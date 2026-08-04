@@ -37,7 +37,8 @@ Single user for v1, behind a password gate. Designed so multi-user is a later fe
 
 **Constraints:**
 - All DB access goes through Drizzle. No raw `pg` client usage except in migration scripts.
-- Use Neon's serverless driver (`@neondatabase/serverless`) with Drizzle, not `node-postgres`. Serverless functions must not hold long-lived pooled connections.
+- **In production and development against Neon**, use Neon's serverless driver (`@neondatabase/serverless`) with Drizzle, not `node-postgres` — serverless functions must not hold long-lived pooled connections.
+- **Against the local Docker test database**, use `pg` (`drizzle-orm/node-postgres`), installed as a devDependency. The prohibition above is scoped to serverless production functions and does not apply here. Both paths sit behind the single driver-selection module described in CLAUDE.md §2 and share identical Drizzle query code; selection is by `TEST_DATABASE_URL` / `NODE_ENV`.
 - API surface is Next.js Route Handlers under `app/api/`. Do not create a separate Express server.
 - Secrets (`DISCOGS_TOKEN`, `ANTHROPIC_API_KEY`, `APP_PASSWORD_HASH`, `SESSION_SECRET`, `CRON_SECRET`, `DATABASE_URL`, `BLOB_READ_WRITE_TOKEN`) live in env vars and are only ever read server-side. Never expose them to a client component. Validate all of them at boot with Zod and fail fast with a clear message naming the missing variable.
 
