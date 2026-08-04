@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: record-collection-test-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: record_collection_test
+    ports:
+      # 5433 on the host, so this never collides with a local Postgres on 5432.
+      - '5433:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d record_collection_test']
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    tmpfs:
+      # The test database is disposable and recreated from migrations on every
+      # run, so keeping it in memory costs nothing and makes resets fast.
+      - /var/lib/postgresql/data
