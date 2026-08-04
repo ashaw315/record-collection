@@ -217,6 +217,8 @@ These power the network graph. All are composite-PK, no separate `id`.
 **`artist_genres`** — `(artist_id, genre_id)`
 **`record_tags`** — `(record_id, tag_id)`
 
+**Cascade rule for junction tables:** every FK on a junction table is `ON DELETE CASCADE`. A junction row is a *link*, not an entity — deleting a record must remove "this record is tagged punk" while leaving the genre itself untouched. This does not weaken §7.4: the reference row is protected by the NO ACTION FK on the owning table (`records.artist_id`, `records.label_id`, `records.pressing_id`, `genres.parent_genre_id`), which still produces a `409 IN_USE`. Without junction cascade, `DELETE /api/records/:id` (§5.2) would fail on an FK violation, so this is required, not optional.
+
 **`artist_influences`** — directed edge between artists
 | Column | Type | Notes |
 |---|---|---|
