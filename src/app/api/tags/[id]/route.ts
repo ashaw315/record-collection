@@ -83,17 +83,26 @@ export const DELETE = withErrorHandling(
     if ((await findTagById(id)) === undefined) return notFound('Tag not found');
 
     /**
-     * SPEC.md §7.4: in-use reference rows are never cascade-deleted. This check
-     * must happen here rather than being left to a foreign-key error, because
-     * `record_tags.tag_id` is ON DELETE CASCADE (§4.3) — Postgres would accept
-     * the delete and silently un-tag every record that used it.
+     * SPEC.md §7.4: an in-use reference row is refused with 409, never
+     * cascade-deleted.
+     *
+     * Two layers, and both are needed. The pre-check produces a helpful 409
+     * without attempting a write in the ordinary case. It is NOT the guarantee,
+     * because it is not atomic with the delete: a concurrent insert into
+     * record_tags lands between them. The guarantee is the NO ACTION foreign key
+     * (§4.3), which deleteTag translates from a 23503 into the same 409 with a
+     * freshly-read count.
      */
     const referenceCount = await countTagReferences(id);
     if (referenceCount > 0) {
       return conflictInUse('Tag is in use and cannot be deleted', referenceCount);
     }
 
-    if (!(await deleteTag(id))) return notFound('Tag not found');
+    const outcome = await deleteTag(id);
+    if (outcome.status === 'not-found') return notFound('Tag not found');
+    if (outcome.status === 'in-use') {
+      return conflictInUse('Tag is in use and cannot be deleted', outcome.referenceCount);
+    }
 
     return NextResponse.json({ ok: true });
   },

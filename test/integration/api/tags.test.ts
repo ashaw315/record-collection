@@ -78,6 +78,48 @@ async function tagRecord(recordId: string, tagId: string): Promise<void> {
   );
 }
 
+/**
+ * Runs `body` with a one-shot hook that inserts junction rows the moment the
+ * handler counts references — reproducing the count-then-delete window
+ * deterministically. Racing real concurrent requests would be flaky and would
+ * not reliably hit the window at all.
+ *
+ * The hook is installed on the query module the handler actually calls, so the
+ * handler is exercised unmodified.
+ */
+async function withReferencesInsertedDuringCount(
+  tagId: string,
+  recordIds: string[],
+  body: () => Promise<void>,
+): Promise<void> {
+  const queries = await import('@/lib/db/queries/tags');
+  const real = queries.countTagReferences;
+  let fired = false;
+
+  const spy = vi.spyOn(queries, 'countTagReferences').mockImplementation(async (id: string) => {
+    const count = await real(id);
+    if (!fired) {
+      fired = true;
+      for (const recordId of recordIds) await tagRecord(recordId, tagId);
+    }
+    return count;
+  });
+
+  try {
+    await body();
+  } finally {
+    spy.mockRestore();
+  }
+}
+
+async function withReferenceInsertedDuringCount(
+  tagId: string,
+  recordId: string,
+  body: () => Promise<void>,
+): Promise<void> {
+  return withReferencesInsertedDuringCount(tagId, [recordId], body);
+}
+
 async function tagNames(): Promise<string[]> {
   const rows = await db.execute<{ name: string }>(sql`SELECT name FROM tags ORDER BY name`);
   return rows.rows.map((r) => r.name);
@@ -582,6 +624,65 @@ describe('DELETE /api/tags/:id', () => {
     );
     expect(response.status).toBe(200);
     expect(await tagNames()).toEqual([]);
+  });
+
+  /**
+   * The count-then-delete sequence is not atomic. Between counting zero
+   * references and issuing the DELETE, a concurrent request can insert into
+   * record_tags; the DELETE then fails on the NO ACTION foreign key with 23503.
+   *
+   * Before this unit that raw error reached withErrorHandling and became a 500
+   * — a server error reported for what is precisely the condition §7.4 defines
+   * a 409 for. Simulated deterministically by inserting the reference in the
+   * window rather than by racing threads, which would be flaky.
+   */
+  it('returns 409, not 500, when a reference appears after the count', async () => {
+    const spy = vi.spyOn(logger, 'error').mockImplementation(() => {});
+
+    const tagId = await insertTag('signed');
+    const artistId = await insertArtist('Blitz');
+    const recordId = await insertRecord(artistId, 'Voice of a Generation');
+
+    // Stand in for the concurrent insert: fires once, during the count, so the
+    // handler observes zero references and then hits the FK.
+    await withReferenceInsertedDuringCount(tagId, recordId, async () => {
+      const response = await deleteTag(
+        request(`/api/tags/${tagId}`, { method: 'DELETE' }),
+        params(tagId),
+      );
+
+      expect(response.status).toBe(409);
+      const body = await response.json();
+      expect(body.error.code).toBe('IN_USE');
+      expect(body.error.referenceCount).toBeGreaterThan(0);
+    });
+
+    // The tag survives, and the late reference is intact.
+    expect(await tagNames()).toEqual(['signed']);
+    // A handled 409 is not a server error and must not be logged as one.
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('reports an accurate count in the raced case, not a placeholder', async () => {
+    vi.spyOn(logger, 'error').mockImplementation(() => {});
+
+    const tagId = await insertTag('signed');
+    const artistId = await insertArtist('The Partisans');
+    const recordIds = [];
+    for (const title of ['Police Story', 'Blind Ambition']) {
+      recordIds.push(await insertRecord(artistId, title));
+    }
+
+    await withReferencesInsertedDuringCount(tagId, recordIds, async () => {
+      const response = await deleteTag(
+        request(`/api/tags/${tagId}`, { method: 'DELETE' }),
+        params(tagId),
+      );
+
+      expect(response.status).toBe(409);
+      // Re-counted after the violation rather than reported as 0 or 1.
+      expect((await response.json()).error.referenceCount).toBe(2);
+    });
   });
 
   it('leaves other tags untouched when refusing', async () => {

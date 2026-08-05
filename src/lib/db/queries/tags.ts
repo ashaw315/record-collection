@@ -1,7 +1,9 @@
 import 'server-only';
 import { and, asc, count, desc, eq, ne } from 'drizzle-orm';
+import { isForeignKeyViolation } from '@/lib/api/errors';
+import { countReferences } from './referrers';
 import { getDb } from '@/db/client';
-import { recordTags, tags } from '@/db/schema';
+import { tags } from '@/db/schema';
 import type { Offset, SortDirection } from '@/lib/api/query-params';
 
 /**
@@ -96,26 +98,49 @@ export async function nameTakenByOther(id: string, name: string): Promise<boolea
 }
 
 /**
- * SPEC.md §7.4: how many rows reference this tag. `record_tags` is the only
- * referencing table for tags (§4.3).
+ * SPEC.md §7.4: how many rows reference this tag.
  *
- * This count is the sole thing standing between a delete and silent data loss:
- * `record_tags.tag_id` is ON DELETE CASCADE, so Postgres would accept the
- * delete and quietly un-tag every record. The refusal cannot be delegated to a
- * foreign-key error the way it can for artists or labels.
+ * Delegates to the shared referrer table so the set of blocking foreign keys is
+ * declared in one place and diffed against pg_constraint by a test. Tags have
+ * exactly one today; artists will have five, and the count must enumerate all
+ * of them or the 409 reports a number that is simply wrong.
+ *
+ * This count is advisory, not the guarantee. `record_tags.tag_id` is NO ACTION
+ * (§4.3, verified against pg_constraint), so the database refuses the delete
+ * regardless — the count exists to produce a helpful 409 before attempting it,
+ * and deleteTag translates the foreign-key violation for the case where a
+ * reference appears after this runs.
  */
 export async function countTagReferences(id: string): Promise<number> {
-  const db = getDb();
-  const [row] = await db
-    .select({ value: count() })
-    .from(recordTags)
-    .where(eq(recordTags.tagId, id));
-  return row?.value ?? 0;
+  return countReferences('tags', id);
 }
 
-export async function deleteTag(id: string): Promise<boolean> {
+export type DeleteOutcome =
+  | { status: 'deleted' }
+  | { status: 'not-found' }
+  | { status: 'in-use'; referenceCount: number };
+
+/**
+ * Deletes a tag, reporting the in-use case rather than throwing it.
+ *
+ * The counting done by the caller is not atomic with this delete: a concurrent
+ * insert into record_tags between the two lands here as a 23503 foreign-key
+ * violation. Translating it — rather than letting it escape — is what makes the
+ * 409 correct rather than racy, since that violation IS SPEC.md §7.4's in-use
+ * condition, just observed from the database instead of from a pre-check.
+ *
+ * The count is re-read after the violation so the 409 reports what is actually
+ * referencing the row now, not the stale zero the pre-check saw.
+ */
+export async function deleteTag(id: string): Promise<DeleteOutcome> {
   const db = getDb();
-  const deleted = await db.delete(tags).where(eq(tags.id, id)).returning({ id: tags.id });
-  return deleted.length > 0;
+
+  try {
+    const deleted = await db.delete(tags).where(eq(tags.id, id)).returning({ id: tags.id });
+    return deleted.length > 0 ? { status: 'deleted' } : { status: 'not-found' };
+  } catch (error) {
+    if (!isForeignKeyViolation(error)) throw error;
+    return { status: 'in-use', referenceCount: await countReferences('tags', id) };
+  }
 }
 

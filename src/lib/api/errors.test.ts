@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { badRequest, conflictInUse, notFound, validationError } from './errors';
+import {
+  badRequest,
+  conflictInUse,
+  isForeignKeyViolation,
+  isUniqueViolation,
+  notFound,
+  pgErrorCode,
+  validationError,
+} from './errors';
 
 /**
  * SPEC.md §5: client errors return
@@ -51,6 +59,61 @@ describe('error responses match the §5 shape', () => {
     const response = conflictInUse('Tag is in use', 0);
     const json = await body(response);
     expect((json.error as { referenceCount: number }).referenceCount).toBe(0);
+  });
+});
+
+/**
+ * Drizzle wraps every driver error in a DrizzleQueryError whose own `code` is
+ * undefined; the real pg error — carrying code, constraint and table — sits on
+ * `.cause`. Reading `.code` off the top level therefore never matched, so the
+ * concurrent-insert fallback in POST and PATCH was dead code from the start.
+ * The sequential pre-check masked it: those paths return 409 before reaching
+ * the insert, so no test noticed.
+ */
+describe('pgErrorCode unwraps the driver error Drizzle hides', () => {
+  function drizzleWrapped(code: string, extra: Record<string, unknown> = {}) {
+    const cause = Object.assign(new Error('duplicate key value'), { code, ...extra });
+    return Object.assign(new Error('Failed query: insert into "tags" ...'), { cause });
+  }
+
+  it('reads the code from a bare driver error', () => {
+    expect(pgErrorCode(Object.assign(new Error('x'), { code: '23505' }))).toBe('23505');
+  });
+
+  it('reads the code through a Drizzle wrapper', () => {
+    expect(pgErrorCode(drizzleWrapped('23505'))).toBe('23505');
+  });
+
+  it('reads the code through more than one layer of wrapping', () => {
+    const inner = drizzleWrapped('23503');
+    const outer = Object.assign(new Error('outer'), { cause: inner });
+    expect(pgErrorCode(outer)).toBe('23503');
+  });
+
+  it('returns undefined for an error carrying no pg code', () => {
+    expect(pgErrorCode(new Error('ordinary'))).toBeUndefined();
+    expect(pgErrorCode('a string')).toBeUndefined();
+    expect(pgErrorCode(null)).toBeUndefined();
+    expect(pgErrorCode(undefined)).toBeUndefined();
+  });
+
+  it('terminates on a self-referencing cause chain', () => {
+    // A cyclic cause must not hang the error path — the one place that would
+    // turn a handled failure into an unhandled one.
+    const cyclic = new Error('cycle');
+    cyclic.cause = cyclic;
+    expect(pgErrorCode(cyclic)).toBeUndefined();
+  });
+
+  it('isUniqueViolation matches a wrapped 23505, not only a bare one', () => {
+    expect(isUniqueViolation(drizzleWrapped('23505'))).toBe(true);
+    expect(isUniqueViolation(Object.assign(new Error('x'), { code: '23505' }))).toBe(true);
+    expect(isUniqueViolation(drizzleWrapped('23503'))).toBe(false);
+  });
+
+  it('isForeignKeyViolation matches a wrapped 23503', () => {
+    expect(isForeignKeyViolation(drizzleWrapped('23503'))).toBe(true);
+    expect(isForeignKeyViolation(drizzleWrapped('23505'))).toBe(false);
   });
 });
 

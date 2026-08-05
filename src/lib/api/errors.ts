@@ -111,13 +111,48 @@ export function isUuid(value: string): boolean {
   return UUID_PATTERN.test(value);
 }
 
+/**
+ * Extracts a Postgres SQLSTATE from an error, following the `cause` chain.
+ *
+ * Drizzle wraps every driver error in a DrizzleQueryError whose own `code` is
+ * undefined; the real pg error — carrying code, constraint and table — hangs
+ * off `.cause`. Reading `.code` from the top level (as this module previously
+ * did) therefore never matched a real query failure, making the
+ * concurrent-insert fallbacks in POST and PATCH dead code. The sequential
+ * pre-checks masked it: those paths return 409 before reaching the write, so
+ * nothing failed.
+ */
+export function pgErrorCode(error: unknown): string | undefined {
+  const seen = new Set<unknown>();
+  let current = error;
+
+  // Bounded by `seen`: a cyclic cause chain must not hang the error path, which
+  // is the one place a hang turns a handled failure into an unhandled one.
+  while (typeof current === 'object' && current !== null && !seen.has(current)) {
+    seen.add(current);
+
+    if ('code' in current) {
+      const { code } = current as { code: unknown };
+      if (typeof code === 'string') return code;
+    }
+
+    current = (current as { cause?: unknown }).cause;
+  }
+
+  return undefined;
+}
+
 /** Postgres unique_violation. Raised when two concurrent requests insert the
  * same name — the check-then-insert race a pre-check alone cannot close. */
 export function isUniqueViolation(error: unknown): boolean {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    (error as { code: unknown }).code === '23505'
-  );
+  return pgErrorCode(error) === '23505';
+}
+
+/**
+ * Postgres foreign_key_violation. Raised when a delete is refused by a NO
+ * ACTION foreign key — SPEC.md §7.4's in-use condition, arriving from the
+ * database rather than from a pre-check.
+ */
+export function isForeignKeyViolation(error: unknown): boolean {
+  return pgErrorCode(error) === '23503';
 }
