@@ -105,6 +105,29 @@ expensive to retrofit. A resource is not done until every applicable line holds.
   reference count before attempting the delete, not to prevent data loss. Both
   layers are kept deliberately; see unit C. Corrected: step 4, unit E.
 
+- **A mutation that fails nothing does not mean the code is dead.** Three
+  distinct patterns have now produced "removing this breaks no test", and only
+  one of them meant the code was genuinely unused:
+
+  1. **Genuinely dead** — `isUniqueViolation` read `.code` off Drizzle's
+     wrapper, where it is always undefined, so the branch never matched.
+  2. **Live but unconstrained** — the branch executes and is correct, but no
+     test holds it: both `isUniqueViolation` call sites after the unit C fix,
+     and the `'is missing'` branch in `parseEnv`.
+  3. **Masked by a different mechanism** — the branch is real and load-bearing,
+     but its absence produces the same observable outcome by another path. The
+     `pressings` discogs-id match branch: remove it and the request falls
+     through to create, the partial unique index rejects the duplicate, and
+     POST's recovery returns the winning row. Same 200, same body, different
+     mechanism. It looks dead to a mutation test *and* to a reviewer, and the
+     "delete unreachable code" instinct removes it.
+
+  **The check:** when a mutation fails nothing, do not conclude the code is
+  dead — determine what produced the correct outcome instead. If the answer is
+  a different mechanism, both are real and each needs an isolating test.
+  Removing both layers together is what distinguishes case 3 from case 1.
+  Noticed: step 4, pressings.
+
 - **The 1877 `formed_year` floor is the start of recorded sound, not of music.**
   §4.1 bounds `artists.formed_year` at 1877 (Edison's phonograph) on the
   reasoning that no *recording* artist predates it. A classical or early-jazz
