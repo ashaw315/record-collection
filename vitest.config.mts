@@ -15,6 +15,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    globalSetup: ['./test/global-setup.ts'],
     include: ['src/**/*.test.ts', 'test/**/*.test.ts'],
     // Playwright specs live in e2e/ and are run by `npm run test:e2e`.
     exclude: ['node_modules/**', '.next/**', 'e2e/**'],

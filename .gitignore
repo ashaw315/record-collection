@@ -40,6 +40,11 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+# Transient stash used by test/repo/drizzle-config.test.ts, which hides
+# .env.local so .env.test is provably the only source of the test database URL.
+# Restored in a finally block; ignored here so a crashed run leaves nothing
+# committable.
+.env.local.drizzle-config-test-stash
 
 # vercel
 .vercel
@@ -53,4 +58,12 @@ yarn-error.log*
 !.vscode/extensions.json
 
 # drizzle
-/drizzle/meta
+# Transient config written by test/repo/migrations-complete.test.ts. It is
+# removed in afterAll, but ignored here so a crashed run cannot leave a
+# committable orphan in the repo root.
+drizzle.config.fresh-clone-test.ts
+
+# Nothing under /drizzle is ignored. drizzle/meta/_journal.json and the
+# per-migration snapshots are migration state, not build output: `drizzle-kit
+# migrate` reads the journal to decide what to apply, and without it a fresh
+# clone silently applies zero migrations and exits 0.

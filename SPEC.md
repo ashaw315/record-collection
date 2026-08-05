@@ -93,7 +93,7 @@ Guard against cycles in `parent_genre_id` at the application layer — a genre m
 |---|---|---|
 | name | TEXT NOT NULL UNIQUE | |
 | notes | TEXT | |
-| discogs_label_id | INTEGER | nullable |
+| discogs_label_id | INTEGER | nullable, **unique when present** (partial unique index) — matching `artists.discogs_artist_id` and `pressings.discogs_release_id`. All three are find-or-create keys for §5.7 import and must behave identically. |
 
 **`formats`**
 | Column | Type | Notes |
@@ -177,11 +177,15 @@ Seed with: LP, 2xLP, 7", 10", 12" Single, Box Set, Picture Disc. **This is the o
 | want_list_id | UUID REFERENCES want_list(id) | nullable |
 | pressing_id | UUID REFERENCES pressings(id) | nullable |
 | price | NUMERIC(10,2) NOT NULL | |
-| price_type | price_type enum | `'new' \| 'used' \| 'best_dig'` |
+| price_type | price_type enum NOT NULL | `'new' \| 'used' \| 'best_dig'`. **NOT NULL** — §7.6's fallback chain has no defined behavior for an untyped price. |
 | source | TEXT | e.g. "discogs_median", "manual" |
 | recorded_at | TIMESTAMPTZ NOT NULL DEFAULT now() | |
 
 Exactly one of `record_id` / `want_list_id` must be non-null — enforce with a CHECK constraint.
+
+**This table is exempt from the schema-wide `created_at` / `updated_at` rule.** `recorded_at` is its only timestamp: `created_at` would duplicate it and `updated_at` is meaningless on an append-only table. Neither column should exist.
+
+**`record_id` and `want_list_id` are `ON DELETE CASCADE`.** Append-only restricts UPDATE, not DELETE (§7.5) — and without cascade, a record with any price history could never be deleted at all, breaking `DELETE /api/records/:id` (§5.2). Price history is a property of its parent; when the parent goes, it goes.
 
 **`images`**
 | Column | Type | Notes |
@@ -199,6 +203,8 @@ Use Vercel Blob for storage. Store the returned URL here.
 | discogs_release_id | INTEGER NOT NULL UNIQUE | |
 | payload | JSONB NOT NULL | raw normalized response |
 | fetched_at | TIMESTAMPTZ NOT NULL DEFAULT now() | |
+
+Also exempt from the `created_at` / `updated_at` rule — `fetched_at` is the only timestamp that means anything here, and it is rewritten on every refresh.
 
 **`journal_entries`**
 | Column | Type | Notes |

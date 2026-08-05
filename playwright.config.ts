@@ -1,6 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const baseURL = process.env.E2E_BASE_URL ?? 'http://localhost:3000';
+// 3100 rather than 3000, so an E2E run never collides with a dev server the
+// developer already has open.
+const PORT = process.env.E2E_PORT ?? '3100';
+const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${PORT}`;
 
 export default defineConfig({
   testDir: './e2e',
@@ -19,9 +22,13 @@ export default defineConfig({
     { name: 'mobile', use: { ...devices['iPhone 13'] } },
   ],
   webServer: {
-    command: 'npm run dev',
+    // NODE_ENV=test makes Next load .env.test and skip .env.local, so an E2E run
+    // never authenticates against the developer's own APP_PASSWORD_HASH.
+    command: `NODE_ENV=test npm run dev -- --port ${PORT}`,
     url: baseURL,
-    reuseExistingServer: !process.env.CI,
+    // A stale dev server would carry the developer's own env, not these values,
+    // and the login tests would fail confusingly.
+    reuseExistingServer: false,
     timeout: 120_000,
   },
 });

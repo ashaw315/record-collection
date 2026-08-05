@@ -1,0 +1,1963 @@
+{
+  "id": "20380992-0e6b-4a4e-ac6d-5e40579aaffc",
+  "prevId": "8a614b9e-9e56-4ed7-80ac-ec8ece16d269",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.artist_genres": {
+      "name": "artist_genres",
+      "schema": "",
+      "columns": {
+        "artist_id": {
+          "name": "artist_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "genre_id": {
+          "name": "genre_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "artist_genres_genre_id_idx": {
+          "name": "artist_genres_genre_id_idx",
+          "columns": [
+            {
+              "expression": "genre_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "artist_genres_artist_id_artists_id_fk": {
+          "name": "artist_genres_artist_id_artists_id_fk",
+          "tableFrom": "artist_genres",
+          "columnsFrom": [
+            "artist_id"
+          ],
+          "tableTo": "artists",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "artist_genres_genre_id_genres_id_fk": {
+          "name": "artist_genres_genre_id_genres_id_fk",
+          "tableFrom": "artist_genres",
+          "columnsFrom": [
+            "genre_id"
+          ],
+          "tableTo": "genres",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "artist_genres_artist_id_genre_id_pk": {
+          "name": "artist_genres_artist_id_genre_id_pk",
+          "columns": [
+            "artist_id",
+            "genre_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.artist_influences": {
+      "name": "artist_influences",
+      "schema": "",
+      "columns": {
+        "source_artist_id": {
+          "name": "source_artist_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_artist_id": {
+          "name": "target_artist_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "strength": {
+          "name": "strength",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "artist_influences_target_artist_id_idx": {
+          "name": "artist_influences_target_artist_id_idx",
+          "columns": [
+            {
+              "expression": "target_artist_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "artist_influences_source_artist_id_artists_id_fk": {
+          "name": "artist_influences_source_artist_id_artists_id_fk",
+          "tableFrom": "artist_influences",
+          "columnsFrom": [
+            "source_artist_id"
+          ],
+          "tableTo": "artists",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "artist_influences_target_artist_id_artists_id_fk": {
+          "name": "artist_influences_target_artist_id_artists_id_fk",
+          "tableFrom": "artist_influences",
+          "columnsFrom": [
+            "target_artist_id"
+          ],
+          "tableTo": "artists",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "artist_influences_source_artist_id_target_artist_id_pk": {
+          "name": "artist_influences_source_artist_id_target_artist_id_pk",
+          "columns": [
+            "source_artist_id",
+            "target_artist_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "artist_influences_no_self_edge": {
+          "name": "artist_influences_no_self_edge",
+          "value": "\"artist_influences\".\"source_artist_id\" <> \"artist_influences\".\"target_artist_id\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.artists": {
+      "name": "artists",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "formed_year": {
+          "name": "formed_year",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "origin_country": {
+          "name": "origin_country",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "discogs_artist_id": {
+          "name": "discogs_artist_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "artists_discogs_artist_id_key": {
+          "name": "artists_discogs_artist_id_key",
+          "columns": [
+            {
+              "expression": "discogs_artist_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"artists\".\"discogs_artist_id\" IS NOT NULL",
+          "concurrently": false
+        },
+        "artists_name_trgm_idx": {
+          "name": "artists_name_trgm_idx",
+          "columns": [
+            {
+              "expression": "\"name\" gin_trgm_ops",
+              "isExpression": true,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "gin",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "artists_name_unique": {
+          "name": "artists_name_unique",
+          "columns": [
+            "name"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.discogs_cache": {
+      "name": "discogs_cache",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "discogs_release_id": {
+          "name": "discogs_release_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payload": {
+          "name": "payload",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fetched_at": {
+          "name": "fetched_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "discogs_cache_discogs_release_id_unique": {
+          "name": "discogs_cache_discogs_release_id_unique",
+          "columns": [
+            "discogs_release_id"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.formats": {
+      "name": "formats",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "formats_name_unique": {
+          "name": "formats_name_unique",
+          "columns": [
+            "name"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.genres": {
+      "name": "genres",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "parent_genre_id": {
+          "name": "parent_genre_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "genres_parent_genre_id_idx": {
+          "name": "genres_parent_genre_id_idx",
+          "columns": [
+            {
+              "expression": "parent_genre_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "genres_parent_genre_id_genres_id_fk": {
+          "name": "genres_parent_genre_id_genres_id_fk",
+          "tableFrom": "genres",
+          "columnsFrom": [
+            "parent_genre_id"
+          ],
+          "tableTo": "genres",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "genres_name_unique": {
+          "name": "genres_name_unique",
+          "columns": [
+            "name"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.images": {
+      "name": "images",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "record_id": {
+          "name": "record_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "image_type": {
+          "name": "image_type",
+          "type": "image_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "caption": {
+          "name": "caption",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "images_record_id_idx": {
+          "name": "images_record_id_idx",
+          "columns": [
+            {
+              "expression": "record_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "images_record_id_records_id_fk": {
+          "name": "images_record_id_records_id_fk",
+          "tableFrom": "images",
+          "columnsFrom": [
+            "record_id"
+          ],
+          "tableTo": "records",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.journal_entries": {
+      "name": "journal_entries",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "record_id": {
+          "name": "record_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entry_date": {
+          "name": "entry_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_DATE"
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "journal_entries_record_id_idx": {
+          "name": "journal_entries_record_id_idx",
+          "columns": [
+            {
+              "expression": "record_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "journal_entries_record_id_records_id_fk": {
+          "name": "journal_entries_record_id_records_id_fk",
+          "tableFrom": "journal_entries",
+          "columnsFrom": [
+            "record_id"
+          ],
+          "tableTo": "records",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.labels": {
+      "name": "labels",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "discogs_label_id": {
+          "name": "discogs_label_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "labels_discogs_label_id_idx": {
+          "name": "labels_discogs_label_id_idx",
+          "columns": [
+            {
+              "expression": "discogs_label_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "labels_name_unique": {
+          "name": "labels_name_unique",
+          "columns": [
+            "name"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.pressings": {
+      "name": "pressings",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "catalog_number": {
+          "name": "catalog_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "matrix_runout": {
+          "name": "matrix_runout",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pressing_plant": {
+          "name": "pressing_plant",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "year_pressed": {
+          "name": "year_pressed",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "country_pressed": {
+          "name": "country_pressed",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "vinyl_weight_grams": {
+          "name": "vinyl_weight_grams",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "color_variant": {
+          "name": "color_variant",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "discogs_release_id": {
+          "name": "discogs_release_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_reissue": {
+          "name": "is_reissue",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "pressings_discogs_release_id_key": {
+          "name": "pressings_discogs_release_id_key",
+          "columns": [
+            {
+              "expression": "discogs_release_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"pressings\".\"discogs_release_id\" IS NOT NULL",
+          "concurrently": false
+        },
+        "pressings_discogs_release_id_idx": {
+          "name": "pressings_discogs_release_id_idx",
+          "columns": [
+            {
+              "expression": "discogs_release_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.price_history": {
+      "name": "price_history",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "record_id": {
+          "name": "record_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "want_list_id": {
+          "name": "want_list_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pressing_id": {
+          "name": "pressing_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "price": {
+          "name": "price",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "price_type": {
+          "name": "price_type",
+          "type": "price_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recorded_at": {
+          "name": "recorded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "price_history_record_id_idx": {
+          "name": "price_history_record_id_idx",
+          "columns": [
+            {
+              "expression": "record_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "price_history_want_list_id_idx": {
+          "name": "price_history_want_list_id_idx",
+          "columns": [
+            {
+              "expression": "want_list_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "price_history_pressing_id_idx": {
+          "name": "price_history_pressing_id_idx",
+          "columns": [
+            {
+              "expression": "pressing_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "price_history_recorded_at_idx": {
+          "name": "price_history_recorded_at_idx",
+          "columns": [
+            {
+              "expression": "recorded_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "price_history_record_id_records_id_fk": {
+          "name": "price_history_record_id_records_id_fk",
+          "tableFrom": "price_history",
+          "columnsFrom": [
+            "record_id"
+          ],
+          "tableTo": "records",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "price_history_want_list_id_want_list_id_fk": {
+          "name": "price_history_want_list_id_want_list_id_fk",
+          "tableFrom": "price_history",
+          "columnsFrom": [
+            "want_list_id"
+          ],
+          "tableTo": "want_list",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "price_history_pressing_id_pressings_id_fk": {
+          "name": "price_history_pressing_id_pressings_id_fk",
+          "tableFrom": "price_history",
+          "columnsFrom": [
+            "pressing_id"
+          ],
+          "tableTo": "pressings",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "price_history_one_parent": {
+          "name": "price_history_one_parent",
+          "value": "(\"price_history\".\"record_id\" IS NOT NULL) <> (\"price_history\".\"want_list_id\" IS NOT NULL)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.record_genres": {
+      "name": "record_genres",
+      "schema": "",
+      "columns": {
+        "record_id": {
+          "name": "record_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "genre_id": {
+          "name": "genre_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "record_genres_genre_id_idx": {
+          "name": "record_genres_genre_id_idx",
+          "columns": [
+            {
+              "expression": "genre_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "record_genres_record_id_records_id_fk": {
+          "name": "record_genres_record_id_records_id_fk",
+          "tableFrom": "record_genres",
+          "columnsFrom": [
+            "record_id"
+          ],
+          "tableTo": "records",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "record_genres_genre_id_genres_id_fk": {
+          "name": "record_genres_genre_id_genres_id_fk",
+          "tableFrom": "record_genres",
+          "columnsFrom": [
+            "genre_id"
+          ],
+          "tableTo": "genres",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "record_genres_record_id_genre_id_pk": {
+          "name": "record_genres_record_id_genre_id_pk",
+          "columns": [
+            "record_id",
+            "genre_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.record_stores": {
+      "name": "record_stores",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "city": {
+          "name": "city",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "state_region": {
+          "name": "state_region",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "country": {
+          "name": "country",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "address": {
+          "name": "address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "website": {
+          "name": "website",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_favorite": {
+          "name": "is_favorite",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.record_tags": {
+      "name": "record_tags",
+      "schema": "",
+      "columns": {
+        "record_id": {
+          "name": "record_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tag_id": {
+          "name": "tag_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "record_tags_tag_id_idx": {
+          "name": "record_tags_tag_id_idx",
+          "columns": [
+            {
+              "expression": "tag_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "record_tags_record_id_records_id_fk": {
+          "name": "record_tags_record_id_records_id_fk",
+          "tableFrom": "record_tags",
+          "columnsFrom": [
+            "record_id"
+          ],
+          "tableTo": "records",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "record_tags_tag_id_tags_id_fk": {
+          "name": "record_tags_tag_id_tags_id_fk",
+          "tableFrom": "record_tags",
+          "columnsFrom": [
+            "tag_id"
+          ],
+          "tableTo": "tags",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "record_tags_record_id_tag_id_pk": {
+          "name": "record_tags_record_id_tag_id_pk",
+          "columns": [
+            "record_id",
+            "tag_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.records": {
+      "name": "records",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "artist_id": {
+          "name": "artist_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "label_id": {
+          "name": "label_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "format_id": {
+          "name": "format_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pressing_id": {
+          "name": "pressing_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "store_id": {
+          "name": "store_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "release_year": {
+          "name": "release_year",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "condition_media": {
+          "name": "condition_media",
+          "type": "condition_grade",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "condition_sleeve": {
+          "name": "condition_sleeve",
+          "type": "condition_grade",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "purchase_price": {
+          "name": "purchase_price",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "purchase_date": {
+          "name": "purchase_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "records_artist_id_idx": {
+          "name": "records_artist_id_idx",
+          "columns": [
+            {
+              "expression": "artist_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "records_label_id_idx": {
+          "name": "records_label_id_idx",
+          "columns": [
+            {
+              "expression": "label_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "records_format_id_idx": {
+          "name": "records_format_id_idx",
+          "columns": [
+            {
+              "expression": "format_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "records_pressing_id_idx": {
+          "name": "records_pressing_id_idx",
+          "columns": [
+            {
+              "expression": "pressing_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "records_store_id_idx": {
+          "name": "records_store_id_idx",
+          "columns": [
+            {
+              "expression": "store_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "records_purchase_date_idx": {
+          "name": "records_purchase_date_idx",
+          "columns": [
+            {
+              "expression": "purchase_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "records_title_trgm_idx": {
+          "name": "records_title_trgm_idx",
+          "columns": [
+            {
+              "expression": "\"title\" gin_trgm_ops",
+              "isExpression": true,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "gin",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "records_artist_id_artists_id_fk": {
+          "name": "records_artist_id_artists_id_fk",
+          "tableFrom": "records",
+          "columnsFrom": [
+            "artist_id"
+          ],
+          "tableTo": "artists",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "records_label_id_labels_id_fk": {
+          "name": "records_label_id_labels_id_fk",
+          "tableFrom": "records",
+          "columnsFrom": [
+            "label_id"
+          ],
+          "tableTo": "labels",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "records_format_id_formats_id_fk": {
+          "name": "records_format_id_formats_id_fk",
+          "tableFrom": "records",
+          "columnsFrom": [
+            "format_id"
+          ],
+          "tableTo": "formats",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "records_pressing_id_pressings_id_fk": {
+          "name": "records_pressing_id_pressings_id_fk",
+          "tableFrom": "records",
+          "columnsFrom": [
+            "pressing_id"
+          ],
+          "tableTo": "pressings",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "records_store_id_record_stores_id_fk": {
+          "name": "records_store_id_record_stores_id_fk",
+          "tableFrom": "records",
+          "columnsFrom": [
+            "store_id"
+          ],
+          "tableTo": "record_stores",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.tags": {
+      "name": "tags",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "tags_name_unique": {
+          "name": "tags_name_unique",
+          "columns": [
+            "name"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.want_list": {
+      "name": "want_list",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "artist_id": {
+          "name": "artist_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "label_id": {
+          "name": "label_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "priority": {
+          "name": "priority",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 3
+        },
+        "target_pressing_id": {
+          "name": "target_pressing_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "best_dig_notes": {
+          "name": "best_dig_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "max_price": {
+          "name": "max_price",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "acquired_record_id": {
+          "name": "acquired_record_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_acquired": {
+          "name": "is_acquired",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "want_list_artist_id_idx": {
+          "name": "want_list_artist_id_idx",
+          "columns": [
+            {
+              "expression": "artist_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "want_list_label_id_idx": {
+          "name": "want_list_label_id_idx",
+          "columns": [
+            {
+              "expression": "label_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "want_list_target_pressing_id_idx": {
+          "name": "want_list_target_pressing_id_idx",
+          "columns": [
+            {
+              "expression": "target_pressing_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "want_list_acquired_record_id_idx": {
+          "name": "want_list_acquired_record_id_idx",
+          "columns": [
+            {
+              "expression": "acquired_record_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "want_list_priority_idx": {
+          "name": "want_list_priority_idx",
+          "columns": [
+            {
+              "expression": "priority",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"want_list\".\"is_acquired\" = false",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "want_list_artist_id_artists_id_fk": {
+          "name": "want_list_artist_id_artists_id_fk",
+          "tableFrom": "want_list",
+          "columnsFrom": [
+            "artist_id"
+          ],
+          "tableTo": "artists",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "want_list_label_id_labels_id_fk": {
+          "name": "want_list_label_id_labels_id_fk",
+          "tableFrom": "want_list",
+          "columnsFrom": [
+            "label_id"
+          ],
+          "tableTo": "labels",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "want_list_target_pressing_id_pressings_id_fk": {
+          "name": "want_list_target_pressing_id_pressings_id_fk",
+          "tableFrom": "want_list",
+          "columnsFrom": [
+            "target_pressing_id"
+          ],
+          "tableTo": "pressings",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "want_list_acquired_record_id_records_id_fk": {
+          "name": "want_list_acquired_record_id_records_id_fk",
+          "tableFrom": "want_list",
+          "columnsFrom": [
+            "acquired_record_id"
+          ],
+          "tableTo": "records",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.want_list_genres": {
+      "name": "want_list_genres",
+      "schema": "",
+      "columns": {
+        "want_list_id": {
+          "name": "want_list_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "genre_id": {
+          "name": "genre_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "want_list_genres_genre_id_idx": {
+          "name": "want_list_genres_genre_id_idx",
+          "columns": [
+            {
+              "expression": "genre_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "want_list_genres_want_list_id_want_list_id_fk": {
+          "name": "want_list_genres_want_list_id_want_list_id_fk",
+          "tableFrom": "want_list_genres",
+          "columnsFrom": [
+            "want_list_id"
+          ],
+          "tableTo": "want_list",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "want_list_genres_genre_id_genres_id_fk": {
+          "name": "want_list_genres_genre_id_genres_id_fk",
+          "tableFrom": "want_list_genres",
+          "columnsFrom": [
+            "genre_id"
+          ],
+          "tableTo": "genres",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "want_list_genres_want_list_id_genre_id_pk": {
+          "name": "want_list_genres_want_list_id_genre_id_pk",
+          "columns": [
+            "want_list_id",
+            "genre_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.condition_grade": {
+      "name": "condition_grade",
+      "schema": "public",
+      "values": [
+        "M",
+        "NM",
+        "VG+",
+        "VG",
+        "G+",
+        "G",
+        "F",
+        "P"
+      ]
+    },
+    "public.image_type": {
+      "name": "image_type",
+      "schema": "public",
+      "values": [
+        "cover",
+        "back",
+        "label",
+        "matrix",
+        "other"
+      ]
+    },
+    "public.price_type": {
+      "name": "price_type",
+      "schema": "public",
+      "values": [
+        "new",
+        "used",
+        "best_dig"
+      ]
+    }
+  },
+  "schemas": {},
+  "views": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

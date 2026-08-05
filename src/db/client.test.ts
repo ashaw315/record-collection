@@ -96,6 +96,53 @@ describe('resolveDriver', () => {
     });
   });
 
+  describe('validates where TEST_DATABASE_URL actually points', () => {
+    // A TEST_DATABASE_URL is a claim that this is the disposable local
+    // database; everything downstream truncates on that basis. Selecting `pg`
+    // for a remote host would hand the reset-between-tests rule a real database.
+    it('refuses a TEST_DATABASE_URL whose ?host= redirects to a remote host', () => {
+      expect(() =>
+        resolveDriver({
+          DATABASE_URL: NEON_URL,
+          TEST_DATABASE_URL: `${LOCAL_URL}?host=ep-prod.us-east-2.aws.neon.tech`,
+          NODE_ENV: 'test',
+        }),
+      ).toThrow();
+    });
+
+    it('refuses a TEST_DATABASE_URL pointing straight at a remote host', () => {
+      expect(() =>
+        resolveDriver({
+          DATABASE_URL: NEON_URL,
+          TEST_DATABASE_URL: NEON_URL,
+          NODE_ENV: 'test',
+        }),
+      ).toThrowError(/non-local|refus/i);
+    });
+
+    it('still accepts the genuine local test database', () => {
+      expect(
+        resolveDriver({
+          DATABASE_URL: NEON_URL,
+          TEST_DATABASE_URL: LOCAL_URL,
+          NODE_ENV: 'test',
+        }).driver,
+      ).toBe('pg');
+    });
+
+    it('does not validate DATABASE_URL as local, since Neon is remote by design', () => {
+      // The guard applies to the test path only; production is meant to be
+      // remote and must not be caught by it.
+      expect(
+        resolveDriver({
+          DATABASE_URL: NEON_URL,
+          TEST_DATABASE_URL: undefined,
+          NODE_ENV: 'production',
+        }).driver,
+      ).toBe('neon');
+    });
+  });
+
   it('ignores an empty TEST_DATABASE_URL rather than treating it as present', () => {
     // `TEST_DATABASE_URL=` in a .env file is an absent value, and must not be
     // read as "use a test database whose URL is the empty string".
