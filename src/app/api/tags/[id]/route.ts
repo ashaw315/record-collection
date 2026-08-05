@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { NAME_MAX_LENGTH, cleanName, nameLength } from '@/lib/api/text';
 import {
   badRequest,
   conflictInUse,
@@ -19,7 +20,17 @@ import {
   updateTag,
 } from '@/lib/db/queries/tags';
 
-const nameSchema = z.string().trim().min(1).max(100);
+// Names are normalized before length and emptiness are checked, so an NFD form
+// collides with its NFC twin, an invisible character cannot shadow a real name,
+// and "   " is rejected rather than stored. See @/lib/api/text for why Postgres
+// alone does not do this.
+const nameSchema = z
+  .string()
+  .transform(cleanName)
+  .refine((value) => value.length > 0, { message: 'Name is required' })
+  .refine((value) => nameLength(value) <= NAME_MAX_LENGTH, {
+    message: `Name must be at most ${NAME_MAX_LENGTH} characters`,
+  });
 const patchSchema = z.strictObject({ name: nameSchema });
 
 type Context = { params: Promise<{ id: string }> };

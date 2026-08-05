@@ -462,6 +462,62 @@ describe('POST /api/tags', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
+  /**
+   * Postgres compares by code point, so NFC "Björk" (5 chars) and NFD "Björk"
+   * (6 chars) are different strings to the UNIQUE index — verified directly
+   * against the test database. Both would insert, and both render identically
+   * in every UI: two rows nobody can tell apart, and a filter on one silently
+   * missing the records tagged with the other.
+   */
+  it('treats NFC and NFD forms of the same name as a duplicate', async () => {
+    // Built from escapes, not literals: an editor or file write normalizes
+    // typed NFD into NFC, which silently destroys the precondition.
+    const nfc = 'Bj\u00F6rk'; // o-with-diaeresis, one code point
+    const nfd = 'Bjo\u0308rk'; // o + combining diaeresis, two code points
+    expect(nfc).not.toBe(nfd); // precondition: genuinely different strings
+
+    const first = await createTag(jsonRequest('/api/tags', 'POST', { name: nfd }));
+    expect(first.status).toBe(201);
+
+    const second = await createTag(jsonRequest('/api/tags', 'POST', { name: nfc }));
+    expect(second.status).toBe(409);
+    expect((await second.json()).error.code).toBe('DUPLICATE');
+
+    // Stored once, in normalized form.
+    const names = await tagNames();
+    expect(names).toHaveLength(1);
+    expect(names[0]).toBe(nfc);
+  });
+
+  it('stores the normalized form regardless of which form was submitted', async () => {
+    await createTag(jsonRequest('/api/tags', 'POST', { name: 'Moto\u0308rhead' }));
+
+    const [stored] = await tagNames();
+    expect(stored.normalize('NFC')).toBe(stored);
+  });
+
+  it('rejects a name of only invisible characters', async () => {
+    // Would otherwise be stored as a tag that displays as nothing.
+    const response = await createTag(
+      jsonRequest('/api/tags', 'POST', { name: '​‌﻿' }),
+    );
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).error.fieldErrors.name).toBeDefined();
+    expect(await tagNames()).toEqual([]);
+  });
+
+  it('treats a zero-width-separated name as a duplicate of the plain one', async () => {
+    await insertTag('signed');
+
+    const response = await createTag(
+      jsonRequest('/api/tags', 'POST', { name: 'sig​ned' }),
+    );
+
+    expect(response.status).toBe(409);
+    expect(await tagNames()).toEqual(['signed']);
+  });
+
   it('trims surrounding whitespace so " signed" cannot shadow "signed"', async () => {
     await insertTag('signed');
 
