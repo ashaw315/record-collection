@@ -35,6 +35,14 @@ export const REFERRERS = {
     { table: 'want_list', column: 'label_id' },
   ],
   record_stores: [{ table: 'records', column: 'store_id' }],
+  // Four, including the SELF-reference: deleting a parent that still has child
+  // genres is refused like any other in-use row. Verified from pg_constraint.
+  genres: [
+    { table: 'record_genres', column: 'genre_id' },
+    { table: 'want_list_genres', column: 'genre_id' },
+    { table: 'artist_genres', column: 'genre_id' },
+    { table: 'genres', column: 'parent_genre_id' },
+  ],
   formats: [{ table: 'records', column: 'format_id' }],
 } as const satisfies Record<string, readonly Referrer[]>;
 
