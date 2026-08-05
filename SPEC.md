@@ -100,7 +100,13 @@ Guard against cycles in `parent_genre_id` at the application layer — a genre m
 |---|---|---|
 | name | TEXT NOT NULL UNIQUE | e.g. "LP", "7\"", "10\"", "Box Set" |
 
-Seed with: LP, 2xLP, 7", 10", 12" Single, Box Set, Picture Disc. **This is the only seed data in the project** — no sample records, artists, genres, or want-list entries. The database starts otherwise empty.
+| is_seeded | BOOLEAN NOT NULL DEFAULT false | true for the seven rows below; never set by the API |
+
+Seed with: LP, 2xLP, 7", 10", 12" Single, Box Set, Picture Disc, all with `is_seeded = true`.
+
+**Seeded formats cannot be deleted.** `DELETE /api/formats/:id` returns `409` with code `SEEDED` for any row where `is_seeded` is true, *even when unreferenced* — nothing re-seeds them, so a delete is permanent and would leave the app without a format it depends on. User-created formats (including any created by §5.7's Discogs find-or-create) delete normally under the usual `409 IN_USE` rule. Identify seeded rows by the column, never by name: names are editable via PATCH, and a name-matched guard would fail silently after a rename. PATCH may rename a seeded row; it may not change `is_seeded`.
+
+**This is the only seed data in the project** — no sample records, artists, genres, or want-list entries. The database starts otherwise empty.
 
 **`record_stores`**
 | Column | Type | Notes |
