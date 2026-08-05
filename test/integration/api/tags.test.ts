@@ -424,6 +424,44 @@ describe('POST /api/tags', () => {
     expect(await tagNames()).toEqual(['signed']);
   });
 
+  /**
+   * The pre-check is not a lock. Two concurrent creates can both find the name
+   * free, and one loses to the unique index — a 23505 that must become the same
+   * 409, not a 500.
+   *
+   * This branch was DEAD for the whole of unit 1: isUniqueViolation read `.code`
+   * off Drizzle's wrapper, where it is undefined, so it never matched. Nothing
+   * failed, because the sequential pre-check returns first in every ordinary
+   * case and no test ever created the race. Unit C fixed the detection; this
+   * test is what stops the call site regressing back to unconstrained.
+   *
+   * The race is created by claiming the name during the pre-check rather than
+   * by racing real requests, which would be flaky and would rarely hit the
+   * window.
+   */
+  it('returns 409 when a concurrent create wins the unique index', async () => {
+    const spy = vi.spyOn(logger, 'error').mockImplementation(() => {});
+    const queries = await import('@/lib/db/queries/tags');
+
+    const claim = vi.spyOn(queries, 'findTagByName').mockImplementation(async () => {
+      await db.execute(sql`INSERT INTO tags (name) VALUES ('signed')`);
+      return undefined;
+    });
+
+    try {
+      const response = await createTag(jsonRequest('/api/tags', 'POST', { name: 'signed' }));
+
+      expect(response.status).toBe(409);
+      expect((await response.json()).error.code).toBe('DUPLICATE');
+    } finally {
+      claim.mockRestore();
+    }
+
+    // Exactly one row, and a handled conflict is not a server error.
+    expect(await tagNames()).toEqual(['signed']);
+    expect(spy).not.toHaveBeenCalled();
+  });
+
   it('trims surrounding whitespace so " signed" cannot shadow "signed"', async () => {
     await insertTag('signed');
 
@@ -513,6 +551,33 @@ describe('PATCH /api/tags/:id', () => {
       params('nope'),
     );
     expect(response.status).toBe(400);
+  });
+
+  /** The PATCH counterpart of the POST race: same dead branch, same fix. */
+  it('returns 409 when a concurrent rename wins the unique index', async () => {
+    const spy = vi.spyOn(logger, 'error').mockImplementation(() => {});
+    const queries = await import('@/lib/db/queries/tags');
+    const id = await insertTag('gift');
+
+    const claim = vi.spyOn(queries, 'nameTakenByOther').mockImplementation(async () => {
+      await db.execute(sql`INSERT INTO tags (name) VALUES ('signed')`);
+      return false;
+    });
+
+    try {
+      const response = await patchTag(
+        jsonRequest(`/api/tags/${id}`, 'PATCH', { name: 'signed' }),
+        params(id),
+      );
+
+      expect(response.status).toBe(409);
+      expect((await response.json()).error.code).toBe('DUPLICATE');
+    } finally {
+      claim.mockRestore();
+    }
+
+    expect(await tagNames()).toEqual(['gift', 'signed']);
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it('rejects renaming onto an existing name with 409', async () => {

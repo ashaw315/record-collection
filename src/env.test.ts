@@ -58,6 +58,30 @@ describe('parseEnv', () => {
       });
     }
 
+    /**
+     * The existing cases assert only that the variable is NAMED, which left the
+     * reason entirely unconstrained — the `issue.code === 'invalid_type' ? 'is
+     * missing'` branch could be deleted with no test failing. That is the same
+     * shape as the dead isUniqueViolation: live code, confident comment, no
+     * coverage. These pin the reason text.
+     */
+    it('says "is missing" for an absent variable, not a raw Zod message', () => {
+      const source = validEnv();
+      delete source.SESSION_SECRET;
+
+      expect(() => parseEnv(source)).toThrowError(/SESSION_SECRET is missing/);
+    });
+
+    it('gives a present-but-invalid variable its real reason, not "is missing"', () => {
+      // A value that is present but too short is NOT missing, and saying so
+      // sends an operator looking for an unset variable that is in fact set.
+      const source = { ...validEnv(), SESSION_SECRET: 'too-short' };
+
+      const run = () => parseEnv(source);
+      expect(run).toThrowError(/SESSION_SECRET/);
+      expect(run).not.toThrowError(/SESSION_SECRET is missing/);
+    });
+
     it('names every missing variable when several are absent at once', () => {
       const source = validEnv();
       delete source.DATABASE_URL;
