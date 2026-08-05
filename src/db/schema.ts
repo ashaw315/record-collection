@@ -88,7 +88,17 @@ export const labels = pgTable(
     discogsLabelId: integer('discogs_label_id'),
     ...timestamps,
   },
-  (t) => [index('labels_discogs_label_id_idx').on(t.discogsLabelId)],
+  (t) => [
+    // Partial unique index, matching artists.discogs_artist_id and
+    // pressings.discogs_release_id. SPEC.md §4.1 requires all three to behave
+    // identically: they are the find-or-create keys for §5.7 import, and
+    // without uniqueness the import can create duplicate labels for one
+    // Discogs entity. A partial unique index also serves the lookups the plain
+    // index was there for, so no separate index is needed.
+    uniqueIndex('labels_discogs_label_id_key')
+      .on(t.discogsLabelId)
+      .where(sql`${t.discogsLabelId} IS NOT NULL`),
+  ],
 );
 
 export const formats = pgTable('formats', {
@@ -141,10 +151,12 @@ export const pressings = pgTable(
     ...timestamps,
   },
   (t) => [
+    // The partial unique index covers the same column, so a separate plain
+    // index is redundant write cost for no read benefit (SPEC.md §4.4 asks for
+    // an index on this column, not two).
     uniqueIndex('pressings_discogs_release_id_key')
       .on(t.discogsReleaseId)
       .where(sql`${t.discogsReleaseId} IS NOT NULL`),
-    index('pressings_discogs_release_id_idx').on(t.discogsReleaseId),
   ],
 );
 
@@ -216,14 +228,23 @@ export const priceHistory = pgTable(
   'price_history',
   {
     id,
-    recordId: uuid('record_id').references(() => records.id),
-    wantListId: uuid('want_list_id').references(() => wantList.id),
+    // ON DELETE CASCADE per SPEC.md §4.2: append-only restricts UPDATE, not
+    // DELETE (§7.5), and without cascade a record with any price history could
+    // never be deleted at all — breaking DELETE /api/records/:id (§5.2). Price
+    // history is a property of its parent.
+    recordId: uuid('record_id').references(() => records.id, { onDelete: 'cascade' }),
+    wantListId: uuid('want_list_id').references(() => wantList.id, { onDelete: 'cascade' }),
+    // NOT cascaded: a pressing is a shared reference row, not this row's parent.
     pressingId: uuid('pressing_id').references(() => pressings.id),
     price: numeric('price', { precision: 10, scale: 2 }).notNull(),
-    priceType: priceType('price_type'),
+    // NOT NULL per §4.2: §7.6's fallback chain has no defined behavior for an
+    // untyped price.
+    priceType: priceType('price_type').notNull(),
     source: text('source'),
+    // §4.2 exempts this table from the created_at/updated_at rule: recorded_at
+    // is its only timestamp. created_at would duplicate it, and updated_at is
+    // meaningless on an append-only table.
     recordedAt: timestamp('recorded_at', { withTimezone: true }).notNull().defaultNow(),
-    ...timestamps,
   },
   (t) => [
     index('price_history_record_id_idx').on(t.recordId),
