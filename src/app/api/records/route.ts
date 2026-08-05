@@ -1,0 +1,140 @@
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { invalidJson, validationError } from '@/lib/api/errors';
+import { withErrorHandling } from '@/lib/api/handler';
+import { isValidFormedYear } from '@/lib/api/year';
+import { MAX_NESTED_IDS, writeRecordWithNested } from '@/lib/db/queries/nested';
+import { missingIds } from '@/lib/db/queries/records';
+import { findArtistById } from '@/lib/db/queries/artists';
+import { findLabelById } from '@/lib/db/queries/labels';
+import { findFormatById } from '@/lib/db/queries/formats';
+import { findStoreById } from '@/lib/db/queries/stores';
+import { findPressingById } from '@/lib/db/queries/pressings';
+
+/**
+ * SPEC.md §5.2 `POST /api/records`.
+ *
+ * Deliberately NO duplicate check. §4: duplicate records are legal and
+ * expected — a collector may own two copies of the same album in different
+ * pressings or conditions — so the reference template's find-then-409 shape
+ * would reject valid data here.
+ */
+
+const CONDITION_GRADES = ['M', 'NM', 'VG+', 'VG', 'G+', 'G', 'F', 'P'] as const;
+
+const conditionSchema = z.enum(CONDITION_GRADES).nullish();
+const uuid = z.string().uuid();
+const nestedIds = z.array(uuid).max(MAX_NESTED_IDS).optional();
+
+/**
+ * `releaseYear` is the ORIGINAL release year, not the pressing year (§4.2) —
+ * a 1982 album on a 2011 reissue has releaseYear 1982 and the pressing carries
+ * 2011. Bounded like every other year in the project.
+ */
+const createSchema = z.strictObject({
+  title: z.string().trim().min(1).max(500),
+  artistId: uuid,
+  labelId: uuid.nullish(),
+  formatId: uuid.nullish(),
+  pressingId: uuid.nullish(),
+  storeId: uuid.nullish(),
+  releaseYear: z
+    .number()
+    .int()
+    .refine((value) => isValidFormedYear(value), { error: () => 'releaseYear is out of range' })
+    .nullish(),
+  conditionMedia: conditionSchema,
+  conditionSleeve: conditionSchema,
+  // NUMERIC(10,2) as a string: a float would silently lose cents.
+  purchasePrice: z
+    .string()
+    .regex(/^\d{1,8}(\.\d{1,2})?$/, 'purchasePrice must be a decimal amount')
+    .nullish(),
+  purchaseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'purchaseDate must be YYYY-MM-DD').nullish(),
+  notes: z.string().trim().max(10_000).nullish(),
+  genreIds: nestedIds,
+  tagIds: nestedIds,
+});
+
+function fieldErrorResponse(fieldErrors: Record<string, string>) {
+  return NextResponse.json(
+    { error: { message: 'Invalid request', code: 'VALIDATION_ERROR', fieldErrors } },
+    { status: 400 },
+  );
+}
+
+export const POST = withErrorHandling('api.records.POST', async (request: Request) => {
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return invalidJson();
+  }
+
+  const parsed = createSchema.safeParse(body);
+  if (!parsed.success) return validationError(parsed.error);
+
+  const { genreIds = [], tagIds = [], ...values } = parsed.data;
+
+  /**
+   * Every foreign key is checked here so a bad id is a 400 naming its field
+   * rather than a foreign-key violation shaped into a 500. Each check names
+   * ITSELF — a client told only "invalid request" cannot tell which of six
+   * relations was wrong.
+   */
+  const fieldErrors: Record<string, string> = {};
+
+  if ((await findArtistById(values.artistId)) === undefined) {
+    fieldErrors.artistId = 'No artist with that id exists';
+  }
+  if (values.labelId != null && (await findLabelById(values.labelId)) === undefined) {
+    fieldErrors.labelId = 'No label with that id exists';
+  }
+  if (values.formatId != null && (await findFormatById(values.formatId)) === undefined) {
+    fieldErrors.formatId = 'No format with that id exists';
+  }
+  if (values.storeId != null && (await findStoreById(values.storeId)) === undefined) {
+    fieldErrors.storeId = 'No store with that id exists';
+  }
+  if (values.pressingId != null && (await findPressingById(values.pressingId)) === undefined) {
+    fieldErrors.pressingId = 'No pressing with that id exists';
+  }
+
+  const missingGenres = await missingIds('genres', genreIds);
+  if (missingGenres.length > 0) {
+    fieldErrors.genreIds = `No genre with id ${missingGenres[0]} exists`;
+  }
+  const missingTags = await missingIds('tags', tagIds);
+  if (missingTags.length > 0) {
+    fieldErrors.tagIds = `No tag with id ${missingTags[0]} exists`;
+  }
+
+  if (Object.keys(fieldErrors).length > 0) return fieldErrorResponse(fieldErrors);
+
+  /**
+   * The nested write is transactional (unit 2): the record and its junction
+   * rows land together or not at all. The pre-checks above make the common
+   * failures a 400; the transaction is what guarantees no half-created record
+   * survives a failure they did not anticipate.
+   */
+  const created = await writeRecordWithNested({
+    values: {
+      artistId: values.artistId,
+      title: values.title,
+      labelId: values.labelId ?? null,
+      formatId: values.formatId ?? null,
+      pressingId: values.pressingId ?? null,
+      storeId: values.storeId ?? null,
+      releaseYear: values.releaseYear ?? null,
+      conditionMedia: values.conditionMedia ?? null,
+      conditionSleeve: values.conditionSleeve ?? null,
+      purchasePrice: values.purchasePrice ?? null,
+      purchaseDate: values.purchaseDate ?? null,
+      notes: values.notes ?? null,
+    },
+    genreIds,
+    tagIds,
+  });
+
+  return NextResponse.json(created, { status: 201 });
+});
