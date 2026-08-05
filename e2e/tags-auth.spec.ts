@@ -51,3 +51,35 @@ test('returns 401 for /api/tags/:id with no session cookie', async ({ request })
   expect(response.status()).toBe(401);
   expect((await response.json()).error.code).toBe('UNAUTHORIZED');
 });
+
+/**
+ * The three resources added alongside tags. Each is a separate route file and
+ * so a separate chance to fall outside the middleware matcher; the integration
+ * suites assert classification, this asserts the protection actually engages.
+ */
+for (const resource of ['labels', 'stores', 'formats']) {
+  test(`returns 401 JSON for /api/${resource} with no session cookie`, async ({ request }) => {
+    const response = await request.get(`/api/${resource}`, { failOnStatusCode: false });
+
+    expect(response.status()).toBe(401);
+    expect((await response.json()).error.code).toBe('UNAUTHORIZED');
+  });
+
+  test(`returns 401 for a write to /api/${resource} with no session cookie`, async ({ request }) => {
+    const response = await request.post(`/api/${resource}`, {
+      data: { name: 'should-never-be-created' },
+      failOnStatusCode: false,
+    });
+
+    expect(response.status()).toBe(401);
+  });
+
+  test(`returns 401 for /api/${resource}/:id with no session cookie`, async ({ request }) => {
+    const response = await request.get(
+      `/api/${resource}/00000000-0000-4000-8000-000000000000`,
+      { failOnStatusCode: false },
+    );
+
+    expect(response.status()).toBe(401);
+  });
+}

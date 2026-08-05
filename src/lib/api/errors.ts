@@ -99,6 +99,19 @@ export function duplicate(message: string): NextResponse<ApiErrorBody> {
 }
 
 /**
+ * SPEC.md §4.1: a seeded format cannot be deleted even when unreferenced,
+ * because nothing re-seeds it and the delete is permanent.
+ *
+ * A distinct code from IN_USE on purpose — the two refusals have different
+ * remedies. IN_USE clears once the referencing records are gone; SEEDED never
+ * does, and a UI that told the user to "remove the records using this" would be
+ * sending them on an impossible errand.
+ */
+export function conflictSeeded(message: string): NextResponse<ApiErrorBody> {
+  return NextResponse.json({ error: { message, code: 'SEEDED' } }, { status: 409 });
+}
+
+/**
  * Every dynamic segment must reject a malformed id with 400 rather than passing
  * it to a query — Postgres raises an error on a bad UUID cast, which would
  * surface as a 500 for what is plainly a client mistake (SPEC.md §5.2 states

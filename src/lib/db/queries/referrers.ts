@@ -30,6 +30,12 @@ export type Referrer = {
 
 export const REFERRERS = {
   tags: [{ table: 'record_tags', column: 'tag_id' }],
+  labels: [
+    { table: 'records', column: 'label_id' },
+    { table: 'want_list', column: 'label_id' },
+  ],
+  record_stores: [{ table: 'records', column: 'store_id' }],
+  formats: [{ table: 'records', column: 'format_id' }],
 } as const satisfies Record<string, readonly Referrer[]>;
 
 export type ReferenceTable = keyof typeof REFERRERS;
