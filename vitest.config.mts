@@ -27,6 +27,12 @@ export default defineConfig({
   test: {
     environment: 'node',
     globalSetup: ['./test/global-setup.ts'],
+    // Every integration test shares one local Postgres database and truncates
+    // it in beforeEach (CLAUDE.md §2). Running files concurrently means one
+    // file's truncate lands inside another file's test, which surfaces as rows
+    // vanishing mid-test in a file nobody edited, with a different subset
+    // failing each run. Serializing files is the price of a shared database.
+    fileParallelism: false,
     include: ['src/**/*.test.ts', 'test/**/*.test.ts'],
     // Playwright specs live in e2e/ and are run by `npm run test:e2e`.
     exclude: ['node_modules/**', '.next/**', 'e2e/**'],
