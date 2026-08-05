@@ -74,7 +74,7 @@ All tables: `id UUID PRIMARY KEY DEFAULT gen_random_uuid()`, `created_at TIMESTA
 | Column | Type | Notes |
 |---|---|---|
 | name | TEXT NOT NULL UNIQUE | |
-| formed_year | INTEGER | nullable |
+| formed_year | INTEGER | nullable. Validated at the API boundary to `1877 <= year <= currentYear + 1` — 1877 is the year sound recording began, so no recording artist predates it; +1 allows a band announced for next year. Not a database constraint: it is a product judgement, and the upper bound moves. **Compute the upper bound at validation time, never at module load** — a warm serverless instance that booted last December would otherwise reject a valid current year. Tests must derive the year rather than hardcode it. |
 | origin_country | TEXT | nullable |
 | notes | TEXT | nullable |
 | discogs_artist_id | INTEGER | nullable, unique when present |
