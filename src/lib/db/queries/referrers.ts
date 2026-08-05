@@ -54,6 +54,11 @@ export const REFERRERS = {
   // THREE, verified from pg_constraint. price_history.pressing_id is the one
   // easily missed: a pressing can be blocked by price history alone, with no
   // record and no want-list row referencing it.
+  // ONE blocking referrer. images, journal_entries, price_history,
+  // record_genres and record_tags all CASCADE from records and must NOT be
+  // declared — counting them would refuse a delete the database performs.
+  // Verified from pg_constraint.
+  records: [{ table: 'want_list', column: 'acquired_record_id' }],
   pressings: [
     { table: 'records', column: 'pressing_id' },
     { table: 'want_list', column: 'target_pressing_id' },

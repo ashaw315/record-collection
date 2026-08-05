@@ -82,34 +82,44 @@ test('creates, renames and deletes a tag inline', async ({ page }) => {
   });
 });
 
-test('explains a refused delete with a count, not a code', async ({ page, request }) => {
+test('explains a refused delete with a count, not a code', async ({ page }) => {
+  /**
+   * `page.request`, not the standalone `request` fixture: the latter is a
+   * separate context with NO session cookie, so every call it makes is a 401.
+   * The original version of this test used it and was skipped, so nothing
+   * noticed — it only surfaced once the skip was removed.
+   */
   // A tag in use by a record: the API returns 409 IN_USE with referenceCount,
   // and the screen must turn that into a sentence.
   const tagName = unique('e2e-inuse');
   const artistName = unique('e2e-artist');
 
-  const tag = await request.post('/api/tags', { data: { name: tagName } });
-  const artist = await request.post('/api/artists', { data: { name: artistName } });
-  const record = await request.post('/api/records', {
-    data: { title: unique('e2e-record'), artistId: (await artist.json()).id },
+  const tag = await page.request.post('/api/tags', { data: { name: tagName } });
+  const artist = await page.request.post('/api/artists', { data: { name: artistName } });
+
+  // Attached via the nested tagIds the records endpoint accepts (§5.2) — there
+  // is no separate /records/:id/tags route, and inventing one in a test would
+  // assert against an API that does not exist.
+  const record = await page.request.post('/api/records', {
+    data: {
+      title: unique('e2e-record'),
+      artistId: (await artist.json()).id,
+      tagIds: [(await tag.json()).id],
+    },
     failOnStatusCode: false,
   });
-
-  // /api/records arrives in step 5; until then, attach via the API that exists.
-  test.skip(!record.ok(), 'records endpoint not built yet');
-
-  await request.post(`/api/records/${(await record.json()).id}/tags`, {
-    data: { tagId: (await tag.json()).id },
-    failOnStatusCode: false,
-  });
+  expect(record.status()).toBe(201);
 
   await openResource(page, 'Tags');
   await page.getByRole('button', { name: `Delete ${tagName}` }).click();
   await page.getByTestId('confirm-delete').click();
 
-  const alert = page.getByRole('alert');
+  // Scoped to the row's own alert: the create row above also renders one, so a
+  // bare getByRole('alert') is ambiguous.
+  const alert = page.getByRole('alert').filter({ hasText: /delete/i });
   await expect(alert).toContainText(/use|used/);
   await expect(alert).not.toContainText('IN_USE');
+  await expect(alert).toContainText('1 record');
 });
 
 test('shows a seeded format as disabled rather than a button that errors', async ({ page }) => {

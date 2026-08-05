@@ -1,5 +1,7 @@
 import 'server-only';
 import { and, asc, desc, eq, exists, gte, ilike, inArray, lte, or, sql } from 'drizzle-orm';
+import { isForeignKeyViolation } from '@/lib/api/errors';
+import { countReferences } from './referrers';
 import { getDb } from '@/db/client';
 import {
   artists,
@@ -361,4 +363,46 @@ export async function listRecords(options: {
     .where(where);
 
   return { rows, total: totals?.value ?? 0 };
+}
+
+/**
+ * SPEC.md §7.4 for records. Only ONE referrer blocks:
+ * `want_list.acquired_record_id`, which is NO ACTION because §7.3 makes the
+ * want list double as acquisition history — deleting the record it points at
+ * would destroy that history.
+ *
+ * The other five (images, journal_entries, price_history, record_genres,
+ * record_tags) all CASCADE and must not be counted, or a delete the database
+ * would happily perform is refused.
+ */
+export async function countRecordReferences(id: string): Promise<number> {
+  return countReferences('records', id);
+}
+
+export type RecordDeleteOutcome =
+  | { status: 'deleted' }
+  | { status: 'not-found' }
+  | { status: 'in-use'; referenceCount: number };
+
+export async function deleteRecord(id: string): Promise<RecordDeleteOutcome> {
+  const db = getDb();
+
+  try {
+    const deleted = await db.delete(records).where(eq(records.id, id)).returning({ id: records.id });
+    return deleted.length > 0 ? { status: 'deleted' } : { status: 'not-found' };
+  } catch (error) {
+    if (!isForeignKeyViolation(error)) throw error;
+    return { status: 'in-use', referenceCount: await countReferences('records', id) };
+  }
+}
+
+export async function updateRecordFields(
+  id: string,
+  values: Partial<typeof records.$inferInsert>,
+): Promise<RecordRow | undefined> {
+  const db = getDb();
+  if (Object.keys(values).length === 0) return findRecordById(id);
+
+  const [row] = await db.update(records).set(values).where(eq(records.id, id)).returning();
+  return row;
 }
