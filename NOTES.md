@@ -198,6 +198,53 @@ and therefore needs designing rather than copying.
   because the test looks correct. The tell is a fixture whose *discriminating
   property* is assumed rather than verified. Noticed: step 5, unit 3.
 
+- **A mutation is code, and it can be wrong. "Fails N tests" is not evidence
+  until the N that failed are the ones that SHOULD have.**
+
+  In step 5 unit 6 a global-recency mutation appeared to fail 5 tests — which
+  looked like strong evidence the chain was well covered. It was not. The
+  mutation's subquery referenced `price_history` unqualified inside a Drizzle
+  template, so the correlation to the outer row silently broke and EVERY record
+  fell through the entire chain to its purchase price. It was not testing
+  "global recency instead of per-type", it was testing "no price history at
+  all".
+
+  **The tell:** a test that should have been INDIFFERENT to the change failed
+  anyway. Both rules return the same value for a record whose only prices are
+  `used`, so the used-only test had no business failing. Checking that one case
+  in isolation exposed it.
+
+  Rewritten correctly — using the same helper style as the real code, so the
+  correlation works — it fails 2, which are exactly the two cases that
+  distinguish the rules. **The smaller number was the honest one.**
+
+  An inflated count is worse than a small one: it reads as stronger evidence
+  while actually meaning the mutation broke something other than the behaviour
+  under test, leaving that behaviour unverified. Add to the mutation checklist
+  alongside "what produced the correct outcome instead" — before trusting a
+  count, confirm the failures are the predicted ones. Noticed: step 5, unit 6.
+
+- **UX HAZARD for step 9's stats screen: one record legitimately shows two
+  different prices, and it will read as a bug.**
+
+  SPEC.md §5.2's record detail shows "latest price" — the most recent
+  `price_history` row, whatever its type. §7.6's estimated collection value uses
+  a different rule: the most recent row of type `used`, falling back to `new`,
+  then `purchase_price`. Both verified against the database.
+
+  So a record with an old `used` price of 20.00 and a newer `new` price of 99.00
+  displays **99.00** on its detail screen while contributing **20.00** to the
+  collection total. Both numbers are correct and the separation is deliberate —
+  they answer different questions — but whoever meets the discrepancy first will
+  reasonably read it as an arithmetic bug.
+
+  **What step 9 must do:** the stats screen states in words what it is summing,
+  rather than presenting a bare number. Something to the effect of "estimated
+  from the most recent second-hand price, or the new price, or what you paid" —
+  the point is that the rule is visible, not that the wording is exact. A
+  tooltip on the figure is not enough if the figure is what gets screenshotted.
+  Noticed: step 5, unit 6.
+
 - **A mutation that fails nothing does not mean the code is dead.** Three
   distinct patterns have now produced "removing this breaks no test", and only
   one of them meant the code was genuinely unused:
