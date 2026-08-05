@@ -94,6 +94,12 @@ export const labels = pgTable(
 export const formats = pgTable('formats', {
   id,
   name: text('name').notNull().unique(),
+  // SPEC.md §4.1: true for the seven rows seeded by migration 0000. Never set
+  // through the API — a seeded row cannot be deleted even when unreferenced,
+  // because nothing re-seeds it. Identified by this column and never by name,
+  // since PATCH may rename a seeded row and a name-matched guard would then
+  // stop protecting it silently.
+  isSeeded: boolean('is_seeded').notNull().default(false),
   ...timestamps,
 });
 
