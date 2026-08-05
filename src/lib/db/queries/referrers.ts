@@ -51,6 +51,14 @@ export const REFERRERS = {
     { table: 'genres', column: 'parent_genre_id' },
   ],
   formats: [{ table: 'records', column: 'format_id' }],
+  // THREE, verified from pg_constraint. price_history.pressing_id is the one
+  // easily missed: a pressing can be blocked by price history alone, with no
+  // record and no want-list row referencing it.
+  pressings: [
+    { table: 'records', column: 'pressing_id' },
+    { table: 'want_list', column: 'target_pressing_id' },
+    { table: 'price_history', column: 'pressing_id' },
+  ],
 } as const satisfies Record<string, readonly Referrer[]>;
 
 export type ReferenceTable = keyof typeof REFERRERS;
