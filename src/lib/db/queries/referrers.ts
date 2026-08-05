@@ -30,6 +30,13 @@ export type Referrer = {
 
 export const REFERRERS = {
   tags: [{ table: 'record_tags', column: 'tag_id' }],
+  // TWO, not five: artist_genres and BOTH artist_influences FKs cascade, and a
+  // cascading referrer must not be declared — counting it would refuse a delete
+  // the database would happily perform. Verified from pg_constraint.
+  artists: [
+    { table: 'records', column: 'artist_id' },
+    { table: 'want_list', column: 'artist_id' },
+  ],
   labels: [
     { table: 'records', column: 'label_id' },
     { table: 'want_list', column: 'label_id' },

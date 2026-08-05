@@ -57,7 +57,7 @@ test('returns 401 for /api/tags/:id with no session cookie', async ({ request })
  * so a separate chance to fall outside the middleware matcher; the integration
  * suites assert classification, this asserts the protection actually engages.
  */
-for (const resource of ['labels', 'stores', 'formats', 'genres']) {
+for (const resource of ['labels', 'stores', 'formats', 'genres', 'artists']) {
   test(`returns 401 JSON for /api/${resource} with no session cookie`, async ({ request }) => {
     const response = await request.get(`/api/${resource}`, { failOnStatusCode: false });
 

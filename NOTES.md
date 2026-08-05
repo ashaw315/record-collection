@@ -105,6 +105,17 @@ expensive to retrofit. A resource is not done until every applicable line holds.
   reference count before attempting the delete, not to prevent data loss. Both
   layers are kept deliberately; see unit C. Corrected: step 4, unit E.
 
+- **The 1877 `formed_year` floor is the start of recorded sound, not of music.**
+  §4.1 bounds `artists.formed_year` at 1877 (Edison's phonograph) on the
+  reasoning that no *recording* artist predates it. A classical or early-jazz
+  reissue could nonetheless involve an artist whose meaningful date is earlier —
+  a composer, or an ensemble founded in the 1800s. `formed_year` is band
+  formation rather than birth or founding, and this collection is punk-centred,
+  so it is unlikely to bite. Recorded rather than acted on: if it ever does, the
+  fix is to lower the floor or make it nullable-with-a-note, not to remove the
+  bound, which is the only thing keeping 999999 out of §8's graph. Noticed:
+  step 4, artists.
+
 - **`--reporter=basic` no longer exists in Vitest 4.** It is now resolved as a
   custom reporter *module*, so passing it fails the run with `ERR_LOAD_URL`
   before any test executes rather than with a "no such reporter" message. Cost a
