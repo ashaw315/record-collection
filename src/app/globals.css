@@ -48,39 +48,68 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+ * A shop's stock ledger, not a SaaS dashboard: warm paper ground, near-black
+ * ink, hairline rules, and ONE accent used for actions only.
+ *
+ * Oxblood (--primary) is the accent. It appears on buttons, focus rings and
+ * active navigation — never on headers, borders or decoration. If it starts
+ * showing up as a background wash, that is the drift to correct.
+ *
+ * SPEC.md §13 rules out a dark-mode toggle, so this light theme is the theme.
+ * The .dark block below is shadcn's default, left untouched and unused rather
+ * than half-maintained.
+ */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Warm paper, not white — a hint of yellow keeps dense text from glaring. */
+  --background: oklch(0.985 0.004 85);
+  --foreground: oklch(0.19 0.008 60);
+
+  --card: oklch(0.995 0.003 85);
+  --card-foreground: var(--foreground);
+  --popover: oklch(0.995 0.003 85);
+  --popover-foreground: var(--foreground);
+
+  /* Oxblood. Dark enough to carry white text at small sizes. */
+  --primary: oklch(0.36 0.098 18);
+  --primary-foreground: oklch(0.98 0.005 85);
+
+  --secondary: oklch(0.955 0.006 85);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.955 0.006 85);
+  --muted-foreground: oklch(0.48 0.012 60);
+
+  /* Row hover / selected. Deliberately a warm neutral, NOT tinted oxblood:
+     the accent is for actions, and a tinted row reads as selected-ness. */
+  --accent: oklch(0.945 0.008 80);
+  --accent-foreground: var(--foreground);
+
+  /* Distinct from the oxblood accent, or a delete button and a primary action
+     become the same colour. Brighter and more orange. */
+  --destructive: oklch(0.52 0.2 27);
+
+  /* Hairlines. Ledger rules, not card outlines. */
+  --border: oklch(0.9 0.006 75);
+  --input: oklch(0.88 0.006 75);
+  --ring: oklch(0.36 0.098 18);
+
+  --chart-1: oklch(0.36 0.098 18);
+  --chart-2: oklch(0.5 0.07 30);
+  --chart-3: oklch(0.62 0.05 45);
+  --chart-4: oklch(0.72 0.035 60);
+  --chart-5: oklch(0.82 0.02 75);
+
+  /* Near-square. Rounded corners are the SaaS tell. */
+  --radius: 0.1875rem;
+
+  --sidebar: oklch(0.965 0.006 82);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: oklch(0.36 0.098 18);
+  --sidebar-primary-foreground: oklch(0.98 0.005 85);
+  --sidebar-accent: oklch(0.93 0.009 80);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: oklch(0.9 0.006 75);
+  --sidebar-ring: oklch(0.36 0.098 18);
 }
 
 .dark {
