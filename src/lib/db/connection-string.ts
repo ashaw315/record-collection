@@ -74,7 +74,7 @@ export function resolveConnectionHost(connectionString: string): string {
  * rejected outright — even when the override points somewhere local — because
  * allowing the benign case is how the dangerous one gets in.
  */
-function hasHostQueryParameter(connectionString: string): boolean {
+export function hasHostQueryParameter(connectionString: string): boolean {
   const queryStart = connectionString.indexOf('?');
   if (queryStart === -1) return false;
 

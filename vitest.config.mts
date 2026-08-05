@@ -11,6 +11,25 @@ import { config } from 'dotenv';
 // keeps working.
 config({ path: '.env.test', quiet: true });
 
+/**
+ * NEON_TEST_DATABASE_URL only, from .env.local.
+ *
+ * The Neon transaction harness (CLAUDE.md §2) needs a real branch URL, which is
+ * a personal credential and so belongs in the gitignored .env.local rather than
+ * the committed .env.test. Loading .env.local WHOLESALE would defeat the
+ * isolation .env.test exists for — an E2E or integration run would pick up the
+ * developer's own DATABASE_URL — so exactly one variable is copied across, and
+ * only when .env.test has not already set it.
+ */
+const localOnly: Record<string, string> = {};
+config({ path: '.env.local', processEnv: localOnly, quiet: true });
+if (
+  process.env.NEON_TEST_DATABASE_URL === undefined &&
+  localOnly.NEON_TEST_DATABASE_URL !== undefined
+) {
+  process.env.NEON_TEST_DATABASE_URL = localOnly.NEON_TEST_DATABASE_URL;
+}
+
 export default defineConfig({
   resolve: { tsconfigPaths: true },
   // Server modules are marked with `import 'server-only'` (CLAUDE.md §6). That
