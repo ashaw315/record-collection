@@ -1,4 +1,15 @@
 import { defineConfig } from 'vitest/config';
+import { config } from 'dotenv';
+
+// Vitest runs outside Next.js, so it does not inherit the .env loading Next
+// does. Without this, TEST_DATABASE_URL is unset and global setup throws — the
+// suite passed only when the caller happened to export it inline, which CI does
+// not do (SPEC.md §14 requires `npm test` to pass as a plain script).
+//
+// dotenv never overwrites an already-set value, so an explicitly exported
+// TEST_DATABASE_URL still wins and pointing a run at a different local database
+// keeps working.
+config({ path: '.env.test', quiet: true });
 
 export default defineConfig({
   resolve: { tsconfigPaths: true },
