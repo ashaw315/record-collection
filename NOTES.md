@@ -159,8 +159,19 @@ and therefore needs designing rather than copying.
   racy, so it needs a different one. Mode 1 is undiagnosed and may be
   environmental.
 
+  **Assume MORE than one defect when returning to them.** In step 5 the third
+  /manage E2E spec — skipped since it was written because `/api/records` did
+  not exist — was enabled and immediately failed for reasons unrelated to why
+  it had been skipped: it used the standalone `request` fixture, a separate
+  context with NO session cookie, so every API call it made was a 401. That was
+  invisible for as long as it was skipped. A skipped test is not neutral; it is
+  a claim of coverage that is actively false, and defects accumulate behind it
+  silently. These two have been skipped longer, so budget for the diagnosed
+  flake PLUS whatever else has been sitting undetected — do not assume fixing
+  the flake makes them pass.
+
   Left quarantined; 3/3 clean runs with them skipped. Noticed: step 4,
-  /manage; investigated further before step 5.
+  /manage; investigated further before step 5; caveat added during unit 5.
 
 - **A test fixture can fail to create the condition its test claims — and
   reading the test cannot catch it.** Two instances so far, both invisible to
