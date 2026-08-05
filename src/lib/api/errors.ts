@@ -155,6 +155,32 @@ export function pgErrorCode(error: unknown): string | undefined {
   return undefined;
 }
 
+
+/**
+ * Validates several UUID path parameters at once, naming the offending one.
+ *
+ * The reference-resource template guards a single `:id` with `isUuid(id)` and
+ * returns a bare 400. A composite key addressed in the path (SPEC.md §5.5's
+ * `/api/influences/:sourceId/:targetId`) has no single id to name, and a client
+ * given "Invalid id" cannot tell which half was wrong. Returns the §5 400 shape
+ * with the bad parameter as the field key, or undefined when all are valid.
+ */
+export function invalidPathIds(
+  ids: Record<string, string>,
+): NextResponse<ApiErrorBody> | undefined {
+  const fieldErrors: Record<string, string> = {};
+  for (const [field, value] of Object.entries(ids)) {
+    if (!isUuid(value)) fieldErrors[field] = 'Must be a UUID';
+  }
+
+  if (Object.keys(fieldErrors).length === 0) return undefined;
+
+  return NextResponse.json(
+    { error: { message: 'Invalid request', code: 'INVALID_ID', fieldErrors } },
+    { status: 400 },
+  );
+}
+
 /** Postgres unique_violation. Raised when two concurrent requests insert the
  * same name — the check-then-insert race a pre-check alone cannot close. */
 export function isUniqueViolation(error: unknown): boolean {
