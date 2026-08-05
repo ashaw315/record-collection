@@ -5,82 +5,90 @@ Nothing here has been acted on. Each entry names the step it was noticed in.
 
 ---
 
-## Acceptance criteria for the remaining reference resources
+## Acceptance criteria for `records` and `want_list`
 
-These are **requirements**, not observations. They apply to `genres`, `artists`,
-`record_stores`, `labels`, `formats` and, where noted, `records` and
-`want_list`. Each was a real defect found in the `tags` template during the step
-4 remediation; each is cheap to satisfy when the resource is written and
-expensive to retrofit. A resource is not done until every applicable line holds.
+The seven reference resources these criteria were written for are **all done**
+(tags, labels, stores, formats, genres, artists, pressings, plus influences).
+Re-pointed at the two core tables, which is where they apply next.
 
-1. **Every handler is wrapped in `withErrorHandling`.** An unwrapped handler
-   leaks the SQL statement in a 500 body (SPEC.md §5). Verified by removing the
+**These are requirements, not observations.** Each was a real defect found in
+the tags template during the step 4 remediation. But `records` is the first
+resource the template was predicted not to stretch to, so the list is split:
+what carries over unchanged, and what has NO PRECEDENT in anything built so far
+and therefore needs designing rather than copying.
+
+### Carries over unchanged
+
+1. **Every handler wrapped in `withErrorHandling`.** Verified by removing the
    wrapper and watching a test fail, not by inspection.
 
-2. **Every race test is written in the same unit as the pre-check it guards —
-   never retrofitted.** For every check-then-write and count-then-delete pair,
-   the race test ships alongside. This is not optional hardening: a fallback
-   behind a pre-check that returns first in every ordinary case is unreachable
-   in normal testing, so it can be dead — as `isUniqueViolation` was for an
-   entire build unit — while the suite stays green. Concretely, each resource
-   needs a concurrent-create test (POST losing to the unique index), a
-   concurrent-rename test (PATCH losing the same way) where the resource has a
-   unique name, and a reference-appears-after-the-count test (DELETE hitting
-   23503). Simulate the window by hooking the pre-check; do not race threads.
+2. **Every race test written in the same unit as the pre-check it guards.** For
+   `records` that is at minimum the find-or-create on `pressings` reached
+   through a nested write, and any uniqueness pre-check. Simulate the window by
+   hooking the pre-check; do not race threads.
 
-3. **Every blocking foreign key is declared in `REFERRERS`.** Counts below are
-   from `pg_constraint`, not from memory — note that a *cascading* referrer must
-   NOT be declared, since counting it would refuse a delete the database would
-   happily perform. `artist_genres` and both `artist_influences` FKs cascade,
-   which is why `artists` has two blocking referrers and not five:
+3. **Every blocking foreign key declared in `REFERRERS`,** from fresh
+   `pg_constraint` output, blocking FKs only. Note `records` is mostly a
+   REFERRER rather than a referent: `images`, `journal_entries` and
+   `price_history` all cascade FROM it (§4.2), so `DELETE /api/records/:id`
+   removes them rather than being refused. `want_list.acquired_record_id` is NO
+   ACTION and DOES block — verify before assuming.
 
-   | Reference table | Blocking referrers |
-   |---|---|
-   | `genres` | 4 — `record_genres`, `want_list_genres`, `artist_genres`, and `genres.parent_genre_id` (self) |
-   | `artists` | 2 — `records.artist_id`, `want_list.artist_id` |
-   | `labels` | 2 — `records.label_id`, `want_list.label_id` |
-   | `record_stores` | 1 — `records.store_id` |
-   | `formats` | 1 — `records.format_id` |
-   | `tags` | 1 — `record_tags.tag_id` |
+4. **`DELETE` translates 23503 into the 409 and re-reads the count.**
 
-   `test/integration/referrers.test.ts` diffs the declaration against
-   `pg_constraint` and fails by name if one is missed — do not weaken that test
-   to make a resource pass. Note `genres` is self-referencing: deleting a parent
-   genre that still has children must be refused like any other in-use row.
+5. **Names through `cleanName`** where a resource has a unique name. `records`
+   has NO unique constraint on `(artist_id, title)` — duplicates are legal and
+   expected (§4) — so this applies to nested find-or-create targets, not to
+   `records.title` itself. Do not add a duplicate check here.
 
-4. **`DELETE` translates 23503 into the 409, and re-reads the count.** The
-   pre-check alone is racy; the foreign key is the guarantee. Reporting the
-   stale pre-check count in the raced 409 is wrong.
+6. **List queries use `orderFor`** for the id tiebreaker and explicit
+   `NULLS LAST`. `records` has many nullable sortable columns
+   (`purchase_date`, `purchase_price`, `release_year`), so assert nulls land
+   last in BOTH directions.
 
-5. **Names go through `cleanName` before validation.** Any resource with a
-   `UNIQUE` name needs NFKC normalization and invisible-character stripping, or
-   NFC/NFD twins and zero-width-separated names become duplicate rows that
-   render identically. Test the NFC/NFD collision explicitly, building the
-   literals from `\uXXXX` escapes — a typed NFD literal is normalized to NFC on
-   being written to disk, which silently destroys the precondition.
+7. **`sort` validated against a per-endpoint allowlist by identity match.**
 
-6. **List queries use `orderFor`**, which supplies the id tiebreaker and an
-   explicit `NULLS LAST`. Both matter for the resources ahead: `artists`,
-   `record_stores` and `genres` all have nullable sortable columns
-   (`formed_year`, `city`, `description`), and Postgres flips null placement
-   between ASC and DESC. Where a resource sorts by a nullable column, assert
-   nulls land last in **both** directions.
+8. **`?page` bounds and the branded `Offset` type.** Both endpoints are the
+   ones most likely to be paged deeply.
 
-7. **`sort` is validated against a per-endpoint allowlist by identity match**,
-   returning the caller's own literal. Test the rejection side, including a real
-   but unenumerated column — that is what distinguishes an allowlist from a
-   blocklist.
+### No precedent — design, do not copy
 
-8. **`records` and `want_list` additionally need `?page` bounds on every list
-   endpoint** and the branded `Offset` type at the query boundary. They are the
-   endpoints most likely to be paged deeply by a client.
+9. **Nested `genreIds` / `tagIds` written transactionally with the parent
+   (§5.2).** Nothing built so far writes two tables in one request. The parent
+   row and its junction rows must both land or neither: a record created with
+   its genres silently dropped is worse than a rejected create, because it
+   looks successful. This is also the first place CLAUDE.md §2's Neon-vs-pg
+   transaction caveat bites — see the DEFERRED entry below, which now applies
+   to step 5 and not only step 6.
 
-9. **`genres` needs a cycle guard** (SPEC.md §4.1: a genre may not be its own
-   ancestor) with a test for the self-parent case, the two-node cycle, and a
-   longer chain. `parent_genre_id` is `NO ACTION`, so an in-use genre is
-   refused by the FK as well.
+10. **Real PATCH semantics.** Every resource so far uses a `strictObject` where
+    each field is independently optional and absence means "leave alone". That
+    shape cannot express nested arrays: for `genreIds`, absent must mean leave
+    alone while `[]` must mean remove all, and the current pattern collapses
+    those. Decide and test both explicitly.
 
----
+11. **A sort on `artist` that needs a JOIN (§5.2).** Every existing sort maps a
+    field name to a column on the same table via a `sortColumns` record, which
+    is what keeps untrusted input out of the query builder. A join-based sort
+    has no column on `records` to map to. Extend the allowlist mechanism rather
+    than bypassing it — an allowlist entry that resolves to a joined column is
+    fine; string interpolation is not.
+
+12. **Ten-plus filters, including `q` fuzzy across two tables (§5.2).** The
+    trigram indexes on `records(title)` and `artists(name)` exist for this.
+    Filters compose, so test combinations rather than each in isolation: a
+    filter that works alone and silently drops rows when combined with another
+    is the likely defect.
+
+13. **`GET /api/records/stats` is a static segment** that must not be swallowed
+    by `[id]` (§5.2). Next resolves static before dynamic so this works, but
+    `[id]` must still reject a non-UUID with 400 rather than attempting a
+    lookup — assert `/api/records/stats` returns stats, not a 400.
+
+14. **`want_list` acquire (§5.3) is transactional and never deletes the
+    want-list row** — it marks `is_acquired` and links `acquired_record_id`
+    (§7.3). The want list doubles as acquisition history. A forced
+    mid-transaction failure test is required by §11.
 
 ## Open
 
@@ -222,8 +230,12 @@ expensive to retrofit. A resource is not done until every applicable line holds.
   the failure path. Developer decision: revisit at step 14 (deploy). Noticed:
   step 1–3 review.
 
-- **DEFERRED: the transactional acquire flow MUST be verified against a real Neon
-  database before step 6 is considered done — not against `pg` alone.** Every
+- **DEFERRED — SCOPE WIDENED: transactional code MUST be verified against a real
+  Neon database, and this now applies from STEP 5, not step 6.** The entry
+  originally named only §5.3's acquire flow. Step 5 introduces transactions
+  earlier: §5.2's nested `genreIds`/`tagIds` writes must land with their parent
+  row or not at all, and that is the first transactional code in the project.
+  Everything below applies to it equally. Every
   integration test runs on local Docker Postgres via `drizzle-orm/node-postgres`.
   Nothing in the suite exercises `drizzle-orm/neon-serverless`; `createClient()`
   in `src/db/client.ts` is never invoked by any test, and `resolveDriver`'s Neon
@@ -242,12 +254,6 @@ expensive to retrofit. A resource is not done until every applicable line holds.
   deploying. That is project-level definition-of-done, not build step 1, so it
   was left untouched. Noticed: step 1.
 
-- **`.env` and `.env.local` already exist in the working tree** (both gitignored,
-  predating step 1). They were deliberately not read, so `.env.example` was
-  written from SPEC.md §2 alone. If the variable names in those files diverge
-  from `.env.example`, boot validation will fail against them and the two will
-  need reconciling by hand. Noticed: step 1.
-
 - **`npm audit` reports 4 moderate advisories, all one transitive chain.**
   `drizzle-kit` → `@esbuild-kit/esm-loader` → `@esbuild-kit/core-utils` → an old
   `esbuild` (GHSA-67mh-4wv8-2f99: the esbuild dev server will answer cross-origin
@@ -260,16 +266,29 @@ expensive to retrofit. A resource is not done until every applicable line holds.
   names it in the fixed stack, so it was installed with the rest of the stack
   rather than deferred. No code imports it yet. Noticed: step 1.
 
-- **`price_history` is append-only by convention only (SPEC.md §7.5).** Nothing
-  in the schema prevents an `UPDATE`, and the `set_updated_at` trigger is
-  attached to the table, which implies updates are expected. Enforcement is left
-  to the query layer as the spec directs; a revoke or a rule could harden it
-  later if that proves too weak. Noticed: step 2.
+- **CORRECTED — `price_history` append-only IS enforced by the database.** This
+  entry previously said the opposite: that nothing in the schema prevents an
+  `UPDATE` and that `set_updated_at` was attached, implying updates were
+  expected. Both were false from migration 0001 onward, and the entry was wrong
+  in the dangerous direction — it would lead the next unit either to build a
+  redundant query-layer guard or to assume no protection exists at all.
 
-- **`records.condition_media` / `condition_sleeve` are nullable.** SPEC.md §4.2
-  lists no NOT NULL on either, so they were left nullable and taken literally.
-  Worth confirming that a record with unknown condition is intended to be
-  representable. Noticed: step 2.
+  Verified against `pg_trigger` and by execution:
+
+  | Claim | Reality |
+  |---|---|
+  | Nothing prevents `UPDATE` | `price_history_reject_update` BEFORE UPDATE fires and raises |
+  | `set_updated_at` is attached | It is NOT; the table has exactly one trigger |
+
+  An `UPDATE` fails with `restrict_violation` and the message
+  `price_history is append-only (SPEC.md 7.5): UPDATE is not permitted, insert
+  a new row instead`. §4.2 also drops `created_at`/`updated_at` from this table
+  entirely, so there is nothing for a timestamp trigger to maintain.
+
+  **What this means for the query layer:** the guarantee is the trigger, not
+  convention. Query code should insert new rows and need not defend against
+  its own updates; a `PATCH` that reaches this table is a bug that will surface
+  as a 500, not silent corruption. Corrected before step 5.
 
 - **Next 16 deprecates the `middleware` file convention in favour of `proxy`.**
   The dev server warns on every boot and offers a codemod
@@ -278,12 +297,27 @@ expensive to retrofit. A resource is not done until every applicable line holds.
   left alone rather than migrated mid-step. Worth doing before step 14 (deploy).
   Noticed: step 3.
 
-- **A stray `next-server` (v16.2.12) was running on port 3000** from another
-  project when E2E was first run. Playwright now uses port 3100 (`E2E_PORT`) so
-  runs never collide with a dev server. Not this project's process; left alone.
-  Noticed: step 3.
-
 ## Resolved
+
+- ~~A stray `next-server` on port 3000 collided with E2E runs.~~ No longer
+  present (verified before step 5: nothing is listening on 3000), and it could
+  not recur regardless — `playwright.config.ts` pins `E2E_PORT` to 3100 and sets
+  `reuseExistingServer: false`, so a run never attaches to a server it did not
+  start. The port choice remains deliberate; the observation itself is spent.
+
+- ~~`records.condition_media` / `condition_sleeve` nullability was unconfirmed.~~
+  Confirmed intended (before step 5): a record can be logged before it is
+  graded, and requiring a grade at insert would block quick in-store entry —
+  which §10 names as the primary mobile case. Nullable is the correct shape and
+  step 5's record form must not make either field required.
+
+- ~~`.env` / `.env.local` might diverge from `.env.example`.~~ Reconciled
+  manually before step 5. Two corrections to the original entry, which was
+  written without reading the files: `.env` does not exist at all (only
+  `.env.local` does), and the variable names now match `.env.example` exactly
+  apart from `BLOB_READ_WRITE_TOKEN`. That one is absent from `.env.local` and
+  correctly so — it is `.optional()` in the env schema and unused until step 8
+  (images), so boot validation passes without it.
 
 - ~~Integration test files raced each other against the shared test database.~~
   Resolved in unit 1 (step 4). Latent since step 2 and invisible until a second
