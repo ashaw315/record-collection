@@ -125,9 +125,34 @@ expensive to retrofit. A resource is not done until every applicable line holds.
   the attribute still reads `false` in the gap between the click and the
   transition starting. That approach made failures more frequent, not less.
 
-  **Not yet known:** what differs under the full run. Next step would be a
-  trace (`--trace on`) from a failing full-suite run rather than more
-  hypotheses. Noticed: step 4, /manage.
+  **Trace investigation (timeboxed, step 4 follow-up).** Reproduced at 4/5
+  failing full runs with `--trace on`. The traces show TWO distinct failure
+  modes in the same suite, which is why single-cause hypotheses kept failing:
+
+  1. `Protocol error (Runtime.callFunctionOn): Internal server error, session
+     closed.` — the browser session dies mid-test. Not a timing race; the page
+     is gone. Cause unknown.
+  2. `expect(option).toHaveCount(0)` gets 1 — the parent's move select still
+     lists its own child after a reparent. The UI has not re-rendered with the
+     new parent when the assertion runs.
+
+  Mode 2 is NOT a logic bug: `validParents` was reproduced in a unit test with
+  the exact post-move state and correctly excludes the child. So the rule is
+  right and `router.refresh()` has not delivered new props yet.
+
+  **Also ruled out:** connection-pool exhaustion. `/manage` issues 7 concurrent
+  queries per render, but the pg pool is default-sized against
+  `max_connections = 100` with 6 in use, and the dev server logs no errors
+  under concurrent load.
+
+  **Where it stands:** mode 2 has a plausible mechanism (refresh latency under
+  load) and would be fixed by asserting on a settled signal the app actually
+  emits — but the earlier `aria-busy` attempt showed that signal is itself
+  racy, so it needs a different one. Mode 1 is undiagnosed and may be
+  environmental.
+
+  Left quarantined; 3/3 clean runs with them skipped. Noticed: step 4,
+  /manage; investigated further before step 5.
 
 - **A mutation that fails nothing does not mean the code is dead.** Three
   distinct patterns have now produced "removing this breaks no test", and only
