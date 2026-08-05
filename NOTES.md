@@ -162,6 +162,31 @@ and therefore needs designing rather than copying.
   Left quarantined; 3/3 clean runs with them skipped. Noticed: step 4,
   /manage; investigated further before step 5.
 
+- **A test fixture can fail to create the condition its test claims — and
+  reading the test cannot catch it.** Two instances so far, both invisible to
+  review and both found only by mutation:
+
+  1. **NFC/NFD literals.** A typed NFD string is normalized to NFC when written
+     to disk, so `expect(nfc).not.toBe(nfd)` compared a value with itself. The
+     test passed while testing nothing.
+  2. **Enum sort order.** `price_type` is a Postgres enum and sorts by
+     DECLARATION order (`new` < `used` < `best_dig`), not alphabetically. Two
+     successive fixtures accidentally made the newest row ALSO sort first under
+     type ordering, so a type-ordered implementation passed a test asserting
+     recency.
+
+  **The rule:** when a test's precondition depends on an ordering, encoding, or
+  normalization that the DATABASE or RUNTIME controls rather than the test,
+  query the actual behavior instead of reasoning about it. `enum_range()` over
+  an assumption about sort order; `\uXXXX` escapes over a typed literal;
+  `pg_constraint` over a memory of what the schema says.
+
+  **Why it needs its own rule:** a mutation only exposes this if the fixture
+  happens to be wrong in a way that mutation reveals — in the enum case it took
+  three fixtures and two wrong hypotheses. Reading the test never catches it,
+  because the test looks correct. The tell is a fixture whose *discriminating
+  property* is assumed rather than verified. Noticed: step 5, unit 3.
+
 - **A mutation that fails nothing does not mean the code is dead.** Three
   distinct patterns have now produced "removing this breaks no test", and only
   one of them meant the code was genuinely unused:
