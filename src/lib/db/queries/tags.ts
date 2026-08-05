@@ -2,7 +2,7 @@ import 'server-only';
 import { and, asc, count, desc, eq, ne } from 'drizzle-orm';
 import { getDb } from '@/db/client';
 import { recordTags, tags } from '@/db/schema';
-import type { SortDirection } from '@/lib/api/query-params';
+import type { Offset, SortDirection } from '@/lib/api/query-params';
 
 /**
  * The query layer for `tags` (CLAUDE.md §6: no inline database access in route
@@ -31,9 +31,14 @@ const columns = {
 // known keys keeps the untrusted string out of the query builder entirely.
 const sortColumns = { name: tags.name, createdAt: tags.createdAt } as const;
 
+/**
+ * `offset` is an Offset, not a number: the brand can only be minted by
+ * parseListParams, so an unvalidated value cannot reach the query by
+ * construction. This is what previously let `5e+21` through to Postgres.
+ */
 export async function listTags(options: {
   limit: number;
-  offset: number;
+  offset: Offset;
   sort?: { field: TagSortField; direction: SortDirection };
 }): Promise<{ rows: Tag[]; total: number }> {
   const db = getDb();

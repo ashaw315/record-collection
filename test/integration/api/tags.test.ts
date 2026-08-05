@@ -292,6 +292,31 @@ describe('GET /api/tags', () => {
     expect(response.status).toBe(400);
     expect((await response.json()).error.fieldErrors.page).toBeDefined();
   });
+
+  /**
+   * The value that previously reached Postgres as `5e+21` and came back as a
+   * 22P02 error carrying the whole SQL statement. Unit A stopped the leak by
+   * shaping it as a 500; this asserts the correct status — a malformed page is
+   * a client error, and it must be refused before the query, not diagnosed by
+   * the database.
+   *
+   * Asserted end-to-end rather than only in the unit test because the unit test
+   * cannot tell whether the handler actually consults the parse result.
+   */
+  it('rejects an out-of-range page with 400, never reaching SQL', async () => {
+    const spy = vi.spyOn(logger, 'error').mockImplementation(() => {});
+
+    const response = await listTags(request('/api/tags?page=99999999999999999999'));
+
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error.code).toBe('VALIDATION_ERROR');
+    expect(body.error.fieldErrors.page).toBeDefined();
+
+    // A 500 would have logged; a 400 must not. This is what distinguishes
+    // "rejected at the boundary" from "failed at the database and was shaped".
+    expect(spy).not.toHaveBeenCalled();
+  });
 });
 
 // --- POST /api/tags ----------------------------------------------------------
