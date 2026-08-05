@@ -78,6 +78,22 @@ export function invalidJson(): NextResponse<ApiErrorBody> {
   return badRequest('Request body must be valid JSON', 'INVALID_JSON');
 }
 
+/**
+ * SPEC.md §5's server-error case. The body is a fixed string with no detail
+ * whatsoever: the caller must learn nothing about the failure. The real cause
+ * is logged server-side by withErrorHandling.
+ *
+ * Deliberately takes no message parameter — an overload accepting one is how a
+ * driver error's text ends up in a response, which is exactly the leak this
+ * exists to close.
+ */
+export function internalError(): NextResponse<ApiErrorBody> {
+  return NextResponse.json(
+    { error: { message: 'Internal server error', code: 'INTERNAL_ERROR' } },
+    { status: 500 },
+  );
+}
+
 export function duplicate(message: string): NextResponse<ApiErrorBody> {
   return NextResponse.json({ error: { message, code: 'DUPLICATE' } }, { status: 409 });
 }

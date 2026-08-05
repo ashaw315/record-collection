@@ -1,5 +1,6 @@
-import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { sql } from 'drizzle-orm';
+import { logger } from '@/lib/logger';
 import { getTestDb, truncateAll, closeTestDb } from '../../helpers/db';
 import { GET as listTags, POST as createTag } from '@/app/api/tags/route';
 import {
@@ -21,6 +22,10 @@ const db = getTestDb();
 
 beforeEach(async () => {
   await truncateAll();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 afterAll(async () => {
@@ -96,6 +101,97 @@ describe('unauthenticated access', () => {
   it('classifies both as session-protected, not public or cron', () => {
     expect(routeAuthMode('/api/tags')).toBe('session');
     expect(routeAuthMode(`/api/tags/${UNUSED_UUID}`)).toBe('session');
+  });
+});
+
+// --- 500 handling (SPEC.md §5) -----------------------------------------------
+
+/**
+ * "Server error: 500, same shape, no stack traces in the response body."
+ *
+ * These force REAL driver errors rather than a synthetic `throw new Error()`.
+ * That distinction is the whole point: before this existed, a bad offset
+ * produced a `pg` error whose message embedded the entire SQL statement, and a
+ * synthetic throw would not have resembled it closely enough to catch the leak.
+ */
+describe('unanticipated server errors', () => {
+  it('returns the §5 500 shape when the underlying query fails', async () => {
+    vi.spyOn(logger, 'error').mockImplementation(() => {});
+
+    // A real driver failure: the table genuinely does not exist for this query.
+    // Restored immediately afterwards by the outer transaction-free truncate.
+    await db.execute(sql`ALTER TABLE tags RENAME TO tags_hidden`);
+    try {
+      const response = await listTags(request('/api/tags'));
+
+      expect(response.status).toBe(500);
+      expect(await response.json()).toEqual({
+        error: { message: 'Internal server error', code: 'INTERNAL_ERROR' },
+      });
+    } finally {
+      await db.execute(sql`ALTER TABLE tags_hidden RENAME TO tags`);
+    }
+  });
+
+  it('leaks no SQL statement, table name, or connection detail in the body', async () => {
+    vi.spyOn(logger, 'error').mockImplementation(() => {});
+
+    await db.execute(sql`ALTER TABLE tags RENAME TO tags_hidden`);
+    let serialized = '';
+    try {
+      const response = await listTags(request('/api/tags'));
+      serialized = JSON.stringify(await response.json());
+    } finally {
+      await db.execute(sql`ALTER TABLE tags_hidden RENAME TO tags`);
+    }
+
+    // The observed pre-fix leak was the full statement, verbatim.
+    expect(serialized).not.toContain('select');
+    expect(serialized).not.toContain('Failed query');
+    expect(serialized).not.toContain('tags_hidden');
+    expect(serialized).not.toContain('relation');
+    expect(serialized).not.toMatch(/\$\d/);
+    expect(serialized).not.toMatch(/\bat\s+\w+.*:\d+:\d+/);
+  });
+
+  it('logs the real cause server-side rather than swallowing it', async () => {
+    const spy = vi.spyOn(logger, 'error').mockImplementation(() => {});
+
+    await db.execute(sql`ALTER TABLE tags RENAME TO tags_hidden`);
+    try {
+      await listTags(request('/api/tags'));
+    } finally {
+      await db.execute(sql`ALTER TABLE tags_hidden RENAME TO tags`);
+    }
+
+    expect(spy).toHaveBeenCalled();
+    // The operator needs the detail the client is denied.
+    expect(spy.mock.calls.map((c) => String(c[1])).join(' ')).toMatch(/tags/i);
+  });
+
+  /**
+   * An unanticipated constraint violation — one the handler does not
+   * specifically translate. `tags.name` is NOT NULL; a null slipping past
+   * validation is a server bug, and it must surface as a shaped 500 rather than
+   * a raw driver error. This is the class of thing that will exist in every
+   * resource built from this template.
+   */
+  it('shapes an unanticipated constraint violation as a 500, not a raw error', async () => {
+    vi.spyOn(logger, 'error').mockImplementation(() => {});
+
+    // Drop the NOT NULL enforcement path by making the column reject everything
+    // via a CHECK the handler knows nothing about.
+    await db.execute(sql`ALTER TABLE tags ADD CONSTRAINT tags_never_valid CHECK (false)`);
+    try {
+      const response = await createTag(jsonRequest('/api/tags', 'POST', { name: 'anything' }));
+
+      expect(response.status).toBe(500);
+      const body = await response.json();
+      expect(body.error.code).toBe('INTERNAL_ERROR');
+      expect(JSON.stringify(body)).not.toContain('tags_never_valid');
+    } finally {
+      await db.execute(sql`ALTER TABLE tags DROP CONSTRAINT tags_never_valid`);
+    }
   });
 });
 
