@@ -406,3 +406,96 @@ export async function updateRecordFields(
   const [row] = await db.update(records).set(values).where(eq(records.id, id)).returning();
   return row;
 }
+
+export type RecordStats = {
+  totalRecords: number;
+  totalSpend: string;
+  estimatedValue: string;
+  byGenre: Array<{ id: string; name: string; count: number }>;
+  byDecade: Array<{ decade: number; count: number }>;
+  byStore: Array<{ id: string; name: string; count: number; spend: string }>;
+};
+
+/**
+ * SPEC.md §5.2 stats, including §7.6's estimated collection value.
+ *
+ * §7.6: "for each record, the most recent price_history row of type `used`
+ * (falling back to `new`, then to `purchase_price`). Sum."
+ *
+ * That is per-TYPE recency, NOT global recency — verified against the database
+ * before implementing. A record with an old `used` price and a newer `new`
+ * price contributes the USED one, because the chain prefers the type and only
+ * then the recency within it. This is the opposite of the detail endpoint's
+ * "latest price" (§5.2), which is why unit 3 deliberately did not apply this
+ * chain there: the two rules answer different questions and would show the user
+ * different numbers.
+ *
+ * Money is summed in SQL as NUMERIC and returned as a STRING. Adding
+ * NUMERIC(10,2) in JavaScript would route it through a float and lose cents on
+ * a large collection.
+ */
+export async function recordStats(): Promise<RecordStats> {
+  const db = getDb();
+
+  const latestOfType = (type: 'used' | 'new') => sql`(
+    SELECT ph.price FROM ${priceHistory} ph
+     WHERE ph.record_id = ${records.id} AND ph.price_type = ${type}
+     ORDER BY ph.recorded_at DESC, ph.id DESC
+     LIMIT 1
+  )`;
+
+  const [totals] = await db
+    .select({
+      totalRecords: sql<number>`count(*)::int`,
+      totalSpend: sql<string>`COALESCE(sum(${records.purchasePrice}), 0)::numeric(12,2)::text`,
+      // COALESCE IS the fallback chain: used, then new, then purchase price,
+      // then nothing. A record with none of the three contributes 0.
+      estimatedValue: sql<string>`COALESCE(sum(
+        COALESCE(${latestOfType('used')}, ${latestOfType('new')}, ${records.purchasePrice}, 0)
+      ), 0)::numeric(12,2)::text`,
+    })
+    .from(records);
+
+  const byGenre = await db
+    .select({
+      id: genres.id,
+      name: genres.name,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(recordGenres)
+    .innerJoin(genres, eq(genres.id, recordGenres.genreId))
+    .groupBy(genres.id, genres.name)
+    .orderBy(desc(sql`count(*)`), genres.name);
+
+  const byDecade = await db
+    .select({
+      decade: sql<number>`((${records.releaseYear} / 10) * 10)::int`,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(records)
+    // A null release year has no decade; bucketing it would invent a category.
+    .where(sql`${records.releaseYear} IS NOT NULL`)
+    .groupBy(sql`(${records.releaseYear} / 10) * 10`)
+    .orderBy(sql`(${records.releaseYear} / 10) * 10`);
+
+  const byStore = await db
+    .select({
+      id: recordStores.id,
+      name: recordStores.name,
+      count: sql<number>`count(*)::int`,
+      spend: sql<string>`COALESCE(sum(${records.purchasePrice}), 0)::numeric(12,2)::text`,
+    })
+    .from(records)
+    .innerJoin(recordStores, eq(recordStores.id, records.storeId))
+    .groupBy(recordStores.id, recordStores.name)
+    .orderBy(desc(sql`count(*)`), recordStores.name);
+
+  return {
+    totalRecords: totals?.totalRecords ?? 0,
+    totalSpend: totals?.totalSpend ?? '0.00',
+    estimatedValue: totals?.estimatedValue ?? '0.00',
+    byGenre,
+    byDecade,
+    byStore,
+  };
+}
