@@ -175,6 +175,56 @@ describe.skipIf(!configured)('transactions over the Neon serverless driver', () 
   });
 
   /**
+   * The §5.2 primitive itself, not a hand-rolled equivalent.
+   *
+   * The tests in nested-write.test.ts prove writeRecordWithNested rolls back on
+   * local pg. This proves the SAME FUNCTION rolls back on Neon — which is the
+   * entire point of CLAUDE.md §2's caveat, and cannot be inferred from the pg
+   * result. It runs against the throwaway branch via the same guard.
+   */
+  it('rolls back the real nested-write primitive, not just raw SQL', async () => {
+    const { writeRecordWithNested } = await import('@/lib/db/queries/nested');
+    const artistName = `${probe}-primitive-artist`;
+    const title = `${probe}-primitive-record`;
+    const missingGenre = '00000000-0000-4000-8000-000000000000';
+
+    await db.execute(sql`INSERT INTO artists (name) VALUES (${artistName})`);
+    const artist = await db.execute<{ id: string }>(
+      sql`SELECT id FROM artists WHERE name = ${artistName}`,
+    );
+
+    // getDb() resolves by TEST_DATABASE_URL presence, so the primitive would
+    // address local pg here. Point it at the branch for the duration.
+    const previous = process.env.TEST_DATABASE_URL;
+    const previousDatabase = process.env.DATABASE_URL;
+    process.env.TEST_DATABASE_URL = '';
+    process.env.DATABASE_URL = branchUrl;
+
+    try {
+      const { closeDb } = await import('@/db/client');
+      await closeDb();
+
+      await expect(
+        writeRecordWithNested({
+          values: { artistId: artist.rows[0].id, title },
+          genreIds: [missingGenre],
+          tagIds: [],
+        }),
+      ).rejects.toThrow();
+
+      await closeDb();
+    } finally {
+      process.env.TEST_DATABASE_URL = previous ?? '';
+      process.env.DATABASE_URL = previousDatabase ?? '';
+    }
+
+    const found = await db.execute<{ n: number }>(
+      sql`SELECT count(*)::int AS n FROM records WHERE title = ${title}`,
+    );
+    expect(found.rows[0].n).toBe(0);
+  });
+
+  /**
    * A constraint violation inside the transaction — not a thrown JS error —
    * because that is how a real nested write fails (a bad genre id hits the
    * foreign key). The driver must surface it AND roll back.
