@@ -5,20 +5,105 @@ Nothing here has been acted on. Each entry names the step it was noticed in.
 
 ---
 
+## Acceptance criteria for the remaining reference resources
+
+These are **requirements**, not observations. They apply to `genres`, `artists`,
+`record_stores`, `labels`, `formats` and, where noted, `records` and
+`want_list`. Each was a real defect found in the `tags` template during the step
+4 remediation; each is cheap to satisfy when the resource is written and
+expensive to retrofit. A resource is not done until every applicable line holds.
+
+1. **Every handler is wrapped in `withErrorHandling`.** An unwrapped handler
+   leaks the SQL statement in a 500 body (SPEC.md §5). Verified by removing the
+   wrapper and watching a test fail, not by inspection.
+
+2. **Every race test is written in the same unit as the pre-check it guards —
+   never retrofitted.** For every check-then-write and count-then-delete pair,
+   the race test ships alongside. This is not optional hardening: a fallback
+   behind a pre-check that returns first in every ordinary case is unreachable
+   in normal testing, so it can be dead — as `isUniqueViolation` was for an
+   entire build unit — while the suite stays green. Concretely, each resource
+   needs a concurrent-create test (POST losing to the unique index), a
+   concurrent-rename test (PATCH losing the same way) where the resource has a
+   unique name, and a reference-appears-after-the-count test (DELETE hitting
+   23503). Simulate the window by hooking the pre-check; do not race threads.
+
+3. **Every blocking foreign key is declared in `REFERRERS`.** Counts below are
+   from `pg_constraint`, not from memory — note that a *cascading* referrer must
+   NOT be declared, since counting it would refuse a delete the database would
+   happily perform. `artist_genres` and both `artist_influences` FKs cascade,
+   which is why `artists` has two blocking referrers and not five:
+
+   | Reference table | Blocking referrers |
+   |---|---|
+   | `genres` | 4 — `record_genres`, `want_list_genres`, `artist_genres`, and `genres.parent_genre_id` (self) |
+   | `artists` | 2 — `records.artist_id`, `want_list.artist_id` |
+   | `labels` | 2 — `records.label_id`, `want_list.label_id` |
+   | `record_stores` | 1 — `records.store_id` |
+   | `formats` | 1 — `records.format_id` |
+   | `tags` | 1 — `record_tags.tag_id` |
+
+   `test/integration/referrers.test.ts` diffs the declaration against
+   `pg_constraint` and fails by name if one is missed — do not weaken that test
+   to make a resource pass. Note `genres` is self-referencing: deleting a parent
+   genre that still has children must be refused like any other in-use row.
+
+4. **`DELETE` translates 23503 into the 409, and re-reads the count.** The
+   pre-check alone is racy; the foreign key is the guarantee. Reporting the
+   stale pre-check count in the raced 409 is wrong.
+
+5. **Names go through `cleanName` before validation.** Any resource with a
+   `UNIQUE` name needs NFKC normalization and invisible-character stripping, or
+   NFC/NFD twins and zero-width-separated names become duplicate rows that
+   render identically. Test the NFC/NFD collision explicitly, building the
+   literals from `\uXXXX` escapes — a typed NFD literal is normalized to NFC on
+   being written to disk, which silently destroys the precondition.
+
+6. **List queries use `orderFor`**, which supplies the id tiebreaker and an
+   explicit `NULLS LAST`. Both matter for the resources ahead: `artists`,
+   `record_stores` and `genres` all have nullable sortable columns
+   (`formed_year`, `city`, `description`), and Postgres flips null placement
+   between ASC and DESC. Where a resource sorts by a nullable column, assert
+   nulls land last in **both** directions.
+
+7. **`sort` is validated against a per-endpoint allowlist by identity match**,
+   returning the caller's own literal. Test the rejection side, including a real
+   but unenumerated column — that is what distinguishes an allowlist from a
+   blocklist.
+
+8. **`records` and `want_list` additionally need `?page` bounds on every list
+   endpoint** and the branded `Offset` type at the query boundary. They are the
+   endpoints most likely to be paged deeply by a client.
+
+9. **`genres` needs a cycle guard** (SPEC.md §4.1: a genre may not be its own
+   ancestor) with a test for the self-parent case, the two-node cycle, and a
+   longer chain. `parent_genre_id` is `NO ACTION`, so an in-use genre is
+   refused by the FK as well.
+
+---
+
 ## Open
 
-- **`tags` has no `DELETE` protection at the database level, by design — the
-  409 is application-only.** `record_tags.tag_id` is `ON DELETE CASCADE` (§4.3),
-  so Postgres will happily delete a tag and silently un-tag every record that
-  used it. Nothing but `countTagReferences()` in the query layer prevents that,
-  which is why the §7.4 tests assert the tag and its junction row *survive* a
-  refused delete rather than only asserting the 409 status. The same is true of
-  every reference resource whose only referrer is a junction table — `genres`
-  reaches `records` through `record_genres`, so it has the identical exposure,
-  while `artists`/`labels`/`stores` are additionally protected by NO ACTION FKs
-  on `records`. Worth keeping in mind when the remaining resources are built:
-  the FK will not catch a missing check for genres or tags. Noticed: step 4,
-  unit 1.
+- **CORRECTED — the database DOES protect reference rows; an earlier entry here
+  said the opposite.** This entry previously claimed `record_tags.tag_id` was
+  `ON DELETE CASCADE` and that only the application layer stood between a delete
+  and silent data loss. That was wrong, and wrong in the dangerous direction:
+  it asserted a threat that does not exist while implying the app check was the
+  sole guard. Verified by querying `pg_constraint` directly (step 4, unit C):
+
+  | Junction | → owning entity | → reference row |
+  |---|---|---|
+  | `record_tags` | `record_id` CASCADE | `tag_id` **NO ACTION** |
+  | `record_genres` | `record_id` CASCADE | `genre_id` **NO ACTION** |
+  | `want_list_genres` | `want_list_id` CASCADE | `genre_id` **NO ACTION** |
+  | `artist_genres` | `artist_id` CASCADE | `genre_id` **NO ACTION** |
+  | `artist_influences` | both FKs CASCADE | — |
+
+  This matches SPEC.md §4.3 as amended (the rule is directional, not blanket).
+  So the FK **is** the guarantee for every reference resource, and the query
+  layer's count is advisory — it exists to produce a helpful 409 with a
+  reference count before attempting the delete, not to prevent data loss. Both
+  layers are kept deliberately; see unit C. Corrected: step 4, unit E.
 
 - **`--reporter=basic` no longer exists in Vitest 4.** It is now resolved as a
   custom reporter *module*, so passing it fails the run with `ERR_LOAD_URL`

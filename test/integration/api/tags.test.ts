@@ -301,6 +301,75 @@ describe('GET /api/tags', () => {
   });
 
   /**
+   * The asc(id) tiebreaker was entirely unconstrained until this test: removing
+   * it left all 398 tests passing, while the comment above it claimed it
+   * prevented rows swapping between pages.
+   *
+   * Proving it requires a GENUINE tie, which means writing created_at
+   * explicitly — the column defaults to now() and inserts in a loop land on
+   * different microseconds. With five rows sharing one timestamp and no
+   * tiebreaker, Postgres may return them in any order, so paging through them
+   * can show a row twice and omit another.
+   *
+   * The assertion is that the union of two pages is the whole set, which is the
+   * property that actually matters and the one an unstable sort breaks.
+   */
+  it('pages consistently when every createdAt is identical', async () => {
+    // 60 rows, not 5: with a handful Postgres returns them in insertion order
+    // regardless, so the test passes with or without the tiebreaker and
+    // constrains nothing. At this size the plan changes and an untied sort
+    // genuinely reorders between queries — verified by mutation.
+    const shared = '2020-01-01T00:00:00.000Z';
+    const names = Array.from({ length: 60 }, (_, i) => `tag-${String(i).padStart(3, '0')}`);
+    for (const name of names) {
+      await db.execute(
+        sql`INSERT INTO tags (name, created_at) VALUES (${name}, ${shared}::timestamptz)`,
+      );
+    }
+
+    const seen: string[] = [];
+    for (let page = 1; page <= 6; page += 1) {
+      const response = await listTags(
+        request(`/api/tags?sort=createdAt:asc&page=${page}&pageSize=10`),
+      );
+      const body = await response.json();
+      seen.push(...body.data.map((t: { name: string }) => t.name));
+      // Write between pages: real pagination is many requests over a live
+      // table, and an unstable sort is what makes that lose rows.
+      await db.execute(sql`UPDATE tags SET updated_at = now() WHERE name = ${names[page]}`);
+    }
+
+    // Every row exactly once across all six pages: none duplicated, none lost.
+    expect(seen).toHaveLength(60);
+    expect([...new Set(seen)]).toHaveLength(60);
+  });
+
+  it('orders tied rows deterministically across repeated identical queries', async () => {
+    // A weaker but sharper check on the same guarantee: the same query must
+    // return the same order every time. Without a tiebreaker this is not
+    // promised, and in practice changes as the table is written to.
+    const shared = '2020-01-01T00:00:00.000Z';
+    for (const name of ['alpha', 'beta', 'gamma', 'delta']) {
+      await db.execute(
+        sql`INSERT INTO tags (name, created_at) VALUES (${name}, ${shared}::timestamptz)`,
+      );
+    }
+
+    const orders: string[][] = [];
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const response = await listTags(request('/api/tags?sort=createdAt:desc'));
+      const body = await response.json();
+      orders.push(body.data.map((t: { name: string }) => t.name));
+      // Touch the table between reads: a plan that happens to be stable on an
+      // untouched table is not the guarantee being claimed.
+      await db.execute(sql`UPDATE tags SET updated_at = now() WHERE name = 'beta'`);
+    }
+
+    expect(orders[1]).toEqual(orders[0]);
+    expect(orders[2]).toEqual(orders[0]);
+  });
+
+  /**
    * The sort allowlist is trivially easy to test in a way that passes without
    * constraining anything — asserting only that `?sort=name` works proves
    * nothing about what happens to `?sort=id`. These assert the rejection side,

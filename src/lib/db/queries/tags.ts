@@ -1,7 +1,8 @@
 import 'server-only';
-import { and, asc, count, desc, eq, ne } from 'drizzle-orm';
+import { and, count, eq, ne } from 'drizzle-orm';
 import { isForeignKeyViolation } from '@/lib/api/errors';
 import { countReferences } from './referrers';
+import { orderFor } from '@/lib/db/order';
 import { getDb } from '@/db/client';
 import { tags } from '@/db/schema';
 import type { Offset, SortDirection } from '@/lib/api/query-params';
@@ -45,16 +46,19 @@ export async function listTags(options: {
 }): Promise<{ rows: Tag[]; total: number }> {
   const db = getDb();
 
-  // Ordering is always fully determined: without the id tiebreaker, two tags
-  // sharing a createdAt could swap between pages and be shown twice or not at
-  // all. Name is unique, but createdAt is not.
+  // orderFor supplies the id tiebreaker and an explicit NULLS LAST. Neither is
+  // decoration: without the tiebreaker, tags sharing a createdAt are shown
+  // twice or dropped while paging (verified with 60 tied rows), and Postgres
+  // flips its null placement between ASC and DESC. tags has no nullable column
+  // today, so the NULLS LAST half is exercised by test/integration/order.test.ts
+  // against artists.formed_year rather than here.
   const sortColumn = options.sort === undefined ? tags.name : sortColumns[options.sort.field];
-  const direction = options.sort?.direction === 'desc' ? desc : asc;
+  const direction = options.sort?.direction ?? 'asc';
 
   const rows = await db
     .select(columns)
     .from(tags)
-    .orderBy(direction(sortColumn), asc(tags.id))
+    .orderBy(...orderFor(sortColumn, direction, tags.id))
     .limit(options.limit)
     .offset(options.offset);
 
