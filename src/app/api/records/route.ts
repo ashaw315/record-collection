@@ -3,8 +3,14 @@ import { z } from 'zod';
 import { invalidJson, validationError } from '@/lib/api/errors';
 import { withErrorHandling } from '@/lib/api/handler';
 import { isValidFormedYear } from '@/lib/api/year';
+import { parseListParams } from '@/lib/api/query-params';
 import { MAX_NESTED_IDS, writeRecordWithNested } from '@/lib/db/queries/nested';
-import { missingIds } from '@/lib/db/queries/records';
+import {
+  RECORD_SORT_FIELDS,
+  listRecords,
+  missingIds,
+  type RecordFilters,
+} from '@/lib/db/queries/records';
 import { findArtistById } from '@/lib/db/queries/artists';
 import { findLabelById } from '@/lib/db/queries/labels';
 import { findFormatById } from '@/lib/db/queries/formats';
@@ -62,6 +68,67 @@ function fieldErrorResponse(fieldErrors: Record<string, string>) {
     { status: 400 },
   );
 }
+
+/**
+ * Query-parameter validation for the list endpoint.
+ *
+ * Every filter is parsed and REJECTED when malformed rather than ignored:
+ * silently dropping an unrecognised filter returns more rows than the caller
+ * asked for, which reads as success.
+ */
+const filterSchema = z.strictObject({
+  artistId: uuid.optional(),
+  genreId: uuid.optional(),
+  labelId: uuid.optional(),
+  storeId: uuid.optional(),
+  tagId: uuid.optional(),
+  formatId: uuid.optional(),
+  condition: z.enum(CONDITION_GRADES).optional(),
+  yearFrom: z.coerce.number().int().optional(),
+  yearTo: z.coerce.number().int().optional(),
+  q: z.string().trim().min(1).max(200).optional(),
+});
+
+export const GET = withErrorHandling('api.records.GET', async (request: Request) => {
+  const searchParams = new URL(request.url).searchParams;
+
+  const params = parseListParams(searchParams, RECORD_SORT_FIELDS);
+  if (!params.ok) {
+    return NextResponse.json(
+      {
+        error: {
+          message: 'Invalid query parameters',
+          code: 'VALIDATION_ERROR',
+          fieldErrors: params.fieldErrors,
+        },
+      },
+      { status: 400 },
+    );
+  }
+
+  // Only the filter keys, so page/pageSize/sort do not trip strictObject.
+  const raw: Record<string, string> = {};
+  for (const key of [
+    'artistId', 'genreId', 'labelId', 'storeId', 'tagId', 'formatId',
+    'condition', 'yearFrom', 'yearTo', 'q',
+  ]) {
+    const value = searchParams.get(key);
+    if (value !== null) raw[key] = value;
+  }
+
+  const filters = filterSchema.safeParse(raw);
+  if (!filters.success) return validationError(filters.error);
+
+  const { page, pageSize, offset, sort } = params.value;
+  const { rows, total } = await listRecords({
+    limit: pageSize,
+    offset,
+    sort,
+    filters: filters.data as RecordFilters,
+  });
+
+  return NextResponse.json({ data: rows, meta: { total, page, pageSize } });
+});
 
 export const POST = withErrorHandling('api.records.POST', async (request: Request) => {
   let body: unknown;

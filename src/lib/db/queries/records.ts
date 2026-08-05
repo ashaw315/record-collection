@@ -1,5 +1,5 @@
 import 'server-only';
-import { desc, eq, inArray } from 'drizzle-orm';
+import { and, asc, desc, eq, exists, gte, ilike, inArray, lte, or, sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
 import {
   artists,
@@ -196,4 +196,169 @@ export async function missingIds(table: 'genres' | 'tags', ids: string[]): Promi
 
   const present = new Set(found.map((row) => row.id));
   return ids.filter((id) => !present.has(id));
+}
+
+/** The §5.2 sortable fields. `artist` has no column on `records`. */
+export const RECORD_SORT_FIELDS = [
+  'title',
+  'artist',
+  'purchaseDate',
+  'purchasePrice',
+  'releaseYear',
+] as const;
+export type RecordSortField = (typeof RECORD_SORT_FIELDS)[number];
+
+export type RecordFilters = {
+  artistId?: string;
+  genreId?: string;
+  labelId?: string;
+  storeId?: string;
+  tagId?: string;
+  formatId?: string;
+  condition?: (typeof records.conditionMedia)['_']['data'];
+  yearFrom?: number;
+  yearTo?: number;
+  q?: string;
+};
+
+/**
+ * Builds the WHERE clause.
+ *
+ * Every filter is a separate condition ANDed together by `and(...)`. The `q`
+ * clause is internally an OR (title OR artist), and it is passed to `and(...)`
+ * as ONE grouped condition — Drizzle parenthesises it, so the OR cannot escape
+ * and widen the result. That precedence error is the defect this endpoint is
+ * most likely to hide: it returns MORE rows than asked for, which reads as "the
+ * filter did nothing" rather than as an error.
+ *
+ * Junction filters use EXISTS rather than a join, so a record with three genres
+ * is not returned three times — the row-multiplication problem the detail read
+ * avoids for the same reason.
+ */
+function buildWhere(filters: RecordFilters) {
+  const clauses = [];
+
+  if (filters.artistId !== undefined) clauses.push(eq(records.artistId, filters.artistId));
+  if (filters.labelId !== undefined) clauses.push(eq(records.labelId, filters.labelId));
+  if (filters.formatId !== undefined) clauses.push(eq(records.formatId, filters.formatId));
+  if (filters.storeId !== undefined) clauses.push(eq(records.storeId, filters.storeId));
+  if (filters.condition !== undefined) clauses.push(eq(records.conditionMedia, filters.condition));
+  if (filters.yearFrom !== undefined) clauses.push(gte(records.releaseYear, filters.yearFrom));
+  if (filters.yearTo !== undefined) clauses.push(lte(records.releaseYear, filters.yearTo));
+
+  if (filters.genreId !== undefined) {
+    const genreId = filters.genreId;
+    clauses.push(
+      exists(
+        getDb()
+          .select({ one: sql`1` })
+          .from(recordGenres)
+          .where(and(eq(recordGenres.recordId, records.id), eq(recordGenres.genreId, genreId))),
+      ),
+    );
+  }
+
+  if (filters.tagId !== undefined) {
+    const tagId = filters.tagId;
+    clauses.push(
+      exists(
+        getDb()
+          .select({ one: sql`1` })
+          .from(recordTags)
+          .where(and(eq(recordTags.recordId, records.id), eq(recordTags.tagId, tagId))),
+      ),
+    );
+  }
+
+  if (filters.q !== undefined && filters.q !== '') {
+    const q = filters.q;
+    const like = `%${q}%`;
+
+    /**
+     * Trigram OR substring, and both halves are needed — verified against the
+     * database rather than assumed:
+     *
+     *   similarity('hear', 'Hear Nothing See Nothing Say Nothing') = 0.25
+     *
+     * which is BELOW the default 0.3 threshold, because a short query is
+     * diluted by a long title. Trigram alone would return nothing for a real
+     * prefix. Conversely 'Notthing' is not a substring of anything, so
+     * substring alone would miss the typo the trigram indexes exist for.
+     */
+    clauses.push(
+      or(
+        sql`${records.title} % ${q}`,
+        ilike(records.title, like),
+        exists(
+          getDb()
+            .select({ one: sql`1` })
+            .from(artists)
+            .where(
+              and(
+                eq(artists.id, records.artistId),
+                or(sql`${artists.name} % ${q}`, ilike(artists.name, like)),
+              ),
+            ),
+        ),
+      ),
+    );
+  }
+
+  return clauses.length === 0 ? undefined : and(...clauses);
+}
+
+/**
+ * Resolves a sort field to an orderable expression.
+ *
+ * `artist` is the field the template's `sortColumns` record cannot express:
+ * there is no column on `records` to map it to. It is resolved with a
+ * correlated subquery rather than by interpolating a string — the allowlist is
+ * EXTENDED, not bypassed, so nothing derived from the request reaches SQL.
+ */
+function sortExpression(field: RecordSortField) {
+  switch (field) {
+    case 'artist':
+      return sql`(SELECT ${artists.name} FROM ${artists} WHERE ${artists.id} = ${records.artistId})`;
+    case 'title':
+      return records.title;
+    case 'purchaseDate':
+      return records.purchaseDate;
+    case 'purchasePrice':
+      return records.purchasePrice;
+    case 'releaseYear':
+      return records.releaseYear;
+  }
+}
+
+export async function listRecords(options: {
+  limit: number;
+  offset: number;
+  sort?: { field: RecordSortField; direction: 'asc' | 'desc' };
+  filters: RecordFilters;
+}): Promise<{ rows: RecordRow[]; total: number }> {
+  const db = getDb();
+  const where = buildWhere(options.filters);
+
+  const column = sortExpression(options.sort?.field ?? 'title');
+  const ordered = options.sort?.direction === 'desc' ? desc(column) : asc(column);
+
+  const rows = await db
+    .select()
+    .from(records)
+    .where(where)
+    // NULLS LAST and the id tiebreaker, for the same reasons as every other
+    // list endpoint: Postgres flips null placement between ASC and DESC, and an
+    // untied sort loses rows across pages.
+    .orderBy(sql`${ordered} NULLS LAST`, asc(records.id))
+    .limit(options.limit)
+    .offset(options.offset);
+
+  // Counted through the SAME where clause: a count that ignores the filters
+  // makes pagination lie about how many pages exist.
+  const [totals] = await db
+    .select({ value: sql<number>`count(*)::int` })
+    .from(records)
+    .where(where);
+
+  return { rows, total: totals?.value ?? 0 };
 }
