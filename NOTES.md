@@ -183,6 +183,43 @@ exactly the "no precedent" items 9–12.
   is the defect and the assertion is decorative regardless of how it is written.
   Noticed across steps 4–5; stated as a rule during the step 5 remediation.
 
+- **RULE: Zod's convenience modifiers silently change MEANING at the boundary.
+  Treat any `.coerce` or `.default` in a request schema as suspect.**
+
+  Three instances, all in this build, all invisible to every downstream test —
+  because each produced a *valid-looking* value rather than an error:
+
+  | Modifier | Input | Becomes | Consequence |
+  |---|---|---|---|
+  | `.default([])` on `genreIds` | absent | `[]` | "leave alone" becomes "REMOVE ALL" — silent data loss on PATCH |
+  | `z.coerce.number()` on `yearFrom` | `''` | `0` | applies `release_year >= 0`, drops every undated record behind a 200 |
+  | `z.coerce.boolean()` on `includeUndated` | `'false'` | `true` | the flag cannot be turned off; every non-empty string is true |
+
+  **Why they are hard to catch.** A validation bug that REJECTS is loud — a 400
+  arrives and someone investigates. These three all ACCEPT, and produce a
+  plausible value, so the endpoint returns 200 with the wrong rows. Nothing
+  downstream can tell: the query layer received a legitimate number, the
+  handler received a legitimate array. The defect exists entirely in the gap
+  between what the caller wrote and what the schema decided they meant.
+
+  **The rule.** In a boundary schema, prefer an explicit shape that cannot
+  reinterpret:
+
+  - a boolean flag is `z.enum(['true','false']).transform(v => v === 'true')`,
+    never `z.coerce.boolean()`;
+  - a numeric param validates its STRING form first
+    (`.refine(v => /^-?\d+$/.test(v))`) and only then transforms — coercing
+    first is what destroys the absent/blank distinction;
+  - `.optional()` preserves absent-vs-empty; `.default()` destroys it. If
+    absence and emptiness mean different things — and for a nested array they
+    always do — `.default()` is wrong.
+
+  **The test that catches this class** is not "does a valid value work" but
+  "does an EMPTY or MALFORMED value get rejected rather than reinterpreted".
+  Every filter now has one; `yearTo=` was found only because the empty-string
+  case was tested for each param separately rather than once. Noticed across
+  steps 4–5; stated as a class during the step 5 UI work.
+
 - **RULE: a message-less `.toThrow()` asserts only that SOMETHING failed.**
   Six instances have now accepted a different exception than intended, and the
   sixth was in the guard built to prevent the fifth.
