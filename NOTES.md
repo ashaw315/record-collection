@@ -183,6 +183,28 @@ exactly the "no precedent" items 9–12.
   is the defect and the assertion is decorative regardless of how it is written.
   Noticed across steps 4–5; stated as a rule during the step 5 remediation.
 
+  **VARIANT: sometimes no value on that axis CAN discriminate, and the fix is a
+  different axis rather than a better fixture.** The five cases above are all
+  repaired by adding inverting rows. This one cannot be.
+
+  `formatPrice` keeps money as a string so it never routes through a float, and
+  the test asserted that with `'12345678.91'` — "a value beyond float
+  precision". It is not: `NUMERIC(10,2)` allows at most 8 digits before the
+  decimal, which is comfortably inside a double, so **no value the column can
+  hold** produces a different answer from `Number(v).toFixed(2)`. Enumerating
+  the candidates is what established that; the test looked rigorous and
+  constrained nothing.
+
+  The discriminator was on another axis entirely — ROUNDING, not magnitude.
+  `'8.567'` truncates to `8.56` and rounds to `8.57`. That value is not even
+  storable in the column; it can arrive from an unsaved form field, which is
+  precisely why the helper must not round.
+
+  **The check when a fixture resists repair:** before concluding the property
+  is untestable, ask what OTHER observable difference the two implementations
+  have. "Same output for every legal input" means the axis is wrong, not that
+  the behaviour is unconstrainable. Noticed: step 5, unit 6.
+
 - **RULE: Zod's convenience modifiers silently change MEANING at the boundary.
   Treat any `.coerce` or `.default` in a request schema as suspect.**
 
