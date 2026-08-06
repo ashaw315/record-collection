@@ -637,6 +637,26 @@ exactly the "no precedent" items 9–12.
   undated record behind a 200. That bug is fixed; this design consequence
   remains. Noticed: step 5 remediation, unit 3.
 
+- **`/manage` has the same 200-row assumption the collection chips had, and it
+  is NOT fixed.** `src/app/manage/page.tsx` fetches every reference resource
+  with `{ limit: 200, offset: 0 }` on the reasoning that "reference data is
+  small, so one page of 200 covers every resource and this screen needs no
+  pagination controls."
+
+  That assumption is now known to break: a single full E2E suite run produces
+  **300 genres**, and the 201st onward simply do not render — no pagination
+  control, no indication, no error. A user with many genres would silently be
+  unable to see or edit some of them, on the screen whose entire purpose is
+  editing them.
+
+  Unlike the collection chips, the facets fix does NOT apply here: `/manage`
+  must show every reference row including unused ones, because deleting an
+  unused genre is exactly what that screen is for. So this needs real
+  pagination or a search field, not a narrower query.
+
+  Deliberately not fixed in step 5 — `/manage` is step 4's screen and this is
+  scope discipline (CLAUDE.md §4). Noticed: step 5, unit 7b.
+
 - **The 1877 `formed_year` floor is the start of recorded sound, not of music.**
   §4.1 bounds `artists.formed_year` at 1877 (Edison's phonograph) on the
   reasoning that no *recording* artist predates it. A classical or early-jazz
