@@ -111,6 +111,15 @@ const filterSchema = z.strictObject({
   condition: z.enum(CONDITION_GRADES).optional(),
   yearFrom: yearFilter,
   yearTo: yearFilter,
+  /**
+   * §5.2, default true. Enumerated rather than coerced: z.coerce.boolean()
+   * treats EVERY non-empty string as true, so 'false' would mean true — the
+   * same class of silent coercion defect as the year filters.
+   */
+  includeUndated: z
+    .enum(['true', 'false'])
+    .transform((value) => value === 'true')
+    .optional(),
   q: z.string().trim().min(1).max(200).optional(),
 });
 
@@ -135,7 +144,7 @@ export const GET = withErrorHandling('api.records.GET', async (request: Request)
   const raw: Record<string, string> = {};
   for (const key of [
     'artistId', 'genreId', 'labelId', 'storeId', 'tagId', 'formatId',
-    'condition', 'yearFrom', 'yearTo', 'q',
+    'condition', 'yearFrom', 'yearTo', 'includeUndated', 'q',
   ]) {
     const value = searchParams.get(key);
     if (value !== null) raw[key] = value;
@@ -145,14 +154,14 @@ export const GET = withErrorHandling('api.records.GET', async (request: Request)
   if (!filters.success) return validationError(filters.error);
 
   const { page, pageSize, offset, sort } = params.value;
-  const { rows, total } = await listRecords({
+  const { rows, total, undatedCount } = await listRecords({
     limit: pageSize,
     offset,
     sort,
     filters: filters.data as RecordFilters,
   });
 
-  return NextResponse.json({ data: rows, meta: { total, page, pageSize } });
+  return NextResponse.json({ data: rows, meta: { total, page, pageSize, undatedCount } });
 });
 
 export const POST = withErrorHandling('api.records.POST', async (request: Request) => {

@@ -115,7 +115,11 @@ describe('GET /api/records — envelope and paging', () => {
     expect(response.status).toBe(200);
 
     const body = await response.json();
-    expect(body.meta).toEqual({ total: 2, page: 1, pageSize: 50 });
+    // toEqual, not toMatchObject: the envelope is a contract, and an extra key
+    // appearing unnoticed is how a response shape drifts. `undatedCount` was
+    // added deliberately by the §5.2 amendment, so this assertion was updated
+    // rather than loosened.
+    expect(body.meta).toEqual({ total: 2, page: 1, pageSize: 50, undatedCount: 0 });
     expect(body.data).toHaveLength(2);
   });
 
@@ -1057,5 +1061,253 @@ describe('GET /api/records — matchedVia (§5.2)', () => {
 
     expect(rows).not.toHaveLength(0);
     for (const row of rows) expect(row.matchedVia, row.title).toBeNull();
+  });
+});
+
+/**
+ * SPEC.md §5.2: list rows carry hydrated names, not bare FK ids.
+ *
+ * The fixture gives every relation a DIFFERENT name from every other, and
+ * names that differ from the record title too — so a row wired to the wrong
+ * relation (label showing the format's name, say) produces different output
+ * rather than the same string by luck. Per the fixture rule in NOTES.md.
+ */
+describe('GET /api/records — hydrated relation names (§5.2)', () => {
+  async function rowsFor(url: string) {
+    const body = await (await listRecords(request(url))).json();
+    return body.data as Array<{
+      title: string;
+      artist: { id: string; name: string };
+      label: { id: string; name: string } | null;
+      format: { id: string; name: string } | null;
+      store: { id: string; name: string } | null;
+    }>;
+  }
+
+  it('hydrates artist, label, format and store on every row', async () => {
+    const s = await seed();
+
+    const rows = await rowsFor('/api/records');
+    const hearNothing = rows.find((r) => r.title === 'Hear Nothing See Nothing Say Nothing');
+
+    expect(hearNothing?.artist).toEqual({ id: s.discharge, name: 'Discharge' });
+    expect(hearNothing?.label).toEqual({ id: s.clay, name: 'Clay' });
+    expect(hearNothing?.format).toEqual({ id: s.lp, name: 'LP' });
+    expect(hearNothing?.store).toEqual({ id: s.amoeba, name: 'Amoeba' });
+  });
+
+  it('does not put one record\'s relations on another', async () => {
+    // The join most likely to go wrong in a plausible-looking way: every row
+    // showing the first row's artist.
+    await seed();
+
+    const rows = await rowsFor('/api/records');
+    const byTitle = Object.fromEntries(rows.map((r) => [r.title, r.artist.name]));
+
+    expect(byTitle).toEqual({
+      'Hear Nothing See Nothing Say Nothing': 'Discharge',
+      'Arise!': 'Amebix',
+    });
+  });
+
+  it('returns null for absent optional relations rather than omitting them', async () => {
+    // A record with only the required artist. Null, not undefined, so the UI
+    // renders a dash rather than branching on key presence.
+    const s = await seed();
+    await db.execute(
+      sql`INSERT INTO records (artist_id, title) VALUES (${s.amebix}, 'Bare')`,
+    );
+
+    const bare = (await rowsFor('/api/records')).find((r) => r.title === 'Bare');
+
+    expect(bare?.artist).toEqual({ id: s.amebix, name: 'Amebix' });
+    expect(bare?.label).toBeNull();
+    expect(bare?.format).toBeNull();
+    expect(bare?.store).toBeNull();
+  });
+
+  it('keeps hydration correct under a filter and a joined sort', async () => {
+    // The hydration joins and the artist sort's correlated subquery both touch
+    // artists; a row could sort by one artist and display another.
+    const s = await seed();
+
+    const rows = await rowsFor(`/api/records?sort=artist:asc&labelId=${s.clay}`);
+
+    expect(rows.map((r) => [r.title, r.artist.name])).toEqual([
+      ['Hear Nothing See Nothing Say Nothing', 'Discharge'],
+    ]);
+  });
+
+  it('does not multiply rows when a record has several genres or tags', async () => {
+    // Hydration adds four joins; if any were to a junction table the row would
+    // be returned once per link.
+    await seed();
+    const extra = (
+      await db.execute<{ id: string }>(sql`INSERT INTO genres (name) VALUES ('Anarcho') RETURNING id`)
+    ).rows[0].id;
+    const target = (
+      await db.execute<{ id: string }>(
+        sql`SELECT id FROM records WHERE title = 'Hear Nothing See Nothing Say Nothing'`,
+      )
+    ).rows[0].id;
+    await db.execute(
+      sql`INSERT INTO record_genres (record_id, genre_id) VALUES (${target}, ${extra})`,
+    );
+
+    const body = await (await listRecords(request('/api/records'))).json();
+
+    expect(body.data).toHaveLength(2);
+    expect(body.meta.total).toBe(2);
+  });
+});
+
+/**
+ * SPEC.md §5.2's `includeUndated` and `meta.undatedCount`.
+ *
+ * `release_year` is nullable, so a year range silently excludes every undated
+ * record — records vanish behind a 200. The spec's resolution is that they are
+ * INCLUDED by default and the count is always reported, so the UI can state
+ * the omission either way.
+ *
+ * The fixture has undated records that would fall on BOTH sides of the range
+ * if nulls were wrongly made to satisfy it, and one dated record outside the
+ * range — so "range widened to include nulls" and "nulls added alongside the
+ * range" produce different output.
+ */
+describe('GET /api/records — includeUndated (§5.2)', () => {
+  type Body = { data: Array<{ title: string }>; meta: { total: number; undatedCount: number } };
+
+  async function bodyFor(url: string): Promise<Body> {
+    return (await listRecords(request(url))).json();
+  }
+
+  async function seedYears(): Promise<string> {
+    const artistId = (
+      await db.execute<{ id: string }>(
+        sql`INSERT INTO artists (name) VALUES ('Year Fixture') RETURNING id`,
+      )
+    ).rows[0].id;
+
+    const rows: Array<[string, number | null]> = [
+      ['InRange', 1985],
+      ['BeforeRange', 1972],
+      ['AfterRange', 1999],
+      ['Undated One', null],
+      ['Undated Two', null],
+    ];
+    for (const [title, year] of rows) {
+      await db.execute(
+        sql`INSERT INTO records (artist_id, title, release_year) VALUES (${artistId}, ${title}, ${year})`,
+      );
+    }
+    return artistId;
+  }
+
+  it('includes undated records in a year range by default', async () => {
+    const a = await seedYears();
+
+    const body = await bodyFor(`/api/records?artistId=${a}&yearFrom=1980&yearTo=1990`);
+
+    expect(body.data.map((r) => r.title).sort()).toEqual(['InRange', 'Undated One', 'Undated Two']);
+  });
+
+  it('excludes them when includeUndated=false', async () => {
+    const a = await seedYears();
+
+    const body = await bodyFor(
+      `/api/records?artistId=${a}&yearFrom=1980&yearTo=1990&includeUndated=false`,
+    );
+
+    expect(body.data.map((r) => r.title)).toEqual(['InRange']);
+  });
+
+  /**
+   * §5.2 forbids making nulls satisfy the RANGE PREDICATE itself. The
+   * distinguishing case: a dated record OUTSIDE the range must stay out
+   * regardless of includeUndated. An implementation that widened the predicate
+   * (`release_year >= 1980 OR release_year IS NULL` folded wrongly) could let
+   * 1972 through.
+   */
+  it('never lets a dated record outside the range in', async () => {
+    const a = await seedYears();
+
+    for (const flag of ['true', 'false']) {
+      const body = await bodyFor(
+        `/api/records?artistId=${a}&yearFrom=1980&yearTo=1990&includeUndated=${flag}`,
+      );
+      expect(body.data.map((r) => r.title), flag).not.toContain('BeforeRange');
+      expect(body.data.map((r) => r.title), flag).not.toContain('AfterRange');
+    }
+  });
+
+  it('reports undatedCount over the current filter set, not the whole table', async () => {
+    // A second artist with its own undated record, excluded by the artistId
+    // filter — so a count over the whole table would read 3, not 2.
+    const a = await seedYears();
+    const other = (
+      await db.execute<{ id: string }>(
+        sql`INSERT INTO artists (name) VALUES ('Other Artist') RETURNING id`,
+      )
+    ).rows[0].id;
+    await db.execute(
+      sql`INSERT INTO records (artist_id, title, release_year) VALUES (${other}, 'Elsewhere', NULL)`,
+    );
+
+    const body = await bodyFor(`/api/records?artistId=${a}&yearFrom=1980&yearTo=1990`);
+
+    expect(body.meta.undatedCount).toBe(2);
+  });
+
+  it('reports the same undatedCount whether they are included or excluded', async () => {
+    // The count exists so the UI can state the omission — it must not become 0
+    // just because they were filtered out.
+    const a = await seedYears();
+
+    const included = await bodyFor(`/api/records?artistId=${a}&yearFrom=1980&yearTo=1990`);
+    const excluded = await bodyFor(
+      `/api/records?artistId=${a}&yearFrom=1980&yearTo=1990&includeUndated=false`,
+    );
+
+    expect(included.meta.undatedCount).toBe(2);
+    expect(excluded.meta.undatedCount).toBe(2);
+  });
+
+  it('counts undated records even with no year filter applied', async () => {
+    // Meaningful without a range: the collection screen can say how many
+    // records are undated before anyone filters.
+    const a = await seedYears();
+
+    const body = await bodyFor(`/api/records?artistId=${a}`);
+
+    expect(body.data).toHaveLength(5);
+    expect(body.meta.undatedCount).toBe(2);
+  });
+
+  it('has no effect when no year filter is present', async () => {
+    // §5.2: only meaningful alongside a year filter. It must not become a
+    // general "hide undated records" switch.
+    const a = await seedYears();
+
+    const body = await bodyFor(`/api/records?artistId=${a}&includeUndated=false`);
+
+    expect(body.data).toHaveLength(5);
+  });
+
+  it('counts undated rows in total when they are included', async () => {
+    // meta.total must agree with the rows actually returned, as for every
+    // other filter.
+    const a = await seedYears();
+
+    const body = await bodyFor(`/api/records?artistId=${a}&yearFrom=1980&yearTo=1990`);
+
+    expect(body.meta.total).toBe(3);
+    expect(body.data).toHaveLength(3);
+  });
+
+  it('rejects a non-boolean includeUndated rather than ignoring it', async () => {
+    const response = await listRecords(request('/api/records?yearFrom=1980&includeUndated=maybe'));
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).error.fieldErrors.includeUndated).toBeDefined();
   });
 });

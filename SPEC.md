@@ -283,6 +283,24 @@ All routes under `app/api/`. All responses JSON. All protected by the auth middl
 |---|---|---|
 | GET | `/api/records` | Filters: `artistId`, `genreId`, `labelId`, `storeId`, `tagId`, `formatId`, `condition`, `yearFrom`, `yearTo`, `q` (fuzzy on title + artist name). Sort: `title`, `artist`, `purchaseDate`, `purchasePrice`, `releaseYear`. |
 
+**List rows carry hydrated names, not bare FK ids.** Every row from `GET /api/records` includes:
+
+```ts
+artist: { id: string; name: string };            // never null — records.artist_id is NOT NULL
+label:  { id: string; name: string } | null;
+format: { id: string; name: string } | null;
+store:  { id: string; name: string } | null;
+```
+
+A collection list cannot render "Discharge — Hear Nothing" from an `artistId`, and `artist` is already in the sort allowlist, so sorting by a field the row cannot display would be incoherent. Resolve these with joins in the query layer, page-bounded — never by a second client-side fetch, which reimplements a server concern in the browser and breaks past one page of reference rows. `pressing` is deliberately excluded: it is only needed on the detail read (§5.2), where it is already hydrated.
+
+**`includeUndated` on year-filtered results.** `yearFrom` / `yearTo` compare against `records.release_year`, which is nullable, so a year range silently excludes every undated record. `GET /api/records` therefore accepts `includeUndated=true|false` (default `true`), which is only meaningful when a year filter is present:
+
+- `true` — records with a null `release_year` are returned alongside those in range.
+- `false` — they are excluded.
+
+Either way the response's `meta` carries `undatedCount`: how many records in the current filter set have no release year, so the UI can state the omission rather than let records vanish silently. Do **not** make nulls satisfy the range predicate itself — `yearFrom=1980` must never be described as matching a 1972 record.
+
 **`matchedVia` on genre-filtered results.** Because §7.1 makes genre membership hierarchical, filtering by `genreId=<Punk>` returns records tagged only `Oi!` or `Crust` — records whose visible badges never mention Punk. Without an explanation the result reads as a bug.
 
 So when `genreId` is supplied, every returned record carries:

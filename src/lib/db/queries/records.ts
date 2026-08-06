@@ -221,6 +221,8 @@ export type RecordFilters = {
   condition?: (typeof records.conditionMedia)['_']['data'];
   yearFrom?: number;
   yearTo?: number;
+  /** §5.2, default true. Only meaningful alongside a year filter. */
+  includeUndated?: boolean;
   q?: string;
 };
 
@@ -273,8 +275,28 @@ function buildWhere(filters: RecordFilters) {
   if (filters.formatId !== undefined) clauses.push(eq(records.formatId, filters.formatId));
   if (filters.storeId !== undefined) clauses.push(eq(records.storeId, filters.storeId));
   if (filters.condition !== undefined) clauses.push(eq(records.conditionMedia, filters.condition));
-  if (filters.yearFrom !== undefined) clauses.push(gte(records.releaseYear, filters.yearFrom));
-  if (filters.yearTo !== undefined) clauses.push(lte(records.releaseYear, filters.yearTo));
+  /**
+   * §5.2's `includeUndated`. The year bounds are built as ONE grouped
+   * condition, then optionally ORed with `release_year IS NULL`.
+   *
+   * The grouping is the whole point: `(from AND to) OR NULL` is right, while
+   * `from AND (to OR NULL)` would let a 1972 record through a 1980 floor.
+   * §5.2 forbids nulls satisfying the range predicate itself, and that is the
+   * shape in which it would silently happen.
+   */
+  const yearClauses = [];
+  if (filters.yearFrom !== undefined) yearClauses.push(gte(records.releaseYear, filters.yearFrom));
+  if (filters.yearTo !== undefined) yearClauses.push(lte(records.releaseYear, filters.yearTo));
+
+  if (yearClauses.length > 0) {
+    const inRange = and(...yearClauses);
+    // Default true (§5.2): a year filter must not make records vanish.
+    clauses.push(
+      filters.includeUndated === false
+        ? inRange
+        : or(inRange, sql`${records.releaseYear} IS NULL`),
+    );
+  }
 
   if (filters.genreId !== undefined) {
     clauses.push(
@@ -363,7 +385,15 @@ export type MatchedVia = {
   descendants: Named[];
 };
 
-export type ListedRecord = RecordRow & { matchedVia: MatchedVia | null };
+/** §5.2: list rows carry hydrated names. `pressing` is deliberately absent — it
+ * is needed only on the detail read, where hydrateRecord already resolves it. */
+export type ListedRecord = RecordRow & {
+  artist: Named;
+  label: Named | null;
+  format: Named | null;
+  store: Named | null;
+  matchedVia: MatchedVia | null;
+};
 
 /**
  * SPEC.md §5.2's `matchedVia`: which of a record's OWN genres fall under the
@@ -424,16 +454,43 @@ export async function listRecords(options: {
   offset: number;
   sort?: { field: RecordSortField; direction: 'asc' | 'desc' };
   filters: RecordFilters;
-}): Promise<{ rows: ListedRecord[]; total: number }> {
+}): Promise<{ rows: ListedRecord[]; total: number; undatedCount: number }> {
   const db = getDb();
   const where = buildWhere(options.filters);
 
   const column = sortExpression(options.sort?.field ?? 'title');
   const ordered = options.sort?.direction === 'desc' ? desc(column) : asc(column);
 
+  /**
+   * §5.2's hydrated names, resolved with LEFT JOINs on the reference tables.
+   *
+   * LEFT, not INNER, for the three nullable relations — an INNER join would
+   * silently DROP every record without a label, which is a filter disguised as
+   * a projection. `artists` is joined the same way even though `artist_id` is
+   * NOT NULL: an inner join there would be correct today and would become a
+   * silent row-dropper if the column ever went nullable.
+   *
+   * All four are single-FK joins on indexed columns against a page-bounded
+   * set. None is a junction table, so no row multiplication — there is a test
+   * asserting a record with several genres still returns once.
+   */
   const rows = await db
-    .select()
+    .select({
+      record: records,
+      artistId: artists.id,
+      artistName: artists.name,
+      labelId: labels.id,
+      labelName: labels.name,
+      formatId: formats.id,
+      formatName: formats.name,
+      storeId: recordStores.id,
+      storeName: recordStores.name,
+    })
     .from(records)
+    .leftJoin(artists, eq(artists.id, records.artistId))
+    .leftJoin(labels, eq(labels.id, records.labelId))
+    .leftJoin(formats, eq(formats.id, records.formatId))
+    .leftJoin(recordStores, eq(recordStores.id, records.storeId))
     .where(where)
     // NULLS LAST and the id tiebreaker, for the same reasons as every other
     // list endpoint: Postgres flips null placement between ASC and DESC, and an
@@ -451,26 +508,63 @@ export async function listRecords(options: {
 
   const total = totals?.value ?? 0;
 
+  /**
+   * §5.2's `meta.undatedCount`: how many records in the CURRENT FILTER SET have
+   * no release year.
+   *
+   * Counted through the same where clause with the year conditions removed —
+   * `whereWithoutYears` — because the count must not depend on the range it is
+   * reporting about. Counting through `where` would make it 0 whenever
+   * includeUndated=false, which is exactly when the UI most needs the number.
+   */
+  const [undated] = await db
+    .select({ value: sql<number>`count(*)::int` })
+    .from(records)
+    .where(
+      and(
+        buildWhere({ ...options.filters, yearFrom: undefined, yearTo: undefined }),
+        sql`${records.releaseYear} IS NULL`,
+      ),
+    );
+
+  const undatedCount = undated?.value ?? 0;
+
+  const hydrate = (row: (typeof rows)[number]) => ({
+    ...row.record,
+    // artist_id is NOT NULL and the join is on the primary key, so this only
+    // falls back if the row were deleted mid-query. Named rather than asserted
+    // non-null: CLAUDE.md §6 forbids `!` to silence the compiler.
+    artist: { id: row.artistId ?? row.record.artistId, name: row.artistName ?? '' },
+    label: row.labelId === null ? null : { id: row.labelId, name: row.labelName ?? '' },
+    format: row.formatId === null ? null : { id: row.formatId, name: row.formatName ?? '' },
+    store: row.storeId === null ? null : { id: row.storeId, name: row.storeName ?? '' },
+  });
+
   // §5.2: null, not absent, when no genreId filter is applied — so a client
   // never has to branch on whether the key exists.
   if (options.filters.genreId === undefined) {
-    return { rows: rows.map((row) => ({ ...row, matchedVia: null })), total };
+    return {
+      rows: rows.map((row) => ({ ...hydrate(row), matchedVia: null })),
+      total,
+      undatedCount,
+    };
   }
 
   const { filtered, byRecord } = await resolveMatchedVia(
     options.filters.genreId,
-    rows.map((row) => row.id),
+    rows.map((row) => row.record.id),
   );
 
   return {
     rows: rows.map((row) => ({
-      ...row,
+      ...hydrate(row),
       matchedVia:
         filtered === undefined
           ? null
-          : { filtered, descendants: byRecord.get(row.id) ?? [] },
+          : { filtered, descendants: byRecord.get(row.record.id) ?? [] },
     })),
     total,
+    undatedCount,
   };
 }
 
