@@ -7,6 +7,12 @@ const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${PORT}`;
 
 export default defineConfig({
   testDir: './e2e',
+  /**
+   * Clears rows accumulated by PREVIOUS runs, so every observation is about the
+   * run that produced it. Fixture debris caused two false findings in step 5;
+   * see e2e/global-setup.ts. Asserted by test/repo/e2e-reset.test.ts.
+   */
+  globalSetup: './e2e/global-setup.ts',
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
