@@ -76,6 +76,31 @@ function fieldErrorResponse(fieldErrors: Record<string, string>) {
  * silently dropping an unrecognised filter returns more rows than the caller
  * asked for, which reads as success.
  */
+/**
+ * A year FILTER bound, held to the same range POST applies to `releaseYear`:
+ * a filter cannot usefully ask for a year the column could never hold.
+ *
+ * `z.coerce.number()` alone was two defects at once. It turns '' into 0, so
+ * `yearFrom=` silently applied `release_year >= 0` and dropped every undated
+ * record, while `yearTo=` applied `<= 0` and emptied the collection — both
+ * behind a 200. And with no upper bound, an out-of-int4-range value reached
+ * Postgres and raised, turning a client error into a 500.
+ *
+ * The empty string is rejected BEFORE coercion, because coercion is what
+ * destroys the distinction between "absent" and "blank". Every other filter
+ * already rejects a blank value; these two were the outliers.
+ */
+const yearFilter = z
+  .string()
+  // Rejects '' as well as 'abc' and '1982.5' — verified that the empty string
+  // fails HERE rather than at a length check, so no separate .min(1) is needed.
+  // Order matters: this must run BEFORE the transform, because Number('') is 0
+  // and coercing first is what destroyed the absent/blank distinction.
+  .refine((value) => /^-?\d+$/.test(value), 'must be a whole number')
+  .transform(Number)
+  .refine((value) => isValidFormedYear(value), 'is out of range')
+  .optional();
+
 const filterSchema = z.strictObject({
   artistId: uuid.optional(),
   genreId: uuid.optional(),
@@ -84,8 +109,8 @@ const filterSchema = z.strictObject({
   tagId: uuid.optional(),
   formatId: uuid.optional(),
   condition: z.enum(CONDITION_GRADES).optional(),
-  yearFrom: z.coerce.number().int().optional(),
-  yearTo: z.coerce.number().int().optional(),
+  yearFrom: yearFilter,
+  yearTo: yearFilter,
   q: z.string().trim().min(1).max(200).optional(),
 });
 

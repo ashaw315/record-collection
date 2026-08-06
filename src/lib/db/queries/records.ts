@@ -1,6 +1,7 @@
 import 'server-only';
 import { and, asc, desc, eq, exists, gte, ilike, inArray, lte, or, sql } from 'drizzle-orm';
 import { isForeignKeyViolation } from '@/lib/api/errors';
+import { escapeLikePattern } from '@/lib/api/like';
 import { countReferences } from './referrers';
 import { getDb } from '@/db/client';
 import {
@@ -299,7 +300,7 @@ function buildWhere(filters: RecordFilters) {
 
   if (filters.q !== undefined && filters.q !== '') {
     const q = filters.q;
-    const like = `%${q}%`;
+    const like = `%${escapeLikePattern(q)}%`;
 
     /**
      * Trigram OR substring, and both halves are needed — verified against the

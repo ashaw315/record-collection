@@ -625,3 +625,172 @@ describe('GET /api/records — genre hierarchy (§7.1)', () => {
     ]);
   });
 });
+
+/**
+ * Query-parameter validation at the boundary (SPEC.md §5: "All input validated
+ * with Zod at the route boundary").
+ *
+ * Every case here was found by the post-unit-6 adversarial review and confirmed
+ * by execution before being written down. They share one shape: a malformed
+ * filter that is SILENTLY APPLIED rather than rejected, so the caller gets a
+ * 200 with the wrong rows and reads it as success.
+ */
+/**
+ * A minimal isolated fixture: one fresh artist with the given titles, so a
+ * search test can assert on an exact result set without the main seed's rows
+ * interfering. Returns the artist id, which the tests AND with `q` so only
+ * these titles are in scope.
+ */
+async function seed2(...titles: string[]): Promise<string> {
+  const artistId = (
+    await db.execute<{ id: string }>(
+      sql`INSERT INTO artists (name) VALUES ('Fixture Artist') RETURNING id`,
+    )
+  ).rows[0].id;
+
+  for (const title of titles) {
+    await db.execute(
+      sql`INSERT INTO records (artist_id, title) VALUES (${artistId}, ${title})`,
+    );
+  }
+  return artistId;
+}
+
+describe('GET /api/records — q is a literal, not a LIKE pattern', () => {
+  /**
+   * `q` was interpolated straight into `%${q}%`, so LIKE metacharacters acted
+   * as wildcards. Verified against the database that this was the ILIKE branch
+   * and not the trigram one: similarity('Why','%') and similarity('Why','_')
+   * are both 0, well under the 0.3 threshold, so trigram contributes nothing
+   * for these inputs and cannot be what matched.
+   */
+  it('treats % as a literal character rather than matching everything', async () => {
+    await seed();
+
+    // Two records exist; neither title nor artist contains a literal '%'.
+    expect(await names('/api/records?q=%25')).toEqual([]);
+  });
+
+  it('treats _ as a literal character rather than matching any single one', async () => {
+    await seed();
+
+    expect(await names('/api/records?q=_')).toEqual([]);
+  });
+
+  /**
+   * The clean proof, and the one that cannot be explained away as trigram
+   * fuzziness: '_h' is not a substring of 'Why' or of any seeded title, so an
+   * ESCAPED pattern returns nothing. Unescaped, '_' matches the 'W' and 'h'
+   * follows, so 'Why' comes back.
+   */
+  it('does not let _h match Why', async () => {
+    const s = await seed2('Why', 'Zzzz');
+
+    expect(await names(`/api/records?q=_h&artistId=${s}`)).toEqual([]);
+  });
+
+  it('still finds a literal underscore when one is really in the title', async () => {
+    /**
+     * Escaping must not make a real metacharacter unfindable.
+     *
+     * This asserts CONTAINMENT, not equality, and deliberately so: 'Side B'
+     * also comes back, because similarity('Side B','Side_A') is 0.56 — above
+     * the 0.3 threshold — so the TRIGRAM half matches it legitimately. §5.2
+     * calls `q` fuzzy, so that is correct behaviour, not leakage from the
+     * escape. Verified against the database rather than assumed; an earlier
+     * version of this test asserted equality and failed for that reason.
+     *
+     * The distinguishing fixture is the '_h' test above, where the trigram
+     * contributes nothing (similarity is 0) and only the ILIKE branch could
+     * have matched.
+     */
+    const s = await seed2('Side_A', 'No Underscore Here');
+
+    expect(await names(`/api/records?q=Side_A&artistId=${s}`)).toContain('Side_A');
+  });
+
+  it('treats a backslash as a literal too', async () => {
+    // The escape character itself needs escaping, or 'a\' becomes a dangling
+    // escape and Postgres raises rather than returning rows.
+    const s = await seed2('back\\slash', 'plain');
+
+    expect(await names(`/api/records?q=back\\slash&artistId=${s}`)).toEqual(['back\\slash']);
+  });
+
+  it('still matches an ordinary substring', async () => {
+    // The regression guard: escaping must not break normal search.
+    await seed();
+
+    expect(await names('/api/records?q=Hear')).toEqual([
+      'Hear Nothing See Nothing Say Nothing',
+    ]);
+  });
+});
+
+describe('GET /api/records — year filter validation', () => {
+  /**
+   * `z.coerce.number()` turns '' into 0, so `yearFrom=` applied
+   * `release_year >= 0` and silently dropped every record with a null release
+   * year. `yearTo=` is worse: `release_year <= 0` matches nothing, so the whole
+   * collection vanishes behind a 200.
+   *
+   * Every other empty filter already 400s (verified: q=, condition=, artistId=,
+   * genreId=, tagId= all reject). These two were the outliers.
+   */
+  it('rejects an empty yearFrom rather than coercing it to 0', async () => {
+    await seed();
+
+    const response = await listRecords(request('/api/records?yearFrom='));
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).error.fieldErrors.yearFrom).toBeDefined();
+  });
+
+  it('rejects an empty yearTo rather than emptying the collection', async () => {
+    await seed();
+
+    const response = await listRecords(request('/api/records?yearTo='));
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).error.fieldErrors.yearTo).toBeDefined();
+  });
+
+  it('does not drop null-release-year records when no year filter is sent', async () => {
+    // The observable harm the empty-string bug caused, asserted directly: an
+    // undated record must survive an unfiltered list.
+    const s = await seed();
+    await db.execute(
+      sql`INSERT INTO records (artist_id, title, release_year) VALUES (${s.discharge}, 'Undated', NULL)`,
+    );
+
+    expect(await names('/api/records')).toContain('Undated');
+  });
+
+  /**
+   * An out-of-int4-range year reached Postgres and raised, surfacing as a 500 —
+   * a client error reported as a server error. Bounded with the SAME check
+   * POST already applies to releaseYear, so a filter cannot ask for a year the
+   * column could never hold.
+   */
+  it('rejects a year above the int4 range with 400, not 500', async () => {
+    const response = await listRecords(request('/api/records?yearFrom=99999999999'));
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).error.fieldErrors.yearFrom).toBeDefined();
+  });
+
+  it('rejects a year below the int4 range with 400, not 500', async () => {
+    const response = await listRecords(request('/api/records?yearTo=-99999999999'));
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).error.fieldErrors.yearTo).toBeDefined();
+  });
+
+  it('still accepts a year inside the range', async () => {
+    await seed();
+
+    expect(await names('/api/records?yearFrom=1982&yearTo=1982')).toEqual([
+      'Hear Nothing See Nothing Say Nothing',
+    ]);
+  });
+});
