@@ -72,8 +72,45 @@ describe('resolveConnectionHost', () => {
 
   it('rejects a non-postgres scheme that pg would otherwise parse', () => {
     expect(parse('garbage://x').host).toBe('x'); // upstream would accept this
-    expect(() => resolveConnectionHost('garbage://x')).toThrow();
-    expect(() => resolveConnectionHost('mysql://user:pass@localhost:3306/db')).toThrow();
+    expect(() => resolveConnectionHost('garbage://x')).toThrowError(/scheme|postgresql:\/\//i);
+
+    /**
+     * `mysql://user:pass@localhost:3306/db` has host "localhost", which the
+     * host allowlist ACCEPTS. So the scheme check is the only thing rejecting
+     * it, and asserting the scheme message is what pins that — a bare
+     * .toThrow() here would pass even if the rejection came from somewhere
+     * else entirely.
+     */
+    expect(() => resolveConnectionHost('mysql://user:pass@localhost:3306/db')).toThrowError(
+      /scheme|postgresql:\/\//i,
+    );
+  });
+
+  /**
+   * The `catch` around pg-connection-string's parse, which no test reached
+   * until the .toThrow() sweep. Mutation-verified as LIVE BUT UNCONSTRAINED
+   * (NOTES.md case 2): removing the throw failed nothing, but parse() genuinely
+   * throws on these — verified by calling it directly — so the branch is real
+   * and reachable, not dead.
+   *
+   * Each input passes the scheme check and fails inside parse(), which is the
+   * only way to reach this branch.
+   */
+  describe('a postgres-scheme string that pg-connection-string cannot parse', () => {
+    const unparseable = [
+      'postgresql://[', // unterminated IPv6 bracket
+      'postgresql://%', // malformed percent-encoding
+      'postgresql://u:p@[unclosed:5432/db',
+      'postgresql://u:p@host:notaport/db', // non-numeric port
+    ];
+
+    for (const url of unparseable) {
+      it(`rejects ${url} with the parse message, not the scheme one`, () => {
+        // Asserts it reached the PARSE branch: if the scheme check had caught
+        // it, the message would name the scheme instead.
+        expect(() => resolveConnectionHost(url)).toThrowError(/could not be parsed/i);
+      });
+    }
   });
 
   it('rejects a postgres URL with an empty host', () => {
