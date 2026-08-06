@@ -282,6 +282,21 @@ All routes under `app/api/`. All responses JSON. All protected by the auth middl
 | Method | Path | Notes |
 |---|---|---|
 | GET | `/api/records` | Filters: `artistId`, `genreId`, `labelId`, `storeId`, `tagId`, `formatId`, `condition`, `yearFrom`, `yearTo`, `q` (fuzzy on title + artist name). Sort: `title`, `artist`, `purchaseDate`, `purchasePrice`, `releaseYear`. |
+
+**`matchedVia` on genre-filtered results.** Because §7.1 makes genre membership hierarchical, filtering by `genreId=<Punk>` returns records tagged only `Oi!` or `Crust` — records whose visible badges never mention Punk. Without an explanation the result reads as a bug.
+
+So when `genreId` is supplied, every returned record carries:
+
+```ts
+matchedVia: {
+  filtered: { id: string; name: string };      // the genre the caller filtered by
+  descendants: Array<{ id: string; name: string }>;  // the record's own genres that fall under it
+} | null
+```
+
+`descendants` is an **array, not a single path**: a record may match through several descendants at once, and picking one arbitrarily flattens exactly the genre distinctions CLAUDE.md §8 forbids. When the record is tagged with the filtered genre directly, `descendants` contains that genre itself, so the field is never empty on a matched row. `matchedVia` is `null` when no `genreId` filter is applied.
+
+The UI decides how to present this; the API's obligation is to make the match explainable rather than to format it.
 | POST | `/api/records` | Create. Accepts nested `genreIds: string[]`, `tagIds: string[]`. |
 | GET | `/api/records/:id` | Returns record with hydrated artist, label, format, store, pressing, genres, tags, images, journal entries, and latest price. |
 | PATCH | `/api/records/:id` | Partial update. |

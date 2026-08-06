@@ -2,7 +2,6 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { sql } from 'drizzle-orm';
 import { getTestDb, truncateAll, closeTestDb } from '../../helpers/db';
 import { GET as getStats } from '@/app/api/records/stats/route';
-import { GET as getRecord } from '@/app/api/records/[id]/route';
 import { middlewareRuns, routeAuthMode } from '@/lib/auth/routes';
 
 /**
@@ -82,27 +81,32 @@ describe('unauthenticated access', () => {
 });
 
 /**
- * §5.2's routing note: the static segment must not be swallowed by [id]. Next
- * resolves static before dynamic so this works — but the note also requires
- * [id] to reject a non-UUID with 400 rather than attempting a lookup, and both
- * halves are asserted.
+ * §5.2's routing note has two halves, and only ONE of them can be tested here.
+ *
+ * Route PRECEDENCE — that the static segment is not swallowed by [id] — is a
+ * property of the Next.js router, which is not involved when a test imports a
+ * handler and calls it directly. That half lives in
+ * e2e/records-routing.spec.ts, where a real request is dispatched; it was
+ * mutation-verified by deleting the static route and watching the E2E test
+ * fail.
+ *
+ * This file previously claimed the precedence coverage with a test that called
+ * the [id] handler with a hand-made `{ id: 'stats' }` param. That exercised the
+ * UUID guard, not routing, and mutation-verified as duplicating
+ * 'returns 400 for a non-UUID id' in records-update.test.ts — removing the
+ * guard failed both. The comment implied otherwise, which is the part that made
+ * it misleading rather than merely redundant.
+ *
+ * What remains here is the half that IS testable at this layer: the stats
+ * handler returns the stats shape.
  */
-describe('the static stats segment is not swallowed by [id]', () => {
-  it('returns stats rather than a 400 from the dynamic route', async () => {
+describe('the stats handler returns the stats shape', () => {
+  it('returns the §5.2 fields rather than an error', async () => {
     const body = await stats();
 
     expect(body).toHaveProperty('totalRecords');
+    expect(body).toHaveProperty('byGenre');
     expect(body).not.toHaveProperty('error');
-  });
-
-  it('still rejects a non-UUID id on the dynamic route', async () => {
-    const response = await getRecord(request('/api/records/stats'), {
-      params: Promise.resolve({ id: 'stats' }),
-    });
-
-    // If routing ever regressed and 'stats' reached [id], this is what the
-    // caller would get — a 400, not a Postgres cast error.
-    expect(response.status).toBe(400);
   });
 });
 

@@ -162,13 +162,49 @@ describe('GET /api/records — individual filters', () => {
     }
   });
 
-  it('treats yearFrom and yearTo as an inclusive range', async () => {
+  /**
+   * INCLUSIVE at both ends, asserted at each boundary separately.
+   *
+   * The second assertion here was `toHaveLength(2)` on a range covering both
+   * seeded years — mutation-verified as adding nothing the first did not
+   * already catch, since making yearTo exclusive failed the test identically
+   * with that line deleted.
+   *
+   * Each bound now has its own case where ONLY that bound's inclusivity
+   * decides the outcome: a range whose lower end exactly equals one record's
+   * year, and one whose upper end exactly equals the other's. An exclusive
+   * `gte` fails the first and leaves the second passing, and vice versa, so
+   * the two ends cannot mask each other.
+   */
+  it('treats yearFrom as inclusive at its lower bound', async () => {
+    /**
+     * ONLY yearFrom is sent, and it exactly equals Arise!'s 1985. Inclusive
+     * `>=` returns it; exclusive `>` returns nothing. Sending yearTo as well
+     * would let the OTHER bound's mutation fail this test too, which is what
+     * made the previous version unable to isolate them.
+     */
     await seed();
 
-    expect(await names('/api/records?yearFrom=1982&yearTo=1982')).toEqual([
+    expect(await names('/api/records?yearFrom=1985')).toEqual(['Arise!']);
+  });
+
+  it('treats yearTo as inclusive at its upper bound', async () => {
+    // Only yearTo, exactly equal to Hear Nothing's 1982.
+    await seed();
+
+    expect(await names('/api/records?yearTo=1982')).toEqual([
       'Hear Nothing See Nothing Say Nothing',
     ]);
-    expect(await names('/api/records?yearFrom=1982&yearTo=1985')).toHaveLength(2);
+  });
+
+  it('spans both records when the range covers them', async () => {
+    // The regression guard against a bound so tight it excludes everything.
+    await seed();
+
+    expect(await names('/api/records?yearFrom=1982&yearTo=1985')).toEqual([
+      'Arise!',
+      'Hear Nothing See Nothing Say Nothing',
+    ]);
   });
 
   it('rejects an unknown condition value rather than ignoring it', async () => {
@@ -410,23 +446,108 @@ describe('GET /api/records — sorting', () => {
     expect(titles.at(-1)).toBe('Aaa');
   });
 
+  /**
+   * The desc counterpart, with the SAME inverting rows as the asc test above.
+   *
+   * It previously used the two-row seed alone, where artist order and title
+   * order agree — so it could not tell a joined artist sort from `sort by
+   * title`, exactly the defect the asc test was written with extra rows to
+   * avoid. Mutation-verified: replacing the artist expression with
+   * records.title failed the asc test and left this one passing.
+   *
+   * It did constrain the DIRECTION (ignoring `desc` failed it), so it was not
+   * wholly decorative — only decorative for the joined-sort property its name
+   * claims. Both properties are asserted now.
+   */
   it('reverses the joined artist sort on desc', async () => {
     await seed();
 
+    const zounds = (
+      await db.execute<{ id: string }>(
+        sql`INSERT INTO artists (name) VALUES ('Zounds') RETURNING id`,
+      )
+    ).rows[0].id;
+    const aardvark = (
+      await db.execute<{ id: string }>(
+        sql`INSERT INTO artists (name) VALUES ('Aardvark') RETURNING id`,
+      )
+    ).rows[0].id;
+
+    await db.execute(sql`INSERT INTO records (artist_id, title) VALUES (${zounds}, 'Aaa')`);
+    await db.execute(sql`INSERT INTO records (artist_id, title) VALUES (${aardvark}, 'Zzz')`);
+
     const desc = await (await listRecords(request('/api/records?sort=artist:desc'))).json();
-    expect(desc.data.map((r: { title: string }) => r.title)).toEqual([
+    const titles = desc.data.map((r: { title: string }) => r.title);
+
+    // By ARTIST descending: Zounds('Aaa'), Discharge(…), Amebix('Arise!'),
+    // Aardvark('Zzz'). By TITLE descending it would be the exact reverse:
+    // 'Zzz', 'Hear Nothing…', 'Arise!', 'Aaa'.
+    expect(titles).toEqual([
+      'Aaa',
       'Hear Nothing See Nothing Say Nothing',
       'Arise!',
+      'Zzz',
     ]);
   });
 
-  it('sorts by each allowlisted field', async () => {
-    await seed();
+  /**
+   * Each allowlisted field sorted, asserting ORDER — not status.
+   *
+   * This test asserted only `status === 200` until the post-unit-6 review.
+   * Mutation-verified then: pointing purchaseDate, purchasePrice AND
+   * releaseYear all at records.title failed 2 tests, neither of them this one.
+   * Every sort field could return the wrong order and it passed.
+   *
+   * The fixture is the reason it can now tell. The two-row seed cannot: its
+   * title, artist, price and date orders ALL agree, so any of those four
+   * columns produces the same output. These four rows give every field a
+   * DIFFERENT order, each one a distinct permutation, so a field resolved to
+   * the wrong column lands rows in the wrong places.
+   *
+   *   title asc:         Alpha, Bravo, Charlie, Delta
+   *   purchaseDate asc:  Delta, Charlie, Bravo, Alpha   (reverse)
+   *   purchasePrice asc: Bravo, Delta, Alpha, Charlie
+   *   releaseYear asc:   Charlie, Alpha, Delta, Bravo
+   */
+  it('sorts by each allowlisted field, in that field\'s own order', async () => {
+    const artistId = (
+      await db.execute<{ id: string }>(
+        sql`INSERT INTO artists (name) VALUES ('Sort Fixture') RETURNING id`,
+      )
+    ).rows[0].id;
 
-    for (const field of ['title', 'purchaseDate', 'purchasePrice', 'releaseYear']) {
-      const response = await listRecords(request(`/api/records?sort=${field}:asc`));
-      expect(response.status, field).toBe(200);
+    const rows: Array<[string, string, string, number]> = [
+      // title,     purchaseDate, purchasePrice, releaseYear
+      ['Alpha', '2024-04-01', '30.00', 1985],
+      ['Bravo', '2024-03-01', '10.00', 1999],
+      ['Charlie', '2024-02-01', '40.00', 1977],
+      ['Delta', '2024-01-01', '20.00', 1991],
+    ];
+
+    for (const [title, date, price, year] of rows) {
+      await db.execute(
+        sql`INSERT INTO records (artist_id, title, purchase_date, purchase_price, release_year)
+            VALUES (${artistId}, ${title}, ${date}, ${price}, ${year})`,
+      );
     }
+
+    const ordered = async (field: string, direction: string) => {
+      const response = await listRecords(
+        request(`/api/records?sort=${field}:${direction}&artistId=${artistId}`),
+      );
+      expect(response.status, field).toBe(200);
+      const body = await response.json();
+      return body.data.map((r: { title: string }) => r.title);
+    };
+
+    expect(await ordered('title', 'asc')).toEqual(['Alpha', 'Bravo', 'Charlie', 'Delta']);
+    expect(await ordered('purchaseDate', 'asc')).toEqual(['Delta', 'Charlie', 'Bravo', 'Alpha']);
+    expect(await ordered('purchasePrice', 'asc')).toEqual(['Bravo', 'Delta', 'Alpha', 'Charlie']);
+    expect(await ordered('releaseYear', 'asc')).toEqual(['Charlie', 'Alpha', 'Delta', 'Bravo']);
+
+    // desc as well, so a field mapped to the right column but the wrong
+    // direction is caught too.
+    expect(await ordered('purchasePrice', 'desc')).toEqual(['Charlie', 'Alpha', 'Delta', 'Bravo']);
   });
 
   it('rejects a real but unenumerated sort column with 400', async () => {
