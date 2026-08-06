@@ -3,8 +3,7 @@ import { sql } from 'drizzle-orm';
 import { getTestDb, truncateAll, closeTestDb } from '../helpers/db';
 import {
   MAX_NESTED_IDS,
-  replaceRecordGenres,
-  replaceRecordTags,
+  updateRecordWithNested,
   writeRecordWithNested,
 } from '@/lib/db/queries/nested';
 
@@ -203,7 +202,7 @@ describe('writeRecordWithNested — the parent and its links land together', () 
   });
 });
 
-describe('replaceRecordGenres / replaceRecordTags — the PATCH primitive', () => {
+describe('updateRecordWithNested — the PATCH primitive', () => {
   it('replaces the whole set rather than appending', async () => {
     const artistId = await insertArtist('Discharge');
     const [a, b, c] = [await insertGenre('A'), await insertGenre('B'), await insertGenre('C')];
@@ -214,7 +213,7 @@ describe('replaceRecordGenres / replaceRecordTags — the PATCH primitive', () =
       tagIds: [],
     });
 
-    await replaceRecordGenres(created.id, [c]);
+    await updateRecordWithNested({ id: created.id, values: {}, genreIds: [c] });
 
     // Replace, not merge: the caller sent the complete desired set.
     expect(await genreIdsFor(created.id)).toEqual([c]);
@@ -233,7 +232,7 @@ describe('replaceRecordGenres / replaceRecordTags — the PATCH primitive', () =
       tagIds: [],
     });
 
-    await replaceRecordGenres(created.id, []);
+    await updateRecordWithNested({ id: created.id, values: {}, genreIds: [] });
 
     expect(await genreIdsFor(created.id)).toEqual([]);
   });
@@ -252,7 +251,7 @@ describe('replaceRecordGenres / replaceRecordTags — the PATCH primitive', () =
       tagIds: [tagId],
     });
 
-    await replaceRecordGenres(created.id, []);
+    await updateRecordWithNested({ id: created.id, values: {}, genreIds: [] });
 
     expect(await tagIdsFor(created.id)).toEqual([tagId]);
   });
@@ -270,7 +269,9 @@ describe('replaceRecordGenres / replaceRecordTags — the PATCH primitive', () =
       tagIds: [],
     });
 
-    await expect(replaceRecordGenres(created.id, [good, missing])).rejects.toThrow();
+    await expect(
+      updateRecordWithNested({ id: created.id, values: {}, genreIds: [good, missing] }),
+    ).rejects.toThrow();
 
     expect(await genreIdsFor(created.id)).toEqual([good]);
   });
@@ -285,8 +286,8 @@ describe('replaceRecordGenres / replaceRecordTags — the PATCH primitive', () =
       tagIds: [],
     });
 
-    await replaceRecordTags(created.id, []);
-    await replaceRecordGenres(created.id, [genreId, genreId]);
+    await updateRecordWithNested({ id: created.id, values: {}, tagIds: [] });
+    await updateRecordWithNested({ id: created.id, values: {}, genreIds: [genreId, genreId] });
 
     expect(await genreIdsFor(created.id)).toEqual([genreId]);
   });

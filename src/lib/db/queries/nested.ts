@@ -2,6 +2,9 @@ import 'server-only';
 import { eq } from 'drizzle-orm';
 import { getDb } from '@/db/client';
 import { recordGenres, recordTags, records } from '@/db/schema';
+// Self-import so the -Tx primitives are reached through the module object and a
+// test can force a failure at a chosen write. See updateRecordWithNested.
+import * as nested from './nested';
 
 /**
  * The transactional nested-write primitive (SPEC.md §5.2).
@@ -104,43 +107,93 @@ export async function writeRecordWithNested(input: {
 }
 
 /**
- * Replaces a record's genre links with exactly `genreIds`.
+ * A handle to an open transaction, so the -Tx primitives below can be composed
+ * into one by a caller that needs all of them to land together.
+ */
+type Tx = Parameters<Parameters<ReturnType<typeof getDb>['transaction']>[0]>[0];
+
+/**
+ * Replaces a record's genre links with exactly `genreIds`, INSIDE a transaction
+ * the caller owns.
  *
  * REPLACE, not merge: the caller sends the complete desired set, so an empty
  * array means "remove all". That distinction is the half of PATCH semantics the
- * template's strictObject shape cannot express (NOTES.md criterion 10), and it
- * has to exist in the primitive before the endpoint can offer it.
+ * template's strictObject shape cannot express (NOTES.md criterion 10).
  *
- * Transactional so a failed replacement leaves the ORIGINAL set intact — a
- * half-applied replace is the same silent corruption as a half-applied create.
+ * Takes the transaction rather than opening one, because PATCH must roll back
+ * this replacement together with the scalar update and the tag replacement. A
+ * version that opened its own transaction is what made PATCH non-atomic: each
+ * write committed independently, so a later failure left the earlier ones
+ * behind a 500.
  */
-export async function replaceRecordGenres(recordId: string, genreIds: string[]): Promise<void> {
+export async function replaceRecordGenresTx(
+  tx: Tx,
+  recordId: string,
+  genreIds: string[],
+): Promise<void> {
   assertWithinBounds('genreIds', genreIds);
   const ids = unique(genreIds);
-  const db = getDb();
 
-  await db.transaction(async (tx) => {
-    await tx.delete(recordGenres).where(eq(recordGenres.recordId, recordId));
+  await tx.delete(recordGenres).where(eq(recordGenres.recordId, recordId));
 
-    if (ids.length > 0) {
-      await tx.insert(recordGenres).values(ids.map((genreId) => ({ recordId, genreId })));
-    }
-  });
+  if (ids.length > 0) {
+    await tx.insert(recordGenres).values(ids.map((genreId) => ({ recordId, genreId })));
+  }
 }
 
 /** The tag counterpart. Separate function, not a shared "clear the junctions"
  * helper: replacing genres must leave tags untouched, and one helper taking a
  * table is exactly how that gets confused. */
-export async function replaceRecordTags(recordId: string, tagIds: string[]): Promise<void> {
+export async function replaceRecordTagsTx(
+  tx: Tx,
+  recordId: string,
+  tagIds: string[],
+): Promise<void> {
   assertWithinBounds('tagIds', tagIds);
   const ids = unique(tagIds);
+
+  await tx.delete(recordTags).where(eq(recordTags.recordId, recordId));
+
+  if (ids.length > 0) {
+    await tx.insert(recordTags).values(ids.map((tagId) => ({ recordId, tagId })));
+  }
+}
+
+/**
+ * The PATCH counterpart to `writeRecordWithNested`: the scalar update and both
+ * junction replacements in ONE transaction.
+ *
+ * `undefined` means LEAVE ALONE and `[]` means REMOVE ALL, for each of the two
+ * arrays independently — the same distinction the endpoint offers, preserved
+ * here so the primitive cannot silently collapse them.
+ *
+ * The functions are called through the module object so a test can force a
+ * failure at a chosen write and observe that the earlier ones rolled back.
+ * Calling them directly would bind the reference at module load and make the
+ * spy invisible, which would leave the rollback path unconstrained — the
+ * "live but unconstrained" pattern in NOTES.md.
+ */
+export async function updateRecordWithNested(input: {
+  id: string;
+  values: Partial<typeof records.$inferInsert>;
+  genreIds?: string[];
+  tagIds?: string[];
+}): Promise<void> {
+  if (input.genreIds !== undefined) assertWithinBounds('genreIds', input.genreIds);
+  if (input.tagIds !== undefined) assertWithinBounds('tagIds', input.tagIds);
+
   const db = getDb();
 
   await db.transaction(async (tx) => {
-    await tx.delete(recordTags).where(eq(recordTags.recordId, recordId));
+    if (Object.keys(input.values).length > 0) {
+      await tx.update(records).set(input.values).where(eq(records.id, input.id));
+    }
 
-    if (ids.length > 0) {
-      await tx.insert(recordTags).values(ids.map((tagId) => ({ recordId, tagId })));
+    if (input.genreIds !== undefined) {
+      await nested.replaceRecordGenresTx(tx, input.id, input.genreIds);
+    }
+    if (input.tagIds !== undefined) {
+      await nested.replaceRecordTagsTx(tx, input.id, input.tagIds);
     }
   });
 }

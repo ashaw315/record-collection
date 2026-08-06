@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { Pool } from '@neondatabase/serverless';
@@ -72,6 +72,11 @@ describe.skipIf(!configured)('transactions over the Neon serverless driver', () 
 
   afterAll(async () => {
     if (pool !== undefined) {
+      await db.execute(
+        sql`DELETE FROM records WHERE artist_id IN
+              (SELECT id FROM artists WHERE name LIKE ${`${probe}%`})`,
+      );
+      await db.execute(sql`DELETE FROM genres WHERE name LIKE ${`${probe}%`}`);
       await db.execute(sql`DELETE FROM artists WHERE name LIKE ${`${probe}%`}`);
       await pool.end();
     }
@@ -199,6 +204,10 @@ describe.skipIf(!configured)('transactions over the Neon serverless driver', () 
     const previousDatabase = process.env.DATABASE_URL;
     process.env.TEST_DATABASE_URL = '';
     process.env.DATABASE_URL = branchUrl;
+    // NODE_ENV too, or resolveDriver refuses outright and the primitive never
+    // reaches Neon — a bare .rejects.toThrow() would accept that refusal as if
+    // it were the rollback under test.
+    vi.stubEnv('NODE_ENV', 'production');
 
     try {
       const { closeDb } = await import('@/db/client');
@@ -210,18 +219,94 @@ describe.skipIf(!configured)('transactions over the Neon serverless driver', () 
           genreIds: [missingGenre],
           tagIds: [],
         }),
-      ).rejects.toThrow();
+      ).rejects.toThrow(/record_genres/i);
 
       await closeDb();
     } finally {
       process.env.TEST_DATABASE_URL = previous ?? '';
       process.env.DATABASE_URL = previousDatabase ?? '';
+      vi.unstubAllEnvs();
     }
 
     const found = await db.execute<{ n: number }>(
       sql`SELECT count(*)::int AS n FROM records WHERE title = ${title}`,
     );
     expect(found.rows[0].n).toBe(0);
+  });
+
+  /**
+   * The PATCH counterpart, for the same reason as the create primitive above.
+   *
+   * updateRecordWithNested spans a scalar UPDATE and two junction replacements
+   * in one transaction. It was added after the post-unit-6 review found PATCH
+   * running three INDEPENDENT transactions, so a failure in the third committed
+   * the first two behind a 500. That fix is only real if the rollback holds on
+   * the driver production actually uses.
+   */
+  it('rolls back the PATCH primitive across the scalar update and the junctions', async () => {
+    const { writeRecordWithNested, updateRecordWithNested } = await import(
+      '@/lib/db/queries/nested'
+    );
+    const artistName = `${probe}-patch-artist`;
+    const title = `${probe}-patch-record`;
+    const genreName = `${probe}-patch-genre`;
+    const missingTag = '00000000-0000-4000-8000-000000000000';
+
+    await db.execute(sql`INSERT INTO artists (name) VALUES (${artistName})`);
+    const artist = await db.execute<{ id: string }>(
+      sql`SELECT id FROM artists WHERE name = ${artistName}`,
+    );
+    await db.execute(sql`INSERT INTO genres (name) VALUES (${genreName})`);
+    const genre = await db.execute<{ id: string }>(
+      sql`SELECT id FROM genres WHERE name = ${genreName}`,
+    );
+
+    const previous = process.env.TEST_DATABASE_URL;
+    const previousDatabase = process.env.DATABASE_URL;
+    process.env.TEST_DATABASE_URL = '';
+    process.env.DATABASE_URL = branchUrl;
+    vi.stubEnv('NODE_ENV', 'production');
+
+    let recordId = '';
+    try {
+      const { closeDb } = await import('@/db/client');
+      await closeDb();
+
+      const created = await writeRecordWithNested({
+        values: { artistId: artist.rows[0].id, title },
+        genreIds: [genre.rows[0].id],
+        tagIds: [],
+      });
+      recordId = created.id;
+
+      // The tag write fails on a foreign key AFTER the title and the genre
+      // replacement have been issued inside the same transaction.
+      await expect(
+        updateRecordWithNested({
+          id: recordId,
+          values: { title: `${title}-CHANGED` },
+          genreIds: [],
+          tagIds: [missingTag],
+        }),
+      ).rejects.toThrow(/record_tags/i);
+
+      await closeDb();
+    } finally {
+      process.env.TEST_DATABASE_URL = previous ?? '';
+      process.env.DATABASE_URL = previousDatabase ?? '';
+      vi.unstubAllEnvs();
+    }
+
+    // The title must be the ORIGINAL, and the genre link must still be there.
+    const after = await db.execute<{ title: string }>(
+      sql`SELECT title FROM records WHERE id = ${recordId}`,
+    );
+    expect(after.rows[0].title).toBe(title);
+
+    const genresAfter = await db.execute<{ n: number }>(
+      sql`SELECT count(*)::int AS n FROM record_genres WHERE record_id = ${recordId}`,
+    );
+    expect(genresAfter.rows[0].n).toBe(1);
   });
 
   /**

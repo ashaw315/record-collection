@@ -396,17 +396,6 @@ export async function deleteRecord(id: string): Promise<RecordDeleteOutcome> {
   }
 }
 
-export async function updateRecordFields(
-  id: string,
-  values: Partial<typeof records.$inferInsert>,
-): Promise<RecordRow | undefined> {
-  const db = getDb();
-  if (Object.keys(values).length === 0) return findRecordById(id);
-
-  const [row] = await db.update(records).set(values).where(eq(records.id, id)).returning();
-  return row;
-}
-
 export type RecordStats = {
   totalRecords: number;
   totalSpend: string;

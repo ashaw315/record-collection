@@ -8,14 +8,13 @@ import {
   validationError,
 } from '@/lib/api/errors';
 import { withErrorHandling } from '@/lib/api/handler';
-import { replaceRecordGenres, replaceRecordTags } from '@/lib/db/queries/nested';
+import { updateRecordWithNested } from '@/lib/db/queries/nested';
 import {
   countRecordReferences,
   deleteRecord,
   findRecordById,
   hydrateRecord,
   missingIds,
-  updateRecordFields,
 } from '@/lib/db/queries/records';
 import { findArtistById } from '@/lib/db/queries/artists';
 import { findLabelById } from '@/lib/db/queries/labels';
@@ -93,9 +92,8 @@ export const PATCH = withErrorHandling(
       if (missing.length > 0) fieldErrors.tagIds = `No tag with id ${missing[0]} exists`;
     }
 
-    // Validated BEFORE anything is written, so a bad nested id leaves the
-    // scalars untouched too — a partially-applied PATCH is the same silent
-    // corruption as a partially-applied create.
+    // Validated BEFORE anything is written, so a bad nested id costs nothing —
+    // the common failures never reach the transaction at all.
     if (Object.keys(fieldErrors).length > 0) {
       return NextResponse.json(
         { error: { message: 'Invalid request', code: 'VALIDATION_ERROR', fieldErrors } },
@@ -103,17 +101,21 @@ export const PATCH = withErrorHandling(
       );
     }
 
-    await updateRecordFields(id, scalars);
-
     /**
-     * `undefined` means LEAVE ALONE; `[]` means REMOVE ALL.
+     * All three writes in ONE transaction.
      *
-     * The two are checked independently — a handler that reads them together
+     * `undefined` means LEAVE ALONE; `[]` means REMOVE ALL — checked
+     * independently for each array, because a handler that reads them together
      * ("if either is present, replace both") passes any test varying them in
      * lockstep and silently wipes the other set in production.
+     *
+     * These were three independent transactions until the post-unit-6 review.
+     * A failure in the third committed the first two behind a 500, leaving the
+     * record with a new title and a fully replaced genre set the caller was
+     * told had not been applied. The pre-checks above only ever covered the
+     * failures they anticipate; the transaction is what covers the rest.
      */
-    if (genreIds !== undefined) await replaceRecordGenres(id, genreIds);
-    if (tagIds !== undefined) await replaceRecordTags(id, tagIds);
+    await updateRecordWithNested({ id, values: scalars, genreIds, tagIds });
 
     const updated = await hydrateRecord(id);
     if (updated === undefined) return notFound('Record not found');

@@ -477,3 +477,117 @@ describe('DELETE /api/records/:id', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * PATCH writes three things — the scalars, the genre links and the tag links.
+ * They must land together or not at all.
+ *
+ * Until this was fixed, they were three INDEPENDENT transactions, so a failure
+ * in the third committed the first two behind a 500. That is worse than a wipe:
+ * the record ends up with a new title AND a fully replaced genre set that the
+ * caller was told never happened, so the client's model of the row is wrong in
+ * a way nothing surfaces.
+ *
+ * The failure is forced at the LAST write, because that is the ordering where
+ * the most state has already been written — a test that fails the first write
+ * proves nothing, since there is nothing before it to roll back.
+ */
+describe('PATCH /api/records/:id — atomicity across the three writes', () => {
+  it('rolls back the scalar update and the genre replacement when the tag write fails', async () => {
+    const f = await seed();
+    const nested = await import('@/lib/db/queries/nested');
+
+    const spy = vi
+      .spyOn(nested, 'replaceRecordTagsTx')
+      .mockRejectedValue(new Error('forced failure at the third write'));
+    vi.spyOn(logger, 'error').mockImplementation(() => {});
+
+    try {
+      const response = await patchRecord(
+        jsonRequest(`/api/records/${f.recordId}`, 'PATCH', {
+          title: 'NEW TITLE',
+          genreIds: [f.otherGenreId],
+          tagIds: [f.otherTagId],
+        }),
+        params(f.recordId),
+      );
+
+      expect(response.status).toBe(500);
+    } finally {
+      spy.mockRestore();
+    }
+
+    const [row] = (
+      await db.execute<{ title: string }>(
+        sql`SELECT title FROM records WHERE id = ${f.recordId}`,
+      )
+    ).rows;
+    expect(row.title).toBe('Hear Nothing');
+
+    const genreRows = (
+      await db.execute<{ genre_id: string }>(
+        sql`SELECT genre_id FROM record_genres WHERE record_id = ${f.recordId}`,
+      )
+    ).rows;
+    expect(genreRows.map((r) => r.genre_id)).toEqual([f.genreId]);
+
+    const tagRows = (
+      await db.execute<{ tag_id: string }>(
+        sql`SELECT tag_id FROM record_tags WHERE record_id = ${f.recordId}`,
+      )
+    ).rows;
+    expect(tagRows.map((r) => r.tag_id)).toEqual([f.tagId]);
+  });
+
+  it('rolls back the scalar update when the genre write fails', async () => {
+    const f = await seed();
+    const nested = await import('@/lib/db/queries/nested');
+
+    const spy = vi
+      .spyOn(nested, 'replaceRecordGenresTx')
+      .mockRejectedValue(new Error('forced failure at the second write'));
+    vi.spyOn(logger, 'error').mockImplementation(() => {});
+
+    try {
+      const response = await patchRecord(
+        jsonRequest(`/api/records/${f.recordId}`, 'PATCH', {
+          title: 'NEW TITLE',
+          genreIds: [f.otherGenreId],
+        }),
+        params(f.recordId),
+      );
+
+      expect(response.status).toBe(500);
+    } finally {
+      spy.mockRestore();
+    }
+
+    const [row] = (
+      await db.execute<{ title: string; notes: string }>(
+        sql`SELECT title, notes FROM records WHERE id = ${f.recordId}`,
+      )
+    ).rows;
+    expect(row.title).toBe('Hear Nothing');
+    expect(row.notes).toBe('original');
+  });
+
+  it('commits all three together on success', async () => {
+    const f = await seed();
+
+    const response = await patchRecord(
+      jsonRequest(`/api/records/${f.recordId}`, 'PATCH', {
+        title: 'NEW TITLE',
+        genreIds: [f.otherGenreId],
+        tagIds: [f.otherTagId],
+      }),
+      params(f.recordId),
+    );
+
+    expect(response.status).toBe(200);
+
+    const body = await response.json();
+    expect(body.title).toBe('NEW TITLE');
+    expect(body.genres.map((g: { id: string }) => g.id)).toEqual([f.otherGenreId]);
+    expect(body.tags.map((t: { id: string }) => t.id)).toEqual([f.otherTagId]);
+  });
+});
