@@ -205,6 +205,36 @@ exactly the "no precedent" items 9–12.
   have. "Same output for every legal input" means the axis is wrong, not that
   the behaviour is unconstrainable. Noticed: step 5, unit 6.
 
+- **RULE: "same family" is a hypothesis, not a diagnosis. Measure which
+  component DOMINATES before choosing a fix.**
+
+  Two failures can share a shape exactly and need opposite responses. Fixing
+  the shape fixes neither.
+
+  The instance, both found in step 5 unit 7b and describable in the same
+  sentence — *"a click acts on state the server has not caught up with"*:
+
+  | | Collection filters | `/manage` genre move (Mode 2) |
+  |---|---|---|
+  | Trigger | `router.push` | `router.refresh` |
+  | What is stale | URL, props AND `useSearchParams` | rendered props |
+  | Dominant cost | the server render | **the PATCH (1264ms vs 142ms)** |
+  | Consequence | wrong href built → a filter is silently DROPPED | assertion runs early |
+  | Nature | **product bug** — a user hits it | **test bug** — the app is correct |
+  | Fix | hold the last-pushed query and build from it | wait for the response |
+
+  Described in prose they are the same problem. Measured, they are not related
+  at all: one needs application code, the other needs one line in a spec. Four
+  earlier attempts on Mode 2 failed because the diagnosis named the 142ms
+  component and the 1264ms component was doing the work.
+
+  **The check:** before adopting a fix because a failure "looks like" one
+  already understood, measure the components and confirm the same one dominates.
+  A shared description is a reason to look, not a reason to conclude. This
+  compounds badly with the "a mutation is code and can be wrong" rule: an
+  inherited diagnosis is never re-derived, so a wrong emphasis survives every
+  subsequent attempt. Noticed: step 5, unit 7b.
+
 - **RULE: Zod's convenience modifiers silently change MEANING at the boundary.
   Treat any `.coerce` or `.default` in a request schema as suspect.**
 
@@ -406,19 +436,40 @@ exactly the "no precedent" items 9–12.
      new parent when the assertion runs.
 
   Mode 2 is NOT a logic bug: `validParents` was reproduced in a unit test with
-  the exact post-move state and correctly excludes the child. So the rule is
-  right and `router.refresh()` has not delivered new props yet.
+  the exact post-move state and correctly excludes the child. That part holds.
+
+  **CORRECTED — MODE 2 IS DIAGNOSED, and the earlier diagnosis was wrong in
+  EMPHASIS, which was the whole problem.** This entry previously said
+  "`router.refresh()` has not delivered new props yet". Measured during step 5
+  unit 7b:
+
+  ```
+  PATCH completed at +1264ms  status 200
+  DOM updated at     +1406ms
+  ```
+
+  `router.refresh()` accounts for ~142ms. **The PATCH accounts for ~1264ms —
+  nine times more.** The refresh was named as the cause when it was the small
+  half. That is why FOUR fix attempts aimed at the refresh (including two
+  `aria-busy` approaches) all failed and "made it worse": they were tuning the
+  10% while the 90% went unwaited.
+
+  The test asserts immediately after `selectOption`. Playwright's 5s expect
+  timeout covers ~1.4s in isolation and not under full-suite load — exactly the
+  pass-alone / fail-together signature observed.
+
+  **So Mode 2 is a TEST bug, not a product bug.** The app is correct; the spec
+  does not wait for the mutation it triggered. The likely fix is waiting on the
+  PATCH response (`page.waitForResponse`) rather than on any rendered signal.
 
   **Also ruled out:** connection-pool exhaustion. `/manage` issues 7 concurrent
   queries per render, but the pg pool is default-sized against
   `max_connections = 100` with 6 in use, and the dev server logs no errors
   under concurrent load.
 
-  **Where it stands:** mode 2 has a plausible mechanism (refresh latency under
-  load) and would be fixed by asserting on a settled signal the app actually
-  emits — but the earlier `aria-busy` attempt showed that signal is itself
-  racy, so it needs a different one. Mode 1 is undiagnosed and may be
-  environmental.
+  **Mode 1 is still undiagnosed** — the `Protocol error … session closed`
+  browser crash. Nothing in the above explains it, and it may be environmental.
+  Do not read "Mode 2 solved" as "these two specs are fixable in one change".
 
   **Assume MORE than one defect when returning to them.** In step 5 the third
   /manage E2E spec — skipped since it was written because `/api/records` did
