@@ -915,3 +915,147 @@ describe('GET /api/records — year filter validation', () => {
     ]);
   });
 });
+
+/**
+ * SPEC.md §5.2's `matchedVia`, which exists because §7.1 makes genre membership
+ * hierarchical: filtering by Punk returns records whose visible badges say only
+ * "Oi!" or "Crust", and without an explanation that reads as a bug.
+ *
+ * The fixture reuses seedHierarchy's Punk > UK82 > Oi! plus the Crust sibling.
+ * Three levels for the same reason as the filter tests: a record tagged at the
+ * BOTTOM must report the bottom genre, not the one directly under the filter,
+ * and two levels cannot tell those apart.
+ */
+describe('GET /api/records — matchedVia (§5.2)', () => {
+  async function rowsFor(url: string) {
+    const body = await (await listRecords(request(url))).json();
+    return body.data as Array<{
+      title: string;
+      matchedVia: null | {
+        filtered: { id: string; name: string };
+        descendants: Array<{ id: string; name: string }>;
+      };
+    }>;
+  }
+
+  it('is null on every row when no genreId filter is supplied', async () => {
+    // Null rather than absent, so a client never branches on presence.
+    await seedHierarchy();
+
+    const rows = await rowsFor('/api/records');
+
+    expect(rows).not.toHaveLength(0);
+    for (const row of rows) {
+      expect(row.matchedVia, row.title).toBeNull();
+    }
+  });
+
+  it('names the filtered genre on every matched row', async () => {
+    const h = await seedHierarchy();
+
+    const rows = await rowsFor(`/api/records?genreId=${h.punk}`);
+
+    expect(rows).toHaveLength(4);
+    for (const row of rows) {
+      expect(row.matchedVia?.filtered, row.title).toEqual({ id: h.punk, name: 'Punk' });
+    }
+  });
+
+  /**
+   * The case a two-level fixture cannot express: 'Tagged Oi' is tagged with the
+   * GRANDCHILD, so `descendants` must name Oi! — not UK82 (the child of the
+   * filtered genre, which an implementation walking only one level down would
+   * report) and not Punk (the filtered genre itself).
+   */
+  it('names the record\'s own genre, not an intermediate ancestor', async () => {
+    const h = await seedHierarchy();
+
+    const rows = await rowsFor(`/api/records?genreId=${h.punk}`);
+    const deep = rows.find((r) => r.title === 'Tagged Oi');
+
+    expect(deep?.matchedVia?.descendants).toEqual([{ id: h.oi, name: 'Oi!' }]);
+  });
+
+  it('contains the filtered genre itself when the record is tagged with it directly', async () => {
+    // §5.2: never empty on a matched row. A directly-tagged record reports the
+    // filtered genre rather than an empty array, so the UI has something to
+    // name in every case.
+    const h = await seedHierarchy();
+
+    const rows = await rowsFor(`/api/records?genreId=${h.punk}`);
+    const direct = rows.find((r) => r.title === 'Tagged Punk');
+
+    expect(direct?.matchedVia?.descendants).toEqual([{ id: h.punk, name: 'Punk' }]);
+  });
+
+  /**
+   * The reason `descendants` is an ARRAY: a record tagged with two genres in
+   * the subtree matches through both, and picking one arbitrarily flattens
+   * exactly the distinctions CLAUDE.md §8 forbids.
+   */
+  it('lists every descendant a record matched through, not just the first', async () => {
+    const h = await seedHierarchy();
+    // 'Tagged Oi' gains Crust as well: two distinct paths under Punk.
+    await db.execute(
+      sql`INSERT INTO record_genres (record_id, genre_id) VALUES (${h.oiRecord}, ${h.crust})`,
+    );
+
+    const rows = await rowsFor(`/api/records?genreId=${h.punk}`);
+    const both = rows.find((r) => r.title === 'Tagged Oi');
+
+    expect(both?.matchedVia?.descendants).toEqual([
+      { id: h.crust, name: 'Crust' },
+      { id: h.oi, name: 'Oi!' },
+    ]);
+  });
+
+  it('excludes a genre outside the filtered subtree', async () => {
+    // The record's OTHER genres are not evidence for this match. A tag outside
+    // the subtree must not appear, or the explanation is wrong rather than
+    // merely incomplete.
+    const h = await seedHierarchy();
+    const jazz = (
+      await db.execute<{ id: string }>(sql`INSERT INTO genres (name) VALUES ('Jazz') RETURNING id`)
+    ).rows[0].id;
+    await db.execute(
+      sql`INSERT INTO record_genres (record_id, genre_id) VALUES (${h.oiRecord}, ${jazz})`,
+    );
+
+    const rows = await rowsFor(`/api/records?genreId=${h.punk}`);
+    const tagged = rows.find((r) => r.title === 'Tagged Oi');
+
+    expect(tagged?.matchedVia?.descendants).toEqual([{ id: h.oi, name: 'Oi!' }]);
+  });
+
+  it('does not leak one record\'s descendants onto another', async () => {
+    // The per-row resolution is the part most likely to go wrong in a way that
+    // looks plausible — every row showing the first row's genres.
+    const h = await seedHierarchy();
+
+    const rows = await rowsFor(`/api/records?genreId=${h.punk}`);
+    const byTitle = Object.fromEntries(
+      rows.map((r) => [r.title, r.matchedVia?.descendants.map((d) => d.name)]),
+    );
+
+    expect(byTitle).toEqual({
+      'Tagged Punk': ['Punk'],
+      'Tagged UK82': ['UK82'],
+      'Tagged Oi': ['Oi!'],
+      'Tagged Crust': ['Crust'],
+    });
+  });
+
+  it('is null when a different filter is applied but genreId is not', async () => {
+    const h = await seedHierarchy();
+    const artistId = (
+      await db.execute<{ artist_id: string }>(
+        sql`SELECT artist_id FROM records WHERE id = ${h.oiRecord}`,
+      )
+    ).rows[0].artist_id;
+
+    const rows = await rowsFor(`/api/records?artistId=${artistId}`);
+
+    expect(rows).not.toHaveLength(0);
+    for (const row of rows) expect(row.matchedVia, row.title).toBeNull();
+  });
+});

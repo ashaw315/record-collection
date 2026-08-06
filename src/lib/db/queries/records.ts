@@ -358,12 +358,73 @@ function sortExpression(field: RecordSortField) {
   }
 }
 
+export type MatchedVia = {
+  filtered: Named;
+  descendants: Named[];
+};
+
+export type ListedRecord = RecordRow & { matchedVia: MatchedVia | null };
+
+/**
+ * SPEC.md §5.2's `matchedVia`: which of a record's OWN genres fall under the
+ * filtered one.
+ *
+ * Resolved in one query for the whole page rather than per row — the page is
+ * already bounded by pageSize, and a query per row is the shape that turns a
+ * 50-row page into 51 round trips.
+ *
+ * Reuses `genreSubtree`, so the explanation cannot disagree with the filter
+ * that produced the rows: if these were computed by separate rules, a record
+ * could be returned with an empty `descendants`, which §5.2 forbids on a
+ * matched row.
+ */
+async function resolveMatchedVia(
+  genreId: string,
+  recordIds: string[],
+): Promise<{ filtered: Named | undefined; byRecord: Map<string, Named[]> }> {
+  const db = getDb();
+
+  const [filtered] = await db
+    .select({ id: genres.id, name: genres.name })
+    .from(genres)
+    .where(eq(genres.id, genreId))
+    .limit(1);
+
+  const byRecord = new Map<string, Named[]>();
+  if (recordIds.length === 0 || filtered === undefined) return { filtered, byRecord };
+
+  const rows = await db
+    .select({
+      recordId: recordGenres.recordId,
+      id: genres.id,
+      name: genres.name,
+    })
+    .from(recordGenres)
+    .innerJoin(genres, eq(genres.id, recordGenres.genreId))
+    .where(
+      and(
+        inArray(recordGenres.recordId, recordIds),
+        sql`${recordGenres.genreId} IN (SELECT id FROM ${genreSubtree(genreId)})`,
+      ),
+    )
+    .orderBy(genres.name, genres.id);
+
+  for (const row of rows) {
+    const existing = byRecord.get(row.recordId);
+    const entry = { id: row.id, name: row.name };
+    if (existing === undefined) byRecord.set(row.recordId, [entry]);
+    else existing.push(entry);
+  }
+
+  return { filtered, byRecord };
+}
+
 export async function listRecords(options: {
   limit: number;
   offset: number;
   sort?: { field: RecordSortField; direction: 'asc' | 'desc' };
   filters: RecordFilters;
-}): Promise<{ rows: RecordRow[]; total: number }> {
+}): Promise<{ rows: ListedRecord[]; total: number }> {
   const db = getDb();
   const where = buildWhere(options.filters);
 
@@ -388,7 +449,29 @@ export async function listRecords(options: {
     .from(records)
     .where(where);
 
-  return { rows, total: totals?.value ?? 0 };
+  const total = totals?.value ?? 0;
+
+  // §5.2: null, not absent, when no genreId filter is applied — so a client
+  // never has to branch on whether the key exists.
+  if (options.filters.genreId === undefined) {
+    return { rows: rows.map((row) => ({ ...row, matchedVia: null })), total };
+  }
+
+  const { filtered, byRecord } = await resolveMatchedVia(
+    options.filters.genreId,
+    rows.map((row) => row.id),
+  );
+
+  return {
+    rows: rows.map((row) => ({
+      ...row,
+      matchedVia:
+        filtered === undefined
+          ? null
+          : { filtered, descendants: byRecord.get(row.id) ?? [] },
+    })),
+    total,
+  };
 }
 
 /**
