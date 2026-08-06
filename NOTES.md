@@ -288,6 +288,35 @@ exactly the "no precedent" items 9–12.
   The hollow Neon test is the worst case — see the Neon entry below.
   Swept: step 5 remediation.
 
+  **SAME CLASS, DIFFERENT MATCHER: `toEqual` cannot catch an explicit
+  `undefined` where a key should be absent.** Verified rather than assumed:
+
+  ```
+  expect({ q: 'x', genreId: undefined }).toEqual({ q: 'x'})        // PASSES
+  expect({ q: 'x', genreId: undefined }).toStrictEqual({ q: 'x' }) // fails
+  ```
+
+  Found in `withFacet` (step 5, unit 7a), where clearing a filter must DELETE
+  the key rather than assign `undefined`. Replacing the delete with an
+  assignment failed no test, and a comment in the source asserted that `toEqual`
+  would have caught it — wrong, and wrong in the confident direction.
+
+  It belongs in this entry because it is the same defect shape as a bare
+  `.toThrow()`: **an assertion that appears to constrain a property it cannot
+  express.** `.toThrow()` cannot distinguish which error; `toEqual` cannot
+  distinguish absent from undefined. In both cases the test reads as though it
+  checks the thing and does not.
+
+  Compounding it here: `toQueryString` skips `undefined` too, so the serialised
+  URL is identical either way. TWO layers each blind to the difference, which is
+  why the mutation came back clean. The fix was a `toStrictEqual` test on the
+  state object plus an `Object.keys` assertion.
+
+  **Worth a sweep of `toEqual` on object shapes**, the same way `.toThrow()` was
+  swept — every place a test asserts a whole object and an extra undefined key
+  would slip through. NOT done yet; recorded so it is not lost. Noticed: step 5,
+  unit 7a.
+
 - **RULE: probes are code too, and a verified-by-execution claim still needs its
   premise checked.** NOTES already says "a mutation is code, and it can be
   wrong". Extend that to probes, and to the review loop around them.
