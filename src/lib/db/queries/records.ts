@@ -2,6 +2,7 @@ import 'server-only';
 import { and, asc, desc, eq, exists, gte, ilike, inArray, lte, or, sql } from 'drizzle-orm';
 import { isForeignKeyViolation } from '@/lib/api/errors';
 import { escapeLikePattern } from '@/lib/api/like';
+import type { RecordFilters, RecordSortField } from '@/lib/records/fields';
 import { countReferences } from './referrers';
 import { getDb } from '@/db/client';
 import {
@@ -201,30 +202,17 @@ export async function missingIds(table: 'genres' | 'tags', ids: string[]): Promi
   return ids.filter((id) => !present.has(id));
 }
 
-/** The §5.2 sortable fields. `artist` has no column on `records`. */
-export const RECORD_SORT_FIELDS = [
-  'title',
-  'artist',
-  'purchaseDate',
-  'purchasePrice',
-  'releaseYear',
-] as const;
-export type RecordSortField = (typeof RECORD_SORT_FIELDS)[number];
-
-export type RecordFilters = {
-  artistId?: string;
-  genreId?: string;
-  labelId?: string;
-  storeId?: string;
-  tagId?: string;
-  formatId?: string;
-  condition?: (typeof records.conditionMedia)['_']['data'];
-  yearFrom?: number;
-  yearTo?: number;
-  /** §5.2, default true. Only meaningful alongside a year filter. */
-  includeUndated?: boolean;
-  q?: string;
-};
+/**
+ * The §5.2 sortable fields and filter shape are DEFINED in @/lib/records/fields
+ * and re-exported here, so existing importers are unaffected.
+ *
+ * They moved because the collection screen's filter controls are a client
+ * component and need the same allowlist; this module is `server-only`, so
+ * importing it from the client would fail the build. Two copies would drift,
+ * and the one that drifts is the one that stops rejecting something.
+ */
+export { RECORD_SORT_FIELDS } from '@/lib/records/fields';
+export type { RecordSortField, RecordFilters } from '@/lib/records/fields';
 
 /**
  * Builds the WHERE clause.
