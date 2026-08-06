@@ -2,11 +2,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { CollectionFilters } from './CollectionFilters';
 import { CollectionList, type CollectionRow } from './CollectionList';
 import { parseCollectionParams } from './collection-params';
-import { listRecords } from '@/lib/db/queries/records';
-import { listGenres } from '@/lib/db/queries/genres';
-import { listLabels } from '@/lib/db/queries/labels';
-import { listStores } from '@/lib/db/queries/stores';
-import { listTags } from '@/lib/db/queries/tags';
+import { listRecords, recordFacets } from '@/lib/db/queries/records';
 import type { Offset } from '@/lib/api/query-params';
 
 /**
@@ -21,7 +17,6 @@ import type { Offset } from '@/lib/api/query-params';
 export const metadata = { title: 'Collection · Record Collection' };
 
 const PAGE_SIZE = 200;
-const REFERENCE_PAGE = { limit: 200, offset: 0 as Offset };
 
 /**
  * Next hands `searchParams` as a record whose values may be arrays, because
@@ -45,27 +40,23 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
   const params = parseCollectionParams(toSearchParams(await searchParams));
 
   /**
-   * The rows and the four chip lists in parallel — they are independent, and
-   * awaiting them in sequence would make the page as slow as their sum.
+   * The rows and the facets in parallel — independent, and awaiting them in
+   * sequence would make the page as slow as their sum.
    *
-   * Reference data is small enough that one page of 200 covers it, the same
-   * assumption /manage makes.
+   * Facets rather than the reference tables (§5.2). The chips previously
+   * rendered `listGenres({ limit: 200 })` and friends, which had two defects:
+   * a chip for a genre no record has returns zero rows when clicked, and past
+   * 200 reference rows the newest chips silently did not render at all.
    */
-  const [records, genres, labels, stores, tags] = await Promise.all([
+  const [records, facets] = await Promise.all([
     listRecords({
       limit: PAGE_SIZE,
       offset: 0 as Offset,
       sort: params.sort,
       filters: params.filters,
     }),
-    listGenres(REFERENCE_PAGE),
-    listLabels(REFERENCE_PAGE),
-    listStores(REFERENCE_PAGE),
-    listTags(REFERENCE_PAGE),
+    recordFacets(),
   ]);
-
-  const named = (rows: Array<{ id: string; name: string }>) =>
-    rows.map((row) => ({ id: row.id, name: row.name }));
 
   return (
     <>
@@ -85,12 +76,7 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
         <CollectionFilters
           params={params}
           undatedCount={records.undatedCount}
-          options={{
-            genres: named(genres.rows),
-            labels: named(labels.rows),
-            stores: named(stores.rows),
-            tags: named(tags.rows),
-          }}
+          options={facets}
         />
 
         <CollectionList rows={records.rows as CollectionRow[]} />

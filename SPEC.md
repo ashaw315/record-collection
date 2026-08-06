@@ -301,6 +301,27 @@ A collection list cannot render "Discharge — Hear Nothing" from an `artistId`,
 
 Either way the response's `meta` carries `undatedCount`: how many records in the current filter set have no release year, so the UI can state the omission rather than let records vanish silently. Do **not** make nulls satisfy the range predicate itself — `yearFrom=1980` must never be described as matching a 1972 record.
 
+**`GET /api/records/facets`** returns the values worth filtering by, not the full reference tables:
+
+```ts
+{
+  genres: Array<{ id: string; name: string; count: number }>;
+  labels: Array<{ id: string; name: string; count: number }>;
+  stores: Array<{ id: string; name: string; count: number }>;
+  tags:   Array<{ id: string; name: string; count: number }>;
+}
+```
+
+Rules:
+
+- **Only values appearing on at least one record.** A chip for a genre no record has returns zero rows when clicked — noise at twenty genres, not merely at three hundred. Rendering the reference tables instead also truncates silently once they exceed a page.
+- **Genre counts follow §7.1.** A record tagged `Oi!` counts toward `UK82` and `Punk`, so `Punk (12)` matches exactly what clicking that chip returns. Any other count is a lie the moment the user clicks. Use the same recursive-CTE rollup as `stats.byGenre`, so the two agree by construction rather than by coincidence.
+- **A genre appears if any descendant is used**, even with no records tagged directly. Otherwise `Punk` is absent from the chips while `Punk (12)` is precisely what a user wants to click.
+- **Facets describe the whole collection, not the current result set.** They do not change when filters change. Filter-aware counts are a better UX in the abstract but create dead ends — filter to `Crust`, the `Clay Records` chip vanishes, and with it the control the user would click to undo — and make every count shift under the reader. Static counts are honest, cacheable, and computable once.
+- **Sorted by count descending, then name ascending.** Unpaginated: the result is bounded by the collection's actual variety, and a collection with hundreds of distinct labels has a different problem worth solving with typeahead when it arrives.
+- **A separate endpoint, not `meta` on `/api/records`.** Since facets don't vary with filters, bundling them would recompute four aggregates on every filtered request. Separate also lets the page fetch them in parallel.
+- `artists` and `formats` are excluded: §10 names chips for genre, label, store and tag. Artists are better served by search; formats are a short closed list. Adding either later is additive.
+
 **`matchedVia` on genre-filtered results.** Because §7.1 makes genre membership hierarchical, filtering by `genreId=<Punk>` returns records tagged only `Oi!` or `Crust` — records whose visible badges never mention Punk. Without an explanation the result reads as a bug.
 
 So when `genreId` is supplied, every returned record carries:
@@ -319,6 +340,7 @@ The UI decides how to present this; the API's obligation is to make the match ex
 | GET | `/api/records/:id` | Returns record with hydrated artist, label, format, store, pressing, genres, tags, images, journal entries, and latest price. |
 | PATCH | `/api/records/:id` | Partial update. |
 | DELETE | `/api/records/:id` | Cascades images + journal entries. |
+| GET | `/api/records/facets` | Filter facets for the collection screen's chips. See below. |
 | GET | `/api/records/stats` | `{ totalRecords, totalSpend, estimatedValue, byGenre: [...], byDecade: [...], byStore: [...] }` |
 
 Note: `app/api/records/stats/route.ts` is a static segment and must not be swallowed by `app/api/records/[id]/route.ts`. Next.js resolves static before dynamic, so this works — but `[id]` must still reject a non-UUID param with `400` rather than attempting a lookup.

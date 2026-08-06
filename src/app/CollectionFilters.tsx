@@ -24,7 +24,8 @@ import {
  * state, rather than a client mirror that can disagree with the rows on screen.
  */
 
-export type FilterOption = { id: string; name: string };
+/** A facet value and how many records carry it (§5.2). */
+export type FilterOption = { id: string; name: string; count: number };
 
 export type FilterOptions = {
   genres: FilterOption[];
@@ -238,7 +239,14 @@ export function CollectionFilters({
                         : 'border-border hover:bg-accent',
                     )}
                   >
-                    {option.name}
+                    {option.name}{' '}
+                    {/* The count is what makes a chip worth clicking — and for
+                        genres it follows §7.1, so "Punk (12)" is exactly what
+                        clicking returns rather than only the directly-tagged
+                        records. */}
+                    <span className={cn('tabular-nums', active ? 'opacity-70' : 'text-muted-foreground')}>
+                      {option.count}
+                    </span>
                   </button>
                 );
               })}

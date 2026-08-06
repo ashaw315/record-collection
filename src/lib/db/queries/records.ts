@@ -587,6 +587,110 @@ export async function deleteRecord(id: string): Promise<RecordDeleteOutcome> {
   }
 }
 
+/**
+ * Records rolled up into every ancestor genre (SPEC.md §7.1), with counts.
+ *
+ * ONE implementation, used by BOTH `stats.byGenre` (§5.2) and
+ * `recordFacets` (§5.2). They must agree for every genre: a `Punk (12)` chip
+ * that yields a different number on the stats screen is the
+ * confidently-misleading class CLAUDE.md §8 is about. Sharing the query makes
+ * them agree BY CONSTRUCTION rather than by coincidence — the same reasoning
+ * as `matchedVia` reusing `genreSubtree`. There is a test asserting the two
+ * endpoints produce identical counts, which fails if this is ever forked.
+ *
+ * Walks UP from each tagged genre, so a genre appears when any DESCENDANT is
+ * used even if nothing is tagged with it directly — §5.2 requires that, because
+ * `Punk (12)` is precisely what a user wants to click.
+ *
+ * COUNT(DISTINCT record_id), not COUNT(*): a record tagged with both Oi! and
+ * Punk reaches Punk by two paths and is still one record. That is the SECOND
+ * of two dedup layers, and they mask each other — `UNION` (not `UNION ALL`)
+ * already collapses repeated (record_id, genre_id) pairs. Mutation-verified:
+ * removing either alone fails no test, removing BOTH fails the double-count
+ * test. NOTES.md case 3 — do not delete one because it "looks unreachable".
+ */
+export async function genreRollup(): Promise<
+  Array<{ id: string; name: string; count: number }>
+> {
+  const db = getDb();
+
+  const result = await db.execute<{ id: string; name: string; count: number }>(sql`
+    WITH RECURSIVE ancestry AS (
+      SELECT rg.record_id, rg.genre_id FROM ${recordGenres} rg
+      UNION
+      SELECT a.record_id, g.parent_genre_id
+        FROM ancestry a
+        JOIN ${genres} g ON g.id = a.genre_id
+       WHERE g.parent_genre_id IS NOT NULL
+    )
+    SELECT g.id, g.name, count(DISTINCT a.record_id)::int AS count
+      FROM ancestry a
+      JOIN ${genres} g ON g.id = a.genre_id
+     GROUP BY g.id, g.name
+     ORDER BY count(DISTINCT a.record_id) DESC, g.name
+  `);
+
+  return result.rows;
+}
+
+export type RecordFacet = { id: string; name: string; count: number };
+
+export type RecordFacets = {
+  genres: RecordFacet[];
+  labels: RecordFacet[];
+  stores: RecordFacet[];
+  tags: RecordFacet[];
+};
+
+/**
+ * SPEC.md §5.2 `GET /api/records/facets`: the values worth filtering by.
+ *
+ * Bounded by the COLLECTION, not by the reference tables. A chip for a genre no
+ * record has returns zero rows when clicked — noise at twenty genres, not
+ * merely at three hundred — and rendering the reference tables also truncates
+ * silently once they exceed a page, which is the defect that prompted this.
+ *
+ * INNER joins here, deliberately, unlike the list read's LEFT joins: a label no
+ * record uses must be ABSENT, so dropping unmatched rows is the intent rather
+ * than an accident.
+ *
+ * Static: these describe the whole collection and do not vary with filters
+ * (§5.2). Filter-aware counts would create dead ends — filter to Crust and the
+ * Clay chip vanishes along with the control needed to undo it.
+ */
+export async function recordFacets(): Promise<RecordFacets> {
+  const db = getDb();
+
+  /**
+   * Written out per table rather than through one helper: Drizzle types each
+   * column to its own table, so a shared parameter would need a cast, and
+   * casting to satisfy a helper is how the wrong column ends up joined.
+   */
+  const [genreRows, labelRows, storeRows, tagRows] = await Promise.all([
+    genreRollup(),
+    db
+      .select({ id: labels.id, name: labels.name, count: sql<number>`count(*)::int` })
+      .from(records)
+      .innerJoin(labels, eq(labels.id, records.labelId))
+      .groupBy(labels.id, labels.name)
+      .orderBy(desc(sql`count(*)`), labels.name),
+    db
+      .select({ id: recordStores.id, name: recordStores.name, count: sql<number>`count(*)::int` })
+      .from(records)
+      .innerJoin(recordStores, eq(recordStores.id, records.storeId))
+      .groupBy(recordStores.id, recordStores.name)
+      .orderBy(desc(sql`count(*)`), recordStores.name),
+    db
+      .select({ id: tags.id, name: tags.name, count: sql<number>`count(*)::int` })
+      .from(recordTags)
+      .innerJoin(tags, eq(tags.id, recordTags.tagId))
+      .groupBy(tags.id, tags.name)
+      .orderBy(desc(sql`count(*)`), tags.name),
+  ]);
+
+  return { genres: genreRows, labels: labelRows, stores: storeRows, tags: tagRows };
+}
+
 export type RecordStats = {
   totalRecords: number;
   totalSpend: string;
@@ -657,21 +761,7 @@ export async function recordStats(): Promise<RecordStats> {
    * because they guard different things: UNION also bounds the walk if a cycle
    * ever reaches the data, the same reasoning as wouldCreateCycle in ./genres.
    */
-  const byGenre = await db.execute<{ id: string; name: string; count: number }>(sql`
-    WITH RECURSIVE ancestry AS (
-      SELECT rg.record_id, rg.genre_id FROM ${recordGenres} rg
-      UNION
-      SELECT a.record_id, g.parent_genre_id
-        FROM ancestry a
-        JOIN ${genres} g ON g.id = a.genre_id
-       WHERE g.parent_genre_id IS NOT NULL
-    )
-    SELECT g.id, g.name, count(DISTINCT a.record_id)::int AS count
-      FROM ancestry a
-      JOIN ${genres} g ON g.id = a.genre_id
-     GROUP BY g.id, g.name
-     ORDER BY count(DISTINCT a.record_id) DESC, g.name
-  `);
+  const byGenre = await genreRollup();
 
   const byDecade = await db
     .select({
@@ -700,7 +790,7 @@ export async function recordStats(): Promise<RecordStats> {
     totalRecords: totals?.totalRecords ?? 0,
     totalSpend: totals?.totalSpend ?? '0.00',
     estimatedValue: totals?.estimatedValue ?? '0.00',
-    byGenre: byGenre.rows,
+    byGenre,
     byDecade,
     byStore,
   };

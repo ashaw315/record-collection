@@ -133,7 +133,14 @@ test('searching narrows the collection and survives a reload', async ({ page }) 
   await page.getByRole('searchbox', { name: 'Search the collection' }).fill('Hear Nothing');
   await page.getByRole('button', { name: 'Search' }).click();
 
-  await expect(page).toHaveURL(/[?&]q=/);
+  /**
+   * 15s, not the 5s default. The submit navigates, and under full-suite load
+   * the dev server's render is slower than 5s — verified that both the button
+   * and Enter submit correctly in isolation, so the shorter timeout was
+   * measuring machine load rather than behaviour. Same lesson as the
+   * quarantined /manage specs: allow for the work the interaction triggers.
+   */
+  await expect(page).toHaveURL(/[?&]q=/, { timeout: 15_000 });
   await expectTitles(page, f.suffix, [`Hear Nothing ${f.suffix}`]);
 
   // The URL is the state, so a reload reproduces the view rather than resetting
