@@ -482,3 +482,146 @@ describe('GET /api/records — sorting', () => {
     ]);
   });
 });
+
+/**
+ * SPEC.md §7.1: "a record tagged with a child genre is implicitly a member of
+ * all ancestor genres for filtering and graph purposes. Compute this with a
+ * recursive CTE; do not denormalize."
+ *
+ * THREE levels, with a record at each, because two cannot distinguish a
+ * recursive CTE from a single join to `parent_genre_id` — the same fixture
+ * problem as the artist sort, where a seed whose orders agreed let a mutation
+ * pass. With Punk > UK82 > Oi!, a single join finds Oi! from UK82 but NOT from
+ * Punk, so the grandparent case is what makes the recursion observable.
+ *
+ * The sibling subtree exists so a CTE that walks the whole table instead of the
+ * requested subtree is caught: filtering by Punk must not return the Crust
+ * record, and "returns everything" would otherwise look like success.
+ */
+type Hierarchy = {
+  punk: string;
+  uk82: string;
+  oi: string;
+  crust: string;
+  punkRecord: string;
+  uk82Record: string;
+  oiRecord: string;
+  crustRecord: string;
+};
+
+async function seedHierarchy(): Promise<Hierarchy> {
+  const id = async (statement: ReturnType<typeof sql>) =>
+    (await db.execute<{ id: string }>(statement)).rows[0].id;
+
+  const artist = await id(sql`INSERT INTO artists (name) VALUES ('Discharge') RETURNING id`);
+
+  const punk = await id(sql`INSERT INTO genres (name) VALUES ('Punk') RETURNING id`);
+  const uk82 = await id(
+    sql`INSERT INTO genres (name, parent_genre_id) VALUES ('UK82', ${punk}) RETURNING id`,
+  );
+  const oi = await id(
+    sql`INSERT INTO genres (name, parent_genre_id) VALUES ('Oi!', ${uk82}) RETURNING id`,
+  );
+  // A second child of Punk, so "descendants of Punk" is a real subtree and not
+  // simply "every genre".
+  const crust = await id(
+    sql`INSERT INTO genres (name, parent_genre_id) VALUES ('Crust', ${punk}) RETURNING id`,
+  );
+
+  const link = async (title: string, genreId: string) => {
+    const recordId = await id(
+      sql`INSERT INTO records (artist_id, title) VALUES (${artist}, ${title}) RETURNING id`,
+    );
+    await db.execute(
+      sql`INSERT INTO record_genres (record_id, genre_id) VALUES (${recordId}, ${genreId})`,
+    );
+    return recordId;
+  };
+
+  return {
+    punk,
+    uk82,
+    oi,
+    crust,
+    punkRecord: await link('Tagged Punk', punk),
+    uk82Record: await link('Tagged UK82', uk82),
+    oiRecord: await link('Tagged Oi', oi),
+    crustRecord: await link('Tagged Crust', crust),
+  };
+}
+
+describe('GET /api/records — genre hierarchy (§7.1)', () => {
+  it('finds a GRANDCHILD-tagged record when filtering by the grandparent', async () => {
+    // The case a single join to parent_genre_id cannot satisfy: Oi! is two
+    // levels below Punk.
+    const h = await seedHierarchy();
+
+    expect(await names(`/api/records?genreId=${h.punk}`)).toEqual([
+      'Tagged Crust',
+      'Tagged Oi',
+      'Tagged Punk',
+      'Tagged UK82',
+    ]);
+  });
+
+  it('finds a child-tagged record when filtering by the direct parent', async () => {
+    const h = await seedHierarchy();
+
+    expect(await names(`/api/records?genreId=${h.uk82}`)).toEqual(['Tagged Oi', 'Tagged UK82']);
+  });
+
+  it('does not walk UPWARDS — a child filter excludes the parent-tagged record', async () => {
+    // Ancestry is directional. A CTE walking the wrong way would return the
+    // Punk-tagged record here, which reads as "the filter is broader than
+    // asked for" rather than as an error.
+    const h = await seedHierarchy();
+
+    expect(await names(`/api/records?genreId=${h.oi}`)).toEqual(['Tagged Oi']);
+  });
+
+  it('does not return a SIBLING subtree', async () => {
+    // Crust and UK82 are both children of Punk; neither contains the other.
+    const h = await seedHierarchy();
+
+    expect(await names(`/api/records?genreId=${h.crust}`)).toEqual(['Tagged Crust']);
+  });
+
+  it('counts a hierarchy match once, not once per ancestor path', async () => {
+    // A record tagged with BOTH a genre and its ancestor matches the subtree
+    // twice. EXISTS collapses that; a join would return the row twice and
+    // inflate meta.total.
+    const h = await seedHierarchy();
+    await db.execute(
+      sql`INSERT INTO record_genres (record_id, genre_id) VALUES (${h.oiRecord}, ${h.punk})`,
+    );
+
+    const body = await (await listRecords(request(`/api/records?genreId=${h.punk}`))).json();
+
+    expect(body.data.filter((r: { title: string }) => r.title === 'Tagged Oi')).toHaveLength(1);
+    expect(body.meta.total).toBe(4);
+  });
+
+  it('composes with another filter rather than widening it', async () => {
+    // A hierarchy filter that is ORed into the clause list instead of ANDed
+    // returns MORE rows, which reads as "the artist filter did nothing".
+    const h = await seedHierarchy();
+    const other = (
+      await db.execute<{ id: string }>(
+        sql`INSERT INTO artists (name) VALUES ('Amebix') RETURNING id`,
+      )
+    ).rows[0].id;
+    const outsider = (
+      await db.execute<{ id: string }>(
+        sql`INSERT INTO records (artist_id, title) VALUES (${other}, 'Other Artist Oi') RETURNING id`,
+      )
+    ).rows[0].id;
+    await db.execute(
+      sql`INSERT INTO record_genres (record_id, genre_id) VALUES (${outsider}, ${h.oi})`,
+    );
+
+    // Both records are in the Punk subtree; only one is by Amebix.
+    expect(await names(`/api/records?genreId=${h.punk}&artistId=${other}`)).toEqual([
+      'Other Artist Oi',
+    ]);
+  });
+});

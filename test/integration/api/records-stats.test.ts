@@ -265,6 +265,70 @@ describe('GET /api/records/stats — breakdowns', () => {
     expect((await stats()).byGenre).toEqual([]);
   });
 
+  /**
+   * SPEC.md §7.1 applies to the breakdown as well as the filter: a record
+   * tagged Oi! counts towards UK82 and Punk too, or the stats screen (§10)
+   * disagrees with the collection screen about how many punk records exist.
+   *
+   * THREE levels for the same reason as the list tests — two cannot tell a
+   * recursive CTE from a single join to parent_genre_id.
+   */
+  it('rolls a descendant-tagged record up into every ancestor genre', async () => {
+    const a = await artist('Discharge');
+    const punk = await id(sql`INSERT INTO genres (name) VALUES ('Punk') RETURNING id`);
+    const uk82 = await id(
+      sql`INSERT INTO genres (name, parent_genre_id) VALUES ('UK82', ${punk}) RETURNING id`,
+    );
+    const oi = await id(
+      sql`INSERT INTO genres (name, parent_genre_id) VALUES ('Oi!', ${uk82}) RETURNING id`,
+    );
+    const crust = await id(
+      sql`INSERT INTO genres (name, parent_genre_id) VALUES ('Crust', ${punk}) RETURNING id`,
+    );
+
+    const deep = await record(a, 'Tagged Oi');
+    await db.execute(sql`INSERT INTO record_genres (record_id, genre_id) VALUES (${deep}, ${oi})`);
+    const mid = await record(a, 'Tagged UK82');
+    await db.execute(sql`INSERT INTO record_genres (record_id, genre_id) VALUES (${mid}, ${uk82})`);
+    const sibling = await record(a, 'Tagged Crust');
+    await db.execute(
+      sql`INSERT INTO record_genres (record_id, genre_id) VALUES (${sibling}, ${crust})`,
+    );
+
+    const body = await stats();
+    const byName = Object.fromEntries(
+      body.byGenre.map((row: { name: string; count: number }) => [row.name, row.count]),
+    );
+
+    // Punk gets all three; UK82 gets the two in its subtree; Oi! and Crust one
+    // each. A single join would give Punk 2 (UK82 + Crust) and miss the Oi!
+    // record entirely.
+    expect(byName).toEqual({ Punk: 3, UK82: 2, 'Oi!': 1, Crust: 1 });
+  });
+
+  it('counts a record once per ancestor even when tagged with two of them', async () => {
+    // Tagged with BOTH Oi! and Punk: it is one record in the Punk subtree, not
+    // two. A CTE joined without DISTINCT double-counts here.
+    const a = await artist('Discharge');
+    const punk = await id(sql`INSERT INTO genres (name) VALUES ('Punk') RETURNING id`);
+    const oi = await id(
+      sql`INSERT INTO genres (name, parent_genre_id) VALUES ('Oi!', ${punk}) RETURNING id`,
+    );
+
+    const both = await record(a, 'Tagged Twice');
+    await db.execute(sql`INSERT INTO record_genres (record_id, genre_id) VALUES (${both}, ${oi})`);
+    await db.execute(sql`INSERT INTO record_genres (record_id, genre_id) VALUES (${both}, ${punk})`);
+
+    const body = await stats();
+    const byName = Object.fromEntries(
+      body.byGenre.map((row: { name: string; count: number }) => [row.name, row.count]),
+    );
+
+    expect(byName).toEqual({ Punk: 1, 'Oi!': 1 });
+  });
+
+
+
   it('groups by decade from the release year', async () => {
     const a = await artist('Discharge');
     await record(a, 'Early', { releaseYear: 1981 });

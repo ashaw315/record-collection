@@ -237,6 +237,33 @@ export type RecordFilters = {
  * is not returned three times — the row-multiplication problem the detail read
  * avoids for the same reason.
  */
+/**
+ * SPEC.md §7.1: a record tagged with a child genre is implicitly a member of
+ * every ancestor genre for filtering. So filtering by a genre means filtering
+ * by that genre AND ITS WHOLE SUBTREE.
+ *
+ * Walks DOWN from the requested genre rather than up from each record's genres:
+ * the question is "which genres count as this one", and answering it once per
+ * query beats answering it once per row.
+ *
+ * `UNION` rather than `UNION ALL`, matching wouldCreateCycle in ./genres — the
+ * cycle guard is the only thing preventing a loop in the data, and if it is
+ * ever defeated, duplicate elimination stops this walking forever.
+ *
+ * §7.1 says "do not denormalize", which is why this is computed per query
+ * rather than kept in a closure table.
+ */
+function genreSubtree(genreId: string) {
+  return sql`(
+    WITH RECURSIVE subtree AS (
+      SELECT id FROM ${genres} WHERE id = ${genreId}
+      UNION
+      SELECT g.id FROM ${genres} g JOIN subtree s ON g.parent_genre_id = s.id
+    )
+    SELECT id FROM subtree
+  )`;
+}
+
 function buildWhere(filters: RecordFilters) {
   const clauses = [];
 
@@ -249,13 +276,11 @@ function buildWhere(filters: RecordFilters) {
   if (filters.yearTo !== undefined) clauses.push(lte(records.releaseYear, filters.yearTo));
 
   if (filters.genreId !== undefined) {
-    const genreId = filters.genreId;
     clauses.push(
       exists(
-        getDb()
-          .select({ one: sql`1` })
-          .from(recordGenres)
-          .where(and(eq(recordGenres.recordId, records.id), eq(recordGenres.genreId, genreId))),
+        sql`(SELECT 1 FROM ${recordGenres} rg
+              WHERE rg.record_id = ${records.id}
+                AND rg.genre_id IN (SELECT id FROM ${genreSubtree(filters.genreId)}))`,
       ),
     );
   }
@@ -445,16 +470,42 @@ export async function recordStats(): Promise<RecordStats> {
     })
     .from(records);
 
-  const byGenre = await db
-    .select({
-      id: genres.id,
-      name: genres.name,
-      count: sql<number>`count(*)::int`,
-    })
-    .from(recordGenres)
-    .innerJoin(genres, eq(genres.id, recordGenres.genreId))
-    .groupBy(genres.id, genres.name)
-    .orderBy(desc(sql`count(*)`), genres.name);
+  /**
+   * §7.1 applies here too: a record tagged Oi! counts towards UK82 and Punk.
+   * Without this the stats screen (§10) contradicts the collection screen about
+   * how many punk records exist, and the number that looks wrong is the one on
+   * the summary page.
+   *
+   * Walks UP from each tagged genre — the opposite direction from the list
+   * filter, because the question is inverted: there, "which genres count as the
+   * one requested"; here, "which genres does this record roll up into".
+   *
+   * COUNT(DISTINCT record_id), not COUNT(*): a record tagged with both Oi! and
+   * Punk reaches Punk by two paths and is still one record.
+   *
+   * That is the SECOND of two dedup layers, and they mask each other — `UNION`
+   * (not `UNION ALL`) already collapses repeated (record_id, genre_id) pairs as
+   * the walk produces them. Mutation-verified: removing either alone fails no
+   * test, removing BOTH fails 'counts a record once per ancestor'. NOTES.md
+   * case 3 — do not delete one because it "looks unreachable". Both are kept
+   * because they guard different things: UNION also bounds the walk if a cycle
+   * ever reaches the data, the same reasoning as wouldCreateCycle in ./genres.
+   */
+  const byGenre = await db.execute<{ id: string; name: string; count: number }>(sql`
+    WITH RECURSIVE ancestry AS (
+      SELECT rg.record_id, rg.genre_id FROM ${recordGenres} rg
+      UNION
+      SELECT a.record_id, g.parent_genre_id
+        FROM ancestry a
+        JOIN ${genres} g ON g.id = a.genre_id
+       WHERE g.parent_genre_id IS NOT NULL
+    )
+    SELECT g.id, g.name, count(DISTINCT a.record_id)::int AS count
+      FROM ancestry a
+      JOIN ${genres} g ON g.id = a.genre_id
+     GROUP BY g.id, g.name
+     ORDER BY count(DISTINCT a.record_id) DESC, g.name
+  `);
 
   const byDecade = await db
     .select({
@@ -483,7 +534,7 @@ export async function recordStats(): Promise<RecordStats> {
     totalRecords: totals?.totalRecords ?? 0,
     totalSpend: totals?.totalSpend ?? '0.00',
     estimatedValue: totals?.estimatedValue ?? '0.00',
-    byGenre,
+    byGenre: byGenre.rows,
     byDecade,
     byStore,
   };
