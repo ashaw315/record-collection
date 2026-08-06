@@ -1,7 +1,54 @@
 # NOTES.md
 
 Out-of-scope observations recorded during build steps, per CLAUDE.md §4.
-Nothing here has been acted on. Each entry names the step it was noticed in.
+Most of this file is observations that have NOT been acted on; the exceptions
+are the entries marked CORRECTED or RESOLVED, which record something that was
+believed and turned out to be false. Each entry names the step it was noticed
+in.
+
+---
+
+## CURRENT POSITION — read this first
+
+**Updated: 2026-08-06, end of the step 5 post-review remediation.**
+
+**Where we are.** Step 5 (SPEC.md §12: "Records CRUD + collection list + record
+detail + add/edit form. E2E #2"). The **API half is complete** — units 1–6 built
+`GET/POST /api/records`, `GET/PATCH/DELETE /api/records/:id` and
+`GET /api/records/stats` — and a post-unit-6 adversarial review of the records
+query layer has now been triaged and remediated in full (units 1–5 + a
+`.toThrow()` sweep, all committed). **The UI half has not started:** the
+collection screen at `/`, record detail, the add/edit form, and E2E #2 are what
+remain. `src/app/page.tsx` is still the create-next-app placeholder.
+
+**Last verified, and when.** Everything below was run at the end of the
+remediation, 2026-08-06:
+
+| Check | State |
+|---|---|
+| `npm test` | 950 passed, 1 skipped, 45 files |
+| `npx playwright test` | 64 passed, 4 skipped |
+| `npm run typecheck` / `lint` / `build` | clean |
+| Neon transaction gate | **closed** — 7 tests against a real branch |
+
+**The caveat a green suite will not tell you.** The Neon gate is closed, but the
+test written to close it in step 5 unit 1 was **hollow until this remediation**
+and reported green from the day it was written. It blanked `TEST_DATABASE_URL`
+to point the primitive at the branch, which made `resolveDriver` throw — and a
+bare `.rejects.toThrow()` accepted that refusal as if it were the rollback under
+test. It never reached Neon at all. Fixed 2026-08-06; both nested-write
+primitives now stub `NODE_ENV` so the driver resolves, and assert on the failing
+TABLE rather than any throw. Do not read "the gate was closed in unit 1" as
+meaning it was verified from unit 1 — it was verified from this remediation.
+
+**The 4 skipped E2E specs are not neutral.** Two quarantined `/manage` genre
+specs × 2 projects. See the UNRESOLVED entry below, and budget for more than the
+diagnosed flake.
+
+**What is queued next**, in order: the collection screen at `/`, then record
+detail, then the add/edit form, then E2E #2. Two entries below bear directly on
+the collection screen — the undated-records year-range gap, and §7.6's two-prices
+hazard.
 
 ---
 
@@ -16,6 +63,19 @@ the tags template during the step 4 remediation. But `records` is the first
 resource the template was predicted not to stretch to, so the list is split:
 what carries over unchanged, and what has NO PRECEDENT in anything built so far
 and therefore needs designing rather than copying.
+
+**STATUS as of 2026-08-06.** The `records` API is built and remediated, so these
+are discharged FOR RECORDS: 1–8 all hold; 9 (transactional nested writes) holds
+for POST and, after the remediation, for PATCH; 10 (real PATCH semantics) is
+implemented and tested both ways; 11 (join sort) and 12 (ten-plus filters) are
+built and adversarially reviewed; 13 (the static stats segment) is covered by
+`e2e/records-routing.spec.ts` — route precedence needs a real request, not a
+handler call.
+
+**They all still apply UNDISCHARGED to `want_list` (step 6)**, and 14 was always
+want_list-only. The prediction that the template would not stretch was correct:
+the review found six defects in the records query layer, four of them in
+exactly the "no precedent" items 9–12.
 
 ### Carries over unchanged
 
@@ -91,6 +151,119 @@ and therefore needs designing rather than copying.
     mid-transaction failure test is required by §11.
 
 ## Open
+
+- **RULE: a test is only as discriminating as its fixture.** When several
+  orderings, selections, or matches agree in the seed data, NO assertion can
+  tell which one the code used. The test looks correct, passes, and constrains
+  nothing.
+
+  **Before writing an assertion about ordering, selection, or matching, check
+  that the fixture makes the alternatives produce DIFFERENT output — and prove
+  it by mutation.** Reading cannot catch this; the test reads as correct in
+  exactly the case where it is worthless.
+
+  Five instances, all in this build:
+
+  | Fixture | Alternatives that agreed | Caught by |
+  |---|---|---|
+  | 2-row list seed | artist order == title order | mutation: artist expr → `records.title` passed 29/29 |
+  | Same seed, 4 scalar sorts | title == date == price order | mutation: 3 fields → title failed 2, neither the test naming them |
+  | 2-level genre tree | recursive CTE == single join | mutation: one-level walk |
+  | Successive price fixtures | recency == enum declaration order | mutation, after 3 fixtures and 2 wrong hypotheses |
+  | `from=X&to=X` year range | yearFrom bound == yearTo bound | mutation: either bound failed BOTH tests |
+
+  The fix is always the same shape: add rows that INVERT the relationship. Two
+  artists whose names sort opposite to their titles; four records giving each
+  sortable field a different permutation; a three-level hierarchy so a
+  grandparent filter must find a grandchild; a query sending only the bound
+  under test.
+
+  **The tell:** ask "if the code used the OTHER rule, would this fixture produce
+  different output?" If the answer is no, or you cannot answer it, the fixture
+  is the defect and the assertion is decorative regardless of how it is written.
+  Noticed across steps 4–5; stated as a rule during the step 5 remediation.
+
+- **RULE: a message-less `.toThrow()` asserts only that SOMETHING failed.**
+  Six instances have now accepted a different exception than intended, and the
+  sixth was in the guard built to prevent the fifth.
+
+  **Swept the whole suite (step 5 remediation): 91 occurrences, 13 files.**
+
+  | Form | Count | Risk |
+  |---|---|---|
+  | `.not.toThrow()` | 11 | none by construction |
+  | `toThrow(<matcher>)` | 8 | constrained |
+  | bare `toThrow()` positive | 49 | the at-risk set |
+
+  The 49 were **tested, not rewritten**, by asking of each: *if the intended
+  failure were impossible, would something else still throw and satisfy it?*
+
+  **30 database-constraint assertions came back sound in substance.** Each was
+  probed for the error it actually catches, and every one is the intended
+  SQLSTATE — 23514 for the `price_history` XOR, 23505 duplicate, 23503 foreign
+  key, 23001 append-only trigger. Control cases confirm valid input SUCCEEDS, so
+  the throw comes from the constraint under test and not from setup. Left as-is
+  deliberately: Drizzle wraps everything as `Failed query: …`, so a message
+  matcher is near useless. **If they are ever tightened, the matcher is
+  `error.cause.code`, not the message** — that is where the SQLSTATE lives.
+
+  **Two real findings:**
+
+  1. **The sixth instance** — the `catch` around pg-connection-string's `parse()`
+     in `resolveConnectionHost` failed NOTHING when removed. Probed rather than
+     assumed dead: `parse()` genuinely throws on `postgresql://[`,
+     `postgresql://%` and a non-numeric port, all of which pass the scheme check
+     first. So it was LIVE BUT UNCONSTRAINED (case 2 below), not dead. Four
+     tests now reach it and assert the parse message specifically.
+
+  2. **A test whose NAME asserted what its assertion did not check.**
+     `expect(() => resolveConnectionHost('mysql://user:pass@localhost:3306/db')).toThrow()`
+     sat in a test called "rejects a non-postgres scheme" — but that URL's host
+     is `localhost`, which the host allowlist ACCEPTS. The scheme check was the
+     only thing rejecting it, and a bare `.toThrow()` would have passed if the
+     rejection came from anywhere else. This is the cleanest illustration of the
+     whole pattern: the name carries a claim the assertion never makes.
+
+  **The shape to watch for:** a test that manipulates environment or input to
+  reach a code path can be defeated by a DIFFERENT guard reading the same input.
+  The hollow Neon test is the worst case — see the Neon entry below.
+  Swept: step 5 remediation.
+
+- **RULE: probes are code too, and a verified-by-execution claim still needs its
+  premise checked.** NOTES already says "a mutation is code, and it can be
+  wrong". Extend that to probes, and to the review loop around them.
+
+  **The instance.** The `.toThrow()` sweep above reported a seventh finding that
+  was FALSE: that `assertLocalHost` accepts `postgresql://u:p@[::1]/db` while
+  rejecting four other loopback spellings, making the guard "comprehensive-
+  looking but holed". The probe output was accurate — `[::1]` IS accepted. The
+  INFERENCE was wrong. `::1` is deliberately allowed: there is a comment
+  directly above `LOCAL_HOSTS` saying so, `stripBrackets` exists for no other
+  purpose than to make it match, the error message names `::1` in its allowed
+  set, and two existing tests cover it as accepted.
+
+  **What made it look like a hole** was reading one probe result without
+  checking what produced it — the same error the sweep existed to find in tests.
+
+  **What caught it** was not re-reading. It was testing whether the POLICY held
+  across spellings: `[0:0:0:0:0:0:0:1]` and `[::0001]` also came back accepted,
+  which looked like confirmation of a real gap until tracing the resolved host
+  showed pg-connection-string NORMALISES all three to `[::1]` before the guard
+  runs. They are accepted because they ARE `::1`. The genuinely non-loopback
+  addresses — `[::2]`, `[fe80::1]`, `[::ffff:127.0.0.1]` — are all correctly
+  rejected. The guard is right as written; no code changed.
+
+  **The part that is about the loop, not the probe.** The finding was APPROVED
+  for fixing on the strength of the report, without the guard being read — so
+  both sides of the review accepted a conclusion whose premise neither had
+  checked. A claim being "verified by execution" makes the OBSERVATION reliable;
+  it says nothing about whether the observation means what the reporter says it
+  means. Both roles have to check the premise, and the reviewer's approval is
+  not a substitute for the reporter's having done so, nor the reverse.
+
+  The prior commit message (`b2c7129`) records the false finding as fact. Left
+  unrewritten deliberately — a pushed commit is history — which is why the
+  correction lives here. Noticed: step 5 remediation.
 
 - **CORRECTED — the database DOES protect reference rows; an earlier entry here
   said the opposite.** This entry previously claimed `record_tags.tag_id` was
@@ -268,6 +441,63 @@ and therefore needs designing rather than copying.
   Removing both layers together is what distinguishes case 3 from case 1.
   Noticed: step 4, pressings.
 
+  **Two more instances in the step 5 remediation, and they resolved OPPOSITE
+  ways — which is the point of doing the determination rather than guessing:**
+
+  4. **KEPT (case 3).** `count(DISTINCT record_id)` in the stats ancestry CTE.
+     Removing it fails nothing, because `UNION` (not `UNION ALL`) has already
+     deduped the `(record_id, genre_id)` pairs as the walk produces them.
+     Removing BOTH fails the double-count test. Probed the CTE directly to
+     establish that UNION was doing it. Both kept, because they guard different
+     things: UNION also bounds the walk if a cycle ever reaches the data, the
+     same reasoning as `wouldCreateCycle`. Documented in the source, since the
+     "delete unreachable code" instinct removes one, sees green, and removes the
+     other in a later pass.
+
+  5. **REMOVED (subsumed).** A `.min(1, 'must not be empty')` on the year
+     filter schema. Its mutation also failed nothing — but probing showed the
+     empty string is already rejected TWICE over: the digit regex `/^-?\d+$/`
+     fails on `''`, and `isValidFormedYear(0)` is false. Unlike case 4, this
+     layer guarded nothing the others did not already cover, so it went.
+
+  **The distinguishing question is not "does removing it fail a test" — both of
+  these answered no. It is "what would go wrong that nothing else catches".**
+  For 4 the answer was a cycle in the data; for 5 there was no answer.
+
+- **DEFERRED to step 14 — concurrent PATCHes to one record can interleave their
+  genre replacements.** `updateRecordWithNested` now wraps all three writes in
+  one transaction, so a FAILED PATCH rolls back completely. That is a different
+  property from two SIMULTANEOUS PATCHes to the same record: each replacement is
+  delete-then-insert, and under the default READ COMMITTED isolation two
+  overlapping transactions can produce a union or a loss rather than
+  last-write-wins.
+
+  Real, but it requires two concurrent writes to the SAME record on a
+  single-user application, where the only client is one person's browser. The
+  fix, if ever needed, is `SELECT … FOR UPDATE` on the parent row inside the
+  transaction, or `SERIALIZABLE` isolation with a retry — not a change to the
+  replacement logic. Developer decision: revisit at step 14. Noticed: step 5
+  remediation, unit 1.
+
+- **COLLECTION SCREEN: undated records are invisible to ANY year range, by
+  design, with no way to surface them.** `release_year` is nullable (a record
+  can be logged before its year is known), and both year filters compare
+  against it, so `yearFrom=1980` and `yearTo=1990` and any combination all
+  exclude every null-year record. That is correct SQL semantics and correct
+  filter behaviour.
+
+  It is a UI problem, not a query bug: a user who sets any year filter silently
+  stops seeing part of their collection, with nothing on screen saying so. The
+  step 5 collection screen has to decide — an "undated" chip, a count of
+  excluded records next to the filter, or a documented choice not to. **Do not
+  "fix" this in the query layer** by making nulls pass the filter; that would
+  make `yearFrom=1980` return records that may well be from 1972.
+
+  Related and separate: this was found while fixing the empty-string coercion
+  bug, where `yearFrom=` silently applied `release_year >= 0` and dropped every
+  undated record behind a 200. That bug is fixed; this design consequence
+  remains. Noticed: step 5 remediation, unit 3.
+
 - **The 1877 `formed_year` floor is the start of recorded sound, not of music.**
   §4.1 bounds `artists.formed_year` at 1877 (Edison's phonograph) on the
   reasoning that no *recording* artist predates it. A classical or early-jazz
@@ -313,24 +543,55 @@ and therefore needs designing rather than copying.
   the failure path. Developer decision: revisit at step 14 (deploy). Noticed:
   step 1–3 review.
 
-- **DEFERRED — SCOPE WIDENED: transactional code MUST be verified against a real
-  Neon database, and this now applies from STEP 5, not step 6.** The entry
-  originally named only §5.3's acquire flow. Step 5 introduces transactions
-  earlier: §5.2's nested `genreIds`/`tagIds` writes must land with their parent
-  row or not at all, and that is the first transactional code in the project.
-  Everything below applies to it equally. Every
-  integration test runs on local Docker Postgres via `drizzle-orm/node-postgres`.
-  Nothing in the suite exercises `drizzle-orm/neon-serverless`; `createClient()`
-  in `src/db/client.ts` is never invoked by any test, and `resolveDriver`'s Neon
-  branch is only asserted on the *string* it returns. SPEC.md §5.3 requires
-  `POST /api/want-list/:id/acquire` to be transactional and SPEC.md §11 requires a
-  forced mid-transaction failure test — that test will run against `pg` and pass
-  regardless of how Neon's WebSocket pool behaves under connection interruption
-  or function suspension. A partially-applied acquire (a `records` row with
-  `want_list.is_acquired` never set) would silently corrupt §7.3's
-  want-list-as-acquisition-history invariant. CLAUDE.md §2 already requires this
-  verification; this entry is here so step 6 cannot be closed without it.
-  Noticed: step 1–3 review.
+- **CORRECTED — the Neon transaction gate is CLOSED, and this entry said
+  otherwise for a whole session.** It previously read "DEFERRED — SCOPE WIDENED:
+  transactional code MUST be verified against a real Neon database", and claimed
+  that nothing in the suite exercised `drizzle-orm/neon-serverless`. That was
+  true when written and became false in **step 5 unit 1** (`ef5b066`), which
+  closed the gate rather than deferring it again. The entry was never updated.
+
+  **What that cost.** A cold session read this file, reported the gate as still
+  open, and was about to make a scoping decision on that basis. This is the
+  THIRD stale-entry incident in this file, after the `record_tags` cascade claim
+  and the `price_history` append-only claim. All three were wrong in the
+  dangerous direction: each asserted an absence of protection that in fact
+  existed, which invites building a redundant guard or, worse, treating verified
+  code as unverified and re-litigating it.
+
+  **Current state**, verified 2026-08-06: `test/integration/neon-transactions.test.ts`
+  runs 7 tests against a real throwaway Neon branch over
+  `drizzle-orm/neon-serverless` — the only place in the suite that driver is
+  exercised at all. Both nested-write primitives are covered:
+  `writeRecordWithNested` (create) and `updateRecordWithNested` (PATCH).
+
+  **BUT THE CLOSING TEST WAS HOLLOW UNTIL 2026-08-06, AND REPORTED GREEN THE
+  WHOLE TIME.** `rolls back the real nested-write primitive, not just raw SQL`
+  blanked `TEST_DATABASE_URL` to point the primitive at the branch — which makes
+  `resolveDriver` THROW, because it refuses to select a driver when
+  `NODE_ENV=test` and no test URL is set. A bare `.rejects.toThrow()` accepted
+  that refusal as if it were the rollback under test. Probed and confirmed: the
+  caught error was the driver guard, not a foreign key. It never reached Neon.
+
+  The other four tests were genuine throughout — they use the branch connection
+  directly — so the gate was partially real. But the ONE test covering the §5.2
+  primitive, which is the entire reason the gate exists, was not.
+
+  Fixed: both primitive tests now stub `NODE_ENV` so the driver resolves, and
+  assert on the failing TABLE (`/record_genres/`, `/record_tags/`) rather than
+  any throw.
+
+  **The general lesson, which outlives this entry:** a test that manipulates
+  environment to reach a code path can be defeated by a DIFFERENT guard reading
+  the same environment, and a message-less assertion will not notice. See the
+  `.toThrow()` entry below. Corrected: step 5 remediation.
+
+  **Still deferred, and unaffected by the above:** SPEC.md §5.3's
+  `POST /api/want-list/:id/acquire` is step 6 work and its §11-required
+  mid-transaction failure test does not exist yet. A partially-applied acquire
+  (a `records` row with `want_list.is_acquired` never set) would silently
+  corrupt §7.3's want-list-as-acquisition-history invariant. The harness to test
+  it on Neon now exists; the acquire flow does not. Step 6 cannot be closed
+  without it.
 
 - **README.md is a 20-byte stub.** SPEC.md §14 requires it to cover local setup,
   running migrations, obtaining a Discogs token, running each test suite, and
@@ -381,6 +642,29 @@ and therefore needs designing rather than copying.
   Noticed: step 3.
 
 ## Resolved
+
+- ~~Hierarchical genre filtering would show records whose badges never mention
+  the filtered genre.~~ Resolved in the step 5 remediation by SPEC.md §5.2's
+  `matchedVia`, decided BEFORE the collection screen rather than retrofitted.
+
+  Once §7.1 was applied (unit 2), filtering by Punk began returning records
+  tagged only `Oi!` or `Crust` — correct, and indistinguishable from a bug to
+  anyone looking at the screen. The client could not explain it either: a
+  record's `genres` array holds only its DIRECT tags, so the UI had no way to
+  know Crust descends from Punk without fetching the whole tree and
+  reimplementing §7.1 — the denormalization §7.1 forbids, relocated to the
+  client.
+
+  `descendants` is an ARRAY rather than a single path because a record can match
+  through several descendants at once, and picking one arbitrarily flattens
+  exactly the distinctions CLAUDE.md §8 exists to protect. It contains the
+  filtered genre itself on a directly-tagged record, so it is never empty on a
+  matched row.
+
+  Implementation note worth keeping: it reuses `genreSubtree`, the same CTE the
+  filter uses. Computed by a separate rule, the explanation could disagree with
+  the filter that produced the row — a divergence that cannot be represented
+  beats one that is merely tested.
 
 - ~~A stray `next-server` on port 3000 collided with E2E runs.~~ No longer
   present (verified before step 5: nothing is listening on 3000), and it could
