@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -123,6 +123,20 @@ export function CollectionFilters({
    */
   const pending = useRef<string | undefined>(undefined);
 
+  /**
+   * A test-support affordance — see RecordForm for the full reasoning.
+   *
+   * `data-hydrated` appears only after the effect runs, so it is the one signal
+   * that distinguishes "React has attached its handlers" from "the markup
+   * arrived". These controls are server-rendered, so their PRESENCE proves
+   * nothing about interactivity, and a test that waits for a visible control
+   * still races hydration on WebKit.
+   */
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    rootRef.current?.setAttribute('data-hydrated', 'true');
+  }, []);
+
   function change(mutate: (current: CollectionParams) => CollectionParams) {
     /**
      * Reconciled HERE, in the event handler, not during render — reading a ref
@@ -161,7 +175,7 @@ export function CollectionFilters({
     ).length;
 
   return (
-    <div className="mb-5 flex flex-col gap-3">
+    <div ref={rootRef} className="mb-5 flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
         {/* Keyed on the URL's term so navigating — including Back — gives a
             FRESH input carrying the new value. The obvious alternative, an

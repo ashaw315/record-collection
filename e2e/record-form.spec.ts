@@ -41,11 +41,15 @@ async function post(page: Page, path: string, data: unknown) {
  * loses the race, which is why this file passed there and failed here.
  *
  * A real user cannot type faster than hydration, so this is a test-harness
- * concern rather than a product defect. The inline-create button is the signal:
- * it is rendered by the client component and only exists once hydrated.
+ * concern rather than a product defect.
+ *
+ * The signal is `data-hydrated`, which RecordForm sets from an effect. An
+ * earlier version waited for a rendered CONTROL and did not fix it: the
+ * controls are server-rendered, so their presence proves the markup arrived
+ * rather than that it is interactive — which is exactly the failing state.
  */
 async function formReady(page: Page): Promise<void> {
-  await page.getByRole('button', { name: '+ New artist' }).waitFor({ timeout: 15_000 });
+  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
 }
 
 test.beforeEach(async ({ page }) => {

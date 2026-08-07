@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -182,6 +182,37 @@ export function RecordForm({
   const [error, setError] = useState<string | undefined>(undefined);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
+  /**
+   * A TEST-SUPPORT AFFORDANCE, and deliberately so.
+   *
+   * `data-hydrated` appears only after the effect runs, which is only after
+   * React has hydrated and attached its event handlers. Nothing in the product
+   * reads it.
+   *
+   * It exists because WebKit reaches the DOM appreciably before hydration
+   * completes, so a test filling an input in that window sets the DOM value
+   * while React's state never receives it — the field then submits as
+   * undefined. Measured: 6 of 8 submissions lost a filled field without a
+   * hydration wait.
+   *
+   * Waiting on a RENDERED CONTROL does not fix it, which is the reason this
+   * marker exists rather than a selector: the controls are server-rendered, so
+   * their presence proves the markup arrived, not that it is interactive —
+   * exactly the failing state.
+   *
+   * The alternative is tests guessing at hydration timing, and the guessing is
+   * the bug. A marker the app sets when it is genuinely ready is honest; a
+   * timeout tuned until it usually passes is not.
+   */
+  const formRef = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    // The DOM attribute IS the external system here, which is the case
+    // react-hooks/set-state-in-effect names as the legitimate use of an
+    // effect. Setting it directly also avoids a second render purely to
+    // publish a flag no React code reads.
+    formRef.current?.setAttribute('data-hydrated', 'true');
+  }, []);
+
   const set = (field: keyof FormValues, value: string) =>
     setValues((current) => ({ ...current, [field]: value }));
 
@@ -265,7 +296,7 @@ export function RecordForm({
   }
 
   return (
-    <form onSubmit={submit} noValidate>
+    <form ref={formRef} onSubmit={submit} noValidate>
       {error !== undefined && (
         <p role="alert" className="mb-3 rounded-xs border border-destructive px-3 py-2 text-sm text-destructive">
           {error}

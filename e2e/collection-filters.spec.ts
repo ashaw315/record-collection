@@ -159,11 +159,13 @@ async function bulkArtist(page: Page, name: string, suffix: string): Promise<str
  * 0 of 8 with it. A real user cannot act faster than hydration, so this is a
  * harness concern rather than a product defect.
  *
- * The sort select is the signal here: it is rendered by the client component
- * and its onChange only exists once hydrated.
+ * The signal is `data-hydrated`, set from an effect in CollectionFilters. An
+ * earlier version waited for the sort select and did not fix it: the select is
+ * server-rendered, so its presence proves the markup arrived rather than that
+ * its onChange exists.
  */
 async function controlsReady(page: Page): Promise<void> {
-  await page.getByLabel('Sort by').waitFor({ timeout: 15_000 });
+  await page.locator('[data-hydrated="true"]').first().waitFor({ timeout: 15_000 });
 }
 
 test.beforeEach(async ({ page }) => {
