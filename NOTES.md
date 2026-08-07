@@ -311,6 +311,54 @@ exactly the "no precedent" items 9–12.
   case was tested for each param separately rather than once. Noticed across
   steps 4–5; stated as a class during the step 5 UI work.
 
+- **RULE: a mock that intercepts EVERY call disables the function; a mock that
+  intercepts only the FIRST simulates the race.**
+
+  Race tests here hook a pre-check so a concurrent write appears to land in the
+  window between check and insert. The natural way to write that is:
+
+  ```ts
+  vi.spyOn(queries, 'findLabelByName').mockImplementation(async () => {
+    await db.execute(sql`INSERT INTO labels (name) VALUES ('Dischord')`);
+    return undefined;              // "no such row" — the race window
+  });
+  ```
+
+  That works only while the handler calls the function ONCE. The moment the
+  recovery path calls it again — which §5.4's `existingId` made it do, to name
+  the winner — the mock answers "no such row" a second time, the handler
+  concludes something impossible has happened, and the test sees a 500 instead
+  of the 409 it asserts.
+
+  **Five existing race tests had this shape and broke together**, and the new
+  test written in the same unit had it too. They were not wrong when written:
+  the mock matched the code as it then was, and only became a lie when the
+  function acquired a second caller.
+
+  **The fix** is to hook the first call and fall through afterwards:
+
+  ```ts
+  const real = queries.findLabelByName;
+  let firstCall = true;
+  vi.spyOn(queries, 'findLabelByName').mockImplementation(async (name) => {
+    if (!firstCall) return real(name);
+    firstCall = false;
+    await db.execute(sql`INSERT INTO labels (name) VALUES ('Dischord')`);
+    return undefined;
+  });
+  ```
+
+  **Why it belongs with the fixture rules:** it is the assumed-precondition
+  pattern in mock form. The fixture assumes something about the data; this
+  assumes something about the CALL COUNT of the code under test — and neither
+  assumption is stated, checked, or visible when reading the test. The tell is
+  identical: the test looks correct and passes, right up until the thing it
+  silently assumed stops being true.
+
+  Expect it on every recovery path: a catch that has to identify what it
+  collided with will re-read, and any mock covering that read has to let the
+  second call through. Noticed: step 5, unit 9b.
+
 - **RULE: a message-less `.toThrow()` asserts only that SOMETHING failed.**
   Six instances have now accepted a different exception than intended, and the
   sixth was in the guard built to prevent the fifth.
