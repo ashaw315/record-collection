@@ -171,6 +171,27 @@ export function CollectionFilters({
             /manage uses to reset a panel when the resource changes. */}
         <SearchBox key={params.filters.q ?? ''} initial={params.filters.q ?? ''} onSubmit={search} />
 
+        {/* View toggle (§10). Two buttons rather than a select: it is a
+            binary choice and a select costs an extra tap on a phone. */}
+        <div className="flex shrink-0 gap-1" role="group" aria-label="View">
+          {(['table', 'grid'] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              aria-pressed={params.view === mode}
+              onClick={() => change((current) => withFacet(current, { view: mode }))}
+              className={cn(
+                'rounded-xs border px-2 py-1 text-xs capitalize transition-colors',
+                params.view === mode
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-border hover:bg-accent',
+              )}
+            >
+              {mode}
+            </button>
+          ))}
+        </div>
+
         <label htmlFor="collection-sort" className="sr-only">
           Sort by
         </label>

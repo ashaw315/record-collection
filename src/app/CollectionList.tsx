@@ -45,8 +45,65 @@ function Absent() {
   return <span className="font-sans text-muted-foreground">—</span>;
 }
 
-export function CollectionList({ rows }: { rows: CollectionRow[] }) {
+/**
+ * The grid view (SPEC.md §10's "Toggle grid ↔ table").
+ *
+ * Deliberately NOT a cover-art grid: images are step 8, and a grid of grey
+ * placeholders is worse than no grid. This is a card per record — the same
+ * facts as a table row, laid out so the title leads and scanning is vertical
+ * rather than across columns.
+ */
+function Grid({ rows }: { rows: CollectionRow[] }) {
+  return (
+    <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      {rows.map((row) => {
+        const explanation = matchExplanation(row.matchedVia);
+
+        return (
+          <li key={row.id} className="border border-border p-3 transition-colors hover:bg-accent">
+            <Link
+              href={`/records/${row.id}`}
+              className="font-medium underline-offset-2 hover:underline"
+            >
+              {row.title}
+            </Link>
+            <div className="text-sm text-muted-foreground">{row.artist.name}</div>
+
+            {explanation !== undefined && (
+              <div className="mt-0.5 text-xs text-muted-foreground italic">{explanation}</div>
+            )}
+
+            <div className="mt-2 flex flex-wrap items-baseline gap-x-2 text-xs text-muted-foreground">
+              <span className="font-mono tabular-nums">
+                {row.releaseYear === null ? <Absent /> : formatYear(row.releaseYear)}
+              </span>
+              {row.format !== null && <span>{row.format.name}</span>}
+              {row.label !== null && <span>{row.label.name}</span>}
+              {row.conditionMedia !== null && <span className="font-mono">{row.conditionMedia}</span>}
+              {/* Price last and pushed right: it is the field most often
+                  absent, so a fixed position would leave a gap on most cards. */}
+              {row.purchasePrice !== null && (
+                <span className="ml-auto font-mono tabular-nums">
+                  {formatPrice(row.purchasePrice)}
+                </span>
+              )}
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+export function CollectionList({
+  rows,
+  view = 'table',
+}: {
+  rows: CollectionRow[];
+  view?: 'table' | 'grid';
+}) {
   if (rows.length === 0) return <Empty />;
+  if (view === 'grid') return <Grid rows={rows} />;
 
   return (
     <div className="overflow-x-auto">

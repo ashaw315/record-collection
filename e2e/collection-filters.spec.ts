@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { seedRecords } from './seed';
 
 /**
  * SPEC.md §10 `/`: the collection screen's controls.
@@ -112,6 +113,41 @@ async function expectTitles(page: Page, suffix: string, expected: string[]): Pro
   await expect
     .poll(() => visibleTitles(page, suffix), { timeout: 15_000 })
     .toEqual(expected);
+}
+
+/**
+ * An artist with 55 records — one page of 50 plus a remainder — inserted in ONE
+ * database round trip rather than 55 HTTP requests.
+ *
+ * The fixture, not the assertions, was the load. Creating them through the API
+ * — sequentially OR concurrently — raised every other spec's flake rate from
+ * ~0.5 to 4-7 failures per run against the shared dev server. Measured both
+ * ways; concurrent was worse. A single INSERT ... SELECT costs one query and
+ * the rate returns to baseline.
+ *
+ * Going around the API is acceptable HERE because these two tests are about
+ * PAGINATION, not about record creation: what they need is a collection larger
+ * than one page, and how the rows got there is incidental. Tests that exercise
+ * the write path still use the API.
+ *
+ * 55 rather than a round number so the last page is PARTIAL: a range label
+ * bounded by page*pageSize instead of by the rows returned reads "51–100 of 55"
+ * here, and would be correct on any exact multiple.
+ */
+/** This run's seeded artist, for scoping a spec to only its own records. */
+async function artistIdFor(page: Page, suffix: string): Promise<string> {
+  const list = await (await page.request.get('/api/artists?pageSize=200')).json();
+  const artist = list.data.find((row: { name: string }) => row.name === `Discharge-${suffix}`);
+  expect(artist, `seeded artist for ${suffix}`).toBeDefined();
+  return artist.id as string;
+}
+
+async function bulkArtist(page: Page, name: string, suffix: string): Promise<string> {
+  const artist = await (await page.request.post('/api/artists', { data: { name } })).json();
+
+  await seedRecords(artist.id, name, suffix, 55);
+
+  return artist.id as string;
 }
 
 test.beforeEach(async ({ page }) => {
@@ -301,4 +337,93 @@ test('clicking through to a filtered view equals loading that URL directly', asy
   } finally {
     await context.close();
   }
+});
+
+/**
+ * SPEC.md §10's grid/table toggle and the page controls.
+ *
+ * The defects these exist to catch are both about state SURVIVING a
+ * navigation: a page link that drops the active filter, and a filter change
+ * that leaves you on page 4 of a result set with one page.
+ */
+test('the view toggle switches layout and survives a reload', async ({ page }) => {
+  /**
+   * Scoped to this run's records with `q`, not left on an unfiltered page 1.
+   *
+   * Now that the collection paginates, the two bulk-fixture specs insert 110
+   * records whose titles sort AHEAD of this one alphabetically, pushing it to
+   * page 3 — so the test failed deterministically whenever it ran alongside
+   * them, and passed alone. The fixture rule from NOTES, in its cross-spec
+   * form: a test that assumes its rows are on the first page is assuming
+   * something no other spec is obliged to preserve.
+   */
+  const f = await seed(page);
+
+  /**
+   * Filtered to this spec's OWN artist, not to `q=<suffix>`.
+   *
+   * Scoping by the suffix is not enough: the bulk-fixture specs put the same
+   * suffix in their 110 titles, and `q` is fuzzy across title AND artist
+   * (§5.2), so it matches those too and this record is still pushed off page 1.
+   * `artistId` is the only scope no other spec shares.
+   *
+   * The underlying rule is NOTES' fixture rule in its cross-spec form: a test
+   * that assumes its rows are on the first page assumes something no other
+   * spec is obliged to preserve. Deterministic once pagination existed —
+   * passed alone, failed alongside the paging specs.
+   */
+  const artistId = await artistIdFor(page, f.suffix);
+  await page.goto(`/?artistId=${artistId}`);
+
+  await page.getByRole('button', { name: 'grid', exact: true }).click();
+  await expect(page).toHaveURL(/view=grid/, { timeout: 15_000 });
+
+  // The table's column headers are gone in grid mode; the records are not.
+  await expect(page.getByRole('columnheader', { name: 'Record' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: `Hear Nothing ${f.suffix}` })).toBeVisible();
+
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'grid', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(page.getByRole('columnheader', { name: 'Record' })).toHaveCount(0);
+});
+
+test('paging keeps the active filter rather than dropping it', async ({ page }) => {
+  /**
+   * The defect: a page link built from the page number alone, discarding the
+   * filters — so page 2 of a filtered view silently shows the whole
+   * collection. Seeded past one page so the control actually renders.
+   */
+  const f = await seed(page);
+
+  const artist = await bulkArtist(page, `Bulk-${f.suffix}`, f.suffix);
+
+  await page.goto(`/?artistId=${artist}`);
+
+  const pagination = page.getByRole('navigation', { name: 'Pagination' });
+  await expect(pagination).toContainText('1–50 of 55');
+
+  await pagination.getByRole('link', { name: 'Page 2' }).click();
+
+  // Still filtered: 5 rows, not the whole collection.
+  await expect(pagination).toContainText('51–55 of 55', { timeout: 15_000 });
+  await expect(page).toHaveURL(/artistId=/);
+});
+
+test('changing a filter returns to page 1', async ({ page }) => {
+  // Staying on page 2 while narrowing the results is how a filter appears to
+  // return nothing — the rows exist, just not that far in.
+  const f = await seed(page);
+
+  const artist = await bulkArtist(page, `Bulk2-${f.suffix}`, f.suffix);
+
+  await page.goto(`/?artistId=${artist}&page=2`);
+  await expect(page.getByRole('navigation', { name: 'Pagination' })).toContainText('51–55 of 55');
+
+  await page.getByLabel('Sort by').selectOption('title:desc');
+
+  await expect(page).not.toHaveURL(/page=/, { timeout: 15_000 });
+  await expect(page.getByRole('navigation', { name: 'Pagination' })).toContainText('1–50 of 55');
 });

@@ -1,9 +1,10 @@
 import { AppHeader } from '@/components/AppHeader';
 import { CollectionFilters } from './CollectionFilters';
 import { CollectionList, type CollectionRow } from './CollectionList';
+import { CollectionPagination } from './CollectionPagination';
 import { parseCollectionParams } from './collection-params';
 import { listRecords, recordFacets } from '@/lib/db/queries/records';
-import type { Offset } from '@/lib/api/query-params';
+import { DEFAULT_PAGE_SIZE, type Offset } from '@/lib/api/query-params';
 
 /**
  * SPEC.md §10 `/`: the collection.
@@ -24,7 +25,12 @@ export const metadata = { title: 'Collection · Record Collection' };
  */
 export const dynamic = 'force-dynamic';
 
-const PAGE_SIZE = 200;
+/**
+ * §5 caps pageSize at 200; 50 is the spec's default and the right size for a
+ * screen — 200 rows is a scroll nobody reads, and unit 6 rendered exactly that
+ * with a "showing the first N" apology instead of controls.
+ */
+const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
 /**
  * Next hands `searchParams` as a record whose values may be arrays, because
@@ -59,7 +65,9 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
   const [records, facets] = await Promise.all([
     listRecords({
       limit: PAGE_SIZE,
-      offset: 0 as Offset,
+      // The branded Offset is minted here from a bounded page number: parse
+      // clamps `page` to a positive integer, so this cannot go negative.
+      offset: ((params.page - 1) * PAGE_SIZE) as Offset,
       sort: params.sort,
       filters: params.filters,
     }),
@@ -73,11 +81,8 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
       <main className="mx-auto w-full max-w-6xl px-4 py-6">
         <header className="mb-5">
           <h1 className="font-heading text-xl font-semibold tracking-tight">Collection</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground" aria-live="polite">
+          <p className="mt-0.5 text-sm text-muted-foreground">
             {records.total === 1 ? '1 record' : `${records.total} records`}
-            {records.rows.length < records.total
-              ? ` · showing the first ${records.rows.length}`
-              : ''}
           </p>
         </header>
 
@@ -87,7 +92,14 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
           options={facets}
         />
 
-        <CollectionList rows={records.rows as CollectionRow[]} />
+        <CollectionList rows={records.rows as CollectionRow[]} view={params.view} />
+
+        <CollectionPagination
+          params={params}
+          total={records.total}
+          rows={records.rows.length}
+          pageSize={PAGE_SIZE}
+        />
       </main>
     </>
   );
