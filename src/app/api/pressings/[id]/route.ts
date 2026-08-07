@@ -17,6 +17,7 @@ import {
   deletePressing,
   discogsIdTakenByOther,
   findPressingById,
+  findPressingByDiscogsId,
   updatePressing,
 } from '@/lib/db/queries/pressings';
 
@@ -82,7 +83,8 @@ export const PATCH = withErrorHandling(
       discogsReleaseId !== undefined &&
       (await discogsIdTakenByOther(id, discogsReleaseId))
     ) {
-      return duplicate('Another pressing already has that Discogs id');
+      const clash = await findPressingByDiscogsId(discogsReleaseId);
+      return duplicate('Another pressing already has that Discogs id', clash?.id ?? id);
     }
 
     try {
@@ -97,7 +99,16 @@ export const PATCH = withErrorHandling(
       return NextResponse.json(updated);
     } catch (error) {
       if (isUniqueViolation(error)) {
-        return duplicate('Another pressing already has that Discogs id');
+        /**
+         * §5.4 requires existingId from the recovery path too. discogsReleaseId
+         * is the only unique column here, so it is the only thing that can have
+         * collided — re-read by it to name the winner.
+         */
+        const winner =
+          discogsReleaseId === null || discogsReleaseId === undefined
+            ? undefined
+            : await findPressingByDiscogsId(discogsReleaseId);
+        return duplicate('Another pressing already has that Discogs id', winner?.id ?? id);
       }
       throw error;
     }

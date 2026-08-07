@@ -83,6 +83,24 @@ export async function findArtistByName(name: string): Promise<Artist | undefined
   return row;
 }
 
+/**
+ * The row holding a given Discogs id, for §5.4's `existingId` on the
+ * unique-violation recovery path. That catch covers two constraints and a
+ * re-read by NAME finds nothing when the Discogs id is what collided.
+ */
+export async function findArtistByDiscogsId(
+  discogsId: number | null,
+): Promise<Artist | undefined> {
+  if (discogsId === null) return undefined;
+  const db = getDb();
+  const [row] = await db
+    .select(columns)
+    .from(artists)
+    .where(eq(artists.discogsArtistId, discogsId))
+    .limit(1);
+  return row;
+}
+
 export type ArtistInput = {
   name: string;
   formedYear?: number | null;

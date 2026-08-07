@@ -63,15 +63,32 @@ export const POST = withErrorHandling('api.formats.POST', async (request: Reques
 
   const { name } = parsed.data;
 
-  if ((await findFormatByName(name)) !== undefined) {
-    return duplicate('A format with that name already exists');
+  const existing = await findFormatByName(name);
+  if (existing !== undefined) {
+    return duplicate('A format with that name already exists', existing.id);
   }
 
   try {
     return NextResponse.json(await createFormat(name), { status: 201 });
   } catch (error) {
     if (isUniqueViolation(error)) {
-      return duplicate('A format with that name already exists');
+      /**
+       * §5.4 requires existingId from the RECOVERY path too — a
+       * concurrent write won the race, and the caller still needs to
+       * be able to select what it lost to. Re-read by name: the row
+       * now exists, which is why we are here.
+       */
+      /**
+       * §5.4 requires existingId from the recovery path too. `name` is this
+       * resource's ONLY unique column, so it is necessarily what collided —
+       * unlike labels and artists, which also have a Discogs id and must
+       * inspect the constraint. The row exists now, which is why we are here;
+       * if it somehow does not, rethrowing is honest rather than returning a
+       * DUPLICATE naming nothing.
+       */
+      const winner = await findFormatByName(name);
+      if (winner === undefined) throw error;
+      return duplicate('A format with that name already exists', winner.id);
     }
     throw error;
   }

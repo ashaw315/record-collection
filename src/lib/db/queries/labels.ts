@@ -74,6 +74,24 @@ export async function findLabelByName(name: string): Promise<Label | undefined> 
   return row;
 }
 
+/**
+ * The row holding a given Discogs id, for §5.4's `existingId` on the
+ * unique-violation recovery path. That catch covers two constraints and a
+ * re-read by NAME finds nothing when the Discogs id is what collided.
+ */
+export async function findLabelByDiscogsId(
+  discogsId: number | null,
+): Promise<Label | undefined> {
+  if (discogsId === null) return undefined;
+  const db = getDb();
+  const [row] = await db
+    .select(columns)
+    .from(labels)
+    .where(eq(labels.discogsLabelId, discogsId))
+    .limit(1);
+  return row;
+}
+
 export type LabelInput = {
   name: string;
   notes?: string | null;

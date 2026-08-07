@@ -512,7 +512,17 @@ describe('POST /api/tags', () => {
     const spy = vi.spyOn(logger, 'error').mockImplementation(() => {});
     const queries = await import('@/lib/db/queries/tags');
 
-    const claim = vi.spyOn(queries, 'findTagByName').mockImplementation(async () => {
+        /**
+     * Only the FIRST call is hooked. The recovery path re-reads by name to
+     * supply §5.4's existingId, so a mock returning undefined every time
+     * makes the handler rethrow — the mock defeating the code under test.
+     */
+    const real = queries.findTagByName;
+    let firstCall = true;
+
+const claim = vi.spyOn(queries, 'findTagByName').mockImplementation(async (name) => {
+      if (!firstCall) return real(name);
+      firstCall = false;
       await db.execute(sql`INSERT INTO tags (name) VALUES ('signed')`);
       return undefined;
     });

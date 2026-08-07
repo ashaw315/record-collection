@@ -14,6 +14,9 @@ export type ApiErrorBody = {
     code: string;
     fieldErrors?: Record<string, string>;
     referenceCount?: number;
+    /** Present on every DUPLICATE (§5.4). Optional here only because this type
+     * describes every error shape; `duplicate()` requires it. */
+    existingId?: string;
   };
 };
 
@@ -94,8 +97,25 @@ export function internalError(): NextResponse<ApiErrorBody> {
   );
 }
 
-export function duplicate(message: string): NextResponse<ApiErrorBody> {
-  return NextResponse.json({ error: { message, code: 'DUPLICATE' } }, { status: 409 });
+/**
+ * SPEC.md §5.4's DUPLICATE conflict.
+ *
+ * `existingId` is REQUIRED, not optional, and that is deliberate: an optional
+ * field invites clients to branch on its presence, and the path most likely to
+ * omit it is the unique-violation recovery — so the defect would appear only
+ * under concurrency, which is the hardest version to diagnose. Making it part
+ * of the signature means the compiler audits every call site instead.
+ *
+ * It exists because names are normalized with `cleanName` before comparison,
+ * so a collision is frequently NOT a string match on the client's side.
+ * Measured: a double space, a non-breaking space, a zero-width joiner and an
+ * NFD-composed `Café` all collide server-side while failing any naive
+ * client-side comparison. Without the id, a client offering "that exists —
+ * use it instead" has to reimplement the normalization and will get it wrong
+ * in exactly the cases normalization exists for.
+ */
+export function duplicate(message: string, existingId: string): NextResponse<ApiErrorBody> {
+  return NextResponse.json({ error: { message, code: 'DUPLICATE', existingId } }, { status: 409 });
 }
 
 /**
@@ -185,6 +205,24 @@ export function invalidPathIds(
  * same name — the check-then-insert race a pre-check alone cannot close. */
 export function isUniqueViolation(error: unknown): boolean {
   return pgErrorCode(error) === '23505';
+}
+
+/**
+ * Which unique constraint a 23505 violated.
+ *
+ * Needed because §5.4 requires `existingId` on every DUPLICATE, and a resource
+ * with TWO unique columns — labels and artists both have a name and a Discogs
+ * id — cannot know which one collided without asking. Re-reading by name after
+ * a Discogs-id collision finds nothing, and the caller would receive a
+ * DUPLICATE naming no row.
+ *
+ * Verified against the database rather than assumed: a name clash reports
+ * `labels_name_unique` and a Discogs clash reports `labels_discogs_label_id_key`.
+ */
+export function uniqueConstraintName(error: unknown): string | undefined {
+  const cause = (error as { cause?: { constraint?: unknown } } | undefined)?.cause;
+  const constraint = cause?.constraint;
+  return typeof constraint === 'string' ? constraint : undefined;
 }
 
 /**

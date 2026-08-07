@@ -16,6 +16,7 @@ import {
   countTagReferences,
   deleteTag,
   findTagById,
+  findTagByName,
   nameTakenByOther,
   updateTag,
 } from '@/lib/db/queries/tags';
@@ -68,7 +69,8 @@ export const PATCH = withErrorHandling(
 
     const { name } = parsed.data;
     if (await nameTakenByOther(id, name)) {
-      return duplicate('A tag with that name already exists');
+      const clash = await findTagByName(name);
+      return duplicate('A tag with that name already exists', clash?.id ?? id);
     }
 
     try {
@@ -78,7 +80,14 @@ export const PATCH = withErrorHandling(
       return NextResponse.json(updated);
     } catch (error) {
       if (isUniqueViolation(error)) {
-        return duplicate('A tag with that name already exists');
+        /**
+         * §5.4 requires existingId from the RECOVERY path too — a
+         * concurrent write won the race, and the caller still needs to
+         * be able to select what it lost to. Re-read by name: the row
+         * now exists, which is why we are here.
+         */
+        const winner = name === undefined ? undefined : await findTagByName(name);
+        return duplicate('A tag with that name already exists', winner?.id ?? '');
       }
       throw error;
     }

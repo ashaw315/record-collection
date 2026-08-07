@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { duplicate, invalidJson, isUniqueViolation, validationError } from '@/lib/api/errors';
+import {
+  duplicate,
+  invalidJson,
+  isUniqueViolation,
+  uniqueConstraintName,
+  validationError,
+} from '@/lib/api/errors';
 import { withErrorHandling } from '@/lib/api/handler';
 import { NAME_MAX_LENGTH, cleanName, nameLength } from '@/lib/api/text';
 import { formedYearSchema } from '@/lib/api/year';
@@ -8,6 +14,7 @@ import { parseListParams } from '@/lib/api/query-params';
 import {
   ARTIST_SORT_FIELDS,
   createArtist,
+  findArtistByDiscogsId,
   findArtistByName,
   listArtists,
 } from '@/lib/db/queries/artists';
@@ -69,8 +76,9 @@ export const POST = withErrorHandling('api.artists.POST', async (request: Reques
 
   const { name, formedYear, originCountry, notes, discogsArtistId } = parsed.data;
 
-  if ((await findArtistByName(name)) !== undefined) {
-    return duplicate('An artist with that name already exists');
+  const existing = await findArtistByName(name);
+  if (existing !== undefined) {
+    return duplicate('An artist with that name already exists', existing.id);
   }
 
   try {
@@ -86,7 +94,24 @@ export const POST = withErrorHandling('api.artists.POST', async (request: Reques
     // Covers both unique constraints: the name pre-check is not a lock, and
     // discogsArtistId is not pre-checked at all.
     if (isUniqueViolation(error)) {
-      return duplicate('An artist with that name or Discogs id already exists');
+      /**
+       * §5.4 requires existingId from the RECOVERY path too — a concurrent
+       * write won the race and the caller still needs to reach what it lost to.
+       *
+       * WHICH constraint failed decides how to find the winner. This catch
+       * covers two: the name (pre-checked, but the check is not a lock) and
+       * discogsArtistId (never pre-checked — the partial unique index is its
+       * only guard). Re-reading by name after a Discogs-id collision finds
+       * nothing, so the constraint has to be inspected rather than assumed.
+       */
+      const constraint = uniqueConstraintName(error);
+      const winner =
+        constraint?.includes('discogs_artist_id') === true
+          ? await findArtistByDiscogsId(discogsArtistId ?? null)
+          : await findArtistByName(name);
+
+      if (winner === undefined) throw error;
+      return duplicate('An artist with that name or Discogs id already exists', winner.id);
     }
     throw error;
   }

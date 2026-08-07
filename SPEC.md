@@ -368,6 +368,14 @@ Standard REST CRUD (`GET` list, `POST`, `GET :id`, `PATCH :id`, `DELETE :id`) fo
 
 **Delete behavior:** reject with `409` if the row is referenced by any record or want-list item. Return `{ error: { code: "IN_USE", message, referenceCount } }`.
 
+**Duplicate behavior:** a `POST` or `PATCH` colliding with an existing unique name returns `409` with `{ error: { code: "DUPLICATE", message, existingId } }`. `existingId` is **required**, not optional, and applies to every resource in this section.
+
+The reason is that names are normalized with `cleanName` before comparison (§4, NFKC plus invisible-character stripping), so a collision is frequently not a string match on the client's side: `"Clay  Records"` with a double space, a non-breaking space, a zero-width joiner, or an NFD-composed `Café` all collide server-side while failing any naive client-side comparison. Without `existingId`, a client wanting to offer "that already exists — use it instead" must reimplement the server's normalization, and will get it wrong in exactly the cases normalization exists to handle.
+
+`existingId` must be returned from **every** path that can produce a `DUPLICATE`, including the unique-violation recovery path taken when a concurrent write wins the race. A recovery-path 409 without it is the same defect surfacing only under concurrency, which is the hardest version to diagnose.
+
+Note that comparison is case-sensitive: `clay records` and `Clay Records` are distinct labels. That is existing behavior and this section does not change it.
+
 `GET /api/genres` supports `?tree=true` to return the nested hierarchy rather than a flat list.
 
 ### 5.5 Relationships

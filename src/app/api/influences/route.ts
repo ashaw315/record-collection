@@ -78,8 +78,15 @@ export const POST = withErrorHandling('api.influences.POST', async (request: Req
     );
   }
 
-  if ((await findInfluence(sourceArtistId, targetArtistId)) !== undefined) {
-    return duplicate('That influence edge already exists');
+  const existingEdge = await findInfluence(sourceArtistId, targetArtistId);
+  if (existingEdge !== undefined) {
+    /**
+     * An influence edge has no surrogate id — §5.5 addresses it by the PAIR in
+     * the path. `sourceArtistId` is what a client needs to reach it
+     * (`/api/influences/:sourceId/:targetId`), so that is what §5.4's
+     * existingId carries here.
+     */
+    return duplicate('That influence edge already exists', sourceArtistId);
   }
 
   try {
@@ -94,7 +101,9 @@ export const POST = withErrorHandling('api.influences.POST', async (request: Req
     // The pre-check is not a lock: two concurrent creates can both pass it and
     // one loses to the composite primary key.
     if (isUniqueViolation(error)) {
-      return duplicate('That influence edge already exists');
+      // The concurrent winner holds the same pair, so the same identifier
+      // reaches it (§5.5).
+      return duplicate('That influence edge already exists', sourceArtistId);
     }
     throw error;
   }

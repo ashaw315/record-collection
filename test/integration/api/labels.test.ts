@@ -334,7 +334,17 @@ describe('POST /api/labels', () => {
     const spy = vi.spyOn(logger, 'error').mockImplementation(() => {});
     const queries = await import('@/lib/db/queries/labels');
 
-    const claim = vi.spyOn(queries, 'findLabelByName').mockImplementation(async () => {
+        /**
+     * Only the FIRST call is hooked. The recovery path re-reads by name to
+     * supply §5.4's existingId, so a mock returning undefined every time
+     * makes the handler rethrow — the mock defeating the code under test.
+     */
+    const real = queries.findLabelByName;
+    let firstCall = true;
+
+const claim = vi.spyOn(queries, 'findLabelByName').mockImplementation(async (name) => {
+      if (!firstCall) return real(name);
+      firstCall = false;
       await db.execute(sql`INSERT INTO labels (name) VALUES ('Dischord')`);
       return undefined;
     });
@@ -358,7 +368,17 @@ describe('POST /api/labels', () => {
     const spy = vi.spyOn(logger, 'error').mockImplementation(() => {});
     const queries = await import('@/lib/db/queries/labels');
 
-    const claim = vi.spyOn(queries, 'findLabelByName').mockImplementation(async () => {
+        /**
+     * Only the FIRST call is hooked. The recovery path re-reads by name to
+     * supply §5.4's existingId, so a mock returning undefined every time
+     * makes the handler rethrow — the mock defeating the code under test.
+     */
+    const real = queries.findLabelByName;
+    let firstCall = true;
+
+const claim = vi.spyOn(queries, 'findLabelByName').mockImplementation(async (name) => {
+      if (!firstCall) return real(name);
+      firstCall = false;
       await db.execute(sql`INSERT INTO labels (name, discogs_label_id) VALUES ('Other', 4321)`);
       return undefined;
     });

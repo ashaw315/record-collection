@@ -119,8 +119,9 @@ export const POST = withErrorHandling('api.genres.POST', async (request: Request
     }
   }
 
-  if ((await findGenreByName(name)) !== undefined) {
-    return duplicate('A genre with that name already exists');
+  const existing = await findGenreByName(name);
+  if (existing !== undefined) {
+    return duplicate('A genre with that name already exists', existing.id);
   }
 
   try {
@@ -132,7 +133,23 @@ export const POST = withErrorHandling('api.genres.POST', async (request: Request
     return NextResponse.json(created, { status: 201 });
   } catch (error) {
     if (isUniqueViolation(error)) {
-      return duplicate('A genre with that name already exists');
+      /**
+       * §5.4 requires existingId from the RECOVERY path too — a
+       * concurrent write won the race, and the caller still needs to
+       * be able to select what it lost to. Re-read by name: the row
+       * now exists, which is why we are here.
+       */
+      /**
+       * §5.4 requires existingId from the recovery path too. `name` is this
+       * resource's ONLY unique column, so it is necessarily what collided —
+       * unlike labels and artists, which also have a Discogs id and must
+       * inspect the constraint. The row exists now, which is why we are here;
+       * if it somehow does not, rethrowing is honest rather than returning a
+       * DUPLICATE naming nothing.
+       */
+      const winner = await findGenreByName(name);
+      if (winner === undefined) throw error;
+      return duplicate('A genre with that name already exists', winner.id);
     }
     throw error;
   }
