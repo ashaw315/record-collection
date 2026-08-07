@@ -24,6 +24,21 @@ import type { Offset } from '@/lib/api/query-params';
 export const metadata = { title: 'Manage · Record Collection' };
 
 /**
+ * Rendered per request, not at build time.
+ *
+ * This page reads seven tables and uses no request-scoped API — auth is in
+ * middleware, which does not opt a page into dynamic rendering — so Next
+ * PRERENDERED it. Proven against a production build: a tag created through the
+ * API was returned by the API and never appeared here, on a full page load.
+ * The screen would have shown whatever data existed when the build ran.
+ *
+ * Declared rather than relying on an incidental dynamic API, so it cannot
+ * regress when the code around it changes. test/repo/dynamic-pages.test.ts
+ * fails if any database-backed page loses this.
+ */
+export const dynamic = 'force-dynamic';
+
+/**
  * Reference data is small, so one page of 200 covers every resource and this
  * screen needs no pagination controls. The offset cast is the one place a
  * branded Offset is minted outside parseListParams: it is the literal 0, not

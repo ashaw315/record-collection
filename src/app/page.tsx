@@ -16,6 +16,14 @@ import type { Offset } from '@/lib/api/query-params';
 
 export const metadata = { title: 'Collection · Record Collection' };
 
+/**
+ * Rendered per request. This page happens to be dynamic already because it
+ * awaits `searchParams`, but relying on that is fragile: removing the filters
+ * would silently make the collection stale, with nothing to notice it. See
+ * /manage, where exactly that shipped.
+ */
+export const dynamic = 'force-dynamic';
+
 const PAGE_SIZE = 200;
 
 /**

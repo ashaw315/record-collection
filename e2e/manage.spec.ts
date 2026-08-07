@@ -151,7 +151,7 @@ test('shows a seeded format as disabled rather than a button that errors', async
  *
  * Do not un-skip without a diagnosis.
  */
-test.skip('moves a genre under another with the select, on touch and pointer alike', async ({
+test('moves a genre under another with the select, on touch and pointer alike', async ({
   page,
   request,
 }) => {
@@ -180,7 +180,7 @@ test.skip('moves a genre under another with the select, on touch and pointer ali
 });
 
 /** QUARANTINED alongside the spec above — same undiagnosed flake. */
-test.skip('the move select never offers a genre its own descendant', async ({ page, request }) => {
+test('the move select never offers a genre its own descendant', async ({ page, request }) => {
   const parent = unique('e2e-cyc-parent');
   const child = unique('e2e-cyc-child');
 
