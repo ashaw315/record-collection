@@ -30,6 +30,24 @@ async function post(page: Page, path: string, data: unknown) {
   return response.json();
 }
 
+/**
+ * Waits for the form to be INTERACTIVE, not merely present.
+ *
+ * WebKit reaches the DOM faster than React hydrates, so `fill()` can set an
+ * input's value before any onChange handler is attached: the DOM holds the
+ * text, React's state does not, and the submitted body omits the field
+ * entirely. Measured on the mobile project — 6 of 8 submissions lost the title
+ * without this wait, 0 of 8 with it. Chromium hydrates faster and almost never
+ * loses the race, which is why this file passed there and failed here.
+ *
+ * A real user cannot type faster than hydration, so this is a test-harness
+ * concern rather than a product defect. The inline-create button is the signal:
+ * it is rendered by the client component and only exists once hydrated.
+ */
+async function formReady(page: Page): Promise<void> {
+  await page.getByRole('button', { name: '+ New artist' }).waitFor({ timeout: 15_000 });
+}
+
 test.beforeEach(async ({ page }) => {
   await login(page);
 });
@@ -43,6 +61,7 @@ test('adds a record manually and finds it in the collection', async ({ page }) =
   const title = `Hear Nothing ${suffix}`;
 
   await page.goto('/records/new');
+  await formReady(page);
 
   await page.getByLabel('Title').fill(title);
   await page.getByLabel('Artist').selectOption(artist.id);
@@ -74,6 +93,7 @@ test('reports a validation failure without losing what was typed', async ({ page
   const title = `No Artist ${suffix}`;
 
   await page.goto('/records/new');
+  await formReady(page);
   await page.getByLabel('Title').fill(title);
   // No artist chosen: artistId is required by §5.2.
   await page.getByRole('button', { name: 'Add record' }).click();
@@ -103,6 +123,7 @@ test('edits one field without disturbing the others', async ({ page }) => {
   });
 
   await page.goto(`/records/${record.id}/edit`);
+  await formReady(page);
   await page.getByLabel('Title').fill(`After ${suffix}`);
   await page.getByRole('button', { name: 'Save changes' }).click();
 
@@ -133,6 +154,7 @@ test('clearing a field removes it rather than leaving it set', async ({ page }) 
   });
 
   await page.goto(`/records/${record.id}/edit`);
+  await formReady(page);
   await expect(page.getByLabel('Label')).toHaveValue(label.id);
 
   await page.getByLabel('Label').selectOption('');
@@ -163,6 +185,7 @@ test('removing every genre clears them, rather than leaving them alone', async (
   await expect(page.getByRole('link', { name: `Removable-${suffix}` })).toBeVisible();
 
   await page.goto(`/records/${record.id}/edit`);
+  await formReady(page);
   // Clicking the selected chip deselects it.
   await page.getByText(`Removable-${suffix}`).click();
   await page.getByRole('button', { name: 'Save changes' }).click();
@@ -182,6 +205,7 @@ test('saving an unchanged record returns without an error', async ({ page }) => 
   });
 
   await page.goto(`/records/${record.id}/edit`);
+  await formReady(page);
   await page.getByRole('button', { name: 'Save changes' }).click();
 
   await expect(page).toHaveURL(new RegExp(`/records/${record.id}$`), { timeout: 15_000 });
@@ -209,6 +233,7 @@ test('creates an artist inline and uses it without leaving the form', async ({ p
   const title = `Inline Record ${suffix}`;
 
   await page.goto('/records/new');
+  await formReady(page);
 
   // The title is typed FIRST, so the test proves the half-filled form survives
   // the inline create — the whole reason it exists rather than a link to
@@ -243,6 +268,7 @@ test('a colliding inline create selects the existing row rather than failing', a
   const existing = await post(page, '/api/labels', { name });
 
   await page.goto('/records/new');
+  await formReady(page);
   await page.getByRole('button', { name: '+ New label' }).click();
   await page.getByLabel('New label name').fill(name);
   await page.getByRole('button', { name: 'Add', exact: true }).click();
@@ -269,6 +295,7 @@ test('a collision that only cleanName can see still selects the existing row', a
   expect(typed).not.toBe(stored);
 
   await page.goto('/records/new');
+  await formReady(page);
   await page.getByRole('button', { name: '+ New label' }).click();
   await page.getByLabel('New label name').fill(typed);
   await page.getByRole('button', { name: 'Add', exact: true }).click();
@@ -291,6 +318,7 @@ test('a zero-width character cannot enter through the form', async ({ page }) =>
   expect(sneaky).not.toBe(clean);
 
   await page.goto('/records/new');
+  await formReady(page);
   await page.getByRole('button', { name: '+ New label' }).click();
   await page.getByLabel('New label name').fill(sneaky);
   await page.getByRole('button', { name: 'Add', exact: true }).click();

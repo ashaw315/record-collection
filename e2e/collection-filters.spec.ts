@@ -150,6 +150,22 @@ async function bulkArtist(page: Page, name: string, suffix: string): Promise<str
   return artist.id as string;
 }
 
+/**
+ * Waits for the controls to be INTERACTIVE, not merely present.
+ *
+ * WebKit reaches the DOM before React hydrates, so an interaction landing in
+ * that window is applied to the DOM and never reaches React's state. Measured
+ * on the record form: 6 of 8 submissions lost a filled field without this wait,
+ * 0 of 8 with it. A real user cannot act faster than hydration, so this is a
+ * harness concern rather than a product defect.
+ *
+ * The sort select is the signal here: it is rendered by the client component
+ * and its onChange only exists once hydrated.
+ */
+async function controlsReady(page: Page): Promise<void> {
+  await page.getByLabel('Sort by').waitFor({ timeout: 15_000 });
+}
+
 test.beforeEach(async ({ page }) => {
   await login(page);
 });
@@ -183,6 +199,7 @@ test('searching narrows the collection and survives a reload', async ({ page }) 
   const term = 'Hear Nothing';
   const artistId = await artistIdFor(page, f.suffix);
   await page.goto(`/?artistId=${artistId}`);
+  await controlsReady(page);
 
   // Wait for the filtered page to settle before typing: the search box is
   // keyed on the URL's `q`, so it remounts when navigation completes and a
@@ -229,6 +246,7 @@ test('a parent-genre chip finds a record tagged with its grandchild, and says wh
    * without depending on what else the database holds.
    */
   await page.goto(`/?genreId=${f.punkId}`);
+  await controlsReady(page);
 
   // §7.1: both the UK82 and Crust records are in the Punk subtree; the Jazz
   // one is not.
@@ -246,6 +264,7 @@ test('a parent-genre chip finds a record tagged with its grandchild, and says wh
 test('clicking the active chip clears it', async ({ page }) => {
   const f = await seed(page);
   await page.goto('/');
+  await controlsReady(page);
 
   const chip = page.getByRole('button', { name: `Punk-${f.suffix}` });
   await chip.click();
@@ -297,6 +316,7 @@ test('sorting reorders the rows', async ({ page }) => {
   // q on the suffix deliberately: this test wants all three of this run's
   // records in scope, and the fuzzy match across title and artist gives that.
   await page.goto(`/?q=${f.suffix}`);
+  await controlsReady(page);
 
   await page.getByLabel('Sort by').selectOption('releaseYear:desc');
 
@@ -313,6 +333,7 @@ test('filters compose rather than replacing each other', async ({ page }) => {
   // silently dropping the first.
   const f = await seed(page);
   await page.goto('/');
+  await controlsReady(page);
 
   await page.getByRole('button', { name: `Punk-${f.suffix}` }).click();
   await page.getByRole('button', { name: `Clay-${f.suffix}` }).click();
@@ -342,6 +363,7 @@ test('clicking through to a filtered view equals loading that URL directly', asy
 }) => {
   const f = await seed(page);
   await page.goto('/');
+  await controlsReady(page);
 
   await page.getByRole('button', { name: `Punk-${f.suffix}` }).click();
   await page.getByRole('button', { name: `Clay-${f.suffix}` }).click();
@@ -416,6 +438,7 @@ test('the view toggle switches layout and survives a reload', async ({ page }, t
    */
   const artistId = await artistIdFor(page, f.suffix);
   await page.goto(`/?artistId=${artistId}`);
+  await controlsReady(page);
 
   await page.getByRole('button', { name: 'grid', exact: true }).click();
   await expect(page).toHaveURL(/view=grid/, { timeout: 15_000 });
@@ -495,9 +518,11 @@ test('the grid toggle is hidden on a phone, but a grid URL still renders', async
   const artistId = await artistIdFor(page, f.suffix);
 
   await page.goto(`/?artistId=${artistId}`);
+  await controlsReady(page);
   await expect(page.getByRole('group', { name: 'View' })).toBeHidden();
 
   await page.goto(`/?artistId=${artistId}&view=grid`);
+  await controlsReady(page);
   await expect(page.getByRole('link', { name: `Hear Nothing ${f.suffix}` })).toBeVisible();
   await expect(page.getByRole('columnheader', { name: 'Record' })).toHaveCount(0);
 });
