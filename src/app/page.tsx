@@ -92,6 +92,12 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
           options={facets}
         />
 
+        {/*
+          `view` is still honoured from the URL at any width — a grid link
+          shared from a desktop opens as a grid. Only the CONTROL is hidden on
+          small screens, so nothing becomes unreachable, and the CSS grid falls
+          back to one column there anyway.
+        */}
         <CollectionList rows={records.rows as CollectionRow[]} view={params.view} />
 
         <CollectionPagination

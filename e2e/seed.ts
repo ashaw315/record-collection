@@ -29,3 +29,21 @@ export async function seedRecords(
       FROM generate_series(0, ${count - 1}) AS i
   `);
 }
+
+/**
+ * Removes a bulk fixture's records once its spec is done.
+ *
+ * Removing the LOAD was not enough. Leaving 110 rows in a database every other
+ * spec reads changes what lands on page 1 for all of them — the same defect as
+ * the view-toggle spec assuming its record was on the first page, one level up:
+ * a spec that leaves data behind imposes that assumption on every other spec in
+ * the file.
+ *
+ * Deleted by artist rather than by title pattern: the artist id is exact, and a
+ * LIKE on a title prefix is the kind of match that quietly widens.
+ */
+export async function removeRecordsFor(artistId: string): Promise<void> {
+  const db = getTestDb();
+
+  await db.execute(sql`DELETE FROM records WHERE artist_id = ${artistId}::uuid`);
+}

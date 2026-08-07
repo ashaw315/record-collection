@@ -171,9 +171,17 @@ export function CollectionFilters({
             /manage uses to reset a panel when the resource changes. */}
         <SearchBox key={params.filters.q ?? ''} initial={params.filters.q ?? ''} onSubmit={search} />
 
-        {/* View toggle (§10). Two buttons rather than a select: it is a
-            binary choice and a select costs an extra tap on a phone. */}
-        <div className="flex shrink-0 gap-1" role="group" aria-label="View">
+        {/*
+          View toggle (§10). Two buttons rather than a select: it is a binary
+          choice and a select costs an extra tap on a phone.
+
+          HIDDEN below `sm`. At 390px the grid collapses to one column, which
+          makes it a taller table rather than a distinct view — measured: 3/2/1
+          columns at 1280/768/390. §10 wants mobile usable ONE-HANDED rather
+          than feature-complete, and a control that swaps one list for a longer
+          list is cost without benefit. The table remains the mobile view.
+        */}
+        <div className="hidden shrink-0 gap-1 sm:flex" role="group" aria-label="View">
           {(['table', 'grid'] as const).map((mode) => (
             <button
               key={mode}

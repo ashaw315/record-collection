@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { seedRecords } from './seed';
+import { removeRecordsFor, seedRecords } from './seed';
 
 /**
  * SPEC.md §10 `/`: the collection screen's controls.
@@ -156,7 +156,6 @@ test.beforeEach(async ({ page }) => {
 
 test('searching narrows the collection and survives a reload', async ({ page }) => {
   const f = await seed(page);
-  await page.goto('/');
 
   /**
    * Searched on a word unique to ONE record, not on the run suffix.
@@ -166,7 +165,34 @@ test('searching narrows the collection and survives a reload', async ({ page }) 
    * three, and an assertion expecting one would be testing the fixture rather
    * than the filter. The fixture rule from NOTES, met in my own test.
    */
-  await page.getByRole('searchbox', { name: 'Search the collection' }).fill('Hear Nothing');
+  /**
+   * Scoped by artistId in the URL, then searched by title word.
+   *
+   * Two collisions have to be avoided at once, and neither the term alone nor
+   * the term-plus-suffix does it:
+   *
+   *   - 'Hear Nothing' matches every PARALLEL PROJECT'S copy, since chromium
+   *     and mobile each seed one;
+   *   - 'Hear Nothing <suffix>' matches all THREE of this run's records,
+   *     because §5.2 makes `q` fuzzy across the artist name too and the artist
+   *     is `Discharge-<suffix>`.
+   *
+   * The artist filter narrows to this run; `q` then does the work the test is
+   * actually about. Both tried and measured before landing here.
+   */
+  const term = 'Hear Nothing';
+  const artistId = await artistIdFor(page, f.suffix);
+  await page.goto(`/?artistId=${artistId}`);
+
+  // Wait for the filtered page to settle before typing: the search box is
+  // keyed on the URL's `q`, so it remounts when navigation completes and a
+  // value typed into the outgoing instance is discarded.
+  await expect(page.getByRole('searchbox', { name: 'Search the collection' })).toBeVisible();
+  await expect(page.getByRole('link', { name: `Hear Nothing ${f.suffix}` })).toBeVisible({
+    timeout: 15_000,
+  });
+
+  await page.getByRole('searchbox', { name: 'Search the collection' }).fill(term);
   await page.getByRole('button', { name: 'Search' }).click();
 
   /**
@@ -183,18 +209,26 @@ test('searching narrows the collection and survives a reload', async ({ page }) 
   // it — the reason filters do not live in React state.
   await page.reload();
   await expectTitles(page, f.suffix, [`Hear Nothing ${f.suffix}`]);
-  await expect(page.getByRole('searchbox', { name: 'Search the collection' })).toHaveValue(
-    'Hear Nothing',
-  );
+  await expect(page.getByRole('searchbox', { name: 'Search the collection' })).toHaveValue(term);
 });
 
 test('a parent-genre chip finds a record tagged with its grandchild, and says why', async ({
   page,
 }) => {
   const f = await seed(page);
-  await page.goto('/');
 
-  await page.getByRole('button', { name: `Punk-${f.suffix}` }).click();
+  /**
+   * Navigated straight to the filtered URL rather than clicking the chip on an
+   * unfiltered page 1.
+   *
+   * Specs run fully parallel against one database, so another spec's bulk
+   * fixture can be present while this one runs — 110 rows that push this run's
+   * records off page 1 and its chip out of the visible facets. Clicking the
+   * chip is covered by 'clicking the active chip clears it'; what THIS spec is
+   * about is §7.1 hierarchy plus matchedVia, and the URL reaches that state
+   * without depending on what else the database holds.
+   */
+  await page.goto(`/?genreId=${f.punkId}`);
 
   // §7.1: both the UK82 and Crust records are in the Punk subtree; the Jazz
   // one is not.
@@ -346,7 +380,15 @@ test('clicking through to a filtered view equals loading that URL directly', asy
  * navigation: a page link that drops the active filter, and a filter change
  * that leaves you on page 4 of a result set with one page.
  */
-test('the view toggle switches layout and survives a reload', async ({ page }) => {
+/**
+ * Desktop only: the toggle is hidden below `sm`, because a single-column grid
+ * at 390px is a taller table rather than a distinct view (§10 wants mobile
+ * usable one-handed). The mobile case is covered by the test below, which
+ * asserts the control is absent AND that a grid URL still renders.
+ */
+test('the view toggle switches layout and survives a reload', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile', 'the toggle is desktop-only by design');
+
   /**
    * Scoped to this run's records with `q`, not left on an unfiltered page 1.
    *
@@ -400,16 +442,23 @@ test('paging keeps the active filter rather than dropping it', async ({ page }) 
 
   const artist = await bulkArtist(page, `Bulk-${f.suffix}`, f.suffix);
 
-  await page.goto(`/?artistId=${artist}`);
+  try {
+    await page.goto(`/?artistId=${artist}`);
 
-  const pagination = page.getByRole('navigation', { name: 'Pagination' });
-  await expect(pagination).toContainText('1–50 of 55');
+    const pagination = page.getByRole('navigation', { name: 'Pagination' });
+    await expect(pagination).toContainText('1–50 of 55');
 
-  await pagination.getByRole('link', { name: 'Page 2' }).click();
+    await pagination.getByRole('link', { name: 'Page 2' }).click();
 
-  // Still filtered: 5 rows, not the whole collection.
-  await expect(pagination).toContainText('51–55 of 55', { timeout: 15_000 });
-  await expect(page).toHaveURL(/artistId=/);
+    // Still filtered: 5 rows, not the whole collection.
+    await expect(pagination).toContainText('51–55 of 55', { timeout: 15_000 });
+    await expect(page).toHaveURL(/artistId=/);
+  } finally {
+    // In a finally, so a failing assertion still cleans up. A spec that leaves
+    // 55 rows behind on failure makes every LATER spec fail too, and the
+    // original cause is then buried under the cascade.
+    await removeRecordsFor(artist);
+  }
 });
 
 test('changing a filter returns to page 1', async ({ page }) => {
@@ -419,11 +468,36 @@ test('changing a filter returns to page 1', async ({ page }) => {
 
   const artist = await bulkArtist(page, `Bulk2-${f.suffix}`, f.suffix);
 
-  await page.goto(`/?artistId=${artist}&page=2`);
-  await expect(page.getByRole('navigation', { name: 'Pagination' })).toContainText('51–55 of 55');
+  try {
+    await page.goto(`/?artistId=${artist}&page=2`);
+    await expect(page.getByRole('navigation', { name: 'Pagination' })).toContainText('51–55 of 55');
 
-  await page.getByLabel('Sort by').selectOption('title:desc');
+    await page.getByLabel('Sort by').selectOption('title:desc');
 
-  await expect(page).not.toHaveURL(/page=/, { timeout: 15_000 });
-  await expect(page.getByRole('navigation', { name: 'Pagination' })).toContainText('1–50 of 55');
+    await expect(page).not.toHaveURL(/page=/, { timeout: 15_000 });
+    await expect(page.getByRole('navigation', { name: 'Pagination' })).toContainText('1–50 of 55');
+  } finally {
+    await removeRecordsFor(artist);
+  }
+});
+
+test('the grid toggle is hidden on a phone, but a grid URL still renders', async ({
+  page,
+}, testInfo) => {
+  /**
+   * The control is hidden, not the capability. A grid link shared from a
+   * desktop must still open — hiding the toggle must not make a URL
+   * unreachable, which is the failure mode of "just remove it on mobile".
+   */
+  test.skip(testInfo.project.name !== 'mobile', 'about the mobile viewport specifically');
+
+  const f = await seed(page);
+  const artistId = await artistIdFor(page, f.suffix);
+
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.getByRole('group', { name: 'View' })).toBeHidden();
+
+  await page.goto(`/?artistId=${artistId}&view=grid`);
+  await expect(page.getByRole('link', { name: `Hear Nothing ${f.suffix}` })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'Record' })).toHaveCount(0);
 });
