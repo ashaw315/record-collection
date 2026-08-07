@@ -58,8 +58,16 @@ export default async function RecordPage({ params }: PageProps<'/records/[id]'>)
           ← Collection
         </Link>
 
-        <div className="mt-3">
-          <RecordDetail record={record} />
+        <div className="mt-3 flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <RecordDetail record={record} />
+          </div>
+          <Link
+            href={`/records/${id}/edit`}
+            className="mt-1 shrink-0 rounded-xs border border-border px-3 py-1.5 text-sm transition-colors hover:bg-accent"
+          >
+            Edit
+          </Link>
         </div>
       </main>
     </>

@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { AppHeader } from '@/components/AppHeader';
 import { CollectionFilters } from './CollectionFilters';
 import { CollectionList, type CollectionRow } from './CollectionList';
@@ -79,11 +80,21 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
       <AppHeader />
 
       <main className="mx-auto w-full max-w-6xl px-4 py-6">
-        <header className="mb-5">
-          <h1 className="font-heading text-xl font-semibold tracking-tight">Collection</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            {records.total === 1 ? '1 record' : `${records.total} records`}
-          </p>
+        <header className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="font-heading text-xl font-semibold tracking-tight">Collection</h1>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {records.total === 1 ? '1 record' : `${records.total} records`}
+            </p>
+          </div>
+          {/* The primary action, in the accent — the only place oxblood appears
+              on this screen besides an active filter. */}
+          <Link
+            href="/records/new"
+            className="shrink-0 rounded-xs bg-primary px-3 py-1.5 text-sm text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            Add record
+          </Link>
         </header>
 
         <CollectionFilters
