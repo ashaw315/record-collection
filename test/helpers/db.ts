@@ -36,10 +36,30 @@ export function getTestDb() {
 }
 
 /**
+ * The seven formats seeded by migration 0000 (SPEC.md §4.1), and pinned by
+ * migration 0002's partial index.
+ *
+ * Duplicated here rather than read from the database, deliberately: the point
+ * is to restore a KNOWN set, and deriving it from whatever the table currently
+ * holds would happily preserve debris. `schema.test.ts` asserts the same seven
+ * against the migration, so a drift between them fails there.
+ */
+const SEEDED_FORMATS = ['LP', '2xLP', '7"', '10"', '12" Single', 'Box Set', 'Picture Disc'];
+
+/**
  * Truncates every table in the public schema. CLAUDE.md §2 requires tests to
  * truncate rather than re-migrate, so this must not drop the schema itself.
- * `formats` is excluded because it is closed reference data seeded by the
- * migration (SPEC.md §4.1), not test state.
+ *
+ * `formats` is RESTORED rather than truncated or skipped. It is closed
+ * reference data, so it is not test state — but skipping it entirely let a
+ * test-created eighth format survive every reset, permanently breaking
+ * schema.test.ts's "seeds exactly the seven" assertion. That happened twice in
+ * one session, and both times the symptom was a failure in a file that had not
+ * changed, with the cause an hour earlier in an unrelated test.
+ *
+ * Restoring handles both directions: extras are removed and deleted seeds come
+ * back. Ids are PRESERVED — the rows are not dropped and recreated — so a
+ * fixture that captured a format id before the reset still resolves.
  */
 export async function truncateAll(): Promise<void> {
   assertLocalTestDatabase(process.env.TEST_DATABASE_URL);
@@ -55,6 +75,32 @@ export async function truncateAll(): Promise<void> {
 
   const tables = result.rows.map((r) => `"${r.tablename}"`).join(', ');
   await database.execute(sql.raw(`TRUNCATE TABLE ${tables} RESTART IDENTITY CASCADE`));
+
+  // A VALUES list rather than an array parameter: Drizzle binds a JS array as
+  // a record, which Postgres refuses to cast to text[].
+  const seeded = sql.join(
+    SEEDED_FORMATS.map((name) => sql`(${name})`),
+    sql`, `,
+  );
+
+  // Anything a test added, gone.
+  await database.execute(
+    sql`DELETE FROM formats WHERE name NOT IN (SELECT * FROM (VALUES ${seeded}) AS s(name))`,
+  );
+  /**
+   * Anything a test removed, back — without disturbing the ids of the rows
+   * that are still there.
+   *
+   * `is_seeded` is set explicitly. Migration 0002 marks these seven, and the
+   * API refuses to delete a seeded format (§5.4's SEEDED conflict), so a
+   * restored row that came back unmarked would be deletable when the real one
+   * is not — a difference invisible until a test asserts on that refusal.
+   */
+  await database.execute(
+    sql`INSERT INTO formats (name, is_seeded)
+        SELECT name, true FROM (VALUES ${seeded}) AS s(name)
+        ON CONFLICT (name) DO UPDATE SET is_seeded = true`,
+  );
 }
 
 export async function closeTestDb(): Promise<void> {
