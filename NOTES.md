@@ -10,50 +10,51 @@ in.
 
 ## CURRENT POSITION — read this first
 
-**Updated: 2026-08-06, end of the E2E stability unit.**
+**Updated: 2026-08-07, end of step 5.**
 
-**Where we are.** Step 5 (SPEC.md §12: "Records CRUD + collection list + record
-detail + add/edit form. E2E #2"). The **API is complete and remediated**. The
-**collection screen at `/` is built**: shell, list, search, filter chips with
-facet counts, sort, the undated toggle, and `matchedVia` rendered. **What
-remains in step 5:** the grid/table toggle and pagination controls (unit 7d),
-record detail at `/records/:id`, the add/edit form, and E2E #2 — to be written
-as soon as the form lands, not deferred to the mobile pass.
+**Where we are.** **Step 5 is COMPLETE** (SPEC.md §12: "Records CRUD +
+collection list + record detail + add/edit form. E2E #2"). Built and
+remediated: the §5.2 API including `facets` and `matchedVia`, the collection
+screen with search / filter chips / sort / pagination / grid toggle, the record
+detail screen, and the add/edit form with inline create. E2E flow 2 passes.
 
-**Last verified, and when.** 2026-08-06:
+**Step 6 is next**: want-list CRUD + the acquire flow, E2E #5.
+
+**Last verified, and when.** 2026-08-07:
 
 | Check | State |
 |---|---|
-| `npm test` | 1026 passed, 1 skipped, 51 files |
-| `npx playwright test` | 82 passed — with one known flake, below |
+| `npm test` | 1105 passed, 1 skipped, 57 files |
+| `npx playwright test` | 119 passed, 2 skipped, ~0-1 failed |
 | `npm run typecheck` / `lint` / `build` | clean |
-| Neon transaction gate | **closed** — 7 tests against the recreated branch |
+| Neon transaction gate | **closed** — 7 tests against a real branch |
 
-**Two caveats a green suite will not tell you.**
+**Three caveats a green suite will not tell you.**
 
-1. **The Neon gate's closing test was hollow until this remediation** and
-   reported green from the day it was written. It blanked `TEST_DATABASE_URL`
-   to point the primitive at the branch, which made `resolveDriver` throw — and
-   a bare `.rejects.toThrow()` accepted that refusal as if it were the rollback
-   under test. It never reached Neon. Fixed 2026-08-06. Do not read "the gate
-   was closed in unit 1" as meaning it was verified from unit 1.
+1. **The Neon gate's closing test was hollow until the step 5 remediation** and
+   reported green from the day it was written — it never reached Neon at all.
+   Fixed. Do not read "the gate was closed in unit 1" as "it was verified from
+   unit 1".
 
-2. **`e2e/collection-filters.spec.ts` flakes at roughly one failure per full
-   suite run**, varying between three specs, on both projects. NOT skipped —
-   a skipped test is a false claim of coverage. It passes 14/14 when the file
-   runs alone, and each spec's logic is verified. Ruled out by measurement:
-   cross-project contention, device emulation, viewport width, worker
-   concurrency, elapsed time, fixture accumulation, and Fast Refresh. See the
-   E2E stability entry below; the diagnosis is open.
+2. **The E2E suite has one open flake**, ~1 run in 5, in
+   `collection-filters.spec.ts` on both projects. NOT skipped. Its signature is
+   recorded below; it is deliberately not assumed to be the WebKit hydration
+   issue, which was diagnosed and mitigated separately.
 
-**The two quarantined `/manage` genre specs are UNQUARANTINED** as of this unit
-— 9/9 across every configuration once the E2E reset and `force-dynamic` landed.
-Both causes were environmental, not the logic the four earlier fixes targeted.
+3. **The 2 skipped E2E specs are the desktop-only view toggle**, skipped by
+   design on the mobile project — not quarantined. The two `/manage` genre
+   specs that WERE quarantined for weeks are now unquarantined and passing; both
+   their causes were environmental.
 
-**What is queued next**, in order: unit 7d (grid toggle, pagination), record
-detail, the add/edit form, then E2E #2. Three entries below bear on that work —
-the undated-records year-range gap, §7.6's two-prices hazard, and `/manage`'s
-own unfixed 200-row assumption.
+**What step 6 must not repeat.** The acceptance criteria below are discharged
+for `records` and still apply UNDISCHARGED to `want_list`. Item 14 — the
+acquire flow's transactional integrity and its §11-required mid-transaction
+failure test — is step 6's, and the Neon harness for testing it now exists.
+
+**Entries that bear directly on step 6 and beyond**: the fixture rules
+(single-test, cross-spec, and no-legal-value variants), the Zod coercion class,
+the mock-scope rule, and the two `/manage` limitations — its unfixed 200-row
+assumption and the reference-data pagination gap.
 
 ---
 
@@ -310,6 +311,123 @@ exactly the "no precedent" items 9–12.
   Every filter now has one; `yearTo=` was found only because the empty-string
   case was tested for each param separately rather than once. Noticed across
   steps 4–5; stated as a class during the step 5 UI work.
+
+- **DIAGNOSED: the E2E flake was WebKit outrunning React hydration. Here is
+  everything that was ruled out, so the next investigation does not repeat it.**
+
+  Symptom: `[mobile]` specs failing 2-4 times per full suite run, passing in
+  isolation, across `collection-filters` and `record-form`. It survived four
+  rounds of investigation across three units before being diagnosed.
+
+  **What it is NOT.** Each ruled out by measurement, not reasoning:
+
+  | Hypothesis | Result |
+  |---|---|
+  | Cross-project contention | mobile alone still fails; chromium alone clean |
+  | Viewport width | desktop engine at 390px is clean |
+  | Touch / mobile emulation | `hasTouch: false, isMobile: false` still fails |
+  | Device scale factor | scale 3 on Chromium is clean |
+  | Worker concurrency | `workers: 1` still fails |
+  | Elapsed time / slowness | a 15s timeout did not help |
+  | Fixture accumulation | fixed the /manage specs, not these |
+  | Fast Refresh / dev server | a production build left the rate unchanged |
+
+  **What it IS.** `devices['iPhone 13']` has `defaultBrowserType: 'webkit'`, and
+  **Desktop Safari fails identically at full size with no mobile emulation** —
+  so the device profile was never relevant, only the engine.
+
+  WebKit reaches the DOM appreciably before React hydrates. A `fill()` landing
+  in that window sets the input's value while React's state never receives it,
+  and the field submits as `undefined`. Captured rather than inferred:
+
+  ```
+  title value after fill: T wmsj3tgyv        <- the DOM has it
+  POST 400 {"title":"expected string, received undefined"}   <- React did not
+  ```
+
+  `selectOption` survives because a select is re-read at submit; only typed
+  text is lost.
+
+  **The mitigation:** `RecordForm` and `CollectionFilters` set `data-hydrated`
+  from an effect and the specs wait on it. Waiting for a RENDERED CONTROL does
+  not work — the controls are server-rendered, so their presence proves the
+  markup arrived rather than that handlers are attached, which is precisely the
+  failing state. Full suite went from 2-4 failures every run to 4 of 5 runs
+  completely clean.
+
+  **If this recurs**, the first question is whether the failing interaction is
+  typed text on WebKit, and the second is whether the spec waits on
+  `data-hydrated`. Do not re-run the table above. Noticed and diagnosed across
+  steps 4-5; resolved during step 5's final unit.
+
+- **KNOWN PROPERTY, not a defect: there is a window where the DOM and React
+  state can diverge.** It is the mechanism behind the flake above, stated
+  separately because it outlives that test problem.
+
+  Between server-rendered markup arriving and React hydrating, an input can be
+  given a value that React's state never sees. A subsequent submit reads state,
+  not the DOM, so the field is absent from the payload.
+
+  **Harmless for a human** — nobody types faster than hydration, and the window
+  is milliseconds. **Real for anything automated**: a browser extension
+  autofilling a form, a password manager, an accessibility tool, or any future
+  integration driving the UI can hit it, and the failure is silent (a field
+  simply missing) rather than an error.
+
+  Not worth fixing now: the app is single-user, manually driven, and the
+  mitigation for the test harness is in place. Recorded so that a future
+  autofill bug report is diagnosed in minutes rather than rediscovered.
+  Noticed: step 5, E2E flake work.
+
+- **OPEN, ~1 run in 5: two `collection-filters` specs fail on BOTH projects.**
+  Its signature differs from the WebKit hydration flake above, so it is
+  deliberately not treated as the same problem — "same family" is a hypothesis
+  (see the rule below), and bundling them is what let the /manage flake survive
+  four attempts.
+
+  **Signature, for whoever picks it up:**
+  - specs: `a parent-genre chip finds a record tagged with its grandchild` and
+    `clicking through to a filtered view equals loading that URL directly`;
+  - fails on **chromium AND mobile**, unlike the hydration flake which was
+    WebKit-only;
+  - roughly 1 full-suite run in 5, never in isolation;
+  - present with `data-hydrated` waits already in place, so it is not that
+    mechanism.
+
+  Left undiagnosed deliberately: at 1 in 5 any measurement is mostly noise, and
+  the suite is currently clean enough that a real regression would still stand
+  out. **If the rate climbs or it spreads to other specs, it needs its own
+  investigation** — starting with measurement, not with the assumption that it
+  is the hydration issue returning. Noticed: step 5, final unit.
+
+- **RULE: a measurement compared against a baseline taken on DIFFERENT CODE
+  overstates the change, and the error always flatters the change.**
+
+  The step 5 flake work produced two measurements of the same thing:
+
+  | Wait signal | Submissions lost | Taken on |
+  |---|---|---|
+  | rendered control | 6 of 8 | the build BEFORE unit 9b |
+  | rendered control | 1 of 12 | the build AFTER unit 9b |
+  | `data-hydrated` | 0 of 12 | the same build |
+
+  Reporting "6 of 8 → 0 of 12" would have been arithmetic on two different
+  programs. Unit 9b added an inline-create button that renders LATER in the
+  tree than the old wait signal, so the control arm had silently become a
+  longer wait — the earlier "fix" was waiting longer rather than waiting
+  correctly, and the difference the new signal actually makes is 1 in 12, not
+  6 in 8.
+
+  **Why the error is never neutral:** a stale baseline was measured before the
+  intervening work, and intervening work is usually improvement. So the "before"
+  is worse than the true control, and every comparison against it flatters
+  whatever came next. Nobody re-measures a baseline that already tells a good
+  story.
+
+  **The rule:** when a fix is verified by comparison, run BOTH ARMS on the
+  CURRENT build. A baseline is a property of a build, not a number you can
+  carry forward — and the moment any other change lands, the old number is
+  measuring something that no longer exists. Noticed: step 5, E2E flake work.
 
 - **RULE: a mock that intercepts EVERY call disables the function; a mock that
   intercepts only the FIRST simulates the race.**
