@@ -10,6 +10,7 @@ import { parseApiError, fallbackMessage } from '@/lib/api/messages';
 import { CONDITION_GRADES } from '@/lib/records/fields';
 import { conditionLabel } from './record-detail-format';
 import { buildCreateBody, buildPatchBody, type FormValues } from './record-form';
+import { InlineCreate } from './InlineCreate';
 
 /**
  * The add/edit record form (SPEC.md §10 `/records/new`, `/records/:id/edit`).
@@ -18,9 +19,8 @@ import { buildCreateBody, buildPatchBody, type FormValues } from './record-form'
  * disabled lookup field reads as broken rather than as not-yet-built, the same
  * reasoning as the absent gallery on the detail screen.
  *
- * Inline create for artist/label/store/tag (§10) is unit 9b: it is four more
- * write paths and would push this unit past the file budget in CLAUDE.md §1.
- * Until then the selects offer existing reference data, which /manage creates.
+ * Inline create for artist/label/store/tag (§10) lets a record be added without
+ * leaving the form to define its artist first — the in-store case §10 names.
  */
 
 export type Option = { id: string; name: string };
@@ -170,12 +170,51 @@ export function RecordForm({
    * capability no UI can reach.
    */
   const [values, setValues] = useState<FormValues>(initial);
+  /**
+   * A local copy of the selectable options, so a row created inline is
+   * available immediately. The server's copy arrives on the next load; until
+   * then this holds what the user just added, which is the only way the new
+   * value can be selected without losing the half-filled form.
+   */
+  const [options, setOptions] = useState<ReferenceData>(reference);
+  const [notice, setNotice] = useState<string | undefined>(undefined);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const set = (field: keyof FormValues, value: string) =>
     setValues((current) => ({ ...current, [field]: value }));
+
+  /** Adds a newly created row to its list and selects it. */
+  function adopt(
+    group: 'artists' | 'labels' | 'stores' | 'tags',
+    field: keyof FormValues,
+    option: Option,
+    message?: string,
+  ) {
+    setOptions((current) => {
+      // A duplicate resolves to a row that may already be listed — adding it
+      // twice would render two identical options.
+      const already = current[group].some((entry) => entry.id === option.id);
+      if (already) return current;
+      return {
+        ...current,
+        [group]: [...current[group], option].sort((a, b) => a.name.localeCompare(b.name)),
+      };
+    });
+
+    if (group === 'tags') {
+      setValues((current) =>
+        current.tagIds.includes(option.id)
+          ? current
+          : { ...current, tagIds: [...current.tagIds, option.id] },
+      );
+    } else {
+      set(field, option.id);
+    }
+
+    setNotice(message);
+  }
 
   const toggle = (field: 'genreIds' | 'tagIds', id: string) =>
     setValues((current) => ({
@@ -233,6 +272,14 @@ export function RecordForm({
         </p>
       )}
 
+      {/* A collision is not an error — the row exists and has been selected —
+          so it is announced politely rather than as an alert. */}
+      {notice !== undefined && (
+        <p role="status" className="mb-3 rounded-xs border border-border px-3 py-2 text-sm text-muted-foreground">
+          {notice}
+        </p>
+      )}
+
       <Row label="Title" htmlFor="title">
         <Input
           id="title"
@@ -253,8 +300,13 @@ export function RecordForm({
           id="artistId"
           value={values.artistId}
           onChange={(value) => set('artistId', value)}
-          options={reference.artists}
+          options={options.artists}
           placeholder="Choose an artist"
+        />
+        <InlineCreate
+          noun="artist"
+          path="/api/artists"
+          onCreated={(option, message) => adopt('artists', 'artistId', option, message)}
         />
         {fieldErrors.artistId !== undefined && (
           <p role="alert" className="mt-1 text-xs text-destructive">
@@ -268,8 +320,13 @@ export function RecordForm({
           id="labelId"
           value={values.labelId}
           onChange={(value) => set('labelId', value)}
-          options={reference.labels}
+          options={options.labels}
           placeholder="No label"
+        />
+        <InlineCreate
+          noun="label"
+          path="/api/labels"
+          onCreated={(option, message) => adopt('labels', 'labelId', option, message)}
         />
       </Row>
 
@@ -278,7 +335,7 @@ export function RecordForm({
           id="formatId"
           value={values.formatId}
           onChange={(value) => set('formatId', value)}
-          options={reference.formats}
+          options={options.formats}
           placeholder="No format"
         />
       </Row>
@@ -360,15 +417,20 @@ export function RecordForm({
           id="storeId"
           value={values.storeId}
           onChange={(value) => set('storeId', value)}
-          options={reference.stores}
+          options={options.stores}
           placeholder="No store"
+        />
+        <InlineCreate
+          noun="store"
+          path="/api/stores"
+          onCreated={(option, message) => adopt('stores', 'storeId', option, message)}
         />
       </Row>
 
       <Row label="Genres">
         <CheckboxGroup
           legend="Genres"
-          options={reference.genres}
+          options={options.genres}
           selected={values.genreIds}
           onToggle={(id) => toggle('genreIds', id)}
         />
@@ -377,9 +439,14 @@ export function RecordForm({
       <Row label="Tags">
         <CheckboxGroup
           legend="Tags"
-          options={reference.tags}
+          options={options.tags}
           selected={values.tagIds}
           onToggle={(id) => toggle('tagIds', id)}
+        />
+        <InlineCreate
+          noun="tag"
+          path="/api/tags"
+          onCreated={(option, message) => adopt('tags', 'tagIds', option, message)}
         />
       </Row>
 

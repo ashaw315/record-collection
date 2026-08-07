@@ -49,12 +49,18 @@ function jsonRequest(url: string, body: unknown): Request {
  *
  * `pressings` is excluded too: no unique name, only a partial unique index on
  * discogs_release_id. Covered separately below.
+ *
+ * `formats` is excluded for a THIRD reason: it is closed reference data seeded
+ * by the migration (§4.1), and `truncateAll` deliberately does not clear it —
+ * so a row created here survives every reset and permanently breaks
+ * schema.test.ts's "seeds exactly the seven formats" assertion. Its duplicate
+ * path is identical to the others and is covered by formats.test.ts, which
+ * exercises it against the seeded rows rather than creating new ones.
  */
 const NAMED_RESOURCES = [
   { path: '/api/artists', module: () => import('@/app/api/artists/route'), table: 'artists' },
   { path: '/api/genres', module: () => import('@/app/api/genres/route'), table: 'genres' },
   { path: '/api/labels', module: () => import('@/app/api/labels/route'), table: 'labels' },
-  { path: '/api/formats', module: () => import('@/app/api/formats/route'), table: 'formats' },
   { path: '/api/tags', module: () => import('@/app/api/tags/route'), table: 'tags' },
 ] as const;
 

@@ -198,3 +198,107 @@ test('saving an unchanged record returns without an error', async ({ page }) => 
   await expect(page.getByText('Could not reach the server. Nothing was saved.')).toHaveCount(0);
   await expect(page.locator('[role="alert"].text-destructive')).toHaveCount(0);
 });
+
+/**
+ * SPEC.md §10's inline create, and §5.4's `existingId` doing the job it was
+ * added for.
+ */
+test('creates an artist inline and uses it without leaving the form', async ({ page }) => {
+  const suffix = makeSuffix();
+  const artistName = `Inline Artist ${suffix}`;
+  const title = `Inline Record ${suffix}`;
+
+  await page.goto('/records/new');
+
+  // The title is typed FIRST, so the test proves the half-filled form survives
+  // the inline create — the whole reason it exists rather than a link to
+  // /manage.
+  await page.getByLabel('Title').fill(title);
+
+  await page.getByRole('button', { name: '+ New artist' }).click();
+  await page.getByLabel('New artist name').fill(artistName);
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
+
+  // exact: the inline field is labelled "New artist name", which a substring
+  // match also resolves to.
+  await expect(page.getByLabel('Artist', { exact: true })).not.toHaveValue('', {
+    timeout: 15_000,
+  });
+  await expect(page.getByLabel('Title')).toHaveValue(title);
+
+  await page.getByRole('button', { name: 'Add record' }).click();
+
+  await expect(page).toHaveURL(/\/records\/[0-9a-f-]{36}$/, { timeout: 15_000 });
+  await expect(page.getByRole('link', { name: artistName })).toBeVisible();
+});
+
+test('a colliding inline create selects the existing row rather than failing', async ({ page }) => {
+  /**
+   * THE CASE §5.4's existingId exists for. A bare "already exists" would leave
+   * the user stuck with a name they cannot use and no indication of which
+   * existing entry it clashed with.
+   */
+  const suffix = makeSuffix();
+  const name = `Existing Label ${suffix}`;
+  const existing = await post(page, '/api/labels', { name });
+
+  await page.goto('/records/new');
+  await page.getByRole('button', { name: '+ New label' }).click();
+  await page.getByLabel('New label name').fill(name);
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
+
+  // Selected, and said so — not an error.
+  await expect(page.getByRole('status')).toContainText('already exists', { timeout: 15_000 });
+  await expect(page.getByLabel('Label', { exact: true })).toHaveValue(existing.id);
+});
+
+test('a collision that only cleanName can see still selects the existing row', async ({ page }) => {
+  /**
+   * The reason `existingId` is required rather than the client matching names
+   * itself. The typed name differs from the stored one by a double space, so
+   * any client-side comparison finds nothing — but `cleanName` collapses it
+   * server-side and the row is the same.
+   *
+   * This is the case a form-side lookup would have failed silently.
+   */
+  const suffix = makeSuffix();
+  const stored = `Spaced Label ${suffix}`;
+  const typed = `Spaced  Label ${suffix}`;
+  const existing = await post(page, '/api/labels', { name: stored });
+
+  expect(typed).not.toBe(stored);
+
+  await page.goto('/records/new');
+  await page.getByRole('button', { name: '+ New label' }).click();
+  await page.getByLabel('New label name').fill(typed);
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
+
+  await expect(page.getByRole('status')).toContainText('already exists', { timeout: 15_000 });
+  await expect(page.getByLabel('Label', { exact: true })).toHaveValue(existing.id);
+});
+
+test('a zero-width character cannot enter through the form', async ({ page }) => {
+  /**
+   * `cleanName` applies to anything created inline (§4). Asserted from the FORM
+   * side because it is a new entry point: a name carrying an invisible
+   * character must not become a second row that looks identical to the first.
+   */
+  const suffix = makeSuffix();
+  const clean = `Zero Width ${suffix}`;
+  const sneaky = `Zero​ Width ${suffix}`;
+  const existing = await post(page, '/api/labels', { name: clean });
+
+  expect(sneaky).not.toBe(clean);
+
+  await page.goto('/records/new');
+  await page.getByRole('button', { name: '+ New label' }).click();
+  await page.getByLabel('New label name').fill(sneaky);
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
+
+  // The same row, not a twin.
+  await expect(page.getByLabel('Label', { exact: true })).toHaveValue(existing.id, { timeout: 15_000 });
+
+  const labels = await (await page.request.get('/api/labels?pageSize=200')).json();
+  const matching = labels.data.filter((row: { name: string }) => row.name.includes(suffix));
+  expect(matching).toHaveLength(1);
+});

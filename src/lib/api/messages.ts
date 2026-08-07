@@ -13,6 +13,8 @@ export type ApiError = {
   code?: string;
   fieldErrors?: Record<string, string>;
   referenceCount?: number;
+  /** §5.4: the row a DUPLICATE collided with, so a client can select it. */
+  existingId?: string;
 };
 
 export function parseApiError(body: unknown): ApiError | undefined {
