@@ -188,6 +188,40 @@ exactly the "no precedent" items 9–12.
   is the defect and the assertion is decorative regardless of how it is written.
   Noticed across steps 4–5; stated as a rule during the step 5 remediation.
 
+  **CROSS-SPEC VARIANT: a test can assume something about SHARED STATE that no
+  other test is obliged to preserve.** The rule above is about one test's own
+  fixture. This is the same defect between tests, and it only appears once
+  specs share a database — which every E2E spec here does, running fully
+  parallel across two browser projects.
+
+  Three instances in one unit (step 5, unit 7d), all deterministic once
+  pagination existed and all invisible when the spec ran alone:
+
+  | Assumption | Broken by |
+  |---|---|
+  | "my record is on page 1" | another spec's 110-row fixture sorting ahead of it |
+  | "my 110 rows don't matter" | every other spec reading page 1 |
+  | "my search term is unique" | the other browser project seeding the same title |
+
+  The last one is worth spelling out, because the obvious fix failed. Searching
+  `'Hear Nothing'` matched the parallel project's copy; scoping it to
+  `'Hear Nothing <suffix>'` then matched all THREE of the run's own records,
+  because §5.2 makes `q` fuzzy across the ARTIST name too and the artist is
+  `Discharge-<suffix>`. Two collisions at different scopes, and each obvious
+  fix only closed one. Measuring each attempt is what found the second.
+
+  **The rules:**
+
+  - scope every assertion to something no other spec can produce — an id you
+    created, not a title, a term, or a position;
+  - a spec that seeds bulk data deletes it in a `finally`, so a failure does
+    not cascade into every later spec and bury the original cause;
+  - prefer navigating to a filtered URL over clicking through an unfiltered
+    page, which is a page-1 assumption in disguise.
+
+  Expect this to recur: every remaining UI step adds specs to the same shared
+  database. Noticed: step 5, unit 7d.
+
   **VARIANT: sometimes no value on that axis CAN discriminate, and the fix is a
   different axis rather than a better fixture.** The five cases above are all
   repaired by adding inverting rows. This one cannot be.
