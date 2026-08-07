@@ -10,45 +10,50 @@ in.
 
 ## CURRENT POSITION — read this first
 
-**Updated: 2026-08-06, end of the step 5 post-review remediation.**
+**Updated: 2026-08-06, end of the E2E stability unit.**
 
 **Where we are.** Step 5 (SPEC.md §12: "Records CRUD + collection list + record
-detail + add/edit form. E2E #2"). The **API half is complete** — units 1–6 built
-`GET/POST /api/records`, `GET/PATCH/DELETE /api/records/:id` and
-`GET /api/records/stats` — and a post-unit-6 adversarial review of the records
-query layer has now been triaged and remediated in full (units 1–5 + a
-`.toThrow()` sweep, all committed). **The UI half has not started:** the
-collection screen at `/`, record detail, the add/edit form, and E2E #2 are what
-remain. `src/app/page.tsx` is still the create-next-app placeholder.
+detail + add/edit form. E2E #2"). The **API is complete and remediated**. The
+**collection screen at `/` is built**: shell, list, search, filter chips with
+facet counts, sort, the undated toggle, and `matchedVia` rendered. **What
+remains in step 5:** the grid/table toggle and pagination controls (unit 7d),
+record detail at `/records/:id`, the add/edit form, and E2E #2 — to be written
+as soon as the form lands, not deferred to the mobile pass.
 
-**Last verified, and when.** Everything below was run at the end of the
-remediation, 2026-08-06:
+**Last verified, and when.** 2026-08-06:
 
 | Check | State |
 |---|---|
-| `npm test` | 950 passed, 1 skipped, 45 files |
-| `npx playwright test` | 64 passed, 4 skipped |
+| `npm test` | 1026 passed, 1 skipped, 51 files |
+| `npx playwright test` | 82 passed — with one known flake, below |
 | `npm run typecheck` / `lint` / `build` | clean |
-| Neon transaction gate | **closed** — 7 tests against a real branch |
+| Neon transaction gate | **closed** — 7 tests against the recreated branch |
 
-**The caveat a green suite will not tell you.** The Neon gate is closed, but the
-test written to close it in step 5 unit 1 was **hollow until this remediation**
-and reported green from the day it was written. It blanked `TEST_DATABASE_URL`
-to point the primitive at the branch, which made `resolveDriver` throw — and a
-bare `.rejects.toThrow()` accepted that refusal as if it were the rollback under
-test. It never reached Neon at all. Fixed 2026-08-06; both nested-write
-primitives now stub `NODE_ENV` so the driver resolves, and assert on the failing
-TABLE rather than any throw. Do not read "the gate was closed in unit 1" as
-meaning it was verified from unit 1 — it was verified from this remediation.
+**Two caveats a green suite will not tell you.**
 
-**The 4 skipped E2E specs are not neutral.** Two quarantined `/manage` genre
-specs × 2 projects. See the UNRESOLVED entry below, and budget for more than the
-diagnosed flake.
+1. **The Neon gate's closing test was hollow until this remediation** and
+   reported green from the day it was written. It blanked `TEST_DATABASE_URL`
+   to point the primitive at the branch, which made `resolveDriver` throw — and
+   a bare `.rejects.toThrow()` accepted that refusal as if it were the rollback
+   under test. It never reached Neon. Fixed 2026-08-06. Do not read "the gate
+   was closed in unit 1" as meaning it was verified from unit 1.
 
-**What is queued next**, in order: the collection screen at `/`, then record
-detail, then the add/edit form, then E2E #2. Two entries below bear directly on
-the collection screen — the undated-records year-range gap, and §7.6's two-prices
-hazard.
+2. **`e2e/collection-filters.spec.ts` flakes at roughly one failure per full
+   suite run**, varying between three specs, on both projects. NOT skipped —
+   a skipped test is a false claim of coverage. It passes 14/14 when the file
+   runs alone, and each spec's logic is verified. Ruled out by measurement:
+   cross-project contention, device emulation, viewport width, worker
+   concurrency, elapsed time, fixture accumulation, and Fast Refresh. See the
+   E2E stability entry below; the diagnosis is open.
+
+**The two quarantined `/manage` genre specs are UNQUARANTINED** as of this unit
+— 9/9 across every configuration once the E2E reset and `force-dynamic` landed.
+Both causes were environmental, not the logic the four earlier fixes targeted.
+
+**What is queued next**, in order: unit 7d (grid toggle, pagination), record
+detail, the add/edit form, then E2E #2. Three entries below bear on that work —
+the undated-records year-range gap, §7.6's two-prices hazard, and `/manage`'s
+own unfixed 200-row assumption.
 
 ---
 
@@ -404,86 +409,44 @@ exactly the "no precedent" items 9–12.
   reference count before attempting the delete, not to prevent data loss. Both
   layers are kept deliberately; see unit C. Corrected: step 4, unit E.
 
-- **UNRESOLVED: two `/manage` genre E2E specs are quarantined as flaky.**
-  `moves a genre under another...` and `the move select never offers a genre its
-  own descendant` are `test.skip`ped in `e2e/manage.spec.ts`. They pass in
-  isolation (6/6 clean, chromium only) and fail under the full run. Four fix
-  attempts made it worse, so they were skipped honestly rather than left red or
-  made to pass by loosening assertions.
+- **RULE: environmental causes look like logic bugs, and a diagnosis that
+  survives four failed fixes is probably about the wrong thing.**
 
-  **Established:** the genre editor works when driven by hand; `aria-busy`
-  settles correctly (measured: true at 200ms, false by 800ms); the rest of the
-  E2E suite is unaffected (52 passing, 3/3 clean runs with these two skipped).
+  Two `/manage` genre specs were quarantined from step 4 until step 5's E2E
+  stability unit — weeks — against the diagnosis "`router.refresh()` has not
+  delivered new props when the assertion runs". Four fix attempts aimed at that
+  mechanism, including two `aria-busy` approaches, and NOTES recorded that they
+  "made it worse".
 
-  **Disproven:** that the chromium and mobile projects race on shared genre
-  rows. Serializing Playwright (`fullyParallel: false`, `workers: 1`) gave 0/4
-  clean — the same as parallel — so that config change was reverted. Do not
-  re-apply it without new evidence.
+  **Neither actual cause was in the application.** Both were environmental:
 
-  **Also learned:** waiting on `aria-busy` from a test is itself a race, because
-  the attribute still reads `false` in the gap between the click and the
-  transition starting. That approach made failures more frequent, not less.
+  1. **Accumulated fixture rows.** E2E specs wrote through the real API and
+     nothing cleaned up, so every run's genres persisted. The move select's
+     contents depend on how many genres exist. Fixed by resetting the E2E
+     database once per run.
+  2. **`/manage` was prerendered at build time.** It reads seven tables and
+     uses no request-scoped API — auth is in middleware, which does not opt a
+     page into dynamic rendering — so a production build served a snapshot.
+     Found only by running E2E against a production build.
 
-  **Trace investigation (timeboxed, step 4 follow-up).** Reproduced at 4/5
-  failing full runs with `--trace on`. The traces show TWO distinct failure
-  modes in the same suite, which is why single-cause hypotheses kept failing:
+  After both, the specs passed **9/9 across every configuration** and are
+  unquarantined.
 
-  1. `Protocol error (Runtime.callFunctionOn): Internal server error, session
-     closed.` — the browser session dies mid-test. Not a timing race; the page
-     is gone. Cause unknown.
-  2. `expect(option).toHaveCount(0)` gets 1 — the parent's move select still
-     lists its own child after a reparent. The UI has not re-rendered with the
-     new parent when the assertion runs.
+  **Why the diagnosis persisted:** it was plausible, it named a real mechanism,
+  and it was never re-derived — each attempt inherited it. The measurement that
+  would have refuted it (PATCH 1264ms vs refresh 142ms) took ten minutes when
+  finally done. See the "same family is a hypothesis" rule above; this is the
+  same failure one level up, where a *cause* rather than a *resemblance* went
+  unchecked.
 
-  Mode 2 is NOT a logic bug: `validParents` was reproduced in a unit test with
-  the exact post-move state and correctly excludes the child. That part holds.
+  **The check:** when a fix aimed at a diagnosis fails twice, stop fixing and
+  re-derive the diagnosis. Test the environment — data volume, build mode,
+  caching — before the application logic. Environmental causes produce
+  symptoms indistinguishable from logic bugs, and they do not respond to
+  logic fixes, which is exactly why the attempts "made it worse".
 
-  **CORRECTED — MODE 2 IS DIAGNOSED, and the earlier diagnosis was wrong in
-  EMPHASIS, which was the whole problem.** This entry previously said
-  "`router.refresh()` has not delivered new props yet". Measured during step 5
-  unit 7b:
-
-  ```
-  PATCH completed at +1264ms  status 200
-  DOM updated at     +1406ms
-  ```
-
-  `router.refresh()` accounts for ~142ms. **The PATCH accounts for ~1264ms —
-  nine times more.** The refresh was named as the cause when it was the small
-  half. That is why FOUR fix attempts aimed at the refresh (including two
-  `aria-busy` approaches) all failed and "made it worse": they were tuning the
-  10% while the 90% went unwaited.
-
-  The test asserts immediately after `selectOption`. Playwright's 5s expect
-  timeout covers ~1.4s in isolation and not under full-suite load — exactly the
-  pass-alone / fail-together signature observed.
-
-  **So Mode 2 is a TEST bug, not a product bug.** The app is correct; the spec
-  does not wait for the mutation it triggered. The likely fix is waiting on the
-  PATCH response (`page.waitForResponse`) rather than on any rendered signal.
-
-  **Also ruled out:** connection-pool exhaustion. `/manage` issues 7 concurrent
-  queries per render, but the pg pool is default-sized against
-  `max_connections = 100` with 6 in use, and the dev server logs no errors
-  under concurrent load.
-
-  **Mode 1 is still undiagnosed** — the `Protocol error … session closed`
-  browser crash. Nothing in the above explains it, and it may be environmental.
-  Do not read "Mode 2 solved" as "these two specs are fixable in one change".
-
-  **Assume MORE than one defect when returning to them.** In step 5 the third
-  /manage E2E spec — skipped since it was written because `/api/records` did
-  not exist — was enabled and immediately failed for reasons unrelated to why
-  it had been skipped: it used the standalone `request` fixture, a separate
-  context with NO session cookie, so every API call it made was a 401. That was
-  invisible for as long as it was skipped. A skipped test is not neutral; it is
-  a claim of coverage that is actively false, and defects accumulate behind it
-  silently. These two have been skipped longer, so budget for the diagnosed
-  flake PLUS whatever else has been sitting undetected — do not assume fixing
-  the flake makes them pass.
-
-  Left quarantined; 3/3 clean runs with them skipped. Noticed: step 4,
-  /manage; investigated further before step 5; caveat added during unit 5.
+  **Mode 1 (`Protocol error … session closed`) never recurred** in ~30 runs
+  during the investigation. Possibly also environmental; not claimed as fixed.
 
 - **A test fixture can fail to create the condition its test claims — and
   reading the test cannot catch it.** Two instances so far, both invisible to
