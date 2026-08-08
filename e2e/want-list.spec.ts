@@ -102,6 +102,183 @@ test('adds a want-list item, marks it acquired, and keeps it as history', async 
   expect(stored.acquiredRecordId).not.toBeNull();
 });
 
+/**
+ * SPEC.md §5.3: "`target_pressing_id` prefills the record's pressing fields; it
+ * is neither dropped nor silently copied."
+ *
+ * The two failure modes are opposite and both plausible, so both are tested:
+ * dropping it loses the hunt (the user re-types what they already recorded),
+ * and copying it invisibly asserts that the record in hand IS the pressing that
+ * was wanted — which §7.7's ownership distinction depends on, and which nobody
+ * checked. Visible and editable is the only correct answer.
+ */
+test('prefills the pressing section from the target pressing', async ({ page }) => {
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Target-${suffix}` });
+  const pressing = await post(page, '/api/pressings', {
+    catalogNumber: `CLAY-${suffix}`,
+    countryPressed: 'UK',
+    yearPressed: 1982,
+    matrixRunout: 'A1/B1 PORKY',
+    pressingPlant: 'Damont',
+  });
+  const title = `Prefilled ${suffix}`;
+
+  await post(page, '/api/want-list', {
+    title,
+    artistId: artist.id,
+    targetPressingId: pressing.id,
+  });
+
+  await page.goto('/want-list');
+  await page
+    .getByRole('listitem')
+    .filter({ hasText: title })
+    .getByRole('link', { name: 'Mark acquired' })
+    .click();
+  await formReady(page);
+
+  // VISIBLE: the hunt's details are on screen, not merely in a hidden field.
+  await expect(page.getByLabel('Catalog no.')).toHaveValue(`CLAY-${suffix}`);
+  await expect(page.getByLabel('Country')).toHaveValue('UK');
+  await expect(page.getByLabel('Year pressed')).toHaveValue('1982');
+  await expect(page.getByLabel('Matrix / runout')).toHaveValue('A1/B1 PORKY');
+  await expect(page.getByLabel('Pressing plant')).toHaveValue('Damont');
+});
+
+test('the prefilled pressing is editable, and what is saved is what was edited', async ({
+  page,
+}) => {
+  /**
+   * The "not silently copied" half, and the reason §5.3 spells it out: the user
+   * may have settled for a DIFFERENT pressing. §7.7 distinguishes "you own this
+   * exact pressing" from "you own a different pressing of this album", and
+   * CLAUDE.md §8 calls collapsing those the single worst bug this app can ship.
+   *
+   * So the acquired record must carry what the user CONFIRMED, not what they
+   * once hoped to find.
+   */
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Settled-${suffix}` });
+  const pressing = await post(page, '/api/pressings', {
+    catalogNumber: `WANTED-${suffix}`,
+    countryPressed: 'UK',
+    yearPressed: 1982,
+  });
+  const title = `Settled ${suffix}`;
+
+  await post(page, '/api/want-list', { title, artistId: artist.id, targetPressingId: pressing.id });
+
+  await page.goto('/want-list');
+  await page
+    .getByRole('listitem')
+    .filter({ hasText: title })
+    .getByRole('link', { name: 'Mark acquired' })
+    .click();
+  await formReady(page);
+
+  /**
+   * The starting state has to be the TARGET, or this test cannot tell editing
+   * from typing into an empty form — it passed against the unprefilled build
+   * on its first run, which is NOTES' fixture rule: with no prefill, "edit" and
+   * "fill in" produce identical output.
+   */
+  await expect(page.getByLabel('Catalog no.')).toHaveValue(`WANTED-${suffix}`);
+
+  // What was actually in the shop: a 1985 German repress, not the UK first.
+  await page.getByLabel('Catalog no.').fill(`SETTLED-${suffix}`);
+  await page.getByLabel('Country').fill('DE');
+  await page.getByLabel('Year pressed').fill('1985');
+
+  await page.getByRole('button', { name: 'Add to collection' }).click();
+  await expect(page).toHaveURL(/\/records\/[0-9a-f-]{36}$/, { timeout: 15_000 });
+
+  const recordId = page.url().split('/').pop();
+  const record = await (await page.request.get(`/api/records/${recordId}`)).json();
+
+  expect(record.pressing, 'a pressing was attached').not.toBeNull();
+  expect(record.pressing.catalogNumber).toBe(`SETTLED-${suffix}`);
+  expect(record.pressing.countryPressed).toBe('DE');
+  expect(record.pressing.yearPressed).toBe(1985);
+
+  // And it is a DIFFERENT pressing row from the one that was hunted for —
+  // §7.7 rests on the two being distinguishable.
+  expect(record.pressingId).not.toBe(pressing.id);
+
+  // The want-list target is untouched: history records what was wanted.
+  const item = await (await page.request.get(`/api/want-list?isAcquired=true`)).json();
+  const acquired = item.data.find((row: { title: string }) => row.title === title);
+  expect(acquired.targetPressingId).toBe(pressing.id);
+});
+
+test('accepting the prefilled pressing unchanged still attaches it', async ({ page }) => {
+  /**
+   * The likeliest real flow: the record in hand IS the one that was hunted, so
+   * the user checks the prefilled details against the sleeve and saves without
+   * touching them.
+   *
+   * This started as a probe while mutation-testing the "silently copied"
+   * variant, and it is the case the other tests miss. Both of those EDIT a
+   * field, so the form always has a changed value to act on. Accepting the
+   * prefill unchanged is the path where a "leave alone means absent" rule can
+   * drop the pressing entirely — the fields are visibly filled in, the save
+   * succeeds, and `pressing_id` is null. Committed rather than discarded per
+   * CLAUDE.md §2: the probe is what proved the branch.
+   */
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Unchanged-${suffix}` });
+  const pressing = await post(page, '/api/pressings', {
+    catalogNumber: `KEPT-${suffix}`,
+    countryPressed: 'UK',
+    yearPressed: 1982,
+  });
+  const title = `Unchanged ${suffix}`;
+
+  await post(page, '/api/want-list', { title, artistId: artist.id, targetPressingId: pressing.id });
+
+  await page.goto('/want-list');
+  await page
+    .getByRole('listitem')
+    .filter({ hasText: title })
+    .getByRole('link', { name: 'Mark acquired' })
+    .click();
+  await formReady(page);
+
+  await expect(page.getByLabel('Catalog no.')).toHaveValue(`KEPT-${suffix}`);
+
+  // Saved WITHOUT touching the pressing section.
+  await page.getByRole('button', { name: 'Add to collection' }).click();
+  await expect(page).toHaveURL(/\/records\/[0-9a-f-]{36}$/, { timeout: 15_000 });
+
+  const recordId = page.url().split('/').pop();
+  const record = await (await page.request.get(`/api/records/${recordId}`)).json();
+
+  expect(record.pressingId, 'the pressing on screen must reach the record').not.toBeNull();
+  expect(record.pressing.catalogNumber).toBe(`KEPT-${suffix}`);
+});
+
+test('an item with no target pressing opens a blank pressing section', async ({ page }) => {
+  // The prefill must not invent details. A want-list item recorded without a
+  // target says nothing about which pressing to expect.
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Untargeted-${suffix}` });
+  const title = `Untargeted ${suffix}`;
+
+  await post(page, '/api/want-list', { title, artistId: artist.id });
+
+  await page.goto('/want-list');
+  await page
+    .getByRole('listitem')
+    .filter({ hasText: title })
+    .getByRole('link', { name: 'Mark acquired' })
+    .click();
+  await formReady(page);
+
+  await expect(page.getByLabel('Catalog no.')).toHaveValue('');
+  await expect(page.getByLabel('Matrix / runout')).toHaveValue('');
+  await expect(page.getByLabel('Year pressed')).toHaveValue('');
+});
+
 test('sorts by priority, highest first', async ({ page }) => {
   /**
    * §4.2: "1 = highest, 5 = lowest". Sorted the other way the screen is

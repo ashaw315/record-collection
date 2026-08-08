@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { RecordForm } from '../RecordForm';
 import { loadReferenceData } from '../reference';
 import type { FormValues } from '../record-form';
-import { BLANK_PRESSING } from '../pressing-form';
+import { BLANK_PRESSING, pressingToForm } from '../pressing-form';
 import { hydrateWantListItem } from '@/lib/db/queries/want-list';
 import { isUuid } from '@/lib/api/errors';
 
@@ -81,7 +81,23 @@ export default async function NewRecordPage({ searchParams }: PageProps<'/record
                   genreIds: wanted.genres.map((genre) => genre.id),
                 }
           }
-          initialPressing={BLANK_PRESSING}
+          /**
+           * §5.3: the target pressing PREFILLS the pressing section — "neither
+           * dropped nor silently copied", exactly as a Discogs lookup will.
+           *
+           * Dropping it made the user retype what they had already recorded
+           * about the pressing they were hunting. Copying it silently would be
+           * worse: it would assert that the record in hand IS the pressing that
+           * was wanted, which is precisely the §7.7 distinction between owning
+           * this pressing and owning a different pressing of the same album.
+           * Prefilled and editable puts the claim in front of the user, who is
+           * holding the record and can check it.
+           */
+          initialPressing={
+            wanted?.targetPressing == null
+              ? BLANK_PRESSING
+              : pressingToForm(wanted.targetPressing)
+          }
           acquiresWantListId={wanted?.id}
         />
       </main>
