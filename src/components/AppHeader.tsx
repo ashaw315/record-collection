@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 
 const LINKS = [
   { href: '/', label: 'Collection' },
+  { href: '/want-list', label: 'Want list' },
   { href: '/manage', label: 'Manage' },
 ] as const;
 

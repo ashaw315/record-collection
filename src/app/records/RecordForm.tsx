@@ -168,6 +168,7 @@ export function RecordForm({
   initialPressing,
   initialPressingId,
   recordId,
+  acquiresWantListId,
 }: {
   reference: ReferenceData;
   initial: FormValues;
@@ -177,6 +178,13 @@ export function RecordForm({
   initialPressingId?: string;
   /** Present when editing; absent when creating. */
   recordId?: string;
+  /**
+   * Present when this save is an ACQUISITION (§5.3). The form then posts to
+   * the acquire endpoint, which creates the record and marks the want-list row
+   * in ONE transaction — posting to /api/records and patching separately would
+   * be the half-application §7.3 forbids.
+   */
+  acquiresWantListId?: string;
 }) {
   const router = useRouter();
 
@@ -377,7 +385,12 @@ export function RecordForm({
         return;
       }
 
-      const response = await fetch(editing ? `/api/records/${recordId}` : '/api/records', {
+      const createPath =
+        acquiresWantListId === undefined
+          ? '/api/records'
+          : `/api/want-list/${acquiresWantListId}/acquire`;
+
+      const response = await fetch(editing ? `/api/records/${recordId}` : createPath, {
         method: editing ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -721,7 +734,13 @@ export function RecordForm({
 
       <div className="mt-4 flex items-center gap-2">
         <Button type="submit" disabled={saving}>
-          {saving ? 'Saving…' : recordId === undefined ? 'Add record' : 'Save changes'}
+          {saving
+            ? 'Saving…'
+            : recordId !== undefined
+              ? 'Save changes'
+              : acquiresWantListId === undefined
+                ? 'Add record'
+                : 'Add to collection'}
         </Button>
         <Link
           href={recordId === undefined ? '/' : `/records/${recordId}`}
