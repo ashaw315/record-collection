@@ -1,6 +1,7 @@
 import 'server-only';
 import { and, asc, eq, exists, sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
+import { ConflictError } from '@/lib/api/errors';
 import {
   artists,
   genres,
@@ -365,9 +366,18 @@ export async function acquireWantListItem(input: {
       .returning({ id: wantList.id });
 
     if (marked.length === 0) {
-      // Rolls the record and its links back with it. Throwing is the only way
-      // to leave nothing behind — returning early would COMMIT the record.
-      throw new Error('want-list item not found or already acquired');
+      /**
+       * Rolls the record and its links back with it. Throwing is the only way
+       * to leave nothing behind — returning early would COMMIT the record.
+       *
+       * Typed, because §5.3 requires the loser of a race to receive the same
+       * 409 as an ordinary repeat. A bare Error reaches `withErrorHandling`
+       * looking exactly like a driver fault and becomes a 500.
+       */
+      throw new ConflictError(
+        'That want-list item has already been acquired',
+        'ALREADY_ACQUIRED',
+      );
     }
 
     return record;

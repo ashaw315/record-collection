@@ -448,7 +448,7 @@ describe('acquireWantListItem is transactional', () => {
       wantListId: f.item,
       values: { artistId: f.discharge, title: 'First' },
       genreIds: [],
-    tagIds: [],
+      tagIds: [],
     });
 
     await expect(
@@ -456,9 +456,17 @@ describe('acquireWantListItem is transactional', () => {
         wantListId: f.item,
         values: { artistId: f.discharge, title: 'Second' },
         genreIds: [],
-      tagIds: [],
+        tagIds: [],
       }),
-    ).rejects.toThrow(/already acquired/i);
+      /**
+       * Asserts the TYPE, not the wording. This previously matched
+       * `/already acquired/i` against a bare Error and broke when the message
+       * gained a word ("has already BEEN acquired") — the assertion was
+       * coupled to prose that carries no guarantee. What matters is that the
+       * guard raises a defined conflict the handler can translate into a 409,
+       * which is the property unit 3 added.
+       */
+    ).rejects.toThrow(expect.objectContaining({ code: 'ALREADY_ACQUIRED' }));
 
     // The FIRST record still owns the link — not overwritten.
     const item = await db.execute<{ acquired_record_id: string }>(
@@ -471,6 +479,120 @@ describe('acquireWantListItem is transactional', () => {
       sql`SELECT count(*)::int AS n FROM records WHERE title = 'Second'`,
     );
     expect(orphans.rows[0].n).toBe(0);
+  });
+
+  /**
+   * §5.3: "Acquiring an already-acquired item returns 409, INCLUDING WHEN THE
+   * RACE IS LOST."
+   *
+   * The test above cannot see this. It awaits the first acquire before starting
+   * the second, so the endpoint's pre-check refuses the second and returns a
+   * legible 409 without the transaction guard ever being reached — NOTES'
+   * concurrency variant: it measures serialization, not concurrency.
+   *
+   * Here both requests are IN FLIGHT before either is awaited, so both pass the
+   * pre-check and the `is_acquired = false` guard on the UPDATE decides the
+   * winner. The loser's error must reach the client as the same 409, not as a
+   * 500: a defined conflict reported as an internal fault tells the user the
+   * app is broken when it is working exactly as designed.
+   */
+  it('returns 409, not 500, to the loser of a real race', async () => {
+    const f = await seed();
+
+    /**
+     * `Promise.all` on two attempts is NOT sufficient on its own, and measuring
+     * proved it: run alone the race reaches the guard and produces [201, 500];
+     * run after the other tests in this file it produces [201, 409], because
+     * the first request finishes its pre-check-to-commit window before the
+     * second reads. Same test, opposite outcome, decided by timing — it would
+     * have passed against the broken code roughly whenever the file ran whole.
+     *
+     * So the window is FORCED rather than hoped for: both requests are held
+     * until both are past the pre-check, which is precisely the state the
+     * pre-check cannot defend and the transaction guard exists for.
+     */
+    const wantList = await import('@/lib/db/queries/want-list');
+    const real = wantList.findWantListItemById;
+
+    let arrived: () => void;
+    const bothArrived = new Promise<void>((resolve) => {
+      arrived = resolve;
+    });
+    let waiting = 0;
+
+    vi.spyOn(wantList, 'findWantListItemById').mockImplementation(async (id: string) => {
+      const item = await real(id);
+      // Hooks EVERY call deliberately: exactly two requests are in flight and
+      // both must clear the pre-check before either proceeds. The mock-scope
+      // rule in NOTES is about a mock that must let a LATER call through; here
+      // the release is the second arrival, not a fallthrough.
+      if (++waiting === 2) arrived();
+      await bothArrived;
+      return item;
+    });
+
+    const attempt = (title: string) =>
+      acquire(
+        jsonRequest(`/api/want-list/${f.item}/acquire`, { title, artistId: f.discharge }),
+        params(f.item),
+      );
+
+    const [a, b] = await Promise.all([attempt('First'), attempt('Second')]);
+
+    const statuses = [a.status, b.status].sort();
+    expect(statuses, 'exactly one winner, and the loser gets a conflict').toEqual([201, 409]);
+
+    const loser = a.status === 409 ? a : b;
+    const body = await loser.json();
+    expect(body.error.code).toBe('ALREADY_ACQUIRED');
+
+    // Exactly one record exists: the loser's was rolled back, not orphaned.
+    const created = await db.execute<{ n: number }>(
+      sql`SELECT count(*)::int AS n FROM records`,
+    );
+    expect(created.rows[0].n).toBe(1);
+  });
+
+  it('does not log a fault when the race is lost', async () => {
+    /**
+     * The other half of §5.3's reasoning: a conflict reported as a 500 "fills
+     * the log with false faults". A logged error means someone investigating a
+     * real incident has to rule this out first.
+     *
+     * Asserted because the 409 could be produced while STILL logging — the
+     * status and the log entry are set in different places.
+     */
+    const f = await seed();
+    const errors = vi.spyOn(logger, 'error').mockImplementation(() => {});
+
+    // Same forced window as the test above — without it this passes whenever
+    // the pre-check happens to win, which is most of the time in a full run.
+    const wantList = await import('@/lib/db/queries/want-list');
+    const real = wantList.findWantListItemById;
+    let arrived: () => void;
+    const bothArrived = new Promise<void>((resolve) => {
+      arrived = resolve;
+    });
+    let waiting = 0;
+    vi.spyOn(wantList, 'findWantListItemById').mockImplementation(async (id: string) => {
+      const item = await real(id);
+      if (++waiting === 2) arrived();
+      await bothArrived;
+      return item;
+    });
+
+    const attempt = (title: string) =>
+      acquire(
+        jsonRequest(`/api/want-list/${f.item}/acquire`, { title, artistId: f.discharge }),
+        params(f.item),
+      );
+
+    const [a, b] = await Promise.all([attempt('First'), attempt('Second')]);
+
+    // Confirms the race was actually lost — otherwise "nothing logged" is
+    // trivially true because no conflict occurred.
+    expect([a.status, b.status].sort()).toEqual([201, 409]);
+    expect(errors).not.toHaveBeenCalled();
   });
 
   it('commits the record, the links and the mark together', async () => {

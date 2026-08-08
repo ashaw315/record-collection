@@ -132,6 +132,38 @@ export function conflictSeeded(message: string): NextResponse<ApiErrorBody> {
 }
 
 /**
+ * A conflict raised from INSIDE a transaction, where the only way to abort is
+ * to throw (SPEC.md §5.3).
+ *
+ * `withErrorHandling` turns every escaping throw into a 500, which is right for
+ * the errors nobody anticipated and wrong for this one: the acquire guard's
+ * `is_acquired = false` losing a race is a DEFINED outcome, not a fault. Before
+ * this type it threw a bare `Error`, indistinguishable from a driver failure,
+ * so the loser of a race got a 500 and the log got a false fault.
+ *
+ * A subclass rather than a string match on the message: message matching breaks
+ * silently when the wording changes, which is the same defect as a message-less
+ * `.toThrow()` seen from the other side.
+ */
+export class ConflictError extends Error {
+  readonly code: string;
+
+  constructor(message: string, code: string) {
+    super(message);
+    this.name = 'ConflictError';
+    this.code = code;
+  }
+}
+
+export function isConflictError(error: unknown): error is ConflictError {
+  return error instanceof ConflictError;
+}
+
+export function conflict(error: ConflictError): NextResponse<ApiErrorBody> {
+  return NextResponse.json({ error: { message: error.message, code: error.code } }, { status: 409 });
+}
+
+/**
  * Every dynamic segment must reject a malformed id with 400 rather than passing
  * it to a query — Postgres raises an error on a bad UUID cast, which would
  * surface as a 500 for what is plainly a client mistake (SPEC.md §5.2 states

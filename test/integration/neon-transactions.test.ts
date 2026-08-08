@@ -429,13 +429,13 @@ describe.skipIf(!configured)('transactions over the Neon serverless driver', () 
           wantListId: item.rows[0].id,
           values: { artistId: artist.rows[0].id, title: `${probe}-race-a` },
           genreIds: [],
-        tagIds: [],
+          tagIds: [],
         }),
         acquireWantListItem({
           wantListId: item.rows[0].id,
           values: { artistId: artist.rows[0].id, title: `${probe}-race-b` },
           genreIds: [],
-        tagIds: [],
+          tagIds: [],
         }),
       ]);
 
@@ -448,6 +448,18 @@ describe.skipIf(!configured)('transactions over the Neon serverless driver', () 
 
     const won = outcomes.filter((outcome) => outcome.status === 'fulfilled');
     expect(won, 'exactly one acquire may succeed').toHaveLength(1);
+
+    /**
+     * §5.3: the loser's failure must be a DEFINED conflict, over the real Neon
+     * driver too — that is what lets the handler answer 409 instead of 500.
+     * Asserted here because the driver, not just the query, decides how a
+     * rolled-back transaction surfaces its error.
+     */
+    const lost = outcomes.find((outcome) => outcome.status === 'rejected');
+    expect(lost).toBeDefined();
+    expect((lost as PromiseRejectedResult).reason).toMatchObject({
+      code: 'ALREADY_ACQUIRED',
+    });
 
     /**
      * The invariant that matters: exactly ONE record exists for this race, and

@@ -1,5 +1,13 @@
 import { NextResponse } from 'next/server';
-import { badRequest, invalidJson, isUuid, notFound, validationError } from '@/lib/api/errors';
+import {
+  badRequest,
+  conflict,
+  invalidJson,
+  isConflictError,
+  isUuid,
+  notFound,
+  validationError,
+} from '@/lib/api/errors';
 import { withErrorHandling } from '@/lib/api/handler';
 import { recordCreateSchema } from '@/lib/records/create-schema';
 import { findArtistById } from '@/lib/db/queries/artists';
@@ -97,25 +105,38 @@ export const POST = withErrorHandling(
       );
     }
 
-    const record = await acquireWantListItem({
-      wantListId: id,
-      values: {
-        artistId: values.artistId,
-        title: values.title,
-        labelId: values.labelId ?? null,
-        formatId: values.formatId ?? null,
-        pressingId: values.pressingId ?? null,
-        storeId: values.storeId ?? null,
-        releaseYear: values.releaseYear ?? null,
-        conditionMedia: values.conditionMedia ?? null,
-        conditionSleeve: values.conditionSleeve ?? null,
-        purchasePrice: values.purchasePrice ?? null,
-        purchaseDate: values.purchaseDate ?? null,
-        notes: values.notes ?? null,
-      },
-      genreIds,
-      tagIds,
-    });
+    /**
+     * The pre-check above handles the ordinary repeat. This handles the RACE it
+     * cannot close (§5.3): two callers both read `is_acquired = false`, both
+     * reach here, and the transaction's guard rejects the second. Same
+     * conflict, same 409 — only the timing differs, and a user who was half a
+     * second late should not be told the app broke.
+     */
+    let record;
+    try {
+      record = await acquireWantListItem({
+        wantListId: id,
+        values: {
+          artistId: values.artistId,
+          title: values.title,
+          labelId: values.labelId ?? null,
+          formatId: values.formatId ?? null,
+          pressingId: values.pressingId ?? null,
+          storeId: values.storeId ?? null,
+          releaseYear: values.releaseYear ?? null,
+          conditionMedia: values.conditionMedia ?? null,
+          conditionSleeve: values.conditionSleeve ?? null,
+          purchasePrice: values.purchasePrice ?? null,
+          purchaseDate: values.purchaseDate ?? null,
+          notes: values.notes ?? null,
+        },
+        genreIds,
+        tagIds,
+      });
+    } catch (error) {
+      if (isConflictError(error)) return conflict(error);
+      throw error;
+    }
 
     return NextResponse.json(record, { status: 201 });
   },

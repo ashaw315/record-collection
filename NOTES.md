@@ -738,6 +738,40 @@ form the records work had not shown — see the masking entry under Open.
   would slip through. NOT done yet; recorded so it is not lost. Noticed: step 5,
   unit 7a.
 
+- **RULE: this toolchain reports ABSENCE as SUCCESS in at least three distinct
+  ways. A green result can mean "nothing ran", not "nothing broke".**
+
+  Three instances, three different mechanisms, all in this build:
+
+  | What was absent | How it appeared | Found by |
+  |---|---|---|
+  | A test file that could not be imported | `Tests no tests`, after `Test Files 1 failed` | reading past the summary line |
+  | A whole file's worth of skipped tests | a `console.warn` at module scope, swallowed | investigating something else |
+  | A test that never reached Neon | a passing `.rejects.toThrow()` catching the wrong error | probing what the error actually was |
+
+  **The third one is the reason this entry exists**: the hollow Neon test
+  reported green for weeks while never contacting the database it existed to
+  verify. The other two are cheaper but the same shape.
+
+  **The first is the newest** (step 6, unit 2). A `ReferenceError` thrown while
+  IMPORTING a test file — `uuid is not defined`, left by an incomplete deletion
+  — surfaces in the summary as `Tests no tests`. There is a `Failed Suites 1`
+  section above it with the stack trace, but the line most readers scan for a
+  verdict says the tests did not run rather than that they failed. A run that
+  collects zero tests from a file that had thirteen is a failure; it reads as a
+  skip.
+
+  **The common shape: the absence of a signal is being rendered in the same
+  visual register as a positive result.** Vitest's summary, a swallowed warn,
+  and a satisfied assertion all look like the thing worked.
+
+  **The rule: for any check that matters, know its POSITIVE count and assert
+  it.** Not "did the suite pass" but "did the number of tests that ran match
+  what should have run". This is why the Neon gate reports "9 passed" rather
+  than "green", why `test/repo/neon-gate.test.ts` fails BY NAME when the branch
+  is unconfigured, and why CURRENT POSITION carries counts rather than ticks. A
+  count can be wrong in a way a tick cannot. Noticed across steps 4-6.
+
 - **RULE: prose is more rigorous than the work it describes, and it is always
   wrong in the flattering direction.** Comments, headers and STATUS REPORTS all
   do this. Three instances now, the third the worst:
@@ -766,6 +800,28 @@ form the records work had not shown — see the masking entry under Open.
   reader. A wrong report misleads the REVIEW — it removes the item from the list
   of things anyone will look at again. Every other rule in this file assumes
   something eventually gets checked; this is the failure that opts out of that.
+
+  4. **A false JUSTIFICATION, which is the most durable form** (step 6 unit 2).
+     The same `create-schema.ts` header explained WHY the copy existed:
+     "`MAX_NESTED_IDS` is inlined rather than imported from the query layer,
+     which is `server-only`… pulling a server-only module through it would be a
+     needless coupling." Two files already did exactly that import
+     (`api/records/route.ts:7`, `api/records/[id]/schema.ts:3`), and this module
+     is imported only by route handlers, so the coupling it warned of could not
+     occur.
+
+     **A false comment misleads a reader; a false justification survives
+     review.** A bare "copied from X" invites the question "why not import it?"
+     — the reasoning is missing, so a reviewer supplies it. A stated rationale
+     answers that question before it is asked, and a reviewer who accepts the
+     premise stops there. The more plausible the reason, the longer the copy
+     lives: this one named a real project rule (CLAUDE.md §6) and a real
+     constraint that simply did not apply here.
+
+     **The check:** when a comment explains why the obvious approach was NOT
+     taken, verify the obstacle exists — usually one grep for whether anything
+     else already does the thing being called impossible. Treat a justification
+     as a claim with a higher burden than a description, not a lower one.
 
   **The rule: a report sentence claiming a code property is an assertion, and
   gets verified like one before it is written.** "Shared by both endpoints" is
