@@ -10,26 +10,29 @@ in.
 
 ## CURRENT POSITION — read this first
 
-**Updated: 2026-08-07, end of step 5.**
+**Updated: 2026-08-08, end of step 6.**
 
-**Where we are.** **Step 5 is COMPLETE** (SPEC.md §12: "Records CRUD +
-collection list + record detail + add/edit form. E2E #2"). Built and
-remediated: the §5.2 API including `facets` and `matchedVia`, the collection
-screen with search / filter chips / sort / pagination / grid toggle, the record
-detail screen, and the add/edit form with inline create. E2E flow 2 passes.
+**Where we are.** **Step 6 is COMPLETE** (SPEC.md §12: "Want list CRUD +
+acquire flow. E2E #5"). Built across five units: the §5.3 want-list API, the
+acquire endpoint and its transactional primitive, and the `/want-list` screen
+with the prefilled mark-acquired flow. E2E flow 5 passes on both projects.
 
-**Step 6 is next**: want-list CRUD + the acquire flow, E2E #5.
+**Step 7 is next**: the Discogs integration.
 
-**Last verified, and when.** 2026-08-07:
+**Last verified, and when.** 2026-08-08, all of it on the current tree:
 
 | Check | State |
 |---|---|
-| `npm test` | 1105 passed, 1 skipped, 57 files |
-| `npx playwright test` | 119 passed, 2 skipped, ~0-1 failed |
+| `npm test` | 1223 passed, 1 skipped, 65 files |
+| `e2e/want-list.spec.ts` | 5 passed chromium, 5 passed mobile |
 | `npm run typecheck` / `lint` / `build` | clean |
-| Neon transaction gate | **closed** — 7 tests against a real branch |
+| Neon transaction gate | **9 passed, 1 skipped** — the skip is the gate's own marker correctly NOT firing |
 
-**Three caveats a green suite will not tell you.**
+Note the Neon row is the file's own count, not a suite total. Run it as
+`npx vitest run test/integration/neon-transactions.test.ts`; there is no
+`test:neon` script, and asking for one wastes a round.
+
+**Four caveats a green suite will not tell you.**
 
 1. **The Neon gate's closing test was hollow until the step 5 remediation** and
    reported green from the day it was written — it never reached Neon at all.
@@ -46,15 +49,22 @@ detail screen, and the add/edit form with inline create. E2E flow 2 passes.
    specs that WERE quarantined for weeks are now unquarantined and passing; both
    their causes were environmental.
 
-**What step 6 must not repeat.** The acceptance criteria below are discharged
-for `records` and still apply UNDISCHARGED to `want_list`. Item 14 — the
-acquire flow's transactional integrity and its §11-required mid-transaction
-failure test — is step 6's, and the Neon harness for testing it now exists.
+4. **The full Playwright suite was not re-run at the end of step 6** — only
+   `want-list.spec.ts` on both projects, plus the full Vitest suite. Nothing
+   suggests a regression, but the last whole-suite E2E number in this file is
+   step 5's and should be treated as such.
 
-**Entries that bear directly on step 6 and beyond**: the fixture rules
-(single-test, cross-spec, and no-legal-value variants), the Zod coercion class,
-the mock-scope rule, and the two `/manage` limitations — its unfixed 200-row
-assumption and the reference-data pagination gap.
+**What step 7 inherits.** Every acceptance criterion below is now discharged
+for BOTH `records` and `want_list`, item 14 included. Step 7 is the first step
+since step 4 that starts without an open gate.
+
+**Entries that bear directly on step 7**: the Zod coercion class and the
+fixture rules apply as always, but the one written FOR step 7 is the
+unspecified-bounds entry — the Discogs import is the first thing to write to
+these columns other than the API, and §4's prose ranges are enforced at the API
+boundary only. Also live: the mock-scope rule (step 7 mocks an external API
+throughout, and CLAUDE.md §2 forbids a live call even once), and the two
+`/manage` limitations.
 
 ---
 
@@ -78,10 +88,15 @@ built and adversarially reviewed; 13 (the static stats segment) is covered by
 `e2e/records-routing.spec.ts` — route precedence needs a real request, not a
 handler call.
 
-**They all still apply UNDISCHARGED to `want_list` (step 6)**, and 14 was always
-want_list-only. The prediction that the template would not stretch was correct:
-the review found six defects in the records query layer, four of them in
-exactly the "no precedent" items 9–12.
+**STATUS as of 2026-08-08: also discharged for `want_list`.** Step 6 applied
+1–12 to the want-list endpoints, and 14 — which was always want_list-only — is
+discharged below with what was proven. 13 does not apply (`want_list` has no
+static sibling segment).
+
+The prediction that the template would not stretch was correct: the review
+found six defects in the records query layer, four of them in exactly the "no
+precedent" items 9–12. Item 9 then cost three more units on `want_list`, in a
+form the records work had not shown — see the masking entry under Open.
 
 ### Carries over unchanged
 
@@ -267,6 +282,35 @@ exactly the "no precedent" items 9–12.
 
   Expect this to recur: every remaining UI step adds specs to the same shared
   database. Noticed: step 5, unit 7d.
+
+  **PRESENTATION VARIANT: a duplicate-fixture error can present as a
+  width-dependent LAYOUT bug.** The cross-spec variant above is about assertions
+  going wrong. This is about the failure pointing somewhere else entirely.
+
+  The step 6 unit 5 screenshot harness captured `/want-list` at 1280 and 390.
+  The 1280 shot passed; **390 failed, alone and in parallel, on
+  `getByText(title)` timing out.** Everything about that says the row renders
+  differently at narrow width — a wrapped element, a responsive branch, a
+  `hidden md:block`. The row component was read looking for exactly that, and
+  has no width-dependent behaviour at all.
+
+  Both shots seeded the SAME titles. By the second run two rows matched, so the
+  locator resolved to two elements and Playwright raised a strict-mode
+  violation — which surfaces as a TIMEOUT on `toBeVisible`, not as "found 2".
+  The message names the thing that was not visible, so it reads as absence.
+  Fixed by suffixing each shot's fixtures with its own viewport name.
+
+  **Why it belongs here rather than under the E2E entries:** nothing was wrong
+  with the page, and nothing was wrong with the assertion. The fixture was
+  duplicated, and the only surprising part is where the symptom appeared. A
+  variable that differs between two runs (viewport) gets blamed for a failure
+  caused by one that does not (the seed).
+
+  **The tell:** a failure that correlates with a dimension the code does not
+  read. Before investigating why 390 differs from 1280, confirm the two runs
+  differ ONLY in width — here they also differed in how much data was already
+  present, which is the same axis-confusion the "same family" rule warns about.
+  Noticed: step 6, unit 5.
 
   **VARIANT: sometimes no value on that axis CAN discriminate, and the fix is a
   different axis rather than a better fixture.** The five cases above are all
@@ -475,9 +519,11 @@ exactly the "no precedent" items 9–12.
   measuring something that no longer exists. Noticed: step 5, E2E flake work.
 
 - **PATTERN, for a decision at step 14: SPEC.md §4 states ranges in prose that
-  nothing below the API boundary enforces.** Two instances so far, and the
-  second was found the same way as the first — by checking `pg_constraint`
-  rather than trusting the column definition.
+  nothing below the API boundary enforces.** Two instances so far — the year
+  bound (step 5) and `want_list.priority` (step 6) — and the second was found
+  the same way as the first, by checking `pg_constraint` rather than trusting
+  the column definition. They differ in a way that matters: the year bound has
+  a stated reason to stay API-only, and priority does not.
 
   | Column | §4 says | Enforced by |
   |---|---|---|
@@ -722,6 +768,12 @@ exactly the "no precedent" items 9–12.
 
 - **RULE: environmental causes look like logic bugs, and a diagnosis that
   survives four failed fixes is probably about the wrong thing.**
+
+  **Four instances now** — the two below, the prerendered `/manage` page, and
+  the 390px screenshot failure recorded further down. The count is the point:
+  this is not a one-off, it is the most common way an investigation here goes
+  wrong. When something fails, the environment is a first-class hypothesis, not
+  what you fall back to after the logic explanations run out.
 
   Two `/manage` genre specs were quarantined from step 4 until step 5's E2E
   stability unit — weeks — against the diagnosis "`router.refresh()` has not
@@ -991,11 +1043,12 @@ exactly the "no precedent" items 9–12.
   existed, which invites building a redundant guard or, worse, treating verified
   code as unverified and re-litigating it.
 
-  **Current state**, verified 2026-08-06: `test/integration/neon-transactions.test.ts`
-  runs 7 tests against a real throwaway Neon branch over
-  `drizzle-orm/neon-serverless` — the only place in the suite that driver is
-  exercised at all. Both nested-write primitives are covered:
-  `writeRecordWithNested` (create) and `updateRecordWithNested` (PATCH).
+  **State as of 2026-08-06** (superseded — the current count is 9, see
+  CURRENT POSITION): `test/integration/neon-transactions.test.ts` ran 7 tests
+  against a real throwaway Neon branch over `drizzle-orm/neon-serverless` — the
+  only place in the suite that driver is exercised at all. Both nested-write
+  primitives were covered: `writeRecordWithNested` (create) and
+  `updateRecordWithNested` (PATCH).
 
   **BUT THE CLOSING TEST WAS HOLLOW UNTIL 2026-08-06, AND REPORTED GREEN THE
   WHOLE TIME.** `rolls back the real nested-write primitive, not just raw SQL`
@@ -1018,13 +1071,16 @@ exactly the "no precedent" items 9–12.
   the same environment, and a message-less assertion will not notice. See the
   `.toThrow()` entry below. Corrected: step 5 remediation.
 
-  **Still deferred, and unaffected by the above:** SPEC.md §5.3's
-  `POST /api/want-list/:id/acquire` is step 6 work and its §11-required
-  mid-transaction failure test does not exist yet. A partially-applied acquire
-  (a `records` row with `want_list.is_acquired` never set) would silently
-  corrupt §7.3's want-list-as-acquisition-history invariant. The harness to test
-  it on Neon now exists; the acquire flow does not. Step 6 cannot be closed
-  without it.
+  **The acquire deferral that used to end this entry is now CLOSED** (step 6,
+  unit 4). It read: "§5.3's `POST /api/want-list/:id/acquire` is step 6 work and
+  its §11-required mid-transaction failure test does not exist yet… Step 6
+  cannot be closed without it." Both the flow and the test now exist, and the
+  Neon file covers the acquire rollback plus two simultaneous acquires on the
+  WebSocket pool. See item 14 above for what was proven.
+
+  Updated here rather than left to be inferred from item 14: this entry is the
+  one a cold session reads when asking "is the Neon gate open", and it has
+  already been stale once in exactly that situation.
 
 - **README.md is a 20-byte stub.** SPEC.md §14 requires it to cover local setup,
   running migrations, obtaining a Discogs token, running each test suite, and
