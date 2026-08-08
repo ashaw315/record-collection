@@ -206,6 +206,34 @@ exactly the "no precedent" items 9–12.
   is the defect and the assertion is decorative regardless of how it is written.
   Noticed across steps 4–5; stated as a rule during the step 5 remediation.
 
+  **CONCURRENCY VARIANT: a concurrency test that is not actually concurrent
+  proves only what the sequential path already covers.** Same failure in a
+  different costume — the test looks like it exercises the race and does not.
+
+  The acquire guard (`WHERE is_acquired = false` on the UPDATE) exists for two
+  callers reading `is_acquired = false` at the same time. Written sequentially:
+
+  ```ts
+  await acquire(item);          // succeeds
+  await expect(acquire(item)).rejects.toThrow();   // "proves" the guard
+  ```
+
+  That passes with the guard REMOVED, because by the second call the first has
+  committed and the endpoint pre-check refuses it anyway. It exercises the
+  pre-check, not the guard.
+
+  The real version starts both before awaiting either:
+
+  ```ts
+  const outcomes = await Promise.allSettled([acquire(item), acquire(item)]);
+  expect(outcomes.filter((o) => o.status === 'fulfilled')).toHaveLength(1);
+  ```
+
+  **The tell:** an `await` between the two operations that are supposed to
+  collide. If the first has finished before the second starts, there is no
+  window, and the test is measuring serialization rather than concurrency.
+  Noticed: step 6, unit 4.
+
   **CROSS-SPEC VARIANT: a test can assume something about SHARED STATE that no
   other test is obliged to preserve.** The rule above is about one test's own
   fixture. This is the same defect between tests, and it only appears once
