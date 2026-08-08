@@ -237,17 +237,65 @@ form the records work had not shown — see the masking entry under Open.
   committed and the endpoint pre-check refuses it anyway. It exercises the
   pre-check, not the guard.
 
-  The real version starts both before awaiting either:
+  Starting both before awaiting either is the first step:
 
   ```ts
   const outcomes = await Promise.allSettled([acquire(item), acquire(item)]);
   expect(outcomes.filter((o) => o.status === 'fulfilled')).toHaveLength(1);
   ```
 
-  **The tell:** an `await` between the two operations that are supposed to
-  collide. If the first has finished before the second starts, there is no
-  window, and the test is measuring serialization rather than concurrency.
-  Noticed: step 6, unit 4.
+  **CORRECTION (step 6 remediation, unit 3): that is NECESSARY AND NOT
+  SUFFICIENT, and this entry said otherwise.** Two promises in flight still
+  race in real time, so whether they collide is decided by scheduling — and a
+  pre-check that completes before the second caller reads closes the window
+  before the guarded code is reached.
+
+  Measured on the acquire endpoint, same test, same code, opposite verdicts:
+
+  | Run | Statuses | Defect |
+  |---|---|---|
+  | the test alone | `[201, 500]` | visible |
+  | the whole file | `[201, 409]` | **hidden** |
+
+  Under load the first request cleared its pre-check-to-commit window before the
+  second one read, so the pre-check answered and the transaction guard never
+  ran. The test passed against broken code in the configuration it would
+  normally be run in.
+
+  **What makes a concurrency test real is FORCING both callers past the point
+  the guard defends**, not hoping they arrive together. Hook the pre-check and
+  release only once both have cleared it:
+
+  ```ts
+  let arrived: () => void;
+  const bothArrived = new Promise<void>((r) => { arrived = r; });
+  let waiting = 0;
+  vi.spyOn(queries, 'findWantListItemById').mockImplementation(async (id) => {
+    const item = await real(id);
+    if (++waiting === 2) arrived();   // both are past the check
+    await bothArrived;                // neither proceeds until then
+    return item;
+  });
+  ```
+
+  Note this hooks EVERY call, which the mock-scope rule below warns against —
+  correctly, for its case. The difference: there the mock must let a LATER call
+  fall through; here the release condition is the second ARRIVAL, and exactly
+  two callers exist. Both rules are really the same instruction — know how many
+  times the code under test calls the thing you hooked.
+
+  **The isolation asymmetry is worth its own alarm.** A test that finds the
+  defect ALONE and hides it in a full run looks exactly like flake, and the
+  standard response to flake is to quarantine or delete it. It is the opposite:
+  the isolated run is the honest one. Before writing off a race test as flaky,
+  check whether the passing configuration is the one where the race does not
+  happen.
+
+  **The tells, in order:** an `await` between the two operations that should
+  collide; then, once that is fixed, a result that changes between an isolated
+  run and a full one. The first means there is no window at all, the second
+  means the window is real but not guaranteed. Noticed: step 6 unit 4;
+  corrected and extended in the step 5+6 remediation, unit 3.
 
   **CROSS-SPEC VARIANT: a test can assume something about SHARED STATE that no
   other test is obliged to preserve.** The rule above is about one test's own
@@ -1152,6 +1200,23 @@ form the records work had not shown — see the masking entry under Open.
   fix is to lower the floor or make it nullable-with-a-note, not to remove the
   bound, which is the only thing keeping 999999 out of §8's graph. Noticed:
   step 4, artists.
+
+- **DO NOT run `prettier` in this repo. There is no config, so it formats to
+  ITS defaults, not the house style.** Run once on a single route file during
+  the step 5+6 remediation, it rewrote every string in the file from single to
+  double quotes — a whole-file diff of unreviewed cosmetic changes wrapped
+  around a three-line fix, which is exactly the large-unreviewed-diff problem
+  CLAUDE.md §1 splits units to avoid. Reverted with `git checkout` and the
+  change reapplied by hand.
+
+  Lint does not object, because ESLint here carries no formatting rules — so
+  nothing in the toolchain will catch this on the way in. Match the surrounding
+  file by hand instead.
+
+  **If formatting is wanted, it is a deliberate step-14 decision** with a
+  committed `.prettierrc` matching the existing style and one sweeping commit
+  that touches nothing else — not an ad-hoc run inside a feature unit. Noticed:
+  step 5+6 remediation, unit 3.
 
 - **`--reporter=basic` no longer exists in Vitest 4.** It is now resolved as a
   custom reporter *module*, so passing it fails the run with `ERR_LOAD_URL`
