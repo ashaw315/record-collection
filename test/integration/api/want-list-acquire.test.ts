@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm';
 import { logger } from '@/lib/logger';
 import { getTestDb, truncateAll, closeTestDb } from '../../helpers/db';
 import { POST as acquire } from '@/app/api/want-list/[id]/acquire/route';
+import { acquireWantListItem } from '@/lib/db/queries/want-list';
 
 /**
  * SPEC.md §5.3 `POST /api/want-list/:id/acquire`, and §7.3's history invariant.
@@ -61,6 +62,7 @@ type Fixture = {
   discharge: string;
   clay: string;
   uk82: string;
+  gatefold: string;
   lp: string;
 };
 
@@ -68,6 +70,7 @@ async function seed(): Promise<Fixture> {
   const discharge = await id(sql`INSERT INTO artists (name) VALUES ('Discharge') RETURNING id`);
   const clay = await id(sql`INSERT INTO labels (name) VALUES ('Clay') RETURNING id`);
   const uk82 = await id(sql`INSERT INTO genres (name) VALUES ('UK82') RETURNING id`);
+  const gatefold = await id(sql`INSERT INTO tags (name) VALUES ('Gatefold') RETURNING id`);
   const lp = await id(sql`SELECT id FROM formats WHERE name = 'LP'`);
 
   const item = await id(
@@ -76,7 +79,7 @@ async function seed(): Promise<Fixture> {
         RETURNING id`,
   );
 
-  return { item, discharge, clay, uk82, lp };
+  return { item, discharge, clay, uk82, gatefold, lp };
 }
 
 describe('POST /api/want-list/:id/acquire — the happy path', () => {
@@ -194,9 +197,17 @@ describe('POST /api/want-list/:id/acquire — the happy path', () => {
     expect(rows.rows[0].max_price).toBe('40.00');
   });
 
-  it('accepts the full record payload, including nested genres', async () => {
-    // §5.3: "Body: full record payload." The same shape POST /api/records
-    // takes, so acquiring is not a lesser way to create a record.
+  it('accepts the full record payload, including nested genres AND tags', async () => {
+    /**
+     * §5.3: "Body: full record payload." The same shape POST /api/records
+     * takes, so acquiring is not a lesser way to create a record.
+     *
+     * This test asserted GENRES ONLY under a name claiming the full payload,
+     * and `tagIds` was validated by the route and then dropped on the floor —
+     * a silent, per-acquisition loss that the 201 concealed. The two nested
+     * collections are asserted together because that is the shape of the
+     * defect: one landing is what made the other look like user error.
+     */
     const f = await seed();
 
     const record = await (
@@ -209,16 +220,54 @@ describe('POST /api/want-list/:id/acquire — the happy path', () => {
           releaseYear: 1982,
           conditionMedia: 'VG+',
           genreIds: [f.uk82],
+          tagIds: [f.gatefold],
         }),
         params(f.item),
       )
     ).json();
 
-    const links = await db.execute<{ genre_id: string }>(
+    const genreLinks = await db.execute<{ genre_id: string }>(
       sql`SELECT genre_id FROM record_genres WHERE record_id = ${record.id}`,
     );
-    expect(links.rows.map((row) => row.genre_id)).toEqual([f.uk82]);
+    expect(genreLinks.rows.map((row) => row.genre_id)).toEqual([f.uk82]);
+
+    const tagLinks = await db.execute<{ tag_id: string }>(
+      sql`SELECT tag_id FROM record_tags WHERE record_id = ${record.id}`,
+    );
+    expect(tagLinks.rows.map((row) => row.tag_id)).toEqual([f.gatefold]);
+
     expect(record.releaseYear).toBe(1982);
+  });
+
+  it('writes tags in the SAME transaction, not after it', async () => {
+    /**
+     * Against the query-layer primitive, per NOTES' standing expectation: the
+     * route's `missingIds` pre-check rejects a bad tag before the transaction
+     * runs, so no endpoint test can observe whether the tag write is inside it.
+     *
+     * A tag id that passes validation and then fails on INSERT is the case that
+     * separates them. If tags are written after the commit, the record and its
+     * genres survive with the tags missing — §5.2's "both land or neither",
+     * violated in the direction that returns 201.
+     */
+    const f = await seed();
+
+    await expect(
+      acquireWantListItem({
+        wantListId: f.item,
+        values: { artistId: f.discharge, title: 'Hear Nothing' },
+        genreIds: [f.uk82],
+        tagIds: [UNUSED_UUID],
+      }),
+    ).rejects.toThrow(/record_tags/);
+
+    const records = await db.execute<{ count: string }>(sql`SELECT COUNT(*) AS count FROM records`);
+    expect(records.rows[0].count, 'the record rolled back with the tags').toBe('0');
+
+    const item = await db.execute<{ is_acquired: boolean }>(
+      sql`SELECT is_acquired FROM want_list WHERE id = ${f.item}`,
+    );
+    expect(item.rows[0].is_acquired).toBe(false);
   });
 });
 
@@ -343,6 +392,7 @@ describe('acquireWantListItem is transactional', () => {
         wantListId: UNUSED_UUID, // no such row: the UPDATE matches nothing
         values: { artistId: f.discharge, title: 'Orphan Risk' },
         genreIds: [],
+      tagIds: [],
       }),
     ).rejects.toThrow();
 
@@ -362,6 +412,7 @@ describe('acquireWantListItem is transactional', () => {
         wantListId: f.item,
         values: { artistId: f.discharge, title: 'Bad Genre' },
         genreIds: [UNUSED_UUID],
+      tagIds: [],
       }),
     ).rejects.toThrow(/record_genres/i);
 
@@ -397,6 +448,7 @@ describe('acquireWantListItem is transactional', () => {
       wantListId: f.item,
       values: { artistId: f.discharge, title: 'First' },
       genreIds: [],
+    tagIds: [],
     });
 
     await expect(
@@ -404,6 +456,7 @@ describe('acquireWantListItem is transactional', () => {
         wantListId: f.item,
         values: { artistId: f.discharge, title: 'Second' },
         genreIds: [],
+      tagIds: [],
       }),
     ).rejects.toThrow(/already acquired/i);
 
@@ -428,6 +481,7 @@ describe('acquireWantListItem is transactional', () => {
       wantListId: f.item,
       values: { artistId: f.discharge, title: 'All Three' },
       genreIds: [f.uk82],
+    tagIds: [],
     });
 
     const links = await db.execute<{ n: number }>(

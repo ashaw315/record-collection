@@ -7,6 +7,7 @@ import {
   labels,
   pressings,
   recordGenres,
+  recordTags,
   records,
   wantList,
   wantListGenres,
@@ -332,17 +333,29 @@ export async function acquireWantListItem(input: {
   wantListId: string;
   values: typeof records.$inferInsert;
   genreIds: string[];
+  tagIds: string[];
 }): Promise<typeof records.$inferSelect> {
   const db = getDb();
 
   return db.transaction(async (tx) => {
     const [record] = await tx.insert(records).values(input.values).returning();
 
-    const unique = [...new Set(input.genreIds)];
-    if (unique.length > 0) {
+    const uniqueGenreIds = [...new Set(input.genreIds)];
+    if (uniqueGenreIds.length > 0) {
       await tx
         .insert(recordGenres)
-        .values(unique.map((genreId) => ({ recordId: record.id, genreId })));
+        .values(uniqueGenreIds.map((genreId) => ({ recordId: record.id, genreId })));
+    }
+
+    /**
+     * §5.3: acquire carries EVERY nested collection the create endpoint does.
+     * These were validated by the route and then dropped — a silent
+     * per-acquisition loss behind a 201, made to look like user error by the
+     * fact that genres landed.
+     */
+    const uniqueTagIds = [...new Set(input.tagIds)];
+    if (uniqueTagIds.length > 0) {
+      await tx.insert(recordTags).values(uniqueTagIds.map((tagId) => ({ recordId: record.id, tagId })));
     }
 
     const marked = await tx

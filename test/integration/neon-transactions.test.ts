@@ -360,6 +360,7 @@ describe.skipIf(!configured)('transactions over the Neon serverless driver', () 
           wantListId: item.rows[0].id,
           values: { artistId: artist.rows[0].id, title },
           genreIds: [missingGenre],
+        tagIds: [],
         }),
       ).rejects.toThrow(/record_genres/i);
 
@@ -428,11 +429,13 @@ describe.skipIf(!configured)('transactions over the Neon serverless driver', () 
           wantListId: item.rows[0].id,
           values: { artistId: artist.rows[0].id, title: `${probe}-race-a` },
           genreIds: [],
+        tagIds: [],
         }),
         acquireWantListItem({
           wantListId: item.rows[0].id,
           values: { artistId: artist.rows[0].id, title: `${probe}-race-b` },
           genreIds: [],
+        tagIds: [],
         }),
       ]);
 

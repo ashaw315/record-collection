@@ -114,6 +114,7 @@ export const POST = withErrorHandling(
         notes: values.notes ?? null,
       },
       genreIds,
+      tagIds,
     });
 
     return NextResponse.json(record, { status: 201 });

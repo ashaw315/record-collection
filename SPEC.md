@@ -357,7 +357,13 @@ Note: `app/api/records/stats/route.ts` is a static segment and must not be swall
 | GET | `/api/want-list/:id` | Hydrated, including `targetPressing`. |
 | PATCH | `/api/want-list/:id` | |
 | DELETE | `/api/want-list/:id` | |
-| POST | `/api/want-list/:id/acquire` | Body: full record payload. Creates a `records` row, sets `is_acquired = true` and `acquired_record_id`. Transactional — both succeed or neither. Returns the new record. |
+| POST | `/api/want-list/:id/acquire` | Body: full record payload — **the same shape as `POST /api/records`, from one shared schema definition, not two that agree today**. Creates a `records` row, sets `is_acquired = true` and `acquired_record_id`. Transactional — both succeed or neither. Returns the new record. |
+
+**The acquire body carries every nested collection the create endpoint does** — `genreIds` *and* `tagIds`. A payload field the endpoint validates and then silently discards is worse than one it rejects: the caller gets a 201 and believes the data landed.
+
+**`target_pressing_id` prefills the record's pressing fields; it is neither dropped nor silently copied.** The target pressing is the "best dig" — the specific pressing being hunted (§7.2) — so a record acquired against it should start from those details. But the user may have settled for a different pressing, and §7.7's whole ownership distinction rests on knowing which one is actually in hand. So the acquire form prefills the pressing section from `target_pressing_id`, visibly and editably, exactly as a Discogs lookup result prefills it, and the user verifies against the physical item before saving. Silently dropping it loses the hunt; silently copying it asserts something nobody checked.
+
+**Acquiring an already-acquired item returns `409`, including when the race is lost.** The handler's pre-check gives a legible 409 in the ordinary case, but the transaction's `is_acquired = false` guard is what closes the concurrent case — and it must surface as the same `409`, not as a `500`. A defined conflict reported as an internal error misleads the user and fills the log with false faults.
 
 ### 5.4 Reference resources
 

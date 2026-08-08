@@ -531,6 +531,16 @@ form the records work had not shown — see the masking entry under Open.
   | `records.release_year` | same bound (§4.2, added later) | API only |
   | `pressings.year_pressed` | same bound (§4.2, added later) | API only |
   | `want_list.priority` | "1 = highest, 5 = lowest" (§4.2) | API only |
+  | `want_list.is_acquired` + `acquired_record_id` | §7.3 makes them one fact | nothing |
+
+  The last row is a different SHAPE from the other four and was found by the
+  step 5+6 adversarial review. The others bound a scalar; this one is a
+  two-column invariant: `is_acquired = true` with `acquired_record_id` NULL is
+  storable, and it means "acquired, but we lost what you acquired" — §7.3's
+  acquisition history with the history missing. The acquire transaction always
+  sets both, so nothing produces it today. A `CHECK (NOT is_acquired OR
+  acquired_record_id IS NOT NULL)` costs nothing and, unlike the year bound, has
+  no moving upper bound to argue about. Decide it with the rest at step 14.
 
   §4.1 is explicit that the year bound is "not a database constraint: it is a
   product judgement, and the upper bound moves" — which is a real reason, since
@@ -550,6 +560,25 @@ form the records work had not shown — see the masking entry under Open.
   work; the migration is small. Do NOT fix these piecemeal in the meantime —
   a half-applied convention is worse than a consistent one. Noticed: step 5
   (years), step 6 unit 1 (priority).
+
+- **DEFERRED — the unconstrained acquired state has a UI DEAD-END, and the two
+  compound.** Recorded separately from the CHECK-constraint decision above
+  because it needs a different fix, in a different file, and would survive that
+  constraint being declined.
+
+  `WantListRow` renders the "Acquired" badge and hides "Mark acquired" whenever
+  `is_acquired` is true. The "View record" link is guarded on
+  `acquiredRecordId !== null` — **so in exactly the unconstrained state, the row
+  shows that something was acquired and offers no way to reach it.** Not
+  reacquirable, not linked, delete or nothing.
+
+  One correction to how this was reported to me: the link is not absent, it is
+  conditional. That distinction is the whole point — the UI degrades precisely
+  where the schema stops holding, so neither problem is visible until they meet.
+  Either fix alone closes it: the CHECK makes the state unreachable, or the row
+  treats a NULL `acquiredRecordId` as a repairable state rather than rendering a
+  dead end. Prefer the CHECK; §4 is where invariants belong. Noticed: step 5+6
+  adversarial review.
 
 - **STANDING EXPECTATION: when a handler pre-checks a condition its transaction
   also guards, the failure test goes against the QUERY-LAYER PRIMITIVE from the
@@ -708,6 +737,43 @@ form the records work had not shown — see the masking entry under Open.
   swept — every place a test asserts a whole object and an extra undefined key
   would slip through. NOT done yet; recorded so it is not lost. Noticed: step 5,
   unit 7a.
+
+- **RULE: prose is more rigorous than the work it describes, and it is always
+  wrong in the flattering direction.** Comments, headers and STATUS REPORTS all
+  do this. Three instances now, the third the worst:
+
+  1. `isUniqueViolation` sat dead for a whole build unit behind a confident
+     comment describing what it caught.
+  2. A comment in `withFacet` asserted that `toEqual` would catch an
+     `undefined`-vs-absent mutation. It cannot — verified.
+  3. **`src/lib/records/create-schema.ts` (step 6, unit 3).** Its header says
+     the schema is "shared by `POST /api/records` and
+     `POST /api/want-list/:id/acquire`", and argues the case: *"Defining it
+     twice is how they drift — and the drift would be silent."* Only acquire
+     ever imported it. `POST /api/records` kept its own local `createSchema`,
+     so the module warning against a second definition WAS the second
+     definition. Found by the step 5+6 adversarial review, not by any test.
+
+  **What makes the third one different: the artifact that outran the work was
+  the REPORT.** The unit 3 report stated as fact that the schema was "shared
+  with POST /api/records". Nobody checked, because a status report is read as
+  a record of what happened rather than as a claim needing verification — and
+  it is written by the party least able to audit it. The comment then encoded
+  the same false claim in the source, where the next person editing one file
+  would reasonably believe both had moved.
+
+  **Why this class is nastier than a wrong comment.** A wrong comment misleads a
+  reader. A wrong report misleads the REVIEW — it removes the item from the list
+  of things anyone will look at again. Every other rule in this file assumes
+  something eventually gets checked; this is the failure that opts out of that.
+
+  **The rule: a report sentence claiming a code property is an assertion, and
+  gets verified like one before it is written.** "Shared by both endpoints" is
+  one grep. Specifically, when a unit says it EXTRACTED or CONSOLIDATED
+  something, grep for the importers and count them — an extraction with one
+  importer is a copy, whatever the header says. Same discipline as a mutation:
+  do not report the property, report what you ran. Noticed: step 6 unit 3,
+  found by the step 5+6 adversarial review.
 
 - **RULE: probes are code too, and a verified-by-execution claim still needs its
   premise checked.** NOTES already says "a mutation is code, and it can be
@@ -962,6 +1028,43 @@ form the records work had not shown — see the masking entry under Open.
   bug, where `yearFrom=` silently applied `release_year >= 0` and dropped every
   undated record behind a 200. That bug is fixed; this design consequence
   remains. Noticed: step 5 remediation, unit 3.
+
+- **DEFERRED — `genreSubtree` is defined twice, in two files, and both copies
+  are correct today.** The recursive CTE walking the genre hierarchy down (§7.1)
+  exists in the records query layer and again in the want-list one. Nothing is
+  wrong with either; the risk is drift, and drift here is silent — a §7.1 fix
+  applied to one file leaves the other filtering by a different rule, with both
+  screens returning a plausible 200.
+
+  **Sharing is not free**, which is why this is deferred rather than done: the
+  records copy lives in a `server-only` module, so extracting it means either a
+  new shared module that is itself server-only (fine, but a third file) or
+  loosening that boundary (not fine — CLAUDE.md §6). The right move is probably
+  a `src/lib/db/queries/genre-hierarchy.ts` marked `server-only` and imported by
+  both, but that is a refactor across two step-boundaries' code and belongs in
+  its own unit rather than smuggled into a defect fix.
+
+  **If either copy is touched before then, port the change to the other in the
+  same commit and say so in the message.** Noticed: step 5+6 adversarial review.
+
+- **DEFERRED — nothing stops TWO want-list items pointing at ONE record.**
+  `acquired_record_id` has no unique constraint, so two rows can claim the same
+  `records` row. §7.3 treats the want-list as acquisition history, and one
+  physical acquisition appearing as two entries misstates that history —
+  the collection value is unaffected, but "what did I hunt for and find" is not.
+
+  **Not reachable through the API today**: acquire creates a fresh record inside
+  its transaction and links that, so no endpoint can aim two items at one row.
+  **It stops being unreachable in step 7.** The Discogs import writes these
+  columns and matches external data onto existing records, which is exactly the
+  path that could link a second want-list item to a record already claimed.
+
+  So this is not a step-14 bounds question like the others — **step 7 has to
+  decide it**, either with a partial unique index on `acquired_record_id WHERE
+  acquired_record_id IS NOT NULL` or with an explicit rule about what a
+  duplicate match means. Deliberately not fixed now: the constraint is trivial,
+  but choosing it before the importer exists risks blocking a legitimate flow
+  nobody has designed yet. Noticed: step 5+6 adversarial review.
 
 - **`/manage` has the same 200-row assumption the collection chips had, and it
   is NOT fixed.** `src/app/manage/page.tsx` fetches every reference resource
