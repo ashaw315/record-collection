@@ -1,7 +1,7 @@
 import 'server-only';
 import { and, asc, eq, exists, sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
-import { artists, genres, labels, wantList, wantListGenres } from '@/db/schema';
+import { artists, genres, labels, pressings, wantList, wantListGenres } from '@/db/schema';
 
 /**
  * The query layer for `want_list` (SPEC.md §5.3).
@@ -166,4 +166,134 @@ export async function createWantListItem(input: {
 
     return created;
   });
+}
+
+export type HydratedWantListItem = WantListRow & {
+  artist: Named;
+  label: Named | null;
+  /**
+   * §5.3 names this specifically, and §7.2 is why: it is the pressing worth
+   * hunting for. An id alone cannot tell the user WHICH pressing to look for,
+   * which is the entire purpose of the field.
+   */
+  targetPressing: typeof pressings.$inferSelect | null;
+  genres: Named[];
+};
+
+export async function findWantListItemById(id: string): Promise<WantListRow | undefined> {
+  const db = getDb();
+  const [row] = await db.select().from(wantList).where(eq(wantList.id, id)).limit(1);
+  return row;
+}
+
+/**
+ * The §5.3 detail read.
+ *
+ * Relations are separate queries rather than one wide join, for the same reason
+ * as `hydrateRecord`: joining across a junction multiplies rows, and collapsing
+ * that back is easy to get wrong in a way that shows another item's genres on
+ * this one.
+ */
+export async function hydrateWantListItem(
+  id: string,
+): Promise<HydratedWantListItem | undefined> {
+  const db = getDb();
+
+  const [item] = await db.select().from(wantList).where(eq(wantList.id, id)).limit(1);
+  if (item === undefined) return undefined;
+
+  const [artist] = await db
+    .select({ id: artists.id, name: artists.name })
+    .from(artists)
+    .where(eq(artists.id, item.artistId))
+    .limit(1);
+
+  const label =
+    item.labelId === null
+      ? null
+      : ((
+          await db
+            .select({ id: labels.id, name: labels.name })
+            .from(labels)
+            .where(eq(labels.id, item.labelId))
+            .limit(1)
+        )[0] ?? null);
+
+  const targetPressing =
+    item.targetPressingId === null
+      ? null
+      : ((
+          await db
+            .select()
+            .from(pressings)
+            .where(eq(pressings.id, item.targetPressingId))
+            .limit(1)
+        )[0] ?? null);
+
+  const genreRows = await db
+    .select({ id: genres.id, name: genres.name })
+    .from(wantListGenres)
+    .innerJoin(genres, eq(genres.id, wantListGenres.genreId))
+    .where(eq(wantListGenres.wantListId, id))
+    .orderBy(genres.name, genres.id);
+
+  return { ...item, artist, label, targetPressing, genres: genreRows };
+}
+
+/**
+ * The PATCH counterpart to `createWantListItem`: the scalar update and the
+ * genre replacement in ONE transaction.
+ *
+ * Step 5's PATCH ran its writes as separate transactions and committed the
+ * earlier ones behind a 500. The same shape is available here, and the same fix
+ * applies — `undefined` means LEAVE ALONE, `[]` means REMOVE ALL, checked
+ * independently.
+ */
+export async function updateWantListItem(input: {
+  id: string;
+  values: Partial<typeof wantList.$inferInsert>;
+  genreIds?: string[];
+}): Promise<void> {
+  const db = getDb();
+
+  await db.transaction(async (tx) => {
+    if (Object.keys(input.values).length > 0) {
+      await tx.update(wantList).set(input.values).where(eq(wantList.id, input.id));
+    }
+
+    if (input.genreIds !== undefined) {
+      await tx.delete(wantListGenres).where(eq(wantListGenres.wantListId, input.id));
+
+      const unique = [...new Set(input.genreIds)];
+      if (unique.length > 0) {
+        await tx
+          .insert(wantListGenres)
+          .values(unique.map((genreId) => ({ wantListId: input.id, genreId })));
+      }
+    }
+  });
+}
+
+/**
+ * Deletes an item.
+ *
+ * No 409 case, unlike the reference resources: both referrers
+ * (`want_list_genres`, `price_history`) CASCADE — verified against
+ * pg_constraint — so a delete always succeeds. The target pressing is NOT
+ * removed: pressings are shared (§4), and deleting one could alter another
+ * record.
+ *
+ * §7.3 forbids ACQUIRING from deleting the row; it does not forbid an explicit
+ * user delete, and the acquired record survives because the FK points the other
+ * way.
+ */
+export async function deleteWantListItem(id: string): Promise<boolean> {
+  const db = getDb();
+
+  const deleted = await db
+    .delete(wantList)
+    .where(eq(wantList.id, id))
+    .returning({ id: wantList.id });
+
+  return deleted.length > 0;
 }
