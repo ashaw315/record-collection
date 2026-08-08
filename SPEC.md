@@ -510,6 +510,10 @@ The goal of this group of endpoints is: **the user fills in a structured form de
 1. **Genre nesting**: a record tagged with a child genre is implicitly a member of all ancestor genres for filtering and graph purposes. Compute this with a recursive CTE; do not denormalize.
 2. **Best dig ≠ best price.** `target_pressing_id` and `best_dig_notes` describe the highest-fidelity pressing worth hunting for. `max_price` is a separate, independent field. Never conflate them in logic or copy.
 3. **Acquiring a want-list item** never deletes the want-list row — it marks it acquired and links the new record. The want-list doubles as acquisition history.
+
+   The rule is about *implicit* loss: acquiring must not discard history as a side effect of a different action. An **explicit** user delete of an acquired item is permitted. Mistakes happen, this is a personal tool, and the record itself retains its own `purchase_date`, `purchase_price` and `store_id` — so deleting the want-list row loses the wanting, not the acquisition. Deleting it must never touch the linked record: `acquired_record_id` points from want-list to record, never the reverse.
+
+   The UI must make the consequence legible before it happens — a confirmation naming what is lost, not a bare delete button on an acquired row.
 4. **Deleting an artist/genre/label/store that is in use** is rejected with `409`, never cascaded.
 5. **Price history is append-only.** Never `UPDATE` a `price_history` row; always insert a new one.
 6. **Estimated collection value** = for each record, the most recent `price_history` row of type `used` (falling back to `new`, then to `purchase_price`). Sum.

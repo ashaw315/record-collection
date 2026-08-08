@@ -1,7 +1,16 @@
 import 'server-only';
 import { and, asc, eq, exists, sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
-import { artists, genres, labels, pressings, wantList, wantListGenres } from '@/db/schema';
+import {
+  artists,
+  genres,
+  labels,
+  pressings,
+  recordGenres,
+  records,
+  wantList,
+  wantListGenres,
+} from '@/db/schema';
 
 /**
  * The query layer for `want_list` (SPEC.md §5.3).
@@ -296,4 +305,58 @@ export async function deleteWantListItem(id: string): Promise<boolean> {
     .returning({ id: wantList.id });
 
   return deleted.length > 0;
+}
+
+/**
+ * SPEC.md §5.3's acquire, and §7.3's history invariant, in ONE transaction.
+ *
+ * This is the most correctness-critical operation in the app. It writes three
+ * things — the record, its genre links, and the mark on the want-list row — and
+ * a partial application corrupts SILENTLY:
+ *
+ *   - record without the mark  → the want list still shows something owned, and
+ *                                the acquisition is missing from history;
+ *   - mark without the record  → `acquired_record_id` points at nothing, and
+ *                                §7.3's "doubles as acquisition history" is a
+ *                                lie.
+ *
+ * Neither raises an error. Both look like success, which is why §11 requires a
+ * forced mid-transaction failure test for this operation specifically.
+ *
+ * The mark is an UPDATE guarded on `is_acquired = false`: acquiring twice would
+ * overwrite `acquired_record_id` and orphan the first record, losing an
+ * acquisition that happened. Zero rows updated means the item was already
+ * acquired (or vanished), and the throw takes the record with it.
+ */
+export async function acquireWantListItem(input: {
+  wantListId: string;
+  values: typeof records.$inferInsert;
+  genreIds: string[];
+}): Promise<typeof records.$inferSelect> {
+  const db = getDb();
+
+  return db.transaction(async (tx) => {
+    const [record] = await tx.insert(records).values(input.values).returning();
+
+    const unique = [...new Set(input.genreIds)];
+    if (unique.length > 0) {
+      await tx
+        .insert(recordGenres)
+        .values(unique.map((genreId) => ({ recordId: record.id, genreId })));
+    }
+
+    const marked = await tx
+      .update(wantList)
+      .set({ isAcquired: true, acquiredRecordId: record.id })
+      .where(and(eq(wantList.id, input.wantListId), eq(wantList.isAcquired, false)))
+      .returning({ id: wantList.id });
+
+    if (marked.length === 0) {
+      // Rolls the record and its links back with it. Throwing is the only way
+      // to leave nothing behind — returning early would COMMIT the record.
+      throw new Error('want-list item not found or already acquired');
+    }
+
+    return record;
+  });
 }
