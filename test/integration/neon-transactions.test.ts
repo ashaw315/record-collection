@@ -73,6 +73,10 @@ describe.skipIf(!configured)('transactions over the Neon serverless driver', () 
   afterAll(async () => {
     if (pool !== undefined) {
       await db.execute(
+        sql`DELETE FROM want_list WHERE artist_id IN
+              (SELECT id FROM artists WHERE name LIKE ${`${probe}%`})`,
+      );
+      await db.execute(
         sql`DELETE FROM records WHERE artist_id IN
               (SELECT id FROM artists WHERE name LIKE ${`${probe}%`})`,
       );
@@ -307,6 +311,159 @@ describe.skipIf(!configured)('transactions over the Neon serverless driver', () 
       sql`SELECT count(*)::int AS n FROM record_genres WHERE record_id = ${recordId}`,
     );
     expect(genresAfter.rows[0].n).toBe(1);
+  });
+
+  /**
+   * NOTES ITEM 14'S HARD GATE: the acquire flow, on the real driver.
+   *
+   * §5.3's acquire writes a record, its genre links, and the mark on the
+   * want-list row. §11 requires a forced mid-transaction failure test, and
+   * CLAUDE.md §2 requires it against Neon rather than local pg alone — this is
+   * the operation the caveat was originally written for.
+   *
+   * A partial application here is §7.3's corruption: either the want list still
+   * shows something owned and the acquisition is missing from history, or
+   * `acquired_record_id` points at nothing. Neither errors.
+   */
+  it('rolls back the acquire primitive across the record and the mark', async () => {
+    const { acquireWantListItem } = await import('@/lib/db/queries/want-list');
+    const artistName = `${probe}-acquire-artist`;
+    const title = `${probe}-acquire-record`;
+    const wantTitle = `${probe}-acquire-want`;
+    const missingGenre = '00000000-0000-4000-8000-000000000000';
+
+    await db.execute(sql`INSERT INTO artists (name) VALUES (${artistName})`);
+    const artist = await db.execute<{ id: string }>(
+      sql`SELECT id FROM artists WHERE name = ${artistName}`,
+    );
+    await db.execute(
+      sql`INSERT INTO want_list (artist_id, title) VALUES (${artist.rows[0].id}, ${wantTitle})`,
+    );
+    const item = await db.execute<{ id: string }>(
+      sql`SELECT id FROM want_list WHERE title = ${wantTitle}`,
+    );
+
+    const previous = process.env.TEST_DATABASE_URL;
+    const previousDatabase = process.env.DATABASE_URL;
+    process.env.TEST_DATABASE_URL = '';
+    process.env.DATABASE_URL = branchUrl;
+    vi.stubEnv('NODE_ENV', 'production');
+
+    try {
+      const { closeDb } = await import('@/db/client');
+      await closeDb();
+
+      // The genre link fails on a foreign key AFTER the record has been
+      // inserted and BEFORE the want-list row is marked.
+      await expect(
+        acquireWantListItem({
+          wantListId: item.rows[0].id,
+          values: { artistId: artist.rows[0].id, title },
+          genreIds: [missingGenre],
+        }),
+      ).rejects.toThrow(/record_genres/i);
+
+      await closeDb();
+    } finally {
+      process.env.TEST_DATABASE_URL = previous ?? '';
+      process.env.DATABASE_URL = previousDatabase ?? '';
+      vi.unstubAllEnvs();
+    }
+
+    // NEITHER half survived.
+    const orphanRecord = await db.execute<{ n: number }>(
+      sql`SELECT count(*)::int AS n FROM records WHERE title = ${title}`,
+    );
+    expect(orphanRecord.rows[0].n, 'the record must not survive a failed mark').toBe(0);
+
+    const marked = await db.execute<{ is_acquired: boolean; acquired_record_id: string | null }>(
+      sql`SELECT is_acquired, acquired_record_id FROM want_list WHERE id = ${item.rows[0].id}`,
+    );
+    expect(marked.rows[0].is_acquired, 'the item must not be marked').toBe(false);
+    expect(marked.rows[0].acquired_record_id).toBeNull();
+  });
+
+  /**
+   * TWO SIMULTANEOUS ACQUIRES, on the real driver.
+   *
+   * This is what local pg cannot answer: Neon's WebSocket pool multiplexes
+   * transactions differently, and the `is_acquired = false` guard on the UPDATE
+   * is the only thing standing between two concurrent acquires and an orphaned
+   * record. Unit 3 established it is load-bearing; this establishes the driver
+   * honours it.
+   *
+   * Genuinely concurrent — both promises are started before either is awaited —
+   * rather than sequential, because a sequential pair proves only what the
+   * endpoint pre-check already covers.
+   */
+  it('lets only one of two simultaneous acquires win', async () => {
+    const { acquireWantListItem } = await import('@/lib/db/queries/want-list');
+    const artistName = `${probe}-race-artist`;
+    const wantTitle = `${probe}-race-want`;
+
+    await db.execute(sql`INSERT INTO artists (name) VALUES (${artistName})`);
+    const artist = await db.execute<{ id: string }>(
+      sql`SELECT id FROM artists WHERE name = ${artistName}`,
+    );
+    await db.execute(
+      sql`INSERT INTO want_list (artist_id, title) VALUES (${artist.rows[0].id}, ${wantTitle})`,
+    );
+    const item = await db.execute<{ id: string }>(
+      sql`SELECT id FROM want_list WHERE title = ${wantTitle}`,
+    );
+
+    const previous = process.env.TEST_DATABASE_URL;
+    const previousDatabase = process.env.DATABASE_URL;
+    process.env.TEST_DATABASE_URL = '';
+    process.env.DATABASE_URL = branchUrl;
+    vi.stubEnv('NODE_ENV', 'production');
+
+    let outcomes: PromiseSettledResult<{ id: string }>[] = [];
+    try {
+      const { closeDb } = await import('@/db/client');
+      await closeDb();
+
+      outcomes = await Promise.allSettled([
+        acquireWantListItem({
+          wantListId: item.rows[0].id,
+          values: { artistId: artist.rows[0].id, title: `${probe}-race-a` },
+          genreIds: [],
+        }),
+        acquireWantListItem({
+          wantListId: item.rows[0].id,
+          values: { artistId: artist.rows[0].id, title: `${probe}-race-b` },
+          genreIds: [],
+        }),
+      ]);
+
+      await closeDb();
+    } finally {
+      process.env.TEST_DATABASE_URL = previous ?? '';
+      process.env.DATABASE_URL = previousDatabase ?? '';
+      vi.unstubAllEnvs();
+    }
+
+    const won = outcomes.filter((outcome) => outcome.status === 'fulfilled');
+    expect(won, 'exactly one acquire may succeed').toHaveLength(1);
+
+    /**
+     * The invariant that matters: exactly ONE record exists for this race, and
+     * the want-list row points at it. Two records would mean an orphan — an
+     * acquisition with nothing referencing it, which §7.3 says must not happen.
+     */
+    const created = await db.execute<{ n: number }>(
+      sql`SELECT count(*)::int AS n FROM records WHERE title LIKE ${`${probe}-race-%`}`,
+    );
+    expect(created.rows[0].n, 'the loser must have rolled back').toBe(1);
+
+    const linked = await db.execute<{ acquired_record_id: string; is_acquired: boolean }>(
+      sql`SELECT acquired_record_id, is_acquired FROM want_list WHERE id = ${item.rows[0].id}`,
+    );
+    expect(linked.rows[0].is_acquired).toBe(true);
+    expect(
+      linked.rows[0].acquired_record_id,
+      'the surviving record is the one linked',
+    ).toBe((won[0] as PromiseFulfilledResult<{ id: string }>).value.id);
   });
 
   /**

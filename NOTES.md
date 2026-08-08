@@ -151,10 +151,27 @@ exactly the "no precedent" items 9–12.
     `[id]` must still reject a non-UUID with 400 rather than attempting a
     lookup — assert `/api/records/stats` returns stats, not a 400.
 
-14. **`want_list` acquire (§5.3) is transactional and never deletes the
-    want-list row** — it marks `is_acquired` and links `acquired_record_id`
-    (§7.3). The want list doubles as acquisition history. A forced
-    mid-transaction failure test is required by §11.
+14. **DISCHARGED (step 6, unit 4). `want_list` acquire (§5.3) is transactional
+    and never deletes the want-list row** — it marks `is_acquired` and links
+    `acquired_record_id` (§7.3).
+
+    Proven, not asserted:
+    - the forced mid-transaction failure §11 requires runs on **local pg AND
+      the real Neon branch**. Removing the transaction fails exactly the 2
+      atomicity tests on pg and the 2 acquire tests on Neon, and nothing else —
+      the happy-path tests are correctly indifferent, which is why the failure
+      tests were written against the query-layer PRIMITIVE rather than the
+      endpoint;
+    - replacing the mark with a delete — the "clean up after yourself"
+      implementation that passes every other test — fails 5;
+    - **two SIMULTANEOUS acquires on the WebSocket pool** leave exactly one
+      record and one link. That case is the reason CLAUDE.md §2 demanded Neon
+      rather than pg: the `is_acquired = false` guard on the UPDATE is the only
+      thing preventing the second from orphaning the first, and removing it
+      fails that test specifically.
+
+    Neon suite: **9 passed, 1 skipped** (the skip is the loud gate marker
+    correctly not firing).
 
 ## Open
 
