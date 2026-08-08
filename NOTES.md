@@ -429,6 +429,37 @@ exactly the "no precedent" items 9–12.
   carry forward — and the moment any other change lands, the old number is
   measuring something that no longer exists. Noticed: step 5, E2E flake work.
 
+- **PATTERN, for a decision at step 14: SPEC.md §4 states ranges in prose that
+  nothing below the API boundary enforces.** Two instances so far, and the
+  second was found the same way as the first — by checking `pg_constraint`
+  rather than trusting the column definition.
+
+  | Column | §4 says | Enforced by |
+  |---|---|---|
+  | `artists.formed_year` | `1877 <= year <= currentYear + 1` (§4.1, with reasoning) | API only |
+  | `records.release_year` | same bound (§4.2, added later) | API only |
+  | `pressings.year_pressed` | same bound (§4.2, added later) | API only |
+  | `want_list.priority` | "1 = highest, 5 = lowest" (§4.2) | API only |
+
+  §4.1 is explicit that the year bound is "not a database constraint: it is a
+  product judgement, and the upper bound moves" — which is a real reason, since
+  a CHECK on `currentYear + 1` would need a migration every January. **Priority
+  has no such excuse**: 1–5 is fixed, and a CHECK would cost nothing.
+
+  **Why it matters beyond tidiness.** The API is the only writer today, so the
+  bounds hold. That stops being true the moment anything writes directly — a
+  migration backfill, a repair script, a future import path, or the Discogs
+  import in step 7, which maps external data onto these columns. A prose range
+  with no constraint is a rule that holds by convention, and convention is what
+  the schema exists to replace.
+
+  **The decision to make at step 14** is a class decision, not case by case:
+  which §4 ranges become CHECK constraints, and which are explicitly
+  API-only-with-a-reason like the year bound. Writing that down is most of the
+  work; the migration is small. Do NOT fix these piecemeal in the meantime —
+  a half-applied convention is worse than a consistent one. Noticed: step 5
+  (years), step 6 unit 1 (priority).
+
 - **RULE: a mock that intercepts EVERY call disables the function; a mock that
   intercepts only the FIRST simulates the race.**
 
