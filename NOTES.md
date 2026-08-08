@@ -460,6 +460,41 @@ exactly the "no precedent" items 9–12.
   a half-applied convention is worse than a consistent one. Noticed: step 5
   (years), step 6 unit 1 (priority).
 
+- **STANDING EXPECTATION: when a handler pre-checks a condition its transaction
+  also guards, the failure test goes against the QUERY-LAYER PRIMITIVE from the
+  start.** Not after a mutation reveals the gap — from the start.
+
+  Three consecutive units in step 6 hit this, and it will recur on every
+  transactional endpoint ahead:
+
+  | Unit | Pre-check in the handler | Guard it masked |
+  |---|---|---|
+  | 1, `POST /api/want-list` | `missingIds` rejects a bad genre | the create transaction |
+  | 2, `PATCH /api/want-list/:id` | same | the update transaction |
+  | 3, acquire | `item.isAcquired` refuses a repeat | `is_acquired = false` on the UPDATE |
+
+  In every case **removing the guard failed no endpoint test**, because the
+  pre-check rejects the input before the guarded code is reached. The endpoint
+  suite is green and proves nothing about the property.
+
+  **Why the guard is still load-bearing.** A pre-check and a transaction close
+  different windows. The pre-check handles bad INPUT; the transaction handles
+  what changes BETWEEN the check and the write. Unit 3's is the clearest: two
+  concurrent acquires both read `is_acquired = false`, both pass the pre-check,
+  and without the `WHERE is_acquired = false` on the UPDATE the second
+  overwrites `acquired_record_id` — orphaning the first record and losing an
+  acquisition that happened. The pre-check cannot close that by construction.
+
+  **So both layers are real** (NOTES case 3, masked-by-a-different-mechanism),
+  and the primitive is the only place the guard is observable. Writing the test
+  there costs nothing extra when done first, and is easy to skip when the
+  endpoint suite already looks complete.
+
+  **The tell:** a handler that validates something, then calls a query function
+  that validates the same thing again. That second check is not redundant — it
+  is the concurrent case — and it needs its own test at the layer where it
+  lives. Noticed: step 6, units 1-3.
+
 - **RULE: a mock that intercepts EVERY call disables the function; a mock that
   intercepts only the FIRST simulates the race.**
 
