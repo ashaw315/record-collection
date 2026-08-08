@@ -461,3 +461,51 @@ test('a matrix value survives an edit that does not touch it', async ({ page }) 
   await expect(page.getByRole('heading', { name: `Retitled ${suffix}` })).toBeVisible();
   await expect(page.getByText(matrix)).toBeVisible();
 });
+
+test('a rejected pressing field is reported against that field', async ({ page }) => {
+  /**
+   * QA finding: entering "199" in Year pressed produced "Could not save the
+   * pressing details. Nothing was saved." — naming neither the field nor the
+   * reason, so the user had to guess. §5 requires `fieldErrors` on a 400 and
+   * the API was returning it; the form threw the parsed body away.
+   *
+   * Verified separately that the message's CLAIM was true: the pressing POST
+   * fails before the record POST is issued, so nothing is written. The defect
+   * was the reporting, not atomicity.
+   */
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `BadYear-${suffix}` });
+
+  await page.goto('/records/new');
+  await formReady(page);
+  await page.getByLabel('Title').fill(`Bad Year ${suffix}`);
+  await page.getByLabel('Artist', { exact: true }).selectOption(artist.id);
+  await page.getByLabel('Year pressed').fill('199');
+  await page.getByRole('button', { name: 'Add record' }).click();
+
+  // Named against the field, not a bare banner.
+  const fieldError = page.locator('#yearPressed-error');
+  await expect(fieldError).toBeVisible({ timeout: 15_000 });
+  await expect(fieldError).toContainText(/range/i);
+
+  // And what was typed survives, so the fix is one keystroke.
+  await expect(page.getByLabel('Year pressed')).toHaveValue('199');
+  await expect(page.getByLabel('Title')).toHaveValue(`Bad Year ${suffix}`);
+});
+
+test('a valid pressing year saves, confirming only the reporting was wrong', async ({ page }) => {
+  // The developer confirmed 1999 saves where 199 does not, so validation is
+  // correct. This pins that, so a "fix" that loosened the bound would fail.
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `GoodYear-${suffix}` });
+
+  await page.goto('/records/new');
+  await formReady(page);
+  await page.getByLabel('Title').fill(`Good Year ${suffix}`);
+  await page.getByLabel('Artist', { exact: true }).selectOption(artist.id);
+  await page.getByLabel('Year pressed').fill('1999');
+  await page.getByRole('button', { name: 'Add record' }).click();
+
+  await expect(page).toHaveURL(/\/records\/[0-9a-f-]{36}$/, { timeout: 15_000 });
+  await expect(page.getByText('1999')).toBeVisible();
+});

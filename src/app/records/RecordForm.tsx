@@ -24,6 +24,16 @@ import { InlineCreate } from './InlineCreate';
  * leaving the form to define its artist first — the in-store case §10 names.
  */
 
+/** Carries the API's per-field errors out of the pressing request. */
+class PressingError extends Error {
+  constructor(
+    readonly fieldErrors: Record<string, string> | undefined,
+    message?: string,
+  ) {
+    super(message ?? 'pressing');
+  }
+}
+
 export type Option = { id: string; name: string };
 
 export type ReferenceData = {
@@ -224,6 +234,20 @@ export function RecordForm({
   const set = (field: keyof FormValues, value: string) =>
     setValues((current) => ({ ...current, [field]: value }));
 
+  /**
+   * The API's error for one pressing field, rendered beside it.
+   *
+   * `aria-describedby` on the input points here, so a screen reader announces
+   * the reason when focus lands on the offending field rather than leaving it
+   * in a banner elsewhere on the page.
+   */
+  const pressingError = (field: string) =>
+    fieldErrors[field] === undefined ? null : (
+      <p id={`${field}-error`} role="alert" className="mt-1 text-xs text-destructive">
+        {fieldErrors[field]}
+      </p>
+    );
+
   const setPressingField = (field: keyof PressingFormValues, value: string | boolean) =>
     setPressing((current) => ({ ...current, [field]: value }));
 
@@ -250,7 +274,18 @@ export function RecordForm({
       body: JSON.stringify(body),
     });
 
-    if (!response.ok) throw new Error('pressing');
+    if (!response.ok) {
+      /**
+       * Surface the API's own fieldErrors rather than a bare banner.
+       *
+       * §5 requires them on a 400 and `/api/pressings` returns them — the form
+       * used to discard the parsed body, so "199" in Year pressed produced
+       * "Could not save the pressing details" naming neither the field nor the
+       * reason. The user had to guess which of eight fields was wrong.
+       */
+      const parsed = parseApiError(await response.json().catch(() => null));
+      throw new PressingError(parsed?.fieldErrors, parsed?.message);
+    }
 
     // §4 find-or-create: 200 is an existing shared row, 201 a new one. Both
     // give the id this record should point at.
@@ -308,7 +343,19 @@ export function RecordForm({
       let pressingId: string | null | undefined;
       try {
         pressingId = await resolvePressingId();
-      } catch {
+      } catch (thrown) {
+        if (thrown instanceof PressingError) {
+          setFieldErrors(thrown.fieldErrors ?? {});
+          // The banner only says what the field errors cannot: that the record
+          // was not written either. Verified true — the pressing POST fails
+          // before the record POST is issued.
+          setError(
+            thrown.fieldErrors === undefined
+              ? (thrown.message ?? 'Could not save the pressing details. Nothing was saved.')
+              : 'The pressing details need a correction. Nothing was saved yet.',
+          );
+          return;
+        }
         setError('Could not save the pressing details. Nothing was saved.');
         return;
       }
@@ -557,11 +604,14 @@ export function RecordForm({
         <Row label="Catalog no." htmlFor="catalogNumber">
           <Input
             id="catalogNumber"
+            aria-describedby={fieldErrors.catalogNumber === undefined ? undefined : 'catalogNumber-error'}
+            aria-invalid={fieldErrors.catalogNumber !== undefined}
             value={pressing.catalogNumber}
             onChange={(event) => setPressingField('catalogNumber', event.target.value)}
             placeholder="CLAY LP 3"
             className="h-9 font-mono"
           />
+        {pressingError('catalogNumber')}
         </Row>
 
         <Row
@@ -571,60 +621,78 @@ export function RecordForm({
         >
           <Input
             id="matrixRunout"
+            aria-describedby={fieldErrors.matrixRunout === undefined ? undefined : 'matrixRunout-error'}
+            aria-invalid={fieldErrors.matrixRunout !== undefined}
             value={pressing.matrixRunout}
             onChange={(event) => setPressingField('matrixRunout', event.target.value)}
             className="h-9 font-mono"
           />
+        {pressingError('matrixRunout')}
         </Row>
 
         <Row label="Country" htmlFor="countryPressed">
           <Input
             id="countryPressed"
+            aria-describedby={fieldErrors.countryPressed === undefined ? undefined : 'countryPressed-error'}
+            aria-invalid={fieldErrors.countryPressed !== undefined}
             value={pressing.countryPressed}
             onChange={(event) => setPressingField('countryPressed', event.target.value)}
             placeholder="UK"
             className="h-9"
           />
+        {pressingError('countryPressed')}
         </Row>
 
         <Row label="Year pressed" htmlFor="yearPressed" hint="This pressing's year, not the album's.">
           <Input
             id="yearPressed"
+            aria-describedby={fieldErrors.yearPressed === undefined ? undefined : 'yearPressed-error'}
+            aria-invalid={fieldErrors.yearPressed !== undefined}
             inputMode="numeric"
             value={pressing.yearPressed}
             onChange={(event) => setPressingField('yearPressed', event.target.value)}
             className="h-9 font-mono"
           />
+        {pressingError('yearPressed')}
         </Row>
 
         <Row label="Pressing plant" htmlFor="pressingPlant">
           <Input
             id="pressingPlant"
+            aria-describedby={fieldErrors.pressingPlant === undefined ? undefined : 'pressingPlant-error'}
+            aria-invalid={fieldErrors.pressingPlant !== undefined}
             value={pressing.pressingPlant}
             onChange={(event) => setPressingField('pressingPlant', event.target.value)}
             className="h-9"
           />
+        {pressingError('pressingPlant')}
         </Row>
 
         <Row label="Weight (g)" htmlFor="vinylWeightGrams">
           <Input
             id="vinylWeightGrams"
+            aria-describedby={fieldErrors.vinylWeightGrams === undefined ? undefined : 'vinylWeightGrams-error'}
+            aria-invalid={fieldErrors.vinylWeightGrams !== undefined}
             inputMode="numeric"
             value={pressing.vinylWeightGrams}
             onChange={(event) => setPressingField('vinylWeightGrams', event.target.value)}
             placeholder="180"
             className="h-9 font-mono"
           />
+        {pressingError('vinylWeightGrams')}
         </Row>
 
         <Row label="Colour" htmlFor="colorVariant">
           <Input
             id="colorVariant"
+            aria-describedby={fieldErrors.colorVariant === undefined ? undefined : 'colorVariant-error'}
+            aria-invalid={fieldErrors.colorVariant !== undefined}
             value={pressing.colorVariant}
             onChange={(event) => setPressingField('colorVariant', event.target.value)}
             placeholder="Black"
             className="h-9"
           />
+        {pressingError('colorVariant')}
         </Row>
 
         <Row label="Reissue" htmlFor="isReissue">

@@ -1,3 +1,4 @@
+import { AppHeader } from '@/components/AppHeader';
 import { ManageClient } from './ManageClient';
 import type { Row } from './ResourceTable';
 import { listArtists } from '@/lib/db/queries/artists';
@@ -68,5 +69,10 @@ export default async function ManagePage() {
     tags: tags.rows as unknown as Row[],
   };
 
-  return <ManageClient rowsByResource={rowsByResource} />;
+  return (
+    <>
+      <AppHeader />
+      <ManageClient rowsByResource={rowsByResource} />
+    </>
+  );
 }
