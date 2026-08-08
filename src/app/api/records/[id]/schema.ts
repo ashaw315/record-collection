@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { isValidFormedYear } from '@/lib/api/year';
+import { yearSchema } from '@/lib/api/year';
 import { MAX_NESTED_IDS } from '@/lib/db/queries/nested';
 
 /**
@@ -32,11 +32,7 @@ export const recordPatchSchema = z
     formatId: uuid.nullish(),
     pressingId: uuid.nullish(),
     storeId: uuid.nullish(),
-    releaseYear: z
-      .number()
-      .int()
-      .refine((value) => isValidFormedYear(value), { error: () => 'releaseYear is out of range' })
-      .nullish(),
+    releaseYear: yearSchema('Release year'),
     conditionMedia: z.enum(CONDITION_GRADES).nullish(),
     conditionSleeve: z.enum(CONDITION_GRADES).nullish(),
     purchasePrice: z

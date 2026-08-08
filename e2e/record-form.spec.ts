@@ -486,7 +486,14 @@ test('a rejected pressing field is reported against that field', async ({ page }
   // Named against the field, not a bare banner.
   const fieldError = page.locator('#yearPressed-error');
   await expect(fieldError).toBeVisible({ timeout: 15_000 });
-  await expect(fieldError).toContainText(/range/i);
+  /**
+   * §5.2: the message names the field in HUMAN terms and states the range.
+   * "yearPressed is out of range" told the user neither which field nor what
+   * would be accepted. The upper bound is derived, never hardcoded — §4.1's
+   * module-load trap applies to all three year columns.
+   */
+  const nextYear = new Date().getUTCFullYear() + 1;
+  await expect(fieldError).toHaveText(`Year pressed must be between 1877 and ${nextYear}`);
 
   // And what was typed survives, so the fix is one keystroke.
   await expect(page.getByLabel('Year pressed')).toHaveValue('199');

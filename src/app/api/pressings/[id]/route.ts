@@ -11,7 +11,7 @@ import {
   validationError,
 } from '@/lib/api/errors';
 import { withErrorHandling } from '@/lib/api/handler';
-import { isValidFormedYear } from '@/lib/api/year';
+import { yearSchema } from '@/lib/api/year';
 import {
   countPressingReferences,
   deletePressing,
@@ -28,11 +28,7 @@ const patchSchema = z
     catalogNumber: optionalText,
     matrixRunout: optionalText,
     pressingPlant: optionalText,
-    yearPressed: z
-      .number()
-      .int()
-      .refine((value) => isValidFormedYear(value), { error: () => 'yearPressed is out of range' })
-      .nullish(),
+    yearPressed: yearSchema('Year pressed'),
     countryPressed: optionalText,
     vinylWeightGrams: z.number().int().positive().max(10_000).nullish(),
     colorVariant: optionalText,

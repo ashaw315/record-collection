@@ -44,8 +44,44 @@ export function isValidFormedYear(year: number, clock: Clock = systemClock): boo
 
 /** The message shown when the bound rejects a value, with the live bounds in it. */
 export function formedYearMessage(clock: Clock = systemClock): string {
+  return yearMessage('Formed year', clock);
+}
+
+/**
+ * SPEC.md §5.2: a rejected year names the FIELD in human terms and states the
+ * range.
+ *
+ * `yearPressed is out of range` was the API's field name and said nothing
+ * actionable — a user typing a three-digit year, which is the realistic typo,
+ * learned neither which field nor what would be accepted.
+ *
+ * The upper bound is computed HERE, per call, never captured at module load:
+ * §4.1's trap, which now applies to all three year columns. A warm serverless
+ * instance that booted in December would otherwise report last year's bound.
+ */
+export function yearMessage(label: string, clock: Clock = systemClock): string {
   const { min, max } = formedYearBounds(clock);
-  return `formedYear must be between ${min} and ${max}`;
+  return `${label} must be between ${min} and ${max}`;
+}
+
+/**
+ * The Zod schema for any bounded year column, labelled for the message.
+ *
+ * §4.2 and §5.2 make this ONE rule across `artists.formed_year`,
+ * `records.release_year` and `pressings.year_pressed` — "implement it once and
+ * reference it from all three; three copies drift". Before this there were five
+ * copies, each with its own wording.
+ *
+ * `error` is a FUNCTION so the bound is evaluated when a value is parsed rather
+ * than when the schema is constructed. Schemas are module-level constants, so a
+ * precomputed string would freeze the upper bound at import.
+ */
+export function yearSchema(label: string) {
+  return z
+    .number()
+    .int()
+    .refine((value) => isValidFormedYear(value), { error: () => yearMessage(label) })
+    .nullish();
 }
 
 /**

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { invalidJson, validationError } from '@/lib/api/errors';
 import { withErrorHandling } from '@/lib/api/handler';
-import { isValidFormedYear } from '@/lib/api/year';
+import { isValidFormedYear, yearSchema } from '@/lib/api/year';
 import { parseListParams } from '@/lib/api/query-params';
 import { MAX_NESTED_IDS, writeRecordWithNested } from '@/lib/db/queries/nested';
 import {
@@ -44,11 +44,7 @@ const createSchema = z.strictObject({
   formatId: uuid.nullish(),
   pressingId: uuid.nullish(),
   storeId: uuid.nullish(),
-  releaseYear: z
-    .number()
-    .int()
-    .refine((value) => isValidFormedYear(value), { error: () => 'releaseYear is out of range' })
-    .nullish(),
+  releaseYear: yearSchema('Release year'),
   conditionMedia: conditionSchema,
   conditionSleeve: conditionSchema,
   // NUMERIC(10,2) as a string: a float would silently lose cents.

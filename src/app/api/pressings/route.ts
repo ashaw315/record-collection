@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { invalidJson, isUniqueViolation, validationError } from '@/lib/api/errors';
 import { withErrorHandling } from '@/lib/api/handler';
 import { parseListParams } from '@/lib/api/query-params';
-import { isValidFormedYear } from '@/lib/api/year';
+import { yearSchema } from '@/lib/api/year';
 import {
   PRESSING_SORT_FIELDS,
   createPressing,
@@ -26,17 +26,13 @@ const optionalText = z.string().trim().max(10_000).nullish();
  * Reuses the artist year bound: a pressing cannot predate recorded sound
  * either, and the upper edge moves with the clock for the same reason.
  */
-const yearSchema = z
-  .number()
-  .int()
-  .refine((value) => isValidFormedYear(value), { error: () => 'yearPressed is out of range' })
-  .nullish();
+const pressedYear = yearSchema('Year pressed');
 
 const pressingFields = {
   catalogNumber: optionalText,
   matrixRunout: optionalText,
   pressingPlant: optionalText,
-  yearPressed: yearSchema,
+  yearPressed: pressedYear,
   countryPressed: optionalText,
   vinylWeightGrams: z.number().int().positive().max(10_000).nullish(),
   colorVariant: optionalText,

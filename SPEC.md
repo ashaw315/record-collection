@@ -139,7 +139,7 @@ Seed with: LP, 2xLP, 7", 10", 12" Single, Box Set, Picture Disc, all with `is_se
 | format_id | UUID REFERENCES formats(id) | nullable |
 | pressing_id | UUID REFERENCES pressings(id) | nullable; the specific pressing owned |
 | store_id | UUID REFERENCES record_stores(id) | nullable; where acquired |
-| release_year | INTEGER | original release year, not pressing year |
+| release_year | INTEGER | nullable. The album's original release year, **not** this pressing's year. Bounded at the API boundary by the same rule as `artists.formed_year` (§4.1): `1877 <= year <= currentYear + 1`, computed per call. |
 | condition_media | condition_grade | enum, see below |
 | condition_sleeve | condition_grade | enum |
 | purchase_price | NUMERIC(10,2) | nullable |
@@ -170,7 +170,7 @@ Seed with: LP, 2xLP, 7", 10", 12" Single, Box Set, Picture Disc, all with `is_se
 | catalog_number | TEXT | label's catalog # |
 | matrix_runout | TEXT | etched in the dead wax; the true pressing fingerprint |
 | pressing_plant | TEXT | |
-| year_pressed | INTEGER | |
+| year_pressed | INTEGER | nullable. The year *this pressing* was manufactured, which for a reissue is later than the record's `release_year`. Same bound as `release_year` and `artists.formed_year`: `1877 <= year <= currentYear + 1`, computed per call. |
 | country_pressed | TEXT | |
 | vinyl_weight_grams | INTEGER | e.g. 140, 180 |
 | color_variant | TEXT | e.g. "black", "clear w/ splatter" |
@@ -321,6 +321,10 @@ Rules:
 - **Sorted by count descending, then name ascending.** Unpaginated: the result is bounded by the collection's actual variety, and a collection with hundreds of distinct labels has a different problem worth solving with typeahead when it arrives.
 - **A separate endpoint, not `meta` on `/api/records`.** Since facets don't vary with filters, bundling them would recompute four aggregates on every filtered request. Separate also lets the page fetch them in parallel.
 - `artists` and `formats` are excluded: §10 names chips for genre, label, store and tag. Artists are better served by search; formats are a short closed list. Adding either later is additive.
+
+**Year bounds are one shared rule, applied to three columns.** `artists.formed_year` (§4.1), `records.release_year` and `pressings.year_pressed` are all bounded to `1877 <= year <= currentYear + 1` — 1877 being the year sound recording began, so nothing in a record collection legitimately predates it. Implement it once and reference it from all three; three copies drift.
+
+**A rejected year must name the field and state the range.** `yearPressed is out of range` is the API's field name and tells the user nothing actionable. The message must read like `Year pressed must be between 1877 and 2027`, with the upper bound computed at validation time rather than hardcoded. This applies to every bounded field: an error that does not say what would be acceptable makes the user guess, and a three-digit year typed in place of a four-digit one is the realistic case.
 
 **`matchedVia` on genre-filtered results.** Because §7.1 makes genre membership hierarchical, filtering by `genreId=<Punk>` returns records tagged only `Oi!` or `Crust` — records whose visible badges never mention Punk. Without an explanation the result reads as a bug.
 
