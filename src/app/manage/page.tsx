@@ -6,12 +6,15 @@ import { listLabels } from '@/lib/db/queries/labels';
 import { listFormats } from '@/lib/db/queries/formats';
 import { listStores } from '@/lib/db/queries/stores';
 import { listTags } from '@/lib/db/queries/tags';
-import { listPressings } from '@/lib/db/queries/pressings';
 import type { Offset } from '@/lib/api/query-params';
 
 /**
  * SPEC.md §10 `/manage`: CRUD for genres (incl. hierarchy), labels, formats,
- * tags, artists, stores and pressings.
+ * tags, artists and stores.
+ *
+ * NOT pressings (§10): a pressing has no meaning apart from the record it
+ * describes, so its fields are entered on the record form instead. The
+ * /api/pressings endpoints remain — step 7's Discogs import needs them.
  *
  * Rows are read here, on the server, and handed to the client component as
  * props. Fetching from an effect instead causes the cascading renders the
@@ -47,14 +50,13 @@ export const dynamic = 'force-dynamic';
 const PAGE = { limit: 200, offset: 0 as Offset };
 
 export default async function ManagePage() {
-  const [artists, genres, labels, formats, stores, tags, pressings] = await Promise.all([
+  const [artists, genres, labels, formats, stores, tags] = await Promise.all([
     listArtists(PAGE),
     listGenres(PAGE),
     listLabels(PAGE),
     listFormats(PAGE),
     listStores(PAGE),
     listTags(PAGE),
-    listPressings(PAGE),
   ]);
 
   const rowsByResource: Record<string, Row[]> = {
@@ -64,7 +66,6 @@ export default async function ManagePage() {
     formats: formats.rows as unknown as Row[],
     stores: stores.rows as unknown as Row[],
     tags: tags.rows as unknown as Row[],
-    pressings: pressings.rows as unknown as Row[],
   };
 
   return <ManageClient rowsByResource={rowsByResource} />;

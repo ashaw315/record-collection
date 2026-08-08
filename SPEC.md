@@ -624,14 +624,24 @@ Responsive throughout — **desktop and mobile are equal priorities**, not deskt
 | Collection | `/` | Filterable, sortable list/grid of owned records. Prominent search. Filter chips for genre/label/store/tag. Toggle grid ↔ table. |
 | Record detail | `/records/:id` | All fields, pressing details incl. matrix number, images gallery, price history sparkline, journal entries with add-entry form. |
 | Record lookup | `/lookup` | **Structured search form** — fields for artist, title, label, catalog number, barcode, country, year, format. Results as cards with cover art, year, country, label, catalog number and format descriptors. Masters expand into a version-comparison table to pin down the exact pressing. Each result offers: "Add to collection", "Add to want list", and an ownership badge (see §7.7). Mobile-optimized — this is the in-store screen. No result may link out to a purchase page (§13). |
-| Add/edit record | `/records/new`, `/records/:id/edit` | Form prefilled from a lookup result, or blank for manual entry. All prefilled fields remain editable — the user verifies against the physical record and corrects. Inline create for artist/label/store/tag. |
+| Add/edit record | `/records/new`, `/records/:id/edit` | Form prefilled from a lookup result, or blank for manual entry. All prefilled fields remain editable — the user verifies against the physical record and corrects. Inline create for artist/label/store/tag. Pressing details are entered here, not on a separate screen: catalog number, matrix/runout, country, year pressed, pressing plant, vinyl weight, colour variant, and whether it is a reissue. All optional — the in-store case must stay enterable in seconds. |
 | Want list | `/want-list` | Sorted by priority. Each row shows target pressing and best-dig notes. "Mark acquired" action opens the record form prefilled. |
 | Graph | `/graph` | The force-directed network. Controls: include owned/wanted/both, genre subset, reset zoom. |
 | Shelf order | `/shelf` | Ordered sections, bridge records marked, print stylesheet, alphabetical toggle. |
 | Suggestions | `/suggestions` | Graph-based list with reasons, always present. Separate "Ask Claude for gap analysis" button for §9.2. Add-to-want-list on each. |
 | Stores | `/stores` | List with favorite toggle; each store shows records acquired there and total spend. |
 | Stats | `/stats` | Total records, total spend, estimated value, breakdown charts by genre/decade/store/label. |
-| Manage | `/manage` | CRUD for genres (incl. hierarchy editor), labels, formats, tags, artists, influences. |
+| Manage | `/manage` | CRUD for genres (incl. hierarchy editor), labels, formats, tags, artists, influences. **Not pressings** — see below. |
+
+**Pressing entry is inline, and a pressing is never created empty.** A pressing has no meaning apart from the record it describes: nobody enters a catalog number with no record in mind. So there is no standalone pressing screen and `/manage` does not list them. On save, the record's pressing fields resolve through §4's find-or-create rules.
+
+**"Identifying field" is a wider set than §4's match key, and the difference matters.** The match key is `discogs_release_id`, or the tuple `(catalog_number, country_pressed, year_pressed)`. The identifying set is *all eight* pressing fields on the form. A user who enters only a matrix runout has identified their pressing precisely — it is the dead-wax fingerprint — even though nothing in the match key is populated. That entry must create a pressing (matching nothing, per §4's empty-key rule) rather than being discarded. Only when all eight are blank is no pressing created and `pressing_id` left null.
+
+This is deliberately not the same as §4's API-side rule, and both are right for their layer. `POST /api/pressings` is told "make me a pressing" and must never silently share one. The form is told "here is a record", and an empty pressing section means the user did not fill it in — a form that created an empty pressing per record would generate a junk row for every quick in-store entry.
+
+**Clearing every pressing field on an existing record detaches, never deletes.** Set `pressing_id` to null and leave the row alone. Pressings are shared (§4), so deleting one could silently alter another record — the pressing-is-not-an-album hazard in reverse. An orphaned pressing is visible and harmless; a deleted shared one is neither.
+
+**`matrix_runout` is user-authoritative** (§4, CLAUDE.md §8). It is read off the dead wax by hand and is frequently absent or wrong in Discogs. Nothing may overwrite a user-entered value — not a re-import, not a re-sync, not a later edit that leaves the field untouched.
 
 ---
 

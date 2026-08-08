@@ -10,6 +10,7 @@ import { parseApiError, fallbackMessage } from '@/lib/api/messages';
 import { CONDITION_GRADES } from '@/lib/records/fields';
 import { conditionLabel } from './record-detail-format';
 import { buildCreateBody, buildPatchBody, type FormValues } from './record-form';
+import { buildPressingBody, type PressingFormValues } from './pressing-form';
 import { InlineCreate } from './InlineCreate';
 
 /**
@@ -154,10 +155,16 @@ function CheckboxGroup({
 export function RecordForm({
   reference,
   initial,
+  initialPressing,
+  initialPressingId,
   recordId,
 }: {
   reference: ReferenceData;
   initial: FormValues;
+  /** The record's current pressing as form strings; blank when it has none. */
+  initialPressing: PressingFormValues;
+  /** The id it currently points at, so a detach can be distinguished. */
+  initialPressingId?: string;
   /** Present when editing; absent when creating. */
   recordId?: string;
 }) {
@@ -170,6 +177,7 @@ export function RecordForm({
    * capability no UI can reach.
    */
   const [values, setValues] = useState<FormValues>(initial);
+  const [pressing, setPressing] = useState<PressingFormValues>(initialPressing);
   /**
    * A local copy of the selectable options, so a row created inline is
    * available immediately. The server's copy arrives on the next load; until
@@ -215,6 +223,39 @@ export function RecordForm({
 
   const set = (field: keyof FormValues, value: string) =>
     setValues((current) => ({ ...current, [field]: value }));
+
+  const setPressingField = (field: keyof PressingFormValues, value: string | boolean) =>
+    setPressing((current) => ({ ...current, [field]: value }));
+
+  /**
+   * Resolves the pressing section to an id, per §10.
+   *
+   * `undefined` means "leave the record's pressing_id as it is"; `null` means
+   * DETACH. §10 is explicit that clearing every field detaches and never
+   * deletes — pressings are shared (§4), so deleting one could silently alter
+   * another record.
+   */
+  async function resolvePressingId(): Promise<string | null | undefined> {
+    const body = buildPressingBody(pressing);
+
+    if (body === undefined) {
+      // Nothing entered. On create that means no pressing at all; on edit it
+      // means detach if one was attached, and nothing if there was not.
+      return recordId === undefined || initialPressingId === undefined ? undefined : null;
+    }
+
+    const response = await fetch('/api/pressings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) throw new Error('pressing');
+
+    // §4 find-or-create: 200 is an existing shared row, 201 a new one. Both
+    // give the id this record should point at.
+    return (await response.json()).id as string;
+  }
 
   /** Adds a newly created row to its list and selects it. */
   function adopt(
@@ -263,7 +304,23 @@ export function RecordForm({
 
     try {
       const editing = recordId !== undefined;
+
+      let pressingId: string | null | undefined;
+      try {
+        pressingId = await resolvePressingId();
+      } catch {
+        setError('Could not save the pressing details. Nothing was saved.');
+        return;
+      }
+
       const body = editing ? buildPatchBody(initial, values) : buildCreateBody(values);
+      // Only when it changed, so an untouched pressing is absent from a PATCH
+      // and the record keeps what it had (§5.2's absent-means-leave-alone).
+      if (pressingId !== undefined && pressingId !== initialPressingId) {
+        body.pressingId = pressingId;
+      } else if (pressingId === null && initialPressingId !== undefined) {
+        body.pressingId = null;
+      }
 
       // Nothing changed: navigating is the honest response to a save that has
       // nothing to save, rather than a request the API would reject for having
@@ -480,6 +537,109 @@ export function RecordForm({
           onCreated={(option, message) => adopt('tags', 'tagIds', option, message)}
         />
       </Row>
+
+      {/*
+        Pressing details (§10). Entered here rather than on a separate screen:
+        a pressing has no meaning apart from the record it describes.
+
+        ALL OPTIONAL. §10 requires the in-store case to stay enterable in
+        seconds, and leaving every field blank attaches no pressing at all
+        rather than creating an empty row.
+      */}
+      <fieldset className="mt-5 border-t border-border pt-3">
+        <legend className="font-heading text-sm font-semibold tracking-tight">
+          Pressing details
+        </legend>
+        <p className="mb-1 text-xs text-muted-foreground">
+          All optional. Leave blank if you are logging the record quickly.
+        </p>
+
+        <Row label="Catalog no." htmlFor="catalogNumber">
+          <Input
+            id="catalogNumber"
+            value={pressing.catalogNumber}
+            onChange={(event) => setPressingField('catalogNumber', event.target.value)}
+            placeholder="CLAY LP 3"
+            className="h-9 font-mono"
+          />
+        </Row>
+
+        <Row
+          label="Matrix / runout"
+          htmlFor="matrixRunout"
+          hint="Read from the dead wax. This is what identifies your exact pressing, and nothing overwrites it later."
+        >
+          <Input
+            id="matrixRunout"
+            value={pressing.matrixRunout}
+            onChange={(event) => setPressingField('matrixRunout', event.target.value)}
+            className="h-9 font-mono"
+          />
+        </Row>
+
+        <Row label="Country" htmlFor="countryPressed">
+          <Input
+            id="countryPressed"
+            value={pressing.countryPressed}
+            onChange={(event) => setPressingField('countryPressed', event.target.value)}
+            placeholder="UK"
+            className="h-9"
+          />
+        </Row>
+
+        <Row label="Year pressed" htmlFor="yearPressed" hint="This pressing's year, not the album's.">
+          <Input
+            id="yearPressed"
+            inputMode="numeric"
+            value={pressing.yearPressed}
+            onChange={(event) => setPressingField('yearPressed', event.target.value)}
+            className="h-9 font-mono"
+          />
+        </Row>
+
+        <Row label="Pressing plant" htmlFor="pressingPlant">
+          <Input
+            id="pressingPlant"
+            value={pressing.pressingPlant}
+            onChange={(event) => setPressingField('pressingPlant', event.target.value)}
+            className="h-9"
+          />
+        </Row>
+
+        <Row label="Weight (g)" htmlFor="vinylWeightGrams">
+          <Input
+            id="vinylWeightGrams"
+            inputMode="numeric"
+            value={pressing.vinylWeightGrams}
+            onChange={(event) => setPressingField('vinylWeightGrams', event.target.value)}
+            placeholder="180"
+            className="h-9 font-mono"
+          />
+        </Row>
+
+        <Row label="Colour" htmlFor="colorVariant">
+          <Input
+            id="colorVariant"
+            value={pressing.colorVariant}
+            onChange={(event) => setPressingField('colorVariant', event.target.value)}
+            placeholder="Black"
+            className="h-9"
+          />
+        </Row>
+
+        <Row label="Reissue" htmlFor="isReissue">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              id="isReissue"
+              type="checkbox"
+              checked={pressing.isReissue}
+              onChange={(event) => setPressingField('isReissue', event.target.checked)}
+              className="size-4 accent-primary"
+            />
+            This is a reissue
+          </label>
+        </Row>
+      </fieldset>
 
       <Row label="Notes" htmlFor="notes">
         <textarea

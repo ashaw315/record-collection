@@ -4,6 +4,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { RecordForm } from '../../RecordForm';
 import { loadReferenceData } from '../../reference';
 import type { FormValues } from '../../record-form';
+import { pressingToForm } from '../../pressing-form';
 import { hydrateRecord } from '@/lib/db/queries/records';
 import { isUuid } from '@/lib/api/errors';
 
@@ -57,7 +58,13 @@ export default async function EditRecordPage({ params }: PageProps<'/records/[id
         </Link>
         <h1 className="mt-3 mb-4 font-heading text-xl font-semibold tracking-tight">Edit record</h1>
 
-        <RecordForm reference={reference} initial={initial} recordId={id} />
+        <RecordForm
+          reference={reference}
+          initial={initial}
+          initialPressing={pressingToForm(record.pressing)}
+          initialPressingId={record.pressingId ?? undefined}
+          recordId={id}
+        />
       </main>
     </>
   );

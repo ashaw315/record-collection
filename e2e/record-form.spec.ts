@@ -334,3 +334,130 @@ test('a zero-width character cannot enter through the form', async ({ page }) =>
   const matching = labels.data.filter((row: { name: string }) => row.name.includes(suffix));
   expect(matching).toHaveLength(1);
 });
+
+/**
+ * SPEC.md §10's inline pressing entry — the section that makes
+ * `records.pressing_id` reachable at all. Before this it was settable only
+ * through the API, so matrix/runout, the field CLAUDE.md §8 calls the one that
+ * identifies what you are holding, could not be entered.
+ */
+test('a matrix runout alone creates a pressing and attaches it', async ({ page }) => {
+  /**
+   * §10's identifying set is all EIGHT fields, wider than §4's match key of
+   * discogs id or (catalog, country, year). A rule keyed on the match key would
+   * discard this entry silently — losing the dead-wax fingerprint, which is the
+   * worst outcome available.
+   */
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Matrix-${suffix}` });
+  const matrix = `CLAYLP3-A1-${suffix}`;
+
+  await page.goto('/records/new');
+  await formReady(page);
+  await page.getByLabel('Title').fill(`Matrix Only ${suffix}`);
+  await page.getByLabel('Artist', { exact: true }).selectOption(artist.id);
+  await page.getByLabel('Matrix / runout').fill(matrix);
+  await page.getByRole('button', { name: 'Add record' }).click();
+
+  await expect(page).toHaveURL(/\/records\/[0-9a-f-]{36}$/, { timeout: 15_000 });
+  await expect(page.getByText(matrix)).toBeVisible();
+});
+
+test('no pressing details leaves pressing_id null', async ({ page }) => {
+  // §10: "Only when all eight are blank is no pressing created and pressing_id
+  // left null." A form that created an empty pressing per record would produce
+  // a junk row for every quick in-store entry.
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `NoPressing-${suffix}` });
+
+  await page.goto('/records/new');
+  await formReady(page);
+  await page.getByLabel('Title').fill(`Bare ${suffix}`);
+  await page.getByLabel('Artist', { exact: true }).selectOption(artist.id);
+  await page.getByRole('button', { name: 'Add record' }).click();
+
+  await expect(page).toHaveURL(/\/records\/[0-9a-f-]{36}$/, { timeout: 15_000 });
+
+  const id = page.url().split('/').pop();
+  const record = await (await page.request.get(`/api/records/${id}`)).json();
+  expect(record.pressingId).toBeNull();
+  // And no Pressing section on the detail screen, rather than an empty one.
+  await expect(page.getByRole('heading', { name: 'Pressing' })).toHaveCount(0);
+});
+
+test('clearing every pressing field detaches without deleting the row', async ({ page }) => {
+  /**
+   * §10: detach, never delete. Pressings are SHARED (§4), so deleting one could
+   * silently alter another record — proven here by a second record still
+   * referencing the same pressing after the first detaches.
+   */
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Detach-${suffix}` });
+  const pressing = await post(page, '/api/pressings', {
+    catalogNumber: `SHARED-${suffix}`,
+    countryPressed: 'UK',
+    yearPressed: 1982,
+  });
+
+  const first = await post(page, '/api/records', {
+    title: `Detaches ${suffix}`,
+    artistId: artist.id,
+    pressingId: pressing.id,
+  });
+  const second = await post(page, '/api/records', {
+    title: `Keeps It ${suffix}`,
+    artistId: artist.id,
+    pressingId: pressing.id,
+  });
+
+  await page.goto(`/records/${first.id}/edit`);
+  await formReady(page);
+  await expect(page.getByLabel('Catalog no.')).toHaveValue(`SHARED-${suffix}`);
+
+  for (const label of ['Catalog no.', 'Country', 'Year pressed']) {
+    await page.getByLabel(label).fill('');
+  }
+  await page.getByRole('button', { name: 'Save changes' }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/records/${first.id}$`), { timeout: 15_000 });
+
+  // Detached from this record...
+  const detached = await (await page.request.get(`/api/records/${first.id}`)).json();
+  expect(detached.pressingId).toBeNull();
+
+  // ...but the row survives, and the OTHER record still has it.
+  const untouched = await (await page.request.get(`/api/records/${second.id}`)).json();
+  expect(untouched.pressingId).toBe(pressing.id);
+
+  const stillThere = await page.request.get(`/api/pressings/${pressing.id}`);
+  expect(stillThere.status()).toBe(200);
+});
+
+test('a matrix value survives an edit that does not touch it', async ({ page }) => {
+  /**
+   * §4 and CLAUDE.md §8: matrix_runout is USER-AUTHORITATIVE. Nothing may
+   * overwrite it — not a re-import, not a re-sync, and not a later edit that
+   * leaves the field alone.
+   */
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Authoritative-${suffix}` });
+  const matrix = `HANDREAD-${suffix}`;
+  const pressing = await post(page, '/api/pressings', { matrixRunout: matrix });
+  const record = await post(page, '/api/records', {
+    title: `Keeps Matrix ${suffix}`,
+    artistId: artist.id,
+    pressingId: pressing.id,
+  });
+
+  await page.goto(`/records/${record.id}/edit`);
+  await formReady(page);
+  await expect(page.getByLabel('Matrix / runout')).toHaveValue(matrix);
+
+  // Change something else entirely.
+  await page.getByLabel('Title').fill(`Retitled ${suffix}`);
+  await page.getByRole('button', { name: 'Save changes' }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/records/${record.id}$`), { timeout: 15_000 });
+  await expect(page.getByRole('heading', { name: `Retitled ${suffix}` })).toBeVisible();
+  await expect(page.getByText(matrix)).toBeVisible();
+});

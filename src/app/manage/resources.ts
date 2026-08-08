@@ -111,32 +111,6 @@ export const RESOURCES: ResourceSpec[] = [
     sortFields: ['name', 'createdAt'],
     fields: [NAME],
   },
-  {
-    key: 'pressings',
-    label: 'Pressings',
-    singular: 'pressing',
-    sortFields: ['catalogNumber', 'yearPressed', 'countryPressed', 'createdAt'],
-    fields: [
-      {
-        name: 'catalogNumber',
-        label: 'Catalog no.',
-        kind: 'text',
-        inTable: true,
-        mono: true,
-        placeholder: 'ABC-123',
-        width: '10rem',
-      },
-      { name: 'yearPressed', label: 'Year', kind: 'number', inTable: true, mono: true, width: '5rem' },
-      { name: 'countryPressed', label: 'Country', kind: 'text', inTable: true, width: '7rem' },
-      { name: 'matrixRunout', label: 'Matrix / runout', kind: 'text', inTable: true, mono: true },
-      { name: 'pressingPlant', label: 'Plant', kind: 'text' },
-      { name: 'colorVariant', label: 'Colour', kind: 'text' },
-      { name: 'vinylWeightGrams', label: 'Weight (g)', kind: 'number', mono: true },
-      { name: 'discogsReleaseId', label: 'Discogs ID', kind: 'number', mono: true },
-      { name: 'isReissue', label: 'Reissue', kind: 'boolean' },
-      { name: 'notes', label: 'Notes', kind: 'text' },
-    ],
-  },
 ];
 
 export function resourceByKey(key: string): ResourceSpec | undefined {

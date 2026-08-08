@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { RecordForm } from '../RecordForm';
 import { loadReferenceData } from '../reference';
 import type { FormValues } from '../record-form';
+import { BLANK_PRESSING } from '../pressing-form';
 
 /** SPEC.md §10 `/records/new`: manual entry. Discogs prefill is step 7. */
 
@@ -41,7 +42,7 @@ export default async function NewRecordPage() {
         </Link>
         <h1 className="mt-3 mb-4 font-heading text-xl font-semibold tracking-tight">Add a record</h1>
 
-        <RecordForm reference={reference} initial={BLANK} />
+        <RecordForm reference={reference} initial={BLANK} initialPressing={BLANK_PRESSING} />
       </main>
     </>
   );
