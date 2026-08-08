@@ -1,26 +1,37 @@
 import { z } from 'zod';
 import { yearSchema } from '@/lib/api/year';
+import { MAX_NESTED_IDS } from '@/lib/db/queries/nested';
 import { CONDITION_GRADES } from './fields';
 
 /**
- * The record-create body (SPEC.md §5.2), shared by `POST /api/records` and
- * `POST /api/want-list/:id/acquire`.
+ * The record-create body (SPEC.md §5.2), parsed by BOTH `POST /api/records`
+ * and `POST /api/want-list/:id/acquire`.
  *
- * §5.3 says acquire takes "the full record payload", so the two must accept
- * exactly the same shape. Defining it twice is how they drift — and the drift
- * would be silent, with acquire quietly rejecting a field the create endpoint
- * accepts. Five copies of the year bound was the same lesson an hour earlier.
+ * §5.3 requires "one shared schema definition, not two that agree today". The
+ * emphasis is earned: this module's header used to claim the sharing while the
+ * records route still had its own copy. The copies matched field for field, so
+ * no test failed, no reviewer saw a difference, and the claim went unchecked
+ * for a whole step. `create-schema.test.ts` now asserts the two endpoints hold
+ * the SAME OBJECT, which is the only version of this that cannot rot.
  *
- * `MAX_NESTED_IDS` is inlined rather than imported from the query layer, which
- * is `server-only`: this module is imported by route handlers, and pulling a
- * server-only module through it would be a needless coupling.
+ * This module is imported by route handlers only, never by a client component,
+ * so importing the `server-only` query layer for MAX_NESTED_IDS is safe — the
+ * records route and `[id]/schema.ts` already do exactly that. If a client ever
+ * needs part of this shape, follow `./fields`: move the definition to a
+ * boundary-free module and re-export, rather than copying it.
  */
 
 const uuid = z.string().uuid();
 const conditionSchema = z.enum(CONDITION_GRADES).nullish();
 
-/** Matches MAX_NESTED_IDS in @/lib/db/queries/nested. */
-const MAX_NESTED = 200;
+/**
+ * The query layer's constant, imported rather than copied.
+ *
+ * This was a hand-written `200` under a comment reading "Matches
+ * MAX_NESTED_IDS" — a claim that would survive the real constant changing,
+ * leaving the schema to accept arrays the transaction then rejects.
+ */
+const MAX_NESTED = MAX_NESTED_IDS;
 
 export const recordCreateSchema = z.strictObject({
   title: z.string().trim().min(1).max(500),

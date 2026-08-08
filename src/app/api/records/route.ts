@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { invalidJson, validationError } from '@/lib/api/errors';
 import { withErrorHandling } from '@/lib/api/handler';
-import { isValidFormedYear, yearSchema } from '@/lib/api/year';
+import { isValidFormedYear } from '@/lib/api/year';
 import { parseListParams } from '@/lib/api/query-params';
-import { MAX_NESTED_IDS, writeRecordWithNested } from '@/lib/db/queries/nested';
+import { writeRecordWithNested } from '@/lib/db/queries/nested';
 import {
   RECORD_SORT_FIELDS,
   listRecords,
@@ -16,6 +16,7 @@ import { findLabelById } from '@/lib/db/queries/labels';
 import { findFormatById } from '@/lib/db/queries/formats';
 import { findStoreById } from '@/lib/db/queries/stores';
 import { findPressingById } from '@/lib/db/queries/pressings';
+import { CONDITION_GRADES } from '@/lib/records/fields';
 
 /**
  * SPEC.md §5.2 `POST /api/records`.
@@ -26,37 +27,22 @@ import { findPressingById } from '@/lib/db/queries/pressings';
  * would reject valid data here.
  */
 
-const CONDITION_GRADES = ['M', 'NM', 'VG+', 'VG', 'G+', 'G', 'F', 'P'] as const;
-
-const conditionSchema = z.enum(CONDITION_GRADES).nullish();
-const uuid = z.string().uuid();
-const nestedIds = z.array(uuid).max(MAX_NESTED_IDS).optional();
-
 /**
- * `releaseYear` is the ORIGINAL release year, not the pressing year (§4.2) —
- * a 1982 album on a 2011 reissue has releaseYear 1982 and the pressing carries
- * 2011. Bounded like every other year in the project.
+ * The create body is defined ONCE, in `@/lib/records/create-schema`, and
+ * `POST /api/want-list/:id/acquire` parses against this same object (§5.3).
+ *
+ * Re-exported rather than merely imported so the shared module's test can
+ * assert the two endpoints hold the identical object. This route previously
+ * kept its own copy while that module's header claimed the sharing had already
+ * happened — the copies agreed field for field, so nothing failed and nobody
+ * looked again.
  */
-const createSchema = z.strictObject({
-  title: z.string().trim().min(1).max(500),
-  artistId: uuid,
-  labelId: uuid.nullish(),
-  formatId: uuid.nullish(),
-  pressingId: uuid.nullish(),
-  storeId: uuid.nullish(),
-  releaseYear: yearSchema('Release year'),
-  conditionMedia: conditionSchema,
-  conditionSleeve: conditionSchema,
-  // NUMERIC(10,2) as a string: a float would silently lose cents.
-  purchasePrice: z
-    .string()
-    .regex(/^\d{1,8}(\.\d{1,2})?$/, 'purchasePrice must be a decimal amount')
-    .nullish(),
-  purchaseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'purchaseDate must be YYYY-MM-DD').nullish(),
-  notes: z.string().trim().max(10_000).nullish(),
-  genreIds: nestedIds,
-  tagIds: nestedIds,
-});
+export { recordCreateSchema as createSchema } from '@/lib/records/create-schema';
+import { recordCreateSchema as createSchema } from '@/lib/records/create-schema';
+
+// Used by the LIST filter schema below, which is this endpoint's own concern
+// and shares nothing with the create body.
+const uuid = z.string().uuid();
 
 function fieldErrorResponse(fieldErrors: Record<string, string>) {
   return NextResponse.json(
