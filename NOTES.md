@@ -410,6 +410,38 @@ form the records work had not shown — see the masking entry under Open.
   the do-nothing path, the most common flow is the untested one. Noticed: step 6
   unit 4, during the step 5+6 remediation.
 
+  **THE LIMIT OF MUTATION TESTING, and it is a real one: mutation cannot see a
+  SYSTEMATICALLY PERMISSIVE layer, because the existing fixtures are all cases
+  that layer already rejects.**
+
+  This build leans on mutation harder than on any other technique, so where it
+  fails is worth stating plainly.
+
+  Step 7 unit 5: removing the `/^\d+$/` check in front of
+  `z.coerce.number()` failed ZERO tests. The obvious reading is "the check is
+  redundant" — and NOTES already says not to conclude that, so I probed
+  instead. Coercion accepts `'5e4'` as 50000 and `'0x50'` as 80, so the check
+  was load-bearing and its removal silently fetched a different record.
+
+  **Why mutation was blind to it.** Every id in the test set —
+  `'not-a-master'`, `'-1'`, `'0'`, `'50683/../..'` — is a value coercion
+  ALREADY rejects. The guard and the coercion agreed on all of them, so
+  removing the guard changed nothing observable. The values that discriminate
+  (`'5e4'`, `'0x50'`, `' 50683 '`) are the ones nobody writes down, precisely
+  because they do not look like inputs a user would send.
+
+  **The general shape:** mutation asks "does removing this change the output on
+  the inputs I have?" It cannot ask "what inputs have I failed to imagine?" —
+  and a permissive layer's whole nature is accepting inputs you did not
+  imagine. Same structural blind spot as the fixture rule above, one level up:
+  there the fixture could not discriminate two RULES, here it cannot
+  discriminate two INPUT SETS.
+
+  **What to do instead, when a mutation on a validation guard fails nothing:**
+  enumerate what the layer underneath accepts, by execution, before concluding
+  anything. Not "does removing this break a test" but "what does the thing I am
+  guarding say yes to". Five minutes in `node -e` answered it here.
+
   **WIRING VARIANT: a pure-function test proves the TRANSFORMATION, never that
   anything calls it.** Not a fixture problem at all — the fixtures are fine and
   the assertions are real. The gap is that a change bypassing the function
@@ -1145,6 +1177,62 @@ form the records work had not shown — see the masking entry under Open.
   importer is a copy, whatever the header says. Same discipline as a mutation:
   do not report the property, report what you ran. Noticed: step 6 unit 3,
   found by the step 5+6 adversarial review.
+
+- **RULE: a search that does not cover the space returns a confident
+  UNDERCOUNT, and an undercount looks exactly like a correct count.** Third
+  instance of "verified by execution, wrong premise", and the cheapest to
+  prevent.
+
+  Step 7's `validationError` defect was reported as affecting TWO endpoints. It
+  was eight. The grep was real, it ran, its output was accurate — and it
+  covered `src/app/api/records/` and `src/lib/records/` rather than `src/`.
+  Every PATCH endpoint in the project carries the same object-level refine.
+
+  **Why this is worse than a failed search.** A search that finds NOTHING
+  prompts a second look; nobody accepts "no results" for something they know
+  exists. A search that finds SOMETHING closes the question — the number gets
+  written into a report, scoped into a unit, and nothing about it invites
+  re-checking. The two-endpoint figure survived into a commit message and a
+  plan.
+
+  **The check, and it is one line:** before quoting a count, run the search
+  once more from the repository ROOT with no path filter, and confirm the two
+  numbers agree. If they differ, the narrower one was measuring your assumption
+  about where the code lives.
+
+  Related and already recorded: the extraction-with-one-importer check, which
+  is the same discipline for a different question. Both are about whether a
+  claim covers the space it appears to. Noticed: step 7, validationError unit.
+
+- **RULE: a class can be SOLVED and not RECOGNISED, and the giveaway is a
+  comment calling the general case an exception.**
+
+  Distinct from the prose-outran-the-work family above, and worth separating:
+  there the comment was FALSE and the work undone. Here the work was correct,
+  the comment was accurate, and the FRAMING was too small — which is why no
+  amount of verifying the claim would have caught it.
+
+  `validationError` handled `unrecognized_keys` as a special case because Zod
+  gives it an empty `path`. The header said so, in writing:
+
+  > "`unrecognized_keys` is the exception that made this more than a one-liner:
+  > it describes the object, not a field, so Zod gives it an empty path"
+
+  That sentence contains the general rule — *issues describing the object have
+  no path* — and files it under "exception". Object-level `.refine` has exactly
+  the same shape, and its message was dropped by the same line of code for
+  eight endpoints.
+
+  **The tell: a comment that explains WHY a case is special in terms that would
+  apply to other cases too.** "It describes the object, not a field" is not a
+  property of `unrecognized_keys`; it is a property of a category. When the
+  justification for a special case generalises, the case is not special —
+  enumerate the others before writing the branch.
+
+  **The check when adding one:** ask what else has the property just used to
+  justify it. Here, one search of Zod's issue codes for those with an empty
+  path would have found the refine case years of sessions earlier. Noticed:
+  step 7, validationError unit.
 
 - **RULE: probes are code too, and a verified-by-execution claim still needs its
   premise checked.** NOTES already says "a mutation is code, and it can be
