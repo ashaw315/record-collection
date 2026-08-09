@@ -1263,6 +1263,38 @@ form the records work had not shown — see the masking entry under Open.
   matching "smarter" or "more accurate" without saying which direction it
   loosens. Noticed: step 7, unit 8a.
 
+- **RULE: a module whose only consumers are its TESTS has an unvalidated
+  interface. Tests exercise a function; callers exercise a DESIGN.**
+
+  `ownership-badge.ts` was written in unit 8b with 16 passing tests, mutation-
+  verified in four directions. All of that was true and none of it established
+  that the module's SHAPE was right — it took the internal `OwnershipMatch`,
+  because that was the only ownership type that existed when it was written.
+
+  The §5.7 amendment then made the endpoints emit a different wire shape, and
+  the component that finally consumed the badge received THAT. The module could
+  not serve it. What happened next is the point: rather than failing, the
+  component grew its own copy of the labels — a second definition of the most
+  consequential text in the app, appearing exactly where the real caller was.
+
+  **Passing tests on an uncalled module tell you the function is correct, not
+  that anyone can use it.** The tests were written by the same person, in the
+  same hour, with the same picture in mind; they inherit the design's
+  assumptions rather than testing them. A caller is an independent party with
+  its own requirements, which is what makes it evidence.
+
+  **The practical rule: while a module's only importers are test files, treat
+  its interface as provisional.** Wire it to something real before adding more
+  to it, and expect the first real caller to change its shape. The failure mode
+  is not a broken module — it is a duplicate appearing at the call site,
+  because copying is easier than reshaping something that already looks
+  finished.
+
+  **The tell:** `grep` for importers excluding `*.test.*` returns nothing. Same
+  check as the extraction-with-one-importer rule, asking a different question:
+  that one asks whether a claimed consolidation happened, this asks whether the
+  design has ever met a consumer. Noticed: step 7, unit 8c.
+
 - **RULE: a guard justified by its CURRENT CALLERS is an assumption about
   callers, not about the function — and it fails on the first caller that does
   not fit.**
