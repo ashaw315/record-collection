@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { sql } from 'drizzle-orm';
 import { getTestDb } from '../test/helpers/db';
 
@@ -46,4 +47,44 @@ export async function removeRecordsFor(artistId: string): Promise<void> {
   const db = getTestDb();
 
   await db.execute(sql`DELETE FROM records WHERE artist_id = ${artistId}::uuid`);
+}
+
+/**
+ * Seeds `discogs_cache` from a committed fixture, so a spec can exercise the
+ * real prefill path without any network.
+ *
+ * **This is how a server-side Discogs flow is tested end to end**, and the
+ * alternatives were both wrong. A Playwright `page.route` stub does not cover
+ * server components — that is precisely how a live call escaped in step 7 —
+ * and vitest module mocking is unavailable across a process boundary.
+ *
+ * Seeding the cache uses the actual captured payload, so the test sees what
+ * Discogs really sends: eight Matrix / Runout variants on release 381756, not
+ * the single one a hand-written stub would carry. Code that assumed one would
+ * pass a stubbed test and ship.
+ */
+export async function seedDiscogsCache(fixtureName: string): Promise<number> {
+  const payload = JSON.parse(
+    readFileSync(`test/fixtures/discogs/${fixtureName}.json`, 'utf8'),
+  ) as { id: number };
+
+  const db = getTestDb();
+
+  await db.execute(
+    sql`INSERT INTO discogs_cache (discogs_release_id, payload, fetched_at)
+        VALUES (${payload.id}, ${JSON.stringify(payload)}::jsonb, now())
+        ON CONFLICT (discogs_release_id)
+        DO UPDATE SET payload = excluded.payload, fetched_at = now()`,
+  );
+
+  return payload.id;
+}
+
+/** Removes one cached release, so a spec cleans up after itself. */
+export async function removeDiscogsCache(discogsReleaseId: number): Promise<void> {
+  const db = getTestDb();
+
+  await db.execute(
+    sql`DELETE FROM discogs_cache WHERE discogs_release_id = ${discogsReleaseId}`,
+  );
 }

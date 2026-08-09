@@ -21,6 +21,17 @@ import { expect, test, type Page } from '@playwright/test';
 
 const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 
+/**
+ * A release id NOTHING caches.
+ *
+ * The first version used 381756, which `discogs-prefill.spec.ts` seeds into
+ * `discogs_cache` — so on a parallel run the release was FOUND, the guard was
+ * never reached, and these specs failed for the opposite of the reason they
+ * exist. The cross-spec fixture rule: an assertion about "nothing has cached
+ * this" must use a value no other spec can cache.
+ */
+const UNCACHED_RELEASE = 999000111;
+
 async function login(page: Page) {
   await page.goto('/login');
   await page.getByLabel('Password').pressSequentially(PASSWORD);
@@ -60,7 +71,7 @@ test('the release endpoint refuses too, which is where the leak happened', async
   // The specific path that broke the rule in step 7: a server component
   // fetching release detail, where a browser-level route stub is not in the
   // request path at all.
-  const response = await page.request.get('/api/discogs/release/381756');
+  const response = await page.request.get(`/api/discogs/release/${UNCACHED_RELEASE}`);
 
   expect(response.status()).toBe(502);
 });
@@ -71,7 +82,7 @@ test('the record form degrades to blank rather than fetching', async ({ page }) 
    * "blank for manual entry", so a refused prefill leaves a usable form and a
    * notice — not an error page, and not a form silently filled from live data.
    */
-  await page.goto('/records/new?discogsReleaseId=381756');
+  await page.goto(`/records/new?discogsReleaseId=${UNCACHED_RELEASE}`);
   await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
 
   await expect(page.getByTestId('prefill-failed')).toBeVisible();
