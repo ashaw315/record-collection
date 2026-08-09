@@ -31,6 +31,22 @@ const MAX_RETRIES = 3;
 /** Used when a 429 arrives with no usable `Retry-After`. */
 const DEFAULT_RETRY_MS = 1_000;
 
+/**
+ * Total wall-clock ceiling on one logical request, retries and waiting
+ * included.
+ *
+ * A SECOND bound alongside `MAX_RETRIES`, because the two fail differently and
+ * the attempt count is not the thing that hurts in production. A wedged request
+ * in a serverless function holds execution time until the platform kills it,
+ * with the user watching a spinner — so the useful guarantee is "this returns
+ * within ten seconds, one way or another", not "this makes at most four
+ * attempts".
+ *
+ * It also bounds a hostile or mistaken `Retry-After: 3600`, which a
+ * count-based limit alone would obey to the letter.
+ */
+const MAX_ELAPSED_MS = 10_000;
+
 export class DiscogsError extends Error {
   readonly status: number | undefined;
 
@@ -108,9 +124,18 @@ export function createDiscogsClient(options: DiscogsClientOptions): DiscogsClien
 
   async function request<T>(path: string, params?: QueryParams): Promise<T> {
     const url = buildUrl(path, params);
+    const deadline = now() + MAX_ELAPSED_MS;
 
     for (let attempt = 0; ; attempt += 1) {
       const wait = bucket.waitMs();
+      // Checked BEFORE sleeping, not after: waiting out a delay and then
+      // reporting that we ran out of time spends the very budget the deadline
+      // exists to protect.
+      if (now() + wait > deadline) {
+        throw new DiscogsError('Discogs is rate limiting us. Try again in a moment.', {
+          status: 429,
+        });
+      }
       if (wait > 0) await sleep(wait);
       bucket.take();
 
@@ -129,7 +154,10 @@ export function createDiscogsClient(options: DiscogsClientOptions): DiscogsClien
         // the one that returns errors.
         bucket.blockUntil(now() + retryMs);
 
-        if (attempt >= MAX_RETRIES) {
+        // Either bound ends it. The attempt count catches a fast retry storm;
+        // the deadline catches a slow one, including a `Retry-After` long
+        // enough to park the request past any useful lifetime.
+        if (attempt >= MAX_RETRIES || now() + retryMs > deadline) {
           throw new DiscogsError(
             'Discogs rate limit reached. Try again in a moment.',
             { status: 429 },

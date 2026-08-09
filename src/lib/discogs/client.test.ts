@@ -18,6 +18,9 @@ const TOKEN = 'test-token';
 /** MAX_RETRIES in client.ts is 3, so 1 initial attempt + 3 retries. */
 const MAX_ATTEMPTS = 4;
 
+/** MAX_ELAPSED_MS in client.ts: the total-time ceiling on one logical request. */
+const MAX_ELAPSED_MS = 10_000;
+
 /** A clock and a sleep the test drives, so no test waits in real time. */
 function harness() {
   let now = 0;
@@ -204,19 +207,16 @@ describe('429 handling', () => {
      * Unbounded retrying against a limiter that keeps saying no is a hang, and
      * a hung request in a route handler is a hung page.
      *
-     * **This test constrains the retry COUNT, not the absence of a hang, and
-     * the difference is worth stating.** Removing the `attempt >= MAX_RETRIES`
-     * guard does not make this test fail — it makes the vitest worker die
-     * ("Worker exited unexpectedly"), because the loop spins on an injected
-     * `sleep` that resolves immediately, never yields, and exhausts memory
-     * before any assertion or `testTimeout` can fire.
+     * This test was originally unable to catch the removal of
+     * `attempt >= MAX_RETRIES`: the loop spun on an injected `sleep` that
+     * resolves immediately, never yielded, and killed the vitest worker before
+     * any assertion or `testTimeout` could fire. It constrained the retry COUNT
+     * and not the absence of a hang, and said so.
      *
-     * Two attempts to convert that into a clean failure were abandoned per
-     * CLAUDE.md §9: a mock that throws after a ceiling is caught by the
-     * client's own network-error branch and feeds the loop, and one that
-     * returns a non-retryable status still dies before reaching the ceiling.
-     * The honest summary is that an unbounded client is caught LOUDLY but not
-     * as an assertion. Recorded rather than papered over, and in NOTES.
+     * **The deadline below closed that.** With `MAX_ELAPSED_MS` in place,
+     * removing the attempt bound now FAILS here rather than crashing — the
+     * runaway loop terminates on time instead of running forever, so the
+     * assertion is reached. Two bounds, and each one makes the other testable.
      */
     const fetchMock = vi.fn(
       async () => new Response('', { status: 429, headers: { 'retry-after': '1' } }),
@@ -235,6 +235,60 @@ describe('429 handling', () => {
     expect(fetchMock.mock.calls.length, 'it did retry, rather than failing at once').toBeGreaterThan(
       1,
     );
+  });
+
+  it('gives up once the total deadline passes, however few attempts that took', async () => {
+    /**
+     * A SECOND bound, on elapsed time rather than attempt count, because the
+     * two fail differently and the attempt bound cannot be tested for its own
+     * removal (see the note above).
+     *
+     * The production risk is not an OOM — that is what a vitest worker does.
+     * In a Vercel function an unbounded retry is a WEDGED REQUEST holding
+     * execution time until the platform kills it, with the user watching a
+     * spinner. A deadline caps that at a known number of seconds regardless of
+     * how the attempt accounting behaves.
+     *
+     * Unlike the attempt bound, removing this one FAILS rather than hangs: a
+     * single enormous Retry-After trips it on the first retry, so the test
+     * never needs the loop to run away.
+     */
+    const fetchMock = vi.fn(
+      async () =>
+        // 60s: well inside MAX_RETRIES, so only the deadline can stop this.
+        new Response('', { status: 429, headers: { 'retry-after': '60' } }),
+    );
+
+    const { client, h } = makeClient(fetchMock as unknown as typeof fetch);
+
+    const error = await client.get('/releases/1').catch((thrown: unknown) => thrown);
+
+    expect(error).toBeInstanceOf(DiscogsError);
+    expect((error as DiscogsError).status).toBe(429);
+
+    // It refused BEFORE sleeping a minute, rather than waiting and then failing.
+    const slept = h.slept.reduce((total, ms) => total + ms, 0);
+    expect(slept, 'never waits longer than the deadline allows').toBeLessThanOrEqual(
+      MAX_ELAPSED_MS,
+    );
+    expect(fetchMock.mock.calls.length, 'it stopped on time, not on attempts').toBeLessThan(
+      MAX_ATTEMPTS,
+    );
+  });
+
+  it('does not wait past the deadline even when Retry-After asks for longer', async () => {
+    // A hostile or broken `Retry-After: 3600` must not park a request for an
+    // hour. Discogs' header is respected up to OUR ceiling, not beyond it.
+    const fetchMock = vi.fn(
+      async () => new Response('', { status: 429, headers: { 'retry-after': '3600' } }),
+    );
+
+    const { client, h } = makeClient(fetchMock as unknown as typeof fetch);
+
+    await client.get('/releases/1').catch(() => undefined);
+
+    const slept = h.slept.reduce((total, ms) => total + ms, 0);
+    expect(slept).toBeLessThanOrEqual(MAX_ELAPSED_MS);
   });
 
   it('falls back to a sane wait when Retry-After is missing or junk', async () => {

@@ -410,6 +410,28 @@ form the records work had not shown — see the masking entry under Open.
   the do-nothing path, the most common flow is the untested one. Noticed: step 6
   unit 4, during the step 5+6 remediation.
 
+  **SELF-MATCHING VARIANT: a checker that scans the repo can end up inside its
+  own subject set, and it fails on its own matchers rather than on real code.**
+  The cross-spec variant one level up: the shared state is the REPOSITORY.
+
+  `test/repo/dotenv-quiet.test.ts` asserts that every tracked file calling
+  dotenv's `config()` passes `quiet: true`, finding those files by search. Its
+  own source contains the strings `dotenv` and `config(` — inside the regexes
+  doing the matching — so once it was committed and `git ls-files` could see
+  it, it matched itself and failed against the bare `config()` in its own
+  matcher.
+
+  **It passed alone and failed in the full suite**, which is the tell, and the
+  timing is the trap: the file is invisible to `git ls-files` until the commit,
+  so the defect appears one commit AFTER the code that causes it. Verified by
+  running the file in isolation (green) and the suite (red).
+
+  **The rules for any repo-scanning check:** exclude the checker from its own
+  subject list explicitly, by path, with a comment saying why — and keep the
+  vacuity guard, because an exclusion that silently over-matches turns the
+  whole assertion into a loop over nothing. Both are in place there. Noticed:
+  step 7, unit 1.
+
   **VARIANT: sometimes no value on that axis CAN discriminate, and the fix is a
   different axis rather than a better fixture.** The five cases above are all
   repaired by adding inverting rows. This one cannot be.
@@ -881,17 +903,40 @@ form the records work had not shown — see the masking entry under Open.
 
   Abandoned there per CLAUDE.md §9 rather than attempting a third.
 
-  **What the test DOES constrain is the retry COUNT** — raising `MAX_RETRIES`
-  from 3 to 8 fails it — and its comment now says exactly that, plus what it
-  cannot catch. The alternative was a test whose name implies it prevents hangs
-  while the mutation that causes one sails past: the decorative shape this file
-  already has five instances of.
+  **RESOLVED, and the resolution is the transferable part: the gap was closed
+  by adding a SECOND bound of a different kind, not by a third attempt at the
+  test.** A total elapsed-time deadline (`MAX_ELAPSED_MS`) now sits alongside
+  the attempt count. With it, removing the attempt bound FAILS the test rather
+  than crashing the worker — the runaway loop terminates on time, so the
+  assertion is reached and reports.
 
-  **The general rule:** when a mutation produces a CRASH rather than a failure,
-  the test does not cover it. Say so in the test, in terms of what it does and
-  does not constrain. A stated gap is a smaller problem than a false claim of
-  coverage — and a crash is at least loud, which is more than the
-  absence-as-success family below manages. Noticed: step 7, unit 1.
+  **Two bounds, and each makes the other testable.** Neither alone is enough:
+  the attempt count catches a fast retry storm, the deadline catches a slow one
+  — including a hostile or mistaken `Retry-After: 3600`, which a count-based
+  limit would obey to the letter. Both are mutation-verified, including the
+  plausible mistake of checking the deadline AFTER sleeping rather than before,
+  which fails 2 because the sleep has already spent the budget being protected.
+
+  **Why the deadline was the right instrument** — it matches the actual
+  production risk. An unbounded retry in a vitest worker is an OOM; in a
+  serverless function it is a WEDGED REQUEST holding execution time until the
+  platform kills it, with the user watching a spinner. So the useful guarantee
+  is "this returns within ten seconds either way", not "this makes at most four
+  attempts". A lint rule against unbounded loops was the other candidate and
+  was rejected: it would fight the `for (;;)` retry idiom and constrain the
+  shape of the code rather than the risk.
+
+  **The general rules, both still standing:**
+
+  1. When a mutation produces a CRASH rather than a failure, the test does not
+     cover it. Say so, in terms of what it does and does not constrain — a
+     stated gap is a smaller problem than a false claim of coverage.
+  2. **Before concluding a property is untestable, ask whether a DIFFERENT
+     guarantee would make it testable.** The same move as the `formatPrice`
+     variant above, where the discriminator was on another axis: here the
+     answer was not a cleverer harness but a second bound the code was arguably
+     missing anyway. A property that resists testing is sometimes telling you
+     the code is underspecified. Noticed and closed: step 7, unit 1.
 
 - **RULE: this toolchain reports ABSENCE as SUCCESS in at least three distinct
   ways. A green result can mean "nothing ran", not "nothing broke".**
