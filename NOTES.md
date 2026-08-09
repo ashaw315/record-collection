@@ -339,6 +339,28 @@ form the records work had not shown — see the masking entry under Open.
   `Discharge-<suffix>`. Two collisions at different scopes, and each obvious
   fix only closed one. Measuring each attempt is what found the second.
 
+  **FOURTH INSTANCE, step 7, and the count is the point: ALL FOUR PRESENTED AS
+  SOMETHING ELSE.** Not one of them looked like shared state at first sight.
+
+  | What it looked like | What it was |
+  |---|---|
+  | a width-dependent layout bug at 390px | two shots seeding identical titles |
+  | a broken unmatched-artist notice | a sibling test creating an artist the fuzzy match found |
+  | a flaky prefill spec, three different failures in three runs | `beforeAll` seeding with `afterAll` cleanup, removing a row a parallel worker was using |
+  | the no-live-call guard not firing | another spec seeding the release, so the cache answered and the guard was never reached |
+
+  **The diagnostic value is in the count.** After four, the right first question
+  for any E2E failure that is not obviously deterministic is "what else touches
+  this row, this title, this id?" — before reading the code under test at all.
+  Three of the four cost a full debugging round because that question came
+  second.
+
+  **The specific trap in the last two: a test can be broken by a fixture that
+  makes it PASS a check it should fail.** The guard specs asserted "nothing has
+  cached this release", and another spec cached it — so the assertion inverted
+  rather than erroring. Seeding is not only an interference risk, it is a way to
+  satisfy a precondition that was supposed to be absent.
+
   **The rules:**
 
   - scope every assertion to something no other spec can produce — an id you
