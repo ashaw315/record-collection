@@ -270,7 +270,15 @@ describe('PATCH /api/want-list/:id', () => {
     );
 
     expect(response.status).toBe(400);
-    expect((await response.json()).error.fieldErrors.priority).toBeDefined();
+    /**
+     * The MESSAGE, not merely that a key exists. `.toBeDefined()` passes on
+     * any string, including a raw driver error — the assertion could not tell
+     * a considered validation message from a leaked constraint violation,
+     * which is the property the test's name claims.
+     */
+    const body = await response.json();
+    expect(body.error.fieldErrors.priority).toMatch(/priority/i);
+    expect(body.error.fieldErrors.priority, 'states the 1-5 range').toMatch(/1.*5|between/i);
   });
 
   it('rejects an empty body rather than reporting a no-op success', async () => {
@@ -302,7 +310,18 @@ describe('PATCH /api/want-list/:id', () => {
     );
 
     expect(response.status).toBe(400);
-    expect((await response.json()).error.fieldErrors.targetPressingId).toBeDefined();
+    /**
+     * The name of this test is the claim: a bad id is NAMED, not surfaced as a
+     * foreign-key error. `.toBeDefined()` would pass on
+     * `insert or update on table "want_list" violates foreign key constraint`,
+     * so it asserted nothing about the distinction it exists to check.
+     */
+    const body = await response.json();
+    expect(body.error.fieldErrors.targetPressingId).toMatch(/no pressing with that id exists/i);
+    expect(
+      body.error.fieldErrors.targetPressingId,
+      'no SQL leaks into the message',
+    ).not.toMatch(/constraint|violates|relation|SQLSTATE|\bpg\b/i);
   });
 
   it('writes nothing when a nested id is invalid', async () => {

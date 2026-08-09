@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { dateSchema } from '@/lib/api/date';
 import { yearSchema } from '@/lib/api/year';
 import { MAX_NESTED_IDS } from '@/lib/db/queries/nested';
 import { CONDITION_GRADES } from './fields';
@@ -52,10 +53,7 @@ export const recordCreateSchema = z.strictObject({
     .string()
     .regex(/^\d{1,8}(\.\d{1,2})?$/, 'purchasePrice must be a decimal amount')
     .nullish(),
-  purchaseDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'purchaseDate must be YYYY-MM-DD')
-    .nullish(),
+  purchaseDate: dateSchema('Purchase date'),
   notes: z.string().trim().max(10_000).nullish(),
   genreIds: z.array(uuid).max(MAX_NESTED).optional(),
   tagIds: z.array(uuid).max(MAX_NESTED).optional(),

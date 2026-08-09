@@ -360,6 +360,36 @@ form the records work had not shown — see the masking entry under Open.
   present, which is the same axis-confusion the "same family" rule warns about.
   Noticed: step 6, unit 5.
 
+  **PASSIVE-PATH VARIANT: when every test exercises the DELIBERATE path, the
+  passive path is unconstrained — and the passive path is usually the common
+  one.** Not a fixture problem: each test is individually well-built. The gap is
+  in what the SET of them chose to do.
+
+  Found in step 6 unit 4 (pressing prefill) by a mutation that failed nothing.
+  The tests covered prefilling, editing a prefilled field, and the no-target
+  case. All four passed with the "silently copied" mutation in place, which
+  should have been impossible — so the question was not "is there anything to
+  constrain" but "why can't these see it".
+
+  The answer: **every test edited something.** The form builds a pressing from
+  the form values, so an edited field always produces a new row and the
+  mutation never changed the outcome. The uncovered case was the one a user
+  actually performs most: check the prefilled details against the sleeve and
+  save without touching them. Under the mutation that yields `pressing_id`
+  null — fields visibly filled, save succeeds, pressing gone.
+
+  **Why this shape recurs:** tests are written from the feature's description,
+  and a description says what the feature DOES ("prefills the pressing
+  section", "lets you edit it"). Accepting a default is not a feature, so
+  nothing in the description prompts a test for it — while for the user it is
+  the path of least effort and therefore the default behaviour.
+
+  **The check:** for any screen with prefilled or default values, ask what
+  happens if the user changes NOTHING and submits. Same for a filter left at its
+  default, a toggle left unticked, a prefilled date accepted. If no test covers
+  the do-nothing path, the most common flow is the untested one. Noticed: step 6
+  unit 4, during the step 5+6 remediation.
+
   **VARIANT: sometimes no value on that axis CAN discriminate, and the fix is a
   different axis rather than a better fixture.** The five cases above are all
   repaired by adding inverting rows. This one cannot be.
@@ -530,6 +560,20 @@ form the records work had not shown — see the masking entry under Open.
   - roughly 1 full-suite run in 5, never in isolation;
   - present with `data-hydrated` waits already in place, so it is not that
     mechanism.
+
+  **Re-observed during the step 5+6 remediation, unit 5**, with one new fact:
+  **the failing spec MOVES.** A full-suite run failed the two named above; an
+  immediate isolated run of the same file passed those two and failed a third
+  (`clicking through to a filtered view equals loading that URL directly`);
+  three further runs of that file on the same build gave 10 passed / 1 failed /
+  10 passed. So it is a property of the FILE, not of any spec in it, and the
+  rate holds at roughly 1 run in 5.
+
+  That mobility is also the cheapest way to tell it from a regression: a change
+  that broke something fails the same spec every time. Do not baseline this by
+  stashing and running once — a single clean baseline run is indistinguishable
+  from the flake not firing, which is the stale-baseline error in miniature.
+  Run the current build several times instead.
 
   Left undiagnosed deliberately: at 1 in 5 any measurement is mostly noise, and
   the suite is currently clean enough that a real regression would still stand

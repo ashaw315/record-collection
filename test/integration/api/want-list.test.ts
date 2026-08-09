@@ -195,7 +195,9 @@ describe('GET /api/want-list — filters', () => {
     const response = await listWantList(request('/api/want-list?priority=nope'));
 
     expect(response.status).toBe(400);
-    expect((await response.json()).error.fieldErrors.priority).toBeDefined();
+    // The message, not just a key: `.toBeDefined()` cannot distinguish a
+    // considered rejection from an error that leaked out of the driver.
+    expect((await response.json()).error.fieldErrors.priority).toMatch(/priority/i);
   });
 
   it('rejects a non-boolean isAcquired rather than coercing it', async () => {
@@ -207,7 +209,9 @@ describe('GET /api/want-list — filters', () => {
     const response = await listWantList(request('/api/want-list?isAcquired=maybe'));
 
     expect(response.status).toBe(400);
-    expect((await response.json()).error.fieldErrors.isAcquired).toBeDefined();
+    expect((await response.json()).error.fieldErrors.isAcquired).toMatch(
+      /true|false|boolean/i,
+    );
   });
 });
 
@@ -316,7 +320,13 @@ describe('POST /api/want-list', () => {
     );
 
     expect(response.status).toBe(400);
-    expect((await response.json()).error.fieldErrors.artistId).toBeDefined();
+    // Named, not surfaced as a foreign-key violation — the same claim the
+    // PATCH counterpart makes and did not check.
+    const body = await response.json();
+    expect(body.error.fieldErrors.artistId).toMatch(/no artist with that id exists/i);
+    expect(body.error.fieldErrors.artistId, 'no SQL leaks').not.toMatch(
+      /constraint|violates|relation/i,
+    );
   });
 
   it('rejects a body with unknown keys', async () => {

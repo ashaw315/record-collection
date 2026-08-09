@@ -363,6 +363,36 @@ test('a matrix runout alone creates a pressing and attaches it', async ({ page }
   await expect(page.getByText(matrix)).toBeVisible();
 });
 
+test('placeholders read as guidance, never as plausible entered values', async ({ page }) => {
+  /**
+   * A placeholder rendered as a bare `180` or `Black` is indistinguishable from
+   * a value at a glance — in a screenshot, or to a tired person holding a
+   * sleeve in a shop. That is the same misinformation as silently copying a
+   * pressing, rendered instead of stored: the user believes the field holds
+   * something it does not, and saves.
+   *
+   * The fix is phrasing, so the test is on the phrasing. `e.g.` is what makes a
+   * sample unmistakably a sample.
+   */
+  await page.goto('/records/new');
+  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
+
+  const sampleFields = ['purchasePrice', 'catalogNumber', 'countryPressed', 'vinylWeightGrams', 'colorVariant'];
+
+  for (const field of sampleFields) {
+    const placeholder = await page.locator(`#${field}`).getAttribute('placeholder');
+
+    expect(placeholder, `${field} has a placeholder`).not.toBeNull();
+    expect(placeholder, `${field} marks its sample as a sample`).toMatch(/^e\.g\. /);
+  }
+
+  // And the fields are genuinely EMPTY — a placeholder must never be submitted
+  // as a value, which is the failure the phrasing is protecting against.
+  for (const field of sampleFields) {
+    await expect(page.locator(`#${field}`)).toHaveValue('');
+  }
+});
+
 test('no pressing details leaves pressing_id null', async ({ page }) => {
   // §10: "Only when all eight are blank is no pressing created and pressing_id
   // left null." A form that created an empty pressing per record would produce

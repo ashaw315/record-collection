@@ -538,7 +538,7 @@ export function RecordForm({
         <Input
           id="purchasePrice"
           inputMode="decimal"
-          placeholder="24.50"
+          placeholder="e.g. 24.50"
           value={values.purchasePrice}
           onChange={(event) => set('purchasePrice', event.target.value)}
           className="h-9 font-mono"
@@ -621,7 +621,7 @@ export function RecordForm({
             aria-invalid={fieldErrors.catalogNumber !== undefined}
             value={pressing.catalogNumber}
             onChange={(event) => setPressingField('catalogNumber', event.target.value)}
-            placeholder="CLAY LP 3"
+            placeholder="e.g. CLAY LP 3"
             className="h-9 font-mono"
           />
         {pressingError('catalogNumber')}
@@ -650,7 +650,7 @@ export function RecordForm({
             aria-invalid={fieldErrors.countryPressed !== undefined}
             value={pressing.countryPressed}
             onChange={(event) => setPressingField('countryPressed', event.target.value)}
-            placeholder="UK"
+            placeholder="e.g. UK"
             className="h-9"
           />
         {pressingError('countryPressed')}
@@ -689,7 +689,7 @@ export function RecordForm({
             inputMode="numeric"
             value={pressing.vinylWeightGrams}
             onChange={(event) => setPressingField('vinylWeightGrams', event.target.value)}
-            placeholder="180"
+            placeholder="e.g. 180"
             className="h-9 font-mono"
           />
         {pressingError('vinylWeightGrams')}
@@ -702,7 +702,7 @@ export function RecordForm({
             aria-invalid={fieldErrors.colorVariant !== undefined}
             value={pressing.colorVariant}
             onChange={(event) => setPressingField('colorVariant', event.target.value)}
-            placeholder="Black"
+            placeholder="e.g. Black"
             className="h-9"
           />
         {pressingError('colorVariant')}

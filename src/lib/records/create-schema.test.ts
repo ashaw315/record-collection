@@ -55,6 +55,53 @@ describe('one definition, not two that agree', () => {
   });
 });
 
+describe('purchaseDate', () => {
+  const parse = (purchaseDate: string) =>
+    recordCreateSchema.safeParse({
+      title: 'X',
+      artistId: '00000000-0000-4000-8000-000000000000',
+      purchaseDate,
+    });
+
+  it('accepts a real date', () => {
+    expect(parse('2026-08-08').success).toBe(true);
+  });
+
+  it('accepts a leap day in a leap year', () => {
+    // 2024 is a leap year. A naive per-field range check (month 1-12, day 1-31)
+    // would accept this too, so it is the control for the case below.
+    expect(parse('2024-02-29').success).toBe(true);
+  });
+
+  /**
+   * The defect: `/^\d{4}-\d{2}-\d{2}$/` validates SHAPE, not validity. Every
+   * one of these matched and was sent to a DATE column, where Postgres rejects
+   * it — turning a plain client mistake into a 500 with a driver error in the
+   * log, rather than the 400 §5 requires.
+   */
+  it.each([
+    ['a 13th month', '2026-13-45'],
+    ['a 45th day', '2026-01-45'],
+    ['the 30th of February', '2026-02-30'],
+    ['a leap day in a NON-leap year', '2025-02-29'],
+    ['the 31st of a 30-day month', '2026-04-31'],
+    ['all zeroes', '0000-00-00'],
+    ['a zero month', '2026-00-10'],
+    ['a zero day', '2026-10-00'],
+  ])('rejects %s', (_label, value) => {
+    expect(parse(value).success, value).toBe(false);
+  });
+
+  it('names the field so the form can show the error against it', () => {
+    const result = parse('2026-13-45');
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].path).toEqual(['purchaseDate']);
+    }
+  });
+});
+
 /**
  * Both endpoints accept identical inputs.
  *
