@@ -325,6 +325,65 @@ describe.skipIf(!configured)('transactions over the Neon serverless driver', () 
    * shows something owned and the acquisition is missing from history, or
    * `acquired_record_id` points at nothing. Neither errors.
    */
+  it('rolls back the Discogs import across all four tables', async () => {
+    /**
+     * CLAUDE.md §2: transactional code is verified against the REAL Neon
+     * driver, not local pg alone. The importer writes artist, label, pressing,
+     * genres and the record — five rows across four tables — and a partial
+     * apply leaves reference rows nothing points at, which surfaces much later
+     * as unexplained names in the artist list.
+     *
+     * Forced with an out-of-range release year, which the column rejects AFTER
+     * the reference rows have been written.
+     */
+    const { importRelease } = await import('@/lib/db/queries/discogs-import');
+    const { normalizeRelease } = await import('@/lib/discogs/normalize-release');
+    const { readFileSync } = await import('node:fs');
+
+    const artistName = `${probe}-import-artist`;
+    const release = {
+      ...normalizeRelease(
+        JSON.parse(readFileSync('test/fixtures/discogs/release-detailed.json', 'utf8')),
+      ),
+      artist: artistName,
+      artistDiscogsId: null,
+      title: `${probe}-import-record`,
+      discogsId: 900000001,
+      year: 2_147_483_648,
+    };
+
+    const previous = process.env.TEST_DATABASE_URL;
+    const previousDatabase = process.env.DATABASE_URL;
+    process.env.TEST_DATABASE_URL = '';
+    process.env.DATABASE_URL = branchUrl;
+    vi.stubEnv('NODE_ENV', 'production');
+
+    try {
+      const { closeDb } = await import('@/db/client');
+      await closeDb();
+
+      await expect(importRelease({ release, target: 'record' })).rejects.toThrow();
+
+      await closeDb();
+    } finally {
+      process.env.TEST_DATABASE_URL = previous ?? '';
+      process.env.DATABASE_URL = previousDatabase ?? '';
+      vi.unstubAllEnvs();
+    }
+
+    // NOTHING survived — not the record, and not the reference rows written
+    // before it.
+    const orphanArtist = await db.execute<{ n: number }>(
+      sql`SELECT count(*)::int AS n FROM artists WHERE name = ${artistName}`,
+    );
+    expect(orphanArtist.rows[0].n, 'the artist must not outlive the failed import').toBe(0);
+
+    const orphanPressing = await db.execute<{ n: number }>(
+      sql`SELECT count(*)::int AS n FROM pressings WHERE discogs_release_id = 900000001`,
+    );
+    expect(orphanPressing.rows[0].n, 'the pressing must not survive either').toBe(0);
+  });
+
   it('rolls back the acquire primitive across the record and the mark', async () => {
     const { acquireWantListItem } = await import('@/lib/db/queries/want-list');
     const artistName = `${probe}-acquire-artist`;

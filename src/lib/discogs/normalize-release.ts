@@ -30,9 +30,19 @@ const rawRelease = z
     estimated_weight: z.number().nullable().optional(),
     num_for_sale: z.number().nullable().optional(),
     lowest_price: z.number().nullable().optional(),
-    artists: z.array(z.object({ name: z.string() }).passthrough()).optional(),
+    artists: z
+      .array(z.object({ name: z.string(), id: z.number().optional() }).passthrough())
+      .optional(),
     labels: z
-      .array(z.object({ name: z.string().optional(), catno: z.string().optional() }).passthrough())
+      .array(
+        z
+          .object({
+            name: z.string().optional(),
+            catno: z.string().optional(),
+            id: z.number().optional(),
+          })
+          .passthrough(),
+      )
       .optional(),
     formats: z
       .array(
@@ -87,7 +97,15 @@ export type NormalizedRelease = {
   masterId: number | null;
   title: string | null;
   artist: string | null;
+  /**
+   * Discogs' own ids for the artist and label, carried so the importer can
+   * find-or-create by id BEFORE falling back to name (§6). Matching by name
+   * alone would merge two different bands who share one, and split one band
+   * whose name the user has since edited.
+   */
+  artistDiscogsId: number | null;
   label: string | null;
+  labelDiscogsId: number | null;
   catalogNumber: string | null;
   country: string | null;
   year: number | null;
@@ -186,7 +204,9 @@ export function normalizeRelease(input: unknown): NormalizedRelease {
     // Title alone here — NOT combined with the artist as in search results.
     title: meaningful(raw.title),
     artist: meaningful(raw.artists?.[0]?.name),
+    artistDiscogsId: raw.artists?.[0]?.id ?? null,
     label: meaningful(raw.labels?.[0]?.name),
+    labelDiscogsId: raw.labels?.[0]?.id ?? null,
     catalogNumber: meaningful(raw.labels?.[0]?.catno),
     country: meaningful(raw.country),
     year: toYear(raw.year) ?? toYear(raw.released),
