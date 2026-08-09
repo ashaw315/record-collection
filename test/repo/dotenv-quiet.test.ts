@@ -21,13 +21,23 @@ import { describe, expect, it } from 'vitest';
  * today's four callers would pass forever while the fifth reintroduces it.
  */
 
-/** Every tracked file that calls dotenv's `config`, found rather than listed. */
+/**
+ * Every tracked file that calls dotenv's `config`, found rather than listed.
+ *
+ * THIS FILE is excluded, and not for convenience: it contains the word
+ * `dotenv` and the string `config(` inside its own matchers, so it matches its
+ * own predicate and then fails against the bare `config()` in the regex source.
+ * Caught by the full suite once the file was committed and `git ls-files`
+ * could see it — the checker cannot be its own subject.
+ */
+const SELF = 'test/repo/dotenv-quiet.test.ts';
+
 function filesCallingDotenvConfig(): string[] {
   const tracked = execFileSync('git', ['ls-files', '*.ts', '*.mts', '*.js', '*.mjs'], {
     encoding: 'utf8',
   })
     .split('\n')
-    .filter((line) => line !== '');
+    .filter((line) => line !== '' && line !== SELF);
 
   return tracked.filter((file) => {
     const source = readFileSync(file, 'utf8');

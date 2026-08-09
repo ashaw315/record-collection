@@ -860,6 +860,39 @@ form the records work had not shown — see the masking entry under Open.
   would slip through. NOT done yet; recorded so it is not lost. Noticed: step 5,
   unit 7a.
 
+- **RULE: some defects cannot be expressed as a failing assertion, and the
+  honest move is to say so in the test rather than write one that looks like it
+  covers them.** A hang is the clearest case.
+
+  Step 7 unit 1's Discogs client retries a 429 a bounded number of times.
+  Removing the bound does NOT fail its test — it kills the vitest worker
+  ("Worker exited unexpectedly"). The loop spins on an injected `sleep` that
+  resolves immediately, so it never yields: `testTimeout` cannot fire, no
+  assertion is reached, and the harness exhausts memory first. The run reports
+  no counts at all.
+
+  **Two attempts to convert that into a clean failure both failed, each for a
+  reason worth knowing:**
+
+  | Attempt | Why it did not work |
+  |---|---|
+  | mock throws after a call ceiling | the client catches every `fetch` rejection as a network error and RETRIES — the escape hatch fed the loop it was meant to break |
+  | mock returns a non-retryable status after a ceiling | the worker dies before reaching the ceiling; the retry counter is not what runs out first |
+
+  Abandoned there per CLAUDE.md §9 rather than attempting a third.
+
+  **What the test DOES constrain is the retry COUNT** — raising `MAX_RETRIES`
+  from 3 to 8 fails it — and its comment now says exactly that, plus what it
+  cannot catch. The alternative was a test whose name implies it prevents hangs
+  while the mutation that causes one sails past: the decorative shape this file
+  already has five instances of.
+
+  **The general rule:** when a mutation produces a CRASH rather than a failure,
+  the test does not cover it. Say so in the test, in terms of what it does and
+  does not constrain. A stated gap is a smaller problem than a false claim of
+  coverage — and a crash is at least loud, which is more than the
+  absence-as-success family below manages. Noticed: step 7, unit 1.
+
 - **RULE: this toolchain reports ABSENCE as SUCCESS in at least three distinct
   ways. A green result can mean "nothing ran", not "nothing broke".**
 
