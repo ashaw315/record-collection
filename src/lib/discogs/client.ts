@@ -1,5 +1,6 @@
 import { getEnv } from '@/env';
 import { TokenBucket } from './limiter';
+import { assertNoLiveCall } from './no-live-calls';
 
 /**
  * The Discogs transport (SPEC.md §6). Every Discogs call in the app routes
@@ -115,14 +116,30 @@ function retryAfterMs(response: Response): number {
  */
 let shared: DiscogsClient | undefined;
 
+/** The real `fetch`, refused in a test context. */
+const guardedFetch: typeof fetch = (input, init) => {
+  assertNoLiveCall(typeof input === 'string' ? input : String(input));
+  return globalThis.fetch(input, init);
+};
+
 export function getDiscogsClient(): DiscogsClient {
   if (shared === undefined) {
     shared = createDiscogsClient({
+      /**
+       * CLAUDE.md §2, enforced rather than trusted.
+       *
+       * The guard wraps the REAL `fetch`, at the one place it is supplied. A
+       * test that mocks this module never reaches here; a test that injects
+       * its own `fetch` into `createDiscogsClient` is exercising the transport
+       * deliberately and is equally unaffected. What it stops is the case that
+       * actually happened: a server component calling Discogs for real during
+       * an E2E run, where a browser-level stub was never in the path.
+       */
+      fetch: guardedFetch,
       token: getEnv().DISCOGS_TOKEN,
       // §6: "set a descriptive User-Agent header. Discogs rejects requests
       // without one." Names the app and gives them somewhere to look.
       userAgent: 'RecordCollection/0.1 +https://github.com/adamshaw/record-collection',
-      fetch: globalThis.fetch,
     });
   }
 

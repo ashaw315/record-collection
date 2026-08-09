@@ -1,0 +1,109 @@
+import { resolveConnectionHost } from '@/lib/db/connection-string';
+
+/**
+ * Makes CLAUDE.md §2's rule structural: **no test may make a live external
+ * call.**
+ *
+ * It was a rule and not a mechanism until step 7 broke it. `/records/new`'s
+ * Discogs prefill runs in a SERVER COMPONENT, so Playwright's `page.route` —
+ * which intercepts browser traffic only — was never in the request path. The
+ * E2E dev server called api.discogs.com for real, cached the response, and
+ * three specs passed against live data. They proved nothing about the code path
+ * they claimed to test, which is the hollow-Neon shape exactly.
+ *
+ * The check lives on the CLIENT rather than in each test, because the tests
+ * that need it are the ones nobody remembered to mock.
+ */
+
+/** localhost, 127.0.0.1 and ::1 — the only hosts the test database ever uses. */
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
+
+/**
+ * **The database target is the primary signal**, and the reason is a correction.
+ *
+ * The first version of this guard keyed off `NODE_ENV === 'test'`, which
+ * `playwright.config.ts` sets on its dev-server command — and Next FORCES
+ * `NODE_ENV` to "development" for `next dev`, discarding it. Measured from
+ * inside the running server: `{"NODE_ENV":"development","VITEST":null}`. The
+ * guard was therefore inert in E2E, the one context where the leak actually
+ * happened, while a repo test asserting the config file's text passed and
+ * proved nothing.
+ *
+ * A flag is an ASSERTION someone can forget on a new runner. The database
+ * target is an OBSERVATION that is true in every test context without anyone
+ * remembering — the same reasoning that made `TEST_DATABASE_URL` beat
+ * `NODE_ENV` for driver selection, and that one has held since step 1.
+ *
+ * `NODE_ENV` and `VITEST` remain as belt to that braces: a UNIT test may open
+ * no database at all, so neither database signal is present and they are the
+ * only ones left.
+ *
+ * **Broad refusal is the safe direction.** A false positive is a loud error in
+ * development; a false negative is a live call that succeeds silently, which is
+ * what happened twice.
+ */
+export function isTestContext(): boolean {
+  if (process.env.VITEST === 'true') return true;
+  if (process.env.NODE_ENV === 'test') return true;
+
+  // Set at all means the local Docker database is in play — nothing else ever
+  // sets it, and `resolveDriver` refuses a non-local value.
+  if ((process.env.TEST_DATABASE_URL ?? '') !== '') return true;
+
+  return pointsAtLocalDatabase(process.env.DATABASE_URL);
+}
+
+/**
+ * Parsed with the library `pg` connects with, via `resolveConnectionHost` —
+ * NOT with `new URL()`.
+ *
+ * That distinction closed a real hole in `assertLocalHost`: a `?host=`
+ * parameter overrides the authority in the URL, so a string that LOOKS remote
+ * can connect locally and vice versa. Reusing the same resolution means the two
+ * guards cannot disagree about what "local" means.
+ */
+function pointsAtLocalDatabase(connectionString: string | undefined): boolean {
+  if (connectionString === undefined || connectionString === '') return false;
+
+  try {
+    const host = resolveConnectionHost(connectionString).replace(/^\[|\]$/g, '');
+    return LOCAL_HOSTS.has(host);
+  } catch {
+    // Unparseable: err toward "this is a test". A false positive is a loud
+    // error someone fixes in a minute.
+    return true;
+  }
+}
+
+/**
+ * Throws if a test is about to reach the network.
+ *
+ * Loudly, and naming the URL. Every §2-adjacent failure in this project has
+ * been an absence reported as success — a guard that returned an empty result
+ * would leave the next person debugging a "Discogs has nothing" response, when
+ * the truth is that the call should never have been attempted.
+ *
+ * Not host-specific: the rule covers external calls generally, and §12 adds the
+ * Anthropic API at step 12. An allow-list would need revisiting then, and the
+ * revisit is the part that gets forgotten.
+ */
+export function assertNoLiveCall(url: string): void {
+  if (!isTestContext()) return;
+
+  throw new Error(
+    `A test tried to reach ${safeHost(url)} (${url}). ` +
+      'CLAUDE.md §2 forbids live external calls from tests — not even once. ' +
+      'Mock getDiscogsClient for this test, as the other Discogs suites do. ' +
+      'A browser-level stub (page.route) does NOT cover server components, ' +
+      'which is how this rule was broken in step 7.',
+  );
+}
+
+/** A malformed URL must not turn the guard's own error into a different one. */
+function safeHost(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return 'an external host';
+  }
+}
