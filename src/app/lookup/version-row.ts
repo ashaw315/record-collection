@@ -36,16 +36,29 @@ export type ComparisonColumn = {
 };
 
 /**
- * §10's five columns, ordered by how much they DISCRIMINATE.
+ * §10's five columns, in a FIXED order. Not derived from the data — deliberately.
  *
- * On master 50683 every row reads "Clay Records / CLAY LP 3 / UK": the catalog
- * number identifies nothing because the versions share it, and the year is
- * what separates the 1982 original from the 1989 reissue. At 390px the later
- * columns are the ones that fall off the edge, so this order decides what is
- * visible in the place the comparison actually happens.
+ * **Year first because pressing year is the field that varies most reliably
+ * across the versions of a master**, whatever else they share. That is a claim
+ * about masters in general, not about any one of them: master 50683 happens to
+ * read "Clay Records / CLAY LP 3 / UK" on every row, so its catalog number
+ * discriminates nothing — but a master spanning US and UK pressings on
+ * different labels discriminates differently, and country or label would carry
+ * more there.
  *
- * The label goes last because a master's versions are usually one label's
- * reissues — it is the column most likely to be identical on every row.
+ * A data-dependent order would serve each master better and is NOT what this
+ * is. The order is fixed because the table is read by scanning DOWN a column,
+ * and a column that moves between one master and the next makes that scan a
+ * fresh puzzle every time — the cost falls on the person comparing, who is
+ * standing in a shop. Consistency beats per-master optimality here.
+ *
+ * If someone later wants to derive this from the data, that is a real design
+ * decision with a real trade-off, not a tidy-up. Make it deliberately.
+ *
+ * At 390px the later columns are the ones that fall off the edge, so this
+ * order also decides what is visible where the comparison actually happens.
+ * Label goes last: a master's versions are usually one label's reissues, so it
+ * is the column most often identical on every row.
  */
 export const COMPARISON_COLUMNS: ComparisonColumn[] = [
   { key: 'year', heading: 'Year' },

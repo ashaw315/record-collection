@@ -87,15 +87,17 @@ describe('the comparison columns', () => {
     expect(keys).toContain('formats');
   });
 
-  it('orders them by how much they discriminate', () => {
+  it('puts year first, since pressing year varies most reliably', () => {
     /**
-     * Year first, then country, then catalog. On this master every row is
-     * "Clay Records / CLAY LP 3 / UK" — the catalog number identifies nothing
-     * because they SHARE it, and the year is what separates a 1982 original
-     * from a 1989 reissue.
+     * A FIXED order, not one derived from the data. Year leads because
+     * pressing year is the field most likely to differ across a master's
+     * versions in general — master 50683 shares a catalog number across every
+     * row, but a master spanning US and UK pressings would discriminate on
+     * country instead.
      *
-     * At 390px the later columns are the ones that fall off the edge, so the
-     * order decides what is visible where the comparison actually happens.
+     * Fixed is the choice: the table is read by scanning DOWN a column, and a
+     * column that moves between masters makes that scan a fresh puzzle each
+     * time. At 390px the order also decides what stays on screen.
      */
     const keys = COMPARISON_COLUMNS.map((column) => column.key);
 
