@@ -70,6 +70,40 @@ const NONE: OwnershipMatch = {
   wantList: null,
 };
 
+/**
+ * §7.7 resolved for a whole page of search results.
+ *
+ * §10 puts a badge on every result card and a Discogs page is 25-50 rows, so
+ * the alternative is one round trip per card before the screen can render — on
+ * a phone, in a shop, which is the worst place to be doing that.
+ *
+ * **Delegates to `matchOwnership` rather than reimplementing the tiering.**
+ * The tiering is the rule §7.7 spends a paragraph on and CLAUDE.md §8 calls the
+ * worst thing to get wrong; a second implementation optimised for batching is
+ * how the two would come to disagree, with the screen showing whichever one
+ * nothing tested. A test asserts they agree row by row.
+ *
+ * Concurrent rather than sequential: the queries are independent reads, so the
+ * latency is one round trip rather than N.
+ */
+export async function matchOwnershipForResults(
+  results: Array<{ discogsId: number; artist: string | null; title: string | null }>,
+): Promise<Map<number, OwnershipMatch>> {
+  const matches = await Promise.all(
+    results.map(async (result) => {
+      const match = await matchOwnership({
+        discogsReleaseId: result.discogsId,
+        artist: result.artist,
+        title: result.title,
+      });
+
+      return [result.discogsId, match] as const;
+    }),
+  );
+
+  return new Map(matches);
+}
+
 export async function matchOwnership(input: {
   discogsReleaseId: number;
   artist: string | null;
