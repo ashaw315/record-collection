@@ -1087,6 +1087,25 @@ form the records work had not shown — see the masking entry under Open.
   for captured fixtures in one line. I would have written `country: null` for a
   missing country, because that is what a sane API does.
 
+  **THE INVERSE, and it is the same error wearing the other face: a value that
+  is PRESENT and means something else.** Absence-prose fabricates data where
+  there was none; this misfiles data that exists.
+
+  Discogs' format `text` field carries whatever a contributor wrote about that
+  pressing's physical form. On release 381756 it is `"Gatefold"`; on the
+  no-matrix fixture it is `"Blue/Green"`. Same field, same type, and one is a
+  sleeve fact while the other is the vinyl colour §4.2 asks for.
+
+  Read unconditionally into `color_variant`, every gatefold record in the
+  collection acquires a colour of "Gatefold" — wrong in the confident
+  direction, exactly like `country: "Unknown"`, and for the same reason: it
+  looks entered, so nobody questions it.
+
+  **The rule: when an external field is a free-text catch-all, require positive
+  evidence before mapping it to a typed column.** The colour mapping now needs
+  a colour word to appear. Conservative on purpose — a missed colour is a blank
+  the user fills in, a wrong one is data they have to notice is wrong first.
+
   **SAME SOURCE, DIFFERENT SHAPE PER ENDPOINT — and the mismatch is silent.**
   Discogs sends the same information in different shapes depending on which
   endpoint answered, and nothing announces the change:
@@ -1177,6 +1196,33 @@ form the records work had not shown — see the masking entry under Open.
   importer is a copy, whatever the header says. Same discipline as a mutation:
   do not report the property, report what you ran. Noticed: step 6 unit 3,
   found by the step 5+6 adversarial review.
+
+- **RULE: cache the UPSTREAM payload, never your interpretation of it — your
+  interpretation is the part that changes.**
+
+  The Discogs release cache stores the raw payload and normalizes on every
+  read, rather than storing the normalized result. Two reasons, and the second
+  is the one that decides it:
+
+  1. **Normalization is our code and it keeps changing.** Six units into this
+     step the mapping has already been corrected several times — the colour
+     rule, the pressing-plant role, the matrix array. Caching output freezes
+     today's mapping for seven days, so a fix does not reach any record someone
+     has already viewed. The bug is fixed and the user still sees it.
+  2. **Double-normalization.** Feeding normalized output back through the
+     normalizer produces a different shape again, so the second request for a
+     release returns something the first did not.
+
+  **The second failure is invisible to any test that fetches once**, which is
+  most tests. It appears only on a cache HIT, meaning in production, after a
+  release has been looked at twice — and it presents as an intermittent shape
+  difference rather than an error. The test that catches it is explicitly "the
+  cached body equals the fresh body".
+
+  **The general shape: a cache stores a snapshot of something. Make sure it is
+  a snapshot of THEIRS, not of yours.** Theirs changes when they edit it, which
+  is what the TTL is for; yours changes when you deploy, which no TTL accounts
+  for. Noticed: step 7, unit 6.
 
 - **RULE: a search that does not cover the space returns a confident
   UNDERCOUNT, and an undercount looks exactly like a correct count.** Third
