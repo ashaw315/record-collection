@@ -10,21 +10,26 @@ in.
 
 ## CURRENT POSITION — read this first
 
-**Updated: 2026-08-08, end of step 6.**
+**Updated: 2026-08-08, end of the step 5+6 adversarial remediation.**
 
 **Where we are.** **Step 6 is COMPLETE** (SPEC.md §12: "Want list CRUD +
-acquire flow. E2E #5"). Built across five units: the §5.3 want-list API, the
-acquire endpoint and its transactional primitive, and the `/want-list` screen
-with the prefilled mark-acquired flow. E2E flow 5 passes on both projects.
+acquire flow. E2E #5"), and so is the five-unit remediation that followed the
+adversarial review of `records` + `want_list` + the acquire path.
+
+The remediation fixed: `tagIds` silently discarded on acquire; two create
+schemas that agreed rather than one shared definition; the concurrent loser
+getting a 500 instead of §5.3's 409; `target_pressing_id` dropped instead of
+prefilling the form; and `purchaseDate` accepting `2026-13-45`. SPEC.md §5.3
+was amended in the course of it and is the authority for all five.
 
 **Step 7 is next**: the Discogs integration.
 
-**Last verified, and when.** 2026-08-08, all of it on the current tree:
+**Last verified, and when.** 2026-08-08, all on the current tree:
 
 | Check | State |
 |---|---|
-| `npm test` | 1223 passed, 1 skipped, 65 files |
-| `e2e/want-list.spec.ts` | 5 passed chromium, 5 passed mobile |
+| `npm test` | **1293 passed, 1 skipped, 68 files** |
+| `npx playwright test` (full, both projects) | **150 passed, 2 failed, 2 skipped** — the 2 are the known flake, see below |
 | `npm run typecheck` / `lint` / `build` | clean |
 | Neon transaction gate | **9 passed, 1 skipped** — the skip is the gate's own marker correctly NOT firing |
 
@@ -32,7 +37,7 @@ Note the Neon row is the file's own count, not a suite total. Run it as
 `npx vitest run test/integration/neon-transactions.test.ts`; there is no
 `test:neon` script, and asking for one wastes a round.
 
-**Four caveats a green suite will not tell you.**
+**Three caveats a green suite will not tell you.**
 
 1. **The Neon gate's closing test was hollow until the step 5 remediation** and
    reported green from the day it was written — it never reached Neon at all.
@@ -40,31 +45,46 @@ Note the Neon row is the file's own count, not a suite total. Run it as
    unit 1".
 
 2. **The E2E suite has one open flake**, ~1 run in 5, in
-   `collection-filters.spec.ts` on both projects. NOT skipped. Its signature is
-   recorded below; it is deliberately not assumed to be the WebKit hydration
-   issue, which was diagnosed and mitigated separately.
+   `collection-filters.spec.ts` on both projects. NOT skipped. **If it fails,
+   re-run that file two or three times before investigating: a MOVING failure
+   is the flake, a FIXED failure is a regression.** Full signature below.
 
 3. **The 2 skipped E2E specs are the desktop-only view toggle**, skipped by
    design on the mobile project — not quarantined. The two `/manage` genre
    specs that WERE quarantined for weeks are now unquarantined and passing; both
    their causes were environmental.
 
-4. **The full Playwright suite was not re-run at the end of step 6** — only
-   `want-list.spec.ts` on both projects, plus the full Vitest suite. Nothing
-   suggests a regression, but the last whole-suite E2E number in this file is
-   step 5's and should be treated as such.
+**What step 7 inherits.** Every acceptance criterion below is discharged for
+BOTH `records` and `want_list`, item 14 included. Step 7 starts with no open
+gate — the first step since step 4 to do so.
 
-**What step 7 inherits.** Every acceptance criterion below is now discharged
-for BOTH `records` and `want_list`, item 14 included. Step 7 is the first step
-since step 4 that starts without an open gate.
+**Before step 7 can be planned, two things:**
 
-**Entries that bear directly on step 7**: the Zod coercion class and the
-fixture rules apply as always, but the one written FOR step 7 is the
-unspecified-bounds entry — the Discogs import is the first thing to write to
-these columns other than the API, and §4's prose ranges are enforced at the API
-boundary only. Also live: the mock-scope rule (step 7 mocks an external API
-throughout, and CLAUDE.md §2 forbids a live call even once), and the two
-`/manage` limitations.
+1. **Adam confirms his Discogs token works.** Nothing in the repo can verify
+   this, and CLAUDE.md §2 forbids a live external call from a test — not even
+   once. So the token is checked by hand, outside the suite, before the work is
+   scoped.
+
+2. **The next adversarial review is SECURITY-FOCUSED and lands AFTER step 7,
+   not before.** §6's rate limiter, cache and normalization are this project's
+   first untrusted external input: everything so far was written by the one
+   authenticated user, and Discogs data is user-submitted, imperfect (CLAUDE.md
+   §8), and arrives over a network that can be slow, hostile, or lying. A
+   general review before that work exists would find nothing; the same effort
+   spent on the boundary afterwards is where the defects will be.
+
+**Entries that bear directly on step 7**, beyond the standing rules:
+- **the unspecified-bounds entry** — the importer is the first thing besides
+  the API to write these columns, and §4's prose ranges are enforced at the API
+  boundary only;
+- **the two-want-list-items-one-record deferral** — explicitly a step 7
+  decision, not step 14, because the importer is what makes it reachable;
+- **the mock-scope rule** — step 7 mocks an external API throughout, and a mock
+  that intercepts every call disables the function it stands in for;
+- **the fixture rules**, especially the discriminating-power one: Discogs
+  fixtures are large, and a payload where every candidate match agrees proves
+  nothing about which rule matched;
+- the two `/manage` limitations, still unfixed.
 
 ---
 
@@ -546,34 +566,44 @@ form the records work had not shown — see the masking entry under Open.
   autofill bug report is diagnosed in minutes rather than rediscovered.
   Noticed: step 5, E2E flake work.
 
-- **OPEN, ~1 run in 5: two `collection-filters` specs fail on BOTH projects.**
+- **OPEN, ~1 run in 5: `collection-filters.spec.ts` fails a spec on BOTH
+  projects. Which spec varies between runs.**
+
+  **THE DIAGNOSTIC, first because it is the useful part: a MOVING failure is
+  the flake; a FIXED failure is a regression.** If `collection-filters` fails,
+  run that file two or three more times on the same build. A change that broke
+  something fails the same spec every time; this fails a different one, or
+  none. Ten seconds, and it settles the question without an investigation.
+
+  Corollary, learned the hard way in unit 5: **do not baseline by stashing and
+  running once.** A single clean baseline run is indistinguishable from the
+  flake not firing, and it will tell you your change caused the failure. Run
+  the CURRENT build several times instead — the stale-baseline rule, in
+  miniature.
+
   Its signature differs from the WebKit hydration flake above, so it is
   deliberately not treated as the same problem — "same family" is a hypothesis
   (see the rule below), and bundling them is what let the /manage flake survive
   four attempts.
 
   **Signature, for whoever picks it up:**
-  - specs: `a parent-genre chip finds a record tagged with its grandchild` and
+  - specs seen failing, one at a time and not the same one twice running:
+    `a parent-genre chip finds a record tagged with its grandchild`,
+    `clicking the active chip clears it`, and
     `clicking through to a filtered view equals loading that URL directly`;
   - fails on **chromium AND mobile**, unlike the hydration flake which was
     WebKit-only;
-  - roughly 1 full-suite run in 5, never in isolation;
+  - roughly 1 run in 5, in a full suite AND in isolation. An earlier version of
+    this entry said "never in isolation"; that was wrong — unit 5 reproduced it
+    running the file alone;
   - present with `data-hydrated` waits already in place, so it is not that
     mechanism.
 
-  **Re-observed during the step 5+6 remediation, unit 5**, with one new fact:
-  **the failing spec MOVES.** A full-suite run failed the two named above; an
-  immediate isolated run of the same file passed those two and failed a third
-  (`clicking through to a filtered view equals loading that URL directly`);
-  three further runs of that file on the same build gave 10 passed / 1 failed /
-  10 passed. So it is a property of the FILE, not of any spec in it, and the
-  rate holds at roughly 1 run in 5.
-
-  That mobility is also the cheapest way to tell it from a regression: a change
-  that broke something fails the same spec every time. Do not baseline this by
-  stashing and running once — a single clean baseline run is indistinguishable
-  from the flake not firing, which is the stale-baseline error in miniature.
-  Run the current build several times instead.
+  **Measured in the step 5+6 remediation, unit 5:** a full-suite run failed two
+  specs; an immediate isolated run of the file passed those two and failed a
+  third; three further runs on the same build gave 10 passed / 1 failed / 10
+  passed. So it is a property of the FILE — most likely its fixtures or its
+  shared filter state — not of any spec in it.
 
   Left undiagnosed deliberately: at 1 in 5 any measurement is mostly noise, and
   the suite is currently clean enough that a real regression would still stand
