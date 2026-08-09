@@ -159,7 +159,7 @@ Seed with: LP, 2xLP, 7", 10", 12" Single, Box Set, Picture Disc, all with `is_se
 | target_pressing_id | UUID REFERENCES pressings(id) | the "best dig" — the highest-fidelity pressing worth hunting |
 | best_dig_notes | TEXT | caveats, e.g. bootleg warnings, how to spot a fake |
 | max_price | NUMERIC(10,2) | what the user is willing to pay |
-| acquired_record_id | UUID REFERENCES records(id) | set when fulfilled; see §7.3 |
+| acquired_record_id | UUID REFERENCES records(id) | set when fulfilled; see §7.3. **Partial unique index where not null** — a record is the fulfilment of at most one want-list entry. |
 | is_acquired | BOOLEAN NOT NULL DEFAULT false | |
 
 **Important semantic:** `best_dig` means *the optimal pressing for sound quality*, not the cheapest option. Any UI copy must reflect this — never label it "best deal" or "best price".
@@ -520,6 +520,8 @@ The goal of this group of endpoints is: **the user fills in a structured form de
    The rule is about *implicit* loss: acquiring must not discard history as a side effect of a different action. An **explicit** user delete of an acquired item is permitted. Mistakes happen, this is a personal tool, and the record itself retains its own `purchase_date`, `purchase_price` and `store_id` — so deleting the want-list row loses the wanting, not the acquisition. Deleting it must never touch the linked record: `acquired_record_id` points from want-list to record, never the reverse.
 
    The UI must make the consequence legible before it happens — a confirmation naming what is lost, not a bare delete button on an acquired row.
+
+   **A record fulfils at most one want-list entry.** Enforce with a partial unique index on `want_list.acquired_record_id WHERE acquired_record_id IS NOT NULL`. Two entries pointing at one record would give that record two contradictory acquisition histories — it was acquired once. Duplicate *unacquired* entries stay legal: wanting two copies, or the same album in two pressings, is a real intention, and each is fulfilled by its own record. §5.7's import makes this reachable, since importing the same release to the want list twice creates two rows.
 4. **Deleting an artist/genre/label/store that is in use** is rejected with `409`, never cascaded.
 5. **Price history is append-only.** Never `UPDATE` a `price_history` row; always insert a new one.
 6. **Estimated collection value** = for each record, the most recent `price_history` row of type `used` (falling back to `new`, then to `purchase_price`). Sum.

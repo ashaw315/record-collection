@@ -217,6 +217,22 @@ export const wantList = pgTable(
     index('want_list_label_id_idx').on(t.labelId),
     index('want_list_target_pressing_id_idx').on(t.targetPressingId),
     index('want_list_acquired_record_id_idx').on(t.acquiredRecordId),
+    /**
+     * §4.2 and §7.3: a record fulfils AT MOST ONE want-list entry. Two entries
+     * pointing at one record would give it two contradictory acquisition
+     * histories, and §7.3 makes the want list exactly that history.
+     *
+     * PARTIAL, and the predicate is the design rather than an optimisation:
+     * duplicate UNACQUIRED entries stay legal, because wanting two copies or
+     * the same album in two pressings is a real intention (§4) and each is
+     * fulfilled by its own record. A blanket unique index would forbid that.
+     *
+     * §5.7's import is what made the violation reachable — importing the same
+     * release to the want list twice creates two rows.
+     */
+    uniqueIndex('want_list_acquired_record_id_unique')
+      .on(t.acquiredRecordId)
+      .where(sql`${t.acquiredRecordId} IS NOT NULL`),
     // Partial: the want list is almost always queried for what is still wanted.
     index('want_list_priority_idx')
       .on(t.priority)

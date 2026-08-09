@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "want_list_acquired_record_id_unique" ON "want_list" USING btree ("acquired_record_id") WHERE "want_list"."acquired_record_id" IS NOT NULL;

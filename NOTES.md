@@ -1197,6 +1197,37 @@ form the records work had not shown — see the masking entry under Open.
   do not report the property, report what you ran. Noticed: step 6 unit 3,
   found by the step 5+6 adversarial review.
 
+- **FOR THE SECURITY REVIEW: `POST /api/discogs/import` re-fetches the release
+  by id rather than accepting a release payload from the client. That is a
+  SECURITY decision, not a spec-reading, and it should be reviewed as one.**
+
+  §5.7 gives the body as `{ discogsReleaseId, target, overrides }` — no release
+  payload — and the implementation follows it. The distinction the shape
+  enforces: **a client asserting facts about a pressing versus the server
+  establishing them.**
+
+  If the endpoint accepted a payload, any caller could claim any pressing
+  identity — a `discogs_release_id` belonging to a different release, a matrix
+  that was never in the dead wax, a catalog number matching a rare original.
+  Those values are found-or-created into SHARED `pressings` rows (§4), so a
+  false claim does not stay local to one record: it becomes the pressing every
+  future import of that release matches against. §7.7's ownership tiers then
+  read from it, and CLAUDE.md §8 calls getting that distinction wrong the worst
+  bug this app can ship.
+
+  The user's corrections still arrive — as `overrides`, which are an explicit,
+  strictly-validated, bounded field list rather than an arbitrary object.
+
+  **Single-user app, so the threat model is thin today.** Recorded because the
+  property is easy to lose: accepting the payload the client already has looks
+  like an obvious optimisation — it saves a rate-limited call — and the reason
+  not to is not visible from the endpoint alone. `test/integration/api/
+  discogs-import.test.ts` asserts both halves (it re-fetches; it rejects a
+  client-supplied `release` key).
+
+  **The general shape for the review: which endpoints let a client assert a
+  fact the server could establish itself?** Noticed: step 7, unit 7.
+
 - **RULE: cache the UPSTREAM payload, never your interpretation of it — your
   interpretation is the part that changes.**
 

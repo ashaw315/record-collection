@@ -29,6 +29,13 @@
       "when": 1785940287570,
       "tag": "0003_schema_corrections",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1786277911917,
+      "tag": "0004_want_list_one_fulfilment",
+      "breakpoints": true
     }
   ]
 }
