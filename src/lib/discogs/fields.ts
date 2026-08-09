@@ -67,6 +67,31 @@ export function inferReissue(descriptors: string[]): boolean {
 }
 
 /**
+ * A Discogs id from a path segment, or null when it is not unambiguously one.
+ *
+ * **`z.coerce.number()` alone is not sufficient, and this was demonstrated
+ * rather than assumed.** Probed against the real coercion:
+ *
+ *   '50683'  → 50683      ' 50683 ' → 50683
+ *   '5e4'    → 50000      '0x50'    → 80        '50683\n' → 50683
+ *
+ * These ids are interpolated into a URL we then request, so an accepted-but-
+ * transformed value fetches a DIFFERENT record and presents it as the answer —
+ * not an error, but the wrong pressing shown as the right one, which is the
+ * §7.7 confusion arriving from a new direction.
+ *
+ * The digit test IS the validation; the numeric conversion is only the
+ * conversion. A mutation removing the check failed zero tests, because every
+ * id in the test set was one coercion rejects anyway.
+ */
+export function toDiscogsId(value: string): number | null {
+  if (!/^\d+$/.test(value)) return null;
+
+  const parsed = Number.parseInt(value, 10);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+/**
  * Format descriptors, whichever way this endpoint happened to send them.
  *
  * Search results send an ARRAY (`["Vinyl", "LP", "Reissue"]`); master versions

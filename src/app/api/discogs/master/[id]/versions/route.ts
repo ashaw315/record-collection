@@ -4,6 +4,7 @@ import { badRequest } from '@/lib/api/errors';
 import { withErrorHandling } from '@/lib/api/handler';
 import { DiscogsError, getDiscogsClient } from '@/lib/discogs/client';
 import { discogsErrorResponse } from '@/lib/discogs/errors';
+import { toDiscogsId } from '@/lib/discogs/fields';
 import { normalizeVersionsResponse } from '@/lib/discogs/normalize-versions';
 
 /**
@@ -26,17 +27,6 @@ import { normalizeVersionsResponse } from '@/lib/discogs/normalize-versions';
 
 type Context = { params: Promise<{ id: string }> };
 
-/**
- * A Discogs master id is a positive integer, and this one is INTERPOLATED INTO
- * A URL we then request. So it is validated as a number rather than passed
- * through as a string: `50683/../../releases/1` would otherwise build a path to
- * a different endpoint entirely.
- *
- * Same reasoning as §5.2's "reject a non-UUID with 400 rather than attempting a
- * lookup", with the added weight that the value leaves our process.
- */
-const masterIdSchema = z.coerce.number().int().positive();
-
 const querySchema = z.strictObject({
   page: z.coerce.number().int().positive().optional(),
 });
@@ -46,19 +36,17 @@ export const GET = withErrorHandling(
   async (request: Request, context: Context) => {
     const { id } = await context.params;
 
-    // `.safeParse` on a string that is not purely numeric fails here rather
-    // than coercing: `Number('50683/..')` is NaN, and NaN is rejected.
-    const master = masterIdSchema.safeParse(id);
-    if (!master.success || !/^\d+$/.test(id)) {
-      return badRequest('Invalid Discogs master id', 'INVALID_ID');
-    }
+    // Digits before conversion — see `toDiscogsId` for the probed list of
+    // values `z.coerce.number()` accepts and transforms.
+    const masterId = toDiscogsId(id);
+    if (masterId === null) return badRequest('Invalid Discogs master id', 'INVALID_ID');
 
     const url = new URL(request.url);
     const query = querySchema.safeParse(Object.fromEntries(url.searchParams.entries()));
     if (!query.success) return badRequest('Invalid page', 'INVALID_PAGE');
 
     try {
-      const payload = await getDiscogsClient().get(`/masters/${master.data}/versions`, {
+      const payload = await getDiscogsClient().get(`/masters/${masterId}/versions`, {
         page: query.data.page,
         // Matches the captured fixture's page size, and keeps a single page
         // readable — §10's table is compared by eye, not scrolled past.
