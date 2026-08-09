@@ -410,6 +410,38 @@ form the records work had not shown — see the masking entry under Open.
   the do-nothing path, the most common flow is the untested one. Noticed: step 6
   unit 4, during the step 5+6 remediation.
 
+  **WIRING VARIANT: a pure-function test proves the TRANSFORMATION, never that
+  anything calls it.** Not a fixture problem at all — the fixtures are fine and
+  the assertions are real. The gap is that a change bypassing the function
+  entirely passes every one of its tests.
+
+  Measured in step 7 unit 4. `normalize-search.test.ts` has 24 tests over real
+  payloads: genres and styles kept separate, absence-prose mapped to null, the
+  combined "Artist - Title" split. Making the route return the RAW Discogs
+  payload instead of the normalized one:
+
+  | Layer | Result |
+  |---|---|
+  | normalizer's own 24 tests | **all still pass** |
+  | endpoint tests | **5 fail** |
+
+  Nothing was wrong with the normalizer, so nothing testing the normalizer
+  could notice. A user would see a record pressed in a country called
+  "Unknown", with a green suite.
+
+  **The rule: for any transformation that exists to protect the user from
+  something, assert the property at the layer the USER reaches, not only where
+  it is implemented.** The pure-function tests stay — they are where the
+  behaviour is pinned down, and they discriminate far more finely than an
+  endpoint test can. But at least one assertion per property belongs at the
+  boundary, and it should be the property that matters rather than a smoke
+  test: "styles survive", "absence is null", not "returns 200".
+
+  **The tell:** a module whose tests all pass but which nothing imports. Same
+  family as the extraction-with-one-importer check above — both are questions
+  about whether the code is CONNECTED, which no test of the code itself can
+  answer. Noticed: step 7, unit 4.
+
   **SELF-MATCHING VARIANT: a checker that scans the repo can end up inside its
   own subject set, and it fails on its own matchers rather than on real code.**
   The cross-spec variant one level up: the shared state is the REPOSITORY.
@@ -1348,10 +1380,16 @@ form the records work had not shown — see the masking entry under Open.
   a change to §5's contract and belongs in its own unit rather than smuggled
   into a Discogs one (CLAUDE.md §4).
 
-  **The fix, when it happens:** map an empty-path issue to a top-level
-  `message` rather than dropping it, and add a test per affected endpoint
-  asserting the message reaches the client. Not just the status — asserting the
-  status alone is what let this sit.
+  **SCHEDULED: its own unit, immediately after step 7 unit 5.** Not step 14.
+  Two endpoints are already discarding the reason, step 7 adds more
+  object-level refinements as it goes, and the blast radius grows with every
+  unit this is deferred past.
+
+  **The fix:** map an empty-path issue to the top-level `message` rather than
+  dropping it, plus a test on EACH affected endpoint asserting the message
+  survives to the client. The existing tests assert only the status, and that
+  is precisely what hid this — so status-only assertions are what the new tests
+  must not repeat.
 
 - **DEFERRED — `genreSubtree` is defined twice, in two files, and both copies
   are correct today.** The recursive CTE walking the genre hierarchy down (§7.1)

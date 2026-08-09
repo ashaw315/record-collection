@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { badRequest, validationError } from '@/lib/api/errors';
 import { withErrorHandling } from '@/lib/api/handler';
 import { DiscogsError, getDiscogsClient } from '@/lib/discogs/client';
+import { discogsErrorResponse } from '@/lib/discogs/errors';
 import { normalizeSearchResponse } from '@/lib/discogs/normalize-search';
 
 /**
@@ -134,25 +135,7 @@ export const GET = withErrorHandling('api.discogs.search.GET', async (request: R
 
     return NextResponse.json(normalizeSearchResponse(payload));
   } catch (error) {
-    if (error instanceof DiscogsError) {
-      /**
-       * Discogs' failures are reported as theirs, not ours. A 429 is a defined,
-       * temporary condition the user can act on by waiting; a 500 would tell
-       * them the app is broken and send someone looking for a bug that is not
-       * there. Everything else upstream becomes a 502 for the same reason.
-       */
-      if (error.status === 429) {
-        return NextResponse.json(
-          { error: { message: 'Discogs rate limit reached. Try again in a moment.', code: 'RATE_LIMITED' } },
-          { status: 429 },
-        );
-      }
-
-      return NextResponse.json(
-        { error: { message: 'Could not reach Discogs. Try again shortly.', code: 'UPSTREAM_ERROR' } },
-        { status: 502 },
-      );
-    }
+    if (error instanceof DiscogsError) return discogsErrorResponse(error);
 
     throw error;
   }

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { inferReissue, meaningful, toDescriptors, toYear } from './fields';
 
 /**
  * Discogs search payloads → SPEC.md §5.7's normalized search result.
@@ -83,35 +84,7 @@ export type NormalizedSearchResponse = {
   meta: { total: number; page: number; pageSize: number };
 };
 
-/**
- * Discogs encodes absence as PROSE, and these are all real values from the
- * captured fixtures: a country of "Unknown", a catalog number of "none", a
- * label of "Not On Label". Passed through, they become a record pressed in a
- * country called Unknown with catalog number "none" — data that looks entered
- * rather than missing, which is worse than a blank.
- */
-const ABSENT = new Set(['', 'unknown', 'none', 'not on label', 'n/a', 'various']);
 
-function meaningful(value: string | undefined): string | null {
-  if (value === undefined) return null;
-
-  const trimmed = value.trim();
-  return trimmed === '' || ABSENT.has(trimmed.toLowerCase()) ? null : trimmed;
-}
-
-/**
- * A year as a number, or null.
- *
- * `Number('')` is 0 and `Number('n/a')` is NaN — both would flow into a column
- * that expects a year, and the first is the more dangerous because it looks
- * like data. The Zod coercion class from NOTES, met at an external boundary.
- */
-function toYear(value: string | number | undefined): number | null {
-  if (value === undefined) return null;
-
-  const parsed = typeof value === 'number' ? value : Number.parseInt(value.trim(), 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-}
 
 /**
  * Discogs sends `"Discharge - Hear Nothing See Nothing Say Nothing"` as one
@@ -133,25 +106,11 @@ function splitTitle(combined: string | undefined): { artist: string | null; titl
   };
 }
 
-/**
- * §5.7: "isReissue — inferred from format descriptors."
- *
- * Matched as WHOLE descriptors rather than by substring: the descriptor list
- * also carries colours and quirks ("Misprint", "Red Translucent"), and a
- * substring test would eventually find "reissue" inside one of them. This is
- * the original-versus-repress distinction that CLAUDE.md §8 is about, so a
- * false positive here mislabels the exact thing the app exists to get right.
- */
-const REISSUE_DESCRIPTORS = new Set(['reissue', 'repress', 'remastered', 'reprint']);
-
-function inferReissue(formats: string[]): boolean {
-  return formats.some((descriptor) => REISSUE_DESCRIPTORS.has(descriptor.trim().toLowerCase()));
-}
 
 export function normalizeSearchResult(input: unknown): NormalizedSearchResult {
   const raw = rawSearchResult.parse(input);
   const { artist, title } = splitTitle(raw.title);
-  const formats = raw.format ?? [];
+  const formats = toDescriptors(raw.format);
 
   return {
     discogsId: raw.id,
