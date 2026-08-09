@@ -970,6 +970,34 @@ form the records work had not shown — see the masking entry under Open.
   The hollow Neon test is the worst case — see the Neon entry below.
   Swept: step 5 remediation.
 
+  **SAME CLASS, WORST FORM YET: asserting a CONFIG FILE'S TEXT rather than the
+  running system's BEHAVIOUR.** The test passed for the entire period the thing
+  it named was inert.
+
+  A repo test asserted that `playwright.config.ts` starts the dev server with
+  `NODE_ENV=test`. It does — and Next FORCES `NODE_ENV` to "development" for
+  `next dev`, discarding it. So the config line was present, the test was
+  green, and the guard keyed off that variable never applied to a single E2E
+  run. Two live calls reached api.discogs.com underneath it.
+
+  **Why it is worse than the other two in this entry.** A message-less
+  `.toThrow()` at least observes the code under test; it just cannot tell which
+  failure. This observes a FILE, and infers behaviour from it. The inference was
+  wrong in a way no amount of reading either the config or the guard would have
+  revealed — only running the system and asking what it saw.
+
+  Replaced with a Playwright spec that drives a real endpoint and asserts the
+  call is refused, mutation-verified: disabling the guard fails 2 of its 3
+  specs. Cost: an extra E2E spec. Value: the assertion is about the thing whose
+  behaviour matters.
+
+  **The tell: a test whose subject is a file path.** `readFileSync` in a test
+  is not automatically wrong — the dotenv and migration checks legitimately
+  assert repository FACTS — but the moment the assertion is a proxy for
+  "therefore the system behaves like X", it has stopped testing X. Ask what
+  would have to be true at RUNTIME, and whether anything checks it. Noticed:
+  step 7, the no-live-calls guard.
+
   **SAME CLASS, DIFFERENT MATCHER: `toEqual` cannot catch an explicit
   `undefined` where a key should be absent.** Verified rather than assumed:
 
