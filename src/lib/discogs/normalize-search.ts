@@ -1,0 +1,192 @@
+import { z } from 'zod';
+
+/**
+ * Discogs search payloads → SPEC.md §5.7's normalized search result.
+ *
+ * §5.7: "Returns normalized results, not raw Discogs payloads." Raw payloads
+ * reaching the client would put Discogs' field names and its encoding of
+ * absence into our UI, and every consumer would have to learn both.
+ *
+ * **Genres and styles stay SEPARATE.** Discogs sends `genre: ["Rock"]` with
+ * `style: ["Hardcore", "Punk"]` for a UK82 hardcore record. CLAUDE.md §8
+ * forbids flattening those distinctions, and §6 says to prefer `styles` because
+ * it is the more specific term — so both travel, and §7.1's hierarchy decides
+ * how they relate. A normalizer that picked one would make that decision
+ * silently and irreversibly.
+ */
+
+/**
+ * Discogs' own field names, parsed at the boundary (CLAUDE.md §6: `any` is
+ * forbidden except at the boundary of genuinely untyped external payloads, and
+ * there it must be immediately narrowed with a Zod parse).
+ *
+ * Everything is optional. This is a user-submitted database and its search
+ * results are sparse in ways that are not documented — `catno` and `country`
+ * are missing entirely on some rows and prose on others.
+ */
+const rawSearchResult = z
+  .object({
+    id: z.number(),
+    type: z.string().optional(),
+    title: z.string().optional(),
+    year: z.union([z.string(), z.number()]).optional(),
+    country: z.string().optional(),
+    catno: z.string().optional(),
+    label: z.array(z.string()).optional(),
+    // SINGULAR here. Release detail uses `genres`/`styles`; search uses
+    // `genre`/`style`, and assuming otherwise silently yields empty arrays.
+    genre: z.array(z.string()).optional(),
+    style: z.array(z.string()).optional(),
+    format: z.array(z.string()).optional(),
+    thumb: z.string().optional(),
+    cover_image: z.string().optional(),
+    master_id: z.number().nullable().optional(),
+    community: z.object({ have: z.number().optional(), want: z.number().optional() }).optional(),
+  })
+  .passthrough();
+
+const rawSearchResponse = z
+  .object({
+    results: z.array(z.unknown()).optional(),
+    pagination: z
+      .object({
+        items: z.number().optional(),
+        page: z.number().optional(),
+        per_page: z.number().optional(),
+      })
+      .optional(),
+  })
+  .passthrough();
+
+export type NormalizedSearchResult = {
+  discogsId: number;
+  type: 'release' | 'master';
+  masterId: number | null;
+  title: string;
+  artist: string | null;
+  thumbUrl: string | null;
+  coverUrl: string | null;
+  year: number | null;
+  country: string | null;
+  label: string | null;
+  catalogNumber: string | null;
+  formats: string[];
+  genres: string[];
+  styles: string[];
+  isReissue: boolean;
+  communityHave: number | null;
+  communityWant: number | null;
+};
+
+export type NormalizedSearchResponse = {
+  data: NormalizedSearchResult[];
+  meta: { total: number; page: number; pageSize: number };
+};
+
+/**
+ * Discogs encodes absence as PROSE, and these are all real values from the
+ * captured fixtures: a country of "Unknown", a catalog number of "none", a
+ * label of "Not On Label". Passed through, they become a record pressed in a
+ * country called Unknown with catalog number "none" — data that looks entered
+ * rather than missing, which is worse than a blank.
+ */
+const ABSENT = new Set(['', 'unknown', 'none', 'not on label', 'n/a', 'various']);
+
+function meaningful(value: string | undefined): string | null {
+  if (value === undefined) return null;
+
+  const trimmed = value.trim();
+  return trimmed === '' || ABSENT.has(trimmed.toLowerCase()) ? null : trimmed;
+}
+
+/**
+ * A year as a number, or null.
+ *
+ * `Number('')` is 0 and `Number('n/a')` is NaN — both would flow into a column
+ * that expects a year, and the first is the more dangerous because it looks
+ * like data. The Zod coercion class from NOTES, met at an external boundary.
+ */
+function toYear(value: string | number | undefined): number | null {
+  if (value === undefined) return null;
+
+  const parsed = typeof value === 'number' ? value : Number.parseInt(value.trim(), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+/**
+ * Discogs sends `"Discharge - Hear Nothing See Nothing Say Nothing"` as one
+ * string. §5.7 wants them apart.
+ *
+ * Split on the FIRST " - " only: titles contain hyphens of their own, and
+ * splitting on each one turns "Why - The Singles" into an artist and two
+ * fragments.
+ */
+function splitTitle(combined: string | undefined): { artist: string | null; title: string } {
+  if (combined === undefined) return { artist: null, title: '' };
+
+  const separator = combined.indexOf(' - ');
+  if (separator === -1) return { artist: null, title: combined.trim() };
+
+  return {
+    artist: combined.slice(0, separator).trim(),
+    title: combined.slice(separator + 3).trim(),
+  };
+}
+
+/**
+ * §5.7: "isReissue — inferred from format descriptors."
+ *
+ * Matched as WHOLE descriptors rather than by substring: the descriptor list
+ * also carries colours and quirks ("Misprint", "Red Translucent"), and a
+ * substring test would eventually find "reissue" inside one of them. This is
+ * the original-versus-repress distinction that CLAUDE.md §8 is about, so a
+ * false positive here mislabels the exact thing the app exists to get right.
+ */
+const REISSUE_DESCRIPTORS = new Set(['reissue', 'repress', 'remastered', 'reprint']);
+
+function inferReissue(formats: string[]): boolean {
+  return formats.some((descriptor) => REISSUE_DESCRIPTORS.has(descriptor.trim().toLowerCase()));
+}
+
+export function normalizeSearchResult(input: unknown): NormalizedSearchResult {
+  const raw = rawSearchResult.parse(input);
+  const { artist, title } = splitTitle(raw.title);
+  const formats = raw.format ?? [];
+
+  return {
+    discogsId: raw.id,
+    // Default to release: §5.7 says the search endpoint's `type` defaults to
+    // `release`, and a result that fails to say is one.
+    type: raw.type === 'master' ? 'master' : 'release',
+    masterId: raw.master_id ?? null,
+    title,
+    artist,
+    thumbUrl: meaningful(raw.thumb),
+    coverUrl: meaningful(raw.cover_image),
+    year: toYear(raw.year),
+    country: meaningful(raw.country),
+    // The first label is the releasing one; the rest are pressing plants and
+    // distributors, which belong to the pressing rather than the record.
+    label: meaningful(raw.label?.[0]),
+    catalogNumber: meaningful(raw.catno),
+    formats,
+    genres: raw.genre ?? [],
+    styles: raw.style ?? [],
+    isReissue: inferReissue(formats),
+    communityHave: raw.community?.have ?? null,
+    communityWant: raw.community?.want ?? null,
+  };
+}
+
+export function normalizeSearchResponse(input: unknown): NormalizedSearchResponse {
+  const raw = rawSearchResponse.parse(input);
+
+  return {
+    data: (raw.results ?? []).map(normalizeSearchResult),
+    meta: {
+      total: raw.pagination?.items ?? 0,
+      page: raw.pagination?.page ?? 1,
+      pageSize: raw.pagination?.per_page ?? 0,
+    },
+  };
+}
