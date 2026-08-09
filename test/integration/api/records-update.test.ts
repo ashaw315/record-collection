@@ -205,6 +205,14 @@ describe('PATCH /api/records/:id — scalar fields', () => {
     );
 
     expect(response.status).toBe(400);
+    /**
+     * The MESSAGE, not just the status. This test asserted the status alone
+     * and passed while the endpoint answered a bare "Invalid request" — the
+     * schema's `At least one field must be supplied` was discarded by
+     * `validationError`, which kept only issues naming a field. A status-only
+     * assertion cannot tell a considered rejection from a silent one.
+     */
+    expect((await response.json()).error.message).toBe('At least one field must be supplied');
   });
 
   it('rejects unknown keys', async () => {

@@ -56,6 +56,21 @@ export function conflictInUse(
  */
 export function validationError(error: ZodError): NextResponse<ApiErrorBody> {
   const fieldErrors: Record<string, string> = {};
+
+  /**
+   * An object-level `.refine` describes the WHOLE body, so Zod gives it an
+   * empty path too — the same shape as `unrecognized_keys` above, which was
+   * handled and then not generalised.
+   *
+   * Its message was dropped, and the response became a 400 saying "Invalid
+   * request" with an empty `fieldErrors`: a rejection that tells the caller
+   * nothing about what to change. Eight PATCH endpoints share the same
+   * "At least one field must be supplied" refine and every one of them answered
+   * that, while every one of their tests passed — because they assert the
+   * status and not the message.
+   */
+  let objectMessage: string | undefined;
+
   for (const issue of error.issues) {
     if (issue.code === 'unrecognized_keys') {
       for (const key of issue.keys) {
@@ -66,13 +81,29 @@ export function validationError(error: ZodError): NextResponse<ApiErrorBody> {
     }
 
     const field = issue.path.join('.');
-    if (field !== '' && !(field in fieldErrors)) {
-      fieldErrors[field] = issue.message;
+    if (field === '') {
+      // First one wins: the message is rendered as a sentence, and
+      // concatenating several would produce prose nobody wrote.
+      objectMessage ??= issue.message;
+      continue;
     }
+
+    if (!(field in fieldErrors)) fieldErrors[field] = issue.message;
   }
 
+  /**
+   * Field errors take precedence. When a body fails both a field check and an
+   * object-level refine, the field errors say what to fix and the refine says
+   * only that something is missing — so the generic message stands and
+   * `fieldErrors` carries the detail, exactly as before this change.
+   */
+  const message =
+    Object.keys(fieldErrors).length === 0 && objectMessage !== undefined
+      ? objectMessage
+      : 'Invalid request';
+
   return NextResponse.json(
-    { error: { message: 'Invalid request', code: 'VALIDATION_ERROR', fieldErrors } },
+    { error: { message, code: 'VALIDATION_ERROR', fieldErrors } },
     { status: 400 },
   );
 }

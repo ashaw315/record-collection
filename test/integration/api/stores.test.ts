@@ -381,6 +381,11 @@ describe('PATCH /api/stores/:id', () => {
     const response = await patchStore(jsonRequest(`/api/stores/${id}`, 'PATCH', {}), params(id));
 
     expect(response.status).toBe(400);
+    // The message, not just the status: a status-only assertion cannot tell a
+    // considered rejection from one whose explanation was discarded.
+    expect((await response.json()).error.message).toBe(
+      'At least one field must be supplied',
+    );
   });
 
   it('rejects unknown keys', async () => {

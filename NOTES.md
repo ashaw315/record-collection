@@ -516,10 +516,17 @@ form the records work had not shown — see the masking entry under Open.
   inherited diagnosis is never re-derived, so a wrong emphasis survives every
   subsequent attempt. Noticed: step 5, unit 7b.
 
-- **RULE: Zod's convenience modifiers silently change MEANING at the boundary.
-  Treat any `.coerce` or `.default` in a request schema as suspect.**
+- **RULE: Zod's coercion layer is SYSTEMATICALLY PERMISSIVE at trust
+  boundaries. Four instances is a class, not a run.**
 
-  Three instances, all in this build, all invisible to every downstream test —
+  **The standing rule: no `.coerce` appears in a boundary schema without an
+  explicit FORMAT CHECK in front of it.** Not "be careful with coercion" —
+  coercion's job is to say yes to things that resemble the target type, and a
+  trust boundary's job is to say no to everything it was not promised. Those
+  are opposite jobs, so the format check is not belt-and-braces, it is the
+  actual validation and the coercion is only the conversion.
+
+  Four instances, all in this build, all invisible to every downstream test —
   because each produced a *valid-looking* value rather than an error:
 
   | Modifier | Input | Becomes | Consequence |
@@ -527,13 +534,32 @@ form the records work had not shown — see the masking entry under Open.
   | `.default([])` on `genreIds` | absent | `[]` | "leave alone" becomes "REMOVE ALL" — silent data loss on PATCH |
   | `z.coerce.number()` on `yearFrom` | `''` | `0` | applies `release_year >= 0`, drops every undated record behind a 200 |
   | `z.coerce.boolean()` on `includeUndated` | `'false'` | `true` | the flag cannot be turned off; every non-empty string is true |
+  | `z.coerce.number()` on a Discogs master id | `'0x50'` | `80` | fetches a DIFFERENT master's versions and presents them as the answer |
+
+  The fourth adds a dimension the first three did not have: **the coerced value
+  left our process.** `"5e4"` becomes 50000 and `"0x50"` becomes 80 — both
+  accepted, both interpolated into a URL, both returning real data for the
+  wrong record. Probed rather than assumed, after a mutation removing the
+  format check failed nothing:
+
+  ```
+  z.coerce.number().int().positive()
+    '50683'  → 50683      ' 50683 ' → 50683
+    '5e4'    → 50000      '0x50'    → 80        '50683\n' → 50683
+  ```
 
   **Why they are hard to catch.** A validation bug that REJECTS is loud — a 400
-  arrives and someone investigates. These three all ACCEPT, and produce a
-  plausible value, so the endpoint returns 200 with the wrong rows. Nothing
-  downstream can tell: the query layer received a legitimate number, the
-  handler received a legitimate array. The defect exists entirely in the gap
-  between what the caller wrote and what the schema decided they meant.
+  arrives and someone investigates. All four ACCEPT, and produce a plausible
+  value, so the endpoint returns 200 with the wrong rows. Nothing downstream
+  can tell: the query layer received a legitimate number, the handler received a
+  legitimate array. The defect exists entirely in the gap between what the
+  caller wrote and what the schema decided they meant.
+
+  **Nor will a mutation necessarily catch it.** Removing the digit check in
+  front of `z.coerce.number()` failed ZERO tests, because the existing tests
+  only sent ids that coercion rejects anyway (`'not-a-master'`, `'-1'`). The
+  test set has to contain values coercion ACCEPTS but the format forbids, and
+  those are not the values anyone thinks to write down.
 
   **The rule.** In a boundary schema, prefer an explicit shape that cannot
   reinterpret:
@@ -1029,6 +1055,30 @@ form the records work had not shown — see the masking entry under Open.
   for captured fixtures in one line. I would have written `country: null` for a
   missing country, because that is what a sane API does.
 
+  **SAME SOURCE, DIFFERENT SHAPE PER ENDPOINT — and the mismatch is silent.**
+  Discogs sends the same information in different shapes depending on which
+  endpoint answered, and nothing announces the change:
+
+  | Field | Search results | Master versions |
+  |---|---|---|
+  | format descriptors | ARRAY `["Vinyl","LP","Reissue"]` | STRING `"LP, Album, Reissue"` |
+  | year | `year` | `released` |
+  | genres / styles | `genre` / `style` (singular) | — |
+  | community counts | `community.have` | `stats.community.in_collection` |
+
+  **The consequence is worse than a missing field.** Treating the version
+  string as an array yields ONE descriptor that matches nothing, so
+  `isReissue` is false for every row — on the screen built specifically to tell
+  an original from a reissue. It does not throw, it does not warn, and the
+  table looks complete. Reading `year` instead of `released` empties the column
+  that separates the 1982 original from the 1989 repress.
+
+  **The rule: normalize per endpoint, and never assume two endpoints of the
+  same API share a field's shape.** Where the RULES are shared (absence-prose,
+  reissue inference) extract them; where the SHAPES differ, keep separate
+  parsers and let each one state what it expects. A single "clever" normalizer
+  spanning both is how the string-as-array case gets written.
+
   **The rule for any external boundary: enumerate how the source spells
   ABSENCE, from real payloads, before mapping its fields.** Null and undefined
   are the easy cases. The dangerous ones are sentinel strings, `0` for "not
@@ -1350,46 +1400,36 @@ form the records work had not shown — see the masking entry under Open.
   undated record behind a 200. That bug is fixed; this design consequence
   remains. Noticed: step 5 remediation, unit 3.
 
-- **DEFECT, unfixed: `validationError` DISCARDS the message from any
-  object-level `.refine`, so those endpoints answer "Invalid request" with an
-  empty `fieldErrors` and no indication of what is wrong.**
+- **RESOLVED: `validationError` discarded the message from any object-level
+  `.refine`, and EIGHT endpoints were answering "Invalid request" with the
+  reason dropped.** Fixed in its own unit after step 7 unit 5.
 
-  Verified by execution, not inspection:
+  A refine on the whole object produces an issue whose `path` is EMPTY, and the
+  helper kept only issues that named a field. The response was a well-formed
+  400 that told the caller nothing — the absence-as-success shape in a place
+  where the absence IS the explanation.
 
-  ```
-  z.strictObject({ a: z.string().optional() })
-    .refine((v) => Object.keys(v).length > 0, { message: 'At least one field must be supplied' })
-  → {"error":{"message":"Invalid request","code":"VALIDATION_ERROR","fieldErrors":{}}}
-  ```
+  **The count was wrong when first recorded here: I said two endpoints, and it
+  was eight.** The original grep covered two directories rather than `src/`.
+  Every PATCH endpoint carries the same `At least one field must be supplied`
+  refine — artists, genres, labels, stores, pressings, records, want-list and
+  influences.
 
-  A refine on the whole object produces an issue whose `path` is EMPTY, and
-  `validationError` keeps only issues that name a field (`if (field !== '')`).
-  The message is dropped silently — the response is a well-formed 400 that
-  tells the caller nothing, which is the absence-as-success shape in a place
-  where the absence is an explanation.
+  **Why it survived: all eight had an empty-body test, and all eight asserted
+  only the STATUS.** A status-only assertion cannot distinguish a considered
+  rejection from one whose explanation was silently discarded. Reverting the
+  fix now fails 10 tests; before the fix that same mutation failed zero.
 
-  **Two endpoints are affected today**, both with the same "empty body" refine:
-  `PATCH /api/records/:id` (`At least one field must be supplied`) and
-  `PATCH /api/influences/:sourceId/:targetId`. Their tests assert the 400
-  status and pass; nothing asserts the message, so the defect is invisible.
+  **The other half was already in the same function.** `unrecognized_keys` has
+  the identical empty-path shape, was handled specially, and the handling was
+  never generalised — the header even documents the empty path as "the
+  exception that made this more than a one-liner". One instance of a class,
+  solved and not recognised as a class.
 
-  Found in step 7 unit 4, where `GET /api/discogs/search` needed to tell the
-  user WHICH search term to supply. Worked around there by checking the
-  condition in the handler and calling `badRequest` with the message directly —
-  a fix in `validationError` would touch every endpoint's error shape, which is
-  a change to §5's contract and belongs in its own unit rather than smuggled
-  into a Discogs one (CLAUDE.md §4).
-
-  **SCHEDULED: its own unit, immediately after step 7 unit 5.** Not step 14.
-  Two endpoints are already discarding the reason, step 7 adds more
-  object-level refinements as it goes, and the blast radius grows with every
-  unit this is deferred past.
-
-  **The fix:** map an empty-path issue to the top-level `message` rather than
-  dropping it, plus a test on EACH affected endpoint asserting the message
-  survives to the client. The existing tests assert only the status, and that
-  is precisely what hid this — so status-only assertions are what the new tests
-  must not repeat.
+  Field errors keep precedence: when a body fails a field check AND an
+  object-level refine, the field errors say what to fix. That rule needed its
+  own fixture — the first version passed under either precedence because the
+  refine did not actually fire, and mutation caught it.
 
 - **DEFERRED — `genreSubtree` is defined twice, in two files, and both copies
   are correct today.** The recursive CTE walking the genre hierarchy down (§7.1)

@@ -485,6 +485,11 @@ describe('PATCH /api/labels/:id', () => {
     const response = await patchLabel(jsonRequest(`/api/labels/${id}`, 'PATCH', {}), params(id));
 
     expect(response.status).toBe(400);
+    // The message, not just the status: a status-only assertion cannot tell a
+    // considered rejection from one whose explanation was discarded.
+    expect((await response.json()).error.message).toBe(
+      'At least one field must be supplied',
+    );
   });
 
   it('returns 404 for an id that does not exist', async () => {

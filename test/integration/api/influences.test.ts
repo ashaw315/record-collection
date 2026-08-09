@@ -572,6 +572,8 @@ describe('PATCH /api/influences/:sourceId/:targetId', () => {
     );
 
     expect(response.status).toBe(400);
+    // The message, not just the status — see records-update.test.ts.
+    expect((await response.json()).error.message).toBe('At least one field must be supplied');
   });
 
   it('rejects an attempt to move the edge by patching its key', async () => {
