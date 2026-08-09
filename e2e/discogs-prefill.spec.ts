@@ -208,3 +208,64 @@ test('an unknown release does not leave a half-filled form', async ({ page }) =>
   await expect(page.getByLabel('Title')).toHaveValue('');
   await expect(page.getByTestId('prefill-failed')).toBeVisible();
 });
+
+test('the want-list form prefills from a Discogs release too', async ({ page }) => {
+  /**
+   * §10's `/want-list/new`, "prefilled from a `/lookup` result via
+   * `?discogsReleaseId=`". This is the destination of the lookup card's "Add
+   * to want list" action, which 404'd until the screen existed.
+   */
+  await page.goto(`/want-list/new?discogsReleaseId=${releaseId}`);
+  await formReady(page);
+
+  await expect(page.getByLabel('Title')).toHaveValue('Hear Nothing See Nothing Say Nothing');
+});
+
+test('keeps best-dig notes and max price in separate sections', async ({ page }) => {
+  /**
+   * §10 states §7.2's separation as a screen requirement, and this asserts it
+   * where the user meets it. `want-list-form.test.ts` pins the structure; this
+   * confirms the structure is what actually renders — the wiring lesson from
+   * unit 4, where a route returning raw payloads left every pure-function test
+   * green.
+   */
+  await page.goto('/want-list/new');
+  await formReady(page);
+
+  const dig = page.getByTestId('section-best-dig');
+  const ceiling = page.getByTestId('section-ceiling');
+
+  await expect(dig).toBeVisible();
+  await expect(ceiling).toBeVisible();
+
+  // The price field is NOT inside the dig section — the specific collapse
+  // CLAUDE.md §8 forbids.
+  await expect(dig.getByLabel(/Most I'll pay/)).toHaveCount(0);
+  await expect(ceiling.getByLabel(/Most I'll pay/)).toHaveCount(1);
+});
+
+test('saves a want-list item with both §7.2 fields distinct', async ({ page }) => {
+  const suffix = Date.now().toString(36);
+  const artist = await page.request.post('/api/artists', {
+    data: { name: `Wanted Fixture ${suffix}` },
+  });
+  const artistId = (await artist.json()).id;
+
+  await page.goto('/want-list/new');
+  await formReady(page);
+
+  await page.getByLabel('Title').fill(`Why ${suffix}`);
+  await page.getByLabel('Artist').selectOption(artistId);
+  await page.getByLabel(/Best dig/).fill('UK first press, Porky stamp');
+  await page.getByLabel(/Most I'll pay/).fill('40.00');
+  await page.getByRole('button', { name: 'Add to want list' }).click();
+
+  await expect(page).toHaveURL('/want-list', { timeout: 15_000 });
+
+  const items = await (await page.request.get('/api/want-list')).json();
+  const saved = items.data.find((row: { title: string }) => row.title === `Why ${suffix}`);
+
+  expect(saved, 'the item was created').toBeDefined();
+  expect(saved.bestDigNotes).toBe('UK first press, Porky stamp');
+  expect(saved.maxPrice, 'a string, so the cents survive').toBe('40.00');
+});
