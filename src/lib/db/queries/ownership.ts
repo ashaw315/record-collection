@@ -109,8 +109,6 @@ export async function matchOwnership(input: {
   artist: string | null;
   title: string | null;
 }): Promise<OwnershipMatch> {
-  if (input.artist === null || input.title === null) return NONE;
-
   const db = getDb();
 
   /**
@@ -145,6 +143,19 @@ export async function matchOwnership(input: {
       wantList: null,
     };
   }
+
+  /**
+   * Tiers 2 and 3 match on artist AND title, so they cannot run without both.
+   * Tier 1 above CAN — it matches on `discogs_release_id` alone, which is a
+   * stronger identification than any text comparison.
+   *
+   * The guard used to sit at the top of this function and returned NONE for a
+   * null artist, silently skipping tier 1 as well. That was invisible while
+   * every caller had an artist; the versions endpoint does not, because
+   * Discogs' version rows carry a title and no artist — so a table of
+   * pressings reported "no badge" for a record sitting on the shelf.
+   */
+  if (input.artist === null || input.title === null) return NONE;
 
   /**
    * TIER 2: the same album, some other pressing — or no pressing recorded.

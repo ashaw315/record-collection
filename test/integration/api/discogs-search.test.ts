@@ -292,6 +292,111 @@ describe('the response', () => {
   });
 });
 
+describe('ownership travels with every result (§5.7)', () => {
+  /**
+   * §5.7: "It is part of the result, not a second request. A card that renders
+   * and acquires its badge a moment later is the worst version of this on the
+   * one screen where a wrong glance costs money — someone looking during the
+   * gap sees no warning at all."
+   */
+  it('carries an ownership tier on every result', async () => {
+    mockDiscogs(BY_CATNO);
+
+    const body = await (await search(request('?catno=CLAY+LP+3'))).json();
+
+    for (const result of body.data) {
+      expect(result, 'every card can render its badge from its own data').toHaveProperty(
+        'ownership',
+      );
+    }
+  });
+
+  it('reports owned_exact for a pressing already on the shelf', async () => {
+    const artist = await db.execute<{ id: string }>(
+      sql`INSERT INTO artists (name) VALUES ('Discharge') RETURNING id`,
+    );
+    const pressing = await db.execute<{ id: string }>(
+      sql`INSERT INTO pressings (discogs_release_id, catalog_number, country_pressed, year_pressed)
+          VALUES (381756, 'CLAY LP 3', 'UK', 1982) RETURNING id`,
+    );
+    await db.execute(
+      sql`INSERT INTO records (artist_id, pressing_id, title)
+          VALUES (${artist.rows[0].id}, ${pressing.rows[0].id},
+                  'Hear Nothing See Nothing Say Nothing')`,
+    );
+
+    mockDiscogs(BY_CATNO);
+    const body = await (await search(request('?catno=CLAY+LP+3'))).json();
+
+    const owned = body.data.find((r: { discogsId: number }) => r.discogsId === 381756);
+    expect(owned.ownership.tier).toBe('owned_exact');
+  });
+
+  it('reports owned_different_pressing, naming the copy at home', async () => {
+    /**
+     * The tier that matters, end to end. The user owns the 1982 original; the
+     * page also lists 1989 and 1991 reissues sharing its catalog number.
+     * Reporting owned_exact on those is what makes someone put back a record
+     * they wanted.
+     */
+    const artist = await db.execute<{ id: string }>(
+      sql`INSERT INTO artists (name) VALUES ('Discharge') RETURNING id`,
+    );
+    const pressing = await db.execute<{ id: string }>(
+      sql`INSERT INTO pressings (discogs_release_id, catalog_number, country_pressed, year_pressed)
+          VALUES (381756, 'CLAY LP 3', 'UK', 1982) RETURNING id`,
+    );
+    await db.execute(
+      sql`INSERT INTO records (artist_id, pressing_id, title)
+          VALUES (${artist.rows[0].id}, ${pressing.rows[0].id},
+                  'Hear Nothing See Nothing Say Nothing')`,
+    );
+
+    mockDiscogs(BY_CATNO);
+    const body = await (await search(request('?catno=CLAY+LP+3'))).json();
+
+    const reissue = body.data.find((r: { discogsId: number }) => r.discogsId === 6779382);
+    expect(reissue.ownership.tier, 'a DIFFERENT pressing, not this one').toBe(
+      'owned_different_pressing',
+    );
+    expect(reissue.ownership.ownedPressing.year, 'and it names which').toBe(1982);
+    expect(reissue.ownership.ownedPressing.catalogNumber).toBe('CLAY LP 3');
+  });
+
+  it('reports a null tier for results the user has never seen', async () => {
+    // §7.7: "No match: no badge." A string tier would be truthy on the client
+    // and badge every unowned row.
+    mockDiscogs(BY_CATNO);
+
+    const body = await (await search(request('?catno=CLAY+LP+3'))).json();
+
+    expect(body.data[0].ownership.tier).toBeNull();
+  });
+
+  it('gives different results different tiers on one page', async () => {
+    // A batch resolver that computed one answer and applied it to the page
+    // would pass every test above — a real page is mostly the same album in
+    // different pressings, which is where a uniform answer looks plausible.
+    const artist = await db.execute<{ id: string }>(
+      sql`INSERT INTO artists (name) VALUES ('Discharge') RETURNING id`,
+    );
+    const pressing = await db.execute<{ id: string }>(
+      sql`INSERT INTO pressings (discogs_release_id) VALUES (381756) RETURNING id`,
+    );
+    await db.execute(
+      sql`INSERT INTO records (artist_id, pressing_id, title)
+          VALUES (${artist.rows[0].id}, ${pressing.rows[0].id},
+                  'Hear Nothing See Nothing Say Nothing')`,
+    );
+
+    mockDiscogs(BY_CATNO);
+    const body = await (await search(request('?catno=CLAY+LP+3'))).json();
+
+    const tiers = new Set(body.data.map((r: { ownership: { tier: string | null } }) => r.ownership.tier));
+    expect(tiers.size, 'the page is not uniform').toBeGreaterThan(1);
+  });
+});
+
 describe('caching', () => {
   it('does NOT cache search results', async () => {
     /**

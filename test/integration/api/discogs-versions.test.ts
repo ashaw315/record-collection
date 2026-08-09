@@ -20,8 +20,23 @@ const VERSIONS = JSON.parse(
   readFileSync('test/fixtures/discogs/master-versions-discharge.json', 'utf8'),
 ) as unknown;
 
+const MASTER = JSON.parse(
+  readFileSync('test/fixtures/discogs/master-discharge-hear-nothing.json', 'utf8'),
+) as unknown;
+
+/**
+ * Answers BOTH calls this endpoint makes: the versions list, and the master
+ * itself for the artist name.
+ *
+ * Version rows carry a title and no artist — verified against the captured
+ * payload — so §7.7's tiers 2 and 3 have nothing to match on without the
+ * master. A mock returning the versions fixture for both would leave every
+ * unowned row badgeless and the tests would agree with it.
+ */
 function mockDiscogs(response: unknown = VERSIONS) {
-  const get = vi.fn(async () => response);
+  const get = vi.fn(async (path: string) =>
+    path.endsWith('/versions') ? response : MASTER,
+  );
 
   vi.spyOn(clientModule, 'getDiscogsClient').mockReturnValue({
     get: get as unknown as clientModule.DiscogsClient['get'],
@@ -195,6 +210,75 @@ describe('the request', () => {
     expect((await versions(request('?page=0'), params('50683'))).status).toBe(400);
     expect((await versions(request('?page=abc'), params('50683'))).status).toBe(400);
     expect(get).not.toHaveBeenCalled();
+  });
+});
+
+describe('ownership travels with every version (§5.7)', () => {
+  /**
+   * §5.7: "This applies to the versions list as much as to search. The
+   * drill-down is where the user chooses BETWEEN pressings, so knowing which of
+   * them are already on the shelf matters more there than anywhere else — a
+   * version table without ownership is a list of candidates with the answer
+   * withheld."
+   *
+   * And this is the table where 381756 (UK 1982 Clay) and 6779382 (UK 1989
+   * reissue) sit next to each other sharing CLAY LP 3. If the badge is wrong
+   * anywhere, it is wrong here, in front of both rows at once.
+   */
+  async function ownTheOriginal() {
+    const artist = await db.execute<{ id: string }>(
+      sql`INSERT INTO artists (name) VALUES ('Discharge') RETURNING id`,
+    );
+    const pressing = await db.execute<{ id: string }>(
+      sql`INSERT INTO pressings (discogs_release_id, catalog_number, country_pressed, year_pressed)
+          VALUES (381756, 'CLAY LP 3', 'UK', 1982) RETURNING id`,
+    );
+    await db.execute(
+      sql`INSERT INTO records (artist_id, pressing_id, title)
+          VALUES (${artist.rows[0].id}, ${pressing.rows[0].id},
+                  'Hear Nothing See Nothing Say Nothing')`,
+    );
+  }
+
+  it('carries an ownership tier on every version row', async () => {
+    mockDiscogs();
+
+    const body = await (await versions(request(), params('50683'))).json();
+
+    for (const row of body.data) {
+      expect(row).toHaveProperty('ownership');
+    }
+  });
+
+  it('marks the owned pressing and NOT the reissue beside it', async () => {
+    /**
+     * The single most important assertion on this screen. Both rows are UK,
+     * both are Clay Records, both are CLAY LP 3. Only the year and the format
+     * descriptors differ — and the user is choosing between them.
+     */
+    await ownTheOriginal();
+    mockDiscogs();
+
+    const body = await (await versions(request(), params('50683'))).json();
+
+    const original = body.data.find((v: { discogsId: number }) => v.discogsId === 381756);
+    const reissue = body.data.find((v: { discogsId: number }) => v.discogsId === 6779382);
+
+    expect(original.ownership.tier).toBe('owned_exact');
+    expect(reissue.ownership.tier, 'the reissue is NOT the one owned').toBe(
+      'owned_different_pressing',
+    );
+    expect(reissue.ownership.ownedPressing.year, 'and the table says which is').toBe(1982);
+  });
+
+  it('leaves unowned versions with a null tier', async () => {
+    mockDiscogs();
+
+    const body = await (await versions(request(), params('50683'))).json();
+
+    expect(body.data.every((v: { ownership: { tier: string | null } }) => v.ownership.tier === null)).toBe(
+      true,
+    );
   });
 });
 

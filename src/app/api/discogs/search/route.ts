@@ -5,6 +5,8 @@ import { withErrorHandling } from '@/lib/api/handler';
 import { DiscogsError, getDiscogsClient } from '@/lib/discogs/client';
 import { discogsErrorResponse } from '@/lib/discogs/errors';
 import { normalizeSearchResponse } from '@/lib/discogs/normalize-search';
+import { toOwnershipPayload } from '@/lib/discogs/ownership-payload';
+import { matchOwnershipForResults } from '@/lib/db/queries/ownership';
 
 /**
  * SPEC.md §5.7 `GET /api/discogs/search` — structured search.
@@ -132,8 +134,41 @@ export const GET = withErrorHandling('api.discogs.search.GET', async (request: R
 
   try {
     const payload = await getDiscogsClient().get('/database/search', query);
+    const normalized = normalizeSearchResponse(payload);
 
-    return NextResponse.json(normalizeSearchResponse(payload));
+    /**
+     * §5.7: "Ownership travels with every result… It is part of the result,
+     * not a second request. A card that renders and acquires its badge a
+     * moment later is the worst version of this on the one screen where a
+     * wrong glance costs money."
+     *
+     * Resolved for the whole page in one batch that delegates to the same
+     * §7.7 matcher the rest of the app uses — §5.7 requires the delegation,
+     * because a batch-optimised second implementation of the tiering is how
+     * the two drift.
+     */
+    const ownership = await matchOwnershipForResults(
+      normalized.data.map((result) => ({
+        discogsId: result.discogsId,
+        artist: result.artist,
+        title: result.title,
+      })),
+    );
+
+    return NextResponse.json({
+      ...normalized,
+      data: normalized.data.map((result) => ({
+        ...result,
+        ownership: toOwnershipPayload(
+          ownership.get(result.discogsId) ?? {
+            tier: 'none',
+            recordId: null,
+            ownedPressing: null,
+            wantList: null,
+          },
+        ),
+      })),
+    });
   } catch (error) {
     if (error instanceof DiscogsError) return discogsErrorResponse(error);
 

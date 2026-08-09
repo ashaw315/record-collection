@@ -479,6 +479,22 @@ The goal of this group of endpoints is: **the user fills in a structured form de
 }
 ```
 
+**Ownership travels with every result.** Each entry from `/api/discogs/search` and from `/api/discogs/master/:id/versions` carries the §7.7 ownership tier for that release, resolved server-side in the same request:
+
+```ts
+ownership: {
+  tier: "owned_exact" | "owned_different_pressing" | "wanted" | null;
+  ownedPressing?: { year: number | null; country: string | null; catalogNumber: string | null } | null;
+  wantedPriority?: number | null;
+} 
+```
+
+It is part of the result, not a second request. A card that renders and acquires its badge a moment later is the worst version of this on the one screen where a wrong glance costs money — someone looking during the gap sees no warning at all. Resolve the whole page in one batch query that delegates to the same §7.7 matcher the rest of the app uses; a batch-optimised second implementation of the tiering is how the two drift, and the screen would show whichever one nothing tested.
+
+This applies to the versions list as much as to search. The drill-down is where the user chooses *between* pressings, so knowing which of them are already on the shelf matters more there than anywhere else — a version table without ownership is a list of candidates with the answer withheld.
+
+`ownedPressing` is present on `owned_different_pressing` and names the year, country and catalog number of the copy already owned, since the question being answered is whether the copy in hand is better than the one at home. When the owned record has no pressing recorded — the common result of §10's quick in-store entry — say so explicitly rather than rendering an empty detail: the badge has something specific to report, namely that the album is owned and the copy cannot be identified.
+
 **Master → release drill-down.** If a search result is a master, the UI must let the user open it and see every version underneath (`/api/discogs/master/:id/versions`), displayed as a comparison table with country, year, label, catalog number, format descriptors and cover thumbnail. This is the step where the user identifies *their* pressing rather than just the album.
 
 **Honest limits — surface these in the UI, do not paper over them:**

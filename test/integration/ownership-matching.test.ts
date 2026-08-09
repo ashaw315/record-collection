@@ -86,6 +86,46 @@ describe('tier 1 — you own this exact pressing', () => {
   });
 });
 
+describe('matching without an artist name', () => {
+  /**
+   * Version rows from `/masters/:id/versions` carry a title and NO artist.
+   *
+   * Tier 1 must still work: it matches on `discogs_release_id`, which is a
+   * stronger identification than any text comparison. A guard at the top of
+   * the matcher returning early for a null artist skipped tier 1 too — so the
+   * version table reported "no badge" for a record sitting on the shelf, on
+   * the screen built to compare pressings. Found while wiring that endpoint.
+   */
+  it('still finds an exact pressing match with no artist supplied', async () => {
+    const artistId = await seedArtist();
+    const pressingId = await seedPressing({ discogsReleaseId: LOOKING_AT });
+    await seedRecord(artistId, pressingId);
+
+    const match = await matchOwnership({
+      discogsReleaseId: LOOKING_AT,
+      artist: null,
+      title: null,
+    });
+
+    expect(match.tier, 'the pressing id alone identifies it').toBe('exact');
+  });
+
+  it('cannot reach tiers 2 or 3 without an artist, and says none', async () => {
+    // Honest rather than guessing: those tiers match on artist AND title, and
+    // there is nothing to match on.
+    const artistId = await seedArtist();
+    await seedRecord(artistId, null);
+
+    const match = await matchOwnership({
+      discogsReleaseId: LOOKING_AT,
+      artist: null,
+      title: null,
+    });
+
+    expect(match.tier).toBe('none');
+  });
+});
+
 describe('tier 2 — you own a DIFFERENT pressing of the same album', () => {
   /**
    * The tier §7.7 singles out. The user owns the album; the copy in their hand

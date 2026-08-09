@@ -6,6 +6,8 @@ import { DiscogsError, getDiscogsClient } from '@/lib/discogs/client';
 import { discogsErrorResponse } from '@/lib/discogs/errors';
 import { toDiscogsId } from '@/lib/discogs/fields';
 import { normalizeVersionsResponse } from '@/lib/discogs/normalize-versions';
+import { toOwnershipPayload } from '@/lib/discogs/ownership-payload';
+import { matchOwnershipForResults } from '@/lib/db/queries/ownership';
 
 /**
  * SPEC.md §5.7 `GET /api/discogs/master/:id/versions`.
@@ -46,14 +48,62 @@ export const GET = withErrorHandling(
     if (!query.success) return badRequest('Invalid page', 'INVALID_PAGE');
 
     try {
-      const payload = await getDiscogsClient().get(`/masters/${masterId}/versions`, {
-        page: query.data.page,
-        // Matches the captured fixture's page size, and keeps a single page
-        // readable — §10's table is compared by eye, not scrolled past.
-        per_page: 25,
-      });
+      const client = getDiscogsClient();
 
-      return NextResponse.json(normalizeVersionsResponse(payload));
+      /**
+       * The master is fetched ALONGSIDE the versions, for the artist name.
+       *
+       * Version rows carry a title and no artist — verified against the
+       * captured payload. Tier 1 matches on `discogs_release_id` alone and so
+       * works without it, but §7.7's tiers 2 and 3 match on artist AND title,
+       * so without the artist every row the user does not own EXACTLY would
+       * fall to "no badge".
+       *
+       * That is the specific failure §7.7 exists to prevent, on the specific
+       * screen where it costs money: a table of pressings with "you own a
+       * different pressing" silently missing from every row. It costs a second
+       * rate-limited call per drill-down, issued concurrently, and that is the
+       * cheaper mistake to make.
+       */
+      const [payload, master] = await Promise.all([
+        client.get(`/masters/${masterId}/versions`, {
+          page: query.data.page,
+          // Matches the captured fixture's page size, and keeps a single page
+          // readable — §10's table is compared by eye, not scrolled past.
+          per_page: 25,
+        }),
+        client
+          .get<{ artists?: Array<{ name?: string }> }>(`/masters/${masterId}`)
+          // A failed master lookup degrades the badge to tier 1 only; it must
+          // not fail the table the user actually asked for.
+          .catch(() => undefined),
+      ]);
+
+      const artist = master?.artists?.[0]?.name ?? null;
+      const normalized = normalizeVersionsResponse(payload);
+
+      const ownership = await matchOwnershipForResults(
+        normalized.data.map((version) => ({
+          discogsId: version.discogsId,
+          artist,
+          title: version.title,
+        })),
+      );
+
+      return NextResponse.json({
+        ...normalized,
+        data: normalized.data.map((version) => ({
+          ...version,
+          ownership: toOwnershipPayload(
+            ownership.get(version.discogsId) ?? {
+              tier: 'none',
+              recordId: null,
+              ownedPressing: null,
+              wantList: null,
+            },
+          ),
+        })),
+      });
     } catch (error) {
       if (error instanceof DiscogsError) return discogsErrorResponse(error);
       throw error;
