@@ -1197,6 +1197,42 @@ form the records work had not shown — see the masking entry under Open.
   do not report the property, report what you ran. Noticed: step 6 unit 3,
   found by the step 5+6 adversarial review.
 
+- **RULE: when a check can fail in two directions, pick the default by asking
+  which error the user NEVER FINDS OUT ABOUT. Not by which is more likely, and
+  not by treating them as equivalent.**
+
+  §7.7's ownership tiers were settled this way, and the reasoning is recorded
+  because a future change would otherwise undo it without knowing there was an
+  argument. The two errors:
+
+  | Wrong answer | What happens | Does the user learn? |
+  |---|---|---|
+  | "You own this pressing" when they own a DIFFERENT one | they put back a record they wanted | **No.** They walk away and never discover it |
+  | "You own a different pressing" when they own THIS one | they buy a duplicate | Yes — at home, within the hour |
+
+  **The second error corrects itself; the first is permanent and invisible.**
+  So the exact tier requires POSITIVE EVIDENCE — a pressing row carrying the
+  same `discogs_release_id` — and everything short of it falls to tier 2. The
+  design is not "match as precisely as possible", it is "be reluctant to claim
+  the specific thing".
+
+  A record logged with no pressing at all reads as tier 2 for the same reason:
+  the user owns the album, nothing establishes which pressing, and "you own a
+  different pressing" is honest where "you own this pressing" is a claim
+  nothing supports. That case is also the LIKELIEST one in practice, since
+  §10's quick in-store entry exists to create records without pressings.
+
+  **The general form: symmetry is the assumption to check, not the default.**
+  Two failure directions are rarely equally costly, and the asymmetry is
+  usually in DISCOVERABILITY rather than in frequency or severity. An error the
+  user cannot detect gets no correction and no bug report — it is not merely
+  worse, it is worse in a way that never appears in any feedback anyone
+  receives.
+
+  **The tell that this reasoning has been lost:** a later change making the
+  matching "smarter" or "more accurate" without saying which direction it
+  loosens. Noticed: step 7, unit 8a.
+
 - **FOR THE SECURITY REVIEW: `POST /api/discogs/import` re-fetches the release
   by id rather than accepting a release payload from the client. That is a
   SECURITY decision, not a spec-reading, and it should be reviewed as one.**
