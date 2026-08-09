@@ -59,8 +59,14 @@ async function formReady(page: Page): Promise<void> {
   await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
 }
 
-test.beforeEach(async ({ page }) => {
+// Once per worker: per-test seeding exhausted database connections under a
+// full parallel run. The upsert makes re-seeding harmless and nothing deletes
+// the row, so a sibling worker cannot be left without it.
+test.beforeAll(async () => {
   releaseId = await seedDiscogsCache('release-detailed');
+});
+
+test.beforeEach(async ({ page }) => {
   await login(page);
 });
 

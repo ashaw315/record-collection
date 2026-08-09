@@ -47,14 +47,17 @@ test('adds a want-list item, marks it acquired, and keeps it as history', async 
     title,
     artistId: artist.id,
     priority: 1,
-    bestDigNotes: 'UK first press, Porky stamp',
+    bestDigNotes: `UK first press, Porky stamp ${suffix}`,
     maxPrice: '40.00',
   });
 
   // It appears on the want list, with what the hunt is for.
   await page.goto('/want-list');
   await expect(page.getByText(title)).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByText('UK first press, Porky stamp')).toBeVisible();
+  // Suffixed: a fixed string matched the parallel project's copy too, and
+  // Playwright refused it in strict mode. Latent since step 6, surfaced when
+  // step 7 added enough specs to make the overlap likely.
+  await expect(page.getByText(`UK first press, Porky stamp ${suffix}`)).toBeVisible();
 
   /**
    * Scoped to THIS run's row, not `.first()`.
