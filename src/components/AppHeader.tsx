@@ -19,6 +19,9 @@ import { cn } from '@/lib/utils';
 const LINKS = [
   { href: '/', label: 'Collection' },
   { href: '/want-list', label: 'Want list' },
+  // §10 calls /lookup "the in-store screen", so it belongs in reach on a
+  // phone rather than behind a URL somebody has to remember.
+  { href: '/lookup', label: 'Look up' },
   { href: '/manage', label: 'Manage' },
 ] as const;
 
