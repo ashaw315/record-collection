@@ -1,0 +1,707 @@
+{
+  "pagination": {
+    "page": 1,
+    "pages": 1,
+    "per_page": 50,
+    "items": 12,
+    "urls": {}
+  },
+  "results": [
+    {
+      "country": "UK",
+      "year": "1989",
+      "format": [
+        "Vinyl",
+        "LP",
+        "Reissue"
+      ],
+      "label": [
+        "Clay Records",
+        "Adrenalin"
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "Hardcore",
+        "Punk"
+      ],
+      "id": 6779382,
+      "barcode": [
+        "CLAY LP-3-A3  ADRENALIN. SECOND TIME AROUND AND STILL THE BEST...BILBO",
+        "CLAY LP-3-B3  ADRENALIN.  AN OLD \"STONE\" NOW TURNED - THANKS MIKE...BILBO"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 50683,
+      "master_url": "https://api.discogs.com/masters/50683",
+      "uri": "/release/6779382-Discharge-Hear-Nothing-See-Nothing-Say-Nothing",
+      "catno": "CLAY LP 3",
+      "title": "Discharge - Hear Nothing See Nothing Say Nothing",
+      "thumb": "https://i.discogs.com/e_tjUd5U8GO-3f_h5hNAVyP8Lh_KFCzjegoh0goitnk/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY3Nzkz/ODItMTQyNjQ0ODk5/MS04NDczLmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/MsW3Q_-CS1394Uuoeiv8r-5T9wen8HIOjRYoGTV7xIY/rs:fit/g:sm/q:90/h:595/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY3Nzkz/ODItMTQyNjQ0ODk5/MS04NDczLmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/6779382",
+      "community": {
+        "want": 316,
+        "have": 173
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Red Translucent",
+          "descriptions": [
+            "LP",
+            "Reissue"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "UK",
+      "year": "1989",
+      "format": [
+        "Vinyl",
+        "LP",
+        "Album",
+        "Reissue",
+        "Repress"
+      ],
+      "label": [
+        "Clay Records",
+        "Adrenalin"
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "Hardcore",
+        "Punk"
+      ],
+      "id": 13157665,
+      "barcode": [
+        "CLAY LP-3-A3  ADRENALIN. SECOND TIME AROUND AND STILL THE BEST...BILBO",
+        "CLAY LP-3-B3  ADRENALIN.  AN OLD \"STONE\" NOW TURNED - THANKS MIKE...BILBO"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 50683,
+      "master_url": "https://api.discogs.com/masters/50683",
+      "uri": "/release/13157665-Discharge-Hear-Nothing-See-Nothing-Say-Nothing",
+      "catno": "CLAY LP 3",
+      "title": "Discharge - Hear Nothing See Nothing Say Nothing",
+      "thumb": "https://i.discogs.com/-kW6Ld5dGTsMQkH5VXjqHqeXApKNdbloJhCfEpua-Vs/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzMTU3/NjY1LTE1NDkwNTM4/NzMtMjkzNi5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/e_S5jIstPgTmN_SlM92VRdgxuY4xGFD_P_yv3gba14Y/rs:fit/g:sm/q:90/h:348/w:351/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzMTU3/NjY1LTE1NDkwNTM4/NzMtMjkzNi5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/13157665",
+      "community": {
+        "want": 217,
+        "have": 101
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "LP",
+            "Album",
+            "Reissue",
+            "Repress"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "UK",
+      "year": "1991",
+      "format": [
+        "Vinyl",
+        "LP",
+        "Album",
+        "Reissue",
+        "Repress"
+      ],
+      "label": [
+        "Clay Records"
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "Hardcore",
+        "Punk"
+      ],
+      "id": 2785559,
+      "barcode": [
+        "Back With Bilbo CLAY-LP-3-A2",
+        "Total Blitz  Bilbo's (unreadable) CLAY-LP-3-B2"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 50683,
+      "master_url": "https://api.discogs.com/masters/50683",
+      "uri": "/release/2785559-Discharge-Hear-Nothing-See-Nothing-Say-Nothing",
+      "catno": "CLAY LP 3",
+      "title": "Discharge - Hear Nothing See Nothing Say Nothing",
+      "thumb": "https://i.discogs.com/HmGb8sr7Ap-ofkkg8Hn91Hwo1s4LeKCFd9Wr_vJfNBM/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3ODU1/NTktMTMwMDkzMTI2/Ni5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/zE_v171lvz2aKZN7Qmz5BCXvwGYzCSZCZnaD3ce6hks/rs:fit/g:sm/q:90/h:400/w:540/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3ODU1/NTktMTMwMDkzMTI2/Ni5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/2785559",
+      "community": {
+        "want": 316,
+        "have": 64
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Red Translucent, Gatefold",
+          "descriptions": [
+            "LP",
+            "Album",
+            "Reissue",
+            "Repress"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "UK",
+      "genre": [
+        "Rock"
+      ],
+      "format": [
+        "Vinyl",
+        "LP",
+        "Album",
+        "Repress"
+      ],
+      "style": [
+        "Hardcore",
+        "Punk"
+      ],
+      "id": 7519996,
+      "label": [
+        "Clay Records",
+        "Clay Records",
+        "Intersong Music",
+        "Tape One"
+      ],
+      "type": "release",
+      "barcode": [
+        "ADRENALIN CLAY LP-3-A3 SECOND TIME AROUND AND STILL THE BEST... BILBO",
+        "ADRENALIN AN OLD \"STONE\" NOW TURNED - THANKS MIKE... BILBO CLAY-LP-3-B3",
+        "5 014438 200319"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 50683,
+      "master_url": "https://api.discogs.com/masters/50683",
+      "uri": "/release/7519996-Discharge-Hear-Nothing-See-Nothing-Say-Nothing",
+      "catno": "CLAY LP 3",
+      "title": "Discharge - Hear Nothing See Nothing Say Nothing",
+      "thumb": "https://i.discogs.com/040hPQRmGWoSS5i6XQBPSljJGfnmn83OYZNOm_YcHoc/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTc1MTk5/OTYtMTQ0ODg4OTE4/NS03NDM5LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/lTTGo0YfTgwOI5OPKcY8TulvSUNIL9MQQeyBO-noaTY/rs:fit/g:sm/q:90/h:595/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTc1MTk5/OTYtMTQ0ODg4OTE4/NS03NDM5LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/7519996",
+      "community": {
+        "want": 226,
+        "have": 58
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Red, Gatefold",
+          "descriptions": [
+            "LP",
+            "Album",
+            "Repress"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "UK",
+      "year": "1982",
+      "format": [
+        "Vinyl",
+        "LP",
+        "Album"
+      ],
+      "label": [
+        "Clay Records",
+        "Clay Records",
+        "Intersong Music",
+        "Damont",
+        "Tape One"
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "Hardcore",
+        "Punk"
+      ],
+      "id": 381756,
+      "barcode": [
+        "BACK WITH BILBO CLAY-LP-3-A2 DAMONT",
+        "TOTAL BLITZ  BILBO TAPEONE CLAY-LP-3-B2 DAMONT",
+        "> BACK WITH BILBO CLAY-LP-3-A2 DAMONT",
+        "X TOTAL BLITZ  BILBO TAPEONE CLAY-LP-3-B2 DAMONT",
+        "3  BACK WITH BILBO  CLAY-LP-3-A²  DAMONT",
+        "O  TOTAL BLITZ  BILBO TAPEONE  CLAY-LP-3-B²  DAMONT",
+        "W  BACK WITH BILBO  CLAY-LP-3-A²  DAMONT",
+        "Y  TOTAL BLITZ  BILBO TAPEONE  CLAY-LP-3-B²  DAMONT"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 50683,
+      "master_url": "https://api.discogs.com/masters/50683",
+      "uri": "/release/381756-Discharge-Hear-Nothing-See-Nothing-Say-Nothing",
+      "catno": "CLAY LP 3",
+      "title": "Discharge - Hear Nothing See Nothing Say Nothing",
+      "thumb": "https://i.discogs.com/kBUMmTAwZU6HJstCSEFdEvwM3n6oyGnVBcu2k3iyR6k/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM4MTc1/Ni0xMzQyMDM3OTcx/LTE1OTkuanBlZw.jpeg",
+      "cover_image": "https://i.discogs.com/Ka_UY0xALfbPxhp6YUxEW1WLvlYF_ul1jGFQriB4mpA/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM4MTc1/Ni0xMzQyMDM3OTcx/LTE1OTkuanBlZw.jpeg",
+      "resource_url": "https://api.discogs.com/releases/381756",
+      "community": {
+        "want": 2165,
+        "have": 3739
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Gatefold",
+          "descriptions": [
+            "LP",
+            "Album"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "UK",
+      "genre": [
+        "Rock"
+      ],
+      "format": [
+        "Vinyl",
+        "Album",
+        "LP",
+        "Repress"
+      ],
+      "style": [
+        "Hardcore",
+        "Punk"
+      ],
+      "id": 2760133,
+      "label": [
+        "Clay Records"
+      ],
+      "type": "release",
+      "barcode": [
+        "ADRENALIN CLAY LP-3-A3 SECOND TIME AROUND AND STILL THE BEST... BILBO",
+        "ADRENALIN AN OLD \"STONE\" NOW TURNED - THANKS MIKE... BILBO CLAY-LP-3-B3"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 50683,
+      "master_url": "https://api.discogs.com/masters/50683",
+      "uri": "/release/2760133-Discharge-Hear-Nothing-See-Nothing-Say-Nothing",
+      "catno": "CLAY LP 3",
+      "title": "Discharge - Hear Nothing See Nothing Say Nothing",
+      "thumb": "https://i.discogs.com/WURA1a6mqDUi1ANbnMo7pi9KQzffHSmMQqowZ8TTqSk/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NjAx/MzMtMTUwNjE1ODk3/Mi0yNjc3LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/fXC2HL0DjaT2XABWOwvLN3NUQA5PDKrk5MPsP8oAsPA/rs:fit/g:sm/q:90/h:604/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NjAx/MzMtMTUwNjE1ODk3/Mi0yNjc3LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/2760133",
+      "community": {
+        "want": 257,
+        "have": 35
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Transparent",
+          "descriptions": [
+            "Album",
+            "LP",
+            "Repress"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "UK",
+      "year": "1982",
+      "format": [
+        "Cassette",
+        "Album"
+      ],
+      "label": [
+        "Clay Records"
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "Hardcore",
+        "Punk"
+      ],
+      "id": 3467667,
+      "barcode": [],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 50683,
+      "master_url": "https://api.discogs.com/masters/50683",
+      "uri": "/release/3467667-Discharge-Hear-Nothing-See-Nothing-Say-Nothing",
+      "catno": "CLAY LP  3",
+      "title": "Discharge - Hear Nothing See Nothing Say Nothing",
+      "thumb": "https://i.discogs.com/m7cr6m3r5j_F2xQV3h5El7IzR5tQxEFqlpaMXp8IBm0/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM0Njc2/NjctMTYxOTEzMTQw/OC0xMzQxLmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/1nXEqa_HkCvcZuiUThLsewJyITiAlLiygH515_9iTJw/rs:fit/g:sm/q:90/h:968/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM0Njc2/NjctMTYxOTEzMTQw/OC0xMzQxLmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/3467667",
+      "community": {
+        "want": 346,
+        "have": 35
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Cassette",
+          "qty": "1",
+          "descriptions": [
+            "Album"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "UK",
+      "year": "1989",
+      "format": [
+        "Vinyl",
+        "LP",
+        "Album",
+        "Reissue"
+      ],
+      "label": [
+        "Clay Records",
+        "Pinnacle",
+        "Adrenalin",
+        "Clay Records",
+        "Intersong Music"
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "Hardcore",
+        "Punk"
+      ],
+      "id": 3346688,
+      "barcode": [
+        "ADRENALIN SECOND TIME AROUND AND STILL THE BEST... BILBO CLAY LP-3-A3",
+        "ADRENALIN AN OLD \"STONE\" NOW TURNED - THANKS MIKE... BILBO CLAY LP-3-B3"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 50683,
+      "master_url": "https://api.discogs.com/masters/50683",
+      "uri": "/release/3346688-Discharge-Hear-Nothing-See-Nothing-Say-Nothing",
+      "catno": "CLAY LP 3",
+      "title": "Discharge - Hear Nothing See Nothing Say Nothing",
+      "thumb": "https://i.discogs.com/qijFR2OXnEDubVJytrphXLMDZAJWFJy6E2ofIt44iIQ/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzNDY2/ODgtMTY2MzYxODY2/Ni04NTQ2LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/YtsmJymV9DZ4LPcroFsmPkNgboNUvIRgUihZp539v18/rs:fit/g:sm/q:90/h:601/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzNDY2/ODgtMTY2MzYxODY2/Ni04NTQ2LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/3346688",
+      "community": {
+        "want": 320,
+        "have": 277
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Gatefold",
+          "descriptions": [
+            "LP",
+            "Album",
+            "Reissue"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "UK",
+      "genre": [
+        "Rock"
+      ],
+      "format": [
+        "Vinyl",
+        "LP",
+        "Album",
+        "Repress"
+      ],
+      "style": [
+        "Hardcore",
+        "Punk"
+      ],
+      "id": 14486672,
+      "label": [
+        "Clay Records",
+        "Pinnacle",
+        "Clay Music",
+        "Intersong",
+        "Damont",
+        "Lyntone Recordings Ltd.",
+        "Lyntone Recordings Ltd."
+      ],
+      "type": "release",
+      "barcode": [
+        "Back With Bilbo Clay-LP-3-A2 LYN-15062 Damont",
+        "Total Blitz B Side Tape One Clay-LP.-3-B2 LYN-15063 Damont",
+        "none"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 50683,
+      "master_url": "https://api.discogs.com/masters/50683",
+      "uri": "/release/14486672-Discharge-Hear-Nothing-See-Nothing-Say-Nothing",
+      "catno": "CLAY LP 3",
+      "title": "Discharge - Hear Nothing See Nothing Say Nothing",
+      "thumb": "https://i.discogs.com/TlY7iX5ikgpm811uTbD4wjj5cbtWURVX1lMyVxQ7qG0/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE0NDg2/NjcyLTE1NzU1MTU1/NDUtODIzMS5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/qmPPWssp-_GqTOIsv-uUYtzNzw8Qo3D-3GtdjGx7NJs/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE0NDg2/NjcyLTE1NzU1MTU1/NDUtODIzMS5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/14486672",
+      "community": {
+        "want": 157,
+        "have": 28
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Gatefold",
+          "descriptions": [
+            "LP",
+            "Album",
+            "Repress"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "UK",
+      "year": "1984",
+      "format": [
+        "Vinyl",
+        "LP",
+        "Album",
+        "Mispress",
+        "Repress"
+      ],
+      "label": [
+        "Clay Records",
+        "Pinnacle",
+        "Clay Music",
+        "Intersong",
+        "Damont",
+        "Lyntone Recordings Ltd.",
+        "Lyntone Recordings Ltd."
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "Hardcore",
+        "Punk"
+      ],
+      "id": 12681954,
+      "barcode": [
+        "Back With Bilbo Clay-LP-3-A2 LYN-15062 Damont",
+        "Total Blitz Bilbo Tape One Clay-LP.-3-B2 LYN-15063 Damont"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 50683,
+      "master_url": "https://api.discogs.com/masters/50683",
+      "uri": "/release/12681954-Discharge-Hear-Nothing-See-Nothing-Say-Nothing",
+      "catno": "CLAY LP 3",
+      "title": "Discharge - Hear Nothing See Nothing Say Nothing",
+      "thumb": "https://i.discogs.com/kmVI4UrfGbnmROLvAnVayrewWSIznMBnVG4s-soJWf8/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyNjgx/OTU0LTE1Mzk5NzQ3/NTQtODQ2NS5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/YnsjggCGsFaCTXtEfocy_wlf3kvX6BJT34gXyQLyenQ/rs:fit/g:sm/q:90/h:449/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyNjgx/OTU0LTE1Mzk5NzQ3/NTQtODQ2NS5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/12681954",
+      "community": {
+        "want": 221,
+        "have": 4
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Gatefold",
+          "descriptions": [
+            "LP",
+            "Album",
+            "Mispress",
+            "Repress"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "UK",
+      "year": "1984",
+      "format": [
+        "Vinyl",
+        "LP",
+        "Album",
+        "Repress"
+      ],
+      "label": [
+        "Clay Records",
+        "Pinnacle",
+        "Clay Music",
+        "Intersong",
+        "Tape One",
+        "Damont",
+        "Lyntone Recordings Ltd.",
+        "Lyntone Recordings Ltd."
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "Hardcore",
+        "Punk"
+      ],
+      "id": 4878030,
+      "barcode": [
+        "Back With Bilbo Clay-LP-3-A2 LYN-15062 Damont",
+        "Total Blitz Bilbo Tape One Clay-LP.-3-B2 LYN-15063 Damont"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 50683,
+      "master_url": "https://api.discogs.com/masters/50683",
+      "uri": "/release/4878030-Discharge-Hear-Nothing-See-Nothing-Say-Nothing",
+      "catno": "CLAY LP 3",
+      "title": "Discharge - Hear Nothing See Nothing Say Nothing",
+      "thumb": "https://i.discogs.com/uWh8UfS7af9L-pCVebuekYdAKANsPiWma4gPHV-V67s/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQ4Nzgw/MzAtMTQ4MDExNTg0/OS02Njk1LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/ftu-ossXl57zi5DW5mcCentO2OcEFR6UCjbJ9rNNK4s/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQ4Nzgw/MzAtMTQ4MDExNTg0/OS02Njk1LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/4878030",
+      "community": {
+        "want": 419,
+        "have": 247
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Gatefold",
+          "descriptions": [
+            "LP",
+            "Album",
+            "Repress"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "UK",
+      "year": "1984",
+      "format": [
+        "Vinyl",
+        "LP",
+        "Album",
+        "Repress"
+      ],
+      "label": [
+        "Clay Records",
+        "Pinnacle",
+        "Clay Music",
+        "Intersong",
+        "Damont",
+        "Lyntone Recordings Ltd.",
+        "Lyntone Recordings Ltd."
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "Hardcore",
+        "Punk"
+      ],
+      "id": 10405725,
+      "barcode": [
+        "Back With Bilbo Clay-LP-3-A2 LYN-15062 Damont",
+        "Total Blitz Bilbo Tape One Clay-LP.-3-B2 LYN-15063 Damont"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 50683,
+      "master_url": "https://api.discogs.com/masters/50683",
+      "uri": "/release/10405725-Discharge-Hear-Nothing-See-Nothing-Say-Nothing",
+      "catno": "CLAY LP 3",
+      "title": "Discharge - Hear Nothing See Nothing Say Nothing",
+      "thumb": "https://i.discogs.com/nA2vcsR4fp3B7NqW58w-htcRVvXWQGvqr3zqG-Or_PA/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNDA1/NzI1LTE1MDAwMzgw/NjEtMzgzNy5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/UWbnd812OxtxpVv2didWv_Am5lttMReMiO9RLdHy4fQ/rs:fit/g:sm/q:90/h:596/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNDA1/NzI1LTE1MDAwMzgw/NjEtMzgzNy5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/10405725",
+      "community": {
+        "want": 327,
+        "have": 274
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Gatefold",
+          "descriptions": [
+            "LP",
+            "Album",
+            "Repress"
+          ]
+        }
+      ]
+    }
+  ]
+}

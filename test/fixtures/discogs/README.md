@@ -14,6 +14,21 @@ A hand-written fixture encodes what we *expect* the API to return. That is the
 assumption most likely to be wrong, and normalization tested against it verifies
 our imagination rather than Discogs' behaviour.
 
+## Every capture is verified
+
+The script asserts, after writing, that each fixture actually has the property
+it was captured for — and writes nothing when it does not. The first run
+produced FIVE wrong files out of seven, from guessed release ids that turned out
+to be Fleetwood Mac, Rick Astley and assorted house records. Every one looked
+plausible, because the filename asserted what the contents did not contain.
+
+A fixture without its property is worse than no fixture: it looks authoritative,
+and the test built on it passes for the wrong reason.
+
+**Do not guess release ids.** The ids in use were read out of the search
+fixtures, which are the API's own answers. If a new fixture is needed, search
+for it and take the id from the result.
+
 ## What each file is for
 
 | File | Why it exists |
@@ -24,7 +39,7 @@ our imagination rather than Discogs' behaviour.
 | `search-by-catno.json` | The structured search that actually pins down a pressing |
 | `search-by-artist-only.json` | The bare-artist search, for the cardinality that makes `q` alone near-useless |
 | `release-detailed.json` | Rich pressing detail: Matrix / Runout identifiers, a pressing plant, weight and colour in format descriptors |
-| `release-no-matrix.json` | A release with NO matrix — §5.7 calls this "frequently missing", and it is the common real case |
+| `release-no-matrix.json` | A release with NO matrix — §5.7 calls this "frequently missing", and it is the common real case. The script SEARCHES for a qualifying release rather than naming one: a low release id is not a sparse entry, it is a heavily-edited one, which is how the first attempt came back with two Matrix / Runout identifiers |
 
 ## Re-capturing
 
