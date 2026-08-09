@@ -1263,6 +1263,39 @@ form the records work had not shown — see the masking entry under Open.
   matching "smarter" or "more accurate" without saying which direction it
   loosens. Noticed: step 7, unit 8a.
 
+- **The decorative-test check has now caught one in ADVANCE rather than by
+  mutation** (step 7, unit 8c). Sixth instance overall, first prevented.
+
+  The test asserted that a column list is "static, not computed from the rows":
+
+  ```ts
+  expect(Object.isFrozen(COMPARISON_COLUMNS) || Array.isArray(COMPARISON_COLUMNS)).toBe(true);
+  expect(COMPARISON_COLUMNS).toHaveLength(5);
+  ```
+
+  `Array.isArray` on an array is trivially true and a length check constrains
+  nothing — it asserted the property in its NAME and not in its body, which is
+  the shape CLAUDE.md §2 describes. Deleted while writing, not after a mutation
+  came back clean.
+
+  The five before it were all found afterwards: a probe deleted, a length test
+  measuring itself, a whitespace test caught incidentally, an NFD literal
+  normalised on disk, and "Misprint" colliding with no reissue prefix. The
+  difference here was applying §2's question — *name the line of source this
+  would fail against* — BEFORE running it rather than after.
+
+  **What replaced it is worth more than a better test: the TYPE SYSTEM holds
+  the decision.** A data-dependent column order changes the export's shape from
+  a constant to a function, and the compiler names every call site. A guarantee
+  the compiler enforces does not need a test, and a test that cannot fail is
+  worse than the absence of one — it reports coverage that is not there.
+
+  **The general form: before writing a test for a property, ask whether
+  something already makes the property unrepresentable.** Types, constraints
+  and unique indexes all do this. The identity assertion in
+  `create-schema.test.ts` is the same move from the other direction — making
+  drift unrepresentable rather than detectable.
+
 - **RULE: a module whose only consumers are its TESTS has an unvalidated
   interface. Tests exercise a function; callers exercise a DESIGN.**
 
