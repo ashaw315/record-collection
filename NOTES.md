@@ -972,6 +972,39 @@ form the records work had not shown — see the masking entry under Open.
   is unconfigured, and why CURRENT POSITION carries counts rather than ticks. A
   count can be wrong in a way a tick cannot. Noticed across steps 4-6.
 
+  **FOURTH INSTANCE, and the first originating OUTSIDE this system: Discogs
+  encodes absence as PROSE.** Every entry above is our own tooling reporting
+  nothing-happened as nothing-broke. This one arrives over the network from a
+  third party, which makes it a different problem: no amount of discipline in
+  our own code prevents it, and it is invisible until someone reads real
+  payloads.
+
+  Real values from the captured search fixtures (step 7, unit 3):
+
+  | Field | Discogs sends | Passed through, it means |
+  |---|---|---|
+  | `country` | `"Unknown"` | pressed in a country called Unknown |
+  | `catno` | `"none"` | catalog number "none" |
+  | `label` | `["Not On Label"]` | released by a label called Not On Label |
+
+  **These are worse than nulls, because they look ENTERED.** A blank country
+  reads as "we don't know"; the string "Unknown" reads as a fact somebody
+  recorded, and it will sort, filter and display as one. §5.7 already says
+  Discogs data is user-submitted and imperfect — this is the concrete form that
+  takes, and it fabricates data rather than omitting it.
+
+  **No hand-written fixture would have contained them**, which is the argument
+  for captured fixtures in one line. I would have written `country: null` for a
+  missing country, because that is what a sane API does.
+
+  **The rule for any external boundary: enumerate how the source spells
+  ABSENCE, from real payloads, before mapping its fields.** Null and undefined
+  are the easy cases. The dangerous ones are sentinel strings, `0` for "not
+  set", `"0000-00-00"` dates, and empty arrays that mean "unknown" rather than
+  "none". Normalize them to null at the boundary, in one place, and test the
+  mapping at the ENDPOINT as well as in the normalizer — a pure function is
+  easy to bypass with a wiring change. Noticed: step 7, unit 3.
+
 - **RULE: prose is more rigorous than the work it describes, and it is always
   wrong in the flattering direction.** Comments, headers and STATUS REPORTS all
   do this. Three instances now, the third the worst:
@@ -1284,6 +1317,41 @@ form the records work had not shown — see the masking entry under Open.
   bug, where `yearFrom=` silently applied `release_year >= 0` and dropped every
   undated record behind a 200. That bug is fixed; this design consequence
   remains. Noticed: step 5 remediation, unit 3.
+
+- **DEFECT, unfixed: `validationError` DISCARDS the message from any
+  object-level `.refine`, so those endpoints answer "Invalid request" with an
+  empty `fieldErrors` and no indication of what is wrong.**
+
+  Verified by execution, not inspection:
+
+  ```
+  z.strictObject({ a: z.string().optional() })
+    .refine((v) => Object.keys(v).length > 0, { message: 'At least one field must be supplied' })
+  → {"error":{"message":"Invalid request","code":"VALIDATION_ERROR","fieldErrors":{}}}
+  ```
+
+  A refine on the whole object produces an issue whose `path` is EMPTY, and
+  `validationError` keeps only issues that name a field (`if (field !== '')`).
+  The message is dropped silently — the response is a well-formed 400 that
+  tells the caller nothing, which is the absence-as-success shape in a place
+  where the absence is an explanation.
+
+  **Two endpoints are affected today**, both with the same "empty body" refine:
+  `PATCH /api/records/:id` (`At least one field must be supplied`) and
+  `PATCH /api/influences/:sourceId/:targetId`. Their tests assert the 400
+  status and pass; nothing asserts the message, so the defect is invisible.
+
+  Found in step 7 unit 4, where `GET /api/discogs/search` needed to tell the
+  user WHICH search term to supply. Worked around there by checking the
+  condition in the handler and calling `badRequest` with the message directly —
+  a fix in `validationError` would touch every endpoint's error shape, which is
+  a change to §5's contract and belongs in its own unit rather than smuggled
+  into a Discogs one (CLAUDE.md §4).
+
+  **The fix, when it happens:** map an empty-path issue to a top-level
+  `message` rather than dropping it, and add a test per affected endpoint
+  asserting the message reaches the client. Not just the status — asserting the
+  status alone is what let this sit.
 
 - **DEFERRED — `genreSubtree` is defined twice, in two files, and both copies
   are correct today.** The recursive CTE walking the genre hierarchy down (§7.1)

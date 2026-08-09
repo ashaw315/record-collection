@@ -1,3 +1,4 @@
+import { getEnv } from '@/env';
 import { TokenBucket } from './limiter';
 
 /**
@@ -98,6 +99,34 @@ function retryAfterMs(response: Response): number {
   if (!Number.isFinite(seconds) || seconds < 0) return DEFAULT_RETRY_MS;
 
   return Math.ceil(seconds * 1_000);
+}
+
+/**
+ * The process-wide client (SPEC.md §6: "a shared module that all Discogs calls
+ * route through").
+ *
+ * Shared because the rate limiter's accounting only means anything if every
+ * call spends from the same bucket — a client per request would let sixty
+ * concurrent handlers each believe they had sixty tokens.
+ *
+ * Route handlers call this rather than constructing their own, and tests
+ * replace it wholesale, which is what keeps a live call impossible by
+ * construction rather than by discipline.
+ */
+let shared: DiscogsClient | undefined;
+
+export function getDiscogsClient(): DiscogsClient {
+  if (shared === undefined) {
+    shared = createDiscogsClient({
+      token: getEnv().DISCOGS_TOKEN,
+      // §6: "set a descriptive User-Agent header. Discogs rejects requests
+      // without one." Names the app and gives them somewhere to look.
+      userAgent: 'RecordCollection/0.1 +https://github.com/adamshaw/record-collection',
+      fetch: globalThis.fetch,
+    });
+  }
+
+  return shared;
 }
 
 export function createDiscogsClient(options: DiscogsClientOptions): DiscogsClient {
