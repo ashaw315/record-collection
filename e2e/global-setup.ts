@@ -35,7 +35,10 @@ export default async function globalSetup(): Promise<void> {
   // Playwright does not load .env.test itself; the dev server it starts does.
   // Without this, TEST_DATABASE_URL is unset and the guard refuses — correctly,
   // but before doing anything useful.
-  config({ path: '.env.test' });
+  // `quiet` because dotenv 17 announces itself on STDOUT, not stderr — see
+  // test/repo/dotenv-quiet.test.ts for why that is a contamination risk rather
+  // than mere noise.
+  config({ path: '.env.test', quiet: true });
 
   await truncateAll();
   await closeTestDb();
