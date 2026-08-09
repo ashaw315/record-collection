@@ -897,6 +897,33 @@ form the records work had not shown — see the masking entry under Open.
   collided with will re-read, and any mock covering that read has to let the
   second call through. Noticed: step 5, unit 9b.
 
+  **THIRD INSTANCE — a mock answering EVERY PATH IDENTICALLY cannot
+  distinguish code that calls one path from code that calls both** (step 7,
+  unit 8c). The family so far:
+
+  | Mock shape | What it could not see |
+  |---|---|
+  | intercepts every CALL rather than the first | the recovery path's second read |
+  | returns `undefined` from the name finder | that the finder was reached at all |
+  | answers every PATH with one fixture | which endpoints were actually called |
+
+  The versions endpoint fetches two things: the versions list, and the master
+  for the artist name. My mock returned the versions fixture for both, so the
+  master lookup yielded no artist — and §7.7's tiers 2 and 3 match on artist,
+  so every unowned row would have come back badgeless **with the tests
+  agreeing**. The mock made the endpoint look correct while removing the data
+  half its logic depends on.
+
+  **The rule for a multi-call mock: branch on the path and assert the branches
+  were taken.** If a mock ignores its arguments, it is asserting that the
+  arguments do not matter — which is a claim about the code under test, and
+  usually a false one.
+
+  **The unifying shape across all three:** a mock is a MODEL of the dependency,
+  and every simplification is an assumption. Call count, return shape, path
+  discrimination — each one silently states "this does not matter here", and
+  the test cannot tell you when the statement stops being true.
+
 - **RULE: a message-less `.toThrow()` asserts only that SOMETHING failed.**
   Six instances have now accepted a different exception than intended, and the
   sixth was in the guard built to prevent the fifth.
@@ -1201,6 +1228,9 @@ form the records work had not shown — see the masking entry under Open.
   which error the user NEVER FINDS OUT ABOUT. Not by which is more likely, and
   not by treating them as equivalent.**
 
+  (See also the guard-and-its-callers rule below, which is how the same badge
+  came to be silently missing on the versions table.)
+
   §7.7's ownership tiers were settled this way, and the reasoning is recorded
   because a future change would otherwise undo it without knowing there was an
   argument. The two errors:
@@ -1232,6 +1262,34 @@ form the records work had not shown — see the masking entry under Open.
   **The tell that this reasoning has been lost:** a later change making the
   matching "smarter" or "more accurate" without saying which direction it
   loosens. Noticed: step 7, unit 8a.
+
+- **RULE: a guard justified by its CURRENT CALLERS is an assumption about
+  callers, not about the function — and it fails on the first caller that does
+  not fit.**
+
+  `matchOwnership` opened with `if (artist === null || title === null) return
+  NONE`. Correct for every caller that existed: all of them came from search
+  results, which carry both. And correct-LOOKING forever, because a guard at
+  the top of a function reads as input validation.
+
+  It is not. §7.7's tier 1 matches on `discogs_release_id` ALONE — a stronger
+  identification than any text comparison — so it never needed the artist. The
+  guard skipped it anyway.
+
+  **The first caller that did not fit was the versions endpoint**, where
+  Discogs' rows carry a title and no artist. The result: a table of pressings
+  reporting "no badge" for a record sitting on the shelf, on the screen built
+  to compare pressings. Nothing failed — every existing test supplied an
+  artist.
+
+  **The tell: a guard at the TOP of a function that serves only SOME of the
+  paths below it.** The check belongs next to the code that needs it. Moved
+  down, tier 1 runs regardless and tiers 2 and 3 return honestly; a regression
+  test now covers the null-artist path in both directions.
+
+  **The general form:** "no caller does that" is a fact about today. A
+  precondition that is really about one branch, hoisted to the entry point,
+  silently disables the branches that never had it. Noticed: step 7, unit 8c.
 
 - **FOR THE SECURITY REVIEW: `POST /api/discogs/import` re-fetches the release
   by id rather than accepting a release payload from the client. That is a

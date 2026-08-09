@@ -1,4 +1,4 @@
-import type { OwnershipMatch, OwnedPressing } from '@/lib/db/queries/ownership';
+import type { OwnershipPayload } from '@/lib/discogs/ownership-payload';
 
 /**
  * The §7.7 ownership badge, as DATA rather than JSX.
@@ -13,6 +13,11 @@ import type { OwnershipMatch, OwnedPressing } from '@/lib/db/queries/ownership';
  * and the colour before the sentence, and two badges differing only in text is
  * how the wrong one gets read. So tone, weight and label all differ, and a test
  * asserts they do.
+ *
+ * Takes the §5.7 WIRE shape rather than the internal match: the wire shape is
+ * what the UI receives, and an earlier version of this module took the
+ * internal one and had no caller — the component had quietly grown a second
+ * copy of the copy. One definition, the shape that is actually rendered.
  */
 
 export type BadgeTone = 'owned' | 'caution' | 'wanted';
@@ -31,7 +36,9 @@ export type OwnershipBadge = {
  * question — is the one in my hand better than the one at home? —
  * unanswerable in the only place it gets asked.
  */
-export function describeOwnedPressing(pressing: OwnedPressing | null): string {
+export function describeOwnedPressing(
+  pressing: { year: number | null; country: string | null; catalogNumber: string | null } | null,
+): string {
   if (pressing === null) {
     // Honest about what is not known. A record can be logged before its
     // pressing is identified (§10's quick entry), and inventing a description
@@ -40,24 +47,21 @@ export function describeOwnedPressing(pressing: OwnedPressing | null): string {
   }
 
   const parts = [
-    pressing.yearPressed === null ? null : String(pressing.yearPressed),
-    pressing.countryPressed,
+    // String(), not toLocaleString(): 1,982 is not a year.
+    pressing.year === null ? null : String(pressing.year),
+    pressing.country,
     pressing.catalogNumber,
   ].filter((part): part is string => part !== null && part.trim() !== '');
 
   return parts.length === 0 ? 'pressing not recorded' : parts.join(' · ');
 }
 
-export function ownershipBadge(match: OwnershipMatch): OwnershipBadge | null {
-  switch (match.tier) {
-    case 'exact':
-      return {
-        label: 'You own this pressing',
-        detail: null,
-        tone: 'owned',
-      };
+export function ownershipBadge(ownership: OwnershipPayload): OwnershipBadge | null {
+  switch (ownership.tier) {
+    case 'owned_exact':
+      return { label: 'You own this pressing', detail: null, tone: 'owned' };
 
-    case 'different-pressing':
+    case 'owned_different_pressing':
       /**
        * The tier §7.7 singles out, and the one that must never be mistaken for
        * the one above. A DIFFERENT tone, not merely different words — this is
@@ -66,14 +70,11 @@ export function ownershipBadge(match: OwnershipMatch): OwnershipBadge | null {
        */
       return {
         label: 'You own a DIFFERENT pressing',
-        detail: `Yours: ${describeOwnedPressing(match.ownedPressing)}`,
+        detail: `Yours: ${describeOwnedPressing(ownership.ownedPressing)}`,
         tone: 'caution',
       };
 
-    case 'wanted': {
-      const wantList = match.wantList;
-      if (wantList === null) return null;
-
+    case 'wanted':
       /**
        * §7.7: "Badge shows priority and, if `target_pressing_id` is set,
        * whether this result IS that target pressing." The difference between
@@ -81,16 +82,15 @@ export function ownershipBadge(match: OwnershipMatch): OwnershipBadge | null {
        * the difference between thinking about it and buying it.
        */
       return {
-        label: wantList.isTargetPressing ? 'On your want list — THIS pressing' : 'On your want list',
-        detail: `Priority ${wantList.priority}`,
+        label: ownership.isTargetPressing ? 'Want list — THIS pressing' : 'On your want list',
+        detail: ownership.wantedPriority === null ? null : `Priority ${ownership.wantedPriority}`,
         tone: 'wanted',
       };
-    }
 
     // §7.7: "No match: no badge." Not a badge reading "not owned" — silence is
     // the honest answer, and a screen of "not owned" badges is noise that makes
     // the real ones harder to see.
-    case 'none':
+    case null:
       return null;
   }
 }

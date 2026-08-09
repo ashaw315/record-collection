@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { OwnershipMatch } from '@/lib/db/queries/ownership';
+import type { OwnershipPayload } from '@/lib/discogs/ownership-payload';
 import { describeOwnedPressing, ownershipBadge } from './ownership-badge';
 
 /**
@@ -13,25 +13,25 @@ import { describeOwnedPressing, ownershipBadge } from './ownership-badge';
  * costs money.
  */
 
-const exact: OwnershipMatch = {
-  tier: 'exact',
-  recordId: 'r1',
-  ownedPressing: { catalogNumber: 'CLAY LP 3', countryPressed: 'UK', yearPressed: 1982 },
-  wantList: null,
+const exact: OwnershipPayload = {
+  tier: 'owned_exact',
+  ownedPressing: { year: 1982, country: 'UK', catalogNumber: 'CLAY LP 3' },
+  wantedPriority: null,
+  isTargetPressing: false,
 };
 
-const differentPressing: OwnershipMatch = {
-  tier: 'different-pressing',
-  recordId: 'r2',
-  ownedPressing: { catalogNumber: 'CLAY LP 3', countryPressed: 'UK', yearPressed: 1989 },
-  wantList: null,
+const differentPressing: OwnershipPayload = {
+  tier: 'owned_different_pressing',
+  ownedPressing: { year: 1989, country: 'UK', catalogNumber: 'CLAY LP 3' },
+  wantedPriority: null,
+  isTargetPressing: false,
 };
 
-const wanted: OwnershipMatch = {
+const wanted: OwnershipPayload = {
   tier: 'wanted',
-  recordId: null,
   ownedPressing: null,
-  wantList: { id: 'w1', priority: 1, isTargetPressing: false },
+  wantedPriority: 1,
+  isTargetPressing: false,
 };
 
 describe('the three tiers are distinguishable at a glance', () => {
@@ -121,20 +121,14 @@ describe('tier 3 — on the want list', () => {
     // §7.7: the difference between "you wanted this album" and "this is the
     // exact pressing you were hunting" is the difference between thinking
     // about it and buying it.
-    const badge = ownershipBadge({
-      ...wanted,
-      wantList: { id: 'w1', priority: 1, isTargetPressing: true },
-    })!;
+    const badge = ownershipBadge({ ...wanted, isTargetPressing: true })!;
 
     expect(badge.label).toMatch(/THIS pressing/);
   });
 
   it('distinguishes the target-pressing case from the plain one', () => {
     const plain = ownershipBadge(wanted)!;
-    const target = ownershipBadge({
-      ...wanted,
-      wantList: { id: 'w1', priority: 1, isTargetPressing: true },
-    })!;
+    const target = ownershipBadge({ ...wanted, isTargetPressing: true })!;
 
     expect(plain.label).not.toBe(target.label);
   });
@@ -148,10 +142,10 @@ describe('no match', () => {
      * meant to catch the eye precisely because it is unusual.
      */
     const badge = ownershipBadge({
-      tier: 'none',
-      recordId: null,
+      tier: null,
       ownedPressing: null,
-      wantList: null,
+      wantedPriority: null,
+      isTargetPressing: false,
     });
 
     expect(badge).toBeNull();
@@ -161,26 +155,26 @@ describe('no match', () => {
 describe('describeOwnedPressing', () => {
   it('orders the fields as a collector reads them', () => {
     expect(
-      describeOwnedPressing({ yearPressed: 1982, countryPressed: 'UK', catalogNumber: 'CLAY LP 3' }),
+      describeOwnedPressing({ year: 1982, country: 'UK', catalogNumber: 'CLAY LP 3' }),
     ).toBe('1982 · UK · CLAY LP 3');
   });
 
   it('omits fields that are absent rather than leaving gaps', () => {
     expect(
-      describeOwnedPressing({ yearPressed: null, countryPressed: 'UK', catalogNumber: null }),
+      describeOwnedPressing({ year: null, country: 'UK', catalogNumber: null }),
     ).toBe('UK');
   });
 
   it('says the pressing is not recorded when nothing identifies it', () => {
     expect(
-      describeOwnedPressing({ yearPressed: null, countryPressed: null, catalogNumber: null }),
+      describeOwnedPressing({ year: null, country: null, catalogNumber: null }),
     ).toBe('pressing not recorded');
   });
 
   it('does not put a thousands separator in the year', () => {
     // 1,982 is not a year. Same trap as the want-list summary.
     expect(
-      describeOwnedPressing({ yearPressed: 1982, countryPressed: null, catalogNumber: null }),
+      describeOwnedPressing({ year: 1982, country: null, catalogNumber: null }),
     ).toBe('1982');
   });
 });
