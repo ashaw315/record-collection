@@ -1,0 +1,1408 @@
+{
+  "pagination": {
+    "page": 1,
+    "pages": 3,
+    "per_page": 25,
+    "items": 57,
+    "urls": {
+      "last": "https://api.discogs.com/masters/50683/versions?per_page=25&page=3",
+      "next": "https://api.discogs.com/masters/50683/versions?per_page=25&page=2"
+    }
+  },
+  "filters": {
+    "applied": {},
+    "available": {
+      "format": {
+        "Album": 53,
+        "Reissue": 40,
+        "LP": 25,
+        "Vinyl": 25,
+        "CD": 24,
+        "Repress": 12,
+        "Cassette": 7,
+        "Remastered": 5,
+        "Unofficial Release": 4,
+        "Compilation": 3,
+        "Limited Edition": 3,
+        "Picture Disc": 2,
+        "Stereo": 2,
+        "Deluxe Edition": 1,
+        "FLAC": 1,
+        "File": 1,
+        "Mispress": 1,
+        "Promo": 1
+      },
+      "label": {
+        "Clay Records": 19,
+        "Sanctuary Records Group Ltd.": 16,
+        "Castle Music": 11,
+        "Sky-Rocket": 10,
+        "Turan Audio": 9,
+        "Sanctuary": 7,
+        "Pinnacle": 6,
+        "Damont": 5,
+        "Maxwood Music Ltd.": 5,
+        "Clay Music": 4,
+        "Intersong": 4,
+        "Lyntone Recordings Ltd.": 4,
+        "Maxwood Music": 4,
+        "Adrenalin": 3,
+        "Captain Oi!": 3,
+        "Earmark": 3,
+        "Havoc Records": 3,
+        "Intersong Music": 3,
+        "Let Them Eat Vinyl": 3,
+        "Radiation Reissues": 3,
+        "Tape One": 3,
+        "Vap": 3,
+        "Vap Inc.": 3,
+        "Abraxas Srl": 2,
+        "Clay Records Ltd.": 2,
+        "Dadc Austria": 2,
+        "Deluxe, Blackburn": 2,
+        "Edc Blackburn Ltd": 2,
+        "Edc, Germany": 2,
+        "Gz Digital Media": 2,
+        "Not On Label": 2,
+        "Plastic Head Distribution": 2,
+        "Prairie Cat Mastering": 2,
+        "Radiation Records": 2,
+        "Sanctuary Records Group": 2,
+        "Toy'S Factory": 2,
+        "Www.Gzvinyl.Com": 2,
+        "666 Records": 1,
+        "Back On Black": 1,
+        "Bmg": 1,
+        "Bmg Rights Management Uk": 1,
+        "Captain Oi! Production": 1,
+        "Cinram, Richmond, In": 1,
+        "Clay": 1,
+        "Disk Union": 1,
+        "Edc": 1,
+        "Estado Records": 1,
+        "Get Back": 1,
+        "Key Production": 1,
+        "Kyrios Comércio, Editora E Serviços Fonográficos Eireli": 1,
+        "Mpo": 1,
+        "Nice Price": 1,
+        "Noise Records": 1,
+        "Not On Label (Discharge)": 1,
+        "Optical Experts Manufacturing": 1,
+        "Punks Not Dead": 1,
+        "Receiver Records": 1,
+        "Receiver Records Limited": 1,
+        "Red Star Recordings": 1,
+        "Restricted Release": 1,
+        "Rock Brigade Records": 1,
+        "Rtt Records": 1,
+        "Sanctuary Records Group Inc.": 1,
+        "Sgolf Musical Comércio E Serviços Ltda.": 1,
+        "Sony Dadc, Southwater": 1,
+        "Sony Dadc, Terre Haute": 1,
+        "Tamt Co., Ltd.": 1,
+        "Technicolor": 1,
+        "United Record Pressing": 1,
+        "Vdc Group": 1,
+        "Voice Music": 1
+      },
+      "country": {
+        "UK": 28,
+        "Italy": 7,
+        "Japan": 7,
+        "US": 6,
+        "UK & Europe": 2,
+        "Brazil": 1,
+        "Czech Republic": 1,
+        "Indonesia": 1,
+        "Malaysia": 1,
+        "Russia": 1,
+        "UK, Europe & US": 1,
+        "Worldwide": 1
+      },
+      "released": {
+        "1982": 2,
+        "1983": 2,
+        "1984": 3,
+        "1987": 1,
+        "1989": 5,
+        "1990": 1,
+        "1991": 1,
+        "1998": 1,
+        "2003": 8,
+        "2006": 1,
+        "2007": 1,
+        "2010": 4,
+        "2016": 3,
+        "2017": 1,
+        "2018": 1,
+        "2019": 1,
+        "2020": 2,
+        "2021": 2,
+        "2022": 1,
+        "2024": 1
+      }
+    }
+  },
+  "filter_facets": [
+    {
+      "title": "Format",
+      "id": "format",
+      "values": [
+        {
+          "title": "Album",
+          "value": "Album",
+          "count": 53
+        },
+        {
+          "title": "Reissue",
+          "value": "Reissue",
+          "count": 40
+        },
+        {
+          "title": "LP",
+          "value": "LP",
+          "count": 25
+        },
+        {
+          "title": "Vinyl",
+          "value": "Vinyl",
+          "count": 25
+        },
+        {
+          "title": "CD",
+          "value": "CD",
+          "count": 24
+        },
+        {
+          "title": "Repress",
+          "value": "Repress",
+          "count": 12
+        },
+        {
+          "title": "Cassette",
+          "value": "Cassette",
+          "count": 7
+        },
+        {
+          "title": "Remastered",
+          "value": "Remastered",
+          "count": 5
+        },
+        {
+          "title": "Unofficial Release",
+          "value": "Unofficial+Release",
+          "count": 4
+        },
+        {
+          "title": "Compilation",
+          "value": "Compilation",
+          "count": 3
+        },
+        {
+          "title": "Limited Edition",
+          "value": "Limited+Edition",
+          "count": 3
+        },
+        {
+          "title": "Picture Disc",
+          "value": "Picture+Disc",
+          "count": 2
+        },
+        {
+          "title": "Stereo",
+          "value": "Stereo",
+          "count": 2
+        },
+        {
+          "title": "Deluxe Edition",
+          "value": "Deluxe+Edition",
+          "count": 1
+        },
+        {
+          "title": "FLAC",
+          "value": "FLAC",
+          "count": 1
+        },
+        {
+          "title": "File",
+          "value": "File",
+          "count": 1
+        },
+        {
+          "title": "Mispress",
+          "value": "Mispress",
+          "count": 1
+        },
+        {
+          "title": "Promo",
+          "value": "Promo",
+          "count": 1
+        }
+      ],
+      "allows_multiple_values": true
+    },
+    {
+      "title": "Label",
+      "id": "label",
+      "values": [
+        {
+          "title": "Clay Records",
+          "value": "Clay+Records",
+          "count": 19
+        },
+        {
+          "title": "Sanctuary Records Group Ltd.",
+          "value": "Sanctuary+Records+Group+Ltd.",
+          "count": 16
+        },
+        {
+          "title": "Castle Music",
+          "value": "Castle+Music",
+          "count": 11
+        },
+        {
+          "title": "Sky-Rocket",
+          "value": "Sky-Rocket",
+          "count": 10
+        },
+        {
+          "title": "Turan Audio",
+          "value": "Turan+Audio",
+          "count": 9
+        },
+        {
+          "title": "Sanctuary",
+          "value": "Sanctuary",
+          "count": 7
+        },
+        {
+          "title": "Pinnacle",
+          "value": "Pinnacle",
+          "count": 6
+        },
+        {
+          "title": "Damont",
+          "value": "Damont",
+          "count": 5
+        },
+        {
+          "title": "Maxwood Music Ltd.",
+          "value": "Maxwood+Music+Ltd.",
+          "count": 5
+        },
+        {
+          "title": "Clay Music",
+          "value": "Clay+Music",
+          "count": 4
+        },
+        {
+          "title": "Intersong",
+          "value": "Intersong",
+          "count": 4
+        },
+        {
+          "title": "Lyntone Recordings Ltd.",
+          "value": "Lyntone+Recordings+Ltd.",
+          "count": 4
+        },
+        {
+          "title": "Maxwood Music",
+          "value": "Maxwood+Music",
+          "count": 4
+        },
+        {
+          "title": "Adrenalin",
+          "value": "Adrenalin",
+          "count": 3
+        },
+        {
+          "title": "Captain Oi!",
+          "value": "Captain+Oi%21",
+          "count": 3
+        },
+        {
+          "title": "Earmark",
+          "value": "Earmark",
+          "count": 3
+        },
+        {
+          "title": "Havoc Records",
+          "value": "Havoc+Records",
+          "count": 3
+        },
+        {
+          "title": "Intersong Music",
+          "value": "Intersong+Music",
+          "count": 3
+        },
+        {
+          "title": "Let Them Eat Vinyl",
+          "value": "Let+Them+Eat+Vinyl",
+          "count": 3
+        },
+        {
+          "title": "Radiation Reissues",
+          "value": "Radiation+Reissues",
+          "count": 3
+        },
+        {
+          "title": "Tape One",
+          "value": "Tape+One",
+          "count": 3
+        },
+        {
+          "title": "Vap",
+          "value": "Vap",
+          "count": 3
+        },
+        {
+          "title": "Vap Inc.",
+          "value": "Vap+Inc.",
+          "count": 3
+        },
+        {
+          "title": "Abraxas Srl",
+          "value": "Abraxas+Srl",
+          "count": 2
+        },
+        {
+          "title": "Clay Records Ltd.",
+          "value": "Clay+Records+Ltd.",
+          "count": 2
+        },
+        {
+          "title": "Dadc Austria",
+          "value": "Dadc+Austria",
+          "count": 2
+        },
+        {
+          "title": "Deluxe, Blackburn",
+          "value": "Deluxe%2C+Blackburn",
+          "count": 2
+        },
+        {
+          "title": "Edc Blackburn Ltd",
+          "value": "Edc+Blackburn+Ltd",
+          "count": 2
+        },
+        {
+          "title": "Edc, Germany",
+          "value": "Edc%2C+Germany",
+          "count": 2
+        },
+        {
+          "title": "Gz Digital Media",
+          "value": "Gz+Digital+Media",
+          "count": 2
+        },
+        {
+          "title": "Not On Label",
+          "value": "Not+On+Label",
+          "count": 2
+        },
+        {
+          "title": "Plastic Head Distribution",
+          "value": "Plastic+Head+Distribution",
+          "count": 2
+        },
+        {
+          "title": "Prairie Cat Mastering",
+          "value": "Prairie+Cat+Mastering",
+          "count": 2
+        },
+        {
+          "title": "Radiation Records",
+          "value": "Radiation+Records",
+          "count": 2
+        },
+        {
+          "title": "Sanctuary Records Group",
+          "value": "Sanctuary+Records+Group",
+          "count": 2
+        },
+        {
+          "title": "Toy'S Factory",
+          "value": "Toy%27S+Factory",
+          "count": 2
+        },
+        {
+          "title": "Www.Gzvinyl.Com",
+          "value": "Www.Gzvinyl.Com",
+          "count": 2
+        },
+        {
+          "title": "666 Records",
+          "value": "666+Records",
+          "count": 1
+        },
+        {
+          "title": "Back On Black",
+          "value": "Back+On+Black",
+          "count": 1
+        },
+        {
+          "title": "Bmg",
+          "value": "Bmg",
+          "count": 1
+        },
+        {
+          "title": "Bmg Rights Management Uk",
+          "value": "Bmg+Rights+Management+Uk",
+          "count": 1
+        },
+        {
+          "title": "Captain Oi! Production",
+          "value": "Captain+Oi%21+Production",
+          "count": 1
+        },
+        {
+          "title": "Cinram, Richmond, In",
+          "value": "Cinram%2C+Richmond%2C+In",
+          "count": 1
+        },
+        {
+          "title": "Clay",
+          "value": "Clay",
+          "count": 1
+        },
+        {
+          "title": "Disk Union",
+          "value": "Disk+Union",
+          "count": 1
+        },
+        {
+          "title": "Edc",
+          "value": "Edc",
+          "count": 1
+        },
+        {
+          "title": "Estado Records",
+          "value": "Estado+Records",
+          "count": 1
+        },
+        {
+          "title": "Get Back",
+          "value": "Get+Back",
+          "count": 1
+        },
+        {
+          "title": "Key Production",
+          "value": "Key+Production",
+          "count": 1
+        },
+        {
+          "title": "Kyrios Comércio, Editora E Serviços Fonográficos Eireli",
+          "value": "Kyrios+Com%C3%A9rcio%2C+Editora+E+Servi%C3%A7os+Fonogr%C3%A1ficos+Eireli",
+          "count": 1
+        },
+        {
+          "title": "Mpo",
+          "value": "Mpo",
+          "count": 1
+        },
+        {
+          "title": "Nice Price",
+          "value": "Nice+Price",
+          "count": 1
+        },
+        {
+          "title": "Noise Records",
+          "value": "Noise+Records",
+          "count": 1
+        },
+        {
+          "title": "Not On Label (Discharge)",
+          "value": "Not+On+Label+%28Discharge%29",
+          "count": 1
+        },
+        {
+          "title": "Optical Experts Manufacturing",
+          "value": "Optical+Experts+Manufacturing",
+          "count": 1
+        },
+        {
+          "title": "Punks Not Dead",
+          "value": "Punks+Not+Dead",
+          "count": 1
+        },
+        {
+          "title": "Receiver Records",
+          "value": "Receiver+Records",
+          "count": 1
+        },
+        {
+          "title": "Receiver Records Limited",
+          "value": "Receiver+Records+Limited",
+          "count": 1
+        },
+        {
+          "title": "Red Star Recordings",
+          "value": "Red+Star+Recordings",
+          "count": 1
+        },
+        {
+          "title": "Restricted Release",
+          "value": "Restricted+Release",
+          "count": 1
+        },
+        {
+          "title": "Rock Brigade Records",
+          "value": "Rock+Brigade+Records",
+          "count": 1
+        },
+        {
+          "title": "Rtt Records",
+          "value": "Rtt+Records",
+          "count": 1
+        },
+        {
+          "title": "Sanctuary Records Group Inc.",
+          "value": "Sanctuary+Records+Group+Inc.",
+          "count": 1
+        },
+        {
+          "title": "Sgolf Musical Comércio E Serviços Ltda.",
+          "value": "Sgolf+Musical+Com%C3%A9rcio+E+Servi%C3%A7os+Ltda.",
+          "count": 1
+        },
+        {
+          "title": "Sony Dadc, Southwater",
+          "value": "Sony+Dadc%2C+Southwater",
+          "count": 1
+        },
+        {
+          "title": "Sony Dadc, Terre Haute",
+          "value": "Sony+Dadc%2C+Terre+Haute",
+          "count": 1
+        },
+        {
+          "title": "Tamt Co., Ltd.",
+          "value": "Tamt+Co.%2C+Ltd.",
+          "count": 1
+        },
+        {
+          "title": "Technicolor",
+          "value": "Technicolor",
+          "count": 1
+        },
+        {
+          "title": "United Record Pressing",
+          "value": "United+Record+Pressing",
+          "count": 1
+        },
+        {
+          "title": "Vdc Group",
+          "value": "Vdc+Group",
+          "count": 1
+        },
+        {
+          "title": "Voice Music",
+          "value": "Voice+Music",
+          "count": 1
+        }
+      ],
+      "allows_multiple_values": true
+    },
+    {
+      "title": "Country",
+      "id": "country",
+      "values": [
+        {
+          "title": "UK",
+          "value": "UK",
+          "count": 28
+        },
+        {
+          "title": "Italy",
+          "value": "Italy",
+          "count": 7
+        },
+        {
+          "title": "Japan",
+          "value": "Japan",
+          "count": 7
+        },
+        {
+          "title": "US",
+          "value": "US",
+          "count": 6
+        },
+        {
+          "title": "UK & Europe",
+          "value": "UK+%26+Europe",
+          "count": 2
+        },
+        {
+          "title": "Brazil",
+          "value": "Brazil",
+          "count": 1
+        },
+        {
+          "title": "Czech Republic",
+          "value": "Czech+Republic",
+          "count": 1
+        },
+        {
+          "title": "Indonesia",
+          "value": "Indonesia",
+          "count": 1
+        },
+        {
+          "title": "Malaysia",
+          "value": "Malaysia",
+          "count": 1
+        },
+        {
+          "title": "Russia",
+          "value": "Russia",
+          "count": 1
+        },
+        {
+          "title": "UK, Europe & US",
+          "value": "UK%2C+Europe+%26+US",
+          "count": 1
+        },
+        {
+          "title": "Worldwide",
+          "value": "Worldwide",
+          "count": 1
+        }
+      ],
+      "allows_multiple_values": true
+    },
+    {
+      "title": "Released",
+      "id": "released",
+      "values": [
+        {
+          "title": "1982",
+          "value": "1982",
+          "count": 2
+        },
+        {
+          "title": "1983",
+          "value": "1983",
+          "count": 2
+        },
+        {
+          "title": "1984",
+          "value": "1984",
+          "count": 3
+        },
+        {
+          "title": "1987",
+          "value": "1987",
+          "count": 1
+        },
+        {
+          "title": "1989",
+          "value": "1989",
+          "count": 5
+        },
+        {
+          "title": "1990",
+          "value": "1990",
+          "count": 1
+        },
+        {
+          "title": "1991",
+          "value": "1991",
+          "count": 1
+        },
+        {
+          "title": "1998",
+          "value": "1998",
+          "count": 1
+        },
+        {
+          "title": "2003",
+          "value": "2003",
+          "count": 8
+        },
+        {
+          "title": "2006",
+          "value": "2006",
+          "count": 1
+        },
+        {
+          "title": "2007",
+          "value": "2007",
+          "count": 1
+        },
+        {
+          "title": "2010",
+          "value": "2010",
+          "count": 4
+        },
+        {
+          "title": "2016",
+          "value": "2016",
+          "count": 3
+        },
+        {
+          "title": "2017",
+          "value": "2017",
+          "count": 1
+        },
+        {
+          "title": "2018",
+          "value": "2018",
+          "count": 1
+        },
+        {
+          "title": "2019",
+          "value": "2019",
+          "count": 1
+        },
+        {
+          "title": "2020",
+          "value": "2020",
+          "count": 2
+        },
+        {
+          "title": "2021",
+          "value": "2021",
+          "count": 2
+        },
+        {
+          "title": "2022",
+          "value": "2022",
+          "count": 1
+        },
+        {
+          "title": "2024",
+          "value": "2024",
+          "count": 1
+        }
+      ],
+      "allows_multiple_values": false
+    }
+  ],
+  "versions": [
+    {
+      "id": 381756,
+      "label": "Clay Records",
+      "country": "UK",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album",
+      "catno": "CLAY LP 3",
+      "released": "1982",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/381756",
+      "thumb": "https://i.discogs.com/kBUMmTAwZU6HJstCSEFdEvwM3n6oyGnVBcu2k3iyR6k/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM4MTc1/Ni0xMzQyMDM3OTcx/LTE1OTkuanBlZw.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 2165,
+          "in_collection": 3739
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 3467667,
+      "label": "Clay Records",
+      "country": "UK",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "Cassette"
+      ],
+      "format": "Album",
+      "catno": "CLAY LP  3",
+      "released": "1982",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/3467667",
+      "thumb": "https://i.discogs.com/m7cr6m3r5j_F2xQV3h5El7IzR5tQxEFqlpaMXp8IBm0/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM0Njc2/NjctMTYxOTEzMTQw/OC0xMzQxLmpwZWc.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 346,
+          "in_collection": 35
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 2291753,
+      "label": "Vap",
+      "country": "Japan",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album",
+      "catno": "35102-25",
+      "released": "1983",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/2291753",
+      "thumb": "https://i.discogs.com/_1bBhghS6SuXe92GtEV5oQS3G7VRzQdSBNgAeYccpFo/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIyOTE3/NTMtMTcwMTI4NTAy/NS0xNjU2LmpwZWc.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 583,
+          "in_collection": 300
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 6238283,
+      "label": "Vap",
+      "country": "Japan",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album, Promo",
+      "catno": "35102-25",
+      "released": "1983",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/6238283",
+      "thumb": "https://i.discogs.com/IHEm-7ByH___4j77nzD7nQJORTMzPaFuUiR6KUHziP4/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTYyMzgy/ODMtMTQxNDQ2MzY0/Mi01MTM3LmpwZWc.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 352,
+          "in_collection": 32
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 12681954,
+      "label": "Clay Records",
+      "country": "UK",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album, Mispress, Repress",
+      "catno": "CLAY LP 3",
+      "released": "1984",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/12681954",
+      "thumb": "https://i.discogs.com/kmVI4UrfGbnmROLvAnVayrewWSIznMBnVG4s-soJWf8/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyNjgx/OTU0LTE1Mzk5NzQ3/NTQtODQ2NS5qcGVn.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 221,
+          "in_collection": 4
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 4878030,
+      "label": "Clay Records",
+      "country": "UK",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album, Repress",
+      "catno": "CLAY LP 3",
+      "released": "1984",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/4878030",
+      "thumb": "https://i.discogs.com/uWh8UfS7af9L-pCVebuekYdAKANsPiWma4gPHV-V67s/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQ4Nzgw/MzAtMTQ4MDExNTg0/OS02Njk1LmpwZWc.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 419,
+          "in_collection": 247
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 10405725,
+      "label": "Clay Records",
+      "country": "UK",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album, Repress",
+      "catno": "CLAY LP 3",
+      "released": "1984",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/10405725",
+      "thumb": "https://i.discogs.com/nA2vcsR4fp3B7NqW58w-htcRVvXWQGvqr3zqG-Or_PA/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNDA1/NzI1LTE1MDAwMzgw/NjEtMzgzNy5qcGVn.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 327,
+          "in_collection": 274
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 5044718,
+      "label": "Vap",
+      "country": "Japan",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "CD"
+      ],
+      "format": "Album",
+      "catno": "85013-30",
+      "released": "1987",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/5044718",
+      "thumb": "https://i.discogs.com/_yL5jUYaQKE3SWHgbK6k60DJv4g7GTew1FAmcx9WvSM/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTUwNDQ3/MTgtMTU1NzU4MzMx/Ni0xNjE4LmpwZWc.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 201,
+          "in_collection": 43
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 6779382,
+      "label": "Clay Records",
+      "country": "UK",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Reissue",
+      "catno": "CLAY LP 3",
+      "released": "1989",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/6779382",
+      "thumb": "https://i.discogs.com/e_tjUd5U8GO-3f_h5hNAVyP8Lh_KFCzjegoh0goitnk/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY3Nzkz/ODItMTQyNjQ0ODk5/MS04NDczLmpwZWc.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 316,
+          "in_collection": 173
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 3346688,
+      "label": "Clay Records",
+      "country": "UK",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album, Reissue",
+      "catno": "CLAY LP 3",
+      "released": "1989",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/3346688",
+      "thumb": "https://i.discogs.com/qijFR2OXnEDubVJytrphXLMDZAJWFJy6E2ofIt44iIQ/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzNDY2/ODgtMTY2MzYxODY2/Ni04NTQ2LmpwZWc.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 320,
+          "in_collection": 277
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 9349384,
+      "label": "Clay Records",
+      "country": "UK",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "CD"
+      ],
+      "format": "Album, Reissue",
+      "catno": "CLAY CD 3",
+      "released": "1989",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/9349384",
+      "thumb": "https://i.discogs.com/7d6LH-1P3-SmiuLu2YFXOkQ7Ip78BfRxgfqOfQ3WbNY/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTkzNDkz/ODQtMTQ3OTA1MjQ5/NC05ODg3LmpwZWc.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 176,
+          "in_collection": 118
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 13157665,
+      "label": "Clay Records",
+      "country": "UK",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album, Reissue, Repress",
+      "catno": "CLAY LP 3",
+      "released": "1989",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/13157665",
+      "thumb": "https://i.discogs.com/-kW6Ld5dGTsMQkH5VXjqHqeXApKNdbloJhCfEpua-Vs/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzMTU3/NjY1LTE1NDkwNTM4/NzMtMjkzNi5qcGVn.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 217,
+          "in_collection": 101
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 603934,
+      "label": "Clay Records",
+      "country": "UK",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "CD"
+      ],
+      "format": "Album",
+      "catno": "CLAY CD 3",
+      "released": "1989",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/603934",
+      "thumb": "https://i.discogs.com/meV2eYV1feFTidmnSJSfEGZ9Lyau_FY5abEJO1vSSi8/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTYwMzkz/NC0xMzc3OTg2OTAx/LTM4MDMuanBlZw.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 264,
+          "in_collection": 230
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 1552541,
+      "label": "Toy's Factory",
+      "country": "Japan",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "CD"
+      ],
+      "format": "Album, Reissue",
+      "catno": "TFCK-88521",
+      "released": "1990",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/1552541",
+      "thumb": "https://i.discogs.com/mwXp8l4SOQmFFMu13jZfDyELp8r4xvFLXhFQ0OY-YNE/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE1NTI1/NDEtMTU5MDMyMjc0/MC03MzcyLmpwZWc.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 176,
+          "in_collection": 97
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 2785559,
+      "label": "Clay Records",
+      "country": "UK",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album, Reissue, Repress",
+      "catno": "CLAY LP 3",
+      "released": "1991",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/2785559",
+      "thumb": "https://i.discogs.com/HmGb8sr7Ap-ofkkg8Hn91Hwo1s4LeKCFd9Wr_vJfNBM/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3ODU1/NTktMTMwMDkzMTI2/Ni5qcGVn.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 316,
+          "in_collection": 64
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 860314,
+      "label": "Receiver Records Limited",
+      "country": "UK, Europe & US",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "CD"
+      ],
+      "format": "Album, Reissue, Remastered",
+      "catno": "RRCD 255 Z, RRCD 255",
+      "released": "1998",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/860314",
+      "thumb": "https://i.discogs.com/2wU5sb0jlbt1zjY9Q_UIy4tjGUS2AezD-RP1nN5XkCA/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTg2MDMx/NC0xNDg1MzAyODQ1/LTQ3MzguanBlZw.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 195,
+          "in_collection": 248
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 12887436,
+      "label": "Castle Music",
+      "country": "US",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "CD"
+      ],
+      "format": "Album, Reissue",
+      "catno": "82310-72319-2",
+      "released": "2003",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/12887436",
+      "thumb": "https://i.discogs.com/E7Dg59FYTRf14a6k407EIHJnSOhLnpnoO1pg9JnUjEA/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyODg3/NDM2LTE1NDM4NzE5/MjctNjc4Ni5qcGVn.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 135,
+          "in_collection": 114
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 20069359,
+      "label": "Castle Music",
+      "country": "UK",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "CD"
+      ],
+      "format": "Album, Compilation, Reissue",
+      "catno": "CMRCD709",
+      "released": "2003",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/20069359",
+      "thumb": "",
+      "stats": {
+        "community": {
+          "in_wantlist": 55,
+          "in_collection": 6
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 416801,
+      "label": "Earmark",
+      "country": "Italy",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album, Reissue",
+      "catno": "40008",
+      "released": "2003",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/416801",
+      "thumb": "https://i.discogs.com/RSOnv-pCD_JLRFcyZXHoRgm6U4kH8IrX8AEgl4edij0/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQxNjgw/MS0xNzUzMDM2MzI3/LTExODAuanBlZw.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 276,
+          "in_collection": 396
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 680738,
+      "label": "Earmark",
+      "country": "Italy",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album, Picture Disc, Reissue",
+      "catno": "40008 P",
+      "released": "2003",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/680738",
+      "thumb": "https://i.discogs.com/fNu1oHplUK7au6iwbIlDcVTi3w2R1fA6miaomPSmk9g/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY4MDcz/OC0xNTU5NDAyMzY3/LTY2OTQuanBlZw.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 244,
+          "in_collection": 233
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 20685517,
+      "label": "Castle Music",
+      "country": "UK",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "CD"
+      ],
+      "format": "Album, Compilation, Reissue",
+      "catno": "CMRCD709",
+      "released": "2003",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/20685517",
+      "thumb": "https://i.discogs.com/7jKlh0OybpXjtoRRxmOx7i0sB5qLBjescKs2MmYa-Og/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIwNjg1/NTE3LTE3NTA0NzMy/ODYtMTM0Mi5qcGVn.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 74,
+          "in_collection": 60
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 3047451,
+      "label": "Castle Music",
+      "country": "UK",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "CD"
+      ],
+      "format": "Album, Reissue",
+      "catno": "CMRCD709",
+      "released": "2003",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/3047451",
+      "thumb": "https://i.discogs.com/SVPzQdS6-7VWtEGocH0DzvydRw9vqT8bILDKCtJ06P4/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMwNDc0/NTEtMTMxMzI1OTAx/My5qcGVn.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 198,
+          "in_collection": 391
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 36299176,
+      "label": "Noise Records",
+      "country": "Worldwide",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "File"
+      ],
+      "format": "FLAC, Album, Reissue, Stereo",
+      "catno": "none",
+      "released": "2003",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/36299176",
+      "thumb": "https://i.discogs.com/WBWfrR-Cg8sCoS1LGOLS0JaRj424Nykkvr--Syvll24/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM2Mjk5/MTc2LTE3NjkyMTI4/NzAtMjkxNi5qcGVn.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 1,
+          "in_collection": 1
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 1931117,
+      "label": "Earmark",
+      "country": "Italy",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album, Reissue",
+      "catno": "640008",
+      "released": "2003",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/1931117",
+      "thumb": "https://i.discogs.com/rdmtYeSb89YcSca8jyb1uWxjvyhg95H2n2EMtqmWRzY/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE5MzEx/MTctMTI1MzI1NDkz/Ny5qcGVn.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 265,
+          "in_collection": 165
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 5956227,
+      "label": "Estado Records",
+      "country": "Japan",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "CD"
+      ],
+      "format": "Album, Reissue, Remastered",
+      "catno": "BONE-2",
+      "released": "2006",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/5956227",
+      "thumb": "https://i.discogs.com/qQ6WidLeKOoWxQKmQDcC-UClSYpVZz8iqljGpCojWaA/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTU5NTYy/MjctMTU3OTI4MTA1/NS01Mzc2LmpwZWc.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 159,
+          "in_collection": 35
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    }
+  ]
+}

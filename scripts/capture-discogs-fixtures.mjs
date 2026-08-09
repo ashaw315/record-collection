@@ -113,10 +113,31 @@ const captures = [
   {
     name: 'master-discharge-hear-nothing',
     path: '/masters/50683',
-    verify: (payload) =>
-      /discharge/i.test(payload.artists_sort ?? '')
-        ? null
-        : `expected a Discharge master, got "${payload.artists_sort}"`,
+    /**
+     * `/masters` does NOT carry `artists_sort` — that is a `/releases` field.
+     * The first version of this predicate assumed the two responses shared a
+     * shape and failed with `got "undefined"`, which is the assumption this
+     * whole fixture approach exists to avoid, made in the verifier instead of
+     * in the test.
+     *
+     * So the artist is looked for wherever Discogs might plausibly put it, and
+     * the failure message reports what was actually present rather than the
+     * absence of one guessed field. The id itself is known good: the versions
+     * capture for master 50683 succeeded, and release 381756 in that payload
+     * carries `master_id: 50683`.
+     */
+    verify(payload) {
+      const candidates = [
+        payload.artists_sort,
+        ...(payload.artists ?? []).map((artist) => artist.name),
+      ].filter((value) => typeof value === 'string' && value !== '');
+
+      if (candidates.some((value) => /discharge/i.test(value))) return null;
+
+      return candidates.length === 0
+        ? `no artist field found; top-level keys were [${Object.keys(payload).join(', ')}]`
+        : `expected a Discharge master, found artists [${candidates.join(', ')}]`;
+    },
   },
   {
     name: 'master-versions-discharge',
@@ -217,12 +238,23 @@ async function findReleaseWithoutMatrix(searchPayload) {
 
 const failures = [];
 
+/**
+ * Optional fixture names, so a single failed capture can be retried without
+ * re-fetching the ones already verified:
+ *
+ *   node scripts/capture-discogs-fixtures.mjs master-discharge-hear-nothing
+ *
+ * With no arguments every fixture is captured.
+ */
+const only = new Set(process.argv.slice(2));
+const wanted = (name) => only.size === 0 || only.has(name);
+
 function save(name, payload) {
   writeFileSync(`${OUT}/${name}.json`, `${JSON.stringify(scrub(payload), null, 2)}\n`);
 }
 
 for (const capture of captures) {
-  if (capture.path === null) continue;
+  if (capture.path === null || !wanted(capture.name)) continue;
 
   console.log(`fetching ${capture.path}`);
   try {
@@ -246,8 +278,9 @@ for (const capture of captures) {
 }
 
 // The no-matrix fixture is SEARCHED for rather than guessed.
-console.log('\nlooking for a release with no Matrix / Runout data');
 const noMatrix = captures.find((c) => c.name === 'release-no-matrix');
+if (wanted(noMatrix.name)) {
+console.log('\nlooking for a release with no Matrix / Runout data');
 try {
   const pool = await get('/database/search?type=release&format=Vinyl&year=2023&per_page=25');
   const found = await findReleaseWithoutMatrix(pool);
@@ -265,6 +298,7 @@ try {
   }
 } catch (error) {
   failures.push(`release-no-matrix: ${error.message}`);
+}
 }
 
 if (failures.length > 0) {

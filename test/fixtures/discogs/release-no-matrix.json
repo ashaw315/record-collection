@@ -1,0 +1,447 @@
+{
+  "id": 27522408,
+  "status": "Accepted",
+  "year": 2023,
+  "resource_url": "https://api.discogs.com/releases/27522408",
+  "uri": "https://www.discogs.com/release/27522408-Lena-Raine-Moonglow-Bay-Original-Soundtrack",
+  "artists": [
+    {
+      "name": "Lena Raine",
+      "anv": "",
+      "join": "",
+      "role": "",
+      "tracks": "",
+      "id": 6315339,
+      "resource_url": "https://api.discogs.com/artists/6315339",
+      "thumbnail_url": "https://i.discogs.com/kmYW7HkuV2-vPioGyf_5Jj8eSwzQpt932xN1kNiKF68/rs:fit/g:sm/q:90/h:600/w:494/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9BLTYzMTUz/MzktMTc0OTczODI0/Ni03NjIxLmpwZWc.jpeg"
+    }
+  ],
+  "artists_sort": "Lena Raine",
+  "labels": [
+    {
+      "name": "Yetee Records",
+      "catno": "YTR-00079",
+      "entity_type": "1",
+      "entity_type_name": "Label",
+      "id": 821780,
+      "resource_url": "https://api.discogs.com/labels/821780",
+      "thumbnail_url": "https://i.discogs.com/j1iJAMOlLE3jz5q_81ZWXiTtxfSYH7pWj0AYNYh53eg/rs:fit/g:sm/q:90/h:400/w:400/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTgyMTc4/MC0xNTI1MTcwODQx/LTQyNTYuanBlZw.jpeg"
+    }
+  ],
+  "series": [],
+  "companies": [],
+  "formats": [
+    {
+      "name": "Vinyl",
+      "qty": "1",
+      "descriptions": [
+        "LP"
+      ],
+      "text": "Blue/Green"
+    },
+    {
+      "name": "Vinyl",
+      "qty": "1",
+      "descriptions": [
+        "LP"
+      ],
+      "text": "Blue/Purple"
+    },
+    {
+      "name": "Vinyl",
+      "qty": "1",
+      "descriptions": [
+        "LP"
+      ],
+      "text": "Yellow/Orange"
+    }
+  ],
+  "data_quality": "Needs Vote",
+  "community": {
+    "have": 45,
+    "want": 11,
+    "rating": {
+      "count": 5,
+      "average": 4.4
+    },
+    "submitter": {
+      "username": "fencerman2",
+      "resource_url": "https://api.discogs.com/users/fencerman2"
+    },
+    "contributors": [
+      {
+        "username": "fencerman2",
+        "resource_url": "https://api.discogs.com/users/fencerman2"
+      },
+      {
+        "username": "Skylord119",
+        "resource_url": "https://api.discogs.com/users/Skylord119"
+      },
+      {
+        "username": "peterbourbon",
+        "resource_url": "https://api.discogs.com/users/peterbourbon"
+      }
+    ],
+    "data_quality": "Needs Vote",
+    "status": "Accepted"
+  },
+  "format_quantity": 3,
+  "date_added": "2023-06-28T16:52:49-07:00",
+  "date_changed": "2023-07-17T06:58:19-07:00",
+  "num_for_sale": 2,
+  "lowest_price": 44.51,
+  "master_id": 3170892,
+  "master_url": "https://api.discogs.com/masters/3170892",
+  "title": "Moonglow Bay Original Soundtrack",
+  "country": "US",
+  "released": "2023",
+  "released_formatted": "2023",
+  "identifiers": [],
+  "videos": [
+    {
+      "uri": "https://www.youtube.com/watch?v=GTy9IcJH6OA",
+      "title": "Lena Raine - Moonglow Bay Vinyl Rip",
+      "description": "Lena Raine – Moonglow Bay Original Soundtrack\n3LP Morning, Noon, and Night Tide vinyl\nReleased by Yetee Records in 2023.\nhttps://theyetee.com/collections/yetee-records/products/moonglow-bay-original-soundtrack?srsltid=AfmBOorCHXma18jCu83OaUc_I87QEKgGPglTE",
+      "duration": 0,
+      "embed": true
+    }
+  ],
+  "genres": [
+    "Electronic",
+    "Stage & Screen"
+  ],
+  "styles": [
+    "Video Game Music",
+    "Ambient"
+  ],
+  "tracklist": [
+    {
+      "position": "1",
+      "type_": "track",
+      "title": "Welcome to Moonglow Bay",
+      "duration": "2:26"
+    },
+    {
+      "position": "2",
+      "type_": "track",
+      "title": "Who Are You",
+      "duration": "0:29"
+    },
+    {
+      "position": "3",
+      "type_": "track",
+      "title": "Learning to Fish",
+      "duration": "0:58"
+    },
+    {
+      "position": "4",
+      "type_": "track",
+      "title": "The Monster of Moonglow",
+      "duration": "0:52"
+    },
+    {
+      "position": "5",
+      "type_": "track",
+      "title": "Fleeting Moments",
+      "duration": "1:08"
+    },
+    {
+      "position": "6",
+      "type_": "track",
+      "title": "Three Years Later",
+      "duration": "1:39"
+    },
+    {
+      "position": "7",
+      "type_": "track",
+      "title": "Everyday Life",
+      "duration": "3:37"
+    },
+    {
+      "position": "8",
+      "type_": "track",
+      "title": "Life at Home",
+      "duration": "2:52"
+    },
+    {
+      "position": "9",
+      "type_": "track",
+      "title": "Full Moon Memories",
+      "duration": "3:23"
+    },
+    {
+      "position": "10",
+      "type_": "track",
+      "title": "Sunrise over the Bay",
+      "duration": "0:32"
+    },
+    {
+      "position": "11",
+      "type_": "track",
+      "title": "Centennial Readiness Committee",
+      "duration": "2:51"
+    },
+    {
+      "position": "12",
+      "type_": "track",
+      "title": "Abi's Scraps",
+      "duration": "1:08"
+    },
+    {
+      "position": "13",
+      "type_": "track",
+      "title": "Kids Rule the World",
+      "duration": "0:58"
+    },
+    {
+      "position": "14",
+      "type_": "track",
+      "title": "Buy a Fish Will Ya??",
+      "duration": "1:05"
+    },
+    {
+      "position": "15",
+      "type_": "track",
+      "title": "Cooking Time",
+      "duration": "2:47"
+    },
+    {
+      "position": "16",
+      "type_": "track",
+      "title": "Rainy Beats to Fish/Shop To",
+      "duration": "3:33"
+    },
+    {
+      "position": "17",
+      "type_": "track",
+      "title": "Goto Tech",
+      "duration": "1:33"
+    },
+    {
+      "position": "18",
+      "type_": "track",
+      "title": "The Cozy Cavern",
+      "duration": "2:14"
+    },
+    {
+      "position": "19",
+      "type_": "track",
+      "title": "Sarah's Boat Shop",
+      "duration": "1:05"
+    },
+    {
+      "position": "20",
+      "type_": "track",
+      "title": "Marina's Aquarium",
+      "duration": "8:04"
+    },
+    {
+      "position": "21",
+      "type_": "track",
+      "title": "Reel It In!",
+      "duration": "2:47"
+    },
+    {
+      "position": "22",
+      "type_": "track",
+      "title": "Azure Crossing",
+      "duration": "0:47"
+    },
+    {
+      "position": "23",
+      "type_": "track",
+      "title": "Perching Isles",
+      "duration": "1:29"
+    },
+    {
+      "position": "24",
+      "type_": "track",
+      "title": "The Border Sea",
+      "duration": "1:31"
+    },
+    {
+      "position": "25",
+      "type_": "track",
+      "title": "Lonely Rock",
+      "duration": "1:36"
+    },
+    {
+      "position": "26",
+      "type_": "track",
+      "title": "Ruin of Ships",
+      "duration": "6:21"
+    },
+    {
+      "position": "27",
+      "type_": "track",
+      "title": "Thunder from the Deep",
+      "duration": "4:30"
+    },
+    {
+      "position": "28",
+      "type_": "track",
+      "title": "Open Chill",
+      "duration": "0:49"
+    },
+    {
+      "position": "29",
+      "type_": "track",
+      "title": "Frosted Skates",
+      "duration": "1:46"
+    },
+    {
+      "position": "30",
+      "type_": "track",
+      "title": "Broken Glaciers",
+      "duration": "1:22"
+    },
+    {
+      "position": "31",
+      "type_": "track",
+      "title": "Shattered Trench",
+      "duration": "1:53"
+    },
+    {
+      "position": "32",
+      "type_": "track",
+      "title": "Mending the River of Ink",
+      "duration": "4:54"
+    },
+    {
+      "position": "33",
+      "type_": "track",
+      "title": "Shallow Steam",
+      "duration": "0:55"
+    },
+    {
+      "position": "34",
+      "type_": "track",
+      "title": "Twintail Lake",
+      "duration": "1:44"
+    },
+    {
+      "position": "35",
+      "type_": "track",
+      "title": "Thermal Geysers",
+      "duration": "1:34"
+    },
+    {
+      "position": "36",
+      "type_": "track",
+      "title": "Resting Crag",
+      "duration": "2:46"
+    },
+    {
+      "position": "37",
+      "type_": "track",
+      "title": "Carbon Eruption",
+      "duration": "4:04"
+    },
+    {
+      "position": "38",
+      "type_": "track",
+      "title": "Toward Ivory Dawn",
+      "duration": "6:49"
+    },
+    {
+      "position": "39",
+      "type_": "track",
+      "title": "Opening Shepherd's Gate",
+      "duration": "8:07"
+    },
+    {
+      "position": "40",
+      "type_": "track",
+      "title": "With Us Forever",
+      "duration": "3:09"
+    },
+    {
+      "position": "41",
+      "type_": "track",
+      "title": "So Am I",
+      "duration": "3:03"
+    }
+  ],
+  "extraartists": [
+    {
+      "name": "Lu Nascimento",
+      "anv": "",
+      "join": "",
+      "role": "Artwork By",
+      "tracks": "",
+      "id": 0,
+      "resource_url": ""
+    },
+    {
+      "name": "R23X",
+      "anv": "",
+      "join": "",
+      "role": "Mastered By",
+      "tracks": "",
+      "id": 4054314,
+      "resource_url": "https://api.discogs.com/artists/4054314"
+    }
+  ],
+  "images": [
+    {
+      "type": "primary",
+      "uri": "https://i.discogs.com/03hlCt3CfUTlZaIEmU6ydDneFnp1XMe4JlV8JgLGesA/rs:fit/g:sm/q:90/h:597/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NTIy/NDA4LTE2ODc5OTYz/NzAtOTYwNS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/03hlCt3CfUTlZaIEmU6ydDneFnp1XMe4JlV8JgLGesA/rs:fit/g:sm/q:90/h:597/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NTIy/NDA4LTE2ODc5OTYz/NzAtOTYwNS5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/qN6q3vtgjiOnvNpXcme3LXSG9mcAEfCjysqNjHLvd-k/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NTIy/NDA4LTE2ODc5OTYz/NzAtOTYwNS5qcGVn.jpeg",
+      "width": 600,
+      "height": 597
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/QMbbTLy4fSk3KKGQzjcFrm4h5TPNlZoKq1GRKmOSw4A/rs:fit/g:sm/q:90/h:575/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NTIy/NDA4LTE2ODg1OTA1/MDAtMzg4OC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/QMbbTLy4fSk3KKGQzjcFrm4h5TPNlZoKq1GRKmOSw4A/rs:fit/g:sm/q:90/h:575/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NTIy/NDA4LTE2ODg1OTA1/MDAtMzg4OC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/cBKV2OzcNS7RMS_5wMXvY82finVPGfrYLZ2Ut_qMnjM/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NTIy/NDA4LTE2ODg1OTA1/MDAtMzg4OC5qcGVn.jpeg",
+      "width": 600,
+      "height": 575
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/gOy5mw0B1EcA9fekDQb2ZSHXrk7CO4qBWSP32AoahEM/rs:fit/g:sm/q:90/h:206/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NTIy/NDA4LTE2ODg1OTA0/MjMtMjQ0OC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/gOy5mw0B1EcA9fekDQb2ZSHXrk7CO4qBWSP32AoahEM/rs:fit/g:sm/q:90/h:206/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NTIy/NDA4LTE2ODg1OTA0/MjMtMjQ0OC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/blr4e86uiTiVQEjbSI3drk7T57XMYmIDXXSoFQnP_20/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NTIy/NDA4LTE2ODg1OTA0/MjMtMjQ0OC5qcGVn.jpeg",
+      "width": 600,
+      "height": 206
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/S2DnP0tpYRjzVyPTYW_nJhq3h4JxxSpOu0lAd7BIavk/rs:fit/g:sm/q:90/h:600/w:597/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NTIy/NDA4LTE2ODg1OTA0/MjktNTM1NC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/S2DnP0tpYRjzVyPTYW_nJhq3h4JxxSpOu0lAd7BIavk/rs:fit/g:sm/q:90/h:600/w:597/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NTIy/NDA4LTE2ODg1OTA0/MjktNTM1NC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/JqPn2oN3MtPhvJmQgbZz7vKWfmqSxKgkqc0bXiCwJK4/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NTIy/NDA4LTE2ODg1OTA0/MjktNTM1NC5qcGVn.jpeg",
+      "width": 597,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/tJqc8XfHb55cPp9cqLXewBLP4ExlJ2Cnz7oZR5bP1Cw/rs:fit/g:sm/q:90/h:596/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NTIy/NDA4LTE2ODg1OTA0/MzctOTU5MC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/tJqc8XfHb55cPp9cqLXewBLP4ExlJ2Cnz7oZR5bP1Cw/rs:fit/g:sm/q:90/h:596/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NTIy/NDA4LTE2ODg1OTA0/MzctOTU5MC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/rCs8ikVTL-B_ZcTF3SKIkqqVHm3uhHxlDnDX3pANNKI/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NTIy/NDA4LTE2ODg1OTA0/MzctOTU5MC5qcGVn.jpeg",
+      "width": 600,
+      "height": 596
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/MWaPZ0rviHOGLLkdb0dPDCFbvQPm9m6vfLSIljxcGdE/rs:fit/g:sm/q:90/h:600/w:576/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NTIy/NDA4LTE2ODg1OTA0/MzYtMzM0NS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/MWaPZ0rviHOGLLkdb0dPDCFbvQPm9m6vfLSIljxcGdE/rs:fit/g:sm/q:90/h:600/w:576/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NTIy/NDA4LTE2ODg1OTA0/MzYtMzM0NS5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/2DA4Q0JM3h7hrmtTURDjCD-Vm-T2HgVQzYir_guh97w/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NTIy/NDA4LTE2ODg1OTA0/MzYtMzM0NS5qcGVn.jpeg",
+      "width": 576,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/NFF1Vm-KKQxfyzYcKJSt-a9w995z89pvbANuOrjWPbk/rs:fit/g:sm/q:90/h:600/w:596/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NTIy/NDA4LTE2ODg1OTA0/NDUtMjQ0MS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/NFF1Vm-KKQxfyzYcKJSt-a9w995z89pvbANuOrjWPbk/rs:fit/g:sm/q:90/h:600/w:596/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NTIy/NDA4LTE2ODg1OTA0/NDUtMjQ0MS5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/Tpo28t3woDDJxDHNAhJScxdcd_Rf2OR-AKngb5QoZHQ/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NTIy/NDA4LTE2ODg1OTA0/NDUtMjQ0MS5qcGVn.jpeg",
+      "width": 596,
+      "height": 600
+    }
+  ],
+  "thumb": "https://i.discogs.com/qN6q3vtgjiOnvNpXcme3LXSG9mcAEfCjysqNjHLvd-k/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NTIy/NDA4LTE2ODc5OTYz/NzAtOTYwNS5qcGVn.jpeg",
+  "estimated_weight": 230,
+  "blocked_from_sale": false,
+  "is_offensive": false
+}
