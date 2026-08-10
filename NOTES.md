@@ -402,6 +402,29 @@ form the records work had not shown — see the masking entry under Open.
   present, which is the same axis-confusion the "same family" rule warns about.
   Noticed: step 6, unit 5.
 
+  **SECOND INSTANCE, and it is becoming a habit worth naming: A FIXTURE THAT
+  MAKES A TEST PASS BY REMOVING WHAT IT TESTS.** Twice in two units, both caught
+  while writing rather than by mutation.
+
+  | Fixture convenience | What it silently removed |
+  |---|---|
+  | `mockMaster(year = 1971)` — a DEFAULT | passing `undefined` to model "master has no year" got 1971 instead, so the test failed against correct code |
+  | suffixing an artist name to dodge `artists_name_unique` | the two records would have had DIFFERENT artists, and §7.7 matches on artist — the test would have passed while testing nothing |
+
+  The second is the more dangerous, because it fails in the *passing*
+  direction. A default that supplies a value makes a test fail loudly and gets
+  fixed; a suffix that separates two rows makes the assertion trivially true
+  and gets committed.
+
+  **Both came from solving a test-mechanics problem — a required argument, a
+  unique constraint — without asking what the workaround changed about the
+  scenario.** The unique constraint wanted found-or-created, not a fresh name:
+  the whole point was two records belonging to the SAME artist.
+
+  **The check: after working around a constraint in a fixture, restate what the
+  test is now testing.** If the restatement is narrower than the test's name,
+  the workaround ate the scenario.
+
   **PASSIVE-PATH VARIANT: when every test exercises the DELIBERATE path, the
   passive path is unconstrained — and the passive path is usually the common
   one.** Not a fixture problem: each test is individually well-built. The gap is
@@ -463,6 +486,44 @@ form the records work had not shown — see the masking entry under Open.
   enumerate what the layer underneath accepts, by execution, before concluding
   anything. Not "does removing this break a test" but "what does the thing I am
   guarding say yes to". Five minutes in `node -e` answered it here.
+
+  **SEAM RULE — third instance, and the one to state as a rule: LAYER TESTS
+  PROVE A LAYER, NEVER THE JOIN. When two correct layers must agree, the test
+  that matters runs end to end through both, and neither side's suite can
+  substitute for it.**
+
+  Three instances now, all found by use rather than by tests:
+
+  | Layer A | Layer B | What fell in the gap |
+  |---|---|---|
+  | normalizer (24 tests) | search route | raw payloads returned; every normalizer test still passed |
+  | search endpoint (accepts 12 params) | lookup form (offers 7) | five §5.7 parameters unreachable; no endpoint test can see a form |
+  | import writes `discogs_release_id` | ownership matches on it | the FORM path never sent it — §7.7 tier 1 unreachable for every record the user owned |
+
+  **The third is the sharpest.** Both sides were correct and both were tested:
+  every ownership test built pressings directly WITH an id, every import test
+  asserted what was written. The defect existed only in the join, and the
+  mutation that exposes it — never sending the id — failed ZERO tests before a
+  seam test existed and three after.
+
+  **Why layer tests cannot catch it, structurally.** A layer test supplies its
+  own inputs. That is what makes it fast and precise, and it is exactly why it
+  cannot tell you whether the real producer supplies those inputs — the fixture
+  stands in for the other layer and always agrees with it. Two suites can be
+  green, complete, and jointly silent.
+
+  **The rule: for any property that requires two components to agree, write one
+  test that goes through both.** `test/integration/import-then-own.test.ts` is
+  the shape — real import in, real ownership query out, no fixture in between.
+  It is slower and less precise than either layer's tests and that is the
+  point: precision is what hides the seam.
+
+  **The tell:** a property stated in the spec that no single module owns. §7.7's
+  tier 1 is a claim about the importer AND the matcher; §5.7's twelve
+  parameters are a claim about the endpoint AND the form. Whenever a
+  requirement spans components, ask which test would fail if they stopped
+  agreeing. Noticed: steps 7 units 4, the search-params QA finding, and the
+  tier-1 QA finding.
 
   **WIRING VARIANT: a pure-function test proves the TRANSFORMATION, never that
   anything calls it.** Not a fixture problem at all — the fixtures are fine and
