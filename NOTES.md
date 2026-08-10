@@ -425,6 +425,32 @@ form the records work had not shown — see the masking entry under Open.
   test is now testing.** If the restatement is narrower than the test's name,
   the workaround ate the scenario.
 
+  **SUITE-SCALE VARIANT: the fixture rule applies to the whole CORPUS, not just
+  to one test's data. If every committed fixture shares a property, no test can
+  see what happens without it — however well written.**
+
+  Step 7's prefill fabricated a pressing year from the master's album year, and
+  no test caught it. Not because the tests were weak: because every captured
+  Discogs payload in the repository carried its own `year`, so the master
+  fallback never ran in any of them. The defect lived on a path the entire
+  suite avoided.
+
+  It surfaced only from a real lookup — the US Carpenters LP, `year: 0` and no
+  `released` field at all, a shape I could not construct from imagination
+  because every variation I invented recovered the year correctly.
+
+  **The response was to make it a permanent fixture** (`release-no-year.json`),
+  not to fix the code and move on. A payload that exercises a path nothing else
+  reaches is worth more than a payload that duplicates coverage, and the
+  argument for keeping it is the same one that justifies capturing fixtures at
+  all: it encodes what the world does rather than what we imagined.
+
+  **The check, at corpus scale: for each fixture, what property does it share
+  with every other one?** Shared properties are unexercised branches. Here it
+  was "carries a year"; the same question applies to "has a matrix", "has a
+  catalog number", "is a release rather than a master". Noticed: step 7, and
+  named by the security review.
+
   **CONCURRENCY-HARNESS VARIANT: a fake `sleep` that ADVANCES THE SHARED CLOCK
   turns a concurrency test into a spread-over-time test — and the correct fix
   then reads as broken.**
@@ -1101,6 +1127,39 @@ form the records work had not shown — see the masking entry under Open.
   reach a code path can be defeated by a DIFFERENT guard reading the same input.
   The hollow Neon test is the worst case — see the Neon entry below.
   Swept: step 5 remediation.
+
+  **WORSE STILL, and the one to remember: A TEST THAT MANUFACTURED FALSE
+  CONFIDENCE ABOUT THE EXACT PROPERTY IT NAMED.**
+
+  A repo test asserted that `client.ts` contains the string `guardedFetch`,
+  under the name "is wired into the shared client, not merely available". It
+  passed. The name existed — and covered ONE OF TWO construction paths:
+  `getDiscogsClient` wrapped its fetch, `createDiscogsClient` did not, so any
+  caller passing `globalThis.fetch` reached Discogs for real.
+
+  **The test written to prove the guard was what stopped anyone checking whether
+  the guard was complete.** Its green tick answered "is the guard wired in?"
+  with evidence about a NAME, and the question was never asked again. The hole
+  was found only when a DIFFERENT test — replacing another file-text assertion
+  with a behavioural one — resolved with a genuine 36-field Discogs payload.
+
+  **Why this is worse than the config-text case below.** That one asserted a
+  fact about a file and inferred behaviour. This one asserted a fact about the
+  IMPLEMENTATION and inferred completeness — a stronger claim, from weaker
+  evidence, about the property the test was named for. A grep can tell you a
+  mechanism exists. It cannot tell you the mechanism has no exceptions, and a
+  guard's entire value is in having none.
+
+  **The rule: never assert a guard by searching for it. Exercise the paths it
+  must cover, including the one you think nobody uses.** Both replacements do:
+  one drives `createDiscogsClient` with the real `fetch` and expects a refusal,
+  the other drives it with an injected `fetch` and expects success, so the
+  guard is pinned in both directions.
+
+  **The tell: a test whose assertion is `toMatch` on source code.** If the
+  answer to "what would have to be true for this to pass while the property is
+  false" is "a name in the wrong place", it is not a test of the property.
+  Noticed: step 7, security unit 5.
 
   **SAME CLASS, WORST FORM YET: asserting a CONFIG FILE'S TEXT rather than the
   running system's BEHAVIOUR.** The test passed for the entire period the thing
@@ -1914,6 +1973,48 @@ form the records work had not shown — see the masking entry under Open.
   object-level refine, the field errors say what to fix. That rule needed its
   own fixture — the first version passed under either precedence because the
   refine did not actually fire, and mutation caught it.
+
+- **DEFERRED (security review) — a `cause` chain can carry more than the message
+  it was wrapped in.** `DiscogsError` keeps `cause` for the log, and
+  `withErrorHandling` stringifies `error.message` plus the stack. A driver or
+  `fetch` error nested deep enough could put a URL, a header set, or a
+  connection string into a log line nobody expected to hold one.
+
+  Latent rather than live: nothing today puts a credential in a `cause`, the
+  token travels in a header the client never logs, and the response body is
+  fixed prose (§5). It is on this list because the shape is one where a future
+  change makes it live without anyone touching the logging code.
+
+  **The fix, when it happens:** log a redacted projection — name, message,
+  status, SQLSTATE — rather than the whole chain, and assert in a test that a
+  planted secret in a nested `cause` does not appear in the emitted line.
+  Noticed: step 7 security review.
+
+- **DEFERRED TO STEP 14 (deploy) — the no-live-calls guard keys off the
+  DATABASE TARGET, which is exactly right today and stops being sufficient the
+  moment a test run points at a remote database.**
+
+  `isTestContext()` returns true when `DATABASE_URL` is local, `NODE_ENV` is
+  test, or `VITEST` is set. Every current test context satisfies at least one.
+
+  A CI job running E2E against a hosted preview database would satisfy NONE:
+  Next forces `NODE_ENV=development` for `next dev` (measured), `VITEST` is
+  unset in a Playwright run, and the database would be remote. The guard would
+  go quiet and a server component could reach Discogs for real — the exact
+  failure it was built for, restored by a configuration change nobody would
+  connect to it.
+
+  **Deferred rather than fixed because that configuration does not exist**, and
+  a guard keyed on a signal we have not yet designed would be speculation. But
+  it is a DEPLOY concern rather than a testing one: whoever sets up remote-
+  database CI has to add a signal that survives it, and `test/repo/
+  no-live-discogs.test.ts` should gain a case for it at the same time.
+
+  **The general shape, worth carrying past this instance:** a guard keyed on an
+  OBSERVATION rather than a flag is more robust — that is why the database
+  target beat `NODE_ENV` — but every observation is still a bet about the
+  environments that will exist. Write down which environments the bet covers.
+  Noticed: step 7 security review.
 
 - **DEFERRED — `genreSubtree` is defined twice, in two files, and both copies
   are correct today.** The recursive CTE walking the genre hierarchy down (§7.1)
