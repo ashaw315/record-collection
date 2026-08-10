@@ -18,8 +18,27 @@ import { logger } from '@/lib/logger';
 
 const db = getTestDb();
 
+/**
+ * Pre-verifies a Discogs release id by seeding §6's cache.
+ *
+ * §7.7 now requires the server to VERIFY a client-supplied `discogsReleaseId`
+ * before storing it, and verification consults the cache first. These tests are
+ * about §4's find-or-create, not about verification — so the id is made
+ * verifiable rather than the endpoint mocked, which keeps the real code path
+ * and needs no network.
+ */
+async function seedVerifiableRelease(discogsReleaseId: number): Promise<void> {
+  await db.execute(
+    sql`INSERT INTO discogs_cache (discogs_release_id, payload, fetched_at)
+        VALUES (${discogsReleaseId}, ${JSON.stringify({ id: discogsReleaseId })}::jsonb, now())
+        ON CONFLICT (discogs_release_id) DO NOTHING`,
+  );
+}
+
+
 beforeEach(async () => {
   await truncateAll();
+  await seedVerifiableRelease(424242);
 });
 
 afterEach(() => {

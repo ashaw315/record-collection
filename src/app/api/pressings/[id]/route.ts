@@ -11,6 +11,7 @@ import {
   validationError,
 } from '@/lib/api/errors';
 import { withErrorHandling } from '@/lib/api/handler';
+import { verifyDiscogsRelease } from '@/lib/discogs/verify-release';
 import { yearSchema } from '@/lib/api/year';
 import {
   countPressingReferences,
@@ -81,6 +82,35 @@ export const PATCH = withErrorHandling(
     ) {
       const clash = await findPressingByDiscogsId(discogsReleaseId);
       return duplicate('Another pressing already has that Discogs id', clash?.id ?? id);
+    }
+
+    /**
+     * §7.7: verified before it is stored, the same as POST.
+     *
+     * Closing one endpoint and not the other would leave the claim reachable by
+     * a second request — create a pressing without an id, then PATCH one in.
+     *
+     * CLEARING it (null) needs no verification: null asserts nothing.
+     */
+    if (discogsReleaseId != null) {
+      const verified = await verifyDiscogsRelease(discogsReleaseId);
+
+      if (!verified.ok) {
+        return verified.reason === 'not-found'
+          ? badRequest(
+              `No Discogs release with id ${discogsReleaseId} exists`,
+              'INVALID_DISCOGS_RELEASE_ID',
+            )
+          : NextResponse.json(
+              {
+                error: {
+                  message: 'Could not reach Discogs to verify that release id.',
+                  code: 'UPSTREAM_ERROR',
+                },
+              },
+              { status: 502 },
+            );
+      }
     }
 
     try {

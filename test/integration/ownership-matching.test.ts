@@ -69,6 +69,116 @@ async function seedRecord(artistId: string, pressingId: string | null, title = T
   return rows.rows[0].id;
 }
 
+describe('tier 1 requires CORROBORATION, not an id alone', () => {
+  /**
+   * §7.7 as amended: tier 1 needs the release id **and** the artist/title match
+   * tier 2 uses.
+   *
+   * **Why the corroboration is not redundant.** `discogs_release_id` is a plain
+   * integer a client can assert through `POST /api/pressings`, so the id alone
+   * lets a wrong or forged value produce "you own this pressing" for a record
+   * with an entirely different artist and title. Verified before fixing:
+   * posting a pressing with `discogsReleaseId: 381756` and unrelated details,
+   * attached to a record by "Some Other Band", returned tier `exact`.
+   *
+   * **Why nothing caught it.** Every fixture in this file paired the id with
+   * the matching artist and title, so no test could tell "matches on id alone"
+   * from "corroborates". The tests below are the ones that can.
+   */
+  it('does NOT report tier 1 when the id names a different album', async () => {
+    const artistId = await seedArtist('Some Other Band');
+    // The id a client asserted. Nothing else about this record agrees with it.
+    const pressingId = await seedPressing({ discogsReleaseId: LOOKING_AT });
+    await seedRecord(artistId, pressingId, 'An Unrelated Album');
+
+    const match = await matchOwnership({
+      discogsReleaseId: LOOKING_AT,
+      artist: 'Discharge',
+      title: TITLE,
+    });
+
+    expect(match.tier, 'a bad id must degrade to no match, never to certainty').toBe('none');
+  });
+
+  it('does NOT report tier 1 when only the ARTIST disagrees', async () => {
+    // The narrower case: right album title, wrong band. Album titles are not
+    // unique, and "Greatest Hits" would otherwise match everything.
+    const artistId = await seedArtist('The Damned');
+    const pressingId = await seedPressing({ discogsReleaseId: LOOKING_AT });
+    await seedRecord(artistId, pressingId);
+
+    const match = await matchOwnership({
+      discogsReleaseId: LOOKING_AT,
+      artist: 'Discharge',
+      title: TITLE,
+    });
+
+    expect(match.tier).not.toBe('exact');
+  });
+
+  it('does NOT report tier 1 when only the TITLE disagrees', async () => {
+    const artistId = await seedArtist();
+    const pressingId = await seedPressing({ discogsReleaseId: LOOKING_AT });
+    await seedRecord(artistId, pressingId, 'Why');
+
+    const match = await matchOwnership({
+      discogsReleaseId: LOOKING_AT,
+      artist: 'Discharge',
+      title: TITLE,
+    });
+
+    expect(match.tier).not.toBe('exact');
+  });
+
+  it('still reports tier 1 when the album agrees but the title has a typo', async () => {
+    /**
+     * The corroboration must not be stricter than tier 2's, or a record whose
+     * title the user typed slightly differently would lose the badge it should
+     * have. Fuzzy on both sides, exactly as tier 2 matches.
+     */
+    const artistId = await seedArtist();
+    const pressingId = await seedPressing({ discogsReleaseId: LOOKING_AT });
+    await seedRecord(artistId, pressingId, 'Hear Nothing See Nothing Say Nothin');
+
+    const match = await matchOwnership({
+      discogsReleaseId: LOOKING_AT,
+      artist: 'Discharge',
+      title: TITLE,
+    });
+
+    expect(match.tier).toBe('exact');
+  });
+
+  it('falls to tier 2 rather than none when the album IS owned elsewhere', async () => {
+    /**
+     * The degradation §7.7 asks for. A forged id on one record must not hide a
+     * genuine copy of the album owned in another pressing — the honest answer
+     * is still "you own a different pressing".
+     */
+    const artistId = await seedArtist();
+
+    const forged = await seedPressing({ discogsReleaseId: LOOKING_AT });
+    await seedRecord(await seedArtist('Some Other Band'), forged, 'An Unrelated Album');
+
+    const genuine = await seedPressing({
+      discogsReleaseId: OWNED_OTHER,
+      catalogNumber: 'CLAY LP 3',
+      countryPressed: 'UK',
+      yearPressed: 1989,
+    });
+    await seedRecord(artistId, genuine);
+
+    const match = await matchOwnership({
+      discogsReleaseId: LOOKING_AT,
+      artist: 'Discharge',
+      title: TITLE,
+    });
+
+    expect(match.tier).toBe('different-pressing');
+    expect(match.ownedPressing?.yearPressed).toBe(1989);
+  });
+});
+
 describe('tier 1 — you own this exact pressing', () => {
   it('matches on the pressing discogs id, not on the album', async () => {
     const artistId = await seedArtist();
@@ -96,7 +206,21 @@ describe('matching without an artist name', () => {
    * version table reported "no badge" for a record sitting on the shelf, on
    * the screen built to compare pressings. Found while wiring that endpoint.
    */
-  it('still finds an exact pressing match with no artist supplied', async () => {
+  it('CANNOT reach tier 1 without an artist to corroborate against', async () => {
+    /**
+     * CHANGED by the §7.7 amendment, and the change is the point.
+     *
+     * This test previously asserted that the pressing id ALONE identifies a
+     * record — which is exactly the property the security review found
+     * forgeable. Tier 1 now requires the album to agree, so a caller supplying
+     * no artist cannot reach it.
+     *
+     * The versions endpoint is the caller that has no artist on its rows, and
+     * it already fetches the master for one — so corroboration succeeds there
+     * whenever the master lookup does. When it does not, §7.7's asymmetry
+     * decides: an error the user never discovers is the one to avoid, so the
+     * app declines to claim the specific thing on thin evidence.
+     */
     const artistId = await seedArtist();
     const pressingId = await seedPressing({ discogsReleaseId: LOOKING_AT });
     await seedRecord(artistId, pressingId);
@@ -107,7 +231,7 @@ describe('matching without an artist name', () => {
       title: null,
     });
 
-    expect(match.tier, 'the pressing id alone identifies it').toBe('exact');
+    expect(match.tier, 'no corroboration available, so no claim').toBe('none');
   });
 
   it('cannot reach tiers 2 or 3 without an artist, and says none', async () => {

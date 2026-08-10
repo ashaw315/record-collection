@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { invalidJson, isUniqueViolation, validationError } from '@/lib/api/errors';
+import { badRequest, invalidJson, isUniqueViolation, validationError } from '@/lib/api/errors';
 import { withErrorHandling } from '@/lib/api/handler';
+import { verifyDiscogsRelease } from '@/lib/discogs/verify-release';
 import { parseListParams } from '@/lib/api/query-params';
 import { yearSchema } from '@/lib/api/year';
 import {
@@ -82,6 +83,36 @@ export const POST = withErrorHandling('api.pressings.POST', async (request: Requ
    * key is empty, so an all-null request always falls through to create — two
    * unrelated white labels must not collapse into one shared row.
    */
+    /**
+     * §7.7: a client-supplied `discogsReleaseId` is VERIFIED before it is
+     * stored. The server holds the release detail and the cache, so a client
+     * asserting a fact the server can establish is a pattern to eliminate.
+     *
+     * An unverified id in this column is inherited by every future reader of
+     * the row — §7.7's tier 1 was the first, and it answered "you own this
+     * pressing" for an unrelated record until the corroboration landed.
+     */
+    if (input.discogsReleaseId != null) {
+      const verified = await verifyDiscogsRelease(input.discogsReleaseId);
+
+      if (!verified.ok) {
+        return verified.reason === 'not-found'
+          ? badRequest(
+              `No Discogs release with id ${input.discogsReleaseId} exists`,
+              'INVALID_DISCOGS_RELEASE_ID',
+            )
+          : NextResponse.json(
+              {
+                error: {
+                  message: 'Could not reach Discogs to verify that release id.',
+                  code: 'UPSTREAM_ERROR',
+                },
+              },
+              { status: 502 },
+            );
+      }
+    }
+
   const existing = await findMatchingPressing(input);
   if (existing !== undefined) {
     return NextResponse.json(existing, { status: 200 });

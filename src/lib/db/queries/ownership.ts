@@ -112,24 +112,49 @@ export async function matchOwnership(input: {
   const db = getDb();
 
   /**
-   * TIER 1: a record whose pressing carries this exact `discogs_release_id`.
+   * TIER 1: this exact `discogs_release_id`, CORROBORATED by the album.
    *
-   * Matched on the PRESSING alone, not on artist or title. The pressing id is
-   * a stronger identification than any text comparison, and requiring the text
-   * to agree as well would demote a correctly-identified pressing to tier 2
-   * because the user typed a different title.
+   * §7.7 as amended: the id **and** the artist/title match tier 2 uses.
+   *
+   * An earlier version matched on the pressing id alone, reasoning that it is
+   * a stronger identification than any text comparison. It is — when it is
+   * true. But `discogs_release_id` is a plain integer a client can assert
+   * through `POST /api/pressings`, so the id alone let a wrong or forged value
+   * produce "you own this pressing" for a record with an entirely different
+   * artist and title. Verified before the fix: a pressing posted with this id
+   * and unrelated details, attached to a record by "Some Other Band", returned
+   * `exact`.
+   *
+   * The corroboration is FUZZY, deliberately matching tier 2's threshold
+   * rather than being stricter. A record whose title the user typed slightly
+   * differently must not lose the badge it should have — the point is to
+   * reject a wrong album, not to demand an exact string.
+   *
+   * When corroboration fails the query simply finds nothing and the tiers below
+   * answer, which is the degradation §7.7 asks for: a bad id becomes tier 2 or
+   * no badge rather than a confident wrong answer.
    */
-  const [exact] = await db
-    .select({
-      recordId: records.id,
-      catalogNumber: pressings.catalogNumber,
-      countryPressed: pressings.countryPressed,
-      yearPressed: pressings.yearPressed,
-    })
-    .from(records)
-    .innerJoin(pressings, eq(pressings.id, records.pressingId))
-    .where(eq(pressings.discogsReleaseId, input.discogsReleaseId))
-    .limit(1);
+  const [exact] =
+    input.artist === null || input.title === null
+      ? []
+      : await db
+          .select({
+            recordId: records.id,
+            catalogNumber: pressings.catalogNumber,
+            countryPressed: pressings.countryPressed,
+            yearPressed: pressings.yearPressed,
+          })
+          .from(records)
+          .innerJoin(pressings, eq(pressings.id, records.pressingId))
+          .innerJoin(artists, eq(artists.id, records.artistId))
+          .where(
+            and(
+              eq(pressings.discogsReleaseId, input.discogsReleaseId),
+              sql`similarity(${artists.name}, ${input.artist}) > ${TITLE_SIMILARITY_THRESHOLD}`,
+              sql`similarity(${records.title}, ${input.title}) > ${TITLE_SIMILARITY_THRESHOLD}`,
+            ),
+          )
+          .limit(1);
 
   if (exact !== undefined) {
     return {

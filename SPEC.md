@@ -522,7 +522,7 @@ This applies to the versions list as much as to search. The drill-down is where 
 - **Required:** set a descriptive `User-Agent` header. Discogs rejects requests without one.
 - **Rate limit:** 60 requests/minute authenticated. Implement a token-bucket limiter in a shared module that all Discogs calls route through. On 429, respect `Retry-After` and surface a clear error to the client rather than silently failing.
 - **Caching:** cache release detail responses in a `discogs_cache` table (`discogs_release_id`, `payload JSONB`, `fetched_at`). Serve from cache if `fetched_at` is under 7 days old. Search results are not cached.
-- **Field mapping** (Discogs → ours): `title`→`title`, `artists[0].name`→`artists.name`, `labels[0].name`→`labels.name`, `labels[0].catno`→`pressings.catalog_number`, `year`→`pressings.year_pressed`, `country`→`pressings.country_pressed`, `formats[0].name`→`formats.name`, `identifiers` where `type == "Matrix / Runout"`→`pressings.matrix_runout`, `genres` + `styles`→`genres` (find-or-create; prefer `styles` since it's more specific).
+- **Field mapping** (Discogs → ours): `title`→`title`, `artists[0].name`→`artists.name`, `labels[0].name`→`labels.name`, `labels[0].catno`→`pressings.catalog_number`, `year`→`pressings.year_pressed`, `country`→`pressings.country_pressed`, `formats[0].descriptions`→`formats.name` (**not** `formats[0].name`, which holds the medium — "Vinyl" — while the seeded format rows are descriptors like "LP" and "Album"; matching on `name` matches none of the seven), `identifiers` where `type == "Matrix / Runout"`→`pressings.matrix_runout`, `genres` + `styles`→`genres` (find-or-create; prefer `styles` since it's more specific).
 - **Price refresh:** `/api/discogs/refresh-prices` runs via Vercel Cron weekly. Pull the marketplace price suggestions endpoint, write `price_history` rows with `source: "discogs"`. Do not overwrite manual entries.
 
 ---
@@ -542,7 +542,11 @@ This applies to the versions list as much as to search. The drill-down is where 
 5. **Price history is append-only.** Never `UPDATE` a `price_history` row; always insert a new one.
 6. **Estimated collection value** = for each record, the most recent `price_history` row of type `used` (falling back to `new`, then to `purchase_price`). Sum.
 7. **Ownership matching** (the "do I already own this?" check on `/lookup`) resolves in three tiers, and the UI must show which tier matched — never a bare yes/no:
-   - **Exact pressing match** — a `records` row whose `pressing_id` points to a pressing with the same `discogs_release_id`. Badge: "You own this pressing."
+   - **Exact pressing match** — a `records` row whose `pressing_id` points to a pressing with the same `discogs_release_id`, **and** which also satisfies the same artist/title match tier 2 uses. Badge: "You own this pressing."
+
+     The corroboration is not redundant. `discogs_release_id` is a plain integer a client can assert through `POST /api/pressings` without the server verifying it names anything, so the id alone lets a wrong or forged value produce "you own this pressing" for a record with an entirely different artist and title. Requiring the id *and* the album means a bad id degrades to tier 2 rather than to a confident wrong answer — the direction the asymmetry below demands.
+
+     Separately, `discogsReleaseId` supplied to `POST` or `PATCH /api/pressings` must be verified against the release it names before being stored. The server holds the release detail and the cache; a client asserting a fact the server can establish is the pattern to eliminate wherever it appears.
    - **Different pressing of the same album** — a `records` row matching on artist + fuzzy title but a different `discogs_release_id`. Badge: "You own a different pressing" plus the year/country/catalog of the one owned. **This case must never be collapsed into the exact match** — it is the whole reason the distinction exists, and getting it wrong is what causes a bad buying decision in a store.
    - **On the want list** — matching `want_list` row not yet acquired. Badge shows priority and, if `target_pressing_id` is set, whether this result *is* that target pressing.
    - No match: no badge.
