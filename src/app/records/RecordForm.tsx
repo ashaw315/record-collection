@@ -11,6 +11,7 @@ import { CONDITION_GRADES } from '@/lib/records/fields';
 import { conditionLabel } from './record-detail-format';
 import { buildCreateBody, buildPatchBody, type FormValues } from './record-form';
 import { buildPressingBody, type PressingFormValues } from './pressing-form';
+import { discogsIdToSubmit } from './pressing-identity';
 import { InlineCreate } from './InlineCreate';
 
 /**
@@ -268,7 +269,27 @@ export function RecordForm({
    * another record.
    */
   async function resolvePressingId(): Promise<string | null | undefined> {
-    const body = buildPressingBody(pressing);
+    /**
+     * §10: "a corrected pressing is a different pressing."
+     *
+     * The prefill's release id is sent only while the identifying fields still
+     * match what Discogs supplied. `discogs_release_id` is unique (§4.2) and
+     * pressings are shared (§4), so sending it alongside an edited catalog
+     * number would find the existing shared row and silently discard the
+     * user's correction — or, worse, write it onto every record matching that
+     * release.
+     *
+     * `initialPressing` is the untouched prefill; `pressing` is what the user
+     * is looking at now.
+     */
+    const body = buildPressingBody({
+      ...pressing,
+      discogsReleaseId: discogsIdToSubmit(
+        initialPressing.discogsReleaseId,
+        initialPressing,
+        pressing,
+      ),
+    });
 
     if (body === undefined) {
       // Nothing entered. On create that means no pressing at all; on edit it

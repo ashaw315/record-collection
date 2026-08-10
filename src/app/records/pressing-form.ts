@@ -12,6 +12,20 @@
  */
 
 export type PressingFormValues = {
+  /**
+   * Discogs' id for the release this pressing came from, when the form was
+   * prefilled from a lookup (§10).
+   *
+   * Carried so §7.7's ownership check can reach tier 1: it matches on
+   * `pressings.discogs_release_id`, and without this the form created pressings
+   * that could never match — every record added through the primary path was
+   * permanently tier 2, which is the badge CLAUDE.md §8 exists to protect.
+   *
+   * NOT a form field the user edits. Whether it is SENT is decided by
+   * `discogsIdToSubmit`, which drops it when the user has contradicted the
+   * release's identity.
+   */
+  discogsReleaseId: number | null;
   catalogNumber: string;
   matrixRunout: string;
   countryPressed: string;
@@ -79,11 +93,19 @@ export function buildPressingBody(
   // Only when ticked. false is the column default, so sending it is noise.
   if (values.isReissue) body.isReissue = true;
 
+  /**
+   * §10: sent only when the caller has established that identity still holds.
+   * `buildPressingBody` does not decide that — `discogsIdToSubmit` does, and
+   * the caller passes the result in `values.discogsReleaseId`.
+   */
+  if (values.discogsReleaseId !== null) body.discogsReleaseId = values.discogsReleaseId;
+
   return body;
 }
 
 /** An untouched pressing section. */
 export const BLANK_PRESSING: PressingFormValues = {
+  discogsReleaseId: null,
   catalogNumber: '',
   matrixRunout: '',
   countryPressed: '',
@@ -96,6 +118,7 @@ export const BLANK_PRESSING: PressingFormValues = {
 
 /** A stored pressing as form strings, for prefilling the edit form. */
 export function pressingToForm(pressing: {
+  discogsReleaseId?: number | null;
   catalogNumber: string | null;
   matrixRunout: string | null;
   countryPressed: string | null;
@@ -108,6 +131,7 @@ export function pressingToForm(pressing: {
   if (pressing === null) return BLANK_PRESSING;
 
   return {
+    discogsReleaseId: pressing.discogsReleaseId ?? null,
     catalogNumber: pressing.catalogNumber ?? '',
     matrixRunout: pressing.matrixRunout ?? '',
     countryPressed: pressing.countryPressed ?? '',

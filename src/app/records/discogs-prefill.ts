@@ -136,6 +136,10 @@ export async function loadDiscogsPrefill(
       releaseYear: year === null ? '' : String(year),
     },
     pressing: {
+      // Carried so §7.7 can reach tier 1. Whether it is SENT on save is
+      // decided by `discogsIdToSubmit` — §10's "a corrected pressing is a
+      // different pressing".
+      discogsReleaseId: release.discogsId,
       catalogNumber: release.catalogNumber ?? '',
       matrixRunout,
       countryPressed: release.country ?? '',

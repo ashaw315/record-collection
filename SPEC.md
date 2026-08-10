@@ -674,6 +674,12 @@ This is deliberately not the same as §4's API-side rule, and both are right for
 
 **Clearing every pressing field on an existing record detaches, never deletes.** Set `pressing_id` to null and leave the row alone. Pressings are shared (§4), so deleting one could silently alter another record — the pressing-is-not-an-album hazard in reverse. An orphaned pressing is visible and harmless; a deleted shared one is neither.
 
+**A corrected pressing is a different pressing.** The form carries `discogsReleaseId` from the prefill so the ownership check in §7.7 can reach tier 1 — but it is sent **only if the identifying fields still match what Discogs supplied**. If the user has edited the catalog number, country or year pressed, the id is dropped and a new pressing row is created from their values.
+
+The reason is that `discogs_release_id` is unique (§4.2) and pressings are shared (§4), so the row carrying a release id is *the* row for that release. Letting user edits win on it would write one person's correction onto every record that matches the same release — §7.8's rule broken in the direction hardest to notice. And a pressing whose printed details contradict Discogs' record of a release is not that release: it may be one Discogs has merged, split, or got wrong, all of which §6 says happen. Tier 2 is then honest rather than degraded — "you own a different pressing" is exactly true.
+
+**Editing `matrix_runout` does not drop the id.** Discogs' runout list is incomplete by construction — it records only the variants contributors have submitted — so a runout it doesn't list is not a contradiction of identity, it is information Discogs lacks. Treating it as identity-contradicting would also punish the careful: the field the app most encourages users to fill in would cost them tier 1 every time. Non-identifying fields — weight, colour, pressing plant — likewise keep the id.
+
 **`matrix_runout` is user-authoritative** (§4, CLAUDE.md §8). It is read off the dead wax by hand and is frequently absent or wrong in Discogs. Nothing may overwrite a user-entered value — not a re-import, not a re-sync, not a later edit that leaves the field untouched.
 
 ---

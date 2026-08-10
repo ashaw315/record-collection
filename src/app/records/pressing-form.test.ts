@@ -17,6 +17,7 @@ import {
  */
 
 const BLANK: PressingFormValues = {
+  discogsReleaseId: null,
   catalogNumber: '',
   matrixRunout: '',
   countryPressed: '',
@@ -134,6 +135,7 @@ describe('buildPressingBody', () => {
   it('sends every field when the form is fully filled', () => {
     expect(
       buildPressingBody({
+        discogsReleaseId: null,
         catalogNumber: 'CLAY LP 3',
         matrixRunout: 'CLAYLP3-A1',
         countryPressed: 'UK',
