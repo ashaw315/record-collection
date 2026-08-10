@@ -490,3 +490,60 @@ test('flow 11: the same album in two pressings persists as two records', async (
   await page.goto(`/records/${recordTwo.id}`);
   await expect(page.getByText(`CLAY-${suffix}-B`)).toBeVisible();
 });
+
+test('the form offers every §5.7 search parameter', async ({ page }) => {
+  /**
+   * FOUND IN REAL USE: the form shipped with 7 of the 12 parameters §5.7
+   * specifies, missing format, genre, style, track and the freeform query.
+   *
+   * `format` is the one that matters most in practice — a Carpenters search
+   * returned 32 results where "Vinyl" would have cut it substantially, because
+   * a popular album exists on CD, cassette and vinyl and only one of those is
+   * in the user's hand.
+   *
+   * The endpoint accepted all twelve from the start; only the form was short,
+   * which is a whole class of defect no endpoint test can see.
+   */
+  await page.goto('/lookup');
+  await formReady(page);
+
+  for (const field of [
+    'catno',
+    'barcode',
+    'artist',
+    'title',
+    'label',
+    'country',
+    'year',
+    'format',
+    'genre',
+    'style',
+    'track',
+    'q',
+  ]) {
+    await expect(page.locator(`#${field}`), `§5.7 lists ${field}`).toBeVisible();
+  }
+});
+
+test('sends format to the endpoint, which is what narrows a common album', async ({ page }) => {
+  let requestedUrl = '';
+
+  await page.route('**/api/discogs/search**', async (route) => {
+    requestedUrl = route.request().url();
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ data: [], meta: { total: 0, page: 1, pageSize: 25 } }),
+    });
+  });
+
+  await page.goto('/lookup');
+  await formReady(page);
+
+  await page.getByLabel('Artist').fill('Carpenters');
+  await page.getByLabel('Format').fill('Vinyl');
+  await page.getByRole('button', { name: 'Search Discogs' }).click();
+
+  await expect.poll(() => requestedUrl).toContain('format=Vinyl');
+  expect(requestedUrl).toContain('artist=Carpenters');
+});

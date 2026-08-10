@@ -87,8 +87,16 @@ describe('the prefill payload', () => {
 
     expect(body).not.toHaveProperty('estimated_weight');
     expect(body).not.toHaveProperty('identifiers');
-    expect(body.vinylWeightGrams).toBe(230);
     expect(body.catalogNumber).toBe('CLAY LP 3');
+
+    /**
+     * NULL, not 230. This test asserted 230 and so encoded a defect found in
+     * real use: `estimated_weight` is Discogs' guess at the weight of the
+     * PACKAGE, and it was prefilling a field labelled "Weight (g)" where vinyl
+     * weights are 140, 180 or 200. §5.7 says the weight comes from a format
+     * descriptor "when present", and this release has none.
+     */
+    expect(body.vinylWeightGrams, 'a shipping estimate is not a vinyl weight').toBeNull();
   });
 });
 

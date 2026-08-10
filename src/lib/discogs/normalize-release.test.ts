@@ -130,19 +130,39 @@ describe('format descriptors', () => {
     expect(normalizeRelease(detailed).colorVariant).toBeNull();
   });
 
-  it('reads the weight Discogs estimates', () => {
+  it('reads an explicit gram descriptor', () => {
     // §5.7: "vinylWeightGrams — parsed from format descriptors when present".
-    // The real payload carries `estimated_weight: 230` at the top level, which
-    // is where it actually lives.
-    expect(normalizeRelease(detailed).vinylWeightGrams).toBe(230);
+    // A descriptor is a CLAIM ABOUT THE PRESSING, made by a contributor
+    // looking at the record.
+    const normalized = normalizeRelease({
+      id: 1,
+      formats: [{ name: 'Vinyl', descriptions: ['LP', '180 Gram'] }],
+    });
+
+    expect(normalized.vinylWeightGrams).toBe(180);
   });
 
-  it('prefers an explicit gram descriptor over the estimate', () => {
+  it('does NOT fall back to estimated_weight, which is a shipping guess', () => {
     /**
-     * "180 Gram" in the descriptors is a CLAIM ABOUT THE PRESSING; the
-     * top-level estimate is Discogs' shipping-weight guess for the package.
-     * When both exist the descriptor is the one that describes the record.
+     * FOUND IN REAL USE, and the reason this test exists.
+     *
+     * `estimated_weight` is Discogs' guess at the weight of the PACKAGE — 230
+     * on this release. Vinyl weights are 140, 180 or 200g, so 230 is not a
+     * plausible value for the column at all, and the form was prefilling it
+     * into a field labelled "Weight (g)" where nobody would question it.
+     *
+     * Unit 6 correctly noted the estimate is a shipping guess and then used it
+     * as a fallback anyway — the knowledge was in the comment and not in the
+     * code. §5.7 says "parsed from format descriptors when present", and when
+     * it is not present the honest answer is nothing.
+     *
+     * An empty field asks the user to weigh the record. A fabricated one tells
+     * them it has already been done.
      */
+    expect(normalizeRelease(detailed).vinylWeightGrams).toBeNull();
+  });
+
+  it('prefers a descriptor over the estimate when both exist', () => {
     const normalized = normalizeRelease({
       id: 1,
       estimated_weight: 230,
@@ -150,6 +170,32 @@ describe('format descriptors', () => {
     });
 
     expect(normalized.vinylWeightGrams).toBe(180);
+  });
+
+  it.each([
+    ['140 Gram', 140],
+    ['180 Gram', 180],
+    ['200 Gram', 200],
+  ])('reads %s as a real vinyl weight', (descriptor, expected) => {
+    // The three weights actually pressed. A rule that accepted any number
+    // would let "12 Inch" or "45 RPM" through as a weight.
+    const normalized = normalizeRelease({
+      id: 1,
+      formats: [{ name: 'Vinyl', descriptions: ['LP', descriptor] }],
+    });
+
+    expect(normalized.vinylWeightGrams).toBe(expected);
+  });
+
+  it('does not read a speed or a size as a weight', () => {
+    // "45 RPM" and "12 Inch" sit in the same descriptor list. A digits-anywhere
+    // rule turns both into a weight.
+    const normalized = normalizeRelease({
+      id: 1,
+      formats: [{ name: 'Vinyl', descriptions: ['12\"', '45 RPM'] }],
+    });
+
+    expect(normalized.vinylWeightGrams).toBeNull();
   });
 
   it('keeps the descriptors themselves', () => {

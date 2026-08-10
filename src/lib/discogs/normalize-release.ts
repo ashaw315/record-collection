@@ -157,8 +157,15 @@ const PRESSING_ROLES = new Set(['pressed by', 'repressed by', 'manufactured by']
 const COLOUR_WORDS =
   /\b(black|blue|red|green|yellow|orange|purple|pink|white|clear|gold|silver|grey|gray|brown|amber|marbled|splatter|translucent|transparent|coloured|colored)\b/i;
 
-/** "180 Gram" / "200g" in the descriptor list — a claim about this pressing. */
-const GRAM_DESCRIPTOR = /(\d{2,3})\s*(?:gram|g)\b/i;
+/**
+ * "180 Gram" / "200g" in the descriptor list — a claim about this pressing,
+ * made by a contributor who was looking at the record.
+ *
+ * The unit is REQUIRED, not optional. The same descriptor list carries "45
+ * RPM", "12 Inch" and "7\"", and a digits-anywhere rule turns every one of
+ * them into a weight.
+ */
+const GRAM_DESCRIPTOR = /\b(\d{2,3})\s*(?:gram|grams|g)\b/i;
 
 export function normalizeRelease(input: unknown): NormalizedRelease {
   const raw = rawRelease.parse(input);
@@ -221,10 +228,23 @@ export function normalizeRelease(input: unknown): NormalizedRelease {
     matrixRunout,
     otherIdentifiers,
     pressingPlant: meaningful(pressedBy?.name),
+    /**
+     * ONLY from an explicit descriptor. Never from `estimated_weight`.
+     *
+     * FOUND IN REAL USE: `estimated_weight` is Discogs' guess at the weight of
+     * the PACKAGE, and it prefilled 230 into a field labelled "Weight (g)".
+     * Vinyl is pressed at 140, 180 or 200 grams — 230 is not a value the
+     * column can plausibly hold, and it arrived looking like data somebody had
+     * measured.
+     *
+     * Unit 6 wrote that the estimate is a shipping guess and then used it as a
+     * fallback regardless: the knowledge was in the comment and not in the
+     * code. §5.7 says "parsed from format descriptors WHEN PRESENT", and when
+     * it is absent the honest answer is nothing. An empty field asks the user
+     * to weigh the record; a fabricated one tells them it is already done.
+     */
     vinylWeightGrams:
-      gramMatch === null || gramMatch === undefined
-        ? (raw.estimated_weight ?? null)
-        : Number(gramMatch[1]),
+      gramMatch === null || gramMatch === undefined ? null : Number(gramMatch[1]),
     colorVariant: meaningful(colourText),
     tracklist: (raw.tracklist ?? []).map((track) => ({
       position: meaningful(track.position),

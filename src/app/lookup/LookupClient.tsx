@@ -56,9 +56,28 @@ const FIELDS = [
   { name: 'barcode', label: 'Barcode', hint: 'Near-unique on modern pressings' },
   { name: 'artist', label: 'Artist' },
   { name: 'title', label: 'Title' },
+  /**
+   * FOUND IN REAL USE, and the reason the full twelve matter: a Carpenters
+   * search returned 32 results, most of them CDs and cassettes. A popular
+   * album exists on every medium and only one of them is in the user's hand,
+   * so "Vinyl" narrows more than another text field would.
+   *
+   * Placed high for that reason — it is a filter almost every search wants.
+   */
+  { name: 'format', label: 'Format', hint: 'e.g. Vinyl, LP, 45 RPM, 180 Gram' },
   { name: 'label', label: 'Label' },
   { name: 'country', label: 'Country' },
   { name: 'year', label: 'Year' },
+  /**
+   * The remaining §5.7 parameters. Lower because they narrow less reliably —
+   * Discogs' genre and style are contributor-entered and inconsistent — but
+   * present, because a form missing a documented parameter is a search the
+   * user cannot express.
+   */
+  { name: 'genre', label: 'Genre' },
+  { name: 'style', label: 'Style', hint: 'The specific scene — Hardcore, UK82, Psychobilly' },
+  { name: 'track', label: 'Track', hint: 'Useful when the sleeve is missing' },
+  { name: 'q', label: 'Anything', hint: 'Freeform — combine with the fields above' },
 ] as const;
 
 type FieldName = (typeof FIELDS)[number]['name'];
@@ -68,9 +87,14 @@ const EMPTY: Record<FieldName, string> = {
   barcode: '',
   artist: '',
   title: '',
+  format: '',
   label: '',
   country: '',
   year: '',
+  genre: '',
+  style: '',
+  track: '',
+  q: '',
 };
 
 export function LookupClient() {
