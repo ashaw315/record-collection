@@ -71,6 +71,13 @@ export type DiscogsClientOptions = {
   fetch: typeof fetch;
   now?: () => number;
   sleep?: (ms: number) => Promise<void>;
+  /**
+   * The wall-clock ceiling on one logical request. Injected so a test can
+   * assert the timeout without waiting ten seconds for it — the abort fires
+   * from the real timer system, which is the one thing a fake clock cannot
+   * model.
+   */
+  maxElapsedMs?: number;
 };
 
 function buildUrl(path: string, params: QueryParams | undefined): string {
@@ -158,6 +165,7 @@ export function createDiscogsClient(options: DiscogsClientOptions): DiscogsClien
   const sleep =
     options.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
 
+  const maxElapsedMs = options.maxElapsedMs ?? MAX_ELAPSED_MS;
   const bucket = new TokenBucket({ capacity: RATE_LIMIT, refillMs: RATE_WINDOW_MS, now });
 
   const headers = {
@@ -170,10 +178,18 @@ export function createDiscogsClient(options: DiscogsClientOptions): DiscogsClien
 
   async function request<T>(path: string, params?: QueryParams): Promise<T> {
     const url = buildUrl(path, params);
-    const deadline = now() + MAX_ELAPSED_MS;
+    const deadline = now() + maxElapsedMs;
 
     for (let attempt = 0; ; attempt += 1) {
-      const wait = bucket.waitMs();
+      /**
+       * RESERVED, not checked-then-taken. `waitMs()` followed by `take()` with
+       * an await between is check-then-act: every concurrent caller saw a full
+       * bucket, and 200 simultaneous requests ran 200 in flight against a
+       * 60/minute limit. `reserve()` claims the token synchronously, so this
+       * caller holds it before yielding.
+       */
+      const wait = bucket.reserve();
+
       // Checked BEFORE sleeping, not after: waiting out a delay and then
       // reporting that we ran out of time spends the very budget the deadline
       // exists to protect.
@@ -183,15 +199,43 @@ export function createDiscogsClient(options: DiscogsClientOptions): DiscogsClien
         });
       }
       if (wait > 0) await sleep(wait);
-      bucket.take();
+
+      /**
+       * The individual request is bounded too, and the two bounds cover
+       * different failures.
+       *
+       * `MAX_ELAPSED_MS` caps the whole logical request — retries and waiting
+       * — which stops a hostile `Retry-After: 3600` parking us for an hour.
+       * It does NOT stop a single response that never arrives: without a
+       * signal, `await fetch(...)` waits forever and the deadline is only
+       * consulted between attempts. The module header claimed a wall-clock
+       * guarantee that neither bound provided alone.
+       *
+       * Timed against the deadline rather than a fixed value, so one slow
+       * response cannot outlive the budget the caller was promised.
+       */
+      const remaining = Math.max(0, deadline - now());
+      const abort = new AbortController();
+      const timer = setTimeout(() => abort.abort(), remaining);
 
       let response: Response;
       try {
-        response = await options.fetch(url, { headers });
+        response = await options.fetch(url, { headers, signal: abort.signal });
       } catch (cause) {
+        // An abort is OUR deadline firing, not Discogs being unreachable, and
+        // saying so is the difference between "try again" and "something is
+        // wrong with the network".
+        if (cause instanceof Error && cause.name === 'AbortError') {
+          throw new DiscogsError('Discogs took too long to respond.', { status: 504, cause });
+        }
+
         // The cause is kept for the log; callers get a typed error and the
         // route layer decides what reaches the client.
         throw new DiscogsError('Could not reach Discogs', { cause });
+      } finally {
+        // Always cleared: a pending timer keeps the process alive and would
+        // abort a controller nothing is listening to.
+        clearTimeout(timer);
       }
 
       if (response.status === 429) {

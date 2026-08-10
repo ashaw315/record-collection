@@ -368,3 +368,156 @@ describe('other failures', () => {
     expect(JSON.stringify(error)).not.toContain(TOKEN);
   });
 });
+
+describe('concurrency', () => {
+  /**
+   * THE SECURITY FINDING, and the reason every rate-limit test above is
+   * insufficient: they drive the client SEQUENTIALLY, so `waitMs()` and
+   * `take()` are never interleaved.
+   *
+   * Measured before the fix: 200 concurrent `get()` against a 60/minute bucket
+   * gave `maxInFlight: 200`. A complete bypass, not a partial one — and both
+   * `matchOwnershipForResults` and the versions endpoint fan out with
+   * `Promise.all` on the ordinary path, so normal use triggers it.
+   */
+  it('never has more requests in flight than the bucket allows', async () => {
+    /**
+     * The clock does NOT advance while a caller sleeps, which is what makes
+     * this test honest.
+     *
+     * The default harness moves the clock inside `sleep`, so each waiting
+     * caller's wake-up refilled the bucket for the next one and all 200 ran
+     * regardless of the fix — the harness modelled 200 requests spread over
+     * minutes rather than 200 at once. Probed to establish that: `reserve()`
+     * returns 60 free then 1000/2000/3000ms staggered against a stable clock,
+     * and one identical 1000ms to everyone against a jumping one.
+     *
+     * A sleep that resolves without moving time is the correct model of
+     * concurrency: every caller arrives in the same instant.
+     */
+    let inFlight = 0;
+    let maxInFlight = 0;
+
+    const fetchMock = (async () => {
+      inFlight += 1;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      // Yields, so concurrency is observable rather than instantaneous.
+      await new Promise((resolve) => setImmediate(resolve));
+      inFlight -= 1;
+      return jsonResponse({ ok: true });
+    }) as unknown as typeof fetch;
+
+    const { client } = makeClient(fetchMock, {
+      now: () => 0,
+      sleep: async () => {
+        await new Promise((resolve) => setImmediate(resolve));
+      },
+    });
+
+    const attempts = Array.from({ length: 200 }, (_, i) =>
+      client.get(`/releases/${i}`).catch(() => undefined),
+    );
+    await Promise.all(attempts);
+
+    expect(maxInFlight, '60 per minute is a ceiling, not a suggestion').toBeLessThanOrEqual(60);
+  });
+
+  it('still completes every concurrent request', async () => {
+    // Rate limiting must DELAY, never drop. A limiter that lost requests would
+    // silently return fewer results than the caller asked for.
+    const fetchMock = vi.fn(async () => jsonResponse({ ok: true }));
+    const { client } = makeClient(fetchMock as unknown as typeof fetch);
+
+    const results = await Promise.all(
+      Array.from({ length: 120 }, (_, i) => client.get(`/releases/${i}`)),
+    );
+
+    expect(results).toHaveLength(120);
+    expect(fetchMock).toHaveBeenCalledTimes(120);
+  });
+});
+
+describe('a slow response', () => {
+  /**
+   * §6's deadline claimed a wall-clock guarantee it did not provide: it bounded
+   * the GAPS between attempts and never a single hung response, because no
+   * `AbortSignal` reached `fetch`.
+   *
+   * The existing deadline tests resolve immediately and would pass with no
+   * timeout at all — the security review's point exactly.
+   */
+  it('gives up on a fetch that never resolves', async () => {
+    /**
+     * A REAL timeout, deliberately short, because this is the one property that
+     * cannot be tested on a fake clock: the abort has to fire from the same
+     * timer system the fetch is waiting on.
+     *
+     * 50ms rather than the production 10s so the suite does not wait — the
+     * ceiling is injected for exactly this reason.
+     */
+    const neverResolves = (async (_url: string, init?: RequestInit) => {
+      return new Promise<Response>((_resolve, reject) => {
+        // Rejects the way a real fetch does when its signal aborts.
+        init?.signal?.addEventListener('abort', () => {
+          reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+        });
+      });
+    }) as unknown as typeof fetch;
+
+    const client = createDiscogsClient({
+      token: TOKEN,
+      userAgent: 'RecordCollection/0.1 +https://example.test',
+      fetch: neverResolves,
+      maxElapsedMs: 50,
+    });
+
+    const error = await client.get('/releases/1').catch((thrown: unknown) => thrown);
+
+    expect(error).toBeInstanceOf(DiscogsError);
+    expect((error as DiscogsError).message).toMatch(/took too long|timed out/i);
+  });
+
+  it('bounds the request by the REMAINING deadline, not a fresh timeout', async () => {
+    /**
+     * The two bounds must compose. A per-request timeout reset on every attempt
+     * would let three retries take three times the promised budget — the
+     * deadline would bound the gaps and the timeout would bound each response,
+     * with nothing bounding the whole.
+     */
+    let observed: number | undefined;
+
+    const slow = (async (_url: string, init?: RequestInit) => {
+      const started = Date.now();
+      return new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => {
+          observed = Date.now() - started;
+          reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+        });
+      });
+    }) as unknown as typeof fetch;
+
+    const client = createDiscogsClient({
+      token: TOKEN,
+      userAgent: 'RecordCollection/0.1 +https://example.test',
+      fetch: slow,
+      maxElapsedMs: 60,
+    });
+
+    await client.get('/releases/1').catch(() => undefined);
+
+    expect(observed, 'aborted at the deadline, not later').toBeLessThan(200);
+  });
+
+  it('passes an AbortSignal to fetch, which is what makes that possible', async () => {
+    // Asserted directly as well as behaviourally: a client that timed out its
+    // own promise while leaving the request running would pass the test above
+    // and still hold a connection open.
+    const fetchMock = vi.fn(async () => jsonResponse({ ok: true }));
+    const { client } = makeClient(fetchMock as unknown as typeof fetch);
+
+    await client.get('/releases/1');
+
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(init.signal, 'the request itself is bounded').toBeDefined();
+  });
+});

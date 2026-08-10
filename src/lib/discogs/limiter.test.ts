@@ -156,3 +156,76 @@ describe('TokenBucket', () => {
     expect(bucket.waitMs()).toBe(ownWait);
   });
 });
+
+describe('reserving a token, rather than checking then taking', () => {
+  /**
+   * THE RACE the security review found, and the reason every test above is
+   * insufficient: they are all SEQUENTIAL, so `waitMs()` and `take()` are
+   * never interleaved by another caller.
+   *
+   * Measured before the fix, with 200 concurrent `client.get()` against a
+   * 60/minute bucket: `maxInFlight: 200`. Every caller checked a full bucket
+   * before any of them spent a token — a complete bypass, not a partial one.
+   *
+   * `reserve()` does both in one synchronous step, so a caller holds its token
+   * before it releases control.
+   */
+  it('hands out at most `capacity` reservations without waiting', () => {
+    const clock = clockAt();
+    const bucket = new TokenBucket({ capacity: PER_MINUTE, refillMs: MINUTE, now: clock.now });
+
+    const waits = Array.from({ length: 200 }, () => bucket.reserve());
+    const free = waits.filter((wait) => wait === 0);
+
+    expect(free, 'only the bucket capacity may go without waiting').toHaveLength(PER_MINUTE);
+  });
+
+  it('makes each caller beyond capacity wait progressively longer', () => {
+    /**
+     * The 61st waits for one token to drip, the 62nd for two. A limiter that
+     * returned the same wait to every over-capacity caller would release them
+     * all at once — the same stampede in slower motion.
+     */
+    const clock = clockAt();
+    const bucket = new TokenBucket({ capacity: 2, refillMs: MINUTE, now: clock.now });
+
+    bucket.reserve();
+    bucket.reserve();
+
+    const third = bucket.reserve();
+    const fourth = bucket.reserve();
+
+    expect(third).toBeGreaterThan(0);
+    expect(fourth, 'the queue is ordered, not simultaneous').toBeGreaterThan(third);
+  });
+
+  it('reserves under genuine concurrency, not merely in a loop', async () => {
+    /**
+     * The loop above proves the arithmetic; this proves the ATOMICITY. Every
+     * caller yields between reserving and reporting, which is exactly the
+     * window the old check-then-act shape left open.
+     */
+    const clock = clockAt();
+    const bucket = new TokenBucket({ capacity: 10, refillMs: MINUTE, now: clock.now });
+
+    const results = await Promise.all(
+      Array.from({ length: 50 }, async () => {
+        const wait = bucket.reserve();
+        await new Promise((resolve) => setImmediate(resolve));
+        return wait;
+      }),
+    );
+
+    expect(results.filter((wait) => wait === 0)).toHaveLength(10);
+  });
+
+  it('still honours an external block', () => {
+    // §6's Retry-After outranks our own accounting, reservation or not.
+    const clock = clockAt(1_000);
+    const bucket = new TokenBucket({ capacity: PER_MINUTE, refillMs: MINUTE, now: clock.now });
+
+    bucket.blockUntil(clock.now() + 5_000);
+
+    expect(bucket.reserve()).toBe(5_000);
+  });
+});
