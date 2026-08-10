@@ -75,6 +75,113 @@ function mockMaster(year: number | null) {
   return get;
 }
 
+describe('format and label matching', () => {
+  /**
+   * FOUND IN REAL USE: three imported Carpenters records had no label and no
+   * format. Three separate causes, and only two are defects.
+   *
+   * **Format was never mapped at all.** §6's field mapping says
+   * `formats[0].name`→`formats.name`, but the real payload puts the MEDIUM in
+   * `name` ("Vinyl") and the format we seed in `descriptions` (["LP","Album"]).
+   * Matching on `name` would never match any of the seven seeded formats, so
+   * the spec's mapping is written against a field that does not hold that
+   * value.
+   */
+  it('matches a seeded format from the DESCRIPTIONS, not the medium', async () => {
+    await seedRelease({
+      ...RELEASE_WITHOUT_YEAR,
+      formats: [{ name: 'Vinyl', descriptions: ['LP', 'Album'] }],
+    });
+    mockMaster(1971);
+
+    const lp = await db.execute<{ id: string }>(
+      sql`SELECT id FROM formats WHERE name = 'LP'`,
+    );
+
+    const prefill = await loadDiscogsPrefill(CARPENTERS);
+
+    expect(prefill?.values.formatId, 'the LP row, matched from descriptions').toBe(
+      lp.rows[0].id,
+    );
+  });
+
+  it('leaves the format empty when nothing matches, rather than guessing', async () => {
+    // §10: matched, never created. A format Discogs names that we do not have
+    // is a blank select and a notice, not a new reference row.
+    await seedRelease({
+      ...RELEASE_WITHOUT_YEAR,
+      formats: [{ name: 'CD', descriptions: ['Album', 'Compilation'] }],
+    });
+    mockMaster(1971);
+
+    const prefill = await loadDiscogsPrefill(CARPENTERS);
+
+    expect(prefill?.values.formatId).toBe('');
+  });
+
+  it('prefers a more specific descriptor over a general one', async () => {
+    // "7\"" and "Single" can both appear; the seeded set has 7" and
+    // 12" Single, so the descriptor that names a physical format wins.
+    await seedRelease({
+      ...RELEASE_WITHOUT_YEAR,
+      formats: [{ name: 'Vinyl', descriptions: ['7"', 'Single'] }],
+    });
+    mockMaster(1971);
+
+    const seven = await db.execute<{ id: string }>(
+      sql`SELECT id FROM formats WHERE name = '7"'`,
+    );
+
+    const prefill = await loadDiscogsPrefill(CARPENTERS);
+
+    expect(prefill?.values.formatId).toBe(seven.rows[0].id);
+  });
+
+  it('names a label it could not match, so the near-miss is visible', async () => {
+    /**
+     * THE reported case. Adam's row is "A&M"; Discogs says "A&M Records".
+     * Exact matching is deliberate — fuzzy matching a label risks attaching a
+     * record to the wrong one, which is the §8-adjacent direction to avoid —
+     * but the field emptying silently gave him no way to see why.
+     *
+     * Naming it lets him act without the app guessing.
+     */
+    await db.execute(sql`INSERT INTO labels (name) VALUES ('A&M')`);
+    await seedRelease(RELEASE_WITHOUT_YEAR);
+    mockMaster(1971);
+
+    const prefill = await loadDiscogsPrefill(CARPENTERS);
+
+    expect(prefill?.values.labelId, 'no guess').toBe('');
+    expect(prefill?.unmatched.label, 'but the name Discogs gave is reported').toBe(
+      'A&M Records',
+    );
+  });
+
+  it('matches a label whose name agrees exactly', async () => {
+    await db.execute(sql`INSERT INTO labels (name) VALUES ('A&M Records')`);
+    await seedRelease(RELEASE_WITHOUT_YEAR);
+    mockMaster(1971);
+
+    const prefill = await loadDiscogsPrefill(CARPENTERS);
+
+    expect(prefill?.values.labelId).not.toBe('');
+    expect(prefill?.unmatched.label).toBeNull();
+  });
+
+  it('names an unmatched FORMAT too, for the same reason', async () => {
+    await seedRelease({
+      ...RELEASE_WITHOUT_YEAR,
+      formats: [{ name: 'Cassette', descriptions: ['Album'] }],
+    });
+    mockMaster(1971);
+
+    const prefill = await loadDiscogsPrefill(CARPENTERS);
+
+    expect(prefill?.unmatched.format).toBe('Cassette');
+  });
+});
+
 describe('a release Discogs gives no year', () => {
   it('falls back to the master year', async () => {
     await seedRelease(RELEASE_WITHOUT_YEAR);

@@ -4,6 +4,7 @@ import { DiscogsError, getDiscogsClient } from '@/lib/discogs/client';
 import { normalizeRelease, type NormalizedRelease } from '@/lib/discogs/normalize-release';
 import { findArtistByDiscogsId, findArtistByName } from '@/lib/db/queries/artists';
 import { findLabelByDiscogsId, findLabelByName } from '@/lib/db/queries/labels';
+import { findFormatByName } from '@/lib/db/queries/formats';
 import type { FormValues } from './record-form';
 import type { PressingFormValues } from './pressing-form';
 
@@ -30,8 +31,39 @@ export type DiscogsPrefill = {
    * can say what it could not fill in rather than silently leaving a blank the
    * user has to notice.
    */
-  unmatched: { artist: string | null; label: string | null };
+  unmatched: { artist: string | null; label: string | null; format: string | null };
 };
+
+/**
+ * The format, matched from Discogs' DESCRIPTIONS rather than its `name`.
+ *
+ * §6's field mapping says `formats[0].name`→`formats.name`, and the real
+ * payloads say otherwise: `name` is the MEDIUM ("Vinyl", "CD") while the
+ * descriptions carry what §4.1 seeds — "LP", "7\"", "Album". Matching on
+ * `name` never matches any of the seven seeded formats, which is why every
+ * imported record had no format at all.
+ *
+ * FOUND IN REAL USE. The spec's mapping was written against a field that does
+ * not hold that value, and no test caught it because nothing asserted the
+ * format was populated end to end.
+ */
+async function matchFormat(
+  release: NormalizedRelease,
+): Promise<{ id: string | undefined; attempted: string | null }> {
+  /**
+   * Most specific first. `formats` on the normalized release is the medium
+   * followed by the descriptors, and the seeded set contains physical formats
+   * — so "7\"" should win over "Single", and "LP" over "Album".
+   */
+  for (const descriptor of release.formats) {
+    const match = await findFormatByName(descriptor.trim());
+    if (match !== undefined) return { id: match.id, attempted: null };
+  }
+
+  // Nothing matched: report the medium, which is the most recognisable thing
+  // to tell the user we could not place.
+  return { id: undefined, attempted: release.formats[0] ?? null };
+}
 
 /**
  * The release, from cache when fresh (§6).
@@ -118,6 +150,8 @@ export async function loadDiscogsPrefill(
   const labelByName =
     label ?? (release.label === null ? undefined : await findLabelByName(release.label));
 
+  const format = await matchFormat(release);
+
   /**
    * §5.7 types `matrixRunout` as an array — a release carries one per side and
    * variant, eight on the captured fixture. Joined rather than truncated: every
@@ -131,6 +165,7 @@ export async function loadDiscogsPrefill(
       title: release.title ?? '',
       artistId: artistByName?.id ?? '',
       labelId: labelByName?.id ?? '',
+      formatId: format.id ?? '',
       // §4.2: the ALBUM's year. The pressing's own year goes in the pressing
       // section below, and conflating them is CLAUDE.md §8's central error.
       releaseYear: year === null ? '' : String(year),
@@ -154,6 +189,7 @@ export async function loadDiscogsPrefill(
     unmatched: {
       artist: artistByName === undefined ? release.artist : null,
       label: labelByName === undefined ? release.label : null,
+      format: format.attempted,
     },
   };
 }

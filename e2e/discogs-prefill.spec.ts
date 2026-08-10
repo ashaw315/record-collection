@@ -275,3 +275,23 @@ test('saves a want-list item with both §7.2 fields distinct', async ({ page }) 
   expect(saved.bestDigNotes).toBe('UK first press, Porky stamp');
   expect(saved.maxPrice, 'a string, so the cents survive').toBe('40.00');
 });
+
+test('prefills the FORMAT select, matched from Discogs descriptors', async ({ page }) => {
+  /**
+   * FOUND IN REAL USE: imported records had no format. §6's mapping names
+   * `formats[0].name`, which holds the MEDIUM ("Vinyl") — the format we seed
+   * is in the descriptions ("LP").
+   *
+   * Asserted at the rendered form rather than only in the prefill, per the
+   * seam rule: a correct mapping that never reaches the select is the same
+   * defect from the user's side.
+   */
+  await page.goto(`/records/new?discogsReleaseId=${releaseId}`);
+  await formReady(page);
+
+  const format = page.getByLabel('Format');
+  await expect(format).not.toHaveValue('');
+
+  // The LP row, by name — not merely "something is selected".
+  await expect(format.locator('option:checked')).toHaveText('LP');
+});

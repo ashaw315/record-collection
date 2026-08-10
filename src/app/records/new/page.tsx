@@ -127,6 +127,19 @@ export default async function NewRecordPage({ searchParams }: PageProps<'/record
                 <span className="font-medium"> + New label</span>.
               </p>
             )}
+            {/*
+              Named rather than left blank, the same as the artist and label.
+              Matching is EXACT on purpose — fuzzy-matching a label would risk
+              attaching a record to the wrong one — so the near miss has to be
+              visible or the user cannot act on it. "A&M" against Discogs' "A&M
+              Records" is the case that prompted this.
+            */}
+            {prefill.unmatched.format !== null && (
+              <p data-testid="unmatched-format" className="text-sm">
+                No format matching “{prefill.unmatched.format}” — choose the closest, or add one
+                in Manage.
+              </p>
+            )}
           </div>
         )}
         {wanted !== undefined && (
