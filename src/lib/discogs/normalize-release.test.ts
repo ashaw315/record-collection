@@ -260,6 +260,27 @@ describe('the rest of the §5.7 detail shape', () => {
     expect(normalized.year).toBe(1982);
   });
 
+  it('reports NO year when Discogs has none, rather than inventing one', () => {
+    /**
+     * FOUND IN REAL USE. The US 1971 Carpenters LP (release 12856557) carries
+     * `year: 0` and NO `released` field at all — Discogs simply does not record
+     * a year on that release. The 1971 the user sees comes from the MASTER.
+     *
+     * `toYear` rejecting 0 is correct: a year of zero is not a date, and
+     * writing it into `release_year` would put a record from 1971 in the year
+     * nought. The gap is that the release alone cannot answer the question —
+     * which is what the prefill's master fallback exists for.
+     *
+     * I could not construct this shape when I first looked for it: I paired
+     * `year: 0` with a valid `released` every time, and every variation
+     * recovered the year correctly. Reproduced only by reading the actual
+     * cached payload.
+     */
+    const normalized = normalizeRelease({ id: 12856557, year: 0, title: 'Carpenters' });
+
+    expect(normalized.year).toBeNull();
+  });
+
   it('reads the artist from artists[0], not from a combined title', () => {
     // Release detail sends `title` as the TITLE ALONE and the artist
     // separately — the opposite of search results, where they are combined.

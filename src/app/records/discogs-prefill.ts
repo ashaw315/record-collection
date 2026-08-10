@@ -58,11 +58,46 @@ async function loadRelease(discogsReleaseId: number): Promise<NormalizedRelease 
   }
 }
 
+/**
+ * The album's year, from the MASTER, when the release does not carry one.
+ *
+ * FOUND IN REAL USE: release 12856557 (the US Carpenters LP, `SP-3502`) has
+ * `year: 0` and no `released` field — Discogs records no year on that release
+ * at all, and the 1971 a user sees on the site comes from the master.
+ *
+ * §4.2 makes the master the CORRECT source rather than merely an available
+ * one: `release_year` is the album's original year, and a master is precisely
+ * a description of an album across its pressings.
+ *
+ * Asked only when the release cannot answer. The release's own year is more
+ * specific — a 1989 reissue of a 1971 album says 1989, and the master says
+ * 1971 — so preferring the master would date every reissue to its original,
+ * which is CLAUDE.md §8's collapse arriving through a date field. It also
+ * costs a rate-limited call.
+ */
+async function masterYear(masterId: number | null): Promise<number | null> {
+  if (masterId === null) return null;
+
+  try {
+    const master = await getDiscogsClient().get<{ year?: number }>(`/masters/${masterId}`);
+    const year = master.year;
+
+    return typeof year === 'number' && year > 0 ? year : null;
+  } catch {
+    // A failed master must not cost the user the whole prefill: the release is
+    // already in hand and the master is an enhancement. Same shape as the
+    // versions endpoint degrading to tier 1.
+    return null;
+  }
+}
+
 export async function loadDiscogsPrefill(
   discogsReleaseId: number,
 ): Promise<DiscogsPrefill | null> {
   const release = await loadRelease(discogsReleaseId);
   if (release === null) return null;
+
+  const year = release.year ?? (await masterYear(release.masterId));
 
   /**
    * By Discogs id first, then by name — the same order §6 gives the importer,
@@ -98,13 +133,13 @@ export async function loadDiscogsPrefill(
       labelId: labelByName?.id ?? '',
       // §4.2: the ALBUM's year. The pressing's own year goes in the pressing
       // section below, and conflating them is CLAUDE.md §8's central error.
-      releaseYear: release.year === null ? '' : String(release.year),
+      releaseYear: year === null ? '' : String(year),
     },
     pressing: {
       catalogNumber: release.catalogNumber ?? '',
       matrixRunout,
       countryPressed: release.country ?? '',
-      yearPressed: release.year === null ? '' : String(release.year),
+      yearPressed: year === null ? '' : String(year),
       pressingPlant: release.pressingPlant ?? '',
       vinylWeightGrams:
         release.vinylWeightGrams === null ? '' : String(release.vinylWeightGrams),
