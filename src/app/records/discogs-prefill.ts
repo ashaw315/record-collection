@@ -129,7 +129,23 @@ export async function loadDiscogsPrefill(
   const release = await loadRelease(discogsReleaseId);
   if (release === null) return null;
 
-  const year = release.year ?? (await masterYear(release.masterId));
+  /**
+   * TWO DIFFERENT YEARS, and conflating them is CLAUDE.md §8's central error.
+   *
+   * `release.year` describes THIS pressing, so it answers both questions. The
+   * master describes the ALBUM across every pressing, so it answers only the
+   * first — a 1989 reissue of a 1971 album was pressed in 1989, and the master
+   * says 1971.
+   *
+   * The `masterYear` comment below makes exactly this argument and I applied it
+   * to `releaseYear` alone, leaving the line beside it to fabricate a pressing
+   * year. Found by the security review, and the compounding is the bad part:
+   * `yearPressed` is one of `IDENTIFYING_FIELDS`, so a user correcting the
+   * fabricated value contradicted an identifying field and silently lost tier 1
+   * — punished for fixing our error.
+   */
+  const albumYear = release.year ?? (await masterYear(release.masterId));
+  const pressingYear = release.year;
 
   /**
    * By Discogs id first, then by name — the same order §6 gives the importer,
@@ -168,7 +184,7 @@ export async function loadDiscogsPrefill(
       formatId: format.id ?? '',
       // §4.2: the ALBUM's year. The pressing's own year goes in the pressing
       // section below, and conflating them is CLAUDE.md §8's central error.
-      releaseYear: year === null ? '' : String(year),
+      releaseYear: albumYear === null ? '' : String(albumYear),
     },
     pressing: {
       // Carried so §7.7 can reach tier 1. Whether it is SENT on save is
@@ -178,7 +194,9 @@ export async function loadDiscogsPrefill(
       catalogNumber: release.catalogNumber ?? '',
       matrixRunout,
       countryPressed: release.country ?? '',
-      yearPressed: year === null ? '' : String(year),
+      // Empty rather than fabricated: an empty field asks the user to read
+      // the year off the record, a wrong one tells them it is already known.
+      yearPressed: pressingYear === null ? '' : String(pressingYear),
       pressingPlant: release.pressingPlant ?? '',
       vinylWeightGrams:
         release.vinylWeightGrams === null ? '' : String(release.vinylWeightGrams),

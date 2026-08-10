@@ -192,17 +192,74 @@ describe('a release Discogs gives no year', () => {
     expect(prefill?.values.releaseYear, 'the album year, from the master').toBe('1971');
   });
 
-  it('fills the PRESSING year from the master too', async () => {
-    // §4.2 keeps these distinct — release_year is the album's, year_pressed is
-    // this pressing's — but when Discogs offers only one date, it is the best
-    // available answer for both and the user corrects what is wrong. An empty
-    // field asks them to find a date the app already has.
+  it('does NOT fill the pressing year from the master', async () => {
+    /**
+     * FOUND BY THE SECURITY REVIEW, and I wrote both halves of the mistake.
+     *
+     * §4.2 keeps the two years distinct: `release_year` is the ALBUM's original
+     * year, `year_pressed` is THIS pressing's. The master describes the album
+     * across all its pressings, so it can answer the first and never the
+     * second — a 1989 reissue of a 1971 album was pressed in 1989.
+     *
+     * The `masterYear` comment two lines above the offending line says exactly
+     * this: "preferring the master would date every reissue to its original,
+     * which is CLAUDE.md §8's collapse arriving through a date field". The
+     * argument was written about `release_year` and never applied to the field
+     * beside it.
+     *
+     * **The compounding is what makes it more than a wrong default.**
+     * `yearPressed` is one of `IDENTIFYING_FIELDS`, so a user who corrects the
+     * fabricated year contradicts an identifying field and silently loses tier
+     * 1 — punished for fixing our error.
+     */
     await seedRelease(RELEASE_WITHOUT_YEAR);
     mockMaster(1971);
 
     const prefill = await loadDiscogsPrefill(CARPENTERS);
 
-    expect(prefill?.pressing.yearPressed).toBe('1971');
+    expect(prefill?.values.releaseYear, 'the ALBUM year, which the master knows').toBe('1971');
+    expect(
+      prefill?.pressing.yearPressed,
+      'the PRESSING year, which it does not — empty rather than fabricated',
+    ).toBe('');
+  });
+
+  it('does fill the pressing year when the RELEASE carries one', async () => {
+    // The release is a description of one pressing, so its year IS that
+    // pressing's year. Only the master's is unusable here.
+    await seedRelease({ ...RELEASE_WITHOUT_YEAR, year: 1989 });
+
+    const prefill = await loadDiscogsPrefill(CARPENTERS);
+
+    expect(prefill?.pressing.yearPressed).toBe('1989');
+    expect(prefill?.values.releaseYear).toBe('1989');
+  });
+
+  it('leaves a user who corrects the year with their tier 1 intact', async () => {
+    /**
+     * The compounding, asserted end to end: with the pressing year no longer
+     * fabricated, there is nothing for the user to correct, so nothing
+     * contradicts identity and the release id survives.
+     *
+     * Before the fix the prefill offered 1971, a user with a 1989 repress
+     * corrected it, and `discogsIdToSubmit` read that as contradicting the
+     * release — dropping the id and the badge.
+     */
+    const { discogsIdToSubmit } = await import('@/app/records/pressing-identity');
+
+    await seedRelease(RELEASE_WITHOUT_YEAR);
+    mockMaster(1971);
+
+    const prefill = await loadDiscogsPrefill(CARPENTERS);
+    const asPrefilled = prefill!.pressing;
+
+    // The user fills in the year from the record in their hand.
+    const corrected = { ...asPrefilled, yearPressed: '1989' };
+
+    expect(
+      discogsIdToSubmit(asPrefilled.discogsReleaseId, asPrefilled, corrected),
+      'filling in a blank is adding information, not contradicting it',
+    ).toBe(CARPENTERS);
   });
 
   it('asks the master only when the release has no year of its own', async () => {
