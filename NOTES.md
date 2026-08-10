@@ -425,6 +425,55 @@ form the records work had not shown — see the masking entry under Open.
   test is now testing.** If the restatement is narrower than the test's name,
   the workaround ate the scenario.
 
+  **CONCURRENCY-HARNESS VARIANT: a fake `sleep` that ADVANCES THE SHARED CLOCK
+  turns a concurrency test into a spread-over-time test — and the correct fix
+  then reads as broken.**
+
+  The security review found the Discogs limiter bypassable: `waitMs()` then
+  `take()` is check-then-act, so 200 concurrent requests ran 200 in flight
+  against a 60/minute bucket. The fix — an atomic `reserve()` — was correct and
+  the test still reported 200.
+
+  The harness was the reason. Its `sleep` did `now += ms`, so every waiting
+  caller's wake-up moved the clock forward and REFILLED the bucket for the next
+  one. It was modelling 200 requests spread over several minutes, which is a
+  scenario the limiter should allow, rather than 200 arriving at once.
+
+  Established by probing rather than reasoning: `reserve()` against a stable
+  clock returns 60 free then 1000/2000/3000ms staggered; against a jumping
+  clock it returns one identical 1000ms to everyone.
+
+  **A sleep that resolves WITHOUT moving time is the honest model of
+  concurrency**: every caller arrives in the same instant, which is the whole
+  premise. Advancing the clock inside `sleep` is right for a test about
+  elapsed-time behaviour and wrong for one about simultaneity, and the same
+  helper cannot serve both.
+
+  **The tell:** a concurrency test whose result does not change when the
+  implementation's atomicity does. Before trusting either outcome, check
+  whether the harness lets the callers actually overlap. Noticed: step 7,
+  security unit 2.
+
+  **A RELATED LIMIT, worth knowing rather than working around: SOME PROPERTIES
+  RESIST AN INJECTED CLOCK, because they are ABOUT the real timer.**
+
+  Every other property of the Discogs client is testable on an injected clock —
+  refill arithmetic, retry counts, deadline accounting — which is why the clock
+  is injected at all. The request timeout is not: the abort fires from
+  `setTimeout`, the very thing a fake clock replaces, so a fake clock can never
+  make it fire.
+
+  The resolution was to inject the CEILING rather than the clock:
+  `maxElapsedMs: 50` in the test against 10s in production, with a real timer
+  doing real work for 50ms. Not a workaround so much as recognising which knob
+  the property is actually attached to.
+
+  **The general form: when a property cannot be tested on the standard
+  substitute, ask what it is a property OF.** Usually the answer names a
+  different injection point. Knowing which properties resist the house
+  technique is more useful than the individual workaround, because the next one
+  will resist it too.
+
   **PASSIVE-PATH VARIANT: when every test exercises the DELIBERATE path, the
   passive path is unconstrained — and the passive path is usually the common
   one.** Not a fixture problem: each test is individually well-built. The gap is
