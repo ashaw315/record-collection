@@ -304,3 +304,150 @@ describe('normalizeSearchResponse', () => {
     expect(normalized.meta.total).toBe(0);
   });
 });
+
+describe('untrusted input from Discogs', () => {
+  /**
+   * Discogs data is contributor-submitted (§5.7), which makes every field an
+   * untrusted input rather than merely an unreliable one. Found by the security
+   * review; each case verified before fixing.
+   */
+  describe('image URLs', () => {
+    it('refuses a javascript: URL', () => {
+      /**
+       * `javascript:alert(1)` reached `thumbUrl` and would be rendered into an
+       * `<img src>`. React will not execute it there, so this is not live XSS
+       * — but the value is contributor-controlled and one framework change,
+       * one `<a href>`, or one copy of the URL elsewhere makes it live. The
+       * scheme is checkable and the check costs nothing.
+       */
+      const normalized = normalizeSearchResult({
+        id: 1,
+        type: 'release',
+        title: 'A - B',
+        thumb: 'javascript:alert(1)',
+      });
+
+      expect(normalized.thumbUrl).toBeNull();
+    });
+
+    it('refuses a plain http URL', () => {
+      /**
+       * Not a scheme attack, a PRIVACY one: an http image is an unencrypted
+       * outbound request from the user's browser, to a host any Discogs
+       * contributor chose, carrying their IP. Discogs serves images over
+       * https, so an http URL is already anomalous.
+       */
+      const normalized = normalizeSearchResult({
+        id: 1,
+        type: 'release',
+        title: 'A - B',
+        cover_image: 'http://evil.test/tracking-pixel.gif',
+      });
+
+      expect(normalized.coverUrl).toBeNull();
+    });
+
+    it.each([
+      ['data:', 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4='],
+      ['file:', 'file:///etc/passwd'],
+      ['no scheme', '//evil.test/pixel.gif'],
+      ['not a URL at all', 'nonsense'],
+    ])('refuses %s', (_label, url) => {
+      const normalized = normalizeSearchResult({ id: 1, type: 'release', title: 'A - B', thumb: url });
+
+      expect(normalized.thumbUrl).toBeNull();
+    });
+
+    it('keeps a normal https image', () => {
+      // The allow-list must not cost the working case.
+      const normalized = normalizeSearchResult({
+        id: 1,
+        type: 'release',
+        title: 'A - B',
+        thumb: 'https://i.discogs.com/abc/R-381756.jpeg',
+      });
+
+      expect(normalized.thumbUrl).toBe('https://i.discogs.com/abc/R-381756.jpeg');
+    });
+  });
+
+  describe('a malformed row', () => {
+    it('drops the bad row and keeps the good ones', () => {
+      /**
+       * One row with a non-numeric id threw a ZodError out of the normalizer,
+       * which `withErrorHandling` turned into a 500 — our bug, reported for
+       * their malformation, with one hostile row poisoning the whole page.
+       *
+       * §5.7 says Discogs merges, splits and gets things wrong. A page that
+       * loses one row is degraded; a page that fails entirely is broken.
+       */
+      const normalized = normalizeSearchResponse({
+        pagination: { items: 2, page: 1, per_page: 50 },
+        results: [
+          { id: 1, type: 'release', title: 'Good - Row' },
+          { id: 'not-a-number' },
+        ],
+      });
+
+      expect(normalized.data).toHaveLength(1);
+      expect(normalized.data[0].title).toBe('Row');
+    });
+
+    it('reports how many rows it dropped', () => {
+      /**
+       * A search silently returning 47 of 50 is a quieter version of the same
+       * problem: on the lookup screen a missing result reads as "Discogs does
+       * not have it" rather than "we could not parse it", and the user stops
+       * looking for a record that exists.
+       */
+      const normalized = normalizeSearchResponse({
+        pagination: { items: 3, page: 1, per_page: 50 },
+        results: [
+          { id: 1, type: 'release', title: 'Good - One' },
+          { id: 'bad' },
+          { id: {} },
+        ],
+      });
+
+      expect(normalized.meta.dropped, 'the count travels with the results').toBe(2);
+    });
+
+    it('reports zero dropped when every row parsed', () => {
+      const normalized = normalizeSearchResponse({
+        pagination: { items: 1, page: 1, per_page: 50 },
+        results: [{ id: 1, type: 'release', title: 'Good - Row' }],
+      });
+
+      expect(normalized.meta.dropped).toBe(0);
+    });
+  });
+
+  describe('length bounds', () => {
+    it('truncates text before it reaches the database', () => {
+      /**
+       * 50,000 characters reached `title` unbounded. The columns are `text`
+       * with no limit, so nothing downstream refuses it — a hostile or broken
+       * contributor entry becomes a row nobody can render and a payload every
+       * future reader carries.
+       */
+      const normalized = normalizeSearchResult({
+        id: 1,
+        type: 'release',
+        title: `Artist - ${'x'.repeat(50_000)}`,
+      });
+
+      expect(normalized.title.length).toBeLessThanOrEqual(500);
+    });
+
+    it('leaves ordinary values untouched', () => {
+      // The bound must be invisible to real data.
+      const normalized = normalizeSearchResult({
+        id: 1,
+        type: 'release',
+        title: 'Discharge - Hear Nothing See Nothing Say Nothing',
+      });
+
+      expect(normalized.title).toBe('Hear Nothing See Nothing Say Nothing');
+    });
+  });
+});

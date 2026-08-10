@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { badRequest, validationError } from '@/lib/api/errors';
 import { withErrorHandling } from '@/lib/api/handler';
+import { logger } from '@/lib/logger';
 import { DiscogsError, getDiscogsClient } from '@/lib/discogs/client';
 import { discogsErrorResponse } from '@/lib/discogs/errors';
 import { normalizeSearchResponse } from '@/lib/discogs/normalize-search';
@@ -135,6 +136,23 @@ export const GET = withErrorHandling('api.discogs.search.GET', async (request: R
   try {
     const payload = await getDiscogsClient().get('/database/search', query);
     const normalized = normalizeSearchResponse(payload);
+
+    /**
+     * A partial page leaves a trace. `meta.dropped` tells the CLIENT so the
+     * screen can say so; this tells the operator, because a search quietly
+     * returning 47 of 50 looks exactly like Discogs having 47.
+     *
+     * Logged only when it happens: a line per successful search would bury the
+     * one that matters.
+     */
+    if (normalized.meta.dropped > 0) {
+      logger.warn(
+        'api.discogs.search.GET',
+        `dropped ${normalized.meta.dropped} unparseable result(s) of ${
+          normalized.meta.dropped + normalized.data.length
+        } from Discogs`,
+      );
+    }
 
     /**
      * §5.7: "Ownership travels with every result… It is part of the result,

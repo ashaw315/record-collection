@@ -1,5 +1,13 @@
 import { z } from 'zod';
-import { inferReissue, meaningful, toDescriptors, toYear } from './fields';
+import {
+  FIELD_LIMITS,
+  bounded,
+  inferReissue,
+  meaningful,
+  safeImageUrl,
+  toDescriptors,
+  toYear,
+} from './fields';
 
 /**
  * Master → version drill-down (SPEC.md §5.7).
@@ -93,8 +101,8 @@ export function normalizeVersion(input: unknown): NormalizedVersion {
 
   return {
     discogsId: raw.id,
-    title: meaningful(raw.title),
-    label: meaningful(raw.label),
+    title: bounded(meaningful(raw.title), FIELD_LIMITS.title),
+    label: bounded(meaningful(raw.label), FIELD_LIMITS.name),
     /**
      * "UK, Europe & US" and "Worldwide" are real values here. Left as written:
      * splitting would invent three pressings from one, and taking the first
@@ -106,7 +114,7 @@ export function normalizeVersion(input: unknown): NormalizedVersion {
     catalogNumber: meaningful(raw.catno),
     formats: descriptors,
     isReissue: inferReissue(descriptors),
-    thumbUrl: meaningful(raw.thumb),
+    thumbUrl: safeImageUrl(raw.thumb),
     communityHave: raw.stats?.community?.in_collection ?? null,
     communityWant: raw.stats?.community?.in_wantlist ?? null,
   };

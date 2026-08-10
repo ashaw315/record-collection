@@ -4,6 +4,7 @@ import { sql } from 'drizzle-orm';
 import { getTestDb, truncateAll, closeTestDb } from '../../helpers/db';
 import { GET as search } from '@/app/api/discogs/search/route';
 import * as clientModule from '@/lib/discogs/client';
+import { logger } from '@/lib/logger';
 
 /**
  * SPEC.md §5.7 `GET /api/discogs/search`.
@@ -394,6 +395,85 @@ describe('ownership travels with every result (§5.7)', () => {
 
     const tiers = new Set(body.data.map((r: { ownership: { tier: string | null } }) => r.ownership.tier));
     expect(tiers.size, 'the page is not uniform').toBeGreaterThan(1);
+  });
+});
+
+describe('a malformed row from Discogs', () => {
+  /**
+   * §5.7: Discogs is contributor-submitted and imperfect. A row we cannot parse
+   * used to throw a ZodError out of the normalizer, which `withErrorHandling`
+   * turned into a 500 — our bug reported for their malformation, with one bad
+   * row taking down a page of good ones.
+   */
+  it('returns the good rows rather than failing the page', async () => {
+    mockDiscogs({
+      pagination: { items: 2, page: 1, per_page: 50 },
+      results: [
+        { id: 1, type: 'release', title: 'Good - Row' },
+        { id: 'not-a-number' },
+      ],
+    });
+
+    const response = await search(request('?artist=Discharge'));
+
+    expect(response.status, 'their malformation is not our 500').toBe(200);
+    expect((await response.json()).data).toHaveLength(1);
+  });
+
+  it('tells the CLIENT how many rows it dropped', async () => {
+    /**
+     * A search silently returning 47 of 50 is a quieter version of the same
+     * problem: on the lookup screen a missing result reads as "Discogs does not
+     * have it" rather than "we could not parse it", and the user stops looking
+     * for a record that exists.
+     */
+    mockDiscogs({
+      pagination: { items: 3, page: 1, per_page: 50 },
+      results: [{ id: 1, type: 'release', title: 'Good - Row' }, { id: 'bad' }, { id: {} }],
+    });
+
+    const body = await (await search(request('?artist=Discharge'))).json();
+
+    expect(body.meta.dropped).toBe(2);
+  });
+
+  it('tells the OPERATOR too, since a partial page looks like a small one', async () => {
+    const warn = vi.spyOn(logger, 'warn').mockImplementation(() => {});
+    mockDiscogs({
+      pagination: { items: 2, page: 1, per_page: 50 },
+      results: [{ id: 1, type: 'release', title: 'Good - Row' }, { id: 'bad' }],
+    });
+
+    await search(request('?artist=Discharge'));
+
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0][1]).toMatch(/dropped 1/);
+  });
+
+  it('does not log when every row parsed', async () => {
+    // A line per successful search would bury the one that matters.
+    const warn = vi.spyOn(logger, 'warn').mockImplementation(() => {});
+    mockDiscogs(BY_CATNO);
+
+    await search(request('?catno=CLAY+LP+3'));
+
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('does not let a hostile image URL reach the client', async () => {
+    // The scheme allow-list, asserted at the layer a user reaches.
+    mockDiscogs({
+      pagination: { items: 1, page: 1, per_page: 50 },
+      results: [
+        { id: 1, type: 'release', title: 'A - B', thumb: 'javascript:alert(1)',
+          cover_image: 'http://evil.test/pixel.gif' },
+      ],
+    });
+
+    const body = await (await search(request('?artist=Discharge'))).json();
+
+    expect(body.data[0].thumbUrl).toBeNull();
+    expect(body.data[0].coverUrl).toBeNull();
   });
 });
 

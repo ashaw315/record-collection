@@ -1,5 +1,13 @@
 import { z } from 'zod';
-import { inferReissue, meaningful, toDescriptors, toYear } from './fields';
+import {
+  FIELD_LIMITS,
+  bounded,
+  inferReissue,
+  meaningful,
+  safeImageUrl,
+  toDescriptors,
+  toYear,
+} from './fields';
 
 /**
  * Discogs release detail → SPEC.md §5.7's normalized release shape.
@@ -173,7 +181,7 @@ export function normalizeRelease(input: unknown): NormalizedRelease {
   const identifiers = raw.identifiers ?? [];
   const matrixRunout = identifiers
     .filter((identifier) => (identifier.type ?? '').trim().toLowerCase() === MATRIX_TYPE)
-    .map((identifier) => identifier.value ?? '')
+    .map((identifier) => bounded(identifier.value ?? '', FIELD_LIMITS.matrix) ?? '')
     .filter((value) => value.trim() !== '');
 
   const otherIdentifiers = identifiers
@@ -209,20 +217,25 @@ export function normalizeRelease(input: unknown): NormalizedRelease {
     discogsId: raw.id,
     masterId: raw.master_id ?? null,
     // Title alone here — NOT combined with the artist as in search results.
-    title: meaningful(raw.title),
-    artist: meaningful(raw.artists?.[0]?.name),
+    title: bounded(meaningful(raw.title), FIELD_LIMITS.title),
+    artist: bounded(meaningful(raw.artists?.[0]?.name), FIELD_LIMITS.name),
     artistDiscogsId: raw.artists?.[0]?.id ?? null,
-    label: meaningful(raw.labels?.[0]?.name),
+    label: bounded(meaningful(raw.labels?.[0]?.name), FIELD_LIMITS.name),
     labelDiscogsId: raw.labels?.[0]?.id ?? null,
     catalogNumber: meaningful(raw.labels?.[0]?.catno),
     country: meaningful(raw.country),
     year: toYear(raw.year) ?? toYear(raw.released),
     formats: descriptors,
     isReissue: inferReissue(descriptors),
+    /**
+     * https only. These URLs are chosen by whichever contributor edited the
+     * release, and the app renders them into the user's browser.
+     */
     images: (raw.images ?? [])
-      .filter((image) => (image.uri ?? '').trim() !== '')
+      .map((image) => ({ url: safeImageUrl(image.uri), type: image.type }))
+      .filter((image): image is { url: string; type: string | undefined } => image.url !== null)
       .map((image) => ({
-        url: image.uri as string,
+        url: image.url,
         type: image.type === 'primary' ? ('primary' as const) : ('secondary' as const),
       })),
     matrixRunout,
@@ -254,7 +267,7 @@ export function normalizeRelease(input: unknown): NormalizedRelease {
     })),
     genres: raw.genres ?? [],
     styles: raw.styles ?? [],
-    notes: meaningful(raw.notes),
+    notes: bounded(meaningful(raw.notes), FIELD_LIMITS.notes),
     numForSale: raw.num_for_sale ?? null,
     lowestPrice: raw.lowest_price ?? null,
   };

@@ -315,6 +315,14 @@ function ResultCard({ result }: { result: SearchResult }) {
             alt=""
             width={72}
             height={72}
+            /**
+             * The URL is https-checked in the normalizer, but it is still a
+             * host a Discogs contributor chose. `no-referrer` stops the
+             * browser telling that host which record the user is looking at,
+             * and `lazy` means an off-screen result makes no request at all.
+             */
+            referrerPolicy="no-referrer"
+            loading="lazy"
             className="h-18 w-18 shrink-0 rounded-xs border border-border object-cover"
           />
         )}

@@ -1,5 +1,13 @@
 import { z } from 'zod';
-import { inferReissue, meaningful, toDescriptors, toYear } from './fields';
+import {
+  FIELD_LIMITS,
+  bounded,
+  inferReissue,
+  meaningful,
+  safeImageUrl,
+  toDescriptors,
+  toYear,
+} from './fields';
 
 /**
  * Discogs search payloads → SPEC.md §5.7's normalized search result.
@@ -81,7 +89,20 @@ export type NormalizedSearchResult = {
 
 export type NormalizedSearchResponse = {
   data: NormalizedSearchResult[];
-  meta: { total: number; page: number; pageSize: number };
+  meta: {
+    total: number;
+    page: number;
+    pageSize: number;
+    /**
+     * Rows Discogs sent that could not be parsed.
+     *
+     * Reported rather than merely logged: a search silently returning 47 of 50
+     * is a quieter version of failing the whole page. On the lookup screen a
+     * missing result reads as "Discogs does not have it" rather than "we could
+     * not parse it", and the user stops looking for a record that exists.
+     */
+    dropped: number;
+  };
 };
 
 
@@ -118,10 +139,11 @@ export function normalizeSearchResult(input: unknown): NormalizedSearchResult {
     // `release`, and a result that fails to say is one.
     type: raw.type === 'master' ? 'master' : 'release',
     masterId: raw.master_id ?? null,
-    title,
-    artist,
-    thumbUrl: meaningful(raw.thumb),
-    coverUrl: meaningful(raw.cover_image),
+    title: bounded(title, FIELD_LIMITS.title) ?? '',
+    artist: bounded(artist, FIELD_LIMITS.name),
+    // https only — see `safeImageUrl`. A contributor chooses these values.
+    thumbUrl: safeImageUrl(raw.thumb),
+    coverUrl: safeImageUrl(raw.cover_image),
     year: toYear(raw.year),
     country: meaningful(raw.country),
     // The first label is the releasing one; the rest are pressing plants and
@@ -140,12 +162,33 @@ export function normalizeSearchResult(input: unknown): NormalizedSearchResult {
 export function normalizeSearchResponse(input: unknown): NormalizedSearchResponse {
   const raw = rawSearchResponse.parse(input);
 
+  /**
+   * A malformed ROW drops the row, never the page.
+   *
+   * One result with a non-numeric id threw a ZodError out of this function,
+   * which `withErrorHandling` turned into a 500 — our bug reported for their
+   * malformation, and one hostile row poisoning a page of good ones. §5.7 says
+   * Discogs merges, splits and gets things wrong; a page that loses a row is
+   * degraded, a page that fails entirely is broken.
+   */
+  const data: NormalizedSearchResult[] = [];
+  let dropped = 0;
+
+  for (const result of raw.results ?? []) {
+    try {
+      data.push(normalizeSearchResult(result));
+    } catch {
+      dropped += 1;
+    }
+  }
+
   return {
-    data: (raw.results ?? []).map(normalizeSearchResult),
+    data,
     meta: {
       total: raw.pagination?.items ?? 0,
       page: raw.pagination?.page ?? 1,
       pageSize: raw.pagination?.per_page ?? 0,
+      dropped,
     },
   };
 }

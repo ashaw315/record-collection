@@ -108,3 +108,59 @@ export function toDescriptors(value: string[] | string | undefined | null): stri
     .map((part) => part.trim())
     .filter((part) => part !== '');
 }
+
+/**
+ * An image URL, or null unless it is unmistakably safe to request.
+ *
+ * **https only, and an allow-list rather than a deny-list.** Found by the
+ * security review: `javascript:alert(1)` reached `thumbUrl`, and
+ * `http://evil.test/pixel.gif` reached `coverUrl`. Both values are chosen by
+ * whichever Discogs contributor edited the release.
+ *
+ * The javascript: case is not live XSS — React will not execute a `javascript:`
+ * URL in `<img src>` — but the value is attacker-controlled and one framework
+ * change, one `<a href>`, or one copy of the URL elsewhere makes it live. The
+ * scheme is checkable and the check costs nothing.
+ *
+ * The http: case is a PRIVACY defect rather than a scheme one: an unencrypted
+ * outbound request from the user's browser, to a host a stranger chose,
+ * carrying their IP. Discogs serves images over https, so http is already
+ * anomalous.
+ */
+export function safeImageUrl(value: string | undefined | null): string | null {
+  const trimmed = meaningful(value);
+  if (trimmed === null) return null;
+
+  try {
+    // `new URL` rejects a scheme-relative "//host/path" without a base, which
+    // is the behaviour wanted: it would inherit the page's scheme.
+    return new URL(trimmed).protocol === 'https:' ? trimmed : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Caps a value from Discogs before it reaches the database.
+ *
+ * The columns are `text` with no length limit, so nothing downstream refuses a
+ * 50,000-character title — verified. A hostile or broken contributor entry
+ * becomes a row nobody can render and a payload every future reader carries.
+ *
+ * Truncated rather than rejected: §5.7 says Discogs is imperfect, and losing a
+ * long title's tail is a smaller harm than losing the record. The bounds are
+ * generous enough to be invisible to real data.
+ */
+export function bounded(value: string | null, max: number): string | null {
+  if (value === null) return null;
+
+  return value.length <= max ? value : value.slice(0, max);
+}
+
+/** §4.2's own bounds, so the normalizers and the columns agree. */
+export const FIELD_LIMITS = {
+  title: 500,
+  name: 200,
+  notes: 10_000,
+  matrix: 1_000,
+} as const;
