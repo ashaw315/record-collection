@@ -24,7 +24,20 @@ import type { NormalizedVersion } from '@/lib/discogs/normalize-versions';
 
 export type VersionWithOwnership = NormalizedVersion & { ownership: OwnershipPayload };
 
-export function VersionTable({ versions }: { versions: VersionWithOwnership[] }) {
+export function VersionTable({
+  versions,
+  ownershipChecked = true,
+}: {
+  versions: VersionWithOwnership[];
+  /**
+   * False when §7.7's check could not run — the master lookup failed, so no
+   * row can carry a badge.
+   *
+   * Rendered rather than swallowed: a table with no badges looks exactly like a
+   * table where you own nothing, and someone in a shop reads that as "buy it".
+   */
+  ownershipChecked?: boolean;
+}) {
   if (versions.length === 0) {
     return (
       <p className="px-3 py-4 text-sm text-muted-foreground">
@@ -43,10 +56,26 @@ export function VersionTable({ versions }: { versions: VersionWithOwnership[] })
       */}
       <p className="px-3 py-2 text-xs text-muted-foreground">
         {versions.length} version{versions.length === 1 ? '' : 's'}
-        {ownedCount > 0 && (
+        {ownershipChecked && ownedCount > 0 && (
           <span className="font-medium text-foreground"> · {ownedCount} already on your shelf</span>
         )}
       </p>
+
+      {/*
+        Said plainly, in the place the answer would have been. The alternative
+        is an absence that reads as "you own none of these" — and the cost of
+        that misreading is buying a record you already have.
+      */}
+      {!ownershipChecked && (
+        <p
+          data-testid="ownership-unchecked"
+          role="status"
+          className="mx-3 mb-2 rounded-xs border border-primary px-2 py-1.5 text-xs font-medium"
+        >
+          Could not check what you already own — this list does not show your collection. Search
+          again in a moment.
+        </p>
+      )}
 
       {/*
         Horizontal scroll rather than stacking. A stacked card per version reads

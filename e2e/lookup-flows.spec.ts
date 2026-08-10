@@ -78,7 +78,13 @@ async function stubLookup(
       contentType: 'application/json',
       body: JSON.stringify({
         data: options.versions ?? [],
-        meta: { total: (options.versions ?? []).length, page: 1, pageSize: 25, pages: 1 },
+        meta: {
+          total: (options.versions ?? []).length,
+          page: 1,
+          pageSize: 25,
+          pages: 1,
+          ownershipChecked: true,
+        },
       }),
     });
   });
@@ -546,4 +552,72 @@ test('sends format to the endpoint, which is what narrows a common album', async
 
   await expect.poll(() => requestedUrl).toContain('format=Vinyl');
   expect(requestedUrl).toContain('artist=Carpenters');
+});
+
+test('says plainly when ownership could not be checked', async ({ page }) => {
+  /**
+   * THE highest-stakes absence-as-success case: a version table with no badges
+   * is indistinguishable from one where you own nothing, and someone in a shop
+   * reads that as "buy it". The failure mode is buying a record you already own
+   * because the app quietly could not tell you.
+   *
+   * Asserted at the SCREEN, not only at the endpoint — the flag exists to be
+   * rendered, and a flag nothing renders is the same silence.
+   */
+  await page.route('**/api/discogs/search**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        data: [searchResult()],
+        meta: { total: 1, page: 1, pageSize: 25, dropped: 0 },
+      }),
+    });
+  });
+
+  await page.route('**/api/discogs/master/*/versions**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        data: [versionRow(ORIGINAL), versionRow(REISSUE)],
+        // The master lookup failed, so no row can carry a badge.
+        meta: { total: 2, page: 1, pageSize: 25, pages: 1, ownershipChecked: false },
+      }),
+    });
+  });
+
+  await page.goto('/lookup');
+  await formReady(page);
+  await page.getByLabel('Artist').fill('Discharge');
+  await page.getByRole('button', { name: 'Search Discogs' }).click();
+
+  await page.getByTestId('result-card').first().getByTestId('expand-versions').click();
+
+  const warning = page.getByTestId('ownership-unchecked');
+  await expect(warning).toBeVisible({ timeout: 15_000 });
+  await expect(warning, 'names what is missing, not merely that something failed').toContainText(
+    /already own/i,
+  );
+
+  // The comparison still renders — degraded, not withheld.
+  await expect(page.getByTestId('version-row')).toHaveCount(2);
+});
+
+test('shows no such warning on the ordinary path', async ({ page }) => {
+  // A warning that always appeared would be ignored within a day.
+  await stubLookup(page, {
+    results: [searchResult()],
+    versions: [versionRow(ORIGINAL), versionRow(REISSUE)],
+  });
+
+  await page.goto('/lookup');
+  await formReady(page);
+  await page.getByLabel('Artist').fill('Discharge');
+  await page.getByRole('button', { name: 'Search Discogs' }).click();
+
+  await page.getByTestId('result-card').first().getByTestId('expand-versions').click();
+  await expect(page.getByTestId('version-row')).toHaveCount(2, { timeout: 15_000 });
+
+  await expect(page.getByTestId('ownership-unchecked')).toHaveCount(0);
 });

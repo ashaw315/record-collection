@@ -208,6 +208,23 @@ export async function matchOwnership(input: {
         sql`similarity(${records.title}, ${input.title}) > ${TITLE_SIMILARITY_THRESHOLD}`,
       ),
     )
+    /**
+     * ORDERED, because `.limit(1)` without it names an arbitrary copy — and
+     * §7.7's badge is a comparison aid: someone deciding whether the record in
+     * their hand beats the one at home needs to know WHICH one at home.
+     *
+     * Most identifying detail first, so the badge names the copy the user can
+     * actually recognise on the shelf rather than one logged fast with no
+     * pressing. `records.id` last makes it deterministic — an answer that
+     * changes between identical queries is worse than a consistently
+     * imperfect one, because nothing signals that it moved.
+     */
+    .orderBy(
+      sql`(${records.pressingId} IS NOT NULL) DESC`,
+      sql`(${pressings.yearPressed} IS NOT NULL) DESC`,
+      sql`(${pressings.catalogNumber} IS NOT NULL) DESC`,
+      records.id,
+    )
     .limit(1);
 
   if (owned !== undefined) {
@@ -249,6 +266,12 @@ export async function matchOwnership(input: {
         sql`similarity(${wantList.title}, ${input.title}) > ${TITLE_SIMILARITY_THRESHOLD}`,
       ),
     )
+    /**
+     * The most urgent entry, then deterministic. §4.2 makes 1 the highest
+     * priority, so a user with two entries for one album sees the one they
+     * cared most about — and sees the same one on every search.
+     */
+    .orderBy(wantList.priority, wantList.id)
     .limit(1);
 
   if (wanted !== undefined) {

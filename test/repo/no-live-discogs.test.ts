@@ -44,48 +44,96 @@ describe('the guard is active where tests run', () => {
     );
   });
 
-  it('is wired into the shared client, not merely available', () => {
+  it('covers EVERY construction path, not just the shared client', async () => {
     /**
-     * The module could exist, be tested, and be imported by nothing — the
-     * uncalled-module trap from NOTES, which this project has already hit.
-     * `getDiscogsClient` is the one place the REAL fetch is supplied, so the
-     * guard has to be on it.
+     * REWRITTEN twice, and the second rewrite is the interesting one.
+     *
+     * The first version grepped `client.ts` for `guardedFetch` — a test whose
+     * subject is a file, which passes as long as a NAME exists. It did not
+     * notice that the name covered only `getDiscogsClient`, leaving
+     * `createDiscogsClient` a bypass: a caller passing `globalThis.fetch`
+     * directly reached Discogs for real.
+     *
+     * That bypass was found by a DIFFERENT test resolving with a genuine
+     * 36-field Discogs payload — the guard, tested, and bypassed by the very
+     * test written to assert it.
+     *
+     * So this asserts behaviour on the path the grep missed.
      */
-    const client = readFileSync('src/lib/discogs/client.ts', 'utf8');
+    const { createDiscogsClient } = await import('@/lib/discogs/client');
 
-    expect(client).toMatch(/assertNoLiveCall/);
-    expect(client, 'the guard wraps the real fetch, not a caller-supplied one').toMatch(
-      /guardedFetch/,
-    );
+    const client = createDiscogsClient({
+      token: 'irrelevant',
+      userAgent: 'RecordCollection/0.1 +https://example.test',
+      // The REAL fetch, exactly as a careless caller would supply it.
+      fetch: globalThis.fetch,
+    });
+
+    await expect(client.get('/releases/381756')).rejects.toThrow(/test tried to reach/i);
+  });
+
+  it('does not fire on an injected fetch, which reaches nothing', async () => {
+    /**
+     * The other half: the guard must not break the transport tests. An injected
+     * `fetch` is a test's own function and contacts no network, so refusing it
+     * would be a false positive that made the module untestable.
+     */
+    const { createDiscogsClient } = await import('@/lib/discogs/client');
+
+    const client = createDiscogsClient({
+      token: 'irrelevant',
+      userAgent: 'RecordCollection/0.1 +https://example.test',
+      fetch: (async () =>
+        new Response('{"ok":true}', {
+          headers: { 'content-type': 'application/json' },
+        })) as unknown as typeof fetch,
+    });
+
+    await expect(client.get('/releases/1')).resolves.toEqual({ ok: true });
   });
 });
 
-describe('the credential is NOT the protection', () => {
-  it('uses a placeholder DISCOGS_TOKEN, while not relying on it', () => {
+describe('the credential is NOT the protection, and the guard is', () => {
+  /**
+   * REWRITTEN after the security review. The previous version read `.env.test`
+   * and asserted the token looked like a placeholder — a test whose subject is
+   * a FILE, which would pass whatever `isTestContext` does. I recorded that
+   * exact shape in NOTES and then wrote it again in this file.
+   *
+   * The behavioural claim is the one worth making: whatever the credential is,
+   * the guard refuses the call.
+   */
+  it('refuses a live call even with a perfectly valid credential', async () => {
     /**
-     * `.env.test` already held a placeholder (`e2e-discogs-token`) when a live
-     * call reached Discogs during an E2E run — and the call SUCCEEDED, with
-     * fresh marketplace data proving it was real.
-     *
-     * Measured rather than assumed: `GET /releases/381756` with a bogus token
-     * returns **200**. Discogs authenticates for RATE LIMITS, not for access;
-     * release detail is public. So a bad credential does not fail a leaked
-     * call, it just makes it slower to be throttled.
-     *
-     * I had reported the opposite — that .env.test carried a real token and
-     * removing it would prevent this. Both halves were wrong. The placeholder
-     * is kept because a credential that cannot authenticate is still the right
-     * thing to put in a test environment, but it is NOT the guard, and this
-     * test exists to stop anyone believing it is.
+     * Measured during the review: `GET /releases/381756` with a BOGUS token
+     * returns 200. Discogs authenticates for rate limits, not for access, so a
+     * placeholder never prevented anything — only the guard does.
      */
+    const { createDiscogsClient } = await import('@/lib/discogs/client');
+    const { assertNoLiveCall } = await import('@/lib/discogs/no-live-calls');
+
+    expect(() => assertNoLiveCall('https://api.discogs.com/releases/381756')).toThrow(
+      /test tried to reach/i,
+    );
+
+    // And the shared client refuses too, which is the path that matters.
+    const client = createDiscogsClient({
+      token: 'a-perfectly-valid-looking-token-aaaaaaaa',
+      userAgent: 'RecordCollection/0.1 +https://example.test',
+      fetch: globalThis.fetch,
+    });
+
+    await expect(client.get('/releases/381756')).rejects.toThrow(/test tried to reach/i);
+  });
+
+  it('keeps a placeholder in .env.test, while not relying on it', () => {
+    // Still worth asserting — a real credential in a test environment is wrong
+    // regardless — but the guard above is what provides the safety.
     const envTest = readFileSync('.env.test', 'utf8');
     const line = envTest.split('\n').find((entry) => entry.startsWith('DISCOGS_TOKEN='));
-
-    expect(line, 'DISCOGS_TOKEN must be set, so the app can boot').toBeDefined();
-
     const value = (line ?? '').slice('DISCOGS_TOKEN='.length).trim();
 
-    expect(value, 'set to something').not.toBe('');
+    expect(value, 'set to something, so the app boots').not.toBe('');
     expect(value, 'never the developer real token').not.toMatch(/^[A-Za-z]{40}$/);
   });
 });

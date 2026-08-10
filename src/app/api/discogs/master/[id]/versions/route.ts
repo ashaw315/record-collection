@@ -82,6 +82,25 @@ export const GET = withErrorHandling(
       const artist = master?.artists?.[0]?.name ?? null;
       const normalized = normalizeVersionsResponse(payload);
 
+      /**
+       * Whether the ownership check could RUN, which is not the same as whether
+       * it found anything.
+       *
+       * §7.7's tiers 2 and 3 match on artist, and version rows carry none — the
+       * master supplies it. When that lookup fails, or the master names no
+       * artist, corroboration is impossible and every row comes back badgeless.
+       *
+       * A version table with no badges is indistinguishable from a table where
+       * you own nothing, and someone in a shop reads that as "buy it". The
+       * failure mode is buying a record you already own because the app quietly
+       * could not tell you — so the screen is told, rather than rendering an
+       * absence that looks like an answer.
+       *
+       * Keyed on the artist being AVAILABLE rather than on the call succeeding:
+       * a master that returns without an artist is the same gap.
+       */
+      const ownershipChecked = artist !== null;
+
       const ownership = await matchOwnershipForResults(
         normalized.data.map((version) => ({
           discogsId: version.discogsId,
@@ -92,6 +111,7 @@ export const GET = withErrorHandling(
 
       return NextResponse.json({
         ...normalized,
+        meta: { ...normalized.meta, ownershipChecked },
         data: normalized.data.map((version) => ({
           ...version,
           ownership: toOwnershipPayload(

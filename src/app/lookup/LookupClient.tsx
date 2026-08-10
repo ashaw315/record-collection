@@ -260,6 +260,7 @@ export function LookupClient() {
 
 function ResultCard({ result }: { result: SearchResult }) {
   const [versions, setVersions] = useState<VersionWithOwnership[] | null>(null);
+  const [ownershipChecked, setOwnershipChecked] = useState(true);
   const [loadingVersions, setLoadingVersions] = useState(false);
   const [versionsError, setVersionsError] = useState<string | undefined>();
 
@@ -282,6 +283,7 @@ function ResultCard({ result }: { result: SearchResult }) {
         return;
       }
       setVersions(body.data);
+      setOwnershipChecked(body.meta?.ownershipChecked !== false);
     } catch {
       setVersionsError('Could not reach the server.');
     } finally {
@@ -395,7 +397,9 @@ function ResultCard({ result }: { result: SearchResult }) {
         </div>
       </div>
 
-      {versions !== null && <VersionTable versions={versions} />}
+      {versions !== null && (
+        <VersionTable versions={versions} ownershipChecked={ownershipChecked} />
+      )}
     </li>
   );
 }

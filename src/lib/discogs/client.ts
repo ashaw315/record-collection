@@ -123,26 +123,26 @@ function retryAfterMs(response: Response): number {
  */
 let shared: DiscogsClient | undefined;
 
-/** The real `fetch`, refused in a test context. */
-const guardedFetch: typeof fetch = (input, init) => {
-  assertNoLiveCall(typeof input === 'string' ? input : String(input));
-  return globalThis.fetch(input, init);
-};
+/**
+ * Whether this client is about to use the REAL network.
+ *
+ * Compared by identity: an injected `fetch` is a test's own function and does
+ * not reach Discogs, so the guard must not fire on it — that would break every
+ * transport test in this suite. `globalThis.fetch` is the one that does.
+ */
+function usesRealNetwork(candidate: typeof fetch): boolean {
+  return candidate === globalThis.fetch;
+}
 
 export function getDiscogsClient(): DiscogsClient {
   if (shared === undefined) {
     shared = createDiscogsClient({
       /**
-       * CLAUDE.md §2, enforced rather than trusted.
-       *
-       * The guard wraps the REAL `fetch`, at the one place it is supplied. A
-       * test that mocks this module never reaches here; a test that injects
-       * its own `fetch` into `createDiscogsClient` is exercising the transport
-       * deliberately and is equally unaffected. What it stops is the case that
-       * actually happened: a server component calling Discogs for real during
-       * an E2E run, where a browser-level stub was never in the path.
+       * The REAL fetch. CLAUDE.md §2 is enforced at the request site rather
+       * than here — see `usesRealNetwork` — so `createDiscogsClient` cannot be
+       * used to route around it, which an earlier version allowed.
        */
-      fetch: guardedFetch,
+      fetch: globalThis.fetch,
       token: getEnv().DISCOGS_TOKEN,
       // §6: "set a descriptive User-Agent header. Discogs rejects requests
       // without one." Names the app and gives them somewhere to look.
@@ -189,6 +189,22 @@ export function createDiscogsClient(options: DiscogsClientOptions): DiscogsClien
        * caller holds it before yielding.
        */
       const wait = bucket.reserve();
+
+      /**
+       * CLAUDE.md §2, checked at the CALL SITE rather than at construction.
+       *
+       * An earlier version wrapped the fetch that `getDiscogsClient` supplies,
+       * which left `createDiscogsClient` a bypass: a caller passing
+       * `globalThis.fetch` directly reached Discogs for real. Found when a test
+       * written to assert the guard resolved with a genuine 36-field payload —
+       * the guard, tested, and bypassed by the very thing testing it.
+       *
+       * Here it covers every construction path, and only when the real network
+       * is in use: an injected `fetch` belongs to a test and reaches nothing.
+       */
+      if (usesRealNetwork(options.fetch)) {
+        assertNoLiveCall(url);
+      }
 
       // Checked BEFORE sleeping, not after: waiting out a delay and then
       // reporting that we ran out of time spends the very budget the deadline

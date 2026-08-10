@@ -282,6 +282,84 @@ describe('ownership travels with every version (§5.7)', () => {
   });
 });
 
+describe('when ownership cannot be checked', () => {
+  /**
+   * THE HIGHEST-STAKES ABSENCE-AS-SUCCESS INSTANCE in this project, and the
+   * reason it gets its own signal rather than a log line.
+   *
+   * §7.7's tiers 2 and 3 match on artist, and version rows carry none — the
+   * endpoint fetches the master to supply it. When that lookup fails the artist
+   * is null, corroboration is impossible, and EVERY row comes back with no
+   * badge.
+   *
+   * A version table with no badges is indistinguishable from a version table
+   * where you own nothing. Someone standing in a shop reads that as "buy it",
+   * and the failure mode is buying a record they already own because the app
+   * quietly could not tell them.
+   *
+   * So the response says plainly that ownership could not be checked. An
+   * absence that looks like an answer is worse than an admitted gap.
+   */
+  function mockVersionsOnly() {
+    const get = vi.fn(async (path: string) => {
+      if (path.endsWith('/versions')) return VERSIONS;
+      throw new clientModule.DiscogsError('Could not reach Discogs');
+    });
+
+    vi.spyOn(clientModule, 'getDiscogsClient').mockReturnValue({
+      get: get as unknown as clientModule.DiscogsClient['get'],
+    });
+
+    return get;
+  }
+
+  it('still returns the version table, since the comparison is useful', async () => {
+    // Degrading, not failing: the year/country/catalog comparison is the point
+    // of the screen and it does not depend on the master.
+    mockVersionsOnly();
+
+    const response = await versions(request(), params('50683'));
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).data.length).toBeGreaterThan(0);
+  });
+
+  it('SAYS ownership could not be checked, rather than showing an absence', async () => {
+    mockVersionsOnly();
+
+    const body = await (await versions(request(), params('50683'))).json();
+
+    expect(body.meta.ownershipChecked, 'the screen can say so').toBe(false);
+  });
+
+  it('reports ownership as checked on the ordinary path', async () => {
+    // The flag must discriminate, or it is decoration: a screen that always
+    // showed the warning would be ignored within a day.
+    mockDiscogs();
+
+    const body = await (await versions(request(), params('50683'))).json();
+
+    expect(body.meta.ownershipChecked).toBe(true);
+  });
+
+  it('does not claim ownership was checked when the master had no artist', async () => {
+    /**
+     * The subtler case: the master lookup SUCCEEDS but carries no artist, so
+     * corroboration is still impossible. A flag keyed on "did the call throw"
+     * would report checked and show nothing.
+     */
+    vi.spyOn(clientModule, 'getDiscogsClient').mockReturnValue({
+      get: vi.fn(async (path: string) =>
+        path.endsWith('/versions') ? VERSIONS : { id: 50683, artists: [] },
+      ) as unknown as clientModule.DiscogsClient['get'],
+    });
+
+    const body = await (await versions(request(), params('50683'))).json();
+
+    expect(body.meta.ownershipChecked).toBe(false);
+  });
+});
+
 describe('caching', () => {
   it('does not cache version listings', async () => {
     // §6 caches release DETAIL only. A version list is a view over a master

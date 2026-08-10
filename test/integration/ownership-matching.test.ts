@@ -627,3 +627,104 @@ describe('no match', () => {
     expect(match.tier).toBe('none');
   });
 });
+
+describe('which copy the badge names, when several match', () => {
+  /**
+   * §7.7's tier 2 shows "the year/country/catalog of the one owned" — and with
+   * two copies of an album, `.limit(1)` with no ordering names an arbitrary
+   * one. Postgres is free to return either, and may return a different one
+   * between queries.
+   *
+   * That matters because the badge is a comparison aid: someone deciding
+   * whether the copy in their hand beats the one at home needs to know WHICH
+   * one at home. A badge that says 1989 on one search and 1982 on the next is
+   * worse than one that consistently says the wrong thing, because nothing
+   * signals that it changed.
+   */
+  it('names the same copy every time', async () => {
+    const artistId = await seedArtist();
+
+    const older = await seedPressing({
+      discogsReleaseId: 111111,
+      catalogNumber: 'CLAY LP 3',
+      countryPressed: 'UK',
+      yearPressed: 1982,
+    });
+    const newer = await seedPressing({
+      discogsReleaseId: 222222,
+      catalogNumber: 'CLAY LP 3',
+      countryPressed: 'UK',
+      yearPressed: 1989,
+    });
+
+    await seedRecord(artistId, newer);
+    await seedRecord(artistId, older);
+
+    const years = new Set<number | null | undefined>();
+    for (let i = 0; i < 5; i += 1) {
+      const match = await matchOwnership({
+        discogsReleaseId: LOOKING_AT,
+        artist: 'Discharge',
+        title: TITLE,
+      });
+      years.add(match.ownedPressing?.yearPressed);
+    }
+
+    expect(years.size, 'the answer is stable across repeated queries').toBe(1);
+  });
+
+  it('prefers the copy with the most identifying detail', async () => {
+    /**
+     * Given a choice, name the copy the user can most easily recognise on the
+     * shelf. A record logged fast with no pressing tells them nothing; one with
+     * a year and catalog number is the useful comparison.
+     */
+    const artistId = await seedArtist();
+
+    await seedRecord(artistId, null);
+
+    const detailed = await seedPressing({
+      discogsReleaseId: 222222,
+      catalogNumber: 'CLAY LP 3',
+      countryPressed: 'UK',
+      yearPressed: 1989,
+    });
+    await seedRecord(artistId, detailed);
+
+    const match = await matchOwnership({
+      discogsReleaseId: LOOKING_AT,
+      artist: 'Discharge',
+      title: TITLE,
+    });
+
+    expect(match.ownedPressing?.yearPressed, 'the identifiable copy, not the blank one').toBe(
+      1989,
+    );
+  });
+
+  it('names the same want-list entry every time', async () => {
+    // Same reasoning for tier 3: the priority shown must not flicker between
+    // two entries for the same album.
+    const artistId = await seedArtist();
+
+    await db.execute(
+      sql`INSERT INTO want_list (artist_id, title, priority) VALUES (${artistId}, ${TITLE}, 4)`,
+    );
+    await db.execute(
+      sql`INSERT INTO want_list (artist_id, title, priority) VALUES (${artistId}, ${TITLE}, 1)`,
+    );
+
+    const priorities = new Set<number | undefined>();
+    for (let i = 0; i < 5; i += 1) {
+      const match = await matchOwnership({
+        discogsReleaseId: LOOKING_AT,
+        artist: 'Discharge',
+        title: TITLE,
+      });
+      priorities.add(match.wantList?.priority);
+    }
+
+    expect(priorities.size).toBe(1);
+    expect([...priorities][0], 'the most urgent entry is the one worth showing').toBe(1);
+  });
+});
