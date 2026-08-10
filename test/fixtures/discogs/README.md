@@ -39,6 +39,7 @@ for it and take the id from the result.
 | `search-by-catno.json` | The structured search that actually pins down a pressing |
 | `search-by-artist-only.json` | The bare-artist search, for the cardinality that makes `q` alone near-useless |
 | `release-detailed.json` | Rich pressing detail: Matrix / Runout identifiers, a pressing plant, weight and colour in format descriptors |
+| `release-no-year.json` | A release Discogs records NO year for — `year: 0` and no `released` field at all. The only committed payload with that shape, and the reason it is here: the entire suite otherwise exercises releases that carry their own year, so the master-year fallback was untestable and a defect in it invisible. Captured from the real US Carpenters LP (`SP-3502`, master 84975) |
 | `release-no-matrix.json` | A release with NO matrix — §5.7 calls this "frequently missing", and it is the common real case. The script SEARCHES for a qualifying release rather than naming one: a low release id is not a sparse entry, it is a heavily-edited one, which is how the first attempt came back with two Matrix / Runout identifiers |
 
 ## Re-capturing

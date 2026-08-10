@@ -1,0 +1,480 @@
+{
+  "id": 12856557,
+  "uri": "https://www.discogs.com/release/12856557-Carpenters-Carpenters",
+  "year": 0,
+  "thumb": "https://i.discogs.com/PoIMOoP8kxIi5f6hcbnGGyOWMM7X3St2ZWTrNIhe8mA/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyODU2/NTU3LTE1NTMxMTY1/MjctODI3Ny5qcGVn.jpeg",
+  "title": "Carpenters",
+  "genres": [
+    "Rock",
+    "Pop"
+  ],
+  "images": [
+    {
+      "uri": "https://i.discogs.com/3OagMCQEYNVhN-d88PYLK7-dxbgIS_xYPOMkz8FfDpI/rs:fit/g:sm/q:90/h:597/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyODU2/NTU3LTE1NTMxMTY1/MjctODI3Ny5qcGVn.jpeg",
+      "type": "primary",
+      "width": 600,
+      "height": 597,
+      "uri150": "https://i.discogs.com/PoIMOoP8kxIi5f6hcbnGGyOWMM7X3St2ZWTrNIhe8mA/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyODU2/NTU3LTE1NTMxMTY1/MjctODI3Ny5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/3OagMCQEYNVhN-d88PYLK7-dxbgIS_xYPOMkz8FfDpI/rs:fit/g:sm/q:90/h:597/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyODU2/NTU3LTE1NTMxMTY1/MjctODI3Ny5qcGVn.jpeg"
+    },
+    {
+      "uri": "https://i.discogs.com/NpX8L3b0lPBBfnwZR_TZiieLkAaNC4VYn4zqkIEM-Ow/rs:fit/g:sm/q:90/h:586/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyODU2/NTU3LTE1NTMxMTY1/MjgtOTYxMi5qcGVn.jpeg",
+      "type": "secondary",
+      "width": 600,
+      "height": 586,
+      "uri150": "https://i.discogs.com/ewkyZwWWg8qhPKo3ReNwms09P_nUbJIof1Uoai_fP-o/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyODU2/NTU3LTE1NTMxMTY1/MjgtOTYxMi5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/NpX8L3b0lPBBfnwZR_TZiieLkAaNC4VYn4zqkIEM-Ow/rs:fit/g:sm/q:90/h:586/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyODU2/NTU3LTE1NTMxMTY1/MjgtOTYxMi5qcGVn.jpeg"
+    },
+    {
+      "uri": "https://i.discogs.com/6SeMOfmufRqPposrXO-F0TtP8gWU_TruXdi-ONiSpuE/rs:fit/g:sm/q:90/h:592/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyODU2/NTU3LTE1NTMxMTY1/MzAtMTAzOS5qcGVn.jpeg",
+      "type": "secondary",
+      "width": 600,
+      "height": 592,
+      "uri150": "https://i.discogs.com/FccXhmPnyFi-LgrNcCdB_vV8Nt7NhYKQXbN6-YE-1rQ/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyODU2/NTU3LTE1NTMxMTY1/MzAtMTAzOS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/6SeMOfmufRqPposrXO-F0TtP8gWU_TruXdi-ONiSpuE/rs:fit/g:sm/q:90/h:592/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyODU2/NTU3LTE1NTMxMTY1/MzAtMTAzOS5qcGVn.jpeg"
+    },
+    {
+      "uri": "https://i.discogs.com/USmM_MvHqjdHxsxUjPdONl95n5Zx1l4huxs441Z0xnE/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyODU2/NTU3LTE1NTMxMTY1/NDMtMjA3NS5qcGVn.jpeg",
+      "type": "secondary",
+      "width": 600,
+      "height": 600,
+      "uri150": "https://i.discogs.com/Ueyj5H7hWLPN21f4qRXt5gc7qhvuKBQe4tRNNpVqExw/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyODU2/NTU3LTE1NTMxMTY1/NDMtMjA3NS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/USmM_MvHqjdHxsxUjPdONl95n5Zx1l4huxs441Z0xnE/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyODU2/NTU3LTE1NTMxMTY1/NDMtMjA3NS5qcGVn.jpeg"
+    },
+    {
+      "uri": "https://i.discogs.com/DbPvoP4zbf6glr3ttxyn8O5RJwgd_2_bMrGNMNGn9-s/rs:fit/g:sm/q:90/h:600/w:583/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyODU2/NTU3LTE1NTMxMTY1/MzEtNDkyNS5qcGVn.jpeg",
+      "type": "secondary",
+      "width": 583,
+      "height": 600,
+      "uri150": "https://i.discogs.com/0sXVrAzsFXCXc09ZOu5mv61VKj0u24gmp4kHqKcKMEg/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyODU2/NTU3LTE1NTMxMTY1/MzEtNDkyNS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/DbPvoP4zbf6glr3ttxyn8O5RJwgd_2_bMrGNMNGn9-s/rs:fit/g:sm/q:90/h:600/w:583/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyODU2/NTU3LTE1NTMxMTY1/MzEtNDkyNS5qcGVn.jpeg"
+    }
+  ],
+  "labels": [
+    {
+      "id": 904,
+      "name": "A&M Records",
+      "catno": "SP-3502",
+      "entity_type": "1",
+      "resource_url": "https://api.discogs.com/labels/904",
+      "thumbnail_url": "https://i.discogs.com/Q9MDIgi0APJGemq-xddyJB41sI-g172DIZ_xl628StE/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTkwNC0x/Mzc5NTAyOTM2LTI1/MDcucG5n.jpeg",
+      "entity_type_name": "Label"
+    },
+    {
+      "id": 904,
+      "name": "A&M Records",
+      "catno": "SP 3502",
+      "entity_type": "1",
+      "resource_url": "https://api.discogs.com/labels/904",
+      "thumbnail_url": "https://i.discogs.com/Q9MDIgi0APJGemq-xddyJB41sI-g172DIZ_xl628StE/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTkwNC0x/Mzc5NTAyOTM2LTI1/MDcucG5n.jpeg",
+      "entity_type_name": "Label"
+    }
+  ],
+  "series": [],
+  "status": "Accepted",
+  "styles": [
+    "Soft Rock",
+    "Ballad"
+  ],
+  "videos": [
+    {
+      "uri": "https://www.youtube.com/watch?v=PjFoQxjgbrs",
+      "embed": true,
+      "title": "Carpenters - Rainy Days And Mondays",
+      "duration": 212,
+      "description": "Music video by Carpenters performing Rainy Days And Mondays. (C) 1985 A&M Records"
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=JFwUGvCpHO0",
+      "embed": true,
+      "title": "Carpenters - 1971",
+      "duration": 0,
+      "description": "Side A\nA1  Rainy Days And Mondays\nWritten-By – Paul Williams (2), Roger Nichols (2)\n \nA2  Saturday\nWritten-By – John Bettis, Richard Carpenter\n \nA3  Let Me Be The One\nWritten-By – Paul Williams (2), Roger Nichols (2)\n \nA4  (A Place To) Hideaway\nWritten-By"
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=SJmmaIGiGBg",
+      "embed": true,
+      "title": "Carpenters - Superstar",
+      "duration": 228,
+      "description": "Learn more about the history of \"Superstar\" here: https://www.udiscovermusic.com/stories/carpenters-superstar-song?utm_campaign=uDYT&utm_medium=youtube&utm_source=youtube\n\nListen to more from Carpenters: http://carpenters.lnk.to/Listen\n\nFacebook: https://"
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=j33WGBavzuk",
+      "embed": true,
+      "title": "Saturday",
+      "duration": 79,
+      "description": "Provided to YouTube by Universal Music Group\n\nSaturday · Carpenters\n\nCarpenters\n\n℗ 1971 A&M Records\n\nReleased on: 2005-09-27\n\nProducer: Jack Daugherty\nRecordingarranger, Composer Lyricist: Richard Carpenter\nEngineer: Ray Gerhardt\nEngineer: Dick Bogert\nCom"
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=b4FkcC_HpsU",
+      "embed": true,
+      "title": "Druscilla Penny",
+      "duration": 135,
+      "description": "Provided to YouTube by Universal Music Group\n\nDruscilla Penny · Carpenters\n\nCarpenters\n\n℗ 1971 A&M Records\n\nReleased on: 2005-09-27\n\nProducer: Jack Daugherty\nRecordingarranger, Composer Lyricist: Richard Carpenter\nEngineer: Ray Gerhardt\nEngineer: Dick Bog"
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=Gs6RRYvi_jE",
+      "embed": true,
+      "title": "The Carpenters - Let Me Be The One",
+      "duration": 144,
+      "description": "This video features materials protected by the Fair Use guidelines of Section 107 of the Copyright Act. All rights reserved to the copyright owners.\nCopyright Disclaimer Under Section 107 of the\nCopyright Act 1976, allowance is made for\n\"fair use\" for pur"
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=dfuPL2p-G3k",
+      "embed": true,
+      "title": "[A Place To] Hide Away",
+      "duration": 222,
+      "description": "Provided to YouTube by Universal Music Group\n\n[A Place To] Hide Away · Carpenters\n\nCarpenters\n\n℗ 1971 A&M Records\n\nReleased on: 2005-09-27\n\nProducer: Jack Daugherty\nRecordingarranger: Richard Carpenter\nEngineer: Ray Gerhardt\nEngineer: Dick Bogert\nComposer"
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=jNrYbMJz99g",
+      "embed": true,
+      "title": "The Carpenters - For All We Know",
+      "duration": 147,
+      "description": "For All We Know by The Carpenters. It's a shame such an amazing song is so short..."
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=p49vXVRZdHM",
+      "embed": true,
+      "title": "One Love",
+      "duration": 206,
+      "description": "Provided to YouTube by Universal Music Group\n\nOne Love · Carpenters\n\nCarpenters\n\n℗ 1971 A&M Records\n\nReleased on: 2005-09-27\n\nProducer: Jack Daugherty\nRecordingarranger, Composer Lyricist: Richard Carpenter\nEngineer: Ray Gerhardt\nEngineer: Dick Bogert\nCom"
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=pBSranIgmYM",
+      "embed": true,
+      "title": "Bacharach/David Medley: Knowing When To Leave/Make It Easy On Yourself/There's Always Something...",
+      "duration": 328,
+      "description": "Provided to YouTube by Universal Music Group\n\nBacharach/David Medley: Knowing When To Leave/Make It Easy On Yourself/There's Always Something There To Remind Me/I'll Never Fall In Love Again/Walk On By/Do You Know The Way To San Jose · Carpenters\n\nCarpent"
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=35lBbXqTsds",
+      "embed": true,
+      "title": "Sometimes",
+      "duration": 175,
+      "description": "Provided to YouTube by Universal Music Group\n\nSometimes · Carpenters\n\nCarpenters\n\n℗ 1971 A&M Records\n\nReleased on: 2005-09-27\n\nProducer: Jack Daugherty\nRecordingarranger: Richard Carpenter\nEngineer: Ray Gerhardt\nEngineer: Dick Bogert\nComposer Lyricist: Fe"
+    }
+  ],
+  "artists": [
+    {
+      "id": 170357,
+      "anv": "",
+      "join": "",
+      "name": "Carpenters",
+      "role": "",
+      "tracks": "",
+      "resource_url": "https://api.discogs.com/artists/170357",
+      "thumbnail_url": "https://i.discogs.com/5uwGE1CI-6INowIM4jslX0xioOnPGUZ23Wnsk7PAlss/rs:fit/g:sm/q:90/h:599/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9BLTE3MDM1/Ny0xNjQ1MzAwNDc5/LTc2NjUuanBlZw.jpeg"
+    }
+  ],
+  "country": "US",
+  "formats": [
+    {
+      "qty": "1",
+      "name": "Vinyl",
+      "descriptions": [
+        "LP",
+        "Album",
+        "Stereo"
+      ]
+    }
+  ],
+  "community": {
+    "have": 187,
+    "want": 56,
+    "rating": {
+      "count": 7,
+      "average": 4.29
+    },
+    "status": "Accepted",
+    "submitter": {
+      "username": "todothemath",
+      "resource_url": "https://api.discogs.com/users/todothemath"
+    },
+    "contributors": [
+      {
+        "username": "todothemath",
+        "resource_url": "https://api.discogs.com/users/todothemath"
+      },
+      {
+        "username": "t75atc",
+        "resource_url": "https://api.discogs.com/users/t75atc"
+      }
+    ],
+    "data_quality": "Needs Vote"
+  },
+  "companies": [],
+  "master_id": 84975,
+  "tracklist": [
+    {
+      "title": "Rainy Days And Mondays",
+      "type_": "track",
+      "duration": "3:40",
+      "position": "A1"
+    },
+    {
+      "title": "Saturday",
+      "type_": "track",
+      "duration": "1:20",
+      "position": "A2"
+    },
+    {
+      "title": "Let Me Be The One",
+      "type_": "track",
+      "duration": "2:25",
+      "position": "A3"
+    },
+    {
+      "title": "(A Place To) Hideaway",
+      "type_": "track",
+      "duration": "3:40",
+      "position": "A4"
+    },
+    {
+      "title": "For All We Know",
+      "type_": "track",
+      "duration": "2:34",
+      "position": "A5"
+    },
+    {
+      "title": "Superstar",
+      "type_": "track",
+      "duration": "3:49",
+      "position": "B1"
+    },
+    {
+      "title": "Druscilla Penny",
+      "type_": "track",
+      "duration": "2:18",
+      "position": "B2"
+    },
+    {
+      "title": "One Love",
+      "type_": "track",
+      "duration": "3:23",
+      "position": "B3"
+    },
+    {
+      "title": "Bacharach-David Medley",
+      "type_": "index",
+      "duration": "5:25",
+      "position": "",
+      "sub_tracks": [
+        {
+          "title": "Knowing When To Leave",
+          "type_": "track",
+          "duration": "",
+          "position": "B4.a"
+        },
+        {
+          "title": "Make It Easy On Yourself",
+          "type_": "track",
+          "duration": "",
+          "position": "B4.b"
+        },
+        {
+          "title": "(There's) Always Something There To Remind Me",
+          "type_": "track",
+          "duration": "",
+          "position": "B4.c"
+        },
+        {
+          "title": "I'll Never Fall In Love Again",
+          "type_": "track",
+          "duration": "",
+          "position": "B4.d"
+        },
+        {
+          "title": "Walk On By",
+          "type_": "track",
+          "duration": "",
+          "position": "B4.e"
+        },
+        {
+          "title": "Do You Know The Way To San Jose",
+          "type_": "track",
+          "duration": "",
+          "position": "B4.f"
+        }
+      ]
+    },
+    {
+      "title": "Sometimes",
+      "type_": "track",
+      "duration": "2:52",
+      "position": "B5"
+    }
+  ],
+  "date_added": "2018-11-26T13:01:02-08:00",
+  "master_url": "https://api.discogs.com/masters/84975",
+  "identifiers": [
+    {
+      "type": "Matrix / Runout",
+      "value": "SP-3503",
+      "description": "Side 1 Matrix"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "SP-3504",
+      "description": "Side 2 Matrix"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "A&M SP 3503 P7",
+      "description": "Side 1 Etched"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "A&M SP 3504 P9",
+      "description": "Side 2 Etched"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "A&M SP 3503-P3",
+      "description": "Side 1 Etched, variant 2"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "A&M SP 3504-P3",
+      "description": "Side 2 Etched, variant 2"
+    }
+  ],
+  "artists_sort": "Carpenters",
+  "data_quality": "Needs Vote",
+  "date_changed": "2026-05-29T09:35:58-07:00",
+  "extraartists": [
+    {
+      "id": 271964,
+      "anv": "",
+      "join": "",
+      "name": "Richard Carpenter",
+      "role": "Arranged By, Keyboards, Conductor, Vocals",
+      "tracks": "",
+      "resource_url": "https://api.discogs.com/artists/271964"
+    },
+    {
+      "id": 1830041,
+      "anv": "",
+      "join": "",
+      "name": "Roland Young (3)",
+      "role": "Art Direction",
+      "tracks": "",
+      "resource_url": "https://api.discogs.com/artists/1830041"
+    },
+    {
+      "id": 253433,
+      "anv": "",
+      "join": "",
+      "name": "Joe Osborn",
+      "role": "Bass",
+      "tracks": "",
+      "resource_url": "https://api.discogs.com/artists/253433"
+    },
+    {
+      "id": 301164,
+      "anv": "",
+      "join": "",
+      "name": "Bob Messenger",
+      "role": "Bass, Woodwind",
+      "tracks": "",
+      "resource_url": "https://api.discogs.com/artists/301164"
+    },
+    {
+      "id": 1846930,
+      "anv": "Craig Braun Inc.",
+      "join": "",
+      "name": "Craig Braun",
+      "role": "Design, Concept By [Album]",
+      "tracks": "",
+      "resource_url": "https://api.discogs.com/artists/1846930"
+    },
+    {
+      "id": 229494,
+      "anv": "",
+      "join": "",
+      "name": "Hal Blaine",
+      "role": "Drums",
+      "tracks": "",
+      "resource_url": "https://api.discogs.com/artists/229494"
+    },
+    {
+      "id": 210671,
+      "anv": "",
+      "join": "",
+      "name": "Karen Carpenter",
+      "role": "Drums, Vocals",
+      "tracks": "",
+      "resource_url": "https://api.discogs.com/artists/210671"
+    },
+    {
+      "id": 359082,
+      "anv": "",
+      "join": "",
+      "name": "Dick Bogert",
+      "role": "Engineer",
+      "tracks": "",
+      "resource_url": "https://api.discogs.com/artists/359082"
+    },
+    {
+      "id": 331704,
+      "anv": "",
+      "join": "",
+      "name": "Ray Gerhardt",
+      "role": "Engineer",
+      "tracks": "",
+      "resource_url": "https://api.discogs.com/artists/331704"
+    },
+    {
+      "id": 431783,
+      "anv": "",
+      "join": "",
+      "name": "Norm Kinney",
+      "role": "Engineer [Assitant]",
+      "tracks": "",
+      "resource_url": "https://api.discogs.com/artists/431783"
+    },
+    {
+      "id": 620325,
+      "anv": "",
+      "join": "",
+      "name": "Guy Webster",
+      "role": "Photography By",
+      "tracks": "",
+      "resource_url": "https://api.discogs.com/artists/620325"
+    },
+    {
+      "id": 30186,
+      "anv": "",
+      "join": "",
+      "name": "Jack Daugherty",
+      "role": "Producer",
+      "tracks": "",
+      "resource_url": "https://api.discogs.com/artists/30186"
+    },
+    {
+      "id": 301165,
+      "anv": "",
+      "join": "",
+      "name": "Doug Strawn",
+      "role": "Woodwind",
+      "tracks": "",
+      "resource_url": "https://api.discogs.com/artists/301165"
+    },
+    {
+      "id": 255404,
+      "anv": "",
+      "join": "",
+      "name": "Jim Horn",
+      "role": "Woodwind",
+      "tracks": "",
+      "resource_url": "https://api.discogs.com/artists/255404"
+    }
+  ],
+  "is_offensive": false,
+  "lowest_price": 1.37,
+  "num_for_sale": 10,
+  "resource_url": "https://api.discogs.com/releases/12856557",
+  "format_quantity": 1,
+  "estimated_weight": 230,
+  "blocked_from_sale": false
+}

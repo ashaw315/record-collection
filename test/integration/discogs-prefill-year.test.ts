@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { sql } from 'drizzle-orm';
 import { getTestDb, truncateAll, closeTestDb } from '../helpers/db';
@@ -29,17 +30,22 @@ const db = getTestDb();
 const CARPENTERS = 12856557;
 const MASTER = 84975;
 
-/** The real payload's shape: a year of 0 and no `released`. */
-const RELEASE_WITHOUT_YEAR = {
-  id: CARPENTERS,
-  title: 'Carpenters',
-  year: 0,
-  country: 'US',
-  master_id: MASTER,
-  artists: [{ name: 'Carpenters', id: 123 }],
-  labels: [{ name: 'A&M Records', catno: 'SP-3502', id: 456 }],
-  formats: [{ name: 'Vinyl', descriptions: ['LP', 'Album'] }],
-};
+/**
+ * THE REAL PAYLOAD, captured rather than written.
+ *
+ * `year: 0` with no `released` field is a shape I could not construct from
+ * imagination — every variation I tried recovered the year correctly, and the
+ * defect surfaced only by reading what Discogs actually sent.
+ *
+ * It is now a committed fixture for a reason the security review made plain:
+ * every OTHER captured payload carries its own year, so the whole suite
+ * exercised the path where the master fallback does not apply. A defect in
+ * that fallback was invisible regardless of how the tests were written — the
+ * fixture rule at suite scale.
+ */
+const RELEASE_WITHOUT_YEAR = JSON.parse(
+  readFileSync('test/fixtures/discogs/release-no-year.json', 'utf8'),
+) as Record<string, unknown>;
 
 beforeEach(async () => {
   await truncateAll();
