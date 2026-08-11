@@ -153,6 +153,14 @@ Do not report a unit complete unless all of these are true and you have verified
 - [ ] Tests were written before the implementation.
 - [ ] The tests were observed failing, then passing.
 - [ ] The full suite passes, not just the new tests.
+- [ ] **The full E2E suite has run — `npx playwright test` with no file
+      argument — not only the spec files this unit touched.** A change that
+      alters a contract breaks the tests that encoded the OLD contract, and
+      those live in files the unit never opened. Twice now a spec-scoped run
+      looked green while a cross-file break was waiting: the matrix change
+      passed `discogs-prefill.spec.ts` while `lookup-flows.spec.ts` failed
+      deterministically on both projects. Same shape as the flake finding —
+      **passing in isolation is not evidence a change is clean.**
 - [ ] `npm run typecheck` clean.
 - [ ] `npm run lint` clean.
 - [ ] `npm run build` succeeds.
