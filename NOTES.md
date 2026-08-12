@@ -10,81 +10,92 @@ in.
 
 ## CURRENT POSITION — read this first
 
-**Updated: 2026-08-08, end of the step 5+6 adversarial remediation.**
+**Updated: 2026-08-10, end of step 7 and its security review.**
 
-**Where we are.** **Step 6 is COMPLETE** (SPEC.md §12: "Want list CRUD +
-acquire flow. E2E #5"), and so is the five-unit remediation that followed the
-adversarial review of `records` + `want_list` + the acquire path.
+**Where we are.** **Step 7 is COMPLETE** (SPEC.md §12: "Discogs integration:
+rate limiter, cache, structured search, master version drill-down, release
+detail, import, and the `/lookup` screen incl. tiered ownership matching (§7.7).
+E2E #3, #4, #11"), including a QA round from real use and a five-unit security
+remediation.
 
-The remediation fixed: `tagIds` silently discarded on acquire; two create
-schemas that agreed rather than one shared definition; the concurrent loser
-getting a 500 instead of §5.3's 409; `target_pressing_id` dropped instead of
-prefilling the form; and `purchaseDate` accepting `2026-13-45`. SPEC.md §5.3
-was amended in the course of it and is the authority for all five.
+**Step 8 is next**: image uploads. E2E #9.
 
-**Step 7 is next**: the Discogs integration.
-
-**Last verified, and when.** 2026-08-08, all on the current tree:
+**Last verified, and when.** 2026-08-10, all on the current tree:
 
 | Check | State |
 |---|---|
-| `npm test` | **1293 passed, 1 skipped, 68 files** |
-| `npx playwright test` (full, both projects) | **150 passed, 2 failed, 2 skipped** — the 2 are the known flake, see below |
+| `npm test` | **1714 passed, 1 skipped, 94 files** |
+| `npx playwright test` (full, both projects) | **206 passed.** Green, with **1 local retry** — see the flake entry before trusting it |
 | `npm run typecheck` / `lint` / `build` | clean |
-| Neon transaction gate | **9 passed, 1 skipped** — the skip is the gate's own marker correctly NOT firing |
+| Neon transaction gate | **10 passed, 1 skipped** — the skip is the gate's own marker correctly NOT firing |
+| Live Discogs calls during a full run | **zero** — checked by counting `discogs_cache` rows |
 
-Note the Neon row is the file's own count, not a suite total. Run it as
-`npx vitest run test/integration/neon-transactions.test.ts`; there is no
-`test:neon` script, and asking for one wastes a round.
+Run the Neon file as `npx vitest run test/integration/neon-transactions.test.ts`;
+there is no `test:neon` script.
 
-**Three caveats a green suite will not tell you.**
+**Four caveats a green suite will not tell you.**
 
-1. **The Neon gate's closing test was hollow until the step 5 remediation** and
-   reported green from the day it was written — it never reached Neon at all.
-   Fixed. Do not read "the gate was closed in unit 1" as "it was verified from
-   unit 1".
+1. **The E2E flake was TWO things, and one of them was a real bug.** Measured
+   2026-08-10, after the recorded rate ("~1 run in 5, one test") turned out to
+   be "1-3 tests every run, six tests seen". Full detail in Resolved; the part
+   needed to read a suite run:
 
-2. **The E2E suite has one open flake**, ~1 run in 5, in
-   `collection-filters.spec.ts` on both projects. NOT skipped. **If it fails,
-   re-run that file two or three times before investigating: a MOVING failure
-   is the flake, a FIXED failure is a regression.** Full signature below.
+   **`clicking the active chip clears it` was not flake.** It failed all three
+   measured runs with a byte-identical error — the only test that did. It read
+   as flake because a *different* spec failed alongside it each time, so the set
+   moved even though it never did. **The moving-failure rule works on the set,
+   not the run: a test that fails EVERY run is fixed, however much company it
+   keeps.** The bug was the test asserting against an unfiltered collection
+   while other specs' records pushed its row past the 50-per-page cut.
 
-3. **The 2 skipped E2E specs are the desktop-only view toggle**, skipped by
-   design on the mobile project — not quarantined. The two `/manage` genre
-   specs that WERE quarantined for weeks are now unquarantined and passing; both
-   their causes were environmental.
+   **What remains is genuine harness flake, ~1 failure per run**, two
+   mechanisms, both distinct from the above and neither in the app:
+   - `apiRequestContext.post: read ECONNRESET` — the dev server dropping a
+     setup POST under full-suite load.
+   - typed text lost to the hydration window (diagnosed below), surfacing as
+     `toHaveValue` / `toContainText` on a field that submitted empty.
 
-**What step 7 inherits.** Every acceptance criterion below is discharged for
-BOTH `records` and `want_list`, item 14 included. Step 7 starts with no open
-gate — the first step since step 4 to do so.
+   **`retries: 1` locally** covers those two, deliberately, with the trade
+   recorded in `playwright.config.ts`. The reporter is `list` + `html` so a
+   retry prints inline as `flaky` — **`flaky` in the output is not noise, it is
+   the cost being paid**, and a spec that starts needing its retry every run is
+   the next thing to investigate.
 
-**Before step 7 can be planned, two things:**
+   **Verification standard this unit had to meet, worth reusing:** a single
+   green full run proves nothing at a 1-per-run rate. Three consecutive runs
+   were the evidence before AND after (1-3 failures each → 0, 1, 1 → green,
+   green, 1 flaky).
 
-1. **Adam confirms his Discogs token works.** Nothing in the repo can verify
-   this, and CLAUDE.md §2 forbids a live external call from a test — not even
-   once. So the token is checked by hand, outside the suite, before the work is
-   scoped.
+2. **The 2 skipped E2E specs are the desktop-only view toggle**, skipped by
+   design on the mobile project — not quarantined.
 
-2. **The next adversarial review is SECURITY-FOCUSED and lands AFTER step 7,
-   not before.** §6's rate limiter, cache and normalization are this project's
-   first untrusted external input: everything so far was written by the one
-   authenticated user, and Discogs data is user-submitted, imperfect (CLAUDE.md
-   §8), and arrives over a network that can be slow, hostile, or lying. A
-   general review before that work exists would find nothing; the same effort
-   spent on the boundary afterwards is where the defects will be.
+3. **Step 7 shipped six defects that tests could not see**, and every one was
+   found by using the app or by an adversarial reviewer. The pattern is worth
+   knowing before step 8: all six lived in a SEAM — between two layers that were
+   each correct and each tested. See the seam rule under Open.
 
-**Entries that bear directly on step 7**, beyond the standing rules:
-- **the unspecified-bounds entry** — the importer is the first thing besides
-  the API to write these columns, and §4's prose ranges are enforced at the API
-  boundary only;
-- **the two-want-list-items-one-record deferral** — explicitly a step 7
-  decision, not step 14, because the importer is what makes it reachable;
-- **the mock-scope rule** — step 7 mocks an external API throughout, and a mock
-  that intercepts every call disables the function it stands in for;
-- **the fixture rules**, especially the discriminating-power one: Discogs
-  fixtures are large, and a payload where every candidate match agrees proves
-  nothing about which rule matched;
-- the two `/manage` limitations, still unfixed.
+4. **The no-live-calls guard has a known limit**, deferred to step 14: it keys
+   off the database target, which every current test context satisfies and a
+   remote-database CI job would not.
+
+**What step 8 inherits.**
+
+- **A QA finding that belongs to step 8, not to step 7:** a Discogs import does
+  NOT bring the cover image across. §5.7's normalized release carries `images`
+  with types, the importer ignores them, and `images` is step 8's table. Build
+  it there rather than as a separate fix.
+- The `safeImageUrl` helper in `lib/discogs/fields.ts` already enforces
+  https-only on Discogs image URLs — step 8's uploads need their own equivalent,
+  and the same reasoning applies to anything rendered into the user's browser.
+- §13 forbids any purchase path, which includes image hosts: a remote image is
+  an outbound request to a host somebody else chose. `/lookup` sets
+  `referrerPolicy="no-referrer"` and `loading="lazy"` for that reason.
+
+**Entries that bear directly on step 8**: the seam rule (a layer test proves a
+layer, never the join); the fixture rule at corpus scale; the absence-as-success
+family, whose highest-stakes instance was found in this step; and the untrusted-
+input work in §5.7's normalizers, since an uploaded file is untrusted in the
+same way a Discogs payload is.
 
 ---
 
@@ -210,6 +221,224 @@ form the records work had not shown — see the masking entry under Open.
 
 ## Open
 
+- **RULE: a Discogs field describing the CATALOGUE OBJECT belongs beside our
+  field, never in it. Two instances; a third will come.**
+
+  The distinction is release-versus-copy. Discogs describes a release — every
+  copy ever pressed. Several of our fields describe THE COPY IN HAND, and they
+  are not the same fact even when they share a name.
+
+  | Field | What Discogs holds | What ours holds |
+  |---|---|---|
+  | `matrix_runout` | every runout its contributors submitted, across pressings | what is etched in YOUR dead wax |
+  | `notes` | sleeve text, gatefold, publishing, copyright | where you found it, why you kept it |
+
+  **Prefilling either is wrong in the same way**, and the harm is not merely
+  clutter:
+
+  - it writes a value describing no physical object into a field whose whole
+    purpose is describing one;
+  - a filled field reads as VERIFIED, which inverts §5.7's "check every field
+    against the record in your hand";
+  - it makes §7.8 unenforceable. "Never overwrite user-entered data with
+    external data" requires knowing whose text it is, and a prefilled field
+    that the user then edited is indistinguishable from one they wrote.
+
+  **The treatment, established for matrix in step 7 and applied to notes in
+  step 8:** render it as reference text beside an empty field, through `Row`'s
+  `after` slot. Nothing is dropped — a Discharge first pressing's "Pay no more
+  than £3.99" is genuinely useful in a shop — and nothing is claimed.
+
+  **The test when a new field is added: does this describe the release, or the
+  copy?** If the release, it goes beside. Note that §6's field mapping is the
+  authority on what is imported AT ALL — it lists title, artist, label, catalog
+  number, year, country, format, matrix and genres, and `notes` is deliberately
+  absent. Two of us read "notes is dropped" as a defect without checking that.
+
+- **RULE: a field seen on one Discogs endpoint's payload is not evidence about
+  another's. Three instances makes it a property of the API, not an accident.**
+
+  | Field | Search | Release | Master versions |
+  |---|---|---|---|
+  | genre / style | **singular** (`genre`, `style`) | plural (`genres`, `styles`) | absent |
+  | the year | `year` | `year` | **`released`** |
+  | format descriptors | array | array + `text` | **comma-joined string, no `text`** |
+
+  Each was found the hard way and each is documented at its own call site. The
+  class is worth stating once: **these endpoints describe the same objects with
+  different field names, different types, and different completeness.**
+
+  **The instance that cost the most** (step 8 close, 2026-08-11): `format.text`
+  carries "Rockaway Pressing" and would have separated the two Hot Tuna
+  releases that misled a user about which pressing they owned. It was observed
+  on the RELEASE payload and reported — by me, and agreed by the developer — as
+  "already in the versions payload". It is not there at all. The versions
+  endpoint returns `id, label, country, title, major_formats, format, catno,
+  released, status, resource_url, thumb, stats`.
+
+  Caught only because the instruction was to measure it against the real rows
+  before building. Building first would have produced a column `undefined` for
+  every row — and one that LOOKED right in tests, since a hand-written fixture
+  would have carried whatever shape the author assumed.
+
+  **The check: before using a field, confirm it on the payload of the endpoint
+  that will actually be called** — not on a sibling endpoint describing the same
+  release. The overlap is large enough to make the assumption feel safe and the
+  differences are exactly where it breaks. `test/fixtures/discogs/` has captured
+  payloads for all three; read the fixture rather than reasoning from memory.
+
+- **RULE: the comparison columns are FIXED, and for any given master the
+  discriminating field may not be among them. That is a property of the design,
+  not of one or two masters.**
+
+  §5.7's version table shows year, country, format, catalog number and label —
+  chosen because they discriminate MOST releases. They are not guaranteed to
+  discriminate ANY particular one, and Discogs offers no field that always does.
+
+  Two instances so far, and the second cost a user their pressing identity:
+
+  | Master | What collapses | The real discriminator |
+  |---|---|---|
+  | Carpenters | four cards identical on every column | not established |
+  | Hot Tuna 133514 | **three US 1970 versions byte-identical** | pressing plant — `RCA Records Pressing Plant, Rockaway` vs `…Hollywood` |
+
+  **The plant is not obtainable here.** Measured against the live API: the
+  versions endpoint returns `id, label, country, title, major_formats, format,
+  catno, released, status, resource_url, thumb, stats` — no `text`, no
+  companies. `format.text` (which carries "Rockaway Pressing") is on the RELEASE
+  endpoint, so showing it costs one rate-limited call per row: 11 calls for a
+  table of eleven, against 60/minute.
+
+  **What shipped instead** (2026-08-11): rows identical on every displayed
+  column collapse into one saying "N more look identical from here", expandable.
+  Three identical rows LOOK LIKE AN ANSWER; one row that admits the limit is
+  honest. Within a group, most-owned first — the only signal available, and a
+  real one, though it does not identify which pressing is in the user's hands
+  and the UI does not imply it does.
+
+  **A group containing something the user OWNS never collapses.** §7.7's badge
+  outranks the tidier table: hiding "you already have this" turns it into
+  silence, and someone in a shop reads no badge as "buy it".
+
+  **What is still open:** the collapse makes the limit visible; it does not
+  resolve it. If identifying the exact pressing becomes important — step 11's
+  shelf ordering, or a QA finding that expanding is too coarse — the options
+  are fetch-on-expand for a single row, or surfacing `stats`-based hints. Both
+  cost calls. Recorded rather than guessed at.
+
+- **DECLINED, do not re-propose: a sold/gone record status.**
+
+  Raised when the delete UI was built, scoped in detail, and **declined by Adam
+  on 2026-08-11**. SPEC.md was briefly amended and has been reverted; §4.2 has
+  no `status`, `sale_price` or `sale_date`, §7 has eight rules, and §7.7 has
+  three tiers. Recorded here because it LOOKS like an obvious gap and will
+  otherwise be proposed again.
+
+  **The argument for it** was real: deleting a sold record discards purchase
+  price, date and store — the same history argument §7.3 makes for keeping
+  acquired want-list entries.
+
+  **The argument against it won, and it is about cost, not correctness:**
+
+  | Cost | Detail |
+  |---|---|
+  | schema | an enum plus two columns, and a migration |
+  | §7.6 | estimated value must exclude sold records — a filter in the value chain |
+  | every collection query | count, facets and pagination all silently wrong without a status filter |
+  | §7.7 | a fourth badge tier, on an interface already amended once |
+  | steps 10-11 | the graph and shelf order both read the collection |
+
+  **Adam tracks what he owns, not what he has sold**, and the feature would be
+  used a handful of times a year. Delete covers the real need.
+
+  **Consequence for the delete confirmation: "cannot be undone" stays exactly as
+  written.** It is accurate, and there is no alternative action to offer — a
+  confirmation that hedged would be worse than one that states the fact.
+
+- **DEBT: `login()` is copy-pasted into TWELVE spec files.**
+
+  Every E2E spec carries its own identical `login()` — `goto('/login')`, wait
+  for `data-hydrated`, type the password, click, assert the URL.
+
+  **The cost is already measured, not hypothetical.** The login-hydration fix
+  was one attribute on the page and one `waitFor` in the helper; it landed as
+  twelve edits because there are twelve helpers. A shared helper would have made
+  it one, and any future change to how login works pays the same tax again.
+
+  **Deliberately NOT consolidated when found.** It touches every spec file, so
+  the diff would span the whole suite — and a regression hidden inside a
+  suite-wide mechanical change is exactly the thing this build's full-E2E gate
+  exists to catch, made maximally hard to see. It belongs in its own unit with
+  its own before/after run, not appended to a feature step.
+
+  When it is done: one helper in `e2e/seed.ts` or a new `e2e/auth-helper.ts`,
+  and the twelve copies deleted in a single commit that changes nothing else.
+  Noticed: step 8 close, 2026-08-11.
+
+- **RULE: a test asserting a feature is ABSENT is a dated claim, and nothing
+  marks its expiry.**
+
+  `toHaveCount(0)` on a heading, `not.toContain` on a field, "no section for the
+  part that is not built yet" — each is true only until the step that builds it.
+  The assertion does not know which step that is, and the unit that makes it
+  false is usually not the unit that opened the file.
+
+  **Stated as evidence rather than principle: both instances so far were caught
+  by a FULL-SUITE run, not by the unit that invalidated them.**
+
+  | Instance | Invalidated by | The unit's own spec file |
+  |---|---|---|
+  | `Matrix / runout` prefilled value | the matrix change | green |
+  | `Images` heading absent | the gallery | green |
+
+  Two for two. That is the argument for CLAUDE.md §10's full-E2E gate in one
+  line — a contract change breaks the tests that encoded the old contract, and
+  those live in files the unit never opened.
+
+  **What to do about it, in order of preference:**
+
+  1. Prefer asserting what IS true over what is not. "The gallery says 'no
+     images yet'" survives the feature being built; "there is no Images
+     heading" does not.
+  2. When an absence assertion is genuinely the point — a section that must
+     stay hidden when empty — say WHY it is absent, so the next reader can tell
+     a rule from a placeholder. `record-detail.spec.ts` now distinguishes the
+     two: Pressing stays hidden by design, Journal is pending step 9.
+  3. Name the step in the comment when it IS a placeholder, so a grep before
+     starting that step finds it.
+
+  Established: step 8, unit 3.
+
+- **RULE, two stores that must agree: choose the order whose failure mode is
+  INVISIBLE AND CHEAP over the one that is VISIBLE AND PERMANENT.**
+
+  When a write spans two stores — here Vercel Blob and Postgres — and either can
+  fail independently, no order is transactional. The choice is not "which order
+  is safe" but "which wreckage would I rather live with".
+
+  For §5.9's images the two failure modes are not symmetric:
+
+  | Wreckage | Cost |
+  |---|---|
+  | Blob with no row | invisible, pennies, nothing renders it |
+  | Row with no blob | **a permanently broken image on the detail screen** |
+
+  A row pointing at a dead blob is also indistinguishable from a real image
+  until it fails to load, which puts it in the absence-as-success family — the
+  screen asserts something it cannot deliver.
+
+  So the orders are OPPOSITE and both fall toward the leaked blob:
+
+  - **Upload: store the blob, THEN write the row.** A failed store writes no
+    row.
+  - **Delete: delete the row, THEN delete the blob** (best-effort, leak logged).
+    A failed blob delete leaves an orphan nothing points at.
+
+  Generalises beyond images: whenever a second store cannot be enrolled in the
+  database transaction, order the operations so the survivable failure is the
+  one that happens. State which failure you chose and why, rather than picking
+  an order by habit. Established: step 8, units 1-2.
+
 - **RULE: a test is only as discriminating as its fixture.** When several
   orderings, selections, or matches agree in the seed data, NO assertion can
   tell which one the code used. The test looks correct, passes, and constrains
@@ -240,6 +469,62 @@ form the records work had not shown — see the masking entry under Open.
   different output?" If the answer is no, or you cannot answer it, the fixture
   is the defect and the assertion is decorative regardless of how it is written.
   Noticed across steps 4–5; stated as a rule during the step 5 remediation.
+
+  **THE STING, and the reason this class keeps recurring: a fixture drawn from
+  TYPICAL data tests the typical path — which is the one least likely to be
+  wrong.**
+
+  Step 8 unit 4. `attachDiscogsCover` must pick the image whose `type` is
+  `primary`, not merely the first. The fixture listed primary first, so "find
+  the primary" and "take `images[0]`" agreed, and the mutation replacing one
+  with the other **failed zero tests**.
+
+  What makes it worse than an ordinary weak fixture: **real Discogs releases
+  usually DO list the primary first.** So `images[0]` would have been correct in
+  the common case and wrong exactly where it mattered — a release whose
+  contributor ordered them differently, silently attaching a back cover or an
+  inner sleeve as the record's front. The bug would have been invisible in
+  testing, invisible in most use, and wrong in the case a person would notice.
+
+  Reordering the fixture so `secondary` comes first makes the same mutation fail
+  1 test. **When a fixture is built from what the source usually sends, it
+  cannot discriminate rules that agree on the usual case — deliberately
+  construct the atypical ordering.**
+
+  **VISIBILITY VARIANT (third instance of the class): `textContent` cannot see
+  visibility, so an assertion built on it is blind to the entire property it
+  claims to test.**
+
+  Hidden elements keep their text in the DOM. Tailwind hides with
+  `display:none`; `textContent` — and therefore Playwright's `toContainText`
+  and `toHaveText` — returns the text of a hidden node exactly as it returns a
+  visible one.
+
+  Measured: a spec asserting a label was readable at seven widths passed at all
+  seven, INCLUDING the width where the label rendered nowhere on screen. It
+  would have passed whatever the layout did.
+
+  ```ts
+  await expect(row).toContainText(label);              // blind to display:none
+  expect(await visibleText(row)).toContain(label);      // innerText — sees it
+  ```
+
+  **Any assertion about what the user can SEE must read `innerText`**, or use a
+  visibility-aware matcher (`toBeVisible`). `collection-widths.spec.ts` is the
+  worked example.
+
+  **THE CHECK THAT UNIFIES THIS WHOLE CLASS — apply it to every assertion:
+  "would this produce a different result if the property it names were wrong?"**
+  Three instances so far, all failing that check the same way:
+
+  | Instance | Names | Actually constrains |
+  |---|---|---|
+  | `.toThrow()` with no message | that the RIGHT error was thrown | that *something* threw |
+  | `toEqual` on an object shape | the fields that matter | every field, including irrelevant ones — and passes when the ones that matter are absent from both sides |
+  | `toContainText` on layout | that the value is VISIBLE | that the value is in the markup |
+
+  Each resembles verification while leaving the named property free to be
+  wrong. Noticed: steps 5-7; stated as a class 2026-08-10.
 
   **CONCURRENCY VARIANT: a concurrency test that is not actually concurrent
   proves only what the sequential path already covers.** Same failure in a
@@ -400,6 +685,35 @@ form the records work had not shown — see the masking entry under Open.
   read. Before investigating why 390 differs from 1280, confirm the two runs
   differ ONLY in width — here they also differed in how much data was already
   present, which is the same axis-confusion the "same family" rule warns about.
+
+- **RULE, responsive layout: a summary line must hide at the WIDEST breakpoint
+  of any column it substitutes for, never the narrowest.**
+
+  A table that hides columns at narrow widths and reprints them in a summary
+  line is only correct while the two are exact complements. In
+  `CollectionList.tsx` they were not: the summary was `sm:hidden` (gone at 640)
+  while the label column was `hidden md:table-cell` (arriving at 768), so
+  **between 640 and 767 the label rendered nowhere**. Real, found in use, fixed
+  2026-08-10.
+
+  Deriving it each time is error-prone; the rule states it once. When adding or
+  moving a hidden column, the summary line's breakpoint is part of that change.
+
+  **Why this class of defect is worse than it looks:** the table draws absence
+  as `—`, meaning "not recorded". A value dropped by the LAYOUT is
+  indistinguishable from one the user never entered, so the screen is
+  confidently misleading rather than obviously broken — CLAUDE.md §8 ranks that
+  the worse of the two. Another instance of the absence-as-success family.
+
+  **COROLLARY, from the testing side: 390 and 1280 both pass, so responsive
+  defects live at the BOUNDARIES and only a sweep finds them.** The two
+  habitual screenshot widths sit either side of the gap and see nothing. Sweep
+  each breakpoint and one pixel below it — `collection-widths.spec.ts` uses
+  375/639/640/700/767/768/1280 against Tailwind's sm=640 and md=768.
+
+  Pair it with the visibility rule above: such a sweep MUST assert `innerText`,
+  because a `textContent` assertion passes at every width including the broken
+  one.
   Noticed: step 6, unit 5.
 
   **SECOND INSTANCE, and it is becoming a habit worth naming: A FIXTURE THAT
@@ -631,6 +945,39 @@ form the records work had not shown — see the masking entry under Open.
   family as the extraction-with-one-importer check above — both are questions
   about whether the code is CONNECTED, which no test of the code itself can
   answer. Noticed: step 7, unit 4.
+
+  **UNREACHABLE-PATH VARIANT — the tell above came true at full scale, and this
+  is the extreme case of it: `POST /api/discogs/import` is not called by any UI
+  code in the repository.**
+
+  Found by QA (2026-08-11): imported records have no genres. `discogs-import.ts`
+  implements §6's mapping correctly — `findOrCreateGenres(tx, [...styles,
+  ...genres])`, styles first, with a comment citing CLAUDE.md §8 on not
+  flattening the hierarchy — and its tests pass and genuinely prove genres
+  attach.
+
+  **They are honest tests of code nothing runs.** Every assertion is real, the
+  fixtures are real, the transaction is real. What no test in that file can
+  express is whether any caller exists. The lookup screen links to
+  `/records/new?discogsReleaseId=`, which goes through `loadDiscogsPrefill` —
+  a path that reads neither `genres` nor `styles`.
+
+  **The rule, and it belongs beside the seam rule: passing tests establish that
+  a unit WORKS, never that anything calls it.** "Do we implement §6's genre
+  mapping?" answers yes from the test suite and no from the running app. Any
+  audit that greps for an implementation and finds one with green tests will
+  reach the wrong conclusion.
+
+  **The cheap check, worth running when a feature is reported missing despite
+  being implemented:** grep for callers of the module OUTSIDE its own tests. One
+  command, and it distinguishes "broken" from "never invoked" — which are
+  different bugs with different fixes.
+
+  Compounding factor worth noting: the two paths were not merely duplicates. The
+  live one has format matching, the master-year fallback and the cover fetch;
+  the dead one has genres and styles. Each was correct about different fields,
+  so neither could be deleted in favour of the other without measuring first —
+  and a field-by-field comparison was the only way to see it.
 
   **SELF-MATCHING VARIANT: a checker that scans the repo can end up inside its
   own subject set, and it fails on its own matchers rather than on real code.**
@@ -1262,6 +1609,32 @@ form the records work had not shown — see the masking entry under Open.
   was rejected: it would fight the `for (;;)` retry idiom and constrain the
   shape of the code rather than the risk.
 
+  **SECOND INSTANCE, and it means the OPPOSITE — read the crash before
+  concluding anything from it.**
+
+  Step 8 unit 4: removing `readCapped`'s streaming size cap (`arrayBuffer()`
+  instead) also killed the worker, `FATAL ERROR: ... heap out of memory`, no
+  counts reported. Same symptom, same absence of a red assertion. The
+  interpretation is inverted:
+
+  | | Step 7, retry bound | Step 8, size cap |
+  |---|---|---|
+  | Crash is | **the defect** — the test never reached its assertion, so the bound was UNVERIFIED | **the consequence** — the mutated code did the harmful thing, loudly |
+  | Evidence value | none; the gap stayed open | stronger than a failed assertion |
+  | Action | add a second bound of a different kind | none; the cap is verified by other tests too |
+
+  **The distinguishing question: does the CRASH itself demonstrate the harm the
+  code prevents?** Buffering an unbounded stream IS the production failure —
+  the process dying is the property under test, arriving in person. An
+  unbounded retry loop spinning on an immediate `sleep` is an artefact of the
+  test harness's fake clock, not what production does.
+
+  **The rule: a mutation that crashes is not automatically a bad mutation, and
+  not automatically a good one.** Ask whether the crash is the behaviour being
+  prevented. If yes, record it as evidence and keep an ordinary assertion
+  alongside it (here, `cancelled === true`, which fails cleanly). If no, the
+  mutation proved nothing and the gap is still open.
+
   **The general rules, both still standing:**
 
   1. When a mutation produces a CRASH rather than a failure, the test does not
@@ -1842,6 +2215,23 @@ form the records work had not shown — see the masking entry under Open.
   alongside "what produced the correct outcome instead" — before trusting a
   count, confirm the failures are the predicted ones. Noticed: step 5, unit 6.
 
+  **COROLLARY: a mutation result from a DIRTY BASELINE is not a result — and
+  the specific trap is that `git checkout` does not restore an UNTRACKED file.**
+
+  A mutation on a file created in the current unit is not yet in git, so
+  `git checkout <path>` succeeds, prints nothing, and changes nothing. The
+  mutation silently persists into the next one, and every subsequent count is
+  measuring two mutations stacked while appearing to measure one.
+
+  Hit in step 8 unit 2: M3 reported 2 failures against a file still carrying M2,
+  so the number was unattributable. Restored from source and re-run alone, the
+  honest count was 1.
+
+  **The habit:** for a new file, snapshot it (`cp`) before the first mutation
+  and restore from the copy — or commit first. Then verify the baseline is
+  green BETWEEN mutations, not only at the end. A green run between two
+  mutations is the cheapest possible proof the previous one was undone.
+
 - **UX HAZARD for step 9's stats screen: one record legitimately shows two
   different prices, and it will read as a bug.**
 
@@ -2238,6 +2628,572 @@ form the records work had not shown — see the masking entry under Open.
   Noticed: step 3.
 
 ## Resolved
+
+- ~~Discogs `notes` were "dropped by both import paths".~~ **Not a defect. My
+  report was wrong and the correction is the finding**, 2026-08-11.
+
+  §6's field mapping does not include `notes`. It maps title, artist, label,
+  catalog number, year, country, format, matrix and genres — and stops. I
+  measured "dropped" against a mapping I had assumed rather than the one the
+  spec states, and the developer accepted it without checking either.
+
+  **The two fields also mean different things.** Discogs' notes on release
+  381756 read: *"Front sleeve note: 'Pay no more than £3.99'. Gatefold sleeve
+  with lyrics. Original sound recording by Clay Records. Publishing
+  Clay/Intersong © 1982"* — the RELEASE, true of every copy pressed.
+  `records.notes` is the user's note about THEIR copy.
+
+  Prefilling would have created the §7.8 problem rather than solving one: "never
+  overwrite user-entered data with external data" requires knowing whose text it
+  is, and a prefilled field the user later edited is indistinguishable from one
+  they wrote.
+
+  Shipped instead: the step 7 matrix treatment — reference text beside an empty
+  field. Nothing dropped, nothing claimed. See the release-versus-copy rule
+  under Open.
+
+  **Second time in two units that a reported defect was an assumed spec.** The
+  other was `format.text` "already in the versions payload". Both were caught by
+  reading the authority — §6's mapping, the actual payload — rather than by
+  reasoning about what seemed natural.
+
+- ~~`format.text` would separate the identical Hot Tuna versions.~~ **My own
+  claim, and it was wrong.** Corrected by measurement before building on it,
+  2026-08-11.
+
+  I reported that `format.text` carries "Rockaway Pressing" and is "already in
+  the versions payload". The first half is true — of the RELEASE endpoint. The
+  versions endpoint has no `text` field at all; its keys are `id, label,
+  country, title, major_formats, format, catno, released, status, resource_url,
+  thumb, stats`.
+
+  **The error was reading one payload and generalising to another.** I saw
+  `format.text` while diagnosing release 1458122 and carried it across to a
+  different endpoint without checking. Caught only because the instruction was
+  to measure it against the four rows before committing — building on it first
+  would have produced a column that is `undefined` for every row.
+
+  **The check: when a field is observed on one Discogs endpoint, confirm it
+  exists on the endpoint that will actually be called.** The two payloads
+  overlap enough to make the assumption feel safe and differ enough to break it.
+
+- ~~Discogs genres were invisible on the form, though they attached on save.~~
+  QA finding on the Hot Tuna import, fixed 2026-08-11.
+
+  The consolidation fixed the SAVE — the import transaction derives genres from
+  the release — so chips appeared afterwards. But `new/page.tsx` passed
+  `genreIds: []` for the Discogs path, and the form renders a checkbox per
+  EXISTING genre row: an unmatched genre is not merely unselected, it is
+  **unselectable**.
+
+  **That defeats §5.7's two-stage flow at its purpose.** The point of stage one
+  is that the user verifies and corrects before committing; a field they cannot
+  see cannot be verified. A record filed under "Rock" and "Blues" when the user
+  would have chosen "Blues Rock" alone is CLAUDE.md §8's flattening concern
+  arriving through OMISSION rather than error — no wrong value is written,
+  the user simply never gets a say.
+
+  `findOrCreateGenresByName` now runs at prefill. **The judgement call**: the
+  prefill deliberately does NOT create artists or labels, because abandoning
+  the form would leave debris and the inline-create box answers it there.
+  Genres have no inline create, so creation is what makes them selectable at
+  all — and the debris is far cheaper: a name in a small reference table,
+  visible in /manage and deletable, versus an artist anchoring a record's
+  identity.
+
+  **The regression guard's blind spot, which is the transferable part.** The
+  guard drove the real form and passed while the Genres row was empty, because
+  it asserted POST-SAVE state and the endpoint derives genres regardless of
+  what the form sends. **A test that checks only the outcome cannot see a
+  two-stage flow's first stage.** It now asserts the checkboxes are checked
+  BEFORE saving; reverting the prefill to `genreIds: []` fails it with a message
+  naming the field.
+
+- ~~`DELETE /api/records/:id` had no UI.~~ Added 2026-08-11, its own unit.
+
+  The endpoint shipped in step 5 and nothing could reach it — the same
+  unreachable-path shape as `/api/discogs/import`, though here the consequence
+  was only a missing feature rather than a silent data loss.
+
+  §7.3's confirmation rule was written about the want list and carries: "the UI
+  must make the consequence legible before it happens — a confirmation naming
+  what is lost, not a bare delete button." A record costs MORE than a want-list
+  entry: images, journal entries and price history cascade (§4.2), and the
+  purchase price, date and store are hand-entered and unrecoverable.
+
+  The message is a pure function (`deleteConsequence`) rather than a string in
+  the component, because the WORDING is the decision — a component test would
+  confirm whatever string the component held. It counts only what exists: "0
+  images and 0 journal entries" is noise, and this sentence is the only warning
+  before an irreversible action.
+
+  **The 409 is surfaced specifically**, not as a generic failure: the record
+  fulfils a want-list entry (§7.3's acquisition history), and "could not
+  delete" would leave the user with nothing to act on.
+
+  **A shared-component defect found by screenshot, not by any assertion:**
+  `DialogTitle` had no padding for the absolutely-positioned close button, so a
+  title long enough to reach it rendered UNDERNEATH it. Every dialog had this;
+  it only showed here because a delete confirmation names the record, and
+  record titles are long. Fixed at the source (`pr-6`, and `leading-snug` so a
+  wrapped title does not clip its descenders) rather than worked around
+  locally, and the other dialog users re-run to confirm no regression.
+
+  **A mutation-testing error worth keeping:** the first two mutations both
+  reported "2 passed" against a "3 passed" baseline — a test had DISAPPEARED
+  from the filtered set rather than failed, because `-g` matched different
+  tests as the messages changed. Re-run against the whole spec file, they show
+  9 → 8 and restore to 9. **A mutation whose test COUNT changes is not a
+  result; fix the set before reading the number.** Same family as the
+  dirty-baseline rule.
+
+- ~~Imported records had no genres, because the form never called
+  `/api/discogs/import`.~~ QA finding, consolidated 2026-08-11.
+
+  §6's mapping was implemented correctly and its tests passed. **Nothing called
+  it.** The lookup screen links to `/records/new?discogsReleaseId=`, whose
+  prefill reads neither `genres` nor `styles`; the form then posted to
+  `/api/records`. Verified against the dev database: every imported record had
+  `genre_count: 0`, and the `genres` table held one hand-created row.
+
+  **The fix is what §5.7 already specifies**, not new behaviour: "the client
+  renders it into the form; the user verifies and corrects; **only then is
+  `/api/discogs/import` called with the user's edited values in `overrides`**."
+  The form was skipping stage two. Teaching the prefill seam to duplicate genre
+  find-or-create would have created the second implementation the spec avoids.
+
+  **The two paths were not duplicates**, which a field-by-field comparison was
+  the only way to see:
+
+  | | prefill (live) | import (dead) |
+  |---|---|---|
+  | genres / styles | ✗ | ✓ |
+  | format matching | ✓ | ✗ |
+  | master-year fallback | ✓ | ✗ |
+  | cover fetch | ✓ | ✗ |
+  | notes | ✗ | ✗ |
+
+  So neither could be deleted in favour of the other. The consolidation added
+  `formatId`, `storeId`, `labelId`, `genreIds` and `tagIds` to the import's
+  override surface, and moved the cover fetch onto that route.
+
+  **A second defect found while wiring it: the import sent
+  `discogs_release_id` unconditionally**, even against a corrected catalog
+  number — while the form path applied `discogsIdToSubmit` for exactly that.
+  §7.6's rule implemented in one place and not the other. Since
+  `discogs_release_id` is unique and pressings are SHARED, keeping it on a
+  corrected pressing either discards the correction or writes it onto every
+  record matching the release. The rule is now one exported function
+  (`contradictsDiscogs`) used by both.
+
+  **Three E2E specs then failed deterministically, and the cause is a rule
+  worth keeping.** They assert an artist and label are UNMATCHED — a claim about
+  the whole database. Once the form began importing, any spec saving release
+  381756 find-or-created "Discharge" and "Clay Records". Moving them to 27522408
+  failed too, because the matrix test SAVES that release. They now use 12856557,
+  which is opened by nobody and saved by nobody.
+
+  **The distinction that took two attempts: reading a release creates no rows;
+  only SAVING does.** When choosing a fixture for an absence assertion, check
+  which specs save it, not which mention it.
+
+  **The regression guard the codebase lacked** is now
+  `discogs-prefill.spec.ts`'s "carries its Discogs genres onto the collection
+  screen": form → import → `record_genres` → chips on screen, asserting
+  `['Hardcore', 'Punk', 'Rock']`. Reverting the routing to `/api/records` fails
+  it. No integration test could have caught the original bug, because the gap
+  was that nothing called the code they tested.
+
+- ~~Cover storage failed with a valid token, and the log said only "The image
+  could not be stored."~~ QA finding, diagnosed and fixed 2026-08-11.
+
+  **The cause: the Blob store was configured for PRIVATE access, and `put()`
+  hardcodes `access: 'public'`.** The SDK's own words were
+  `Vercel Blob: Cannot use public access on a private store.` — which named the
+  problem exactly, and which nothing ever printed.
+
+  Resolved by switching the store to public. **A private store would have needed
+  more than an access flag**, and this is worth knowing before anyone tries it:
+  a private-store upload SUCCEEDS, but its URL returns **403 to anonymous
+  readers** — verified. Storing that URL writes a row whose image renders as
+  broken, which is the "row pointing at a dead blob" failure the delete ordering
+  exists to avoid, arriving from a new direction. Making it work needs
+  `presignUrl` at render time and signed URLs that expire, so `images.url` would
+  no longer be directly usable.
+
+  **The real defect was the swallowed cause, and it was mine.** `createBlobStorage`
+  wrapped the SDK error and attached it as `cause`; `attachDiscogsCover` logged
+  `cause.message`, which is the WRAPPER's sentence. The chain existed and
+  stopped one frame short of the only place it mattered.
+
+  `describeError` now walks the chain (`a ← caused by: b`), bounded at 5 links
+  and 600 chars, cycle-guarded. Wired into `attachDiscogsCover` AND
+  `withErrorHandling` — the sweep found the same defect one layer up, affecting
+  every route: a wrapped error logged its message and stack but never its cause.
+
+  **Logs only.** §5's shape is what reaches a client, and a cause chain there
+  would leak deployment detail — asserted, since the SDK's message can contain
+  token fragments.
+
+  **A cycle test that proved nothing, caught by mutation.** The first version
+  asserted `describeError` returns on a self-referencing cause — but `MAX_LINKS`
+  already guarantees termination, so removing the `seen` set passed it. It now
+  asserts the exact output (`'a ← caused by: b'`) and that each link appears
+  once. Same lesson as the primary-image fixture: **when two mechanisms provide
+  overlapping guarantees, a test must isolate the one it names.**
+
+- ~~A failed cover fetch left no signal on screen.~~ Same QA pass, fixed
+  2026-08-11.
+
+  Unit 4 correctly never fails the import — but **never failing is not the same
+  as never telling.** The record saved, the gallery was empty, and nothing
+  distinguished "Discogs had no cover" from "we tried and could not". The second
+  is retryable, and the user might otherwise photograph a sleeve they did not
+  need to.
+
+  `?cover=failed` on the redirect, rendered as a notice on the record page.
+  Carried through the URL because the form navigates immediately — a message set
+  in component state would unmount before anyone read it.
+
+  **Only on `reason: 'failed'`, never on `'none'`.** A notice on every coverless
+  record trains the user to ignore the one that matters. The discriminating test
+  asserts the notice is ABSENT for a release with no images — without it, a
+  notice shown always would pass the positive test.
+
+  **Cost, found by the full-suite gate:** two specs asserted
+  `toHaveURL(/\/records\/<uuid>$/)` and the query param broke the anchor. Both
+  are genuine Discogs imports whose cover fails in this environment, so the app
+  was right and the anchors were relaxed to `(\?|$)`. Only two — I initially
+  grepped ten candidates and inferred the blast radius from file names rather
+  than measuring it.
+
+- ~~A missing `BLOB_READ_WRITE_TOKEN` made every upload return "Internal server
+  error".~~ Found in the step 8 QA pass, fixed 2026-08-11.
+
+  Measured before and after, on the real screen:
+
+  | | Status | What the user reads |
+  |---|---|---|
+  | before | 500 | `Internal server error` |
+  | after | **503** | `Image uploads are not configured. Add a Vercel Blob store to enable them.` |
+
+  A 500 says "our code broke" and sends the reader to application logs; a
+  missing credential is a DEPLOYMENT problem the app can detect and name. Third
+  instance of the family — the no-live-calls guard returned 500 for a rule
+  working exactly as designed until it was given a status of its own.
+
+  **The token stays optional**, deliberately: §10's in-store case wants the app
+  usable without every integration configured, and a developer running it
+  locally has the same claim. The cost of that choice is that each absence must
+  be detected where it is USED — `isBlobConfigured()` does it for uploads, and
+  step 12 owes the same for `ANTHROPIC_API_KEY`.
+
+  The check runs BEFORE the request body is read: a 10MB photo on a phone
+  connection should not be transferred in full only to be told the server was
+  never able to store it. The message never names the variable — it reaches a
+  browser, and which credential is absent describes the deployment's shape.
+
+  **A decorative test caught by mutation, worth keeping.** The first version of
+  "checks configuration before reading the body" sent a bad payload and asserted
+  503 — which passes with the check placed anywhere before payload validation,
+  so a mutation moving it after `file.arrayBuffer()` **failed zero tests**. It
+  now instruments the request's own `formData` and asserts the body was never
+  read; the same mutation fails 1. The NOTES check applies exactly: would this
+  assertion produce a different result if the property it names were wrong?
+
+  Also corrected: the schema comment read "not required until build steps 12 and
+  8 respectively" — true when written, false once step 8 shipped. **A dated
+  claim in the very file that enforces it**, the same shape as a placeholder
+  assertion. It now states why they are optional by design.
+
+  **Test-setup consequence worth knowing:** the upload and delete suites seed
+  through the endpoint, so both now stub `isBlobConfigured` to true. Stubbed
+  rather than setting a fake token in `process.env` — a fake credential there is
+  one edit away from being mistaken for a real one.
+
+- ~~The login page had no `data-hydrated` marker, making it the largest single
+  source of E2E flake.~~ Fixed 2026-08-11, its own unit.
+
+  `login()` typed a password into a CONTROLLED form before React hydrated. The
+  keystrokes reached the DOM and never reached state, so `onSubmit` saw `''` and
+  rendered "Enter the password" with the field looking full. Every spec goes
+  through `login()`, so when it fired it failed whole FILES at once and each
+  failure named whatever feature that spec was about — one run produced 33
+  identical `toHaveURL` failures across 8 files, none related to the features
+  they named.
+
+  **The reproduction is the transferable part.** The flake was intermittent
+  enough that three consecutive green baseline runs proved nothing. Racing it
+  deliberately made it deterministic:
+
+  ```ts
+  await page.goto('/login', { waitUntil: 'commit' });   // returns AT the window
+  await page.getByLabel('Password').pressSequentially(PASSWORD, { delay: 0 });
+  ```
+
+  | | 8 parallel attempts |
+  |---|---|
+  | before | **8 failed** |
+  | after | **8 passed** |
+
+  `waitUntil: 'commit'` is what does it — it returns as soon as the navigation
+  commits, which is exactly the pre-hydration window. **For any
+  hydration-sensitive flake, this converts "sometimes" into "always" and makes
+  a before/after measurement possible.** Kept as a committed regression test in
+  `auth.spec.ts`; mutation-verified by removing the marker.
+
+  Full-suite effect, measured: mobile-only went from **9 failed results** to
+  **0-1 flaky**, and a full run from 6.9m back to ~4m. What remains is one
+  unrelated test (`manage.spec.ts` "moves a genre under another"), which is the
+  separately-diagnosed slow `router.refresh` + PATCH case.
+
+  **Out of scope, worth doing later: `login()` is copy-pasted into TWELVE spec
+  files.** Fixing this meant editing all twelve. A shared helper in `e2e/seed.ts`
+  or similar would have made it one edit — noted rather than done, since the
+  refactor touches every spec and belongs in its own unit.
+
+- ~~E2E #9's first version stubbed the browser's POST and proved nothing.~~
+  Found and corrected within step 8 unit 3, 2026-08-11.
+
+  The gallery is SERVER-rendered, and `router.refresh()` re-fetches from the
+  server. Intercepting the browser's upload with `page.route` returned 201 to
+  the client, wrote no row, and the server then correctly rendered "no images
+  yet" — so the assertion failed and **read exactly like a broken gallery**. The
+  stub was on the wrong side of the thing under test.
+
+  **The rule: a stub must sit between the code under test and its dependency,
+  not between the test and the code.** For anything server-rendered, a
+  browser-level route stub is outside the boundary — it intercepts a request the
+  server never sees. Seed the database instead (`seedImage` in `e2e/seed.ts`).
+
+  Found by probe rather than reasoning: the stub logged as hit, the row count
+  stayed zero, and that pair named it in one run. The gallery was correct
+  throughout.
+
+  **THE PAIR, and the reason this is a class rather than an incident: the same
+  server-versus-client confusion produced two OPPOSITE symptoms.**
+
+  | | Step 7 | Step 8 unit 3 |
+  |---|---|---|
+  | Stub | `page.route` on the Discogs API | `page.route` on the upload endpoint |
+  | Symptom | a live call that should NOT have happened | a call that did not happen when it SHOULD |
+  | Read as | the guard failing | the gallery failing |
+  | Actually | the stub never covered server components | the stub never covered the server render |
+
+  Both times the stub sat in the browser and the code under test ran on the
+  server, so the interception was invisible to it. One leaked outward, one
+  starved inward; the cause is identical. **Before writing a `page.route` stub,
+  ask which process makes the request.** If it is the server, the browser-level
+  stub is decoration — seed the database or inject at the module seam instead.
+
+  Two smaller traps in the same unit, both worth keeping:
+
+  - **`db.execute` returns a driver result object, not an array.** `const [row]
+    = await db.execute(...)` throws "is not iterable". Use Drizzle's typed
+    `.insert().returning()`, which also survives a schema change.
+  - **`innerText` returns text as RENDERED, so `uppercase` styling reaches the
+    assertion.** A heading reading "Cover" in the DOM comes back "COVER". The
+    fix is comparing case-insensitively when ORDER is what the test is about —
+    the same `innerText`/`textContent` gap as the collection-widths rule, seen
+    from the other side: there it hid a defect, here it invented one.
+
+- ~~`renders a record that has only the required fields` asserted the Images
+  heading was ABSENT.~~ Updated in step 8 unit 3.
+
+  A placeholder from step 5 — "sections for the parts that are not built yet
+  (steps 8 and 9)" — that became false the moment the gallery shipped. It failed
+  deterministically on both projects and both retries, and the **full-suite
+  rule added to CLAUDE.md §10 the same day caught it**: the unit's own spec file
+  was green.
+
+  Replaced with the real assertion rather than deleted: the gallery IS present
+  on a record with no images, unlike the Pressing section, because it is also
+  the upload control — hiding it would leave no way to add the first image. The
+  Journal line stays at `toHaveCount(0)` until step 9.
+
+  **The pattern: a placeholder assertion is a dated claim.** "Not built yet" is
+  true until the step that builds it, and nothing marks which step that is. Both
+  instances so far were found by a full-suite run, not by the unit that made
+  them false.
+
+- ~~`saves what the user confirmed` failed deterministically once another spec
+  imported the same release first.~~ Found in step 8 unit 2's full-suite gate,
+  fixed 2026-08-11. **The app was correct throughout; the test asserted
+  something §4 makes impossible.**
+
+  It imported release 381756, corrected the matrix, saved, and expected the
+  saved pressing to carry its value. But `pressings` are SHARED and
+  found-or-create (§4), and SPEC.md §7.6 says a row carrying a
+  `discogs_release_id` is *the* row for that release — user edits deliberately
+  do not win on it, because that would "write one person's correction onto
+  every record that matches the same release".
+
+  `lookup-flows.spec.ts` imports 381756 too. Whichever spec ran first created
+  the pressing; the second attached to the existing row and read back the
+  first's matrix. The test passed for as long as it happened to run first.
+
+  Fixed by giving it release 27522408 (`release-no-matrix`), which nothing else
+  imports, so the pressing is its own.
+
+  **THE FIXTURE RULE THIS ESTABLISHES, wider than the existing suffix rule: a
+  spec asserting on a SHARED row must use a key no other spec can produce.**
+  The suffix convention already covers rows keyed by name. It does not cover
+  `pressings`, which are keyed by `discogs_release_id` or
+  `(catalog_number, country_pressed, year_pressed)` — a Discogs fixture id is
+  shared by every spec that imports it, and no suffix can separate them. Before
+  asserting on a pressing, check which other specs import that release.
+
+  **Why it read as flake for one run:** the failure moved between full runs
+  because which spec ran first moved. The rule from the flake unit still
+  applies and is worth restating — apply the moving/fixed test to the TEST, not
+  the run. Here the same test failed on both projects and both retries with a
+  byte-identical message, which is fixed, whatever else was failing around it.
+
+- ~~The matrix/runout field was prefilled with every runout Discogs holds.~~
+  Changed 2026-08-10, on the approved design decision.
+
+  Release 381756 carries EIGHT Matrix / Runout values spanning FOUR documented
+  pressings. Joined into one field they produce a fingerprint describing no
+  physical object — in the field §4 calls "the true pressing fingerprint" and
+  CLAUDE.md §8 calls user-authoritative. §5.7 is explicit: "frequently missing
+  or partial. **Always let the user hand-enter it from the dead wax.**"
+
+  A prefilled field also reads as VERIFIED, which inverts the instruction: the
+  one field the user is meant to read off the record arrived looking already
+  answered.
+
+  The field now starts empty and the variants render beside it as reference
+  (`matrixReference`, `data-testid="matrix-reference"`). Nothing is dropped —
+  all eight are shown, since a user comparing wax to screen wants the list. The
+  match key is unaffected (matrix was never in it, §4) and `discogsIdToSubmit`
+  still keeps the pressing id when the matrix is edited (§7.6).
+
+  **A `Row` gained an `after` slot for this.** First attempt rendered the
+  reference between the input and its hint, splitting the field from its own
+  instruction — visible only in the screenshot, not in any assertion. The rule
+  the slot encodes: supporting detail goes BELOW the hint; the instruction stays
+  adjacent to the control it instructs.
+
+- ~~The collection list dropped the label between 640 and 767px, rendering it
+  the way it renders "not recorded".~~ Found by QA, fixed 2026-08-10.
+
+  The table hides columns at narrow widths and reprints them in a summary line.
+  Sound only while the two are exact complements — and they were not. The
+  summary was `sm:hidden` (gone at 640) while the label column was
+  `hidden md:table-cell` (arriving at 768). **Between 640 and 767 the label was
+  in neither.**
+
+  Worse than a missing column, and this is the reason it ranks: the table draws
+  absence as `—`, meaning "not recorded". A value dropped by the LAYOUT is
+  indistinguishable from a value the user never entered — the confidently
+  misleading failure CLAUDE.md §8 ranks above the obviously broken one. Another
+  instance of the absence-as-success family (now 5+).
+
+  **The rule, generalised: a responsive summary line must hide at the WIDEST
+  breakpoint of any column it stands in for, never the narrowest.** Encoded in
+  `CollectionList.tsx`. Format was additionally promoted to a column at all
+  widths — two or three characters, highly scannable, costs nothing.
+
+  **Two process notes.**
+
+  1. **The first version of the test passed at all seven widths, including the
+     broken one.** It used `toContainText`, and both the hidden column and the
+     hidden summary line remain in the DOM — Tailwind hides with
+     `display:none`, and `textContent` returns hidden text. The test would have
+     passed whatever the layout did: the decorative shape CLAUDE.md §2 names.
+     Fixed by asserting `innerText`, which respects `display:none`. **Any test
+     about what the user can SEE must read `innerText`, never `textContent`.**
+  2. **Testing only 390 and 1280 would have missed this entirely** — both pass.
+     The gap lived between the two habitual widths. `collection-widths.spec.ts`
+     sweeps 375/639/640/700/767/768/1280 for that reason.
+
+- ~~An unmatched Discogs label was silently dropped, and the only recourse was
+  to leave the form.~~ Found by QA, fixed 2026-08-10.
+
+  "Match, never create" is right — a prefill is not a commitment, and creating
+  rows for an abandoned form leaves debris. But the near-miss was rendered as
+  prose telling the user to go to /manage and re-import, losing everything
+  typed. **On a new collection nothing matches, so every import lost its
+  label.** Confirmed against the database: the imported row had `format_id` and
+  `release_year` populated and `label_id` null.
+
+  `InlineCreate` now takes a `suggestion` that opens the box with the name in
+  it. Nothing is created until the user clicks Add, so the principle is intact;
+  the dead end is gone. Initial state rather than an effect — syncing would
+  fight the user's typing on re-render.
+
+  **Scope, deliberately narrower than "wherever a prefill matches nothing":**
+  artist and label only. **Store has no Discogs source at all** — Discogs
+  cannot know where you bought a record, so `unmatched` has no store field and
+  inventing one would be worse than the dead end. **Format is a controlled
+  vocabulary**, not an open set; "choose the closest" is the correct
+  instruction for a fixed list, and prefilling a create box would mean building
+  inline create for it.
+
+  Also verified: the QA report named four missing fields, and they were three
+  different things. Year was never missing. Format was in the database and
+  hidden by the layout bug above. Label was the save gap. **Condition is
+  correct behaviour** — it describes the physical copy in your hands and no
+  import can supply it.
+
+- ~~`clicking the active chip clears it` failed every full suite run and was
+  read as flake for three steps.~~ Fixed 2026-08-10.
+
+  It asserted `toContain('Kind Of Blue')` against an **unfiltered** collection.
+  The suffix helper filters the rows the page RENDERED — it cannot recover a row
+  pagination never sent. At 68 accumulated records the 50-per-page cut dropped
+  this run's record onto page 2, and the assertion read that as "clearing the
+  chip did not restore the record". Alone, the collection fits one page and it
+  always passed. Fixed by scoping to the spec's own `artistId`, which the
+  pagination specs already did; `q=<suffix>` also isolates but writes to the
+  URL, and the URL round-trip is what this test is about.
+
+  **Three process lessons, in order of how much they cost.**
+
+  1. **A fixed failure hid inside a moving set.** The recorded rule — moving is
+     flake, fixed is regression — was applied to the run and not to the test.
+     This one failed 3 of 3 with an identical message while its companions
+     rotated, so the set moved and the diagnosis followed the set.
+
+  2. **The prediction test is what broke it open.** The recorded diagnosis
+     (WebKit outrunning hydration, mitigated by `data-hydrated`) predicts the
+     failures are typed text on unhydrated forms. Two of the six failing tests
+     type nothing at all — one is a `goto` and an assertion. That mismatch,
+     not more re-running, is what proved a second mechanism existed. Same move
+     as discarding the Fast Refresh theory when its prediction failed.
+
+  3. **Two wrong theories died to measurement, cheaply.** "Stale element
+     handles under re-render churn" — the reader was instrumented for 25
+     consecutive reads and never threw. "The app fails to refetch on clear" —
+     probed directly and the app was correct, URL and rows both. The failing
+     run's own page text (`Collection 68 records`) was what actually named it.
+
+- ~~The no-live-calls guard returned 500 instead of 502, because moving it fixed
+  the leak and broke the reporting.~~ Found closing step 7, fixed 2026-08-10.
+
+  Security unit 5 moved `assertNoLiveCall` from inside the fetch wrapper to the
+  request site to close the `createDiscogsClient` bypass. It closed it. But the
+  new site was *before* the `try`, and the guard throws a plain `Error`, so it
+  escaped `withErrorHandling` as a **500** — "our bug" — for a rule that was
+  working exactly as designed. The guard's own E2E specs caught it by asserting
+  the status rather than just the refusal.
+
+  **The pattern, third instance: a fix verified on the axis it was about.** The
+  unit asked "does the guard still fire?" and the answer was yes, on every path.
+  Nobody asked what the caller now *sees*. Same shape as the tier-1 forgery
+  (correct on both sides, wrong at the seam) and the `yearPressed` fix ("I
+  applied the argument to releaseYear and never looked at the field beside it").
+  A moved call site changes two things — whether it runs, and what catches it.
+
+  The fix moved the guard inside the `try`, which produced the 502 and then
+  *swallowed the message*: it came back as "Could not reach Discogs", sending
+  the next reader to debug their network instead of reading the sentence naming
+  the fix. Two guard tests failed on the message and were **not** relaxed to
+  match — the message is the point. Final shape: the guard throws a
+  `DiscogsError` with `status: 502`, and the transport rethrows an already-typed
+  `DiscogsError` rather than re-wrapping it. **The second bug was introduced by
+  the first fix and caught only because the tests asserted the message text as
+  well as the status.**
 
 - ~~Hierarchical genre filtering would show records whose badges never mention
   the filtered genre.~~ Resolved in the step 5 remediation by SPEC.md §5.2's

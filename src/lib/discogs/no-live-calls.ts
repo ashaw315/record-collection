@@ -1,4 +1,5 @@
 import { resolveConnectionHost } from '@/lib/db/connection-string';
+import { DiscogsError } from './client';
 
 /**
  * Makes CLAUDE.md §2's rule structural: **no test may make a live external
@@ -90,12 +91,22 @@ function pointsAtLocalDatabase(connectionString: string | undefined): boolean {
 export function assertNoLiveCall(url: string): void {
   if (!isTestContext()) return;
 
-  throw new Error(
+  /**
+   * A `DiscogsError`, not a plain one, so the transport layer treats this as a
+   * defined transport failure and the MESSAGE survives.
+   *
+   * A plain Error was wrapped as "Could not reach Discogs" — which sends the
+   * next person debugging their network instead of reading the sentence that
+   * names the fix. 502 rather than 500 for the same reason: a refused call is
+   * not our internal fault.
+   */
+  throw new DiscogsError(
     `A test tried to reach ${safeHost(url)} (${url}). ` +
       'CLAUDE.md §2 forbids live external calls from tests — not even once. ' +
       'Mock getDiscogsClient for this test, as the other Discogs suites do. ' +
       'A browser-level stub (page.route) does NOT cover server components, ' +
       'which is how this rule was broken in step 7.',
+    { status: 502 },
   );
 }
 

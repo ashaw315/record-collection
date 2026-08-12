@@ -41,6 +41,8 @@ function mockDiscogs(response: unknown = DETAILED) {
 
   vi.spyOn(clientModule, 'getDiscogsClient').mockReturnValue({
     get: get as unknown as clientModule.DiscogsClient['get'],
+    // Unused here; the type requires it since the cover fetch was added.
+    fetchImage: vi.fn() as unknown as clientModule.DiscogsClient['fetchImage'],
   });
 
   return get;

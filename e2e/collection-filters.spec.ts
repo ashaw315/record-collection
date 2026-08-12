@@ -18,6 +18,11 @@ const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 
 async function login(page: Page) {
   await page.goto('/login');
+
+  // Waits for hydration before typing: this form is CONTROLLED, so a value
+  // typed into the DOM before React attaches never reaches state and the submit
+  // sees an empty password. See the note on the login page.
+  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
   await page.getByLabel('Password').pressSequentially(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page).toHaveURL('/');
@@ -37,6 +42,8 @@ function makeSuffix(): string {
 
 type Fixture = {
   suffix: string;
+  /** Shared by all three seeded records, so a spec can scope to its own run. */
+  artistId: string;
   punkId: string;
   uk82Id: string;
   crustId: string;
@@ -86,10 +93,25 @@ async function seed(page: Page): Promise<Fixture> {
     genreIds: [jazz.id],
   });
 
-  return { suffix, punkId: punk.id, uk82Id: uk82.id, crustId: crust.id, labelId: label.id };
+  return {
+    suffix,
+    artistId: artist.id,
+    punkId: punk.id,
+    uk82Id: uk82.id,
+    crustId: crust.id,
+    labelId: label.id,
+  };
 }
 
-/** Titles from this run only — the table also holds every earlier run's rows. */
+/**
+ * Titles from this run only — the table also holds every earlier run's rows.
+ *
+ * **Filtering the rendered rows is not sufficient on its own.** This reads what
+ * the page SENT; it cannot recover a row pagination left on page 2. Any test
+ * asserting on an UNFILTERED collection must also scope the query (`artistId`
+ * or `q=<suffix>`), or it silently depends on the whole suite's record count
+ * staying under one page. See the comment on 'clicking the active chip'.
+ */
 async function visibleTitles(page: Page, suffix: string): Promise<string[]> {
   const rows = page.getByRole('row').filter({ hasText: suffix });
   const titles: string[] = [];
@@ -264,8 +286,21 @@ test('a parent-genre chip finds a record tagged with its grandchild, and says wh
 });
 
 test('clicking the active chip clears it', async ({ page }) => {
+  /**
+   * Scoped to this spec's OWN artist, exactly as the pagination specs are.
+   *
+   * Unscoped, this asserted against the WHOLE collection, and every other
+   * spec's records land in the same table: at 68 records the 50-per-page cut
+   * dropped this run's undated record onto page 2 and the assertion read that
+   * as "clearing the chip did not restore it".
+   *
+   * It only ever failed in a full suite — alone, the collection fits one page
+   * — which is what made it look like flake for three steps. `q=<suffix>`
+   * would isolate it too, but it writes to the URL, and the URL round-trip is
+   * the thing under test here.
+   */
   const f = await seed(page);
-  await page.goto('/');
+  await page.goto(`/?artistId=${f.artistId}`);
   await controlsReady(page);
 
   const chip = page.getByRole('button', { name: `Punk-${f.suffix}` });
@@ -528,3 +563,5 @@ test('the grid toggle is hidden on a phone, but a grid URL still renders', async
   await expect(page.getByRole('link', { name: `Hear Nothing ${f.suffix}` })).toBeVisible();
   await expect(page.getByRole('columnheader', { name: 'Record' })).toHaveCount(0);
 });
+
+

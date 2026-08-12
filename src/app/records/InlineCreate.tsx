@@ -14,6 +14,13 @@ import type { Option } from './RecordForm';
  * collection has never seen, and being sent to /manage to add them — losing
  * everything typed so far — is what makes an app unusable in a shop.
  *
+ * **`suggestion` opens the box with a name already in it.** Discogs supplies a
+ * label or artist name matching no existing row, and the prefill deliberately
+ * does not create it — but leaving the near-miss as prose ("add it with + New
+ * label") made every import on a new collection a dead end: leave the form, add
+ * the row in /manage, re-import, lose everything typed. The name waiting in the
+ * box is one click from done, and still creates NOTHING until that click.
+ *
  * A name collision is treated as SUCCESS, not failure. The row the user wanted
  * exists; §5.4's `existingId` names it; the form selects it and says so. A bare
  * "already exists" would leave them stuck, and after `cleanName` normalization
@@ -23,16 +30,26 @@ import type { Option } from './RecordForm';
 export function InlineCreate({
   noun,
   path,
+  suggestion,
   onCreated,
 }: {
   /** Singular, lowercase: 'artist', 'label', 'store', 'tag'. */
   noun: string;
   /** The §5.4 collection endpoint, e.g. '/api/artists'. */
   path: string;
+  /**
+   * A name from an import that matched no existing row (§5.7). Opens the box
+   * with the name in it, ready to accept — never creates it.
+   */
+  suggestion?: string;
   onCreated: (option: Option, message?: string) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState('');
+  /**
+   * Initial state, not an effect: the suggestion is fixed for the life of this
+   * form, and syncing it would fight the user's own typing on every re-render.
+   */
+  const [open, setOpen] = useState(suggestion !== undefined && suggestion !== '');
+  const [name, setName] = useState(suggestion ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
 

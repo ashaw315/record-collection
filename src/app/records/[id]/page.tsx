@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { AppHeader } from '@/components/AppHeader';
+import { DeleteRecord } from './DeleteRecord';
+import { ImageGallery } from './ImageGallery';
 import { RecordDetail } from './RecordDetail';
 import { hydrateRecord } from '@/lib/db/queries/records';
 import { isUuid } from '@/lib/api/errors';
@@ -26,8 +28,9 @@ export async function generateMetadata({ params }: PageProps<'/records/[id]'>) {
   return { title: `${record.artist.name} – ${record.title} · Record Collection` };
 }
 
-export default async function RecordPage({ params }: PageProps<'/records/[id]'>) {
+export default async function RecordPage({ params, searchParams }: PageProps<'/records/[id]'>) {
   const { id } = await params;
+  const { cover } = await searchParams;
 
   /**
    * A non-UUID is a 404, not a 500.
@@ -61,13 +64,55 @@ export default async function RecordPage({ params }: PageProps<'/records/[id]'>)
         <div className="mt-3 flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             <RecordDetail record={record} />
+
+            {/*
+              §10's "images gallery". Rendered here rather than inside
+              RecordDetail because it is interactive — uploads and deletes make
+              it a client component, and RecordDetail is a server component that
+              formats already-fetched facts.
+            */}
+            {/*
+              Said plainly, and only on a genuine failure.
+              
+              The import never fails over a cover (§5.7) — but never failing is
+              not the same as never telling. Without this the record saves, the
+              gallery is empty, and nothing distinguishes "Discogs had no cover"
+              from "we tried and could not". The second is retryable, and worth
+              a sentence.
+            */}
+            {cover === 'failed' && (
+              <p
+                data-testid="cover-notice"
+                role="status"
+                className="mt-6 rounded-xs border border-border px-3 py-2 text-sm text-muted-foreground"
+              >
+                The cover art could not be fetched from Discogs. The record saved normally — you
+                can add an image below.
+              </p>
+            )}
+
+            <ImageGallery recordId={id} images={record.images} />
           </div>
-          <Link
-            href={`/records/${id}/edit`}
-            className="mt-1 shrink-0 rounded-xs border border-border px-3 py-1.5 text-sm transition-colors hover:bg-accent"
-          >
-            Edit
-          </Link>
+          {/*
+            Delete sits UNDER Edit and reads as a link rather than a button:
+            §7.3's precedent is that a destructive action must be deliberate,
+            and giving it the same visual weight as Edit invites the misclick
+            the confirmation then has to catch.
+          */}
+          <div className="mt-1 flex shrink-0 flex-col items-end">
+            <Link
+              href={`/records/${id}/edit`}
+              className="rounded-xs border border-border px-3 py-1.5 text-sm transition-colors hover:bg-accent"
+            >
+              Edit
+            </Link>
+            <DeleteRecord
+              recordId={id}
+              title={record.title}
+              imageCount={record.images.length}
+              journalCount={record.journalEntries.length}
+            />
+          </div>
         </div>
       </main>
     </>

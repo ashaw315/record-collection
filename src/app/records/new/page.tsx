@@ -115,16 +115,22 @@ export default async function NewRecordPage({ searchParams }: PageProps<'/record
               Prefilled from Discogs. Check every field against the record in your hand — these
               details are contributed by collectors and are a starting point, not proof.
             </p>
+            {/*
+              The name is waiting in the inline-create box below, so this says
+              where it is rather than sending the user to /manage. It previously
+              read "add them with + New artist", which was a dead end on a new
+              collection: nothing matches, so every import lost its label.
+            */}
             {prefill.unmatched.artist !== null && (
               <p data-testid="unmatched-artist" className="text-sm">
-                No artist named “{prefill.unmatched.artist}” in your collection yet — add them with
-                <span className="font-medium"> + New artist</span>.
+                No artist named “{prefill.unmatched.artist}” in your collection yet — it is ready
+                to add under <span className="font-medium">Artist</span>.
               </p>
             )}
             {prefill.unmatched.label !== null && (
               <p data-testid="unmatched-label" className="text-sm">
-                No label named “{prefill.unmatched.label}” yet — add it with
-                <span className="font-medium"> + New label</span>.
+                No label named “{prefill.unmatched.label}” yet — it is ready to add under
+                <span className="font-medium"> Label</span>.
               </p>
             )}
             {/*
@@ -150,6 +156,13 @@ export default async function NewRecordPage({ searchParams }: PageProps<'/record
         )}
 
         <RecordForm
+          matrixReference={prefill?.matrixReference ?? null}
+          notesReference={prefill?.notesReference ?? null}
+          suggestions={
+            prefill === null
+              ? undefined
+              : { artist: prefill.unmatched.artist, label: prefill.unmatched.label }
+          }
           reference={reference}
           initial={
             wanted !== undefined

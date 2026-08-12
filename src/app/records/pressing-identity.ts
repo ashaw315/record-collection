@@ -54,6 +54,30 @@ function sameValue(a: string, b: string): boolean {
   return a.trim().toLowerCase() === b.trim().toLowerCase();
 }
 
+/**
+ * The rule itself, over plain strings, so the FORM path and the IMPORT path
+ * share one definition (§10, §7.6).
+ *
+ * Extracted when the form was pointed at `/api/discogs/import`: that endpoint
+ * sent `discogs_release_id` unconditionally, even against a corrected catalog
+ * number, while the form applied this rule. Two halves of one spec sentence in
+ * two places is how they drift — and here they already had.
+ *
+ * Each pair is `[what Discogs said, what the user is submitting]`.
+ */
+export function contradictsDiscogs(pairs: Array<[string, string]>): boolean {
+  return pairs.some(([original, now]) => {
+    if (sameValue(original, now)) return false;
+
+    /**
+     * FILLING IN a field Discogs left blank is not a contradiction — the user
+     * is adding information, not disputing it. Only a change to something
+     * Discogs actually asserted drops the id.
+     */
+    return original.trim() !== '';
+  });
+}
+
 export function discogsIdToSubmit(
   prefilledId: number | null,
   fromDiscogs: PressingFormValues,
@@ -63,21 +87,9 @@ export function discogsIdToSubmit(
   // inventing one would be CLAUDE.md §8's collapse.
   if (prefilledId === null) return null;
 
-  for (const field of IDENTIFYING_FIELDS) {
-    const original = fromDiscogs[field];
-    const now = current[field];
+  const contradicted = contradictsDiscogs(
+    IDENTIFYING_FIELDS.map((field) => [fromDiscogs[field], current[field]]),
+  );
 
-    if (sameValue(original, now)) continue;
-
-    /**
-     * FILLING IN a field Discogs left blank is not a contradiction — the user
-     * is adding information, not disputing it. Only a change to something
-     * Discogs actually asserted drops the id.
-     */
-    if (original.trim() === '') continue;
-
-    return null;
-  }
-
-  return prefilledId;
+  return contradicted ? null : prefilledId;
 }

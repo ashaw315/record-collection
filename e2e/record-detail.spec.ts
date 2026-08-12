@@ -14,6 +14,11 @@ const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 
 async function login(page: Page) {
   await page.goto('/login');
+
+  // Waits for hydration before typing: this form is CONTROLLED, so a value
+  // typed into the DOM before React attaches never reaches state and the submit
+  // sees an empty password. See the note on the login page.
+  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
   await page.getByLabel('Password').pressSequentially(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page).toHaveURL('/');
@@ -106,8 +111,20 @@ test('renders a record that has only the required fields', async ({ page }) => {
 
   // No pressing, so no Pressing section at all rather than an empty one.
   await expect(page.getByRole('heading', { name: 'Pressing' })).toHaveCount(0);
-  // Nor sections for the parts that are not built yet (steps 8 and 9).
-  await expect(page.getByRole('heading', { name: 'Images' })).toHaveCount(0);
+  /**
+   * The gallery is PRESENT with no images, unlike Pressing above — and the
+   * difference is deliberate. A pressing section with nothing in it would
+   * assert facts that do not exist; the gallery is also the upload control, so
+   * hiding it on a record with no images would leave no way to add the first
+   * one. It says so instead of rendering blank.
+   *
+   * This line asserted `toHaveCount(0)` until step 8, as a placeholder for
+   * "not built yet". Kept as a real assertion rather than deleted.
+   */
+  await expect(page.getByRole('heading', { name: 'Images' })).toHaveCount(1);
+  await expect(page.getByTestId('image-gallery')).toContainText('No images yet');
+
+  // Step 9 is still to come.
   await expect(page.getByRole('heading', { name: 'Journal' })).toHaveCount(0);
 });
 
@@ -166,4 +183,97 @@ test('reaches the detail screen from the collection list', async ({ page }) => {
 
   await expect(page).toHaveURL(/\/records\/[0-9a-f-]{36}/, { timeout: 15_000 });
   await expect(page.getByRole('heading', { name: `Navigable ${suffix}` })).toBeVisible();
+});
+
+test('deleting a record names what is lost, then returns to the collection', async ({ page }) => {
+  /**
+   * §5.2's DELETE endpoint has existed since step 5 with no UI. §7.3's
+   * precedent governs the confirmation: "the UI must make the consequence
+   * legible before it happens — a confirmation naming what is lost, not a bare
+   * delete button".
+   *
+   * A record cascades more than a want-list entry does: images, journal entries
+   * and price history (§4.2). The purchase price, date and store are
+   * hand-entered and unrecoverable, which is the loss people actually regret.
+   */
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Deletable-${suffix}` });
+  const record = await post(page, '/api/records', {
+    title: `Deletable ${suffix}`,
+    artistId: artist.id,
+    purchasePrice: '24.50',
+  });
+
+  await page.goto(`/records/${record.id}`);
+
+  await page.getByRole('button', { name: 'Delete record' }).click();
+
+  const dialog = page.getByRole('dialog');
+  await expect(dialog, 'the title names the record, not "this item"').toContainText(
+    `Deletable ${suffix}`,
+  );
+  await expect(dialog, 'the purchase details are named — they are unrecoverable').toContainText(
+    /purchase price, date and store/i,
+  );
+  await expect(dialog).toContainText(/cannot be undone/i);
+
+  await page.getByTestId('confirm-delete').click();
+
+  // Back to the collection, not a 404 on a record that no longer exists.
+  await expect(page).toHaveURL(/\/$|\/\?/, { timeout: 15_000 });
+  await expect(page.getByText(`Deletable ${suffix}`)).toHaveCount(0);
+});
+
+test('a cancelled delete deletes nothing', async ({ page }) => {
+  // The other half: the confirmation above passes equally well against a
+  // dialog whose Cancel also deletes.
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Kept-${suffix}` });
+  const record = await post(page, '/api/records', {
+    title: `Kept ${suffix}`,
+    artistId: artist.id,
+  });
+
+  await page.goto(`/records/${record.id}`);
+  await page.getByRole('button', { name: 'Delete record' }).click();
+  await page.getByRole('button', { name: 'Cancel' }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/records/${record.id}`));
+  // `exact`: the dialog title also contains the record title, so a substring
+  // match resolves to two headings and fails as a strict-mode violation —
+  // which reads as "not visible" rather than "found two".
+  await expect(
+    page.getByRole('heading', { name: `Kept ${suffix}`, exact: true }),
+  ).toBeVisible();
+});
+
+test('a record fulfilling a want-list entry says WHY it cannot be deleted', async ({ page }) => {
+  /**
+   * §5.2 returns `409 IN_USE` when `want_list.acquired_record_id` references
+   * the record. A generic "could not delete" would leave the user with no idea
+   * why and nothing to act on — the reason is specific, so the message is.
+   */
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Fulfils-${suffix}` });
+  const item = await post(page, '/api/want-list', {
+    title: `Fulfils ${suffix}`,
+    artistId: artist.id,
+  });
+
+  const acquired = await page.request.post(`/api/want-list/${item.id}/acquire`, {
+    data: { title: `Fulfils ${suffix}`, artistId: artist.id },
+    failOnStatusCode: false,
+  });
+  expect(acquired.status()).toBe(201);
+  const record = await acquired.json();
+
+  await page.goto(`/records/${record.id}`);
+  await page.getByRole('button', { name: 'Delete record' }).click();
+  await page.getByTestId('confirm-delete').click();
+
+  // Scoped to main: Next renders a route announcer with role="alert" too, so
+  // an unscoped query is a strict-mode violation that reads as absence.
+  await expect(page.locator('main').getByRole('alert')).toContainText(/want[- ]list/i);
+  // And it is still here — a refused delete must not look like a successful one.
+  await expect(page).toHaveURL(new RegExp(`/records/${record.id}`));
 });

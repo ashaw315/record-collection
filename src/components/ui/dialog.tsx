@@ -122,7 +122,12 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
     <DialogPrimitive.Title
       data-slot="dialog-title"
       className={cn(
-        "font-heading text-base leading-none font-medium",
+        // `pr-6`: the close button is absolutely positioned at top-2 right-2,
+        // so a title long enough to reach it renders UNDERNEATH it. Reserving
+        // the space here fixes every dialog rather than each caller — seen with
+        // a full record title, which is the normal case for a delete
+        // confirmation naming what it is about to remove.
+        "font-heading pr-6 text-base leading-snug font-medium",
         className
       )}
       {...props}

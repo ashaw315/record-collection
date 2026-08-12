@@ -119,7 +119,7 @@ export function CollectionList({
             <th scope="col" className={`${headCell} hidden md:table-cell`}>
               Label
             </th>
-            <th scope="col" className={`${headCell} hidden sm:table-cell`}>
+            <th scope="col" className={headCell}>
               Format
             </th>
             <th scope="col" className={`${headCell} text-right`}>
@@ -160,11 +160,24 @@ export function CollectionList({
                     </div>
                   )}
 
-                  {/* The columns hidden at narrow widths reappear here rather
-                      than being dropped — §10 makes mobile an equal priority,
-                      and a phone showing less DATA is a different app. */}
-                  <div className="mt-0.5 text-xs text-muted-foreground sm:hidden">
-                    {[row.format?.name, row.label?.name, row.conditionMedia]
+                  {/*
+                    The columns hidden at narrow widths reappear here rather than
+                    being dropped — §10 makes mobile an equal priority, and a
+                    phone showing less DATA is a different app.
+
+                    **`md:hidden`, matching the LAST column it stands in for.**
+                    It was `sm:hidden` while the label column was
+                    `hidden md:table-cell`, so between 640 and 767px the label
+                    was in neither and vanished with no indication — on a table
+                    whose dash means "not recorded". The rule this encodes: this
+                    line must hide at the widest breakpoint of any column it
+                    substitutes for, never the narrowest.
+
+                    Format is no longer listed here: it is now a real column at
+                    every width, and printing it twice below md was redundant.
+                  */}
+                  <div className="mt-0.5 text-xs text-muted-foreground md:hidden">
+                    {[row.label?.name, row.conditionMedia]
                       .filter((value) => value !== null && value !== undefined)
                       .join(' · ')}
                   </div>
@@ -173,7 +186,7 @@ export function CollectionList({
                 <td className="hidden px-3 py-2 align-top text-muted-foreground md:table-cell">
                   {row.label === null ? <Absent /> : row.label.name}
                 </td>
-                <td className="hidden px-3 py-2 align-top text-muted-foreground sm:table-cell">
+                <td className="px-3 py-2 align-top text-muted-foreground">
                   {row.format === null ? <Absent /> : row.format.name}
                 </td>
                 <td className="px-3 py-2 text-right align-top font-mono tabular-nums">

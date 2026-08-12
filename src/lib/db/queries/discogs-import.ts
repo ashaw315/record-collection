@@ -7,10 +7,12 @@ import {
   labels,
   pressings,
   recordGenres,
+  recordTags,
   records,
   wantList,
   wantListGenres,
 } from '@/db/schema';
+import { contradictsDiscogs } from '@/app/records/pressing-identity';
 import type { NormalizedRelease } from '@/lib/discogs/normalize-release';
 
 /**
@@ -52,6 +54,24 @@ export type ImportOverrides = {
   countryPressed?: string | null;
   yearPressed?: number | null;
   pressingPlant?: string | null;
+  /**
+   * Reference selections the FORM owns and Discogs has no opinion about.
+   *
+   * Added when the form was pointed at this endpoint (§5.7's stage two). Without
+   * them the user picks a format, a store, or a genre, the endpoint returns 201,
+   * and the choice is silently discarded — the tagIds defect from step 6
+   * exactly: validated, dropped, and reported as success.
+   */
+  formatId?: string | null;
+  storeId?: string | null;
+  labelId?: string | null;
+  /**
+   * When present these REPLACE the genres derived from Discogs, per §5.7's
+   * "overrides take precedence for every field they cover". The user has seen
+   * both and chosen; silently unioning would make a removal impossible.
+   */
+  genreIds?: string[];
+  tagIds?: string[];
 };
 
 export type ImportInput = {
@@ -250,8 +270,31 @@ export async function importRelease(
      */
     const discogsMatrix = release.matrixRunout.length === 0 ? null : release.matrixRunout.join(' / ');
 
+    /**
+     * §10 / §7.6: **a corrected pressing is a different pressing.**
+     *
+     * The id was sent unconditionally here, even when the user's overrides
+     * contradicted an identifying field — while the form path applied
+     * `discogsIdToSubmit` for exactly this case. `discogs_release_id` is unique
+     * (§4.2) and pressings are SHARED (§4), so keeping it on a corrected
+     * pressing either finds the existing shared row and discards the
+     * correction, or writes that correction onto every record matching the
+     * release. The second is worse and silent.
+     *
+     * The rule is imported rather than restated — two copies of one spec
+     * sentence is how they drift, and these two already had.
+     */
+    const asText = (value: string | number | null | undefined): string =>
+      value === null || value === undefined ? '' : String(value);
+
+    const corrected = contradictsDiscogs([
+      [asText(release.catalogNumber), asText(pick(overrides.catalogNumber, release.catalogNumber))],
+      [asText(release.country), asText(pick(overrides.countryPressed, release.country))],
+      [asText(release.year), asText(pick(overrides.yearPressed, release.year))],
+    ]);
+
     const pressingId = await findOrCreatePressing(tx, {
-      discogsReleaseId: release.discogsId,
+      discogsReleaseId: corrected ? null : release.discogsId,
       catalogNumber: pick(overrides.catalogNumber, release.catalogNumber),
       countryPressed: pick(overrides.countryPressed, release.country),
       yearPressed: pick(overrides.yearPressed, release.year),
@@ -262,9 +305,18 @@ export async function importRelease(
       isReissue: release.isReissue,
     });
 
-    // Styles first: §6 prefers them, and the order is what a UI showing the
-    // first badge would surface.
-    const genreIds = await findOrCreateGenres(tx, [...release.styles, ...release.genres]);
+    /**
+     * Styles first: §6 prefers them, and the order is what a UI showing the
+     * first badge would surface.
+     *
+     * An explicit `genreIds` override REPLACES this rather than adding to it —
+     * the user saw the Discogs genres on the form and edited them, so a union
+     * would make removing one impossible.
+     */
+    const genreIds =
+      overrides.genreIds !== undefined
+        ? overrides.genreIds
+        : await findOrCreateGenres(tx, [...release.styles, ...release.genres]);
 
     if (target === 'want_list') {
       const [item] = await tx
@@ -294,8 +346,10 @@ export async function importRelease(
       .insert(records)
       .values({
         artistId,
-        labelId,
+        labelId: overrides.labelId !== undefined ? overrides.labelId : labelId,
         pressingId,
+        formatId: overrides.formatId ?? null,
+        storeId: overrides.storeId ?? null,
         title: pick(overrides.title, release.title) ?? '',
         // §4.2: the ALBUM's year, not the pressing's. They coincide on a first
         // pressing, which is exactly why they must not be conflated.
@@ -310,6 +364,13 @@ export async function importRelease(
 
     if (genreIds.length > 0) {
       await tx.insert(recordGenres).values(genreIds.map((genreId) => ({ recordId: record.id, genreId })));
+    }
+
+    // Tags are the user's own vocabulary — Discogs has no equivalent, so these
+    // only ever arrive as an override.
+    const tagIds = overrides.tagIds ?? [];
+    if (tagIds.length > 0) {
+      await tx.insert(recordTags).values(tagIds.map((tagId) => ({ recordId: record.id, tagId })));
     }
 
     return record;

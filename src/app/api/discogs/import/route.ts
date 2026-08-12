@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { invalidJson, validationError } from '@/lib/api/errors';
 import { withErrorHandling } from '@/lib/api/handler';
+import { attachDiscogsCover } from '@/lib/discogs/attach-cover';
 import { readCachedRelease, writeCachedRelease } from '@/lib/discogs/cache';
 import { DiscogsError, getDiscogsClient } from '@/lib/discogs/client';
 import { discogsErrorResponse } from '@/lib/discogs/errors';
@@ -42,6 +43,17 @@ const overridesSchema = z
     countryPressed: z.string().nullable().optional(),
     yearPressed: z.number().int().nullable().optional(),
     pressingPlant: z.string().nullable().optional(),
+
+    /**
+     * Reference selections the form owns (§5.7 stage two). UUIDs, checked as
+     * such: a malformed id must be a 400 rather than reaching Postgres and
+     * failing the uuid cast as a 500.
+     */
+    formatId: z.string().uuid().nullable().optional(),
+    storeId: z.string().uuid().nullable().optional(),
+    labelId: z.string().uuid().nullable().optional(),
+    genreIds: z.array(z.string().uuid()).optional(),
+    tagIds: z.array(z.string().uuid()).optional(),
   })
   .optional();
 
@@ -93,5 +105,27 @@ export const POST = withErrorHandling('api.discogs.import.POST', async (request:
 
   const created = await importRelease({ release, target, overrides });
 
-  return NextResponse.json(created, { status: 201 });
+  /**
+   * The cover, carried across on import (§5.7, §5.9).
+   *
+   * It lived on `POST /api/records` until the form was pointed here, and moving
+   * it is what stops the step 8 QA finding — "a Discogs import doesn't bring the
+   * cover across" — from silently reopening.
+   *
+   * Records only: a want-list item has no `images` rows to hang one from.
+   * Awaited rather than detached, because a serverless function may be frozen
+   * the moment it responds. `attachDiscogsCover` never throws and reports its
+   * own failures, so this cannot fail the import — asserted, including against
+   * a synchronously-throwing client.
+   */
+  const cover =
+    target === 'record'
+      ? await attachDiscogsCover({
+          recordId: created.id,
+          images: release.images,
+          client: getDiscogsClient(),
+        })
+      : undefined;
+
+  return NextResponse.json({ ...created, cover }, { status: 201 });
 });

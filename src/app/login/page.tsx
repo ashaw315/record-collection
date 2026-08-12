@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
@@ -9,6 +9,32 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+
+  /**
+   * A TEST-SUPPORT AFFORDANCE, the same one `RecordForm` and
+   * `CollectionFilters` carry, and the highest-leverage of the three.
+   *
+   * This form is CONTROLLED: `onSubmit` reads `password` from React state. A
+   * value typed into the DOM before hydration never reaches that state, so the
+   * submit sees `''` and renders "Enter the password" — the field looks filled
+   * and the login fails.
+   *
+   * Waiting for the rendered input does not help: it is server-rendered, so its
+   * presence proves the markup arrived, not that React is listening. This
+   * attribute appears only after an effect runs, which is only after hydration.
+   *
+   * Every spec's `login()` goes through here, so when the race fires it fails
+   * whole FILES at once and each failure names whatever feature that spec was
+   * about. One run produced 33 identical `toHaveURL` failures across 8 files,
+   * none of them related to the features they named.
+   */
+  const formRef = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    // The DOM attribute IS the external system, which is the legitimate use of
+    // an effect named by react-hooks/set-state-in-effect. Setting it directly
+    // also avoids a render purely to publish a flag no React code reads.
+    formRef.current?.setAttribute('data-hydrated', 'true');
+  }, []);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -53,7 +79,7 @@ export default function LoginPage() {
         <h1 className="mb-1 text-2xl font-semibold tracking-tight">Record Collection</h1>
         <p className="mb-6 text-sm text-muted-foreground">Enter the password to continue.</p>
 
-        <form onSubmit={onSubmit} noValidate>
+        <form ref={formRef} onSubmit={onSubmit} noValidate>
           <label htmlFor="password" className="mb-2 block text-sm font-medium">
             Password
           </label>

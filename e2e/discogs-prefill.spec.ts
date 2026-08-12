@@ -50,6 +50,11 @@ let releaseId: number;
 
 async function login(page: Page) {
   await page.goto('/login');
+
+  // Waits for hydration before typing: this form is CONTROLLED, so a value
+  // typed into the DOM before React attaches never reaches state and the submit
+  // sees an empty password. See the note on the login page.
+  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
   await page.getByLabel('Password').pressSequentially(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page).toHaveURL('/');
@@ -109,10 +114,51 @@ test('carries every matrix variant, not just the first', async ({ page }) => {
   await page.goto(`/records/new?discogsReleaseId=${releaseId}`);
   await formReady(page);
 
-  const matrix = page.getByLabel('Matrix / runout');
+  /**
+   * **The field starts EMPTY and the variants are shown beside it.**
+   *
+   * This test previously asserted the eight joined variants were prefilled
+   * INTO the field, and that was the wrong behaviour rather than a wrong test.
+   * §5.7: the matrix is "frequently missing or partial — always let the user
+   * hand-enter it from the dead wax". Eight variants across FOUR documented
+   * pressings is not this user's record; accepting it wholesale writes a
+   * fingerprint describing no physical object, into the field §4 calls "the
+   * true pressing fingerprint". A prefilled field also reads as verified,
+   * which inverts the instruction.
+   *
+   * The variants are still worth showing — they are what Discogs has on
+   * record, and useful while reading the wax — so they move to reference text.
+   */
+  await expect(page.getByLabel('Matrix / runout')).toHaveValue('');
 
-  await expect(matrix).toHaveValue(ALL_EIGHT_MATRIX_VARIANTS);
-  await expect(matrix, 'the B-side variants survive').toHaveValue(/TOTAL BLITZ/);
+  const reference = page.getByTestId('matrix-reference');
+  await expect(reference).toContainText('BACK WITH BILBO');
+  await expect(reference, 'the B-side variants are still shown').toContainText('TOTAL BLITZ');
+  await expect(reference, 'all eight, not just the first').toContainText(
+    ALL_EIGHT_MATRIX_VARIANTS,
+  );
+});
+
+test('the matrix reference is not a value that can be saved by accident', async ({ page }) => {
+  /**
+   * The discriminating case: reference text and a prefilled value look similar
+   * on screen and behave completely differently on save. Saving with the field
+   * untouched must record NO matrix, not Discogs' eight.
+   */
+  await page.goto(`/records/new?discogsReleaseId=${releaseId}`);
+  await formReady(page);
+
+  await expect(page.getByTestId('matrix-reference')).toContainText('BACK WITH BILBO');
+
+  // Nothing in the form's actual inputs carries the reference text.
+  const values = await page
+    .locator('form input, form textarea')
+    .evaluateAll((nodes) =>
+      nodes.map((node) => (node as HTMLInputElement | HTMLTextAreaElement).value).join('|'),
+    );
+  expect(values, 'the reference must not be sitting in any input').not.toContain(
+    'BACK WITH BILBO',
+  );
 });
 
 test('every prefilled field stays editable', async ({ page }) => {
@@ -128,8 +174,15 @@ test('every prefilled field stays editable', async ({ page }) => {
   // editing from typing into an empty form — it passed against the
   // unprefilled build on its first run.
   await expect(page.getByLabel('Title')).toHaveValue('Hear Nothing See Nothing Say Nothing');
-  await expect(page.getByLabel('Matrix / runout')).toHaveValue(ALL_EIGHT_MATRIX_VARIANTS);
+  // Catalog number rather than matrix: the matrix is deliberately NOT prefilled
+  // (see above), so it can no longer carry this test's point about editing a
+  // PREFILLED field. Its own editability is covered below.
+  await expect(page.getByLabel('Catalog no.')).toHaveValue('CLAY LP 3');
 
+  await page.getByLabel('Catalog no.').fill('CLAY LP 3 (my copy)');
+  await expect(page.getByLabel('Catalog no.')).toHaveValue('CLAY LP 3 (my copy)');
+
+  // The empty matrix still accepts what the user reads off the wax.
   await page.getByLabel('Matrix / runout').fill('MY OWN READING FROM THE WAX');
   await expect(page.getByLabel('Matrix / runout')).toHaveValue('MY OWN READING FROM THE WAX');
 
@@ -155,25 +208,50 @@ test('saves what the user confirmed, not what Discogs said', async ({ page }) =>
    * seeing its notice. The fixture rule between tests: this spec's artist must
    * be one nothing else can match.
    */
+  /**
+   * **Its OWN release, not the shared `release-detailed` one.**
+   *
+   * §4 makes `pressings` shared and found-or-create, and SPEC.md §7.6 is
+   * explicit that a row carrying a `discogs_release_id` is *the* row for that
+   * release — user edits must not win on it, or "one person's correction is
+   * written onto every record that matches the same release".
+   *
+   * `lookup-flows.spec.ts` imports release 381756 too. Whichever spec ran first
+   * created that pressing, and the second attached to it and read back the
+   * FIRST one's matrix. This test passed for as long as it happened to run
+   * first, and failed deterministically on both projects once it did not — the
+   * app was correct throughout.
+   *
+   * Release 27522408 is imported by nothing else, so the pressing this test
+   * creates is its own and the assertion is about the save rather than about
+   * which spec won a race.
+   */
+  const ownReleaseId = await seedDiscogsCache('release-no-matrix');
+
   const artist = await page.request.post('/api/artists', {
     data: { name: `Save Fixture ${Date.now().toString(36)}` },
   });
   const artistId = (await artist.json()).id;
 
-  await page.goto(`/records/new?discogsReleaseId=${releaseId}`);
+  await page.goto(`/records/new?discogsReleaseId=${ownReleaseId}`);
   await formReady(page);
 
   await page.getByLabel('Artist', { exact: true }).selectOption(artistId);
   await page.getByLabel('Matrix / runout').fill('CORRECTED A1/B1 VARIANT 3');
   await page.getByRole('button', { name: /Add record|Add to collection/ }).click();
 
-  await expect(page).toHaveURL(/\/records\/[0-9a-f-]{36}$/, { timeout: 15_000 });
+  /**
+   * NOT anchored with `$`: a save whose Discogs cover could not be fetched
+   * lands on `?cover=failed`, which is the notice telling the user so. The
+   * record id is what this assertion is about.
+   */
+  await expect(page).toHaveURL(/\/records\/[0-9a-f-]{36}(\?|$)/, { timeout: 15_000 });
 
   const recordId = page.url().split('/').pop();
   const record = await (await page.request.get(`/api/records/${recordId}`)).json();
 
   expect(record.pressing?.matrixRunout).toBe('CORRECTED A1/B1 VARIANT 3');
-  expect(record.title).toBe('Hear Nothing See Nothing Say Nothing');
+  expect(record.title).toBe('Moonglow Bay Original Soundtrack');
 });
 
 test('names an artist it could not match, rather than leaving a silent blank', async ({ page }) => {
@@ -186,10 +264,99 @@ test('names an artist it could not match, rather than leaving a silent blank', a
    * why, or the user sees a blank field with no way to know whether the lookup
    * failed or the artist genuinely has no name.
    */
-  await page.goto(`/records/new?discogsReleaseId=${releaseId}`);
+  /**
+   * A release nothing in the E2E suite SAVES.
+   *
+   * These assert an artist and label are UNMATCHED — a claim about the whole
+   * database, not about this spec's own rows. The suffix convention cannot
+   * help: a Discogs fixture's artist name is a FIXED EXTERNAL KEY, so any spec
+   * that saves the same release find-or-creates the same rows.
+   *
+   * Two collisions, found in order: 381756 once the form began posting to
+   * `/api/discogs/import` (§5.7 stage two), then 27522408, which the
+   * matrix-save test above saves. 12856557 is opened by nobody and saved by
+   * nobody — reading a release does not create rows; only saving does.
+   *
+   * Same rule as the shared-pressing collision in NOTES, one table over.
+   */
+  const soloReleaseId = await seedDiscogsCache('release-no-year');
+
+  await page.goto(`/records/new?discogsReleaseId=${soloReleaseId}`);
   await formReady(page);
 
-  await expect(page.getByTestId('unmatched-artist')).toContainText('Discharge');
+  await expect(page.getByTestId('unmatched-artist')).toContainText('Carpenters');
+});
+
+test('an unmatched name is waiting in the inline-create box, not a dead end', async ({ page }) => {
+  /**
+   * The QA finding this exists for: "match, never create" is right, but an
+   * unmatched label was DROPPED silently and the only recourse was to leave the
+   * form, add the label in /manage, and re-import — losing everything typed.
+   * On a new collection nothing matches, so every import lost its label.
+   *
+   * The name Discogs gave is placed in the inline-create field, open and ready.
+   * **Nothing is created until the user clicks Add**, so the principle holds:
+   * abandoning the form still leaves no debris.
+   */
+  /**
+   * A release nothing in the E2E suite SAVES.
+   *
+   * These assert an artist and label are UNMATCHED — a claim about the whole
+   * database, not about this spec's own rows. The suffix convention cannot
+   * help: a Discogs fixture's artist name is a FIXED EXTERNAL KEY, so any spec
+   * that saves the same release find-or-creates the same rows.
+   *
+   * Two collisions, found in order: 381756 once the form began posting to
+   * `/api/discogs/import` (§5.7 stage two), then 27522408, which the
+   * matrix-save test above saves. 12856557 is opened by nobody and saved by
+   * nobody — reading a release does not create rows; only saving does.
+   *
+   * Same rule as the shared-pressing collision in NOTES, one table over.
+   */
+  const soloReleaseId = await seedDiscogsCache('release-no-year');
+
+  await page.goto(`/records/new?discogsReleaseId=${soloReleaseId}`);
+  await formReady(page);
+
+  // Open and populated, rather than a hint pointing somewhere else.
+  await expect(page.getByLabel('New artist name')).toHaveValue('Carpenters');
+  await expect(page.getByLabel('New label name')).toHaveValue('A&M Records');
+
+  // The select is still empty: suggesting is not selecting.
+  await expect(page.getByLabel('Artist', { exact: true })).toHaveValue('');
+});
+
+test('the suggested name creates nothing until the user acts on it', async ({ page }) => {
+  /**
+   * The half that protects the principle. A suggestion that quietly created the
+   * row would be the debris `loadDiscogsPrefill` deliberately avoids — and it
+   * would be invisible, since the form looks identical either way.
+   */
+  /**
+   * A release nothing in the E2E suite SAVES.
+   *
+   * These assert an artist and label are UNMATCHED — a claim about the whole
+   * database, not about this spec's own rows. The suffix convention cannot
+   * help: a Discogs fixture's artist name is a FIXED EXTERNAL KEY, so any spec
+   * that saves the same release find-or-creates the same rows.
+   *
+   * Two collisions, found in order: 381756 once the form began posting to
+   * `/api/discogs/import` (§5.7 stage two), then 27522408, which the
+   * matrix-save test above saves. 12856557 is opened by nobody and saved by
+   * nobody — reading a release does not create rows; only saving does.
+   *
+   * Same rule as the shared-pressing collision in NOTES, one table over.
+   */
+  const soloReleaseId = await seedDiscogsCache('release-no-year');
+
+  await page.goto(`/records/new?discogsReleaseId=${soloReleaseId}`);
+  await formReady(page);
+  await expect(page.getByLabel('New label name')).toHaveValue('A&M Records');
+
+  // Leave without acting. Nothing may have been written.
+  const before = await (await page.request.get('/api/labels')).json();
+  const names = (before.data ?? before).map((row: { name: string }) => row.name);
+  expect(names, 'the suggestion must not have created the label').not.toContain('A&M Records');
 });
 
 test('a blank form still works for manual entry', async ({ page }) => {
@@ -294,4 +461,123 @@ test('prefills the FORMAT select, matched from Discogs descriptors', async ({ pa
 
   // The LP row, by name — not merely "something is selected".
   await expect(format.locator('option:checked')).toHaveText('LP');
+});
+
+test('an imported record carries its Discogs genres onto the collection screen', async ({
+  page,
+}) => {
+  /**
+   * **The end of the chain, in a browser.** The QA finding was that imported
+   * records had no genres — and everything downstream of `record_genres` was
+   * correct and starved: §7.1's hierarchy, the facet chips, `matchedVia`, and
+   * steps 10-12.
+   *
+   * Integration tests now cover import → `record_genres` → `listRecords`. This
+   * covers the part none of them can see: that a user going through the FORM
+   * ends up with chips on screen. That gap is exactly how §6's mapping sat
+   * implemented, tested and unreachable.
+   *
+   * Asserts BOTH the style and the parent genre. Release 381756 is
+   * `genres: ["Rock"]`, `styles: ["Hardcore", "Punk"]` — an implementation
+   * reading only `genres` shows "Rock" and passes any test that merely checks a
+   * chip exists, while filing a hardcore record under the parent. That is the
+   * distinction CLAUDE.md §8 exists to protect.
+   */
+  const artist = await page.request.post('/api/artists', {
+    data: { name: `Genre Fixture ${Date.now().toString(36)}` },
+  });
+  const artistId = (await artist.json()).id;
+
+  await page.goto(`/records/new?discogsReleaseId=${releaseId}`);
+  await formReady(page);
+
+  /**
+   * **Asserted BEFORE the save, which is the blind spot this guard had.**
+   *
+   * The first version checked only post-save state, and passed while the form's
+   * Genres row was empty — because the import transaction derives genres from
+   * the release regardless of what the form sends. Chips appeared afterwards;
+   * nothing was visible or editable beforehand.
+   *
+   * That defeats §5.7's two-stage flow, whose whole point is verifying before
+   * committing. A record filed under genres the user never saw is CLAUDE.md
+   * §8's concern arriving by omission rather than by error.
+   */
+  for (const name of ['Hardcore', 'Punk', 'Rock']) {
+    await expect(
+      page.getByRole('checkbox', { name, exact: true }),
+      `${name} is offered on the form`,
+    ).toBeChecked();
+  }
+
+  await page.getByLabel('Artist', { exact: true }).selectOption(artistId);
+  await page.getByRole('button', { name: /Add record|Add to collection/ }).click();
+
+  await expect(page).toHaveURL(/\/records\/[0-9a-f-]{36}(\?|$)/, { timeout: 20_000 });
+
+  const recordId = new URL(page.url()).pathname.split('/').pop() ?? '';
+  const record = await (await page.request.get(`/api/records/${recordId}`)).json();
+  const names = (record.genres ?? []).map((genre: { name: string }) => genre.name).sort();
+
+  expect(names, 'the style survives, not just the parent genre').toEqual([
+    'Hardcore',
+    'Punk',
+    'Rock',
+  ]);
+
+  // And they are visible on the record, which is what the user actually sees.
+  await expect(page.getByText('Hardcore')).toBeVisible();
+});
+
+test('Discogs notes are shown beside the field, never inside it', async ({ page }) => {
+  /**
+   * The release-versus-copy distinction (NOTES: "a Discogs field describing the
+   * CATALOGUE OBJECT belongs beside our field").
+   *
+   * Discogs' `notes` describe the RELEASE — sleeve text, gatefold, publishing,
+   * copyright — which is true of every copy ever pressed. `records.notes` is
+   * the user's note about THEIR copy. Prefilling one into the other fills a
+   * personal field with boilerplate, reads as verified when it is not, and
+   * makes §7.8 unenforceable: a re-import cannot tell whose text it is.
+   *
+   * Second instance of the treatment established for the matrix in step 7.
+   * §6's mapping does not import `notes` at all, so nothing is lost by showing
+   * rather than filling.
+   */
+  await page.goto(`/records/new?discogsReleaseId=${releaseId}`);
+  await formReady(page);
+
+  await expect(page.getByLabel('Notes')).toHaveValue('');
+
+  const reference = page.getByTestId('notes-reference');
+  await expect(reference).toContainText('Pay no more than');
+  await expect(reference, 'the whole note, not the first line').toContainText('Gatefold sleeve');
+});
+
+test('the notes reference cannot be saved by leaving the field untouched', async ({ page }) => {
+  // Reference text and a prefilled value look similar and behave completely
+  // differently on save. Saving untouched must record NO note.
+  await page.goto(`/records/new?discogsReleaseId=${releaseId}`);
+  await formReady(page);
+
+  await expect(page.getByTestId('notes-reference')).toContainText('Pay no more than');
+
+  const values = await page
+    .locator('form input, form textarea')
+    .evaluateAll((nodes) =>
+      nodes.map((node) => (node as HTMLInputElement | HTMLTextAreaElement).value).join('|'),
+    );
+
+  expect(values, 'the reference must not sit in any input').not.toContain('Pay no more than');
+});
+
+test('a release with no notes shows no reference at all', async ({ page }) => {
+  // Absence rendered as absence. An empty "Discogs lists:" label would assert
+  // that Discogs said something.
+  const quiet = await seedDiscogsCache('release-no-year');
+
+  await page.goto(`/records/new?discogsReleaseId=${quiet}`);
+  await formReady(page);
+
+  await expect(page.getByTestId('notes-reference')).toHaveCount(0);
 });

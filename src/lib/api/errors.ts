@@ -24,6 +24,23 @@ export function badRequest(message: string, code: string): NextResponse<ApiError
   return NextResponse.json({ error: { message, code } }, { status: 400 });
 }
 
+/**
+ * A dependency this deployment needs is absent (SPEC.md §5's error shape).
+ *
+ * **503, not 500, and the distinction is the point.** A 500 says "our code
+ * broke" and sends the reader to application logs; a missing credential is a
+ * DEPLOYMENT problem the app can detect and name. The precedent is the
+ * no-live-calls guard, which returned 500 for a rule working exactly as
+ * designed until it was given a status of its own.
+ *
+ * The message must say what is unavailable in the user's terms — "image uploads
+ * are not configured" — and never name the environment variable, which reaches
+ * a browser and describes the deployment's shape.
+ */
+export function notConfigured(message: string): NextResponse<ApiErrorBody> {
+  return NextResponse.json({ error: { message, code: 'NOT_CONFIGURED' } }, { status: 503 });
+}
+
 export function notFound(message: string): NextResponse<ApiErrorBody> {
   return NextResponse.json({ error: { message, code: 'NOT_FOUND' } }, { status: 404 });
 }

@@ -34,6 +34,11 @@ let releaseId: number;
 
 async function login(page: Page) {
   await page.goto('/login');
+
+  // Waits for hydration before typing: this form is CONTROLLED, so a value
+  // typed into the DOM before React attaches never reaches state and the submit
+  // sees an empty password. See the note on the login page.
+  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
   await page.getByLabel('Password').pressSequentially(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page).toHaveURL('/');
@@ -227,12 +232,28 @@ test('flow 3: search, drill into a version, import it and save', async ({ page }
 
   await expect(page.getByLabel('Title')).toHaveValue(TITLE);
   await expect(page.getByLabel('Catalog no.')).toHaveValue('CLAY LP 3');
-  await expect(page.getByLabel('Matrix / runout')).toHaveValue(/CLAY-LP-3-A2/);
+
+  /**
+   * The matrix arrives EMPTY, with Discogs' variants shown beside it.
+   *
+   * This previously asserted the field was prefilled. §5.7 requires the user to
+   * hand-enter the runout from the dead wax, and this release lists eight
+   * variants across four pressings — prefilling them writes a fingerprint
+   * matching no physical record. The reference stays visible so the user can
+   * compare while reading the wax.
+   */
+  await expect(page.getByLabel('Matrix / runout')).toHaveValue('');
+  await expect(page.getByTestId('matrix-reference')).toContainText('CLAY-LP-3-A2');
 
   await page.getByLabel('Artist', { exact: true }).selectOption(artistId);
   await page.getByRole('button', { name: /Add record/ }).click();
 
-  await expect(page).toHaveURL(/\/records\/[0-9a-f-]{36}$/, { timeout: 15_000 });
+  /**
+   * NOT anchored with `$`: a save whose Discogs cover could not be fetched
+   * lands on `?cover=failed`, which is the notice telling the user so. The
+   * record id is what this assertion is about.
+   */
+  await expect(page).toHaveURL(/\/records\/[0-9a-f-]{36}(\?|$)/, { timeout: 15_000 });
   await expect(page.getByRole('heading', { name: TITLE })).toBeVisible();
 });
 
@@ -621,3 +642,142 @@ test('shows no such warning on the ordinary path', async ({ page }) => {
 
   await expect(page.getByTestId('ownership-unchecked')).toHaveCount(0);
 });
+
+test('versions that look identical collapse into one honest row', async ({ page }) => {
+  /**
+   * §5.7 calls the version table "the step where the user identifies THEIR
+   * pressing", and for some masters the columns cannot.
+   *
+   * Hot Tuna's master 133514 has THREE US 1970 versions byte-identical on every
+   * field the versions endpoint returns — `LSP-4353 | US | 1970 | LP, Album,
+   * Stereo | RCA Victor`. Measured against the live API; `format.text`, which
+   * carries "Rockaway Pressing", is on the RELEASE endpoint and not on versions.
+   *
+   * **This is the QA finding that motivated it.** A user picked one of these
+   * rows, believed they had 1458122, and reported its pressing plant as wrong.
+   * It was right — for release 10040976, which they actually had. Three
+   * identical rows look like an answer.
+   */
+  const twins = [1458122, 6825185, 6440008];
+  const versions = [
+    ...twins.map((id, index) => ({
+      discogsId: id,
+      title: 'Hot Tuna',
+      label: 'RCA Victor',
+      country: 'US',
+      year: 1970,
+      catalogNumber: 'LSP-4353',
+      formats: ['LP', 'Album', 'Stereo'],
+      isReissue: false,
+      thumbUrl: null,
+      // Real counts, most-owned first once grouped.
+      communityHave: [3936, 872, 462][index],
+      communityWant: 100,
+      ownership: NO_OWNERSHIP,
+    })),
+    {
+      discogsId: 4555386,
+      title: 'Hot Tuna',
+      label: 'RCA Victor',
+      country: 'Spain',
+      year: 1970,
+      catalogNumber: 'LSP-4353',
+      formats: ['LP', 'Album'],
+      isReissue: false,
+      thumbUrl: null,
+      communityHave: 30,
+      communityWant: 10,
+      ownership: NO_OWNERSHIP,
+    },
+  ];
+
+  await stubLookup(page, { results: [searchResult()], versions });
+
+  await page.goto('/lookup');
+  await formReady(page);
+  await page.getByLabel('Artist').fill('Hot Tuna');
+  await page.getByRole('button', { name: 'Search Discogs' }).click();
+
+  const card = page.getByTestId('result-card').first();
+  await expect(card).toBeVisible({ timeout: 15_000 });
+  await card.getByTestId('expand-versions').click();
+
+  // Two rows, not four: the three twins collapse, Spain stays distinct.
+  await expect(page.getByTestId('version-row')).toHaveCount(2, { timeout: 15_000 });
+  await expect(page.getByTestId('identical-toggle')).toContainText('2 more look identical');
+
+  // Expanding shows all three, most-owned first.
+  await page.getByTestId('identical-toggle').click();
+  await expect(page.getByTestId('version-row')).toHaveCount(4);
+  const ids = await page
+    .getByTestId('version-row')
+    .evaluateAll((rows) => rows.map((row) => row.getAttribute('data-discogs-id')));
+  expect(ids.slice(0, 3), 'most-owned first within the group').toEqual([
+    '1458122',
+    '6825185',
+    '6440008',
+  ]);
+});
+
+test('an owned version is never hidden inside a collapsed group', async ({ page }) => {
+  /**
+   * §7.7's badge outranks the tidier table. Hiding "you already have this"
+   * inside a collapsed group turns it into silence — the absence-as-success
+   * failure in the place it costs most: someone in a shop reads no badge as
+   * "buy it".
+   */
+  const versions = [
+    {
+      discogsId: 1458122,
+      title: 'Hot Tuna',
+      label: 'RCA Victor',
+      country: 'US',
+      year: 1970,
+      catalogNumber: 'LSP-4353',
+      formats: ['LP', 'Album', 'Stereo'],
+      isReissue: false,
+      thumbUrl: null,
+      communityHave: 3936,
+      communityWant: 100,
+      ownership: NO_OWNERSHIP,
+    },
+    {
+      discogsId: 6825185,
+      title: 'Hot Tuna',
+      label: 'RCA Victor',
+      country: 'US',
+      year: 1970,
+      catalogNumber: 'LSP-4353',
+      formats: ['LP', 'Album', 'Stereo'],
+      isReissue: false,
+      thumbUrl: null,
+      communityHave: 872,
+      communityWant: 100,
+      // `owned_exact`, the real tier value — a first version used 'exact' and
+      // the row collapsed, which is the failure this test exists to catch.
+      ownership: {
+        tier: 'owned_exact',
+        ownedPressing: { year: 1970, country: 'US', catalogNumber: 'LSP-4353' },
+        wantedPriority: null,
+        isTargetPressing: false,
+      },
+    },
+  ];
+
+  await stubLookup(page, { results: [searchResult()], versions });
+
+  await page.goto('/lookup');
+  await formReady(page);
+  await page.getByLabel('Artist').fill('Hot Tuna');
+  await page.getByRole('button', { name: 'Search Discogs' }).click();
+
+  const card = page.getByTestId('result-card').first();
+  await expect(card).toBeVisible({ timeout: 15_000 });
+  await card.getByTestId('expand-versions').click();
+
+  // Both rows visible although they are indistinguishable, because one is owned.
+  await expect(page.getByTestId('version-row')).toHaveCount(2, { timeout: 15_000 });
+  await expect(page.getByTestId('identical-toggle')).toHaveCount(0);
+  await expect(page.locator('[data-owned="true"]')).toHaveCount(1);
+});
+

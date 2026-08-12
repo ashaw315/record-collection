@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
-import { sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
+import { images } from '@/db/schema';
 import { getTestDb } from '../test/helpers/db';
 
 /**
@@ -87,4 +88,48 @@ export async function removeDiscogsCache(discogsReleaseId: number): Promise<void
   await db.execute(
     sql`DELETE FROM discogs_cache WHERE discogs_release_id = ${discogsReleaseId}`,
   );
+}
+
+/**
+ * An `images` row written straight to the database, standing in for an upload.
+ *
+ * **The blob is what cannot happen here, not the row.** `BLOB_READ_WRITE_TOKEN`
+ * is absent in the E2E environment, so a real upload fails at the storage call
+ * — but the gallery reads from Postgres through a SERVER render, so stubbing
+ * the browser's POST proves nothing: `router.refresh()` re-fetches from the
+ * server, which sees no row and correctly renders "no images yet". Measured
+ * before this helper existed, and it read exactly like a broken gallery.
+ *
+ * The URL is a data: URI so the rendered <img> resolves without a network call.
+ */
+export async function seedImage(input: {
+  recordId: string;
+  imageType?: 'cover' | 'back' | 'label' | 'matrix' | 'other' | null;
+  caption?: string | null;
+}): Promise<string> {
+  const db = getTestDb();
+
+  const onePixelPng =
+    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==';
+
+  // Drizzle's typed insert rather than raw SQL: `db.execute` returns a driver
+  // result object, not an array, and destructuring it silently is how the first
+  // version of this helper failed.
+  const [row] = await db
+    .insert(images)
+    .values({
+      recordId: input.recordId,
+      url: onePixelPng,
+      imageType: input.imageType ?? null,
+      caption: input.caption ?? null,
+    })
+    .returning({ id: images.id });
+
+  return row.id;
+}
+
+/** Removes every image attached to a record, so a spec cleans up after itself. */
+export async function removeImagesFor(recordId: string): Promise<void> {
+  const db = getTestDb();
+  await db.delete(images).where(eq(images.recordId, recordId));
 }

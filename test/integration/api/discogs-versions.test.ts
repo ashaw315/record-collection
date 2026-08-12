@@ -40,6 +40,8 @@ function mockDiscogs(response: unknown = VERSIONS) {
 
   vi.spyOn(clientModule, 'getDiscogsClient').mockReturnValue({
     get: get as unknown as clientModule.DiscogsClient['get'],
+    // Unused here; the type requires it since the cover fetch was added.
+    fetchImage: vi.fn() as unknown as clientModule.DiscogsClient['fetchImage'],
   });
 
   return get;
@@ -308,6 +310,8 @@ describe('when ownership cannot be checked', () => {
 
     vi.spyOn(clientModule, 'getDiscogsClient').mockReturnValue({
       get: get as unknown as clientModule.DiscogsClient['get'],
+      // Unused here; the type requires it since the cover fetch was added.
+      fetchImage: vi.fn() as unknown as clientModule.DiscogsClient['fetchImage'],
     });
 
     return get;
@@ -349,6 +353,7 @@ describe('when ownership cannot be checked', () => {
      * would report checked and show nothing.
      */
     vi.spyOn(clientModule, 'getDiscogsClient').mockReturnValue({
+      fetchImage: vi.fn() as unknown as clientModule.DiscogsClient['fetchImage'],
       get: vi.fn(async (path: string) =>
         path.endsWith('/versions') ? VERSIONS : { id: 50683, artists: [] },
       ) as unknown as clientModule.DiscogsClient['get'],
@@ -377,6 +382,7 @@ describe('caching', () => {
 describe('failures', () => {
   it('reports an unknown master as 404 rather than as our own error', async () => {
     vi.spyOn(clientModule, 'getDiscogsClient').mockReturnValue({
+      fetchImage: vi.fn() as unknown as clientModule.DiscogsClient['fetchImage'],
       get: vi.fn(async () => {
         throw new clientModule.DiscogsError('Discogs request failed with status 404', {
           status: 404,
@@ -394,6 +400,7 @@ describe('failures', () => {
       get: vi.fn(async () => {
         throw new clientModule.DiscogsError('Discogs rate limit reached.', { status: 429 });
       }) as unknown as clientModule.DiscogsClient['get'],
+      fetchImage: vi.fn() as unknown as clientModule.DiscogsClient['fetchImage'],
     });
 
     const response = await versions(request(), params('50683'));
@@ -406,6 +413,7 @@ describe('failures', () => {
       get: vi.fn(async () => {
         throw new clientModule.DiscogsError('Could not reach Discogs');
       }) as unknown as clientModule.DiscogsClient['get'],
+      fetchImage: vi.fn() as unknown as clientModule.DiscogsClient['fetchImage'],
     });
 
     const response = await versions(request(), params('50683'));

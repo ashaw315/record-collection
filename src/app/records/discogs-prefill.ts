@@ -4,6 +4,7 @@ import { DiscogsError, getDiscogsClient } from '@/lib/discogs/client';
 import { normalizeRelease, type NormalizedRelease } from '@/lib/discogs/normalize-release';
 import { findArtistByDiscogsId, findArtistByName } from '@/lib/db/queries/artists';
 import { findLabelByDiscogsId, findLabelByName } from '@/lib/db/queries/labels';
+import { findOrCreateGenresByName } from '@/lib/db/queries/genres';
 import { findFormatByName } from '@/lib/db/queries/formats';
 import type { FormValues } from './record-form';
 import type { PressingFormValues } from './pressing-form';
@@ -32,6 +33,20 @@ export type DiscogsPrefill = {
    * user has to notice.
    */
   unmatched: { artist: string | null; label: string | null; format: string | null };
+  /**
+   * Every Matrix / Runout value Discogs holds, joined for display BESIDE the
+   * field — never in it. See the note where this is built.
+   */
+  matrixReference: string | null;
+  /**
+   * Discogs' own notes, shown BESIDE the notes field (§5.7).
+   *
+   * They describe the RELEASE — sleeve text, gatefold, publishing, copyright —
+   * which is true of every copy ever pressed. `records.notes` is the user's
+   * note about THEIR copy, so this is reference, never a value. §6's field
+   * mapping does not import `notes` at all.
+   */
+  notesReference: string | null;
 };
 
 /**
@@ -72,7 +87,14 @@ async function matchFormat(
  * importing it costs one Discogs call rather than two — the drill-down invites
  * looking at several releases in a row, and 60/minute is the budget.
  */
-async function loadRelease(discogsReleaseId: number): Promise<NormalizedRelease | null> {
+/**
+ * Exported so the cover path (`POST /api/records`) reads a release the same
+ * way. A second copy of "cache first, then Discogs, null on failure" is how the
+ * two would drift — the `create-schema` precedent, where two definitions agreed
+ * field for field and survived a whole step because nothing failed while they
+ * agreed.
+ */
+export async function loadRelease(discogsReleaseId: number): Promise<NormalizedRelease | null> {
   const cached = await readCachedRelease(discogsReleaseId);
   if (cached !== null) return normalizeRelease(cached.payload);
 
@@ -170,11 +192,17 @@ export async function loadDiscogsPrefill(
 
   /**
    * §5.7 types `matrixRunout` as an array — a release carries one per side and
-   * variant, eight on the captured fixture. Joined rather than truncated: every
-   * variant is identifying information, and keeping only the first would
-   * discard the side the user is looking at.
+   * variant, EIGHT on the captured fixture, spanning four documented pressings.
+   *
+   * **Shown as reference, never prefilled into the field.** §5.7: the matrix is
+   * "frequently missing or partial — always let the user hand-enter it from the
+   * dead wax". Joining four pressings' runouts into one field produces a
+   * fingerprint describing no physical object, in the field §4 calls "the true
+   * pressing fingerprint"; and a filled field reads as verified, which inverts
+   * the instruction. Every variant is still worth SEEING while reading the wax,
+   * so none are dropped — they move beside the field instead of into it.
    */
-  const matrixRunout = release.matrixRunout.length === 0 ? '' : release.matrixRunout.join(' / ');
+  const matrixReference = release.matrixRunout.length === 0 ? null : release.matrixRunout.join(' / ');
 
   return {
     values: {
@@ -185,6 +213,20 @@ export async function loadDiscogsPrefill(
       // §4.2: the ALBUM's year. The pressing's own year goes in the pressing
       // section below, and conflating them is CLAUDE.md §8's central error.
       releaseYear: albumYear === null ? '' : String(albumYear),
+      /**
+       * §6: "genres + styles→genres (find-or-create; prefer styles since it's
+       * more specific)" — applied at PREFILL, not only on save.
+       *
+       * The import transaction already derived these, so chips appeared after
+       * saving. But the form showed nothing: its checkbox group renders one box
+       * per EXISTING genre, so an unmatched genre is unselectable, and §5.7's
+       * "the user verifies and corrects" cannot happen for a field they cannot
+       * see. A record filed under Rock and Blues when the user would have
+       * chosen otherwise is CLAUDE.md §8 arriving by omission.
+       *
+       * Styles first, matching the import's order.
+       */
+      genreIds: await findOrCreateGenresByName([...release.styles, ...release.genres]),
     },
     pressing: {
       // Carried so §7.7 can reach tier 1. Whether it is SENT on save is
@@ -192,7 +234,7 @@ export async function loadDiscogsPrefill(
       // different pressing".
       discogsReleaseId: release.discogsId,
       catalogNumber: release.catalogNumber ?? '',
-      matrixRunout,
+      matrixRunout: '',
       countryPressed: release.country ?? '',
       // Empty rather than fabricated: an empty field asks the user to read
       // the year off the record, a wrong one tells them it is already known.
@@ -209,5 +251,7 @@ export async function loadDiscogsPrefill(
       label: labelByName === undefined ? release.label : null,
       format: format.attempted,
     },
+    matrixReference,
+    notesReference: release.notes,
   };
 }

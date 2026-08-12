@@ -36,6 +36,8 @@ function mockDiscogs(response: unknown = DETAILED) {
 
   vi.spyOn(clientModule, 'getDiscogsClient').mockReturnValue({
     get: get as unknown as clientModule.DiscogsClient['get'],
+    // Unused here; the type requires it since the cover fetch was added.
+    fetchImage: vi.fn() as unknown as clientModule.DiscogsClient['fetchImage'],
   });
 
   return get;
@@ -85,6 +87,7 @@ describe('POST verifies a supplied discogsReleaseId', () => {
           status: 404,
         });
       }) as unknown as clientModule.DiscogsClient['get'],
+      fetchImage: vi.fn() as unknown as clientModule.DiscogsClient['fetchImage'],
     });
 
     const response = await post({ catalogNumber: 'FORGED', discogsReleaseId: 999000111 });
@@ -99,6 +102,7 @@ describe('POST verifies a supplied discogsReleaseId', () => {
           status: 404,
         });
       }) as unknown as clientModule.DiscogsClient['get'],
+      fetchImage: vi.fn() as unknown as clientModule.DiscogsClient['fetchImage'],
     });
 
     await post({ catalogNumber: 'FORGED', discogsReleaseId: 999000111 });
@@ -145,6 +149,7 @@ describe('POST verifies a supplied discogsReleaseId', () => {
       get: vi.fn(async () => {
         throw new clientModule.DiscogsError('Could not reach Discogs');
       }) as unknown as clientModule.DiscogsClient['get'],
+      fetchImage: vi.fn() as unknown as clientModule.DiscogsClient['fetchImage'],
     });
 
     const response = await post({ catalogNumber: 'X', discogsReleaseId: RELEASE_ID });
@@ -189,6 +194,7 @@ describe('PATCH verifies it too', () => {
           status: 404,
         });
       }) as unknown as clientModule.DiscogsClient['get'],
+      fetchImage: vi.fn() as unknown as clientModule.DiscogsClient['fetchImage'],
     });
     const id = await seedPressing();
 

@@ -76,6 +76,8 @@ function mockMaster(year: number | null) {
 
   vi.spyOn(clientModule, 'getDiscogsClient').mockReturnValue({
     get: get as unknown as clientModule.DiscogsClient['get'],
+    // Unused here; the type requires it since the cover fetch was added.
+    fetchImage: vi.fn() as unknown as clientModule.DiscogsClient['fetchImage'],
   });
 
   return get;
@@ -309,6 +311,7 @@ describe('a release Discogs gives no year', () => {
       get: vi.fn(async () => {
         throw new clientModule.DiscogsError('Could not reach Discogs');
       }) as unknown as clientModule.DiscogsClient['get'],
+      fetchImage: vi.fn() as unknown as clientModule.DiscogsClient['fetchImage'],
     });
 
     const prefill = await loadDiscogsPrefill(CARPENTERS);

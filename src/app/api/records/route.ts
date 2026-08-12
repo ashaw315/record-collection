@@ -39,6 +39,9 @@ import { CONDITION_GRADES } from '@/lib/records/fields';
  */
 export { recordCreateSchema as createSchema } from '@/lib/records/create-schema';
 import { recordCreateSchema as createSchema } from '@/lib/records/create-schema';
+import { attachDiscogsCover, type CoverOutcome } from '@/lib/discogs/attach-cover';
+import { getDiscogsClient } from '@/lib/discogs/client';
+import { loadRelease } from '@/app/records/discogs-prefill';
 
 // Used by the LIST filter schema below, which is this endpoint's own concern
 // and shares nothing with the create body.
@@ -219,5 +222,53 @@ export const POST = withErrorHandling('api.records.POST', async (request: Reques
     tagIds,
   });
 
-  return NextResponse.json(created, { status: 201 });
+  /**
+   * The Discogs cover, carried across on SAVE (§5.7, §5.9) — the QA finding
+   * that "a Discogs import doesn't bring the cover across".
+   *
+   * Here rather than at form-open because `images.record_id` is NOT NULL: there
+   * is no valid row before this point, and fetching earlier would leave an
+   * orphaned blob every time a form was abandoned.
+   *
+   * Awaited rather than fired-and-forgotten: a serverless function may be
+   * frozen the moment it responds, so a detached promise is not guaranteed to
+   * finish. `attachDiscogsCover` never throws and reports its own failures, so
+   * awaiting it cannot fail the record — verified by its own tests, including a
+   * synchronously-throwing client.
+   */
+  const cover = await attachCoverFor(created.pressingId, created.id);
+
+  return NextResponse.json({ ...created, cover }, { status: 201 });
 });
+
+/**
+ * Resolves the release behind a saved record's pressing and attaches its cover.
+ *
+ * Returns a `CoverOutcome` the client can show — "the cover could not be
+ * fetched" is worth saying, since the alternative is a record that silently
+ * has no image and no explanation.
+ */
+async function attachCoverFor(
+  pressingId: string | null,
+  recordId: string,
+): Promise<CoverOutcome> {
+  if (pressingId === null) return { attached: false, reason: 'none' };
+
+  const pressing = await findPressingById(pressingId);
+  if (pressing?.discogsReleaseId == null) return { attached: false, reason: 'none' };
+
+  try {
+    const release = await loadRelease(pressing.discogsReleaseId);
+    if (release === null) return { attached: false, reason: 'failed' };
+
+    return await attachDiscogsCover({
+      recordId,
+      images: release.images,
+      client: getDiscogsClient(),
+    });
+  } catch {
+    // Reaching Discogs for the release detail can fail too, and it fails the
+    // same way as everything else on this path: no cover, never no record.
+    return { attached: false, reason: 'failed' };
+  }
+}

@@ -1,4 +1,5 @@
 import { internalError } from './errors';
+import { describeError } from '@/lib/errors/describe';
 import { logger } from '@/lib/logger';
 
 /**
@@ -36,7 +37,12 @@ export function withErrorHandling<TContext = { params: Promise<Record<string, st
       // inside the very code meant to stop errors escaping.
       const detail =
         error instanceof Error
-          ? `${error.message}\n${error.stack ?? '(no stack)'}`
+          ? // `describeError` rather than `.message`: a wrapped error's cause
+            // says WHY and the stack says WHERE, and a 500 log with only the
+            // wrapper's own sentence is the least actionable thing there is.
+            // Found when a cover failure logged "The image could not be
+            // stored." and nothing else.
+            `${describeError(error)}\n${error.stack ?? '(no stack)'}`
           : `Non-Error thrown: ${safeStringify(error)}`;
 
       logger.error(scope, detail);

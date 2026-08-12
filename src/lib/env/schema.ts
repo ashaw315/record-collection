@@ -53,8 +53,22 @@ export const envSchema = z.object({
 
   DISCOGS_TOKEN: z.string().min(1),
 
-  // Not required until build steps 12 and 8 respectively; the dev server must
-  // start without them.
+  /**
+   * Optional by DESIGN, not because they are pending.
+   *
+   * §10's in-store case wants the app usable without every integration
+   * configured, and a developer running it locally has the same claim — so a
+   * missing key degrades one feature rather than stopping the server.
+   *
+   * The cost is that each absence must be detected where it is USED, or it
+   * surfaces as "Internal server error" for what is a deployment problem.
+   * `isBlobConfigured()` does that for uploads; step 12 owes the same for
+   * `ANTHROPIC_API_KEY`.
+   *
+   * (This comment previously read "not required until build steps 12 and 8
+   * respectively" — true when written, false once step 8 shipped. A dated claim
+   * in the file that enforces it, the same shape as a placeholder assertion.)
+   */
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
   BLOB_READ_WRITE_TOKEN: z.string().min(1).optional(),
 

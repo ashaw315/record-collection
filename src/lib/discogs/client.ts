@@ -1,6 +1,12 @@
 import { getEnv } from '@/env';
 import { TokenBucket } from './limiter';
 import { assertNoLiveCall } from './no-live-calls';
+import { safeImageUrl } from './fields';
+import {
+  MAX_IMAGE_BYTES,
+  sniffImageType,
+  type AcceptedImageType,
+} from '@/lib/storage/image-type';
 
 /**
  * The Discogs transport (SPEC.md §6). Every Discogs call in the app routes
@@ -61,6 +67,18 @@ export class DiscogsError extends Error {
 
 export type DiscogsClient = {
   get<T = unknown>(path: string, params?: QueryParams): Promise<T>;
+  /**
+   * An image from Discogs, fetched so it can be STORED rather than hot-linked
+   * (§5.7, §5.9).
+   *
+   * On this client, and not a standalone function, because it must spend from
+   * the SAME token bucket. Images live on `i.discogs.com` while the API is
+   * `api.discogs.com`, and the bucket only ever covered the API host — every
+   * `get` goes through `request()`, which builds URLs against `API_BASE`. A
+   * separate image path would let a bulk import fan out unbounded against
+   * Discogs, which is the concurrent-bypass shape on a different axis.
+   */
+  fetchImage(url: string): Promise<{ bytes: ArrayBuffer; contentType: AcceptedImageType }>;
 };
 
 export type QueryParams = Record<string, string | number | boolean | undefined>;
@@ -202,10 +220,6 @@ export function createDiscogsClient(options: DiscogsClientOptions): DiscogsClien
        * Here it covers every construction path, and only when the real network
        * is in use: an injected `fetch` belongs to a test and reaches nothing.
        */
-      if (usesRealNetwork(options.fetch)) {
-        assertNoLiveCall(url);
-      }
-
       // Checked BEFORE sleeping, not after: waiting out a delay and then
       // reporting that we ran out of time spends the very budget the deadline
       // exists to protect.
@@ -236,8 +250,26 @@ export function createDiscogsClient(options: DiscogsClientOptions): DiscogsClien
 
       let response: Response;
       try {
+        /**
+         * Checked INSIDE the try, so the refusal is handled like any other
+         * transport failure and reaches the client as a 502 rather than a 500.
+         *
+         * An earlier version checked before the try: `assertNoLiveCall` throws
+         * a plain Error, which escaped to `withErrorHandling` and became "our
+         * bug" for a rule working exactly as designed. Caught by the guard's
+         * own E2E specs asserting 502 — deterministically, on both projects.
+         */
+        if (usesRealNetwork(options.fetch)) {
+          assertNoLiveCall(url);
+        }
+
         response = await options.fetch(url, { headers, signal: abort.signal });
       } catch (cause) {
+        // Already typed — the no-live-calls guard, or anything else that has
+        // already said precisely what went wrong. Re-wrapping would replace a
+        // sentence naming the fix with a generic one.
+        if (cause instanceof DiscogsError) throw cause;
+
         // An abort is OUR deadline firing, not Discogs being unreachable, and
         // saying so is the difference between "try again" and "something is
         // wrong with the network".
@@ -297,5 +329,125 @@ export function createDiscogsClient(options: DiscogsClientOptions): DiscogsClien
     }
   }
 
-  return { get: request };
+  /**
+   * Reads a response body with a HARD ceiling, stopping mid-stream.
+   *
+   * `arrayBuffer()` would download every byte before anything could refuse an
+   * oversized file — the cap enforced only after paying its full cost, which on
+   * a Discogs primary image is exactly the case worth avoiding. Cancelling the
+   * reader stops the transfer.
+   */
+  async function readCapped(response: Response, limit: number): Promise<Uint8Array> {
+    const body = response.body;
+    if (body === null) {
+      throw new DiscogsError('Discogs returned an empty image.', { status: 502 });
+    }
+
+    const reader = body.getReader();
+    const chunks: Uint8Array[] = [];
+    let total = 0;
+
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value === undefined) continue;
+
+        total += value.byteLength;
+        if (total > limit) {
+          /**
+           * Cancelled HERE rather than left to the `finally`.
+           *
+           * Measured: cancelling from the finally let the source stream's
+           * `pull` deliver every remaining chunk first, so a 12MB body was
+           * fully transferred despite the throw — the cap enforced after
+           * paying its cost, which is the exact thing streaming avoids.
+           */
+          await reader.cancel();
+          throw new DiscogsError(
+            `That image is too large — over ${limit / (1024 * 1024)}MB.`,
+            { status: 413 },
+          );
+        }
+        chunks.push(value);
+      }
+    } finally {
+      // Releases the connection whether we finished or refused.
+      await reader.cancel().catch(() => {});
+    }
+
+    const merged = new Uint8Array(new ArrayBuffer(total));
+    let offset = 0;
+    for (const chunk of chunks) {
+      merged.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    return merged;
+  }
+
+  /** The bytes as a standalone ArrayBuffer, which is what storage accepts. */
+  function merged(view: Uint8Array): ArrayBuffer {
+    const copy = new ArrayBuffer(view.byteLength);
+    new Uint8Array(copy).set(view);
+    return copy;
+  }
+
+  async function fetchImage(
+    imageUrl: string,
+  ): Promise<{ bytes: ArrayBuffer; contentType: AcceptedImageType }> {
+    /**
+     * https only, checked BEFORE the request — the URL comes from whichever
+     * contributor edited the release, and this fetch runs on our server, so an
+     * attacker-chosen host would be contacted by us rather than by a browser.
+     */
+    if (safeImageUrl(imageUrl) === null) {
+      throw new DiscogsError('That image URL is not one we will request.', { status: 400 });
+    }
+
+    // The shared bucket. This is the whole reason fetchImage lives here.
+    const wait = bucket.reserve();
+    if (wait > 0) await sleep(wait);
+
+    let response: Response;
+    try {
+      if (usesRealNetwork(options.fetch)) {
+        assertNoLiveCall(imageUrl);
+      }
+
+      response = await options.fetch(imageUrl, {
+        headers: { 'user-agent': options.userAgent },
+      });
+    } catch (cause) {
+      if (cause instanceof DiscogsError) throw cause;
+      throw new DiscogsError('Could not reach Discogs for that image.', { cause });
+    }
+
+    if (!response.ok) {
+      throw new DiscogsError(`Discogs returned ${response.status} for that image.`, {
+        status: 502,
+      });
+    }
+
+    const bytes = await readCapped(response, MAX_IMAGE_BYTES);
+
+    /**
+     * Sniffed, never taken from `Content-Type` — the same rule as the upload
+     * endpoint. A URL ending `.jpeg` and a header saying `image/jpeg` are both
+     * claims made by the host; the bytes are the fact.
+     */
+    const contentType = sniffImageType(bytes);
+    if (contentType === null) {
+      throw new DiscogsError('What Discogs returned is not an image we accept.', { status: 415 });
+    }
+
+    return {
+      // `slice` on the typed array's own buffer, which `readCapped` allocates
+      // as a plain ArrayBuffer — the SDK's PutBody does not accept a
+      // SharedArrayBuffer-backed view.
+      bytes: merged(bytes),
+      contentType,
+    };
+  }
+
+  return { get: request, fetchImage };
 }

@@ -5,6 +5,7 @@ import { countReferences } from './referrers';
 import { orderFor } from '@/lib/db/order';
 import { getDb } from '@/db/client';
 import { genres } from '@/db/schema';
+import { meaningful } from '@/lib/discogs/fields';
 import type { Offset, SortDirection } from '@/lib/api/query-params';
 import type { DeleteOutcome } from './tags';
 
@@ -190,4 +191,52 @@ export async function deleteGenre(id: string): Promise<DeleteOutcome> {
     if (!isForeignKeyViolation(error)) throw error;
     return { status: 'in-use', referenceCount: await countReferences('genres', id) };
   }
+}
+
+/**
+ * §6's find-or-create for a list of genre names, outside a transaction.
+ *
+ * The import has its own transaction-scoped copy (`discogs-import.ts`) because
+ * its writes must be atomic with the record. This one serves the PREFILL, which
+ * has no transaction to join — and both must apply the same rules, so the
+ * matching is identical: case-insensitive, and absence-prose is ignored.
+ *
+ * **Why the prefill creates rows at all**, when it deliberately does not create
+ * artists or labels: the form renders a checkbox per EXISTING genre. An
+ * unmatched genre is not merely unselected, it is unselectable — so the user
+ * cannot verify or correct it, which is the whole point of §5.7's two stages.
+ * A genre is also cheap debris: a name in a small reference table, visible in
+ * /manage and deletable, versus an artist that anchors a record's identity.
+ */
+export async function findOrCreateGenresByName(names: string[]): Promise<string[]> {
+  const db = getDb();
+  const ids: string[] = [];
+  const seen = new Set<string>();
+
+  for (const raw of names) {
+    // Discogs encodes absence as prose. A genre row called "Unknown" would be
+    // indistinguishable from one the user meant.
+    const name = meaningful(raw);
+    if (name === null) continue;
+
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    const [existing] = await db
+      .select({ id: genres.id })
+      .from(genres)
+      .where(sql`lower(${genres.name}) = lower(${name})`)
+      .limit(1);
+
+    if (existing !== undefined) {
+      ids.push(existing.id);
+      continue;
+    }
+
+    const [created] = await db.insert(genres).values({ name }).returning({ id: genres.id });
+    ids.push(created.id);
+  }
+
+  return ids;
 }

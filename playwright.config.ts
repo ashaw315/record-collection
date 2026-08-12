@@ -15,9 +15,38 @@ export default defineConfig({
   globalSetup: './e2e/global-setup.ts',
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
-  retries: process.env.CI ? 2 : 0,
+  /**
+   * One retry locally, and the reasoning matters more than the number.
+   *
+   * A retry normally hides bugs, and it hid one here for three steps: 'clicking
+   * the active chip clears it' failed EVERY full run and was read as flake
+   * because a different spec failed each time. It was a real defect — the
+   * assertion ran against an unfiltered collection, and at 68 records the
+   * 50-per-page cut pushed its record onto page 2.
+   *
+   * What is left after that fix is two residual mechanisms at roughly one
+   * failure per run, both diagnosed as harness rather than app: the dev server
+   * resetting a setup POST under load (`ECONNRESET`), and typed text lost to
+   * the hydration window (NOTES: "WebKit outrunning React hydration").
+   *
+   * The trade, made deliberately: at 1-3 failures per run a red suite could not
+   * be read at all, so a real regression arrived camouflaged. One retry makes
+   * green mean something again. **The cost is that a test failing ~50% of the
+   * time now passes silently** — so `retry` counts are NOT noise. If a spec
+   * starts needing its retry, treat that as the signal this flag was bought
+   * with, and read `PLAYWRIGHT_RETRY_REPORT` below.
+   */
+  retries: process.env.CI ? 2 : 1,
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  /**
+   * `list` alongside `html` so retried tests are VISIBLE in the terminal.
+   *
+   * With `html` alone a retry-then-pass is invisible unless someone opens the
+   * report, which recreates the problem the retry was added to solve: a spec
+   * failing half the time reads as a clean run. The list reporter prints
+   * "retry #1" inline, so the cost of the retry stays in view.
+   */
+  reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL,
     trace: 'on-first-retry',

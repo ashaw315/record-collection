@@ -43,6 +43,8 @@ function mockDiscogs(response: unknown = BY_CATNO) {
 
   vi.spyOn(clientModule, 'getDiscogsClient').mockReturnValue({
     get: get as unknown as clientModule.DiscogsClient['get'],
+    // Unused here; the type requires it since the cover fetch was added.
+    fetchImage: vi.fn() as unknown as clientModule.DiscogsClient['fetchImage'],
   });
 
   return get;
@@ -518,6 +520,7 @@ describe('failures', () => {
      * temporary condition the user can act on by waiting.
      */
     vi.spyOn(clientModule, 'getDiscogsClient').mockReturnValue({
+      fetchImage: vi.fn() as unknown as clientModule.DiscogsClient['fetchImage'],
       get: vi.fn(async () => {
         throw new clientModule.DiscogsError('Discogs rate limit reached.', { status: 429 });
       }),
@@ -533,6 +536,7 @@ describe('failures', () => {
     // Discogs being down is not a bug in this app, and a 500 would send
     // someone looking for one.
     vi.spyOn(clientModule, 'getDiscogsClient').mockReturnValue({
+      fetchImage: vi.fn() as unknown as clientModule.DiscogsClient['fetchImage'],
       get: vi.fn(async () => {
         throw new clientModule.DiscogsError('Could not reach Discogs');
       }),
@@ -545,6 +549,7 @@ describe('failures', () => {
 
   it('never leaks the token in an error response', async () => {
     vi.spyOn(clientModule, 'getDiscogsClient').mockReturnValue({
+      fetchImage: vi.fn() as unknown as clientModule.DiscogsClient['fetchImage'],
       get: vi.fn(async () => {
         throw new clientModule.DiscogsError('Discogs request failed with status 401', {
           status: 401,

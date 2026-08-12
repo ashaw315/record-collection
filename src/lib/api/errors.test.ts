@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import {
+  notConfigured,
   badRequest,
   conflictInUse,
   isForeignKeyViolation,
@@ -185,5 +186,41 @@ describe('validationError maps Zod issues to fieldErrors', () => {
     expect(serialized).not.toMatch(/\bat\s+\w+.*:\d+:\d+/);
     expect(serialized).not.toContain('node_modules');
     expect(serialized).not.toContain('stack');
+  });
+});
+
+describe('notConfigured names a deployment problem as one', () => {
+  /**
+   * The defect this closes: a missing `BLOB_READ_WRITE_TOKEN` surfaced as
+   * "Internal server error", which blames the APP for a deployment problem and
+   * sends whoever hit it to read application logs.
+   *
+   * Same family as the no-live-calls guard returning 500 for a rule working
+   * exactly as designed — "our bug" reported for something that is not a bug.
+   */
+  it('is a 503, not a 500 — the server works, a dependency is absent', async () => {
+    const response = notConfigured('Image uploads are not configured.');
+
+    expect(response.status).toBe(503);
+  });
+
+  it('carries the §5 error shape with an actionable message', async () => {
+    const response = notConfigured('Image uploads are not configured.');
+    const body = await response.json();
+
+    expect(body).toEqual({
+      error: { message: 'Image uploads are not configured.', code: 'NOT_CONFIGURED' },
+    });
+  });
+
+  it('never names the missing variable, which is a deployment detail', async () => {
+    // The message reaches a browser. Which credential is absent is something
+    // for the logs — naming it in a response tells an unauthenticated-adjacent
+    // reader about the deployment's shape.
+    const response = notConfigured('Image uploads are not configured.');
+    const body = await response.json();
+
+    expect(JSON.stringify(body)).not.toContain('BLOB_READ_WRITE_TOKEN');
+    expect(JSON.stringify(body)).not.toContain('TOKEN');
   });
 });

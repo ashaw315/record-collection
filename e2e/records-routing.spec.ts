@@ -21,6 +21,11 @@ const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 
 async function login(page: Page) {
   await page.goto('/login');
+
+  // Waits for hydration before typing: this form is CONTROLLED, so a value
+  // typed into the DOM before React attaches never reaches state and the submit
+  // sees an empty password. See the note on the login page.
+  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
   await page.getByLabel('Password').pressSequentially(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page).toHaveURL('/');

@@ -135,3 +135,59 @@ describe('withErrorHandling', () => {
     expect(response.status).toBe(500);
   });
 });
+
+describe('the logged detail includes the cause chain', () => {
+  /**
+   * Same defect as the cover path, one layer up and affecting every route: a
+   * wrapped error reaching `withErrorHandling` logged its own message and stack
+   * but never the `cause` — so the sentence explaining WHY was dropped at the
+   * only place anyone would look for it.
+   *
+   * The stack still matters (it says where); the cause says why, and a 500 with
+   * neither is the least actionable thing a log can contain.
+   */
+  it('logs the underlying reason, not just the wrapper', async () => {
+    const logged: string[] = [];
+    vi.spyOn(logger, 'error').mockImplementation((_scope, message) => {
+      logged.push(message);
+    });
+
+    const handler = withErrorHandling('TEST /thing', async () => {
+      throw new Error('The image could not be stored.', {
+        cause: new Error('Access denied, please provide a valid token'),
+      });
+    });
+
+    const response = await handler(new Request('http://test/thing'));
+
+    expect(response.status, 'still a 500 — this is about the LOG, not the body').toBe(500);
+    expect(logged.join('\n'), 'the actionable half reaches the log').toContain('Access denied');
+  });
+
+  it('still logs the stack, which says WHERE', async () => {
+    const logged: string[] = [];
+    vi.spyOn(logger, 'error').mockImplementation((_scope, message) => {
+      logged.push(message);
+    });
+
+    const handler = withErrorHandling('TEST /thing', async () => {
+      throw new Error('plain failure');
+    });
+    await handler(new Request('http://test/thing'));
+
+    expect(logged.join('\n')).toContain('plain failure');
+    expect(logged.join('\n'), 'the stack is not lost to the change').toMatch(/at |no stack/);
+  });
+
+  it('never puts the cause in the RESPONSE', async () => {
+    // §5's shape reaches a client. A cause chain there leaks deployment detail
+    // — the same reason the 503 for an unconfigured store names no variable.
+    const handler = withErrorHandling('TEST /thing', async () => {
+      throw new Error('wrapper', { cause: new Error('vercel_blob_rw_secret_detail') });
+    });
+
+    const body = await (await handler(new Request('http://test/thing'))).json();
+
+    expect(JSON.stringify(body)).not.toContain('vercel_blob_rw_secret_detail');
+  });
+});

@@ -27,6 +27,8 @@ function mockDiscogs(response: unknown = DETAILED) {
 
   vi.spyOn(clientModule, 'getDiscogsClient').mockReturnValue({
     get: get as unknown as clientModule.DiscogsClient['get'],
+    // Unused here; the type requires it since the cover fetch was added.
+    fetchImage: vi.fn() as unknown as clientModule.DiscogsClient['fetchImage'],
   });
 
   return get;
@@ -216,6 +218,7 @@ describe('failures', () => {
           status: 404,
         });
       }) as unknown as clientModule.DiscogsClient['get'],
+      fetchImage: vi.fn() as unknown as clientModule.DiscogsClient['fetchImage'],
     });
 
     expect((await release(request(), params(99999999))).status).toBe(404);
@@ -226,6 +229,7 @@ describe('failures', () => {
       get: vi.fn(async () => {
         throw new clientModule.DiscogsError('Discogs rate limit reached.', { status: 429 });
       }) as unknown as clientModule.DiscogsClient['get'],
+      fetchImage: vi.fn() as unknown as clientModule.DiscogsClient['fetchImage'],
     });
 
     expect((await release(request(), params(RELEASE_ID))).status).toBe(429);
@@ -241,6 +245,7 @@ describe('failures', () => {
       get: vi.fn(async () => {
         throw new clientModule.DiscogsError('Could not reach Discogs');
       }) as unknown as clientModule.DiscogsClient['get'],
+      fetchImage: vi.fn() as unknown as clientModule.DiscogsClient['fetchImage'],
     });
 
     await release(request(), params(RELEASE_ID));

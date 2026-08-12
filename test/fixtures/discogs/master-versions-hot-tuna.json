@@ -1,0 +1,436 @@
+{
+  "pagination": {
+    "page": 1,
+    "pages": 1,
+    "per_page": 17,
+    "items": 17,
+    "urls": {}
+  },
+  "versions": [
+    {
+      "id": 1458122,
+      "label": "RCA Victor",
+      "country": "US",
+      "title": "Hot Tuna",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album, Stereo",
+      "catno": "LSP-4353",
+      "released": "1970",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/1458122",
+      "thumb": "https://i.discogs.com/4Kvt8k26ECvUAytfyVwtW7kyi1kAZZX7uPbvAPGK4f4/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE0NTgx/MjItMTMwMDg1MDA1/NC5qcGVn.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 290,
+          "in_collection": 3936
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 10040976,
+      "label": "RCA Victor",
+      "country": "US",
+      "title": "Hot Tuna",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album, Repress, Stereo",
+      "catno": "LSP-4353",
+      "released": "1970",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/10040976",
+      "thumb": "https://i.discogs.com/RaV4mGC9MbWQGb_B8nfXfQ8PPUo2h-ZgonmVsM2dapw/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMDQw/OTc2LTE0OTA1ODE1/ODAtMjY2OC5qcGVn.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 78,
+          "in_collection": 433
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 9135291,
+      "label": "RCA",
+      "country": "Japan",
+      "title": "Hot Tuna",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album",
+      "catno": "SRA-5505",
+      "released": "1970",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/9135291",
+      "thumb": "https://i.discogs.com/LLGPq_91EYI6jWN4A2Rz0-xFq890qR1d1XuVMjq7ONQ/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTkxMzUy/OTEtMTUzOTQ4MzE4/MC0zNjgyLmpwZWc.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 56,
+          "in_collection": 30
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 31925332,
+      "label": "RCA",
+      "country": "Japan",
+      "title": "Hot Tuna",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album, Promo",
+      "catno": "SRA-5505",
+      "released": "1970",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/31925332",
+      "thumb": "https://i.discogs.com/UaYYuoY12vZpkqkwXsURBfgrTGFF43vzxiS9sK1nEJU/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxOTI1/MzMyLTE3MjgyMjAy/MDYtODE2MC5qcGVn.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 16,
+          "in_collection": 2
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 6825185,
+      "label": "RCA Victor",
+      "country": "US",
+      "title": "Hot Tuna",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album, Stereo",
+      "catno": "LSP-4353",
+      "released": "1970",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/6825185",
+      "thumb": "https://i.discogs.com/p1_r0DJNC1g5L8wAK_0RgEo4SSfXTEvTXC1DXQlivcU/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY4MjUx/ODUtMTQyNzQxMDk0/Ni03MzU5LnBuZw.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 94,
+          "in_collection": 872
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 14205898,
+      "label": "RCA Victor",
+      "country": "US",
+      "title": "Hot Tuna",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album, Misprint",
+      "catno": "LSP-4353",
+      "released": "1970",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/14205898",
+      "thumb": "https://i.discogs.com/F2nJKkXXW9mJVMBqSXeaZzhz6F9KeoUReRpuxSUPjcs/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE0MjA1/ODk4LTE1Njk4NDM0/NTItMzMxMy5qcGVn.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 49,
+          "in_collection": 34
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 4555386,
+      "label": "RCA Victor",
+      "country": "Spain",
+      "title": "Hot Tuna ",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album",
+      "catno": "LSP-4353",
+      "released": "1970",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/4555386",
+      "thumb": "https://i.discogs.com/EnU6ow6FnMBuop4Lghk7RTqBJrhtK4sjVG2ln_wwFfw/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQ1NTUz/ODYtMTY2ODc3MjMw/MC0xNzM4LmpwZWc.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 47,
+          "in_collection": 30
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 6440008,
+      "label": "RCA Victor",
+      "country": "US",
+      "title": "Hot Tuna",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album, Stereo",
+      "catno": "LSP-4353",
+      "released": "1970",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/6440008",
+      "thumb": "https://i.discogs.com/754_7BLtjioXleEzxw5vOrt3MOx6yZ098WJqGgjhjgg/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY0NDAw/MDgtMTQxOTM0NDIz/MS0zNzE1LmpwZWc.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 95,
+          "in_collection": 462
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 8554393,
+      "label": "RCA",
+      "country": "Japan",
+      "title": "Hot Tuna",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album",
+      "catno": "RCA-6197",
+      "released": "1974",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/8554393",
+      "thumb": "https://i.discogs.com/FtbrqVf7q2yNuqEVIq5blCBonETwqj6GoQllJi1dyb4/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTg1NTQz/OTMtMTQ2MzkzNzE2/NC00NDMzLmpwZWc.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 45,
+          "in_collection": 23
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 7495962,
+      "label": "RCA",
+      "country": "Japan",
+      "title": "Hot Tuna",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album, Limited Edition",
+      "catno": "PG-103",
+      "released": "1978",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/7495962",
+      "thumb": "https://i.discogs.com/_9JsyloaEwpPnlcI0DSCKmipJ5F9ZuLkGT-miWtPPUY/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTc0OTU5/NjItMTQ0MjY3MjY0/Ny00MjM0LmpwZWc.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 49,
+          "in_collection": 50
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 3557356,
+      "label": "RCA",
+      "country": "Spain",
+      "title": "Hot Tuna (Recorded Live At The New Orleans House, Berkeley)",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album, Reissue",
+      "catno": "PL-42772",
+      "released": "1979",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/3557356",
+      "thumb": "https://i.discogs.com/1DxAX1Qdk86NWuksaNlawjZuZBbrtJ8AP472YlpQu3k/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM1NTcz/NTYtMTQzNzQxMTk5/Ni0zODAxLmpwZWc.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 42,
+          "in_collection": 86
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 13923354,
+      "label": "RCA Victor",
+      "country": "Spain",
+      "title": "Hot Tuna (Live At The New Orleans House)",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album, Reissue",
+      "catno": "PL-42772",
+      "released": "1989",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/13923354",
+      "thumb": "https://i.discogs.com/7oKFSt-4hvhxSezW7a3VPE8RAlDv2IwQ-rS6kqyiz-4/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzOTIz/MzU0LTE1NjQxNTY1/NDItMzQzNC5tcG8.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 35,
+          "in_collection": 5
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 4936710,
+      "label": "RCA Victor",
+      "country": "Spain",
+      "title": "Hot Tuna (Live At The New Orleans House)",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album, Reissue",
+      "catno": "NL-90349",
+      "released": "1989",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/4936710",
+      "thumb": "https://i.discogs.com/DThoXp8myDUWA3iPHYuVa4dzLL3TbX-oGEH575qiM6Q/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQ5MzY3/MTAtMTM3OTk0OTg4/Ny00NTE5LmpwZWc.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 43,
+          "in_collection": 27
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 13465062,
+      "label": "BMG",
+      "country": "Japan",
+      "title": "Hot Tuna",
+      "major_formats": [
+        "CD"
+      ],
+      "format": "Album, Reissue",
+      "catno": "BVCM-7340",
+      "released": "1998",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/13465062",
+      "thumb": "https://i.discogs.com/6GAncuE0JVPkP9ukB0bDpWrH47Z2tBh36PWUrIY4fLU/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzNDY1/MDYyLTE1NTQ3MjQw/ODktMjkxNC5qcGVn.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 18,
+          "in_collection": 4
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 1913279,
+      "label": "BMG",
+      "country": "Japan",
+      "title": "Hot Tuna",
+      "major_formats": [
+        "CD"
+      ],
+      "format": "Album, Reissue",
+      "catno": "BVCM-35459, 88697-38465-2",
+      "released": "2008",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/1913279",
+      "thumb": "https://i.discogs.com/8i7By_uCXnaGWmYlvYowZmTyiqz0sKUisGJIAuN5IQQ/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE5MTMy/NzktMTI1MjEwMTc0/Mi5qcGVn.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 27,
+          "in_collection": 22
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 13466214,
+      "label": "Vivid Sound",
+      "country": "Japan",
+      "title": "Hot Tuna",
+      "major_formats": [
+        "CD"
+      ],
+      "format": "Album, Limited Edition, Reissue",
+      "catno": "VSCD-9096",
+      "released": "2013",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/13466214",
+      "thumb": "https://i.discogs.com/sRFwNhhEZI3fZ6GTLJ7ArR1_1yWZxSJw32K6Tzho8Pc/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzNDY2/MjE0LTE2NDg0ODYw/MTQtOTkxNy5qcGVn.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 18,
+          "in_collection": 5
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 12596349,
+      "label": "RCA",
+      "country": "Japan",
+      "title": "Hot Tuna",
+      "major_formats": [
+        "CD"
+      ],
+      "format": "Album, Limited Edition, Reissue",
+      "catno": "SICP 5889",
+      "released": "2018",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/12596349",
+      "thumb": "https://i.discogs.com/fLmA_klnmGwru4sJ7sDeci_IpHt4-o5dKwhsxYy-Q0s/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyNTk2/MzQ5LTE1MzgyOTcw/NzktMTM5NS5qcGVn.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 28,
+          "in_collection": 7
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    }
+  ]
+}

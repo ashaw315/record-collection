@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -12,6 +12,7 @@ import { conditionLabel } from './record-detail-format';
 import { buildCreateBody, buildPatchBody, type FormValues } from './record-form';
 import { buildPressingBody, type PressingFormValues } from './pressing-form';
 import { discogsIdToSubmit } from './pressing-identity';
+import { buildImportBody, saveDestination } from './save-destination';
 import { InlineCreate } from './InlineCreate';
 
 /**
@@ -51,6 +52,7 @@ function Row({
   htmlFor,
   children,
   hint,
+  after,
 }: {
   label: string;
   /**
@@ -63,6 +65,8 @@ function Row({
   htmlFor?: string;
   children: React.ReactNode;
   hint?: string;
+  /** Supporting detail rendered BELOW the hint — never between field and hint. */
+  after?: ReactNode;
 }) {
   const labelClass =
     'text-xs tracking-wide text-muted-foreground uppercase sm:w-40 sm:shrink-0 sm:pt-2';
@@ -79,6 +83,13 @@ function Row({
       <div className="mt-1 min-w-0 flex-1 sm:mt-0">
         {children}
         {hint !== undefined && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+        {/*
+          Below the hint, not between the input and it. The hint is the
+          INSTRUCTION ("read from the dead wax"); anything here is subordinate
+          reference, and splitting a field from its own instruction to make room
+          for supporting detail inverts that.
+        */}
+        {after}
       </div>
     </div>
   );
@@ -170,6 +181,9 @@ export function RecordForm({
   initialPressingId,
   recordId,
   acquiresWantListId,
+  suggestions,
+  matrixReference,
+  notesReference,
 }: {
   reference: ReferenceData;
   initial: FormValues;
@@ -186,6 +200,27 @@ export function RecordForm({
    * be the half-application §7.3 forbids.
    */
   acquiresWantListId?: string;
+  /**
+   * Names an import supplied that matched no existing row (§5.7), offered in
+   * the inline-create boxes. Artist and label only: Discogs has no notion of
+   * WHERE you bought a record, so store never has a suggestion, and format is a
+   * fixed reference list where "choose the closest" is the right instruction.
+   */
+  suggestions?: { artist: string | null; label: string | null };
+  /**
+   * Discogs' Matrix / Runout values, shown beside the field as reference.
+   * Deliberately not a prefilled VALUE — §5.7 requires the user to read this
+   * one off the dead wax, and a release carries variants from several
+   * pressings at once.
+   */
+  matrixReference?: string | null;
+  /**
+   * Discogs' notes about the RELEASE, shown beside the field. Never a value:
+   * the field is the user's note about their own copy, and a prefilled one
+   * reads as verified while making §7.8's "never overwrite user-entered data"
+   * unenforceable.
+   */
+  notesReference?: string | null;
 }) {
   const router = useRouter();
 
@@ -398,6 +433,12 @@ export function RecordForm({
         body.pressingId = null;
       }
 
+      /**
+       * The pressing is resolved separately ONLY on the record path. The import
+       * creates its own from the release plus overrides, so sending a
+       * `pressingId` there would attach one pressing and orphan another —
+       * `buildImportBody` drops it, and this skips the round trip entirely.
+       */
       // Nothing changed: navigating is the honest response to a save that has
       // nothing to save, rather than a request the API would reject for having
       // an empty body.
@@ -406,15 +447,40 @@ export function RecordForm({
         return;
       }
 
-      const createPath =
-        acquiresWantListId === undefined
-          ? '/api/records'
-          : `/api/want-list/${acquiresWantListId}/acquire`;
+      /**
+       * §5.7's stage two: a create that came from a Discogs release posts to
+       * `/api/discogs/import` with the user's corrections as `overrides`.
+       *
+       * It previously posted every create to `/api/records`, which skipped the
+       * import entirely — so §6's genre mapping, implemented and tested inside
+       * that transaction, was unreachable from anything a user could do. Every
+       * imported record arrived with no genres, starving §7.1's hierarchy, the
+       * facet chips, `matchedVia`, and steps 10-12.
+       */
+      /**
+       * The release this form was prefilled FROM, not whatever the pressing
+       * currently claims. `discogsIdToSubmit` may legitimately drop the id when
+       * the user corrects an identifying field (§10) — but the import still
+       * needs to know which release to fetch, and the endpoint applies the same
+       * rule itself when deciding whether to keep it on the pressing.
+       */
+      const importReleaseId = editing ? undefined : (initialPressing.discogsReleaseId ?? undefined);
 
-      const response = await fetch(editing ? `/api/records/${recordId}` : createPath, {
-        method: editing ? 'PATCH' : 'POST',
+      const target = saveDestination({
+        editing,
+        recordId,
+        discogsReleaseId: importReleaseId,
+        acquiresWantListId,
+      });
+
+      const response = await fetch(target.path, {
+        method: target.method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify(
+          target.shape === 'import' && importReleaseId !== undefined
+            ? buildImportBody(importReleaseId, body)
+            : body,
+        ),
       });
 
       if (!response.ok) {
@@ -425,7 +491,21 @@ export function RecordForm({
       }
 
       const saved = await response.json();
-      router.push(`/records/${editing ? recordId : saved.id}`);
+
+      /**
+       * Carried through the URL because this navigates immediately — a message
+       * set in state here would be unmounted before anyone read it.
+       *
+       * Only for a genuine FAILURE. `reason: 'none'` means the release had no
+       * images, which is not worth saying: a notice on every coverless record
+       * would train the user to ignore the one that matters. §5.7's rule that
+       * Discogs is imperfect cuts both ways — a missing cover is normal, a
+       * failed fetch is information.
+       */
+      const coverFailed = saved?.cover?.attached === false && saved.cover.reason === 'failed';
+      const destination = `/records/${editing ? recordId : saved.id}`;
+
+      router.push(coverFailed ? `${destination}?cover=failed` : destination);
     } catch {
       setError('Could not reach the server. Nothing was saved.');
     } finally {
@@ -475,6 +555,7 @@ export function RecordForm({
         <InlineCreate
           noun="artist"
           path="/api/artists"
+          suggestion={suggestions?.artist ?? undefined}
           onCreated={(option, message) => adopt('artists', 'artistId', option, message)}
         />
         {fieldErrors.artistId !== undefined && (
@@ -495,6 +576,8 @@ export function RecordForm({
         <InlineCreate
           noun="label"
           path="/api/labels"
+          suggestion={suggestions?.label ?? undefined}
+          
           onCreated={(option, message) => adopt('labels', 'labelId', option, message)}
         />
       </Row>
@@ -652,6 +735,24 @@ export function RecordForm({
           label="Matrix / runout"
           htmlFor="matrixRunout"
           hint="Read from the dead wax. This is what identifies your exact pressing, and nothing overwrites it later."
+          after={
+            /*
+              Reference, not a value. Discogs lists every runout its
+              contributors have submitted — eight on the captured fixture,
+              across FOUR different pressings — so this is what to compare
+              against while reading the wax, not something to accept. Rendered
+              as text rather than in the input so it cannot be saved by leaving
+              the field untouched.
+            */
+            matrixReference === null || matrixReference === undefined ? undefined : (
+              <p
+                data-testid="matrix-reference"
+                className="mt-1 font-mono text-xs text-muted-foreground"
+              >
+                <span className="font-sans">Discogs lists:</span> {matrixReference}
+              </p>
+            )
+          }
         >
           <Input
             id="matrixRunout"
@@ -743,7 +844,21 @@ export function RecordForm({
         </Row>
       </fieldset>
 
-      <Row label="Notes" htmlFor="notes">
+      <Row
+        label="Notes"
+        htmlFor="notes"
+        after={
+          // Second instance of the matrix treatment: shown, not filled.
+          notesReference === null || notesReference === undefined ? undefined : (
+            <p
+              data-testid="notes-reference"
+              className="mt-1 text-xs whitespace-pre-line text-muted-foreground"
+            >
+              <span className="font-medium">Discogs lists:</span> {notesReference}
+            </p>
+          )
+        }
+      >
         <textarea
           id="notes"
           rows={4}
