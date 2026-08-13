@@ -5,6 +5,7 @@ import { DiscogsError, getDiscogsClient } from '@/lib/discogs/client';
 import { discogsErrorResponse } from '@/lib/discogs/errors';
 import { toDiscogsId } from '@/lib/discogs/fields';
 import { summariseSpread, type VersionPrice } from '@/lib/discogs/version-spread';
+import { cachedLowestPrice, readCachedMarket, writeCachedMarket } from '@/lib/discogs/market-cache';
 
 /**
  * SPEC.md §10a layer 3 — `GET /api/discogs/master/:id/spread`.
@@ -69,14 +70,45 @@ export const GET = withErrorHandling(
       const versionId = version.id;
       if (versionId === undefined) continue;
 
+      /**
+       * §10a: "versions already seen through search or a previous expand are
+       * free the first time." A cached version costs nothing AND spends none of
+       * the budget, so the calls saved here go to versions that still need
+       * pricing rather than being given back.
+       *
+       * Shares the store the market endpoint writes, so the two layers warm
+       * each other: opening a record's market panel prices that release for a
+       * later spread, and vice versa.
+       */
+      const cached = await readCachedMarket(versionId);
+      if (cached !== null) {
+        checked.push({ discogsId: versionId, lowestPrice: cachedLowestPrice(cached.payload) });
+        continue;
+      }
+
       try {
         const stats = await client.get<{ lowest_price?: { value?: number } | null }>(
           `/marketplace/stats/${versionId}?curr_abbr=USD`,
         );
 
-        checked.push({
-          discogsId: versionId,
-          lowestPrice: typeof stats.lowest_price?.value === 'number' ? stats.lowest_price.value : null,
+        const lowestPrice =
+          typeof stats.lowest_price?.value === 'number' ? stats.lowest_price.value : null;
+
+        checked.push({ discogsId: versionId, lowestPrice });
+
+        /**
+         * **Only the floor, because only the floor was fetched.** The spread
+         * asks `marketplace/stats` and never `price_suggestions`, so writing a
+         * full market payload here would record an empty condition ladder as a
+         * cached fact — and the market panel would then serve "no ladder" for
+         * seven days for a release nobody ever asked layer 2 about.
+         *
+         * `layersFetched` says which layers this row can answer for. A reader
+         * needing layer 2 treats a floor-only row as a miss.
+         */
+        await writeCachedMarket(versionId, {
+          layersFetched: ['floor'],
+          lowestPrice: lowestPrice === null ? null : { value: lowestPrice, currency: 'USD' },
         });
       } catch (cause) {
         /**

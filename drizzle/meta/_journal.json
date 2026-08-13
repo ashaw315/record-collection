@@ -43,6 +43,13 @@
       "when": 1786559649126,
       "tag": "0005_price_type_asking",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1786589809868,
+      "tag": "0006_market_cache",
+      "breakpoints": true
     }
   ]
 }

@@ -5,6 +5,7 @@ import { DiscogsError, getDiscogsClient } from '@/lib/discogs/client';
 import { discogsErrorResponse } from '@/lib/discogs/errors';
 import { toDiscogsId } from '@/lib/discogs/fields';
 import { normalizeMarket } from '@/lib/discogs/normalize-market';
+import { cacheCovers, readCachedMarket, writeCachedMarket } from '@/lib/discogs/market-cache';
 
 /**
  * SPEC.md §10a layers 1 and 2 — `GET /api/discogs/market/:id`.
@@ -35,6 +36,18 @@ export const GET = withErrorHandling(
     const releaseId = toDiscogsId(id);
     if (releaseId === null) {
       return badRequest('That is not a valid Discogs release id.', 'INVALID_ID');
+    }
+
+    /**
+     * §10a: served from cache if `fetched_at` is under 7 days old. This is what
+     * makes layer 3 affordable — the spread calls this data once per version,
+     * eleven times for a single master, and without a cache every expand pays
+     * that again.
+     */
+    const cached = await readCachedMarket(releaseId);
+    // Both layers, or it cannot answer this request — see `cacheCovers`.
+    if (cached !== null && cacheCovers(cached.payload, ['floor', 'ladder'])) {
+      return NextResponse.json(cached.payload);
     }
 
     const client = getDiscogsClient();
@@ -69,7 +82,7 @@ export const GET = withErrorHandling(
       suggestions: suggestions.status === 'fulfilled' ? suggestions.value : null,
     });
 
-    return NextResponse.json({
+    const payload = {
       ...market,
       /**
        * Stated, so the UI can SAY the range is unavailable rather than render
@@ -77,6 +90,20 @@ export const GET = withErrorHandling(
        * explanation looks like a record nobody has priced.
        */
       rangeUnavailable: market.conditions.length === 0,
-    });
+      layersFetched: ['floor', 'ladder'] as const,
+    };
+
+    /**
+     * Cached only past the both-rejected check above, so a Discogs outage is
+     * never stored as an answer. Writing an empty result would serve "nothing
+     * for sale" for seven days after a one-minute failure — absence recorded as
+     * fact, which §10a prohibits.
+     *
+     * A partial answer IS cached: one layer succeeding is a real reading of the
+     * market, and `rangeUnavailable` already says which part is missing.
+     */
+    await writeCachedMarket(releaseId, payload);
+
+    return NextResponse.json(payload);
   },
 );

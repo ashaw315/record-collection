@@ -3986,27 +3986,63 @@ form the records work had not shown — see the masking entry under Open.
 
 ## Step 10 unit 4 — the version spread (§10a layer 3)
 
-- **An E2E "not yet fetched" assertion needs a settle window or it constrains nothing.**
-  `expect(spreadCalls).toBe(0)` immediately after the result card renders passed
-  against a mutation that moved the spread fetch into a mount effect — the
-  mount fetch had not resolved yet either, so 0 meant "not back yet" rather
-  than "never asked". A `waitForTimeout` before the assertion is what makes it
-  discriminate. Same family as the other assertions-that-cannot-constrain
-  already recorded here; this variant is specific to *absence over time*.
+- **RULE: an assertion about absence needs a time dimension, or it cannot
+  distinguish "did not happen" from "has not happened yet."**
+  `expect(spreadCalls).toBe(0)` immediately after the result card rendered
+  passed against a mutation that moved the spread fetch into a mount effect —
+  the mount fetch had not resolved yet either, so 0 meant "not back yet"
+  rather than "never asked". The assertion read like it guarded §10a's
+  on-demand rule and guarded nothing. A settle window before the check is what
+  makes zero mean absence.
 
-- **The render block was silently absent.** The `spread` state and the fetch
-  were wired, so typecheck and lint were clean and the request demonstrably
-  fired — but nothing read the state. Only the E2E test caught it. A fetch
-  whose result is never rendered is invisible to every gate except a test that
-  looks at the page.
+  This is a distinct member of the assertion-that-cannot-constrain family
+  already catalogued above, and the one most likely to recur: it applies
+  ANYWHERE we assert something did NOT occur — no request fired, no row
+  written, no email sent, no handler called. The others fail by measuring the
+  wrong thing; this one fails by measuring the right thing too early.
 
-- **OPEN — market data has nowhere to cache.** The user asked for per-release
-  caching at the 7-day rule so a second expand of the same master is free.
-  `src/lib/discogs/cache.ts` implements exactly that TTL, but it is keyed by
-  `discogs_release_id` and holds *release detail* payloads. Writing
-  `marketplace/stats` under the same key would collide with the release cache
-  the import path reads. SPEC.md §12 says "the client, limiter and cache all
-  exist"; §10a never says where market data is cached. Needs a spec decision:
-  a separate cache table, a discriminator column, or an in-memory TTL. Until
-  then every expand costs one call per version again — 11 for the Hot Tuna
-  master, a fifth of the per-minute budget.
+- **RULE: three green instruments can all agree on a feature that was never
+  built.** The spread's state and fetch were wired but no render block read the
+  state. Typecheck clean, lint clean, the request demonstrably firing against a
+  live endpoint returning 200 — and the feature absent from the page. Only an
+  E2E test that looked at the DOM caught it.
+
+  Static gates verify that code is consistent, not that it is reachable. A
+  value computed and never rendered is well-typed, lint-clean, and invisible.
+  When a unit ends in something a user is supposed to SEE, the test that proves
+  it must assert on what is displayed.
+
+  Corollary, from the same incident: my first diagnosis blamed the test stubs.
+  The probe showed the request reaching the endpoint and returning 200, which
+  ruled the stubs out and pointed at the render. Probe before theorising —
+  recorded again because it worked again.
+
+## Step 10 unit 4a — the market cache (§10a, "Where it is cached")
+
+- **RULE: two routes writing one store must be tested against each other, not
+  against each other's fixtures.** A mutation that mislabelled the spread's
+  floor-only cache rows as carrying both layers survived every test in both
+  endpoint specs. Each spec wrote its OWN fixture row and read it back, so
+  neither ever saw what the other actually writes. The defect only became
+  visible in a test that runs the spread and then requests the market for a
+  version it priced.
+
+  The cost of getting it wrong is the shape §10a exists to prevent: the spread
+  fetches only `marketplace/stats`, so a row claiming the ladder too would make
+  the market panel serve an empty condition ladder as a cached FACT for seven
+  days, for a release layer 2 was never asked about. Hence `layersFetched` and
+  `cacheCovers` — a floor-only row reads as a miss to anyone needing layer 2.
+
+- **Hand-writing a migration skips its snapshot.** `drizzle/meta/NNNN_snapshot.json`
+  is generated, and a hand-written `.sql` plus a hand-edited journal leaves the
+  chain without one. Caught by the fresh-clone test, which copies only
+  git-tracked files — the untracked migration was absent while the journal
+  referenced it. Use `drizzle-kit generate`, then rename the file and fix the
+  journal tag; do not author the SQL directly.
+
+- **A green migration is not proof against a dirty local database.** After the
+  regenerate, `drizzle-kit migrate` failed with an empty error and exit 1
+  because my earlier hand-run had already created `market_cache` while the new
+  migration hash was unrecorded. Dropping and recreating the test database
+  resolved it. When a migration fails with no message, suspect local state
+  before suspecting the migration.

@@ -248,6 +248,10 @@ describe('§4 conformance — NOT NULL where the spec requires it', () => {
     const exempt = [
       'price_history',
       'discogs_cache',
+      // §10a specifies three columns and no more. Like its sibling above, this
+      // is a cache: `fetched_at` IS its timestamp, and a separate `updated_at`
+      // would be a second answer to the same question.
+      'market_cache',
       'record_genres',
       'want_list_genres',
       'artist_genres',

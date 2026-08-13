@@ -3,6 +3,8 @@ import { truncateAll, closeTestDb } from '../../helpers/db';
 import { GET as spread } from '@/app/api/discogs/master/[id]/spread/route';
 import { middlewareRuns, routeAuthMode } from '@/lib/auth/routes';
 import * as clientModule from '@/lib/discogs/client';
+import { readCachedMarket, writeCachedMarket } from '@/lib/discogs/market-cache';
+import { GET as market } from '@/app/api/discogs/market/[id]/route';
 
 /**
  * SPEC.md §10a layer 3 — the version spread.
@@ -177,5 +179,113 @@ describe('GET /api/discogs/master/:id/spread', () => {
     });
 
     expect((await request('133514')).status).toBe(502);
+  });
+});
+
+describe('the market cache (§10a, "Where it is cached")', () => {
+  /**
+   * **This is the layer the cache was specified for.** The spread costs one
+   * call per version — eleven for the Hot Tuna master, a fifth of the
+   * per-minute budget — and §10a: "a second expand of the same master is free,
+   * and versions already seen through search or a previous expand are free the
+   * first time."
+   */
+
+  it('a second expand of the same master costs no Discogs calls', async () => {
+    const get = mockDiscogs({ prices: { 1001: 8, 1002: 45, 1003: 400 } });
+
+    const first = await (await request('133514')).json();
+
+    const statsCalls = () =>
+      get.mock.calls.filter(([path]) => String(path).includes('marketplace/stats')).length;
+    expect(statsCalls(), 'one per version the first time').toBe(3);
+
+    const second = await (await request('133514')).json();
+
+    expect(statsCalls(), 'the second expand is free').toBe(3);
+    expect(second.range, 'and gives the same answer').toEqual(first.range);
+  });
+
+  it('prices only the versions not already cached', async () => {
+    /**
+     * The partial-hit case, and the one that pays off in normal use: a version
+     * seen through an earlier expand or a record-detail panel is already
+     * priced, so only the rest cost anything.
+     */
+    await writeCachedMarket(1002, { lowestPrice: { value: 45, currency: 'USD' } });
+
+    const get = mockDiscogs({ prices: { 1001: 8, 1003: 400 } });
+
+    const body = await (await request('133514')).json();
+
+    const statsCalls = get.mock.calls.filter(([path]) =>
+      String(path).includes('marketplace/stats'),
+    );
+    expect(statsCalls, 'two fetched, one served from cache').toHaveLength(2);
+
+    // The cached version still counts toward the answer.
+    expect(body.checked).toBe(3);
+    expect(body.range).toEqual({ low: 8, high: 400 });
+  });
+
+  it('stores each version it priced, so a later master sharing it is cheaper', async () => {
+    mockDiscogs({ prices: { 1001: 8, 1002: 45, 1003: 400 } });
+
+    await request('133514');
+
+    expect(await readCachedMarket(1001)).not.toBeNull();
+    expect(await readCachedMarket(1003)).not.toBeNull();
+  });
+
+  it('does not cache a version the limiter refused', async () => {
+    /**
+     * A refusal is not a price. Caching it would record "nothing for sale" for
+     * seven days because the budget ran out once — the absent-versus-unknown
+     * failure, persisted.
+     */
+    mockDiscogs({ prices: { 1001: 8, 1002: 45, 1003: 400 }, failAfter: 1 });
+
+    await request('133514');
+
+    expect(await readCachedMarket(1002), 'a refusal is not an answer').toBeNull();
+    expect(await readCachedMarket(1003)).toBeNull();
+  });
+
+  it('leaves rows the MARKET endpoint will refetch, rather than a hollow ladder', async () => {
+    /**
+     * **The two routes tested against each other, not against my idea of each
+     * other.** A mutation that mislabelled the spread's floor-only rows as
+     * carrying both layers survived every test here — because each route's
+     * tests wrote their own fixture rows and never read the other's.
+     *
+     * The spread fetches only `marketplace/stats`. If it claims the ladder too,
+     * the market panel serves an empty condition ladder as a cached fact for
+     * seven days for a release layer 2 was never asked about.
+     */
+    mockDiscogs({ prices: { 1001: 8, 1002: 45, 1003: 400 } });
+
+    await request('133514');
+    vi.restoreAllMocks();
+
+    // A real market request for a version the spread just priced.
+    const marketGet = vi.fn(async (path: string) => {
+      if (path.includes('price_suggestions')) {
+        return { 'Very Good Plus (VG+)': { value: 30, currency: 'USD' } };
+      }
+      return { num_for_sale: 3, lowest_price: { value: 8, currency: 'USD' } };
+    });
+    vi.spyOn(clientModule, 'getDiscogsClient').mockReturnValue({
+      get: marketGet as unknown as clientModule.DiscogsClient['get'],
+      fetchImage: vi.fn() as unknown as clientModule.DiscogsClient['fetchImage'],
+    });
+
+    const body = await (
+      await market(new Request('http://test/api/discogs/market/1001'), {
+        params: Promise.resolve({ id: '1001' }),
+      })
+    ).json();
+
+    expect(marketGet, "the spread's row cannot answer a ladder request").toHaveBeenCalled();
+    expect(body.conditions.length, 'a real ladder, not a cached emptiness').toBeGreaterThan(0);
   });
 });

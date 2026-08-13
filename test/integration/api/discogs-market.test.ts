@@ -4,6 +4,7 @@ import { truncateAll, closeTestDb } from '../../helpers/db';
 import { GET as market } from '@/app/api/discogs/market/[id]/route';
 import { middlewareRuns, routeAuthMode } from '@/lib/auth/routes';
 import * as clientModule from '@/lib/discogs/client';
+import { readCachedMarket, writeCachedMarket } from '@/lib/discogs/market-cache';
 
 /**
  * SPEC.md §10a layers 1 and 2: `GET /api/discogs/market/:id`.
@@ -198,5 +199,106 @@ describe('GET /api/discogs/market/:id', () => {
 
     expect(body).not.toMatch(/marketplace\/(sell|item|buy)/i);
     expect(body).not.toContain('discogs.com/sell');
+  });
+});
+
+describe('the market cache (§10a, "Where it is cached")', () => {
+  /**
+   * **What makes layer 3 affordable.** The spread costs one call per version —
+   * eleven for a single master — and without a cache every expand pays it
+   * again. These tests assert the CALL COUNT, not just the response body: a
+   * cache that returns the right figures while still hitting Discogs has not
+   * done the thing it exists for.
+   */
+
+  it('does not call Discogs a second time for the same release', async () => {
+    const get = mockDiscogs();
+
+    const first = await (await request('381756')).json();
+    const callsAfterFirst = get.mock.calls.length;
+
+    const second = await (await request('381756')).json();
+
+    expect(get.mock.calls.length, 'served from cache').toBe(callsAfterFirst);
+    expect(second).toEqual(first);
+  });
+
+  it('still calls Discogs for a DIFFERENT release', async () => {
+    // Guards the obvious cache bug: a hit keyed on nothing, serving one
+    // release's prices for every release.
+    const get = mockDiscogs();
+
+    await request('381756');
+    const callsAfterFirst = get.mock.calls.length;
+
+    await request('249504');
+
+    expect(get.mock.calls.length).toBeGreaterThan(callsAfterFirst);
+  });
+
+  it('re-fetches once the entry is older than 7 days', async () => {
+    /**
+     * Written directly at 8 days, because the route's own clock cannot be
+     * moved from here. A stale entry must read as a miss and be refreshed.
+     */
+    const get = mockDiscogs();
+    const EIGHT_DAYS = 8 * 24 * 60 * 60 * 1000;
+
+    await writeCachedMarket(381756, { forSale: 99 }, () => Date.now() - EIGHT_DAYS);
+
+    const body = await (await request('381756')).json();
+
+    expect(get, 'a stale entry is a miss').toHaveBeenCalled();
+    expect(body.forSale, 'the refreshed figures, not the stale ones').not.toBe(99);
+  });
+
+  it('serves a fresh cached entry without asking Discogs at all', async () => {
+    const get = mockDiscogs();
+
+    await writeCachedMarket(381756, { forSale: 7, conditions: [], rangeUnavailable: true });
+
+    const body = await (await request('381756')).json();
+
+    expect(get, 'nothing fresh needs fetching').not.toHaveBeenCalled();
+    expect(body.forSale).toBe(7);
+  });
+
+  it('does not cache a response when Discogs was unreachable', async () => {
+    /**
+     * The dangerous write. If a total failure were cached, the app would serve
+     * "nothing for sale" for seven days after a one-minute outage — absence
+     * recorded as fact, which is §10a's central prohibition.
+     */
+    const unreachable = new clientModule.DiscogsError('unreachable', { status: 502 });
+    mockDiscogs({ stats: unreachable, suggestions: unreachable });
+
+    expect((await request('381756')).status).toBe(502);
+
+    expect(
+      await readCachedMarket(381756),
+      'a failure must not be stored as an answer',
+    ).toBeNull();
+  });
+
+  it('treats a floor-only row from the spread as a MISS, not a complete answer', async () => {
+    /**
+     * **The two writers store different amounts of truth.** The spread fetches
+     * only `marketplace/stats` (the floor) — never `price_suggestions` — so its
+     * rows carry no condition ladder. Serving one here as a complete market
+     * answer would render "no ladder available" for seven days for a release
+     * layer 2 was never asked about: absence recorded as fact, which is exactly
+     * what §10a forbids.
+     */
+    const get = mockDiscogs();
+
+    await writeCachedMarket(381756, {
+      layersFetched: ['floor'],
+      lowestPrice: { value: 20, currency: 'USD' },
+    });
+
+    const body = await (await request('381756')).json();
+
+    expect(get, 'a floor-only row cannot answer a full market request').toHaveBeenCalled();
+    expect(body.conditions.length, 'the ladder is fetched, not assumed empty').toBeGreaterThan(0);
   });
 });

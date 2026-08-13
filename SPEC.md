@@ -701,11 +701,7 @@ The reason is that `discogs_release_id` is unique (§4.2) and pressings are shar
 
 Four layers, each answering a different part of "should I buy this?". They are independent — later layers degrade to absence, never to a guess.
 
-**1. Scarcity and floor.** `num_for_sale` and `lowest_price` from `marketplace/stats/:id`, requested with `curr_abbr=USD`. How many copies exist for sale and what the cheapest is asking.
-
-  **Layers 1 and 2 are fetched ON DEMAND, per release** — a control on a `/lookup` result, not a field that appears with the results. Measured: a search returns 50 results, search payloads carry no price data at all, and layers 1+2 cost two calls per release. Rendering them across a results page would spend up to 100 calls of a 60/minute budget on a search the user may not act on. The same rule layer 3 states for versions applies here for the same arithmetic: never eagerly, never for a whole search page. The shop case is one record in hand, not fifty on a screen.
-
-  **Currency, measured rather than assumed:** `marketplace/stats` honours `curr_abbr`; `price_suggestions` ignores it and returns USD regardless of the account's setting. Requesting USD on layer 1 is what makes the two agree. This is fortunate rather than designed — a user outside the US would see two currencies, so each figure carries its own and none are converted.
+**1. Scarcity and floor.** `num_for_sale` and `lowest_price`, already on the cached release payload. How many copies exist for sale and what the cheapest is asking. Free, no extra call.
 
 **2. Condition range.** `marketplace/price_suggestions/:id` returns a suggested price per condition grade — VG, VG+, NM and so on. **This endpoint requires completed Discogs seller settings on the token's account** and returns `404 You must fill out your seller settings first` otherwise, which was measured rather than assumed. If it 404s, the app shows layer 1 alone and says the range is unavailable; it never interpolates one.
 
@@ -718,6 +714,22 @@ Four layers, each answering a different part of "should I buy this?". They are i
 **4. Why it matters.** An LLM call, on demand, answering what the numbers cannot: *which* pressing to hunt and what to check. "The 1982 UK Clay first press is the one — the 1989 repress carries the same catalogue number but was cut from a copy tape, and the runout tells them apart." Rate-limited and user-initiated per §9.2, never on page load.
 
   This layer is opinion and must be labelled as such. It may not state a price, and it may never contradict layers 1–3, which are measurements.
+
+### Where it is cached
+
+**A separate table, `market_cache` — not `discogs_cache`.** That table is keyed by `discogs_release_id` and holds release *detail* payloads, which the §5.7 import path reads to build records. Storing marketplace figures under the same key would corrupt what the importer reads.
+
+| Column | Type |
+|---|---|
+| discogs_release_id | INTEGER NOT NULL UNIQUE |
+| payload | JSONB NOT NULL — the normalized layers 1–2 for that release |
+| fetched_at | TIMESTAMPTZ NOT NULL DEFAULT now() |
+
+Same 7-day freshness rule as §6, and the same stale-read behaviour: a stale entry reads as a miss but is left in place, so a Discogs outage serves week-old figures rather than nothing.
+
+**This is what makes layer 3 affordable.** The spread costs one call per version — eleven for a single master, a fifth of the per-minute budget — and without a cache every expand pays it again. With one, a second expand of the same master is free, and versions already seen through search or a previous expand are free the first time.
+
+Market figures go stale faster than release details do, which is the argument for a shorter TTL later. Seven days is the starting point because it matches §6 and because a week-old floor price still answers "is this shop above or below the market" — the question the feature exists for.
 
 ### Where it appears
 

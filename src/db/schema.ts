@@ -300,6 +300,21 @@ export const discogsCache = pgTable('discogs_cache', {
   fetchedAt: timestamp('fetched_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * §10a: marketplace figures, cached separately from release detail.
+ *
+ * **Not `discogs_cache`.** That table is keyed by the same id but holds release
+ * *detail*, which the §5.7 import path reads to build records — marketplace
+ * figures stored under the same key would be handed to the importer as a
+ * release payload.
+ */
+export const marketCache = pgTable('market_cache', {
+  id,
+  discogsReleaseId: integer('discogs_release_id').notNull().unique(),
+  payload: jsonb('payload').notNull(),
+  fetchedAt: timestamp('fetched_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const journalEntries = pgTable(
   'journal_entries',
   {
