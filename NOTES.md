@@ -4222,9 +4222,78 @@ South Korea $40.00, US $65.00. The outlier is self-explaining: nobody reads that
 and concludes their UK copy is bad. Worth deciding finding 3 against this rather
 than against the verdict text alone.
 
-**A Playwright route glob without a trailing `*` silently unstubs on a new query
-param.** Adding `?format=` to the spread URL broke two older tests that stubbed
-`**/spread` — they did not error, the route simply stopped matching and the real
-endpoint answered. Caught only by running the whole spec file. This is the
-cross-file break CLAUDE.md §10 describes, in its quietest form: the failure mode
-of a stale glob is a test that stops testing, not one that fails loudly.
+**A Playwright route glob without a trailing `*` stops matching on a new query
+param.** Adding `?format=` to the spread URL detached the stub from two older
+tests that routed `**/spread`. Caught by running the whole spec file — the
+cross-file break CLAUDE.md §10 describes.
+
+**Corrected after measuring:** the first version of this entry said the tests
+"passed against the real endpoint". They did not. Reproduced by reverting one
+glob: the request reaches the route handler, `assertNoLiveCall` throws, and the
+endpoint returns 502 `UPSTREAM_ERROR`, so the test fails loudly and NO live call
+is made. See the guard entry below.
+
+## The no-live-Discogs guard covers the detached-stub path (measured)
+
+Question raised in QA: when a Playwright route glob stops matching, the stub
+detaches with no error — do the tests then hit Discogs for real, and does the
+guard catch it?
+
+**Measured, not reasoned.** Reverted one glob to its stale form and requested the
+unstubbed endpoint directly from a running E2E server:
+
+    GET /api/discogs/master/50683/spread?format=Vinyl
+    -> 502 {"error":{"message":"Could not reach Discogs. Try again shortly.",
+            "code":"UPSTREAM_ERROR"}}
+
+That is `assertNoLiveCall` throwing. The guard is armed in E2E because
+`.env.test` points `DATABASE_URL` at localhost:5433 and the guard keys off the
+DATABASE TARGET rather than a flag — the step-7 correction holding up under a
+case it was not written for.
+
+So the failure mode of a detached stub here is a LOUD failure, not a silent
+live call. The guard is doing exactly what it exists for.
+
+**What is still true and worth fixing separately:** a detached stub fails for the
+wrong REASON. The test reports "element not found" rather than "your route glob
+stopped matching", which cost a diagnosis cycle. The guard prevents the dangerous
+outcome; it does not make the cause legible.
+
+## RULE: a mock can fail by not answering, not only by answering wrongly
+
+Alongside the mock-shape family already recorded here (a fixture that answers
+every path identically; a fixture that does not discriminate between rules), this
+is the degenerate member: **the mock stops answering at all.**
+
+The tell is different from the others. A wrong-shaped mock produces confidently
+wrong assertions; a detached mock produces assertions that fail for an unrelated
+reason — "element not found", "timeout waiting for locator" — and sends you
+looking at the component instead of the stub. Both times this has happened here
+the first hypothesis was the render path.
+
+Practical rule: when a UI assertion fails right after a URL or contract change,
+check that the stub still MATCHES before investigating what it returns. A
+`page.route` glob is a silent contract with the code under test, and query
+strings, path segments and trailing slashes all break it without warning.
+
+## WIDE_RATIO is unvalidated against a real negative case
+
+Stated plainly because two rounds of measurement have now failed to confirm it.
+
+`WIDE_RATIO = 3` was a guess, and the Carpenters master (84975) is the one record
+where the answer is known — pressing does NOT meaningfully matter among the
+copies a collector would actually encounter. Measured against it twice:
+
+    unfiltered, first 15 versions   ratio 50.00   -> "pressing matters"
+    vinyl-only, first 15 vinyl      ratio 81.25   -> "pressing matters"
+
+The threshold fired on the wrong answer both times, and the strictly-better fix
+made the number worse rather than better.
+
+**This does not mean the threshold is wrong.** It means it has never been
+confirmed against a real case where the verdict should be negative, and the one
+candidate case fails it. Treat `WIDE_RATIO` as unvalidated rather than settled:
+do not tune it against Carpenters (one case, and trimming to fit it would be a
+second guess agreeing with the first), and do not cite it as tested. What would
+settle it is a handful of masters with known answers in both directions —
+collected from real use, not constructed.
