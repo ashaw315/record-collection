@@ -555,6 +555,10 @@ This applies to the versions list as much as to search. The drill-down is where 
    - **Different pressing of the same album** — a `records` row matching on artist + fuzzy title but a different `discogs_release_id`. Badge: "You own a different pressing" plus the year/country/catalog of the one owned. **This case must never be collapsed into the exact match** — it is the whole reason the distinction exists, and getting it wrong is what causes a bad buying decision in a store.
    - **On the want list** — matching `want_list` row not yet acquired. Badge shows priority and, if `target_pressing_id` is set, whether this result *is* that target pressing.
    - No match: no badge.
+
+   **In a version table, the badge belongs to the table, not to every row.** §7.7's tiers were written for a single candidate — one record in hand, one answer. A master's version table is a different shape: every row shares the album, so every non-owned row is genuinely "a different pressing of something you own", and rendering that on all of them makes the badge the table's background rather than a signal about any row.
+
+   So: state the ownership fact **once at the head** — "100 versions · 1 already on your shelf. You own: 1978 US BSK 3266" — and badge **only the row that is actually owned**. The asymmetry says the unmissable answer is "you own *this* one", and it is unmissable precisely because nothing else is marked.
 8. **Never overwrite user-entered data with external data.** On any Discogs re-sync or re-import, fields the user has edited are preserved. `matrix_runout` in particular is user-authoritative.
 
 ---
@@ -710,6 +714,10 @@ Four layers, each answering a different part of "should I buy this?". They are i
 **3. Does pressing matter here?** Computed, not fetched: the spread of `lowest_price` across a master's versions. Versions spanning £8 to £400 mean the pressing matters more than the price; everything between £10 and £25 means it barely does. This is the judgement a collector actually needs and no single release can supply it.
 
   It costs one call per version, so it is fetched **on demand only** — when the user opens a master's version table — and cached with the same 7-day rule. Never eagerly, never for a whole search page.
+
+**A partial sample can still be decisive, in one direction only.** A price range only grows as more versions are checked, so a sample already spanning a wide ratio cannot become narrow — the verdict "pressing matters here" is safe on partial evidence and must be given. The opposite is not: a narrow sample says nothing, because an unchecked version could be the £400 one.
+
+So on a partial fetch, say "pressing matters" when the ratio is already wide, and say only that the check is incomplete when it is not. Withholding both is what the naive rule does, and combined with a cap on versions priced it silences layer 3 on exactly the masters with the most versions — which are the popular records where pressing choice matters most. A verdict that only fires on small masters is a verdict that never fires when it counts.
 
 **4. Why it matters.** An LLM call, on demand, answering what the numbers cannot: *which* pressing to hunt and what to check. "The 1982 UK Clay first press is the one — the 1989 repress carries the same catalogue number but was cut from a copy tape, and the runout tells them apart." Rate-limited and user-initiated per §9.2, never on page load.
 

@@ -4082,3 +4082,75 @@ form the records work had not shown — see the masking entry under Open.
   state, no submit, no `data-hydrated` marker. Worth noting because the reverse
   move — adding one input to a display component — silently costs a client
   boundary and a hydration marker.
+
+## RULE: a schema unit is not done until `db:migrate` has run against NEON
+
+Twice now a step has looked complete — migrations clean from an empty local
+database, full suite green — and then failed in QA because the deployed Neon
+database was still on the previous schema. The local test database and Neon are
+two databases; `npm run test` only ever proves the first one.
+
+The test suite CANNOT catch this. It resets and migrates the local Postgres
+every run, so the migration is always applied there by definition. Nothing in
+the gates looks at Neon at all.
+
+For any unit that adds or changes a migration, run `db:migrate` against the Neon
+URL as part of the unit, and say in the report that it was run. Treat it as part
+of the §10 definition of done for schema units, alongside "runs clean from an
+empty database".
+
+## QA round, step 10 — the outlier floor (recorded for the copy pass, not fixed)
+
+A Japanese CD rendered: "1 for sale, cheapest asking $594.83. Discogs estimates
+NM $73.31." The floor is EIGHT TIMES the top estimate — one optimistic seller
+with the only listing — and the panel presents the two figures flatly, as though
+they corroborate each other.
+
+Neither number is wrong and neither is mislabelled; §10a's layers are doing
+exactly what they promise. What is missing is the RELATION between them. Adjacent
+placement implies agreement, and here they disagree by an order of magnitude —
+which is itself the most useful thing on the panel, because it says "the only
+copy listed is priced far above what Discogs thinks it is worth."
+
+The shape to fix in the copy pass: when the floor exceeds the top ladder estimate
+by a wide multiple, say so in words rather than leaving the reader to divide two
+numbers. Related to the want-list "three money figures, each saying what it is"
+work — same problem, one layer further out: it is not enough for each figure to
+say what it is when their RELATIONSHIP is the finding.
+
+Not fixed now because it is copy design on a closing step, and because the
+threshold wants real data behind it rather than a guess.
+
+## QA round, step 10 — two fixes
+
+- **The version table badge was correct per row and wrong per table.** Verified
+  with a probe against the real matcher: with one owned pressing among four
+  version rows, the owned row returns `exact` and the rest return
+  `different-pressing`. Every one of those was TRUE — §7.7's tiers were written
+  for a single candidate, and in a version table every row shares the album, so
+  every unowned row genuinely is a different pressing of something owned.
+
+  The lesson is not about ownership. **A rule that is correct for one item can
+  be noise when applied to a list of items that share the thing the rule is
+  about.** The signal was carried by the ONE row that differed, and marking all
+  of them destroyed it. §7.7 amended: state it once at the head, badge only the
+  owned row.
+
+- **"Withhold on partial" silenced layer 3 exactly where it mattered.** A price
+  range only grows, so a partial sample already spanning a wide ratio cannot
+  become narrow — the verdict is safe. The old rule withheld anyway, and
+  combined with `MAX_VERSIONS_PRICED = 15` that meant every master with more
+  than fifteen versions got silence. Those are the popular records. A caution
+  that fires only on small masters never fires when it counts.
+
+  Generalisable: **a safety rule keyed on "is the evidence complete" rather
+  than "can the evidence change the answer" fails asymmetrically**, and it fails
+  toward saying nothing — which reads as a broken feature rather than a careful
+  one.
+
+- **A `sed` mutation that fails to apply looks exactly like a surviving
+  mutation.** Three mutations of the directional rule reported "20 passed"
+  because `sed` rejected the `||` in the anchor and changed nothing. The
+  anchor-not-found failure mode from the earlier LEFT JOIN finding, in a new
+  disguise. Mutation scripts must ASSERT the anchor was found — the Python
+  version does, and the three then failed 2, 4 and 5 tests.

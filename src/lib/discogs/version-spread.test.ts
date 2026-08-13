@@ -204,3 +204,112 @@ describe('summariseSpread — the PARTIAL case', () => {
     expect(said.text).toMatch(/could not|none checked|unavailable/i);
   });
 });
+
+describe('summariseSpread — the DIRECTIONAL rule (§10a as amended)', () => {
+  /**
+   * **A range only grows.** Checking more versions can widen a spread but never
+   * narrow it, so the two directions carry different evidential weight:
+   *
+   *   - already wide on a partial sample → the verdict is SAFE. The unchecked
+   *     versions cannot bring the ratio back down.
+   *   - currently narrow on a partial sample → the verdict is a GUESS. Any
+   *     unchecked version could be the £400 one.
+   *
+   * The naive "withhold on anything partial" rule looked cautious and was
+   * worse: combined with MAX_VERSIONS_PRICED = 15 it silenced layer 3 on every
+   * master with more than fifteen versions — the popular records, where
+   * pressing choice matters most. A verdict that only fires on small masters
+   * never fires when it counts. QA found it at 15 of 100 versions, $5.69–$20.69
+   * — a 3.64x spread, decisive, and reported as nothing at all.
+   */
+
+  it('gives the verdict on a partial sample that is ALREADY wide', () => {
+    // QA's actual case: 15 of 100, $5.69-$20.69, ratio 3.64.
+    const said = summariseSpread({
+      checked: [priced(5.69), priced(20.69)],
+      total: 100,
+      currency: 'USD',
+    });
+
+    expect(said.partial, 'still honestly partial').toBe(true);
+    expect(said.verdict, 'and still decisive').toBe('pressing-matters');
+    expect(said.text).toMatch(/which pressing|pressing matters/i);
+    expect(said.text, 'the sample size is not hidden').toContain('2 of 100');
+  });
+
+  it('WITHHOLDS the verdict on a partial sample that is currently narrow', () => {
+    /**
+     * The direction that cannot be trusted. Three versions between $20 and $25
+     * says nothing about the other ninety-seven — one of them could be the
+     * expensive one, which reverses the answer entirely.
+     */
+    const said = summariseSpread({
+      checked: [priced(20), priced(22), priced(25)],
+      total: 100,
+      currency: 'USD',
+    });
+
+    expect(said.verdict).toBeNull();
+    expect(said.text.toLowerCase()).not.toMatch(/barely/);
+    expect(said.text, 'and says why it is not answering').toMatch(/so far|checked/i);
+  });
+
+  it('says "barely matters" when the sample is COMPLETE and narrow', () => {
+    /**
+     * Silence read as a missing feature in QA. "Pressing barely matters here"
+     * is a real answer — it tells the collector to buy the cheap copy — and
+     * withholding it wastes a fetch that already succeeded.
+     */
+    const said = summariseSpread({
+      checked: [priced(20), priced(22), priced(25)],
+      total: 3,
+      currency: 'USD',
+    });
+
+    expect(said.verdict).toBe('pressing-barely-matters');
+    expect(said.text).toMatch(/barely/i);
+  });
+
+  it('is the RATIO that decides a partial verdict, not the sample size', () => {
+    /**
+     * The discriminating pair: both are 2 of 100 checked, and they must differ.
+     * A rule keyed on "enough versions seen" would treat them identically and
+     * get both wrong.
+     */
+    const wide = summariseSpread({
+      checked: [priced(5), priced(30)],
+      total: 100,
+      currency: 'USD',
+    });
+    const narrow = summariseSpread({
+      checked: [priced(20), priced(25)],
+      total: 100,
+      currency: 'USD',
+    });
+
+    expect(wide.verdict, '6x on two versions is already decisive').toBe('pressing-matters');
+    expect(narrow.verdict, '1.25x on two versions decides nothing').toBeNull();
+  });
+
+  it('never reports "barely matters" from a partial sample, at any width', () => {
+    /**
+     * The direction that must NEVER fire on partial evidence, asserted across
+     * the range rather than at one point — this is the claim that would send a
+     * collector home with the wrong pressing.
+     */
+    for (const [low, high] of [
+      [20, 21],
+      [20, 25],
+      [20, 40],
+      [20, 59],
+    ] as const) {
+      const said = summariseSpread({
+        checked: [priced(low), priced(high)],
+        total: 100,
+        currency: 'USD',
+      });
+
+      expect(said.verdict, `${low}-${high} partial`).not.toBe('pressing-barely-matters');
+    }
+  });
+});

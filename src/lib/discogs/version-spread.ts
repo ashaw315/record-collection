@@ -83,33 +83,50 @@ export function summariseSpread(input: {
   const range = { low: Math.min(...prices), high: Math.max(...prices) };
 
   /**
-   * **The verdict is withheld on a partial sample, and the range is not.**
+   * **Partial evidence is decisive in ONE direction, and the rule follows the
+   * direction rather than the sample size** (§10a as amended).
    *
-   * A range can be honestly partial — "of the ones checked" is true and useful.
-   * A verdict cannot: "the pressing barely matters" from three of eleven
-   * versions is a conclusion the evidence does not support, and the eight
-   * unchecked could contain the one that reverses it.
+   * A price range only ever GROWS as more versions are checked. So:
+   *
+   *   - already wide → "pressing matters" is safe on partial evidence. The
+   *     unchecked versions cannot bring the ratio back down.
+   *   - currently narrow → "barely matters" is a guess. Any unchecked version
+   *     could be the £400 one, which reverses it completely.
+   *
+   * The earlier rule withheld BOTH on anything partial. That looked like the
+   * cautious choice and was worse: `MAX_VERSIONS_PRICED` caps every fetch at
+   * fifteen, so every master with more versions than that was permanently
+   * partial and layer 3 said nothing at all about it — and those are the
+   * popular records, where pressing choice matters most. QA caught it at 15 of
+   * 100 versions spanning $5.69–$20.69: a 3.64× spread, conclusive, reported as
+   * silence.
    */
-  const verdict = partial ? null : spreadVerdict(range);
+  const candidate = spreadVerdict(range);
+  const verdict = !partial || candidate === 'pressing-matters' ? candidate : null;
 
   const money = (value: number) => formatMarketPrice(value, input.currency);
   const spread = range.low === range.high ? money(range.low) : `${money(range.low)}–${money(range.high)}`;
 
-  if (partial) {
-    return {
-      range,
-      verdict,
-      partial,
-      text: `${input.checked.length} of ${input.total} pressings checked so far — ${spread}.`,
-    };
-  }
-
+  /**
+   * One phrasing for both, so a verdict reads identically whether the sample
+   * was complete or not — the sample size is reported separately and honestly,
+   * rather than being encoded in how confident the sentence sounds.
+   */
   const conclusion =
     verdict === 'pressing-matters'
       ? ' Which pressing you get matters more than the price.'
       : verdict === 'pressing-barely-matters'
         ? ' The pressing barely changes the price.'
         : '';
+
+  if (partial) {
+    return {
+      range,
+      verdict,
+      partial,
+      text: `${input.checked.length} of ${input.total} pressings checked so far — ${spread}.${conclusion}`,
+    };
+  }
 
   return {
     range,

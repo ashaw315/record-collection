@@ -127,7 +127,7 @@ function searchResult(overrides: Record<string, unknown> = {}) {
 }
 
 /** A version row as the versions endpoint emits it, ownership included. */
-function versionRow(discogsId: number, ownership = NO_OWNERSHIP) {
+function versionRow(discogsId: number, ownership: Record<string, unknown> = NO_OWNERSHIP) {
   const raw = VERSIONS_FIXTURE.versions.find((v) => v.id === discogsId);
 
   return {
@@ -1012,4 +1012,69 @@ test('a partial spread says it is partial rather than reading as complete', asyn
   // No verdict from a third of the evidence.
   await expect(spread).not.toContainText(/barely (changes|matters)/i);
   await expect(spread).not.toContainText(/which pressing you get matters/i);
+});
+
+test('the version table states ownership once, and badges only the row you own', async ({
+  page,
+}) => {
+  /**
+   * §7.7 as amended: "In a version table, the badge belongs to the table, not
+   * to every row."
+   *
+   * QA found the old behaviour: every non-owned row carried an identical "You
+   * own a DIFFERENT pressing / Yours: 1978 US BSK 3266", repeated down the
+   * table. Each one was TRUE — the tiers were written for a single candidate,
+   * and in a version table every row shares the album, so every unowned row
+   * genuinely is a different pressing of something owned. Repeated on all of
+   * them it became the table's background rather than a signal about any row.
+   *
+   * The asymmetry is the point: the unmissable answer is "you own THIS one",
+   * and it is unmissable precisely because nothing else is marked.
+   */
+  const OWNED = 381756;
+  const OTHER = 1002;
+  const THIRD = 1003;
+
+  const differentPressing: Record<string, unknown> = {
+    ...NO_OWNERSHIP,
+    tier: 'owned_different_pressing',
+    ownedPressing: { year: 1978, country: 'US', catalogNumber: 'BSK 3266' },
+  };
+
+  await stubLookup(page, {
+    results: [searchResult()],
+    versions: [
+      versionRow(OWNED, { ...NO_OWNERSHIP, tier: 'owned_exact' }),
+      versionRow(OTHER, differentPressing),
+      versionRow(THIRD, differentPressing),
+    ],
+  });
+
+  await page.goto('/lookup');
+  await formReady(page);
+  await page.getByLabel('Artist').fill('Discharge');
+  await page.getByRole('button', { name: 'Search Discogs' }).click();
+  await page.getByTestId('result-card').first().getByTestId('expand-versions').click();
+
+  const rows = page.getByTestId('version-row');
+  await expect(rows).toHaveCount(3, { timeout: 15_000 });
+
+  /**
+   * ONE badge in the table, on the owned row. The count is the assertion —
+   * "the owned row has a badge" would pass with all three badged.
+   */
+  const badges = page.getByTestId('version-row').getByTestId('ownership-badge');
+  await expect(badges, 'only the row actually owned is marked').toHaveCount(1);
+  await expect(badges.first()).toContainText(/own this pressing/i);
+
+  // The repeated fact, stated once, where it is context rather than noise.
+  const head = page.getByTestId('version-table-summary');
+  await expect(head).toContainText('1 already on your shelf');
+  await expect(head, 'the owned pressing named once').toContainText('1978');
+  await expect(head).toContainText('BSK 3266');
+
+  // And never per-row, which is the defect itself.
+  for (const row of await rows.all()) {
+    await expect(row, 'the repeated badge is gone').not.toContainText(/DIFFERENT pressing/);
+  }
 });

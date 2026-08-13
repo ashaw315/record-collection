@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { comparisonKey, groupIdenticalVersions, mustStayExpanded } from './identical-versions';
 import { OwnershipBadge } from './OwnershipBadge';
+import { describeOwnedPressing } from './ownership-badge';
 import { COMPARISON_COLUMNS, comparisonCells, isOnTheShelf } from './version-row';
 import type { OwnershipPayload } from '@/lib/discogs/ownership-payload';
 import type { NormalizedVersion } from '@/lib/discogs/normalize-versions';
@@ -61,6 +62,24 @@ export function VersionTable({
   const ownedCount = versions.filter((version) => isOnTheShelf(version.ownership)).length;
 
   /**
+   * The owned pressing named once for the whole table.
+   *
+   * Taken from any tier-2 row, because they all carry the SAME
+   * `ownedPressing` — that identity is exactly why repeating it per row was
+   * noise. Read from a row rather than passed in, so the table keeps deriving
+   * its own state from the payload it is given.
+   */
+  const ownedElsewhere =
+    versions
+      .map((version) => version.ownership)
+      .find((ownership) => ownership.tier === 'owned_different_pressing')?.ownedPressing ?? null;
+
+  // The same wording the badge used, so the fact reads identically wherever it
+  // appears — moving it must not silently reword it.
+  const ownedElsewhereText =
+    ownedElsewhere === null ? null : describeOwnedPressing(ownedElsewhere);
+
+  /**
    * §5.7 calls this "the step where the user identifies THEIR pressing", and
    * for some masters the columns cannot: Hot Tuna's 133514 has FIVE US 1970
    * versions identical on every field the versions endpoint returns. Rendering
@@ -108,10 +127,18 @@ export function VersionTable({
         The count first, because it is the answer to "have I got this already?"
         before any row is read — and on a phone it is what fits above the fold.
       */}
-      <p className="px-3 py-2 text-xs text-muted-foreground">
+      <p data-testid="version-table-summary" className="px-3 py-2 text-xs text-muted-foreground">
         {versions.length} version{versions.length === 1 ? '' : 's'}
         {ownershipChecked && ownedCount > 0 && (
           <span className="font-medium text-foreground"> · {ownedCount} already on your shelf</span>
+        )}
+        {/*
+          The fact the per-row badge used to repeat, stated once. Here it is
+          context for reading the table; on every row it was noise that drowned
+          the one row worth noticing.
+        */}
+        {ownershipChecked && ownedElsewhereText !== null && (
+          <span className="block text-foreground">You own: {ownedElsewhereText}</span>
         )}
       </p>
 
@@ -203,7 +230,19 @@ export function VersionTable({
                   ))}
 
                   <td className="px-2 py-2">
-                    <OwnershipBadge ownership={version.ownership} />
+                    {/*
+                      §7.7 as amended: "the badge belongs to the table, not to
+                      every row."
+                      
+                      `owned_different_pressing` is TRUE of every unowned row
+                      here — they all share the album — so rendering it per row
+                      made the badge the table's background instead of a signal.
+                      It is stated once at the head; what stays on a row is what
+                      distinguishes that row from its neighbours.
+                    */}
+                    {version.ownership.tier !== 'owned_different_pressing' && (
+                      <OwnershipBadge ownership={version.ownership} />
+                    )}
                     {/*
                       Said plainly, on the row it applies to. "3 more look
                       identical from here" is the honest description: Discogs
