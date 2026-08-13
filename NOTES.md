@@ -4027,11 +4027,23 @@ form the records work had not shown — see the masking entry under Open.
   visible in a test that runs the spread and then requests the market for a
   version it priced.
 
+  This is a THIRD kind of test gap, distinct from the two already recorded here.
+  Layer tests prove a layer. Seam tests prove a join. This is two independent
+  writers to one store, each honest about its own rows, DISAGREEING about what a
+  row means — invisible to both suites because each read back only what it
+  wrote.
+
   The cost of getting it wrong is the shape §10a exists to prevent: the spread
   fetches only `marketplace/stats`, so a row claiming the ladder too would make
   the market panel serve an empty condition ladder as a cached FACT for seven
   days, for a release layer 2 was never asked about. Hence `layersFetched` and
   `cacheCovers` — a floor-only row reads as a miss to anyone needing layer 2.
+
+  **And the consequence is why this class deserves its own rule: a mislabelled
+  cache row is absent-versus-unknown PERSISTED.** A wrong answer inside a
+  request lasts one request. A wrong answer written to a store with a seven-day
+  TTL outlives every attempt to notice it — the next reader sees a confident
+  cached fact with no trace of the call that never happened.
 
 - **Hand-writing a migration skips its snapshot.** `drizzle/meta/NNNN_snapshot.json`
   is generated, and a hand-written `.sql` plus a hand-edited journal leaves the
@@ -4046,3 +4058,27 @@ form the records work had not shown — see the masking entry under Open.
   migration hash was unrecorded. Dropping and recreating the test database
   resolved it. When a migration fails with no message, suspect local state
   before suspecting the migration.
+
+## Step 10 unit 5 — manual price entry removed (§10a, "What it replaces")
+
+- **RULE: an absence assertion needs its precondition ON SCREEN.** The check
+  that the empty-state copy no longer invites manual entry sat on a record that
+  HAD a price, so the empty state never rendered and `not.toContainText` passed
+  against a branch that was not there. A mutation restoring the old copy
+  survived it. Fixed by asserting against a record with no prices, and by
+  asserting the new copy is present as well as the old copy absent.
+
+  Third variant of this family now: the first measured the wrong thing, the
+  second measured too early (the mount-fetch), this one measured the wrong
+  page state. Common shape — proving a negative requires proving the positive
+  case was reachable.
+
+- **§5.7 line 529 reads like a conflict and is not.** "Do not overwrite manual
+  entries" presumes manual entries exist, which they will: rows already written
+  stay, and the cron must still leave them alone. What §10a removed is the UI
+  that CREATED new ones, not the historical rows or the protection.
+
+- **The removal made the component a server component again.** No form means no
+  state, no submit, no `data-hydrated` marker. Worth noting because the reverse
+  move — adding one input to a display component — silently costs a client
+  boundary and a hydration marker.

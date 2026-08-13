@@ -128,7 +128,6 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
             />
 
             <PriceHistory
-              recordId={id}
               observations={prices.map((row) => ({
                 id: row.id,
                 price: row.price,

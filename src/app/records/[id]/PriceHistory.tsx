@@ -1,9 +1,3 @@
-'use client';
-
-import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { formatPrice } from '@/app/collection-format';
 import { priceLine } from './price-line';
 import {
@@ -15,80 +9,25 @@ import {
 } from './sparkline';
 
 /**
- * §10's "price history sparkline", with §5.2's append control.
+ * §10's "price history sparkline" — a READER of `price_history`, not a writer.
  *
- * **Append-only (§7.5).** There is no edit affordance, deliberately: a
- * correction is a new observation, not a rewrite, and offering an edit here
- * would promise something the endpoint refuses.
+ * **§10a removed manual price entry.** Neither real use case needed it: the
+ * shop question is about a record the user does not own, and the appreciation
+ * question is answered by refreshed market data rather than by the user
+ * noticing prices and typing them in. The §5.7 cron writes the observations
+ * now; this displays them.
+ *
+ * That makes the component a server component again — with no form there is no
+ * state, no submit and nothing to hydrate.
+ *
+ * **Still append-only (§7.5).** The rule outlived the form: a correction is a
+ * new observation rather than a rewrite, and the copy below says so, because
+ * the absence of an edit control otherwise reads as an oversight.
  */
 
-/**
- * §4.2's three types, labelled in the user's terms.
- *
- * `best_dig` is gone (migration 0005): it names a PRESSING worth hunting for,
- * never a price, and offering it here produced "$120.00 best dig" — which reads
- * as "best price", the exact §8 conflation the rule forbids.
- */
-const PRICE_TYPES = [
-  { value: 'used', label: 'Used — what a copy sold for' },
-  { value: 'new', label: 'New — a sealed copy' },
-  { value: 'asking', label: 'Asking — wanted, not paid' },
-] as const;
-
-export function PriceHistory({
-  recordId,
-  observations,
-}: {
-  recordId: string;
-  observations: PriceObservation[];
-}) {
-  const router = useRouter();
-
-  const [price, setPrice] = useState('');
-  const [priceType, setPriceType] = useState<string>('used');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | undefined>(undefined);
-
-  // Controlled inputs read on submit — the marker is a default for this shape
-  // now, not something to rediscover when a mobile test fails (NOTES).
-  const formRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    formRef.current?.setAttribute('data-hydrated', 'true');
-  }, []);
-
+export function PriceHistory({ observations }: { observations: PriceObservation[] }) {
   const points = sparklinePoints(observations);
   const range = priceRange(observations);
-
-  async function add() {
-    if (price.trim() === '') {
-      setError('Enter a price first.');
-      return;
-    }
-
-    setBusy(true);
-    setError(undefined);
-
-    try {
-      const response = await fetch(`/api/records/${recordId}/prices`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ price: price.trim(), priceType }),
-      });
-
-      if (!response.ok) {
-        const body = await response.json().catch(() => null);
-        setError(body?.error?.message ?? 'That price could not be saved.');
-        return;
-      }
-
-      setPrice('');
-      router.refresh();
-    } catch {
-      setError('Could not reach the server. Nothing was saved.');
-    } finally {
-      setBusy(false);
-    }
-  }
 
   return (
     <section className="mt-6" data-testid="price-history">
@@ -96,7 +35,7 @@ export function PriceHistory({
 
       {points.length === 0 ? (
         <p className="mb-3 text-sm text-muted-foreground">
-          No prices recorded. Add what it is worth, or what you were quoted.
+          No prices recorded yet. The weekly refresh adds what the market says.
         </p>
       ) : (
         <div className="mb-3">
@@ -170,40 +109,6 @@ export function PriceHistory({
         </div>
       )}
 
-      <div ref={formRef} data-testid="price-form" className="flex flex-wrap items-center gap-2">
-        <label htmlFor="price-amount" className="sr-only">
-          Price
-        </label>
-        <Input
-          id="price-amount"
-          value={price}
-          inputMode="decimal"
-          placeholder="24.50"
-          onChange={(event) => setPrice(event.target.value)}
-          className="h-9 w-28 font-mono"
-        />
-
-        <label htmlFor="price-type" className="sr-only">
-          Price type
-        </label>
-        <select
-          id="price-type"
-          value={priceType}
-          onChange={(event) => setPriceType(event.target.value)}
-          className="h-9 rounded-xs border border-input bg-transparent px-2 text-sm"
-        >
-          {PRICE_TYPES.map((type) => (
-            <option key={type.value} value={type.value}>
-              {type.label}
-            </option>
-          ))}
-        </select>
-
-        <Button type="button" disabled={busy} onClick={() => void add()}>
-          {busy ? 'Saving…' : 'Add price'}
-        </Button>
-      </div>
-
       {/*
         §7.5 stated where it is felt. Without this, the absence of an edit
         control reads as an oversight rather than a rule.
@@ -212,11 +117,6 @@ export function PriceHistory({
         Prices are a record of observations — each one is added, never edited.
       </p>
 
-      {error !== undefined && (
-        <p role="alert" className="mt-2 text-xs text-destructive">
-          {error}
-        </p>
-      )}
     </section>
   );
 }

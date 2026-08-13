@@ -395,6 +395,10 @@ test('prices accumulate as observations and the sparkline states its bounds', as
    *
    * The bounds are stated in WORDS beside the shape: a sparkline shows the
    * trend and says nothing about scale, so a chart without them is decoration.
+   *
+   * Seeded through the endpoint rather than a form, because §10a removed manual
+   * price entry — the cron is the writer now, and this asserts what the reader
+   * SEES of what it wrote.
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Priced-${suffix}` });
@@ -403,26 +407,23 @@ test('prices accumulate as observations and the sparkline states its bounds', as
     artistId: artist.id,
   });
 
-  await page.goto(`/records/${record.id}`);
-  await page.locator('[data-testid="price-form"][data-hydrated="true"]').waitFor({
-    timeout: 15_000,
-  });
-
   // Empty state says what the section is for rather than showing a blank chart.
+  await page.goto(`/records/${record.id}`);
   await expect(page.getByTestId('price-history')).toContainText(/no prices recorded/i);
   await expect(page.getByTestId('sparkline')).toHaveCount(0);
 
-  await page.getByLabel('Price', { exact: true }).fill('20.00');
-  await page.getByRole('button', { name: 'Add price' }).click();
-  await expect(page.getByTestId('sparkline')).toHaveCount(1, { timeout: 15_000 });
+  for (const price of ['20.00', '35.50']) {
+    const response = await page.request.post(`/api/records/${record.id}/prices`, {
+      data: { price, priceType: 'used' },
+    });
+    expect(response.status()).toBe(201);
+  }
 
-  await page.getByLabel('Price', { exact: true }).fill('35.50');
-  await page.getByRole('button', { name: 'Add price' }).click();
+  await page.goto(`/records/${record.id}`);
+  await expect(page.getByTestId('sparkline')).toHaveCount(1);
 
   // BOTH survive: §7.5 appends, never replaces.
-  await expect(page.getByTestId('price-range')).toContainText('2 observations', {
-    timeout: 15_000,
-  });
+  await expect(page.getByTestId('price-range')).toContainText('2 observations');
   await expect(page.getByTestId('price-range')).toContainText('$20.00');
   await expect(page.getByTestId('price-range')).toContainText('$35.50');
 });
@@ -450,25 +451,68 @@ test('the price section offers no way to edit an observation', async ({ page }) 
   await expect(section.getByRole('button', { name: /edit/i })).toHaveCount(0);
 });
 
-test('a rejected price says what is wrong and records nothing', async ({ page }) => {
-  // The coercion class at a money boundary: '5e4' is 50000 to a naive parse.
+test('offers no way to type in a price — §10a replaced manual entry', async ({ page }) => {
+  /**
+   * §10a, "What it replaces": manual price entry on a record the user owns.
+   * Neither real use case needs it — the shop question is about a record they
+   * do NOT own, and the appreciation question is answered by refreshed market
+   * data rather than by the user noticing prices and typing them in.
+   *
+   * The endpoint stays (the §5.7 cron writes through it) and `price_history`
+   * still accumulates; what is gone is the UI that invited a human to add rows
+   * to it. Asserted on the CONTROLS rather than the section, since the price
+   * history itself must remain visible.
+   *
+   * The previous version of this test drove the form to prove the endpoint
+   * rejects '5e4'. That rule did not go away with the form: prices.test.ts
+   * asserts it directly against '0x50', '5e4', 'twenty', '', '-5.00' and
+   * '10.001' — a wider net than the form could cast.
+   */
   const suffix = makeSuffix();
-  const artist = await post(page, '/api/artists', { name: `BadPrice-${suffix}` });
+  const artist = await post(page, '/api/artists', { name: `NoManual-${suffix}` });
   const record = await post(page, '/api/records', {
-    title: `BadPrice ${suffix}`,
+    title: `NoManual ${suffix}`,
     artistId: artist.id,
+  });
+  await page.request.post(`/api/records/${record.id}/prices`, {
+    data: { price: '24.50', priceType: 'used' },
   });
 
   await page.goto(`/records/${record.id}`);
-  await page.locator('[data-testid="price-form"][data-hydrated="true"]').waitFor({
-    timeout: 15_000,
+
+  const section = page.getByTestId('price-history');
+
+  // The history is still shown — this removed an input, not the feature.
+  await expect(section.getByTestId('price-observation')).toHaveCount(1);
+
+  await expect(page.getByTestId('price-form'), 'the form is gone').toHaveCount(0);
+  await expect(section.getByRole('button', { name: /add price/i })).toHaveCount(0);
+  await expect(section.getByRole('textbox')).toHaveCount(0);
+  await expect(section.getByRole('combobox'), 'and its price-type select').toHaveCount(0);
+
+  /**
+   * The empty-state copy invited manual entry ("Add what it is worth"), and it
+   * must not still ask for something the UI no longer offers.
+   *
+   * **Asserted on a record with NO prices, deliberately.** The check first sat
+   * on the seeded record above, where the empty state never renders — so
+   * `not.toContainText` passed against a branch that was not on screen, and a
+   * mutation restoring the old copy survived it. An absence assertion needs its
+   * precondition present, or it proves nothing.
+   */
+  const blank = await post(page, '/api/records', {
+    title: `NoManual Blank ${suffix}`,
+    artistId: artist.id,
   });
 
-  await page.getByLabel('Price', { exact: true }).fill('5e4');
-  await page.getByRole('button', { name: 'Add price' }).click();
+  await page.goto(`/records/${blank.id}`);
 
-  await expect(page.getByTestId('price-history').getByRole('alert')).toBeVisible();
-  await expect(page.getByTestId('sparkline')).toHaveCount(0);
+  const blankSection = page.getByTestId('price-history');
+  await expect(blankSection, 'the empty state IS on screen').toContainText(
+    /no prices recorded/i,
+  );
+  await expect(blankSection).not.toContainText(/add what it is worth/i);
+  await expect(blankSection).toContainText(/weekly refresh/i);
 });
 
 test('each price shows its date and what its type means', async ({ page }) => {
