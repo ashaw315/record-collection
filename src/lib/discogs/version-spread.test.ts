@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { spreadVerdict, summariseSpread } from './version-spread';
+import { sameFormatFamily, spreadVerdict, summariseSpread } from './version-spread';
 
 /**
  * SPEC.md §10a layer 3 — "does pressing matter here?"
@@ -311,5 +311,83 @@ describe('summariseSpread — the DIRECTIONAL rule (§10a as amended)', () => {
 
       expect(said.verdict, `${low}-${high} partial`).not.toBe('pressing-barely-matters');
     }
+  });
+});
+
+describe('sameFormatFamily — comparing pressings, not media (§10a)', () => {
+  /**
+   * QA: the Carpenters master (SP-3502) prices 8-track cartridges and cassettes
+   * alongside LPs. Comparing a quadraphonic 8-track to a US LP is not a pressing
+   * comparison — the spread measures the FORMAT and calls it pressing variance.
+   *
+   * Measured on master 84975: 64 vinyl, 17 CD, 11 cassette, 7 8-track, 1
+   * reel-to-reel. The first fifteen versions in Discogs order are 12 vinyl and 3
+   * other, so the cap spends a fifth of its budget on media the user is not
+   * choosing between.
+   *
+   * **Filtering happens BEFORE the cap**, which is why this is worth doing even
+   * though it did NOT fix the Carpenters ratio (see NOTES): the same fifteen
+   * calls buy fifteen comparable versions instead of twelve.
+   */
+
+  it('keeps vinyl against vinyl', () => {
+    expect(sameFormatFamily(['Vinyl', 'LP', 'Album'], ['Vinyl'])).toBe(true);
+  });
+
+  it('rejects an 8-track against a vinyl LP', () => {
+    // The QA case by name.
+    expect(sameFormatFamily(['8-Track Cartridge', 'Album', 'Quadraphonic'], ['Vinyl'])).toBe(false);
+  });
+
+  it('rejects a cassette and a CD against vinyl', () => {
+    expect(sameFormatFamily(['Cassette', 'Album'], ['Vinyl'])).toBe(false);
+    expect(sameFormatFamily(['CD', 'Album', 'Reissue'], ['Vinyl'])).toBe(false);
+  });
+
+  it('compares a CD master against CDs, not vinyl', () => {
+    /**
+     * The family is whatever the user is LOOKING AT, not a hardcoded preference
+     * for vinyl. Someone holding a CD is choosing between CD pressings.
+     */
+    expect(sameFormatFamily(['CD', 'Album'], ['CD'])).toBe(true);
+    expect(sameFormatFamily(['Vinyl', 'LP'], ['CD'])).toBe(false);
+  });
+
+  it('ignores the descriptors that are NOT the medium', () => {
+    /**
+     * "Album", "Reissue", "Stereo" and "Quadraphonic" are all in the same
+     * flattened list as the medium. A naive intersection would call an
+     * 8-Track "Album" and a Vinyl "Album" the same family — which is exactly
+     * the comparison this exists to prevent.
+     */
+    expect(sameFormatFamily(['8-Track Cartridge', 'Album'], ['Vinyl', 'Album'])).toBe(false);
+    expect(sameFormatFamily(['Cassette', 'Stereo'], ['Vinyl', 'Stereo'])).toBe(false);
+  });
+
+  it('keeps a version whose medium is unknown rather than dropping it', () => {
+    /**
+     * Discogs data is user-submitted and `major_formats` is sometimes absent.
+     * Dropping those would silently shrink the sample on exactly the releases
+     * with the poorest data — and an unknown medium is not evidence of a
+     * DIFFERENT medium. §10a's absent-versus-unknown rule.
+     */
+    expect(sameFormatFamily([], ['Vinyl'])).toBe(true);
+    expect(sameFormatFamily(['Album', 'Reissue'], ['Vinyl'])).toBe(true);
+  });
+
+  it('keeps everything when the viewed release has no known medium', () => {
+    // Nothing to compare against: filtering on an unknown would drop the whole
+    // table.
+    expect(sameFormatFamily(['Vinyl'], [])).toBe(true);
+    expect(sameFormatFamily(['CD'], ['Album'])).toBe(true);
+  });
+
+  it('treats vinyl sizes as ONE family', () => {
+    /**
+     * A 7", a 10" and a 12" are all vinyl and all real pressing choices for the
+     * same album. `major_formats` says "Vinyl" for each; the size lives in the
+     * descriptors, which this deliberately ignores.
+     */
+    expect(sameFormatFamily(['Vinyl', '7"', 'Single'], ['Vinyl', 'LP'])).toBe(true);
   });
 });

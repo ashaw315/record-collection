@@ -9,7 +9,12 @@ import { marketSummary, type MarketView } from './market-summary';
 import type { SpreadSummary } from '@/lib/discogs/version-spread';
 
 /** §10a layer 3's response: the summary plus how much of the master it covers. */
-type SpreadResponse = SpreadSummary & { checked: number; total: number };
+type SpreadResponse = SpreadSummary & {
+  checked: number;
+  total: number;
+  /** Per-version floors keyed by release id — the table joins on these. */
+  prices?: Record<string, number | null>;
+};
 import { OwnershipBadge } from './OwnershipBadge';
 import { VersionTable, type VersionWithOwnership } from './VersionTable';
 import type { OwnershipPayload } from '@/lib/discogs/ownership-payload';
@@ -363,7 +368,18 @@ function ResultCard({
        * fired without awaiting, so eleven sequential price checks do not hold
        * up the table the user asked for.
        */
-      void fetch(`/api/discogs/master/${result.masterId}/spread`)
+      /**
+       * The medium the user is looking at, so the spread compares pressings
+       * rather than formats (§10a). Discogs' `major_formats` is the first
+       * descriptor on a normalized version; the search result carries the same
+       * shape.
+       */
+      const viewedFormat = result.formats?.[0];
+
+      void fetch(
+        `/api/discogs/master/${result.masterId}/spread` +
+          (viewedFormat === undefined ? '' : `?format=${encodeURIComponent(viewedFormat)}`),
+      )
         .then((r) => (r.ok ? r.json() : null))
         .then((value) => setSpread(value))
         .catch(() => setSpread(null));
@@ -533,7 +549,11 @@ function ResultCard({
             </p>
           )}
 
-          <VersionTable versions={versions} ownershipChecked={ownershipChecked} />
+          <VersionTable
+            versions={versions}
+            ownershipChecked={ownershipChecked}
+            prices={spread?.prices}
+          />
         </>
       )}
     </li>

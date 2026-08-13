@@ -4,7 +4,7 @@ import { withErrorHandling } from '@/lib/api/handler';
 import { DiscogsError, getDiscogsClient } from '@/lib/discogs/client';
 import { discogsErrorResponse } from '@/lib/discogs/errors';
 import { toDiscogsId } from '@/lib/discogs/fields';
-import { summariseSpread, type VersionPrice } from '@/lib/discogs/version-spread';
+import { sameFormatFamily, summariseSpread, type VersionPrice } from '@/lib/discogs/version-spread';
 import { cachedLowestPrice, readCachedMarket, writeCachedMarket } from '@/lib/discogs/market-cache';
 
 /**
@@ -34,8 +34,19 @@ const MAX_VERSIONS_PRICED = 15;
 
 export const GET = withErrorHandling(
   'GET /api/discogs/master/:id/spread',
-  async (_request: Request, context: { params: Promise<{ id: string }> }) => {
+  async (request: Request, context: { params: Promise<{ id: string }> }) => {
     const { id } = await context.params;
+
+    /**
+     * The medium the user is actually looking at, so the spread compares
+     * pressings rather than formats (§10a).
+     *
+     * A free string rather than an enum: it is passed straight to
+     * `sameFormatFamily`, which matches it against a known vocabulary and
+     * treats anything unrecognised as "no filter" — so a junk value degrades to
+     * today's behaviour instead of an empty spread.
+     */
+    const viewedFormat = new URL(request.url).searchParams.get('format');
 
     // `toDiscogsId`, not coercion: '0x50' reads as 80 and would price a
     // different master's versions while presenting them as this one's.
@@ -46,11 +57,11 @@ export const GET = withErrorHandling(
 
     const client = getDiscogsClient();
 
-    let versions: Array<{ id?: number }>;
+    let versions: Array<{ id?: number; major_formats?: string[] }>;
     try {
-      const payload = await client.get<{ versions?: Array<{ id?: number }> }>(
-        `/masters/${masterId}/versions?per_page=100&page=1`,
-      );
+      const payload = await client.get<{
+        versions?: Array<{ id?: number; major_formats?: string[] }>;
+      }>(`/masters/${masterId}/versions?per_page=100&page=1`);
       versions = payload.versions ?? [];
     } catch (cause) {
       /**
@@ -62,8 +73,25 @@ export const GET = withErrorHandling(
       throw cause;
     }
 
-    const total = versions.length;
-    const priceable = versions.slice(0, MAX_VERSIONS_PRICED);
+    /**
+     * **Filtered BEFORE the cap, which is the whole point.** Taking the first
+     * fifteen and then discarding the non-vinyl ones would spend real calls on
+     * versions that cannot appear in the answer — measured on the Carpenters
+     * master, the first fifteen in Discogs order are 12 vinyl and 3 other, so a
+     * fifth of the budget bought nothing. Filtering first buys fifteen
+     * comparable versions for the same fifteen calls.
+     *
+     * `total` counts the FILTERED set: "3 of 64 vinyl pressings checked" is the
+     * honest denominator, where "3 of 160" would describe a population the
+     * spread never intended to measure.
+     */
+    const comparable =
+      viewedFormat === null
+        ? versions
+        : versions.filter((version) => sameFormatFamily(version.major_formats ?? [], [viewedFormat]));
+
+    const total = comparable.length;
+    const priceable = comparable.slice(0, MAX_VERSIONS_PRICED);
     const checked: VersionPrice[] = [];
 
     for (const version of priceable) {
@@ -128,8 +156,24 @@ export const GET = withErrorHandling(
 
     const summary = summariseSpread({ checked, total, currency: 'USD' });
 
+    /**
+     * The per-version figures, returned rather than discarded.
+     *
+     * QA: the verdict says "which pressing you get matters more than the price"
+     * over a table with no prices in it — the user learns that the answer varies
+     * and is given no way to act on it. These were already fetched to compute
+     * the spread; the table joins them by release id.
+     *
+     * `null` is kept and distinguished from absent: a version nobody is selling
+     * has no price, which is not the same as a version that was never checked.
+     */
+    const prices = Object.fromEntries(
+      checked.map((version) => [String(version.discogsId), version.lowestPrice]),
+    );
+
     return NextResponse.json({
       ...summary,
+      prices,
       checked: checked.length,
       total,
     });

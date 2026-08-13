@@ -16,6 +16,65 @@ import { formatMarketPrice } from './normalize-market';
 
 export type VersionPrice = { discogsId: number; lowestPrice: number | null };
 
+/**
+ * The media a spread may compare across — one family per physical medium.
+ *
+ * **Vinyl sizes are deliberately ONE family.** A 7", 10" and 12" of the same
+ * album are all vinyl and all real pressing choices; the size lives in the
+ * descriptors, not here.
+ *
+ * Matched against Discogs' `major_formats`, which is a controlled vocabulary
+ * ("Vinyl", "CD", "Cassette", "8-Track Cartridge", "Reel-To-Reel", "File") —
+ * unlike `format`, which is free-ish prose. Anything not listed is treated as
+ * an unknown medium rather than forced into a family.
+ */
+const FORMAT_FAMILIES = [
+  'vinyl',
+  'cd',
+  'cassette',
+  '8-track cartridge',
+  'reel-to-reel',
+  'file',
+  'dvd',
+  'blu-ray',
+  'shellac',
+  'minidisc',
+] as const;
+
+function mediumOf(formats: readonly string[]): string | null {
+  for (const format of formats) {
+    const found = FORMAT_FAMILIES.find((family) => family === format.trim().toLowerCase());
+    if (found !== undefined) return found;
+  }
+  return null;
+}
+
+/**
+ * Whether a version is the same KIND of object as the release being viewed.
+ *
+ * §10a layer 3 asks "does pressing matter here?" — a question about pressings
+ * of one medium. QA found the Carpenters master (SP-3502) pricing 8-track
+ * cartridges and cassettes beside LPs, so the spread was measuring the format
+ * and reporting it as pressing variance. Comparing a quadraphonic 8-track to a
+ * US LP is not a pressing comparison.
+ *
+ * **An unknown medium is KEPT, not dropped.** `major_formats` is sometimes
+ * absent on user-submitted data, and absence of a medium is not evidence of a
+ * different one — dropping those would shrink the sample worst on exactly the
+ * releases with the poorest data.
+ */
+export function sameFormatFamily(
+  versionFormats: readonly string[],
+  viewedFormats: readonly string[],
+): boolean {
+  const viewed = mediumOf(viewedFormats);
+  const version = mediumOf(versionFormats);
+
+  if (viewed === null || version === null) return true;
+
+  return viewed === version;
+}
+
 export type SpreadVerdict = 'pressing-matters' | 'pressing-barely-matters';
 
 export type SpreadSummary = {

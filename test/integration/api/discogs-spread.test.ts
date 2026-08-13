@@ -20,9 +20,9 @@ import { GET as market } from '@/app/api/discogs/market/[id]/route';
  */
 
 const VERSIONS = [
-  { id: 1001, catno: 'LSP-4353', country: 'US', released: '1970' },
-  { id: 1002, catno: 'LSP-4353', country: 'US', released: '1970' },
-  { id: 1003, catno: 'LSP-4353', country: 'UK', released: '1971' },
+  { id: 1001, catno: 'LSP-4353', country: 'US', released: '1970', major_formats: ['Vinyl'] },
+  { id: 1002, catno: 'LSP-4353', country: 'US', released: '1970', major_formats: ['Vinyl'] },
+  { id: 1003, catno: 'LSP-4353', country: 'UK', released: '1971', major_formats: ['Vinyl'] },
 ];
 
 /** Routes versions and per-release stats to fixtures; `fail` marks the exhaustion point. */
@@ -287,5 +287,179 @@ describe('the market cache (§10a, "Where it is cached")', () => {
 
     expect(marketGet, "the spread's row cannot answer a ladder request").toHaveBeenCalled();
     expect(body.conditions.length, 'a real ladder, not a cached emptiness').toBeGreaterThan(0);
+  });
+});
+
+describe('format family and per-version prices (§10a, QA round 2)', () => {
+  /**
+   * Two QA findings, both about the spread being unactionable.
+   *
+   * 1. The verdict says "which pressing you get matters" over a table with no
+   *    prices in it — the user learns the answer varies and has no way to act.
+   *    The per-version prices are already fetched to compute the spread and
+   *    were then discarded.
+   * 2. The Carpenters master priced 8-track cartridges and cassettes beside
+   *    LPs, so the spread measured FORMAT rather than pressing.
+   */
+
+  function mockMixedFormats(prices: Record<number, number | null>) {
+    const versions = [
+      { id: 2001, catno: 'SP-3502', country: 'UK', released: '1971', major_formats: ['Vinyl'] },
+      {
+        id: 2002,
+        catno: 'SP-3502',
+        country: 'US',
+        released: '1971',
+        major_formats: ['8-Track Cartridge'],
+      },
+      { id: 2003, catno: 'SP-3502', country: 'US', released: '1971', major_formats: ['Cassette'] },
+      { id: 2004, catno: 'OLE-009', country: 'South Korea', released: '1971', major_formats: ['Vinyl'] },
+    ];
+
+    const get = vi.fn(async (path: string) => {
+      if (path.includes('/versions')) {
+        return { versions, pagination: { items: versions.length, pages: 1 } };
+      }
+      if (path.includes('marketplace/stats')) {
+        const id = Number(/stats\/(\d+)/.exec(path)?.[1]);
+        const price = prices[id];
+        return {
+          num_for_sale: price === null || price === undefined ? 0 : 2,
+          lowest_price: price === null || price === undefined ? null : { value: price, currency: 'USD' },
+        };
+      }
+      throw new Error(`unexpected path: ${path}`);
+    });
+
+    vi.spyOn(clientModule, 'getDiscogsClient').mockReturnValue({
+      get: get as unknown as clientModule.DiscogsClient['get'],
+      fetchImage: vi.fn() as unknown as clientModule.DiscogsClient['fetchImage'],
+    });
+
+    return get;
+  }
+
+  const requestFor = (id: string, format: string) =>
+    spread(new Request(`http://test/api/discogs/master/${id}/spread?format=${format}`), {
+      params: Promise.resolve({ id }),
+    });
+
+  it('filters BEFORE the cap, so the budget buys comparable versions', async () => {
+    /**
+     * **The mutation-resistant version of the budget claim.** With a sample
+     * smaller than MAX_VERSIONS_PRICED, cap-before-filter and filter-before-cap
+     * produce identical results — a four-version fixture cannot tell them
+     * apart, and a mutation swapping the order passed against one.
+     *
+     * So: 20 versions, alternating vinyl and cassette, against a cap of 15.
+     *   - filter first  -> 10 vinyl available, all 10 priced
+     *   - cap first     -> first 15 taken, of which 8 are vinyl
+     *
+     * The difference is the two vinyl pressings a user would never see priced,
+     * and the calls spent on cassettes to lose them.
+     */
+    const versions = Array.from({ length: 20 }, (_, index) => ({
+      id: 3000 + index,
+      catno: `CAT-${index}`,
+      country: 'US',
+      released: '1971',
+      major_formats: [index % 2 === 0 ? 'Vinyl' : 'Cassette'],
+    }));
+
+    const get = vi.fn(async (path: string) => {
+      if (path.includes('/versions')) {
+        return { versions, pagination: { items: versions.length, pages: 1 } };
+      }
+      if (path.includes('marketplace/stats')) {
+        return { num_for_sale: 1, lowest_price: { value: 10, currency: 'USD' } };
+      }
+      throw new Error(`unexpected path: ${path}`);
+    });
+    vi.spyOn(clientModule, 'getDiscogsClient').mockReturnValue({
+      get: get as unknown as clientModule.DiscogsClient['get'],
+      fetchImage: vi.fn() as unknown as clientModule.DiscogsClient['fetchImage'],
+    });
+
+    const body = await (await requestFor('84975', 'Vinyl')).json();
+
+    const pricedIds = get.mock.calls
+      .map(([path]) => /stats\/(\d+)/.exec(String(path))?.[1])
+      .filter((id): id is string => id !== undefined);
+
+    expect(pricedIds, 'every vinyl version, no cassettes').toHaveLength(10);
+    expect(pricedIds.every((id) => Number(id) % 2 === 0), 'no cassette was priced').toBe(true);
+    expect(body.total, 'the vinyl population, not all 20').toBe(10);
+    expect(body.partial, 'all 10 comparable versions checked').toBe(false);
+  });
+
+  it('never SPENDS a call on a version outside the format family', async () => {
+    /**
+     * The budget assertion, and the reason filtering happens BEFORE the cap:
+     * the same fifteen calls must buy fifteen COMPARABLE versions rather than
+     * twelve. Measured on the real Carpenters master, the first fifteen in
+     * Discogs order are 12 vinyl and 3 other.
+     */
+    const get = mockMixedFormats({ 2001: 1.28, 2002: 30, 2003: 13.18, 2004: 40 });
+
+    await requestFor('84975', 'Vinyl');
+
+    const pricedIds = get.mock.calls
+      .map(([path]) => /stats\/(\d+)/.exec(String(path))?.[1])
+      .filter((id): id is string => id !== undefined);
+
+    expect(pricedIds, 'only the two vinyl versions').toEqual(['2001', '2004']);
+  });
+
+  it('excludes other media from the range', async () => {
+    // The 8-track at $30 sits inside the vinyl range and must not appear as a
+    // pressing observation either way.
+    mockMixedFormats({ 2001: 1.28, 2002: 30, 2003: 13.18, 2004: 40 });
+
+    const body = await (await requestFor('84975', 'Vinyl')).json();
+
+    expect(body.range).toEqual({ low: 1.28, high: 40 });
+    expect(body.total, 'and the denominator counts only comparable versions').toBe(2);
+  });
+
+  it('returns the per-version prices it already fetched', async () => {
+    /**
+     * §10a QA: the verdict answers "does this matter", the column answers
+     * "which one". Without it the user is told the answer varies and given no
+     * way to act on it.
+     */
+    mockMixedFormats({ 2001: 1.28, 2002: 30, 2003: 13.18, 2004: 40 });
+
+    const body = await (await requestFor('84975', 'Vinyl')).json();
+
+    expect(body.prices, 'keyed by release id, for the table to join on').toEqual({
+      '2001': 1.28,
+      '2004': 40,
+    });
+  });
+
+  it('reports a version with no listing as null rather than omitting it', async () => {
+    // Absent-versus-unknown at the row level: "nobody is selling this" and "we
+    // did not check this" must not render identically.
+    mockMixedFormats({ 2001: 1.28, 2004: null });
+
+    const body = await (await requestFor('84975', 'Vinyl')).json();
+
+    expect(body.prices['2004'], 'checked, and nothing for sale').toBeNull();
+    expect(Object.keys(body.prices)).toContain('2004');
+  });
+
+  it('prices everything when no format is given', async () => {
+    // A caller that cannot say what it is looking at gets the unfiltered
+    // behaviour rather than an empty spread.
+    const get = mockMixedFormats({ 2001: 1.28, 2002: 30, 2003: 13.18, 2004: 40 });
+
+    await spread(new Request('http://test/api/discogs/master/84975/spread'), {
+      params: Promise.resolve({ id: '84975' }),
+    });
+
+    const statsCalls = get.mock.calls.filter(([path]) =>
+      String(path).includes('marketplace/stats'),
+    );
+    expect(statsCalls).toHaveLength(4);
   });
 });

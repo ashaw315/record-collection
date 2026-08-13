@@ -1,5 +1,6 @@
 import type { OwnershipPayload } from '@/lib/discogs/ownership-payload';
 import type { NormalizedVersion } from '@/lib/discogs/normalize-versions';
+import { formatMarketPrice } from '@/lib/discogs/normalize-market';
 
 /**
  * Presentation rules for the version-comparison table (SPEC.md §5.7, §10).
@@ -70,6 +71,32 @@ export const COMPARISON_COLUMNS: ComparisonColumn[] = [
 
 /** An em dash reads as "not recorded"; an empty cell reads as a bug. */
 const ABSENT = '—';
+
+/**
+ * §10a layer 3's per-version floor, for the comparison table.
+ *
+ * **Three states, not two.** QA found the verdict ("which pressing you get
+ * matters more than the price") rendered over a table with no prices in it —
+ * true, and unactionable. These are the figures that answer "which one", and
+ * they arrive in three conditions that must stay distinguishable:
+ *
+ *   number    — the cheapest copy currently listed
+ *   null      — checked, and nobody is selling one. Real information: a
+ *               pressing with no listings is one you will not find easily.
+ *   undefined — never checked. The cap stops at MAX_VERSIONS_PRICED and the
+ *               budget can refuse before that.
+ *
+ * Collapsing the last two is the absent-versus-unknown failure at row level:
+ * "none for sale" is a fact about the market, "—" is a fact about us.
+ */
+export function formatVersionPrice(price: number | null | undefined): string {
+  if (price === undefined) return ABSENT;
+  if (price === null) return 'none for sale';
+
+  // The same formatter the spread's own text uses, so a figure reads
+  // identically in the sentence above the table and in the row below it.
+  return formatMarketPrice(price, 'USD');
+}
 
 function orAbsent(value: string | null): string {
   return value === null || value.trim() === '' ? ABSENT : value;

@@ -921,7 +921,9 @@ test('the version spread answers "does pressing matter here?"', async ({ page })
    * when the user opens the table and never before.
    */
   let spreadCalls = 0;
-  await page.route('**/api/discogs/master/*/spread', async (route) => {
+  // Trailing `*`: the spread URL carries `?format=` (§10a), and a glob without
+  // it silently stops matching — which unstubs the route rather than failing.
+  await page.route('**/api/discogs/master/*/spread*', async (route) => {
     spreadCalls += 1;
     await route.fulfill({
       status: 200,
@@ -981,7 +983,9 @@ test('a partial spread says it is partial rather than reading as complete', asyn
    * master whose versions genuinely cluster from one where the wide end was
    * never fetched.
    */
-  await page.route('**/api/discogs/master/*/spread', async (route) => {
+  // Trailing `*`: the spread URL carries `?format=` (§10a), and a glob without
+  // it silently stops matching — which unstubs the route rather than failing.
+  await page.route('**/api/discogs/master/*/spread*', async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -1077,4 +1081,118 @@ test('the version table states ownership once, and badges only the row you own',
   for (const row of await rows.all()) {
     await expect(row, 'the repeated badge is gone').not.toContainText(/DIFFERENT pressing/);
   }
+});
+
+test('the version table shows what each pressing costs', async ({ page }) => {
+  /**
+   * §10a QA: the verdict said "which pressing you get matters more than the
+   * price" over a table with no prices in it. True, and unactionable — the user
+   * learns the answer varies and has no way to tell WHICH pressing is which.
+   *
+   * The verdict answers "does this matter"; the column answers "which one".
+   *
+   * The three states are asserted together because they are the reason this is
+   * a formatter rather than a template: a price, "none for sale" (checked,
+   * nothing listed) and "—" (never checked) are three different facts, and the
+   * last two collapse under any single-branch implementation.
+   */
+  const CHEAP = 381756;
+  const DEAR = 1002;
+  const UNSOLD = 1003;
+
+  await page.route('**/api/discogs/master/*/spread*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        range: { low: 1.28, high: 40 },
+        verdict: 'pressing-matters',
+        partial: false,
+        text: '3 pressings, $1.28–$40.00. Which pressing you get matters more than the price.',
+        checked: 3,
+        total: 3,
+        // The fourth row is deliberately ABSENT from prices — never checked.
+        prices: { [CHEAP]: 1.28, [DEAR]: 40, [UNSOLD]: null },
+      }),
+    });
+  });
+
+  /**
+   * Distinct countries and years so the identical-version grouping keeps them
+   * as four rows — collapsing is correct behaviour there (a master's identical
+   * versions become one row), and it would hide the very column under test.
+   */
+  await stubLookup(page, {
+    results: [searchResult()],
+    versions: [
+      { ...versionRow(CHEAP), country: 'UK', year: 1971, catalogNumber: 'AMLS 63502' },
+      { ...versionRow(DEAR), country: 'South Korea', year: 1972, catalogNumber: 'OLE-009' },
+      { ...versionRow(UNSOLD), country: 'Japan', year: 1973, catalogNumber: 'GP-231' },
+      { ...versionRow(1004), country: 'Germany', year: 1974, catalogNumber: 'AMLS 64571' },
+    ],
+  });
+
+  await page.goto('/lookup');
+  await formReady(page);
+  await page.getByLabel('Artist').fill('Discharge');
+  await page.getByRole('button', { name: 'Search Discogs' }).click();
+  await page.getByTestId('result-card').first().getByTestId('expand-versions').click();
+
+  const rows = page.getByTestId('version-row');
+  await expect(rows).toHaveCount(4, { timeout: 15_000 });
+
+  /**
+   * The prices arrive AFTER the table. The spread fetch is deliberately not
+   * awaited — one call per version must not hold up the rows the user asked
+   * for — so the column appears when it resolves.
+   */
+  await expect(rows.nth(0), 'the cheap pressing').toContainText('$1.28', { timeout: 15_000 });
+  await expect(rows.nth(1), 'and the expensive one').toContainText('$40.00');
+
+  // Checked, and nobody is selling it — information, not an absence.
+  await expect(rows.nth(2)).toContainText(/none for sale/i);
+
+  // Never checked. Must NOT read as "none for sale".
+  await expect(rows.nth(3)).not.toContainText(/none for sale/i);
+});
+
+test('the spread asks only about the format in hand', async ({ page }) => {
+  /**
+   * QA: the Carpenters master priced 8-track cartridges and cassettes beside
+   * LPs, so the spread measured the FORMAT and reported it as pressing
+   * variance. Comparing a quadraphonic 8-track to a US LP is not a pressing
+   * comparison.
+   *
+   * Asserted on the REQUEST, because that is where the budget is spent —
+   * filtering after the fact would still pay for the cassettes.
+   */
+  let requested: string | null = null;
+  await page.route('**/api/discogs/master/*/spread*', async (route) => {
+    requested = route.request().url();
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        range: null,
+        verdict: null,
+        partial: false,
+        text: 'None of the pressings checked are for sale right now.',
+        checked: 0,
+        total: 0,
+        prices: {},
+      }),
+    });
+  });
+
+  await stubLookup(page, { results: [searchResult()], versions: [versionRow(ORIGINAL)] });
+
+  await page.goto('/lookup');
+  await formReady(page);
+  await page.getByLabel('Artist').fill('Discharge');
+  await page.getByRole('button', { name: 'Search Discogs' }).click();
+  await page.getByTestId('result-card').first().getByTestId('expand-versions').click();
+
+  await expect(page.getByTestId('version-spread')).toBeVisible({ timeout: 15_000 });
+
+  expect(requested, 'the medium travels with the request').toContain('format=Vinyl');
 });

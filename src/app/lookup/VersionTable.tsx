@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { comparisonKey, groupIdenticalVersions, mustStayExpanded } from './identical-versions';
 import { OwnershipBadge } from './OwnershipBadge';
 import { describeOwnedPressing } from './ownership-badge';
-import { COMPARISON_COLUMNS, comparisonCells, isOnTheShelf } from './version-row';
+import { COMPARISON_COLUMNS, comparisonCells, formatVersionPrice, isOnTheShelf } from './version-row';
 import type { OwnershipPayload } from '@/lib/discogs/ownership-payload';
 import type { NormalizedVersion } from '@/lib/discogs/normalize-versions';
 
@@ -30,8 +30,21 @@ export type VersionWithOwnership = NormalizedVersion & { ownership: OwnershipPay
 export function VersionTable({
   versions,
   ownershipChecked = true,
+  prices,
 }: {
   versions: VersionWithOwnership[];
+  /**
+   * §10a layer 3's per-version floors, keyed by release id.
+   *
+   * QA: the verdict said "which pressing you get matters more than the price"
+   * over a table with no prices in it — the user learned the answer varies and
+   * had no way to act. The spread already fetches these; this is where they
+   * become usable.
+   *
+   * Three states, deliberately distinct: a number, `null` (checked, nothing for
+   * sale) and absent (never checked — the cap, or the budget ran out).
+   */
+  prices?: Record<string, number | null> | undefined;
   /**
    * False when §7.7's check could not run — the master lookup failed, so no
    * row can carry a badge.
@@ -180,6 +193,11 @@ export function VersionTable({
                   {column.heading}
                 </th>
               ))}
+              {prices !== undefined && (
+                <th scope="col" className="px-2 py-1.5 text-right font-normal whitespace-nowrap">
+                  Cheapest
+                </th>
+              )}
               <th scope="col" className="px-2 py-1.5 font-normal">
                 <span className="sr-only">Ownership</span>
               </th>
@@ -228,6 +246,20 @@ export function VersionTable({
                       {cells[column.key]}
                     </td>
                   ))}
+
+                  {prices !== undefined && (
+                    <td className="px-2 py-2 text-right font-mono tabular-nums whitespace-nowrap">
+                      {/*
+                        Three states kept apart, because collapsing them is the
+                        absent-versus-unknown failure at row level:
+                          a number  — this is what the cheapest copy costs
+                          null      — checked, and nobody is selling one
+                          absent    — never checked (the cap, or the budget)
+                        "—" for the last would claim knowledge nobody has.
+                      */}
+                      {formatVersionPrice(prices[String(version.discogsId)])}
+                    </td>
+                  )}
 
                   <td className="px-2 py-2">
                     {/*

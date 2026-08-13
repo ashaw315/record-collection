@@ -4154,3 +4154,77 @@ threshold wants real data behind it rather than a guess.
   anchor-not-found failure mode from the earlier LEFT JOIN finding, in a new
   disguise. Mutation scripts must ASSERT the anchor was found — the Python
   version does, and the three then failed 2, 4 and 5 tests.
+
+## RULE: a real fix can be adopted for a wrong reason
+
+The format hypothesis for the Carpenters spread was that 8-tracks and cassettes
+were polluting the range. Measured against the live master (84975): unfiltered
+11 priced, $0.80–$40.00, ratio 50.00. Vinyl only: 10 priced, $0.80–$40.00, ratio
+**50.00**. Identical. Both endpoints are vinyl LPs — a 1971 UK `AMLS 63502` at
+$0.80 and a 1971 South Korean `OLE-009` at $40.00. The non-vinyl versions were
+two unpriced 8-tracks and a $13.18 cassette sitting mid-range, so removing them
+moved neither endpoint.
+
+Format filtering is still worth doing — the pollution is real, and filtering
+BEFORE the cap buys 15 comparable versions for the same budget instead of 12.
+But it does not fix the case it was justified by.
+
+**The tell is that nobody checks whether the fix addressed the thing that
+motivated it.** Filtering would have been adopted, the defect would have
+remained, and the change would have looked like a success because it was
+independently defensible. Whenever a fix is justified by a specific observed
+case, measure that case before and after — the fix surviving on its own merits
+is not evidence it solved the problem it was proposed for.
+
+## Finding 3 (held): the spread answers a different question than the one asked
+
+Recorded as a REFRAMING rather than a solution, because the solution is not yet
+known.
+
+The verdict currently answers: *"how much do prices vary across this master?"*
+The question the user is actually asking in a shop is: *"is the pressing in front
+of me better or worse than the ones I would realistically encounter?"*
+
+A scarce territory pressing is a true answer to the first and irrelevant to the
+second. Adam will never see a South Korean Carpenters LP in a shop, so a 50x
+spread driven entirely by that one release is technically correct and practically
+useless — it fires "pressing matters" on a record where, among the pressings he
+could actually find, it does not.
+
+**Not fixed, and deliberately not fixed by trimming.** An outlier rule tuned
+against one known case is two guesses agreeing on one record, and `WIDE_RATIO` is
+already the first guess. Per-row prices (finding 1) may dissolve this entirely by
+making the outlier VISIBLE and self-explaining — the user sees a Korean pressing
+at $40 beside a stack of $1-$3 LPs and draws the correct conclusion without the
+verdict needing to encode it. Decide after seeing that against real data.
+
+## QA round 2 — per-version prices and format filtering (measured)
+
+**Filtering before the cap, verified against the live Carpenters master (84975):**
+64 vinyl versions of 160 total. The cap now takes 15 VINYL versions rather than
+the first 15 in Discogs order (12 vinyl, 3 other) — 12 priced instead of 11, for
+the same fifteen calls. The three extra include a $65 US pressing the unfiltered
+sample never reached.
+
+**And it moved the ratio the WRONG way: 50x -> 81.25x.** The extra budget bought
+more outliers, because on this master the expensive versions are all scarce
+territory pressings (South Korea $40, Brazil $38.83, US $65) against common
+UK/Canada copies at $0.80-$2.16. Filtering made the sample better and the verdict
+worse — which is finding 3 restated, not a regression: the spread is faithfully
+measuring a population the user will never shop in.
+
+Recorded because it is the second measurement in two rounds where a defensible
+fix did not improve the case that motivated it. See the rule above.
+
+**Per-version prices do appear to dissolve it in practice.** With the column
+rendered, the row list reads UK $0.80, UK $1.28, Canada $2.16, Australia $3.55 …
+South Korea $40.00, US $65.00. The outlier is self-explaining: nobody reads that
+and concludes their UK copy is bad. Worth deciding finding 3 against this rather
+than against the verdict text alone.
+
+**A Playwright route glob without a trailing `*` silently unstubs on a new query
+param.** Adding `?format=` to the spread URL broke two older tests that stubbed
+`**/spread` — they did not error, the route simply stopped matching and the real
+endpoint answered. Caught only by running the whole spec file. This is the
+cross-file break CLAUDE.md §10 describes, in its quietest form: the failure mode
+of a stale glob is a test that stops testing, not one that fails loudly.

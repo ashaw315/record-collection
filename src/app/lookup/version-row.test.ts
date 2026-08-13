@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { OwnershipPayload } from '@/lib/discogs/ownership-payload';
-import { COMPARISON_COLUMNS, comparisonCells, isOnTheShelf } from './version-row';
+import { COMPARISON_COLUMNS, comparisonCells, isOnTheShelf, formatVersionPrice } from './version-row';
 
 /**
  * The version-comparison table (SPEC.md §5.7, §10).
@@ -152,5 +152,46 @@ describe('the comparison columns', () => {
 
   it('does not put a thousands separator in the year', () => {
     expect(comparisonCells({ ...version, year: 1982 }).year).toBe('1982');
+  });
+});
+
+describe('formatVersionPrice — three states, not two (§10a)', () => {
+  /**
+   * The per-version floor in the comparison table. QA: the verdict told the
+   * user that pressing matters and gave them nothing to act on; this is the
+   * column that answers "which one".
+   *
+   * **A price, an absence and an unknown are three different facts.** Rendering
+   * the last two identically is the absent-versus-unknown failure at row level:
+   * "nobody is selling this pressing" is information a collector can use, and
+   * "we never checked this one" is not.
+   */
+
+  it('renders a price as money', () => {
+    expect(formatVersionPrice(40)).toBe('$40.00');
+    expect(formatVersionPrice(1.28), 'cents are not dropped').toBe('$1.28');
+  });
+
+  it('says none for sale when it was CHECKED and nothing was listed', () => {
+    expect(formatVersionPrice(null)).toBe('none for sale');
+  });
+
+  it('renders an em dash when the version was never checked', () => {
+    // `undefined` is a version the cap or the budget never reached.
+    expect(formatVersionPrice(undefined)).toBe('—');
+  });
+
+  it('never renders an unchecked version as though nothing were for sale', () => {
+    /**
+     * The load-bearing distinction, asserted directly rather than implied by
+     * the two tests above — this is the pair a single-branch implementation
+     * would collapse.
+     */
+    expect(formatVersionPrice(undefined)).not.toBe(formatVersionPrice(null));
+  });
+
+  it('renders a free listing as a price, not as an absence', () => {
+    // 0 is falsy, and a naive check would report a $0.00 listing as unchecked.
+    expect(formatVersionPrice(0)).toBe('$0.00');
   });
 });
