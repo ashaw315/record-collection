@@ -221,6 +221,356 @@ form the records work had not shown — see the masking entry under Open.
 
 ## Open
 
+- **STEP 16 (deploy): `sslmode=require` will change meaning in `pg` v9. Fix is
+  one word, and it is not urgent.**
+
+  Every server start logs a `pg` deprecation warning: `sslmode=require`
+  currently behaves as `verify-full` (certificate AND hostname verified), and in
+  `pg` v9 it will adopt libpq semantics — encryption without verifying the
+  certificate. **Weaker, silently, on a version bump.**
+
+  Not caused by our code: the string comes from Neon's dashboard and appears in
+  `DATABASE_URL` and `NEON_TEST_DATABASE_URL` alike.
+
+  **The fix, named so nobody has to re-derive it: replace `sslmode=require`
+  with `sslmode=verify-full`.** That pins today's behaviour explicitly and the
+  warning goes away. Do it in the deploy step, where the environment variables
+  are being set anyway, rather than piecemeal across `.env` files that are not
+  in the repo.
+
+  Worth doing at step 16 rather than later: after a `pg` major bump the same
+  string still WORKS, just less safely, so nothing fails to draw attention to
+  it. A security property that degrades quietly is exactly the kind that
+  outlives the person who knew about it.
+
+- **§10a's placement was specified without the arithmetic, and measuring it
+  changed the design. Third time in this feature.**
+
+  §10a said market data appears on "`/lookup` result and version rows". Measured
+  before building: a search returns **50 results**, search payloads carry **no
+  price data at all** (only `community` have/want), and layers 1+2 cost **two
+  calls per release**. Rendering them across a results page is up to 100 calls
+  of a 60/minute budget — on a search the user may not act on.
+
+  §10a already forbade exactly this for layer 3 ("never eagerly, never for a
+  whole search page"); the arithmetic is worse for layers 1–2 because they are
+  two calls rather than one. Amended to on-demand-per-release, with a
+  single-result exception for the shop case: arriving by catalog number or
+  barcode usually returns one release, and requiring a click to answer the
+  question the search just asked is friction for nothing.
+
+  **The pattern across all three (`format.text`, the condition range, this):
+  a spec sentence describing an API's behaviour is a hypothesis until measured.**
+  Each was written from what seemed natural. Each cost a round. The check is
+  cheap — one script against the live endpoint before designing anything on top.
+
+- **A filter that drops data is the mirror of one that invents it.**
+
+  `ladderHighlights` picks the three grades a buyer meets (VG, VG+, NM) from
+  Discogs' eight. A first version fell back to showing everything only when NO
+  preferred grade matched — so a ladder of {NM, Good} rendered as **NM alone**,
+  silently dropping a priced grade.
+
+  §10a forbids interpolating a grade that was not priced. Losing one that WAS is
+  the same misrepresentation from the other direction, and easier to miss: an
+  invented number looks suspicious, a missing row looks like Discogs simply had
+  nothing.
+
+  Fixed by taking all three preferred grades or everything — never a partial
+  filter. Caught by a test asserting two grades in, two grades out.
+
+  **Same family as outage-vs-scarcity, found in the same unit.** Rendering "no
+  market data" as "none for sale" turns a network failure into a claim about a
+  record's rarity — and reads as a fact rather than a gap, exactly as a dropped
+  ladder row does.
+
+  **The generalisation: when data is missing, the UI must distinguish "this is
+  absent" from "we do not know".** Both render as nothing on screen unless the
+  copy is written to separate them, and the second silently becomes the first.
+  A wrong value gets questioned; a confident absence does not.
+
+  | Case | Absent | Unknown |
+  |---|---|---|
+  | condition ladder | Discogs priced no grades | seller settings missing (§10a says SAY so) |
+  | for sale | zero copies listed — a fact about scarcity | fetch failed |
+  | genre chips | record filed under nothing | import never attached them |
+
+- **RULE: a captured fixture contains VOLATILE fields. Assert the property, not
+  the reading.**
+
+  Re-capturing for step 10 refreshed all seven Discogs fixtures and broke a test
+  that had passed for three steps: `lowest_price` moved 43.96 → 55.59, because
+  it is a live market figure. The code had not changed; the market had.
+
+  `num_for_sale` was asserted as `11` in the same test and passed — **by
+  coincidence**. It is equally volatile and would have broken on the next
+  capture, in a step with no connection to marketplace data.
+
+  | Field kind | Example | Assert |
+  |---|---|---|
+  | stable identity | `id`, `catno`, `country`, `title` | the exact value |
+  | curated but slow | `genres`, `styles`, `formats` | the exact value |
+  | **volatile** | **`lowest_price`, `num_for_sale`, `community.have/want`** | **the property** |
+
+  **Stated generally: any fixture refreshed from a live API carries fields that
+  change without anything being wrong.** The test that broke had passed for
+  three steps and the code had not moved — the market had. The one beside it
+  passed by coincidence and was equally volatile, which is the more dangerous
+  half: a coincidence looks exactly like coverage until the day it does not.
+
+  Rewritten, the test asserts the normalizer CARRIES the field —
+  `expect(normalized.lowestPrice).toBe(raw.lowest_price)` plus a type check —
+  which still fails when a mutation drops it (verified) and never fails because
+  a record got more expensive.
+
+  **The tell: an assertion whose expected value came from the API rather than
+  from the behaviour.** If re-running the capture could change the number, the
+  number is not the thing under test.
+
+  **A second trap in the same refresh: the DIFF lies about identity fields.**
+  `master-versions-discharge.json` appeared to swap `CLAY LP 3` for `CLAY CD 3`
+  at the same array position — which would mean the fixture had lost the vinyl
+  pressing the identical-rows tests depend on.
+
+  It had not. Compared as SETS rather than by line: 25 versions before, 25
+  after, zero dropped, zero added, still 8 `CLAY LP 3` UK versions. Discogs had
+  reordered the array, and a line-oriented diff aligned unrelated entries.
+
+  **Before concluding a captured array changed, compare it as a set.** A
+  reordered list produces a diff that reads as wholesale replacement, and the
+  natural reaction — reverting the fixture — would discard a legitimate refresh.
+  `git diff` is the wrong instrument for an unordered payload.
+
+- **MEASURED, for step 10 unit 1: `curr_abbr` works on `stats` and is IGNORED by
+  `price_suggestions`.**
+
+  | Endpoint | `curr_abbr` | Result |
+  |---|---|---|
+  | `marketplace/stats/:id` | honoured | EUR 41.14 / USD 47.28 / GBP 34.99, same release |
+  | `marketplace/price_suggestions/:id` | **ignored** | USD whatever is requested |
+
+  `price_suggestions` is pinned to USD — and not even to the account setting:
+  the profile reads `curr_abbr: EUR` and the endpoint returns USD anyway.
+  Measured, not assumed.
+
+  **Consequence: layer 1 must REQUEST `curr_abbr=USD`.** It is the only value
+  that makes the two layers agree, and it happens to be Adam's currency. Had he
+  been in the UK, the two figures could not have been reconciled without a
+  conversion we invented — which is why this was checked before designing the
+  panel rather than after.
+
+  Eight condition grades come back consistently (Mint → Poor), verified on two
+  releases.
+
+  **The resolution is FORTUNATE, not designed.** `price_suggestions` is pinned
+  to USD regardless of the account setting, and layers 1 and 2 agree only
+  because Adam is in New York. A UK user would see a GBP floor beside a USD
+  ladder, and reconciling them would need a conversion we invented — a number
+  nobody quoted, which is the confidently-wrong shape in money.
+
+  **So the design must not depend on the two agreeing.** `normalizeMarket`
+  carries the currency per figure rather than assuming one, and
+  `formatMarketPrice` renders each with its own symbol. That costs nothing today
+  and is the difference between "works here" and "works". If Discogs ever
+  honours `curr_abbr` on `price_suggestions`, or the account moves, the panel
+  keeps telling the truth.
+
+- **BLOCKED, awaiting Adam: §10a's range-with-conditions needs Discogs seller
+  settings.**
+
+  Measured against the live API before starting step 10 (2026-08-12):
+
+  | Endpoint | Result |
+  |---|---|
+  | `marketplace/price_suggestions/:id` | **404** — *"You must fill out your seller settings first"*, on two different releases |
+  | `marketplace/stats/:id` | 200 — `num_for_sale: 11`, `lowest_price: 41.14 EUR` |
+  | release payload (already cached) | the same two fields |
+
+  The token authenticates (`oauth/identity` → 200), so this is an ACCOUNT STATE,
+  not a bad path: per-condition pricing requires Discogs seller settings.
+
+  §10a specifies "a range, never a single number" — *"VG £12–18, NM £40+"* — and
+  names collapsing conditions into one figure as the §8 flattening error. **With
+  seller settings unset, the range is not obtainable and building it as one
+  number is the thing the section forbids.**
+
+  Adam is filling in the seller settings. Two outcomes:
+  - **works** → build §10a as written, `price_suggestions` supplies the range;
+  - **does not** → build the honest subset ("11 for sale, from £41.14", no
+    invented range, no condition claims) and §10a is amended to match.
+
+  **The split is approved either way** — the three-placement architecture and the
+  caching are identical; only the payload's richness changes.
+
+  **Unit 1's normalizer is built against a CAPTURED fixture**, per the step 7
+  practice: the shape must come from a measured payload, not from what the docs
+  describe. That is the discipline whose absence produced this blocker in the
+  first place, and the `format.text` error before it.
+
+- **RULE: a negative claim about a file needs a search that could have found it.**
+
+  Step 10 planning, 2026-08-12. I reported that §12's reorder "did not land" and
+  that MusicBrainz "appears nowhere in SPEC.md". Both were false. The reorder was
+  present and complete through step 16.
+
+  The search was `grep -in "market|musicbrainz"` **inside a `sed` slice of §12**
+  — and the slice ended at `^## 13\.`, while the reordered list runs to step 16,
+  so the range closed before the entries. A second grep for "musicbrainz" across
+  the whole file returned nothing because I had already convinced myself and read
+  the empty output as confirmation.
+
+  **"I searched and found nothing" is only evidence if the search would have
+  found it.** Before reporting an absence, prove the method works: grep for
+  something you KNOW is in the file, using the same command shape. Here,
+  searching for "Market data" — the §10a heading I had just read — would have
+  returned a hit inside §12 and ended it immediately.
+
+  Same family as the wrong-anchor mutation trap and the `getByRole('row')`
+  reproduction: **a null result from an instrument never shown to work is not a
+  measurement.** Third instance, and the first where the instrument was a grep.
+
+  **FOURTH INSTANCE, and the class is now worth stating on its own: `git diff`
+  is an instrument, and it aligned unrelated array entries.**
+
+  Re-capturing `master-versions-discharge.json` produced a diff reporting that
+  `CLAY LP 3` had become `CLAY CD 3` at the same position — vinyl replaced by
+  CD, which would mean the fixture had lost the pressing the identical-rows
+  tests depend on. Compared as SETS: 25 versions before, 25 after, zero dropped,
+  zero added, still 8 `CLAY LP 3` UK versions. Discogs had reordered the array
+  and a line-oriented diff paired unrelated entries.
+
+  **The natural response — reverting the fixture — would have discarded a
+  legitimate refresh** on the strength of a change that never happened.
+
+  **What unites all four: each produced a confident WRONG ANSWER rather than an
+  error.** A tool that fails loudly is harmless; these returned plausible output
+  and were believed.
+
+  | Instrument | Reported | Actually |
+  |---|---|---|
+  | `str.index()` anchor | mutation applied, 0 failures | applied to a different query |
+  | `getByRole('row')` | 8/8 reproduction of a defect | locator matched nothing |
+  | `grep` in a `sed` slice | §12 reorder absent | present, outside the slice |
+  | `git diff` on an array | catalog number changed | array reordered, content identical |
+
+  **The check that would have caught every one: exercise the instrument against
+  a case whose answer you already know.** Grep for something you know is
+  present; make the reproduction pass once; confirm the mutation landed; compare
+  the array as a set. One extra command each time.
+
+- **RULE: make a reproduction GREEN once before trusting it red.**
+
+  A reproduction that confirms your hypothesis needs the same scrutiny as one
+  that refutes it — and gets less, because it agrees with you.
+
+  Step 9's `manage` investigation. A forced-race probe failed **8 of 8**, which
+  read as decisive proof of a hydration defect. It was measuring
+  `getByRole('row')` against a tree that renders `listitem` — a locator matching
+  nothing, failing perfectly every time. Four further timing measurements
+  (500ms to 6s, all "0 rows") looked like proof the refresh never landed. Every
+  one was the locator.
+
+  **The check costs one run: exercise the assertion against known-good
+  conditions and confirm it can PASS.** A red result from an assertion never
+  observed green is not evidence — it cannot distinguish "the behaviour is
+  broken" from "this never matched anything".
+
+  Related: the same investigation's earlier probe printed `posts: 1` and a 201
+  carrying the right name. That said plainly that the write worked, and it was
+  read past because it did not fit the theory. **Read the parts of a probe that
+  contradict you first.**
+
+- **RULE: the symptom names a location, and the location is where everyone
+  looks.**
+
+  `manage.spec.ts` failed intermittently for four investigations across several
+  steps. Every one examined the test, the component, and the `/manage` screen —
+  because the failure said `manage`. The cause was `workers` in
+  `playwright.config.ts`: ~6 workers against one dev server, saturating it.
+
+  Nothing in the symptom pointed at the config. The test that fails first under
+  contention is simply the one doing the most sequential round trips, and its
+  name is then attached to a cause it has nothing to do with.
+
+  **The tell: a failure that resists investigation AT the place it names.** After
+  two failed attempts inside the named location, ask what is shared —
+  the server, the database, the config, the fixtures — and vary that instead.
+  The four-attempt cost here is the argument for asking earlier.
+
+- **E2E RUNTIME crossed the 6-minute threshold: measure before optimising.**
+
+  The agreed trigger was "revisit past 6m". Measured 2026-08-12 across
+  consecutive full runs: **6.4m and 6.9m**, against ~4.0m when the suite held
+  246 tests. The suite is now 270 tests in 13 files — **+10% tests for +60%
+  wall clock**, which is disproportionate and the reason this is recorded rather
+  than accepted.
+
+  **Where the time goes** (total test-time, summed across workers, from one
+  run's JSON):
+
+  | File | Test-time |
+  |---|---|
+  | `record-form` | 366s |
+  | `discogs-prefill` | 300s |
+  | `record-detail` | 282s |
+  | `lookup-flows` | 232s |
+  | `collection-filters` | 209s |
+  | `manage` | 187s |
+
+  ~32 minutes of test-time over ~4 workers. **No single file dominates**, so
+  there is no one hotspot to fix — the cost is spread, which points at
+  per-test overhead rather than a slow feature.
+
+  **The individual outliers are all `manage`**: 32.7s, 23.4s, 22.3s for the
+  genre-move tests — the same file with the long-standing unexplained failure,
+  and one of two files whose controlled inputs still lack `data-hydrated`. Those
+  two facts may be the same fact.
+
+  **Candidates, none measured yet:**
+
+  1. **`login()` runs per test** — 270 logins, each a navigation, a hydration
+     wait and a form round trip. A shared storage state (`storageState`) would
+     make it once per worker. Biggest single lever if the overhead is real.
+  2. The `manage` genre-move tests specifically, which are 3× the median.
+  3. Worker count against available cores.
+
+  **Do not optimise before measuring which.** The suite is green and the
+  runtime is inconvenient rather than blocking; guessing here would trade a
+  known cost for an unknown regression. Its own unit, with a before/after.
+
+- **`data-hydrated` should be a DEFAULT for controlled forms, not a discovery.
+  Four instances is a pattern; the fifth diagnosis is waste.**
+
+  Measured 2026-08-12. Seventeen client components; six carry the marker. The
+  vulnerable set is not "all client components" — it is those with a CONTROLLED
+  input whose state is read on submit, because that is the only shape where a
+  pre-hydration keystroke lands in the DOM and never in React.
+
+  | Marked | Unmarked, with controlled inputs |
+  |---|---|
+  | `RecordForm`, `CollectionFilters`, `WantListForm`, `LookupClient`, login, `RecordJournal` | **`GenreTree`, `ResourceTable`, `InlineCreate`, `ImageGallery`** |
+
+  **`manage.spec.ts` has a long-standing failure that no unit has diagnosed**,
+  and `GenreTree` and `ResourceTable` both live on `/manage` with four and two
+  controlled bindings. That is a lead, not a conclusion — the recorded
+  diagnosis for it is a slow `router.refresh` + PATCH, which is a different
+  mechanism. Worth testing before assuming either.
+
+  **The cheaper shapes, in preference order:**
+
+  1. **A shared `useHydrated()` hook returning a ref**, so a new form adds one
+     line and cannot forget the effect's shape. Least ceremony, no build
+     tooling.
+  2. **An ESLint rule** requiring the marker in any `'use client'` file
+     containing `value={` — mechanical, catches the case at write time, but
+     needs a custom rule and will misfire on read-only bindings.
+  3. **Status quo**: diagnose each one when a mobile test fails. Four
+     diagnoses so far, each costing a probe and a false lead about saving.
+
+  Not done here because it touches four components and the manage specs, which
+  is its own unit with its own before/after. **Until then: any new controlled
+  form gets the marker while it is being written.** Noticed: step 9, unit 2.
+
 - **RULE: a Discogs field describing the CATALOGUE OBJECT belongs beside our
   field, never in it. Two instances; a third will come.**
 
@@ -2232,6 +2582,28 @@ form the records work had not shown — see the masking entry under Open.
   green BETWEEN mutations, not only at the end. A green run between two
   mutations is the cheapest possible proof the previous one was undone.
 
+  **THIRD TRAP, distinct from both: the mutation can apply CLEANLY to the wrong
+  code.** Not a dirty baseline and not a changed test count — the edit succeeds,
+  the suite runs, and it measures a query nobody was testing.
+
+  Step 9 unit 4. `records.ts` contains `.innerJoin(labels, ...)` TWICE. A
+  `str.index()` anchor found the first occurrence, in an unrelated query, so the
+  `byLabel` LEFT JOIN mutation reported "0 failures" and I nearly concluded the
+  test was decorative. It was correct — measured directly against Postgres, a
+  LEFT JOIN yields a null-named group, exactly what the test asserts against.
+  Re-anchored on `const byLabel` first, it fails 2.
+
+  **The tell: a mutation you expected to fail something that reports zero.**
+  Before concluding the test is weak, confirm the mutation LANDED — grep the
+  mutated file for the change, or count occurrences of the anchor first. Three
+  traps now, all producing a number that looks like evidence:
+
+  | Trap | Symptom | Check |
+  |---|---|---|
+  | dirty baseline | plausible count, unattributable | green run between mutations |
+  | changed test set | count moves for the wrong reason | run the whole file, fixed set |
+  | **wrong anchor** | **zero failures on a real gap** | **confirm the edit landed where intended** |
+
 - **UX HAZARD for step 9's stats screen: one record legitimately shows two
   different prices, and it will read as a bug.**
 
@@ -2628,6 +3000,316 @@ form the records work had not shown — see the masking entry under Open.
   Noticed: step 3.
 
 ## Resolved
+
+- ~~§10a's market panel on the want list and record detail.~~ Step 10 unit 3,
+  2026-08-13.
+
+  **The want list is where four quantities meet**, and three of them are money:
+  `best_dig_notes` (a PRESSING), `max_price` (the user's DECISION), the market
+  floor (a seller's LISTING), and Discogs' ladder (a MODEL). §7.2 has kept the
+  first two apart since step 6; §10a adds the last two to the same row.
+
+  Each says what it IS in words rather than relying on position — a label naming
+  the field tells the reader where a number came from, not what it means.
+  Mutation-verified: a floor label colliding with the ceiling fails 2 tests,
+  claiming a "worth" fails 1, presenting the ladder as sales fails 1.
+
+  **One component for both screens**, per §10a's "building it per-screen
+  produces three implementations that drift". Record detail auto-loads (one
+  record, already owned); the want list does not, because it is a list.
+
+  **A screenshot caught duplication no assertion did:** the panel heading read
+  "CHEAPEST ASKING NOW" directly above a sentence beginning "cheapest asking
+  $47.28". The heading now names the QUESTION (§10a's table) and the sentence
+  supplies the figure. The test that pinned the old wording was rewritten to
+  assert the PROPERTY — never "worth", never "sold" — rather than the phrasing.
+
+  **A new variant of the shared-row collision, worth the entry.**
+  `pressings.discogs_release_id` carries a UNIQUE index (§4.2) and pressings are
+  found-or-create, so two Playwright projects cannot both own a pressing for
+  release 381756: the first wins, the second reads back a row it never seeded.
+  Passed alone, failed paired.
+
+  Previous instances collided through PAGINATION (rows pushed off page 1) and
+  through NAME (the suffix convention). This one collides through a database
+  CONSTRAINT, which no suffix can help with — the id is the key.
+
+  Fixed with `seedDiscogsCacheAs(id, fixture)`: each run caches real captured
+  data under an id of its own. **The general rule holds and gains a third face —
+  a spec asserting on a found-or-created row needs a key no other run can
+  produce, and "key" includes any uniquely-indexed column, not just the name.**
+
+- ~~The app rendered `£` throughout and Adam is in New York.~~ Fixed
+  2026-08-13, its own unit.
+
+  **SPEC.md never named a currency.** `£` was assumed in step 5 and copied into
+  three formatters. QA made it visibly incoherent rather than theoretically
+  wrong: a record detail page showed **"PAID £10.00" directly above market data
+  in dollars** — two currencies on one screen, neither labelled.
+
+  **Three formatters became one.** `formatPrice`, `formatTotal` and
+  `formatCeiling` were the same string manipulation with different null
+  handling, which is exactly why the symbol lived in three places. `formatMoney`
+  now carries it once, and the old names delegate so no caller changed.
+
+  | | before | after |
+  |---|---|---|
+  | code sites with the symbol | 3 | **1** (`CURRENCY_SYMBOL`) |
+  | tests pinning it | scattered | 13 fail if it changes |
+
+  **`formatCeiling`'s distinct behaviour is preserved, not flattened.** It
+  returns `undefined` rather than a dash, because the want list OMITS the
+  max-price line entirely — a dash beside a ceiling reads as "I will pay
+  nothing" (§7.2). That is an overload on the shared function rather than a
+  fourth copy.
+
+  **Still string manipulation, never `toLocaleString`.** `NUMERIC(10,2)` values
+  are carried as strings end to end precisely so they never route through a
+  float, and a locale formatter would reintroduce exactly that.
+
+  Verified by screenshot: every figure on the detail and stats screens is USD,
+  and §7.6's estimate correctly excludes the $120 asking price in favour of the
+  $24.50 `used` one.
+
+- ~~`VersionTable` called `useState` after an early return.~~ Found by LINT, not
+  by any test, during step 10 unit 2.
+
+  The identical-versions unit added `const [expanded] = useState(...)` below the
+  `versions.length === 0` guard. React requires hooks in the same order on every
+  render, so a card that first rendered with no versions and then received some
+  would call a different number of hooks.
+
+  **No test caught it and none would have**: the two orderings only diverge when
+  the props change mid-life, and every fixture in the suite renders a card once
+  with its final data. `react-hooks/rules-of-hooks` sees it structurally.
+
+  **The generalisable part: lint is a different INSTRUMENT, not a slower test.**
+  It reasons about code shape rather than behaviour, so it catches the class of
+  defect whose trigger no fixture happens to reproduce. Three of the last four
+  findings came from tools rather than tests — this, the fresh-clone migration
+  check, and the `git diff` set comparison.
+
+  Also cleared in the same pass: a `setState` called synchronously inside an
+  effect (the §10a auto-resolve), which the same rule flags as cascading
+  renders. Fixed by scheduling off the effect body rather than by suppressing.
+
+- ~~`price_type` contained `best_dig` — a PRESSING modelled as a price.~~
+  Spec defect, migrated out in **0005**, 2026-08-12.
+
+  Adam's record read **"£120.00 best dig"**, which reads as "best price" — the
+  exact §8 conflation the rule exists to prevent, and it was in the schema. The
+  enum is now `new | used | asking`.
+
+  **Data verified before and after, not just "the migration ran":**
+
+  | | rows | sum | the row |
+  |---|---|---|---|
+  | before | 3 | £138.00 | `de0f81dd… @ 120.00 best_dig` |
+  | after | 3 | £138.00 | `de0f81dd… @ 120.00 asking` |
+
+  Same id, same amount, relabelled. Postgres cannot remove an enum value in
+  place, so the type is replaced (`CASE best_dig -> asking`); flagged as a
+  destructive type change per CLAUDE.md §7 and confirmed before running.
+
+  **`asking` is deliberately OUTSIDE §7.6's chain** (`used → new →
+  purchase_price`), and that is the most important part of this unit: a price
+  nobody paid must not inflate the headline figure on /stats. Same class as the
+  fabricated 230g weight, except it compounds into a number people quote.
+  Mutation-verified — adding `asking` to the chain fails **3** tests.
+
+  **The fresh-clone migration test caught an untracked file.** It copies TRACKED
+  files only, so a journal entry without its committed SQL produced a failure
+  that looked like bad SQL. The migration was fine; `git add` was missing. That
+  test earned its place.
+
+  **Five stale test references**, each updated with the reason rather than
+  quietly: three were incidental uses of the value, one asserted the enum
+  contents (which is what should fail), and one depended on DECLARATION ORDER —
+  `asking` is also declared last, so recency and type-ordering still disagree
+  and the fixture still discriminates.
+
+- ~~Prices showed neither date nor type.~~ QA finding, step 9, fixed
+  2026-08-12.
+
+  The sparkline plots by time and the range gave the bounds, but "3
+  observations, £8.00 to £120.00" could not say whether the £120 was last week
+  or three years ago, nor which observation was new or used.
+
+  Each observation now reads `2026-08-12  £120.00  what someone wanted — nobody
+  paid this`.
+
+  **The type is EXPLAINED, never labelled**, and this is the same rule as §7.6's
+  value sentence: "Asking" alone does not say that nobody paid it, which is the
+  entire point of the type. A bare enum label would reintroduce the `best_dig`
+  problem in a new vocabulary.
+
+  **Found by screenshot after the fix**: "Latest price £120.00 asking" sat
+  directly beside "PAID £8.00" in the Acquisition section — still a raw enum,
+  and the juxtaposition invites reading the record as worth £120. Now uses the
+  same `priceTypeMeaning`. **The QA finding named the observation list; the
+  same defect was one section up.**
+
+- ~~`manage.spec.ts` "moves a genre under another" failed intermittently in full
+  runs — survived four investigations and a quarantine.~~ **Diagnosed and fixed
+  2026-08-12: the cause was `workers`, not the test, the component, or
+  hydration.**
+
+  Playwright's default is roughly half the cores — ~6 on this 12-core machine —
+  and all of them drive ONE dev server. Measured across full runs:
+
+  | workers | result |
+  |---|---|
+  | default (~6) | 1-6 failures per run: `manage` timing out at 30s, `ECONNRESET` on setup POSTs across four other files |
+  | **3** | **278 passed, zero failures, zero flaky, twice** |
+
+  `ECONNRESET` is the server refusing connections it cannot accept; the 30s
+  timeout is the same saturation reaching the test that does the most
+  sequential round trips. **Wall clock is unchanged** (~4.9m vs ~4.6m) — the
+  bottleneck was the server, so extra workers bought contention, not throughput.
+
+  **Why it survived four attempts: every one looked at the test and the
+  component.** The failure named `manage`, so `manage` was investigated. The
+  cause was one line of harness config, and nothing about the symptom pointed
+  at it.
+
+  **My hydration lead was WRONG, and the way it nearly stuck is the entry worth
+  keeping.** `GenreTree` and `ResourceTable` do have unmarked controlled inputs,
+  which made the theory plausible. I built a forced-race reproduction and it
+  failed **8 of 8** — apparently decisive confirmation.
+
+  It was my own locator. The genre tree renders `listitem`; my probe used
+  `getByRole('row')`, which matches nothing there. Every "0 rows" reading —
+  including four timing measurements at 500ms to 6s that looked like proof the
+  refresh never lands — was the locator, not the app. With the correct locator,
+  the same forced race shows the row present.
+
+  **The rule: a reproduction that confirms your hypothesis needs the same
+  scrutiny as one that refutes it.** I verified the failure was deterministic
+  and did not verify the assertion could ever pass. The cheap check, before
+  trusting a red reproduction: **make it green once** — against known-good
+  conditions — so you know the locator and the assertion work at all.
+
+  Related and now separated: the probe that "proved" the POST never refreshed
+  actually showed `posts: 1` and a 201 with the right name. The write was always
+  fine. Reading that carefully is what broke the theory open.
+
+  **Retries measured, not assumed.** With 3 workers and `retries: 0`, a run
+  still failed one spec — so the retry stays, and what it now covers is the
+  hydration class (a real property of the app) rather than harness load.
+
+- ~~The §7.6 stats hazard: one record legitimately shows two different prices,
+  and a bare total would read as an arithmetic bug.~~ Built around rather than
+  captioned, step 9 unit 4, 2026-08-12.
+
+  The figure and its meaning are ONE sentence, produced by
+  `estimatedValueStatement`: *"Estimated value of what is on the shelf: £242.10,
+  using each record's most recent second-hand price — or its new price, or what
+  you paid, when that is all there is."* There is no arrangement of the page
+  that shows the number without the rule.
+
+  **Why not a caption:** a bare £X with an explanation underneath is a number
+  people quote back at you having not read the explanation.
+
+  **Four things the tests pin that a looser wording would lose:**
+  - the WHOLE fallback chain, not just its first link — naming only the used
+    price describes a smaller sum than the one shown;
+  - the word "estimate", since most of these prices come from Discogs and §5.7
+    calls that a starting point, never proof;
+  - **never "best dig"** — it is a `price_type` in §4.2 and NOT in §7.6's chain,
+    and CLAUDE.md §8 forbids conflating it with any price. This is the copy
+    where that confusion would be most expensive;
+  - zero reads as *"cannot be estimated"*, not £0.00 — the collection is not
+    worth nothing, nothing is known about what it is worth.
+
+  Spend is worded as a FACT ("total paid"), never an estimate: the two sit side
+  by side and the pair would otherwise read as profit.
+
+  **`byLabel` was in §5.2's amended response shape and missing from the query.**
+  The documented shape said one thing and the endpoint returned another. INNER
+  JOIN, like `byStore` — measured directly against Postgres, a LEFT JOIN yields
+  a null-named group, which would render as a shelf category called nothing.
+
+  **`formatTotal` added alongside `formatPrice`**, grouping thousands by string
+  manipulation: `formatPrice` deliberately avoids floats because
+  NUMERIC(10,2) → float is the precision loss the column type exists to prevent,
+  and `toLocaleString` would reintroduce it. Row prices are rarely four digits;
+  a collection total is.
+
+  **A shared-state race between two of my OWN tests**, worth the entry: an
+  E2E test asserting the zero branch guarded with `test.skip(estimatedValue >
+  0)`, and another test in the same file seeded a priced record between the
+  guard and the assertion. Check-then-act, at spec scope. Removed rather than
+  retried — `value-statement.test.ts` covers both branches directly because it
+  chooses its own input. **A test that is usually right about shared state is
+  worse than no test: it teaches you to re-run.**
+
+- ~~`price_history` had no write path.~~ Step 9 unit 3, 2026-08-12.
+
+  `POST /api/records/:id/prices` per the amended §5.2, plus §10's sparkline.
+
+  **The append-only rejection is the load-bearing part**, and it was
+  mutation-verified specifically: an endpoint that accepts an `id` and appends
+  anyway fails **2** tests. §7.5's guarantee — "never UPDATE a price_history
+  row" — is only meaningful if a correction is a DELIBERATE new observation. A
+  client sending `{ id, price }` believes it is editing; appending would raise
+  the row count, satisfying any test that checks only that, while leaving the
+  client's model of history wrong. `.strictObject` is what produces the 400, and
+  here it is a rule rather than housekeeping: `id`, `recordedAt` and `priceId`
+  are exactly the keys someone reaches for when trying to correct a row.
+
+  **The query layer cannot express an update**, deliberately — `appendPrice` and
+  a list, no update, no delete. A layer that offered one would make §7.5 depend
+  on every caller remembering it.
+
+  **Third copy of the money regex avoided.** `create-schema.ts` and the Discogs
+  import already carried `/^\d{1,8}(\.\d{1,2})?$/`; this would have been the
+  third. Extracted to `moneySchema` — two definitions that agree today are how
+  they drift, and the coercion class means the regex IS the validation
+  (`z.coerce.number()` reads `'5e4'` as 50000).
+
+  **Sparkline decisions, each mutation-verified:** plotted oldest-first (query
+  order would draw a rising price as falling — the most misleading thing this
+  chart could do), spaced by TIME not index (six years and two days are
+  different histories), and the range compared numerically (`'9.00' > '35.50'`
+  as text). The bounds are stated in words beside the shape: a sparkline shows
+  a trend and says nothing about scale.
+
+- ~~`a year range keeps undated records` failed in full runs and passed alone —
+  cleared as unrelated TWICE before being diagnosed.~~ Fixed 2026-08-12.
+
+  It asserted against the whole collection filtered only by year. Every other
+  spec's records land in the same table, records from 1980-83 belonging to other
+  runs fall inside the range, and at 50 per page this run's rows drop off page 1.
+
+  **The same pagination collision as `clicking the active chip clears it`**,
+  fixed in the flake unit — and this test was missed then because its failure
+  MOVED between runs while the chip's stayed fixed. Seven tests in that file
+  scope by `artistId`; this one did not.
+
+  **The process failure is the entry worth keeping: I cleared it twice.** Both
+  times it passed 3/3 in isolation and I concluded "no mechanism connects it to
+  my change". That reasoning was correct and irrelevant — the mechanism was
+  another spec's fixtures, which no amount of isolated re-running can reveal.
+
+  **The rule: "passes alone" is evidence about isolation, never about
+  correctness under load.** When a test fails a full run and passes alone, the
+  next question is what SHARED state it asserts on — not whether the current
+  change could have caused it. Already recorded for `db.execute` and shared
+  rows; this is the third instance and the first where the delay was mine.
+
+- ~~The journal's add-entry form lost typed text on mobile.~~ Found and fixed
+  within step 9 unit 2.
+
+  Its inputs are CONTROLLED, so a value typed before hydration never reaches
+  React state — `add()` saw an empty note and refused it. Measured with a probe
+  rather than assumed: the textarea held `"probe note"` while the guard fired.
+
+  Fourth component to need `data-hydrated` after `RecordForm`,
+  `CollectionFilters` and the login page. **The pattern is now predictable
+  enough to apply on sight: any new controlled form in this app needs the
+  marker, and its spec needs the wait.** Adding it while writing the component
+  costs nothing; discovering it costs a mobile-only failure that looks like a
+  save bug.
 
 - ~~Discogs `notes` were "dropped by both import paths".~~ **Not a defect. My
   report was wrong and the correction is the finding**, 2026-08-11.
@@ -3301,3 +3983,30 @@ form the records work had not shown — see the masking entry under Open.
   Postgres path for the local test database.~~ Resolved during step 1: SPEC.md §2
   was amended to scope the prohibition to serverless production functions and to
   name `pg` as a devDependency for the local test path.
+
+## Step 10 unit 4 — the version spread (§10a layer 3)
+
+- **An E2E "not yet fetched" assertion needs a settle window or it constrains nothing.**
+  `expect(spreadCalls).toBe(0)` immediately after the result card renders passed
+  against a mutation that moved the spread fetch into a mount effect — the
+  mount fetch had not resolved yet either, so 0 meant "not back yet" rather
+  than "never asked". A `waitForTimeout` before the assertion is what makes it
+  discriminate. Same family as the other assertions-that-cannot-constrain
+  already recorded here; this variant is specific to *absence over time*.
+
+- **The render block was silently absent.** The `spread` state and the fetch
+  were wired, so typecheck and lint were clean and the request demonstrably
+  fired — but nothing read the state. Only the E2E test caught it. A fetch
+  whose result is never rendered is invisible to every gate except a test that
+  looks at the page.
+
+- **OPEN — market data has nowhere to cache.** The user asked for per-release
+  caching at the 7-day rule so a second expand of the same master is free.
+  `src/lib/discogs/cache.ts` implements exactly that TTL, but it is keyed by
+  `discogs_release_id` and holds *release detail* payloads. Writing
+  `marketplace/stats` under the same key would collide with the release cache
+  the import path reads. SPEC.md §12 says "the client, limiter and cache all
+  exist"; §10a never says where market data is cached. Needs a spec decision:
+  a separate cache table, a discriminator column, or an in-memory TTL. Until
+  then every expand costs one call per version again — 11 for the Hot Tuna
+  master, a fifth of the per-minute budget.

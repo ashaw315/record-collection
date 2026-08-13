@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dateSchema, isCalendarDate } from './date';
+import { boundedDateSchema, dateSchema, isCalendarDate } from './date';
 
 /**
  * The shared calendar-date rule (SPEC.md §4.2's DATE columns).
@@ -92,5 +92,89 @@ describe('dateSchema', () => {
     // §4.2: purchase_date is nullable — a record can be logged without one.
     expect(dateSchema('Purchase date').safeParse(null).success).toBe(true);
     expect(dateSchema('Purchase date').safeParse(undefined).success).toBe(true);
+  });
+});
+
+describe('boundedDateSchema keeps a typo out of a date field', () => {
+  /**
+   * `isCalendarDate` rejects `2026-13-45` — a shape that is not a day. It
+   * cannot reject `1823-04-11`, which is a perfectly real day and, in a journal
+   * entry or a purchase date, a typo.
+   *
+   * The bound mirrors §4.1's year rule and its reasoning: **1877 is the year
+   * sound recording began**, so nothing about a record collection legitimately
+   * predates it, and the upper bound is today — unlike `formed_year`, which
+   * allows next year for a band already announced. **You cannot have bought a
+   * record tomorrow, or written a note about playing one.**
+   *
+   * The clock is a PARAMETER for the reason §4.1 records: a serverless instance
+   * that boots in December and stays warm into January would, with a bound
+   * computed at module load, reject the genuine current date — and no ordinary
+   * test catches it, because a test run never spans New Year.
+   */
+  const clock = () => new Date('2026-08-12T00:00:00Z');
+  const schema = boundedDateSchema('Entry date', clock);
+
+  it('accepts today', () => {
+    expect(schema.safeParse('2026-08-12').success).toBe(true);
+  });
+
+  it('accepts a date within living memory', () => {
+    expect(schema.safeParse('1979-11-02').success).toBe(true);
+  });
+
+  it('accepts 1877, the year sound recording began', () => {
+    expect(schema.safeParse('1877-01-01').success).toBe(true);
+  });
+
+  it('rejects 1876, which predates recorded sound', () => {
+    expect(schema.safeParse('1876-12-31').success).toBe(false);
+  });
+
+  it('rejects tomorrow — you cannot have played it yet', () => {
+    /**
+     * The discriminating case against §4.1's rule, which allows `currentYear +
+     * 1`. A band can be announced for next year; a record cannot have been
+     * bought, or listened to, tomorrow.
+     */
+    expect(schema.safeParse('2026-08-13').success).toBe(false);
+  });
+
+  it('rejects a date in the wrong century, which is what a typo looks like', () => {
+    expect(schema.safeParse('1823-04-11').success).toBe(false);
+    expect(schema.safeParse('2087-04-11').success).toBe(false);
+  });
+
+  it('still rejects a date that is not a day at all', () => {
+    // The existing rule survives the bound rather than being replaced by it.
+    expect(schema.safeParse('2026-13-45').success).toBe(false);
+    expect(schema.safeParse('2026-02-30').success).toBe(false);
+  });
+
+  it('names the field in the message, per §4.1’s amended rule', () => {
+    const result = schema.safeParse('1823-04-11');
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toContain('Entry date');
+    }
+  });
+
+  it('computes the bound per call, never at module load', () => {
+    /**
+     * The New Year case, made testable by injecting the clock. The same schema
+     * factory asked on two different days must give two different answers about
+     * the same date.
+     */
+    const newYearEve = boundedDateSchema('Entry date', () => new Date('2026-12-31T23:00:00Z'));
+    const newYearDay = boundedDateSchema('Entry date', () => new Date('2027-01-01T01:00:00Z'));
+
+    expect(newYearEve.safeParse('2027-01-01').success, 'not yet').toBe(false);
+    expect(newYearDay.safeParse('2027-01-01').success, 'now it is today').toBe(true);
+  });
+
+  it('still allows null and undefined, which mean "not recorded"', () => {
+    expect(schema.safeParse(null).success).toBe(true);
+    expect(schema.safeParse(undefined).success).toBe(true);
   });
 });

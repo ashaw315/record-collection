@@ -1,0 +1,34 @@
+{
+  "Mint (M)": {
+    "currency": "USD",
+    "value": 145.79866227900087
+  },
+  "Near Mint (NM or M-)": {
+    "currency": "USD",
+    "value": 130.451434670685
+  },
+  "Very Good Plus (VG+)": {
+    "currency": "USD",
+    "value": 99.75697945405324
+  },
+  "Very Good (VG)": {
+    "currency": "USD",
+    "value": 69.06252423742147
+  },
+  "Good Plus (G+)": {
+    "currency": "USD",
+    "value": 38.368069020789704
+  },
+  "Good (G)": {
+    "currency": "USD",
+    "value": 23.02084141247382
+  },
+  "Fair (F)": {
+    "currency": "USD",
+    "value": 15.347227608315883
+  },
+  "Poor (P)": {
+    "currency": "USD",
+    "value": 7.673613804157942
+  }
+}

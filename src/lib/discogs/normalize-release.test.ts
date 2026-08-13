@@ -239,12 +239,30 @@ describe('the rest of the §5.7 detail shape', () => {
   });
 
   it('carries the marketplace figures as information only', () => {
-    // §5.7 lists these; CLAUDE.md §8 forbids anything that sells. They are
-    // displayed, never linked.
+    /**
+     * §5.7 lists these; CLAUDE.md §8 forbids anything that sells. They are
+     * displayed, never linked.
+     *
+     * **Asserted as PROPERTIES, not as readings.** These are live market
+     * figures: re-capturing the fixture moved `lowest_price` from 43.96 to
+     * 55.59 and the hardcoded assertion failed for a change in the market
+     * rather than a change in the code. `num_for_sale` passed only by
+     * coincidence and would have broken the same way next capture.
+     *
+     * The behaviour under test is that the normalizer CARRIES these fields
+     * through — which is what a mutation dropping them would break, and which
+     * no specific number is needed to state.
+     */
     const normalized = normalizeRelease(detailed);
 
-    expect(normalized.numForSale).toBe(11);
-    expect(normalized.lowestPrice).toBe(43.96);
+    // Narrowed at the point of use: the fixture is deliberately `unknown` so
+    // nothing in this file can assume a shape the payload does not have.
+    const raw = detailed as { num_for_sale: number; lowest_price: number };
+
+    expect(normalized.numForSale).toBe(raw.num_for_sale);
+    expect(normalized.lowestPrice).toBe(raw.lowest_price);
+    expect(typeof normalized.numForSale, 'present, whatever the market says').toBe('number');
+    expect(typeof normalized.lowestPrice).toBe('number');
   });
 
   it('carries the identifying fields for the form', () => {

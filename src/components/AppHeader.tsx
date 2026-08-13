@@ -22,6 +22,9 @@ const LINKS = [
   // §10 calls /lookup "the in-store screen", so it belongs in reach on a
   // phone rather than behind a URL somebody has to remember.
   { href: '/lookup', label: 'Look up' },
+  // Linked, not just routable: a screen nothing navigates to is the
+  // unreachable-path shape that cost this build §6's genre mapping (NOTES).
+  { href: '/stats', label: 'Stats' },
   { href: '/manage', label: 'Manage' },
 ] as const;
 

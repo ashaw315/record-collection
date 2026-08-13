@@ -37,7 +37,30 @@ export default defineConfig({
    * with, and read `PLAYWRIGHT_RETRY_REPORT` below.
    */
   retries: process.env.CI ? 2 : 1,
-  workers: process.env.CI ? 1 : undefined,
+  /**
+   * THREE locally, not Playwright's default.
+   *
+   * The default is roughly half the cores — ~6 on a 12-core machine — and every
+   * one of them drives ONE dev server. Measured 2026-08-12, three full runs at
+   * each setting:
+   *
+   * | workers | result |
+   * |---|---|
+   * | default (~6) | 1-6 failures per run: `manage` timing out at 30s, and `ECONNRESET` on setup POSTs across four other files |
+   * | **3** | **278 passed, zero failures, zero flaky, twice** |
+   *
+   * The failures were never in the app. `ECONNRESET` is the dev server dropping
+   * connections it cannot accept, and the `manage` timeout is the same
+   * saturation reaching a test that does four sequential round trips. Both
+   * vanish when the server is not oversubscribed.
+   *
+   * Wall clock is unchanged (~4.9m vs ~4.6m): the bottleneck was the server, so
+   * more workers bought contention rather than throughput.
+   *
+   * **This is why the `manage` flake survived four investigations** — every one
+   * looked at the test and the component, and the cause was in this line.
+   */
+  workers: process.env.CI ? 1 : 3,
   /**
    * `list` alongside `html` so retried tests are VISIBLE in the terminal.
    *

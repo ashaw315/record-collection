@@ -781,3 +781,235 @@ test('an owned version is never hidden inside a collapsed group', async ({ page 
   await expect(page.locator('[data-owned="true"]')).toHaveCount(1);
 });
 
+
+test('market data is fetched on demand, not for a page of results', async ({ page }) => {
+  /**
+   * §10a: layers 1-2 are two calls per release and a search returns fifty
+   * results — rendering them eagerly would spend up to a hundred calls of a
+   * sixty-per-minute budget on a search the user may not act on.
+   */
+  let marketCalls = 0;
+  await page.route('**/api/discogs/market/**', async (route) => {
+    marketCalls += 1;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        numForSale: 11,
+        lowestPrice: { value: 47.28, currency: 'USD' },
+        conditions: [
+          { grade: 'Near Mint (NM or M-)', value: 130.45 },
+          { grade: 'Very Good Plus (VG+)', value: 99.76 },
+          { grade: 'Very Good (VG)', value: 69.06 },
+        ],
+        range: { low: 69.06, high: 130.45 },
+        currency: 'USD',
+        rangeUnavailable: false,
+      }),
+    });
+  });
+
+  await stubLookup(page, { results: [searchResult(), searchResult({ discogsId: 999001 })] });
+
+  await page.goto('/lookup');
+  await formReady(page);
+  await page.getByLabel('Artist').fill('Discharge');
+  await page.getByRole('button', { name: 'Search Discogs' }).click();
+
+  await expect(page.getByTestId('result-card')).toHaveCount(2, { timeout: 15_000 });
+  expect(marketCalls, 'two results: nothing fetched until asked').toBe(0);
+
+  await page.getByTestId('check-market').first().click();
+
+  await expect(page.getByTestId('market-summary').first()).toContainText('11 for sale');
+  expect(marketCalls, 'one card asked, one release fetched').toBe(1);
+
+  // The copy carries §10a's distinctions.
+  const summary = await page.getByTestId('market-summary').first().innerText();
+  expect(summary).toContain('$47.28');
+  expect(summary, 'the floor is an ASKING price, never a worth').toMatch(/asking/i);
+  expect(summary, 'the ladder is estimated, not sold').toMatch(/estimates/i);
+  expect(summary.toLowerCase()).not.toContain('best dig');
+});
+
+test('a single result resolves automatically — the shop case', async ({ page }) => {
+  /**
+   * §10a's exception. Arriving by catalog number or barcode usually returns one
+   * release, and requiring a click to answer the question the search just asked
+   * is friction for nothing.
+   *
+   * **Driven by the RESULT COUNT, not the search shape.** A catalog-number
+   * search returning one and a freeform search happening to return one are the
+   * same case from the user's side; keying on how the query was built would make
+   * the behaviour unpredictable — so this test searches by ARTIST and still
+   * expects the auto-resolve.
+   */
+  let marketCalls = 0;
+  await page.route('**/api/discogs/market/**', async (route) => {
+    marketCalls += 1;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        numForSale: 3,
+        lowestPrice: { value: 12.5, currency: 'USD' },
+        conditions: [{ grade: 'Very Good (VG)', value: 18 }],
+        range: { low: 18, high: 18 },
+        currency: 'USD',
+        rangeUnavailable: false,
+      }),
+    });
+  });
+
+  await stubLookup(page, { results: [searchResult()] });
+
+  await page.goto('/lookup');
+  await formReady(page);
+  // Deliberately a freeform artist search, not a catalog number.
+  await page.getByLabel('Artist').fill('Discharge');
+  await page.getByRole('button', { name: 'Search Discogs' }).click();
+
+  await expect(page.getByTestId('market-summary')).toContainText('3 for sale', {
+    timeout: 15_000,
+  });
+  expect(marketCalls, 'exactly one release, fetched once').toBe(1);
+
+  // And no control to press, because it already answered.
+  await expect(page.getByTestId('check-market')).toHaveCount(0);
+});
+
+test('a missing condition ladder says so rather than showing nothing', async ({ page }) => {
+  /**
+   * §10a: `price_suggestions` needs completed Discogs seller settings and 404s
+   * without them. The app then "shows layer 1 alone and says the range is
+   * unavailable; it never interpolates one".
+   *
+   * An unexplained absence reads as "nobody has priced this record", which is a
+   * claim rather than a gap.
+   */
+  await page.route('**/api/discogs/market/**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        numForSale: 11,
+        lowestPrice: { value: 47.28, currency: 'USD' },
+        conditions: [],
+        range: null,
+        currency: 'USD',
+        rangeUnavailable: true,
+      }),
+    });
+  });
+
+  await stubLookup(page, { results: [searchResult()] });
+
+  await page.goto('/lookup');
+  await formReady(page);
+  await page.getByLabel('Artist').fill('Discharge');
+  await page.getByRole('button', { name: 'Search Discogs' }).click();
+
+  const summary = page.getByTestId('market-summary');
+  await expect(summary).toContainText('11 for sale', { timeout: 15_000 });
+  await expect(summary, 'the gap is named').toContainText(/no condition guide/i);
+});
+
+
+test('the version spread answers "does pressing matter here?"', async ({ page }) => {
+  /**
+   * §10a layer 3. It rides the expand — one call per version, so it happens
+   * when the user opens the table and never before.
+   */
+  let spreadCalls = 0;
+  await page.route('**/api/discogs/master/*/spread', async (route) => {
+    spreadCalls += 1;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        range: { low: 8, high: 400 },
+        verdict: 'pressing-matters',
+        partial: false,
+        text: '11 pressings, $8.00–$400.00. Which pressing you get matters more than the price.',
+        checked: 11,
+        total: 11,
+      }),
+    });
+  });
+
+  await stubLookup(page, { results: [searchResult()], versions: [versionRow(ORIGINAL)] });
+
+  await page.goto('/lookup');
+  await formReady(page);
+  await page.getByLabel('Artist').fill('Discharge');
+  await page.getByRole('button', { name: 'Search Discogs' }).click();
+
+  const card = page.getByTestId('result-card').first();
+  await expect(card).toBeVisible({ timeout: 15_000 });
+
+  /**
+   * §10a's on-demand rule: one call per version, so nothing is fetched until
+   * the user opens the table.
+   *
+   * **The wait is the test.** Checking the counter the instant the card renders
+   * proves nothing — a fetch fired on mount has not resolved yet either, so the
+   * count is 0 under both the correct code and the broken one. A mutation that
+   * moved the fetch into a mount effect passed against exactly that assertion.
+   * The settle window is what makes 0 mean "never asked" rather than "not back
+   * yet".
+   */
+  await page.waitForTimeout(1500);
+  expect(spreadCalls, 'not fetched until the user opens the table').toBe(0);
+
+  await card.getByTestId('expand-versions').click();
+
+  await expect(page.getByTestId('version-spread')).toContainText('$8.00–$400.00', {
+    timeout: 15_000,
+  });
+  await expect(page.getByTestId('version-spread')).toContainText(/which pressing/i);
+  expect(spreadCalls).toBe(1);
+});
+
+test('a partial spread says it is partial rather than reading as complete', async ({ page }) => {
+  /**
+   * The budget runs out mid-fetch: eleven versions against a sixty-per-minute
+   * limit, contending with everything else on the page.
+   *
+   * §10a — a partial spread is still an answer, but presenting an incomplete
+   * range as complete is the absent-versus-unknown failure in the layer where
+   * the numbers carry the most weight. The reader cannot otherwise tell a
+   * master whose versions genuinely cluster from one where the wide end was
+   * never fetched.
+   */
+  await page.route('**/api/discogs/master/*/spread', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        range: { low: 20, high: 25 },
+        // Withheld: the unchecked versions could reverse it.
+        verdict: null,
+        partial: true,
+        text: '3 of 11 pressings checked so far — $20.00–$25.00.',
+        checked: 3,
+        total: 11,
+      }),
+    });
+  });
+
+  await stubLookup(page, { results: [searchResult()], versions: [versionRow(ORIGINAL)] });
+
+  await page.goto('/lookup');
+  await formReady(page);
+  await page.getByLabel('Artist').fill('Discharge');
+  await page.getByRole('button', { name: 'Search Discogs' }).click();
+  await page.getByTestId('result-card').first().getByTestId('expand-versions').click();
+
+  const spread = page.getByTestId('version-spread');
+  await expect(spread).toContainText('3 of 11', { timeout: 15_000 });
+  await expect(spread, 'the range is provisional').toContainText(/so far/i);
+
+  // No verdict from a third of the evidence.
+  await expect(spread).not.toContainText(/barely (changes|matters)/i);
+  await expect(spread).not.toContainText(/which pressing you get matters/i);
+});

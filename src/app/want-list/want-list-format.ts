@@ -1,3 +1,4 @@
+import { formatMoney } from '@/lib/money';
 /**
  * Display helpers for the want-list screen (SPEC.md §10).
  *
@@ -19,9 +20,31 @@ export const BEST_DIG_LABEL = 'Best dig — the pressing to hunt for';
 export const MAX_PRICE_LABEL = "Most I'll pay";
 
 /**
+ * §10a's two market figures, labelled beside §7.2's ceiling.
+ *
+ * Three quantities on one row all render as money — the user's DECISION, a
+ * seller's LISTING, and Discogs' MODEL — which is exactly the confusion §7.2
+ * exists to prevent between the first two. Each says what it is in words rather
+ * than relying on sitting in a different block.
+ *
+ * Never "worth" or "value" (§10a: the app does not know what a specific copy is
+ * worth), never "sold" or "paid" (the endpoint is `price_suggestions` — nobody
+ * paid these), and never "best dig", which names a PRESSING and is already the
+ * label of the notes field on this same screen.
+ */
+/**
+ * The QUESTION this panel answers on the want list, per §10a's table — "is my
+ * ceiling realistic?". Not a restatement of the figure: `marketSummary` already
+ * says "cheapest asking $47.28", and a heading repeating it read as duplication
+ * on screen. Caught in a screenshot, not by an assertion.
+ */
+export const MARKET_FLOOR_LABEL = 'On the market now';
+export const MARKET_RANGE_LABEL = 'Discogs estimates by condition';
+
+/**
  * The ceiling, or `undefined` when none was set.
  *
- * Omitted rather than rendered as zero — "£0.00" reads as "I will pay nothing",
+ * Omitted rather than rendered as zero — "$0.00" reads as "I will pay nothing",
  * which is a different statement from "I have not decided".
  *
  * The amount stays a STRING throughout, as `purchase_price` does (§4.2): the
@@ -30,10 +53,9 @@ export const MAX_PRICE_LABEL = "Most I'll pay";
  * higher than the one recorded.
  */
 export function formatCeiling(maxPrice: string | null): string | undefined {
-  if (maxPrice === null) return undefined;
-
-  const [whole, fraction = ''] = maxPrice.split('.');
-  return `£${whole}.${fraction.padEnd(2, '0').slice(0, 2)}`;
+  // `absent: undefined` keeps this row OMITTED rather than dashed — see the
+  // note above: a dash beside a ceiling reads as "I will pay nothing".
+  return formatMoney(maxPrice, { absent: undefined });
 }
 
 /**

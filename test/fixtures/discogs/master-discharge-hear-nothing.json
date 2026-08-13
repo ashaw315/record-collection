@@ -7,8 +7,8 @@
   "versions_url": "https://api.discogs.com/masters/50683/versions",
   "main_release_url": "https://api.discogs.com/releases/381756",
   "most_recent_release_url": "https://api.discogs.com/releases/31329322",
-  "num_for_sale": 260,
-  "lowest_price": 9.29,
+  "num_for_sale": 257,
+  "lowest_price": 8.76,
   "images": [
     {
       "type": "primary",

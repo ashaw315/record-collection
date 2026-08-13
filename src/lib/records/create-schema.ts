@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { dateSchema } from '@/lib/api/date';
+import { moneySchema } from '@/lib/api/money';
+import { boundedDateSchema } from '@/lib/api/date';
 import { yearSchema } from '@/lib/api/year';
 import { MAX_NESTED_IDS } from '@/lib/db/queries/nested';
 import { CONDITION_GRADES } from './fields';
@@ -49,11 +50,15 @@ export const recordCreateSchema = z.strictObject({
   conditionMedia: conditionSchema,
   conditionSleeve: conditionSchema,
   // NUMERIC(10,2) as a string: a float would silently lose pence.
-  purchasePrice: z
-    .string()
-    .regex(/^\d{1,8}(\.\d{1,2})?$/, 'purchasePrice must be a decimal amount')
+  purchasePrice: moneySchema('purchasePrice')
     .nullish(),
-  purchaseDate: dateSchema('Purchase date'),
+  /**
+   * Bounded, not merely a calendar check. `2026-13-45` is not a day and was
+   * already rejected; `1823-04-11` IS a day and is a typo. Same bound as the
+   * journal's entry date — 1877 (sound recording began) to today, because you
+   * cannot have bought a record tomorrow.
+   */
+  purchaseDate: boundedDateSchema('Purchase date'),
   notes: z.string().trim().max(10_000).nullish(),
   genreIds: z.array(uuid).max(MAX_NESTED).optional(),
   tagIds: z.array(uuid).max(MAX_NESTED).optional(),

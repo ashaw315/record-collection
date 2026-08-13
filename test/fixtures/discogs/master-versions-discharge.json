@@ -1055,31 +1055,6 @@
       }
     },
     {
-      "id": 13157665,
-      "label": "Clay Records",
-      "country": "UK",
-      "title": "Hear Nothing See Nothing Say Nothing",
-      "major_formats": [
-        "Vinyl"
-      ],
-      "format": "LP, Album, Reissue, Repress",
-      "catno": "CLAY LP 3",
-      "released": "1989",
-      "status": "Accepted",
-      "resource_url": "https://api.discogs.com/releases/13157665",
-      "thumb": "https://i.discogs.com/-kW6Ld5dGTsMQkH5VXjqHqeXApKNdbloJhCfEpua-Vs/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzMTU3/NjY1LTE1NDkwNTM4/NzMtMjkzNi5qcGVn.jpeg",
-      "stats": {
-        "community": {
-          "in_wantlist": 217,
-          "in_collection": 101
-        },
-        "user": {
-          "in_wantlist": 0,
-          "in_collection": 0
-        }
-      }
-    },
-    {
       "id": 603934,
       "label": "Clay Records",
       "country": "UK",
@@ -1097,6 +1072,31 @@
         "community": {
           "in_wantlist": 264,
           "in_collection": 230
+        },
+        "user": {
+          "in_wantlist": 0,
+          "in_collection": 0
+        }
+      }
+    },
+    {
+      "id": 13157665,
+      "label": "Clay Records",
+      "country": "UK",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "major_formats": [
+        "Vinyl"
+      ],
+      "format": "LP, Album, Reissue, Repress",
+      "catno": "CLAY LP 3",
+      "released": "1989",
+      "status": "Accepted",
+      "resource_url": "https://api.discogs.com/releases/13157665",
+      "thumb": "https://i.discogs.com/-kW6Ld5dGTsMQkH5VXjqHqeXApKNdbloJhCfEpua-Vs/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzMTU3/NjY1LTE1NDkwNTM4/NzMtMjkzNi5qcGVn.jpeg",
+      "stats": {
+        "community": {
+          "in_wantlist": 217,
+          "in_collection": 101
         },
         "user": {
           "in_wantlist": 0,

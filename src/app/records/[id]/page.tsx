@@ -3,7 +3,11 @@ import Link from 'next/link';
 import { AppHeader } from '@/components/AppHeader';
 import { DeleteRecord } from './DeleteRecord';
 import { ImageGallery } from './ImageGallery';
+import { MarketPanel } from '@/app/market/MarketPanel';
+import { PriceHistory } from './PriceHistory';
+import { RecordJournal } from './RecordJournal';
 import { RecordDetail } from './RecordDetail';
+import { listPricesForRecord } from '@/lib/db/queries/prices';
 import { hydrateRecord } from '@/lib/db/queries/records';
 import { isUuid } from '@/lib/api/errors';
 
@@ -46,6 +50,15 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
 
   const record = await hydrateRecord(id);
   if (record === undefined) notFound();
+
+  /**
+   * The FULL history, not §5.2's hydrated `latestPrice`.
+   *
+   * The hydrated read returns one row by design — the detail screen's headline
+   * figure. §10's sparkline needs every observation, and this is a server
+   * component, so it is one more query rather than a client fetch.
+   */
+  const prices = await listPricesForRecord(id);
 
   return (
     <>
@@ -92,6 +105,46 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
             )}
 
             <ImageGallery recordId={id} images={record.images} />
+
+            {/*
+              §10's journal. After the gallery because the images describe the
+              object and the journal describes living with it.
+            */}
+            {/*
+              Before the journal: the sparkline is about the object's value,
+              which sits with the other facts, while the journal is about
+              living with it.
+            */}
+            {/*
+              §10a's third placement: "Has this appreciated since I bought it?"
+              — the market beside what was PAID, which sits in Acquisition above.
+              Auto-loaded because this is one record the user already owns, not
+              a list.
+            */}
+            <MarketPanel
+              discogsReleaseId={record.pressing?.discogsReleaseId ?? null}
+              label="What it goes for now"
+              autoLoad
+            />
+
+            <PriceHistory
+              recordId={id}
+              observations={prices.map((row) => ({
+                id: row.id,
+                price: row.price,
+                priceType: row.priceType ?? 'used',
+                recordedAt: row.recordedAt,
+              }))}
+            />
+
+            <RecordJournal
+              recordId={id}
+              entries={record.journalEntries.map((entry) => ({
+                id: entry.id,
+                entryDate: entry.entryDate,
+                note: entry.note,
+              }))}
+            />
           </div>
           {/*
             Delete sits UNDER Edit and reads as a link rather than a button:

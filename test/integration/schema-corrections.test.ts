@@ -66,7 +66,7 @@ describe('price_history cascades from its parent (SPEC.md §4.2)', () => {
       sql`INSERT INTO want_list (artist_id, title) VALUES (${artist.rows[0].id}, 'Arise!') RETURNING id`,
     );
     await db.execute(
-      sql`INSERT INTO price_history (want_list_id, price, price_type) VALUES (${want.rows[0].id}, 55.00, 'best_dig')`,
+      sql`INSERT INTO price_history (want_list_id, price, price_type) VALUES (${want.rows[0].id}, 55.00, 'asking')`,
     );
 
     await db.execute(sql`DELETE FROM want_list WHERE id = ${want.rows[0].id}`);

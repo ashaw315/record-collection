@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { formatPrice, formatYear } from '../../collection-format';
 import { conditionLabel, pressingFacts } from '../record-detail-format';
+import { priceTypeMeaning, type PriceType } from './price-line';
 import type { HydratedRecord } from '@/lib/db/queries/records';
 
 /**
@@ -149,8 +150,15 @@ export function RecordDetail({ record }: { record: HydratedRecord }) {
         {record.latestPrice !== null && (
           <Field label="Latest price">
             <span className="font-mono tabular-nums">{formatPrice(record.latestPrice.price)}</span>
+            {/*
+              The type EXPLAINED, not the raw enum. This read "$120.00 asking"
+              directly beside "PAID $8.00", which invites reading the record as
+              worth $120 — and $120 is precisely the figure nobody paid.
+              Same rule as the observation list below and §7.6's total: the
+              number and its meaning arrive together.
+            */}
             <span className="ml-2 text-xs text-muted-foreground">
-              {record.latestPrice.priceType.replace('_', ' ')}
+              {priceTypeMeaning(record.latestPrice.priceType as PriceType)}
             </span>
           </Field>
         )}

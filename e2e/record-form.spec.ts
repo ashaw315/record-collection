@@ -86,7 +86,7 @@ test('adds a record manually and finds it in the collection', async ({ page }) =
   // Lands on the new record's detail screen.
   await expect(page).toHaveURL(/\/records\/[0-9a-f-]{36}$/, { timeout: 15_000 });
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
-  await expect(page.getByText('£24.50')).toBeVisible();
+  await expect(page.getByText('$24.50')).toBeVisible();
 
   // And it is in the collection — the "see it in the list" half of flow 2.
   await page.goto(`/?artistId=${artist.id}`);
@@ -141,7 +141,7 @@ test('edits one field without disturbing the others', async ({ page }) => {
 
   // Everything untouched survived.
   await expect(page.getByText(`EditLabel-${suffix}`)).toBeVisible();
-  await expect(page.getByText('£24.50')).toBeVisible();
+  await expect(page.getByText('$24.50')).toBeVisible();
   await expect(page.getByText('Original note.')).toBeVisible();
   await expect(page.getByText('VG+')).toBeVisible();
 });

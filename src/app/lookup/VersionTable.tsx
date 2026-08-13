@@ -40,6 +40,16 @@ export function VersionTable({
    */
   ownershipChecked?: boolean;
 }) {
+  /**
+   * BEFORE the early return: hooks must run in the same order on every render,
+   * and this sat after the empty-versions guard — so a card that first rendered
+   * with no versions and then received some would call a different number of
+   * hooks. Caught by `react-hooks/rules-of-hooks`, not by any test: the two
+   * orderings only diverge when the props change mid-life, which no fixture in
+   * this suite does.
+   */
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
+
   if (versions.length === 0) {
     return (
       <p className="px-3 py-4 text-sm text-muted-foreground">
@@ -47,8 +57,6 @@ export function VersionTable({
       </p>
     );
   }
-
-  const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
 
   const ownedCount = versions.filter((version) => isOnTheShelf(version.ownership)).length;
 

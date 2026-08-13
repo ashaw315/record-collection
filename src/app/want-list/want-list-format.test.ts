@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   BEST_DIG_LABEL,
+  MARKET_FLOOR_LABEL,
+  MARKET_RANGE_LABEL,
   MAX_PRICE_LABEL,
   formatCeiling,
   priorityLabel,
@@ -57,11 +59,11 @@ describe('the §7.2 labels', () => {
 
 describe('formatCeiling', () => {
   it('renders an amount with the currency mark', () => {
-    expect(formatCeiling('40.00')).toBe('£40.00');
+    expect(formatCeiling('40.00')).toBe('$40.00');
   });
 
   it('is undefined when no ceiling was set', () => {
-    // Omitted rather than shown as zero: "£0.00" would read as "I will pay
+    // Omitted rather than shown as zero: "$0.00" would read as "I will pay
     // nothing", which is a different statement from "I have not decided".
     expect(formatCeiling(null)).toBeUndefined();
   });
@@ -70,7 +72,7 @@ describe('formatCeiling', () => {
     // NUMERIC(10,2) carried as a string end to end (§4.2), same as
     // purchase_price. Truncates rather than rounds, so a displayed ceiling is
     // never higher than the one recorded.
-    expect(formatCeiling('8.567')).toBe('£8.56');
+    expect(formatCeiling('8.567')).toBe('$8.56');
   });
 });
 
@@ -165,5 +167,66 @@ describe('targetPressingSummary', () => {
     });
 
     expect(summary).toBe('1982');
+  });
+});
+
+describe('three money figures, three meanings (§7.2 extended by §10a)', () => {
+  /**
+   * The want list is where they collide. §7.2 has kept `best_dig_notes` and
+   * `max_price` apart since step 6 — which pressing to hunt versus what the user
+   * will pay. §10a adds a third and a fourth quantity to the same row:
+   *
+   *   - **`max_price`** — the user's ceiling. A decision.
+   *   - **market floor** — what someone is asking today. A listing.
+   *   - **condition ladder** — what Discogs estimates. A model.
+   *
+   * Three quantities that all render as money is precisely the confusion §7.2
+   * exists to prevent, so each says what it IS in words rather than relying on
+   * sitting in a different block. A label naming the field ("Max price") tells
+   * the reader where it came from; these tell them what it means.
+   */
+  it('labels the ceiling as the user’s own decision', () => {
+    expect(MAX_PRICE_LABEL).toMatch(/I.ll pay/i);
+  });
+
+  it('heads the market block without claiming a worth', () => {
+    /**
+     * The heading names the QUESTION (§10a's table: "is my ceiling
+     * realistic?"); `marketSummary` supplies the "cheapest asking $47.28"
+     * wording. A first version asserted "asking" HERE too and produced a
+     * heading that duplicated the sentence under it — caught in a screenshot.
+     *
+     * What must hold either way: never "worth" and never "value". §10a — the
+     * app does not know what a specific copy is worth, and the floor is one
+     * listing at a condition nobody stated.
+     */
+    expect(MARKET_FLOOR_LABEL.toLowerCase()).not.toMatch(/\bworth\b|\bvalue\b/);
+    expect(MARKET_FLOOR_LABEL.toLowerCase()).not.toMatch(/\bpaid\b|\bsold\b/);
+  });
+
+  it('labels the ladder as an estimate, not as sales', () => {
+    // The endpoint is `price_suggestions`: Discogs MODELS these. Nobody paid
+    // $145.80 for that record.
+    expect(MARKET_RANGE_LABEL).toMatch(/estimate/i);
+    expect(MARKET_RANGE_LABEL.toLowerCase()).not.toMatch(/\bsold\b|\bpaid\b/);
+  });
+
+  it('gives all three DIFFERENT labels, so none can be read as another', () => {
+    /**
+     * The discriminating assertion. Three figures with overlapping labels would
+     * reproduce exactly the flattening §7.2 forbids — and the failure mode is
+     * the user reading their own ceiling as a market price, or the reverse.
+     */
+    const labels = [MAX_PRICE_LABEL, MARKET_FLOOR_LABEL, MARKET_RANGE_LABEL];
+
+    expect(new Set(labels).size).toBe(3);
+  });
+
+  it('never uses "best dig" for any money figure', () => {
+    // CLAUDE.md §8: best dig names a PRESSING. It is already the label for the
+    // notes field on this same screen, which is why the risk is highest here.
+    for (const label of [MAX_PRICE_LABEL, MARKET_FLOOR_LABEL, MARKET_RANGE_LABEL]) {
+      expect(label.toLowerCase()).not.toContain('best dig');
+    }
   });
 });

@@ -40,7 +40,11 @@ export const conditionGrade = pgEnum('condition_grade', [
   'F',
   'P',
 ]);
-export const priceType = pgEnum('price_type', ['new', 'used', 'best_dig']);
+// §4.2 as amended, and §7's correction note: `best_dig` described a PRESSING
+// and modelling it as a price was CLAUDE.md §8's conflation in the schema.
+// `asking` is a price somebody wants that nobody has paid — a shop tag or an
+// open listing — and is deliberately NOT in §7.6's value chain.
+export const priceType = pgEnum('price_type', ['new', 'used', 'asking']);
 export const imageType = pgEnum('image_type', ['cover', 'back', 'label', 'matrix', 'other']);
 
 // --- 4.1 Reference tables ---------------------------------------------------

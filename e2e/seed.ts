@@ -133,3 +133,35 @@ export async function removeImagesFor(recordId: string): Promise<void> {
   const db = getTestDb();
   await db.delete(images).where(eq(images.recordId, recordId));
 }
+
+/**
+ * A fixture payload cached under a CHOSEN release id.
+ *
+ * `seedDiscogsCache` uses the payload's own id, which is right when a spec is
+ * about that release. It is wrong when two Playwright projects both need "a
+ * release that verifies": `pressings.discogs_release_id` is uniquely indexed
+ * (§4.2) and pressings are found-or-create, so only one project can own a
+ * pressing for a given id and the other reads back a row it did not seed.
+ *
+ * Passing an id per run gives each project its own, without inventing a payload
+ * — the cached body is still real captured data.
+ */
+export async function seedDiscogsCacheAs(
+  discogsReleaseId: number,
+  fixtureName: string,
+): Promise<number> {
+  const payload = JSON.parse(
+    readFileSync(`test/fixtures/discogs/${fixtureName}.json`, 'utf8'),
+  ) as Record<string, unknown>;
+
+  const db = getTestDb();
+
+  await db.execute(
+    sql`INSERT INTO discogs_cache (discogs_release_id, payload, fetched_at)
+        VALUES (${discogsReleaseId}, ${JSON.stringify({ ...payload, id: discogsReleaseId })}::jsonb, now())
+        ON CONFLICT (discogs_release_id)
+        DO UPDATE SET payload = excluded.payload, fetched_at = now()`,
+  );
+
+  return discogsReleaseId;
+}

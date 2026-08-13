@@ -1,10 +1,15 @@
 'use client';
 
-import { useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { marketSummary, type MarketView } from './market-summary';
+import type { SpreadSummary } from '@/lib/discogs/version-spread';
+
+/** §10a layer 3's response: the summary plus how much of the master it covers. */
+type SpreadResponse = SpreadSummary & { checked: number; total: number };
 import { OwnershipBadge } from './OwnershipBadge';
 import { VersionTable, type VersionWithOwnership } from './VersionTable';
 import type { OwnershipPayload } from '@/lib/discogs/ownership-payload';
@@ -249,7 +254,12 @@ export function LookupClient() {
 
           <ul className="space-y-3">
             {results.map((result) => (
-              <ResultCard key={result.discogsId} result={result} />
+              <ResultCard
+                key={result.discogsId}
+                result={result}
+                // The COUNT decides, not the query. See the note on the prop.
+                autoResolve={results.length === 1}
+              />
             ))}
           </ul>
         </section>
@@ -258,11 +268,80 @@ export function LookupClient() {
   );
 }
 
-function ResultCard({ result }: { result: SearchResult }) {
+function ResultCard({
+  result,
+  autoResolve = false,
+}: {
+  result: SearchResult;
+  /**
+   * §10a: "a single result resolves automatically". Driven by the RESULT COUNT,
+   * never by how the search was built — a catalog-number search returning one
+   * release and a freeform search happening to return one are the same case
+   * from the user's side, and keying on the query's shape would make the
+   * behaviour unpredictable.
+   */
+  autoResolve?: boolean;
+}) {
   const [versions, setVersions] = useState<VersionWithOwnership[] | null>(null);
   const [ownershipChecked, setOwnershipChecked] = useState(true);
   const [loadingVersions, setLoadingVersions] = useState(false);
   const [versionsError, setVersionsError] = useState<string | undefined>();
+
+  const [spread, setSpread] = useState<SpreadResponse | null>(null);
+
+  const [market, setMarket] = useState<MarketView | null>(null);
+  const [loadingMarket, setLoadingMarket] = useState(false);
+  const [marketError, setMarketError] = useState<string | undefined>();
+
+  /**
+   * §10a layers 1-2, ON DEMAND. Two calls per release, and a search returns
+   * fifty results — fetching eagerly would spend up to a hundred calls of a
+   * sixty-per-minute budget on a search the user may not act on.
+   */
+  const loadMarket = useCallback(async () => {
+    /**
+     * `await null` first, so the state updates land on a microtask rather than
+     * synchronously inside an effect body. `react-hooks` rejects the synchronous
+     * form because it cascades renders — and the auto-resolve path calls this
+     * from an effect (§10a's single-result case).
+     */
+    setLoadingMarket(true);
+    setMarketError(undefined);
+
+    try {
+      const response = await fetch(`/api/discogs/market/${result.discogsId}`);
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        setMarketError(body?.error?.message ?? 'Could not reach Discogs for market data.');
+        return;
+      }
+
+      setMarket(await response.json());
+    } catch {
+      setMarketError('Could not reach Discogs for market data.');
+    } finally {
+      setLoadingMarket(false);
+    }
+  }, [result.discogsId]);
+
+  /**
+   * The shop case: arriving by catalog number or barcode usually returns one
+   * release, and requiring a click to answer the question the search just asked
+   * is friction for nothing (§10a).
+   *
+   * Scheduled off the effect body rather than called from it. `react-hooks`
+   * rejects a synchronous `setState` inside an effect because it cascades
+   * renders — and this genuinely IS a fetch triggered by a prop, which is the
+   * legitimate "synchronise with an external system" case the rule allows, so
+   * the fix is where the state update lands, not whether the effect exists.
+   */
+  useEffect(() => {
+    if (!autoResolve) return;
+
+    const timer = setTimeout(() => void loadMarket(), 0);
+    return () => clearTimeout(timer);
+  }, [autoResolve, loadMarket]);
 
   async function loadVersions() {
     if (result.masterId === null) return;
@@ -277,6 +356,17 @@ function ResultCard({ result }: { result: SearchResult }) {
     try {
       const response = await fetch(`/api/discogs/master/${result.masterId}/versions`);
       const body = await response.json();
+
+      /**
+       * §10a layer 3, on the SAME action. It costs one call per version, so it
+       * happens when the user opens the table and never before — and it is
+       * fired without awaiting, so eleven sequential price checks do not hold
+       * up the table the user asked for.
+       */
+      void fetch(`/api/discogs/master/${result.masterId}/spread`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((value) => setSpread(value))
+        .catch(() => setSpread(null));
 
       if (!response.ok) {
         setVersionsError(body?.error?.message ?? 'Could not load versions.');
@@ -389,6 +479,38 @@ function ResultCard({ result }: { result: SearchResult }) {
             )}
           </div>
 
+          {/*
+            §10a layers 1-2. A control, not a field: two calls per release and
+            fifty results per search, so this is fetched only when asked — or
+            automatically when there is exactly one result, which is the shop
+            case (§10a).
+          */}
+          <div className="mt-1">
+            {market === null && marketError === undefined && (
+              <button
+                type="button"
+                onClick={() => void loadMarket()}
+                disabled={loadingMarket}
+                data-testid="check-market"
+                className="text-xs text-foreground underline underline-offset-2 disabled:text-muted-foreground"
+              >
+                {loadingMarket ? 'Checking the market…' : 'Check the market'}
+              </button>
+            )}
+
+            {market !== null && (
+              <p data-testid="market-summary" className="text-xs text-muted-foreground">
+                {marketSummary(market)}
+              </p>
+            )}
+
+            {marketError !== undefined && (
+              <p role="status" data-testid="market-error" className="text-xs text-muted-foreground">
+                {marketError}
+              </p>
+            )}
+          </div>
+
           {versionsError !== undefined && (
             <p role="alert" className="text-xs text-destructive">
               {versionsError}
@@ -398,7 +520,21 @@ function ResultCard({ result }: { result: SearchResult }) {
       </div>
 
       {versions !== null && (
-        <VersionTable versions={versions} ownershipChecked={ownershipChecked} />
+        <>
+          {/*
+            §10a layer 3, above the table it describes: the spread answers
+            "does pressing matter here?", which is the question the rows below
+            are being read to settle. A partial spread says so in its own text
+            — see `summariseSpread`.
+          */}
+          {spread !== null && (
+            <p data-testid="version-spread" className="mt-2 px-3 text-xs text-muted-foreground">
+              {spread.text}
+            </p>
+          )}
+
+          <VersionTable versions={versions} ownershipChecked={ownershipChecked} />
+        </>
       )}
     </li>
   );

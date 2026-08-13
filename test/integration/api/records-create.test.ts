@@ -479,12 +479,16 @@ describe('GET /api/records/:id — the hydrated read', () => {
      * Chosen so recency and type-ordering genuinely disagree.
      *
      * `price_type` is a Postgres ENUM, so it sorts by DECLARATION order
-     * (new < used < best_dig), not alphabetically — verified with
-     * enum_range(). Two earlier fixtures failed to discriminate because the
-     * newest row also happened to sort first under the type ordering.
+     * (new < used < asking), not alphabetically — verified with enum_range().
+     * Two earlier fixtures failed to discriminate because the newest row also
+     * happened to sort first under the type ordering.
      *
-     * Here the newest row is 'best_dig', which sorts LAST by type. Any
+     * Here the newest row is 'asking', which sorts LAST by type. Any
      * implementation ordering by type returns the older 'new' row instead.
+     *
+     * Was `best_dig` until migration 0005. The value changed; the PROPERTY the
+     * fixture needs did not — `asking` is also declared last, so recency and
+     * type-ordering still disagree and the test still discriminates.
      */
     await db.execute(
       sql`INSERT INTO price_history (record_id, price, price_type, recorded_at)
@@ -492,13 +496,13 @@ describe('GET /api/records/:id — the hydrated read', () => {
     );
     await db.execute(
       sql`INSERT INTO price_history (record_id, price, price_type, recorded_at)
-          VALUES (${id}, 45.00, 'best_dig', '2024-06-01T00:00:00Z')`,
+          VALUES (${id}, 45.00, 'asking', '2024-06-01T00:00:00Z')`,
     );
 
     const body = await (await getRecord(request(`/api/records/${id}`), params(id))).json();
 
     // Latest by recorded_at. A type-ordered query would return 99.00 / 'new'.
-    expect(body.latestPrice).toMatchObject({ price: '45.00', priceType: 'best_dig' });
+    expect(body.latestPrice).toMatchObject({ price: '45.00', priceType: 'asking' });
   });
 
   it('returns a null latestPrice when there is no price history', async () => {
@@ -547,6 +551,46 @@ describe('GET /api/records/:id — the hydrated read', () => {
 
   it('returns 400 for a non-UUID id rather than attempting a lookup', async () => {
     const response = await getRecord(request('/api/records/not-a-uuid'), params('not-a-uuid'));
+
+    expect(response.status).toBe(400);
+  });
+});
+
+describe('purchase date is bounded, not merely well-formed', () => {
+  /**
+   * `2026-13-45` was already rejected — it is not a day. `1823-04-11` IS a day,
+   * and as a purchase date it is a typo. §4.1 bounds the year fields at 1877
+   * (sound recording began) for this reason; the same argument applies to a
+   * date, with the upper bound at TODAY rather than next year — you cannot have
+   * bought a record tomorrow.
+   *
+   * Added when the bound was applied: the field had no boundary test, so the
+   * change would otherwise have been unconstrained here.
+   */
+  it('rejects a purchase date in the wrong century', async () => {
+    const artistId = await insertArtist('Bounded');
+
+    const response = await createRecord(
+      jsonRequest('/api/records', 'POST', {
+        artistId,
+        title: 'Typo',
+        purchaseDate: '1823-04-11',
+      }),
+    );
+
+    expect(response.status).toBe(400);
+  });
+
+  it('rejects a purchase date in the future', async () => {
+    const artistId = await insertArtist('Not Yet');
+
+    const response = await createRecord(
+      jsonRequest('/api/records', 'POST', {
+        artistId,
+        title: 'Not yet',
+        purchaseDate: '2087-01-01',
+      }),
+    );
 
     expect(response.status).toBe(400);
   });

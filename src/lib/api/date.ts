@@ -66,3 +66,48 @@ export function dateSchema(label: string) {
     .refine(isCalendarDate, `${label} must be a real date in YYYY-MM-DD form`)
     .nullish();
 }
+
+/** 1877: the year sound recording began. Shared with §4.1's year rule. */
+export const COLLECTION_DATE_MIN = '1877-01-01';
+
+/** The clock as a parameter — see the note on the schema below. */
+export type DateClock = () => Date;
+
+const systemClock: DateClock = () => new Date();
+
+function todayIso(clock: DateClock): string {
+  // UTC, matching the database's `CURRENT_DATE` on a UTC server. A local-time
+  // read would differ by a day either side of midnight.
+  return clock().toISOString().slice(0, 10);
+}
+
+/**
+ * A calendar date bounded to when a record collection can plausibly exist.
+ *
+ * `dateSchema` rejects `2026-13-45`, which is not a day. It cannot reject
+ * `1823-04-11`, which is a real day and — in a purchase date or a journal entry
+ * — a typo. §4.1 bounds the year fields for exactly this reason; these are the
+ * same argument applied to dates.
+ *
+ * **The upper bound is TODAY, not next year.** §4.1 allows `currentYear + 1`
+ * because a band can be announced for next year. You cannot have bought a
+ * record tomorrow, or written a note about playing one.
+ *
+ * **The clock is a parameter**, per §4.1: a serverless instance that boots in
+ * December and stays warm into January would, with a bound computed at module
+ * load, reject the genuine current date — and no ordinary test catches it,
+ * because a test run never spans New Year.
+ */
+export function boundedDateSchema(label: string, clock: DateClock = systemClock) {
+  return z
+    .string()
+    .refine(isCalendarDate, `${label} must be a real date in YYYY-MM-DD form`)
+    .refine(
+      (value) => value >= COLLECTION_DATE_MIN,
+      `${label} must not be earlier than ${COLLECTION_DATE_MIN.slice(0, 4)} — sound recording did not exist yet`,
+    )
+    // String comparison is safe and exact for zero-padded ISO dates, and avoids
+    // constructing a Date purely to compare two days.
+    .refine((value) => value <= todayIso(clock), `${label} cannot be in the future`)
+    .nullish();
+}

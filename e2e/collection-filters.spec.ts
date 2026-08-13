@@ -319,9 +319,20 @@ test('a year range keeps undated records until they are excluded, and says how m
 }) => {
   const f = await seed(page);
 
-  // A year range that excludes the 1985 record but not the 1982 one. The
-  // undated record's fate is what the toggle decides.
-  await page.goto('/?yearFrom=1980&yearTo=1983');
+  /**
+   * Scoped to this spec's OWN artist, like the pagination and chip tests.
+   *
+   * Unscoped, this asserts against the whole collection filtered only by year —
+   * and every other spec's records land in the same table. Records from 1980-83
+   * belonging to another run appear in the range, and at 50 per page this run's
+   * rows can fall off page 1 entirely.
+   *
+   * It failed both retries in a full suite while passing 3/3 alone, twice, in
+   * different units. The same pagination collision as 'clicking the active chip
+   * clears it' — missed then because the failure moved between runs and read as
+   * flake.
+   */
+  await page.goto(`/?artistId=${f.artistId}&yearFrom=1980&yearTo=1983`);
 
   await expect(page.getByText(/records? (has|have) no release year/)).toBeVisible();
 

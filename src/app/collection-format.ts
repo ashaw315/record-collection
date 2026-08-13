@@ -23,6 +23,8 @@ export type MatchedVia = {
  * not exceptional. In a dense ruled table a blank cell reads as a rendering
  * fault; a dash reads as "known to be absent", which is what it is.
  */
+import { formatMoney } from '@/lib/money';
+
 const ABSENT = '—';
 
 export function formatYear(year: number | null): string {
@@ -39,10 +41,22 @@ export function formatYear(year: number | null): string {
  * places are padded by string manipulation instead.
  */
 export function formatPrice(price: string | null): string {
-  if (price === null) return ABSENT;
+  return formatMoney(price);
+}
 
-  const [whole, fraction = ''] = price.split('.');
-  return `£${whole}.${fraction.padEnd(2, '0').slice(0, 2)}`;
+/**
+ * A money total with thousands separated — for SUMS, not row-level prices.
+ *
+ * A five-figure collection total is genuinely misread without separators:
+ * `$12405.00` and `$1240.50` differ by a decimal point's worth of attention.
+ * Individual record prices are rarely four digits and read fine without.
+ *
+ * Grouped by STRING manipulation, keeping `formatPrice`'s no-float rule:
+ * `Number(...).toLocaleString()` would route a NUMERIC(10,2) through a float,
+ * which is the precision loss the column type exists to prevent.
+ */
+export function formatTotal(price: string | null): string {
+  return formatMoney(price);
 }
 
 /** Artist and title on one line, for the narrow layout where they share a cell. */

@@ -27,12 +27,12 @@ describe('formatYear', () => {
 
 describe('formatPrice', () => {
   it('renders a NUMERIC string with two decimals and a currency mark', () => {
-    expect(formatPrice('24.50')).toBe('£24.50');
+    expect(formatPrice('24.50')).toBe('$24.50');
   });
 
   it('pads a whole-pound amount to two decimals so a column aligns', () => {
-    expect(formatPrice('8.00')).toBe('£8.00');
-    expect(formatPrice('8')).toBe('£8.00');
+    expect(formatPrice('8.00')).toBe('$8.00');
+    expect(formatPrice('8')).toBe('$8.00');
   });
 
   it('renders an em dash when no price was recorded', () => {
@@ -58,7 +58,7 @@ describe('formatPrice', () => {
    * unsaved form value, and rounding it silently is the wrong failure.
    */
   it('truncates rather than rounding a surplus decimal place', () => {
-    expect(formatPrice('8.567')).toBe('£8.56');
+    expect(formatPrice('8.567')).toBe('$8.56');
   });
 });
 

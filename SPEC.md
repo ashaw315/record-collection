@@ -185,7 +185,7 @@ Seed with: LP, 2xLP, 7", 10", 12" Single, Box Set, Picture Disc, all with `is_se
 | want_list_id | UUID REFERENCES want_list(id) | nullable |
 | pressing_id | UUID REFERENCES pressings(id) | nullable |
 | price | NUMERIC(10,2) NOT NULL | |
-| price_type | price_type enum NOT NULL | `'new' \| 'used' \| 'best_dig'`. **NOT NULL** — §7.6's fallback chain has no defined behavior for an untyped price. |
+| price_type | price_type enum NOT NULL | `'new' \| 'used' \| 'asking'`. **NOT NULL** — §7.6's fallback chain has no defined behavior for an untyped price. See the correction note in §7. |
 | source | TEXT | e.g. "discogs_median", "manual" |
 | recorded_at | TIMESTAMPTZ NOT NULL DEFAULT now() | |
 
@@ -345,7 +345,10 @@ The UI decides how to present this; the API's obligation is to make the match ex
 | PATCH | `/api/records/:id` | Partial update. |
 | DELETE | `/api/records/:id` | Cascades images + journal entries. |
 | GET | `/api/records/facets` | Filter facets for the collection screen's chips. See below. |
-| GET | `/api/records/stats` | `{ totalRecords, totalSpend, estimatedValue, byGenre: [...], byDecade: [...], byStore: [...] }` |
+| POST | `/api/records/:id/journal` | Create a journal entry. Body `{ entryDate?, note }`; `entryDate` defaults to today. |
+| DELETE | `/api/journal/:id` | Delete a journal entry. |
+| POST | `/api/records/:id/prices` | Append a price observation. Body `{ price, priceType, source? }`. **Append-only (§7.5)** — there is no update path, and a request shaped like an edit is rejected rather than quietly appended as a new row. |
+| GET | `/api/records/stats` | `{ totalRecords, totalSpend, estimatedValue, byGenre: [...], byDecade: [...], byStore: [...], byLabel: [...] }` — `byLabel` because §10's stats screen asks for it and a collection organised around labels like Clay or Dischord is a real way to read a shelf. |
 
 Note: `app/api/records/stats/route.ts` is a static segment and must not be swallowed by `app/api/records/[id]/route.ts`. Next.js resolves static before dynamic, so this works — but `[id]` must still reject a non-UUID param with `400` rather than attempting a lookup.
 
@@ -530,7 +533,9 @@ This applies to the versions list as much as to search. The drill-down is where 
 ## 7. Business rules
 
 1. **Genre nesting**: a record tagged with a child genre is implicitly a member of all ancestor genres for filtering and graph purposes. Compute this with a recursive CTE; do not denormalize.
-2. **Best dig ≠ best price.** `target_pressing_id` and `best_dig_notes` describe the highest-fidelity pressing worth hunting for. `max_price` is a separate, independent field. Never conflate them in logic or copy.
+2. **`price_type` never contains `best_dig`.** Its three values are `new` (a price for a sealed copy), `used` (what a second-hand copy actually sold for), and `asking` (a price someone wants but nobody has paid — a shop tag, an open listing). An earlier version of this spec put `best_dig` in that enum: a *pressing* modelled as a *price*, which is precisely the conflation rule 3 forbids, written into the schema. It must be migrated out. A record displaying "£120.00 best dig" reads as "best price", which is the error the rule exists to prevent.
+
+3. **Best dig ≠ best price.** `target_pressing_id` and `best_dig_notes` describe the highest-fidelity pressing worth hunting for. `max_price` is a separate, independent field. Never conflate them in logic or copy.
 3. **Acquiring a want-list item** never deletes the want-list row — it marks it acquired and links the new record. The want-list doubles as acquisition history.
 
    The rule is about *implicit* loss: acquiring must not discard history as a side effect of a different action. An **explicit** user delete of an acquired item is permitted. Mistakes happen, this is a personal tool, and the record itself retains its own `purchase_date`, `purchase_price` and `store_id` — so deleting the want-list row loses the wanting, not the acquisition. Deleting it must never touch the linked record: `acquired_record_id` points from want-list to record, never the reverse.
@@ -688,6 +693,53 @@ The reason is that `discogs_release_id` is unique (§4.2) and pressings are shar
 
 ---
 
+## 10a. Market data
+
+**The question this answers is "is this a fair price?", asked in a shop, on a phone.** It is not a feature about the user's own records — it is about *releases*, and the same data answers three different questions depending on where the user is standing.
+
+### Where it comes from
+
+Four layers, each answering a different part of "should I buy this?". They are independent — later layers degrade to absence, never to a guess.
+
+**1. Scarcity and floor.** `num_for_sale` and `lowest_price` from `marketplace/stats/:id`, requested with `curr_abbr=USD`. How many copies exist for sale and what the cheapest is asking.
+
+  **Layers 1 and 2 are fetched ON DEMAND, per release** — a control on a `/lookup` result, not a field that appears with the results. Measured: a search returns 50 results, search payloads carry no price data at all, and layers 1+2 cost two calls per release. Rendering them across a results page would spend up to 100 calls of a 60/minute budget on a search the user may not act on. The same rule layer 3 states for versions applies here for the same arithmetic: never eagerly, never for a whole search page. The shop case is one record in hand, not fifty on a screen.
+
+  **Currency, measured rather than assumed:** `marketplace/stats` honours `curr_abbr`; `price_suggestions` ignores it and returns USD regardless of the account's setting. Requesting USD on layer 1 is what makes the two agree. This is fortunate rather than designed — a user outside the US would see two currencies, so each figure carries its own and none are converted.
+
+**2. Condition range.** `marketplace/price_suggestions/:id` returns a suggested price per condition grade — VG, VG+, NM and so on. **This endpoint requires completed Discogs seller settings on the token's account** and returns `404 You must fill out your seller settings first` otherwise, which was measured rather than assumed. If it 404s, the app shows layer 1 alone and says the range is unavailable; it never interpolates one.
+
+  Note that per-listing marketplace data — who is selling what at which condition — is *not* available through the API at all. Discogs closed that endpoint and their own staff have said it was never public. Scraping the marketplace HTML is out (their terms, and it would break), and a paid third-party service is out for a personal app. `price_suggestions` is the only legitimate route to condition-level pricing.
+
+**3. Does pressing matter here?** Computed, not fetched: the spread of `lowest_price` across a master's versions. Versions spanning £8 to £400 mean the pressing matters more than the price; everything between £10 and £25 means it barely does. This is the judgement a collector actually needs and no single release can supply it.
+
+  It costs one call per version, so it is fetched **on demand only** — when the user opens a master's version table — and cached with the same 7-day rule. Never eagerly, never for a whole search page.
+
+**4. Why it matters.** An LLM call, on demand, answering what the numbers cannot: *which* pressing to hunt and what to check. "The 1982 UK Clay first press is the one — the 1989 repress carries the same catalogue number but was cut from a copy tape, and the runout tells them apart." Rate-limited and user-initiated per §9.2, never on page load.
+
+  This layer is opinion and must be labelled as such. It may not state a price, and it may never contradict layers 1–3, which are measurements.
+
+### Where it appears
+
+| Screen | The question | What it shows |
+|---|---|---|
+| `/lookup` result rows | Is the copy in front of me fairly priced? | Layers 1–2, **on demand per result** |
+| `/lookup` version table | Which pressing should I be looking for? | Layers 1–3, plus the spread across versions |
+| Want list | Is my ceiling realistic, and has the market moved? | Layers 1–2, beside `max_price` — never merged with it |
+| Record detail | Has this appreciated since I bought it? | Layers 1–2, beside `purchase_price` |
+
+**Layers 1–2 are fetched on demand, per release, never for a page of results.** Each is one API call, so a fifty-result search would cost up to a hundred against a sixty-per-minute budget. Every result carries a control that fetches that release's market data when asked — the same on-demand principle layer 3 follows, and the same shape as the real scenario: someone holding one record, not comparing fifty.
+
+**Exception: a single result resolves automatically.** Arriving at `/lookup` by catalog number or barcode usually returns one release, and that is the shop case — requiring a click to answer the question the search just asked is friction for nothing. One result, one fetch. Two or more, each waits to be asked.
+
+Layer 4 is offered as an action on the version table and the want list, never rendered automatically.
+
+### What it replaces
+
+Manual price entry on a record the user owns. Neither real use case needs it: the shop question is about a release they do not own, and the appreciation question is answered by refreshed market data rather than by the user noticing prices and typing them in. `price_history` remains as the store for observations the cron writes (§5.7), append-only per §7.5.
+
+---
+
 ## 11. Testing
 
 ### Unit (Vitest)
@@ -733,11 +785,15 @@ Mock the Discogs and Anthropic APIs in tests. Never hit live external APIs in CI
 7. Discogs integration: rate limiter, cache, structured search, master version drill-down, release detail, import, and the `/lookup` screen incl. tiered ownership matching (§7.7). E2E #3, #4, #11.
 8. Images upload. E2E #9.
 9. Journal entries, price history, stats screen.
-10. Graph endpoint + visualization. E2E #6.
-11. Shelf order. E2E #7.
-12. Suggestions — graph-based first, then LLM-assisted. E2E #8.
-13. Mobile pass across all screens. E2E #10.
-14. Vercel deploy config + cron for price refresh.
+10. **Market data (§10a).** Discogs marketplace ranges on `/lookup`, the want list and record detail. No new dependency — the client, limiter and cache all exist — and it is the feature the app is carried into a shop for.
+11. **MusicBrainz import: seed `artist_influences`.** Band membership and side-project relationships, pulled automatically. Its own rate limiter and cache, roughly the shape of step 7's Discogs work.
+12. Graph endpoint + visualization. E2E #6.
+13. Shelf order. E2E #7.
+14. Suggestions — graph-based first, then LLM-assisted. E2E #8.
+15. Mobile pass across all screens. E2E #10.
+16. Vercel deploy config + cron for price refresh.
+
+**Why 10 and 11 come before the graph.** The original order put the graph immediately after the stats screen, and the graph reads its edges from `artist_influences` — a table nothing populates automatically. Built in that order, the graph renders unconnected dots, nobody can tell whether the force layout or the clustering works, and step 13's shelf ordering inherits the same blindness, since it runs community detection over the same edges. Seeding the table first makes all three verifiable. Market data moves ahead of both because it has no dependency at all and answers the question the app exists for.
 
 Each step should end with its tests green before moving on.
 

@@ -36,6 +36,13 @@
       "when": 1786277911917,
       "tag": "0004_want_list_one_fulfilment",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1786559649126,
+      "tag": "0005_price_type_asking",
+      "breakpoints": true
     }
   ]
 }

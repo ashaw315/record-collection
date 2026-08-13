@@ -133,65 +133,6 @@
       ]
     },
     {
-      "country": "UK",
-      "year": "1984",
-      "format": [
-        "Vinyl",
-        "LP",
-        "Compilation"
-      ],
-      "label": [
-        "Clay Records",
-        "Pinnacle",
-        "Clay Music Ltd.",
-        "Intersong Music Ltd.",
-        "Tape One",
-        "France Imprimerie Sorel",
-        "Disco France"
-      ],
-      "type": "release",
-      "genre": [
-        "Rock"
-      ],
-      "style": [
-        "Hardcore",
-        "Punk"
-      ],
-      "id": 437920,
-      "barcode": [
-        "[AGI logo] 84 6 CLAY LP 12 A2 Bilbo Tape One (2)",
-        "[AGI logo] 84 6 CLAY LP 12 B2 Bilbo Tape One (2)"
-      ],
-      "user_data": {
-        "in_wantlist": false,
-        "in_collection": false
-      },
-      "master_id": 50744,
-      "master_url": "https://api.discogs.com/masters/50744",
-      "uri": "/release/437920-Discharge-Never-Again",
-      "catno": "CLAY LP 12",
-      "title": "Discharge - Never Again",
-      "thumb": "https://i.discogs.com/KtsBbJBpxJt_i8jfr1T6UsvPcV0gY9swfodjHdXL_3k/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQzNzky/MC0xNDQwNjE1NzQ3/LTE1ODIuanBlZw.jpeg",
-      "cover_image": "https://i.discogs.com/qHz2KV5rFPAo7oVi9z5y-YlmFbAffQzzxQuwpIT8XdU/rs:fit/g:sm/q:90/h:602/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQzNzky/MC0xNDQwNjE1NzQ3/LTE1ODIuanBlZw.jpeg",
-      "resource_url": "https://api.discogs.com/releases/437920",
-      "community": {
-        "want": 360,
-        "have": 1320
-      },
-      "format_quantity": 1,
-      "formats": [
-        {
-          "name": "Vinyl",
-          "qty": "1",
-          "text": "Gatefold",
-          "descriptions": [
-            "LP",
-            "Compilation"
-          ]
-        }
-      ]
-    },
-    {
       "country": "US",
       "year": "2011",
       "format": [
@@ -246,62 +187,6 @@
             "45 RPM",
             "Single",
             "Reissue"
-          ]
-        }
-      ]
-    },
-    {
-      "country": "UK",
-      "year": "1995",
-      "format": [
-        "CD",
-        "Compilation"
-      ],
-      "label": [
-        "Clay Records",
-        "Mayking",
-        "Trojan Sales Ltd.",
-        "Clay Records Ltd.",
-        "Clay Records Ltd."
-      ],
-      "type": "release",
-      "genre": [
-        "Rock"
-      ],
-      "style": [
-        "Punk",
-        "Hardcore"
-      ],
-      "id": 489907,
-      "barcode": [
-        "7 66126 21202 3",
-        "766126212023",
-        "CLAYCD120 : ·MASTERED BY MAYKING·",
-        "95612 CLAYCD120 CSV"
-      ],
-      "user_data": {
-        "in_wantlist": false,
-        "in_collection": false
-      },
-      "master_id": 1000449,
-      "master_url": "https://api.discogs.com/masters/1000449",
-      "uri": "/release/489907-Discharge-The-Clay-Punk-Singles-Collection",
-      "catno": "CLAYCD 120",
-      "title": "Discharge - The Clay Punk Singles Collection",
-      "thumb": "https://i.discogs.com/eAS5o7LeaTcEZ7jg8XGnte5WX06-k9aCDTNL6_ExjRo/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQ4OTkw/Ny0xNTE5NzIyODc5/LTk3NTMuanBlZw.jpeg",
-      "cover_image": "https://i.discogs.com/oGh1FjycYeWmjXLpeGphyhZFPYToc5-aSKdVOVnchv4/rs:fit/g:sm/q:90/h:604/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQ4OTkw/Ny0xNTE5NzIyODc5/LTk3NTMuanBlZw.jpeg",
-      "resource_url": "https://api.discogs.com/releases/489907",
-      "community": {
-        "want": 103,
-        "have": 332
-      },
-      "format_quantity": 1,
-      "formats": [
-        {
-          "name": "CD",
-          "qty": "1",
-          "descriptions": [
-            "Compilation"
           ]
         }
       ]
@@ -802,6 +687,63 @@
       ]
     },
     {
+      "country": "Japan",
+      "year": "1985",
+      "format": [
+        "Vinyl",
+        "12\"",
+        "45 RPM",
+        "EP",
+        "Promo",
+        "Reissue"
+      ],
+      "label": [
+        "Vap",
+        "Punks Not Dead Part 3",
+        "Vap Inc."
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "Hardcore",
+        "Punk"
+      ],
+      "id": 10928442,
+      "barcode": [],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 50777,
+      "master_url": "https://api.discogs.com/masters/50777",
+      "uri": "/release/10928442-Discharge-Why",
+      "catno": "35137-18",
+      "title": "Discharge - Why",
+      "thumb": "https://i.discogs.com/IDGXHswGesoJbG_Sh5RZMuNtod0CrncDVeAAJlvkdtg/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwOTI4/NDQyLTE2ODU0NzMy/MDYtOTYzOS5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/IzeWGxL9WPLisR31gZTW87XS1STzteATMCMAZFF-gdU/rs:fit/g:sm/q:90/h:590/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwOTI4/NDQyLTE2ODU0NzMy/MDYtOTYzOS5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/10928442",
+      "community": {
+        "want": 218,
+        "have": 9
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "12\"",
+            "45 RPM",
+            "EP",
+            "Promo",
+            "Reissue"
+          ]
+        }
+      ]
+    },
+    {
       "country": "US",
       "year": "2010",
       "format": [
@@ -840,7 +782,7 @@
       "catno": "HC1244",
       "title": "Discharge - Why",
       "thumb": "",
-      "cover_image": "https://st.discogs.com/33e882e4d73eb6576fefb4eb4e6f482005355f9c/images/spacer.gif",
+      "cover_image": "https://st.discogs.com/84f9629ffadbd37951ef62a8d3f7ff8e9f601060/images/spacer.gif",
       "resource_url": "https://api.discogs.com/releases/14154279",
       "community": {
         "want": 72,
@@ -1176,6 +1118,121 @@
     },
     {
       "country": "UK",
+      "year": "1984",
+      "format": [
+        "Vinyl",
+        "LP",
+        "Compilation"
+      ],
+      "label": [
+        "Clay Records",
+        "Pinnacle",
+        "Clay Music Ltd.",
+        "Intersong Music Ltd.",
+        "Tape One",
+        "France Imprimerie Sorel",
+        "Disco France"
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "Hardcore",
+        "Punk"
+      ],
+      "id": 437920,
+      "barcode": [
+        "[AGI logo] 84 6 CLAY LP 12 A2 Bilbo Tape One (2)",
+        "[AGI logo] 84 6 CLAY LP 12 B2 Bilbo Tape One (2)"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 50744,
+      "master_url": "https://api.discogs.com/masters/50744",
+      "uri": "/release/437920-Discharge-Never-Again",
+      "catno": "CLAY LP 12",
+      "title": "Discharge - Never Again",
+      "thumb": "https://i.discogs.com/KtsBbJBpxJt_i8jfr1T6UsvPcV0gY9swfodjHdXL_3k/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQzNzky/MC0xNDQwNjE1NzQ3/LTE1ODIuanBlZw.jpeg",
+      "cover_image": "https://i.discogs.com/qHz2KV5rFPAo7oVi9z5y-YlmFbAffQzzxQuwpIT8XdU/rs:fit/g:sm/q:90/h:602/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQzNzky/MC0xNDQwNjE1NzQ3/LTE1ODIuanBlZw.jpeg",
+      "resource_url": "https://api.discogs.com/releases/437920",
+      "community": {
+        "want": 360,
+        "have": 1320
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Gatefold",
+          "descriptions": [
+            "LP",
+            "Compilation"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "UK",
+      "year": "1995",
+      "format": [
+        "CD",
+        "Compilation"
+      ],
+      "label": [
+        "Clay Records",
+        "Mayking",
+        "Trojan Sales Ltd.",
+        "Clay Records Ltd.",
+        "Clay Records Ltd."
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "Punk",
+        "Hardcore"
+      ],
+      "id": 489907,
+      "barcode": [
+        "7 66126 21202 3",
+        "766126212023",
+        "CLAYCD120 : ·MASTERED BY MAYKING·",
+        "95612 CLAYCD120 CSV"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 1000449,
+      "master_url": "https://api.discogs.com/masters/1000449",
+      "uri": "/release/489907-Discharge-The-Clay-Punk-Singles-Collection",
+      "catno": "CLAYCD 120",
+      "title": "Discharge - The Clay Punk Singles Collection",
+      "thumb": "https://i.discogs.com/eAS5o7LeaTcEZ7jg8XGnte5WX06-k9aCDTNL6_ExjRo/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQ4OTkw/Ny0xNTE5NzIyODc5/LTk3NTMuanBlZw.jpeg",
+      "cover_image": "https://i.discogs.com/oGh1FjycYeWmjXLpeGphyhZFPYToc5-aSKdVOVnchv4/rs:fit/g:sm/q:90/h:604/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQ4OTkw/Ny0xNTE5NzIyODc5/LTk3NTMuanBlZw.jpeg",
+      "resource_url": "https://api.discogs.com/releases/489907",
+      "community": {
+        "want": 103,
+        "have": 332
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "CD",
+          "qty": "1",
+          "descriptions": [
+            "Compilation"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "UK",
       "year": "1991",
       "format": [
         "Vinyl",
@@ -1223,63 +1280,6 @@
           "descriptions": [
             "LP",
             "Album"
-          ]
-        }
-      ]
-    },
-    {
-      "country": "Japan",
-      "year": "1985",
-      "format": [
-        "Vinyl",
-        "12\"",
-        "45 RPM",
-        "EP",
-        "Promo",
-        "Reissue"
-      ],
-      "label": [
-        "Vap",
-        "Punks Not Dead Part 3",
-        "Vap Inc."
-      ],
-      "type": "release",
-      "genre": [
-        "Rock"
-      ],
-      "style": [
-        "Hardcore",
-        "Punk"
-      ],
-      "id": 10928442,
-      "barcode": [],
-      "user_data": {
-        "in_wantlist": false,
-        "in_collection": false
-      },
-      "master_id": 50777,
-      "master_url": "https://api.discogs.com/masters/50777",
-      "uri": "/release/10928442-Discharge-Why",
-      "catno": "35137-18",
-      "title": "Discharge - Why",
-      "thumb": "https://i.discogs.com/IDGXHswGesoJbG_Sh5RZMuNtod0CrncDVeAAJlvkdtg/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwOTI4/NDQyLTE2ODU0NzMy/MDYtOTYzOS5qcGVn.jpeg",
-      "cover_image": "https://i.discogs.com/IzeWGxL9WPLisR31gZTW87XS1STzteATMCMAZFF-gdU/rs:fit/g:sm/q:90/h:590/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwOTI4/NDQyLTE2ODU0NzMy/MDYtOTYzOS5qcGVn.jpeg",
-      "resource_url": "https://api.discogs.com/releases/10928442",
-      "community": {
-        "want": 218,
-        "have": 9
-      },
-      "format_quantity": 1,
-      "formats": [
-        {
-          "name": "Vinyl",
-          "qty": "1",
-          "descriptions": [
-            "12\"",
-            "45 RPM",
-            "EP",
-            "Promo",
-            "Reissue"
           ]
         }
       ]
@@ -2165,70 +2165,6 @@
       ]
     },
     {
-      "country": "UK",
-      "year": "1981",
-      "format": [
-        "Vinyl",
-        "7\"",
-        "45 RPM",
-        "Single",
-        "Stereo"
-      ],
-      "label": [
-        "Clay Records",
-        "Clay Records",
-        "Intersong",
-        "Pinnacle Records",
-        "Utopia Studios",
-        "Lyntone Recordings Ltd.",
-        "Lyntone Recordings Ltd."
-      ],
-      "type": "release",
-      "genre": [
-        "Rock"
-      ],
-      "style": [
-        "Hardcore",
-        "Punk"
-      ],
-      "id": 710725,
-      "barcode": [
-        "CLAY 6A",
-        "CLAY 6B",
-        "LYN-10284-2UT CLAY-6-A2",
-        "LYN-10285-2UT CLAY-6-B2 TWO MONSTUROUS NUCLEAR STOCKPILES"
-      ],
-      "user_data": {
-        "in_wantlist": false,
-        "in_collection": false
-      },
-      "master_id": 394614,
-      "master_url": "https://api.discogs.com/masters/394614",
-      "uri": "/release/710725-Discharge-Never-Again",
-      "catno": "CLAY 6",
-      "title": "Discharge - Never Again",
-      "thumb": "https://i.discogs.com/XjfnazDgJFX7y4yVTm1gyTxE5LLu3af_1xmFUyj1NEE/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTcxMDcy/NS0xNjg3ODAyMDcw/LTg3MTQuanBlZw.jpeg",
-      "cover_image": "https://i.discogs.com/neq9SlxHZ4jMz29SC8jB2QMmwsdCRcIGNNf7zFspGJE/rs:fit/g:sm/q:90/h:602/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTcxMDcy/NS0xNjg3ODAyMDcw/LTg3MTQuanBlZw.jpeg",
-      "resource_url": "https://api.discogs.com/releases/710725",
-      "community": {
-        "want": 858,
-        "have": 3073
-      },
-      "format_quantity": 1,
-      "formats": [
-        {
-          "name": "Vinyl",
-          "qty": "1",
-          "descriptions": [
-            "7\"",
-            "45 RPM",
-            "Single",
-            "Stereo"
-          ]
-        }
-      ]
-    },
-    {
       "country": "Germany",
       "year": "2025",
       "format": [
@@ -2353,51 +2289,62 @@
     },
     {
       "country": "UK",
-      "year": "1989",
-      "format": [
-        "CD",
-        "Album"
-      ],
-      "label": [
-        "Clay Records",
-        "DADC Austria"
-      ],
-      "type": "release",
       "genre": [
         "Rock"
+      ],
+      "format": [
+        "CD",
+        "Album",
+        "Reissue"
       ],
       "style": [
         "Hardcore",
         "Punk"
       ],
-      "id": 913980,
+      "id": 927166,
+      "label": [
+        "Castle Music",
+        "Sanctuary Records Group Ltd.",
+        "Castle Music",
+        "Sanctuary Records Group Ltd.",
+        "Maxwood Music Ltd.",
+        "Turan Audio",
+        "sky-rocket",
+        "EDC Blackburn Ltd"
+      ],
+      "type": "release",
       "barcode": [
-        "5014438210325",
-        "CLAYCD-103 13 MASTERED BY DADC AUSTRIA"
+        "5 050159 170920",
+        "LC 6448",
+        "E D C CMRCD809 01",
+        "IFPI L136",
+        "IFPI 6222"
       ],
       "user_data": {
         "in_wantlist": false,
         "in_collection": false
       },
-      "master_id": 50690,
-      "master_url": "https://api.discogs.com/masters/50690",
-      "uri": "/release/913980-Discharge-Live-At-The-City-Garden-New-Jersey",
-      "catno": "CLAY CD 103",
-      "title": "Discharge - Live At The City Garden New Jersey",
-      "thumb": "https://i.discogs.com/jZA938oOggeAFa98BuPRQjXx_XbR2xqyuaII2LCMkAw/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTkxMzk4/MC0xMTcyMjgwMDEy/LmpwZWc.jpeg",
-      "cover_image": "https://i.discogs.com/wdLWlI5HouKk2EAcGqhXMrHy01BxPB3qdT-YVWLfPhI/rs:fit/g:sm/q:90/h:590/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTkxMzk4/MC0xMTcyMjgwMDEy/LmpwZWc.jpeg",
-      "resource_url": "https://api.discogs.com/releases/913980",
+      "master_id": 50683,
+      "master_url": "https://api.discogs.com/masters/50683",
+      "uri": "/release/927166-Discharge-Hear-Nothing-See-Nothing-Say-Nothing",
+      "catno": "CMRCD709",
+      "title": "Discharge - Hear Nothing See Nothing Say Nothing",
+      "thumb": "https://i.discogs.com/THE-T8gULfAv8comLGGEBgIuY4llG2zsMJLrBlQ2YDs/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTkyNzE2/Ni0xMzUzNDQ0ODY4/LTc1ODkuanBlZw.jpeg",
+      "cover_image": "https://i.discogs.com/j2Od1zPCfZ9tqoCAY3L-coxiPtumd6R0LqpuNbi5mT0/rs:fit/g:sm/q:90/h:586/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTkyNzE2/Ni0xMzUzNDQ0ODY4/LTc1ODkuanBlZw.jpeg",
+      "resource_url": "https://api.discogs.com/releases/927166",
       "community": {
-        "want": 50,
-        "have": 151
+        "want": 169,
+        "have": 180
       },
       "format_quantity": 1,
       "formats": [
         {
           "name": "CD",
           "qty": "1",
+          "text": "Slipcase",
           "descriptions": [
-            "Album"
+            "Album",
+            "Reissue"
           ]
         }
       ]
@@ -2456,62 +2403,115 @@
     },
     {
       "country": "UK",
+      "year": "1981",
+      "format": [
+        "Vinyl",
+        "7\"",
+        "45 RPM",
+        "Single",
+        "Stereo"
+      ],
+      "label": [
+        "Clay Records",
+        "Clay Records",
+        "Intersong",
+        "Pinnacle Records",
+        "Utopia Studios",
+        "Lyntone Recordings Ltd.",
+        "Lyntone Recordings Ltd."
+      ],
+      "type": "release",
       "genre": [
         "Rock"
-      ],
-      "format": [
-        "CD",
-        "Album",
-        "Reissue"
       ],
       "style": [
         "Hardcore",
         "Punk"
       ],
-      "id": 927166,
-      "label": [
-        "Castle Music",
-        "Sanctuary Records Group Ltd.",
-        "Castle Music",
-        "Sanctuary Records Group Ltd.",
-        "Maxwood Music Ltd.",
-        "Turan Audio",
-        "sky-rocket",
-        "EDC Blackburn Ltd"
-      ],
-      "type": "release",
+      "id": 710725,
       "barcode": [
-        "5 050159 170920",
-        "LC 6448",
-        "E D C CMRCD809 01",
-        "IFPI L136",
-        "IFPI 6222"
+        "CLAY 6A",
+        "CLAY 6B",
+        "LYN-10284-2UT CLAY-6-A2",
+        "LYN-10285-2UT CLAY-6-B2 TWO MONSTUROUS NUCLEAR STOCKPILES"
       ],
       "user_data": {
         "in_wantlist": false,
         "in_collection": false
       },
-      "master_id": 50683,
-      "master_url": "https://api.discogs.com/masters/50683",
-      "uri": "/release/927166-Discharge-Hear-Nothing-See-Nothing-Say-Nothing",
-      "catno": "CMRCD709",
-      "title": "Discharge - Hear Nothing See Nothing Say Nothing",
-      "thumb": "https://i.discogs.com/THE-T8gULfAv8comLGGEBgIuY4llG2zsMJLrBlQ2YDs/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTkyNzE2/Ni0xMzUzNDQ0ODY4/LTc1ODkuanBlZw.jpeg",
-      "cover_image": "https://i.discogs.com/j2Od1zPCfZ9tqoCAY3L-coxiPtumd6R0LqpuNbi5mT0/rs:fit/g:sm/q:90/h:586/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTkyNzE2/Ni0xMzUzNDQ0ODY4/LTc1ODkuanBlZw.jpeg",
-      "resource_url": "https://api.discogs.com/releases/927166",
+      "master_id": 394614,
+      "master_url": "https://api.discogs.com/masters/394614",
+      "uri": "/release/710725-Discharge-Never-Again",
+      "catno": "CLAY 6",
+      "title": "Discharge - Never Again",
+      "thumb": "https://i.discogs.com/XjfnazDgJFX7y4yVTm1gyTxE5LLu3af_1xmFUyj1NEE/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTcxMDcy/NS0xNjg3ODAyMDcw/LTg3MTQuanBlZw.jpeg",
+      "cover_image": "https://i.discogs.com/neq9SlxHZ4jMz29SC8jB2QMmwsdCRcIGNNf7zFspGJE/rs:fit/g:sm/q:90/h:602/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTcxMDcy/NS0xNjg3ODAyMDcw/LTg3MTQuanBlZw.jpeg",
+      "resource_url": "https://api.discogs.com/releases/710725",
       "community": {
-        "want": 169,
-        "have": 180
+        "want": 858,
+        "have": 3073
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "descriptions": [
+            "7\"",
+            "45 RPM",
+            "Single",
+            "Stereo"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "UK",
+      "year": "1989",
+      "format": [
+        "CD",
+        "Album"
+      ],
+      "label": [
+        "Clay Records",
+        "DADC Austria"
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "Hardcore",
+        "Punk"
+      ],
+      "id": 913980,
+      "barcode": [
+        "5014438210325",
+        "CLAYCD-103 13 MASTERED BY DADC AUSTRIA"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 50690,
+      "master_url": "https://api.discogs.com/masters/50690",
+      "uri": "/release/913980-Discharge-Live-At-The-City-Garden-New-Jersey",
+      "catno": "CLAY CD 103",
+      "title": "Discharge - Live At The City Garden New Jersey",
+      "thumb": "https://i.discogs.com/jZA938oOggeAFa98BuPRQjXx_XbR2xqyuaII2LCMkAw/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTkxMzk4/MC0xMTcyMjgwMDEy/LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/wdLWlI5HouKk2EAcGqhXMrHy01BxPB3qdT-YVWLfPhI/rs:fit/g:sm/q:90/h:590/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTkxMzk4/MC0xMTcyMjgwMDEy/LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/913980",
+      "community": {
+        "want": 50,
+        "have": 151
       },
       "format_quantity": 1,
       "formats": [
         {
           "name": "CD",
           "qty": "1",
-          "text": "Slipcase",
           "descriptions": [
-            "Album",
-            "Reissue"
+            "Album"
           ]
         }
       ]
@@ -2637,61 +2637,6 @@
             "12\"",
             "45 RPM",
             "EP"
-          ]
-        }
-      ]
-    },
-    {
-      "country": "UK",
-      "year": "2011",
-      "format": [
-        "CD",
-        "Compilation"
-      ],
-      "label": [
-        "Candlelight Records",
-        "Sound Performance",
-        "Sound Performance"
-      ],
-      "type": "release",
-      "genre": [
-        "Rock"
-      ],
-      "style": [
-        "Hardcore",
-        "Punk"
-      ],
-      "id": 3934662,
-      "barcode": [
-        "803341341937",
-        "LC13005",
-        "[Sound Performance logo] 020 8691 2121 CANDLE344CD",
-        "IFPI LP76",
-        "IFPI AAHP1"
-      ],
-      "user_data": {
-        "in_wantlist": false,
-        "in_collection": false
-      },
-      "master_id": 362018,
-      "master_url": "https://api.discogs.com/masters/362018",
-      "uri": "/release/3934662-Discharge-War-Is-Hell",
-      "catno": "CANDLE344CD",
-      "title": "Discharge - War Is Hell",
-      "thumb": "https://i.discogs.com/hmFIjPON21LA8Va-BB5Ek2cAIifXs-IubKCZzh0O6F4/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM5MzQ2/NjItMTM0OTczNjg2/Ni00MjQxLmpwZWc.jpeg",
-      "cover_image": "https://i.discogs.com/4Z6rVano01QrUCpZZ98h-Fkrx3vOq4ViA88aBvAR_3U/rs:fit/g:sm/q:90/h:580/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM5MzQ2/NjItMTM0OTczNjg2/Ni00MjQxLmpwZWc.jpeg",
-      "resource_url": "https://api.discogs.com/releases/3934662",
-      "community": {
-        "want": 25,
-        "have": 84
-      },
-      "format_quantity": 1,
-      "formats": [
-        {
-          "name": "CD",
-          "qty": "1",
-          "descriptions": [
-            "Compilation"
           ]
         }
       ]
@@ -2823,6 +2768,62 @@
             "Compilation",
             "Reissue",
             "Remastered"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "Brazil",
+      "year": "2016",
+      "format": [
+        "CD",
+        "Album"
+      ],
+      "label": [
+        "Shinigami Records",
+        "Nuclear Blast Records",
+        "Nuclear Blast Records",
+        "Tremolo Recording Studio",
+        "The Abyss",
+        "Black Lounge Studios",
+        "Laser Disc Do Brasil Ltda"
+      ],
+      "type": "release",
+      "genre": [
+        "Rock"
+      ],
+      "style": [
+        "Hardcore",
+        "Punk"
+      ],
+      "id": 10841244,
+      "barcode": [
+        "7898410008098",
+        "AA000500"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 993509,
+      "master_url": "https://api.discogs.com/masters/993509",
+      "uri": "/release/10841244-Discharge-End-Of-Days",
+      "catno": "SRNB016",
+      "title": "Discharge - End Of Days",
+      "thumb": "https://i.discogs.com/JLOX__uG8Mq5MlxfFOJ73NQl2glaX2-DxDFb1iZYPEs/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwODQx/MjQ0LTE1MDUxNzM1/NzctNTAzMC5qcGVn.jpeg",
+      "cover_image": "https://i.discogs.com/vtNAhutFfEmf9-CIqiHqHk51d3Ant5a-oqEELsiyCGs/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwODQx/MjQ0LTE1MDUxNzM1/NzctNTAzMC5qcGVn.jpeg",
+      "resource_url": "https://api.discogs.com/releases/10841244",
+      "community": {
+        "want": 37,
+        "have": 46
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "CD",
+          "qty": "1",
+          "descriptions": [
+            "Album"
           ]
         }
       ]

@@ -51,7 +51,7 @@ describe('price_history parent CHECK constraint', () => {
 
     await expect(
       db.execute(
-        sql`INSERT INTO price_history (want_list_id, price, price_type) VALUES (${wantId}, 55.00, 'best_dig')`,
+        sql`INSERT INTO price_history (want_list_id, price, price_type) VALUES (${wantId}, 55.00, 'asking')`,
       ),
     ).resolves.toBeDefined();
   });
@@ -512,7 +512,16 @@ describe('schema-level guarantees', () => {
     };
 
     expect(await check('condition_grade')).toEqual(['M', 'NM', 'VG+', 'VG', 'G+', 'G', 'F', 'P']);
-    expect(await check('price_type')).toEqual(['new', 'used', 'best_dig']);
+    /**
+     * §4.2 as amended. `best_dig` was migrated out in 0005 — it names a
+     * PRESSING, and modelling it as a price is CLAUDE.md §8's conflation
+     * written into the schema. `asking` replaced it: a price somebody wants
+     * that nobody has paid.
+     *
+     * This assertion is the reason the change could not be made quietly, which
+     * is what it is for.
+     */
+    expect(await check('price_type')).toEqual(['new', 'used', 'asking']);
     expect(await check('image_type')).toEqual(['cover', 'back', 'label', 'matrix', 'other']);
   });
 });

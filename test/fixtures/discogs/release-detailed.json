@@ -81,9 +81,9 @@
   "data_quality": "Needs Vote",
   "community": {
     "have": 3837,
-    "want": 2236,
+    "want": 2240,
     "rating": {
-      "count": 402,
+      "count": 403,
       "average": 4.57
     },
     "submitter": {
@@ -191,7 +191,7 @@
   "date_added": "2005-01-18T13:13:09-08:00",
   "date_changed": "2025-05-19T07:28:13-07:00",
   "num_for_sale": 11,
-  "lowest_price": 43.96,
+  "lowest_price": 55.59,
   "master_id": 50683,
   "master_url": "https://api.discogs.com/masters/50683",
   "title": "Hear Nothing See Nothing Say Nothing",

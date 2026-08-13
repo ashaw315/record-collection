@@ -51,21 +51,35 @@ async function artist(name: string): Promise<string> {
 async function record(
   artistId: string,
   title: string,
-  fields: { purchasePrice?: string | null; releaseYear?: number | null; storeId?: string | null } = {},
+  fields: {
+    purchasePrice?: string | null;
+    releaseYear?: number | null;
+    storeId?: string | null;
+    // Added for §5.2's byLabel, which §10's screen asks for.
+    labelId?: string | null;
+  } = {},
 ): Promise<string> {
   return id(
-    sql`INSERT INTO records (artist_id, title, purchase_price, release_year, store_id)
+    sql`INSERT INTO records (artist_id, title, purchase_price, release_year, store_id, label_id)
         VALUES (${artistId}, ${title}, ${fields.purchasePrice ?? null},
-                ${fields.releaseYear ?? null}, ${fields.storeId ?? null})
+                ${fields.releaseYear ?? null}, ${fields.storeId ?? null},
+                ${fields.labelId ?? null})
         RETURNING id`,
   );
+}
+
+async function label(name: string): Promise<string> {
+  return id(sql`INSERT INTO labels (name) VALUES (${name}) RETURNING id`);
 }
 
 async function price(
   recordId: string,
   amount: string,
-  type: 'used' | 'new' | 'best_dig',
-  recordedAt: string,
+  // §4.2's amended enum: `best_dig` was migrated out (see §7's correction note)
+  // because a pressing modelled as a price is CLAUDE.md §8's conflation written
+  // into the schema.
+  type: 'used' | 'new' | 'asking',
+  recordedAt = '2026-01-01T00:00:00Z',
 ): Promise<void> {
   await db.execute(
     sql`INSERT INTO price_history (record_id, price, price_type, recorded_at)
@@ -191,11 +205,17 @@ describe('GET /api/records/stats — §7.6 estimated value', () => {
   });
 
   it('falls back to PURCHASE PRICE when there is no used or new price', async () => {
-    // Exercises step 3 alone: only a best_dig row exists, which the chain does
-    // NOT consider, so the purchase price must win.
+    /**
+     * Exercises step 3 alone: only an off-chain price row exists, so the
+     * purchase price must win.
+     *
+     * Was `best_dig`, migrated to `asking` in 0005 — the ASSERTION is unchanged
+     * because the property it tests is unchanged: a price type outside §7.6's
+     * chain must not displace the last link. Only the value's name moved.
+     */
     const a = await artist('Antisect');
     const r = await record(a, 'Purchase only', { purchasePrice: '12.75' });
-    await price(r, '500.00', 'best_dig', '2024-01-01');
+    await price(r, '500.00', 'asking', '2024-01-01');
 
     expect((await stats()).estimatedValue).toBe('12.75');
   });
@@ -401,5 +421,137 @@ describe('GET /api/records/stats — breakdowns', () => {
     expect(body.byStore[0]).toMatchObject({ name: 'Amoeba', count: 1, spend: '10.00' });
     // The unattributed record still counts in the totals.
     expect(body.totalSpend).toBe('109.00');
+  });
+});
+
+describe('byLabel — §5.2, added when §10 asked for it', () => {
+  /**
+   * §10's stats screen asks for a breakdown by label, and §5.2's response shape
+   * was amended to include `byLabel`. The QUERY was not — the documented shape
+   * said one thing and the endpoint returned another.
+   *
+   * A collection organised around Clay, Dischord or SST is a real way to read a
+   * shelf, which is why the screen wants it.
+   */
+  it('counts records per label, most first', async () => {
+    const clay = await label('Clay Records');
+    const dischord = await label('Dischord');
+    const artistId = await artist('Discharge');
+
+    await record(artistId, 'A', { labelId: clay });
+    await record(artistId, 'B', { labelId: clay });
+    await record(artistId, 'C', { labelId: dischord });
+
+    const body = await stats();
+
+    expect(body.byLabel.map((row: { name: string; count: number }) => [row.name, row.count])).toEqual([
+      ['Clay Records', 2],
+      ['Dischord', 1],
+    ]);
+  });
+
+  it('omits a label with no records rather than reporting zero', async () => {
+    // A label the user created and has not used is not a shelf category.
+    await label('Unused Records');
+    const artistId = await artist('Discharge');
+    await record(artistId, 'A');
+
+    expect((await stats()).byLabel).toEqual([]);
+  });
+
+  it('excludes records with no label rather than grouping them as one', async () => {
+    /**
+     * The discriminating case. §4.2 makes `label_id` nullable, and an INNER
+     * JOIN is what keeps "no label" from becoming a label called nothing —
+     * which would then read as a shelf category on the screen.
+     */
+    const clay = await label('Clay Records');
+    const artistId = await artist('Discharge');
+
+    await record(artistId, 'A', { labelId: clay });
+    await record(artistId, 'B');
+
+    const body = await stats();
+
+    expect(body.byLabel).toHaveLength(1);
+    expect(body.byLabel[0].count, 'the unlabelled record is not counted').toBe(1);
+  });
+
+  it('breaks a tie by name, so the order is stable between calls', async () => {
+    // Two labels with one record each must not swap places run to run — a
+    // screen that reorders on refresh looks broken.
+    const beggars = await label('Beggars');
+    const at = await label('Alternative Tentacles');
+    const artistId = await artist('Discharge');
+
+    await record(artistId, 'A', { labelId: beggars });
+    await record(artistId, 'B', { labelId: at });
+
+    expect((await stats()).byLabel.map((row: { name: string }) => row.name)).toEqual([
+      'Alternative Tentacles',
+      'Beggars',
+    ]);
+  });
+});
+
+describe('§7.6: an ASKING price never inflates estimated value', () => {
+  /**
+   * **The most important assertion in this unit.**
+   *
+   * §7.6's chain is `used` → `new` → `purchase_price`. `asking` is deliberately
+   * absent: it is what somebody WANTED, not what anybody paid. A shop tag of
+   * £120 on a record that sells for £15 is not evidence the record is worth
+   * £120.
+   *
+   * Same class as the fabricated 230g weight — a value that looks entered and
+   * is not supported — except this one compounds into a headline figure on
+   * /stats, which is the number a person quotes.
+   */
+  it('ignores an asking price entirely when nothing else is recorded', async () => {
+    const artistId = await artist('Discharge');
+    const recordId = await record(artistId, 'Asking Only');
+    await price(recordId, '120.00', 'asking');
+
+    const body = await stats();
+
+    expect(body.estimatedValue, 'nobody paid £120, so it is worth nothing known').toBe('0.00');
+  });
+
+  it('prefers a real used price over a higher asking price', async () => {
+    // The discriminating case: if `asking` were in the chain at all, a higher
+    // asking price would win on recency or on ordering and the total would jump.
+    const artistId = await artist('Discharge');
+    const recordId = await record(artistId, 'Both');
+    await price(recordId, '15.00', 'used');
+    await price(recordId, '120.00', 'asking');
+
+    const body = await stats();
+
+    expect(body.estimatedValue).toBe('15.00');
+  });
+
+  it('falls through an asking price to the purchase price', async () => {
+    // `purchase_price` is the last link in the chain and is a fact — money that
+    // changed hands. An asking price must not displace it.
+    const artistId = await artist('Discharge');
+    const recordId = await record(artistId, 'Paid', { purchasePrice: '12.00' });
+    await price(recordId, '120.00', 'asking');
+
+    const body = await stats();
+
+    expect(body.estimatedValue).toBe('12.00');
+  });
+
+  it('still uses a new price when there is no used one', async () => {
+    // The chain's middle link survives the change — this is what stops the fix
+    // from being "ignore everything except used".
+    const artistId = await artist('Discharge');
+    const recordId = await record(artistId, 'Sealed');
+    await price(recordId, '40.00', 'new');
+    await price(recordId, '120.00', 'asking');
+
+    const body = await stats();
+
+    expect(body.estimatedValue).toBe('40.00');
   });
 });

@@ -82,7 +82,7 @@ test('shows every recorded field, and omits what is absent', async ({ page }) =>
   await expect(page.getByText('Damont')).toBeVisible();
   await expect(page.getByText('180 g')).toBeVisible();
 
-  await expect(page.getByText('£24.50')).toBeVisible();
+  await expect(page.getByText('$24.50')).toBeVisible();
   await expect(page.getByText('First pressing, bought in person.')).toBeVisible();
 
   // is_reissue defaults false, and only the true case earns a row.
@@ -124,8 +124,17 @@ test('renders a record that has only the required fields', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Images' })).toHaveCount(1);
   await expect(page.getByTestId('image-gallery')).toContainText('No images yet');
 
-  // Step 9 is still to come.
-  await expect(page.getByRole('heading', { name: 'Journal' })).toHaveCount(0);
+  /**
+   * The journal is PRESENT with no entries, for the same reason the gallery is:
+   * it carries the add-entry form, so hiding it on a record with no entries
+   * would leave no way to write the first one.
+   *
+   * This asserted `toHaveCount(0)` until step 9, as a placeholder for "not
+   * built yet" — a dated claim, and the second one this file has carried. Kept
+   * as a real assertion rather than deleted.
+   */
+  await expect(page.getByRole('heading', { name: 'Journal' })).toHaveCount(1);
+  await expect(page.getByTestId('journal')).toContainText('No entries yet');
 });
 
 test('a genre link returns to the collection filtered by it', async ({ page }) => {
@@ -276,4 +285,231 @@ test('a record fulfilling a want-list entry says WHY it cannot be deleted', asyn
   await expect(page.locator('main').getByRole('alert')).toContainText(/want[- ]list/i);
   // And it is still here — a refused delete must not look like a successful one.
   await expect(page).toHaveURL(new RegExp(`/records/${record.id}`));
+});
+
+test('the journal records what happened, newest first', async ({ page }) => {
+  /**
+   * §10: the record detail carries "journal entries with add-entry form".
+   * §5.2's endpoints landed in unit 1; this is the screen that reaches them.
+   *
+   * Newest first, matching the hydrated read's `entry_date DESC`: the last
+   * thing you thought about a record is what you want to see.
+   */
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Journal-${suffix}` });
+  const record = await post(page, '/api/records', {
+    title: `Journal ${suffix}`,
+    artistId: artist.id,
+  });
+
+  await page.goto(`/records/${record.id}`);
+  // Controlled inputs: a value typed before React attaches never reaches state,
+  // so the note submits empty. Same marker as the record form and login page.
+  await page.locator('[data-testid="journal-form"][data-hydrated="true"]').waitFor({
+    timeout: 15_000,
+  });
+
+  // The empty state says what the journal is FOR rather than showing nothing.
+  await expect(page.getByTestId('journal')).toContainText(/no entries|nothing yet/i);
+
+  await page.getByLabel('Journal note').fill('Played it after the pub. Still loud.');
+  await page.getByRole('button', { name: 'Add entry' }).click();
+
+  await expect(page.getByTestId('journal-entry')).toHaveCount(1, { timeout: 15_000 });
+  await expect(page.getByTestId('journal')).toContainText('Still loud');
+
+  // A second entry, backdated — "I played this last Tuesday" is the normal case.
+  await page.getByLabel('Entry date').fill('2026-01-05');
+  await page.getByLabel('Journal note').fill('First listen, cold morning.');
+  await page.getByRole('button', { name: 'Add entry' }).click();
+
+  await expect(page.getByTestId('journal-entry')).toHaveCount(2, { timeout: 15_000 });
+
+  const notes = await page.getByTestId('journal-entry').allInnerTexts();
+  expect(notes[0], "today's entry leads, not January's").toContain('Still loud');
+});
+
+test('the entry date defaults to today and refuses a typo', async ({ page }) => {
+  /**
+   * §5.2: "`entryDate` defaults to today". Bounded to 1877–today, because
+   * `1823-04-11` is a real day and a typo — the calendar check that rejects
+   * `2026-13-45` cannot see it.
+   */
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Dated-${suffix}` });
+  const record = await post(page, '/api/records', {
+    title: `Dated ${suffix}`,
+    artistId: artist.id,
+  });
+
+  await page.goto(`/records/${record.id}`);
+
+  /**
+   * Today read from the BROWSER, not computed in the test process.
+   *
+   * The two can differ by a day either side of midnight — the page computes its
+   * default in the browser's clock, and a locally-computed comparison would
+   * fail at 23:59 for reasons having nothing to do with the code. Same hazard
+   * as the endpoint test comparing against the database's `CURRENT_DATE`.
+   */
+  const today = await page.evaluate(() => new Date().toISOString().slice(0, 10));
+
+  // Prefilled, so the common case is one field and a button.
+  await expect(page.getByLabel('Entry date')).toHaveValue(today);
+
+  // The input itself refuses out-of-range dates, so the server never sees them.
+  await expect(page.getByLabel('Entry date')).toHaveAttribute('min', '1877-01-01');
+  await expect(page.getByLabel('Entry date')).toHaveAttribute('max', today);
+});
+
+test('deleting an entry leaves the record alone', async ({ page }) => {
+  // §4.2 cascades entries when a RECORD goes; nothing cascades the other way.
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Undelete-${suffix}` });
+  const record = await post(page, '/api/records', {
+    title: `Undelete ${suffix}`,
+    artistId: artist.id,
+  });
+
+  await page.goto(`/records/${record.id}`);
+  await page.locator('[data-testid="journal-form"][data-hydrated="true"]').waitFor({
+    timeout: 15_000,
+  });
+  await page.getByLabel('Journal note').fill('a note to remove');
+  await page.getByRole('button', { name: 'Add entry' }).click();
+  await expect(page.getByTestId('journal-entry')).toHaveCount(1, { timeout: 15_000 });
+
+  page.on('dialog', (dialog) => dialog.accept());
+  await page.getByRole('button', { name: /Delete this entry/i }).click();
+
+  await expect(page.getByTestId('journal-entry')).toHaveCount(0, { timeout: 15_000 });
+  await expect(
+    page.getByRole('heading', { name: `Undelete ${suffix}`, exact: true }),
+    'the record survives its note',
+  ).toBeVisible();
+});
+
+test('prices accumulate as observations and the sparkline states its bounds', async ({ page }) => {
+  /**
+   * §10's "price history sparkline", and §7.5's append-only rule made visible.
+   *
+   * The bounds are stated in WORDS beside the shape: a sparkline shows the
+   * trend and says nothing about scale, so a chart without them is decoration.
+   */
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Priced-${suffix}` });
+  const record = await post(page, '/api/records', {
+    title: `Priced ${suffix}`,
+    artistId: artist.id,
+  });
+
+  await page.goto(`/records/${record.id}`);
+  await page.locator('[data-testid="price-form"][data-hydrated="true"]').waitFor({
+    timeout: 15_000,
+  });
+
+  // Empty state says what the section is for rather than showing a blank chart.
+  await expect(page.getByTestId('price-history')).toContainText(/no prices recorded/i);
+  await expect(page.getByTestId('sparkline')).toHaveCount(0);
+
+  await page.getByLabel('Price', { exact: true }).fill('20.00');
+  await page.getByRole('button', { name: 'Add price' }).click();
+  await expect(page.getByTestId('sparkline')).toHaveCount(1, { timeout: 15_000 });
+
+  await page.getByLabel('Price', { exact: true }).fill('35.50');
+  await page.getByRole('button', { name: 'Add price' }).click();
+
+  // BOTH survive: §7.5 appends, never replaces.
+  await expect(page.getByTestId('price-range')).toContainText('2 observations', {
+    timeout: 15_000,
+  });
+  await expect(page.getByTestId('price-range')).toContainText('$20.00');
+  await expect(page.getByTestId('price-range')).toContainText('$35.50');
+});
+
+test('the price section offers no way to edit an observation', async ({ page }) => {
+  /**
+   * §7.5 is append-only, so an edit control would promise something the
+   * endpoint refuses. Asserted rather than assumed: the absence is the design,
+   * and the copy says so in case the absence reads as an oversight.
+   */
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `NoEdit-${suffix}` });
+  const record = await post(page, '/api/records', {
+    title: `NoEdit ${suffix}`,
+    artistId: artist.id,
+  });
+  await page.request.post(`/api/records/${record.id}/prices`, {
+    data: { price: '24.50', priceType: 'used' },
+  });
+
+  await page.goto(`/records/${record.id}`);
+
+  const section = page.getByTestId('price-history');
+  await expect(section).toContainText(/added, never edited/i);
+  await expect(section.getByRole('button', { name: /edit/i })).toHaveCount(0);
+});
+
+test('a rejected price says what is wrong and records nothing', async ({ page }) => {
+  // The coercion class at a money boundary: '5e4' is 50000 to a naive parse.
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `BadPrice-${suffix}` });
+  const record = await post(page, '/api/records', {
+    title: `BadPrice ${suffix}`,
+    artistId: artist.id,
+  });
+
+  await page.goto(`/records/${record.id}`);
+  await page.locator('[data-testid="price-form"][data-hydrated="true"]').waitFor({
+    timeout: 15_000,
+  });
+
+  await page.getByLabel('Price', { exact: true }).fill('5e4');
+  await page.getByRole('button', { name: 'Add price' }).click();
+
+  await expect(page.getByTestId('price-history').getByRole('alert')).toBeVisible();
+  await expect(page.getByTestId('sparkline')).toHaveCount(0);
+});
+
+test('each price shows its date and what its type means', async ({ page }) => {
+  /**
+   * QA, step 9: the sparkline plots by time and the reader could not see the
+   * times. "3 observations, $8.00 to $120.00" cannot say whether the $120 was
+   * last week or three years ago, nor which observation was new or used.
+   */
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Dated-${suffix}` });
+  const record = await post(page, '/api/records', {
+    title: `Dated Prices ${suffix}`,
+    artistId: artist.id,
+  });
+
+  for (const [price, priceType] of [
+    ['8.00', 'used'],
+    ['120.00', 'asking'],
+  ] as const) {
+    const response = await page.request.post(`/api/records/${record.id}/prices`, {
+      data: { price, priceType },
+    });
+    expect(response.status()).toBe(201);
+  }
+
+  await page.goto(`/records/${record.id}`);
+
+  const observations = page.getByTestId('price-observation');
+  await expect(observations).toHaveCount(2);
+
+  const text = (await observations.allInnerTexts()).join('\n');
+
+  // The dates, which is the finding.
+  expect(text).toMatch(/\d{4}-\d{2}-\d{2}/);
+
+  /**
+   * The type EXPLAINED, not labelled. "Asking" alone does not say nobody paid
+   * it — the same reasoning as the estimated-value sentence, and the same field
+   * where `best_dig` once produced "$120.00 best dig".
+   */
+  expect(text).toMatch(/nobody paid this/i);
+  expect(text).toMatch(/second-hand copy sold for/i);
+  expect(text.toLowerCase()).not.toContain('best dig');
 });

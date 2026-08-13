@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { seedDiscogsCacheAs } from './seed';
 
 /**
  * SPEC.md §11 E2E flow 5: "Add a want-list item, then mark it acquired, and
@@ -86,7 +87,7 @@ test('adds a want-list item, marks it acquired, and keeps it as history', async 
   // It lands on the new record.
   await expect(page).toHaveURL(/\/records\/[0-9a-f-]{36}$/, { timeout: 15_000 });
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
-  await expect(page.getByText('£24.50')).toBeVisible();
+  await expect(page.getByText('$24.50')).toBeVisible();
 
   // It is in the COLLECTION.
   await page.goto(`/?artistId=${artist.id}`);
@@ -403,4 +404,93 @@ test('deleting an acquired item names what is lost and spares the record', async
       timeout: 15_000,
     })
     .toBe(200);
+});
+
+test('three money figures, each saying what it is', async ({ page }) => {
+  /**
+   * The want list is where they collide: `max_price` (the user's ceiling), the
+   * market floor (what someone is asking), and Discogs' condition estimates.
+   * §7.2 has kept the first two apart since step 6 — this asserts the third
+   * arrives without flattening into either.
+   */
+  await page.route('**/api/discogs/market/**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        numForSale: 11,
+        lowestPrice: { value: 47.28, currency: 'USD' },
+        conditions: [
+          { grade: 'Near Mint (NM or M-)', value: 130.45 },
+          { grade: 'Very Good Plus (VG+)', value: 99.76 },
+          { grade: 'Very Good (VG)', value: 69.06 },
+        ],
+        range: { low: 69.06, high: 130.45 },
+        currency: 'USD',
+        rangeUnavailable: false,
+      }),
+    });
+  });
+
+  /**
+   * The release must be in the cache: `POST /api/pressings` VERIFIES a supplied
+   * `discogsReleaseId` against Discogs (§7.7 security unit), and the E2E guard
+   * refuses live calls. Cache-first verification then resolves offline.
+   */
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Three-${suffix}` });
+  /**
+   * A release id UNIQUE to this run, not the shared fixture's 381756.
+   *
+   * `pressings.discogs_release_id` carries a unique index (§4.2), and pressings
+   * are found-or-create — so both Playwright projects running this test cannot
+   * both own a pressing for 381756. The first wins and the second reads back a
+   * row it did not seed. It passed alone and failed paired: the shared-row
+   * collision already in NOTES, arriving through a UNIQUE constraint rather
+   * than through pagination.
+   *
+   * The market route is stubbed above and answers for any id, so the id needs
+   * only to be well-formed and this run's own. `verifyDiscogsRelease` is
+   * cache-first, so the seeded payload under this id satisfies it offline.
+   */
+  const releaseId = 900_000_000 + Math.floor(Math.random() * 90_000_000);
+  await seedDiscogsCacheAs(releaseId, 'release-detailed');
+
+  const pressing = await post(page, '/api/pressings', {
+    catalogNumber: `CLAY-${suffix}`,
+    discogsReleaseId: releaseId,
+  });
+  await post(page, '/api/want-list', {
+    title: `Three Figures ${suffix}`,
+    artistId: artist.id,
+    targetPressingId: pressing.id,
+    maxPrice: '35.00',
+    bestDigNotes: 'The 1982 Clay press, not the 1989 repress.',
+  });
+
+  await page.goto('/want-list');
+  const row = page.getByRole('listitem').filter({ hasText: `Three Figures ${suffix}` });
+
+  // The user's ceiling, in §7.2's words.
+  await expect(row).toContainText(/Most I.ll pay/i);
+  await expect(row).toContainText('$35.00');
+
+  // Not fetched until asked — this is a list (§10a).
+  await expect(row.getByTestId('market-summary')).toHaveCount(0);
+
+  await row.getByTestId('market-check').click();
+  await expect(row.getByTestId('market-summary')).toContainText('11 for sale', {
+    timeout: 15_000,
+  });
+
+  const text = await row.innerText();
+
+  // Each figure says what it IS, so none can be read as another.
+  expect(text, "the ceiling is the user's decision").toMatch(/Most I'll pay/i);
+  expect(text, 'the floor is somebody asking').toMatch(/cheapest asking/i);
+  expect(text, 'the ladder is a model').toMatch(/estimates/i);
+
+  // And the pressing note is still a PRESSING, never a price (CLAUDE.md §8).
+  expect(text).toMatch(/Best dig/i);
+  expect(text).toMatch(/not the 1989 repress/i);
 });

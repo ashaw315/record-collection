@@ -14,11 +14,13 @@ import {
 import { useRouter } from 'next/navigation';
 import {
   BEST_DIG_LABEL,
+  MARKET_FLOOR_LABEL,
   MAX_PRICE_LABEL,
   formatCeiling,
   priorityLabel,
   targetPressingSummary,
 } from './want-list-format';
+import { MarketPanel } from '@/app/market/MarketPanel';
 
 /**
  * One want-list row (SPEC.md §10: "Sorted by priority. Each row shows target
@@ -45,6 +47,9 @@ export type WantListItem = {
     countryPressed: string | null;
     yearPressed: number | null;
     matrixRunout: string | null;
+    // §10a needs a release to ask about. The query already returns the whole
+    // pressing row; only this narrowed prop omitted it.
+    discogsReleaseId: number | null;
   } | null;
 };
 
@@ -149,6 +154,20 @@ export function WantListRow({ item }: { item: WantListItem }) {
           <span className="font-mono tabular-nums">{ceiling}</span>
         </p>
       )}
+
+      {/*
+        §10a beside §7.2's ceiling — and this is where THREE money figures meet:
+        what the user will pay, what someone is asking, and what Discogs
+        estimates. §7.2 has kept the first two apart since step 6; each now says
+        what it is in words rather than relying on position.
+
+        Not auto-loaded: this is a list, and §10a forbids fetching market data
+        for a page of rows.
+      */}
+      <MarketPanel
+        discogsReleaseId={item.targetPressing?.discogsReleaseId ?? null}
+        label={MARKET_FLOOR_LABEL}
+      />
 
       <Dialog open={confirming} onOpenChange={setConfirming}>
         <DialogContent>

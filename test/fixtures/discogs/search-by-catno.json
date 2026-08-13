@@ -235,6 +235,60 @@
     },
     {
       "country": "UK",
+      "genre": [
+        "Rock"
+      ],
+      "format": [
+        "Vinyl",
+        "Album",
+        "LP",
+        "Repress"
+      ],
+      "style": [
+        "Hardcore",
+        "Punk"
+      ],
+      "id": 2760133,
+      "label": [
+        "Clay Records"
+      ],
+      "type": "release",
+      "barcode": [
+        "ADRENALIN CLAY LP-3-A3 SECOND TIME AROUND AND STILL THE BEST... BILBO",
+        "ADRENALIN AN OLD \"STONE\" NOW TURNED - THANKS MIKE... BILBO CLAY-LP-3-B3"
+      ],
+      "user_data": {
+        "in_wantlist": false,
+        "in_collection": false
+      },
+      "master_id": 50683,
+      "master_url": "https://api.discogs.com/masters/50683",
+      "uri": "/release/2760133-Discharge-Hear-Nothing-See-Nothing-Say-Nothing",
+      "catno": "CLAY LP 3",
+      "title": "Discharge - Hear Nothing See Nothing Say Nothing",
+      "thumb": "https://i.discogs.com/WURA1a6mqDUi1ANbnMo7pi9KQzffHSmMQqowZ8TTqSk/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NjAx/MzMtMTUwNjE1ODk3/Mi0yNjc3LmpwZWc.jpeg",
+      "cover_image": "https://i.discogs.com/fXC2HL0DjaT2XABWOwvLN3NUQA5PDKrk5MPsP8oAsPA/rs:fit/g:sm/q:90/h:604/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NjAx/MzMtMTUwNjE1ODk3/Mi0yNjc3LmpwZWc.jpeg",
+      "resource_url": "https://api.discogs.com/releases/2760133",
+      "community": {
+        "want": 257,
+        "have": 35
+      },
+      "format_quantity": 1,
+      "formats": [
+        {
+          "name": "Vinyl",
+          "qty": "1",
+          "text": "Transparent",
+          "descriptions": [
+            "Album",
+            "LP",
+            "Repress"
+          ]
+        }
+      ]
+    },
+    {
+      "country": "UK",
       "year": "1982",
       "format": [
         "Vinyl",
@@ -292,60 +346,6 @@
           "descriptions": [
             "LP",
             "Album"
-          ]
-        }
-      ]
-    },
-    {
-      "country": "UK",
-      "genre": [
-        "Rock"
-      ],
-      "format": [
-        "Vinyl",
-        "Album",
-        "LP",
-        "Repress"
-      ],
-      "style": [
-        "Hardcore",
-        "Punk"
-      ],
-      "id": 2760133,
-      "label": [
-        "Clay Records"
-      ],
-      "type": "release",
-      "barcode": [
-        "ADRENALIN CLAY LP-3-A3 SECOND TIME AROUND AND STILL THE BEST... BILBO",
-        "ADRENALIN AN OLD \"STONE\" NOW TURNED - THANKS MIKE... BILBO CLAY-LP-3-B3"
-      ],
-      "user_data": {
-        "in_wantlist": false,
-        "in_collection": false
-      },
-      "master_id": 50683,
-      "master_url": "https://api.discogs.com/masters/50683",
-      "uri": "/release/2760133-Discharge-Hear-Nothing-See-Nothing-Say-Nothing",
-      "catno": "CLAY LP 3",
-      "title": "Discharge - Hear Nothing See Nothing Say Nothing",
-      "thumb": "https://i.discogs.com/WURA1a6mqDUi1ANbnMo7pi9KQzffHSmMQqowZ8TTqSk/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NjAx/MzMtMTUwNjE1ODk3/Mi0yNjc3LmpwZWc.jpeg",
-      "cover_image": "https://i.discogs.com/fXC2HL0DjaT2XABWOwvLN3NUQA5PDKrk5MPsP8oAsPA/rs:fit/g:sm/q:90/h:604/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3NjAx/MzMtMTUwNjE1ODk3/Mi0yNjc3LmpwZWc.jpeg",
-      "resource_url": "https://api.discogs.com/releases/2760133",
-      "community": {
-        "want": 257,
-        "have": 35
-      },
-      "format_quantity": 1,
-      "formats": [
-        {
-          "name": "Vinyl",
-          "qty": "1",
-          "text": "Transparent",
-          "descriptions": [
-            "Album",
-            "LP",
-            "Repress"
           ]
         }
       ]

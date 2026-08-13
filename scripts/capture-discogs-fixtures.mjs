@@ -83,6 +83,66 @@ const matrixIdentifiers = (payload) =>
  */
 const captures = [
   {
+    name: 'marketplace-stats-381756',
+    /**
+     * §10a layer 1. `curr_abbr=USD` is REQUESTED, not incidental — measured
+     * 2026-08-12: this endpoint honours the parameter (EUR 41.14 / USD 47.28 /
+     * GBP 34.99 for one release) while `price_suggestions` IGNORES it and
+     * returns USD regardless. USD is the only value that makes the two layers
+     * agree, and converting between them would invent a number nobody quoted.
+     */
+    path: '/marketplace/stats/381756?curr_abbr=USD',
+    verify(payload) {
+      if (typeof payload.num_for_sale !== 'number') {
+        return 'needs num_for_sale — layer 1 is scarcity AND floor';
+      }
+      if (payload.lowest_price === null || payload.lowest_price === undefined) {
+        return 'needs a lowest_price; a release with none cannot exercise the floor';
+      }
+      if (payload.lowest_price.currency !== 'USD') {
+        return `curr_abbr was ignored: got ${payload.lowest_price.currency}, wanted USD`;
+      }
+      return null;
+    },
+  },
+  {
+    name: 'price-suggestions-381756',
+    /**
+     * §10a layer 2, the condition ladder.
+     *
+     * Requires completed Discogs SELLER SETTINGS on the token's account —
+     * without them this is `404 You must fill out your seller settings first`,
+     * measured rather than assumed. If it 404s the app shows layer 1 alone and
+     * says the range is unavailable; it never interpolates one.
+     */
+    path: '/marketplace/price_suggestions/381756',
+    verify(payload) {
+      const grades = Object.keys(payload ?? {});
+
+      // The whole point of layer 2 is a RANGE across conditions. A payload with
+      // one grade would let an implementation that reads a single figure pass,
+      // which is the flattening §10a forbids.
+      if (grades.length < 2) {
+        return `needs multiple condition grades, got ${grades.length}`;
+      }
+      if (!grades.some((g) => /Near Mint/i.test(g)) || !grades.some((g) => /^Good/i.test(g))) {
+        return 'needs both a high and a low grade so the spread is real';
+      }
+
+      const values = grades.map((g) => payload[g]?.value);
+      if (values.some((v) => typeof v !== 'number')) {
+        return 'every grade needs a numeric value';
+      }
+      if (new Set(values).size === 1) {
+        return 'all grades priced identically — the ladder cannot be discriminated';
+      }
+      if (grades.some((g) => payload[g]?.currency !== 'USD')) {
+        return 'expected USD throughout; mixed currencies would need per-figure labels';
+      }
+      return null;
+    },
+  },
+  {
     name: 'release-discharge-hear-nothing',
     path: '/releases/381756',
     /**

@@ -698,6 +698,7 @@ export type RecordStats = {
   byGenre: Array<{ id: string; name: string; count: number }>;
   byDecade: Array<{ decade: number; count: number }>;
   byStore: Array<{ id: string; name: string; count: number; spend: string }>;
+  byLabel: Array<{ id: string; name: string; count: number }>;
 };
 
 /**
@@ -786,6 +787,25 @@ export async function recordStats(): Promise<RecordStats> {
     .groupBy(recordStores.id, recordStores.name)
     .orderBy(desc(sql`count(*)`), recordStores.name);
 
+  /**
+   * §5.2's `byLabel`, added when §10's screen asked for it. INNER JOIN, like
+   * `byStore`: `label_id` is nullable (§4.2), and a LEFT JOIN would render "no
+   * label" as a shelf category called nothing.
+   *
+   * Tie broken by name so the order is stable between calls — a screen that
+   * reorders on refresh looks broken.
+   */
+  const byLabel = await db
+    .select({
+      id: labels.id,
+      name: labels.name,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(records)
+    .innerJoin(labels, eq(labels.id, records.labelId))
+    .groupBy(labels.id, labels.name)
+    .orderBy(desc(sql`count(*)`), labels.name);
+
   return {
     totalRecords: totals?.totalRecords ?? 0,
     totalSpend: totals?.totalSpend ?? '0.00',
@@ -793,5 +813,6 @@ export async function recordStats(): Promise<RecordStats> {
     byGenre,
     byDecade,
     byStore,
+    byLabel,
   };
 }
