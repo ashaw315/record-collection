@@ -4757,3 +4757,71 @@ invisible after shipping.
   (`record-form`, `manage`, `collection-filters`), all load-dependent, all
   passing in isolation. Worker measurement started per the standing rule —
   measure contention, not the spec that happened to fail.
+
+## RULE: a module fully tested through injection can be unreachable
+
+`createMusicBrainzClient` was built and tested in unit 1 with fifteen passing
+tests. Every one of them injected its own `fetch`, clock and sleep — so nothing
+ever called a shared accessor, and `getMusicBrainzClient` did not exist until
+unit 6a needed it. Neither did `MUSICBRAINZ_CONTACT_EMAIL`. The module was
+correct, well covered, and unreachable from application code.
+
+**Injection makes this invisible rather than merely unnoticed.** The related
+finding — `/api/discogs/import` implemented, tested and never called — was at
+least visible as an unreferenced route. Here every test supplies its own
+instance, so the accessor's absence produces no unused export, no dead branch and
+no failing test. The coverage is real; the wiring is missing; nothing
+distinguishes them.
+
+**The check:** for a module whose tests all inject their dependencies, ask what
+the APPLICATION would call and whether that path is exercised anywhere. If the
+answer is "the tests construct it directly", the production entry point may not
+exist at all.
+
+## RULE: partial data belongs in the database, not in the cache
+
+A cache entry asserts completeness for the whole of its TTL. Writing a partial
+result makes the next attempt read a LIE rather than retry — and for the ninety
+days of the MusicBrainz TTL, nothing would ever discover the missing members.
+
+The walk splits on exactly this:
+
+- **Members are cached as they are fetched.** Each member's own payload IS
+  complete — one request, one full answer.
+- **The band's cache write is deferred to the end.** Its payload is complete but
+  its WALK was not, and the cache entry stands for the walk. A cut-short walk
+  earns no entry, so the next one tries again.
+- **Both are written to the database.** Nineteen resolved members are real data;
+  discarding them wastes nineteen seconds of a one-per-second budget and makes
+  the next walk pay for it again.
+
+The general form: **cache what is complete, persist what is true.** A row can be
+partial and honest — the walk reports "20 of 32" alongside it. A cache entry
+cannot, because nothing reads its provenance.
+
+## Flake resolution — workers 3 → 2 (mitigation, not diagnosis)
+
+Three observations accumulated across three units, each in a DIFFERENT spec file
+(`record-form.spec.ts` matrix test, `manage.spec.ts` genre selects,
+`collection-filters.spec.ts` chip clearing). All load-dependent, all passing in
+isolation. Per the standing rule from the worker-saturation round: measure
+contention, do not investigate the spec that happened to fail.
+
+Measured 2026-08-14, full suite each run:
+
+| workers | runs | flaky | wall clock |
+|---|---|---|---|
+| 3 | 2 | **2** — a different spec each time | 5.1m |
+| **2** | **3** | **0** | 6.0-6.3m |
+
+Taken. About a minute per run against a flake on every run is worth paying.
+
+**Recorded as mitigation rather than a fix, deliberately.** Three different specs
+failing under load means something is genuinely SHARED between concurrent
+workers — most likely test data in the single database they all use. Reducing
+concurrency makes collisions rarer, not impossible. A flake here later is not a
+surprise and not a refutation of this measurement.
+
+Note the evidential symmetry: one clean run at workers=2 would have been as
+uninformative as one flaky run at workers=3, which is why three were run before
+changing anything.

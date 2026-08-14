@@ -38,7 +38,25 @@ export default defineConfig({
    */
   retries: process.env.CI ? 2 : 1,
   /**
-   * THREE locally, not Playwright's default.
+   * TWO locally, not Playwright's default — reduced from three on 2026-08-14.
+   *
+   * **This is MITIGATION, not diagnosis.** Three flakes accumulated across
+   * three different spec files (`record-form`, `manage`, `collection-filters`),
+   * every one load-dependent and every one passing in isolation. Measured
+   * again, full suite each time:
+   *
+   * | workers | runs | flaky | wall clock |
+   * |---|---|---|---|
+   * | 3 | 2 | **2** — a different spec each time | 5.1m |
+   * | **2** | **3** | **0** | 6.0-6.3m |
+   *
+   * Something is genuinely SHARED between concurrent workers — most likely test
+   * data in the one database they all use. Fewer workers makes collisions
+   * rarer, not impossible, so a flake here later is not a surprise and not a
+   * refutation. The cost is about a minute per run, which is worth paying
+   * against a flake on every run.
+   *
+   * The original reduction from ~6 to 3, still the larger effect:
    *
    * The default is roughly half the cores — ~6 on a 12-core machine — and every
    * one of them drives ONE dev server. Measured 2026-08-12, three full runs at
@@ -60,7 +78,7 @@ export default defineConfig({
    * **This is why the `manage` flake survived four investigations** — every one
    * looked at the test and the component, and the cause was in this line.
    */
-  workers: process.env.CI ? 1 : 3,
+  workers: process.env.CI ? 1 : 2,
   /**
    * `list` alongside `html` so retried tests are VISIBLE in the terminal.
    *
