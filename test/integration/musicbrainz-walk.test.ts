@@ -400,3 +400,52 @@ describe('the 90-day TTL (§4.3)', () => {
     expect(MUSICBRAINZ_CACHE_TTL_MS).toBe(90 * DAY);
   });
 });
+
+describe('incremental saves — progress the client can observe', () => {
+  /**
+   * A walk is ~32 sequential requests and 32 seconds. A spinner for that long
+   * is indistinguishable from a hang, so `/manage` polls the membership count
+   * to show "checked 12 of 31" — and that only works if rows land AS the walk
+   * proceeds rather than in one batch at the end.
+   *
+   * It also makes the walk robust against a mid-way crash, which the
+   * end-of-walk batch was not: a process killed at member 20 lost all twenty.
+   */
+
+  it('writes memberships DURING the walk, not only at the end', async () => {
+    const relations = {
+      [DISCHARGE.id]: [memberRel(SHARED), memberRel(CAL)],
+      [SHARED.id]: [bandRel(DISCHARGE)],
+      [CAL.id]: [bandRel(DISCHARGE)],
+    };
+
+    /**
+     * Counted from inside the mock, between the first and second member's
+     * fetches. Asserting after the walk cannot distinguish incremental from
+     * batched — both end with two rows.
+     */
+    let rowsMidWalk: number | null = null;
+    let memberFetches = 0;
+
+    const get = vi.fn(async (path: string) => {
+      const mbid = /artist\/([^?]+)/.exec(path)?.[1] ?? '';
+
+      if (mbid !== DISCHARGE.id) {
+        memberFetches += 1;
+        if (memberFetches === 2) {
+          rowsMidWalk = await count('artist_memberships');
+        }
+      }
+
+      return { id: mbid, name: mbid, relations: relations[mbid] ?? [] };
+    });
+    vi.spyOn(clientModule, 'getMusicBrainzClient').mockReturnValue({
+      get: get as unknown as clientModule.MusicBrainzClient['get'],
+    });
+
+    await walkLineup(DISCHARGE.id);
+
+    expect(rowsMidWalk, 'the first member was already committed').toBeGreaterThan(0);
+    expect(await count('artist_memberships'), 'and both are there at the end').toBe(2);
+  });
+});

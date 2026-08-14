@@ -371,3 +371,117 @@ test('merging names what moves and what is destroyed, then does it', async ({ pa
   expect(named, 'one artist survives, not two').toHaveLength(1);
   expect(named[0].id, 'the one holding the records').toBe(localId);
 });
+
+test('the lineup picker shows enough to choose between same-named artists', async ({ page }) => {
+  /**
+   * SPEC.md §4.3. Four artists are called Discharge, so the name has already
+   * failed to identify them — the picker exists precisely because it did.
+   *
+   * What separates them is the disambiguation comment and the life-span:
+   * 1977-ongoing against 1978-1980. Release counts would cost one extra request
+   * per candidate at one per second, and say less.
+   */
+  const suffix = `${Date.now()}`;
+  const name = `Discharge ${suffix}`;
+  await page.request.post('/api/artists', { data: { name } });
+
+  await page.route('**/api/artists/*/lineup', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        walked: false,
+        candidates: [
+          {
+            mbid: 'mb-dbeat',
+            name,
+            score: 100,
+            type: 'Group',
+            country: 'GB',
+            disambiguation: 'UK hardcore punk/d-beat band',
+            lifeSpan: { begin: '1977', end: null, ended: false },
+          },
+          {
+            mbid: 'mb-other',
+            name,
+            score: 83,
+            type: 'Group',
+            country: 'GB',
+            disambiguation: 'UK punk band, only one release',
+            lifeSpan: { begin: '1978', end: '1980', ended: true },
+          },
+        ],
+      }),
+    });
+  });
+
+  await page.goto('/manage');
+  await openResource(page, 'Artists');
+
+  const row = page.getByRole('row').filter({ hasText: name });
+  await expect(row).toHaveCount(1, { timeout: 15_000 });
+
+  await row.getByRole('button', { name: /lineup/i }).click();
+
+  const picker = page.getByTestId('lineup-picker');
+  await expect(picker).toBeVisible({ timeout: 15_000 });
+
+  const options = picker.getByTestId('lineup-candidate');
+  await expect(options).toHaveCount(2);
+
+  // The facts that actually separate them — never the name, which is shared.
+  await expect(options.first()).toContainText(/d-beat/i);
+  await expect(options.first(), 'still going').toContainText('1977');
+  await expect(options.nth(1)).toContainText(/only one release/i);
+  await expect(options.nth(1), 'a band that ended').toContainText('1980');
+});
+
+test('a lineup walk reports what it is doing, not just that it is busy', async ({ page }) => {
+  /**
+   * §12 step 11: "show progress". Thirty-two seconds of spinner is
+   * indistinguishable from a hang — the denominator is known before the walk
+   * starts, so the screen can say "checked N of M" the whole way through.
+   */
+  const suffix = `${Date.now()}-progress`;
+  const name = `Hot Tuna ${suffix}`;
+  await page.request.post('/api/artists', { data: { name } });
+
+  let resolveWalk: (() => void) | undefined;
+  const walkFinished = new Promise<void>((resolve) => {
+    resolveWalk = resolve;
+  });
+
+  await page.route('**/api/artists/*/lineup', async (route) => {
+    // Held open so the progress state is observable rather than a flash.
+    await walkFinished;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ walked: true, candidates: [], checked: 3, total: 3, partial: false, text: '3 members.' }),
+    });
+  });
+
+  await page.route('**/api/artists/*/lineup/progress', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ found: 12 }),
+    });
+  });
+
+  await page.goto('/manage');
+  await openResource(page, 'Artists');
+
+  const row = page.getByRole('row').filter({ hasText: name });
+  await row.getByRole('button', { name: /lineup/i }).click();
+
+  const progress = page.getByTestId('lineup-progress');
+  await expect(progress).toBeVisible({ timeout: 15_000 });
+  await expect(progress, 'a count, not a spinner').toContainText(/12/, { timeout: 15_000 });
+
+  resolveWalk?.();
+
+  await expect(page.getByTestId('lineup-result')).toContainText(/3 members/i, {
+    timeout: 15_000,
+  });
+});

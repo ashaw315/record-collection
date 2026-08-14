@@ -4,7 +4,7 @@ import { normalizeRelations, type MembershipRelation } from './normalize-relatio
 import { readCachedArtist, writeCachedArtist } from './artist-cache';
 import { resolveArtist } from './resolve-artist';
 import { recordMatchCandidates } from '@/lib/db/queries/artist-match-candidates';
-import { saveMemberships, type MembershipInput } from '@/lib/db/queries/artist-memberships';
+import { saveMemberships } from '@/lib/db/queries/artist-memberships';
 
 /**
  * Walking a band's lineup (SPEC.md §12 step 11).
@@ -93,7 +93,6 @@ export async function walkLineup(bandMbid: string): Promise<WalkResult> {
   const members = band.relations.filter((relation) => relation.role === 'person');
   const total = members.length;
 
-  const memberships: MembershipInput[] = [];
   let checked = 0;
   let stopped = false;
 
@@ -101,14 +100,28 @@ export async function walkLineup(bandMbid: string): Promise<WalkResult> {
     const person = await resolveArtist({ mbid: member.artistMbid, name: member.artistName });
     await recordMatchCandidates(person.artistId, person.candidateIds);
 
-    memberships.push({
-      personArtistId: person.artistId,
-      groupArtistId: bandArtist.artistId,
-      instrument: member.instrument,
-      beganYear: member.beganYear,
-      endedYear: member.endedYear,
-      musicbrainzId: member.artistMbid,
-    });
+    /**
+     * **Saved HERE, not batched at the end.** Two reasons, and the second is
+     * why it changed:
+     *
+     * 1. A walk is ~32 seconds, so `/manage` polls this count to show "checked
+     *    12 of 31" rather than a spinner indistinguishable from a hang.
+     * 2. A process killed mid-walk previously lost every row it had resolved.
+     *    The partial-failure path handled a REFUSAL; it could not handle a
+     *    crash.
+     *
+     * Idempotent per §4.3, so re-walking adds nothing.
+     */
+    await saveMemberships([
+      {
+        personArtistId: person.artistId,
+        groupArtistId: bandArtist.artistId,
+        instrument: member.instrument,
+        beganYear: member.beganYear,
+        endedYear: member.endedYear,
+        musicbrainzId: member.artistMbid,
+      },
+    ]);
 
     /**
      * Following the member into their OTHER bands is what §12 step 11 is
@@ -143,25 +156,25 @@ export async function walkLineup(bandMbid: string): Promise<WalkResult> {
       });
       await recordMatchCandidates(group.artistId, group.candidateIds);
 
-      memberships.push({
-        personArtistId: person.artistId,
-        groupArtistId: group.artistId,
-        instrument: otherBand.instrument,
-        beganYear: otherBand.beganYear,
-        endedYear: otherBand.endedYear,
-        musicbrainzId: otherBand.artistMbid,
-      });
+      await saveMemberships([
+        {
+          personArtistId: person.artistId,
+          groupArtistId: group.artistId,
+          instrument: otherBand.instrument,
+          beganYear: otherBand.beganYear,
+          endedYear: otherBand.endedYear,
+          musicbrainzId: otherBand.artistMbid,
+        },
+      ]);
     }
   }
 
   /**
-   * Written even when the walk stopped early: nineteen members is real data,
-   * and discarding it would throw away nineteen seconds of budget and make the
-   * next walk pay for it again. Idempotent per §4.3, so a later complete walk
-   * adds the rest without duplicating these.
+   * Nothing to flush: rows were committed as they were resolved. What the walk
+   * gathered before a refusal is already on disk, which is the behaviour the
+   * partial-failure tests pin — nineteen members is real data, and discarding
+   * it would throw away nineteen seconds of budget.
    */
-  await saveMemberships(memberships);
-
   const partial = stopped;
 
   // Only a COMPLETE walk earns a cache entry, so a cut-short one is retried.

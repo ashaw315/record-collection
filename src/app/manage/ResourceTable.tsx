@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { LineupAction } from './LineupAction';
 
 import { seededMessage } from '@/lib/api/messages';
 import { tableFields, type FieldSpec, type ResourceSpec } from './resources';
@@ -200,7 +201,16 @@ export function ResourceTable({
                   ))}
 
                   <td className="px-3 py-1.5">
-                    <div className="flex justify-end gap-1">
+                    <div className="flex items-start justify-end gap-1">
+                      {/*
+                        §12 step 11: artists only. A lineup is band membership,
+                        which no other resource here has — and the walk is ~32
+                        requests, so it must be asked for rather than offered
+                        everywhere.
+                      */}
+                      {resource.key === 'artists' && !isEditing && (
+                        <LineupAction artistId={row.id} artistName={name} />
+                      )}
                       {isEditing ? (
                         <>
                           <Button

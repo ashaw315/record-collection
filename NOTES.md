@@ -4851,13 +4851,8 @@ schemas or a per-worker database, which is a change to `test/helpers/db.ts` and
   case where the answer is known, not to be tuned to fit. Two Discharges both
   score 100 and the rule refuses, which is the behaviour it exists for.
 
-- **A test asserted a rule I did not want, and the code was right.** I wrote
-  `[100, 50, 100]` expecting the second 100 to be ignored as "third in the
-  array" — but the rule ranks by SCORE, so those are the top two and it
-  correctly refused. Had I "fixed" the code to match, a same-scoring artist
-  would have passed whenever the payload happened to list a weak match between
-  them. When a test fails, decide which of the two is wrong before changing
-  either.
+- See the rule below: a test of mine asserted the wrong thing and the code was
+  right.
 
 - **A mutation removing the sort survived** because the fixture had its two
   perfect scores adjacent — sorted and unsorted agreed. Fixed by moving the weak
@@ -4868,3 +4863,80 @@ schemas or a per-worker database, which is a change to `test/helpers/db.ts` and
   `11111111-1111-4111-8111-111111111111` is accepted. Cost two attempts at a
   "not found" fixture that kept returning 400 — the endpoint was right both
   times.
+
+## RULE: when a test fails, which of the two is wrong is a DECISION
+
+The reflex is to change the code. It is right often enough to become automatic,
+and that is what makes the exception dangerous.
+
+**The instance.** I wrote `pickDisambiguated([100, 50, 100])` expecting the
+second perfect score to be ignored — "it is third in the array". The code ranks
+by SCORE, so those two 100s are the top two and it correctly refused to choose.
+The test failed. The code was right.
+
+Had I changed the code to match the test, the rule would have accepted a
+same-scoring artist **whenever the payload happened to list a weak match between
+the two perfect ones** — which is precisely the case the rule exists to guard,
+arrived at by making a test pass.
+
+**The check, before touching either side:** state in one sentence what the code
+does, and what the test expects, and which one describes the behaviour you
+actually want. If the test's version would be a defect, the test is wrong. Write
+the reason into the test when you fix it, so the next reader does not re-derive
+it — the corrected test now carries a paragraph explaining what it originally
+claimed and why that was worse.
+
+Related to the fixture rules above but distinct: those are about tests that
+cannot fail. This is about a test that fails correctly and is still wrong.
+
+## Deferred to step 16: per-worker test-data isolation
+
+The E2E flake rate is mitigated (workers 3 → 2) but not diagnosed. Four spec
+files have now flaked under load — `record-form`, `manage`,
+`collection-filters`, `stats` — which means the shared resource is the single
+test database every worker uses, not any individual spec.
+
+**The real fix is per-worker isolation**: a schema or database per Playwright
+worker, created in `e2e/global-setup.ts` and selected in `test/helpers/db.ts`.
+That is a substantial harness change and does not belong in a feature step.
+
+Current rate: 1 flaky in 5 full runs at workers=2, versus 2 in 2 at workers=3.
+Low enough that a regression would still stand out. **Revisit only if the rate
+climbs** — recorded here so the next person does not re-investigate the spec
+that happened to fail.
+
+## Step 11 unit 6c — the lineup trigger, picker and progress
+
+- **The score-gap rule was replaced by a name-identity rule**, and the reason is
+  worth keeping because the wrong rule looks more sophisticated. MusicBrainz
+  ranks by how well documented an artist is, so among four groups called
+  Discharge the famous d-beat band scores 100 and the others 83, 82, 82. A gap
+  rule auto-accepts exactly the case it was written to catch. The new rule:
+  accept only when no other result carries the same name.
+
+  **The old rule's justification in SPEC.md was a measurement nobody took** —
+  "both Discharges score 100", true of a `country:GB`-filtered query and false of
+  the one the code sends. Found by measuring before building the picker.
+
+- **Progress is derived from rows the walk already writes**, not from a progress
+  table. That required making the walk save each membership as it resolves one
+  rather than batching at the end — a change to an approved unit, and a better
+  one: a process killed mid-walk previously lost every row. The partial-failure
+  path handled a REFUSAL and could not handle a crash.
+
+  Tested by counting rows from INSIDE the mock, between the first and second
+  member fetches. Asserting after the walk cannot distinguish incremental from
+  batched — both end with the same rows.
+
+- **The picker shows what the name could not.** Disambiguation comment first,
+  then type · country · life-span: "UK hardcore punk/d-beat band · Group · GB ·
+  1977–" against "UK punk band, only one release · Group · GB · 1978–1980". The
+  name appears nowhere on the cards, because the name is why they are there.
+  Release counts were considered and rejected — one extra request per candidate
+  at 1/sec, and they say less than a life-span.
+
+- **A mutation checking only the runner-up survived** the four-Discharge fixture
+  because the duplicates were adjacent. Fixed by putting a differently-named
+  artist between them, which is the real shape: "Discharge" returns four
+  same-named artists interleaved with "Amphetamine Discharge" and "Triple
+  Discharge".

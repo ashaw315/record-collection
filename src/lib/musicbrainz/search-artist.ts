@@ -22,19 +22,16 @@ export type ArtistSearchHit = {
 };
 
 /**
- * **A GUESS, and it must keep saying so.**
+ * The name each hit is compared by.
  *
- * Fitted to two observed cases — Hot Tuna 100 against 78, Carpenters 100 against
- * 66 — with no negative case where the right answer is known. §4.3 records it in
- * the same terms as `WIDE_RATIO`: unvalidated, **not to be tuned to fit**, and
- * revisited only when real use produces a case it gets wrong.
- *
- * The rule is a GAP rather than a high absolute. Two artists genuinely named
- * Discharge both score 100, so an "is the top hit confident?" test would accept
- * one of them at random — which is the failure this exists to prevent.
+ * Case- and whitespace-insensitive: "discharge" and "Discharge " are the same
+ * name to a reader, and MusicBrainz names are user-submitted. A comparison that
+ * missed those would auto-accept precisely the collision this rule exists to
+ * catch.
  */
-const PERFECT_SCORE = 100;
-const RUNNER_UP_CEILING = 90;
+function nameKey(name: string): string {
+  return name.trim().toLowerCase();
+}
 
 const rawHit = z.object({
   id: z.string().min(1),
@@ -86,14 +83,26 @@ export function pickDisambiguated(hits: ArtistSearchHit[]): ArtistSearchHit | nu
    * on someone else's ordering guarantee.
    */
   const ranked = [...hits].sort((a, b) => b.score - a.score);
-  const [best, runnerUp] = ranked;
+  const [best] = ranked;
 
-  if (best.score < PERFECT_SCORE) return null;
+  /**
+   * **The rule keys on the NAME, because the name is what failed** (§4.3).
+   *
+   * An earlier version used a score gap — top hit 100, runner-up below 90 — and
+   * it was wrong in a way worth recording, because it looks more sophisticated
+   * and someone will propose it again. MusicBrainz ranks by how well documented
+   * an artist is, so among four groups called Discharge the famous d-beat band
+   * scores 100 and the others 83, 82, 82 (measured 2026-08-14). A gap rule
+   * therefore auto-accepts exactly the case it was written to catch, and stays
+   * silent precisely where names are ambiguous.
+   *
+   * Score is not consulted at all here. It orders the results; it does not
+   * decide them.
+   */
+  const bestKey = nameKey(best.name);
+  const sameName = ranked.filter((hit) => nameKey(hit.name) === bestKey);
 
-  // A lone perfect match has nothing to be confused with.
-  if (runnerUp === undefined) return best;
-
-  return runnerUp.score < RUNNER_UP_CEILING ? best : null;
+  return sameName.length === 1 ? best : null;
 }
 
 /**
