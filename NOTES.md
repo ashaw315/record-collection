@@ -4336,3 +4336,41 @@ collected from real use, not constructed.
   CLAUDE.md §4 rather than chased mid-unit. Note that 3/3 in isolation is NOT
   evidence it is clean; the worker-saturation finding above is exactly this
   shape.
+
+## Step 11 unit 2 — the relation normalizer
+
+- **A mutation survived because no fixture could tell the two rules apart.**
+  Deriving `role` from the target's Person/Group type instead of `direction`
+  passed all 18 tests — including the one written specifically to catch it.
+  Discharge, Black Flag and the person fixture never disagree: bands have Person
+  members, people have Group bands, so both rules give the same answer
+  everywhere.
+
+  **The fix was to find real data where they diverge, not to construct it.**
+  Searched MusicBrainz for a group that is a MEMBER of a group and found GP Wu
+  in the Wu-Tang Killa Bees — `direction: backward`, target type `Group`. By
+  direction it is a member (correct); by target type it is a band (an inverted
+  row). Captured as `artist-group-member-of-group.json`; the mutation now fails.
+
+  This is the discriminating-power rule again, with a twist worth keeping: **a
+  test can name the exact shortcut it exists to prevent and still not detect
+  it.** The comment described the failure precisely while the assertion could
+  not distinguish it. Naming the hazard is not the same as constraining it.
+
+- **Black Flag earned its place as predicted.** 26 relations, 22 kept — the only
+  fixture where the type filter has anything to discard. Against Discharge (31
+  of 31 member-of-band) a normalizer that filtered nothing would pass.
+
+- **Three date formats occur in real payloads:** `1976`, `2014-03`,
+  `2011-12-13`. `Number('2011-12-13')` is `NaN`, and §4.3 stores an INTEGER
+  year — a NaN reaching that column fails at the database, far from the parse
+  that caused it. The coercion class from NOTES in a new place.
+
+- **FLAKE COUNT — observation 2.** Full E2E run showed 4 failures in
+  `manage.spec.ts` (mobile only, genre move selects), then: mobile-only project
+  run 149/149 clean, full suite re-run 298/298 clean. Requires both projects
+  running concurrently, which points at contention rather than code — this unit
+  added a pure module and JSON fixtures and touches no genre path. Same family
+  as the worker-saturation finding above. Not chased, per the standing decision
+  to accumulate observations before investigating. Previous: record-form.spec.ts
+  matrix test (unit 1).
