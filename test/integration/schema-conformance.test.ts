@@ -68,6 +68,12 @@ describe('§4 conformance — cascade directions', () => {
       'artist_genres.genre_id -> genres: NO ACTION',
       'artist_influences.source_artist_id -> artists: CASCADE',
       'artist_influences.target_artist_id -> artists: CASCADE',
+      // §4.3's `artist_memberships`, added at step 11. Both FKs point at
+      // `artists` as owner and cascade for the same reason the influence edges
+      // do: a membership edge to a deleted artist is meaningless, and NO ACTION
+      // here would make DELETE /api/artists/:id fail on an FK violation.
+      'artist_memberships.group_artist_id -> artists: CASCADE',
+      'artist_memberships.person_artist_id -> artists: CASCADE',
       'genres.parent_genre_id -> genres: NO ACTION',
       'images.record_id -> records: CASCADE',
       'journal_entries.record_id -> records: CASCADE',

@@ -50,6 +50,13 @@
       "when": 1786589809868,
       "tag": "0006_market_cache",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1786671385485,
+      "tag": "0007_artist_memberships",
+      "breakpoints": true
     }
   ]
 }

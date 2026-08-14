@@ -12,6 +12,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  unique,
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
@@ -396,6 +397,63 @@ export const recordTags = pgTable(
   (t) => [
     primaryKey({ columns: [t.recordId, t.tagId] }),
     index('record_tags_tag_id_idx').on(t.tagId),
+  ],
+);
+
+/**
+ * §4.3 — a person's membership of a group, imported from MusicBrainz.
+ *
+ * **A fact with a source, deliberately not `artist_influences`.** MusicBrainz
+ * has no influence relationship; mapping membership onto influence would fill a
+ * 1-5 `strength` with a number nobody measured. §8.1's graph draws the two
+ * differently because they mean different things.
+ *
+ * **A surrogate id plus a UNIQUE constraint, not the composite PK §4.3
+ * describes.** Postgres forbids a nullable column in a primary key, and
+ * `instrument` is nullable — MusicBrainz omits it routinely. The identity rule
+ * §4.3 asks for is preserved by the constraint below; only its mechanism
+ * differs, and every other table here already carries a uuid `id`.
+ */
+export const artistMemberships = pgTable(
+  'artist_memberships',
+  {
+    id,
+    personArtistId: uuid('person_artist_id')
+      .notNull()
+      .references(() => artists.id, { onDelete: 'cascade' }),
+    groupArtistId: uuid('group_artist_id')
+      .notNull()
+      .references(() => artists.id, { onDelete: 'cascade' }),
+    instrument: text('instrument'),
+    beganYear: integer('began_year'),
+    endedYear: integer('ended_year'),
+    musicbrainzId: text('musicbrainz_id'),
+    ...timestamps,
+  },
+  (t) => [
+    /**
+     * **`NULLS NOT DISTINCT`, and it is load-bearing.**
+     *
+     * §4.3 identifies a membership by (person, group, instrument), and
+     * `instrument` is null whenever MusicBrainz does not record one. Under
+     * Postgres' DEFAULT semantics two NULLs are distinct, so this constraint
+     * would not see two null-instrument rows for the same pair as conflicting:
+     * `ON CONFLICT DO NOTHING` would never fire and every re-import would
+     * insert another copy. Measured on Postgres 16.14 — default yields 2 rows,
+     * this yields 1.
+     *
+     * The failure that avoids is silent: nothing errors, the import
+     * "succeeds", and the pair is weighted more heavily in the graph on every
+     * pass. A cache that looks like it is working while the data drifts.
+     */
+    unique('artist_memberships_person_group_instrument_key')
+      .on(t.personArtistId, t.groupArtistId, t.instrument)
+      .nullsNotDistinct(),
+    index('artist_memberships_group_artist_id_idx').on(t.groupArtistId),
+    check(
+      'artist_memberships_no_self_membership',
+      sql`${t.personArtistId} <> ${t.groupArtistId}`,
+    ),
   ],
 );
 

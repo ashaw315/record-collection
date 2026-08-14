@@ -4374,3 +4374,41 @@ collected from real use, not constructed.
   as the worker-saturation finding above. Not chased, per the standing decision
   to accumulate observations before investigating. Previous: record-form.spec.ts
   matrix test (unit 1).
+
+## Step 11 unit 3 — artist_memberships
+
+- **`NULLS NOT DISTINCT`: verified, not assumed.** Measured directly on
+  Postgres 16.14 before writing any schema — a plain `UNIQUE (a, b, c)` accepts
+  two rows whose `c` is NULL (2 rows), `UNIQUE NULLS NOT DISTINCT` collapses
+  them (1 row) and makes `ON CONFLICT` actually fire. Mutation-verified the way
+  it matters: removing the clause fails the null-instrument RE-IMPORT test and
+  only that test. An insert-path test would not have caught it, because the
+  first insert succeeds either way.
+
+- **§4.3 asks for a composite PK Postgres cannot create.** `PK is (person,
+  group, instrument)` with `instrument` nullable — a primary key forbids
+  nullable columns. Resolved as a surrogate uuid `id` plus a UNIQUE constraint
+  carrying the identity rule, matching every other table here. Flagged rather
+  than silently substituted; the rule §4.3 wants is preserved, only its
+  mechanism differs.
+
+- **A batch upsert needs `excluded`, not the local variables.** The two existing
+  upserts in this codebase (`cache.ts`, `market-cache.ts`) write ONE row and can
+  name their values directly. `saveMemberships` writes many in one statement, so
+  each conflict must take its own incoming values — `sql\`excluded.began_year\``
+  rather than the variable. Naming variables would write one row's values over
+  every conflicting row, a bug that only appears once an artist has more than
+  one membership.
+
+- **The FK conformance test caught the addition, as designed.** Its comment says
+  an exhaustive list "is the only way to notice an ADDITION", and it noticed.
+  Both new FKs cascade toward `artists` for `artist_influences`' reason — an
+  edge to a deleted artist is meaningless, and NO ACTION would make artist
+  deletion fail on an FK violation. Recorded in the list with that reasoning
+  rather than silently appended.
+
+- **The fresh-clone migration test failed for the same reason as last time:**
+  untracked migration and snapshot files. It copies only git-tracked files, so
+  a new migration is invisible to it until staged while the journal already
+  references it. Second occurrence — `git add drizzle/` belongs in the schema
+  unit checklist, not in the debugging that follows.
