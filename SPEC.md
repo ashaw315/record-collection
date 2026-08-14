@@ -277,6 +277,12 @@ Surface accumulated possible matches as a review afterwards, in `/manage`, where
 
 **Key on the MBID, not on a local artist id.** The same MusicBrainz person reached through two different bands' lineups is one fetch, and a local key would refetch them separately.
 
+**Finding the MusicBrainz artist for a local row.** Hand-entered artists have no MBID, so a lineup walk must search by name — the one thing §4.3 says cannot identify an artist. So the search result is auto-accepted only when it is *disambiguating*: the top hit scores 100 and the next scores below 90. A gap, not a high absolute. Otherwise the candidates are returned and the user picks.
+
+**That threshold is a guess and must say so in the code.** It is fitted to two observed cases — Hot Tuna 100 against 78, Carpenters 100 against 66 — with no negative case where the right answer is known. Two artists genuinely named Discharge both score 100, so that case asks, which is the behaviour the rule exists for. Treat it like `WIDE_RATIO`: unvalidated, not tuned to fit, and revisited when real use produces a case it gets wrong.
+
+**A confirmed MBID is written to `artists.musicbrainz_id`; an inferred one is not.** §4.3's resolver refuses to attach an id on a name match precisely because a wrong attachment is silent and self-reinforcing. A user who has been shown the candidates and chosen one has supplied the evidence the resolver lacked — that is a different act, and the id may be stored. The distinction is who decided, not how confident the code is.
+
 **`artist_memberships`** — a person's membership of a group, imported from MusicBrainz. A *fact with a source*, kept separate from `artist_influences`, which is the user's judgement.
 
 | Column | Type | Notes |

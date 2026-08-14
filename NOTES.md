@@ -4825,3 +4825,46 @@ surprise and not a refutation of this measurement.
 Note the evidential symmetry: one clean run at workers=2 would have been as
 uninformative as one flaky run at workers=3, which is why three were run before
 changing anything.
+
+**UPDATE, same day: a flake at workers=2**, in `stats.spec.ts` ("reachable from
+the nav") — a FOURTH spec file, after four clean runs. Recorded rather than
+re-tuned, because it is exactly what "mitigation, not diagnosis" predicted:
+fewer workers makes collisions rarer, not impossible.
+
+This does not refute the measurement (2 of 2 flaky at three workers, 0 of 4 at
+two) and it does not justify workers=1 — the standing decision was that a flake
+here is not a surprise. What it does confirm is that the shared resource is
+still shared. **The real diagnosis, when someone takes it, is test-data
+isolation in the single database every worker uses** — most likely per-worker
+schemas or a per-worker database, which is a change to `test/helpers/db.ts` and
+`global-setup.ts` rather than to a spec.
+
+## Step 11 unit 6b — the lineup endpoint
+
+- **The endpoint has two outcomes by design**, because every artist in the real
+  collection is hand-entered with no MBID. Verified against Neon: all six of
+  Adam's artists are `NO MBID`, so the name-search path is the ONLY path that
+  runs in practice — the id path exists for second and subsequent walks.
+
+- **The gap threshold is in the code as an explicit guess**, in `WIDE_RATIO`'s
+  terms: fitted to Hot Tuna (100 vs 78) and Carpenters (100 vs 66), no negative
+  case where the answer is known, not to be tuned to fit. Two Discharges both
+  score 100 and the rule refuses, which is the behaviour it exists for.
+
+- **A test asserted a rule I did not want, and the code was right.** I wrote
+  `[100, 50, 100]` expecting the second 100 to be ignored as "third in the
+  array" — but the rule ranks by SCORE, so those are the top two and it
+  correctly refused. Had I "fixed" the code to match, a same-scoring artist
+  would have passed whenever the payload happened to list a weak match between
+  them. When a test fails, decide which of the two is wrong before changing
+  either.
+
+- **A mutation removing the sort survived** because the fixture had its two
+  perfect scores adjacent — sorted and unsorted agreed. Fixed by moving the weak
+  match BETWEEN them. The discriminating-power rule again, on ordering.
+
+- **`z.string().uuid()` validates the version nibble, not just the shape.**
+  `11111111-1111-1111-1111-111111111112` is rejected; a v4-shaped
+  `11111111-1111-4111-8111-111111111111` is accepted. Cost two attempts at a
+  "not found" fixture that kept returning 400 — the endpoint was right both
+  times.
