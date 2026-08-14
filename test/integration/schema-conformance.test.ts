@@ -263,6 +263,9 @@ describe('§4 conformance — NOT NULL where the spec requires it', () => {
       // is a cache: `fetched_at` IS its timestamp, and a separate `updated_at`
       // would be a second answer to the same question.
       'market_cache',
+      // §4.3's MusicBrainz cache, same reasoning again — three columns, and
+      // `fetched_at` is what freshness is measured from.
+      'musicbrainz_cache',
       'record_genres',
       'want_list_genres',
       'artist_genres',

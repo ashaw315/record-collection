@@ -263,6 +263,20 @@ A table rather than a column on `artists`, because a column holds one candidate 
 
 Surface accumulated possible matches as a review afterwards, in `/manage`, where the user can merge deliberately with both artists in front of them. Asking once, later, with context beats asking thirty times during a walk.
 
+**`musicbrainz_cache`** — artist relation payloads, keyed by MBID. Not `discogs_cache` or `market_cache`: both are keyed by `discogs_release_id`, and this holds a different entity type under a different key.
+
+| Column | Type | Notes |
+|---|---|---|
+| musicbrainz_id | TEXT NOT NULL UNIQUE | the artist MBID |
+| payload | JSONB NOT NULL | the raw artist-rels response |
+| fetched_at | TIMESTAMPTZ NOT NULL DEFAULT now() | |
+
+**TTL is 90 days, not the 7 used elsewhere.** Lineups change on the scale of years; prices change weekly. Inheriting §6's rule would mean re-walking thirty-odd requests for a fact that has not moved since 1982. Put that reasoning in the code — 7 is the established number in this codebase and someone will otherwise "fix" the inconsistency. Same stale-read behaviour as §6: a stale entry reads as a miss but is left in place, so an outage serves three-month-old lineups rather than nothing.
+
+**Store the raw payload, never the normalized relations.** Normalization is our code and it changes; caching its output freezes today's decisions into rows that outlive them by ninety days, and a later fix to the normalizer would never reach anything already fetched. The same reasoning governs `discogs_cache` (§6).
+
+**Key on the MBID, not on a local artist id.** The same MusicBrainz person reached through two different bands' lineups is one fetch, and a local key would refetch them separately.
+
 **`artist_memberships`** — a person's membership of a group, imported from MusicBrainz. A *fact with a source*, kept separate from `artist_influences`, which is the user's judgement.
 
 | Column | Type | Notes |

@@ -71,6 +71,13 @@
       "when": 1786676530250,
       "tag": "0009_artist_match_candidates",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1786715119767,
+      "tag": "0010_musicbrainz_cache",
+      "breakpoints": true
     }
   ]
 }

@@ -1,3 +1,4 @@
+import { getEnv } from '@/env';
 import { TokenBucket } from '@/lib/discogs/limiter';
 import { assertNoLiveCall, usesRealNetwork } from '@/lib/discogs/no-live-calls';
 
@@ -208,4 +209,22 @@ export function createMusicBrainzClient(
   }
 
   return { get: request };
+}
+
+let shared: MusicBrainzClient | undefined;
+
+/**
+ * The application's MusicBrainz client.
+ *
+ * Mirrors `getDiscogsClient`: the REAL fetch, so CLAUDE.md §2 is enforced at the
+ * request site via `usesRealNetwork` rather than here — `createMusicBrainzClient`
+ * cannot be used to route around the guard.
+ */
+export function getMusicBrainzClient(): MusicBrainzClient {
+  shared ??= createMusicBrainzClient({
+    contactEmail: getEnv().MUSICBRAINZ_CONTACT_EMAIL ?? '',
+    fetchImpl: globalThis.fetch,
+  });
+
+  return shared;
 }

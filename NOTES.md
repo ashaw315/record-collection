@@ -4658,3 +4658,102 @@ several", and it is harder to notice because the data looks complete.
 - **A `sed`/python mutation with a broken anchor printed "13 passed" again.**
   Nested quotes defeated the replacement; the assert caught it. Third time this
   guard has earned itself.
+
+## RULE: assertions about copy quote the copy
+
+Matching a regex of SYNONYMS against a string that says something else is
+unfalsifiable — it cannot fail, so it constrains nothing.
+
+The instance: a test asserting the confirmation does not claim the MusicBrainz id
+moves matched `/will be kept|moves across|gains/i`, while the sentence says
+"moves to". None of the three alternatives appear in the copy under any
+condition, so the assertion passed against correct code, against broken code, and
+against a mutation that rendered the line unconditionally.
+
+**The reason it slips is that it feels MORE robust, not less.** Listing synonyms
+looks like defending against harmless rewording, and quoting looks brittle. The
+opposite is true: a quote fails when the copy changes, which is exactly when a
+human should look at it, while a synonym list silently stops matching and never
+fails again.
+
+- Assert on the words the code actually produces.
+- If a test would break on a harmless rewording, that is the test working — the
+  fix is to update the quote, not to loosen it into a paraphrase.
+- The tell: could this pattern match the string under ANY branch? If not, it is
+  asserting the absence of something that was never there.
+
+Same family as the assertion-that-cannot-constrain entries above: the version
+spread's settle window, the vacuous empty-state check, and the ordering that no
+fixture can discriminate. This one is specific to text.
+
+## RULE: a one-sentence step entry has gaps proportional to what it did not examine
+
+Step 11's §12 entry was one sentence. Building it surfaced THREE spec gaps, all
+found by reading the data source rather than the spec:
+
+| Gap | Found by | Would have been |
+|---|---|---|
+| MusicBrainz has no influence relationship at all | fetching the artist-rels vocabulary | `artist_influences` filled with a fabricated 1-5 `strength` |
+| `artists.name UNIQUE` makes two same-named bands impossible | reading §4.1 against a real payload with two Discharges | one artist, two bands' lineups fused |
+| No table for artist-keyed cache payloads | looking for where a 90-day cache would live | relation payloads written into a release-keyed table |
+
+**The common cause is that the step was scoped before its data source was
+examined.** "Band membership and side-project relationships, pulled
+automatically" is a reasonable sentence to write about an API nobody has called
+yet — and every assumption inside it (that influence is available, that a name
+identifies an artist, that an existing cache fits) turned out to be wrong in a
+way only the payload could reveal.
+
+**Steps 12, 13 and 14 are specified the same way** — one sentence each, written
+before their data sources were examined. Expect the same shape:
+
+- Step 12 (graph endpoint + D3 visualization): §8.1's `weight` comment already
+  omits `shared_member`, which is a known gap.
+- Step 13 (shelf order): the algorithm is described but its inputs are not
+  bounded — what happens with one artist, or a thousand.
+- Step 14 (suggestions, LLM-assisted): the prompt is the whole feature and
+  §12 gives it a clause.
+
+The practical rule: **before building a step, fetch or read the real thing it
+consumes, and reconcile the spec against it BEFORE writing tests.** Three
+one-hour investigations here each prevented a defect that would have been
+invisible after shipping.
+
+## Step 11 unit 6a — the lineup walk
+
+- **Partial failure decided before building, not after.** The client already
+  retries a 503 three times with backoff, so an error reaching the walk means
+  MusicBrainz refused FOUR times — down or hard-limiting, not blinking. Hence:
+  stop rather than continue, commit what was resolved, and report honestly.
+
+- **The asymmetry that took the most thought: partial data is worth keeping in
+  the DATABASE and worth NOT keeping in the CACHE.** Nineteen members is real
+  data and discarding it wastes nineteen seconds of a one-per-second budget. But
+  caching the band after a cut-short walk would serve an incomplete lineup for
+  ninety days — the next walk would read the cached band, find its members
+  already recorded, and never discover the ones the refusal cut off. So the
+  band's cache write is deferred until the walk completes; members are cached as
+  they are fetched, because each member's own payload IS complete.
+
+- **Two mutations survived on non-discriminating fixtures**, both fixed:
+  - TTL 90 → 7 days passed, because every test ran against fresh entries. Added
+    boundary fixtures at 60, exactly 90 and 120 days — the only values where the
+    two rules disagree.
+  - Skipping `saveMemberships` on a partial walk passed, because the test
+    asserted the ARTIST existed and `resolveArtist` writes artists as a side
+    effect of resolving them. The membership rows were never checked.
+
+  Both are the same shape: an assertion adjacent to the behaviour rather than on
+  it.
+
+- **`getMusicBrainzClient` did not exist.** Unit 1 built `createMusicBrainzClient`
+  and its tests injected everything, so nothing ever needed the shared accessor
+  or the `MUSICBRAINZ_CONTACT_EMAIL` env var. Both added here. A module fully
+  tested through injection can be unreachable from application code without any
+  test noticing.
+
+- **FLAKE COUNT — observation 3**, and the first two conditions for
+  investigating are now met: three observations, three different spec files
+  (`record-form`, `manage`, `collection-filters`), all load-dependent, all
+  passing in isolation. Worker measurement started per the standing rule —
+  measure contention, not the spec that happened to fail.

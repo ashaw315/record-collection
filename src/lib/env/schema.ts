@@ -52,6 +52,14 @@ export const envSchema = z.object({
   CRON_SECRET: z.string().min(32, 'must be at least 32 characters'),
 
   DISCOGS_TOKEN: z.string().min(1),
+  /**
+   * §12 step 11: MusicBrainz requires a User-Agent carrying contact
+   * information, as a term of use. Optional here rather than required — the
+   * app runs without the MusicBrainz import, and a missing value fails loudly
+   * at `getMusicBrainzClient()` where the cause is obvious, rather than
+   * blocking every deploy that has not configured it.
+   */
+  MUSICBRAINZ_CONTACT_EMAIL: z.string().optional(),
 
   /**
    * Optional by DESIGN, not because they are pending.

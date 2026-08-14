@@ -423,6 +423,21 @@ export const recordTags = pgTable(
 );
 
 /**
+ * §4.3 — MusicBrainz artist relation payloads, keyed by MBID.
+ *
+ * **Not `discogs_cache` or `market_cache`**: both are keyed by
+ * `discogs_release_id`, and this holds a different entity type under a
+ * different key. Writing artist relations into a release-keyed table is the
+ * collision `market_cache` was created to avoid.
+ */
+export const musicbrainzCache = pgTable('musicbrainz_cache', {
+  id,
+  musicbrainzId: text('musicbrainz_id').notNull().unique(),
+  payload: jsonb('payload').notNull(),
+  fetchedAt: timestamp('fetched_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
  * §4.3 — a possible duplicate artist, recorded rather than asked about
  * mid-import.
  *
