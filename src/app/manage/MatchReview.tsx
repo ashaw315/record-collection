@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import type { OpenMatchCandidate } from '@/lib/db/queries/artist-match-candidates';
+import { mergeSummary } from './merge-summary';
 
 /**
  * SPEC.md §4.3 — the possible-duplicate review.
@@ -14,15 +15,27 @@ import type { OpenMatchCandidate } from '@/lib/db/queries/artist-match-candidate
  * records each already has. An artist with eleven records is the one being
  * collected; a freshly imported row with none is new.
  *
- * **"Different artists" is exactly as easy as "same artist".** One button each,
- * same size, same place, one click, and both are equally permanent. The
- * asymmetry in the DAMAGE is why the interface must not be asymmetric: a wrong
- * merge is invisible and self-reinforcing, because every later import matches
- * the id attached in error. A wrong decline leaves two artists in a list.
+ * **"Different artists" is never HARDER than "same artist".** Both are offered
+ * side by side, same weight, neither styled as the default, and declining is
+ * one click. If declining were the longer path the review would degrade into a
+ * merge button with extra steps.
+ *
+ * Merging takes one extra step — a confirmation — and that is not asymmetry in
+ * the wrong direction: it is asymmetry matching the DAMAGE. A wrong merge is
+ * irreversible, invisible and self-reinforcing, because every later import
+ * matches the id attached in error. A wrong decline leaves two artists in a
+ * list and can be revisited.
  */
 export function MatchReview({ candidates }: { candidates: OpenMatchCandidate[] }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
+  /**
+   * Which pair is awaiting confirmation. Merging is irreversible, so it takes a
+   * second deliberate action — "different artists" does not, because a recorded
+   * opinion can be revisited and the asymmetry in the UI must match the
+   * asymmetry in the damage.
+   */
+  const [confirming, setConfirming] = useState<string | null>(null);
   const [error, setError] = useState<string | undefined>(undefined);
 
   /**
@@ -97,11 +110,51 @@ export function MatchReview({ candidates }: { candidates: OpenMatchCandidate[] }
                 type="button"
                 variant="outline"
                 disabled={busy !== null}
-                onClick={() => void answer(candidate.id, 'merged')}
+                onClick={() => setConfirming(candidate.id)}
               >
                 Same artist
               </Button>
             </div>
+
+            {confirming === candidate.id && (
+              <div
+                data-testid="merge-confirm"
+                role="group"
+                aria-label="Confirm merge"
+                className="mt-3 rounded-xs border border-destructive/40 p-3 text-xs"
+              >
+                {/*
+                  Names what MOVES and what is DESTROYED, the way the delete
+                  confirmation does. A user told only what they gain cannot
+                  weigh what they lose.
+                */}
+                <p>{mergeSummary(candidate.plan).moves}</p>
+                {mergeSummary(candidate.plan).discards !== null && (
+                  <p className="mt-1">{mergeSummary(candidate.plan).discards}</p>
+                )}
+                <p className="mt-1 font-medium text-destructive">
+                  {mergeSummary(candidate.plan).warning}
+                </p>
+
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={busy !== null}
+                    onClick={() => setConfirming(null)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={busy !== null}
+                    onClick={() => void answer(candidate.id, 'merged')}
+                  >
+                    {busy === candidate.id ? 'Merging…' : 'Merge them'}
+                  </Button>
+                </div>
+              </div>
+            )}
           </li>
         ))}
       </ul>

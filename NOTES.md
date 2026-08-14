@@ -4575,3 +4575,46 @@ several", and it is harder to notice because the data looks complete.
 - **The FK conformance test caught the addition again**, as it did in unit 3.
   Third time it has earned its exhaustive-list design. Both new FKs cascade;
   recorded with the reasoning rather than appended silently.
+
+## Step 11 unit 7 — merging artists
+
+- **RULE: when a schema-level failure injection turns contrived, use a seam and
+  say so.** Three attempts to force a mid-transaction failure through the schema
+  each failed honestly: an out-of-range year the seed itself could not write, a
+  null byte the tooling refused, a want-list overflow needing a swallowed catch.
+  Every attempt left a test whose COMMENT described a mechanism the code did not
+  implement — the decorative test this project has shipped before.
+
+  The primitive now exposes an `afterMoves` seam, called inside the transaction
+  between the moves and the delete. It is honest about being a seam, it fails
+  where a real error would, and the assertions are about the ROLLBACK, which is
+  the behaviour under test. Mutation M1 (removing the transaction) fails it.
+
+- **The partial unique index bit during the merge itself.** Copying the loser's
+  `musicbrainz_id` onto the survivor while the loser still held it put the value
+  on two rows at once: `duplicate key value violates unique constraint
+  "artists_musicbrainz_id_key"` — even though the loser is deleted moments
+  later. Within a transaction, "it will be gone by COMMIT" is not enough; the
+  index is checked per statement. The loser's unique ids are released first.
+
+- **§4.3's own list omitted `artist_genres`, and it was the dangerous omission.**
+  It cascades, so a merge that skipped it would strip UK82 from a band with no
+  error and no trace — §8's genre-flattening realised by accident. Found by
+  enumerating the nine FKs pointing at `artists` rather than working from the
+  list.
+
+- **Every junction has a composite key, so every move can collide.** Both
+  artists tagged "punk" makes a plain `UPDATE SET artist_id` throw. Each move is
+  an insert-on-conflict-do-nothing followed by a delete, and the discarded count
+  is REPORTED so the confirmation can name it.
+
+- **Edges between the two are deleted, not moved.** "A influenced B" stops being
+  a statement when A and B turn out to be one artist. Three CHECKs forbid
+  self-reference, so moving them would fail anyway — but the reason to delete is
+  semantic, not constraint-driven.
+
+- **A third order-dependent E2E test, found by the full suite.** My own review
+  test used `.first()` and asserted zero candidates GLOBALLY, so it passed only
+  when no other test had one open. Scoped by name. That is now three instances
+  of the same defect in this file — worth treating `.first()` on a shared testid
+  as a smell in its own right.

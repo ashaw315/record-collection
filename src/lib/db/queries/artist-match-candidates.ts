@@ -3,6 +3,7 @@ import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import { getDb } from '@/db/client';
 import { artistMatchCandidates, artists, records } from '@/db/schema';
+import { planMerge } from './merge-artists';
 
 /**
  * `artist_match_candidates` (SPEC.md §4.3) — possible duplicate artists,
@@ -41,6 +42,10 @@ export type CandidateArtist = {
 export type OpenMatchCandidate = {
   id: string;
   reason: string;
+  /** What a merge would move and destroy — §4.3's informed confirmation. */
+  plan: import('./merge-artists').MergePlan;
+  /** Which row survives, so the confirmation can name it. */
+  survivorId: string;
   /** The row the import created. */
   artist: CandidateArtist;
   /** The existing local row it might be the same as. */
@@ -126,9 +131,20 @@ export async function listOpenMatchCandidates(): Promise<OpenMatchCandidate[]> {
     .where(isNull(artistMatchCandidates.resolvedAt))
     .orderBy(asc(artistMatchCandidates.createdAt), asc(artistMatchCandidates.id));
 
-  return rows.map((row) => ({
+  const plans = await Promise.all(
+    rows.map(async (row) => {
+      const pair = await candidatePair(row.id);
+      const survivorId = pair?.survivorId ?? row.artistId;
+      const loserId = pair?.loserId ?? row.candidateId;
+      return { survivorId, plan: await planMerge(survivorId, loserId) };
+    }),
+  );
+
+  return rows.map((row, index) => ({
     id: row.id,
     reason: row.reason,
+    plan: plans[index].plan,
+    survivorId: plans[index].survivorId,
     artist: {
       id: row.artistId,
       name: row.artistName,
@@ -170,4 +186,54 @@ export async function resolveMatchCandidate(
     .update(artistMatchCandidates)
     .set({ resolution, resolvedAt: new Date() })
     .where(and(eq(artistMatchCandidates.id, id), isNull(artistMatchCandidates.resolvedAt)));
+}
+
+/**
+ * Which artist survives a merge, and which is destroyed.
+ *
+ * **More records wins, and the MusicBrainz id follows.** The two are not rivals:
+ * an MBID is a COLUMN and can move, while a record graph — eleven records, their
+ * want-list history, journal entries and images — cannot be moved cheaply. So
+ * the row the user has been collecting survives and the identity is carried onto
+ * it. Adam's case (eleven records and no MBID against zero records and an MBID)
+ * ends with one artist, eleven records, and the MBID.
+ *
+ * Ties break on `created_at`: deterministic, and the older row is the one the
+ * user has been living with.
+ */
+export async function candidatePair(
+  candidateId: string,
+): Promise<{ survivorId: string; loserId: string } | undefined> {
+  const db = getDb();
+
+  const result = await db.execute<{
+    a_id: string;
+    b_id: string;
+    a_records: number;
+    b_records: number;
+    a_created: Date;
+    b_created: Date;
+  }>(sql`
+    SELECT
+      a.id AS a_id, b.id AS b_id,
+      (SELECT COUNT(*)::int FROM records WHERE artist_id = a.id) AS a_records,
+      (SELECT COUNT(*)::int FROM records WHERE artist_id = b.id) AS b_records,
+      a.created_at AS a_created, b.created_at AS b_created
+    FROM artist_match_candidates c
+    JOIN artists a ON a.id = c.artist_id
+    JOIN artists b ON b.id = c.candidate_artist_id
+    WHERE c.id = ${candidateId}
+  `);
+
+  const row = result.rows[0];
+  if (row === undefined) return undefined;
+
+  const aWins =
+    Number(row.a_records) !== Number(row.b_records)
+      ? Number(row.a_records) > Number(row.b_records)
+      : new Date(row.a_created).getTime() <= new Date(row.b_created).getTime();
+
+  return aWins
+    ? { survivorId: row.a_id, loserId: row.b_id }
+    : { survivorId: row.b_id, loserId: row.a_id };
 }

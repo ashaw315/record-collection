@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { badRequest, invalidJson, validationError } from '@/lib/api/errors';
+import { badRequest, invalidJson, notFound, validationError } from '@/lib/api/errors';
 import { withErrorHandling } from '@/lib/api/handler';
 import {
+  candidatePair,
   resolveMatchCandidate,
   type MatchResolution,
 } from '@/lib/db/queries/artist-match-candidates';
+import { mergeArtists } from '@/lib/db/queries/merge-artists';
 
 /**
  * SPEC.md §4.3 — answering one possible-duplicate pair.
@@ -42,6 +44,39 @@ export const PATCH = withErrorHandling(
 
     const parsed = bodySchema.safeParse(body);
     if (!parsed.success) return validationError(parsed.error);
+
+    /**
+     * **"Same artist" MERGES; it does not merely record an opinion.**
+     *
+     * A review that cleared while the data stayed split would be worse than one
+     * offering less — the user believes it is handled. `distinct` is a recorded
+     * judgement that can be revisited; `merged` destroys a row.
+     */
+    if (parsed.data.resolution === 'merged') {
+      const pair = await candidatePair(id);
+      if (pair === undefined) return notFound('That match candidate no longer exists.');
+
+      try {
+        await mergeArtists({ survivorId: pair.survivorId, loserId: pair.loserId });
+      } catch (error) {
+        // §4.3's two-MBID refusal reaches the user as a refusal, not a 500 —
+        // it is a rule, not a fault.
+        return NextResponse.json(
+          {
+            error: {
+              message:
+                error instanceof Error ? error.message : 'These artists could not be merged.',
+              code: 'MERGE_REFUSED',
+            },
+          },
+          { status: 409 },
+        );
+      }
+
+      // The merge deletes the candidate rows with the losing artist, so there
+      // is nothing left to resolve.
+      return NextResponse.json({ ok: true, merged: true });
+    }
 
     await resolveMatchCandidate(id, parsed.data.resolution as MatchResolution);
 

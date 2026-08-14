@@ -248,7 +248,16 @@ test('the duplicate-artist review shows enough to decide, and decline is as easy
   const review = page.getByTestId('match-review');
   await expect(review).toBeVisible({ timeout: 15_000 });
 
-  const row = review.getByTestId('match-candidate').first();
+  /**
+   * Scoped by NAME, never `.first()`.
+   *
+   * `.first()` grabs whichever pair renders first, which is this test's only
+   * when no other test has an open candidate — it passed or failed on worker
+   * ordering, and did fail once in a full run. Same defect class as the two
+   * recorded flakes: a test whose result depends on what else ran.
+   */
+  const row = review.getByTestId('match-candidate').filter({ hasText: name });
+  await expect(row).toHaveCount(1);
 
   // The context that actually separates them — never just the name.
   await expect(row, 'the MusicBrainz id').toContainText(`mbid-${suffix}`);
@@ -263,12 +272,15 @@ test('the duplicate-artist review shows enough to decide, and decline is as easy
 
   await distinct.click();
 
-  // Answered and gone — and it must STAY gone, which the query tests cover
-  // against a re-import.
-  await expect(review.getByTestId('match-candidate')).toHaveCount(0, { timeout: 15_000 });
+  // Answered and gone — asserted on THIS pair, since another test's candidate
+  // may legitimately be open at the same time.
+  await expect(row).toHaveCount(0, { timeout: 15_000 });
 
   await page.reload();
-  await expect(page.getByTestId('match-candidate'), 'still answered').toHaveCount(0);
+  await expect(
+    page.getByTestId('match-candidate').filter({ hasText: name }),
+    'still answered',
+  ).toHaveCount(0);
 });
 
 test('the review shows only UNANSWERED pairs', async ({ page }) => {
@@ -296,4 +308,59 @@ test('the review shows only UNANSWERED pairs', async ({ page }) => {
 
   await page.reload();
   await expect(page.getByTestId('match-candidate').filter({ hasText: name })).toHaveCount(0);
+});
+
+test('merging names what moves and what is destroyed, then does it', async ({ page }) => {
+  /**
+   * §4.3. The button used to record an opinion while the data stayed split —
+   * a review that clears while the records stay on two artists is worse than
+   * one offering less, because the user believes it is handled.
+   *
+   * Merging is irreversible, so the confirmation names what MOVES and what is
+   * DISCARDED, the way the delete confirmation does.
+   */
+  const suffix = `${Date.now()}-merge`;
+  const name = `Discharge ${suffix}`;
+  const { localId } = await seedMatchCandidate({
+    name,
+    importedMbid: `mbid-${suffix}`,
+    localRecordTitle: `Hear Nothing ${suffix}`,
+  });
+
+  await page.goto('/manage');
+
+  const row = page.getByTestId('match-candidate').filter({ hasText: name });
+  await expect(row).toHaveCount(1, { timeout: 15_000 });
+
+  // Merging is not one click — it names the consequences first.
+  await row.getByRole('button', { name: /same artist/i }).click();
+
+  const confirm = row.getByTestId('merge-confirm');
+  await expect(confirm).toBeVisible();
+
+  /**
+   * **The survivor is the row with the records**, so the IMPORTED row is the
+   * loser and it has nothing to move — the confirmation says so plainly rather
+   * than listing an empty inventory. That is the survivor rule visible in the
+   * copy: an MBID is a column and moves; a record graph is not and does not.
+   */
+  await expect(confirm, 'says the duplicate row goes').toContainText(/artist row will be deleted/i);
+  await expect(confirm, 'and that it is permanent').toContainText(/cannot be undone/i);
+
+  // Cancelling changes nothing.
+  await confirm.getByRole('button', { name: /cancel/i }).click();
+  await expect(row.getByTestId('merge-confirm')).toHaveCount(0);
+  await expect(row, 'still awaiting a decision').toHaveCount(1);
+
+  await row.getByRole('button', { name: /same artist/i }).click();
+  await row.getByTestId('merge-confirm').getByRole('button', { name: /merge them/i }).click();
+
+  await expect(row, 'the pair is gone from the review').toHaveCount(0, { timeout: 15_000 });
+
+  // **The data actually merged**, which is the part the old button only claimed.
+  const remaining = await page.request.get(`/api/artists?limit=200`);
+  const body = await remaining.json();
+  const named = (body.data as Array<{ id: string; name: string }>).filter((a) => a.name === name);
+  expect(named, 'one artist survives, not two').toHaveLength(1);
+  expect(named[0].id, 'the one holding the records').toBe(localId);
 });
