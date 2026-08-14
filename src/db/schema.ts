@@ -423,6 +423,50 @@ export const recordTags = pgTable(
 );
 
 /**
+ * §4.3 — a possible duplicate artist, recorded rather than asked about
+ * mid-import.
+ *
+ * **A table, not a column on `artists`, for two reasons the spec states.** A
+ * column holds ONE candidate and an imported name may match two hand-entered
+ * rows — a column would silently drop one. And the decision must persist:
+ * "these are distinct" has to be remembered or every re-import asks again,
+ * whereas a column would be nulled on resolution, losing the fact that it was
+ * ever answered.
+ */
+export const artistMatchCandidates = pgTable(
+  'artist_match_candidates',
+  {
+    id,
+    /** The row the import just created. */
+    artistId: uuid('artist_id')
+      .notNull()
+      .references(() => artists.id, { onDelete: 'cascade' }),
+    /** The existing local row it might be the same as. */
+    candidateArtistId: uuid('candidate_artist_id')
+      .notNull()
+      .references(() => artists.id, { onDelete: 'cascade' }),
+    reason: text('reason').notNull(),
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    /** `merged` | `distinct`, once the user has decided. */
+    resolution: text('resolution'),
+    ...timestamps,
+  },
+  (t) => [
+    // §4.3: "so a re-import raises nothing new." NULLS NOT DISTINCT for the
+    // reason unit 3 established — without it the clause does not fire and each
+    // pass adds a duplicate silently.
+    unique('artist_match_candidates_pair_reason_key')
+      .on(t.artistId, t.candidateArtistId, t.reason)
+      .nullsNotDistinct(),
+    index('artist_match_candidates_candidate_artist_id_idx').on(t.candidateArtistId),
+    check(
+      'artist_match_candidates_no_self_match',
+      sql`${t.artistId} <> ${t.candidateArtistId}`,
+    ),
+  ],
+);
+
+/**
  * §4.3 — a person's membership of a group, imported from MusicBrainz.
  *
  * **A fact with a source, deliberately not `artist_influences`.** MusicBrainz

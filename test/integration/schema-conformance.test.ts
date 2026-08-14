@@ -68,6 +68,11 @@ describe('§4 conformance — cascade directions', () => {
       'artist_genres.genre_id -> genres: NO ACTION',
       'artist_influences.source_artist_id -> artists: CASCADE',
       'artist_influences.target_artist_id -> artists: CASCADE',
+      // §4.3's `artist_match_candidates`, added at step 11 unit 5. Both FKs
+      // point at `artists` and cascade: a candidate naming a deleted artist is
+      // meaningless, and NO ACTION would block artist deletion entirely.
+      'artist_match_candidates.artist_id -> artists: CASCADE',
+      'artist_match_candidates.candidate_artist_id -> artists: CASCADE',
       // §4.3's `artist_memberships`, added at step 11. Both FKs point at
       // `artists` as owner and cascade for the same reason the influence edges
       // do: a membership edge to a deleted artist is meaningless, and NO ACTION

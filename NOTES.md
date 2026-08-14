@@ -4519,3 +4519,59 @@ collected from real use, not constructed.
 - **`ArtistInput` did not carry `musicbrainzId`.** Caught by the compiler rather
   than by a silent drop, which is the argument for the write going through the
   typed query layer instead of raw SQL.
+
+## RULE: a field holding what is really a list
+
+Three instances now, and the tell is identical each time: **the singular case is
+the common one, so the plural only surfaces with real data.** Every fixture, every
+manual test and usually the first month of use shows exactly one — and the design
+that holds one looks correct until it silently drops the second.
+
+| Instance | The singular assumption | What the plural was |
+|---|---|---|
+| Version-table ownership badge | one badge per row says something | every row carried the same badge; the signal was the one row that differed |
+| `artist_match_candidates` | a column on `artists` for "possible match" | a name can match TWO hand-entered rows |
+| `resolveArtist` return | one `candidateId` | same: two local Discharges, both MBID-less |
+
+The failure is always the same shape and always silent: no error, no warning, the
+extra values simply do not exist downstream. Nothing distinguishes "there was
+one" from "there were three and we kept one" once the data is written.
+
+**The check, before choosing a scalar:** ask what makes this value unique — a
+constraint, or a coincidence of the current data? A name is not unique (§4.1). A
+row can have several matches. An ownership tier applies to many rows at once. If
+the answer is "nothing enforces it", the field is a list and the scalar is a
+truncation waiting for a second row.
+
+Related but distinct from the absent-versus-unknown family: those confuse "no
+value" with "unknown value". This confuses "one value" with "the first of
+several", and it is harder to notice because the data looks complete.
+
+## Step 11 unit 5 — the duplicate-artist review
+
+- **"Distinct" is durable, not just available.** The query filters on
+  `resolved_at` rather than on `resolution`, so a pair answered "different
+  artists" is as permanently closed as one answered "same artist". A mutation
+  filtering on `resolution != 'merged'` — which looks equivalent — reopens every
+  declined pair on the next import and fails 2 tests.
+
+  That mutation is the whole unit in miniature: if declining did not persist,
+  the only way to permanently silence a pair would be to MERGE it, and the
+  review would become a merge button with extra steps. The dangerous outcome
+  arrived at through the UI rather than through the code.
+
+- **The review cannot use names as evidence, by construction.** A pair is a
+  candidate BECAUSE the names are identical. The screen shows record count
+  first (an artist with eleven records is the one being collected; a freshly
+  imported row with none is new), then formed year, country and MBID. A
+  mutation returning names without record counts fails.
+
+- **An E2E "the panel is absent" test was order-dependent.** It asserted
+  `match-review` had count 0, which only held if no other test had seeded a
+  candidate — it passed or failed on worker ordering. Rewritten to seed its own
+  pair and assert THAT pair leaves the review once answered. Same defect class
+  as the flake findings above: a test whose result depends on what else ran.
+
+- **The FK conformance test caught the addition again**, as it did in unit 3.
+  Third time it has earned its exhaustive-list design. Both new FKs cascade;
+  recorded with the reasoning rather than appended silently.

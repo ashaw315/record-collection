@@ -165,3 +165,43 @@ export async function seedDiscogsCacheAs(
 
   return discogsReleaseId;
 }
+
+/**
+ * Two same-named artists and an open match candidate between them.
+ *
+ * Seeded directly because the import walk that produces these is unit 6 — the
+ * review surface is testable without it, and waiting would leave the UI
+ * unverified for a whole unit.
+ */
+export async function seedMatchCandidate(options: {
+  name: string;
+  importedMbid: string;
+  localRecordTitle?: string;
+}): Promise<{ importedId: string; localId: string }> {
+  const db = getTestDb();
+
+  const imported = await db.execute<{ id: string }>(
+    sql`INSERT INTO artists (name, musicbrainz_id, origin_country, formed_year)
+        VALUES (${options.name}, ${options.importedMbid}, 'GB', 1977)
+        RETURNING id`,
+  );
+  const local = await db.execute<{ id: string }>(
+    sql`INSERT INTO artists (name) VALUES (${options.name}) RETURNING id`,
+  );
+
+  const importedId = imported.rows[0].id;
+  const localId = local.rows[0].id;
+
+  if (options.localRecordTitle !== undefined) {
+    await db.execute(
+      sql`INSERT INTO records (title, artist_id) VALUES (${options.localRecordTitle}, ${localId})`,
+    );
+  }
+
+  await db.execute(
+    sql`INSERT INTO artist_match_candidates (artist_id, candidate_artist_id, reason)
+        VALUES (${importedId}, ${localId}, 'name_match_no_mbid')`,
+  );
+
+  return { importedId, localId };
+}

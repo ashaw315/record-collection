@@ -2,6 +2,8 @@ import { AppHeader } from '@/components/AppHeader';
 import { ManageClient } from './ManageClient';
 import type { Row } from './ResourceTable';
 import { listArtists } from '@/lib/db/queries/artists';
+import { listOpenMatchCandidates } from '@/lib/db/queries/artist-match-candidates';
+import { MatchReview } from './MatchReview';
 import { listGenres } from '@/lib/db/queries/genres';
 import { listLabels } from '@/lib/db/queries/labels';
 import { listFormats } from '@/lib/db/queries/formats';
@@ -51,13 +53,15 @@ export const dynamic = 'force-dynamic';
 const PAGE = { limit: 200, offset: 0 as Offset };
 
 export default async function ManagePage() {
-  const [artists, genres, labels, formats, stores, tags] = await Promise.all([
+  const [artists, genres, labels, formats, stores, tags, matchCandidates] = await Promise.all([
     listArtists(PAGE),
     listGenres(PAGE),
     listLabels(PAGE),
     listFormats(PAGE),
     listStores(PAGE),
     listTags(PAGE),
+    // §4.3: surfaced here rather than asked during the import walk.
+    listOpenMatchCandidates(),
   ]);
 
   const rowsByResource: Record<string, Row[]> = {
@@ -72,6 +76,9 @@ export default async function ManagePage() {
   return (
     <>
       <AppHeader />
+      <div className="mx-auto w-full max-w-5xl px-3 pt-4">
+        <MatchReview candidates={matchCandidates} />
+      </div>
       <ManageClient rowsByResource={rowsByResource} />
     </>
   );

@@ -64,6 +64,13 @@
       "when": 1786673920358,
       "tag": "0008_artist_name_not_unique",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1786676530250,
+      "tag": "0009_artist_match_candidates",
+      "breakpoints": true
     }
   ]
 }

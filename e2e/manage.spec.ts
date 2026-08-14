@@ -1,4 +1,5 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import { seedMatchCandidate } from './seed';
 
 /**
  * SPEC.md §10 `/manage`. These cover what only exists in a browser: inline
@@ -219,4 +220,80 @@ test('the resource rail is reachable on a narrow viewport', async ({ page }) => 
   await genres.click();
 
   await expect(page.getByRole('region', { name: 'Genres' })).toBeVisible();
+});
+
+test('the duplicate-artist review shows enough to decide, and decline is as easy as merge', async ({
+  page,
+}) => {
+  /**
+   * SPEC.md §4.3's review. Two properties, and they are the unit:
+   *
+   * 1. **Names cannot be the evidence.** The pair is a candidate BECAUSE the
+   *    names are identical, so a review showing two names shows nothing.
+   * 2. **"Distinct" must be as easy as "merge".** A wrong merge is invisible
+   *    and self-reinforcing; a wrong decline is visible and cheap. If declining
+   *    took more clicks the review would become a merge button with extra
+   *    steps.
+   */
+  const suffix = `${Date.now()}`;
+  const name = `Discharge ${suffix}`;
+  await seedMatchCandidate({
+    name,
+    importedMbid: `mbid-${suffix}`,
+    localRecordTitle: `Hear Nothing ${suffix}`,
+  });
+
+  await page.goto('/manage');
+
+  const review = page.getByTestId('match-review');
+  await expect(review).toBeVisible({ timeout: 15_000 });
+
+  const row = review.getByTestId('match-candidate').first();
+
+  // The context that actually separates them — never just the name.
+  await expect(row, 'the MusicBrainz id').toContainText(`mbid-${suffix}`);
+  await expect(row, 'the record count on the local side').toContainText(/1 record/);
+  await expect(row, 'and where it is from').toContainText('GB');
+
+  // Both answers present, both one click.
+  const merge = row.getByRole('button', { name: /same artist/i });
+  const distinct = row.getByRole('button', { name: /different artists/i });
+  await expect(merge).toBeVisible();
+  await expect(distinct).toBeVisible();
+
+  await distinct.click();
+
+  // Answered and gone — and it must STAY gone, which the query tests cover
+  // against a re-import.
+  await expect(review.getByTestId('match-candidate')).toHaveCount(0, { timeout: 15_000 });
+
+  await page.reload();
+  await expect(page.getByTestId('match-candidate'), 'still answered').toHaveCount(0);
+});
+
+test('the review shows only UNANSWERED pairs', async ({ page }) => {
+  /**
+   * A permanently visible panel trains the user to ignore the place warnings
+   * appear, so an answered pair must leave no trace on this screen.
+   *
+   * **Asserted on this pair rather than on the panel being absent.** The
+   * earlier version checked `match-review` had count 0, which only held when
+   * no other test had seeded a candidate — it passed or failed on worker
+   * ordering, which NOTES already records as its own defect class.
+   */
+  const suffix = `${Date.now()}-answered`;
+  const name = `Amebix ${suffix}`;
+  await seedMatchCandidate({ name, importedMbid: `mbid-${suffix}` });
+
+  await page.goto('/manage');
+
+  const mine = page.getByTestId('match-candidate').filter({ hasText: name });
+  await expect(mine).toHaveCount(1, { timeout: 15_000 });
+
+  await mine.getByRole('button', { name: /different artists/i }).click();
+
+  await expect(mine, 'answered pairs leave the review').toHaveCount(0, { timeout: 15_000 });
+
+  await page.reload();
+  await expect(page.getByTestId('match-candidate').filter({ hasText: name })).toHaveCount(0);
 });
