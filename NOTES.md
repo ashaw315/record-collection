@@ -820,6 +820,24 @@ form the records work had not shown — see the masking entry under Open.
   is the defect and the assertion is decorative regardless of how it is written.
   Noticed across steps 4–5; stated as a rule during the step 5 remediation.
 
+  **TERMINAL CASE: sometimes no fixture can discriminate, and the honest move is
+  to say so.** "The fix is always the same shape" above is not quite true — it
+  assumes an inverting fixture exists. For some properties none does, because
+  the query's own contract forbids the rows that would invert it.
+
+  `findArtistsNamed` (step 11 unit 4a) is the instance. It matches names
+  EXACTLY, so every row it can return shares one name — which makes `ORDER BY
+  created_at`, `ORDER BY name` and no ordering at all mutually indistinguishable
+  in its output. Two mutations confirmed it: swapping to a name sort and
+  deleting the clause both pass. There is no seed data that separates them,
+  because any row that would separate them is a row the query does not return.
+
+  When that happens: assert the property that IS observable (there, that the
+  first row is the earliest by `created_at`), and state in the test's own
+  comment that it does not prove the mechanism. A test that silently claims
+  more than it constrains is the thing this whole rule exists to prevent, and
+  that failure does not stop being a failure because the gap is unavoidable.
+
   **THE STING, and the reason this class keeps recurring: a fixture drawn from
   TYPICAL data tests the typical path — which is the one least likely to be
   wrong.**
@@ -4459,3 +4477,45 @@ collected from real use, not constructed.
   `findArtistByMusicbrainzId(\'\')` returns undefined against a table where
   nobody holds `\'\'` (the query finds nothing either way — now a row holds one),
   and the ordering case above.
+
+## Step 11 unit 4b — artist resolution
+
+- **RULE: when the failure is silent and permanent, test the SECOND operation.**
+  A first import against an empty table succeeds under almost any rule — match
+  on name, match on nothing, create unconditionally all pass. Only the second
+  import of a DIFFERENT MusicBrainz artist sharing a name can tell those apart.
+
+  The asymmetry is what makes it worth stating: attaching an MBID to the wrong
+  local artist means every LATER import matches the id that was attached in
+  error, so the mistake stops presenting as a name collision and starts
+  presenting as settled fact. Nothing throws at any point.
+
+  Mutation M1 — claiming a name-matched row instead of creating a new one, the
+  silent merge itself — fails 3 tests, all of them second-import tests.
+
+- **Four cases, and only one of them is ambiguous.** The distinction that took
+  the most care:
+    MBID matches             -> that row. The id identifies an artist.
+    name matches, no MBID    -> AMBIGUOUS. Create, report the candidate.
+    name matches, other MBID -> a KNOWN DIFFERENT artist, not a candidate at
+                                all. MusicBrainz has already answered the
+                                question a review would ask, and offering it
+                                for merge invites the exact mistake.
+    nothing matches          -> create.
+
+  The third is the one an implementation would most easily collapse into the
+  second. Mutation M2 does exactly that and fails.
+
+- **The resolver REPORTS candidates rather than persisting them**, because unit
+  5 owns the table. An array, not a single id: a name can match two hand-entered
+  rows and one field would silently drop one — the version-table badge bug in a
+  new place, where a field held what was really a list. Mutation M3 confirms it.
+
+- **A resolver that created null-MBID rows would generate its own future
+  ambiguity** — the row would be indistinguishable from a hand-entered one, and
+  the next import would find it by name and face the same question. Refused at
+  the entry point instead.
+
+- **`ArtistInput` did not carry `musicbrainzId`.** Caught by the compiler rather
+  than by a silent drop, which is the argument for the write going through the
+  typed query layer instead of raw SQL.

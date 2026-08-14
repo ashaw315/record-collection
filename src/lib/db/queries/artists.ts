@@ -152,6 +152,12 @@ export type ArtistInput = {
   originCountry?: string | null;
   notes?: string | null;
   discogsArtistId?: number | null;
+  /**
+   * §4.1's second find-or-create key. Optional because the API's own create
+   * path does not set it — only the MusicBrainz import does, via
+   * `resolveArtist`.
+   */
+  musicbrainzId?: string | null;
 };
 
 export async function createArtist(input: ArtistInput): Promise<Artist> {
