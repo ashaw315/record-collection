@@ -1,7 +1,9 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { sql } from 'drizzle-orm';
 import { getTestDb, truncateAll, closeTestDb } from '../helpers/db';
-import { artists } from '@/db/schema';
-import { findArtistByMusicbrainzId, findArtistsNamed } from '@/lib/db/queries/artists';
+import { artists, records } from '@/db/schema';
+import { findArtistByMusicbrainzId, findArtistsNamed, listArtists } from '@/lib/db/queries/artists';
+import type { Offset } from '@/lib/api/query-params';
 
 /**
  * SPEC.md §4.1 as amended — **a name no longer identifies an artist.**
@@ -223,5 +225,93 @@ describe('findArtistsNamed — every artist with that name', () => {
     ]);
 
     expect(await findArtistsNamed('Discharge')).toHaveLength(1);
+  });
+});
+
+describe('collected artists — the /manage default (QA, step 11)', () => {
+  /**
+   * **Two lineup imports took Adam's artist list from 6 to 71.** Session
+   * players, side projects and tribute acts now sit between the artists he
+   * actually collects.
+   *
+   * The list mixes two populations: artists with records, which the user
+   * MANAGES, and artists that exist only as graph nodes, which the user will
+   * never edit. Measured on the real database: 71 artists, 4 with a record or
+   * want-list entry.
+   */
+  const PAGE = { limit: 200, offset: 0 as Offset };
+
+  async function seedPopulations() {
+    const [collected] = await db.insert(artists).values({ name: 'Dire Straits' }).returning();
+    const [wanted] = await db.insert(artists).values({ name: 'Discharge' }).returning();
+    await db.insert(artists).values({ name: 'Alan Clark', musicbrainzId: 'mb-alan' });
+    await db.insert(artists).values({ name: 'Dire Straits Legacy', musicbrainzId: 'mb-legacy' });
+
+    await db.insert(records).values({ title: 'Brothers in Arms', artistId: collected.id });
+    await db.execute(
+      sql`INSERT INTO want_list (title, artist_id) VALUES ('Hear Nothing', ${wanted.id})`,
+    );
+
+    return { collected, wanted };
+  }
+
+  it('returns only artists with a record or want-list entry when asked', async () => {
+    const { collected, wanted } = await seedPopulations();
+
+    const listed = await listArtists({ ...PAGE, collectedOnly: true });
+
+    expect(listed.rows.map((row) => row.id).sort()).toEqual([collected.id, wanted.id].sort());
+  });
+
+  it('counts BOTH populations, so the hidden ones are not a surprise', async () => {
+    /**
+     * "6 artists · 74 more from lineup imports". A filtered list that reported
+     * only its own size would make 67 artists vanish with no trace — the
+     * absent-versus-unknown failure on a screen the user manages data from.
+     */
+    await seedPopulations();
+
+    const listed = await listArtists({ ...PAGE, collectedOnly: true });
+
+    expect(listed.total, 'the filtered count').toBe(2);
+    expect(listed.totalAll, 'and the whole population').toBe(4);
+  });
+
+  it('returns everything when the filter is off', async () => {
+    await seedPopulations();
+
+    const listed = await listArtists({ ...PAGE, collectedOnly: false });
+
+    expect(listed.rows).toHaveLength(4);
+    expect(listed.total).toBe(4);
+    expect(listed.totalAll).toBe(4);
+  });
+
+  it('defaults to everything, so no existing caller changes behaviour', async () => {
+    // The filter is opt-in: /manage asks for it, and nothing else does.
+    await seedPopulations();
+
+    expect((await listArtists(PAGE)).rows).toHaveLength(4);
+  });
+
+  it('counts an artist once when it has both a record and a want-list entry', async () => {
+    /**
+     * The join hazard. A naive INNER JOIN across both tables would list an
+     * artist twice and inflate the count — and the collection screen's own
+     * join-sort bug in step 5 was exactly this shape.
+     */
+    const [artist] = await db.insert(artists).values({ name: 'Hot Tuna' }).returning();
+    await db.insert(records).values([
+      { title: 'Burgers', artistId: artist.id },
+      { title: 'First Pull Up', artistId: artist.id },
+    ]);
+    await db.execute(
+      sql`INSERT INTO want_list (title, artist_id) VALUES ('Yellow Fever', ${artist.id})`,
+    );
+
+    const listed = await listArtists({ ...PAGE, collectedOnly: true });
+
+    expect(listed.rows).toHaveLength(1);
+    expect(listed.total).toBe(1);
   });
 });

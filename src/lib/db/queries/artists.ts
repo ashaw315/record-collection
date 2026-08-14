@@ -1,10 +1,10 @@
 import 'server-only';
-import { and, asc, count, eq, ne } from 'drizzle-orm';
+import { and, asc, count, eq, ne, sql } from 'drizzle-orm';
 import { isForeignKeyViolation } from '@/lib/api/errors';
 import { countReferences } from './referrers';
 import { orderFor } from '@/lib/db/order';
 import { getDb } from '@/db/client';
-import { artists } from '@/db/schema';
+import { artists, records, wantList } from '@/db/schema';
 import type { Offset, SortDirection } from '@/lib/api/query-params';
 import type { DeleteOutcome } from './tags';
 
@@ -51,26 +51,61 @@ const sortColumns = {
   createdAt: artists.createdAt,
 } as const;
 
+/**
+ * Artists the user actually manages: those with at least one record or
+ * want-list entry.
+ *
+ * **`EXISTS`, not a join.** An artist with three records and a want-list entry
+ * would appear four times through an INNER JOIN, inflating both the list and the
+ * count — the same duplication that produced step 5's join-sort defect.
+ */
+const isCollected = sql`(
+  EXISTS (SELECT 1 FROM ${records} WHERE ${records.artistId} = ${artists.id})
+  OR EXISTS (SELECT 1 FROM ${wantList} WHERE ${wantList.artistId} = ${artists.id})
+)`;
+
 export async function listArtists(options: {
   limit: number;
   offset: Offset;
   sort?: { field: ArtistSortField; direction: SortDirection };
-}): Promise<{ rows: Artist[]; total: number }> {
+  /**
+   * §10's `/manage` default, added after QA: two lineup walks took the artist
+   * list from 6 to 71, so session players and tribute acts sat between the
+   * artists being collected.
+   *
+   * Opt-in, so no existing caller changes behaviour.
+   */
+  collectedOnly?: boolean;
+}): Promise<{ rows: Artist[]; total: number; totalAll: number }> {
   const db = getDb();
 
   const sortColumn = options.sort === undefined ? artists.name : sortColumns[options.sort.field];
   const direction = options.sort?.direction ?? 'asc';
+  const where = options.collectedOnly === true ? isCollected : undefined;
 
   const rows = await db
     .select(columns)
     .from(artists)
+    .where(where)
     .orderBy(...orderFor(sortColumn, direction, artists.id))
     .limit(options.limit)
     .offset(options.offset);
 
-  const [totals] = await db.select({ value: count() }).from(artists);
+  const [totals] = await db.select({ value: count() }).from(artists).where(where);
 
-  return { rows, total: totals?.value ?? 0 };
+  /**
+   * The WHOLE population, always. A filtered list reporting only its own size
+   * would make sixty-seven artists vanish without trace — absence presented as
+   * completeness, on a screen the user manages data from.
+   */
+  const [allTotals] =
+    where === undefined ? [totals] : await db.select({ value: count() }).from(artists);
+
+  return {
+    rows,
+    total: totals?.value ?? 0,
+    totalAll: allTotals?.value ?? 0,
+  };
 }
 
 export async function findArtistById(id: string): Promise<Artist | undefined> {

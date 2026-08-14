@@ -589,6 +589,56 @@ describe('PATCH /api/artists/:id', () => {
 });
 
 describe('DELETE /api/artists/:id', () => {
+  it('deletes a band member, whose memberships cascade with him', async () => {
+    /**
+     * **Step 11 made this reachable and nothing tested it.** A lineup walk
+     * creates a row per session player, tribute act and side project — 71
+     * artists from two imports against Adam's real collection — and most of
+     * them exist only as graph nodes he will want to remove.
+     *
+     * §7.4's in-use guard counts `records` and `want_list` ONLY. Memberships
+     * cascade (§4.3), so an artist who is merely in a band deletes cleanly.
+     * That is correct, and it is one line away from being wrong: adding
+     * `artist_memberships` to the referrer list would turn every session player
+     * into an undeletable row, with a 409 that names no record the user can
+     * find.
+     */
+    const person = await insertArtist('Alan Clark');
+    const band = await insertArtist('Dire Straits');
+    await db.execute(
+      sql`INSERT INTO artist_memberships (person_artist_id, group_artist_id)
+          VALUES (${person}, ${band})`,
+    );
+
+    const response = await deleteArtist(
+      request(`/api/artists/${person}`, { method: 'DELETE' }),
+      params(person),
+    );
+
+    expect(response.status, 'not a 409 — a membership is not a referrer').toBe(200);
+
+    const remaining = await db.execute<{ n: number }>(
+      sql`SELECT COUNT(*)::int AS n FROM artist_memberships`,
+    );
+    expect(remaining.rows[0].n, 'the edge went with the artist').toBe(0);
+  });
+
+  it('still refuses to delete an artist who has a RECORD', async () => {
+    // The other side of the same rule, so the test above cannot be satisfied by
+    // a guard that has stopped refusing anything at all.
+    const artist = await insertArtist('Dire Straits');
+    await db.execute(
+      sql`INSERT INTO records (title, artist_id) VALUES ('Brothers in Arms', ${artist})`,
+    );
+
+    const response = await deleteArtist(
+      request(`/api/artists/${artist}`, { method: 'DELETE' }),
+      params(artist),
+    );
+
+    expect(response.status).toBe(409);
+  });
+
   it('deletes an unreferenced artist', async () => {
     const id = await insertArtist('Discharge');
 

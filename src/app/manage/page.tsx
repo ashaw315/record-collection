@@ -52,9 +52,20 @@ export const dynamic = 'force-dynamic';
  */
 const PAGE = { limit: 200, offset: 0 as Offset };
 
-export default async function ManagePage() {
+export default async function ManagePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ artists?: string }>;
+}) {
+  /**
+   * The toggle lives in the URL rather than in client state: it survives a
+   * reload, it is linkable, and it needs no refetch — the page is a server
+   * component and simply queries differently.
+   */
+  const showAllArtists = (await searchParams).artists === 'all';
+
   const [artists, genres, labels, formats, stores, tags, matchCandidates] = await Promise.all([
-    listArtists(PAGE),
+    listArtists({ ...PAGE, collectedOnly: !showAllArtists }),
     listGenres(PAGE),
     listLabels(PAGE),
     listFormats(PAGE),
@@ -64,6 +75,12 @@ export default async function ManagePage() {
     listOpenMatchCandidates(),
   ]);
 
+  /**
+   * §10's `/manage`, narrowed after QA: two lineup walks took the artist list
+   * from 6 to 71, and the imported session players and tribute acts sat between
+   * the artists being collected. The default is what the user MANAGES; the
+   * count names what is hidden.
+   */
   const rowsByResource: Record<string, Row[]> = {
     artists: artists.rows as unknown as Row[],
     genres: genres.rows as unknown as Row[],
@@ -79,7 +96,14 @@ export default async function ManagePage() {
       <div className="mx-auto w-full max-w-5xl px-3 pt-4">
         <MatchReview candidates={matchCandidates} />
       </div>
-      <ManageClient rowsByResource={rowsByResource} />
+      <ManageClient
+        rowsByResource={rowsByResource}
+        artistCounts={{
+          shown: artists.total,
+          hidden: artists.totalAll - artists.total,
+          showingAll: showAllArtists,
+        }}
+      />
     </>
   );
 }

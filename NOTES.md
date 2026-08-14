@@ -4940,3 +4940,68 @@ that happened to fail.
   artist between them, which is the real shape: "Discharge" returns four
   same-named artists interleaved with "Amphetamine Discharge" and "Triple
   Discharge".
+
+## For step 12: tribute acts are noise, side projects are the feature
+
+Adam's distinction, and it should shape the graph's filtering rather than the
+walk's depth:
+
+**A side project is interesting because it might have records worth buying. A
+tribute act never does.** That is a difference the data can express, and it is a
+sharper rule than anything about graph distance.
+
+Measured after the first live walks — 2 lineup imports created 36 distinct
+groups and took the artist list from 6 to 71:
+
+| Artist | as_group | as_person | reached via |
+|---|---|---|---|
+| Dire Straits | 9 | 0 | requested directly |
+| Dire Straits Experience | 1 | 0 | Chris White's other bands |
+| Dire Straits Legacy | 1 | 0 | Alan Clark's other bands |
+| Mark Knopfler's Guitar Heroes | 2 | 0 | Knopfler + Fletcher |
+
+**A depth limit was considered and rejected.** All the noise arrives on the
+depth-2 hop — but so does the entire feature: §12 step 11 asks for "side-project
+relationships", and §4.3's `shared_member` edge exists only because of that hop.
+Cutting to depth 1 gives a member list and no graph. The noise is not depth, it
+is that 36 groups are equal in a flat list when a handful matter.
+
+**Tools available to step 12, none of which need the import to change:**
+
+- **MusicBrainz's own `tribute` relationship type** — `normalizeRelations`
+  already discards it, so a tribute act only appears here because its members
+  are real people who also played in the real band. The relation exists on
+  MusicBrainz and could be fetched to mark the group.
+- **Shared-member count as an edge weight** (§8.1's `shared_member`, whose
+  weight the spec still does not define). Dire Straits Experience shares ONE
+  member with Dire Straits; a genuine side project usually shares more, and a
+  tribute act's overlap is often a single hired player.
+- **Whether the group has records at all.** The strongest signal for "worth
+  buying" is the one the collection already answers.
+
+A group connected by one member who also plays in a tribute act looks identical
+at import time and quite different in a graph weighted by shared members. That
+is why this belongs in step 12 and not in the walk.
+
+## `openResource` navigates, so a caller cannot navigate first
+
+Found while making the /manage artist filter green. The two step 11 lineup tests
+both failed, and the first fix — changing their `page.goto('/manage')` to
+`?artists=all` — did nothing at all, because `openResource` does its OWN
+`page.goto('/manage')` and silently overwrote it. The second run failed
+identically to the first.
+
+**What gave it away was the page snapshot, not the stack.** The error context
+showed the string "more from lineup imports" — the summary variant that only
+renders when `showingAll` is FALSE. The param had not survived to the server
+component, which pointed at navigation rather than at the query or the filter.
+
+`openResource` now takes a `search` argument and owns the only `goto`. Worth
+knowing generally: **a helper that navigates makes every caller's own navigation
+dead code**, and it fails by silently showing the default page rather than by
+erroring — which reads as "the feature is broken" instead of "the URL was
+discarded".
+
+A related latent flake, fixed in passing: the progress test clicked the lineup
+button with no prior wait for the row to exist, unlike the picker test beside
+it. It passed only because the row happened to render fast enough.

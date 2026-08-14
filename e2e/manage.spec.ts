@@ -30,8 +30,10 @@ function genreRow(page: Page, name: string) {
   return page.getByRole('listitem').filter({ has: page.getByRole('button', { name: `Edit ${name}` }) });
 }
 
-async function openResource(page: Page, label: string) {
-  await page.goto('/manage');
+async function openResource(page: Page, label: string, search = '') {
+  // The goto lives HERE, so a caller must pass its query string through rather
+  // than navigating first — this helper would overwrite that navigation.
+  await page.goto(`/manage${search}`);
   await page.getByRole('button', { name: label, exact: true }).click();
   await expect(page.getByRole('region', { name: label })).toBeVisible();
 }
@@ -415,8 +417,10 @@ test('the lineup picker shows enough to choose between same-named artists', asyn
     });
   });
 
-  await page.goto('/manage');
-  await openResource(page, 'Artists');
+  // ?artists=all: this artist has no record, and the /manage default now lists
+  // only what you collect. A lineup walk is run ON an imported graph node, so
+  // the toggled view is where this flow actually lives.
+  await openResource(page, 'Artists', '?artists=all');
 
   const row = page.getByRole('row').filter({ hasText: name });
   await expect(row).toHaveCount(1, { timeout: 15_000 });
@@ -469,10 +473,12 @@ test('a lineup walk reports what it is doing, not just that it is busy', async (
     });
   });
 
-  await page.goto('/manage');
-  await openResource(page, 'Artists');
+  // ?artists=all: see the picker test above — this artist has no record, and
+  // the /manage default now lists only what you collect.
+  await openResource(page, 'Artists', '?artists=all');
 
   const row = page.getByRole('row').filter({ hasText: name });
+  await expect(row).toHaveCount(1, { timeout: 15_000 });
   await row.getByRole('button', { name: /lineup/i }).click();
 
   const progress = page.getByTestId('lineup-progress');
@@ -482,6 +488,53 @@ test('a lineup walk reports what it is doing, not just that it is busy', async (
   resolveWalk?.();
 
   await expect(page.getByTestId('lineup-result')).toContainText(/3 members/i, {
+    timeout: 15_000,
+  });
+});
+
+test('the artist list defaults to what you collect, and says what it is hiding', async ({
+  page,
+}) => {
+  /**
+   * QA after the first live lineup walks: two imports took the artist list from
+   * 6 to 71. Session players, side projects and tribute acts sat between the
+   * artists Adam actually collects.
+   *
+   * The list mixes two populations — artists with records, which the user
+   * MANAGES, and artists that exist only as graph nodes, which he will never
+   * edit. The default shows the first; the count names the second, so the
+   * hidden ones are not a surprise.
+   */
+  const suffix = `${Date.now()}`;
+  const collected = `Dire Straits ${suffix}`;
+  const sideman = `Alan Clark ${suffix}`;
+
+  const artist = await page.request.post('/api/artists', { data: { name: collected } });
+  const artistId = (await artist.json()).id;
+  await page.request.post('/api/artists', { data: { name: sideman } });
+  await page.request.post('/api/records', {
+    data: { title: `Brothers in Arms ${suffix}`, artistId },
+  });
+
+  await page.goto('/manage');
+  await openResource(page, 'Artists');
+
+  const rows = page.getByRole('row');
+  await expect(rows.filter({ hasText: collected }), 'the one with a record').toHaveCount(1, {
+    timeout: 15_000,
+  });
+  await expect(rows.filter({ hasText: sideman }), 'the imported sideman is hidden').toHaveCount(0);
+
+  // The hidden population is NAMED, not silently dropped.
+  const summary = page.getByTestId('artist-count-summary');
+  await expect(summary).toContainText(/more from lineup imports/i);
+
+  // A LINK, not a button: the toggle lives in the URL so it survives a reload
+  // and is linkable, and the page is a server component that simply queries
+  // differently.
+  await page.getByRole('link', { name: /show all/i }).click();
+
+  await expect(rows.filter({ hasText: sideman }), 'and reachable on request').toHaveCount(1, {
     timeout: 15_000,
   });
 });

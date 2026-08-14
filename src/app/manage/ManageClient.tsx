@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -253,7 +254,15 @@ function ResourcePanel({ resource, rows }: { resource: ResourceSpec; rows: Row[]
   );
 }
 
-export function ManageClient({ rowsByResource }: { rowsByResource: Record<string, Row[]> }) {
+export type ArtistCounts = { shown: number; hidden: number; showingAll: boolean };
+
+export function ManageClient({
+  rowsByResource,
+  artistCounts,
+}: {
+  rowsByResource: Record<string, Row[]>;
+  artistCounts: ArtistCounts;
+}) {
   const [activeKey, setActiveKey] = useState(RESOURCES[0].key);
   const resource = RESOURCES.find((entry) => entry.key === activeKey) as ResourceSpec;
 
@@ -291,9 +300,50 @@ export function ManageClient({ rowsByResource }: { rowsByResource: Record<string
           </ul>
         </nav>
 
-        {/* Keyed: a new resource is a new instance with fresh state. */}
-        <ResourcePanel key={resource.key} resource={resource} rows={rowsByResource[resource.key] ?? []} />
+        <div className="min-w-0 flex-1">
+          {resource.key === 'artists' && <ArtistCountSummary counts={artistCounts} />}
+
+          {/* Keyed: a new resource is a new instance with fresh state. */}
+          <ResourcePanel
+            key={resource.key}
+            resource={resource}
+            rows={rowsByResource[resource.key] ?? []}
+          />
+        </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * What the artist list is showing, and what it is not.
+ *
+ * **The hidden population is named rather than silently dropped.** Two lineup
+ * walks took Adam's artist list from 6 to 71 — session players, side projects
+ * and tribute acts — and a filtered list that reported only its own size would
+ * make sixty-seven artists vanish without trace.
+ */
+function ArtistCountSummary({ counts }: { counts: ArtistCounts }) {
+  if (counts.hidden === 0 && !counts.showingAll) return null;
+
+  return (
+    <p data-testid="artist-count-summary" className="mb-2 text-xs text-muted-foreground">
+      {counts.showingAll ? (
+        <>
+          Showing all {counts.shown} artists.{' '}
+          <Link href="/manage" className="underline underline-offset-2">
+            Show only what you collect
+          </Link>
+        </>
+      ) : (
+        <>
+          {counts.shown} artist{counts.shown === 1 ? '' : 's'} ·{' '}
+          {counts.hidden} more from lineup imports.{' '}
+          <Link href="/manage?artists=all" className="underline underline-offset-2">
+            Show all
+          </Link>
+        </>
+      )}
+    </p>
   );
 }
