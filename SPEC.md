@@ -238,6 +238,23 @@ These power the network graph. All are composite-PK, no separate `id`.
 
 `artist_influences` cascades on both FKs, since both point at `artists` as owner and an edge to a deleted artist is meaningless. A junction row is a *link*, not an entity — deleting a record must remove "this record is tagged punk" while leaving the genre itself untouched. This does not weaken §7.4: the reference row is protected by the NO ACTION FK on the owning table (`records.artist_id`, `records.label_id`, `records.pressing_id`, `genres.parent_genre_id`), which still produces a `409 IN_USE`. Without junction cascade, `DELETE /api/records/:id` (§5.2) would fail on an FK violation, so this is required, not optional.
 
+**`artist_memberships`** — a person's membership of a group, imported from MusicBrainz. A *fact with a source*, kept separate from `artist_influences`, which is the user's judgement.
+
+| Column | Type | Notes |
+|---|---|---|
+| person_artist_id | UUID NOT NULL REFERENCES artists(id) | the individual |
+| group_artist_id | UUID NOT NULL REFERENCES artists(id) | the band |
+| instrument | TEXT | nullable |
+| began_year | INTEGER | nullable |
+| ended_year | INTEGER | nullable |
+| musicbrainz_id | TEXT | the relation's MBID, nullable |
+
+PK is `(person_artist_id, group_artist_id, instrument)`; a person may join a group twice on different instruments. CHECK that person ≠ group.
+
+**Membership is never written to `artist_influences`.** MusicBrainz has no influence relationship — its artist-artist vocabulary is membership, collaboration, founder, rename, tribute and personal relations, and nothing represents "A influenced B". Mapping membership onto influence would fill a 1–5 `strength` with a number nobody measured, and §8.1's graph already treats `influence` and `member_of` as distinct link types with different weights. `artist_influences` stays what it is: edges the user asserts.
+
+**Shared membership is still a real connection and the graph draws it.** Two groups sharing a person — Discharge and Broken Bones — is evidence of a genuine link, derived from `artist_memberships` at query time rather than denormalized into an influence row. §8.1 gains a fourth link type, `shared_member`, weighted by the number of people in common. It is drawn differently from `influence` because it means something different: a fact about lineups, not a claim about sound.
+
 **`artist_influences`** — directed edge between artists
 | Column | Type | Notes |
 |---|---|---|
@@ -583,7 +600,7 @@ This applies to the versions list as much as to search. The drill-down is where 
   links: Array<{
     source: string;
     target: string;
-    type: "influence" | "member_of" | "genre_parent";
+    type: "influence" | "member_of" | "genre_parent" | "shared_member";
     weight: number;              // influence: artist_influences.strength (1-5).
                                  // member_of: count of records linking the pair.
                                  // genre_parent: always 1.
@@ -806,7 +823,9 @@ Mock the Discogs and Anthropic APIs in tests. Never hit live external APIs in CI
 8. Images upload. E2E #9.
 9. Journal entries, price history, stats screen.
 10. **Market data (§10a).** Discogs marketplace ranges on `/lookup`, the want list and record detail. No new dependency — the client, limiter and cache all exist — and it is the feature the app is carried into a shop for.
-11. **MusicBrainz import: seed `artist_influences`.** Band membership and side-project relationships, pulled automatically. Its own rate limiter and cache, roughly the shape of step 7's Discogs work.
+11. **MusicBrainz import: populate `artist_memberships`.** Band membership pulled automatically into its own table (§4.3) — *not* into `artist_influences`, since MusicBrainz has no influence relationship and inventing one would fabricate a strength nobody measured. Its own rate limiter and cache, roughly the shape of step 7's Discogs work, but stricter: **one request per second**, and a `User-Agent` carrying contact information, both required by MusicBrainz.
+
+    **On demand, per artist, never a bulk crawl.** `member of band` links a person to a group, so building one band's full lineup graph means walking band → person → that person's other bands: roughly 32 sequential requests for an artist like Discharge, about 35 seconds at the permitted rate. That is acceptable when the user asks about one artist and unacceptable as a background job over a whole collection. Fetch when asked, cache, and show progress.
 12. Graph endpoint + visualization. E2E #6.
 13. Shelf order. E2E #7.
 14. Suggestions — graph-based first, then LLM-assisted. E2E #8.

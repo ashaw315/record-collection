@@ -77,6 +77,23 @@ function pointsAtLocalDatabase(connectionString: string | undefined): boolean {
 }
 
 /**
+ * Whether this client would actually reach the network.
+ *
+ * **The guard fires at the request site, not at construction**, so an injected
+ * fake `fetch` is exempt while the real one is not. That distinction is what
+ * lets a client's own unit tests exercise its retry and rate-limit paths — they
+ * never touch a socket — while a code path that forgot to inject one is
+ * refused.
+ *
+ * Lives beside the guard rather than inside a client because every transport
+ * needs it, and a second copy is how two clients come to disagree about what
+ * counts as a live call.
+ */
+export function usesRealNetwork(candidate: typeof fetch): boolean {
+  return candidate === globalThis.fetch;
+}
+
+/**
  * Throws if a test is about to reach the network.
  *
  * Loudly, and naming the URL. Every §2-adjacent failure in this project has
@@ -103,11 +120,44 @@ export function assertNoLiveCall(url: string): void {
   throw new DiscogsError(
     `A test tried to reach ${safeHost(url)} (${url}). ` +
       'CLAUDE.md §2 forbids live external calls from tests — not even once. ' +
-      'Mock getDiscogsClient for this test, as the other Discogs suites do. ' +
+      `${mockAdvice(url)} ` +
       'A browser-level stub (page.route) does NOT cover server components, ' +
       'which is how this rule was broken in step 7.',
     { status: 502 },
   );
+}
+
+/**
+ * Which client to mock, by host.
+ *
+ * **The coverage was never host-specific and still is not** — this guard
+ * blocked musicbrainz.org before step 11 existed, which is the point of the
+ * comment above. What IS host-specific is the advice, and getting that wrong is
+ * its own failure: a message reading "Mock getDiscogsClient" on a MusicBrainz
+ * test names a module unrelated to the failure and sends the reader to the
+ * wrong file. A guard that fires correctly and then misdirects is worse than
+ * silence, because the reader trusts it.
+ *
+ * An unknown host falls back to generic advice rather than guessing. §12 adds
+ * the Anthropic API at step 14, and naming it after whichever client was
+ * written most recently is exactly the drift this avoids.
+ */
+const CLIENTS_BY_HOST: ReadonlyArray<{ match: string; advice: string }> = [
+  {
+    match: 'discogs.com',
+    advice: 'Mock getDiscogsClient for this test, as the other Discogs suites do.',
+  },
+  {
+    match: 'musicbrainz.org',
+    advice: 'Mock getMusicBrainzClient for this test, as the other MusicBrainz suites do.',
+  },
+];
+
+function mockAdvice(url: string): string {
+  const host = safeHost(url);
+  const known = CLIENTS_BY_HOST.find((client) => host.endsWith(client.match));
+
+  return known?.advice ?? 'Mock the client this code path uses rather than letting it reach the network.';
 }
 
 /** A malformed URL must not turn the guard's own error into a different one. */

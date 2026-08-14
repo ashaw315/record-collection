@@ -1,6 +1,6 @@
 import { getEnv } from '@/env';
 import { TokenBucket } from './limiter';
-import { assertNoLiveCall } from './no-live-calls';
+import { assertNoLiveCall, usesRealNetwork } from './no-live-calls';
 import { safeImageUrl } from './fields';
 import {
   MAX_IMAGE_BYTES,
@@ -148,10 +148,6 @@ let shared: DiscogsClient | undefined;
  * not reach Discogs, so the guard must not fire on it — that would break every
  * transport test in this suite. `globalThis.fetch` is the one that does.
  */
-function usesRealNetwork(candidate: typeof fetch): boolean {
-  return candidate === globalThis.fetch;
-}
-
 export function getDiscogsClient(): DiscogsClient {
   if (shared === undefined) {
     shared = createDiscogsClient({

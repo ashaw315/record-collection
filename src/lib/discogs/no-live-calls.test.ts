@@ -177,4 +177,58 @@ describe('the guard itself', () => {
       /api\.anthropic\.com/,
     );
   });
+
+  it('tells a MusicBrainz caller to mock the MUSICBRAINZ client', () => {
+    /**
+     * The guard was already host-agnostic — it blocked musicbrainz.org before
+     * step 11 existed, which is what its "not host-specific" comment promised.
+     * What was wrong was the ADVICE: every message said "Mock
+     * getDiscogsClient", which for a MusicBrainz test names the wrong module
+     * and sends the reader to a file that has nothing to do with their failure.
+     *
+     * A guard that fires correctly and then misdirects is worse than one that
+     * says nothing, because the reader trusts it.
+     */
+    let message = 'NO THROW';
+    try {
+      assertNoLiveCall('https://musicbrainz.org/ws/2/artist/0c9bfbdc?inc=artist-rels');
+    } catch (error) {
+      message = (error as Error).message;
+    }
+
+    expect(message, 'the rule still fires').toMatch(/forbids live external calls/i);
+    expect(message, 'and names the right client').toMatch(/getMusicBrainzClient/);
+    expect(message, 'not the Discogs one').not.toMatch(/getDiscogsClient/);
+  });
+
+  it('still names the Discogs client for a Discogs URL', () => {
+    // The existing advice must survive being made host-aware.
+    let message = 'NO THROW';
+    try {
+      assertNoLiveCall('https://api.discogs.com/database/search?q=x');
+    } catch (error) {
+      message = (error as Error).message;
+    }
+
+    expect(message).toMatch(/getDiscogsClient/);
+    expect(message).not.toMatch(/getMusicBrainzClient/);
+  });
+
+  it('falls back to generic advice for a host it does not know', () => {
+    /**
+     * §12 adds the Anthropic API at step 14. An unknown host must still be
+     * refused with a usable message rather than being named after whichever
+     * client was written most recently.
+     */
+    let message = 'NO THROW';
+    try {
+      assertNoLiveCall('https://api.anthropic.com/v1/messages');
+    } catch (error) {
+      message = (error as Error).message;
+    }
+
+    expect(message).toMatch(/forbids live external calls/i);
+    expect(message).toMatch(/api\.anthropic\.com/);
+    expect(message, 'no misleading client name').not.toMatch(/getDiscogsClient|getMusicBrainzClient/);
+  });
 });

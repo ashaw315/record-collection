@@ -4297,3 +4297,42 @@ do not tune it against Carpenters (one case, and trimming to fit it would be a
 second guess agreeing with the first), and do not cite it as tested. What would
 settle it is a handful of masters with known answers in both directions —
 collected from real use, not constructed.
+
+## Step 11 unit 1 — MusicBrainz transport
+
+- **The no-live-calls guard already covered MusicBrainz.** Probed before
+  changing anything: `assertNoLiveCall('https://musicbrainz.org/...')` threw
+  correctly, because the guard was written host-agnostic and its comment said so
+  ("Not host-specific: the rule covers external calls generally"). The step-7
+  design held for a host that did not exist when it was written.
+
+  What WAS wrong was the advice. Every message said "Mock getDiscogsClient",
+  which on a MusicBrainz failure names an unrelated module and sends the reader
+  to the wrong file. **A guard that fires correctly and then misdirects is worse
+  than one that says nothing, because the reader trusts it.** Now host-aware,
+  with a generic fallback so step 14's Anthropic client is not named after
+  whichever client was written most recently.
+
+- **`usesRealNetwork` moved out of the Discogs client and beside the guard.**
+  Both transports need it — the guard fires at the request site so an injected
+  fake is exempt while the real `fetch` is not, which is what makes a client's
+  own retry tests writable. A second copy is how two clients come to disagree
+  about what counts as a live call. Mutation M5 (removing the guard call
+  entirely from the MusicBrainz client) fails 2 tests, so the exemption is not
+  an escape hatch.
+
+- **MusicBrainz differs from Discogs in ways worth encoding, not sharing.**
+  Verified against their live documentation rather than recalled: 1 req/sec per
+  source IP (not 60/min), enforced ALL-OR-NOTHING so exceeding it fails rather
+  than slows, breach code **503** rather than 429, and a `User-Agent` carrying
+  contact information required as a term of use. A client parameterised over
+  both would be a conditional at every branch; the token bucket is shared
+  because it is genuinely generic.
+
+- **FLAKE (unrelated, recorded not fixed):** `record-form.spec.ts` "a matrix
+  value survives an edit that does not touch it" failed once in a full run and
+  passed on retry, then passed 3/3 in isolation. It exercises no Discogs or
+  MusicBrainz path — a form-save navigation with a 15s URL wait. Recorded per
+  CLAUDE.md §4 rather than chased mid-unit. Note that 3/3 in isolation is NOT
+  evidence it is clean; the worker-saturation finding above is exactly this
+  shape.
