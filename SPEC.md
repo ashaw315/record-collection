@@ -446,7 +446,7 @@ The pair is addressed in the path, not a request body — `DELETE` with a body i
 ### 5.6 Graph & shelf
 | Method | Path | Notes |
 |---|---|---|
-| GET | `/api/graph` | Returns `{ nodes, links }` — see §8.1 for shape. Query params: `include=owned\|wanted\|both` (default both), `genreId` to subset. |
+| GET | `/api/graph` | Returns `{ nodes, links }` — see §8.1 for shape. **Owned records only.** Query param: `genreId` to subset. |
 | GET | `/api/shelf-order` | Returns ordered records with section breaks — see §8.2. |
 
 ### 5.7 Discogs — record lookup
@@ -618,7 +618,6 @@ This applies to the versions list as much as to search. The drill-down is where 
     type: "artist" | "genre";
     label: string;
     ownedCount: number;          // records owned attributable to this node
-    wantedCount: number;
     priorityTier: number | null; // min priority across linked want-list items
     parentGenreId: string | null;
   }>,
@@ -635,7 +634,11 @@ This applies to the versions list as much as to search. The drill-down is where 
 
 Rendering:
 - Client component only, `'use client'`, dynamically imported with `ssr: false`. D3 force simulation touches `window`/DOM and will break SSR otherwise.
-- Node radius scales with `ownedCount + wantedCount`; owned and wanted are visually distinguished (fill vs. outline).
+- Node radius scales with `ownedCount`.
+
+**The graph is the collection, not the want list.** A want-list sociogram — records to hunt, sized by priority, carrying best-dig notes and price ranges — is a different and arguably more useful screen, but it answers a different question and is deliberately out of scope here. This graph shows what is on the shelf and how it connects.
+
+**Expect it to be sparse, and do not disguise that.** Clusters emerge from edges that exist: shared members (§4.3), shared genres, and the genre hierarchy. A collection of unrelated artists is genuinely a scatter of unconnected dots, and a layout that implies structure where the data has none would be the confidently-misleading shape §8 warns about. If a node has no edges, it sits alone.
 - Colour by top-level ancestor genre.
 - Clicking a node filters the collection list to that artist/genre.
 - Must be usable on mobile: pinch-zoom and pan, and a fallback list view for very small screens.

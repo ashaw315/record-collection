@@ -1,5 +1,8 @@
 import type { MergePlan } from '@/lib/db/queries/merge-artists';
 
+/** Re-exported so tests can name the shape without importing the query layer. */
+export type MergePlanLike = MergePlan;
+
 /**
  * The merge confirmation's words (SPEC.md §4.3).
  *
@@ -11,7 +14,26 @@ import type { MergePlan } from '@/lib/db/queries/merge-artists';
  * Pure, so the sentences are testable without a database or a browser.
  */
 
+/** The facts that separate two artists whose names do not. */
+export type MergeSide = {
+  id: string;
+  name: string;
+  recordCount: number;
+  formedYear: number | null;
+  originCountry: string | null;
+  musicbrainzId: string | null;
+};
+
 export type MergeSummary = {
+  /**
+   * WHICH row survives, in decidable terms.
+   *
+   * "The duplicate will be deleted" is not a sentence a user can act on when
+   * both rows are called Discharge — and they always are, because that is why
+   * the pair is here. Named by record count first, then the other separating
+   * facts.
+   */
+  keeping: string;
   /** What the survivor gains. Always present — the artist row itself goes. */
   moves: string;
   /** What is thrown away, or `null` when nothing is. */
@@ -31,7 +53,29 @@ function joinClauses(parts: string[]): string {
   return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
 }
 
-export function mergeSummary(plan: MergePlan): MergeSummary {
+/** "11 records · formed 1977 · GB" — never the name, which both rows share. */
+function describeSide(side: MergeSide): string {
+  return [
+    plural(side.recordCount, 'record'),
+    side.formedYear === null ? null : `formed ${side.formedYear}`,
+    side.originCountry,
+  ]
+    .filter((part): part is string => part !== null && part !== '')
+    .join(' · ');
+}
+
+/**
+ * `sides` is REQUIRED, not optional.
+ *
+ * It was optional briefly, and an omitted argument produced a confirmation with
+ * no `keeping` sentence — silently losing the only line that says which row
+ * survives, on the screen whose entire premise is that names cannot say. An
+ * optional argument that changes what the copy MEANS is not a convenience.
+ */
+export function mergeSummary(
+  plan: MergePlan,
+  sides: { survivor: MergeSide; loser: MergeSide },
+): MergeSummary {
   /**
    * Empty categories are omitted rather than rendered as "0 want-list entries".
    * Zeroes are noise, and they bury the line that matters.
@@ -46,10 +90,13 @@ export function mergeSummary(plan: MergePlan): MergeSummary {
     ].filter((part): part is string => part !== null),
   );
 
-  const moves =
-    moved === ''
-      ? 'The duplicate artist row will be deleted. Nothing else moves.'
-      : `${moved} will move to the artist you keep, and the duplicate artist row will be deleted.`;
+  /**
+   * Says only what MOVES. `keeping` above already states which row is deleted,
+   * and repeating it there produced "…will be deleted. The duplicate artist row
+   * will be deleted." — two sentences saying one thing, which reads as though
+   * two rows are going.
+   */
+  const moves = moved === '' ? 'Nothing else moves.' : `${moved} will move to the artist you keep.`;
 
   /**
    * Both discards say WHY. "3 genre tags will be discarded" alone reads as data
@@ -67,7 +114,22 @@ export function mergeSummary(plan: MergePlan): MergeSummary {
     ].filter((part): part is string => part !== null),
   );
 
+  /**
+   * The MusicBrainz id moving across is stated only when it actually moves.
+   * A user keeping the row with the records, who knows the other held the id,
+   * would reasonably fear losing it — and saying so when nothing moves would
+   * be noise.
+   */
+  const gainsMbid =
+    sides.survivor.musicbrainzId === null && sides.loser.musicbrainzId !== null;
+
+  const keeping =
+    `Keeping the artist with ${describeSide(sides.survivor)}. ` +
+    `The one with ${describeSide(sides.loser)} will be deleted.` +
+    (gainsMbid ? ' Its MusicBrainz id moves to the artist you keep.' : '');
+
   return {
+    keeping,
     moves,
     /**
      * `null` rather than a reassuring sentence. A permanently visible "nothing

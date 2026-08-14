@@ -128,13 +128,7 @@ export function MatchReview({ candidates }: { candidates: OpenMatchCandidate[] }
                   confirmation does. A user told only what they gain cannot
                   weigh what they lose.
                 */}
-                <p>{mergeSummary(candidate.plan).moves}</p>
-                {mergeSummary(candidate.plan).discards !== null && (
-                  <p className="mt-1">{mergeSummary(candidate.plan).discards}</p>
-                )}
-                <p className="mt-1 font-medium text-destructive">
-                  {mergeSummary(candidate.plan).warning}
-                </p>
+                <MergeConfirmation candidate={candidate} />
 
                 <div className="mt-2 flex flex-wrap gap-2">
                   <Button
@@ -200,5 +194,31 @@ function ArtistFacts({
         {artist.musicbrainzId ?? 'no MusicBrainz id'}
       </p>
     </div>
+  );
+}
+
+/**
+ * The confirmation's words.
+ *
+ * **Names WHICH row survives, in decidable terms.** Both rows are called
+ * Discharge — that is why the pair is here — so "the duplicate will be deleted"
+ * tells the user nothing they can act on. The survivor is named by the same
+ * facts the review uses above it: record count first, then formed year and
+ * country.
+ */
+function MergeConfirmation({ candidate }: { candidate: OpenMatchCandidate }) {
+  const survivorIsImported = candidate.survivorId === candidate.artist.id;
+  const survivor = survivorIsImported ? candidate.artist : candidate.candidate;
+  const loser = survivorIsImported ? candidate.candidate : candidate.artist;
+
+  const summary = mergeSummary(candidate.plan, { survivor, loser });
+
+  return (
+    <>
+      <p className="font-medium">{summary.keeping}</p>
+      <p className="mt-1">{summary.moves}</p>
+      {summary.discards !== null && <p className="mt-1">{summary.discards}</p>}
+      <p className="mt-1 font-medium text-destructive">{summary.warning}</p>
+    </>
   );
 }

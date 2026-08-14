@@ -344,7 +344,14 @@ test('merging names what moves and what is destroyed, then does it', async ({ pa
    * than listing an empty inventory. That is the survivor rule visible in the
    * copy: an MBID is a column and moves; a record graph is not and does not.
    */
-  await expect(confirm, 'says the duplicate row goes').toContainText(/artist row will be deleted/i);
+  /**
+   * **Names WHICH row survives**, in terms the user can act on. Both rows are
+   * called Discharge, so "the duplicate will be deleted" is not decidable — the
+   * survivor is identified by record count, the same fact the review uses.
+   */
+  await expect(confirm, 'the row being kept').toContainText(/keeping the artist with 1 record/i);
+  await expect(confirm, 'and the one being deleted').toContainText(/the one with 0 records/i);
+  await expect(confirm, 'the identity moves across').toContainText(/MusicBrainz id moves/i);
   await expect(confirm, 'and that it is permanent').toContainText(/cannot be undone/i);
 
   // Cancelling changes nothing.

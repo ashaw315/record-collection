@@ -4590,12 +4590,21 @@ several", and it is harder to notice because the data looks complete.
   where a real error would, and the assertions are about the ROLLBACK, which is
   the behaviour under test. Mutation M1 (removing the transaction) fails it.
 
-- **The partial unique index bit during the merge itself.** Copying the loser's
-  `musicbrainz_id` onto the survivor while the loser still held it put the value
-  on two rows at once: `duplicate key value violates unique constraint
-  "artists_musicbrainz_id_key"` — even though the loser is deleted moments
-  later. Within a transaction, "it will be gone by COMMIT" is not enough; the
-  index is checked per statement. The loser's unique ids are released first.
+- **RULE: "it will be gone by COMMIT" is wrong for unique indexes.** Copying the
+  loser's `musicbrainz_id` onto the survivor while the loser still held it put
+  the value on two rows at once and threw `duplicate key value violates unique
+  constraint "artists_musicbrainz_id_key"` — even though the loser is deleted
+  three statements later, inside the same transaction.
+
+  **A unique index is checked per STATEMENT, not at commit.** The intermediate
+  state has to be legal, not just the final one. That reasoning — "the conflict
+  resolves before anyone can see it, so it does not matter" — is what would have
+  shipped this, and it is wrong for every non-deferrable constraint. Postgres
+  supports `DEFERRABLE` for exactly this, but the simpler fix is ordering:
+  release the loser's unique ids before copying them.
+
+  Generalises to any move-then-delete across a unique column: swapping two
+  values, reassigning a slug, transferring an external id.
 
 - **§4.3's own list omitted `artist_genres`, and it was the dangerous omission.**
   It cascades, so a merge that skipped it would strip UK82 from a band with no
@@ -4618,3 +4627,34 @@ several", and it is harder to notice because the data looks complete.
   when no other test had one open. Scoped by name. That is now three instances
   of the same defect in this file — worth treating `.first()` on a shared testid
   as a smell in its own right.
+
+## Merge confirmation — naming the survivor
+
+- **"The duplicate will be deleted" is not a decidable sentence here.** Both rows
+  are called Discharge — that is why the pair is in the review — so the
+  confirmation has to name the survivor by the facts that separate them, the
+  same ones the review uses: record count, formed year, country, MBID. "Keeping
+  the artist with 1 record. The one with 0 records · formed 1977 · GB will be
+  deleted."
+
+- **An optional argument that changes what the copy MEANS is not a
+  convenience.** `sides` was optional at first, so a caller omitting it got a
+  confirmation with no survivor sentence at all — silently losing the only line
+  that says which row is kept, on the screen whose entire premise is that names
+  cannot say. Made required; the compiler then found every call site.
+
+- **Two sentences saying one thing reads as two things happening.** `keeping`
+  ends with "…will be deleted" and `moves` began with "The duplicate artist row
+  will be deleted", which together implied two rows were going. Caught by
+  reading the rendered string in a failing E2E assertion, not by the unit tests
+  — each function was correct in isolation.
+
+- **A mutation survived because the assertion paraphrased the copy.** The test
+  for "does not claim the id moves" matched `/will be kept|moves across|gains/i`
+  while the sentence says "moves to" — so it could not fail, and a mutation
+  showing the line unconditionally passed. Assertions about copy must quote the
+  copy, not describe it.
+
+- **A `sed`/python mutation with a broken anchor printed "13 passed" again.**
+  Nested quotes defeated the replacement; the assert caught it. Third time this
+  guard has earned itself.
