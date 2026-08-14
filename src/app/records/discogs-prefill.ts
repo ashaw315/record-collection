@@ -2,7 +2,7 @@ import 'server-only';
 import { readCachedRelease, writeCachedRelease } from '@/lib/discogs/cache';
 import { DiscogsError, getDiscogsClient } from '@/lib/discogs/client';
 import { normalizeRelease, type NormalizedRelease } from '@/lib/discogs/normalize-release';
-import { findArtistByDiscogsId, findArtistByName } from '@/lib/db/queries/artists';
+import { findArtistByDiscogsId, findArtistsNamed } from '@/lib/db/queries/artists';
 import { findLabelByDiscogsId, findLabelByName } from '@/lib/db/queries/labels';
 import { findOrCreateGenresByName } from '@/lib/db/queries/genres';
 import { findFormatByName } from '@/lib/db/queries/formats';
@@ -33,6 +33,12 @@ export type DiscogsPrefill = {
    * user has to notice.
    */
   unmatched: { artist: string | null; label: string | null; format: string | null };
+  /**
+   * §4.1: names repeat. A count rather than a boolean, so the form can say
+   * "you have 2 artists named Discharge" rather than pointing at one as though
+   * it were the one.
+   */
+  ambiguous: { artist: number | null; artistName: string | null };
   /**
    * Every Matrix / Runout value Discogs holds, joined for display BESIDE the
    * field — never in it. See the note where this is built.
@@ -178,8 +184,21 @@ export async function loadDiscogsPrefill(
     release.artistDiscogsId === null
       ? undefined
       : await findArtistByDiscogsId(release.artistDiscogsId);
-  const artistByName =
-    artist ?? (release.artist === null ? undefined : await findArtistByName(release.artist));
+  /**
+   * §4.1: a name identifies nothing, so N artists may carry it.
+   *
+   * **With more than one, prefill NOTHING and say why.** Guessing between two
+   * bands called Discharge is §8's hazard on the one screen where the user is
+   * holding the record and can settle it themselves. Silence would be worse
+   * than a guess only if it were unexplained — hence `ambiguous` below, which
+   * is a different fact from `unmatched`: "you have two artists with this name"
+   * is not "Discogs named an artist you do not have".
+   */
+  const namedArtists =
+    artist !== undefined || release.artist === null ? [] : await findArtistsNamed(release.artist);
+
+  const artistByName = artist ?? (namedArtists.length === 1 ? namedArtists[0] : undefined);
+  const ambiguousArtist = namedArtists.length > 1 ? namedArtists.length : null;
 
   const label =
     release.labelDiscogsId === null
@@ -247,9 +266,16 @@ export async function loadDiscogsPrefill(
     },
     release,
     unmatched: {
-      artist: artistByName === undefined ? release.artist : null,
+      // Not reported as unmatched when the name is AMBIGUOUS: the artist is not
+      // missing, there are several, and the form says so separately.
+      artist: artistByName === undefined && ambiguousArtist === null ? release.artist : null,
       label: labelByName === undefined ? release.label : null,
       format: format.attempted,
+    },
+    ambiguous: {
+      /** How many local artists share the name, when more than one do. */
+      artist: ambiguousArtist,
+      artistName: ambiguousArtist === null ? null : release.artist,
     },
     matrixReference,
     notesReference: release.notes,

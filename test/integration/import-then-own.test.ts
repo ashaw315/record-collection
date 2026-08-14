@@ -147,17 +147,25 @@ describe('save via the FORM path, then ask who owns it', () => {
     const pressing = await response.json();
 
     /**
-     * Found-or-created rather than inserted: a test that saves twice would
-     * otherwise hit `artists_name_unique` on the second call. §7.7 matches
-     * artists fuzzily, so both records must belong to the SAME artist for the
-     * ownership query to see them — a suffixed name would quietly change what
-     * is being tested.
+     * Found-or-created, and the REASON is what matters: §7.7 matches artists
+     * fuzzily, so both records must belong to the SAME artist row for the
+     * ownership query to see them. A second artist named Discharge would
+     * quietly change what is being tested.
+     *
+     * **Was an `ON CONFLICT (name)` upsert**, which needed the unique
+     * constraint migration 0008 dropped (§4.1: two UK bands are called
+     * Discharge). Now an explicit select-then-insert, which does not depend on
+     * a constraint at all — the intent was never uniqueness, only reuse.
      */
-    const artist = await db.execute<{ id: string }>(
-      sql`INSERT INTO artists (name) VALUES ('Discharge')
-          ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
-          RETURNING id`,
+    const existing = await db.execute<{ id: string }>(
+      sql`SELECT id FROM artists WHERE name = 'Discharge' LIMIT 1`,
     );
+    const artist =
+      existing.rows.length > 0
+        ? existing
+        : await db.execute<{ id: string }>(
+            sql`INSERT INTO artists (name) VALUES ('Discharge') RETURNING id`,
+          );
     await db.execute(
       sql`INSERT INTO records (artist_id, pressing_id, title)
           VALUES (${artist.rows[0].id}, ${pressing.id}, ${DETAILED.title})`,

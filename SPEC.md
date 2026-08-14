@@ -75,7 +75,8 @@ All tables: `id UUID PRIMARY KEY DEFAULT gen_random_uuid()`, `created_at TIMESTA
 **`artists`**
 | Column | Type | Notes |
 |---|---|---|
-| name | TEXT NOT NULL UNIQUE | |
+| name | TEXT NOT NULL | **Not unique.** Two different bands genuinely share a name — MusicBrainz carries two distinct UK groups called Discharge — and a unique constraint asserts they are one artist. That is §8's pressing-is-not-an-album hazard at the artist level, and it silently fuses two bands' lineups and records. Uniqueness lives on the external ids below, which identify an artist; a name does not. |
+| musicbrainz_id | TEXT | nullable, **unique when present** (partial unique index), matching `discogs_artist_id` — §4.1's find-or-create keys must behave identically. |
 | formed_year | INTEGER | nullable. Validated at the API boundary to `1877 <= year <= currentYear + 1` — 1877 is the year sound recording began, so no recording artist predates it; +1 allows a band announced for next year. Not a database constraint: it is a product judgement, and the upper bound moves. **Compute the upper bound at validation time, never at module load** — a warm serverless instance that booted last December would otherwise reject a valid current year. Tests must derive the year rather than hardcode it. |
 | origin_country | TEXT | nullable |
 | notes | TEXT | nullable |
@@ -238,6 +239,30 @@ These power the network graph. All are composite-PK, no separate `id`.
 
 `artist_influences` cascades on both FKs, since both point at `artists` as owner and an edge to a deleted artist is meaningless. A junction row is a *link*, not an entity — deleting a record must remove "this record is tagged punk" while leaving the genre itself untouched. This does not weaken §7.4: the reference row is protected by the NO ACTION FK on the owning table (`records.artist_id`, `records.label_id`, `records.pressing_id`, `genres.parent_genre_id`), which still produces a `409 IN_USE`. Without junction cascade, `DELETE /api/records/:id` (§5.2) would fail on an FK violation, so this is required, not optional.
 
+**Dropping the name constraint does not drop the duplicate warning.** `POST /api/artists` keeps its check and still answers `409 DUPLICATE` with `existingId` when a name matches — because typing a name you already have is far more often a mistake than a genuine second band. What changes is that the client may override it: "you already have Discharge — add anyway?" A constraint the database enforced becomes a question the user answers, rather than a silence.
+
+**`artist_match_candidates`** — a possible duplicate, recorded rather than asked about mid-import.
+
+| Column | Type | Notes |
+|---|---|---|
+| artist_id | UUID NOT NULL REFERENCES artists(id) ON DELETE CASCADE | the row just created |
+| candidate_artist_id | UUID NOT NULL REFERENCES artists(id) ON DELETE CASCADE | the existing local row it might be |
+| reason | TEXT NOT NULL | e.g. `name_match_no_mbid` |
+| resolved_at | TIMESTAMPTZ | nullable; set when the user decides |
+| resolution | TEXT | nullable; `merged` \| `distinct` |
+
+`UNIQUE NULLS NOT DISTINCT (artist_id, candidate_artist_id, reason)`, so a re-import raises nothing new.
+
+A table rather than a column on `artists`, because a column holds one candidate and importing a name that matches two local rows has two — a column would silently drop one. And because the decision must persist: "these are distinct" has to be remembered or every re-import asks again, and a column would have to be nulled on resolution, losing the fact that it was ever answered.
+
+**Artist resolution on import, and when to ask.** Matching an imported artist to a local row is where a silent wrong merge does the most damage, so the rule is asymmetric — declining to merge is visible and cheap, merging wrongly is invisible and self-reinforcing, because every later import matches the id that was attached in error.
+
+- **MBID matches a local row** → the same artist. Use it.
+- **Name matches a row carrying a *different* MBID** → definitely a different artist. Never merge; create a new row.
+- **Name matches a row with no MBID** → genuinely ambiguous. Do not claim it, and do not block the import on a question the user cannot yet answer: create the artist and record the possible match. A first import against a collection of hand-entered artists hits this case constantly, and a wall of confirmations at that moment is a worse failure than a duplicate row.
+
+Surface accumulated possible matches as a review afterwards, in `/manage`, where the user can merge deliberately with both artists in front of them. Asking once, later, with context beats asking thirty times during a walk.
+
 **`artist_memberships`** — a person's membership of a group, imported from MusicBrainz. A *fact with a source*, kept separate from `artist_influences`, which is the user's judgement.
 
 | Column | Type | Notes |
@@ -249,7 +274,7 @@ These power the network graph. All are composite-PK, no separate `id`.
 | ended_year | INTEGER | nullable |
 | musicbrainz_id | TEXT | the relation's MBID, nullable |
 
-PK is `(person_artist_id, group_artist_id, instrument)`; a person may join a group twice on different instruments. CHECK that person ≠ group.
+Identity is `(person_artist_id, group_artist_id, instrument)` — a person may join a group twice on different instruments — but that cannot be the primary key, because `instrument` is nullable and a PK may not contain a nullable column. Use a surrogate `id` with a `UNIQUE NULLS NOT DISTINCT` constraint on the triple. The `NULLS NOT DISTINCT` clause is load-bearing: without it two rows with a null instrument for the same pair are treated as distinct, so every re-import accumulates a duplicate while the cache appears to be working. CHECK that person ≠ group.
 
 **Membership is never written to `artist_influences`.** MusicBrainz has no influence relationship — its artist-artist vocabulary is membership, collaboration, founder, rename, tribute and personal relations, and nothing represents "A influenced B". Mapping membership onto influence would fill a 1–5 `strength` with a number nobody measured, and §8.1's graph already treats `influence` and `member_of` as distinct link types with different weights. `artist_influences` stays what it is: edges the user asserts.
 

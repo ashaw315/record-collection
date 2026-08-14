@@ -54,11 +54,25 @@ export const artists = pgTable(
   'artists',
   {
     id,
-    name: text('name').notNull().unique(),
+    /**
+     * §4.1 as amended: **not unique.**
+     *
+     * Two different bands genuinely share a name — MusicBrainz carries two
+     * distinct UK groups called Discharge — and a unique constraint asserts
+     * they are one artist. That is §8's pressing-is-not-an-album hazard at the
+     * artist level, and it fuses two bands' lineups and records silently.
+     *
+     * Uniqueness lives on the external ids below, which IDENTIFY an artist. A
+     * name does not. The duplicate warning survives as a §5.4 soft 409 the user
+     * may override — a constraint the database enforced becomes a question the
+     * user answers.
+     */
+    name: text('name').notNull(),
     formedYear: integer('formed_year'),
     originCountry: text('origin_country'),
     notes: text('notes'),
     discogsArtistId: integer('discogs_artist_id'),
+    musicbrainzId: text('musicbrainz_id'),
     ...timestamps,
   },
   (t) => [
@@ -66,6 +80,14 @@ export const artists = pgTable(
     uniqueIndex('artists_discogs_artist_id_key')
       .on(t.discogsArtistId)
       .where(sql`${t.discogsArtistId} IS NOT NULL`),
+    /**
+     * §4.1: "matching `discogs_artist_id` — §4.1's find-or-create keys must
+     * behave identically." Now that a name identifies nothing, this is the key
+     * a re-import matches on.
+     */
+    uniqueIndex('artists_musicbrainz_id_key')
+      .on(t.musicbrainzId)
+      .where(sql`${t.musicbrainzId} IS NOT NULL`),
     index('artists_name_trgm_idx').using('gin', sql`${t.name} gin_trgm_ops`),
   ],
 );

@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, count, eq, ne } from 'drizzle-orm';
+import { and, asc, count, eq, ne } from 'drizzle-orm';
 import { isForeignKeyViolation } from '@/lib/api/errors';
 import { countReferences } from './referrers';
 import { orderFor } from '@/lib/db/order';
@@ -28,6 +28,7 @@ export type Artist = {
   originCountry: string | null;
   notes: string | null;
   discogsArtistId: number | null;
+  musicbrainzId: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -39,6 +40,7 @@ const columns = {
   originCountry: artists.originCountry,
   notes: artists.notes,
   discogsArtistId: artists.discogsArtistId,
+  musicbrainzId: artists.musicbrainzId,
   createdAt: artists.createdAt,
   updatedAt: artists.updatedAt,
 };
@@ -77,9 +79,52 @@ export async function findArtistById(id: string): Promise<Artist | undefined> {
   return row;
 }
 
-export async function findArtistByName(name: string): Promise<Artist | undefined> {
+/**
+ * Every artist with this name — **an array, because a name identifies nothing.**
+ *
+ * This replaced `findArtistByName`, whose `.limit(1)` was exact while
+ * `artists.name` was UNIQUE and became "an arbitrary row of N" the moment
+ * §4.1 dropped the constraint. That function was deleted rather than adapted:
+ * its contract ("the artist with this name") is no longer true of the schema,
+ * and its five callers would have gone on trusting it.
+ *
+ * Ordered oldest-first so the same input gives the same answer. An unordered
+ * `limit(1)` may return different rows across calls — the planner is free to —
+ * and §5.4's `existingId` would then point somewhere new each time the same
+ * duplicate was submitted.
+ *
+ * Exact match, not fuzzy: §7.7's ownership check and search use `similarity()`
+ * deliberately, but a duplicate warning that fired on "Discharge Bomb" would
+ * train the user to dismiss it.
+ */
+export async function findArtistsNamed(name: string): Promise<Artist[]> {
   const db = getDb();
-  const [row] = await db.select(columns).from(artists).where(eq(artists.name, name)).limit(1);
+  return db
+    .select(columns)
+    .from(artists)
+    .where(eq(artists.name, name))
+    .orderBy(asc(artists.createdAt), asc(artists.id));
+}
+
+/**
+ * The artist carrying this MusicBrainz id — §4.1's identity key.
+ *
+ * Null is not a value to match on. Every hand-entered artist has a null MBID,
+ * so a query that matched it would return an arbitrary stranger and claim it as
+ * the imported artist — the silent merge this whole change exists to prevent.
+ * `findArtistByDiscogsId` guards the same way for the same reason.
+ */
+export async function findArtistByMusicbrainzId(
+  musicbrainzId: string | null,
+): Promise<Artist | undefined> {
+  if (musicbrainzId === null || musicbrainzId === '') return undefined;
+
+  const db = getDb();
+  const [row] = await db
+    .select(columns)
+    .from(artists)
+    .where(eq(artists.musicbrainzId, musicbrainzId))
+    .limit(1);
   return row;
 }
 

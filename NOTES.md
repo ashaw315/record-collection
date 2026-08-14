@@ -4412,3 +4412,50 @@ collected from real use, not constructed.
   a new migration is invisible to it until staged while the journal already
   references it. Second occurrence — `git add drizzle/` belongs in the schema
   unit checklist, not in the debugging that follows.
+
+## Step 11 unit 4a — artists.name is no longer unique
+
+- **RULE: when a query\'s CONTRACT stops being true, delete it rather than adapt
+  it.** `findArtistByName` returned one row because the schema guaranteed one
+  row. After migration 0008 it would have returned an arbitrary row of N —
+  same name, same signature, silently different meaning, and five callers still
+  trusting the old contract. Replaced by two functions that ask answerable
+  questions: `findArtistByMusicbrainzId` (identity) and `findArtistsNamed`
+  (an array, count included). Deleting it made the compiler enumerate every
+  caller, which is the enumeration a rename would have hidden.
+
+- **The five callers wanted four different things**, which is why one function
+  serving all of them was wrong:
+    prefill  -> a suggestion; now prefills NOTHING when N > 1 and says why
+    POST     -> "does anyone have this name"; now returns a count too
+    PATCH    -> same as POST; `artistNameTakenByOther` deleted, since it
+                enforced a constraint that no longer exists and would have made
+                PATCH stricter than POST
+    2 recovery paths -> the winner of a race on the NAME constraint. Both dead
+                after 0008; deleted rather than left unreachable.
+
+- **The asymmetry with labels and genres is deliberate and now commented.** They
+  keep unique names because a label IS its name; two bands genuinely share one.
+  Without the comment the next reader sees artists re-reading by Discogs id
+  while labels re-read by name and assumes one is a bug.
+
+- **A test helper depended on the constraint invisibly.** `import-then-own.test.ts`
+  used `ON CONFLICT (name) DO UPDATE` to find-or-create an artist — a
+  four-test failure in a file this unit never opened. Its comment said the
+  intent was REUSE, not uniqueness; rewritten as select-then-insert, which
+  depends on no constraint at all. Cross-file break of exactly the kind
+  CLAUDE.md §10 describes.
+
+- **HONEST LIMIT: the ordering of `findArtistsNamed` is not fully testable.**
+  It matches exactly, so every row it returns shares one name — which makes
+  `ORDER BY name`, `ORDER BY created_at` and NO ordering mutually
+  indistinguishable on a small table. Two mutations confirmed it: a name sort
+  and removing the clause entirely both pass. The test asserts the property
+  that matters (the first row is the earliest by `created_at`) and its comment
+  says plainly that it does not prove the ORDER BY causes it. Recorded rather
+  than dressed up as coverage.
+
+- **Two non-discriminating fixtures caught by mutation**, both fixed: asserting
+  `findArtistByMusicbrainzId(\'\')` returns undefined against a table where
+  nobody holds `\'\'` (the query finds nothing either way — now a row holds one),
+  and the ordering case above.

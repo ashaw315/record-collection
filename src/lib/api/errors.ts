@@ -17,6 +17,8 @@ export type ApiErrorBody = {
     /** Present on every DUPLICATE (§5.4). Optional here only because this type
      * describes every error shape; `duplicate()` requires it. */
     existingId?: string;
+    /** §4.1: how many artists share a name. Artists only — see `duplicate`. */
+    matchCount?: number;
   };
 };
 
@@ -162,8 +164,30 @@ export function internalError(): NextResponse<ApiErrorBody> {
  * use it instead" has to reimplement the normalization and will get it wrong
  * in exactly the cases normalization exists for.
  */
-export function duplicate(message: string, existingId: string): NextResponse<ApiErrorBody> {
-  return NextResponse.json({ error: { message, code: 'DUPLICATE', existingId } }, { status: 409 });
+export function duplicate(
+  message: string,
+  existingId: string,
+  /**
+   * How many rows carry the colliding value, when more than one can.
+   *
+   * Only artists (§4.1): a name no longer identifies an artist, so `existingId`
+   * alone would point at one of several as though it were THE one. Omitted
+   * everywhere else, where the unique constraint still holds and a count could
+   * only ever be 1 — a label IS its name, and two bands genuinely share one.
+   */
+  matchCount?: number,
+): NextResponse<ApiErrorBody> {
+  return NextResponse.json(
+    {
+      error: {
+        message,
+        code: 'DUPLICATE',
+        existingId,
+        ...(matchCount === undefined ? {} : { matchCount }),
+      },
+    },
+    { status: 409 },
+  );
 }
 
 /**

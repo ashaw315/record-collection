@@ -338,56 +338,64 @@ describe('POST /api/artists', () => {
     expect((await response.json()).formedYear).toBeNull();
   });
 
-  it('returns 409 when a concurrent create wins the unique index', async () => {
-    const spy = vi.spyOn(logger, 'error').mockImplementation(() => {});
-    const queries = await import('@/lib/db/queries/artists');
-
-        /**
-     * Only the FIRST call is hooked. The recovery path re-reads by name to
-     * supply §5.4's existingId, so a mock returning undefined every time
-     * makes the handler rethrow — the mock defeating the code under test.
+  it('no longer races on the NAME, because names may repeat (§4.1)', async () => {
+    /**
+     * **This test used to simulate a race on `artists_name_unique`.** Migration
+     * 0008 dropped that constraint — two UK bands are called Discharge — so the
+     * scenario it described cannot occur: a concurrent create with the same
+     * name now SUCCEEDS, and both artists exist.
+     *
+     * Rewritten rather than deleted, because the behaviour it guarded still
+     * matters and has simply inverted: what used to be a 409 is now two rows.
      */
-    const real = queries.findArtistByName;
-    let firstCall = true;
+    await db.execute(sql`INSERT INTO artists (name) VALUES ('Discharge')`);
 
-const claim = vi.spyOn(queries, 'findArtistByName').mockImplementation(async (name) => {
-      if (!firstCall) return real(name);
-      firstCall = false;
-      await db.execute(sql`INSERT INTO artists (name) VALUES ('Discharge')`);
-      return undefined;
-    });
+    const response = await createArtist(
+      jsonRequest('/api/artists', 'POST', { name: 'Discharge' }),
+    );
 
-    try {
-      const response = await createArtist(
-        jsonRequest('/api/artists', 'POST', { name: 'Discharge' }),
-      );
+    // Still WARNED about — §4.1 keeps the soft duplicate check — but the
+    // warning now carries a count and the client may override it.
+    expect(response.status).toBe(409);
+    const body = await response.json();
+    expect(body.error.code).toBe('DUPLICATE');
+    expect(body.error.existingId, '§5.4 requires it').toBeDefined();
+    expect(body.error.matchCount, 'one artist has that name so far').toBe(1);
+  });
 
-      expect(response.status).toBe(409);
-      expect((await response.json()).error.code).toBe('DUPLICATE');
-    } finally {
-      claim.mockRestore();
-    }
+  it('reports HOW MANY artists share the name, not just one of them', async () => {
+    /**
+     * §4.1: `existingId` alone points at one of several as though it were THE
+     * one. With two Discharges already recorded, "an artist with that name
+     * exists" is true and misleading — the user needs to know there are two
+     * before deciding whether a third is a mistake.
+     */
+    await db.execute(sql`INSERT INTO artists (name) VALUES ('Discharge')`);
+    await db.execute(sql`INSERT INTO artists (name) VALUES ('Discharge')`);
 
-    expect(spy).not.toHaveBeenCalled();
+    const response = await createArtist(
+      jsonRequest('/api/artists', 'POST', { name: 'Discharge' }),
+    );
+
+    const body = await response.json();
+    expect(response.status).toBe(409);
+    expect(body.error.matchCount).toBe(2);
+    expect(body.error.message).toMatch(/2 artists/);
   });
 
   it('returns 409 when a concurrent create claims the discogsArtistId', async () => {
     const spy = vi.spyOn(logger, 'error').mockImplementation(() => {});
     const queries = await import('@/lib/db/queries/artists');
 
-        /**
-     * Only the FIRST call is hooked. The recovery path re-reads by name to
-     * supply §5.4's existingId, so a mock returning undefined every time
-     * makes the handler rethrow — the mock defeating the code under test.
+    /**
+     * Hooks the NAME lookup to slip a concurrent write in before the insert.
+     * The recovery path now re-reads by DISCOGS ID rather than by name (§4.1
+     * dropped the name constraint), so this mock no longer has to pass through
+     * on later calls — it is not on the recovery path at all.
      */
-    const real = queries.findArtistByName;
-    let firstCall = true;
-
-const claim = vi.spyOn(queries, 'findArtistByName').mockImplementation(async (name) => {
-      if (!firstCall) return real(name);
-      firstCall = false;
+    const claim = vi.spyOn(queries, 'findArtistsNamed').mockImplementation(async () => {
       await db.execute(sql`INSERT INTO artists (name, discogs_artist_id) VALUES ('Other', 4321)`);
-      return undefined;
+      return [];
     });
 
     try {
@@ -535,29 +543,48 @@ describe('PATCH /api/artists/:id', () => {
     expect(response.status).toBe(409);
   });
 
-  it('returns 409 when a concurrent rename wins the unique index', async () => {
-    const spy = vi.spyOn(logger, 'error').mockImplementation(() => {});
-    const queries = await import('@/lib/db/queries/artists');
+  it('warns on a rename into an existing name, and does not refuse it', async () => {
+    /**
+     * **This test used to race on `artists_name_unique`.** Migration 0008
+     * dropped it, so a rename into a name another artist holds is now legal —
+     * and it must be, or the API would be incoherent: §4.1 lets you CREATE a
+     * second Discharge, so refusing to RENAME into one would be stricter on
+     * the smaller change.
+     *
+     * The soft warning matches POST's exactly. Rewritten rather than deleted
+     * because the behaviour still matters; what changed is that the 409 is now
+     * a question rather than a refusal.
+     */
+    const id = await insertArtist('Amebix');
+    await db.execute(sql`INSERT INTO artists (name) VALUES ('Discharge')`);
+
+    const response = await patchArtist(
+      jsonRequest(`/api/artists/${id}`, 'PATCH', { name: 'Discharge' }),
+      params(id),
+    );
+
+    expect(response.status).toBe(409);
+    const body = await response.json();
+    expect(body.error.code).toBe('DUPLICATE');
+    expect(body.error.existingId, '§5.4 requires it').toBeDefined();
+    expect(body.error.matchCount).toBe(1);
+  });
+
+  it('does not warn when an artist keeps its own name', async () => {
+    /**
+     * The self-match. A PATCH that leaves the name alone must not collide with
+     * the row being edited — the old `artistNameTakenByOther` excluded `id`
+     * explicitly, and the replacement filter has to do the same or every edit
+     * to an artist's notes would 409.
+     */
     const id = await insertArtist('Amebix');
 
-    const claim = vi.spyOn(queries, 'artistNameTakenByOther').mockImplementation(async () => {
-      await db.execute(sql`INSERT INTO artists (name) VALUES ('Discharge')`);
-      return false;
-    });
+    const response = await patchArtist(
+      jsonRequest(`/api/artists/${id}`, 'PATCH', { name: 'Amebix', notes: 'crust' }),
+      params(id),
+    );
 
-    try {
-      const response = await patchArtist(
-        jsonRequest(`/api/artists/${id}`, 'PATCH', { name: 'Discharge' }),
-        params(id),
-      );
-
-      expect(response.status).toBe(409);
-      expect((await response.json()).error.code).toBe('DUPLICATE');
-    } finally {
-      claim.mockRestore();
-    }
-
-    expect(spy).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
   });
 });
 

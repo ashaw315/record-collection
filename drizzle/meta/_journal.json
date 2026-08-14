@@ -57,6 +57,13 @@
       "when": 1786671385485,
       "tag": "0007_artist_memberships",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1786673920358,
+      "tag": "0008_artist_name_not_unique",
+      "breakpoints": true
     }
   ]
 }

@@ -14,11 +14,11 @@ import { withErrorHandling } from '@/lib/api/handler';
 import { NAME_MAX_LENGTH, cleanName, nameLength } from '@/lib/api/text';
 import { formedYearSchema } from '@/lib/api/year';
 import {
-  artistNameTakenByOther,
   countArtistReferences,
   deleteArtist,
   findArtistById,
-  findArtistByName,
+  findArtistByDiscogsId,
+  findArtistsNamed,
   updateArtist,
 } from '@/lib/db/queries/artists';
 
@@ -82,12 +82,27 @@ export const PATCH = withErrorHandling(
 
     if ((await findArtistById(id)) === undefined) return notFound('Artist not found');
 
+    /**
+     * §4.1 as amended: renaming an artist into a name another artist already
+     * has is LEGAL now — two bands are called Discharge.
+     *
+     * The warning matches POST's exactly, and deliberately: keeping the old
+     * hard refusal here would let a user create a second Discharge but not
+     * rename into one, which is incoherent. Soft 409 with the count, the client
+     * may override.
+     */
     const { name } = parsed.data;
-    if (name !== undefined && (await artistNameTakenByOther(id, name))) {
-      // §5.4: the caller needs the id of the row it collided with,
-      // and the taken-by-other check only reports THAT it is taken.
-      const clash = await findArtistByName(name);
-      return duplicate('An artist with that name already exists', clash?.id ?? id);
+    if (name !== undefined) {
+      const clashes = (await findArtistsNamed(name)).filter((artist) => artist.id !== id);
+      if (clashes.length > 0) {
+        return duplicate(
+          clashes.length === 1
+            ? 'An artist with that name already exists'
+            : `${clashes.length} artists with that name already exist`,
+          clashes[0].id,
+          clashes.length,
+        );
+      }
     }
 
     try {
@@ -97,13 +112,19 @@ export const PATCH = withErrorHandling(
     } catch (error) {
       if (isUniqueViolation(error)) {
         /**
-         * §5.4 requires existingId from the RECOVERY path too — a
-         * concurrent write won the race, and the caller still needs to
-         * be able to select what it lost to. Re-read by name: the row
-         * now exists, which is why we are here.
+         * §5.4 requires `existingId` from the RECOVERY path too — a concurrent
+         * write won the race and the caller still needs to reach what it lost
+         * to.
+         *
+         * **Only `discogs_artist_id` and `musicbrainz_id` can collide now.**
+         * The name branch that re-read here is gone rather than left
+         * unreachable: its own comment said "the row now exists, which is why
+         * we are here", which stopped being true when §4.1 dropped the
+         * constraint. Labels and genres keep theirs because a label IS its
+         * name; two bands genuinely share one.
          */
-        const winner = name === undefined ? undefined : await findArtistByName(name);
-        return duplicate('An artist with that name or Discogs id already exists', winner?.id ?? '');
+        const winner = await findArtistByDiscogsId(parsed.data.discogsArtistId ?? null);
+        return duplicate('An artist with that Discogs id already exists', winner?.id ?? '');
       }
       throw error;
     }
