@@ -18,7 +18,12 @@ const mergeSummary2 = (plan: MergePlanLike) =>
 
 const empty = {
   moves: { records: 0, wantList: 0, genres: 0, memberships: 0, influences: 0 },
-  discards: { duplicateGenres: 0, selfEdges: 0 },
+  discards: {
+    duplicateGenres: 0,
+    duplicateMemberships: 0,
+    duplicateInfluences: 0,
+    selfEdges: 0,
+  },
   irreversible: true as const,
 };
 
@@ -86,6 +91,32 @@ describe('what is DESTROYED', () => {
     const said = mergeSummary2({ ...empty, discards: { ...empty.discards, selfEdges: 2 } });
 
     expect(said.discards).toMatch(/2 (links|connections|edges)/i);
+  });
+
+  it('names discarded duplicate lineup rows', () => {
+    /**
+     * These are the two tables where the merge previously FAILED outright
+     * rather than discarding. Now that they drop the duplicate, the discard has
+     * to be said — a lineup row vanishing silently is the same data-loss
+     * surprise the genre wording exists to prevent.
+     */
+    const said = mergeSummary2({
+      ...empty,
+      discards: { ...empty.discards, duplicateMemberships: 2 },
+    });
+
+    expect(said.discards).toMatch(/2 (lineup|membership)/i);
+    expect(said.discards, 'the reason, not just the count').toMatch(/already|duplicate/i);
+  });
+
+  it('names discarded duplicate influence edges', () => {
+    const said = mergeSummary2({
+      ...empty,
+      discards: { ...empty.discards, duplicateInfluences: 1 },
+    });
+
+    expect(said.discards).toMatch(/1 influence/i);
+    expect(said.discards).toMatch(/already|duplicate/i);
   });
 
   it('is null when nothing is destroyed, so the warning means something', () => {

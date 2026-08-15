@@ -21,6 +21,57 @@ import { getDb } from '@/db/client';
  * can name it.
  */
 
+/**
+ * Whether a loser membership row (`lm`) would land on one the survivor already
+ * holds, once its id is rewritten.
+ *
+ * **`IS NOT DISTINCT FROM` on the instrument, not `=`.** The constraint is
+ * `UNIQUE NULLS NOT DISTINCT` (§4.3), so two null instruments DO collide — and
+ * `null = null` is null, which a WHERE clause reads as false. Using `=` here
+ * would miss exactly the case §4.3 calls load-bearing, and the merge would fail
+ * on a duplicate the plan had promised was safe.
+ *
+ * Both directions are covered because the loser may be the person or the group.
+ */
+function membershipCollides(survivorId: string, loserId: string) {
+  return sql`EXISTS (
+    SELECT 1 FROM artist_memberships sm
+    WHERE sm.person_artist_id = CASE WHEN lm.person_artist_id = ${loserId}
+                                     THEN ${survivorId} ELSE lm.person_artist_id END
+      AND sm.group_artist_id  = CASE WHEN lm.group_artist_id = ${loserId}
+                                     THEN ${survivorId} ELSE lm.group_artist_id END
+      AND sm.instrument IS NOT DISTINCT FROM lm.instrument
+  )`;
+}
+
+/** The same question for `artist_influences`, keyed `(source, target)`. */
+function influenceCollides(survivorId: string, loserId: string) {
+  return sql`EXISTS (
+    SELECT 1 FROM artist_influences si
+    WHERE si.source_artist_id = CASE WHEN li.source_artist_id = ${loserId}
+                                     THEN ${survivorId} ELSE li.source_artist_id END
+      AND si.target_artist_id = CASE WHEN li.target_artist_id = ${loserId}
+                                     THEN ${survivorId} ELSE li.target_artist_id END
+  )`;
+}
+
+/**
+ * A merge refused by a RULE, as distinct from one that failed.
+ *
+ * The endpoint answers `409 MERGE_REFUSED` and puts `message` in front of the
+ * user, so the two must not be conflated: a §4.3 refusal is a sentence the user
+ * should read, and a constraint violation is a fault whose text is a SQL dump.
+ * Before this existed the endpoint caught everything and presented
+ * `Failed query: INSERT INTO artist_memberships ...` as though it were a
+ * considered answer.
+ */
+export class MergeRefused extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'MergeRefused';
+  }
+}
+
 export type MergeInput = {
   survivorId: string;
   loserId: string;
@@ -48,6 +99,13 @@ export type MergePlan = {
   discards: {
     /** Tags the survivor already carries — moving them would collide. */
     duplicateGenres: number;
+    /**
+     * Lineup rows the survivor already carries for the same (group, instrument)
+     * — or the same (person, instrument) when the loser is the group.
+     */
+    duplicateMemberships: number;
+    /** Influence edges the survivor already has with the same counterpart. */
+    duplicateInfluences: number;
     /** Edges between the two artists, which stop being statements. */
     selfEdges: number;
   };
@@ -74,6 +132,8 @@ export async function planMerge(survivorId: string, loserId: string): Promise<Me
       memberships: number;
       influences: number;
       duplicate_genres: number;
+      duplicate_memberships: number;
+      duplicate_influences: number;
       self_edges: number;
     }>(sql`
       SELECT
@@ -84,14 +144,26 @@ export async function planMerge(survivorId: string, loserId: string): Promise<Me
              AND NOT EXISTS (SELECT 1 FROM artist_genres sg
                               WHERE sg.artist_id = ${survivorId}
                                 AND sg.genre_id = lg.genre_id)) AS genres,
-        (SELECT COUNT(*)::int FROM artist_memberships
-           WHERE (person_artist_id = ${loserId} OR group_artist_id = ${loserId})
-             AND person_artist_id <> ${survivorId}
-             AND group_artist_id <> ${survivorId}) AS memberships,
-        (SELECT COUNT(*)::int FROM artist_influences
-           WHERE (source_artist_id = ${loserId} OR target_artist_id = ${loserId})
-             AND source_artist_id <> ${survivorId}
-             AND target_artist_id <> ${survivorId}) AS influences,
+        (SELECT COUNT(*)::int FROM artist_memberships lm
+           WHERE (lm.person_artist_id = ${loserId} OR lm.group_artist_id = ${loserId})
+             AND lm.person_artist_id <> ${survivorId}
+             AND lm.group_artist_id <> ${survivorId}
+             AND NOT ${membershipCollides(survivorId, loserId)}) AS memberships,
+        (SELECT COUNT(*)::int FROM artist_influences li
+           WHERE (li.source_artist_id = ${loserId} OR li.target_artist_id = ${loserId})
+             AND li.source_artist_id <> ${survivorId}
+             AND li.target_artist_id <> ${survivorId}
+             AND NOT ${influenceCollides(survivorId, loserId)}) AS influences,
+        (SELECT COUNT(*)::int FROM artist_memberships lm
+           WHERE (lm.person_artist_id = ${loserId} OR lm.group_artist_id = ${loserId})
+             AND lm.person_artist_id <> ${survivorId}
+             AND lm.group_artist_id <> ${survivorId}
+             AND ${membershipCollides(survivorId, loserId)}) AS duplicate_memberships,
+        (SELECT COUNT(*)::int FROM artist_influences li
+           WHERE (li.source_artist_id = ${loserId} OR li.target_artist_id = ${loserId})
+             AND li.source_artist_id <> ${survivorId}
+             AND li.target_artist_id <> ${survivorId}
+             AND ${influenceCollides(survivorId, loserId)}) AS duplicate_influences,
         (SELECT COUNT(*)::int FROM artist_genres lg
            WHERE lg.artist_id = ${loserId}
              AND EXISTS (SELECT 1 FROM artist_genres sg
@@ -117,6 +189,8 @@ export async function planMerge(survivorId: string, loserId: string): Promise<Me
     },
     discards: {
       duplicateGenres: Number(row.duplicate_genres),
+      duplicateMemberships: Number(row.duplicate_memberships),
+      duplicateInfluences: Number(row.duplicate_influences),
       selfEdges: Number(row.self_edges),
     },
     irreversible: true,
@@ -127,7 +201,7 @@ export async function mergeArtists(input: MergeInput): Promise<void> {
   const { survivorId, loserId } = input;
 
   if (survivorId === loserId) {
-    throw new Error('Cannot merge an artist into itself.');
+    throw new MergeRefused('Cannot merge an artist into itself.');
   }
 
   const db = getDb();
@@ -149,7 +223,7 @@ export async function mergeArtists(input: MergeInput): Promise<void> {
      * the user took is not a safeguard.
      */
     if (pair.survivor_mbid !== null && pair.loser_mbid !== null) {
-      throw new Error(
+      throw new MergeRefused(
         'These artists have different MusicBrainz ids, which means MusicBrainz ' +
           'has them as different artists. They cannot be merged.',
       );
@@ -191,13 +265,34 @@ export async function mergeArtists(input: MergeInput): Promise<void> {
       WHERE (person_artist_id = ${loserId} AND group_artist_id = ${survivorId})
          OR (person_artist_id = ${survivorId} AND group_artist_id = ${loserId})
     `);
+    /**
+     * **Insert-on-conflict-then-delete, exactly as the genres above.** A plain
+     * UPDATE violates `UNIQUE NULLS NOT DISTINCT (person, group, instrument)`
+     * whenever both artists hold the same lineup row — which is the ordinary
+     * case for the duplicates this merge exists to resolve, not an edge. It was
+     * measured: `artist_memberships_person_group_instrument_key`, with the whole
+     * transaction rolled back and the artists left split.
+     *
+     * Both columns are rewritten in ONE statement rather than two. The loser can
+     * be the person or the group, and a row where it is both has already been
+     * deleted above as a self-edge — so a single CASE per column covers every
+     * surviving row and cannot collide with its own intermediate state, which
+     * two sequential UPDATEs could.
+     */
     await tx.execute(sql`
-      UPDATE artist_memberships SET person_artist_id = ${survivorId}
-      WHERE person_artist_id = ${loserId}
+      INSERT INTO artist_memberships
+        (person_artist_id, group_artist_id, instrument, began_year, ended_year, musicbrainz_id)
+      SELECT
+        CASE WHEN person_artist_id = ${loserId} THEN ${survivorId} ELSE person_artist_id END,
+        CASE WHEN group_artist_id  = ${loserId} THEN ${survivorId} ELSE group_artist_id  END,
+        instrument, began_year, ended_year, musicbrainz_id
+      FROM artist_memberships
+      WHERE person_artist_id = ${loserId} OR group_artist_id = ${loserId}
+      ON CONFLICT DO NOTHING
     `);
     await tx.execute(sql`
-      UPDATE artist_memberships SET group_artist_id = ${survivorId}
-      WHERE group_artist_id = ${loserId}
+      DELETE FROM artist_memberships
+      WHERE person_artist_id = ${loserId} OR group_artist_id = ${loserId}
     `);
 
     await tx.execute(sql`
@@ -205,13 +300,30 @@ export async function mergeArtists(input: MergeInput): Promise<void> {
       WHERE (source_artist_id = ${loserId} AND target_artist_id = ${survivorId})
          OR (source_artist_id = ${survivorId} AND target_artist_id = ${loserId})
     `);
+    /**
+     * The same treatment, for the same reason: PK `(source, target)` collides
+     * when both artists share a counterpart. Measured:
+     * `artist_influences_source_artist_id_target_artist_id_pk`.
+     *
+     * **`DO NOTHING`, so the SURVIVOR's row wins.** `strength` is a 1–5 judgement
+     * the user entered on the row they chose to keep; taking the loser's would
+     * overwrite a curated value with one arriving from elsewhere, which §8
+     * forbids. The discarded count is reported so the confirmation can say a
+     * duplicate edge was dropped rather than leaving it silent.
+     */
     await tx.execute(sql`
-      UPDATE artist_influences SET source_artist_id = ${survivorId}
-      WHERE source_artist_id = ${loserId}
+      INSERT INTO artist_influences (source_artist_id, target_artist_id, strength, notes)
+      SELECT
+        CASE WHEN source_artist_id = ${loserId} THEN ${survivorId} ELSE source_artist_id END,
+        CASE WHEN target_artist_id = ${loserId} THEN ${survivorId} ELSE target_artist_id END,
+        strength, notes
+      FROM artist_influences
+      WHERE source_artist_id = ${loserId} OR target_artist_id = ${loserId}
+      ON CONFLICT DO NOTHING
     `);
     await tx.execute(sql`
-      UPDATE artist_influences SET target_artist_id = ${survivorId}
-      WHERE target_artist_id = ${loserId}
+      DELETE FROM artist_influences
+      WHERE source_artist_id = ${loserId} OR target_artist_id = ${loserId}
     `);
 
     /**

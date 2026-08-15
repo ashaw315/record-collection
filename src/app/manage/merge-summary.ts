@@ -108,6 +108,12 @@ export function mergeSummary(
       plan.discards.duplicateGenres > 0
         ? `${plural(plan.discards.duplicateGenres, 'genre tag')} the artist you are keeping already has`
         : null,
+      plan.discards.duplicateMemberships > 0
+        ? `${plural(plan.discards.duplicateMemberships, 'lineup entry', 'lineup entries')} the artist you are keeping already has`
+        : null,
+      plan.discards.duplicateInfluences > 0
+        ? `${plural(plan.discards.duplicateInfluences, 'influence link')} the artist you are keeping already has`
+        : null,
       plan.discards.selfEdges > 0
         ? `${plural(plan.discards.selfEdges, 'link')} between these two artists, which stop meaning anything once they are one`
         : null,

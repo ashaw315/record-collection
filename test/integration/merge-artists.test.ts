@@ -184,6 +184,124 @@ describe('what is DISCARDED rather than moved', () => {
     expect(await count('artist_genres'), 'one tag, not two and not an error').toBe(1);
   });
 
+  it('drops a duplicate MEMBERSHIP instead of failing on the composite key', async () => {
+    /**
+     * **The same hazard as the genre case above, on the table that made it
+     * likely.** `artist_memberships` is keyed
+     * `UNIQUE NULLS NOT DISTINCT (person, group, instrument)`, and a lineup walk
+     * that resolved one person to two rows writes both of them into the same
+     * band on the same instrument. That is not an exotic case — it is precisely
+     * the duplicate this merge exists to resolve, so the feature failed on its
+     * own reason for existing.
+     *
+     * Measured before the fix: `artist_memberships_person_group_instrument_key`,
+     * with the transaction rolled back and the artists left split.
+     */
+    const { keeper, loser } = await twoArtists();
+    const [band] = await db.insert(artists).values({ name: 'Broken Bones' }).returning();
+
+    await db.execute(sql`
+      INSERT INTO artist_memberships (person_artist_id, group_artist_id, instrument)
+      VALUES (${keeper.id}, ${band.id}, 'bass'), (${loser.id}, ${band.id}, 'bass')
+    `);
+
+    await mergeArtists({ survivorId: keeper.id, loserId: loser.id });
+
+    expect(await count('artist_memberships'), 'one membership, not two and not an error').toBe(1);
+    expect(await count('artist_memberships', sql`person_artist_id = ${keeper.id}`)).toBe(1);
+  });
+
+  it('drops a duplicate membership where the instrument is NULL on both', async () => {
+    /**
+     * `NULLS NOT DISTINCT` is what makes this a collision at all — under
+     * Postgres' default semantics two null-instrument rows do not conflict.
+     * §4.3 calls that clause load-bearing, so the null case is asserted
+     * separately from the named-instrument one above rather than assumed to
+     * follow from it.
+     */
+    const { keeper, loser } = await twoArtists();
+    const [band] = await db.insert(artists).values({ name: 'Broken Bones' }).returning();
+
+    await db.execute(sql`
+      INSERT INTO artist_memberships (person_artist_id, group_artist_id)
+      VALUES (${keeper.id}, ${band.id}), (${loser.id}, ${band.id})
+    `);
+
+    await mergeArtists({ survivorId: keeper.id, loserId: loser.id });
+
+    expect(await count('artist_memberships')).toBe(1);
+  });
+
+  it('drops a duplicate membership reached from the GROUP side', async () => {
+    /**
+     * The move happens in two statements — one per column — so a duplicate can
+     * collide on either. A band recorded twice, with the same person in each,
+     * collides on `group_artist_id` where the case above collides on
+     * `person_artist_id`.
+     */
+    const { keeper, loser } = await twoArtists();
+    const [person] = await db.insert(artists).values({ name: 'Tony Atkinson' }).returning();
+
+    await db.execute(sql`
+      INSERT INTO artist_memberships (person_artist_id, group_artist_id, instrument)
+      VALUES (${person.id}, ${keeper.id}, 'drums'), (${person.id}, ${loser.id}, 'drums')
+    `);
+
+    await mergeArtists({ survivorId: keeper.id, loserId: loser.id });
+
+    expect(await count('artist_memberships')).toBe(1);
+    expect(await count('artist_memberships', sql`group_artist_id = ${keeper.id}`)).toBe(1);
+  });
+
+  it('drops a duplicate INFLUENCE instead of failing on the primary key', async () => {
+    /**
+     * `artist_influences` is keyed `(source_artist_id, target_artist_id)`. Two
+     * duplicate rows for one artist, both influenced by the same third artist,
+     * collide when the loser's edge moves.
+     *
+     * Measured before the fix:
+     * `artist_influences_source_artist_id_target_artist_id_pk`.
+     *
+     * The survivor's own edge WINS: its `strength` is the number the user
+     * curated on the row they chose to keep, and §8 forbids overwriting a
+     * user-entered value with one arriving from elsewhere.
+     */
+    const { keeper, loser } = await twoArtists();
+    const [third] = await db.insert(artists).values({ name: 'The Varukers' }).returning();
+
+    await db.execute(sql`
+      INSERT INTO artist_influences (source_artist_id, target_artist_id, strength)
+      VALUES (${third.id}, ${keeper.id}, 3), (${third.id}, ${loser.id}, 4)
+    `);
+
+    await mergeArtists({ survivorId: keeper.id, loserId: loser.id });
+
+    expect(await count('artist_influences'), 'one edge, not two and not an error').toBe(1);
+
+    const [row] = (
+      await db.execute<{ strength: number }>(
+        sql`SELECT strength FROM artist_influences WHERE target_artist_id = ${keeper.id}`,
+      )
+    ).rows;
+    expect(row.strength, "the survivor's own strength is not overwritten").toBe(3);
+  });
+
+  it('drops a duplicate influence reached from the TARGET side', async () => {
+    // As with memberships, the move is two statements and either can collide.
+    const { keeper, loser } = await twoArtists();
+    const [third] = await db.insert(artists).values({ name: 'The Varukers' }).returning();
+
+    await db.execute(sql`
+      INSERT INTO artist_influences (source_artist_id, target_artist_id, strength)
+      VALUES (${keeper.id}, ${third.id}, 2), (${loser.id}, ${third.id}, 5)
+    `);
+
+    await mergeArtists({ survivorId: keeper.id, loserId: loser.id });
+
+    expect(await count('artist_influences')).toBe(1);
+    expect(await count('artist_influences', sql`source_artist_id = ${keeper.id}`)).toBe(1);
+  });
+
   it('deletes an influence edge BETWEEN the two rather than making a self-edge', async () => {
     /**
      * "A influenced B" stops being a statement when A and B turn out to be one
@@ -354,6 +472,61 @@ describe('planMerge — what the confirmation must say', () => {
     expect(plan.discards.duplicateGenres, 'duplicates the survivor already has').toBe(1);
     expect(plan.discards.selfEdges, 'stops being a statement').toBe(1);
     expect(plan.moves.genres, 'and it is not double-counted as a move').toBe(0);
+  });
+
+  it('counts duplicate memberships and influences as discards, not moves', async () => {
+    /**
+     * The confirmation names what is lost. Duplicate genres were already
+     * counted; memberships and influences were not, so a merge that silently
+     * dropped a lineup row or an influence edge told the user nothing — and
+     * those are the two tables where a merge previously failed outright.
+     *
+     * A duplicate is not a move: counting it as both would overstate what
+     * survives.
+     */
+    const { keeper, loser } = await twoArtists();
+    const [band] = await db.insert(artists).values({ name: 'Broken Bones' }).returning();
+    const [third] = await db.insert(artists).values({ name: 'The Varukers' }).returning();
+
+    await db.execute(sql`
+      INSERT INTO artist_memberships (person_artist_id, group_artist_id, instrument)
+      VALUES (${keeper.id}, ${band.id}, 'bass'), (${loser.id}, ${band.id}, 'bass')
+    `);
+    await db.execute(sql`
+      INSERT INTO artist_influences (source_artist_id, target_artist_id, strength)
+      VALUES (${third.id}, ${keeper.id}, 3), (${third.id}, ${loser.id}, 4)
+    `);
+
+    const plan = await planMerge(keeper.id, loser.id);
+
+    expect(plan.discards.duplicateMemberships).toBe(1);
+    expect(plan.discards.duplicateInfluences).toBe(1);
+    expect(plan.moves.memberships, 'a duplicate is not also a move').toBe(0);
+    expect(plan.moves.influences, 'a duplicate is not also a move').toBe(0);
+  });
+
+  it('still counts a NON-duplicate membership and influence as a move', async () => {
+    // The complement of the test above: without it, a plan that reported
+    // everything as a discard would pass.
+    const { keeper, loser } = await twoArtists();
+    const [band] = await db.insert(artists).values({ name: 'Broken Bones' }).returning();
+    const [third] = await db.insert(artists).values({ name: 'The Varukers' }).returning();
+
+    await db.execute(
+      sql`INSERT INTO artist_memberships (person_artist_id, group_artist_id, instrument)
+          VALUES (${loser.id}, ${band.id}, 'bass')`,
+    );
+    await db.execute(
+      sql`INSERT INTO artist_influences (source_artist_id, target_artist_id, strength)
+          VALUES (${third.id}, ${loser.id}, 4)`,
+    );
+
+    const plan = await planMerge(keeper.id, loser.id);
+
+    expect(plan.moves.memberships).toBe(1);
+    expect(plan.moves.influences).toBe(1);
+    expect(plan.discards.duplicateMemberships).toBe(0);
+    expect(plan.discards.duplicateInfluences).toBe(0);
   });
 
   it('says the merge cannot be undone', async () => {

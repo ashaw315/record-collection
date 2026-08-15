@@ -5303,3 +5303,104 @@ code change, that look exactly like a regression.** The tell is the error text �
 failure. Before debugging code against a red `neon-transactions.test.ts`, check
 the credential and re-run; and stash local changes to confirm the failures
 predate them, which is what distinguished environment from regression both times.
+
+---
+
+# Steps 8–12 adversarial review — remediation
+
+Six units, one per defect class. Three claims were re-verified by probe against
+the local test database before any fix was written, because the fixes depend on
+being right and a probe is cheap. All three reproduced.
+
+## Unit 1 — `mergeArtists` failed on two of three composite keys
+
+**Measured before the fix**, each with the transaction rolled back and the two
+artists left split:
+
+- `artist_memberships_person_group_instrument_key` — two duplicate rows for one
+  person, both members of the same band on the same instrument.
+- `artist_influences_source_artist_id_target_artist_id_pk` — two duplicate rows
+  for one artist, both influenced by the same third artist.
+- Control: the `artist_genres` path SUCCEEDED on its own duplicate, which is
+  what showed the hazard was known and handled once out of three times.
+
+**The shape worth carrying.** `merge-artists.test.ts:168` already tested the
+genre collision and explained the mechanism correctly in its docblock. The same
+mechanism applied verbatim to two neighbouring tables in the same function, and
+neither had a test. A test that pins one instance of a general hazard reads, to
+the next person, as though the hazard is handled — the docblock is written in
+general terms while the coverage is specific. When a comment explains a CLASS of
+bug, check every member of the class.
+
+**Why these two are worse than genres.** Both are the ordinary case for the
+duplicates the merge exists to resolve: a lineup walk that resolved one person
+to two rows writes them into the same band on the same instrument, which is the
+duplicate the user is merging. So the feature failed on its own reason for
+existing, and only under the data that makes it necessary.
+
+**`IS NOT DISTINCT FROM`, not `=`, in the membership collision predicate.** The
+constraint is `UNIQUE NULLS NOT DISTINCT`, so two null instruments DO collide —
+but `null = null` is null, which a WHERE clause reads as false. A predicate
+using `=` would report "no duplicates" and then fail on the insert, which is
+worse than not checking: the plan would have promised the merge was safe.
+Asserted by its own test rather than assumed to follow from the named-instrument
+case.
+
+**Both membership columns are rewritten in ONE statement.** The loser may be the
+person or the group; a row where it is both has already been deleted as a
+self-edge. Two sequential UPDATEs could collide with their own intermediate
+state, which a single CASE per column cannot.
+
+**`DO NOTHING`, so the survivor's `strength` wins.** It is a 1–5 judgement the
+user entered on the row they chose to keep, and taking the loser's would
+overwrite a curated value with one arriving from elsewhere (§8).
+
+## The 409 that dressed a fault up as a decision
+
+`PATCH /api/artists/match-candidates/:id` caught EVERY throw from `mergeArtists`
+and returned `409 MERGE_REFUSED` with `error.message` verbatim. So the constraint
+violations above reached the user as
+
+    Failed query: INSERT INTO artist_memberships (…) VALUES (…)
+
+styled as a considered business answer, while the 409 told the caller nothing
+was wrong with the server. A rule and a fault are different things and the
+status code is the place that must not conflate them.
+
+Fixed with a typed `MergeRefused`: only that becomes a 409, everything else
+rethrows to `withErrorHandling` for a 500 with no internals in the body.
+
+**This endpoint had no tests at all** — that is why its error handling was
+wrong. `test/integration/api/artist-match-candidates.test.ts` now covers
+CLAUDE.md §2's four cases plus the rule-versus-fault distinction. The fault test
+asserts the response body does not contain `INSERT INTO`, which is the property
+that actually matters and which a status-code assertion alone would not catch.
+
+## Pre-existing E2E flake, not caused by this work
+
+`e2e/stats.spec.ts:145` (`[mobile]`, "reachable from the nav") failed once and
+passed on retry during the Unit 1 verification run: the nav link click did not
+navigate within 5s. Unit 1 touched only merge, match-candidates and
+merge-summary, so this is unrelated — recorded here so the next reader does not
+attribute it to the merge work. Worth a look during the deferred test pass.
+
+## Deferred deliberately, not forgotten
+
+**The pass-4 ceremony findings**, to be done as ONE considered pass rather than
+folded into defect work: ~19 near-identical auth stanzas across integration
+files; `e2e/tags-auth.spec.ts`'s 18 tests × 2 projects for one middleware
+matcher; the uniform 2× Playwright matrix where SPEC §11 flow 10 scopes mobile
+to collection + lookup only; and the file-text tests
+(`every-page-has-nav.test.ts:41` asserting `toContain('<AppHeader />')`,
+`drizzle-config.test.ts:44` asserting an import statement,
+`neon-gate.test.ts:55` asserting a comment). These cost runtime rather than
+correctness. Mixing them into defect commits would make the defect diffs hard to
+review, which is the actual reason to keep them apart.
+
+**`LookupClient.tsx` at 561 lines, and the market rendering implemented twice**
+(`MarketPanel.tsx` versus the inline block in `LookupClient.tsx`, both calling
+`marketSummary`). Real duplication — `MarketPanel`'s own docblock warns that
+building it per-screen "produces three implementations that drift", and `/lookup`
+then does exactly that. Deferred because refactoring a working screen in the
+middle of a remediation sequence is how a regression hides in a diff nobody can
+read cleanly.

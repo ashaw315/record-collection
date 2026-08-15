@@ -7,7 +7,7 @@ import {
   resolveMatchCandidate,
   type MatchResolution,
 } from '@/lib/db/queries/artist-match-candidates';
-import { mergeArtists } from '@/lib/db/queries/merge-artists';
+import { MergeRefused, mergeArtists } from '@/lib/db/queries/merge-artists';
 
 /**
  * SPEC.md §4.3 — answering one possible-duplicate pair.
@@ -59,16 +59,22 @@ export const PATCH = withErrorHandling(
       try {
         await mergeArtists({ survivorId: pair.survivorId, loserId: pair.loserId });
       } catch (error) {
-        // §4.3's two-MBID refusal reaches the user as a refusal, not a 500 —
-        // it is a rule, not a fault.
+        /**
+         * **Only a RULE becomes a 409.** §4.3's two-MBID refusal is a sentence
+         * the user should read, so it reaches them as a refusal rather than a
+         * 500. Anything else is a fault and must NOT be dressed up as one:
+         * catching everything here previously put
+         * `Failed query: INSERT INTO artist_memberships ...` in front of the
+         * user, styled as a considered answer, while telling the caller with a
+         * 409 that nothing was wrong with the server.
+         *
+         * Rethrowing lets `withErrorHandling` log it and answer 500 with no
+         * internals in the body (§5).
+         */
+        if (!(error instanceof MergeRefused)) throw error;
+
         return NextResponse.json(
-          {
-            error: {
-              message:
-                error instanceof Error ? error.message : 'These artists could not be merged.',
-              code: 'MERGE_REFUSED',
-            },
-          },
+          { error: { message: error.message, code: 'MERGE_REFUSED' } },
           { status: 409 },
         );
       }
