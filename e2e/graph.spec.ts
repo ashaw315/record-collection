@@ -39,7 +39,17 @@ test('the graph is reachable from the nav, not only by URL', async ({ page }) =>
   // A screen nothing links to is the unreachable-path shape that cost this
   // build §6's genre mapping (NOTES). Routable is not reachable.
   await page.goto('/');
-  await page.getByRole('navigation').getByRole('link', { name: 'Graph' }).click();
+
+  /**
+   * Scrolled into view before clicking, not merely clicked. The nav is
+   * `overflow-x-auto` and now carries six links, so on a 390px viewport "Graph"
+   * can start outside the scroll container — Playwright scrolls it in
+   * automatically, and under full-suite load the click has landed mid-scroll.
+   * Second sighting of this signature (see stats.spec.ts, NOTES).
+   */
+  const link = page.getByRole('navigation').getByRole('link', { name: 'Graph' });
+  await link.scrollIntoViewIfNeeded();
+  await link.click();
 
   await expect(page).toHaveURL(/\/graph$/, { timeout: 15_000 });
   await expect(page.getByRole('heading', { name: 'Graph', level: 1 })).toBeVisible();
@@ -58,6 +68,10 @@ test('loading the graph, clicking a node, and landing on the filtered collection
   const artist = await post(page, '/api/artists', { name: `Graphed-${suffix}` });
   await post(page, '/api/records', { title: `Graphed LP ${suffix}`, artistId: artist.id });
 
+  // The NETWORK view is a wide-screen feature since §8.1's fallback landed;
+  // below `sm` the list stands in and there are no nodes to click. The mobile
+  // project runs at 390px, so this test states the width it needs.
+  await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/graph');
 
   const node = page.getByTestId('graph-node').filter({ hasText: `Graphed-${suffix}` });
@@ -129,6 +143,64 @@ test('an influence edge is drawn between two collected artists', async ({ page }
   await expect(page.getByTestId('graph-link')).not.toHaveCount(0, { timeout: 15_000 });
 });
 
+test('a narrow screen gets the list, a wide one gets the network', async ({ page }) => {
+  /**
+   * §8.1: "a fallback list view for very small screens". At 390px the force
+   * layout still renders and pans, but the node labels are unreadable — so the
+   * information the graph carries is not actually available at that width.
+   *
+   * Asserted at BOTH widths in one test: a fallback that showed everywhere, or
+   * nowhere, would satisfy half of this and be plainly wrong.
+   */
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Narrow-${suffix}` });
+  await post(page, '/api/records', { title: `Narrow LP ${suffix}`, artistId: artist.id });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/graph');
+
+  const list = page.getByTestId('graph-fallback-list');
+  await expect(list, 'the list stands in on a phone').toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('img', { name: /network of artists/i })).toBeHidden();
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/graph');
+
+  await expect(page.getByRole('img', { name: /network of artists/i })).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(list, 'and gets out of the way on a desktop').toBeHidden();
+});
+
+test('the fallback list groups by genre and reaches the collection', async ({ page }) => {
+  /**
+   * The grouping is the point — a list that could not group would be an
+   * alphabetical index, which the graph already beats. And a row must go
+   * somewhere: §8.1's click-to-filter is the same destination a node has.
+   */
+  const suffix = makeSuffix();
+  const genre = await post(page, '/api/genres', { name: `Listed-${suffix}` });
+  const artist = await post(page, '/api/artists', { name: `Grouped-${suffix}` });
+  await post(page, '/api/records', {
+    title: `Grouped LP ${suffix}`,
+    artistId: artist.id,
+    genreIds: [genre.id],
+  });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/graph');
+
+  const list = page.getByTestId('graph-fallback-list');
+  await expect(list).toContainText(`Listed-${suffix}`, { timeout: 15_000 });
+
+  await list.getByRole('link', { name: new RegExp(`Grouped-${suffix}`) }).click();
+
+  await expect(page).toHaveURL(new RegExp(`artistId=${artist.id}`), { timeout: 15_000 });
+  await expect(page.getByRole('link', { name: `Grouped LP ${suffix}` })).toBeVisible({
+    timeout: 15_000,
+  });
+});
+
 test('the genre subset control narrows the graph to that genre', async ({ page }) => {
   /**
    * §10's `/graph` row: "Controls: genre subset, reset zoom." Selecting a genre
@@ -149,6 +221,8 @@ test('the genre subset control narrows the graph to that genre', async ({ page }
   const outGenre = await post(page, '/api/artists', { name: `OutGenre-${suffix}` });
   await post(page, '/api/records', { title: `Out LP ${suffix}`, artistId: outGenre.id });
 
+  // Wide: the subset control belongs to the network view (see above).
+  await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/graph');
   await page.getByRole('combobox', { name: 'Genre subset' }).selectOption(genre.id);
 

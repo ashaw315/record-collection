@@ -890,9 +890,26 @@ form the records work had not shown — see the masking entry under Open.
   | `.toThrow()` with no message | that the RIGHT error was thrown | that *something* threw |
   | `toEqual` on an object shape | the fields that matter | every field, including irrelevant ones — and passes when the ones that matter are absent from both sides |
   | `toContainText` on layout | that the value is VISIBLE | that the value is in the markup |
+  | `toHaveCount` on a hidden subtree | that the elements are ON SCREEN | that they are in the DOM — `display:none` changes neither the count nor the locator |
 
   Each resembles verification while leaving the named property free to be
   wrong. Noticed: steps 5-7; stated as a class 2026-08-10.
+
+  **Fourth instance, unit 12g — same cause as the `toContainText` variant.**
+  The graph's `sm:hidden` / `hidden sm:block` swap hides the canvas on phones
+  with CSS, so the SVG subtree still mounts. Two E2E tests that count
+  `graph-node` elements passed unchanged on the mobile project **while the
+  canvas was invisible to a user.** They read the markup, not the screen.
+
+  This is also the same family as the dead node click (unit 12d): green because
+  the element EXISTS, while the feature it stands for is unavailable. In both
+  cases the counting assertion was satisfied and the thing a user would do —
+  see the graph, click a node — did not work.
+
+  `toBeVisible` / `toBeHidden` are the matchers that know the difference. The
+  narrow/wide test in graph.spec.ts asserts with both, at both widths, in one
+  test: a fallback that appeared everywhere, or nowhere, would satisfy half of
+  that and be plainly wrong.
 
   **CONCURRENCY VARIANT: a concurrency test that is not actually concurrent
   proves only what the sequential path already covers.** Same failure in a
@@ -5067,6 +5084,64 @@ absence. The likely shape is the default 5s `toHaveURL` timeout being tight for
 a mobile nav click when workers are saturated; the neighbouring assertions in
 that file pass `timeout: 15_000` explicitly. Worth watching for a second
 occurrence before touching it.
+
+**Second sighting, unit 12g** — same signature, different file:
+`graph.spec.ts`'s nav test, mobile only, `toHaveURL` timing out after a nav
+click, flaky under full-suite load and 12/12 green in isolation. Two files now
+share it, so it is a pattern rather than one bad test.
+
+A mechanism that fits both: `AppHeader`'s nav is `overflow-x-auto` and now
+carries SIX links. At 390px the later ones start outside the scroll container,
+Playwright auto-scrolls to reach them, and under load the click can land
+mid-scroll. Both failing tests click a nav link near the end of that row.
+
+Mitigated in graph.spec.ts with an explicit `scrollIntoViewIfNeeded()` before
+the click — the assertion is untouched. **Called a mitigation, not a fix**: it
+only ever reproduced under full-suite load, so the evidence is one clean full
+run, which is weak.
+
+## FOR STEP 15's MOBILE PASS: six links in a scrolling nav
+
+The flake above is a symptom; this is the finding. `AppHeader` now carries six
+links — Collection, Want list, Look up, Stats, Graph, Manage — in a single
+`overflow-x-auto` row.
+
+**Measured at 390px, not assumed:** the nav needs `scrollWidth` 394 in a
+`clientWidth` of 237, and **three of the six links are entirely off-screen** —
+Stats (right edge at 409), Graph (466) and Manage (535), against a 390px
+viewport. They sit behind a horizontal scroll with no affordance indicating
+there is anything there.
+
+That is a real usability problem, not a test-timing one. §10 makes mobile an
+equal priority and describes the phone case as "standing in a record store" —
+and half the app is invisible there. The test flake was the cheap symptom; a
+user simply does not discover the tail of that list.
+
+Worth noting it predates this step, and this was measured too rather than
+assumed — the Graph link was temporarily removed and the page re-measured. At
+five links: `scrollWidth` 337 in the same 237px container, with Stats and Manage
+already off-screen. **Step 12 took it from two hidden links to three.** The
+Graph screen did not create the problem, it made it measurable.
+
+Not acted on, because it is a §10 navigation change rather than anything step 12
+called for. Options worth weighing at step 15: a wrapping two-row nav on narrow
+widths, a scroll affordance (fade or chevron), or moving the rarely-in-store
+screens (Stats, Manage, Graph) behind a menu. **Adding a seventh link before
+this is addressed will make it worse.**
+
+## DOM presence is not visibility (unit 12g)
+
+**Recorded with the assertion-shape class above, as its fourth instance** — same
+cause as the `toContainText` variant, so it belongs in that table rather than
+standing alone. Short version: two E2E tests counting `graph-node` elements
+passed on mobile while the canvas was hidden by CSS.
+
+A related cost, noted at the swap in page.tsx and not fixed: because it is CSS
+rather than a gate, a phone still mounts the canvas and runs its 300-tick force
+simulation to produce a picture nobody sees. That is wasted work on the device
+least able to afford it. Fixing it properly needs a client-side width check,
+which trades a hydration concern for a performance one — worth doing only if the
+graph grows enough for the simulation to be felt.
 
 ## Two bugs the tests passed and the screenshot caught (unit 12d)
 
