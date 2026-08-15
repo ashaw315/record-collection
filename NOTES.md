@@ -5005,3 +5005,226 @@ discarded".
 A related latent flake, fixed in passing: the progress test clicked the lineup
 button with no prior wait for the row to exist, unlike the picker test beside
 it. It passed only because the row happened to render fast enough.
+
+## Ordering by uuid makes a test a coin flip (unit 12b)
+
+`shared_member` orders its pair by artist id (§8.1), and artist ids are random
+uuids. A test that expected `source: a1, target: a2` — insertion order — was
+therefore asserting a 50/50 outcome. **It passed when the file ran alone and
+failed in the full suite**, which reads like cross-test pollution and is nothing
+of the kind: same test, same data, different uuids.
+
+The fix was to sort the pair in the expectation, the same rule the code follows.
+Worth generalising: **whenever output ordering is derived from a generated id,
+the test must derive its expectation the same way rather than from the order
+rows were inserted.** Insertion order is the intuitive guess and it is wrong
+half the time, which is the worst possible failure rate — frequent enough to
+break CI, rare enough to look like a flake.
+
+I re-ran the file six times after fixing it, because one green run of a coin
+flip is not evidence.
+
+## Two open questions for 12c/12d, not acted on
+
+- **Genre nodes are unfiltered by ownership in one respect.** `buildGraph`
+  emits a genre node for any genre tagged on an owned record, which is correct,
+  but a genre whose only records fall outside a `genreId` subset still needs
+  checking against the real data once the screen exists.
+- **`member_of` weight is the person's own owned-record count**, per §8.1's
+  "count of records linking the pair". For a membership that is the reading
+  that makes sense, but it means a prolific solo artist has a heavy edge to a
+  band he played one session for. Worth looking at on the rendered graph before
+  deciding it is wrong — which is exactly the tribute-act instruction: build it,
+  look at it, then decide.
+
+## zod 4's `.uuid()` rejects a hand-written uuid (unit 12c)
+
+`11111111-2222-3333-4444-555555555555` is uuid-SHAPED and not a valid uuid: zod
+4 enforces the version and variant nibbles. The "unused id" constant in the
+route tests was therefore rejected at validation and never reached the query,
+turning a test written to assert *200 with an empty result* into an assertion
+about a 400.
+
+It failed loudly and immediately, so it cost nothing — but the same constant in
+a test asserting a 404 or a 400 would have PASSED, for entirely the wrong
+reason. Any test that needs a well-formed-but-unmatched id should use a real v4
+(`3f2504e0-4f89-41d3-9a0c-0305e82c3301` here) rather than a readable pattern of
+repeated digits.
+
+## An unrelated mobile flake in stats.spec.ts, not fixed (unit 12c)
+
+`the stats screen is reachable from the nav, not only by URL` failed once on
+mobile during a full E2E run — `toHaveURL` timed out at 5s after clicking the
+nav link. It is not caused by unit 12c, which added an API route and no nav or
+screen: verified by stashing the unit's two files and watching it pass, then
+restoring and running it six times (green), then running the full suite again
+(green, 310 passed).
+
+**Recorded rather than fixed, and deliberately not called fixed.** It reproduces
+only under full-suite load, so the six-run check is weaker evidence here than it
+was for the uuid coin flip — a single full-suite pass afterwards does not prove
+absence. The likely shape is the default 5s `toHaveURL` timeout being tight for
+a mobile nav click when workers are saturated; the neighbouring assertions in
+that file pass `timeout: 15_000` explicitly. Worth watching for a second
+occurrence before touching it.
+
+## Two bugs the tests passed and the screenshot caught (unit 12d)
+
+Both were found by rendering the graph and looking at it. Neither would have
+been caught by any test in this repo, and the first is the more instructive.
+
+**Clicking a node did nothing.** `onPointerDown` called `setPointerCapture`,
+which swallows the click that follows — so §8.1's click-to-filter, the whole of
+§11 flow #6, silently did not work in a browser. What made it diagnosable was
+that KEYBOARD activation navigated correctly: same handler, same route, so the
+fault had to be in pointer handling rather than in the navigation. Capture is
+now deferred until the pointer has actually moved a pixel.
+
+**Three of seven nodes were drawn outside the canvas.** A fixed 900×560 viewBox
+clipped whatever the charge force pushed beyond it. The tell was in the render
+itself: the header read "7 nodes" while four were visible — the count and the
+picture disagreeing, which is the kind of internal contradiction worth building
+into a UI deliberately, because it is what made a silent bug loud.
+
+The viewBox is now fitted to the settled layout. **This is not layout tuning
+against §8.1** — no node moves, the camera is pointed at where the simulation
+put them. Framing a photograph, not staging one. `boundsFor` and `radiusFor`
+moved into `graph-layout.ts` with unit tests, per §2's rule that the probe which
+found a bug becomes a test.
+
+**The general lesson: a graph screen cannot be verified by assertions alone.**
+Every E2E test passed while the node click was dead, because they asserted node
+COUNTS. Flow #6 caught it only once it clicked a node and followed the URL.
+
+## Artist nodes are all one colour, and it shows (unit 12d, for 12e or later)
+
+§8.1 says "colour by top-level ancestor genre", but the §8.1 payload gives an
+artist node no genre — only genre nodes carry `parentGenreId`. So artists render
+neutral grey and the palette only ever appears on genre nodes.
+
+Visible in the screenshot: two genre nodes are red and blue, and all five
+artists are identical grey. Colour is doing almost no work on the screen the
+user actually reads, since artists are most of the graph.
+
+Fixing it needs a decision, not code: either the payload gains an artist→genre
+association (a shape change to §8.1) or artists inherit colour from a linked
+genre node in the client. Not acted on — flagged, as with the `member_of`
+weight and the tribute acts.
+
+**Resolved in unit 12e as a MISSING LINK TYPE, not a colour problem.** The
+proposed fix — "artists inherit colour by walking artist → genre → root" —
+turned out to be unexecutable: §8.1's four link types all connected artist↔artist
+or genre↔genre, so there was no artist→genre hop to walk. Checking that before
+building on it is what turned a cosmetic ticket into the real defect: the genre
+nodes were ORPHANS, drawn and connected to nothing, while §8.1's own claim that
+clusters emerge from "shared genres" went unmet.
+
+§8.1 now specifies `has_genre` (weight: the artist's owned records in that
+genre). Measured on a seeded graph: connections went 2 → 5 and two real clusters
+formed — Discharge + The Varukers around UK82, Dire Straits + DS Legacy around
+Rock — where previously every genre node floated alone. An artist whose records
+carry no genre still sits alone, which is the §8.1 sparseness rule holding in the
+same picture that shows the clusters.
+
+## An inert mutation is not a passing test (unit 12e)
+
+While mutation-checking `has_genre` I wrote a mutation meant to leak want-list
+genres into the graph, and the suite stayed green. The obvious read is "the test
+is decorative" — but the mutation was INERT: it only joined want-list rows with
+an `acquired_record_id`, which the test's row does not have. It changed no
+behaviour, so nothing could catch it.
+
+A second mutation that actually introduced the leak failed the test immediately.
+**When a mutation does not fail a test, check that the mutation does what you
+think before concluding the test is worthless** — otherwise the conclusion is to
+delete a test that was working, which is worse than the decorative test it was
+meant to find.
+
+## Sibling genres get different colours (unit 12f) — FIXED in 12f-fix
+
+UK82 and US Hardcore are both children of Punk, so §8.1's "colour by top-level
+ancestor" should give them one colour family. On the rendered graph they came
+out blue and amber. Recorded as an `it.fails` test in `graph-colour.test.ts`, so
+the defect is asserted rather than described — it turns red the moment the fix
+lands.
+
+**The cause is in the payload, not the walk.** `buildGraph` emits a genre node
+only for genres with directly-tagged owned records (12b's deliberate no-rollup
+rule). A Punk that has children with records but none of its own is therefore
+absent, and `topLevelAncestors` applies its dangling-parent guard — which is
+CORRECT for a `genreId` subset, where following a filtered-out genre would key
+colour to an invisible node, and WRONG here, where the parent exists in the
+hierarchy and merely owns nothing.
+
+The two cases are indistinguishable from the payload: both look like "parent id
+not among the nodes."
+
+**It is also not only a colour bug.** `genre_parent` edges break at the same
+places, so the hierarchy §8.1 claims to draw is broken wherever an intermediate
+genre has no direct records.
+
+The fix worth considering: have `buildGraph` emit ancestor genre nodes for any
+emitted genre, so Punk appears whenever UK82 does. That contradicts nothing in
+§8.1 — the node would carry `ownedCount: 0` honestly, and 12b's no-rollup rule
+is about COUNTS, not about which nodes exist. But it does put zero-count nodes on
+screen, which is what the people-are-edges rule deliberately avoided, so it is a
+decision rather than a cleanup. Not acted on.
+
+**Resolved: `buildGraph` now emits ancestors** via a recursive CTE from the
+owned genres upward. Measured on the same seed that exposed it — the whole punk
+family (UK82, US Hardcore, Discharge, Varukers, Black Flag) is now one blue tree
+joined through a Punk node, where before UK82 and US Hardcore were separate blue
+and amber islands.
+
+**Why zero-count genres are emitted while zero-count artists are not**, since
+the rules read as contradictory and the code says so at the query: the
+difference is what the node is FOR. A session player at count zero is a dot
+nobody would click, so it collapses into an edge. Punk at count zero is a genre
+the user navigates by, and it is what its children hang from. The count stays
+honest either way — zero means nothing is tagged Punk directly, which is true,
+and §7.1's rollup deliberately still does not apply.
+
+One consequence worth knowing: **the fix did not make the walk's dangling-parent
+guard dead.** A `genreId` subset can still drop a parent, so that branch is now
+covered by its own test rather than by the sibling case that used to reach it.
+
+## An `it.fails` must be written against the layer where the fix will land
+
+The sibling-colour defect was recorded as an `it.fails` in the COLOUR unit tests.
+When the fix landed it did not flip to red — because that test calls
+`artistGenreAncestors` directly with a hand-built genre list omitting the parent,
+so it exercises the walk in isolation while the fix was in the PAYLOAD. The walk
+was never wrong.
+
+**An expected-fail that cannot observe its own fix is a false record of an open
+bug**: it sits green forever, describing a defect that no longer exists, and the
+next person reads it as live. Write the `it.fails` at the layer the fix will land
+— here, an integration test against `buildGraph` — or don't write one.
+
+The better half of the same finding: checking whether the walk's dangling-parent
+guard had become dead showed it had NOT. A `genreId` subset can still drop a
+parent. That branch had only ever been reached incidentally by the sibling case,
+and it now has a test of its own.
+
+## The Neon transaction tests need live credentials, and they expired mid-session
+
+`test/integration/neon-transactions.test.ts` began failing 9/9 with `password
+authentication failed for user 'neondb_owner'`. **Not a regression** — verified
+by stashing all working changes and reproducing the identical failures on a
+clean tree. It passed earlier the same day, so the credential rotated or expired
+between runs.
+
+Worth knowing for anyone reading a red suite: this file is the §2 driver-caveat
+test and is the ONE part of the suite that talks to a real network service. Every
+other integration test runs against local Postgres via Docker. A failure here
+says nothing about the code under test.
+
+**This credential has now expired twice.** `NEON_TEST_DATABASE_URL` was replaced
+and the suite went green again (10 passed, 1 skipped, confirmed by running it,
+not assumed). The pattern is worth naming because the failure mode is
+misleading: **nine red tests in an otherwise hermetic suite, arriving with no
+code change, that look exactly like a regression.** The tell is the error text —
+`password authentication failed for user 'neondb_owner'` — not an assertion
+failure. Before debugging code against a red `neon-transactions.test.ts`, check
+the credential and re-run; and stash local changes to confirm the failures
+predate them, which is what distinguished environment from regression both times.

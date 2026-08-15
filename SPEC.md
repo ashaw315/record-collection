@@ -646,10 +646,12 @@ This applies to the versions list as much as to search. The drill-down is where 
   links: Array<{
     source: string;
     target: string;
-    type: "influence" | "member_of" | "genre_parent" | "shared_member";
+    type: "influence" | "member_of" | "genre_parent" | "shared_member" | "has_genre";
     weight: number;              // influence: artist_influences.strength (1-5).
                                  // member_of: count of records linking the pair.
                                  // genre_parent: always 1.
+                                 // shared_member: count of people the two groups have in common.
+                                 // has_genre: count of the artist's owned records tagged with that genre.
   }>
 }
 ```
@@ -659,6 +661,16 @@ Rendering:
 - Node radius scales with `ownedCount`.
 
 **The graph is the collection, not the want list.** A want-list sociogram — records to hunt, sized by priority, carrying best-dig notes and price ranges — is a different and arguably more useful screen, but it answers a different question and is deliberately out of scope here. This graph shows what is on the shelf and how it connects.
+
+**`has_genre` connects an artist to each genre their owned records carry**, derived from `record_genres` at query time rather than stored. Without it the genre nodes are orphans — drawn, unconnected, and doing nothing — while §8.1's own claim that clusters emerge from "shared genres" goes unmet. Two artists tagged UK82 cluster because they both connect to the UK82 node, which connects upward through `genre_parent`.
+
+It is also what makes colour possible. Artists are coloured by their top-level ancestor genre, walked `artist → genre → root`, using the genre with the most of that artist's owned records and breaking ties by name so the same collection always colours the same way. An artist whose records carry no genre stays grey — that is an honest absence, not a gap to fill.
+
+**People are edges, not nodes.** A membership import pulls in every session player and side project — Adam's collection has 71 artists of which 4 have records. Emitting those 67 as nodes produces a hairball around the four that matter, and rendering them at `ownedCount: 0` means radius zero: invisible dots still occupying force-simulation space.
+
+So a person who links two groups is collapsed into a `shared_member` edge between them, weighted by how many people they have in common. Alan Clark becomes an edge between Dire Straits and Dire Straits Legacy rather than a dot nobody would click. `member_of` remains person-to-group only where the person is themselves an artist in the collection; otherwise the person does not appear.
+
+This also makes the tribute-act problem legible rather than hidden: Dire Straits Experience connects at weight 3, a one-hired-player overlap at weight 1, and the difference is visible in the graph rather than buried in the import.
 
 **Expect it to be sparse, and do not disguise that.** Clusters emerge from edges that exist: shared members (§4.3), shared genres, and the genre hierarchy. A collection of unrelated artists is genuinely a scatter of unconnected dots, and a layout that implies structure where the data has none would be the confidently-misleading shape §8 warns about. If a node has no edges, it sits alone.
 - Colour by top-level ancestor genre.
@@ -739,7 +751,7 @@ Responsive throughout — **desktop and mobile are equal priorities**, not deskt
 | Add/edit record | `/records/new`, `/records/:id/edit` | Form prefilled from a lookup result, or blank for manual entry. All prefilled fields remain editable — the user verifies against the physical record and corrects. Inline create for artist/label/store/tag. Pressing details are entered here, not on a separate screen: catalog number, matrix/runout, country, year pressed, pressing plant, vinyl weight, colour variant, and whether it is a reissue. All optional — the in-store case must stay enterable in seconds. |
 | Add/edit want-list item | `/want-list/new`, `/want-list/:id/edit` | Form for a wanted record, mirroring the record form's structure. Fields: title, artist, label, priority, target pressing, best-dig notes, max price. Prefilled from a `/lookup` result via `?discogsReleaseId=`, or blank. **`best_dig_notes` and `max_price` are visually and structurally separate** (§7.2) — never one section, never one label. Reference rows are matched, never created: a prefill is not a commitment, and an artist created for an abandoned form is debris nothing points at. When a Discogs value matches no existing row, leave the field empty and name what could not be found. |
 | Want list | `/want-list` | Sorted by priority. Each row shows target pressing and best-dig notes. "Mark acquired" action opens the record form prefilled. |
-| Graph | `/graph` | The force-directed network. Controls: include owned/wanted/both, genre subset, reset zoom. |
+| Graph | `/graph` | The force-directed network. Controls: genre subset, reset zoom. Owned records only — there is no want-list view (§8.1). |
 | Shelf order | `/shelf` | Ordered sections, bridge records marked, print stylesheet, alphabetical toggle. |
 | Suggestions | `/suggestions` | Graph-based list with reasons, always present. Separate "Ask Claude for gap analysis" button for §9.2. Add-to-want-list on each. |
 | Stores | `/stores` | List with favorite toggle; each store shows records acquired there and total spend. |

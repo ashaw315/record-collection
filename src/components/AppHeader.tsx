@@ -25,6 +25,7 @@ const LINKS = [
   // Linked, not just routable: a screen nothing navigates to is the
   // unreachable-path shape that cost this build §6's genre mapping (NOTES).
   { href: '/stats', label: 'Stats' },
+  { href: '/graph', label: 'Graph' },
   { href: '/manage', label: 'Manage' },
 ] as const;
 
