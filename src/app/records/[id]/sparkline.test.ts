@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sparklinePoints, priceRange } from './sparkline';
+import { sparklinePoints, priceRange, paidObservations } from './sparkline';
 
 /**
  * §10's "price history sparkline" on the record detail screen.
@@ -130,5 +130,90 @@ describe('priceRange', () => {
     ]);
 
     expect(range).toEqual({ low: '9.00', high: '35.50' });
+  });
+});
+
+describe('paidObservations — the chart and its bounds exclude `asking`', () => {
+  /**
+   * **§7.6 already draws this line and the chart crossed it.**
+   *
+   * Estimated value sums the latest `used`, falling back to `new`, and never
+   * `asking` — because an asking price is what someone WANTED and nobody paid.
+   * `value-statement.ts` says so in as many words: it "is not evidence of what a
+   * record is worth, and it would inflate this headline figure".
+   *
+   * The sparkline plotted all three as one series and `priceRange` reported the
+   * bounds across all three, so a single optimistic shop tag drew a spike and
+   * was announced — in the visible text and in the aria-label — as this record's
+   * high. The per-row list below the chart carried the meaning correctly; the
+   * summary and the shape, which are read first, did not.
+   *
+   * Concrete: used $8.00, asking $120.00, used $9.50 rendered
+   * "3 observations, $8.00 to $120.00" over a chart spiking to $120.
+   */
+  const paid = (price: string, recordedAt: string) => ({
+    id: `paid-${recordedAt}`,
+    price,
+    priceType: 'used',
+    recordedAt,
+  });
+  const asking = (price: string, recordedAt: string) => ({
+    id: `ask-${recordedAt}`,
+    price,
+    priceType: 'asking',
+    recordedAt,
+  });
+
+  it('keeps `used` and `new`, drops `asking`', () => {
+    const kept = paidObservations([
+      paid('8.00', '2024-01-01T00:00:00Z'),
+      asking('120.00', '2025-06-01T00:00:00Z'),
+      { id: 'n', price: '30.00', priceType: 'new', recordedAt: '2025-07-01T00:00:00Z' },
+    ]);
+
+    expect(kept.map((row) => row.priceType).sort()).toEqual(['new', 'used']);
+  });
+
+  it('bounds a mixed history by what was actually PAID', () => {
+    const observations = [
+      paid('8.00', '2024-01-01T00:00:00Z'),
+      asking('120.00', '2025-06-01T00:00:00Z'),
+      paid('9.50', '2026-01-01T00:00:00Z'),
+    ];
+
+    expect(priceRange(paidObservations(observations))).toEqual({ low: '8.00', high: '9.50' });
+  });
+
+  it('plots only the paid observations', () => {
+    const observations = [
+      paid('8.00', '2024-01-01T00:00:00Z'),
+      asking('120.00', '2025-06-01T00:00:00Z'),
+      paid('9.50', '2026-01-01T00:00:00Z'),
+    ];
+
+    expect(sparklinePoints(paidObservations(observations))).toHaveLength(2);
+  });
+
+  it('returns nothing when every observation is an asking price', () => {
+    /**
+     * Not a chart of one flat line, and not a chart of the asking prices
+     * either: there is no evidence of what this record is worth. The component
+     * renders its empty state, which is honest.
+     */
+    expect(paidObservations([asking('120.00', '2025-06-01T00:00:00Z')])).toEqual([]);
+    expect(priceRange(paidObservations([asking('120.00', '2025-06-01T00:00:00Z')]))).toBeNull();
+  });
+
+  it('leaves an unrecognised type OUT rather than assuming it was paid', () => {
+    /**
+     * The direction of the guess matters. `price_type` is a Postgres enum today,
+     * but §5.7's cron is the writer and a fourth value would arrive here before
+     * it arrived in this file. Treating an unknown type as paid would put it in
+     * the headline figure; leaving it out understates rather than inflates, and
+     * the per-row list still shows it.
+     */
+    expect(
+      paidObservations([{ id: 'x', price: '99.00', priceType: 'auction', recordedAt: '2026-01-01T00:00:00Z' }]),
+    ).toEqual([]);
   });
 });

@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { badRequest, invalidJson, notFound, validationError } from '@/lib/api/errors';
+import { badRequest, duplicate, invalidJson, notFound, validationError } from '@/lib/api/errors';
 import { withErrorHandling } from '@/lib/api/handler';
-import { findArtistById, updateArtist } from '@/lib/db/queries/artists';
+import {
+  findArtistById,
+  findArtistByMusicbrainzId,
+  updateArtist,
+} from '@/lib/db/queries/artists';
 import { MusicBrainzError } from '@/lib/musicbrainz/client';
 import { pickDisambiguated, searchArtistsByName } from '@/lib/musicbrainz/search-artist';
 import { walkLineup } from '@/lib/musicbrainz/walk-lineup';
@@ -53,6 +57,41 @@ export const POST = withErrorHandling(
     const artist = await findArtistById(id);
     if (artist === undefined) return notFound('Artist not found');
 
+    /**
+     * Confirming an MBID that another local row already holds.
+     *
+     * `artists.musicbrainz_id` is unique when present (§4.1), and this endpoint
+     * wrote it with a bare `updateArtist` — so a collision surfaced as a raw
+     * Postgres error that the `MusicBrainzError` catch below does not match,
+     * and escaped as a 500 saying "Internal server error".
+     *
+     * **It is reachable through the app's own behaviour.** The walk's
+     * `resolveArtist` creates rows carrying MBIDs for every band and member it
+     * meets, so walking one artist can mint a row for some group, and a later
+     * "Lineup" on a hand-entered row for that same group confirms an id the
+     * walk already attached elsewhere. That is a duplicate the user can
+     * resolve — the situation §4.3's match-candidate review exists for — so it
+     * answers 409 naming the holder, per §5.4's rule that every DUPLICATE
+     * carries `existingId`.
+     *
+     * Checked BEFORE writing rather than recovered after: the read is cheap,
+     * and it keeps the refusal from depending on which of the two write sites
+     * below was taken.
+     */
+    const claimMbid = async (mbid: string): Promise<NextResponse | null> => {
+      const holder = await findArtistByMusicbrainzId(mbid);
+      if (holder !== undefined && holder.id !== id) {
+        return duplicate(
+          `Another artist (${holder.name}) already carries that MusicBrainz id. ` +
+            'If they are the same artist, merge them from the review below.',
+          holder.id,
+        );
+      }
+
+      await updateArtist(id, { musicbrainzId: mbid });
+      return null;
+    };
+
     try {
       /**
        * The id wins over the name whenever we have one — the user's choice
@@ -75,14 +114,17 @@ export const POST = withErrorHandling(
           return NextResponse.json({ walked: false, candidates: hits });
         }
 
-        await updateArtist(id, { musicbrainzId: chosen.mbid });
+        const refused = await claimMbid(chosen.mbid);
+        if (refused !== null) return refused;
+
         const result = await walkLineup(chosen.mbid);
         return NextResponse.json({ walked: true, candidates: [], ...result });
       }
 
       // A user-supplied id is a confirmation, so it is stored (§4.3).
       if (parsed.data.musicbrainzId !== undefined) {
-        await updateArtist(id, { musicbrainzId: parsed.data.musicbrainzId });
+        const refused = await claimMbid(parsed.data.musicbrainzId);
+        if (refused !== null) return refused;
       }
 
       const result = await walkLineup(known);

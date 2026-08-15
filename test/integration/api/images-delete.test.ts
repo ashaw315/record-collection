@@ -192,3 +192,102 @@ describe('DELETE /api/images/:id', () => {
     expect((await remove(imageId)).status).toBe(404);
   });
 });
+
+describe('DELETE /api/records/:id — the blobs go too', () => {
+  /**
+   * **The one path where the documented asymmetry did not hold.**
+   *
+   * `images.record_id` is `ON DELETE CASCADE`, so deleting a record removes the
+   * image ROWS in the database and nothing ever touched the blobs. That is the
+   * same "blob with no row" wreckage the single-image delete accepts
+   * deliberately — except here it happens SILENTLY, in bulk, and
+   * unrecoverably: the rows that held the URLs are gone, so nothing can find
+   * the orphans afterwards. The single-image path at least logs the URL.
+   *
+   * A record with six photos leaked six blobs, with no log line and no way to
+   * enumerate them later.
+   */
+  async function seedRecordWithImages(count: number): Promise<{ recordId: string }> {
+    const artist = await (
+      await import('@/lib/db/queries/artists')
+    ).createArtist({ name: 'Discharge' });
+
+    const created = await createRecord(
+      new Request('http://test/api/records', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'Hear Nothing', artistId: artist.id }),
+      }),
+    );
+    const recordId = (await created.json()).id;
+
+    for (let index = 0; index < count; index += 1) {
+      const form = new FormData();
+      form.set('file', new File([JPEG_BYTES as BlobPart], `sleeve-${index}.jpg`, {
+        type: 'image/jpeg',
+      }));
+      await uploadImage(
+        new Request(`http://test/api/records/${recordId}/images`, { method: 'POST', body: form }),
+        { params: Promise.resolve({ id: recordId }) },
+      );
+    }
+
+    return { recordId };
+  }
+
+  const removeRecord = async (id: string) => {
+    const { DELETE } = await import('@/app/api/records/[id]/route');
+    return DELETE(new Request(`http://test/api/records/${id}`, { method: 'DELETE' }), {
+      params: Promise.resolve({ id }),
+    });
+  };
+
+  it('deletes every image blob when the record is deleted', async () => {
+    const { recordId } = await seedRecordWithImages(3);
+
+    const response = await removeRecord(recordId);
+
+    expect(response.status).toBe(200);
+    expect(delSpy, 'one blob delete per image row that cascaded').toHaveBeenCalledTimes(3);
+  });
+
+  it('still deletes the record when a blob delete fails', async () => {
+    /**
+     * Same precedence as the single-image path: the user asked for the record
+     * to be gone. A storage failure must not leave it on screen with no way to
+     * remove it — the leak is the cheap wreckage and it is LOGGED, never
+     * swallowed, because an orphan nobody can find is how a bill grows without
+     * explanation.
+     */
+    const errors = vi.spyOn(logger, 'error').mockImplementation(() => {});
+    const { recordId } = await seedRecordWithImages(1);
+    delSpy.mockRejectedValueOnce(new Error('storage unreachable'));
+
+    const response = await removeRecord(recordId);
+
+    expect(response.status, 'the delete still succeeds').toBe(200);
+    expect(errors, 'and the orphan is named in the log').toHaveBeenCalled();
+    expect(String(errors.mock.calls[0]?.[1]), 'with the URL, so it can be found').toContain(
+      STORED_URL,
+    );
+  });
+
+  it('deletes a record with no images without touching storage', async () => {
+    // The ordinary case must not pay for the feature: no images means no blob
+    // calls at all, not a call with an empty list.
+    const artist = await (
+      await import('@/lib/db/queries/artists')
+    ).createArtist({ name: 'Discharge' });
+    const created = await createRecord(
+      new Request('http://test/api/records', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'Why', artistId: artist.id }),
+      }),
+    );
+
+    await removeRecord((await created.json()).id);
+
+    expect(delSpy).not.toHaveBeenCalled();
+  });
+});

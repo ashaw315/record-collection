@@ -32,8 +32,25 @@ const MEANINGS: Record<PriceType, string> = {
   asking: 'what someone wanted — nobody paid this',
 };
 
+/**
+ * **Total, because the result is rendered directly.**
+ *
+ * `MEANINGS` is keyed by the three §7.1 types and `priceLine` reaches it through
+ * an unchecked cast on a value typed `string`, so an unrecognised type used to
+ * return `undefined` and React rendered nothing — leaving "2026-01-14 $120.00"
+ * with no qualifier beside it.
+ *
+ * That is the `$120.00 best dig` misreading (CLAUDE.md §8) arriving through a
+ * missing branch: a bare sum with nothing saying what it is, on the screen
+ * where a wrong glance costs money. The gap failed OPEN, toward the
+ * confident-looking output.
+ *
+ * The fallback NAMES the type rather than saying only "unrecognised", so the
+ * row stays diagnosable — and reads as a gap in this app's vocabulary rather
+ * than as a fact about the record.
+ */
 export function priceTypeMeaning(type: PriceType): string {
-  return MEANINGS[type];
+  return MEANINGS[type] ?? `an unrecognised price type (${type})`;
 }
 
 export type PriceLine = {
@@ -54,6 +71,12 @@ export function priceLine(observation: PriceObservation): PriceLine {
     // The RECORDED date, which is the fact the sparkline plots and the reader
     // could not previously see.
     date: isoDate(observation.recordedAt),
+    /**
+     * Still a cast, but now a SAFE one: `priceTypeMeaning` is total over
+     * `string`, so widening no longer risks `undefined`. The cast remains only
+     * because `PriceObservation.priceType` is typed `string` at the query
+     * boundary, where the driver hands back whatever the enum column holds.
+     */
     meaning: priceTypeMeaning(observation.priceType as PriceType),
   };
 }

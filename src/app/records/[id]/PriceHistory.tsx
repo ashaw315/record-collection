@@ -3,6 +3,7 @@ import { priceLine } from './price-line';
 import {
   SPARK_HEIGHT,
   SPARK_WIDTH,
+  paidObservations,
   priceRange,
   sparklinePoints,
   type PriceObservation,
@@ -26,19 +27,42 @@ import {
  */
 
 export function PriceHistory({ observations }: { observations: PriceObservation[] }) {
-  const points = sparklinePoints(observations);
-  const range = priceRange(observations);
+  /**
+   * **The chart and its bounds show what was PAID; the list below shows
+   * everything.** §7.6 excludes `asking` from what a record is worth, and the
+   * chart used to include it — so a single optimistic shop tag drew a spike and
+   * was announced as the record's high.
+   *
+   * The list keeps every observation, because an asking price IS worth seeing;
+   * it just is not evidence of value. Each row says which it is.
+   */
+  const paid = paidObservations(observations);
+  const points = sparklinePoints(paid);
+  const range = priceRange(paid);
 
   return (
     <section className="mt-6" data-testid="price-history">
       <h2 className="mb-1 font-heading text-sm font-semibold tracking-tight">Price history</h2>
 
-      {points.length === 0 ? (
+      {observations.length === 0 ? (
         <p className="mb-3 text-sm text-muted-foreground">
           No prices recorded yet. The weekly refresh adds what the market says.
         </p>
       ) : (
         <div className="mb-3">
+          {/*
+            Asking-only history is a real state and it gets its own sentence.
+            Falling back to "no prices recorded yet" would contradict the list
+            printed directly below it, and drawing a chart of asking prices
+            would assert a value nobody paid.
+          */}
+          {points.length === 0 && (
+            <p data-testid="no-paid-prices" className="text-xs text-muted-foreground">
+              Nothing here says what a copy sold for — only what someone asked.
+            </p>
+          )}
+
+          {points.length > 0 && (
           <svg
             data-testid="sparkline"
             viewBox={`0 0 ${SPARK_WIDTH} ${SPARK_HEIGHT}`}
@@ -53,7 +77,7 @@ export function PriceHistory({ observations }: { observations: PriceObservation[
             aria-label={
               range === null
                 ? 'Price history'
-                : `Price history: ${observations.length} observations, ${formatPrice(range.low)} to ${formatPrice(range.high)}`
+                : `Price history: ${paid.length} sale${paid.length === 1 ? '' : 's'}, ${formatPrice(range.low)} to ${formatPrice(range.high)}`
             }
           >
             {points.length === 1 ? (
@@ -68,15 +92,21 @@ export function PriceHistory({ observations }: { observations: PriceObservation[
               />
             )}
           </svg>
+          )}
 
           {/*
             The bounds in words, beside the shape rather than under it. A
             sparkline shows the trend and says nothing about scale — the same
             obligation §7.6's total has to state what it sums.
+
+            **Counts the PAID observations, not all of them.** The range is over
+            what sold, so "3 observations, $8.00 to $9.50" would describe a
+            bound computed from two of them and invite the reader to look for a
+            third that is not on the chart.
           */}
           {range !== null && (
             <p data-testid="price-range" className="mt-1 text-xs text-muted-foreground">
-              {observations.length} observation{observations.length === 1 ? '' : 's'},{' '}
+              {paid.length} sale{paid.length === 1 ? '' : 's'},{' '}
               <span className="font-mono tabular-nums">{formatPrice(range.low)}</span> to{' '}
               <span className="font-mono tabular-nums">{formatPrice(range.high)}</span>
             </p>

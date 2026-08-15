@@ -16,6 +16,35 @@ export type PriceObservation = {
 
 export type SparkPoint = { x: number; y: number };
 
+/**
+ * The types that are evidence of what a record is WORTH (SPEC.md §7.6).
+ *
+ * §7.6's estimated value sums the latest `used`, falling back to `new`, and
+ * never `asking` — "a price someone wants but nobody has paid" (§7.1). The
+ * chart crossed a line the value calculation already drew: it plotted all three
+ * as one series and bounded them together, so one optimistic shop tag drew a
+ * spike and was announced as the record's high, in the visible text and in the
+ * aria-label both.
+ *
+ * The per-row list underneath was always correct — every row says what its type
+ * MEANS. It is the summary and the shape, which are read first, that were not.
+ */
+const PAID_TYPES = new Set(['used', 'new']);
+
+/**
+ * The observations that say what a copy actually changed hands for.
+ *
+ * **An unrecognised type is EXCLUDED, deliberately.** `price_type` is a
+ * Postgres enum today, but §5.7's cron is the writer and a fourth value would
+ * reach this file after it reached the database. Treating an unknown type as
+ * paid would put it straight into the headline figure; leaving it out
+ * understates rather than inflates, and the per-row list still shows it. That
+ * is the same asymmetry §7.7 uses — degrade toward the cautious answer.
+ */
+export function paidObservations(observations: PriceObservation[]): PriceObservation[] {
+  return observations.filter((row) => PAID_TYPES.has(row.priceType));
+}
+
 /** An arbitrary viewBox; the component scales it with CSS. */
 export const SPARK_WIDTH = 100;
 export const SPARK_HEIGHT = 24;

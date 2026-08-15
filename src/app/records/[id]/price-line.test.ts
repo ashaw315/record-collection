@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { priceLine, priceTypeMeaning } from './price-line';
+import { priceLine, priceTypeMeaning, type PriceType } from './price-line';
 
 /**
  * How a single price observation reads (QA, step 9).
@@ -89,5 +89,48 @@ describe('priceLine', () => {
     const line = priceLine({ ...observation, recordedAt: new Date('2024-03-15T00:00:00Z') });
 
     expect(line.date).toBe('2024-03-15');
+  });
+});
+
+describe('an unrecognised price type', () => {
+  /**
+   * **The cast was the hole.** `priceLine` reached `MEANINGS` via
+   * `observation.priceType as PriceType` — an unchecked cast on a value typed
+   * `string` — and the lookup has no fallback, so an unknown type rendered
+   * `undefined` into the page. The row became "2026-01-14  $120.00" with no
+   * qualifier at all.
+   *
+   * That is exactly the reading §4.2's old `best_dig` produced and this file
+   * exists to prevent: a bare sum with nothing saying what it means, in the one
+   * place CLAUDE.md §8 says a wrong glance costs money. The missing branch
+   * failed OPEN — toward the confident-looking output — which is the wrong
+   * direction for an unknown.
+   *
+   * `price_type` is a Postgres enum today, so this is not reachable from the
+   * database now; §5.7's cron is the writer and a fourth value would arrive
+   * here before it arrived in this file.
+   */
+  it('says the type is unrecognised rather than rendering nothing', () => {
+    const meaning = priceTypeMeaning('auction' as PriceType);
+
+    expect(meaning, 'never undefined — it is rendered directly').toBeDefined();
+    expect(meaning).toMatch(/unrecognised|unknown/i);
+  });
+
+  it('never returns undefined from priceLine for an unknown type', () => {
+    const line = priceLine({
+      id: 'p1',
+      price: '120.00',
+      priceType: 'auction',
+      recordedAt: '2026-01-14T00:00:00Z',
+    });
+
+    expect(line.meaning).toBeDefined();
+    expect(line.amount, 'the money still renders').toBe('$120.00');
+  });
+
+  it('still names the type, so the row is diagnosable', () => {
+    // "an unrecognised price type" alone leaves the reader unable to say WHICH.
+    expect(priceTypeMeaning('auction' as PriceType)).toContain('auction');
   });
 });

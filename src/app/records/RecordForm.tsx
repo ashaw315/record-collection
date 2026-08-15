@@ -502,10 +502,20 @@ export function RecordForm({
        * Discogs is imperfect cuts both ways — a missing cover is normal, a
        * failed fetch is information.
        */
-      const coverFailed = saved?.cover?.attached === false && saved.cover.reason === 'failed';
+      /**
+       * `unconfigured` travels too, and separately. It is not a failure to
+       * report as one — Discogs was reached fine — and the notice it produces
+       * must not offer "add an image below", which fails on the same missing
+       * token.
+       */
+      const coverReason =
+        saved?.cover?.attached === false &&
+        (saved.cover.reason === 'failed' || saved.cover.reason === 'unconfigured')
+          ? saved.cover.reason
+          : null;
       const destination = `/records/${editing ? recordId : saved.id}`;
 
-      router.push(coverFailed ? `${destination}?cover=failed` : destination);
+      router.push(coverReason === null ? destination : `${destination}?cover=${coverReason}`);
     } catch {
       setError('Could not reach the server. Nothing was saved.');
     } finally {

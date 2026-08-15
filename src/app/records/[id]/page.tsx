@@ -104,6 +104,24 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
               </p>
             )}
 
+            {/*
+              A DIFFERENT sentence, because it is a different fact. Reporting
+              this as "could not be fetched from Discogs" blamed a service that
+              answered perfectly well, and "you can add an image below" pointed
+              at an upload that fails on the same missing token — the one action
+              guaranteed not to work.
+            */}
+            {cover === 'unconfigured' && (
+              <p
+                data-testid="cover-notice-unconfigured"
+                role="status"
+                className="mt-6 rounded-xs border border-border px-3 py-2 text-sm text-muted-foreground"
+              >
+                The record saved normally, but this deployment has no image storage configured, so
+                no cover was kept and uploads are unavailable.
+              </p>
+            )}
+
             <ImageGallery recordId={id} images={record.images} />
 
             {/*

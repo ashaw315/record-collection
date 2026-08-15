@@ -254,3 +254,76 @@ describe('the four cases every route needs', () => {
     expect(response.status).toBe(503);
   });
 });
+
+describe('the MusicBrainz id is already on another local artist', () => {
+  /**
+   * **`artists.musicbrainz_id` is UNIQUE when present** (§4.1, partial index
+   * `artists_musicbrainz_id_key`), and this endpoint wrote it with a bare
+   * `updateArtist` and no recovery. So confirming an id that another row
+   * already holds threw a raw Postgres unique violation, which the handler's
+   * `MusicBrainzError` catch did not match — it escaped as a 500 saying
+   * "Internal server error".
+   *
+   * **It is reachable through the app's own behaviour, not just by hand.** The
+   * walk's `resolveArtist` CREATES rows carrying MBIDs for every band and
+   * member it encounters. Walking Discharge can therefore mint a local row for
+   * some group, and a later "Lineup" on a hand-entered row for that same group
+   * confirms an id the walk has already attached elsewhere. The user sees a
+   * server error for what is really a duplicate they could resolve.
+   *
+   * It is the same underlying situation §4.3's match-candidate review exists
+   * for, so the answer is a 409 that says which artist holds it, not a 500.
+   */
+  it('answers 409 rather than letting the unique violation become a 500', async () => {
+    const holder = await seedArtist('Discharge', DISCHARGE_A);
+    const target = await seedArtist('Discharge');
+
+    mockMusicBrainz(searchResult([{ id: DISCHARGE_A, name: 'Discharge', score: 100 }]));
+
+    const response = await request(target.id, { musicbrainzId: DISCHARGE_A });
+
+    expect(response.status, 'a duplicate is not a server fault').toBe(409);
+
+    const body = await response.json();
+    expect(body.error.code).toBe('DUPLICATE');
+    expect(
+      body.error.existingId,
+      '§5.4 requires existingId on every DUPLICATE, so the client can offer the merge',
+    ).toBe(holder.id);
+  });
+
+  it('leaves the target artist untouched when it refuses', async () => {
+    // A refusal that had already written half of itself would be worse than the
+    // 500: the row would carry an id the endpoint then said it could not take.
+    await seedArtist('Discharge', DISCHARGE_A);
+    const target = await seedArtist('Discharge');
+
+    mockMusicBrainz(searchResult([{ id: DISCHARGE_A, name: 'Discharge', score: 100 }]));
+    await request(target.id, { musicbrainzId: DISCHARGE_A });
+
+    const [row] = (
+      await db.execute<{ musicbrainz_id: string | null }>(
+        sql`SELECT musicbrainz_id FROM artists WHERE id = ${target.id}`,
+      )
+    ).rows;
+
+    expect(row.musicbrainz_id).toBeNull();
+  });
+
+  it('also refuses on the SEARCH path, not only a supplied id', async () => {
+    /**
+     * The id is written in two places — after an unambiguous search, and when
+     * the user picks a candidate. Both call `updateArtist`, so both could
+     * collide, and a fix applied to one would leave the other throwing.
+     */
+    const holder = await seedArtist('Discharge', DISCHARGE_A);
+    const target = await seedArtist('Discharge');
+
+    mockMusicBrainz(searchResult([{ id: DISCHARGE_A, name: 'Discharge', score: 100 }]));
+
+    const response = await request(target.id);
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).error.existingId).toBe(holder.id);
+  });
+});

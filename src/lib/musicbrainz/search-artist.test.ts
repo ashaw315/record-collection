@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { pickDisambiguated, type ArtistSearchHit } from './search-artist';
+import { normalizeSearchHits, pickDisambiguated, type ArtistSearchHit } from './search-artist';
 
 /**
  * SPEC.md §4.3 — finding the MusicBrainz artist for a local row.
@@ -25,6 +25,9 @@ const hit = (name: string, score: number, extra: Partial<ArtistSearchHit> = {}):
   type: 'Group',
   country: 'US',
   disambiguation: null,
+  // Defaulted so the picker tests stay about the NAME rule; the life-span's own
+  // behaviour is asserted in the normalizer block below.
+  lifeSpan: null,
   ...extra,
 });
 
@@ -149,5 +152,89 @@ describe('the rule is NAME identity, not score', () => {
     const chosen = pickDisambiguated([hit('B', 40), hit('C', 10), hit('A', 100)]);
 
     expect(chosen?.name).toBe('A');
+  });
+});
+
+describe('normalizeSearchHits — the fields the picker screen actually shows', () => {
+  /**
+   * **`lifeSpan` was read by the UI and produced by nobody.**
+   *
+   * `LineupAction.tsx` declares it on its `Candidate` type, renders it through
+   * `lifeSpanText`, and its docblock explains why it matters: "1977–ongoing
+   * against 1978–1980 identifies the two Discharges at a glance". The
+   * normalizer never extracted it, so `lifeSpanText` returned `''` on every
+   * candidate and the fact silently never appeared.
+   *
+   * That is the worst place for it to be missing. The picker only EXISTS
+   * because two or more results share a name — §4.3 sends the user there
+   * precisely when the name has failed to identify the artist — so the screen
+   * withheld the one thing that could settle it and offered the name it had
+   * already declared useless.
+   *
+   * This normalizer had no tests at all, which is why nobody noticed. The
+   * declared-but-never-populated shape is invisible to TypeScript: the field is
+   * optional on the client type, so `undefined` typechecks perfectly.
+   *
+   * MusicBrainz spells it `life-span`, hyphenated, with `begin`/`end`/`ended` —
+   * so the mapping is where a plausible-looking `lifeSpan` lookup would return
+   * undefined forever.
+   */
+  const payload = (artist: Record<string, unknown>) => ({ artists: [{ id: 'mb-1', ...artist }] });
+
+  it('maps MusicBrainz `life-span` onto lifeSpan', () => {
+    const [hit] = normalizeSearchHits(
+      payload({ name: 'Discharge', 'life-span': { begin: '1977', end: null, ended: false } }),
+    );
+
+    expect(hit.lifeSpan).toEqual({ begin: '1977', end: null, ended: false });
+  });
+
+  it('carries an ended band with both dates', () => {
+    // The discriminating pair: 1977– against 1978–1980 is what separates two
+    // bands sharing a name.
+    const [hit] = normalizeSearchHits(
+      payload({ name: 'Discharge', 'life-span': { begin: '1978', end: '1980', ended: true } }),
+    );
+
+    expect(hit.lifeSpan).toEqual({ begin: '1978', end: '1980', ended: true });
+  });
+
+  it('is null when MusicBrainz has no life-span, not an empty object', () => {
+    // Absent versus unknown: an object with null fields would render as a stray
+    // separator, claiming a date exists.
+    const [hit] = normalizeSearchHits(payload({ name: 'Discharge' }));
+
+    expect(hit.lifeSpan).toBeNull();
+  });
+
+  it('survives a life-span that is not an object', () => {
+    // Someone else's payload, so it is parsed rather than trusted.
+    const [hit] = normalizeSearchHits(payload({ name: 'Discharge', 'life-span': 'nonsense' }));
+
+    expect(hit.lifeSpan).toBeNull();
+    expect(hit.name, 'and the rest of the hit still arrives').toBe('Discharge');
+  });
+
+  it('still carries the fields the picker already rendered', () => {
+    // The regression guard: lifeSpan was added beside these, and dropping one
+    // would trade a silent gap for another.
+    const [hit] = normalizeSearchHits(
+      payload({
+        name: 'Discharge',
+        score: 100,
+        type: 'Group',
+        country: 'GB',
+        disambiguation: 'UK d-beat band',
+      }),
+    );
+
+    expect(hit).toMatchObject({
+      mbid: 'mb-1',
+      name: 'Discharge',
+      score: 100,
+      type: 'Group',
+      country: 'GB',
+      disambiguation: 'UK d-beat band',
+    });
   });
 });

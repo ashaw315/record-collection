@@ -5,7 +5,7 @@ import { images } from '@/db/schema';
 import { createImage } from '@/lib/db/queries/images';
 import { describeError } from '@/lib/errors/describe';
 import { logger } from '@/lib/logger';
-import { getBlobStorage, storageKeyFor } from '@/lib/storage/blob';
+import { getBlobStorage, isBlobConfigured, storageKeyFor } from '@/lib/storage/blob';
 import type { DiscogsClient } from './client';
 
 /**
@@ -29,7 +29,17 @@ import type { DiscogsClient } from './client';
 
 export type CoverOutcome =
   | { attached: true }
-  | { attached: false; reason: 'none' | 'already-has-cover' | 'failed' };
+  /**
+   * `unconfigured` is separate from `failed` because they want different
+   * sentences. `failed` means something went wrong and retrying might work;
+   * `unconfigured` means this deployment has no `BLOB_READ_WRITE_TOKEN` and no
+   * amount of retrying will help.
+   *
+   * Collapsing them told the user "the cover art could not be fetched from
+   * Discogs — you can add an image below", where Discogs was reached perfectly
+   * well and adding an image below fails on the same missing token.
+   */
+  | { attached: false; reason: 'none' | 'already-has-cover' | 'failed' | 'unconfigured' };
 
 export async function attachDiscogsCover(input: {
   recordId: string;
@@ -42,6 +52,25 @@ export async function attachDiscogsCover(input: {
   const chosen = input.images.find((image) => image.type === 'primary') ?? input.images[0];
   if (chosen === undefined) {
     return { attached: false, reason: 'none' };
+  }
+
+  /**
+   * **Checked here, not only in the upload route.** `BLOB_READ_WRITE_TOKEN` is
+   * optional by design, so the absence has to be detected at each point it is
+   * USED — this was one of two sites that went straight to the SDK and let it
+   * throw from inside the catch below, reporting a Discogs failure for a
+   * deployment problem.
+   *
+   * Before the fetch, deliberately: `fetchImage` spends the shared 60/minute
+   * Discogs budget, and bytes that can never be stored are budget the lookup
+   * screen needs — on every import, for as long as the token is missing.
+   *
+   * After the `none` check, so a release with no images reports the simpler
+   * truth rather than sending the reader after a deployment problem that was
+   * not going to matter.
+   */
+  if (!isBlobConfigured()) {
+    return { attached: false, reason: 'unconfigured' };
   }
 
   try {

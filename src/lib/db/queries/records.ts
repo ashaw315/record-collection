@@ -547,16 +547,40 @@ export async function countRecordReferences(id: string): Promise<number> {
 }
 
 export type RecordDeleteOutcome =
-  | { status: 'deleted' }
+  /**
+   * `orphanedBlobUrls` — the images that cascaded, so the caller can delete the
+   * blobs behind them.
+   *
+   * **Read BEFORE the delete, because the cascade destroys the evidence.**
+   * `images.record_id` is `ON DELETE CASCADE`, so the rows holding the URLs are
+   * gone the instant the record is; nothing can enumerate the orphans
+   * afterwards. That is what made this leak unrecoverable rather than merely
+   * invisible — the single-image path at least logs the URL it failed to
+   * remove.
+   *
+   * The query layer returns them rather than deleting them itself: blobs are an
+   * HTTP concern with its own failure handling, and §5.9's row-first ordering
+   * is decided at the route.
+   */
+  | { status: 'deleted'; orphanedBlobUrls: string[] }
   | { status: 'not-found' }
   | { status: 'in-use'; referenceCount: number };
 
 export async function deleteRecord(id: string): Promise<RecordDeleteOutcome> {
   const db = getDb();
 
+  // Collected first — see the note on the type above.
+  const doomed = await db
+    .select({ url: images.url })
+    .from(images)
+    .where(eq(images.recordId, id));
+
   try {
     const deleted = await db.delete(records).where(eq(records.id, id)).returning({ id: records.id });
-    return deleted.length > 0 ? { status: 'deleted' } : { status: 'not-found' };
+
+    return deleted.length > 0
+      ? { status: 'deleted', orphanedBlobUrls: doomed.map((row) => row.url) }
+      : { status: 'not-found' };
   } catch (error) {
     if (!isForeignKeyViolation(error)) throw error;
     return { status: 'in-use', referenceCount: await countReferences('records', id) };

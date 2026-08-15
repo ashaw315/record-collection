@@ -8,6 +8,8 @@ import {
   validationError,
 } from '@/lib/api/errors';
 import { withErrorHandling } from '@/lib/api/handler';
+import { logger } from '@/lib/logger';
+import { getBlobStorage, isBlobConfigured } from '@/lib/storage/blob';
 import { updateRecordWithNested } from '@/lib/db/queries/nested';
 import {
   countRecordReferences,
@@ -136,6 +138,11 @@ export const DELETE = withErrorHandling(
      * Only want_list.acquired_record_id blocks (§7.3: the want list doubles as
      * acquisition history). images, journal_entries, price_history and both
      * junctions CASCADE and are correctly absent from REFERRERS.
+     *
+     * **That is true of the ROWS and was silently untrue of the blobs.** The
+     * sentence above is what made the storage question look settled: the
+     * database side was complete and correct, so nothing prompted the reader to
+     * ask what happened to the bytes. See the blob cleanup below.
      */
     const referenceCount = await countRecordReferences(id);
     if (referenceCount > 0) {
@@ -146,6 +153,37 @@ export const DELETE = withErrorHandling(
     if (outcome.status === 'not-found') return notFound('Record not found');
     if (outcome.status === 'in-use') {
       return conflictInUse('Record is in use and cannot be deleted', outcome.referenceCount);
+    }
+
+    /**
+     * §5.9's "deletes blob and row", applied to the cascade.
+     *
+     * Same ordering and same precedence as `DELETE /api/images/:id`: rows
+     * first, blobs best-effort. The user asked for the record to be gone and it
+     * is, so a storage failure must not fail the request and leave it on screen.
+     *
+     * The difference from that endpoint is that here the leak was previously
+     * UNRECOVERABLE — the cascade destroys the rows holding the URLs, so an
+     * orphan could never be found afterwards. `deleteRecord` reads them before
+     * the delete precisely so this log line can name them.
+     *
+     * Sequential rather than `Promise.all`: a record has a handful of images,
+     * and one failure should not abort the rest.
+     */
+    // Nothing was ever stored on a deployment with no token, so there is
+    // nothing to remove and an error log would send the operator after a
+    // storage bill that cannot exist.
+    for (const url of isBlobConfigured() ? outcome.orphanedBlobUrls : []) {
+      try {
+        await getBlobStorage().delete(url);
+      } catch (cause) {
+        logger.error(
+          'api.records.[id].DELETE',
+          `Record deleted but the blob was not: ${url} — ${
+            cause instanceof Error ? cause.message : String(cause)
+          }`,
+        );
+      }
     }
 
     return NextResponse.json({ ok: true });

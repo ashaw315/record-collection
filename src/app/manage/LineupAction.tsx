@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import type { ArtistSearchHit } from '@/lib/musicbrainz/search-artist';
 
 /**
  * SPEC.md §12 step 11 — pulling an artist's band membership from MusicBrainz.
@@ -21,14 +22,27 @@ import { Button } from '@/components/ui/button';
  *    shows what has not — the disambiguation comment and the life-span.
  */
 
-type Candidate = {
-  mbid: string;
-  name: string;
-  type: string | null;
-  country: string | null;
-  disambiguation: string | null;
-  lifeSpan?: { begin: string | null; end: string | null; ended: boolean } | null;
-};
+/**
+ * The wire shape of a candidate, taken FROM the endpoint's own type rather than
+ * restated here.
+ *
+ * `lifeSpan` was previously declared locally as an optional field and no
+ * producer ever set it, so `lifeSpanText` returned `''` on every candidate and
+ * the disambiguating fact silently never rendered. An optional field makes that
+ * invisible to the compiler — `undefined` typechecks — so the local restatement
+ * was what allowed the client and the server to disagree in silence.
+ *
+ * Importing the server's type means the next field to go missing is a build
+ * error rather than a blank space on screen.
+ */
+type Candidate = ArtistSearchHit;
+
+/**
+ * `import type`, which is ERASED at compile time — no `server-only` module
+ * reaches the client bundle (CLAUDE.md §6). Verified by `npm run build`
+ * succeeding, not assumed: a value import of the same module fails the build
+ * with server-only's own error, which is the guard doing its job.
+ */
 
 type WalkResponse = {
   walked: boolean;

@@ -5539,3 +5539,155 @@ the full parallel run rather than a defect in either spec.
 rather than red — and that is the same masking the Unit 5 traps depend on. Worth
 diagnosing during the deferred test pass, with the two sightings as evidence
 that it is the mobile project under load rather than any one spec.
+
+### Asserting BOTH directions found a defect the review had not
+
+The review found the ladder half: a row marked as carrying a ladder it never
+fetched, serving `conditions: []` as measured truth. The floor half was not in
+the review and was found only because the marker is built from two independent
+settlements, so the fix was written symmetrically and then tested symmetrically.
+
+**It is the worse of the two.** `cachedLowestPrice` reads the floor from these
+rows, and a row claiming a floor it never fetched returns `null` — which the
+spread does not treat as "unknown". `summariseSpread` filters nulls out of the
+price list, so the version silently leaves the sample, and if enough versions
+carry that marker the remaining low end is whatever happened to be fetched. That
+is **layer 3's verdict corrupted through layer 1's cache**: "which pressing you
+get matters more than the price" is a conclusion about a range, computed from a
+range that a cache marker quietly narrowed.
+
+Layer 3 is explicitly the judgement §10a says "no single release can supply",
+and it degrades in the one direction §10a warns is unsafe — a narrow sample
+reading as conclusive when the unchecked versions are the ones that would have
+widened it.
+
+**The general rule:** when a marker is derived from N independent outcomes,
+test N directions, not the one that was reported. The reported direction is
+evidence the shape is wrong, not a description of its extent.
+
+## Unit 4 — six smaller defects, and two tests that encoded them as correct
+
+### Blob orphans on record delete (the worst of the six)
+
+`images.record_id` is `ON DELETE CASCADE`, so deleting a record removed the
+image ROWS and never touched the blobs. The single-image endpoint accepts
+exactly this wreckage deliberately — "blob with no row" is the cheap failure —
+but there it is LOGGED with the URL. Here it happened silently, in bulk, and
+**unrecoverably**: the cascade destroys the rows holding the URLs, so nothing
+could enumerate the orphans afterwards.
+
+`deleteRecord` now reads the URLs BEFORE the delete and returns them, and the
+route deletes the blobs best-effort with the same row-first precedence. The
+query layer returns them rather than deleting them itself: blobs are an HTTP
+concern with their own failure handling.
+
+**The comment that hid it** was `api/records/[id]/route.ts`: "images,
+journal_entries, price_history and both junctions CASCADE and are correctly
+absent from REFERRERS." Entirely true of the ROWS. The database side was
+complete and correct, so nothing prompted the reader to ask about the bytes.
+
+### The chart counted an asking price as evidence of value
+
+§7.6 excludes `asking` from estimated value — "a price someone wants but nobody
+has paid" — and `value-statement.ts` says in as many words that including it
+"would inflate this headline figure". The sparkline plotted all three types as
+one series and `priceRange` bounded across all three, so used $8.00 / asking
+$120.00 / used $9.50 rendered "3 observations, $8.00 to $120.00" over a chart
+spiking to $120 — in the visible text and the aria-label both.
+
+The per-row list underneath was always right; every row says what its type
+MEANS. It is the summary and the shape, read FIRST, that were not. The list
+still shows all three, because an asking price is worth seeing — it just is not
+evidence of worth.
+
+The count moved with the bounds: "2 sales", not "3 observations", or the
+sentence would describe a range computed from two of the three it counted.
+
+### `priceTypeMeaning` rendered `undefined` into the page
+
+`MEANINGS[type]` with no fallback, reached through an unchecked
+`as PriceType` cast on a value typed `string`. An unknown type produced
+`undefined`, React rendered nothing, and the row became "2026-01-14 $120.00" —
+a bare sum with nothing saying what it is, which is the `$120.00 best dig`
+misreading (CLAUDE.md §8) arriving through a missing branch.
+
+**The gap failed OPEN**, toward the confident-looking output. The fallback names
+the type, so the row stays diagnosable and reads as a gap in this app's
+vocabulary rather than a fact about the record.
+
+### The lineup MBID collision escaped as a 500
+
+`artists.musicbrainz_id` is unique when present and the endpoint wrote it with a
+bare `updateArtist`. Reachable through the app's own behaviour, not just by
+hand: the walk's `resolveArtist` CREATES rows carrying MBIDs for every band and
+member it meets, so walking one artist can mint a row for some group, and a
+later "Lineup" on a hand-entered row for that group confirms an id already
+attached elsewhere. Now a 409 naming the holder, per §5.4's rule that every
+DUPLICATE carries `existingId`. Both write sites are covered — a fix applied to
+one would have left the other throwing.
+
+### `lifeSpan`: declared by the client, produced by nobody
+
+`LineupAction.tsx` typed it, rendered it through `lifeSpanText`, and explained
+in its docblock why it mattered — "1977–ongoing against 1978–1980 identifies the
+two Discharges at a glance". `normalizeSearchHits` never extracted it, so the
+helper returned `''` for every candidate.
+
+**The worst possible place for it.** The picker exists ONLY because two or more
+results share a name — §4.3 sends the user there precisely when the name has
+failed — so the screen withheld the one fact that could settle it.
+
+Three things made it invisible: the field was OPTIONAL on the client type, so
+`undefined` typechecked; the client RESTATED the shape rather than importing it,
+so the two could disagree in silence; and `normalizeSearchHits` had no tests at
+all. MusicBrainz spells it `life-span`, hyphenated — the spelling a plausible
+camelCase lookup misses forever while typechecking perfectly.
+
+`Candidate` is now `ArtistSearchHit` via `import type`, which is erased at
+compile time so no `server-only` module reaches the client bundle — verified by
+`npm run build`, not assumed.
+
+### `isBlobConfigured` guarded one of three call sites
+
+`BLOB_READ_WRITE_TOKEN` is optional by design, so the absence must be detected
+where it is USED. Only the upload route checked. `attach-cover.ts` went straight
+to the SDK and reported `reason: 'failed'`, which the UI rendered as "The cover
+art could not be fetched from Discogs… you can add an image below" — **both
+halves wrong**: Discogs answered fine, and the upload fails on the same missing
+token. The one action offered was the one guaranteed to fail.
+
+Now `reason: 'unconfigured'`, with its own sentence, checked BEFORE the fetch so
+it does not spend shared Discogs budget on bytes it cannot store. The image
+DELETE route was the third site: it logged an ERROR naming a leaked blob on a
+deployment that never stored anything, sending the operator after a bill that
+cannot exist.
+
+### Two E2E specs had encoded the defects as expected behaviour
+
+The full-suite run (CLAUDE.md §10) turned up four failures in files this unit
+never opened — the cross-file break that rule exists for.
+
+- `record-detail.spec.ts:392` asserted "2 observations". A wording change, and
+  correct to update: both its prices are `used`, so only the noun moved. A new
+  test beside it covers the mixed case the old one could not reach.
+- **`images.spec.ts:242` is the interesting one.** It asserted
+  `reason: 'failed'` while its OWN docblock said this environment has no
+  `BLOB_READ_WRITE_TOKEN`. The spec was documenting the bug as the contract —
+  it described the cause correctly one paragraph above the assertion that got it
+  wrong. `'failed'` was simply the only reason that existed, so the test could
+  not have said anything else.
+
+**That is a third variant of the pair.** Unit 1: prose describing a general
+hazard above coverage of one case. Unit 2: prose describing the correct rule
+above code that ignored it. Here: prose describing the correct CAUSE above an
+assertion that named the wrong one. In all three the sentence was right and the
+thing beside it was wrong, and the sentence is what stopped anyone looking.
+
+### One test-harness change, and why it is not a test edited to pass
+
+Six pre-existing `discogs-cover` tests began failing once `attachDiscogsCover`
+checked `isBlobConfigured`, because no real token exists in the test
+environment — correctly. The fix stubs the CHECK, exactly as
+`images-delete.test.ts` already does for the upload route, rather than faking
+the environment. The tests assert the same behaviour as before; they just now
+have to say which deployment they are describing.

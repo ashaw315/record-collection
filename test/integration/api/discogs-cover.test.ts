@@ -54,6 +54,18 @@ beforeEach(async () => {
     .returning({ id: artists.id });
   await db.insert(records).values({ id: RECORD_ID, title: 'Hear Nothing', artistId: artist.id });
 
+  /**
+   * The cover path now refuses to start without configured storage, the same
+   * way the upload route does — otherwise the SDK throws from inside the catch
+   * and a deployment problem is reported as a Discogs failure.
+   *
+   * No real `BLOB_READ_WRITE_TOKEN` is present here, correctly, so the CHECK is
+   * stubbed rather than the environment faked. `images-delete.test.ts` does the
+   * same for the same reason. The tests that exercise an unconfigured
+   * deployment override this back to false.
+   */
+  vi.spyOn(storage, 'isBlobConfigured').mockReturnValue(true);
+
   putSpy = vi.fn().mockResolvedValue({ url: STORED_URL });
   vi.spyOn(storage, 'getBlobStorage').mockReturnValue({
     put: putSpy as unknown as storage.BlobStorage['put'],
@@ -244,5 +256,89 @@ describe('attachDiscogsCover', () => {
 
     expect(outcome).toEqual({ attached: false, reason: 'already-has-cover' });
     expect(await db.select().from(images), 'still one, not two').toHaveLength(1);
+  });
+});
+
+describe('a deployment with no blob storage configured', () => {
+  /**
+   * **`isBlobConfigured` guarded ONE of its three call sites.**
+   *
+   * `BLOB_READ_WRITE_TOKEN` is deliberately optional (`lib/env/schema.ts`) so
+   * §10's in-store case and local development work without every integration
+   * present. The cost is that the absence must be detected where it is USED —
+   * and only the upload route checked. This path went straight to
+   * `getBlobStorage().put()`, the SDK threw from inside the try, and the user
+   * was told:
+   *
+   *   "The cover art could not be fetched from Discogs. The record saved
+   *    normally — you can add an image below."
+   *
+   * Both halves wrong. Discogs was reached perfectly well, and adding an image
+   * below is also impossible — the upload route 503s on the same missing token.
+   * The one action offered is the one guaranteed to fail.
+   *
+   * So this is `reason: 'unconfigured'`, distinct from `'failed'`: a deployment
+   * fact rather than a transient error, and the two want different sentences.
+   */
+  it('reports unconfigured rather than blaming Discogs', async () => {
+    vi.spyOn(storage, 'isBlobConfigured').mockReturnValue(false);
+
+    const outcome = await attachDiscogsCover({
+      recordId: RECORD_ID,
+      images: [{ url: 'https://i.discogs.com/a/cover.jpg', type: 'primary' }],
+      client: clientWith(fetchImage),
+    });
+
+    expect(outcome).toEqual({ attached: false, reason: 'unconfigured' });
+  });
+
+  it('does not spend a Discogs request it cannot use', async () => {
+    /**
+     * Checked BEFORE the fetch, not after. The image fetch is rate-limited on
+     * the shared 60/minute bucket, so fetching bytes that can never be stored
+     * spends budget the lookup screen needs — and on a deployment with no
+     * token, it would do so on every single import.
+     */
+    vi.spyOn(storage, 'isBlobConfigured').mockReturnValue(false);
+
+    await attachDiscogsCover({
+      recordId: RECORD_ID,
+      images: [{ url: 'https://i.discogs.com/a/cover.jpg', type: 'primary' }],
+      client: clientWith(fetchImage),
+    });
+
+    expect(fetchImage, 'no bytes are fetched').not.toHaveBeenCalled();
+    expect(putSpy, 'and no store is attempted').not.toHaveBeenCalled();
+  });
+
+  it('still attaches normally when storage IS configured', async () => {
+    // The guard must not become an unconditional refusal — the ordinary path is
+    // the one that matters, and a check that always failed would pass every
+    // test above.
+    vi.spyOn(storage, 'isBlobConfigured').mockReturnValue(true);
+
+    const outcome = await attachDiscogsCover({
+      recordId: RECORD_ID,
+      images: [{ url: 'https://i.discogs.com/a/cover.jpg', type: 'primary' }],
+      client: clientWith(fetchImage),
+    });
+
+    expect(outcome).toEqual({ attached: true });
+    expect(await db.select().from(images)).toHaveLength(1);
+  });
+
+  it('says nothing about storage when the release has no cover at all', async () => {
+    // 'none' outranks 'unconfigured': there was nothing to store either way, and
+    // reporting a deployment problem for a release with no images would send the
+    // reader after the wrong thing.
+    vi.spyOn(storage, 'isBlobConfigured').mockReturnValue(false);
+
+    const outcome = await attachDiscogsCover({
+      recordId: RECORD_ID,
+      images: [],
+      client: clientWith(fetchImage),
+    });
+
+    expect(outcome).toEqual({ attached: false, reason: 'none' });
   });
 });

@@ -422,10 +422,61 @@ test('prices accumulate as observations and the sparkline states its bounds', as
   await page.goto(`/records/${record.id}`);
   await expect(page.getByTestId('sparkline')).toHaveCount(1);
 
-  // BOTH survive: §7.5 appends, never replaces.
-  await expect(page.getByTestId('price-range')).toContainText('2 observations');
+  /**
+   * BOTH survive: §7.5 appends, never replaces.
+   *
+   * "sales", not "observations": the chart and its bounds now cover only what
+   * a copy actually SOLD for (§7.6's `used`/`new`), because an `asking` price
+   * is what someone wanted and nobody paid — including it drew a spike and
+   * announced it as this record's high. Both prices here are `used`, so the
+   * count is unchanged and only the noun moved.
+   */
+  await expect(page.getByTestId('price-range')).toContainText('2 sales');
   await expect(page.getByTestId('price-range')).toContainText('$20.00');
   await expect(page.getByTestId('price-range')).toContainText('$35.50');
+});
+
+test('an asking price is listed but never charted as what the record is worth', async ({
+  page,
+}) => {
+  /**
+   * §7.6 excludes `asking` from what a record is worth — "a price someone wants
+   * but nobody has paid" — and the chart used to include it. One optimistic
+   * shop tag drew a spike and the bounds beneath it announced that tag as the
+   * record's high, in the visible text and the aria-label both.
+   *
+   * The row list still shows it, because an asking price IS worth seeing. It is
+   * the summary and the shape, read first, that must not treat it as evidence.
+   */
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Asking-${suffix}` });
+  const record = await post(page, '/api/records', {
+    title: `Asking ${suffix}`,
+    artistId: artist.id,
+  });
+
+  for (const [price, priceType] of [
+    ['8.00', 'used'],
+    ['120.00', 'asking'],
+    ['9.50', 'used'],
+  ] as const) {
+    const response = await page.request.post(`/api/records/${record.id}/prices`, {
+      data: { price, priceType },
+    });
+    expect(response.status()).toBe(201);
+  }
+
+  await page.goto(`/records/${record.id}`);
+
+  const range = page.getByTestId('price-range');
+  await expect(range, 'bounded by what sold, not what was asked').toContainText('$8.00');
+  await expect(range).toContainText('$9.50');
+  await expect(range, 'the shop tag is not the high').not.toContainText('$120.00');
+  await expect(range, 'and it is not counted as a sale').toContainText('2 sales');
+
+  // All three remain in the list below — with the asking one saying nobody paid.
+  await expect(page.getByTestId('price-observation')).toHaveCount(3);
+  await expect(page.getByTestId('price-history')).toContainText(/nobody paid/i);
 });
 
 test('the price section offers no way to edit an observation', async ({ page }) => {

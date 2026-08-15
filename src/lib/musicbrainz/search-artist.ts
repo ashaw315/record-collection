@@ -10,6 +10,20 @@ import { z } from 'zod';
  * becoming a silent wrong attachment.
  */
 
+/**
+ * When the artist existed — the fact that most cheaply separates two bands
+ * sharing a name.
+ *
+ * `1977–` against `1978–1980` identifies the two Discharges at a glance, which
+ * is exactly what the candidate picker is for: it only appears when the NAME has
+ * failed to identify the artist, so it must show something the name did not.
+ */
+export type ArtistLifeSpan = {
+  begin: string | null;
+  end: string | null;
+  ended: boolean;
+};
+
 export type ArtistSearchHit = {
   mbid: string;
   name: string;
@@ -19,6 +33,16 @@ export type ArtistSearchHit = {
   country: string | null;
   /** MusicBrainz's own note distinguishing same-named artists. */
   disambiguation: string | null;
+  /**
+   * **Was declared by the picker and produced by nobody.** `LineupAction.tsx`
+   * rendered `lifeSpan` through `lifeSpanText` and this normalizer never
+   * extracted it, so the helper returned `''` for every candidate and the fact
+   * silently never appeared on the one screen that exists to disambiguate.
+   *
+   * Invisible to the compiler, because the field was optional on the client's
+   * own type — `undefined` typechecked perfectly.
+   */
+  lifeSpan: ArtistLifeSpan | null;
 };
 
 /**
@@ -40,6 +64,24 @@ const rawHit = z.object({
   type: z.string().nullish(),
   country: z.string().nullish(),
   disambiguation: z.string().nullish(),
+  /**
+   * **Hyphenated — MusicBrainz sends `life-span`, not `lifeSpan`.** That is the
+   * spelling a plausible-looking camelCase lookup would miss forever while
+   * typechecking perfectly.
+   *
+   * `catch` rather than a bare optional: this is someone else's payload, and a
+   * malformed life-span should cost the DATE, not the whole hit — dropping the
+   * artist would remove a candidate from the very list the user is choosing
+   * from.
+   */
+  'life-span': z
+    .object({
+      begin: z.string().nullish(),
+      end: z.string().nullish(),
+      ended: z.boolean().nullish(),
+    })
+    .nullish()
+    .catch(undefined),
 });
 
 /** Permissive by design: this is someone else's payload and they add fields. */
@@ -53,6 +95,8 @@ export function normalizeSearchHits(payload: unknown): ArtistSearchHit[] {
     const parsed = rawHit.safeParse(candidate);
     if (!parsed.success) continue;
 
+    const span = parsed.data['life-span'];
+
     hits.push({
       mbid: parsed.data.id,
       name: parsed.data.name ?? '',
@@ -60,6 +104,15 @@ export function normalizeSearchHits(payload: unknown): ArtistSearchHit[] {
       type: parsed.data.type ?? null,
       country: parsed.data.country ?? null,
       disambiguation: parsed.data.disambiguation ?? null,
+      /**
+       * `null` when absent rather than an object of nulls: the picker treats a
+       * null span as "no dates to show", where `{begin: null}` would render a
+       * stray separator claiming a date exists.
+       */
+      lifeSpan:
+        span === undefined || span === null
+          ? null
+          : { begin: span.begin ?? null, end: span.end ?? null, ended: span.ended ?? false },
     });
   }
 

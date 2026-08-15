@@ -280,9 +280,21 @@ test('a cover that cannot be fetched does not fail the import', async ({ page })
 
   const response = await created;
   expect(response.status(), 'the record is created regardless').toBe(201);
-  expect((await response.json()).cover, 'and it says the cover did not arrive').toEqual({
+  /**
+   * **`unconfigured`, not `failed` — and this spec previously asserted the
+   * wrong one.** Its own docblock above says this environment has no
+   * `BLOB_READ_WRITE_TOKEN`, which is a DEPLOYMENT fact rather than a fetch
+   * failure. `'failed'` was the only reason that existed, so the spec encoded
+   * the defect as expected behaviour: the user was told Discogs could not be
+   * reached — it was reached fine — and offered an upload that fails on the
+   * same missing token.
+   *
+   * The unconfigured check runs before the fetch, so it is what this
+   * environment reports.
+   */
+  expect((await response.json()).cover, 'and it says WHY the cover did not arrive').toEqual({
     attached: false,
-    reason: 'failed',
+    reason: 'unconfigured',
   });
 
   // The record exists and is reachable — not a 500, not a rolled-back save.
@@ -296,7 +308,11 @@ test('a cover that cannot be fetched does not fail the import', async ({ page })
    * fetch one and could not". The second is worth knowing — it is retryable,
    * and the user might otherwise photograph a sleeve they did not need to.
    */
-  await expect(page.getByTestId('cover-notice')).toContainText(/could not be fetched/i);
+  await expect(page.getByTestId('cover-notice-unconfigured')).toContainText(/image storage/i);
+  await expect(
+    page.getByTestId('cover-notice-unconfigured'),
+    'and it does not blame Discogs, which answered fine',
+  ).not.toContainText(/could not be fetched from Discogs/i);
   await expect(page.getByTestId('image-gallery')).toContainText('No images yet');
 });
 

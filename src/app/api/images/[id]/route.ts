@@ -3,7 +3,7 @@ import { badRequest, isUuid, notFound } from '@/lib/api/errors';
 import { withErrorHandling } from '@/lib/api/handler';
 import { deleteImage, findImageById } from '@/lib/db/queries/images';
 import { logger } from '@/lib/logger';
-import { getBlobStorage } from '@/lib/storage/blob';
+import { getBlobStorage, isBlobConfigured } from '@/lib/storage/blob';
 
 /**
  * SPEC.md §5.9 `DELETE /api/images/:id` — "Deletes blob and row."
@@ -40,6 +40,19 @@ export const DELETE = withErrorHandling(
     }
 
     await deleteImage(id);
+
+    /**
+     * **Skipped when this deployment has no storage token.** Without the guard
+     * the SDK throws, the catch below logs an ERROR naming a "leaked" blob —
+     * and the operator goes looking for a storage bill that cannot exist,
+     * because a deployment with no token never stored anything.
+     *
+     * The row is still deleted, which is what the user asked for. There is
+     * simply no blob to remove.
+     */
+    if (!isBlobConfigured()) {
+      return new NextResponse(null, { status: 204 });
+    }
 
     try {
       await getBlobStorage().delete(image.url);
