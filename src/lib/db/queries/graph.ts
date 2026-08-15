@@ -1,6 +1,8 @@
 import 'server-only';
 import { sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
+// §7.1's hierarchy, shared with the collection list and the want list.
+import { genreSubtree } from './genre-hierarchy';
 
 /**
  * The network graph (SPEC.md §8.1), scoped to OWNED records (§5.6).
@@ -62,17 +64,35 @@ export async function buildGraph(options: { genreId?: string }): Promise<Graph> 
    * left dangling — a link to a node that was never emitted renders as a broken
    * edge into empty space.
    */
+  /**
+   * **The filter walks §7.1's subtree, not a flat equality.** A record tagged
+   * only UK82 IS a Punk record for filtering "and graph purposes" — the spec
+   * binds both with one sentence. This shipped as `rg.genre_id = $1`, so
+   * filtering by Punk returned an entirely EMPTY graph while `/?genreId=<Punk>`
+   * returned the records: the same question answered two ways by two screens.
+   *
+   * Shared with the collection list and the want list rather than reimplemented
+   * (see ./genre-hierarchy) — three copies is how this happened.
+   */
+  /**
+   * Composed rather than made branchless with a `$1 IS NULL OR ...` guard: the
+   * subtree walk only makes sense when there IS a genre, and an unfiltered
+   * graph should not carry a recursive CTE the planner has to reason about.
+   */
+  const inSubtree = (recordAlias: string) =>
+    genreId === null
+      ? sql`TRUE`
+      : sql`EXISTS (
+          SELECT 1 FROM record_genres rg
+          WHERE rg.record_id = ${sql.raw(recordAlias)}.id
+            AND rg.genre_id IN (SELECT id FROM ${genreSubtree(genreId)})
+        )`;
+
   const collectedArtists = sql`
     SELECT r.artist_id AS id, COUNT(*)::int AS owned_count
     FROM records r
     WHERE r.artist_id IS NOT NULL
-      AND (
-        ${genreId}::uuid IS NULL
-        OR EXISTS (
-          SELECT 1 FROM record_genres rg
-          WHERE rg.record_id = r.id AND rg.genre_id = ${genreId}::uuid
-        )
-      )
+      AND ${inSubtree('r')}
     GROUP BY r.artist_id
   `;
 
@@ -116,13 +136,13 @@ export async function buildGraph(options: { genreId?: string }): Promise<Graph> 
    */
   const genreRows = await db.execute<GenreRow>(sql`
     WITH RECURSIVE owned_genres AS (
+      -- Every genre carried by a record that survives the filter. The filter is
+      -- §7.1's subtree, so a record tagged only UK82 is inside a Punk subset and
+      -- brings its genres with it.
       SELECT DISTINCT rg.genre_id AS id
       FROM record_genres rg
       JOIN records r ON r.id = rg.record_id
-      WHERE ${genreId}::uuid IS NULL OR rg.genre_id = ${genreId}::uuid OR EXISTS (
-        SELECT 1 FROM record_genres sub
-        WHERE sub.record_id = r.id AND sub.genre_id = ${genreId}::uuid
-      )
+      WHERE ${inSubtree('r')}
     ),
     with_ancestors AS (
       SELECT id FROM owned_genres

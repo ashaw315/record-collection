@@ -1,6 +1,7 @@
 import 'server-only';
 import { and, asc, eq, exists, sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
+import { genreSubtree } from './genre-hierarchy';
 import { ConflictError } from '@/lib/api/errors';
 import {
   artists,
@@ -41,26 +42,13 @@ export type WantListFilters = {
 };
 
 /**
- * §7.1's subtree, identical in shape to the records version.
+ * §7.1's subtree now comes from ./genre-hierarchy.
  *
- * A want-list item tagged with a child genre is a member of every ancestor, so
- * filtering by Punk must find a UK82 item. The records endpoint shipped without
- * this and returned nothing for a parent genre; the same defect is available
- * here.
- *
- * `UNION` rather than `UNION ALL` bounds the walk if a cycle ever reaches the
- * data, matching `wouldCreateCycle` in ./genres.
+ * This file's copy said "the records endpoint shipped without this and returned
+ * nothing for a parent genre; the same defect is available here" — and it was
+ * right, but about the wrong file. The defect landed in the GRAPH, which was
+ * written later and used flat equality. Three copies, two correct.
  */
-function genreSubtree(genreId: string) {
-  return sql`(
-    WITH RECURSIVE subtree AS (
-      SELECT id FROM ${genres} WHERE id = ${genreId}
-      UNION
-      SELECT g.id FROM ${genres} g JOIN subtree s ON g.parent_genre_id = s.id
-    )
-    SELECT id FROM subtree
-  )`;
-}
 
 function buildWhere(filters: WantListFilters) {
   const clauses = [];

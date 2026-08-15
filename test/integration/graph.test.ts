@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm';
 import { getTestDb, truncateAll, closeTestDb } from '../helpers/db';
 import { artists, artistInfluences, genres, records, recordGenres } from '@/db/schema';
 import { buildGraph } from '@/lib/db/queries/graph';
+import { listRecords } from '@/lib/db/queries/records';
 
 /**
  * SPEC.md §8.1 — the network graph, scoped to OWNED records (§5.6).
@@ -298,12 +299,23 @@ describe('buildGraph — member_of edges', () => {
 describe('buildGraph — genre nodes and edges', () => {
   it('sizes a genre by the records DIRECTLY tagged with it, never rolled up', async () => {
     /**
-     * **Deliberately different from §7.1's filtering rule**, and someone will
-     * read that as a bug. Filtering by Punk returns UK82 records because the
-     * question is "show me punk". A Punk NODE's size answers "how many records
-     * are tagged Punk", which is a different question — and rolling up would
-     * make every parent larger than all its children by construction, which is
-     * structure the data does not have.
+     * **`ownedCount` is deliberately NOT rolled up, though the genreId FILTER
+     * is.** The two rules sit in one module and look contradictory, so the
+     * distinction is worth stating precisely: they answer different questions.
+     *
+     *   - `buildGraph({ genreId: Punk })` MATCHES a record tagged only UK82.
+     *     That is §7.1, binding on filtering "and graph purposes", and it is
+     *     asserted in the genreId-subset block below.
+     *   - A Punk node's `ownedCount` answers "how many records are tagged Punk"
+     *     — directly. Rolling up would make every parent larger than all its
+     *     children by construction, which is structure the data does not have.
+     *
+     * **This comment previously read "Filtering by Punk returns UK82 records"
+     * as a plain statement of fact.** It was true of the collection list and
+     * false of the code it sat above — the graph used flat equality and
+     * returned an empty payload for any ancestor. The comment was the reason
+     * the defect looked handled: it described the correct rule beside an
+     * implementation that did not follow it.
      */
     const [punk] = await db.insert(genres).values({ name: 'Punk' }).returning();
     const [uk82] = await db
@@ -688,6 +700,109 @@ describe('buildGraph — the genreId subset (§5.6)', () => {
 
     expect(graph.nodes.map((n) => n.label)).toContain('Discharge');
     expect(graph.nodes.map((n) => n.label)).not.toContain('Dire Straits');
+  });
+
+  it('matches a record tagged only with a DESCENDANT of the filtered genre', async () => {
+    /**
+     * **§7.1 is binding here, not only on the collection list**: "a record
+     * tagged with a child genre is implicitly a member of all ancestor genres
+     * for filtering **and graph purposes**."
+     *
+     * This shipped as flat equality — `rg.genre_id = $1` — so filtering by Punk
+     * returned an entirely EMPTY graph when the records were tagged UK82, while
+     * `/?genreId=<Punk>` returned them. Measured on `Punk > UK82 > Oi!` with one
+     * record tagged only `Oi!`: records=1, wantList=1, graphNodes=0.
+     *
+     * The `/graph` genre dropdown lists every genre with no hierarchy filter,
+     * so selecting a parent was a reachable path to a blank canvas.
+     */
+    const [punk] = await db.insert(genres).values({ name: 'Punk' }).returning();
+    const [uk82] = await db
+      .insert(genres)
+      .values({ name: 'UK82', parentGenreId: punk.id })
+      .returning();
+
+    const artist = await insertArtist('Discharge');
+    const record = await insertRecord('Hear Nothing', artist);
+    await db.insert(recordGenres).values({ recordId: record, genreId: uk82.id });
+
+    const graph = await buildGraph({ genreId: punk.id });
+
+    expect(graph.nodes.map((n) => n.label), 'the artist survives the filter').toContain(
+      'Discharge',
+    );
+  });
+
+  it('matches through more than one level of nesting', async () => {
+    // Two levels, because a fix that walked exactly one level would pass the
+    // test above and still be wrong for `Punk > UK82 > Oi!`.
+    const [punk] = await db.insert(genres).values({ name: 'Punk' }).returning();
+    const [uk82] = await db
+      .insert(genres)
+      .values({ name: 'UK82', parentGenreId: punk.id })
+      .returning();
+    const [oi] = await db.insert(genres).values({ name: 'Oi!', parentGenreId: uk82.id }).returning();
+
+    const artist = await insertArtist('Discharge');
+    const record = await insertRecord('Hear Nothing', artist);
+    await db.insert(recordGenres).values({ recordId: record, genreId: oi.id });
+
+    const graph = await buildGraph({ genreId: punk.id });
+
+    expect(graph.nodes.map((n) => n.label)).toContain('Discharge');
+  });
+
+  it('does NOT match a record tagged with an ANCESTOR of the filtered genre', async () => {
+    /**
+     * The direction is asymmetric and the complement matters: §7.1 makes a child
+     * a member of its ancestors, not the reverse. A record tagged only `Punk` is
+     * not a UK82 record, and a subtree walk that went upward would claim it was.
+     */
+    const [punk] = await db.insert(genres).values({ name: 'Punk' }).returning();
+    const [uk82] = await db
+      .insert(genres)
+      .values({ name: 'UK82', parentGenreId: punk.id })
+      .returning();
+
+    const artist = await insertArtist('Discharge');
+    const record = await insertRecord('Hear Nothing', artist);
+    await db.insert(recordGenres).values({ recordId: record, genreId: punk.id });
+
+    const graph = await buildGraph({ genreId: uk82.id });
+
+    expect(graph.nodes.map((n) => n.label)).not.toContain('Discharge');
+  });
+
+  it('agrees with the collection list on the same fixture', async () => {
+    /**
+     * **The seam, asserted directly.** The two paths answered the same question
+     * differently for a year: identical `genreSubtree` copies in records and
+     * want-list, and flat equality in the graph. Pinning the ANSWERS against
+     * each other — rather than each against its own expectation — is what makes
+     * a future divergence fail here rather than in a screenshot.
+     */
+    const [punk] = await db.insert(genres).values({ name: 'Punk' }).returning();
+    const [uk82] = await db
+      .insert(genres)
+      .values({ name: 'UK82', parentGenreId: punk.id })
+      .returning();
+
+    const artist = await insertArtist('Discharge');
+    const record = await insertRecord('Hear Nothing', artist);
+    await db.insert(recordGenres).values({ recordId: record, genreId: uk82.id });
+
+    const listed = await listRecords({
+      limit: 50,
+      offset: 0,
+      sort: { field: 'title', direction: 'asc' },
+      filters: { genreId: punk.id },
+    });
+    const graph = await buildGraph({ genreId: punk.id });
+
+    const artistsInGraph = graph.nodes.filter((n) => n.type === 'artist');
+
+    expect(listed.total, 'the list matches the record').toBe(1);
+    expect(artistsInGraph, 'and so does the graph').toHaveLength(1);
   });
 });
 

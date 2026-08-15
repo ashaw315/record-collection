@@ -5404,3 +5404,64 @@ building it per-screen "produces three implementations that drift", and `/lookup
 then does exactly that. Deferred because refactoring a working screen in the
 middle of a remediation sequence is how a regression hides in a diff nobody can
 read cleanly.
+
+## Unit 2 — `genreSubtree`: three implementations, and which one was right
+
+**The decision was made from measurement, not from recency.** One fixture,
+`Punk > UK82 > Oi!`, with a single record and a single want-list item tagged
+only with the LEAF `Oi!`, filtered at each of the three levels:
+
+| implementation | leaf `Oi!` | parent `UK82` | grandparent `Punk` |
+|---|---|---|---|
+| `records.ts:247`   | 1 | 1 | 1 |
+| `want-list.ts:54`  | 1 | 1 | 1 |
+| `graph.ts:73`      | 4 nodes | **0** | **0** |
+
+**Records and want-list were byte-identical** — genuine duplication with no
+behavioural disagreement, exactly as the earlier deferral described. **The graph
+was the sole departure**, using flat equality `rg.genre_id = $1`, so it matched
+only the exact genre and returned an ENTIRELY EMPTY payload for any ancestor —
+not a smaller graph, nothing at all.
+
+§7.1 settles it: "a record tagged with a child genre is implicitly a member of
+all ancestor genres for filtering **and graph purposes**." One sentence binds
+all three callers. The two identical copies implement it; the third did not.
+So the subtree walk was extracted to `src/lib/db/queries/genre-hierarchy.ts` and
+the graph changed to match, in both places it filtered — `collectedArtists` and
+the `owned_genres` CTE.
+
+**Nobody was relying on the graph's behaviour**, which is worth stating since a
+behaviour change needs that check. `/graph`'s genre dropdown is populated from
+`listGenres` — a flat list of ALL genres with no hierarchy filter — so selecting
+any parent genre was a reachable path to a blank canvas. It was a user-visible
+bug, not a contract.
+
+**Two other recursive walks are NOT copies and were left alone**, which matters
+because "five recursive CTEs over `genres`" looks like five copies of one idea:
+
+- `genreRollup` (`records.ts`) walks UPWARD from records to ancestors, for
+  §5.2's facet counts. Different direction, different question.
+- `wouldCreateCycle` (`genres.ts`) walks down for cycle detection and returns a
+  boolean.
+
+Consolidating those into the same helper would have been the churn CLAUDE.md §4
+warns about — they share a shape, not a meaning.
+
+**The comment that made the defect invisible.** `graph.test.ts:302` read
+"Filtering by Punk returns UK82 records because the question is 'show me punk'"
+as a plain statement of fact, sitting above a test about `ownedCount`. It was
+true of the collection list and false of the code it sat in. Someone reading
+that block — the one place in the graph tests where §7.1 is discussed — would
+conclude the hierarchy was handled and the no-rollup rule was the only
+subtlety. It now states both rules explicitly, says which is rolled up and which
+is not, and records that the sentence was previously false.
+
+**Same shape as Unit 1's finding, from the opposite direction.** There, a
+comment explaining a general hazard sat above coverage of one specific case.
+Here, a comment describing the correct rule sat above an implementation that did
+not follow it. Both times the prose was right and load-bearing in the reader's
+mind, and both times it was doing the work the code was supposed to do.
+
+**One test pins the two answers against each other** rather than each against
+its own expectation ("agrees with the collection list on the same fixture"). A
+future divergence fails there, at the seam, instead of in a screenshot.

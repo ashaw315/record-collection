@@ -4,6 +4,9 @@ import { isForeignKeyViolation } from '@/lib/api/errors';
 import { escapeLikePattern } from '@/lib/api/like';
 import type { RecordFilters, RecordSortField } from '@/lib/records/fields';
 import { countReferences } from './referrers';
+// §7.1's hierarchy, shared with ./want-list and ./graph — see that module for
+// why it is not defined here.
+import { genreSubtree } from './genre-hierarchy';
 import { getDb } from '@/db/client';
 import {
   artists,
@@ -228,33 +231,6 @@ export type { RecordSortField, RecordFilters } from '@/lib/records/fields';
  * is not returned three times — the row-multiplication problem the detail read
  * avoids for the same reason.
  */
-/**
- * SPEC.md §7.1: a record tagged with a child genre is implicitly a member of
- * every ancestor genre for filtering. So filtering by a genre means filtering
- * by that genre AND ITS WHOLE SUBTREE.
- *
- * Walks DOWN from the requested genre rather than up from each record's genres:
- * the question is "which genres count as this one", and answering it once per
- * query beats answering it once per row.
- *
- * `UNION` rather than `UNION ALL`, matching wouldCreateCycle in ./genres — the
- * cycle guard is the only thing preventing a loop in the data, and if it is
- * ever defeated, duplicate elimination stops this walking forever.
- *
- * §7.1 says "do not denormalize", which is why this is computed per query
- * rather than kept in a closure table.
- */
-function genreSubtree(genreId: string) {
-  return sql`(
-    WITH RECURSIVE subtree AS (
-      SELECT id FROM ${genres} WHERE id = ${genreId}
-      UNION
-      SELECT g.id FROM ${genres} g JOIN subtree s ON g.parent_genre_id = s.id
-    )
-    SELECT id FROM subtree
-  )`;
-}
-
 function buildWhere(filters: RecordFilters) {
   const clauses = [];
 
