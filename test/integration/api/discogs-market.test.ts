@@ -4,7 +4,12 @@ import { truncateAll, closeTestDb } from '../../helpers/db';
 import { GET as market } from '@/app/api/discogs/market/[id]/route';
 import { middlewareRuns, routeAuthMode } from '@/lib/auth/routes';
 import * as clientModule from '@/lib/discogs/client';
-import { readCachedMarket, writeCachedMarket } from '@/lib/discogs/market-cache';
+import {
+  cacheCovers,
+  cachedLowestPrice,
+  readCachedMarket,
+  writeCachedMarket,
+} from '@/lib/discogs/market-cache';
 
 /**
  * SPEC.md §10a layers 1 and 2: `GET /api/discogs/market/:id`.
@@ -121,6 +126,107 @@ describe('GET /api/discogs/market/:id', () => {
     expect(body.rangeUnavailable, 'the UI must be able to SAY why').toBe(true);
   });
 
+  it('caches a 404 ladder as COVERED — the absence is a fact, not a gap', async () => {
+    /**
+     * §10a's documented normal state: `price_suggestions` 404s without completed
+     * seller settings. That is a real, settled answer — this account cannot see
+     * a ladder for this release — so the row legitimately covers layer 2 and a
+     * later read must be served from cache rather than re-asking every time.
+     *
+     * The contrast with the test below is the whole point of this pair: an empty
+     * ladder that was ANSWERED and an empty ladder that was NEVER ASKED look
+     * identical in the payload and must not be cached identically.
+     */
+    const get = mockDiscogs({
+      suggestions: new clientModule.DiscogsError('seller settings', { status: 404 }),
+    });
+
+    await request('381756');
+
+    const cached = await readCachedMarket(381756);
+    expect(cached, 'a settled answer is cached').not.toBeNull();
+    expect(
+      cacheCovers(cached?.payload, ['floor', 'ladder']),
+      'a 404 ladder is an answer, so the row covers layer 2',
+    ).toBe(true);
+
+    get.mockClear();
+    await request('381756');
+    expect(get, 'and a second read is served from cache').not.toHaveBeenCalled();
+  });
+
+  it('does NOT mark the ladder covered when the ladder request FAILED', async () => {
+    /**
+     * **The defect this test exists for.** `layersFetched` was a hardcoded
+     * `['floor', 'ladder']` literal written on every non-total failure, so a
+     * transient 503 on `price_suggestions` produced a row claiming to carry a
+     * ladder it had never fetched. `cacheCovers` then answered `true` for seven
+     * days and every reader was served an empty `conditions` array as though it
+     * were the measured truth.
+     *
+     * Absence recorded as fact, which §10a's "later layers degrade to absence,
+     * never to a guess" exists to prevent — and it is invisible, because the
+     * FIRST request behaves correctly under any implementation. Only the second
+     * one, up to seven days later, is wrong.
+     *
+     * A 503 rather than a 404: a 404 is Discogs answering, and that is the test
+     * above.
+     */
+    mockDiscogs({
+      suggestions: new clientModule.DiscogsError('upstream blew up', { status: 503 }),
+    });
+
+    const response = await request('381756');
+    expect(response.status, 'layer 1 still answers').toBe(200);
+
+    const cached = await readCachedMarket(381756);
+    expect(cached, 'the floor is real and worth keeping').not.toBeNull();
+    expect(
+      cacheCovers(cached?.payload, ['floor', 'ladder']),
+      'the ladder was never fetched, so the row cannot answer for it',
+    ).toBe(false);
+    expect(
+      cacheCovers(cached?.payload, ['floor']),
+      'but the floor it DID fetch is still usable',
+    ).toBe(true);
+  });
+
+  it('re-asks for the ladder on the next request after one failed', async () => {
+    /**
+     * The consequence that matters to the user. Marking an unfetched ladder as
+     * covered did not merely mislabel a row — it meant the app never tried
+     * again until the entry expired, so one transient blip cost seven days of
+     * layer 2 on that release.
+     */
+    mockDiscogs({
+      suggestions: new clientModule.DiscogsError('upstream blew up', { status: 503 }),
+    });
+    await request('381756');
+
+    // Discogs recovers.
+    const get = mockDiscogs();
+    const body = await (await request('381756')).json();
+
+    expect(get, 'the miss is re-fetched, not served stale').toHaveBeenCalled();
+    expect(body.conditions.length, 'and the ladder arrives').toBeGreaterThan(0);
+  });
+
+  it('still serves the FLOOR from a ladder-failed row without a refetch', async () => {
+    /**
+     * The complement, and the reason this is a marker rather than a refusal to
+     * cache: the floor was genuinely fetched. A spread asking only for layer 1
+     * must be served from this row, or a failed ladder would throw away a good
+     * measurement and re-spend budget the limiter is short of.
+     */
+    mockDiscogs({
+      suggestions: new clientModule.DiscogsError('upstream blew up', { status: 503 }),
+    });
+    await request('381756');
+
+    const cached = await readCachedMarket(381756);
+    expect(cachedLowestPrice(cached?.payload), 'the measured floor survives').toBe(47.28);
+  });
+
   it('never derives a condition ladder from the floor', async () => {
     // The interpolation §10a forbids: `lowest_price` is one listing at an
     // unknown condition, and spreading it across grades invents six numbers.
@@ -156,6 +262,24 @@ describe('GET /api/discogs/market/:id', () => {
 
     expect(body.numForSale).toBeNull();
     expect(body.conditions, 'the ladder still arrived').toHaveLength(8);
+  });
+
+  it('does not mark the FLOOR covered when the floor request failed', async () => {
+    /**
+     * The mirror of the ladder case, asserted separately because the marker is
+     * built from two independent settlements and a fix could get one right and
+     * the other wrong. This direction matters to the SPREAD, which reads these
+     * rows for layer 1 only: a row claiming a floor it never fetched would make
+     * `cachedLowestPrice` return null and be believed as "nobody is selling it",
+     * dragging a master's spread toward a low end that does not exist.
+     */
+    mockDiscogs({ stats: new clientModule.DiscogsError('stats down', { status: 502 }) });
+
+    await request('381756');
+
+    const cached = await readCachedMarket(381756);
+    expect(cacheCovers(cached?.payload, ['floor']), 'the floor was never fetched').toBe(false);
+    expect(cacheCovers(cached?.payload, ['ladder']), 'but the ladder was').toBe(true);
   });
 
   it('400s on a non-numeric release id rather than requesting it', async () => {

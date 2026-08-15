@@ -5465,3 +5465,77 @@ mind, and both times it was doing the work the code was supposed to do.
 **One test pins the two answers against each other** rather than each against
 its own expectation ("agrees with the collection list on the same fixture"). A
 future divergence fails there, at the seam, instead of in a screenshot.
+
+## Unit 3 — the market cache recorded a ladder it never fetched
+
+`GET /api/discogs/market/:id` built `layersFetched: ['floor', 'ladder']` as a
+hardcoded literal and wrote it on every response that was not a TOTAL failure.
+The two layers are settled independently with `Promise.allSettled`, so a
+transient 503 on `price_suggestions` stored a row claiming a ladder that had
+never been fetched. `cacheCovers` then answered `true` for seven days, and every
+reader was served `conditions: []` as though it were the measured truth.
+
+Measured before the fix: `cacheCovers(payload, ['floor','ladder']) === true`
+with `conditions.length === 0`.
+
+**The consequence was worse than the mislabelling.** Because the row read as
+complete, nothing retried — one blip cost a week of layer 2 on that release
+rather than being corrected on the next request.
+
+**A 404 counts as fetched; a rejection does not.** This is the distinction the
+fix turns on, and it is not the same as "did we get data":
+
+- `price_suggestions` 404 is §10a's DOCUMENTED normal state — the token's
+  account has no seller settings. That is Discogs ANSWERING: this account cannot
+  see a ladder for this release. A settled fact, worth caching, and re-asking
+  every time would spend budget to be told the same thing.
+- A 503 is Discogs failing to answer. The empty ladder means "we do not know",
+  and it must expire on the next request.
+
+Both produce `conditions: []`. They are indistinguishable in the payload, which
+is exactly why the marker has to carry the difference — the payload cannot.
+
+**`rangeUnavailable` deliberately did NOT change**, and the two fields now
+answer different questions on purpose:
+
+- `rangeUnavailable` answers the READER's question, "is there a range to show
+  me?" — false in both cases, so `conditions.length === 0` is right.
+- `layersFetched` answers the CACHE's question, "may I serve this again?" — and
+  only there does fact-versus-unknown change the behaviour.
+
+The route's own comment previously claimed "`rangeUnavailable` already says
+which part is missing", which was true for the reader and false for the cache.
+Same shape as Units 1 and 2: prose that was correct about one layer, sitting
+above code that needed it to be correct about another.
+
+**Both directions are asserted, not just the one that was broken.** The marker
+is built from two independent settlements, so a fix could get the ladder right
+and the floor wrong. The floor direction matters to the SPREAD, which reads
+these rows for layer 1 only: a row claiming a floor it never fetched would make
+`cachedLowestPrice` return null and be believed as "nobody is selling it",
+dragging a master's spread toward a low end that does not exist.
+
+**The floor test passed the moment it was written**, which CLAUDE.md §2 treats
+as a defect in the test until explained. Mutation-verified rather than assumed:
+replacing `floorAnswered` with `true` — the old literal's behaviour — fails it
+with `expected true to be false`. It constrains the code; it was green because
+the fix was symmetric from the start.
+
+**The spread's writer was checked and is correct.** It writes
+`layersFetched: ['floor']` INSIDE the try, after the fetch has returned, so its
+marker is always truthful. The market endpoint was the sole offender — worth
+recording, since "two writers to one table" was the shape that made this
+suspicious and only one of them had the bug.
+
+## Mobile E2E flake, second sighting — load-dependent, not a regression
+
+Unit 1's run flagged `e2e/stats.spec.ts:145` `[mobile]`; Unit 3's flagged
+`e2e/collection-filters.spec.ts:408` `[mobile]`. Different specs, same project,
+neither touched by the unit that surfaced it. `collection-filters` passes 30/30
+under `--repeat-each=3 --project=mobile` in isolation, so this is contention in
+the full parallel run rather than a defect in either spec.
+
+`playwright.config.ts` sets `retries: 1`, which is why these surface as "flaky"
+rather than red — and that is the same masking the Unit 5 traps depend on. Worth
+diagnosing during the deferred test pass, with the two sightings as evidence
+that it is the mobile project under load rather than any one spec.

@@ -5,7 +5,12 @@ import { DiscogsError, getDiscogsClient } from '@/lib/discogs/client';
 import { discogsErrorResponse } from '@/lib/discogs/errors';
 import { toDiscogsId } from '@/lib/discogs/fields';
 import { normalizeMarket } from '@/lib/discogs/normalize-market';
-import { cacheCovers, readCachedMarket, writeCachedMarket } from '@/lib/discogs/market-cache';
+import {
+  cacheCovers,
+  readCachedMarket,
+  writeCachedMarket,
+  type MarketLayer,
+} from '@/lib/discogs/market-cache';
 
 /**
  * SPEC.md §10a layers 1 and 2 — `GET /api/discogs/market/:id`.
@@ -82,15 +87,56 @@ export const GET = withErrorHandling(
       suggestions: suggestions.status === 'fulfilled' ? suggestions.value : null,
     });
 
+    /**
+     * **Which layers this row can actually answer for — measured, not assumed.**
+     *
+     * This was a hardcoded `['floor', 'ladder']` literal, written on every
+     * response that was not a total failure. So a transient 503 on
+     * `price_suggestions` stored a row claiming a ladder it had never fetched,
+     * `cacheCovers` answered `true`, and for seven days every reader was served
+     * an empty `conditions` array as though it were the measured truth. One
+     * blip cost a week of layer 2 on that release, and nothing retried because
+     * the row looked complete.
+     *
+     * **A 404 counts as FETCHED, a rejection does not**, and the distinction is
+     * the whole point. §10a documents the 404: `price_suggestions` returns it
+     * when the token's account has no seller settings, which is Discogs
+     * ANSWERING — this account cannot see a ladder for this release. That is a
+     * settled fact worth caching. A 503 is Discogs failing to answer, and an
+     * empty ladder then means "we do not know", which must expire on the next
+     * request rather than in seven days.
+     *
+     * The two are indistinguishable in the payload — `conditions: []` either
+     * way — which is precisely why the marker has to carry the difference.
+     */
+    const ladderAnswered =
+      suggestions.status === 'fulfilled' ||
+      (suggestions.reason instanceof DiscogsError && suggestions.reason.status === 404);
+
+    const floorAnswered =
+      stats.status === 'fulfilled' ||
+      (stats.reason instanceof DiscogsError && stats.reason.status === 404);
+
+    const layersFetched: MarketLayer[] = [
+      ...(floorAnswered ? (['floor'] as const) : []),
+      ...(ladderAnswered ? (['ladder'] as const) : []),
+    ];
+
     const payload = {
       ...market,
       /**
        * Stated, so the UI can SAY the range is unavailable rather than render
        * an absence the reader has to interpret. An empty ladder with no
        * explanation looks like a record nobody has priced.
+       *
+       * Deliberately still `conditions.length === 0` and NOT `!ladderAnswered`:
+       * this answers the reader's question ("is there a range to show me?"),
+       * which is false in both cases. `layersFetched` answers the cache's
+       * question ("may I serve this again?"), and only there does the
+       * fact-versus-unknown distinction change the behaviour.
        */
       rangeUnavailable: market.conditions.length === 0,
-      layersFetched: ['floor', 'ladder'] as const,
+      layersFetched,
     };
 
     /**
