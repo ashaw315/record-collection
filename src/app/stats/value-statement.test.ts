@@ -99,3 +99,52 @@ describe('spendStatement', () => {
     expect(said).toMatch(/no purchase prices|nothing recorded/i);
   });
 });
+
+describe('a total that is not a number at all', () => {
+  /**
+   * **`Number(amount) === 0` conflated three different facts**, and this is the
+   * absent-versus-unknown shape landing in a money field (CLAUDE.md §8).
+   *
+   *   '0.00'      a real computed zero        -> "no prices recorded"  correct
+   *   ''          the driver returned nothing -> "no prices recorded"  WRONG-ish
+   *   'nonsense'  something is broken         -> rendered AS MONEY     wrong
+   *
+   * The third is the dangerous one. `Number('nonsense')` is `NaN`, `NaN === 0`
+   * is false, so the guard passed the value through and `formatTotal` put it in
+   * front of the user inside a sentence beginning "Estimated value of what is on
+   * the shelf". A number the app cannot parse is not a valuation, and saying
+   * nothing is the only honest option.
+   *
+   * `recordStats` returns '0.00' for an empty collection, so this is not
+   * reachable from the query layer today — but §5.7's cron is a writer, the
+   * column is `NUMERIC(10,2)` which node-postgres hands back as a STRING, and
+   * `money.ts` documents at length that these values must never route through a
+   * float. The guard should not be the one place that assumes they parse.
+   */
+  it('says nothing rather than rendering an unparseable value as money', () => {
+    const said = estimatedValueStatement('nonsense');
+
+    expect(said, 'never presents garbage as a valuation').not.toContain('nonsense');
+    expect(said).toMatch(/cannot be estimated|no prices/i);
+  });
+
+  it('treats an empty string as nothing recorded, not as zero pounds', () => {
+    expect(estimatedValueStatement('')).toMatch(/cannot be estimated|no prices/i);
+  });
+
+  it('does the same for the spend statement', () => {
+    expect(spendStatement('nonsense')).not.toContain('nonsense');
+    expect(spendStatement('nonsense')).toMatch(/no purchase prices/i);
+  });
+
+  it('still reports a genuine zero as nothing recorded', () => {
+    // Unchanged behaviour, asserted so the fix cannot quietly reclassify it.
+    expect(estimatedValueStatement('0.00')).toMatch(/cannot be estimated|no prices/i);
+  });
+
+  it('still reports a real total', () => {
+    // The complement: a guard that rejected everything would pass every test
+    // above.
+    expect(estimatedValueStatement('120.50')).toContain('120.50');
+  });
+});

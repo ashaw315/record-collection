@@ -146,6 +146,9 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
             />
 
             <PriceHistory
+              // The same id the panel above is built from, so the empty state
+              // cannot point at a control that did not render.
+              hasMarketPanel={record.pressing?.discogsReleaseId != null}
               observations={prices.map((row) => ({
                 id: row.id,
                 price: row.price,

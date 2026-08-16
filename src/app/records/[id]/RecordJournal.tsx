@@ -21,9 +21,25 @@ export type JournalEntryView = {
   note: string;
 };
 
-/** Today in the same form the date input and the API use. */
+/**
+ * Today on the USER's calendar, in the form the date input and the API use.
+ *
+ * **`toISOString()` was wrong here, and wrong in the direction that files real
+ * entries under the wrong day.** It converts to UTC first, so for a user west of
+ * Greenwich every evening reads as tomorrow: 20:30 on Friday the 15th in New
+ * York is 00:30 Saturday the 16th in UTC, and a note written on Friday night was
+ * captioned Saturday. Measured, not reasoned about.
+ *
+ * A journal entry's date is a HUMAN fact — the day the user played the record —
+ * not a machine timestamp. `journal_entries.entry_date` is a `DATE`, and the
+ * only calendar that makes it true is the one the user was looking at.
+ *
+ * `en-CA` because it formats as `YYYY-MM-DD`, which is what the input and the
+ * API want; the locale is a formatting trick, not a claim about the user's
+ * language.
+ */
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  return new Date().toLocaleDateString('en-CA');
 }
 
 export function RecordJournal({

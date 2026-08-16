@@ -131,13 +131,23 @@ describe('boundedDateSchema keeps a typo out of a date field', () => {
     expect(schema.safeParse('1876-12-31').success).toBe(false);
   });
 
-  it('rejects tomorrow — you cannot have played it yet', () => {
+  it('rejects the day after tomorrow — no timezone is that far ahead', () => {
     /**
      * The discriminating case against §4.1's rule, which allows `currentYear +
      * 1`. A band can be announced for next year; a record cannot have been
-     * bought, or listened to, tomorrow.
+     * bought, or listened to, in the future.
+     *
+     * **The line sits a day later than it reads, and deliberately.** The server
+     * bounds in UTC while the value arrives from the client's LOCAL calendar,
+     * which east of Greenwich is routinely a day ahead — so `2026-08-13` at this
+     * clock is somebody's genuine today and is accepted (see the timezone block
+     * below). Two days ahead is nobody's today, and that is where the bound
+     * bites.
+     *
+     * This test previously asserted `2026-08-13` was rejected, which made the
+     * form reject the user's own today for most of the world east of UTC.
      */
-    expect(schema.safeParse('2026-08-13').success).toBe(false);
+    expect(schema.safeParse('2026-08-14').success).toBe(false);
   });
 
   it('rejects a date in the wrong century, which is what a typo looks like', () => {
@@ -169,12 +179,63 @@ describe('boundedDateSchema keeps a typo out of a date field', () => {
     const newYearEve = boundedDateSchema('Entry date', () => new Date('2026-12-31T23:00:00Z'));
     const newYearDay = boundedDateSchema('Entry date', () => new Date('2027-01-01T01:00:00Z'));
 
-    expect(newYearEve.safeParse('2027-01-01').success, 'not yet').toBe(false);
-    expect(newYearDay.safeParse('2027-01-01').success, 'now it is today').toBe(true);
+    /**
+     * Compared TWO days out rather than one, because the bound now carries a
+     * day of timezone slack: `2027-01-01` is already acceptable on New Year's
+     * Eve in UTC, since it is midnight somewhere. `2027-01-02` is the date the
+     * two clocks still disagree about, so it is the one that proves the bound
+     * moved rather than being frozen at module load — which is the property
+     * this test exists for.
+     */
+    expect(newYearEve.safeParse('2027-01-02').success, 'not yet').toBe(false);
+    expect(newYearDay.safeParse('2027-01-02').success, 'now within reach').toBe(true);
   });
 
   it('still allows null and undefined, which mean "not recorded"', () => {
     expect(schema.safeParse(null).success).toBe(true);
     expect(schema.safeParse(undefined).success).toBe(true);
+  });
+});
+
+describe('the future bound tolerates a timezone ahead of UTC', () => {
+  /**
+   * **The bound is computed in UTC and the value arrives from a LOCAL calendar,
+   * so the two disagree by a day for most of the world, twice over.**
+   *
+   * A journal entry's date is a human fact — "the day I played this" — so the
+   * client sends the user's local calendar date. East of Greenwich that date is
+   * routinely a day AHEAD of UTC: 09:00 on 16 August in Sydney is 23:00 on the
+   * 15th in UTC. A strict `value <= todayIso()` rejects the user's actual today
+   * as being in the future, on a form whose own date input offered it.
+   *
+   * One day of slack, not a timezone conversion. The server cannot know the
+   * client's zone and must not guess one; what it CAN say is that no zone is
+   * more than a day from UTC, so a date one day ahead is somebody's today and a
+   * date two days ahead is a typo. The bound still does its job — §4.1's point
+   * is keeping `2126-04-11` out, not adjudicating midnight.
+   */
+  const clock = () => new Date('2026-08-15T23:00:00Z');
+  const schema = boundedDateSchema('Entry date', clock);
+
+  it('accepts tomorrow-in-UTC, which is today somewhere east', () => {
+    expect(schema.safeParse('2026-08-16').success, 'Sydney is already on the 16th').toBe(true);
+  });
+
+  it('still accepts the UTC today', () => {
+    expect(schema.safeParse('2026-08-15').success).toBe(true);
+  });
+
+  it('still rejects a date two days out, which no zone reaches', () => {
+    const result = schema.safeParse('2026-08-17');
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toMatch(/future/i);
+    }
+  });
+
+  it('still rejects a wildly future typo', () => {
+    // The case the bound exists for: a mistyped year, not a midnight edge.
+    expect(schema.safeParse('2126-08-15').success).toBe(false);
   });
 });

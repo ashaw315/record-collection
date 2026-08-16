@@ -90,3 +90,37 @@ describe('CURRENCY_SYMBOL', () => {
     expect(CURRENCY_SYMBOL).toBe('$');
   });
 });
+
+describe('a negative amount', () => {
+  /**
+   * **`$-12.50` puts the sign in the wrong place.** The convention is `-$12.50`
+   * — the minus governs the whole amount, not the digits after the symbol — and
+   * this is the app's single money formatter, so it is the one place that
+   * decides.
+   *
+   * **Reachability, stated rather than assumed.** `moneySchema` is
+   * `^\d{1,8}(\.\d{1,2})?$`, which has no sign, so the API boundary refuses a
+   * negative and no ordinary path produces one. There is no CHECK constraint on
+   * `records.purchase_price` (verified against the database), so a value
+   * corrected by hand in psql — an ordinary thing to do to a personal tool —
+   * reaches `formatPrice` on the record detail screen and renders wrongly. The
+   * fix costs two lines and the alternative is a formatter that is right only
+   * because nothing has tested it.
+   */
+  it('puts the minus before the symbol, not after it', () => {
+    expect(formatMoney('-12.50')).toBe('-$12.50');
+  });
+
+  it('groups a large negative correctly', () => {
+    // The sign must not disturb the thousands grouping, which reads the whole
+    // part as digits.
+    expect(formatMoney('-12345.50')).toBe('-$12,345.50');
+  });
+
+  it('leaves a positive amount exactly as it was', () => {
+    // The regression guard: a sign-handling change must not touch the ordinary
+    // path, which is every amount this app has ever shown.
+    expect(formatMoney('12345.50')).toBe('$12,345.50');
+    expect(formatMoney('0.00')).toBe('$0.00');
+  });
+});

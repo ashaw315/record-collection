@@ -5959,3 +5959,90 @@ so `typecheck` and `build` both fail with `Cannot find module
 '.../api/graph/route.js'` until `.next` is removed. Not a source error, and the
 message points at a file that no longer exists — worth knowing before debugging
 it as one.
+
+## Unit 7 — four defects from the review that were wrong data, not cleanup
+
+### The journal date was wrong in BOTH directions
+
+`RecordJournal.todayIso()` used `toISOString()`, which converts to UTC first. For
+a user west of Greenwich every evening reads as tomorrow: **20:30 Friday the 15th
+in New York is 00:30 Saturday the 16th in UTC**, so a note written on Friday
+night was captioned Saturday. Measured, not reasoned about.
+
+The second direction was hiding behind it and is the reason the fix is two
+changes rather than one. Fixing the client to send the LOCAL calendar date —
+which is right, because a journal date is a human fact about the user's day, not
+a machine timestamp — immediately breaks the server bound, because east of
+Greenwich the local date is routinely a day AHEAD of UTC. `09:00 on 16 August in
+Sydney` is `23:00 on the 15th` in UTC, and `value <= todayIso()` rejects the
+user's genuine today on a form whose own date input offered it.
+
+So `boundedDateSchema` now allows one day of slack. **Slack, not a timezone
+conversion**: the server cannot know the client's zone and must not guess one,
+but it can say that no zone is more than a day from UTC — a date one day ahead
+is somebody's today, two days ahead is a typo. §4.1's purpose is keeping
+`2126-04-11` out, not adjudicating midnight.
+
+Two existing tests encoded the strict bound and both were rewritten rather than
+relaxed: the unit test now asserts the day AFTER tomorrow is refused, and the
+New Year clock-injection test compares two days out, because one day out is now
+acceptable on New Year's Eve and would no longer prove the bound moves.
+
+### `isNothingRecorded` conflated three facts
+
+`Number(amount) === 0` treated a real zero, an empty string and unparseable
+garbage as one case — except it did not, and that is the defect:
+
+    '0.00'      real computed zero   -> "no prices recorded"     correct
+    ''          driver returned none -> "no prices recorded"     right, by luck
+    'nonsense'  something broke      -> NaN === 0 is FALSE, so it
+                                        was passed through and rendered
+
+The third put an unparsed string inside "Estimated value of what is on the
+shelf: …". Absent-versus-unknown in a money field, and the guess ran toward the
+confident output again. Now `Number.isNaN(value) || value === 0`.
+
+Not reachable from `recordStats` today — it returns `'0.00'` for an empty
+collection — and guarded anyway, because §5.7's cron is a writer and
+`NUMERIC(10,2)` arrives from node-postgres as a STRING. This guard should not be
+the one place that assumes they parse.
+
+### `formatMoney` put the sign in the wrong place
+
+`$-12.50`, because the minus stayed inside the string the grouping regex reads
+as digits. Conventional form is `-$12.50`: the minus governs the amount, not the
+digits after the symbol.
+
+`moneySchema` is `^\d{1,8}…` with no sign, so the API refuses a negative, and
+there is no CHECK on `records.purchase_price` (verified). It arrives only from a
+value corrected by hand in psql — ordinary for a personal tool — and this is the
+app's single money formatter.
+
+### The empty state promised a refresh that cannot run
+
+"No prices recorded yet. The weekly refresh adds what the market says." §5.7's
+cron is **step 16 and does not exist**; the only writer to `price_history` is
+`POST /api/records/:id/prices`, which no screen calls. The sentence described a
+mechanism that could not run, and an E2E test asserted it, holding it in place.
+
+**The obvious rewrite was the same defect in a new costume.** "Use the market
+panel above" is false whenever the record has no Discogs release id, because
+`MarketPanel` returns `null` without one — which is the common result of §10's
+quick in-store entry. Pointing at a control that is not on screen is exactly
+what the old copy did. So the empty state is conditional, and `page.tsx` passes
+`hasMarketPanel` from the same id the panel is built from rather than the
+component re-deriving it: two readings of "is there a panel" are two things that
+can disagree.
+
+### A JSX trap worth knowing
+
+A `{/* comment */}` as the FIRST child of a ternary branch is not a comment —
+`cond ? {/* … */} : …` parses as an object literal and fails with
+`TS1128: Declaration or statement expected` pointing at the END of the file,
+which is nowhere near the mistake. Put the comment above the conditional.
+
+### The run
+
+Full E2E at `--retries=0`: **326 passed, 0 failed** — the first fully clean
+retries-off run recorded here, so the mobile contention did not appear this
+time. It is load-dependent, not gone.

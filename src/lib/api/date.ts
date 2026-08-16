@@ -75,10 +75,30 @@ export type DateClock = () => Date;
 
 const systemClock: DateClock = () => new Date();
 
-function todayIso(clock: DateClock): string {
-  // UTC, matching the database's `CURRENT_DATE` on a UTC server. A local-time
-  // read would differ by a day either side of midnight.
-  return clock().toISOString().slice(0, 10);
+/**
+ * The latest date any timezone can currently call "today".
+ *
+ * Read in UTC — matching the database's `CURRENT_DATE` on a UTC server — and
+ * then given a day of slack, for the reason below. A `todayIso` helper returning
+ * the bare UTC day used to sit here; it became dead when this replaced its only
+ * caller, and is gone rather than kept as an unused alternative.
+ *
+ * **The server computes its bound in UTC; the value arrives from a LOCAL
+ * calendar.** A journal entry's date is a human fact — the day the user played
+ * the record — so the client sends its own calendar date, and east of Greenwich
+ * that is routinely a day ahead of UTC: 09:00 on 16 August in Sydney is 23:00 on
+ * the 15th in UTC. A strict `value <= todayIso()` rejected the user's actual
+ * today as being in the future, on a form whose own date input had offered it.
+ *
+ * One day of slack rather than a timezone conversion. The server cannot know the
+ * client's zone and must not guess one; what it CAN say is that no zone sits
+ * more than a day from UTC, so a date one day ahead is somebody's today and a
+ * date two days ahead is a typo. The bound still does the job §4.1 wants —
+ * keeping `2126-04-11` out — rather than adjudicating midnight.
+ */
+function latestPlausibleToday(clock: DateClock): string {
+  const tomorrow = new Date(clock().getTime() + 24 * 60 * 60 * 1000);
+  return tomorrow.toISOString().slice(0, 10);
 }
 
 /**
@@ -108,6 +128,9 @@ export function boundedDateSchema(label: string, clock: DateClock = systemClock)
     )
     // String comparison is safe and exact for zero-padded ISO dates, and avoids
     // constructing a Date purely to compare two days.
-    .refine((value) => value <= todayIso(clock), `${label} cannot be in the future`)
+    .refine(
+      (value) => value <= latestPlausibleToday(clock),
+      `${label} cannot be in the future`,
+    )
     .nullish();
 }

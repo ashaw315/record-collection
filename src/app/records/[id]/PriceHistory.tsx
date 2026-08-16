@@ -26,7 +26,22 @@ import {
  * the absence of an edit control otherwise reads as an oversight.
  */
 
-export function PriceHistory({ observations }: { observations: PriceObservation[] }) {
+export function PriceHistory({
+  observations,
+  /**
+   * Whether the market panel is on screen above — i.e. whether the record has a
+   * Discogs release id. The empty state points at that control, and must not
+   * when it is absent (`MarketPanel` renders `null` without an id).
+   *
+   * Passed rather than re-derived: `page.tsx` already computes the id for the
+   * panel, and two readings of "is there a panel" are two things that can
+   * disagree.
+   */
+  hasMarketPanel = false,
+}: {
+  observations: PriceObservation[];
+  hasMarketPanel?: boolean;
+}) {
   /**
    * **The chart and its bounds show what was PAID; the list below shows
    * everything.** §7.6 excludes `asking` from what a record is worth, and the
@@ -44,9 +59,31 @@ export function PriceHistory({ observations }: { observations: PriceObservation[
     <section className="mt-6" data-testid="price-history">
       <h2 className="mb-1 font-heading text-sm font-semibold tracking-tight">Price history</h2>
 
+      {/*
+        **The empty state says what is true now, not what is planned.** It read
+        "The weekly refresh adds what the market says" — describing §5.7's cron,
+        which is step 16 and does not exist. `POST /api/records/:id/prices` is
+        the only writer to `price_history` and no screen calls it, so the
+        sentence promised a mechanism that could not run and left the reader
+        waiting for data that was never going to arrive.
+
+        **And the replacement is conditional**, because the obvious rewrite —
+        "use the market panel above" — is the same defect in a new costume:
+        `MarketPanel` renders nothing at all when the record has no Discogs
+        release id, which is the common result of §10's quick in-store entry.
+        Pointing at a control that is not on screen is exactly what the old copy
+        did.
+
+        §10a removed manual entry deliberately (see the note above), so where
+        there is no market panel the honest answer is that nothing records a
+        price for this record yet — stated plainly rather than dressed as a
+        forthcoming feature.
+      */}
       {observations.length === 0 ? (
         <p className="mb-3 text-sm text-muted-foreground">
-          No prices recorded yet. The weekly refresh adds what the market says.
+          {hasMarketPanel
+            ? 'No prices recorded yet. “What it goes for now” above shows what the market says today.'
+            : 'No prices recorded yet, and this record has no Discogs release linked, so nothing can look one up.'}
         </p>
       ) : (
         <div className="mb-3">

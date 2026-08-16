@@ -48,7 +48,22 @@ export function formatMoney(
     return options !== undefined && 'absent' in options ? options.absent : ABSENT;
   }
 
-  const [whole, fraction = ''] = amount.split('.');
+  /**
+   * The sign is peeled off BEFORE grouping and put back before the symbol.
+   *
+   * Left attached, it produced `$-12.50` — the minus governs the amount, not the
+   * digits after the symbol, so the conventional form is `-$12.50`. It also kept
+   * the sign inside the string the grouping regex reads as digits.
+   *
+   * `moneySchema` (`^\d{1,8}…`) refuses a negative at the API boundary and
+   * there is no CHECK on `records.purchase_price`, so this arrives only from a
+   * value corrected by hand in the database — ordinary enough for a personal
+   * tool, and this is the app's single money formatter.
+   */
+  const negative = amount.startsWith('-');
+  const unsigned = negative ? amount.slice(1) : amount;
+
+  const [whole, fraction = ''] = unsigned.split('.');
 
   /**
    * Thousands separated: $12405.00 and $1240.50 differ by a decimal point's
@@ -66,5 +81,7 @@ export function formatMoney(
   // Truncated, not rounded — NUMERIC(10,2) cannot hold a third decimal, so one
   // arriving here came from a caller's arithmetic rather than the column, and
   // rounding would quietly disagree with what is stored.
-  return `${CURRENCY_SYMBOL}${grouped}.${fraction.padEnd(2, '0').slice(0, 2)}`;
+  const sign = negative ? '-' : '';
+
+  return `${sign}${CURRENCY_SYMBOL}${grouped}.${fraction.padEnd(2, '0').slice(0, 2)}`;
 }

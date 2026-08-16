@@ -20,9 +20,32 @@ import { formatTotal } from '@/app/collection-format';
  * "$0.00, using the most recent second-hand price" claims a computation over
  * records that have no prices at all. The collection is not worth nothing;
  * nothing is known about what it is worth.
+ *
+ * **`Number(amount) === 0` alone conflated three different facts**, which is the
+ * absent-versus-unknown shape (CLAUDE.md §8) arriving in a money field:
+ *
+ *   '0.00'      a real computed zero        -> nothing recorded    correct
+ *   ''          the driver returned nothing -> nothing recorded    right answer,
+ *                                                                  luckily
+ *   'nonsense'  something upstream broke    -> `NaN === 0` is false,
+ *                                              so it was PASSED THROUGH and
+ *                                              rendered inside "Estimated value
+ *                                              of what is on the shelf: …"
+ *
+ * A figure the app cannot parse is not a valuation, and the honest output is the
+ * same sentence used for no data — not the unparsed string in a money position.
+ *
+ * Not reachable from `recordStats` today, which returns '0.00' for an empty
+ * collection. It is guarded anyway because §5.7's cron is a writer, the column
+ * is `NUMERIC(10,2)` which node-postgres hands back as a STRING, and `money.ts`
+ * documents at length that these values must never route through a float. This
+ * guard should not be the one place that assumes they parse.
  */
 function isNothingRecorded(amount: string): boolean {
-  return Number(amount) === 0;
+  const value = Number(amount);
+
+  // NaN covers the unparseable case; `=== 0` covers the genuine and empty ones.
+  return Number.isNaN(value) || value === 0;
 }
 
 export function estimatedValueStatement(estimatedValue: string): string {

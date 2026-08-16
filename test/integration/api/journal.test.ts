@@ -143,14 +143,38 @@ describe('POST /api/records/:id/journal', () => {
     expect(await db.select().from(journalEntries)).toHaveLength(0);
   });
 
-  it('rejects tomorrow — you cannot have played it yet', async () => {
-    // The upper bound is TODAY, unlike §4.1's year rule which allows next year
-    // for a band already announced.
+  it('rejects the day after tomorrow, which is nobody’s today', async () => {
+    /**
+     * The upper bound is today PLUS one day, unlike §4.1's year rule which
+     * allows a whole next year for a band already announced.
+     *
+     * **The extra day is timezone slack, not laxity.** The server bounds in UTC
+     * while the client sends its own LOCAL calendar date — a journal entry's
+     * date is a human fact, the day the user played the record — and east of
+     * Greenwich that is routinely a day ahead of UTC. Rejecting it made the API
+     * refuse the user's genuine today, offered by the form's own date input.
+     *
+     * This previously asserted `CURRENT_DATE + 1` was a 400, which is what
+     * broke it. Two days out is beyond every timezone and still refused, so the
+     * bound keeps doing the job §4.1 wants — catching `2087-04-11` above.
+     */
+    const [{ dayAfter }] = await db
+      .execute<{ dayAfter: string }>(sql`SELECT (CURRENT_DATE + 2)::text AS "dayAfter"`)
+      .then((result) => (Array.isArray(result) ? result : result.rows));
+
+    expect((await post(recordId, { entryDate: dayAfter, note: 'x' })).status).toBe(400);
+  });
+
+  it('accepts tomorrow-in-UTC, because it is today somewhere east', async () => {
+    /**
+     * The complement, and the case the change exists for. Without it the API
+     * rejects a date its own form offered to a user in Sydney.
+     */
     const [{ tomorrow }] = await db
       .execute<{ tomorrow: string }>(sql`SELECT (CURRENT_DATE + 1)::text AS tomorrow`)
       .then((result) => (Array.isArray(result) ? result : result.rows));
 
-    expect((await post(recordId, { entryDate: tomorrow, note: 'x' })).status).toBe(400);
+    expect((await post(recordId, { entryDate: tomorrow, note: 'x' })).status).toBe(201);
   });
 
   it('accepts today, the boundary in the other direction', async () => {

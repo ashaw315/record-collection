@@ -563,7 +563,21 @@ test('offers no way to type in a price — §10a replaced manual entry', async (
     /no prices recorded/i,
   );
   await expect(blankSection).not.toContainText(/add what it is worth/i);
-  await expect(blankSection).toContainText(/weekly refresh/i);
+
+  /**
+   * **The empty state must not promise the weekly refresh.** It used to, and
+   * this test asserted it: §5.7's cron is step 16 and does not exist, so the
+   * only writer to `price_history` is an endpoint no screen calls. The sentence
+   * described a mechanism that could not run, and the test held it in place.
+   *
+   * This record is created through the API with no pressing, so it has no
+   * Discogs release id and no market panel — the branch that must not point at
+   * a control that is not on screen.
+   */
+  await expect(blankSection, 'no promise of a refresh that cannot run').not.toContainText(
+    /weekly refresh/i,
+  );
+  await expect(blankSection).toContainText(/no Discogs release linked/i);
 });
 
 test('each price shows its date and what its type means', async ({ page }) => {
