@@ -137,6 +137,25 @@ That last one is the measure of whether the review prompts are working. Steps 8�
 5. **The journal date is wrong in *both* directions.** The review found evening entries filing as tomorrow west of Greenwich. Fixing it — send the local date, since a journal date is a human fact — immediately breaks the server bound east of Greenwich, where the local date is a day *ahead* of UTC and the API rejects the user's genuine today. The resolution is slack, not conversion: the server cannot know the client's zone and must not guess, but it can say no zone is more than a day from UTC.
 6. **The obvious rewrite of the empty state was the same defect again.** "Use the market panel above" is false whenever the record has no Discogs release id, because `MarketPanel` renders `null` without one.
 
+**R4 test-quality pass — 2026-08-16. First overturned finding.**
+
+The audit named `e2e/tags-auth.spec.ts` as ceremony: 18 tests × 2 projects = 36 executions for "one middleware matcher", already owned by the unit suite. Mutation testing reversed it.
+
+Exempting a single resource — adding `/api/pressings` to `PUBLIC_PATHS`, which is what a real auth regression looks like — produced:
+
+- `src/lib/auth/routes.test.ts`: **53/53 passed.** The unit suite does not catch a one-resource exemption, because it asserts the *rule* (`routeAuthMode` defaults to `session`) and the exemption changes the *data* the rule reads.
+- `e2e/tags-auth.spec.ts`: **2 failed**, on exactly the exempted resource, over real HTTP through real middleware.
+
+So the loop is the only thing covering per-route protection, and the case for deleting it rested on a claim that is false. It stays.
+
+Two things worth carrying:
+
+**This is the first time verification saved a test rather than changed a fix.** The rule "a finding is a hypothesis" had been earning its place by narrowing fixes; here it prevented the removal of the only check standing between a single-line auth mistake and a silently public endpoint.
+
+**The file's own docblock was wrong about itself.** It says `/api/tags` "covers the class rather than only this path, because the five that follow are covered by the same middleware matcher and the same routeAuthMode default" — and then loops over six more resources anyway. The prose argued for deleting the loop sitting directly beneath it, which is the pattern this remediation kept meeting, now pointed at a test instead of at code. The loop was right and the sentence explaining it away was wrong.
+
+*Also in this pass:* 17 per-endpoint auth stanzas removed from integration files (mutation-verified redundant — making every path public is caught 36 times by the unit suite alone); 846 → 829 tests. One kept in `influences.test.ts`, which covers three distinct path shapes including the two-param route.
+
 *The pattern this remediation named,* now a standing check: **when prose and code sit together and disagree, the prose is what stops anyone looking.** Three instances, each a correct sentence beside a wrong thing — a comment explaining a hazard class above coverage of one case; a comment stating §7.1 correctly above code that ignored it; a docblock naming a cause above an assertion naming a different one. The third is the sharpest, because the accurate comment knew more than the type system let the assertion express. A fourth was *avoided*: keeping `/api/graph` would have required a careful paragraph explaining why dead code should stay.
 
 ---

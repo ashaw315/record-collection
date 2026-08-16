@@ -2,7 +2,6 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { sql } from 'drizzle-orm';
 import { getTestDb, truncateAll, closeTestDb } from '../../helpers/db';
 import { GET as getStats } from '@/app/api/records/stats/route';
-import { middlewareRuns, routeAuthMode } from '@/lib/auth/routes';
 
 /**
  * SPEC.md §5.2 `GET /api/records/stats`, and §7.6's estimated-value chain.
@@ -87,12 +86,6 @@ async function price(
   );
 }
 
-describe('unauthenticated access', () => {
-  it('routes the stats path through middleware as session-protected', () => {
-    expect(middlewareRuns('/api/records/stats')).toBe(true);
-    expect(routeAuthMode('/api/records/stats')).toBe('session');
-  });
-});
 
 /**
  * §5.2's routing note has two halves, and only ONE of them can be tested here.

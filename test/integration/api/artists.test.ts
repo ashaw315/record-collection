@@ -8,7 +8,6 @@ import {
   PATCH as patchArtist,
   DELETE as deleteArtist,
 } from '@/app/api/artists/[id]/route';
-import { middlewareRuns, routeAuthMode } from '@/lib/auth/routes';
 
 /**
  * SPEC.md §5.4 reference CRUD for `artists`.
@@ -67,14 +66,6 @@ async function artistNames(): Promise<string[]> {
   return rows.rows.map((r) => r.name);
 }
 
-describe('unauthenticated access', () => {
-  it('routes both paths through middleware as session-protected', () => {
-    expect(middlewareRuns('/api/artists')).toBe(true);
-    expect(middlewareRuns(`/api/artists/${UNUSED_UUID}`)).toBe(true);
-    expect(routeAuthMode('/api/artists')).toBe('session');
-    expect(routeAuthMode(`/api/artists/${UNUSED_UUID}`)).toBe('session');
-  });
-});
 
 describe('unanticipated server errors', () => {
   it('returns the §5 500 shape and leaks nothing when the query fails', async () => {

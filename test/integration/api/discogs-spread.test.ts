@@ -1,7 +1,6 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { truncateAll, closeTestDb } from '../../helpers/db';
 import { GET as spread } from '@/app/api/discogs/master/[id]/spread/route';
-import { middlewareRuns, routeAuthMode } from '@/lib/auth/routes';
 import * as clientModule from '@/lib/discogs/client';
 import { readCachedMarket, writeCachedMarket } from '@/lib/discogs/market-cache';
 import { GET as market } from '@/app/api/discogs/market/[id]/route';
@@ -161,11 +160,6 @@ describe('GET /api/discogs/master/:id/spread', () => {
     }
 
     expect(get).not.toHaveBeenCalled();
-  });
-
-  it('is behind auth (unauthenticated)', () => {
-    expect(middlewareRuns('/api/discogs/master/133514/spread')).toBe(true);
-    expect(routeAuthMode('/api/discogs/master/133514/spread')).toBe('session');
   });
 
   it('surfaces a failed version list as a Discogs error', async () => {

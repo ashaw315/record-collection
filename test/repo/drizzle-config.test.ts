@@ -37,13 +37,26 @@ function runMigrate(env: Record<string, string | undefined>): {
 }
 
 describe('drizzle.config.ts shares one schema with the app', () => {
-  it('does not re-implement env validation or driver selection', () => {
-    const source = readFileSync(join(REPO_ROOT, 'drizzle.config.ts'), 'utf-8');
-
-    // The imports are the fix. Hand-rolled equivalents are what drifted.
-    expect(source).toMatch(/import\s*\{\s*parseEnv\s*\}/);
-    expect(source).toMatch(/import\s*\{\s*resolveDriver\s*\}/);
-  });
+  /**
+   * **Removed: an assertion that `drizzle.config.ts` contains two import
+   * statements.**
+   *
+   * It asserted the FORM of the fix rather than its effect, and the effect is
+   * already covered here by "rejects a DATABASE_URL that boot validation would
+   * reject", which loads the config the way drizzle-kit does and checks the
+   * resolved behaviour. Mutation-verified: replacing the `parseEnv` import with
+   * a hand-rolled stub fails that test on its own, so the text check added
+   * nothing.
+   *
+   * Not a general licence to delete file-text tests — two others in this
+   * directory survived the same scrutiny. `neon-gate.test.ts` greps a test file
+   * for its gate, and mutation showed it is the ONLY thing that catches the
+   * gate being renamed away; its behavioural sibling passes, because the
+   * warning text it matches is unchanged. A file-text assertion is right
+   * exactly when the property is about a file — that a test still exists, that
+   * a generated block has not been appended — and wrong when it stands in for
+   * behaviour that can be observed.
+   */
 
   it('imports from modules free of the server-only marker', () => {
     // src/env.ts and src/db/client.ts both carry `import 'server-only'`, whose

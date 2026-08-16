@@ -94,8 +94,59 @@ export default defineConfig({
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    // SPEC.md §11 flow 10 runs the collection and lookup flows at 390x844.
-    { name: 'mobile', use: { ...devices['iPhone 13'] } },
+    {
+      name: 'mobile',
+      use: { ...devices['iPhone 13'] },
+      /**
+       * **Scoped, where it used to run every spec.**
+       *
+       * SPEC.md §11 flow 10: "Run the collection list and lookup flows at a
+       * mobile viewport (390×844)". The uniform matrix doubled all 15 specs to
+       * satisfy a requirement naming two, at roughly 3.7 minutes of a 7-minute
+       * suite.
+       *
+       * Two different justifications below, and the difference matters when
+       * someone edits this list:
+       *
+       *   SPEC-MANDATED — §11 flow 10 names these. Removing one is a spec
+       *   violation, not a tidy-up.
+       *     collection-filters, collection-widths, lookup-flows
+       *
+       *   EVIDENCE-BASED — the spec does not name these; they are here because
+       *   they assert viewport-dependent behaviour INTERNALLY, so running them
+       *   only on desktop would leave those assertions permanently unexercised
+       *   in the one place they are about.
+       *     graph      — §8.1's fallback list is a `sm:hidden` swap, and the
+       *                  canvas/list complement is asserted at both widths
+       *     manage     — "the resource rail is reachable on a narrow viewport"
+       *
+       * **What cannot be proven, and is therefore a decision rather than a
+       * cleanup.** The auth stanzas removed in this same pass were provably
+       * redundant: break the rule and watch which tests fail. There is no
+       * equivalent for "this spec does not need mobile" — a spec only fails on
+       * mobile if a mobile-specific defect exists, and none does today. So the
+       * excluded specs are excluded on the absence of viewport-dependent
+       * assertions, which is weaker evidence than a mutation.
+       *
+       * Concretely: `CollectionList` once had a dead band at 640–767px where a
+       * column and its stand-in were both hidden, and the uniform matrix is
+       * what would have caught it anywhere. **Re-adding a spec here needs no
+       * justification; removing one needs evidence.**
+       *
+       * Baseline before narrowing, so a later comparison means something: two
+       * consecutive `--retries=0` runs of the FULL matrix, 326 passed, 0 failed.
+       * A cleaner run after narrowing is NOT evidence the mobile contention is
+       * resolved — fewer parallel workers is exactly what would mask it. That
+       * investigation stays open on its own terms.
+       */
+      testMatch: [
+        /collection-filters\.spec\.ts$/,
+        /collection-widths\.spec\.ts$/,
+        /lookup-flows\.spec\.ts$/,
+        /graph\.spec\.ts$/,
+        /manage\.spec\.ts$/,
+      ],
+    },
   ],
   webServer: {
     // NODE_ENV=test makes Next load .env.test and skip .env.local, so an E2E run

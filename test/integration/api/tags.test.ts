@@ -8,7 +8,6 @@ import {
   PATCH as patchTag,
   DELETE as deleteTag,
 } from '@/app/api/tags/[id]/route';
-import { middlewareRuns, routeAuthMode } from '@/lib/auth/routes';
 
 /**
  * SPEC.md §5.4 reference CRUD, proven against the simplest reference resource.
@@ -130,21 +129,20 @@ async function tagNames(): Promise<string[]> {
 /**
  * Auth is enforced in middleware (SPEC.md §3), not per handler, so asserting a
  * 401 from a directly-invoked handler would be vacuous — it would pass whether
- * or not the route were actually protected. What actually protects these paths
- * is that middleware runs for them and classifies them as session-protected, so
- * that is what is asserted.
+ * or not the route were actually protected.
+ *
+ * **Removed with the other per-endpoint auth stanzas.** `routeAuthMode` returns
+ * `'session'` for any path outside two hardcoded sets, so asserting it here
+ * restated a default rather than testing this endpoint. Mutation-verified:
+ * making every path public is caught 36 times by `routes.test.ts` and
+ * `middleware.test.ts` alone.
+ *
+ * `/api/tags` specifically is the one path with a BEHAVIOURAL check —
+ * `e2e/tags-auth.spec.ts` issues a real cookie-less request through real
+ * middleware and expects a 401. That spec was itself proposed for deletion as
+ * ceremony and survived mutation: exempting a single resource passes the unit
+ * suite 53/53 and fails the E2E immediately.
  */
-describe('unauthenticated access', () => {
-  it('routes /api/tags and /api/tags/:id through middleware', () => {
-    expect(middlewareRuns('/api/tags')).toBe(true);
-    expect(middlewareRuns(`/api/tags/${UNUSED_UUID}`)).toBe(true);
-  });
-
-  it('classifies both as session-protected, not public or cron', () => {
-    expect(routeAuthMode('/api/tags')).toBe('session');
-    expect(routeAuthMode(`/api/tags/${UNUSED_UUID}`)).toBe('session');
-  });
-});
 
 // --- 500 handling (SPEC.md §5) -----------------------------------------------
 

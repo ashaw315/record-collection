@@ -5,7 +5,6 @@ import { POST as addEntry } from '@/app/api/records/[id]/journal/route';
 import { DELETE as removeEntry } from '@/app/api/journal/[id]/route';
 import { GET as getRecord } from '@/app/api/records/[id]/route';
 import { artists, journalEntries, records } from '@/db/schema';
-import { middlewareRuns, routeAuthMode } from '@/lib/auth/routes';
 
 /**
  * SPEC.md §5.2: `POST /api/records/:id/journal` — "Body `{ entryDate?, note }`;
@@ -194,13 +193,6 @@ describe('POST /api/records/:id/journal', () => {
 
   it('400s on a malformed record id rather than treating it as missing', async () => {
     expect((await post('not-a-uuid', { note: 'x' })).status).toBe(400);
-  });
-
-  it('is behind auth (unauthenticated)', () => {
-    expect(middlewareRuns('/api/records/abc/journal')).toBe(true);
-    expect(routeAuthMode('/api/records/abc/journal')).toBe('session');
-    expect(middlewareRuns('/api/journal/abc')).toBe(true);
-    expect(routeAuthMode('/api/journal/abc')).toBe('session');
   });
 
   it('rejects an unknown key rather than discarding it', async () => {

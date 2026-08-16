@@ -4,7 +4,6 @@ import { logger } from '@/lib/logger';
 import { getTestDb, truncateAll, closeTestDb } from '../../helpers/db';
 import { PATCH } from '@/app/api/artists/match-candidates/[id]/route';
 import { artists } from '@/db/schema';
-import { middlewareRuns, routeAuthMode } from '@/lib/auth/routes';
 
 /**
  * SPEC.md §4.3 — `PATCH /api/artists/match-candidates/:id`, the /manage review.
@@ -158,10 +157,3 @@ describe('PATCH match-candidates — not found', () => {
   });
 });
 
-describe('PATCH match-candidates — unauthenticated access', () => {
-  it('sits behind the session middleware', () => {
-    const path = '/api/artists/match-candidates/x';
-    expect(middlewareRuns(path)).toBe(true);
-    expect(routeAuthMode(path)).toBe('session');
-  });
-});

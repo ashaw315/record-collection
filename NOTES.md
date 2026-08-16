@@ -6098,3 +6098,128 @@ waiting — the failure is silent truncation, which is the worst kind.
 not be read as open. Migration `0004_want_list_one_fulfilment.sql` created the
 partial unique index the note asked for. It named step 7 as its trigger and step
 7 acted on it, which is the process working.
+
+# Test-quality pass — what mutation testing overturned
+
+Four areas were scoped from the R4 audit. **Two of the four were wrong**, and
+mutation testing is the only reason that is known.
+
+## Removed: 18 per-endpoint auth stanzas (17 by script, 1 by hand)
+
+`routeAuthMode` returns `'session'` for any path outside two hardcoded sets, so
+`expect(routeAuthMode('/api/x')).toBe('session')` in each endpoint's test
+restated a default rather than testing that endpoint.
+
+Mutation: making every path public (`return 'public'`) is caught **36 times** by
+`routes.test.ts` and `middleware.test.ts` alone. The per-endpoint copies added
+nothing. 846 → 828 integration tests.
+
+One kept in `influences.test.ts`: it covers three distinct path SHAPES including
+the two-param `/api/influences/:sourceId/:targetId`, which no other test walks.
+The removal script was written to skip any stanza carrying other assertions and
+reported the one it skipped, rather than trusting a regex over 18 files.
+
+## KEPT, against the audit: `e2e/tags-auth.spec.ts`
+
+Called ceremony — "18 tests × 2 projects for one middleware matcher, already
+owned by the unit suite". **The unit suite does not own it.**
+
+Mutation, exempting a single resource (`/api/pressings` added to
+`PUBLIC_PATHS` — what a real auth regression looks like):
+
+| | result |
+|---|---|
+| `src/lib/auth/routes.test.ts` | **53/53 passed** |
+| `e2e/tags-auth.spec.ts` | **2 failed**, on exactly that resource |
+
+The unit suite asserts the RULE (`routeAuthMode` defaults to session); the
+exemption changes the DATA the rule reads. Only a real cookie-less request
+through real middleware distinguishes them.
+
+**And the file's own docblock argued for its deletion.** It says `/api/tags`
+"covers the class rather than only this path, because the five that follow are
+covered by the same middleware matcher and the same routeAuthMode default" —
+then loops over six more resources anyway. The prose was wrong and the loop
+beneath it was right. Same pattern as the three code instances, pointed at a
+test.
+
+## KEPT, against the audit: `neon-gate.test.ts`'s file-text check
+
+Listed as "asserts a comment". It greps `neon-transactions.test.ts` for the gate
+test's name. Mutation — renaming `Neon verification gate` — showed it is the
+**only** thing that catches the gate being removed: the behavioural sibling,
+which runs vitest and greps the output, PASSES, because the warning text it
+matches is unchanged.
+
+**A file-text assertion is right exactly when the property is about a file** —
+that a test still exists, that a generated block has not been appended — and
+wrong when it stands in for behaviour that can be observed. No behavioural test
+can notice that another test was deleted.
+
+## Removed: `drizzle-config.test.ts`'s import assertion
+
+Genuinely redundant. Mutation — replacing the `parseEnv` import with a
+hand-rolled stub — fails the sibling test that loads the config and checks the
+RESOLVED target. The text check added nothing.
+
+## Replaced: `every-page-has-nav.test.ts` → `e2e/every-page-has-nav.spec.ts`
+
+The file-text version did `expect(readFileSync(page)).toContain('<AppHeader />')`.
+It encodes a real bug — `/manage` shipped with no way back to the collection —
+and that is precisely why it had to assert what a user can REACH rather than
+what a file contains.
+
+Two mutations, run against both versions:
+
+| mutation | old (file-text) | new (E2E) |
+|---|---|---|
+| delete `<AppHeader />` from `/manage` | FAILS | FAILS |
+| `{false && <AppHeader />}` | **11/11 PASSED** | **FAILS** |
+
+The second is the case that matters: the string is still in the file, so the
+grep is satisfied, and no nav renders. Same family as DOM-presence-is-not-
+visibility, which this suite has been caught by before. The new spec asserts
+`toBeVisible` on the `Main` navigation landmark, plus that it contains a link —
+a nav that renders and goes nowhere does not solve the problem either.
+
+The directory walk was kept as a **vacuity guard**: it counts `page.tsx` files
+and fails if a screen is added without being listed, which was the one real
+advantage the file-text version had. And `/login`'s exemption is now asserted
+rather than assumed, so the reason it differs is recorded where a test can see
+it.
+
+## The matrix, narrowed — and what cannot be proven
+
+`playwright.config.ts` ran all 15 specs on both projects to satisfy §11 flow 10,
+which names two. Now scoped to five, split by justification in the config
+comment: three SPEC-MANDATED (collection-filters, collection-widths,
+lookup-flows) and two EVIDENCE-BASED (graph, manage) that assert
+viewport-dependent behaviour internally.
+
+**The asymmetry is stated in the config because it governs future edits.** The
+auth stanzas could be proven redundant — break the rule, watch which tests fail.
+There is no equivalent for "this spec does not need mobile": a spec only fails on
+mobile if a mobile-specific defect exists, and none does today. So exclusion
+rests on the absence of viewport-dependent assertions, which is weaker evidence.
+`CollectionList` once had a dead band at 640–767px, and the uniform matrix is
+what would have caught it anywhere. **Re-adding a spec needs no justification;
+removing one needs evidence.**
+
+Runtime: ~7m → ~5m. 326 → 228 executions.
+
+## Sixth sighting of the mobile contention — and narrowing did NOT fix it
+
+Baseline BEFORE narrowing, deliberately: two consecutive `--retries=0` runs of
+the full matrix, 326 passed, 0 failed both times.
+
+After narrowing: one run failed 1, the immediate re-run passed 228/228. Also
+seen during this pass: a mobile-project-only run failed 1 of 162, clean on
+re-run.
+
+**So a cleaner run after narrowing is not evidence the contention is resolved**,
+and this is now positive evidence it is not — the failures continue at reduced
+parallel load. Fewer workers is exactly what would mask it, which is why the
+baseline was taken first. Sightings: stats (Unit 1), collection-filters (Unit 3),
+three-at-once (Unit 5), mobile-only run and post-narrowing run (this pass).
+
+The investigation stays open on its own terms, at `--retries=0`.

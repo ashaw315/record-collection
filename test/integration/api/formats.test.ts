@@ -8,7 +8,6 @@ import {
   PATCH as patchFormat,
   DELETE as deleteFormat,
 } from '@/app/api/formats/[id]/route';
-import { middlewareRuns, routeAuthMode } from '@/lib/auth/routes';
 
 /**
  * SPEC.md §5.4 reference CRUD for `formats`, plus §4.1's seeded-row rule.
@@ -121,14 +120,6 @@ async function insertArtist(name: string): Promise<string> {
   return rows.rows[0].id;
 }
 
-describe('unauthenticated access', () => {
-  it('routes both paths through middleware as session-protected', () => {
-    expect(middlewareRuns('/api/formats')).toBe(true);
-    expect(middlewareRuns(`/api/formats/${UNUSED_UUID}`)).toBe(true);
-    expect(routeAuthMode('/api/formats')).toBe('session');
-    expect(routeAuthMode(`/api/formats/${UNUSED_UUID}`)).toBe('session');
-  });
-});
 
 describe('unanticipated server errors', () => {
   it('returns the §5 500 shape and leaks nothing when the query fails', async () => {

@@ -8,7 +8,6 @@ import {
   PATCH as patchStore,
   DELETE as deleteStore,
 } from '@/app/api/stores/[id]/route';
-import { middlewareRuns, routeAuthMode } from '@/lib/auth/routes';
 
 /**
  * SPEC.md §5.4 reference CRUD for `record_stores`, mounted at /api/stores.
@@ -73,14 +72,6 @@ async function storeNames(): Promise<string[]> {
   return rows.rows.map((r) => r.name);
 }
 
-describe('unauthenticated access', () => {
-  it('routes both paths through middleware as session-protected', () => {
-    expect(middlewareRuns('/api/stores')).toBe(true);
-    expect(middlewareRuns(`/api/stores/${UNUSED_UUID}`)).toBe(true);
-    expect(routeAuthMode('/api/stores')).toBe('session');
-    expect(routeAuthMode(`/api/stores/${UNUSED_UUID}`)).toBe('session');
-  });
-});
 
 describe('unanticipated server errors', () => {
   it('returns the §5 500 shape and leaks nothing when the query fails', async () => {

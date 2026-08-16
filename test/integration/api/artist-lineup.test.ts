@@ -3,7 +3,6 @@ import { sql } from 'drizzle-orm';
 import { getTestDb, truncateAll, closeTestDb } from '../../helpers/db';
 import { artists } from '@/db/schema';
 import { POST as walkArtist } from '@/app/api/artists/[id]/lineup/route';
-import { middlewareRuns, routeAuthMode } from '@/lib/auth/routes';
 import * as clientModule from '@/lib/musicbrainz/client';
 
 /**
@@ -234,11 +233,6 @@ describe('the four cases every route needs', () => {
     const response = await request(artist.id, { musicbrainzID: DISCHARGE_A });
 
     expect(response.status).toBe(400);
-  });
-
-  it('is behind auth (unauthenticated)', () => {
-    expect(middlewareRuns('/api/artists/x/lineup')).toBe(true);
-    expect(routeAuthMode('/api/artists/x/lineup')).toBe('session');
   });
 
   it('surfaces a MusicBrainz outage as an upstream failure', async () => {

@@ -8,7 +8,6 @@ import {
   PATCH as patchPressing,
   DELETE as deletePressing,
 } from '@/app/api/pressings/[id]/route';
-import { middlewareRuns, routeAuthMode } from '@/lib/auth/routes';
 
 /**
  * SPEC.md §5.4 CRUD for `pressings`, plus §4's find-or-create rule.
@@ -104,14 +103,6 @@ async function insertArtist(name: string): Promise<string> {
   return rows.rows[0].id;
 }
 
-describe('unauthenticated access', () => {
-  it('routes both paths through middleware as session-protected', () => {
-    expect(middlewareRuns('/api/pressings')).toBe(true);
-    expect(middlewareRuns(`/api/pressings/${UNUSED_UUID}`)).toBe(true);
-    expect(routeAuthMode('/api/pressings')).toBe('session');
-    expect(routeAuthMode(`/api/pressings/${UNUSED_UUID}`)).toBe('session');
-  });
-});
 
 describe('unanticipated server errors', () => {
   it('returns the §5 500 shape and leaks nothing when the query fails', async () => {

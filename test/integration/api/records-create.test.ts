@@ -4,7 +4,6 @@ import { logger } from '@/lib/logger';
 import { getTestDb, truncateAll, closeTestDb } from '../../helpers/db';
 import { POST as createRecord } from '@/app/api/records/route';
 import { GET as getRecord } from '@/app/api/records/[id]/route';
-import { middlewareRuns, routeAuthMode } from '@/lib/auth/routes';
 
 /**
  * SPEC.md §5.2: `POST /api/records` and `GET /api/records/:id`.
@@ -79,14 +78,6 @@ async function recordCount(): Promise<number> {
   return rows.rows[0].n;
 }
 
-describe('unauthenticated access', () => {
-  it('routes both paths through middleware as session-protected', () => {
-    expect(middlewareRuns('/api/records')).toBe(true);
-    expect(middlewareRuns(`/api/records/${UNUSED_UUID}`)).toBe(true);
-    expect(routeAuthMode('/api/records')).toBe('session');
-    expect(routeAuthMode(`/api/records/${UNUSED_UUID}`)).toBe('session');
-  });
-});
 
 describe('unanticipated server errors', () => {
   it('returns the §5 500 shape and leaks nothing when the query fails', async () => {

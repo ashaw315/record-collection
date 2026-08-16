@@ -4,7 +4,6 @@ import { getTestDb, truncateAll, closeTestDb } from '../../helpers/db';
 import { POST as addPrice } from '@/app/api/records/[id]/prices/route';
 import { GET as getRecord } from '@/app/api/records/[id]/route';
 import { artists, priceHistory, records } from '@/db/schema';
-import { middlewareRuns, routeAuthMode } from '@/lib/auth/routes';
 
 /**
  * SPEC.md §5.2: `POST /api/records/:id/prices` — "Append a price observation.
@@ -173,11 +172,6 @@ describe('POST /api/records/:id/prices', () => {
 
   it('400s on a malformed record id rather than treating it as missing', async () => {
     expect((await post('not-a-uuid', { price: '10.00', priceType: 'used' })).status).toBe(400);
-  });
-
-  it('is behind auth (unauthenticated)', () => {
-    expect(middlewareRuns('/api/records/abc/prices')).toBe(true);
-    expect(routeAuthMode('/api/records/abc/prices')).toBe('session');
   });
 
   it('reaches the record’s hydrated read as the latest price', async () => {

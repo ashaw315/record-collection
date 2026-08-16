@@ -5,7 +5,6 @@ import { POST as uploadImage } from '@/app/api/records/[id]/images/route';
 import { POST as createRecord } from '@/app/api/records/route';
 import { images } from '@/db/schema';
 import { logger } from '@/lib/logger';
-import { middlewareRuns, routeAuthMode } from '@/lib/auth/routes';
 import * as storage from '@/lib/storage/blob';
 
 /**
@@ -112,11 +111,6 @@ describe('DELETE /api/images/:id', () => {
 
     expect(response.status).toBe(400);
     expect(delSpy).not.toHaveBeenCalled();
-  });
-
-  it('is behind auth (unauthenticated)', () => {
-    expect(middlewareRuns('/api/images/abc')).toBe(true);
-    expect(routeAuthMode('/api/images/abc')).toBe('session');
   });
 
   it('still succeeds when the blob delete fails, and says what leaked', async () => {

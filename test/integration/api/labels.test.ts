@@ -8,7 +8,6 @@ import {
   PATCH as patchLabel,
   DELETE as deleteLabel,
 } from '@/app/api/labels/[id]/route';
-import { middlewareRuns, routeAuthMode } from '@/lib/auth/routes';
 
 /**
  * SPEC.md §5.4 reference CRUD for `labels`, against the template remediated in
@@ -74,14 +73,6 @@ async function labelNames(): Promise<string[]> {
 
 // --- Unauthenticated (criterion: middleware classification) ------------------
 
-describe('unauthenticated access', () => {
-  it('routes both paths through middleware as session-protected', () => {
-    expect(middlewareRuns('/api/labels')).toBe(true);
-    expect(middlewareRuns(`/api/labels/${UNUSED_UUID}`)).toBe(true);
-    expect(routeAuthMode('/api/labels')).toBe('session');
-    expect(routeAuthMode(`/api/labels/${UNUSED_UUID}`)).toBe('session');
-  });
-});
 
 // --- Criterion 1: every handler wrapped --------------------------------------
 

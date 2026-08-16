@@ -2,7 +2,6 @@ import { readFileSync } from 'node:fs';
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { truncateAll, closeTestDb } from '../../helpers/db';
 import { GET as market } from '@/app/api/discogs/market/[id]/route';
-import { middlewareRuns, routeAuthMode } from '@/lib/auth/routes';
 import * as clientModule from '@/lib/discogs/client';
 import {
   cacheCovers,
@@ -295,11 +294,6 @@ describe('GET /api/discogs/market/:id', () => {
     }
 
     expect(get, 'nothing may be requested for an id we cannot parse').not.toHaveBeenCalled();
-  });
-
-  it('is behind auth (unauthenticated)', () => {
-    expect(middlewareRuns('/api/discogs/market/381756')).toBe(true);
-    expect(routeAuthMode('/api/discogs/market/381756')).toBe('session');
   });
 
   it('surfaces a Discogs outage as a Discogs error, not our own', async () => {

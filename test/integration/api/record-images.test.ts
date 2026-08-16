@@ -4,7 +4,6 @@ import { POST as uploadImage } from '@/app/api/records/[id]/images/route';
 import { POST as createRecord } from '@/app/api/records/route';
 import { GET as getRecord } from '@/app/api/records/[id]/route';
 import { images } from '@/db/schema';
-import { middlewareRuns, routeAuthMode } from '@/lib/auth/routes';
 import * as storage from '@/lib/storage/blob';
 
 /**
@@ -140,13 +139,6 @@ describe('POST /api/records/:id/images', () => {
     // And nothing was uploaded — the existence check must precede the store,
     // or a 404 still costs a blob nothing will ever delete.
     expect(putSpy).not.toHaveBeenCalled();
-  });
-
-  it('is behind auth (unauthenticated)', () => {
-    // Same shape as every other route's auth case: the middleware covers it,
-    // and this asserts the route is in the set the middleware runs for.
-    expect(middlewareRuns('/api/records/abc/images')).toBe(true);
-    expect(routeAuthMode('/api/records/abc/images')).toBe('session');
   });
 
   it('rejects a file whose BYTES are not an accepted image, whatever it claims', async () => {
