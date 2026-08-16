@@ -468,7 +468,7 @@ The pair is addressed in the path, not a request body — `DELETE` with a body i
 ### 5.6 Graph & shelf
 | Method | Path | Notes |
 |---|---|---|
-| GET | `/api/graph` | Returns `{ nodes, links }` — see §8.1 for shape. **Owned records only.** Query param: `genreId` to subset. |
+| — | *(no `/api/graph` endpoint)* | The graph is built server-side. `/graph` is a server component calling `buildGraph()` directly, per §8.1 — a client fetch would reimplement a server concern and render an empty canvas while it resolved. An earlier version of this spec listed an endpoint here, and it was built, tested, and called by nothing: two mandates in tension, and the server component won on merit. The query layer carries the contract and its tests. |
 | GET | `/api/shelf-order` | Returns ordered records with section breaks — see §8.2. |
 
 ### 5.7 Discogs — record lookup

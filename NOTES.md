@@ -5867,3 +5867,95 @@ retry is a decision not to know; the argument against is that genuine
 infrastructure contention then blocks a merge. Four sightings now
 (stats/Unit 1, collection-filters/Unit 3, three-at-once/Unit 5) all point at the
 mobile project under parallel load rather than at any spec.
+
+## Unit 6 — deletions, and the one that was a spec defect rather than dead code
+
+### `GET /api/graph`: two mandates in tension, and the spec was wrong
+
+The endpoint was correctly implemented, correctly integration-tested, and called
+by nothing. That is not ordinary dead code:
+
+- **§5.6 required it.** §14 requires every §5 endpoint "implemented and
+  integration-tested" — both were true.
+- **§8.1 required the thing that made it unreachable.** `/graph` is a server
+  component calling `buildGraph()` directly, because a client fetch "would
+  reimplement a server concern and show an empty canvas while it resolved".
+
+Both requirements were followed and they could not both produce a live
+endpoint. The server component won on merit, so §5.6 was amended and the route
+and its test deleted.
+
+**The option not taken is worth recording.** The alternative was keeping the
+endpoint with a docblock explaining it is spec-mandated, has no caller by
+design, and should not be "cleaned up" — a careful, accurate comment whose only
+function is to stop someone deleting code that does nothing. That is the
+prose-doing-the-code's-work pattern a third time, and this instance would have
+been *self-inflicted*: writing the comment that makes the next reviewer look
+away. When the justification for keeping something is a paragraph explaining why
+it looks wrong but isn't, check whether the requirement it satisfies should
+exist.
+
+### The Hot Tuna fixture: kept, and the test now loads it
+
+Orphaned, and the review recommended deleting it. Kept instead, because
+`identical-versions.test.ts` hand-built its `BASE` from ids taken OUT of that
+fixture — so the payload was the evidence and the test was a paraphrase of it.
+
+**The orphaning had already cost something, which is how the decision settled.**
+The test's docblock claimed FIVE identical versions "measured against the live
+API". The committed capture has THREE, plus a fourth differing only by
+`Repress`. Nothing could contradict the claim because nothing read the file. The
+fixture README's own argument — "a hand-written fixture encodes what we EXPECT
+the API to return" — applied exactly, and deleting the fixture would have
+removed the thing that exposed it.
+
+The test now loads the capture through `normalizeVersion` (not as raw JSON: the
+collapse acts on `NormalizedVersion`, so a normalization change must be able to
+break it) and asserts three properties the hand-built rows could not:
+
+1. the master really does contain a group of indistinguishable versions;
+2. the `Repress` near-miss is NOT collapsed into it — real data supplied a
+   discriminating neighbour nobody would have thought to construct;
+3. the Japanese pressings stay separate.
+
+Mutation-verified: emptying `formats` out of `comparisonKey` fails the fixture
+test, and its failure is the more informative one — it reports the group count
+changing on real data rather than two keys matching.
+
+**The hand-built tests stayed**, deliberately. They probe rules the real payload
+has no example of: a genuine zero count beside a null, a 1971 year. Fixture
+proves the hazard is real; unit tests prove the rules handle it. Neither
+subsumes the other.
+
+### `artist-minor-threat.json`: deleted, and the citation is why
+
+It IS cited — `normalize-relations.test.ts` names it as a **negative**:
+"Discharge and Minor Threat are 100% `member of band` — against those, a
+normalizer that filtered nothing at all would pass every test." It was captured,
+found non-discriminating, and replaced by Black Flag, which carries five
+relation types.
+
+So the citation is the reason to delete rather than to keep: the fixture's
+recorded property is that it proves nothing. The sentence explaining that is
+what has value, and it stays in the test.
+
+### The other two
+
+- **`?? 'used'`** on the record detail page. Verified unreachable —
+  `is_nullable = NO` in Postgres, `.notNull()` in Drizzle — and wrong in the
+  inflating direction if it ever fired, since `used` is the one type §7.6 sums
+  into estimated value.
+- **`RecordDetail`'s docblock**, which called the gallery, journal, sparkline
+  and edit form "DELIBERATELY ABSENT" and named the steps that would add them.
+  All four ship and `page.tsx` renders every one. It was accurate when written
+  and went false without being touched, because the code it described moved to a
+  sibling file. The rule it justified — no placeholder sections — is still live
+  and was kept.
+
+### One build note
+
+Deleting a route handler leaves a stale reference in `.next/types/validator.ts`,
+so `typecheck` and `build` both fail with `Cannot find module
+'.../api/graph/route.js'` until `.next` is removed. Not a source error, and the
+message points at a file that no longer exists — worth knowing before debugging
+it as one.

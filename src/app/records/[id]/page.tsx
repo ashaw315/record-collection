@@ -149,7 +149,15 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
               observations={prices.map((row) => ({
                 id: row.id,
                 price: row.price,
-                priceType: row.priceType ?? 'used',
+                /**
+                 * No `?? 'used'` fallback. `price_type` is NOT NULL in the
+                 * database and `.notNull()` in Drizzle, so `row.priceType` is
+                 * non-nullable and the branch was unreachable — and it defaulted
+                 * to the ONE type §7.6 sums into estimated value, so a null
+                 * arriving here would have become evidence of what a record is
+                 * worth. Dead, and wrong in the direction that inflates.
+                 */
+                priceType: row.priceType,
                 recordedAt: row.recordedAt,
               }))}
             />

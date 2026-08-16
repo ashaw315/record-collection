@@ -5,14 +5,25 @@ import { priceTypeMeaning, type PriceType } from './price-line';
 import type { HydratedRecord } from '@/lib/db/queries/records';
 
 /**
- * The record detail screen (SPEC.md §10 `/records/:id`).
+ * The record's FIELDS on the detail screen (SPEC.md §10 `/records/:id`).
  *
- * A server component: it renders props and has no interactivity yet. The edit
- * form is unit 9.
+ * A server component, and deliberately only the fields. The gallery, price
+ * history and journal are siblings assembled by `page.tsx`, not children of
+ * this one: each is interactive or has its own data, and mixing them in here
+ * would make the whole screen a client component to serve three sections that
+ * need it.
  *
- * DELIBERATELY ABSENT: the images gallery (step 8) and journal entries with
- * their add-entry form (step 9). No placeholder sections — an empty gallery
- * that does nothing reads as broken rather than as not-yet-built, and a reader
+ * **This docblock previously said the gallery, the journal, the sparkline and
+ * the edit form were "DELIBERATELY ABSENT" and named the steps that would add
+ * them.** All four shipped, two steps earlier, and `page.tsx` renders every one
+ * of them — so a reader trusting the header would have concluded the screen was
+ * half-built. It was accurate when written and became false without being
+ * touched, which is the ordinary way a comment goes wrong: the code it
+ * described moved to a different file.
+ *
+ * Kept as a note rather than deleted, because the ABSENCE it justified is a
+ * live rule and still correct: no placeholder sections. An empty gallery that
+ * does nothing reads as broken rather than as not-yet-built, and a reader
  * cannot tell the difference.
  */
 

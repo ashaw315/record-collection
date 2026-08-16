@@ -1,26 +1,39 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { comparisonKey, groupIdenticalVersions, mustStayExpanded } from './identical-versions';
-import type { NormalizedVersion } from '@/lib/discogs/normalize-versions';
+import { normalizeVersion, type NormalizedVersion } from '@/lib/discogs/normalize-versions';
 
 /**
  * Collapsing versions that render as the same row (SPEC.md §5.7).
  *
  * §5.7 calls the version table "the step where the user identifies THEIR
- * pressing". Master 133514 (Hot Tuna) has FIVE US 1970 versions that are
- * byte-identical on every field the versions endpoint returns:
+ * pressing". Master 133514 (Hot Tuna) carries US 1970 versions that are
+ * identical on every field the versions endpoint returns:
  *
  *   LSP-4353 | US | 1970 | LP, Album, Stereo | RCA Victor
  *
- * Measured against the live API, and no column can separate them: `format.text`
- * — which carries "Rockaway Pressing" — exists on the RELEASE endpoint and not
- * on versions, whose keys are id, label, country, title, major_formats, format,
- * catno, released, status, resource_url, thumb, stats.
+ * No column can separate them: `format.text` — which carries "Rockaway
+ * Pressing" — exists on the RELEASE endpoint and not on versions, whose keys are
+ * id, label, country, title, major_formats, format, catno, released, status,
+ * resource_url, thumb, stats.
  *
- * **Rendering them as five identical rows is worse than a longer table: it
- * looks like an answer.** A user picked one, believed they had another, and
- * reported the pressing plant as wrong — it was correct for the release they
- * actually had. So identical rows collapse into one that SAYS they are
- * indistinguishable from here.
+ * **Rendering them as identical rows is worse than a longer table: it looks
+ * like an answer.** A user picked one, believed they had another, and reported
+ * the pressing plant as wrong — it was correct for the release they actually
+ * had. So identical rows collapse into one that SAYS they are indistinguishable
+ * from here.
+ *
+ * **The captured payload is loaded below, and it corrected this docblock.** The
+ * text said FIVE identical versions "measured against the live API"; the
+ * committed capture of that master has THREE, plus a fourth differing only by
+ * `Repress`. The hand-built `BASE` used ids taken out of that fixture while the
+ * fixture itself was loaded by nothing, so the number could drift from the
+ * evidence without anything failing — which is what the fixture README warns
+ * about: "a hand-written fixture encodes what we EXPECT the API to return."
+ *
+ * The unit tests below stay hand-built, deliberately: they probe rules the real
+ * payload has no example of (a genuine zero count against a null, a 1971 year).
+ * The fixture block proves the HAZARD is real; these prove the rules handle it.
  */
 
 const BASE: NormalizedVersion = {
@@ -81,7 +94,13 @@ describe('groupIdenticalVersions', () => {
     expect(groups.every((group) => group.versions.length === 1)).toBe(true);
   });
 
-  it('collapses the five Hot Tuna twins into one group', () => {
+  /**
+   * Five hand-built rows, and the count is arbitrary — it tests that N
+   * identical rows become one group, not that this master has five. The real
+   * master has three, which the fixture block below asserts against the
+   * captured payload. The two numbers used to look like one claim.
+   */
+  it('collapses any number of identical rows into one group', () => {
     const groups = groupIdenticalVersions([
       version({ discogsId: 1458122, communityHave: 3936 }),
       version({ discogsId: 6825185, communityHave: 872 }),
@@ -178,5 +197,84 @@ describe('mustStayExpanded', () => {
     const [group] = groupIdenticalVersions([version({ discogsId: 6825185 })]);
 
     expect(mustStayExpanded(group, owned)).toBe(false);
+  });
+});
+
+describe('the real Hot Tuna master, from the captured payload', () => {
+  /**
+   * **The fixture is the evidence the hazard exists.** Everything above tests
+   * the RULES against hand-built rows; this tests that the situation the rules
+   * exist for occurs in real Discogs data — which is the one thing a hand-built
+   * fixture cannot establish, because it is the assumption most likely to be
+   * wrong (test/fixtures/discogs/README.md).
+   *
+   * Loaded through the real normalizer, not read as raw JSON: the collapse acts
+   * on `NormalizedVersion`, so a capture that stopped supporting the collapse
+   * because NORMALIZATION changed would otherwise still pass.
+   */
+  const versions: NormalizedVersion[] = (
+    JSON.parse(
+      readFileSync('test/fixtures/discogs/master-versions-hot-tuna.json', 'utf8'),
+    ) as { versions: unknown[] }
+  ).versions.map(normalizeVersion);
+
+  it('contains a group of genuinely indistinguishable US 1970 pressings', () => {
+    const groups = groupIdenticalVersions(versions);
+    const collapsed = groups.filter((group) => group.versions.length > 1);
+
+    expect(collapsed, 'the master really does contain identical rows').toHaveLength(1);
+    expect(
+      collapsed[0].versions.length,
+      'three of them — the docblock previously claimed five',
+    ).toBe(3);
+
+    // The property that makes them indistinguishable, asserted rather than
+    // assumed: every displayed column agrees.
+    const [first, ...rest] = collapsed[0].versions;
+    for (const other of rest) {
+      expect(comparisonKey(other)).toBe(comparisonKey(first));
+      expect(other.discogsId, 'while the ids differ').not.toBe(first.discogsId);
+    }
+  });
+
+  it('does NOT collapse the repress, which differs only by a descriptor', () => {
+    /**
+     * The discriminating neighbour, and the reason this fixture earns its place
+     * over a constructed one. The same master carries a US/1970/LSP-4353
+     * version whose only difference is `Repress` in the format descriptors — so
+     * a comparison key ignoring descriptors would swallow a genuinely different
+     * pressing into the collapsed group and tell the user it was the same
+     * record. Real data supplies the near-miss; a hand-built fixture would only
+     * contain it if someone had thought of it.
+     */
+    const groups = groupIdenticalVersions(versions);
+    const collapsed = groups.find((group) => group.versions.length > 1);
+
+    const repressInGroup = collapsed?.versions.some((row) =>
+      row.formats.some((descriptor) => /repress/i.test(descriptor)),
+    );
+
+    expect(repressInGroup, 'a repress is a different pressing').toBe(false);
+    expect(
+      versions.some((row) => row.formats.some((descriptor) => /repress/i.test(descriptor))),
+      'and the fixture does contain one, so this is a real test',
+    ).toBe(true);
+  });
+
+  it('leaves the Japanese pressings distinguishable', () => {
+    // Country is a displayed column, so nothing collapses across it. Asserted
+    // against real rows because it is the ordinary case the collapse must not
+    // touch.
+    const groups = groupIdenticalVersions(versions);
+    const japanese = versions.filter((row) => row.country === 'Japan');
+
+    expect(japanese.length, 'the fixture carries Japanese pressings').toBeGreaterThan(0);
+
+    for (const row of japanese) {
+      const group = groups.find((candidate) =>
+        candidate.versions.some((member) => member.discogsId === row.discogsId),
+      );
+      expect(group?.versions.every((member) => member.country === 'Japan')).toBe(true);
+    }
   });
 });
