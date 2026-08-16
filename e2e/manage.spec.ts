@@ -142,22 +142,33 @@ test('shows a seeded format as disabled rather than a button that errors', async
 });
 
 /**
- * QUARANTINED — flaky, cause NOT diagnosed.
+ * **These two were documented as QUARANTINED and were never skipped.**
  *
- * The two genre specs below pass in isolation (6/6 clean runs, chromium only)
- * and fail under the full suite. Four attempts to fix them made the situation
- * worse rather than better, so they are skipped honestly rather than left red
- * or "fixed" by loosening assertions until they pass.
+ * The docblock here said "they are skipped honestly" and "do not un-skip
+ * without a diagnosis" — but there was no `test.skip` anywhere in this file, so
+ * both ran on every invocation. With `retries: 1` in `playwright.config.ts`, a
+ * test that failed once and passed on retry reports as "flaky" and the run
+ * still exits 0, so the documented ~50% failure was absorbed silently and the
+ * file described a quarantine that did not exist.
  *
- * Known: the /manage genre editor works when driven by hand; aria-busy settles
- * correctly (measured true at 200ms, false by 800ms); the rest of the E2E suite
- * is unaffected at 52 passing. Not known: what differs under the full run.
+ * That is worse than either honest option. A skipped test is visibly absent; a
+ * red one stops the build. A test that is believed skipped, actually runs, and
+ * has its failures swallowed by a retry gives false readings in both
+ * directions: nobody trusts it, and nobody sees it fail either.
  *
- * A first hypothesis — the chromium and mobile projects racing on shared genre
- * rows — was tested by serializing Playwright and DISPROVEN: 0/4 clean either
- * way. Do not re-apply that config change without new evidence.
+ * **Re-measured before rewriting this**, rather than trusting either the old
+ * note or the assumption that it was stale: `--retries=0` across the FULL
+ * suite, twice, 326 passed 0 failed both times; and `--repeat-each=4` on this
+ * file alone, 48/48. The flake does not currently reproduce. Since the note was
+ * written the shared-genre-row contention it guessed at has changed —
+ * `cleanupGenres` now removes both rows at the end of each spec.
  *
- * Do not un-skip without a diagnosis.
+ * The old hypothesis is kept because it is still a live warning: serializing
+ * Playwright was tried and DISPROVEN (0/4 clean either way). Do not re-apply
+ * that config change without new evidence.
+ *
+ * If these fail again, the honest move is `test.fixme` — which actually skips —
+ * not a comment saying they are skipped.
  */
 test('moves a genre under another with the select, on touch and pointer alike', async ({
   page,
@@ -165,29 +176,85 @@ test('moves a genre under another with the select, on touch and pointer alike', 
 }) => {
   const parent = unique('e2e-parent');
   const child = unique('e2e-child');
+  /**
+   * **A DECOY, and it is what makes this test discriminating.**
+   *
+   * With only one candidate parent on screen, "moved under the right genre" and
+   * "moved under any genre" are the same observation, so no assertion could
+   * tell them apart. Mutation-verified: pointing the move handler at
+   * `parents[0]` instead of the chosen value passes every assertion when one
+   * parent exists, and fails once a second one does.
+   *
+   * Named to sort BEFORE the real parent, so a handler taking the first option
+   * takes the wrong one.
+   */
+  const decoy = unique('e2e-aaa-decoy');
 
   await openResource(page, 'Genres');
 
-  await page.getByLabel('New genre name').fill(parent);
-  await page.getByRole('button', { name: 'Add' }).click();
-  await expect(genreRow(page, parent)).toBeVisible({ timeout: 15_000 });
+  for (const name of [decoy, parent]) {
+    await page.getByLabel('New genre name').fill(name);
+    await page.getByRole('button', { name: 'Add' }).click();
+    await expect(genreRow(page, name)).toBeVisible({ timeout: 15_000 });
+  }
 
   await page.getByLabel('New genre name').fill(child);
   await page.getByRole('button', { name: 'Add' }).click();
   await expect(genreRow(page, child)).toBeVisible({ timeout: 15_000 });
 
+  /**
+   * The parent's id, read from the option the select offers, so the assertion
+   * below can name WHICH parent rather than merely "some non-empty value".
+   */
+  const childSelect = page.getByRole('combobox', { name: `Move ${child} under` });
+  const parentId = await childSelect
+    .getByRole('option', { name: parent, exact: true })
+    .getAttribute('value');
+  expect(parentId, 'the parent must be offered before it can be chosen').toBeTruthy();
+
   // A native select, so this is the same interaction on every device — there is
   // no drag path and therefore no untested fallback.
-  await page.getByRole('combobox', { name: `Move ${child} under` }).selectOption({ label: parent });
+  await childSelect.selectOption({ label: parent });
 
-  await expect(page.getByRole('combobox', { name: `Move ${child} under` })).toHaveValue(/.+/);
+  /**
+   * **`toHaveValue(parentId)`, not `toHaveValue(/.+/)`.**
+   *
+   * The old assertion was weaker than its title, though not in the way it first
+   * appears and not vacuously. `value` is `node.parentGenreId ?? ''`, so a
+   * top-level genre holds `''` and `/.+/` correctly REJECTS the unchanged case
+   * — measured, not assumed, and a no-op move handler does fail it.
+   *
+   * What `/.+/` could not see is WHICH genre the child moved under. Mutation
+   * testing, with all three variants run:
+   *
+   *   handler → no-op                    old FAILS, new FAILS
+   *   handler → always `parents[0]`,
+   *     one candidate parent on screen   old PASSES, new PASSES  (inert)
+   *   handler → always `parents[0]`,
+   *     with the decoy above             old PASSES, new FAILS
+   *
+   * The third row is the whole point: a test titled "moves a genre under
+   * another" passed while the child was moved under an unrelated genre. And the
+   * second row is why the decoy exists — with one candidate parent, "the right
+   * one" and "any one" are the same observation and no assertion can separate
+   * them.
+   */
+  await expect(childSelect).toHaveValue(parentId ?? '');
+
+  /**
+   * And the TREE re-nested, which is the thing the user came for. The select is
+   * a control; `aria-level` is the outcome. Asserting only the control would
+   * pass if the value stuck locally and the move never reached the server.
+   */
+  await expect(genreRow(page, child)).toHaveAttribute('aria-level', '2');
+  await expect(genreRow(page, parent)).toHaveAttribute('aria-level', '1');
 
   // These rows live in the dev database, which E2E does not truncate. Removing
   // them keeps repeat runs from accumulating and keeps the move selects short.
-  await cleanupGenres(request, [child, parent]);
+  await cleanupGenres(request, [child, parent, decoy]);
 });
 
-/** QUARANTINED alongside the spec above — same undiagnosed flake. */
+/** Was documented as quarantined alongside the spec above — see that note. */
 test('the move select never offers a genre its own descendant', async ({ page, request }) => {
   const parent = unique('e2e-cyc-parent');
   const child = unique('e2e-cyc-child');

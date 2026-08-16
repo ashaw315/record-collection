@@ -5739,3 +5739,80 @@ they left a rendered-but-empty field on the one screen that exists to
 disambiguate. **When looking for this shape, look for the combination — an
 optional field whose only producer is untested and whose consumer restates the
 type.**
+
+## Unit 5 — a quarantine that did not exist, and a title the test never asserted
+
+### The false quarantine
+
+`e2e/manage.spec.ts` carried a docblock saying two genre specs were
+"skipped honestly", with "do not un-skip without a diagnosis". **There was no
+`test.skip` anywhere in the file.** Both ran on every invocation, and
+`playwright.config.ts` sets `retries: 1`, so a test that failed once and passed
+on retry reports as "flaky" while the run still exits 0.
+
+**That is worse than either honest option.** A skipped test is visibly absent
+from the count; a red one stops the build. A test believed skipped, actually
+running, with its failures absorbed by a retry, gives false readings in both
+directions at once — nobody trusts it, and nobody sees it fail either.
+
+**Re-measured rather than assumed stale**, in both directions:
+
+- `--retries=0` across the FULL suite: 326 passed / 0 failed, twice.
+- `--repeat-each=4`, this file, chromium: 48/48.
+- `--repeat-each=3`, this file, both projects, no retries: 72/72.
+
+The documented flake does not currently reproduce. The docblock now says what
+was measured and when, keeps the disproven serialization hypothesis as a live
+warning, and states the honest move if it returns: `test.fixme`, which actually
+skips, rather than a comment claiming it does.
+
+### The assertion that never asserted its title — and a correction
+
+The review reported `toHaveValue(/.+/)` as matching the unchanged value. **That
+is not right, and it is worth recording because the real defect is narrower and
+more interesting.** `value` is `node.parentGenreId ?? ''`, so a top-level genre
+holds the empty string and `/.+/` correctly REJECTS it. A no-op move handler
+does fail the old assertion — measured.
+
+What `/.+/` could not see is WHICH genre the child moved under. Three mutations,
+all run:
+
+| mutation | old assertion | new |
+|---|---|---|
+| handler → no-op | FAILS | FAILS |
+| handler → always `parents[0]`, one candidate parent | PASSES | PASSES |
+| handler → always `parents[0]`, with a decoy parent | **PASSES** | FAILS |
+
+Row three is the defect: a test titled "moves a genre under another" passed
+while the child was moved under an unrelated genre.
+
+**Row two is why the fixture changed.** With one candidate parent on screen,
+"moved under the right genre" and "moved under any genre" are the same
+observation — no assertion can separate them, however tightly written. The test
+now creates a decoy named to sort first, so a handler taking the first option
+takes the wrong one. **The discriminating power was in the FIXTURE, not the
+matcher**; tightening the assertion alone would have left the test just as blind.
+
+The test also now asserts `aria-level` on both rows, because the select is a
+control and the tree is the outcome — a value that stuck locally without
+reaching the server would pass a select-only assertion.
+
+Checked for the same shape elsewhere: no other catch-all regex assertions
+(`toHaveValue(/.+/)`, `toContainText(/.+/)`, etc.) exist in `e2e/`.
+
+### Fourth sighting of the mobile contention, and what retries: 1 hides
+
+Running the full suite at `--retries=0` surfaced three `[mobile]` failures —
+`collection-filters`, `stats`, `want-list` — none in the file this unit touched.
+All 25 of those specs pass in isolation on the mobile project. The same run
+under the project's own config reports "2 flaky" and exits 0.
+
+That is the same masking the false quarantine depended on, demonstrated
+directly: **`retries: 1` is why nobody had to decide whether these tests were
+broken.** Sightings so far: `stats.spec.ts` (Unit 1), `collection-filters`
+(Unit 3), and now three at once under retries=0.
+
+For the deferred test pass: the diagnosis wants `--retries=0` as the default for
+investigation, since the current config cannot distinguish "passes" from
+"passes on the second try". Worth considering whether CI should run retries=0
+and let flakes be red, with retries reserved for local runs.
