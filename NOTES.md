@@ -5816,3 +5816,54 @@ For the deferred test pass: the diagnosis wants `--retries=0` as the default for
 investigation, since the current config cannot distinguish "passes" from
 "passes on the second try". Worth considering whether CI should run retries=0
 and let flakes be red, with retries reserved for local runs.
+
+# The fixture rule, sharpest instance: when no matcher can separate two outcomes
+
+Unit 5's mutation table has a row worth extracting, because the instinct it
+defeats is entirely to fix the assertion.
+
+    handler → always parents[0], ONE candidate parent    old PASSES   new PASSES
+
+With a single parent on screen, "the child moved under the RIGHT genre" and "the
+child moved under ANY genre" are **the same observation**. No assertion can tell
+them apart — not a tighter regex, not an exact id, not a stricter matcher —
+because the two outcomes produce identical DOM. Tightening `toHaveValue(/.+/)`
+to `toHaveValue(parentId)` reads far stricter and is exactly as blind.
+
+The discriminating power was in the FIXTURE: a second, decoy parent named to
+sort first, so a handler taking the wrong option takes a *visibly* wrong one.
+
+**The general form.** Before strengthening an assertion, ask whether the fixture
+can produce the failure the assertion is meant to catch. If the wrong behaviour
+and the right behaviour yield the same state, the test is under-fixtured, not
+under-asserted — and a stricter matcher makes it *look* rigorous while changing
+nothing. A test is only as discriminating as the difference its setup can create.
+
+Cheap check: mutate the code to the plausible wrong behaviour and run. If the
+test still passes, adding assertions will not help; add a case to the fixture
+that makes the two outcomes diverge.
+
+This is the same family as the earlier "name the line of source it would fail
+against" rule, one level earlier: that rule asks whether the assertion touches
+the code, this one asks whether the setup can make the code be wrong.
+
+# The retries demonstration, and how the deferred pass should be run
+
+Shown rather than argued, in one run:
+
+- `npx playwright test --retries=0` → **3 failed** (`[mobile]`:
+  collection-filters, stats, want-list)
+- the same suite under `playwright.config.ts` → **"2 flaky", exit 0**
+- those same specs alone on the mobile project → **25/25**
+
+So the current config cannot distinguish "passes" from "passes on the second
+try", and that is precisely what let `manage.spec.ts` document a quarantine that
+did not exist: the failures it described were real and were being absorbed.
+
+**Settled for the deferred test pass:** investigate at `--retries=0`. Open
+question for that pass, not decided here — whether CI should run retries=0 with
+flakes red, keeping retries for local runs only. The argument for is that a
+retry is a decision not to know; the argument against is that genuine
+infrastructure contention then blocks a merge. Four sightings now
+(stats/Unit 1, collection-filters/Unit 3, three-at-once/Unit 5) all point at the
+mobile project under parallel load rather than at any spec.
