@@ -154,7 +154,22 @@ Two things worth carrying:
 
 **The file's own docblock was wrong about itself.** It says `/api/tags` "covers the class rather than only this path, because the five that follow are covered by the same middleware matcher and the same routeAuthMode default" — and then loops over six more resources anyway. The prose argued for deleting the loop sitting directly beneath it, which is the pattern this remediation kept meeting, now pointed at a test instead of at code. The loop was right and the sentence explaining it away was wrong.
 
-*Also in this pass:* 17 per-endpoint auth stanzas removed from integration files (mutation-verified redundant — making every path public is caught 36 times by the unit suite alone); 846 → 829 tests. One kept in `influences.test.ts`, which covers three distinct path shapes including the two-param route.
+*Also in this pass:* 18 per-endpoint auth stanzas removed from integration files (mutation-verified redundant — making every path public is caught 36 times by the unit suite alone). One kept in `influences.test.ts`, which covers three distinct path shapes including the two-param route.
+
+**Scorecard: 4 findings, 2 confirmed, 2 overturned.** Worth tracking as a ratio rather than a count.
+
+| finding | verdict | evidence |
+|---|---|---|
+| ~19 auth stanzas are redundant | **confirmed** | breaking auth is caught 36× by the unit suite alone |
+| `every-page-has-nav` asserts file text, not behaviour | **confirmed** | passes 11/11 against `{false && <AppHeader />}`; the E2E fails |
+| `tags-auth.spec.ts` is 36 wasted executions | **OVERTURNED** | exempting one resource: unit suite 53/53 green, this spec fails |
+| `neon-gate.test.ts:55` asserts a comment | **OVERTURNED** | renaming the gate away is caught only here; the behavioural sibling passes |
+
+**An audit whose findings are all correct probably was not looking hard enough.** A reviewer that only reports what it can prove will miss the defects that need a hypothesis; one that reports hypotheses will be wrong sometimes, and the wrongness is the price of the reach. What makes the ratio safe is the standing rule — *verify before fixing* — which is now the difference between a sharp audit and a destructive one. Both overturns would have deleted the only test covering a real property.
+
+The two overturns also produced a correction to a NOTES rule that had been written too bluntly. "The tell: a test whose assertion is `toMatch` on source code" is wrong as stated; the accurate form is **a file-text assertion is right exactly when the property is about a file, and wrong when it stands in for behaviour that can be observed** — because no behavioural test can notice that another test was deleted.
+
+*A sixth sighting of the mobile contention, and narrowing the matrix did not fix it.* Baseline taken deliberately before the change (two clean `--retries=0` runs, 326 each); afterwards a run failed 1 and cleared on re-run, at reduced parallel load. That is positive evidence rather than the absence of it. Investigation stays open.
 
 *The pattern this remediation named,* now a standing check: **when prose and code sit together and disagree, the prose is what stops anyone looking.** Three instances, each a correct sentence beside a wrong thing — a comment explaining a hazard class above coverage of one case; a comment stating §7.1 correctly above code that ignored it; a docblock naming a cause above an assertion naming a different one. The third is the sharpest, because the accurate comment knew more than the type system let the assertion express. A fourth was *avoided*: keeping `/api/graph` would have required a careful paragraph explaining why dead code should stay.
 

@@ -1893,6 +1893,32 @@ form the records work had not shown — see the masking entry under Open.
   false" is "a name in the wrong place", it is not a test of the property.
   Noticed: step 7, security unit 5.
 
+  **CORRECTED — this rule was recorded too bluntly, and the test-quality pass
+  found the counterexample.** "A test whose assertion is `toMatch` on source
+  code" is not the tell. The tell is narrower:
+
+  > **A file-text assertion is right exactly when the property is about a FILE,
+  > and wrong when it stands in for behaviour that can be observed.**
+
+  `neon-gate.test.ts` greps `neon-transactions.test.ts` for its gate test's
+  name, which reads like the shape condemned above. Mutation says otherwise:
+  renaming the gate away is caught ONLY by that grep. Its behavioural sibling —
+  which actually runs vitest and greps the output — PASSES, because the warning
+  text it matches is unchanged.
+
+  **No behavioural test can notice that another test was deleted.** A deleted
+  test does not fail; it stops existing, and the suite goes green with less
+  coverage. The property "this test still exists" is genuinely a property of a
+  file, and a file-text assertion is the only instrument for it.
+
+  So the question to ask is not "does this assert on source text" but "is the
+  thing being asserted a fact about the file, or about the running system". The
+  `guardedFetch` case above was the second: it asserted a NAME and inferred a
+  guard was complete. `every-page-has-nav` was the second too — it asserted a
+  string and inferred a nav renders, and passed 11/11 against
+  `{false && <AppHeader />}`. `neon-gate` is the first, and stays.
+  Corrected: test-quality pass after R4.
+
   **SAME CLASS, WORST FORM YET: asserting a CONFIG FILE'S TEXT rather than the
   running system's BEHAVIOUR.** The test passed for the entire period the thing
   it named was inert.
