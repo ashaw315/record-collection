@@ -6046,3 +6046,55 @@ which is nowhere near the mistake. Put the comment above the conditional.
 Full E2E at `--retries=0`: **326 passed, 0 failed** — the first fully clean
 retries-off run recorded here, so the mobile contention did not appear this
 time. It is load-dependent, not gone.
+
+# Triggers added to deferrals that had none
+
+REVIEW-PLAN.md's triage rule: **a deferral without a named trigger is a decision
+never to do it.** Audited every open deferral in this file; most already name
+one (step 14, step 7, step 16). Three did not, and one turned out to be closed.
+
+## 1. The acquired-state UI dead end (recorded at step 5+6 review)
+
+`WantListRow` shows the "Acquired" badge but guards "View record" on
+`acquiredRecordId !== null`, so a row in the unconstrained state announces an
+acquisition and offers no way to reach it. The note ends "Prefer the CHECK; §4 is
+where invariants belong" and then stops — a preference, not a trigger.
+
+**Trigger: the next migration touching `want_list`, whenever that happens.**
+Verified still open — `pg_constraint` shows no CHECK on `want_list` today. The
+constraint is three lines and belongs in a migration that is already being
+written; opening one solely for it is the reason it keeps being skipped. If step
+16 arrives first with no such migration, it goes in there, because a deploy is
+the last point at which schema changes are cheap.
+
+## 2. The `cause`-chain log leak (recorded at step 7 security review)
+
+A nested `cause` could carry a URL, a header set or a connection string into a
+log line. The note says "the fix, when it happens" and names it precisely —
+redacted projection, plus a test planting a secret in a nested cause — but names
+no when.
+
+**Trigger: R6, deploy readiness.** It is latent today for a stated reason
+(nothing puts a credential in a `cause`, the token travels in a header the client
+never logs) and it stops being latent the moment logs leave the laptop and are
+retained by someone else. R6 already attacks "every secret's path from
+`.env.local` to Vercel", which is the same question from the other end.
+
+## 3. `/manage`'s 200-row assumption
+
+Fetches every reference resource with `{ limit: 200, offset: 0 }`. Fine for one
+person's collection and silently wrong past 200 of anything.
+
+**Trigger: R8, once the collection is real (~100 records).** That is the review
+that measures the app against actual data, and it is the only cheap way to know
+whether 200 is a real ceiling or a number nobody will ever reach. Adam's artist
+count went 6 → 71 on a single lineup walk, so genres and labels are the ones to
+measure. If any resource passes ~150 before then, fix it immediately rather than
+waiting — the failure is silent truncation, which is the worst kind.
+
+## Closed, not deferred
+
+**Two want-list items pointing at one record** is RESOLVED, and the entry should
+not be read as open. Migration `0004_want_list_one_fulfilment.sql` created the
+partial unique index the note asked for. It named step 7 as its trigger and step
+7 acted on it, which is the process working.
