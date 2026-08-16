@@ -5691,3 +5691,51 @@ environment — correctly. The fix stubs the CHECK, exactly as
 `images-delete.test.ts` already does for the upload route, rather than faking
 the environment. The tests assert the same behaviour as before; they just now
 have to say which deployment they are describing.
+
+# The rule: when prose and code disagree, the prose is what stops anyone looking
+
+Three instances in this remediation, each a correct sentence beside a wrong
+thing. That is the whole pattern — not "comments go stale", but that an ACCURATE
+comment can be the reason a defect survives, because it satisfies the reader's
+question before they reach the code that answers it differently.
+
+| Unit | The prose | What sat beside it |
+|---|---|---|
+| 1 | `merge-artists.test.ts:168` explained composite-key collisions in general terms | Coverage of one of the three tables that have them |
+| 2 | `graph.test.ts:302` stated §7.1's hierarchy rule correctly | A graph that used flat equality and matched no descendant |
+| 4 | `images.spec.ts:242`'s docblock named the missing token as the cause | An assertion saying `reason: 'failed'` |
+
+The third is the sharpest, because the test could not have been written any
+other way: `'unconfigured'` did not exist yet, so the only available name was
+the wrong one. The docblock knew more than the type system allowed the
+assertion to say. **When a comment explains a cause more precisely than the
+adjacent assertion can express, that gap is the bug.**
+
+Practical form of the rule, for reviews:
+
+- A comment describing a CLASS of hazard is a prompt to check every member of
+  the class, not evidence the class is handled.
+- A comment stating a rule correctly says nothing about whether the code below
+  follows it. Read them as two independent claims.
+- A comment naming a cause the assertion cannot name is a missing case in the
+  type, not a stylistic mismatch.
+
+## Corollary: three weak concealments beat one strong one
+
+`lifeSpan` was invisible for an entire build step, and no single cause would
+have hidden it:
+
+1. **Optional field on the client type** — `lifeSpan?:` meant `undefined`
+   typechecked perfectly, so the compiler had nothing to say.
+2. **Restated shape rather than an imported one** — `LineupAction.tsx` declared
+   its own `Candidate` type, so the client and the server could disagree without
+   any single file being wrong.
+3. **No tests on the normalizer** — `normalizeSearchHits` had none at all, so
+   nothing asserted what it produced.
+
+Any one alone would probably have been caught: a required field fails the build,
+an imported type fails the build, a tested normalizer fails its test. Together
+they left a rendered-but-empty field on the one screen that exists to
+disambiguate. **When looking for this shape, look for the combination — an
+optional field whose only producer is untested and whose consumer restates the
+type.**
