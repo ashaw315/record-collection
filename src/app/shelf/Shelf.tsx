@@ -1,5 +1,9 @@
+'use client';
+
 import Link from 'next/link';
+import { useState } from 'react';
 import type { ShelfRecord } from '@/lib/db/queries/shelf';
+import { PulledRecord } from './PulledRecord';
 import { DEFAULT_SPINE_COLOUR, spineText, spineWidth, textColourOn } from './spine';
 
 /**
@@ -20,12 +24,24 @@ import { DEFAULT_SPINE_COLOUR, spineText, spineWidth, textColourOn } from './spi
  * The ordering survived. Punk records still stand next to each other; nothing
  * announces that they are punk.
  *
- * **A server component.** Hover is CSS, the floating label is CSS, and clicking
- * a spine is a `Link` — no state, nothing to hydrate, and the wall is there in
- * the first paint rather than after JavaScript loads.
+ * **A client component, and it was a server one until §10b's pull.** Hover and
+ * the floating label are still pure CSS; what needs state is which record has
+ * been taken off the shelf. The spines themselves render on the server as part
+ * of the page — only the pulled record is interactive, and it lives in its own
+ * component so a wall of three hundred spines ships one handler rather than
+ * three hundred.
+ *
+ * A spine stays a LINK whose click is intercepted. §10b pulls the record into
+ * view rather than navigating, but the element still leads to a record: the
+ * href works with middle-click, cmd-click and no JavaScript, and eight E2E
+ * specs across five files locate records by `getByRole('link', { name })`,
+ * which is the contract every other collection view honours.
  */
 
 export function Shelf({ records }: { records: ShelfRecord[] }) {
+  const [pulledId, setPulledId] = useState<string | null>(null);
+  const pulled = records.find((record) => record.id === pulledId) ?? null;
+
   if (records.length === 0) {
     return (
       <p className="mt-8 text-sm text-muted-foreground">
@@ -57,8 +73,33 @@ export function Shelf({ records }: { records: ShelfRecord[] }) {
 
             return (
               <li key={record.id} className="group relative shrink-0">
+                {/*
+                  **A LINK that is intercepted, not a button.**
+
+                  §10b pulls the record into view rather than navigating, which
+                  reads as a button — and making it one broke eight E2E specs
+                  across five files that locate a record with
+                  `getByRole('link', { name: title })`. That is not a test
+                  detail: it is the contract every other collection view
+                  honours, and it is how a record is found by anything reading
+                  the accessibility tree.
+
+                  More importantly it is what the element IS. A spine leads to a
+                  record; pulling it into view is an enhancement over that
+                  journey, not a different one. As a link it works with
+                  middle-click, cmd-click, "open in new tab" and no JavaScript
+                  at all — `preventDefault` is what upgrades it, and if the
+                  handler never runs the href still goes somewhere correct.
+                */}
                 <Link
                   href={`/records/${record.id}`}
+                  onClick={(event) => {
+                    // Let the browser handle the modified clicks a link should:
+                    // new tab, new window, download.
+                    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                    event.preventDefault();
+                    setPulledId(record.id);
+                  }}
                   data-testid="shelf-spine"
                   data-record-id={record.id}
                   /*
@@ -127,6 +168,15 @@ export function Shelf({ records }: { records: ShelfRecord[] }) {
           })}
         </ul>
       </div>
+
+      {/*
+        §10b: "clicking a spine animates the record off the shelf and into view:
+        front cover forward, the shelf dimmed behind it." Rendered here rather
+        than per-spine so exactly one record is ever out.
+      */}
+      {pulled !== null && (
+        <PulledRecord record={pulled} onClose={() => setPulledId(null)} />
+      )}
     </div>
   );
 }

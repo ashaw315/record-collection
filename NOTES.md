@@ -7104,3 +7104,47 @@ Same family as the absent-versus-unknown rule this build keeps meeting
 (`layersFetched`, `spine_colour`, `NULLS LAST` on years, `matchedVia`), with one
 extra twist: here the absence is not merely unrendered, it is **unrecoverable**,
 because the default overwrote it on the way in.
+
+# When a role conflict looks unresolvable, the element's meaning is usually wrong
+
+§10b says clicking a spine pulls the record into view rather than navigating.
+That reads as a button, so the spine became one — and it broke the eight E2E
+specs across five files that find a record with
+`getByRole('link', { name: title })`, which is the contract every other
+collection view honours.
+
+The question presented itself as **"which wins, the spec's interaction or the
+suite's contract?"** — and framed that way both answers are bad. Making it a
+button breaks record lookup everywhere; keeping it a link contradicts what
+clicking does.
+
+**Neither. The element had been misidentified.** A spine LEADS TO A RECORD. That
+is what it is, and pulling the record into view is an enhancement over that
+journey rather than a different journey. So it stays a link and the click is
+intercepted:
+
+    <Link href={`/records/${id}`} onClick={(e) => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      pull(id);
+    }}>
+
+Which is strictly better than either original option:
+
+- `preventDefault` UPGRADES the link. If the handler never runs — no JavaScript,
+  a hydration error, an exception earlier in the tree — the `href` still goes
+  somewhere correct.
+- Middle-click, cmd-click and "open in new tab" work, as they must on something
+  that leads to a record. The modifier check is what preserves that.
+- The accessibility contract holds unchanged.
+
+**The general shape.** When an interaction requirement and an
+accessibility/semantic contract appear to conflict, the conflict is usually
+evidence that the element's semantics were chosen from its BEHAVIOUR rather than
+from its MEANING. Ask what the thing is, not what the click does. A control that
+navigates is a link even when JavaScript makes the navigation prettier; a
+control that mutates is a button even when it happens to change the URL.
+
+Corollary worth keeping: **progressive enhancement resolved a test failure
+without accommodating the test.** The suite was right about the contract, the
+spec was right about the interaction, and the correct element satisfied both.
