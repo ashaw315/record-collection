@@ -7589,3 +7589,43 @@ test file carried the cases that pinned the clustering behaviour.
 wholesale** — a builder shaped for a force-directed layout is the wrong shape for
 a scoring function, and this project has already recorded that keeping something
 built for a screen that no longer exists is how dead code survives.
+
+# Two instructions for the three.js work, recorded before it starts
+
+Given before unit 7 and worth having written down, because both are decisions
+that are hard to retrofit.
+
+## Render on a dirty flag, not a throttled pointermove
+
+The obvious shape is `throttle(onPointerMove, 16)`. The better one is:
+
+    onPointerMove  ->  dirty = true          (cheap, no render)
+    rAF loop       ->  if (dirty) { render(); dirty = false }
+
+Cheaper than a throttle, and — the reason it matters — **a still record costs
+nothing.** A throttled handler still fires and still renders while the pointer
+rests; a dirty flag renders only when something changed. The idle case is the
+common one on a screen where the reader is looking rather than moving, and that
+is worth more than smoothing the moving case.
+
+It also decouples input rate from frame rate: a mouse reporting at 1000Hz and a
+display at 60Hz stop being the same number, which is the two-systems-sharing-a-
+number smell recorded earlier.
+
+## A textured plane on screen before any motion exists
+
+Get a plane you can SEE, with a real cover on it, before writing the rise or the
+rotation. A plane that is visible is a far smaller thing to debug than a plane
+inside a rise-and-rotate sequence.
+
+**Every failure on this feature so far has been about two things agreeing rather
+than either thing working** — React state with a CSS transition (twice), the
+spine's role with the accessibility contract, the section grouping with the
+data's actual shape. A canvas adds a third party: WebGL, whose failures are
+silent (a black square, a washed-out texture, nothing at all) and whose error
+messages point at the draw call rather than the cause.
+
+So the first three.js unit ships one static textured plane and nothing else.
+If the texture is washed out, that is the colour-space difference between r128's
+`texture.encoding` and r152+'s `texture.colorSpace`, and finding it there costs
+minutes rather than being one candidate among five.
