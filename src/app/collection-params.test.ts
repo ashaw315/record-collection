@@ -28,10 +28,12 @@ function params(query: string): URLSearchParams {
 }
 
 describe('parseCollectionParams', () => {
-  it('defaults to a table view with no filters', () => {
+  it('defaults to the shelf view with no filters', () => {
+    // §10b moved the default from `table`; the rest of this assertion is
+    // unchanged and is what it was always for.
     const result = parseCollectionParams(params(''));
 
-    expect(result.view).toBe('table');
+    expect(result.view).toBe('shelf');
     expect(result.filters).toEqual({});
     expect(result.sort).toBeUndefined();
   });
@@ -132,8 +134,10 @@ describe('parseCollectionParams', () => {
     expect(VIEW_MODES).toContain('grid');
   });
 
-  it('falls back to table for an unknown view mode', () => {
-    expect(parseCollectionParams(params('view=carousel')).view).toBe('table');
+  it('falls back to the default for an unknown view mode', () => {
+    // A view mode is a presentation preference, so a stale bookmark shows the
+    // collection rather than an error.
+    expect(parseCollectionParams(params('view=carousel')).view).toBe('shelf');
   });
 
   it('reads the page number', () => {
@@ -242,5 +246,46 @@ describe('toQueryString', () => {
 
     expect(next.filters).toStrictEqual({ q: 'discharge' });
     expect(Object.keys(next.filters)).not.toContain('genreId');
+  });
+});
+
+describe('the shelf view (§10b)', () => {
+  /**
+   * §10b: the shelf "is the default view of `/` on desktop".
+   *
+   * It joins `table` and `grid` as a third mode rather than replacing either —
+   * §10's toggle still reaches them, and the shelf is a way of browsing by eye
+   * rather than a way of reading the data.
+   */
+  it('accepts shelf as a view mode', () => {
+    expect(parseCollectionParams(params('view=shelf')).view).toBe('shelf');
+  });
+
+  it('defaults to shelf, which §10b makes the default view of /', () => {
+    /**
+     * The behaviour change in this unit. It was `table`, and the previous
+     * assertion is updated rather than removed: the default is a decision, and
+     * §10b moved it.
+     */
+    expect(parseCollectionParams(params('')).view).toBe('shelf');
+  });
+
+  it('still rejects an unknown view, falling back to the default', () => {
+    expect(parseCollectionParams(params('view=carousel')).view).toBe('shelf');
+  });
+
+  it('omits the shelf from the query string, since it is now the default', () => {
+    /**
+     * The serialiser drops defaults so a plain URL is clean. When the default
+     * moved, the thing being omitted had to move with it — otherwise `/` would
+     * emit `?view=shelf` on every link while `?view=table` vanished, which is
+     * the opposite of both intentions.
+     */
+    expect(toQueryString(parseCollectionParams(params('view=shelf')))).not.toContain('view=');
+
+    expect(
+      toQueryString(parseCollectionParams(params('view=table'))),
+      'a non-default view is still carried',
+    ).toContain('view=table');
   });
 });

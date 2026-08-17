@@ -847,7 +847,9 @@ Inspired by thecriterioncloset.com, and worth being explicit about what is borro
 
 ### The shelf
 
-- **Records stand as spines**, ordered by genre so the shelf reads as sections: all the punk together, all the rock together. That ordering is the shelf's own, not a proposal for the physical one.
+- **Records stand as spines on one continuous shelf**, ordered by genre so related records stand together — all the punk adjacent, all the rock adjacent. That ordering is the shelf's own, not a proposal for the physical one.
+
+  **No section headings, and no shelf band per genre.** Adjacency does the grouping, as it does on a real shelf and in the reference this borrows from, which shows 1,300 spines with no headings at all. Sections were tried and removed: a collection with six flat genres for five records produced five near-empty black bands stacked down the page, and it read as broken rather than as short. Signposting a wall is a problem that arrives with scale, and the decision belongs to whoever is looking at three hundred records.
 - **A spine's colour is the average colour of its cover**, computed once at import and stored. A record with no cover gets a plain spine — an honest absence, not a gap in the wall.
 - **Spine text is artist, title and catalogue number**, set in mono, rotated. The catalogue number is the collector's identifier and earns its space.
 - **Hover names the record** — artist, title, year, label — in a floating label, with the aimed-at spine marked. Aim, then click.

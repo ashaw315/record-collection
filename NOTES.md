@@ -6829,3 +6829,33 @@ the PROBLEM rather than the solution — determinism, absence handling, ordering
 guarantees — and check whether the replacement inherits them. Nothing in the
 retirement diff would have surfaced this; it was noticed because §8.2 had been
 read closely enough to remember the sentence.
+
+# A retired feature's preconditions can survive into its replacement, unstated
+
+§8.2's shelf ordering was retired for three stated reasons: it needed enough
+records for clusters, **a built-out genre hierarchy**, and hand-entered
+influence edges — none of which the collection has.
+
+§10b replaced it, and its sectioning quietly assumed the second one. "All the
+punk together" only groups anything if UK82 and US Hardcore sit UNDER Punk. The
+real collection has six genres for five records and **every one is top-level**,
+so the top-level-ancestor walk was correct and did nothing: five sections of one
+record each, each rendering its own full-width black band. It read as broken
+rather than as short.
+
+**The precondition outlived the feature that named it, and the check went with
+the feature.** §8.2 said out loud that it needed a hierarchy; nothing in §10b
+did, because §10b was written as a fresh feature rather than as a successor. So
+the requirement was inherited and the sentence recording it was not.
+
+**The rule:** when replacing a retired feature, read the RETIREMENT REASONS as a
+checklist against the replacement, not just as history. If a feature was
+retired because the data could not support it, ask what the replacement assumes
+about that same data. The reasons are usually about the collection rather than
+about the mechanism, and a new mechanism over the same collection inherits them.
+
+**And it was only caught by looking.** Every test passed — the grouping is
+correct, the determinism holds, the absences render honestly. What the tests
+could not say is that five correct sections look wrong on a page. The screenshot
+was the instrument, as it was for the spine colours; the difference is that
+there the row exposed a wrong VALUE and here the page exposed a wrong SHAPE.

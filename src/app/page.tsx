@@ -2,9 +2,11 @@ import Link from 'next/link';
 import { AppHeader } from '@/components/AppHeader';
 import { CollectionFilters } from './CollectionFilters';
 import { CollectionList, type CollectionRow } from './CollectionList';
+import { Shelf } from './shelf/Shelf';
 import { CollectionPagination } from './CollectionPagination';
 import { parseCollectionParams } from './collection-params';
 import { listRecords, recordFacets } from '@/lib/db/queries/records';
+import { shelfRecords } from '@/lib/db/queries/shelf';
 import { DEFAULT_PAGE_SIZE, type Offset } from '@/lib/api/query-params';
 
 /**
@@ -63,6 +65,14 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
    * a chip for a genre no record has returns zero rows when clicked, and past
    * 200 reference rows the newest chips silently did not render at all.
    */
+  /**
+   * §10b's shelf reads a DIFFERENT query — grouped into genre sections and
+   * unpaginated, because a wall is scanned whole rather than a page at a time.
+   * Fetched only when it is the view in use, so the table and grid do not pay
+   * for it.
+   */
+  const shelf = params.view === 'shelf' ? await shelfRecords() : null;
+
   const [records, facets] = await Promise.all([
     listRecords({
       limit: PAGE_SIZE,
@@ -109,14 +119,36 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
           small screens, so nothing becomes unreachable, and the CSS grid falls
           back to one column there anyway.
         */}
-        <CollectionList rows={records.rows as CollectionRow[]} view={params.view} />
+        {shelf === null ? (
+          <>
+            {/*
+              Narrowed, not cast. `CollectionList` handles table and grid and
+              the shelf is its SIBLING rather than a third case inside it — so
+              the branch above is what proves `view` is not 'shelf' here, and
+              widening that component's prop would let a shelf request reach a
+              component with no way to render it.
+            */}
+            <CollectionList
+              rows={records.rows as CollectionRow[]}
+              view={params.view === 'grid' ? 'grid' : 'table'}
+            />
 
-        <CollectionPagination
-          params={params}
-          total={records.total}
-          rows={records.rows.length}
-          pageSize={PAGE_SIZE}
-        />
+            <CollectionPagination
+              params={params}
+              total={records.total}
+              rows={records.rows.length}
+              pageSize={PAGE_SIZE}
+            />
+          </>
+        ) : (
+          /*
+            No pagination on the shelf, deliberately. §10b's wall is browsed by
+            eye and a shelf that stopped at fifty records would be a claim about
+            the collection's size rather than a view of it — the sections are
+            the structure, and scrolling is how you reach the end.
+          */
+          <Shelf sections={shelf} />
+        )}
       </main>
     </>
   );

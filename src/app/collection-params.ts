@@ -18,7 +18,15 @@ import { RECORD_SORT_FIELDS, type RecordFilters, type RecordSortField } from '@/
  * with `toQueryString`.
  */
 
-export const VIEW_MODES = ['table', 'grid'] as const;
+/**
+ * §10's table/grid toggle, plus §10b's shelf.
+ *
+ * `shelf` is FIRST because it is the default (§10b: "the default view of `/` on
+ * desktop") — a wall of spines browsed by eye, where table and grid are ways of
+ * reading the data. It is a third mode, not a replacement: §10's toggle still
+ * reaches both others.
+ */
+export const VIEW_MODES = ['shelf', 'table', 'grid'] as const;
 export type ViewMode = (typeof VIEW_MODES)[number];
 
 export type CollectionParams = {
@@ -102,8 +110,16 @@ function readSort(value: string | null): CollectionParams['sort'] {
   return { field: field as RecordSortField, direction };
 }
 
+/**
+ * §10b moved the default from `table` to `shelf`. An unrecognised value falls
+ * back to the default rather than 400ing — a view mode is a presentation
+ * preference, and a stale bookmark should show the collection rather than an
+ * error.
+ */
+export const DEFAULT_VIEW: ViewMode = 'shelf';
+
 function readView(value: string | null): ViewMode {
-  return VIEW_MODES.includes(value as ViewMode) ? (value as ViewMode) : 'table';
+  return VIEW_MODES.includes(value as ViewMode) ? (value as ViewMode) : DEFAULT_VIEW;
 }
 
 /**
@@ -129,7 +145,9 @@ export function toQueryString(params: CollectionParams): string {
   if (params.sort !== undefined) {
     search.set('sort', `${params.sort.field}:${params.sort.direction}`);
   }
-  if (params.view !== 'table') search.set('view', params.view);
+  // Omits the DEFAULT, which §10b moved — otherwise `/` would emit
+  // `?view=shelf` on every link while `?view=table` vanished.
+  if (params.view !== DEFAULT_VIEW) search.set('view', params.view);
   if (params.page > 1) search.set('page', String(params.page));
 
   return search.toString();
