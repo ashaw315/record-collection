@@ -1,7 +1,7 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { sql } from 'drizzle-orm';
 import { getTestDb, truncateAll, closeTestDb } from '../helpers/db';
-import { artists, genres, labels, pressings, records, recordGenres } from '@/db/schema';
+import { artists, genres, images, labels, pressings, records, recordGenres } from '@/db/schema';
 import { shelfRecords } from '@/lib/db/queries/shelf';
 
 /**
@@ -339,6 +339,160 @@ describe('shelfRecords — scope', () => {
     await db.execute(
       sql`INSERT INTO want_list (title, artist_id) VALUES ('Never Again', ${discharge})`,
     );
+
+    expect(await titles()).toEqual(['Hear Nothing']);
+  });
+});
+
+describe('shelfRecords — what pulling a record needs (§10b)', () => {
+  /**
+   * §10b: clicking a spine pulls the record into view, front cover forward, and
+   * turning it shows the back — "label, catalogue number, pressing details,
+   * matrix runout, condition, what was paid and where".
+   *
+   * All of it arrives in the SAME query as the spines. The alternative is a
+   * fetch per record when one is pulled, which on a wall of three hundred
+   * spines is three hundred possible requests for a screen whose point is
+   * immediacy.
+   */
+  it('carries the cover image for the front face', async () => {
+    const punk = await genre('Punk');
+    const id = await record('Hear Nothing', await artist('Discharge'), { genreIds: [punk] });
+
+    await db.insert(images).values({
+      recordId: id,
+      url: 'https://blob.example/cover.jpg',
+      imageType: 'cover',
+    });
+
+    expect((await shelfRecords())[0].coverUrl).toBe('https://blob.example/cover.jpg');
+  });
+
+  it('carries a photographed back when one exists', async () => {
+    // §10b: "where a photographed back exists, it is used instead, with the
+    // same details beside it."
+    const punk = await genre('Punk');
+    const id = await record('Hear Nothing', await artist('Discharge'), { genreIds: [punk] });
+
+    await db.insert(images).values({
+      recordId: id,
+      url: 'https://blob.example/back.jpg',
+      imageType: 'back',
+    });
+
+    expect((await shelfRecords())[0].backUrl).toBe('https://blob.example/back.jpg');
+  });
+
+  it('reports a missing back as null — the details render instead', async () => {
+    /**
+     * The common case by a wide margin: a Discogs import brings a front cover
+     * and nothing else. §10b's whole point is that this record is still
+     * two-sided, with the back composed from stored fields.
+     */
+    const punk = await genre('Punk');
+    await record('Hear Nothing', await artist('Discharge'), { genreIds: [punk] });
+
+    expect((await shelfRecords())[0].backUrl).toBeNull();
+  });
+
+  it('carries a gatefold ONLY when one has been photographed', async () => {
+    /**
+     * §10b: "the state exists only where an inner image has been photographed.
+     * There is no generated stand-in: the point of a gatefold is the artwork
+     * inside it, and a panel of pressing details folded open where a photograph
+     * should be would be inventing the thing the user came to see."
+     *
+     * So this field IS the affordance — its presence is what makes the hinge
+     * appear, and nothing else may.
+     */
+    const punk = await genre('Punk');
+    const plain = await record('No gatefold', await artist('A'), { genreIds: [punk] });
+    const folds = await record('Gatefold', await artist('B'), { genreIds: [punk] });
+
+    await db.insert(images).values({
+      recordId: folds,
+      url: 'https://blob.example/inner.jpg',
+      imageType: 'gatefold',
+    });
+
+    const shelf = await shelfRecords();
+    const byId = new Map(shelf.map((row) => [row.id, row]));
+
+    expect(byId.get(plain)?.gatefoldUrl, 'no inner image, no affordance').toBeNull();
+    expect(byId.get(folds)?.gatefoldUrl).toBe('https://blob.example/inner.jpg');
+  });
+
+  it('carries the pressing and purchase fields the back face renders', async () => {
+    const punk = await genre('Punk');
+    const [label] = await db
+      .insert(labels)
+      .values({ name: 'Clay Records' })
+      .returning({ id: labels.id });
+    const [pressing] = await db
+      .insert(pressings)
+      .values({
+        catalogNumber: 'CLAYLP 3',
+        matrixRunout: 'CLAYLP3 A1',
+        yearPressed: 1982,
+        countryPressed: 'UK',
+        isReissue: true,
+      })
+      .returning({ id: pressings.id });
+
+    await record('Hear Nothing', await artist('Discharge'), {
+      genreIds: [punk],
+      labelId: label.id,
+      pressingId: pressing.id,
+    });
+
+    expect((await shelfRecords())[0]).toMatchObject({
+      matrixRunout: 'CLAYLP3 A1',
+      yearPressed: 1982,
+      countryPressed: 'UK',
+      isReissue: true,
+    });
+  });
+
+  it('takes the OLDEST image of each type, matching the gallery', async () => {
+    /**
+     * A record can have two covers. The gallery orders within a type oldest
+     * first — "the first upload stays first" — and the shelf must agree, or the
+     * front of a pulled record differs from the first image of its gallery.
+     */
+    const punk = await genre('Punk');
+    const id = await record('Hear Nothing', await artist('Discharge'), { genreIds: [punk] });
+
+    await db.insert(images).values({
+      recordId: id,
+      url: 'https://blob.example/first.jpg',
+      imageType: 'cover',
+      createdAt: new Date('2026-01-01T00:00:00Z'),
+    });
+    await db.insert(images).values({
+      recordId: id,
+      url: 'https://blob.example/second.jpg',
+      imageType: 'cover',
+      createdAt: new Date('2026-06-01T00:00:00Z'),
+    });
+
+    expect((await shelfRecords())[0].coverUrl).toBe('https://blob.example/first.jpg');
+  });
+
+  it('does not multiply a record by its images', async () => {
+    /**
+     * The join hazard. Three images on one record must not put three spines on
+     * the wall — the same failure the multi-genre join had, one table over.
+     */
+    const punk = await genre('Punk');
+    const id = await record('Hear Nothing', await artist('Discharge'), { genreIds: [punk] });
+
+    for (const type of ['cover', 'back', 'gatefold'] as const) {
+      await db.insert(images).values({
+        recordId: id,
+        url: `https://blob.example/${type}.jpg`,
+        imageType: type,
+      });
+    }
 
     expect(await titles()).toEqual(['Hear Nothing']);
   });

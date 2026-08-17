@@ -43,6 +43,37 @@ export type ShelfRecord = {
   catalogNumber: string | null;
   /** §10b's spine colour; `null` is an honest absence, rendered as a plain spine. */
   spineColour: string | null;
+
+  /**
+   * §10b's pulled record: front cover, back, and the fields the back face
+   * composes from when no photograph exists.
+   *
+   * All of it travels with the spines rather than being fetched when a record
+   * is pulled — on a wall of three hundred, a fetch-per-pull is three hundred
+   * possible requests on a screen whose point is immediacy.
+   */
+  coverUrl: string | null;
+  backUrl: string | null;
+  /**
+   * §10b: the gatefold "state exists only where an inner image has been
+   * photographed. There is no generated stand-in." This field IS the
+   * affordance — its presence is what makes the hinge appear, and nothing else
+   * may.
+   */
+  gatefoldUrl: string | null;
+
+  matrixRunout: string | null;
+  yearPressed: number | null;
+  countryPressed: string | null;
+  pressingPlant: string | null;
+  vinylWeightGrams: number | null;
+  colorVariant: string | null;
+  isReissue: boolean;
+  conditionMedia: string | null;
+  conditionSleeve: string | null;
+  purchasePrice: string | null;
+  purchaseDate: string | null;
+  storeName: string | null;
 };
 
 type Row = ShelfRecord & { sectionName: string | null };
@@ -97,6 +128,23 @@ export async function shelfRecords(): Promise<ShelfRecord[]> {
       JOIN root r ON r.genre_id = rg.genre_id
       JOIN genres rg2 ON rg2.id = r.root_id
       ORDER BY rg.record_id, rg2.name, r.root_id
+    ),
+    /**
+     * One image per type per record, OLDEST first.
+     *
+     * DISTINCT ON rather than a plain join: a record with three images would
+     * otherwise appear three times, putting three spines on the wall — the same
+     * fan-out the multi-genre join has, one table over.
+     *
+     * Oldest wins, matching the gallery's "the first upload stays first". If
+     * the two disagreed, the front of a pulled record would differ from the
+     * first image of its own gallery.
+     */
+    image AS (
+      SELECT DISTINCT ON (record_id, image_type) record_id, image_type, url
+      FROM images
+      WHERE image_type IN ('cover', 'back', 'gatefold')
+      ORDER BY record_id, image_type, created_at ASC, id
     )
     SELECT
       rec.id,
@@ -106,11 +154,30 @@ export async function shelfRecords(): Promise<ShelfRecord[]> {
       l.name AS "labelName",
       p.catalog_number AS "catalogNumber",
       rec.spine_colour AS "spineColour",
+      cover.url AS "coverUrl",
+      back.url AS "backUrl",
+      gate.url AS "gatefoldUrl",
+      p.matrix_runout AS "matrixRunout",
+      p.year_pressed AS "yearPressed",
+      p.country_pressed AS "countryPressed",
+      p.pressing_plant AS "pressingPlant",
+      p.vinyl_weight_grams AS "vinylWeightGrams",
+      p.color_variant AS "colorVariant",
+      COALESCE(p.is_reissue, false) AS "isReissue",
+      rec.condition_media::text AS "conditionMedia",
+      rec.condition_sleeve::text AS "conditionSleeve",
+      rec.purchase_price::text AS "purchasePrice",
+      rec.purchase_date::text AS "purchaseDate",
+      st.name AS "storeName",
       s.root_name AS "sectionName"
     FROM records rec
     JOIN artists a ON a.id = rec.artist_id
     LEFT JOIN labels l ON l.id = rec.label_id
     LEFT JOIN pressings p ON p.id = rec.pressing_id
+    LEFT JOIN record_stores st ON st.id = rec.store_id
+    LEFT JOIN image cover ON cover.record_id = rec.id AND cover.image_type = 'cover'
+    LEFT JOIN image back  ON back.record_id  = rec.id AND back.image_type  = 'back'
+    LEFT JOIN image gate  ON gate.record_id  = rec.id AND gate.image_type  = 'gatefold'
     LEFT JOIN section s ON s.record_id = rec.id
     /**
      * Genre groups alphabetically, with ungrouped records LAST — they are the
@@ -148,5 +215,20 @@ export async function shelfRecords(): Promise<ShelfRecord[]> {
     labelName: row.labelName,
     catalogNumber: row.catalogNumber,
     spineColour: row.spineColour,
+    coverUrl: row.coverUrl,
+    backUrl: row.backUrl,
+    gatefoldUrl: row.gatefoldUrl,
+    matrixRunout: row.matrixRunout,
+    yearPressed: row.yearPressed,
+    countryPressed: row.countryPressed,
+    pressingPlant: row.pressingPlant,
+    vinylWeightGrams: row.vinylWeightGrams,
+    colorVariant: row.colorVariant,
+    isReissue: row.isReissue,
+    conditionMedia: row.conditionMedia,
+    conditionSleeve: row.conditionSleeve,
+    purchasePrice: row.purchasePrice,
+    purchaseDate: row.purchaseDate,
+    storeName: row.storeName,
   }));
 }
