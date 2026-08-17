@@ -2443,6 +2443,17 @@ form the records work had not shown — see the masking entry under Open.
   is the same discipline for a different question. Both are about whether a
   claim covers the space it appears to. Noticed: step 7, validationError unit.
 
+  **Fourth instance, and the first where the instrument was a hand enumeration
+  in a planning document rather than a grep in code.** The SPEC amendment sets
+  under-counted the same class three times running — "four places use this
+  term" was five, then six. Each pass found the ones the previous pass named
+  plus one more, because each searched for the specific phrase (`graph-based`)
+  rather than the root (`graph`). The correction is not a more careful list: it
+  is that a claim about coverage in a planning document is an assertion, and
+  gets verified by execution like any other. Same family as the
+  `validationError` two-endpoints-that-were-eight finding. Noticed: SPEC
+  amendments A16–A17.
+
 - **RULE: a class can be SOLVED and not RECOGNISED, and the giveaway is a
   comment calling the general case an exception.**
 

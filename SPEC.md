@@ -241,7 +241,9 @@ Also exempt from the `created_at` / `updated_at` rule — `fetched_at` is the on
 
 ### 4.3 Junction tables
 
-These power the network graph. All are composite-PK, no separate `id`.
+These carry the relationships the rest of the app reads: genre filtering and its hierarchy rollup (§7.1), the collection's facet counts (§5.2), the shelf's genre ordering (§10b), and §9.1's suggestion scoring. All are composite-PK, no separate `id`.
+
+An earlier version of this line said they power the network graph. That screen is retired (§8); the tables and every other consumer of them are not.
 
 **`record_genres`** — `(record_id, genre_id)`
 **`want_list_genres`** — `(want_list_id, genre_id)`
@@ -726,7 +728,7 @@ Responsive throughout — **desktop and mobile are equal priorities**, not deskt
 | Add/edit record | `/records/new`, `/records/:id/edit` | Form prefilled from a lookup result, or blank for manual entry. All prefilled fields remain editable — the user verifies against the physical record and corrects. Inline create for artist/label/store/tag. Pressing details are entered here, not on a separate screen: catalog number, matrix/runout, country, year pressed, pressing plant, vinyl weight, colour variant, and whether it is a reissue. All optional — the in-store case must stay enterable in seconds. |
 | Add/edit want-list item | `/want-list/new`, `/want-list/:id/edit` | Form for a wanted record, mirroring the record form's structure. Fields: title, artist, label, priority, target pressing, best-dig notes, max price. Prefilled from a `/lookup` result via `?discogsReleaseId=`, or blank. **`best_dig_notes` and `max_price` are visually and structurally separate** (§7.2) — never one section, never one label. Reference rows are matched, never created: a prefill is not a commitment, and an artist created for an abandoned form is debris nothing points at. When a Discogs value matches no existing row, leave the field empty and name what could not be found. |
 | Want list | `/want-list` | Sorted by priority. Each row shows target pressing and best-dig notes. "Mark acquired" action opens the record form prefilled. |
-| Suggestions | `/suggestions` | Graph-based list with reasons, always present. Separate "Ask Claude for gap analysis" button for §9.2. Add-to-want-list on each. |
+| Suggestions | `/suggestions` | Relationship-based list with reasons, always present. Separate "Ask Claude for gap analysis" button for §9.2. Add-to-want-list on each. |
 | Stores | `/stores` | List with favorite toggle; each store shows records acquired there and total spend. |
 | Stats | `/stats` | Total records, total spend, estimated value, breakdown charts by genre/decade/store/label. |
 | Manage | `/manage` | CRUD for genres (incl. hierarchy editor), labels, formats, tags, artists, influences. **Not pressings** — see below. |
