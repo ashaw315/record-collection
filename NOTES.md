@@ -6783,3 +6783,49 @@ shelf test then timed out. It was not a bad restore — the guard was back and t
 `genres` table held one clean row. A plain re-run was green. **A timed-out
 recursive query can outlive the process that issued it; re-run once before
 diagnosing the code.**
+
+# A timed-out recursive query outlives the process that issued it
+
+Killing a `vitest` run mid-recursion — a `WITH RECURSIVE` with its depth bound
+mutated away — left the test database wedged. Every shelf test in the NEXT run
+timed out at 10s, including ones that had passed moments earlier.
+
+**It reads as a bad restore**, which is the trap: the natural conclusion is that
+the mutation was not fully reverted, so the time goes into re-diffing correct
+code. Both checks said otherwise — `WHERE c.depth < 16` was back, and `genres`
+held a single clean row with a null parent.
+
+A plain re-run was green.
+
+**The rule: after killing a run that was executing a recursive or long query,
+re-run once before diagnosing anything.** `pg_stat_activity` showed no stuck
+backend by the time it was checked, so the residue is not always visible either
+— absence of a blocker is not evidence the previous run left nothing behind.
+
+Related to the two-processes-one-database note already recorded: the shared
+Docker test database has no isolation between runs, and `fileParallelism: false`
+serialises files WITHIN a run and nothing across them.
+
+# When a spec section is retired, some of its reasoning may belong elsewhere
+
+§8.2's shelf ordering is gone — retired with the graph screen, because it needed
+enough records for clusters, a built-out genre hierarchy and hand-entered
+influence edges, none of which exist. But one of its requirements survived the
+feature that motivated it:
+
+> **"The same collection must always produce the same shelf order."** A shelf
+> that reshuffles between page loads is useless for a physical shelf.
+
+§10b's wall is a different feature — genre sections rather than community
+detection — and the requirement applies unchanged, for a reason §10b never
+states: a wall you scan by eye cannot move between loads, or you re-scan it
+every time. `shelfRecords` therefore breaks every tie deterministically
+(`DISTINCT ON … ORDER BY root_name`, then artist, year, title, id) and there is
+a test pinning it.
+
+**The general point.** Retiring a section deletes its mechanism, not necessarily
+its constraints. Before removing one, read it for requirements that are about
+the PROBLEM rather than the solution — determinism, absence handling, ordering
+guarantees — and check whether the replacement inherits them. Nothing in the
+retirement diff would have surfaced this; it was noticed because §8.2 had been
+read closely enough to remember the sentence.
