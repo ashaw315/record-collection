@@ -10,10 +10,12 @@ This is a complete build specification for a single-developer project. Implement
 
 A personal vinyl record collection tracker. Two core datasets: **records owned** and a **want-list** of records to acquire. Around those sit reference data (artists, genres, labels, stores, pressings) that make two signature features possible:
 
-1. **Network graph** — a force-directed visualization of the collection where artists and genres are nodes and influence/membership relationships are edges.
-2. **Shelf order** — a derived linear ordering of the physical collection based on graph clustering, so the shelf reads as a genealogy rather than an alphabet.
+1. **The shelf** — the collection rendered as a wall of spines, ordered by genre so related records stand together, with a record that can be pulled out and turned over (§10b). It is the default view of the collection.
+2. **In-store lookup** — a structured Discogs search that answers "do I already own this pressing?" and "is this a fair price?" while standing in a shop (§5.7, §7.7, §10a).
 
-Plus a **suggestion engine** that recommends records to acquire based on gaps in the graph.
+Plus a **suggestion engine** that recommends records to acquire from the relationships in the collection: influence edges the user has asserted, shared band membership imported from MusicBrainz, and genre overlap (§9).
+
+An earlier version of this spec named a force-directed network graph and a derived shelf *ordering* as the two signature features. Both were built and retired at step 13; §8 records why, and §10b is what replaced them. The relationship data they read from is untouched and still feeds §9.
 
 Single user for v1, behind a password gate. Designed so multi-user is a later feature flag, not a rewrite.
 
@@ -28,7 +30,8 @@ Single user for v1, behind a password gate. Designed so multi-user is a later fe
 | ORM | Drizzle ORM + Drizzle Kit for migrations |
 | Styling | Tailwind CSS |
 | Components | shadcn/ui |
-| Graph viz | D3 (`d3-force`) rendered to SVG |
+| 3D | `three` — **only** for the pulled record (§10b). The shelf itself is CSS, and that is a rule, not an accident: see §10b. |
+| Image processing | `sharp` — spine colour averaging at import (§10b). Present transitively via Next; **declared explicitly** so a Next minor release cannot remove it. |
 | Unit/integration tests | Vitest |
 | E2E tests | Playwright |
 | Hosting | Vercel |
@@ -40,7 +43,11 @@ Single user for v1, behind a password gate. Designed so multi-user is a later fe
 - **In production and development against Neon**, use `@neondatabase/serverless` with Drizzle via the **WebSocket `Pool` adapter (`drizzle-orm/neon-serverless`)** — not `node-postgres`, and **not** the HTTP adapter (`drizzle-orm/neon-http`). The HTTP driver cannot do interactive transactions, and §5.3's acquire flow and §5.7's import both require them. Using HTTP for reads and WebSocket for writes would mean two production code paths and a class of bug that only appears once deployed; use WebSocket throughout. The marginal per-query latency versus HTTP is immaterial at this scale.
 - **Against the local Docker test database**, use `pg` (`drizzle-orm/node-postgres`), installed as a devDependency. The prohibition above is scoped to serverless production functions and does not apply here. Both paths sit behind the single driver-selection module described in CLAUDE.md §2 and share identical Drizzle query code; **selection is by the presence of `TEST_DATABASE_URL` alone — never by `NODE_ENV`.** Playwright does not set `NODE_ENV=test`, so keying on it would route E2E runs to the production database, where the reset-between-tests rule would truncate real data. An empty-string `TEST_DATABASE_URL` counts as absent. `NODE_ENV=test` with no `TEST_DATABASE_URL` must throw, not fall through to Neon.
 - API surface is Next.js Route Handlers under `app/api/`. Do not create a separate Express server.
-- Secrets (`DISCOGS_TOKEN`, `ANTHROPIC_API_KEY`, `APP_PASSWORD_HASH`, `SESSION_SECRET`, `CRON_SECRET`, `DATABASE_URL`, `BLOB_READ_WRITE_TOKEN`) live in env vars and are only ever read server-side. Never expose them to a client component. Validate all of them at boot with Zod and fail fast with a clear message naming the missing variable.
+- Secrets and required environment values (`DISCOGS_TOKEN`, `ANTHROPIC_API_KEY`, `APP_PASSWORD_HASH`, `SESSION_SECRET`, `CRON_SECRET`, `DATABASE_URL`, `BLOB_READ_WRITE_TOKEN`, `MUSICBRAINZ_CONTACT_EMAIL`) live in env vars and are only ever read server-side. Never expose them to a client component. Validate all of them at boot with Zod and fail fast with a clear message naming the missing variable.
+- **`d3-force` is no longer part of the stack.** It was specified for §8.1's graph, which is retired. Before uninstalling, grep for importers — a null result from a search that could not have found it is not evidence (NOTES). If nothing imports it, remove it; the dependency and this line go together.
+- **`three` is scoped to the pulled record and nothing else.** §10b's wall is deliberately 2D. A change that renders the shelf in WebGL is a spec change, not an implementation detail.
+
+`MUSICBRAINZ_CONTACT_EMAIL` is not a secret but is required by MusicBrainz's terms of use in the `User-Agent` (§12 step 11), and §14 requires every variable documented in `.env.example`. Three of these fail at point of use rather than at boot — Blob, MusicBrainz contact, Anthropic — which R6 is tasked with checking.
 
 ---
 
@@ -146,6 +153,15 @@ Seed with: LP, 2xLP, 7", 10", 12" Single, Box Set, Picture Disc, all with `is_se
 | purchase_price | NUMERIC(10,2) | nullable |
 | purchase_date | DATE | nullable |
 | notes | TEXT | |
+| spine_colour | TEXT | nullable. The average colour of this record's cover as `#rrggbb`, computed once when a cover image is attached and stored (§10b). |
+| snippet | TEXT | nullable. Two or three generated sentences about the album (§10b). Absence is normal. |
+| snippet_edited_at | TIMESTAMPTZ | nullable. Set when the user edits the snippet. |
+
+**`spine_colour` is written once and never overwritten** (§7.8). It is computed from the *cover* image only — a matrix or label photograph averages to the vinyl or the label, not the sleeve, and would give a spine matching nothing on the shelf. `null` means no cover has been processed and is treated as absent rather than as a decision, so a record whose first cover failed to decode still gets a colour when a readable one arrives. A null spine renders plain (§10b): an honest absence, not a gap in the wall, and never a default colour.
+
+The averaging rule itself is a product decision recorded in §10b, not a schema concern. The one schema-adjacent constraint: the value is stored, not derived per render, because computing it needs the image bytes.
+
+**`snippet_edited_at` is what makes §7.8 enforceable here.** Null means the text is as generated and a regeneration may replace it; non-null means the user owns it and a regeneration must refuse rather than overwrite. A boolean with a default would not do: `false` would mean both "generated" and "never asked", and the two become indistinguishable at write time (NOTES). Deleting a snippet sets `snippet` to null and leaves `snippet_edited_at` alone — a deliberate deletion is an edit.
 
 **`condition_grade`** is a Postgres enum: `'M' | 'NM' | 'VG+' | 'VG' | 'G+' | 'G' | 'F' | 'P'` (Goldmine standard).
 
@@ -298,9 +314,9 @@ Name collision is rare enough that asking is cheap, and it is the only signal th
 
 Identity is `(person_artist_id, group_artist_id, instrument)` — a person may join a group twice on different instruments — but that cannot be the primary key, because `instrument` is nullable and a PK may not contain a nullable column. Use a surrogate `id` with a `UNIQUE NULLS NOT DISTINCT` constraint on the triple. The `NULLS NOT DISTINCT` clause is load-bearing: without it two rows with a null instrument for the same pair are treated as distinct, so every re-import accumulates a duplicate while the cache appears to be working. CHECK that person ≠ group.
 
-**Membership is never written to `artist_influences`.** MusicBrainz has no influence relationship — its artist-artist vocabulary is membership, collaboration, founder, rename, tribute and personal relations, and nothing represents "A influenced B". Mapping membership onto influence would fill a 1–5 `strength` with a number nobody measured, and §8.1's graph already treats `influence` and `member_of` as distinct link types with different weights. `artist_influences` stays what it is: edges the user asserts.
+**Membership is never written to `artist_influences`.** MusicBrainz has no influence relationship — its artist-artist vocabulary is membership, collaboration, founder, rename, tribute and personal relations, and nothing represents "A influenced B". Mapping membership onto influence would fill a 1–5 `strength` with a number nobody measured, and membership and influence are different claims: one is a sourced fact about a lineup, the other is the user's judgement about sound. Collapsing them would fill a 1–5 `strength` with a number nobody measured. `artist_influences` stays what it is: edges the user asserts.
 
-**Shared membership is still a real connection and the graph draws it.** Two groups sharing a person — Discharge and Broken Bones — is evidence of a genuine link, derived from `artist_memberships` at query time rather than denormalized into an influence row. §8.1 gains a fourth link type, `shared_member`, weighted by the number of people in common. It is drawn differently from `influence` because it means something different: a fact about lineups, not a claim about sound.
+**Shared membership is a real connection and §9 may read it.** Two groups sharing a person — Discharge and Broken Bones — is evidence of a genuine link. It is derived from `artist_memberships` at query time, weighted by the number of people in common, and never denormalized into an influence row. §8.1 drew it as a `shared_member` edge; that screen is retired (§8) and the derivation went with it, but the data and the reasoning stand and are exactly what §9.1's "linked to artists you own" term should read. The weight distinction matters when it is rebuilt: a tribute act overlaps by one hired player, a genuine side project by several, and that difference is the signal.
 
 **`artist_influences`** — directed edge between artists
 | Column | Type | Notes |
@@ -465,11 +481,15 @@ Note that comparison is case-sensitive: `clay records` and `Clay Records` are di
 
 The pair is addressed in the path, not a request body — `DELETE` with a body is poorly supported across clients and caches. Influence edges are directed: creating source→target does not imply target→source.
 
-### 5.6 Graph & shelf
-| Method | Path | Notes |
-|---|---|---|
-| — | *(no `/api/graph` endpoint)* | The graph is built server-side. `/graph` is a server component calling `buildGraph()` directly, per §8.1 — a client fetch would reimplement a server concern and render an empty canvas while it resolved. An earlier version of this spec listed an endpoint here, and it was built, tested, and called by nothing: two mandates in tension, and the server component won on merit. The query layer carries the contract and its tests. |
-| GET | `/api/shelf-order` | Returns ordered records with section breaks — see §8.2. |
+### 5.6 Graph & shelf — retired, no endpoints
+
+This section listed `GET /api/graph` and `GET /api/shelf-order`. Neither exists.
+
+`/api/graph` was built, integration-tested, and called by nothing: §5.6 required the endpoint while §8.1 independently required `/graph` to be a server component calling `buildGraph()` directly. Both mandates were followed and they could not both produce a live endpoint. The server component won on merit and the spec line was the defect. `buildGraph` itself was later deleted with the graph screen (§8).
+
+`/api/shelf-order` was never built. §10b replaced the feature before step 13 reached it (§8.2).
+
+**The rule this leaves behind, because §14 will otherwise recreate the first mistake:** §5 lists endpoints a client actually calls. Where a server component or a query-layer function is the only consumer, the contract and its tests live at that layer, and no endpoint is built to satisfy §14's completeness line.
 
 ### 5.7 Discogs — record lookup
 
@@ -596,7 +616,7 @@ This applies to the versions list as much as to search. The drill-down is where 
 
 ## 7. Business rules
 
-1. **Genre nesting**: a record tagged with a child genre is implicitly a member of all ancestor genres for filtering and graph purposes. Compute this with a recursive CTE; do not denormalize.
+1. **Genre nesting**: a record tagged with a child genre is implicitly a member of all ancestor genres — for collection filtering, for `/api/records/facets` counts, and for the shelf's ordering (§10b). Compute this with a recursive CTE; do not denormalize. Every caller uses the same walk, from one shared module: two callers with their own copies is how one of them ends up matching only the exact genre while the other walks the subtree, and both return a plausible 200.
 2. **`price_type` never contains `best_dig`.** Its three values are `new` (a price for a sealed copy), `used` (what a second-hand copy actually sold for), and `asking` (a price someone wants but nobody has paid — a shop tag, an open listing). An earlier version of this spec put `best_dig` in that enum: a *pressing* modelled as a *price*, which is precisely the conflation rule 3 forbids, written into the schema. It must be migrated out. A record displaying "£120.00 best dig" reads as "best price", which is the error the rule exists to prevent.
 
 3. **Best dig ≠ best price.** `target_pressing_id` and `best_dig_notes` describe the highest-fidelity pressing worth hunting for. `max_price` is a separate, independent field. Never conflate them in logic or copy.
@@ -627,82 +647,33 @@ This applies to the versions list as much as to search. The drill-down is where 
 
 ---
 
-## 8. Graph & shelf ordering
+## 8. Graph & shelf ordering — retired at step 13
 
-### 8.1 Network graph
+Both features in this section are gone. They are recorded here rather than deleted because three sections still in force were written against them, and because the reasons are worth keeping.
 
-`GET /api/graph` returns:
+### 8.1 Network graph — built, then retired
 
-```ts
-{
-  nodes: Array<{
-    id: string;                  // prefixed: "artist:<uuid>" | "genre:<uuid>"
-    type: "artist" | "genre";
-    label: string;
-    ownedCount: number;          // records owned attributable to this node
-    priorityTier: number | null; // min priority across linked want-list items
-    parentGenreId: string | null;
-  }>,
-  links: Array<{
-    source: string;
-    target: string;
-    type: "influence" | "member_of" | "genre_parent" | "shared_member" | "has_genre";
-    weight: number;              // influence: artist_influences.strength (1-5).
-                                 // member_of: count of records linking the pair.
-                                 // genre_parent: always 1.
-                                 // shared_member: count of people the two groups have in common.
-                                 // has_genre: count of the artist's owned records tagged with that genre.
-  }>
-}
-```
+`GET /api/graph` returned artist and genre nodes with `influence`, `member_of`, `genre_parent`, `shared_member` and `has_genre` links; `/graph` rendered them with a D3 force simulation. It shipped at step 12 and was retired at step 13 unit 5, along with `buildGraph` and the `has_genre` derivation. The implementation is in git at `src/lib/db/queries/graph.ts`, commit `bfc8f08^`, with the tests that pinned its clustering behaviour.
 
-Rendering:
-- Client component only, `'use client'`, dynamically imported with `ssr: false`. D3 force simulation touches `window`/DOM and will break SSR otherwise.
-- Node radius scales with `ownedCount`.
+**Why.** It drew a picture that told the user what they already knew. The collection's structure — punk things, rock things, two singletons — was legible from the shelf without a force layout, and the screen's real value turned out to be the data behind it, which §9 reads directly.
 
-**The graph is the collection, not the want list.** A want-list sociogram — records to hunt, sized by priority, carrying best-dig notes and price ranges — is a different and arguably more useful screen, but it answers a different question and is deliberately out of scope here. This graph shows what is on the shelf and how it connects.
+**What survives, and where it went.** The tables are untouched and still written correctly: `artist_memberships`, `artist_genres`, `artist_influences`, `record_genres`. Three rules moved rather than died:
 
-**`has_genre` connects an artist to each genre their owned records carry**, derived from `record_genres` at query time rather than stored. Without it the genre nodes are orphans — drawn, unconnected, and doing nothing — while §8.1's own claim that clusters emerge from "shared genres" goes unmet. Two artists tagged UK82 cluster because they both connect to the UK82 node, which connects upward through `genre_parent`.
+- **Genre grouping and its tie-break** — an artist or record is attributed to the top-level ancestor of the genre with the most of its owned records, ties broken by genre name so the same collection always groups the same way. This was the graph's colouring rule and is now the shelf's ordering rule; it is stated in §10b, which is the section that uses it.
+- **Sparseness is not disguised.** A collection of unrelated artists is genuinely a scatter, and a view that implied structure the data lacks would be the confidently-misleading shape CLAUDE.md §8 forbids. Restated in §10b rather than referenced from here.
+- **`has_genre` was a count, not a boolean** — the number of an artist's owned records tagged with a genre, derived at query time from `record_genres` and never stored (§7.1). §9.1's genre-overlap term is the same aggregate and should be written against §9's requirement rather than restored wholesale: a payload builder shaped for a force layout is the wrong shape for a scoring function.
 
-It is also what makes colour possible. Artists are coloured by their top-level ancestor genre, walked `artist → genre → root`, using the genre with the most of that artist's owned records and breaking ties by name so the same collection always colours the same way. An artist whose records carry no genre stays grey — that is an honest absence, not a gap to fill.
+**People are edges, not nodes** was the graph's answer to a real problem that outlives it: a membership import pulls in every session player and side project, and 71 artists of which 4 have records is a hairball. Any future view over this data inherits the problem. The graph's answer was to collapse a person who links two groups into a weighted edge between them; it is recorded here because the next reader will meet the same 67 artists.
 
-**People are edges, not nodes.** A membership import pulls in every session player and side project — Adam's collection has 71 artists of which 4 have records. Emitting those 67 as nodes produces a hairball around the four that matter, and rendering them at `ownedCount: 0` means radius zero: invisible dots still occupying force-simulation space.
+### 8.2 Shelf order — specified, never built
 
-So a person who links two groups is collapsed into a `shared_member` edge between them, weighted by how many people they have in common. Alan Clark becomes an edge between Dire Straits and Dire Straits Legacy rather than a dot nobody would click. `member_of` remains person-to-group only where the person is themselves an artist in the collection; otherwise the person does not appear.
+`GET /api/shelf-order` proposed a linear filing order for the physical collection, derived by greedy-modularity community detection over an artist graph weighted by `INFLUENCE_WEIGHT` and `GENRE_WEIGHT`, with bridge records marking the transitions.
 
-This also makes the tribute-act problem legible rather than hidden: Dire Straits Experience connects at weight 3, a one-hired-player overlap at weight 1, and the difference is visible in the graph rather than buried in the import.
+**Why it was retired before it was built.** It needed three things the collection does not have: enough records for clusters, a built-out genre hierarchy, and hand-entered influence edges. Its output for a real collection today is "punk things, rock things, two singletons" — which a genre sort gives for free, without a tuning knob no test can validate. `WIDE_RATIO` had already failed to validate twice against a case with a known answer; `INFLUENCE_WEIGHT`/`GENRE_WEIGHT` would have been the same bet, twice over.
 
-**Expect it to be sparse, and do not disguise that.** Clusters emerge from edges that exist: shared members (§4.3), shared genres, and the genre hierarchy. A collection of unrelated artists is genuinely a scatter of unconnected dots, and a layout that implies structure where the data has none would be the confidently-misleading shape §8 warns about. If a node has no edges, it sits alone.
-- Colour by top-level ancestor genre.
-- Clicking a node filters the collection list to that artist/genre.
-- Must be usable on mobile: pinch-zoom and pan, and a fallback list view for very small screens.
+**One requirement survived and is load-bearing.** *"The same collection must always produce the same shelf order."* A wall scanned by eye cannot reshuffle between page loads, or it is re-scanned every time. §10b inherits this and states it; `shelfRecords` breaks every tie deterministically and a test pins it. The requirement was about the problem, not the algorithm, which is why it outlived the mechanism.
 
-### 8.2 Shelf order
-
-`GET /api/shelf-order` produces a **linear ordering of owned records** derived from graph structure, so physically adjacent records are musically related.
-
-Algorithm:
-1. Build the artist graph: nodes = artists with owned records; edges = `artist_influences` (weight = `strength` × `INFLUENCE_WEIGHT`) plus shared-genre edges (weight = number of shared genres × `GENRE_WEIGHT`).
-
-   **`INFLUENCE_WEIGHT` and `GENRE_WEIGHT` are exported named constants in the shelf-order module, not inline numbers.** Start at `1.0` each. This ratio is the single knob that determines whether the output is useful: weight genre too heavily and the shelf collapses into plain genre sorting, adding nothing over a manual sort; weight influence too heavily and a densely cross-referenced scene merges into one undifferentiated blob. Expect to tune it against real data. Keep it trivially findable.
-2. Detect communities using **greedy modularity (Louvain/CNM)**. Do not use label propagation: it is non-deterministic, and a shelf order that reshuffles between page loads is useless for a physical shelf. **The same collection must always produce the same shelf order.** Add a unit test asserting this — run the algorithm twice on the same fixture and assert identical output. Ties at any stage break on artist name, never on insertion order or object key order.
-3. Order communities so that adjacent communities are the ones with the most inter-community edge weight (greedy nearest-neighbour walk over the community adjacency matrix).
-4. Within a community, order artists by a similar greedy walk, then by name as tiebreak.
-5. Within an artist, order records by `release_year`, then title.
-6. **Bridge records** — records whose artist has edges into the *next* community — are placed at the end of their community, forming the transition point.
-
-Response:
-
-```ts
-{
-  sections: Array<{
-    label: string;              // derived from dominant genre of the community
-    records: Array<{ id, title, artistName, releaseYear, isBridge: boolean }>
-  }>
-}
-```
-
-UI shows this as a printable/checkable list, with bridge records visually marked as section transitions. Include a toggle to fall back to plain alphabetical-by-artist.
+**What replaced both:** §10b.
 
 ---
 
@@ -712,7 +683,7 @@ UI shows this as a printable/checkable list, with bridge records visually marked
 
 `GET /api/suggestions`. Pure computation, no external calls.
 
-For each artist **not** in the collection but reachable in the graph (i.e. appearing in `artist_influences` linked to an owned artist), compute:
+For each artist **not** in the collection but reachable from one that is — appearing in `artist_influences` linked to an owned artist, or sharing a member with one through `artist_memberships` (§4.3) — compute:
 
 ```
 score =
@@ -721,6 +692,8 @@ score =
   + (1.0 × label overlap with labels appearing 2+ times in the collection)
   - (3.0 if already on the want-list)   // suppress, don't hide
 ```
+
+**"Genre overlap" is a count, not a flag.** For each artist, the number of their owned records tagged with each genre, rolled up through the hierarchy per §7.1 and derived at query time from `record_genres` — never stored. Ties break on genre name so the same collection scores the same way on every call. This is the aggregate §8.1's retired `has_genre` link computed; it is specified here because §9 is now its only consumer.
 
 Return the top `limit` sorted descending, each with a **reason string** assembled from which terms contributed — e.g. "Linked to 3 artists you own; shares the UK82 genre; on Clay Records, a label you own 4 records from."
 
@@ -745,18 +718,20 @@ Responsive throughout — **desktop and mobile are equal priorities**, not deskt
 | Screen | Route | Contents |
 |---|---|---|
 | Login | `/login` | Password field only. |
-| Collection | `/` | Filterable, sortable list/grid of owned records. Prominent search. Filter chips for genre/label/store/tag. Toggle grid ↔ table. |
+| Collection | `/` | Three views of the owned collection: **shelf** (default, §10b), grid, and table. Prominent search. Filter chips for genre/label/store/tag. Filtering, sorting and paging apply to grid and table; the shelf is a wall, not a result set. |
 | Record detail | `/records/:id` | All fields, pressing details incl. matrix number, images gallery, price history sparkline, journal entries with add-entry form. |
 | Record lookup | `/lookup` | **Structured search form** — fields for artist, title, label, catalog number, barcode, country, year, format. Results as cards with cover art, year, country, label, catalog number and format descriptors. Masters expand into a version-comparison table to pin down the exact pressing. Each result offers: "Add to collection", "Add to want list", and an ownership badge (see §7.7). Mobile-optimized — this is the in-store screen. No result may link out to a purchase page (§13). |
 | Add/edit record | `/records/new`, `/records/:id/edit` | Form prefilled from a lookup result, or blank for manual entry. All prefilled fields remain editable — the user verifies against the physical record and corrects. Inline create for artist/label/store/tag. Pressing details are entered here, not on a separate screen: catalog number, matrix/runout, country, year pressed, pressing plant, vinyl weight, colour variant, and whether it is a reissue. All optional — the in-store case must stay enterable in seconds. |
 | Add/edit want-list item | `/want-list/new`, `/want-list/:id/edit` | Form for a wanted record, mirroring the record form's structure. Fields: title, artist, label, priority, target pressing, best-dig notes, max price. Prefilled from a `/lookup` result via `?discogsReleaseId=`, or blank. **`best_dig_notes` and `max_price` are visually and structurally separate** (§7.2) — never one section, never one label. Reference rows are matched, never created: a prefill is not a commitment, and an artist created for an abandoned form is debris nothing points at. When a Discogs value matches no existing row, leave the field empty and name what could not be found. |
 | Want list | `/want-list` | Sorted by priority. Each row shows target pressing and best-dig notes. "Mark acquired" action opens the record form prefilled. |
-| Graph | `/graph` | The force-directed network. Controls: genre subset, reset zoom. Owned records only — there is no want-list view (§8.1). |
-| Shelf order | `/shelf` | Ordered sections, bridge records marked, print stylesheet, alphabetical toggle. |
 | Suggestions | `/suggestions` | Graph-based list with reasons, always present. Separate "Ask Claude for gap analysis" button for §9.2. Add-to-want-list on each. |
 | Stores | `/stores` | List with favorite toggle; each store shows records acquired there and total spend. |
 | Stats | `/stats` | Total records, total spend, estimated value, breakdown charts by genre/decade/store/label. |
 | Manage | `/manage` | CRUD for genres (incl. hierarchy editor), labels, formats, tags, artists, influences. **Not pressings** — see below. |
+
+**The shelf has no route of its own.** It is a view of `/`, selected by the absence of `?view=`, with `?view=grid` and `?view=table` as the alternatives. Pulling a record out is a state of that screen, not a navigation — but a spine is still a link to `/records/:id`, so cmd-click, middle-click and a failed hydration all behave correctly (§10b).
+
+**`/graph` and `/shelf` were listed here and are retired** (§8). Nothing links to them and no route exists.
 
 **Pressing entry is inline, and a pressing is never created empty.** A pressing has no meaning apart from the record it describes: nobody enters a catalog number with no record in mind. So there is no standalone pressing screen and `/manage` does not list them. On save, the record's pressing fields resolve through §4's find-or-create rules.
 
@@ -841,13 +816,19 @@ Manual price entry on a record the user owns. Neither real use case needs it: th
 
 ## 10b. The shelf
 
-**The collection rendered as a shelf of sleeves, browsed by eye rather than read as a table.** You know your records by their spines and covers; a table row is an index of them. This is the default view of `/` on desktop.
+**The collection rendered as a shelf of sleeves, browsed by eye rather than read as a table.** You know your records by their spines and covers; a table row is an index of them. This is the default view of `/`, at every width. Only the view *control* is hidden on narrow screens, so nothing becomes unreachable and a `?view=grid` link shared from a desktop still opens as a grid.
 
-Inspired by thecriterioncloset.com, and worth being explicit about what is borrowed: a wall of spines in perspective, a crosshair that names what you are aimed at, and a case that comes off the shelf and can be turned over. What is *not* borrowed is the 3D engine — see below.
+Whether a phone should default to the shelf at all is genuinely open and belongs to step 15's mobile pass, which is the first time the wall will be judged at 390px. If it is gated by width then, the gate goes on the default and not on availability: a view a URL can reach must stay reachable.
+
+Inspired by thecriterioncloset.com, and worth being explicit about what is borrowed: a wall of spines in perspective, a crosshair that names what you are aimed at, and a case that comes off the shelf and can be turned over. The 3D engine is borrowed for one thing only — the pulled record — and deliberately not for the wall. Both halves of that split are reasoned below, and the reasoning is the point: the wall is flat, so CSS is right for it; the record is an object you turn, so it is not.
 
 ### The shelf
 
 - **Records stand as spines on shelves that wrap.** One shelf holds as many spines as fit; the rest continue on a shelf below, and the wall scrolls. Ordered by genre so related records stand together — all the punk adjacent, all the rock adjacent. That ordering is the shelf's own, not a proposal for the physical one.
+
+  **A record occupies one position, so exactly one genre wins.** A record carrying several genres appears once, filed under the top-level ancestor of the genre with the most of that record's owned siblings, ties broken by genre name. This is the rule §8.1's graph used to colour an artist, kept deliberately identical: two views grouping one collection by different genre logic would disagree about what belongs together, and the disagreement would read as a bug in whichever the user checked second. Records with no genre file last, under no heading, as themselves.
+
+  **The order is deterministic.** The same collection always produces the same wall — every tie broken explicitly, down to the record id. Inherited from §8.2, which stated it about a physical filing order and was right about the problem rather than the algorithm: a wall you scan by eye cannot move between loads, or you re-scan it every time.
 
 - **A shelf is no wider than it needs and no shorter than a shelf.** It fits its records, growing as they do and wrapping when they exceed a row — but it has a minimum length, because a shelf is furniture and has a length whether or not it is full. A real shelf with five records on it is still a shelf with space beside them. Both neighbouring rules are wrong on their own: a shelf stretched to the full viewport with five spines at the left reads as *missing data* rather than as a short collection, because the emptiness is the whole viewport and implies a collection that should have filled it; a shelf shrunk to its contents reads as a *thumbnail of a shelf*. The minimum is about 40% of the content column, chosen by rendering the candidates at five records and looking.
 
@@ -856,10 +837,10 @@ Inspired by thecriterioncloset.com, and worth being explicit about what is borro
   An earlier version of this said 1:40, which was arithmetic about sleeve thickness rather than a rule about reading. It loses to legibility: at any workable height a 1:40 spine is around 4px wide, which cannot hold a glyph, so the spine text this section requires becomes impossible. The reference carries a title and a catalogue number on every spine, and that is what makes a wall scannable rather than decorative. The instinct was right and the number was wrong.
 
   **No section headings, and no shelf band per genre.** Adjacency does the grouping, as it does on a real shelf and in the reference this borrows from, which shows 1,300 spines with no headings at all. Sections were tried and removed: a collection with six flat genres for five records produced five near-empty black bands stacked down the page, and it read as broken rather than as short. Signposting a wall is a problem that arrives with scale, and the decision belongs to whoever is looking at three hundred records.
-- **A spine's colour is the average colour of its cover**, computed once at import and stored. A record with no cover gets a plain spine — an honest absence, not a gap in the wall.
+- **A spine's colour is the average colour of its cover**, computed once when the cover is attached and stored in `records.spine_colour` (§4.2). The average is taken in linear light and weighted by alpha, not by the most populous colour bucket — measured against real sleeves, a dominant-bucket rule gives a warm brown portrait a near-black spine, which is a wrong answer rather than a different one. Saturation is never boosted: a spine is a claim about a cover, and a shelf prettier than the sleeves on it is inventing colour the record does not have. A record with no cover gets a plain spine — an honest absence, not a gap in the wall.
 - **Spine text is artist, title and catalogue number**, set in mono, rotated. The catalogue number is the collector's identifier and earns its space.
 - **Hover names the record** — artist, title, year, label — in a floating label, with the aimed-at spine marked. Aim, then click.
-- **Sparse is fine.** Six records is a short shelf, and the view does not pad, fake, or hide itself until the collection is large enough to flatter it. §8.1's rule applies here too.
+- **Sparse is fine.** Six records is a short shelf, and the view does not pad, fake, or hide itself until the collection is large enough to flatter it. A view that implied more structure than the data has would be the confidently-misleading shape CLAUDE.md §8 forbids — which is exactly why the shelf has a minimum length rather than a full-viewport one: the emptiness must not imply a collection that should have filled it.
 
 **Rendered in 2D with CSS perspective, not a 3D engine.** Criterion's wall is `three.js`; this gets most of the feel from transforms and shadows for a fraction of the work and no new dependency. If it turns out to be worth more, that is a later decision made with the flat version in front of us.
 
@@ -900,7 +881,9 @@ Generated by an LLM on demand, written once and stored rather than fetched per v
 
 The shelf replaces §8.2's shelf ordering. That feature proposed a physical filing order derived from community detection over the graph, and it needed three things the collection does not have: enough records for clusters, a built-out genre hierarchy, and hand-entered influence edges. Its output for a real collection today is "punk things, rock things, two singletons" — which a genre sort gives for free, without a tuning knob no test can validate.
 
-`/graph` is likewise retired as a screen. The data behind it — `artist_memberships`, `has_genre`, `artist_influences` — remains and feeds §9's suggestions, which is what it was actually useful for. Drawing it added a picture that told the user what they already knew.
+`/graph` is likewise retired as a screen. The tables behind it — `artist_memberships`, `artist_genres`, `artist_influences`, `record_genres` — are untouched, still written on every import, and feed §9's suggestions, which is what they were actually useful for. Drawing them added a picture that told the user what they already knew.
+
+Note that `has_genre` was **not** among the survivors, though an earlier version of this paragraph listed it. It was never a table: it was an artist-to-genre count derived inside `buildGraph` on every call, and it was deleted with it. §9.1 specifies the equivalent aggregate for the one consumer that still wants it.
 
 ---
 
@@ -908,8 +891,10 @@ The shelf replaces §8.2's shelf ordering. That feature proposed a physical fili
 
 ### Unit (Vitest)
 - Suggestion scoring function — every scoring term independently, plus the want-list suppression case.
-- Shelf-order algorithm — community detection and ordering on fixture graphs, incl. degenerate cases (zero artists; one artist; no edges at all; every artist in one community; two disconnected components).
-- Shelf-order **determinism** — same fixture in, byte-identical output across repeated runs.
+- **Shelf ordering determinism** — the same collection produces byte-identical order across repeated runs, including the tie-break chain (§10b).
+- **Shelf genre attribution** — a record carrying several genres appears exactly once, under the correct top-level ancestor, with ties broken by name; a record with no genre files last.
+- **Spine colour** — average-in-linear-light against known inputs, alpha weighting, and the null case (no cover, or a fully transparent image) returning absence rather than black.
+- **Spine text fitting** — the character budget derives from spine height rather than being declared, the truncation gives way in the right order (title, then artist, never the catalogue number), and the degenerate case where artist plus catalogue number alone exceed the budget.
 - Genre ancestor resolution (recursive CTE) — including deep nesting and cycle rejection.
 - Discogs field mapping — a real-shaped payload in, our fields out.
 - Estimated-value fallback chain.
@@ -927,14 +912,14 @@ The shelf replaces §8.2's shelf ordering. That feature proposed a physical fili
 3. Use the structured lookup form (artist + catalog number), drill from a master into a specific version, verify cover art and pressing details render, import it, verify prefilled fields, save it.
 4. Ownership badge tiers: look up a record owned in the exact pressing (expect "you own this pressing"); look up a different pressing of an owned album (expect "you own a different pressing", **not** the exact-match badge); look up a want-list item (expect the want-list badge).
 5. Add a want-list item, then mark it acquired, and verify it appears in the collection and is flagged acquired in the want-list.
-6. Load the graph, click a node, verify the collection filters.
-7. Load the shelf order and verify sections render with bridge markers.
+6. Load the collection at its default view, confirm the shelf renders spines for owned records, and click one — verify it leads to that record.
+7. Pull a record out of the shelf and turn it: verify the back face renders label, catalogue number and pressing details for a record with no photographed back, and that the gatefold affordance is **absent** on a record with no inner image.
 8. Request graph-based suggestions and add one to the want-list.
 9. Upload an image to a record and verify it appears in the gallery.
 10. Run the collection list and lookup flows at a mobile viewport (390×844) — search and filter must be usable one-handed.
 11. Add the same album twice in two different pressings and verify both persist as separate records.
 
-Mock the Discogs and Anthropic APIs in tests. Never hit live external APIs in CI.
+Mock the Discogs, MusicBrainz and Anthropic APIs in tests. Never hit live external APIs in CI. The no-live-call guard is host-agnostic by design and already covers all three; it keys off the database target rather than a flag, and R6 owns the case that breaks (a test run against a remote database).
 
 ---
 
@@ -953,13 +938,13 @@ Mock the Discogs and Anthropic APIs in tests. Never hit live external APIs in CI
 11. **MusicBrainz import: populate `artist_memberships`.** Band membership pulled automatically into its own table (§4.3) — *not* into `artist_influences`, since MusicBrainz has no influence relationship and inventing one would fabricate a strength nobody measured. Its own rate limiter and cache, roughly the shape of step 7's Discogs work, but stricter: **one request per second**, and a `User-Agent` carrying contact information, both required by MusicBrainz.
 
     **On demand, per artist, never a bulk crawl.** `member of band` links a person to a group, so building one band's full lineup graph means walking band → person → that person's other bands: roughly 32 sequential requests for an artist like Discharge, about 35 seconds at the permitted rate. That is acceptable when the user asks about one artist and unacceptable as a background job over a whole collection. Fetch when asked, cache, and show progress.
-12. Graph endpoint + visualization. E2E #6.
+12. Graph endpoint + visualization. **Built and retired at step 13** — see §8. Kept in this list because the steps are numbered and referenced; the work happened, the screen no longer exists, and the data it read from is still populated by steps 10 and 11.
 13. **The shelf (§10b).** The collection as a wall of sleeves, replacing the shelf-ordering feature and the graph screen.
 14. Suggestions — graph-based first, then LLM-assisted. E2E #8.
 15. Mobile pass across all screens. E2E #10.
 16. Vercel deploy config + cron for price refresh.
 
-**Why 10 and 11 come before the graph.** The original order put the graph immediately after the stats screen, and the graph reads its edges from `artist_influences` — a table nothing populates automatically. Built in that order, the graph renders unconnected dots, nobody can tell whether the force layout or the clustering works, and step 13's shelf ordering inherits the same blindness, since it runs community detection over the same edges. Seeding the table first makes all three verifiable. Market data moves ahead of both because it has no dependency at all and answers the question the app exists for.
+**Why 10 and 11 come before 12.** The original order put the graph immediately after the stats screen, and it read its edges from `artist_influences` — a table nothing populated automatically. Built in that order it would have rendered unconnected dots, with no way to tell whether the layout or the clustering was at fault. Seeding first made it verifiable, and what that verification eventually showed was that the screen was not worth keeping (§8) — which is a better outcome than shipping it blind. Step 11's membership data survives the screen and now feeds §9. Market data moved ahead of both because it has no dependency at all and answers the question the app exists for.
 
 Each step should end with its tests green before moving on.
 
