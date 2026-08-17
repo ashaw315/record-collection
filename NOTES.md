@@ -6682,3 +6682,43 @@ statements as the test branch.
 So the standing note should say **databases**, plural: the local Docker test
 database is migrated by `drizzle-kit`, and BOTH remote ones (dev and the Neon
 test branch) are maintained out of band and drift on every migration.
+
+# When duplication is forced by a boundary, the copy must verify itself
+
+`scripts/backfill-spine-colours.mjs` carries a second implementation of the
+spine-colour average. That was not a choice: the script is plain `.mjs` run by
+node with no bundler, and `src/lib/images/spine-colour.ts` is `server-only`
+TypeScript. There is no import that works.
+
+**The danger is not the duplication, it is that the duplication is silent.** A
+backfill writing subtly different colours from every future import gives two
+sources of truth for one shelf, with nothing raising an error anywhere — the
+shelf simply has two populations of spine, and which one a record belongs to
+depends on when it was added. That is the confidently-misleading shape with no
+symptom at all.
+
+So the script asserts, before it touches a row:
+
+    const got = await averageColour(solidRedPng);
+    if (got !== '#a7191d') {
+      console.error('This script has drifted from src/lib/images/spine-colour.ts.');
+      process.exit(1);
+    }
+
+A solid red square must average to itself. It is one line of arithmetic that
+both implementations must agree on, and it fails loudly at the moment of
+divergence rather than quietly at every write.
+
+**The general rule:** when a boundary forces a copy — a script that cannot
+import the app's module, a client type restating a server shape, SQL duplicated
+between a migration and a query — the copy carries a check against a value both
+implementations must produce. Pick an input whose answer is fixed by the
+definition rather than by either implementation, so the check cannot be
+satisfied by copying a bug.
+
+Related, and the counter-example worth remembering: `lifeSpan` was a client type
+restating a server shape with NO such check, and it was wrong for an entire
+build step while typechecking perfectly. That one was fixed by removing the
+duplication (`type Candidate = ArtistSearchHit`), which is better than verifying
+it — **eliminate the copy where the boundary permits, verify it where it does
+not.**
