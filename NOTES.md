@@ -7068,3 +7068,39 @@ Neither substitutes for the other, and for anything whose output is visual —
 colour, position, size, text fitting — take both. The spine-colour measurement
 in unit 1 needed the same pair: a table of hex values could not show that
 `#070101` was wrong for a warm brown cover, and a row of spines could.
+
+# A boolean with a default looks like an answer and is often an absence
+
+`pressings.is_reissue` is `BOOLEAN NOT NULL DEFAULT false` (§4.2). Rendering it
+straight gives the back face:
+
+    Pressing: original
+
+which asserts that somebody examined the record and concluded it was a first
+press. Nobody did. Every pressing created by a quick in-store entry, by a
+Discogs import, or by any path that did not tick the box holds `false` — and
+`false` there means **"not marked as a reissue"**, not "confirmed original".
+
+**The two are indistinguishable in the column**, which is what makes this
+different from a nullable field. A `NULL` announces its own ignorance; a
+defaulted `false` looks exactly like a recorded answer, and no query can tell
+the two apart afterwards. The information was lost at write time.
+
+So the back face prints `Pressing: Reissue` when true and **nothing at all**
+when false. The absence is honest: this app does not know.
+
+**The general rule.** For any `NOT NULL DEFAULT <x>` boolean, ask what the
+default means before displaying it:
+
+- **Rendering only the non-default value** is usually right — it says "this was
+  marked" and stays silent otherwise.
+- **Rendering both values as facts** claims a determination that may never have
+  happened.
+- If BOTH states are genuinely meaningful and need distinguishing from "not
+  asked", the column wants to be nullable — three states, three values. That is
+  a schema decision and it cannot be recovered later.
+
+Same family as the absent-versus-unknown rule this build keeps meeting
+(`layersFetched`, `spine_colour`, `NULLS LAST` on years, `matchedVia`), with one
+extra twist: here the absence is not merely unrendered, it is **unrecoverable**,
+because the default overwrote it on the way in.
