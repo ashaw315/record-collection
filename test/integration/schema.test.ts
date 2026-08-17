@@ -522,6 +522,27 @@ describe('schema-level guarantees', () => {
      * is what it is for.
      */
     expect(await check('price_type')).toEqual(['new', 'used', 'asking']);
-    expect(await check('image_type')).toEqual(['cover', 'back', 'label', 'matrix', 'other']);
+    /**
+     * §4.2 as extended by §10b. `gatefold` was added in 0011 and sits after
+     * `back`, because the order tracks how a sleeve is examined — front, back,
+     * inside, then the detail shots.
+     *
+     * Asserted against `enumsortorder`, so this pins the POSITION and not only
+     * membership. That matters: `ALTER TYPE ... ADD VALUE` without a
+     * `BEFORE`/`AFTER` clause appends, and an appended `gatefold` would file
+     * the sleeve's own artwork behind close-ups of the dead wax everywhere the
+     * enum order is used.
+     *
+     * This assertion did its job when the value was added — it failed, in a
+     * file the unit never opened, which is what a schema-level guarantee is for.
+     */
+    expect(await check('image_type')).toEqual([
+      'cover',
+      'back',
+      'gatefold',
+      'label',
+      'matrix',
+      'other',
+    ]);
   });
 });

@@ -6249,3 +6249,66 @@ baseline was taken first. Sightings: stats (Unit 1), collection-filters (Unit 3)
 three-at-once (Unit 5), mobile-only run and post-narrowing run (this pass).
 
 The investigation stays open on its own terms, at `--retries=0`.
+
+## Step 13 unit 0 — the `gatefold` enum value, and three Postgres/drizzle facts
+
+§10b makes a fold-out sleeve a third state. This unit only makes the value
+STORABLE — the affordance comes with the shelf, and §10b is explicit that it
+appears only where an inner image exists, with no generated stand-in.
+
+Three things were measured rather than assumed, and **the first two contradicted
+what I expected**:
+
+**1. `ALTER TYPE ... ADD VALUE` works inside a transaction.** I flagged this as a
+likely problem because drizzle-kit wraps each migration file. The restriction was
+lifted in Postgres 12; on the 16.14 this project runs, adding a value to a
+pre-existing type inside `BEGIN`/`COMMIT` succeeds. Migration 0005's
+create/swap/drop dance was needed because it REMOVED a value, which is genuinely
+impossible in place — adding one needs none of that.
+
+**2. The new value cannot be USED in the same transaction.** That restriction is
+real: `ERROR: unsafe use of new value "d" of enum type`. So a migration that
+added `gatefold` and backfilled rows to it in one file would fail. This one only
+adds the value; a later migration writing `gatefold` rows must be its own file.
+
+**3. Hand-writing a migration file silently does nothing.** I wrote
+`0011_*.sql` and appended a journal entry by hand. `drizzle-kit migrate`
+reported **"migrations applied successfully"** and applied nothing, because
+`meta/NNNN_snapshot.json` was missing. Caught by checking `enum_range` afterwards
+rather than trusting the success line — the same absence-as-success shape this
+project keeps meeting, this time in the tooling.
+
+The fix is to run `drizzle-kit generate`, which writes SQL, snapshot and journal
+entry together, then rename the random tag and add the reasoning as comments.
+
+**A fourth, worth its own line: `npx drizzle-kit migrate` does not load
+`.env.test`.** It exits 1 with NOTHING on stderr, having applied nothing, which
+reads exactly like a broken migration — and I spent several steps debugging my
+own SQL because of it. The same command succeeded against an identical scratch
+database whose URL was passed explicitly. `npm run db:migrate` has the same gap.
+Use `TEST_DATABASE_URL=... npx drizzle-kit migrate`.
+
+The detour also left the test database briefly inconsistent, because I applied
+the statement directly via psql to see its error, which advanced the schema
+without advancing `__drizzle_migrations`. Rebuilding from empty was the fix and
+is cheap; **applying DDL by hand to diagnose a migrator is how the two get out of
+step**, so re-run against a scratch database instead.
+
+### Two cross-file tests caught it, which is what they are for
+
+- `test/integration/schema.test.ts` asserts `image_type`'s values AND their
+  `enumsortorder`. It failed on the addition, in a file this unit never opened.
+  Position matters as much as membership: a bare `ADD VALUE` appends, and an
+  appended `gatefold` would file the sleeve's own artwork behind close-ups of
+  the dead wax everywhere the order is used.
+- `test/repo/migrations-complete.test.ts` copies only GIT-TRACKED files and
+  migrates from empty. It failed because the new `.sql` and snapshot were
+  untracked while the journal referenced them — precisely the "new developer
+  clones the repo and migrations fail" scenario. `git add` fixed it, and the
+  failure was the test doing its job.
+
+### Seventh sighting of the mobile contention
+
+Full E2E at `--retries=0`: 2 failed, immediate re-run 228/228 clean. This unit
+touches an enum and a gallery ordering; no E2E-covered path changed. Unrelated,
+and the investigation stays open.

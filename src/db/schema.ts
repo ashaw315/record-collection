@@ -46,7 +46,23 @@ export const conditionGrade = pgEnum('condition_grade', [
 // `asking` is a price somebody wants that nobody has paid — a shop tag or an
 // open listing — and is deliberately NOT in §7.6's value chain.
 export const priceType = pgEnum('price_type', ['new', 'used', 'asking']);
-export const imageType = pgEnum('image_type', ['cover', 'back', 'label', 'matrix', 'other']);
+/**
+ * §4.2, extended by §10b. `gatefold` sits after `back` because the order tracks
+ * how a sleeve is examined — front, back, inside, then the detail shots.
+ *
+ * Drizzle does not enforce this list against the database; migration 0011 adds
+ * the value and `record-images.test.ts` round-trips a real upload, because this
+ * list, the Postgres type and the route's `z.enum` are three places that can
+ * disagree two-against-one.
+ */
+export const imageType = pgEnum('image_type', [
+  'cover',
+  'back',
+  'gatefold',
+  'label',
+  'matrix',
+  'other',
+]);
 
 // --- 4.1 Reference tables ---------------------------------------------------
 

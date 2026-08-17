@@ -6,7 +6,22 @@
  * order the code produced without ever stating what it should be.
  */
 
-export const IMAGE_TYPE_ORDER = ['cover', 'back', 'label', 'matrix', 'other'] as const;
+/**
+ * §4.2's types in the order a sleeve is examined: front, back, inside, then the
+ * detail shots.
+ *
+ * `gatefold` (§10b) sits after `back` rather than at the end — it is the
+ * sleeve's own artwork, and filing it behind close-ups of the dead wax would
+ * bury the thing a gatefold exists for.
+ */
+export const IMAGE_TYPE_ORDER = [
+  'cover',
+  'back',
+  'gatefold',
+  'label',
+  'matrix',
+  'other',
+] as const;
 
 export type GalleryImageType = (typeof IMAGE_TYPE_ORDER)[number];
 
@@ -24,6 +39,9 @@ export type ImageGroup = { type: GalleryImageType; images: GalleryImage[] };
 const LABELS: Record<GalleryImageType, string> = {
   cover: 'Cover',
   back: 'Back',
+  // The collector's word, and it says the sleeve FOLDS rather than describing
+  // where the photograph was taken — "Inside" would do the latter.
+  gatefold: 'Gatefold',
   label: 'Label',
   // Spelled out: a heading reading just "Matrix" invites confusion with the
   // catalog number, and §4.2's column is `matrix_runout` — this is the dead wax.

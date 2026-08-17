@@ -78,6 +78,13 @@
       "when": 1786715119767,
       "tag": "0010_musicbrainz_cache",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1786970803256,
+      "tag": "0011_image_type_gatefold",
+      "breakpoints": true
     }
   ]
 }

@@ -120,6 +120,37 @@ describe('POST /api/records/:id/images', () => {
     expect(body.caption).toBe('A-side runout');
   });
 
+  it('accepts gatefold, §10b\'s third sleeve state', async () => {
+    /**
+     * **The round trip is the point.** `image_type` is enumerated in THREE
+     * independent places — the Postgres type, Drizzle's `pgEnum`, and the
+     * route's `z.enum` — and any two of them can agree while the third does
+     * not. A unit test of the schema list would pass with the migration
+     * unapplied; a migration test would pass with the `z.enum` unchanged. Only
+     * a real upload landing a real row exercises all three.
+     *
+     * §10b adds this state because a gatefold OPENS rather than turns: front →
+     * turn → back is rotation, front → open → inner spread is a hinge. This
+     * unit makes the value storable; the affordance that reads it comes with
+     * the shelf, and appears only where an inner image exists.
+     */
+    const recordId = await seedRecord();
+
+    const response = await upload(
+      recordId,
+      fileForm(JPEG_BYTES, 'inner.jpg', 'image/jpeg', {
+        imageType: 'gatefold',
+        caption: 'Inner spread',
+      }),
+    );
+
+    expect(response.status, 'the z.enum must accept it').toBe(201);
+    expect((await response.json()).imageType).toBe('gatefold');
+
+    const [row] = await db.select().from(images);
+    expect(row.imageType, 'and the Postgres enum must hold it').toBe('gatefold');
+  });
+
   it('rejects an image_type outside §4.2’s enum (validation failure)', async () => {
     const recordId = await seedRecord();
 
