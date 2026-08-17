@@ -6722,3 +6722,64 @@ build step while typechecking perfectly. That one was fixed by removing the
 duplication (`type Candidate = ArtistSearchHit`), which is better than verifying
 it — **eliminate the copy where the boundary permits, verify it where it does
 not.**
+
+## Step 13 unit 2 — the shelf query, and the one design decision in it
+
+`shelfRecords()` returns owned records grouped into sections. The decision worth
+recording is what a section IS.
+
+**Sections are TOP-LEVEL genres, not the genres a record carries.** A record
+tagged UK82 and one tagged US Hardcore stand together on the shelf, because both
+are Punk — while staying distinct on the record, in every filter, and in §7.1's
+hierarchy. §8 forbids flattening those scenes and this does not: it groups them
+for one screen's layout without changing what any record says about itself.
+
+Sectioning by the tagged genre instead would put two shelves of punk at opposite
+ends of the wall, which is precisely the opposite of §10b's "all the punk
+together".
+
+**Deliberately the same rule §8.1's graph used to colour an artist**, including
+the tie-break. Two screens grouping one collection by different genre logic
+would disagree about what belongs together, and the disagreement would look like
+a bug in whichever one the user checked second.
+
+### A spine occupies one position, so exactly one genre wins
+
+A record can carry several genres; a spine cannot stand in two places. The naive
+join emits the record once per genre, which on a wall is the same record
+appearing twice.
+
+`DISTINCT ON (record_id) … ORDER BY root_name` picks the alphabetically-first
+top-level ancestor. **Arbitrary, but stable** — and stable is the requirement.
+§8.2's determinism rule outlived the feature it was written for: a wall that
+reshuffles between page loads cannot be used to find a record by eye, which is
+§10b's entire purpose.
+
+### Three absences, each rendered as itself
+
+- **No genre** → its own section, named "No genre", sorted LAST. Not hidden, not
+  filed under something. Last because it is the leftovers, and a section with
+  that name sorted alphabetically into the middle of the wall would read as a
+  genre. Omitted entirely when empty.
+- **No release year** → `NULLS LAST` within the artist. Sorting NULL as 0 would
+  file every undated record in front of ones genuinely older, asserting a date
+  nobody entered.
+- **No colour, catalogue number or label** → `null`, never a default or an empty
+  string. §10b: "a plain spine — an honest absence, not a gap in the wall."
+
+### The cycle guard is load-bearing, and mutation proved it
+
+`genres.parent_genre_id` has no cycle constraint — the guard is at the
+application layer (§4.1) — so `a → b → a` is storable, and the upward walk needs
+a bound. `WHERE c.depth < 16` is that bound.
+
+The test passed on first write, which CLAUDE.md §2 treats as suspect until
+explained. Removing the bound made it **time out**: the request hangs rather
+than returning a wrong answer, exactly as the comment claims. The guard is real.
+
+**One trap the mutation created**, worth knowing: killing a `vitest` run
+mid-recursion left the test database wedged for the following run, and every
+shelf test then timed out. It was not a bad restore — the guard was back and the
+`genres` table held one clean row. A plain re-run was green. **A timed-out
+recursive query can outlive the process that issued it; re-run once before
+diagnosing the code.**
