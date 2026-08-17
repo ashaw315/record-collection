@@ -79,11 +79,24 @@ export function Shelf({ records }: { records: ShelfRecord[] }) {
 
         `perspective` on the container with a slight rotation is what makes the
         spines read as objects with depth — §10b's "most of the feel from
-        transforms and shadows". §10b's "sparse is fine" is why nothing pads it:
-        five records is five spines and a lot of visible shelf.
+        transforms and shadows".
+
+        **`w-fit max-w-full`: the shelf ends where its records do.** A shelf
+        stretching the full viewport with five spines at the left reads as
+        MISSING DATA rather than as a short collection — measured at 1088px of
+        empty timber past Adam's last spine. That is the sections defect one
+        level out: five near-empty black bands said "broken" about a collection
+        that was merely small. §10b's "sparse is fine" is about the SPINES, not
+        about the container they sit in.
+
+        Both halves are load-bearing. `w-fit` alone gives the flex row no width
+        to wrap against, so three hundred spines lay out on one infinite line;
+        `max-w-full` is the wrapping constraint, and `w-fit` collapses the box
+        to the widest row once wrapping has happened. So a full row still fills
+        the width naturally and only the last one stops short.
       */}
       <div
-        className="rounded-xs bg-[#0e0d0c] px-4 pt-5 pb-2"
+        className="w-fit max-w-full rounded-xs bg-[#0e0d0c] px-4 pt-5 pb-2"
         style={{
           perspective: '900px',
           backgroundImage: `linear-gradient(to bottom, transparent 0, transparent ${SPINE_HEIGHT}px, #241d16 ${SPINE_HEIGHT}px, #241d16 ${SPINE_ROW_HEIGHT}px)`,
@@ -152,8 +165,8 @@ export function Shelf({ records }: { records: ShelfRecord[] }) {
                     all of them by naming its links after abbreviated text.
 
                     So the label carries the full title and artist, untruncated.
-                    The truncation is a rendering constraint of a 210px spine and
-                    has no business reaching the accessibility tree.
+                    The truncation is a rendering constraint of a ~13px-wide
+                    spine and has no business reaching the accessibility tree.
                   */
                   aria-label={`${record.title} — ${record.artistName}`}
                   className="block rounded-t-[1px] outline-none transition-transform duration-150 focus-visible:ring-2 focus-visible:ring-ring group-hover:-translate-y-2 focus-visible:-translate-y-2"

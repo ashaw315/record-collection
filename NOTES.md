@@ -7794,3 +7794,101 @@ same defect in the reporting layer — the layer that reports on all the others 
 and it went six rounds. If the pattern can survive there, in a project whose
 NOTES file is largely about this exact failure, it can survive anywhere. The
 instance list is worth more with it than without.
+
+---
+
+## Step 13 units 7 and 8 — spine width, and the shelf that ends where its records do
+
+Two small units before the three.js split. Both landed; together they produced a
+finding rather than a finish, which is recorded here because the screenshot is
+the only thing that could have produced it.
+
+### Unit 7 — 1:12, and the budget question that was asked wrong
+
+Spines went from 26–34px to 11–15px against a 160px height: about 1:12, which is
+§10b as amended after QA found 1:7 "reads as box sets". The spec first said 1:40,
+from arithmetic about a real sleeve (314mm × 3–5mm, so 1:63 to 1:105); that loses
+to legibility, because at any workable height it is about 4px, narrower than a
+glyph.
+
+Adam flagged the coupling to check: *"the text budget derives from height, so
+check whether narrowing changes what fits — a narrower spine at the same height
+holds the same characters, but confirm rather than assume."*
+
+Confirmed, and the budget is unchanged at 29. Width decides whether a glyph fits
+ACROSS the spine; height decides how many fit ALONG it. It is pinned by a test
+now so the next width change is not assumed to move it.
+
+**But the check answered a narrower question than the one worth asking.** The
+crop showed 29 characters of `Cocteau Twins 1787001709542 Hea…` — the budget
+was spent on a fixture's timestamp suffix. That is a fixture artefact and not a
+product defect, and the budget was not changed on fixture evidence. The lesson
+is about the verification: "do 29 characters fit" was answered correctly while
+"are they the right 29" went unasked. **A coupling check that confirms a
+quantity has not confirmed the quantity is well spent.** Same family as the
+stale-budget entry, one level up: the number was right and uninformative.
+
+### Unit 8 — the shelf ends where its records do
+
+`w-fit max-w-full` on the timber container. Both halves are load-bearing:
+`w-fit` alone leaves the flex row no width to wrap against, so the collection
+lays out on one infinite line; `max-w-full` is the wrapping constraint and
+`w-fit` collapses the box to the widest row afterwards. Full rows still fill the
+width naturally; only the last one stops short.
+
+Measured at five records: trailing empty timber fell from **1088px to 16px**,
+which is exactly `px-4`. Adam's framing was that this is the sections defect one
+level out — five near-empty black bands said "broken" about a collection that
+was merely small, and a full-width band with five spines at the left says the
+same thing more quietly.
+
+### The finding: both units succeeded and together they overshot
+
+At five records the shelf is now **105×188px** — 9% of the content column. It no
+longer claims missing data. It reads as a thumbnail of a shelf: a small dark
+tile floating in a large empty page.
+
+The arithmetic says this is structural rather than a tuning problem. At 13px a
+spine plus a 3px gap, the shelf only starts filling a 1200px column at about
+**60 records**:
+
+| records | shelf width |
+|---|---|
+| 5 | 109px |
+| 12 | 221px |
+| 30 | 509px |
+| 60 | 989px |
+| 120 | wraps to 2 rows |
+
+So "the shelf ends where its records do" and "the shelf reads as a shelf" pull
+against each other for every collection under about sixty, and Adam has five.
+Both rules are right; they are not jointly satisfiable at this scale by
+adjusting either one. That is a design call and it is recorded rather than
+designed around, per the instruction that if it still reads as a fragment after
+both units, **that is a finding rather than something to design around.**
+
+### The test that passed scoped and failed in the suite
+
+The first version of unit 8's E2E measured the container against the LAST SPINE.
+It passed scoped and failed in the full run — the shape CLAUDE.md §10 already
+warns about, arriving for the third time.
+
+Diagnosed by execution rather than by reading: seeding 90 records reproduced it
+exactly. The shelf wraps to 2 rows, the box is legitimately 1120px wide, and the
+last spine sits 167px down at the start of a short second row, leaving **769px
+of trailing shelf that belongs to the rows above it**. Correct behaviour, called
+a failure by the assertion.
+
+The fix was to measure the container against the **widest row**, which is the
+property that holds at both scales — and §10b's actual rule, since full rows are
+supposed to stay full width. Then mutation-tested: with `w-fit` removed the
+corrected assertion still fails at 1091px, so it was fixed rather than loosened.
+
+**The general shape: a test whose measurement is right at the scale it was
+written at and wrong at every other.** Five records never wrap, so "last spine"
+and "widest row" are the same measurement — and the distinction only exists in a
+state the scoped run cannot reach. Both previous instances of this family were
+about contracts breaking tests in files the unit never opened; this one is a
+test breaking itself against data volume it never saw. The common cause is the
+same: **passing in isolation is not evidence a change is clean, because
+isolation is a state the application never runs in.**

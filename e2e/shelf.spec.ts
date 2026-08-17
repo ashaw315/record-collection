@@ -168,6 +168,65 @@ test('the pulled record can be put back, and by Escape', async ({ page }) => {
   await expect(page.getByTestId('pulled-record')).toHaveCount(0);
 });
 
+test('the shelf is only as wide as the records it carries', async ({ page }) => {
+  /**
+   * §10b as amended: a shelf's width is however much it carries.
+   *
+   * A shelf stretching the full viewport with five spines at the left reads as
+   * MISSING DATA rather than as a short collection — measured at 1088px of
+   * empty timber past the last spine before this changed. That is the genre
+   * sections defect one level out, where five near-empty black bands said
+   * "broken" about a collection that was merely small. Sparse is fine;
+   * sparse-inside-a-full-width-container is not.
+   *
+   * **Measured against the WIDEST ROW, not against the last spine.** The first
+   * version of this test compared the container to the final spine and passed
+   * scoped, then failed in the full suite — where other specs have seeded
+   * enough records that the shelf WRAPS, so the last spine sits at the start
+   * of a short second row and 769px of legitimate trailing shelf belongs to
+   * the rows above it. §10b's rule is that full rows stay full width and only
+   * the last one stops short, so the container must fit its widest row, which
+   * is the property that holds at both scales.
+   *
+   * Measured rather than asserted about a class name: `w-fit max-w-full` is one
+   * way to get this and a future change might use another.
+   */
+  const title = `Fitted ${suffix()}`;
+  await seedRecord(page, title);
+
+  await page.goto('/');
+  const shelf = page.getByTestId('shelf');
+  await expect(shelf).toBeVisible();
+
+  const spines = page.getByTestId('shelf-spine');
+  const spineCount = await spines.count();
+  expect(spineCount, 'nothing is proven by a shelf with no spines').toBeGreaterThan(0);
+
+  const timber = shelf.locator('> div').first();
+  const box = await timber.boundingBox();
+  expect(box, 'the shelf must have a measurable box').not.toBeNull();
+  if (box === null) return;
+
+  // The rightmost edge any spine reaches, across every row.
+  let widestReach = 0;
+  for (let i = 0; i < spineCount; i += 1) {
+    const spine = await spines.nth(i).boundingBox();
+    if (spine !== null) widestReach = Math.max(widestReach, spine.x + spine.width);
+  }
+  expect(widestReach, 'no spine had a measurable box').toBeGreaterThan(0);
+
+  /**
+   * The gap between the widest row's right edge and the shelf's is padding,
+   * not emptiness. `px-4` is 16px a side, and a little slack covers the
+   * rotateX and the spine's drop shadow.
+   */
+  const trailing = box.x + box.width - widestReach;
+  expect(
+    trailing,
+    `the shelf runs ${Math.round(trailing)}px past its widest row — it is filling the viewport rather than fitting its records`,
+  ).toBeLessThan(40);
+});
+
 test('the table view is still reachable, and the shelf is not forced', async ({ page }) => {
   // §10b makes the shelf the default; §10's toggle still reaches the others.
   // The shelf is a third mode rather than a replacement.

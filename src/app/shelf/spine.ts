@@ -25,9 +25,23 @@ export const DEFAULT_SPINE_COLOUR = '#3a3a3a';
  * it implies a fact about thickness nobody recorded. A 2xLP is genuinely
  * thicker, but `formats` does not say how thick, and inventing the difference
  * would be the §8 shape — a shelf asserting something the data does not hold.
+ *
+ * **11-15px against a 160px spine is roughly 1:12**, which is §10b's amended
+ * rule: narrow enough to read as a record, wide enough to name it. It was
+ * 26-34px (about 1:6) and QA found that reads as a shelf of box sets.
+ *
+ * The spec first said 1:40, from arithmetic about sleeve thickness — a real 12″
+ * sleeve is 314mm tall and 3-5mm thick, so 1:63 to 1:105, and even 1:40 was a
+ * compromise. It loses to legibility: at 160px tall that is 4px, narrower than
+ * a 9px glyph, so the spine text §10b requires becomes impossible and the wall
+ * becomes colour bars you must hover one at a time to identify.
+ *
+ * **Narrowing does not change the TEXT BUDGET.** Width decides whether a glyph
+ * fits across the spine; height decides how many fit along it. Checked rather
+ * than assumed, and pinned by a test.
  */
-export const MIN_SPINE_WIDTH = 26;
-export const MAX_SPINE_WIDTH = 34;
+export const MIN_SPINE_WIDTH = 11;
+export const MAX_SPINE_WIDTH = 15;
 
 /**
  * How tall a spine stands, and the row rhythm the shelf repeats at.

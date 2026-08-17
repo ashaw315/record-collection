@@ -175,6 +175,49 @@ describe('spineText — fitting the budget', () => {
   });
 });
 
+describe('spine proportions read as records, not box sets', () => {
+  /**
+   * §10b as amended: "narrow enough to read as a record, wide enough to name
+   * it. Roughly 1:12."
+   *
+   * The spec said 1:40 first, from arithmetic about sleeve thickness — and that
+   * loses to legibility, because at any workable height it is about 4px, which
+   * is narrower than a glyph. The failure exists in BOTH directions, so both
+   * bounds are asserted: too wide is a shelf of box sets, too narrow is a wall
+   * of colour bars that must be hovered one at a time.
+   */
+  it('is around 1:12, the ratio §10b settled on', () => {
+    const widest = SPINE_HEIGHT / MIN_SPINE_WIDTH;
+    const narrowest = SPINE_HEIGHT / MAX_SPINE_WIDTH;
+
+    expect(narrowest, 'not box sets — 1:7 was the QA finding').toBeGreaterThan(9);
+    expect(widest, 'not colour bars — a spine must still hold its text').toBeLessThan(16);
+  });
+
+  it('stays wide enough for the 9px type the spine text uses', () => {
+    /**
+     * The constraint that killed 1:40. A 9px mono glyph is about 6.5px of cap
+     * height and needs a little padding either side; below roughly 10px of
+     * spine the text stops being readable and becomes marks.
+     *
+     * Measured across five rendered variants at real size, not derived from a
+     * font metric alone.
+     */
+    expect(MIN_SPINE_WIDTH).toBeGreaterThanOrEqual(11);
+  });
+
+  it('does not change how MUCH text fits, which is a function of height', () => {
+    /**
+     * Width decides whether a glyph fits ACROSS the spine; height decides how
+     * many fit ALONG it. Narrowing from 26-34 to 11-15 leaves the budget at 29,
+     * and this pins that so a future width change is not assumed to move it —
+     * the assumption was checked rather than trusted when this unit was
+     * written.
+     */
+    expect(SPINE_TEXT_BUDGET).toBe(Math.floor(SPINE_HEIGHT / 5.4));
+  });
+});
+
 describe('the text budget tracks the spine height', () => {
   it('never exceeds what a spine that tall can hold', () => {
     /**
