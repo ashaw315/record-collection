@@ -7214,3 +7214,33 @@ marker commit records where the work actually is.
 
 **The rule: `git add <paths>` when committing NOTES mid-unit.** Reserve
 `git add -A` for the unit's own commit, where sweeping everything is the intent.
+
+### Why a mis-attributed commit belongs with the prose-versus-code findings
+
+The `git add -A` slip is ordinary. What makes it worth keeping is that it is the
+same SHAPE as every prose-versus-code defect in this remediation.
+
+In this project, commit messages carry reasoning. NOTES entries cite them,
+REVIEW-PLAN's log summarises them, and the intended way to answer "why is this
+like this" is `git log -- <file>`. So a documentation commit answering
+`git log -- src/app/shelf/faces.ts` is not merely untidy — **it is a record that
+reads as authoritative and points somewhere wrong**, which is precisely what the
+comment above the flat-equality graph filter did, and the docblock naming a
+missing token beside an assertion blaming Discogs.
+
+The family, now five members:
+
+| where | the correct-looking thing | what it hid |
+|---|---|---|
+| `merge-artists.test.ts` | a comment explaining a general hazard | coverage of one table in three |
+| `graph.test.ts` | §7.1's rule, stated correctly | code using flat equality |
+| `images.spec.ts` | a docblock naming the real cause | an assertion naming a different one |
+| `/api/graph` (avoided) | a paragraph justifying dead code | that it should not exist |
+| `git log -- faces.ts` | a commit message | work it does not describe |
+
+**The generalisation: any artefact a reader treats as the answer must either BE
+the answer or not exist.** A comment, a docblock, a commit message and a NOTES
+entry are all read as authoritative here, and each is capable of pointing
+confidently at the wrong thing. The defect is never the prose being wrong in
+isolation — it is that the prose satisfies the question before the reader gets
+to the thing that would have contradicted it.
