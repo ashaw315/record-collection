@@ -6378,3 +6378,79 @@ DDL directly through psql advanced the schema WITHOUT advancing
 migrator nor the tests expected. Rebuilding from empty was the fix and took
 seconds. **Diagnose a migrator against a scratch database, never against the one
 under test** — the diagnostic itself is a write.
+
+## Step 13 unit 1 — choosing the spine-colour algorithm by measurement
+
+§10b: "a spine's colour is the average colour of its cover". Four candidates were
+run against the THREE REAL COVERS in the dev database — Discharge *Grave New
+World* (near-monochrome dark airbrush), Dire Straits (pale cream border, sepia
+painting), Luther Vandross *Never Too Much* (warm brown portrait) — and rendered
+as spines in a row.
+
+| | Discharge | Dire Straits | Vandross |
+|---|---|---|---|
+| A — mean, sRGB | `#2f281f` | `#c6b9a7` | `#7a4b29` |
+| B — mean, linear light | `#363028` | `#d8cbb7` | `#92603c` |
+| C/D — dominant bucket | `#1b130a` | `#fff2da` | **`#070101`** |
+
+**Chosen: B.** Averaging gamma-encoded sRGB under-weights bright pixels; B is
+measurably lighter on every cover, and on Dire Straits — where the cream border
+is most of the sleeve — it is the more faithful answer.
+
+### The screenshot earned its place: dominant-bucket is WRONG, not just different
+
+`#070101` for Vandross. The most populous colour bucket is the leather jacket, so
+a cover that reads warm brown gets a near-black spine. That is a wrong answer
+about a real record, and it was **invisible in the hex column and obvious in the
+row** — `#070101` beside `#1b130a` looks like two dark values until they are
+spines next to a cover you can see.
+
+The rule: for anything whose output is a colour, a position or a size, render it
+at the size the user sees it. A table of values shows that the numbers differ,
+never whether they are right.
+
+### When a measurement looks suspiciously uniform, test the INSTRUMENT first
+
+All three covers landed within **11° of hue** (25°, 34°, 36° — orange-brown).
+That is exactly what a broken averager looks like: everything converging on mud.
+
+Two explanations fit the same evidence — *the covers are brown* and *the
+algorithm destroys colour* — and they are indistinguishable from the output
+alone. So the instrument was tested on inputs whose answer is known: a synthetic
+red sleeve, and a blue one.
+
+    red sleeve  -> #a7191d   (clearly red)
+    blue sleeve -> #8394c2   (clearly blue)
+
+The mean preserves strong hues. The brown is the collection, not the code.
+
+**Carry this past this instance.** A uniform result is evidence about the
+measurement as much as about the data, and the cheapest way to tell them apart is
+a control input with a known answer. Without those two controls, "the covers are
+brown" was a guess that happened to be right.
+
+### Declining a saturation boost — §8 in a place that was easy to miss
+
+The obvious next move, once the shelf reads brown, is to push saturation so it
+looks livelier. **That is inventing colour the record does not have**, and it is
+CLAUDE.md §8's confidently-misleading rule arriving somewhere it does not
+announce itself: not a wrong price or a wrong pressing, just a shelf prettier
+than the sleeves on it. A spine is a claim about a cover.
+
+### Lightness is what distinguishes the spines, and that is where to look later
+
+Measured on the chosen algorithm:
+
+| | hue | saturation | lightness |
+|---|---|---|---|
+| Discharge | 34° | 15% | **18%** |
+| Vandross | 25° | 42% | **40%** |
+| Dire Straits | 36° | 30% | **78%** |
+
+Hue clusters within 11°; lightness spreads 18/40/78%. **The row is legible
+because of lightness, not hue.**
+
+Recorded because three records cannot answer whether thirty muted sleeves read as
+a shelf or as a smear. If it turns out to be a smear, this says where to look:
+the RENDERING — spacing, edge highlights, a dividing rule between genre sections
+— not the colour. The stored hex would not change, so that fix stays cheap.
