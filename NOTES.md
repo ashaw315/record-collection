@@ -7543,3 +7543,49 @@ server died mid-run" as fact; it was a hypothesis that fitted 14 identical
 errors and happened to be the wrong half of the story. Two more runs went by
 before the actual message — naming a port nobody had looked at — was read
 properly.
+
+# `has_genre` had exactly one consumer, and Unit 5 deleted it
+
+Recorded with the reasoning rather than the fact, because whoever rebuilds it
+needs to know it existed, what it was for, and why it went.
+
+**What it was.** §8.1's graph derived a `has_genre` edge at query time — artist
+→ each genre their OWNED records carry, weighted by how many of those records
+are in it. It was never a table; `buildGraph` computed it from `record_genres`
+on every call, deliberately, because §7.1 forbids denormalising the hierarchy.
+
+**Why it existed.** Without it the genre nodes were orphans — drawn, connected
+to nothing, doing none of the clustering §8.1 claimed emerged from "shared
+genres". It was also what made colour possible: an artist was coloured by
+walking `artist → genre → root`, taking the genre with the most of that artist's
+owned records and breaking ties by name. **Found by rendering the graph and
+looking at it, not by a failing test** — which is worth knowing, because it means
+no test will notice its absence either.
+
+**Why it went.** §10b retired `/graph` as a screen, and `buildGraph` was its only
+caller. Keeping a payload builder for a screen that no longer exists is the
+"correctly implemented and uncalled" pattern this project deleted `/api/graph`
+for, one layer down.
+
+**What survives.** The DATA is untouched: `record_genres`, `artist_genres`,
+`artist_influences` and `artist_memberships` are all still written and still
+correct. Only the derivation went.
+
+**If §9's suggestions want it back.** §9.1 scores "genre overlap with the user's
+top 3 genres by owned count", which is the same aggregate `has_genre` computed
+per artist. Two things to carry across rather than rediscover:
+
+1. **The weight is a COUNT of that artist's owned records in the genre**, not a
+   boolean. Ties break on genre name, so the answer is stable across calls —
+   §8.2's determinism rule, which outlived the feature it was written for.
+2. **It must be derived at query time from `record_genres`**, not stored. §7.1:
+   "compute this with a recursive CTE; do not denormalize."
+
+The deleted implementation is in git at `src/lib/db/queries/graph.ts`, commit
+`bfc8f08^`. Reading it is cheaper than re-deriving the tie-break rule, and its
+test file carried the cases that pinned the clustering behaviour.
+
+**Written against §9's actual requirement when the time comes, not restored
+wholesale** — a builder shaped for a force-directed layout is the wrong shape for
+a scoring function, and this project has already recorded that keeping something
+built for a screen that no longer exists is how dead code survives.
