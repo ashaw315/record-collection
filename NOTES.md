@@ -6514,3 +6514,106 @@ to the throwaway branch.
 maintained out of band and will drift silently. The tell is `neon-transactions`
 failing with a column list mentioning something the branch lacks, which reads as
 a transaction bug and is not.
+
+# sharp premultiplies during resize, so `removeAlpha` cannot be trusted with it
+
+**The obvious code is the wrong code, and the error is invisible** — it produces
+a colour slightly too dark, not an exception, not a wrong shape. Nothing in the
+output says it happened.
+
+Measured on a half-transparent red square (`rgb(200,30,35)`, alternating pixels
+at alpha 0 and 255), all four on sharp 0.35.3:
+
+| pipeline | distinct pixels out |
+|---|---|
+| `.removeAlpha()` alone | `{200,30,35}` — correct |
+| `.removeAlpha().resize()` | `{0,0,0}`, `{201,30,35}`, `{200,30,35}`, `{199,29,35}` |
+| `.resize().removeAlpha()` | same |
+| `.resize({kernel:'nearest'})` | `{0,0,0}`, `{200,30,35}` |
+
+Resampling blends neighbours, and a fully transparent neighbour contributes its
+RGB — which is usually zero — while still counting toward the divisor. So black
+enters an image that contained none. **Reordering does not fix it; a
+nearest-neighbour kernel does not either.** Both were tried, not reasoned about.
+
+**The fix: keep the alpha channel and weight by it yourself.**
+
+    const { data, info } = await sharp(bytes)
+      .resize(N, N, { fit: 'fill' })
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    // alpha 0 contributes nothing; alpha 0.5 contributes half
+    const alpha = data[i + 3] / 255;
+    if (alpha === 0) continue;
+    r += toLinear(data[i]) * alpha;
+    weight += alpha;
+
+Exact, and it introduces no synthetic colour. Flattening onto white or black
+would each invent a background the sleeve does not have — the §8 shape again.
+
+Guard the divide: a fully transparent image has `weight === 0`, and dividing
+yields `NaN`, which clamps to `#000000` — black invented out of nothing. It
+returns `null` instead, which §10b already renders as a plain spine.
+
+# Two failures in one run are not one finding until you check
+
+The spine-colour run failed twice at once:
+
+    × caps the work by downsampling      expected '#148c5a' to be '#0c8c5a'
+    × ignores an alpha channel           expected '#ae181d' to be '#c81e23'
+
+Both were colour mismatches in the same new module, minutes apart, and the
+tempting read is a single root cause — some systematic darkening. It was not:
+
+- The first was a **wrong expectation.** rgb(20,140,90) is `#148c5a`; I had
+  written `0x0c` for 20, which is 12. The code was right.
+- The second was a **real bug**, the premultiplication above.
+
+Assuming a shared cause would have led to "fix" the code until both passed,
+which for the first one means changing correct behaviour to match a mistake.
+Checking each separately — deriving the hex by hand, then dumping sharp's actual
+pixels — took two minutes and pointed opposite directions.
+
+**The rule, filed with the mutation-verification ones:** simultaneous failures
+are evidence of nothing in particular. Establish each one's cause independently
+before proposing a fix that addresses both. The stronger the apparent pattern,
+the more it is worth checking, because a coincidence that *looks* systematic is
+what makes the wrong fix feel obvious.
+
+# STANDING HAZARD: the Neon test branch drifts, and the symptom misleads
+
+Not an incident — a property of the setup, and this was its second occurrence.
+
+`test/integration/neon-transactions.test.ts` runs against a real Neon branch
+whose schema is **maintained out of band**. Nothing applies migrations to it, so
+every migration touching a table that file writes leaves it behind.
+
+**The symptom reads as a transaction bug.** Drizzle builds `INSERT` column lists
+from the schema, so a missing column surfaces as
+
+    Failed query: insert into "records" (…, "spine_colour", …) values …
+
+inside a test named "rolls back the real nested-write primitive", with 4/4 of
+that file red and everything else green. It looks like the transactional code
+broke.
+
+**The tell:** the failing column list names something added recently, and the
+rest of the suite passes. `neon-transactions` is the only file talking to a
+network service; every other integration test is local Docker.
+
+**The fix, and why the obvious one is refused.**
+`TEST_DATABASE_URL=<neon-url> npx drizzle-kit migrate` is rejected by
+`assertLocalTestDatabase`:
+
+    Refusing to run destructive test helpers against non-local host "…neon.tech".
+
+That guard is CORRECT and must not be worked around: `TEST_DATABASE_URL` is the
+variable integration tests truncate from, and pointing it at a remote host is
+precisely the accident it exists to prevent. Apply the DDL to the throwaway
+branch directly instead, with a short script against `NEON_TEST_DATABASE_URL`.
+
+**Do this in the same unit as the migration**, not when the tests go red. Both
+occurrences so far were diagnosed after the fact; the cost is entirely in the
+diagnosis, and the fix is thirty seconds.
