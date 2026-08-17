@@ -6998,3 +6998,73 @@ it consumes the accessibility tree the same way assistive technology does —
 which is the argument for locating by role and name rather than by test id.
 
 Result: 39 + 39 passing across the eight affected specs, from 11 failing.
+
+# Truncation belongs to rendering, never to the accessibility tree
+
+The shelf's spine text is clipped to fit a 210px spine. The link's accessible
+name was that clipped string, so a record announced itself as
+
+    "Luther Vandross  Nev…  FE 37451"
+
+which names no record — not to a screen reader, and not to any programmatic
+consumer. The fix is `aria-label` carrying the untruncated title and artist.
+
+**Two channels, one width limit.** The visible string has a spine to fit inside;
+the accessible name has no such constraint, and collapsing them means the
+constraint silently becomes a fact about the record's identity.
+
+**The E2E suite caught it because it reads the accessibility tree the way
+assistive technology does.** Eight specs across five files locate a record with
+`getByRole('link', { name: title })` — the contract every other collection view
+honours — and the shelf broke all of them at once.
+
+Had those specs used `data-testid`, every one would have passed and the defect
+would have shipped: the test id was present and correct on the spine the whole
+time. **That is the argument for locating by role and name.** A test id asserts
+that an element exists; a role and name assert that it can be found and
+understood, which is what a user does.
+
+The general rule: **when visible text is abbreviated for layout — truncated,
+initialised, iconified — the accessible name carries the full value.** If the
+two must differ, the accessible one is the complete one.
+
+# The stash test: how many were already failing?
+
+Changing `/`'s default view broke 33 E2E tests across nine spec files. The
+instinct is to start bisecting one's own edits. The cheaper first question is
+how many of those 33 were failing BEFORE the change.
+
+    git stash push -m wip
+    npx playwright test <spec> --retries=0
+    git stash pop
+
+One run, no cost. It found 1 of the 33 failing on the untouched tree — a login
+flake belonging to the contention this file has tracked for seven sightings —
+which would otherwise have been debugged inside the view change and attributed
+to it.
+
+**Same shape as the two-simultaneous-failures rule, at suite scale.** A pile of
+failures arriving together is not evidence of a single cause; it is evidence of
+a change big enough to expose whatever was already broken. Establish the
+baseline before attributing anything.
+
+# Screenshot wide AND cropped: they answer different questions
+
+This rule earned itself twice in one unit, in opposite directions.
+
+**The wide shot found a defect the crop would have missed.** Five genre
+sections, each correct, rendered as five near-empty black bands stacked down the
+page — visible only as a whole page. Every test passed. Cropped to one section,
+it would have looked fine.
+
+**The crop found a defect the wide shot hid.** At 1280 the spines looked right;
+zoomed in, the text was clipped at both ends and had eaten the catalogue number.
+The wide view had too little resolution per spine to show it.
+
+    wide  -> "is the LAYOUT right?"   — proportion, rhythm, whether it reads
+    crop  -> "is the CONTENT right?"  — text, colour, truncation, alignment
+
+Neither substitutes for the other, and for anything whose output is visual —
+colour, position, size, text fitting — take both. The spine-colour measurement
+in unit 1 needed the same pair: a table of hex values could not show that
+`#070101` was wrong for a warm brown cover, and a row of spines could.
