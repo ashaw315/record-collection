@@ -6617,3 +6617,68 @@ branch directly instead, with a short script against `NEON_TEST_DATABASE_URL`.
 **Do this in the same unit as the migration**, not when the tests go red. Both
 occurrences so far were diagnosed after the fact; the cost is entirely in the
 diagnosis, and the fix is thirty seconds.
+
+## Step 13 unit 1b — wiring the colour in, and the backfill
+
+Two write paths compute it, and the difference between them is the interesting
+part.
+
+**`attachDiscogsCover`** computes it after writing the image row, from the bytes
+`fetchImage` has already returned — §10b's "once, at import". After the row, not
+before: the colour describes a cover that exists, and a failure between the two
+should leave no colour rather than a colour for nothing.
+
+**The upload route computes it for `imageType === 'cover'` ONLY**, and that
+restriction is the point rather than a detail. A matrix photograph is mostly
+black vinyl; a centre-label shot is mostly a colour that is not the sleeve.
+Either would give a spine matching no part of the record as it sits on a shelf.
+An untyped upload is not a claim to be the front either — §4.2 makes the column
+nullable and the form does not require it.
+
+**The gap-fill guard lives in the query layer, not at the call sites.**
+`setSpineColourIfUnset` adds `AND spine_colour IS NULL` to the update, so §7.8's
+never-overwrite rule cannot be forgotten by a third writer. A spine computed
+from a sleeve the user photographed survives a later re-import.
+
+`null` is deliberately treated as ABSENT rather than as a decision: a record
+whose first cover failed to decode should still get a colour when a readable one
+arrives.
+
+### The backfill is a script, and it self-checks
+
+`scripts/backfill-spine-colours.mjs`, run by hand, `--dry-run` supported.
+
+**Not a migration.** The colour comes from bytes in Vercel Blob, so computing it
+needs a network fetch per record — and a migration reaching out to a CDN makes
+`db:migrate` depend on blob storage being reachable and a token being present. A
+migration that cannot run offline blocks a fresh clone.
+
+**Not a hand-fix either, at three records.** The same path runs the next time the
+algorithm changes or a batch of covers lands without one, and an ad-hoc `UPDATE`
+teaches nobody how to repeat it.
+
+**It carries a COPY of the algorithm, so it verifies itself before writing.**
+The script is plain `.mjs` run by node with no bundler; the module it would
+import is `server-only` TypeScript. Duplication was the only option, and a
+backfill writing subtly different colours from every future import is the worst
+form of drift — two sources of truth for one shelf, with no error anywhere. So
+it averages a known red square first and exits non-zero if the answer is not
+`#a7191d`.
+
+Also `DISTINCT ON (r.id) … ORDER BY i.created_at ASC`, so the OLDEST cover wins
+— matching the gap-fill rule rather than contradicting it.
+
+Result on the real collection: `#363129` Grave New World, `#92603d` Never Too
+Much, `#d8cbb8` Dire Straits — the measured values. Re-running reports "nothing
+to do".
+
+### Third occurrence of the Neon drift, one unit after recording it
+
+The hazard note said the fix costs thirty seconds and the cost is all in the
+diagnosis. That held: the backfill failed instantly with `column r.spine_colour
+does not exist`, and the DEV database — also Neon — needed the same two DDL
+statements as the test branch.
+
+So the standing note should say **databases**, plural: the local Docker test
+database is migrated by `drizzle-kit`, and BOTH remote ones (dev and the Neon
+test branch) are maintained out of band and drift on every migration.

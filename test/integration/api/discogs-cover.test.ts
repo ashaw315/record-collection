@@ -342,3 +342,102 @@ describe('a deployment with no blob storage configured', () => {
     expect(outcome).toEqual({ attached: false, reason: 'none' });
   });
 });
+
+describe('the spine colour is computed and stored with the cover', () => {
+  /**
+   * §10b: "a spine's colour is the average colour of its cover, computed once
+   * at import and stored."
+   *
+   * **Computed HERE, where the bytes already are.** `fetchImage` has just
+   * returned them, so the alternative — reading the blob back to decode it —
+   * would be a second network round trip for something already in memory, and
+   * §10b says once, at import.
+   *
+   * These use a REAL encoded image rather than the `JPEG` stub the rest of this
+   * file passes around: a four-byte JPEG header is enough to exercise the
+   * storage path but decodes to nothing, so a test asserting a colour must give
+   * sharp something it can actually read.
+   */
+  const solidPng = async (r: number, g: number, b: number) =>
+    (
+      await (
+        await import('sharp')
+      ).default({ create: { width: 24, height: 24, channels: 3, background: { r, g, b } } })
+        .png()
+        .toBuffer()
+    ).buffer as ArrayBuffer;
+
+  const spineColourOf = async (recordId: string) => {
+    const [row] = await db
+      .select({ spineColour: (await import('@/db/schema')).records.spineColour })
+      .from((await import('@/db/schema')).records)
+      .where((await import('drizzle-orm')).eq((await import('@/db/schema')).records.id, recordId));
+    return row?.spineColour ?? null;
+  };
+
+  it('stores the average colour of the cover it attached', async () => {
+    fetchImage.mockResolvedValue({
+      bytes: await solidPng(0xa7, 0x19, 0x1d),
+      contentType: 'image/png',
+    });
+
+    await attachDiscogsCover({
+      recordId: RECORD_ID,
+      images: [{ url: 'https://i.discogs.com/a/cover.jpg', type: 'primary' }],
+      client: clientWith(fetchImage),
+    });
+
+    expect(await spineColourOf(RECORD_ID)).toBe('#a7191d');
+  });
+
+  it('leaves the colour NULL when the cover cannot be decoded', async () => {
+    /**
+     * §10b's honest absence, at the seam. A cover that stores fine but decodes
+     * to nothing must not fail the import and must not invent a colour — the
+     * record keeps its plain spine.
+     *
+     * The image row is still written: the bytes reached storage and the picture
+     * is real, it is only the average that could not be taken.
+     */
+    fetchImage.mockResolvedValue({
+      bytes: new TextEncoder().encode('not an image').buffer as ArrayBuffer,
+      contentType: 'image/jpeg',
+    });
+
+    const outcome = await attachDiscogsCover({
+      recordId: RECORD_ID,
+      images: [{ url: 'https://i.discogs.com/a/cover.jpg', type: 'primary' }],
+      client: clientWith(fetchImage),
+    });
+
+    expect(outcome, 'the cover still attached').toEqual({ attached: true });
+    expect(await spineColourOf(RECORD_ID), 'and no colour was invented').toBeNull();
+  });
+
+  it('does not overwrite a colour the record already has', async () => {
+    /**
+     * §7.8 in the place it is easiest to miss. `attachDiscogsCover` already
+     * refuses when a cover exists, so this asserts the guard from the colour's
+     * side: a record whose spine was computed from a photographed sleeve must
+     * not have it replaced by a re-import.
+     */
+    const { records } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+    await db.update(records).set({ spineColour: '#123456' }).where(eq(records.id, RECORD_ID));
+
+    // A cover already exists, so the attach declines before fetching anything.
+    await db.insert((await import('@/db/schema')).images).values({
+      recordId: RECORD_ID,
+      url: 'https://blob.example/existing.jpg',
+      imageType: 'cover',
+    });
+
+    await attachDiscogsCover({
+      recordId: RECORD_ID,
+      images: [{ url: 'https://i.discogs.com/a/cover.jpg', type: 'primary' }],
+      client: clientWith(fetchImage),
+    });
+
+    expect(await spineColourOf(RECORD_ID)).toBe('#123456');
+  });
+});

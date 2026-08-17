@@ -339,3 +339,97 @@ describe('POST /api/records/:id/images', () => {
     expect(response.status).toBe(400);
   });
 });
+
+describe('spine colour on a manually uploaded cover (§10b)', () => {
+  const solidPng = async (r: number, g: number, b: number) =>
+    (await import('sharp')).default({
+      create: { width: 24, height: 24, channels: 3, background: { r, g, b } },
+    })
+      .png()
+      .toBuffer();
+
+  const spineColourOf = async (recordId: string) => {
+    const { records } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+    const [row] = await db
+      .select({ c: records.spineColour })
+      .from(records)
+      .where(eq(records.id, recordId));
+    return row?.c ?? null;
+  };
+
+  it('computes the colour when the upload IS a cover', async () => {
+    const recordId = await seedRecord();
+    const png = await solidPng(0x33, 0x66, 0x99);
+
+    const response = await upload(
+      recordId,
+      fileForm(png, 'sleeve.png', 'image/png', { imageType: 'cover' }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(await spineColourOf(recordId)).toBe('#336699');
+  });
+
+  it('does NOT compute a colour for a non-cover image', async () => {
+    /**
+     * **The discriminating case, and the reason this is not simply "on every
+     * upload".** §10b says the spine is the average of the COVER. A photograph
+     * of the dead wax is mostly black vinyl; a centre label is mostly one
+     * colour that is not the sleeve. Either would give a spine that matches no
+     * part of the record as it sits on a shelf.
+     */
+    const recordId = await seedRecord();
+    const png = await solidPng(0x33, 0x66, 0x99);
+
+    await upload(recordId, fileForm(png, 'wax.png', 'image/png', { imageType: 'matrix' }));
+
+    expect(await spineColourOf(recordId)).toBeNull();
+  });
+
+  it('does not compute a colour for an untyped upload', async () => {
+    // `image_type` is nullable and an upload with no type chosen is legal
+    // (§4.2). It is not a claim that the image is the front sleeve.
+    const recordId = await seedRecord();
+    const png = await solidPng(0x33, 0x66, 0x99);
+
+    await upload(recordId, fileForm(png, 'unknown.png', 'image/png'));
+
+    expect(await spineColourOf(recordId)).toBeNull();
+  });
+
+  it('leaves an existing colour alone when a second cover is uploaded', async () => {
+    // §7.8: gap-fill, never overwrite. The first cover decided the spine.
+    const recordId = await seedRecord();
+
+    await upload(
+      recordId,
+      fileForm(await solidPng(0xa7, 0x19, 0x1d), 'first.png', 'image/png', { imageType: 'cover' }),
+    );
+    await upload(
+      recordId,
+      fileForm(await solidPng(0x33, 0x66, 0x99), 'second.png', 'image/png', { imageType: 'cover' }),
+    );
+
+    expect(await spineColourOf(recordId)).toBe('#a7191d');
+  });
+
+  it('still stores the image when the bytes cannot be averaged', async () => {
+    /**
+     * The upload path sniffs the type, so bytes reaching storage are a real
+     * image — but a truncated or exotic file can still defeat the decoder.
+     * §10b's absence is honest: the image row lands, the colour stays null, and
+     * the request succeeds.
+     */
+    const recordId = await seedRecord();
+
+    const response = await upload(
+      recordId,
+      fileForm(JPEG_BYTES, 'stub.jpg', 'image/jpeg', { imageType: 'cover' }),
+    );
+
+    expect(response.status, 'the upload is not failed by an unreadable average').toBe(201);
+    expect(await db.select().from(images)).toHaveLength(1);
+    expect(await spineColourOf(recordId)).toBeNull();
+  });
+});

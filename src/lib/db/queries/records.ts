@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, asc, desc, eq, exists, gte, ilike, inArray, lte, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, exists, gte, ilike, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 import { isForeignKeyViolation } from '@/lib/api/errors';
 import { escapeLikePattern } from '@/lib/api/like';
 import type { RecordFilters, RecordSortField } from '@/lib/records/fields';
@@ -53,6 +53,28 @@ export type HydratedRecord = RecordRow & {
   journalEntries: (typeof journalEntries.$inferSelect)[];
   latestPrice: typeof priceHistory.$inferSelect | null;
 };
+
+/**
+ * Sets §10b's spine colour, and ONLY when the record has none.
+ *
+ * **Gap-fill, not overwrite** (§7.8). A spine computed from a sleeve the user
+ * photographed must survive a later Discogs re-import — the colour is derived
+ * from a cover, and the user's cover is the authoritative one. The guard lives
+ * here rather than at each call site so a third writer cannot forget it.
+ *
+ * `null` is a legitimate stored value meaning "no cover, so no colour", and
+ * this deliberately treats it as ABSENT rather than as a decision: a record
+ * whose first cover failed to decode should get a colour when a readable one
+ * arrives.
+ */
+export async function setSpineColourIfUnset(recordId: string, colour: string): Promise<void> {
+  const db = getDb();
+
+  await db
+    .update(records)
+    .set({ spineColour: colour })
+    .where(and(eq(records.id, recordId), isNull(records.spineColour)));
+}
 
 export async function findRecordById(id: string): Promise<RecordRow | undefined> {
   const db = getDb();

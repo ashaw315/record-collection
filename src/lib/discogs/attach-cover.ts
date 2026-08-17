@@ -3,6 +3,8 @@ import { and, eq } from 'drizzle-orm';
 import { getDb } from '@/db/client';
 import { images } from '@/db/schema';
 import { createImage } from '@/lib/db/queries/images';
+import { setSpineColourIfUnset } from '@/lib/db/queries/records';
+import { averageColour } from '@/lib/images/spine-colour';
 import { describeError } from '@/lib/errors/describe';
 import { logger } from '@/lib/logger';
 import { getBlobStorage, isBlobConfigured, storageKeyFor } from '@/lib/storage/blob';
@@ -108,6 +110,24 @@ export async function attachDiscogsCover(input: {
       imageType: 'cover',
       caption: null,
     });
+
+    /**
+     * §10b's spine colour, "computed once at import and stored".
+     *
+     * **Here, because the bytes are already in hand.** Reading the blob back to
+     * decode it would be a second round trip for something in memory, and doing
+     * it per render would decode every cover on every page load.
+     *
+     * After the image row, not before: the colour describes a cover that
+     * exists, and a failure between the two should leave no colour rather than
+     * a colour for nothing.
+     *
+     * `averageColour` never throws — an undecodable cover returns null, which
+     * §10b renders as a plain spine. So this cannot fail the import, and the
+     * absence is a real state rather than an error.
+     */
+    const colour = await averageColour(bytes);
+    if (colour !== null) await setSpineColourIfUnset(input.recordId, colour);
 
     return { attached: true };
   } catch (cause) {
