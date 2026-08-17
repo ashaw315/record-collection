@@ -6859,3 +6859,142 @@ correct, the determinism holds, the absences render honestly. What the tests
 could not say is that five correct sections look wrong on a page. The screenshot
 was the instrument, as it was for the spine colours; the difference is that
 there the row exposed a wrong VALUE and here the page exposed a wrong SHAPE.
+
+## Step 13 unit 3 — the wall, and two things only a screenshot could say
+
+### Sections were built, rendered, and removed
+
+The first version grouped spines into genre sections with a heading and a shelf
+band each. Every test passed: the grouping was correct, the ordering
+deterministic, the absences honest. **It looked broken.** The real collection has
+six genres for five records and every one is top-level, so it rendered five
+near-empty black bands stacked down the page — you scrolled past the first
+before reaching the second.
+
+§10b was amended to one continuous shelf with no headings, matching the
+reference it borrows from (1,300 spines, no headings at all). **The ordering
+survived intact**: "all the punk together" is a sentence about ADJACENCY, and
+ordering by top-level genre delivers it without a heading. The section tests
+became adjacency tests, which is the property that actually mattered.
+
+Recorded separately: the sectioning had inherited §8.2's "needs a built-out
+genre hierarchy" precondition without inheriting the check.
+
+### The wide screenshot hid a defect the crop showed
+
+The full-page shot at 1280 looked right. Cropping to the spines showed the text
+clipped at BOTH ends — `…re Straits · Dire Straits · BSK 32…` — taking the
+catalogue number with it.
+
+Measured, not eyeballed: a 210px spine at 9px mono holds ~31 characters, and
+four of five real spines needed 38, 41, 43 and 49.
+
+**So: screenshot at the size the user sees, then crop to the element.** The wide
+view answers "is the layout right"; only the crop answers "is the content
+right". This is the second time this unit that a picture caught something no
+test could — the first was five correct sections looking wrong on a page.
+
+### Truncate to FIT, and the degenerate case was measured before it was decided
+
+The budget is computed from the spine height, minus artist and catalogue number,
+with the remainder given to the title. A short spine loses nothing —
+`John Lennon  test  1a 20` renders whole — and a long one loses exactly enough.
+
+§10b names the casualty: the catalogue number "is the collector's identifier and
+earns its space", the artist is how a record is found, so the title absorbs the
+shortfall.
+
+**The degenerate case — artist plus catalogue exceeding the budget alone — is
+not hypothetical.** Measured across plausible collections, four of six pairs
+blow it before the title gets a character:
+
+    Emerson, Lake & Palmer + K 50422        31
+    Crosby, Stills, Nash & Young + SD 7200  37
+    The Jimi Hendrix Experience + 613 001   36
+    Siouxsie and the Banshees + POLS 1056   36
+
+There the ARTIST gives way, and the measurement decided the direction rather
+than taste:
+
+    truncate artist    -> "Crosby, Stills, Nash …  SD 7200"    still obvious
+    truncate catalogue -> "Crosby, Stills, Nash & Young  S…"   identifies nothing
+
+**A clipped artist stays readable because its distinguishing information is
+front-loaded; a catalogue number's is spread across the whole string.** `BSK 32…`
+is not an identifier. That asymmetry is the reason, and it generalises to any
+field pair where one is a name and the other a code.
+
+Separators dropped from ` · ` to two spaces — identical on a rotated mono spine,
+six characters back for the title, free alongside the truncation.
+
+### One test wrong for the right reason
+
+`spineText` returned `Discharge  Hear Noth…  CLAYLP 3` where the test demanded
+the untruncated form. The string is 33 characters against a 31 budget: the
+assertion was asking for something that does not fit, and the code was right.
+Same shape as the `#0c8c5a` slip in unit 1a — a hand-derived expectation that
+did not survive its own arithmetic.
+
+### 33 E2E failures, and the stash test that split them in two
+
+Changing `/`'s default view to `shelf` (§10b) broke 33 E2E tests across nine
+spec files this unit never opened — the cross-file break CLAUDE.md §10 requires
+the full run to catch.
+
+**Not all 33 were mine, and the cheap way to find out was `git stash`.**
+Running `graph.spec.ts` against the stashed tree — my changes removed entirely —
+still failed 1 of 7, with `Received: /login`: a login that did not take. That
+failure predates the shelf and is the mobile/parallel contention this file has
+been tracking for seven sightings.
+
+**The technique is worth naming.** When a change breaks many tests at once, the
+first question is not "which of my edits caused this" but "how many of these
+were already failing". `git stash && <run> && git stash pop` answers it in one
+run and costs nothing. Without it the login failure would have been attributed
+to the view change and debugged there — the same trap as the two simultaneous
+failures in unit 1a, at suite scale.
+
+**The genuine breakage was 22, in `collection-filters` and `collection-widths`,
+and the fix is not a workaround.** Those specs test FILTERING, PAGING and
+WIDTHS — behaviours of the table and grid, not of the wall — and they navigated
+to `/` relying on a default rather than stating their subject. They now ask for
+`?view=table` explicitly, which says what each test is about and survives the
+next time a default moves.
+
+After the fix: 11 of 13 pass, and the remaining 2 are `apiRequestContext.post`
+TIMEOUTS during setup rather than assertion failures — both pass in isolation.
+Contention again, and distinguishable from a real failure by its shape: a
+timeout in a POST that seeds data is infrastructure, an assertion about the DOM
+is the code.
+
+### The truncation reached the accessibility tree, and 11 specs said so
+
+After the `?view=table` fix, 11 failures remained — and their NAMES were the
+diagnosis: "adds a record manually and **finds it in the collection**", "**returns
+to the collection** filtered by it", "**reaches the detail screen from the
+collection list**". Every one lands on the collection and looks for a record.
+
+The detail:
+
+    Locator: getByRole('link', { name: 'Hear Nothing fmsxkv1nt9252' })
+    Error: element(s) not found
+
+**The spine's accessible name was its truncated visible text.** A link reading
+`Luther Vandross  Nev…  FE 37451` names no record — not to a screen reader, and
+not to any caller searching for one. Eight specs across five files locate a
+record on the collection by its TITLE, which is the contract every other view
+honours, and the shelf broke all of them at once.
+
+The fix is `aria-label={title — artist}`, and it is a real accessibility defect
+rather than a test accommodation. **Truncation is a rendering constraint of a
+210px spine and has no business reaching the accessibility tree.** A sighted
+user recovers the full title by hovering (§10b's floating label); a screen
+reader had nothing, and neither did any programmatic consumer.
+
+Worth generalising: **when visible text is abbreviated for layout, the
+accessible name should carry the unabbreviated value.** The two are different
+channels and only one of them has a width limit. The E2E suite noticed because
+it consumes the accessibility tree the same way assistive technology does —
+which is the argument for locating by role and name rather than by test id.
+
+Result: 39 + 39 passing across the eight affected specs, from 11 failing.

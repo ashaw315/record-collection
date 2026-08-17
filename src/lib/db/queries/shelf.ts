@@ -3,22 +3,29 @@ import { sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
 
 /**
- * SPEC.md §10b's shelf: the collection as a wall of spines, in sections.
+ * SPEC.md §10b's shelf: the collection as ONE continuous wall of spines.
  *
- * "Records stand as spines, ordered by genre so the shelf reads as sections:
- * all the punk together, all the rock together. **That ordering is the shelf's
- * own, not a proposal for the physical one.**"
+ * "Records stand as spines on one continuous shelf, ordered by genre so related
+ * records stand together — all the punk adjacent, all the rock adjacent."
  *
- * **Sections are TOP-LEVEL genres, not the genres a record carries**, and that
- * is the whole design. UK82 and US Hardcore are different scenes — §8 forbids
- * flattening them and they stay distinct on the record, in every filter, and in
- * §7.1's hierarchy. They stand TOGETHER on the shelf because both are Punk.
- * Sectioning by the tagged genre would put two shelves of punk at opposite ends
- * of the wall, which is the opposite of what §10b asks for.
+ * **No sections, and that is a correction rather than a simplification.** An
+ * earlier version of this returned genre sections, each rendering its own
+ * heading and shelf band. It was correct and it looked broken: the real
+ * collection has six genres for five records and every one is top-level, so it
+ * produced five near-empty black bands stacked down the page. §10b was amended
+ * — "adjacency does the grouping, as it does on a real shelf and in the
+ * reference this borrows from, which shows 1,300 spines with no headings at
+ * all."
  *
- * Same rule §8.1's graph used to colour an artist, deliberately: two screens
- * grouping one collection by different genre logic would disagree about what
- * belongs together.
+ * **The ORDERING survived the sections**, which is the point: "all the punk
+ * together" is a sentence about adjacency, and ordering by top-level genre
+ * delivers it without a heading. UK82 and US Hardcore stand next to each other
+ * because both are Punk, while staying distinct on the record and in every
+ * filter — §8 forbids flattening those scenes and this does not flatten them.
+ *
+ * Same rule and tie-break §8.1's graph used to colour an artist, deliberately:
+ * two screens ordering one collection by different genre logic would disagree
+ * about what belongs beside what.
  *
  * **Owned records only**, as §8.1 scoped the graph. A want-list item is a
  * record you do not have, and standing it among the ones you do makes the wall
@@ -38,16 +45,9 @@ export type ShelfRecord = {
   spineColour: string | null;
 };
 
-export type ShelfSection = {
-  /** `null` for the leftovers bucket — it is not a real genre. */
-  genreId: string | null;
-  label: string;
-  records: ShelfRecord[];
-};
+type Row = ShelfRecord & { sectionName: string | null };
 
-type Row = ShelfRecord & { sectionId: string | null; sectionName: string | null };
-
-export async function shelfRecords(): Promise<ShelfSection[]> {
+export async function shelfRecords(): Promise<ShelfRecord[]> {
   const db = getDb();
 
   const result = await db.execute<Row>(sql`
@@ -106,7 +106,6 @@ export async function shelfRecords(): Promise<ShelfSection[]> {
       l.name AS "labelName",
       p.catalog_number AS "catalogNumber",
       rec.spine_colour AS "spineColour",
-      s.root_id AS "sectionId",
       s.root_name AS "sectionName"
     FROM records rec
     JOIN artists a ON a.id = rec.artist_id
@@ -114,9 +113,9 @@ export async function shelfRecords(): Promise<ShelfSection[]> {
     LEFT JOIN pressings p ON p.id = rec.pressing_id
     LEFT JOIN section s ON s.record_id = rec.id
     /**
-     * Sections alphabetically, with the ungrouped bucket LAST — it is the
-     * leftovers, and a section called "No genre" sorted into the middle of the
-     * wall would read as a genre.
+     * Genre groups alphabetically, with ungrouped records LAST — they are the
+     * leftovers, and scattering them through the wall would break the adjacency
+     * the ordering exists to create.
      *
      * Within a section: artist, then year, then title. That is how a shelf is
      * actually filed — an artist's records together, oldest first — and title
@@ -136,29 +135,18 @@ export async function shelfRecords(): Promise<ShelfSection[]> {
       rec.id
   `);
 
-  const sections: ShelfSection[] = [];
-
-  for (const row of result.rows) {
-    const label = row.sectionName ?? 'No genre';
-    const last = sections[sections.length - 1];
-
-    // The query already groups them, so a new section starts only when the
-    // label changes — no map, no second sort, and the order above is preserved
-    // exactly as SQL produced it.
-    if (last === undefined || last.label !== label) {
-      sections.push({ genreId: row.sectionId, label, records: [] });
-    }
-
-    sections[sections.length - 1].records.push({
-      id: row.id,
-      title: row.title,
-      artistName: row.artistName,
-      releaseYear: row.releaseYear,
-      labelName: row.labelName,
-      catalogNumber: row.catalogNumber,
-      spineColour: row.spineColour,
-    });
-  }
-
-  return sections;
+  /**
+   * A flat list in shelf order. `sectionName` did the ordering in SQL and is
+   * dropped here — it is not shown, and returning it would invite a caller to
+   * render the headings §10b removed.
+   */
+  return result.rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    artistName: row.artistName,
+    releaseYear: row.releaseYear,
+    labelName: row.labelName,
+    catalogNumber: row.catalogNumber,
+    spineColour: row.spineColour,
+  }));
 }

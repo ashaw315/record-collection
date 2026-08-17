@@ -48,21 +48,91 @@ export function spineWidth(id: string): number {
 }
 
 /**
+ * How many characters fit on a spine, top to bottom.
+ *
+ * A 210px spine at 9px mono holds about 31. Measured rather than guessed, and
+ * the measurement is why this exists at all: against the real collection, four
+ * of five spines overflowed — 38, 41, 43 and 49 characters — and the browser
+ * clipped them at BOTH ends, taking the catalogue number with it.
+ *
+ * A constant rather than a runtime measurement because the spine height is
+ * fixed in the component and text measurement in a server component is not
+ * available. If the height changes, this changes with it.
+ */
+export const SPINE_TEXT_BUDGET = 31;
+
+/** Two spaces, not " · ": on a rotated mono spine they read the same and cost
+ * one character instead of three, which is six characters back for the title. */
+const GAP = '  ';
+
+/** Truncates with an ellipsis, never returning more than `room` characters. */
+function clip(value: string, room: number): string {
+  if (room <= 0) return '';
+  if (value.length <= room) return value;
+  if (room === 1) return '…';
+
+  return `${value.slice(0, room - 1)}…`;
+}
+
+/**
  * §10b: "spine text is artist, title and catalogue number."
  *
- * A missing catalogue number is dropped rather than left as a dangling
- * separator — §10's quick in-store entry leaves it blank and that is the common
- * case, not an edge. When it IS present it stays, however crowded the spine:
- * §10b calls it "the collector's identifier" that "earns its space".
+ * **Truncated to FIT, not to a fixed length.** A short spine loses nothing; a
+ * long one loses exactly enough. The title absorbs the shortfall, because §10b
+ * names the priority: the catalogue number "is the collector's identifier and
+ * earns its space", and the artist is how a record is found on a shelf. The
+ * title is what a collector can lose and still know which record this is.
+ *
+ * **When artist and catalogue number ALONE exceed the budget, the artist gives
+ * way — not the identifier.** That case is not hypothetical: measured across
+ * plausible collections, four of six artist/catalogue pairs blow the budget
+ * before the title gets a character ("Crosby, Stills, Nash & Young" + "SD 7200"
+ * is 37 against 31). The measurement decided the direction rather than taste:
+ *
+ *     truncate artist    -> "Crosby, Stills, Nash …  SD 7200"    still obvious
+ *     truncate catalogue -> "Crosby, Stills, Nash & Young  S…"   identifies nothing
+ *
+ * A clipped artist stays readable because its distinguishing information is
+ * front-loaded. A catalogue number's is spread across the whole string, so a
+ * stub of one is not an identifier at all.
  */
 export function spineText(record: {
   artistName: string;
   title: string;
   catalogNumber: string | null;
 }): string {
-  return [record.artistName, record.title, record.catalogNumber]
-    .filter((part): part is string => part !== null && part !== '')
-    .join(' · ');
+  const catalogue = record.catalogNumber ?? '';
+  const hasCatalogue = catalogue !== '';
+
+  // What the identifiers need before the title is considered at all.
+  const fixed = record.artistName.length + (hasCatalogue ? GAP.length + catalogue.length : 0);
+
+  if (fixed > SPINE_TEXT_BUDGET) {
+    /**
+     * Degenerate: the identifiers do not fit together, so the title is gone and
+     * the artist is cut down to whatever remains. The catalogue number is never
+     * touched — if it alone fills the budget, it is the last thing standing,
+     * and a spine showing only an identifier beats one showing neither.
+     */
+    const roomForArtist = SPINE_TEXT_BUDGET - (hasCatalogue ? GAP.length + catalogue.length : 0);
+    const artist = clip(record.artistName, roomForArtist);
+
+    return [artist, hasCatalogue ? catalogue : '']
+      .filter((part) => part !== '')
+      .join(GAP);
+  }
+
+  /**
+   * Below three characters a truncated title is noise — "N…" tells the reader
+   * nothing and costs space the identifiers could use. Absence is cleaner than
+   * a stub.
+   */
+  const roomForTitle = SPINE_TEXT_BUDGET - fixed - GAP.length;
+  const title = roomForTitle >= 3 ? clip(record.title, roomForTitle) : '';
+
+  return [record.artistName, title, hasCatalogue ? catalogue : '']
+    .filter((part) => part !== '')
+    .join(GAP);
 }
 
 /** Parsed to 0–255 per channel, or `null` if the value is not a hex colour. */

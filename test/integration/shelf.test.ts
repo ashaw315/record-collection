@@ -7,20 +7,22 @@ import { shelfRecords } from '@/lib/db/queries/shelf';
 /**
  * SPEC.md §10b's shelf ordering.
  *
- * "Records stand as spines, ordered by genre so the shelf reads as sections:
- * all the punk together, all the rock together. **That ordering is the shelf's
- * own, not a proposal for the physical one.**"
+ * "Records stand as spines on one continuous shelf, ordered by genre so related
+ * records stand together — all the punk adjacent, all the rock adjacent."
  *
- * **Sections are TOP-LEVEL genres, not the genres a record carries.** UK82 and
- * US Hardcore are different scenes (§8, and this project will not flatten them)
- * — they stay distinct on the record and in every filter, and they stand
- * together on the shelf because both are Punk. Sectioning by the tagged genre
- * instead would put two shelves of punk at opposite ends of the wall, which is
- * the opposite of what §10b asks for.
+ * **These are ADJACENCY tests, not grouping tests, and the distinction is the
+ * unit's history.** An earlier version returned genre sections with headings;
+ * it was correct and looked broken — six flat genres for five records produced
+ * five near-empty black bands stacked down the page. §10b was amended to one
+ * continuous wall. The ORDERING survived intact, so what these assert is that
+ * related records end up next to each other, which is what "all the punk
+ * together" actually means.
  *
- * This is the same rule §8.1's graph used to colour an artist, and deliberately
- * so: two screens grouping the same collection by different genre logic would
- * disagree about what belongs together.
+ * The ordering is by TOP-LEVEL genre. UK82 and US Hardcore are different scenes
+ * (§8, and this project will not flatten them) — they stay distinct on the
+ * record and in every filter, and they stand adjacent on the shelf because both
+ * are Punk. Ordering by the tagged genre instead would put two runs of punk at
+ * opposite ends of the wall.
  */
 
 const db = getTestDb();
@@ -49,7 +51,13 @@ async function genre(name: string, parentGenreId?: string) {
 async function record(
   title: string,
   artistId: string,
-  extra: { genreIds?: string[]; releaseYear?: number; spineColour?: string; labelId?: string; pressingId?: string } = {},
+  extra: {
+    genreIds?: string[];
+    releaseYear?: number;
+    spineColour?: string;
+    labelId?: string;
+    pressingId?: string;
+  } = {},
 ) {
   const [row] = await db
     .insert(records)
@@ -69,126 +77,139 @@ async function record(
   return row.id;
 }
 
-const titles = (sections: Awaited<ReturnType<typeof shelfRecords>>) =>
-  sections.flatMap((section) => section.records.map((r) => r.title));
+const titles = async () => (await shelfRecords()).map((r) => r.title);
 
-describe('shelfRecords — sections', () => {
-  it('groups records under their TOP-LEVEL genre, not the one they carry', async () => {
+/** Whether two titles end up next to each other on the wall. */
+function adjacent(order: string[], a: string, b: string): boolean {
+  return Math.abs(order.indexOf(a) - order.indexOf(b)) === 1;
+}
+
+describe('shelfRecords — one continuous wall, ordered by genre', () => {
+  it('stands records of the same TOP-LEVEL genre adjacent', async () => {
     /**
-     * The load-bearing case. A record tagged UK82 and one tagged US Hardcore are
-     * different scenes and must stay so in the data — but on a shelf they stand
-     * together, because both are punk.
+     * The load-bearing case. A UK82 record and a US Hardcore record are
+     * different scenes and stay so in the data — but on the wall they stand
+     * next to each other, because both are punk. A rock record separates them
+     * only if the ordering is wrong.
      */
     const punk = await genre('Punk');
     const uk82 = await genre('UK82', punk);
     const hardcore = await genre('US Hardcore', punk);
+    const rock = await genre('Rock');
 
-    const discharge = await artist('Discharge');
-    const blackFlag = await artist('Black Flag');
-    await record('Hear Nothing', discharge, { genreIds: [uk82] });
-    await record('Damaged', blackFlag, { genreIds: [hardcore] });
+    await record('Damaged', await artist('Black Flag'), { genreIds: [hardcore] });
+    await record('Brothers in Arms', await artist('Dire Straits'), { genreIds: [rock] });
+    await record('Hear Nothing', await artist('Discharge'), { genreIds: [uk82] });
 
-    const sections = await shelfRecords();
+    const order = await titles();
 
-    expect(sections).toHaveLength(1);
-    expect(sections[0].label).toBe('Punk');
-    expect(sections[0].records).toHaveLength(2);
+    expect(adjacent(order, 'Damaged', 'Hear Nothing'), order.join(' | ')).toBe(true);
   });
 
-  it('keeps unrelated top-level genres in separate sections', async () => {
+  it('keeps unrelated genres in separate runs', async () => {
     const punk = await genre('Punk');
     const rock = await genre('Rock');
 
-    await record('Hear Nothing', await artist('Discharge'), { genreIds: [punk] });
-    await record('Brothers in Arms', await artist('Dire Straits'), { genreIds: [rock] });
+    await record('Rock A', await artist('A Rock'), { genreIds: [rock] });
+    await record('Punk A', await artist('A Punk'), { genreIds: [punk] });
+    await record('Rock B', await artist('B Rock'), { genreIds: [rock] });
 
-    const sections = await shelfRecords();
-
-    expect(sections.map((s) => s.label)).toEqual(['Punk', 'Rock']);
+    // Punk sorts before Rock, so the two rock records are together after it —
+    // not interleaved with the punk one.
+    expect(await titles()).toEqual(['Punk A', 'Rock A', 'Rock B']);
   });
 
-  it('orders sections by name, so the wall is the same on every load', async () => {
+  it('returns a flat list, with no sections or headings', async () => {
     /**
-     * §8.2's determinism rule, which outlived the feature it was written for:
-     * "the same collection must always produce the same order". A shelf that
-     * reshuffles between page loads is useless for finding a record by eye,
-     * which is the entire point of §10b.
+     * §10b as amended: "no section headings, and no shelf band per genre."
+     * Returning sections would invite a caller to render the headings that were
+     * removed, so the shape itself rules it out.
+     */
+    const punk = await genre('Punk');
+    await record('Hear Nothing', await artist('Discharge'), { genreIds: [punk] });
+
+    const shelf = await shelfRecords();
+
+    expect(Array.isArray(shelf)).toBe(true);
+    expect(shelf[0]).not.toHaveProperty('records');
+    expect(shelf[0]).not.toHaveProperty('label');
+  });
+
+  it('is byte-identical across calls, so the wall can be scanned by eye', async () => {
+    /**
+     * §8.2's determinism rule outlived the feature it was written for. A wall
+     * that reshuffles between page loads has to be re-scanned every time, which
+     * defeats §10b's entire purpose.
      *
-     * Inserted in reverse so insertion order cannot be what passes this.
+     * Inserted in a deliberately unhelpful order so insertion order cannot be
+     * what passes this.
      */
     const rock = await genre('Rock');
     const jazz = await genre('Jazz');
-    const punk = await genre('Punk');
 
     await record('C', await artist('C'), { genreIds: [rock] });
     await record('A', await artist('A'), { genreIds: [jazz] });
-    await record('B', await artist('B'), { genreIds: [punk] });
+    await record('B', await artist('B'), { genreIds: [rock] });
 
-    expect((await shelfRecords()).map((s) => s.label)).toEqual(['Jazz', 'Punk', 'Rock']);
+    expect(await titles()).toEqual(await titles());
+    expect(await titles()).toEqual(['A', 'B', 'C']);
   });
 
-  it('puts records with no genre in their own section, last and named', async () => {
+  it('puts records with no genre at the END, not scattered through the wall', async () => {
     /**
-     * §10b's "sparse is fine" and §8.1's honest-absence rule. A record with no
-     * genre is not hidden and not silently filed under something — it stands in
-     * a section that says what it is.
+     * They are the leftovers. Scattering them would break the adjacency the
+     * ordering exists to create — a genreless record between two punk records
+     * separates records that belong together.
      *
-     * Last, because it is the leftovers, and a section called "No genre" sorted
-     * alphabetically into the middle of the wall would read as a genre.
+     * Not hidden either: §10b's "sparse is fine" and §8.1's honest-absence rule
+     * both apply, and a record missing from the wall is worse than one at the
+     * end of it.
      */
     const punk = await genre('Punk');
-    await record('Hear Nothing', await artist('Discharge'), { genreIds: [punk] });
     await record('Uncategorised', await artist('Nobody'));
-
-    const sections = await shelfRecords();
-
-    expect(sections.map((s) => s.label)).toEqual(['Punk', 'No genre']);
-    expect(sections[1].genreId, 'the bucket is not a real genre').toBeNull();
-  });
-
-  it('does not emit an empty leftovers section when every record has a genre', async () => {
-    // An empty heading asserts something is missing. Nothing is the honest
-    // rendering of nothing — the same rule the gallery follows.
-    const punk = await genre('Punk');
     await record('Hear Nothing', await artist('Discharge'), { genreIds: [punk] });
 
-    expect((await shelfRecords()).map((s) => s.label)).toEqual(['Punk']);
+    expect(await titles()).toEqual(['Hear Nothing', 'Uncategorised']);
   });
 
-  it('files a record under ONE section even when it carries several genres', async () => {
+  it('places a record ONCE even when it carries several genres', async () => {
     /**
-     * A spine occupies one position on a shelf. A record tagged both Punk and
-     * Rock cannot stand in two places, so the query picks one — and must not
-     * emit the record twice, which is what a naive join produces.
+     * A spine occupies one position on a shelf. The naive join emits the record
+     * once per genre, which on a wall is the same record appearing twice.
      */
     const punk = await genre('Punk');
     const rock = await genre('Rock');
     await record('Crossover', await artist('Both'), { genreIds: [punk, rock] });
 
-    const sections = await shelfRecords();
-
-    expect(titles(sections)).toEqual(['Crossover']);
+    expect(await titles()).toEqual(['Crossover']);
   });
 
   it('breaks a multi-genre tie on the ancestor name, deterministically', async () => {
     /**
-     * Which section wins is arbitrary; that it is STABLE is not. The rule is
-     * the alphabetically-first top-level ancestor, matching §8.1's colour
-     * tie-break — two screens grouping the same collection by different logic
-     * would disagree about what belongs together.
+     * Which run a crossover record joins is arbitrary; that it is STABLE is
+     * not. The rule is the alphabetically-first top-level ancestor, matching
+     * §8.1's colour tie-break — two screens ordering one collection by
+     * different logic would disagree about what belongs beside what.
+     *
+     * Punk sorts before Rock, so the crossover stands with the punk record.
      */
     const punk = await genre('Punk');
     const rock = await genre('Rock');
-    await record('Crossover', await artist('Both'), { genreIds: [rock, punk] });
 
-    expect((await shelfRecords())[0].label).toBe('Punk');
+    await record('Pure Rock', await artist('Z Rock'), { genreIds: [rock] });
+    await record('Crossover', await artist('A Both'), { genreIds: [rock, punk] });
+    await record('Pure Punk', await artist('A Punk'), { genreIds: [punk] });
+
+    expect(await titles()).toEqual(['Crossover', 'Pure Punk', 'Pure Rock']);
   });
 
   it('survives a cycle in parent_genre_id rather than looping forever', async () => {
     /**
      * `genres.parent_genre_id` has no cycle constraint — the guard is at the
-     * application layer (§4.1), so a→b→a is storable and a walk without a
-     * termination guard hangs the request rather than returning a wrong answer.
+     * application layer (§4.1) — so a→b→a is storable, and an unbounded upward
+     * walk hangs the request rather than returning a wrong answer.
+     *
+     * Mutation-verified: removing `WHERE c.depth < 16` makes this time out.
      */
     const a = await genre('Alpha');
     const b = await genre('Beta', a);
@@ -196,12 +217,11 @@ describe('shelfRecords — sections', () => {
 
     await record('Looped', await artist('Loop'), { genreIds: [b] });
 
-    const sections = await shelfRecords();
-    expect(titles(sections)).toEqual(['Looped']);
+    expect(await titles()).toEqual(['Looped']);
   });
 });
 
-describe('shelfRecords — order within a section', () => {
+describe('shelfRecords — order within a genre run', () => {
   it('orders by artist, then year, then title', async () => {
     /**
      * How a shelf is actually filed: an artist's records together, oldest
@@ -217,19 +237,14 @@ describe('shelfRecords — order within a section', () => {
     await record('Hear Nothing', discharge, { genreIds: [punk], releaseYear: 1982 });
     await record('Aardvark', discharge, { genreIds: [punk], releaseYear: 1982 });
 
-    expect(titles(await shelfRecords())).toEqual([
-      'Why',
-      'Aardvark',
-      'Hear Nothing',
-      'Bloodsuckers',
-    ]);
+    expect(await titles()).toEqual(['Why', 'Aardvark', 'Hear Nothing', 'Bloodsuckers']);
   });
 
   it('places a record with no year after that artist’s dated ones', async () => {
     /**
      * Absent, not zero. Sorting NULL as 0 would file every undated record at
      * the head of its artist, in front of records genuinely older — asserting a
-     * date nobody entered. NULLS LAST says "we do not know" instead.
+     * date nobody entered.
      */
     const punk = await genre('Punk');
     const discharge = await artist('Discharge');
@@ -237,7 +252,7 @@ describe('shelfRecords — order within a section', () => {
     await record('Undated', discharge, { genreIds: [punk] });
     await record('Why', discharge, { genreIds: [punk], releaseYear: 1981 });
 
-    expect(titles(await shelfRecords())).toEqual(['Why', 'Undated']);
+    expect(await titles()).toEqual(['Why', 'Undated']);
   });
 });
 
@@ -246,9 +261,8 @@ describe('shelfRecords — what a spine needs', () => {
     /**
      * §10b: spine text is "artist, title and catalogue number"; hover names
      * "artist, title, year, label". Everything a spine and its label need
-     * arrives in ONE query — a shelf that fetched a label per spine would issue
-     * a request per record on a screen whose whole point is showing many at
-     * once.
+     * arrives in ONE query — a wall that fetched a label per spine would issue
+     * a request per record on a screen whose whole point is showing many.
      */
     const punk = await genre('Punk');
     const [label] = await db
@@ -268,7 +282,7 @@ describe('shelfRecords — what a spine needs', () => {
       pressingId: pressing.id,
     });
 
-    const [row] = (await shelfRecords())[0].records;
+    const [row] = await shelfRecords();
 
     expect(row).toMatchObject({
       title: 'Hear Nothing',
@@ -284,11 +298,11 @@ describe('shelfRecords — what a spine needs', () => {
   it('reports a missing colour as null rather than a default', async () => {
     // §10b: "a record with no cover gets a plain spine — an honest absence, not
     // a gap in the wall." A default here would be indistinguishable from a
-    // genuinely dark sleeve.
+    // genuinely dark sleeve, and the DEFAULT belongs to the renderer.
     const punk = await genre('Punk');
     await record('No cover', await artist('Discharge'), { genreIds: [punk] });
 
-    expect((await shelfRecords())[0].records[0].spineColour).toBeNull();
+    expect((await shelfRecords())[0].spineColour).toBeNull();
   });
 
   it('reports a missing catalogue number and label as null, not empty strings', async () => {
@@ -298,7 +312,7 @@ describe('shelfRecords — what a spine needs', () => {
     const punk = await genre('Punk');
     await record('Bare', await artist('Discharge'), { genreIds: [punk] });
 
-    const [row] = (await shelfRecords())[0].records;
+    const [row] = await shelfRecords();
     expect(row.catalogNumber).toBeNull();
     expect(row.labelName).toBeNull();
   });
@@ -307,7 +321,7 @@ describe('shelfRecords — what a spine needs', () => {
 describe('shelfRecords — scope', () => {
   it('returns an empty array for an empty collection', async () => {
     // §10b: "sparse is fine … the view does not pad, fake, or hide itself."
-    // Zero records is zero sections, not a placeholder wall.
+    // Zero records is an empty wall, not a placeholder.
     expect(await shelfRecords()).toEqual([]);
   });
 
@@ -326,6 +340,6 @@ describe('shelfRecords — scope', () => {
       sql`INSERT INTO want_list (title, artist_id) VALUES ('Never Again', ${discharge})`,
     );
 
-    expect(titles(await shelfRecords())).toEqual(['Hear Nothing']);
+    expect(await titles()).toEqual(['Hear Nothing']);
   });
 });

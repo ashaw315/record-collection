@@ -2,6 +2,19 @@ import { expect, test, type Page } from '@playwright/test';
 import { removeRecordsFor, seedRecords } from './seed';
 
 /**
+ * **These specs ask for `?view=table` explicitly, and that is the point.**
+ *
+ * §10b made the shelf the default view of `/`. These tests are about FILTERING,
+ * PAGING and WIDTHS — behaviours of the table and grid, not of the wall — so
+ * they were relying on a default rather than stating their subject. When the
+ * default moved they broke, 22 of them, in files this unit never opened.
+ *
+ * Naming the view is the honest fix: it says which view each test is about, and
+ * it survives the next time the default changes.
+ */
+
+
+/**
  * SPEC.md §10 `/`: the collection screen's controls.
  *
  * E2E rather than integration because the behaviour under test is NAVIGATION —
@@ -222,7 +235,7 @@ test('searching narrows the collection and survives a reload', async ({ page }) 
    */
   const term = 'Hear Nothing';
   const artistId = await artistIdFor(page, f.suffix);
-  await page.goto(`/?artistId=${artistId}`);
+  await page.goto(`/?view=table&artistId=${artistId}`);
   await controlsReady(page);
 
   // Wait for the filtered page to settle before typing: the search box is
@@ -269,7 +282,7 @@ test('a parent-genre chip finds a record tagged with its grandchild, and says wh
    * about is §7.1 hierarchy plus matchedVia, and the URL reaches that state
    * without depending on what else the database holds.
    */
-  await page.goto(`/?genreId=${f.punkId}`);
+  await page.goto(`/?view=table&genreId=${f.punkId}`);
   await controlsReady(page);
 
   // §7.1: both the UK82 and Crust records are in the Punk subtree; the Jazz
@@ -300,7 +313,7 @@ test('clicking the active chip clears it', async ({ page }) => {
    * the thing under test here.
    */
   const f = await seed(page);
-  await page.goto(`/?artistId=${f.artistId}`);
+  await page.goto(`/?view=table&artistId=${f.artistId}`);
   await controlsReady(page);
 
   const chip = page.getByRole('button', { name: `Punk-${f.suffix}` });
@@ -332,7 +345,7 @@ test('a year range keeps undated records until they are excluded, and says how m
    * clears it' — missed then because the failure moved between runs and read as
    * flake.
    */
-  await page.goto(`/?artistId=${f.artistId}&yearFrom=1980&yearTo=1983`);
+  await page.goto(`/?view=table&artistId=${f.artistId}&yearFrom=1980&yearTo=1983`);
 
   await expect(page.getByText(/records? (has|have) no release year/)).toBeVisible();
 
@@ -363,7 +376,7 @@ test('sorting reorders the rows', async ({ page }) => {
   const f = await seed(page);
   // q on the suffix deliberately: this test wants all three of this run's
   // records in scope, and the fuzzy match across title and artist gives that.
-  await page.goto(`/?q=${f.suffix}`);
+  await page.goto(`/?view=table&q=${f.suffix}`);
   await controlsReady(page);
 
   await page.getByLabel('Sort by').selectOption('releaseYear:desc');
@@ -380,7 +393,7 @@ test('filters compose rather than replacing each other', async ({ page }) => {
   // The defect a single-filter test cannot catch: applying a second filter
   // silently dropping the first.
   const f = await seed(page);
-  await page.goto('/');
+  await page.goto('/?view=table');
   await controlsReady(page);
 
   await page.getByRole('button', { name: `Punk-${f.suffix}` }).click();
@@ -410,7 +423,7 @@ test('clicking through to a filtered view equals loading that URL directly', asy
   browser,
 }) => {
   const f = await seed(page);
-  await page.goto('/');
+  await page.goto('/?view=table');
   await controlsReady(page);
 
   await page.getByRole('button', { name: `Punk-${f.suffix}` }).click();
@@ -485,7 +498,7 @@ test('the view toggle switches layout and survives a reload', async ({ page }, t
    * passed alone, failed alongside the paging specs.
    */
   const artistId = await artistIdFor(page, f.suffix);
-  await page.goto(`/?artistId=${artistId}`);
+  await page.goto(`/?view=table&artistId=${artistId}`);
   await controlsReady(page);
 
   await page.getByRole('button', { name: 'grid', exact: true }).click();
@@ -514,7 +527,7 @@ test('paging keeps the active filter rather than dropping it', async ({ page }) 
   const artist = await bulkArtist(page, `Bulk-${f.suffix}`, f.suffix);
 
   try {
-    await page.goto(`/?artistId=${artist}`);
+    await page.goto(`/?view=table&artistId=${artist}`);
 
     const pagination = page.getByRole('navigation', { name: 'Pagination' });
     await expect(pagination).toContainText('1–50 of 55');
@@ -540,7 +553,7 @@ test('changing a filter returns to page 1', async ({ page }) => {
   const artist = await bulkArtist(page, `Bulk2-${f.suffix}`, f.suffix);
 
   try {
-    await page.goto(`/?artistId=${artist}&page=2`);
+    await page.goto(`/?view=table&artistId=${artist}&page=2`);
     await expect(page.getByRole('navigation', { name: 'Pagination' })).toContainText('51–55 of 55');
 
     await page.getByLabel('Sort by').selectOption('title:desc');
@@ -565,7 +578,7 @@ test('the grid toggle is hidden on a phone, but a grid URL still renders', async
   const f = await seed(page);
   const artistId = await artistIdFor(page, f.suffix);
 
-  await page.goto(`/?artistId=${artistId}`);
+  await page.goto(`/?view=table&artistId=${artistId}`);
   await controlsReady(page);
   await expect(page.getByRole('group', { name: 'View' })).toBeHidden();
 

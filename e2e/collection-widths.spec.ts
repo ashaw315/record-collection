@@ -1,6 +1,19 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 /**
+ * **These specs ask for `?view=table` explicitly, and that is the point.**
+ *
+ * §10b made the shelf the default view of `/`. These tests are about FILTERING,
+ * PAGING and WIDTHS — behaviours of the table and grid, not of the wall — so
+ * they were relying on a default rather than stating their subject. When the
+ * default moved they broke, 22 of them, in files this unit never opened.
+ *
+ * Naming the view is the honest fix: it says which view each test is about, and
+ * it survives the next time the default changes.
+ */
+
+
+/**
  * **No width may lose data** (SPEC.md §10: mobile is an equal priority).
  *
  * The collection table hides columns at narrow widths and reprints them in a
@@ -97,7 +110,7 @@ test('the label is readable at every width, never silently dropped', async ({ pa
 
   for (const { width, note } of WIDTHS) {
     await page.setViewportSize({ width, height: 900 });
-    await page.goto(`/?artistId=${f.artistId}`);
+    await page.goto(`/?view=table&artistId=${f.artistId}`);
 
     const row = page.getByRole('row').filter({ hasText: f.suffix });
     await expect(row, `${width}px (${note})`).toHaveCount(1);
@@ -121,7 +134,7 @@ test('the format is readable at every width', async ({ page }) => {
 
   for (const { width, note } of WIDTHS) {
     await page.setViewportSize({ width, height: 900 });
-    await page.goto(`/?artistId=${f.artistId}`);
+    await page.goto(`/?view=table&artistId=${f.artistId}`);
 
     const row = page.getByRole('row').filter({ hasText: f.suffix });
     expect(await visibleText(row), `format not VISIBLE at ${width}px — ${note}`).toContain(
@@ -148,7 +161,7 @@ test('a dash means "not recorded", never "your window is too narrow"', async ({ 
 
   for (const { width, note } of WIDTHS) {
     await page.setViewportSize({ width, height: 900 });
-    await page.goto(`/?artistId=${f.artistId}`);
+    await page.goto(`/?view=table&artistId=${f.artistId}`);
 
     const withLabel = page.getByRole('row').filter({ hasText: `Widths ${f.suffix}` });
     const without = page.getByRole('row').filter({ hasText: `Bare ${f.suffix}` });

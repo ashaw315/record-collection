@@ -147,7 +147,7 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
             the collection's size rather than a view of it — the sections are
             the structure, and scrolling is how you reach the end.
           */
-          <Shelf sections={shelf} />
+          <Shelf records={shelf} />
         )}
       </main>
     </>
