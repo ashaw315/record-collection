@@ -4,7 +4,15 @@ import Link from 'next/link';
 import { useState } from 'react';
 import type { ShelfRecord } from '@/lib/db/queries/shelf';
 import { PulledRecord } from './PulledRecord';
-import { DEFAULT_SPINE_COLOUR, spineText, spineWidth, textColourOn } from './spine';
+import {
+  DEFAULT_SPINE_COLOUR,
+  SHELF_EDGE,
+  SPINE_HEIGHT,
+  SPINE_ROW_HEIGHT,
+  spineText,
+  spineWidth,
+  textColourOn,
+} from './spine';
 
 /**
  * §10b's shelf: the collection as ONE continuous wall of spines, browsed by eye.
@@ -53,20 +61,50 @@ export function Shelf({ records }: { records: ShelfRecord[] }) {
   return (
     <div className="mt-6" data-testid="shelf">
       {/*
-        One shelf. `perspective` on the container with a slight rotation on the
-        row is what makes the spines read as objects with depth rather than as
-        coloured bars — §10b's "most of the feel from transforms and shadows".
+        **Shelves that fill the width and wrap** (§10b as amended). One shelf
+        holds as many spines as fit and the rest continue below, so the wall
+        grows downward as a bookcase does.
 
-        `overflow-x-auto` because a wall is horizontal: a long collection
-        scrolls sideways rather than wrapping into rows, which would stop it
-        reading as one shelf. §10b's "sparse is fine" is why nothing pads it —
+        This replaced `overflow-x-auto`, which put the whole collection on one
+        sideways-scrolling shelf. That reads as a single strip rather than a
+        wall, and — the practical half — everything past the viewport width was
+        behind a horizontal scroll nobody thinks to use on a page that scrolls
+        vertically.
+
+        **`background-repeat` draws the shelf edge under every row**, which is
+        what makes wrapping look like shelves rather than one tall box. A
+        border-bottom on the container would draw a single line under the last
+        row and leave the rows above floating. The gradient is a hard stop: a
+        band of dark timber at the foot of each 168px row.
+
+        `perspective` on the container with a slight rotation is what makes the
+        spines read as objects with depth — §10b's "most of the feel from
+        transforms and shadows". §10b's "sparse is fine" is why nothing pads it:
         five records is five spines and a lot of visible shelf.
       */}
       <div
-        className="overflow-x-auto rounded-xs border-b-4 border-b-[#241d16] bg-[#0e0d0c] px-4 pt-5 pb-1"
-        style={{ perspective: '900px' }}
+        className="rounded-xs bg-[#0e0d0c] px-4 pt-5 pb-2"
+        style={{
+          perspective: '900px',
+          backgroundImage: `linear-gradient(to bottom, transparent 0, transparent ${SPINE_HEIGHT}px, #241d16 ${SPINE_HEIGHT}px, #241d16 ${SPINE_ROW_HEIGHT}px)`,
+          backgroundSize: `100% ${SPINE_ROW_HEIGHT}px`,
+          /*
+            The gradient is painted in the PADDING BOX, so it starts under
+            `pt-5` (20px) automatically — an explicit offset double-counted it
+            and floated the timber above the first row. `padding-box` says so
+            rather than relying on the default.
+          */
+          backgroundOrigin: 'padding-box',
+          backgroundClip: 'padding-box',
+          backgroundRepeat: 'repeat-y',
+        }}
       >
-        <ul className="flex items-end gap-[3px]" style={{ transform: 'rotateX(2deg)' }}>
+        <ul
+          className="flex flex-wrap items-end gap-x-[3px]"
+          // `rowGap` is the shelf edge itself: the gap between rows is where
+          // the repeating background paints the timber.
+          style={{ rowGap: `${SHELF_EDGE}px`, transform: 'rotateX(2deg)' }}
+        >
           {records.map((record) => {
             const colour = record.spineColour ?? DEFAULT_SPINE_COLOUR;
             const light = textColourOn(record.spineColour) === 'light';
@@ -118,9 +156,10 @@ export function Shelf({ records }: { records: ShelfRecord[] }) {
                     has no business reaching the accessibility tree.
                   */
                   aria-label={`${record.title} — ${record.artistName}`}
-                  className="block h-[210px] rounded-t-[1px] outline-none transition-transform duration-150 focus-visible:ring-2 focus-visible:ring-ring group-hover:-translate-y-2 focus-visible:-translate-y-2"
+                  className="block rounded-t-[1px] outline-none transition-transform duration-150 focus-visible:ring-2 focus-visible:ring-ring group-hover:-translate-y-2 focus-visible:-translate-y-2"
                   style={{
                     width: `${spineWidth(record.id)}px`,
+                    height: `${SPINE_HEIGHT}px`,
                     background: colour,
                     /*
                       Two inset shadows do the work of a 3D model: a dark edge on

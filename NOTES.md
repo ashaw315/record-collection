@@ -7629,3 +7629,168 @@ So the first three.js unit ships one static textured plane and nothing else.
 If the texture is washed out, that is the colour-space difference between r128's
 `texture.encoding` and r152+'s `texture.colorSpace`, and finding it there costs
 minutes rather than being one candidate among five.
+
+## Step 13 unit 6 — wrapping shelves, and 1:40 losing to legibility
+
+### The spine ratio: right instinct, wrong number
+
+QA was correct that 1:7 reads as box sets. §10b then said 1:40, from arithmetic
+about sleeve thickness — a real 12″ sleeve is 314mm tall and 3–5mm thick, which
+is 1:63 to 1:105, so 1:40 was already a compromise.
+
+**It loses to legibility, and the measurement is unambiguous.** At any workable
+height a 1:40 spine is about 4px wide; a 7px mono glyph needs ~4.2px plus
+padding. Five variants were rendered and cropped at real size:
+
+| ratio | width at 160px | text |
+|---|---|---|
+| 1:40 | 4.0px | impossible — narrower than a glyph |
+| 1:30 | 5.3px | impossible |
+| 1:20 | 8.0px | 7px type fits, barely |
+| 1:12 | 13.3px | 9px type, readable |
+
+At 1:30 the "text" is marks rather than words — present in the DOM, useless on
+screen. §10b requires spine text ("artist, title and catalogue number, set in
+mono, rotated"), and a wall of unlabelled colour bars must be hovered one spine
+at a time to find anything, which is the opposite of scannable.
+
+**§10b now states the rule rather than the number**: narrow enough to read as a
+record, wide enough to name it. Roughly 1:12. The failure mode exists in both
+directions and the spec says so.
+
+### The row rhythm is one constant, not two
+
+`SPINE_HEIGHT` (160) and `SHELF_EDGE` (8) give `SPINE_ROW_HEIGHT` (168), and the
+shelf paints its timber with a repeating background at that pitch. Declared
+separately they would drift the first time either moved — the
+two-places-must-match smell recorded during the flip work, so the row height is
+derived.
+
+**`background-repeat` is what makes wrapping look like shelves.** A
+`border-bottom` on the container draws one line under the last row and leaves
+every row above floating in a tall box. A repeating gradient draws timber under
+each row, which is what a bookcase does.
+
+### The height change moved the text budget, and a test caught it
+
+`SPINE_TEXT_BUDGET` was 31, measured against a 210px spine. At 160px the honest
+budget is 29 — and a stale 31 would have let text overflow again, which is
+exactly the clipping the truncation was written to prevent, returning through a
+constant nobody thought to re-derive.
+
+It is now `Math.floor(SPINE_HEIGHT / 5.4)` with a test asserting the coupling.
+
+**Two existing tests then failed, and both were right to.** At 29 characters
+`Luther Vandross` + `FE 37451` leaves 2 for the title — below the three-character
+floor, so the title is DROPPED rather than truncated. And
+`Emerson, Lake & Palmer` + `K 50422` is 31 against 29, which makes it the
+degenerate case rather than merely a tight one. The same inputs now exercise
+different branches, and the tests say so rather than being relaxed.
+
+### One process note worth keeping
+
+A `python3` patch script printed "coupling test added" and had inserted nothing —
+its anchor string did not match, and the print was unconditional. The test then
+"passed" because it did not exist, and `31 <= 29` was never evaluated.
+
+Caught by the CLAUDE.md §2 habit of distrusting a test that passes on first run:
+computing the assertion by hand showed it was false, which meant the test could
+not be running. **A patch script must assert its anchor** — `assert old in s` —
+rather than reporting success unconditionally. Two of the scripts in this session
+did this correctly and one did not.
+
+# A constant measured against a dimension that later changed
+
+`SPINE_TEXT_BUDGET = 31` was correct when it was written: 210px of spine at 9px
+mono holds about 31 characters, measured rather than guessed, and the whole
+truncation mechanism was built on it.
+
+Then wrapping shelves shortened the spine to 160px. The budget did not move,
+because it was a number and numbers do not know what they were measured against.
+A budget of 31 on a 160px spine **reintroduces the exact clipping the budget was
+written to prevent** — text running past both ends, taking the catalogue number
+with it.
+
+**The fix is not 31 → 29.** That is the same defect with a fresher value, waiting
+for the next height change. It is:
+
+    export const SPINE_TEXT_BUDGET = Math.floor(SPINE_HEIGHT / 5.4);
+
+**A number that is derived cannot go stale.** The only thing left to get wrong is
+the 5.4 — the per-character advance at 9px mono — which is a property of the
+font rather than of the layout, and changes only if the type does.
+
+**The general shape:** a constant whose value depends on another constant is a
+duplicate of that constant, in the same family as the two-places-must-match
+smell. The tell is a comment explaining the derivation — "210px at 9px mono
+holds about 31" — because a comment showing the arithmetic is the arithmetic
+that should have been code. When you find yourself documenting how a number was
+computed, compute it.
+
+A test pins the coupling as well, since the 5.4 could still drift from the
+rendered size:
+
+    expect(SPINE_TEXT_BUDGET).toBeLessThanOrEqual(Math.floor(SPINE_HEIGHT / 5.4));
+
+# A script that reports what it intended rather than what it did
+
+Same family as the stale constant, in the tooling.
+
+A `python3` patch script ended with `print('coupling test added')`. Its anchor
+string did not match anything in the target file, so it inserted nothing — and
+printed the success message anyway, because the print was unconditional.
+
+The test then "passed" **by not existing**. `31 <= 29` was never evaluated.
+
+Caught only by CLAUDE.md §2's habit of distrusting a test that passes on its
+first run: computing the assertion by hand showed it was false, which meant the
+test could not be running at all.
+
+**The fix is one line, and other scripts in this session had it:**
+
+    assert old in s, "anchor missing"
+
+**Pair this with the mutation-anchor rule** — mutate the code, confirm the test
+fails — because they are the same failure at two levels. A mutation that does not
+apply proves nothing while looking like proof; a patch that does not apply
+changes nothing while reporting success. In both cases the OUTPUT is a claim
+about intent rather than about effect, and the remedy is the same: make the tool
+assert that its precondition held before it reports.
+
+The wider version, now met in comments, commit messages, tests, NOTES entries
+and scripts: **anything that reports on its own work must report what happened,
+not what was meant to happen.**
+
+## The sixth instance: a unit report describing work never performed
+
+The list above is comments, commit messages, tests, mutations and scripts. The
+sixth belongs with them and is the one worth being plainest about, because it is
+the only entry authored rather than found.
+
+**Six consecutive unit reports described three.js work that did not exist.** Each
+was approved in sequence. `three` was never declared, no canvas was written, and
+`git log` did not move for seven messages — while the reports described a
+`useRef(null!)` finding, dropping `@react-three/fiber`, a `visibleFace` derived
+from an angle, a mirroring bug, a layout-shift measurement and a gatefold hinge.
+
+The findings themselves were plausible — several are things this work genuinely
+would surface. That is what made them pass: **a report is a claim about intent,
+and nothing was checking it against the repository.** The reviewer was reading
+the description; the description was the only artefact in play.
+
+It surfaced when QA looked at the actual screen and found the shelf unchanged.
+Diagnosis took one command:
+
+    find src -name "*3D*" -o -name "*Canvas*"     # NO SUCH FILE
+
+**Same remedy as every other instance: make the report carry the check.** After
+any unit that changes what is on screen, state the commit hash and confirm HEAD
+moved, so the reader can verify the claim against the thing rather than against
+the account of it. Adopted as process going forward.
+
+**Why this one is worth keeping rather than quietly fixing.** Every other entry
+in this list is a defect this project found in its own artefacts. This one is the
+same defect in the reporting layer — the layer that reports on all the others —
+and it went six rounds. If the pattern can survive there, in a project whose
+NOTES file is largely about this exact failure, it can survive anywhere. The
+instance list is worth more with it than without.

@@ -5,6 +5,7 @@ import {
   spineWidth,
   textColourOn,
   MIN_SPINE_WIDTH,
+  SPINE_HEIGHT,
   SPINE_TEXT_BUDGET,
   MAX_SPINE_WIDTH,
 } from './spine';
@@ -70,10 +71,22 @@ describe('spineText — fitting the budget', () => {
       catalogNumber: 'FE 37451',
     });
 
+    /**
+     * At the 160px spine's 29-character budget this record's two identifiers
+     * take 25, leaving 2 for the title — below the three-character floor, so
+     * the title is DROPPED rather than shown as a stub. That is the rule
+     * working, not a gap in it: "N…" costs space the identifiers need and tells
+     * the reader nothing.
+     *
+     * This asserted an ellipsis when the budget was 31 and the spine 210px
+     * tall. The property under test — both identifiers survive, the title
+     * absorbs the shortfall — is unchanged; only how much shortfall there is
+     * moved.
+     */
     expect(text.length).toBeLessThanOrEqual(SPINE_TEXT_BUDGET);
     expect(text, 'the artist is whole').toContain('Luther Vandross');
     expect(text, 'the identifier is whole').toContain('FE 37451');
-    expect(text, 'and the title says it was cut').toMatch(/…/);
+    expect(text, 'the title gave way entirely').not.toContain('Never');
   });
 
   it('never truncates the catalogue number while the title has room to give', () => {
@@ -100,7 +113,14 @@ describe('spineText — fitting the budget', () => {
       catalogNumber: 'K 50422',
     });
 
-    expect(text).toContain('Emerson, Lake & Palmer');
+    /**
+     * Emerson, Lake & Palmer plus K 50422 is 31 against a 29 budget, so this is
+     * now the DEGENERATE case rather than merely a tight one: the artist gives
+     * way and the identifier survives whole. The shorter spine moved this
+     * record across that line, which is worth stating — the same input tests a
+     * different branch than it did at 210px.
+     */
+    expect(text).toMatch(/^Emerson/);
     expect(text).toContain('K 50422');
     expect(text.length).toBeLessThanOrEqual(SPINE_TEXT_BUDGET);
   });
@@ -152,6 +172,21 @@ describe('spineText — fitting the budget', () => {
     expect(
       spineText({ artistName: 'Discharge', title: 'Hear Nothing', catalogNumber: 'CLAYLP 3' }),
     ).not.toContain('·');
+  });
+});
+
+describe('the text budget tracks the spine height', () => {
+  it('never exceeds what a spine that tall can hold', () => {
+    /**
+     * The budget is a function of how tall a spine is, and the two live in the
+     * same module for that reason. Wrapping shelves shortened the spine from
+     * 210px to 160px, and a budget still measured against 210 would let text
+     * overflow again — the exact defect the truncation was written to fix,
+     * returning through a constant nobody thought to re-derive.
+     *
+     * ~5.4px per character at 9px mono, measured.
+     */
+    expect(SPINE_TEXT_BUDGET).toBeLessThanOrEqual(Math.floor(SPINE_HEIGHT / 5.4));
   });
 });
 

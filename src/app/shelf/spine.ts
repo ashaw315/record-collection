@@ -30,6 +30,20 @@ export const MIN_SPINE_WIDTH = 26;
 export const MAX_SPINE_WIDTH = 34;
 
 /**
+ * How tall a spine stands, and the row rhythm the shelf repeats at.
+ *
+ * **One constant, two consumers.** The shelf paints its shelf-edge with a
+ * repeating background every `SPINE_ROW_HEIGHT` pixels, and a spine is
+ * `SPINE_HEIGHT` tall. If the spine were taller than the row it would overhang
+ * the shelf below; if the two were declared separately they would drift the
+ * first time either changed — the two-places-must-match smell recorded in
+ * NOTES, so the row is derived rather than restated.
+ */
+export const SPINE_HEIGHT = 160;
+export const SHELF_EDGE = 8;
+export const SPINE_ROW_HEIGHT = SPINE_HEIGHT + SHELF_EDGE;
+
+/**
  * Derived from the record's id, so it is STABLE across loads.
  *
  * §8.2's determinism rule outlived the feature it was written for: a wall that
@@ -50,7 +64,10 @@ export function spineWidth(id: string): number {
 /**
  * How many characters fit on a spine, top to bottom.
  *
- * A 210px spine at 9px mono holds about 31. Measured rather than guessed, and
+ * A 160px spine at 9px mono holds about 29 (~5.4px per character, measured).
+ * Derived from `SPINE_HEIGHT` rather than restated, so shortening the spine
+ * cannot leave a budget measured against the old height — which is how the
+ * clipping this exists to prevent would return. Measured rather than guessed, and
  * the measurement is why this exists at all: against the real collection, four
  * of five spines overflowed — 38, 41, 43 and 49 characters — and the browser
  * clipped them at BOTH ends, taking the catalogue number with it.
@@ -59,7 +76,7 @@ export function spineWidth(id: string): number {
  * fixed in the component and text measurement in a server component is not
  * available. If the height changes, this changes with it.
  */
-export const SPINE_TEXT_BUDGET = 31;
+export const SPINE_TEXT_BUDGET = Math.floor(SPINE_HEIGHT / 5.4);
 
 /** Two spaces, not " · ": on a rotated mono spine they read the same and cost
  * one character instead of three, which is six characters back for the title. */

@@ -849,7 +849,9 @@ Inspired by thecriterioncloset.com, and worth being explicit about what is borro
 
 - **Records stand as spines on shelves that fill the viewport width and wrap.** One shelf holds as many spines as fit; the rest continue on a shelf below, and the wall scrolls. Ordered by genre so related records stand together — all the punk adjacent, all the rock adjacent. That ordering is the shelf's own, not a proposal for the physical one.
 
-- **Spines are proportioned like records, not like DVD cases.** A 12″ sleeve is a few millimetres thick, so a spine is very narrow and very tall — roughly 1:40. Getting this wrong makes the wall read as a shelf of box sets.
+- **Spines are proportioned like records, not like DVD cases** — narrow enough to read as a record, wide enough to name it. Roughly 1:12. Getting this wrong in one direction makes the wall a shelf of box sets; in the other it makes it a wall of colour bars that must be hovered one at a time to find anything.
+
+  An earlier version of this said 1:40, which was arithmetic about sleeve thickness rather than a rule about reading. It loses to legibility: at any workable height a 1:40 spine is around 4px wide, which cannot hold a glyph, so the spine text this section requires becomes impossible. The reference carries a title and a catalogue number on every spine, and that is what makes a wall scannable rather than decorative. The instinct was right and the number was wrong.
 
   **No section headings, and no shelf band per genre.** Adjacency does the grouping, as it does on a real shelf and in the reference this borrows from, which shows 1,300 spines with no headings at all. Sections were tried and removed: a collection with six flat genres for five records produced five near-empty black bands stacked down the page, and it read as broken rather than as short. Signposting a wall is a problem that arrives with scale, and the decision belongs to whoever is looking at three hundred records.
 - **A spine's colour is the average colour of its cover**, computed once at import and stored. A record with no cover gets a plain spine — an honest absence, not a gap in the wall.
