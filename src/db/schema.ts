@@ -222,6 +222,23 @@ export const records = pgTable(
     purchasePrice: numeric('purchase_price', { precision: 10, scale: 2 }),
     purchaseDate: date('purchase_date'),
     notes: text('notes'),
+    /**
+     * §10b: "a spine's colour is the average colour of its cover, computed once
+     * at import and stored."
+     *
+     * On `records` rather than `images`, because the spine is a property of the
+     * record AS SHELVED. Deriving it from an image row would need a rule for
+     * which cover wins the moment a second one is uploaded, and the shelf would
+     * change colour when someone photographs a sleeve.
+     *
+     * `#rrggbb` lowercase, or NULL for a record with no cover — §10b calls that
+     * "a plain spine, an honest absence, not a gap in the wall". NULL and
+     * "black" must stay distinguishable, which is why there is no default.
+     *
+     * Stored rather than computed per render: decoding every cover on every
+     * page load would be absurd, and §10b says once, at import.
+     */
+    spineColour: text('spine_colour'),
     ...timestamps,
   },
   // No unique constraint on (artist_id, title): duplicate records are legal and

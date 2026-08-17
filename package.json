@@ -17,6 +17,9 @@
     "db:test:up": "docker compose up -d --wait postgres",
     "db:test:reset": "docker compose down postgres && docker compose up -d --wait postgres"
   },
+  "dependencyNotes": {
+    "sharp": "PINNED to the version Next 16 already installs, and declared DELIBERATELY rather than added. It was in the tree transitively (next -> sharp) and loadable, so nothing new is installed by this entry — what was missing was the declaration. Undeclared, a minor Next release dropping or moving it would break §10b's shelf with a module-not-found from a package nobody chose. It decodes cover art to compute a spine colour (src/lib/images/spine-colour.ts); §5.9 accepts jpeg/png/webp and two of the three real covers are PROGRESSIVE jpeg, so hand-rolling a decoder would mean three decoders and a silently wrong colour on the ones it got wrong. Do not remove it as 'a heavy native dependency for one colour computation' — it ships in the Vercel bundle either way."
+  },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
     "@neondatabase/serverless": "^1.1.0",
@@ -33,6 +36,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "server-only": "^0.0.1",
+    "sharp": "0.35.3",
     "tailwind-merge": "^3.6.0",
     "tw-animate-css": "^1.4.0",
     "zod": "^4.4.3"

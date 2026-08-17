@@ -1,0 +1,27 @@
+-- SPEC.md §10b: `records` gains `spine_colour`.
+--
+-- "A spine's colour is the average colour of its cover, computed once at import
+-- and stored. A record with no cover gets a plain spine — an honest absence,
+-- not a gap in the wall."
+--
+-- ON `records`, NOT `images`. The spine is a property of the record AS SHELVED.
+-- Deriving it from an image row would need a rule for which cover wins as soon
+-- as a second one is uploaded, and the shelf would change colour when someone
+-- photographs a sleeve.
+--
+-- NULLABLE WITH NO DEFAULT, deliberately. NULL means "no cover, so no colour"
+-- and renders as a plain spine; a default of black would be indistinguishable
+-- from a genuinely black sleeve, which is the absent-versus-unknown failure
+-- this project keeps meeting. The three records already in the dev database get
+-- NULL here and are backfilled by re-attaching their covers, not by this file —
+-- a migration that invented a colour would be asserting something nobody
+-- measured.
+--
+-- TEXT rather than a fixed-width type: `#rrggbb` is seven characters and
+-- Postgres CHAR(7) would pad nothing and buy nothing, while a future move to
+-- `#rrggbbaa` or a named palette entry would need another migration.
+--
+-- Additive and nullable, so it is safe on a populated table: no rewrite, no
+-- lock beyond the catalogue update, and every existing row is valid.
+
+ALTER TABLE "records" ADD COLUMN "spine_colour" text;

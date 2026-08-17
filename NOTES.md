@@ -6454,3 +6454,63 @@ Recorded because three records cannot answer whether thirty muted sleeves read a
 a shelf or as a smear. If it turns out to be a smear, this says where to look:
 the RENDERING — spacing, edge highlights, a dividing rule between genre sections
 — not the colour. The stored hex would not change, so that fix stays cheap.
+
+### Implementing it: two things the measurement had not exposed
+
+**1. `sharp` was declared, not added.** It was already in the tree as a
+transitive dependency of Next 16 and already loadable, so `npm ls` reports it
+`deduped` and the lockfile did not change. What was missing was the declaration —
+and undeclared, a minor Next release dropping it would break §10b's shelf with a
+module-not-found from a package nobody chose. Pinned to `0.35.3`, the version
+already present, with the reasoning in a `dependencyNotes` field in
+`package.json` because JSON takes no comments and someone will otherwise see a
+heavy native dependency for one colour computation and try to remove it.
+
+**2. `.removeAlpha().resize()` does not do what it reads as, in EITHER order.**
+The obvious pipeline is wrong and the wrongness is invisible:
+
+    removeAlpha only          -> {200,30,35}                       correct
+    removeAlpha THEN resize   -> {0,0,0, 201,30,35, 200,30,35, …}  wrong
+    resize THEN removeAlpha   -> same
+    kernel: 'nearest'         -> same
+
+sharp premultiplies during resampling, so a transparent neighbour contributes
+nothing to the numerator while still counting — introducing pixels of `0,0,0`
+that were never in the image and dragging the average dark. Reordering does not
+help and neither does a nearest-neighbour kernel; both were tried.
+
+The fix is to keep the alpha channel (`ensureAlpha`) and weight by it in our own
+loop: a fully transparent pixel contributes nothing at all, a half-transparent
+one contributes half, and no synthetic colour is introduced. Flattening onto
+white or black would each invent a background the sleeve does not have.
+
+**Found by a test that failed for the right reason.** The alpha case was written
+because §5.9 accepts PNG and a transparent cover is possible, not because
+anything suggested a bug. It failed, and the failure was real code rather than a
+wrong expectation — unlike the sibling failure in the same run, where I had
+written `#0c8c5a` for rgb(20,140,90) because 20 is `0x14`, not `0x0c`. Two
+failures, one test wrong and one implementation wrong, and only checking each
+told them apart.
+
+**Verified against the real covers afterwards**, since synthetic images cannot
+confirm the values the algorithm was chosen for. The module reproduces the
+measurement within one bit per channel — `#363129` / `#d8cbb8` / `#92603d`
+against the probe's `#363028` / `#d8cbb7` / `#92603c`, the difference being
+sharp's resampler versus the BMP-based probe.
+
+### The Neon branch needed the columns applied by hand
+
+`test/integration/neon-transactions.test.ts` failed 4/4 after the migration:
+the local database had `spine_colour`, the remote branch did not, and Drizzle
+generates `INSERT` column lists from the schema.
+
+`TEST_DATABASE_URL=<neon> npx drizzle-kit migrate` is REFUSED by
+`assertLocalTestDatabase` — correctly, since that variable is the one
+integration tests truncate from, and pointing it at a remote host is exactly the
+accident the guard exists for. So the two DDL statements were applied directly
+to the throwaway branch.
+
+**Worth knowing for every future migration:** the Neon branch's schema is
+maintained out of band and will drift silently. The tell is `neon-transactions`
+failing with a column list mentioning something the branch lacks, which reads as
+a transaction bug and is not.
