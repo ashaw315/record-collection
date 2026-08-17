@@ -157,3 +157,70 @@
     @apply font-sans;
   }
 }
+/**
+ * §10b's turn: a record coming off the shelf and being turned over.
+ *
+ * **A keyframe rather than a React-coordinated transition, deliberately.** Two
+ * earlier attempts synchronised `useState` with a CSS transition — one cleared
+ * its flag in the same commit as the content swap so the return leg snapped,
+ * the other cancelled its own pending timer through an effect dependency and
+ * left the card edge-on for ever. Both are the same shape of bug: React and the
+ * compositor disagreeing about when a thing is halfway.
+ *
+ * Keyed on the face, this removes the coordination entirely. React renders the
+ * NEW face and the browser plays the animation from the start; nothing has to
+ * agree about a midpoint, because there is no midpoint to agree about — the old
+ * face is simply gone and the new one arrives edge-on and rotates flat.
+ *
+ * That is a half-turn rather than a full one, and it is the honest trade for
+ * removing the coordination: a true two-sided flip needs the outgoing face to
+ * survive until 90°, which is the thing that could not be made to work. What
+ * remains reads as the record swinging into view.
+ */
+@keyframes record-turn {
+  from {
+    transform: rotateY(-92deg);
+    opacity: 0.35;
+  }
+  to {
+    transform: rotateY(0deg);
+    opacity: 1;
+  }
+}
+
+/**
+ * A gatefold opens rather than turns (§10b), so it swings about its LEFT EDGE
+ * and settles partway open — a different motion for a different physical act,
+ * visibly not the same as turning the sleeve over.
+ */
+@keyframes record-open {
+  from {
+    transform: rotateY(-70deg) scale(0.98);
+    opacity: 0.35;
+  }
+  to {
+    transform: rotateY(-14deg) scale(1.02);
+    opacity: 1;
+  }
+}
+
+.record-face-turn {
+  animation: record-turn 320ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+.record-face-open {
+  transform-origin: left center;
+  animation: record-open 320ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+/* A turn is decorative motion; a reader who has asked for less gets the face
+   without it. */
+@media (prefers-reduced-motion: reduce) {
+  .record-face-turn,
+  .record-face-open {
+    animation: none;
+  }
+  .record-face-open {
+    transform: rotateY(-14deg) scale(1.02);
+  }
+}

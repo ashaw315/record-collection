@@ -187,7 +187,16 @@ test('reaches the detail screen from the collection list', async ({ page }) => {
   const artists = await (await page.request.get('/api/artists?pageSize=200')).json();
   const mine = artists.data.find((row: { name: string }) => row.name === `Nav-${suffix}`);
 
-  await page.goto(`/?artistId=${mine.id}`);
+  /**
+   * `?view=table` because this test's subject is the LIST, as its name says.
+   * §10b made the shelf the default view of `/`, and a spine there pulls the
+   * record into view rather than navigating — a different interaction on a
+   * different view, covered by `shelf.spec.ts`.
+   *
+   * Naming the view states what is being tested and survives the next time a
+   * default moves; relying on one is what broke 22 specs when the shelf landed.
+   */
+  await page.goto(`/?view=table&artistId=${mine.id}`);
   await page.getByRole('link', { name: `Navigable ${suffix}` }).click();
 
   await expect(page).toHaveURL(/\/records\/[0-9a-f-]{36}/, { timeout: 15_000 });

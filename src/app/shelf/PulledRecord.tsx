@@ -87,14 +87,30 @@ export function PulledRecord({
           two different physical acts.
         */}
         <div style={{ perspective: '1400px' }}>
+          {/*
+            **`key={face}` is the whole mechanism.** Changing it remounts the
+            face, so the browser plays the keyframe from the start and owns the
+            timing completely — React holds no flag, schedules no timer and has
+            no opinion about when the motion is halfway.
+
+            Two earlier attempts coordinated `useState` with a CSS transition
+            and both failed at the same seam: one cleared its flag in the same
+            commit as the content swap and the return leg snapped, the other
+            cancelled its own pending timer through an effect dependency and
+            left the card stuck edge-on. Removing the coordination is not a
+            tidier version of that — it deletes the thing that was wrong.
+
+            The honest cost is that this is a HALF turn: the new face swings in
+            rather than the old one turning away first, because keeping the
+            outgoing face alive to 90° is exactly the coordination that could
+            not be made to work. It reads as the record swinging into view.
+          */}
           <div
+            key={face}
             data-testid="pulled-face"
-            className="relative aspect-square w-full overflow-hidden rounded-xs bg-card shadow-2xl transition-transform duration-300"
-            style={
-              face === 'gatefold'
-                ? { transformOrigin: 'left center', transform: 'rotateY(-14deg) scale(1.02)' }
-                : { transform: face === 'back' ? 'rotateY(-6deg)' : 'none' }
-            }
+            className={`relative aspect-square w-full overflow-hidden rounded-xs bg-card shadow-2xl ${
+              face === 'gatefold' ? 'record-face-open' : 'record-face-turn'
+            }`}
           >
             {image === null ? (
               <ComposedBack record={record} />

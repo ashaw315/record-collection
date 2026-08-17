@@ -7244,3 +7244,302 @@ entry are all read as authoritative here, and each is capable of pointing
 confidently at the wrong thing. The defect is never the prose being wrong in
 isolation — it is that the prose satisfies the question before the reader gets
 to the thing that would have contradicted it.
+
+## Step 13 unit 4c — the turn, by removing the coordination rather than fixing it
+
+Two attempts at a React-driven flip failed, both at the same seam: React and the
+compositor disagreeing about when a thing is halfway.
+
+1. **One `flipping` boolean.** The outgoing rotation animated correctly — a
+   screenshot at 60ms showed a genuine foreshortened turn — and the RETURN
+   snapped, because `shown` and the flag updated in the same commit and the
+   transform jumped 90° → 0° with nothing to interpolate from.
+2. **Two legs across two effects.** `setLeg('out')` re-ran its own effect via a
+   `leg` dependency, the cleanup cancelled the pending swap, and the card sat
+   edge-on permanently. Merging them into one effect and scheduling off a timer
+   did not fix it.
+
+Stopped at two per CLAUDE.md §9. **A third attempt at that shape would have been
+a better version of the thing that failed twice.**
+
+### The fix removes the problem rather than solving it
+
+    <div key={face} className={face === 'gatefold' ? 'record-face-open' : 'record-face-turn'}>
+
+`key={face}` remounts the face, so the browser plays a keyframe from the start
+and owns the timing completely. **React holds no flag, schedules no timer, and
+has no opinion about when the motion is halfway** — there is no midpoint to
+agree about, because the old face is simply gone and the new one arrives
+edge-on and rotates flat.
+
+Deleted in the process: two `useState`s, two `useEffect`s, three `setTimeout`s
+and a cleanup. The working version is smaller than either failure.
+
+**The honest cost, stated rather than hidden.** This is a HALF turn — the new
+face swings in rather than the old one turning away first. A true two-sided flip
+needs the outgoing face alive to 90°, which is exactly the coordination that
+could not be made to work. What remains reads as the record swinging into view,
+and the mid-transition frame confirms it: foreshortened, left edge nearer,
+perspective visible, dimmed as it arrives.
+
+The gatefold keeps a DIFFERENT keyframe — swinging about its left edge and
+settling partway open — because §10b is explicit that opening is a hinge rather
+than a rotation, and two physical acts should not share one motion.
+
+`prefers-reduced-motion` disables both. A turn is decorative and a reader who
+has asked for less should get the face without it.
+
+### The general rule
+
+**When coordinating two systems fails twice, check whether one of them can own
+the whole thing.** The failures were not bugs in the coordination; they were the
+cost of having any. A third attempt would have been a better-written version of
+a design that had already told me twice what was wrong with it.
+
+# Two failed attempts at coordinating two systems: remove the coordination
+
+The sharpest form of the §9 stop-at-two rule, and the flip is its clearest
+instance.
+
+Both failures were about React and the compositor agreeing on when a thing is
+halfway. A third attempt would have been a better-written version of that
+agreement — and **the failures were not bugs IN the coordination, they were the
+cost of HAVING any.** That distinction is what makes "try again more carefully"
+the wrong move: there was nothing to get right.
+
+**The deletion count is the evidence.** The working version removed:
+
+    2 useState        the flag and the shown-face
+    2 useEffect       start-the-turn and release-it
+    3 setTimeout      start, swap, settle
+    1 cleanup chain
+
+and added one `key={face}` and a keyframe. **It is smaller than either failure**,
+which is the tell that the coordination was the problem rather than the
+implementation of it.
+
+**How to recognise the shape.** Two systems both want to own the same fact —
+here, "how far through the motion are we". Symptoms:
+
+- a flag that must be cleared at exactly the right moment, and clearing it in
+  the wrong commit breaks the second half;
+- an effect that cancels its own pending work through its dependency list;
+- timing constants that have to match between the two systems (`FLIP_MS / 2`
+  appearing in both a CSS duration and a `setTimeout`).
+
+That last one is the cheapest early warning: **if a number has to be the same in
+two places for the feature to work, one system should own it.**
+
+The general question after the second failure is not "what did I get wrong" but
+"**can one of these systems own the whole thing?**" Sometimes the answer is no
+and the coordination is essential — the acquire transaction genuinely spans the
+database and the handler. Here CSS could own all of it, and asking took less
+time than the third attempt would have.
+
+# The screen with three shipped defects had no E2E coverage
+
+Worth naming because the gap was invisible from inside the work. §10b's shelf
+shipped and fixed three defects — genre sections rendering as empty black bands,
+spine text clipped at both ends, a turn that was a panel swap — and until unit
+4c there was no E2E touching it at all.
+
+**Coverage tends to be thinnest exactly where a feature is newest**, which is
+where it is most likely to be wrong. Every other screen accumulated specs as its
+defects were found; this one accumulated screenshots instead, because the
+defects were visual and the fix loop ran through a browser rather than a test.
+
+The correction is `e2e/shelf.spec.ts`, and its docblock is careful about what it
+can and cannot claim:
+
+> These exist because unit tests could not have caught any of the three defects
+> this feature shipped and then fixed. What a test CAN hold down is the
+> behaviour underneath: that a spine leads somewhere, that turning shows the
+> other side, and that the gatefold affordance appears only where an inner image
+> exists.
+
+**A spec that implied it covered the appearance would be the prose-versus-code
+shape**, in the place this project keeps finding it: a green tick answering
+"is the shelf right?" with evidence about something else. Saying which half it
+holds is what stops the tick from being a false record.
+
+The gatefold test asserts an ABSENCE — `toHaveCount(0)` on the open control —
+because §10b's strictest rule is that no affordance may appear without a
+photograph behind it. An absence is the only honest assertion for a rule whose
+violation is something existing.
+
+# Before writing coordination, ask what owns the number
+
+The generalisable half of the flip work, and it is a check runnable BEFORE the
+code rather than after it fails twice.
+
+The failed versions had `FLIP_MS / 2` appearing in a `setTimeout` and `FLIP_MS`
+in a CSS duration. **A constant that must agree across two systems for the
+feature to work is the signature of coordination that one system should own.**
+
+    // the tell
+    transition: `transform ${FLIP_MS / 2}ms ease-in-out`   // CSS owns this
+    setTimeout(() => setShown(face), FLIP_MS / 2)          // React owns this too
+
+Nothing enforces the agreement. Change the easing, the duration, or the browser's
+frame timing, and the two drift — and the failure is a stuck or snapping
+animation rather than an error.
+
+**The question to ask when the shared number appears: can one system own the
+whole thing?** For the flip, CSS could: a keyframe and a `key` change, with
+React holding no timing at all. Asking took a minute; the two failed attempts
+took considerably longer.
+
+Sometimes the answer is genuinely no — the acquire transaction spans the handler
+and the database and neither can own both halves. But then the coordination is
+essential rather than incidental, and it deserves the care it gets. The
+distinction is worth drawing early.
+
+### The new spec repeated a mistake its neighbour documents
+
+`e2e/shelf.spec.ts` failed on first full run, on the one test that asserted
+against `?view=table` without scoping to its own fixture. The table paginates at
+50 and does not filter by default, so the record was on some later page.
+
+`record-detail.spec.ts` opens with exactly this warning:
+
+> Every fixture here is scoped to its own run and its own artist. Specs run
+> fully parallel against one database, so a test that assumes what is on an
+> unfiltered page 1 — or that its title is unique — is assuming something no
+> other spec is obliged to preserve. **That cost three separate defects in unit
+> 7d.**
+
+I had read that file in this same unit — to fix its `?view=table` navigation —
+and wrote the same bug an hour later.
+
+**A warning in one file does not protect the file next to it.** The docblock is
+in the right place for someone editing `record-detail.spec.ts` and nowhere near
+someone creating a new spec. This is the third or fourth time in this project
+that knowledge sitting in exactly one file failed to reach the next writer:
+`genreSubtree`'s two copies, the `page.request` versus `request` trap, and now
+this.
+
+**The cheap mitigation is a shared helper rather than a shared comment.** A
+`seedRecord` that RETURNS the artist id — as this one now does — makes scoping
+the obvious path, where a comment makes it the remembered one. Prose that has to
+be recalled at the right moment is the weakest form of a rule; a signature that
+hands you what you need is the strongest.
+
+**Three of those four were eventually solved STRUCTURALLY, not by documenting
+harder** — and that is the useful part of the pattern, because it says which
+move to reach for first:
+
+| knowledge that failed to travel | what actually fixed it |
+|---|---|
+| `genreSubtree` duplicated in two files | one shared `genre-hierarchy` module |
+| `page.request` vs the `request` fixture | still a comment — unsolved |
+| the Neon branch drifting on every migration | still a note — unsolved |
+| scoping a spec to its own fixture | `seedRecord` RETURNS the artist id |
+
+The two still carried by prose are the two nobody has found a structure for. The
+two that were solved stopped needing to be remembered at all.
+
+**So the order to try is: eliminate the duplication, then make the right path
+the obvious one, then — only if neither works — write it down.** This project
+reaches for the note first because notes are cheap and the habit is strong, and
+the note is the weakest of the three every time. Where a comment is the answer,
+it should be because the other two were considered and rejected, not because
+they were skipped.
+
+Worth pairing with the earlier rule about forced duplication: *eliminate the copy
+where the boundary permits, verify it where it does not.* Same instinct — prose
+last.
+
+# A dead web server looks like fourteen test failures
+
+A full E2E run reported 14 failures, all in `manage.spec.ts` and
+`lookup-flows.spec.ts` on the mobile project — which looks exactly like the
+contention this file has tracked for eight sightings, and is not.
+
+Every one carried the same error:
+
+    Error: page.goto: Could not connect to the server.
+
+**The web server had died mid-run.** Playwright kept dispatching tests against a
+port with nothing behind it, so each failed at its first navigation. The count
+is a function of how many tests remained when the server went, not of anything
+in the code.
+
+**Distinguishing it from the contention takes one command**, and the shape is
+worth knowing because the two look identical in a summary:
+
+    grep -oE "Error: [a-zA-Z.]+: [A-Za-z ]+" <output> | sort | uniq -c
+
+| all failures share one error | what it is |
+|---|---|
+| `Could not connect to the server` | the server died — infrastructure, re-run |
+| `apiRequestContext.post/get: … ECONNRESET` | a seeding request lost — contention |
+| assorted `toBeVisible` / `toHaveURL` failures | probably the code |
+
+**The tell is uniformity.** A real regression produces failures that differ from
+each other, because they are about different assertions; an environment failure
+produces the SAME error repeated, because the tests never reached their
+assertions at all. Fourteen identical errors is a stronger signal of
+infrastructure than fourteen failures in one file is of a defect there.
+
+Also worth checking before re-running: `lsof -ti:3100` and a `ps` for a stray
+`next dev`. Playwright starts its own server and a leftover one from a manual
+screenshot session can hold the port — this session ran several.
+
+**Correction, from the very next run.** The re-run did not fail 14 tests — it
+failed to start at all:
+
+    [WebServer] or run kill 62065 to stop it and start a new one.
+    Error: Process from config.webServer was not able to start. Exit code: 1
+
+So the two runs showed the SAME cause at two different moments. `reuseExistingServer:
+false` (playwright.config.ts) means Playwright always starts its own, and a
+leftover server on 3100 either makes it refuse to start, or — if the leftover
+dies partway — takes the suite down with it mid-run.
+
+**The stray came from this session's own screenshot work.** Several manual
+`npm run dev -- --port 3210` servers were started for the shelf captures, and
+one had bound 3100 as well.
+
+Two things worth doing rather than one:
+
+    lsof -ti:3100 | xargs -r kill -9      # not `pkill -f "next dev"`
+    ps aux | grep "[n]ext dev"
+
+`pkill -f "next dev"` did NOT catch it — the surviving process did not match that
+pattern, which is why the first attempt looked clean and the run still failed.
+**Check the PORT, not the process name.** A port is the thing that actually
+conflicts.
+
+**Second correction, and this one is the actual mechanism.** Both amendments
+above guessed at the port and both were wrong. The real chain:
+
+1. A Playwright run leaves an orphaned `next-server` behind when it dies badly.
+2. That orphan binds **3000**, not 3100.
+3. The next run asks Next for **3100** — and Next checks 3000 first, finds a
+   server, prints *"You can access the existing server at http://localhost:3000,
+   or run kill <pid>"* and **exits 1 without ever trying 3100**.
+4. Playwright reports `Process from config.webServer was not able to start`.
+
+So the conflict is not on the port the suite wants. `lsof -ti:3100` is empty and
+looks clean at every step, which is why two attempts to clear it failed.
+
+**What actually works:**
+
+    pgrep -f "next-server"        # find it regardless of port or invocation
+    pkill -9 -f "next-server"
+
+`pkill -f "next dev"` misses it because the surviving process has re-execed as
+`next-server`, and `lsof -ti:3100` misses it because it is on a port nobody
+asked about.
+
+**And check the start time before killing anything.** `ps -p <pid> -o lstart=`
+showed the orphan was 80 seconds old — mine — rather than a dev server Adam had
+running. Killing a colleague's process to fix your own test run is a bad trade,
+and the timestamp settles it in one command.
+
+**The general lesson, which cost three runs: when a diagnosis is a guess, say so
+and check it before acting on it.** The first entry above asserted "the web
+server died mid-run" as fact; it was a hypothesis that fitted 14 identical
+errors and happened to be the wrong half of the story. Two more runs went by
+before the actual message — naming a port nobody had looked at — was read
+properly.
