@@ -58,6 +58,26 @@ export const SHELF_EDGE = 8;
 export const SPINE_ROW_HEIGHT = SPINE_HEIGHT + SHELF_EDGE;
 
 /**
+ * The shelf's minimum width, as a fraction of the content column.
+ *
+ * §10b: "no wider than it needs, no shorter than a shelf." A shelf is
+ * FURNITURE — it has a length whether or not it is full, and a real shelf with
+ * five records on it is still a shelf with space beside them.
+ *
+ * Both neighbouring values were shipped and both were wrong. A full-width band
+ * with five spines at the left reads as MISSING DATA, because the emptiness is
+ * the whole viewport and implies a collection that should have filled it. A box
+ * shrunk to its contents reads as a THUMBNAIL of a shelf: 105px of timber
+ * floating in a 1200px column.
+ *
+ * Chosen by looking at 30%, 40% and 50% rendered at five records, not by
+ * arithmetic — the arithmetic only established that the shelf does not fill a
+ * 1200px column until about sixty records, which is what made this a decision
+ * rather than a tuning problem.
+ */
+export const MIN_SHELF_FRACTION = 0.4;
+
+/**
  * Derived from the record's id, so it is STABLE across loads.
  *
  * §8.2's determinism rule outlived the feature it was written for: a wall that

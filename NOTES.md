@@ -7892,3 +7892,74 @@ about contracts breaking tests in files the unit never opened; this one is a
 test breaking itself against data volume it never saw. The common cause is the
 same: **passing in isolation is not evidence a change is clean, because
 isolation is a state the application never runs in.**
+
+---
+
+## Step 13 unit 9 — a shelf is furniture
+
+The finding from units 7–8 settled. Both rules were correct and neither was the
+rule; what resolves it is Adam's framing:
+
+> A shelf is furniture: it has a length whether or not it is full, and a real
+> shelf with five records on it is still a shelf with space beside them. What
+> made the full-width version read as missing data was not the emptiness — it
+> was that the emptiness was the whole viewport, implying a collection that
+> should have filled it.
+
+That is the distinction the two failed versions both missed. **The defect was
+never the empty space; it was what the empty space implied.** A full-viewport
+band says "records should be here and are not". A 105px tile says "this is a
+picture of a shelf, not a shelf". A 448px shelf with five records at the left
+says "short collection, room to grow" — which is true.
+
+So: `min-width: 40%` of the content column, with `w-fit max-w-full` taking over
+once the records exceed it. §10b amended to state both halves — **no wider than
+it needs, no shorter than a shelf** — replacing "shelves that fill the viewport
+width", which had been the stale half of that bullet since unit 8 landed. Worth
+noting the earlier rule was never IN the spec: "ends where its records do" lived
+only in an instruction and a commit message, which is how a contract with no
+written home ends up contradicting the document it belongs to.
+
+### Picked by looking, which produced a different answer than arithmetic would
+
+Adam's instruction was explicit: *"Pick the minimum by looking, not by
+arithmetic. Screenshot 30%, 40% and 50% at five records and take whichever reads
+as furniture."*
+
+Rendered at five records in a 1120px column:
+
+| minimum | width | reads as |
+|---|---|---|
+| 30% | 336px | works, but tight — the timber ends close enough behind the records that it still reads slightly as a box around the spines |
+| **40%** | **448px** | **furniture — records at the left, timber running on past them** |
+| 50% | 560px | fine, but the emptiness is becoming the subject again, drifting back toward the defect the unit exists to avoid |
+
+Arithmetic could not have produced this. All three satisfy "wider than the
+records, narrower than the column"; the difference between them is entirely in
+what they read as, and that is only available by looking. This is the same
+lesson as the 1:12 spine ratio one step earlier, where the sleeve-thickness
+calculation gave 1:40 and the screenshot gave 1:12.
+
+### The test now asserts a floor AND a ceiling
+
+Each half was shipped alone and each was a defect, so the test carries both.
+The ceiling is skipped when the shelf is AT the floor — below the minimum the
+shelf is deliberately wider than its records, so trailing space there is
+furniture rather than the defect the ceiling catches. Both halves were
+mutation-tested: removing `min-width` fails at 45px, removing `w-fit` fails at
+1091px.
+
+### A restore that failed and was caught by an assertion I nearly did not write
+
+Mutation-testing the floor meant deleting `minWidth` and putting it back. The
+deletion left a blank line where the property had been, so the restore's anchor
+did not match and **the file stayed mutated**. The `assert` in the restore
+script is the only reason this surfaced — the equivalent step for the `w-fit`
+mutation an hour earlier had no such check, and would have committed a mutated
+file with a green scoped test.
+
+Same family as the patch script that printed "coupling test added" and inserted
+nothing: **a script that reports on its own work must verify the work, not
+describe it.** The rule for mutation-testing specifically: the restore needs an
+assertion, and then the restored state needs verifying by RUNNING rather than by
+reading the file back — which is what caught it here.

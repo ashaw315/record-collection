@@ -168,28 +168,31 @@ test('the pulled record can be put back, and by Escape', async ({ page }) => {
   await expect(page.getByTestId('pulled-record')).toHaveCount(0);
 });
 
-test('the shelf is only as wide as the records it carries', async ({ page }) => {
+test('the shelf is no wider than it needs and no shorter than a shelf', async ({ page }) => {
   /**
-   * §10b as amended: a shelf's width is however much it carries.
+   * §10b as amended: **no wider than it needs, no shorter than a shelf.**
    *
-   * A shelf stretching the full viewport with five spines at the left reads as
-   * MISSING DATA rather than as a short collection — measured at 1088px of
-   * empty timber past the last spine before this changed. That is the genre
-   * sections defect one level out, where five near-empty black bands said
-   * "broken" about a collection that was merely small. Sparse is fine;
-   * sparse-inside-a-full-width-container is not.
+   * Two rules, and the unit that produced them had only the first. "A shelf's
+   * width is however much it carries" fixed a real defect — a full-viewport
+   * band with five spines at the left reads as MISSING DATA, the genre-sections
+   * defect one level out — and then overshot, because at five records it left a
+   * 105px tile floating in a 1200px column, which reads as a thumbnail of a
+   * shelf rather than as a shelf.
    *
-   * **Measured against the WIDEST ROW, not against the last spine.** The first
-   * version of this test compared the container to the final spine and passed
-   * scoped, then failed in the full suite — where other specs have seeded
-   * enough records that the shelf WRAPS, so the last spine sits at the start
-   * of a short second row and 769px of legitimate trailing shelf belongs to
-   * the rows above it. §10b's rule is that full rows stay full width and only
-   * the last one stops short, so the container must fit its widest row, which
-   * is the property that holds at both scales.
+   * What resolves it is that a shelf is FURNITURE. It has a length whether or
+   * not it is full, and a real shelf with five records on it is still a shelf
+   * with space beside them. The emptiness was never the problem; the emptiness
+   * being the whole viewport was, because that implies a collection that should
+   * have filled it.
    *
-   * Measured rather than asserted about a class name: `w-fit max-w-full` is one
-   * way to get this and a future change might use another.
+   * So the floor and the ceiling are asserted together. Neither alone is the
+   * rule, and each was briefly shipped as if it were.
+   *
+   * **The ceiling is measured against the WIDEST ROW, not the last spine.** The
+   * first version of this test compared the container to the final spine, then
+   * passed scoped and failed in the full suite — where other specs seed enough
+   * records to WRAP, so the last spine sits at the start of a short second row
+   * and 769px of legitimate trailing shelf belongs to the rows above it.
    */
   const title = `Fitted ${suffix()}`;
   await seedRecord(page, title);
@@ -204,8 +207,20 @@ test('the shelf is only as wide as the records it carries', async ({ page }) => 
 
   const timber = shelf.locator('> div').first();
   const box = await timber.boundingBox();
+  const column = await shelf.boundingBox();
   expect(box, 'the shelf must have a measurable box').not.toBeNull();
-  if (box === null) return;
+  expect(column, 'the content column must have a measurable box').not.toBeNull();
+  if (box === null || column === null) return;
+
+  /**
+   * The floor: a shelf is furniture and has a length. Asserted as a fraction of
+   * the CONTENT COLUMN rather than of the viewport, because that is what the
+   * shelf sits in and what it looked lost inside.
+   */
+  expect(
+    box.width / column.width,
+    `the shelf is ${Math.round(box.width)}px in a ${Math.round(column.width)}px column — a tile, not a shelf`,
+  ).toBeGreaterThan(0.3);
 
   // The rightmost edge any spine reaches, across every row.
   let widestReach = 0;
@@ -216,15 +231,18 @@ test('the shelf is only as wide as the records it carries', async ({ page }) => 
   expect(widestReach, 'no spine had a measurable box').toBeGreaterThan(0);
 
   /**
-   * The gap between the widest row's right edge and the shelf's is padding,
-   * not emptiness. `px-4` is 16px a side, and a little slack covers the
-   * rotateX and the spine's drop shadow.
+   * The ceiling, and it only applies ABOVE the floor. Below it the shelf is
+   * deliberately wider than its records — that is the whole point of a minimum
+   * — so trailing space is furniture rather than the defect this half catches.
    */
   const trailing = box.x + box.width - widestReach;
-  expect(
-    trailing,
-    `the shelf runs ${Math.round(trailing)}px past its widest row — it is filling the viewport rather than fitting its records`,
-  ).toBeLessThan(40);
+  const atFloor = box.width <= column.width * 0.45;
+  if (!atFloor) {
+    expect(
+      trailing,
+      `the shelf runs ${Math.round(trailing)}px past its widest row — it is filling the viewport rather than fitting its records`,
+    ).toBeLessThan(40);
+  }
 });
 
 test('the table view is still reachable, and the shelf is not forced', async ({ page }) => {

@@ -847,7 +847,9 @@ Inspired by thecriterioncloset.com, and worth being explicit about what is borro
 
 ### The shelf
 
-- **Records stand as spines on shelves that fill the viewport width and wrap.** One shelf holds as many spines as fit; the rest continue on a shelf below, and the wall scrolls. Ordered by genre so related records stand together — all the punk adjacent, all the rock adjacent. That ordering is the shelf's own, not a proposal for the physical one.
+- **Records stand as spines on shelves that wrap.** One shelf holds as many spines as fit; the rest continue on a shelf below, and the wall scrolls. Ordered by genre so related records stand together — all the punk adjacent, all the rock adjacent. That ordering is the shelf's own, not a proposal for the physical one.
+
+- **A shelf is no wider than it needs and no shorter than a shelf.** It fits its records, growing as they do and wrapping when they exceed a row — but it has a minimum length, because a shelf is furniture and has a length whether or not it is full. A real shelf with five records on it is still a shelf with space beside them. Both neighbouring rules are wrong on their own: a shelf stretched to the full viewport with five spines at the left reads as *missing data* rather than as a short collection, because the emptiness is the whole viewport and implies a collection that should have filled it; a shelf shrunk to its contents reads as a *thumbnail of a shelf*. The minimum is about 40% of the content column, chosen by rendering the candidates at five records and looking.
 
 - **Spines are proportioned like records, not like DVD cases** — narrow enough to read as a record, wide enough to name it. Roughly 1:12. Getting this wrong in one direction makes the wall a shelf of box sets; in the other it makes it a wall of colour bars that must be hovered one at a time to find anything.
 

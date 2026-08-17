@@ -8,6 +8,7 @@ import {
   DEFAULT_SPINE_COLOUR,
   SHELF_EDGE,
   SPINE_HEIGHT,
+  MIN_SHELF_FRACTION,
   SPINE_ROW_HEIGHT,
   spineText,
   spineWidth,
@@ -81,23 +82,34 @@ export function Shelf({ records }: { records: ShelfRecord[] }) {
         spines read as objects with depth — §10b's "most of the feel from
         transforms and shadows".
 
-        **`w-fit max-w-full`: the shelf ends where its records do.** A shelf
-        stretching the full viewport with five spines at the left reads as
-        MISSING DATA rather than as a short collection — measured at 1088px of
-        empty timber past Adam's last spine. That is the sections defect one
-        level out: five near-empty black bands said "broken" about a collection
-        that was merely small. §10b's "sparse is fine" is about the SPINES, not
-        about the container they sit in.
+        **`min-width` then `w-fit max-w-full`: no wider than it needs, no
+        shorter than a shelf** (§10b as amended). Three values were tried here
+        and the outer two are both defects.
 
-        Both halves are load-bearing. `w-fit` alone gives the flex row no width
-        to wrap against, so three hundred spines lay out on one infinite line;
-        `max-w-full` is the wrapping constraint, and `w-fit` collapses the box
-        to the widest row once wrapping has happened. So a full row still fills
-        the width naturally and only the last one stops short.
+        Full width with five spines at the left reads as MISSING DATA — 1088px
+        of empty timber, the genre-sections defect one level out, where five
+        near-empty black bands said "broken" about a collection that was merely
+        small. Shrunk to its contents it reads as a THUMBNAIL of a shelf: 105px
+        of timber floating in a 1200px column, because the spines do not fill
+        that column until about sixty records.
+
+        What resolves it is that a shelf is FURNITURE. It has a length whether
+        or not it is full, and a real shelf with five records on it is still a
+        shelf with space beside them. The emptiness was never the problem; the
+        emptiness being the whole viewport was.
+
+        All three declarations are load-bearing. `min-width` is the floor.
+        `w-fit` alone gives the flex row no width to wrap against, so three
+        hundred spines lay out on one infinite line; `max-w-full` is the
+        wrapping constraint, and `w-fit` collapses the box to the widest row
+        once wrapping has happened. So a short collection gets a short shelf
+        with room on it, a full row still fills the width, and only the last row
+        of a wrapped shelf stops short.
       */}
       <div
         className="w-fit max-w-full rounded-xs bg-[#0e0d0c] px-4 pt-5 pb-2"
         style={{
+          minWidth: `${MIN_SHELF_FRACTION * 100}%`,
           perspective: '900px',
           backgroundImage: `linear-gradient(to bottom, transparent 0, transparent ${SPINE_HEIGHT}px, #241d16 ${SPINE_HEIGHT}px, #241d16 ${SPINE_ROW_HEIGHT}px)`,
           backgroundSize: `100% ${SPINE_ROW_HEIGHT}px`,
