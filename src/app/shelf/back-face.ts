@@ -104,3 +104,62 @@ export function backFaceDetails(record: BackFaceInput): BackFaceRow[] {
     .filter((entry): entry is [string, string] => entry[1] !== null && entry[1] !== '')
     .map(([label, value]) => ({ label, value }));
 }
+
+/**
+ * The same facts, typeset.
+ *
+ * **A real back sleeve is not a field dump pinned to a corner.** The flat list
+ * above, rendered with the title at the top and the rows at the bottom, left a
+ * hole in the middle that GREW as data shrank — measured across the real
+ * collection at 5, 6, 7, 7 and 8 lines, every record showed it, including the
+ * densest. That is the layout rather than the density, so reflowing the same
+ * list upward would fix the hole and still read as a data panel.
+ *
+ * Three groups, in the order a sleeve carries them:
+ *
+ *   IMPRINT     label and catalogue number — what a sleeve prints largest, and
+ *               what identifies the release
+ *   PRESSING    where and when this copy was made, plus the dead-wax
+ *               fingerprint: facts about the OBJECT
+ *   PROVENANCE  condition, what was paid, where and when — facts about THIS
+ *               COPY and its owner, which a real sleeve does not print at all,
+ *               so they come last and render quieter
+ *
+ * `backFaceDetails` stays: it is the flat projection, still used where a single
+ * ordered list is wanted, and the grouping is asserted to carry every field it
+ * does.
+ */
+
+export type BackFaceGroupKind = 'imprint' | 'pressing' | 'provenance';
+
+export type BackFaceGroup = {
+  kind: BackFaceGroupKind;
+  rows: BackFaceRow[];
+};
+
+const GROUP_FIELDS: Record<BackFaceGroupKind, string[]> = {
+  imprint: ['Label', 'Catalogue'],
+  pressing: ['Pressed', 'Country', 'Plant', 'Matrix', 'Disc', 'Pressing'],
+  provenance: ['Media', 'Sleeve', 'Paid', 'Bought'],
+};
+
+export function backFaceGroups(record: BackFaceInput): BackFaceGroup[] {
+  // Derived from the flat list rather than re-deciding which fields exist, so
+  // the two cannot disagree about a field's presence, its formatting, or the
+  // absent-versus-empty rules above.
+  const byLabel = new Map(backFaceDetails(record).map((row) => [row.label, row]));
+
+  const groups: BackFaceGroup[] = [];
+
+  for (const kind of ['imprint', 'pressing', 'provenance'] as BackFaceGroupKind[]) {
+    const rows = GROUP_FIELDS[kind]
+      .map((label) => byLabel.get(label))
+      .filter((row): row is BackFaceRow => row !== undefined);
+
+    // An empty heading asserts something is missing — the same rule the gallery
+    // and the shelf's own ordering follow.
+    if (rows.length > 0) groups.push({ kind, rows });
+  }
+
+  return groups;
+}

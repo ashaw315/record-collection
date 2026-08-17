@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { ShelfRecord } from '@/lib/db/queries/shelf';
-import { backFaceDetails } from './back-face';
+import { backFaceGroups } from './back-face';
 import { availableFaces, nextFace, type Face } from './faces';
 
 /**
@@ -48,8 +48,6 @@ export function PulledRecord({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
-
-  const details = backFaceDetails(record);
 
   /** The image for the current face, or `null` when it is composed instead. */
   const imageFor = (current: Face): string | null =>
@@ -99,7 +97,7 @@ export function PulledRecord({
             }
           >
             {image === null ? (
-              <ComposedBack record={record} details={details} />
+              <ComposedBack record={record} />
             ) : (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -172,42 +170,75 @@ export function PulledRecord({
  * picture is not a blank square, and the fields are what is actually known
  * about it.
  */
-function ComposedBack({
-  record,
-  details,
-}: {
-  record: ShelfRecord;
-  details: ReturnType<typeof backFaceDetails>;
-}) {
+function ComposedBack({ record }: { record: ShelfRecord }) {
+  const groups = backFaceGroups(record);
+
   return (
     <div
       data-testid="composed-face"
-      className="flex h-full w-full flex-col justify-between bg-[#141210] p-6 text-[#e8e2d8]"
+      className="h-full w-full overflow-y-auto bg-[#141210] px-7 py-6 text-[#e8e2d8]"
     >
-      <div>
-        <p className="font-heading text-lg leading-tight font-semibold">{record.title}</p>
-        <p className="mt-0.5 text-sm text-[#a09689]">{record.artistName}</p>
-      </div>
+      {/*
+        **Flowing from the top, not pinned to the corners.** An earlier version
+        used `justify-between`, which put the title at the top and the rows at
+        the bottom and left a hole in the middle that GREW as data shrank —
+        measured across the real collection at 5 to 8 lines, every record showed
+        it, including the densest. That was the layout, not the density.
+      */}
+      <p className="font-heading text-xl leading-tight font-semibold">{record.title}</p>
+      <p className="mt-0.5 text-sm text-[#a09689]">
+        {[record.artistName, record.releaseYear].filter(Boolean).join(' · ')}
+      </p>
 
-      {details.length === 0 ? (
+      {groups.length === 0 ? (
         /*
           The honest empty state, and it is the FIRST state of most records:
           §10's quick in-store entry records a title and an artist and nothing
           else. Saying so beats inventing rows, and beats a blank panel that
           reads as a rendering failure.
         */
-        <p data-testid="composed-empty" className="text-xs text-[#8a8078]">
+        <p data-testid="composed-empty" className="mt-6 text-xs text-[#8a8078]">
           Nothing recorded about this pressing yet.
         </p>
       ) : (
-        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
-          {details.map((row) => (
-            <div key={row.label} className="contents">
-              <dt className="tracking-wide text-[#8a8078] uppercase">{row.label}</dt>
-              <dd className="font-mono text-[#e8e2d8]">{row.value}</dd>
+        <div className="mt-6 space-y-5">
+          {groups.map((group) => (
+            <div key={group.kind} data-testid={`face-group-${group.kind}`}>
+              {/*
+                **Typographic weight is what makes this a sleeve rather than a
+                data panel.** The imprint is what a real back cover prints
+                largest — label and catalogue number — so it is set larger and
+                lighter. Pressing facts are the body text. Provenance is the
+                owner's information, which a real sleeve does not carry at all,
+                so it is quieter and last.
+              */}
+              {group.kind === 'imprint' ? (
+                <p className="font-mono text-base tracking-wide text-[#d8cfc2]">
+                  {group.rows.map((row) => row.value).join('   ')}
+                </p>
+              ) : (
+                <dl
+                  className={`grid grid-cols-[5.5rem_1fr] gap-x-4 gap-y-1 ${
+                    group.kind === 'provenance' ? 'text-[11px] text-[#8a8078]' : 'text-xs'
+                  }`}
+                >
+                  {group.rows.map((row) => (
+                    <div key={row.label} className="contents">
+                      <dt className="tracking-wide text-[#7d746b] uppercase">{row.label}</dt>
+                      <dd
+                        className={`font-mono ${
+                          group.kind === 'provenance' ? 'text-[#a09689]' : 'text-[#e8e2d8]'
+                        }`}
+                      >
+                        {row.value}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
             </div>
           ))}
-        </dl>
+        </div>
       )}
     </div>
   );

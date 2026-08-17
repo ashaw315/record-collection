@@ -7148,3 +7148,40 @@ control that mutates is a button even when it happens to change the URL.
 Corollary worth keeping: **progressive enhancement resolved a test failure
 without accommodating the test.** The suite was right about the contract, the
 spec was right about the interaction, and the correct element satisfied both.
+
+# A defect that exists only BETWEEN two correct states
+
+The pulled record's turn: front face correct, back face correct, every test
+green, `data-face` attribute right at both ends. The defect lived entirely in
+the 300ms between them.
+
+`setFace` swapped the content SYNCHRONOUSLY while only the container animated a
+6° rotation. So at every instant during the transition you saw the NEW face on a
+slightly-tilted card — a panel swap with a wobble, not a record turning over.
+§10b asks for "front → turn → back is rotation"; this was not that.
+
+**No still frame of either endpoint can show it.** Both are exactly what they
+should be. The screenshot that found it was taken 120ms after the click, and it
+came back indistinguishable from the settled state — which IS the finding.
+
+## The screenshot rule, extended to three captures
+
+Each answers a different question, and none substitutes for another:
+
+| capture | question |
+|---|---|
+| **wide** | is the LAYOUT right? proportion, rhythm, whether the page reads |
+| **crop** | is the CONTENT right? text, colour, truncation, alignment |
+| **mid-transition** | is the MOTION right? does it move like the thing it depicts |
+
+All three have now found a defect on this one feature, and each was invisible to
+the others:
+
+- **wide** — five genre sections rendering as five near-empty black bands
+- **crop** — spine text clipped at both ends, eating the catalogue number
+- **mid-transition** — a swap wearing a rotation's clothes
+
+**Capture the midpoint for anything that animates**, and pick the time from the
+duration rather than by feel: roughly a third in, where a real transition is
+visibly mid-way and a fake one has already finished. If the midpoint frame looks
+like the endpoint, there is no motion — only a delay.

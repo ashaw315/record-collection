@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { backFaceDetails } from './back-face';
+import { backFaceDetails, backFaceGroups } from './back-face';
 
 /**
  * §10b: "**The back face is never empty.** Most records will have a front cover
@@ -141,5 +141,110 @@ describe('backFaceDetails', () => {
     const rows = backFaceDetails({ ...bare, storeName: 'Very Friendly Records' });
 
     expect(rows.find((row) => row.label === 'Bought')?.value).toBe('Very Friendly Records');
+  });
+});
+
+describe('backFaceGroups — typeset, not a field dump', () => {
+  /**
+   * **A real back sleeve is typeset, not a list of fields pinned to a corner.**
+   *
+   * The first version returned one flat list rendered with `justify-between`,
+   * which pinned the title to the top and the details to the bottom and left a
+   * hole in the middle that GREW as data shrank. Measured on the real
+   * collection — 5, 6, 7, 7 and 8 lines — every record showed it, including the
+   * densest, so it was the layout rather than the density.
+   *
+   * The fix is not merely reflowing the same list upward. The block gets
+   * structure, because the difference between a data panel and something that
+   * looks like the back of a record is mostly typographic weight:
+   *
+   *   IMPRINT   label and catalogue number, which is what a sleeve prints
+   *             largest and first
+   *   PRESSING  where and when it was made, and the dead-wax fingerprint
+   *   PROVENANCE what was paid, where, and what condition — quieter, because it
+   *             is the owner's information rather than the record's
+   */
+  it('reads label and catalogue number as the imprint', () => {
+    const groups = backFaceGroups({
+      ...bare,
+      labelName: 'Clay Records',
+      catalogNumber: 'CLAYLP 3',
+    });
+
+    expect(groups.map((group) => group.kind)).toEqual(['imprint']);
+    expect(groups[0].rows.map((row) => row.value)).toEqual(['Clay Records', 'CLAYLP 3']);
+  });
+
+  it('separates pressing facts from the imprint', () => {
+    const groups = backFaceGroups({
+      ...bare,
+      labelName: 'Clay Records',
+      yearPressed: 1982,
+      countryPressed: 'UK',
+      matrixRunout: 'CLAYLP3 A1',
+    });
+
+    expect(groups.map((group) => group.kind)).toEqual(['imprint', 'pressing']);
+    expect(groups[1].rows.map((row) => row.label)).toEqual(['Pressed', 'Country', 'Matrix']);
+  });
+
+  it('puts the owner’s information last and in its own group', () => {
+    /**
+     * Condition, price and provenance are facts about THIS COPY rather than
+     * about the record — a real sleeve does not print them at all. Last and
+     * quieter, so the sleeve reads as a sleeve first.
+     */
+    const groups = backFaceGroups({
+      ...bare,
+      labelName: 'Clay Records',
+      conditionMedia: 'VG+',
+      purchasePrice: '12.50',
+    });
+
+    expect(groups.map((group) => group.kind)).toEqual(['imprint', 'provenance']);
+    expect(groups[1].rows.map((row) => row.label)).toEqual(['Media', 'Paid']);
+  });
+
+  it('omits a group entirely when nothing in it is recorded', () => {
+    // An empty heading asserts something is missing. The same rule the gallery
+    // and the shelf sections both follow.
+    const groups = backFaceGroups({ ...bare, matrixRunout: 'CLAYLP3 A1' });
+
+    expect(groups.map((group) => group.kind)).toEqual(['pressing']);
+  });
+
+  it('returns nothing for a record with no details at all', () => {
+    // §10's quick in-store entry is title-and-artist only, which is the FIRST
+    // state of most records. The component says so in a sentence.
+    expect(backFaceGroups(bare)).toEqual([]);
+  });
+
+  it('carries every field the flat list did, across the three groups', () => {
+    /**
+     * The regression guard. Grouping must not silently drop a field — the flat
+     * version was complete, and a reader comparing the two should find the same
+     * facts in a better arrangement.
+     */
+    const full = {
+      labelName: 'Clay Records',
+      catalogNumber: 'CLAYLP 3',
+      yearPressed: 1982,
+      countryPressed: 'UK',
+      pressingPlant: 'Damont',
+      matrixRunout: 'CLAYLP3 A1',
+      vinylWeightGrams: 180,
+      colorVariant: 'black',
+      isReissue: true,
+      conditionMedia: 'VG+',
+      conditionSleeve: 'NM',
+      purchasePrice: '12.50',
+      purchaseDate: '2026-03-15',
+      storeName: 'Very Friendly Records',
+    };
+
+    const flat = backFaceDetails(full).map((row) => row.label);
+    const grouped = backFaceGroups(full).flatMap((group) => group.rows.map((row) => row.label));
+
+    expect(new Set(grouped)).toEqual(new Set(flat));
   });
 });
