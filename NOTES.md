@@ -7185,3 +7185,32 @@ the others:
 duration rather than by feel: roughly a third in, where a real transition is
 visibly mid-way and a fake one has already finished. If the midpoint frame looks
 like the endpoint, there is no motion — only a delay.
+
+## A bookkeeping failure: `git add -A` swept code into NOTES commits
+
+Unit 4b's component work — `PulledRecord.tsx`, `faces.ts`, the `Shelf.tsx`
+conversion, and the back-face reflow — is in the tree and correct, but it landed
+under two commits whose messages describe documentation:
+
+    0afeb8b  NOTES: a role conflict means the element's meaning was misidentified
+             + PulledRecord.tsx (214), Shelf.tsx (56), faces.ts, faces.test.ts
+    10f8d76  NOTES: the mid-transition frame, and the third screenshot question
+             + PulledRecord.tsx (81 changed), back-face.ts (59), back-face.test.ts
+
+**Cause: `git add -A` in a NOTES commit, with unstaged feature work present.**
+The NOTES entries were written mid-unit, as they should be — the habit that is
+wrong is staging everything when the intent is to commit one file.
+
+**Why it matters here more than usual.** This project's commit messages are
+load-bearing: they carry the reasoning, and REVIEW-PLAN's log and the NOTES
+entries both point at them. `git log --oneline -- src/app/shelf/faces.ts`
+returning a documentation commit is a false trail for exactly the reader those
+messages are written for.
+
+**Not rewritten.** The tree is correct and verified at HEAD (2416 tests,
+typecheck, lint, build), the reasoning survives in NOTES, and rewriting shared
+history to improve a message trades a real risk for a cosmetic gain. An honest
+marker commit records where the work actually is.
+
+**The rule: `git add <paths>` when committing NOTES mid-unit.** Reserve
+`git add -A` for the unit's own commit, where sweeping everything is the intent.
