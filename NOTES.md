@@ -6312,3 +6312,69 @@ step**, so re-run against a scratch database instead.
 Full E2E at `--retries=0`: 2 failed, immediate re-run 228/228 clean. This unit
 touches an enum and a gallery ordering; no E2E-covered path changed. Unrelated,
 and the investigation stays open.
+
+# The enum-value restriction a later migration WILL hit
+
+Recorded separately from unit 0's log because the error message does not point
+at the cause, and the next person to meet it will be writing a migration that
+backfills `gatefold` rows.
+
+**You may add an enum value inside a transaction. You may not USE it in the same
+transaction.**
+
+    BEGIN;
+    ALTER TYPE image_type ADD VALUE 'gatefold';   -- fine
+    UPDATE images SET image_type = 'gatefold' ...  -- ERROR
+    -- ERROR:  unsafe use of new value "gatefold" of enum type image_type
+    -- HINT:   New enum values must be committed before they can be used.
+
+Measured on Postgres 16.14. drizzle-kit wraps each migration FILE in a
+transaction, so the rule in practice is: **adding a value and writing rows with
+it must be two migration files.** 0011 adds the value and deliberately does
+nothing else.
+
+**The correction this replaces.** I expected `ALTER TYPE ... ADD VALUE` to fail
+inside a transaction at all — that restriction was real and was lifted in
+Postgres 12. Carrying the old rule forward would have produced 0005's
+create/swap/drop dance for no reason, rewriting a column to add one label. The
+restriction that survives is the narrower one above, and it is easy to conflate
+the two because both are "ADD VALUE and transactions".
+
+# Two more absence-as-success instances, both in the migration toolchain
+
+This family keeps arriving. Two new members, and the second cost the most time.
+
+**1. A hand-written migration reports success and applies nothing.** Writing
+`drizzle/0011_x.sql` and appending an entry to `meta/_journal.json` is not
+enough: drizzle-kit also needs `meta/0011_snapshot.json`. Without it,
+`drizzle-kit migrate` prints
+
+    [✓] migrations applied successfully!
+
+and applies nothing. The success line is unconditional on the file being found.
+
+*Tell:* the applied count in `drizzle.__drizzle_migrations` does not move. Check
+the SCHEMA after a migration — `enum_range`, `\d table` — not the success
+message.
+
+**2. `npx drizzle-kit migrate` does not load `.env.test`, and fails silently.**
+The worse of the pair. It exits **1** with an empty stderr, having applied
+nothing, because it resolved no usable database URL. That reads exactly like a
+broken migration, and I debugged my own SQL for several steps — running the
+statement by hand against the test database, where it succeeded, which made it
+look like a drizzle bug rather than a connection one.
+
+*What resolved it:* the identical command against a scratch database with the
+URL passed explicitly exited 0. The variable, not the SQL.
+
+    TEST_DATABASE_URL=postgresql://... npx drizzle-kit migrate   # works
+    npx drizzle-kit migrate                                       # exit 1, silent
+
+`npm run db:migrate` is a bare `drizzle-kit migrate` and has the same gap.
+
+**And a process rule from the detour.** Diagnosing the migrator by applying its
+DDL directly through psql advanced the schema WITHOUT advancing
+`__drizzle_migrations`, leaving the test database in a state neither the
+migrator nor the tests expected. Rebuilding from empty was the fix and took
+seconds. **Diagnose a migrator against a scratch database, never against the one
+under test** — the diagnostic itself is a write.
