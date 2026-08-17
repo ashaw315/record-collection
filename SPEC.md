@@ -592,7 +592,7 @@ This applies to the versions list as much as to search. The drill-down is where 
 ### 5.8 Suggestions
 | Method | Path | Notes |
 |---|---|---|
-| GET | `/api/suggestions` | Graph-based suggestions, §9.1. Query: `limit` (default 10). |
+| GET | `/api/suggestions` | Relationship-based suggestions, §9.1. Query: `limit` (default 10). |
 | POST | `/api/suggestions/ai` | LLM-assisted gap analysis, §9.2. Rate-limited to 10/hour. |
 
 ### 5.9 Images
@@ -679,9 +679,11 @@ Both features in this section are gone. They are recorded here rather than delet
 
 ## 9. Suggestion engine
 
-### 9.1 Graph-based (default, always on)
+### 9.1 Relationship-based (default, always on)
 
 `GET /api/suggestions`. Pure computation, no external calls.
+
+**It reads three tables and no screen.** `artist_influences` (edges the user asserted), `artist_memberships` (lineups imported from MusicBrainz, §4.3), and `record_genres` rolled up through the hierarchy (§7.1). Earlier versions of this spec called this "graph-based" after §8.1's visualization; that screen is retired (§8) and the relationships it drew are not. The name changed so that nothing sends a reader looking for a graph to find one.
 
 For each artist **not** in the collection but reachable from one that is — appearing in `artist_influences` linked to an owned artist, or sharing a member with one through `artist_memberships` (§4.3) — compute:
 
@@ -914,7 +916,7 @@ Note that `has_genre` was **not** among the survivors, though an earlier version
 5. Add a want-list item, then mark it acquired, and verify it appears in the collection and is flagged acquired in the want-list.
 6. Load the collection at its default view, confirm the shelf renders spines for owned records, and click one — verify it leads to that record.
 7. Pull a record out of the shelf and turn it: verify the back face renders label, catalogue number and pressing details for a record with no photographed back, and that the gatefold affordance is **absent** on a record with no inner image.
-8. Request graph-based suggestions and add one to the want-list.
+8. Request relationship-based suggestions and add one to the want-list.
 9. Upload an image to a record and verify it appears in the gallery.
 10. Run the collection list and lookup flows at a mobile viewport (390×844) — search and filter must be usable one-handed.
 11. Add the same album twice in two different pressings and verify both persist as separate records.
@@ -940,7 +942,7 @@ Mock the Discogs, MusicBrainz and Anthropic APIs in tests. Never hit live extern
     **On demand, per artist, never a bulk crawl.** `member of band` links a person to a group, so building one band's full lineup graph means walking band → person → that person's other bands: roughly 32 sequential requests for an artist like Discharge, about 35 seconds at the permitted rate. That is acceptable when the user asks about one artist and unacceptable as a background job over a whole collection. Fetch when asked, cache, and show progress.
 12. Graph endpoint + visualization. **Built and retired at step 13** — see §8. Kept in this list because the steps are numbered and referenced; the work happened, the screen no longer exists, and the data it read from is still populated by steps 10 and 11.
 13. **The shelf (§10b).** The collection as a wall of sleeves, replacing the shelf-ordering feature and the graph screen.
-14. Suggestions — graph-based first, then LLM-assisted. E2E #8.
+14. Suggestions — relationship-based first (§9.1), then LLM-assisted (§9.2). E2E #8.
 15. Mobile pass across all screens. E2E #10.
 16. Vercel deploy config + cron for price refresh.
 
@@ -968,7 +970,7 @@ Do not build these. Do not add schema for them beyond what §4 specifies.
 ## 14. Definition of done
 
 - All migrations run clean from an empty database.
-- Every endpoint in §5 implemented and integration-tested.
+- Every endpoint in §5 implemented and integration-tested — noting that §5.6 lists none, deliberately. Where a server component or a query-layer function is the sole consumer, the contract and its tests live at that layer and **no endpoint is built to satisfy this line.** An endpoint whose only caller is its own test satisfies this checklist and fails the app.
 - All eleven E2E flows in §11 passing.
 - `npm run build` clean with TypeScript strict mode, no `any` outside genuinely untyped external payloads.
 - Deployed to Vercel with the cron job registered and all env vars documented in `.env.example`.
