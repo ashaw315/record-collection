@@ -847,7 +847,9 @@ Inspired by thecriterioncloset.com, and worth being explicit about what is borro
 
 ### The shelf
 
-- **Records stand as spines on one continuous shelf**, ordered by genre so related records stand together — all the punk adjacent, all the rock adjacent. That ordering is the shelf's own, not a proposal for the physical one.
+- **Records stand as spines on shelves that fill the viewport width and wrap.** One shelf holds as many spines as fit; the rest continue on a shelf below, and the wall scrolls. Ordered by genre so related records stand together — all the punk adjacent, all the rock adjacent. That ordering is the shelf's own, not a proposal for the physical one.
+
+- **Spines are proportioned like records, not like DVD cases.** A 12″ sleeve is a few millimetres thick, so a spine is very narrow and very tall — roughly 1:40. Getting this wrong makes the wall read as a shelf of box sets.
 
   **No section headings, and no shelf band per genre.** Adjacency does the grouping, as it does on a real shelf and in the reference this borrows from, which shows 1,300 spines with no headings at all. Sections were tried and removed: a collection with six flat genres for five records produced five near-empty black bands stacked down the page, and it read as broken rather than as short. Signposting a wall is a problem that arrives with scale, and the decision belongs to whoever is looking at three hundred records.
 - **A spine's colour is the average colour of its cover**, computed once at import and stored. A record with no cover gets a plain spine — an honest absence, not a gap in the wall.
@@ -859,19 +861,25 @@ Inspired by thecriterioncloset.com, and worth being explicit about what is borro
 
 ### Pulling a record
 
-Clicking a spine animates the record off the shelf and into view: front cover forward, the shelf dimmed behind it.
+**The record rises out of its slot.** It was on the shelf a moment ago and now it is in your hands — that continuity is the feature. A record that fades in centred is a modal wearing a sleeve, and the difference is felt immediately.
 
-**Turning it over shows the back**, as you would with the physical object. Not a click-through to a second image — the sleeve is a two-sided thing and turning it is what a person does. Click again puts it back.
+**Rendered in 3D (`three.js`), unlike the shelf.** The wall is flat and CSS is right for it. The pulled record is not: it is an object you turn, and turning it is continuous rather than a fixed animation. This was first built as a CSS keyframe and the result was a panel swapping with a wobble — the end states correct, the motion wrong. Two failed attempts at coordinating React state with a CSS transition were the signal that the medium was wrong, not the implementation.
 
-**The back face is never empty.** Most records will have a front cover from Discogs and nothing else for a long time. Rather than a blank or a placeholder image, the back renders what is known: label, catalogue number, pressing details, matrix runout, condition, what was paid and where. That is close to what a real back sleeve carries, and it means every record is a two-sided object from the day it is entered.
+**Turning is continuous and pointer-driven.** On desktop the record follows the pointer, as the reference does — move to turn it, click to put it back. On touch it is dragged. Either way the rotation tracks the input rather than playing a canned animation, because that is what makes it feel like an object rather than a transition.
 
-Where a photographed back exists, it is used instead, with the same details beside it.
-
-**A gatefold opens; it does not turn.** A sleeve that folds out is a third state, reached by a different gesture from turning the record over, because it is a different physical act. Front → turn → back is rotation; front → open → inner spread is a hinge.
+**A gatefold opens as a real hinge** — two panels rotating about their shared edge, inner artwork mapped across both. Front → turn → back is rotation; front → open → inner spread is a hinge. Two physical acts, two motions, and sharing one would flatten the distinction.
 
 The state exists only where an inner image has been photographed. There is no generated stand-in: the point of a gatefold is the artwork inside it, and a panel of pressing details folded open where a photograph should be would be inventing the thing the user came to see. A record with no inner image simply has two faces, and nothing suggests otherwise.
 
-That means `images` gains a `gatefold` type alongside `cover`, `back`, `label` and `matrix` (§4.2), and its presence is what makes the affordance appear.
+That means `images` carries a `gatefold` type alongside `cover`, `back`, `label` and `matrix` (§4.2), and its presence is what makes the affordance appear.
+
+**Arrows move through the collection without putting the record back.** Browsing a shelf is continuous; being returned to the wall between every record is not. The next record rises as the current one returns.
+
+**The back face is never empty.** Most records will have a front cover from Discogs and nothing else for a long time. Rather than a blank or a placeholder image, the back renders what is known: label and catalogue number set as an imprint, pressing details as body text, purchase information last and quieter. That is close to what a real back sleeve carries, and it means every record is a two-sided object from the day it is entered.
+
+Where a photographed back exists, it is used instead, with the same details beside it.
+
+**Reduced motion disables all of it.** The turn, the rise and the hinge are decorative; the record and its faces are not.
 
 ### The snippet
 

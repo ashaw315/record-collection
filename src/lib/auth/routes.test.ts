@@ -35,7 +35,7 @@ describe('routeAuthMode', () => {
       '/records/abc-123',
       '/want-list',
       '/lookup',
-      '/graph',
+      '/stats',
       '/shelf',
       '/suggestions',
       '/stores',

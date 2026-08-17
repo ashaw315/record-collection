@@ -11,9 +11,10 @@ import { cn } from '@/lib/utils';
  * the URL. §10 lists ten screens, so a shell that names them has to exist
  * before the second one ships.
  *
- * Only the built screens appear. A nav advertising `/graph` before step 10
- * builds it is a dead link, and a disabled item that never enables reads as
- * broken — the remaining §10 routes are added by the steps that build them.
+ * Only the built screens appear. A nav advertising a screen before it exists is
+ * a dead link, and a disabled item that never enables reads as broken — the
+ * remaining §10 routes are added by the steps that build them, and a retired
+ * one leaves here with the screen.
  */
 
 const LINKS = [
@@ -25,7 +26,10 @@ const LINKS = [
   // Linked, not just routable: a screen nothing navigates to is the
   // unreachable-path shape that cost this build §6's genre mapping (NOTES).
   { href: '/stats', label: 'Stats' },
-  { href: '/graph', label: 'Graph' },
+  // `/graph` was here until §10b retired the screen. The DATA it drew --
+  // artist_memberships, artist_influences, record_genres -- survives and feeds
+  // §9's suggestions, which is what it was actually useful for; drawing it
+  // added a picture that told the user what they already knew.
   { href: '/manage', label: 'Manage' },
 ] as const;
 

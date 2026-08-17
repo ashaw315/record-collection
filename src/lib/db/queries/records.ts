@@ -4,7 +4,7 @@ import { isForeignKeyViolation } from '@/lib/api/errors';
 import { escapeLikePattern } from '@/lib/api/like';
 import type { RecordFilters, RecordSortField } from '@/lib/records/fields';
 import { countReferences } from './referrers';
-// §7.1's hierarchy, shared with ./want-list and ./graph — see that module for
+// §7.1's hierarchy, shared with ./want-list and ./shelf — see that module for
 // why it is not defined here.
 import { genreSubtree } from './genre-hierarchy';
 import { getDb } from '@/db/client';

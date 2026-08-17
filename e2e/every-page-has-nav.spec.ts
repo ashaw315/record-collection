@@ -52,7 +52,6 @@ async function login(page: Page) {
  */
 const STATIC_ROUTES = [
   '/',
-  '/graph',
   '/lookup',
   '/manage',
   '/records/new',
