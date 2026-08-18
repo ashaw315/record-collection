@@ -253,7 +253,23 @@ export type { RecordSortField, RecordFilters } from '@/lib/records/fields';
  * is not returned three times — the row-multiplication problem the detail read
  * avoids for the same reason.
  */
-function buildWhere(filters: RecordFilters) {
+/**
+ * **Exported so the SHELF shares this predicate rather than restating it.**
+ *
+ * §10b's wall is a raw-`sql` query — two recursive CTEs and three `DISTINCT ON`
+ * clauses, none of which has a clean Drizzle expression — so converting it to
+ * the query builder to reuse this would be a rewrite of working, tested code.
+ * Drizzle's `sql` objects compose into raw templates, so the CONDITIONS travel
+ * even though the query shape does not.
+ *
+ * That matters more than convenience: a shelf with its own copy of the genre
+ * predicate would be two implementations of one rule, which is the shape NOTES
+ * records under `genreSubtree` and `hasGatefold`. The wall and the table now
+ * answer the same filter by construction rather than by coincidence — and the
+ * defect that made this necessary was exactly that kind of divergence, with the
+ * heading counting one thing and the wall showing another.
+ */
+export function buildWhere(filters: RecordFilters) {
   const clauses = [];
 
   if (filters.artistId !== undefined) clauses.push(eq(records.artistId, filters.artistId));

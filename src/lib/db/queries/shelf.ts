@@ -1,6 +1,7 @@
 import 'server-only';
 import { sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
+import { buildWhere, type RecordFilters } from './records';
 
 /**
  * SPEC.md §10b's shelf: the collection as ONE continuous wall of spines.
@@ -83,8 +84,34 @@ export type ShelfRecord = {
 
 type Row = ShelfRecord & { sectionName: string | null };
 
-export async function shelfRecords(): Promise<ShelfRecord[]> {
+/**
+ * §10b's wall.
+ *
+ * **Filtered by the SAME predicate the table uses**, and that is a defect fix
+ * rather than a feature. This function took no arguments: filtering to a genre
+ * rendered every spine in the collection under a heading showing the FILTERED
+ * count — five spines beneath "2 records", with the chip lit and "Clear filter"
+ * offered. A user would believe they owned five Rock records. That is the
+ * confidently-misleading class CLAUDE.md §8 is about, on the screen they see
+ * first, and it survived from unit 6 to unit 20 because no test asserted the
+ * wall honours a filter.
+ *
+ * `buildWhere` is exported from `records.ts` and reused rather than restated.
+ * Drizzle's `sql` objects compose into raw templates, so the CONDITIONS travel
+ * even though this query's shape — two recursive CTEs, three `DISTINCT ON`
+ * clauses — has no clean Drizzle expression and is not worth rewriting to
+ * share them. The table is aliased as `records` rather than `rec` precisely so
+ * those conditions resolve: Drizzle renders `"records"."label_id"`, which would
+ * reference a table not in scope under any other alias.
+ *
+ * **Filtering repacks rather than leaving gaps**, which is honest but is not
+ * what §10b A24d asks for. That behaviour is unimplemented and has its own unit
+ * ahead of it; holding positions for records that are not rendered is a
+ * different mechanism from filtering the rows.
+ */
+export async function shelfRecords(filters: RecordFilters = {}): Promise<ShelfRecord[]> {
   const db = getDb();
+  const where = buildWhere(filters);
 
   const result = await db.execute<Row>(sql`
     /**
@@ -152,13 +179,13 @@ export async function shelfRecords(): Promise<ShelfRecord[]> {
       ORDER BY record_id, image_type, created_at ASC, id
     )
     SELECT
-      rec.id,
-      rec.title,
+      records.id,
+      records.title,
       a.name AS "artistName",
-      rec.release_year AS "releaseYear",
+      records.release_year AS "releaseYear",
       l.name AS "labelName",
       p.catalog_number AS "catalogNumber",
-      rec.spine_colour AS "spineColour",
+      records.spine_colour AS "spineColour",
       cover.url AS "coverUrl",
       back.url AS "backUrl",
       gateL.url AS "gatefoldLeftUrl",
@@ -170,22 +197,23 @@ export async function shelfRecords(): Promise<ShelfRecord[]> {
       p.vinyl_weight_grams AS "vinylWeightGrams",
       p.color_variant AS "colorVariant",
       COALESCE(p.is_reissue, false) AS "isReissue",
-      rec.condition_media::text AS "conditionMedia",
-      rec.condition_sleeve::text AS "conditionSleeve",
-      rec.purchase_price::text AS "purchasePrice",
-      rec.purchase_date::text AS "purchaseDate",
+      records.condition_media::text AS "conditionMedia",
+      records.condition_sleeve::text AS "conditionSleeve",
+      records.purchase_price::text AS "purchasePrice",
+      records.purchase_date::text AS "purchaseDate",
       st.name AS "storeName",
       s.root_name AS "sectionName"
-    FROM records rec
-    JOIN artists a ON a.id = rec.artist_id
-    LEFT JOIN labels l ON l.id = rec.label_id
-    LEFT JOIN pressings p ON p.id = rec.pressing_id
-    LEFT JOIN record_stores st ON st.id = rec.store_id
-    LEFT JOIN image cover ON cover.record_id = rec.id AND cover.image_type = 'cover'
-    LEFT JOIN image back  ON back.record_id  = rec.id AND back.image_type  = 'back'
-    LEFT JOIN image gateL ON gateL.record_id = rec.id AND gateL.image_type = 'gatefold_left'
-    LEFT JOIN image gateR ON gateR.record_id = rec.id AND gateR.image_type = 'gatefold_right'
-    LEFT JOIN section s ON s.record_id = rec.id
+    FROM records
+    JOIN artists a ON a.id = records.artist_id
+    LEFT JOIN labels l ON l.id = records.label_id
+    LEFT JOIN pressings p ON p.id = records.pressing_id
+    LEFT JOIN record_stores st ON st.id = records.store_id
+    LEFT JOIN image cover ON cover.record_id = records.id AND cover.image_type = 'cover'
+    LEFT JOIN image back  ON back.record_id  = records.id AND back.image_type  = 'back'
+    LEFT JOIN image gateL ON gateL.record_id = records.id AND gateL.image_type = 'gatefold_left'
+    LEFT JOIN image gateR ON gateR.record_id = records.id AND gateR.image_type = 'gatefold_right'
+    LEFT JOIN section s ON s.record_id = records.id
+    ${where === undefined ? sql`` : sql`WHERE ${where}`}
     /**
      * Genre groups alphabetically, with ungrouped records LAST — they are the
      * leftovers, and scattering them through the wall would break the adjacency
@@ -204,9 +232,9 @@ export async function shelfRecords(): Promise<ShelfRecord[]> {
       (s.root_name IS NULL),
       s.root_name,
       a.name,
-      rec.release_year NULLS LAST,
-      rec.title,
-      rec.id
+      records.release_year NULLS LAST,
+      records.title,
+      records.id
   `);
 
   /**

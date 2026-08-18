@@ -71,7 +71,7 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
    * Fetched only when it is the view in use, so the table and grid do not pay
    * for it.
    */
-  const shelf = params.view === 'shelf' ? await shelfRecords() : null;
+  const shelf = params.view === 'shelf' ? await shelfRecords(params.filters) : null;
 
   const [records, facets] = await Promise.all([
     listRecords({

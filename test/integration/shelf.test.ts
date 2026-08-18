@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm';
 import { getTestDb, truncateAll, closeTestDb } from '../helpers/db';
 import { artists, genres, images, labels, pressings, records, recordGenres } from '@/db/schema';
 import { shelfRecords } from '@/lib/db/queries/shelf';
+import { listRecords } from '@/lib/db/queries/records';
 
 /**
  * SPEC.md §10b's shelf ordering.
@@ -393,6 +394,79 @@ describe('shelfRecords — what pulling a record needs (§10b)', () => {
     await record('Hear Nothing', await artist('Discharge'), { genreIds: [punk] });
 
     expect((await shelfRecords())[0].backUrl).toBeNull();
+  });
+
+  it('honours a filter, rather than returning the whole collection', async () => {
+    /**
+     * **The defect this pins, at the query level.**
+     *
+     * `shelfRecords()` took no arguments and returned everything, while the
+     * page's heading came from the filtered `listRecords` query — so filtering
+     * to a genre rendered every spine under a heading showing the filtered
+     * count. Five spines beneath "2 records", chip lit, "Clear filter" offered:
+     * a user would believe they owned five records of that genre, on the
+     * default view of `/`.
+     *
+     * It survived from unit 6 to unit 20 because nothing asserted the wall
+     * honours a filter. There is an E2E seam test asserting the wall and the
+     * heading agree with EACH OTHER, which is the assertion that cannot drift;
+     * this one is narrower and faster, and it fails against the query itself
+     * rather than against the page.
+     *
+     * Fails against `shelfRecords` if the filters parameter is dropped, if the
+     * WHERE clause is omitted, or if the shared `buildWhere` predicate stops
+     * being applied.
+     */
+    const punk = await genre('Punk');
+    const rock = await genre('Rock');
+    const discharge = await artist('Discharge');
+
+    await record('Hear Nothing', discharge, { genreIds: [punk] });
+    await record('Why', discharge, { genreIds: [punk] });
+    await record('Brothers in Arms', await artist('Dire Straits'), { genreIds: [rock] });
+
+    expect((await shelfRecords()).length, 'unfiltered returns everything').toBe(3);
+
+    const punkOnly = await shelfRecords({ genreId: punk });
+    expect(punkOnly.map((row) => row.title).sort()).toEqual(['Hear Nothing', 'Why']);
+
+    const rockOnly = await shelfRecords({ genreId: rock });
+    expect(rockOnly.map((row) => row.title)).toEqual(['Brothers in Arms']);
+  });
+
+  it('shares ONE filter predicate with the table, rather than restating it', async () => {
+    /**
+     * **The two-implementations guard**, and the reason `buildWhere` is
+     * exported rather than copied.
+     *
+     * The wall is a raw-`sql` query and the table is Drizzle, so the obvious
+     * route was a second predicate written in SQL. Two implementations of one
+     * rule is the shape NOTES records under `genreSubtree` and `hasGatefold` —
+     * and divergence between two producers is exactly what caused the defect
+     * above, with the heading counting one thing and the wall showing another.
+     *
+     * Drizzle's `sql` objects compose into raw templates, so the CONDITIONS are
+     * shared even though the query shapes differ. This asserts the two agree
+     * for a filter whose semantics are non-trivial: genre membership is
+     * HIERARCHICAL (§7.1), so a record tagged only with a child genre must
+     * match its ancestor. A hand-written copy of the predicate would be most
+     * likely to get exactly that wrong.
+     */
+    const punk = await genre('Punk');
+    const uk82 = await genre('UK82', punk);
+    const discharge = await artist('Discharge');
+
+    await record('Hear Nothing', discharge, { genreIds: [uk82] });
+    await record('Brothers in Arms', await artist('Dire Straits'), { genreIds: [] });
+
+    const wall = await shelfRecords({ genreId: punk });
+    const table = await listRecords({ filters: { genreId: punk }, page: 1, pageSize: 50 });
+
+    expect(
+      wall.map((row) => row.title).sort(),
+      'the wall must match through the hierarchy, as the table does',
+    ).toEqual(table.rows.map((row) => row.title).sort());
+    expect(wall.length, 'and the child-tagged record matches its ancestor').toBe(1);
   });
 
   it('carries a gatefold ONLY when BOTH leaves have been photographed', async () => {

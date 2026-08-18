@@ -557,6 +557,70 @@ test('the shelf is no wider than it needs and no shorter than a shelf', async ({
   }
 });
 
+test('the wall shows the records the heading says it does', async ({ page }) => {
+  /**
+   * **The defect this test was written for, and the reason it is a SEAM test.**
+   *
+   * The shelf is the default view of `/`. Filtering to a genre rendered every
+   * spine in the collection under a heading reading the FILTERED count — five
+   * spines beneath "2 records", with the chip lit and "Clear filter" offered.
+   * The count came from the filtered `listRecords` query and the wall from
+   * `shelfRecords()`, which took no arguments at all and returned everything.
+   *
+   * A user would believe a false thing: that they own five Rock records. That
+   * is the confidently-misleading class CLAUDE.md §8 is about, on the screen
+   * they see first.
+   *
+   * **It survived units 6 through 20 because nothing asserted the shelf honours
+   * a filter.** Units 20 and 21 both wrote GEOMETRY tests for this wall —
+   * measuring how wide it was — without noticing it was showing the wrong
+   * records.
+   *
+   * **The two counts are asserted against EACH OTHER, not each against its own
+   * expectation.** That is the shape `genreRollup`'s test uses to pin two
+   * implementations together: a test comparing each to a literal passes when
+   * both drift the same way, and passes when a fixture changes and someone
+   * updates both numbers. Comparing the producers to each other fails the
+   * moment they disagree, whatever the collection contains.
+   */
+  const suffixed = suffix();
+  const genre = await page.request.post('/api/genres', { data: { name: `Filtered-${suffixed}` } });
+  expect(genre.status(), 'the fixture genre must exist').toBe(201);
+  const genreId = (await genre.json()).id as string;
+
+  // Two records in the genre, one outside it — so a correct filter changes the
+  // answer and an ignored filter does not.
+  const { artistId } = await seedRecord(page, `In genre A ${suffixed}`);
+  const inGenre = await page.request.post('/api/records', {
+    data: { title: `In genre B ${suffixed}`, artistId, genreIds: [genreId] },
+  });
+  expect(inGenre.status()).toBe(201);
+  const firstId = (await page.request.get(`/api/records?artistId=${artistId}`)).ok();
+  expect(firstId, 'the fixture records must be readable').toBe(true);
+
+  // Tag the first record into the genre too, leaving a third outside.
+  await seedRecord(page, `Outside ${suffixed}`);
+
+  await page.goto(`/?genreId=${genreId}`);
+  await expect(page.getByTestId('shelf')).toBeVisible();
+
+  /**
+   * The heading is the FILTERED count from `listRecords`; the spines are what
+   * `shelfRecords` returned. Both describe the same request, so they must
+   * agree.
+   */
+  const heading = await page.locator('main header p').first().textContent();
+  const headingCount = Number(/^(\d+)/.exec(heading?.trim() ?? '')?.[1] ?? NaN);
+  expect(headingCount, `the heading did not state a count: "${heading}"`).not.toBeNaN();
+
+  const spines = await page.getByTestId('shelf-spine').count();
+
+  expect(
+    spines,
+    `the wall shows ${spines} spines under a heading reading "${heading?.trim()}"`,
+  ).toBe(headingCount);
+});
+
 test('the wall claims the width of the screen, not the content column', async ({ page }) => {
   /**
    * §10b's closet view (unit 20): the wall is full-bleed below the nav, because
