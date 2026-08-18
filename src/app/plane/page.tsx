@@ -1,8 +1,12 @@
 import { asc } from 'drizzle-orm';
 import { getDb } from '@/db/client';
 import { images } from '@/db/schema';
+import { shelfRecords } from '@/lib/db/queries/shelf';
+import { backFaceGroups } from '../shelf/back-face';
+import { BoxCanvas } from './BoxCanvas';
 import { PlaneCanvas } from './PlaneCanvas';
 import { coverTextureUrl } from './plane';
+import { resolveSkins } from './skins';
 
 /**
  * §10b's first `three.js` unit, on a route of its own.
@@ -41,6 +45,14 @@ export default async function PlanePage() {
     .orderBy(asc(images.createdAt));
 
   const textureUrl = coverTextureUrl(rows);
+
+  /**
+   * Real records, so the fallbacks are exercised against real data rather than
+   * against fixtures that flatter them. `shelfRecords` already resolves the four
+   * slots and the spine colour, so the object and the wall read the same rows —
+   * two queries would be two answers about one record.
+   */
+  const records = await shelfRecords();
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
@@ -92,6 +104,66 @@ export default async function PlanePage() {
             */}
           </div>
         </div>
+      )}
+
+      {/*
+        §10b's object: the same four slots on a BOX rather than a plane, at a
+        fixed angle that shows a face and an edge together. A box viewed face-on
+        is indistinguishable from a plane, which is the whole claim being made.
+      */}
+      <h2 className="mt-14 font-heading text-xl font-semibold text-foreground">
+        The box, all four slots
+      </h2>
+      <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+        Step 13 unit 16. Front and back are mapped from their slots; where a slot is empty the
+        face is a plain sleeve in the record&rsquo;s own spine colour, and the back carries its
+        label and catalogue number as a small imprint. Every record here hits the back
+        fallback, which is what the object looks like today.
+      </p>
+
+      <div className="mt-6 flex flex-wrap items-start gap-8">
+        {records.map((record) => {
+          const skins = resolveSkins(record);
+          const groups = backFaceGroups(record);
+          const imprintRow = groups.find((group) => group.kind === 'imprint');
+          const imprint =
+            imprintRow === undefined ? null : imprintRow.rows.map((row) => row.value).join('   ');
+
+          return (
+            <BoxCanvas
+              key={record.id}
+              skins={skins}
+              imprint={imprint}
+              label={`${record.title} · ${skins.front.kind}/${skins.back.kind}${
+                skins.gatefold === null ? '' : ' · gatefold'
+              }`}
+            />
+          );
+        })}
+      </div>
+
+      {/*
+        The thickness candidates, rendered at real size so the choice is made by
+        looking rather than by arithmetic. §10b settled 1:40 for the CSS box from
+        unit 12's measured failure, but that number was never judged under light.
+      */}
+      {records.length > 0 && (
+        <>
+          <h2 className="mt-14 font-heading text-xl font-semibold text-foreground">
+            Thickness candidates
+          </h2>
+          <div className="mt-6 flex flex-wrap items-start gap-8">
+            {([1 / 25, 1 / 40, 1 / 70] as const).map((ratio) => (
+              <BoxCanvas
+                key={ratio}
+                skins={resolveSkins(records[0])}
+                imprint={null}
+                thicknessRatio={ratio}
+                label={`1:${Math.round(1 / ratio)}`}
+              />
+            ))}
+          </div>
+        </>
       )}
     </main>
   );

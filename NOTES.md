@@ -8261,3 +8261,51 @@ answer both.** Unit 13 correctly made the mapping use layout geometry precisely
 BECAUSE the visual box moves; this test then inherited that value for a purpose
 that needs the visual box. Fixed by polling until the two agree, which is the
 browser saying the rise is over — no duration in the test.
+
+---
+
+## Step 13 unit 16 — the box, and all four texture slots
+
+**1:40 confirmed by eye, not inherited.** The CSS box's thickness was derived
+from arithmetic against unit 12's measured failure and had never been judged
+under light — the one number in this feature chosen without looking. Rendered at
+1:25, 1:40 and 1:70 and cropped the edge on each:
+
+- **1:25** — a broad grey band. Reads as a DVD case, which is the reference's
+  own proportion and the wrong thing to borrow.
+- **1:40** — a narrower band, still clearly its own lit surface, tonally
+  separate from the face. Chosen.
+- **1:70** — a hairline. The sleeve reads as a sheet with a dark border rather
+  than an object with a side. This is the physically accurate ratio and it loses
+  to legibility, exactly as the spines' 1:12 did.
+
+The WebGL box got its OWN constant (`BOX_THICKNESS_RATIO`) rather than importing
+`SLEEVE_THICKNESS_RATIO`. Sharing it would mean this unit's looking-at-it could
+only be recorded by editing the CSS box, which the unit had to leave untouched.
+Two renderers, two values, until one replaces the other.
+
+**Two of the three real covers are NOT square** — 591x599 and 596x600. A22's
+crop rule is a live path rather than an edge case, and every imported cover
+should be assumed non-square until measured.
+
+**The fallback back reads as a plain sleeve, but the EDGE is what sells it.** On
+a record with no images at all, the face is a flat colour with light raking
+across it — clearly a lit surface rather than a missing texture — but at the
+fixed viewing angle its edge is much less visible than on a photographed record,
+because there is no artwork to contrast against. It reads as a sleeve; it reads
+less as a BOX than the textured ones do. Worth knowing before the panels unit,
+since this is the face every record shows today.
+
+**`hasGatefold` now exists twice** — `skins.ts` and `faces.ts`, identical logic.
+Deliberate and temporary: the CSS and WebGL implementations are parallel while
+the renderer is proven, and importing across them would couple two things meant
+to be independently deletable. Recorded in the source rather than left silent,
+because it is the two-places-one-rule shape this codebase keeps meeting. When
+the CSS version goes, one copy goes with it.
+
+**The root-grep habit paid again.** Grepping `spine_colour` before writing found
+`DEFAULT_SPINE_COLOUR` and `textColourOn` already existing in `spine.ts` — so the
+object reuses the wall's fallback colour instead of inventing a second one. A
+file-by-file read of the plane directory would have found neither, and the
+symptom would have been one grey on the wall and a different grey on the object
+for the same record.
