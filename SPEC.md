@@ -856,11 +856,13 @@ One thing the reference settles that this spec previously got wrong: **its case 
 
   **The order is deterministic.** The same collection always produces the same wall — every tie broken explicitly, down to the record id. Inherited from §8.2, which stated it about a physical filing order and was right about the problem rather than the algorithm: a wall you scan by eye cannot move between loads, or you re-scan it every time.
 
-- **A shelf has a length whether or not it is full.** It is furniture: a real shelf with five records on it is still a shelf with space beside them, and a shelf shrunk to its contents reads as a thumbnail rather than as a shelf.
+- **The shelf is a plane, not a box, and it has no minimum width.** The surface runs edge to edge and ends where the wall ends. A real shelf with five records on it is still a shelf with space beside them — and the space beside them is *wall*, not empty shelf, which is why it implies nothing about records that are not there.
 
-  **The minimum was 40% of the content column, and that number does not survive the view owning the screen.** It was chosen by rendering candidates at five records in a 1120px column and looking; on a full-bleed parent the same rule yields 499px of empty timber with 133px of spines at one end, which is the *missing data* reading it was written to prevent, arriving through the rule rather than despite it.
+  **A24c left the minimum unstated pending a re-derivation. The re-derivation closed the clause rather than filling it in.** Rendered at five records against a viewport-owning wall, every candidate width failed the same way: 151px read as a tile, 499px as a partly-drawn box, 874px the same but wider, 1248px of black timber as *missing data*. They were one object at four widths, and the object was the defect — a rectangle that stops has a size, and a reader interprets the size. A plane does not, so there is nothing to set.
 
-  Re-derive it in the new context by the same instrument — render the candidates at a real collection size against a viewport-owning wall, and look. What the rule protects has not changed: a short collection must read as short, not as broken. What "short" looks like against a whole screen is a different measurement, and this section states the rule rather than the number until it has been taken.
+  What the old rule protected survives: a short collection must read as short rather than broken. That is now a property of the plane being the same width whatever stands on it, rather than of a floor holding a box open.
+
+  **The empty portion is wall.** Judged by rendering four treatments of that space — black fill, edge-only, dim wall, and a wall block behind the records — and looking. Black fill is the *missing data* failure. Edge-only reads as a line ruled across a page rather than as a surface. A block behind the records floats over its own shelf edge, replacing one boundary with two. A dim wall carrying the shelf edge along its foot is the one that reads as furniture.
 
 - **Spines are proportioned like records, not like DVD cases** — narrow enough to read as a record, wide enough to name it. Roughly 1:12. Getting this wrong in one direction makes the wall a shelf of box sets; in the other it makes it a wall of colour bars that must be hovered one at a time to find anything.
 

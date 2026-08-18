@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { AppHeader } from '@/components/AppHeader';
 import { CollectionFilters } from './CollectionFilters';
+import { ShelfControls } from './ShelfControls';
+import { activeFilterCount } from './active-filters';
 import { CollectionList, type CollectionRow } from './CollectionList';
 import { Shelf } from './shelf/Shelf';
 import { CollectionPagination } from './CollectionPagination';
@@ -107,11 +109,30 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
           </Link>
         </header>
 
-        <CollectionFilters
-          params={params}
-          undatedCount={records.undatedCount}
-          options={facets}
-        />
+        {/*
+          §10b A24a and §10's screens table: the views differ structurally, not
+          just in layout. Grid and table carry their controls ON THE PAGE, above
+          the rows, because a list wants its controls visible. The shelf owns
+          the screen and reaches the same controls through an OVERLAY.
+
+          The branch is here rather than inside `CollectionFilters` deliberately:
+          wrapping the shared component would impose the overlay on the list
+          views too, and the asymmetry is the point.
+        */}
+        {shelf === null ? (
+          <CollectionFilters
+            params={params}
+            undatedCount={records.undatedCount}
+            options={facets}
+          />
+        ) : (
+          <ShelfControls
+            params={params}
+            undatedCount={records.undatedCount}
+            options={facets}
+            activeCount={activeFilterCount(params)}
+          />
+        )}
 
         {/*
           `view` is still honoured from the URL at any width — a grid link

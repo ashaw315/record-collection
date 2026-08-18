@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { RECORD_SORT_FIELDS, type RecordSortField } from '@/lib/records/fields';
 import {
+  VIEW_MODES,
   parseCollectionParams,
   toQueryString,
   withFacet,
@@ -86,14 +87,76 @@ function SearchBox({ initial, onSubmit }: { initial: string; onSubmit: (value: s
   );
 }
 
+/**
+ * The view toggle (§10), shared by every view rather than duplicated.
+ *
+ * **Exported because the shelf hosts it somewhere else.** The shelf's filters
+ * live in an overlay (§10b A24a) and the view toggle must NOT be inside it —
+ * changing view would otherwise mean opening a filter panel first. Extracting
+ * it means both hosts render the same control, so the two cannot drift.
+ *
+ * **All three views, not two.** This offered `table` and `grid` only, which was
+ * harmless while `table` was the default and became a one-way trip when §10b
+ * made `shelf` the default: leaving the shelf was possible, returning to it was
+ * not, except by editing the URL. Found by looking at the built overlay — the
+ * geometry numbers were all correct and could not see it.
+ *
+ * HIDDEN below `sm`. At 390px the grid collapses to one column, which makes it
+ * a taller table rather than a distinct view — measured: 3/2/1 columns at
+ * 1280/768/390. §10 wants mobile usable ONE-HANDED rather than
+ * feature-complete, and a control that swaps one list for a longer list is cost
+ * without benefit. The table remains the mobile view.
+ */
+export function ViewToggle({
+  params,
+  change,
+}: {
+  params: CollectionParams;
+  change: (next: (current: CollectionParams) => CollectionParams) => void;
+}) {
+  return (
+    <div className="hidden shrink-0 gap-1 sm:flex" role="group" aria-label="View">
+      {VIEW_MODES.map((mode) => (
+        <button
+          key={mode}
+          type="button"
+          aria-pressed={params.view === mode}
+          onClick={() => change((current) => withFacet(current, { view: mode }))}
+          className={cn(
+            'rounded-xs border px-2 py-1 text-xs capitalize transition-colors',
+            params.view === mode
+              ? 'border-primary bg-primary text-primary-foreground'
+              : 'border-border hover:bg-accent',
+          )}
+        >
+          {mode}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function CollectionFilters({
   params,
   options,
   undatedCount,
+  renderToolbar,
 }: {
   params: CollectionParams;
   options: FilterOptions;
   undatedCount: number;
+  /**
+   * Lets a caller place the view toggle OUTSIDE this component's own layout.
+   *
+   * The shelf needs the toggle beside its disclosure button rather than inside
+   * the overlay (§10b A24a), but the toggle navigates through `change`, which
+   * owns the pending-navigation reconciliation just below. Handing the CALLER
+   * a ready-made element keeps one `change` and one instance — the alternative,
+   * a second toggle wired to its own `router.push`, is two implementations of
+   * the same navigation that must agree, and the one outside the panel would
+   * quietly drop a filter change still in flight.
+   */
+  renderToolbar?: (toggle: React.ReactNode, body: React.ReactNode) => React.ReactNode;
 }) {
   const router = useRouter();
 
@@ -174,8 +237,10 @@ export function CollectionFilters({
       (key) => key !== 'includeUndated' && params.filters[key as keyof typeof params.filters] !== undefined,
     ).length;
 
-  return (
-    <div ref={rootRef} className="mb-5 flex flex-col gap-3">
+  const toggle = <ViewToggle params={params} change={change} />;
+
+  const body = (
+    <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
         {/* Keyed on the URL's term so navigating — including Back — gives a
             FRESH input carrying the new value. The obvious alternative, an
@@ -186,33 +251,11 @@ export function CollectionFilters({
         <SearchBox key={params.filters.q ?? ''} initial={params.filters.q ?? ''} onSubmit={search} />
 
         {/*
-          View toggle (§10). Two buttons rather than a select: it is a binary
-          choice and a select costs an extra tap on a phone.
-
-          HIDDEN below `sm`. At 390px the grid collapses to one column, which
-          makes it a taller table rather than a distinct view — measured: 3/2/1
-          columns at 1280/768/390. §10 wants mobile usable ONE-HANDED rather
-          than feature-complete, and a control that swaps one list for a longer
-          list is cost without benefit. The table remains the mobile view.
+          The shelf lifts the toggle OUT of this row via `renderToolbar`, so it
+          stays reachable without opening the filter overlay (§10b A24a). The
+          list views keep it here, inline, where their other controls are.
         */}
-        <div className="hidden shrink-0 gap-1 sm:flex" role="group" aria-label="View">
-          {(['table', 'grid'] as const).map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              aria-pressed={params.view === mode}
-              onClick={() => change((current) => withFacet(current, { view: mode }))}
-              className={cn(
-                'rounded-xs border px-2 py-1 text-xs capitalize transition-colors',
-                params.view === mode
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-border hover:bg-accent',
-              )}
-            >
-              {mode}
-            </button>
-          ))}
-        </div>
+        {renderToolbar === undefined && <ViewToggle params={params} change={change} />}
 
         <label htmlFor="collection-sort" className="sr-only">
           Sort by
@@ -350,6 +393,24 @@ export function CollectionFilters({
           </button>
         </div>
       )}
+    </div>
+  );
+
+  /**
+   * The shelf supplies its own arrangement: the toggle stays on the page while
+   * the body goes into an overlay (§10b A24a). One `change`, one instance —
+   * the toggle outside the panel is the SAME element as the one the list views
+   * render inline, so the two cannot drift.
+   */
+  if (renderToolbar !== undefined) {
+    return (
+      <div ref={rootRef}>{renderToolbar(toggle, body)}</div>
+    );
+  }
+
+  return (
+    <div ref={rootRef} className="mb-5">
+      {body}
     </div>
   );
 }

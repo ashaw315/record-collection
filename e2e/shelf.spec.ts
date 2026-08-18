@@ -480,81 +480,64 @@ test('the tilt tracks pointer POSITION, and holds when the pointer leaves', asyn
     .toBe(first);
 });
 
-test('the shelf is no wider than it needs and no shorter than a shelf', async ({ page }) => {
+test('the shelf is a plane that ends where the wall ends, at any collection size', async ({ page }) => {
   /**
-   * §10b as amended: **no wider than it needs, no shorter than a shelf.**
+   * **This replaces unit 9's floor-and-ceiling test, which is obsolete rather
+   * than relaxed.**
    *
-   * Two rules, and the unit that produced them had only the first. "A shelf's
-   * width is however much it carries" fixed a real defect — a full-viewport
-   * band with five spines at the left reads as MISSING DATA, the genre-sections
-   * defect one level out — and then overshot, because at five records it left a
-   * 105px tile floating in a 1200px column, which reads as a thumbnail of a
-   * shelf rather than as a shelf.
+   * That test asserted two things about a BOX: a `min-width: 40%` floor so five
+   * records did not read as a thumbnail, and a `w-fit` ceiling so the box did
+   * not run past its widest row. Both were mutation-verified and both were
+   * right about the object they described.
    *
-   * What resolves it is that a shelf is FURNITURE. It has a length whether or
-   * not it is full, and a real shelf with five records on it is still a shelf
-   * with space beside them. The emptiness was never the problem; the emptiness
-   * being the whole viewport was, because that implies a collection that should
-   * have filled it.
+   * The object was the defect. A rectangle that stops has a size and a reader
+   * interprets it — every candidate width failed at five records for the same
+   * reason. The shelf is now a plane running edge to edge, so there is no floor
+   * to hold and no ceiling to enforce: the surface ends where the wall ends.
    *
-   * So the floor and the ceiling are asserted together. Neither alone is the
-   * rule, and each was briefly shipped as if it were.
-   *
-   * **The ceiling is measured against the WIDEST ROW, not the last spine.** The
-   * first version of this test compared the container to the final spine, then
-   * passed scoped and failed in the full suite — where other specs seed enough
-   * records to WRAP, so the last spine sits at the start of a short second row
-   * and 769px of legitimate trailing shelf belongs to the rows above it.
+   * What survives is what the old rule protected — a short collection must read
+   * as short rather than broken — and that is now a property of the plane being
+   * the same width regardless of what stands on it. Asserted at two collection
+   * sizes, because a width that tracked the contents would differ between them.
    */
-  const title = `Fitted ${suffix()}`;
-  await seedRecord(page, title);
+  const artist = await page.request.post('/api/artists', { data: { name: `Plane-${suffix()}` } });
+  const artistId = (await artist.json()).id as string;
 
-  await page.goto('/');
-  const shelf = page.getByTestId('shelf');
-  await expect(shelf).toBeVisible();
+  await page.request.post('/api/records', { data: { title: `Only one ${suffix()}`, artistId } });
+  await page.goto(`/?artistId=${artistId}`);
+  const timber = page.getByTestId('shelf-timber');
+  await expect(timber).toBeVisible();
 
-  const spines = page.getByTestId('shelf-spine');
-  const spineCount = await spines.count();
-  expect(spineCount, 'nothing is proven by a shelf with no spines').toBeGreaterThan(0);
+  const narrow = await timber.boundingBox();
+  const spinesNarrow = await page.getByTestId('shelf-spine').count();
+  expect(narrow, 'the plane must have a measurable box').not.toBeNull();
+  if (narrow === null) return;
 
-  const timber = shelf.locator('> div').first();
-  const box = await timber.boundingBox();
-  const column = await shelf.boundingBox();
-  expect(box, 'the shelf must have a measurable box').not.toBeNull();
-  expect(column, 'the content column must have a measurable box').not.toBeNull();
-  if (box === null || column === null) return;
+  // Several more records, so the row is fuller.
+  for (let index = 0; index < 12; index += 1) {
+    await page.request.post('/api/records', { data: { title: `Filler ${index} ${suffix()}`, artistId } });
+  }
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(timber).toBeVisible();
+
+  const wide = await timber.boundingBox();
+  const spinesWide = await page.getByTestId('shelf-spine').count();
+  expect(wide, 'the plane must have a measurable box').not.toBeNull();
+  if (wide === null) return;
+
+  expect(spinesWide, 'the second render must actually hold more records').toBeGreaterThan(
+    spinesNarrow,
+  );
 
   /**
-   * The floor: a shelf is furniture and has a length. Asserted as a fraction of
-   * the CONTENT COLUMN rather than of the viewport, because that is what the
-   * shelf sits in and what it looked lost inside.
+   * The assertion: the plane is the same width with one record as with
+   * thirteen. A box that fitted its contents would differ here, and a box with
+   * a percentage floor would differ once the contents exceeded it.
    */
   expect(
-    box.width / column.width,
-    `the shelf is ${Math.round(box.width)}px in a ${Math.round(column.width)}px column — a tile, not a shelf`,
-  ).toBeGreaterThan(0.3);
-
-  // The rightmost edge any spine reaches, across every row.
-  let widestReach = 0;
-  for (let i = 0; i < spineCount; i += 1) {
-    const spine = await spines.nth(i).boundingBox();
-    if (spine !== null) widestReach = Math.max(widestReach, spine.x + spine.width);
-  }
-  expect(widestReach, 'no spine had a measurable box').toBeGreaterThan(0);
-
-  /**
-   * The ceiling, and it only applies ABOVE the floor. Below it the shelf is
-   * deliberately wider than its records — that is the whole point of a minimum
-   * — so trailing space is furniture rather than the defect this half catches.
-   */
-  const trailing = box.x + box.width - widestReach;
-  const atFloor = box.width <= column.width * 0.45;
-  if (!atFloor) {
-    expect(
-      trailing,
-      `the shelf runs ${Math.round(trailing)}px past its widest row — it is filling the viewport rather than fitting its records`,
-    ).toBeLessThan(40);
-  }
+    Math.abs(wide.width - narrow.width),
+    `the plane was ${Math.round(narrow.width)}px with ${spinesNarrow} records and ${Math.round(wide.width)}px with ${spinesWide}`,
+  ).toBeLessThan(2);
 });
 
 test('the wall shows the records the heading says it does', async ({ page }) => {
@@ -621,46 +604,175 @@ test('the wall shows the records the heading says it does', async ({ page }) => 
   ).toBe(headingCount);
 });
 
-test('the wall claims the width of the screen, not the content column', async ({ page }) => {
+test('the shelf view puts its controls in an overlay, and says when a filter is on', async ({
+  page,
+}) => {
   /**
-   * §10b's closet view (unit 20): the wall is full-bleed below the nav, because
-   * the reference's spines dominate the frame and that is what makes a case
-   * emerging from them read as emerging from SOMETHING. At 160px in a centred
-   * `max-w-6xl` column it was a 510x188 strip in the corner of a 1280x900
-   * window with the page empty below it — a widget rather than a wall.
+   * §10b A24a: below the nav there is the wall and nothing else. Search, chips
+   * and sort are reachable from the shelf but do not take vertical space above
+   * it — a wall arriving under four rows of controls is a strip rather than a
+   * wall.
    *
-   * **Asserted as measured geometry rather than a class name.** A
-   * `toHaveClass` check passes against a class that has been overridden, or
-   * renamed, or whose breakout is cancelled by a padding further in — which is
-   * exactly the defect this unit hit: the wrapper was the full 1280px and a
-   * `px-[calc((100vw-72rem)/2)]` put the shelf straight back at x=64.
+   * **The closed state must announce an active filter.** The gaps in the wall
+   * are the primary feedback (A24d), but a wall with fewer records and no
+   * indication of why cannot be told from a collection that is simply small —
+   * the absent-versus-unknown problem this project keeps catching. This is the
+   * half most likely to be skipped, so it is asserted explicitly.
+   *
+   * Asserted as what a user can SEE and REACH — `toBeVisible`, not
+   * `toHaveClass`. Unit 20's breakout had every class present and correct and
+   * cancelled by a fourth declaration.
+   */
+  const title = `Overlaid ${suffix()}`;
+  const { artistId } = await seedRecord(page, title);
+
+  await page.goto('/');
+  await expect(page.getByTestId('shelf-timber')).toBeVisible();
+
+  // Closed by default: the controls are not occupying space above the wall.
+  const panel = page.getByTestId('shelf-controls-panel');
+  await expect(panel, 'the panel starts closed so the wall owns the screen').toBeHidden();
+
+  const toggle = page.getByTestId('shelf-controls-toggle');
+  await expect(toggle, 'and one control opens all of them').toBeVisible();
+
+  await toggle.click();
+  await expect(panel, 'opening the control reveals search, chips and sort').toBeVisible();
+  await expect(panel.getByRole('search')).toBeVisible();
+
+  await toggle.click();
+  await expect(panel, 'and it closes again').toBeHidden();
+
+  /**
+   * With a filter applied and the panel CLOSED, the control must still say so.
+   */
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.getByTestId('shelf-timber')).toBeVisible();
+  await expect(page.getByTestId('shelf-controls-panel')).toBeHidden();
+
+  await expect(
+    page.getByTestId('shelf-controls-active'),
+    'a closed panel must never hide the fact that the wall is filtered',
+  ).toBeVisible();
+});
+
+test('the view toggle stays OUT of the overlay, and can reach all three views', async ({
+  page,
+}) => {
+  /**
+   * The prompt's explicit carve-out: "One control opens all of them... The view
+   * toggle stays separate, as the reference does with its List/Closet switch."
+   *
+   * Two failures this pins, both found by LOOKING at the built overlay rather
+   * than by reading its numbers — the wall measured 1248px full-bleed and the
+   * panel displaced it 0px, and neither number could see either of these:
+   *
+   *   1. The toggle was swept into the panel with everything else, so changing
+   *      view meant opening a filter overlay first.
+   *   2. The toggle offers `table` and `grid` only. With `shelf` as the default
+   *      view (§10b), leaving the shelf became a ONE-WAY trip — reachable only
+   *      by editing the URL.
+   *
+   * The second is the worse one and predates this unit: it was invisible while
+   * `table` was the default and became a trap when §10b moved the default.
+   */
+  await seedRecord(page, `Toggle ${suffix()}`);
+  await page.goto('/');
+  await expect(page.getByTestId('shelf-timber')).toBeVisible();
+
+  const toggle = page.getByRole('group', { name: 'View' });
+  await expect(toggle, 'the view toggle is reachable without opening the panel').toBeVisible();
+  await expect(page.getByTestId('shelf-controls-panel')).toBeHidden();
+
+  // Out and back: the round trip is the property, not either leg alone.
+  // The wall's ABSENCE is what says we left the shelf — there is no single
+  // element that means "table view", and asserting the wall is gone is the
+  // question actually being asked.
+  await toggle.getByRole('button', { name: 'table', exact: true }).click();
+  await expect(page.getByTestId('shelf-timber')).toBeHidden();
+
+  await page
+    .getByRole('group', { name: 'View' })
+    .getByRole('button', { name: 'shelf', exact: true })
+    .click();
+  await expect(page.getByTestId('shelf-timber'), 'and the shelf is reachable again').toBeVisible();
+});
+
+test('the table and grid keep their controls on the page', async ({ page }) => {
+  /**
+   * The regression this unit is most likely to cause. §10's screens table
+   * states the asymmetry: a list wants its controls visible, and the overlay is
+   * about the wall only.
+   *
+   * If this fails, the overlay was built at the wrong level — around the shared
+   * component rather than around the shelf's use of it.
+   */
+  const title = `Listed ${suffix()}`;
+  const { artistId } = await seedRecord(page, title);
+
+  for (const view of ['table', 'grid'] as const) {
+    await page.goto(`/?view=${view}&artistId=${artistId}`);
+
+    await expect(
+      page.getByRole('search'),
+      `${view} must show its search without opening anything`,
+    ).toBeVisible();
+    await expect(
+      page.getByTestId('shelf-controls-toggle'),
+      `${view} has no overlay toggle`,
+    ).toHaveCount(0);
+  }
+});
+
+test('the wall the USER SEES spans the screen, not the wrapper around it', async ({ page }) => {
+  /**
+   * **This test replaces a vacuous one, and the vacuity is the lesson.**
+   *
+   * The previous version measured `[data-testid="shelf"]` — an invisible
+   * wrapper `div`. A block element fills its parent's width by definition, so
+   * that assertion was true before unit 20's breakout, true after it, and true
+   * of any block element in that position. It reported coverage it did not
+   * have, while being the very check meant to catch a wall that was not
+   * spanning the screen.
+   *
+   * It even seemed to pass its mutation proof: removing the breakout moved `x`
+   * from 16 to 80 and the test failed. But that was the OFFSET half biting. The
+   * WIDTH half — the half that names what full-bleed means — could not fail.
+   * One real signal and one vacuous one, read as joint confirmation.
+   *
+   * So this measures `shelf-timber`: the element with the background, the black
+   * box a user actually sees. The general check from this project's rules:
+   * *would this assertion produce a different result if the property it names
+   * were wrong?*
    */
   const title = `Bleeding ${suffix()}`;
   await seedRecord(page, title);
 
   await page.goto('/');
-  const shelf = page.getByTestId('shelf');
-  await expect(shelf).toBeVisible();
+  const timber = page.getByTestId('shelf-timber');
+  await expect(timber).toBeVisible();
 
-  const box = await shelf.boundingBox();
+  const box = await timber.boundingBox();
   const viewport = page.viewportSize();
-  expect(box, 'the shelf must have a measurable box').not.toBeNull();
+  expect(box, 'the wall must have a measurable box').not.toBeNull();
   expect(viewport, 'the viewport size must be known to compare against').not.toBeNull();
   if (box === null || viewport === null) return;
 
   /**
-   * Wider than the content column it used to live in. `max-w-6xl` is 1152px
-   * and the header above it still sits inside that — so anything close to the
-   * viewport width proves the breakout happened, and anything at or below 1152
-   * proves it did not.
+   * **Both halves, and each names a different failure.**
+   *
+   * The width: a wall confined to the old `max-w-6xl` column is 1152px at most,
+   * so anything near the viewport proves the breakout reached the visible
+   * element rather than only the wrapper.
+   *
+   * The offset: a wall that is wide but inset still reads as a box on a page.
    */
   expect(
     box.width,
-    `the wall is ${Math.round(box.width)}px in a ${viewport.width}px viewport — still in the column`,
-  ).toBeGreaterThan(Math.min(1152, viewport.width) * 0.92);
+    `the wall a user sees is ${Math.round(box.width)}px in a ${viewport.width}px viewport`,
+  ).toBeGreaterThan(viewport.width * 0.9);
 
-  // And it starts near the left edge rather than at the column's inset.
-  expect(box.x, 'the wall starts at the screen edge, not the column margin').toBeLessThan(40);
+  expect(box.x, 'the wall starts at the screen edge, not a column margin').toBeLessThan(40);
 });
 
 test('the table view is still reachable, and the shelf is not forced', async ({ page }) => {

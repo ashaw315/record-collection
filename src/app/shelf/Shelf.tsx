@@ -9,7 +9,6 @@ import {
   DEFAULT_SPINE_COLOUR,
   SHELF_EDGE,
   SPINE_HEIGHT,
-  MIN_SHELF_FRACTION,
   SPINE_ROW_HEIGHT,
   spineText,
   spineWidth,
@@ -99,34 +98,29 @@ export function Shelf({ records }: { records: ShelfRecord[] }) {
         spines read as objects with depth — §10b's "most of the feel from
         transforms and shadows".
 
-        **`min-width` then `w-fit max-w-full`: no wider than it needs, no
-        shorter than a shelf** (§10b as amended). Three values were tried here
-        and the outer two are both defects.
+        **The wall is a shelf PLANE, not a box.** The surface runs edge to
+        edge and ends where the wall ends, so there is no boundary for a reader
+        to interpret as a size.
 
-        Full width with five spines at the left reads as MISSING DATA — 1088px
-        of empty timber, the genre-sections defect one level out, where five
-        near-empty black bands said "broken" about a collection that was merely
-        small. Shrunk to its contents it reads as a THUMBNAIL of a shelf: 105px
-        of timber floating in a 1200px column, because the spines do not fill
-        that column until about sixty records.
+        That replaced `min-width: 40%` with `w-fit max-w-full`, and the
+        replacement is a change of kind rather than of number. Rendered at five
+        records against a viewport-owning wall, every candidate width failed the
+        same way — 151px read as a tile, 499px as a partly-drawn box, 1248px of
+        black as missing data — because they were one object at four widths. A
+        rectangle that stops has a size; a shelf does not.
 
-        What resolves it is that a shelf is FURNITURE. It has a length whether
-        or not it is full, and a real shelf with five records on it is still a
-        shelf with space beside them. The emptiness was never the problem; the
-        emptiness being the whole viewport was.
-
-        All three declarations are load-bearing. `min-width` is the floor.
-        `w-fit` alone gives the flex row no width to wrap against, so three
-        hundred spines lay out on one infinite line; `max-w-full` is the
-        wrapping constraint, and `w-fit` collapses the box to the widest row
-        once wrapping has happened. So a short collection gets a short shelf
-        with room on it, a full row still fills the width, and only the last row
-        of a wrapped shelf stops short.
+        **The empty portion is WALL, not empty shelf**, which is the whole
+        reason the full-width version now works where the black one did not:
+        1111px of unoccupied TIMBER implies records that should have been there,
+        while wall implies nothing. Judged by rendering four treatments of that
+        space — black fill, edge-only, dim wall, and a wall block behind the
+        records — and looking. Edge-only read as a line on a page; the wall
+        block floated over its own edge with two boundaries instead of none.
       */}
       <div
-        className="w-fit max-w-full rounded-xs bg-[#0e0d0c] px-4 pt-5 pb-2"
+        data-testid="shelf-timber"
+        className="w-full rounded-xs bg-[#1a1714] px-4 pt-5 pb-2"
         style={{
-          minWidth: `${MIN_SHELF_FRACTION * 100}%`,
           perspective: '900px',
           backgroundImage: `linear-gradient(to bottom, transparent 0, transparent ${SPINE_HEIGHT}px, #241d16 ${SPINE_HEIGHT}px, #241d16 ${SPINE_ROW_HEIGHT}px)`,
           backgroundSize: `100% ${SPINE_ROW_HEIGHT}px`,

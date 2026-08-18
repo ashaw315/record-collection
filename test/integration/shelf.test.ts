@@ -460,7 +460,7 @@ describe('shelfRecords — what pulling a record needs (§10b)', () => {
     await record('Brothers in Arms', await artist('Dire Straits'), { genreIds: [] });
 
     const wall = await shelfRecords({ genreId: punk });
-    const table = await listRecords({ filters: { genreId: punk }, page: 1, pageSize: 50 });
+    const table = await listRecords({ filters: { genreId: punk }, limit: 50, offset: 0 });
 
     expect(
       wall.map((row) => row.title).sort(),

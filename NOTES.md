@@ -8562,3 +8562,48 @@ timber 499.19px against a predicted 499.2px.
 The new E2E test measures the shelf's box against the viewport. A `toHaveClass`
 check on the breakout classes would have PASSED against the broken version,
 because the classes were all present and correct — and cancelled by a fourth.
+
+---
+
+## Step 13 unit 21 — the controls overlay
+
+**A24d (gaps versus repacking) is UNIMPLEMENTED and needs its own unit.** The
+shelf repacks when filtered: the spines close up rather than leaving gaps where
+the excluded records were. §10b A24d specifies gaps as the primary feedback for
+a filtered wall. This unit ships the honest repacked version and the closed
+control's filter count, which is the *secondary* feedback; the gaps are a
+separate piece of work with real layout consequences and should not be smuggled
+into a layout unit.
+
+**The view toggle could not return to the shelf, and no number could see it.**
+The toggle offered `table` and `grid` only. That was harmless while `table` was
+the default view and became a one-way trip the moment §10b made `shelf` the
+default — you could leave the shelf and not get back, except by editing the URL.
+It was found by LOOKING at a screenshot of the built overlay. Every measurement
+this unit took was correct and green at the time: the wall was 1248px full-bleed,
+the panel displaced it 0px, chrome fell from 403px to 205px. None of them ask
+"can a user get back here", so none of them could fail.
+
+Same shape as unit 20's vacuous geometry test, one level out: there the
+instrument measured the wrong element, here the instruments measured the right
+things and the question was never posed. A passing suite constrains what it
+asserts and nothing else.
+
+**Two navigation implementations were nearly shipped.** The toggle has to sit
+outside the overlay while `CollectionFilters` — which owns the pending-navigation
+reconciliation — is inside it. The obvious build gives the outside toggle its own
+`router.push`, which is two implementations of one navigation that must agree,
+and the outside one would silently drop a filter change still in flight.
+Avoided by `renderToolbar`: the caller arranges the toggle and the body, and
+both come from one instance with one `change`.
+
+**`includeUndated` is presence-without-intent.** `parseCollectionParams` sets it
+to `true` whenever a year filter is present (§5.2's default), so a naive
+`Object.keys(filters).length` reports "2 filters" for one year filter — a key
+the user never set, counted as something they did. `activeFilterCount` counts
+what a user DID: view/sort/page are not filters, a year range is one filter, and
+`includeUndated` counts only when `false`.
+
+**205px of chrome remains above the wall** — the nav (52px) plus the
+"Collection / 1 record / Add record" heading block. The overlay removed the
+controls; the heading is a separate decision and was not in this unit's scope.

@@ -77,24 +77,25 @@ export const MIN_SPINE_WIDTH = Math.round(SPINE_HEIGHT / 14);
 export const MAX_SPINE_WIDTH = Math.round(SPINE_HEIGHT / 10);
 
 /**
- * The shelf's minimum width, as a fraction of the content column.
+ * **`MIN_SHELF_FRACTION` was here and is deleted, not left inert.**
  *
- * §10b: "no wider than it needs, no shorter than a shelf." A shelf is
- * FURNITURE — it has a length whether or not it is full, and a real shelf with
- * five records on it is still a shelf with space beside them.
+ * The shelf had a minimum width — 40% of its container — because a box shrunk
+ * to five spines read as a thumbnail. That rule was right about a BOX, and the
+ * box was the defect: a rectangle that stops has a size, and a reader
+ * interprets the size. Rendered at five records against a viewport-owning wall,
+ * every candidate failed the same way because they were one object at four
+ * widths — 151px read as a tile, 499px as a partly-drawn box, 874px the same
+ * but wider, 1248px as missing data.
  *
- * Both neighbouring values were shipped and both were wrong. A full-width band
- * with five spines at the left reads as MISSING DATA, because the emptiness is
- * the whole viewport and implies a collection that should have filled it. A box
- * shrunk to its contents reads as a THUMBNAIL of a shelf: 105px of timber
- * floating in a 1200px column.
+ * The wall is now a shelf PLANE: the surface runs edge to edge and ends where
+ * the wall ends, so there is no boundary to interpret and no minimum to set.
+ * The empty portion is WALL rather than empty shelf, which is why it does not
+ * imply records that should have been there.
  *
- * Chosen by looking at 30%, 40% and 50% rendered at five records, not by
- * arithmetic — the arithmetic only established that the shelf does not fill a
- * 1200px column until about sixty records, which is what made this a decision
- * rather than a tuning problem.
+ * §10b A24c left the minimum unstated pending a re-derivation. This closes that
+ * clause rather than filling it in — the honest answer was that the rule's
+ * subject no longer exists.
  */
-export const MIN_SHELF_FRACTION = 0.4;
 
 /**
  * Derived from the record's id, so it is STABLE across loads.
