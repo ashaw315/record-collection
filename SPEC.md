@@ -882,7 +882,13 @@ The reason for the split is that they answer different questions. The tilt says 
 
 **The object takes four textures, all square.** `cover` on the front, `back` on the back, and `gatefold_left` and `gatefold_right` across the two leaves of the open sleeve. Nothing else is mapped onto it.
 
-Square because a 12″ sleeve is square, and because it keeps every image the app stores to one shape — the spine colour already averages a square cover, and a texture of a different aspect either stretches or letterboxes, both of which are the app asserting something about a sleeve that is not true of it.
+Square because a 12″ sleeve is square. **The stored images frequently are not**, and that is measured rather than assumed: Discogs serves whatever a contributor uploaded, and the first cover checked was 591×599.
+
+**A non-square image is cropped to square from its centre when it is mapped onto the object**, matching what the wall already does with `object-cover`. The alternative — fitting the whole image and letterboxing the remainder — puts a border on a record that has none, which is the app asserting something false about a physical object; and filling that border with the spine colour, considered and rejected, invents a sleeve edge that was never photographed.
+
+Cropping loses artwork at the edges. That is a real cost and it is the right one: a sleeve photographed slightly off-square loses a few pixels of its own border, where a letterboxed one gains a band that belongs to no record.
+
+**The crop happens at mapping time, not on the stored file.** The image in the gallery is the whole photograph, unmodified — it is the user's data (§7.8) and the object's needs are not a reason to alter it. In practice that means adjusting the texture's UV mapping rather than re-processing bytes.
 
 The inner is **two photographs, not one spread.** A real gatefold inner is continuous, and mapping one wide image across both leaves would be more faithful — but it asks for a photograph most phones take badly, and it makes the inner the only non-square image in the collection. Two straight-on shots are what someone can actually take. The cost is a seam down the middle wherever the two differ in lighting or crop, and that is accepted: a visible seam is honest about being two photographs.
 
