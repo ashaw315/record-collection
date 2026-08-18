@@ -224,6 +224,8 @@ Exactly one of `record_id` / `want_list_id` must be non-null — enforce with a 
 
 `gatefold` was a single value, added before the affordance was built. It became two when the inner was specified as two square photographs rather than one wide spread. Removing an enum value is not possible in place: Postgres requires the type to be replaced, which is a destructive migration and needs confirmation before it runs (CLAUDE.md §7).
 
+**The swap carries no data, and that was measured rather than assumed.** Production held two images at the time of writing, both `cover`: zero `gatefold`, zero `back`. So there is no row to remap and no decision about which leaf an existing `gatefold` row would have been — the case that would have made this migration genuinely hard does not arise. The §7 confirmation still stands, because replacing a type is destructive whatever it currently holds; what the count removes is the mapping problem inside it, not the need to confirm.
+
 Use Vercel Blob for storage. Store the returned URL here.
 
 **`discogs_cache`** — not user data; supports §6 caching
@@ -888,9 +890,13 @@ The inner is **two photographs, not one spread.** A real gatefold inner is conti
 
 The halves are called *leaves* throughout, deliberately: a *panel* in this section is the DOM block of facts beside the record, and the two must not be confused. One is a surface of the object; the other is the place text lives precisely because it is not on the object.
 
-The state exists only where an inner image has been photographed. There is no generated stand-in: the point of a gatefold is the artwork inside it, and opening a sleeve onto a blank or invented inner spread would be fabricating the thing the reader opened it to see. A record with no inner image simply has two faces, and nothing suggests otherwise.
+**The state exists only where both leaves have been photographed.** One is not enough: a hinge that opens onto artwork on one side and a blank on the other invents exactly the thing the user came to see, and it does it in the most conspicuous place possible. §10b's strictest rule is that no affordance appears without a photograph behind it, and a half-filled gatefold is that rule failing through a partial state rather than an empty one.
 
-That means `images` carries a `gatefold` type alongside `cover`, `back`, `label` and `matrix` (§4.2), and its presence is what makes the affordance appear.
+So the affordance is present when `gatefold_left` and `gatefold_right` both exist, and absent otherwise. A single inner photograph is still stored and still appears in the gallery — it is a real photograph of a real record — it simply does not open the sleeve. A record with no inner images has two faces, and nothing suggests otherwise.
+
+There is no generated stand-in of any kind. The point of a gatefold is the artwork inside it.
+
+That means the affordance is driven by §4.2's `image_type` values rather than by a flag: `gatefold_left` and `gatefold_right` are two of the seven that enum defines, and the hinge appears exactly when both are present. §4.2 is the authority on the full list — restating a subset of it here is how the two drift, and an earlier version of this sentence did precisely that, naming a `gatefold` type that no longer exists.
 
 **Arrows move through the collection without putting the record back.** Browsing a shelf is continuous; being returned to the wall between every record is not. The next record rises as the current one returns.
 
