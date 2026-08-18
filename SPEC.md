@@ -220,7 +220,7 @@ Exactly one of `record_id` / `want_list_id` must be non-null — enforce with a 
 | image_type | image_type enum | `'cover' \| 'back' \| 'gatefold_left' \| 'gatefold_right' \| 'label' \| 'matrix' \| 'other'` |
 | caption | TEXT | |
 
-**Four of these are textures on the pulled record; the rest are gallery images.** `cover`, `back`, `gatefold_left` and `gatefold_right` are the object's skins (§10b) and are expected to be square. `label`, `matrix` and `other` are photographs of the record that appear in the gallery and are never mapped onto the object — a close-up of the dead wax is evidence about a pressing, not a surface of the sleeve.
+**Four of these are textures on the pulled record; the rest are gallery images.** `cover`, `back`, `gatefold_left` and `gatefold_right` are the object's skins (§10b), which is where the shape they are mapped at — and what happens when a stored image does not match it — is specified. An earlier version of this line said they "are expected to be square", which was an assumption about data the app does not control rather than a rule it enforces: Discogs serves whatever a contributor uploaded, and the first cover measured was 591×599. `label`, `matrix` and `other` are photographs of the record that appear in the gallery and are never mapped onto the object — a close-up of the dead wax is evidence about a pressing, not a surface of the sleeve.
 
 `gatefold` was a single value, added before the affordance was built. It became two when the inner was specified as two square photographs rather than one wide spread. Removing an enum value is not possible in place: Postgres requires the type to be replaced, which is a destructive migration and needs confirmation before it runs (CLAUDE.md §7).
 
