@@ -8309,3 +8309,44 @@ object reuses the wall's fallback colour instead of inventing a second one. A
 file-by-file read of the plane directory would have found neither, and the
 symptom would have been one grey on the wall and a different grey on the object
 for the same record.
+
+---
+
+## Step 13 unit 17 — the panels, and the fallback edge
+
+**`back-face.ts` fitted without reshaping, and no second producer appeared.**
+`backFaceGroups` already decides which fields exist, formats each, groups them
+imprint/pressing/provenance, and — the part that mattered — DROPS a group whose
+fields are all absent rather than printing a heading with nothing under it. The
+panel needed exactly one thing it does not supply: artist, title and year, which
+were the FACE's heading in the CSS version. `factPanel` is that heading and
+nothing else; the groups pass through untouched.
+
+That is the third time this session reuse-over-reimplementation was the right
+call, after `DEFAULT_SPINE_COLOUR` and `textColourOn`. Each time the grep found
+it and a file-by-file read would not have.
+
+**The fallback edge: the fix is DIRECTION, not amount.** Unit 16's defect was
+that a plain sleeve's edge vanished into its face. The obvious fix — darken the
+edge — fails at exactly the case that motivated it: Grave New World's sleeve is
+~18% lightness, where multiplying by 0.8 moves it about three levels and the
+edge disappears again.
+
+So `edgeColourFor` chooses direction from the face's luminance and moves a
+fraction of the REMAINING distance to white or black. A dark face takes a
+lighter edge, a light face a darker one, and there is always room. Measured on
+screen: a 21-level tonal step between edge and face on the plain sleeve, where
+unit 16 had none visible.
+
+**The test that catches this is the SWEEP, not the spot checks.** Two assertions
+at the extremes can both pass while a band between them collapses. Walking
+0-255 in steps of 5 and asserting a minimum separation at every level is what
+rejects the naive rule — proven by installing proportional darkening, which
+failed with `#000000 separates by only 0.000`. Spot checks at the two ends would
+have passed the near-white one and caught only half of it.
+
+**The discriminating fixture for the panel is the record with nothing optional
+set.** A fully-populated fixture cannot distinguish "omits absent fields" from
+"renders every field it is given" — both produce identical output. Only the bare
+record separates them, and in production the bare record IS the common case:
+three of three records showed the empty state or near it.

@@ -2,8 +2,9 @@ import { asc } from 'drizzle-orm';
 import { getDb } from '@/db/client';
 import { images } from '@/db/schema';
 import { shelfRecords } from '@/lib/db/queries/shelf';
-import { backFaceGroups } from '../shelf/back-face';
 import { BoxCanvas } from './BoxCanvas';
+import { FactsPanel, ActionsPanel } from './Panels';
+import { factPanel } from './panel';
 import { PlaneCanvas } from './PlaneCanvas';
 import { coverTextureUrl } from './plane';
 import { resolveSkins } from './skins';
@@ -121,23 +122,45 @@ export default async function PlanePage() {
         fallback, which is what the object looks like today.
       </p>
 
-      <div className="mt-6 flex flex-wrap items-start gap-8">
+      <div className="mt-6 flex flex-col gap-12">
         {records.map((record) => {
           const skins = resolveSkins(record);
-          const groups = backFaceGroups(record);
-          const imprintRow = groups.find((group) => group.kind === 'imprint');
+          const panel = factPanel(record);
+          const imprintGroup = panel.groups.find((group) => group.kind === 'imprint');
           const imprint =
-            imprintRow === undefined ? null : imprintRow.rows.map((row) => row.value).join('   ');
+            imprintGroup === undefined
+              ? null
+              : imprintGroup.rows.map((row) => row.value).join('   ');
 
           return (
-            <BoxCanvas
+            /*
+              §10b, A19e: the object between two fixed panels — facts on the
+              left, actions on the right, as the reference does. They are DOM
+              rather than canvas, which is not a stylistic choice: a canvas has
+              no text, so the panel is the only channel a screen reader or a
+              test can read.
+
+              They do not track the record's geometry and never need to agree
+              with the camera about anything. That is what makes them cheap.
+            */
+            <section
               key={record.id}
-              skins={skins}
-              imprint={imprint}
-              label={`${record.title} · ${skins.front.kind}/${skins.back.kind}${
-                skins.gatefold === null ? '' : ' · gatefold'
-              }`}
-            />
+              data-testid="composition"
+              className="flex flex-wrap items-start justify-center gap-8"
+            >
+              <FactsPanel panel={panel} />
+
+              <BoxCanvas
+                skins={skins}
+                imprint={imprint}
+                spineColour={record.spineColour}
+                label={`${skins.front.kind}/${skins.back.kind}${
+                  skins.gatefold === null ? '' : ' · gatefold'
+                }`}
+              />
+
+              <ActionsPanel />
+            </section>
           );
         })}
       </div>
@@ -158,6 +181,7 @@ export default async function PlanePage() {
                 key={ratio}
                 skins={resolveSkins(records[0])}
                 imprint={null}
+                spineColour={records[0].spineColour}
                 thicknessRatio={ratio}
                 label={`1:${Math.round(1 / ratio)}`}
               />

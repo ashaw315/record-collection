@@ -16,6 +16,7 @@ import {
   type Material,
   type Texture,
 } from 'three';
+import { edgeColourFor } from './edge-colour';
 import { centredSquareUv, type Skin, type Skins } from './skins';
 
 /**
@@ -96,11 +97,14 @@ function plainTexture(colour: string, imprint: string | null): Texture {
 export function BoxCanvas({
   skins,
   imprint,
+  spineColour,
   thicknessRatio = BOX_THICKNESS_RATIO,
   label,
 }: {
   skins: Skins;
   imprint: string | null;
+  /** The record's stored colour, from which the edge tone is derived. */
+  spineColour: string | null;
   thicknessRatio?: number;
   label?: string;
 }) {
@@ -147,8 +151,20 @@ export function BoxCanvas({
       edge, which is obvious — but putting the back on the front is not, on a
       record whose faces are both plain.
     */
+    /**
+     * **The edge is derived from the face, not fixed** — unit 16's defect.
+     *
+     * A constant dark edge works against a photographed cover and disappears
+     * against a plain sleeve of similar tone, which is the face every record
+     * shows today. `edgeColourFor` moves away from the face's own luminance, so
+     * the two separate at every lightness rather than only in the middle.
+     */
     const edgeMaterial = () =>
-      new MeshStandardMaterial({ color: 0x2a2724, roughness: 0.85, metalness: 0.02 });
+      new MeshStandardMaterial({
+        color: edgeColourFor(spineColour),
+        roughness: 0.85,
+        metalness: 0.02,
+      });
 
     const faceMaterial = () => new MeshStandardMaterial({ roughness: 0.62, metalness: 0.0 });
 
@@ -233,7 +249,7 @@ export function BoxCanvas({
       for (const material of materials) material.dispose();
       renderer.dispose();
     };
-  }, [skins, imprint, thicknessRatio]);
+  }, [skins, imprint, spineColour, thicknessRatio]);
 
   return (
     <div className="flex flex-col gap-2">
