@@ -1,12 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ShelfRecord } from '@/lib/db/queries/shelf';
 import { backFaceGroups } from './back-face';
 import { availableFaces, nextFace, type Face } from './faces';
 import { riseTransform, riseTransformCss, type Rect } from './rise';
 import { chromeStage } from './chrome';
+import { NO_TILT, tiltFor } from './tilt';
 
 /**
  * §10b: "reduced motion disables all of it. The turn, the rise and the hinge
@@ -74,7 +75,40 @@ export function PulledRecord({
    * rest", and one `requestAnimationFrame` moves between them.
    */
   const sleeve = useRef<HTMLDivElement>(null);
+  const tiltSurface = useRef<HTMLDivElement>(null);
   const [returning, setReturning] = useState(false);
+
+  /**
+   * §10b's "an object you turn": the record follows the pointer, continuously.
+   *
+   * **No React state per pointer move, and that is a rule rather than an
+   * optimisation.** A `useState` here would re-render the component on every
+   * `pointermove` — 1000Hz input driving a 60Hz display through React's
+   * scheduler, which is the two-systems-share-a-number smell in a new place.
+   * The angles are written straight to custom properties and the compositor
+   * owns them from there; React never learns the record is turned.
+   *
+   * No throttle either. The recorded reasoning for the dirty-flag approach
+   * applies exactly: a throttled handler still fires and still does work while
+   * the pointer rests. Writing two custom properties IS the cheap path — there
+   * is nothing left to throttle.
+   *
+   * The angle is not cleared on leave. §10b's record "holds its last angle",
+   * which is what makes it an object someone turned rather than a control that
+   * resets itself, and it is also why a still record costs nothing.
+   */
+  const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const surface = tiltSurface.current;
+    if (surface === null || prefersReducedMotion()) return;
+
+    const { rotateX, rotateY } = tiltFor(
+      { x: event.clientX, y: event.clientY },
+      surface.getBoundingClientRect(),
+    );
+
+    surface.style.setProperty('--tilt-x', `${rotateX}deg`);
+    surface.style.setProperty('--tilt-y', `${rotateY}deg`);
+  };
 
   /**
    * Where the record sits at rest, measured ONCE with no transform applied.
@@ -274,6 +308,32 @@ export function PulledRecord({
             outgoing face alive to 90° is exactly the coordination that could
             not be made to work. It reads as the record swinging into view.
           */}
+          {/*
+            **The tilt gets its OWN element, and that is the whole reason it
+            works.**
+
+            `record-turn` is a CSS ANIMATION on the face, and an animation's
+            `transform` beats an inline one for as long as it runs — with
+            `both` as its fill mode, that is for ever. A tilt written to the
+            face would therefore be dead on arrival, silently: the record would
+            simply not respond, with nothing to say why.
+
+            Nesting composes them instead of making them compete. This element
+            turns; the face inside it keeps its keyframe untouched. Two
+            rotations, two elements, no shared property and no arbitration.
+
+            Measured, not assumed: at 37ms into the rise the face is at
+            rotateY ~60deg, resolving to identity by 365ms — that keyframe
+            overlaps the rise, which is what unit 11 saw and called a
+            perspective skew. The rest state itself is a true square.
+          */}
+          <div
+            ref={tiltSurface}
+            data-testid="pulled-tilt"
+            className="record-tilt"
+            onPointerMove={onPointerMove}
+            style={{ '--tilt-x': `${NO_TILT.rotateX}deg`, '--tilt-y': `${NO_TILT.rotateY}deg` } as CSSProperties}
+          >
           <div
             key={face}
             data-testid="pulled-face"
@@ -292,6 +352,7 @@ export function PulledRecord({
                 className="h-full w-full object-cover"
               />
             )}
+          </div>
           </div>
         </div>
 

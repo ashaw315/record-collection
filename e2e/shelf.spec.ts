@@ -288,11 +288,82 @@ test('reduced motion: the record still arrives, and still goes back', async ({ p
     /^0s(,\s*0s)*$/,
   );
 
+  /**
+   * The TILT obeys the preference too (§10b: "reduced motion disables all of
+   * it"). Two locks, asserted together because either alone can be defeated:
+   * the handler declines to write the angles, and the stylesheet overrides the
+   * transform for a reader who changed the setting while a record was already
+   * out and turned.
+   */
+  const tilt = page.getByTestId('pulled-tilt');
+  const box = await tilt.boundingBox();
+  expect(box, 'the tilt surface must have a measurable box').not.toBeNull();
+  if (box !== null) {
+    await page.mouse.move(box.x + box.width - 6, box.y + 6);
+    await page.waitForTimeout(120);
+  }
+  expect(
+    await tilt.evaluate((el) => getComputedStyle(el).transform),
+    'a reduced-motion reader must get a record that does not turn',
+  ).toBe('none');
+
   await page.getByTestId('put-back').click();
   await expect(
     page.getByTestId('pulled-record'),
     'a reduced-motion reader must be able to put the record back',
   ).toHaveCount(0);
+});
+
+test('the tilt tracks pointer POSITION, and holds when the pointer leaves', async ({ page }) => {
+  /**
+   * §10b's "an object you turn", and the two properties that make it one.
+   *
+   * **Absolute mapping**: the same pointer position gives the same angle
+   * whatever path the pointer took. Asserted as a ROUND TRIP because a single
+   * move cannot distinguish position-mapping from delta-accumulation — both
+   * produce an angle, and on a first move both produce the same one. They
+   * diverge only over a path.
+   *
+   * **It holds its last angle**: no spring back, no idle animation. That is
+   * what makes it a record someone turned rather than a control that resets,
+   * and it is why a still record costs nothing.
+   */
+  const title = `Turned ${suffix()}`;
+  const { artistId } = await seedRecord(page, title);
+
+  await page.goto(`/?artistId=${artistId}`);
+  await page.getByRole('link', { name: new RegExp(title) }).click();
+  await page.getByTestId('pulled-record').waitFor();
+
+  const tilt = page.getByTestId('pulled-tilt');
+  const box = await tilt.boundingBox();
+  expect(box, 'the tilt surface must have a measurable box').not.toBeNull();
+  if (box === null) return;
+
+  const angles = () => tilt.evaluate((el) => el.getAttribute('style') ?? '');
+  const start = { x: box.x + 90, y: box.y + 380 };
+
+  await page.mouse.move(start.x, start.y);
+  await page.waitForTimeout(80);
+  const first = await angles();
+  expect(first, 'the pointer over the record must turn it').toContain('--tilt-y');
+
+  // A path that an accumulating mapping could not retrace.
+  await page.mouse.move(box.x + box.width - 6, box.y + box.height / 2);
+  await page.mouse.move(box.x + 6, box.y + 6);
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.waitForTimeout(80);
+
+  await page.mouse.move(start.x, start.y);
+  await page.waitForTimeout(80);
+  expect(await angles(), 'the same position must give the same angle, whatever the path').toBe(
+    first,
+  );
+
+  // Pointer well away from the record, and left there.
+  await page.mouse.move(40, 780);
+  await page.waitForTimeout(400);
+  expect(await angles(), 'the record holds its angle rather than springing back').toBe(first);
 });
 
 test('the shelf is no wider than it needs and no shorter than a shelf', async ({ page }) => {

@@ -236,6 +236,46 @@
 }
 
 /**
+ * §10b's TILT: the record follows the pointer, continuously, within a limited
+ * range that never reveals the back.
+ *
+ * **Its own element, deliberately.** `record-turn` is an animation on the face
+ * inside this, and a running animation's `transform` beats an inline one — with
+ * `both` as its fill mode, permanently. A tilt written to the face would be
+ * silently dead. Nesting composes the two rotations instead of arbitrating
+ * between them, and the flip keeps its keyframe untouched.
+ *
+ * **No transition, and that is the point.** The tilt tracks input; a transition
+ * would make it lag the pointer, which is exactly the difference between an
+ * object and a control. If this ever wants an easing to smooth jitter, the
+ * input mapping is wrong and the mapping is what to fix.
+ *
+ * The angles arrive as custom properties written straight to this element's
+ * style by the pointer handler — no React state per move, no throttle, nothing
+ * for the scheduler to sit between the pointer and the compositor.
+ */
+.record-tilt {
+  transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+/*
+  §10b: "reduced motion disables all of it." The record sits face-on and does
+  not respond to the pointer. The handler checks the preference too and never
+  writes the properties, so this is a second lock on the same door — belt and
+  braces because the two can disagree: a reader who changes the setting while a
+  record is out has already had angles written to the element, and only this
+  rule can override what is sitting in its inline style.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .record-tilt {
+    transform: none;
+    will-change: auto;
+  }
+}
+
+/**
  * §10b's chrome — the backdrop's dim and the control row's arrival — which
  * PARTICIPATES in the rise rather than resolving ahead of it.
  *
