@@ -30,7 +30,7 @@ Single user for v1, behind a password gate. Designed so multi-user is a later fe
 | ORM | Drizzle ORM + Drizzle Kit for migrations |
 | Styling | Tailwind CSS |
 | Components | shadcn/ui |
-| 3D | None. The pulled record is CSS transforms under `preserve-3d` (§10b). `three` was specified and then not adopted — the reasoning is in §10b and it was settled by building the flat version. |
+| 3D | `three` — the pulled record only (§10b). The shelf stays CSS. Adopted after the flat version was built and judged: the motion was right and the object was not, and lighting across a printed surface is the part CSS cannot do. |
 | Image processing | `sharp` — spine colour averaging at import (§10b). Present transitively via Next; **declared explicitly** so a Next minor release cannot remove it. |
 | Unit/integration tests | Vitest |
 | E2E tests | Playwright |
@@ -824,7 +824,9 @@ Manual price entry on a record the user owns. Neither real use case needs it: th
 
 Whether a phone should default to the shelf at all is genuinely open and belongs to step 15's mobile pass, which is the first time the wall will be judged at 390px. If it is gated by width then, the gate goes on the default and not on availability: a view a URL can reach must stay reachable.
 
-Inspired by thecriterioncloset.com, and worth being explicit about what is borrowed: a wall of spines in perspective, a crosshair that names what you are aimed at, and a case that comes off the shelf and can be turned. What is **not** borrowed is the 3D engine — not for the wall, and, after measurement, not for the record either.
+Inspired by thecriterioncloset.com, and worth being explicit about what is borrowed: a wall of spines in perspective, a crosshair that names what you are aimed at, a case that comes off the shelf and can be turned, and — the part that took longest to see — **an object that carries nothing but artwork, with every fact in panels beside it.**
+
+The 3D engine is borrowed for the record and deliberately not for the wall. The wall is flat, so CSS is right for it; the record is a printed object you turn under light, and it is not.
 
 One thing the reference settles that this spec previously got wrong: **its case does not flip.** It turns perhaps 15–20° off face-on, enough to show the case has thickness, never enough to reveal a back. Its own copy reads *"Move the mouse to turn it · click to put it back."* Turning the record over to read its back is this app's own design, not something taken from the reference, and the two motions are separate here for that reason.
 
@@ -854,13 +856,15 @@ One thing the reference settles that this spec previously got wrong: **its case 
 
 **The record rises out of its slot.** It was on the shelf a moment ago and now it is in your hands — that continuity is the feature. A record that fades in centred is a modal wearing a sleeve, and the difference is felt immediately.
 
-**Rendered in CSS, like the shelf — decided by building it.** An earlier version of this section committed the pulled record to `three.js`, on the evidence of two failed attempts at a CSS flip. That inference was wrong, and the correction is worth recording because it is the same shape as several other findings here: the failures were about a *discrete face swap* fighting an animation — a flag saying which face was showing, and a midpoint React and the compositor disagreed about — and they were read as evidence about the medium.
+**Rendered in 3D (`three.js`), unlike the shelf — decided by building the flat version and looking at it.** This decision has been made three times and the record of it is worth keeping, because each turn rested on different evidence.
 
-Splitting the motion apart removed the state that failed. A pointer-driven tilt has no second state at all: the pointer moves, a custom property updates, the compositor renders, and nothing is ever halfway between two things because there is only one thing. Built that way it wanted no coordinator, no flag, no shared duration, and no easing.
+It was first specified as `three.js` on the strength of two failed CSS flip attempts. That inference was wrong: those failures were a *discrete face swap* fighting an animation — a flag saying which face was showing, and a midpoint React and the compositor disagreed about — and they said nothing about the medium. Splitting the motion into a pointer-driven tilt and a deliberate click removed the state that failed, and the CSS version that followed wanted no flag, no coordinator, and no shared duration. On that evidence the decision was reversed to CSS.
 
-**The mechanism that decides it.** The record's position comes from CSS layout — it rises out of a spine that is a flex child in a wrapping row. A WebGL version must convert that DOM rect into world coordinates and keep the mapping correct across scroll, resize and re-wrap: a number two systems must agree on, adopted in order to escape a coordination failure. The CSS version has no such number, because the element is the coordinate system.
+**Then it was looked at, and the motion turned out not to be the problem.** The record read as a skewed panel: metadata crammed into the top third of an otherwise empty back face, a flat-lit surface with no detail for the rotation to act on, and controls floating beside the object rather than belonging to it. Every motion was correct and the object was not convincing.
 
-**This reverts if the box does not work.** The one thing still missing is depth — at 16° the sleeve shows no side face, so the rotation is convincing and the object is not. That is a second element rotated 90° about the shared edge under the `preserve-3d` already in place. If real geometry turns out to need a renderer after all, the decision is reopened with that evidence, the same way it was closed with this.
+What resolves it is the allocation, not the renderer alone: **the object carries only artwork, and every fact moves to a panel beside it.** That removes what made the back read as a form, gives the tilt a printed surface to act on, and makes real lighting worth having — a face that shades as it turns, an edge that catches, a shadow cast back onto the wall. Those respond to angle, and CSS cannot do them at any level of care.
+
+**The known cost.** The record rises out of a spine that is a flex child in a wrapping CSS row, so the renderer must map a DOM rect into world coordinates and keep that mapping correct across scroll, resize and re-wrap. That is a number two systems share, and it is the hardest part of this work rather than an incidental detail.
 
 **Two motions, deliberately separate: a tilt you drive, and a turn you ask for.**
 
@@ -878,15 +882,25 @@ That means `images` carries a `gatefold` type alongside `cover`, `back`, `label`
 
 **Arrows move through the collection without putting the record back.** Browsing a shelf is continuous; being returned to the wall between every record is not. The next record rises as the current one returns.
 
-**The back face is never empty.** Most records will have a front cover from Discogs and nothing else for a long time. Rather than a blank or a placeholder image, the back renders what is known: label and catalogue number set as an imprint, pressing details as body text, purchase information last and quieter. That is close to what a real back sleeve carries, and it means every record is a two-sided object from the day it is entered.
+**The faces carry artwork and nothing else.** Where a photographed back exists it is used. Where one does not — which is most records, since Discogs supplies a front cover and nothing more — the back is **a plain sleeve in the record's stored spine colour**, carrying label and catalogue number as a small imprint and nothing further.
 
-Where a photographed back exists, it is used instead, with the same details beside it.
+That is honest in the way the plain spine is honest: it does not invent a back that was never photographed, it reuses a colour already computed from the record's own cover, and a plain back is a real thing rather than a placeholder. Repeating the front would assert something false, and a stock sleeve texture would be a photograph of someone else's record.
+
+An earlier version of this section had the back rendering pressing details, condition and purchase information as body text. Built and looked at, that read as a form rather than a sleeve — metadata in the top third of a large empty field. Those facts have not been dropped; they have moved to the panel below, which is where the reference puts them and where they can actually be read.
+
+**The facts live in fixed panels beside the record.** Artist, title, year, label, catalogue number, pressing details, condition, and purchase information — laid out beside the object, static while it turns, as the reference does. They do not track the record's geometry and never need to agree with it about anything.
+
+This is what makes the object worth rendering: with the copy off it, the faces are printed artwork and the rotation has something to be a rotation *of*.
+
+**The panels are DOM, not canvas.** A canvas has no text, so the panel is the only channel a screen reader or a test can read — and this is the same distinction the spine already draws, where the visible glyphs are clipped to fit and the accessible name carries the whole title. Facts that matter belong where they can be read by something other than an eye.
+
+The controls belong with the record rather than floating beside it. A control row that does not participate in the object's arrival undercuts the continuity the rise exists to establish.
 
 **Reduced motion disables all of it.** The turn, the rise and the hinge are decorative; the record and its faces are not.
 
 ### The snippet
 
-**A short generated note about the album, stored on the record.** Two or three sentences — what it is, when it landed, why it matters. It sits on the back face, where liner notes would be.
+**A short generated note about the album, stored on the record.** Two or three sentences — what it is, when it landed, why it matters. It sits in the panel beside the record, with the other facts, for the same reason they do: the faces carry artwork only.
 
 Generated by an LLM on demand, written once and stored rather than fetched per view. It is the app asserting things about music, so:
 
