@@ -30,7 +30,7 @@ Single user for v1, behind a password gate. Designed so multi-user is a later fe
 | ORM | Drizzle ORM + Drizzle Kit for migrations |
 | Styling | Tailwind CSS |
 | Components | shadcn/ui |
-| 3D | `three` — **only** for the pulled record (§10b). The shelf itself is CSS, and that is a rule, not an accident: see §10b. |
+| 3D | None. The pulled record is CSS transforms under `preserve-3d` (§10b). `three` was specified and then not adopted — the reasoning is in §10b and it was settled by building the flat version. |
 | Image processing | `sharp` — spine colour averaging at import (§10b). Present transitively via Next; **declared explicitly** so a Next minor release cannot remove it. |
 | Unit/integration tests | Vitest |
 | E2E tests | Playwright |
@@ -824,7 +824,9 @@ Manual price entry on a record the user owns. Neither real use case needs it: th
 
 Whether a phone should default to the shelf at all is genuinely open and belongs to step 15's mobile pass, which is the first time the wall will be judged at 390px. If it is gated by width then, the gate goes on the default and not on availability: a view a URL can reach must stay reachable.
 
-Inspired by thecriterioncloset.com, and worth being explicit about what is borrowed: a wall of spines in perspective, a crosshair that names what you are aimed at, and a case that comes off the shelf and can be turned over. The 3D engine is borrowed for one thing only — the pulled record — and deliberately not for the wall. Both halves of that split are reasoned below, and the reasoning is the point: the wall is flat, so CSS is right for it; the record is an object you turn, so it is not.
+Inspired by thecriterioncloset.com, and worth being explicit about what is borrowed: a wall of spines in perspective, a crosshair that names what you are aimed at, and a case that comes off the shelf and can be turned. What is **not** borrowed is the 3D engine — not for the wall, and, after measurement, not for the record either.
+
+One thing the reference settles that this spec previously got wrong: **its case does not flip.** It turns perhaps 15–20° off face-on, enough to show the case has thickness, never enough to reveal a back. Its own copy reads *"Move the mouse to turn it · click to put it back."* Turning the record over to read its back is this app's own design, not something taken from the reference, and the two motions are separate here for that reason.
 
 ### The shelf
 
@@ -852,9 +854,21 @@ Inspired by thecriterioncloset.com, and worth being explicit about what is borro
 
 **The record rises out of its slot.** It was on the shelf a moment ago and now it is in your hands — that continuity is the feature. A record that fades in centred is a modal wearing a sleeve, and the difference is felt immediately.
 
-**Rendered in 3D (`three.js`), unlike the shelf.** The wall is flat and CSS is right for it. The pulled record is not: it is an object you turn, and turning it is continuous rather than a fixed animation. This was first built as a CSS keyframe and the result was a panel swapping with a wobble — the end states correct, the motion wrong. Two failed attempts at coordinating React state with a CSS transition were the signal that the medium was wrong, not the implementation.
+**Rendered in CSS, like the shelf — decided by building it.** An earlier version of this section committed the pulled record to `three.js`, on the evidence of two failed attempts at a CSS flip. That inference was wrong, and the correction is worth recording because it is the same shape as several other findings here: the failures were about a *discrete face swap* fighting an animation — a flag saying which face was showing, and a midpoint React and the compositor disagreed about — and they were read as evidence about the medium.
 
-**Turning is continuous and pointer-driven.** On desktop the record follows the pointer, as the reference does — move to turn it, click to put it back. On touch it is dragged. Either way the rotation tracks the input rather than playing a canned animation, because that is what makes it feel like an object rather than a transition.
+Splitting the motion apart removed the state that failed. A pointer-driven tilt has no second state at all: the pointer moves, a custom property updates, the compositor renders, and nothing is ever halfway between two things because there is only one thing. Built that way it wanted no coordinator, no flag, no shared duration, and no easing.
+
+**The mechanism that decides it.** The record's position comes from CSS layout — it rises out of a spine that is a flex child in a wrapping row. A WebGL version must convert that DOM rect into world coordinates and keep the mapping correct across scroll, resize and re-wrap: a number two systems must agree on, adopted in order to escape a coordination failure. The CSS version has no such number, because the element is the coordinate system.
+
+**This reverts if the box does not work.** The one thing still missing is depth — at 16° the sleeve shows no side face, so the rotation is convincing and the object is not. That is a second element rotated 90° about the shared edge under the `preserve-3d` already in place. If real geometry turns out to need a renderer after all, the decision is reopened with that evidence, the same way it was closed with this.
+
+**Two motions, deliberately separate: a tilt you drive, and a turn you ask for.**
+
+**The tilt is continuous, pointer-driven and limited.** On desktop the record follows the pointer as the reference does — around 15–20°, enough to show it is an object with thickness and to catch the light across its face, never enough to reveal the back. The mapping is absolute: the same pointer position always gives the same angle, so moving away and back returns the record to where it was. On touch it is dragged. It **holds its last angle** when the pointer leaves rather than springing back, because a record you have turned stays turned — and because a still record then costs nothing at all.
+
+**The turn to the back face is a deliberate click**, not something the pointer can reach. Rotation of a two-sided object rather than a swap of one face's contents, so no state says which side is showing. Both faces exist throughout.
+
+The reason for the split is that they answer different questions. The tilt says *this is an object*; the turn says *show me the other side*. Collapsing them means the back arrives by accident while someone is looking at the front.
 
 **A gatefold opens as a real hinge** — two panels rotating about their shared edge, inner artwork mapped across both. Front → turn → back is rotation; front → open → inner spread is a hinge. Two physical acts, two motions, and sharing one would flatten the distinction.
 
