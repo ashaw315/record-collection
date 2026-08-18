@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import type { ShelfRecord } from '@/lib/db/queries/shelf';
-import type { Rect } from './rise';
-import { PulledRecord } from './PulledRecord';
+import type { ScreenRect } from '../plane/world-map';
+import { RecordCanvas } from './RecordCanvas';
 import { WALL_MIN_HEIGHT, shelfRows, shelfSurface } from './shelf-surface';
 import {
   DEFAULT_SPINE_COLOUR,
@@ -49,23 +49,22 @@ import {
 
 export function Shelf({ records }: { records: ShelfRecord[] }) {
   const [pulledId, setPulledId] = useState<string | null>(null);
+  /**
+   * The slot the record came out of, viewport-relative, measured at CLICK time.
+   *
+   * Held in state rather than measured during render: by the time the canvas
+   * renders, the spine is behind a scrim and may have moved. The rise needs
+   * where the spine WAS when it was clicked, which is a fact about that moment.
+   */
+  const [pulledFrom, setPulledFrom] = useState<ScreenRect | null>(null);
   const pulled = records.find((record) => record.id === pulledId) ?? null;
 
-  /**
-   * §10b's rise needs to know which slot the record came out of, so the spine's
-   * rect is measured at click time — FLIP's "First".
-   *
-   * **Measured, never cached across the return.** `spineRectFor` re-reads the
-   * element at dismiss time rather than reusing the rect from the rise: the
-   * wall may have scrolled, resized or re-wrapped while the record was out, and
-   * a stale baseline would send it back to where its slot used to be. The DOM
-   * is the source of truth for where a spine is; a copy of it is a bug waiting
-   * for the first resize.
-   */
-  const spineRectFor = (recordId: string): Rect | null => {
-    const spine = document.querySelector(`[data-record-id="${CSS.escape(recordId)}"]`);
-    return spine === null ? null : spine.getBoundingClientRect();
-  };
+  /*
+    `spineRectFor` lived here for the CSS implementation, which re-measured the
+    spine at dismiss time to fly the record back to it. The canvas measures the
+    slot at CLICK time instead and holds it in `pulledFrom`, because the rise is
+    the only motion this unit owns. It comes back when the return does.
+  */
 
   if (records.length === 0) {
     return (
@@ -221,6 +220,23 @@ export function Shelf({ records }: { records: ShelfRecord[] }) {
                     // new tab, new window, download.
                     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
                     event.preventDefault();
+
+                    /*
+                      Measured HERE, viewport-relative, at the moment of the
+                      click. `getBoundingClientRect` for this and for the canvas
+                      rect alike, so scroll cancels out of their difference and
+                      no scroll term appears anywhere — unit 18's defect was
+                      pairing a document-relative measurement with a
+                      viewport-relative one, and the fix was one system rather
+                      than a correction.
+                    */
+                    const slot = event.currentTarget.getBoundingClientRect();
+                    setPulledFrom({
+                      left: slot.left,
+                      top: slot.top,
+                      width: slot.width,
+                      height: slot.height,
+                    });
                     setPulledId(record.id);
                   }}
                   data-testid="shelf-spine"
@@ -278,7 +294,20 @@ export function Shelf({ records }: { records: ShelfRecord[] }) {
                 */}
                 <div
                   data-testid="shelf-label"
-                  className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 rounded-xs border border-border bg-popover px-2 py-1.5 whitespace-nowrap shadow-lg group-hover:block group-focus-within:block"
+                  /*
+                    **Suppressed while a record is out**, derived from the same
+                    `pulled` that owns that question — not from a second flag.
+
+                    Clicking a spine leaves it focused, and the label reveals on
+                    `group-focus-within` (which is right for keyboard use), so
+                    without this the tooltip stays visible under a translucent
+                    scrim: a floating label naming the record, showing through
+                    the thing that replaced it. Neither the wall nor `/plane`
+                    could show this alone.
+                  */
+                  className={`pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 rounded-xs border border-border bg-popover px-2 py-1.5 whitespace-nowrap shadow-lg ${
+                    pulled === null ? 'group-hover:block group-focus-within:block' : ''
+                  }`}
                 >
                   <p className="text-xs font-medium text-popover-foreground">{record.title}</p>
                   <p className="text-[11px] text-muted-foreground">
@@ -323,14 +352,14 @@ export function Shelf({ records }: { records: ShelfRecord[] }) {
         front cover forward, the shelf dimmed behind it." Rendered here rather
         than per-spine so exactly one record is ever out.
       */}
-      {pulled !== null && (
-        <PulledRecord
-          record={pulled}
-          spineRect={spineRectFor(pulled.id)}
-          measureSpine={() => spineRectFor(pulled.id)}
-          onClose={() => setPulledId(null)}
-        />
-      )}
+      <RecordCanvas
+        record={pulled}
+        from={pulledFrom}
+        onClose={() => {
+          setPulledId(null);
+          setPulledFrom(null);
+        }}
+      />
     </div>
   );
 }

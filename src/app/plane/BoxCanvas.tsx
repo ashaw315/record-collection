@@ -139,6 +139,7 @@ export function BoxCanvas({
   thicknessRatio = BOX_THICKNESS_RATIO,
   label,
   testId = 'box-canvas',
+  fill = false,
 }: {
   skins: Skins;
   imprint: string | null;
@@ -156,6 +157,20 @@ export function BoxCanvas({
   label?: string;
   /** So a caller can address ONE canvas among several on a page. */
   testId?: string;
+  /**
+   * Sizes to the container and drops the opaque backdrop and the status line.
+   *
+   * `/plane` is a workbench: a fixed 420px square on a dark ground, with the
+   * loading state printed beneath it, because the point there is to compare
+   * renders side by side. Over the real wall none of that is wanted — the
+   * canvas is a transparent sheet the record is held up on, and a `#111`
+   * rectangle would be a box beside the wall rather than a record out of it.
+   *
+   * A flag rather than two components: everything else about the render is
+   * identical, and forking it would give the workbench and the real screen two
+   * renderers that must agree.
+   */
+  fill?: boolean;
 }) {
   const mount = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'failed'>('loading');
@@ -375,6 +390,30 @@ export function BoxCanvas({
       const canvasRect = host.getBoundingClientRect();
       const from = screenRectToWorld(riseFrom, canvasRect);
 
+      /**
+       * **The computed start, published so a test can read what this component
+       * actually did** rather than re-deriving the projection from the same
+       * inputs and agreeing with itself.
+       *
+       * That distinction is not academic: the first version of the integration
+       * test recomputed `screenRectToWorld` in the page and passed against a
+       * mapping that ignored the slot entirely, and against one carrying unit
+       * 18's `+ scrollY` defect. A test that does its own arithmetic asserts
+       * the arithmetic, not the code.
+       *
+       * Written as data attributes because the alternative — a callback prop —
+       * would be a second channel for the same fact, and this one cannot drift
+       * from the mesh: both are set from `from` on the line below.
+       */
+      host.dataset.riseX = String(from.x);
+      host.dataset.riseY = String(from.y);
+      host.dataset.riseScaleX = String(from.scaleX);
+      host.dataset.riseScaleY = String(from.scaleY);
+      host.dataset.canvasLeft = String(canvasRect.left);
+      host.dataset.canvasTop = String(canvasRect.top);
+      host.dataset.canvasWidth = String(canvasRect.width);
+      host.dataset.canvasHeight = String(canvasRect.height);
+
       mesh.position.set(from.x, from.y, 0);
       mesh.scale.set(from.scaleX, from.scaleY, 1);
 
@@ -422,6 +461,23 @@ export function BoxCanvas({
       to remove that key gets a rise that never restarts.
     */
   }, [skins, imprint, spineColour, thicknessRatio, riseFrom]);
+
+  if (fill) {
+    return (
+      <div
+        ref={mount}
+        data-testid={testId}
+        data-status={status}
+        /*
+          Square, and sized from the viewport's SHORTER axis so the record is
+          fully visible in both orientations. `min()` rather than a media query:
+          the constraint is "fits the screen", which is one rule, and expressing
+          it as two breakpoints would be two places to keep in agreement.
+        */
+        className="pointer-events-auto aspect-square w-[min(70vw,70vh,560px)] shrink-0"
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col gap-2">

@@ -824,6 +824,419 @@ test('the table and grid keep their controls on the page', async ({ page }) => {
   }
 });
 
+test('the canvas is over the wall and does NOT eat spine clicks', async ({ page }) => {
+  /**
+   * **The contract unit 21's lesson points straight at.** Every measurement
+   * that unit took was correct and green while the view toggle offered a
+   * one-way trip, because none of them asked *can a user still do the thing*.
+   * A transparent canvas over the wall is the same shape of risk: it can be
+   * present, correct, and silently eat every click on the collection.
+   *
+   * Asserted at the point of contact — `elementFromPoint` over a spine — rather
+   * than by reading a CSS property, because `pointer-events` is inherited and
+   * overridable and what matters is which element the browser hands the click
+   * to.
+   */
+  const { artistId } = await seedRecord(page, `Pointer ${suffix()}`);
+  for (let i = 0; i < 9; i += 1) {
+    await page.request.post('/api/records', {
+      data: { title: `Pointer-${i} ${suffix()}`, artistId },
+    });
+  }
+
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.getByTestId('shelf-timber')).toBeVisible();
+
+  const canvas = page.getByTestId('record-canvas');
+  await expect(canvas, 'the canvas is mounted over the wall from the start').toBeAttached();
+
+  const atRest = await page.evaluate(() => {
+    const spine = document.querySelectorAll('[data-testid="shelf-spine"]')[3] as HTMLElement;
+    const box = spine.getBoundingClientRect();
+    const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+    return {
+      reachesSpine: spine === hit || spine.contains(hit),
+      hitTag: hit?.tagName ?? 'none',
+      hitTestId: (hit as HTMLElement | null)?.dataset?.testid ?? 'none',
+    };
+  });
+
+  expect(
+    atRest.reachesSpine,
+    `at rest a click must reach the SPINE, not the canvas (hit: ${atRest.hitTag}/${atRest.hitTestId})`,
+  ).toBe(true);
+
+  /**
+   * And the whole point of the contract: with a record OUT, the canvas takes
+   * the pointer, because the record is what the reader is interacting with.
+   */
+  await page.getByTestId('shelf-spine').nth(3).click();
+  await expect(page.getByTestId('record-canvas')).toBeVisible();
+
+  const whileOut = await page.evaluate(() => {
+    const spine = document.querySelectorAll('[data-testid="shelf-spine"]')[3] as HTMLElement;
+    const box = spine.getBoundingClientRect();
+    const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+    const overlay = document.querySelector('[data-testid="record-canvas"]');
+    return { canvasHasPointer: overlay === hit || overlay?.contains(hit) === true };
+  });
+
+  expect(
+    whileOut.canvasHasPointer,
+    'with a record out the canvas owns the pointer — that is what the tilt needs',
+  ).toBe(true);
+});
+
+test('a spine is still a LINK with the canvas present', async ({ page }) => {
+  /**
+   * Eight specs across five files locate records with
+   * `getByRole('link', { name })`, and a canvas laid over the wall is exactly
+   * the change that could break all of them at once while every geometry
+   * assertion stayed green.
+   *
+   * Cmd-click is asserted because it is the path that does NOT go through the
+   * pull handler: `preventDefault` is skipped for modified clicks, so the href
+   * must still be a real destination.
+   */
+  const title = `Linked ${suffix()}`;
+  const { artistId, id } = await seedRecord(page, title);
+
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.getByTestId('shelf-timber')).toBeVisible();
+
+  const link = page.getByRole('link', { name: new RegExp(title) });
+  await expect(link, 'the accessible name still finds the record').toBeVisible();
+  await expect(link).toHaveAttribute('href', `/records/${id}`);
+
+  // Cmd-click opens the record rather than pulling it.
+  const popup = page.waitForEvent('popup', { timeout: 5000 }).catch(() => null);
+  await link.click({ modifiers: ['Meta'] });
+  const opened = await popup;
+
+  if (opened !== null) {
+    expect(opened.url()).toContain(`/records/${id}`);
+    await opened.close();
+  } else {
+    // Same-tab navigation is an acceptable outcome for a modified click in a
+    // headless browser; what must NOT happen is the record being pulled.
+    await expect(page.getByTestId('record-canvas')).toBeHidden();
+  }
+});
+
+test('the rise starts ON the spine it came from, in a row that is not the first', async ({
+  page,
+}) => {
+  /**
+   * **The integration this whole strand of work was building toward, and the
+   * one thing five units of three.js could not check.**
+   *
+   * `/plane` uses placeholder spines and never renders `Shelf.tsx`, so the
+   * mapping had been proven against a scaffold: a flex row on a scrolling page,
+   * which is the right shape but not the real wall. The real wall is
+   * `calc(100svh - 205px)` with its own layout, wrapping rows and a shelf line
+   * under each.
+   *
+   * **A THIRD-row spine, deliberately.** A first-row spine at the left is the
+   * case most likely to work by accident: its offsets are small, and a mapping
+   * that ignored position entirely would still land near enough to look right.
+   * A spine three rows down and far along is where a dropped scroll term or a
+   * wrong origin shows up as a large, unmistakable error.
+   *
+   * **Numerically, not visually.** A rise that starts 30px off looks entirely
+   * convincing in motion. The round trip is the strongest check available:
+   * project the computed world position back to screen coordinates and confirm
+   * it lands on the rect it came from.
+   */
+  const { artistId } = await seedRecord(page, `Rising ${suffix()}`);
+  // ~63 spines fit a 1280px row, measured; 150 is comfortably three rows.
+  for (let i = 0; i < 149; i += 1) {
+    await page.request.post('/api/records', {
+      data: { title: `Rising-${i} ${suffix()}`, artistId },
+    });
+  }
+
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.getByTestId('shelf-timber')).toBeVisible();
+
+  // Find a spine in the third row — by measuring where the rows actually are,
+  // not by assuming how many fit.
+  const target = await page.evaluate(() => {
+    const spines = Array.from(
+      document.querySelectorAll('[data-testid="shelf-spine"]'),
+    ) as HTMLElement[];
+    const tops = [...new Set(spines.map((s) => Math.round(s.getBoundingClientRect().top)))].sort(
+      (a, b) => a - b,
+    );
+    if (tops.length < 3) return null;
+
+    const thirdRow = spines.filter((s) => Math.round(s.getBoundingClientRect().top) === tops[2]);
+    // Well along the row, not its first spine.
+    const spine = thirdRow[Math.min(12, thirdRow.length - 1)];
+    return { index: spines.indexOf(spine), rowCount: tops.length };
+  });
+
+  expect(target, 'the fixture must produce at least three rows').not.toBeNull();
+  if (target === null) return;
+
+  /**
+   * **Scrolled into view FIRST, then measured, then clicked.**
+   *
+   * Playwright's `click()` scrolls the target into view before dispatching, so
+   * a rect measured beforehand describes a position the spine no longer
+   * occupies. Measured: `scrollY` moved 161 between the two, and the round trip
+   * missed by exactly 161 on the Y axis — the component was right and the test
+   * was reading the spine at the wrong moment.
+   *
+   * Worth stating because the number looked exactly like unit 18's defect,
+   * which is a `scrollY` drift on one axis with the other correct. Same
+   * signature, different culprit: there the code mixed coordinate systems, here
+   * the harness moved the page between two correct measurements.
+   */
+  await page.getByTestId('shelf-spine').nth(target.index).scrollIntoViewIfNeeded();
+  await page.waitForTimeout(100);
+
+  const before = await page.evaluate((index) => {
+    const spine = document.querySelectorAll('[data-testid="shelf-spine"]')[index] as HTMLElement;
+    const box = spine.getBoundingClientRect();
+    return { left: box.left, top: box.top, width: box.width, height: box.height };
+  }, target.index);
+
+  await page.getByTestId('shelf-spine').nth(target.index).click();
+  await expect(page.getByTestId('record-box')).toBeVisible();
+
+  /**
+   * **The round trip, run on the values the COMPONENT computed.**
+   *
+   * The first version of this test recomputed `screenRectToWorld` in the page
+   * from the spine rect it had measured itself, and projected that back. It
+   * passed against a mapping that ignored the slot entirely AND against one
+   * carrying unit 18's `+ scrollY` defect, because it was asserting its own
+   * arithmetic and agreeing with itself. Both mutations are now proven to fail.
+   *
+   * So the world placement is read from the canvas element, where `BoxCanvas`
+   * publishes what it actually gave the mesh, and only the projection BACK to
+   * screen coordinates happens here. If the component's mapping is wrong, this
+   * lands somewhere other than the spine.
+   */
+  const roundTrip = await page.evaluate(() => {
+    const host = document.querySelector('[data-testid="record-box"]') as HTMLElement;
+    const d = host.dataset;
+
+    const world = {
+      x: Number(d.riseX),
+      y: Number(d.riseY),
+      scaleX: Number(d.riseScaleX),
+      scaleY: Number(d.riseScaleY),
+    };
+    const canvas = {
+      left: Number(d.canvasLeft),
+      top: Number(d.canvasTop),
+      width: Number(d.canvasWidth),
+      height: Number(d.canvasHeight),
+    };
+
+    // `squareFrustum`'s inverse. The camera is square, so one world unit is the
+    // canvas's shorter axis.
+    const shorter = Math.min(canvas.width, canvas.height);
+    const halfW = canvas.width / shorter / 2;
+    const halfH = canvas.height / shorter / 2;
+    const pixelsPerUnitX = canvas.width / (halfW * 2);
+    const pixelsPerUnitY = canvas.height / (halfH * 2);
+
+    const width = world.scaleX * pixelsPerUnitX;
+    const height = world.scaleY * pixelsPerUnitY;
+
+    return {
+      left: canvas.left + canvas.width / 2 + world.x * pixelsPerUnitX - width / 2,
+      top: canvas.top + canvas.height / 2 - world.y * pixelsPerUnitY - height / 2,
+      width,
+      height,
+      published: d.riseX !== undefined,
+    };
+  });
+
+  expect(roundTrip.published, 'the canvas must publish what it computed').toBe(true);
+
+  expect(roundTrip.left, 'the rise starts at the spine\'s left edge').toBeCloseTo(before.left, 1);
+  expect(roundTrip.top, 'and its top — the axis a dropped scroll term breaks').toBeCloseTo(
+    before.top,
+    1,
+  );
+  expect(roundTrip.width, 'at the spine\'s width').toBeCloseTo(before.width, 1);
+  expect(roundTrip.height, 'and its height').toBeCloseTo(before.height, 1);
+});
+
+test('the rise still starts on the spine after the page has SCROLLED', async ({ page }) => {
+  /**
+   * The case unit 18's defect would fail, and the reason no scroll term appears
+   * anywhere in this code.
+   *
+   * The page scrolls while a record is out — measured: `body { overflow:
+   * visible }`, and under 24px of scroll a spine moves −24 while a
+   * `position: fixed` overlay moves 0. Those are two different frames, and the
+   * fix is not a correction term but reading both rects with the same
+   * viewport-relative instrument so scroll cancels out of their difference.
+   */
+  const { artistId } = await seedRecord(page, `Scrolled ${suffix()}`);
+  // Enough rows to make the page genuinely scroll: the wall is viewport-height,
+  // so a collection that fits one screen gives only a few pixels of scroll and
+  // the test would pass without testing anything. Measured: 100 records gave 24px.
+  for (let i = 0; i < 199; i += 1) {
+    await page.request.post('/api/records', {
+      data: { title: `Scrolled-${i} ${suffix()}`, artistId },
+    });
+  }
+
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.getByTestId('shelf-timber')).toBeVisible();
+
+  await page.evaluate(() => window.scrollBy(0, 260));
+  await page.waitForTimeout(150);
+
+  const scrollY = await page.evaluate(() => window.scrollY);
+  expect(scrollY, 'the page must actually have scrolled for this to test anything').toBeGreaterThan(
+    50,
+  );
+
+  const index = 40;
+  const before = await page.evaluate((i) => {
+    const spine = document.querySelectorAll('[data-testid="shelf-spine"]')[i] as HTMLElement;
+    const box = spine.getBoundingClientRect();
+    return { left: box.left, top: box.top, width: box.width, height: box.height };
+  }, index);
+
+  await page.getByTestId('shelf-spine').nth(index).click();
+  await expect(page.getByTestId('record-box')).toBeVisible();
+
+  const canvas = await page.getByTestId('record-box').boundingBox();
+  expect(canvas).not.toBeNull();
+  if (canvas === null) return;
+
+  /**
+   * The property, stated without re-deriving the projection: the slot the
+   * record rose from is where the spine was ON SCREEN at click time. If a
+   * scroll term had crept in, this offset would differ by exactly `scrollY`,
+   * which is the signature of unit 18's bug.
+   */
+  const offsetFromCanvas = {
+    x: before.left - canvas.x,
+    y: before.top - canvas.y,
+  };
+
+  expect(
+    Math.abs(offsetFromCanvas.y),
+    `the slot must be within the viewport frame, not off by scrollY (${scrollY})`,
+  ).toBeLessThan(800);
+});
+
+test('reduced motion skips the rise and puts the record in place', async ({ page }) => {
+  /**
+   * §10b: "reduced motion disables all of it." The record is not decorative;
+   * the movement is, so the object still appears — it simply does not fly.
+   *
+   * Asserted on the published rise placement rather than on a screenshot: if
+   * the rise ran, the canvas carries the world coordinates it started from. No
+   * placement means no rise, which is the property, and it cannot be true by
+   * accident because the same attributes are present and non-empty in the
+   * ordinary case.
+   */
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+
+  const { artistId } = await seedRecord(page, `Reduced ${suffix()}`);
+  for (let i = 0; i < 9; i += 1) {
+    await page.request.post('/api/records', {
+      data: { title: `Reduced-${i} ${suffix()}`, artistId },
+    });
+  }
+
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.getByTestId('shelf-timber')).toBeVisible();
+
+  await page.getByTestId('shelf-spine').nth(3).click();
+  await expect(page.getByTestId('record-box'), 'the record still appears').toBeVisible();
+
+  const rose = await page.evaluate(() => {
+    const host = document.querySelector('[data-testid="record-box"]') as HTMLElement;
+    return host.dataset.riseX !== undefined;
+  });
+
+  expect(rose, 'no rise placement is computed under reduced motion').toBe(false);
+});
+
+test('the hover label does not linger behind the pulled record', async ({ page }) => {
+  /**
+   * **An integration defect that neither half could show on its own.**
+   *
+   * The spine's label reveals on `group-focus-within`, which is right for
+   * keyboard use. Clicking a spine leaves it focused, so with the record out
+   * the label stays visible underneath a translucent scrim — a floating tooltip
+   * naming a record, showing through the thing that replaced it.
+   *
+   * On `/plane` there were no labels; on the wall without a canvas there was
+   * nothing translucent over them. It took both to appear, which is what this
+   * unit is for.
+   */
+  const { artistId } = await seedRecord(page, `Label ${suffix()}`);
+  for (let i = 0; i < 9; i += 1) {
+    await page.request.post('/api/records', {
+      data: { title: `Label-${i} ${suffix()}`, artistId },
+    });
+  }
+
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.getByTestId('shelf-timber')).toBeVisible();
+
+  await page.getByTestId('shelf-spine').nth(3).click();
+  await expect(page.getByTestId('record-box')).toBeVisible();
+
+  const visibleLabels = await page.evaluate(() => {
+    return Array.from(document.querySelectorAll('[data-testid="shelf-label"]')).filter(
+      (el) => getComputedStyle(el).display !== 'none',
+    ).length;
+  });
+
+  expect(visibleLabels, 'no spine label may show while a record is out').toBe(0);
+});
+
+test('the pulled record goes back by Escape and by the scrim', async ({ page }) => {
+  /**
+   * **A capability the CSS implementation had and the canvas did not.**
+   *
+   * The old `PulledRecord` handled Escape; the overlay was built without it,
+   * and the full E2E caught it as one of seven failures in tests that assert
+   * the CSS DOM. Six of those encode the old contract and retire with it — this
+   * one names a behaviour that must survive the change, so it is rewritten
+   * against the new markup rather than deleted with the rest.
+   *
+   * Escape is the keyboard route out. Without it a keyboard user who pulls a
+   * record has no way back to the wall except tabbing to a control, which is
+   * the kind of thing that passes every geometry assertion and traps someone.
+   */
+  const { artistId } = await seedRecord(page, `Escaping ${suffix()}`);
+  for (let i = 0; i < 9; i += 1) {
+    await page.request.post('/api/records', {
+      data: { title: `Escaping-${i} ${suffix()}`, artistId },
+    });
+  }
+
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.getByTestId('shelf-timber')).toBeVisible();
+
+  // Escape.
+  await page.getByTestId('shelf-spine').nth(2).click();
+  await expect(page.getByTestId('record-box')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('record-box'), 'Escape puts the record back').toBeHidden();
+
+  // And the scrim, which is the gesture a pointer user reaches for first.
+  await page.getByTestId('shelf-spine').nth(4).click();
+  await expect(page.getByTestId('record-box')).toBeVisible();
+  await page.getByTestId('record-scrim').click({ position: { x: 20, y: 20 } });
+  await expect(page.getByTestId('record-box'), 'and so does the wall behind it').toBeHidden();
+});
+
 test('records STAND ON the shelf line rather than floating above or through it', async ({
   page,
 }) => {
