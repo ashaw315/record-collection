@@ -8350,3 +8350,53 @@ set.** A fully-populated fixture cannot distinguish "omits absent fields" from
 "renders every field it is given" — both produce identical output. Only the bare
 record separates them, and in production the bare record IS the common case:
 three of three records showed the empty state or near it.
+
+---
+
+## Step 13 unit 18 — the tilt in three.js, and a principle that overrode the eye
+
+**CORRECTION: 1:40 was wrong, and the way it was chosen was the defect.**
+
+Unit 16 rendered 1:25, 1:40 and 1:70 side by side specifically so the thickness
+could be judged by looking — and then rejected 1:25 by REASONING: "DVD-case
+proportion, which is the reference's own and the wrong thing to borrow." QA
+looked at the same three frames and chose 1:25. At 1:40 and 1:70 the edge reads
+as a dark line on a sheet; only at 1:25 does it read as a surface of its own.
+
+**A principle overrode the instrument, inside a comparison that existed to be
+looked at.** The principle was even sound in isolation — the reference IS a DVD
+case and mimicking it would be borrowing the wrong thing — but "does this read
+as a record" is a question the eye answers and an argument cannot. Exactly the
+shape recorded for the spines, where 1:40 was arithmetic about sleeve thickness
+and 1:12 was what could actually be read.
+
+The check: when a unit sets up a comparison to be judged by looking, the looking
+decides. If a candidate is going to be rejected on principle, reject it before
+rendering it — otherwise the comparison is theatre.
+
+**The rest state was flattering the geometry.** Every `/plane` frame through
+unit 17 showed a fixed three-quarter angle, and every "does it read as an
+object" answer was given under that pose. A box at an angle is obviously a box;
+face-on it is indistinguishable from a plane. Now that the rest state is square
+on, the honest answer to frame 1 is NO — at rest it reads as a flat photograph
+of a sleeve — and the object-ness has to arrive from the motion, which is the
+actual claim the renderer was adopted for. It does: one pointer move and the
+edge presents, the face foreshortens, the light redistributes.
+
+**`tilt.ts` fitted with no changes at all** — degrees in, degrees out, no DOM,
+no CSS. The renderer converts to radians and nothing else. Fourth reuse this
+session after `DEFAULT_SPINE_COLOUR`, `textColourOn` and `backFaceGroups`, and
+the fourth to pay.
+
+**The dirty-flag loop's real test is the IDLE frame.** Asserting "a render
+happened after a pointer move" passes against a loop that renders every frame
+for ever, which is the thing being avoided. The assertion that matters runs ten
+frames after the flag is cleared and expects the count NOT to move — proven by
+installing an always-render loop, which failed with "expected 1 times, got 11".
+
+**A multi-step patch script that exits on failure loses its earlier successful
+steps.** A script did four replacements, reported "ok" for each, then hit a
+failed anchor and `sys.exit(1)` — before its single `write()` at the end. All
+four were discarded while the log said they had worked. Lint caught it as two
+unused imports; without that the pointer handler would simply have been absent.
+Write after each step, or verify the file rather than the log.

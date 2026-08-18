@@ -16,7 +16,9 @@ import {
   type Material,
   type Texture,
 } from 'three';
+import { tiltFor } from '../shelf/tilt';
 import { edgeColourFor } from './edge-colour';
+import { createRenderLoop } from './render-loop';
 import { centredSquareUv, type Skin, type Skins } from './skins';
 
 /**
@@ -46,16 +48,30 @@ import { centredSquareUv, type Skin, type Skins } from './skins';
  * this unit must leave untouched. Two renderers, two values, until one replaces
  * the other.
  *
- * Chosen at 1:40 after rendering 1:25, 1:40 and 1:70 and cropping the edge —
- * see the unit report. A real 12″ sleeve is about 1:70, which under light is a
- * hairline; 1:25 reads as a DVD case, which is the reference's own proportion
- * and the wrong thing to borrow.
+ * **1:25, corrected from 1:40 by looking.** Unit 16 rendered all three
+ * candidates and then rejected 1:25 on PRINCIPLE — "DVD-case proportion, the
+ * reference's own and the wrong thing to borrow" — inside a comparison that
+ * existed to be looked at. QA looked and chose 1:25: at 1:40 and 1:70 the edge
+ * reads as a dark line on a sheet, and only at 1:25 does it read as a surface
+ * of its own.
+ *
+ * Same shape as the spines, where 1:40 was arithmetic about sleeve thickness
+ * and 1:12 was what could actually be read. The eye is the instrument for this
+ * question and a principle overrode it.
  */
-export const BOX_THICKNESS_RATIO = 1 / 40;
+export const BOX_THICKNESS_RATIO = 1 / 25;
 
-/** The fixed viewing angle: enough to show a face and an edge together. */
-const VIEW_ANGLE_Y = 0.42;
-const VIEW_ANGLE_X = 0.16;
+/**
+ * §10b: "reduced motion disables all of it." The record sits face-on and does
+ * not respond to the pointer — the object is not decorative, the turning is.
+ *
+ * Read at call time rather than cached: a reader may change the setting while
+ * the page is open, and the OS reports it live. Same helper and same reasoning
+ * as `PulledRecord`'s, which the CSS tilt uses.
+ */
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
  * A plain sleeve, drawn as a 1×1 canvas texture rather than a bare colour.
@@ -179,18 +195,33 @@ export function BoxCanvas({
       back,
     ];
 
+    /**
+     * **At rest the record faces you square on, at zero rotation.**
+     *
+     * Every previous `/plane` frame showed a fixed three-quarter angle, which
+     * flatters the geometry: a box at an angle is obviously a box, and face-on
+     * it is indistinguishable from a plane. So the object-ness now has to
+     * arrive from the MOTION rather than from the pose, which is the actual
+     * claim the renderer was adopted for.
+     */
     const mesh = new Mesh(geometry, materials);
-    mesh.rotation.y = VIEW_ANGLE_Y;
-    mesh.rotation.x = VIEW_ANGLE_X;
     scene.add(mesh);
 
     let disposed = false;
     const owned: Texture[] = [];
     let pending = 0;
 
-    const draw = () => {
+    /**
+     * **Render on a dirty flag, never per event** (NOTES, recorded before any
+     * three.js work began). A still record costs nothing: the pointer handler
+     * sets a flag and returns, and the loop draws at most once per frame.
+     */
+    const loop = createRenderLoop(() => {
       if (!disposed) renderer.render(scene, camera);
-    };
+    });
+    loop.start();
+
+    const draw = () => loop.markDirty();
 
     const applySkin = (skin: Skin, material: MeshStandardMaterial, withImprint: boolean) => {
       if (skin.kind === 'plain') {
@@ -235,6 +266,52 @@ export function BoxCanvas({
       );
     };
 
+    /**
+     * §10b's tilt, driven by the SAME pure mapping the CSS version uses.
+     *
+     * `tilt.ts` takes a pointer position and a rect and returns two angles:
+     * absolute mapping, clamped, with a round-trip test proving it maps
+     * position rather than accumulating deltas. None of that is
+     * renderer-specific, so this converts degrees to radians and does nothing
+     * else. A second implementation would be the shape NOTES records under
+     * `genreSubtree` and `hasGatefold` — the fourth chance this session to
+     * reuse rather than reimplement.
+     *
+     * **Measured against the canvas's LAYOUT rect, not its visual box.** Unit
+     * 13's fourth defect: `getBoundingClientRect` reports what is on screen, so
+     * a rect read while the object is transformed feeds the angle back into
+     * itself. `offsetWidth`/`offsetLeft` are layout geometry and ignore
+     * transforms — and the canvas element itself never moves, which is why it
+     * is the right thing to measure against here.
+     */
+    const onPointerMove = (event: PointerEvent) => {
+      if (prefersReducedMotion()) return;
+
+      let left = 0;
+      let top = 0;
+      for (
+        let node: HTMLElement | null = host;
+        node !== null;
+        node = node.offsetParent as HTMLElement | null
+      ) {
+        left += node.offsetLeft;
+        top += node.offsetTop;
+      }
+
+      const { rotateX, rotateY } = tiltFor(
+        { x: event.clientX, y: event.clientY },
+        { left, top, width: host.offsetWidth, height: host.offsetHeight },
+      );
+
+      mesh.rotation.x = (rotateX * Math.PI) / 180;
+      mesh.rotation.y = (rotateY * Math.PI) / 180;
+
+      // A flag, not a render: the loop decides when to draw.
+      draw();
+    };
+
+    host.addEventListener('pointermove', onPointerMove);
+
     applySkin(skins.front, front, false);
     applySkin(skins.back, back, true);
 
@@ -243,6 +320,8 @@ export function BoxCanvas({
 
     return () => {
       disposed = true;
+      loop.stop();
+      host.removeEventListener('pointermove', onPointerMove);
       renderer.domElement.remove();
       geometry.dispose();
       for (const texture of owned) texture.dispose();

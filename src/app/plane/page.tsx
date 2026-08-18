@@ -146,7 +146,14 @@ export default async function PlanePage() {
             <section
               key={record.id}
               data-testid="composition"
-              className="flex flex-wrap items-start justify-center gap-8"
+              /*
+                **Pulled in, not spread out.** These read as three separate
+                columns with a wide gap when they were `gap-8` across the full
+                width — the panels have to sit close enough to the object to
+                belong to it, as the reference's do. `max-w-4xl` and `mx-auto`
+                make the composition one thing rather than a row of three.
+              */
+              className="mx-auto flex max-w-5xl flex-wrap items-start justify-center gap-5"
             >
               <FactsPanel panel={panel} />
 
