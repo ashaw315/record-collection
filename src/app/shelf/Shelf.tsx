@@ -5,11 +5,11 @@ import { useState } from 'react';
 import type { ShelfRecord } from '@/lib/db/queries/shelf';
 import type { Rect } from './rise';
 import { PulledRecord } from './PulledRecord';
+import { shelfSurface } from './shelf-surface';
 import {
   DEFAULT_SPINE_COLOUR,
   SHELF_EDGE,
   SPINE_HEIGHT,
-  SPINE_ROW_HEIGHT,
   spineText,
   spineWidth,
   textColourOn,
@@ -119,21 +119,8 @@ export function Shelf({ records }: { records: ShelfRecord[] }) {
       */}
       <div
         data-testid="shelf-timber"
-        className="w-full rounded-xs bg-[#1a1714] px-4 pt-5 pb-2"
-        style={{
-          perspective: '900px',
-          backgroundImage: `linear-gradient(to bottom, transparent 0, transparent ${SPINE_HEIGHT}px, #241d16 ${SPINE_HEIGHT}px, #241d16 ${SPINE_ROW_HEIGHT}px)`,
-          backgroundSize: `100% ${SPINE_ROW_HEIGHT}px`,
-          /*
-            The gradient is painted in the PADDING BOX, so it starts under
-            `pt-5` (20px) automatically — an explicit offset double-counted it
-            and floated the timber above the first row. `padding-box` says so
-            rather than relying on the default.
-          */
-          backgroundOrigin: 'padding-box',
-          backgroundClip: 'padding-box',
-          backgroundRepeat: 'repeat-y',
-        }}
+        className="w-full px-4 pt-5 pb-2"
+        style={{ perspective: '900px', ...shelfSurface() }}
       >
         <ul
           className="flex flex-wrap items-end gap-x-[3px]"

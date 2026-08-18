@@ -8607,3 +8607,47 @@ what a user DID: view/sort/page are not filters, a year range is one filter, and
 **205px of chrome remains above the wall** — the nav (52px) plus the
 "Collection / 1 record / Add record" heading block. The overlay removed the
 controls; the heading is a separate decision and was not in this unit's scope.
+
+---
+
+## Step 13 unit 22 — the wall and the plane are different surfaces
+
+**Unit 21 chose a treatment and then painted both surfaces one colour.** It
+rendered four candidates for the empty portion, picked "dim wall with the shelf
+edge along its foot", and implemented it as a single `#1a1714` rectangle with an
+edge gradient repeating down it. The choice survived only in the comment. Nothing
+asserted that wall and plane differed, so nothing noticed that they did not.
+
+That is a new variant of a familiar shape: not a test that cannot fail, but a
+DECISION with no test at all, recorded in prose next to code that contradicts it.
+The prompt for this unit asked for "an assertion that would fail if they became
+the same colour" — against unit 21's implementation that assertion fails
+immediately, which is how the gap was found.
+
+**Unit 21's geometry test went vacuous again, by a different route.** It measures
+`shelf-timber`'s bounding box against the viewport. That element is now `w-full`
+inside a `w-screen` breakout — a block element filling its parent, true by
+definition. The offset half still bites; the width half cannot. Unit 20 had
+exactly this problem with `[data-testid="shelf"]` and the fix was to measure the
+visible element instead; making that element full-bleed re-created the vacuity in
+the new place. **Widening an element to the viewport makes any width assertion
+about it trivially true**, so the assertion has to move to something with a
+reason to be a particular size.
+
+Replaced by sampling `elementFromPoint` at the far left and far right of the
+shelf line, at ONE record — the count where a content-sized plane and a
+full-width one differ. Mutation-proved by restoring `w-fit max-w-full`.
+
+**`background-size` and `background-repeat` pair with `background-image`
+POSITIONALLY, and a short list cycles rather than erroring.** Three image layers
+with two sizes silently gives the third layer the first layer's size. The test
+counts entries per layer for that reason. Splitting layers on commas needs depth
+counting — `rgba(0,0,0,.5)` nests commas two levels down and a lookahead regex
+reports seven layers where there are three.
+
+**Still not fixed, and it is a shape question rather than a paint one.** At five
+records the wall above the spines is 240px of empty surface, and it is the
+largest thing in the frame. Light makes it read as wall rather than as void,
+which is what this unit could do. Whether a short collection should get a
+shorter wall is a structural decision §10b does not settle — it says the space
+BESIDE the records is wall, and says nothing about the space above them.

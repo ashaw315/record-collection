@@ -724,6 +724,95 @@ test('the table and grid keep their controls on the page', async ({ page }) => {
   }
 });
 
+test('the shelf PLANE runs edge to edge whatever the record count', async ({ page }) => {
+  /**
+   * **The discriminating fixture, and why the count matters.** With enough
+   * records to fill a row, a full-width plane and a content-sized one are the
+   * same observation — so a test seeded with "enough" records passes against
+   * both and proves nothing. One record is where they differ: the plane must
+   * still cross the whole wall while the spines occupy ~13px of it.
+   *
+   * **Measured from PAINTED PIXELS, not from an element's box.** Unit 21's
+   * geometry test measured `shelf-timber`'s bounding box, which is `w-full`
+   * inside a `w-screen` breakout — a block element filling its parent, which is
+   * true by definition of any block element in that position. That is the
+   * vacuous-wrapper problem returning by a different route: the offset half of
+   * that test still bites, the width half no longer can.
+   *
+   * So this samples the shelf line itself, at the far left and the far right,
+   * and asserts that what is painted there is PLANE rather than WALL. That
+   * distinction cannot be true by construction — it is false today of any
+   * implementation whose plane stops where the records do.
+   */
+  const readShelfColours = async () => {
+    return page.evaluate(() => {
+      const timber = document.querySelector('[data-testid="shelf-timber"]') as HTMLElement;
+      const spine = document.querySelector('[data-testid="shelf-spine"]') as HTMLElement;
+      const box = timber.getBoundingClientRect();
+      const spineBox = spine.getBoundingClientRect();
+      const y = Math.round(spineBox.bottom + 2);
+
+      /*
+        `elementFromPoint` at the far right of the wall must land on the timber
+        itself — if the plane stopped at the records, the point would be outside
+        it or on the page background.
+      */
+      const farRight = document.elementFromPoint(Math.round(box.right) - 4, y);
+      const farLeft = document.elementFromPoint(Math.round(box.left) + 4, y);
+
+      return {
+        rightIsTimber: farRight === timber || timber.contains(farRight),
+        leftIsTimber: farLeft === timber || timber.contains(farLeft),
+        wallWidth: box.width,
+        spineRight: spineBox.right,
+        viewport: window.innerWidth,
+      };
+    });
+  };
+
+  // ONE record: the case where a content-sized plane and a full-width one differ.
+  const solo = await seedRecord(page, `Plane-one ${suffix()}`);
+  await page.goto(`/?artistId=${solo.artistId}`);
+  await expect(page.getByTestId('shelf-timber')).toBeVisible();
+
+  const one = await readShelfColours();
+  expect(one.leftIsTimber, 'the plane reaches the left edge').toBe(true);
+  expect(
+    one.rightIsTimber,
+    'the plane must reach the RIGHT edge with one record on it — a shelf ends where the wall ends',
+  ).toBe(true);
+  expect(
+    one.wallWidth - one.spineRight,
+    'and the emptiness beside one record must be most of the wall',
+  ).toBeGreaterThan(one.viewport * 0.5);
+
+  // MANY records: the plane still spans, and the same assertion is now weaker,
+  // which is exactly why the one-record case above carries the proof.
+  const many = await seedRecord(page, `Plane-many ${suffix()}`);
+  for (let i = 0; i < 24; i += 1) {
+    await page.request.post('/api/records', {
+      data: { title: `Plane-many-${i} ${suffix()}`, artistId: many.artistId },
+    });
+  }
+  await page.goto(`/?artistId=${many.artistId}`);
+  await expect(page.getByTestId('shelf-timber')).toBeVisible();
+
+  const lots = await readShelfColours();
+  expect(lots.leftIsTimber).toBe(true);
+  expect(lots.rightIsTimber, 'the plane spans at any count').toBe(true);
+
+  /**
+   * **The plane is the SAME width at both counts.** This is the assertion that
+   * would fail against a content-sized shelf, where 1 record and 25 give
+   * different widths — and it compares the two observations against EACH OTHER
+   * rather than each against a literal, so they cannot drift apart.
+   */
+  expect(lots.wallWidth, 'the wall does not resize itself around its contents').toBeCloseTo(
+    one.wallWidth,
+    0,
+  );
+});
+
 test('the wall the USER SEES spans the screen, not the wrapper around it', async ({ page }) => {
   /**
    * **This test replaces a vacuous one, and the vacuity is the lesson.**
