@@ -7974,3 +7974,64 @@ nothing: **a script that reports on its own work must verify the work, not
 describe it.** The rule for mutation-testing specifically: the restore needs an
 assertion, and then the restored state needs verifying by RUNNING rather than by
 reading the file back — which is what caught it here.
+
+---
+
+## Step 13 unit 10 — the rise, and two silent no-ops
+
+**Both defects in this unit were silent.** Neither threw, neither failed a unit
+test, and the first would have shipped as "the rise works" if the verification
+had been a screenshot of the settled state rather than of the motion.
+
+**1. The Invert measured an element that was already inverted.** `useLayoutEffect`
+runs twice in development, and the second run measured the sleeve with the first
+run's transform still applied. `getBoundingClientRect` reports the VISUAL box, so
+the sleeve measured as the spine, the delta came out zero, and the applied
+transform was `translate(2.3e-05px) scale(1, 1)` — the identity. The record rose
+from exactly where it landed.
+
+That is a fade wearing a rise's clothes, and it is §10b's modal complaint
+arriving by a different route. **A still frame of the settled state cannot tell
+the two apart**, which is exactly why the unit demanded the mid-transition frame.
+The numbers found it before the images did: `matrix(1, 0, 0, 1, 1.1e-05, 0)` at
+15% in is not a rise. Fixed by measuring the settled rect once and reusing it;
+pinned by a test that asserts a second call against the same settled rect gives
+the same answer.
+
+**2. `transitionend` is not guaranteed to fire, and the case that bit was "no
+transition ever started".** The return leg closed the record on `transitionend`.
+Dismiss within a frame of the click — before the rise's `requestAnimationFrame`
+has restored the transition — and the element still carries `transition: none`
+from the Invert, so the return transform applies instantly and NO transition
+event fires. The record sat at its returned position for ever, with no way out
+but a reload. Escape landed 6ms after mount and reproduced it every time.
+
+**The general rule: waiting on an event is a bet that the event will happen.**
+`transitionend` has three failure modes — interrupted (fires `transitioncancel`
+instead), never started (fires nothing), and property-mismatched. The guard that
+covers all three is `element.getAnimations().length === 0`, which asks the
+browser whether anything is actually running rather than assuming it is. It asks
+whether a transition EXISTS, never how long it lasts, so the duration stays in
+CSS.
+
+**What caught it: the full E2E run with no file argument.** The break surfaced in
+`shelf.spec.ts`'s EXISTING Escape test, not in anything this unit added — the
+same shape as the two cross-file breaks already recorded here. A spec-scoped run
+of the new tests alone was green.
+
+---
+
+## OBSERVATION (out of scope, unit 10): `record-detail.spec.ts` fails after 20:00 EDT
+
+`e2e/record-detail.spec.ts:367` computes the expected date as
+`new Date().toISOString().slice(0, 10)` — UTC — and compares it to an input the
+server renders in LOCAL time. Between 20:00 EDT and midnight the two dates
+differ and the test fails deterministically.
+
+Observed at 20:38 EDT on 2026-08-17: expected `2026-08-18`, received
+`2026-08-17`. It fails on both the baseline and the post-change run of this
+unit, touches no file unit 10 modified, and is a real defect in the test rather
+than in the app — the app is right and the test's clock is wrong.
+
+Not fixed here per CLAUDE.md §4. The fix is to derive the expected date the same
+way the server does rather than through `toISOString`.

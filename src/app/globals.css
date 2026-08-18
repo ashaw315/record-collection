@@ -213,6 +213,28 @@
   animation: record-open 320ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
 }
 
+/**
+ * §10b's RISE: "the record rises out of its slot. It was on the shelf a moment
+ * ago and now it is in your hands — that continuity is the feature. A record
+ * that fades in centred is a modal wearing a sleeve."
+ *
+ * **The duration lives HERE and nowhere else.** `rise.ts` computes the geometry
+ * and `PulledRecord` sets the start transform, but neither knows how long the
+ * motion takes: React clears the transform on the next frame and hears about
+ * the end from `transitionend`. Two earlier attempts at the turn kept a copy of
+ * the duration in TypeScript and both failed at the seam where the two numbers
+ * had to agree — so there is only one number.
+ *
+ * `transform` alone is transitioned, deliberately: it and `opacity` are the two
+ * properties a compositor can animate without laying out the page again, and a
+ * rise that triggers layout on every frame stutters exactly when it should be
+ * smooth.
+ */
+.record-rise {
+  transition: transform 420ms cubic-bezier(0.16, 0.84, 0.36, 1);
+  will-change: transform;
+}
+
 /* A turn is decorative motion; a reader who has asked for less gets the face
    without it. */
 @media (prefers-reduced-motion: reduce) {
@@ -222,5 +244,18 @@
   }
   .record-face-open {
     transform: rotateY(-14deg) scale(1.02);
+  }
+
+  /*
+    §10b: "reduced motion disables all of it. The turn, the rise and the hinge
+    are decorative; the record and its faces are not." The record still arrives
+    and is still readable — it simply does not travel. `transition: none` also
+    means `transitionend` never fires, which is why `putBack` checks the
+    preference and closes directly rather than waiting for an event that is
+    not coming.
+  */
+  .record-rise {
+    transition: none;
+    will-change: auto;
   }
 }

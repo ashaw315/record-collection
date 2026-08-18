@@ -1,10 +1,22 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ShelfRecord } from '@/lib/db/queries/shelf';
 import { backFaceGroups } from './back-face';
 import { availableFaces, nextFace, type Face } from './faces';
+import { riseTransform, riseTransformCss, type Rect } from './rise';
+
+/**
+ * §10b: "reduced motion disables all of it. The turn, the rise and the hinge
+ * are decorative; the record and its faces are not."
+ *
+ * Read at call time rather than cached: a reader may change the setting while
+ * the page is open, and the OS reports it live.
+ */
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
  * §10b: "Clicking a spine animates the record off the shelf and into view:
@@ -30,24 +42,161 @@ const FACE_LABEL: Record<Face, string> = {
 
 export function PulledRecord({
   record,
+  spineRect,
+  measureSpine,
   onClose,
 }: {
   record: ShelfRecord;
+  /** Where the spine was when it was clicked — FLIP's "First". */
+  spineRect: Rect | null;
+  /** Re-measures the slot at dismiss time; see `Shelf`'s note on staleness. */
+  measureSpine: () => Rect | null;
   onClose: () => void;
 }) {
   const [face, setFace] = useState<Face>('front');
   const faces = availableFaces(record);
   const canOpen = faces.includes('gatefold');
 
+  /**
+   * §10b: "the record rises out of its slot. It was on the shelf a moment ago
+   * and now it is in your hands — that continuity is the feature."
+   *
+   * **The browser owns the timing and React owns only "is it out".** The
+   * duration lives in `globals.css`; nothing here holds it, no `setTimeout`
+   * waits on it, and the end of the return is learned from `transitionend` —
+   * the browser saying so rather than this guessing.
+   *
+   * That is the correction from two failed flip attempts, both of which put a
+   * copy of the duration in TypeScript and then disagreed with the compositor
+   * about the midpoint. A rise has no midpoint to disagree about: nothing is
+   * swapped halfway, so the only states are "inverted onto the spine" and "at
+   * rest", and one `requestAnimationFrame` moves between them.
+   */
+  const sleeve = useRef<HTMLDivElement>(null);
+  const [returning, setReturning] = useState(false);
+
+  /**
+   * Where the record sits at rest, measured ONCE with no transform applied.
+   *
+   * **Measuring it live is the bug this replaced**, and it was silent.
+   * `useLayoutEffect` runs twice in development, and the second run measured
+   * the sleeve while it still carried the first run's inverted transform —
+   * `getBoundingClientRect` reports the VISUAL box, so the sleeve measured as
+   * the spine, the delta came out zero, and the record rose from exactly where
+   * it landed. A fade wearing a rise's clothes, which is §10b's modal complaint
+   * arriving by a different route. Pinned by a test in `rise.test.ts`.
+   */
+  const settledRect = useRef<Rect | null>(null);
+
+  useLayoutEffect(() => {
+    const element = sleeve.current;
+    if (element === null || spineRect === null) return;
+
+    // First call wins: the rect is the untransformed one, and every later run
+    // reuses it rather than re-measuring an element that is mid-flight.
+    settledRect.current ??= element.getBoundingClientRect();
+
+    // Invert: start looking exactly like the spine, before the browser paints.
+    element.style.transition = 'none';
+    element.style.transform = riseTransformCss(riseTransform(spineRect, settledRect.current));
+
+    // Play: next frame, drop both the override and the transform. The CSS class
+    // carries it from there — this never learns how long that takes.
+    const frame = requestAnimationFrame(() => {
+      element.style.transition = '';
+      element.style.transform = '';
+    });
+    return () => cancelAnimationFrame(frame);
+    // Measured once per pulled record: re-running on a face change would send
+    // the record back to its slot mid-read.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [record.id]);
+
+  /**
+   * The return, which is the rise in reverse and the half most likely to snap.
+   *
+   * The slot is re-measured HERE rather than reused from the rise, because the
+   * wall may have scrolled or re-wrapped while the record was out.
+   */
+  const putBack = () => {
+    const element = sleeve.current;
+    const slot = measureSpine();
+
+    // No sleeve, no slot, or a reader who asked for less motion: just close.
+    // `transitionend` would never fire, and waiting for it would strand the
+    // record on screen — the failure mode that is worse than no animation.
+    if (element === null || slot === null || prefersReducedMotion()) {
+      onClose();
+      return;
+    }
+
+    setReturning(true);
+
+    /**
+     * **Every ending, because a transition has three — and one of them is
+     * "never started".**
+     *
+     * `transitionend` alone stranded the record on screen, and the full E2E run
+     * caught it as a failure in the EXISTING Escape test rather than in
+     * anything this unit added. Two distinct cases were behind it:
+     *
+     * 1. Dismissed mid-rise, the interrupted transition fires
+     *    `transitioncancel` instead of `transitionend`.
+     * 2. Dismissed within a frame of the click — before the rise's
+     *    `requestAnimationFrame` has restored the transition — the element is
+     *    still carrying `transition: none` from the Invert, so the return
+     *    transform applies INSTANTLY and no transition event fires at all.
+     *
+     * Case 2 is the one that actually bit: Escape landed 6ms after mount, and
+     * the record sat at its returned transform for ever with no event coming.
+     * A user who changes their mind does it in well under 420ms, so neither
+     * case is an edge.
+     *
+     * `getAnimations()` is the check that covers all three: it asks the browser
+     * whether anything is actually running on this element. If nothing is,
+     * there is no motion to wait for and the record closes now. Still no
+     * duration in TypeScript — this asks whether a transition exists, never how
+     * long it lasts.
+     */
+    const done = () => {
+      element.removeEventListener('transitionend', done);
+      element.removeEventListener('transitioncancel', done);
+      onClose();
+    };
+    element.addEventListener('transitionend', done);
+    element.addEventListener('transitioncancel', done);
+
+    // The SETTLED rect again, for the same reason: the element may already be
+    // carrying a transform, and its visual box is not where it belongs at rest.
+    element.style.transform = riseTransformCss(
+      riseTransform(slot, settledRect.current ?? element.getBoundingClientRect()),
+    );
+
+    // Applied above; if that started nothing, close rather than wait for an
+    // event that is not coming.
+    if (element.getAnimations().length === 0) done();
+  };
+
+  /**
+   * Escape must run the CURRENT `putBack`, but the listener is registered once.
+   * A ref bridges the two: re-registering on every render would tear down and
+   * rebuild the listener mid-motion, and closing over the first `putBack` would
+   * measure a slot from a render ago.
+   */
+  const putBackRef = useRef(putBack);
+  useEffect(() => {
+    putBackRef.current = putBack;
+  });
+
   // Escape closes, as it would on any overlay. Registered once and cleaned up,
   // so a second pulled record does not stack listeners.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') putBackRef.current();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, []);
 
   /** The image for the current face, or `null` when it is composed instead. */
   const imageFor = (current: Face): string | null =>
@@ -67,7 +216,7 @@ export function PulledRecord({
       data-testid="pulled-record"
       data-face={face}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-6 backdrop-blur-sm"
-      onClick={onClose}
+      onClick={putBack}
     >
       <div
         className="max-h-full w-full max-w-lg overflow-y-auto"
@@ -86,7 +235,13 @@ export function PulledRecord({
           about the centre. Two motions, visibly different, because they are
           two different physical acts.
         */}
-        <div style={{ perspective: '1400px' }}>
+        <div
+          ref={sleeve}
+          data-testid="pulled-sleeve"
+          data-returning={returning ? 'true' : 'false'}
+          className="record-rise"
+          style={{ perspective: '1400px' }}
+        >
           {/*
             **`key={face}` is the whole mechanism.** Changing it remounts the
             face, so the browser plays the keyframe from the start and owns the
@@ -166,7 +321,7 @@ export function PulledRecord({
           <button
             type="button"
             data-testid="put-back"
-            onClick={onClose}
+            onClick={putBack}
             className="ml-auto rounded-xs px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground"
           >
             Put back

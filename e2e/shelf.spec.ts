@@ -168,6 +168,112 @@ test('the pulled record can be put back, and by Escape', async ({ page }) => {
   await expect(page.getByTestId('pulled-record')).toHaveCount(0);
 });
 
+test('clicking a spine pulls out THAT record, out of its own slot', async ({ page }) => {
+  /**
+   * §10b: "the record rises out of its slot. It was on the shelf a moment ago
+   * and now it is in your hands — that continuity is the feature. A record that
+   * fades in centred is a modal wearing a sleeve."
+   *
+   * **Nothing here waits on a duration.** The rise's timing lives in CSS and
+   * this design deliberately keeps it there, so a test that slept for it would
+   * be asserting a number TypeScript is not allowed to know. What is assertable
+   * is identity — the record that comes out is the one whose spine was clicked
+   * — and that the sleeve is transform-driven at all.
+   *
+   * Identity is the half that matters: a wall of spines all leading to the same
+   * overlay would pass every other test in this file.
+   */
+  const mine = `Risen ${suffix()}`;
+  const other = `Neighbour ${suffix()}`;
+  await seedRecord(page, other);
+  const { artistId } = await seedRecord(page, mine);
+
+  await page.goto(`/?artistId=${artistId}`);
+  await page.getByRole('link', { name: new RegExp(mine) }).click();
+
+  const pulled = page.getByTestId('pulled-record');
+  await expect(pulled).toBeVisible();
+  await expect(
+    pulled,
+    'the record that came out must be the one whose spine was clicked',
+  ).toHaveAttribute('aria-label', new RegExp(mine));
+  await expect(pulled).not.toHaveAttribute('aria-label', new RegExp(other));
+
+  /**
+   * The sleeve carries the rise. Asserted as "the class is applied" rather than
+   * as a computed transform: mid-flight the transform is whatever the
+   * compositor has reached, and settled it is `none` — so a value assertion
+   * either races the animation or pins the end state, and neither says the
+   * rise happened.
+   */
+  await expect(page.getByTestId('pulled-sleeve')).toHaveClass(/record-rise/);
+});
+
+test('a record dismissed MID-RISE still goes away', async ({ page }) => {
+  /**
+   * **The defect this unit shipped and then fixed, kept as the test that
+   * found it.**
+   *
+   * The return leg listened for `transitionend` and closed on it. Dismiss the
+   * record while the rise is still travelling and the browser fires
+   * `transitioncancel` for the interrupted transition instead — so the listener
+   * never ran, the record never unmounted, and Escape left it stranded on
+   * screen with no way out but a reload.
+   *
+   * The full E2E run caught it as a failure in the EXISTING Escape test, which
+   * is the cross-file break CLAUDE.md §10 exists for: nothing in this file's
+   * own additions was wrong.
+   *
+   * No wait between the click and the dismissal — that is the whole point. A
+   * user who changes their mind does it in well under the rise's duration.
+   */
+  const title = `Interrupted ${suffix()}`;
+  const { artistId } = await seedRecord(page, title);
+
+  await page.goto(`/?artistId=${artistId}`);
+  await page.getByRole('link', { name: new RegExp(title) }).click();
+
+  // Immediately — mid-flight, before the rise can settle.
+  await page.keyboard.press('Escape');
+  await expect(
+    page.getByTestId('pulled-record'),
+    'a record dismissed mid-rise must not be stranded on screen',
+  ).toHaveCount(0);
+
+  // And the same through the button, which takes the identical path.
+  await page.getByRole('link', { name: new RegExp(title) }).click();
+  await page.getByTestId('put-back').click();
+  await expect(page.getByTestId('pulled-record')).toHaveCount(0);
+});
+
+test('reduced motion: the record still arrives, and still goes back', async ({ page }) => {
+  /**
+   * §10b: "reduced motion disables all of it. The turn, the rise and the hinge
+   * are decorative; the record and its faces are not."
+   *
+   * **This is the branch a screenshot will never show.** The risk it guards is
+   * specific and was designed against rather than discovered: with
+   * `transition: none` the browser fires no `transitionend`, so a return leg
+   * that waits for one would strand the record on screen for ever. A reader who
+   * asked for less motion would be the only one who could not put a record
+   * back.
+   */
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+
+  const title = `Still ${suffix()}`;
+  const { artistId } = await seedRecord(page, title);
+
+  await page.goto(`/?artistId=${artistId}`);
+  await page.getByRole('link', { name: new RegExp(title) }).click();
+  await expect(page.getByTestId('pulled-record')).toBeVisible();
+
+  await page.getByTestId('put-back').click();
+  await expect(
+    page.getByTestId('pulled-record'),
+    'a reduced-motion reader must be able to put the record back',
+  ).toHaveCount(0);
+});
+
 test('the shelf is no wider than it needs and no shorter than a shelf', async ({ page }) => {
   /**
    * §10b as amended: **no wider than it needs, no shorter than a shelf.**

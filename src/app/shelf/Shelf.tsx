@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import type { ShelfRecord } from '@/lib/db/queries/shelf';
+import type { Rect } from './rise';
 import { PulledRecord } from './PulledRecord';
 import {
   DEFAULT_SPINE_COLOUR,
@@ -50,6 +51,22 @@ import {
 export function Shelf({ records }: { records: ShelfRecord[] }) {
   const [pulledId, setPulledId] = useState<string | null>(null);
   const pulled = records.find((record) => record.id === pulledId) ?? null;
+
+  /**
+   * §10b's rise needs to know which slot the record came out of, so the spine's
+   * rect is measured at click time — FLIP's "First".
+   *
+   * **Measured, never cached across the return.** `spineRectFor` re-reads the
+   * element at dismiss time rather than reusing the rect from the rise: the
+   * wall may have scrolled, resized or re-wrapped while the record was out, and
+   * a stale baseline would send it back to where its slot used to be. The DOM
+   * is the source of truth for where a spine is; a copy of it is a bug waiting
+   * for the first resize.
+   */
+  const spineRectFor = (recordId: string): Rect | null => {
+    const spine = document.querySelector(`[data-record-id="${CSS.escape(recordId)}"]`);
+    return spine === null ? null : spine.getBoundingClientRect();
+  };
 
   if (records.length === 0) {
     return (
@@ -239,7 +256,12 @@ export function Shelf({ records }: { records: ShelfRecord[] }) {
         than per-spine so exactly one record is ever out.
       */}
       {pulled !== null && (
-        <PulledRecord record={pulled} onClose={() => setPulledId(null)} />
+        <PulledRecord
+          record={pulled}
+          spineRect={spineRectFor(pulled.id)}
+          measureSpine={() => spineRectFor(pulled.id)}
+          onClose={() => setPulledId(null)}
+        />
       )}
     </div>
   );
