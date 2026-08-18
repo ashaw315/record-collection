@@ -874,9 +874,11 @@ What resolves it is the allocation, not the renderer alone: **the object carries
 
 The reason for the split is that they answer different questions. The tilt says *this is an object*; the turn says *show me the other side*. Collapsing them means the back arrives by accident while someone is looking at the front.
 
-**A gatefold opens as a real hinge** — two panels rotating about their shared edge, inner artwork mapped across both. Front → turn → back is rotation; front → open → inner spread is a hinge. Two physical acts, two motions, and sharing one would flatten the distinction.
+**A gatefold opens as a real hinge** — two **leaves** rotating about their shared edge, inner artwork mapped across both. Front → turn → back is rotation; front → open → inner spread is a hinge. Two physical acts, two motions, and sharing one would flatten the distinction.
 
-The state exists only where an inner image has been photographed. There is no generated stand-in: the point of a gatefold is the artwork inside it, and a panel of pressing details folded open where a photograph should be would be inventing the thing the user came to see. A record with no inner image simply has two faces, and nothing suggests otherwise.
+The halves are called *leaves* throughout, deliberately: a *panel* in this section is the DOM block of facts beside the record, and the two must not be confused. One is a surface of the object; the other is the place text lives precisely because it is not on the object.
+
+The state exists only where an inner image has been photographed. There is no generated stand-in: the point of a gatefold is the artwork inside it, and opening a sleeve onto a blank or invented inner spread would be fabricating the thing the reader opened it to see. A record with no inner image simply has two faces, and nothing suggests otherwise.
 
 That means `images` carries a `gatefold` type alongside `cover`, `back`, `label` and `matrix` (§4.2), and its presence is what makes the affordance appear.
 
@@ -896,7 +898,7 @@ This is what makes the object worth rendering: with the copy off it, the faces a
 
 The controls belong with the record rather than floating beside it. A control row that does not participate in the object's arrival undercuts the continuity the rise exists to establish.
 
-**Reduced motion disables all of it.** The turn, the rise and the hinge are decorative; the record and its faces are not.
+**Reduced motion disables all of it.** The rise, the tilt, the turn and the hinge are decorative; the record, its faces and the panel beside it are not. A reader who has asked for less motion still gets the record, still turns it over, and still reads every fact — the object simply does not travel or follow the pointer to get there.
 
 ### The snippet
 
@@ -945,7 +947,7 @@ Note that `has_genre` was **not** among the survivors, though an earlier version
 4. Ownership badge tiers: look up a record owned in the exact pressing (expect "you own this pressing"); look up a different pressing of an owned album (expect "you own a different pressing", **not** the exact-match badge); look up a want-list item (expect the want-list badge).
 5. Add a want-list item, then mark it acquired, and verify it appears in the collection and is flagged acquired in the want-list.
 6. Load the collection at its default view, confirm the shelf renders spines for owned records, and click one — verify it leads to that record.
-7. Pull a record out of the shelf and turn it: verify the back face renders label, catalogue number and pressing details for a record with no photographed back, and that the gatefold affordance is **absent** on a record with no inner image.
+7. Pull a record out of the shelf and turn it, on a record with no photographed back: verify the turn shows the other side, that the back is a plain sleeve in the record's spine colour carrying label and catalogue number and no body text, that the pressing details appear in the panel beside the record rather than on the face, and that the gatefold affordance is **absent** on a record with no inner image.
 8. Request relationship-based suggestions and add one to the want-list.
 9. Upload an image to a record and verify it appears in the gallery.
 10. Run the collection list and lookup flows at a mobile viewport (390×844) — search and filter must be usable one-handed.
