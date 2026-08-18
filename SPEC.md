@@ -838,25 +838,45 @@ One thing the reference settles that this spec previously got wrong: **its case 
 
 ### The shelf
 
+- **The shelf is a view that owns the screen, not a section of a page.** Below the nav there is the wall and nothing else. Search and the filter chips are reachable from it — as an overlay, opened when wanted — but they do not sit above the wall taking vertical space from it, because a wall that arrives under four rows of controls is a strip rather than a wall.
+
+  This is the one structural thing borrowed wholesale from the reference: its closet is the window, with a compact floating search control and a view toggle over the top of it. `?view=table` and `?view=grid` keep their filters on the page, unchanged — a list genuinely wants its controls visible, and this rule is about the wall.
+
+- **The wall is viewed square on and scrolls vertically.** Every spine is at the same angle and equally legible; there is no camera, no perspective on the wall itself, and no horizontal pan. Rows wrap and the wall grows downward, as a bookcase does.
+
+  **This is where the reference is deliberately not followed.** Criterion's closet is a *room* — a camera in 3D space, shelves receding at an angle, and looking around means moving the camera. It is beautiful and it costs legibility: spines toward the edges are foreshortened and hard to read. This wall exists to be scanned by eye, and §10b requires artist, title and catalogue number on every spine, so a raking angle would defeat the feature that makes the wall useful. A room is something you stand in; a wall is something you read.
+
+  The consequence worth stating, because it governs the pulled record too: the wall stays flat, so the only 3D in this feature is the record you pull out of it.
+
 - **Records stand as spines on shelves that wrap.** One shelf holds as many spines as fit; the rest continue on a shelf below, and the wall scrolls. Ordered by genre so related records stand together — all the punk adjacent, all the rock adjacent. That ordering is the shelf's own, not a proposal for the physical one.
 
   **A record occupies one position, so exactly one genre wins.** A record carrying several genres appears once, filed under the top-level ancestor of the genre with the most of that record's owned siblings, ties broken by genre name. This is the rule §8.1's graph used to colour an artist, kept deliberately identical: two views grouping one collection by different genre logic would disagree about what belongs together, and the disagreement would read as a bug in whichever the user checked second. Records with no genre file last, under no heading, as themselves.
 
   **The order is deterministic.** The same collection always produces the same wall — every tie broken explicitly, down to the record id. Inherited from §8.2, which stated it about a physical filing order and was right about the problem rather than the algorithm: a wall you scan by eye cannot move between loads, or you re-scan it every time.
 
-- **A shelf is no wider than it needs and no shorter than a shelf.** It fits its records, growing as they do and wrapping when they exceed a row — but it has a minimum length, because a shelf is furniture and has a length whether or not it is full. A real shelf with five records on it is still a shelf with space beside them. Both neighbouring rules are wrong on their own: a shelf stretched to the full viewport with five spines at the left reads as *missing data* rather than as a short collection, because the emptiness is the whole viewport and implies a collection that should have filled it; a shelf shrunk to its contents reads as a *thumbnail of a shelf*. The minimum is about 40% of the content column, chosen by rendering the candidates at five records and looking.
+- **A shelf has a length whether or not it is full.** It is furniture: a real shelf with five records on it is still a shelf with space beside them, and a shelf shrunk to its contents reads as a thumbnail rather than as a shelf.
+
+  **The minimum was 40% of the content column, and that number does not survive the view owning the screen.** It was chosen by rendering candidates at five records in a 1120px column and looking; on a full-bleed parent the same rule yields 499px of empty timber with 133px of spines at one end, which is the *missing data* reading it was written to prevent, arriving through the rule rather than despite it.
+
+  Re-derive it in the new context by the same instrument — render the candidates at a real collection size against a viewport-owning wall, and look. What the rule protects has not changed: a short collection must read as short, not as broken. What "short" looks like against a whole screen is a different measurement, and this section states the rule rather than the number until it has been taken.
 
 - **Spines are proportioned like records, not like DVD cases** — narrow enough to read as a record, wide enough to name it. Roughly 1:12. Getting this wrong in one direction makes the wall a shelf of box sets; in the other it makes it a wall of colour bars that must be hovered one at a time to find anything.
 
   An earlier version of this said 1:40, which was arithmetic about sleeve thickness rather than a rule about reading. It loses to legibility: at any workable height a 1:40 spine is around 4px wide, which cannot hold a glyph, so the spine text this section requires becomes impossible. The reference carries a title and a catalogue number on every spine, and that is what makes a wall scannable rather than decorative. The instinct was right and the number was wrong.
 
   **No section headings, and no shelf band per genre.** Adjacency does the grouping, as it does on a real shelf and in the reference this borrows from, which shows 1,300 spines with no headings at all. Sections were tried and removed: a collection with six flat genres for five records produced five near-empty black bands stacked down the page, and it read as broken rather than as short. Signposting a wall is a problem that arrives with scale, and the decision belongs to whoever is looking at three hundred records.
+**A filtered wall keeps its shape and shows gaps.** Filtering does not repack the spines into a tight row: each record stays where it was, and what is left is holes in the wall where the others were. A wall of five spines packed at the left is indistinguishable from a collection of five records; the same five scattered across a wall of empty shelf says plainly that most of the collection is hidden.
+
+This is the absent-versus-unknown distinction (§10a, and the rule this project keeps meeting) applied to a layout: the gaps are the feedback. The filter chips already carry the counts, and `?view=table` shares the same URL state, so the numeric answer is available in both views without the wall having to state it.
+
 - **A spine's colour is the average colour of its cover**, computed once when the cover is attached and stored in `records.spine_colour` (§4.2). The average is taken in linear light and weighted by alpha, not by the most populous colour bucket — measured against real sleeves, a dominant-bucket rule gives a warm brown portrait a near-black spine, which is a wrong answer rather than a different one. Saturation is never boosted: a spine is a claim about a cover, and a shelf prettier than the sleeves on it is inventing colour the record does not have. A record with no cover gets a plain spine — an honest absence, not a gap in the wall.
 - **Spine text is artist, title and catalogue number**, set in mono, rotated. The catalogue number is the collector's identifier and earns its space.
 - **Hover names the record** — artist, title, year, label — in a floating label, with the aimed-at spine marked. Aim, then click.
 - **Sparse is fine.** Six records is a short shelf, and the view does not pad, fake, or hide itself until the collection is large enough to flatter it. A view that implied more structure than the data has would be the confidently-misleading shape CLAUDE.md §8 forbids — which is exactly why the shelf has a minimum length rather than a full-viewport one: the emptiness must not imply a collection that should have filled it.
 
-**Rendered in 2D with CSS perspective, not a 3D engine.** Criterion's wall is `three.js`; this gets most of the feel from transforms and shadows for a fraction of the work and no new dependency. If it turns out to be worth more, that is a later decision made with the flat version in front of us.
+**The wall is CSS, and that is now a design decision rather than a cost decision.** The original reasoning was that transforms and shadows get most of the feel for a fraction of the work. The better reasoning arrived from A24b: the wall is viewed square on, so there is no perspective to render and nothing for a 3D engine to do. Criterion's wall is `three.js` because it is a room; this is a flat wall, and CSS is what a flat wall is made of.
+
+The pulled record is the exception and is rendered in `three.js` (below).
 
 ### Pulling a record
 
