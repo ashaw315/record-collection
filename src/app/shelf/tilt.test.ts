@@ -158,6 +158,51 @@ describe('the rect it measures against must not be the tilted one', () => {
   });
 });
 
+describe('the rect must share the pointer’s coordinate system', () => {
+  it('drifts by exactly the scroll offset when given a document-relative rect', () => {
+    /**
+     * **The unit 18 defect, kept as the test that explains it.**
+     *
+     * `tiltFor` was correct throughout and is not what changed. What was wrong
+     * was the rect handed to it: the WebGL renderer walked
+     * `offsetLeft`/`offsetTop`, which are DOCUMENT-relative, and paired them
+     * with `clientX`/`clientY`, which are VIEWPORT-relative. On a page scrolled
+     * by 184px the vertical axis drifted by exactly that much while the
+     * horizontal one — which never scrolls on that page — stayed correct. The
+     * signature was "tilts down on any pointer move, left/right tracks fine".
+     *
+     * Measured on screen: the pointer at the record's own visual centre
+     * normalised to -0.876 and produced +14° instead of 0, compressing the
+     * whole usable range into the bottom tenth of the record.
+     *
+     * This pins the CONSEQUENCE so the reason survives: the same pointer over
+     * two rects that differ only by a scroll offset gives two different angles,
+     * therefore the rect must be in the pointer's own coordinate system.
+     *
+     * Same family as unit 13's Invert measuring an already-inverted element and
+     * unit 15's readback: the DOM answers several different questions about
+     * "where is this", and they are not interchangeable.
+     */
+    const scrollY = 184;
+    const viewportRelative: Rect = { left: 480, top: 580, width: 420, height: 420 };
+    const documentRelative: Rect = { ...viewportRelative, top: viewportRelative.top + scrollY };
+
+    // The pointer at the record's visual centre, in viewport coordinates.
+    const centre = {
+      x: viewportRelative.left + viewportRelative.width / 2,
+      y: viewportRelative.top + viewportRelative.height / 2,
+    };
+
+    expect(tiltFor(centre, viewportRelative)).toEqual({ rotateX: 0, rotateY: 0 });
+
+    const drifted = tiltFor(centre, documentRelative);
+    expect(drifted.rotateX, 'a document-relative rect tilts a centred pointer').not.toBe(0);
+    // The horizontal axis is untouched, which is why the bug looked like a
+    // one-axis fault rather than a coordinate-system one.
+    expect(drifted.rotateY).toBe(0);
+  });
+});
+
 describe('NO_TILT', () => {
   it('is face-on, for the reduced-motion reader and the untouched record', () => {
     /**

@@ -277,30 +277,38 @@ export function BoxCanvas({
      * `genreSubtree` and `hasGatefold` — the fourth chance this session to
      * reuse rather than reimplement.
      *
-     * **Measured against the canvas's LAYOUT rect, not its visual box.** Unit
-     * 13's fourth defect: `getBoundingClientRect` reports what is on screen, so
-     * a rect read while the object is transformed feeds the angle back into
-     * itself. `offsetWidth`/`offsetLeft` are layout geometry and ignore
-     * transforms — and the canvas element itself never moves, which is why it
-     * is the right thing to measure against here.
+     * **The rect must be in the SAME coordinate system as the pointer**, and
+     * that is the whole of this. `clientX`/`clientY` are viewport-relative, so
+     * the rect has to be too.
+     *
+     * An earlier version walked `offsetLeft`/`offsetTop` up the offset parents,
+     * copied from the CSS implementation. Those are DOCUMENT-relative, so on a
+     * scrolling page the vertical axis drifted by exactly `scrollY` while the
+     * horizontal one — which never scrolls here — stayed correct. Measured at
+     * `scrollY = 184`: the walked rect gave `top = 764` where the record was
+     * visually at `y = 580`, so the pointer at the record's own centre
+     * normalised to `-0.876` and produced `rotateX = +14°` instead of zero. The
+     * whole usable range was compressed into the bottom tenth of the record.
+     *
+     * `getBoundingClientRect` is viewport-relative and is therefore right here.
+     * Unit 13 moved AWAY from it for the CSS tilt because there the measured
+     * element carried the tilt transform itself, so its visual box fed the angle
+     * back into itself. That does not apply to this canvas: the mesh rotates
+     * inside it and the element never moves, so its visual box is stable.
+     *
+     * The CSS implementation still walks offsets and is still correct there —
+     * it lives inside a `position: fixed` overlay with the body scroll-locked,
+     * so `scrollY` is always zero and the two systems coincide. Latent there,
+     * live here.
      */
     const onPointerMove = (event: PointerEvent) => {
       if (prefersReducedMotion()) return;
 
-      let left = 0;
-      let top = 0;
-      for (
-        let node: HTMLElement | null = host;
-        node !== null;
-        node = node.offsetParent as HTMLElement | null
-      ) {
-        left += node.offsetLeft;
-        top += node.offsetTop;
-      }
+      const rect = host.getBoundingClientRect();
 
       const { rotateX, rotateY } = tiltFor(
         { x: event.clientX, y: event.clientY },
-        { left, top, width: host.offsetWidth, height: host.offsetHeight },
+        { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
       );
 
       mesh.rotation.x = (rotateX * Math.PI) / 180;

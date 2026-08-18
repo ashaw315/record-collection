@@ -8400,3 +8400,57 @@ failed anchor and `sys.exit(1)` — before its single `write()` at the end. All
 four were discarded while the log said they had worked. Lint caught it as two
 unused imports; without that the pointer handler would simply have been absent.
 Write after each step, or verify the file rather than the log.
+
+---
+
+## RULE: "where is this element" has several answers, and they are not interchangeable
+
+Fifth instance in this feature, and the first where the two wrong answers were
+both *correct* — just to different questions. Worth naming as a family rather
+than fixing case by case.
+
+The DOM offers at least three coordinate systems for one element:
+
+| What you call | What you get | Relative to |
+|---|---|---|
+| `getBoundingClientRect()` | the VISUAL box, after transforms | the VIEWPORT |
+| `offsetWidth` / `offsetHeight` | LAYOUT size, ignoring transforms | the element |
+| `offsetLeft` / `offsetTop` walked | LAYOUT position | the DOCUMENT |
+
+**The instances so far:**
+
+1. Unit 10 — the FLIP Invert measured an element that already carried the
+   inverted transform, so the delta came out zero and the record "rose" from
+   where it landed. Visual box, when layout was wanted.
+2. Unit 13 — the tilt's reference rect grew to 516.8x524.5 once the box had
+   `preserve-3d` depth, so the angle depended on the angle. Visual box, when
+   layout was wanted.
+3. Unit 13 — the box edges measured 15.83px mid-rise and stayed 0.39px wide.
+   Visual box, when layout was wanted.
+4. Unit 13 — the tilt E2E test aimed a real cursor using the LAYOUT box while
+   the record was still rising, so the pointer landed on the scroll wrapper.
+   Layout box, when visual was wanted.
+5. Unit 18 — the WebGL tilt paired a DOCUMENT-relative walked `offsetTop` with
+   a VIEWPORT-relative `clientY`, so the vertical axis drifted by exactly
+   `scrollY` and the horizontal one did not. Layout position, when viewport was
+   wanted.
+
+**The rule that would have prevented all five:** name the question before
+reaching for a measurement.
+
+- "How big was this laid out?" -> `offsetWidth`/`offsetHeight`.
+- "Where is it on screen right now?" -> `getBoundingClientRect()`.
+- "Where is a pointer relative to it?" -> `getBoundingClientRect()`, because
+  `clientX`/`clientY` are viewport-relative and the two MUST share a system.
+
+**The tell that this family is in play:** one axis is wrong and the other is
+right. A genuine sign error or a bad rotation order breaks both axes
+symmetrically; a coordinate-system mismatch breaks only the axis that differs —
+here vertical, because the page scrolls vertically and not horizontally.
+
+**And the reason unit 12's tests never caught it:** the CSS implementation walks
+offsets too, and is correct, because it lives inside a `position: fixed` overlay
+with the body scroll-locked. `scrollY` is always zero there, so the two systems
+coincide. The same construct was latent in one place and live in another, and
+only the scrolling page exposed it. A shared helper would have carried the bug
+into both; what actually differed was the CONTEXT, not the code.
