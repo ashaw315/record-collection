@@ -267,6 +267,27 @@ test('reduced motion: the record still arrives, and still goes back', async ({ p
   await page.getByRole('link', { name: new RegExp(title) }).click();
   await expect(page.getByTestId('pulled-record')).toBeVisible();
 
+  /**
+   * The CHROME obeys the preference too (§10b: "reduced motion disables all of
+   * it"). The backdrop is still dark and the controls are still there — they
+   * are not decorative, the TRAVEL is — so what is asserted is that neither
+   * carries a transition, not that either is absent.
+   */
+  const durations = await page.getByTestId('pulled-record').evaluate((el) => {
+    const controls = el.querySelector('.record-controls');
+    return {
+      chrome: getComputedStyle(el).transitionDuration,
+      controls: controls === null ? 'missing' : getComputedStyle(controls).transitionDuration,
+    };
+  });
+  expect(durations.controls, 'the control row must exist to be asserted about').not.toBe(
+    'missing',
+  );
+  expect(durations.chrome, 'the backdrop must not travel under reduced motion').toMatch(/^0s(,\s*0s)*$/);
+  expect(durations.controls, 'the controls must not travel under reduced motion').toMatch(
+    /^0s(,\s*0s)*$/,
+  );
+
   await page.getByTestId('put-back').click();
   await expect(
     page.getByTestId('pulled-record'),

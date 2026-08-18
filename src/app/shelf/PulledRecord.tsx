@@ -6,6 +6,7 @@ import type { ShelfRecord } from '@/lib/db/queries/shelf';
 import { backFaceGroups } from './back-face';
 import { availableFaces, nextFace, type Face } from './faces';
 import { riseTransform, riseTransformCss, type Rect } from './rise';
+import { chromeStage } from './chrome';
 
 /**
  * §10b: "reduced motion disables all of it. The turn, the rise and the hinge
@@ -215,7 +216,20 @@ export function PulledRecord({
       aria-label={`${record.title} — ${record.artistName}`}
       data-testid="pulled-record"
       data-face={face}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-6 backdrop-blur-sm"
+      /*
+        **One value, read by three things** (§10b, and `chrome.ts`). The
+        backdrop's dim, the control row's arrival and the record's own rise all
+        key off this single attribute; the stylesheet gives each its own
+        transition and the browser owns every duration. Nothing here sequences
+        them.
+
+        Unit 10's defect was that the chrome did not participate at all: at 15%
+        through the rise the backdrop was already fully dark and the controls at
+        final size, so the record rose into a modal that had already announced
+        itself — the exact thing §10b's continuity sentence rejects.
+      */
+      data-stage={chromeStage({ returning })}
+      className="record-chrome fixed inset-0 z-50 flex items-center justify-center p-6"
       onClick={putBack}
     >
       <div
@@ -281,7 +295,13 @@ export function PulledRecord({
           </div>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+        {/*
+          The control row arrives WITH the record rather than ahead of it. It is
+          the same class toggle above: no timer, no flag, no waiting on the
+          sleeve — it simply answers the same question the backdrop and the
+          record answer.
+        */}
+        <div className="record-controls mt-3 flex flex-wrap items-center gap-2">
           <button
             type="button"
             data-testid="turn-record"

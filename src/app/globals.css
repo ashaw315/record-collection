@@ -235,6 +235,94 @@
   will-change: transform;
 }
 
+/**
+ * §10b's chrome — the backdrop's dim and the control row's arrival — which
+ * PARTICIPATES in the rise rather than resolving ahead of it.
+ *
+ * Unit 10 shipped the rise with static chrome, and the mid-transition frame
+ * showed why that is a defect rather than polish: at 15% through the motion the
+ * backdrop was already at full dark and the controls at final size, while the
+ * sleeve was `scale(0.51, 0.65)` and 190px from where it would land. The record
+ * rose out of the shelf into a modal that had already announced itself, which
+ * is precisely what §10b's continuity sentence rejects.
+ *
+ * **Every part reads one attribute and owns its own timing.** `data-stage` on
+ * the dialog root is the single source (`chrome.ts`); each rule below carries
+ * its own duration and easing, and no JavaScript sequences them or knows how
+ * long any of them takes.
+ *
+ * The durations differ ON PURPOSE and that is a stylesheet decision. The
+ * backdrop is slower than the record (520ms against 420ms) so the room darkens
+ * around a record that is already moving, rather than the dark arriving first
+ * and the record catching up. The controls are quicker and slightly delayed:
+ * they belong to the settled state, so they resolve last, as the record lands.
+ */
+.record-chrome {
+  background-color: rgb(0 0 0 / 0.75);
+  backdrop-filter: blur(4px);
+  transition:
+    background-color 520ms cubic-bezier(0.16, 0.84, 0.36, 1),
+    backdrop-filter 520ms cubic-bezier(0.16, 0.84, 0.36, 1);
+}
+
+/*
+  Entry, expressed as a from-state rather than as a third stage.
+
+  `@starting-style` is what lets the browser own the whole entry transition: the
+  element mounts with these values and transitions off them on its first frame.
+  A "rising" stage would have needed JavaScript to decide when rising became
+  settled — a coordinator by another name, and the shape that has failed twice
+  here. There is no such decision to make if the browser makes it.
+*/
+@starting-style {
+  .record-chrome {
+    background-color: rgb(0 0 0 / 0);
+    backdrop-filter: blur(0px);
+  }
+}
+
+/*
+  Going back: the room lightens as the record descends. Same single attribute,
+  same independence — the backdrop is not told the record has left, it answers
+  the same question the record does.
+*/
+.record-chrome[data-stage='returning'] {
+  background-color: rgb(0 0 0 / 0);
+  backdrop-filter: blur(0px);
+}
+
+/**
+ * The control row arrives with the record and leaves before it.
+ *
+ * Slightly delayed on entry (90ms) because it belongs to the settled state:
+ * §10b's record is an object coming off a shelf, and the buttons are what you
+ * get once it is in your hands, not part of the object's flight. On the return
+ * it goes immediately and faster — waiting would leave controls hanging over a
+ * record that is already back in the wall.
+ */
+.record-controls {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition:
+    opacity 260ms cubic-bezier(0.16, 0.84, 0.36, 1) 90ms,
+    transform 260ms cubic-bezier(0.16, 0.84, 0.36, 1) 90ms;
+}
+
+@starting-style {
+  .record-controls {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+}
+
+.record-chrome[data-stage='returning'] .record-controls {
+  opacity: 0;
+  transform: translateY(10px) scale(0.96);
+  transition:
+    opacity 180ms cubic-bezier(0.4, 0, 1, 1),
+    transform 180ms cubic-bezier(0.4, 0, 1, 1);
+}
+
 /* A turn is decorative motion; a reader who has asked for less gets the face
    without it. */
 @media (prefers-reduced-motion: reduce) {
@@ -257,5 +345,28 @@
   .record-rise {
     transition: none;
     will-change: auto;
+  }
+
+  /*
+    §10b: "reduced motion disables all of it." The chrome is decorative in
+    exactly the way the rise is — the dim and the controls still arrive, they
+    simply do not travel to get there. Both the entry from-states and the
+    returning rules are neutralised, so nothing is left mid-fade.
+  */
+  .record-chrome,
+  .record-controls,
+  .record-chrome[data-stage='returning'],
+  .record-chrome[data-stage='returning'] .record-controls {
+    transition: none;
+  }
+
+  .record-chrome[data-stage='returning'] {
+    background-color: rgb(0 0 0 / 0.75);
+    backdrop-filter: blur(4px);
+  }
+
+  .record-chrome[data-stage='returning'] .record-controls {
+    opacity: 1;
+    transform: none;
   }
 }
