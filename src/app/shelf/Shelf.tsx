@@ -5,7 +5,7 @@ import { useState } from 'react';
 import type { ShelfRecord } from '@/lib/db/queries/shelf';
 import type { Rect } from './rise';
 import { PulledRecord } from './PulledRecord';
-import { shelfSurface } from './shelf-surface';
+import { WALL_MIN_HEIGHT, shelfRows, shelfSurface } from './shelf-surface';
 import {
   DEFAULT_SPINE_COLOUR,
   SHELF_EDGE,
@@ -119,14 +119,76 @@ export function Shelf({ records }: { records: ShelfRecord[] }) {
       */}
       <div
         data-testid="shelf-timber"
-        className="w-full px-4 pt-5 pb-2"
-        style={{ perspective: '900px', ...shelfSurface() }}
+        className="flex w-full flex-col pt-5"
+        style={{ minHeight: WALL_MIN_HEIGHT, ...shelfSurface() }}
       >
+        {/*
+          **Three real things, not one background on one box.**
+
+          The wall, the shelf plane and the records used to be a single element
+          with a repeating gradient painted on it. That is what made every
+          treatment of the empty space fail: a container sized by its contents
+          has no empty space to treat, and a plane that is a gradient stop has
+          no position anything can stand on. Three rounds of colour candidates
+          were painting a box whose shape was the defect.
+
+          Now the wall has a height of its own (A24a: "below the nav there is
+          the wall and nothing else"), and the plane is an element with a rect —
+          so a test can assert the spines meet it, which is the check that would
+          have caught the 15px foot misalignment.
+
+          Records fill the wall from the TOP down, as a bookcase does, and what
+          is left below is wall. That is the vertical half of §10b's rule: the
+          space beside the records is wall, and so is the space below them.
+        */}
+        {/*
+          **The rows region carries the shelf under EVERY row.**
+
+          How many spines fit on a shelf is decided by the browser from the
+          container width, which the server does not know — so the shelf repeats
+          per row rather than being one element per row. A single plane at the
+          foot was tried and measured 2 rows against 1 plane at 80 records, with
+          the first row's feet 240px above the only shelf.
+
+          `rowGap` is the shelf itself: the gap between rows is where the
+          repeating background paints the plane and its lip.
+        */}
+        {/*
+          **The shelf under every row, drawn once by one mechanism.**
+
+          `rowGap` IS the shelf: the gap between rows is exactly where the
+          repeating background paints the plane and its lip, so the surface
+          follows the browser's wrapping rather than predicting it.
+
+          There is deliberately no separate element for the last row's shelf. A
+          second mechanism was tried four ways and doubled the shelf line every
+          time — invisible to rect assertions, because a background has no box,
+          and obvious the moment anyone looked.
+        */}
         <ul
-          className="flex flex-wrap items-end gap-x-[3px]"
-          // `rowGap` is the shelf edge itself: the gap between rows is where
-          // the repeating background paints the timber.
-          style={{ rowGap: `${SHELF_EDGE}px`, transform: 'rotateX(2deg)' }}
+          data-testid="shelf-rows"
+          /*
+            `pt-0`: the rows region is exactly as tall as its rows, so the
+            bottom-anchored shelf pattern tiles across them and stops. With top
+            padding it tiled into the padding too and drew a stray shelf near
+            the top of the wall — measured at y=209 against feet at y=465.
+
+            Breathing room above the first row now comes from the WALL's own
+            padding, where it belongs: it is wall, not part of a row.
+          */
+          className="flex flex-wrap items-end gap-x-[3px] px-4"
+          /*
+            `paddingBottom` of one shelf: the last row needs somewhere for its
+            shelf to be drawn. Bottom-anchored, the pattern's final tile ends at
+            the bottom of this box, so the box must extend one shelf below the
+            feet — otherwise the last row's shelf falls outside it and the row
+            stands on nothing, which is the defect this unit is fixing.
+          */
+          style={{
+            rowGap: `${SHELF_EDGE}px`,
+            paddingBottom: `${SHELF_EDGE}px`,
+            ...shelfRows(),
+          }}
         >
           {records.map((record) => {
             const colour = record.spineColour ?? DEFAULT_SPINE_COLOUR;
@@ -228,7 +290,32 @@ export function Shelf({ records }: { records: ShelfRecord[] }) {
               </li>
             );
           })}
+
         </ul>
+
+        {/*
+          **The shelf plane the records stand on.**
+
+          A real element rather than a gradient stop, so it has a rect and the
+          spines can be measured against it with ONE instrument. Unit 22
+          compared a transformed box against an untransformed background offset
+          and found them equal to half a pixel while the feet hung 15px through
+          the shelf — the same two-coordinate-systems defect as unit 18's tilt.
+
+          It runs the full width regardless of what stands on it, which is what
+          §10b means by a plane: "the surface runs edge to edge and ends where
+          the wall ends", not where the records do.
+        */}
+
+
+        {/*
+          The wall BELOW the shelf. This is what A24a's "the shelf owns the
+          screen" actually buys, and what unit 21 left empty when it moved the
+          controls off the wall: room under the shelf line for the wall to be a
+          wall. `flex-1` gives the remainder of the viewport to it rather than
+          to the records.
+        */}
+        <div className="min-h-0 flex-1" />
       </div>
 
       {/*

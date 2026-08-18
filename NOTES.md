@@ -8651,3 +8651,55 @@ largest thing in the frame. Light makes it read as wall rather than as void,
 which is what this unit could do. Whether a short collection should get a
 shorter wall is a structural decision §10b does not settle — it says the space
 BESIDE the records is wall, and says nothing about the space above them.
+
+---
+
+## Step 13 unit 23 — the wall as a real thing
+
+**The 15px foot misalignment was NOT caused by `rotateX(2deg)`, and unit 22's
+diagnosis of it was wrong.** Measured directly: with the rotation restored the
+feet sit at −0.08px, not −15px. The rotation was spec drift under A24b and
+dropping it is right, but it was not the cause. The cause was structural — the
+plane was a gradient stop in a box sized by its contents, with `pb-2` beneath
+it, so the painted band and the feet were in different places for a different
+reason. **A visible transform is a tempting culprit and being visible is not
+evidence.**
+
+**A background has no box, and every rect assertion in this file is blind to
+it.** This is the instrument lesson of the unit, and it is not a variant of the
+earlier ones — it is stronger. `getBoundingClientRect` cannot see a painted
+gradient AT ALL, so it does not report it wrongly; it reports something else,
+confidently. Two defects hid behind that: the 15px misalignment, and a doubled
+shelf line 8px apart that was obvious in a screenshot and invisible to every
+measurement taken of it. Both were found by decoding the PNG and locating the
+shelf by COLOUR, which is what `findShelfBands` now does — the same thing the
+eye does, and the only measurement that would have failed on any of the bad
+versions.
+
+**Eight attempts at one seam, and the fix was to remove the seam.** Two
+mechanisms drew the shelf — a repeating background for wrapped rows and an
+element for the last one — because neither alone could do both jobs: a repeat
+cannot know where the last row ends, an element cannot know where the browser
+wrapped. Every attempt to make them agree produced a doubled line (8px, then
+3px, then a stray band in the padding, then none at all). A per-spine shelf was
+seam-free and stopped where the records stopped, breaking §10b's plane rule.
+
+The version that works is ONE mechanism: the repeat draws every shelf, bottom
+anchored to a `padding-box` whose padding is exactly one shelf deep. Bottom
+anchoring is what matters — spines are `items-end`, so rows are anchored to
+their feet, and a top-anchored pattern lands `padding-top` above every one of
+them.
+
+**Two mutations that do not bite, and both are honest no-ops rather than weak
+tests.** Top-vs-bottom anchoring coincides whenever the rows box is an exact
+multiple of the tile, which it is at 5 records and at 80. `rotateX(2deg)` moves
+the feet by 0.08px, under any sane threshold. Recorded because "the mutation
+did not bite" normally means the test is decorative, and here it does not —
+worth not mistaking one for the other later.
+
+**Still open: what the wall reads as at 120 records.** The wall is now
+viewport-height, so a full collection scrolls past its bottom edge and the
+"empty portion" question changes shape — at 120 records there is no empty wall
+below, only above the first row. Whether a short collection reads as short
+rather than broken is now a VERTICAL question as much as a horizontal one, and
+five records on a 695px wall is a different judgement from five on a 268px band.

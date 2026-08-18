@@ -1,4 +1,4 @@
-import { SPINE_HEIGHT, SPINE_ROW_HEIGHT } from './spine';
+import { SHELF_EDGE, SPINE_HEIGHT, SPINE_ROW_HEIGHT } from './spine';
 
 /**
  * The two surfaces §10b's wall is made of, and the reason they are two.
@@ -50,73 +50,149 @@ export const SHELF_LIP = '#1d160f';
  */
 export const PLANE_DEPTH = 6;
 
-/** The lip below it, thinner still. */
-export const LIP_DEPTH = SPINE_ROW_HEIGHT - SPINE_HEIGHT - PLANE_DEPTH;
+/** The lip below it, thinner still — whatever is left of the shelf's depth. */
+export const LIP_DEPTH = SHELF_EDGE - PLANE_DEPTH;
 
 /**
- * The repeating background that paints a shelf under EVERY row.
+ * How tall the wall is: the viewport, less what sits above it.
  *
- * A `border-bottom` would draw one line beneath the final row and leave the
- * rows above floating; the repeat is what makes wrapping look like a bookcase.
- * The interval is `SPINE_ROW_HEIGHT`, derived from the spine height rather than
- * restated, so the two cannot drift.
+ * **A24a has said this since the amendment and it had never been implemented.**
+ * "The shelf is a view that owns the screen, not a section of a page. Below the
+ * nav there is the wall and nothing else." Unit 21 moved the controls off the
+ * wall and nothing filled the space they left, so the wall stayed exactly as
+ * tall as its own contents.
  *
- * Returned as a style object rather than written inline so the relationships
- * above can be asserted without rendering a component.
+ * That is what made every treatment of the empty space fail. A container sized
+ * by its contents has no empty space to treat: at five records it was a 268px
+ * band floating in a 900px page, and it read as a widget however it was
+ * painted. Three rounds of colour candidates were all painting a box that was
+ * the wrong shape.
+ *
+ * **Set from the viewport rather than from the row count**, so five records and
+ * five hundred get the same wall and the difference between them is how much of
+ * it is occupied — which is the whole point of a wall scanned by eye.
+ *
+ * `svh` rather than `vh`: on a phone `vh` is the viewport with the browser
+ * chrome RETRACTED, so a `100vh` wall is taller than the screen at rest and its
+ * shelf line sits permanently under the address bar. `svh` is the smallest
+ * state, which is the one that is always visible.
+ */
+export const WALL_OFFSET_PX = 205;
+
+/** The wall fills what is left of the screen below the nav and the controls. */
+export const WALL_MIN_HEIGHT = `calc(100svh - ${WALL_OFFSET_PX}px)`;
+
+/**
+ * The WALL's own surface — and it is now only the wall.
+ *
+ * **This used to paint all three surfaces as one background on one box, and
+ * that was the defect three rounds of colour candidates could not reach.** The
+ * shelf plane was a gradient stop inside a repeating pattern, so it had no
+ * position anything could be measured against and no existence independent of
+ * the box it was painted on. Records could not stand on it because it was not a
+ * thing; it was a stripe.
  */
 export function shelfSurface(): {
   backgroundColor: string;
   backgroundImage: string;
   backgroundSize: string;
   backgroundRepeat: string;
-  backgroundOrigin: string;
-  backgroundClip: string;
 } {
-  const planeEnd = SPINE_HEIGHT + PLANE_DEPTH;
-
   /**
    * What makes the wall read as a WALL rather than as a void.
    *
-   * Chosen by looking, at five records, against a flat baseline. A flat
-   * `WALL_BACK` field is a correct colour and an empty image: at five records
-   * it is 240px of featureless black and the eye reads *nothing there* rather
-   * than *wall*. Two gradients fix it without adding an object:
-   *
-   *   - light rising from the shelf line, as a room lit from the front puts on
-   *     the wall just above a surface;
-   *   - the top falling away, so the wall recedes instead of ending.
+   * Chosen by looking, against a flat baseline. A flat `WALL_BACK` field is a
+   * correct colour and an empty image, and the eye reads *nothing there* rather
+   * than *wall*. Two gradients fix it without adding an object: light rising
+   * from the foot, as a room lit from the front puts on the wall just above a
+   * surface, and the top falling away so the wall recedes instead of ending.
    *
    * Neither has a hard boundary, which is the point — a boundary is what turned
    * every candidate width in unit 21 into a box. These are the only soft edges
    * in the surface, and they are soft because light is.
    */
   const wallLight =
-    'linear-gradient(to bottom, rgba(0,0,0,.5) 0%, rgba(0,0,0,0) 40%), ' +
-    'radial-gradient(120% 90% at 50% 115%, rgba(255,238,215,.09) 0%, rgba(0,0,0,0) 65%)';
+    'linear-gradient(to bottom, rgba(0,0,0,.55) 0%, rgba(0,0,0,0) 35%), ' +
+    'radial-gradient(140% 70% at 50% 100%, rgba(255,238,215,.10) 0%, rgba(0,0,0,0) 70%)';
 
   return {
-    /*
-      The WALL is the base. Everything not explicitly painted as shelf is wall,
-      which is what makes the empty portion read as wall rather than as timber
-      nobody filled.
-    */
     backgroundColor: WALL_BACK,
+    backgroundImage: wallLight,
     /*
-      Hard stops, not blends. A softened edge was tried in unit 21 and read as a
-      grey smear resembling a loading state; furniture has edges.
+      The lighting spans the whole wall ONCE. Two layers, two sizes, two
+      repeats, in the same order — CSS pairs them positionally and a short list
+      cycles silently rather than erroring.
     */
-    backgroundImage: `${wallLight}, linear-gradient(to bottom, transparent 0, transparent ${SPINE_HEIGHT}px, ${SHELF_PLANE} ${SPINE_HEIGHT}px, ${SHELF_PLANE} ${planeEnd}px, ${SHELF_LIP} ${planeEnd}px, ${SHELF_LIP} ${SPINE_ROW_HEIGHT}px)`,
+    backgroundSize: '100% 100%, 100% 100%',
+    backgroundRepeat: 'no-repeat, no-repeat',
+  };
+}
+
+/**
+ * The shelf drawn under EVERY row, and the ONLY thing that draws a shelf.
+ *
+ * **One mechanism, after four attempts at two.** A repeating background for the
+ * wrapped rows plus an element for the last one produced a doubled shelf line
+ * every time — 8px apart, then 3px, then a stray band in the padding — because
+ * "where does the last row end" is a question a repeating background cannot
+ * answer and an element cannot ask. Every version of that seam was invisible to
+ * rect assertions, because a background has no box, and obvious in a
+ * screenshot.
+ *
+ * A per-spine shelf was tried too: seam-free, and it stops where the records
+ * stop, which breaks §10b's plane rule outright.
+ *
+ * So the repeat draws all of them. How many spines fit on a row is the
+ * browser's decision from a width the server never sees, and the repeat follows
+ * that layout rather than predicting it. The shelf line has no element of its
+ * own; it is the row rhythm, and a spine's foot IS where it falls — which is
+ * what the foot assertion measures against.
+ */
+export function shelfRows(): {
+  backgroundImage: string;
+  backgroundSize: string;
+  backgroundRepeat: string;
+  backgroundPosition: string;
+  backgroundOrigin: string;
+  backgroundClip: string;
+} {
+  return {
     /*
-      The lighting spans the whole wall ONCE; only the shelf pattern repeats per
-      row. Three layers, three sizes, three repeats — in the same order, because
-      CSS pairs them positionally and a missing entry silently cycles.
+      Lit surface over dark lip, as hard stops. The plane catches light from the
+      front of the room; the lip faces the viewer rather than the light and is
+      the darkest of the three. Softening this read as a grey smear resembling a
+      loading state — furniture has edges.
     */
-    backgroundSize: `100% 100%, 100% 100%, 100% ${SPINE_ROW_HEIGHT}px`,
-    backgroundRepeat: 'no-repeat, no-repeat, repeat-y',
     /*
-      Painted in the padding box, so the pattern starts under the container's
-      top padding automatically. An explicit offset double-counted it in unit 6
-      and floated the timber above the first row.
+      One tile is a row of spines with its shelf beneath: `SPINE_HEIGHT` of
+      nothing, then the lit plane, then the lip. Bottom-anchored, so the last
+      tile's shelf lands under the last row's feet and the pattern tiles upward
+      from there — a shelf under every row, and adding a record cannot shift the
+      ones above it.
+    */
+    backgroundImage: `linear-gradient(to bottom, transparent 0, transparent ${SPINE_HEIGHT}px, ${SHELF_PLANE} ${SPINE_HEIGHT}px, ${SHELF_PLANE} ${SPINE_HEIGHT + PLANE_DEPTH}px, ${SHELF_LIP} ${SPINE_HEIGHT + PLANE_DEPTH}px, ${SHELF_LIP} ${SPINE_ROW_HEIGHT}px)`,
+    backgroundSize: `100% ${SPINE_ROW_HEIGHT}px`,
+    backgroundRepeat: 'repeat-y',
+    /*
+      **Anchored to the BOTTOM, because that is where the rows are anchored.**
+
+      Spines are `items-end`, so every row's feet sit at the bottom of its line
+      box and the last row's at the bottom of the content box. Anchoring to the
+      top instead assumes the first row begins exactly at the padding edge — it
+      does not, and the shelves then land `padding-top` above every set of feet.
+      Measured: the painted band at y=445 with the feet at y=465, a 20px gap
+      that no rect assertion in this project could see, because a background has
+      no box.
+
+      Bottom-anchoring also means the repeat grows upward from the last row, so
+      adding a record cannot shift the shelves under the rows above it.
+    */
+    backgroundPosition: 'left bottom',
+    /*
+      `padding-box`, so the bottom anchor is the box's padding edge — which the
+      rows region extends one shelf below the last row's feet, giving that shelf
+      somewhere to be drawn. With `content-box` the anchor is the feet
+      themselves and the last shelf lands 8px above them, inside the row.
     */
     backgroundOrigin: 'padding-box',
     backgroundClip: 'padding-box',

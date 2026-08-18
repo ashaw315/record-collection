@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   PLANE_DEPTH,
+  shelfRows,
+  WALL_MIN_HEIGHT,
+  WALL_OFFSET_PX,
   SHELF_LIP,
   SHELF_PLANE,
   WALL_BACK,
@@ -75,6 +78,10 @@ describe('the wall and the plane are distinguishable surfaces', () => {
 
 describe('shelfSurface', () => {
   it('paints a plane band at the foot of EVERY row, not just the last', () => {
+    /*
+      Retargeted from `shelfSurface` to `shelfRows` when the shelf pattern moved
+      there — the property asserted is unchanged, its producer moved.
+    */
     /**
      * The wrapping wall's defining property. A single border-bottom draws one
      * line under the final row and leaves every row above floating — the defect
@@ -84,7 +91,7 @@ describe('shelfSurface', () => {
      * Fails against `shelfSurface` if the repeat interval stops matching the
      * row rhythm.
      */
-    const surface = shelfSurface();
+    const surface = shelfRows();
 
     /**
      * **Asserted per LAYER, not as a whole string.** The surface carries wall
@@ -135,7 +142,7 @@ describe('shelfSurface', () => {
      * Fails against `shelfSurface` if the first colour stop drifts from
      * `SPINE_HEIGHT`.
      */
-    const surface = shelfSurface();
+    const surface = shelfRows();
 
     expect(surface.backgroundImage).toContain(`${SPINE_HEIGHT}px`);
   });
@@ -148,7 +155,9 @@ describe('shelfSurface', () => {
      */
     expect(SHELF_LIP.length).toBeGreaterThan(0);
     expect(PLANE_DEPTH).toBeGreaterThan(0);
-    expect(PLANE_DEPTH).toBeLessThan(SPINE_ROW_HEIGHT - SPINE_HEIGHT + PLANE_DEPTH);
+    expect(PLANE_DEPTH, 'the lit surface is part of the shelf, not all of it').toBeLessThan(
+      SPINE_ROW_HEIGHT - SPINE_HEIGHT,
+    );
   });
 
   it('paints the WALL as the base, so an empty stretch is wall rather than void', () => {
@@ -164,6 +173,47 @@ describe('shelfSurface', () => {
     const surface = shelfSurface();
 
     expect(surface.backgroundColor).toBe(WALL_BACK);
+  });
+});
+
+describe('the wall has its own height', () => {
+  it('sizes the wall from the VIEWPORT, not from the rows standing on it', () => {
+    /**
+     * **The structural fix, asserted as a property rather than as a number.**
+     * A24a: "below the nav there is the wall and nothing else." A wall sized by
+     * its contents has no empty space to read, which is why three rounds of
+     * colour candidates could not make five records read as a short collection
+     * — they were painting a box whose shape was the defect.
+     *
+     * Fails against `WALL_MIN_HEIGHT` if it is ever expressed in terms of rows,
+     * spines or a fixed pixel height.
+     */
+    expect(WALL_MIN_HEIGHT).toContain('svh');
+    expect(WALL_MIN_HEIGHT, 'the wall is measured against the screen').toContain('100svh');
+  });
+
+  it('uses svh rather than vh, so a phone wall is not cut off by the address bar', () => {
+    /**
+     * `vh` is the viewport with browser chrome RETRACTED, so a `100vh` wall is
+     * taller than a phone screen at rest and its shelf line sits permanently
+     * under the address bar — the one part of the wall that must be visible.
+     *
+     * Fails against a plain `vh` unit, which looks identical on a desktop and
+     * is wrong on every phone.
+     */
+    expect(WALL_MIN_HEIGHT).not.toMatch(/[^s]vh/);
+  });
+
+  it('subtracts what sits ABOVE the wall rather than assuming it starts at the top', () => {
+    /**
+     * The nav and the collection heading occupy real space; a wall that ignored
+     * them would overflow the screen by exactly that much and push its own
+     * shelf line off the bottom.
+     *
+     * Fails if the offset is dropped or set to zero.
+     */
+    expect(WALL_OFFSET_PX).toBeGreaterThan(0);
+    expect(WALL_MIN_HEIGHT).toContain(`- ${WALL_OFFSET_PX}px`);
   });
 });
 

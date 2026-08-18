@@ -1,3 +1,4 @@
+import zlib from 'node:zlib';
 import { expect, test, type Page } from '@playwright/test';
 
 /**
@@ -28,6 +29,105 @@ async function login(page: Page) {
 const suffix = () => `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
 
 /** A record on the shelf, returning both ids the callers need. */
+/**
+ * Finds the shelf's lit bands in a screenshot, by colour, down one column.
+ *
+ * **The only instrument that can see a painted shelf.** The surface is a CSS
+ * gradient, so it has no element and no rect — `getBoundingClientRect` reports
+ * nothing about it and every rect-based assertion in this file is blind to
+ * where it actually lands. That blindness let a 15px foot misalignment and a
+ * doubled shelf line both pass a green suite.
+ *
+ * PNG is decoded rather than pulled through a library: the alternative is a new
+ * dependency for something this small, and the format's own filters are the
+ * whole of the work.
+ */
+function findShelfBands(
+  png: Buffer,
+  xCss: number,
+  within: { top: number; bottom: number },
+): Array<{ top: number; bottom: number }> {
+  const view = new DataView(png.buffer, png.byteOffset, png.byteLength);
+  let pos = 8;
+  let width = 0;
+  let height = 0;
+  let colourType = 0;
+  const idat: Buffer[] = [];
+
+  while (pos < png.length) {
+    const length = view.getUint32(pos);
+    const type = png.toString('ascii', pos + 4, pos + 8);
+    if (type === 'IHDR') {
+      width = view.getUint32(pos + 8);
+      height = view.getUint32(pos + 12);
+      colourType = png[pos + 17];
+    } else if (type === 'IDAT') {
+      idat.push(png.subarray(pos + 8, pos + 8 + length));
+    }
+    pos += 12 + length;
+  }
+
+  const raw = zlib.inflateSync(Buffer.concat(idat));
+  const channels = colourType === 6 ? 4 : 3;
+  const stride = width * channels;
+  const rows: Buffer[] = [];
+  let previous = Buffer.alloc(stride);
+  let cursor = 0;
+
+  // Undo the per-scanline filters. Straight from the PNG spec; no cleverness.
+  for (let y = 0; y < height; y += 1) {
+    const filter = raw[cursor];
+    cursor += 1;
+    const line = Buffer.from(raw.subarray(cursor, cursor + stride));
+    cursor += stride;
+
+    for (let i = 0; i < stride; i += 1) {
+      const a = i >= channels ? line[i - channels] : 0;
+      const b = previous[i];
+      const c = i >= channels ? previous[i - channels] : 0;
+      if (filter === 1) line[i] = (line[i] + a) & 255;
+      else if (filter === 2) line[i] = (line[i] + b) & 255;
+      else if (filter === 3) line[i] = (line[i] + ((a + b) >> 1)) & 255;
+      else if (filter === 4) {
+        const p = a + b - c;
+        const pa = Math.abs(p - a);
+        const pb = Math.abs(p - b);
+        const pc = Math.abs(p - c);
+        line[i] = (line[i] + (pa <= pb && pa <= pc ? a : pb <= pc ? b : c)) & 255;
+      }
+    }
+    rows.push(line);
+    previous = line;
+  }
+
+  const scale = width / 1280;
+  const x = Math.round(xCss * scale);
+  const bands: Array<{ top: number; bottom: number }> = [];
+  let start: number | null = null;
+
+  /*
+    Scanned only INSIDE the wall. The page around it is cream (red 251), which
+    is far brighter than the shelf and was reported as a 205px-tall "shelf
+    band" — a detector that finds the background is worse than none.
+  */
+  const from = Math.max(0, Math.round(within.top * scale));
+  const to = Math.min(height, Math.round(within.bottom * scale));
+
+  for (let y = from; y < to; y += 1) {
+    const red = rows[y][x * channels];
+    // `SHELF_PLANE` is #4d3b2b (red 77); the wall behind it never exceeds ~30.
+    const lit = red > 55;
+    if (lit && start === null) start = y;
+    if (!lit && start !== null) {
+      bands.push({ top: start / scale, bottom: y / scale });
+      start = null;
+    }
+  }
+  if (start !== null) bands.push({ top: start / scale, bottom: to / scale });
+
+  return bands;
+}
+
 async function seedRecord(page: Page, title: string) {
   const artist = await page.request.post('/api/artists', {
     data: { name: `Shelf-${suffix()}` },
@@ -721,6 +821,217 @@ test('the table and grid keep their controls on the page', async ({ page }) => {
       page.getByTestId('shelf-controls-toggle'),
       `${view} has no overlay toggle`,
     ).toHaveCount(0);
+  }
+});
+
+test('records STAND ON the shelf line rather than floating above or through it', async ({
+  page,
+}) => {
+  /**
+   * **The regression test for a defect that shipped past a passing suite**, and
+   * the check that would have caught it.
+   *
+   * Unit 22 shipped spines whose feet hung ~15-20px BELOW the painted shelf
+   * line and past the bottom of the wall. The box model said they matched to
+   * half a pixel. Both readings were of real numbers and one of them was of the
+   * wrong thing:
+   *
+   *   - `offsetHeight` is 240, UNtransformed.
+   *   - `getBoundingClientRect` reports the TRANSFORMED box.
+   *   - the painted background sits on the untransformed PARENT.
+   *
+   * A `rotateX(2deg)` on the row tipped it forward about its centre, dropping
+   * the visible feet ~15px while the background stayed put. Comparing
+   * `offsetHeight` against the background's offset compared two numbers from
+   * different coordinate systems and found them equal — the same
+   * two-systems-share-a-number defect as unit 18's tilt, in a new place.
+   *
+   * So this asserts on the VISUAL box, `getBoundingClientRect`, which is the
+   * system the shelf line is painted in — and it is written to fail if the feet
+   * land on either side of the line, because "floating above" and "sinking
+   * through" are both wrong and only one of them was the bug.
+   */
+  const { artistId } = await seedRecord(page, `Standing ${suffix()}`);
+  for (let i = 0; i < 4; i += 1) {
+    await page.request.post('/api/records', {
+      data: { title: `Standing-${i} ${suffix()}`, artistId },
+    });
+  }
+
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.getByTestId('shelf-timber')).toBeVisible();
+
+  /**
+   * **Measured from the PAINTED PIXELS, because the shelf is a background and a
+   * background has no box.**
+   *
+   * This is the instrument lesson of the unit. Every rect-based check agreed
+   * the geometry was correct while the screen showed a doubled shelf line and,
+   * before that, feet hanging 15px through the surface. `getBoundingClientRect`
+   * cannot see a painted gradient at all, so it answered a different question
+   * confidently.
+   *
+   * The page is screenshotted and the shelf band is located by COLOUR, then
+   * compared against the spine's foot. That is the same thing the eye does, and
+   * it is the only measurement that would have failed on any of the versions
+   * that looked wrong.
+   */
+  const spineFoot = await page.evaluate(() => {
+    const spine = document.querySelector('[data-testid="shelf-spine"]') as HTMLElement;
+    const wall = document.querySelector('[data-testid="shelf-timber"]') as HTMLElement;
+    const sb = spine.getBoundingClientRect();
+    const wb = wall.getBoundingClientRect();
+    return { foot: sb.bottom, wallTop: wb.top, wallHeight: wb.height, wallWidth: wb.width };
+  });
+
+  const shot = await page.screenshot({ clip: { x: 0, y: 0, width: 1280, height: 900 } });
+
+  /**
+   * The shelf's lit surface, found by its own colour rather than by a
+   * hardcoded y. `SHELF_PLANE` is `#4d3b2b`; the wall behind it is far darker,
+   * so a red channel above 60 in an empty column identifies the band.
+   */
+  const bands = findShelfBands(shot, 700, {
+    top: spineFoot.wallTop,
+    bottom: spineFoot.wallTop + spineFoot.wallHeight,
+  });
+
+  expect(bands.length, 'exactly one shelf line — two means two mechanisms drew it').toBe(1);
+
+  const feet = [bands[0].top - spineFoot.foot];
+
+  expect(feet.length, 'the shelf band must have been found').toBe(1);
+
+  for (const [index, gap] of feet.entries()) {
+    /**
+     * One pixel of tolerance for sub-pixel layout, and no more. Unit 22's
+     * defect was 15-20px and any honest threshold catches it; a loose one would
+     * let the next one through.
+     */
+    expect(gap, `spine ${index} must stand ON the shelf line, not float or sink`).toBeGreaterThan(
+      -1,
+    );
+    expect(gap, `spine ${index} must not hang through the shelf`).toBeLessThan(1);
+  }
+});
+
+test('EVERY row of a wrapping wall gets a shelf under it, not just the last', async ({
+  page,
+}) => {
+  /**
+   * §10b: "One shelf holds as many spines as fit; the rest continue on a shelf
+   * below, and the wall scrolls." A wall with a shelf under only its last row
+   * leaves every row above standing on nothing — the floating-records defect
+   * this unit fixes, one row up.
+   *
+   * **Asserted as a PROPERTY of the row rhythm, not as a count of elements.**
+   * A first version counted `shelf-plane` elements against rows and failed
+   * against correct code: the shelves under wrapped rows are painted by a
+   * repeating background, because how many spines fit is decided by the browser
+   * from a width the server never sees. Counting elements asserted the
+   * mechanism rather than the requirement, and the requirement is that a shelf
+   * exists at every row's feet.
+   *
+   * So this checks the two things that make the repeat land correctly, both
+   * measured rather than predicted:
+   *
+   *   1. rows are spaced at exactly the interval the shelf pattern repeats at,
+   *      so a shelf falls at every row's feet rather than drifting away from
+   *      them a little more with each row;
+   *   2. the pattern's origin coincides with the first row's feet.
+   *
+   * Together those are what "a shelf under every row" means for a repeat. Get
+   * either wrong and the misalignment grows down the wall — which is worse than
+   * a constant offset and is invisible in a one-row fixture.
+   */
+  const { artistId } = await seedRecord(page, `Wrapping ${suffix()}`);
+  for (let i = 0; i < 79; i += 1) {
+    await page.request.post('/api/records', {
+      data: { title: `Wrapping-${i} ${suffix()}`, artistId },
+    });
+  }
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.getByTestId('shelf-timber')).toBeVisible();
+
+  const shape = await page.evaluate(() => {
+    const rows = document.querySelector('[data-testid="shelf-rows"]') as HTMLElement;
+    const spines = Array.from(
+      document.querySelectorAll('[data-testid="shelf-spine"]'),
+    ) as HTMLElement[];
+
+    // Distinct spine tops ARE the rows: everything on one shelf shares a top.
+    const tops = [...new Set(spines.map((s) => Math.round(s.getBoundingClientRect().top)))].sort(
+      (a, b) => a - b,
+    );
+
+    const style = getComputedStyle(rows);
+    const box = rows.getBoundingClientRect();
+
+    return {
+      tops,
+      spineHeight: spines[0].getBoundingClientRect().height,
+      // The interval the shelf pattern repeats at, read from the live element.
+      repeat: parseFloat(style.backgroundSize.split(' ')[1]),
+      // Where the pattern starts: the padding box, per `background-origin`.
+      patternOrigin: box.top + parseFloat(style.paddingTop),
+    };
+  });
+
+  expect(shape.tops.length, 'the fixture must actually wrap').toBeGreaterThan(1);
+
+  /**
+   * 1. Row spacing equals the repeat interval. If these differ by even a pixel
+   *    the shelves walk away from the feet as the wall grows.
+   */
+  for (let index = 1; index < shape.tops.length; index += 1) {
+    expect(
+      shape.tops[index] - shape.tops[index - 1],
+      `row ${index} must sit exactly one shelf-repeat below row ${index - 1}`,
+    ).toBeCloseTo(shape.repeat, 0);
+  }
+
+  /**
+   * 2. The pattern starts where the first row does, so its first shelf lands on
+   *    the first row's feet rather than somewhere inside the spines.
+   */
+  expect(
+    shape.patternOrigin,
+    'the shelf pattern must be anchored to the first row, not to the wall',
+  ).toBeCloseTo(shape.tops[0], 0);
+
+  /**
+   * **And the PAINTED shelves land on every row's feet**, which is the half the
+   * rhythm assertions above cannot see: they prove the rows and the pattern
+   * share an interval, not that the pattern is in the right place. A uniform
+   * 20px offset satisfies both and was the live defect.
+   */
+  const wall = await page.getByTestId('shelf-timber').boundingBox();
+  expect(wall, 'the wall must be measurable').not.toBeNull();
+  if (wall === null) return;
+
+  const shot = await page.screenshot();
+  /*
+    Sampled at the far RIGHT of the wall, past every spine. At x=700 the first
+    row's spines overlap the column and their drop-shadow shifts where the band
+    appears to start — measured 468 against feet at 465. The shelf runs the full
+    width, so a column with nothing standing on it reads the surface itself.
+  */
+  const bands = findShelfBands(shot, wall.x + wall.width - 20, {
+    top: wall.y,
+    bottom: wall.y + wall.height,
+  });
+
+  expect(bands.length, 'one shelf per row, none doubled and none missing').toBe(
+    shape.tops.length,
+  );
+
+  for (const [index, top] of shape.tops.entries()) {
+    expect(
+      bands[index].top,
+      `row ${index}'s shelf must be painted at its feet, not near them`,
+    ).toBeCloseTo(top + shape.spineHeight, 0);
   }
 });
 
