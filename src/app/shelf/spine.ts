@@ -40,9 +40,6 @@ export const DEFAULT_SPINE_COLOUR = '#3a3a3a';
  * fits across the spine; height decides how many fit along it. Checked rather
  * than assumed, and pinned by a test.
  */
-export const MIN_SPINE_WIDTH = 11;
-export const MAX_SPINE_WIDTH = 15;
-
 /**
  * How tall a spine stands, and the row rhythm the shelf repeats at.
  *
@@ -52,10 +49,32 @@ export const MAX_SPINE_WIDTH = 15;
  * the shelf below; if the two were declared separately they would drift the
  * first time either changed — the two-places-must-match smell recorded in
  * NOTES, so the row is derived rather than restated.
+ *
+ * **240 rather than 160, chosen by looking at the full-bleed wall.** At 160 the
+ * shelf was a 510x188 strip in the corner of a 1280x900 window with the page
+ * empty below it — a widget rather than a wall, which is why a record leaving
+ * it did not read as leaving anything. The reference's spines dominate the
+ * frame and that is what makes a case emerging from them read as emerging from
+ * something.
  */
-export const SPINE_HEIGHT = 160;
+export const SPINE_HEIGHT = 240;
 export const SHELF_EDGE = 8;
 export const SPINE_ROW_HEIGHT = SPINE_HEIGHT + SHELF_EDGE;
+
+/**
+ * **Derived from the height, because §10b states 1:12 as a RULE and not a
+ * number.** Hardcoding these was a latent defect: raising the height alone
+ * would have turned the wall into planks with no test noticing, since the
+ * ratio assertion checks the relationship rather than the values.
+ *
+ * The spread is 1:14 to 1:10, which averages near 1:12 and gives the wall
+ * texture — enough that it does not read as a barcode, not so much that it
+ * implies a fact about thickness nobody recorded. A 2xLP is genuinely thicker,
+ * but `formats` does not say how thick, and inventing the difference would be
+ * the §8 shape.
+ */
+export const MIN_SPINE_WIDTH = Math.round(SPINE_HEIGHT / 14);
+export const MAX_SPINE_WIDTH = Math.round(SPINE_HEIGHT / 10);
 
 /**
  * The shelf's minimum width, as a fraction of the content column.

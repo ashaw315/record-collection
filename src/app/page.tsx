@@ -147,7 +147,30 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
             the collection's size rather than a view of it — the sections are
             the structure, and scrolling is how you reach the end.
           */
-          <Shelf records={shelf} />
+          /*
+            **Full-bleed: the wall claims the screen** (unit 20). The header and
+            the filters stay inside `max-w-6xl`; the shelf breaks out of it,
+            because the reference's spines dominate the frame and that is what
+            makes a case emerging from them read as emerging from SOMETHING. At
+            160px in a centred column it was a 510x188 strip in the corner of a
+            1280x900 window with the page empty below it.
+
+            `w-screen` with a negative half-viewport margin is the breakout: the
+            element is as wide as the viewport regardless of the ancestor's
+            max-width, and `left-1/2 -ml-[50vw]` re-centres it.
+
+            A SMALL gutter rather than the column's own — an earlier attempt
+            used `px-[calc((100vw-72rem)/2)]`, which re-inserted exactly the
+            margin the breakout had just escaped and put the wall back where it
+            started. Measured: the wrapper was 1280px wide and the shelf inside
+            it still x=64 w=1152.
+
+            Table and grid are untouched — this is the closet view, not a change
+            to how the collection is read as a list.
+          */
+          <div className="relative left-1/2 -ml-[50vw] w-screen px-4">
+            <Shelf records={shelf} />
+          </div>
         )}
       </main>
     </>

@@ -557,6 +557,48 @@ test('the shelf is no wider than it needs and no shorter than a shelf', async ({
   }
 });
 
+test('the wall claims the width of the screen, not the content column', async ({ page }) => {
+  /**
+   * §10b's closet view (unit 20): the wall is full-bleed below the nav, because
+   * the reference's spines dominate the frame and that is what makes a case
+   * emerging from them read as emerging from SOMETHING. At 160px in a centred
+   * `max-w-6xl` column it was a 510x188 strip in the corner of a 1280x900
+   * window with the page empty below it — a widget rather than a wall.
+   *
+   * **Asserted as measured geometry rather than a class name.** A
+   * `toHaveClass` check passes against a class that has been overridden, or
+   * renamed, or whose breakout is cancelled by a padding further in — which is
+   * exactly the defect this unit hit: the wrapper was the full 1280px and a
+   * `px-[calc((100vw-72rem)/2)]` put the shelf straight back at x=64.
+   */
+  const title = `Bleeding ${suffix()}`;
+  await seedRecord(page, title);
+
+  await page.goto('/');
+  const shelf = page.getByTestId('shelf');
+  await expect(shelf).toBeVisible();
+
+  const box = await shelf.boundingBox();
+  const viewport = page.viewportSize();
+  expect(box, 'the shelf must have a measurable box').not.toBeNull();
+  expect(viewport, 'the viewport size must be known to compare against').not.toBeNull();
+  if (box === null || viewport === null) return;
+
+  /**
+   * Wider than the content column it used to live in. `max-w-6xl` is 1152px
+   * and the header above it still sits inside that — so anything close to the
+   * viewport width proves the breakout happened, and anything at or below 1152
+   * proves it did not.
+   */
+  expect(
+    box.width,
+    `the wall is ${Math.round(box.width)}px in a ${viewport.width}px viewport — still in the column`,
+  ).toBeGreaterThan(Math.min(1152, viewport.width) * 0.92);
+
+  // And it starts near the left edge rather than at the column's inset.
+  expect(box.x, 'the wall starts at the screen edge, not the column margin').toBeLessThan(40);
+});
+
 test('the table view is still reachable, and the shelf is not forced', async ({ page }) => {
   // §10b makes the shelf the default; §10's toggle still reaches the others.
   // The shelf is a third mode rather than a replacement.

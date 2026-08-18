@@ -66,27 +66,34 @@ describe('spineText — fitting the budget', () => {
    */
   it('shortens the title so artist and catalogue number both survive', () => {
     const text = spineText({
-      artistName: 'Luther Vandross',
-      title: 'Never Too Much',
-      catalogNumber: 'FE 37451',
+      artistName: '...And You Will Know Us by the Trail of Dead',
+      title: 'Source Tags & Codes',
+      catalogNumber: 'IL 1',
     });
 
     /**
-     * At the 160px spine's 29-character budget this record's two identifiers
-     * take 25, leaving 2 for the title — below the three-character floor, so
-     * the title is DROPPED rather than shown as a stub. That is the rule
-     * working, not a gap in it: "N…" costs space the identifiers need and tells
-     * the reader nothing.
+     * At the 240px spine's 44-character budget this record's two identifiers
+     * take 49 on their own, so there is no room for the title at all and it is
+     * DROPPED rather than shown as a stub. That is the rule working, not a gap
+     * in it: "S…" costs space the identifiers need and tells the reader
+     * nothing.
      *
-     * This asserted an ellipsis when the budget was 31 and the spine 210px
-     * tall. The property under test — both identifiers survive, the title
-     * absorbs the shortfall — is unchanged; only how much shortfall there is
-     * moved.
+     * **This fixture has now moved twice, and the reason is the same both
+     * times.** It asserted an ellipsis at a 31-character budget and a 210px
+     * spine; it asserted a dropped title for Luther Vandross at 29 and 160px;
+     * at 44 that record FITS WHOLE and stopped testing anything. The property
+     * under test — both identifiers survive, the title absorbs the shortfall —
+     * has never changed. What moves is how much shortfall there is, which is
+     * exactly what a derived budget is supposed to do.
+     *
+     * The band name is real, which matters: a synthetic 50-character artist
+     * would make this look like an invented edge case rather than a record
+     * somebody owns.
      */
     expect(text.length).toBeLessThanOrEqual(SPINE_TEXT_BUDGET);
-    expect(text, 'the artist is whole').toContain('Luther Vandross');
-    expect(text, 'the identifier is whole').toContain('FE 37451');
-    expect(text, 'the title gave way entirely').not.toContain('Never');
+    expect(text, 'the artist is whole').toContain('...And You Will Know Us');
+    expect(text, 'the identifier is whole').toContain('IL 1');
+    expect(text, 'the title gave way entirely').not.toContain('Source');
   });
 
   it('never truncates the catalogue number while the title has room to give', () => {
@@ -192,6 +199,22 @@ describe('spine proportions read as records, not box sets', () => {
 
     expect(narrowest, 'not box sets — 1:7 was the QA finding').toBeGreaterThan(9);
     expect(widest, 'not colour bars — a spine must still hold its text').toBeLessThan(16);
+  });
+
+  it('DERIVES the width from the height, so the ratio survives a taller wall', () => {
+    /**
+     * **The defect this prevents, found in unit 20.** `SPINE_HEIGHT` went from
+     * 160 to a full-bleed wall's height, and the widths were hardcoded at
+     * 11-15 — so raising the height alone would have quietly changed the ratio
+     * from 1:12 to something much narrower, turning §10b's rule into a wall of
+     * planks without any test noticing.
+     *
+     * §10b states 1:12 as a RULE rather than a number, so the widths have to
+     * track the height. Fails against `MIN_SPINE_WIDTH`/`MAX_SPINE_WIDTH` if
+     * either is pinned to a literal again.
+     */
+    expect(MIN_SPINE_WIDTH).toBe(Math.round(SPINE_HEIGHT / 14));
+    expect(MAX_SPINE_WIDTH).toBe(Math.round(SPINE_HEIGHT / 10));
   });
 
   it('stays wide enough for the 9px type the spine text uses', () => {

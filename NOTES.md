@@ -8510,3 +8510,55 @@ running and the first animation frame arriving, where subsequent frames are
 ~16ms apart. Real, reproducible, and it means the first sixth of a 620ms rise is
 a single held frame. Not fixed here — the rise reads correctly at full speed and
 chasing it would be a fourth attempt at a thing that works.
+
+---
+
+## Step 13 unit 20 — the wall claims the screen
+
+**A latent defect the grep found before it could bite.**
+`MIN_SPINE_WIDTH`/`MAX_SPINE_WIDTH` were hardcoded at 11-15 while
+`SPINE_TEXT_BUDGET` and `SPINE_ROW_HEIGHT` were derived from `SPINE_HEIGHT`.
+So raising the height from 160 to 240 would have quietly changed §10b's 1:12
+ratio into something much narrower — a wall of planks — and NO TEST WOULD HAVE
+CAUGHT IT, because the ratio assertion checks the relationship (`9 < r < 16`)
+and both values would still have satisfied it at the old height.
+
+§10b states 1:12 as a RULE rather than a number. The widths now derive from the
+height, with a test that fails if either is pinned to a literal again. Worth
+noticing that a partial derivation is more dangerous than none: three of four
+constants tracked the height, which made it look like the chain was complete.
+
+**The text budget moved 29 -> 44 and that broke a truncation test, which is the
+derivation working.** The old fixture — Luther Vandross / Never Too Much / FE
+37451, 41 characters — now FITS WHOLE at a 44-character budget and stopped
+testing anything at all. Replaced with a real band whose name alone exceeds the
+budget. That fixture has now moved twice (31 -> 29 -> 44) for the same reason
+each time, and its docblock says so: the property under test never changed, only
+how much shortfall there is.
+
+**The height alone did not make it a wall, and the measurement said why.** At 30
+records, 50 spines fit per full-width row, so the collection makes ONE short row
+with 400px of empty page below it. No spine height fixes that. What makes it a
+wall is full-bleed width PLUS enough records to wrap — at 120 records it is
+three rows deep and runs past the fold.
+
+That also means a full-HEIGHT container would have been the wrong fix: it would
+produce a mostly-empty black box, which is precisely the "missing data" failure
+§10b's 40% floor exists to prevent, one level out.
+
+**A breakout that was cancelled by its own padding.** The first attempt was
+`w-screen` with `-ml-[50vw]` and
+`px-[max(1rem,calc((100vw-72rem)/2))]`. The wrapper measured the full 1280px
+and the shelf inside it still measured x=64 w=1152 — because that padding
+re-inserted exactly the column margin the breakout had just escaped. Two
+correct-looking declarations that cancel each other, visible only by measuring
+the ancestor chain rather than reading the classes.
+
+**The 40% floor now measures against the full-bleed wrapper**, not the old
+`max-w-6xl` column: 40% of 1248 rather than 40% of 1152. Verified at 5 records —
+timber 499.19px against a predicted 499.2px.
+
+**Asserting geometry rather than a class name earned its place immediately.**
+The new E2E test measures the shelf's box against the viewport. A `toHaveClass`
+check on the breakout classes would have PASSED against the broken version,
+because the classes were all present and correct — and cancelled by a fourth.
