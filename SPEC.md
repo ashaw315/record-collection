@@ -217,8 +217,12 @@ Exactly one of `record_id` / `want_list_id` must be non-null — enforce with a 
 |---|---|---|
 | record_id | UUID REFERENCES records(id) ON DELETE CASCADE | |
 | url | TEXT NOT NULL | |
-| image_type | image_type enum | `'cover' \| 'back' \| 'gatefold' \| 'label' \| 'matrix' \| 'other'` |
+| image_type | image_type enum | `'cover' \| 'back' \| 'gatefold_left' \| 'gatefold_right' \| 'label' \| 'matrix' \| 'other'` |
 | caption | TEXT | |
+
+**Four of these are textures on the pulled record; the rest are gallery images.** `cover`, `back`, `gatefold_left` and `gatefold_right` are the object's skins (§10b) and are expected to be square. `label`, `matrix` and `other` are photographs of the record that appear in the gallery and are never mapped onto the object — a close-up of the dead wax is evidence about a pressing, not a surface of the sleeve.
+
+`gatefold` was a single value, added before the affordance was built. It became two when the inner was specified as two square photographs rather than one wide spread. Removing an enum value is not possible in place: Postgres requires the type to be replaced, which is a destructive migration and needs confirmation before it runs (CLAUDE.md §7).
 
 Use Vercel Blob for storage. Store the returned URL here.
 
@@ -874,6 +878,12 @@ What resolves it is the allocation, not the renderer alone: **the object carries
 
 The reason for the split is that they answer different questions. The tilt says *this is an object*; the turn says *show me the other side*. Collapsing them means the back arrives by accident while someone is looking at the front.
 
+**The object takes four textures, all square.** `cover` on the front, `back` on the back, and `gatefold_left` and `gatefold_right` across the two leaves of the open sleeve. Nothing else is mapped onto it.
+
+Square because a 12″ sleeve is square, and because it keeps every image the app stores to one shape — the spine colour already averages a square cover, and a texture of a different aspect either stretches or letterboxes, both of which are the app asserting something about a sleeve that is not true of it.
+
+The inner is **two photographs, not one spread.** A real gatefold inner is continuous, and mapping one wide image across both leaves would be more faithful — but it asks for a photograph most phones take badly, and it makes the inner the only non-square image in the collection. Two straight-on shots are what someone can actually take. The cost is a seam down the middle wherever the two differ in lighting or crop, and that is accepted: a visible seam is honest about being two photographs.
+
 **A gatefold opens as a real hinge** — two **leaves** rotating about their shared edge, inner artwork mapped across both. Front → turn → back is rotation; front → open → inner spread is a hinge. Two physical acts, two motions, and sharing one would flatten the distinction.
 
 The halves are called *leaves* throughout, deliberately: a *panel* in this section is the DOM block of facts beside the record, and the two must not be confused. One is a surface of the object; the other is the place text lives precisely because it is not on the object.
@@ -884,7 +894,9 @@ That means `images` carries a `gatefold` type alongside `cover`, `back`, `label`
 
 **Arrows move through the collection without putting the record back.** Browsing a shelf is continuous; being returned to the wall between every record is not. The next record rises as the current one returns.
 
-**The faces carry artwork and nothing else.** Where a photographed back exists it is used. Where one does not — which is most records, since Discogs supplies a front cover and nothing more — the back is **a plain sleeve in the record's stored spine colour**, carrying label and catalogue number as a small imprint and nothing further.
+**The faces carry artwork and nothing else.** Where a `back` photograph exists it is used. Where one does not — which is most records, since Discogs supplies a front cover and nothing more — the back is **a plain sleeve in the record's stored spine colour**, carrying label and catalogue number as a small imprint and nothing further.
+
+The front is the `cover` image. A record with no cover gets a plain sleeve there too, in the same colour, by the same reasoning that gives it a plain spine on the wall: an honest absence rather than a placeholder. Both cases are ordinary and neither is an error state.
 
 That is honest in the way the plain spine is honest: it does not invent a back that was never photographed, it reuses a colour already computed from the record's own cover, and a plain back is a real thing rather than a placeholder. Repeating the front would assert something false, and a stock sleeve texture would be a photograph of someone else's record.
 
