@@ -523,23 +523,29 @@ describe('schema-level guarantees', () => {
      */
     expect(await check('price_type')).toEqual(['new', 'used', 'asking']);
     /**
-     * §4.2 as extended by §10b. `gatefold` was added in 0011 and sits after
-     * `back`, because the order tracks how a sleeve is examined — front, back,
-     * inside, then the detail shots.
+     * §4.2 as amended by A21a. The order tracks how a sleeve is examined —
+     * front, back, inside, then the detail shots — so the two inner leaves sit
+     * together at positions 3 and 4, after `back` and before the close-ups.
      *
      * Asserted against `enumsortorder`, so this pins the POSITION and not only
-     * membership. That matters: `ALTER TYPE ... ADD VALUE` without a
-     * `BEFORE`/`AFTER` clause appends, and an appended `gatefold` would file
-     * the sleeve's own artwork behind close-ups of the dead wax everywhere the
-     * enum order is used.
+     * membership. That matters twice over here: `ALTER TYPE ... ADD VALUE`
+     * without a `BEFORE`/`AFTER` clause appends, and a type REPLACEMENT can
+     * reorder everything silently. Either way the leaves would end up filed
+     * behind close-ups of the dead wax, everywhere the enum order is used.
      *
-     * This assertion did its job when the value was added — it failed, in a
-     * file the unit never opened, which is what a schema-level guarantee is for.
+     * **`gatefold` became two values in migration 0013**, which replaced the
+     * type rather than altering it — Postgres cannot remove an enum value in
+     * place. This assertion failed on that change, which is what it is for; it
+     * was updated deliberately rather than relaxed.
+     *
+     * Left before right, because that is the order a reader meets the two
+     * halves of an open sleeve.
      */
     expect(await check('image_type')).toEqual([
       'cover',
       'back',
-      'gatefold',
+      'gatefold_left',
+      'gatefold_right',
       'label',
       'matrix',
       'other',

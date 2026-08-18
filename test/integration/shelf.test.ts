@@ -395,31 +395,51 @@ describe('shelfRecords — what pulling a record needs (§10b)', () => {
     expect((await shelfRecords())[0].backUrl).toBeNull();
   });
 
-  it('carries a gatefold ONLY when one has been photographed', async () => {
+  it('carries a gatefold ONLY when BOTH leaves have been photographed', async () => {
     /**
-     * §10b: "the state exists only where an inner image has been photographed.
-     * There is no generated stand-in: the point of a gatefold is the artwork
-     * inside it, and a panel of pressing details folded open where a photograph
-     * should be would be inventing the thing the user came to see."
+     * §10b as amended by A21c: "the state exists only where both leaves have
+     * been photographed. One is not enough: a hinge that opens onto artwork on
+     * one side and a blank on the other invents exactly the thing the user came
+     * to see, and it does it in the most conspicuous place possible."
      *
-     * So this field IS the affordance — its presence is what makes the hinge
-     * appear, and nothing else may.
+     * **The one-leaf record is the discriminating case**, and it is why this
+     * test was rewritten rather than renamed. Under the old single-`gatefold`
+     * shape it could not be expressed at all: one image meant one affordance.
+     * A fixture carrying either both leaves or neither cannot tell the new rule
+     * from the old one — both pass it — so the half-photographed record is the
+     * only fixture that constrains anything here.
      */
     const punk = await genre('Punk');
     const plain = await record('No gatefold', await artist('A'), { genreIds: [punk] });
     const folds = await record('Gatefold', await artist('B'), { genreIds: [punk] });
+    const halfShot = await record('Half shot', await artist('C'), { genreIds: [punk] });
 
-    await db.insert(images).values({
-      recordId: folds,
-      url: 'https://blob.example/inner.jpg',
-      imageType: 'gatefold',
-    });
+    await db.insert(images).values([
+      { recordId: folds, url: 'https://blob.example/left.jpg', imageType: 'gatefold_left' },
+      { recordId: folds, url: 'https://blob.example/right.jpg', imageType: 'gatefold_right' },
+      // One leaf and no other: stored, real, and NOT an affordance.
+      { recordId: halfShot, url: 'https://blob.example/lonely.jpg', imageType: 'gatefold_left' },
+    ]);
 
     const shelf = await shelfRecords();
     const byId = new Map(shelf.map((row) => [row.id, row]));
 
-    expect(byId.get(plain)?.gatefoldUrl, 'no inner image, no affordance').toBeNull();
-    expect(byId.get(folds)?.gatefoldUrl).toBe('https://blob.example/inner.jpg');
+    expect(byId.get(plain)?.gatefoldLeftUrl, 'no inner images, no affordance').toBeNull();
+    expect(byId.get(plain)?.gatefoldRightUrl).toBeNull();
+
+    expect(byId.get(folds)?.gatefoldLeftUrl).toBe('https://blob.example/left.jpg');
+    expect(byId.get(folds)?.gatefoldRightUrl).toBe('https://blob.example/right.jpg');
+
+    /**
+     * The half-photographed record keeps its image — it is a real photograph of
+     * a real record and still belongs in the gallery — but the other leaf is
+     * absent, and §10b's rule is that the hinge needs both.
+     */
+    expect(byId.get(halfShot)?.gatefoldLeftUrl).toBe('https://blob.example/lonely.jpg');
+    expect(
+      byId.get(halfShot)?.gatefoldRightUrl,
+      'one leaf is stored but must not open the sleeve',
+    ).toBeNull();
   });
 
   it('carries the pressing and purchase fields the back face renders', async () => {
@@ -486,7 +506,7 @@ describe('shelfRecords — what pulling a record needs (§10b)', () => {
     const punk = await genre('Punk');
     const id = await record('Hear Nothing', await artist('Discharge'), { genreIds: [punk] });
 
-    for (const type of ['cover', 'back', 'gatefold'] as const) {
+    for (const type of ['cover', 'back', 'gatefold_left', 'gatefold_right'] as const) {
       await db.insert(images).values({
         recordId: id,
         url: `https://blob.example/${type}.jpg`,

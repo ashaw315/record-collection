@@ -14,7 +14,7 @@ function image(id: string, imageType: string | null, createdAt = '2026-01-01T00:
 }
 
 describe('IMAGE_TYPE_ORDER', () => {
-  it('runs cover, back, gatefold, label, matrix, other', () => {
+  it('runs cover, back, both gatefold leaves, label, matrix, other', () => {
     /**
      * Not alphabetical and not the enum's declaration order by accident — this
      * is the order someone examines a record in: the front first, then the
@@ -27,7 +27,15 @@ describe('IMAGE_TYPE_ORDER', () => {
      * would bury the thing a gatefold exists for. The rule this test states did
      * not change — the new state was placed by it.
      */
-    expect(IMAGE_TYPE_ORDER).toEqual(['cover', 'back', 'gatefold', 'label', 'matrix', 'other']);
+    expect(IMAGE_TYPE_ORDER).toEqual([
+      'cover',
+      'back',
+      'gatefold_left',
+      'gatefold_right',
+      'label',
+      'matrix',
+      'other',
+    ]);
   });
 });
 
@@ -138,14 +146,21 @@ describe('gatefold — §10b\'s third state', () => {
      */
     const order = [...IMAGE_TYPE_ORDER];
 
-    expect(order.indexOf('gatefold')).toBeGreaterThan(order.indexOf('back'));
-    expect(order.indexOf('gatefold')).toBeLessThan(order.indexOf('label'));
+    expect(order.indexOf('gatefold_left')).toBeGreaterThan(order.indexOf('back'));
+    expect(order.indexOf('gatefold_right')).toBeLessThan(order.indexOf('label'));
+    // Adjacent, and left before right: the two halves of one spread belong
+    // together and in the order a reader meets them.
+    expect(order.indexOf('gatefold_right') - order.indexOf('gatefold_left')).toBe(1);
   });
 
   it('carries a heading of its own', () => {
     // "Gatefold" rather than "Inside": the collector's word, and it says the
     // sleeve folds rather than describing where the photo was taken.
-    expect(imageTypeLabel('gatefold')).toMatch(/gatefold/i);
+    expect(imageTypeLabel('gatefold_left')).toMatch(/gatefold/i);
+    expect(imageTypeLabel('gatefold_right')).toMatch(/gatefold/i);
+    // Distinguishable, because a gallery of six photographs has to say which
+    // half of the spread each one is.
+    expect(imageTypeLabel('gatefold_left')).not.toBe(imageTypeLabel('gatefold_right'));
   });
 
   it('groups a gatefold image rather than dropping it as unknown', () => {
@@ -159,14 +174,14 @@ describe('gatefold — §10b\'s third state', () => {
       {
         id: 'g1',
         url: 'https://blob.example/inner.jpg',
-        imageType: 'gatefold',
+        imageType: 'gatefold_left',
         caption: null,
         createdAt: '2026-08-17T00:00:00Z',
       },
     ]);
 
     expect(groups).toHaveLength(1);
-    expect(groups[0].type).toBe('gatefold');
+    expect(groups[0].type).toBe('gatefold_left');
     expect(groups[0].images).toHaveLength(1);
   });
 });

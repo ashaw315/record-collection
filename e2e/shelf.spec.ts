@@ -143,13 +143,16 @@ test('clicking a spine pulls the record out, and turning shows the back', async 
 
 test('the gatefold affordance is absent without an inner image', async ({ page }) => {
   /**
-   * §10b's strictest rule: "the state exists only where an inner image has been
-   * photographed. There is no generated stand-in: the point of a gatefold is
-   * the artwork inside it, and a panel of pressing details folded open where a
-   * photograph should be would be inventing the thing the user came to see."
+   * §10b's strictest rule, as amended by A21c: "the state exists only where
+   * BOTH leaves have been photographed. One is not enough: a hinge that opens
+   * onto artwork on one side and a blank on the other invents exactly the thing
+   * the user came to see."
    *
-   * So the ABSENCE is the assertion. A record with no inner photograph has two
-   * faces and nothing suggests otherwise.
+   * So the ABSENCE is the assertion. This record has no inner photographs at
+   * all, which is the ordinary case; the half-photographed case — one leaf and
+   * not the other — is the discriminating one and is pinned at the unit level,
+   * in `faces.test.ts` and `shelf.test.ts`, where a fixture can be built
+   * without uploading two files through the UI.
    */
   const title = `Plain ${suffix()}`;
   await seedRecord(page, title);

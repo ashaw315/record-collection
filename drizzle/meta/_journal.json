@@ -92,6 +92,13 @@
       "when": 1786977384336,
       "tag": "0012_records_spine_colour",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1787057367864,
+      "tag": "0013_image_type_gatefold_split",
+      "breakpoints": true
     }
   ]
 }

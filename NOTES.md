@@ -8125,3 +8125,46 @@ have come first — the round trip closes to the digit (`-7.75deg` out, `-7.75de
 back) and the angle holds. But it proved the CODE was right, which is only half
 the question; the other half was in the test, and the message had already
 answered it.
+
+---
+
+## Step 13 unit 14 — the gatefold enum split
+
+**The three toolchain hazards NOTES already records all held, and following them
+cost nothing.** `drizzle-kit generate` produced a correct type replacement for an
+enum value REMOVAL — via `text` rather than 0005's `_new` type, but equivalent —
+so hand-writing the SQL was never necessary. Renaming the file and fixing the
+journal tag afterwards is the whole of the extra work, and `git add drizzle/`
+went in the same commit as the rename rather than after a test failure.
+
+**`ALTER TYPE ... SET DATA TYPE text` then back is the drizzle-kit shape.** 0005
+went via a parallel `_new` type because it had rows to remap in the `USING`
+clause. With no rows to remap, the text round-trip is simpler and the `USING`
+cast is a plain re-cast. Both are correct; the difference is whether a mapping
+decision has to live inside the migration.
+
+**The count that mattered came from production, not from the test database.**
+Local held 0 rows because it is truncated between runs — a number that would
+have looked like confirmation and proved nothing. Neon test held 2 `cover`, dev
+held 3 `cover`, production 2 `cover`; zero `gatefold` anywhere. The value being
+removed had never been used, so the hard case — a `gatefold` row that could be
+either leaf, with nothing in the data to say which — did not arise.
+
+**Both remote databases were migrated inside this unit.** The drift hazard is
+recorded three times in this file and was still worth doing explicitly: neither
+`drizzle-kit migrate` nor any test would have applied the DDL to the Neon test
+branch or to dev. All three now return the identical `enum_range`, verified by
+query rather than by a success line.
+
+**A schema change is a behaviour change when the schema encodes a rule.**
+Splitting one value into two turned "the affordance is this field's presence"
+into "the affordance is BOTH fields' presence" (§10b A21c), which meant
+`FaceSources`, `ShelfRecord`, the shelf query and `availableFaces` all changed
+shape. The migration was the small half.
+
+**The discriminating fixture is the half-photographed record.** A record with
+both leaves or neither passes under the old rule and the new one alike — they
+agree on those cases. Only one leaf and not the other separates them, and under
+the previous single-`gatefold` shape that case was not even representable. Same
+family as the tilt's round trip: a fixture where two designs agree cannot tell
+them apart.

@@ -31,9 +31,11 @@ import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_BYTES, sniffImageType } from '@/lib/sto
 /** §4.2's enum, restated at the boundary so an unknown value is a 400 not a 500. */
 const metadataSchema = z
   .object({
-    // §4.2 as extended by §10b. Kept in step with `imageType` in db/schema.ts
+    // §4.2 as amended by A21a. Kept in step with `imageType` in db/schema.ts
     // and IMAGE_TYPE_ORDER in gallery-order.ts — three lists, one enum.
-    imageType: z.enum(['cover', 'back', 'gatefold', 'label', 'matrix', 'other']).optional(),
+    imageType: z
+      .enum(['cover', 'back', 'gatefold_left', 'gatefold_right', 'label', 'matrix', 'other'])
+      .optional(),
     caption: z.string().trim().min(1).max(500).optional(),
   })
   .strict();

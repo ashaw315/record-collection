@@ -120,7 +120,7 @@ describe('POST /api/records/:id/images', () => {
     expect(body.caption).toBe('A-side runout');
   });
 
-  it('accepts gatefold, §10b\'s third sleeve state', async () => {
+  it('accepts both gatefold leaves, §10b\'s third sleeve state', async () => {
     /**
      * **The round trip is the point.** `image_type` is enumerated in THREE
      * independent places — the Postgres type, Drizzle's `pgEnum`, and the
@@ -139,16 +139,16 @@ describe('POST /api/records/:id/images', () => {
     const response = await upload(
       recordId,
       fileForm(JPEG_BYTES, 'inner.jpg', 'image/jpeg', {
-        imageType: 'gatefold',
+        imageType: 'gatefold_left',
         caption: 'Inner spread',
       }),
     );
 
     expect(response.status, 'the z.enum must accept it').toBe(201);
-    expect((await response.json()).imageType).toBe('gatefold');
+    expect((await response.json()).imageType).toBe('gatefold_left');
 
     const [row] = await db.select().from(images);
-    expect(row.imageType, 'and the Postgres enum must hold it').toBe('gatefold');
+    expect(row.imageType, 'and the Postgres enum must hold it').toBe('gatefold_left');
   });
 
   it('rejects an image_type outside §4.2’s enum (validation failure)', async () => {

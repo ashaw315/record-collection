@@ -10,14 +10,18 @@
  * §4.2's types in the order a sleeve is examined: front, back, inside, then the
  * detail shots.
  *
- * `gatefold` (§10b) sits after `back` rather than at the end — it is the
- * sleeve's own artwork, and filing it behind close-ups of the dead wax would
- * bury the thing a gatefold exists for.
+ * The two gatefold leaves (§10b, A21a) sit together after `back` rather than at
+ * the end — they are the sleeve's own artwork, and filing them behind close-ups
+ * of the dead wax would bury the thing a gatefold exists for.
+ *
+ * Left before right, because that is the order a reader meets them on an open
+ * sleeve rather than an alphabetical accident.
  */
 export const IMAGE_TYPE_ORDER = [
   'cover',
   'back',
-  'gatefold',
+  'gatefold_left',
+  'gatefold_right',
   'label',
   'matrix',
   'other',
@@ -40,8 +44,11 @@ const LABELS: Record<GalleryImageType, string> = {
   cover: 'Cover',
   back: 'Back',
   // The collector's word, and it says the sleeve FOLDS rather than describing
-  // where the photograph was taken — "Inside" would do the latter.
-  gatefold: 'Gatefold',
+  // where the photograph was taken — "Inside" would do the latter. Two leaves
+  // since A21a, distinguished because a reader looking at a gallery of six
+  // photographs needs to know which half of the spread each one is.
+  gatefold_left: 'Gatefold (left)',
+  gatefold_right: 'Gatefold (right)',
   label: 'Label',
   // Spelled out: a heading reading just "Matrix" invites confusion with the
   // catalog number, and §4.2's column is `matrix_runout` — this is the dead wax.

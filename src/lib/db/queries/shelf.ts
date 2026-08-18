@@ -55,12 +55,17 @@ export type ShelfRecord = {
   coverUrl: string | null;
   backUrl: string | null;
   /**
-   * §10b: the gatefold "state exists only where an inner image has been
-   * photographed. There is no generated stand-in." This field IS the
-   * affordance — its presence is what makes the hinge appear, and nothing else
-   * may.
+   * §10b as amended by A21c: the hinge "exists only where BOTH leaves have been
+   * photographed. One is not enough: a hinge that opens onto artwork on one
+   * side and a blank on the other invents exactly the thing the user came to
+   * see."
+   *
+   * Two fields rather than one, so the half-photographed record is
+   * representable. A single url could not distinguish "both leaves" from "one
+   * leaf", and the affordance rule turns on exactly that difference.
    */
-  gatefoldUrl: string | null;
+  gatefoldLeftUrl: string | null;
+  gatefoldRightUrl: string | null;
 
   matrixRunout: string | null;
   yearPressed: number | null;
@@ -143,7 +148,7 @@ export async function shelfRecords(): Promise<ShelfRecord[]> {
     image AS (
       SELECT DISTINCT ON (record_id, image_type) record_id, image_type, url
       FROM images
-      WHERE image_type IN ('cover', 'back', 'gatefold')
+      WHERE image_type IN ('cover', 'back', 'gatefold_left', 'gatefold_right')
       ORDER BY record_id, image_type, created_at ASC, id
     )
     SELECT
@@ -156,7 +161,8 @@ export async function shelfRecords(): Promise<ShelfRecord[]> {
       rec.spine_colour AS "spineColour",
       cover.url AS "coverUrl",
       back.url AS "backUrl",
-      gate.url AS "gatefoldUrl",
+      gateL.url AS "gatefoldLeftUrl",
+      gateR.url AS "gatefoldRightUrl",
       p.matrix_runout AS "matrixRunout",
       p.year_pressed AS "yearPressed",
       p.country_pressed AS "countryPressed",
@@ -177,7 +183,8 @@ export async function shelfRecords(): Promise<ShelfRecord[]> {
     LEFT JOIN record_stores st ON st.id = rec.store_id
     LEFT JOIN image cover ON cover.record_id = rec.id AND cover.image_type = 'cover'
     LEFT JOIN image back  ON back.record_id  = rec.id AND back.image_type  = 'back'
-    LEFT JOIN image gate  ON gate.record_id  = rec.id AND gate.image_type  = 'gatefold'
+    LEFT JOIN image gateL ON gateL.record_id = rec.id AND gateL.image_type = 'gatefold_left'
+    LEFT JOIN image gateR ON gateR.record_id = rec.id AND gateR.image_type = 'gatefold_right'
     LEFT JOIN section s ON s.record_id = rec.id
     /**
      * Genre groups alphabetically, with ungrouped records LAST — they are the
@@ -217,7 +224,8 @@ export async function shelfRecords(): Promise<ShelfRecord[]> {
     spineColour: row.spineColour,
     coverUrl: row.coverUrl,
     backUrl: row.backUrl,
-    gatefoldUrl: row.gatefoldUrl,
+    gatefoldLeftUrl: row.gatefoldLeftUrl,
+    gatefoldRightUrl: row.gatefoldRightUrl,
     matrixRunout: row.matrixRunout,
     yearPressed: row.yearPressed,
     countryPressed: row.countryPressed,

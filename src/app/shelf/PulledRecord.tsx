@@ -342,12 +342,20 @@ export function PulledRecord({
                 data-panel="gatefold"
                 className="record-face-open relative aspect-square w-full overflow-hidden rounded-xs bg-card shadow-2xl"
               >
-                {record.gatefoldUrl === null ? (
+                {record.gatefoldLeftUrl === null ? (
                   <ComposedBack record={record} />
                 ) : (
+                  /*
+                    The LEFT leaf, and only because the hinge is not built yet:
+                    §10b's open sleeve shows both leaves rotating about their
+                    shared edge, which is the renderer's unit rather than this
+                    one. Reaching the gatefold face at all requires BOTH leaves
+                    (`availableFaces`), so a record here always has a right leaf
+                    too — it is simply not drawn until the hinge exists.
+                  */
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={record.gatefoldUrl}
+                    src={record.gatefoldLeftUrl}
                     alt={`Inside of ${record.title}`}
                     data-testid="pulled-image"
                     className="h-full w-full object-cover"

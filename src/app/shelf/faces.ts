@@ -17,10 +17,17 @@
 
 export type Face = 'front' | 'back' | 'gatefold';
 
-/** What the record has to show — the gatefold url IS the affordance. */
+/**
+ * What the record has to show.
+ *
+ * **Two leaves rather than one inner url**, because §10b's affordance turns on
+ * having BOTH: a single field could not distinguish a fully photographed
+ * gatefold from a half-photographed one, and that difference is the rule.
+ */
 export type FaceSources = {
   backUrl: string | null;
-  gatefoldUrl: string | null;
+  gatefoldLeftUrl: string | null;
+  gatefoldRightUrl: string | null;
 };
 
 export type Gesture = 'turn' | 'open' | 'close';
@@ -32,16 +39,23 @@ export type Gesture = 'turn' | 'open' | 'close';
  * is a two-sided object from the day it is entered" — a record with no
  * photographs still turns over, because the back composes from stored fields.
  *
- * **Gatefold only where an inner image has been photographed.** There is no
- * generated stand-in: folding a sleeve open onto a panel of pressing details
- * would invent the artwork the reader opened it to see. A photographed BACK
- * does not qualify — a back and an inner spread are different surfaces, and
- * only one of them folds.
+ * **Gatefold only where BOTH leaves have been photographed** (§10b as amended
+ * by A21c). One is not enough: a hinge opening onto artwork on one side and a
+ * blank on the other invents exactly the thing the reader came to see, in the
+ * most conspicuous place available. The lone leaf is still stored and still
+ * appears in the gallery — it is a real photograph — it simply does not open
+ * the sleeve.
+ *
+ * A photographed BACK does not qualify either: a back and an inner spread are
+ * different surfaces, and only one of them folds.
  */
 export function availableFaces(sources: FaceSources): Face[] {
-  return sources.gatefoldUrl === null
-    ? ['front', 'back']
-    : ['front', 'back', 'gatefold'];
+  return hasGatefold(sources) ? ['front', 'back', 'gatefold'] : ['front', 'back'];
+}
+
+/** Both leaves, or no hinge. Neither leaf is privileged over the other. */
+function hasGatefold(sources: FaceSources): boolean {
+  return sources.gatefoldLeftUrl !== null && sources.gatefoldRightUrl !== null;
 }
 
 export function nextFace(current: Face, gesture: Gesture, sources: FaceSources): Face {
@@ -72,7 +86,7 @@ export function nextFace(current: Face, gesture: Gesture, sources: FaceSources):
    * and requiring it front-side up first would be a rule about the software
    * rather than about the object.
    */
-  if (sources.gatefoldUrl === null) return current;
+  if (!hasGatefold(sources)) return current;
 
   return current === 'gatefold' ? 'front' : 'gatefold';
 }

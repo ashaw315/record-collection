@@ -47,18 +47,25 @@ export const conditionGrade = pgEnum('condition_grade', [
 // open listing — and is deliberately NOT in §7.6's value chain.
 export const priceType = pgEnum('price_type', ['new', 'used', 'asking']);
 /**
- * §4.2, extended by §10b. `gatefold` sits after `back` because the order tracks
- * how a sleeve is examined — front, back, inside, then the detail shots.
+ * §4.2 as amended by A21a. The order tracks how a sleeve is examined — front,
+ * back, inside, then the detail shots — so the two inner leaves sit together
+ * after `back` and before the close-ups.
  *
- * Drizzle does not enforce this list against the database; migration 0011 adds
- * the value and `record-images.test.ts` round-trips a real upload, because this
- * list, the Postgres type and the route's `z.enum` are three places that can
- * disagree two-against-one.
+ * **`gatefold` became two values** when §10b specified the inner as two square
+ * photographs rather than one wide spread: a real gatefold inner is continuous,
+ * but photographing it as one shot asks for a picture most phones take badly
+ * and makes the inner the only non-square image in the collection.
+ *
+ * Drizzle does not enforce this list against the database; migration 0013
+ * replaces the type and `record-images.test.ts` round-trips a real upload,
+ * because this list, the Postgres type and the route's `z.enum` are three
+ * places that can disagree two-against-one.
  */
 export const imageType = pgEnum('image_type', [
   'cover',
   'back',
-  'gatefold',
+  'gatefold_left',
+  'gatefold_right',
   'label',
   'matrix',
   'other',

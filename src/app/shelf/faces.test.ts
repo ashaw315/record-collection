@@ -13,8 +13,18 @@ import { availableFaces, nextFace, type Face } from './faces';
  * happen.
  */
 
-const twoSided = { backUrl: null, gatefoldUrl: null };
-const withGatefold = { backUrl: null, gatefoldUrl: 'https://blob.example/inner.jpg' };
+const twoSided = { backUrl: null, gatefoldLeftUrl: null, gatefoldRightUrl: null };
+const withGatefold = {
+  backUrl: null,
+  gatefoldLeftUrl: 'https://blob.example/left.jpg',
+  gatefoldRightUrl: 'https://blob.example/right.jpg',
+};
+/** One leaf photographed and not the other — the case A21c turns on. */
+const halfShot = {
+  backUrl: null,
+  gatefoldLeftUrl: 'https://blob.example/left.jpg',
+  gatefoldRightUrl: null,
+};
 
 describe('availableFaces', () => {
   it('gives every record a front and a back', () => {
@@ -36,10 +46,34 @@ describe('availableFaces', () => {
     expect(availableFaces(withGatefold)).toEqual(['front', 'back', 'gatefold']);
   });
 
+  it('refuses the affordance when only ONE leaf has been photographed', () => {
+    /**
+     * §10b as amended by A21c: "One is not enough: a hinge that opens onto
+     * artwork on one side and a blank on the other invents exactly the thing
+     * the user came to see, and it does it in the most conspicuous place
+     * possible."
+     *
+     * **The discriminating fixture.** A record with both leaves or neither
+     * passes under either rule — the old one-image rule and the new both-leaves
+     * rule agree on those. Only the half-photographed record separates them,
+     * which is why it exists here.
+     *
+     * Fails against `availableFaces`'s guard if it tests either leaf rather
+     * than both.
+     */
+    expect(availableFaces(halfShot)).toEqual(['front', 'back']);
+    expect(
+      availableFaces({ ...halfShot, gatefoldLeftUrl: null, gatefoldRightUrl: 'https://x/r.jpg' }),
+      'and the same the other way round — neither leaf is privileged',
+    ).toEqual(['front', 'back']);
+  });
+
   it('does not add a gatefold for a record that merely has a back photograph', () => {
     // A photographed back is not an inner spread. The two are different images
     // of different surfaces, and only one of them folds.
-    expect(availableFaces({ backUrl: 'https://blob.example/back.jpg', gatefoldUrl: null })).toEqual([
+    expect(
+      availableFaces({ backUrl: 'https://blob.example/back.jpg', gatefoldLeftUrl: null, gatefoldRightUrl: null }),
+    ).toEqual([
       'front',
       'back',
     ]);
