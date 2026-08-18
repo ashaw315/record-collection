@@ -8035,3 +8035,93 @@ than in the app — the app is right and the test's clock is wrong.
 
 Not fixed here per CLAUDE.md §4. The fix is to derive the expected date the same
 way the server does rather than through `toISOString`.
+
+---
+
+## Step 13 unit 13 — the box, and "the DOM answers a different question"
+
+**Four defects in one unit, all the same family, all silent.** Each came from
+asking the DOM for geometry and getting the VISUAL answer when the question was
+about LAYOUT. `getBoundingClientRect` reports what is on screen; `offsetWidth`
+and `offsetLeft` report what was laid out. Under transforms those diverge, and
+nothing warns you.
+
+1. **The tilt's reference rect.** Once the record had real depth under
+   `preserve-3d`, a tilted surface measured 516.8 x 524.5 against its laid-out
+   512 x 512. Feeding that back into the mapping made the angle depend on the
+   angle, so the round trip stopped closing: -7.75deg out, -7.730deg back.
+2. **The edge thickness.** The `ResizeObserver` fired during the RISE, when the
+   box is still scaled to spine size, and measured 15.83px instead of 512. The
+   edges were built from that and stayed 0.39px wide for ever — geometrically
+   present, invisible in every frame.
+3. **The same rect, mid-rise.** Sampled per frame: the box's rect goes 188px ->
+   512px and its x slides 195 -> 384 over ~430ms, while `offsetWidth` is 512 the
+   whole time. A pointer move landing mid-rise mapped against different geometry
+   from the same move landing after it.
+4. **The tilt E2E test, measuring the same way.** It called `boundingBox()`
+   immediately after `waitFor()` — mid-rise — so its computed pointer positions
+   landed outside the settled record and read the CLAMP. The full-suite run
+   caught it as `first` being `--tilt-x: -16deg`, exactly `MAX_TILT_DEGREES`.
+
+   **Worth separating from the other three**: the component had already been
+   corrected for this exact hazard, and the test had not. A fix applied to the
+   code does not propagate to the test that exercises it, and a test measuring
+   geometry needs the same discipline as the code measuring geometry. That the
+   wrong value was the clamp — a round, meaningful constant rather than a
+   plausible near-miss — is what made it diagnosable in one reading.
+
+**The rule: if the element is transformed, `getBoundingClientRect` is not
+measuring the thing you laid out.** Reach for `offsetWidth`/`offsetHeight` and
+walked `offsetLeft`/`offsetTop` whenever the answer must be stable under
+transforms. This is the same family as unit 10's Invert measuring an
+already-inverted element — that one is now five instances, and the fifth was in
+a TEST rather than in the code it covers.
+
+**The half-turn limitation is RETIRED.** NOTES recorded it as an honest cost of
+the old structure: "the new face swings in rather than the old one turning away
+first, because keeping the outgoing face alive to 90 degrees is exactly the
+coordination that could not be made to work." A box has no flag to coordinate,
+so the cost went with the structure. Measured: the flip passes through 54.5deg,
+141.5deg and 172.6deg, settling at exactly 180deg, and the outgoing face is
+fully alive and foreshortened at 25% with its edge visible. The entry that
+described this as a live limitation no longer applies.
+
+---
+
+## RULE: a flake is a defect with a bad error message, and "flaky" is a diagnosis you have to earn
+
+The tilt round-trip test failed once in a full-suite run and passed scoped. I
+treated that as a timing flake and spent **four** attempts tuning how it waited
+— a stability poll, a `transitionend` precondition, a revert, a re-revert — each
+of the first three introducing a new failure mode. CLAUDE.md section 9 says stop
+after two.
+
+**It was never a timing flake. It was a real bug in the test, and the error
+message said so from the first failure:**
+
+```
+Expected: "--tilt-x: 0deg; --tilt-y: 0deg;"
+```
+
+The element ships with `--tilt-x: 0deg; --tilt-y: 0deg` from its React default,
+so `expect.poll(...).toContain('--tilt-y')` is satisfied BEFORE the pointer has
+moved. `first` was captured as the resting value; every later assertion compared
+against it; under load the real angle arrived later and the comparison failed.
+The fix is one line — poll until the style differs from rest.
+
+**What went wrong in the diagnosis.** The word "flake" arrived before the
+evidence did, and it stopped the search: passing scoped and failing in parallel
+LOOKS like a timing problem, so I tuned timing instead of reading the expected
+value. `Expected: "0deg"` is not a timing symptom — it says the baseline is
+wrong — and it was in the very first failure output.
+
+**The check:** before calling anything flaky, read what it expected and ask
+whether that value is what the test intended to capture. A genuine race produces
+two plausible values; a captured-too-early baseline produces a suspiciously
+round one. Related and already recorded: `retries: 1` masking real failures.
+
+Verifying the behaviour directly outside the harness was worth doing and should
+have come first — the round trip closes to the digit (`-7.75deg` out, `-7.75deg`
+back) and the angle holds. But it proved the CODE was right, which is only half
+the question; the other half was in the test, and the message had already
+answered it.

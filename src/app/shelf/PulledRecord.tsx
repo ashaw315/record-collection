@@ -8,6 +8,7 @@ import { availableFaces, nextFace, type Face } from './faces';
 import { riseTransform, riseTransformCss, type Rect } from './rise';
 import { chromeStage } from './chrome';
 import { NO_TILT, tiltFor } from './tilt';
+import { BOX_PANELS, boxRotation, edgeThickness, panelTransform } from './box';
 
 /**
  * §10b: "reduced motion disables all of it. The turn, the rise and the hinge
@@ -101,9 +102,38 @@ export function PulledRecord({
     const surface = tiltSurface.current;
     if (surface === null || prefersReducedMotion()) return;
 
+    /**
+     * **The reference is the record's LAID-OUT geometry, not any visual box.**
+     *
+     * `getBoundingClientRect` reports what is on screen, and on this element
+     * that is a moving target twice over: during the rise the box measures
+     * 188px growing to 512, its x sliding 195 → 384; and once tilted it
+     * measures 516.8 x 524.5 against a laid-out 512, because `preserve-3d`
+     * depth expands the visual bounds. Feeding either back into the mapping
+     * makes the angle depend on the angle, and the round trip stops closing.
+     *
+     * `offsetWidth`/`offsetHeight` are layout size and ignore transforms
+     * entirely; the centre comes from the untransformed OFFSET position walked
+     * up the offset parents. So the reference is the same rectangle whatever
+     * the record is currently doing — mid-rise, tilted, flipped or still.
+     *
+     * Third instance of this family in this feature, after unit 10's Invert
+     * measuring an already-inverted element and the edges measuring 15.8px
+     * mid-rise. Each time: the DOM answers "how does this look" when the
+     * question was "how was this laid out".
+     */
+    const box = surface.querySelector<HTMLElement>('[data-testid="pulled-box"]') ?? surface;
+
+    let left = 0;
+    let top = 0;
+    for (let node: HTMLElement | null = box; node !== null; node = node.offsetParent as HTMLElement | null) {
+      left += node.offsetLeft;
+      top += node.offsetTop;
+    }
+
     const { rotateX, rotateY } = tiltFor(
       { x: event.clientX, y: event.clientY },
-      surface.getBoundingClientRect(),
+      { left, top, width: box.offsetWidth, height: box.offsetHeight },
     );
 
     surface.style.setProperty('--tilt-x', `${rotateX}deg`);
@@ -233,12 +263,6 @@ export function PulledRecord({
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  /** The image for the current face, or `null` when it is composed instead. */
-  const imageFor = (current: Face): string | null =>
-    current === 'front' ? record.coverUrl : current === 'back' ? record.backUrl : record.gatefoldUrl;
-
-  const image = imageFor(face);
-
   return (
     /*
       The shelf dimmed behind it (§10b). Clicking the backdrop closes — the
@@ -291,41 +315,14 @@ export function PulledRecord({
           style={{ perspective: '1400px' }}
         >
           {/*
-            **`key={face}` is the whole mechanism.** Changing it remounts the
-            face, so the browser plays the keyframe from the start and owns the
-            timing completely — React holds no flag, schedules no timer and has
-            no opinion about when the motion is halfway.
-
-            Two earlier attempts coordinated `useState` with a CSS transition
-            and both failed at the same seam: one cleared its flag in the same
-            commit as the content swap and the return leg snapped, the other
-            cancelled its own pending timer through an effect dependency and
-            left the card stuck edge-on. Removing the coordination is not a
-            tidier version of that — it deletes the thing that was wrong.
-
-            The honest cost is that this is a HALF turn: the new face swings in
-            rather than the old one turning away first, because keeping the
-            outgoing face alive to 90° is exactly the coordination that could
-            not be made to work. It reads as the record swinging into view.
-          */}
-          {/*
             **The tilt gets its OWN element, and that is the whole reason it
             works.**
 
-            `record-turn` is a CSS ANIMATION on the face, and an animation's
-            `transform` beats an inline one for as long as it runs — with
-            `both` as its fill mode, that is for ever. A tilt written to the
-            face would therefore be dead on arrival, silently: the record would
-            simply not respond, with nothing to say why.
-
-            Nesting composes them instead of making them compete. This element
-            turns; the face inside it keeps its keyframe untouched. Two
-            rotations, two elements, no shared property and no arbitration.
-
-            Measured, not assumed: at 37ms into the rise the face is at
-            rotateY ~60deg, resolving to identity by 365ms — that keyframe
-            overlaps the rise, which is what unit 11 saw and called a
-            perspective skew. The rest state itself is a true square.
+            Two rotations, two elements, no shared property and no arbitration:
+            this one carries the pointer-driven tilt, the box inside it carries
+            the flip. Unit 12 found the alternative the hard way — a running
+            keyframe's `transform` beats an inline one, so a tilt written to the
+            same element the flip animates would be silently dead.
           */}
           <div
             ref={tiltSurface}
@@ -334,25 +331,32 @@ export function PulledRecord({
             onPointerMove={onPointerMove}
             style={{ '--tilt-x': `${NO_TILT.rotateX}deg`, '--tilt-y': `${NO_TILT.rotateY}deg` } as CSSProperties}
           >
-          <div
-            key={face}
-            data-testid="pulled-face"
-            className={`relative aspect-square w-full overflow-hidden rounded-xs bg-card shadow-2xl ${
-              face === 'gatefold' ? 'record-face-open' : 'record-face-turn'
-            }`}
-          >
-            {image === null ? (
-              <ComposedBack record={record} />
+            {face === 'gatefold' ? (
+              /*
+                The hinge is a different physical act and keeps its own element
+                and its own transform (§10b). It is out of this unit's scope and
+                deliberately not a rotation of the box.
+              */
+              <div
+                data-testid="pulled-face"
+                data-panel="gatefold"
+                className="record-face-open relative aspect-square w-full overflow-hidden rounded-xs bg-card shadow-2xl"
+              >
+                {record.gatefoldUrl === null ? (
+                  <ComposedBack record={record} />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={record.gatefoldUrl}
+                    alt={`Inside of ${record.title}`}
+                    data-testid="pulled-image"
+                    className="h-full w-full object-cover"
+                  />
+                )}
+              </div>
             ) : (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={image}
-                alt={`${FACE_LABEL[face]} of ${record.title}`}
-                data-testid="pulled-image"
-                className="h-full w-full object-cover"
-              />
+              <RecordBox record={record} face={face} />
             )}
-          </div>
           </div>
         </div>
 
@@ -409,6 +413,119 @@ export function PulledRecord({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * §10b's record as an OBJECT: six panels in one `preserve-3d` box.
+ *
+ * **The flip falls out of the geometry rather than being animated onto it.**
+ * The back is not swapped in when the record turns over — it is already there,
+ * behind the front, mirrored and facing outward. Turning the box 180° brings it
+ * round. Nothing is exchanged, so there is no midpoint for React and the
+ * compositor to disagree about, which is what defeated both earlier attempts.
+ *
+ * That also retires the half turn NOTES recorded as an honest cost: the
+ * outgoing face stays alive all the way to 90° and beyond, because it is a
+ * surface of an object rather than the contents of a panel.
+ *
+ * `boxRotation` supplies the angle and the stylesheet transitions it. The angle
+ * is a fact about which way the record faces (§10b as amended) — no duration
+ * attached, not read during the motion, gating nothing.
+ */
+function RecordBox({ record, face }: { record: ShelfRecord; face: Face }) {
+  const [faceSize, setFaceSize] = useState(0);
+  const box = useRef<HTMLDivElement>(null);
+
+  /**
+   * The panels are sized in pixels off the face, so the edges scale with it — a
+   * constant would be proportionally vast mid-rise and hairline once settled.
+   *
+   * **`offsetWidth`, not `getBoundingClientRect`.** The first version used the
+   * rect and measured 15.83px instead of 512: the observer fires during the
+   * RISE, when the box is still scaled down to spine size, and the rect reports
+   * the visual box. The edges were then built from that frame's number and
+   * stayed 0.39px wide for ever — geometrically present, invisible, exactly the
+   * silent no-op this feature keeps producing.
+   *
+   * `offsetWidth` is layout size and ignores transforms entirely, so it answers
+   * "how big is this element" rather than "how big does it currently look".
+   * Third instance of the same family in this feature, after unit 10's Invert
+   * and the tilt's reference rect above.
+   *
+   * Re-measured on resize because the sleeve is `max-w-lg` against a viewport.
+   */
+  useLayoutEffect(() => {
+    const element = box.current;
+    if (element === null) return;
+
+    const measure = () => setFaceSize(element.offsetWidth);
+    measure();
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={box}
+      data-testid="pulled-box"
+      data-face={face}
+      className="record-box relative aspect-square w-full"
+      style={
+        {
+          '--box-turn': `${boxRotation(face)}deg`,
+          '--edge': `${edgeThickness(faceSize)}px`,
+        } as CSSProperties
+      }
+    >
+      {BOX_PANELS.map((panel) => {
+        const transform = panelTransform(panel.name, faceSize);
+
+        if (panel.kind === 'edge') {
+          /*
+            The edges are what make it an object. Lit differently from the faces
+            deliberately — a side the same colour as the front changes the
+            silhouette and nothing else. The same thing the spines already know:
+            thickness reads through lightness, not hue.
+          */
+          return (
+            <div
+              key={panel.name}
+              data-testid={`box-edge-${panel.name}`}
+              className={`record-edge record-edge-${panel.name}`}
+              style={{ transform }}
+            />
+          );
+        }
+
+        const isFront = panel.name === 'front';
+        const image = isFront ? record.coverUrl : record.backUrl;
+
+        return (
+          <div
+            key={panel.name}
+            data-testid={isFront ? 'pulled-face' : 'pulled-back-face'}
+            data-panel={panel.name}
+            className="record-panel absolute inset-0 overflow-hidden rounded-xs bg-card shadow-2xl"
+            style={{ transform }}
+          >
+            {image === null ? (
+              <ComposedBack record={record} />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={image}
+                alt={`${isFront ? FACE_LABEL.front : FACE_LABEL.back} of ${record.title}`}
+                data-testid={isFront ? 'pulled-image' : 'pulled-back-image'}
+                className="h-full w-full object-cover"
+              />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

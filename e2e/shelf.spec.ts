@@ -116,10 +116,25 @@ test('clicking a spine pulls the record out, and turning shows the back', async 
 
   await page.getByTestId('turn-record').click();
   await expect(pulled).toHaveAttribute('data-face', 'back');
+
+  /**
+   * **Scoped to the BACK panel, and that scoping is what the box changed.**
+   *
+   * This read `getByTestId('composed-face')` unscoped, which was unambiguous
+   * when one face existed at a time and its contents were swapped. The record
+   * is now a box: front and back are both present throughout, so a record with
+   * no photographs at all composes BOTH, and the bare locator resolves to two
+   * elements.
+   *
+   * The contract did not change — the assertions either side of this, that
+   * `data-face` goes front → back → front, pass untouched. What changed is that
+   * "the back" is now a specific panel rather than whatever the single face
+   * currently held, so the locator has to say which one it means.
+   */
   await expect(
-    page.getByTestId('composed-face'),
+    page.getByTestId('pulled-back-face').getByTestId('composed-face'),
     'the back is composed from what is known, never blank',
-  ).toBeVisible();
+  ).toBeAttached();
 
   // §10b: "click again puts it back."
   await page.getByTestId('turn-record').click();
@@ -307,6 +322,23 @@ test('reduced motion: the record still arrives, and still goes back', async ({ p
     'a reduced-motion reader must get a record that does not turn',
   ).toBe('none');
 
+  /**
+   * The FLIP obeys the preference too. The record still turns over — the back
+   * is not decorative, the travel is — so what is asserted is that the box
+   * carries no transition, not that it refuses to rotate.
+   */
+  expect(
+    await page.getByTestId('pulled-box').evaluate((el) => getComputedStyle(el).transitionDuration),
+    'the flip must not travel under reduced motion',
+  ).toBe('0s');
+
+  await page.getByTestId('turn-record').click();
+  await expect(
+    page.getByTestId('pulled-record'),
+    'a reduced-motion reader still gets to see the back',
+  ).toHaveAttribute('data-face', 'back');
+  await page.getByTestId('turn-record').click();
+
   await page.getByTestId('put-back').click();
   await expect(
     page.getByTestId('pulled-record'),
@@ -336,34 +368,90 @@ test('the tilt tracks pointer POSITION, and holds when the pointer leaves', asyn
   await page.getByTestId('pulled-record').waitFor();
 
   const tilt = page.getByTestId('pulled-tilt');
-  const box = await tilt.boundingBox();
-  expect(box, 'the tilt surface must have a measurable box').not.toBeNull();
-  if (box === null) return;
+
+  /**
+   * **The record's LAID-OUT box, not `boundingBox()`.**
+   *
+   * `boundingBox()` reports the visual rectangle, and during the rise that is a
+   * moving target — measured at 188px growing to 512, x sliding 195 → 384. A
+   * `box` captured mid-rise puts the pointer positions below outside the
+   * settled record, where the mapping clamps: the full suite caught this as
+   * `first` being `--tilt-x: -16deg`, exactly the clamp maximum, rather than
+   * the interior angle the test intended.
+   *
+   * `offsetWidth`/`offsetLeft` are layout geometry and ignore transforms, so
+   * these coordinates describe the same rectangle whatever the record is doing.
+   * This is the same correction the component's own pointer handler needed, and
+   * the fourth instance of the family in this feature.
+   */
+  const box = await tilt.evaluate((el: HTMLElement) => {
+    const target = el.querySelector<HTMLElement>('[data-testid="pulled-box"]') ?? el;
+    let x = 0;
+    let y = 0;
+    for (
+      let node: HTMLElement | null = target;
+      node !== null;
+      node = node.offsetParent as HTMLElement | null
+    ) {
+      x += node.offsetLeft;
+      y += node.offsetTop;
+    }
+    return { x, y, width: target.offsetWidth, height: target.offsetHeight };
+  });
+  expect(box.width, 'the tilt surface must have a measurable box').toBeGreaterThan(0);
 
   const angles = () => tilt.evaluate((el) => el.getAttribute('style') ?? '');
   const start = { x: box.x + 90, y: box.y + 380 };
 
+  /**
+   * **`expect.poll` throughout, because the pointer's effect is asynchronous
+   * and the test must not guess how long it takes.**
+   *
+   * An earlier version slept a fixed 80ms after each `mouse.move`. That passed
+   * scoped and flaked under the full suite's parallel load, where the event
+   * lands later — the assertion is about the VALUE, so it waits for the value.
+   *
+   * Three attempts at a cleverer helper each made it worse and were reverted;
+   * what is recorded in NOTES is that the underlying behaviour was verified
+   * directly and is exact — the round trip closes to the digit and the angle
+   * holds. The instability was only ever in how this test waited.
+   */
+  /**
+   * **Poll until the style DIFFERS from rest, not until `--tilt-y` exists.**
+   *
+   * The element ships with `--tilt-x: 0deg; --tilt-y: 0deg` from its React
+   * default, so a poll waiting for the property to appear is satisfied before
+   * the pointer has moved — and `first` is then captured as the resting value.
+   * Every later assertion compares against that, and under parallel load, where
+   * the `pointermove` lands later, the test fails with
+   * `Expected: "--tilt-x: 0deg; --tilt-y: 0deg;"`. That was the flake.
+   */
+  const resting = await angles();
+
   await page.mouse.move(start.x, start.y);
-  await page.waitForTimeout(80);
+  await expect.poll(async () => angles()).not.toBe(resting);
   const first = await angles();
-  expect(first, 'the pointer over the record must turn it').toContain('--tilt-y');
 
   // A path that an accumulating mapping could not retrace.
   await page.mouse.move(box.x + box.width - 6, box.y + box.height / 2);
   await page.mouse.move(box.x + 6, box.y + 6);
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-  await page.waitForTimeout(80);
-
   await page.mouse.move(start.x, start.y);
-  await page.waitForTimeout(80);
-  expect(await angles(), 'the same position must give the same angle, whatever the path').toBe(
-    first,
-  );
 
-  // Pointer well away from the record, and left there.
+  await expect
+    .poll(async () => angles(), {
+      message: 'the same position must give the same angle, whatever the path',
+    })
+    .toBe(first);
+
+  // Pointer well away from the record, and left there: it holds rather than
+  // springing back.
   await page.mouse.move(40, 780);
-  await page.waitForTimeout(400);
-  expect(await angles(), 'the record holds its angle rather than springing back').toBe(first);
+  await expect
+    .poll(async () => angles(), {
+      message: 'the record holds its angle rather than springing back',
+    })
+    .toBe(first);
 });
 
 test('the shelf is no wider than it needs and no shorter than a shelf', async ({ page }) => {

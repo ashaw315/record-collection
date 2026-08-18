@@ -260,6 +260,91 @@
   will-change: transform;
 }
 
+/**
+ * §10b's record as an OBJECT — six panels, one box, real thickness.
+ *
+ * Unit 12 shipped a convincing rotation of an unconvincing thing: at 16° the
+ * silhouette was a pale face meeting a dark background with no side anywhere.
+ * This is the geometry that fixes it, and the flip falls out of it.
+ *
+ * **The turn is a rotation of the box, not a swap of a panel's contents.** Both
+ * faces exist throughout, so nothing is exchanged at the midpoint and no flag
+ * says which side is showing — which is what defeated the two earlier attempts.
+ * The outgoing face stays alive through 90° and past it, because it is a
+ * surface of an object rather than the contents of a div. That retires the half
+ * turn NOTES recorded as an honest cost of the old structure.
+ *
+ * The duration lives here and nowhere else, like every other duration in this
+ * feature.
+ */
+.record-box {
+  transform: rotateY(var(--box-turn, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 620ms cubic-bezier(0.33, 0, 0.2, 1);
+  will-change: transform;
+}
+
+/*
+  Faces and edges alike sit on the box's own centre and are placed by their
+  transforms. `backface-visibility` is what stops the front showing through from
+  behind once the box passes 90° — without it the record turns into a ghost of
+  its own front face for the second half of every flip.
+*/
+.record-panel,
+.record-edge {
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+/**
+ * The sleeve's four edges.
+ *
+ * **Lit, not merely present.** A side face the same colour as the front changes
+ * the silhouette and little else — thickness reads through LIGHTNESS variation,
+ * which is exactly what already makes the spines legible on the wall. The left
+ * and right edges are darker than the top and bottom because a sleeve lit from
+ * above catches its horizontal edges and shades its vertical ones.
+ *
+ * `--edge` is the measured thickness in pixels, derived from the face's own
+ * rendered size so the box stays proportionate at every point in the rise.
+ */
+.record-edge {
+  position: absolute;
+  background: #2a2724;
+}
+
+.record-edge-left,
+.record-edge-right {
+  top: 0;
+  left: 50%;
+  width: var(--edge, 0px);
+  height: 100%;
+  margin-left: calc(var(--edge, 0px) / -2);
+  background: linear-gradient(to bottom, #3a3531 0%, #211e1b 55%, #2e2a26 100%);
+}
+
+.record-edge-top,
+.record-edge-bottom {
+  left: 0;
+  top: 50%;
+  width: 100%;
+  height: var(--edge, 0px);
+  margin-top: calc(var(--edge, 0px) / -2);
+  background: linear-gradient(to right, #453f3a 0%, #2b2724 60%, #383330 100%);
+}
+
+/*
+  §10b: "reduced motion disables all of it." The record still turns over — the
+  back is not decorative, the motion is — it simply arrives without travelling,
+  so nothing is left mid-rotation.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .record-box {
+    transition: none;
+    will-change: auto;
+  }
+}
+
 /*
   §10b: "reduced motion disables all of it." The record sits face-on and does
   not respond to the pointer. The handler checks the preference too and never

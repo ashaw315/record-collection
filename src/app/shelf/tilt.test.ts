@@ -131,6 +131,33 @@ describe('tiltFor — where the pointer points', () => {
   });
 });
 
+describe('the rect it measures against must not be the tilted one', () => {
+  it('gives a different angle when the rect grows, which is why the rect must be stable', () => {
+    /**
+     * **The regression the box exposed, kept as the test that explains it.**
+     *
+     * `getBoundingClientRect` reports the VISUAL box. Once the record became a
+     * box with real depth under `preserve-3d`, a tilted record measured LARGER
+     * than an untilted one — 516.8 x 524.5 against 512 x 512, and offset — so
+     * feeding that live rect back into the mapping made the angle depend on the
+     * angle. The round trip stopped closing: -7.75deg out, -7.730deg back.
+     *
+     * `tiltFor` is pure and was never wrong; what was wrong was the rect handed
+     * to it. This pins the CONSEQUENCE so the reason is not lost: the same
+     * pointer over two different rects gives two different angles, therefore the
+     * rect must be the record's stable untilted geometry, measured once.
+     *
+     * Same family as unit 10's Invert measuring an already-inverted element.
+     * Both are "the DOM reports what is on screen, not what you laid out".
+     */
+    const settled: Rect = { left: 384, top: 144, width: 512, height: 512 };
+    const whileTilted: Rect = { left: 390.26, top: 114.5, width: 516.84, height: 524.54 };
+    const pointer = { x: settled.left + 90, y: settled.top + 380 };
+
+    expect(tiltFor(pointer, whileTilted)).not.toEqual(tiltFor(pointer, settled));
+  });
+});
+
 describe('NO_TILT', () => {
   it('is face-on, for the reduced-motion reader and the untouched record', () => {
     /**
