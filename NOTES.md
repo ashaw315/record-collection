@@ -8168,3 +8168,96 @@ agree on those cases. Only one leaf and not the other separates them, and under
 the previous single-`gatefold` shape that case was not even representable. Same
 family as the tilt's round trip: a fixture where two designs agree cannot tell
 them apart.
+
+---
+
+## Step 13 unit 15 — one static textured plane
+
+**`three@0.185.1` (r185), and the hazard note's boundary was thirty releases
+back.** The note says: if the texture is washed out, that is
+`texture.encoding` (r128) versus `texture.colorSpace` (r152+). Verified against
+the INSTALLED package rather than the note, and the situation has moved past
+what it describes: `sRGBEncoding` and `LinearEncoding` are **gone** — zero
+occurrences in the build, `hasOwnProperty` false — not deprecated. So on r185
+there is no wrong-but-working option to fall into; using the old name is a
+`ReferenceError`, not a washed-out texture.
+
+Also gone, checked in the same pass because thirty releases move more than one
+API: `Geometry` (use `BufferGeometry`), `Face3`, `WebGLMultisampleRenderTarget`,
+`ImmediateRenderObject`. Everything this unit reached for — `WebGLRenderer`,
+`Scene`, `OrthographicCamera`, `PlaneGeometry`, `MeshBasicMaterial`,
+`TextureLoader`, `SRGBColorSpace` — is present.
+
+**Two things WebGL did silently, both discovered rather than reported:**
+
+1. **Reading back from the canvas returns nothing.** `drawImage(webglCanvas)`
+   into a 2D context gave an empty buffer, because the context is created
+   without `preserveDrawingBuffer` and the drawing buffer is cleared after
+   compositing. The probe did not throw — it returned sentinel values that my
+   arithmetic then happily divided, printing `ratio 1.0000` from `-1e9 / -1e9`.
+   **A plausible number from a failed measurement**, which is the worst shape.
+2. **`getImageData` throws `SecurityError` on a blob-hosted texture.** The
+   cross-origin image taints both the WebGL canvas and any 2D canvas the
+   `<img>` is drawn into, so in-page pixel comparison is unavailable entirely.
+
+The way round both: measure from **screenshots** rather than from the canvas.
+Playwright's element screenshot is outside the page's security model and after
+compositing, so it sees what the eye sees.
+
+**The colour check passed and the aspect check found something real.** Mean
+per-channel difference between canvas and source over the whole 420x420
+element: **8.75/255**, with means of `47.9/41.0/32.4` against `46.3/39.3/30.6` —
+about 1.7 levels, where a colour-space error is tens. But `MAX 196` and 20% of
+channels differing by >8 said something else was going on, and it was:
+
+**Covers are not reliably square. This one is 591x599.** `object-cover` CROPS
+the source to fill a square box; a texture map STRETCHES the whole image across
+a square plane. Same file, two different treatments, so a pixel diff shows a
+spatial offset even when every colour matches. Measured separately, the
+rendered plane is **exactly 420x420, ratio 1.0000** — the frustum arithmetic is
+right and the geometry is square; it is the texture that is not.
+
+**The lesson for the next unit:** a per-pixel diff between a canvas and an
+`<img>` is not a colour test unless both are framed identically. Reading that
+offset as a colour problem would have sent someone tuning a colour space that
+was already correct.
+
+**"I touched no existing files" was wrong, and the full E2E run said so.**
+`every-page-has-nav.spec.ts` failed with *"src/app has 10 non-login pages; this
+spec covers 9"* — a vacuity guard that counts `page.tsx` files so a screen
+cannot be added without being checked. Adding a ROUTE changes a contract even
+when no existing file is edited, and the unit's scope claim quietly assumed
+otherwise.
+
+`/plane` is exempted **by name**, alongside `/login`, rather than by bumping the
+count. The distinction matters: an exemption spelled as a larger number is
+invisible, and the next screen added would take the free slot and go unchecked —
+exactly the silent coverage loss the guard exists to prevent. Verified by
+dropping a decoy `page.tsx` in and confirming the guard still fails, then
+removing it and confirming it passes.
+
+The reason `/plane` is exempt rather than listed is that listing it would assert
+it renders the main nav, and it is a development scaffold rather than a screen.
+Giving a scaffold a nav to satisfy a test would make it impersonate a screen,
+which is the shape of dishonesty that suite exists to prevent.
+
+**And the tilt test flaked again, for a THIRD distinct reason — same test, three
+different causes.** Worth listing together, because "it's that flaky test again"
+is exactly the reasoning that would have missed each one:
+
+1. Baseline captured before the pointer moved, because the element ships with
+   `--tilt-y: 0deg` and the poll waited for the property to EXIST.
+2. The reference rect measured mid-rise, so the mapping used geometry that was
+   still moving (unit 13).
+3. **This one: the layout box is the right rect for the MAPPING and the wrong
+   one for AIMING.** Measured mid-rise it reads (384,121) 512x512 while the
+   record is visually at (863,452) 188x281 — so the pointer landed on the scroll
+   wrapper, no `pointermove` reached the tilt surface, and the poll timed out
+   having never seen an angle at all.
+
+The general shape: **"where does the mapping measure from" and "where is the
+element on screen right now" are different questions, and one value cannot
+answer both.** Unit 13 correctly made the mapping use layout geometry precisely
+BECAUSE the visual box moves; this test then inherited that value for a purpose
+that needs the visual box. Fixed by polling until the two agree, which is the
+browser saying the rise is over — no duration in the test.

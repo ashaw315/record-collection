@@ -25,6 +25,19 @@ import { expect, test, type Page } from '@playwright/test';
  *
  * `/login` is exempt: it is the unauthenticated screen and its nav would link
  * to pages the visitor cannot reach.
+ *
+ * `/plane` is exempt for a different reason: it is a DEVELOPMENT SCAFFOLD, not
+ * a screen. §10b's renderer is being proven one piece at a time (step 13 unit
+ * 15), and that route exists to put a textured plane beside its source image so
+ * a human can compare them. Nothing links to it, nobody navigates to it, and
+ * giving it a nav to satisfy this test would make a scaffold impersonate a
+ * screen — which is the shape of dishonesty this suite exists to prevent, not
+ * an example of it.
+ *
+ * **Exempted by name, never by bumping the count.** An exemption that reads as
+ * a larger number is invisible: the next screen added would take the free slot
+ * and go unchecked, which is precisely the silent coverage loss the vacuity
+ * guard below was written to stop.
  */
 
 const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
@@ -70,11 +83,12 @@ test.beforeEach(async ({ page }) => {
 test('the route list has not fallen behind the app', async () => {
   /**
    * The vacuity guard, and it is doing the job the old test's directory walk
-   * did. `src/app` has 11 `page.tsx` files: the eight static routes above, the
-   * two record routes covered below, and `/login`, which is exempt.
+   * did. `src/app` has 12 `page.tsx` files: the seven static routes above, the
+   * two record routes covered below, and two exempt — `/login` and `/plane`.
    *
    * If a screen is added and not listed here, this fails — which is the whole
-   * reason the count is asserted rather than left implicit.
+   * reason the count is asserted rather than left implicit. It did exactly that
+   * when `/plane` was added, in a file that unit never opened.
    */
   const { readdirSync, statSync } = await import('node:fs');
   const { join } = await import('node:path');
@@ -89,7 +103,8 @@ test('the route list has not fallen behind the app', async () => {
     return found;
   };
 
-  const pages = findPages('src/app').filter((p) => !p.includes(join('app', 'login')));
+  const EXEMPT = [join('app', 'login'), join('app', 'plane')];
+  const pages = findPages('src/app').filter((p) => !EXEMPT.some((dir) => p.includes(dir)));
 
   expect(
     pages.length,

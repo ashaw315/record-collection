@@ -431,6 +431,29 @@ test('the tilt tracks pointer POSITION, and holds when the pointer leaves', asyn
    */
   const resting = await angles();
 
+  /**
+   * **Wait for the rise to finish before AIMING a pointer.**
+   *
+   * The box above is layout geometry, which is right for the mapping — the
+   * tilt's reference rect must not move as the record moves (unit 13). But it
+   * is wrong for deciding where to put a real cursor while the record is still
+   * travelling: measured mid-rise, the layout box reads (384,121) 512x512 while
+   * the record is visually at (863,452) 188x281, so `start` lands on the scroll
+   * wrapper and no `pointermove` ever reaches the tilt surface. The poll then
+   * times out having never seen an angle.
+   *
+   * Two different questions — "what rect does the mapping use" and "where is
+   * the element right now" — and the same value does not answer both. Polling
+   * until the visual box matches the laid-out one is the browser saying the
+   * rise is over, with no duration in the test.
+   */
+  await expect
+    .poll(async () => {
+      const visual = await tilt.boundingBox();
+      return visual !== null && Math.abs(visual.width - box.width) < 2;
+    })
+    .toBe(true);
+
   await page.mouse.move(start.x, start.y);
   await expect.poll(async () => angles()).not.toBe(resting);
   const first = await angles();
