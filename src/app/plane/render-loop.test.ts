@@ -138,6 +138,58 @@ describe('createRenderLoop', () => {
     expect(frames.cancel).toHaveBeenCalled();
   });
 
+  it('renders each frame while an animation is running, then stops', () => {
+    /**
+     * The rise needs per-frame renders, which is the opposite of the dirty flag
+     * — so it is driven through the SAME loop rather than a second mechanism,
+     * and it must END. Fails against `animate` if the callback's return value
+     * is ignored.
+     */
+    const render = vi.fn();
+    const frames = fakeFrames();
+    const loop = createRenderLoop(render, frames);
+
+    loop.start();
+    let calls = 0;
+    loop.animate(() => {
+      calls += 1;
+      return calls < 3;
+    });
+
+    for (let frame = 0; frame < 6; frame += 1) frames.tick();
+
+    expect(calls, 'the animation ran until it said stop').toBe(3);
+    expect(render, 'and each of those frames drew').toHaveBeenCalledTimes(3);
+  });
+
+  it('goes QUIET again once the animation finishes — the property that matters', () => {
+    /**
+     * **A rise that leaves the loop running for ever is the cost the dirty flag
+     * was written to avoid**, and this is the assertion that catches it.
+     *
+     * Ten frames after the animation ends, the render count must not move. As
+     * in the idle test above, the settle window is what distinguishes "stopped"
+     * from "has not drawn yet" — NOTES, step 10 unit 4.
+     */
+    const render = vi.fn();
+    const frames = fakeFrames();
+    const loop = createRenderLoop(render, frames);
+
+    loop.start();
+    let calls = 0;
+    loop.animate(() => {
+      calls += 1;
+      return calls < 2;
+    });
+
+    for (let frame = 0; frame < 4; frame += 1) frames.tick();
+    const settled = render.mock.calls.length;
+
+    for (let frame = 0; frame < 10; frame += 1) frames.tick();
+
+    expect(render, 'a settled record must cost nothing').toHaveBeenCalledTimes(settled);
+  });
+
   it('does not render before start, so a mark cannot draw into an unbuilt scene', () => {
     /**
      * Fails against `markDirty` if it renders directly rather than setting a

@@ -8454,3 +8454,59 @@ with the body scroll-locked. `scrollY` is always zero there, so the two systems
 coincide. The same construct was latent in one place and live in another, and
 only the scrolling page exposed it. A shared helper would have carried the bug
 into both; what actually differed was the CONTEXT, not the code.
+
+---
+
+## Step 13 unit 19 — the rise in three.js, and a diagnosis that cost too much
+
+**The mapping worked on the first attempt. Verifying it took six passes**, and
+every one of those passes was spent on the instrument rather than the thing.
+
+**What the mapping does.** `getBoundingClientRect` for BOTH the spine and the
+canvas, because the question is "where are these two elements relative to each
+other, right now, on screen". Both viewport-relative means scroll cancels out of
+their difference, so no scroll term appears in the arithmetic — that absence is
+the design. Unit 18's defect was mixing a document-relative measurement with a
+viewport-relative one; the fix was never a correction term, it was keeping
+everything in one system.
+
+Verified numerically rather than by eye: spine (199,420) 11x160, canvas
+(430,636) 420x420, `from = {x:-1.0369, y:0.8238, scaleX:0.02619,
+scaleY:0.38095}`. scaleX is exactly 11/420 and scaleY exactly 160/420.
+
+**The four false trails, in order, all mine:**
+
+1. Screenshot at 15% looked settled -> assumed the rise was not running. It was.
+2. Probed `[data-testid="box-canvas"]` and took the LAST one — which is a
+   thickness candidate, not the risen record. Measured and photographed the
+   wrong element for three passes. The label in the log said `1:70 · ready` and
+   I read past it twice.
+3. Filtered the frame log to `progress < 0.3` and read the resulting two lines
+   as "the animation runs for two frames". It ran for twenty; the filter hid
+   the middle.
+4. Instrumented the loop with a shared `window.__loopDbg` array and got 537
+   frames in 900ms with zero gaps — because NINE loops run on that page, one
+   per canvas, all pushing to one array.
+
+**What actually resolved it: slowing the animation to 4000ms so a frame could
+be judged.** At 620ms the early portion is over before a screenshot can land,
+and every frame looks like the settled state. That is the same trap as unit 10's
+"a settled frame is indistinguishable from a working one", met from the other
+side — there the motion was absent, here the capture was too slow.
+
+**The rule: when a measurement disagrees with the code, check the measurement
+first.** Four of those five passes were spent proving my instrument wrong, and
+in each case the code was already right. Slowing the thing under test until it
+is unambiguous should have been the FIRST move, not the sixth.
+
+**A second-order lesson about test filters.** The `progress < 0.3` filter was
+added to keep the log short and it converted a working animation into evidence
+of a broken one. A filter on diagnostic output is a claim about what matters,
+and it can lie in exactly the direction that confirms the hypothesis being
+tested.
+
+**One thing measured and left alone**: there is a ~167ms gap between the effect
+running and the first animation frame arriving, where subsequent frames are
+~16ms apart. Real, reproducible, and it means the first sixth of a 620ms rise is
+a single held frame. Not fixed here — the rise reads correctly at full speed and
+chasing it would be a fourth attempt at a thing that works.

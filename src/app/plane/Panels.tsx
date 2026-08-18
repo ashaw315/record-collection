@@ -25,7 +25,7 @@ import type { FactPanel } from './panel';
  */
 export function FactsPanel({ panel }: { panel: FactPanel }) {
   return (
-    <div data-testid="facts-panel" className="w-[280px] shrink-0 pt-2">
+    <div data-testid="facts-panel" className="w-[210px] shrink-0 pt-2">
       <h3 className="font-heading text-lg leading-tight font-semibold text-foreground">
         {panel.title}
       </h3>

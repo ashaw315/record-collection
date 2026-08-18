@@ -19,6 +19,7 @@ import {
 import { tiltFor } from '../shelf/tilt';
 import { edgeColourFor } from './edge-colour';
 import { createRenderLoop } from './render-loop';
+import { screenRectToWorld, type ScreenRect } from './world-map';
 import { centredSquareUv, type Skin, type Skins } from './skins';
 
 /**
@@ -60,6 +61,26 @@ import { centredSquareUv, type Skin, type Skins } from './skins';
  * question and a principle overrode it.
  */
 export const BOX_THICKNESS_RATIO = 1 / 25;
+
+/**
+ * How long the rise takes, in milliseconds.
+ *
+ * **One owner, and this is it.** The CSS version put the duration in a
+ * stylesheet and React held nothing; in WebGL there is no stylesheet to own it,
+ * so something in this code must. That is not the two-systems smell provided
+ * exactly ONE thing holds it — the smell is a number that has to agree between
+ * two places. Nothing else reads this: the loop asks for elapsed time and this
+ * constant converts it to progress.
+ */
+export const RISE_MS = 620;
+
+/**
+ * Ease-out: fast away from the slot, settling gently.
+ *
+ * A record leaving a shelf accelerates out of the gap and slows as it arrives;
+ * linear motion reads as a slide rather than a lift.
+ */
+const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 
 /**
  * §10b: "reduced motion disables all of it." The record sits face-on and does
@@ -114,15 +135,27 @@ export function BoxCanvas({
   skins,
   imprint,
   spineColour,
+  riseFrom = null,
   thicknessRatio = BOX_THICKNESS_RATIO,
   label,
+  testId = 'box-canvas',
 }: {
   skins: Skins;
   imprint: string | null;
   /** The record's stored colour, from which the edge tone is derived. */
   spineColour: string | null;
+  /**
+   * The slot to rise out of, viewport-relative, or null to appear in place.
+   *
+   * Re-measured by the caller at click time rather than cached: a resize
+   * re-wraps the row and moves every spine, so a remembered rect sends the
+   * record back to where its slot used to be.
+   */
+  riseFrom?: ScreenRect | null;
   thicknessRatio?: number;
   label?: string;
+  /** So a caller can address ONE canvas among several on a page. */
+  testId?: string;
 }) {
   const mount = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'failed'>('loading');
@@ -320,6 +353,52 @@ export function BoxCanvas({
 
     host.addEventListener('pointermove', onPointerMove);
 
+    /**
+     * §10b's rise: "the record rises out of its slot … a record that fades in
+     * centred is a modal wearing a sleeve."
+     *
+     * **Measured BEFORE the first paint and never re-measured mid-flight.**
+     * Unit 10's first defect was a `useLayoutEffect` running twice in dev, so
+     * the second run measured an element already carrying the first transform
+     * and produced an identity — a record that rose from exactly where it
+     * landed, with a settled frame indistinguishable from a working one. Here
+     * the source rect comes from the caller and the canvas rect is read once,
+     * so nothing measures a thing it has already moved.
+     *
+     * Driven from the SAME rAF loop as the dirty flag rather than a second
+     * mechanism, and the loop is asked to stop when the rise completes — a rise
+     * that leaves it running for ever is the cost the flag exists to avoid.
+     */
+    let riseStart: number | null = null;
+
+    if (riseFrom !== null && !prefersReducedMotion()) {
+      const canvasRect = host.getBoundingClientRect();
+      const from = screenRectToWorld(riseFrom, canvasRect);
+
+      mesh.position.set(from.x, from.y, 0);
+      mesh.scale.set(from.scaleX, from.scaleY, 1);
+
+      loop.animate((now) => {
+        // The first frame establishes the clock rather than assuming the
+        // effect and the frame share one — they do not, and the gap between
+        // them is real: measured at ~167ms on the first frame after mount.
+        if (riseStart === null) riseStart = now;
+        const progress = Math.min(1, (now - riseStart) / RISE_MS);
+        const eased = easeOut(progress);
+
+        // Toward the settled state: the origin, at full size.
+        mesh.position.set(from.x * (1 - eased), from.y * (1 - eased), 0);
+        mesh.scale.set(
+          from.scaleX + (1 - from.scaleX) * eased,
+          from.scaleY + (1 - from.scaleY) * eased,
+          1,
+        );
+
+        // `false` ends the animation, and with it the loop's reason to run.
+        return progress < 1;
+      });
+    }
+
     applySkin(skins.front, front, false);
     applySkin(skins.back, back, true);
 
@@ -336,13 +415,19 @@ export function BoxCanvas({
       for (const material of materials) material.dispose();
       renderer.dispose();
     };
-  }, [skins, imprint, spineColour, thicknessRatio]);
+    /*
+      `riseFrom` is a dependency because the effect reads it. The caller also
+      keys the component on the spine, so a second click remounts rather than
+      re-running — but the array must be honest regardless, or the next person
+      to remove that key gets a rise that never restarts.
+    */
+  }, [skins, imprint, spineColour, thicknessRatio, riseFrom]);
 
   return (
     <div className="flex flex-col gap-2">
       <div
         ref={mount}
-        data-testid="box-canvas"
+        data-testid={testId}
         data-status={status}
         className="h-[420px] w-[420px] bg-[#111]"
       />

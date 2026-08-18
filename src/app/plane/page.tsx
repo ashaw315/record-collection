@@ -4,6 +4,7 @@ import { images } from '@/db/schema';
 import { shelfRecords } from '@/lib/db/queries/shelf';
 import { BoxCanvas } from './BoxCanvas';
 import { FactsPanel, ActionsPanel } from './Panels';
+import { RiseDemo } from './RiseDemo';
 import { factPanel } from './panel';
 import { PlaneCanvas } from './PlaneCanvas';
 import { coverTextureUrl } from './plane';
@@ -171,6 +172,20 @@ export default async function PlanePage() {
           );
         })}
       </div>
+
+      {records.length > 0 && (
+        <>
+          <h2 className="mt-14 font-heading text-xl font-semibold text-foreground">
+            The rise
+          </h2>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            Step 13 unit 19. Click a spine: the record rises out of it. The mapping from a DOM
+            rect to world coordinates is the unit — it must start exactly on the spine, and stay
+            correct when the page is scrolled or resized.
+          </p>
+          <RiseDemo records={records} />
+        </>
+      )}
 
       {/*
         The thickness candidates, rendered at real size so the choice is made by
