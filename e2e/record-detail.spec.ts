@@ -354,14 +354,22 @@ test('the entry date defaults to today and refuses a typo', async ({ page }) => 
   await page.goto(`/records/${record.id}`);
 
   /**
-   * Today read from the BROWSER, not computed in the test process.
+   * Today read from the BROWSER, in the browser's LOCAL calendar — the same way
+   * `RecordJournal.todayIso()` computes the value under test.
    *
-   * The two can differ by a day either side of midnight — the page computes its
-   * default in the browser's clock, and a locally-computed comparison would
-   * fail at 23:59 for reasons having nothing to do with the code. Same hazard
-   * as the endpoint test comparing against the database's `CURRENT_DATE`.
+   * Reading it from the browser rather than the test process is right and was
+   * always right: the two can differ by a day either side of midnight. But
+   * `toISOString()` then converted that reading to UTC and threw the timezone
+   * away, so west of Greenwich the expectation was tomorrow's date every
+   * evening: at 21:10 EDT this asserted `2026-08-18` against a rendered
+   * `2026-08-17` and failed deterministically until midnight UTC.
+   *
+   * This is the known class, not a discovery — `todayIso` itself was fixed for
+   * exactly this ("20:30 Friday the 15th in New York is 00:30 Saturday the 16th
+   * in UTC"), and a date a user sees in an input is a human fact about their
+   * day, not a UTC instant. `en-CA` is ISO-formatted by locale definition.
    */
-  const today = await page.evaluate(() => new Date().toISOString().slice(0, 10));
+  const today = await page.evaluate(() => new Date().toLocaleDateString('en-CA'));
 
   // Prefilled, so the common case is one field and a button.
   await expect(page.getByLabel('Entry date')).toHaveValue(today);
