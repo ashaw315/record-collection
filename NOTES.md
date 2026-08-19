@@ -8870,3 +8870,49 @@ of the distance from its slot to the centre, and 87% by halfway. It leaves the
 slot quickly and then hovers near centre while it finishes turning. That is a
 judgement about the shape of the motion rather than a defect, and it is the sort
 of thing to decide by looking at the frames.
+
+---
+
+## Step 13 — the wall in the scene (`/plane`)
+
+**The slot empties, and that is the unit's answer.** With the wall and the
+record in one scene, the spine that rises IS the spine that was in the wall, so
+the gap is not drawn, coordinated or faked — it is where the mesh is not any
+more. Asserted as the pulled spine's distance from its home position (>240px,
+mutation-proved: pinning the mesh to its slot gives exactly 0). Screenshots show
+the empty slot and the record occluding the spines and shelf line behind it.
+
+**Scroll: a tall canvas that scrolls with the page.** A fixed canvas with a
+panning camera is camera work, which A24b rules out, and it puts the wall and
+the page in two coordinate systems that must agree about a scroll offset — unit
+18's defect by construction. Cost stated: 125 records is a ~750px canvas rather
+than a viewport-height one. Beyond a few rows the answer is to render only
+visible rows, which the computed layout already permits.
+
+**A reproducible "scale limit" that was a two-state race.** The scene mounted at
+20-80 records and never above ~85. The measure callback reported the correct
+width four times while the scene effect only ever saw `width = 0`. Cause: the
+width lived in React state, measured in one effect and consumed in another —
+two pieces of state that must agree about one number, the smell this project
+keeps meeting. Fixed by removing one: there is no width state, the effect
+measures the element it is about to draw into on a layout frame. Four wrong
+theories preceded that (parent measurement, StrictMode double-invoke, instance
+identity, fixture leakage), and three of them were wrong because fixture
+accumulation across tests in one worker made the readings non-reproducible.
+
+**Three geometry attempts, and the third was to stop.** `risePose`'s quarter
+turn was built for the PERSPECTIVE camera on `/`, where a turning face
+foreshortens. Under the orthographic camera A24b requires for the wall, a
+rotation about Y is a pure horizontal squash with no convergence — it reads as
+squeezing, not turning. Attempt one turned past face-on and back to edge-on (the
+record grew, then shrank); attempt two made every spine a full square and filled
+the wall with covers. The rotation is disabled and the record widens instead.
+**How a record should turn under an orthographic camera is a real open question**
+and is reported rather than guessed at a third time.
+
+**Known wrong in the candidate, not fixed:**
+- Spine text renders MIRRORED — a texture orientation bug.
+- Spines read pale grey rather than their spine colours; the wall looks like a
+  barcode where the CSS wall had colour.
+- No hover behaviour at all, deliberately: there is a hover defect on `/` and
+  this unit does not carry across a behaviour nobody asked for.

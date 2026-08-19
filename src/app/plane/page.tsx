@@ -7,6 +7,7 @@ import { FactsPanel, ActionsPanel } from './Panels';
 import { RiseDemo } from './RiseDemo';
 import { factPanel } from './panel';
 import { PlaneCanvas } from './PlaneCanvas';
+import { WallScene } from './WallScene';
 import { coverTextureUrl } from './plane';
 import { resolveSkins } from './skins';
 
@@ -32,7 +33,24 @@ import { resolveSkins } from './skins';
  */
 export const dynamic = 'force-dynamic';
 
-export default async function PlanePage() {
+export default async function PlanePage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  /**
+   * **`artistId` narrows the wall**, through the same `RecordFilters` the
+   * collection views use rather than a test-only path.
+   *
+   * A workbench route showing the WHOLE collection makes the wall unmeasurable
+   * at a known size: under the E2E suite every other test's fixtures land on
+   * it, and the scene took longer to build than any reasonable timeout. Being
+   * able to say "this wall has exactly these five records on it" is what makes
+   * the frames comparable and the assertions honest.
+   */
+  const params = await searchParams;
+  const artistId = typeof params.artistId === 'string' ? params.artistId : undefined;
+
   const db = getDb();
 
   /**
@@ -54,10 +72,34 @@ export default async function PlanePage() {
    * slots and the spine colour, so the object and the wall read the same rows —
    * two queries would be two answers about one record.
    */
-  const records = await shelfRecords();
+  const records = await shelfRecords(artistId === undefined ? {} : { artistId });
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
+    <main className="py-10">
+      {/*
+        **The wall in the scene** — this unit's whole question, and deliberately
+        first on the page and full-bleed, because the thing being judged is
+        whether a record comes off a shelf and that cannot be judged in a
+        column.
+
+        Everything below it is the earlier workbench: static planes, boxes and
+        panels, kept because they are what proved the renderer piece by piece.
+      */}
+      <section className="mb-16">
+        <div className="mx-auto mb-4 max-w-5xl px-6">
+          <h1 className="font-heading text-2xl font-semibold text-foreground">
+            The wall, in the scene
+          </h1>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            One scene: the wall, the shelves and the record. Click a spine — the point is that
+            it LEAVES the wall, so the slot it came out of is empty behind it. `/` is untouched
+            and still uses the CSS wall.
+          </p>
+        </div>
+        <WallScene records={records} />
+      </section>
+
+      <div className="mx-auto max-w-5xl px-6">
       <h1 className="font-heading text-2xl font-semibold text-foreground">
         Textured plane
       </h1>
@@ -211,6 +253,7 @@ export default async function PlanePage() {
           </div>
         </>
       )}
+    </div>
     </main>
   );
 }
