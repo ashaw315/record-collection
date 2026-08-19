@@ -222,12 +222,149 @@ test('the record returns to its slot when dismissed', async ({ page }) => {
   await page.mouse.click(box.x + box.width - 30, box.y + box.height - 30);
   await expect(scene, 'the wall is whole again').toHaveAttribute('data-pulled', '');
 
-  const gap = await page.evaluate(() => {
+  /*
+    **Polled, because dismissal now ANIMATES.** This assertion read the gap
+    immediately and passed while the record vanished on dismiss — an instant
+    snap satisfies "ends up home" perfectly. That it kept passing through the
+    vanish is why `the record ANIMATES back` exists beside it: this one checks
+    the destination, that one checks there was a journey.
+  */
+  await expect
+    .poll(
+      async () =>
+        page.evaluate(() =>
+          Number(
+            (document.querySelector('[data-testid="wall-scene"]') as HTMLElement).dataset
+              .slotGap ?? -1,
+          ),
+        ),
+      { timeout: 5000 },
+    )
+    .toBeLessThan(1);
+});
+
+test('the record ANIMATES back rather than vanishing', async ({ page }) => {
+  /**
+   * **The record vanished on dismiss and the existing return test passed
+   * against it**, because that test asserts where the record ENDS UP — which an
+   * instant snap satisfies perfectly. Ending in the right place is not the
+   * same as travelling there.
+   *
+   * §10b: the record goes back where it came from. Asserted by catching it
+   * mid-flight: shortly after dismissal it must be somewhere between the
+   * destination and its slot, not already home and not still out.
+   */
+  const { artistId } = await seed(page, 12);
+  await openWall(page, artistId);
+
+  const scene = page.getByTestId('wall-scene');
+  const box = await scene.locator('canvas').boundingBox();
+  if (box === null) return;
+
+  await clickASpine(page, box);
+  await expect(scene).not.toHaveAttribute('data-pulled', '');
+  await page.waitForTimeout(900);
+
+  const out = await page.evaluate(() =>
+    Number(
+      (document.querySelector('[data-testid="wall-scene"]') as HTMLElement).dataset.slotGap ?? 0,
+    ),
+  );
+  expect(out, 'the record is out of the wall to begin with').toBeGreaterThan(200);
+
+  // Dismiss, then sample immediately — before the return can have finished.
+  await page.mouse.click(box.x + box.width - 30, box.y + box.height - 30);
+  await page.waitForTimeout(150);
+
+  const midFlight = await page.evaluate(() =>
+    Number(
+      (document.querySelector('[data-testid="wall-scene"]') as HTMLElement).dataset.slotGap ?? -1,
+    ),
+  );
+
+  /*
+    Between the two, not at either end. A snap gives 0 here; no return at all
+    leaves it at `out`.
+  */
+  expect(midFlight, 'not already home — that is a snap, not a return').toBeGreaterThan(1);
+  expect(midFlight, 'and on its way back, not still out there').toBeLessThan(out);
+
+  // And it finishes.
+  await expect
+    .poll(
+      async () =>
+        page.evaluate(() =>
+          Number(
+            (document.querySelector('[data-testid="wall-scene"]') as HTMLElement).dataset
+              .slotGap ?? -1,
+          ),
+        ),
+      { timeout: 5000 },
+    )
+    .toBeLessThan(1);
+});
+
+test('the return re-measures the slot rather than caching it', async ({ page }) => {
+  /**
+   * Unit 19's rule, carried across: the slot is read at DISMISS time, not
+   * remembered from the rise. That unit's mutation missed by 201px against a
+   * 240px scroll.
+   *
+   * **Asserted against SCROLL, not resize.** A resize would be the stronger
+   * fixture — it re-wraps every row — but the scene does not rebuild on resize
+   * at all: a comment claims a `ResizeObserver` bumps a version counter and no
+   * such counter exists. That is recorded in NOTES as its own gap rather than
+   * fixed here, and a test that asserted it would be asserting a feature this
+   * unit did not build.
+   *
+   * Scroll is what the rule was written for and is reachable by anyone with a
+   * wheel: the page scrolls freely while a record is out.
+   */
+  const { artistId } = await seed(page, 60);
+  await openWall(page, artistId);
+
+  const scene = page.getByTestId('wall-scene');
+  const box = await scene.locator('canvas').boundingBox();
+  if (box === null) return;
+
+  await clickASpine(page, box);
+  await expect(scene).not.toHaveAttribute('data-pulled', '');
+  await page.waitForTimeout(900);
+
+  // Scroll while the record is out — the case the rule exists for.
+  await page.mouse.wheel(0, 300);
+  await page.waitForTimeout(300);
+
+  /*
+    Where the record's own spine sits in wall coordinates, read from the layout
+    the scene is using. The return must land HERE.
+  */
+  const slot = await page.evaluate(() => {
     const el = document.querySelector('[data-testid="wall-scene"]') as HTMLElement;
-    return Number(el.dataset.slotGap ?? -1);
+    return {
+      x: Number(el.dataset.layoutSlotX ?? NaN),
+      y: Number(el.dataset.layoutSlotY ?? NaN),
+    };
   });
 
-  expect(gap, 'and the spine is back in the wall').toBeLessThan(1);
+  await page.mouse.click(box.x + box.width - 30, box.y + 40);
+  await page.waitForTimeout(1200);
+
+  /**
+   * **Measured absolutely, not against the record's own reference.**
+   *
+   * A first version polled `slotGap`, which is computed as the distance from
+   * `home` — so corrupting `home` moved the record and the ruler together and
+   * the gap still reached zero. It could not fail. The mesh's absolute position
+   * against the slot's own coordinates is the check that can.
+   */
+  const landed = await page.evaluate(() => {
+    const el = document.querySelector('[data-testid="wall-scene"]') as HTMLElement;
+    return { x: Number(el.dataset.meshX ?? NaN), y: Number(el.dataset.meshY ?? NaN) };
+  });
+
+  expect(landed.x, 'the record is back in its own slot, horizontally').toBeCloseTo(slot.x, 0);
+  expect(landed.y, 'and vertically').toBeCloseTo(slot.y, 0);
 });
 
 test('the accessible list carries every record with its FULL title', async ({ page }) => {

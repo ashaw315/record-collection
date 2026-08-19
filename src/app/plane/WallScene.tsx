@@ -34,6 +34,7 @@ import { spineLabelPlan } from './spine-texture';
 import { layoutWall, type WallLayout } from './wall-layout';
 import { WALL_FOV_DEGREES, wallCameraDistance } from './wall-camera';
 import { pulledDestination } from './pulled-destination';
+import { boxDepth } from './record-box';
 import { RESTING_ROTATION_Y } from './spine-facing';
 
 /**
@@ -83,6 +84,34 @@ import { RESTING_ROTATION_Y } from './spine-facing';
 export function WallScene({ records }: { records: ShelfRecord[] }) {
   const mount = useRef<HTMLDivElement>(null);
   const [pulledId, setPulledId] = useState<string | null>(null);
+  /**
+   * Which record is on its way back, if any.
+   *
+   * A dismissal cannot be animated from `pulledId` alone: by the time the
+   * record should start moving, `pulledId` is already null and the scene no
+   * longer knows which mesh to fly home. This holds that for the length of the
+   * return and clears itself when it lands.
+   */
+  const [returningId, setReturningId] = useState<string | null>(null);
+
+  /**
+   * The pulled id, readable from the click handler.
+   *
+   * The handler is bound inside the scene effect, which deliberately does NOT
+   * re-run when a record is pulled — rebuilding 125 meshes on every click is
+   * the cost this scene is careful about. So it closes over the value at build
+   * time, which is always null. A ref is the read-through.
+   */
+  const pulledIdRef = useRef<string | null>(null);
+
+  /*
+    Written in an effect rather than during render: reading or writing a ref
+    while rendering is unsound and `react-hooks/refs` rejects it, correctly.
+    Same reasoning `CollectionFilters` records for its pending-navigation ref.
+  */
+  useEffect(() => {
+    pulledIdRef.current = pulledId;
+  }, [pulledId]);
 
   /**
    * Memoised, because the scene effect depends on it.
@@ -118,10 +147,15 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
    *
    * Two pieces of state that must agree about one number — the smell this
    * project keeps meeting — and the fix is the same as every other time: remove
-   * one of them. There is no width state now. The effect measures the element
-   * it is about to draw into, on the frame before it draws, and a
-   * `ResizeObserver` re-runs the whole effect by bumping a version counter when
-   * the element genuinely changes size.
+   * one of them. There is no width state now: the effect measures the element
+   * it is about to draw into, on the frame before it draws.
+   *
+   * **The scene does NOT rebuild on resize**, and an earlier version of this
+   * comment claimed a `ResizeObserver` re-ran the effect "by bumping a version
+   * counter". No such counter exists and none ever did — a confident sentence
+   * describing a mechanism that was never built. Resizing the window leaves the
+   * wall at its old wrapping. Recorded in NOTES as its own gap rather than
+   * fixed here.
    */
   useEffect(() => {
     const host = mount.current;
@@ -338,7 +372,15 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
         a spine IS — and the quarter turn then reveals a cover rather than
         stretching one.
       */
-      mesh.scale.set(SPINE_HEIGHT, SPINE_HEIGHT, placed.width);
+      /*
+        At rest: the shelf FOOTPRINT, which is what keeps spine text legible.
+        See `record-box.ts` for why that is wider than a record really is.
+      */
+      mesh.scale.set(
+        SPINE_HEIGHT,
+        SPINE_HEIGHT,
+        boxDepth({ recordId: placed.id, height: SPINE_HEIGHT, progress: 0 }),
+      );
       // See `spine-facing.ts`: the sign is load-bearing and is pinned there.
       mesh.rotation.y = RESTING_ROTATION_Y;
       mesh.position.set(
@@ -366,6 +408,20 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     live.current = {
       animate: (step) => loop.animate(step),
       setPulled: (id, progress) => {
+        /*
+          The LAYOUT's answer for where this record's slot is — read from
+          `layout`, which the packer produced, rather than from the mesh's own
+          `home`. A test comparing the mesh against `home` compares a value with
+          itself: corrupting `home` moves the record and the ruler together.
+        */
+        if (id !== null) {
+          const slot = layout.placed.find((p) => p.id === id);
+          if (slot !== undefined) {
+            host.dataset.layoutSlotX = String(slot.x + slot.width / 2);
+            host.dataset.layoutSlotY = String(-(slot.y + SPINE_HEIGHT / 2));
+          }
+        }
+
         /**
          * **The slot's emptiness, published so it can be asserted.**
          *
@@ -404,7 +460,11 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
             */
             mesh.position.set(home.x, home.y, home.z);
             mesh.rotation.y = RESTING_ROTATION_Y;
-            mesh.scale.set(SPINE_HEIGHT, SPINE_HEIGHT, widthOf.get(recordId) ?? 20);
+            mesh.scale.set(
+              SPINE_HEIGHT,
+              SPINE_HEIGHT,
+              boxDepth({ recordId, height: SPINE_HEIGHT, progress: 0 }),
+            );
             continue;
           }
 
@@ -461,6 +521,17 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
           const dz = mesh.position.z - home.z;
           host.dataset.slotGap = String(Math.sqrt(dx * dx + dy * dy + dz * dz));
 
+          /*
+            The mesh's ABSOLUTE position, so a test can check where the record
+            actually is rather than where it is relative to its own reference.
+            `slotGap` is measured against `home`, so it cannot answer questions
+            about `home` being wrong — the ruler moves with the thing it
+            measures.
+          */
+          host.dataset.meshX = String(mesh.position.x);
+          host.dataset.meshY = String(mesh.position.y);
+
+
           /**
            * **Where the record ended up, in normalised device coordinates.**
            *
@@ -484,22 +555,24 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
             as well as turning it double-counts the turn, which is what the two
             earlier attempts did.
           */
-          mesh.scale.set(SPINE_HEIGHT, SPINE_HEIGHT, placedWidthFor(recordId));
+          /*
+            **The edge thins as the record comes out**, from its shelf footprint
+            to the 1:25 thickness QA chose by looking. That interpolation is
+            what reconciles the two: a spine is drawn thicker than a record
+            really is so its text can be read, and the object in your hands is
+            the real proportion.
+          */
+          mesh.scale.set(
+            SPINE_HEIGHT,
+            SPINE_HEIGHT,
+            boxDepth({ recordId, height: SPINE_HEIGHT, progress: eased }),
+          );
         }
         loop.markDirty();
       },
     };
 
-    /*
-      A map rather than a `find` per mesh per frame: at 125 spines the scan ran
-      125x125 times a frame, which is the class of mistake this scene has room
-      for and the last unit was bitten by.
-    */
-    const widthOf = new Map(layout.placed.map((p) => [p.id, p.width]));
 
-    function placedWidthFor(id: string): number {
-      return widthOf.get(id) ?? 20;
-    }
 
     /*
       Hit testing is a raycast now, not a DOM event. Deliberately CLICK only —
@@ -518,7 +591,15 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
       const hits = raycaster.intersectObjects([...meshes.values()], false);
       const hit = hits[0]?.object.userData.recordId;
 
-      setPulledId(typeof hit === 'string' ? hit : null);
+      const next = typeof hit === 'string' ? hit : null;
+
+      /*
+        Dismissing starts a return; pulling a different record does not — it
+        would leave two meshes animating and the new one is what the reader is
+        looking at.
+      */
+      setReturningId(next === null ? pulledIdRef.current : null);
+      setPulledId(next);
     };
 
     renderer.domElement.addEventListener('click', onClick);
@@ -539,8 +620,48 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     const scene = live.current;
     if (scene === null) return;
 
+    /**
+     * **The return: the rise reversed, so the two cannot describe different
+     * objects.**
+     *
+     * `setPulled` snapped everything home when nothing was pulled, and the
+     * record vanished. The existing return test passed against that, because it
+     * asserted where the record ENDS UP — which an instant snap satisfies
+     * perfectly. Ending in the right place is not travelling there.
+     *
+     * `returningId` is what makes a dismissal animatable: the scene still needs
+     * to know WHICH record is going back after `pulledId` has become null.
+     */
     if (pulledId === null) {
-      scene.setPulled(null, 0);
+      if (returningId === null) {
+        scene.setPulled(null, 0);
+        return;
+      }
+
+      let backFrom: number | null = null;
+      const goingBack = returningId;
+
+      scene.animate((now) => {
+        if (backFrom === null) backFrom = now;
+        const elapsed = Math.min(1, (now - backFrom) / RISE_MS);
+
+        /*
+          **Ease IN, the mirror of the rise's ease-out.** A record going back
+          accelerates toward the gap rather than drifting into it; reusing the
+          rise's easing reads as the animation played backwards.
+        */
+        const eased = elapsed * elapsed * elapsed;
+
+        /*
+          The SAME `risePose`, read from 1 down to 0. One description of the
+          motion, two directions through it — rather than a second function
+          that has to agree with the first about what a record does.
+        */
+        scene.setPulled(goingBack, 1 - eased);
+
+        if (elapsed >= 1) setReturningId(null);
+        return elapsed < 1;
+      });
       return;
     }
 
@@ -549,14 +670,15 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
      *
      * The first version ran its own `requestAnimationFrame` calling
      * `setPulled`, which only MARKS the scene dirty — the render loop then drew
-     * on its own frame. Two rAF loops, and a mark landing after the render
-     * loop's frame had already passed was simply lost. Measured: **9 draws
-     * across a 620ms rise** where 60fps is about 37, so the rise ran at roughly
-     * 15fps while reporting `progress: 1` and looking correct in a screenshot.
+     * on its own frame. Two rAF loops that had to interleave.
      *
      * `animate` exists for exactly this and is tested to draw every frame
-     * (unit 19). Using it makes the rise and the dirty flag one mechanism
-     * rather than two that must interleave.
+     * (unit 19), so this is one mechanism rather than two.
+     *
+     * (A measurement of "9 draws across a 620ms rise" was once attributed to
+     * the two-loop arrangement. That was wrong: headless Chromium throttles
+     * rAF to ~10fps, and the same code headed gives 39 draws. The change is
+     * still right; the reason recorded for it was not.)
      */
     let start: number | null = null;
 
@@ -566,7 +688,7 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
       scene.setPulled(pulledId, progress);
       return progress < 1;
     });
-  }, [pulledId]);
+  }, [pulledId, returningId]);
 
   return (
     <div className="relative">

@@ -9108,3 +9108,49 @@ the defect lives in**, which here was rows rather than record count.
 **The pull-depth cap is retired**, with a note in its place. It bounded a
 symptom of the pull being a fraction of the camera distance; the destination
 removes the cause, so there is nothing left to bound.
+
+---
+
+## Step 13 — the return, and the box reconciled
+
+**The return: the same `risePose` read from 1 down to 0**, eased IN rather than
+reusing the rise's ease-out. `returningId` is what makes it animatable at all —
+by the time the record should start moving, `pulledId` is already null and the
+scene no longer knows which mesh to fly home.
+
+**The existing return test passed against the vanish**, because it asserted
+where the record ENDS UP and an instant snap satisfies that perfectly. Ending
+in the right place is not travelling there. `the record ANIMATES back` now
+catches it mid-flight; the older test still checks the destination, and the two
+are deliberately separate.
+
+**A self-referential assertion, twice.** The re-measure test polled `slotGap`,
+which is computed as the distance from `home` — so corrupting `home` moved the
+record AND the ruler together and the gap still reached zero. The second attempt
+published `homeX`/`homeY` from the same object and had the same flaw. Both
+passed against a mutation that broke the thing they named.
+
+The fix is comparing two INDEPENDENT producers: the mesh's absolute position
+against the slot the LAYOUT computed. Same shape as the seam test that pins
+`shelfRecords` to the heading — assert two producers against each other, not
+each against its own value. Now bites: expected 69, received 0.
+
+**The box is reconciled, and the boundary is real.** `WallScene` built its own
+at 1:11 where `BoxCanvas` uses 1:25 — the `genreSubtree`/`hasGatefold` shape,
+and `BoxCanvas`'s own comment named the condition for resolving it ("two
+renderers, two values, until one replaces the other"). `record-box.ts` now
+re-exports the one ratio rather than restating it.
+
+What stays separate is NOT a second thickness. Measured: at 1:25 a 240px record
+is 9.6px thick, and `spineLabelPlan` fits a glyph across 62% of that — a **6px
+font**, illegible. §10b settled this moving from 1:40 to 1:12. So a spine is
+drawn at its shelf FOOTPRINT and the pulled record at its true THICKNESS, and
+`boxDepth` interpolates between them across the rise. One object, two states, a
+transition — rather than two answers to one question.
+
+**Found and NOT fixed: the scene does not rebuild on resize.** A comment claimed
+a `ResizeObserver` re-ran the effect "by bumping a version counter"; no such
+counter exists and none ever did — a confident sentence describing a mechanism
+that was never built. Resizing leaves the wall at its old wrapping. The comment
+is corrected; the gap is its own unit. It also cost a test: the re-measure
+assertion wanted resize as its fixture and had to use scroll instead.
