@@ -9,7 +9,7 @@ import {
   DirectionalLight,
   Mesh,
   MeshStandardMaterial,
-  OrthographicCamera,
+  PerspectiveCamera,
   PlaneGeometry,
   Raycaster,
   Scene,
@@ -32,6 +32,7 @@ import { risePose } from './rise-pose';
 import { RISE_MS } from './BoxCanvas';
 import { spineLabelPlan } from './spine-texture';
 import { layoutWall, type WallLayout } from './wall-layout';
+import { PULL_FRACTION, WALL_FOV_DEGREES, wallCameraDistance } from './wall-camera';
 
 /**
  * §10b's wall and its records, in ONE scene.
@@ -75,8 +76,7 @@ import { layoutWall, type WallLayout } from './wall-layout';
  * which row every spine is in.
  */
 
-/** How far forward of the wall a pulled record sits, in wall pixels. */
-const PULL_DEPTH = 420;
+
 
 export function WallScene({ records }: { records: ShelfRecord[] }) {
   const mount = useRef<HTMLDivElement>(null);
@@ -156,14 +156,29 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     const scene = new Scene();
     scene.background = new Color(WALL_BACK);
 
-    /*
-      **Orthographic, mapped 1:1 to wall pixels.** The frustum IS the wall's
-      pixel box, so `layoutWall`'s coordinates are the scene's coordinates and
-      no projection sits between them. Y is negated once, here, at the boundary:
-      the layout grows downward like the DOM, the scene grows upward.
-    */
-    const camera = new OrthographicCamera(0, width, 0, -height, -1000, 2000);
-    camera.position.z = 1000;
+    /**
+     * **One perspective camera with a very long lens** — near-orthographic
+     * across the wall, converging enough that a turn reads as a turn.
+     *
+     * A24b and §10b conflict under a single ORTHOGRAPHIC camera: a rotation
+     * about Y with no convergence is a pure horizontal squash, so a turning
+     * record reads as being squeezed. Measured twice on this route before the
+     * camera itself was suspected.
+     *
+     * At 16° an edge spine on a 3440px wall is within 1% of a centre spine, so
+     * A24b's reason survives — spines equally legible, no raking angle — while
+     * a record pulled 40% of the way to the camera converges by 1.16, which
+     * reads as a turn. The numbers and the sweep that chose them are in
+     * `wall-camera.ts`.
+     *
+     * Framed on the WALL's centre, so the layout's coordinates still map
+     * directly: Y is negated once, here, because the layout grows downward like
+     * the DOM and the scene grows upward.
+     */
+    const cameraDistance = wallCameraDistance({ wallHeight: height });
+    const camera = new PerspectiveCamera(WALL_FOV_DEGREES, width / height, 1, cameraDistance * 2);
+    camera.position.set(width / 2, -height / 2, cameraDistance);
+    camera.lookAt(width / 2, -height / 2, 0);
 
     /*
       One light on the wall AND the records, which is the point of one scene.
@@ -229,9 +244,23 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
         `spineLabelPlan` because a texture gets no hinting — the legibility bar
         is the CSS wall's, and matching it costs device pixels.
       */
+      /**
+       * **The canvas is PORTRAIT, matching the face it goes on.**
+       *
+       * `spineLabelPlan` describes the label in reading order — long axis first
+       * — because that is how the text is laid out. The face it lands on is the
+       * spine's +z: `placed.width` across and `SPINE_HEIGHT` tall, which is
+       * portrait. Creating the canvas landscape and letting the GPU stretch it
+       * onto a portrait face rotates the glyphs by squashing them, and the
+       * extra `rotate(PI)` that was meant to fix the reading direction turned
+       * that into a mirror image.
+       *
+       * So the canvas is portrait and the ROTATION happens here, in 2D, where
+       * it is a real rotation rather than a stretch.
+       */
       const canvas = document.createElement('canvas');
-      canvas.width = plan.canvasWidth;
-      canvas.height = plan.canvasHeight;
+      canvas.width = plan.canvasHeight;
+      canvas.height = plan.canvasWidth;
       const context = canvas.getContext('2d');
 
       if (context !== null) {
@@ -241,11 +270,17 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
         context.font = `600 ${plan.fontPx}px ui-monospace, monospace`;
         context.textBaseline = 'middle';
         context.textAlign = 'left';
-        // Along the spine, reading bottom-to-top as spines on a shelf do.
+
+        /*
+          Rotated -90° and drawn up the spine, so it reads bottom-to-top as
+          spines on a shelf do (§10b: "set in mono, rotated"). The translate
+          puts the origin at the bottom-left of the label's run; after the
+          rotation, +x runs UP the canvas.
+        */
         context.save();
-        context.translate(canvas.width, canvas.height / 2);
-        context.rotate(Math.PI);
-        context.fillText(plan.text, 6, 0);
+        context.translate(canvas.width / 2, canvas.height - 8);
+        context.rotate(-Math.PI / 2);
+        context.fillText(plan.text, 0, 0);
         context.restore();
       }
 
@@ -255,14 +290,36 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
 
       const plain = new MeshStandardMaterial({ color: new Color(colour), roughness: 0.7 });
       const faced = new MeshStandardMaterial({ map: texture, roughness: 0.7 });
-      disposables.push(plain, faced);
-
       /*
-        BoxGeometry material order is [+x, -x, +y, -y, +z, -z]. The label goes
-        on +z, which faces the viewer while the spine stands in the wall.
+        The cover face, revealed by the turn. Plain in the record's own spine
+        colour for now — §10b's "an honest absence, not a gap in the wall" —
+        because cover textures are a later unit and a placeholder would assert
+        artwork the record does not have.
       */
-      const mesh = new Mesh(spineGeometry, [plain, plain, plain, plain, faced, plain]);
-      mesh.scale.set(placed.width, SPINE_HEIGHT, placed.width);
+      const cover = new MeshStandardMaterial({ color: new Color(colour), roughness: 0.62 });
+      disposables.push(plain, faced, cover);
+
+      /**
+       * BoxGeometry material order is [+x, -x, +y, -y, +z, -z].
+       *
+       * **The label goes on +x, the sleeve's EDGE.** The mesh is a record
+       * turned side-on, so what faces the viewer in the wall is its edge — and
+       * that is where a real spine's text is printed. It was on +z, the cover
+       * face, which is hidden until the record turns: correct for a slab the
+       * width of a spine, wrong for a record standing edge-on.
+       *
+       * `cover` is the front face, which the quarter turn reveals.
+       */
+      const mesh = new Mesh(spineGeometry, [faced, plain, plain, plain, cover, plain]);
+      /*
+        **A record standing edge-on**, not a slab the width of a spine. Width
+        and height are the record; depth is the sleeve's thickness. Turned
+        side-on it presents exactly `placed.width` to the viewer, which is what
+        a spine IS — and the quarter turn then reveals a cover rather than
+        stretching one.
+      */
+      mesh.scale.set(SPINE_HEIGHT, SPINE_HEIGHT, placed.width);
+      mesh.rotation.y = Math.PI / 2;
       mesh.position.set(
         placed.x + placed.width / 2,
         -(placed.y + SPINE_HEIGHT / 2),
@@ -317,12 +374,26 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
           const home = mesh.userData.home as { x: number; y: number; z: number };
 
           if (recordId !== id) {
+            /*
+              **Back to EDGE-ON, not to zero.** A record standing in the wall is
+              turned side-on; resetting the rotation to 0 turned every spine on
+              the wall face-on the moment anything was pulled, which is what the
+              frames showed. The resting pose is the quarter turn.
+            */
             mesh.position.set(home.x, home.y, home.z);
-            mesh.rotation.y = 0;
+            mesh.rotation.y = Math.PI / 2;
+            mesh.scale.set(SPINE_HEIGHT, SPINE_HEIGHT, widthOf.get(recordId) ?? 20);
             continue;
           }
 
-          const pose = risePose({ progress, slotDepth: PULL_DEPTH });
+          /*
+            **The pull is a fraction of the CAMERA distance, not a fixed number
+            of pixels.** Convergence depends on how much closer the record is
+            than the wall in proportion: at this focal length a fixed 420px pull
+            is 4% of the way and converges by 1.02, which is no turn at all.
+            Measured across focal lengths in `wall-camera.ts`.
+          */
+          const pose = risePose({ progress, slotDepth: cameraDistance * PULL_FRACTION });
 
           /*
             Toward the centre of the visible wall as it turns and comes forward.
@@ -335,22 +406,15 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
             home.z + pose.z,
           );
           /**
-           * **No rotation while the wall stays orthographic.**
+           * **The turn, now that the camera can show one.**
            *
-           * `risePose`'s quarter turn was built for the perspective camera on
-           * `/`, where a turning face foreshortens and reads as a turn. Under
-           * an orthographic camera — which A24b requires for the wall — a
-           * rotation about Y produces a pure horizontal squash with no
-           * convergence, so it reads as the record being squeezed rather than
-           * turned. Two attempts at combining it with the width interpolation
-           * produced a record that grew then shrank, and then spines that
-           * filled the wall.
-           *
-           * This unit's question is whether the SLOT EMPTIES, and it does. How
-           * the record turns under an orthographic camera is a real open
-           * question and is reported rather than guessed at a third time.
+           * `risePose` runs the angle from edge-on (π/2) to face-on (0), and a
+           * spine standing in the wall is already edge-on — so the mesh's
+           * rotation IS the pose's angle, not the pose's angle minus a quarter
+           * turn. Subtracting one ran the rotation past face-on and back to
+           * edge-on, which is what made the record grow and then shrink.
            */
-          mesh.rotation.y = 0;
+          mesh.rotation.y = pose.rotationY;
 
           // How far the spine has travelled from its slot, in wall pixels.
           const dx = mesh.position.x - home.x;
@@ -358,19 +422,27 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
           const dz = mesh.position.z - home.z;
           host.dataset.slotGap = String(Math.sqrt(dx * dx + dy * dy + dz * dz));
           /*
-            The spine grows into a record as it comes out: X from the spine's
-            width to the record's full size. Rotation stays out of the size,
-            because combining the two double-counts the turn.
+            **The size does not interpolate; the ROTATION reveals it.** The mesh
+            is a record all along — SPINE_HEIGHT square, as thick as its spine —
+            standing edge-on so only its thickness faces the viewer. Widening it
+            as well as turning it double-counts the turn, which is what the two
+            earlier attempts did.
           */
-          const spineW = placedWidthFor(recordId);
-          mesh.scale.set(spineW + (SPINE_HEIGHT - spineW) * eased, SPINE_HEIGHT, spineW);
+          mesh.scale.set(SPINE_HEIGHT, SPINE_HEIGHT, placedWidthFor(recordId));
         }
         loop.markDirty();
       },
     };
 
+    /*
+      A map rather than a `find` per mesh per frame: at 125 spines the scan ran
+      125x125 times a frame, which is the class of mistake this scene has room
+      for and the last unit was bitten by.
+    */
+    const widthOf = new Map(layout.placed.map((p) => [p.id, p.width]));
+
     function placedWidthFor(id: string): number {
-      return layout.placed.find((p) => p.id === id)?.width ?? 20;
+      return widthOf.get(id) ?? 20;
     }
 
     /*

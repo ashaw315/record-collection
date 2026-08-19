@@ -8916,3 +8916,62 @@ and is reported rather than guessed at a third time.
   barcode where the CSS wall had colour.
 - No hover behaviour at all, deliberately: there is a hover defect on `/` and
   this unit does not carry across a behaviour nobody asked for.
+
+---
+
+## Step 13 — the long lens, and two texture defects
+
+**A long lens does both, and the measurement is what showed how.** A24b's
+square-on rule and §10b's turn conflict under one orthographic camera: a
+rotation about Y with no convergence is a pure horizontal squash. Swept across
+focal lengths:
+
+| FOV | edge compression @3440px | convergence at 40% pull |
+|-----|--------------------------|-------------------------|
+| 4°  | 0.06% | 1.038 |
+| 12° | 0.55% | 1.120 |
+| 16° | 0.97% | 1.164 |
+| 25° | 2.37% | 1.271 |
+| 40° | 6.03% | 1.487 |
+
+**16° clears both bars.** An edge spine is within 1% of a centre spine, so
+A24b's REASON survives — spines equally legible, no raking angle — and a record
+pulled toward the viewer converges by 1.16, which reads as a turn. Mutation-
+proved from both sides: 40° fails edge compression, 2° fails the turn.
+
+**The pull had to become RELATIVE, and that was the real finding.** At 4° the
+camera stands 10,653px back for a 744px wall, so the fixed 420px pull was 4% of
+the way and converged by 1.02 — no turn at all. Convergence depends on the
+proportion of the distance closed, not on pixels. `PULL_FRACTION = 0.4`.
+
+**Two texture defects, both from the same wrong mental model.** The spine was
+modelled as a slab the width of a spine, with the label on its +z face. But a
+spine IS a record turned side-on: the face the viewer sees in the wall is the
+sleeve's EDGE (+x), and +z is the cover, hidden until the turn. The label was on
+the cover. And the label canvas was created landscape and stretched onto a
+portrait face, which rotated the glyphs by squashing them — the `rotate(PI)`
+added to fix the reading direction turned that into a mirror.
+
+**A resting pose reset to the wrong value.** The non-pulled branch set
+`rotation.y = 0`, so pulling one record turned EVERY spine on the wall face-on.
+The resting pose is the quarter turn, not zero.
+
+**Still not verified: spine text legibility on screen.** The label is on the
+right face now and the geometry is right, but the fixtures have no spine colours
+(§7.8 computes them from covers, and the API does not accept them) so the wall
+renders in the fallback grey and no text was legible in the frames. Whether a
+supersampled canvas texture matches the CSS wall's hinted 9px mono is UNMEASURED
+and is the thing to check before this replaces `/`.
+
+**Screenshot sampling still cannot see the start of the rise.** The "15%" frame
+was already fully turned: a round trip costs ~100ms of a 620ms animation. The
+frame log remains the only instrument that has answered a question about this
+animation correctly.
+
+**The dev login password was changed** to a known value in `.env.local` only.
+`.env.test` carries its own `APP_PASSWORD_HASH` and `playwright.config.ts` runs
+the server with `NODE_ENV=test`, which makes Next load `.env.test` and SKIP
+`.env.local` — so the twelve specs' `login()` is unaffected. Both files are
+gitignored; production is untouched. **The `$` characters must be
+backslash-escaped**: single quotes do not stop Next's parser interpolating them,
+and a quoted hash arrived at the route as a 25-character fragment.
