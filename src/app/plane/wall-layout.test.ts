@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { layoutWall, type WallSpine } from './wall-layout';
+import {
+  MIN_SHELF_ROWS,
+  WALL_EDGE_MARGIN,
+  layoutWall,
+  type WallSpine,
+} from './wall-layout';
 import { MAX_SPINE_WIDTH, MIN_SPINE_WIDTH, SPINE_HEIGHT, SHELF_EDGE } from '../shelf/spine';
 
 /**
@@ -38,8 +43,13 @@ describe('layoutWall', () => {
      */
     const wall = layoutWall({ spines: spines(100), viewportWidth: 1000 });
 
+    /*
+      40 rather than 42: the edge margin widened from 16 to 40 so the wall has
+      ends, which costs each row a spine. The property — packed by measured
+      width, not a fixed count — is unchanged.
+    */
     const firstRow = wall.placed.filter((p) => p.row === 0);
-    expect(firstRow.length).toBe(42);
+    expect(firstRow.length).toBe(40);
   });
 
   it('wraps the remainder onto the next row, in order', () => {
@@ -52,8 +62,8 @@ describe('layoutWall', () => {
     const wall = layoutWall({ spines: spines(50), viewportWidth: 1000 });
 
     expect(wall.placed.map((p) => p.id)).toEqual(spines(50).map((s) => s.id));
-    expect(wall.placed[41].row).toBe(0);
-    expect(wall.placed[42].row).toBe(1);
+    expect(wall.placed[39].row).toBe(0);
+    expect(wall.placed[40].row).toBe(1);
   });
 
   it('stacks rows one SPINE_ROW_HEIGHT apart, so shelves land under feet', () => {
@@ -86,7 +96,11 @@ describe('layoutWall', () => {
      */
     const wall = layoutWall({ spines: spines(45), viewportWidth: 1000 });
 
-    expect(wall.shelves.length, 'one shelf per row, including the partial one').toBe(2);
+    /*
+      Four, not two: the room's minimum. The property under test is that every
+      shelf spans the wall — including the partial row and the empty ones.
+    */
+    expect(wall.shelves.length, 'one shelf per row, including the empty ones').toBe(4);
     for (const shelf of wall.shelves) {
       expect(shelf.width, 'the shelf spans the wall').toBeCloseTo(1000, 5);
       expect(shelf.x, 'and starts at its left edge').toBeCloseTo(0, 5);
@@ -127,7 +141,8 @@ describe('layoutWall', () => {
      */
     const wall = layoutWall({ spines: spines(45), viewportWidth: 1000 });
 
-    expect(wall.height).toBeCloseTo(2 * (SPINE_HEIGHT + SHELF_EDGE), 5);
+    /* Four rows now: the room's minimum, not the two these records occupy. */
+    expect(wall.height).toBeCloseTo(4 * (SPINE_HEIGHT + SHELF_EDGE), 5);
   });
 
   it('survives a viewport narrower than one spine without looping forever', () => {
@@ -148,6 +163,79 @@ describe('layoutWall', () => {
     expect(wall.placed).toEqual([]);
     expect(wall.shelves).toEqual([]);
     expect(wall.height).toBe(0);
+  });
+
+  it('is at least FOUR shelves deep, however few records there are', () => {
+    /**
+     * **A room has a size.** Filtering to 26 records collapsed the wall to a
+     * single row — the room shrink-wrapping its contents. That is the same
+     * failure as every rejected minimum-WIDTH candidate in units 20-22,
+     * arriving vertically: a rectangle that stops has a size, and a reader
+     * interprets it.
+     *
+     * Four rows of empty shelf below a filtered result says *these are the ones
+     * that matched*. One row that fits the result says *this is the whole
+     * collection*, which is false.
+     *
+     * **The discriminating fixture is a SHORT collection.** A wall that already
+     * fills four rows cannot tell a minimum from its absence — the same shape
+     * as unit 22's plane needing one record and many, and unit A's centring
+     * needing three rows rather than one.
+     */
+    for (const count of [1, 5, 26]) {
+      const wall = layoutWall({ spines: spines(count), viewportWidth: 1000 });
+
+      expect(
+        wall.shelves.length,
+        `${count} records must still get a room, not a shrink-wrapped strip`,
+      ).toBe(MIN_SHELF_ROWS);
+      expect(wall.height).toBeCloseTo(MIN_SHELF_ROWS * (SPINE_HEIGHT + SHELF_EDGE), 5);
+    }
+  });
+
+  it('GROWS beyond the minimum with the collection', () => {
+    /**
+     * The other half, and the one a floor breaks if it is written as a fixed
+     * height: a large collection must still get every row it needs.
+     */
+    const big = layoutWall({ spines: spines(400), viewportWidth: 1000 });
+
+    expect(big.shelves.length).toBeGreaterThan(MIN_SHELF_ROWS);
+    expect(big.placed[big.placed.length - 1].row).toBe(big.shelves.length - 1);
+  });
+
+  it('gives the empty shelves the SAME treatment as occupied ones', () => {
+    /**
+     * §10b, unit 22: "the surface runs edge to edge and ends where the wall
+     * ends." A row with nothing on it is shelf with nothing on it — not void,
+     * and not a different kind of surface.
+     */
+    const wall = layoutWall({ spines: spines(5), viewportWidth: 1000 });
+
+    for (const shelf of wall.shelves) {
+      expect(shelf.width, 'every shelf spans the wall').toBeCloseTo(1000, 5);
+      expect(shelf.height).toBe(wall.shelves[0].height);
+    }
+  });
+
+  it('leaves a margin at BOTH edges, because a real shelf has ends', () => {
+    /**
+     * **The clipping QA saw**: leftmost spines cut mid-word — "rannigan",
+     * "orvid Murder" — and the same at the right. The wall bled off both edges.
+     *
+     * Asserted as a gap between the wall's edge and the outermost spine, at
+     * both ends, so a one-sided fix cannot pass.
+     */
+    const wall = layoutWall({ spines: spines(80), viewportWidth: 1000 });
+
+    const leftmost = Math.min(...wall.placed.map((p) => p.x));
+    const rightmost = Math.max(...wall.placed.map((p) => p.x + p.width));
+
+    expect(leftmost, 'a margin before the first spine').toBeGreaterThanOrEqual(WALL_EDGE_MARGIN);
+    expect(
+      1000 - rightmost,
+      'and after the last one',
+    ).toBeGreaterThanOrEqual(0);
   });
 
   it('is DETERMINISTIC: the same input always produces the same wall', () => {

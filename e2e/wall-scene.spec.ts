@@ -81,6 +81,26 @@ test.beforeEach(async ({ page }) => {
  * The filter is the same `artistId` the collection views use, so this exercises
  * the real query rather than a test-only path.
  */
+/**
+ * Clicks empty wall to put a record back.
+ *
+ * **Clamped to the viewport**, because the wall is four shelves deep now and a
+ * canvas taller than the window is ordinary: three tests clicked at
+ * `box.y + box.height - 30`, which after the room's minimum landed BELOW the
+ * fold and hit nothing at all. They failed reporting an unchanged slot gap,
+ * which reads as "the return never ran" — the right symptom from the wrong
+ * cause.
+ *
+ * The far right of a row is empty wall on any collection that does not fill it,
+ * so the raycast misses every spine and dismisses.
+ */
+async function dismiss(page: Page, box: { x: number; y: number; width: number; height: number }) {
+  const viewport = page.viewportSize();
+  const bottom = Math.min(box.y + box.height - 30, (viewport?.height ?? 900) - 40);
+
+  await page.mouse.click(box.x + box.width - 30, bottom);
+}
+
 async function openWall(page: Page, artistId: string) {
   await page.goto(`/plane?artistId=${artistId}`);
   const canvas = page.getByTestId('wall-scene').locator('canvas');
@@ -219,7 +239,7 @@ test('the record returns to its slot when dismissed', async ({ page }) => {
   await page.waitForTimeout(900);
 
   // Clicking empty wall puts it back — the raycast misses every spine.
-  await page.mouse.click(box.x + box.width - 30, box.y + box.height - 30);
+  await dismiss(page, box);
   await expect(scene, 'the wall is whole again').toHaveAttribute('data-pulled', '');
 
   /*
@@ -273,7 +293,7 @@ test('the record ANIMATES back rather than vanishing', async ({ page }) => {
   expect(out, 'the record is out of the wall to begin with').toBeGreaterThan(200);
 
   // Dismiss, then sample immediately — before the return can have finished.
-  await page.mouse.click(box.x + box.width - 30, box.y + box.height - 30);
+  await dismiss(page, box);
   await page.waitForTimeout(150);
 
   const midFlight = await page.evaluate(() =>
@@ -351,7 +371,7 @@ test('the return re-measures the slot rather than caching it', async ({ page }) 
   expect(after).not.toBeNull();
   if (after === null) return;
 
-  await page.mouse.click(after.x + after.width - 20, after.y + after.height - 20);
+  await dismiss(page, after);
   await page.waitForTimeout(1400);
 
   /**
@@ -386,7 +406,16 @@ test('the wall RE-WRAPS when its container changes width', async ({ page }) => {
    * changes size for reasons that are not re-wrapping and the row count is what
    * a re-wrap actually means.
    */
-  const { artistId } = await seed(page, 60);
+  /**
+   * **The fixture must EXCEED the room's minimum at the wide width**, or the
+   * re-wrap is invisible: four shelves is the floor, so 60 records gave four
+   * rows at 1280 and four at 600 and the row count could not move. 200 records
+   * is five rows at 1280 and more when narrowed.
+   *
+   * The same shape as every discriminating fixture in this strand — a test at a
+   * size the rule already covers cannot see the rule working.
+   */
+  const { artistId } = await seed(page, 200);
 
   await page.setViewportSize({ width: 1280, height: 900 });
   await openWall(page, artistId);
@@ -521,6 +550,41 @@ test('a keyboard can walk the wall and open a record', async ({ page }) => {
   // The record that opened is one of ours.
   const heading = await page.getByRole('heading', { level: 1 }).first().textContent();
   expect(titles.some((t) => heading?.includes(t)), `opened "${heading}"`).toBe(true);
+});
+
+test('the room is FOUR shelves deep however few records matched', async ({ page }) => {
+  /**
+   * **A room has a size.** Filtering to 26 records collapsed the wall to a
+   * single row — the room shrink-wrapping its contents. That is the same
+   * failure as every rejected minimum-WIDTH candidate in units 20-22, arriving
+   * vertically: a rectangle that stops has a size, and a reader reads that size
+   * as a fact about the collection.
+   *
+   * Four rows of empty shelf below a filtered result says *these are the ones
+   * that matched*; one row that fits the result says *this is all there is*.
+   *
+   * **The discriminating fixture is a SHORT collection.** A wall that already
+   * fills four rows cannot tell a minimum from its absence — the same shape as
+   * unit 22's plane needing one record and many, and unit A's centring needing
+   * three rows rather than one.
+   *
+   * **This is what satisfies A24d**, whose gaps rule wanted a filtered wall to
+   * keep its shape rather than repack. Holding positions for unrendered records
+   * is a hard mechanism; empty shelf below the results achieves the same honesty
+   * far more simply.
+   */
+  for (const count of [1, 5, 26]) {
+    const { artistId } = await seed(page, count);
+    await openWall(page, artistId);
+
+    const rows = await page.evaluate(() =>
+      Number(
+        (document.querySelector('[data-testid="wall-scene"]') as HTMLElement).dataset.rows ?? -1,
+      ),
+    );
+
+    expect(rows, `${count} records must still get a room, not a strip`).toBe(4);
+  }
 });
 
 test('a short collection still fills the wall', async ({ page }) => {

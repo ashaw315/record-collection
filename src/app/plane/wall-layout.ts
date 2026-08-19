@@ -54,8 +54,46 @@ export type WallLayout = {
 /** The gap between adjacent spines. Matches the CSS wall's `gap-x-[3px]`. */
 const SPINE_GAP = 3;
 
-/** Breathing room at the wall's left and right edges. */
-const WALL_PADDING = 16;
+/**
+ * Breathing room at the wall's left and right edges — **the wall's ends**.
+ *
+ * QA saw the leftmost spines cut mid-word ("rannigan", "orvid Murder") and the
+ * same at the right: the wall bled off both edges. The old 16px was measured
+ * against a canvas that is itself inset by the page's own padding, so the first
+ * spine sat on the very first pixel of the scene.
+ *
+ * A real shelf has ends. This is wide enough to read as one rather than as a
+ * wall that continues past the frame.
+ */
+export const WALL_EDGE_MARGIN = 40;
+
+/**
+ * The room is at least four shelves deep, however few records are on it.
+ *
+ * **A room has a size.** Filtering to 26 records collapsed the wall to a single
+ * row — the room shrink-wrapping its contents. That is the same failure as
+ * every rejected minimum-WIDTH candidate in units 20-22, arriving vertically
+ * rather than horizontally: a rectangle that stops has a size, and a reader
+ * interprets that size as a fact about the collection.
+ *
+ * Four rows of empty shelf below a filtered result says *these are the ones
+ * that matched*. One row that fits the result says *this is the whole
+ * collection*, which is false.
+ *
+ * **This is also what satisfies A24d.** That rule wanted a filtered wall to
+ * keep its shape rather than repack, and holding positions for records that are
+ * not rendered is a hard mechanism with a lot of ways to be subtly wrong. Empty
+ * shelf below the results achieves the same honesty far more simply: the room
+ * stays the size of the room.
+ *
+ * **The room does not shrink to fit the window**, any more than a bookcase
+ * does. Four rows of 240px spines is roughly 1000px, which exceeds a laptop
+ * viewport once the nav and controls are accounted for — and that is correct.
+ * You scroll.
+ */
+export const MIN_SHELF_ROWS = 4;
+
+const WALL_PADDING = WALL_EDGE_MARGIN;
 
 export function layoutWall({
   spines,
@@ -104,7 +142,12 @@ export function layoutWall({
     cursor += spine.width + gap;
   }
 
-  const rowCount = row + 1;
+  /*
+    At least the room's minimum, and more when the collection needs it. The
+    `Math.max` is what makes this a FLOOR rather than a fixed height — a large
+    collection still gets every row it needs.
+  */
+  const rowCount = Math.max(row + 1, MIN_SHELF_ROWS);
 
   /*
     **One shelf per row, spanning the FULL width.** §10b: "the surface runs edge

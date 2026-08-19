@@ -9255,3 +9255,59 @@ number about the machine**, the same lesson as the headless-rAF measurement.
 
 Two flakes, both `collection-filters` on the mobile project — the same file that
 flaked before this work.
+
+---
+
+## Step 13 — the room has a size
+
+**1. Four shelves minimum.** Filtering to 26 records collapsed the wall to one
+row. Same failure as every rejected minimum-WIDTH candidate in units 20-22,
+arriving vertically: a rectangle that stops has a size and a reader reads it as
+a fact. `MIN_SHELF_ROWS = 4`, as a FLOOR not a fixed height — mutation-proved
+in both directions (no minimum, and minimum-as-ceiling).
+
+**A24d is satisfied by this rather than by position-holding**, and SPEC §10b now
+says so. The gaps rule wanted a filtered wall to keep its shape; holding slots
+for unrendered records is a hard mechanism, and empty shelf below the results
+achieves the same honesty far more simply.
+
+**2. The clipping was the edge margin, and it was on both sides.** Diagnosed
+rather than guessed — three candidates measured and two eliminated: the frustum
+covers exactly 1248px of a 1248px wall (fits), and the canvas is 1248 in a 1248
+host at x=16 (no overflow). What remained was `WALL_PADDING = 16`, measured
+against a canvas already inset by the page's own padding, so the first spine sat
+on the scene's first pixel. Now 40px, and pixel-scanned to confirm: 24px of wall
+before the page background at the right edge.
+
+**A wrong theory recorded because it was plausible:** the spine mesh is
+`SPINE_HEIGHT` wide in X, so I expected a 95px overhang at the left. Projecting
+the actual mesh showed screen x 13.5-35.6 — fully inside. The rotation
+transforms the geometry, so the visible extent IS the depth. Arithmetic about
+an untransformed mesh says nothing about what is drawn.
+
+**3. The return was NOT dropping frames.** Measured: 36 frames across 620ms,
+first-frame gap 17ms, median 17ms, progress 0 then 0.027. No stall, nothing
+dropped — so "looks fast" was the CURVE, and tuning duration would have been
+fixing the wrong thing. A cubic ease-in covers 13% of the distance by halfway,
+leaving 88% for the second half: the record hangs, then snaps. Quadratic covers
+25% by halfway. Changed the easing, not the duration.
+
+**A taller canvas broke three committed tests, and the symptom lied.** They
+dismissed at `box.y + box.height - 30`, which after the four-row minimum lands
+BELOW the fold — the click hit nothing and the tests failed reporting an
+unchanged slot gap, which reads as "the return never ran". A `dismiss` helper
+now clamps to the viewport. Worth recording: a canvas taller than the window is
+ordinary now, and any test clicking by canvas-relative coordinates has to
+account for it.
+
+**And a fixture outdated by the rule:** the re-wrap test used 60 records, which
+is four rows at 1280 AND at 600 once the minimum applies, so the row count could
+not move. 200 records discriminates. A test at a size the rule already covers
+cannot see the rule working.
+
+**Full E2E: 223 passed, 3 failed, 2 flaky — all five on the MOBILE project in
+`lookup-flows` and `manage`, neither of which touches the wall.** All pass in
+isolation (34/34 for the two files together), and `manage` passes in isolation
+at the baseline commit too. This is the shared-test-data contention
+`playwright.config.ts` already documents between concurrent workers, showing up
+under a longer run. Recorded rather than reported as clean.

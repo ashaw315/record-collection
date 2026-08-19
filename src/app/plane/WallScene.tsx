@@ -666,12 +666,24 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
         if (backFrom === null) backFrom = now;
         const elapsed = Math.min(1, (now - backFrom) / RISE_MS);
 
-        /*
-          **Ease IN, the mirror of the rise's ease-out.** A record going back
-          accelerates toward the gap rather than drifting into it; reusing the
-          rise's easing reads as the animation played backwards.
-        */
-        const eased = elapsed * elapsed * elapsed;
+        /**
+         * **Ease IN, the mirror of the rise's ease-out** — a record going back
+         * accelerates toward the gap rather than drifting into it, and reusing
+         * the rise's easing reads as the animation played backwards.
+         *
+         * **Quadratic rather than cubic, and the frames are why that is the
+         * right change.** QA reported the return looked fast and possibly
+         * dropped frames. Measured: 36 frames across 620ms, first-frame gap
+         * 17ms, median 17ms, progress 0 then 0.027. Nothing is dropped and
+         * there is no stall — so "fast" is the CURVE, not the frame rate, and
+         * tuning the duration would have been fixing the wrong thing.
+         *
+         * A cubic ease-in covers 13% of the distance by halfway, leaving 88%
+         * for the second half: the record hangs, then snaps. Quadratic covers
+         * 25% by halfway, which still accelerates into the slot without the
+         * lurch.
+         */
+        const eased = elapsed * elapsed;
 
         /*
           The SAME `risePose`, read from 1 down to 0. One description of the
