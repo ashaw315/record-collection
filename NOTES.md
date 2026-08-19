@@ -8703,3 +8703,64 @@ viewport-height, so a full collection scrolls past its bottom edge and the
 below, only above the first row. Whether a short collection reads as short
 rather than broken is now a VERTICAL question as much as a horizontal one, and
 five records on a 695px wall is a different judgement from five on a 268px band.
+
+---
+
+## Step 13 — the canvas over the wall
+
+**A test that recomputes the code's arithmetic asserts the arithmetic, not the
+code.** The first version of the rise integration test measured the spine rect,
+recomputed `screenRectToWorld` inside the page, projected it back, and compared.
+It passed against a mapping that ignored the slot position entirely and against
+one carrying unit 18's `+ scrollY` defect. It was a closed loop agreeing with
+itself.
+
+The fix was to make the component publish what it actually computed —
+`BoxCanvas` writes the world placement to data attributes — and have the test
+project only that. Both mutations then failed, the scrollY one by exactly 161px.
+
+This is a distinct shape from the vacuity findings before it. Unit 20's test
+measured the wrong element; unit 22's rects could not see a painted background.
+This one measured the right thing with the right instrument and still proved
+nothing, because the value under test was derived from the same inputs by the
+same formula. **A round trip is only a check if one direction comes from the
+code.**
+
+**Playwright's `click()` scrolls the target into view.** A rect measured before
+the click describes a position the spine no longer occupies. This produced a
+161px miss on Y with X correct — unit 18's exact signature, different culprit:
+there the code mixed coordinate systems, here the harness moved the page between
+two individually correct measurements. `scrollIntoViewIfNeeded()` first, then
+measure, then click.
+
+**Two defects that needed BOTH halves to appear.** The panels had no background
+of their own: built against `/plane`'s light workbench page, they rendered as
+transparent text directly over spine glyphs. And the spine hover label reveals on
+`group-focus-within`, so a clicked spine kept its tooltip visible beneath the
+translucent scrim. Neither the wall alone nor `/plane` alone could show either.
+That is what an integration unit is for, and it is an argument against scaffolds
+that do not render the real component.
+
+**Orphaned after deleting `PulledRecord`, and NOT removed here:**
+`src/app/shelf/faces.ts`, `rise.ts`, `chrome.ts` and `box.ts` now have no
+importers outside their own tests. `back-face.ts` and `tilt.ts` are still shared
+with the canvas path. Deleting four modules and their tests is a larger and
+separate decision — several encode measured findings (unit 12's box geometry,
+unit 10's rise curve) that may be wanted when the flip and the return are built
+on the canvas.
+
+**Still missing from the canvas path**, all previously working in CSS: the flip
+to the back face, the gatefold affordance, and the return-to-slot animation.
+"Turn over" and "Full details" are inert and say so. The tilt exists in
+`BoxCanvas` but has no assertion over the real wall.
+
+**One E2E flake under full-suite parallelism, not reproduced in isolation:**
+`collection-filters.spec.ts:421` ("clicking through to a filtered view equals
+loading that URL directly") on the mobile project. It passes alone, and the
+whole spec passes in full at the commit before the CSS retirement, so it is not
+a regression from that deletion — the file has no shelf dependency. An earlier
+full run reported a different flake (`EVERY row of a wrapping wall`), which then
+passed three times in isolation and did not recur. Both are recorded rather than
+dismissed: this project's own rule is that passing in isolation is not evidence,
+and two different tests flaking on the mobile project in consecutive full runs
+is worth watching rather than explaining away.
