@@ -9062,3 +9062,49 @@ entirely: an empty slot with nothing visible to show for it. Capped at two rows,
 which still clears the convergence bar.
 
 **Not yet done, and deliberately separate:** the swap of `/` to the WebGL wall.
+
+---
+
+## Step 13 unit A — the pulled record's destination
+
+**The three symptoms did NOT share one cause.** The hypothesis was that the
+record ends up very near the lens, filling the frame flat and exaggerating the
+lean of nearby spines. Measured at 125 records, settled:
+
+    world (640, -120, 507)   NDC (0, 0.838)   screen (640, 60) of 1280x744
+    camera distance 2155     camera z 2647    rotationY 0
+    scale 240x240x22         facing +z        spineColour #c1c8c9, no cover
+
+The record was **2155 units from the camera**, not near it, and had travelled
+496 forward — the two-row cap, not "thousands". Each symptom is separate:
+
+1. **Not centred: the record kept its slot's row height.** `home.y` was never
+   interpolated, so a row-0 record settled 252 world units above the view
+   centre. Predicted NDC 0.832 against 0.838 measured — the arithmetic matches
+   exactly. This is the one real defect and it is fixed.
+2. **The "flat dark green rectangle" is the plain-sleeve fallback, correct.**
+   `spineColour` is `#c1c8c9` and there is no cover, so §10b's honest absence is
+   what should render. It reads flat because a uniform surface lit head-on has
+   no gradient to shade across — the key light gives it N·L 0.745, so it IS lit.
+   Not a defect; a consequence of no cover art plus a nearly edge-free face.
+3. **The splay is pre-existing perspective and unrelated to the gap.** Captured
+   the same crop with nothing pulled: identical lean, symmetric about the frame
+   centre, growing toward the edges. It is ordinary convergence on 22px-deep
+   boxes at 16° FOV.
+
+**A shared explanation that fits is a hypothesis, not a diagnosis** — the prompt
+said so and the measurement bore it out. One of three.
+
+**The scene builds its own box, not units 16-18's.** Depth is the spine's width
+(1:11), where `BoxCanvas` uses 1:25. That is a real divergence and is worth
+reconciling when covers arrive, but it is not what made the record look flat.
+
+**A vacuous test caught by mutation, again.** The centring assertion first used
+5 and 40 records — both ONE ROW at 1280px, where `home.y` IS the view centre, so
+restoring the defect changed nothing and the test passed against it. 130 records
+wraps to three rows and discriminates. **The fixture has to span the dimension
+the defect lives in**, which here was rows rather than record count.
+
+**The pull-depth cap is retired**, with a note in its place. It bounded a
+symptom of the pull being a fraction of the camera distance; the destination
+removes the cause, so there is nothing left to bound.

@@ -151,6 +151,61 @@ test('pulling a record EMPTIES its slot in the wall', async ({ page }) => {
   expect(gap, `the pulled spine is ${Math.round(gap)}px from its slot`).toBeGreaterThan(240);
 });
 
+test('the pulled record settles CENTRED in view, at any collection size', async ({ page }) => {
+  /**
+   * **The defect this catches shipped with every assertion green.** The slot
+   * emptied, the record occluded the wall, the rise completed — and the record
+   * settled at NDC y 0.838, clipped against the top of the frame, because it
+   * kept its slot's row height. Where it landed depended on which row it came
+   * from, which is not a destination anyone chose.
+   *
+   * §10b: "it was on the shelf a moment ago and now it is in your hands."
+   *
+   * **Asserted at two collection sizes**, because a camera-relative
+   * destination and an absolute one are the same observation at one size. The
+   * camera frames the whole wall, so its distance scales with the collection —
+   * that is exactly where the two designs diverge.
+   */
+  /**
+   * **The counts must span more than one ROW, not just more than one record.**
+   *
+   * A first version used 5 and 40, which both fit one row at 1280px — and
+   * there `home.y` IS the view centre, so restoring the defect changed nothing
+   * and the test passed against it. Mutation-proved and rewritten.
+   *
+   * 130 wraps to three rows, where a row-0 record's own height is 252 world
+   * units above centre. That is the case the two designs disagree about.
+   */
+  for (const count of [5, 130]) {
+    const { artistId } = await seed(page, count);
+    await openWall(page, artistId);
+
+    const scene = page.getByTestId('wall-scene');
+    const box = await scene.locator('canvas').boundingBox();
+    expect(box).not.toBeNull();
+    if (box === null) return;
+
+    await clickASpine(page, box);
+    await expect(scene).not.toHaveAttribute('data-pulled', '');
+    await page.waitForTimeout(900);
+
+    const settled = await page.evaluate(() => {
+      const el = document.querySelector('[data-testid="wall-scene"]') as HTMLElement;
+      return {
+        x: Number(el.dataset.settledNdcX ?? 9),
+        y: Number(el.dataset.settledNdcY ?? 9),
+      };
+    });
+
+    /*
+      Tolerance is generous because the rise may not have settled to the last
+      sub-pixel; the defect was 0.838, so anything this catches is real.
+    */
+    expect(Math.abs(settled.x), `${count} records: horizontally centred`).toBeLessThan(0.05);
+    expect(Math.abs(settled.y), `${count} records: vertically centred`).toBeLessThan(0.05);
+  }
+});
+
 test('the record returns to its slot when dismissed', async ({ page }) => {
   const { artistId } = await seed(page, 12);
   await openWall(page, artistId);

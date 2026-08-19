@@ -21,7 +21,6 @@ import {
 import type { ShelfRecord } from '@/lib/db/queries/shelf';
 import {
   DEFAULT_SPINE_COLOUR,
-  SHELF_EDGE,
   SPINE_HEIGHT,
   spineText,
   spineWidth,
@@ -33,7 +32,8 @@ import { risePose } from './rise-pose';
 import { RISE_MS } from './BoxCanvas';
 import { spineLabelPlan } from './spine-texture';
 import { layoutWall, type WallLayout } from './wall-layout';
-import { PULL_FRACTION, WALL_FOV_DEGREES, wallCameraDistance } from './wall-camera';
+import { WALL_FOV_DEGREES, wallCameraDistance } from './wall-camera';
+import { pulledDestination } from './pulled-destination';
 import { RESTING_ROTATION_Y } from './spine-facing';
 
 /**
@@ -79,14 +79,6 @@ import { RESTING_ROTATION_Y } from './spine-facing';
  */
 
 
-
-/**
- * The furthest a record travels toward the viewer, whatever the wall's height.
- *
- * Two rows: enough that the record clearly leaves the wall and occludes what is
- * behind it, and near enough that it stays in the viewport on a nine-row wall.
- */
-const PULL_DEPTH_CAP = (SPINE_HEIGHT + SHELF_EDGE) * 2;
 
 export function WallScene({ records }: { records: ShelfRecord[] }) {
   const mount = useRef<HTMLDivElement>(null);
@@ -203,6 +195,7 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
      * `PULL_DEPTH_CAP` below.
      */
     const cameraDistance = wallCameraDistance({ wallHeight: height });
+    const destination = pulledDestination({ wallWidth: width, wallHeight: height });
     const camera = new PerspectiveCamera(WALL_FOV_DEGREES, width / height, 1, cameraDistance * 2);
     camera.position.set(width / 2, -height / 2, cameraDistance);
     camera.lookAt(width / 2, -height / 2, 0);
@@ -423,45 +416,28 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
             Measured across focal lengths in `wall-camera.ts`.
           */
           /**
-           * **The pull is a fraction of the camera distance, CAPPED.**
+           * **From the slot to an explicit DESTINATION**, rather than forward
+           * by a proportion and wherever that lands.
            *
-           * A fraction alone is right for convergence — a fixed pixel depth
-           * converges by 1.02 at this focal length and reads as no turn at all.
-           * But the camera distance scales with the wall, so on a 390px
-           * viewport where 125 records wrap to nine rows and 2232px, 40% is
-           * 3176px: the record left the viewport entirely and the reader saw an
-           * empty slot with nothing to show for it.
+           * The old version kept `home.y`, so where a record settled depended
+           * on which row it came from — measured at 125 records, a row-0 record
+           * ended 252 world units above the view centre, NDC y 0.838, clipped
+           * against the top of the frame. Its depth was a fraction of the
+           * camera distance, which scales with the collection, so it also
+           * arrived a different apparent size on a nine-row wall than a one-row
+           * one.
            *
-           * The cap is expressed in ROWS, because a row is what the reader is
-           * looking at and it does not change with collection size. Two rows
-           * still clears the convergence bar on any wall tall enough for the
-           * cap to bite.
+           * `pulledDestination` owns both: centred in view, at a distance
+           * derived from how big the record should LOOK rather than from how
+           * many records are owned. `risePose` still owns what happens on the
+           * way — the quarter turn and the forward travel are unchanged.
            */
-          const pullDepth = Math.min(cameraDistance * PULL_FRACTION, PULL_DEPTH_CAP);
-          const pose = risePose({ progress, slotDepth: pullDepth });
-
-          /*
-            Toward the centre of the visible wall as it turns and comes forward.
-            The record is read at the middle of the screen, not above its slot.
-          */
           const eased = 1 - Math.pow(1 - progress, 3);
-          /**
-           * **The record comes forward from its slot, it does not fly to the
-           * top of the wall.**
-           *
-           * The target was a fixed `y` near the canvas's top, which is fine on
-           * a three-row wall and wrong on a tall one: at 390px the wall wraps
-           * to nine rows and 2232px, so a record pulled from row two travelled
-           * 3182px and left the viewport entirely — an empty slot with nothing
-           * visible to show for it.
-           *
-           * Staying at the slot's own height keeps the record where the reader
-           * was already looking, which is also what a record coming off a shelf
-           * does: it comes toward you, not upward.
-           */
+          const pose = risePose({ progress, slotDepth: destination.z - home.z });
+
           mesh.position.set(
-            home.x + (width / 2 - home.x) * eased,
-            home.y,
+            home.x + (destination.x - home.x) * eased,
+            home.y + (destination.y - home.y) * eased,
             home.z + pose.z,
           );
           /**
@@ -484,6 +460,23 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
           const dy = mesh.position.y - home.y;
           const dz = mesh.position.z - home.z;
           host.dataset.slotGap = String(Math.sqrt(dx * dx + dy * dy + dz * dz));
+
+          /**
+           * **Where the record ended up, in normalised device coordinates.**
+           *
+           * Published because a canvas has nothing a rect can measure, and the
+           * defect this unit fixed was invisible to every assertion the scene
+           * had: the record settled at NDC y 0.838, clipped against the top of
+           * the frame, while the slot emptied correctly and every test passed.
+           *
+           * NDC rather than pixels: (0, 0) is the centre of view by definition,
+           * so "is it centred" is a comparison against zero rather than against
+           * a canvas size the test would have to know.
+           */
+          const ndc = mesh.position.clone().project(camera);
+          host.dataset.settledNdcX = String(ndc.x);
+          host.dataset.settledNdcY = String(ndc.y);
+
           /*
             **The size does not interpolate; the ROTATION reveals it.** The mesh
             is a record all along — SPINE_HEIGHT square, as thick as its spine —
