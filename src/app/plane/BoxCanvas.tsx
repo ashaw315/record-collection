@@ -20,7 +20,8 @@ import { tiltFor } from '../shelf/tilt';
 import { edgeColourFor } from './edge-colour';
 import { createRenderLoop } from './render-loop';
 import { riseProgress, shouldStartClock } from './rise-clock';
-import { screenRectToWorld, type ScreenRect, type WorldPlacement } from './world-map';
+import { risePose } from './rise-pose';
+import { screenRectToWorld, type ScreenRect } from './world-map';
 import { centredSquareUv, type Skin, type Skins } from './skins';
 
 /**
@@ -74,6 +75,16 @@ export const BOX_THICKNESS_RATIO = 1 / 25;
  * constant converts it to progress.
  */
 export const RISE_MS = 620;
+
+/**
+ * How far forward of the wall plane the settled record sits, in world units.
+ *
+ * The record comes TOWARD the viewer as it leaves the shelf — that is what a
+ * record coming off a shelf does, and it is the half of the motion a rect
+ * interpolation cannot express. Small relative to the camera's distance (3.4)
+ * so the perspective change reads as approach rather than as a zoom.
+ */
+export const SLOT_DEPTH = 0.55;
 
 /**
  * Ease-out: fast away from the slot, settling gently.
@@ -205,7 +216,7 @@ export function BoxCanvas({
    */
   const live = useRef<{
     animate: (step: (now: number) => boolean) => void;
-    setPlacement: (p: WorldPlacement) => void;
+    setPose: (p: { x: number; y: number; z: number; rotationY: number; scale: number }) => void;
     canvasRect: () => ScreenRect;
   } | null>(null);
 
@@ -448,8 +459,15 @@ export function BoxCanvas({
       host.dataset.canvasWidth = String(canvasRect.width);
       host.dataset.canvasHeight = String(canvasRect.height);
 
-      mesh.position.set(from.x, from.y, 0);
-      mesh.scale.set(from.scaleX, from.scaleY, 1);
+      /*
+        **Edge-on in the slot**, which is what a spine IS. The box starts at its
+        true proportions and looks like a spine because it is turned side-on,
+        rather than being a squashed rectangle that has to un-squash.
+      */
+      const startPose = risePose({ progress: 0, slotDepth: SLOT_DEPTH });
+      mesh.position.set(from.x, from.y, startPose.z);
+      mesh.rotation.y = startPose.rotationY;
+      mesh.scale.setScalar(startPose.scale);
 
       /**
        * **One warm-up frame at the slot, then the clock.**
@@ -499,17 +517,30 @@ export function BoxCanvas({
          * a stall needs.
          */
         if (frameLog.length < 64) frameLog.push({ progress, at: now });
+        host.dataset.riseProgress = String(progress);
         host.dataset.riseFrames = String(frameLog.length);
         host.dataset.riseFirstProgress = String(frameLog[0]?.progress ?? -1);
         host.dataset.riseSecondProgress = String(frameLog[1]?.progress ?? -1);
 
-        // Toward the settled state: the origin, at full size.
-        mesh.position.set(from.x * (1 - eased), from.y * (1 - eased), 0);
-        mesh.scale.set(
-          from.scaleX + (1 - from.scaleX) * eased,
-          from.scaleY + (1 - from.scaleY) * eased,
-          1,
-        );
+        /**
+         * **A motion the box performs, not a rect it is drawn inside.**
+         *
+         * The old version interpolated position and scale from the spine's rect
+         * to the settled rect — unit 19's FLIP, which was right for a CSS plane
+         * and reads on a real box as a square shrinking and expanding. A spine
+         * is the EDGE of a record, so leaving the shelf is a quarter turn about
+         * Y and a translation in Z, both of which are free under a real camera
+         * and neither of which CSS could have done.
+         *
+         * The lateral travel from the slot to the centre stays an
+         * interpolation, because that part genuinely is one: the record moves
+         * across the wall to where it is read.
+         */
+        const pose = risePose({ progress, slotDepth: SLOT_DEPTH });
+
+        mesh.position.set(from.x * (1 - eased), from.y * (1 - eased), pose.z);
+        mesh.rotation.y = pose.rotationY;
+        mesh.scale.setScalar(pose.scale);
 
         // `false` ends the animation, and with it the loop's reason to run.
         return progress < 1;
@@ -522,11 +553,28 @@ export function BoxCanvas({
     draw();
     if (pending === 0) setStatus('ready');
 
+    /*
+      Counted so a test can assert the scene is built ONCE per record rather
+      than once per render. Measured before this was fixed: six pulls created
+      EIGHTEEN WebGL contexts — three per pull — because `skins` was a fresh
+      object on every render and is an effect dependency, so any re-render tore
+      down the renderer, geometry, materials and lights and built them again.
+      Each rebuild cost a ~31ms first draw.
+    */
+    const counter = window as unknown as { __sceneBuilds?: number };
+    counter.__sceneBuilds = (counter.__sceneBuilds ?? 0) + 1;
+
     live.current = {
       animate: (step) => loop.animate(step),
-      setPlacement: (p) => {
-        mesh.position.set(p.x, p.y, 0);
-        mesh.scale.set(p.scaleX, p.scaleY, 1);
+      /*
+        Takes a POSE now, not a placement: the return is the rise reversed, and
+        the rise turns. A position-and-scale channel could not express the
+        record turning back edge-on as it goes into the slot.
+      */
+      setPose: (p: { x: number; y: number; z: number; rotationY: number; scale: number }) => {
+        mesh.position.set(p.x, p.y, p.z);
+        mesh.rotation.y = p.rotationY;
+        mesh.scale.setScalar(p.scale);
       },
       canvasRect: () => {
         /*
@@ -615,11 +663,20 @@ export function BoxCanvas({
       */
       const eased = progress * progress * progress;
 
-      scene.setPlacement({
+      /**
+       * **The rise's motion, reversed**: the record turns back edge-on as it
+       * goes into the slot, rather than shrinking into it face-on. Same
+       * `risePose`, read from 1 down to 0, so the two directions cannot
+       * describe different objects.
+       */
+      const pose = risePose({ progress: 1 - eased, slotDepth: SLOT_DEPTH });
+
+      scene.setPose({
         x: to.x * eased,
         y: to.y * eased,
-        scaleX: 1 + (to.scaleX - 1) * eased,
-        scaleY: 1 + (to.scaleY - 1) * eased,
+        z: pose.z,
+        rotationY: pose.rotationY,
+        scale: pose.scale,
       });
 
       if (progress >= 1 && !finished) {

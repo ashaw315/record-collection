@@ -1077,6 +1077,69 @@ test('the record RETURNS to its slot, re-measured rather than remembered', async
   await expect(page.getByTestId('record-box')).toBeHidden({ timeout: 5000 });
 });
 
+test('browsing across records does not rebuild the scene each time', async ({ page }) => {
+  /**
+   * **Moving across records fast was laggy, and this is what it was.**
+   *
+   * Measured before the fix: six pulls created EIGHTEEN WebGL contexts — three
+   * per pull — each costing a ~31ms first draw, with one at 63.9ms. Not the
+   * warm-up frame, which is one frame; not texture loads, since the fixtures
+   * have no covers; and not the dirty-flag loop, which was measured drawing
+   * ZERO idle frames in 1500ms.
+   *
+   * The cause was `resolveSkins(record)` built inline in the caller's JSX, so
+   * `skins` was a new object on every render and is an effect dependency —
+   * meaning any re-render tore down renderer, geometry, materials and lights
+   * and rebuilt them. The `key` accounted for one rebuild per pull; identity
+   * churn added two more.
+   *
+   * **Asserted as builds per pull, not as a duration.** A timing threshold on a
+   * CI machine is a flake waiting to happen; the count is exact and is the
+   * thing that was actually wrong.
+   */
+  const { artistId } = await seedRecord(page, `Browsing ${suffix()}`);
+  for (let i = 0; i < 9; i += 1) {
+    await page.request.post('/api/records', {
+      data: { title: `Browsing-${i} ${suffix()}`, artistId },
+    });
+  }
+
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.getByTestId('shelf-timber')).toBeVisible();
+
+  await page.evaluate(() => {
+    (window as unknown as { __sceneBuilds?: number }).__sceneBuilds = 0;
+  });
+
+  const pulls = 5;
+  for (let i = 0; i < pulls; i += 1) {
+    await page.getByTestId('shelf-spine').nth(i).click();
+    await expect(page.getByTestId('record-box')).toBeVisible();
+    await page.getByTestId('record-scrim').click({ position: { x: 10, y: 10 } });
+    await expect(page.getByTestId('record-box')).toBeHidden({ timeout: 5000 });
+  }
+
+  const builds = await page.evaluate(
+    () => (window as unknown as { __sceneBuilds?: number }).__sceneBuilds ?? 0,
+  );
+
+  /**
+   * One build per record is the honest cost of keying the canvas on the spine:
+   * a second click must restart the rise rather than reuse a settled canvas.
+   *
+   * **The ceiling is 2x, not 1x, and the reason is the dev server.** React
+   * StrictMode double-invokes effects in development and the E2E suite runs
+   * against `next dev`, so every build is seen twice here and once in
+   * production. Asserting 1x would fail against correct code; asserting 3x
+   * would not have caught the defect. 2x is the honest bound for the
+   * environment the test runs in, and it still fails the 3x that shipped.
+   */
+  expect(
+    builds,
+    `${pulls} pulls rebuilt the scene ${builds} times; it was 3x per pull before this was fixed`,
+  ).toBeLessThanOrEqual(pulls * 2);
+});
+
 test('records STAND ON the shelf line rather than floating above or through it', async ({
   page,
 }) => {

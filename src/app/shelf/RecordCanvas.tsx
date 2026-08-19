@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ShelfRecord } from '@/lib/db/queries/shelf';
 import { BoxCanvas } from '../plane/BoxCanvas';
 import { resolveSkins } from '../plane/skins';
@@ -113,6 +113,17 @@ export function RecordCanvas({
     setReturningId(record?.id ?? null);
   }, [record?.id]);
 
+  /**
+   * **Memoised, because `skins` is an effect dependency in `BoxCanvas`.**
+   *
+   * Built inline in the JSX this was a fresh object on every render, so any
+   * re-render — the return flag flipping, a parent update, anything — tore down
+   * the renderer, geometry, materials and lights and built them again.
+   * Measured: six pulls created eighteen WebGL contexts, each costing a ~31ms
+   * first draw, which is what made browsing across records feel laggy.
+   */
+  const skins = useMemo(() => (record === null ? null : resolveSkins(record)), [record]);
+
   const measureForReturn = useCallback(
     () => (record === null ? null : measureSlot(record.id)),
     [record, measureSlot],
@@ -209,7 +220,7 @@ export function RecordCanvas({
               */
               key={`${record.id}-${from?.left ?? 0}-${from?.top ?? 0}`}
               testId="record-box"
-              skins={resolveSkins(record)}
+              skins={skins ?? resolveSkins(record)}
               imprint={null}
               spineColour={record.spineColour}
               riseFrom={from}

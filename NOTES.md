@@ -8822,3 +8822,51 @@ returning" without state having to be corrected.
 a shelf under it` (unit 23's). Second full run in which it has flaked, and it
 passes in isolation. Not from this work, and worth a look before it hides
 something.
+
+---
+
+## Step 13 — the rise as a 3D motion, and the browsing lag
+
+**Browsing lag: three WebGL contexts per pull, and it was not any of the first
+guesses.** Measured across six pulls: 18 contexts created, 12 slow draws (one at
+63.9ms, eleven at ~31ms). Ruled out by measurement rather than reasoning — the
+warm-up frame is one frame; the fixtures have no covers so no texture loads at
+all; and the dirty-flag loop drew **zero** idle frames in 1500ms, so it settles
+correctly between rises.
+
+The cause was `resolveSkins(record)` built inline in the caller's JSX. `skins`
+is an effect dependency in `BoxCanvas`, so a fresh object on every render tore
+down renderer, geometry, materials and lights and rebuilt them. The `key`
+accounted for one rebuild per pull; identity churn added two more. Memoising it
+took 15 rebuilds down to 10 across five pulls — and the remaining 2x is React
+StrictMode double-invoking effects in development, which does not happen in
+production.
+
+**That last part changed a test's threshold, and the reasoning matters.**
+Asserting 1x rebuild per pull would fail against correct code because the E2E
+suite runs against `next dev`; asserting 3x would not have caught the defect.
+The bound is 2x — honest for the environment the test runs in, and still fails
+the 3x that shipped.
+
+**The rise was a rect interpolation the box was drawn inside.** Unit 19's FLIP
+moved position and scaled from the spine's rect to the settled rect: no depth,
+no rotation. Correct at both endpoints and wrong for the entire middle, which is
+why it read as a square shrinking and expanding.
+
+A spine IS the edge of a record, so the motion is a quarter turn about Y from
+edge-on to face-on plus a translation in Z — both free under a real camera, and
+neither expressible in CSS, which is the case A18 made for the renderer in the
+first place. `risePose` owns it, the return reads the same function from 1 down
+to 0 so the two directions cannot describe different objects.
+
+**Mutation-proved on the middle, not the ends**, because the ends were already
+right: no rotation fails, snapping face-on in the first frames then translating
+fails, and turning in place before moving fails. The second is the important
+one — it passes both endpoint assertions and looks exactly like the defect.
+
+**Observed and NOT changed: the lateral travel is front-loaded.** Both channels
+share the cubic ease-out, so at 15% progress the record has already crossed 39%
+of the distance from its slot to the centre, and 87% by halfway. It leaves the
+slot quickly and then hovers near centre while it finishes turning. That is a
+judgement about the shape of the motion rather than a defect, and it is the sort
+of thing to decide by looking at the frames.
