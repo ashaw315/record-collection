@@ -310,15 +310,11 @@ test('the return re-measures the slot rather than caching it', async ({ page }) 
    * remembered from the rise. That unit's mutation missed by 201px against a
    * 240px scroll.
    *
-   * **Asserted against SCROLL, not resize.** A resize would be the stronger
-   * fixture — it re-wraps every row — but the scene does not rebuild on resize
-   * at all: a comment claims a `ResizeObserver` bumps a version counter and no
-   * such counter exists. That is recorded in NOTES as its own gap rather than
-   * fixed here, and a test that asserted it would be asserting a feature this
-   * unit did not build.
-   *
-   * Scroll is what the rule was written for and is reachable by anyone with a
-   * wheel: the page scrolls freely while a record is out.
+   * **Asserted against RESIZE, which is the stronger fixture.** A scroll moves
+   * every spine on screen; a resize RE-WRAPS the rows, so a record's slot can
+   * change row entirely. An earlier version of this test had to use scroll
+   * because the scene did not rebuild on resize at all — that gap is now
+   * closed, so the test uses the case it always wanted.
    */
   const { artistId } = await seed(page, 60);
   await openWall(page, artistId);
@@ -331,9 +327,9 @@ test('the return re-measures the slot rather than caching it', async ({ page }) 
   await expect(scene).not.toHaveAttribute('data-pulled', '');
   await page.waitForTimeout(900);
 
-  // Scroll while the record is out — the case the rule exists for.
-  await page.mouse.wheel(0, 300);
-  await page.waitForTimeout(300);
+  // Re-wrap the wall while the record is out — every slot moves.
+  await page.setViewportSize({ width: 900, height: 900 });
+  await page.waitForTimeout(700);
 
   /*
     Where the record's own spine sits in wall coordinates, read from the layout
@@ -347,8 +343,16 @@ test('the return re-measures the slot rather than caching it', async ({ page }) 
     };
   });
 
-  await page.mouse.click(box.x + box.width - 30, box.y + 40);
-  await page.waitForTimeout(1200);
+  /*
+    The canvas has moved and re-sized, so its box is re-read rather than reused.
+    Clicking the old one would miss the wall entirely.
+  */
+  const after = await scene.locator('canvas').boundingBox();
+  expect(after).not.toBeNull();
+  if (after === null) return;
+
+  await page.mouse.click(after.x + after.width - 20, after.y + after.height - 20);
+  await page.waitForTimeout(1400);
 
   /**
    * **Measured absolutely, not against the record's own reference.**
@@ -365,6 +369,57 @@ test('the return re-measures the slot rather than caching it', async ({ page }) 
 
   expect(landed.x, 'the record is back in its own slot, horizontally').toBeCloseTo(slot.x, 0);
   expect(landed.y, 'and vertically').toBeCloseTo(slot.y, 0);
+});
+
+test('the wall RE-WRAPS when its container changes width', async ({ page }) => {
+  /**
+   * **The scene did not rebuild on resize, and a comment claimed it did.** It
+   * described a `ResizeObserver` re-running the effect "by bumping a version
+   * counter"; no such counter existed and none ever had.
+   *
+   * The consequence is worse than a stale picture. The wall re-wraps on any
+   * width change, so every slot moves — and both the rise and the return map to
+   * slots. A resize mid-session left the scene describing a layout that no
+   * longer existed: a record rising out of a gap that is not where the gap is.
+   *
+   * Asserted on the ROW COUNT rather than the canvas size, because the canvas
+   * changes size for reasons that are not re-wrapping and the row count is what
+   * a re-wrap actually means.
+   */
+  const { artistId } = await seed(page, 60);
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await openWall(page, artistId);
+
+  const read = () =>
+    page.evaluate(() => {
+      const el = document.querySelector('[data-testid="wall-scene"]') as HTMLElement;
+      return { rows: Number(el.dataset.rows ?? -1), width: Number(el.dataset.wallWidth ?? -1) };
+    });
+
+  const wide = await read();
+  expect(wide.rows, 'the wall has rows to begin with').toBeGreaterThan(0);
+
+  await page.setViewportSize({ width: 600, height: 900 });
+
+  /*
+    Polled: the rebuild is a measurement, a layout and a WebGL scene, and it
+    happens on the observer's own schedule rather than synchronously with the
+    viewport change.
+  */
+  await expect
+    .poll(async () => (await read()).width, { timeout: 5000 })
+    .toBeLessThan(wide.width);
+
+  const narrow = await read();
+  expect(
+    narrow.rows,
+    `${wide.width}px gave ${wide.rows} rows; ${narrow.width}px must give more`,
+  ).toBeGreaterThan(wide.rows);
+
+  // And back, so the rebuild is not one-way.
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await expect.poll(async () => (await read()).rows, { timeout: 5000 }).toBe(wide.rows);
 });
 
 test('the accessible list carries every record with its FULL title', async ({ page }) => {

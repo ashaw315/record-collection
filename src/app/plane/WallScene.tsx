@@ -35,6 +35,7 @@ import { layoutWall, type WallLayout } from './wall-layout';
 import { WALL_FOV_DEGREES, wallCameraDistance } from './wall-camera';
 import { pulledDestination } from './pulled-destination';
 import { boxDepth } from './record-box';
+import { createWidthWatcher } from './wall-resize';
 import { RESTING_ROTATION_Y } from './spine-facing';
 
 /**
@@ -147,15 +148,14 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
    *
    * Two pieces of state that must agree about one number — the smell this
    * project keeps meeting — and the fix is the same as every other time: remove
-   * one of them. There is no width state now: the effect measures the element
-   * it is about to draw into, on the frame before it draws.
+   * one of them. There is no width state now: `createWidthWatcher` measures the
+   * element the scene is about to draw into and calls back when that width
+   * genuinely changes.
    *
-   * **The scene does NOT rebuild on resize**, and an earlier version of this
-   * comment claimed a `ResizeObserver` re-ran the effect "by bumping a version
-   * counter". No such counter exists and none ever did — a confident sentence
-   * describing a mechanism that was never built. Resizing the window leaves the
-   * wall at its old wrapping. Recorded in NOTES as its own gap rather than
-   * fixed here.
+   * **An earlier version of this comment claimed a `ResizeObserver` re-ran the
+   * effect "by bumping a version counter".** No such counter existed and none
+   * ever had — a confident sentence describing a mechanism that was never
+   * built, sitting above code that did the opposite. It is built now.
    */
   useEffect(() => {
     const host = mount.current;
@@ -164,21 +164,34 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     let cancelled = false;
     let teardown: (() => void) | null = null;
 
-    /*
-      Deferred one frame so the measurement happens after layout. Measuring
-      synchronously in an effect can read zero on the first commit, which is
-      what the old version did — and then it had no reliable way to try again.
-    */
-    const frame = requestAnimationFrame(() => {
-      if (cancelled) return;
-      const width = host.clientWidth || host.parentElement?.clientWidth || 0;
-      if (width === 0 || spines.length === 0) return;
-      teardown = build(host, width, layoutWall({ spines, viewportWidth: width }));
+    /**
+     * **Rebuilt whenever the container's width actually changes.**
+     *
+     * The wall re-wraps on any width change, so every slot moves — and both the
+     * rise and the return map to slots. Without this a resize left the scene
+     * describing a layout that no longer existed: a record rising out of a gap
+     * that is not where the gap is.
+     *
+     * `createWidthWatcher` owns the three decisions that make this affordable
+     * rather than a loop: report a change, do NOT report an unchanged width
+     * (the observer fires when the canvas is inserted, which the rebuild itself
+     * does), and ignore zero.
+     */
+    const stopWatching = createWidthWatcher({
+      element: host,
+      onWidth: (width) => {
+        if (cancelled || spines.length === 0) return;
+
+        // The previous scene goes before the next one is built: two WebGL
+        // contexts for one wall is the cost this scene is careful about.
+        teardown?.();
+        teardown = build(host, width, layoutWall({ spines, viewportWidth: width }));
+      },
     });
 
     return () => {
       cancelled = true;
-      cancelAnimationFrame(frame);
+      stopWatching();
       teardown?.();
     };
 
@@ -393,6 +406,14 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
       scene.add(mesh);
       meshes.set(placed.id, mesh);
     }
+
+    /*
+      Published so a test can see that the wall RE-WRAPPED, which is the thing a
+      resize has to change. A canvas has nothing a rect can measure, and the
+      canvas's own size changes for reasons that are not re-wrapping.
+    */
+    host.dataset.rows = String(layout.shelves.length);
+    host.dataset.wallWidth = String(width);
 
     const loop = createRenderLoop(() => renderer.render(scene, camera));
     loop.start();

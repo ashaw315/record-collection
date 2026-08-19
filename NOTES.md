@@ -9154,3 +9154,44 @@ counter exists and none ever did — a confident sentence describing a mechanism
 that was never built. Resizing leaves the wall at its old wrapping. The comment
 is corrected; the gap is its own unit. It also cost a test: the re-measure
 assertion wanted resize as its fixture and had to use scroll instead.
+
+---
+
+## Step 13 — the wall rebuilds on resize
+
+**The comment was false and the code did the opposite.** It described a
+`ResizeObserver` re-running the effect "by bumping a version counter"; no such
+counter existed and none ever had. Worth naming as its own failure mode: a
+confident sentence about a mechanism that was never built is worse than no
+comment, because it stops the next reader looking.
+
+**Why it mattered more on `/` than on `/plane`:** the wall re-wraps on any width
+change, so every slot moves, and BOTH the rise and the return map to slots. A
+resize mid-session left the scene describing a layout that no longer existed —
+a record rising out of a gap that is not where the gap is, and returning to a
+slot its spine has left.
+
+**Three decisions, each a way to get it wrong**, and each mutation-proved:
+
+- Report a width change. (The defect.)
+- Do NOT report an unchanged one. `ResizeObserver` fires whenever the box
+  changes for any reason — including the canvas being inserted, which the
+  rebuild itself does. Forwarding every notification rebuilds the scene in
+  response to its own rebuild: 125 meshes, textures and a context, in a loop,
+  at ~31ms each.
+- Ignore zero. A container measured before layout reports zero, and so does one
+  hidden by an ancestor; building then gives a layout with every spine on its
+  own row.
+
+**Width only.** The wall's height is an OUTPUT of the layout, so watching it
+would be watching the rebuild's own effect.
+
+**A stub that was wrong, not the code.** `stops reporting once disconnected`
+failed first time because the fake `ResizeObserver`'s `disconnect` was a no-op.
+Worth recording because the instinct on a failing test is to suspect the code,
+and this project's rule is that a test passing first time is the suspicious
+case — the inverse is also worth checking.
+
+**Last unit's weaker test is closed.** The re-measure assertion wanted a resize
+as its fixture — it re-wraps every row, where a scroll only moves them — and had
+to use scroll because the scene could not rebuild. It uses resize now.
