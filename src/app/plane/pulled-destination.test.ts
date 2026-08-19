@@ -43,6 +43,25 @@ describe('pulledDestination', () => {
     );
   });
 
+  it('sits on the CAMERA AXIS, which is the wall\'s centre', () => {
+    /**
+     * **Two other answers were measured wrong before this one.** Centring the
+     * record on the window put it at NDC 0.62; on the visible slice of the wall,
+     * 0.93. Both were exactly the offset from the camera's axis, projected.
+     *
+     * The camera is FIXED on the wall's centre because A24b forbids panning it,
+     * so what appears in the middle of the frame is whatever sits on that axis —
+     * "where the reader is looking" is not a scroll question. That the wall may
+     * extend past the window is handled by the canvas scrolling with the page,
+     * which is what the fixed camera bought.
+     */
+    const wallHeight = wallOf(4);
+    const target = pulledDestination({ wallWidth: 1280, wallHeight });
+
+    expect(target.y, 'on the axis the camera looks down').toBeCloseTo(-wallHeight / 2, 5);
+    expect(target.x).toBeCloseTo(640, 5);
+  });
+
   it('lands at the SAME APPARENT SIZE at 5 records and at 125', () => {
     /**
      * **The discriminating fixture, and the reason a camera-relative

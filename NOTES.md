@@ -9358,3 +9358,75 @@ testing what it names.
 **The draw counter is committed, not a probe.** A still wall costing nothing is
 a constraint rather than a statistic, and a canvas has nothing a test can
 otherwise measure.
+
+---
+
+## Step 13 — the composition returns
+
+**One owner: a PHASE, not six flags.** `record-state.ts` holds
+idle/rising/settled/flipping/returning as one value. Dismissing from `flipping`
+goes to `returning` like dismissing from anywhere else — there is no combination
+of flags to get wrong because there are no flags. Mutation-proved on the
+interactions rather than the parts: dismiss-only-from-settled leaves a mid-flip
+record stuck, tilt-during-rise lets two things write one rotation, and a settle
+that resets the face undoes a flip by arriving.
+
+**The tilt is NOT a phase.** It is a pointer-driven offset on top of whatever the
+record is doing, which is why `canTilt` is a question about the phase rather than
+a phase of its own — and why the tilt and flip compose rather than compete.
+
+**Which rotation owns which axis:** the rise owns Y while it runs, the flip adds
+a half turn about Y on top of it, and the tilt adds X plus a small Y offset on
+top of both. All three are SUMMED into one rotation rather than assigned, so
+none can win over another. Unit 12 resolved the CSS equivalent structurally by
+nesting; this is the same answer in a different medium.
+
+**`tiltFor` fits unchanged, a fifth reuse.** Pointer and rect in, two angles out.
+
+**A refactor bug the phase itself caused.** The return effect ran when
+`pulledId === null`, which was true with separate flags because dismissing
+cleared it. Deriving `pulledId` from the phase changed that: a returning record
+is still OUT, so `pulledId` stays set and the branch never ran. Escape
+transitioned the state correctly — measured `settled -> returning` — and nothing
+moved. Keyed on the phase now, which is the question actually being asked.
+
+Worth recording how that was found: three probes in a row said the wrong thing
+(one said keydown never reached the window, because the probe's promise resolved
+before the key was pressed). The one that answered it logged the transition
+inside the state updater.
+
+**The four-shelf room and the panels put the record in the wrong place.** The
+destination centred on the WALL, which was right when the wall was the viewport.
+A 992px canvas in a 900px window puts the wall's centre 243px below the
+viewport's, so the record spanned page y 420-966 and its bottom fell off the
+screen while the panels — `fixed`, viewport-centred — sat beside it. Two centres
+for one composition. `pulledDestination` now takes the viewport and the scroll
+offset, measured at PULL time rather than build time.
+
+**Draws through the whole composition:** 0 idle before, 40 for 40 tilt moves
+(one each), **0 after the pointer stops**, 0 after a flip. The dirty-flag
+discipline holds with the tilt added.
+
+**The hover card outlived what it described.** Hover already does nothing while
+a record is out, but the card was React state and kept its last value — so it
+sat over the facts panel naming the same record twice. Derived from the phase
+now.
+
+**The record centres on the CAMERA AXIS, and two other answers were measured
+wrong first.** The four-shelf room made the canvas taller than the window, so
+the record's bottom fell off the screen. Centring on the window gave NDC 0.62;
+centring on the visible slice of the wall gave 0.93. Both were exactly the
+offset from the camera's axis, projected — the arithmetic matched to three
+decimals each time.
+
+The camera is FIXED on the wall's centre because A24b forbids panning it, so
+what appears in the middle of the frame is whatever sits on that axis. "Where
+the reader is looking" is not a scroll question at all; that the wall extends
+past the window is handled by the canvas scrolling with the page, which is what
+the fixed camera bought in the first place. NDC (0,0) at 5 records and at 130.
+
+Worth recording as a shape: **two plausible fixes that each moved the number in
+the right direction and neither was right.** What settled it was computing the
+expected NDC from the camera geometry and finding it matched the measurement
+exactly — the code was doing precisely what it was told, and the instruction was
+wrong.

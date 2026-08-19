@@ -724,6 +724,160 @@ test('crossing the wall fast leaves exactly ONE spine proud', async ({ page }) =
   await expect(page.getByTestId('wall-card')).toHaveCount(hovered === '' ? 0 : 1);
 });
 
+test('the composition arrives with the record: scrim, facts, actions', async ({ page }) => {
+  /**
+   * What the CSS path had and the swap left behind. Unit 11's finding is the
+   * ordering: the chrome arrives AS the record travels, not before it — that
+   * is what makes it read as arriving rather than a modal opening.
+   */
+  const { artistId } = await seed(page, 12);
+  await openWall(page, artistId);
+
+  const box = await page.getByTestId('wall-scene').locator('canvas').boundingBox();
+  if (box === null) return;
+
+  await clickASpine(page, box);
+  await expect(page.getByTestId('record-chrome')).toBeVisible();
+
+  // The chrome is not yet arrived while the record is still travelling.
+  const early = await page.evaluate(
+    () => getComputedStyle(document.querySelector('[data-testid="record-chrome"]') as HTMLElement).opacity,
+  );
+
+  await page.waitForTimeout(1200);
+
+  /*
+    **Scoped to the chrome.** `/plane` is a workbench and renders `FactsPanel`
+    per record further down the page, so an unscoped `getByTestId` resolves to
+    thirteen. Scoping asserts the WALL's composition rather than the page's.
+  */
+  const chrome = page.getByTestId('record-chrome');
+  await expect(chrome.getByTestId('record-scrim')).toBeVisible();
+  await expect(chrome.getByTestId('facts-panel')).toBeVisible();
+  await expect(chrome.getByTestId('actions-panel')).toBeVisible();
+  await expect(chrome.getByTestId('action-turn')).toBeVisible();
+  await expect(chrome.getByTestId('action-full')).toHaveAttribute('href', /\/records\//);
+
+  const settled = await page.evaluate(
+    () => getComputedStyle(document.querySelector('[data-testid="record-chrome"]') as HTMLElement).opacity,
+  );
+
+  expect(Number(settled), 'the chrome has arrived once the record settles').toBeGreaterThan(0.9);
+  expect(
+    Number(early),
+    `the chrome must not be there before the record is (was ${early})`,
+  ).toBeLessThan(Number(settled));
+});
+
+test('the panel values are READABLE against the scrim', async ({ page }) => {
+  /**
+   * **Not optional**: this caught 1.02:1 once, when values were painted
+   * near-black on near-black and the panel read as labels with no values. The
+   * ground here is the scrim rather than `/plane`'s page, so the measurement
+   * has to be taken again rather than assumed to carry.
+   */
+  const artist = await page.request.post('/api/artists', { data: { name: `Read-${suffix()}` } });
+  const artistId = (await artist.json()).id as string;
+  const label = await page.request.post('/api/labels', { data: { name: `RLab-${suffix()}` } });
+  await page.request.post('/api/records', {
+    data: {
+      title: `Readable ${suffix()}`,
+      artistId,
+      labelId: (await label.json()).id as string,
+      releaseYear: 1979,
+      conditionMedia: 'VG+',
+      purchasePrice: '24.50',
+    },
+  });
+
+  await openWall(page, artistId);
+  const box = await page.getByTestId('wall-scene').locator('canvas').boundingBox();
+  if (box === null) return;
+
+  await clickASpine(page, box);
+  await expect(page.getByTestId('record-chrome').getByTestId('facts-panel')).toBeVisible();
+  await page.waitForTimeout(900);
+
+  const worst = await page.evaluate(() => {
+    const facts = document.querySelector(
+      '[data-testid="record-chrome"] [data-testid="facts-panel"]',
+    ) as HTMLElement;
+    const ground = getComputedStyle(facts.parentElement as HTMLElement).backgroundColor;
+
+    const parse = (colour: string): number[] => (colour.match(/[\d.]+/g) ?? []).map(Number);
+    const lum = ([r, g, b]: number[]) => {
+      const ch = (v: number) => {
+        const x = v / 255;
+        return x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+      };
+      return 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b);
+    };
+    const ratio = (a: string, b: string) => {
+      const la = lum(parse(a));
+      const lb = lum(parse(b));
+      return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+    };
+
+    const nodes = [...facts.querySelectorAll('dd'), ...facts.querySelectorAll('h3')] as HTMLElement[];
+    return Math.min(...nodes.map((n) => ratio(getComputedStyle(n).color, ground)));
+  });
+
+  expect(worst, `the least readable value is ${worst.toFixed(2)}:1`).toBeGreaterThanOrEqual(4.5);
+});
+
+test('Escape dismisses, and a record dismissed MID-FLIP goes home', async ({ page }) => {
+  /**
+   * **The interactions, which is what is genuinely new here.** Each feature has
+   * its own tests; a test of each alone cannot see a record dismissed mid-flip
+   * sticking because two owners disagreed about whether it was still out.
+   *
+   * That is exactly what separate flags produced every time it was built that
+   * way, and why the phase is one value.
+   */
+  const { artistId } = await seed(page, 12);
+  await openWall(page, artistId);
+
+  const box = await page.getByTestId('wall-scene').locator('canvas').boundingBox();
+  if (box === null) return;
+
+  // Escape from settled.
+  await clickASpine(page, box);
+  await page.waitForTimeout(1000);
+  await page.keyboard.press('Escape');
+  await expect
+    .poll(
+      async () =>
+        page.evaluate(() =>
+          Number(
+            (document.querySelector('[data-testid="wall-scene"]') as HTMLElement).dataset.slotGap ?? -1,
+          ),
+        ),
+      { timeout: 6000 },
+    )
+    .toBeLessThan(1);
+
+  // Dismiss MID-FLIP: turn over, then Escape before the turn completes.
+  await clickASpine(page, box);
+  await page.waitForTimeout(1000);
+  await page.getByTestId('record-chrome').getByTestId('action-turn').click();
+  await page.waitForTimeout(120);
+  await page.keyboard.press('Escape');
+
+  await expect
+    .poll(
+      async () =>
+        page.evaluate(() =>
+          Number(
+            (document.querySelector('[data-testid="wall-scene"]') as HTMLElement).dataset.slotGap ?? -1,
+          ),
+        ),
+      { timeout: 6000 },
+    )
+    .toBeLessThan(1);
+
+  await expect(page.getByTestId('record-chrome'), 'and the chrome goes with it').toHaveCount(0);
+});
+
 test('a short collection still fills the wall', async ({ page }) => {
   /**
    * §10b: "a short collection reads as short, not broken." Five records on a

@@ -36,6 +36,7 @@ export function pulledDestination({
 }: {
   wallWidth: number;
   wallHeight: number;
+
 }): PulledPose {
   const cameraZ = wallCameraDistance({ wallHeight });
   const halfAngle = (WALL_FOV_DEGREES * Math.PI) / 360;
@@ -54,9 +55,23 @@ export function pulledDestination({
   const distance = SPINE_HEIGHT / (2 * FRAME_FILL * Math.tan(halfAngle));
 
   return {
-    // Centred across the wall, and at the height the camera is looking at —
-    // which is the wall's middle, not the record's own row.
+    // Centred across the wall.
     x: wallWidth / 2,
+
+    /**
+     * **On the camera's axis**, which is the wall's centre.
+     *
+     * Two other answers were tried and measured wrong, and the reason is worth
+     * recording: the camera is FIXED on the wall's centre, because A24b forbids
+     * panning it. So "where the reader is looking" is not a property of the
+     * scroll position at all — whatever is on the camera's axis is what appears
+     * in the middle of the frame. Centring the record on the window put it at
+     * NDC 0.62, and on the visible slice of the wall at 0.93; both are exactly
+     * the offset from the axis, projected.
+     *
+     * That the wall may extend past the window is a SCROLL question, and the
+     * canvas scrolls with the page — which is what the fixed camera bought.
+     */
     y: -wallHeight / 2,
     z: cameraZ - distance,
   };

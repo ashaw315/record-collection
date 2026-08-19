@@ -231,7 +231,12 @@ export function RecordCanvas({
 
             <div className="pointer-events-auto rounded-xs p-4 shadow-2xl backdrop-blur-sm"
               style={{ backgroundColor: PANEL_GROUND }}>
-              <ActionsPanel />
+              {/*
+                The retired CSS path: its actions stay inert. This component is
+                kept only so the WebGL swap is one revert, and giving it working
+                handlers would be building on a path that is being removed.
+              */}
+              <ActionsPanel recordId={record.id} onTurnOver={() => {}} onPutBack={onClose} />
             </div>
           </div>
         </>

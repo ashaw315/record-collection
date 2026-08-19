@@ -209,7 +209,13 @@ export default async function PlanePage({
                 }`}
               />
 
-              <ActionsPanel />
+              {/*
+              The workbench renders the panel for COMPOSITION only — this is a
+              server component, so it cannot pass handlers. `ActionsPanel` takes
+              them optionally for exactly this reason: on `/` they are real, and
+              here the buttons are inert as they always were on this page.
+            */}
+            <ActionsPanel recordId={records[0]?.id ?? ''} />
             </section>
           );
         })}

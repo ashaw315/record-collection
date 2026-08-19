@@ -36,6 +36,20 @@ import { WALL_FOV_DEGREES, wallCameraDistance } from './wall-camera';
 import { pulledDestination } from './pulled-destination';
 import { boxDepth } from './record-box';
 import { PROUD_MS, proudOffset, shouldRedraw } from './hover-proud';
+import { NO_TILT, tiltFor } from '../shelf/tilt';
+import { ActionsPanel, FactsPanel } from './Panels';
+import { factPanel } from './panel';
+import { PANEL_GROUND } from '../shelf/panel-palette';
+import {
+  canTilt,
+  dismiss,
+  flip,
+  outRecordId,
+  pull,
+  settle,
+  showsBack,
+  type RecordState,
+} from './record-state';
 import { createWidthWatcher } from './wall-resize';
 import { RESTING_ROTATION_Y } from './spine-facing';
 
@@ -85,7 +99,18 @@ import { RESTING_ROTATION_Y } from './spine-facing';
 
 export function WallScene({ records }: { records: ShelfRecord[] }) {
   const mount = useRef<HTMLDivElement>(null);
-  const [pulledId, setPulledId] = useState<string | null>(null);
+  /**
+   * **What the record is doing — one value.**
+   *
+   * Pulled, rising, settled, flipping and returning were separate flags, and
+   * this unit adds tilting on top. Held apart they are the shape that has
+   * failed here every time: a record dismissed mid-flip stuck because two
+   * owners disagreed about whether it was still out.
+   *
+   * `record-state.ts` owns the transitions; everything below derives.
+   */
+  const [state, setState] = useState<RecordState>({ phase: 'idle' });
+  const pulledId = outRecordId(state);
   /**
    * Which record is on its way back, if any.
    *
@@ -94,7 +119,7 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
    * longer knows which mesh to fly home. This holds that for the length of the
    * return and clears itself when it lands.
    */
-  const [returningId, setReturningId] = useState<string | null>(null);
+  const returningId = state.phase === 'returning' ? state.recordId : null;
 
   /**
    * Which record the card is naming, and where the pointer is.
@@ -151,6 +176,8 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
   const live = useRef<{
     setPulled: (id: string | null, progress: number) => void;
     animate: (step: (now: number) => boolean) => void;
+    setFlip: (turn: number) => void;
+    setTilt: (next: { rotateX: number; rotateY: number }) => void;
   } | null>(null);
 
   /**
@@ -439,6 +466,15 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
      * likely to break. There is nothing in a canvas a test can measure, so the
      * loop counts its own draws and a test reads them after a settle window.
      */
+    /*
+      The flip's accumulated half-turns and the tilt's current angles, held
+      here so the mesh's rotation can SUM all three contributions rather than
+      any one of them assigning it.
+    */
+    let flipTurn = 0;
+    let tiltNow = NO_TILT;
+    const DEG = Math.PI / 180;
+
     const counter = window as unknown as { __drawCount?: number };
 
     const loop = createRenderLoop(() => {
@@ -457,6 +493,14 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
      */
     live.current = {
       animate: (step) => loop.animate(step),
+      setFlip: (turn: number) => {
+        flipTurn = turn;
+        loop.markDirty();
+      },
+      setTilt: (next: { rotateX: number; rotateY: number }) => {
+        tiltNow = next;
+        loop.markDirty();
+      },
       setPulled: (id, progress) => {
         /*
           The LAYOUT's answer for where this record's slot is — read from
@@ -563,7 +607,21 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
             Negated to match the resting pose: the turn runs from −π/2 (edge-on,
             label toward the viewer) to 0 (face-on, cover toward the viewer).
           */
-          mesh.rotation.y = -pose.rotationY;
+          /**
+           * **Which rotation owns which axis** — the composition question.
+           *
+           * The RISE owns Y while it runs: edge-on to face-on. The FLIP also
+           * turns about Y, and adds a half turn on top of wherever the rise
+           * has reached. The TILT owns X, and adds a small Y offset on top of
+           * both rather than replacing them.
+           *
+           * Unit 12 found that a running keyframe's transform beats an inline
+           * one and resolved it structurally rather than by arbitration. The
+           * equivalent here is that all three CONTRIBUTE to one rotation — they
+           * are summed, not assigned — so none can win over another.
+           */
+          mesh.rotation.y = -pose.rotationY + flipTurn + tiltNow.rotateY * DEG;
+          mesh.rotation.x = tiltNow.rotateX * DEG;
 
           // How far the spine has travelled from its slot, in wall pixels.
           const dx = mesh.position.x - home.x;
@@ -648,8 +706,12 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
         would leave two meshes animating and the new one is what the reader is
         looking at.
       */
-      setReturningId(next === null ? pulledIdRef.current : null);
-      setPulledId(next);
+      /*
+        Clicking a spine pulls it; clicking empty wall dismisses whatever is out.
+        Both are one transition on one value, so there is no combination of
+        flags to get wrong.
+      */
+      setState((current) => (next === null ? dismiss(current) : pull(current, next)));
     };
 
     /**
@@ -798,11 +860,18 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
      * `returningId` is what makes a dismissal animatable: the scene still needs
      * to know WHICH record is going back after `pulledId` has become null.
      */
-    if (pulledId === null) {
-      if (returningId === null) {
-        scene.setPulled(null, 0);
-        return;
-      }
+    /**
+     * **Keyed on the PHASE, not on `pulledId` being null.**
+     *
+     * With separate flags the return ran when `pulledId` became null, because
+     * dismissing cleared it. Deriving `pulledId` from the phase changed that:
+     * a returning record is still OUT, so `pulledId` stays set and this branch
+     * never ran — Escape transitioned the state correctly (`settled ->
+     * returning`, measured) and nothing moved.
+     *
+     * The phase is the question being asked, so the phase is what it asks.
+     */
+    if (returningId !== null) {
 
       let backFrom: number | null = null;
       const goingBack = returningId;
@@ -837,9 +906,14 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
         */
         scene.setPulled(goingBack, 1 - eased);
 
-        if (elapsed >= 1) setReturningId(null);
+        if (elapsed >= 1) setState({ phase: 'idle' });
         return elapsed < 1;
       });
+      return;
+    }
+
+    if (pulledId === null) {
+      scene.setPulled(null, 0);
       return;
     }
 
@@ -864,9 +938,131 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
       if (start === null) start = now;
       const progress = Math.min(1, (now - start) / RISE_MS);
       scene.setPulled(pulledId, progress);
+
+      /*
+        The rise finishing is a transition, not a flag: `settled` is what lets
+        the chrome arrive and the tilt begin. Guarded on `rising` so a record
+        dismissed mid-rise is not dragged back to settled by its own animation
+        finishing.
+      */
+      if (progress >= 1) setState((current) => (current.phase === 'rising' ? settle(current) : current));
+
       return progress < 1;
     });
   }, [pulledId, returningId]);
+
+  /**
+   * **The flip: a half turn about Y, animated through the same loop.**
+   *
+   * The box has both faces, so this is a rotation of an object rather than a
+   * state saying which side shows — which was the whole argument for the box in
+   * unit 13, and what retired the half-turn cost NOTES had recorded.
+   */
+  useEffect(() => {
+    if (state.phase !== 'flipping') return;
+    const scene = live.current;
+    if (scene === null) return;
+
+    const target = showsBack(state) ? Math.PI : 0;
+    const from = showsBack(state) ? 0 : Math.PI;
+
+    let start: number | null = null;
+
+    /*
+      **Reduced motion turns the record instantly**, and the settle still goes
+      through the loop rather than a synchronous `setState` in this effect —
+      which `react-hooks/set-state-in-effect` refuses, correctly: it causes a
+      cascading render to fix up state React can simply be given. Running one
+      frame at progress 1 is the same code path with no animation in it.
+    */
+    const instant = prefersReducedMotion();
+
+    scene.animate((now) => {
+      if (instant) {
+        scene.setFlip(target);
+        setState((current) => (current.phase === 'flipping' ? settle(current) : current));
+        return false;
+      }
+
+      if (start === null) start = now;
+      const t = Math.min(1, (now - start) / RISE_MS);
+      const eased = 1 - Math.pow(1 - t, 3);
+      scene.setFlip(from + (target - from) * eased);
+
+      if (t >= 1) setState((current) => (current.phase === 'flipping' ? settle(current) : current));
+      return t < 1;
+    });
+  }, [state]);
+
+  /**
+   * **The tilt: the pointer over the record, mapped by `tiltFor`.**
+   *
+   * Reused unchanged for a fifth time — pointer and rect in, two angles out. It
+   * fits without modification, which is the point of it being pure.
+   *
+   * Bound only while `canTilt`, so it cannot fight the rise or the return: both
+   * own the record's rotation while they run.
+   */
+  useEffect(() => {
+    if (!canTilt(state)) return;
+    const scene = live.current;
+    const host = mount.current;
+    if (scene === null || host === null) return;
+    if (prefersReducedMotion()) return;
+
+    const onMove = (event: PointerEvent) => {
+      const box = host.getBoundingClientRect();
+      /*
+        The record occupies the middle of the view, so the tilt is mapped
+        against a centred square of the canvas rather than the whole wall —
+        pointing at a spine in the corner should not tilt the record hard over.
+      */
+      const size = Math.min(box.width, box.height) * 0.6;
+      const face = {
+        left: box.left + (box.width - size) / 2,
+        top: box.top + (box.height - size) / 2,
+        width: size,
+        height: size,
+      };
+
+      scene.setTilt(tiltFor({ x: event.clientX, y: event.clientY }, face));
+    };
+
+    window.addEventListener('pointermove', onMove);
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      scene.setTilt(NO_TILT);
+    };
+  }, [state]);
+
+  /**
+   * **Escape puts the record back**, bound only while one is out.
+   *
+   * Clicking empty wall works but is discoverable by accident; Escape is what
+   * anyone tries first. The CSS path had it and the swap left it behind.
+   */
+  useEffect(() => {
+    if (pulledId === null) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setState(dismiss);
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [pulledId]);
+
+  /** The record that is out, whatever it is doing. */
+  const out =
+    pulledId === null ? null : (records.find((record) => record.id === pulledId) ?? null);
+
+  /**
+   * **The chrome arrives as the record travels** (unit 11): 0 while it rises,
+   * 1 once it has settled or is flipping, 0 again as it returns. Derived from
+   * the phase rather than held, so it cannot disagree with what the record is
+   * doing.
+   */
+  const chromeOpacity = state.phase === 'settled' || state.phase === 'flipping' ? 1 : 0;
 
   const hovered =
     hoveredRecordId === null
@@ -907,7 +1103,72 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
         Offset from the pointer rather than centred on it, and flipped near the
         right edge so it does not run off the frame.
       */}
-      {hovered !== null && cardAt !== null && (
+      {/**
+        * **The scrim and the panels — the composition, in DOM.**
+        *
+        * A19e: the canvas is a picture, so text belongs where something other
+        * than an eye can read it. The panels are fixed and static; they do not
+        * track the record's geometry and never need to agree with the camera
+        * about anything, which is what makes them cheap.
+        *
+        * **The chrome arrives AS the record travels**, not before it — unit 11
+        * found that ordering is what makes the record read as arriving rather
+        * than a modal opening. `chromeOpacity` is 0 while the record is rising
+        * and reaches 1 as it settles.
+        */}
+      {out !== null && (
+        <div
+          data-testid="record-chrome"
+          className="fixed inset-0 z-40 flex items-center justify-center gap-8 p-6 transition-opacity duration-300"
+          style={{ opacity: chromeOpacity, pointerEvents: chromeOpacity === 0 ? 'none' : 'auto' }}
+        >
+          {/*
+            The dimmed wall. A button so it is reachable and announces itself,
+            and behind everything else so it never intercepts a panel click.
+          */}
+          <button
+            type="button"
+            data-testid="record-scrim"
+            aria-label="Put the record back"
+            onClick={() => setState(dismiss)}
+            className="absolute inset-0 -z-10 cursor-default bg-black/70"
+          />
+
+          <div
+            className="rounded-xs p-4 shadow-2xl backdrop-blur-sm"
+            style={{ backgroundColor: PANEL_GROUND }}
+          >
+            <FactsPanel panel={factPanel(out)} />
+          </div>
+
+          {/*
+            A spacer the width of the record, so the panels sit either side of
+            it rather than over it. The record itself is drawn in the canvas
+            beneath — the panels never move to follow it.
+          */}
+          <div className="w-[min(46vw,46vh,420px)] shrink-0" aria-hidden />
+
+          <div
+            className="rounded-xs p-4 shadow-2xl backdrop-blur-sm"
+            style={{ backgroundColor: PANEL_GROUND }}
+          >
+            <ActionsPanel
+              recordId={out.id}
+              onTurnOver={() => setState(flip)}
+              onPutBack={() => setState(dismiss)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/*
+        **Not while a record is out.** Hover already does nothing then — the
+        handler returns early — but the card is React state and kept its last
+        value, so it sat over the facts panel naming the same record twice.
+        State that outlives the thing it describes is the shape this project
+        keeps meeting; the guard derives it from the phase instead.
+      */}
+      {out === null && hovered !== null && cardAt !== null && (
         <div
           data-testid="wall-card"
           className="pointer-events-none fixed z-40 max-w-xs rounded-xs border border-border bg-popover px-3 py-2 shadow-lg"

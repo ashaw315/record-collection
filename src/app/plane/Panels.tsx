@@ -97,24 +97,63 @@ export function FactsPanel({ panel }: { panel: FactPanel }) {
  * discipline is that nothing moves. They are here so the COMPOSITION can be
  * judged with them in place, which is the point of this gate.
  */
-export function ActionsPanel() {
+export function ActionsPanel({
+  recordId,
+  onTurnOver,
+  onPutBack,
+}: {
+  /** So "Full details" can be a real link to the record. */
+  recordId: string;
+  /**
+   * Optional so a SERVER component can render the panel for composition — the
+   * `/plane` workbench does, and cannot pass handlers across that boundary.
+   * On `/` they are real and the buttons work.
+   */
+  onTurnOver?: () => void;
+  onPutBack?: () => void;
+}) {
   return (
     <div data-testid="actions-panel" className="flex w-[180px] shrink-0 flex-col gap-2 pt-2">
-      {['Turn over', 'Full details', 'Put back'].map((action) => (
-        <button
-          key={action}
-          type="button"
-          disabled
-          data-testid={`action-${action.split(' ')[0].toLowerCase()}`}
-          className="rounded-xs border border-white/15 px-3 py-1.5 text-left text-sm"
-          style={{ color: PANEL_TEXT.value }}
-        >
-          {action}
-        </button>
-      ))}
-      <p className="mt-1 text-[11px]" style={{ color: PANEL_TEXT.muted }}>
-        Inert in this unit — motion is next.
-      </p>
+      {/*
+        **Live now, where they were inert since unit 17.** They were built so
+        the COMPOSITION could be judged with them in place, and wiring them was
+        deferred to the unit that had the motion. This is that unit.
+      */}
+      <button
+        type="button"
+        data-testid="action-turn"
+        onClick={onTurnOver}
+        disabled={onTurnOver === undefined}
+        className="rounded-xs border border-white/15 px-3 py-1.5 text-left text-sm hover:bg-white/10"
+        style={{ color: PANEL_TEXT.value }}
+      >
+        Turn over
+      </button>
+
+      {/*
+        A LINK, not a button: it leads somewhere, so it works with middle-click
+        and "open in new tab" — the same reasoning the spine's href had before
+        the wall became a canvas, and the destination the accessible list uses.
+      */}
+      <a
+        href={`/records/${recordId}`}
+        data-testid="action-full"
+        className="rounded-xs border border-white/15 px-3 py-1.5 text-left text-sm hover:bg-white/10"
+        style={{ color: PANEL_TEXT.value }}
+      >
+        Full details
+      </a>
+
+      <button
+        type="button"
+        data-testid="action-put"
+        onClick={onPutBack}
+        disabled={onPutBack === undefined}
+        className="rounded-xs border border-white/15 px-3 py-1.5 text-left text-sm hover:bg-white/10"
+        style={{ color: PANEL_TEXT.value }}
+      >
+        Put back
+      </button>
     </div>
   );
 }
