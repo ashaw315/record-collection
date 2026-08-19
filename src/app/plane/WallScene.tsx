@@ -29,12 +29,13 @@ import {
 import { SHELF_LIP, SHELF_PLANE, WALL_BACK } from '../shelf/shelf-surface';
 import { createRenderLoop } from './render-loop';
 import { risePose } from './rise-pose';
-import { RISE_MS } from './BoxCanvas';
+import { RISE_MS, prefersReducedMotion } from './BoxCanvas';
 import { spineLabelPlan } from './spine-texture';
 import { layoutWall, type WallLayout } from './wall-layout';
 import { WALL_FOV_DEGREES, wallCameraDistance } from './wall-camera';
 import { pulledDestination } from './pulled-destination';
 import { boxDepth } from './record-box';
+import { PROUD_MS, proudOffset, shouldRedraw } from './hover-proud';
 import { createWidthWatcher } from './wall-resize';
 import { RESTING_ROTATION_Y } from './spine-facing';
 
@@ -94,6 +95,20 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
    * return and clears itself when it lands.
    */
   const [returningId, setReturningId] = useState<string | null>(null);
+
+  /**
+   * Which record the card is naming, and where the pointer is.
+   *
+   * **The card is DOM, not canvas** — A19e's reasoning: a canvas has no text,
+   * so anything other than an eye reads nothing. It is also chrome rather than
+   * part of the scene, which is what the reference does.
+   *
+   * Held in React because it renders React; the PROUD MOTION is driven inside
+   * the scene effect and never re-renders, which is what keeps a fast crossing
+   * from costing forty renders.
+   */
+  const [hoveredRecordId, setHoveredRecordId] = useState<string | null>(null);
+  const [cardAt, setCardAt] = useState<{ x: number; y: number } | null>(null);
 
   /**
    * The pulled id, readable from the click handler.
@@ -415,7 +430,21 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     host.dataset.rows = String(layout.shelves.length);
     host.dataset.wallWidth = String(width);
 
-    const loop = createRenderLoop(() => renderer.render(scene, camera));
+    /**
+     * **The draw count, published because it is a CONSTRAINT rather than a
+     * statistic.**
+     *
+     * A still wall with a still pointer must cost nothing — the reasoning NOTES
+     * recorded before any three.js work began, and the property hover was most
+     * likely to break. There is nothing in a canvas a test can measure, so the
+     * loop counts its own draws and a test reads them after a settle window.
+     */
+    const counter = window as unknown as { __drawCount?: number };
+
+    const loop = createRenderLoop(() => {
+      renderer.render(scene, camera);
+      counter.__drawCount = (counter.__drawCount ?? 0) + 1;
+    });
     loop.start();
     loop.markDirty();
 
@@ -623,9 +652,125 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
       setPulledId(next);
     };
 
+    /**
+     * **Hover: the spine eases proud of the wall.**
+     *
+     * §10b, closest to the reference — you push a record proud with a finger to
+     * see it before deciding, and the thing that pops is the thing that will
+     * come out, so the click is legible in advance.
+     *
+     * **Raycast on move, mark dirty only on CHANGE.** Before this the wall cost
+     * zero draws across 60 fast pointer moves because there was no handler at
+     * all; a naive version renders on every `pointermove` across 125 spines.
+     * The raycast is cheap and unavoidable, the draw is not. `shouldRedraw`
+     * owns that decision.
+     *
+     * **One owner**: `hoveredId` here, with every spine's offset derived from it
+     * by `proudOffset`. Crossing the wall quickly touches forty spines, and
+     * per-spine state is the shape that has failed here every time.
+     */
+    let hoveredId: string | null = null;
+    let proudFrom = new Map<string, number>();
+    let proudStart: number | null = null;
+    let easing = false;
+
+    /** Where each spine currently sits, so a new hover eases from there. */
+    const currentProud = new Map<string, number>();
+
+    const settleProud = () => {
+      if (easing) return;
+      easing = true;
+      proudStart = null;
+
+      loop.animate((now) => {
+        if (proudStart === null) proudStart = now;
+        const t = Math.min(1, (now - proudStart) / PROUD_MS);
+        const eased = 1 - Math.pow(1 - t, 3);
+
+        for (const [recordId, mesh] of meshes) {
+          /*
+            A spine that is out of the wall is not hovering anything: the pulled
+            record has left its slot and must not also be nudged.
+          */
+          if (recordId === pulledIdRef.current) continue;
+
+          const from = proudFrom.get(recordId) ?? 0;
+          const to = proudOffset({ id: recordId, hoveredId });
+          const at = from + (to - from) * eased;
+
+          currentProud.set(recordId, at);
+          const home = mesh.userData.home as { z: number };
+          mesh.position.z = home.z + at;
+        }
+
+        if (t >= 1) easing = false;
+        return t < 1;
+      });
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      /*
+        **Nothing hovers while a record is out.** Its slot is empty so there is
+        nothing there to nudge, the pulled record itself must not respond, and
+        the wall behind is not what the reader is looking at. Deliberate: the
+        alternative is a wall that twitches behind the thing being read.
+      */
+      if (pulledIdRef.current !== null) {
+        setHoveredRecordId(null);
+        return;
+      }
+
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(pointer, camera);
+      const hits = raycaster.intersectObjects([...meshes.values()], false);
+      const hit = hits[0]?.object.userData.recordId;
+      const next = typeof hit === 'string' ? hit : null;
+
+      if (!shouldRedraw({ previous: hoveredId, next })) return;
+
+      // Ease from wherever each spine is NOW, so a fast crossing does not snap.
+      proudFrom = new Map(currentProud);
+      hoveredId = next;
+      host.dataset.hovered = next ?? '';
+      setHoveredRecordId(next);
+      setCardAt(next === null ? null : { x: event.clientX, y: event.clientY });
+
+      if (prefersReducedMotion()) {
+        /*
+          §10b: reduced motion disables the movement. The CARD still appears —
+          it is information, not decoration.
+        */
+        for (const [recordId, mesh] of meshes) {
+          const home = mesh.userData.home as { z: number };
+          mesh.position.z = home.z;
+          currentProud.set(recordId, 0);
+        }
+        loop.markDirty();
+        return;
+      }
+
+      settleProud();
+    };
+
+    const onPointerLeave = () => {
+      if (!shouldRedraw({ previous: hoveredId, next: null })) return;
+      proudFrom = new Map(currentProud);
+      hoveredId = null;
+      host.dataset.hovered = '';
+      setHoveredRecordId(null);
+      settleProud();
+    };
+
+    renderer.domElement.addEventListener('pointermove', onPointerMove);
+    renderer.domElement.addEventListener('pointerleave', onPointerLeave);
     renderer.domElement.addEventListener('click', onClick);
 
     return () => {
+      renderer.domElement.removeEventListener('pointermove', onPointerMove);
+      renderer.domElement.removeEventListener('pointerleave', onPointerLeave);
       renderer.domElement.removeEventListener('click', onClick);
       loop.stop();
       live.current = null;
@@ -723,6 +868,11 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     });
   }, [pulledId, returningId]);
 
+  const hovered =
+    hoveredRecordId === null
+      ? null
+      : (records.find((record) => record.id === hoveredRecordId) ?? null);
+
   return (
     <div className="relative">
       <div ref={mount} data-testid="wall-scene" data-pulled={pulledId ?? ''} className="w-full" />
@@ -741,6 +891,41 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
         keeps is the contract eight specs depend on — one link per record,
         named by its FULL untruncated title, resolving to the record.
       */}
+      {/*
+        **The card that names what the pointer is over** (§10b: artist, title,
+        year, label).
+
+        DOM rather than canvas, for A19e's reason: a canvas is a picture, and
+        text belongs where something other than an eye can read it. It also
+        reads as chrome rather than as part of the scene, which is what the
+        reference does.
+
+        `pointer-events-none` so it can never intercept the click it is
+        describing — the same rule the CSS wall's label followed, and the reason
+        that label never ate a pull.
+
+        Offset from the pointer rather than centred on it, and flipped near the
+        right edge so it does not run off the frame.
+      */}
+      {hovered !== null && cardAt !== null && (
+        <div
+          data-testid="wall-card"
+          className="pointer-events-none fixed z-40 max-w-xs rounded-xs border border-border bg-popover px-3 py-2 shadow-lg"
+          style={{
+            left: cardAt.x + 18,
+            top: cardAt.y + 18,
+            transform: cardAt.x > window.innerWidth - 280 ? 'translateX(-100%)' : undefined,
+          }}
+        >
+          <p className="text-sm font-medium text-popover-foreground">{hovered.title}</p>
+          <p className="text-xs text-muted-foreground">
+            {[hovered.artistName, hovered.releaseYear, hovered.labelName]
+              .filter((part) => part !== null && part !== '')
+              .join(' · ')}
+          </p>
+        </div>
+      )}
+
       <ul
         data-testid="wall-records"
         /*

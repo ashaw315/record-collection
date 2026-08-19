@@ -99,10 +99,14 @@ const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
  * not respond to the pointer — the object is not decorative, the turning is.
  *
  * Read at call time rather than cached: a reader may change the setting while
- * the page is open, and the OS reports it live. Same helper and same reasoning
- * as `PulledRecord`'s, which the CSS tilt uses.
+ * the page is open, and the OS reports it live.
+ *
+ * **Exported so the wall scene shares this one**, rather than restating the
+ * media query beside its own animations — two places deciding whether motion is
+ * wanted is the smell this project keeps meeting, and a setting honoured in one
+ * animation and not another is worse than honouring it nowhere.
  */
-const prefersReducedMotion = () =>
+export const prefersReducedMotion = () =>
   typeof window !== 'undefined' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 

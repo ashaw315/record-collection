@@ -9311,3 +9311,50 @@ isolation (34/34 for the two files together), and `manage` passes in isolation
 at the baseline commit too. This is the shared-test-data contention
 `playwright.config.ts` already documents between concurrent workers, showing up
 under a longer run. Recorded rather than reported as clean.
+
+---
+
+## Step 13 — hover: the record comes proud
+
+**Draws, measured before and after** (headed, 125 records):
+
+| | draws |
+|---|---|
+| idle before hovering, 2000ms | **0** |
+| 60 fast moves across the wall | **60** (60 during, 0 settling) |
+| idle after all hovering, 2000ms | **0** |
+| 20 jitter moves on ONE spine | **0** |
+
+One draw per spine CHANGE, not per pointer event, and the eased motion coalesces
+into those frames rather than adding its own — so the wall settles to zero both
+before and after. `shouldRedraw` owns that decision and is mutation-proved:
+redrawing on every move gives 24 draws where 0 is required.
+
+**One owner: `hoveredId` inside the scene effect.** Every spine's offset derives
+from it via `proudOffset`, so "only one is proud" is unrepresentable rather than
+merely unlikely. Crossing the wall touches forty spines and per-spine state is
+the shape that has failed here every time. The proud motion never re-renders
+React — only the CARD does, which is why a fast crossing does not cost forty
+renders.
+
+**Hover does nothing while a record is pulled**, chosen deliberately: the pulled
+record's slot is empty so there is nothing to nudge, the record itself must not
+respond, and a wall twitching behind the thing being read is worse than a still
+one.
+
+**`prefersReducedMotion` is now exported from `BoxCanvas` rather than restated.**
+Two places deciding whether motion is wanted is the smell this project keeps
+meeting, and a setting honoured in one animation and not another is worse than
+honouring it nowhere. Under reduced motion the spine does not move and the card
+still appears — it is information, not decoration.
+
+**A test fixture that crossed the thing it was measuring.** The resting-pointer
+test jittered at a fixed x ± 1px, which near a spine edge lands on the
+NEIGHBOUR — spines are ~22px wide — so it measured 6 draws and called it a
+resting pointer. It now jitters vertically along a spine's 240px length, with a
+precondition asserting the hovered id did not change, so it cannot silently stop
+testing what it names.
+
+**The draw counter is committed, not a probe.** A still wall costing nothing is
+a constraint rather than a statistic, and a canvas has nothing a test can
+otherwise measure.

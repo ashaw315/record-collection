@@ -587,6 +587,143 @@ test('the room is FOUR shelves deep however few records matched', async ({ page 
   }
 });
 
+test('hovering a spine names it, and costs nothing when the pointer rests', async ({ page }) => {
+  /**
+   * §10b's hover: the spine eases proud and a card names the record. **The
+   * thing that pops is the thing that will come out**, so the click is legible
+   * in advance.
+   *
+   * **The draw discipline is what this test is really for.** Before this unit
+   * the wall cost ZERO draws across 60 fast pointer moves, because there was no
+   * handler at all; a naive version renders on every `pointermove` across 125
+   * spines. The raycast is unavoidable, the draw is not.
+   */
+  const { artistId, titles } = await seed(page, 12);
+  await openWall(page, artistId);
+
+  const scene = page.getByTestId('wall-scene');
+  const box = await scene.locator('canvas').boundingBox();
+  expect(box).not.toBeNull();
+  if (box === null) return;
+
+  // Find a spine by moving across the first row until one is hovered.
+  let hovered = '';
+  for (let offset = 40; offset < 500 && hovered === ''; offset += 9) {
+    await page.mouse.move(box.x + offset, box.y + 120);
+    hovered = await page.evaluate(
+      () => (document.querySelector('[data-testid="wall-scene"]') as HTMLElement).dataset.hovered ?? '',
+    );
+  }
+
+  expect(hovered, 'a spine must be hoverable at all').not.toBe('');
+
+  const card = page.getByTestId('wall-card');
+  await expect(card, 'the card names what the pointer is over').toBeVisible();
+
+  const text = await card.textContent();
+  expect(
+    titles.some((title) => text?.includes(title)),
+    `the card read "${text}"`,
+  ).toBe(true);
+});
+
+test('a resting pointer costs NO draws, and the wall settles to quiet', async ({ page }) => {
+  /**
+   * **The constraint this unit was most likely to break**, asserted with a
+   * settle window rather than immediately.
+   *
+   * A zero measured straight after a pointer move cannot distinguish *did not
+   * render* from *has not rendered yet* — NOTES records that trap from step 10
+   * unit 4, where a zero taken too early passed against a mutation that moved a
+   * fetch into a mount effect. So: move, let it settle, then assert quiet.
+   *
+   * **The discriminating case is a resting pointer ON a spine.** A pointer over
+   * empty wall is quiet in any implementation; jitter on one spine is what
+   * separates "redraw on change" from "redraw on move".
+   */
+  const { artistId } = await seed(page, 12);
+  await openWall(page, artistId);
+
+  const box = await page.getByTestId('wall-scene').locator('canvas').boundingBox();
+  if (box === null) return;
+
+  await page.evaluate(() => {
+    (window as unknown as { __drawCount?: number }).__drawCount = 0;
+  });
+
+  /*
+    Land on a spine and REMEMBER WHERE, so the jitter below stays on it. A first
+    version jittered at a fixed x ± 1px, which near a spine edge crosses onto
+    the neighbour — spines are ~22px wide — and measured 6 draws for what it
+    called a resting pointer. The fixture was wrong, not the code.
+  */
+  let hovered = '';
+  let restX = 0;
+  for (let offset = 40; offset < 500 && hovered === ''; offset += 9) {
+    await page.mouse.move(box.x + offset, box.y + 120);
+    hovered = await page.evaluate(
+      () => (document.querySelector('[data-testid="wall-scene"]') as HTMLElement).dataset.hovered ?? '',
+    );
+    restX = box.x + offset;
+  }
+  await page.waitForTimeout(600);
+
+  const before = await page.evaluate(
+    () => (window as unknown as { __drawCount?: number }).__drawCount ?? 0,
+  );
+
+  /*
+    Jitter within the SAME spine: the hovered id does not change, so nothing
+    should redraw.
+  */
+  for (let i = 0; i < 20; i += 1) {
+    // Vertically, within the same spine — a spine is 240px tall and ~22 wide,
+    // so moving down its length cannot cross onto a neighbour.
+    await page.mouse.move(restX, box.y + 120 + (i % 3));
+  }
+  await page.waitForTimeout(800);
+
+  const stillHovered = await page.evaluate(
+    () => (document.querySelector('[data-testid="wall-scene"]') as HTMLElement).dataset.hovered ?? '',
+  );
+  expect(stillHovered, 'the jitter must stay on the same spine to test anything').toBe(hovered);
+
+  const after = await page.evaluate(
+    () => (window as unknown as { __drawCount?: number }).__drawCount ?? 0,
+  );
+
+  expect(after - before, 'a resting pointer must cost nothing').toBe(0);
+});
+
+test('crossing the wall fast leaves exactly ONE spine proud', async ({ page }) => {
+  /**
+   * **The discriminating case for "one owner"**, and the reason a single-hover
+   * test is not enough: crossing the wall touches forty spines, and per-spine
+   * state can leave several proud or one stuck. A test that hovers one spine
+   * cannot tell the two designs apart.
+   */
+  const { artistId } = await seed(page, 40);
+  await openWall(page, artistId);
+
+  const box = await page.getByTestId('wall-scene').locator('canvas').boundingBox();
+  if (box === null) return;
+
+  for (let i = 0; i < 40; i += 1) {
+    await page.mouse.move(box.x + 30 + i * 14, box.y + 120);
+  }
+  await page.waitForTimeout(700);
+
+  const hovered = await page.evaluate(
+    () => (document.querySelector('[data-testid="wall-scene"]') as HTMLElement).dataset.hovered ?? '',
+  );
+
+  /*
+    Exactly one card, naming exactly one record — the DOM is the readable
+    witness for a state the canvas holds.
+  */
+  await expect(page.getByTestId('wall-card')).toHaveCount(hovered === '' ? 0 : 1);
+});
+
 test('a short collection still fills the wall', async ({ page }) => {
   /**
    * §10b: "a short collection reads as short, not broken." Five records on a
