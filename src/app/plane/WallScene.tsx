@@ -21,6 +21,7 @@ import {
 import type { ShelfRecord } from '@/lib/db/queries/shelf';
 import {
   DEFAULT_SPINE_COLOUR,
+  SHELF_EDGE,
   SPINE_HEIGHT,
   spineText,
   spineWidth,
@@ -79,6 +80,14 @@ import { RESTING_ROTATION_Y } from './spine-facing';
 
 
 
+/**
+ * The furthest a record travels toward the viewer, whatever the wall's height.
+ *
+ * Two rows: enough that the record clearly leaves the wall and occludes what is
+ * behind it, and near enough that it stays in the viewport on a nine-row wall.
+ */
+const PULL_DEPTH_CAP = (SPINE_HEIGHT + SHELF_EDGE) * 2;
+
 export function WallScene({ records }: { records: ShelfRecord[] }) {
   const mount = useRef<HTMLDivElement>(null);
   const [pulledId, setPulledId] = useState<string | null>(null);
@@ -102,7 +111,10 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
   );
 
   /** The scene, exposed so the pull can drive it without a rebuild. */
-  const live = useRef<{ setPulled: (id: string | null, progress: number) => void } | null>(null);
+  const live = useRef<{
+    setPulled: (id: string | null, progress: number) => void;
+    animate: (step: (now: number) => boolean) => void;
+  } | null>(null);
 
   /**
    * **Built from a width measured INSIDE the effect, on a layout frame.**
@@ -175,6 +187,20 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
      * Framed on the WALL's centre, so the layout's coordinates still map
      * directly: Y is negated once, here, because the layout grows downward like
      * the DOM and the scene grows upward.
+     */
+    /**
+     * **Framed on the whole wall, which is what keeps a spine its true size.**
+     *
+     * Computed rather than guessed, after framing on one row overshot the other
+     * way and made a single record fill the screen. The canvas is `height` px
+     * tall and shows `framedHeight` world units, so a spine renders at
+     * `240 × height / framedHeight`. Only `framedHeight === height` gives
+     * 240px — one wall pixel to one screen pixel, which is the whole reason the
+     * layout is computed in pixels.
+     *
+     * The consequence is that the camera distance scales with the collection,
+     * and that is fine for the camera and NOT fine for the pull depth. See
+     * `PULL_DEPTH_CAP` below.
      */
     const cameraDistance = wallCameraDistance({ wallHeight: height });
     const camera = new PerspectiveCamera(WALL_FOV_DEGREES, width / height, 1, cameraDistance * 2);
@@ -345,6 +371,7 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
      * simply where the mesh is not any more.
      */
     live.current = {
+      animate: (step) => loop.animate(step),
       setPulled: (id, progress) => {
         /**
          * **The slot's emptiness, published so it can be asserted.**
@@ -395,16 +422,46 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
             is 4% of the way and converges by 1.02, which is no turn at all.
             Measured across focal lengths in `wall-camera.ts`.
           */
-          const pose = risePose({ progress, slotDepth: cameraDistance * PULL_FRACTION });
+          /**
+           * **The pull is a fraction of the camera distance, CAPPED.**
+           *
+           * A fraction alone is right for convergence — a fixed pixel depth
+           * converges by 1.02 at this focal length and reads as no turn at all.
+           * But the camera distance scales with the wall, so on a 390px
+           * viewport where 125 records wrap to nine rows and 2232px, 40% is
+           * 3176px: the record left the viewport entirely and the reader saw an
+           * empty slot with nothing to show for it.
+           *
+           * The cap is expressed in ROWS, because a row is what the reader is
+           * looking at and it does not change with collection size. Two rows
+           * still clears the convergence bar on any wall tall enough for the
+           * cap to bite.
+           */
+          const pullDepth = Math.min(cameraDistance * PULL_FRACTION, PULL_DEPTH_CAP);
+          const pose = risePose({ progress, slotDepth: pullDepth });
 
           /*
             Toward the centre of the visible wall as it turns and comes forward.
             The record is read at the middle of the screen, not above its slot.
           */
           const eased = 1 - Math.pow(1 - progress, 3);
+          /**
+           * **The record comes forward from its slot, it does not fly to the
+           * top of the wall.**
+           *
+           * The target was a fixed `y` near the canvas's top, which is fine on
+           * a three-row wall and wrong on a tall one: at 390px the wall wraps
+           * to nine rows and 2232px, so a record pulled from row two travelled
+           * 3182px and left the viewport entirely — an empty slot with nothing
+           * visible to show for it.
+           *
+           * Staying at the slot's own height keeps the record where the reader
+           * was already looking, which is also what a record coming off a shelf
+           * does: it comes toward you, not upward.
+           */
           mesh.position.set(
             home.x + (width / 2 - home.x) * eased,
-            home.y + (-(SPINE_HEIGHT * 0.9) - home.y) * eased,
+            home.y,
             home.z + pose.z,
           );
           /**
@@ -494,18 +551,28 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
       return;
     }
 
+    /**
+     * **Driven through the render loop's own `animate`, not a second rAF.**
+     *
+     * The first version ran its own `requestAnimationFrame` calling
+     * `setPulled`, which only MARKS the scene dirty — the render loop then drew
+     * on its own frame. Two rAF loops, and a mark landing after the render
+     * loop's frame had already passed was simply lost. Measured: **9 draws
+     * across a 620ms rise** where 60fps is about 37, so the rise ran at roughly
+     * 15fps while reporting `progress: 1` and looking correct in a screenshot.
+     *
+     * `animate` exists for exactly this and is tested to draw every frame
+     * (unit 19). Using it makes the rise and the dirty flag one mechanism
+     * rather than two that must interleave.
+     */
     let start: number | null = null;
-    let frame = 0;
 
-    const step = (now: number) => {
+    scene.animate((now) => {
       if (start === null) start = now;
       const progress = Math.min(1, (now - start) / RISE_MS);
       scene.setPulled(pulledId, progress);
-      if (progress < 1) frame = requestAnimationFrame(step);
-    };
-    frame = requestAnimationFrame(step);
-
-    return () => cancelAnimationFrame(frame);
+      return progress < 1;
+    });
   }, [pulledId]);
 
   return (

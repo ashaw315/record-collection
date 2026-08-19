@@ -95,6 +95,45 @@ describe('the wall camera is near-orthographic ACROSS the wall', () => {
   });
 });
 
+describe('the pull depth is bounded, whatever the wall\'s height', () => {
+  /**
+   * **A defect the 390px case exposed and 1280px could not.**
+   *
+   * The camera frames the whole wall, so its distance scales with the
+   * collection — which is correct, and is what keeps a spine at its true 240px.
+   * But the pull was a fixed FRACTION of that distance, so a 390px viewport
+   * wrapping 125 records into nine rows put the camera 7941px back and sent the
+   * record 3176px toward it: out of the viewport entirely, leaving an empty
+   * slot with nothing visible to show for it.
+   *
+   * The cap is in ROWS because a row is what the reader is looking at and it
+   * does not change with collection size.
+   */
+  const cappedPull = (wallHeight: number, cap: number) =>
+    Math.min(wallCameraDistance({ wallHeight }) * PULL_FRACTION, cap);
+
+  it('does not send the record further than the cap on a TALL wall', () => {
+    const cap = 496;
+
+    // Three rows at 1280px: the fraction is what applies.
+    expect(cappedPull(744, cap)).toBeLessThanOrEqual(cap);
+    // Nine rows at 390px: the cap is what applies, and it bites hard.
+    expect(cappedPull(2232, cap), 'the nine-row wall is capped').toBe(cap);
+  });
+
+  it('still clears the convergence bar at the cap', () => {
+    /**
+     * The cap must not quietly undo the turn — which is the failure a bound
+     * like this invites, and the reason it is asserted rather than assumed.
+     */
+    const wallDistance = wallCameraDistance({ wallHeight: 2232 });
+    const atCap = convergence(wallDistance - 496, 240);
+    const atWall = convergence(wallDistance, 240);
+
+    expect(atCap, 'a capped pull still converges more than the wall').toBeGreaterThan(atWall);
+  });
+});
+
 describe('the wall camera gives a TURN enough convergence to read', () => {
   it('foreshortens a turning record measurably at the centre', () => {
     /**

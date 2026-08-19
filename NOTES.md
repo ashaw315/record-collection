@@ -9016,3 +9016,49 @@ test named after the consequence.
 have no error, no failing assertion and no visible artefact except absence.
 Verifying against fixtures that lack the very data being judged is how that
 survived two units.
+
+---
+
+## Step 13 — performance and 390px, before any swap
+
+**Performance at 125 records, measured under sustained interaction (headed
+Chromium, 1280x900):**
+
+| | result |
+|---|---|
+| scene builds at mount | 1 |
+| scene builds across 5 pull/return cycles | **0** |
+| idle draws in 2000ms | **0** |
+| draws across 60 fast hover moves | **0** |
+| draws in one 620ms rise | **39** (60fps) |
+| draws in 2000ms after all interaction | **0** |
+| draw cost | median 2.8ms, p95 4.1ms |
+
+The unmemoised-prop class of defect is absent, the dirty-flag loop settles both
+before and after interaction, and draw cost is well inside a 16.7ms frame.
+
+**Hover costs literally nothing, because there is no hover handler.** That was
+deliberate — `/` has a hover lag and a "records pop up on hover" defect, and
+this scene does not carry either across. Hit testing is click-only.
+
+**Headless Chromium throttles rAF to ~10fps and I nearly reported that as a
+defect.** The first measurement showed 8 draws for a 620ms rise; frame gaps were
+83-100ms with periodic ~967ms stalls. Headed, the same code gives 16-17ms gaps
+and 39 draws. **A performance number from a headless browser is a number about
+the browser.** The `animate` change made while chasing it is still right — one
+loop rather than two interleaving — but it was not the cause and the first
+diagnosis was wrong.
+
+**390px: wraps correctly, text legible, and it exposed a real defect.** 125
+records wrap to nine rows and a 2232px canvas. Spine text is as legible as at
+1280 — spine width does not change with viewport, only the wrapping does.
+
+The defect: the camera frames the whole wall, so its distance scales with the
+collection. That is correct and is what keeps a spine at its true 240px —
+computed after framing on one row overshot and made a single record fill the
+screen. But the PULL was a fixed fraction of that distance, so nine rows put the
+camera 7941px back and sent the record 3176px toward it, out of the viewport
+entirely: an empty slot with nothing visible to show for it. Capped at two rows,
+which still clears the convergence bar.
+
+**Not yet done, and deliberately separate:** the swap of `/` to the WebGL wall.
