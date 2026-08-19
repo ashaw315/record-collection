@@ -8975,3 +8975,44 @@ the server with `NODE_ENV=test`, which makes Next load `.env.test` and SKIP
 gitignored; production is untouched. **The `$` characters must be
 backslash-escaped**: single quotes do not stop Next's parser interpolating them,
 and a quoted hash arrived at the route as a 25-character fragment.
+
+---
+
+## Step 13 — colour and legibility verified against real data
+
+**Both criteria met, and the verification found a defect nothing else could.**
+
+The wall reads as bands of colour — deep greens, ochres, wine reds, blues,
+creams, with a lit edge and a shadowed side on every spine, so it reads as
+objects on a shelf rather than flat stripes. Arguably better than the CSS wall,
+which had the colour but no depth.
+
+Spine text is legible at real size without hovering, on light and dark spines
+alike, and **just as legible at the far right edge as at the centre** — which is
+the A24b criterion the long lens was chosen to satisfy, now confirmed by looking
+rather than only by arithmetic.
+
+**A wall that rendered perfectly and showed no text at all.** Colour, lighting,
+shelves, layout and slot behaviour were all correct; the labels were on the face
+pointing away. Nothing errored, no assertion failed, every existing test stayed
+green. It was only visible by looking at a wall with REAL data on it — API
+fixtures have `spineColour: null` (§7.8 computes it from covers), so the test
+wall rendered in fallback grey where a missing label is indistinguishable from a
+dark spine.
+
+The cause was a sign: under three.js's Y rotation the +x normal maps to z = −1
+at +π/2, so the face pointing at the camera after a positive quarter turn is
+**−x**. The label was on +x.
+
+**Both plausible fixes look equally right in code and only one is.** Moving the
+label to −x fixes the wall and leaves the record showing its BACK when the turn
+completes — a defect that only appears after a 620ms animation. Flipping the
+rotation sign serves both ends: edge toward the viewer at rest, cover toward the
+viewer at face-on. `spine-facing.ts` pins that as arithmetic, swept through the
+turn, with the defect asserted directly so a reader who flips it back sees a
+test named after the consequence.
+
+**The lesson for the remaining WebGL work:** a scene can be wrong in ways that
+have no error, no failing assertion and no visible artefact except absence.
+Verifying against fixtures that lack the very data being judged is how that
+survived two units.

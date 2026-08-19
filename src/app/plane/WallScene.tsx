@@ -33,6 +33,7 @@ import { RISE_MS } from './BoxCanvas';
 import { spineLabelPlan } from './spine-texture';
 import { layoutWall, type WallLayout } from './wall-layout';
 import { PULL_FRACTION, WALL_FOV_DEGREES, wallCameraDistance } from './wall-camera';
+import { RESTING_ROTATION_Y } from './spine-facing';
 
 /**
  * §10b's wall and its records, in ONE scene.
@@ -319,7 +320,8 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
         stretching one.
       */
       mesh.scale.set(SPINE_HEIGHT, SPINE_HEIGHT, placed.width);
-      mesh.rotation.y = Math.PI / 2;
+      // See `spine-facing.ts`: the sign is load-bearing and is pinned there.
+      mesh.rotation.y = RESTING_ROTATION_Y;
       mesh.position.set(
         placed.x + placed.width / 2,
         -(placed.y + SPINE_HEIGHT / 2),
@@ -381,7 +383,7 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
               frames showed. The resting pose is the quarter turn.
             */
             mesh.position.set(home.x, home.y, home.z);
-            mesh.rotation.y = Math.PI / 2;
+            mesh.rotation.y = RESTING_ROTATION_Y;
             mesh.scale.set(SPINE_HEIGHT, SPINE_HEIGHT, widthOf.get(recordId) ?? 20);
             continue;
           }
@@ -414,7 +416,11 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
            * turn. Subtracting one ran the rotation past face-on and back to
            * edge-on, which is what made the record grow and then shrink.
            */
-          mesh.rotation.y = pose.rotationY;
+          /*
+            Negated to match the resting pose: the turn runs from −π/2 (edge-on,
+            label toward the viewer) to 0 (face-on, cover toward the viewer).
+          */
+          mesh.rotation.y = -pose.rotationY;
 
           // How far the spine has travelled from its slot, in wall pixels.
           const dx = mesh.position.x - home.x;
