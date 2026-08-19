@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { ShelfRecord } from '@/lib/db/queries/shelf';
 import { BoxCanvas } from '../plane/BoxCanvas';
 import { resolveSkins } from '../plane/skins';
 import type { ScreenRect } from '../plane/world-map';
 import { ActionsPanel, FactsPanel } from '../plane/Panels';
 import { factPanel } from '../plane/panel';
+import { PANEL_GROUND } from './panel-palette';
 
 /**
  * §10b's record, rendered over the real wall — the integration this whole
@@ -61,15 +62,61 @@ import { factPanel } from '../plane/panel';
 export function RecordCanvas({
   record,
   from,
+  measureSlot,
   onClose,
 }: {
   /** The record that is out, or `null`. THE source of truth for that question. */
   record: ShelfRecord | null;
   /** The slot it came out of, viewport-relative, measured at click time. */
   from: ScreenRect | null;
+  /**
+   * Re-measures the slot on demand, for the return.
+   *
+   * Unit 19's rule: the wall may have scrolled or re-wrapped while the record
+   * was out, so the slot is read at DISMISS time rather than remembered from
+   * the rise. The page scrolls freely here, so a stale rect is reachable by
+   * anyone with a wheel.
+   */
+  measureSlot: (recordId: string) => ScreenRect | null;
   onClose: () => void;
 }) {
   const isOut = record !== null;
+
+  /**
+   * **Dismissal is a request, not the act.** The record has to fly back before
+   * it goes, so a click sets this and `onClose` runs when the animation ends.
+   *
+   * Derived state, not a second owner: `record` still answers "is a record
+   * out". This answers the narrower "is it on its way back", which only exists
+   * between the two.
+   */
+
+  /**
+   * **A new record cancels any return in flight**, keyed rather than reset from
+   * an effect.
+   *
+   * Pulling a record while another is going back is ordinary, and a stale
+   * `returning` would dismiss the new one immediately. The obvious fix — an
+   * effect calling `setReturning(false)` when the record changes — is what
+   * `react-hooks/set-state-in-effect` refuses, and the rule is right: it causes
+   * a cascading render to fix up state React can simply be given. Same
+   * technique `CollectionFilters` uses to reset its search box when the URL's
+   * term changes.
+   *
+   * So the flag is stored WITH the record it belongs to, and a mismatch reads
+   * as "not returning" without any state having to be corrected.
+   */
+  const [returningId, setReturningId] = useState<string | null>(null);
+  const returning = record !== null && returningId === record.id;
+
+  const requestClose = useCallback(() => {
+    setReturningId(record?.id ?? null);
+  }, [record?.id]);
+
+  const measureForReturn = useCallback(
+    () => (record === null ? null : measureSlot(record.id)),
+    [record, measureSlot],
+  );
 
   /**
    * **Escape puts the record back**, and the effect is bound only while one is
@@ -85,12 +132,12 @@ export function RecordCanvas({
     if (!isOut) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') requestClose();
     };
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isOut, onClose]);
+  }, [isOut, requestClose]);
 
   return (
     <div
@@ -124,7 +171,7 @@ export function RecordCanvas({
             type="button"
             data-testid="record-scrim"
             aria-label="Put the record back"
-            onClick={onClose}
+            onClick={requestClose}
             /*
               Heavier than the CSS version's dim, because the thing being dimmed
               is already dark: measured at black/0.55 the wall behind still read
@@ -149,7 +196,8 @@ export function RecordCanvas({
               A found integration gap rather than a design change: the panels
               are unchanged, what changed is that they now sit on something.
             */}
-            <div className="pointer-events-auto rounded-xs bg-[#17140f]/95 p-4 shadow-2xl backdrop-blur-sm">
+            <div className="pointer-events-auto rounded-xs p-4 shadow-2xl backdrop-blur-sm"
+              style={{ backgroundColor: PANEL_GROUND }}>
               <FactsPanel panel={factPanel(record)} />
             </div>
 
@@ -165,10 +213,13 @@ export function RecordCanvas({
               imprint={null}
               spineColour={record.spineColour}
               riseFrom={from}
+              returnTo={returning ? measureForReturn : null}
+              onReturned={onClose}
               fill
             />
 
-            <div className="pointer-events-auto rounded-xs bg-[#17140f]/95 p-4 shadow-2xl backdrop-blur-sm">
+            <div className="pointer-events-auto rounded-xs p-4 shadow-2xl backdrop-blur-sm"
+              style={{ backgroundColor: PANEL_GROUND }}>
               <ActionsPanel />
             </div>
           </div>

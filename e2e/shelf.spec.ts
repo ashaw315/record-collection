@@ -850,6 +850,233 @@ test('the pulled record goes back by Escape and by the scrim', async ({ page }) 
   await expect(page.getByTestId('record-box'), 'and so does the wall behind it').toBeHidden();
 });
 
+test('the panel values are READABLE against the panel ground', async ({ page }) => {
+  /**
+   * **The defect this catches shipped with a green suite**, because a colour in
+   * a `className` is a string and no test can ask a string whether it can be
+   * seen. `panel-palette.test.ts` pins the palette's ratios; this pins that the
+   * palette is what the browser actually paints — the two halves of the same
+   * question, and the second is the one the unit-test sweep cannot answer.
+   *
+   * Measured from computed styles rather than class names: the values were
+   * present, correctly formatted and correctly positioned at 1.02:1 against
+   * their ground, which reads as a panel of labels with no values.
+   */
+  const artist = await page.request.post('/api/artists', {
+    data: { name: `Readable-${suffix()}` },
+  });
+  const artistId = (await artist.json()).id as string;
+  const label = await page.request.post('/api/labels', {
+    data: { name: `ReadableLabel-${suffix()}` },
+  });
+
+  await page.request.post('/api/records', {
+    data: {
+      title: `Readable ${suffix()}`,
+      artistId,
+      labelId: (await label.json()).id as string,
+      releaseYear: 1979,
+      conditionMedia: 'VG+',
+      purchasePrice: '24.50',
+    },
+  });
+
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.getByTestId('shelf-timber')).toBeVisible();
+  await page.getByTestId('shelf-spine').first().click();
+  await expect(page.getByTestId('record-box')).toBeVisible();
+
+  const readings = await page.evaluate(() => {
+    const facts = document.querySelector('[data-testid="facts-panel"]') as HTMLElement;
+    const ground = getComputedStyle(facts.parentElement as HTMLElement).backgroundColor;
+
+    const parse = (colour: string): [number, number, number] => {
+      const nums = colour.match(/[\d.]+/g) ?? [];
+      return [Number(nums[0]), Number(nums[1]), Number(nums[2])];
+    };
+    const lum = ([r, g, b]: [number, number, number]): number => {
+      const ch = (v: number) => {
+        const s = v / 255;
+        return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+      };
+      return 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b);
+    };
+    const ratio = (a: string, b: string) => {
+      const la = lum(parse(a));
+      const lb = lum(parse(b));
+      return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+    };
+
+    /*
+      EVERY value on the panel, plus the title — swept rather than sampled, for
+      the same reason the palette test sweeps: the roles differ deliberately in
+      weight and checking the brightest says nothing about the quietest.
+    */
+    const nodes = [
+      ...Array.from(facts.querySelectorAll('dd')),
+      ...Array.from(facts.querySelectorAll('h3')),
+    ] as HTMLElement[];
+
+    return {
+      ground,
+      count: nodes.length,
+      worst: Math.min(...nodes.map((n) => ratio(getComputedStyle(n).color, ground))),
+      texts: nodes.map((n) => n.textContent?.slice(0, 20) ?? ''),
+    };
+  });
+
+  expect(readings.count, 'the fixture must render values to measure').toBeGreaterThan(2);
+  expect(
+    readings.worst,
+    `the least readable of ${readings.count} values is ${readings.worst.toFixed(2)}:1 on ${readings.ground}`,
+  ).toBeGreaterThanOrEqual(4.5);
+});
+
+test('the rise is VISIBLE from its start, not half over on its first frame', async ({
+  page,
+}) => {
+  /**
+   * **The frame log as a committed test rather than a scratch probe**, because
+   * it is the only instrument that has answered a question about this animation
+   * correctly.
+   *
+   * Screenshot sampling reported the box SHRINKING from 159px to 118px — the
+   * opposite of the real defect — because a screenshot round trip costs ~100ms
+   * and never observed the first half of a 620ms rise at all. Rect assertions
+   * cannot see a mesh. Only the per-frame progress values showed what happened:
+   *
+   *   frame 1  progress 0      elapsed 0ms
+   *   frame 2  progress 0.188  elapsed 117ms
+   *
+   * 117ms into an ease-out is 51% risen, so the spine-shaped half was never
+   * drawn and the record read as simply appearing.
+   *
+   * What must be true now: the first frame anyone sees is at or near progress
+   * 0, and the second is a frame's worth along rather than a fifth of the way.
+   */
+  const { artistId } = await seedRecord(page, `Frames ${suffix()}`);
+  for (let i = 0; i < 9; i += 1) {
+    await page.request.post('/api/records', {
+      data: { title: `Frames-${i} ${suffix()}`, artistId },
+    });
+  }
+
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.getByTestId('shelf-timber')).toBeVisible();
+
+  await page.getByTestId('shelf-spine').nth(3).click();
+  await expect(page.getByTestId('record-box')).toBeVisible();
+
+  // Long enough for the whole rise plus slack, so the log is complete.
+  await page.waitForTimeout(1200);
+
+  const log = await page.evaluate(() => {
+    const host = document.querySelector('[data-testid="record-box"]') as HTMLElement;
+    return {
+      frames: Number(host.dataset.riseFrames ?? 0),
+      first: Number(host.dataset.riseFirstProgress ?? -1),
+      second: Number(host.dataset.riseSecondProgress ?? -1),
+    };
+  });
+
+  expect(log.frames, 'the rise must actually have animated').toBeGreaterThan(10);
+
+  /**
+   * The first frame is the start of the rise, not the middle of it.
+   */
+  expect(log.first, 'the first drawn frame is at the slot, spine-shaped').toBeCloseTo(0, 3);
+
+  /**
+   * **The assertion that catches the stall.** At 60fps one frame is 16.7ms of
+   * 620ms — about 0.027. The shipped defect put frame two at 0.188, seven
+   * frames along. A generous ceiling of 0.08 (three frames) still fails it by
+   * more than double, and would not flake on a slow CI frame.
+   */
+  expect(
+    log.second,
+    `frame two was ${(log.second * 620).toFixed(0)}ms into the rise; the stall put it at 117ms`,
+  ).toBeLessThan(0.08);
+});
+
+test('the record RETURNS to its slot, re-measured rather than remembered', async ({ page }) => {
+  /**
+   * §10b: the record goes back where it came from. The canvas integration
+   * carried the rise across and not the return, so dismissal was instant.
+   *
+   * **Re-measured at dismiss time, never cached from the rise.** Unit 19's
+   * rule, carried across: the wall may have scrolled or re-wrapped while the
+   * record was out, and a rect remembered from the rise sends it back to where
+   * its slot USED to be. The DOM is the source of truth for where a spine is;
+   * a copy of it is a bug waiting for the first scroll.
+   *
+   * The discriminating case is therefore a page that has SCROLLED between the
+   * pull and the put-back. A cached rect and a re-measured one are the same
+   * observation on a still page, so a test that never scrolls cannot tell them
+   * apart — the same shape as unit 22's one-record fixture. Mutation-proved:
+   * caching the rise's rect misses by 201px against a 240px scroll.
+   */
+  const { artistId } = await seedRecord(page, `Returning ${suffix()}`);
+  for (let i = 0; i < 199; i += 1) {
+    await page.request.post('/api/records', {
+      data: { title: `Returning-${i} ${suffix()}`, artistId },
+    });
+  }
+
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.getByTestId('shelf-timber')).toBeVisible();
+
+  const spine = page.getByTestId('shelf-spine').nth(30);
+  await spine.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(100);
+  await spine.click();
+  await expect(page.getByTestId('record-box')).toBeVisible();
+  await page.waitForTimeout(800);
+
+  /**
+   * Scroll WHILE the record is out — the case the rule exists for. The page
+   * scrolls freely here (no scroll lock), so this is reachable by anyone with
+   * a wheel.
+   */
+  await page.evaluate(() => window.scrollBy(0, 240));
+  await page.waitForTimeout(150);
+
+  const slotNow = await page.evaluate(() => {
+    const el = document.querySelectorAll('[data-testid="shelf-spine"]')[30] as HTMLElement;
+    const box = el.getBoundingClientRect();
+    return { left: box.left, top: box.top };
+  });
+
+  await page.getByTestId('record-scrim').click({ position: { x: 20, y: 20 } });
+
+  /**
+   * The return's target, published by the canvas the same way the rise's start
+   * is — read from the component rather than recomputed here. The round-trip
+   * test's lesson: a check that derives the value it is checking asserts its
+   * own arithmetic and agrees with itself.
+   */
+  const target = await page.evaluate(() => {
+    const host = document.querySelector('[data-testid="record-box"]') as HTMLElement | null;
+    if (host === null) return null;
+    return {
+      left: Number(host.dataset.returnLeft ?? NaN),
+      top: Number(host.dataset.returnTop ?? NaN),
+    };
+  });
+
+  expect(target, 'the record must still be on screen, animating back').not.toBeNull();
+  if (target === null) return;
+
+  expect(
+    target.top,
+    'the return targets where the spine is NOW, not where it was when pulled',
+  ).toBeCloseTo(slotNow.top, 0);
+  expect(target.left).toBeCloseTo(slotNow.left, 0);
+
+  // And it does actually finish.
+  await expect(page.getByTestId('record-box')).toBeHidden({ timeout: 5000 });
+});
+
 test('records STAND ON the shelf line rather than floating above or through it', async ({
   page,
 }) => {

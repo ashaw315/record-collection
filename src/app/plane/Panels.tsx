@@ -1,3 +1,4 @@
+import { PANEL_TEXT } from '../shelf/panel-palette';
 import type { FactPanel } from './panel';
 
 /**
@@ -26,10 +27,13 @@ import type { FactPanel } from './panel';
 export function FactsPanel({ panel }: { panel: FactPanel }) {
   return (
     <div data-testid="facts-panel" className="w-[210px] shrink-0 pt-2">
-      <h3 className="font-heading text-lg leading-tight font-semibold text-foreground">
+      <h3
+        className="font-heading text-lg leading-tight font-semibold"
+        style={{ color: PANEL_TEXT.title }}
+      >
         {panel.title}
       </h3>
-      <p className="mt-0.5 text-sm text-muted-foreground">
+      <p className="mt-0.5 text-sm" style={{ color: PANEL_TEXT.muted }}>
         {/* The year joins the artist only when there is one — a heading ending
             in a dangling separator is the empty-label failure in miniature. */}
         {[panel.artist, panel.year].filter((part) => part !== null).join(' · ')}
@@ -42,7 +46,7 @@ export function FactsPanel({ panel }: { panel: FactPanel }) {
           else. Saying so beats inventing rows, and beats a blank column that
           reads as a rendering failure.
         */
-        <p data-testid="facts-empty" className="mt-6 text-xs text-muted-foreground">
+        <p data-testid="facts-empty" className="mt-6 text-xs" style={{ color: PANEL_TEXT.muted }}>
           Nothing else recorded about this pressing yet.
         </p>
       ) : (
@@ -59,8 +63,18 @@ export function FactsPanel({ panel }: { panel: FactPanel }) {
             >
               {group.rows.map((row) => (
                 <div key={row.label} className="contents">
-                  <dt className="tracking-wide text-muted-foreground uppercase">{row.label}</dt>
-                  <dd className="font-mono text-foreground">{row.value}</dd>
+                  <dt className="tracking-wide uppercase" style={{ color: PANEL_TEXT.label }}>
+                    {row.label}
+                  </dt>
+                  <dd
+                    className="font-mono"
+                    style={{
+                      color:
+                        group.kind === 'provenance' ? PANEL_TEXT.provenance : PANEL_TEXT.value,
+                    }}
+                  >
+                    {row.value}
+                  </dd>
                 </div>
               ))}
             </dl>
@@ -92,12 +106,13 @@ export function ActionsPanel() {
           type="button"
           disabled
           data-testid={`action-${action.split(' ')[0].toLowerCase()}`}
-          className="rounded-xs border border-border px-3 py-1.5 text-left text-sm text-muted-foreground"
+          className="rounded-xs border border-white/15 px-3 py-1.5 text-left text-sm"
+          style={{ color: PANEL_TEXT.value }}
         >
           {action}
         </button>
       ))}
-      <p className="mt-1 text-[11px] text-muted-foreground">
+      <p className="mt-1 text-[11px]" style={{ color: PANEL_TEXT.muted }}>
         Inert in this unit — motion is next.
       </p>
     </div>

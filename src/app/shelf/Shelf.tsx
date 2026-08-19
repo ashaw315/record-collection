@@ -59,12 +59,25 @@ export function Shelf({ records }: { records: ShelfRecord[] }) {
   const [pulledFrom, setPulledFrom] = useState<ScreenRect | null>(null);
   const pulled = records.find((record) => record.id === pulledId) ?? null;
 
-  /*
-    `spineRectFor` lived here for the CSS implementation, which re-measured the
-    spine at dismiss time to fly the record back to it. The canvas measures the
-    slot at CLICK time instead and holds it in `pulledFrom`, because the rise is
-    the only motion this unit owns. It comes back when the return does.
-  */
+  /**
+   * Where a spine is RIGHT NOW, for the return.
+   *
+   * **Re-measured on demand, never cached across the pull.** Unit 19's rule,
+   * carried across from the CSS implementation: the wall may have scrolled or
+   * re-wrapped while the record was out, and a rect remembered from the rise
+   * sends it back to where its slot used to be. The page scrolls freely here,
+   * so that is reachable by anyone with a wheel.
+   *
+   * The DOM is the source of truth for where a spine is; a copy of it is a bug
+   * waiting for the first scroll.
+   */
+  const spineRectFor = (recordId: string): ScreenRect | null => {
+    const spine = document.querySelector(`[data-record-id="${CSS.escape(recordId)}"]`);
+    if (spine === null) return null;
+
+    const box = spine.getBoundingClientRect();
+    return { left: box.left, top: box.top, width: box.width, height: box.height };
+  };
 
   if (records.length === 0) {
     return (
@@ -355,6 +368,7 @@ export function Shelf({ records }: { records: ShelfRecord[] }) {
       <RecordCanvas
         record={pulled}
         from={pulledFrom}
+        measureSlot={spineRectFor}
         onClose={() => {
           setPulledId(null);
           setPulledFrom(null);

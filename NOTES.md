@@ -8764,3 +8764,61 @@ passed three times in isolation and did not recur. Both are recorded rather than
 dismissed: this project's own rule is that passing in isolation is not evidence,
 and two different tests flaking on the mobile project in consecutive full runs
 is worth watching rather than explaining away.
+
+---
+
+## Step 13 — three defects from the QA gate
+
+**The panel values were invisible, not absent, and the omission logic was
+right.** `backFaceDetails` filters null/empty before grouping and
+`backFaceGroups` drops an all-missing group, so an absent value cannot render a
+row — verified: a record with no pressing produced no Catalogue/Pressed/Country/
+Plant rows at all. What shipped was the value column at **1.02:1** against its
+ground (L* 6.2 text on L* 6.5) because `Panels.tsx` was built for `/plane`'s
+LIGHT page and I gave it a near-black ground without changing its text tokens.
+The labels used `text-muted-foreground` at L* 40 and stayed legible, which is
+exactly why it read as "labels with no values".
+
+**A colour in a `className` is a string, and no test can ask a string whether it
+can be seen.** The palette is now values in `panel-palette.ts` with the
+relationships asserted, swept across every role rather than checked at two —
+mutation-proved that dimming provenance alone (the mid-band case) fails while
+both endpoints still pass.
+
+**The rise's stall was the first DRAW, not the first frame.** Phase timings:
+renderer created 8.7ms, loop started 10.3ms, first animation frame 13.2ms —
+then a 209ms gap to the second. Per-render timings: **45.4ms for the first draw,
+0.4-0.9ms for every one after**. That is shader compilation and pipeline setup,
+which WebGL defers to the first `render()`, plus React committing the overlay,
+scrim and two panels in the same frame.
+
+That distinction decided the fix and the prompt was right to demand it: neither
+cost is the animation being slow, so *delaying the start* would have moved the
+stall rather than removed it. Drawing one warm-up frame at the slot spends the
+expensive frame while the record is still spine-shaped and exactly where the
+spine is.
+
+**Screenshot sampling reported the OPPOSITE defect.** It showed the box
+shrinking 159→118px, because a screenshot round trip costs ~100ms and never
+observed the first half of a 620ms rise. The per-frame progress log is the only
+instrument that has answered a question about this animation correctly, and it
+is now a committed test rather than a probe.
+
+**A block of code placed after `return` in an effect is dead and silent.** The
+`live.current` assignment for the return went in below the cleanup function, so
+the ref was never set, the return effect's null guard fired, and `onReturned()`
+ran immediately — the record vanished exactly as it had before the fix. Nothing
+type-checked it, nothing linted it. Found by instrumenting the state after
+dismissal rather than by reading.
+
+**Two editing-safety notes.** A python splice with a mis-measured span
+duplicated 408 lines of `shelf.spec.ts` and produced four duplicate test titles;
+Playwright refused the file, which caught it. And the obvious `useEffect` reset
+of a "returning" flag is what `react-hooks/set-state-in-effect` refuses — the
+flag is stored WITH the record id instead, so a mismatch reads as "not
+returning" without state having to be corrected.
+
+**Still flaky under full-suite parallelism:** `EVERY row of a wrapping wall gets
+a shelf under it` (unit 23's). Second full run in which it has flaked, and it
+passes in isolation. Not from this work, and worth a look before it hides
+something.

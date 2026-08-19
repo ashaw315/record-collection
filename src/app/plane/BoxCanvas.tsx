@@ -19,7 +19,8 @@ import {
 import { tiltFor } from '../shelf/tilt';
 import { edgeColourFor } from './edge-colour';
 import { createRenderLoop } from './render-loop';
-import { screenRectToWorld, type ScreenRect } from './world-map';
+import { riseProgress, shouldStartClock } from './rise-clock';
+import { screenRectToWorld, type ScreenRect, type WorldPlacement } from './world-map';
 import { centredSquareUv, type Skin, type Skins } from './skins';
 
 /**
@@ -136,6 +137,8 @@ export function BoxCanvas({
   imprint,
   spineColour,
   riseFrom = null,
+  returnTo = null,
+  onReturned,
   thicknessRatio = BOX_THICKNESS_RATIO,
   label,
   testId = 'box-canvas',
@@ -153,6 +156,23 @@ export function BoxCanvas({
    * record back to where its slot used to be.
    */
   riseFrom?: ScreenRect | null;
+  /**
+   * Re-measures the slot AT DISMISS TIME and returns the record to it.
+   *
+   * **A callback rather than a rect, and that is the whole point.** Unit 19's
+   * rule, carried across from the CSS implementation: the wall may have
+   * scrolled or re-wrapped while the record was out, so a rect remembered from
+   * the rise sends it back to where its slot used to be. The DOM is the source
+   * of truth for where a spine is; a copy of it is a bug waiting for the first
+   * scroll — and the page scrolls freely here, so that is reachable by anyone
+   * with a wheel.
+   *
+   * Returning `null` means the slot has gone (filtered away, or the record
+   * deleted), and the record fades rather than flying to a stale position.
+   */
+  returnTo?: (() => ScreenRect | null) | null;
+  /** Set while the record is going back, so the caller can unmount when done. */
+  onReturned?: () => void;
   thicknessRatio?: number;
   label?: string;
   /** So a caller can address ONE canvas among several on a page. */
@@ -174,6 +194,20 @@ export function BoxCanvas({
 }) {
   const mount = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'failed'>('loading');
+
+  /**
+   * The live scene, so the RETURN can drive the same mesh through the same loop
+   * without rebuilding either.
+   *
+   * A ref rather than state: nothing renders from it, and putting a three.js
+   * mesh in React state would re-render the tree on every frame of an animation
+   * whose entire point is that React is not involved.
+   */
+  const live = useRef<{
+    animate: (step: (now: number) => boolean) => void;
+    setPlacement: (p: WorldPlacement) => void;
+    canvasRect: () => ScreenRect;
+  } | null>(null);
 
   useEffect(() => {
     const host = mount.current;
@@ -417,13 +451,57 @@ export function BoxCanvas({
       mesh.position.set(from.x, from.y, 0);
       mesh.scale.set(from.scaleX, from.scaleY, 1);
 
+      /**
+       * **One warm-up frame at the slot, then the clock.**
+       *
+       * The first `render()` costs 45.4ms against 0.4-0.9ms for every one
+       * after it — shader compilation and pipeline setup, which WebGL defers
+       * to the first draw — and React commits the overlay, scrim and panels in
+       * the same frame. Together they stalled the second animation frame to
+       * 117ms, which at `easeOut` is 51% risen: the whole spine-shaped half of
+       * the rise was never drawn.
+       *
+       * Diagnosed before fixing, because *delay the start* and *warm the
+       * pipeline* are different answers and only one is right here. Neither
+       * cost is the animation being slow, so delaying would move the stall
+       * rather than remove it. Drawing one frame first spends the expensive
+       * frame while the record is still at the slot, at spine size — exactly
+       * where it should be at progress 0.
+       */
+      let framesDrawn = 0;
+      const frameLog: Array<{ progress: number; at: number }> = [];
+
       loop.animate((now) => {
-        // The first frame establishes the clock rather than assuming the
-        // effect and the frame share one — they do not, and the gap between
-        // them is real: measured at ~167ms on the first frame after mount.
+        if (!shouldStartClock({ framesDrawn })) {
+          framesDrawn += 1;
+          // Drawn at the slot, so the warm-up frame shows the record where the
+          // spine is rather than anywhere else.
+          return true;
+        }
+
+        // The clock starts on the first WARM frame, not on the effect: the two
+        // do not share a clock and the gap between them is real.
         if (riseStart === null) riseStart = now;
-        const progress = Math.min(1, (now - riseStart) / RISE_MS);
+        const progress = riseProgress({ now, startedAt: riseStart, durationMs: RISE_MS });
         const eased = easeOut(progress);
+
+        /**
+         * **The frame log, published rather than probed.**
+         *
+         * This is the only instrument that has answered a question about this
+         * animation correctly. Screenshot sampling reported the box SHRINKING —
+         * the opposite of the defect — because a round trip costs ~100ms and
+         * never saw the first half of a 620ms rise. Rect assertions cannot see
+         * a mesh at all.
+         *
+         * Bounded, so a long-lived page cannot grow it without limit; the rise
+         * is 38 frames at 60fps and the first few are what any assertion about
+         * a stall needs.
+         */
+        if (frameLog.length < 64) frameLog.push({ progress, at: now });
+        host.dataset.riseFrames = String(frameLog.length);
+        host.dataset.riseFirstProgress = String(frameLog[0]?.progress ?? -1);
+        host.dataset.riseSecondProgress = String(frameLog[1]?.progress ?? -1);
 
         // Toward the settled state: the origin, at full size.
         mesh.position.set(from.x * (1 - eased), from.y * (1 - eased), 0);
@@ -444,16 +522,37 @@ export function BoxCanvas({
     draw();
     if (pending === 0) setStatus('ready');
 
+    live.current = {
+      animate: (step) => loop.animate(step),
+      setPlacement: (p) => {
+        mesh.position.set(p.x, p.y, 0);
+        mesh.scale.set(p.scaleX, p.scaleY, 1);
+      },
+      canvasRect: () => {
+        /*
+          Read from the ref rather than a captured local: the narrowing at the
+          top of the effect does not survive into a closure called later, and a
+          non-null assertion to silence that is forbidden (CLAUDE.md §6).
+        */
+        const node = mount.current;
+        if (node === null) return { left: 0, top: 0, width: 0, height: 0 };
+        const r = node.getBoundingClientRect();
+        return { left: r.left, top: r.top, width: r.width, height: r.height };
+      },
+    };
+
     return () => {
       disposed = true;
       loop.stop();
       host.removeEventListener('pointermove', onPointerMove);
+      live.current = null;
       renderer.domElement.remove();
       geometry.dispose();
       for (const texture of owned) texture.dispose();
       for (const material of materials) material.dispose();
       renderer.dispose();
     };
+
     /*
       `riseFrom` is a dependency because the effect reads it. The caller also
       keys the component on the spine, so a second click remounts rather than
@@ -461,6 +560,76 @@ export function BoxCanvas({
       to remove that key gets a rise that never restarts.
     */
   }, [skins, imprint, spineColour, thicknessRatio, riseFrom]);
+
+  /**
+   * **The return**, in its own effect so it drives the existing mesh through the
+   * existing loop rather than rebuilding the scene.
+   *
+   * §10b: the record goes back where it came from. The canvas integration
+   * carried the rise across and not this, so dismissal was instant.
+   *
+   * **The slot is re-measured HERE, at dismiss time**, which is unit 19's rule
+   * carried across from the CSS implementation. The wall may have scrolled or
+   * re-wrapped while the record was out — the page scrolls freely, so that is
+   * reachable by anyone with a wheel — and a rect remembered from the rise
+   * would send the record back to where its slot used to be.
+   */
+  useEffect(() => {
+    if (returnTo === null || returnTo === undefined) return;
+
+    const scene = live.current;
+    const host = mount.current;
+    if (scene === null || host === null) {
+      onReturned?.();
+      return;
+    }
+
+    const slot = returnTo();
+    if (slot === null || prefersReducedMotion()) {
+      // No slot to go back to, or motion is off: the record simply goes.
+      onReturned?.();
+      return;
+    }
+
+    const canvas = scene.canvasRect();
+    const to = screenRectToWorld(slot, canvas);
+
+    /*
+      Published for the same reason the rise's start is: so a test can read what
+      this component targeted rather than deriving it and agreeing with itself.
+    */
+    host.dataset.returnLeft = String(slot.left);
+    host.dataset.returnTop = String(slot.top);
+
+    let started: number | null = null;
+    let finished = false;
+
+    scene.animate((now) => {
+      if (started === null) started = now;
+      const progress = riseProgress({ now, startedAt: started, durationMs: RISE_MS });
+
+      /*
+        Ease-IN, the mirror of the rise's ease-out: a record going back
+        accelerates toward the gap rather than drifting into it. Using the same
+        ease both ways reads as the animation being played backwards.
+      */
+      const eased = progress * progress * progress;
+
+      scene.setPlacement({
+        x: to.x * eased,
+        y: to.y * eased,
+        scaleX: 1 + (to.scaleX - 1) * eased,
+        scaleY: 1 + (to.scaleY - 1) * eased,
+      });
+
+      if (progress >= 1 && !finished) {
+        finished = true;
+        onReturned?.();
+      }
+
+      return progress < 1;
+    });
+  }, [returnTo, onReturned]);
 
   if (fill) {
     return (
