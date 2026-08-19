@@ -729,10 +729,30 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
         keeps is the contract eight specs depend on — one link per record,
         named by its FULL untruncated title, resolving to the record.
       */}
-      <ul data-testid="wall-records" className="sr-only">
+      <ul
+        data-testid="wall-records"
+        /*
+          **Visually hidden, but REACHABLE.** `sr-only` alone clips the list to
+          1px, which is correct for a screen reader and wrong for a keyboard:
+          measured by hand after the swap, tabbing skipped the entire wall and a
+          link could not be clicked at all.
+
+          The CSS wall's spines were real focusable links, so this would have
+          been a capability lost in the swap rather than one knowingly traded.
+          `focus-within:not-sr-only` brings the list into view the moment
+          anything in it takes focus, so a keyboard user can walk the collection
+          and open a record — which is the contract the canvas cannot carry.
+        */
+        className="sr-only focus-within:not-sr-only focus-within:absolute focus-within:inset-x-0 focus-within:top-0 focus-within:z-30 focus-within:max-h-64 focus-within:overflow-y-auto focus-within:bg-background focus-within:p-4 focus-within:shadow-lg"
+      >
         {records.map((record) => (
           <li key={record.id}>
-            <a href={`/records/${record.id}`}>{`${record.title} — ${record.artistName}`}</a>
+            <a
+              href={`/records/${record.id}`}
+              className="block rounded-xs px-2 py-1 text-sm text-foreground focus:bg-accent focus:outline-2"
+            >
+              {`${record.title} — ${record.artistName}`}
+            </a>
           </li>
         ))}
       </ul>

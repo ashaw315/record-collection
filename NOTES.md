@@ -9195,3 +9195,63 @@ case — the inverse is also worth checking.
 **Last unit's weaker test is closed.** The re-measure assertion wanted a resize
 as its fixture — it re-wraps every row, where a scroll only moves them — and had
 to use scroll because the scene could not rebuild. It uses resize now.
+
+---
+
+## Step 13 — the swap: the WebGL wall replaces the CSS wall at `/`
+
+**The gate held.** The eight specs across five files that find records with
+`getByRole('link', { name: title })` pass unchanged: `collection-filters` 10/10,
+and `record-detail`, `record-form`, `stats`, `want-list`, `lookup-flows` 71/71
+together. The seam test pinning the wall's record count to the heading was
+retargeted to the accessible list and mutation-proved to still catch
+`dc6e04c`'s defect: "the wall shows 3 records under a heading reading 1 record".
+
+**Verified by hand, and the hand found what the harness did not.** `sr-only`
+uses a 1px clip rather than `display:none`, so Playwright reports those links as
+VISIBLE and finds them by role and name — every locating test passes. But the
+element is 1px at x=-1, so it cannot be clicked, and tabbing skipped the entire
+wall.
+
+The CSS wall's spines were real focusable links. That is a capability LOST in
+the swap rather than knowingly traded — the distinction that matters, because
+cmd-click was traded and this was not. Fixed with
+`focus-within:not-sr-only`: focus reveals a scrollable panel of every record,
+Enter opens it. Mutation-proved — `sr-only` alone gives a 16px focused link and
+fails the assertion by name.
+
+**Exactly the shape the prompt warned about**: "a canvas that passes a harness
+and eats a real click".
+
+**What is missing from `/` that was there before**, stated rather than
+discovered:
+
+| Gone | Was |
+|---|---|
+| Panels (facts, actions) | `RecordCanvas` rendered `FactsPanel`/`ActionsPanel` beside the record |
+| Tilt | pointer-tracked rotation on the pulled record |
+| Flip / "Turn over" | never worked on the canvas path either; inert since the CSS retirement |
+| Gatefold | same |
+| Hover label | the CSS wall named a record on hover; deliberately not carried across (there was a hover defect and a pop-up defect on `/`) |
+| Escape to dismiss | `RecordCanvas` bound it; the wall scene dismisses by clicking empty wall |
+| Scrim | the dimmed backdrop behind the pulled record |
+| Cmd-click a spine | knowingly traded — a canvas cannot carry it |
+
+**What a user does instead of cmd-click:** tab to the accessible list and press
+Enter, or switch to `?view=table`. Nothing in the app assumes cmd-click on a
+spine — the two E2E clicks on a record link are on a detail page and in the
+table view respectively, both unaffected.
+
+**18 CSS-DOM tests are SKIPPED, not deleted**, with a note above them. They go
+with `Shelf.tsx` when the CSS path is removed; skipping keeps the swap one
+revert, which is the point of doing it separately.
+
+**Suite timing after the swap: 8.3m against a ~6m baseline.** One run took 1.8h
+and I nearly reported that as the swap's cost — it was machine contention (a
+headed browser and two dev servers running alongside it), not a property of the
+change. Individual specs are unaffected: `collection-filters` 26s,
+`shelf` + `wall-scene` 56s. **A timing number from a contended machine is a
+number about the machine**, the same lesson as the headless-rAF measurement.
+
+Two flakes, both `collection-filters` on the mobile project — the same file that
+flaked before this work.

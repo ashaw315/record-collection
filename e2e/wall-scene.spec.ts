@@ -468,6 +468,61 @@ test('the accessible list carries every record with its FULL title', async ({ pa
   expect(href).toMatch(/^\/records\/[0-9a-f-]{36}$/);
 });
 
+test('a keyboard can walk the wall and open a record', async ({ page }) => {
+  /**
+   * **The contract the canvas cannot carry, and the one the swap nearly lost.**
+   *
+   * The CSS wall's spines were real focusable links: tabbable, clickable,
+   * cmd-clickable. A canvas has none of that, so the accessible list is the
+   * only channel — and `sr-only` alone clips it to 1px, which is right for a
+   * screen reader and useless for a keyboard.
+   *
+   * Measured by hand after the swap: tabbing skipped the entire wall and a link
+   * could not be clicked at all. That is a capability LOST rather than
+   * knowingly traded, which is the distinction that matters — cmd-click was
+   * traded, this was not.
+   *
+   * Asserted as what a user can DO: tab to it, see it, press Enter, arrive.
+   */
+  const { artistId, titles } = await seed(page, 6);
+  await openWall(page, artistId);
+
+  const list = page.getByTestId('wall-records');
+  await expect(list).toBeAttached();
+
+  // Tab until focus lands inside the list, as a keyboard user would.
+  let reached = false;
+  for (let press = 0; press < 25 && !reached; press += 1) {
+    await page.keyboard.press('Tab');
+    reached = await page.evaluate(
+      () => document.activeElement?.closest('[data-testid="wall-records"]') !== null,
+    );
+  }
+
+  expect(reached, 'the wall must be reachable by keyboard at all').toBe(true);
+
+  /**
+   * **Visible once focused, not merely present.** A 1px link is findable by a
+   * test and invisible to a person — this is the half that separates the two.
+   */
+  const focused = await page.evaluate(() => {
+    const box = (document.activeElement as HTMLElement).getBoundingClientRect();
+    return { width: box.width, height: box.height, href: (document.activeElement as HTMLAnchorElement).href };
+  });
+
+  expect(focused.width, 'the focused record is on screen, not clipped to 1px').toBeGreaterThan(50);
+  expect(focused.height).toBeGreaterThan(10);
+  expect(focused.href).toMatch(/\/records\/[0-9a-f-]{36}$/);
+
+  // And Enter takes you there.
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/\/records\/[0-9a-f-]{36}/, { timeout: 15_000 });
+
+  // The record that opened is one of ours.
+  const heading = await page.getByRole('heading', { level: 1 }).first().textContent();
+  expect(titles.some((t) => heading?.includes(t)), `opened "${heading}"`).toBe(true);
+});
+
 test('a short collection still fills the wall', async ({ page }) => {
   /**
    * §10b: "a short collection reads as short, not broken." Five records on a

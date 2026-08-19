@@ -4,7 +4,7 @@ import { CollectionFilters } from './CollectionFilters';
 import { ShelfControls } from './ShelfControls';
 import { activeFilterCount } from './active-filters';
 import { CollectionList, type CollectionRow } from './CollectionList';
-import { Shelf } from './shelf/Shelf';
+import { WallScene } from './plane/WallScene';
 import { CollectionPagination } from './CollectionPagination';
 import { parseCollectionParams } from './collection-params';
 import { listRecords, recordFacets } from '@/lib/db/queries/records';
@@ -190,7 +190,7 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
             to how the collection is read as a list.
           */
           <div className="relative left-1/2 -ml-[50vw] w-screen px-4">
-            <Shelf records={shelf} />
+            <WallScene records={shelf} />
           </div>
         )}
       </main>
