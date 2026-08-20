@@ -313,6 +313,26 @@ Name collision is rare enough that asking is cheap, and it is the only signal th
 
 **A confirmed MBID is written to `artists.musicbrainz_id`; an inferred one is not.** §4.3's resolver refuses to attach an id on a name match precisely because a wrong attachment is silent and self-reinforcing. A user who has been shown the candidates and chosen one has supplied the evidence the resolver lacked — that is a different act, and the id may be stored. The distinction is who decided, not how confident the code is.
 
+**`llm_requests`** — one row per outbound Anthropic request, for §9.2's and §10b's rate limit.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | UUID PRIMARY KEY DEFAULT gen_random_uuid() | |
+| kind | TEXT NOT NULL | `gap_analysis` \| `snippet` — the two callers, counted together |
+| requested_at | TIMESTAMPTZ NOT NULL DEFAULT now() | |
+
+Index on `requested_at`, which is the only column the limit reads.
+
+**A log of requests, not a counter.** A single mutable `count` row needs resetting on a schedule nothing runs, and answers "how many this hour" only if the reset fired. Rows carry their own timestamps, so the window is a `WHERE` clause and no scheduled job exists to fail. Rows older than the window are deletable at any time by anything, or never — the query is correct either way.
+
+**Both callers share one budget.** §9.2's gap analysis and §10b's snippet are the same spend against the same account; two independent 10/hour limits would be a 20/hour limit nobody specified. `kind` records which asked, for diagnosis, and is not part of the count.
+
+**The check and the insert must be ONE atomic statement.** A `SELECT count(*)` followed by an `INSERT` is check-then-act: two concurrent requests both read 9, both pass, and both write — the eleventh request in an hour, admitted by a limiter that was working correctly at every individual step. This is the acquire-flow race in a new place, and §7.3's rule applies for the same reason: a pre-check handles bad input, and only the atomic write handles what changes between the check and the write.
+
+Write it as a conditional insert — `INSERT ... SELECT ... WHERE (SELECT count(*) ...) < limit` — and treat **zero rows inserted** as the refusal. The count and the insert then happen in one statement under one snapshot, and the caller learns the outcome from what the database did rather than from what it predicted.
+
+**This must be tested at the concurrent level, not only the sequential one.** Eleven requests in sequence will pass a limiter that is wrong; the test that matters fires the eleventh concurrently with the tenth. NOTES records the mock rule this needs: a mock intercepting every call disables the function, while one intercepting only the first simulates the race.
+
 **`artist_memberships`** — a person's membership of a group, imported from MusicBrainz. A *fact with a source*, kept separate from `artist_influences`, which is the user's judgement.
 
 | Column | Type | Notes |
@@ -747,8 +767,19 @@ Both were specified in §9.1 and are not scored. Each is recorded with what it n
 - Build a compact summary of the collection: owned artists grouped by genre, want-list with priorities, label counts. Do not dump raw rows.
 - Prompt asks for **gap analysis**: named records that are conspicuous absences given what's owned, with a one-sentence rationale each. Ask explicitly for genre-accurate reasoning — the distinctions between UK first-wave punk, UK82, US hardcore, horror punk, and psychobilly are meaningful and should not be flattened into "punk".
 - Require JSON-only output: `{ suggestions: [{ artist, title, reason, genre }] }`. Strip markdown fences before parsing. Handle parse failure gracefully with a user-visible error, not a crash.
-- Rate limit to 10 requests/hour. Never call this on page load — user-initiated only.
-- Results are ephemeral (not persisted) but the UI offers a one-click "add to want-list" per suggestion.
+- **The prompt asks the model to omit records it is unsure exist. That reduces hallucination and does not prevent it** — a model's confidence is not evidence, and nothing in the response can be checked against the world. So it is a trade of recall for precision, not a guarantee, and the human step below is what actually catches an invented record. Do not let the instruction's presence in the prompt read as a verification anywhere in the code or the UI.
+- **`genre` must be one of the user's own genre names, and this is validated rather than trusted.** The prompt supplies the collection's genre hierarchy and constrains the field to it, which is what makes the response checkable instead of merely plausible — and it is the mechanism that enforces the genre-accuracy requirement above, since a model flattening UK82 into "punk" produces a name the hierarchy does not contain.
+
+  A suggestion whose `genre` is absent from the hierarchy is **valid JSON of the wrong shape** — the envelope parsed and one value is unusable. It is not a parse failure and not an empty response, and the three must stay distinguishable.
+
+  **Drop that suggestion, keep the rest, and report how many were dropped.** Per-suggestion rather than whole-response: one bad genre in five is not a reason to discard four good ones. Silently rather than visibly is the failure to avoid — a dropped suggestion nobody is told about makes the model's error invisible and the list shorter for no stated reason.
+- **Rate limit to 10 requests/hour, enforced server-side against `llm_requests` (§4.3)** — never trusted from the client, and shared with §10b's snippet since both spend the same account. Exhaustion is a legible refusal naming when capacity returns, not a 500 and not silence: an exhausted quota is a fact the app knows, and reporting it as an internal error sends the reader to application logs for something the app could have said. Never call this on page load — user-initiated only.
+- Results are ephemeral (not persisted) but the UI offers an "add to want-list" action per suggestion.
+- **That action prefills the want-list form; it never writes a row directly.** An LLM suggestion names a record, so unlike §9.1 a title exists — but it is a title the model produced, and §5.7's architecture exists because a client asserting a fact the server can establish is the pattern to eliminate. A model is a less reliable client than a user: it can name a record that does not exist, misattribute one, or invent a pressing. A direct write puts an unverified assertion in the same table as records the user typed, where nothing afterwards distinguishes them.
+
+  **Prefilling through `/lookup` was considered and rejected**, though it is the only option where a hallucinated record cannot land. Discogs search is fuzzy and returns something for almost any string, so a hallucinated title finds a near-match and the user confirms a record the model did not mean. That converts a visible failure — a record that does not exist — into an invisible one, a different record blessed by a search. The same shape as a version table whose identical rows read as an answer.
+
+  **Suggestions must read as generated** (§10b's labelling rule): the list says so, and `reason` is presented as the model's rationale rather than as something the app established.
 
 ---
 
@@ -1073,7 +1104,7 @@ Mock the Discogs, MusicBrainz and Anthropic APIs in tests. Never hit live extern
     **On demand, per artist, never a bulk crawl.** `member of band` links a person to a group, so building one band's full lineup graph means walking band → person → that person's other bands: roughly 32 sequential requests for an artist like Discharge, about 35 seconds at the permitted rate. That is acceptable when the user asks about one artist and unacceptable as a background job over a whole collection. Fetch when asked, cache, and show progress.
 12. Graph endpoint + visualization. **Built and retired at step 13** — see §8. Kept in this list because the steps are numbered and referenced; the work happened, the screen no longer exists, and the data it read from is still populated by steps 10 and 11.
 13. **The shelf (§10b).** The collection as a wall of sleeves, replacing the shelf-ordering feature and the graph screen. Delivered: the wall and the pulled record in one `three.js` scene, so a record leaves an emptied slot; hover, tilt, turn, the flanking panels, filtering, and a keyboard-reachable list of every record. Three §10b clauses are deliberately **not** in this step and are listed at 13a, 13b and 13c below.
-14. Suggestions — relationship-based first (§9.1), then LLM-assisted (§9.2). E2E #8.
+14. Suggestions — relationship-based first (§9.1), then LLM-assisted (§9.2). E2E #8. **§9.2 and 13c are separate units sharing one module**, not one unit: see the deferral note below.
 14a. **Measure Discogs' inner images, then build slot assignment.** Discogs carries gatefold artwork on some releases, which makes 13a reachable — but three things are assumptions rather than facts and this project's record on assuming API shapes is poor (`format.text`, the versions payload, the master-year fallback each cost a round).
 
     Measure against the live API on a known gatefold release, before designing anything on top: how the payload types an inner image, given `images[].type` is only `primary`/`secondary`; whether it is one wide spread or two square leaves; and what §6's field mapping would have to gain for the importer to carry them at all.
@@ -1090,7 +1121,11 @@ Mock the Discogs, MusicBrainz and Anthropic APIs in tests. Never hit live extern
 
 This block is in **execution order** — 13c, then 13a, then 13b. The numbering is by feature and does not run in sequence: 13c happens first, at step 14.
 
-**13c. The snippet** (§10b). **Trigger: step 14**, with §9.2's LLM work. It is a second call to the same API and it needs the same rate limit, the same JSON-parse boundary, and the same answer to R5's question about what leaves the machine. Building it here would build that boundary twice, and R5 is scoped to review it once.
+**13c. The snippet** (§10b). **Trigger: step 14**, immediately after §9.2 and built on the module §9.2 extracts — the Anthropic client, the shared rate limit (§4.3's `llm_requests`) and the JSON-parse boundary. R5 still reviews one boundary, because there is one.
+
+**Separate units, and the original reasoning is why.** This note used to say building it alongside §9.2 was necessary to avoid building that boundary twice. Having read both features, the shared part is satisfied by a shared *module*; what is not shared is where each one's difficulty lives. §9.2 sends a summary of the whole collection and returns something ephemeral, so its hard question is disclosure — R5's first attack line, field by field. The snippet sends one record and its hard question is **storage and ownership**: the text is written to `records.snippet`, `snippet_edited_at` transfers ownership to the user on edit, and a regeneration must then refuse (§7.8).
+
+Judging a disclosure decision and a stored-ownership decision in one review is what splitting §9.1 from §9.2 was meant to avoid.
 
 **13a. The gatefold hinge.** Two leaves about a shared edge, and the affordance only where both inner photographs exist (§10b, A21c). **Trigger: after the Discogs inner-image measurement and the add-record slot-assignment UI** (14a). Nothing in the collection can open a gatefold until images can be assigned to `gatefold_left` and `gatefold_right`, so the hinge has nothing to act on. The scene already wires both slots through the surface-kind rule, so the geometry is what is missing.
 
