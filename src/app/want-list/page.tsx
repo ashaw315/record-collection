@@ -54,6 +54,24 @@ export default async function WantListPage({ searchParams }: PageProps<'/want-li
               {showAcquired ? ' acquired' : ' still wanted'}
             </p>
           </div>
+
+          {/*
+            §10's `/suggestions` is reached from HERE rather than from the header
+            nav, and that is a decision with a measurement behind it (NOTES, step
+            14 unit 3): at 390px the nav already hides two of its five links
+            behind a scroll with no affordance, so a sixth makes a measured
+            problem worse.
+
+            This is also simply where it belongs. The suggestion screen's entire
+            output is want-list rows, so the want list is where a user is when
+            they want more of them.
+          */}
+          <Link
+            href="/suggestions"
+            className="shrink-0 text-sm underline underline-offset-2 hover:text-foreground"
+          >
+            Suggestions
+          </Link>
         </header>
 
         {/*

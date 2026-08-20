@@ -69,6 +69,7 @@ const STATIC_ROUTES = [
   '/manage',
   '/records/new',
   '/stats',
+  '/suggestions',
   '/want-list',
   '/want-list/new',
 ] as const;
@@ -83,8 +84,13 @@ test.beforeEach(async ({ page }) => {
 test('the route list has not fallen behind the app', async () => {
   /**
    * The vacuity guard, and it is doing the job the old test's directory walk
-   * did. `src/app` has 12 `page.tsx` files: the seven static routes above, the
+   * did. `src/app` has 13 `page.tsx` files: the eight static routes above, the
    * two record routes covered below, and two exempt — `/login` and `/plane`.
+   *
+   * `/suggestions` is listed here and has NO header link, deliberately (NOTES,
+   * step 14 unit 3). This spec's subject is whether a screen is reachable FROM,
+   * which is why it still belongs: the way back must exist even where the way in
+   * is a link on `/want-list` rather than a nav slot.
    *
    * If a screen is added and not listed here, this fails — which is the whole
    * reason the count is asserted rather than left implicit. It did exactly that

@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { AppHeader } from '@/components/AppHeader';
 import { WantListForm } from '../WantListForm';
+import { isUuid } from '@/lib/api/errors';
+import { suggestions } from '@/lib/db/queries/suggestions';
 import { loadReferenceData } from '@/app/records/reference';
 import { loadDiscogsPrefill } from '@/app/records/discogs-prefill';
 import { toDiscogsId } from '@/lib/discogs/fields';
@@ -52,6 +54,39 @@ export default async function NewWantListItemPage({
   const prefill = releaseId === null ? null : await loadDiscogsPrefill(releaseId);
   const prefillFailed = releaseId !== null && prefill === null;
 
+  /**
+   * `?artistId=` — the prefill from §10's `/suggestions` screen.
+   *
+   * §9.1 suggests ARTISTS and `want_list.title` is NOT NULL because the want
+   * list holds RECORDS, so the suggestion cannot create a row on its own: there
+   * is no title, and inventing one ('TBC', the artist's name, empty) is the app
+   * asserting a fact nobody supplied. The artist prefills; the user names the
+   * record. §5.7's division everywhere else in this app.
+   */
+  const rawArtistId = typeof raw.artistId === 'string' ? raw.artistId : undefined;
+  const suggestedArtistId = rawArtistId !== undefined && isUuid(rawArtistId) ? rawArtistId : null;
+
+  /**
+   * The reason clauses, REGENERATED here rather than carried in the URL.
+   *
+   * A reason passed as a query parameter is attacker-controlled text rendered
+   * on a page, and it would also let a URL claim a reason the engine never
+   * produced. So the page asks §9.1 why this artist is suggested and renders
+   * that — and renders nothing if the answer is "it isn't", which happens for a
+   * stale link or an artist acquired since.
+   *
+   * It is CONTEXT, never data: nothing here reaches the `want_list` row. A
+   * suggestion is true of a collection at a moment, and freezing it into a row
+   * would leave a stale claim behind the first time the collection changed.
+   * There is also nowhere honest to put it — `best_dig_notes` is the only free
+   * text on the table and §7.2 gives it a different meaning.
+   */
+  const suggestionReasons =
+    suggestedArtistId === null
+      ? []
+      : ((await suggestions({ limit: 200 })).find((row) => row.artistId === suggestedArtistId)
+          ?.reasons ?? []);
+
   const reference = await loadReferenceData();
 
   return (
@@ -80,6 +115,17 @@ export default async function NewWantListItemPage({
           </p>
         )}
 
+        {suggestionReasons.length > 0 && (
+          <div className="mb-4 rounded-xs border border-border px-3 py-2 text-sm">
+            <p className="text-muted-foreground">Suggested because:</p>
+            <ul className="mt-1 space-y-0.5">
+              {suggestionReasons.map((reason) => (
+                <li key={reason}>{reason}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {prefill !== null && (
           <p className="mb-4 text-sm text-muted-foreground">
             Prefilled from Discogs. These details are contributed by collectors — a starting point
@@ -90,7 +136,7 @@ export default async function NewWantListItemPage({
         <WantListForm
           initial={
             prefill === null
-              ? BLANK
+              ? { ...BLANK, artistId: suggestedArtistId ?? '' }
               : {
                   ...BLANK,
                   title: prefill.values.title ?? '',

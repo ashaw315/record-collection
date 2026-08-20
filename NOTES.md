@@ -10107,3 +10107,149 @@ other write rather than from a form, which is where a missing path hides.
 | M13 | drop `MAX_LIMIT` | 1, after the fixture was fixed |
 | M13b | `>` -> `>=` (off-by-one) | 1 |
 | M14 | default limit 10 -> 50 | 1 |
+
+## Step 14 unit 3 — /suggestions is reached from the want list, not from the nav
+
+**Decided deliberately rather than by adding a link**, because AppHeader is the
+one place in this app where the default action has a measured cost.
+
+**Re-measured at 390px before deciding**, not carried forward from the step-12
+note (a baseline is a property of a build, and that note described a six-link nav
+including the since-retired Graph):
+
+    scrollWidth 337, clientWidth 237
+    Collection 219 | Want list 290 | Look up 358 | Stats 409 | Manage 478
+
+Identical to the note's five-link figures. **Stats and Manage are already past
+the 390px viewport**, behind a horizontal scroll with no affordance. A sixth link
+lands near 550 — a third hidden item, restoring exactly the state step 12 created
+and the note forbids reproducing: "adding a link before this is addressed will
+make it worse."
+
+**Chosen: an entry point on `/want-list`.** Three reasons, in order of weight:
+
+1. **It is where the output lands.** §10's row is "Add-to-want-list on each" and
+   E2E #8 is "request suggestions and add one to the want-list". The screen's
+   entire product is want-list rows, so the want list is where a user is when
+   they want more of them.
+2. **It degrades honestly.** `artist_influences` is hand-entered and empty, so
+   §9.1 is sparse or silent for most collections today. A top-level nav link
+   promises a destination; a contextual link promises a suggestion ABOUT the want
+   list, which is still true when there is nothing to suggest.
+3. **The alternatives are worse.** `/` is the shelf, which §10b gives the whole
+   viewport with its controls behind an overlay — a link there either intrudes on
+   the wall or hides in the overlay. And the nav is the option already ruled out
+   by measurement.
+
+**This does NOT solve the nav problem and is not intended to.** Step 15 still
+owns it, with the options that note lists: a wrapping two-row nav, a scroll
+affordance, or moving the rarely-in-store screens behind a menu.
+
+**FOR STEP 15 — READ THIS BEFORE ADDING A NAV LINK.** `/suggestions` has **no
+header link by decision, not by oversight**. It is reached from `/want-list`.
+
+The reason, measured on this build at 390px: **the nav already hides two of its
+five links** — `scrollWidth` 337 in a `clientWidth` of 237, Stats at 409 and
+Manage at 478 against a 390px viewport, behind a horizontal scroll with no
+affordance. A sixth link lands near 550 and makes a measured problem worse.
+
+So: do not read the missing link as something the build forgot. When the nav is
+fixed — wrapping row, scroll affordance, or the rarely-in-store screens behind a
+menu — decide whether `/suggestions` earns a slot. The answer may still be no: it
+is not an in-store screen, and §10 makes the phone case "standing in a record
+store". Reachability is already satisfied: the screen renders the nav (so there
+is a way back) and `/want-list` links to it (so there is a way in).
+
+**A pressure worth naming: `AppHeader`'s own comment argues for adding one.** It
+says "the remaining §10 routes are added by the steps that build them" — written
+when the nav was short and true of every screen before this one. A file-local
+instruction that was correct when written is exactly what carries a build past a
+measurement taken elsewhere. The comment now records the exception.
+
+## Add-to-want-list: the artist prefills, the reason is context, and nothing is invented
+
+**§9.1 suggests ARTISTS; `want_list` holds RECORDS**, and `want_list.title` is
+NOT NULL. So "add to want list" cannot be a one-click POST: there is no title,
+and every candidate for one — `'TBC'`, the artist's name, an empty string — is
+the app asserting a fact nobody supplied. That is the matrix-prefill and
+country-`'Unknown'` shape this project has been caught by twice: a placeholder
+that then sorts, filters and displays as real data.
+
+**So the action links to `/want-list/new?artistId=…`**, which already accepts a
+prefill and already carries an artist field. §5.7's division everywhere else in
+this app: the app supplies the material, the user supplies the judgement.
+
+### The reason clauses travel as CONTEXT, never as data
+
+The problem is real — a user arriving at a blank form has forgotten which of five
+suggestions they clicked. The resolution is that this is a SCREEN problem, not a
+storage one, and the two have different answers.
+
+**There is nowhere honest to store it.** `want_list` has exactly one free-text
+column, `best_dig_notes`, and §7.2 gives it a specific meaning: the
+highest-fidelity pressing worth hunting for. Writing "Shares 4 members with
+Discharge" there is the best-dig/max-price conflation CLAUDE.md §8 forbids,
+arriving through a prefill rather than through a form. Adding a column would be
+schema for a UI convenience.
+
+**So it renders on the form and is never written.** Two properties, both
+deliberate:
+
+1. **Regenerated server-side from the artist id, not passed in the URL.** A
+   reason carried as a query parameter is attacker-controlled text rendered on a
+   page, and it would also let a URL claim a reason the engine never produced.
+   The page asks `suggestions()` why THIS artist is suggested and renders that.
+2. **It does not survive the save.** The `want_list` row records what the user
+   wanted, not what the app recommended. A suggestion is true of a collection at
+   a moment; freezing it into a row would leave a stale claim behind the first
+   time the collection changed.
+
+**If the artist is no longer a suggestion, no context line renders** — a stale
+link, or an artist acquired since. The form still works with the artist
+prefilled. Absent context is honest; a fabricated one is the thing this entry
+exists to prevent.
+
+## Step 14 unit 3 — the screen, and what it declines to render
+
+- **§10's row was already there.** Checked before treating navigation as a spec
+  question: "Suggestions | `/suggestions` | Relationship-based list with reasons,
+  always present. Separate 'Ask Claude for gap analysis' button for §9.2.
+  Add-to-want-list on each." So this was a build unit, not an amendment.
+
+- **The gap-analysis button is deliberately NOT built.** §9.2 is a later unit and
+  a button calling an endpoint that does not exist is a dead control — which
+  reads as broken rather than as unbuilt, and is worse than its absence. Recorded
+  in the page's own comment so the omission is legible where someone would add it.
+
+- **The SCORE is not rendered.** The reasons are. `8.5` means nothing to a
+  reader; "Linked to 3 artists you own" is the same fact in a form they can
+  check, and §9.1's requirement is explainability rather than transparency about
+  arithmetic. A screen showing both would invite the user to reconcile a number
+  with a sentence, which is work the app should have done.
+
+- **The screen says two of four terms are unscored.** §9.1a in one line at the
+  foot. A ranking built from half the specified terms is not wrong, but
+  presenting it as the whole judgement overstates what the app knows — the same
+  reasoning that made §7.7's badge state its tier rather than a bare yes/no.
+
+- **The empty state names its two inputs.** `artist_influences` is hand-entered
+  and `artist_memberships` comes from an on-demand walk, so a collection that has
+  had neither shows nothing — the DEFAULT state today, not an edge case. The
+  panel says which two things are missing and links to `/manage`, because "no
+  suggestions" with no explanation is indistinguishable from a broken screen.
+
+- **`every-page-has-nav.spec.ts` fired exactly as designed.** Its
+  `EXPECTED_PAGE_COUNT` guard failed on the new page, in a file this unit would
+  otherwise never have opened — the third time that trip-wire has caught an
+  addition. `/suggestions` is now in `STATIC_ROUTES`, and it belongs there even
+  with no header link: that spec's subject is whether a screen is reachable FROM,
+  and the way back must exist even where the way in is elsewhere.
+
+**Screen mutations, all caught:**
+
+| # | Mutation | E2E failed |
+|---|---|---|
+| M15 | reason clauses dropped from the list | 2 |
+| M16 | suppressed candidates hidden rather than shown | 1 |
+| M17 | the form's context line never renders | 1 |
+| M18 | `artistId` prefill dropped | 1 |
