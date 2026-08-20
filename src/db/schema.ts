@@ -246,6 +246,27 @@ export const records = pgTable(
      * page load would be absurd, and §10b says once, at import.
      */
     spineColour: text('spine_colour'),
+
+    /**
+     * SPEC.md §10b's generated note about the album (§4.2). Nullable, and
+     * absence is normal — a record with no snippet shows none.
+     */
+    snippet: text('snippet'),
+
+    /**
+     * §4.2: what makes §7.8 enforceable here. Null means the text is as
+     * generated and a regeneration may replace it; non-null means the USER owns
+     * it, and a regeneration must refuse unless they explicitly confirm the
+     * replacement (A31a).
+     *
+     * A TIMESTAMP rather than a boolean, and §4.2 gives the reason: `false`
+     * would mean both "generated" and "never asked", which are different facts
+     * that become indistinguishable at write time.
+     *
+     * These two columns reached §4.2 with A4 and never reached the schema —
+     * three steps of spec describing storage that did not exist (NOTES).
+     */
+    snippetEditedAt: timestamp('snippet_edited_at', { withTimezone: true }),
     ...timestamps,
   },
   // No unique constraint on (artist_id, title): duplicate records are legal and

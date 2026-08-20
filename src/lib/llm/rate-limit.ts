@@ -32,7 +32,12 @@ const CLAIM_LOCK_KEY = 8_141_972;
 export type LlmRequestKind = 'gap_analysis' | 'snippet';
 
 export type ClaimResult =
-  | { ok: true }
+  /**
+   * `id` is the row this claim wrote, and it exists so a refund can target its
+   * OWN row (`releaseLlmRequest`). Deleting "the most recent" row instead would
+   * delete a concurrent caller's claim.
+   */
+  | { ok: true; id: string }
   /** `retryAt` is when the oldest request in the window ages out. */
   | { ok: false; retryAt: Date };
 
@@ -89,7 +94,8 @@ export async function claimLlmRequest(kind: LlmRequestKind): Promise<ClaimResult
     `);
   });
 
-  if (inserted.rows.length > 0) return { ok: true };
+  const claimedId = inserted.rows[0]?.id;
+  if (claimedId !== undefined) return { ok: true, id: claimedId };
 
   /*
    * Refused, so say WHEN rather than "later". §9.2 requires a legible refusal:
@@ -125,4 +131,30 @@ export async function claimLlmRequest(kind: LlmRequestKind): Promise<ClaimResult
     ok: false,
     retryAt: oldestAt === undefined ? new Date() : new Date(oldestAt.getTime() + WINDOW_MS),
   };
+}
+
+/**
+ * Returns a claimed slot to the hour's budget.
+ *
+ * **Only for a call the account was never charged for**, which in practice
+ * means an upstream auth rejection (`isAuthFailure`). §9.2 is deliberate that an
+ * unreadable response KEEPS its slot: that call completed and was billed, and
+ * refunding it would let a persistently failing model be retried without limit.
+ * The narrow case is different in kind — a 401 means the request was never
+ * served, so charging the user's quota for it makes a deployment fault look like
+ * their own overuse.
+ *
+ * **By id, never by recency.** Deleting the most recent row would delete a
+ * CONCURRENT caller's claim: two requests in flight, the first fails on auth and
+ * refunds while the second is still working, and the second silently loses the
+ * slot it holds. The id is why `ClaimResult` carries one.
+ *
+ * Silent when the row is already gone. This runs on an error path, and a throw
+ * here would replace a legible 502 with the 500 this whole change exists to
+ * remove.
+ */
+export async function releaseLlmRequest(id: string): Promise<void> {
+  const db = getDb();
+
+  await db.execute(sql`DELETE FROM llm_requests WHERE id = ${id}`);
 }

@@ -39,6 +39,30 @@ export function FactsPanel({ panel }: { panel: FactPanel }) {
         {[panel.artist, panel.year].filter((part) => part !== null).join(' · ')}
       </p>
 
+      {/*
+        §10b's snippet, READ-ONLY here: the wall is for looking and the detail
+        page is for editing (A19e drew the same line putting these facts in DOM
+        rather than canvas).
+
+        **The label is not optional.** This sits where liner notes would, so it
+        must not read as liner notes — §10b's "same register as Discogs
+        estimates, never presented as fact the app established". `panel.snippet`
+        carries the flag with the text so neither can be rendered without the
+        other.
+      */}
+      {panel.snippet !== null && (
+        <div data-testid="panel-snippet" className="mt-5">
+          <p className="text-xs leading-relaxed" style={{ color: PANEL_TEXT.value }}>
+            {panel.snippet.text}
+          </p>
+          <p className="mt-1 text-[11px]" style={{ color: PANEL_TEXT.muted }}>
+            {panel.snippet.generated
+              ? 'Written by Claude — about the music, not a fact this app checked.'
+              : 'Your own note.'}
+          </p>
+        </div>
+      )}
+
       {panel.groups.length === 0 ? (
         /*
           The honest empty state, and it is the FIRST state of most records:

@@ -4888,10 +4888,13 @@ fewer workers makes collisions rarer, not impossible.
 This does not refute the measurement (2 of 2 flaky at three workers, 0 of 4 at
 two) and it does not justify workers=1 — the standing decision was that a flake
 here is not a surprise. What it does confirm is that the shared resource is
-still shared. **The real diagnosis, when someone takes it, is test-data
-isolation in the single database every worker uses** — most likely per-worker
-schemas or a per-worker database, which is a change to `test/helpers/db.ts` and
-`global-setup.ts` rather than to a spec.
+still shared. **The real diagnosis is test-data isolation in the single database
+every worker uses** — most likely per-worker schemas or a per-worker database, a
+change to `test/helpers/db.ts` and `global-setup.ts` rather than to a spec.
+
+**Scheduled: step 15, unit 1** (decided 2026-08-20 after R5's remediation
+measured 7 and 5 hard failures in two of three full runs, all `[mobile]`). See
+"Per-worker test-data isolation — DECIDED" below.
 
 ## Step 11 unit 6b — the lineup endpoint
 
@@ -4943,7 +4946,395 @@ claimed and why that was worse.
 Related to the fixture rules above but distinct: those are about tests that
 cannot fail. This is about a test that fails correctly and is still wrong.
 
-## Deferred to step 16: per-worker test-data isolation
+## Step 13c unit 1 — the snippet column and the ownership rule
+
+The migration A4 implied and never produced, plus §7.8's rule as pure state. **No
+LLM in this unit**, by design (§12): every other failure in this feature is
+recoverable, and silently overwriting text the user wrote is not.
+
+**The migration's verification is a command, per CLAUDE.md §2's carve-out**, and
+the objects were checked rather than the exit code: test database reset to empty,
+16/16 applied, both columns present as `text` and `timestamptz`, nullable, no
+defaults, 23 tables.
+
+### What the tests constrain, proved by mutation
+
+13 query-layer tests and 12 route tests. Seven mutations, all caught:
+
+| mutation | caught by |
+|---|---|
+| M1 ownership guard removed | 2 tests |
+| M2 delete also clears `snippet_edited_at` | 2 tests |
+| M3 confirmed replace keeps the timestamp | 1 test |
+| M4 edit does not set the timestamp | 4 tests |
+| M5 `not_found` collapsed into `user_owns_snippet` | 1 test |
+| M6 `.strict()` removed from the edit schema | 1 test |
+| M7 DELETE ignores not-found | 1 test |
+
+M1 is the one that matters: it is the permanent-damage case, and the test asserts
+BOTH that the refusal is reported and that the text is unchanged — a function can
+return a refusal and still have written, and the write is what does the damage.
+
+### The refusal and the write are one statement
+
+`WHERE snippet_edited_at IS NULL` sits in the UPDATE rather than in a preceding
+SELECT. A read-then-write is check-then-act: an edit committed between the two
+would be overwritten by a regeneration that read a null timestamp and believed
+it. Small window, permanent loss — the same combination as §7.3's acquire flow
+and §9.2's limiter. **Zero rows updated IS the refusal**, and the caller learns
+the outcome from what the database did.
+
+### A test that was wrong, said so rather than adjusted quietly
+
+Two route tests failed with `expected 400 to be 404`. The cause was the test, not
+the code: `MISSING` was the nil uuid `00000000-...`, which `isUuid` correctly
+rejects as malformed — the pattern requires a version digit and a variant nibble
+— so it exercised the 400 path and never reached the 404 one. Replaced with a
+well-formed v4 that matches no row, and the reason is recorded in a comment above
+the constant so the next person does not "simplify" it back.
+
+### Two cross-file failures, in files this unit never opened
+
+Both found by the full-suite rule (CLAUDE.md §10), both real:
+
+1. **`migrations-complete` failed because 0015 was UNTRACKED.** The journal is
+   tracked and was modified; the SQL and snapshot were new and unstaged. That
+   test copies TRACKED FILES ONLY, so the simulated clone got a journal entry
+   pointing at a migration file that did not exist. **This is R1's
+   untracked-migration defect, caught again by the test written for it.** Staged;
+   passes.
+2. **`neon-transactions` failed because the Neon branch was five migrations
+   behind** — inserts now name `snippet`, which that branch lacked. Not caused by
+   this unit; this unit is what made it visible, being the first change to add a
+   column those tests write through. Its own entry above.
+
+### Verification
+
+vitest **2721 passed, 1 skipped, 172 files**. Neon gate **10 passed, 1 skipped**
+(the skip is the gate's own marker correctly not firing). typecheck, lint, build
+clean. Full E2E **237 passed, 2 failed, 3 flaky** — both failures login-stage on
+`wall-scene.spec.ts`, which contains zero references to snippet; see the
+contention correction above.
+
+**Unit 2 (the generation path) and unit 3 (the panel UI) are NOT built.** `POST
+/api/records/:id/snippet` is specified in §5.2 and deliberately absent from the
+route file, which says so.
+
+## Step 13c unit 2 — the generation path, and R5's finding 4 decided
+
+### Finding 4: the two callers needed DIFFERENT limits, which is the finding
+
+`client.ts`'s `MAX_TOKENS = 4000` was shared and commented "short by
+construction: §9.2 wants a handful of suggestions, not an essay". R5's live run
+contradicted the comment — 34 suggestions, 2994 output tokens, `stop_reason:
+end_turn`. The model finished; it did not hit the ceiling. So 4000 is not
+"short", it is where a full gap analysis happens to fit, and "a handful" was the
+only place in the codebase a count was written down.
+
+**Measured, then split:**
+
+| caller | natural bound | budget |
+|---|---|---|
+| §9.2 gap analysis | **none in the spec** | `GAP_ANALYSIS_MAX_TOKENS = 4000` (unchanged) |
+| §10b snippet | "two or three sentences" ≈ 200–400 chars ≈ **100 tokens** | `SNIPPET_MAX_TOKENS = 400` |
+
+The shared constant was ~40x what a snippet can use. **A ceiling 40x larger than
+any correct response is not a safety net** — a runaway answer looks exactly like
+a normal one and costs forty times as much.
+
+**§9.2 still has no count limit, deliberately.** Nothing in §9.2 or §5.8 bounds
+the number of suggestions, and a server-side slice would discard output the
+account was already billed for. If a count is ever wanted, the honest place is
+the PROMPT. Recorded in `client.ts` rather than fixed, because 34
+grouped-by-genre suggestions were judged good on the one real run there has been.
+
+**That §10b has a bound and §9.2 does not is the substance here.** A spec that
+says "two or three sentences" has already answered the question; a spec that says
+nothing has left it open, and the shared constant hid the difference.
+
+### What is ENFORCED versus INSTRUCTED, stated rather than implied
+
+§10b: "It never contradicts entered data. It does not state a pressing, a year,
+or a price." **That is an instruction to a model, and no parser can check it.** A
+snippet asserting "released in 1982" for a 1981 pressing is valid prose, and the
+app cannot check a claim about music against the world — CLAUDE.md §8's worst
+shape, confidently misleading.
+
+So the module states the split in a table rather than letting the prompt read as
+a guarantee (A29d is the precedent — an amendment claimed the genre validation
+enforced a rule it could not, and three files repeated it):
+
+| mechanism | kind |
+|---|---|
+| **the record's own facts are NOT SENT** | **enforced** |
+| the prompt forbids years, pressings, prices | instructed |
+| the prompt asks for omission over guessing | instructed |
+| the output is labelled generated (unit 3) | enforced, but mitigates rather than checks |
+
+**The only enforced mitigation is withholding**, and it is structural: the model
+cannot contradict a year it was never told. `findRecordSubject` selects `artist`
+and `title` and nothing else, and lives in `snippet.ts` beside the rule rather
+than in `records.ts`, so no caller has to remember what not to send. A sentinel
+test asserts no year, price, label or matrix reaches the prompt even when extra
+keys are spread into the subject.
+
+**Sending the year "so the model can avoid contradicting it" is the trap** — it
+hands over the exact value most likely to be repeated back as an assertion.
+
+### Unit 1's refusal is consumed, and mutation found where that was not true
+
+The route checks ownership BEFORE claiming a slot and before calling, which
+reverses §9.2's order deliberately: §9.2's failures are only knowable after the
+call, while this refusal is knowable from a column. Generating first would bill
+the account and burn one of ten hourly slots to produce text thrown away.
+
+**The pre-check is an optimisation, NOT the guard.** Unit 1's write refuses
+atomically in the same statement as the write, and that is what makes the
+pre-check safe to be advisory.
+
+**M12 proved the tests did not know that.** Making the route pass
+`confirmReplace: true` to the write — defeating unit 1's guard completely —
+**passed all twelve route tests**, because every one exercised the sequential
+case the cheap pre-check already catches. Two rules that can disagree, and only
+the race distinguishes them.
+
+The window is real: R5 measured 44s for a gap-analysis call. A user editing their
+snippet in that window would have their text overwritten by a generation that
+read a null timestamp before they typed.
+
+Fixed by a test that commits the edit **from inside the mocked client** — the
+only place genuinely between the pre-check and the write. M12 is now caught.
+**Same shape as the limiter's concurrency test in unit 4a: a sequential test
+passes with the guard removed, and only a barrier at the right point proves the
+code relies on it.**
+
+### Verification
+
+vitest **2746 passed, 1 skipped, 174 files**. typecheck, lint, build clean.
+Mutations M8–M12 all caught (M12 only after the race test was added).
+
+**Unit 3 (the panel UI) is NOT built.**
+
+## Step 13c unit 3 — the panel UI, and step 13c closes
+
+### The wall is for looking, the detail page is for editing
+
+§10b says the snippet "sits in the panel beside the record", and that panel is
+the wall's `FactsPanel` — DOM beside a WebGL canvas, with no form controls. The
+edit, delete and confirmation affordances went to `/records/[id]` instead, which
+is where the snippet's siblings already live: journal entries, prices, images.
+**A19e drew this line first** by putting the facts in DOM rather than canvas so
+they could be read; editing is one step further along it, and §7.8 makes an
+edited snippet the user's own text.
+
+The wall still shows the snippet, **read-only and with the same label**. §10b's
+point is that it sits where liner notes would, so it must not read as liner
+notes.
+
+### The label is the mitigation, so it cannot be optional
+
+`FactPanel.snippet` is `{ text, generated } | null`, never a bare string. Pairing
+them makes it impossible to render the text without its label — a
+`snippet: string | null` would have allowed exactly that. Nothing in the pipeline
+verified this text; unit 2 established that WITHHOLDING the record's facts is the
+only enforced mitigation, so the label carries what the code cannot.
+
+**`generated` is false once the user has edited it.** Their writing attributed to
+the model is the same misattribution as the model's writing presented as fact,
+reversed.
+
+### One producer, per the standing rule
+
+`hydrateRecord` already carried `snippet` and `snippetEditedAt` — it uses
+`select()` — so the detail page needed nothing. The WALL did: `ShelfRecord` now
+selects both in `shelf.ts`, beside `spine_colour`. Two producers of the same
+field is the shape NOTES records under `genreSubtree` and `hasGatefold`, and the
+wall already loads every record it draws.
+
+The type change surfaced all three call sites at compile time rather than at
+runtime, which is the argument for the field being on the type rather than
+fetched where needed.
+
+### A case the first implementation got wrong: the DELETED snippet
+
+`snippetView` initially returned `confirmBeforeRegenerating: false` whenever
+`snippet` was null — treating "no text" as "nothing to lose". Wrong: §4.2 says
+"a deliberate deletion is an edit", so **the user owns the ABSENCE**, and
+generating over it would silently overrule the choice they just made.
+
+**Ownership and presence are separate questions**, and `kind` and
+`confirmBeforeRegenerating` are separate fields because of it — the panel shows
+nothing while the action still asks. Deriving one from the other collapses
+exactly this state. It also needs its own sentence: "your version will be lost"
+is false when nothing is lost, so the deleted case says "You deleted the snippet
+for this record. Write a new one?"
+
+Caught by writing the test before assuming the two-state model was complete.
+
+### A31a's two rules, as implemented
+
+- **Confirmation only where there is something to lose.** Never for an absent or
+  generated snippet, always for an edited or deleted one. Same reasoning as the
+  cover notice firing on `failed` and never on `none`: confirming every
+  regeneration trains the user to dismiss the one that matters.
+- **The confirmation names the text, not the rule.** Pinned by tests asserting
+  both directions — it must say what is lost, and it must never contain
+  `snippet_edited_at`, `timestamp`, `column`, `null` or `409`.
+
+### The E2E found a real inconsistency, not just a test problem
+
+The confirm-dialog specs hung for 30s waiting for a button that never rendered:
+the control was gated on `configured` and `.env.test` has no `ANTHROPIC_API_KEY`
+(§11 forbids live calls). **The panel dropped the button silently** — while
+`GapAnalysis` names the same situation, for a reason it states: "a button that
+silently does nothing reads as broken; saying which credential is missing turns a
+mystery into a deployment task."
+
+That is A31a's own argument about hiding a capability, applied to the deployment
+case, and the panel was inconsistent with the app's existing answer. Now named
+rather than absent, and the E2E asserts the named state — which this environment
+genuinely has.
+
+**The confirmation itself is covered where it is REACHABLE**, and the spec file
+says so, so nobody adds a browser assertion back and watches it hang:
+`snippet-view.test.ts` pins when it fires and what it says;
+`record-snippet-post.test.ts` pins the server-side refusal and the
+edit-during-generation race.
+
+### Verification
+
+vitest **2765 passed, 1 skipped, 175 files**. typecheck, lint, build clean. Full
+E2E **246 passed, 0 failed, 0 flaky**.
+
+**STEP 13c IS COMPLETE** — all three units. With §9.1, §9.2 and the snippet
+built, **step 14 closes.** Next is step 15, whose FIRST unit is per-worker E2E
+test-data isolation (see the decision above), before any mobile screen work.
+
+## The Neon test branch has NO supported migrate command — the tooling has no path
+
+Found 2026-08-20, 13c unit 1. **Third database-behind-its-schema instance this
+session**, and this one is not a lapse: nothing anybody could have run would have
+kept it current.
+
+**Measured.** `drizzle.config.ts` calls `parseEnv` then `resolveDriver`, which
+select between `DATABASE_URL` and `TEST_DATABASE_URL`. **`NEON_TEST_DATABASE_URL`
+appears nowhere in `drizzle.config.ts`, `env/schema.ts` or `connection-string.ts`
+as a migration target.** `npm run db:migrate` cannot address the branch, and
+`TEST_DATABASE_URL=<neon-url> npx drizzle-kit migrate` is refused by
+`assertLocalTestDatabase` — correctly, since that variable is what integration
+tests TRUNCATE, and pointing it at a remote database aims a truncate at it.
+
+So the guard is right, the config is not wrong exactly, and between them there is
+no route. **The branch drifted three times because the tooling has no path, not
+because anyone forgot.** That distinction matters for the fix: a checklist item
+would not have helped.
+
+**State when found:** ledger 11 rows against journal 16, with 0011–0013's schema
+ALREADY PRESENT and unrecorded — the same ledger-versus-schema divergence dev
+had, one migration further behind. A plain `drizzle-kit migrate` would have died
+on 0011 or 0012 inside drizzle's single wrapping transaction, rolled back, and
+printed "migrations applied successfully". Checked BEFORE running anything, on
+the developer's instruction, which is what stopped a command that would have
+reported success and changed nothing.
+
+**Repaired by recreating the branch from empty** rather than by backfilling the
+ledger, which is available here and was not available for dev: the branch is
+explicitly "the throwaway test branch" (`neon-test-branch.ts`), holds no data
+anyone needs, and `truncateAll` clears it between tests anyway. One clean run
+against an empty database applies all 16 and records all 16 — no completeness
+audit, no backfill, no risk of recording a half-applied migration. **Recreating
+beats repairing whenever the data is disposable**, and it verifies the migrations
+run clean from empty on Neon, which is R6's question anyway.
+
+The command used, for the next person: a `drizzle.config.neon-test.ts` written
+INSIDE the repo (drizzle-kit resolves its modules from the config file's
+location, so a temp-dir config cannot load it — `migrations-complete.test.ts:129`
+documents the same constraint), reading `process.env.NEON_TEST_DATABASE_URL`
+directly. It never touches `TEST_DATABASE_URL`, so the guard is not bypassed —
+it is simply not on that path.
+
+**One thing verification turned up that the exit code would not have.** After
+migrating, the branch's ledger holds **17 rows against 16 journal entries**. The
+extra is `created_at=1786715119768` — matching no journal entry, one millisecond
+after 0010 — **the byte-identical orphan row the dev database carries.** Two
+independent databases, the same stray timestamp: the branch was almost certainly
+created FROM dev after that row existed, which also explains how it inherited
+dev's divergence. It is inert (below the high-water mark, so it can never gate a
+migration) and is left alone on both. The correct ledger assertion is "every
+journal entry has a row with a matching hash", not "the row count equals the
+journal length" — my first verification script asserted the latter and failed on
+a healthy database.
+
+**R6 item, and the serious version is production.** R6 owns deploy readiness. The
+same divergence against the production Neon database is materially worse: the
+repair used here depends on the data being disposable, and production's is not,
+so the only route there is dev's — verify each drifted migration is COMPLETE,
+backfill the ledger, then migrate. That worked on dev by luck rather than by
+guarantee; a production database whose schema half-moved has no cheap recovery.
+R6 should establish (a) whether production has the same drift, (b) what command
+is supposed to migrate it and whether that command exists, and (c) a check that
+notices within one deploy rather than three steps later.
+
+**Trigger: R6, before the first deploy.**
+
+## An amendment is a claim about the DOCUMENT, not about the database — and nothing checks the difference
+
+Noticed 2026-08-20, planning 13c unit 1. **Second instance this session**, which
+is what makes it a pattern rather than an incident.
+
+**A4 added `snippet` and `snippet_edited_at` to §4.2 and the columns were never
+created.** Measured before planning anything on top of them:
+
+| location | `snippet` / `snippet_edited_at` |
+|---|---|
+| SPEC §4.2 (lines 157–158, 164) | **present**, with the full §7.8 rationale |
+| `src/db/schema.ts` | **absent** |
+| all 15 `drizzle/*.sql` | **absent** |
+| dev Neon `records` | **absent** |
+
+The spec has described these columns — including a careful paragraph on why
+`snippet_edited_at` is a timestamp rather than a boolean — through every step
+since A4 was written. Nothing referenced them, so nothing failed.
+
+**The two instances differ in mechanism and share a cause:**
+
+1. **The dev database three migrations behind** (R5): the migration EXISTED and
+   had not been applied. Caught only because the feature was run for real.
+2. **A4's columns** (here): the migration was never WRITTEN. Caught only because
+   13c was about to build on them.
+
+Neither was caught by a test, and neither would have been. `schema-conformance`
+checks that tables in the schema obey conventions; `migrations-complete` checks
+that migrations apply. **Nothing walks the other direction — from what §4 CLAIMS
+to what the database HAS.** A column described in the spec and absent everywhere
+else is invisible to every check this project runs.
+
+**Why the shape recurs.** An amendment is written as a documentation edit — it
+says "ADD this row to §4.2's table" — and applying it is a documentation action.
+The implementation is a separate act, in a separate session, often several steps
+later. A4 in particular was a *decision* amendment ("storage for §10b's
+snippet"), written as forward planning, and forward planning that lands in a
+normative table is indistinguishable afterwards from a description of what
+exists. §4.2 does not mark which of its rows are built.
+
+**This is the prose-and-code pattern with the prose in the SPEC**, which R5 also
+met at A29d — an amendment claiming the prompt supplied a genre hierarchy it did
+not supply. Three instances now, all the same: **a spec sentence asserting a
+mechanism, and nothing between the sentence and the truth.**
+
+**What would catch it.** A repo test that reads §4's column tables and asserts
+each named column exists in `src/db/schema.ts`. It would have failed the day A4
+was applied, and it fails loudly rather than waiting for someone to build on the
+claim. Not built here — 13c unit 1 creates these two columns, which closes the
+instance but not the class.
+
+**Deferred with a trigger: R7** (the whole-codebase audit), whose stated job
+includes "the spec against the app — which sections describe something that no
+longer exists, or that exists differently." This is that question asked
+mechanically instead of by reading, and R7 is where the answer is worth the
+tooling. Recorded here so R7 inherits the mechanism rather than rediscovering it.
+
+## Per-worker test-data isolation — DECIDED: step 15, unit 1 (was deferred to step 16)
 
 The E2E flake rate is mitigated (workers 3 → 2) but not diagnosed. Four spec
 files have now flaked under load — `record-form`, `manage`,
@@ -4958,6 +5349,125 @@ Current rate: 1 flaky in 5 full runs at workers=2, versus 2 in 2 at workers=3.
 Low enough that a regression would still stand out. **Revisit only if the rate
 climbs** — recorded here so the next person does not re-investigate the spec
 that happened to fail.
+
+### THE TRIGGER HAS FIRED — 2026-08-20, R5's remediation. Move this to step 15.
+
+**The rate climbed, and the failure CHARACTER changed.** Three full runs during
+R5's remediation:
+
+| run | hard failures | flaky |
+|---|---|---|
+| after F1 | **0** | 2 |
+| after F2, run 1 | **7** | 3 |
+| after F2, run 2 | **5** | 3 |
+
+The baseline above is "1 flaky in 5 full runs" with **zero hard failures**. Two
+runs in three now produce five to seven tests that exhaust their retries. A flaky
+test costs a retry; a hard failure means the suite cannot answer the question it
+was run to answer.
+
+**Every hard failure fails at LOGIN** — `toHaveURL('/')` receiving `/login` —
+before reaching any assertion. The failure set MOVES between runs (eleven
+distinct specs across the two F2 runs, one overlap), which is what identifies it
+as contention rather than regression, per the moving-failure rule.
+
+**CORRECTION, two runs later: it is not mobile-only.** This entry first said
+"every hard failure is `[mobile]`, zero on chromium", which was true of the two
+runs then measured and false as a general claim. 13c unit 1's full run failed
+**2 on `[chromium]`** (`wall-scene.spec.ts:900` and `:956`), same login-stage
+signature, in specs containing zero references to the code that unit changed.
+
+Five full runs during R5's remediation:
+
+| run | failures |
+|---|---|
+| after F1 | 0 |
+| after F2 run 1 | 7 mobile |
+| after F2 run 2 | 5 mobile |
+| after finding 3 | 0 |
+| after 13c unit 1 | 2 chromium |
+
+**14 hard failures: 12 mobile, 2 chromium.** The mobile skew is real and large,
+which is why the step 15 argument holds — but "zero on chromium" was an artefact
+of a small sample, and a claim that the contention CANNOT reach chromium would
+have been wrong. The shared resource is the one test database every worker uses,
+which is not a per-project resource; the mobile project simply runs more of the
+specs that collide.
+
+**This does not weaken the step 15 decision, and slightly strengthens it.** The
+argument was never that chromium is immune — it was that step 15 has no
+independent project to cross-check against, because the project it exercises is
+the subject. A contention that reaches both projects makes "does it also fail on
+chromium?" a weaker diagnostic everywhere, not a stronger one.
+
+**Why the deferral to step 16 should move to step 15, before step 15 starts.**
+
+Step 15 is "Mobile pass across all screens. E2E #10" — a step whose verification
+is almost entirely mobile E2E, on the exact project where 100% of these failures
+land. Running it against this instrument means every real defect arrives mixed
+with five to seven false ones, and the tell for a genuine mobile regression —
+"tests fail on mobile" — is indistinguishable from the noise floor.
+
+**This is R5's own lesson repeating.** The review's manual half was blocked by a
+dev database three migrations behind: the check could not fail informatively
+because the instrument was wrong, and fixing the instrument came first. A
+mobile-focused step measured by a mobile suite that fails a dozen mobile specs
+per run is the same shape. **Fix the instrument before the step that depends on
+it.**
+
+Also note 13b ("arrow navigation between records") is already triggered on step
+15, so step 15 is carrying feature work as well as a sweep — more reason for its
+measuring instrument to be trustworthy.
+
+### THE DECISION: per-worker isolation is step 15's FIRST unit
+
+**Agreed and recorded 2026-08-20.** This is no longer a step 16 deferral. It is
+the first unit of step 15, to be built BEFORE any mobile screen work.
+
+**The argument is indistinguishability, and step 15 is the one step where it is
+fatal.**
+
+A genuine mobile regression presents as *"tests fail on mobile."* The contention
+presents as *"tests fail on mobile."* They are the same observation. Everywhere
+else in the build that ambiguity is tolerable, because mobile E2E is incidental
+to what the step changes — a failure there is one signal among several, and the
+chromium project gives an independent read.
+
+Step 15 is the exception on both counts. **Mobile is what it changes, and mobile
+E2E is how it is verified.** There is no second project to cross-check against,
+because the whole point of the step is the project that flakes. So the one
+diagnostic that would distinguish a real regression from the noise — "does it
+also fail on chromium?" — is unavailable exactly where it is needed, and five to
+seven false failures per run sit on top of however many real ones the step
+introduces.
+
+That is not a slower step; it is a step whose results cannot be read.
+
+**Scope.** A schema or database per Playwright worker, created in
+`e2e/global-setup.ts` and selected in `test/helpers/db.ts`. A harness change, not
+a spec change. It does not belong in a feature step — but it belongs even less
+AFTER the step whose results it would have made legible.
+
+**The alternative was already measured and rejected.** Reducing workers trades
+wall clock for a symptom: 2 of 2 runs flaky at workers=3, and workers=2 still
+produced 7 and 5 hard failures during R5's remediation. Fewer workers makes
+collisions rarer, not impossible, which is what "mitigation, not diagnosis"
+predicted.
+
+**Precedent for the ordering.** R5's manual half was blocked by a dev database
+three migrations behind: the check could not fail informatively because the
+instrument was wrong, and the instrument had to be fixed first. Same shape, and
+the cost of getting it wrong is higher here — a stale database announced itself
+with `relation "llm_requests" does not exist`, while a noisy test suite announces
+itself as a passing-looking run with some failures somebody will attribute to
+flake.
+
+**Also relevant:** 13b (arrow navigation between records) is triggered on step
+15, so the step carries feature work as well as a sweep. More reason for its
+measuring instrument to be trustworthy.
+
+**Not built in R5's remediation** — R5 is a review, and this is step 15's first
+unit. Recorded with the measurement so it is not re-investigated from scratch.
 
 ## Step 11 unit 6c — the lineup trigger, picker and progress
 
@@ -6304,6 +6814,616 @@ the statement directly via psql to see its error, which advanced the schema
 without advancing `__drizzle_migrations`. Rebuilding from empty was the fix and
 is cheap; **applying DDL by hand to diagnose a migrator is how the two get out of
 step**, so re-run against a scratch database instead.
+
+**A FIFTH, found during R5 and the most dangerous of the set: when the ledger
+falls behind a schema that has already moved, EVERY `db:migrate` is a silent
+no-op, forever.** Noticed: R5, 2026-08-20, on the DEV database.
+
+**Two wrong reconstructions preceded the right one, and both are recorded because
+each was plausible and each would have justified a different repair.** The
+standing rule — verify before fixing — is what caught them, applied to a
+reviewer's own finding rather than to someone else's.
+
+*What is measured:*
+
+- Dev's ledger holds **12 rows against a 15-entry journal**, and its twelfth row
+  carries `created_at=1786715119768` — one millisecond after 0010 and matching
+  **no journal entry at all**. Dated 2026-08-14, three days before 0011 was
+  written.
+- 0011, 0012 and 0013's effects are all PRESENT and COMPLETE in the schema:
+  `records.spine_colour` is text/nullable/no-default; `enum_range(image_type)`
+  is exactly `cover, back, gatefold_left, gatefold_right, label, matrix, other`
+  in that order; `images.image_type` is still `USER-DEFINED/image_type` rather
+  than stranded as text; no shadow type survives; the 3 `cover` rows are intact.
+- 0014's `llm_requests` is **absent**.
+- Drizzle's gate is `lastDbMigration.created_at < migration.folderMillis`
+  (`pg-core/dialect.js:62`), so with the high-water mark at `...768` it computes
+  pending as **0011, 0012, 0013, 0014** — four files, not three.
+- **The whole batch runs in ONE transaction** (`dialect.js:60`), ledger inserts
+  included.
+- Replaying that exact batch against dev inside a rolled-back transaction dies at
+  **0012 statement 1: `42701 column "spine_colour" of relation "records" already
+  exists`**. 0011 succeeds first; Postgres 12+ allows `ALTER TYPE ... ADD VALUE`
+  in a transaction so long as the value is not USED there, so 0011 is not the
+  blocker.
+
+*Therefore:* the transaction aborts at 0012, everything rolls back including
+0011's DDL and every ledger insert, and `drizzle-kit migrate` **prints
+"migrations applied successfully" and exits 0**. The ledger never advances, so
+the next run recomputes the identical batch and dies identically. **The state is
+self-perpetuating and nothing in the output ever says so.**
+
+*What is NOT established:* which command applied 0011–0013's schema without
+ledger rows. It predates this session — the ledger's mystery row is dated
+2026-08-14 — and a `drizzle-kit push`, or hand-applied DDL during step 13, both
+fit. Recorded as unknown rather than guessed, because the two candidate stories
+imply different preventions.
+
+**The two reconstructions that were wrong:**
+
+1. *"An interrupted `db:migrate` applied 0012 and 0013 without the ledger."*
+   Refuted by `dialect.js:60`: the batch is one transaction, so an interruption
+   rolls the DDL back too. It cannot leave schema ahead of ledger.
+2. *"0011's `ALTER TYPE ... ADD VALUE` fails inside drizzle's transaction."*
+   Refuted by replay: it succeeds. The restriction is on USING a new value in the
+   same transaction, which NOTES already records above and which I misread as a
+   ban on adding one.
+
+The three earlier entries in this list fail from a clean start or apply nothing.
+This one runs against a database whose schema has drifted AHEAD of its ledger,
+which no amount of re-running can resolve.
+
+### The absence-as-success family gains its worst member, and this one is PERMANENT
+
+NOTES already records two: a hand-written migration with no snapshot ("migrations
+applied successfully", applied nothing) and `drizzle-kit migrate` not loading
+`.env.test` (exit 1, silent). Both are ONE-OFF — the run fails, and the next run
+with the defect corrected succeeds.
+
+**This one never clears itself.** The inputs to drizzle's decision are the ledger
+and the journal, and a failed run changes neither. So:
+
+    every run recomputes the SAME pending batch
+      -> dies on the SAME 42701
+        -> rolls back, ledger unchanged
+          -> prints "migrations applied successfully", exit 0
+
+There is no run count at which this improves, and no signal that anything is
+wrong. A CI step, a deploy hook or a developer doing the obvious thing — running
+it again — all get the success line, forever, while the database stays exactly as
+broken as it was. That is what makes it worse than a failure: a failure stops
+somebody.
+
+**The generalisation this earns, beyond drizzle:** *a tool that reports success
+by default and derives its work from state its failures do not change cannot
+report a persistent problem.* Verify the OBJECTS, not the exit code —
+`information_schema` for tables and columns, `enum_range` for enums, and
+`count(*)` on `drizzle.__drizzle_migrations` against the journal length. That
+check is three queries and it is the only thing that would have caught this.
+
+CLAUDE.md §7 requires migrations to "run clean on an empty database". An empty
+database is where this defect CANNOT occur — it needs a schema that has drifted
+ahead of its ledger. **The rule as written verifies the one case that is safe.**
+
+### Open question for R6: what applied three migrations' schema without ledger rows?
+
+**Unresolved, and deliberately not guessed.** 0011, 0012 and 0013's effects were
+present and complete in dev with no `__drizzle_migrations` rows, and the ledger's
+unexplained twelfth row is dated 2026-08-14 — three days before 0011 was written.
+Whatever did it predates this session **and is still available to do it again.**
+
+Two candidates, and they need different preventions:
+
+1. **`drizzle-kit push`.** Diffs the schema files against the live database and
+   applies the difference DIRECTLY, writing no ledger row — by design. It would
+   produce exactly this state: correct schema, silent ledger. If this is it, the
+   prevention is a rule (never `push` at a database `migrate` owns) plus removing
+   the temptation.
+2. **Hand-applied DDL during step 13.** NOTES already records this happening once
+   on the TEST database, diagnosing a migrator via psql, with the same
+   schema-ahead-of-ledger result and the same fix (rebuild from empty). If this
+   is it, the prevention is the rule that entry already states, applied to dev
+   where rebuilding from empty is not cheap.
+
+**What would distinguish them:** `push` applies the FULL diff between schema files
+and database, so it would have brought across everything pending at that moment,
+not a selective subset — whereas hand-applied DDL brings exactly the statements
+someone typed. The dev schema can be diffed against `0013_snapshot.json` to see
+which it looks like: an exact match points at `push`, while a match on 0011–0013
+with some other pending change missing points at hand-application. Neither
+candidate is confirmed and the shell history for those days is the other evidence
+worth checking.
+
+**Why R6 owns it.** R6 is deploy readiness, and the same divergence against
+PRODUCTION Neon is a materially worse day: the repair used here (verify
+completeness, backfill the ledger, re-run) depends on the drifted migrations
+being verifiably complete, which was true on dev and is luck rather than
+guarantee. A production database whose schema half-moved has no equivalent cheap
+recovery. R6 should establish which tool did this, whether it can still reach
+production, and what check would notice within one deploy rather than three steps
+later.
+
+**Trigger: R6, before the first deploy.**
+
+---
+
+## R5's live run — §9.2 returned a bare 500, and the genre test DID NOT RUN
+
+Recorded 2026-08-20, against the DEV database with the hierarchy built.
+
+### What happened
+
+`/suggestions` renders correctly and §9.1 works on real data — Broken Bones
+"shares 4 members with Discharge", Demon 2, plus three Dire Straits side projects
+each with its own reason clause. **The shared-member term is doing exactly what
+§9.1 specified**, on a real collection, which is the first evidence of that.
+
+§9.2's "Ask Claude" returned **500, rendered as "Internal server error"**.
+
+### The cause, from the server's stderr rather than from the status
+
+    [api.suggestions.ai.POST] 401 {"type":"error","error":{"type":
+    "authentication_error","message":"API key is invalid."},"request_id":null}
+
+**The key is PRESENT but INVALID.** `.env.local`'s `ANTHROPIC_API_KEY` is 160
+characters, begins `sk-ant-` and ends `here` — a placeholder of the
+`...-put-your-key-here` shape, not a credential. So:
+
+- `isAnthropicConfigured()` returned true, because it only tests non-empty.
+  `notConfigured` could not fire.
+- A slot WAS claimed. `llm_requests` holds 1 row: **9 of 10 remaining, spent on a
+  call that never reached the model and cost the account nothing.**
+- The payload was built and sent. The SDK threw on the 401,
+  `withErrorHandling` caught it, and it became `500 INTERNAL_ERROR`.
+
+### This is F1, reproduced live
+
+F1 was raised from a probe with a MOCKED 401 before the run. The live path
+produced the identical status, the identical body and the identical slot
+consumption. The finding was a hypothesis; it is now measured on the real code
+path.
+
+**It is also the `isBlobConfigured` shape exactly, one integration over** (see
+"isBlobConfigured guarded one of three call sites"). Both: a credential optional
+by design, an is-configured predicate too weak to catch the real failure, and a
+user shown "Internal server error" for a deployment problem the app could name.
+The Blob variant offered an action guaranteed to fail; this one offers no action
+at all.
+
+### What the user should have been told
+
+Not "Internal server error". The app knew, at the moment it logged, that
+Anthropic rejected the credential. A truthful message names the credential and
+the fact that it is the DEPLOYMENT that is wrong, not the request:
+
+> Gap analysis is not available: the Anthropic API rejected this deployment's
+> credential. Check `ANTHROPIC_API_KEY`.
+
+Two properties that message has and the 500 does not: it sends the reader to the
+env var rather than to application logs, and it does not imply retrying will
+help. A 401 is not transient and the UI's "Try again." is actively wrong advice.
+
+The status should be 502 alongside `LLM_UNREADABLE` — the failure is upstream,
+not ours — or a distinct `LLM_UNAUTHORIZED`. And **an auth failure should not
+spend a slot**: unlike an unreadable response, the call was never billed. The
+current behaviour lets ten clicks against a bad key exhaust the hour for requests
+that never happened.
+
+### What this means for the review
+
+**THE GENRE-ACCURACY TEST HAS NOT RUN.** The one thing R5 exists to measure is
+still unmeasured. The case that can fail is now BUILT and verified — Punk is a
+parent with 0 records, UK82 has 15 and US Hardcore 6, and the vocabulary the
+prompt sends is `AOR, Black Metal, Heavy Metal, Punk, Rock, Rock & Roll, UK82,
+US Hardcore` — so the run needs only a working key. Everything else is in place.
+
+F2 remains untested against a real model, and F2 is the finding that says the
+validation backstop would not catch a flattening even if the model produced one.
+
+**RESOLVED 2026-08-20**, same session: a valid key was supplied and the run
+completed. §9.2 has now executed. See the run below.
+
+---
+
+## R5's live run, SECOND ATTEMPT — §9.2 EXECUTED, and the genre test PASSES
+
+2026-08-20, dev database, hierarchy in place. `POST /api/suggestions/ai 200 in
+44s`. **The first successful execution of §9.2 in any environment.**
+
+### Conditions
+
+| | |
+|---|---|
+| model / effort | `claude-opus-5`, effort `high`, max_tokens 4000 |
+| tokens | in 2944, out 2994 |
+| `stop_reason` | `end_turn` — **not truncated** |
+| markdown fences | **none** — the model obeyed "JSON only" |
+| vocabulary sent | `AOR, Black Metal, Heavy Metal, Punk, Rock, Rock & Roll, UK82, US Hardcore` |
+| hierarchy | Punk = parent, **0 records**; UK82 15; US Hardcore 6 |
+
+Captured out-of-band with a script that rebuilds the SAME summary from the SAME
+four queries and the SAME prompt text, because §9.2's results are ephemeral by
+design and the server logs the status, not the body.
+
+### THE RESULT: 0 of 34 suggestions flattened to `Punk`
+
+    by genre: Black Metal 4, Heavy Metal 6, UK82 4, US Hardcore 5,
+              AOR 5, Rock & Roll 5, Rock 5
+    Punk-tagged: 0
+
+**The requirement CLAUDE.md §8 calls the most important one is met on real
+output.** Nothing is tagged `Punk` although `Punk` was offered in the vocabulary
+and would have validated. The reasons stay inside their scenes, and the model
+draws distinctions FINER than the hierarchy demands:
+
+- within US Hardcore — DC ("the DC record that codified the scene"), Californian,
+  South Bay melodic;
+- within Black Metal — Swedish proto- vs Norwegian second wave vs its symphonic
+  wing;
+- within Heavy Metal — NWOBHM vs epic sword-and-sorcery vs occult.
+
+Adam's verdict on the material: canonical, no hallucinations visible.
+
+### Full output, verbatim
+
+ 1. **Bathory — Under the Sign of the Black Mark**  `Black Metal`
+    > The collection is deep in second-wave-styled black metal (Nattskog, Vargnatt, Kaldrsjor, Ulvenatt) but lacks the Swedish proto-black-metal record that defined that scene's template.
+ 2. **Mayhem — De Mysteriis Dom Sathanas**  `Black Metal`
+    > With a dozen Norwegian-styled black metal acts on the shelf (Vinterlys, Nordvarg, Fimbulvinter), the founding Norwegian black metal document is a conspicuous gap.
+ 3. **Darkthrone — A Blaze in the Northern Sky**  `Black Metal`
+    > The raw, cold Norwegian black metal aesthetic that Frostmark, Grimfrost and Ravenfrost all descend from starts with this record.
+ 4. **Emperor — In the Nightside Eclipse**  `Black Metal`
+    > Fills the symphonic wing of the Norwegian black metal scene the collector already covers heavily with Dimmerlight and Vinterlys.
+ 5. **Iron Maiden — The Number of the Beast**  `Heavy Metal`
+    > The NWOBHM canon is missing entirely despite a whole shelf of galloping trad-metal acts like Ironclad, Nightblade and Steelwind.
+ 6. **Judas Priest — British Steel**  `Heavy Metal`
+    > The twin-guitar British heavy metal blueprint behind Blackanvil, Hellforge and Bonecrusher is absent.
+ 7. **Saxon — Wheels of Steel**  `Heavy Metal`
+    > A core NWOBHM record that sits directly alongside the working-class trad metal of Bastion, Dreadnought and The Gauntlet.
+ 8. **Diamond Head — Lightning to the Nations**  `Heavy Metal`
+    > The most-covered NWOBHM album and a foundational reference point for the Axe of Kings / Warlord Sky style of trad metal here.
+ 9. **Manowar — Hail to England**  `Heavy Metal`
+    > Epic sword-and-sorcery heavy metal is well represented by Axe of Kings, Warhammer Sky and Titan Fall but its standard-bearer is missing.
+10. **Mercyful Fate — Don't Break the Oath**  `Heavy Metal`
+    > The occult-themed heavy metal link between the trad metal shelf (The Wyrm, Doomhold) and the black metal shelf is unrepresented.
+11. **The Exploited — Punks Not Dead**  `UK82`
+    > UK82 is collected heavily (Blank Signal, The Rotters, Curfew) yet the record that names and defines the scene is missing.
+12. **GBH — City Baby Attacked by Rats**  `UK82`
+    > A cornerstone UK82 album from the same Birmingham axis as the studded street-punk bands (The Kerb Crawlers, Spit & Sawdust) already owned.
+13. **Blitz — Voice of a Generation**  `UK82`
+    > One of the defining UK82 LPs, sitting squarely with the terrace-punk of The Agitators and Panic Merchants.
+14. **Chaos UK — Chaos UK**  `UK82`
+    > The noisier UK82 wing that complements the Discharge record already in the collection.
+15. **Minor Threat — Out of Step**  `US Hardcore`
+    > US Hardcore here (Static Youth, Riot Shield, Exit Wound) lacks the DC record that codified the scene's fast, terse style.
+16. **Black Flag — Damaged**  `US Hardcore`
+    > The founding LP of American hardcore and the obvious anchor for the Bin Day / Council Estate / Tin Pot shelf.
+17. **Bad Brains — Bad Brains**  `US Hardcore`
+    > The fastest and most influential early US hardcore record, absent from a collection with several US Hardcore bands.
+18. **Circle Jerks — Group Sex**  `US Hardcore`
+    > A foundational Californian US Hardcore LP that pairs directly with the short-sharp bands already collected.
+19. **Descendents — Milo Goes to College**  `US Hardcore`
+    > Rounds out the US Hardcore shelf with the melodic South Bay side of the same scene.
+20. **Toto — Toto IV**  `AOR`
+    > The AOR shelf (Silver Lining, Skyline, Velvet Coast, Midnight Avenue) is missing the definitive session-musician West Coast AOR album.
+21. **Foreigner — 4**  `AOR`
+    > A cornerstone of polished radio AOR that the Gold Standard / Vanguard / Sunset Boulevard entries all echo.
+22. **Journey — Escape**  `AOR`
+    > The archetypal arena-AOR record and an obvious gap beside Neon Harbour, Harbour Lights and The Westside.
+23. **Steely Dan — Aja**  `AOR`
+    > The sophisticated studio-craft end of AOR that Silk Road Radio, Nightporter and The Casablanca Set clearly draw from.
+24. **Boston — Boston**  `AOR`
+    > A foundational AOR debut whose layered guitar-and-harmony sound underpins the Chrome & Velvet / Cabana Club side of the shelf.
+25. **Chuck Berry — One Dozen Berrys**  `Rock & Roll`
+    > The Rock & Roll shelf of Wildcat Wilson, The Chevrons and The Fuel Injectors has no Chess-era originator on it.
+26. **Eddie Cochran — Singin' to My Baby**  `Rock & Roll`
+    > Core late-fifties rock & roll that sits directly behind the rockabilly-leaning entries like The Rockabilly Kings and Tex Marlow.
+27. **Gene Vincent — Bluejean Bop!**  `Rock & Roll`
+    > A foundational rockabilly LP for a shelf that already has The Hepcats, The Bobbysoxers and Sonny Blaze.
+28. **Little Richard — Here's Little Richard**  `Rock & Roll`
+    > The wildest of the original rock & roll albums, missing from a Rock & Roll shelf built on Duke Rio, Johnny Reno and Ricky Vance.
+29. **Buddy Holly — The "Chirping" Crickets**  `Rock & Roll`
+    > The band-format rock & roll template behind Del Ray & The Rays, The Starlites and The Silvertones.
+30. **Bruce Springsteen — Born to Run**  `Rock`
+    > The heartland-rock touchstone for a Rock shelf full of place-name Americana acts like Gravel Road, Low Country and Iron Bridge.
+31. **Tom Petty and the Heartbreakers — Damn the Torpedoes**  `Rock`
+    > Straight-ahead guitar rock that connects the Amber Hollow / Weathervane / The Wreckers side of the collection to its source.
+32. **Creedence Clearwater Revival — Cosmo's Factory**  `Rock`
+    > Roots-rock bedrock for the swamp-and-river flavoured Rock entries such as Salt Marsh, Cold Harbour and The Blackwater Band.
+33. **Neil Young — After the Gold Rush**  `Rock`
+    > The rustic songwriter end of Rock that Fable & Crow, Standing Stones and Marlowe & Sons plainly draw on.
+34. **Dire Straits — Brothers in Arms**  `Rock`
+    > The collector already owns Dire Straits and this is the band's most essential later album, bridging their Rock and AOR shelves.
+
+### Three findings from the run
+
+**1. A suggestion names an artist the collector already owns, and the spec does
+not say whether that is wrong.**
+
+#34, Dire Straits — *Brothers in Arms*, whose reason states it outright: "The
+collector already owns Dire Straits". Measured against the payload: **1 of 34**
+suggestions names an owned artist; Dire Straits is owned (1 record).
+
+The prompt says "Do not recommend anything they already own", and **§9.2 does not
+define whether that means the ARTIST or the RECORD.** The model read it as the
+record and said so in the open. That is defensible — a different record by an
+owned artist is a reasonable gap, and it is arguably the best-supported kind of
+suggestion — but it is UNDEFINED rather than decided, and the ambiguity is in the
+spec before it is in the prompt.
+
+Note it is exactly CLAUDE.md §8's live distinction one level up: *a pressing is
+not an album*, and here *an album is not an artist*. The app cannot check either
+way — §9.2 sends artist names, not titles, so **the model could not avoid
+suggesting an owned RECORD even if the rule said to**. Whichever reading is
+chosen, only the artist-level rule is currently enforceable from the payload.
+
+(NOT the first suggestion, and not Discharge — the first is Bathory. The
+Discharge mention is inside #14's reason, referring to an owned record as
+context, which is correct.)
+
+**2. Thirty-four suggestions came back, and §9.2 has NO limit.**
+
+§5.8 gives §9.1 `limit` (default 10). §9.2's row carries only "Rate-limited to
+10/hour". Searched: **no count limit exists anywhere in §9.2 or §5.8**, the
+prompt does not ask for a number, and neither the route nor the parser caps the
+array. `max_tokens: 4000` is the only de facto bound — and `client.ts` calls it
+"Short by construction: §9.2 wants a handful of suggestions, not an essay",
+which this run contradicts: 34 suggestions, 2994 output tokens, and it stopped
+because the model finished rather than because it hit the cap.
+
+That comment is the prose-beside-wrong-code shape again, and it is the only place
+"a handful" is written down.
+
+Whether 34 is wrong is a judgement, not a defect. Against it: the UI renders one
+bordered card each, so 34 is a very long page from a single click, and a
+gap-analysis list nobody reads to the end is weaker than ten considered ones.
+For it: they are grouped by genre and genuinely canonical, and truncating server-
+side would discard model output the user paid for. **Recorded as undecided.** If
+a limit is wanted, the honest place is the PROMPT (ask for N) rather than a
+server-side slice, because slicing throws away work already billed.
+
+**3. A29d's validation never fired, which is F2 confirming itself from the other
+side.**
+
+`dropped: 0`, so no discarded-count line appeared. Nothing needed rejecting —
+every genre was one of the user's own, at a leaf.
+
+**This is the sharpest possible statement of F2.** The mechanism A29d calls "the
+mechanism that enforces the genre-accuracy requirement" has now run against real
+model output and done NOTHING, because there was nothing to do. Had the model
+flattened to `Punk`, F2 shows it would have been ACCEPTED — `Punk` is in the
+vocabulary. So:
+
+- the genre accuracy is real, and it comes ENTIRELY from the prompt and the
+  model, not from the validation;
+- the validation's only demonstrated power is against a genre outside the
+  collection entirely (e.g. "Britpop"), which this run gave it no chance to show;
+- **the backstop is untested in production conditions and F2 says it would not
+  catch the specific failure it was built for.**
+
+The run is the strongest evidence for the feature and it removes none of F2's
+force. A29d's claim about its own mechanism remains wrong even though the feature
+works.
+
+## R5 remediation — F1 and F2
+
+### F1: every Anthropic failure was a bare 500 — FIXED
+
+Reproduced first, per the standing rule: nine tests written before any change,
+all observed failing (`expected 500 not to be 500`; `expected [{…}] to have a
+length of +0 but got 1`; `expected 'AI suggestions are not configured. Se…' not
+to match /ANTHROPIC_API_KEY/`).
+
+Four parts, three named in the review and **one found while verifying**:
+
+1. **`isAnthropicConfigured` now rejects placeholders**, not only absence. Six
+   narrow patterns (`your-key`, `put-your`, `replace-me`, `key-here`, `<…>`,
+   `xxx|placeholder|changeme|todo`). Paired with an INVERSE test on two
+   real-shaped keys, because a predicate that rejects a valid credential turns a
+   working deployment into a dead feature — worse than the bug. It still cannot
+   verify a key and does not try; a revoked-but-real key is caught downstream.
+2. **A 401/403 is `LLM_UNAUTHORIZED` at 502**, naming the credential and giving
+   NO retry advice. A rejected key is not transient, so "try again" sends the
+   user round the same loop. Verified the UI's "Try again after" is gated on
+   `retryAt`, which only the 429 carries.
+3. **An unbilled call refunds its slot.** `claimLlmRequest` returns its row id;
+   `releaseLlmRequest(id)` deletes **by id, never by recency** — pinned by a test
+   with two claimants in flight, since deleting "the newest row" would delete a
+   CONCURRENT caller's claim. Refund is narrow: 401/403 only. Two inverse tests
+   confirm an unreadable response and a 529 keep their slots.
+4. **THE ONE THE REVIEW MISSED.** `errors.ts`'s docblock for `notConfigured`
+   requires that the message "never name the environment variable, which reaches
+   a browser and describes the deployment's shape". The images route obeys it
+   ("Add a Vercel Blob store"); `/api/suggestions/ai` said "Set
+   ANTHROPIC_API_KEY." **R5's own write-up proposed the same violation** — the
+   fix was found by reading the module's contract, not from the live run. Both
+   paths now obey it.
+
+### F2: the prompt sent a flat list where A29d claimed a hierarchy — FIXED
+
+Reproduced at both layers before changing anything: the prompt rendered
+`Punk, UK82, US Hardcore, Rock`, and `collection-summary.ts` never referenced
+`parent_genre_id` at all.
+
+`buildCollectionSummary` now selects each genre's parent via a self-join — not
+`genreSubtree`'s recursive CTE, which answers a different question (every
+descendant of one node) when what is needed is each genre's immediate parent.
+The prompt renders it as:
+
+    GENRES THEY ORGANISE BY:
+    - Punk
+    - Rock
+    - UK82 (a kind of Punk)
+    - US Hardcore (a kind of Punk)
+
+A flat collection still reads as a plain list — pinned by a test, since most
+collections are flat and the common case must not become noisier.
+
+**`Punk` stays in the vocabulary.** The plausible wrong fix was sitting next to
+the right one: removing parents would make every suggestion invalid for a
+collection legitimately organised at the top level. A test now pins that a parent
+genre is ACCEPTED, with a comment saying it is a decision rather than an
+oversight.
+
+### The decision R5 was asked to make: what does the validation check?
+
+**It stays a vocabulary check. Rejecting a parent is deliberately NOT a rule.**
+
+The two mechanisms answer two different failures and neither backs up the other:
+
+- **The prompt** prevents FLATTENING, now that it can show which term is a
+  parent. It asks for "the most specific genre that fits" rather than forbidding
+  parents.
+- **The parser** catches an INVENTED genre — "Britpop" against a collection with
+  no such genre.
+
+Why not enforce it in the parser: **"nothing is tagged Punk" is a fact about the
+collection today, not a rule about it.** A user may tag at a parent tomorrow, and
+a validation keyed to current tagging would silently delete correct suggestions
+on a state change nobody made. Being wrong in the prompt costs a weaker
+suggestion; being wrong in the parser deletes a good one. The asymmetry decides
+it.
+
+### Three prose corrections, because the false claim had propagated
+
+A29d's text, `parse-suggestions.ts`'s docblock and `client.ts`'s docblock all
+asserted that the vocabulary makes flattening "mechanically detectable". All
+three now state what is actually caught (an invented genre) and what is not (a
+parent term), and name the prompt as the thing that addresses flattening.
+
+**This is the prose-beside-wrong-code pattern with the prose in the SPEC.** The
+amendment described a mechanism the code did not implement, and three files
+repeated it downstream.
+
+### Verification
+
+vitest **2694 passed, 1 skipped, 170 files** (from 2667). typecheck, lint, build
+clean.
+
+**Full E2E run TWICE, and the first read was reported wrong.** Run 1 was
+initially summarised here as "233 passed, 3 flaky" from the tail; the run had
+**7 failed** — the count sits above the region that was read. Corrected
+immediately, and worth keeping as an instance of the rule it breaks: read the
+whole result, not the summary.
+
+| run | passed | failed | flaky |
+|---|---|---|---|
+| 1 | 233 | 7 | 3 |
+| 2 | 234 | 5 | 3 |
+
+**All twelve failures are login-stage** (`toHaveURL('/')` receiving `/login`),
+all `[mobile]`, none reaching an assertion about the changed code. **The failure
+SET moved between runs**: eleven distinct specs, one overlap
+(`manage.spec.ts:510`, which touches neither genres nor suggestions and also
+failed at login). Per NOTES' moving-failure rule — the rule works on the set, not
+the run — that is the mobile contention already tracked here at six sightings,
+now seven. Run 2 also logged `⨯ Error: The destination stream closed early` from
+the dev server, a server-side symptom consistent with contention.
+
+An isolated re-run of the three affected spec files on the STASHED pre-change
+tree passed 37/37, but that proves little: mobile-only against three files is not
+the full parallel load, and the comparable evidence is the moving set across two
+full runs on the changed tree.
+
+### Finding 3: "already owned" is now an artist-level rule — FIXED (A29g)
+
+**Verified before amending, and the verification sharpened the finding.** The
+payload carries want-list titles but NOT owned-record titles:
+
+    artists:  SELECT a.name, COUNT(DISTINCT r.id), ARRAY_AGG(g.name)   -- no title
+    wantList: SELECT a.name AS artist, w.title, w.priority             -- title
+
+So the prompt's single sentence — "Do not recommend anything they already own or
+that is already on their want list" — contained two clauses with DIFFERENT
+enforceability, which the review had not noticed:
+
+| clause | payload carries | enforceable at record level |
+|---|---|---|
+| already own | artist names only | **no** |
+| already on want list | artist AND title | **yes** |
+
+The prompt now states only what the data supports: a different record by an owned
+artist is explicitly welcomed (and the model is asked to say so in its reason),
+while the want-list prohibition keeps its record-level form. **The asymmetry is
+the finding**, and it is why this is a decision rather than a wording fix.
+
+**The alternative was available and declined:** sending owned record titles would
+make a record-level rule enforceable, at the cost of putting every title in the
+collection on the wire for a constraint that buys little — §9.2's disclosure
+boundary is deliberately narrow, and the live run showed the model already avoids
+obvious repeats. Recorded in A29g so it is not re-proposed as an obvious gap.
+
+**The Dire Straits case was a good suggestion, not a defect.** An artist with
+records on the shelf is demonstrably collected; naming another is the gap this
+feature exists to find.
+
+Verified: vitest **2696 passed, 1 skipped, 170 files**; typecheck, lint, build
+clean; full E2E **242 passed, 0 failed, 0 flaky**.
+
+**That clean E2E run is itself evidence for the contention entry above** — the
+same tree that produced 7 and 5 hard failures on the two previous runs produced
+zero here, with no code change to the E2E surface between them. The variance is
+in the harness.
+
+### PROVENANCE: the dev genre hierarchy is TEST DATA, built for this review
+
+**Read this before treating the Punk tree as real structure.** Created
+2026-08-20 by R5, in the DEV database only, specifically so the genre-accuracy
+check could fail. It is deliberately LEFT IN PLACE — it is better data than the
+flat `Punk` it replaced — but it was not built by anyone curating a collection.
+
+What was done:
+
+1. `Punk` (already existed, flat, 21 records) became a PARENT with two children
+   created beneath it: **UK82** and **US Hardcore**.
+2. All 21 records tagged `Punk` were re-tagged at a LEAF and the `Punk` tag
+   removed, leaving **Punk with 0 records**. Without that the check is inert:
+   "Punk" IS the punk genre, so nothing can be flattened into it.
+3. The UK82 / US Hardcore split was made by R5 on the FEEL of the band names.
+   It is a plausible split, not a researched one.
+
+**UK82 (15):** Blank Signal — No Fixed Address; Broken Glass Club — Last Bus
+Home; Curfew — After Dark; Dead Letters — Return to Sender; **Discharge — Grave
+New World**; Panic Merchants — Everything Is Fine; Sirens — Blue Light Special;
+Spit & Sawdust — Public Bar; The Agitators — Wind Up; The Flyposters — Bill
+Stickers Will Be Prosecuted; The Kerb Crawlers — Saturday Night Fever Dream; The
+Nihilists — Nothing Doing; The Offcuts — Cheap Thrills; The Rotters — Compost;
+The Vacant Lot — Concrete Sunrise.
+
+**US Hardcore (6):** Bin Day — Municipal Waste Disposal; Council Estate — Right
+to Buy; Exit Wound — Bandage; Riot Shield — Twelve Inches of Trouble; Static
+Youth — Nothing Ever Happens Here; Tin Pot — Dictator.
+
+**THE ARTIST NAMES IN THIS SET ARE SYNTHETIC.** Of the 21, only **Discharge** is
+a real band; the other 20 are generated test data, as is most of the 125-record
+dev collection. This matters for reading the live run: the model reasoned about a
+collection of largely non-existent bands and still produced canonical, correctly
+scened suggestions — which strengthens the GENRE conclusion (that is independent
+of whether it recognises the names) and weakens any conclusion about SUGGESTION
+QUALITY against a real shelf. **R8 is where suggestion quality gets judged, on
+Adam's actual records.**
+
+Also note the US Hardcore six are, by name, plainly British — "Council Estate",
+"Bin Day", "Right to Buy". The model still described them as a US Hardcore shelf
+because that is how they are TAGGED, which is correct behaviour given the payload
+and worth knowing before anyone reads those five reasons as evidence about the
+bands.
+
+**The rule this earns:** *a migrator's exit code is not evidence. Verify the
+OBJECTS.* `information_schema` for tables and columns, `enum_range` for enums,
+and `count(*)` on `drizzle.__drizzle_migrations` against the journal length.
+CLAUDE.md §7 already requires migrations to "run clean on an empty database";
+what this adds is that a POPULATED database needs the objects checked too,
+because the failure mode there is silence rather than a failure.
+
+**And a workflow gap, not just a tooling one.** No step in CLAUDE.md's loop
+checks that dev matches the journal, so a feature can be committed green — 2667
+tests passing against the local Docker database — while being unrunnable in dev
+for want of a table. That is exactly what happened to §9.2: `f48bc99` shipped a
+feature whose first action is a write to `llm_requests`, and dev had no such
+table. **Deferred to R6 with a named trigger** (deploy readiness), which will
+meet the same divergence against production Neon, where the recovery options are
+worse.
 
 ### Two cross-file tests caught it, which is what they are for
 

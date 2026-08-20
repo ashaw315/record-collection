@@ -5,6 +5,8 @@ import { DeleteRecord } from './DeleteRecord';
 import { ImageGallery } from './ImageGallery';
 import { MarketPanel } from '@/app/market/MarketPanel';
 import { PriceHistory } from './PriceHistory';
+import { SnippetPanel } from './SnippetPanel';
+import { isAnthropicConfigured } from '@/lib/llm/client';
 import { RecordJournal } from './RecordJournal';
 import { RecordDetail } from './RecordDetail';
 import { listPricesForRecord } from '@/lib/db/queries/prices';
@@ -123,6 +125,18 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
             )}
 
             <ImageGallery recordId={id} images={record.images} />
+
+            {/*
+              §10b's snippet. Between the gallery and the journal deliberately:
+              the images describe the object, the snippet describes the MUSIC,
+              and the journal describes living with it — outward-in.
+            */}
+            <SnippetPanel
+              recordId={id}
+              snippet={record.snippet}
+              snippetEditedAt={record.snippetEditedAt}
+              configured={isAnthropicConfigured()}
+            />
 
             {/*
               §10's journal. After the gallery because the images describe the

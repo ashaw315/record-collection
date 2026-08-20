@@ -27,6 +27,8 @@ const bare: PanelInput = {
   vinylWeightGrams: null,
   colorVariant: null,
   isReissue: false,
+  snippet: null,
+  snippetEditedAt: null,
   conditionMedia: null,
   conditionSleeve: null,
   purchasePrice: null,
@@ -111,5 +113,59 @@ describe('factPanel — groups', () => {
 
     expect(panel.groups.map((group) => group.kind)).toEqual(['imprint']);
     for (const group of panel.groups) expect(group.rows.length).toBeGreaterThan(0);
+  });
+});
+
+describe('§10b: the snippet in the wall panel', () => {
+  /**
+   * Fails against: a panel that shows the snippet WITHOUT its label.
+   *
+   * **The label is the whole reason this is safe to show here.** §10b puts the
+   * snippet where liner notes would sit, so it must not read as liner notes —
+   * "in the same register as Discogs estimates, never presented as fact the app
+   * established". Nothing in the pipeline verified the text; withholding the
+   * record's own facts is the only enforced mitigation, so the label carries
+   * what the code cannot.
+   */
+  it('carries the generated label with the text', () => {
+    const panel = factPanel({
+      ...bare,
+      snippet: 'A 1982 hardcore record that reshaped the scene.',
+      snippetEditedAt: null,
+    });
+
+    expect(panel.snippet).toEqual({
+      text: 'A 1982 hardcore record that reshaped the scene.',
+      generated: true,
+    });
+  });
+
+  /**
+   * Fails against: a panel that calls the user's own writing generated.
+   *
+   * Once edited the text is theirs (§7.8), and the label must say so — the same
+   * misattribution as presenting the model's writing as fact, reversed.
+   */
+  it('does not label an edited snippet as generated', () => {
+    const panel = factPanel({
+      ...bare,
+      snippet: 'My own note.',
+      snippetEditedAt: new Date('2026-08-20T12:00:00Z'),
+    });
+
+    expect(panel.snippet).toEqual({ text: 'My own note.', generated: false });
+  });
+
+  /**
+   * Fails against: a panel that renders an empty snippet block.
+   *
+   * §10b: "A record with no snippet shows none, and no placeholder invites one."
+   * Null rather than an empty string, so the component has nothing to render
+   * rather than something empty to render.
+   */
+  it('is null when there is no snippet', () => {
+    const panel = factPanel({ ...bare, snippet: null, snippetEditedAt: null });
+
+    expect(panel.snippet).toBeNull();
   });
 });

@@ -37,8 +37,46 @@ const MODEL = 'claude-opus-5';
  */
 const EFFORT = 'high' as const;
 
-/** Short by construction: §9.2 wants a handful of suggestions, not an essay. */
-const MAX_TOKENS = 4_000;
+/**
+ * §9.2's output budget.
+ *
+ * **This comment used to read "short by construction: §9.2 wants a handful of
+ * suggestions, not an essay", and R5's live run contradicted it.** That run
+ * returned 34 suggestions in 2994 output tokens and stopped on `end_turn` — the
+ * model finished, it did not hit the ceiling. So 4000 is not "short", it is
+ * simply where a full answer happens to fit, and "a handful" was the only place
+ * in the codebase a count was written down (R5 finding 4).
+ *
+ * **§9.2 has no count limit and deliberately still does not.** Nothing in §9.2
+ * or §5.8 bounds the number of suggestions, and adding a server-side slice would
+ * discard output the account was already billed for. If a count is ever wanted
+ * the honest place is the PROMPT — ask for N — which costs nothing and returns
+ * what it asks for. Recorded rather than fixed, because 34 grouped-by-genre
+ * suggestions were judged good on the one real run there has been.
+ *
+ * Exported so the snippet's budget can be compared against it: the two callers
+ * share a client and need different ceilings (`SNIPPET_MAX_TOKENS`).
+ */
+export const GAP_ANALYSIS_MAX_TOKENS = 4_000;
+
+/**
+ * Placeholder tails and bodies, from the `.env.example` idiom rather than from
+ * imagination: a value someone copied and did not fill in.
+ *
+ * **Deliberately narrow.** Each pattern must be something no real credential
+ * could contain, because the cost of a false positive is a working deployment
+ * with a dead feature — worse than the bug this closes. Anthropic keys are
+ * opaque base64-ish strings, so English words joined by hyphens or underscores
+ * are safe to reject; a bare `sk-ant-` prefix check would not be.
+ */
+const PLACEHOLDER_PATTERNS = [
+  /your[-_ ]?(api[-_ ]?)?key/i,
+  /put[-_ ]?your/i,
+  /replace[-_ ]?me/i,
+  /key[-_ ]?here/i,
+  /^<.*>$/,
+  /^(xxx+|placeholder|changeme|todo)$/i,
+];
 
 /**
  * Whether §9.2 and §10b can run at all.
@@ -48,9 +86,49 @@ const MAX_TOKENS = 4_000;
  * absence must be caught HERE, at the point of use — otherwise it surfaces as
  * "Internal server error" for what is a deployment problem, sending the reader
  * to application logs for something the app could have named.
+ *
+ * **"Present" is not "usable", and R5's live run is why this is more than a
+ * non-empty check.** `.env.local` held a 160-character placeholder beginning
+ * `sk-ant-` and ending `-put-your-key-here`. It passed every test this function
+ * used to apply, so the app claimed a rate-limit slot, built the collection
+ * summary and sent it to an API that rejected the credential — surfacing as
+ * `500 Internal server error` for a deployment fault the app could have named
+ * before spending anything.
+ *
+ * **This cannot verify a key, and must not try.** Only a request can do that,
+ * and a request costs money and a slot. What it can do is reject values that
+ * are definitionally not credentials — which is exactly what the placeholder
+ * was. A genuine key that is expired or revoked still passes here and is caught
+ * at the call site by `isAuthFailure`; the two are complementary, not
+ * alternatives.
  */
 export function isAnthropicConfigured(): boolean {
-  return (process.env.ANTHROPIC_API_KEY ?? '').trim() !== '';
+  const key = (process.env.ANTHROPIC_API_KEY ?? '').trim();
+  if (key === '') return false;
+
+  return !PLACEHOLDER_PATTERNS.some((pattern) => pattern.test(key));
+}
+
+/**
+ * Whether a thrown error is the API rejecting this deployment's credential.
+ *
+ * **401 and 403 only, and the narrowness is the point.** These are the two
+ * statuses that mean "the request was never served", so the account was not
+ * charged and the rate-limit slot can be refunded. A 429, a 529 overload or a
+ * 500 all mean the request REACHED Anthropic and may well have been counted —
+ * refunding those would let a failing call be retried without limit, which is
+ * the opposite of what the quota protects.
+ *
+ * Reads `status` structurally rather than importing the SDK's error classes: the
+ * route's tests inject failures through a mocked client, and requiring a real
+ * `APIError` instance would make the tests assert the SDK's constructor rather
+ * than this app's behaviour.
+ */
+export function isAuthFailure(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+
+  const status = (error as { status?: unknown }).status;
+  return status === 401 || status === 403;
 }
 
 /**
@@ -59,11 +137,15 @@ export function isAnthropicConfigured(): boolean {
  *
  * Two deliberate choices worth naming:
  *
- * **The genre vocabulary is the user's own, and the constraint on `genre` is
- * what makes the response checkable rather than merely plausible.** A model
- * that flattens UK82 into "punk" produces a name the hierarchy does not
- * contain, so §9.2's genre-accuracy requirement becomes mechanically
- * detectable instead of a hope about prompt-following (A29d).
+ * **The genre vocabulary is the user's own, and the constraint on `genre` makes
+ * an INVENTED genre checkable** — "Britpop" against a collection that has no
+ * such genre is dropped by `parseSuggestions` (A29d).
+ *
+ * **It does not make a FLATTENING checkable, and this docblock used to say it
+ * did** (R5's F2). `Punk` is one of the user's names, so a suggestion tagged
+ * `Punk` validates even when every record sits at a leaf beneath it. What
+ * prevents flattening is the HIERARCHY rendered below — each genre with its
+ * parent, so the model can see which term is which — not the validation.
  *
  * **The scenes are not hard-coded.** CLAUDE.md §8 names five as EXAMPLES of a
  * distinction that matters; a prompt that listed them would flatten a
@@ -82,11 +164,26 @@ export function buildPrompt(summary: CollectionSummary): string {
       ? '(nothing on the want list)'
       : summary.wantList.map((w) => `- ${w.artist} — ${w.title} (priority ${w.priority})`).join('\n');
 
+  /*
+   * **The hierarchy, rendered so the relationship is legible** (R5's F2). A29d
+   * says the prompt supplies it; it used to send `summary.genreVocabulary
+   * .join(', ')`, a flat comma list, two paragraphs above an instruction not to
+   * flatten a scene into a parent term. The model was told to respect a
+   * structure it was never shown.
+   *
+   * A child names its immediate parent. A genre with no parent is listed plainly
+   * — a flat collection is the common case and must not read as a tree whose
+   * every node is a root.
+   */
+  const genreLines = summary.genres
+    .map((g) => (g.parent === null ? `- ${g.name}` : `- ${g.name} (a kind of ${g.parent})`))
+    .join('\n');
+
   return [
     'You are helping a collector find gaps in a vinyl collection.',
     '',
     'GENRES THEY ORGANISE BY:',
-    summary.genreVocabulary.join(', '),
+    genreLines,
     '',
     'ARTISTS THEY ALREADY OWN:',
     owned,
@@ -103,10 +200,33 @@ export function buildPrompt(summary: CollectionSummary): string {
     'term: a recommendation whose reasoning collapses two of their genres into',
     'one is worse than no recommendation.',
     '',
+    /*
+     * Only sayable now the tree is rendered. It asks for the MOST SPECIFIC
+     * genre rather than forbidding parents outright — a parent is a legitimate
+     * answer for a collection organised at that level, and the validation
+     * accepts one deliberately (see `parseSuggestions`).
+     */
+    'Where one of their genres is a kind of another, use the most specific one',
+    'that fits. Answering with the parent when the record belongs to one of its',
+    'children is the flattening this is asking you to avoid.',
+    '',
     'Name records that are conspicuous absences given what they own — a',
     'foundational record of a scene they collect deeply, or a key release by a',
-    'band adjacent to several they own. Do not recommend anything they already',
-    'own or that is already on their want list; both lists are above.',
+    'band adjacent to several they own.',
+    '',
+    /*
+     * **R5's finding 3, decided at the ARTIST level, because that is the only
+     * level the payload can express.** The artists section carries a name, a
+     * count and genre names — no record titles — so "do not recommend anything
+     * they already own" could not be honoured at record level by either side.
+     *
+     * The want list is different and the asymmetry is deliberate: it carries
+     * artist AND title, so a record-level prohibition there is checkable.
+     */
+    'The list above names the artists they own but not which records, so a',
+    'different record by an artist they already own is a welcome suggestion —',
+    'say so in the reason when that is what you are doing. Do not recommend',
+    'anything already on their want list, which is listed with titles.',
     '',
     'Prefer records you are confident exist, with the artist and title as',
     'actually released. If you are unsure a record exists, leave it out.',
@@ -142,7 +262,7 @@ export function createGapAnalysisClient(transport: { create: MessageCreate }): G
     async analyse(summary) {
       const response = await transport.create({
         model: MODEL,
-        max_tokens: MAX_TOKENS,
+        max_tokens: GAP_ANALYSIS_MAX_TOKENS,
         output_config: { effort: EFFORT },
         messages: [{ role: 'user', content: buildPrompt(summary) }],
       });

@@ -25,6 +25,12 @@ const SUMMARY: CollectionSummary = {
   labels: [{ name: 'Clay Records', recordCount: 4 }],
   wantList: [{ artist: 'Anti-Cimex', title: 'Raped Ass', priority: 1 }],
   genreVocabulary: ['UK82', 'D-beat', 'US Hardcore', 'Punk'],
+  genres: [
+    { name: 'Punk', parent: null },
+    { name: 'UK82', parent: 'Punk' },
+    { name: 'D-beat', parent: 'UK82' },
+    { name: 'US Hardcore', parent: 'Punk' },
+  ],
 };
 
 afterEach(() => {
@@ -78,6 +84,48 @@ describe('the prompt is the feature', () => {
     expect(prompt).toContain('Discharge');
     expect(prompt).toContain('Anti-Cimex');
     expect(prompt).toMatch(/already own|already on/i);
+  });
+
+  /**
+   * Fails against: a prompt forbidding recommendation of anything by an owned
+   * ARTIST, or asserting a record-level rule the payload cannot support.
+   *
+   * **R5's finding 3, decided at the artist level.** §9.2 said "do not recommend
+   * anything they already own" without saying whether "anything" meant the
+   * artist or the record — and the payload settles it: the artists section
+   * carries `a.name`, a count and genre names, and **no record titles at all**.
+   * A record-level rule is unenforceable by construction, so a prompt asserting
+   * one asks the model to honour a constraint neither side can check.
+   *
+   * The live run made the case concrete. It suggested Dire Straits — *Brothers
+   * in Arms* with the reason "The collector already owns Dire Straits", which is
+   * a GOOD suggestion, not a defect: a different record by an artist you collect
+   * is exactly the gap this feature exists to name.
+   *
+   * So the prompt now says a different record by an owned artist is welcome, and
+   * reserves the prohibition for the case the payload CAN express.
+   */
+  it('welcomes a different record by an artist already owned', () => {
+    const prompt = buildPrompt(SUMMARY);
+
+    expect(prompt).toMatch(/different record|another record|record by an artist they (already )?own/i);
+    // And it must not forbid the artist wholesale.
+    expect(prompt).not.toMatch(/do not recommend .*by (an )?artists? they/i);
+  });
+
+  /**
+   * Fails against: dropping the want-list prohibition along with the owned one.
+   *
+   * **The asymmetry is the point.** The want list carries `artist` AND `title`
+   * (`collection-summary.ts`), so "already on their want list" IS checkable from
+   * the payload at record level — the model is given both halves. Only the owned
+   * side lacks titles, so only that side loosens.
+   */
+  it('still forbids recommending something already on the want list', () => {
+    const prompt = buildPrompt(SUMMARY);
+
+    expect(prompt).toMatch(/want list/i);
+    expect(prompt).toContain('Raped Ass');
   });
 
   /**
@@ -242,8 +290,162 @@ describe('the no-live-call guard covers this client', () => {
       labels: [],
       wantList: [],
       genreVocabulary: ['UK82'],
+      genres: [{ name: 'UK82', parent: null }],
     };
 
     await expect(getGapAnalysisClient().analyse(summary)).rejects.toThrow(/api\.anthropic\.com/);
+  });
+});
+
+/**
+ * R5's F1, first part: **`isAnthropicConfigured` must mean more than
+ * non-empty.**
+ *
+ * The live run failed because `.env.local` held a PLACEHOLDER — 160 characters,
+ * beginning `sk-ant-` and ending `-put-your-key-here`. Every existing check
+ * passed it: non-empty, trimmed, present. The app then claimed a rate-limit
+ * slot and sent the collection summary to an API that rejected the credential.
+ *
+ * A predicate cannot verify a key without spending a call, and it must not try.
+ * What it CAN do is reject the shapes that are definitionally not credentials —
+ * which is what the placeholder was.
+ */
+describe('configuration rejects a placeholder, not only an absence', () => {
+  /**
+   * Fails against: `(process.env.ANTHROPIC_API_KEY ?? '').trim() !== ''`.
+   *
+   * The exact value that broke the live run, reconstructed from its measured
+   * shape. `sk-ant-` prefix, plausible length, and a tail that says it was never
+   * filled in.
+   */
+  it.each([
+    ['sk-ant-api03-xxxxxxxxxxxxxxxxxxxxxxxx-put-your-key-here'],
+    ['sk-ant-api03-replace-me'],
+    ['your-api-key-here'],
+    ['sk-ant-YOUR_KEY_HERE'],
+    ['<your-anthropic-api-key>'],
+  ])('rejects the placeholder %j', (value) => {
+    vi.stubEnv('ANTHROPIC_API_KEY', value);
+
+    expect(isAnthropicConfigured()).toBe(false);
+  });
+
+  /**
+   * Fails against: a check so eager it rejects real keys.
+   *
+   * **The inverse, and it is the one that matters most.** A predicate that
+   * refuses a valid credential turns a working deployment into a dead feature,
+   * which is worse than the bug being fixed. Shaped like the key that actually
+   * worked in the live run: `sk-ant-` prefix, 108 characters, opaque tail.
+   */
+  it.each([
+    ['sk-ant-api03-' + 'A1b2C3d4E5f6G7h8'.repeat(5) + 'wXyZ3wAA'],
+    ['sk-ant-api03-Zm9vYmFyYmF6cXV1eA0987654321AbCdEfGhIjKlMnOpQrStUvWxYz3wAA'],
+  ])('accepts a real-shaped key', (value) => {
+    vi.stubEnv('ANTHROPIC_API_KEY', value);
+
+    expect(isAnthropicConfigured()).toBe(true);
+  });
+});
+
+/**
+ * R5's F2: **A29d claimed the prompt supplies the genre hierarchy, and it sent
+ * a flat comma list.**
+ *
+ * `Punk, UK82, US Hardcore, Rock` tells the model nothing about which term is a
+ * parent, while the very next paragraph instructs it not to flatten a scene into
+ * a parent term. The instruction named a relationship the payload did not carry.
+ */
+const HIERARCHY: CollectionSummary = {
+  artists: [
+    { name: 'Discharge', recordCount: 4, genres: ['UK82'] },
+    { name: 'Minor Threat', recordCount: 3, genres: ['US Hardcore'] },
+  ],
+  labels: [],
+  wantList: [],
+  genreVocabulary: ['Punk', 'UK82', 'US Hardcore', 'Rock'],
+  genres: [
+    { name: 'Punk', parent: null },
+    { name: 'UK82', parent: 'Punk' },
+    { name: 'US Hardcore', parent: 'Punk' },
+    { name: 'Rock', parent: null },
+  ],
+};
+
+describe('the prompt supplies the hierarchy A29d claims it does', () => {
+  /**
+   * Fails against: `summary.genreVocabulary.join(', ')`.
+   *
+   * The relationship must be legible, not merely the names. A model told
+   * "UK82 (a kind of Punk)" can obey "do not flatten a scene into a parent
+   * term"; a model given a comma list cannot know which of the four is the
+   * parent it must avoid.
+   */
+  it('shows which genres are children of which', () => {
+    const prompt = buildPrompt(HIERARCHY);
+
+    expect(prompt).toMatch(/UK82[^\n]*Punk/);
+    expect(prompt).toMatch(/US Hardcore[^\n]*Punk/);
+  });
+
+  /**
+   * Fails against: a prompt that drops parents once it renders a tree.
+   *
+   * **`Punk` MUST remain offerable.** A collection that legitimately tags
+   * records at a parent has to be able to receive `Punk` as an answer, and
+   * A29d's validation reads the same vocabulary. Removing parents is the
+   * plausible wrong fix sitting next to the right one — it would turn a correct
+   * suggestion into a dropped one for any collection organised at the top level.
+   */
+  it('still offers every genre name, parents included', () => {
+    const prompt = buildPrompt(HIERARCHY);
+
+    for (const name of HIERARCHY.genreVocabulary) {
+      expect(prompt).toContain(name);
+    }
+  });
+
+  /**
+   * Fails against: a prompt that names a parent but not its own depth.
+   *
+   * A grandchild must read as a child of its PARENT, not of the root, or the
+   * prompt describes a tree the user does not have.
+   */
+  it('renders depth beyond two levels', () => {
+    const prompt = buildPrompt({
+      ...HIERARCHY,
+      genreVocabulary: ['Punk', 'Hardcore', 'Powerviolence'],
+      genres: [
+        { name: 'Punk', parent: null },
+        { name: 'Hardcore', parent: 'Punk' },
+        { name: 'Powerviolence', parent: 'Hardcore' },
+      ],
+    });
+
+    expect(prompt).toMatch(/Powerviolence[^\n]*Hardcore/);
+  });
+
+  /**
+   * Fails against: a prompt that breaks when nothing has a parent.
+   *
+   * **The common case, and it must not become noisier.** Most collections are
+   * flat — dev's was, before R5 built a hierarchy for the review. A flat list
+   * should still read as a plain list rather than as a tree with every node at
+   * the root.
+   */
+  it('reads plainly when the collection is flat', () => {
+    const prompt = buildPrompt({
+      ...HIERARCHY,
+      genreVocabulary: ['AOR', 'Rock'],
+      genres: [
+        { name: 'AOR', parent: null },
+        { name: 'Rock', parent: null },
+      ],
+    });
+
+    expect(prompt).toContain('AOR');
+    expect(prompt).toContain('Rock');
+    // No parenthetical relationship where there is no relationship.
+    expect(prompt).not.toMatch(/AOR[^\n]*a kind of/);
   });
 });

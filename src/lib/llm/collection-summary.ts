@@ -16,6 +16,7 @@ import { getDb } from '@/db/client';
  * | label name + count | §9.2's "label counts" |
  * | want-list title, artist, priority | §9.2's "want list with priorities" |
  * | the genre vocabulary | A29d validates the response's `genre` against it |
+ * | each genre's parent | the hierarchy A29d says the prompt supplies (R5's F2) |
  *
  * **What is excluded, by name:** `purchase_price`, `purchase_date`, store names,
  * `max_price`, `journal_entries`, `notes` on any table, `matrix_runout`,
@@ -40,8 +41,26 @@ export type CollectionSummary = {
   artists: Array<{ name: string; recordCount: number; genres: string[] }>;
   labels: Array<{ name: string; recordCount: number }>;
   wantList: Array<{ artist: string; title: string; priority: number }>;
-  /** Every genre name the user has, for A29d's validation and the prompt. */
+  /**
+   * Every genre name the user has, for A29d's validation.
+   *
+   * **Parents included.** A collection that tags records at a parent term must
+   * still validate — the vocabulary is "the user's own genre names", and a
+   * parent is one of those.
+   */
   genreVocabulary: string[];
+  /**
+   * The same genres WITH their structure, for the prompt (R5's F2).
+   *
+   * A29d says "the prompt supplies the collection's genre hierarchy", and until
+   * this existed it supplied a comma-separated list — instructing the model not
+   * to flatten a scene into a parent term without telling it which terms were
+   * parents.
+   *
+   * `parent` is the parent's NAME rather than its id: nothing downstream
+   * resolves ids, and §9.2 sends no identifiers at all.
+   */
+  genres: Array<{ name: string; parent: string | null }>;
 };
 
 export async function buildCollectionSummary(): Promise<CollectionSummary> {
@@ -105,9 +124,17 @@ export async function buildCollectionSummary(): Promise<CollectionSummary> {
    * The whole vocabulary, including genres nothing is tagged with yet: the user
    * created them, so they are part of how this collection is organised, and
    * A29d validates the response against exactly this list.
+   *
+   * **With the parent's NAME, which is R5's F2.** A self-join rather than a
+   * recursive CTE: each genre needs its immediate parent, not its ancestry, and
+   * `genreSubtree`'s recursion answers a different question (every descendant of
+   * one node). Rendering the tree from parent links is the prompt's job.
    */
-  const genreRows = await db.execute<{ name: string }>(sql`
-    SELECT name FROM genres ORDER BY name
+  const genreRows = await db.execute<{ name: string; parent: string | null }>(sql`
+    SELECT g.name, p.name AS parent
+    FROM genres g
+    LEFT JOIN genres p ON p.id = g.parent_genre_id
+    ORDER BY g.name
   `);
 
   return {
@@ -123,5 +150,6 @@ export async function buildCollectionSummary(): Promise<CollectionSummary> {
       priority: row.priority,
     })),
     genreVocabulary: genreRows.rows.map((row) => row.name),
+    genres: genreRows.rows.map((row) => ({ name: row.name, parent: row.parent })),
   };
 }

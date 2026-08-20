@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { withErrorHandling } from '@/lib/api/handler';
 import { notConfigured } from '@/lib/api/errors';
 import { buildCollectionSummary } from '@/lib/llm/collection-summary';
-import { getGapAnalysisClient, isAnthropicConfigured } from '@/lib/llm/client';
-import { claimLlmRequest } from '@/lib/llm/rate-limit';
+import { getGapAnalysisClient, isAnthropicConfigured, isAuthFailure } from '@/lib/llm/client';
+import { claimLlmRequest, releaseLlmRequest } from '@/lib/llm/rate-limit';
 
 /**
  * SPEC.md §5.8 `POST /api/suggestions/ai` — §9.2's LLM gap analysis.
@@ -25,12 +25,25 @@ export const POST = withErrorHandling('api.suggestions.ai.POST', async () => {
   /*
    * §9.2's key is optional at boot so a missing one degrades this feature
    * rather than stopping the server (env/schema.ts). The cost is that the
-   * absence must be named HERE — `notConfigured` says which credential is
-   * missing instead of "Internal server error", which would send the reader to
-   * application logs for a deployment problem.
+   * absence must be named HERE — `notConfigured` says the feature is
+   * unconfigured instead of "Internal server error", which would send the
+   * reader to application logs for a deployment problem.
+   *
+   * **`isAnthropicConfigured` also rejects placeholders**, not only absence: a
+   * `-put-your-key-here` value passed the old non-empty check, claimed a slot
+   * and reached the API before failing (R5's live run).
    */
   if (!isAnthropicConfigured()) {
-    return notConfigured('AI suggestions are not configured. Set ANTHROPIC_API_KEY.');
+    /*
+     * **Names no environment variable**, per `errors.ts`'s rule for
+     * `notConfigured`: the message reaches a browser, and naming the variable
+     * describes the deployment's shape to whoever is looking. This previously
+     * read "Set ANTHROPIC_API_KEY." — the images route got this right ("Add a
+     * Vercel Blob store") and this one did not.
+     */
+    return notConfigured(
+      'AI suggestions are not configured on this deployment. Add an Anthropic API key to enable them.',
+    );
   }
 
   const claim = await claimLlmRequest('gap_analysis');
@@ -55,7 +68,50 @@ export const POST = withErrorHandling('api.suggestions.ai.POST', async () => {
   }
 
   const summary = await buildCollectionSummary();
-  const result = await getGapAnalysisClient().analyse(summary);
+
+  let result;
+  try {
+    result = await getGapAnalysisClient().analyse(summary);
+  } catch (error) {
+    /*
+     * **The case R5's live run actually hit**, and the reason §9.2 did not work.
+     * A placeholder key reached the API, was rejected, and the throw reached
+     * `withErrorHandling` — so the user saw "Internal server error" for a
+     * credential problem the app had been told about in words.
+     *
+     * Anything that is NOT an auth failure keeps the old behaviour deliberately:
+     * a 529 overload or a network fault is an unanticipated error, and
+     * `withErrorHandling` logging it with a stack is the right treatment. Only
+     * the case we can describe precisely gets its own answer.
+     */
+    if (!isAuthFailure(error)) throw error;
+
+    /*
+     * The slot goes back. Unlike an unreadable response, this call was never
+     * served and never billed — charging the hour's budget for it would make a
+     * deployment fault look like the user's own overuse, and ten clicks against
+     * a bad key would exhaust a quota protecting nothing.
+     */
+    await releaseLlmRequest(claim.id);
+
+    /*
+     * 502 like `LLM_UNREADABLE` — the failure is upstream rather than ours — but
+     * a distinct code, because the two need different sentences. And NO retry
+     * advice: a rejected credential is not transient, so "try again" is wrong
+     * advice that sends the user round the same loop. The variable is not named,
+     * per `errors.ts`'s rule for messages that reach a browser.
+     */
+    return NextResponse.json(
+      {
+        error: {
+          message:
+            'The suggestion service rejected this deployment’s credential. AI suggestions are unavailable until it is corrected.',
+          code: 'LLM_UNAUTHORIZED',
+        },
+      },
+      { status: 502 },
+    );
+  }
 
   if (!result.ok) {
     /*

@@ -109,7 +109,8 @@ the material a prompt revision would need.
 Everything so far has run on one laptop against a database nobody else can reach.
 
 Attack:
-- Every secret's path from `.env.local` to Vercel. Which are required at boot, which fail at point of use, and does each fail legibly? Three now fail only when used — Blob, MusicBrainz contact, Anthropic.
+- Every secret's path from `.env.local` to Vercel. Which are required at boot, which fail at point of use, and does each fail legibly? Three now fail only when used — Blob, MusicBrainz contact, Anthropic. **`isAnthropicConfigured` now rejects placeholders as well as absence** (R5's F1, after a `-put-your-key-here` value passed every check and spent a rate-limit slot); ask the same of the other two.
+- **Which databases can actually be migrated, and by what command.** Three drifted during R5 alone: dev (three behind), the Neon test branch (five behind, and it has NO supported migrate command — `drizzle.config.ts` resolves `DATABASE_URL` and `TEST_DATABASE_URL` only), and the ledger-versus-schema divergence that makes `drizzle-kit migrate` print success and apply nothing, permanently. **Production is the serious version**: the throwaway branch was repaired by recreating it, which production cannot be. Establish whether production has the same drift, what command is meant to migrate it, whether that command exists, and what check would notice within one deploy.
 - The Neon WebSocket driver under real serverless conditions: cold starts, connection limits, function suspension mid-transaction. Local `pg` has never exercised any of it.
 - The cron: authentication, idempotence, what happens on partial completion, and whether a failed run is visible to anyone.
 - Whether anything in the repo assumes a filesystem, a long-lived process, or localhost.
@@ -243,6 +244,174 @@ The two overturns also produced a correction to a NOTES rule that had been writt
 *A sixth sighting of the mobile contention, and narrowing the matrix did not fix it.* Baseline taken deliberately before the change (two clean `--retries=0` runs, 326 each); afterwards a run failed 1 and cleared on re-run, at reduced parallel load. That is positive evidence rather than the absence of it. Investigation stays open.
 
 *The pattern this remediation named,* now a standing check: **when prose and code sit together and disagree, the prose is what stops anyone looking.** Three instances, each a correct sentence beside a wrong thing — a comment explaining a hazard class above coverage of one case; a comment stating §7.1 correctly above code that ignored it; a docblock naming a cause above an assertion naming a different one. The third is the sharpest, because the accurate comment knew more than the type system let the assertion express. A fourth was *avoided*: keeping `/api/graph` would have required a careful paragraph explaining why dead code should stay.
+
+**R5 — suggestions and the LLM boundary. 2026-08-20.** The first review with a
+manual half, and the half that could not be read is the one that mattered.
+
+*Findings, in REVIEW-PLAN's buckets.*
+
+**Fix in this remediation** (no "fix now" — nothing here corrupts data or writes
+a false thing):
+
+1. **F1 — every Anthropic failure is a bare 500.** *Confident: reproduced twice,
+   once mocked and once live.* The route names three conditions legibly
+   (unconfigured 503, rate-limited 429 + retryAt, unreadable 502) and the
+   likeliest one falls through `withErrorHandling` to `500 INTERNAL_ERROR /
+   "Internal server error"`. Hit for real: a placeholder key ending
+   `-put-your-key-here` passed `isAnthropicConfigured()` (which only tests
+   non-empty), claimed a slot, and produced a 500 the user cannot act on. The UI
+   then says "Try again", which is wrong advice for a 401. Two sub-parts: the
+   message should name the credential, and **an auth failure should not spend a
+   slot** — unlike an unreadable response, nothing was billed.
+
+   Same shape as `isBlobConfigured` guarding one of three call sites, one
+   integration over.
+
+2. **F2 — A29d's validation cannot catch a flattening to a PARENT genre.**
+   *Confident in the mechanism; the remediation should still reproduce it.*
+   `parseSuggestions` accepts `genre: 'Punk'` with `dropped: 0` when Punk is in
+   the vocabulary. A29d says the constraint "is the mechanism that enforces the
+   genre-accuracy requirement, since a model flattening UK82 into 'punk'
+   produces a name the hierarchy does not contain" — true only while the parent
+   is absent from the collection. Root cause one layer up: A29d also says "the
+   prompt supplies the collection's genre HIERARCHY" and it does not.
+   `buildPrompt` renders a flat comma list and `collection-summary.ts` never
+   reads `parent_genre_id`, so the model is told not to flatten into a parent
+   term without being told which terms are parents.
+
+3. **The owned-artist-vs-owned-record ambiguity is unenforceable by
+   construction.** *Confident.* §9.2 says "do not recommend anything they
+   already own" and does not define artist or record. The model read it as the
+   record (#34, Dire Straits — *Brothers in Arms*, "The collector already owns
+   Dire Straits"; 1 of 34). The decisive part is not the ambiguity but that
+   **§9.2 sends artist names and not titles, so the record-level reading cannot
+   be enforced from the payload at all.** Only the artist-level rule is
+   checkable. That makes it a decision to take rather than a wording to tidy.
+
+**Defer with a named trigger:**
+
+4. **§9.2 has no count limit; 34 came back.** *Confident in the fact, undecided
+   on whether it is wrong.* §5.8 gives §9.1 `limit` (default 10); §9.2 has only
+   10/hour. Nothing caps the array and the prompt asks for no number.
+   `client.ts` calls `max_tokens: 4000` "short by construction: §9.2 wants a
+   handful of suggestions, not an essay" — contradicted by this run, which
+   stopped on `end_turn` at 2994 output tokens. **Trigger: 13c, the snippet** —
+   it shares this client and the same question ("how much output is right")
+   arrives there too, so decide once for both. If a limit is wanted the honest
+   place is the prompt, not a server-side slice that discards billed output.
+
+5. **The `dropped` copy has never been seen by a human.** *Not confident this
+   matters.* A29d requires the count visible; the string is
+   "N suggestions were discarded for naming genres outside your collection".
+   `dropped: 0` on the live run, so it did not render. Whether it reads as an
+   app defect or a model defect is a judgement no test settles. **Trigger:
+   the first real run that drops something.**
+
+6. **The route's 503 notConfigured branch is never exercised.** *Confident,
+   minor.* The integration test hardcodes `isAnthropicConfigured: () => true`.
+   The function is tested four ways; the route's use of it is not. **Trigger:
+   fold into F1's remediation** — that work touches these branches anyway.
+
+7. **Dev migration divergence, and the unknown behind it.** *Confident in the
+   mechanism, NOT in the cause.* Dev was four migrations behind with a ledger
+   whose high-water row matches no journal entry. Drizzle recomputes the same
+   batch every run, dies on `42701`, rolls back, **prints success and exits 0** —
+   permanently, since a failed run changes neither ledger nor journal. Repaired
+   by verifying the drifted migrations were complete, backfilling three ledger
+   rows, then migrating. **What applied 0011–0013's schema without ledger rows is
+   unknown** — `drizzle-kit push` and hand-applied DDL both fit. **Trigger: R6,
+   before the first deploy**, which owns the same divergence against production
+   where recovery is worse.
+
+**Decline, with reasoning:**
+
+8. **The two engines could be merged or cross-checked.** They are separate on
+   screen by design (§10, and `page.tsx` argues it), §9.2 is labelled
+   "Generated by Claude… not facts this app checked", and §9.2 is not given
+   §9.1's candidates so they cannot contradict each other within one claim. The
+   attack line came back clean; nothing to do.
+
+9. **An LLM suggestion reaching the want list without a human step.** Cannot
+   happen. Free-text prefill, artist must match an existing row or the form
+   names it unmatched, user must press Save. No write path from the model.
+
+*What the review confirmed clean:* what leaves the machine (read against the
+four queries column by column, not the docblock — no uuids, prices, dates,
+stores, notes, matrix or journal; want list correctly filtered to unacquired);
+the server-side rate limit and its concurrency work; all five enumerated parse
+cases with unreadable/empty/dropped kept distinct.
+
+*What the review MISSED that the run found:* the model reasons FINER than the
+hierarchy asks — DC vs Californian vs South Bay inside US Hardcore, Swedish
+proto- vs Norwegian second wave inside Black Metal. Nothing in the reading
+predicted the failure mode might be the opposite of flattening. Also missed: that
+§9.2 sends no titles, which is what turns finding 3 from a wording question into
+a design decision — visible in the code the whole time and only noticed when a
+real suggestion named an owned artist.
+
+*What ONLY the live run could have shown — the point of the manual half.*
+
+- **§9.2 had never executed anywhere.** The run is the first evidence the model
+  id, the `output_config.effort` shape, the token budget and the JSON discipline
+  all work. `claude-opus-5` and `effort: 'high'` were untested constants pinned
+  by a test asserting the string.
+- **The prompt works, and the tests could not have said so.** 0 of 34 flattened
+  to `Punk` when `Punk` was offered and would have validated. A test asserting
+  the prompt contains "flatten" is compatible with a model that ignores it.
+- **No markdown fences.** The parser's fence handling — with its own committed
+  probe — was not needed once. Right to keep; now known to be the exceptional
+  path rather than the norm.
+- **F1 and F2 both CHANGED SHAPE against the real API**, which is the entry
+  REVIEW-PLAN asks for. F1 was raised from a mocked 401 and looked like a
+  robustness gap; live, it was **the actual reason the feature did not work**,
+  triggered by a placeholder credential no shape check catches, and it cost a
+  rate-limit slot for a call that was never billed. F2 was raised as "the
+  backstop has a hole"; the run confirmed it **from the opposite direction** —
+  the validation fired zero times, so the genre accuracy is real and comes
+  ENTIRELY from prompt and model, with the backstop contributing nothing and
+  still unable to catch the case it was built for. Reading found both; only the
+  run established what they mean.
+- **§9.1 works on real data** — Broken Bones "shares 4 members with Discharge",
+  Demon 2, three Dire Straits side projects, each with its own clause and the two
+  terms kept separate. First evidence of the shared-member term against a real
+  collection.
+
+*Scorecard: 9 findings, 7 confident, 2 held loosely (the `dropped` copy, and the
+CAUSE of the migration divergence as distinct from its mechanism).* No finding
+was overturned in this review — but nothing has been remediated yet, and the
+standing rule says that is where overturns happen. **Both F1 and F2 should be
+reproduced before they are fixed**, and F2's fix in particular has a wrong
+version available: sending the hierarchy is not the same as removing `Punk` from
+the vocabulary, and the second would break a collection that legitimately tags at
+a parent.
+
+*A caveat on the material.* The dev collection is largely synthetic — of the 21
+re-tagged punk records only Discharge is a real band. That strengthens the genre
+conclusion (independent of name recognition) and weakens any conclusion about
+suggestion QUALITY. **R8 judges that, on Adam's real records.**
+
+*The mobile contention reached its eighth sighting and its deferral was
+RESOLVED.* R4 left this "investigation stays open" at six sightings, deferred to
+step 16. R5's remediation measured the rate climbing past the trigger R4 wrote
+for it: two full runs in three produced seven and five HARD failures — retries
+exhausted, not flake — 100% `[mobile]`, zero on chromium, all failing at login
+before any assertion, with the failure SET moving between runs.
+
+**Decided: per-worker test-data isolation becomes step 15's FIRST unit**, moved
+from step 16, and both NOTES and SPEC §12 updated so the plan and the notes
+agree. The argument is indistinguishability — a real mobile regression and this
+contention produce the same observation, "tests fail on mobile", and step 15 is
+the one step where that is fatal because mobile is what it changes and mobile
+E2E is how it is verified. No chromium cross-check is available there, since the
+flaking project IS the subject.
+
+Worth noting as a review-process point: this was not an R5 finding. It came from
+running the full E2E suite four times over a remediation, which is what CLAUDE.md
+§10 requires and what makes a rate visible at all. **A defect that only shows up
+as a rate needs repeated runs to see, and single-run verification would have
+reported every one of these as flake.**
+
+---
 
 ---
 

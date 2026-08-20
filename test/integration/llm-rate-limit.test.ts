@@ -3,7 +3,7 @@ import { sql } from 'drizzle-orm';
 import { getTestDb, truncateAll, closeTestDb } from '../helpers/db';
 import { getDb } from '@/db/client';
 import { llmRequests } from '@/db/schema';
-import { claimLlmRequest, LLM_REQUESTS_PER_HOUR } from '@/lib/llm/rate-limit';
+import { claimLlmRequest, releaseLlmRequest, LLM_REQUESTS_PER_HOUR } from '@/lib/llm/rate-limit';
 
 /**
  * SPEC.md §4.3 `llm_requests` and §9.2's "rate limit to 10 requests/hour,
@@ -337,5 +337,75 @@ describe('the concurrent claim', () => {
 
     expect(claims.filter((claim) => claim.ok)).toHaveLength(9);
     expect(await countRows()).toBe(LLM_REQUESTS_PER_HOUR);
+  });
+});
+
+describe('releasing a claim', () => {
+  /**
+   * R5's F1: an auth failure never reached the model, so the account was not
+   * charged and the slot must go back.
+   *
+   * Fails against: a module with no release, and against one that deletes by
+   * recency instead of by id.
+   */
+  it('a released claim frees its slot', async () => {
+    await fill(LLM_REQUESTS_PER_HOUR - 1);
+
+    const claim = await claimLlmRequest('gap_analysis');
+    expect(claim.ok).toBe(true);
+    if (!claim.ok) throw new Error('unreachable');
+    expect(await countRows()).toBe(LLM_REQUESTS_PER_HOUR);
+
+    await releaseLlmRequest(claim.id);
+
+    expect(await countRows()).toBe(LLM_REQUESTS_PER_HOUR - 1);
+    // And the freed slot is genuinely usable again.
+    expect((await claimLlmRequest('gap_analysis')).ok).toBe(true);
+  });
+
+  /**
+   * **Fails against a release that deletes the NEWEST row rather than its own.**
+   *
+   * This is the reason `claimLlmRequest` returns an id at all. Two requests are
+   * in flight; the first fails on auth and releases while the second is still
+   * working. A release that removed "the most recent row" would delete the
+   * SECOND caller's claim, silently handing them an unlimited budget while the
+   * failing one kept a slot it should not have.
+   *
+   * The rows are aged apart so "newest" and "mine" are distinguishable — without
+   * that, both orderings give the same answer and the test proves nothing.
+   */
+  it('releases its own row, not the newest one', async () => {
+    const mine = await claimLlmRequest('gap_analysis');
+    expect(mine.ok).toBe(true);
+    if (!mine.ok) throw new Error('unreachable');
+
+    // A later claimant, still in flight.
+    const theirs = await claimLlmRequest('snippet');
+    expect(theirs.ok).toBe(true);
+    if (!theirs.ok) throw new Error('unreachable');
+
+    await releaseLlmRequest(mine.id);
+
+    const remaining = await db.select().from(llmRequests);
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0].id).toBe(theirs.id);
+    expect(remaining[0].kind).toBe('snippet');
+  });
+
+  /**
+   * Fails against: a release that throws on a row that is already gone.
+   *
+   * The window may have been truncated, or the same failure handled twice. A
+   * release is a best-effort refund on an error path, and throwing there would
+   * replace a legible 502 with a 500 — turning the fix into the bug it fixes.
+   */
+  it('is silent when the row is already gone', async () => {
+    const claim = await claimLlmRequest('gap_analysis');
+    if (!claim.ok) throw new Error('unreachable');
+
+    await releaseLlmRequest(claim.id);
+
+    await expect(releaseLlmRequest(claim.id)).resolves.toBeUndefined();
   });
 });

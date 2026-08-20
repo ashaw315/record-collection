@@ -209,3 +209,69 @@ describe('what leaves the machine', () => {
     expect(discharge?.recordCount).toBe(1);
   });
 });
+
+describe('the genre hierarchy, not a flat list (R5 F2)', () => {
+  /**
+   * Fails against: `genreVocabulary` as the only genre field.
+   *
+   * A29d says "the prompt supplies the collection's genre HIERARCHY and
+   * constrains the field to it". It did not: `collection-summary.ts` ran
+   * `SELECT name FROM genres` and never read `parent_genre_id`, so the model was
+   * told not to flatten a scene into a parent term without being told which
+   * terms were parents.
+   */
+  it('reports each genre parent', async () => {
+    const [parent] = await db.insert(genres).values({ name: 'Punk' }).returning();
+    await db.insert(genres).values({ name: 'UK82', parentGenreId: parent.id });
+    await db.insert(genres).values({ name: 'US Hardcore', parentGenreId: parent.id });
+
+    const summary = await buildCollectionSummary();
+
+    expect(summary.genres).toEqual(
+      expect.arrayContaining([
+        { name: 'Punk', parent: null },
+        { name: 'UK82', parent: 'Punk' },
+        { name: 'US Hardcore', parent: 'Punk' },
+      ]),
+    );
+  });
+
+  /**
+   * Fails against: dropping `genreVocabulary` when adding the structure.
+   *
+   * A29d validates `genre` against the user's own NAMES, and every name stays
+   * valid — including a parent. The vocabulary is the validation's input and
+   * must keep containing every genre the user has.
+   */
+  it('still lists every genre name, parents included', async () => {
+    const [parent] = await db.insert(genres).values({ name: 'Punk' }).returning();
+    await db.insert(genres).values({ name: 'UK82', parentGenreId: parent.id });
+
+    const summary = await buildCollectionSummary();
+
+    expect(summary.genreVocabulary).toContain('Punk');
+    expect(summary.genreVocabulary).toContain('UK82');
+  });
+
+  /**
+   * Fails against: a builder that only handles two levels.
+   *
+   * §4.1 makes the hierarchy arbitrarily deep. A grandchild must name its own
+   * parent rather than the root, or the prompt would describe a tree the user
+   * does not have.
+   */
+  it('handles a hierarchy deeper than two levels', async () => {
+    const [punk] = await db.insert(genres).values({ name: 'Punk' }).returning();
+    const [hc] = await db
+      .insert(genres)
+      .values({ name: 'Hardcore', parentGenreId: punk.id })
+      .returning();
+    await db.insert(genres).values({ name: 'Powerviolence', parentGenreId: hc.id });
+
+    const summary = await buildCollectionSummary();
+
+    expect(summary.genres).toEqual(
+      expect.arrayContaining([{ name: 'Powerviolence', parent: 'Hardcore' }]),
+    );
+  });
+});

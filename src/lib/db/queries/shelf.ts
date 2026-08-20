@@ -46,6 +46,17 @@ export type ShelfRecord = {
   spineColour: string | null;
 
   /**
+   * §10b's snippet, for the pulled record's panel. Null is ordinary.
+   *
+   * Selected HERE rather than fetched separately by the panel: two producers of
+   * the same field is the shape NOTES records under `genreSubtree` and again
+   * under `hasGatefold`, and the wall already loads every record it draws.
+   */
+  snippet: string | null;
+  /** §4.2: non-null means the user wrote it, so the panel must not call it generated. */
+  snippetEditedAt: Date | null;
+
+  /**
    * §10b's pulled record: front cover, back, and the fields the back face
    * composes from when no photograph exists.
    *
@@ -186,6 +197,8 @@ export async function shelfRecords(filters: RecordFilters = {}): Promise<ShelfRe
       l.name AS "labelName",
       p.catalog_number AS "catalogNumber",
       records.spine_colour AS "spineColour",
+      records.snippet AS "snippet",
+      records.snippet_edited_at AS "snippetEditedAt",
       cover.url AS "coverUrl",
       back.url AS "backUrl",
       gateL.url AS "gatefoldLeftUrl",
@@ -250,6 +263,8 @@ export async function shelfRecords(filters: RecordFilters = {}): Promise<ShelfRe
     labelName: row.labelName,
     catalogNumber: row.catalogNumber,
     spineColour: row.spineColour,
+    snippet: row.snippet,
+    snippetEditedAt: row.snippetEditedAt === null ? null : new Date(row.snippetEditedAt),
     coverUrl: row.coverUrl,
     backUrl: row.backUrl,
     gatefoldLeftUrl: row.gatefoldLeftUrl,

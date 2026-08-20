@@ -100,7 +100,13 @@ rather than by a shared unit. What is not shared is most of each feature's diffi
 
 **ADD beneath the JSON-output bullet:**
 
-> **`genre` must be one of the user's own genre names, and this is validated rather than trusted.** The prompt supplies the collection's genre hierarchy and constrains the field to it, which is what makes the response checkable instead of merely plausible — and it is the mechanism that enforces §9.2's genre-accuracy requirement, since a model flattening UK82 into "punk" produces a name the hierarchy does not contain.
+> **`genre` must be one of the user's own genre names, and this is validated rather than trusted.** The prompt supplies the collection's genre hierarchy — each genre with its parent, so a child reads as "UK82 (a kind of Punk)" — and constrains the field to those names, which is what makes the response checkable instead of merely plausible.
+
+  **What the validation catches, stated precisely, because an earlier version of this bullet overclaimed.** It rejects a `genre` that is not one of the user's genres at all — "Britpop" against a collection that has no such genre. It does NOT reject a parent term: `Punk` is a name the user has, so a suggestion tagged `Punk` validates even where every record is tagged at a leaf beneath it. The previous wording said a model flattening UK82 into "punk" "produces a name the hierarchy does not contain", which is true only while the parent is absent from the collection — and false for exactly the collection that has the hierarchy this bullet describes.
+
+  **So the hierarchy in the prompt is what prevents flattening, and the validation is what catches an invented genre.** They are two mechanisms against two failures, and neither is a backstop for the other. Measured: a live run against a collection with `Punk` as a parent of `UK82` and `US Hardcore`, tagged entirely at the leaves, returned 34 suggestions and none tagged `Punk`.
+
+  **Rejecting a parent is deliberately NOT a rule.** "Nothing is tagged Punk" is a fact about the collection today, not a rule about it — a user may tag at a parent tomorrow, and a validation that dropped those suggestions would discard correct answers on a state change nobody made. Genre precision is asked for in the prompt, where being wrong costs a weaker suggestion, rather than enforced in the parser, where being wrong silently deletes a good one.
 >
 > A suggestion whose `genre` is absent from the hierarchy is **valid JSON of the wrong shape** — the envelope parsed and one value is unusable. It is not a parse failure and not an empty response, and the three must stay distinguishable.
 >
@@ -151,3 +157,27 @@ rather than by a shared unit. What is not shared is most of each feature's diffi
 alternative recorded; and §12 says what the build does.
 
 The migration for `llm_requests` follows this amendment, not the other way round.
+
+---
+
+## A29g — §9.2: "already owned" is an artist-level rule *(added by R5's remediation)*
+
+**Found by the live run, not by reading.** The run returned Dire Straits —
+*Brothers in Arms* with the reason "The collector already owns Dire Straits",
+against a prompt that said "Do not recommend anything they already own". §9.2
+never defined whether "anything" meant the artist or the record.
+
+**ADD beneath the JSON-output bullet:**
+
+> **"Already owned" is an ARTIST-level rule, because the payload cannot express a record-level one.** The summary sends owned ARTISTS — a name, a record count and genre names — and **no record titles**. So "do not recommend anything they already own" could not be honoured at record level by either side: the model is never told which records they are.
+>
+> **A different record by an artist they own is a legitimate suggestion, not a defect.** It is arguably the best-supported kind: an artist with four records on the shelf is demonstrably collected, and naming a fifth is exactly the gap this feature exists to find. The live run produced one, and it was a good suggestion. The prompt now says so, and asks the model to name that as its reasoning when it applies.
+>
+> **The want list keeps a record-level prohibition, and the asymmetry is the point.** It is sent with artist AND title, so "already on their want list" is checkable from the payload in a way "already owned" is not. A rule the data can support is stated; a rule it cannot is not asserted. This is the same discipline as A29c's refusal to let a prompt instruction read as a verification.
+
+**Why this is a decision and not a wording fix.** The alternative — sending owned
+record titles so a record-level rule becomes enforceable — was available and
+declined. It would put every title in the collection on the wire for a constraint
+that buys little: the model already avoids obvious repeats, and §9.2's disclosure
+boundary is deliberately narrow. The cheaper answer is to stop asserting the
+unenforceable half.

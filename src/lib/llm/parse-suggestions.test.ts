@@ -167,6 +167,33 @@ describe('per-suggestion validation', () => {
   });
 
   /**
+   * Fails against: a parser that rejects a PARENT genre.
+   *
+   * **This pins a decision, not an accident** (R5's F2). `Punk` is one of the
+   * user's own genres, so it validates — even for a collection tagged entirely
+   * at leaves beneath it, which is the case A29d used to claim was caught here.
+   *
+   * It is not caught here on purpose. "Nothing is tagged Punk" is a fact about
+   * the collection now, not a rule about it: a user may tag at the parent
+   * tomorrow, and a parser that dropped these would silently delete correct
+   * suggestions on a state change nobody made. Flattening is addressed in the
+   * prompt, which renders the hierarchy so the model can see which term is a
+   * parent.
+   *
+   * If this test is ever changed to expect a drop, the prompt-side mechanism and
+   * this comment must be revisited together — they are one decision.
+   */
+  it('accepts a parent genre, deliberately', () => {
+    const result = parseSuggestions(wrap({ ...ONE, genre: 'Punk' }), VOCABULARY);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error('unreachable');
+    expect(result.suggestions).toHaveLength(1);
+    expect(result.suggestions[0].genre).toBe('Punk');
+    expect(result.dropped).toBe(0);
+  });
+
+  /**
    * Fails against: a genre check that is case- or whitespace-sensitive.
    *
    * "uk82" is the user's own genre with different capitalisation, not a

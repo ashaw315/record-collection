@@ -72,11 +72,25 @@ function extractJson(raw: string): string {
 /**
  * Parses a §9.2 response against the user's own genre vocabulary (A29d).
  *
- * The vocabulary is what makes the response CHECKABLE rather than merely
- * plausible: the prompt constrains `genre` to the user's genre names, so a
- * model that flattens UK82 into "punk" produces a name the hierarchy does not
- * contain, and the flattening §9.2 forbids becomes mechanically detectable
- * rather than a hope about prompt-following.
+ * **What this catches: an INVENTED genre.** "Britpop" against a collection with
+ * no such genre is a name the user does not have, and it is dropped.
+ *
+ * **What this does NOT catch: a FLATTENING.** `Punk` is one of the user's genre
+ * names, so a suggestion tagged `Punk` validates even when every record sits at
+ * a leaf beneath it. This docblock used to claim otherwise — that a model
+ * flattening UK82 into "punk" "produces a name the hierarchy does not contain"
+ * — which holds only while the parent is absent from the collection, and fails
+ * for precisely the collections that have a hierarchy (R5's F2).
+ *
+ * Flattening is prevented in the PROMPT, which now renders each genre with its
+ * parent so the model can see which term is which. Two mechanisms, two
+ * failures; neither backs the other up.
+ *
+ * **Rejecting parents here was considered and refused.** "Nothing is tagged
+ * Punk" describes the collection today, not a rule about it, and a parser that
+ * dropped parent-tagged suggestions would silently delete correct answers for
+ * any collection organised at the top level. Being wrong in the prompt costs a
+ * weaker suggestion; being wrong here deletes a good one.
  */
 export function parseSuggestions(raw: string, genreVocabulary: string[]): ParseResult {
   let parsed: unknown;

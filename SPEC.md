@@ -161,7 +161,7 @@ Seed with: LP, 2xLP, 7", 10", 12" Single, Box Set, Picture Disc, all with `is_se
 
 The averaging rule itself is a product decision recorded in §10b, not a schema concern. The one schema-adjacent constraint: the value is stored, not derived per render, because computing it needs the image bytes.
 
-**`snippet_edited_at` is what makes §7.8 enforceable here.** Null means the text is as generated and a regeneration may replace it; non-null means the user owns it and a regeneration must refuse rather than overwrite. A boolean with a default would not do: `false` would mean both "generated" and "never asked", and the two become indistinguishable at write time (NOTES). Deleting a snippet sets `snippet` to null and leaves `snippet_edited_at` alone — a deliberate deletion is an edit.
+**`snippet_edited_at` is what makes §7.8 enforceable here.** Null means the text is as generated and a regeneration may replace it; non-null means the user owns it and a regeneration must refuse rather than overwrite *unless the user explicitly confirms the replacement* (A31a, §10b). It records WHO OWNS THE TEXT — which determines whether replacing it needs consent — not whether replacing it is possible. The server enforces this: a regeneration against an edited snippet without confirmation is refused with `409`, so the safety does not depend on a dialog being present in some particular client. A boolean with a default would not do: `false` would mean both "generated" and "never asked", and the two become indistinguishable at write time (NOTES). Deleting a snippet sets `snippet` to null and leaves `snippet_edited_at` alone — a deliberate deletion is an edit.
 
 **`condition_grade`** is a Postgres enum: `'M' | 'NM' | 'VG+' | 'VG' | 'G+' | 'G' | 'F' | 'P'` (Goldmine standard).
 
@@ -480,6 +480,16 @@ The UI decides how to present this; the API's obligation is to make the match ex
 
 Note: `app/api/records/stats/route.ts` is a static segment and must not be swallowed by `app/api/records/[id]/route.ts`. Next.js resolves static before dynamic, so this works — but `[id]` must still reject a non-UUID param with `400` rather than attempting a lookup.
 
+**Snippet** (§10b, A31b). A separate resource rather than fields on `PATCH /api/records/:id`: generation spends a rate-limited external budget and the other two do not, so folding them in would put a metered side effect behind a general-purpose update. §5.9 makes the same split for images.
+
+| Method | Path | Notes |
+|---|---|---|
+| POST | `/api/records/:id/snippet` | Generate and store a snippet (§10b). Rate-limited with §9.2 against `llm_requests` (`kind: 'snippet'`). Body: `{ confirmReplace?: boolean }`. |
+| PATCH | `/api/records/:id/snippet` | Save a user edit. Sets `snippet_edited_at`. Body: `{ snippet: string }`. |
+| DELETE | `/api/records/:id/snippet` | Clears `snippet`, leaves `snippet_edited_at` (§4.2 — a deliberate deletion is an edit). |
+
+**`confirmReplace` is required only when `snippet_edited_at` is set**, and its absence there is a refusal rather than a silent overwrite: `409` with a code naming the situation, so a client that has not asked the user cannot destroy their text by omission. Defaulting it to true would put the safety in the UI, where the next caller — a script, a retry, a second client — does not inherit it.
+
 ### 5.3 Want list
 | Method | Path | Notes |
 |---|---|---|
@@ -783,8 +793,20 @@ Both were specified in §9.1 and are not scored. Each is recorded with what it n
 - Build a compact summary of the collection: owned artists grouped by genre, want-list with priorities, label counts. Do not dump raw rows.
 - Prompt asks for **gap analysis**: named records that are conspicuous absences given what's owned, with a one-sentence rationale each. Ask explicitly for genre-accurate reasoning — the distinctions between UK first-wave punk, UK82, US hardcore, horror punk, and psychobilly are meaningful and should not be flattened into "punk".
 - Require JSON-only output: `{ suggestions: [{ artist, title, reason, genre }] }`. Strip markdown fences before parsing. Handle parse failure gracefully with a user-visible error, not a crash.
+- **"Already owned" is an ARTIST-level rule, because the payload cannot express a record-level one.** The summary sends owned ARTISTS — a name, a record count and genre names — and **no record titles**. So "do not recommend anything they already own" could not be honoured at record level by either side: the model is never told which records they are.
+
+  **A different record by an artist they own is a legitimate suggestion, not a defect.** It is arguably the best-supported kind: an artist with four records on the shelf is demonstrably collected, and naming a fifth is exactly the gap this feature exists to find. The live run produced one — Dire Straits, *Brothers in Arms*, with the reason openly saying "The collector already owns Dire Straits" — and it was a good suggestion. The prompt now says so, and asks the model to name that as its reasoning when it applies.
+
+  **The want list keeps a record-level prohibition, and the asymmetry is the point.** It is sent with artist AND title, so "already on their want list" is checkable from the payload in a way "already owned" is not. A rule the data can support is stated; a rule it cannot is not asserted. This is the same discipline as A29c's refusal to let a prompt instruction read as a verification.
+
 - **The prompt asks the model to omit records it is unsure exist. That reduces hallucination and does not prevent it** — a model's confidence is not evidence, and nothing in the response can be checked against the world. So it is a trade of recall for precision, not a guarantee, and the human step below is what actually catches an invented record. Do not let the instruction's presence in the prompt read as a verification anywhere in the code or the UI.
-- **`genre` must be one of the user's own genre names, and this is validated rather than trusted.** The prompt supplies the collection's genre hierarchy and constrains the field to it, which is what makes the response checkable instead of merely plausible — and it is the mechanism that enforces the genre-accuracy requirement above, since a model flattening UK82 into "punk" produces a name the hierarchy does not contain.
+- **`genre` must be one of the user's own genre names, and this is validated rather than trusted.** The prompt supplies the collection's genre hierarchy — each genre with its parent, so a child reads as "UK82 (a kind of Punk)" — and constrains the field to those names, which is what makes the response checkable instead of merely plausible.
+
+  **What the validation catches, stated precisely, because an earlier version of this bullet overclaimed.** It rejects a `genre` that is not one of the user's genres at all — "Britpop" against a collection that has no such genre. It does NOT reject a parent term: `Punk` is a name the user has, so a suggestion tagged `Punk` validates even where every record is tagged at a leaf beneath it. The previous wording said a model flattening UK82 into "punk" "produces a name the hierarchy does not contain", which is true only while the parent is absent from the collection — and false for exactly the collection that has the hierarchy this bullet describes.
+
+  **So the hierarchy in the prompt is what prevents flattening, and the validation is what catches an invented genre.** They are two mechanisms against two failures, and neither is a backstop for the other. Measured: a live run against a collection with `Punk` as a parent of `UK82` and `US Hardcore`, tagged entirely at the leaves, returned 34 suggestions and none tagged `Punk`.
+
+  **Rejecting a parent is deliberately NOT a rule.** "Nothing is tagged Punk" is a fact about the collection today, not a rule about it — a user may tag at a parent tomorrow, and a validation that dropped those suggestions would discard correct answers on a state change nobody made. Genre precision is asked for in the prompt, where being wrong costs a weaker suggestion, rather than enforced in the parser, where being wrong silently deletes a good one.
 
   A suggestion whose `genre` is absent from the hierarchy is **valid JSON of the wrong shape** — the envelope parsed and one value is unusable. It is not a parse failure and not an empty response, and the three must stay distinguishable.
 
@@ -1048,8 +1070,16 @@ Generated by an LLM on demand, written once and stored rather than fetched per v
 
 - **It is labelled as generated**, in the same register as "Discogs estimates" — never presented as fact the app established.
 - **It never contradicts entered data.** It does not state a pressing, a year, or a price; those are on the record.
-- **It is editable and deletable.** A snippet the user has corrected is theirs, and a regeneration must not overwrite it (§7.8).
+- **It is editable and deletable.** A snippet the user has corrected is theirs, and a regeneration must not overwrite it silently (§7.8).
 - **Absence is fine.** A record with no snippet shows none, and no placeholder invites one.
+
+**Regenerating an edited snippet is OFFERED, not hidden, and it names what will be lost** (A31a). Once `snippet_edited_at` is set the text is the user's, so a regeneration must never proceed on its own — but it is offered, behind a confirmation saying the edited text will be replaced and cannot be recovered. The same shape §7.3 requires for deleting an acquired want-list row: "a confirmation naming what is lost, not a bare delete button."
+
+**The reasoning is §7.8's actual scope.** §7.8 forbids overwriting user-entered data *with external data* — the Discogs re-sync case, where the app acts unasked and the user finds out afterwards. It governs what the app does on its own initiative, not what its owner may deliberately choose. §7.3 already draws that line for a structurally identical case: "The rule is about *implicit* loss… An **explicit** user delete of an acquired item is permitted. Mistakes happen, this is a personal tool." A snippet the user edited and now wants regenerated is the same situation — they typed it, they can see it, and they are asking. Hiding the control would treat the owner of the text as the threat the rule protects against.
+
+**Confirmation only where there is something to lose.** With `snippet_edited_at` null the stored text is as generated, and regeneration replaces it without asking: no user work is at stake, and confirming every regeneration would train the user to dismiss the one that matters.
+
+**The confirmation names the text, not the rule** — "Replace the snippet you edited? Your version will be lost", never "this record has snippet_edited_at set".
 
 **Three clauses in this section are specified and not yet built**, each moved out of step 13 with a trigger rather than left open inside it: the gatefold hinge (§12, 13a), arrow navigation between records (13b), and the snippet (13c). Everything else described above is built and live at `/`.
 
@@ -1128,7 +1158,7 @@ Mock the Discogs, MusicBrainz and Anthropic APIs in tests. Never hit live extern
     Then build the assignment UI. **The importer does not assign slots automatically** — Discogs' types cannot distinguish a left leaf from a right leaf from a back cover, and a wrong guess opens a hinge onto artwork that is not the inner sleeve, which is the invented-stand-in failure §10b's strictest rule forbids. The add-record form surfaces the release's images as candidates and the user assigns them, the same shape §5.7 already uses for every other field: Discogs supplies the material, the user supplies the judgement.
 
     A single wide scan of an open gatefold cannot fill two square slots (A21b). It goes to the gallery as `other`, and a user who wants the hinge photographs the sleeve themselves. That is honest — splitting a scan down the middle and hoping the seam lands right is not.
-15. Mobile pass across all screens. E2E #10.
+15. Mobile pass across all screens. E2E #10. **Unit 1 is per-worker E2E test-data isolation** — see below.
 16. Vercel deploy config + cron for price refresh.
 
 **Why 10 and 11 come before 12.** The original order put the graph immediately after the stats screen, and it read its edges from `artist_influences` — a table nothing populated automatically. Built in that order it would have rendered unconnected dots, with no way to tell whether the layout or the clustering was at fault. Seeding first made it verifiable, and what that verification eventually showed was that the screen was not worth keeping (§8) — which is a better outcome than shipping it blind. Step 11's membership data survives the screen and now feeds §9. Market data moved ahead of both because it has no dependency at all and answers the question the app exists for.
@@ -1137,7 +1167,13 @@ Mock the Discogs, MusicBrainz and Anthropic APIs in tests. Never hit live extern
 
 This block is in **execution order** — 13c, then 13a, then 13b. The numbering is by feature and does not run in sequence: 13c happens first, at step 14.
 
-**13c. The snippet** (§10b). **Trigger: step 14**, immediately after §9.2 and built on the module §9.2 extracts — the Anthropic client, the shared rate limit (§4.3's `llm_requests`) and the JSON-parse boundary. R5 still reviews one boundary, because there is one.
+**13c. The snippet** (§10b), in THREE UNITS. **Trigger: step 14**, immediately after §9.2 and built on the module §9.2 extracts — the Anthropic client, the shared rate limit (§4.3's `llm_requests`) and the JSON-parse boundary. R5 still reviews one boundary, because there is one.
+
+- **Unit 1 — the column and the ownership rule.** The migration A4 implied and never produced (`snippet`, `snippet_edited_at` reached §4.2 and never reached the schema), the query-layer writes, and §7.8's rule as pure state: a regeneration without confirmation refuses when `snippet_edited_at` is set; a delete clears the text and keeps the timestamp. **No LLM** — testable with no mock, no fixture and no injected client, because a rule about who owns a piece of text is pure state.
+- **Unit 2 — the generation path.** The prompt, `kind: 'snippet'` through the shared limiter, the parse boundary, and `POST`. Consumes unit 1's refusal rather than defining it. R5's finding 4 (no count limit on LLM output) is decided here, since it is the same client and the same question.
+- **Unit 3 — the panel UI.** Display with the generated label, edit, delete, and A31a's confirmation.
+
+**Why the ownership rule is judged alone.** Every other failure in this feature is recoverable: a bad snippet is regenerated, a 500 is retried. Silently overwriting text the user wrote is permanent. Judging that rule in the same unit as a prompt, a route and a UI is how it gets waved through — the same argument that split §9.1 from §9.2, and that R5 found worth having.
 
 **Separate units, and the original reasoning is why.** This note used to say building it alongside §9.2 was necessary to avoid building that boundary twice. Having read both features, the shared part is satisfied by a shared *module*; what is not shared is where each one's difficulty lives. §9.2 sends a summary of the whole collection and returns something ephemeral, so its hard question is disclosure — R5's first attack line, field by field. The snippet sends one record and its hard question is **storage and ownership**: the text is written to `records.snippet`, `snippet_edited_at` transfers ownership to the user on edit, and a regeneration must then refuse (§7.8).
 
@@ -1146,6 +1182,29 @@ Judging a disclosure decision and a stored-ownership decision in one review is w
 **13a. The gatefold hinge.** Two leaves about a shared edge, and the affordance only where both inner photographs exist (§10b, A21c). **Trigger: after the Discogs inner-image measurement and the add-record slot-assignment UI** (14a). Nothing in the collection can open a gatefold until images can be assigned to `gatefold_left` and `gatefold_right`, so the hinge has nothing to act on. The scene already wires both slots through the surface-kind rule, so the geometry is what is missing.
 
 **13b. Arrow navigation between records** (§10b). Moving through the collection without putting the record back. **Trigger: step 15's mobile pass**, which is already touching how the wall is navigated on a small screen, and where "browsing is continuous" matters most.
+
+**Step 15 begins with the harness, not with a screen.** Per-worker test-data
+isolation (a schema or database per Playwright worker, in `e2e/global-setup.ts`
+and `test/helpers/db.ts`) is unit 1, moved here from step 16 on 2026-08-20.
+
+The reason is indistinguishability. A genuine mobile regression presents as
+"tests fail on mobile"; the shared-database contention presents as "tests fail on
+mobile". Everywhere else that ambiguity is tolerable — mobile E2E is incidental
+to what those steps change, and the chromium project gives an independent read.
+**Step 15 is the exception on both counts: mobile is what it changes, and mobile
+E2E is how it is verified**, so the one diagnostic that separates a real
+regression from noise is unavailable exactly where it is needed.
+
+Measured during R5's remediation, at workers=2: three full runs in five produced
+hard failures (retries exhausted, not flake) — seven, five and two — every one
+failing at login before reaching an assertion, in specs unrelated to the change
+under test. 12 of the 14 were `[mobile]` and 2 were `[chromium]`, so the skew is
+large but the contention is not confined to one project: the shared resource is
+the single test database every worker uses. The recorded baseline for the deferral was "1 flaky in 5 runs" with no
+hard failures, and its stated trigger was "revisit if the rate climbs".
+
+Reducing workers was already measured and is insufficient: it makes collisions
+rarer, not impossible.
 
 Each step should end with its tests green before moving on.
 
