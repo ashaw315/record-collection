@@ -698,14 +698,23 @@ For each artist **not** in the collection but reachable from one that is — app
 ```
 score =
     (2.0 × number of owned artists directly linked, weighted by edge strength)
+  + (1.5 × number of owned artists sharing members, weighted by people in common)
   + (1.5 × genre overlap with the user's top 3 genres by owned count)
   + (1.0 × label overlap with labels appearing 2+ times in the collection)
   - (3.0 if already on the want-list)   // suppress, don't hide
 ```
 
+**The two link terms are separate on purpose, and must not be merged.** An `artist_influences` edge carries a 1–5 `strength` the user typed; a shared membership carries a count of people imported from MusicBrainz. Merging them into one link total requires an exchange rate between a judgement and a measurement — a number nothing in the collection can supply, which would be guessed once and cited as settled thereafter. §4.3 already forbids the version of this that writes membership into `artist_influences`; scoring them as one term is the same conflation one layer up.
+
+Merging also destroys the distinction the membership import was built to expose. A tribute act shares one hired player with a band the user owns; a genuine side project shares several (§4.3). In a sum, four shared members and one strong influence edge are the same number, and the tribute is indistinguishable from the side project — the one comparison this data answers.
+
+**Weight the shared-member term by people in common**, not by whether any exist: the count is the signal. Ties break on artist name, so the same collection scores the same way on every call.
+
 **"Genre overlap" is a count, not a flag.** For each artist, the number of their owned records tagged with each genre, rolled up through the hierarchy per §7.1 and derived at query time from `record_genres` — never stored. Ties break on genre name so the same collection scores the same way on every call. This is the aggregate §8.1's retired `has_genre` link computed; it is specified here because §9 is now its only consumer.
 
-Return the top `limit` sorted descending, each with a **reason string** assembled from which terms contributed — e.g. "Linked to 3 artists you own; shares the UK82 genre; on Clay Records, a label you own 4 records from."
+Return the top `limit` sorted descending, each with a **reason string** assembled from which terms contributed — e.g. "Linked to 3 artists you own; shares 4 members with Discharge; shares the UK82 genre; on Clay Records, a label you own 4 records from."
+
+The two link terms appear as separate clauses, naming which one fired. "Linked to 3 artists you own" and "shares 4 members with Discharge" are different claims about different evidence, and a reader who can see which one produced a suggestion can judge it; a merged clause asks them to trust an arithmetic they cannot see.
 
 Suggestions must be explainable. Never return a bare score with no reasoning.
 
@@ -990,7 +999,7 @@ Note that `has_genre` was **not** among the survivors, though an earlier version
 ## 11. Testing
 
 ### Unit (Vitest)
-- Suggestion scoring function — every scoring term independently, plus the want-list suppression case.
+- Suggestion scoring function — every scoring term independently, plus the want-list suppression case. The two link terms are tested separately, including a case where an artist is reached by shared membership alone and one where it is reached by an influence edge alone: a single fixture carrying both cannot tell a correct implementation from one that merged them.
 - **Shelf ordering determinism** — the same collection produces byte-identical order across repeated runs, including the tie-break chain (§10b).
 - **Shelf genre attribution** — a record carrying several genres appears exactly once, under the correct top-level ancestor, with ties broken by name; a record with no genre files last.
 - **Spine colour** — average-in-linear-light against known inputs, alpha weighting, and the null case (no cover, or a fully transparent image) returning absence rather than black.
