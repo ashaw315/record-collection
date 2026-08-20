@@ -9723,6 +9723,11 @@ only the ordering one needed five, and it was the only one that needed the work.
 
 ## OBSERVATION (step 14 unit 1): the full E2E run degraded badly, and it is NOT this unit
 
+**CLOSED — see "RESOLVED: the E2E degradation was accumulated local state" below.
+A cold restart returned the suite to 235 passed / 1 flaky / 7.8m, exactly the
+baseline. The open questions in this entry are answered there; it is kept for the
+measurements.**
+
 Recorded per CLAUDE.md §4 rather than chased, because the unit it was noticed in
 cannot have caused it. But it is a bigger observation than the usual flake note
 and the next step should not discover it cold.
@@ -9797,3 +9802,74 @@ instead of inferring it from a composite.
 **And the one that would have saved the most time, done first:** ask whether the
 change under suspicion is even REACHABLE from the failing tests. One `grep` for
 references answered in seconds what three full E2E runs could not.
+
+## RESOLVED: the E2E degradation was accumulated local state, and the instrument is fine
+
+The observation recorded above ("the full E2E run degraded badly") is CLOSED.
+A cold restart returned the suite to its exact baseline.
+
+| Run | Result | Wall clock |
+|---|---|---|
+| Session start | 235 passed, 1 flaky, 20 skipped | 7.8m |
+| Degraded, after three full runs in one session | 33 failed | 2.6h |
+| Cold restart, **invalid — see below** | 146 failed | 16.4m |
+| **Cold restart, valid** | **235 passed, 1 flaky, 20 skipped** | **7.8m** |
+
+Same pass count, same flake count, same skip count, same wall clock. Not "near
+baseline" — the baseline.
+
+**What accumulated, stated as belief with its evidence and its limit.** The
+strongest candidate is `.next`, which had reached **1.1 GB, of which
+`.next/dev` was 833 MB**. Every E2E test waits on the dev server, and Next
+compiles routes on demand into that cache; a bloated dev cache plausibly slows
+every navigation in the suite. Supporting it: the test DATABASE was NOT bloated
+— 14 MB, 28 live rows, 46 dead — so accumulated table data is ruled out, and
+`truncateAll` was doing its job throughout.
+
+**The honest limit: this is not proven, and cannot be from this data.** The
+cold restart changed four things at once — deleted `.next`, deleted 32 MB of
+traces, replaced a 2-day-old container, and (accidentally) wiped and re-migrated
+the database. A single-variable test would be: run the suite three times to
+degrade it, delete ONLY `.next`, run again. That was NOT performed. Anyone
+citing the 833 MB as the cause is citing a hypothesis, not a measurement.
+
+**The practical rule, which does not depend on the cause:** if a full E2E run
+starts taking multiples of 7.8m, stop the dev server, delete `.next`, and run
+again BEFORE diagnosing anything in the app. Three runs in one session was
+enough to degrade it here.
+
+# A `db:test:reset` that leaves the database unusable
+
+Found by running the documented reset and then the suite. **146 failed, 33
+passed, 57 did not run** — every failure ultimately `relation "artists" does not
+exist`, buried under WebServer log noise several screens deep.
+
+```
+"db:test:reset": "docker compose down postgres && docker compose up -d --wait postgres"
+```
+
+`docker-compose.yml` declares **no named volume**, so the database lives in the
+container's anonymous storage and `down` destroys the schema. The script brings
+a container back up and stops — it never migrates. SPEC §14 lists
+`db:test:reset` among the scripts that "must pass": it exits 0, and leaves a
+database nothing can run against.
+
+**Why this has never surfaced.** `npm test` applies migrations on every run
+(visible as "applying migrations" in its output), so Vitest silently repairs the
+damage. Playwright's `globalSetup` does not migrate, so the E2E suite is the only
+consumer that sees the empty database — and its failure mode is 146 red tests
+that look like an application collapse rather than a missing schema.
+
+**The shape:** a script whose success is defined by exiting 0 rather than by the
+state it leaves behind. Same family as the absence-as-success entries, and the
+same tell — the thing that would have caught it is asserting the POSTCONDITION
+(tables exist) rather than the command's exit code.
+
+**Trigger: the same unit that fixes the E2E instrument for step 15**, or sooner
+if anyone runs the reset. The fix is one word — append `&& npm run db:migrate`
+— but it is out of scope for step 14 unit 1 and is recorded rather than applied.
+
+**Recorded honestly: I caused this, then diagnosed it.** The first "cold restart"
+was invalid because of it, and its 146 failures measured nothing about the
+instrument. It is a real defect that was already there, and it took destroying a
+database to find it.
