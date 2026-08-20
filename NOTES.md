@@ -10253,3 +10253,104 @@ exists to prevent.
 | M16 | suppressed candidates hidden rather than shown | 1 |
 | M17 | the form's context line never renders | 1 |
 | M18 | `artistId` prefill dropped | 1 |
+
+## Step 14 unit 4a — the rate limit, and a one-statement guard that was not enough
+
+The migration and the limiter, committed before the Anthropic client so the
+concurrency work is reviewable on its own.
+
+### The defect the spec did not anticipate: one statement is not one serialisation
+
+A29 specified `INSERT ... SELECT ... WHERE (count) < limit` as a conditional
+insert and called it atomic. It is — with respect to its OWN snapshot, which is
+what defeats check-then-act. **It is not serialised against other claimants**,
+and under READ COMMITTED a statement cannot see another transaction's
+uncommitted rows.
+
+**Measured, not reasoned about:** ten concurrent claims against nine free slots
+admitted **TEN**, reproducibly, about two runs in five. Every claimant counted
+the same nine committed rows and every one inserted.
+
+The fix is `pg_advisory_xact_lock` before the count, held to the end of the
+enclosing transaction, so the next claimant reads a committed table rather than
+a stale snapshot. **The amendment's reasoning was right about the failure it
+named and incomplete about the mechanism** — worth recording, because "it is one
+statement" reads as sufficient and is not.
+
+**A consequence that inverts an earlier finding.** With the lock in place,
+splitting the statement back into a count and an insert INSIDE the lock is no
+longer a defect — the lock is what makes it safe, so that mutation correctly
+passes. The test's comment says so, rather than claiming to constrain a
+statement shape it does not.
+
+# Writing the concurrent test: three versions, two of them convincing and wrong
+
+Recorded in full because the first two looked right, passed, and would have
+shipped a test that reports success exactly where the defect lives.
+
+**Version 1 — a JS barrier before the call.** Both callers announce arrival, the
+second releases both, then each calls the claim. Caught check-then-act when run
+ALONE, 3 runs of 3. **Missed it inside the full file, 3 runs of 3.**
+
+The diagnosis was measured rather than assumed: running only the two concurrent
+tests, it failed again. The six sequential tests before it warm the connection
+pool, so the first claim's round-trip completes before the second issues its
+query — the barrier releases both into a race that is no longer a race.
+
+**That is the isolation asymmetry in its dangerous direction**, and the standing
+rule held: the isolated run was the honest one and the full-file pass was the
+lie. Calling the difference flake would have kept a decorative test.
+
+**Version 2 — `pg_advisory_xact_lock` around each claim in the TEST.** This made
+it worse: the lock SERIALISES, so A claims, commits and releases before B reads.
+That is the sequential case the test exists to avoid, and it stopped catching
+the mutation entirely.
+
+**Version 3 — a barrier between the READ and the WRITE.** The defect is two
+callers both reading before either writes, so the barrier must sit in that
+window. `db.execute` is hooked, a caller that has finished its count waits until
+all have finished theirs, and only the count query is intercepted.
+
+**And it still did not fire, for a reason no amount of re-reading would have
+found:** `getDb()` caches its own client while `getTestDb()` builds a SEPARATE
+Drizzle instance over the same database. Spying on the test's handle intercepts
+nothing the module does. Found with a probe that threw from inside the mock to
+print what it saw; the fix is to hook `getDb()`'s handle.
+
+**The rule this yields: when a hook does not fire, prove it fires before
+theorising about what it caught.** Three of this session's wrong turns were
+instruments answering an adjacent question, and a mock installed on the wrong
+object is the same family — it reports nothing and nothing looks broken.
+
+## A detector that fires 4 runs in 6 is not a detector
+
+The ten-way test found the missing-lock defect with a bare `Promise.all` — and
+only **4 runs in 6**, because it depended on real concurrency and its timing
+moves with pool warmth and machine load.
+
+Same rule as the ordering test in unit 1, in a new place: **a test that catches
+its defect two thirds of the time reads as flake and gets retried away.** The
+barrier removes timing from the question — all ten claimants count before any
+inserts, which is exactly the state a lockless limiter mishandles. Detection
+went 4/6 → **6/6**.
+
+**Mutations, all deterministic:**
+
+| # | Mutation | Result |
+|---|---|---|
+| M19 | check-then-act, no lock | caught (2 tests) |
+| M20 | drop the advisory lock | caught, 6 runs of 6 (was 4 of 6) |
+| M19b | check-then-act INSIDE the lock | correctly passes — the lock makes it safe |
+
+## The schema-conformance guard fired, in a file this unit never opened
+
+`llm_requests` has three columns and no `created_at`/`updated_at`, so
+"gives every other table both timestamp columns" failed — the cross-file break
+CLAUDE.md §10 describes, caught by the full suite rather than by the unit's own
+tests.
+
+Exempted **by name with its reasoning**, never by bumping a count: `requested_at`
+is the only time this table has an opinion about and the column the window
+reads; a `created_at` would be a second answer to the same question, and an
+`updated_at` would imply a row that changes, which these never do. That is what
+makes the window a WHERE clause rather than a job.

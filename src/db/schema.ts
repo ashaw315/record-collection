@@ -470,6 +470,30 @@ export const recordTags = pgTable(
  * different key. Writing artist relations into a release-keyed table is the
  * collision `market_cache` was created to avoid.
  */
+/**
+ * §4.3 `llm_requests` — one row per outbound Anthropic request, for §9.2's and
+ * §10b's shared 10/hour rate limit.
+ *
+ * **A log, not a counter.** A single mutable `count` row needs resetting on a
+ * schedule nothing runs, and answers "how many this hour" only if that reset
+ * fired. Rows carry their own timestamps, so the window is a `WHERE` clause and
+ * there is no scheduled job to fail. Old rows may be deleted at any time or
+ * never — the query is correct either way.
+ *
+ * **Both callers share one budget**, because they spend the same account. Two
+ * independent 10/hour limits would be a 20/hour limit nobody specified. `kind`
+ * records which asked, for diagnosis, and takes no part in the count.
+ */
+export const llmRequests = pgTable(
+  'llm_requests',
+  {
+    id,
+    kind: text('kind').notNull(),
+    requestedAt: timestamp('requested_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('llm_requests_requested_at_idx').on(t.requestedAt)],
+);
+
 export const musicbrainzCache = pgTable('musicbrainz_cache', {
   id,
   musicbrainzId: text('musicbrainz_id').notNull().unique(),

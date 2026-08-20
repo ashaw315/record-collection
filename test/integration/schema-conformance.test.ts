@@ -266,6 +266,13 @@ describe('§4 conformance — NOT NULL where the spec requires it', () => {
       // §4.3's MusicBrainz cache, same reasoning again — three columns, and
       // `fetched_at` is what freshness is measured from.
       'musicbrainz_cache',
+      // §4.3's `llm_requests`, specified with exactly three columns. It is a LOG
+      // rather than a cache, but the reasoning lands the same way: `requested_at`
+      // is the only time this table has an opinion about, and it is the column
+      // the rate-limit window reads. A `created_at` would be a second answer to
+      // the same question, and an `updated_at` would imply a row that changes —
+      // these never do, which is what makes the window a WHERE clause.
+      'llm_requests',
       'record_genres',
       'want_list_genres',
       'artist_genres',
