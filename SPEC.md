@@ -13,7 +13,7 @@ A personal vinyl record collection tracker. Two core datasets: **records owned**
 1. **The shelf** — the collection rendered as a wall of spines, ordered by genre so related records stand together, with a record that can be pulled out and turned over (§10b). It is the default view of the collection.
 2. **In-store lookup** — a structured Discogs search that answers "do I already own this pressing?" and "is this a fair price?" while standing in a shop (§5.7, §7.7, §10a).
 
-Plus a **suggestion engine** that recommends records to acquire from the relationships in the collection: influence edges the user has asserted, shared band membership imported from MusicBrainz, and genre overlap (§9).
+Plus a **suggestion engine** that recommends records to acquire from the relationships in the collection: influence edges the user has asserted and shared band membership imported from MusicBrainz (§9). A genre-overlap term is specified and unbuilt, because nothing populates its source (§9.1a).
 
 An earlier version of this spec named a force-directed network graph and a derived shelf *ordering* as the two signature features. Both were built and retired at step 13; §8 records why, and §10b is what replaced them. The relationship data they read from is untouched and still feeds §9.
 
@@ -255,6 +255,10 @@ An earlier version of this line said they power the network graph. That screen i
 **`want_list_genres`** — `(want_list_id, genre_id)`
 **`artist_genres`** — `(artist_id, genre_id)`
 **`record_tags`** — `(record_id, tag_id)`
+
+**`artist_genres` has never held a row.** It has a schema, cascade rules, a `REFERRERS` entry, conformance tests and merge handling — all correct, none of which check that anything writes to it. `mergeArtists`' handling of it was found broken during a review, diagnosed, fixed and pinned with a test, for rows that cannot exist; the test builds its own fixture and genuinely proves the code works, and no test can notice that the production path feeding it has no source.
+
+Recorded here rather than only in NOTES because it is a fact about the schema: **a table can read as populated because everything around it behaves as though it is.** The dead-code sweep finds a module with no callers by following imports; a table with no writers is not findable that way. The check is whether a write path exists, not whether rows are present — a table can be legitimately empty and fully wired.
 
 **Cascade rule for junction tables — directional, not blanket.** A junction row has two FKs and they behave differently:
 
@@ -665,7 +669,7 @@ Both features in this section are gone. They are recorded here rather than delet
 
 **Why.** It drew a picture that told the user what they already knew. The collection's structure — punk things, rock things, two singletons — was legible from the shelf without a force layout, and the screen's real value turned out to be the data behind it, which §9 reads directly.
 
-**What survives, and where it went.** The tables are untouched and still written correctly: `artist_memberships`, `artist_genres`, `artist_influences`, `record_genres`. Three rules moved rather than died:
+**What survives, and where it went.** The tables are untouched: `artist_memberships`, `artist_influences` and `record_genres` are all still written correctly. `artist_genres` is the exception and always was — it has never held a row (§4.3), which the graph's retirement did not cause and did not reveal. Three rules moved rather than died:
 
 - **Genre grouping and its tie-break** — an artist or record is attributed to the top-level ancestor of the genre with the most of its owned records, ties broken by genre name so the same collection always groups the same way. This was the graph's colouring rule and is now the shelf's ordering rule; it is stated in §10b, which is the section that uses it.
 - **Sparseness is not disguised.** A collection of unrelated artists is genuinely a scatter, and a view that implied structure the data lacks would be the confidently-misleading shape CLAUDE.md §8 forbids. Restated in §10b rather than referenced from here.
@@ -691,7 +695,7 @@ Both features in this section are gone. They are recorded here rather than delet
 
 `GET /api/suggestions`. Pure computation, no external calls.
 
-**It reads three tables and no screen.** `artist_influences` (edges the user asserted), `artist_memberships` (lineups imported from MusicBrainz, §4.3), and `record_genres` rolled up through the hierarchy (§7.1). Earlier versions of this spec called this "graph-based" after §8.1's visualization; that screen is retired (§8) and the relationships it drew are not. The name changed so that nothing sends a reader looking for a graph to find one.
+**It reads two tables and no screen.** `artist_influences` (edges the user asserted) and `artist_memberships` (lineups imported from MusicBrainz, §4.3). An earlier version read `record_genres` too, for a genre term now recorded at §9.1a as awaiting a source. Earlier versions of this spec called this "graph-based" after §8.1's visualization; that screen is retired (§8) and the relationships it drew are not. The name changed so that nothing sends a reader looking for a graph to find one.
 
 For each artist **not** in the collection but reachable from one that is — appearing in `artist_influences` linked to an owned artist, or sharing a member with one through `artist_memberships` (§4.3) — compute:
 
@@ -699,10 +703,12 @@ For each artist **not** in the collection but reachable from one that is — app
 score =
     (2.0 × number of owned artists directly linked, weighted by edge strength)
   + (1.5 × number of owned artists sharing members, weighted by people in common)
-  + (1.5 × genre overlap with the user's top 3 genres by owned count)
-  + (1.0 × label overlap with labels appearing 2+ times in the collection)
   - (3.0 if already on the want-list)   // suppress, don't hide
 ```
+
+**Two terms are specified below and not yet scored, because nothing populates their source.** Measured, not assumed: `artist_genres` has never held a row, and no `artist_labels` table exists. Both are recorded at §9.1a with what each would need.
+
+What remains is a **relationship engine**: an artist is suggested because you asserted an influence edge to them, or because they share members with a band you own. That is scene adjacency, and it is what the data actually supports today. §9.2's LLM gap analysis is where genre-aware suggesting lives, and it is unaffected — it summarises the collection from `record_genres`, which is populated.
 
 **The two link terms are separate on purpose, and must not be merged.** An `artist_influences` edge carries a 1–5 `strength` the user typed; a shared membership carries a count of people imported from MusicBrainz. Merging them into one link total requires an exchange rate between a judgement and a measurement — a number nothing in the collection can supply, which would be guessed once and cited as settled thereafter. §4.3 already forbids the version of this that writes membership into `artist_influences`; scoring them as one term is the same conflation one layer up.
 
@@ -710,13 +716,29 @@ Merging also destroys the distinction the membership import was built to expose.
 
 **Weight the shared-member term by people in common**, not by whether any exist: the count is the signal. Ties break on artist name, so the same collection scores the same way on every call.
 
-**"Genre overlap" is a count, not a flag.** For each artist, the number of their owned records tagged with each genre, rolled up through the hierarchy per §7.1 and derived at query time from `record_genres` — never stored. Ties break on genre name so the same collection scores the same way on every call. This is the aggregate §8.1's retired `has_genre` link computed; it is specified here because §9 is now its only consumer.
-
-Return the top `limit` sorted descending, each with a **reason string** assembled from which terms contributed — e.g. "Linked to 3 artists you own; shares 4 members with Discharge; shares the UK82 genre; on Clay Records, a label you own 4 records from."
+Return the top `limit` sorted descending, each with a **reason string** assembled from which terms contributed — e.g. "Linked to 3 artists you own; shares 4 members with Discharge."
 
 The two link terms appear as separate clauses, naming which one fired. "Linked to 3 artists you own" and "shares 4 members with Discharge" are different claims about different evidence, and a reader who can see which one produced a suggestion can judge it; a merged clause asks them to trust an arithmetic they cannot see.
 
+The example previously continued *"; shares the UK82 genre; on Clay Records, a label you own 4 records from"* — clauses from the two terms now at §9.1a. They return when their terms do.
+
 Suggestions must be explainable. Never return a bare score with no reasoning.
+
+### 9.1a Two terms awaiting a source
+
+Both were specified in §9.1 and are not scored. Each is recorded with what it needs, because the term is right and the data is missing rather than the reverse.
+
+**Genre overlap — `1.5 × overlap with the user's top 3 genres by owned count`.** "By owned count" ranks the top 3; it does not say whose records supply the overlap. The overlap is between the candidate and those three genres, and a candidate's genres are a property of the artist — `artist_genres` (§4.3) — not of records they do not own. §9.1's own example reason string says *"shares the UK82 genre"*, a claim about an artist.
+
+**Trigger: when anything populates `artist_genres`.** The obvious candidate is the Discogs import, whose release payloads carry genres and styles.
+
+**But that is a measurement before it is an implementation**, and the measurement comes first. Discogs genres are a property of a *release*. Deriving "this artist is a UK82 artist" from one release's tags is a claim about an artist assembled from claims about records, which is the move §4.3 already refuses when it declines to write membership into `artist_influences` — MusicBrainz has no influence relationship, and mapping one onto the other would fill a 1–5 strength with a number nobody measured. Whether a release's genres honestly characterise its artist is answerable against real payloads and must be answered before this is built. If the answer is no, the term needs a different source or it does not ship.
+
+**Label overlap — `1.0 × overlap with labels appearing 2+ times in the collection`.** Needs an artist-to-label relationship, which does not exist in §4 in any form.
+
+**Trigger: a schema decision, taken deliberately, not as a side effect of building the term.** The same question applies harder than for genres: a label is a property of a *pressing* (§4.2), and an artist releasing once on Clay does not make them a Clay artist. A table asserting otherwise would be the app inventing a fact about an artist from a fact about a record.
+
+**Neither term is deleted, because neither is wrong.** They are claims this app cannot currently substantiate, and §8's rule is that an unsubstantiated claim is not made quietly.
 
 ### 9.2 LLM-assisted (on-demand)
 
@@ -990,7 +1012,7 @@ The gatefold's four texture slots exist in the schema (§4.2) and are wired thro
 
 The shelf replaces §8.2's shelf ordering. That feature proposed a physical filing order derived from community detection over the graph, and it needed three things the collection does not have: enough records for clusters, a built-out genre hierarchy, and hand-entered influence edges. Its output for a real collection today is "punk things, rock things, two singletons" — which a genre sort gives for free, without a tuning knob no test can validate.
 
-`/graph` is likewise retired as a screen. The tables behind it — `artist_memberships`, `artist_genres`, `artist_influences`, `record_genres` — are untouched, still written on every import, and feed §9's suggestions, which is what they were actually useful for. Drawing them added a picture that told the user what they already knew.
+`/graph` is likewise retired as a screen. The tables behind it — `artist_memberships`, `artist_influences`, `record_genres` — are untouched, still written on every import, and feed §9's suggestions, which is what they were actually useful for. (`artist_genres` was drawn by the graph too and has never held a row; see §4.3.) Drawing them added a picture that told the user what they already knew.
 
 Note that `has_genre` was **not** among the survivors, though an earlier version of this paragraph listed it. It was never a table: it was an artist-to-genre count derived inside `buildGraph` on every call, and it was deleted with it. §9.1 specifies the equivalent aggregate for the one consumer that still wants it.
 
@@ -999,7 +1021,9 @@ Note that `has_genre` was **not** among the survivors, though an earlier version
 ## 11. Testing
 
 ### Unit (Vitest)
-- Suggestion scoring function — every scoring term independently, plus the want-list suppression case. The two link terms are tested separately, including a case where an artist is reached by shared membership alone and one where it is reached by an influence edge alone: a single fixture carrying both cannot tell a correct implementation from one that merged them.
+- Suggestion scoring function — every **scored** term independently, plus the want-list suppression case. The two link terms are tested separately, including a case where an artist is reached by shared membership alone and one where it is reached by an influence edge alone: a single fixture carrying both cannot tell a correct implementation from one that merged them.
+
+  The genre and label terms are unbuilt (§9.1a) and have no tests. **Do not write tests asserting they return zero** — a test pinning an unsourced term to zero would pass for the wrong reason and would keep passing after a source arrived.
 - **Shelf ordering determinism** — the same collection produces byte-identical order across repeated runs, including the tie-break chain (§10b).
 - **Shelf genre attribution** — a record carrying several genres appears exactly once, under the correct top-level ancestor, with ties broken by name; a record with no genre files last.
 - **Spine colour** — average-in-linear-light against known inputs, alpha weighting, and the null case (no cover, or a fully transparent image) returning absence rather than black.
