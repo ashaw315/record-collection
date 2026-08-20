@@ -1,15 +1,20 @@
 import Link from 'next/link';
 import { AppHeader } from '@/components/AppHeader';
 import { suggestions } from '@/lib/db/queries/suggestions';
+import { isAnthropicConfigured } from '@/lib/llm/client';
+import { GapAnalysis } from './GapAnalysis';
 
 /**
  * SPEC.md §10 `/suggestions`: "Relationship-based list with reasons, always
  * present. Separate 'Ask Claude for gap analysis' button for §9.2.
  * Add-to-want-list on each."
  *
- * **The gap-analysis button is not here yet.** §9.2 is a later unit and a button
- * calling an endpoint that does not exist is a dead control — worse than a
- * missing one, because it reads as broken rather than as unbuilt.
+ * **The gap-analysis button is here and is deliberately separate**, per §10's
+ * "Separate 'Ask Claude for gap analysis' button". Separate because the two
+ * halves make different claims: §9.1's list is computed from the user's own
+ * data and is always right about what it says, while §9.2's is a model's
+ * opinion about music. Mixing them into one ranked list would present both
+ * with the same authority.
  *
  * **No header link points here, by decision** (NOTES, step 14 unit 3). Measured
  * at 390px, the nav already hides two of its five links behind a scroll with no
@@ -50,6 +55,10 @@ export default async function SuggestionsPage() {
           Artists you don&rsquo;t own, reached from ones you do — through influences you&rsquo;ve
           recorded, or a shared line-up.
         </p>
+
+        <div className="mb-6">
+          <GapAnalysis configured={isAnthropicConfigured()} />
+        </div>
 
         {rows.length === 0 ? (
           /**

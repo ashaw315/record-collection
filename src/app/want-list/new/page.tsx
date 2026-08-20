@@ -87,7 +87,35 @@ export default async function NewWantListItemPage({
       : ((await suggestions({ limit: 200 })).find((row) => row.artistId === suggestedArtistId)
           ?.reasons ?? []);
 
+  /**
+   * `?artist=` and `?title=` — the prefill from §9.2's gap analysis.
+   *
+   * FREE TEXT, not ids, and that is forced by what an LLM suggestion is: the
+   * model names a record, and the artist may be one this collection has never
+   * heard of. §5.7's rule still holds — the app supplies material, the user
+   * supplies judgement — so the title fills in and the artist is MATCHED
+   * against existing rows rather than created.
+   *
+   * An unmatched name reuses the same affordance the Discogs prefill uses
+   * ("No artist named X in your collection yet"), rather than inventing a
+   * second way to say the same thing. §10's rule for the want-list form:
+   * "Reference rows are matched, never created: a prefill is not a commitment,
+   * and an artist created for an abandoned form is debris nothing points at."
+   */
+  const suggestedArtistName = typeof raw.artist === 'string' ? raw.artist.trim() : undefined;
+  const suggestedTitle = typeof raw.title === 'string' ? raw.title.trim() : undefined;
+
   const reference = await loadReferenceData();
+
+  const matchedByName =
+    suggestedArtistName === undefined
+      ? undefined
+      : reference.artists.find(
+          (candidate) => candidate.name.toLowerCase() === suggestedArtistName.toLowerCase(),
+        );
+
+  const unmatchedArtist =
+    suggestedArtistName !== undefined && matchedByName === undefined ? suggestedArtistName : null;
 
   return (
     <>
@@ -136,7 +164,11 @@ export default async function NewWantListItemPage({
         <WantListForm
           initial={
             prefill === null
-              ? { ...BLANK, artistId: suggestedArtistId ?? '' }
+              ? {
+                  ...BLANK,
+                  title: suggestedTitle ?? '',
+                  artistId: suggestedArtistId ?? matchedByName?.id ?? '',
+                }
               : {
                   ...BLANK,
                   title: prefill.values.title ?? '',
@@ -146,7 +178,7 @@ export default async function NewWantListItemPage({
           }
           artists={reference.artists}
           labels={reference.labels}
-          unmatched={prefill?.unmatched}
+          unmatched={prefill?.unmatched ?? { artist: unmatchedArtist, label: null }}
         />
       </main>
     </>

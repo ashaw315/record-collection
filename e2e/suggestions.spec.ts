@@ -145,3 +145,57 @@ test('an artist with no link to the collection is not suggested', async ({ page 
   await expect(page.getByText(`Nobody ${suffix}`)).toHaveCount(0);
   expect(stranger.id).toBeTruthy();
 });
+
+test('a gap-analysis prefill fills the title and names an artist it cannot match', async ({
+  page,
+}) => {
+  await login(page);
+  const suffix = `s8ai-${Date.now()}`;
+
+  /**
+   * §9.2's suggestions name RECORDS, and the artist may be one this collection
+   * has never heard of — which is the case a uuid-only prefill would silently
+   * drop, filling in nothing and explaining nothing.
+   *
+   * Exercised through the URL the gap-analysis button builds rather than
+   * through the model: the LLM call is out of scope for an E2E run (§11 forbids
+   * live external calls), and what needs proving here is the LANDING, not the
+   * generation.
+   */
+  await page.goto(
+    `/want-list/new?artist=${encodeURIComponent(`Nobody Has This Band ${suffix}`)}&title=${encodeURIComponent(`Some Record ${suffix}`)}`,
+  );
+
+  // The title prefills — it is free text and needs no match.
+  await expect(page.getByLabel('Title')).toHaveValue(`Some Record ${suffix}`);
+
+  /*
+   * The artist does NOT silently prefill as blank: the form says which name it
+   * could not match, reusing the affordance the Discogs prefill already uses.
+   * §10: "When a Discogs value matches no existing row, leave the field empty
+   * and name what could not be found."
+   */
+  await expect(page.getByTestId('unmatched-artist')).toContainText(
+    `Nobody Has This Band ${suffix}`,
+  );
+});
+
+test('a gap-analysis prefill matches an artist the collection already has', async ({ page }) => {
+  await login(page);
+  const suffix = `s8aim-${Date.now()}`;
+  const name = `Discharge ${suffix}`;
+
+  const artist = await post(page, '/api/artists', { name });
+
+  await page.goto(
+    `/want-list/new?artist=${encodeURIComponent(name)}&title=${encodeURIComponent(`Why ${suffix}`)}`,
+  );
+
+  /*
+   * Matched by NAME, never created — §10's rule for this form. The vacuity
+   * guard for the test above: without this, a form that matched nothing ever
+   * would pass that one by always showing the unmatched message.
+   */
+  await expect(page.getByLabel('Artist')).toHaveValue(artist.id);
+  await expect(page.getByTestId('unmatched-artist')).toHaveCount(0);
+});

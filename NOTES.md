@@ -10354,3 +10354,131 @@ is the only time this table has an opinion about and the column the window
 reads; a `created_at` would be a second answer to the same question, and an
 `updated_at` would imply a row that changes, which these never do. That is what
 makes the window a WHERE clause rather than a job.
+
+## Step 14 unit 4b — §9.2, and what the disclosure boundary actually looks like
+
+- **The exclusion is asserted against the SERIALISED payload, never field by
+  field.** Nine sentinels planted across `purchase_price`, `purchase_date`, store
+  name, journal entry, record notes, `matrix_runout`, `best_dig_notes`,
+  `max_price` and catalogue number; the test greps the whole JSON string. A
+  field-by-field check tests the fields the author remembered — this one covers a
+  column added next year by someone who never opens the test.
+
+  Paired with its inverse, or it is vacuous: "nothing leaked" is trivially true
+  of a builder returning `{}`. M25 (empty payload) fails 3 tests.
+
+- **Two fields excluded for a reason that is NOT sensitivity**, worth recording
+  because the obvious framing misses them: condition grades and `year_pressed`
+  are harmless to disclose, and they still do not go. §9.2 asks for gap analysis
+  — what is MISSING — so they fail "is it needed" before reaching "is it
+  sensitive". The narrower question is the one that keeps a payload small.
+
+- **The genre vocabulary is what makes the response checkable.** A29d constrains
+  `genre` to the user's own names, so a model that flattens UK82 into "punk"
+  produces a name the hierarchy does not contain — and §9.2's genre-accuracy
+  requirement stops being a hope about prompt-following and becomes a validation.
+  That is the single sharpest thing in this unit.
+
+- **The scenes are NOT hard-coded in the prompt.** CLAUDE.md §8 names five (UK
+  first-wave punk, UK82, US hardcore, horror punk, psychobilly) as EXAMPLES of a
+  distinction that matters. A prompt listing them would flatten a collection
+  organised around dub or post-punk just as badly, in the other direction. The
+  hierarchy the user actually built is the vocabulary.
+
+- **The model choice is recorded as an argument, not a string.** `claude-opus-5`
+  is bought for musical reasoning, at ten short requests an hour for one person —
+  and the source says what evidence should move it: not "is Opus expensive" but
+  "does a cheaper model keep UK82 and US hardcore apart", measurable against real
+  suggestions.
+
+# Three distinctions this unit had to keep apart, and they are all one shape
+
+Absent-versus-unknown, three times in one feature:
+
+| Distinction | Collapsing it says |
+|---|---|
+| unreadable vs empty response | "your collection has no gaps" when the answer was truncated |
+| dropped suggestions vs none | a shorter list, with the model's error invisible |
+| unconfigured vs failed | "Internal server error" for a missing env var |
+
+Each has its own status code (502 / 200-with-count / `notConfigured`), and each
+is mutation-covered. **The count is what carries the third one**: A29d requires
+`dropped` to reach the UI, so the user sees "2 suggestions were discarded for
+naming genres outside your collection" rather than a list that is quietly short.
+
+## The fence-stripper looked like dead code and was not
+
+Deleting the markdown-fence regex passed all 19 parse tests — brace-slicing from
+the first `{` to the last `}` handles every fenced case those tests use. It read
+exactly like an unreachable branch.
+
+**It is load-bearing for prose CONTAINING A BRACE.** A model signing off with
+"Hope that helps! {smile}" makes the last `}` the sign-off's, and brace-slicing
+fails on a response that was perfectly good. Measured both ways — probe, then two
+committed tests — before concluding either direction. The mutation now fails.
+
+**The general form: "no test catches this mutation" has two explanations** — the
+tests are thin, or the code is dead — and they need opposite fixes. Finding the
+input where the two implementations diverge is what tells them apart, and it is
+the same move as unit 2's normalizer, where real data had to be found rather than
+constructed.
+
+## A partial mutation understates coverage and reads exactly like a gap
+
+Recorded because it cost a wrong conclusion in this session. A `sed` replacing
+`return { ok: false, ... }` matched only the 4-space-indented occurrence, leaving
+a differently-indented one intact. The half-mutation was caught by ONE test, and
+I reported that as thin coverage. Applied completely, it is caught by SIX.
+
+**Check that a mutation actually changed everything it names before drawing a
+conclusion from what survived.** Same family as the hook that never fired: an
+instrument reporting on a mutation that did not fully happen.
+
+## The LLM prefill needed free text, and the affordance already existed
+
+§9.1's suggestions carry an artist ID; §9.2's carry a NAME the model produced,
+and the collection may have no such artist. A uuid-only prefill silently fills in
+nothing and explains nothing — the invisible-failure shape.
+
+`/want-list/new` now takes `?artist=` and `?title=` as free text, matches the
+artist by name, and **reuses the Discogs prefill's `unmatched` affordance** ("No
+artist named X in your collection yet") rather than inventing a second way to say
+the same thing. §10's rule holds either way: reference rows are matched, never
+created, because "an artist created for an abandoned form is debris nothing
+points at".
+
+**Mutations, all caught:**
+
+| # | Mutation | Tests failed |
+|---|---|---|
+| M21 | leak `purchase_price` | 1 |
+| M22 | leak the store name | 1 |
+| M23 | send artist uuids | 1 |
+| M24 | `COUNT(DISTINCT r.id)` -> `COUNT(*)` | 1 |
+| M25 | empty payload (vacuity) | 3 |
+| M26 | malformed collapses to empty | 6 |
+| M27 | whole-response rejection on one bad item | 6 |
+| M28 | drop silently, no count | 6 |
+| M29 | skip genre validation | 2 |
+| M30 | no fence stripping | 2 (after the probe became a test) |
+| M31 | drop the genre vocabulary from the prompt | 1 |
+| M32 | drop the no-flattening instruction | 1 |
+| M33 | unreadable reported as empty | 1 |
+| M34 | `isAnthropicConfigured` ignores blank keys | 2 |
+| M35 | widen the vocabulary (skip validation) | 1 |
+| M36 | claim AFTER the call | 1 |
+| M37 | unreadable reported as an empty 200 | 1 |
+| M38 | refuse with 500 rather than 429 | 1 |
+| M39 | drop `retryAt` | 1 |
+| M40 | drop the `dropped` count | 1 |
+
+## OBSERVATION (out of scope): npm audit reports 5 pre-existing vulnerabilities
+
+Noticed when installing `@anthropic-ai/sdk` — **not introduced by it**. 4
+moderate, 1 high, the high being `nanoid` (GHSA-2v37-7h3g-55p8, a custom
+generator looping when size is zero). `npm audit fix` claims to resolve them
+without breaking changes.
+
+Not acted on: it is unrelated to this unit and CLAUDE.md §4 says record rather
+than fix mid-stream. **Trigger: R6, deploy readiness** — that review already owns
+the question of what ships to a host somebody else runs.

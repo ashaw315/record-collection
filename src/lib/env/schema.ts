@@ -70,8 +70,13 @@ export const envSchema = z.object({
    *
    * The cost is that each absence must be detected where it is USED, or it
    * surfaces as "Internal server error" for what is a deployment problem.
-   * `isBlobConfigured()` does that for uploads; step 12 owes the same for
-   * `ANTHROPIC_API_KEY`.
+   * `isBlobConfigured()` does that for uploads, and `isAnthropicConfigured()`
+   * does it for §9.2's gap analysis and §10b's snippet.
+   *
+   * (This previously read "step 12 owes the same for `ANTHROPIC_API_KEY`" —
+   * a debt assigned to a step that was retired at step 13 and will never
+   * arrive, which is the untriggered-deferral shape in a source file. Step 14
+   * paid it; the sentence now names the function rather than a future.)
    *
    * (This comment previously read "not required until build steps 12 and 8
    * respectively" — true when written, false once step 8 shipped. A dated claim
