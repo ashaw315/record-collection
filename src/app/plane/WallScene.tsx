@@ -8,6 +8,7 @@ import {
   Color,
   DirectionalLight,
   Mesh,
+  MeshBasicMaterial,
   MeshStandardMaterial,
   PerspectiveCamera,
   PlaneGeometry,
@@ -55,6 +56,7 @@ import {
 } from './record-state';
 import { createWidthWatcher } from './wall-resize';
 import { RESTING_ROTATION_Y } from './spine-facing';
+import { type Surface, surfaceKind } from './surface-kind';
 
 /**
  * §10b's wall and its records, in ONE scene.
@@ -447,10 +449,34 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
        * A record with no cover still gets the plain sleeve in its own spine
        * colour: §10b's "an honest absence, not a gap in the wall".
        */
-      const cover = new MeshStandardMaterial({ color: new Color(colour), roughness: 0.62 });
+      /**
+       * **What a surface IS decides whether light touches it**, and
+       * `surface-kind.ts` is where that question is answered. Nothing here
+       * picks a material without first saying what it is drawing.
+       *
+       * Photographs of artwork — cover, back, and the gatefold leaves — are
+       * unlit. §10b's rule about spines applies to them directly: a spine is a
+       * claim about a cover, and a cover face is a claim about the artwork.
+       * Lighting a photograph adds light that was never in the sleeve, the same
+       * class as the saturation boost unit 1a declined.
+       *
+       * Surfaces — the plain-sleeve fallback, the record's edges, the spines,
+       * the shelves and the lip — are lit, and NEED to be. Unit 17 found the
+       * fallback's edge only separates tonally from its face because it is lit.
+       */
+      const materialFor = (surface: Surface, url: string | null) => {
+        if (url === null || surfaceKind(surface) === 'lit') {
+          /*
+            A record with no cover gets the plain sleeve in its own spine
+            colour: §10b's "an honest absence, not a gap in the wall". A surface
+            rather than a photograph, so it is lit.
+          */
+          return new MeshStandardMaterial({ color: new Color(colour), roughness: 0.62 });
+        }
 
-      if (record.coverUrl !== null) {
-        new TextureLoader().load(record.coverUrl, (texture) => {
+        const material = new MeshBasicMaterial({ color: 0xffffff });
+
+        new TextureLoader().load(url, (texture) => {
           if (disposed) {
             texture.dispose();
             return;
@@ -468,19 +494,31 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
           texture.offset.set(uv.offsetX, uv.offsetY);
 
           disposables.push(texture);
-          cover.map = texture;
-          /*
-            White, so the texture is shown rather than tinted by the spine
-            colour it was falling back to. Unit 15 settled that a lit material
-            puts the light between the source image and the pixels; a coloured
-            base puts a filter there too.
-          */
-          cover.color.set(0xffffff);
-          cover.needsUpdate = true;
+          material.map = texture;
+          material.needsUpdate = true;
           loop.markDirty();
         });
-      }
-      disposables.push(plain, faced, cover);
+
+        return material;
+      };
+
+      const cover = materialFor('cover', record.coverUrl);
+      const backFace = materialFor('back', record.backUrl);
+
+      /*
+        **The gatefold leaves have no geometry yet, and the rule is wired
+        anyway.** The slots are real — `gatefoldLeftUrl` and `gatefoldRightUrl`
+        come off the query — and leaving them for the unit that builds the
+        opening is exactly the "deferral with no home" NOTES records: the cover
+        itself sat plain for six units behind a comment saying textures were
+        later. Building them here costs two texture loads on records that have
+        them and settles the material question before it can be re-litigated.
+      */
+      const gatefoldLeft = materialFor('gatefold_left', record.gatefoldLeftUrl);
+      const gatefoldRight = materialFor('gatefold_right', record.gatefoldRightUrl);
+      disposables.push(gatefoldLeft, gatefoldRight);
+
+      disposables.push(plain, faced, cover, backFace);
 
       /**
        * BoxGeometry material order is [+x, -x, +y, -y, +z, -z].
@@ -493,7 +531,7 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
        *
        * `cover` is the front face, which the quarter turn reveals.
        */
-      const mesh = new Mesh(spineGeometry, [faced, plain, plain, plain, cover, plain]);
+      const mesh = new Mesh(spineGeometry, [faced, plain, plain, plain, cover, backFace]);
       /*
         **A record standing edge-on**, not a slab the width of a spine. Width
         and height are the record; depth is the sleeve's thickness. Turned

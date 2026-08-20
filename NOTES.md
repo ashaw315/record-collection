@@ -9554,3 +9554,30 @@ sleeves, which are `MeshStandardMaterial` and should respond to light.
 
 **Not applied in this commit**: that is a design decision about what a cover is,
 not a defect fix, and it changes how every cover renders.
+
+## The instrument reported in a different colour space than the source
+
+`sharp.stats()` returns channel means in **linear** space. The screenshot bytes
+and the source PNG are both sRGB. Comparing one against the other reported the
+cover rendering at **0.52x source** — 24.3 / 21.0 / 18.0 against 47 / 40 / 31 —
+which is not a plausible-looking error but a very plausible one: a near-uniform
+halving reads exactly like a gain somewhere in the pipeline.
+
+It survived two rounds of looking for that gain in the renderer. What ended it
+was sampling a single pixel: `[47, 40, 31]`, identical to source. The bytes had
+been correct the whole time.
+
+Two lessons, and the second is the one that generalises:
+
+1. **Compute the mean from the raw bytes.** `stats()` is a different question
+   than the one being asked.
+2. **A wrong instrument produces a consistent, reproducible, mutation-sensitive
+   number.** This one would have passed a mutation test — reverting to a lit
+   material moved it — so "the assertion is sensitive to the code" is not
+   evidence the assertion measures what it names. Sample one pixel by hand
+   before trusting an aggregate.
+
+Related: the same session's first crop error (a centred sixth of the frame
+reaching onto the dimmed wall) produced *the same number*, 24.3, by an entirely
+different mechanism. Two independent instrument faults agreeing is what made it
+convincing.

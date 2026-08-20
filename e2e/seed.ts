@@ -106,6 +106,14 @@ export async function seedImage(input: {
   recordId: string;
   imageType?: 'cover' | 'back' | 'label' | 'matrix' | 'other' | null;
   caption?: string | null;
+  /**
+   * A specific image, when the test is about the PIXELS rather than about a row
+   * existing. The default is one white pixel, which is fine for "the gallery
+   * shows it" and useless for "the render matches the source" — a colour
+   * comparison against white cannot distinguish a correct render from one that
+   * has blown out.
+   */
+  url?: string;
 }): Promise<string> {
   const db = getTestDb();
 
@@ -119,7 +127,7 @@ export async function seedImage(input: {
     .insert(images)
     .values({
       recordId: input.recordId,
-      url: onePixelPng,
+      url: input.url ?? onePixelPng,
       imageType: input.imageType ?? null,
       caption: input.caption ?? null,
     })
