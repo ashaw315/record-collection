@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { deleteRecordsByArtist } from './cleanup';
 
 /**
  * The wall in the scene, at `/plane`.
@@ -29,9 +30,27 @@ async function login(page: Page) {
   await expect(page).toHaveURL('/');
 }
 
+/**
+ * Every artist this file seeds, cleaned up in `afterEach`.
+ *
+ * **A hook rather than a `finally` at each call site**, because `seed()` is
+ * called from sixteen tests and the one that gets forgotten is the one that
+ * matters. The hook also runs after a FAILING test, which is the property NOTES
+ * requires: a spec seeding bulk data must clean up even when it fails, or one
+ * failure cascades into every later spec and buries the original cause.
+ */
+const seededArtists: string[] = [];
+
+test.afterEach(async ({ page }) => {
+  for (const artistId of seededArtists.splice(0)) {
+    await deleteRecordsByArtist(page, artistId);
+  }
+});
+
 async function seed(page: Page, count: number) {
   const artist = await page.request.post('/api/artists', { data: { name: `Wall-${suffix()}` } });
   const artistId = (await artist.json()).id as string;
+  seededArtists.push(artistId);
 
   const titles: string[] = [];
   for (let i = 0; i < count; i += 1) {

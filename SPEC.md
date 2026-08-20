@@ -1158,7 +1158,7 @@ Mock the Discogs, MusicBrainz and Anthropic APIs in tests. Never hit live extern
     Then build the assignment UI. **The importer does not assign slots automatically** — Discogs' types cannot distinguish a left leaf from a right leaf from a back cover, and a wrong guess opens a hinge onto artwork that is not the inner sleeve, which is the invented-stand-in failure §10b's strictest rule forbids. The add-record form surfaces the release's images as candidates and the user assigns them, the same shape §5.7 already uses for every other field: Discogs supplies the material, the user supplies the judgement.
 
     A single wide scan of an open gatefold cannot fill two square slots (A21b). It goes to the gallery as `other`, and a user who wants the hinge photographs the sleeve themselves. That is honest — splitting a scan down the middle and hoping the seam lands right is not.
-15. Mobile pass across all screens. E2E #10. **Unit 1 is per-worker E2E test-data isolation** — see below.
+15. Mobile pass across all screens. E2E #10. **Unit 1 was the E2E flake, fixed by per-spec cleanup rather than the per-worker isolation originally prescribed** — see below.
 16. Vercel deploy config + cron for price refresh.
 
 **Why 10 and 11 come before 12.** The original order put the graph immediately after the stats screen, and it read its edges from `artist_influences` — a table nothing populated automatically. Built in that order it would have rendered unconnected dots, with no way to tell whether the layout or the clustering was at fault. Seeding first made it verifiable, and what that verification eventually showed was that the screen was not worth keeping (§8) — which is a better outcome than shipping it blind. Step 11's membership data survives the screen and now feeds §9. Market data moved ahead of both because it has no dependency at all and answers the question the app exists for.
@@ -1198,13 +1198,21 @@ regression from noise is unavailable exactly where it is needed.
 Measured during R5's remediation, at workers=2: three full runs in five produced
 hard failures (retries exhausted, not flake) — seven, five and two — every one
 failing at login before reaching an assertion, in specs unrelated to the change
-under test. 12 of the 14 were `[mobile]` and 2 were `[chromium]`, so the skew is
-large but the contention is not confined to one project: the shared resource is
-the single test database every worker uses. The recorded baseline for the deferral was "1 flaky in 5 runs" with no
-hard failures, and its stated trigger was "revisit if the rate climbs".
+under test. 12 of the 14 were `[mobile]` and 2 were `[chromium]`.
 
-Reducing workers was already measured and is insufficient: it makes collisions
-rarer, not impossible.
+**The diagnosis, done in step 15 unit 1, found a different cause than every
+earlier entry assumed.** Every failure sat in the last quarter of the run —
+earliest 194 of 262, none in the first 190, across roughly 800 executions.
+`globalSetup` truncates once per run and nothing cleaned up after each spec, so a
+run accumulated 724 records; `/` is a server component awaiting `shelfRecords`,
+`records` and `facets`, and every spec's `login()` ends by waiting for that
+render. Late in a run it exceeds the 5s default.
+
+So it was accumulation WITHIN a run, not contention between workers — and
+per-worker isolation would not have fixed it, because one worker accumulates just
+as fast. After per-spec cleanup in an `afterEach`, four valid runs at
+`--retries=0` produced ONE failure: a pre-existing hydration flake unrelated to
+load. Per-worker isolation is deferred with a trigger (NOTES).
 
 Each step should end with its tests green before moving on.
 

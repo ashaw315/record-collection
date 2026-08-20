@@ -5334,6 +5334,182 @@ longer exists, or that exists differently." This is that question asked
 mechanically instead of by reading, and R7 is where the answer is worth the
 tooling. Recorded here so R7 inherits the mechanism rather than rediscovering it.
 
+## The E2E flake is ACCUMULATION, not worker contention — the prescription was wrong
+
+Diagnosed 2026-08-20, step 15 unit 1. **This overturns a deferral carried through
+eleven sightings**, and the prescription it carried would have looked like a fix
+while leaving the failures in place.
+
+### What NOTES said, and why it was wrong
+
+Every entry above says the shared resource is "test data in the one database
+every worker uses" and prescribes **a schema or database per Playwright worker**.
+That was written from the SYMPTOM — failures move between runs, so something must
+be shared — and the diagnosis was never done, only mitigated by halving the
+workers.
+
+**Per-worker isolation would not have fixed this.** The cause is accumulation
+WITHIN a run, and one worker alone accumulates just as fast.
+
+### The measurement
+
+**Every failure sits in the last quarter of the run.** Across three full runs,
+by test index out of 262:
+
+| run | failing indices |
+|---|---|
+| F2 run 1 | 222 228 230 231 232 234 236 241 243 254 256 265 267 268 269 270 271 |
+| F2 run 2 | 220 222 231 233 238 239 240 246 256 258 267 268 269 |
+| 13c unit 1 | 194 201 205 206 207 208 213 |
+
+**Earliest failure: 194 of 262. Not one failure in the first 190 tests, across
+roughly 800 executions.** That rules out per-test contention outright — a
+collision between two workers would strike anywhere, and this strikes only late.
+It also crosses projects (run 3's were all `[chromium]`), so it is not a mobile
+property either.
+
+**The cause.** `globalSetup` truncates ONCE per run and nothing cleaned up after
+each spec, so a full run accumulated **724 records** — measured directly against
+the test database after a run. `/` is a server component that awaits
+`shelfRecords`, `records` and `facets` before responding, and every spec's
+`login()` ends with `expect(page).toHaveURL('/')`, which waits for that render.
+Early in a run it is fast; by test ~200 it exceeds the 5s default and the login
+"fails" — in a spec that never got as far as its own assertions.
+
+So the failure is reported against whichever spec happened to be running when the
+collection got big enough, which is exactly why the failure SET moved between
+runs and read as contention.
+
+### Ruled out by measurement, not by argument
+
+- **bcrypt.** Cost 10, measured at **68ms** per compare — ~74 concurrent logins
+  to exhaust a 5s timeout. At two workers it is not the mechanism.
+- **`The destination stream closed early` / `Error: aborted`.** Present in the
+  logs, but occurring during PASSING tests, so incidental.
+
+### The fix, and what it measured
+
+`e2e/cleanup.ts` deletes the records a spec created, called from an `afterEach`
+rather than a `finally` at each of sixteen call sites — the hook cannot be
+forgotten and still runs after a FAILING test, which is NOTES' requirement that
+bulk-seeding specs clean up on failure so one failure does not cascade.
+
+Records deleted BEFORE the artist: §7.4 refuses to cascade a reference row in use
+(409 with a count), which is correct behaviour and not something to work around.
+Paginated at `pageSize=200`, because §5 CLAMPS rather than rejects a larger
+value — asking for 250 would silently return 200 and leave the rest.
+
+Measured on `wall-scene.spec.ts`, the heaviest seeder:
+
+| | records in the test database |
+|---|---|
+| after a full run, before | **724** |
+| after `wall-scene` alone, with cleanup | **1** |
+| all 16 OTHER chromium specs, with cleanup | **103** |
+
+So `wall-scene` contributed roughly 620 of the 724 on its own, and the remaining
+floor is 103. 17/17 wall-scene tests still pass.
+
+### Per-worker isolation stays OPEN, on evidence rather than prescription
+
+Not declined. It answers a question cleanup does not: NOTES records four
+CROSS-SPEC collisions — two projects seeding identical titles, a shared pressing
+keyed by `discogs_release_id`, a page-1 assumption broken by another spec's 110
+rows. Those are collisions between workers, not accumulation within one, and they
+are currently invisible because accumulation is louder.
+
+### MEASURED: five runs at `--retries=0` after the fix
+
+| run | result | wall clock | note |
+|---|---|---|---|
+| 1 | **246 passed, 0 failed** | 7.0m | |
+| 2 | **246 passed, 0 failed** | 7.1m | |
+| 3 | 4 failed, 242 passed | **37.8m** | **discarded — stalled machine, see below** |
+| 4 | **246 passed, 0 failed** | 7.0m | |
+| 5 | 1 failed, 245 passed | 7.0m | pre-existing hydration flake, see below |
+
+Against a baseline of **14 hard failures across five runs**, all login-stage,
+that is the accumulation mechanism closed.
+
+**Run 3 is discarded, and the reason is measurable rather than convenient.** All
+four of its failing tests took **12.4–16.9 MINUTES against a 30-second
+timeout**. A test cannot exceed its own timeout by 30x through slow queries —
+Playwright kills it at 30s — so the timer itself fired late, which only happens
+when the process is starved of CPU. The whole run took 5x longer than the two
+either side of it. The failure kinds differed too: only 2 of 4 were login-stage,
+the others `page.goto` and `locator.waitFor`.
+
+**What could not be established is WHAT starved it.** Some short commands were
+run during that window and are too small to plausibly explain a 30x stall; other
+machine activity cannot be ruled out. Recorded as unexplained rather than
+attributed, and runs 4 and 5 were taken with nothing else running.
+
+**Run 5's single failure is a DIFFERENT, pre-existing flake.**
+`collection-filters.spec.ts:421` failed on
+`toHaveValue('releaseYear:desc')` receiving `""` — the `<select>` exists and its
+value is empty, which is the **hydration window** NOTES documents at the top of
+this file, not a login timeout. Verified as pre-existing: the same spec failed in
+BOTH pre-change runs (`e2e-f2`, `e2e-f2b`). So it is neither residue from
+accumulation nor introduced by the cleanup.
+
+### THE RESIDUE: nothing surfaced, so isolation's case is NOT made
+
+Across the four valid post-fix runs (1, 2, 4, 5 — roughly 1,000 test
+executions), the complete list of failures is:
+
+    1 x e2e/collection-filters.spec.ts:421   (the pre-existing hydration flake)
+
+**Not one cross-spec collision appeared.** The noise floor dropped by an order of
+magnitude and nothing was revealed underneath it.
+
+That is the evidence the decision was waiting for, and it points the other way
+from the prescription. **Per-worker isolation is DEFERRED, not built** — the
+four collisions NOTES records were each found while investigating something else,
+they remain theoretically possible (they collide on CONTENT, which cleanup does
+not touch), and they are not currently happening at a rate any measurement can
+see. Building a schema-per-worker harness against a defect that four runs cannot
+observe is exactly the "mitigation before diagnosis" this entry was written to
+correct — one level up.
+
+**Trigger: a cross-spec collision that is actually observed.** The signature to
+watch for is a failure whose cause is another spec's DATA rather than the volume
+of it — a duplicate title, a shared `discogs_release_id`, an assertion about page
+1. That is a different shape from the login timeout and will be recognisable.
+`--retries=0` is what makes it visible; keep using it when measuring.
+
+**The honest summary of this unit:** the deferral was carried for eleven
+sightings on a prescription that would not have worked, the actual cause was
+found by asking where in the run the failures sat, and the fix is one `afterEach`
+in one spec file. The expensive harness change was never needed.
+
+**Next: read the residue.** If cross-spec
+collisions surface once the noise floor drops, that is isolation's case made on
+evidence. A single clean run proves nothing at the measured rate — the standard
+NOTES set the last time this was measured was three consecutive runs, before and
+after.
+
+**Why the four collisions are orthogonal to this fix, stated so the next reader
+does not assume cleanup covered them.** They collide on CONTENT, not on volume:
+
+| collision | does cleanup touch it? |
+|---|---|
+| two projects seeding identical titles | **no** — both still seed the same string, concurrently |
+| a shared pressing keyed by `discogs_release_id` | **no** — §4 makes pressings found-or-created and SHARED by design |
+| `beforeAll` seeding with `afterAll` cleanup, removing a row a parallel worker was using | **no** — and cleanup adds a teardown, so this class gets slightly larger |
+| the no-live-call guard not firing because another spec had seeded the release | **no** — the cache answers regardless of how many rows exist |
+
+Cleanup lowers the VOLUME, which is what made the login render slow. It does
+nothing about two workers writing the same name at the same moment. Those four
+were each found while investigating something else and each presented as a
+different bug — so the honest expectation after this fix is that some of them
+become visible rather than that they were fixed.
+
+The third row is worth flagging as a risk this unit introduces: `afterEach`
+cleanup is a teardown that deletes rows while another worker may be reading them.
+It is scoped to the artist the spec created, so a collision needs two specs
+sharing an artist id, which the `suffix()` naming makes unlikely — but "unlikely"
+is what the four instances above were each called before they happened.
+
 ## Per-worker test-data isolation — DECIDED: step 15, unit 1 (was deferred to step 16)
 
 The E2E flake rate is mitigated (workers 3 → 2) but not diagnosed. Four spec
