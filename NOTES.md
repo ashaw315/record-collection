@@ -10025,3 +10025,85 @@ source.**
 
 Start with the junction tables, since their rows arrive as a side effect of some
 other write rather than from a form, which is where a missing path hides.
+
+## Step 14 unit 2 — the scored terms, suppression, and two tests that passed for the wrong reason
+
+- **Two mutations survived the first pass, and both were tests that named the
+  right hazard while measuring something else.** Recorded together because they
+  are one shape, and it is the shape CLAUDE.md §2 warns about most directly.
+
+  **M11 — `COUNT(DISTINCT owned artist)` -> `COUNT(*)`, passed all 15 tests.**
+  The multi-source test used two owned artists with ONE edge each, so a count of
+  artists and a count of edges agree. The test's own comment said it existed to
+  tell a count from a flag — true — while the fixture could not tell a count of
+  artists from a count of edges. Fixed by adding a second edge to the SAME owned
+  artist, in the opposite direction (§4.3's PK is `(source, target)`, so that is
+  the only way to have two). Three edges, two artists: M11 now fails.
+
+  **M13 — deleting the `MAX_LIMIT` bound entirely, passed all 14 tests,
+  including the one written for it.** The test sent `99999999999999999999`,
+  which is not a safe integer, so `parseIntegerParam` rejected it BEFORE the
+  bound was consulted. The test asserted 400 and got 400, from a branch it was
+  not testing. Fixed with `limit=201` — one past the ceiling is the only value
+  that reaches the bound — plus a paired `limit=200` case, since either alone is
+  satisfied by an off-by-one in the permissive direction. Both mutations now
+  fail.
+
+  **The general form: a test can name its hazard precisely and still be
+  satisfied by a different code path.** Unit 11's normalizer had the same shape
+  (a comment describing the exact shortcut it could not detect). The check that
+  finds it is not re-reading the test — the comment reads correctly — it is
+  running the mutation and watching which tests fail. In both cases here the
+  count was zero.
+
+- **Suppression needed TWO tests and §11's letter only implies one.** A
+  want-listed candidate keeps its row and loses 3.0. Case 5 pins the score with
+  the candidate still visible — constructed so the reduced score stays inside
+  `limit`, because a fixture where suppression pushes it past the cut cannot
+  distinguish suppression from exclusion, both producing an absent row.
+
+  That test does NOT catch suppression applied after sorting: the score is still
+  9 and the row still present, only in the wrong position. Case 6 makes
+  suppression FLIP the order (10 vs 12-3=9) and is the only test that fails
+  against M8. Adam named this before the unit started; the letter of §11 would
+  have missed it.
+
+- **The reason string is `string[]`, and the list rule earned its place
+  immediately.** A candidate reached by both routes has two clauses. M9 —
+  keeping only the first — fails 2 tests. A pre-joined sentence would have been
+  a scalar holding a list, and the joining is the caller's decision to make.
+
+- **`sharedMemberExemplar` is a deliberate narrowing of the SENTENCE, not of the
+  data.** "Shares 4 members with Discharge" names one band where several may
+  qualify; `sharedMemberArtistCount` carries how many. Recorded because a single
+  name where a list exists is exactly the shape the field-holding-a-list rule
+  warns about, and the distinction is that nothing is DROPPED — the count is
+  still there, only the sentence is short. `MIN(name)` rather than an arbitrary
+  row so the sentence is stable across calls.
+
+- **No auth stanza, no not-found case, and both are decisions.** `routeAuthMode`
+  defaults to `'session'`, so a per-endpoint auth assertion restates a default —
+  18 of them were removed after a mutation pass, and adding one back here would
+  reintroduce what that pass deleted. §5.8 defines no id, so there is no
+  not-found case to invent; the fourth case that earns its place is the EMPTY
+  result, which is the realistic one — `artist_influences` is hand-entered and
+  holds nothing today, so §9.1 currently rides on shared membership alone.
+
+- **`parseIntegerParam` exported rather than copied.** It was private to
+  `query-params.ts` and rejects `'5e4'`, `'0x50'`, `' 1 '` and anything that
+  cannot round-trip as a safe integer. A second copy is how two parsers come to
+  disagree about what a number is; this codebase has recorded that once already.
+
+**Mutations, all now failing:**
+
+| # | Mutation | Tests failed |
+|---|---|---|
+| M7 | suppression -> exclusion | 3 |
+| M8 | sort BEFORE suppression | 1 (case 6, and only case 6) |
+| M9 | `reasons` -> first clause only | 2 |
+| M10 | acquired want-list rows also suppress | 1 |
+| M11 | artist count -> edge count | 1, after the fixture was fixed |
+| M12 | `parseIntegerParam` -> `Number()` | 4 |
+| M13 | drop `MAX_LIMIT` | 1, after the fixture was fixed |
+| M13b | `>` -> `>=` (off-by-one) | 1 |
+| M14 | default limit 10 -> 50 | 1 |

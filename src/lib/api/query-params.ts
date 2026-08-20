@@ -53,7 +53,7 @@ export type ParseResult<TField extends string> =
  * and `Number()` silently yields `5e+21`. Number.isSafeInteger is what makes
  * "looks numeric" mean "is exactly this integer".
  */
-function parseIntegerParam(raw: string | null): number | undefined {
+export function parseIntegerParam(raw: string | null): number | undefined {
   if (raw === null || !/^\d+$/.test(raw)) return undefined;
   const value = Number(raw);
   if (!Number.isSafeInteger(value)) return undefined;
