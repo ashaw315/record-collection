@@ -9502,3 +9502,55 @@ is the shared-test-data contention `playwright.config.ts` documents, showing up
 on a run that took twice the usual wall clock. **Recorded rather than reported
 as clean** — four failures in one file is a cluster worth watching even when
 each is individually explainable.
+
+---
+
+## Step 13 — the faded cover: the scrim, and a cast underneath it
+
+**The fade was the scrim, and only the scrim.** Measured against the source
+image, mean RGB over the record's face:
+
+| | R | G | B |
+|---|---|---|---|
+| source (centre-cropped as the UV does) | 46.8 | 39.8 | 31.0 |
+| rendered, with the DOM scrim | 20.7 | 19.7 | 17.6 |
+| rendered, scrim hidden | 68.6 | 65.4 | 58.3 |
+
+The scrim alone cost **0.30x** — exactly `1 - 0.7` for `black/70`, matching to
+two decimals. Structurally: it was `z-index: -10` INSIDE a `z-index: 40`
+stacking context, so "behind the panels" still meant "in front of the canvas".
+The panels looked full-strength because they are siblings above it.
+
+**Candidates 2 and 3 are ruled out by the same measurement**: without the scrim
+the render is BRIGHTER than source, so it is neither a lighting deficit (which
+darkens) nor a missing sRGB conversion (which darkens midtones).
+
+**The fix is structural, not a value.** The wall dims in the SCENE — spine,
+shelf and lip materials scaled by `wallDim` — and the record is simply not in
+that set. A DOM overlay cannot express "dim everything except this one object in
+the canvas".
+
+**Unit 11's ordering survived, and the obvious curve broke it.** A cubic
+ease-out — the same easing the rise uses — is 39% dimmed at 15% progress and 88%
+by halfway: the wall goes dark well ahead of the record, which is the modal
+opening the ordering exists to prevent. Linear tracks the rise exactly, so the
+dim arrives WITH the record. Mutation-proved in both directions.
+
+**The channel drift is an ADDITIVE term, and the arithmetic says which.**
+Ratios 1.47 / 1.64 / 1.88 spread wide; differences 21.8 / 25.6 / 27.3 are
+near-constant. A gain gives equal ratios, a constant add gives equal
+differences. Converting to linear space, the term is **+0.030 across all three
+channels** — a constant light added to the texture, which lifts the darkest
+channel proportionally most and reads as a blue cast.
+
+**The honest fix is that a cover should not be lit at all**, and it is NOT
+lowering the ambient until the numbers match. That would be tuning, and it would
+darken the spines and shelves, which want the light. A cover is a photograph of
+artwork; lighting it adds light that was never in the sleeve, which is the same
+class as inventing a spine colour and §10b forbids it. `MeshBasicMaterial` on
+the cover face shows the texture as-is — which is what unit 15 verified to 1.7
+levels and why it used one. The shading belongs on the edges and the plain
+sleeves, which are `MeshStandardMaterial` and should respond to light.
+
+**Not applied in this commit**: that is a design decision about what a cover is,
+not a defect fix, and it changes how every cover renders.

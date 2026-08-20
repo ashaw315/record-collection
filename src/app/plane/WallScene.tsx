@@ -37,6 +37,7 @@ import { layoutWall, type WallLayout } from './wall-layout';
 import { WALL_FOV_DEGREES, wallCameraDistance } from './wall-camera';
 import { pulledDestination } from './pulled-destination';
 import { boxDepth } from './record-box';
+import { wallDim } from './wall-dim';
 import { PROUD_MS, proudOffset, shouldRedraw } from './hover-proud';
 import { NO_TILT, tiltFor } from '../shelf/tilt';
 import { ActionsPanel, FactsPanel } from './Panels';
@@ -311,6 +312,13 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     */
     let disposed = false;
 
+    /**
+     * Every material the WALL is made of, with the colour it should be at full
+     * brightness. The pulled record's own materials are deliberately NOT in
+     * here — that is the whole point of moving the dim into the scene.
+     */
+    const wallMaterials: Array<{ material: MeshStandardMaterial; base: Color }> = [];
+
     /*
       The shelves: one per row, spanning the full width. §10b's plane rule —
       "the surface runs edge to edge and ends where the wall ends", not where
@@ -328,6 +336,10 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
       surface.position.set(shelf.x + shelf.width / 2, -(shelf.y + shelf.height * 0.35), 1);
       scene.add(surface);
       disposables.push(surface.material as Material);
+      wallMaterials.push({
+        material: surface.material as MeshStandardMaterial,
+        base: new Color(SHELF_PLANE),
+      });
 
       const lip = new Mesh(
         shelfGeometry,
@@ -337,6 +349,10 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
       lip.position.set(shelf.x + shelf.width / 2, -(shelf.y + shelf.height * 0.85), 1);
       scene.add(lip);
       disposables.push(lip.material as Material);
+      wallMaterials.push({
+        material: lip.material as MeshStandardMaterial,
+        base: new Color(SHELF_LIP),
+      });
     }
 
     /*
@@ -408,7 +424,16 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
       disposables.push(texture);
 
       const plain = new MeshStandardMaterial({ color: new Color(colour), roughness: 0.7 });
+      /*
+        Kept so the wall can be dimmed behind a pulled record. `color` is the
+        base tint a material multiplies its map by, so scaling it dims a
+        textured spine and a plain one alike.
+      */
+      wallMaterials.push({ material: plain, base: new Color(colour) });
       const faced = new MeshStandardMaterial({ map: texture, roughness: 0.7 });
+      // The spine's labelled face dims with the rest of the wall. Its base is
+      // white because the colour is in the texture, not the material.
+      wallMaterials.push({ material: faced, base: new Color(0xffffff) });
       /**
        * The cover face, revealed by the turn.
        *
@@ -567,6 +592,15 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     function setPulledInternal(id: string | null, progress: number) {
       pulledNow = id;
       riseProgress = progress;
+
+      /*
+        **The wall dims with the record's own progress**, so unit 11's ordering
+        survives the move out of the DOM: the backdrop arrives AS the record
+        travels rather than dropping on click. `wallDim` is linear for exactly
+        that reason — a cubic ease-out is 39% dimmed at 15% progress and would
+        put the record's arrival against an already-dark wall.
+      */
+      setWallDim(wallDim(id === null ? 0 : progress));
         /*
           The LAYOUT's answer for where this record's slot is — read from
           `layout`, which the packer produced, rather than from the mesh's own
@@ -745,6 +779,22 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
           );
         }
         loop.markDirty();
+    }
+
+    /**
+     * Dims the WALL — spines, shelves and lips — leaving the pulled record at
+     * full brightness.
+     *
+     * This replaces a DOM scrim that sat above the canvas in z-order and so
+     * dimmed the record along with everything else: measured, the cover
+     * rendered at 0.30x its own brightness, exactly `1 - 0.7` for a `black/70`
+     * overlay. A cover is a claim about a record's artwork (§10b) and 44% of
+     * the sleeve is the app being wrong about the record.
+     */
+    function setWallDim(amount: number) {
+      for (const { material, base } of wallMaterials) {
+        material.color.setRGB(base.r * amount, base.g * amount, base.b * amount);
+      }
     }
 
     function applyPose() {
@@ -1284,7 +1334,18 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
               handled by the canvas's own raycast missing every spine, plus
               Escape and "Put back", so nothing is lost.
             */
-            className="pointer-events-none absolute inset-0 -z-10 bg-black/70"
+            /*
+              **No longer dims anything** — the wall darkens in the SCENE now,
+              which is the only place the record can be excluded from it. A
+              `black/70` overlay above the canvas cost the cover 0.30x its
+              brightness, measured, because z-order put it over the record too.
+
+              Kept as a labelled, non-interactive element: it is what an
+              assistive technology reads as "the wall, behind". Dismissing is
+              the canvas's own raycast missing every spine, plus Escape and
+              "Put back".
+            */
+            className="pointer-events-none absolute inset-0 -z-10"
           />
 
           <div
