@@ -21,7 +21,16 @@ They keep earning their place. This is the plan for the rest.
 ## Remaining reviews
 
 ### R5 — Suggestions and the LLM boundary
-**After step 14, before step 15.**
+**After step 14's §9.2 unit, BEFORE 13c (the snippet).**
+
+**Timing changed deliberately.** This used to read "after step 14, before step
+15". A29f split §9.2 and the snippet into two units, and the snippet is built ON
+the boundary §9.2 extracts — the client, the shared rate limit, the JSON-parse
+boundary. A correction found after 13c has to be applied in two places; found
+now, in one. Run this review where a defect would multiply.
+
+State at the time of writing: §9.1, `/suggestions`, E2E #8 and §9.2 are built
+and committed (`f48bc99`). 13c is not.
 
 The first time this app sends collection data to an external service and renders what comes back. Everything before was fetching; this is disclosing and then trusting.
 
@@ -31,6 +40,68 @@ Attack:
 - Rate limiting and cost. 10/hour is specified — is it enforced server-side or trusted from the client? What does exhaustion look like?
 - Whether the graph-derived candidates and the LLM's judgement can disagree in a way that misleads. The graph knows Adam's shelf; the LLM knows music. A suggestion presented as one voice when two disagree is the confidently-misleading shape.
 - Whether an LLM suggestion can reach the want list without a human step.
+
+#### The one thing no test can answer: does the prompt actually work?
+
+**Every test of §9.2 injects a fake client.** That is correct — CLAUDE.md §2
+forbids live external calls, and the guard covers `api.anthropic.com` (verified
+against that host, not assumed). But it means the genre-accuracy requirement —
+**the thing this feature exists for** — is verified only as PROMPT TEXT. A test
+asserts the prompt contains the word "flatten"; nothing asserts a model obeys it.
+
+CLAUDE.md §8 names this as the place the distinction matters most: "UK
+first-wave punk, UK82, US hardcore, horror punk and psychobilly are different
+scenes with different sounds. Do not flatten them to 'punk' anywhere — least of
+all in the LLM suggestion prompt."
+
+**The case as it stands cannot fail, and that is measured.** The dev database
+holds 125 records, 191 artists, and six genres — AOR, Black Metal, Heavy Metal,
+Punk, Rock, Rock & Roll — **every one of them with `parent_genre_id` NULL**.
+There is no hierarchy, so:
+
+- The prompt's "do not flatten a specific scene into a parent term" has nothing
+  to flatten. "Punk" IS the punk genre.
+- A29d's validation would ACCEPT a flattened answer, because `Punk` is in the
+  vocabulary. The check that makes the response checkable is inert against this
+  data.
+
+So a live run today would prove nothing in either direction.
+
+**Build the case that can fail, then run it:**
+
+1. In the DEV database (Neon, `DATABASE_URL` in `.env.local` — not the local test
+   database), create `Punk` as a parent with **UK82** and **US Hardcore** beneath
+   it, via `/manage`'s hierarchy editor or directly.
+2. Re-tag some existing punk records at the LEAVES rather than at `Punk`, so the
+   collection genuinely reads as a UK82 collection or a US hardcore one. The
+   summary sends each artist's genres, so this is what the model actually sees.
+3. Run the real thing with a real `ANTHROPIC_API_KEY`, through the UI at
+   `/suggestions`.
+
+**What failure looks like:** suggestions whose `genre` is `Punk` when the
+collection is tagged at the leaves, or reasons that describe a UK82 collection in
+terms of "punk" generally. Either means the prompt has failed the requirement
+CLAUDE.md §8 calls the most important one, and no amount of green tests would
+have said so.
+
+**What success looks like:** suggestions naming UK82 or US Hardcore specifically,
+with reasons that stay inside the scene — and, ideally, at least one suggestion
+whose genre is dropped by A29d's validation, which would prove that mechanism
+fires on real output rather than only on fixtures.
+
+**Record the actual responses**, not a verdict. This is the first evidence
+anybody will have about whether the feature works, and a summary would discard
+the material a prompt revision would need.
+
+#### Two more things this review inherits
+
+- **The prompt has never been run.** Nothing in the repo has made a live
+  Anthropic call. Treat every claim about model behaviour as untested, including
+  the ones in `client.ts`'s comments.
+- **`dropped` reaching the UI is tested; the copy is not.** A29d requires the
+  count to be visible. Whether "2 suggestions were discarded for naming genres
+  outside your collection" reads as an app defect or a model defect to somebody
+  who did not build it is a judgement, not an assertion.
 
 ### R6 — Deploy readiness
 **Before step 16, and again after the first deploy.**
