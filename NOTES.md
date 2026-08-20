@@ -9865,11 +9865,163 @@ state it leaves behind. Same family as the absence-as-success entries, and the
 same tell — the thing that would have caught it is asserting the POSTCONDITION
 (tables exist) rather than the command's exit code.
 
-**Trigger: the same unit that fixes the E2E instrument for step 15**, or sooner
-if anyone runs the reset. The fix is one word — append `&& npm run db:migrate`
-— but it is out of scope for step 14 unit 1 and is recorded rather than applied.
+**Trigger: BEFORE step 15, as its first unit.** Not "the unit that fixes the E2E
+instrument" — that was the original wording and it was a bad trigger, because the
+instrument turned out to need no fixing, so the condition it named will never
+arrive. A trigger conditional on work that may never happen is the untriggered
+deferral REVIEW-PLAN's triage rule warns about, wearing a trigger's clothes.
+
+Step 15 is the right point because it is E2E-heavy, and because of the specific
+failure mode: the suite misbehaves, someone runs the DOCUMENTED reset to clear
+it, and then spends an afternoon diagnosing an application collapse that is
+actually a missing schema. The reset is the thing a person reaches for exactly
+when they are already confused, which is the worst moment for it to make things
+quietly worse. The fix is one word — append `&& npm run db:migrate` — and it is
+out of scope for step 14 unit 1 only because it is unrelated to suggestions, not
+because it is hard or unclear.
+
+Do it sooner if anyone runs the reset in the meantime.
 
 **Recorded honestly: I caused this, then diagnosed it.** The first "cold restart"
 was invalid because of it, and its 146 failures measured nothing about the
 instrument. It is a real defect that was already there, and it took destroying a
 database to find it.
+
+## MEASURED (step 14 unit 2, before building): §9.1's genre and label terms have no data source
+
+Both measured against every write path and the live database before writing any
+test, per the standing rule that a step's inputs are read before its spec is
+trusted. Neither term can be built as specified today. Recorded together because
+the decision between §9.1's options is one decision, not two.
+
+### The genre term: `artist_genres` has a schema and no writer, ever
+
+`1.5 × genre overlap with the user's top 3 genres by owned count`. "By owned
+count" ranks the TOP 3; the overlap itself is between the CANDIDATE and those
+three, and a candidate's genres are a property of the artist — `artist_genres`
+(§4.3) — not of anybody's records. §9.1's own example reason string, "shares the
+UK82 genre", is a claim about the artist with no count of records in it.
+
+| Path | Writes `artist_genres`? |
+|---|---|
+| MusicBrainz lineup walk | **No** — no genre handling in `src/lib/musicbrainz/` at all |
+| Discogs import | **No** — writes `record_genres`; never touches `artist_genres` |
+| `POST`/`PATCH /api/artists` | **No** — `ArtistInput` has no genre field |
+| Any UI | **No** — nothing in `src/app/**/*.tsx` references it |
+| `mergeArtists` | **MOVES** rows between artists — cannot create one |
+
+Live: **139 artists, 81 `record_genres` rows, 0 `artist_genres` rows.**
+
+**A rejected substitution, recorded because it was nearly built.** The proposal
+was to count the linking OWNED artists' records instead — Discharge's genres
+standing in for Anti-Cimex's. Adam rejected it as a defect rather than a variant
+reading, and the reason generalises: **the link term already scores the
+connection to Discharge, so scoring Discharge's genres too counts one piece of
+evidence twice under two names.** The reason string would assert "linked to
+Discharge" and "shares Discharge's genres" as independent corroboration when they
+are the same fact. A candidate linked to a prolific owned artist would score high
+on genre overlap while having no genre relationship to the collection at all.
+Same conflation A27 forbids between the two link terms, arriving in a third.
+
+**Absent is not unknown.** Zero `artist_genres` rows means "nobody has tagged
+this artist", not "this artist has no genre relationship to the collection".
+Building the term anyway returns 0 for every candidate and presents it as a
+computed judgement — silently inert, with the reason string simply never
+mentioning genre and nothing anywhere saying why.
+
+### The label term: there is no artist-to-label relationship to read
+
+`1.0 × label overlap with labels appearing 2+ times in the collection`. Same
+structural question, DIFFERENT answer — and worth stating separately, because the
+two failures are not the same failure.
+
+**There is no `artist_labels` table.** Not empty: absent. The only FKs to
+`labels` are `records.label_id` and `want_list.label_id`, so a label attaches to
+a RELEASE, never to an artist. That is correct modelling — a band records for
+several labels across its life and §4.2 puts the label on the pressing-bearing
+row — but it means "which labels is this candidate on" has no source at all, and
+no table to populate later without a schema change.
+
+Unlike the genre term, the DATA here is healthy: **38 labels, 37 of 38 records
+carry one.** "Labels appearing 2+ times in the collection" is computable today.
+It is the other half — attaching the candidate to a label — that has nowhere to
+come from.
+
+`want_list` was checked as the one path that could plausibly pair an artist with
+a label without a record: it carries both `artist_id` and `label_id`. Live:
+**12 rows, 12 with an artist, 0 with a label.** So even that path supplies
+nothing today, and it would answer a different question anyway (what the user
+INTENDS to buy, not what a candidate released).
+
+### Both terms, one decision
+
+Options as put to Adam: populate `artist_genres` from Discogs first (real work,
+own unit); derive artist genres from their records (does NOT rescue it —
+candidates own no records, so still 0 for everyone); or amend §9.1 and score on
+the two link terms plus whatever survives. Awaiting that decision; nothing built.
+
+# A table with schema, tests, merge logic — and no writer, ever
+
+`artist_genres` is the instance and the class is the finding.
+
+It has: a schema definition, FK cascade rules (`artist_id` CASCADE, `genre_id`
+NO ACTION), rows in `schema-conformance.test.ts`'s exhaustive FK list, an entry
+in `referrers.ts`, and dedicated merge logic in `mergeArtists`. **Nothing has
+ever written a row into it.**
+
+**The merge case is the sharpest.** `mergeArtists` moves `artist_genres` rows
+from loser to survivor, skipping pairs the survivor already holds. That path was
+found BROKEN during R4's remediation — "failed on two of three composite keys" —
+diagnosed, fixed, and pinned with a test. All of it correct work, on rows that
+cannot exist. The test constructs its own fixture with a raw
+`INSERT INTO artist_genres`, so it passes and proves the code works; what no test
+can notice is that the production path feeding it has no source.
+
+**NOTES contains reasoning about protecting data in this table.** §4.3's junction
+list omitting `artist_genres` is recorded as "the dangerous omission", with the
+cascade direction argued from the data loss that would follow. A real argument
+about a real rule, applied to a table that has never held a row.
+
+**The class: a table reads as populated because everything AROUND it behaves as
+though it is.** Cascade rules imply rows to cascade. Conformance tests imply a
+contract someone relies on. Merge logic implies rows worth merging. Each artefact
+is individually correct and collectively they assert a fact none of them checks.
+It survives every review for the same reason the untriggered deferral does —
+there is no inconsistency to catch, because nothing contradicts anything.
+
+**Distinct from dead code, and that is why it needs its own sweep.**
+REVIEW-PLAN's dead-code pass looks for MODULES whose only consumers are their
+tests. This is the same shape one layer down, in the SCHEMA: a table whose only
+writers are its tests. A module with no callers is findable by following imports;
+a table with no writers is not, because the reads, the constraints and the tests
+all look exactly like a live table's.
+
+**Question for R7's cold read: what else has schema, tests, and no writer?**
+
+**Do NOT use row count as the test — it answers a different question.** Checked
+here, and the first two candidates I named on a hunch were both wrong:
+
+| table | live rows | writers in `src/` | verdict |
+|---|---|---|---|
+| `artist_genres` | 0 | **none** (merge only MOVES rows) | **no writer, ever** |
+| `want_list_genres` | 0 | 2 (`want-list.ts`, `discogs-import.ts`) | fine — just untagged locally |
+| `record_tags` | 3 | — | fine |
+| `record_genres` | 81 | — | fine |
+
+`want_list_genres` is the instructive one: **zero rows and two real writers.**
+Empty here only because the local want-list entries happen to carry no genres. A
+row-count sweep would have flagged it and wasted the reviewer's time; worse, on a
+database where someone HAD tagged a want-list item it would have cleared
+`artist_genres` too if the timing differed.
+
+**The test is "does a write path exist", not "are there rows".** And grep is a
+poor instrument for it — searching for `INSERT INTO record_genres` returns
+nothing, because Drizzle writes `.insert(recordGenres)`. Search the schema
+IDENTIFIER (`recordGenres`), exclude `relations.ts` and `schema.ts`, and read
+what the hits actually do: `mergeArtists` "writes" `artist_genres` in the sense
+of an INSERT statement, but its SELECT source is the same table, so it can only
+relocate rows that already exist. **A writer that reads its own table is not a
+source.**
+
+Start with the junction tables, since their rows arrive as a side effect of some
+other write rather than from a form, which is where a missing path hides.
