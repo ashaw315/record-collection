@@ -9430,3 +9430,75 @@ the right direction and neither was right.** What settled it was computing the
 expected NDC from the camera geometry and finding it matched the measurement
 exactly — the code was doing precisely what it was told, and the instruction was
 wrong.
+
+---
+
+## Step 13 — four QA findings, and two shapes worth keeping
+
+**1. The tilt: a value computed, stored, marked dirty, and never applied.**
+
+A new failure shape. Every instrument reported success — phase `settled`,
+`canTilt` true, twenty pointer moves received, `tiltFor` returning real angles
+(`rotateX 11.67, rotateY 7.80`), the dirty flag firing — because **each was
+upstream of the break**. The line that writes the rotation lived inside
+`setPulled`, which only runs while the rise or the return is animating, so
+`markDirty` redrew an unchanged mesh.
+
+That is worth naming separately from the vacuity findings: nothing was
+mismeasured and no instrument lied. They were all true, and none of them was
+the question.
+
+**The flip escaped it only because its animation re-enters `setPulled`** — a
+coupling nothing stated, which the next addition would have had to discover.
+`applyPose` is now the single writer of the pulled record's mesh, and every
+input (rise progress, flip turn, tilt angles) has a setter that calls it. The
+coupling is explicit and there is a named place to hook into.
+
+**2. The record was a correct box, drawn face-on, with a plain cover.**
+BoxGeometry, 24 vertices, 240×240×9.6 (1:25), ambient plus directional light.
+Face-on a 9.6px edge projects to nothing, which is why it read flat — and why
+it could not be judged until the tilt worked. Unit 18's evidence exactly: an
+untextured record reads as an object the moment it moves.
+
+**The cover comment was accurate when written and described a debt no list
+carried.** "Cover textures are a later unit and a placeholder would assert
+artwork the record does not have" — true, and there was no later unit. Pulling a
+record WITH a cover gave the same `[tex, plain×5]` as one without: the artwork
+never reached the face anyone sees.
+
+This is not the prose-versus-code failure, where a comment contradicts what the
+code does. It is **a deferral with no trigger and no home**, which REVIEW-PLAN's
+triage already calls a decision never to do it. It survives every review
+precisely because nothing contradicts it — there is no inconsistency to catch.
+
+**3 and 4: the panels covered the record, and "centred" meant the wrong centre.**
+
+The panels are pinned to the edges now with the middle belonging to the record —
+`justify-between` rather than a spacer a flex row can compress. Criterion's
+overlap the case at its edges and stop there.
+
+For centring, three options and only one survives A24b: panning the camera is
+forbidden; moving the record off the camera axis was measured wrong twice last
+unit (NDC 0.62 and 0.93, both exactly its offset from the axis, projected). So
+**the reader moves to the record**: pulling scrolls the wall's centre into view,
+using the scrolling the canvas already does — which is what the fixed camera
+bought in the first place.
+
+**An inline style beating a class, again.** `pointerEvents: 'auto'` on the chrome
+row overrode its own `pointer-events-none`, so the row swallowed every click —
+dismissal and the tilt's pointer moves alike. Unit 12's finding in a third
+medium: the more specific declaration wins, and the fix is structural (the
+panels and scrim carry their own `pointer-events-auto`) rather than arbitration.
+
+**A helper made stale by a new behaviour.** `clickASpine` reused a canvas box
+measured before a pull, and pulling now scrolls — so the second pull in a test
+hit empty page and reported "no spine was hit anywhere", which reads as a broken
+wall. It scrolls to the top and re-measures now.
+
+**Full E2E: 229 passed, 6 failed, 13.7m** — four `want-list` on chromium, plus
+the familiar `collection-filters` and `manage` on mobile. All pass in isolation
+(want-list 10/10) and want-list passes in isolation at the baseline too, so this
+is the shared-test-data contention `playwright.config.ts` documents, showing up
+on a run that took twice the usual wall clock. **Recorded rather than reported
+as clean** — four failures in one file is a cluster worth watching even when
+each is individually explainable.

@@ -13,6 +13,7 @@ import {
   PlaneGeometry,
   Raycaster,
   Scene,
+  TextureLoader,
   SRGBColorSpace,
   Vector2,
   WebGLRenderer,
@@ -31,6 +32,7 @@ import { createRenderLoop } from './render-loop';
 import { risePose } from './rise-pose';
 import { RISE_MS, prefersReducedMotion } from './BoxCanvas';
 import { spineLabelPlan } from './spine-texture';
+import { centredSquareUv } from './skins';
 import { layoutWall, type WallLayout } from './wall-layout';
 import { WALL_FOV_DEGREES, wallCameraDistance } from './wall-camera';
 import { pulledDestination } from './pulled-destination';
@@ -302,6 +304,14 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     const disposables: Array<{ dispose: () => void }> = [];
 
     /*
+      A texture load can finish AFTER the scene has been torn down — a resize
+      rebuilds the wall, and 125 covers do not all arrive before it does.
+      Writing to a disposed material is the silent-failure shape this feature
+      keeps meeting: WebGL does not complain.
+    */
+    let disposed = false;
+
+    /*
       The shelves: one per row, spanning the full width. §10b's plane rule —
       "the surface runs edge to edge and ends where the wall ends", not where
       the records do.
@@ -399,13 +409,52 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
 
       const plain = new MeshStandardMaterial({ color: new Color(colour), roughness: 0.7 });
       const faced = new MeshStandardMaterial({ map: texture, roughness: 0.7 });
-      /*
-        The cover face, revealed by the turn. Plain in the record's own spine
-        colour for now — §10b's "an honest absence, not a gap in the wall" —
-        because cover textures are a later unit and a placeholder would assert
-        artwork the record does not have.
-      */
+      /**
+       * The cover face, revealed by the turn.
+       *
+       * **The plain sleeve is the FALLBACK, not the only case.** This was plain
+       * unconditionally, with a comment saying cover textures were "a later
+       * unit" — a deferral with no trigger and no home, which is a decision
+       * never to do it. Pulling a record that HAS a cover showed the same
+       * `[tex, plain×5]` as one that does not, so the artwork never reached the
+       * face anyone sees.
+       *
+       * A record with no cover still gets the plain sleeve in its own spine
+       * colour: §10b's "an honest absence, not a gap in the wall".
+       */
       const cover = new MeshStandardMaterial({ color: new Color(colour), roughness: 0.62 });
+
+      if (record.coverUrl !== null) {
+        new TextureLoader().load(record.coverUrl, (texture) => {
+          if (disposed) {
+            texture.dispose();
+            return;
+          }
+
+          texture.colorSpace = SRGBColorSpace;
+
+          /*
+            A22: a non-square image is CROPPED to square from its centre at
+            mapping time, never by touching the stored file. `repeat`/`offset`
+            move the sampling window; the bytes and the gallery are untouched.
+          */
+          const uv = centredSquareUv(texture.image.width, texture.image.height);
+          texture.repeat.set(uv.repeatX, uv.repeatY);
+          texture.offset.set(uv.offsetX, uv.offsetY);
+
+          disposables.push(texture);
+          cover.map = texture;
+          /*
+            White, so the texture is shown rather than tinted by the spine
+            colour it was falling back to. Unit 15 settled that a lit material
+            puts the light between the source image and the pixels; a coloured
+            base puts a filter there too.
+          */
+          cover.color.set(0xffffff);
+          cover.needsUpdate = true;
+          loop.markDirty();
+        });
+      }
       disposables.push(plain, faced, cover);
 
       /**
@@ -471,6 +520,25 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
       here so the mesh's rotation can SUM all three contributions rather than
       any one of them assigning it.
     */
+    /**
+     * **Everything the pulled record's pose is made of, in one place.**
+     *
+     * The rise's progress, the flip's accumulated turn, the tilt's angles.
+     * `applyPose` below is the ONLY thing that writes the mesh, and every one
+     * of these has a setter that calls it.
+     *
+     * That is the fix for a defect worth naming: the tilt was computed, stored
+     * and marked dirty, and never applied — because the line that wrote the
+     * rotation lived inside `setPulled`, which only runs while the rise or the
+     * return is animating. Every instrument reported success (phase, events,
+     * angles, dirty flag) because each was UPSTREAM of the break.
+     *
+     * It also makes explicit a coupling nothing stated: the flip worked only
+     * because its animation re-entered `setPulled`. Anything added here now has
+     * a named place to hook into rather than a side effect to discover.
+     */
+    let pulledNow: string | null = null;
+    let riseProgress = 0;
     let flipTurn = 0;
     let tiltNow = NO_TILT;
     const DEG = Math.PI / 180;
@@ -491,17 +559,14 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
      * the wall, so the gap it leaves is not drawn, coordinated or faked — it is
      * simply where the mesh is not any more.
      */
-    live.current = {
-      animate: (step) => loop.animate(step),
-      setFlip: (turn: number) => {
-        flipTurn = turn;
-        loop.markDirty();
-      },
-      setTilt: (next: { rotateX: number; rotateY: number }) => {
-        tiltNow = next;
-        loop.markDirty();
-      },
-      setPulled: (id, progress) => {
+    /**
+     * Writes the mesh from the current pose inputs. Called by `setPulled` (the
+     * rise and the return), `setFlip` and `setTilt` — every path that can
+     * change what the record looks like.
+     */
+    function setPulledInternal(id: string | null, progress: number) {
+      pulledNow = id;
+      riseProgress = progress;
         /*
           The LAYOUT's answer for where this record's slot is — read from
           `layout`, which the packer produced, rather than from the mesh's own
@@ -653,6 +718,9 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
            * a canvas size the test would have to know.
            */
           const ndc = mesh.position.clone().project(camera);
+          /* The record's rotation, so a test can assert the tilt responds. */
+          host.dataset.rotX = String(Math.round(mesh.rotation.x * 1000) / 1000);
+          host.dataset.rotY = String(Math.round(mesh.rotation.y * 1000) / 1000);
           host.dataset.settledNdcX = String(ndc.x);
           host.dataset.settledNdcY = String(ndc.y);
 
@@ -677,7 +745,33 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
           );
         }
         loop.markDirty();
+    }
+
+    function applyPose() {
+      if (pulledNow === null) return;
+      setPulledInternal(pulledNow, riseProgress);
+    }
+
+    live.current = {
+      animate: (step) => loop.animate(step),
+      setFlip: (turn: number) => {
+        flipTurn = turn;
+        applyPose();
       },
+      setTilt: (next: { rotateX: number; rotateY: number }) => {
+        tiltNow = next;
+        applyPose();
+      },
+      /**
+       * **The one thing that writes the pulled record's mesh.**
+       *
+       * Re-applies the pose from whatever its inputs currently are, so a change
+       * to any of them — rise progress, flip turn, tilt angles — shows up
+       * without needing an animation to be running. That was the tilt's defect:
+       * its value was stored and never written, because writing only happened
+       * inside the rise's and return's own animation callbacks.
+       */
+      setPulled: (id, progress) => setPulledInternal(id, progress),
     };
 
 
@@ -831,6 +925,7 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     renderer.domElement.addEventListener('click', onClick);
 
     return () => {
+      disposed = true;
       renderer.domElement.removeEventListener('pointermove', onPointerMove);
       renderer.domElement.removeEventListener('pointerleave', onPointerLeave);
       renderer.domElement.removeEventListener('click', onClick);
@@ -1036,6 +1131,37 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
   }, [state]);
 
   /**
+   * **Pulling a record scrolls the wall's centre into view.**
+   *
+   * The record settles on the camera's axis — the wall's centre — because the
+   * camera is fixed there and A24b forbids panning it. Two other answers were
+   * measured wrong last unit: centring the record on the window put it at NDC
+   * 0.62, on the visible slice of the wall 0.93, both exactly its offset from
+   * the axis projected.
+   *
+   * So the record cannot move to the reader; the reader moves to the record.
+   * The canvas already scrolls with the page — that is what the fixed camera
+   * bought — so this uses the mechanism that exists rather than adding one.
+   *
+   * Only on the rise: scrolling during a return would chase a record that is
+   * going away.
+   */
+  useEffect(() => {
+    if (state.phase !== 'rising') return;
+    const host = mount.current;
+    if (host === null) return;
+
+    const box = host.getBoundingClientRect();
+    // Where the wall's centre currently sits in the page.
+    const centre = window.scrollY + box.top + box.height / 2;
+
+    window.scrollTo({
+      top: Math.max(0, centre - window.innerHeight / 2),
+      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+    });
+  }, [state.phase]);
+
+  /**
    * **Escape puts the record back**, bound only while one is out.
    *
    * Clicking empty wall works but is discoverable by accident; Escape is what
@@ -1119,8 +1245,28 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
       {out !== null && (
         <div
           data-testid="record-chrome"
-          className="fixed inset-0 z-40 flex items-center justify-center gap-8 p-6 transition-opacity duration-300"
-          style={{ opacity: chromeOpacity, pointerEvents: chromeOpacity === 0 ? 'none' : 'auto' }}
+          /*
+            **The panels flank the record; they never cover it.** Criterion's
+            overlap the case slightly at its edges and stop there.
+
+            `justify-between` with the record's own space between them, rather
+            than `justify-center` with a spacer that a flex row can compress:
+            the panels are pushed to the edges and the middle belongs to the
+            record. `pointer-events-none` on the row so the gap between them
+            passes clicks through to the canvas — the tilt needs the pointer
+            over the record, and a transparent div that ate it was how the tilt
+            looked broken.
+          */
+          className="pointer-events-none fixed inset-0 z-40 flex items-center justify-between gap-6 px-6 transition-opacity duration-300"
+          /*
+            **Opacity only.** An inline `pointerEvents: 'auto'` here beat the
+            `pointer-events-none` class and made the whole row swallow every
+            click — including the empty wall that dismisses, and the pointer
+            moves the tilt needs. The panels and the scrim carry their own
+            `pointer-events-auto`, so the row itself must stay transparent to
+            the pointer.
+          */
+          style={{ opacity: chromeOpacity }}
         >
           {/*
             The dimmed wall. A button so it is reachable and announces itself,
@@ -1131,25 +1277,25 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
             data-testid="record-scrim"
             aria-label="Put the record back"
             onClick={() => setState(dismiss)}
-            className="absolute inset-0 -z-10 cursor-default bg-black/70"
+            /*
+              **`pointer-events-none`**, deliberately: the scrim covers the
+              whole viewport including the record, so a clickable one eats every
+              pointer move over it — which is what the tilt needs. Dismissing is
+              handled by the canvas's own raycast missing every spine, plus
+              Escape and "Put back", so nothing is lost.
+            */
+            className="pointer-events-none absolute inset-0 -z-10 bg-black/70"
           />
 
           <div
-            className="rounded-xs p-4 shadow-2xl backdrop-blur-sm"
+            className="pointer-events-auto max-w-[26vw] rounded-xs p-4 shadow-2xl backdrop-blur-sm"
             style={{ backgroundColor: PANEL_GROUND }}
           >
             <FactsPanel panel={factPanel(out)} />
           </div>
 
-          {/*
-            A spacer the width of the record, so the panels sit either side of
-            it rather than over it. The record itself is drawn in the canvas
-            beneath — the panels never move to follow it.
-          */}
-          <div className="w-[min(46vw,46vh,420px)] shrink-0" aria-hidden />
-
           <div
-            className="rounded-xs p-4 shadow-2xl backdrop-blur-sm"
+            className="pointer-events-auto max-w-[26vw] rounded-xs p-4 shadow-2xl backdrop-blur-sm"
             style={{ backgroundColor: PANEL_GROUND }}
           >
             <ActionsPanel

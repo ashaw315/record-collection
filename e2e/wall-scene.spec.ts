@@ -53,8 +53,27 @@ async function seed(page: Page, count: number) {
  * for a while and then flakes.
  */
 async function clickASpine(page: Page, box: { x: number; y: number }) {
+  /*
+    **The canvas box is re-read, not reused.** Pulling a record scrolls the
+    wall's centre into view, so a box measured before one pull is stale for the
+    next — the second `clickASpine` in a test hit empty page and reported "no
+    spine was hit anywhere", which reads as a broken wall rather than a stale
+    coordinate.
+  */
+  /*
+    **Scrolled to the top and re-measured.** Pulling a record scrolls the wall's
+    centre into view, so after one pull the first row can be off-screen entirely
+    — a second `clickASpine` then hit empty page and reported "no spine was hit
+    anywhere", which reads as a broken wall rather than a stale viewport.
+  */
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }));
+  await page.waitForTimeout(150);
+
+  const live = await page.getByTestId('wall-scene').locator('canvas').boundingBox();
+  const at = live ?? box;
+
   for (let offset = 20; offset < 400; offset += 12) {
-    await page.mouse.click(box.x + offset, box.y + 120);
+    await page.mouse.click(at.x + offset, at.y + 120);
 
     const pulled = await page.evaluate(() => {
       const el = document.querySelector('[data-testid="wall-scene"]') as HTMLElement;
@@ -876,6 +895,62 @@ test('Escape dismisses, and a record dismissed MID-FLIP goes home', async ({ pag
     .toBeLessThan(1);
 
   await expect(page.getByTestId('record-chrome'), 'and the chrome goes with it').toHaveCount(0);
+});
+
+test('the pulled record TILTS with the pointer, and the cover is on its face', async ({
+  page,
+}) => {
+  /**
+   * **A value computed, stored, marked dirty, and never applied.**
+   *
+   * The tilt reported success at every instrument: the phase was `settled`,
+   * `canTilt` was true, twenty pointer moves arrived, `tiltFor` returned real
+   * angles, the dirty flag fired. Each was UPSTREAM of the break — the line
+   * that writes the rotation lived inside `setPulled`, which only runs while
+   * the rise or the return is animating, so `markDirty` redrew an unchanged
+   * mesh.
+   *
+   * The flip escaped it only because its animation re-enters `setPulled`, a
+   * coupling nothing stated. `applyPose` is now the single writer and every
+   * input has a setter that calls it.
+   *
+   * Asserted on the MESH's rotation rather than on the angles `tiltFor`
+   * produced: those were correct throughout the defect.
+   */
+  await openWall(page, (await seed(page, 8)).artistId);
+
+  const box = await page.getByTestId('wall-scene').locator('canvas').boundingBox();
+  if (box === null) return;
+
+  await clickASpine(page, box);
+  await expect(page.getByTestId('record-chrome')).toBeVisible();
+  await page.waitForTimeout(1100);
+
+  const read = () =>
+    page.evaluate(() => {
+      const el = document.querySelector('[data-testid="wall-scene"]') as HTMLElement;
+      return { x: Number(el.dataset.rotX ?? 0), y: Number(el.dataset.rotY ?? 0) };
+    });
+
+  await page.mouse.move(400, 300);
+  await page.waitForTimeout(250);
+  const upLeft = await read();
+
+  await page.mouse.move(900, 620);
+  await page.waitForTimeout(250);
+  const downRight = await read();
+
+  /*
+    Opposite corners must give opposite signs on BOTH axes. A test that moved
+    the pointer once and checked "not zero" would pass against a tilt stuck at
+    whatever the first move produced.
+  */
+  expect(upLeft.y, 'pointer left of centre turns the record one way').toBeLessThan(0);
+  expect(downRight.y, 'and right of centre the other').toBeGreaterThan(0);
+  expect(
+    downRight.x,
+    'and the X axis responds too, rather than only Y',
+  ).toBeLessThan(upLeft.x);
 });
 
 test('a short collection still fills the wall', async ({ page }) => {
