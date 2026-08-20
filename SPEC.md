@@ -1051,15 +1051,17 @@ Mock the Discogs, MusicBrainz and Anthropic APIs in tests. Never hit live extern
 15. Mobile pass across all screens. E2E #10.
 16. Vercel deploy config + cron for price refresh.
 
+**Why 10 and 11 come before 12.** The original order put the graph immediately after the stats screen, and it read its edges from `artist_influences` — a table nothing populated automatically. Built in that order it would have rendered unconnected dots, with no way to tell whether the layout or the clustering was at fault. Seeding first made it verifiable, and what that verification eventually showed was that the screen was not worth keeping (§8) — which is a better outcome than shipping it blind. Step 11's membership data survives the screen and now feeds §9. Market data moved ahead of both because it has no dependency at all and answers the question the app exists for.
+
 **Deferred out of step 13, each with a trigger.** These are §10b features, built later rather than never:
+
+This block is in **execution order** — 13c, then 13a, then 13b. The numbering is by feature and does not run in sequence: 13c happens first, at step 14.
+
+**13c. The snippet** (§10b). **Trigger: step 14**, with §9.2's LLM work. It is a second call to the same API and it needs the same rate limit, the same JSON-parse boundary, and the same answer to R5's question about what leaves the machine. Building it here would build that boundary twice, and R5 is scoped to review it once.
 
 **13a. The gatefold hinge.** Two leaves about a shared edge, and the affordance only where both inner photographs exist (§10b, A21c). **Trigger: after the Discogs inner-image measurement and the add-record slot-assignment UI** (14a). Nothing in the collection can open a gatefold until images can be assigned to `gatefold_left` and `gatefold_right`, so the hinge has nothing to act on. The scene already wires both slots through the surface-kind rule, so the geometry is what is missing.
 
 **13b. Arrow navigation between records** (§10b). Moving through the collection without putting the record back. **Trigger: step 15's mobile pass**, which is already touching how the wall is navigated on a small screen, and where "browsing is continuous" matters most.
-
-**13c. The snippet** (§10b). **Trigger: step 14**, with §9.2's LLM work. It is a second call to the same API and it needs the same rate limit, the same JSON-parse boundary, and the same answer to R5's question about what leaves the machine. Building it here would build that boundary twice, and R5 is scoped to review it once.
-
-**Why 10 and 11 come before 12.** The original order put the graph immediately after the stats screen, and it read its edges from `artist_influences` — a table nothing populated automatically. Built in that order it would have rendered unconnected dots, with no way to tell whether the layout or the clustering was at fault. Seeding first made it verifiable, and what that verification eventually showed was that the screen was not worth keeping (§8) — which is a better outcome than shipping it blind. Step 11's membership data survives the screen and now feeds §9. Market data moved ahead of both because it has no dependency at all and answers the question the app exists for.
 
 Each step should end with its tests green before moving on.
 
