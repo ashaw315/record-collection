@@ -9581,3 +9581,56 @@ Related: the same session's first crop error (a centred sixth of the frame
 reaching onto the dimmed wall) produced *the same number*, 24.3, by an entirely
 different mechanism. Two independent instrument faults agreeing is what made it
 convincing.
+
+## Deferred: the spine treatment — line-drawn and monochrome, colour as accent
+
+**What.** The wall's spines are full-saturation colour bands: `spine_colour`
+fills the whole visible surface of every record. The direction under
+consideration is line-drawn spines — monochrome, with the stored `spine_colour`
+as an accent rather than the entire face. Adam's design sense is black and white
+with pops of colour, and a wall of saturated bands is the opposite of that.
+
+**The record's faces are NOT in scope for this.** Cover and back stay
+photographic, skinned with the real artwork, governed by the photograph-is-unlit
+rule in `surface-kind.ts`. A line-drawn spine and a photographed cover are not
+in tension: a spine is a claim about a record, and the artwork is the record.
+
+**Why deferred rather than declined.** It is a look, not a defect. The wall
+reads correctly today — colour, legibility and performance were all measured
+against real data before the swap. And deciding it now would mean deciding it
+against 125 seeded records with invented names, which is deciding against a wall
+that will not exist.
+
+**Trigger: R8, once the collection is real (~100 records).** That is the review
+that checks the app against the world rather than against the spec, and
+REVIEW-PLAN already says R8 cannot be run by an agent alone — which is correct
+here, because this is a judgement about how something looks to the person who
+owns the records. Same trigger as `/manage`'s 200-row assumption, for the same
+underlying reason: both need real data before the answer means anything.
+
+### Two constraints that will govern whatever is chosen
+
+Recorded now so they are not rediscovered by whoever picks this up.
+
+**1. The legibility bar is already set, and it was expensive.** Spines are
+roughly 1:12 — `SPINE_HEIGHT` is 240, `spineWidth` returns 17-24px — and each
+one must carry artist, title and catalogue number in rotated mono. That bar cost
+two units and overturned an earlier 1:40, which was too narrow to carry the
+text. Any treatment that trades legibility for looking better has failed a
+requirement that was paid for once already, and a line-drawn spine has LESS
+contrast to work with than a filled colour band, not more.
+
+**2. Whether spines become unlit is a real decision, not a detail.** A
+line-drawn spine is a texture like any other, so `surface-kind.ts` will be asked
+the question directly. The scene lights with an ambient at 1.5 and a directional
+key at 1.9, and line work under a directional light picks up shading that fights
+its flatness — the drawing stops reading as a drawing and starts reading as a
+lit surface with marks on it.
+
+But the answer is not automatically "unlit". A spine is not a photograph of
+artwork, and unit 17 found that the plain-sleeve fallback's edge only separates
+tonally from its face BECAUSE it is lit. Unlit spines may flatten the wall into
+a single plane and lose the shelf depth entirely. The rule's own framing is what
+decides it: what IS a line-drawn spine — a drawing, or a surface with a drawing
+printed on it? That question should be answered explicitly and in those terms,
+not settled by whichever screenshot looks better.
