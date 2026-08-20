@@ -9634,3 +9634,166 @@ a single plane and lose the shelf depth entirely. The rule's own framing is what
 decides it: what IS a line-drawn spine — a drawing, or a surface with a drawing
 printed on it? That question should be answered explicitly and in those terms,
 not settled by whichever screenshot looks better.
+
+## Step 14 unit 1 — the two link terms, and an ordering test that was a coin flip
+
+- **A27 was written before the code, and the code found nothing to argue with.**
+  The amendment split §9.1's single link term in two; the implementation is two
+  CTEs joined with `FULL OUTER JOIN`. Worth noting that the JOIN TYPE is the
+  whole separation: an inner join returns only artists reached by BOTH routes,
+  which silently drops most real links, and a left join drops every artist
+  reached by membership alone. Mutation M2 (`FULL OUTER` -> `LEFT`) fails 3
+  tests, all of them the shared-membership cases.
+
+- **`records.artist_id` is NOT NULL, and the deleted `graph.ts` says otherwise.**
+  That file guarded `WHERE r.artist_id IS NOT NULL`, so a case was planned
+  against it — "a record with no artist must not create a phantom owned artist"
+  — and the column has since been made `NOT NULL`. Verified against
+  `information_schema` on the live test database rather than trusting either the
+  old code or the Drizzle schema.
+
+  **The test was DROPPED rather than written**, because its precondition cannot
+  be constructed: the database refuses the row. A test whose setup cannot exist
+  is decorative in the sharpest sense — it would have asserted something about a
+  state the schema forbids. This is the general hazard in NOTES' advice to read
+  deleted code for its reasoning: the reasoning survives, the facts about the
+  schema may not.
+
+- **Two exclusion tests PASSED against a stub returning `[]`.** Caught by running
+  the stub before implementing, per CLAUDE.md §2's "a test that passes the first
+  time is a defect in the test". "Everything is excluded" satisfies an exclusion
+  assertion vacuously, and both tests were asserting only absences. Each now
+  carries a POSITIVE CONTROL — a candidate that must appear alongside the ones
+  that must not — so the test distinguishes "correctly excluded" from "returned
+  nothing".
+
+  **The general form: an assertion that only names absences cannot fail against
+  an empty result.** Same family as the absence-as-success entries, reached from
+  the test side rather than the code side.
+
+# An ordering test that catches its mutation 1 run in 5 is worse than no test
+
+The determinism test asserted that two equal-weight candidates come back in name
+order. It passed, and its comment claimed an honest limit — that it pins the
+observable effect but cannot prove the `ORDER BY` caused it.
+
+**Mutation testing showed the limit was worse than the comment admitted.**
+Dropping the name tie-break (`ORDER BY a.id` alone) still passed the whole file.
+Run five times against the mutation, the ordering test failed ONCE and passed
+FOUR times: random uuids agree with alphabetical order about half the time per
+pair, so the defect surfaces on a coin flip.
+
+**That is the worst possible failure rate for a test.** A test that never catches
+its defect is dead weight and eventually gets noticed. A test that catches it 1
+run in 5 presents as a flake, gets retried away by `retries: 1`, and actively
+argues that the code is fine. NOTES already recorded this shape at unit 12b
+("ordering by uuid makes a test a coin flip") — this is the second instance, and
+the first where the flakiness was in the ASSERTION rather than in the data under
+test.
+
+**The fix is to remove the coincidence, not to accept the limit.** The two
+artists now have PINNED uuids chosen so that id order is the exact reverse of
+name order: 'Alpha Band' sorts first by name and last by id. The orders cannot
+agree, so the assertion can only pass if the name tie-break did the ordering.
+The mutation now fails 5 runs of 5.
+
+**The lesson generalises past ordering.** When a test's fixture leaves any value
+to chance, the mutation it exists to catch may be caught probabilistically — and
+the measurement that reveals this is running the mutation SEVERAL times, not
+once. A single mutation run that fails looks identical to one that fails
+reliably. Four of this unit's five mutations were confirmed on one run each;
+only the ordering one needed five, and it was the only one that needed the work.
+
+**Mutations run, all now failing deterministically:**
+
+| # | Mutation | Tests failed |
+|---|---|---|
+| M1 | `COUNT(DISTINCT person)` -> `COUNT(*)` | 1 (the multi-instrumentalist) |
+| M2 | `FULL OUTER JOIN` -> `LEFT JOIN` | 3 (every membership-only case) |
+| M3 | shared-member weight -> boolean `1` | 2 (tribute vs side project) |
+| M4 | drop `ORDER BY a.name` | 1, on 5 runs of 5 (was 1 of 5) |
+| M5 | drop the `NOT IN owned` exclusion | 1 (owned artists as candidates) |
+| M6 | invert the CASE (wrong edge endpoint) | 6 |
+
+- **A psql probe became test 9, per CLAUDE.md §2.** The probe checked that an
+  edge's non-owned endpoint is the one selected, and that a candidate linked to
+  TWO owned artists sums both strengths rather than reporting one. It is the
+  verification that convinced me the `LATERAL`/`CASE` was right, so it is now a
+  committed test rather than a deleted scratch query. M6 above is its mutation.
+
+## OBSERVATION (step 14 unit 1): the full E2E run degraded badly, and it is NOT this unit
+
+Recorded per CLAUDE.md §4 rather than chased, because the unit it was noticed in
+cannot have caused it. But it is a bigger observation than the usual flake note
+and the next step should not discover it cold.
+
+**Measured this session, in order:**
+
+| Run | Result | Wall clock |
+|---|---|---|
+| Session start (baseline, before any change) | 235 passed, 1 flaky | 7.8m |
+| After the unit, machine saturated by my own overlapping runs | 21 failed | 1.7h |
+| After letting the machine settle | **33 failed** | **2.6h** |
+| `lookup-flows.spec.ts` chromium ALONE, change STASHED | **22 passed** | 1.1m |
+| `lookup-flows.spec.ts` chromium ALONE, change restored | **22 passed** | 1.3m |
+
+**The unit is excluded as a cause by construction, not by argument.**
+`linkTermsForCandidates` is imported by nothing — `grep` across `src` and `e2e`
+finds zero references outside the module and its own integration test. E2E tests
+drive the app through a browser; a module no route, page or component imports
+cannot change what the browser renders. The stash comparison confirms it
+empirically: byte-identical results either side.
+
+**What is NOT yet explained**, and should not be assumed:
+
+- Why the full run degraded from 7.8m to 2.6h across one session on one machine.
+  Load average was ~38 at the worst point but was still ~22 (15-min) with
+  nothing of mine running, and the 2.6h run happened AFTER settling.
+- Whether the 33 failures are the documented shared-test-data contention at a
+  larger scale, or a second mechanism. The failing set spans `lookup-flows`,
+  `manage`, `record-detail`, `wall-scene`, `want-list` and `collection-filters`
+  across BOTH projects — wider than the recorded cluster, which was `want-list`
+  ×4 plus two mobile specs.
+- Whether repeated full runs in one session degrade the database or the dev
+  server cumulatively. Three full runs happened here; the suite got worse each
+  time. That is a hypothesis with an obvious test (restart Docker + dev server,
+  run once, cold) which was NOT performed.
+
+**Trigger: before step 15's mobile pass**, which is E2E-heavy and will be reading
+these same numbers. If the suite cannot produce a trustworthy full-run result,
+step 15 has no instrument.
+
+# THREE measurement errors in one session, and what each one looked like
+
+Worth recording as a set, because they compounded: each made the next harder to
+see, and together they cost far more than the unit did.
+
+**1. An exit code that was not the test runner's.** `npx playwright test ... |
+tail -8` reports `tail`'s status. The run announced "exit code 0" while
+`test-results/.last-run.json` said `"status": "failed"` with 21 failed tests.
+**A pipeline's exit code belongs to its LAST command.** Use
+`cmd > file 2>&1; echo $?`, and cross-check `.last-run.json`, which is the
+authority.
+
+**2. Running Vitest against the test database while Playwright was using it.**
+Produced 8 failures across 5 files the unit never opened, with a failure set that
+MOVED between runs and `expected length 2, got 3` — extra rows, the signature of
+a second writer. Vitest alone: 2579 passed. The suites share one database and
+`truncateAll` runs between tests; they cannot overlap.
+
+**3. Diagnosing machine load as external while measuring my own instrument.**
+`ps aux | sort -k3 -rn | head` reported a zsh at 48% — which was that pipeline
+itself, already exited by the time it was inspected. Concluded "something else is
+consuming the machine" and said so. The falling 1-min-vs-15-min averages
+afterwards showed the load was mine all along.
+
+**The common shape: three different instruments each answered a question
+adjacent to the one asked.** Same family as the `sharp.stats()` colour-space
+finding — a wrong instrument produces a consistent, plausible, reproducible
+number. The cheap check that ended all three was the same: measure the thing
+directly (the status file, the suite alone, the load with nothing running)
+instead of inferring it from a composite.
+
+**And the one that would have saved the most time, done first:** ask whether the
+change under suspicion is even REACHABLE from the failing tests. One `grep` for
+references answered in seconds what three full E2E runs could not.
