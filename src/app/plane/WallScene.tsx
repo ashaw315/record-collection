@@ -41,13 +41,14 @@ import { boxDepth } from './record-box';
 import { wallDim } from './wall-dim';
 import { PROUD_MS, proudOffset, shouldRedraw } from './hover-proud';
 import { NO_TILT, tiltFor } from '../shelf/tilt';
-import { beginDrag, endDrag, shouldStartTiltDrag, type TiltDrag } from './touch-tilt';
+import { beginDrag, endDrag, shouldStartTiltDrag, swipeDirection, type TiltDrag } from './touch-tilt';
 import { RecordPanel } from './RecordPanel';
 import { recordSummary } from './summary';
 import { recordLayout } from './record-layout';
+import { adjacentRecordId, hasAdjacent, type Direction } from './adjacent-record';
 import { useScrollLock } from './use-scroll-lock';
 import { factPanel } from './panel';
-import { PANEL_GROUND } from '../shelf/panel-palette';
+import { PANEL_GROUND, PANEL_TEXT } from '../shelf/panel-palette';
 import {
   canTilt,
   dismiss,
@@ -176,6 +177,15 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     release.
   */
   const preRiseScrollY = useRef<number | null>(null);
+
+  /*
+    **The latest `navigate`, held in a ref for the touch effect.** The effect is
+    keyed on `[state]`, but `navigate` closes over `pulledId` and `order`, which
+    change independently — a direct reference would capture a stale one. The ref
+    is updated every render (below) and the effect reads `.current`, so a swipe
+    always moves from the record that is actually out.
+  */
+  const navigateRef = useRef<(direction: Direction) => void>(() => {});
 
   /*
     Written in an effect rather than during render: reading or writing a ref
@@ -1313,6 +1323,9 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     if (prefersReducedMotion()) return;
 
     let drag: TiltDrag = { active: false, tilt: null };
+    /* Where the drag began and where it is now — for the swipe/tilt decision. */
+    let startAt: { x: number; y: number } | null = null;
+    let lastAt: { x: number; y: number } | null = null;
 
     const faceFor = (): { left: number; top: number; width: number; height: number } => {
       const box = host.getBoundingClientRect();
@@ -1335,6 +1348,8 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
         return;
       }
       drag = beginDrag();
+      startAt = { x: touch.clientX, y: touch.clientY };
+      lastAt = startAt;
       /*
         Claim the gesture: prevent the browser turning this into a scroll or a
         synthetic click. The empty-wall touch is NOT prevented (this handler
@@ -1347,6 +1362,7 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
       if (!drag.active) return;
       const touch = event.touches[0];
       if (touch === undefined) return;
+      lastAt = { x: touch.clientX, y: touch.clientY };
       const tilt = tiltFor({ x: touch.clientX, y: touch.clientY }, faceFor());
       drag = { active: true, tilt };
       scene.setTilt(tilt);
@@ -1355,8 +1371,35 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
 
     const onTouchEnd = () => {
       if (!drag.active) return;
-      /* Hold the angle — do NOT reset. §10b: a record you turned stays turned. */
+
+      /*
+        **Swipe vs tilt, decided at release (13b).** A drag whose net horizontal
+        travel crossed half the record's on-screen width, dominantly horizontal,
+        was a navigation swipe — the finger left the record. The face square's
+        width is the record's mapped width, so half of it is the same "past the
+        edge" distance the tilt clamps at.
+      */
+      if (startAt !== null && lastAt !== null) {
+        const direction = swipeDirection({
+          dx: lastAt.x - startAt.x,
+          dy: lastAt.y - startAt.y,
+          recordWidth: faceFor().width,
+        });
+        if (direction !== null) {
+          /* Leaving this record: snap the tilt back, then move. */
+          scene.setTilt(NO_TILT);
+          navigateRef.current(direction);
+          drag = { active: false, tilt: null };
+          startAt = null;
+          lastAt = null;
+          return;
+        }
+      }
+
+      /* Not a swipe: hold the angle — do NOT reset. §10b: a record turned stays turned. */
       drag = endDrag(drag);
+      startAt = null;
+      lastAt = null;
     };
 
     const canvas = host.querySelector('canvas');
@@ -1441,6 +1484,31 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
   /** The record that is out, whatever it is doing. */
   const out =
     pulledId === null ? null : (records.find((record) => record.id === pulledId) ?? null);
+
+  /*
+    **The wall's order, for moving between records (13b).** `records` is already
+    the deterministic genre order `shelfRecords` built the wall from — filtered
+    walls repack it, so this is next IN WHAT IS SHOWN. Not a second order.
+  */
+  const order = useMemo(() => records.map((record) => record.id), [records]);
+
+  /*
+    Move to the adjacent record without a return to the wall (§10b). Reuses the
+    same transition clicking a neighbouring spine does — `pull` to the new id —
+    which honours the slots: the new record rises from its slot and the old
+    slot refills. Under reduced motion the pull is instant (no rise), which the
+    scene's own reduced-motion path already handles.
+  */
+  const navigate = (direction: Direction) => {
+    if (pulledId === null) return;
+    const nextId = adjacentRecordId(order, pulledId, direction);
+    if (nextId === null) return;
+    setState((current) => pull(current, nextId));
+  };
+  /* The ref is updated in an effect, not during render (refs are write-in-effect). */
+  useEffect(() => {
+    navigateRef.current = navigate;
+  });
 
 
 
@@ -1577,6 +1645,46 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
             */
             className="pointer-events-none absolute inset-0 -z-10"
           />
+
+          {/*
+            **The navigation arrows, overlaid on the artwork (13b).** Criterion
+            puts them on the case, not in a side panel, because a panel arrow
+            competes with the panel's own content — so these sit over the record
+            at its vertical centre, one per side. Present on BOTH layouts.
+
+            **Each is present only where there is somewhere to go** (`hasAdjacent`).
+            §10b keeps rejecting an affordance that appears to work and does not,
+            so at the first record the left arrow is absent and at the last the
+            right one is — the wall stops visibly, by the arrow's absence, rather
+            than a press that silently does nothing.
+
+            `chromeOpacity` gates them with the rest of the chrome, so they
+            arrive as the record settles rather than over a record still rising.
+          */}
+          {out !== null && hasAdjacent(order, out.id, 'previous') && (
+            <button
+              type="button"
+              data-testid="nav-previous"
+              aria-label="Previous record"
+              onClick={() => navigate('previous')}
+              className="pointer-events-auto absolute top-1/2 left-2 z-50 flex size-11 -translate-y-1/2 items-center justify-center rounded-full text-2xl"
+              style={{ backgroundColor: PANEL_GROUND, color: PANEL_TEXT.title }}
+            >
+              ‹
+            </button>
+          )}
+          {out !== null && hasAdjacent(order, out.id, 'next') && (
+            <button
+              type="button"
+              data-testid="nav-next"
+              aria-label="Next record"
+              onClick={() => navigate('next')}
+              className="pointer-events-auto absolute top-1/2 right-2 z-50 flex size-11 -translate-y-1/2 items-center justify-center rounded-full text-2xl"
+              style={{ backgroundColor: PANEL_GROUND, color: PANEL_TEXT.title }}
+            >
+              ›
+            </button>
+          )}
 
           {/*
             **§10b/A32: the facts flank the record, or stack beneath it.** Above

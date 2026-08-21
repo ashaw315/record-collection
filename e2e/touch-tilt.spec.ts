@@ -165,3 +165,56 @@ test('a drag that STARTS on the wall does NOT tilt the record (the boundary)', a
     await cleanup(artistId);
   }
 });
+
+
+test('a horizontal SWIPE navigates, a short drag TILTS — the boundary (13b)', async ({ page }) => {
+  const artistId = await seed();
+  try {
+    await login(page);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/plane?artistId=${artistId}`);
+    await expect(page.getByTestId('wall-scene').locator('canvas')).toBeVisible({ timeout: 30_000 });
+    await pullByTap(page);
+
+    const pulled = () =>
+      page.evaluate(
+        () => (document.querySelector('[data-testid="wall-scene"]') as HTMLElement)?.dataset.pulled ?? '',
+      );
+
+    const client = await page.context().newCDPSession(page);
+    const cx = 195;
+    const cy = 400;
+
+    /*
+      **A short drag tilts and stays on the same record.** This is the
+      discriminating half: a drag that produces a tilt must NOT also navigate.
+    */
+    const idBefore = await pulled();
+    await client.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: cx, y: cy }] });
+    await client.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: cx + 50, y: cy }] });
+    await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await page.waitForTimeout(150);
+    expect(await rotY(page), 'the short drag tilted the record').not.toBe('0');
+    expect(await pulled(), 'the short drag did not navigate').toBe(idBefore);
+
+    /*
+      **A long horizontal swipe navigates to a different record.** Left = next.
+      The record leaves; the pulled id changes.
+    */
+    await client.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: cx + 130, y: cy }] });
+    for (let i = 1; i <= 10; i += 1) {
+      await client.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [{ x: cx + 130 - i * 30, y: cy }],
+      });
+    }
+    await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await client.detach();
+
+    await expect
+      .poll(() => pulled(), { timeout: 10_000 })
+      .not.toBe(idBefore);
+  } finally {
+    await cleanup(artistId);
+  }
+});

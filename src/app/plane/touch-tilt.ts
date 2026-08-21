@@ -62,3 +62,52 @@ export function beginDrag(): TiltDrag {
 export function endDrag(drag: TiltDrag): TiltDrag {
   return { active: false, tilt: drag.tilt };
 }
+
+/**
+ * **Distinguishing a navigation swipe from a tilt drag (13b), geometrically.**
+ *
+ * Both start as a finger moving sideways on the record, so the boundary is the
+ * gesture-boundary problem one layer in. It is decided at RELEASE, from the net
+ * displacement — and the threshold is a GEOMETRIC quantity, not a derived
+ * number: a swipe is a drag whose horizontal travel exceeds half the record's
+ * on-screen width AND is dominantly horizontal. Half the record width is the
+ * distance from centre to edge; a drag that crosses it has travelled past the
+ * record itself, which reads as "leave this one" rather than "turn this one".
+ * It is hand-independent because it scales with the record, not with a guess at
+ * how far a thumb flicks.
+ *
+ * During the drag the record tilts (live feedback, `tiltFor`); only the release
+ * decides. A swipe that commits snaps the tilt back, because the record is
+ * leaving.
+ */
+export type SwipeResult = 'next' | 'previous' | null;
+
+export function swipeDirection({
+  dx,
+  dy,
+  recordWidth,
+}: {
+  /** Net horizontal displacement from touchstart to touchend (px). */
+  dx: number;
+  /** Net vertical displacement (px). */
+  dy: number;
+  /** The record's on-screen width (px). */
+  recordWidth: number;
+}): SwipeResult {
+  const horizontalReach = recordWidth / 2;
+
+  /*
+    Dominantly horizontal: the horizontal travel is greater than the vertical,
+    so a mostly-vertical drag (or a diagonal tilt) does not read as a swipe.
+    And it must clear half the record's width — past the record's own edge.
+  */
+  if (Math.abs(dx) <= Math.abs(dy)) return null;
+  if (Math.abs(dx) < horizontalReach) return null;
+
+  /*
+    A swipe LEFT (dx negative, the finger moves toward the left) reveals the
+    NEXT record, the way a gallery advances — the content moves left as the next
+    slides in. Right is previous.
+  */
+  return dx < 0 ? 'next' : 'previous';
+}

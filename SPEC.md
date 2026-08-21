@@ -1018,6 +1018,8 @@ What resolves it is the allocation, not the renderer alone: **the object carries
 
 The reason for the split is that they answer different questions. The tilt says *this is an object*; the turn says *show me the other side*. Collapsing them means the back arrives by accident while someone is looking at the front.
 
+**The turn is a button on touch, not a swipe, and that is a decision (A34).** A swipe-to-flip is declined for two reasons. A flick and a drag differ only in speed and distance — a threshold nobody can derive, and one that behaves differently for different hands, the same shape as the `WIDE_RATIO` minimum this section rejected. And horizontal swipe belongs to *moving between records* (13b): it is the gesture every gallery has taught, so spending it on the flip would force a second, invented gesture for the more important navigation. "Turn over" is a button; it is unambiguous and it works. **Trigger to revisit: R8, or the first real one-handed use in a shop** — if the button proves awkward to reach with a thumb while holding a record, the swipe earns reconsidering, and the cost is then whatever gesture 13b did not take.
+
 **The object takes four textures, all square.** `cover` on the front, `back` on the back, and `gatefold_left` and `gatefold_right` across the two leaves of the open sleeve. Nothing else is mapped onto it.
 
 Square because a 12″ sleeve is square. **The stored images frequently are not**, and that is measured rather than assumed: Discogs serves whatever a contributor uploaded, and the first cover checked was 591×599.

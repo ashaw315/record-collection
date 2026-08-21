@@ -13791,3 +13791,80 @@ hit test rather than trusting the drag's result.
 restored on cleanup, so the wall scrolls normally when nothing is pulled. A
 `touch` Playwright project (Chromium + hasTouch, 390px) runs the spec, scoped —
 CDP touch is Chromium-only and the WebKit `mobile` project cannot drive it.
+
+## Step 15 — 13b: moving between records, and swipe-to-flip declined (A34)
+
+### A34: no swipe-to-flip, WITH a trigger
+
+Recorded in §10b beside the tilt clause. A flick and a drag differ only in speed
+and distance — the undrivable threshold this section already rejected for
+`WIDE_RATIO` — and horizontal swipe belongs to MOVING BETWEEN records, so
+spending it on flip would force a second invented gesture for the more important
+feature. "Turn over" is a button. **Trigger to revisit: R8, or the first real
+one-handed use in a shop** — if the button is awkward to reach with a thumb while
+holding a record, the swipe earns reconsidering. A decision without a trigger is
+a decision never to revisit, and this one might earn it once the app is in a shop.
+
+### What the wall does (Q1): the next record RISES, through the slots
+
+Navigation reuses the exact transition clicking a neighbouring spine does —
+`pull(current, nextId)`. The new record rises from its own slot and the old
+slot refills; it is not a content swap. Seen mid-navigation (screenshot): the
+next record rising out of the wall, the previous slot emptied. This honours the
+rise/return rather than bypassing it, and it means put-back returns the
+navigated-to record to ITS slot.
+
+### The ends (Q2): the arrow is ABSENT where there is nowhere to go
+
+`adjacentRecordId` returns null at the ends; the arrow is hidden there
+(`hasAdjacent`). §10b keeps rejecting an affordance that appears to work and does
+not, so the wall stops VISIBLY — the left arrow gone at the first record, the
+right gone at the last — rather than a press that silently does nothing.
+Stopping-that-looks-live and wrapping-a-linear-shelf were the other two answers;
+a shelf is a line and does not loop.
+
+### The order is the WALL's, asserted against its producer (Q4)
+
+Navigation indexes `records` — the deterministic genre order `shelfRecords`
+built the wall from. A filtered wall repacks it, so this is next in what is
+SHOWN. The E2E reads the order from the `wall-records` accessible list (the same
+`records` prop, rendered as links) rather than a literal — the seam-test shape,
+and `shelfRecords` is server-only and cannot be imported into a spec anyway. All
+navigation tests run against `/plane?artistId=`, which IS a filtered wall.
+
+### The gesture boundary (the part most likely wrong): swipe vs tilt, GEOMETRIC
+
+Both start as a finger moving sideways on the record. Decided at RELEASE, and the
+threshold is a GEOMETRIC quantity, not a derived number: a swipe is a drag whose
+net horizontal travel exceeds HALF THE RECORD'S ON-SCREEN WIDTH and is dominantly
+horizontal. Half the width is centre-to-edge — past the record itself, which
+reads as "leave this one". It scales with the record, so it is hand-independent,
+which is exactly what A34 rejected the fuzzy version for. During the drag it
+tilts (live feedback); a committed swipe snaps the tilt back and moves.
+
+Measured: a short drag (~50px) tilts and stays on the same record; a long swipe
+(~250px) navigates. Mutation-tested: dropping the horizontal-dominance check,
+the half-width threshold, or flipping next/previous each fails.
+
+### Draws (Q5) and put-back (Q3)
+
+Idle 0 before, 32 over one navigation (the rise), 0 after it settles. Put-back
+after navigating 10 records forward into later rows cleared the pulled state —
+the record returned to its slot. The scroll lock and return-home from the last
+unit carry: put-back still lands right because the navigated-to record's own home
+slot is where the pull-transition sends it.
+
+### Emulation vs device
+
+The order, the ends, the boundary and the draws are logic and are pinned in the
+E2E (arrows via chromium, swipe via the `touch` project + CDP). What only the
+DEVICE judges: whether the swipe feels like turning a page vs fighting the tilt,
+whether the arrows are reachable one-handed, whether the rise-between-records
+reads as continuous. Adam's call on the phone.
+
+### What must not break — checked
+
+Tap still pulls, tilt drag still tilts and holds, wall-drag still does not tilt,
+scroll lock and return-home unchanged, desktop unchanged except for the arrows,
+zero idle draws. reduced-motion: navigation reuses `pull`, whose reduced-motion
+path is instant (no rise) — the new record simply appears.
