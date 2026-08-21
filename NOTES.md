@@ -13464,3 +13464,159 @@ Until the width is measured on first client render, the flanking layout is
 assumed — it is the desktop shape and the server markup is desktop-shaped, so a
 phone corrects on hydration rather than a wrong default flashing the wrong
 layout at every width.
+
+## Step 15 unit 5, mobile: two coupled failures, diagnosed by scanning pixels
+
+Reported by the developer against the live wall (both invisible on /plane and to
+arithmetic). Measured on a 390px render, sleeve band scanned off the screenshot.
+
+### Problem 1: the card is OVER the scene, not beneath the record in a column
+
+There is no column. The record is drawn on the CANVAS, centred on the camera
+axis (viewport centre). The summary card is an `absolute` element pinned to the
+bottom of the `fixed inset-0` chrome container — the container built for the
+FLANKING pair, which uses `align-items: center; justify-content: space-between`
+to push two panels to the left and right edges with the record showing between.
+
+The stacked card inherits that container and lands as a black block layered in Z
+OVER the composited scene. Measured: record sleeve ≈261–582, dimmed wall
+582–646, card 646–820, a sliver of wall 821–844. In Y they nearly abut, but the
+card floats above the scene rather than the record sitting above the card — and a
+band of dimmed WALL shows between them, which reads as the record and card being
+two unrelated things stacked in depth. **The /plane comparison put the record in
+a DOM box above the card in a flex column; the live wall puts the record on a
+canvas and the card on an overlay, and those do not form a column.**
+
+### Problem 2: the wall scrolls while a record is out
+
+Measured `scrollY = 1295` with a record pulled. The rise scrolls the wall's
+centre to the viewport centre once (`state.phase === 'rising'` effect), but
+nothing holds it there. The record is fixed to the CAMERA; the wall scrolls
+under it; they separate. On desktop the scrim is a full-viewport element but is
+`pointer-events-none`, so it does not absorb scroll either — desktop simply
+isn't touch-scrolled in the test. On touch a one-finger drag scrolls the page.
+
+### THE DESIGN QUESTION for problem 2, reasoned rather than reflexed
+
+Scroll-locking is one answer and not automatically the right one. Three
+considerations:
+
+1. **A pulled record IS a modal-ish state.** The wall is dimmed, the record is
+   the subject, and "put back" is the way out. Modals lock the background scroll
+   because scrolling a background you cannot interact with is disorienting. That
+   argues for a lock.
+
+2. **But the wall is not inert — it is frozen, and a frozen wall behind a record
+   you can put back is a promise the wall is still THERE.** Locking scroll keeps
+   the wall exactly where the record left it, so putting the record back returns
+   it to the same slot in view. That is the continuity §10b's rise exists to
+   establish, extended to the return. This also argues for a lock — a lock that
+   FREEZES rather than one that hides.
+
+3. **It interacts with the unbuilt touch-drag (§10b, still deferred).** §10b:
+   "on touch it is dragged." A one-finger drag on the record must TILT it, not
+   scroll the page — so the page-scroll-lock and the touch-drag are the same
+   gesture boundary seen from two sides. Building the lock now without the drag
+   means a finger on the record does nothing (no tilt yet) but also does not
+   scroll (locked), which is correct-but-inert rather than wrong. Building the
+   drag later then has a locked page to work against rather than a moving one.
+
+**Decision: freeze the page while a record is out** — `overflow: hidden` on the
+document with the scroll position PRESERVED, not reset. The wall stays exactly
+where it was; the record is on the camera axis at that scroll position; putting
+the record back releases the lock and the wall is where it was left. This is the
+freeze of consideration 2, and it lays the ground the touch-drag needs rather
+than fighting it.
+
+**What this does NOT do:** it does not implement the touch tilt. A finger on the
+record will not turn it until §10b's drag is built. That is honest — the record
+still turns via the "Turn over" button, which is in both layouts — and the lock
+is a precondition of the drag, not a substitute for it.
+
+### Why problem 1's fix is not "just add flex-col"
+
+The chrome container cannot simply become a column, because it holds the
+FLANKING layout at desktop too and that needs the record centred with panels at
+the edges. The stacked case needs its OWN container — the record's on-canvas
+position and the card's DOM position have to be made to agree about a column,
+which the flanking case explicitly does not want. So the fork has to reach
+higher than swapping the panels: the stacked layout needs the record positioned
+in the LOWER-UPPER of the frame with the card below it, which means the
+destination's Y (currently the camera axis) is also part of the stacked shape.
+
+Both fixes measured on the device, per the six prior times arithmetic looked
+right and a screenshot did not.
+
+### RESOLVED, and the lift was the SEVENTH "which frame" error
+
+Both fixed, both after a screenshot contradicted a number.
+
+**The scroll lock (problem 2): freeze on SETTLE, not on rise.** `useScrollLock`
+pins the body at `-scrollY` (position preserved, not `overflow:hidden` which
+jumps to top — mutation-tested: the overflow-only version fails the
+position-unchanged test). But locking while `out !== null` froze the page during
+the RISE, before the rise-scroll centred the record — so the record settled
+off-screen against a frozen wall. Locking on `phase === 'settled' || 'flipping'`
+lets the rise-scroll finish first. Asserted: scroll position identical across
+pull and return, on the seeded wall.
+
+**The column (problem 1): lift the stacked record, flanked untouched.**
+`pulledDestination` gains a `layout` and lifts the record's world Y so the card
+sits beneath it. The flanked case is asserted byte-identical (and the "unchanged"
+test was itself caught passing vacuously on two NaNs — hardened to require a
+finite Y first).
+
+**The lift magnitude was wrong TWICE, both caught by rendering:**
+1. A fixed 0.18 fraction of the frame clipped the record off the top — a lift
+   that tracks neither viewport nor card height.
+2. A screen-space lift that divided by `viewport.height` — but the record maps
+   to the CANVAS height (2976px, the whole wall), not the viewport (844px), so
+   the lift was 3.5x too large and still clipped. **The seventh instance of this
+   unit's one bug: a quantity measured against the wrong frame.** Fixed to
+   `wallHeight`, and the record now sits in a complete column above the card.
+
+The pattern held to the end: the arithmetic looked right at 0.18, looked right
+at viewport.height, and a screenshot showed a clipped record both times. The
+rule stands — a size assertion must name which frame it is a fraction of — and
+this unit named the wrong one seven times before the screenshots exhausted the
+frames.
+
+## `wall-scene:212` "settles CENTRED" — SECOND SIGHTING, and it is the flake
+
+2026-08-21, step 15 unit 5. Fired in a full suite on the HORIZONTAL axis
+(`settledNdcX` 0.35, where <0.05 is required) after the lift/lock work.
+
+NOTES' first-sighting entry said "if it fires again after the fill rule lands,
+suspect the change before the harness." Suspicion fell on the change — correct
+discipline — and the change was **exonerated by measurement**:
+
+- Isolated, the test passes twice at `--retries=0`.
+- A direct probe of the settled world X at 130 records: `worldX=640, destX=640,
+  camX=640, ndcX=0` — exactly centred. The lift is Y-only and never touches X.
+
+So it is the timing flake the first entry describes, now seen on X: under
+full-suite load the rise's X interpolation has not reached `destination.x` by
+the test's fixed 900ms wait, and a partway reading is off-centre. The 0.05
+tolerance assumes a settled rise; under load it is not settled.
+
+**Two axes of expression, one flake — now FIXED.** The fix was not to re-suspect
+each change (that was tried and cost an investigation) but to make the test wait
+for the rise to actually settle. The scene already exposes `pulledProgress`,
+which `Math.min(1, …)`-caps and reaches '1' when the rise completes; the test
+now `expect.poll`s for that instead of a fixed 900ms. A settle SIGNAL cannot
+read a partway position under load, which is what both sightings were. Ran 3x in
+isolation green after the change. This closes the flake at its cause rather than
+its symptom — the condition-based-waiting fix the deferral named.
+
+## scroll-lock test: the assertion assumed the wrong capture point, corrected
+
+The lock fires on SETTLE (after the rise-scroll centres the record), so the
+pinned offset is where the rise LEFT the wall — not the pre-pull scroll. The
+first test asserted the pin equalled the pre-pull `before` (600) and failed:
+the rise-scroll had moved it to 3293 and the lock correctly captured that.
+
+Corrected to assert what is actually true and load-bearing: the pin is a real
+negative offset (not 0 / jumped-to-top), it does not move while out, and the
+return restores THAT position — so the record's slot is where the reader last
+saw it. Re-mutated after the correction: `overflow:hidden` alone still fails the
+position test, so the guard against the jump-to-top failure survives the fix.

@@ -245,7 +245,26 @@ test('the pulled record settles CENTRED in view, at any collection size', async 
 
     await clickASpine(page, box);
     await expect(scene).not.toHaveAttribute('data-pulled', '');
-    await page.waitForTimeout(900);
+
+    /*
+      **Wait for the rise to actually SETTLE, not a fixed 900ms.** The record
+      interpolates from its slot to the destination over the rise; a fixed
+      timeout reads a partway position under load, and this test flaked on both
+      axes (NDC y, then x) for exactly that reason across two steps. The scene
+      exposes `pulledProgress`, which reaches '1' when the rise completes — a
+      settle SIGNAL rather than a guess at its duration.
+    */
+    await expect
+      .poll(
+        () =>
+          page.evaluate(
+            () =>
+              (document.querySelector('[data-testid="wall-scene"]') as HTMLElement)?.dataset
+                .pulledProgress ?? '0',
+          ),
+        { timeout: 10_000 },
+      )
+      .toBe('1');
 
     const settled = await page.evaluate(() => {
       const el = document.querySelector('[data-testid="wall-scene"]') as HTMLElement;

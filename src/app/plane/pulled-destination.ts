@@ -35,6 +35,8 @@ export function pulledDestination({
   wallHeight,
   viewport,
   widthFill,
+  layout,
+  stackedCardHeight,
 }: {
   wallWidth: number;
   wallHeight: number;
@@ -60,6 +62,26 @@ export function pulledDestination({
    * consulted when `viewport` is set.
    */
   widthFill?: number;
+  /**
+   * **The A32 layout, which decides whether the record shifts up for the card.**
+   *
+   * `'flanked'` (the default) leaves the record on the camera axis — the panels
+   * sit beside it and want it centred, and this is the shape verified at 1280.
+   * `'stacked'` lifts the record into the upper part of the frame so the summary
+   * card has room in a COLUMN beneath it, rather than floating over the scene.
+   * The lift is only applied for `'stacked'`, so the flanking layout is
+   * (see `stackedCardHeight` for how far it lifts)
+   * byte-identical to before.
+   */
+  layout?: 'flanked' | 'stacked';
+  /**
+   * The stacked card's height in SCREEN pixels. The record lifts by half of it,
+   * so the record's centre moves up by exactly what the card takes from the
+   * bottom — centring the record in the space ABOVE the card rather than in the
+   * whole viewport. Only consulted for `'stacked'`; defaults to a sensible card
+   * height so an omitted value does not clip the record.
+   */
+  stackedCardHeight?: number;
 }): PulledPose {
   const cameraZ = wallCameraDistance({ wallHeight });
   const halfAngle = (WALL_FOV_DEGREES * Math.PI) / 360;
@@ -96,6 +118,42 @@ export function pulledDestination({
 
   const distance = Math.max(byHeight, byWidth);
 
+  /*
+    **The stacked lift, computed in SCREEN space, not a magic fraction.** The
+    record is centred on the camera axis — the middle of the viewport. The card
+    is pinned to the bottom, so to sit the record ABOVE it in a column the
+    record's centre must move up by half the card's height: that clears the
+    card's band from the bottom and centres the record in what remains.
+
+    A fixed fraction of the frame was tried (0.18) and clipped the record off the
+    top — it does not track the viewport height or the card height, and a lift
+    that only works at one screen size is the "which frame" trap this unit keeps
+    hitting. So the lift is a screen quantity (half the card height) converted to
+    world units at the record's depth.
+  */
+  const frameHeightAtRecord = 2 * distance * Math.tan(halfAngle);
+  const DEFAULT_CARD_HEIGHT = 200;
+  let lift = 0;
+  if (layout === 'stacked' && viewport !== undefined) {
+    /*
+      **The record's on-screen size maps through the CANVAS height, not the
+      viewport height.** The canvas is drawn at 1 world unit = 1 px and is as
+      tall as the whole wall (`wallHeight`), not the viewport — only a slice of
+      it is visible. A first version divided by `viewport.height` and lifted the
+      record 3.5x too far, clipping it off the top: the seventh "which frame"
+      error in this unit, and again a screenshot caught what the number hid.
+
+      `wallHeight` world units map to `wallHeight` canvas px, so the record
+      (SPINE_HEIGHT world) is `SPINE_HEIGHT / frameHeightAtRecord * wallHeight`
+      px on screen. The lift converts half the card's height from those px back
+      to world.
+    */
+    const recordScreenPx = (SPINE_HEIGHT / frameHeightAtRecord) * wallHeight;
+    const worldPerScreenPx = SPINE_HEIGHT / recordScreenPx;
+    const halfCard = (stackedCardHeight ?? DEFAULT_CARD_HEIGHT) / 2;
+    lift = halfCard * worldPerScreenPx;
+  }
+
   return {
     // Centred across the wall.
     x: wallWidth / 2,
@@ -114,7 +172,8 @@ export function pulledDestination({
      * That the wall may extend past the window is a SCROLL question, and the
      * canvas scrolls with the page — which is what the fixed camera bought.
      */
-    y: -wallHeight / 2,
+    // Camera axis, lifted for the stacked layout so a card fits beneath.
+    y: -wallHeight / 2 + lift,
     z: cameraZ - distance,
   };
 }

@@ -45,6 +45,7 @@ import { ActionsPanel, FactsPanel } from './Panels';
 import { SummaryCard } from './SummaryCard';
 import { recordSummary } from './summary';
 import { recordLayout } from './record-layout';
+import { useScrollLock } from './use-scroll-lock';
 import { factPanel } from './panel';
 import { PANEL_GROUND, PANEL_TEXT } from '../shelf/panel-palette';
 import {
@@ -324,6 +325,20 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
         as a distant speck.
       */
       widthFill: 0.9,
+      /*
+        **The stacked layout lifts the record so the card sits beneath it in a
+        column** (§10b/A32). `build` re-runs on width change, which is exactly
+        when the layout flips, so reading `window.innerWidth` here stays current.
+      */
+      layout: recordLayout(window.innerWidth),
+      /*
+        The stacked card's height, so the record lifts by half of it and sits in
+        a column above rather than clipping off the top. Measured constant: the
+        card is the summary (2 lines + link) plus the button row ≈ 200px; the
+        default in `pulledDestination` matches, so this is explicit rather than
+        load-bearing.
+      */
+      stackedCardHeight: 200,
     });
     const camera = new PerspectiveCamera(WALL_FOV_DEGREES, width / height, 1, cameraDistance * 2);
     camera.position.set(width / 2, -height / 2, cameraDistance);
@@ -1304,6 +1319,17 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
   /** The record that is out, whatever it is doing. */
   const out =
     pulledId === null ? null : (records.find((record) => record.id === pulledId) ?? null);
+
+  /*
+    Freeze the page once the record has SETTLED, not while it rises. §10b unit 5:
+    the wall scrolled under a camera-fixed record and they separated. Locking
+    during the rise would freeze the page at its pre-rise scroll, before the
+    rise-scroll effect below centres the record — so the record would settle
+    off-screen against a frozen wall. Waiting for 'settled' lets the rise-scroll
+    complete first, then the lock captures the centred position. 'flipping' keeps
+    the lock while the record is turned.
+  */
+  useScrollLock(state.phase === 'settled' || state.phase === 'flipping');
 
   /**
    * **The chrome arrives as the record travels** (unit 11): 0 while it rises,

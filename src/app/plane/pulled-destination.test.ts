@@ -204,6 +204,48 @@ describe('the pulled record fits the viewport, not just the canvas', () => {
   });
 });
 
+describe('the stacked layout lifts the record, the flanked layout does not', () => {
+  const wall = { wallWidth: 358, wallHeight: wallOf(10) };
+  const viewport = { width: 390, height: 844 };
+
+  it('leaves the flanked record on the camera axis, unchanged', () => {
+    /*
+      **The desktop layout must not move.** `pulledDestination` was verified at
+      1280 with the record centred; a Y shift applied unconditionally would
+      centre the desktop record high with an empty band beneath. So the flanked
+      case — the default — is asserted byte-identical to omitting `layout`.
+    */
+    const withFlanked = pulledDestination({ ...wall, viewport, widthFill: 0.9, layout: 'flanked' });
+    const withoutLayout = pulledDestination({ ...wall, viewport, widthFill: 0.9 });
+
+    /* Finite, or the equality below passes vacuously on two NaNs (it did once). */
+    expect(Number.isFinite(withFlanked.y)).toBe(true);
+    expect(withFlanked.y).toBe(withoutLayout.y);
+    expect(withFlanked).toEqual(withoutLayout);
+  });
+
+  it('lifts the stacked record above the axis so a card fits beneath', () => {
+    const flanked = pulledDestination({ ...wall, viewport, widthFill: 0.9, layout: 'flanked' });
+    const stacked = pulledDestination({ ...wall, viewport, widthFill: 0.9, layout: 'stacked' });
+
+    /*
+      Y increases upward (the camera looks at -height/2), so a lift makes the
+      stacked Y GREATER than the flanked one. Fails against a lift applied to
+      both, or to neither.
+    */
+    expect(stacked.y).toBeGreaterThan(flanked.y);
+    // And only in Y — the depth and horizontal centre are the same record.
+    expect(stacked.z).toBe(flanked.z);
+    expect(stacked.x).toBe(flanked.x);
+  });
+
+  it('does not lift when no layout is given (the geometry tests stay valid)', () => {
+    const bare = pulledDestination({ wallWidth: 1280, wallHeight: wallOf(3) });
+    const flanked = pulledDestination({ wallWidth: 1280, wallHeight: wallOf(3), layout: 'flanked' });
+    expect(bare.y).toBe(flanked.y);
+  });
+});
+
 /**
  * **The frame-fit tests that stood here are gone, and the question went with
  * them.**
