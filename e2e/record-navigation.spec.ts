@@ -93,6 +93,20 @@ async function settle(page: Page) {
       { timeout: 10_000 },
     )
     .toBe('1');
+  /*
+    Wait for the PHASE too, not just progress — a slide's progress hits 1 a tick
+    before the state settles, and clicking the next arrow mid-settle races the
+    transition. `settled` or `flipping` both mean the record is out and still.
+  */
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          () => (document.querySelector('[data-testid="wall-scene"]') as HTMLElement)?.dataset.phase ?? '',
+        ),
+      { timeout: 10_000 },
+    )
+    .toMatch(/settled|flipping/);
 }
 
 test('the arrows move to the adjacent record in the WALL\'S order', async ({ page }) => {
@@ -197,6 +211,82 @@ test('put back lands right after navigating away from where you started', async 
     await expect
       .poll(() => pulled(page), { timeout: 10_000 })
       .toBe('');
+  } finally {
+    await cleanup(artistId);
+  }
+});
+
+
+test('navigation is a SLIDE — both records at the same depth, not a rise', async ({ page }) => {
+  const artistId = await seed(20);
+  try {
+    await login(page);
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(`/plane?artistId=${artistId}`);
+    await expect(page.getByTestId('wall-scene').locator('canvas')).toBeVisible({ timeout: 30_000 });
+    await pullFirst(page);
+
+    /*
+      During a slide the record is in the 'sliding' phase — a LATERAL move, not a
+      rise. The scene exposes the phase via the data attribute set while sliding;
+      we sample it mid-transition. A rise would pass through 'rising' instead.
+      Asserted through the state, not pixels, because the mechanism is the claim.
+    */
+    /*
+      **The phase is 'sliding', never 'rising'** — that IS the distinction from
+      the pull-based version, which passed through 'rising'. Poll for it right
+      after the click; a slide is fast, so catch it before it settles.
+    */
+    await page.getByTestId('nav-next').click();
+    const phasesSeen = new Set<string>();
+    for (let i = 0; i < 40; i += 1) {
+      phasesSeen.add(
+        await page.evaluate(
+          () => (document.querySelector('[data-testid="wall-scene"]') as HTMLElement)?.dataset.phase ?? '',
+        ),
+      );
+      if (phasesSeen.has('settled') && phasesSeen.has('sliding')) break;
+      await page.waitForTimeout(15);
+    }
+    expect(phasesSeen.has('sliding'), `saw phases ${[...phasesSeen].join(',')}`).toBe(true);
+    expect(phasesSeen.has('rising'), 'a slide never rises').toBe(false);
+    await settle(page);
+  } finally {
+    await cleanup(artistId);
+  }
+});
+
+test('put back lands in the HELD record\'s slot after sliding (slotGap ~0)', async ({ page }) => {
+  const artistId = await seed(60);
+  try {
+    await login(page);
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(`/plane?artistId=${artistId}`);
+    await expect(page.getByTestId('wall-scene').locator('canvas')).toBeVisible({ timeout: 30_000 });
+    await pullFirst(page);
+
+    for (let i = 0; i < 10; i += 1) {
+      await page.getByTestId('nav-next').click();
+      await settle(page);
+    }
+
+    const slotGap = () =>
+      page.evaluate(
+        () => Number((document.querySelector('[data-testid="wall-scene"]') as HTMLElement)?.dataset.slotGap ?? '-1'),
+      );
+    /*
+      The held record's slot is EMPTY while it is out (a large gap), and after
+      put-back the SAME record returns to ITS slot — the gap collapses to ~0.
+      This is the property from the pull-based version, preserved for the slide:
+      sliding along changes which record is held, and its home is elsewhere, so
+      the return must find that home rather than the original.
+    */
+    expect(await slotGap(), 'the held record slot is empty while out').toBeGreaterThan(100);
+
+    await page.getByTestId('record-chrome').getByTestId('action-put').click();
+    await expect.poll(() => page.evaluate(() => (document.querySelector('[data-testid="wall-scene"]') as HTMLElement)?.dataset.pulled ?? ''), { timeout: 10_000 }).toBe('');
+    await page.waitForTimeout(300);
+    expect(await slotGap(), 'the record returned to its own slot').toBeLessThan(5);
   } finally {
     await cleanup(artistId);
   }

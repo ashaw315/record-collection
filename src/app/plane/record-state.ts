@@ -24,7 +24,15 @@ export type RecordState =
   | { phase: 'rising'; recordId: string; face: Face }
   | { phase: 'settled'; recordId: string; face: Face }
   | { phase: 'flipping'; recordId: string; face: Face }
-  | { phase: 'returning'; recordId: string; face: Face };
+  | { phase: 'returning'; recordId: string; face: Face }
+  /**
+   * **A lateral move between records (13b).** The record being held slides off
+   * one side and the next slides in from the other, at the same depth — NOT a
+   * return through the shelf and a fresh rise. `fromId` leaves, `toId` arrives;
+   * `direction` is which way they travel (the input decides it). The face
+   * resets to front: the new record arrives face-on, as a pull does.
+   */
+  | { phase: 'sliding'; fromId: string; toId: string; direction: 'next' | 'previous' };
 
 /** Pulling a record out of the wall. */
 export function pull(state: RecordState, recordId: string): RecordState {
@@ -39,6 +47,8 @@ export function pull(state: RecordState, recordId: string): RecordState {
  */
 export function settle(state: RecordState): RecordState {
   if (state.phase === 'idle') return state;
+  /* A slide settles to the record it slid TO, face-on (a new record arrives front). */
+  if (state.phase === 'sliding') return { phase: 'settled', recordId: state.toId, face: 'front' };
   return { phase: 'settled', recordId: state.recordId, face: state.face };
 }
 
@@ -55,12 +65,36 @@ export function dismiss(state: RecordState): RecordState {
   // where the return began.
   if (state.phase === 'returning') return state;
 
-  return { phase: 'returning', recordId: state.recordId, face: state.face };
+  const recordId = state.phase === 'sliding' ? state.toId : state.recordId;
+  const face = state.phase === 'sliding' ? 'front' : state.face;
+  return { phase: 'returning', recordId, face };
+}
+
+/**
+ * Sliding laterally to an adjacent record (13b).
+ *
+ * **Only from settled or flipping** — a record that is out and still. Not
+ * during a rise, a return, or another slide: those own the record's motion, and
+ * starting a slide mid-motion is two things writing one position, the shape unit
+ * 12 resolved structurally. The caller has already resolved the neighbour id and
+ * that there IS one (the arrow is absent at the ends).
+ */
+export function slide(
+  state: RecordState,
+  toId: string,
+  direction: 'next' | 'previous',
+): RecordState {
+  if (state.phase !== 'settled' && state.phase !== 'flipping') return state;
+  if (state.recordId === toId) return state;
+  return { phase: 'sliding', fromId: state.recordId, toId, direction };
 }
 
 /** Turning the record over. */
 export function flip(state: RecordState): RecordState {
-  if (state.phase === 'idle' || state.phase === 'returning') return state;
+  /* Not while idle, returning, or SLIDING — a slide owns the record's motion. */
+  if (state.phase === 'idle' || state.phase === 'returning' || state.phase === 'sliding') {
+    return state;
+  }
 
   return { phase: 'flipping', recordId: state.recordId, face: nextFace(state.face) };
 }
@@ -88,10 +122,14 @@ export function nextFace(face: Face): Face {
 
 /** Whether the back is showing — derived, never stored separately. */
 export function showsBack(state: RecordState): boolean {
-  return state.phase !== 'idle' && state.face === 'back';
+  /* A sliding record has no face yet — it arrives front-on when it settles. */
+  if (state.phase === 'idle' || state.phase === 'sliding') return false;
+  return state.face === 'back';
 }
 
 /** The record that is out, whatever it is doing. */
 export function outRecordId(state: RecordState): string | null {
-  return state.phase === 'idle' ? null : state.recordId;
+  if (state.phase === 'idle') return null;
+  if (state.phase === 'sliding') return state.toId;
+  return state.recordId;
 }

@@ -7,6 +7,7 @@ import {
   outRecordId,
   pull,
   settle,
+  slide,
   showsBack,
   type RecordState,
 } from './record-state';
@@ -148,5 +149,58 @@ describe('nextFace', () => {
      */
     expect(nextFace('front')).toBe('back');
     expect(nextFace('back')).toBe('front');
+  });
+});
+
+
+describe('slide — a lateral move to an adjacent record (13b)', () => {
+  it('slides from a settled record to the target, carrying the direction', () => {
+    const state = slide({ phase: 'settled', recordId: 'a', face: 'front' }, 'b', 'next');
+    expect(state).toEqual({ phase: 'sliding', fromId: 'a', toId: 'b', direction: 'next' });
+  });
+
+  it('slides from a flipping record too (a record that is out and still)', () => {
+    const state = slide({ phase: 'flipping', recordId: 'a', face: 'back' }, 'b', 'previous');
+    expect(state.phase).toBe('sliding');
+  });
+
+  it('does NOT slide while rising, returning, or already sliding', () => {
+    /* Those own the motion; starting a slide mid-motion is two writers on one position. */
+    const rising = { phase: 'rising', recordId: 'a', face: 'front' } as const;
+    expect(slide(rising, 'b', 'next')).toBe(rising);
+    const returning = { phase: 'returning', recordId: 'a', face: 'front' } as const;
+    expect(slide(returning, 'b', 'next')).toBe(returning);
+    const sliding = { phase: 'sliding', fromId: 'a', toId: 'b', direction: 'next' } as const;
+    expect(slide(sliding, 'c', 'next')).toBe(sliding);
+  });
+
+  it('does not slide to the record already out', () => {
+    const state = { phase: 'settled', recordId: 'a', face: 'front' } as const;
+    expect(slide(state, 'a', 'next')).toBe(state);
+  });
+
+  it('settles a slide to the record it slid TO, face-on', () => {
+    const settled = settle({ phase: 'sliding', fromId: 'a', toId: 'b', direction: 'next' });
+    expect(settled).toEqual({ phase: 'settled', recordId: 'b', face: 'front' });
+  });
+
+  it('the record OUT during a slide is the one arriving (toId)', () => {
+    expect(outRecordId({ phase: 'sliding', fromId: 'a', toId: 'b', direction: 'next' })).toBe('b');
+  });
+
+  it('dismissing a slide returns the arriving record', () => {
+    const state = dismiss({ phase: 'sliding', fromId: 'a', toId: 'b', direction: 'next' });
+    expect(state).toEqual({ phase: 'returning', recordId: 'b', face: 'front' });
+  });
+
+  it('a slide cannot be flipped mid-slide', () => {
+    const sliding = { phase: 'sliding', fromId: 'a', toId: 'b', direction: 'next' } as const;
+    expect(flip(sliding)).toBe(sliding);
+  });
+
+  it('a sliding record does not tilt and shows no back', () => {
+    const sliding = { phase: 'sliding', fromId: 'a', toId: 'b', direction: 'next' } as const;
+    expect(canTilt(sliding)).toBe(false);
+    expect(showsBack(sliding)).toBe(false);
   });
 });

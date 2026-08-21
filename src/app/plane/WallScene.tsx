@@ -56,6 +56,7 @@ import {
   outRecordId,
   pull,
   settle,
+  slide,
   showsBack,
   type RecordState,
 } from './record-state';
@@ -130,6 +131,7 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
    * return and clears itself when it lands.
    */
   const returningId = state.phase === 'returning' ? state.recordId : null;
+  const sliding = state.phase === 'sliding' ? state : null;
 
   /**
    * Which record the card is naming, and where the pointer is.
@@ -222,6 +224,18 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     setTilt: (next: { rotateX: number; rotateY: number }) => void;
     /** Does a viewport point land on the pulled record's mesh? (touch boundary) */
     hitsPulledRecord: (clientX: number, clientY: number) => boolean;
+    /**
+     * **A lateral slide between records (13b).** `progress` 0..1 moves `fromId`
+     * off one side and `toId` in from the other, both at the settled depth. Not
+     * a rise: the depth does not change, only x. At progress 1 `toId` is centred
+     * and `fromId` is off-screen.
+     */
+    setSlide: (
+      fromId: string,
+      toId: string,
+      direction: 'next' | 'previous',
+      progress: number,
+    ) => void;
   } | null>(null);
 
   /**
@@ -917,6 +931,55 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
        * inside the rise's and return's own animation callbacks.
        */
       setPulled: (id, progress) => setPulledInternal(id, progress),
+      setSlide: (fromId, toId, direction, progress) => {
+        /*
+          **Both records at the settled DEPTH — the move is lateral, not a rise.**
+          The outgoing record leaves toward one side and the incoming arrives
+          from the other; direction picks the sign. `next` (swipe left / right
+          arrow) slides the current record LEFT and brings the next from the
+          right, the way a gallery advances.
+
+          The wall behind is unchanged during the slide (see the effect): the
+          emptied slot belongs to the settled state, and moving slots mid-slide
+          would contradict "a lateral move in front of the wall".
+        */
+        const frameHeight = 2 * (cameraDistance - destination.z) * Math.tan((WALL_FOV_DEGREES * Math.PI) / 360);
+        const frameWidth = frameHeight * (width / height);
+        const travel = frameWidth * 1.1; // just past the frame edge, fully off
+
+        const sign = direction === 'next' ? -1 : 1;
+        const eased = 1 - Math.pow(1 - progress, 3);
+
+        const fromMesh = meshes.get(fromId);
+        const toMesh = meshes.get(toId);
+
+        setWallDim(wallDim(1)); // stay dimmed throughout the slide
+
+        for (const [recordId, mesh] of meshes) {
+          if (recordId === fromId || recordId === toId) continue;
+          /* Everything else stays in the wall, edge-on. */
+          const home = mesh.userData.home as { x: number; y: number; z: number };
+          mesh.position.set(home.x, home.y, home.z);
+          mesh.rotation.set(0, RESTING_ROTATION_Y, 0);
+          mesh.scale.set(SPINE_HEIGHT, SPINE_HEIGHT, boxDepth({ recordId, height: SPINE_HEIGHT, progress: 0 }));
+        }
+
+        const placeAt = (mesh: typeof fromMesh, offsetX: number) => {
+          if (mesh === undefined) return;
+          mesh.position.set(destination.x + offsetX, destination.y, destination.z);
+          mesh.rotation.set(0, 0, 0); // face-on
+          mesh.scale.set(SPINE_HEIGHT, SPINE_HEIGHT, boxDepth({ recordId: toId, height: SPINE_HEIGHT, progress: 1 }));
+        };
+
+        /* Outgoing: from centre to fully off, in `sign` direction. */
+        placeAt(fromMesh, sign * travel * eased);
+        /* Incoming: from fully off (opposite side) to centre. */
+        placeAt(toMesh, -sign * travel * (1 - eased));
+
+        host.dataset.pulledId = toId;
+        host.dataset.pulledProgress = String(progress);
+        loop.markDirty();
+      },
       /*
         **The touch gesture boundary's query half.** A finger on the record
         tilts it; a finger on the wall does not. This raycasts the pulled mesh
@@ -1169,8 +1232,27 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
       return;
     }
 
+    if (state.phase === 'sliding') {
+      /* The slide effect owns the meshes while sliding — do not also rise. */
+      return;
+    }
+
     if (pulledId === null) {
       scene.setPulled(null, 0);
+      return;
+    }
+
+    /*
+      **Only a FRESH rise animates.** This effect depends on `state.phase` so it
+      can bail on 'sliding' — but that also re-runs it on settle, and without
+      this guard a record that just settled (from a rise OR a slide) would rise
+      AGAIN, and its `scene.animate` would replace the slide's step mid-flight
+      (the render loop has one step slot), orphaning the slide at whatever
+      progress it had reached. When the record is already out and still, hold the
+      settled pose statically instead.
+    */
+    if (state.phase !== 'rising') {
+      scene.setPulled(pulledId, 1);
       return;
     }
 
@@ -1206,7 +1288,42 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
 
       return progress < 1;
     });
-  }, [pulledId, returningId]);
+  }, [pulledId, returningId, state.phase]);
+
+  /**
+   * **The slide between records (13b).** A lateral move: `fromId` leaves one
+   * side, `toId` arrives from the other, at the settled depth — not a return
+   * and a fresh rise. `SLIDE_MS` is the single movement the developer asked for,
+   * where `pull(current, nextId)` was two full rises and read as jerky and as
+   * "done with this one, get me that one" rather than "let me see the next".
+   *
+   * **Reduced motion:** no travel — `toId` is placed centred at once and the
+   * state settles, the same instant path the rise takes.
+   */
+  useEffect(() => {
+    if (sliding === null) return;
+    const scene = live.current;
+    if (scene === null) return;
+
+    const { fromId, toId, direction } = sliding;
+
+    /*
+      Both paths settle through `animate`, not a synchronous `setState` — the
+      latter cascades renders inside the effect. Reduced motion jumps straight
+      to progress 1 on the first frame; otherwise it eases over `RISE_MS`.
+    */
+    const instant = prefersReducedMotion();
+    let start: number | null = null;
+    scene.animate((now) => {
+      if (start === null) start = now;
+      const progress = instant ? 1 : Math.min(1, (now - start) / RISE_MS);
+      scene.setSlide(fromId, toId, direction, progress);
+      if (progress >= 1) {
+        setState((current) => (current.phase === 'sliding' ? settle(current) : current));
+      }
+      return progress < 1;
+    });
+  }, [sliding]);
 
   /**
    * **The flip: a half turn about Y, animated through the same loop.**
@@ -1503,7 +1620,13 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     if (pulledId === null) return;
     const nextId = adjacentRecordId(order, pulledId, direction);
     if (nextId === null) return;
-    setState((current) => pull(current, nextId));
+    /*
+      **A slide, not a pull.** `pull(current, nextId)` returned the held record
+      to the shelf and rose the next — two full rises, reading as "done with
+      this one, get me that one" and as jerky. A slide is one lateral movement
+      that says "let me see the next" (developer's framing).
+    */
+    setState((current) => slide(current, nextId, direction));
   };
   /* The ref is updated in an effect, not during render (refs are write-in-effect). */
   useEffect(() => {
@@ -1545,7 +1668,7 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
 
   return (
     <div className="relative">
-      <div ref={mount} data-testid="wall-scene" data-pulled={pulledId ?? ''} className="w-full" />
+      <div ref={mount} data-testid="wall-scene" data-pulled={pulledId ?? ''} data-phase={state.phase} className="w-full" />
 
       {/*
         **The accessible list, and it is now the ONLY channel carrying the

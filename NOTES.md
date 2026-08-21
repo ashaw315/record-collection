@@ -13868,3 +13868,65 @@ Tap still pulls, tilt drag still tilts and holds, wall-drag still does not tilt,
 scroll lock and return-home unchanged, desktop unchanged except for the arrows,
 zero idle draws. reduced-motion: navigation reuses `pull`, whose reduced-motion
 path is instant (no rise) — the new record simply appears.
+
+## Step 15 — 13b navigation REBUILT as a slide, not a pull
+
+The developer rejected `pull(current, nextId)` for navigation: it returned the
+held record to the shelf and rose the next — two full rises — which reads as
+"done with this one, get me that one" and as jerky, where moving between records
+should be a lateral "let me see the next". Correct engineering (one mechanism, no
+second transition), wrong meaning.
+
+### The slide
+
+A new `sliding` phase (`{ fromId, toId, direction }`) and a `slide` action in the
+state machine. `setSlide(fromId, toId, direction, progress)` moves both meshes
+HORIZONTALLY at the settled depth: the held record leaves one side, the next
+arrives from the other. Measured on device: at progress 0.43, fromX=132 and
+toX=736 either side of dest=624; at progress 1, fromX off-screen and toX=624
+centred. **fromZ = toZ = 1977 throughout** — the same depth, which is what makes
+it a lateral move rather than a rise (a rise changes z). Direction follows the
+input: `next` (swipe left / right arrow) slides the current record left.
+
+### What the wall does during a slide (the decided question)
+
+**The wall stays as it was.** The two moving records float at destination depth
+in front of a frozen, dimmed wall; the wall's slots are not re-animated. That is
+what "a lateral move in front of the wall" means — moving the emptied slot with
+the selection would turn the transition into a wall event, which it is not. At
+rest, only the held record's slot is empty (the leaving record returns to its
+slot on settle). Both slots being momentarily open mid-slide is incidental to the
+wall being frozen, not a moving-gap animation.
+
+### Put-back still lands right, asserted after a SLIDE
+
+The property from the pull-based version, preserved and verified for the slide:
+after sliding 10 records forward, `slotGap` while out is 2034 (the held record's
+slot is empty), and after put-back it is 0 — the record returned to ITS own slot,
+which is elsewhere on the wall. Asserted in E2E via `slotGap`, published from the
+same values that draw the mesh.
+
+### THE BUG the rebuild exposed: one step slot, and a spurious re-rise
+
+The render loop has a SINGLE `step` slot (`animate: (next) => { step = next }`).
+Adding `state.phase` to the rise effect's deps — needed so it bails on 'sliding'
+— made it re-run on SETTLE too, and without a guard a just-settled record rose
+AGAIN, its `scene.animate` replacing the slide's step mid-flight and orphaning
+the slide at whatever progress it had reached (measured: stuck at 0.43 during
+rapid navigation).
+
+**Root cause found by reading `render-loop.ts`**, not guessed: one step slot
+means any `animate` caller cancels the previous. Fixed by guarding the rise to
+FRESH rises only (`state.phase === 'rising'`); a settled/flipping record holds
+its pose statically (`setPulled(pulledId, 1)`) rather than re-animating. This is
+the systematic-debugging Iron Law paying off — the symptom was "slide stuck at
+0.43", the cause was two writers to one step slot, and a fix at the symptom
+(retrying the slide) would have left it.
+
+### Draws and the rest
+
+Idle 0 before, 17 during the slide, 0 after. Tap-to-pull, tilt, wall-scene
+rise/return/flip, and touch all still pass. reduced-motion: the slide jumps to
+progress 1 on the first frame (the same instant path the rise uses).
+`data-phase` is now published on the wall-scene element so a test can assert the
+phase is 'sliding', never 'rising' — the definitive distinction from a pull.
