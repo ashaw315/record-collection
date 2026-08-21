@@ -212,6 +212,15 @@ export function RecordCanvas({
               <FactsPanel panel={factPanel(record)} />
             </div>
 
+            {/*
+              **The "fits the screen" rule, which used to live inside
+              `BoxCanvas`.** It sized itself from the viewport's shorter axis;
+              that made it unable to adopt any container, so the sizing moved
+              out to the callers that know what they are placing it into. This
+              is the same `min(70vw,70vh,560px)` square, unchanged, so this path
+              renders exactly as before.
+            */}
+            <div className="aspect-square w-[min(70vw,70vh,560px)] shrink-0">
             <BoxCanvas
               /*
                 Keyed on the record AND its slot, so pulling a second record
@@ -228,6 +237,7 @@ export function RecordCanvas({
               onReturned={onClose}
               fill
             />
+            </div>
 
             <div className="pointer-events-auto rounded-xs p-4 shadow-2xl backdrop-blur-sm"
               style={{ backgroundColor: PANEL_GROUND }}>

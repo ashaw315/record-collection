@@ -135,3 +135,27 @@ describe('pulledDestination', () => {
     expect(a).toEqual(b);
   });
 });
+
+/**
+ * **The frame-fit tests that stood here are gone, and the question went with
+ * them.**
+ *
+ * They asserted that `pulledDestination`'s `FRAME_FILL` produced a record
+ * inside the frame at both viewports — the right assertion while the record's
+ * size came from a fraction of the frustum. It no longer does: the card became
+ * a summary of constant height, so the size is now `recordSizeFor(frame,
+ * widthFraction, cardFraction)` in `fill-candidates.ts`, tested there against
+ * a portrait frame, a landscape one and a squat one.
+ *
+ * **Deleted rather than adjusted.** A test kept past the question it asks
+ * starts passing for a reason nobody chose, and this one would have gone green
+ * the moment `FRAME_FILL` stopped deciding anything — reporting health about a
+ * constant no longer on the path.
+ *
+ * What `pulledDestination` still owns, and what the tests above still cover, is
+ * WHERE the record settles: centred on the camera's axis, the same apparent
+ * size whatever the collection's size. That is untouched by the fill rule.
+ *
+ * `viewportAspect` remains exported and tested in `wall-camera.test.ts`, and
+ * remains deliberately unused by `WallScene` until the aspect decision lands.
+ */

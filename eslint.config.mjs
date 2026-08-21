@@ -16,6 +16,13 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
+    // The E2E dev server's build directory (next.config.ts sets `distDir` under
+    // NODE_ENV=test so it can run alongside the developer's dev server).
+    // eslint-config-next ignores `.next` by name and knows nothing about this
+    // one, so without the entry lint walks 765MB of generated output and
+    // reports ~1,550 errors in code nobody wrote. Same reasoning as
+    // playwright-report below.
+    ".next-test/**",
     "out/**",
     "build/**",
     "next-env.d.ts",

@@ -4,6 +4,8 @@ import { images } from '@/db/schema';
 import { shelfRecords } from '@/lib/db/queries/shelf';
 import { BoxCanvas } from './BoxCanvas';
 import { FactsPanel, ActionsPanel } from './Panels';
+import { FillComparison } from './FillComparison';
+import { BoxGeometryProbe } from './BoxGeometryProbe';
 import { RiseDemo } from './RiseDemo';
 import { factPanel } from './panel';
 import { PlaneCanvas } from './PlaneCanvas';
@@ -33,6 +35,14 @@ import { resolveSkins } from './skins';
  */
 export const dynamic = 'force-dynamic';
 
+/**
+ * How many records the composition block renders.
+ *
+ * Each is a live WebGL context and browsers cap those at roughly 16. See the
+ * comment at the block itself.
+ */
+const COMPOSITION_LIMIT = 8;
+
 export default async function PlanePage({
   searchParams,
 }: {
@@ -50,6 +60,20 @@ export default async function PlanePage({
    */
   const params = await searchParams;
   const artistId = typeof params.artistId === 'string' ? params.artistId : undefined;
+
+  /**
+   * **`recordId` picks WHICH record the size comparison renders.**
+   *
+   * The comparison shows one record and defaulted to `records[0]`, which made
+   * it impossible to compare a sparse record's card against a documented one —
+   * and that comparison is the whole test of the constant-height claim
+   * (`e2e/summary-card.spec.ts`).
+   *
+   * Selected from the records already fetched rather than by a second query:
+   * `shelfRecords` filters, and adding an id filter for a workbench would touch
+   * a query the collection views share.
+   */
+  const recordId = typeof params.recordId === 'string' ? params.recordId : undefined;
 
   const db = getDb();
 
@@ -73,6 +97,10 @@ export default async function PlanePage({
    * two queries would be two answers about one record.
    */
   const records = await shelfRecords(artistId === undefined ? {} : { artistId });
+
+  /* `?recordId=` names the one the comparison renders; otherwise the first. */
+  const comparisonRecord =
+    records.find((record) => record.id === recordId) ?? records[0];
 
   return (
     <main className="py-10">
@@ -164,9 +192,36 @@ export default async function PlanePage({
         label and catalogue number as a small imprint. Every record here hits the back
         fallback, which is what the object looks like today.
       </p>
+      {/*
+        Named rather than silently truncated. NOTES' rule about capped coverage:
+        a limit nobody can see reads as "this is all there is".
+      */}
+      {records.length > COMPOSITION_LIMIT && (
+        <p className="mt-1 font-mono text-xs text-muted-foreground">
+          Showing {COMPOSITION_LIMIT} of {records.length} — each is a WebGL context and
+          browsers cap those at about 16.
+        </p>
+      )}
 
+      {/*
+        **Bounded, because every one of these holds a WebGL context.**
+
+        This was `records.map` over the whole collection. A browser caps
+        concurrent WebGL contexts at roughly 16, and past that `createShader`
+        returns null and three.js throws `shaderSource must be an instance of
+        WebGLShader` on every frame.
+
+        It was harmless while `/plane` was only ever opened against a handful of
+        E2E fixtures — measured against a real 125-record collection it mounted
+        **134 contexts** and the page filled with runtime errors. The E2E
+        database is small, so no test could ever have caught it (NOTES).
+
+        Eight is enough to compare skin combinations, which is what this block
+        is for, and leaves headroom for the wall, the plane, the rise demo and
+        the size candidates below.
+      */}
       <div className="mt-6 flex flex-col gap-12">
-        {records.map((record) => {
+        {records.slice(0, COMPOSITION_LIMIT).map((record) => {
           const skins = resolveSkins(record);
           const panel = factPanel(record);
           const imprintGroup = panel.groups.find((group) => group.kind === 'imprint');
@@ -233,6 +288,36 @@ export default async function PlanePage({
           </p>
           <RiseDemo records={records} />
         </>
+      )}
+
+      {/*
+        The container-geometry probe (step 15 unit 4). Drives
+        `e2e/box-canvas-geometry.spec.ts`, whose subject is whether a filling
+        record adopts the box it is given.
+      */}
+      {records.length > 0 && (
+        <BoxGeometryProbe
+          skins={resolveSkins(records[0])}
+          spineColour={records[0].spineColour}
+        />
+      )}
+
+      {/*
+        **The pulled record's SIZE, three candidates** (step 15 unit 4). Same
+        shape as the thickness candidates below and for the same reason: the
+        number that broke was one nobody had ever looked at on a phone.
+
+        Scaffolding — `WallScene` still uses the wall's aspect, deliberately,
+        until the rule here is chosen.
+      */}
+      {records.length > 0 && (
+        <FillComparison
+          skins={resolveSkins(comparisonRecord)}
+          imprint={null}
+          spineColour={comparisonRecord.spineColour}
+          panel={factPanel(comparisonRecord)}
+          recordId={comparisonRecord.id}
+        />
       )}
 
       {/*

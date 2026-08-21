@@ -62,7 +62,15 @@ import { centredSquareUv, type Skin, type Skins } from './skins';
  * and 1:12 was what could actually be read. The eye is the instrument for this
  * question and a principle overrode it.
  */
+import { boxCameraDistance } from './box-framing';
+
 export const BOX_THICKNESS_RATIO = 1 / 25;
+
+/** The camera's field of view, shared with `boxCameraDistance`. */
+const BOX_FOV = 30;
+
+/** The default framing: the record sits back in its scene at ~55% of the frame. */
+export const DEFAULT_FRAME_FILL = 0.55;
 
 /**
  * How long the rise takes, in milliseconds.
@@ -158,6 +166,7 @@ export function BoxCanvas({
   label,
   testId = 'box-canvas',
   fill = false,
+  frameFill = DEFAULT_FRAME_FILL,
 }: {
   skins: Skins;
   imprint: string | null;
@@ -206,6 +215,13 @@ export function BoxCanvas({
    * renderers that must agree.
    */
   fill?: boolean;
+  /**
+   * How much of the frame the record fills, 0..1. Default sits it back in the
+   * scene; the size comparison asks for more. Sets the camera distance so the
+   * ELEMENT'S size and the RECORD'S size are one number (NOTES: a "100%"
+   * element once showed a 55% record).
+   */
+  frameFill?: number;
 }) {
   const mount = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'failed'>('loading');
@@ -241,8 +257,8 @@ export function BoxCanvas({
 
     // Perspective rather than unit 15's orthographic: an edge seen in
     // perspective converges, which is part of what makes it read as depth.
-    const camera = new PerspectiveCamera(30, width / height, 0.1, 100);
-    camera.position.set(0, 0, 3.4);
+    const camera = new PerspectiveCamera(BOX_FOV, width / height, 0.1, 100);
+    camera.position.set(0, 0, boxCameraDistance(frameFill, BOX_FOV));
 
     /*
       One directional light and ambient enough to keep artwork legible. The
@@ -609,9 +625,11 @@ export function BoxCanvas({
       `riseFrom` is a dependency because the effect reads it. The caller also
       keys the component on the spine, so a second click remounts rather than
       re-running — but the array must be honest regardless, or the next person
-      to remove that key gets a rise that never restarts.
+      to remove that key gets a rise that never restarts. `frameFill` is here
+      for the same reason: the comparison changes it via a keyed remount, but
+      the array names every value the effect reads.
     */
-  }, [skins, imprint, spineColour, thicknessRatio, riseFrom]);
+  }, [skins, imprint, spineColour, thicknessRatio, riseFrom, frameFill]);
 
   /**
    * **The return**, in its own effect so it drives the existing mesh through the
@@ -699,12 +717,28 @@ export function BoxCanvas({
         data-testid={testId}
         data-status={status}
         /*
-          Square, and sized from the viewport's SHORTER axis so the record is
-          fully visible in both orientations. `min()` rather than a media query:
-          the constraint is "fits the screen", which is one rule, and expressing
-          it as two breakpoints would be two places to keep in agreement.
+          **Fills its container, and asserts nothing about its own size.**
+
+          This read `aspect-square w-[min(70vw,70vh,560px)]`, which sized the
+          record from the VIEWPORT and forced it square. Two costs, and the
+          second is the one that bit: every instance rendered identically
+          whatever box it was placed in (273px at 390x844), and a non-square
+          frame could not be expressed at all.
+
+          That made a three-way size comparison meaningless while its captions
+          stayed correct — the wrappers were 405, 187 and 292px and all three
+          canvases came out 273x273 (NOTES, step 15 unit 4).
+
+          The "fits the screen" rule the old comment described is real and has
+          simply moved to the CALLER, which is the only thing that knows what it
+          is placing the record into. `RecordCanvas` carries it for the retired
+          CSS path; `/plane`'s comparison sets its own frame.
+
+          Asserted by `e2e/box-canvas-geometry.spec.ts` against three containers
+          of different shapes, in a browser rather than by className — a layout
+          engine is the only thing that knows whether a child filled its parent.
         */
-        className="pointer-events-auto aspect-square w-[min(70vw,70vh,560px)] shrink-0"
+        className="pointer-events-auto h-full w-full"
       />
     );
   }

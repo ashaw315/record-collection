@@ -12508,3 +12508,890 @@ Do not write unit 4's tests until this is resolved. The candidate explanations
 worth separating — emulated click vs real tap, canvas height, hit-testing
 against a 2976px-tall buffer, timing — are for that investigation, and
 **none of them should be assumed**; three guesses were already wrong today.
+
+## RESOLVED: there was no instrument disagreement. My probe missed the spine.
+
+Step 15 unit 4, first question, and it is **withdrawn rather than answered**.
+
+### What was claimed
+
+That Playwright at 390px showed no facts panel on tap while the real phone
+showed both — and therefore that every mobile test from here would measure
+something other than what the developer sees. It was recorded as outranking the
+geometry defect: "a wrong number is a wrong number, but a wrong instrument
+invalidates the tests."
+
+### What was actually true
+
+**The probe clicked a fixed coordinate at x = box.x + 30. The first spine at
+390px is at offset 44.** It hit empty wall, which dismisses rather than pulls,
+and the absent panel was correct behaviour reported as a defect.
+
+`wall-scene.spec.ts` already solved this and the helper says why — `clickASpine`
+walks the row in 12px steps until `data-pulled` is non-empty, because "hit
+testing is a raycast now, so there is no element to target and a fixed
+coordinate is a guess about where the packing put a spine." Spine widths vary
+17-24px from the record id, so the guess is not even stable between runs.
+
+**I wrote a worse instrument than the one already in the repo, then blamed the
+platform for its result.**
+
+### Measured, with the proven helper and a real touchscreen
+
+| project | hasTouch | width | mouse | tap | facts panel |
+|---|---|---|---|---|---|
+| chromium | false | 390 | hit @44 | n/a | **true** |
+| chromium | false | 1280 | hit @20 | n/a | **true** |
+| iPhone 13 | true | 390 | hit @44 | **hit @44** | **true** |
+| iPhone 13 | true | 1280 | hit @32 | **hit @32** | **true** |
+| WebKit + hasTouch | true | 390 | hit @44 | **hit @44** | **true** |
+
+**Tap and mouse behave identically, at both widths, on every profile.** The
+emulator and the device agree. The pull path works on touch, which was already
+predicted (prediction 3) on the grounds that `onClick` is a `MouseEvent`
+handler and a tap synthesises a click.
+
+### What this does NOT overturn
+
+The touch findings stand, because they are about different handlers:
+
+- **Zero touch handlers in `src/`** — still true, verified by grep, and the tilt
+  still binds `pointermove` only (`WallScene.tsx:1214`). The pull works because
+  it is a CLICK handler; the tilt and drag are not.
+- **The 457% width overflow** — unaffected, measured from the real layout.
+
+The phone screenshots remain the primary evidence for the geometry defect, and
+nothing about them is in question.
+
+### FOURTH IN THE FAMILY, AND THE FIRST WHERE THE RIGHT INSTRUMENT ALREADY EXISTED
+
+That distinction is the whole value of this entry. The other three were
+instruments that were WRONG:
+
+| # | instrument | what it reported on |
+|---|---|---|
+| 1 | a `sed` mutation that matched one indentation | a mutation that half-happened |
+| 2 | a hook that never fired | nothing, silently |
+| 3 | `npx playwright test \| tail -8` | `tail`'s exit code |
+| **4** | **a fixed click coordinate** | **empty wall, against a raycast** |
+
+The first three had no correct version sitting beside them. **This one did.**
+`e2e/wall-scene.spec.ts` contains `clickASpine`, whose comment states the exact
+failure mode I then walked into: *"Hit testing is a raycast now, so there is no
+element to target and a fixed coordinate is a guess about where the packing put
+a spine. Spine widths vary 17-24px from the record id ... so that guess is not
+stable between runs — which is exactly how a test passes for a while and then
+flakes."*
+
+So the cost was not a missing technique. It was **writing a new probe without
+reading how the existing tests solve the same problem** — and a new instrument
+arrives with none of the old one's scar tissue, which is precisely what that
+comment is: scar tissue, written down, ignored.
+
+**The rule this yields:** when probing behaviour the suite already exercises,
+start from the suite's helper. If the helper looks over-complicated, that
+complexity is a record of what went wrong before.
+
+### The lesson, which is the one this project keeps relearning
+
+**Before concluding that a platform disagrees with itself, check that the probe
+did what it claimed.** Same family as three entries already here: the mutation
+that only half-applied and was read as thin coverage; the hook that never fired;
+the exit code that belonged to `tail`. Every one of them was an INSTRUMENT
+reporting on something other than the thing under test, and every one produced a
+confident wrong conclusion that survived until someone checked the instrument.
+
+The tell was available and unread: **the repo already contained a helper whose
+comment explains exactly why a fixed coordinate fails here.** A probe written
+without checking how the existing tests solve the same problem is a new
+instrument with none of the old one's scar tissue.
+
+**Cost: one commit's worth of NOTES asserting a wrong instrument, and a unit
+ordered around it.** Cheap because it was checked first, which is the argument
+for checking the instrument before building on it — the order was right even
+though the finding evaporated.
+
+## The desktop wall CHANGES under a viewport aspect — the arithmetic was silent about it
+
+Step 15 unit 4. **Caught by rendering, exactly as the developer predicted it
+would be**: "B being analytically a no-op at 1280 is exactly the kind of claim
+that wants a picture."
+
+### What the arithmetic said, and what it was actually about
+
+Candidate B (fill the smaller frame dimension) reduces to candidate A on any
+landscape aperture, because `min(1, aspect)` is 1 there. That is true, it is
+asserted in `fill-candidates.test.ts`, and **it is a claim about the FILL RULE
+only.**
+
+The blast radius is not in the fill rule. It is in the **aspect swap itself**,
+which the fill comparison never touched because both candidates take the aspect
+as a given.
+
+### Measured, by swapping the aspect in the live scene and screenshotting
+
+    camera aspect = width / height of the WALL   (before)  1248/992 = 1.258
+    camera aspect = viewport                      (after)  1280/900 = 1.422
+
+At 1280 the wall is 1248px wide and the canvas is its own size, so the wall
+EXACTLY fills a frame built from the canvas's ratio — 100% of it. Under the
+viewport's ratio the frame becomes 1411 units wide for the same 992 of height,
+and the wall fills **88%** of it.
+
+**Rendered, the difference is obvious and is not subtle:** the wall is inset
+with black margins left and right, the spines are wider, the shelf planes stop
+short of the edges, and row 2 shows 74 spines where it showed ~99. The wall no
+longer owns the window, which is A24a's requirement ("below the nav there is the
+wall and nothing else").
+
+### Why: the canvas is NOT the viewport, and the wall is sized to the canvas
+
+`renderer.setSize(width, layout.height)` makes the canvas as tall as the whole
+wall and as wide as its container. The camera frames `wallHeight`, and the wall
+is drawn at exactly canvas dimensions in world units. **So the canvas's own
+ratio is the one that makes the wall fill the frame** — using anything else
+letterboxes it.
+
+That is why the "wrong" aspect looked right on desktop for the entire life of
+the feature: at 1280 the canvas ratio and the viewport ratio are close (1.258 vs
+1.422), so the letterboxing was small enough to read as intentional margin. At
+390px they diverge by a factor of four and the pulled record breaks.
+
+### THE FIX IS NOT A ONE-LINE ASPECT SWAP, and that is the finding
+
+Both quantities are load-bearing and they are not the same quantity:
+
+| consumer | needs | why |
+|---|---|---|
+| the WALL | the CANVAS's ratio | the wall is drawn at canvas dimensions; anything else letterboxes it |
+| the PULLED RECORD | the VIEWPORT's ratio | it floats in front of the camera and is judged against the screen |
+
+One `PerspectiveCamera` currently serves both. **The unit's real question is how
+to give the pulled record a viewport-shaped frame without relettering the wall**
+— a second camera for the record, a canvas clamped to the viewport with the wall
+scrolled by other means, or the record's destination solved against the
+viewport while the camera keeps the canvas ratio.
+
+Not decided here. Recorded because the one-line change was tried, measured,
+photographed and **reverted** — `viewportAspect` is exported and tested and is
+deliberately NOT imported by `WallScene.tsx`.
+
+### Method note: the arithmetic was right and answered a narrower question
+
+`distanceFillSmaller(DESKTOP) === distanceFillHeight()` to nine decimal places.
+No test was wrong. The claim "B is a no-op at 1280" was TRUE and was heard as
+"changing the aspect is a no-op at 1280", which is a different sentence.
+
+**A proof about one variable says nothing about the change that introduces it.**
+The picture is what separated them, and it took one screenshot.
+
+## A page that told the truth in text and a lie in pixels
+
+Step 15 unit 4. **Fifth in the instrument family, and the second this session
+where the measuring device was the thing that was wrong.**
+
+### What happened
+
+The three fill candidates were rendered side by side on `/plane` for judgement
+by eye. On a real phone they were **indistinguishable** — A is meant to be 119%
+of the frame's width, B 55%, C 86%, which on a 390px screen is an overflowing
+record, a small one and a large one.
+
+Measured rather than adjusted, because the developer's hypothesis was specific:
+"if all three compute the same aspect, they are measuring their own container
+rather than the window."
+
+| candidate | wrapper (the comparison's sizing) | canvas RENDERED | host ratio |
+|---|---|---|---|
+| A (119%) | 405 x 405 | **273 x 273** | 1.000 |
+| B (55%) | 187 x 273 | **273 x 273** | 1.000 |
+| C (86%) | 292 x 292 | **273 x 273** | 1.000 |
+
+The wrappers differ exactly as intended. **Every canvas renders identically.**
+
+### Why
+
+`BoxCanvas`'s `fill` branch hardcodes its own geometry:
+
+    className="pointer-events-auto aspect-square w-[min(70vw,70vh,560px)] shrink-0"
+
+At 390x844 that is `min(273, 590, 560)` = **273px** — a viewport-derived
+constant, the same for all three, overriding whatever container it is placed in.
+At 1280x900 it is `min(896, 630, 560)` = 560px, again identical for all three.
+
+**`aspect-square` is the harder half.** It means `BoxCanvas` cannot represent a
+non-square frame AT ALL, so every candidate was square before any fill rule was
+applied. The component could not express the thing under study.
+
+### THE FINDING: a label computed from the same source as the render is not evidence
+
+The captions were CORRECT. "119% wide · 55% tall · OVERFLOWS" was accurate
+arithmetic printed beside a render showing nothing of the kind. The page told
+the truth in text and a lie in pixels, and the text was the more confident of
+the two.
+
+Had the developer trusted the caption over their own eyes, a fill rule would
+have been chosen on the strength of a label describing a render that did not
+exist.
+
+**The practical rule:**
+
+> A label computed from the same source as the render is not independent
+> evidence. When the two are computed SEPARATELY, disagreement is the whole
+> signal — and it is the only thing that catches a renderer ignoring its input.
+
+Here they were not independent in the way that mattered: both the caption and
+the wrapper came from `occupancy()`, and the renderer downstream ignored the
+wrapper. Two agreeing numbers from one source, one silent third party. The
+comparison would have been trustworthy if the caption had been derived from the
+CANVAS's measured size rather than from the arithmetic that was supposed to
+drive it — that version reads "273 x 273" under all three and the defect is
+visible immediately.
+
+### It is the ORIGINAL DEFECT, reproduced inside the instrument built to study it
+
+Structurally identical, one level up:
+
+| | takes | needs |
+|---|---|---|
+| `WallScene` (the bug) | the WALL's ratio | the viewport's |
+| `FillComparison` (the instrument) | computes the viewport's ratio correctly, hands it to a child that **substitutes its own box** | the child to accept the container's geometry |
+
+Box-versus-viewport twice, in the code and in the thing measuring the code.
+
+### Sequencing, decided by the developer and worth recording as a rule
+
+The `BoxCanvas` change is **its own step, not folded into the comparison** —
+because that same `fill` branch renders the pulled record on `/`. It is a change
+to the live scene wearing scaffolding's clothes, and the order is:
+
+1. Change `BoxCanvas` to take geometry from its container.
+2. **Verify `/` is pixel-unchanged at 1280 AND 390 by RENDERING** — not by
+   arithmetic, which is the mistake this unit has already made twice (the
+   "B is a no-op at 1280" proof, and this).
+3. Only then rebuild the comparison on top of a component that can express a
+   non-square frame.
+
+**The test that matters: the component renders a NON-SQUARE frame when given
+one, and it must fail against today's `aspect-square`.**
+
+## Step 15 unit 4 step 1: `BoxCanvas` takes its geometry from its container
+
+### The change
+
+`fill`'s branch read `aspect-square w-[min(70vw,70vh,560px)]` and now reads
+`h-full w-full`. The "fits the screen" rule moved OUT to `RecordCanvas`,
+byte-identical, because the caller is the only thing that knows what it is
+placing the record into.
+
+### A CORRECTION: this was NOT the live scene, and I said it was
+
+Recorded because the wrong claim drove the plan. I told the developer that
+`fill` renders the pulled record on `/`, and the sequencing — its own step,
+render-verified — was built on that.
+
+**`WallScene` does not use `BoxCanvas` at all.** It imports `RISE_MS` and
+`prefersReducedMotion` and builds its own mesh. `fill` has exactly two callers:
+`RecordCanvas` (reachable only through `Shelf.tsx`, which nothing imports — the
+retired CSS path) and the workbench comparison.
+
+Verified by RENDERING rather than by grep, at both widths with a record pulled:
+
+    [390]  BoxCanvas elements=0  canvases=1  wallScene=1  facts=1
+    [1280] BoxCanvas elements=0  canvases=1  wallScene=1  facts=1
+
+**The instruction to treat it as live and verify by rendering was still right**
+— it is what converted an assertion into a measurement, and the measurement went
+the other way. Cheap insurance against a claim that was wrong.
+
+### `/` is pixel-unchanged, and the FIRST comparison was invalid
+
+Four screenshots, wall and pulled record at 390 and 1280: **byte-identical**.
+
+**The first attempt at this comparison was worthless and is worth recording.**
+The "before" images came from a run against the TEST database and the "after"
+from the DEV database — different records, so different pixels no matter what
+the code did. `cmp` dutifully reported differences and none of them meant
+anything.
+
+Redone properly: stash the change, capture, restore, capture. Same database,
+same records, only the code differing. **A before/after where something other
+than the change also differs is not a before/after** — the same family as the
+half-applied mutation, and it would have reported a regression that did not
+exist.
+
+### The full run caught TWO failures a spec-scoped run did not
+
+Both mine, and neither visible in the file the unit opened:
+
+1. `box-canvas-geometry.spec.ts` — **both tests, "element(s) not found"**.
+2. `cover-unlit.spec.ts` — "the canvas must have a measurable box to click into".
+
+**The cause is one thing.** `/plane`'s components are gated on
+`records.length > 0`, and **the E2E database is now empty between specs** because
+of step 15 unit 1's per-spec cleanup. Measured directly: `probe: 0,
+comparison: 0, canvases: 0`. My spec assumed a populated database, and
+`cover-unlit` — which passes in isolation — tripped over the state my spec left.
+
+Fixed in the SPEC, not the page: seed two records through the API in
+`beforeEach`, narrow the workbench with `?artistId=`, clean up in `afterEach`.
+
+**This is the second time this session that unit 1's cleanup has surprised
+something.** The first was a probe reporting an empty wall as a broken wall. The
+standing note bears repeating in bold: **anything touching `/plane` or `/` in
+E2E must seed its own records — an empty database is now the default, not an
+edge case.**
+
+It is also the cross-spec collision NOTES set a trigger for, in a milder form:
+not two specs colliding on content, but one spec's ABSENCE of setup breaking its
+neighbour. Worth watching whether the stronger form appears.
+
+### Step 3: the comparison rebuilt around the question being asked
+
+The developer stated it precisely: *which size makes the record read as the
+thing I pulled out, with its facts legible beneath, on a screen I am holding* —
+**one question about a PAIR**, not two about a record and a card.
+
+The first version failed that on its own terms even before `BoxCanvas` ignored
+it: three shrunken frames side by side in a scrolling column. A record at 55% of
+a 340px preview is not a record at 55% of a phone, and "does this read as the
+thing in my hands" cannot be asked of something the size of a stamp.
+
+Rebuilt as **one candidate at a time, full-bleed at `min(78svh, 780px)`, real
+card beneath, switcher fixed at the bottom** — thumb-reachable per §10, one tap
+apart so they compare by flicking rather than by memory.
+
+**The caption now carries TWO numbers from TWO sources**: the intended
+percentage from `occupancy()`, and the MEASURED percentage read back off the DOM
+after layout, with a visible `← DISAGREE` when they part. That is the finding
+above turned into a mechanism — the previous page printed one number twice and
+called it agreement.
+
+**And the bar the developer set for it: if the three still look alike on a phone
+after this, that is a THIRD instrument failure and the comparison gets rethought
+rather than the numbers adjusted.** Recorded so it is not quietly relitigated.
+
+## The instrument must be judged on the device that judges it
+
+Step 15 unit 4. **The sharpest form of this unit's recurring failure, and it
+arrived one level out from the last one.**
+
+### The measurement
+
+The fill comparison's frame is `min(78svh, 780px)`. Measured on two devices,
+same page, same candidate C:
+
+| device | frame | C measured |
+|---|---|---|
+| desktop Chrome, 390x844 viewport | 340 x 656 | **40%** of frame height |
+| the developer's phone, 390x844 | (taller `svh`) | **54%** of frame height |
+
+`svh` resolves against the browser's small-viewport height, and a phone's
+differs from an emulated 844px window — toolbars, safe areas, and the fact that
+`svh` is a device property rather than a CSS constant.
+
+**So a number chosen on the desktop would be wrong on the phone.** The
+comparison is for choosing a value by eye; if the preview frame is not the shape
+of the frame the value will act in, the value chosen produces something else.
+
+### It is the SAME class as the defect under study, one level out
+
+Three instances now, each nested inside the last:
+
+| level | the frame used | the frame needed |
+|---|---|---|
+| the bug | the WALL's aspect | the viewport's |
+| the instrument (v1) | `BoxCanvas`'s own box | the container's |
+| **the instrument (v2)** | **the DESKTOP's `svh`** | **the judging device's** |
+
+Every one is "a frame that is not the frame under study". The third is the
+hardest to see because the page is correct on the machine that built it.
+
+**The rule: the instrument has to be judged on the device that judges it.**
+Not merely rendered there — MEASURED there. A reading taken on the developing
+machine is a reading about the developing machine.
+
+This is why the per-device numbers now print on the page itself: the phone
+reports its own frame, and a desktop reading is visibly a different one rather
+than silently standing in.
+
+### Two caption bugs, both found by the page's own DISAGREE check
+
+1. **Width resolved against the PADDED content box.** The frame is 340px wide
+   with 16px padding a side, so `width: 86%` resolved against 308px and the
+   caption divided by 340. Predicted exactly: 55% -> 50%, 86% -> 78%, both
+   matching the measurement. Every candidate rendered ~10% smaller than its
+   label claimed.
+
+2. **The two height numbers were different quantities sharing a label.**
+   `occupancy().height` is record / world-frame-height — a fact about the 3D
+   frustum (240 in 436 = 55%). The measured value is a SQUARE CSS box over the
+   CSS frame height, so its height follows its WIDTH. A frustum fraction and a
+   layout fraction **cannot agree except by coincidence**, and the CSS frame's
+   aspect (0.518) was not the viewport's (0.462) anyway.
+
+Fixed by making the CSS frame the viewport's aspect, so both numbers describe
+the same box, and by removing the padding from the measured frame.
+
+**The DISAGREE mechanism worked**, and the credit is limited: it caught a fault
+built into the same page one turn earlier. Its real value is that it caught it
+BEFORE a number was chosen from it, which is the first time in this unit an
+instrument reported its own fault rather than being caught by a person
+distrusting it.
+
+### What it costs the judgement already made
+
+The developer's provisional read — A crowds the card, B is a thumbnail, C
+closest — **stands, because it was a judgement about SHAPES that were really
+drawn** (308 / 169 / 265px in a 340px frame; the ratios between them are
+correct).
+
+But it shifts: every candidate was ~10% small, so **a true 86% is larger than
+the C that was liked**. If the corrected C crowds the card the way A did, that is
+a different answer. Re-judged before anything is committed.
+
+## `/plane` mounted 134 WebGL contexts against a real collection
+
+Step 15 unit 4. Reported by the developer as "runtime type errors", which is
+what it looks like from the browser:
+
+    Uncaught TypeError: Argument 1 ('shader') to
+    WebGL2RenderingContext.shaderSource must be an instance of WebGLShader
+
+117 of them in one page load. **Not a type error** — `createShader` returns
+`null` once a browser's cap on concurrent WebGL contexts (~16) is exceeded, and
+three.js passes that null straight to `shaderSource`. The type error is the
+symptom of exhaustion, several layers from the cause.
+
+### The count
+
+Measured directly: **134 canvases, every one holding a live context.**
+
+| source | contexts |
+|---|---|
+| the composition block, `records.map` over the WHOLE collection | **125** |
+| thickness candidates | 3 |
+| geometry probe (added this unit) | 3 |
+| fill comparison (added this unit) | 1 |
+| wall, plane, rise demo | 3 |
+
+### Why no test could ever have caught it
+
+**The composition block was unbounded and had always been unbounded.** It is
+harmless at any size `/plane` had ever been opened at — and it had only ever
+been opened against E2E fixtures, which seed one or two records. Step 15 unit
+1's per-spec cleanup makes that even more certain: the test database is now
+EMPTY between specs.
+
+So the defect required a real collection to appear, and nothing in the suite has
+one. **This is the mirror image of the accumulation flake**: that one needed a
+database that had grown too large, this one needs one that is never large
+enough. Both are properties of test-data VOLUME that no assertion mentions.
+
+Recorded as a standing hazard rather than fixed with a test: an E2E test that
+seeded 125 records to prove a WebGL cap would take the cap as its subject and
+cost a minute a run. The bound itself is the guard.
+
+### The fix, and the honest attribution
+
+`records.slice(0, COMPOSITION_LIMIT)` with `COMPOSITION_LIMIT = 8`. Measured
+after: **134 -> 17 canvases, zero page errors**, comparison still live. Stable
+under 18 candidate switches, so contexts ARE released on unmount and switching
+does not leak.
+
+**Pre-existing, and I made it reachable.** The unbounded map predates this unit;
+what this unit did was add four contexts and then point the developer at
+`/plane` with a 125-record collection open. Both halves are true and the second
+is the one that turned a latent bug into a broken page.
+
+**The cap is NAMED on the page**, per NOTES' rule about silent truncation:
+"Showing 8 of 125 — each is a WebGL context and browsers cap those at about 16."
+A limit nobody can see reads as *this is all there is*.
+
+## The dev-server lock is on the DIRECTORY, not the port — and the fix is `distDir`
+
+Step 15 unit 4, after the developer asked whether keeping a phone alive and
+running the suite are mutually exclusive. **They were. They are not now.**
+
+### The problem, stated properly
+
+Next holds `<distDir>/dev/lock` and refuses a second `next dev` from the same
+project directory **however it is addressed**. The suite's `webServer` runs on
+3100 and the developer's server on 3000, and that made no difference: the port
+was never the contended resource.
+
+So every full E2E run required killing whatever was serving the phone. **Three
+times in one session**, each costing a restart, and twice the developer
+discovered it rather than being told.
+
+### The fix
+
+    distDir: process.env.NODE_ENV === 'test' ? '.next-test' : '.next'
+
+`playwright.config.ts` already sets `NODE_ENV=test` on its `webServer` command
+for an unrelated reason (loading `.env.test` instead of the developer's
+`.env.local`), so the test server gets `.next-test` and its own lock for free.
+Nothing else sets it: `npm run dev` and `npm run build` are untouched.
+`.next-test` added to `.gitignore`.
+
+**Measured, which is the only thing that settles it:** dev server PID 44373
+before the run, `nav-mobile` passing on the mobile project, PID 44373 after, and
+the phone's URL still serving 200.
+
+### Why the alternatives lose
+
+- **A git worktree** would have its own directory and its own lock, but needs
+  its own `node_modules` and would test COMMITTED code — so a run would silently
+  verify something other than the working tree. Worse than the problem.
+- **`reuseExistingServer: true`** would point the suite at the developer's
+  server, which loads `.env.local` and the REAL Neon database. The E2E suite
+  truncates and seeds. That is a data-loss bug waiting to happen.
+
+### The general shape, worth carrying
+
+**"Two things cannot run at once" is a claim about a RESOURCE, and the resource
+is worth identifying before working around it.** Three restarts were spent
+treating the port as the conflict because that is what a port conflict looks
+like from outside. The lock file names its own scope, and reading it took one
+command.
+
+## The LAN IP changed overnight and `allowedDevOrigins` was pinned to one host
+
+Same session, the morning after. `192.168.86.95` -> `.98` by DHCP lease.
+
+**The comment predicting this is in the file it broke.** It read: "If the LAN
+address changes, this stops working and the symptom is the credential-leaking
+one above." It did, it was, and the comment prevented nothing — **the second
+time this session a hazard was written down and then walked into**, the first
+being the nav measurement that survived three steps as prose.
+
+The symptom was exactly as predicted: `/login` 200, its chunks 403, and a form
+with no JavaScript falls back to a native GET submit carrying the password.
+
+Fixed by widening to the private /24 the machine sits on
+(`192.168.86.*`, plus `localhost` and `127.0.0.1`) rather than re-pinning a host
+that will move again. That is the smallest thing that survives a lease change,
+and it admits only devices already on this LAN — the same trust boundary
+`--hostname 0.0.0.0` exposes anyway.
+
+**A prose warning is not a control.** Both instances this session had the same
+shape: the knowledge existed, was correct, was written next to the code, and
+nothing executed it. The nav's answer was a test; this one's is a value that
+cannot go stale.
+
+## FIRST SIGHTING: `wall-scene.spec.ts:212` "settles CENTRED in view"
+
+2026-08-21, step 15 unit 4. Failed once in a full run, passed on the next full
+run and 17/17 in isolation.
+
+    expect(Math.abs(settled.y), `${count} records: vertically centred`)
+      .toBeLessThan(0.05);
+
+**Recorded as a first sighting rather than dismissed as flake**, because NOTES
+has no prior entry for it. The existing `wall-scene` entries are a different
+shape: seeding VOLUME (it contributed ~620 of the 724 accumulated records) and
+LOGIN-STAGE timeouts at `:900`/`:956`. This is neither — it reached its own
+assertion and got a number outside tolerance.
+
+| run | result |
+|---|---|
+| full suite, `--retries=0` | **failed** |
+| full suite, `--retries=0`, immediately after | passed (254/254) |
+| `wall-scene` alone | 17/17 |
+
+**Not attributed, and specifically NOT called flake.** One failure in two full
+runs is exactly the rate at which this project has twice been wrong in both
+directions — the "clicking the active chip clears it" defect was read as flake
+for three steps and was real, and the accumulation failures were read as
+contention for eleven sightings. A single non-recurrence is not evidence of
+absence.
+
+**What would settle it, when it next fires:** the assertion is a POSITION at a
+moment, so the candidates are a rise still in flight when it was read (a timing
+problem that load makes likelier) versus a genuine off-centre settle at some
+collection size. Those are distinguishable — read `settled.y` twice a beat
+apart, and a value that MOVES is timing while a value that is stable and wrong
+is geometry.
+
+Worth noting the unit that would care: `pulledDestination` is under active
+change (`viewportAspect`, the fill rule), and this test asserts exactly what
+that code computes. **If it fires again after the fill rule lands, suspect the
+change before suspecting the harness.**
+
+## Step 15 unit 4 (continued): the card becomes a summary, and the size question dissolves
+
+### The move, and why it is not a re-tune
+
+A, B and C each answered "**how much of the frame should be RESERVED for
+facts**", and every answer was a guess about content: the seeded record's card
+was three lines with a void beneath, a fully-documented one would overflow the
+same space. Nobody had rendered both against the same reservation.
+
+A summary card has a **constant height**, so the reservation is knowable and the
+question changes to "**how wide should the record be, given a known small
+reservation**". The old candidates are answers to a question that no longer
+exists — so they were re-derived, not re-tuned, and the tests for the old
+question were DELETED rather than adjusted. A test kept past the question it
+asks starts passing for a reason nobody chose.
+
+New candidates, spanning the boundary the developer's read points at ("at least
+A, possibly bigger"): **90% / 95% / 100% of frame width.** 100% is included as
+the far side — a record touching both edges has no space to be in — so the
+boundary can be seen rather than guessed.
+
+### What the summary contains, and why not the spine's three fields
+
+§10b puts **artist, title and catalogue number** on the spine. The summary is
+**artist, title and RELEASE YEAR**, and the swap is the whole point:
+
+- `release_year` is "the album's original release year, **not** this pressing's
+  year" (§4, in those words). The spine's catalogue number identifies the
+  PRESSING. So the two answer different questions — *what record is this* and
+  *which copy* — and neither is recoverable from the other.
+- It is the one of the four a collector cannot read off the object in their hand.
+
+Artist and title repeat the spine deliberately: the pulled record shows its
+COVER, not its spine, so a card that did not name the record beneath it would be
+a caption for something else.
+
+Plus a **count** — "11 more facts, the journal and prices" — because "More" is a
+control that does not say what it does, and a count distinguishes a record with
+nothing else recorded from one with a dozen fields. Zero is a real answer and is
+said plainly (§10b: absence is fine).
+
+### A decorative test, caught by mutation and corrected
+
+The release-vs-pressing-year test was written against `recordSummary` and was
+**vacuous**: `FactPanel` has no `yearPressed` field at all, because the choice
+is made upstream in `factPanel`. A mutation making `recordSummary` read a
+pressing year had nothing to read and all six tests passed.
+
+CLAUDE.md §2's rule is to name the line a test would fail against. For this
+distinction that line is `panel.ts`'s `year: record.releaseYear` — so the test
+now asserts against `factPanel` and fails (3 assertions) when that line is
+mutated.
+
+### THREE bugs found by rendering, all the same shape as the unit's original defect
+
+1. **`aspectRatio: 1` defeated the height clamp.** `recordSizeFor` computed the
+   correct clamped size; a percentage width plus `aspectRatio` made the element
+   593x877 in a 686px frame at 1280, pushing the card to 902px — **entirely
+   outside the frame and invisible**. Fixed by sizing in explicit pixels, which
+   the box it sits in cannot override. *A computed constraint silently
+   overridden by CSS*, exactly like `BoxCanvas` ignoring its container.
+
+2. **The reservation covered only the card.** It must cover everything below the
+   record — the card, its margin, and the switcher's strip — or the card itself
+   overflows.
+
+3. **1553 lint errors from `.next-test`.** `distDir` gave the E2E server its own
+   build directory and `eslint-config-next` ignores `.next` BY NAME, so lint
+   began walking 765MB of generated output. Caught by lint rather than shipped;
+   fixed with an ignore entry beside the existing `playwright-report` one.
+
+### Measured
+
+| | 390x844 | 1280x900 |
+|---|---|---|
+| frame | 342x740 | 976x686 |
+| card height | **91px** | **91px** |
+| record at candidate A | 306x306 (89%) | clamped by height |
+
+**The constant-height claim, asserted against both extremes**
+(`e2e/summary-card.spec.ts`): a record with nothing recorded and one with a
+pressing, condition, price and date. **Both 90.5px**, with visibly different
+content ("Nothing else recorded yet" vs "11 more facts"), and the fixtures are
+asserted to DIFFER so the equality is not vacuous.
+
+Mutation-checked by making the card render its full fact list: **90.5px vs
+122.5px, caught.**
+
+### Still open, and NOT decided here
+
+- **Which width.** The developer judges on the phone; a desktop render is a
+  desktop reading (NOTES, the per-device entry).
+- **The desktop panel as a summary.** The prompt names this as the half most
+  likely to be worse and it is: at 1280 the record is clamped by height and the
+  frame is mostly empty around it. Reported rather than defended.
+- **The aspect fix** — steer recorded: solve the destination against the
+  viewport, leave the camera on the canvas ratio. Built after the size rule is
+  chosen, since the destination arithmetic is what changes.
+
+## The caption said 100%, the record filled 55% — a camera inside a box the sizing never reached
+
+Step 15 unit 4, caught by the developer distrusting the caption against the
+screenshot. **Fifth instance of this unit's one recurring failure**, and the
+deepest yet: the frame the caption measured and the frame the record was drawn
+in were two different frames, one inside the other.
+
+### Measured
+
+The `data-fill-box` element is at the frame edges — 1px gap each side, the
+frame's own border. So the sizing worked: A's element is 306px, C's is 340px, at
+90% and 100% of the frame.
+
+**But the record inside fills only 55% of that element.** Scanned off a
+screenshot: A's sleeve spans 170 of 306px (56%), C's 188 of 340px (55%). On
+screen both records are ~55% of the frame and differ only in canvas size — which
+is why they looked nearly alike and why C left black either side despite a "100%"
+caption.
+
+### Why: BoxCanvas has its OWN camera, and the sizing never reached it
+
+`BoxCanvas.tsx:244` builds `PerspectiveCamera(30, …)` at `z = 3.4`, and the
+record is a `BoxGeometry(1,1,depth)`. At fov 30 and z 3.4 the frame is 1.822
+world units tall, so a 1-unit record fills `1/1.822 = 54.9%` — the measured
+number exactly.
+
+The comparison sizes the ELEMENT and the camera inside stays put, so the record
+is 55% of whatever element it is given. **The width fraction was applied to the
+box; the record lives one frame deeper, untouched.**
+
+This is `WallScene` taking the wall's aspect, and `BoxCanvas` ignoring its
+container, and the padded frame, and the per-device `svh`, all again: **a
+quantity applied to the wrong box.** It keeps recurring because the scene has
+genuinely nested frames — DOM element, canvas, camera frustum — and each fix
+addresses one boundary while the next one waits.
+
+### The fix
+
+`BoxCanvas` takes a `frameFill` and sets its camera distance so the record fills
+that fraction: `z = 1 / (2 · fill · tan(fov/2))`. Then sizing the ELEMENT and
+sizing the RECORD are one operation rather than two that have to agree.
+
+The default stays 55% (z 3.4), which is right for the wall's pulled record — it
+sits back in a scene there. Only the comparison asks for more.
+
+### What this cost, and the standing lesson
+
+The developer caught it by eye against a caption they had learned not to trust —
+this unit trained that distrust across four prior instances, and it paid off.
+**When a page reports a number, the number and the render must come from the
+same box or the report is fiction.** The caption's second source (measuring the
+DOM) was correct about the DOM and blind to the frustum inside it.
+
+## FIVE nested-frame failures in one unit, and the rule that falls out
+
+Step 15 unit 4 hit the same defect five times, each on a different pair of
+frames, each fixed in isolation before the next surfaced:
+
+| # | the fraction was applied to | but the record lived in |
+|---|---|---|
+| 1 | the WALL's aspect | the viewport's |
+| 2 | `BoxCanvas`'s own hard-coded `min(70vw,70vh)` | its container |
+| 3 | the desktop's `svh` | the judging device's screen |
+| 4 | the padded content box (308 of 340px) | the frame itself |
+| 5 | the DOM element | the canvas, and the camera frustum inside it |
+
+**The cause is one thing: nobody enumerated how many frames there were.** The
+pulled record is a fraction of a chain — viewport → CSS frame → DOM element →
+canvas → camera frustum — and each fix addressed the layer in front of it while
+the next one down stayed wrong. The caption measured the DOM and was blind to
+the frustum; the size rule sized the element and was blind to the camera; the
+comparison frame used `svh` and was blind to the device. Every one was correct
+about its own layer.
+
+That is why the developer's learned distrust of the caption paid off five times:
+a number computed from one frame and rendered in another agrees by coincidence
+or not at all, and only the eye against the render — or a measurement that names
+BOTH frames — catches it.
+
+### THE RULE
+
+**A size assertion must name which frame it is a fraction of.** "The record is
+90%" is meaningless; "the record is 90% of the CSS frame's width, and fills its
+DOM element, and the camera frames the element at 100%" is checkable, and its
+checkability is exactly the three places a bug can hide.
+
+**A chain of frames must have its layers listed before any of them is trusted.**
+Had the five layers been written down at the first sighting, the other four
+would have been four lines of a checklist rather than four separate
+investigations across as many turns. The enumeration is cheap; discovering the
+layers one failure at a time is what was expensive.
+
+This is the same family as "verify the value where it is USED" (the env-var
+entry) and "check the instrument did what it claimed" (the fixed-coordinate
+probe): a quantity is only meaningful relative to a named reference, and the
+reference is the thing that goes unstated and wrong.
+
+## DECIDED: the record's presentation is width-dependent — §10b amendment owed
+
+Full-bleed with a stacked summary card below a breakpoint; the flanking panel
+above it. §10b currently describes the flanking panel as THE layout rather than
+as the wide-screen one, so the amendment must say the presentation depends on
+width — or R7 finds a spec describing one shape and an app with two.
+
+**Why the fork, measured not asserted.** The record is square; a desktop frame
+is landscape. At 1280 a full-bleed record clamps to HEIGHT at 51% of the width
+and sits in a wide dark field with empty margins either side, the full-width card
+stretched beneath it — a small square marooned in black. The phone's portrait
+frame holds the same square large with the card under it. **Two amounts of room
+want two shapes**; it is not a summary being worse than a panel, it is one model
+right on a phone and wrong on a desktop that has room to put facts BESIDE the
+record — which is what the flanking panel always was.
+
+**Sequencing:** the phone side is finished, tested and judged (C, full-bleed,
+summary card, the frame-fill fix). It ships as its own commit and does not wait
+on the desktop design question. The desktop fork is its own unit, after — one
+revert if either goes wrong. The §10b amendment is written when the desktop
+shape is judged, covering both.
+
+## CROSS-SPEC COLLISION, observed at last — the trigger NOTES set has fired
+
+Step 15 unit 4. `summary-card.spec.ts` failed under the full suite and passed in
+isolation, `expect(match).toBeDefined()` undefined at both call sites. **This is
+the collision NOTES has waited for since step 15 unit 1**, which deferred
+per-worker isolation "until a cross-spec collision is actually observed" — and
+set the signature to watch for: "an assertion about page 1" broken by another
+spec's data rather than by the volume of it.
+
+### The mechanism, and a FIRST FIX that was wrong
+
+The spec searched `/api/records?search=Full ${run}` and took the first-page
+match. `/api/records?search=` matches title AND artist by trigram
+(`records.ts:342-351`), and orders by similarity — so under the full suite a
+record from another spec could outrank the target.
+
+**The first fix — search by the unique `run` token, wider page — did not hold**,
+and the reason is the instructive part. `record-detail.spec.ts` seeds an artist
+`Sparse-<suffix>` and a title `Bare <suffix>`; the page snapshot at failure
+showed `link "Bare dmt32k8rv4790 — Sparse-dmt32k8rv4790"`. My `run` token was a
+trigram match for THAT record's artist name, and `.find(r => r.title === 'Sparse
+' + run)` then found nothing because its title is "Bare". Searching by a token
+unique to my records is not enough when the search also matches ARTIST names I
+do not control.
+
+**The real fix: address the records by ID.** `seedExtremes` returns the ids from
+the create responses, and the tests navigate `/plane?recordId=<id>` directly. An
+id cannot collide with another spec's anything. No search, no page, no ordering
+— the three things that were load-bearing and shouldn't have been.
+
+This is the seed helper's own lesson taken one step further: "deleted by artist
+rather than by title pattern — the artist id is exact, a LIKE on a title prefix
+quietly widens." A LIKE on a title prefix widens; a search that also spans artist
+names widens further; only an id is exact.
+
+### It does NOT re-open per-worker isolation, and here is why
+
+The deferral's trigger was "a collision whose cause is another spec's DATA
+rather than the volume of it". This IS that — but the cause is a QUERY that
+assumed page 1, not two workers writing the same row. Cleanup lowered the volume
+and this was hiding under it exactly as predicted; what surfaced is a test
+making a page-1 assumption, which is fixed in the test.
+
+Per-worker isolation answers a different question: two workers writing the SAME
+content concurrently. That did not happen here — the collision was one spec's
+query against another spec's legitimately-present rows. So the trigger fired for
+the milder of the two forms NOTES distinguished, and the fix is a better query
+rather than a schema-per-worker harness.
+
+**The signature to keep watching** is unchanged for the stronger form: a failure
+caused by two specs writing an IDENTICAL title or a shared `discogs_release_id`
+at the same moment. That is still unobserved.
+
+### Why the full run was needed to see it
+
+Isolation passed both tests every time. Only the full suite puts another spec's
+records in the collection, and only `--retries=0` keeps the failure visible
+rather than retried away. **CLAUDE.md §10's "full E2E, no file argument" is
+exactly the rule that caught this** — a spec-scoped run was green throughout.

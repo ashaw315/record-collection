@@ -67,3 +67,4 @@ drizzle.config.fresh-clone-test.ts
 # per-migration snapshots are migration state, not build output: `drizzle-kit
 # migrate` reads the journal to decide what to apply, and without it a fresh
 # clone silently applies zero migrations and exits 0.
+.next-test

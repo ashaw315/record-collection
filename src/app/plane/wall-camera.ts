@@ -100,3 +100,34 @@ export function edgeCompression({ wallWidth }: { wallWidth: number }): number {
   // Projected size goes as 1/distance, so the shortfall is the ratio.
   return 1 - distance / toEdge;
 }
+
+/**
+ * The camera's aspect ratio, which is a property of the APERTURE.
+ *
+ * **The wall's own ratio was used here and it is the wrong quantity.** The
+ * canvas is as tall as the entire wall (`WallScene.tsx`: `height =
+ * layout.height`), so `width / height` describes how many records are owned and
+ * how they wrapped — content, not viewport. At 390px, 125 records wrap to ~10
+ * rows and that ratio is ~0.12: the frame becomes a 52-unit slot and a
+ * 240-unit record fills 457% of its width. Found on a real phone; the record
+ * did not render at all, because the reader was inside a magnified sleeve.
+ *
+ * On a desktop the wall is wider than tall, so the two quantities are close
+ * enough that nothing ever showed. **This is the arithmetic no test varied** —
+ * `pulledDestination`'s own tests vary the RECORD COUNT and hold the viewport
+ * fixed, which is the axis its defect lived on and not this one's.
+ *
+ * Height is never zero in practice — a viewport with no height renders nothing
+ * — but it is guarded rather than asserted, because a NaN aspect propagates
+ * silently into every projected position instead of failing where it is made.
+ */
+export function viewportAspect({
+  width,
+  height,
+}: {
+  width: number;
+  height: number;
+}): number {
+  if (height <= 0) return 1;
+  return width / height;
+}
