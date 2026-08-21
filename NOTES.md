@@ -13395,3 +13395,72 @@ Isolation passed both tests every time. Only the full suite puts another spec's
 records in the collection, and only `--retries=0` keeps the failure visible
 rather than retried away. **CLAUDE.md §10's "full E2E, no file argument" is
 exactly the rule that caught this** — a spec-scoped run was green throughout.
+
+## Step 15 unit 5: the desktop fork — spec first, then the aspect fix, then two shapes
+
+### A32 written BEFORE the code
+
+§10b described the flanking panel as THE layout; the phone side shipped a
+stacked summary. So the spec described one shape and the app had two. A32
+amends §10b to say the presentation is width-dependent — flanking above a
+threshold, stacked summary below — written and applied to SPEC.md before any
+layout code, per the project's rule through 31 amendments. R7's "spec against
+the app" now finds a decision rather than a drift.
+
+### The breakpoint is MEASURED, not md/lg
+
+Derived from panel geometry, not screen-size convention: facts panel (210) +
+gap + a readable record (320, its phone size) + gap + controls (180) + page
+margin ≈ 806px, rounded to **820**. That is between Tailwind's `md` (768) and
+`lg` (1024) and coincides with neither — at 768 the flanked record is 282px,
+below the readable floor. `record-layout.ts` is the pure decision, and its test
+asserts BOTH that 820 leaves the record its minimum AND that md would not, so
+the choice of a measured threshold is a test rather than a comment.
+
+Panel widths extracted to `panel-dimensions.ts` so the threshold derives from
+the same numbers `Panels.tsx` renders — two producers of one width is how a
+breakpoint reserving room for a 210px panel ends up beside a 240px one.
+
+### The aspect fix, and an overcorrection caught by rendering
+
+Agreed steer: solve the record's DESTINATION against the viewport, leave the
+camera on the canvas ratio (a viewport aspect insets the wall, breaks A24a,
+measured). `pulledDestination` now takes the viewport and pushes the record
+back so its WIDTH fits, not just its height.
+
+**First attempt overcorrected.** Fitting width at the wall's default 55% pushed
+the record to distance 12905 — 7% of frame height, a distant speck, invisible
+on screen. The live wall pull showed dimmed wall where the record should be.
+Fixed by a `widthFill` of 0.9: near full-bleed, the record ≈320px on screen at
+390px (its readable floor) rather than sitting back in the scene. **Caught by
+looking at the live wall, not by the arithmetic** — the sixth time this unit's
+"which frame" confusion surfaced, and again the render was the instrument.
+
+Verified live: the magnified-sleeve overflow is gone, the wall reads correctly
+(not inset), and the record is a visible square at both widths.
+
+### The fork, and two bugs the screenshots caught
+
+`WallScene` rendered `FactsPanel`/`ActionsPanel` flanking at every width — the
+phone side lived only in the `/plane` scaffold, never the live wall. So this
+unit wired the phone shape (summary card + full-bleed) INTO the live scene for
+the first time, forked by `recordLayout(viewportWidth)`.
+
+Two bugs, both found by rendering the live wall rather than trusting the markup:
+
+1. **The stacked buttons were invisible** — `text-foreground` is theme-dependent
+   and the panel ground is a fixed dark, so the labels rendered dark-on-dark.
+   Fixed to `PANEL_TEXT.title`, the same the card uses.
+2. **The record was a speck** — the aspect overcorrection above.
+
+Both shapes verified live: phone stacks a full-bleed record over the summary
+card with working Turn over / Put back; desktop flanks a centred record with the
+full facts panel and actions. Desktop is UNCHANGED by the `widthFill` — width was
+never its binding constraint.
+
+### Server-render default
+
+Until the width is measured on first client render, the flanking layout is
+assumed — it is the desktop shape and the server markup is desktop-shaped, so a
+phone corrects on hydration rather than a wrong default flashing the wrong
+layout at every width.

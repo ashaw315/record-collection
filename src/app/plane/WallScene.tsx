@@ -42,8 +42,11 @@ import { wallDim } from './wall-dim';
 import { PROUD_MS, proudOffset, shouldRedraw } from './hover-proud';
 import { NO_TILT, tiltFor } from '../shelf/tilt';
 import { ActionsPanel, FactsPanel } from './Panels';
+import { SummaryCard } from './SummaryCard';
+import { recordSummary } from './summary';
+import { recordLayout } from './record-layout';
 import { factPanel } from './panel';
-import { PANEL_GROUND } from '../shelf/panel-palette';
+import { PANEL_GROUND, PANEL_TEXT } from '../shelf/panel-palette';
 import {
   canTilt,
   dismiss,
@@ -139,6 +142,20 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
    */
   const [hoveredRecordId, setHoveredRecordId] = useState<string | null>(null);
   const [cardAt, setCardAt] = useState<{ x: number; y: number } | null>(null);
+
+  /**
+   * The viewport width, watched only for the §10b/A32 layout fork: panels beside
+   * the record above the threshold, a stacked summary below it. Separate from
+   * the scene's own width watcher (which rebuilds the wall) because this drives
+   * DOM chrome, not the canvas, and a re-render on resize is all it needs.
+   */
+  const [viewportWidth, setViewportWidth] = useState<number | null>(null);
+  useEffect(() => {
+    const measure = () => setViewportWidth(window.innerWidth);
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
 
   /**
    * The pulled id, readable from the click handler.
@@ -289,7 +306,25 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
      * `PULL_DEPTH_CAP` below.
      */
     const cameraDistance = wallCameraDistance({ wallHeight: height });
-    const destination = pulledDestination({ wallWidth: width, wallHeight: height });
+    /*
+      **The viewport is passed so the record fits the frame's WIDTH** (the aspect
+      fix). The camera keeps `width / height` (the canvas ratio) — a viewport
+      aspect insets the wall and breaks A24a, measured — so the record's depth is
+      what accounts for the viewport being narrow. `window.innerWidth/Height` is
+      the screen; the canvas (`width` x `height`) is the whole wall and is not it.
+    */
+    const destination = pulledDestination({
+      wallWidth: width,
+      wallHeight: height,
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+      /*
+        Near full-bleed. On a narrow canvas the width is what binds, and 0.9
+        makes the record own the frame (≈320px on screen at 390px, its readable
+        floor) rather than sitting back at the wall's default 55% where it read
+        as a distant speck.
+      */
+      widthFill: 0.9,
+    });
     const camera = new PerspectiveCamera(WALL_FOV_DEGREES, width / height, 1, cameraDistance * 2);
     camera.position.set(width / 2, -height / 2, cameraDistance);
     camera.lookAt(width / 2, -height / 2, 0);
@@ -1386,23 +1421,75 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
             className="pointer-events-none absolute inset-0 -z-10"
           />
 
-          <div
-            className="pointer-events-auto max-w-[26vw] rounded-xs p-4 shadow-2xl backdrop-blur-sm"
-            style={{ backgroundColor: PANEL_GROUND }}
-          >
-            <FactsPanel panel={factPanel(out)} />
-          </div>
+          {/*
+            **§10b/A32: the facts flank the record, or stack beneath it.** Above
+            the measured threshold there is room for a panel beside a readable
+            record; below it the record fills the frame and the facts become a
+            summary card stacked under it, with the controls beneath that. The
+            fork is one `recordLayout` decision so the two shapes cannot drift
+            about which width gets which.
 
-          <div
-            className="pointer-events-auto max-w-[26vw] rounded-xs p-4 shadow-2xl backdrop-blur-sm"
-            style={{ backgroundColor: PANEL_GROUND }}
-          >
-            <ActionsPanel
-              recordId={out.id}
-              onTurnOver={() => setState(flip)}
-              onPutBack={() => setState(dismiss)}
-            />
-          </div>
+            Until the width is measured (first client render) the flanking
+            layout is assumed — it is the desktop shape and the server markup is
+            desktop-shaped, so a phone corrects on hydration rather than
+            flashing a wrong layout that a wrong default would show at every
+            width.
+          */}
+          {viewportWidth !== null && recordLayout(viewportWidth) === 'stacked' ? (
+            <div
+              data-testid="record-chrome-stacked"
+              className="pointer-events-auto absolute inset-x-4 bottom-6 rounded-xs p-4 shadow-2xl backdrop-blur-sm"
+              style={{ backgroundColor: PANEL_GROUND }}
+            >
+              <SummaryCard summary={recordSummary(factPanel(out), out.id)} />
+              <div className="mt-2 flex gap-2">
+                {/*
+                  Coloured from `PANEL_TEXT`, not `text-foreground`: the panel
+                  ground is a fixed dark (#141210) regardless of theme, so a
+                  theme-dependent foreground goes invisible against it — which is
+                  exactly what happened, the labels rendered dark-on-dark.
+                */}
+                <button
+                  type="button"
+                  onClick={() => setState(flip)}
+                  className="min-h-11 flex-1 rounded-xs border border-border text-sm"
+                  style={{ color: PANEL_TEXT.title }}
+                >
+                  Turn over
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setState(dismiss)}
+                  className="min-h-11 flex-1 rounded-xs border border-border text-sm"
+                  style={{ color: PANEL_TEXT.title }}
+                >
+                  Put back
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div
+                data-testid="record-chrome-facts"
+                className="pointer-events-auto max-w-[26vw] rounded-xs p-4 shadow-2xl backdrop-blur-sm"
+                style={{ backgroundColor: PANEL_GROUND }}
+              >
+                <FactsPanel panel={factPanel(out)} />
+              </div>
+
+              <div
+                data-testid="record-chrome-actions"
+                className="pointer-events-auto max-w-[26vw] rounded-xs p-4 shadow-2xl backdrop-blur-sm"
+                style={{ backgroundColor: PANEL_GROUND }}
+              >
+                <ActionsPanel
+                  recordId={out.id}
+                  onTurnOver={() => setState(flip)}
+                  onPutBack={() => setState(dismiss)}
+                />
+              </div>
+            </>
+          )}
         </div>
       )}
 

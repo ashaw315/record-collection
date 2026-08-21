@@ -33,26 +33,68 @@ export type PulledPose = { x: number; y: number; z: number };
 export function pulledDestination({
   wallWidth,
   wallHeight,
+  viewport,
+  widthFill,
 }: {
   wallWidth: number;
   wallHeight: number;
-
+  /**
+   * **Set when rendering on the wall, omitted for the pure-geometry tests.**
+   *
+   * The record's WIDTH only needs constraining when it is actually being shown:
+   * the on-wall camera has the CANVAS aspect (a viewport aspect insets the wall
+   * and breaks A24a, measured), so on a tall narrow canvas the record must be
+   * pushed back to fit the frame's width. The tests that assert only WHERE the
+   * record settles pass nothing and get the height-framed depth, unchanged.
+   *
+   * The dimensions themselves are not read — the width fit uses the canvas
+   * aspect the camera already has — so this is a presence flag carrying its
+   * reason, not a size input. Typed as the viewport it represents rather than a
+   * bare boolean, so a caller passes what it means.
+   */
+  viewport?: { width: number; height: number };
+  /**
+   * How much of the frame's WIDTH the record fills when a viewport is given.
+   * The stacked phone layout wants the record near full-bleed (≈0.9); the
+   * default keeps the wall's framing (the record sits back in the scene). Only
+   * consulted when `viewport` is set.
+   */
+  widthFill?: number;
 }): PulledPose {
   const cameraZ = wallCameraDistance({ wallHeight });
   const halfAngle = (WALL_FOV_DEGREES * Math.PI) / 360;
 
   /*
     Solve for the distance at which a `SPINE_HEIGHT`-tall record fills
-    `FRAME_FILL` of the frame:
+    `FRAME_FILL` of the frame's HEIGHT:
 
       frameHeight = 2 · distance · tan(halfAngle)
       SPINE_HEIGHT / frameHeight = FRAME_FILL
-
-    This is independent of the wall's height, which is the whole point: five
-    records and five hundred put the camera in different places and the record
-    arrives the same apparent size.
   */
-  const distance = SPINE_HEIGHT / (2 * FRAME_FILL * Math.tan(halfAngle));
+  const byHeight = SPINE_HEIGHT / (2 * FRAME_FILL * Math.tan(halfAngle));
+
+  /*
+    **The aspect fix.** The camera's aspect is the CANVAS's — width/height of the
+    wall — so the frame at a given depth is that ratio wide. On a tall narrow
+    canvas (a phone: ~8:1 tall) a record framed by height alone is far too wide
+    for the frame, and overflowed 4.5x. So the record must ALSO fit the viewport:
+    pushed back until `SPINE_HEIGHT` fills at most `FRAME_FILL` of the frame's
+    WIDTH, where the frame's width uses the canvas aspect the camera actually has.
+
+      frameWidth = frameHeight · canvasAspect = 2 · distance · tan · (canvasW / canvasH)
+      SPINE_HEIGHT / frameWidth = FRAME_FILL   ->   distance = SPINE_HEIGHT / (2 · FRAME_FILL · tan · canvasAspect)
+
+    The record settles at whichever distance is FURTHER — the binding constraint,
+    because further is smaller and a record that fits width and height both is at
+    the max of the two. With no viewport, height alone decides, as before.
+  */
+  const canvasAspect = wallWidth / wallHeight;
+  const byWidth =
+    viewport === undefined
+      ? 0
+      : SPINE_HEIGHT / (2 * (widthFill ?? FRAME_FILL) * Math.tan(halfAngle) * canvasAspect);
+
+  const distance = Math.max(byHeight, byWidth);
 
   return {
     // Centred across the wall.

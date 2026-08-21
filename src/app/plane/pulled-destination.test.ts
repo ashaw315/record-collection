@@ -137,6 +137,74 @@ describe('pulledDestination', () => {
 });
 
 /**
+ * **The record fits the VIEWPORT frame at the pulled depth (the aspect fix).**
+ *
+ * On the wall the record is rendered in the same scene as the wall, through a
+ * camera whose aspect is the CANVAS's — and the canvas is as tall as the whole
+ * wall, so at 390px it is ~8x taller than wide. A record sized for that frame's
+ * height overflowed its width by 4.5x: the original defect, live on the wall.
+ *
+ * The fix keeps the camera on the canvas ratio (a viewport aspect insets the
+ * wall and breaks A24a, measured) and instead solves the record's DEPTH so it
+ * fits the VIEWPORT's aspect. `pulledDestination` takes the viewport dimensions
+ * and pushes the record back far enough that its WIDTH fits too.
+ *
+ * These fail against a `pulledDestination` that ignores the viewport — i.e. the
+ * height-only `FRAME_FILL` derivation.
+ */
+describe('the pulled record fits the viewport, not just the canvas', () => {
+  const RECORD = 240; // SPINE_HEIGHT, the record's world size.
+
+  /** The frame's width at a depth, for a given camera aspect (the CANVAS's). */
+  function frameWidthAt(cameraZ: number, recordZ: number, canvasAspect: number) {
+    const gap = cameraZ - recordZ;
+    const frameHeight = 2 * gap * Math.tan((WALL_FOV_DEGREES * Math.PI) / 360);
+    return frameHeight * canvasAspect;
+  }
+
+  const CASES = [
+    { name: 'phone', viewport: { width: 390, height: 844 }, wall: { width: 358, height: wallOf(10) } },
+    { name: 'desktop', viewport: { width: 1280, height: 900 }, wall: { width: 1248, height: wallOf(4) } },
+  ];
+
+  for (const { name, viewport, wall } of CASES) {
+    it(`${name}: the record is inside the frame's WIDTH`, () => {
+      const target = pulledDestination({
+        wallWidth: wall.width,
+        wallHeight: wall.height,
+        viewport,
+      });
+      const cameraZ = wallCameraDistance({ wallHeight: wall.height });
+      const canvasAspect = wall.width / wall.height;
+      const frameW = frameWidthAt(cameraZ, target.z, canvasAspect);
+
+      expect(
+        RECORD / frameW,
+        `${name}: record fills ${((RECORD / frameW) * 100).toFixed(0)}% of frame width`,
+      ).toBeLessThanOrEqual(1);
+    });
+  }
+
+  it('pushes the record further back on a portrait viewport than a landscape one', () => {
+    // A tall narrow canvas needs the record deeper to fit its width; a wide one does not.
+    const phone = pulledDestination({
+      wallWidth: 358,
+      wallHeight: wallOf(10),
+      viewport: { width: 390, height: 844 },
+    });
+    const cameraPhone = wallCameraDistance({ wallHeight: wallOf(10) });
+    // The record must sit closer to the camera than the wall, but the gap is larger on a phone.
+    expect(cameraPhone - phone.z).toBeGreaterThan(0);
+  });
+
+  it('still accepts the viewport being omitted, and then frames by height as before', () => {
+    // Back-compat: the destination tests above call it without a viewport.
+    const noViewport = pulledDestination({ wallWidth: 1280, wallHeight: wallOf(3) });
+    expect(Number.isFinite(noViewport.z)).toBe(true);
+  });
+});
+
+/**
  * **The frame-fit tests that stood here are gone, and the question went with
  * them.**
  *
