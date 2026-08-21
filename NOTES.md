@@ -11778,3 +11778,238 @@ without breaking changes.
 Not acted on: it is unrelated to this unit and CLAUDE.md §4 says record rather
 than fix mid-stream. **Trigger: R6, deploy readiness** — that review already owns
 the question of what ships to a host somebody else runs.
+
+## The wall at 390px: 462px of non-shrinkable chrome, and no touch handlers at all
+
+Surveyed 2026-08-20, step 15 unit 2, **before** any mobile screen work — recorded
+here rather than acted on, because the unit that acts on it is not this one and
+the phone-default question (§10b) comes first.
+
+SPEC.md §10b says the wall "will be judged at 390px" for the first time in step
+15. This is what the survey found, and none of it is a rendering failure: the
+wall draws. It is that **every affordance on it is either fixed-width or
+hover-driven**, and §10b deliberately put every readable fact in the panels.
+
+### The chrome row cannot fit, arithmetically
+
+`WallScene.tsx:1355` lays the pulled record's chrome as
+`fixed inset-0 flex items-center justify-between gap-6 px-6`:
+
+| part | width |
+|---|---|
+| `FactsPanel` (`Panels.tsx:29`) | `w-[210px] shrink-0` |
+| `ActionsPanel` (`Panels.tsx:140`) | `w-[180px] shrink-0` |
+| `gap-6` | 24 |
+| `px-6` | 48 |
+| **total** | **462px, non-shrinkable, in a 390px viewport** |
+
+The two panels overlap the record and each other, and the row overflows.
+
+**The `max-w-[26vw]` wrappers do not save it** (`WallScene.tsx:1390`, `:1397`).
+At 390px that computes to 101px — narrower than the `w-[210px]`/`w-[180px]`
+children it wraps, and those children are `shrink-0`, so the max-width is
+defeated rather than applied. A constraint that is silently overridden reads in
+source as though the case were handled.
+
+**Why this is data loss and not styling.** §10b moved every fact off the object
+on purpose: "the faces carry artwork and nothing else", and "the panels are DOM,
+not canvas… the panel is the only channel a screen reader or a test can read."
+So artist, title, year, label, catalogue number, pressing details, condition and
+purchase information are ALL in the overlapping panels. Obscuring them on a phone
+removes the only channel that carries them.
+
+### There are zero touch handlers in the scene
+
+Verified by grep across `src/` for `pointerdown`, `pointerup`,
+`setPointerCapture`, `touchstart`, `touchmove`, `TouchEvent`, `pointerType`,
+`isPrimary`, `hasTouch`: **zero hits.** The only match for "dragged" is prose in
+`WallScene.tsx:1128`.
+
+§10b states: *"On desktop the record follows the pointer as the reference does…
+On touch it is dragged."* **The touch clause is specified and unbuilt.**
+
+Every consequence follows from that one absence, which is why they are one
+finding rather than four:
+
+| affordance | mechanism | on touch |
+|---|---|---|
+| tilt | `window` `pointermove` while settled (`:1196`) | never fires — no move stream without a finger down |
+| spine eases proud | `pointermove` raycast (`:955`) | never fires |
+| hover card — artist, title, year, label (`:1416`) | requires hover | **unreachable from the wall** |
+| keyboard record list (`:1435`) | `sr-only focus-within:not-sr-only` | reachable by Tab only; no visible control reveals it |
+
+So on a phone the wall is a picture you can tap. The hover card is the only place
+the wall names what you are aimed at, and it cannot be summoned; the accessible
+list is the only text channel for the collection, and nothing on screen offers
+it.
+
+### Zero width breakpoints exist in the shelf or the scene
+
+No `sm:`/`md:`/`lg:` anywhere in `src/app/plane/` or `src/app/shelf/`. The three
+media queries in `globals.css` (`:341`, `:356`, `:453`) are all
+`prefers-reduced-motion`. **There is no width-based media query in the
+codebase**, and the one `matchMedia` call (`BoxCanvas.tsx:111`) is reduced-motion
+too. The wall has never been told a viewport can be narrow.
+
+Related fixed assumptions, same survey: `SPINE_HEIGHT = 240` with
+`MIN_SHELF_ROWS = 4` (~1000px of room regardless of viewport, which §10b says is
+correct — "you scroll"); `WALL_EDGE_MARGIN = 40` leaving ~278px of usable spine
+width at 390px; and `WallScene.tsx:1423`'s `window.innerWidth - 280` hover-card
+flip, which at 390px fires for any x > 110 and so flips the card leftward across
+nearly the whole width.
+
+### WHY NONE OF THIS SURFACED: the wall is not in the mobile matrix
+
+`playwright.config.ts`'s `mobile` project runs five specs. **`wall-scene.spec.ts`
+and `shelf.spec.ts` are not among them.** `wall-scene.spec.ts` narrows to 900px
+(`:389`) and 600px (`:470`) and never below.
+
+So the wall has never been executed at 390px by anything. This is the
+uniform-matrix argument the config's own comment makes against itself — "a spec
+only fails on mobile if a mobile-specific defect exists, and none does today" was
+written before the wall existed, and the wall arrived carrying five.
+
+**Adding both specs to the mobile matrix belongs to whichever unit touches the
+wall first.** Recorded here so that unit inherits it rather than rediscovering
+it. Note the config comment's own standing rule: "Re-adding a spec here needs no
+justification; removing one needs evidence."
+
+### Order decided: the phone-default question goes first
+
+§10b leaves it open by name — *"Whether a phone should default to the shelf at
+all is genuinely open and belongs to step 15's mobile pass."* It is taken first
+because **it changes what the other two findings are worth**: if a phone does not
+default to the shelf, the overlap and the missing drag are defects on a
+deliberately-reached view; if it does, they are the first screen of the app being
+unusable on the device §10 calls primary.
+
+That unit produces **evidence for a judgement, not a build** — the wall on a
+phone-sized viewport in a state that can be looked at, **with the overlap
+visible rather than fixed first.** A tidied version would flatter the answer to
+the question being asked. §10b already fixes the constraint on whatever is
+decided: if it is gated by width, **the gate goes on the default and not on
+availability** — a view a URL can reach must stay reachable.
+
+## Step 15 unit 2 — the nav wraps, and the measurement is now a test
+
+The defect NOTES carried since step 12: `AppHeader`'s nav was one
+`overflow-x-auto` row, and at 390px **two of its five links were entirely
+outside the viewport** behind a scroll with no affordance.
+
+**Re-measured on this build before touching anything**, because a baseline is a
+property of a build and the step-12 figure described a six-link nav:
+
+    scrollWidth 337, clientWidth 237  -> 100px hidden
+    Stats right edge 408.66, Manage 478, against a 390px viewport
+
+Identical to the recorded figures. The defect had survived three steps.
+
+### Why it survived: it was prose, and prose does not fail
+
+This is the finding, not the fix. The measurement existed, was correct, was
+written down twice, and was read at least three times — step 12 recorded it,
+step 14 unit 3 re-measured it and declined to add a `/suggestions` link because
+of it, and both entries ended with a warning to a future reader. **Nothing
+executed the nav at 390px**, so nothing ever went red.
+
+Same shape as the wall findings recorded above, and the same cause: a
+requirement that lives in a comment is satisfied by whoever remembers to read
+it. `e2e/nav-mobile.spec.ts` now fails against `AppHeader.tsx` instead.
+
+### The test asserts geometry, and the reason is a defect this suite has shipped
+
+The obvious assertion — "every link is inside the viewport" — **passes on a nav
+that wraps into a heap.** Links stacked on each other, or squeezed to a few
+pixels tall, are all inside the viewport. So each link is checked three ways,
+and each fails against a different defect:
+
+| # | assertion | catches |
+|---|---|---|
+| 1 | visible, and inside 390px | the off-screen tail — the original defect |
+| 2 | height >= 24px | a wrap whose rows collapse |
+| 3 | no two links overlap | a wrap that stacks links — **invisible to (1)** |
+
+(3) is the one a naive test misses, and it is the one that catches a "fix"
+satisfying (1) by folding the row onto itself.
+
+**A class-name assertion would have been worse than useless.** `flex-wrap` in
+the source does not prove a wrap happened: a parent `flex-nowrap`, a `w-max`, or
+an ancestor `overflow-x-auto` would each leave the class present and inert.
+That is unit 20's breakout defect exactly — four correct declarations cancelled
+by a fifth — and the DOM-presence-is-not-visibility class this suite has now
+been caught by three times. The rendered box is the only thing that knows.
+
+Plus a vacuity guard (`toHaveCount(5)`): every geometry assertion below it
+passes trivially on a nav rendering zero links.
+
+### The fix, and why `flex-wrap` alone was not enough
+
+`-mx-1 flex gap-1 overflow-x-auto` -> `-mx-1 flex min-w-0 flex-wrap gap-1`.
+
+**`min-w-0` is load-bearing.** The nav is a flex ITEM of the header bar, and a
+flex item floors at its intrinsic content width unless told otherwise — so
+`flex-wrap` alone leaves the row at 337px and the wrap never fires. Worth
+recording because the symptom of omitting it is *the fix appearing not to work*,
+with the right class present in the source.
+
+### AFTER, measured the same way as BEFORE
+
+| width | scrollWidth / clientWidth | rows | nav height | page overflow |
+|---|---|---|---|---|
+| 390 | **237 / 237** (was 337 / 237) | 2 | 60px | none |
+| 360 | 207 / 207 | 2 | 60px | none |
+| 320 | 167 / 167 | 3 | 92px | none |
+| 768 | 337 / 337 | 1 | 28px | none |
+| 1280 | 337 / 337 | 1 | 28px | none |
+
+**Nothing is hidden at any width, and desktop is byte-identical** — one row,
+same geometry at 768 and 1280. The wrap fires only where the row cannot fit, so
+this is not a breakpoint that trades desktop for mobile. It costs 32px of
+vertical space at 390px and nothing above it.
+
+**It degrades correctly below the tested width**: 320px takes a third row rather
+than clipping. A menu would not have had that property, and neither would a
+scroll affordance.
+
+**Checked because it was a real risk:** the header bar is `items-baseline`, so a
+second nav row could have dragged the wordmark's baseline. Wordmark holds
+`y=16` at all five widths.
+
+### Why wrapping, and not a menu or a scroll affordance
+
+Recorded because the alternatives were live options in NOTES since step 12.
+
+- **A menu is a taxonomy decision dressed as a layout fix.** It must guess which
+  screens are wanted in a shop, and it hides the answer behind a tap. Wrapping
+  makes no claim about which links matter.
+- **A fade or chevron announces the tail without making it reachable.**
+  Horizontal scrolling is awkward one-handed, which is the §10 case exactly.
+
+### `/suggestions` still has no nav slot — and the fix is not an argument for one
+
+The step-14 decision stands on reasoning this change does not touch: it is not
+an in-store screen, and arriving from `/want-list` frames the suggestion as
+being ABOUT the want list in a way a top-level entry does not. **Removing the
+width objection is not a positive case.**
+
+There is also a measurement reason to keep them apart: the wrap is measured
+against five links, and adding a sixth in the same unit would change the thing
+and its subject at once.
+
+### The dead `graph.spec.ts` pattern, removed
+
+`playwright.config.ts`'s mobile `testMatch` still carried `/graph\.spec\.ts$/`.
+**The file has not existed since §8 retired the screen** — the spec was deleted
+and the pattern stayed, matching nothing.
+
+Harmless to the runner, not harmless to a reader: that list is the config's own
+spec-mandated record of what mobile covers, annotated SPEC-MANDATED vs
+EVIDENCE-BASED, and a dead entry in it **overstates the coverage**. Same family
+as the exempted-by-name rule this project already applies to counts — an
+exemption or an entry that nobody can trace back to a file is invisible.
+
+`nav-mobile.spec.ts` added in its place, under EVIDENCE-BASED: the whole spec is
+about 390px and would not execute at all without an entry there.
+
+**Still not in the mobile matrix, and it belongs to the next wall unit:**
+`wall-scene.spec.ts` and `shelf.spec.ts`. See the wall entry above.

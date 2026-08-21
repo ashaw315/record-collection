@@ -116,9 +116,17 @@ export default defineConfig({
        *   they assert viewport-dependent behaviour INTERNALLY, so running them
        *   only on desktop would leave those assertions permanently unexercised
        *   in the one place they are about.
-       *     graph      — §8.1's fallback list is a `sm:hidden` swap, and the
-       *                  canvas/list complement is asserted at both widths
+       *     nav-mobile — the whole spec is about 390px; it is meaningless on
+       *                  chromium and its assertions would not run at all
+       *                  without this entry
        *     manage     — "the resource rail is reachable on a narrow viewport"
+       *
+       * `graph.spec.ts` was listed here until step 15 unit 2 and the FILE NO
+       * LONGER EXISTS — §8 retired the screen and the spec went with it, while
+       * this pattern stayed behind matching nothing. Harmless to the runner and
+       * not harmless to a reader: this list is the spec-mandated record of what
+       * mobile covers, and a dead entry in it overstates that coverage. Removed
+       * rather than left as archaeology.
        *
        * **What cannot be proven, and is therefore a decision rather than a
        * cleanup.** The auth stanzas removed in this same pass were provably
@@ -143,7 +151,7 @@ export default defineConfig({
         /collection-filters\.spec\.ts$/,
         /collection-widths\.spec\.ts$/,
         /lookup-flows\.spec\.ts$/,
-        /graph\.spec\.ts$/,
+        /nav-mobile\.spec\.ts$/,
         /manage\.spec\.ts$/,
       ],
     },

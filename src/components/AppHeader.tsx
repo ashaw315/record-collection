@@ -48,7 +48,32 @@ export function AppHeader() {
           Record Collection
         </Link>
 
-        <nav aria-label="Main" className="-mx-1 flex gap-1 overflow-x-auto">
+        {/*
+          **Wraps rather than scrolls, and that is a §10 requirement rather than
+          a preference.** Measured at 390px while it was one `overflow-x-auto`
+          row: `scrollWidth` 337 in a `clientWidth` of 237, with Stats ending at
+          409 and Manage at 478 — two of five links entirely outside the
+          viewport, behind a horizontal scroll with no affordance. §10 makes
+          mobile an equal priority and calls the case "standing in a record
+          store", so half the app was undiscoverable exactly where it matters.
+
+          Wrapping was chosen over a menu because a menu is a taxonomy decision
+          dressed as a layout fix: it has to guess which screens are wanted in a
+          shop, and it hides the answer behind an extra tap. A fade or chevron
+          announces the tail without making it any easier to reach, and
+          horizontal scrolling is awkward one-handed.
+
+          `flex-wrap` alone is not enough — the row is a flex ITEM of the header
+          bar, so it must be allowed to give up its intrinsic width before it
+          will wrap. `min-w-0` is what permits that; without it a flex item
+          floors at its content width and the wrap never fires.
+
+          Asserted by `e2e/nav-mobile.spec.ts` at 390px, on rendered geometry:
+          every link visible, inside the viewport, tappable, and overlapping no
+          other. A class-name check would pass on a `flex-wrap` cancelled by an
+          ancestor, which is unit 20's breakout-class defect exactly.
+        */}
+        <nav aria-label="Main" className="-mx-1 flex min-w-0 flex-wrap gap-1">
           {LINKS.map((link) => {
             // `/manage` must not light up on `/manage/anything`, and `/` would
             // prefix-match everything, so home is compared exactly.
