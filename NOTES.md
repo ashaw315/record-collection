@@ -12013,3 +12013,498 @@ about 390px and would not execute at all without an entry there.
 
 **Still not in the mobile matrix, and it belongs to the next wall unit:**
 `wall-scene.spec.ts` and `shelf.spec.ts`. See the wall entry above.
+
+## Step 15 unit 3 — the instrument for the phone-default question
+
+§10b leaves the question open by name: *"Whether a phone should default to the
+shelf at all is genuinely open and belongs to step 15's mobile pass, which is
+the first time the wall will be judged at 390px."*
+
+**This unit built no fix.** It produced a way to look at the wall and the table
+side by side at 390px, on a real phone, **with the panel overlap left visible**
+— a tidied version would flatter the answer to the question being asked.
+
+### Why a phone and not device emulation
+
+Chrome DevTools' device mode dispatches touch events, but it also delivers a
+`pointermove` stream from the mouse. The finding under judgement is that **every
+affordance on the wall is hover-driven** (tilt, proud-on-hover, the hover card
+that is the wall's only channel for artist/title/year/label). Emulation supplies
+exactly the input a phone does not, so it would report the wall as working.
+
+The instrument has to be the thing it is measuring. Dev server bound to
+`0.0.0.0`, reached over the LAN.
+
+### The compare page is two iframes onto the REAL routes
+
+`public/zz-compare.html`, 390x844 frames loading `/` and `/?view=table`.
+Deliberately not a mock: a compare page that re-implemented either view would be
+showing a drawing of the app rather than the app. Below 861px it shows one frame
+at a time with a switcher, because two 390px frames do not fit on a 390px phone.
+
+**It is behind the middleware like everything else** (§3), and that is correct
+rather than an obstacle — the session cookie applies to it once logged in.
+`secure` is false in development (`session.ts:82`), so the cookie sets over
+plain http on the LAN.
+
+### The verification caught an instrument defect, which is the point of verifying
+
+First check failed: **no canvas in the wall frame.** The cause was not the
+iframe — the canvas was missing at 390px directly too — it was that the E2E
+test database is EMPTY, because unit 1's `afterEach` cleanup now deletes what
+each spec creates. The page reported `0 records` and drew no wall.
+
+So the instrument was fine and the environment was wrong. Re-verified with 60
+seeded records: **canvas 356x1488 inside the 390px frame, table 50 rows.**
+
+Recorded because the failure mode was indistinguishable from a broken viewing
+aid, and shipping it unverified would have had the developer judging an empty
+wall and concluding the wall was broken. **An unverified instrument is worse
+than no instrument** — the same lesson as the hook that never fired and the
+mutation that did not fully apply.
+
+Note for whoever next writes a probe against E2E: **the test database is empty
+between runs now.** Seeding is no longer optional for anything that needs a
+populated collection to be visible.
+
+### What the developer is judging, and the constraint on the answer
+
+Not "is the wall bad on a phone" but **"which of these two do I want when I open
+the app standing up"** — §10's record-shop case.
+
+§10b already fixes the shape of whatever is decided: **if it is gated by width,
+the gate goes on the default and not on availability.** A view a URL can reach
+must stay reachable, so a `?view=shelf` link shared from a desktop still opens
+the wall on a phone.
+
+`public/zz-compare.html` is scaffolding and comes out when the question is
+answered.
+
+## DECIDED: the wall stays the phone default. No width gate.
+
+2026-08-20, step 15 unit 3, by the developer after looking at both views at
+390px. §10b's open question — *"Whether a phone should default to the shelf at
+all"* — is **closed: it does.**
+
+**§10b's conditional clause is now moot and should not be read as pending.** It
+said "if it is gated by width then, the gate goes on the default and not on
+availability". Nothing is gated, so no gate exists to place. `?view=table` and
+`?view=grid` remain reachable exactly as before, which was never in question.
+
+What this settles for the units that follow: **the panel overlap and the missing
+touch drag are defects on the FIRST SCREEN of the app on the device §10 calls
+primary**, not on a deliberately-reached view. That is the reading that makes
+them worth fixing rather than tolerating, and it was the whole reason this
+question was taken before them.
+
+## DECIDED: on a phone the panels STACK, they do not flank
+
+The fix for the 462px-in-390px overlap, decided from the reference rather than
+derived from the arithmetic.
+
+**Criterion's own mobile answer**: the case at full width, the facts card
+BELOW it, and the arrows overlaid on the artwork. **The vertical axis carries
+what the horizontal cannot.** A phone has 844px of height and 390px of width, so
+the panels move to the axis that has room.
+
+This is not the same as "shrink the panels". Two 390px-wide panels stacked under
+a full-width record is a different layout from two narrow columns flanking a
+smaller one, and the second is what fitting `w-[210px]` and `w-[180px]` into
+390px would produce — a record squeezed to nothing between two columns of text.
+**The record keeps the width; the facts go underneath.**
+
+Note the arrows are 13b (§10b, "arrows move through the collection without
+putting the record back"), triggered on this step and not yet built. The
+reference overlays them ON the artwork, which is a placement decision 13b
+inherits rather than one it has to invent.
+
+### FOR WHENEVER THE SHELF CONTROLS GET THEIR MOBILE TREATMENT
+
+Observed on thecriterioncloset.com at 390px, recorded now because the
+observation is cheap and re-deriving it is not:
+
+**Their controls collapse to icon circles in a floating row, while the view
+toggle stays as TEXT.** Two different treatments in one control cluster, and the
+split is not arbitrary — an icon is fine for an action whose meaning is
+recoverable from context, and a view toggle names mutually exclusive STATES,
+which an icon cannot distinguish without the user already knowing.
+
+Ours today: `ShelfControls.tsx`'s disclosure button is text with a filter count,
+and the `ViewToggle` is `hidden ... sm:flex` (`CollectionFilters.tsx:118`) —
+absent on a phone entirely, which §10b permits ("only the view *control* is
+hidden on narrow screens"). Now that the wall is confirmed as the phone default,
+whether that remains right is a live question rather than a settled one: the
+control that switches away from the default is the one a phone user might most
+want.
+
+Not a decision. Recorded for the unit that touches those controls.
+
+## `z.string().min(1)` on APP_PASSWORD_HASH — presence where shape was needed
+
+Found 2026-08-20, step 15 unit 3, by being unable to log in on a phone.
+**Recorded rather than fixed** (CLAUDE.md §4): the env fix that unblocked the
+session was a value in an untracked file; this is a defect in `schema.ts` and
+gets its own unit.
+
+### What happened
+
+`.env.local` held `APP_PASSWORD_HASH=\$2b\$12\$...` — a bcrypt hash with its
+three `$` signs **backslash-escaped**. That is shell syntax, correct inside
+double quotes in a terminal and wrong in a `.env` file, which is read literally.
+63 characters where bcrypt is exactly 60.
+
+**It presented as a wrong password.** `bcrypt.compare` returns `false` for a
+malformed hash rather than throwing, so every login attempt — phone and desktop
+alike — failed the way a typo fails. Measured both ways before concluding:
+compare against the escaped form `false`; unescaped, the value is exactly 60
+chars, matches `/^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/`, and `getRounds` reads
+12. The underlying hash was intact the whole time. **No password could ever have
+matched it.**
+
+### The defect
+
+`src/lib/env/schema.ts:47`:
+
+    APP_PASSWORD_HASH: z.string().min(1),
+
+Any non-empty string passes, including a 63-character shell-escaped one.
+
+**The discipline exists in this very file and this line missed it.** The two
+lines immediately below carry a floor AND its reasoning:
+
+    // 32 chars is the floor for a signing key that is not trivially brute-forced.
+    SESSION_SECRET: z.string().min(32, 'must be at least 32 characters'),
+    CRON_SECRET: z.string().min(32, 'must be at least 32 characters'),
+
+So this was **missed rather than considered** — which matters, because it means
+the fix is applying an existing standard rather than inventing one. The variable
+whose format is the most rigidly fixed and the most cheaply checkable
+(`$2[aby]$NN$` + 53 chars from a known alphabet) is the one validated least.
+
+### THE GENERALISATION — second instance, and R5 found the first
+
+**An is-configured check that tests PRESENCE rather than SHAPE cannot
+distinguish a missing credential from a broken one, and both then fail at the
+point of use, where the symptom names something else.**
+
+| | R5 finding F1 | this |
+|---|---|---|
+| predicate | `isAnthropicConfigured` tested non-empty | `z.string().min(1)` |
+| what sailed through | a placeholder API key | a 63-char shell-escaped "hash" |
+| symptom at point of use | a 500 | "wrong password" |
+| what the symptom named | the route | the user's typing |
+
+Two integrations, one weak predicate, both failing silently and both blaming
+something other than the configuration. That is what makes it a class rather
+than two bugs: **the cost is not the invalid value, it is that the error surfaces
+somewhere that misdirects.** A user who cannot log in retypes their password; a
+developer seeing a 500 reads the route handler. Neither looks at an env file
+that "is set".
+
+Note the direction: this is NOT an argument for validating every string. It is
+an argument for validating the ones with a **known, fixed, machine-checkable
+format** — which is a small set, and bcrypt hashes and API-key prefixes are both
+in it.
+
+### The fix, when it is built
+
+    APP_PASSWORD_HASH: z.string().regex(
+      /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/,
+      'must be a bcrypt hash (60 chars, $2b$NN$...); check for shell-escaped $ signs',
+    ),
+
+The message names the actual failure seen here, because "invalid format" would
+have sent the next person to regenerate a hash that was already correct.
+
+TDD path is clean and needs no carve-out: the escaped 63-char string is the
+failing case, a real hash is the passing one, and both are pure-function tests
+against `parseEnv`. **Check `edge.ts` too** — `schema.ts:50` says the Edge subset
+must apply the same floor and a test asserts it, so the same question applies to
+whatever that subset contains.
+
+### TRIGGER: R6, deploy readiness
+
+R6 already owns every secret's path from `.env.local` to Vercel, which is
+exactly the journey that re-introduces this: **a hash pasted into a Vercel
+environment variable through a shell, a CI script, or a dashboard field that
+escapes differently.** On production the blast radius is total — a malformed
+hash means nobody can log in at all, and the symptom is still "wrong password",
+now with no local database to check it against.
+
+The npm-audit observation above is already triggered on R6 for the same reason
+(what ships to a host somebody else runs). These two travel together.
+
+## A 403 on a JS chunk became a credential disclosure
+
+Found 2026-08-20, step 15 unit 3, trying to reach the dev server from a phone.
+**This is the finding of the unit, and it is not about Next's config.**
+
+### The chain
+
+1. Dev server reached at `http://192.168.86.95:3000` instead of localhost.
+2. Next 16 blocks cross-origin requests to dev resources unless the origin is in
+   `allowedDevOrigins`. The LAN address is not, so `/_next/static/chunks/*`,
+   `/__nextjs_font/*` and `/_next/hmr` all returned **403**.
+3. **The login page itself still rendered 200.** Only its JavaScript was missing.
+4. A React form with no handler attached falls back to a **native GET submit**.
+5. So the password went into the query string:
+   `GET /login?password=<the password> 200`
+6. Which put it in the **browser history** and, six times, in the **dev request
+   log** — Next's own logger prints the request line, query string included.
+
+**A missing script became a credential in a URL, and the page looked normal the
+whole time.** No error, no broken layout; the form submitted and came back to
+the login screen, which is indistinguishable from a wrong password. That is the
+same misdirection shape as the entry above it — the symptom named the user's
+typing, and the cause was three 403s in a network tab nobody had open.
+
+### What it was NOT, measured rather than assumed
+
+The obvious suspect was the middleware matcher (`/((?!_next/static/|...))`),
+since it excludes some static paths and not others. **Wrong, and curl alone
+would have "cleared" it for the wrong reason** — every one of these returned
+200 from curl on both hosts, because curl sends no `Origin`.
+
+The isolation that found it, varying one header at a time:
+
+| request | result |
+|---|---|
+| LAN chunk, no extra headers | **200** |
+| LAN chunk, `Origin: http://192.168.86.95:3000` | **403** |
+| LAN chunk, `Origin: http://localhost:3000` | **200** |
+| LAN chunk, `Referer` only | **200** |
+| **localhost** chunk, `Origin: http://192.168.86.95:3000` | **403** |
+
+The last row is the one that settles it: the same block fires **on localhost**
+when the Origin is the LAN address. So it is not the network, not the host, not
+the matcher — it is an **origin allowlist**, and the developer's framing
+("localhost vs LAN") would have pointed at the wrong axis. Confirmed afterwards
+against the server's own log, which names the blocked chunks.
+
+**Reproducing a browser failure with curl needs the browser's headers.** A bare
+curl said everything was fine while the browser was being refused.
+
+### The fix
+
+`next.config.ts`: `allowedDevOrigins: ['192.168.86.95']`.
+
+Config, so CLAUDE.md §2's carve-out applies — the verification is a **command
+that must succeed**, not a unit test. Proving command and result: the chunk that
+403'd returns **200** with the LAN `Origin`, the font likewise, and the new dev
+log carries **zero** blocked-origin warnings.
+
+**Read only by `next dev`** — no effect on `next build` or `next start`, which
+is why it is safe to commit rather than keep as a local edit. `npm run build`
+accepts it without warning, which is the check that it is a recognised dev-only
+key rather than an ignored one.
+
+Scoped to one host, not a wildcard: any origin that can reach the dev server can
+otherwise read its source, and a wildcard would hand that to anything else on
+the same Wi-Fi.
+
+**If the LAN address changes, this breaks and the symptom is the
+credential-leaking one above.** DHCP can reassign it. The tell is 403s on
+`/_next/static/*`; the fix is to update the list.
+
+### The password
+
+Six copies existed, **all in one captured dev log** in the session scratchpad.
+Redacted in place, verified zero remaining, and a re-scan of the repo, git
+history (`git log -S`), `test-results/`, `playwright-report/` and Next's
+persistent `.next/dev/logs/` found **no other copy**.
+
+**The app did not leak it.** `src/app/api/auth/login/route.ts` has no logger
+call and the login page never reads `searchParams`; the framework logged the URL
+the broken form produced. Worth stating precisely, because "the login route logs
+passwords" would be a much larger defect than the one that exists.
+
+Still in the phone's browser history, which is not reachable from here.
+**Rotation is the right call regardless** — it transited a URL, and a URL is the
+one place a secret is copied by default.
+
+### A question this raises for R6, recorded not acted on
+
+Next's dev request logger prints full query strings. In development that is
+merely noisy; **the general rule it breaks is that credentials must never reach
+a log**, and the app's own logger module is not what did it here. R6 owns the
+production logging path and should confirm the deployed logger does not print
+query strings — Vercel's request logs are a different surface from this one, and
+the answer may already be fine. Not assumed either way.
+
+## CORRECTION: the escaped `$` in .env.local was RIGHT, and unescaping it broke login
+
+Written 2026-08-20, step 15 unit 3, correcting the entry above
+("`z.string().min(1)` on APP_PASSWORD_HASH"). **The diagnosis in that entry was
+half wrong and the remedy it implied was actively harmful.**
+
+### What that entry claimed, and what is actually true
+
+It said the backslashes were "shell syntax, correct inside double quotes in a
+terminal and wrong in a `.env` file, which is read literally."
+
+**`.env` files are NOT read literally. Dotenv performs variable expansion.** A
+bare `$2b$12$<hash>` has `$2b` and `$12` substituted as empty variables, and
+the route receives a **52-character** string beginning `<fragment>` — the leading
+`$2b$12$` plus one char eaten. So:
+
+| stored form | what the app receives | login |
+|---|---|---|
+| `\$2b\$12\$...` (escaped, 63 ch) | the correct 60-char hash | **works** |
+| `$2b$12$...` (bare, 60 ch) | a 52-char fragment | **impossible** |
+
+The escaping was a working convention, not a mistake. **`.env.test` uses it too**
+and its logins pass — 250 E2E tests green — which was evidence available before
+the change and not consulted.
+
+### How the wrong conclusion was reached, and what would have prevented it
+
+The bare hash was checked with `bcrypt.compare` **against the file's bytes**,
+read directly with `readFileSync`. That returns `true`, because the file is
+correct. **The file was never the thing under test — the loader was.** Every
+check confirmed a fact nobody doubted while the failing path went unexercised.
+
+What actually found it: logging `env.APP_PASSWORD_HASH` from inside the login
+route — the value at the point of use. Length 52, prefix `<fragment>`, last four
+matching the file's. Three theories died first (middleware matcher, `getEnv`
+caching, a stale process), each plausible and each testable, none tested at the
+point where the value is consumed.
+
+**The general rule, and it is the same one as the wall entry above:** verify the
+value where it is USED, not where it is stored. A config bug lives in the
+journey, and reading the source of that journey confirms the departure rather
+than the arrival.
+
+### What this does to the `min(1)` finding — it strengthens it
+
+The finding stands and its case is now better. A shape check
+(`/^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/`) would have caught **BOTH** failures:
+
+- the escaped-63-char value, had it ever reached the app unexpanded;
+- the 52-char expanded fragment, which is what the app actually received.
+
+Both are "non-empty strings that are not bcrypt hashes", and `min(1)` waves
+through each. **The validator's job is to reject what arrives, whatever mangled
+it** — and note the correct fix validates the POST-expansion value, which is the
+only one the app ever sees.
+
+Trigger unchanged: **R6**, and it is now more clearly R6's problem, because the
+Vercel dashboard is another loader with its own escaping rules and the same
+symptom ("wrong password") on the far side.
+
+### Also fixed in passing, and NOT caused by any of this
+
+`/` returned 500: `column records.snippet does not exist`. Migration
+`0015_records_snippet.sql` had never been applied to the Neon dev database —
+the drift NOTES already records under "the tooling has no path". Applied by the
+developer; verified afterwards rather than trusted, because drizzle prints
+"migrations applied successfully" while applying nothing when a snapshot is
+missing: **both columns present, both nullable, 125 records intact.**
+
+### The password was rotated
+
+The old one had transited a URL (see the 403 entry). New hash generated at cost
+12, written escaped, and verified end to end against the running server —
+**wrong password 401, correct password 200, session opens `/`** — rather than
+asserted from the file. That verification is what caught the expansion bug; the
+file-level check had already passed.
+
+## DIAGNOSED, NOT FIXED: the pulled record fills 457% of the frame's width at 390px
+
+Found 2026-08-20 on a REAL PHONE at 390px, step 15 unit 3. **Fix is unit 4.**
+Nobody predicted it, and none of the three guesses made before measuring — the
+plain-sleeve fallback at viewport scale, the record scaled to fill, the camera
+inside the mesh — was right.
+
+### The symptom
+
+Tap a spine and the record does not render. Both panels appear correctly at
+opposite edges with a gap between them; the space between and around them is a
+flat pink field filling the whole viewport, and the wall is gone.
+
+**Explicitly NOT the 462px chrome overlap.** The panels were not overlapping.
+Same unexercised-at-390px cause, different defect.
+
+The pink is not a fallback colour — there is no pink constant in the source. It
+is the INTERIOR of a plain sleeve in a record's spine colour, magnified until
+one flat region covers the frame.
+
+### The root cause, measured on the real layout
+
+`pulled-destination.ts` solves for the record filling `FRAME_FILL = 0.55` of the
+frame's **HEIGHT**. That part is correct and viewport-independent by design: 436
+units tall at every width, 55% at every width.
+
+**Nothing constrains the WIDTH.** The camera is built with the aspect of the
+WALL (`WallScene.tsx:293`, `width / height`), and the canvas is as tall as the
+entire wall (`:247`, `height = layout.height`). So the aspect is not the
+viewport's.
+
+| | 390px | 1280px |
+|---|---|---|
+| canvas | 358 x 2976 | 1248 x 992 |
+| camera aspect | **0.120** | 1.258 |
+| cameraZ / recordZ / gap | 10588 / 9035 / 1552 | 3529 / 1977 / 1552 |
+| frame at the record | **52.5 x 436** | 549 x 436 |
+| record (240x240) fills | **457% width**, 55% height | 44% width, 55% height |
+
+At 390px the wall is roughly **8x taller than wide**, so the frame at the
+record's distance is 52.5 units across and the record is 240. The reader is
+looking at the middle of a 4.5x-magnified sleeve.
+
+**On a desktop the wall is wider than tall and the aspect hides it entirely.**
+
+### WHAT NOBODY VARIED, and this is the transferable part
+
+Unit A's destination test asserted **the same apparent size at 5 records and at
+125** — the right axis for the defect it was chasing (a rise with no
+destination, where the pose depended on which row a record came from), and the
+wrong axis for this one.
+
+**Nothing has ever varied VIEWPORT WIDTH.** Every test, every screenshot, every
+judgement of the pulled record happened where the wall is wider than tall, which
+is the exact condition under which this arithmetic is well-behaved. The bug does
+not exist at any width the project has ever looked at.
+
+Same family as the accumulation flake (nobody asked WHERE in the run failures
+sat) and the nav (measured, written down, never executed): **a quantity that was
+only ever tested along the axis it was designed to be correct on.**
+
+### FOR UNIT 4 — `FRAME_FILL` IS ANSWERED BY LOOKING, NOT BY ARITHMETIC
+
+Three candidates, and they are to be **rendered on the phone and judged
+together, not separately**:
+
+1. 55% of HEIGHT — as now.
+2. 55% of the SMALLER dimension.
+3. A fill computed from the VIEWPORT rather than from the wall.
+
+**They interact with the panels-stacking decision** (recorded above): a record
+sized for a tall frame leaves no room for a card beneath it. Judging the record
+size without the panel under it answers a question the app does not ask.
+
+Arithmetic can rule a candidate OUT (457% is not a judgement call) and cannot
+rule one IN — "does this read as a record in your hands" is §10b's own standard
+and it is visual.
+
+### FOR UNIT 4, FIRST: THE INSTRUMENT DISAGREES WITH THE DEVICE
+
+**Chase this BEFORE building anything, because it is the bigger problem.**
+
+At 390px in Playwright/chromium, tapping a spine produced **no facts panel**. On
+the real phone at 390px, **both panels appeared**. Same width, different
+behaviour.
+
+**The geometry is a wrong number; this is a wrong instrument.** If the emulator
+and the device disagree about behaviour at the width the unit is about, then
+every test written for that unit measures something other than what the
+developer will see — and the unit would be verified green against a lie.
+
+This is the concrete form of the argument for judging on a real phone rather
+than in device emulation (recorded above under the touch-affordance survey): the
+emulator supplies input a phone does not. It has now produced a measurable
+behavioural difference, so it is no longer a theoretical objection.
+
+Do not write unit 4's tests until this is resolved. The candidate explanations
+worth separating — emulated click vs real tap, canvas height, hit-testing
+against a 2976px-tall buffer, timing — are for that investigation, and
+**none of them should be assumed**; three guesses were already wrong today.
