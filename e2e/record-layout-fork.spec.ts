@@ -2,13 +2,13 @@ import { expect, test, type Page } from '@playwright/test';
 import { deleteRecordsByArtist } from './cleanup';
 
 /**
- * **§10b/A32: the pulled record's facts flank it or stack beneath it, by width.**
+ * **§10b/A32/A33: the pulled record's facts flank it or overlay it, by width.**
  *
  * Above the measured threshold there is room for a panel beside a readable
- * record; below it the record fills the frame and the facts become a summary
- * card stacked under it. This asserts the fork lands on the right side at each
- * width, and that BOTH shapes reach `/records/:id` — the destination §10b's
- * keyboard list also uses, so they cannot describe different facts.
+ * record; below it the record fills the frame and the facts overlay its lower
+ * portion (A33a). The panel expands in place rather than navigating (A33b), and
+ * reaches `/records/:id` by a link inside the expansion. This asserts the fork
+ * lands on the right side at each width and behaves per A33.
  *
  * Driven on `/`, the real wall, because the fork is a property of the rendered
  * scene and a className test would not know whether a panel actually overlapped
@@ -65,7 +65,15 @@ test.afterEach(async ({ page }) => {
   await deleteRecordsByArtist(page, artistId);
 });
 
-test('a phone stacks the summary beneath the record', async ({ page }) => {
+/*
+  **Updated for A33.** These tests encoded A32's contract — a stacked card
+  beneath the record whose tap navigated — which A33 changed to an overlay whose
+  chevron expands in place. The testids changed with it: `record-chrome-stacked`
+  is the overlay, `record-chrome-facts` the flanking wrapper, and the panel is
+  `record-panel` (collapsed on the phone, always-expanded on desktop). The old
+  `record-chrome-actions` is gone — the panel carries its own controls now.
+*/
+test('a phone overlays the record with a collapsed panel', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   await expect(page.getByTestId('wall-scene').locator('canvas')).toBeVisible({ timeout: 30_000 });
@@ -75,13 +83,13 @@ test('a phone stacks the summary beneath the record', async ({ page }) => {
   await expect(page.getByTestId('record-chrome-stacked')).toBeVisible();
   await expect(page.getByTestId('record-chrome-facts')).toHaveCount(0);
 
-  /* The summary is the readable channel here, and it links to the detail page. */
-  const card = page.getByTestId('summary-card');
-  await expect(card).toBeVisible();
-  await expect(card).toHaveAttribute('href', /^\/records\//);
+  /* The overlay panel is collapsed on a phone (A33), and its chevron expands. */
+  const panel = page.getByTestId('record-chrome').getByTestId('record-panel');
+  await expect(panel).toBeVisible();
+  await expect(panel).toHaveAttribute('data-expanded', 'false');
 });
 
-test('a desktop flanks the record with the full panels', async ({ page }) => {
+test('a desktop flanks the record with an always-expanded panel', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/');
   await expect(page.getByTestId('wall-scene').locator('canvas')).toBeVisible({ timeout: 30_000 });
@@ -89,16 +97,23 @@ test('a desktop flanks the record with the full panels', async ({ page }) => {
   await page.waitForTimeout(2000);
 
   await expect(page.getByTestId('record-chrome-facts')).toBeVisible();
-  await expect(page.getByTestId('record-chrome-actions')).toBeVisible();
   await expect(page.getByTestId('record-chrome-stacked')).toHaveCount(0);
+
+  /* A33d: the wide panel is the expanded shape at rest. */
+  await expect(page.getByTestId('record-chrome').getByTestId('record-panel')).toHaveAttribute(
+    'data-expanded',
+    'true',
+  );
 });
 
-test('both shapes send the reader to the record detail page', async ({ page }) => {
+test('both shapes reach the detail page by a link inside the expanded panel (A33)', async ({
+  page,
+}) => {
   /*
-    The stacked summary's tap and the flanking panel's "Full details" both reach
-    `/records/:id`. Asserted on the phone because the stacked summary is the
-    whole card; the flanking "Full details" link is covered by the actions
-    panel's own tests.
+    A33 moved the destination INTO the expanded panel. On the phone the panel is
+    collapsed, so it is expanded first; on desktop it is already expanded. Either
+    way the link points at `/records/:id`, the one destination §10b's keyboard
+    list also uses.
   */
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
@@ -106,8 +121,8 @@ test('both shapes send the reader to the record detail page', async ({ page }) =
   await pullASpine(page);
   await page.waitForTimeout(2000);
 
-  const href = await page.getByTestId('summary-card').getAttribute('href');
-  expect(href, 'the card links somewhere').not.toBeNull();
-  await page.getByTestId('summary-card').click();
-  await expect(page).toHaveURL(href ?? '/records/none', { timeout: 20_000 });
+  await page.getByTestId('record-chrome').getByTestId('panel-expand-toggle').click();
+  const link = page.getByTestId('record-chrome').getByTestId('panel-detail-link');
+  await expect(link).toBeVisible();
+  await expect(link).toHaveAttribute('href', /^\/records\//);
 });

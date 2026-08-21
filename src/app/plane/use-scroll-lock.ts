@@ -71,5 +71,12 @@ export function useScrollLock(
       const target = options?.restoreTo?.current ?? scrollY;
       window.scrollTo({ top: target, behavior: 'instant' as ScrollBehavior });
     };
+    /*
+      Only `locked` drives lock/unlock. `options.restoreTo` is a stable ref read
+      at UNLOCK time, not lock time — including it would re-run the whole
+      lock/restore cycle on every render that changes it, which is wrong: the
+      restore target should be read once, when the record returns.
+    */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locked]);
 }

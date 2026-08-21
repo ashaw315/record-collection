@@ -41,13 +41,12 @@ import { boxDepth } from './record-box';
 import { wallDim } from './wall-dim';
 import { PROUD_MS, proudOffset, shouldRedraw } from './hover-proud';
 import { NO_TILT, tiltFor } from '../shelf/tilt';
-import { ActionsPanel, FactsPanel } from './Panels';
-import { SummaryCard } from './SummaryCard';
+import { RecordPanel } from './RecordPanel';
 import { recordSummary } from './summary';
 import { recordLayout } from './record-layout';
 import { useScrollLock } from './use-scroll-lock';
 import { factPanel } from './panel';
-import { PANEL_GROUND, PANEL_TEXT } from '../shelf/panel-palette';
+import { PANEL_GROUND } from '../shelf/panel-palette';
 import {
   canTilt,
   dismiss,
@@ -334,20 +333,6 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
         as a distant speck.
       */
       widthFill: 0.9,
-      /*
-        **The stacked layout lifts the record so the card sits beneath it in a
-        column** (§10b/A32). `build` re-runs on width change, which is exactly
-        when the layout flips, so reading `window.innerWidth` here stays current.
-      */
-      layout: recordLayout(window.innerWidth),
-      /*
-        The stacked card's height, so the record lifts by half of it and sits in
-        a column above rather than clipping off the top. Measured constant: the
-        card is the summary (2 lines + link) plus the button row ≈ 200px; the
-        default in `pulledDestination` matches, so this is explicit rather than
-        load-bearing.
-      */
-      stackedCardHeight: 200,
     });
     const camera = new PerspectiveCamera(WALL_FOV_DEGREES, width / height, 1, cameraDistance * 2);
     camera.position.set(width / 2, -height / 2, cameraDistance);
@@ -1335,7 +1320,7 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
   const out =
     pulledId === null ? null : (records.find((record) => record.id === pulledId) ?? null);
 
-  if (state.phase === 'idle') preRiseScrollY.current = null;
+
 
   /*
     Freeze the page once the record has SETTLED, not while it rises. §10b unit 5:
@@ -1349,6 +1334,11 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
   useScrollLock(state.phase === 'settled' || state.phase === 'flipping', {
     restoreTo: preRiseScrollY,
   });
+
+  /* Clear the remembered scroll once the record is fully back. */
+  useEffect(() => {
+    if (state.phase === 'idle') preRiseScrollY.current = null;
+  }, [state.phase]);
 
   /**
    * **The chrome arrives as the record travels** (unit 11): 0 while it rises,
@@ -1483,57 +1473,45 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
           {viewportWidth !== null && recordLayout(viewportWidth) === 'stacked' ? (
             <div
               data-testid="record-chrome-stacked"
-              className="pointer-events-auto absolute inset-x-4 bottom-6 rounded-xs p-4 shadow-2xl backdrop-blur-sm"
-              style={{ backgroundColor: PANEL_GROUND }}
+              /*
+                **An OVERLAY on the record's lower portion, not a block beneath
+                it (A33a).** A scrim from transparent at the top to the panel
+                ground at the bottom, so the artwork reads through the top of the
+                panel as the reference does — the record stays full-bleed and
+                camera-centred behind it.
+              */
+              className="pointer-events-auto absolute inset-x-0 bottom-0 rounded-t-xs"
+              style={{
+                backgroundImage: `linear-gradient(to bottom, transparent, ${PANEL_GROUND} 38%)`,
+              }}
             >
-              <SummaryCard summary={recordSummary(factPanel(out), out.id)} />
-              <div className="mt-2 flex gap-2">
-                {/*
-                  Coloured from `PANEL_TEXT`, not `text-foreground`: the panel
-                  ground is a fixed dark (#141210) regardless of theme, so a
-                  theme-dependent foreground goes invisible against it — which is
-                  exactly what happened, the labels rendered dark-on-dark.
-                */}
-                <button
-                  type="button"
-                  onClick={() => setState(flip)}
-                  className="min-h-11 flex-1 rounded-xs border border-border text-sm"
-                  style={{ color: PANEL_TEXT.title }}
-                >
-                  Turn over
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setState(dismiss)}
-                  className="min-h-11 flex-1 rounded-xs border border-border text-sm"
-                  style={{ color: PANEL_TEXT.title }}
-                >
-                  Put back
-                </button>
-              </div>
+              <RecordPanel
+                summary={recordSummary(factPanel(out), out.id)}
+                onTurnOver={() => setState(flip)}
+                onPutBack={() => setState(dismiss)}
+              />
             </div>
           ) : (
-            <>
-              <div
+            <div
                 data-testid="record-chrome-facts"
                 className="pointer-events-auto max-w-[26vw] rounded-xs p-4 shadow-2xl backdrop-blur-sm"
                 style={{ backgroundColor: PANEL_GROUND }}
               >
-                <FactsPanel panel={factPanel(out)} />
-              </div>
-
-              <div
-                data-testid="record-chrome-actions"
-                className="pointer-events-auto max-w-[26vw] rounded-xs p-4 shadow-2xl backdrop-blur-sm"
-                style={{ backgroundColor: PANEL_GROUND }}
-              >
-                <ActionsPanel
-                  recordId={out.id}
+                {/*
+                  **The flanking panel shows the expanded content at rest (A33d)**
+                  — snippet, facts and the in-panel link, no chevron — because it
+                  has the room the overlay does not. One `RecordPanel`, two
+                  layouts. `record-chrome-actions` is folded in: the panel carries
+                  Turn over / Put back itself, so the separate actions block is
+                  gone.
+                */}
+                <RecordPanel
+                  summary={recordSummary(factPanel(out), out.id)}
                   onTurnOver={() => setState(flip)}
                   onPutBack={() => setState(dismiss)}
+                  alwaysExpanded
                 />
               </div>
-            </>
           )}
         </div>
       )}

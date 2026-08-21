@@ -1,4 +1,5 @@
 import type { FactPanel } from './panel';
+import type { BackFaceGroup } from '../shelf/back-face';
 
 /**
  * **The card beside a pulled record, reduced to a summary.**
@@ -66,6 +67,22 @@ export type RecordSummary = {
    * affordance says so rather than hiding.
    */
   furtherFacts: number;
+  /**
+   * **The generated synopsis, with its label — separate from the facts (A33c).**
+   *
+   * The snippet is the app's own claim about the music (§10b), carried as
+   * `{ text, generated }` since 13c precisely so it can never be rendered as a
+   * fact. The expanded panel shows it above the fact list, labelled, with a
+   * boundary between — and keeping it a distinct field here is what makes that
+   * boundary enforceable rather than a hope. Null when there is no snippet,
+   * which is most records.
+   */
+  snippet: { text: string; generated: boolean } | null;
+  /**
+   * The entered and imported facts, as `backFaceGroups` produced them — a
+   * SEPARATE field from `snippet`, so the two cannot merge in the panel.
+   */
+  factGroups: BackFaceGroup[];
 };
 
 export function recordSummary(panel: FactPanel, recordId: string): RecordSummary {
@@ -83,6 +100,9 @@ export function recordSummary(panel: FactPanel, recordId: string): RecordSummary
     year: panel.year,
     href: `/records/${recordId}`,
     furtherFacts,
+    /* Passed through with its flag intact — never flattened into the facts. */
+    snippet: panel.snippet,
+    factGroups: panel.groups,
   };
 }
 

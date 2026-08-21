@@ -131,4 +131,49 @@ describe('recordSummary', () => {
     expect(sparse.artist).toBe(full.artist);
     expect(sparse.year).toBe(full.year);
   });
+
+  /**
+   * **The expanded panel keeps the snippet and the facts SEPARATE (A33c).** The
+   * snippet is generated and carries §10b's label; the facts are entered or
+   * imported. `recordSummary` must expose them as distinct fields so the panel
+   * cannot render them as one undifferentiated block — the failure 13c's typed
+   * `{ text, generated }` was built to prevent, arriving at the last surface.
+   *
+   * Fails against a `recordSummary` that flattens snippet text into the fact
+   * list, or drops the `generated` flag.
+   */
+  it('exposes the snippet with its generated flag, separate from the facts', () => {
+    const withSnippet: PanelInput = {
+      ...FULL,
+      snippet: 'A landmark 1978 debut, recorded in a Deptford pub back room.',
+      snippetEditedAt: null,
+    };
+    const summary = recordSummary(factPanel(withSnippet), 'r1');
+
+    expect(summary.snippet, 'the snippet is present').not.toBeNull();
+    expect(summary.snippet?.text).toContain('Deptford');
+    expect(summary.snippet?.generated, 'unedited snippet is labelled generated').toBe(true);
+
+    /* The facts are a separate field, and the snippet text is NOT among them. */
+    const factText = summary.factGroups.flatMap((g) => g.rows.map((r) => r.value)).join(' ');
+    expect(factText, 'the snippet did not leak into the facts').not.toContain('Deptford');
+    expect(summary.factGroups.length, 'the facts are present too').toBeGreaterThan(0);
+  });
+
+  it('carries a null snippet as null, and still exposes the facts', () => {
+    /* Most records have no snippet — the panel degrades to facts only. */
+    const summary = recordSummary(factPanel(FULL), 'r1');
+    expect(summary.snippet).toBeNull();
+    expect(summary.factGroups.length).toBeGreaterThan(0);
+  });
+
+  it('marks an edited snippet as NOT generated', () => {
+    /* §4.2: `snippetEditedAt` set means the user owns it — not the app's claim. */
+    const edited: PanelInput = {
+      ...FULL,
+      snippet: 'My own note.',
+      snippetEditedAt: new Date('2026-01-01'),
+    };
+    expect(recordSummary(factPanel(edited), 'r1').snippet?.generated).toBe(false);
+  });
 });

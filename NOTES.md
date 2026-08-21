@@ -13673,3 +13673,54 @@ Earlier this unit the tap went to `/records/:id` (A32). #3 changes that: the
 chevron EXPANDS IN PLACE over the record — synopsis scrolling inside the panel,
 the record behind — and a link to the full page lives INSIDE the expanded panel,
 not instead of it. Scoped below; the developer wants the cost before committing.
+
+## Step 15 unit 5: A33 built — the panel expands in place, and #1 is fixed by it
+
+A33 (spec committed first) reframed #1: the reference OVERLAYS the record, it does
+not stack a card beneath. So the "column" approach was abandoned wholesale.
+
+### A33a — the record lift is DELETED, the record goes camera-centred
+
+`pulledDestination`'s `layout` / `stackedCardHeight` / lift arithmetic all
+removed. The record is full-bleed and centred at every width; the panel is a
+scrim OVERLAY on its lower portion (transparent at the top, panel ground at the
+bottom), the artwork reading through. **This deletes the two lift bugs the column
+fought** — the fixed-fraction clip and the viewport-vs-canvas-height error — a
+net simplification, which is the right shape for a fix that was chasing the wrong
+model.
+
+Verified on device: the record is centred and whole, the overlay at the bottom,
+no floating block and no clipping. #1 fixed.
+
+### A33b/c/d — the panel expands in place, one component, both layouts
+
+`RecordPanel` replaces `SummaryCard` in the live scene (`SummaryCard` stays only
+in the retired `/plane` FillComparison scaffold). Collapsed on the phone (title,
+attribution, count, chevron); the chevron EXPANDS it — synopsis and facts scroll
+inside, the record behind — with the `/records/:id` link INSIDE the expansion
+(A33b). Desktop passes `alwaysExpanded` (A33d): the wide panel is the expanded
+shape at rest, no chevron.
+
+**A33c held to, and it is the constraint that mattered.** `RecordSummary` gained
+`snippet: {text, generated}` and `factGroups` as SEPARATE fields, so the panel
+cannot merge them. Mutation-tested at the unit level (flattening the snippet into
+factGroups fails) and asserted in E2E: the snippet renders above a boundary,
+labelled "A note, written by Claude" (or "Your note" when edited, §4.2), the
+facts below, and the snippet text does NOT appear in the fact list. This is 13c's
+typed label carried to its last surface — the panel does not assert things about
+music without saying which part it made up.
+
+### Tests updated for the contract change, not worked around
+
+`record-layout-fork.spec.ts` encoded A32's contract (stacked card, tap
+navigates, `record-chrome-actions`). A33 changed the contract, so the tests were
+updated to it WITH the reason stated in the file — not modified to make failing
+code pass, but re-pointed at the new behaviour A33 specifies. `record-panel.spec.ts`
+is new: expand-in-place, the boundary, the edited label, the desktop
+always-expanded. `summary-card.spec.ts` is unchanged and still green — it tests
+the scaffold `SummaryCard`, which A33 did not touch.
+
+**A testid collision found and scoped around:** `panel-snippet` exists in both
+`RecordPanel` and `Panels.tsx`'s `FactsPanel` (13c), and `/plane` renders both
+the live wall and the FillComparison scaffold. The E2E scopes to `record-chrome`
+(the wall's chrome) so it reads the live panel, not the scaffold's.

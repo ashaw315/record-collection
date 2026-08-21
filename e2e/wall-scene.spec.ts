@@ -810,10 +810,18 @@ test('the composition arrives with the record: scrim, facts, actions', async ({ 
   */
   const chrome = page.getByTestId('record-chrome');
   await expect(chrome.getByTestId('record-scrim')).toBeVisible();
-  await expect(chrome.getByTestId('facts-panel')).toBeVisible();
-  await expect(chrome.getByTestId('actions-panel')).toBeVisible();
+  /*
+    A33: the flanking panel is `RecordPanel`, expanded at rest on desktop —
+    its facts, controls and detail link are all present.
+  */
+  await expect(chrome.getByTestId('record-panel')).toBeVisible();
   await expect(chrome.getByTestId('action-turn')).toBeVisible();
-  await expect(chrome.getByTestId('action-full')).toHaveAttribute('href', /\/records\//);
+  /*
+    These records carry no pressing or condition, so `panel-facts` is absent
+    (its own test seeds a record that has them). The detail link is always
+    present in the expanded desktop panel.
+  */
+  await expect(chrome.getByTestId('panel-detail-link')).toHaveAttribute('href', /\/records\//);
 
   const settled = await page.evaluate(
     () => getComputedStyle(document.querySelector('[data-testid="record-chrome"]') as HTMLElement).opacity,
@@ -852,14 +860,20 @@ test('the panel values are READABLE against the scrim', async ({ page }) => {
   if (box === null) return;
 
   await clickASpine(page, box);
-  await expect(page.getByTestId('record-chrome').getByTestId('facts-panel')).toBeVisible();
+  await expect(page.getByTestId('record-chrome').getByTestId('panel-facts')).toBeVisible();
   await page.waitForTimeout(900);
 
   const worst = await page.evaluate(() => {
     const facts = document.querySelector(
-      '[data-testid="record-chrome"] [data-testid="facts-panel"]',
+      '[data-testid="record-chrome"] [data-testid="panel-facts"]',
     ) as HTMLElement;
-    const ground = getComputedStyle(facts.parentElement as HTMLElement).backgroundColor;
+    /*
+      The ground is the panel container behind the facts — walk up to the
+      record-panel, whose background is the scrim/panel ground.
+    */
+    const ground = getComputedStyle(
+      (facts.closest('[data-testid="record-panel"]') as HTMLElement).parentElement as HTMLElement,
+    ).backgroundColor;
 
     const parse = (colour: string): number[] => (colour.match(/[\d.]+/g) ?? []).map(Number);
     const lum = ([r, g, b]: number[]) => {

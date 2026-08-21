@@ -204,45 +204,43 @@ describe('the pulled record fits the viewport, not just the canvas', () => {
   });
 });
 
-describe('the stacked layout lifts the record, the flanked layout does not', () => {
+describe('the record is always camera-centred — no lift (A33a)', () => {
   const wall = { wallWidth: 358, wallHeight: wallOf(10) };
   const viewport = { width: 390, height: 844 };
 
-  it('leaves the flanked record on the camera axis, unchanged', () => {
-    /*
-      **The desktop layout must not move.** `pulledDestination` was verified at
-      1280 with the record centred; a Y shift applied unconditionally would
-      centre the desktop record high with an empty band beneath. So the flanked
-      case — the default — is asserted byte-identical to omitting `layout`.
-    */
-    const withFlanked = pulledDestination({ ...wall, viewport, widthFill: 0.9, layout: 'flanked' });
-    const withoutLayout = pulledDestination({ ...wall, viewport, widthFill: 0.9 });
+  /**
+   * **A33a removed the stacked lift.** The summary card became an OVERLAY on
+   * the record's lower portion rather than a block beneath it in a column, so
+   * the record no longer shifts up to make room — it stays on the camera axis
+   * at every width, and the overlay reads through it.
+   *
+   * The lift was tried and cost two "which frame" bugs (a fixed fraction that
+   * clipped the record, then a screen-space lift that divided by the viewport
+   * height instead of the canvas height). Removing it deletes both. This test
+   * pins that the Y is the axis regardless of what the caller passes, so a
+   * re-introduced lift fails here.
+   */
+  it('centres the record on the camera axis whatever the viewport', () => {
+    const withViewport = pulledDestination({ ...wall, viewport, widthFill: 0.9 });
+    const withoutViewport = pulledDestination(wall);
 
-    /* Finite, or the equality below passes vacuously on two NaNs (it did once). */
-    expect(Number.isFinite(withFlanked.y)).toBe(true);
-    expect(withFlanked.y).toBe(withoutLayout.y);
-    expect(withFlanked).toEqual(withoutLayout);
+    expect(withViewport.y, 'on the axis, -wallHeight/2').toBe(-wall.wallHeight / 2);
+    expect(withoutViewport.y, 'the axis does not depend on the viewport').toBe(
+      -wall.wallHeight / 2,
+    );
   });
 
-  it('lifts the stacked record above the axis so a card fits beneath', () => {
-    const flanked = pulledDestination({ ...wall, viewport, widthFill: 0.9, layout: 'flanked' });
-    const stacked = pulledDestination({ ...wall, viewport, widthFill: 0.9, layout: 'stacked' });
-
-    /*
-      Y increases upward (the camera looks at -height/2), so a lift makes the
-      stacked Y GREATER than the flanked one. Fails against a lift applied to
-      both, or to neither.
-    */
-    expect(stacked.y).toBeGreaterThan(flanked.y);
-    // And only in Y — the depth and horizontal centre are the same record.
-    expect(stacked.z).toBe(flanked.z);
-    expect(stacked.x).toBe(flanked.x);
-  });
-
-  it('does not lift when no layout is given (the geometry tests stay valid)', () => {
-    const bare = pulledDestination({ wallWidth: 1280, wallHeight: wallOf(3) });
-    const flanked = pulledDestination({ wallWidth: 1280, wallHeight: wallOf(3), layout: 'flanked' });
-    expect(bare.y).toBe(flanked.y);
+  it('is the same Y at a phone and a desktop wall', () => {
+    const phone = pulledDestination({ wallWidth: 358, wallHeight: wallOf(10), viewport, widthFill: 0.9 });
+    const desktop = pulledDestination({
+      wallWidth: 1248,
+      wallHeight: wallOf(4),
+      viewport: { width: 1280, height: 900 },
+      widthFill: 0.9,
+    });
+    /* Both on their own wall's axis — the record is centred at every width. */
+    expect(phone.y).toBe(-wallOf(10) / 2);
+    expect(desktop.y).toBe(-wallOf(4) / 2);
   });
 });
 
