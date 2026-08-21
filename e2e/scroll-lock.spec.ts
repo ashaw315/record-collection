@@ -101,18 +101,20 @@ test('the scroll position is unchanged across pull and return', async ({ page })
   expect(stillPinned, 'scrolling while out is inert').toBe(pinnedTop);
 
   /*
-    Put back, and the scroll returns to where the wall was WHILE OUT — the pin
-    released to its own offset — so the record's slot is back where the reader
-    last saw it. `pinnedTop` is `-<scrollY>px`, so the restored scrollY is its
-    magnitude.
+    **Put back returns the wall HOME — to `before`, where the reader was — not
+    to the rise-scrolled position it was locked at.** The rise scrolls the wall
+    to centre the record (so `pinnedTop` here is a LARGER offset than `before`);
+    the continuity the freeze exists to protect is that the wall comes back to
+    where the reader left it. A first version of this test asserted only that the
+    position was stable while out, and missed that the return anchor was wrong.
   */
   const lockedScrollY = Math.abs(parseInt(pinnedTop, 10));
+  expect(lockedScrollY, 'the rise scrolled the wall away from `before`').toBeGreaterThan(before);
+
   await page.getByRole('button', { name: 'Put back' }).click();
   await page.waitForTimeout(1500);
   const after = await page.evaluate(() => window.scrollY);
-  expect(after, `scroll returned to the locked position ${lockedScrollY}, got ${after}`).toBe(
-    lockedScrollY,
-  );
+  expect(after, `wall returned home to ${before}, got ${after}`).toBe(before);
 });
 
 test('the body is not left locked after the record returns', async ({ page }) => {

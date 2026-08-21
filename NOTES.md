@@ -13620,3 +13620,56 @@ negative offset (not 0 / jumped-to-top), it does not move while out, and the
 return restores THAT position — so the record's slot is where the reader last
 saw it. Re-mutated after the correction: `overflow:hidden` alone still fails the
 position test, so the guard against the jump-to-top failure survives the fix.
+
+## Step 15 unit 5 mobile, ROUND 2: three findings, and #1 and #3 are one question
+
+Reported by the developer against the live wall with a REAL cover (Dire
+Straits), where the seeded probe's plain sleeve hid the overlap.
+
+### #1 — the card is OVER the record, still. My "column" was wrong-headed.
+
+Measured: record sleeve band 161–646, card 645–820. They abut in the scan's
+centre column but the card is an OPAQUE black rectangle laid over the canvas at
+bottom-left, and the sleeve pokes out around it (right side, and below where wall
+spines show). It is not a column and not a clean overlay — two things fighting.
+
+**My report said the lift formed a complete column. The render disagreed, and I
+trusted the vitest assertion (which only checks the destination Y arithmetic)
+over a screenshot.** Exactly the failure this unit has been caught by seven
+times: a number that looks right, a picture that shows otherwise.
+
+### #3 reframes #1 — the reference OVERLAYS, it does not stack
+
+The developer's Criterion screenshot (Rosetta) shows the answer: the panel is a
+translucent overlay CENTRED ON the case — title, metadata and a SYNOPSIS
+scrolling inside the panel, over the lower two-thirds of the artwork, the case
+fully visible behind. You stay in the room. It is one object, not a record with
+a card beneath it.
+
+So the "lift the record to make a column" model is abandoned: there is no
+column. The card becomes an overlay on the full-bleed record, as the reference
+does. That subsumes #1 — fixing the overlay IS the column fix — and it is what
+#3 asks for.
+
+### #2 — the wall does not return home, and the test asserted the wrong thing
+
+Measured: scrolled to 300, pulled (rise scrolled to 1295 to centre the record),
+put back → wall left at 1295, not 300. The return animation is never seen and
+the wall is somewhere the reader did not put it.
+
+**The scroll-lock test passed because it asserts position is preserved across
+the LOCKED state — nobody asserted the wall returns to where it was BEFORE the
+rise scrolled it.** The freeze-in-place decision existed precisely to protect
+that continuity, and the implementation preserves the wrong anchor: it restores
+the rise-scrolled position (1295), not the pre-pull position (300).
+
+The fix is two parts, as the developer said: the BEHAVIOUR (restore the pre-pull
+scroll on return) and the ASSERTION (a test that the wall is back where it
+started, not merely stable while out).
+
+### #3 is a DECISION CHANGE and a §10b amendment — scoped, not built
+
+Earlier this unit the tap went to `/records/:id` (A32). #3 changes that: the
+chevron EXPANDS IN PLACE over the record — synopsis scrolling inside the panel,
+the record behind — and a link to the full page lives INSIDE the expanded panel,
+not instead of it. Scoped below; the developer wants the cost before committing.

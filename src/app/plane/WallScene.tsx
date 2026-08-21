@@ -169,6 +169,15 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
   const pulledIdRef = useRef<string | null>(null);
 
   /*
+    **The scroll position from BEFORE the rise scrolled the wall.** The rise
+    centres the record by scrolling the page; the scroll lock must restore where
+    the reader WAS, not where the rise left the wall, or "put back" leaves the
+    wall somewhere the reader never put it. Captured at rise-start, consumed on
+    release.
+  */
+  const preRiseScrollY = useRef<number | null>(null);
+
+  /*
     Written in an effect rather than during render: reading or writing a ref
     while rendering is unsound and `react-hooks/refs` rejects it, correctly.
     Same reasoning `CollectionFilters` records for its pending-navigation ref.
@@ -1289,6 +1298,12 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     const host = mount.current;
     if (host === null) return;
 
+    /*
+      Remembered BEFORE the scroll below, so "put back" can return the wall to
+      where the reader was rather than where the rise moved it.
+    */
+    if (preRiseScrollY.current === null) preRiseScrollY.current = window.scrollY;
+
     const box = host.getBoundingClientRect();
     // Where the wall's centre currently sits in the page.
     const centre = window.scrollY + box.top + box.height / 2;
@@ -1320,6 +1335,8 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
   const out =
     pulledId === null ? null : (records.find((record) => record.id === pulledId) ?? null);
 
+  if (state.phase === 'idle') preRiseScrollY.current = null;
+
   /*
     Freeze the page once the record has SETTLED, not while it rises. §10b unit 5:
     the wall scrolled under a camera-fixed record and they separated. Locking
@@ -1329,7 +1346,9 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     complete first, then the lock captures the centred position. 'flipping' keeps
     the lock while the record is turned.
   */
-  useScrollLock(state.phase === 'settled' || state.phase === 'flipping');
+  useScrollLock(state.phase === 'settled' || state.phase === 'flipping', {
+    restoreTo: preRiseScrollY,
+  });
 
   /**
    * **The chrome arrives as the record travels** (unit 11): 0 while it rises,

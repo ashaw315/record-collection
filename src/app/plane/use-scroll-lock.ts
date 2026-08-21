@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, type RefObject } from 'react';
 
 /**
  * **Freezes the page in place while a record is out (§10b, step 15 unit 5).**
@@ -21,7 +21,10 @@ import { useEffect } from 'react';
  * finger on the record will not tilt it until that is built, but it also will
  * not scroll the page away, which is the ground the drag needs.
  */
-export function useScrollLock(locked: boolean): void {
+export function useScrollLock(
+  locked: boolean,
+  options?: { restoreTo?: RefObject<number | null> },
+): void {
   useEffect(() => {
     if (!locked) return;
 
@@ -57,10 +60,16 @@ export function useScrollLock(locked: boolean): void {
       body.style.width = previous.width;
       body.style.overflow = previous.overflow;
       /*
-        Restore to EXACTLY where the lock began. `'instant'` so the return does
-        not animate a scroll the user did not ask for.
+        **Restore to the PRE-RISE position, not where the lock began.** The lock
+        began at the rise-scrolled position (the record centred); returning there
+        would leave the wall where the rise moved it, not where the reader was.
+        `restoreTo` carries the position captured before the rise scrolled, so
+        "put back" returns the wall home and the return animation plays from
+        there. Falls back to the lock position if no target is given.
+        `'instant'` so the restore itself does not animate a scroll.
       */
-      window.scrollTo({ top: scrollY, behavior: 'instant' as ScrollBehavior });
+      const target = options?.restoreTo?.current ?? scrollY;
+      window.scrollTo({ top: target, behavior: 'instant' as ScrollBehavior });
     };
   }, [locked]);
 }
