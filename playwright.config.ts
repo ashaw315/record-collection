@@ -93,7 +93,20 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, testIgnore: [/touch-tilt\.spec\.ts$/] },
+    /*
+      **A touch-enabled Chromium project, scoped to the touch-tilt spec.**
+      §10b's touch drag needs a real touch stream, and the only reliable one in
+      Playwright is CDP `Input.dispatchTouchEvent` — Chromium-only, so the
+      WebKit `mobile` project cannot drive it. `hasTouch` at 390px is the phone
+      viewport the drag is about. The feel is judged on the device; this project
+      pins the gesture BOUNDARY and the hold, which are logic, not feel.
+    */
+    {
+      name: 'touch',
+      use: { ...devices['Desktop Chrome'], hasTouch: true, viewport: { width: 390, height: 844 } },
+      testMatch: [/touch-tilt\.spec\.ts$/],
+    },
     {
       name: 'mobile',
       use: { ...devices['iPhone 13'] },

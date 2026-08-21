@@ -13724,3 +13724,70 @@ the scaffold `SummaryCard`, which A33 did not touch.
 `RecordPanel` and `Panels.tsx`'s `FactsPanel` (13c), and `/plane` renders both
 the live wall and the FillComparison scaffold. The E2E scopes to `record-chrome`
 (the wall's chrome) so it reads the live panel, not the scaffold's.
+
+## Step 15 — touch: drag to tilt, and the gesture boundary designed not discovered
+
+§10b's second tilt half ("on touch it is dragged"), never built. Zero touch
+handlers in src/ (measured, still true of the pointer path).
+
+### tiltFor reused a SIXTH time, unchanged
+
+The touch effect feeds `tiltFor(touch.clientX/Y, face)` exactly as the pointer
+effect feeds it `event.clientX/Y` — touch gives absolute positions, which is
+what the pure absolute-position mapping wants. No fork. The prompt asked whether
+it fits; it fits without a change.
+
+### The boundary is a raycast, not a rectangle
+
+`live.current.hitsPulledRecord(x, y)` raycasts the PULLED mesh specifically (not
+the wall spines) and returns whether the touch hit it. `touch-tilt.ts`'s
+`shouldStartTiltDrag` is the decision on top: hit + canTilt + not-reduced-motion.
+A touch on the wall returns false and falls through to the tap that pulls or
+dismisses — which is what keeps the tap working. Mutation-tested: claiming every
+touch (drop `hitRecord`) fails, and springing home on release (drop the held
+tilt) fails.
+
+### What rests on the scroll lock — nothing, stated
+
+The record drag is claimed by `touch-action: none` on the canvas (set while a
+record is out, restored on cleanup) and by only calling `setTilt` for touches
+that hit the record. So a record-drag never scrolls even if the lock were
+removed. The lock's own job — a WALL drag while a record is out not scrolling
+the wall away — is separate and unchanged. The two do not depend on each other.
+
+### Measured (chromium + CDP touch stream at 390px)
+
+- **Tap still pulls:** true. The touchstart handler returns without
+  preventDefault on a wall touch, so the synthetic click survives.
+- **Record drag tilts and holds:** rotY 0 -> 0.143 during the drag, 0.143 after
+  the finger lifts. The hold rule, seen in the screenshots (mid-drag and held
+  are the same frame).
+- **Wall drag does not tilt:** a drag started above the record left rotY at its
+  held 0.143, unchanged.
+- **Idle draws: 0 before, 20 over exactly 20 moves (one per move), 0 after.**
+  The dirty-flag discipline holds — the record settles when the finger stops.
+
+### What rests on emulation vs the device
+
+The gesture BOUNDARY and the HOLD are logic — hit test, phase, held angle — and
+are pinned by `touch-tilt.spec.ts` (unit + E2E). Those do not depend on feel and
+the emulation is trustworthy for them (the fixed-coordinate probe already made
+emulator and device agree once). What only the DEVICE can judge is the FEEL:
+whether the drag tracks the finger naturally, whether 16° reads as turning a
+sleeve, whether the hold feels right rather than stuck. That is Adam's call on
+the phone.
+
+**A false alarm worth recording:** a first wall-drag test "failed" (the record
+tilted) — but the wall touch coordinate was `box.y + box.height - 20`, and at
+390px the canvas is 2976px tall, so that y was off-screen and CDP clamped it
+somewhere unexpected. Instrumented `hitsPulledRecord`: a genuine on-screen wall
+touch above the record returns false and does not tilt. The boundary was right;
+the test coordinate was the ninth "which frame" slip, caught by measuring the
+hit test rather than trusting the drag's result.
+
+### touch-action scoped to the record-out state
+
+`touch-action: none` is applied to the canvas only while a record is out and
+restored on cleanup, so the wall scrolls normally when nothing is pulled. A
+`touch` Playwright project (Chromium + hasTouch, 390px) runs the spec, scoped —
+CDP touch is Chromium-only and the WebKit `mobile` project cannot drive it.

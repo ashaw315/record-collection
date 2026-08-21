@@ -41,6 +41,7 @@ import { boxDepth } from './record-box';
 import { wallDim } from './wall-dim';
 import { PROUD_MS, proudOffset, shouldRedraw } from './hover-proud';
 import { NO_TILT, tiltFor } from '../shelf/tilt';
+import { beginDrag, endDrag, shouldStartTiltDrag, type TiltDrag } from './touch-tilt';
 import { RecordPanel } from './RecordPanel';
 import { recordSummary } from './summary';
 import { recordLayout } from './record-layout';
@@ -209,6 +210,8 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     animate: (step: (now: number) => boolean) => void;
     setFlip: (turn: number) => void;
     setTilt: (next: { rotateX: number; rotateY: number }) => void;
+    /** Does a viewport point land on the pulled record's mesh? (touch boundary) */
+    hitsPulledRecord: (clientX: number, clientY: number) => boolean;
   } | null>(null);
 
   /**
@@ -904,6 +907,23 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
        * inside the rise's and return's own animation callbacks.
        */
       setPulled: (id, progress) => setPulledInternal(id, progress),
+      /*
+        **The touch gesture boundary's query half.** A finger on the record
+        tilts it; a finger on the wall does not. This raycasts the pulled mesh
+        specifically — not the wall spines — so `touch-tilt.ts`'s decision can be
+        made from a real hit test rather than a rectangle guess.
+      */
+      hitsPulledRecord: (clientX, clientY) => {
+        const pulled = pulledIdRef.current;
+        if (pulled === null) return false;
+        const mesh = meshes.get(pulled);
+        if (mesh === undefined) return false;
+        const rect = renderer.domElement.getBoundingClientRect();
+        pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+        pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(pointer, camera);
+        return raycaster.intersectObject(mesh, false).length > 0;
+      },
     };
 
 
@@ -1259,6 +1279,108 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     return () => {
       window.removeEventListener('pointermove', onMove);
       scene.setTilt(NO_TILT);
+    };
+  }, [state]);
+
+  /**
+   * **Drag to tilt on touch (§10b: "on touch it is dragged").**
+   *
+   * The pointer effect above follows the cursor; this is its touch twin. The
+   * boundary is the design: a finger that lands ON the record starts a tilt
+   * drag (`touch-tilt.ts`'s `shouldStartTiltDrag`, from a real raycast via
+   * `hitsPulledRecord`); a finger on the wall does not, and falls through to the
+   * tap that pulls or dismisses — which is why the tap still works.
+   *
+   * **The record holds its angle when the finger lifts.** `touchmove` feeds
+   * `tiltFor` exactly as the pointer does; `touchend` stops the drag WITHOUT
+   * resetting the tilt (`endDrag` keeps it). The pointer version resets on
+   * cleanup because it resets when the record LEAVES the tilting phase, which is
+   * a different moment from a finger lifting — so the two do not share that
+   * reset, and touch is deliberately hold-only.
+   *
+   * **What rests on the scroll lock, stated:** nothing here does. The record
+   * drag is claimed by `touch-action: none` on the canvas (below) and by only
+   * calling `setTilt` for touches that hit the record, so a record-drag never
+   * scrolls even if the lock were removed. The lock's own job — that a
+   * wall-drag while a record is out does not scroll the wall away — is separate
+   * and unchanged.
+   */
+  useEffect(() => {
+    if (!canTilt(state)) return;
+    const scene = live.current;
+    const host = mount.current;
+    if (scene === null || host === null) return;
+    if (prefersReducedMotion()) return;
+
+    let drag: TiltDrag = { active: false, tilt: null };
+
+    const faceFor = (): { left: number; top: number; width: number; height: number } => {
+      const box = host.getBoundingClientRect();
+      const size = Math.min(box.width, box.height) * 0.6;
+      return {
+        left: box.left + (box.width - size) / 2,
+        top: box.top + (box.height - size) / 2,
+        width: size,
+        height: size,
+      };
+    };
+
+    const onTouchStart = (event: TouchEvent) => {
+      const touch = event.touches[0];
+      if (touch === undefined) return;
+      const hitRecord = scene.hitsPulledRecord(touch.clientX, touch.clientY);
+      if (
+        !shouldStartTiltDrag({ hitRecord, canTilt: true, reducedMotion: prefersReducedMotion() })
+      ) {
+        return;
+      }
+      drag = beginDrag();
+      /*
+        Claim the gesture: prevent the browser turning this into a scroll or a
+        synthetic click. The empty-wall touch is NOT prevented (this handler
+        returned above), so the tap that pulls/dismisses still fires there.
+      */
+      event.preventDefault();
+    };
+
+    const onTouchMove = (event: TouchEvent) => {
+      if (!drag.active) return;
+      const touch = event.touches[0];
+      if (touch === undefined) return;
+      const tilt = tiltFor({ x: touch.clientX, y: touch.clientY }, faceFor());
+      drag = { active: true, tilt };
+      scene.setTilt(tilt);
+      event.preventDefault();
+    };
+
+    const onTouchEnd = () => {
+      if (!drag.active) return;
+      /* Hold the angle — do NOT reset. §10b: a record you turned stays turned. */
+      drag = endDrag(drag);
+    };
+
+    const canvas = host.querySelector('canvas');
+    if (canvas === null) return;
+    /*
+      **`touch-action: none` on the canvas while a record is out.** The
+      declarative backstop to `preventDefault`: a record-drag never becomes a
+      scroll even if a browser fires touchmove before the handler, and even if
+      the scroll lock were removed. Restored on cleanup so the wall scrolls
+      normally when no record is out.
+    */
+    const priorTouchAction = canvas.style.touchAction;
+    canvas.style.touchAction = 'none';
+
+    canvas.addEventListener('touchstart', onTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+    canvas.addEventListener('touchend', onTouchEnd);
+    canvas.addEventListener('touchcancel', onTouchEnd);
+    return () => {
+      canvas.style.touchAction = priorTouchAction;
+      canvas.removeEventListener('touchstart', onTouchStart);
+      canvas.removeEventListener('touchmove', onTouchMove);
+      canvas.removeEventListener('touchend', onTouchEnd);
+      canvas.removeEventListener('touchcancel', onTouchEnd);
     };
   }, [state]);
 
