@@ -35,6 +35,8 @@ export function pulledDestination({
   wallHeight,
   viewport,
   widthFill,
+  viewCentrePx,
+  viewportHeight,
 }: {
   wallWidth: number;
   wallHeight: number;
@@ -60,6 +62,19 @@ export function pulledDestination({
    * consulted when `viewport` is set.
    */
   widthFill?: number;
+  /**
+   * **Where the record should sit on SCREEN — the visible viewport's centre, in
+   * canvas pixels** (i.e. `scrollY + viewportHeight / 2`). When given, the
+   * record settles at the visible centre regardless of which row its slot is in,
+   * so it never depends on scroll and the rise does not have to scroll the wall
+   * to bring it into view. Omitted → the wall's own centre, as before.
+   *
+   * Paired with `viewportHeight` because the record floats at the pull DEPTH,
+   * not on the wall plane, so parallax shifts an off-axis point — the world-y is
+   * solved through the projection rather than set to the raw canvas position.
+   */
+  viewCentrePx?: number;
+  viewportHeight?: number;
 }): PulledPose {
   const cameraZ = wallCameraDistance({ wallHeight });
   const halfAngle = (WALL_FOV_DEGREES * Math.PI) / 360;
@@ -115,7 +130,57 @@ export function pulledDestination({
      * That the wall may extend past the window is a SCROLL question, and the
      * canvas scrolls with the page — which is what the fixed camera bought.
      */
-    y: -wallHeight / 2,
+    y: viewY({ viewCentrePx, viewportHeight, wallHeight, cameraZ, distance, halfAngle }),
     z: cameraZ - distance,
   };
+}
+
+/**
+ * **The record's world-y so it PROJECTS to the visible viewport centre.**
+ *
+ * The camera looks at the wall's centre (`-wallHeight/2`) and the canvas is 1:1
+ * with world on the wall plane. The visible viewport centre is at canvas-px
+ * `viewCentrePx`, whose world-y on the wall plane is `-viewCentrePx`. But the
+ * record floats at the pull DEPTH, closer than the wall, so an off-axis point
+ * there projects with parallax — 26 world units at a desktop wall, small but
+ * visible as "slightly off-centre". So the y is solved through the projection:
+ * take the target's NDC on the wall plane, and place the record at the world-y
+ * that yields the same NDC at the record's own depth.
+ *
+ * With no `viewCentrePx` the record sits at the wall's centre, as before — the
+ * geometry tests and any caller that does not pass a scroll position.
+ */
+function viewY({
+  viewCentrePx,
+  viewportHeight,
+  wallHeight,
+  cameraZ,
+  distance,
+  halfAngle,
+}: {
+  viewCentrePx?: number;
+  viewportHeight?: number;
+  wallHeight: number;
+  cameraZ: number;
+  distance: number;
+  halfAngle: number;
+}): number {
+  const cameraY = -wallHeight / 2;
+  if (viewCentrePx === undefined || viewportHeight === undefined) return cameraY;
+
+  // The target's world-y on the wall plane (canvas 1:1 with world there).
+  const targetWorldY = -viewCentrePx;
+  // Its NDC-y through the fixed camera: offset from the axis over the frustum
+  // half-height at the wall plane (z = 0).
+  const halfHeightAtWall = cameraZ * Math.tan(halfAngle);
+  const ndc = (targetWorldY - cameraY) / halfHeightAtWall;
+  /*
+    The frustum half-height at the RECORD's plane. The camera-to-record distance
+    is `distance` (the record sits at z = cameraZ - distance, so the camera is
+    `distance` in front of it), NOT `cameraZ - distance`. Getting that wrong put
+    the record at NDC 0.23 where 0.66 was wanted — the parallax computed against
+    the wrong plane.
+  */
+  const halfHeightAtRecord = distance * Math.tan(halfAngle);
+  return cameraY + ndc * halfHeightAtRecord;
 }

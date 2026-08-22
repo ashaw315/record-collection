@@ -267,3 +267,54 @@ describe('the record is always camera-centred — no lift (A33a)', () => {
  * `viewportAspect` remains exported and tested in `wall-camera.test.ts`, and
  * remains deliberately unused by `WallScene` until the aspect decision lands.
  */
+
+
+describe('the record settles at the VISIBLE viewport centre, not the wall centre', () => {
+  const wallHeight = wallOf(10); // a tall wall, so scroll matters
+  const viewportHeight = 844;
+
+  function ndcAt(y: number, z: number, camZ: number): number {
+    const halfAngle = (WALL_FOV_DEGREES * Math.PI) / 360;
+    const halfHeight = (camZ - z) * Math.tan(halfAngle);
+    return (y - -wallHeight / 2) / halfHeight;
+  }
+
+  /**
+   * **The record projects to the same screen place at any scroll (13b).** The
+   * fix for the mis-PLACED record: its position must not depend on which row its
+   * slot is in. Given the visible-viewport centre (scrollY + vh/2), the record's
+   * projected NDC must match that centre's NDC — the same at scroll 0, 500, 2000.
+   *
+   * Fails against `y: -wallHeight/2` (the old value), whose NDC is fixed at the
+   * WALL centre and so lands off-screen at the extremes.
+   */
+  it('places the record so it projects to the visible centre at every scroll', () => {
+    const camZ = wallCameraDistance({ wallHeight });
+    for (const scrollY of [0, 500, 2000]) {
+      const viewCentrePx = scrollY + viewportHeight / 2;
+      const target = pulledDestination({
+        wallWidth: 358,
+        wallHeight,
+        viewport: { width: 390, height: viewportHeight },
+        widthFill: 0.9,
+        viewCentrePx,
+        viewportHeight,
+      });
+
+      // The record's projected NDC.
+      const recordNdc = ndcAt(target.y, target.z, camZ);
+      // The visible centre's NDC on the wall plane.
+      const centreNdc = ndcAt(-viewCentrePx, 0, camZ);
+      expect(recordNdc, `scroll ${scrollY}: record centred in the visible slice`).toBeCloseTo(
+        centreNdc,
+        4,
+      );
+    }
+  });
+
+  it('falls back to the wall centre when no view centre is given', () => {
+    /* The geometry tests and any caller without a scroll position are unchanged. */
+    const target = pulledDestination({ wallWidth: 358, wallHeight });
+    expect(target.y).toBe(-wallHeight / 2);
+  });
+});

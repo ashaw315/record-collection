@@ -82,17 +82,21 @@ test('the scroll position is unchanged across pull and return', async ({ page })
   await page.waitForTimeout(2500);
 
   /*
-    **The lock fires on SETTLE, after the rise-scroll centres the record**, so
-    the pinned position is where the rise left the wall — NOT the pre-pull
-    `before`. That is correct: the rise deliberately scrolls the wall to bring
-    the record to the middle, and locking preserves THAT, not the position the
-    user happened to be at when they tapped. The load-bearing claim is that the
-    pin is a real captured offset (not 0 / jumped-to-top) and that it does not
-    move while out.
+    **The lock pins the page EXACTLY where the reader tapped — the wall does not
+    move on pull.** The placement fix (step 15) settles the record at the visible
+    viewport centre by PROJECTION, not by scrolling the wall to bring the slot to
+    the middle. So the pinned offset is `before`, not a larger rise-scrolled one:
+    the record floats in front of a frozen wall that stays put. The load-bearing
+    claim is unchanged from the first version of this test — the pin is the real
+    captured offset (not 0 / jumped-to-top) and it does not move while out — only
+    the anchor is now `before` rather than a rise-displaced position.
   */
   const pinnedTop = await page.evaluate(() => document.body.style.top);
   expect(pinnedTop, 'the body is pinned, not jumped to the top').not.toBe('0px');
   expect(pinnedTop, 'the body is pinned to a real negative offset').toMatch(/^-\d+px$/);
+
+  const lockedScrollY = Math.abs(parseInt(pinnedTop, 10));
+  expect(lockedScrollY, 'the wall is frozen where the reader tapped, un-scrolled').toBe(before);
 
   /* A scroll attempt while out must not move the pinned position. */
   await page.mouse.wheel(0, 500);
@@ -101,20 +105,14 @@ test('the scroll position is unchanged across pull and return', async ({ page })
   expect(stillPinned, 'scrolling while out is inert').toBe(pinnedTop);
 
   /*
-    **Put back returns the wall HOME — to `before`, where the reader was — not
-    to the rise-scrolled position it was locked at.** The rise scrolls the wall
-    to centre the record (so `pinnedTop` here is a LARGER offset than `before`);
-    the continuity the freeze exists to protect is that the wall comes back to
-    where the reader left it. A first version of this test asserted only that the
-    position was stable while out, and missed that the return anchor was wrong.
+    **Put back leaves the wall HOME — at `before`, where the reader was.** The
+    wall never moved (no rise-scroll), so the continuity the freeze protects is
+    that unlocking restores the same offset it captured, not the top.
   */
-  const lockedScrollY = Math.abs(parseInt(pinnedTop, 10));
-  expect(lockedScrollY, 'the rise scrolled the wall away from `before`').toBeGreaterThan(before);
-
   await page.getByRole('button', { name: 'Put back' }).click();
   await page.waitForTimeout(1500);
   const after = await page.evaluate(() => window.scrollY);
-  expect(after, `wall returned home to ${before}, got ${after}`).toBe(before);
+  expect(after, `wall stayed home at ${before}, got ${after}`).toBe(before);
 });
 
 test('the body is not left locked after the record returns', async ({ page }) => {

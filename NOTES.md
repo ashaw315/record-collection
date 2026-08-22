@@ -13930,3 +13930,138 @@ rise/return/flip, and touch all still pass. reduced-motion: the slide jumps to
 progress 1 on the first frame (the same instant path the rise uses).
 `data-phase` is now published on the wall-scene element so a test can assert the
 phase is 'sliding', never 'rising' — the definitive distinction from a pull.
+
+## Step 15 — 13b: a slide RELEASED the scroll lock, scrolling the wall away
+
+Reported by the developer: sliding to a top-row record scrolls the wall to the
+top and the held record goes off-screen. Their hypothesis (something in the slide
+still moves the wall) was right in effect; the specific cause is the scroll lock,
+not the incoming slot.
+
+### Measured
+
+`useScrollLock(state.phase === 'settled' || state.phase === 'flipping')`. A slide
+is the `sliding` phase — NOT in that list — so the moment a slide starts the lock
+becomes `locked=false`, its cleanup runs, and it `window.scrollTo`s back to
+`preRiseScrollY` (the pre-pull position, near the top when the record came from a
+top row). The record is placed at the wall's centre in WORLD space, so once the
+page scrolls it is off-screen.
+
+    after pull:  bodyTop -178px   (locked, pinned at 178)
+    mid-slide:   bodyTop ''       (lock RELEASED — the bug)
+    after slide: bodyTop 0px      (re-locked, but at the TOP, not 178)
+
+### Why the scroll-lock test did not catch it
+
+The developer named this: `scroll-lock.spec.ts` asserts the position is preserved
+across PULL and RETURN. A slide is neither — it is a third transition the test's
+fixtures never exercise, so the lock releasing mid-slide was invisible to it.
+Same shape as the CENTRED flake and the put-back-anchor bug: a property asserted
+along the axes it was designed for and not the new one.
+
+### The fix
+
+The lock must stay active through `sliding` — a slide is "a record is out", and
+the page must stay frozen behind the lateral move. Add `sliding` to the locked
+condition. The record then arrives centred on screen regardless of its slot's
+row, because the frozen wall does not move under it.
+
+## Step 15 — 13b: the record's screen position is a SCROLL side-effect, not a chosen place
+
+The developer's sharper reframing, from three 1280 screenshots: the record opens
+at a DIFFERENT vertical position depending on which row its slot is in. A
+middle-row record centres; a top-row record lands high and overlaps the panel; a
+bottom-row record runs off the bottom edge. It is not mis-sized — it is
+MIS-PLACED, and the place is decided by the wall's scroll clamps.
+
+### The mechanism, read from the code
+
+The camera looks at the wall's CENTRE (`camera.lookAt(width/2, -height/2, 0)`)
+and the record's destination is also the wall's centre (`y: -wallHeight/2`). The
+canvas is the whole wall (~2976px) drawn 1 world-unit = 1px, so world-y maps to
+canvas-px. To see the record at the wall's centre, the page must scroll so
+canvas-y ≈ 1488 sits mid-viewport — which is why the RISE SCROLLS. At the top and
+bottom rows the scroll CLAMPS (a wall cannot scroll above its own top), so the
+record lands wherever the clamp leaves it, not centred.
+
+**My scroll-lock-during-slide fix was necessary but insufficient** — it stopped
+the wall moving mid-slide, but it froze the WRONG position. The real fix is the
+developer's: do not use scroll to position the record at all.
+
+### The fix: position the record at the VISIBLE viewport centre, not the wall's
+
+The record floats in front of a frozen wall; it should arrive at the same place
+on screen every time. Its world-y must be `-(scrollY + viewportHeight/2)` — the
+centre of the VISIBLE slice — computed from the scroll position at pull time
+(which the lock already captures as `preRiseScrollY`). Then no scroll is needed
+to bring it into view, and the rise-scroll effect is DELETED. This also fixes the
+phone slide bug: if the record's position never depends on scroll, sliding to a
+top-row record cannot yank the wall.
+
+### Two properties to preserve (the developer named both)
+
+1. **The rise still starts at the spine.** It travels from the slot's actual
+   world position to the fixed on-screen place — the unit-19 mapping. This must
+   not become a fixed START; only the DESTINATION changes.
+2. **Put-back still returns to the correct slot** — the property verified after
+   sliding ten records forward (`slotGap` 0 after return).
+
+---
+
+### 2026-08-21 — placement fix + easing: verification state (machine starved)
+
+The placement fix (record settles at the visible viewport centre by projection,
+wall frozen, rise-scroll deleted) and the per-channel slide easing are done.
+
+Verified on a SETTLED machine, per-suite, all green:
+- `record-navigation` (chromium+touch): slide is lateral never rises; slotGap ~0
+  after put-back following a 10-record slide; put-back lands right.
+- `wall-scene`: settles at viewport centre (settledScreenY ≈ viewport/2, ±60).
+- `scroll-lock` (rewritten): wall now frozen AT `before` (no rise-scroll), pin
+  == before, scroll-while-out inert, put-back leaves it at `before`.
+- `rise*`: rise still starts at the spine (unit-19 mapping intact).
+- `cover-unlit`: render 47.0/40.0/31.0 == source 47/40/31 EXACT. The earlier
+  failure was the sampler anchoring on the CANVAS centre; the record now floats
+  at the VIEWPORT centre, so the shot is clipped to the record's reported
+  on-screen position (settledScreenY + settledNdcX) — a locating fix, the
+  luminance was never wrong.
+- typecheck / lint / build all clean.
+
+The full no-argument E2E run is BLOCKED by machine starvation: a run took 1.6h
+under load avg 23-28 (healthy ~10min). Its list reporter printed "251 passed,
+20 skipped, 0 failed" (exit 0), but `.last-run.json` showed a stale
+`status:failed` with a `failedTests` array and 20 tests were skipped under load
+— NOT a trustworthy clean run either way. DISCARD per the load-49 precedent.
+Re-run `npx playwright test --retries=0` (no file arg) once load is back to ~2-4
+before committing. Do NOT commit on the strength of the starved run.
+
+---
+
+### RULE: a test must FIND the element, not assume where it sits
+
+Three instances in the shelf strand now, same shape:
+
+1. **The fixed-coordinate spine probe** — clicked a hard-coded `(x, y)` to hit a
+   spine; broke when the row that was on-screen changed with scroll. Fixed by
+   sweeping a grid until `data-pulled` reports a hit.
+2. **The off-screen wall-drag coordinate** — asserted a drag "on the wall" using
+   a literal y that assumed the record's position; a layout change moved the
+   record under that point.
+3. **cover-unlit sampled the canvas centre** — the record used to rise near the
+   canvas midpoint, so `at(width/2, height/2)` was the face. The placement fix
+   floats the record at the VIEWPORT centre instead, and the canvas-centre pixel
+   became dimmed wall. The luminance was never wrong; the test located the record
+   by assuming where it sits. Fixed by clipping the shot to the record's REPORTED
+   on-screen position (`settledScreenY` + `settledNdcX`).
+
+**The rule:** a test that hard-codes a position is asserting a layout it does not
+own. It reads like verification but constrains nothing about the code under test,
+and it breaks when the layout changes for good reasons — a false failure that
+costs a debugging session to distinguish from a real one. Locate the target by
+FINDING it (poll a state attribute, scan until a hit, read the element's reported
+position) rather than by assuming a coordinate. The scene already exposes what a
+test needs — `data-pulled`, `data-phase`, `settledScreenY`, `settledNdcX`,
+`slotGap` — precisely so assertions can ask where things are instead of guessing.
+
+Same family as the §2 "name the line it would fail against" rule: a coordinate
+literal fails against the layout, not against the behaviour the test names.

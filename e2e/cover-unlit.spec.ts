@@ -106,7 +106,36 @@ test('a photographed cover renders at its source luminance, unlit', async ({ pag
   await expect(page.getByTestId('record-chrome')).toBeVisible();
   await page.waitForTimeout(900);
 
-  const shot = await scene.screenshot();
+  /*
+    **The record settles at the VISIBLE viewport centre, not the wall-canvas
+    centre** (step 15 placement fix — it floats in front of a frozen wall,
+    placed by projection rather than by scrolling its slot to the middle). So a
+    screenshot of the whole tall wall element has its geometric centre out on
+    the dimmed wall, and the centre-anchored scan below would sample that, not
+    the face. Clip the shot to a viewport-sized box centred on the record's
+    reported on-screen position, so the centre pixel is the face again. The
+    scene exposes that position as `settledScreenY` (page-relative) and
+    `settledNdcX` (its horizontal NDC); the record is near enough to the
+    horizontal centre that a wide clip keeps the whole face in frame.
+  */
+  const centreOnScreen = await scene.evaluate((el) => {
+    const h = el as HTMLElement;
+    const rect = h.querySelector('canvas')!.getBoundingClientRect();
+    /* Both are viewport-relative: settledScreenY comes from getBoundingClientRect().top. */
+    const screenY = Number(h.dataset.settledScreenY);
+    const ndcX = Number(h.dataset.settledNdcX ?? '0');
+    const x = rect.left + ((ndcX + 1) / 2) * rect.width;
+    return { x, y: screenY };
+  });
+  const clipHalf = 300;
+  const vw = page.viewportSize()!;
+  const clip = {
+    x: Math.max(0, Math.round(centreOnScreen.x - clipHalf)),
+    y: Math.max(0, Math.round(centreOnScreen.y - clipHalf)),
+    width: Math.min(2 * clipHalf, vw.width - Math.max(0, Math.round(centreOnScreen.x - clipHalf))),
+    height: Math.min(2 * clipHalf, vw.height - Math.max(0, Math.round(centreOnScreen.y - clipHalf))),
+  };
+  const shot = await page.screenshot({ clip });
 
   /**
    * **The sample window is FOUND, not assumed.**

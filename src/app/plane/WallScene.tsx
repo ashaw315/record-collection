@@ -224,6 +224,8 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     setTilt: (next: { rotateX: number; rotateY: number }) => void;
     /** Does a viewport point land on the pulled record's mesh? (touch boundary) */
     hitsPulledRecord: (clientX: number, clientY: number) => boolean;
+    /** Recompute the pulled destination from the current scroll (call at pull start). */
+    recomputeDestination: () => void;
     /**
      * **A lateral slide between records (13b).** `progress` 0..1 moves `fromId`
      * off one side and `toId` in from the other, both at the settled depth. Not
@@ -349,18 +351,39 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
       what accounts for the viewport being narrow. `window.innerWidth/Height` is
       the screen; the canvas (`width` x `height`) is the whole wall and is not it.
     */
-    const destination = pulledDestination({
-      wallWidth: width,
-      wallHeight: height,
-      viewport: { width: window.innerWidth, height: window.innerHeight },
-      /*
-        Near full-bleed. On a narrow canvas the width is what binds, and 0.9
-        makes the record own the frame (≈320px on screen at 390px, its readable
-        floor) rather than sitting back at the wall's default 55% where it read
-        as a distant speck.
-      */
-      widthFill: 0.9,
-    });
+    /*
+      **The destination is recomputed per pull from the CURRENT scroll**, so the
+      record arrives at the VISIBLE viewport centre whatever row its slot is in —
+      not at the wall's centre, which needed the wall scrolled to be seen and
+      clamped at the top/bottom rows (the mis-PLACED record). x and z do not
+      depend on scroll; only y does.
+    */
+    /* The canvas element's offset from the DOCUMENT top (fixed; nav sits above). */
+    const canvasDocTop = () => host.getBoundingClientRect().top + window.scrollY;
+    const destinationFor = (scrollY: number) =>
+      pulledDestination({
+        wallWidth: width,
+        wallHeight: height,
+        viewport: { width: window.innerWidth, height: window.innerHeight },
+        /*
+          Near full-bleed. On a narrow canvas the width is what binds, and 0.9
+          makes the record own the frame (≈320px on screen at 390px, its readable
+          floor) rather than sitting back at the wall's default 55% where it read
+          as a distant speck.
+        */
+        widthFill: 0.9,
+        /*
+          In CANVAS coordinates: the viewport centre's page-y minus the canvas's
+          own offset from the document top. The canvas starts below the nav (~197
+          px), so the viewport centre is NOT at canvas-y `vh/2` — it is that much
+          higher. Omitting this put the record ~197px too low (below the panel,
+          off the bottom).
+        */
+        viewCentrePx: scrollY + window.innerHeight / 2 - canvasDocTop(),
+        viewportHeight: window.innerHeight,
+      });
+    /* Recomputed when a record is pulled; the initial value is only a placeholder. */
+    let destination = destinationFor(window.scrollY);
     const camera = new PerspectiveCamera(WALL_FOV_DEGREES, width / height, 1, cameraDistance * 2);
     camera.position.set(width / 2, -height / 2, cameraDistance);
     camera.lookAt(width / 2, -height / 2, 0);
@@ -866,6 +889,17 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
           host.dataset.rotY = String(Math.round(mesh.rotation.y * 1000) / 1000);
           host.dataset.settledNdcX = String(ndc.x);
           host.dataset.settledNdcY = String(ndc.y);
+          /*
+            **The record's centre in VIEWPORT-relative screen pixels.** NDC is
+            over the whole canvas frame; the fix places the record at the visible
+            viewport centre, whose NDC is not zero, so a test must read the
+            SCREEN position. The canvas maps NDC y ∈ [-1,1] to its own height, and
+            the canvas sits at `box.top` in the viewport.
+          */
+          const canvasEl = renderer.domElement;
+          const canvasRect = canvasEl.getBoundingClientRect();
+          const screenY = canvasRect.top + ((1 - ndc.y) / 2) * canvasRect.height;
+          host.dataset.settledScreenY = String(Math.round(screenY));
 
           /*
             **The size does not interpolate; the ROTATION reveals it.** The mesh
@@ -948,7 +982,17 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
         const travel = frameWidth * 1.1; // just past the frame edge, fully off
 
         const sign = direction === 'next' ? -1 : 1;
-        const eased = 1 - Math.pow(1 - progress, 3);
+
+        /*
+          **Per-channel easing, like a gallery (13b).** The outgoing record
+          ACCELERATES away (ease-IN, cubic) — it is leaving, so it should speed
+          up toward the edge. The incoming DECELERATES into place (ease-OUT) — it
+          arrives and settles. A single ease-out shared by both (unit 11's
+          mistake, which the developer flagged) makes the outgoing drift out
+          slowly, reading as mechanical. Two curves, one per direction.
+        */
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        const easeIn = Math.pow(progress, 3);
 
         const fromMesh = meshes.get(fromId);
         const toMesh = meshes.get(toId);
@@ -971,10 +1015,10 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
           mesh.scale.set(SPINE_HEIGHT, SPINE_HEIGHT, boxDepth({ recordId: toId, height: SPINE_HEIGHT, progress: 1 }));
         };
 
-        /* Outgoing: from centre to fully off, in `sign` direction. */
-        placeAt(fromMesh, sign * travel * eased);
-        /* Incoming: from fully off (opposite side) to centre. */
-        placeAt(toMesh, -sign * travel * (1 - eased));
+        /* Outgoing: centre → off, ACCELERATING away (ease-in). */
+        placeAt(fromMesh, sign * travel * easeIn);
+        /* Incoming: off → centre, DECELERATING into place (ease-out). */
+        placeAt(toMesh, -sign * travel * (1 - easeOut));
 
         host.dataset.pulledId = toId;
         host.dataset.pulledProgress = String(progress);
@@ -986,6 +1030,9 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
         specifically — not the wall spines — so `touch-tilt.ts`'s decision can be
         made from a real hit test rather than a rectangle guess.
       */
+      recomputeDestination: () => {
+        destination = destinationFor(window.scrollY);
+      },
       hitsPulledRecord: (clientX, clientY) => {
         const pulled = pulledIdRef.current;
         if (pulled === null) return false;
@@ -1255,6 +1302,15 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
       scene.setPulled(pulledId, 1);
       return;
     }
+
+    /*
+      **Recompute the destination from the CURRENT scroll**, before the rise
+      animates, so the record settles at the VISIBLE viewport centre wherever its
+      slot is — top row, bottom row, or middle. The scroll does not change during
+      the pull (the lock freezes it and there is no rise-scroll any more), so this
+      one read holds for the whole rise.
+    */
+    scene.recomputeDestination();
 
     /**
      * **Driven through the render loop's own `animate`, not a second rAF.**
@@ -1545,40 +1601,22 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
   }, [state]);
 
   /**
-   * **Pulling a record scrolls the wall's centre into view.**
+   * **The record comes to the reader; the wall does NOT scroll (13b).**
    *
-   * The record settles on the camera's axis — the wall's centre — because the
-   * camera is fixed there and A24b forbids panning it. Two other answers were
-   * measured wrong last unit: centring the record on the window put it at NDC
-   * 0.62, on the visible slice of the wall 0.93, both exactly its offset from
-   * the axis projected.
+   * The rise once scrolled the wall to bring the record's slot to the viewport
+   * centre — but that made the record's screen POSITION depend on the slot's
+   * row, and it clamped at the top and bottom rows, leaving the record
+   * mis-placed (overlapping the panel, or off the bottom edge). Now the record
+   * settles at the VISIBLE viewport centre directly (`pulledDestination`'s
+   * `viewCentrePx`), so nothing needs to scroll — and the phone slide bug goes
+   * with it, since a top-row record no longer yanks the wall.
    *
-   * So the record cannot move to the reader; the reader moves to the record.
-   * The canvas already scrolls with the page — that is what the fixed camera
-   * bought — so this uses the mechanism that exists rather than adding one.
-   *
-   * Only on the rise: scrolling during a return would chase a record that is
-   * going away.
+   * This effect now only REMEMBERS where the reader was, so the scroll lock's
+   * `restoreTo` returns there on put-back. No `window.scrollTo`.
    */
   useEffect(() => {
     if (state.phase !== 'rising') return;
-    const host = mount.current;
-    if (host === null) return;
-
-    /*
-      Remembered BEFORE the scroll below, so "put back" can return the wall to
-      where the reader was rather than where the rise moved it.
-    */
     if (preRiseScrollY.current === null) preRiseScrollY.current = window.scrollY;
-
-    const box = host.getBoundingClientRect();
-    // Where the wall's centre currently sits in the page.
-    const centre = window.scrollY + box.top + box.height / 2;
-
-    window.scrollTo({
-      top: Math.max(0, centre - window.innerHeight / 2),
-      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-    });
   }, [state.phase]);
 
   /**
@@ -1644,9 +1682,18 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     complete first, then the lock captures the centred position. 'flipping' keeps
     the lock while the record is turned.
   */
-  useScrollLock(state.phase === 'settled' || state.phase === 'flipping', {
-    restoreTo: preRiseScrollY,
-  });
+  /*
+    **Locked through 'sliding' too**, not only 'settled'/'flipping'. A slide is a
+    record out — the page must stay frozen behind the lateral move. Releasing
+    the lock mid-slide ran its restore-scroll and scrolled the wall away, sending
+    the record (placed at the wall's centre in world space) off-screen; worst for
+    a top-row record, which restored to the top. The scroll-lock test asserts
+    across pull and return only, so a slide slipped through (NOTES).
+  */
+  useScrollLock(
+    state.phase === 'settled' || state.phase === 'flipping' || state.phase === 'sliding',
+    { restoreTo: preRiseScrollY },
+  );
 
   /* Clear the remembered scroll once the record is fully back. */
   useEffect(() => {

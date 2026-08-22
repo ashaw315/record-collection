@@ -270,16 +270,27 @@ test('the pulled record settles CENTRED in view, at any collection size', async 
       const el = document.querySelector('[data-testid="wall-scene"]') as HTMLElement;
       return {
         x: Number(el.dataset.settledNdcX ?? 9),
-        y: Number(el.dataset.settledNdcY ?? 9),
+        screenY: Number(el.dataset.settledScreenY ?? -1),
+        viewportH: window.innerHeight,
       };
     });
 
     /*
-      Tolerance is generous because the rise may not have settled to the last
-      sub-pixel; the defect was 0.838, so anything this catches is real.
+      **Horizontally centred** on the camera axis — NDC x ~0, unchanged.
     */
     expect(Math.abs(settled.x), `${count} records: horizontally centred`).toBeLessThan(0.05);
-    expect(Math.abs(settled.y), `${count} records: vertically centred`).toBeLessThan(0.05);
+
+    /*
+      **Vertically centred in the VISIBLE VIEWPORT** (13b), not at the wall's
+      centre. The record now settles at the viewport centre whatever row its slot
+      is in — so its SCREEN y is ~half the viewport height, not NDC 0. The old
+      assertion (NDC y ~0) encoded the wall-centre placement that made a top-row
+      record land off-centre; this asserts the fix.
+    */
+    expect(
+      Math.abs(settled.screenY - settled.viewportH / 2),
+      `${count} records: at the viewport centre (screenY ${settled.screenY}, half ${settled.viewportH / 2})`,
+    ).toBeLessThan(60);
   }
 });
 
