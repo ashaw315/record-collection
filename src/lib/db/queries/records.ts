@@ -584,6 +584,22 @@ export async function countRecordReferences(id: string): Promise<number> {
   return countReferences('records', id);
 }
 
+/**
+ * The whole collection's size, ignoring every filter — the "M" in the
+ * collection heading's "N of M records".
+ *
+ * The heading carries this when a filter is active, which is what let the wall
+ * drop its four-row minimum (A24d amended): the count states how many the
+ * collection holds, so the wall can be as tall as its contents rather than
+ * saying it in empty shelf. A bare `count(*)` with no where clause, because the
+ * total is a fact about the collection, not about the current view.
+ */
+export async function countAllRecords(): Promise<number> {
+  const db = getDb();
+  const [row] = await db.select({ value: sql<number>`count(*)::int` }).from(records);
+  return row?.value ?? 0;
+}
+
 export type RecordDeleteOutcome =
   /**
    * `orphanedBlobUrls` — the images that cascaded, so the caller can delete the

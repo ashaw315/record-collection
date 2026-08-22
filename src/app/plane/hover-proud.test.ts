@@ -97,8 +97,9 @@ describe('shouldRedraw', () => {
 
   it('does not redraw while the pointer is over nothing', () => {
     /**
-     * Moving across empty shelf below the records is ordinary now that the room
-     * is four rows deep, and it must be as free as resting on a spine.
+     * Moving across empty shelf — the space to the right of a partial last row,
+     * or below the records on a short wall — is ordinary, and it must be as free
+     * as resting on a spine.
      */
     expect(shouldRedraw({ previous: null, next: null })).toBe(false);
   });

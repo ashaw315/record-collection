@@ -67,31 +67,18 @@ const SPINE_GAP = 3;
  */
 export const WALL_EDGE_MARGIN = 40;
 
-/**
- * The room is at least four shelves deep, however few records are on it.
- *
- * **A room has a size.** Filtering to 26 records collapsed the wall to a single
- * row — the room shrink-wrapping its contents. That is the same failure as
- * every rejected minimum-WIDTH candidate in units 20-22, arriving vertically
- * rather than horizontally: a rectangle that stops has a size, and a reader
- * interprets that size as a fact about the collection.
- *
- * Four rows of empty shelf below a filtered result says *these are the ones
- * that matched*. One row that fits the result says *this is the whole
- * collection*, which is false.
- *
- * **This is also what satisfies A24d.** That rule wanted a filtered wall to
- * keep its shape rather than repack, and holding positions for records that are
- * not rendered is a hard mechanism with a lot of ways to be subtly wrong. Empty
- * shelf below the results achieves the same honesty far more simply: the room
- * stays the size of the room.
- *
- * **The room does not shrink to fit the window**, any more than a bookcase
- * does. Four rows of 240px spines is roughly 1000px, which exceeds a laptop
- * viewport once the nav and controls are accounted for — and that is correct.
- * You scroll.
- */
-export const MIN_SHELF_ROWS = 4;
+/*
+  The wall is as tall as its contents — no minimum row count.
+
+  A four-row floor once stood here ("a room has a size"): a filtered result kept
+  the room's height and said "these are the ones that matched" with empty shelf
+  below. Removed after judging it on both screens with real data — at 390px the
+  empty rows stretched the canvas and pushed records to odd positions, and at
+  1280 they were two empty shelves saying in furniture what a count says in
+  words. A24d, which the floor had satisfied, is amended to the same effect: the
+  heading states "N of M records" when a filter is active, and the wall is the
+  size of what is on it.
+*/
 
 const WALL_PADDING = WALL_EDGE_MARGIN;
 
@@ -143,11 +130,14 @@ export function layoutWall({
   }
 
   /*
-    At least the room's minimum, and more when the collection needs it. The
-    `Math.max` is what makes this a FLOOR rather than a fixed height — a large
-    collection still gets every row it needs.
+    As tall as its contents — one shelf per row the records actually fill, no
+    floor. The four-row minimum was removed (A24d amended): on both screens the
+    empty rows did not earn their place — at 390px they stretched the canvas, at
+    1280 they said in furniture what the heading's count now says in words. The
+    "most of the collection is hidden" signal lives in "N of M records", not in
+    empty shelf.
   */
-  const rowCount = Math.max(row + 1, MIN_SHELF_ROWS);
+  const rowCount = row + 1;
 
   /*
     **One shelf per row, spanning the FULL width.** §10b: "the surface runs edge

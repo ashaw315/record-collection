@@ -3,11 +3,12 @@ import { AppHeader } from '@/components/AppHeader';
 import { CollectionFilters } from './CollectionFilters';
 import { ShelfControls } from './ShelfControls';
 import { activeFilterCount } from './active-filters';
+import { collectionCountLabel } from './collection-count';
 import { CollectionList, type CollectionRow } from './CollectionList';
 import { WallScene } from './plane/WallScene';
 import { CollectionPagination } from './CollectionPagination';
 import { parseCollectionParams } from './collection-params';
-import { listRecords, recordFacets } from '@/lib/db/queries/records';
+import { listRecords, recordFacets, countAllRecords } from '@/lib/db/queries/records';
 import { shelfRecords } from '@/lib/db/queries/shelf';
 import { DEFAULT_PAGE_SIZE, type Offset } from '@/lib/api/query-params';
 
@@ -75,7 +76,12 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
    */
   const shelf = params.view === 'shelf' ? await shelfRecords(params.filters) : null;
 
-  const [records, facets] = await Promise.all([
+  /*
+    `collectionTotal` is the UNFILTERED grand total — the "M" in "N of M
+    records" the heading shows when a filter is active. In parallel with the
+    rows and facets so it adds no latency; a bare count(*) is cheap.
+  */
+  const [records, facets, collectionTotal] = await Promise.all([
     listRecords({
       limit: PAGE_SIZE,
       // The branded Offset is minted here from a bounded page number: parse
@@ -85,6 +91,7 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
       filters: params.filters,
     }),
     recordFacets(),
+    countAllRecords(),
   ]);
 
   return (
@@ -96,7 +103,17 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
           <div>
             <h1 className="font-heading text-xl font-semibold tracking-tight">Collection</h1>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              {records.total === 1 ? '1 record' : `${records.total} records`}
+              {/*
+                Filter-aware: "34 of 312 records" when a filter is active. This
+                is the signal the wall's four-row minimum used to carry in empty
+                shelf (A24d, amended) — the count says how many the collection
+                holds, so the wall can be as tall as its contents.
+              */}
+              {collectionCountLabel({
+                matched: records.total,
+                total: collectionTotal,
+                filtered: activeFilterCount(params) > 0,
+              })}
             </p>
           </div>
           {/* The primary action, in the accent — the only place oxblood appears

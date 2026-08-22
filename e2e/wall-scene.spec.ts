@@ -122,21 +122,34 @@ test.beforeEach(async ({ page }) => {
 /**
  * Clicks empty wall to put a record back.
  *
- * **Clamped to the viewport**, because the wall is four shelves deep now and a
- * canvas taller than the window is ordinary: three tests clicked at
- * `box.y + box.height - 30`, which after the room's minimum landed BELOW the
- * fold and hit nothing at all. They failed reporting an unchanged slot gap,
- * which reads as "the return never ran" — the right symptom from the wrong
- * cause.
+ * **Clamped to the viewport**, because a large collection's wall is many rows
+ * deep and a canvas taller than the window is ordinary: three tests clicked at
+ * `box.y + box.height - 30`, which for a multi-row wall landed BELOW the fold
+ * and hit nothing at all. They failed reporting an unchanged slot gap, which
+ * reads as "the return never ran" — the right symptom from the wrong cause.
+ * (The wall's four-row minimum that first surfaced this was removed — A24d
+ * amended — but the clamp stands: these fixtures are 130 records, several rows.)
  *
  * The far right of a row is empty wall on any collection that does not fill it,
  * so the raycast misses every spine and dismisses.
  */
 async function dismiss(page: Page, box: { x: number; y: number; width: number; height: number }) {
-  const viewport = page.viewportSize();
-  const bottom = Math.min(box.y + box.height - 30, (viewport?.height ?? 900) - 40);
+  /*
+    **The far right of the FIRST row** — empty wall on any collection that does
+    not fill row 0, which the small fixtures here never do. This used to click
+    the canvas BOTTOM, relying on the four-row minimum to leave empty shelf
+    below the records; with that minimum gone (A35) a short collection is one
+    row and the bottom click landed ON a spine, which navigates instead of
+    dismissing. The row's own vertical centre is stable regardless of how many
+    rows the wall has.
 
-  await page.mouse.click(box.x + box.width - 30, bottom);
+    Clamped into the viewport, because a tall wall's row 0 can sit above the
+    fold after a pull scrolls the scene — a click above y=0 hits nothing and the
+    raycast never runs.
+  */
+  const SPINE_HEIGHT = 240; // src/app/shelf/spine.ts; a row's own height
+  const rowCentre = Math.max(box.y + SPINE_HEIGHT / 2, 40);
+  await page.mouse.click(box.x + box.width - 20, rowCentre);
 }
 
 async function openWall(page: Page, artistId: string) {
@@ -475,10 +488,12 @@ test('the wall RE-WRAPS when its container changes width', async ({ page }) => {
    * a re-wrap actually means.
    */
   /**
-   * **The fixture must EXCEED the room's minimum at the wide width**, or the
-   * re-wrap is invisible: four shelves is the floor, so 60 records gave four
-   * rows at 1280 and four at 600 and the row count could not move. 200 records
-   * is five rows at 1280 and more when narrowed.
+   * **The fixture must fill several rows at the wide width**, or the re-wrap is
+   * invisible: a wall that is one row at 1280 and still one row at 600 cannot
+   * show the row count moving. 200 records is several rows at 1280 and more when
+   * narrowed. (This once had to clear the four-row floor as well; that floor is
+   * gone — A24d amended — but a multi-row fixture is still what makes a re-wrap
+   * observable.)
    *
    * The same shape as every discriminating fixture in this strand — a test at a
    * size the rule already covers cannot see the rule working.
@@ -620,28 +635,23 @@ test('a keyboard can walk the wall and open a record', async ({ page }) => {
   expect(titles.some((t) => heading?.includes(t)), `opened "${heading}"`).toBe(true);
 });
 
-test('the room is FOUR shelves deep however few records matched', async ({ page }) => {
+test('the wall is as tall as its CONTENTS — a small result is a small wall', async ({ page }) => {
   /**
-   * **A room has a size.** Filtering to 26 records collapsed the wall to a
-   * single row — the room shrink-wrapping its contents. That is the same
-   * failure as every rejected minimum-WIDTH candidate in units 20-22, arriving
-   * vertically: a rectangle that stops has a size, and a reader reads that size
-   * as a fact about the collection.
-   *
-   * Four rows of empty shelf below a filtered result says *these are the ones
-   * that matched*; one row that fits the result says *this is all there is*.
+   * **The four-row minimum is gone (A24d amended).** It reserved four shelves
+   * however few records matched, so a filtered result sat above rows of empty
+   * shelf — meant to say "these are the ones that matched". Judged on both
+   * screens with real data it did not earn its place: at 390px the empty rows
+   * stretched the canvas and pushed records to odd positions, and at 1280 they
+   * said in furniture what the heading's count now says in words ("N of M
+   * records"). So the wall is exactly the rows its records fill.
    *
    * **The discriminating fixture is a SHORT collection.** A wall that already
-   * fills four rows cannot tell a minimum from its absence — the same shape as
-   * unit 22's plane needing one record and many, and unit A's centring needing
-   * three rows rather than one.
-   *
-   * **This is what satisfies A24d**, whose gaps rule wanted a filtered wall to
-   * keep its shape rather than repack. Holding positions for unrendered records
-   * is a hard mechanism; empty shelf below the results achieves the same honesty
-   * far more simply.
+   * fills several rows cannot tell "no minimum" from a minimum it exceeds. One
+   * record is one shelf; a handful that fits one row is one shelf. The old
+   * contract forced 4 here — this is its inversion, the E2E twin of the
+   * `wall-layout` unit test.
    */
-  for (const count of [1, 5, 26]) {
+  for (const count of [1, 5]) {
     const { artistId } = await seed(page, count);
     await openWall(page, artistId);
 
@@ -651,7 +661,7 @@ test('the room is FOUR shelves deep however few records matched', async ({ page 
       ),
     );
 
-    expect(rows, `${count} records must still get a room, not a strip`).toBe(4);
+    expect(rows, `${count} records fit one row, so the wall is one shelf — not four`).toBe(1);
   }
 });
 
@@ -1035,4 +1045,52 @@ test('a short collection still fills the wall', async ({ page }) => {
     box.width,
     'the wall spans the screen with five records on it',
   ).toBeGreaterThan(viewport.width * 0.9);
+});
+
+test('a record pulled from a SHORT wall is contained and full-size, not clipped', async ({
+  page,
+}) => {
+  /**
+   * **The regression removing the four-row minimum exposed (A35).** The canvas
+   * is the wall — 1 world unit to 1 screen pixel — so a one-row wall's canvas is
+   * ~250px tall. The pulled record floats at the VIEWPORT centre (the placement
+   * fix), which on a 900px window is ~450px down: OUTSIDE a 250px canvas. The
+   * record rendered tiny and clipped at the canvas edge — `cover-unlit` caught
+   * it as a sample window under 40px, and it is visible as a stamp-sized square.
+   *
+   * The fix decouples the RENDER surface from the wall's content height: the
+   * canvas and camera are at least viewport-tall, so a floating record is
+   * contained, while the shelves still draw only for the rows the records fill
+   * (the wall stays as-tall-as-contents visually). Asserted on the settled
+   * record's projected NDC — inside the frustum on BOTH axes means on-screen and
+   * whole — and on its on-screen height being a real fraction of the viewport.
+   */
+  const { artistId } = await seed(page, 3);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await openWall(page, artistId);
+
+  const scene = page.getByTestId('wall-scene');
+  const box = await scene.locator('canvas').boundingBox();
+  if (box === null) return;
+
+  await clickASpine(page, box);
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          () => (document.querySelector('[data-testid="wall-scene"]') as HTMLElement).dataset.phase ?? '',
+        ),
+      { timeout: 10_000 },
+    )
+    .toMatch(/settled/);
+
+  const m = await page.evaluate(() => {
+    const el = document.querySelector('[data-testid="wall-scene"]') as HTMLElement;
+    return { ndcX: Number(el.dataset.settledNdcX), ndcY: Number(el.dataset.settledNdcY) };
+  });
+
+  /* Inside the frustum on both axes: the whole record is on-screen, not off the
+     canvas bottom (the clip was ndcY ≈ -1.04, outside the range). */
+  expect(Math.abs(m.ndcX), `ndcX ${m.ndcX} within frustum`).toBeLessThan(1);
+  expect(Math.abs(m.ndcY), `ndcY ${m.ndcY} within frustum — not clipped below the canvas`).toBeLessThan(1);
 });

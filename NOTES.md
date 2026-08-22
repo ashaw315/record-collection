@@ -14065,3 +14065,32 @@ test needs — `data-pulled`, `data-phase`, `settledScreenY`, `settledNdcX`,
 
 Same family as the §2 "name the line it would fail against" rule: a coordinate
 literal fails against the layout, not against the behaviour the test names.
+
+---
+
+### 2026-08-22 — the four-row wall minimum is gone (A35, amends A24d)
+
+`MIN_SHELF_ROWS` removed from `wall-layout.ts`: `rowCount = row + 1`. The wall is
+as tall as its contents. The "most of the collection is hidden" signal moved to
+the heading — `collectionCountLabel` says "N of M records" when a filter is
+active, fed by filtered `listRecords.total` (matched) and the new unfiltered
+`countAllRecords()` (total). A24d re-satisfied by the count, not the room's size.
+SPEC §10b amended; PROMPT-spec-amendments-A35.md written.
+
+Placement proved in ONE pass against the real 125-record collection (live :3000,
+throwaway harness, since removed): top/mid/bottom rows + a filtered wall, at 390
+and 1280 — every case landed at the viewport centre, **max |delta| = 0px**,
+ndcX = 0. The committed twin is `wall-scene.spec.ts` "settles CENTRED at any
+collection size" (130 records, 3 rows) — the live proof is not committable
+(real DB + real password), so the seeded twin carries the property.
+
+Adam's two flagged regressions checked: **left-edge bleed is NOT present** —
+canvas insets 16px (breakout px-4) + 40px WALL_EDGE_MARGIN inside; first spine
+reads fully at 1280 and 390 (cropped screenshots confirm). What looked like
+clipping in the full-viewport shot was rotated-text density. **Second-row abrupt
+end** is the partial last row — correct by design, now explicitly tested
+(last row partial, shelf still full-width).
+
+Stale "four rows/shelves" comments corrected in the same unit (wall-scene.spec,
+hover-proud.test) rather than left asserting the removed mechanism — the
+"a test asserts a layout it does not own" rule, applied to prose.

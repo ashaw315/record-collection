@@ -299,7 +299,22 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
 
     function build(host: HTMLDivElement, width: number, layout: WallLayout): () => void {
 
-    const height = layout.height;
+    /*
+      **Two heights, since A35 removed the four-row minimum.** `layout.height` is
+      the CONTENT height — the rows the records actually fill — and the shelves
+      draw against it. `height` is the RENDER surface: at least the viewport, so
+      a pulled record floating at the viewport centre is contained rather than
+      clipped off the bottom of a one-row canvas (which read as a stamp-sized,
+      cut-off record). The extra height below the content is WALL_BACK, which
+      reads as wall, not as empty shelves — the very thing the minimum was
+      removed to avoid. Content sits at the top (y = 0..layout.height); the
+      camera frames the taller surface at 1:1, so a spine is still 240px.
+
+      Guarded against SSR/measurement gaps with a sane floor, and it only ever
+      GROWS the surface — a tall collection keeps its own height.
+    */
+    const viewportFloor = typeof window === 'undefined' ? 0 : window.innerHeight;
+    const height = Math.max(layout.height, viewportFloor);
 
     const renderer = new WebGLRenderer({ antialias: true, alpha: false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));

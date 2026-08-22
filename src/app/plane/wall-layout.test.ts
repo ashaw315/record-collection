@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  MIN_SHELF_ROWS,
   WALL_EDGE_MARGIN,
   layoutWall,
   type WallSpine,
@@ -97,10 +96,18 @@ describe('layoutWall', () => {
     const wall = layoutWall({ spines: spines(45), viewportWidth: 1000 });
 
     /*
-      Four, not two: the room's minimum. The property under test is that every
-      shelf spans the wall — including the partial row and the empty ones.
+      One shelf per row the records actually fill — no floor. The discriminating
+      property is that the LAST row is PARTIAL (the records do not reach the
+      right edge) and its shelf still spans the full width, which is what tells a
+      plane from a container. Asserted against the rows the records occupy rather
+      than a literal, so it does not re-encode a minimum that no longer exists.
     */
-    expect(wall.shelves.length, 'one shelf per row, including the empty ones').toBe(4);
+    const rows = wall.placed[wall.placed.length - 1].row + 1;
+    const lastRow = wall.placed.filter((p) => p.row === rows - 1);
+    const lastRight = Math.max(...lastRow.map((p) => p.x + p.width));
+    expect(lastRight, 'the last row is partial — records stop before the edge').toBeLessThan(1000 - WALL_EDGE_MARGIN);
+
+    expect(wall.shelves.length, 'one shelf per occupied row').toBe(rows);
     for (const shelf of wall.shelves) {
       expect(shelf.width, 'the shelf spans the wall').toBeCloseTo(1000, 5);
       expect(shelf.x, 'and starts at its left edge').toBeCloseTo(0, 5);
@@ -141,8 +148,15 @@ describe('layoutWall', () => {
      */
     const wall = layoutWall({ spines: spines(45), viewportWidth: 1000 });
 
-    /* Four rows now: the room's minimum, not the two these records occupy. */
-    expect(wall.height).toBeCloseTo(4 * (SPINE_HEIGHT + SHELF_EDGE), 5);
+    /*
+      As tall as its contents. 45 spines of ~20px + 3px gap on a 1000px row wrap
+      into a known number of rows; the height covers exactly those, no floor. The
+      four-row minimum was removed (A24d amended) — a small result is a small
+      wall, and the count says how many the collection holds.
+    */
+    const rows = wall.placed[wall.placed.length - 1].row + 1;
+    expect(wall.shelves.length).toBe(rows);
+    expect(wall.height).toBeCloseTo(rows * (SPINE_HEIGHT + SHELF_EDGE), 5);
   });
 
   it('survives a viewport narrower than one spine without looping forever', () => {
@@ -165,42 +179,52 @@ describe('layoutWall', () => {
     expect(wall.height).toBe(0);
   });
 
-  it('is at least FOUR shelves deep, however few records there are', () => {
+  it('is as tall as its CONTENTS — no minimum, so a small result is a small wall', () => {
     /**
-     * **A room has a size.** Filtering to 26 records collapsed the wall to a
-     * single row — the room shrink-wrapping its contents. That is the same
-     * failure as every rejected minimum-WIDTH candidate in units 20-22,
-     * arriving vertically: a rectangle that stops has a size, and a reader
-     * interprets it.
+     * **The four-row minimum is gone (A24d amended).** It was meant to say
+     * "these are the ones that matched, most of the collection is hidden" in
+     * furniture. On both screens it did not earn its place: at 390px the empty
+     * rows stretched the canvas and pushed records to odd positions, and at
+     * 1280 they were two empty shelves saying what the heading's count now says
+     * in words ("34 of 312 records").
      *
-     * Four rows of empty shelf below a filtered result says *these are the ones
-     * that matched*. One row that fits the result says *this is the whole
-     * collection*, which is false.
-     *
-     * **The discriminating fixture is a SHORT collection.** A wall that already
-     * fills four rows cannot tell a minimum from its absence — the same shape
-     * as unit 22's plane needing one record and many, and unit A's centring
-     * needing three rows rather than one.
+     * So a result that fills ONE row is exactly one row of shelf — no padding
+     * below it. The discriminating fixture is a SHORT collection: a wall that
+     * already fills several rows cannot tell "no minimum" from a minimum it
+     * happens to exceed.
      */
     for (const count of [1, 5, 26]) {
       const wall = layoutWall({ spines: spines(count), viewportWidth: 1000 });
+      const rows = wall.placed[wall.placed.length - 1].row + 1;
 
       expect(
         wall.shelves.length,
-        `${count} records must still get a room, not a shrink-wrapped strip`,
-      ).toBe(MIN_SHELF_ROWS);
-      expect(wall.height).toBeCloseTo(MIN_SHELF_ROWS * (SPINE_HEIGHT + SHELF_EDGE), 5);
+        `${count} records get exactly the rows they fill, no empty floor`,
+      ).toBe(rows);
+      expect(wall.height).toBeCloseTo(rows * (SPINE_HEIGHT + SHELF_EDGE), 5);
     }
   });
 
-  it('GROWS beyond the minimum with the collection', () => {
+  it('a single row of records is a single shelf, not four', () => {
+    /*
+      The exact regression the removal targets: five records on a 1000px row
+      occupy one row, and the wall must be one shelf tall. The old floor made
+      this four, with three empty shelves below — the defect on the phone.
+    */
+    const wall = layoutWall({ spines: spines(5), viewportWidth: 1000 });
+    expect(wall.placed.every((p) => p.row === 0), 'all five fit one row').toBe(true);
+    expect(wall.shelves.length).toBe(1);
+  });
+
+  it('GROWS with the collection — a large wall gets every row it needs', () => {
     /**
-     * The other half, and the one a floor breaks if it is written as a fixed
-     * height: a large collection must still get every row it needs.
+     * The other half: removing the floor must not cap the height either. A big
+     * collection still gets a row per wrap, and the last spine sits on the last
+     * shelf.
      */
     const big = layoutWall({ spines: spines(400), viewportWidth: 1000 });
 
-    expect(big.shelves.length).toBeGreaterThan(MIN_SHELF_ROWS);
+    expect(big.shelves.length).toBeGreaterThan(4);
     expect(big.placed[big.placed.length - 1].row).toBe(big.shelves.length - 1);
   });
 
