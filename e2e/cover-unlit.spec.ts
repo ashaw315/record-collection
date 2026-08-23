@@ -1,6 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
+import { registerCleanup, trackArtist } from './cleanup';
 import sharp from 'sharp';
 import { removeImagesFor, seedImage } from './seed';
+
+/* Records and artists removed after each test — see e2e/cleanup.ts. */
+registerCleanup();
 
 /**
  * **A photograph of artwork is rendered unlit, and this measures it.**
@@ -65,6 +69,7 @@ test('a photographed cover renders at its source luminance, unlit', async ({ pag
 
   const run = `${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`;
   const artist = await page.request.post('/api/artists', { data: { name: `Unlit-${run}` } });
+  trackArtist(((await artist.json()) as { id: string }).id);
   expect(artist.status(), 'the fixture must exist for this to test anything').toBe(201);
   const artistId = (await artist.json()).id as string;
 

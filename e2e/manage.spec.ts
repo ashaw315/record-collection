@@ -1,5 +1,9 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import { registerCleanup, trackArtist } from './cleanup';
 import { seedMatchCandidate } from './seed';
+
+/* Records and artists removed after each test — see e2e/cleanup.ts. */
+registerCleanup();
 
 /**
  * SPEC.md §10 `/manage`. These cover what only exists in a browser: inline
@@ -104,6 +108,8 @@ test('explains a refused delete with a count, not a code', async ({ page }) => {
 
   const tag = await page.request.post('/api/tags', { data: { name: tagName } });
   const artist = await page.request.post('/api/artists', { data: { name: artistName } });
+  trackArtist(((await artist.json()) as { id: string }).id);
+  trackArtist(((await artist.json()) as { id: string }).id);
 
   // Attached via the nested tagIds the records endpoint accepts (§5.2) — there
   // is no separate /records/:id/tags route, and inventing one in a test would
@@ -452,7 +458,8 @@ test('the lineup picker shows enough to choose between same-named artists', asyn
    */
   const suffix = `${Date.now()}`;
   const name = `Discharge ${suffix}`;
-  await page.request.post('/api/artists', { data: { name } });
+  const created = await page.request.post('/api/artists', { data: { name } });
+  trackArtist(((await created.json()) as { id: string }).id);
 
   await page.route('**/api/artists/*/lineup', async (route) => {
     await route.fulfill({
@@ -515,7 +522,8 @@ test('a lineup walk reports what it is doing, not just that it is busy', async (
    */
   const suffix = `${Date.now()}-progress`;
   const name = `Hot Tuna ${suffix}`;
-  await page.request.post('/api/artists', { data: { name } });
+  const created = await page.request.post('/api/artists', { data: { name } });
+  trackArtist(((await created.json()) as { id: string }).id);
 
   let resolveWalk: (() => void) | undefined;
   const walkFinished = new Promise<void>((resolve) => {
@@ -577,8 +585,11 @@ test('the artist list defaults to what you collect, and says what it is hiding',
   const sideman = `Alan Clark ${suffix}`;
 
   const artist = await page.request.post('/api/artists', { data: { name: collected } });
+  trackArtist(((await artist.json()) as { id: string }).id);
+  trackArtist(((await artist.json()) as { id: string }).id);
   const artistId = (await artist.json()).id;
-  await page.request.post('/api/artists', { data: { name: sideman } });
+  const created = await page.request.post('/api/artists', { data: { name: sideman } });
+  trackArtist(((await created.json()) as { id: string }).id);
   await page.request.post('/api/records', {
     data: { title: `Brothers in Arms ${suffix}`, artistId },
   });

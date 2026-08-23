@@ -1,4 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
+import { registerCleanup, trackArtist } from './cleanup';
+
+/* Records and artists removed after each test — see e2e/cleanup.ts. */
+registerCleanup();
 
 /**
  * Every screen must render the app header, so there is always a way back.
@@ -152,6 +156,7 @@ test('the record detail and edit screens render the main nav', async ({ page }) 
   const suffix = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
 
   const artist = await page.request.post('/api/artists', { data: { name: `Nav-${suffix}` } });
+  trackArtist(((await artist.json()) as { id: string }).id);
   const record = await page.request.post('/api/records', {
     data: { title: `Nav Record ${suffix}`, artistId: (await artist.json()).id },
   });

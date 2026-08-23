@@ -1,4 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
+import { registerCleanup, trackArtist } from './cleanup';
+
+/* Records and artists removed after each test — see e2e/cleanup.ts. */
+registerCleanup();
 
 /**
  * SPEC.md §11, E2E flow #8: "Request relationship-based suggestions and add one
@@ -39,7 +43,9 @@ async function post(page: Page, path: string, data: unknown) {
  */
 async function seedASuggestion(page: Page, suffix: string) {
   const owned = await post(page, '/api/artists', { name: `Discharge ${suffix}` });
+  trackArtist(owned.id as string);
   const candidate = await post(page, '/api/artists', { name: `Anti-Cimex ${suffix}` });
+  trackArtist(candidate.id as string);
 
   await post(page, '/api/records', {
     title: `Hear Nothing ${suffix}`,
@@ -138,6 +144,7 @@ test('an artist with no link to the collection is not suggested', async ({ page 
    * tests, which own a truncated database and can assert `[]` honestly.
    */
   const stranger = await post(page, '/api/artists', { name: `Nobody ${suffix}` });
+  trackArtist(stranger.id as string);
 
   await page.goto('/suggestions');
 
@@ -186,6 +193,7 @@ test('a gap-analysis prefill matches an artist the collection already has', asyn
   const name = `Discharge ${suffix}`;
 
   const artist = await post(page, '/api/artists', { name });
+  trackArtist(artist.id as string);
 
   await page.goto(
     `/want-list/new?artist=${encodeURIComponent(name)}&title=${encodeURIComponent(`Why ${suffix}`)}`,

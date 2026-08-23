@@ -1,5 +1,9 @@
 import zlib from 'node:zlib';
 import { expect, test, type Page } from '@playwright/test';
+import { registerCleanup, trackArtist } from './cleanup';
+
+/* Records and artists removed after each test — see e2e/cleanup.ts. */
+registerCleanup();
 
 /**
  * SPEC.md §10b — the shelf, and pulling a record off it.
@@ -133,6 +137,7 @@ async function seedRecord(page: Page, title: string) {
     data: { name: `Shelf-${suffix()}` },
   });
   const artistId = (await artist.json()).id as string;
+  trackArtist(artistId);
 
   const record = await page.request.post('/api/records', {
     data: { title, artistId },
@@ -236,6 +241,7 @@ test.skip('the shelf is a plane that ends where the wall ends, at any collection
    */
   const artist = await page.request.post('/api/artists', { data: { name: `Plane-${suffix()}` } });
   const artistId = (await artist.json()).id as string;
+  trackArtist(artistId);
 
   await page.request.post('/api/records', { data: { title: `Only one ${suffix()}`, artistId } });
   await page.goto(`/?artistId=${artistId}`);
@@ -893,6 +899,7 @@ test.skip('the panel values are READABLE against the panel ground', async ({ pag
     data: { name: `Readable-${suffix()}` },
   });
   const artistId = (await artist.json()).id as string;
+  trackArtist(artistId);
   const label = await page.request.post('/api/labels', {
     data: { name: `ReadableLabel-${suffix()}` },
   });

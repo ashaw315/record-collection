@@ -14296,3 +14296,55 @@ exposed snippet and suggestions creating through a local `post(page, ...)`
 wrapper, and **record-form creating through the UI form** — thirteen saves, no
 request literal, which this pattern structurally cannot see. It is exempted with
 that limitation written on the line rather than left as a silent hole.
+
+---
+
+### 2026-08-23 — E2E accumulation, unit (b): 145 -> 10, and what the residue is
+
+All thirteen listed specs converted to `trackArtist`/`registerCleanup`. Measured
+from a genuinely EMPTY database after each pass, which is what produced the two
+findings below — an end-only measurement would have shown a number that looked
+like success and hidden both.
+
+**Pass 1 — shelf + record-detail (32 of 47 sites): 145 -> 1.** The surviving 1
+was the finding. A `Fulfils-` artist was tracked and still would not delete: of
+everything referencing artists and records, only three columns are NO ACTION —
+`records.artist_id`, `want_list.artist_id`, `want_list.acquired_record_id` — and
+a want-list row pinned both. That is §7.4's refusal to cascade a reference in
+use, working correctly. Fixed AT THE RULE: `registerCleanup` deletes want-list
+rows first, by artist and by acquired record. Re-measured 0/0/0.
+
+**Pass 2 — the remaining eleven: 145 -> 74.** Not the ~0 predicted, and the
+residue was almost entirely `collection-filters`, which the guard called
+COMPLIANT. **Partial cleanup read as compliance:** it removes its records via
+`removeRecordsFor` and never the artists behind them, and artists outlive
+records because `records.artist_id` is NO ACTION. So the guard gained a second
+check — creation sites vs removal sites per spec — which named five offenders
+(collection-filters, discogs-prefill, manage, want-list, wall-scene; 22
+untracked sites). That check is CRUDE ON PURPOSE: it can only show a spec does
+not create more than it accounts for, never that the RIGHT artist is removed.
+
+**Pass 3 — after those five: 145 -> 10 records / 13 artists, want_list 0.**
+93% closed. Suite green throughout (275 passed), and a minute faster.
+
+**What the residue is, and why it is not the same defect.** Every remaining row
+is an artist the APPLICATION creates as the behaviour under test, not a fixture
+a spec seeds: `manage`'s merge and match-candidate flows generate `-merge` and
+`-answered` artists server-side, and `discogs-prefill` importing a Discogs
+fixture creates `Lena Raine`. `trackArtist` structurally cannot see these — the
+spec never holds their ids. Removing them needs each spec to query for what the
+app created, which is a different mechanism from tracking what the spec seeded.
+
+**Trigger, not permanent debt:** revisit if the from-empty count exceeds ~30, or
+if any spec fails in the last quarter of a run with a login or `/` timeout —
+the step 15 unit 1 signature. At 10 records the accumulation cannot reproduce
+that; at 724 it did. The number is here so the next person can compare rather
+than re-derive it.
+
+**`record-form` needed no exemption in the end.** Its 11 API-created artists are
+tracked, and its 13 UI saves mostly select an existing tracked artist, so those
+records die with it. Exactly one site creates through the UI — the "New artist
+name" inline field at `record-form:262` — and it did leave one pair in the pass-2
+measurement. It does not appear in the pass-3 residue. The exemption list is
+EMPTY; the UI-creation blind spot is documented on `SEEDS` instead, where it
+belongs, since it is a property of the pattern rather than of that spec.

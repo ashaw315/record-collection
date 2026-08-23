@@ -1,8 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
+import { registerCleanup, trackArtist } from './cleanup';
 import sharp from 'sharp';
 import { sql } from 'drizzle-orm';
 import { getTestDb } from '../test/helpers/db';
 import { removeRecordsFor, seedRecords } from './seed';
+
+/* Records and artists removed after each test — see e2e/cleanup.ts. */
+registerCleanup();
 
 /**
  * The wall in the scene, at `/plane`.
@@ -89,6 +93,7 @@ test.afterEach(async () => {
  */
 async function seed(page: Page, count: number) {
   const artist = await page.request.post('/api/artists', { data: { name: `Wall-${suffix()}` } });
+  trackArtist(((await artist.json()) as { id: string }).id);
   const artistId = (await artist.json()).id as string;
   seededArtists.push(artistId);
 
@@ -929,6 +934,7 @@ test('the panel values are READABLE against the scrim', async ({ page }) => {
    * has to be taken again rather than assumed to carry.
    */
   const artist = await page.request.post('/api/artists', { data: { name: `Read-${suffix()}` } });
+  trackArtist(((await artist.json()) as { id: string }).id);
   const artistId = (await artist.json()).id as string;
   /* Registered for teardown — this path never was, and leaked a record per run. */
   seededArtists.push(artistId);

@@ -1,4 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
+import { registerCleanup, trackArtist } from './cleanup';
+
+/* Records and artists removed after each test — see e2e/cleanup.ts. */
+registerCleanup();
 
 /**
  * SPEC.md §11 E2E flow 2: "Add a record manually, end to end, and see it in the
@@ -65,6 +69,7 @@ test.beforeEach(async ({ page }) => {
 test('adds a record manually and finds it in the collection', async ({ page }) => {
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Discharge-${suffix}` });
+  trackArtist(artist.id as string);
   const label = await post(page, '/api/labels', { name: `Clay-${suffix}` });
   await post(page, '/api/genres', { name: `UK82-${suffix}` });
   const title = `Hear Nothing ${suffix}`;
@@ -120,6 +125,7 @@ test('edits one field without disturbing the others', async ({ page }) => {
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Edit-${suffix}` });
+  trackArtist(artist.id as string);
   const label = await post(page, '/api/labels', { name: `EditLabel-${suffix}` });
   const record = await post(page, '/api/records', {
     title: `Before ${suffix}`,
@@ -154,6 +160,7 @@ test('clearing a field removes it rather than leaving it set', async ({ page }) 
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Clear-${suffix}` });
+  trackArtist(artist.id as string);
   const label = await post(page, '/api/labels', { name: `ClearLabel-${suffix}` });
   const record = await post(page, '/api/records', {
     title: `Clearable ${suffix}`,
@@ -183,6 +190,7 @@ test('removing every genre clears them, rather than leaving them alone', async (
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Genres-${suffix}` });
+  trackArtist(artist.id as string);
   const genre = await post(page, '/api/genres', { name: `Removable-${suffix}` });
   const record = await post(page, '/api/records', {
     title: `Genred ${suffix}`,
@@ -208,6 +216,7 @@ test('saving an unchanged record returns without an error', async ({ page }) => 
   // navigates instead of sending a request it knows will fail.
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Unchanged-${suffix}` });
+  trackArtist(artist.id as string);
   const record = await post(page, '/api/records', {
     title: `Untouched ${suffix}`,
     artistId: artist.id,
@@ -355,6 +364,7 @@ test('a matrix runout alone creates a pressing and attaches it', async ({ page }
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Matrix-${suffix}` });
+  trackArtist(artist.id as string);
   const matrix = `CLAYLP3-A1-${suffix}`;
 
   await page.goto('/records/new');
@@ -404,6 +414,7 @@ test('no pressing details leaves pressing_id null', async ({ page }) => {
   // a junk row for every quick in-store entry.
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `NoPressing-${suffix}` });
+  trackArtist(artist.id as string);
 
   await page.goto('/records/new');
   await formReady(page);
@@ -428,6 +439,7 @@ test('clearing every pressing field detaches without deleting the row', async ({
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Detach-${suffix}` });
+  trackArtist(artist.id as string);
   const pressing = await post(page, '/api/pressings', {
     catalogNumber: `SHARED-${suffix}`,
     countryPressed: 'UK',
@@ -476,6 +488,7 @@ test('a matrix value survives an edit that does not touch it', async ({ page }) 
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Authoritative-${suffix}` });
+  trackArtist(artist.id as string);
   const matrix = `HANDREAD-${suffix}`;
   const pressing = await post(page, '/api/pressings', { matrixRunout: matrix });
   const record = await post(page, '/api/records', {
@@ -510,6 +523,7 @@ test('a rejected pressing field is reported against that field', async ({ page }
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `BadYear-${suffix}` });
+  trackArtist(artist.id as string);
 
   await page.goto('/records/new');
   await formReady(page);
@@ -540,6 +554,7 @@ test('a valid pressing year saves, confirming only the reporting was wrong', asy
   // correct. This pins that, so a "fix" that loosened the bound would fail.
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `GoodYear-${suffix}` });
+  trackArtist(artist.id as string);
 
   await page.goto('/records/new');
   await formReady(page);

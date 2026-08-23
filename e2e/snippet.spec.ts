@@ -1,4 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
+import { registerCleanup, trackArtist } from './cleanup';
+
+/* Records and artists removed after each test — see e2e/cleanup.ts. */
+registerCleanup();
 
 /**
  * SPEC.md §10b's snippet on the record detail page, and A31a's confirmation.
@@ -39,6 +43,7 @@ async function post(page: Page, path: string, data: unknown) {
 /** A record with a snippet the USER owns, created without touching the model. */
 async function seedEditedRecord(page: Page, suffix: string) {
   const artist = await post(page, '/api/artists', { name: `Discharge ${suffix}` });
+  trackArtist(artist.id as string);
   const record = await post(page, '/api/records', {
     title: `Why ${suffix}`,
     artistId: artist.id,
@@ -74,6 +79,7 @@ test('a record with no snippet says so without inviting one', async ({ page }) =
   await login(page);
   const suffix = `snipa-${Date.now()}`;
   const artist = await post(page, '/api/artists', { name: `Anti-Cimex ${suffix}` });
+  trackArtist(artist.id as string);
   const record = await post(page, '/api/records', {
     title: `Raped Ass ${suffix}`,
     artistId: artist.id,

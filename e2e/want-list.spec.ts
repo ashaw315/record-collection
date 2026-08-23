@@ -1,5 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
+import { registerCleanup, trackArtist } from './cleanup';
 import { seedDiscogsCacheAs } from './seed';
+
+/* Records and artists removed after each test — see e2e/cleanup.ts. */
+registerCleanup();
 
 /**
  * SPEC.md §11 E2E flow 5: "Add a want-list item, then mark it acquired, and
@@ -47,6 +51,7 @@ test.beforeEach(async ({ page }) => {
 test('adds a want-list item, marks it acquired, and keeps it as history', async ({ page }) => {
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Discharge-${suffix}` });
+  trackArtist(artist.id as string);
   const title = `Hear Nothing ${suffix}`;
 
   const item = await post(page, '/api/want-list', {
@@ -124,6 +129,7 @@ test('adds a want-list item, marks it acquired, and keeps it as history', async 
 test('prefills the pressing section from the target pressing', async ({ page }) => {
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Target-${suffix}` });
+  trackArtist(artist.id as string);
   const pressing = await post(page, '/api/pressings', {
     catalogNumber: `CLAY-${suffix}`,
     countryPressed: 'UK',
@@ -169,6 +175,7 @@ test('the prefilled pressing is editable, and what is saved is what was edited',
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Settled-${suffix}` });
+  trackArtist(artist.id as string);
   const pressing = await post(page, '/api/pressings', {
     catalogNumber: `WANTED-${suffix}`,
     countryPressed: 'UK',
@@ -236,6 +243,7 @@ test('accepting the prefilled pressing unchanged still attaches it', async ({ pa
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Unchanged-${suffix}` });
+  trackArtist(artist.id as string);
   const pressing = await post(page, '/api/pressings', {
     catalogNumber: `KEPT-${suffix}`,
     countryPressed: 'UK',
@@ -271,6 +279,7 @@ test('an item with no target pressing opens a blank pressing section', async ({ 
   // target says nothing about which pressing to expect.
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Untargeted-${suffix}` });
+  trackArtist(artist.id as string);
   const title = `Untargeted ${suffix}`;
 
   await post(page, '/api/want-list', { title, artistId: artist.id });
@@ -295,6 +304,7 @@ test('sorts by priority, highest first', async ({ page }) => {
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Sorted-${suffix}` });
+  trackArtist(artist.id as string);
 
   await post(page, '/api/want-list', {
     title: `Lowest ${suffix}`,
@@ -319,6 +329,7 @@ test('shows the target pressing and best-dig notes on the row', async ({ page })
   // §10: "Each row shows target pressing and best-dig notes."
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Pressing-${suffix}` });
+  trackArtist(artist.id as string);
   const pressing = await post(page, '/api/pressings', {
     catalogNumber: `CLAY-${suffix}`,
     countryPressed: 'UK',
@@ -349,6 +360,7 @@ test('never describes best dig as a price or a deal', async ({ page }) => {
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Copy-${suffix}` });
+  trackArtist(artist.id as string);
   await post(page, '/api/want-list', {
     title: `Copy Check ${suffix}`,
     artistId: artist.id,
@@ -374,6 +386,7 @@ test('deleting an acquired item names what is lost and spares the record', async
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Deletable-${suffix}` });
+  trackArtist(artist.id as string);
   const item = await post(page, '/api/want-list', {
     title: `Deletable ${suffix}`,
     artistId: artist.id,
@@ -439,6 +452,7 @@ test('three money figures, each saying what it is', async ({ page }) => {
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Three-${suffix}` });
+  trackArtist(artist.id as string);
   /**
    * A release id UNIQUE to this run, not the shared fixture's 381756.
    *

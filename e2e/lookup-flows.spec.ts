@@ -1,6 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
+import { registerCleanup, trackArtist } from './cleanup';
 import { seedDiscogsCache } from './seed';
+
+/* Records and artists removed after each test — see e2e/cleanup.ts. */
+registerCleanup();
 
 /**
  * SPEC.md §11's flows 3, 4 and 11 — the three this step is accountable for.
@@ -176,6 +180,7 @@ test('flow 3: search, drill into a version, import it and save', async ({ page }
   const artist = await page.request.post('/api/artists', {
     data: { name: `Discharge ${suffix}` },
   });
+  trackArtist(((await artist.json()) as { id: string }).id);
   const artistId = (await artist.json()).id;
 
   await stubLookup(page, {
@@ -272,6 +277,7 @@ test.describe('flow 4: ownership badge tiers', () => {
     const artist = await page.request.post('/api/artists', {
       data: { name: `Discharge ${suffix}` },
     });
+  trackArtist(((await artist.json()) as { id: string }).id);
     const artistId = (await artist.json()).id;
     const pressing = await page.request.post('/api/pressings', {
       data: { catalogNumber: `CLAY-${suffix}`, countryPressed: 'UK', yearPressed: 1982 },
@@ -480,6 +486,7 @@ test('flow 11: the same album in two pressings persists as two records', async (
   const artist = await page.request.post('/api/artists', {
     data: { name: `Discharge ${suffix}` },
   });
+  trackArtist(((await artist.json()) as { id: string }).id);
   const artistId = (await artist.json()).id;
   const title = `${TITLE} ${suffix}`;
 

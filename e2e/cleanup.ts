@@ -108,6 +108,22 @@ export function registerCleanup(): void {
        * with a cleanup error.
        */
       try {
+        /*
+          **Want-list rows first.** Everything else referencing a record or an
+          artist cascades; three columns do not — `records.artist_id`,
+          `want_list.artist_id` and `want_list.acquired_record_id` are all NO
+          ACTION, which is §7.4's refusal to cascade a reference row in use. A
+          first version deleted records then the artist and left one fixture
+          behind per run: a want-list entry pinned both. Found by measuring, not
+          by reading — the count fell from 145 to 1, and the 1 was the tell.
+        */
+        await db.execute(
+          sql`DELETE FROM want_list
+               WHERE artist_id = ${artistId}::uuid
+                  OR acquired_record_id IN (
+                       SELECT id FROM records WHERE artist_id = ${artistId}::uuid
+                     )`,
+        );
         await db.execute(sql`DELETE FROM records WHERE artist_id = ${artistId}::uuid`);
         await db.execute(sql`DELETE FROM artists WHERE id = ${artistId}::uuid`);
       } catch {

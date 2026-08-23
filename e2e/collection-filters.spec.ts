@@ -1,5 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
+import { registerCleanup, trackArtist } from './cleanup';
 import { removeRecordsFor, seedRecords } from './seed';
+
+/* Records and artists removed after each test — see e2e/cleanup.ts. */
+registerCleanup();
 
 /**
  * **These specs ask for `?view=table` explicitly, and that is the point.**
@@ -78,6 +82,7 @@ async function seed(page: Page): Promise<Fixture> {
   const jazz = await post('/api/genres', { name: `Jazz-${suffix}` });
 
   const artist = await post('/api/artists', { name: `Discharge-${suffix}` });
+  trackArtist(artist.id as string);
   const label = await post('/api/labels', { name: `Clay-${suffix}` });
 
   // Tagged with the GRANDCHILD, so a parent-genre filter only finds it if the
@@ -179,6 +184,7 @@ async function artistIdFor(page: Page, suffix: string): Promise<string> {
 
 async function bulkArtist(page: Page, name: string, suffix: string): Promise<string> {
   const artist = await (await page.request.post('/api/artists', { data: { name } })).json();
+  trackArtist(artist.id as string);
 
   await seedRecords(artist.id, name, suffix, 55);
 

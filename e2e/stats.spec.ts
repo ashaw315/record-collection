@@ -1,4 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
+import { registerCleanup, trackArtist } from './cleanup';
+
+/* Records and artists removed after each test — see e2e/cleanup.ts. */
+registerCleanup();
 
 /**
  * SPEC.md §10 `/stats`: "Total records, total spend, estimated value, breakdown
@@ -43,6 +47,7 @@ test('the estimated value says what it sums in the same breath as the number', a
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Stats-${suffix}` });
+  trackArtist(artist.id as string);
   const record = await post(page, '/api/records', {
     title: `Valued ${suffix}`,
     artistId: artist.id,
@@ -77,6 +82,7 @@ test('spend and value are distinguishable, not readable as profit', async ({ pag
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Spend-${suffix}` });
+  trackArtist(artist.id as string);
   await post(page, '/api/records', {
     title: `Spent ${suffix}`,
     artistId: artist.id,
@@ -96,6 +102,7 @@ test('breaks the collection down by genre, decade, store and label', async ({ pa
   // query until this unit.
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Break-${suffix}` });
+  trackArtist(artist.id as string);
   const genre = await post(page, '/api/genres', { name: `UK82-${suffix}` });
   const label = await post(page, '/api/labels', { name: `Clay-${suffix}` });
   const store = await post(page, '/api/stores', { name: `Shop-${suffix}` });
@@ -150,6 +157,7 @@ test('a breakdown row opens the collection filtered by it', async ({ page }) => 
   // A breakdown is only useful if you can open what it counts.
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Clickable-${suffix}` });
+  trackArtist(artist.id as string);
   const label = await post(page, '/api/labels', { name: `Rough-${suffix}` });
   await post(page, '/api/records', {
     title: `Clickable ${suffix}`,

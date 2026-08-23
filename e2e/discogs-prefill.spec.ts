@@ -1,5 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
+import { registerCleanup, trackArtist } from './cleanup';
 import { seedDiscogsCache } from './seed';
+
+/* Records and artists removed after each test — see e2e/cleanup.ts. */
+registerCleanup();
 
 /**
  * SPEC.md §10: `/records/new` is "Form prefilled from a lookup result, or blank
@@ -231,6 +235,7 @@ test('saves what the user confirmed, not what Discogs said', async ({ page }) =>
   const artist = await page.request.post('/api/artists', {
     data: { name: `Save Fixture ${Date.now().toString(36)}` },
   });
+  trackArtist(((await artist.json()) as { id: string }).id);
   const artistId = (await artist.json()).id;
 
   await page.goto(`/records/new?discogsReleaseId=${ownReleaseId}`);
@@ -422,6 +427,7 @@ test('saves a want-list item with both §7.2 fields distinct', async ({ page }) 
   const artist = await page.request.post('/api/artists', {
     data: { name: `Wanted Fixture ${suffix}` },
   });
+  trackArtist(((await artist.json()) as { id: string }).id);
   const artistId = (await artist.json()).id;
 
   await page.goto('/want-list/new');
@@ -486,6 +492,7 @@ test('an imported record carries its Discogs genres onto the collection screen',
   const artist = await page.request.post('/api/artists', {
     data: { name: `Genre Fixture ${Date.now().toString(36)}` },
   });
+  trackArtist(((await artist.json()) as { id: string }).id);
   const artistId = (await artist.json()).id;
 
   await page.goto(`/records/new?discogsReleaseId=${releaseId}`);

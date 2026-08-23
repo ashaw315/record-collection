@@ -1,4 +1,8 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { registerCleanup, trackArtist } from './cleanup';
+
+/* Records and artists removed after each test — see e2e/cleanup.ts. */
+registerCleanup();
 
 /**
  * **These specs ask for `?view=table` explicitly, and that is the point.**
@@ -72,6 +76,7 @@ async function seed(page: Page): Promise<Fixture> {
   };
 
   const artist = await post('/api/artists', { name: `WidthTest-${suffix}` });
+  trackArtist(artist.id as string);
   const label = await post('/api/labels', { name: `Chrysalis-${suffix}` });
 
   // An existing format from the fixed reference list, whichever is first.

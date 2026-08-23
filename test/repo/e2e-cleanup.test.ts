@@ -29,20 +29,16 @@ import { describe, expect, it } from 'vitest';
  *
  * **Remove a name from this list when its spec is converted. Never add one.**
  */
-const EXEMPT_PENDING_CONVERSION = new Set([
-  'collection-widths', // converted in (b)
-  'cover-unlit', // converted in (b)
-  'every-page-has-nav', // converted in (b)
-  'images', // converted in (b)
-  'lookup-flows', // converted in (b)
-  'manage', // converted in (b)
-  'record-detail', // converted in (b)
-  'record-form', // converted in (b) — creates through the UI form; SEEDS cannot detect it
-  'shelf', // converted in (b)
-  'snippet', // converted in (b)
-  'stats', // converted in (b)
-  'suggestions', // converted in (b)
-]);
+/**
+ * Specs that seed records and do not yet clean up.
+ *
+ * **Empty, and it must stay that way.** Unit (b) converted all thirteen; the
+ * staleness check below means a name cannot linger here after its spec complies,
+ * and the offenders check means a new spec cannot be added without cleanup. If
+ * you are about to add a name here, add `registerCleanup()` and `trackArtist()`
+ * to the spec instead — see `e2e/cleanup.ts`.
+ */
+const EXEMPT_PENDING_CONVERSION = new Set<string>([]);
 
 /**
  * Creates records: a POST to the records endpoint — directly or through a local
@@ -61,6 +57,11 @@ const EXEMPT_PENDING_CONVERSION = new Set([
  * a form" would catch every editing spec, most of which create nothing.
  */
 const SEEDS = /post\(\s*page\s*,\s*[`'"]\/api\/records|request\.post\(\s*[`'"]\/api\/records|seedRecords\(|INSERT INTO records/;
+
+/** Creates an artist fixture, by any of the idioms the specs use. */
+const CREATES_ARTIST = /post\(\s*page\s*,\s*[`'"]\/api\/artists|post\(\s*[`'"]\/api\/artists|request\.post\(\s*[`'"]\/api\/artists|INSERT INTO artists/g;
+/** Accounts for one: the shared tracker, or an explicit artist delete. */
+const REMOVES_ARTIST = /trackArtist\(|DELETE FROM artists|deleteRecordsByArtist\(/g;
 
 /** Removes them: the shared tracker, the bulk helper, the API sweep, or raw SQL. */
 const CLEANS = /trackArtist\(|registerCleanup\(|removeRecordsFor\(|deleteRecordsByArtist\(|DELETE FROM records/;
@@ -85,6 +86,38 @@ describe('E2E specs clean up the records they seed', () => {
     expect(
       offenders,
       `these specs seed records and never remove them — add cleanup, do not add them to the exemption list:\n  ${offenders.join('\n  ')}`,
+    ).toEqual([]);
+  });
+
+  it('every artist a spec creates is also removed', () => {
+    /**
+     * **Cleaning up SOMETHING is not cleaning up EVERYTHING.**
+     *
+     * The first version of this guard asked only whether a spec mentioned any
+     * cleanup at all. `collection-filters` passed it while leaking 56 artists a
+     * run: it calls `removeRecordsFor` for its records and never removes the
+     * artists behind them, and `records.artist_id` is NO ACTION, so the artists
+     * simply stay. Measured after unit (b) converted all thirteen listed specs —
+     * the count fell 145 -> 74 rather than to ~0, and the residue was almost
+     * entirely one spec the guard called compliant.
+     *
+     * So this counts creation sites against removal sites per spec. It is a
+     * crude comparison and deliberately so: it cannot prove the right artist is
+     * removed, only that a spec does not create more than it accounts for.
+     */
+    const offenders = specs
+      .map((s) => {
+        const created = (s.body.match(CREATES_ARTIST) ?? []).length;
+        const removed = (s.body.match(REMOVES_ARTIST) ?? []).length;
+        return { name: s.name, created, removed };
+      })
+      .filter((s) => s.created > s.removed)
+      .filter((s) => !EXEMPT_PENDING_CONVERSION.has(s.name))
+      .map((s) => `${s.name} (creates ${s.created}, removes ${s.removed})`);
+
+    expect(
+      offenders,
+      `these specs create artists they never remove — artists outlive records because records.artist_id is NO ACTION:\n  ${offenders.join('\n  ')}`,
     ).toEqual([]);
   });
 

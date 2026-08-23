@@ -1,4 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
+import { registerCleanup, trackArtist } from './cleanup';
+
+/* Records and artists removed after each test — see e2e/cleanup.ts. */
+registerCleanup();
 
 /**
  * SPEC.md §10 `/records/:id`.
@@ -42,6 +46,7 @@ test('shows every recorded field, and omits what is absent', async ({ page }) =>
   const suffix = makeSuffix();
 
   const artist = await post(page, '/api/artists', { name: `Discharge-${suffix}` });
+  trackArtist(artist.id as string);
   const label = await post(page, '/api/labels', { name: `Clay-${suffix}` });
   const store = await post(page, '/api/stores', { name: `Amoeba-${suffix}` });
   const genre = await post(page, '/api/genres', { name: `UK82-${suffix}` });
@@ -98,6 +103,7 @@ test('renders a record that has only the required fields', async ({ page }) => {
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Sparse-${suffix}` });
+  trackArtist(artist.id as string);
   const record = await post(page, '/api/records', {
     title: `Bare ${suffix}`,
     artistId: artist.id,
@@ -142,6 +148,7 @@ test('a genre link returns to the collection filtered by it', async ({ page }) =
   // "what else is like this" has to be one click.
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Linked-${suffix}` });
+  trackArtist(artist.id as string);
   const genre = await post(page, '/api/genres', { name: `Crust-${suffix}` });
   const record = await post(page, '/api/records', {
     title: `Linked Record ${suffix}`,
@@ -181,6 +188,7 @@ test('a malformed id is a not-found page rather than a cast error', async ({ pag
 test('reaches the detail screen from the collection list', async ({ page }) => {
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Nav-${suffix}` });
+  trackArtist(artist.id as string);
   await post(page, '/api/records', { title: `Navigable ${suffix}`, artistId: artist.id });
 
   // Scoped to this run's artist: another spec's fixtures may be on page 1.
@@ -216,6 +224,7 @@ test('deleting a record names what is lost, then returns to the collection', asy
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Deletable-${suffix}` });
+  trackArtist(artist.id as string);
   const record = await post(page, '/api/records', {
     title: `Deletable ${suffix}`,
     artistId: artist.id,
@@ -247,6 +256,7 @@ test('a cancelled delete deletes nothing', async ({ page }) => {
   // dialog whose Cancel also deletes.
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Kept-${suffix}` });
+  trackArtist(artist.id as string);
   const record = await post(page, '/api/records', {
     title: `Kept ${suffix}`,
     artistId: artist.id,
@@ -273,6 +283,7 @@ test('a record fulfilling a want-list entry says WHY it cannot be deleted', asyn
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Fulfils-${suffix}` });
+  trackArtist(artist.id as string);
   const item = await post(page, '/api/want-list', {
     title: `Fulfils ${suffix}`,
     artistId: artist.id,
@@ -306,6 +317,7 @@ test('the journal records what happened, newest first', async ({ page }) => {
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Journal-${suffix}` });
+  trackArtist(artist.id as string);
   const record = await post(page, '/api/records', {
     title: `Journal ${suffix}`,
     artistId: artist.id,
@@ -346,6 +358,7 @@ test('the entry date defaults to today and refuses a typo', async ({ page }) => 
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Dated-${suffix}` });
+  trackArtist(artist.id as string);
   const record = await post(page, '/api/records', {
     title: `Dated ${suffix}`,
     artistId: artist.id,
@@ -383,6 +396,7 @@ test('deleting an entry leaves the record alone', async ({ page }) => {
   // §4.2 cascades entries when a RECORD goes; nothing cascades the other way.
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Undelete-${suffix}` });
+  trackArtist(artist.id as string);
   const record = await post(page, '/api/records', {
     title: `Undelete ${suffix}`,
     artistId: artist.id,
@@ -419,6 +433,7 @@ test('prices accumulate as observations and the sparkline states its bounds', as
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Priced-${suffix}` });
+  trackArtist(artist.id as string);
   const record = await post(page, '/api/records', {
     title: `Priced ${suffix}`,
     artistId: artist.id,
@@ -467,6 +482,7 @@ test('an asking price is listed but never charted as what the record is worth', 
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Asking-${suffix}` });
+  trackArtist(artist.id as string);
   const record = await post(page, '/api/records', {
     title: `Asking ${suffix}`,
     artistId: artist.id,
@@ -504,6 +520,7 @@ test('the price section offers no way to edit an observation', async ({ page }) 
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `NoEdit-${suffix}` });
+  trackArtist(artist.id as string);
   const record = await post(page, '/api/records', {
     title: `NoEdit ${suffix}`,
     artistId: artist.id,
@@ -538,6 +555,7 @@ test('offers no way to type in a price — §10a replaced manual entry', async (
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `NoManual-${suffix}` });
+  trackArtist(artist.id as string);
   const record = await post(page, '/api/records', {
     title: `NoManual ${suffix}`,
     artistId: artist.id,
@@ -605,6 +623,7 @@ test('each price shows its date and what its type means', async ({ page }) => {
    */
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Dated-${suffix}` });
+  trackArtist(artist.id as string);
   const record = await post(page, '/api/records', {
     title: `Dated Prices ${suffix}`,
     artistId: artist.id,

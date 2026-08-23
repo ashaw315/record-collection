@@ -1,5 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
+import { registerCleanup, trackArtist } from './cleanup';
 import { removeImagesFor, seedDiscogsCache, seedImage } from './seed';
+
+/* Records and artists removed after each test — see e2e/cleanup.ts. */
+registerCleanup();
 
 /**
  * SPEC.md §11, E2E #9: "Upload an image to a record and verify it appears in
@@ -62,6 +66,7 @@ async function seedRecord(page: Page): Promise<{ recordId: string; run: string }
   const run = suffix();
 
   const artist = await page.request.post('/api/artists', { data: { name: `Gallery-${run}` } });
+  trackArtist(((await artist.json()) as { id: string }).id);
   expect(artist.status()).toBe(201);
 
   const record = await page.request.post('/api/records', {
@@ -258,6 +263,7 @@ test('a cover that cannot be fetched does not fail the import', async ({ page })
   const artist = await page.request.post('/api/artists', {
     data: { name: `Cover-${suffix()}` },
   });
+  trackArtist(((await artist.json()) as { id: string }).id);
   const artistId = (await artist.json()).id;
 
   await page.goto(`/records/new?discogsReleaseId=${releaseId}`);
