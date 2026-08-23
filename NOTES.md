@@ -14140,3 +14140,62 @@ the harness reasons about — the shape that fails silently when it is wrong.
 Per-test truncate is the mechanism §2 mandates. **Do not re-propose on speed
 grounds; the number is here.** The other 41s is 960 needed truncates at a fixed
 cost that only a different mechanism would change.
+
+---
+
+### RULE: a test whose expected value comes from the inputs under test cannot fail
+
+Stronger than the vacuous-test rule above, and a different failure. Those tests
+*could* have failed and didn't. This class **cannot** fail, for a structural
+reason: when the expected value is derived from the same inputs as the value
+under test, the assertion compares the code against itself.
+
+The instance. `wall-scene.spec.ts` asserted the pulled record was centred:
+
+    expect(Math.abs(settledScreenY - innerHeight / 2)).toBeLessThan(60)
+
+`settledScreenY` is written by the scene as
+`canvasRect.top + ((1 - ndc.y) / 2) * canvasRect.height`, and the destination
+that produced `ndc.y` is `scrollY + innerHeight/2 - canvasDocTop()`. Both sides
+are `innerHeight` and the canvas rect. It reported **delta 0px at every viewport
+and every row** while the sleeve ran off the top of the wall on the phone.
+
+**No mutation catches it.** Change the target from `innerHeight/2` to
+`innerHeight/3`, or to a constant, and the record moves — and `settledScreenY`
+moves with it, because it is read back through the same geometry. The mutation
+moves both sides. Mutation testing is the usual answer to "could this test
+fail"; here it answers wrongly.
+
+**The tell**, when reviewing: the expected value is *computed* rather than
+*stated*, and its terms appear in the implementation. `toBeLessThan(60)` around
+a difference of two derived quantities is the shape.
+
+**The replacement reads pixels.** `the pulled sleeve fits INSIDE the visible
+wall region` screenshots the page, scans the sleeve's extent down the middle
+column, and asserts it lies strictly inside the region — a claim about the
+render, whose expected value (the region's own edges) comes from the DOM, not
+from the placement arithmetic. It fails against the broken code (sleeve top 172
+pinned to region top 172) and passes against the fix.
+
+**The fixture must be short enough to clip.** At 390x844 the region holds a
+322px sleeve aimed at the viewport centre, so the broken code PASSES there;
+every real Safari viewport is shorter once the URL bar and toolbar are taken.
+The test uses 390x664. A test at 844 would have been green against the defect —
+the same "a test at a size the rule already covers cannot see the rule working"
+finding as unit 22's plane and the re-wrap fixture.
+
+### The defect itself: viewport centre vs visible wall region centre
+
+The wall starts below the nav and heading (canvas top ~229 at 390). Aiming the
+record at `innerHeight/2` ignores that: on a short viewport the visible region
+is the LOWER part of the screen and its centre is well below the viewport's. A
+322px sleeve aimed at 332 has its top at 170, above the canvas at 229, and is
+clipped there. Fixed by `viewRegionCentrePx`, which targets
+`(max(canvasTop, scrollY) + min(canvasBottom, fold)) / 2` and clamps so the
+sleeve's edges clear the region; when the region cannot hold it, the region
+centre spreads the overflow rather than pinning it to one edge.
+
+Also fixed in the same pass: `touch-tilt.spec.ts` hard-coded the record centre
+at `195, 400` and the wall drag at `195, 120`. Both now derive from
+`settledScreenY`/`settledNdcX` — the find-it-don't-assume-it rule again, third
+and fourth instances in this file.

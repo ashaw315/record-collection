@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import sharp from 'sharp';
 import { sql } from 'drizzle-orm';
 import { getTestDb } from '../test/helpers/db';
 import { removeRecordsFor, seedRecords } from './seed';
@@ -286,6 +287,8 @@ test('the pulled record settles CENTRED in view, at any collection size', async 
    * 130 wraps to three rows, where a row-0 record's own height is 252 world
    * units above centre. That is the case the two designs disagree about.
    */
+  const landedAt: number[] = [];
+
   for (const count of [5, 130]) {
     const { artistId } = await seed(page, count);
     await openWall(page, artistId);
@@ -324,6 +327,7 @@ test('the pulled record settles CENTRED in view, at any collection size', async 
         x: Number(el.dataset.settledNdcX ?? 9),
         screenY: Number(el.dataset.settledScreenY ?? -1),
         viewportH: window.innerHeight,
+        regionTop: Math.max(Math.round(el.querySelector('canvas')!.getBoundingClientRect().top), 0),
       };
     });
 
@@ -333,17 +337,40 @@ test('the pulled record settles CENTRED in view, at any collection size', async 
     expect(Math.abs(settled.x), `${count} records: horizontally centred`).toBeLessThan(0.05);
 
     /*
-      **Vertically centred in the VISIBLE VIEWPORT** (13b), not at the wall's
-      centre. The record now settles at the viewport centre whatever row its slot
-      is in — so its SCREEN y is ~half the viewport height, not NDC 0. The old
-      assertion (NDC y ~0) encoded the wall-centre placement that made a top-row
-      record land off-centre; this asserts the fix.
+      **Vertically inside the VISIBLE WALL REGION, and in the same place at both
+      collection sizes** — which is the row-independence this test exists for.
+
+      It previously asserted `screenY ≈ innerHeight / 2`. That could not fail:
+      the destination places the record at the viewport centre using
+      `innerHeight` and `canvasDocTop`, and `settledScreenY` reads it back
+      through the same canvas rect, so both sides came from the same two
+      numbers. It reported delta 0 while the sleeve ran off the top of the wall
+      on a phone. Whether the record is WHOLE and where it sits relative to the
+      region is asserted from pixels in "the pulled sleeve fits INSIDE the
+      visible wall region"; what is left here is the claim that test cannot make
+      — that the answer does not depend on which row the record came from, at
+      two collection sizes with different camera distances.
     */
     expect(
-      Math.abs(settled.screenY - settled.viewportH / 2),
-      `${count} records: at the viewport centre (screenY ${settled.screenY}, half ${settled.viewportH / 2})`,
-    ).toBeLessThan(60);
+      settled.screenY,
+      `${count} records: below the wall region top (screenY ${settled.screenY}, region top ${settled.regionTop})`,
+    ).toBeGreaterThan(settled.regionTop);
+    expect(
+      settled.screenY,
+      `${count} records: above the fold (screenY ${settled.screenY}, fold ${settled.viewportH})`,
+    ).toBeLessThan(settled.viewportH);
+    landedAt.push(settled.screenY);
   }
+
+  /*
+    The row-independence itself: 5 records is one row, 130 is three, and the
+    camera distance differs between them. A destination that kept the slot's own
+    row height — the defect this test was written for — puts these far apart.
+  */
+  expect(
+    Math.abs(landedAt[0] - landedAt[1]),
+    `same place from row 0 of a one-row wall (${landedAt[0]}) and a three-row wall (${landedAt[1]})`,
+  ).toBeLessThan(60);
 });
 
 test('the record returns to its slot when dismissed', async ({ page }) => {
@@ -1086,6 +1113,107 @@ test('a short collection still fills the wall', async ({ page }) => {
     box.width,
     'the wall spans the screen with five records on it',
   ).toBeGreaterThan(viewport.width * 0.9);
+});
+
+test('the pulled sleeve fits INSIDE the visible wall region on a short viewport', async ({
+  page,
+}) => {
+  /**
+   * **The defect a centred-ness assertion structurally could not catch.**
+   *
+   * `settledScreenY` is the record's CENTRE, and the test beside this one
+   * compared it to `innerHeight / 2`. Both sides are computed from the same two
+   * quantities — the destination places the record at
+   * `scrollY + innerHeight/2 - canvasDocTop()`, and the dataset reads it back
+   * through the same canvas rect — so the comparison is a tautology. It asserts
+   * the code performed the arithmetic it was told to, and no mutation of that
+   * arithmetic can fail it, because the mutation moves both sides together. It
+   * reported delta 0 while the sleeve ran off the top of the wall on a phone.
+   *
+   * So this reads PIXELS. The sleeve is a solid block against the dimmed wall;
+   * its extent is scanned from a screenshot and must lie wholly inside the
+   * visible wall region — the canvas top (which is below the nav and heading)
+   * down to the fold. That is a claim about what is on screen, derived from the
+   * render rather than from the inputs that produced it.
+   *
+   * **The viewport must be SHORT enough to clip.** At 390x844 the region is
+   * tall enough to contain a 322px sleeve aimed at the viewport centre, so the
+   * broken code passes there; every real Safari viewport is shorter once the URL
+   * bar and toolbar are subtracted. Measured against the defect: at 844 the
+   * sleeve drew 260..581 (whole), at 664 it drew 229..491 — truncated exactly at
+   * the canvas edge, its true top 59px above the region. 664 is the fixture.
+   */
+  const { artistId } = await seed(page, 12);
+  await page.setViewportSize({ width: 390, height: 664 });
+  await openWall(page, artistId);
+
+  const scene = page.getByTestId('wall-scene');
+  const box = await scene.locator('canvas').boundingBox();
+  expect(box).not.toBeNull();
+  if (box === null) return;
+
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }));
+  await clickASpine(page, box);
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          () =>
+            (document.querySelector('[data-testid="wall-scene"]') as HTMLElement).dataset.phase ??
+            '',
+        ),
+      { timeout: 10_000 },
+    )
+    .toMatch(/settled/);
+  await page.waitForTimeout(400);
+
+  const region = await page.evaluate(() => {
+    const host = document.querySelector('[data-testid="wall-scene"]') as HTMLElement;
+    const rect = host.querySelector('canvas')!.getBoundingClientRect();
+    return { top: Math.max(Math.round(rect.top), 0), bottom: window.innerHeight };
+  });
+
+  /*
+    The sleeve against the dimmed wall. Scanned down the middle column, where the
+    record is centred horizontally, so the run is the sleeve's own height. The
+    placeholder and a real cover are both far brighter than the dimmed spines
+    behind them, which is what makes a luminance threshold enough here — this
+    asserts WHERE it is, not what colour it is.
+  */
+  const shot = await page.screenshot();
+  const raw = await sharp(shot).raw().toBuffer({ resolveWithObject: true });
+  const { width, height, channels } = raw.info;
+  const column = Math.floor(width / 2);
+  const luma = (y: number) => {
+    const i = (y * width + column) * channels;
+    return 0.2126 * raw.data[i] + 0.7152 * raw.data[i + 1] + 0.0722 * raw.data[i + 2];
+  };
+
+  const wallFloor = 60;
+  let first = -1;
+  let last = -1;
+  for (let y = region.top; y < Math.min(region.bottom, height); y += 1) {
+    if (luma(y) > wallFloor) {
+      if (first < 0) first = y;
+      last = y;
+    }
+  }
+
+  expect(first, 'the sleeve is visible in the wall region at all').toBeGreaterThan(-1);
+  expect(last - first, 'and it is a sleeve, not a sliver of lit wall').toBeGreaterThan(150);
+
+  /*
+    **The load-bearing pair.** A sleeve whose top is pinned to the region's top
+    edge is one that has been CLIPPED there — its real top is above it. Asserted
+    strictly inside, so touching the edge fails.
+  */
+  expect(first, `sleeve top ${first} must clear the wall region top ${region.top}`).toBeGreaterThan(
+    region.top,
+  );
+  expect(
+    last,
+    `sleeve bottom ${last} must clear the fold ${region.bottom}`,
+  ).toBeLessThan(region.bottom);
 });
 
 test('a record pulled from a SHORT wall is contained and full-size, not clipped', async ({

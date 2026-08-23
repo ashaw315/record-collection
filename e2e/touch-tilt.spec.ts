@@ -46,6 +46,25 @@ async function cleanup(artistId: string) {
   await db.execute(sql`DELETE FROM artists WHERE id = ${artistId}::uuid`);
 }
 
+/**
+ * The record's centre in viewport pixels, READ from the scene rather than
+ * assumed. `cx`/`cy` were hard-coded 195/400 — a coordinate that owned a layout
+ * this spec does not control, and it drifted when the pulled record moved to the
+ * visible wall region's centre. Same rule NOTES records for the spine probe and
+ * the wall-drag coordinate: find the target, do not guess where it is.
+ */
+async function recordCentre(page: Page): Promise<{ x: number; y: number }> {
+  return page.evaluate(() => {
+    const host = document.querySelector('[data-testid="wall-scene"]') as HTMLElement;
+    const rect = host.querySelector('canvas')!.getBoundingClientRect();
+    const ndcX = Number(host.dataset.settledNdcX ?? '0');
+    return {
+      x: Math.round(rect.left + ((ndcX + 1) / 2) * rect.width),
+      y: Number(host.dataset.settledScreenY),
+    };
+  });
+}
+
 const rotY = (page: Page) =>
   page.evaluate(
     () => (document.querySelector('[data-testid="wall-scene"]') as HTMLElement)?.dataset.rotY ?? 'x',
@@ -104,8 +123,7 @@ test('a drag that STARTS on the record tilts it, and it holds after release', as
 
     const client = await page.context().newCDPSession(page);
     /* The record fills the middle of the frame; its centre is on the axis. */
-    const cx = 195;
-    const cy = 400;
+    const { x: cx, y: cy } = await recordCentre(page);
     await client.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: cx, y: cy }] });
     await client.send('Input.dispatchTouchEvent', {
       type: 'touchMove',
@@ -139,19 +157,24 @@ test('a drag that STARTS on the wall does NOT tilt the record (the boundary)', a
     const client = await page.context().newCDPSession(page);
 
     /* First turn the record, so "unchanged" below is a real hold, not a zero. */
-    await client.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 195, y: 400 }] });
-    await client.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: 255, y: 360 }] });
+    const centre = await recordCentre(page);
+    await client.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: centre.x, y: centre.y }] });
+    await client.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: centre.x + 60, y: centre.y - 40 }] });
     await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     await page.waitForTimeout(150);
     const held = await rotY(page);
     expect(held, 'the record is turned before the wall drag').not.toBe('0');
 
     /*
-      A drag on the WALL, above the record (the record is centred; y=120 is over
-      the wall spines). The record must NOT turn — the gesture began off it.
+      A drag on the WALL, ABOVE the record — derived from where the record
+      actually is rather than from a literal, and clamped into the wall region
+      so it lands on spines and not on the page above the canvas.
     */
-    await client.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 195, y: 120 }] });
-    await client.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: 255, y: 80 }] });
+    const wallY = Math.max(centre.y - 260, (await page.evaluate(() =>
+      Math.round((document.querySelector('[data-testid="wall-scene"]')!
+        .querySelector('canvas')!.getBoundingClientRect().top))) ) + 30);
+    await client.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: centre.x, y: wallY }] });
+    await client.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: centre.x + 60, y: wallY - 40 }] });
     await page.waitForTimeout(150);
     const duringWallDrag = await rotY(page);
     await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
@@ -182,8 +205,7 @@ test('a horizontal SWIPE navigates, a short drag TILTS — the boundary (13b)', 
       );
 
     const client = await page.context().newCDPSession(page);
-    const cx = 195;
-    const cy = 400;
+    const { x: cx, y: cy } = await recordCentre(page);
 
     /*
       **A short drag tilts and stays on the same record.** This is the

@@ -375,6 +375,53 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     */
     /* The canvas element's offset from the DOCUMENT top (fixed; nav sits above). */
     const canvasDocTop = () => host.getBoundingClientRect().top + window.scrollY;
+
+    /**
+     * **Where the record should sit, in canvas pixels: the centre of the wall
+     * region the reader can actually SEE.**
+     *
+     * The wall begins below the nav and heading. On a phone that leaves a region
+     * running from the canvas top down to the fold, whose centre is well below
+     * `innerHeight / 2` — and aiming at the viewport centre put the sleeve's top
+     * above the canvas, where it was clipped. `docTop` converts to the canvas's
+     * own coordinates, which is what `pulledDestination` expects.
+     *
+     * The clamp keeps the whole sleeve inside the region. `halfSleevePx` is the
+     * record's half-height on screen, taken from the geometry that sizes it
+     * rather than restated: the canvas shows `2·distance·tan(halfAngle)` world
+     * units over `height` pixels at the record's plane, and the record is
+     * `SPINE_HEIGHT` tall.
+     */
+    const viewRegionCentrePx = (scrollY: number): number => {
+      const docTop = canvasDocTop();
+      /* The visible slice of the canvas, in page coordinates. */
+      const regionTop = Math.max(docTop, scrollY);
+      const regionBottom = Math.min(docTop + height, scrollY + window.innerHeight);
+
+      const halfAngle = (WALL_FOV_DEGREES * Math.PI) / 360;
+      const probe = pulledDestination({
+        wallWidth: width,
+        wallHeight: height,
+        viewport: { width: window.innerWidth, height: window.innerHeight },
+        widthFill: 0.9,
+      });
+      const distance = cameraDistance - probe.z;
+      const worldPerPx = (2 * distance * Math.tan(halfAngle)) / height;
+      const halfSleevePx = SPINE_HEIGHT / worldPerPx / 2;
+
+      const centre = (regionTop + regionBottom) / 2;
+      const lowest = regionTop + halfSleevePx;
+      const highest = regionBottom - halfSleevePx;
+      /*
+        `lowest > highest` means the region cannot hold the sleeve; the region's
+        own centre then spreads the overflow across both edges rather than
+        pinning it to one, which is what made the clipping read as "runs off the
+        top" instead of "slightly too big".
+      */
+      const target = lowest > highest ? centre : Math.min(Math.max(centre, lowest), highest);
+
+      return target - docTop;
+    };
     const destinationFor = (scrollY: number) =>
       pulledDestination({
         wallWidth: width,
@@ -394,7 +441,23 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
           higher. Omitting this put the record ~197px too low (below the panel,
           off the bottom).
         */
-        viewCentrePx: scrollY + window.innerHeight / 2 - canvasDocTop(),
+        /*
+          **The VISIBLE WALL REGION's centre, not the viewport's.** The wall
+          starts below the nav and heading, so on a short viewport the region is
+          the lower part of the screen and its centre is well below `vh/2`.
+          Aiming at `vh/2` put a 322px sleeve's top ABOVE the canvas, which
+          clipped it against the top edge — visible on a phone, and invisible to
+          a test that compared the record's centre against `vh/2` because both
+          sides came from these same two numbers.
+
+          Clamped so the sleeve FITS: if the region is shorter than the record,
+          the centre alone cannot save it, so the target is pushed down far
+          enough for the top edge to clear the region and no further than the
+          bottom edge allows. When the region cannot hold it at all the clamp
+          collapses to the region's own centre, which distributes the overflow
+          evenly rather than dumping it at one edge.
+        */
+        viewCentrePx: viewRegionCentrePx(scrollY),
         viewportHeight: window.innerHeight,
       });
     /* Recomputed when a record is pulled; the initial value is only a placeholder. */
