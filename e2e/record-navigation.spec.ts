@@ -252,23 +252,58 @@ test('put back lands in the HELD record\'s slot after sliding (slotGap ~0)', asy
       await settle(page);
     }
 
-    const slotGap = () =>
-      page.evaluate(
-        () => Number((document.querySelector('[data-testid="wall-scene"]') as HTMLElement)?.dataset.slotGap ?? '-1'),
-      );
+    const scene = () =>
+      page.evaluate(() => {
+        const el = document.querySelector('[data-testid="wall-scene"]') as HTMLElement;
+        return {
+          gap: Number(el?.dataset.slotGap ?? '-1'),
+          slotX: Number(el?.dataset.layoutSlotX ?? NaN),
+          slotY: Number(el?.dataset.layoutSlotY ?? NaN),
+          meshX: Number(el?.dataset.meshX ?? NaN),
+          meshY: Number(el?.dataset.meshY ?? NaN),
+        };
+      });
+
     /*
-      The held record's slot is EMPTY while it is out (a large gap), and after
-      put-back the SAME record returns to ITS slot — the gap collapses to ~0.
-      This is the property from the pull-based version, preserved for the slide:
-      sliding along changes which record is held, and its home is elsewhere, so
-      the return must find that home rather than the original.
+      **The slot is captured WHILE the record is out**, because `layoutSlotX/Y`
+      describe whichever record is currently held — after the put-back there is
+      none, and the values would be stale.
+
+      `slotGap` is kept for this half: it says the record has LEFT its slot,
+      which is a claim about distance travelled and does not depend on where
+      home is.
     */
-    expect(await slotGap(), 'the held record slot is empty while out').toBeGreaterThan(100);
+    const out = await scene();
+    expect(out.gap, 'the held record slot is empty while out').toBeGreaterThan(100);
+    expect(Number.isNaN(out.slotX), 'the layout knows the held record slot').toBe(false);
 
     await page.getByTestId('record-chrome').getByTestId('action-put').click();
     await expect.poll(() => page.evaluate(() => (document.querySelector('[data-testid="wall-scene"]') as HTMLElement)?.dataset.pulled ?? ''), { timeout: 10_000 }).toBe('');
     await page.waitForTimeout(300);
-    expect(await slotGap(), 'the record returned to its own slot').toBeLessThan(5);
+
+    /**
+     * **Where the record ACTUALLY landed, against the LAYOUT's slot — not
+     * against `slotGap`.**
+     *
+     * `slotGap` is `|mesh.position - home|` and the return animates the mesh
+     * toward `home`, so it collapses to ~0 whatever `home` holds: the ruler
+     * moves with the thing it measures. It can catch a return that never runs,
+     * and cannot catch a return to the WRONG slot — which is precisely the bug
+     * a slide can introduce, because sliding changes which record is held and
+     * its home is elsewhere.
+     *
+     * That was tolerable while a sibling test also covered put-back. It is not
+     * now: this test carries the property alone since its pull-era predecessor
+     * was removed as subsumed, so a partial tautology would be the only guard.
+     *
+     * `meshX/meshY` come from the render and `layoutSlotX/layoutSlotY` from the
+     * packer — two independent producers, which is what makes this falsifiable.
+     * The same substitution was already made in `wall-scene.spec.ts` for the
+     * re-wrap return, for the same reason.
+     */
+    const landed = await scene();
+    expect(landed.meshX, 'the record is back in its OWN slot, horizontally').toBeCloseTo(out.slotX, 0);
+    expect(landed.meshY, 'and vertically').toBeCloseTo(out.slotY, 0);
   } finally {
     await cleanup(artistId);
   }

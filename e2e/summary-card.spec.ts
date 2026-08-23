@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { deleteRecordsByArtist } from './cleanup';
+import { registerCleanup, trackArtist } from './cleanup';
 
 /**
  * **The summary card's height is a constant, and that is the claim everything
@@ -51,6 +51,7 @@ async function seedExtremes(
   const artist = await page.request.post('/api/artists', { data: { name: `Summary-${run}` } });
   expect(artist.status(), 'the fixture must exist for this to test anything').toBe(201);
   const artistId = (await artist.json()).id as string;
+  trackArtist(artistId);
 
   const sparse = await page.request.post('/api/records', {
     data: { title: `Sparse ${run}`, artistId, releaseYear: 1982 },
@@ -111,19 +112,17 @@ async function seedExtremes(
   return { artistId, sparseId, fullId };
 }
 
-let artistId: string;
 let sparseId: string;
 let fullId: string;
 
 test.beforeEach(async ({ page }) => {
   await login(page);
-  ({ artistId, sparseId, fullId } = await seedExtremes(page));
+  ({ sparseId, fullId } = await seedExtremes(page));
 });
 
 /* Per step 15 unit 1: a spec that leaves records behind slows every later one. */
-test.afterEach(async ({ page }) => {
-  await deleteRecordsByArtist(page, artistId);
-});
+/* Records and artist removed after each test by the shared tracker. */
+registerCleanup();
 
 test('the summary card is the same height for a sparse and a documented record', async ({
   page,

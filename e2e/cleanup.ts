@@ -1,4 +1,7 @@
+import { test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { sql } from 'drizzle-orm';
+import { getTestDb } from '../test/helpers/db';
 
 /**
  * Removes the records a spec created, so the database does not grow all run.
@@ -58,4 +61,58 @@ export async function deleteRecordsByArtist(page: Page, artistId: string): Promi
   } catch {
     // Swallowed deliberately — see above.
   }
+}
+
+/**
+ * **The one-line way for a spec to clean up after itself.**
+ *
+ * Call `trackArtist(id)` when a fixture artist is created; every tracked artist
+ * and its records are removed after each test, whether the test passed or
+ * failed. `registerCleanup()` wires the hook — call it once at module scope.
+ *
+ * **Why a shared helper rather than a per-spec `afterEach`.** A full run from an
+ * empty database ended with 145 records and 129 artists, because thirteen specs
+ * seeded and never cleaned up. Per-file teardown is the rule that was already
+ * in place and was simply not followed thirteen times; the fix has to make
+ * compliance cheap and non-compliance visible, which is why
+ * `test/repo/e2e-cleanup.test.ts` fails when a spec seeds without registering.
+ *
+ * **Why not a mid-run truncate.** `global-setup.ts` records the reason: two
+ * projects run in parallel against one database, so truncating mid-run — or in
+ * a global teardown while a project is still going — would delete another
+ * spec's live fixtures. Per-artist deletion only ever touches this spec's own
+ * rows.
+ *
+ * **Why SQL rather than the API.** `deleteRecordsByArtist` issues one paginated
+ * GET plus one DELETE per record; the heaviest spec paid 200 round-trips on
+ * teardown against the shared dev server, which is the load `seed.ts` warns
+ * about. These fixtures need nothing the delete route adds — the specs using
+ * this attach no images, so there is no blob to orphan.
+ *
+ * Records before the artist: §7.4 refuses to cascade a reference row in use.
+ */
+export function trackArtist(artistId: string): void {
+  trackedArtists.push(artistId);
+}
+
+const trackedArtists: string[] = [];
+
+export function registerCleanup(): void {
+  test.afterEach(async () => {
+    const db = getTestDb();
+
+    for (const artistId of trackedArtists.splice(0)) {
+      /*
+       * Best-effort per artist, and one failure must not strand the rest: this
+       * is the teardown path, and a throw here would replace a real failure
+       * with a cleanup error.
+       */
+      try {
+        await db.execute(sql`DELETE FROM records WHERE artist_id = ${artistId}::uuid`);
+        await db.execute(sql`DELETE FROM artists WHERE id = ${artistId}::uuid`);
+      } catch {
+        // Swallowed deliberately — see above.
+      }
+    }
+  });
 }

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { deleteRecordsByArtist } from './cleanup';
+import { registerCleanup, trackArtist } from './cleanup';
 
 /**
  * **§10b/A32/A33: the pulled record's facts flank it or overlay it, by width.**
@@ -31,6 +31,7 @@ async function seedOne(page: Page): Promise<string> {
   const artist = await page.request.post('/api/artists', { data: { name: `Fork-${run}` } });
   expect(artist.status()).toBe(201);
   const artistId = (await artist.json()).id as string;
+  trackArtist(artistId);
   const record = await page.request.post('/api/records', {
     data: { title: `Fork ${run}`, artistId, releaseYear: 1990 },
   });
@@ -54,16 +55,13 @@ async function pullASpine(page: Page) {
   throw new Error('no spine hit');
 }
 
-let artistId: string;
-
 test.beforeEach(async ({ page }) => {
   await login(page);
-  artistId = await seedOne(page);
+  await seedOne(page);
 });
 
-test.afterEach(async ({ page }) => {
-  await deleteRecordsByArtist(page, artistId);
-});
+/* Records and artist removed after each test by the shared tracker. */
+registerCleanup();
 
 /*
   **Updated for A33.** These tests encoded A32's contract — a stacked card

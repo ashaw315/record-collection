@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { deleteRecordsByArtist } from './cleanup';
+import { registerCleanup, trackArtist } from './cleanup';
 
 /**
  * **`BoxCanvas`'s filling variant must take its geometry from its container.**
@@ -51,6 +51,7 @@ async function seedTwoRecords(page: Page): Promise<string> {
   const artist = await page.request.post('/api/artists', { data: { name: `BoxGeom-${run}` } });
   expect(artist.status(), 'the fixture must exist for this to test anything').toBe(201);
   const artistId = (await artist.json()).id as string;
+  trackArtist(artistId);
 
   for (const n of [0, 1]) {
     const record = await page.request.post('/api/records', {
@@ -80,9 +81,8 @@ test.beforeEach(async ({ page }) => {
   Cleaned up per spec, per step 15 unit 1: a run that leaves records behind
   slows every later spec's `login()` until it times out.
 */
-test.afterEach(async ({ page }) => {
-  await deleteRecordsByArtist(page, artistId);
-});
+/* Records and artist removed after each test by the shared tracker. */
+registerCleanup();
 
 test('a filling record adopts its container, including a non-square one', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });

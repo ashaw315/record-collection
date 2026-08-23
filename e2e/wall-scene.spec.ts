@@ -1173,27 +1173,47 @@ test('the pulled sleeve fits INSIDE the visible wall region on a short viewport'
     return { top: Math.max(Math.round(rect.top), 0), bottom: window.innerHeight };
   });
 
-  /*
-    The sleeve against the dimmed wall. Scanned down the middle column, where the
-    record is centred horizontally, so the run is the sleeve's own height. The
-    placeholder and a real cover are both far brighter than the dimmed spines
-    behind them, which is what makes a luminance threshold enough here — this
-    asserts WHERE it is, not what colour it is.
-  */
+  /**
+   * **The sleeve is found by horizontal UNIFORMITY, not by brightness.**
+   *
+   * A first version took the first row over a luminance floor down the middle
+   * column. That passed on a small wall and failed under the full suite, where
+   * the database carries other specs' records, the wall is twelve rows, and the
+   * LIT SPINES above the sleeve clear the same floor — so it reported the
+   * sleeve's top pinned to the region's top and read exactly like the clipping
+   * defect. A measurement that cannot tell the sleeve from the wall behind it
+   * cannot testify about either.
+   *
+   * The sleeve is a solid block: across the middle of the frame its rows vary by
+   * ~0. The wall is vertical stripes of spines and rotated text, varying by
+   * ~110. The panel below is uniform too but dark, so brightness separates it.
+   * Measured on a twelve-row wall: sleeve rows `range=0 mean=67`, wall rows
+   * `range=113`, panel rows `mean=18-36`.
+   */
   const shot = await page.screenshot();
   const raw = await sharp(shot).raw().toBuffer({ resolveWithObject: true });
   const { width, height, channels } = raw.info;
-  const column = Math.floor(width / 2);
-  const luma = (y: number) => {
-    const i = (y * width + column) * channels;
-    return 0.2126 * raw.data[i] + 0.7152 * raw.data[i + 1] + 0.0722 * raw.data[i + 2];
+  const bandFrom = Math.floor(width * 0.35);
+  const bandTo = Math.floor(width * 0.65);
+  const rowIsSleeve = (y: number) => {
+    let min = Infinity;
+    let max = -Infinity;
+    let sum = 0;
+    for (let x = bandFrom; x < bandTo; x += 1) {
+      const i = (y * width + x) * channels;
+      const l = 0.2126 * raw.data[i] + 0.7152 * raw.data[i + 1] + 0.0722 * raw.data[i + 2];
+      if (l < min) min = l;
+      if (l > max) max = l;
+      sum += l;
+    }
+    const mean = sum / (bandTo - bandFrom);
+    return max - min < 12 && mean > 50;
   };
 
-  const wallFloor = 60;
   let first = -1;
   let last = -1;
   for (let y = region.top; y < Math.min(region.bottom, height); y += 1) {
-    if (luma(y) > wallFloor) {
+    if (rowIsSleeve(y)) {
       if (first < 0) first = y;
       last = y;
     }

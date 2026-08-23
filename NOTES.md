@@ -14199,3 +14199,100 @@ Also fixed in the same pass: `touch-tilt.spec.ts` hard-coded the record centre
 at `195, 400` and the wall drag at `195, 120`. Both now derive from
 `settledScreenY`/`settledNdcX` — the find-it-don't-assume-it rule again, third
 and fourth instances in this file.
+
+---
+
+### RULE: a scene value written FOR tests is how a test ends up reading back the implementation
+
+The generalisation the tautology audit produced. Every instance of the
+self-consistency shape in this strand involves one of the fifteen `data-*`
+values `WallScene` publishes for tests to read — `settledScreenY`, `slotGap`,
+`meshX/Y`, `layoutSlotX/Y`, and the rest. Those datasets are the mechanism: they
+are convenient, and they are also a channel through which a test can compare the
+implementation's arithmetic against itself.
+
+**The defence, which has now worked three times:** assert against a SECOND,
+INDEPENDENT PRODUCER, or against PIXELS.
+
+  - `meshX/Y` (the render) vs `layoutSlotX/Y` (the packer) — wall-scene's
+    re-wrap return, and now record-navigation's put-back.
+  - The sleeve's extent decoded from a screenshot vs the wall region's edges
+    read from the DOM — the placement fix.
+
+When adding a `data-*` for a test, ask what the test will COMPARE it to. If the
+answer is a formula built from the same inputs the scene used to write it, the
+assertion cannot fail and a second producer is needed instead.
+
+### The audit itself (2026-08-22)
+
+Checked every E2E and unit assertion that reads one of the fifteen scene
+datasets. Full tautologies remaining: **0** (the `settledScreenY` one is fixed).
+Sound despite resembling the shape, left alone with reasons: `meshX/Y` vs
+`layoutSlotX/Y` (two producers); `recordDepth` vs `SPINE_HEIGHT *
+BOX_THICKNESS_RATIO` (a deliberate no-duplication pin, backed by the stated
+constant 9.6 which WOULD catch a wrong ratio — the pair is sound, either alone
+is not); `boxCameraDistance` fill (inverts the function rather than restating
+it, and is recorded as failing against the old fixed distance);
+`pulled-destination.test.ts:61` (restates the fallback, but it is the documented
+contract and the file's same-apparent-size tests carry the real property — the
+weakest of the four, worth revisiting if that file changes).
+
+**Changed: `record-navigation.spec.ts` put-back, from `slotGap` to mesh-vs-slot.**
+`slotGap` is `|mesh.position - home|` and the return animates the mesh toward
+`home`, so it collapses to ~0 whatever `home` holds — a PARTIAL tautology: it
+catches a return that never runs, never a return to the wrong slot. That was
+tolerable while a sibling test also covered put-back. It stopped being tolerable
+when that sibling was removed as subsumed (same session), leaving this test as
+the only guard on exactly the bug a slide can introduce — sliding changes which
+record is held, so its home is elsewhere.
+
+Mutation-proved both ways, sending the return 300px off its home:
+  - old `slotGap < 5`: **PASSED** against the corrupted return.
+  - new mesh-vs-slot: **FAILED**, expected 283, received 583.
+That is the difference between a ruler that moves with the thing it measures and
+one that does not.
+
+---
+
+### 2026-08-23 — E2E accumulation, unit (a): the mechanism and the guard
+
+**Measured from a genuinely empty database:** one full run ends with **145
+records / 129 artists**. `globalSetup` truncates once per run, so that growth is
+WITHIN the run — the shape step 15 unit 1 diagnosed, where 724 accumulated
+records made `/` slow enough that late specs' logins timed out. Attribution by
+fixture prefix: Discharge 67 records (shared across collection-filters,
+discogs-prefill, manage), Gallery 8 (images), WidthTest 8, Shelf 7, long tail.
+Zero orphans — artists and records leak together.
+
+**The cause is not the three HTTP teardowns.** Those specs cleaned up correctly;
+moving them was consistency, not the leak. The leak is **13 specs that seed and
+never clean up at all**; shelf (17 seeding sites) and record-detail (15) carry
+32 of 47.
+
+**Why not a mid-run truncate.** `global-setup.ts` records the reason and it still
+holds: two projects run in parallel against one database, so truncating mid-run
+— or in a global teardown while a project is still running — deletes another
+spec's live fixtures. The rule-level fix is a shared PER-SPEC teardown plus a
+guard, not a shared reset.
+
+**Built:** `trackArtist(id)` / `registerCleanup()` in `e2e/cleanup.ts` (SQL,
+records before artist per §7.4, best-effort per artist so one failure cannot
+strand the rest), and `test/repo/e2e-cleanup.test.ts`, which fails when a spec
+seeds records without registering cleanup. The three HTTP teardowns moved onto
+it; `deleteRecordsByArtist` now has no callers in specs.
+
+**The guard is LIVE, not skipped**, with the 13 non-compliant specs named as
+explicit exemptions — visible debt rather than a silent skip, since a skipped
+test is a test that does not run. Proved it catches a fourteenth offender by
+name. It also has a staleness check, so (b) MUST remove each name as it
+converts: a list that outlived its debt would quietly grant permission to
+regress.
+
+**Two findings from writing the guard, both from it being more accurate than a
+manual survey.** A first pattern matched any mention of `/api/records` and named
+discogs-prefill, records-routing and want-list — specs that only READ records;
+it would have sent (b) to fix work that does not exist. Tightening it then
+exposed snippet and suggestions creating through a local `post(page, ...)`
+wrapper, and **record-form creating through the UI form** — thirteen saves, no
+request literal, which this pattern structurally cannot see. It is exempted with
+that limitation written on the line rather than left as a silent hole.
