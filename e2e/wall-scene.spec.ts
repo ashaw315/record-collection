@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
-import { deleteRecordsByArtist } from './cleanup';
+import { sql } from 'drizzle-orm';
+import { getTestDb } from '../test/helpers/db';
+import { removeRecordsFor, seedRecords } from './seed';
 
 /**
  * The wall in the scene, at `/plane`.
@@ -41,24 +43,61 @@ async function login(page: Page) {
  */
 const seededArtists: string[] = [];
 
-test.afterEach(async ({ page }) => {
+/**
+ * Teardown goes straight to the database, as the seed does. The seed moved to
+ * one INSERT (see `seed` below) and leaving the delete on the API would have
+ * left a spec that seeds via SQL and tears down via 200 paginated HTTP DELETEs
+ * with nothing explaining the asymmetry — `seed.ts`'s argument against HTTP
+ * fixtures degrading the shared server applies to the teardown exactly as it
+ * does to the seed. Nothing here needs the API's delete path: these records
+ * carry no images (no blob to orphan) and nothing references them (no §7.4
+ * refusal to honour).
+ *
+ * Records before the artist, and best-effort: this is the teardown path, and a
+ * throw here would replace a real failure with a cleanup error.
+ */
+test.afterEach(async () => {
+  const db = getTestDb();
   for (const artistId of seededArtists.splice(0)) {
-    await deleteRecordsByArtist(page, artistId);
+    try {
+      await removeRecordsFor(artistId);
+      await db.execute(sql`DELETE FROM artists WHERE id = ${artistId}::uuid`);
+    } catch {
+      // Swallowed deliberately — see above.
+    }
   }
 });
 
+/**
+ * The records go straight to the database through `seedRecords` — ONE
+ * statement — rather than one `POST /api/records` each. This file predated
+ * that helper and kept the HTTP loop after every other bulk-seeding spec had
+ * moved, which was drift rather than a decision: `seed.ts` states the reason
+ * (fixtures that are scenery, created over HTTP, degrade the shared dev server
+ * and destabilise every other spec in the run), and this file's 200-record
+ * re-wrap fixture was the largest remaining offender. Measured: 200 POSTs took
+ * 3.0–4.0s; the single INSERT took 14–22ms.
+ *
+ * The artist is still created through the API — one call — and these records
+ * need nothing the route adds on create (spine colour is set on image attach).
+ *
+ * `titles` is rebuilt from the helper's own naming, `prefix NN suffix`, for
+ * the specs that look records up by name. Postgres `lpad` TRUNCATES past its
+ * length, so the rebuild does too; only fixtures over 100 would notice, and
+ * none of those use the titles.
+ */
 async function seed(page: Page, count: number) {
   const artist = await page.request.post('/api/artists', { data: { name: `Wall-${suffix()}` } });
   const artistId = (await artist.json()).id as string;
   seededArtists.push(artistId);
 
-  const titles: string[] = [];
-  for (let i = 0; i < count; i += 1) {
-    const title = `Wall-${i} ${suffix()}`;
-    const made = await page.request.post('/api/records', { data: { title, artistId } });
-    expect(made.status(), 'the fixture must exist for this to test anything').toBe(201);
-    titles.push(title);
-  }
+  const run = suffix();
+  await seedRecords(artistId, 'Wall', run, count);
+
+  const titles = Array.from(
+    { length: count },
+    (_, i) => `Wall ${String(i).padStart(2, '0').slice(0, 2)} ${run}`,
+  );
   return { artistId, titles };
 }
 
@@ -864,6 +903,8 @@ test('the panel values are READABLE against the scrim', async ({ page }) => {
    */
   const artist = await page.request.post('/api/artists', { data: { name: `Read-${suffix()}` } });
   const artistId = (await artist.json()).id as string;
+  /* Registered for teardown — this path never was, and leaked a record per run. */
+  seededArtists.push(artistId);
   const label = await page.request.post('/api/labels', { data: { name: `RLab-${suffix()}` } });
   await page.request.post('/api/records', {
     data: {

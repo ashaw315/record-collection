@@ -14094,3 +14094,49 @@ end** is the partial last row — correct by design, now explicitly tested
 Stale "four rows/shelves" comments corrected in the same unit (wall-scene.spec,
 hover-proud.test) rather than left asserting the removed mechanism — the
 "a test asserts a layout it does not own" rule, applied to prose.
+
+---
+
+### 2026-08-22 — suite audit: what was measured, what changed, what stays
+
+**The load is not the suite.** Sampled `top` every 20s through a full E2E run:
+the suite's own processes averaged 93% of ONE core, peak 284% (two
+chrome-headless rendering WebGL). Non-ours averaged 117%: WindowServer 29%,
+kernel_task 24%, Docker VM 15%, Creative Cloud 14% (intermittent, top process
+in 3 of the last 4 samples as load hit 15 while the suite wound down), Chrome
+13%. Idle baseline with nothing of ours running: load 4.5–9.3, `ospredictiond`
+bursting to 33%. Load climbing as our CPU falls is the signature. Quit Creative
+Cloud before runs; the 37.8-min and 1.6-h runs were external bursts.
+
+**Distribution.** Vitest 2,838 tests / 3.5 min wall: src/ unit tests (~1,200)
+cost 1.5s total; test/ integration is 113.7s; ~90s is migrate + transform
+overhead. E2E 275 tests / 8.7 min: eleven WebGL-wall specs (~52 tests, 19%)
+are ~39% of serial time at ~7.5s each; screenshot decoding is 4 calls, ~17s.
+
+**Removed with reason (supersession):** record-navigation "put back lands
+right after navigating away" — the pull-era predecessor of the slotGap test,
+same fixture and steps, strictly weaker assertion. Note left in the spec.
+
+**Harness, not coverage:** wall-scene's seed() moved to `seedRecords` (one
+INSERT). Measured 200 POSTs = 3.0–4.0s vs one statement 14–22ms; the reason is
+seed.ts's own — HTTP fixtures degrade the shared dev server mid-run. wall-scene
+predated the helper and never moved (drift). Its teardown moved with it —
+`removeRecordsFor` + a SQL artist delete — because a spec that seeds via SQL and
+tears down via 200 paginated HTTP DELETEs has the same asymmetry the seed had,
+and nothing in wall-scene needs the API delete path (no images, no references).
+The `Read-` seed path was never registered for cleanup and leaked one record
+per run; it is now.
+
+**truncateAll — measured, and left alone.** Instrumented every call for one
+run (patch reverted): 1,272 calls, 54.9s of TRUNCATE at a flat 43ms each —
+26% of vitest wall, not "99%" (that figure was integration FILES, which
+includes their real work). 312 calls (25%) truncated tables that were already
+empty — the previous test wrote nothing — costing 13.6s, concentrated in
+discogs-search (39/42), formats (29/32), discogs-versions (23/25), tags, genres.
+
+Decision: no skip-if-empty guard. 13.6s is not worth adding a round-trip to
+every call to skip some of them, and it makes "was this table empty" something
+the harness reasons about — the shape that fails silently when it is wrong.
+Per-test truncate is the mechanism §2 mandates. **Do not re-propose on speed
+grounds; the number is here.** The other 41s is 960 needed truncates at a fixed
+cost that only a different mechanism would change.

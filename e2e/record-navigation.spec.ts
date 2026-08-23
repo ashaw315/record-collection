@@ -185,37 +185,19 @@ test('the previous arrow is ABSENT at the first record, the next arrow at the la
   }
 });
 
-test('put back lands right after navigating away from where you started', async ({ page }) => {
-  const artistId = await seed(60);
-  try {
-    await login(page);
-    await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(`/plane?artistId=${artistId}`);
-    await expect(page.getByTestId('wall-scene').locator('canvas')).toBeVisible({ timeout: 30_000 });
-
-    await pullFirst(page);
-    /* Navigate several records forward — into later rows of a 60-record wall. */
-    for (let i = 0; i < 10; i += 1) {
-      await page.getByTestId('nav-next').click();
-      await settle(page);
-    }
-    const navigatedTo = await pulled(page);
-    expect(navigatedTo, 'a record is out after navigating').not.toBe('');
-
-    /*
-      Put back. It returns the NAVIGATED-TO record to ITS slot — the pull-to-a-
-      new-id transition makes the current record the pulled one, so its own home
-      slot is where it goes. The pulled state clearing is the return completing.
-    */
-    await page.getByTestId('record-chrome').getByTestId('action-put').click();
-    await expect
-      .poll(() => pulled(page), { timeout: 10_000 })
-      .toBe('');
-  } finally {
-    await cleanup(artistId);
-  }
-});
-
+/*
+  **Superseded, not deleted:** "put back lands right after navigating away from
+  where you started" stood here. It was the pull-era predecessor of the slotGap
+  test below — same fixture (60), same ten navigations, same Put back — and its
+  only assertion was that `data-pulled` cleared, i.e. that the return completed.
+  The slotGap test makes that identical poll and two stronger assertions besides:
+  the held record's slot is empty while it is out, and the SAME record lands in
+  ITS OWN slot afterwards. By §2's rule — name the failure a test catches — there
+  is none the predecessor caught that the successor does not, and the successor
+  also catches a return to the WRONG slot, which is the bug the slide could
+  introduce. Measured at 19.2s each (ten sequential slides, not the fixture),
+  the pair paid that cost twice for one property.
+*/
 
 test('navigation is a SLIDE — both records at the same depth, not a rise', async ({ page }) => {
   const artistId = await seed(20);
