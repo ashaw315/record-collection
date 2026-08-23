@@ -1,9 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import sharp from 'sharp';
-import { sql } from 'drizzle-orm';
-import { getTestDb } from '../test/helpers/db';
-import { removeRecordsFor, seedRecords } from './seed';
+import { seedRecords } from './seed';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -37,41 +35,14 @@ async function login(page: Page) {
   await expect(page).toHaveURL('/');
 }
 
-/**
- * Every artist this file seeds, cleaned up in `afterEach`.
- *
- * **A hook rather than a `finally` at each call site**, because `seed()` is
- * called from sixteen tests and the one that gets forgotten is the one that
- * matters. The hook also runs after a FAILING test, which is the property NOTES
- * requires: a spec seeding bulk data must clean up even when it fails, or one
- * failure cascades into every later spec and buries the original cause.
- */
-const seededArtists: string[] = [];
-
-/**
- * Teardown goes straight to the database, as the seed does. The seed moved to
- * one INSERT (see `seed` below) and leaving the delete on the API would have
- * left a spec that seeds via SQL and tears down via 200 paginated HTTP DELETEs
- * with nothing explaining the asymmetry — `seed.ts`'s argument against HTTP
- * fixtures degrading the shared server applies to the teardown exactly as it
- * does to the seed. Nothing here needs the API's delete path: these records
- * carry no images (no blob to orphan) and nothing references them (no §7.4
- * refusal to honour).
- *
- * Records before the artist, and best-effort: this is the teardown path, and a
- * throw here would replace a real failure with a cleanup error.
- */
-test.afterEach(async () => {
-  const db = getTestDb();
-  for (const artistId of seededArtists.splice(0)) {
-    try {
-      await removeRecordsFor(artistId);
-      await db.execute(sql`DELETE FROM artists WHERE id = ${artistId}::uuid`);
-    } catch {
-      // Swallowed deliberately — see above.
-    }
-  }
-});
+/*
+  Teardown is the SHARED tracker (`registerCleanup`/`trackArtist`), not a local
+  hook. This file had both for a while: its own `seededArtists` loop AND
+  `trackArtist`, which deleted every artist twice. The shared one also removes
+  want-list rows, which the local copy did not — and a want-list row pins an
+  artist, because `want_list.artist_id` is NO ACTION.
+*/
+registerCleanup();
 
 /**
  * The records go straight to the database through `seedRecords` — ONE
@@ -93,9 +64,8 @@ test.afterEach(async () => {
  */
 async function seed(page: Page, count: number) {
   const artist = await page.request.post('/api/artists', { data: { name: `Wall-${suffix()}` } });
-  trackArtist(((await artist.json()) as { id: string }).id);
   const artistId = (await artist.json()).id as string;
-  seededArtists.push(artistId);
+  trackArtist(artistId);
 
   const run = suffix();
   await seedRecords(artistId, 'Wall', run, count);
@@ -934,10 +904,9 @@ test('the panel values are READABLE against the scrim', async ({ page }) => {
    * has to be taken again rather than assumed to carry.
    */
   const artist = await page.request.post('/api/artists', { data: { name: `Read-${suffix()}` } });
-  trackArtist(((await artist.json()) as { id: string }).id);
   const artistId = (await artist.json()).id as string;
   /* Registered for teardown — this path never was, and leaked a record per run. */
-  seededArtists.push(artistId);
+  trackArtist(artistId);
   const label = await page.request.post('/api/labels', { data: { name: `RLab-${suffix()}` } });
   await page.request.post('/api/records', {
     data: {

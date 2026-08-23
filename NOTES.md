@@ -14348,3 +14348,162 @@ name" inline field at `record-form:262` — and it did leave one pair in the pas
 measurement. It does not appear in the pass-3 residue. The exemption list is
 EMPTY; the UI-creation blind spot is documented on `SEEDS` instead, where it
 belongs, since it is a property of the pattern rather than of that spec.
+
+---
+
+### 2026-08-23 — step 15's mobile pass: the form screens
+
+§12 step 15 is "mobile pass across ALL screens. E2E #10", and eight of twelve
+screens had never been rendered at 390px. Forms first, being the most
+viewport-dependent.
+
+`record-form`, `discogs-prefill` and `want-list` added to the `mobile` project
+(covering /records/new, /records/[id]/edit and /want-list/new). **All 46 tests
+passed at 390x844 — nothing fell out**, and no horizontal overflow on any of the
+three. That result means very little on its own: the wall passed every assertion
+it had while being unusable on a phone. So each screen was screenshotted and
+read.
+
+**What the screenshots show.** Layout is genuinely sound on all three: fields go
+full-width, one control per row, real touch targets, genre chips wrap, no
+cramping or clipping. The nav wraps to two rows, which costs ~85px of every
+screen but is legible.
+
+**The one thing worth judging on the phone: LENGTH.** /want-list/new is 1,022px
+— sectioned ("The record" / "How much you want it" / "The dig" / "What you will
+pay"), submit reachable in about one scroll, and it reads well. /records/new is
+**2,439px** and /records/[id]/edit **2,451px** — roughly three screens, ~20
+fields, with Add record reachable only after scrolling past all of them. Nothing
+is broken; it is a long form on a small screen. Whether that is acceptable for
+"logging a record quickly" (the form's own words) is Adam's call on the device.
+/want-list/new demonstrates the sectioning that would shorten it if it is not.
+
+### §11 flow 10's "usable one-handed": judged on device, with a trigger
+
+Flow 10 reads "Run the collection list and lookup flows at a mobile viewport
+(390x844) — search and filter must be usable one-handed." The viewport half is
+covered: collection-filters, collection-widths and lookup-flows run in the
+`mobile` project, spec-mandated for exactly this.
+
+**The "one-handed" half is deliberately NOT asserted.** A touch-target-size
+check would pass on a screen nobody can actually use — the same false comfort as
+a centred-ness assertion on a clipped record. It is recorded here as judged on
+device instead.
+
+**Trigger:** revisit if Adam reports reaching for a control on the collection or
+lookup screen with a second hand, or if either screen gains a control that sits
+above the fold's midpoint on a 390px viewport. Until then the assertion stays
+absent on purpose, not by omission.
+
+---
+
+### 2026-08-23 — step 15's mobile pass: the remaining five screens
+
+`auth`, `record-detail`, `images`, `snippet`, `stats`, `suggestions` added to the
+`mobile` project. **All 67 passed at 390x844 — nothing fell out**, no horizontal
+overflow anywhere. With the form specs, all twelve routes have now been rendered
+at 390px, and the project's testMatch list is the record of that.
+
+Assertions passing means little here, so each screen was screenshotted and read.
+
+**Sound at 390, no action:**
+  - `/login` — vertically centred, full-width field and button, large targets.
+  - `/stats` — full-width bars, label left / count right, sections spaced.
+  - `/suggestions` — good prose measure, clear empty state.
+  - `/records/[id]` overall — sectioned Record / Pressing / Acquisition / Filed
+    under / Notes, monospace catalogue and matrix, sensible hierarchy at 1,929px.
+
+**One real defect: the snippet panel header** (`SnippetPanel.tsx:88`). A
+`flex items-baseline justify-between` row with `shrink-0` on the right-hand
+element. At 390 the long "Writing notes is not configured on this deployment."
+keeps its full width, squeezing the `h2` into a three-line stack — "ABOUT / THIS
+/ RECORD" — beside it. It never wraps to a second row. Everything else on that
+page is single-column, so it reads as a broken fragment.
+
+**One uncomfortable, not broken: `/want-list` rows.** Title, priority chip,
+"Mark acquired" and "Delete" share one row, with Delete — a destructive action —
+immediately beside the primary one and hard against the right edge. Mis-tap risk
+on a phone.
+
+**A method note.** The first screenshot run produced five 404s, and the tell was
+`scrollHeight=844` on every screen — the viewport height exactly, i.e. no
+content. The probe had POSTed pressing fields (`catalogNumber`, `matrixRunout`,
+`country`) inline to `/api/records`, which rejects unknown keys; pressings are
+found-or-created through `/api/pressings`. A uniform number across unrelated
+screens is a broken instrument, not a finding — the same lesson as the luminance
+scan that could not tell sleeve from wall.
+
+---
+
+### 2026-08-23 — the mobile fixes: /records/new, the snippet header, want-list Delete
+
+**/records/new was an ORDERING problem, not a length one.** Adam's reading, and
+the rest of the pass confirmed it: /records/[id] is nearly as long (1,929px) and
+does not have the problem, because its length is reference material you SCAN.
+/records/new was length you had to TRAVERSE to reach the button.
+
+§5.7 makes Discogs lookup the primary entry path, so this form is the fallback —
+the case is a shop, holding a sleeve. The essentials are what cannot be
+reconstructed once the record is back in the rack: **title, artist, catalog
+number, matrix/runout**. Catalog number is the collector's identifier (CLAUDE.md
+§8) and matrix is what distinguishes THIS pressing from another of the same
+album — §8's worst confusion. Both were two-thirds down the page in "Pressing
+details"; they now sit with title and artist.
+
+**Media condition was considered and rejected**, on Adam's argument: he holds the
+record for as long as he owns it, and a grade assigned under shop lighting is one
+he would revise after a listen. Recording a provisional grade as fact is the
+confidently-misleading shape §8 rejects. Paid was left out for the same class of
+reason — recorded at leisure. Three fields and a button.
+
+Result: **2,439px -> one screen, with Add record at y=662 on an 844px viewport**
+— visible without scrolling.
+
+**The same pattern does NOT fit both forms, so it was not forced.** Sectioning
+helps both; COLLAPSING helps only create. On /records/[id]/edit the disclosure is
+open (`recordId !== undefined`), because editing is a deliberate act with an
+intent and the field you came for is usually inside — and worse, a collapsed
+section on edit hides values that ARE recorded, which reads as data loss.
+`<details>` rather than React state: keyboard-reachable, announced as a
+disclosure, works without JS.
+
+**What fell out: 18 E2E failures**, 9 chromium and 9 mobile — every one a
+create-mode test filling a field now behind the disclosure. That is the honest
+cost of the change and it was a design question, not a test-fixing one: the
+tests assert behaviour that still works, and what changed is that reaching those
+fields now takes a tap, exactly as it does for a person. So the four copies of
+`formReady` open the disclosure. Note `<details>`/`<summary>` do NOT expose
+`group`/`button` roles here — both `getByRole` attempts matched zero — so the
+helper uses element selectors, verified by probe rather than assumed.
+
+**The snippet header** (`SnippetPanel.tsx`): was `flex items-baseline
+justify-between` with `shrink-0` on the message, which held its width at 390 and
+squeezed the h2 into "ABOUT / THIS / RECORD". Now `flex-wrap` with `shrink-0` on
+the HEADING, so the message drops beneath it when there is no room. Unchanged on
+a wide screen.
+
+**The want-list Delete**: was adjacent to "Mark acquired", hard against the right
+edge — a destructive control under the thumb, a few pixels from the one you
+want. §7.3 already requires a confirmation naming what is lost, so the risk was
+never an unrecoverable delete; it was the mis-tap and the interruption. Set
+apart with a separator and a leading margin rather than hidden behind a menu,
+which would trade a small annoyance for a hunt.
+
+**Leak after the mobile pass: 14, and it is not a regression.** The residue is
+the same app-created category documented above, doubled because the mobile
+project now runs those specs on two projects: `-answered` and `-merge` artists
+that `manage`'s merge and match-candidate flows create server-side, `Lena Raine`
+from `discogs-prefill`'s import, and **two** `Inline Artist` rows rather than one
+— `record-form:262`'s "New artist name" UI-creation site, now exercised on
+chromium AND mobile. Still well under the ~30 trigger.
+
+**A wrong theory, recorded because the correction matters.** The rise from 10 to
+14 was first attributed to `wall-scene.spec.ts` running two teardown mechanisms
+at once — its own `seededArtists` loop from unit (a) plus `trackArtist` from (b),
+deleting every artist twice. That duplication was REAL and is removed (the local
+copy also missed want-list rows, the exact gap that pinned an artist earlier),
+along with two `artist.json()` double-reads an earlier de-duplication patch had
+missed. But it was not the cause: deleting twice leaks nothing. The cause was
+simply wider mobile coverage. Measuring the leftovers by NAME is what
+distinguished the two — the count alone would have left the wrong theory
+standing.

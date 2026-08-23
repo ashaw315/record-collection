@@ -125,6 +125,23 @@ export default defineConfig({
        *   violation, not a tidy-up.
        *     collection-filters, collection-widths, lookup-flows
        *
+       *   STEP 15's MOBILE PASS — §12 step 15 is "mobile pass across ALL
+       *   screens", and eight of twelve had never been rendered at 390px. These
+       *   carry the form screens, which is where viewport-dependent layout bites
+       *   hardest — label wrapping, select widths, keyboard overlap.
+       *     record-form      — /records/new and /records/[id]/edit
+       *     discogs-prefill  — /records/new prefilled, and /want-list/new
+       *     want-list        — /want-list and the acquire flow
+       *     auth             — /login
+       *     record-detail    — /records/[id], with images and snippet, which
+       *     images, snippet    render the same screen's gallery and blurb
+       *     stats            — /stats
+       *     suggestions      — /suggestions
+       *
+       *   With these, all twelve routes have been rendered at 390px. The list
+       *   is now the record that step 15's "across all screens" was satisfied,
+       *   which is why a spec should not be dropped from it without evidence.
+       *
        *   EVIDENCE-BASED — the spec does not name these; they are here because
        *   they assert viewport-dependent behaviour INTERNALLY, so running them
        *   only on desktop would leave those assertions permanently unexercised
@@ -166,6 +183,15 @@ export default defineConfig({
         /lookup-flows\.spec\.ts$/,
         /nav-mobile\.spec\.ts$/,
         /manage\.spec\.ts$/,
+        /record-form\.spec\.ts$/,
+        /discogs-prefill\.spec\.ts$/,
+        /want-list\.spec\.ts$/,
+        /auth\.spec\.ts$/,
+        /record-detail\.spec\.ts$/,
+        /images\.spec\.ts$/,
+        /snippet\.spec\.ts$/,
+        /stats\.spec\.ts$/,
+        /suggestions\.spec\.ts$/,
       ],
     },
   ],

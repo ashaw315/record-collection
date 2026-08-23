@@ -575,308 +575,358 @@ export function RecordForm({
         )}
       </Row>
 
-      <Row label="Label" htmlFor="labelId">
-        <Select
-          id="labelId"
-          value={values.labelId}
-          onChange={(value) => set('labelId', value)}
-          options={options.labels}
-          placeholder="No label"
-        />
-        <InlineCreate
-          noun="label"
-          path="/api/labels"
-          suggestion={suggestions?.label ?? undefined}
-          
-          onCreated={(option, message) => adopt('labels', 'labelId', option, message)}
-        />
-      </Row>
-
-      <Row label="Format" htmlFor="formatId">
-        <Select
-          id="formatId"
-          value={values.formatId}
-          onChange={(value) => set('formatId', value)}
-          options={options.formats}
-          placeholder="No format"
-        />
-      </Row>
-
-      <Row
-        label="Release year"
-        htmlFor="releaseYear"
-        hint="The album's original year, not this pressing's."
-      >
-        <Input
-          id="releaseYear"
-          // `inputMode` rather than type="number": a number input allows
-          // scientific notation and silently discards non-numeric text, so what
-          // the user typed and what the form reads can differ.
-          inputMode="numeric"
-          value={values.releaseYear}
-          onChange={(event) => set('releaseYear', event.target.value)}
-          className="h-9 font-mono"
-        />
-        {fieldErrors.releaseYear !== undefined && (
-          <p role="alert" className="mt-1 text-xs text-destructive">
-            {fieldErrors.releaseYear}
-          </p>
-        )}
-      </Row>
-
-      {(['conditionMedia', 'conditionSleeve'] as const).map((field) => (
-        <Row
-          key={field}
-          label={field === 'conditionMedia' ? 'Media condition' : 'Sleeve condition'}
-          htmlFor={field}
-        >
-          <select
-            id={field}
-            value={values[field]}
-            onChange={(event) => set(field, event.target.value)}
-            className={selectClass}
-          >
-            {/* §4.2 keeps these nullable so a record can be logged before it is
-                graded — "not graded" has to stay reachable. */}
-            <option value="">Not graded</option>
-            {CONDITION_GRADES.map((grade) => (
-              <option key={grade} value={grade}>
-                {grade} — {conditionLabel(grade)}
-              </option>
-            ))}
-          </select>
-        </Row>
-      ))}
-
-      <Row label="Paid" htmlFor="purchasePrice">
-        <Input
-          id="purchasePrice"
-          inputMode="decimal"
-          placeholder="e.g. 24.50"
-          value={values.purchasePrice}
-          onChange={(event) => set('purchasePrice', event.target.value)}
-          className="h-9 font-mono"
-        />
-        {fieldErrors.purchasePrice !== undefined && (
-          <p role="alert" className="mt-1 text-xs text-destructive">
-            {fieldErrors.purchasePrice}
-          </p>
-        )}
-      </Row>
-
-      <Row label="Bought on" htmlFor="purchaseDate">
-        <Input
-          id="purchaseDate"
-          type="date"
-          value={values.purchaseDate}
-          onChange={(event) => set('purchaseDate', event.target.value)}
-          className="h-9 font-mono"
-        />
-      </Row>
-
-      <Row label="Bought from" htmlFor="storeId">
-        <Select
-          id="storeId"
-          value={values.storeId}
-          onChange={(value) => set('storeId', value)}
-          options={options.stores}
-          placeholder="No store"
-        />
-        <InlineCreate
-          noun="store"
-          path="/api/stores"
-          onCreated={(option, message) => adopt('stores', 'storeId', option, message)}
-        />
-      </Row>
-
-      <Row label="Genres">
-        <CheckboxGroup
-          legend="Genres"
-          options={options.genres}
-          selected={values.genreIds}
-          onToggle={(id) => toggle('genreIds', id)}
-        />
-      </Row>
-
-      <Row label="Tags">
-        <CheckboxGroup
-          legend="Tags"
-          options={options.tags}
-          selected={values.tagIds}
-          onToggle={(id) => toggle('tagIds', id)}
-        />
-        <InlineCreate
-          noun="tag"
-          path="/api/tags"
-          onCreated={(option, message) => adopt('tags', 'tagIds', option, message)}
-        />
-      </Row>
-
       {/*
-        Pressing details (§10). Entered here rather than on a separate screen:
-        a pressing has no meaning apart from the record it describes.
+        **Catalog number and matrix sit with title and artist, not in the
+        pressing section.**
 
-        ALL OPTIONAL. §10 requires the in-store case to stay enterable in
-        seconds, and leaving every field blank attaches no pressing at all
-        rather than creating an empty row.
+        §5.7 makes Discogs lookup the primary entry path, so this form is the
+        FALLBACK — reached when the record is not on Discogs or there is no
+        signal. That case is a shop, holding a sleeve, and these two are what
+        cannot be reconstructed once the record is back in the rack: the
+        catalogue number is the collector's identifier (CLAUDE.md §8), and the
+        matrix is what distinguishes THIS pressing from another of the same
+        album, which §8 calls the worst confusion the app can ship. Everything
+        below is on the sleeve, or recorded at leisure.
+
+        Media condition was considered for this group and deliberately left
+        out: a grade assigned under shop lighting is provisional, and recording
+        a provisional grade as fact is the confidently-misleading shape §8
+        rejects. It is better revised after a proper listen.
       */}
-      <fieldset className="mt-5 border-t border-border pt-3">
-        <legend className="font-heading text-sm font-semibold tracking-tight">
-          Pressing details
-        </legend>
-        <p className="mb-1 text-xs text-muted-foreground">
-          All optional. Leave blank if you are logging the record quickly.
-        </p>
-
-        <Row label="Catalog no." htmlFor="catalogNumber">
-          <Input
-            id="catalogNumber"
-            aria-describedby={fieldErrors.catalogNumber === undefined ? undefined : 'catalogNumber-error'}
-            aria-invalid={fieldErrors.catalogNumber !== undefined}
-            value={pressing.catalogNumber}
-            onChange={(event) => setPressingField('catalogNumber', event.target.value)}
-            placeholder="e.g. CLAY LP 3"
-            className="h-9 font-mono"
-          />
-        {pressingError('catalogNumber')}
-        </Row>
-
-        <Row
-          label="Matrix / runout"
-          htmlFor="matrixRunout"
-          hint="Read from the dead wax. This is what identifies your exact pressing, and nothing overwrites it later."
-          after={
-            /*
-              Reference, not a value. Discogs lists every runout its
-              contributors have submitted — eight on the captured fixture,
-              across FOUR different pressings — so this is what to compare
-              against while reading the wax, not something to accept. Rendered
-              as text rather than in the input so it cannot be saved by leaving
-              the field untouched.
-            */
-            matrixReference === null || matrixReference === undefined ? undefined : (
-              <p
-                data-testid="matrix-reference"
-                className="mt-1 font-mono text-xs text-muted-foreground"
-              >
-                <span className="font-sans">Discogs lists:</span> {matrixReference}
-              </p>
-            )
-          }
-        >
-          <Input
-            id="matrixRunout"
-            aria-describedby={fieldErrors.matrixRunout === undefined ? undefined : 'matrixRunout-error'}
-            aria-invalid={fieldErrors.matrixRunout !== undefined}
-            value={pressing.matrixRunout}
-            onChange={(event) => setPressingField('matrixRunout', event.target.value)}
-            className="h-9 font-mono"
-          />
-        {pressingError('matrixRunout')}
-        </Row>
-
-        <Row label="Country" htmlFor="countryPressed">
-          <Input
-            id="countryPressed"
-            aria-describedby={fieldErrors.countryPressed === undefined ? undefined : 'countryPressed-error'}
-            aria-invalid={fieldErrors.countryPressed !== undefined}
-            value={pressing.countryPressed}
-            onChange={(event) => setPressingField('countryPressed', event.target.value)}
-            placeholder="e.g. UK"
-            className="h-9"
-          />
-        {pressingError('countryPressed')}
-        </Row>
-
-        <Row label="Year pressed" htmlFor="yearPressed" hint="This pressing's year, not the album's.">
-          <Input
-            id="yearPressed"
-            aria-describedby={fieldErrors.yearPressed === undefined ? undefined : 'yearPressed-error'}
-            aria-invalid={fieldErrors.yearPressed !== undefined}
-            inputMode="numeric"
-            value={pressing.yearPressed}
-            onChange={(event) => setPressingField('yearPressed', event.target.value)}
-            className="h-9 font-mono"
-          />
-        {pressingError('yearPressed')}
-        </Row>
-
-        <Row label="Pressing plant" htmlFor="pressingPlant">
-          <Input
-            id="pressingPlant"
-            aria-describedby={fieldErrors.pressingPlant === undefined ? undefined : 'pressingPlant-error'}
-            aria-invalid={fieldErrors.pressingPlant !== undefined}
-            value={pressing.pressingPlant}
-            onChange={(event) => setPressingField('pressingPlant', event.target.value)}
-            className="h-9"
-          />
-        {pressingError('pressingPlant')}
-        </Row>
-
-        <Row label="Weight (g)" htmlFor="vinylWeightGrams">
-          <Input
-            id="vinylWeightGrams"
-            aria-describedby={fieldErrors.vinylWeightGrams === undefined ? undefined : 'vinylWeightGrams-error'}
-            aria-invalid={fieldErrors.vinylWeightGrams !== undefined}
-            inputMode="numeric"
-            value={pressing.vinylWeightGrams}
-            onChange={(event) => setPressingField('vinylWeightGrams', event.target.value)}
-            placeholder="e.g. 180"
-            className="h-9 font-mono"
-          />
-        {pressingError('vinylWeightGrams')}
-        </Row>
-
-        <Row label="Colour" htmlFor="colorVariant">
-          <Input
-            id="colorVariant"
-            aria-describedby={fieldErrors.colorVariant === undefined ? undefined : 'colorVariant-error'}
-            aria-invalid={fieldErrors.colorVariant !== undefined}
-            value={pressing.colorVariant}
-            onChange={(event) => setPressingField('colorVariant', event.target.value)}
-            placeholder="e.g. Black"
-            className="h-9"
-          />
-        {pressingError('colorVariant')}
-        </Row>
-
-        <Row label="Reissue" htmlFor="isReissue">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              id="isReissue"
-              type="checkbox"
-              checked={pressing.isReissue}
-              onChange={(event) => setPressingField('isReissue', event.target.checked)}
-              className="size-4 accent-primary"
-            />
-            This is a reissue
-          </label>
-        </Row>
-      </fieldset>
+      <Row label="Catalog no." htmlFor="catalogNumber">
+        <Input
+          id="catalogNumber"
+          aria-describedby={fieldErrors.catalogNumber === undefined ? undefined : 'catalogNumber-error'}
+          aria-invalid={fieldErrors.catalogNumber !== undefined}
+          value={pressing.catalogNumber}
+          onChange={(event) => setPressingField('catalogNumber', event.target.value)}
+          placeholder="e.g. CLAY LP 3"
+          className="h-9 font-mono"
+        />
+      {pressingError('catalogNumber')}
+      </Row>
 
       <Row
-        label="Notes"
-        htmlFor="notes"
+        label="Matrix / runout"
+        htmlFor="matrixRunout"
+        hint="Read from the dead wax. This is what identifies your exact pressing, and nothing overwrites it later."
         after={
-          // Second instance of the matrix treatment: shown, not filled.
-          notesReference === null || notesReference === undefined ? undefined : (
+          /*
+            Reference, not a value. Discogs lists every runout its
+            contributors have submitted — eight on the captured fixture,
+            across FOUR different pressings — so this is what to compare
+            against while reading the wax, not something to accept. Rendered
+            as text rather than in the input so it cannot be saved by leaving
+            the field untouched.
+          */
+          matrixReference === null || matrixReference === undefined ? undefined : (
             <p
-              data-testid="notes-reference"
-              className="mt-1 text-xs whitespace-pre-line text-muted-foreground"
+              data-testid="matrix-reference"
+              className="mt-1 font-mono text-xs text-muted-foreground"
             >
-              <span className="font-medium">Discogs lists:</span> {notesReference}
+              <span className="font-sans">Discogs lists:</span> {matrixReference}
             </p>
           )
         }
       >
-        <textarea
-          id="notes"
-          rows={4}
-          value={values.notes}
-          onChange={(event) => set('notes', event.target.value)}
-          className="w-full rounded-xs border border-input bg-transparent px-2 py-1.5 text-sm"
+        <Input
+          id="matrixRunout"
+          aria-describedby={fieldErrors.matrixRunout === undefined ? undefined : 'matrixRunout-error'}
+          aria-invalid={fieldErrors.matrixRunout !== undefined}
+          value={pressing.matrixRunout}
+          onChange={(event) => setPressingField('matrixRunout', event.target.value)}
+          className="h-9 font-mono"
         />
+      {pressingError('matrixRunout')}
       </Row>
+
+      {/*
+        **Everything beyond the three essentials is behind a disclosure — when
+        CREATING only.**
+
+        §5.7 makes this form the fallback path, and the in-shop case is three
+        fields and a button. The rest is on the sleeve or recorded at leisure,
+        and twenty fields between the reader and the submit button is what made
+        the screen 2,439px on a phone.
+
+        **Open by default when EDITING** (`recordId` present), because editing
+        is a deliberate act with an intent — "fix the year", "add what I paid" —
+        and the field you came for is usually in here. Worse, a collapsed
+        section on edit hides values that ARE recorded, which reads as data
+        loss. The sectioning helps both screens; the collapsing helps only one,
+        so it is applied to only one rather than forced on both.
+
+        `<details>` rather than state: it is keyboard-reachable, it is
+        announced as a disclosure, and it needs no JavaScript to open — so the
+        fields inside remain submittable and focusable exactly as before.
+      */}
+      <details open={recordId !== undefined} className="mt-4 pt-1">
+        <summary className="cursor-pointer font-heading text-sm font-semibold tracking-tight">
+          Everything else
+        </summary>
+        <p className="mt-1 mb-2 text-xs text-muted-foreground">
+          Label, format, condition, what you paid, genres, tags, and the rest of
+          the pressing. All optional — leave it closed if you are logging the
+          record quickly.
+        </p>
+
+        <Row label="Label" htmlFor="labelId">
+          <Select
+            id="labelId"
+            value={values.labelId}
+            onChange={(value) => set('labelId', value)}
+            options={options.labels}
+            placeholder="No label"
+          />
+          <InlineCreate
+            noun="label"
+            path="/api/labels"
+            suggestion={suggestions?.label ?? undefined}
+          
+            onCreated={(option, message) => adopt('labels', 'labelId', option, message)}
+          />
+        </Row>
+
+        <Row label="Format" htmlFor="formatId">
+          <Select
+            id="formatId"
+            value={values.formatId}
+            onChange={(value) => set('formatId', value)}
+            options={options.formats}
+            placeholder="No format"
+          />
+        </Row>
+
+        <Row
+          label="Release year"
+          htmlFor="releaseYear"
+          hint="The album's original year, not this pressing's."
+        >
+          <Input
+            id="releaseYear"
+            // `inputMode` rather than type="number": a number input allows
+            // scientific notation and silently discards non-numeric text, so what
+            // the user typed and what the form reads can differ.
+            inputMode="numeric"
+            value={values.releaseYear}
+            onChange={(event) => set('releaseYear', event.target.value)}
+            className="h-9 font-mono"
+          />
+          {fieldErrors.releaseYear !== undefined && (
+            <p role="alert" className="mt-1 text-xs text-destructive">
+              {fieldErrors.releaseYear}
+            </p>
+          )}
+        </Row>
+
+        {(['conditionMedia', 'conditionSleeve'] as const).map((field) => (
+          <Row
+            key={field}
+            label={field === 'conditionMedia' ? 'Media condition' : 'Sleeve condition'}
+            htmlFor={field}
+          >
+            <select
+              id={field}
+              value={values[field]}
+              onChange={(event) => set(field, event.target.value)}
+              className={selectClass}
+            >
+              {/* §4.2 keeps these nullable so a record can be logged before it is
+                  graded — "not graded" has to stay reachable. */}
+              <option value="">Not graded</option>
+              {CONDITION_GRADES.map((grade) => (
+                <option key={grade} value={grade}>
+                  {grade} — {conditionLabel(grade)}
+                </option>
+              ))}
+            </select>
+          </Row>
+        ))}
+
+        <Row label="Paid" htmlFor="purchasePrice">
+          <Input
+            id="purchasePrice"
+            inputMode="decimal"
+            placeholder="e.g. 24.50"
+            value={values.purchasePrice}
+            onChange={(event) => set('purchasePrice', event.target.value)}
+            className="h-9 font-mono"
+          />
+          {fieldErrors.purchasePrice !== undefined && (
+            <p role="alert" className="mt-1 text-xs text-destructive">
+              {fieldErrors.purchasePrice}
+            </p>
+          )}
+        </Row>
+
+        <Row label="Bought on" htmlFor="purchaseDate">
+          <Input
+            id="purchaseDate"
+            type="date"
+            value={values.purchaseDate}
+            onChange={(event) => set('purchaseDate', event.target.value)}
+            className="h-9 font-mono"
+          />
+        </Row>
+
+        <Row label="Bought from" htmlFor="storeId">
+          <Select
+            id="storeId"
+            value={values.storeId}
+            onChange={(value) => set('storeId', value)}
+            options={options.stores}
+            placeholder="No store"
+          />
+          <InlineCreate
+            noun="store"
+            path="/api/stores"
+            onCreated={(option, message) => adopt('stores', 'storeId', option, message)}
+          />
+        </Row>
+
+        <Row label="Genres">
+          <CheckboxGroup
+            legend="Genres"
+            options={options.genres}
+            selected={values.genreIds}
+            onToggle={(id) => toggle('genreIds', id)}
+          />
+        </Row>
+
+        <Row label="Tags">
+          <CheckboxGroup
+            legend="Tags"
+            options={options.tags}
+            selected={values.tagIds}
+            onToggle={(id) => toggle('tagIds', id)}
+          />
+          <InlineCreate
+            noun="tag"
+            path="/api/tags"
+            onCreated={(option, message) => adopt('tags', 'tagIds', option, message)}
+          />
+        </Row>
+
+        {/*
+          Pressing details (§10). Entered here rather than on a separate screen:
+          a pressing has no meaning apart from the record it describes.
+
+          ALL OPTIONAL. §10 requires the in-store case to stay enterable in
+          seconds, and leaving every field blank attaches no pressing at all
+          rather than creating an empty row.
+        */}
+        <fieldset className="mt-5 border-t border-border pt-3">
+          <legend className="font-heading text-sm font-semibold tracking-tight">
+            Pressing details
+          </legend>
+          <p className="mb-1 text-xs text-muted-foreground">
+            All optional. Leave blank if you are logging the record quickly.
+          </p>
+
+
+          <Row label="Country" htmlFor="countryPressed">
+            <Input
+              id="countryPressed"
+              aria-describedby={fieldErrors.countryPressed === undefined ? undefined : 'countryPressed-error'}
+              aria-invalid={fieldErrors.countryPressed !== undefined}
+              value={pressing.countryPressed}
+              onChange={(event) => setPressingField('countryPressed', event.target.value)}
+              placeholder="e.g. UK"
+              className="h-9"
+            />
+          {pressingError('countryPressed')}
+          </Row>
+
+          <Row label="Year pressed" htmlFor="yearPressed" hint="This pressing's year, not the album's.">
+            <Input
+              id="yearPressed"
+              aria-describedby={fieldErrors.yearPressed === undefined ? undefined : 'yearPressed-error'}
+              aria-invalid={fieldErrors.yearPressed !== undefined}
+              inputMode="numeric"
+              value={pressing.yearPressed}
+              onChange={(event) => setPressingField('yearPressed', event.target.value)}
+              className="h-9 font-mono"
+            />
+          {pressingError('yearPressed')}
+          </Row>
+
+          <Row label="Pressing plant" htmlFor="pressingPlant">
+            <Input
+              id="pressingPlant"
+              aria-describedby={fieldErrors.pressingPlant === undefined ? undefined : 'pressingPlant-error'}
+              aria-invalid={fieldErrors.pressingPlant !== undefined}
+              value={pressing.pressingPlant}
+              onChange={(event) => setPressingField('pressingPlant', event.target.value)}
+              className="h-9"
+            />
+          {pressingError('pressingPlant')}
+          </Row>
+
+          <Row label="Weight (g)" htmlFor="vinylWeightGrams">
+            <Input
+              id="vinylWeightGrams"
+              aria-describedby={fieldErrors.vinylWeightGrams === undefined ? undefined : 'vinylWeightGrams-error'}
+              aria-invalid={fieldErrors.vinylWeightGrams !== undefined}
+              inputMode="numeric"
+              value={pressing.vinylWeightGrams}
+              onChange={(event) => setPressingField('vinylWeightGrams', event.target.value)}
+              placeholder="e.g. 180"
+              className="h-9 font-mono"
+            />
+          {pressingError('vinylWeightGrams')}
+          </Row>
+
+          <Row label="Colour" htmlFor="colorVariant">
+            <Input
+              id="colorVariant"
+              aria-describedby={fieldErrors.colorVariant === undefined ? undefined : 'colorVariant-error'}
+              aria-invalid={fieldErrors.colorVariant !== undefined}
+              value={pressing.colorVariant}
+              onChange={(event) => setPressingField('colorVariant', event.target.value)}
+              placeholder="e.g. Black"
+              className="h-9"
+            />
+          {pressingError('colorVariant')}
+          </Row>
+
+          <Row label="Reissue" htmlFor="isReissue">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                id="isReissue"
+                type="checkbox"
+                checked={pressing.isReissue}
+                onChange={(event) => setPressingField('isReissue', event.target.checked)}
+                className="size-4 accent-primary"
+              />
+              This is a reissue
+            </label>
+          </Row>
+        </fieldset>
+
+        <Row
+          label="Notes"
+          htmlFor="notes"
+          after={
+            // Second instance of the matrix treatment: shown, not filled.
+            notesReference === null || notesReference === undefined ? undefined : (
+              <p
+                data-testid="notes-reference"
+                className="mt-1 text-xs whitespace-pre-line text-muted-foreground"
+              >
+                <span className="font-medium">Discogs lists:</span> {notesReference}
+              </p>
+            )
+          }
+        >
+          <textarea
+            id="notes"
+            rows={4}
+            value={values.notes}
+            onChange={(event) => set('notes', event.target.value)}
+            className="w-full rounded-xs border border-input bg-transparent px-2 py-1.5 text-sm"
+          />
+        </Row>
+      </details>
 
       <div className="mt-4 flex items-center gap-2">
         <Button type="submit" disabled={saving}>

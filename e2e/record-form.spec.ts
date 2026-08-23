@@ -59,6 +59,28 @@ async function post(page: Page, path: string, data: unknown) {
  */
 async function formReady(page: Page): Promise<void> {
   await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
+
+  /*
+    **Open the "Everything else" disclosure if it is closed.**
+
+    §5.7 makes the manual form the fallback path, so on CREATE everything past
+    title, artist, catalog number and matrix is collapsed — the in-shop case is
+    three fields and a button, and twenty fields between the reader and submit
+    is what made this screen 2,439px on a phone. On EDIT it is open already,
+    because a collapsed section there hides values that ARE recorded.
+
+    A test filling any of those fields has to open it, exactly as a person does.
+    Done here rather than in each test: the disclosure is a property of the
+    form, not of what any one spec is checking.
+  */
+  const disclosure = page.locator('details').filter({ has: page.locator('summary', { hasText: 'Everything else' }) });
+  if (
+    (await disclosure.count()) > 0 &&
+    !(await disclosure.first().evaluate((el) => (el as HTMLDetailsElement).open))
+  ) {
+    await disclosure.first().locator('summary').click();
+    await expect(disclosure.first()).toHaveAttribute('open', '');
+  }
 }
 
 test.beforeEach(async ({ page }) => {

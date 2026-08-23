@@ -118,10 +118,24 @@ export function WantListRow({ item }: { item: WantListItem }) {
             </Link>
           )}
 
+          {/*
+            **Set apart from the primary action, not hidden.** On a 390px row
+            the priority chip, "Mark acquired" and this sat adjacent with Delete
+            hard against the right edge — a destructive control under the thumb,
+            a few pixels from the one you actually want.
+
+            §7.3 already requires a confirmation naming what is lost, so the
+            risk was never an unrecoverable delete; it was the mis-tap, and the
+            interruption of confirming something you did not mean to press. The
+            separator and the leading margin make it a deliberate reach while
+            leaving it exactly as reachable as before — hiding it behind a menu
+            would trade a small annoyance for a hunt.
+          */}
+          <span aria-hidden className="ml-1 hidden h-3 w-px bg-border sm:block" />
           <button
             type="button"
             onClick={() => setConfirming(true)}
-            className="text-xs text-muted-foreground underline underline-offset-2 hover:text-destructive"
+            className="ml-auto pl-3 text-xs text-muted-foreground underline underline-offset-2 hover:text-destructive sm:ml-1 sm:pl-0"
           >
             Delete
           </button>

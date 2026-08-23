@@ -85,8 +85,20 @@ export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured }:
 
   return (
     <section className="mt-8" data-testid="snippet-panel">
-      <div className="flex items-baseline justify-between gap-4">
-        <h2 className="font-heading text-sm tracking-wide uppercase text-muted-foreground">
+      {/*
+        **Wraps rather than squeezing.** This was `flex items-baseline
+        justify-between` with `shrink-0` on the right-hand element. At 390px the
+        unconfigured message — a full sentence — held its width and squeezed the
+        heading into a three-line stack, "ABOUT / THIS / RECORD", beside it. Every
+        other block on this screen is single-column, so it read as a broken
+        fragment.
+
+        `flex-wrap` with `shrink-0` on the HEADING instead: the heading keeps its
+        line, and the long message drops beneath it when there is no room. On a
+        wide screen nothing changes — the two still sit on one baseline.
+      */}
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h2 className="shrink-0 font-heading text-sm tracking-wide uppercase text-muted-foreground">
           About this record
         </h2>
 
@@ -114,7 +126,7 @@ export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured }:
         ) : (
           <span
             data-testid="snippet-unconfigured"
-            className="shrink-0 text-xs text-muted-foreground"
+            className="text-xs text-muted-foreground"
           >
             Writing notes is not configured on this deployment.
           </span>
