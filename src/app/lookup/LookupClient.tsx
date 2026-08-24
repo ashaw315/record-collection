@@ -90,6 +90,21 @@ const FIELDS = [
   { name: 'q', label: 'Anything', hint: 'Freeform — combine with the fields above' },
 ] as const;
 
+/**
+ * **What you type standing in a shop, holding the record.**
+ *
+ * §5.7's screen is an in-store lookup, and these four are what is on the object
+ * in your hand: the catalogue number off the spine (the strongest match), the
+ * artist and title off the sleeve, and the format — which earns its place for a
+ * measured reason recorded above, a Carpenters search returning 32 results
+ * mostly on CD and cassette when only one medium is in the hand.
+ *
+ * The remaining eight are refinements. They stay reachable behind a disclosure
+ * rather than being removed: §5.7 documents all twelve, and a form missing a
+ * documented parameter is a search the user cannot express.
+ */
+const ESSENTIAL_FIELDS = ['catno', 'artist', 'title', 'format'] as const;
+
 type FieldName = (typeof FIELDS)[number]['name'];
 
 const EMPTY: Record<FieldName, string> = {
@@ -114,6 +129,22 @@ export function LookupClient() {
   const [total, setTotal] = useState(0);
   const [error, setError] = useState<string | undefined>();
   const [searching, setSearching] = useState(false);
+  /**
+   * **The form collapses once there are results, and the results take the
+   * screen.**
+   *
+   * Reported from a phone as "I tap search and nothing happens": the request
+   * returned 200 and the results rendered below a full screen of form, so a
+   * successful search looked identical to a dead button. Scrolling to the
+   * results was the smaller fix and it treats the symptom — the screen you look
+   * at after submitting would still be the query you just typed.
+   *
+   * So after a search the query becomes a summary line you can tap to reopen,
+   * and the answer is what is on screen. Re-opened automatically when a search
+   * fails or returns nothing, because then the query IS the thing to look at.
+   */
+  const [queryOpen, setQueryOpen] = useState(true);
+  const [refinementsOpen, setRefinementsOpen] = useState(false);
 
   /**
    * A TEST-SUPPORT AFFORDANCE, and deliberately so — the same one RecordForm
@@ -158,22 +189,72 @@ export function LookupClient() {
       if (!response.ok) {
         setError(body?.error?.message ?? 'Search failed.');
         setResults(null);
+        setQueryOpen(true);
         return;
       }
 
       setResults(body.data);
       setTotal(body.meta.total);
+      /* Nothing found means the query is what needs attention, not the answer. */
+      setQueryOpen(body.meta.total === 0);
     } catch {
       setError('Could not reach the server.');
       setResults(null);
+      setQueryOpen(true);
     } finally {
       setSearching(false);
     }
   }
 
+  const renderField = (field: (typeof FIELDS)[number]) => (
+    <div key={field.name} className="space-y-1">
+      <label htmlFor={field.name} className="block text-xs text-muted-foreground uppercase">
+        {field.label}
+      </label>
+      <Input
+        id={field.name}
+        name={field.name}
+        value={values[field.name]}
+        onChange={(event) =>
+          setValues((current) => ({ ...current, [field.name]: event.target.value }))
+        }
+        className="h-9"
+        autoComplete="off"
+      />
+      {'hint' in field && field.hint !== undefined && (
+        <p className="text-[0.7rem] text-muted-foreground">{field.hint}</p>
+      )}
+    </div>
+  );
+
+  /** The query in a sentence, for the collapsed state. */
+  const querySummary = FIELDS.filter((field) => values[field.name].trim() !== '')
+    .map((field) => `${field.label} ${values[field.name].trim()}`)
+    .join(' · ');
+
   return (
     <div className="space-y-6">
+      {/*
+        **Results first once there are results.** The query is above them when
+        you are composing it and below them — as a summary you can tap open —
+        once it has been answered. On a phone that is the difference between a
+        search that appears to do nothing and one that shows you what came back.
+      */}
+      {results !== null && !queryOpen && (
+        <button
+          type="button"
+          data-testid="lookup-query-summary"
+          onClick={() => setQueryOpen(true)}
+          className="w-full rounded-xs border border-border px-3 py-2 text-left text-xs text-muted-foreground"
+        >
+          <span className="font-medium text-foreground">Searched:</span>{' '}
+          {querySummary === '' ? 'everything' : querySummary}
+          <span className="ml-1 underline underline-offset-2">Edit</span>
+        </button>
+      )}
+
       <form
+        hidden={results !== null && !queryOpen}
         ref={formRef}
         id={formId}
         onSubmit={search}
@@ -186,27 +267,29 @@ export function LookupClient() {
           before any scrolling.
         */}
         <div className="grid gap-3 sm:grid-cols-2">
-          {FIELDS.map((field) => (
-            <div key={field.name} className="space-y-1">
-              <label htmlFor={field.name} className="block text-xs text-muted-foreground uppercase">
-                {field.label}
-              </label>
-              <Input
-                id={field.name}
-                name={field.name}
-                value={values[field.name]}
-                onChange={(event) =>
-                  setValues((current) => ({ ...current, [field.name]: event.target.value }))
-                }
-                className="h-9"
-                autoComplete="off"
-              />
-              {'hint' in field && field.hint !== undefined && (
-                <p className="text-[0.7rem] text-muted-foreground">{field.hint}</p>
-              )}
-            </div>
-          ))}
+          {FIELDS.filter((field) =>
+            (ESSENTIAL_FIELDS as readonly string[]).includes(field.name),
+          ).map(renderField)}
         </div>
+
+        {/*
+          The eight refinements, reachable but not in the way. §5.7 documents
+          all twelve parameters and every one stays expressible; what changed is
+          that a phone no longer shows twelve fields before it shows an answer.
+        */}
+        <details
+          open={refinementsOpen}
+          onToggle={(event) => setRefinementsOpen((event.target as HTMLDetailsElement).open)}
+        >
+          <summary className="cursor-pointer text-xs text-muted-foreground underline underline-offset-2">
+            More search terms
+          </summary>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {FIELDS.filter(
+              (field) => !(ESSENTIAL_FIELDS as readonly string[]).includes(field.name),
+            ).map(renderField)}
+          </div>
+        </details>
 
         <div className="flex items-center gap-3">
           <Button type="submit" disabled={searching}>
@@ -236,7 +319,7 @@ export function LookupClient() {
 
       {results !== null && (
         <section aria-label="Results" className="space-y-3">
-          <p className="text-xs text-muted-foreground">
+          <p data-testid="lookup-summary" className="text-xs text-muted-foreground">
             {total === 0
               ? 'No matches on Discogs.'
               : `${total} match${total === 1 ? '' : 'es'}${

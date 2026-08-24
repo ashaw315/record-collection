@@ -14507,3 +14507,84 @@ missed. But it was not the cause: deleting twice leaks nothing. The cause was
 simply wider mobile coverage. Measuring the leftovers by NAME is what
 distinguished the two — the count alone would have left the wrong theory
 standing.
+
+---
+
+### RULE: `toBeVisible()` does not mean ON SCREEN
+
+A Playwright fact this project has now been caught by, written here because the
+next test author will otherwise be caught by it too.
+
+`expect(locator).toBeVisible()` means the element is in the layout with a
+non-empty bounding box and is not `hidden`/`display:none`. **It is true for an
+element scrolled a thousand pixels out of view.** Playwright also auto-scrolls
+before interacting, so a `click()` on an off-screen element succeeds silently.
+
+**The assertion that can fail is `toBeInViewport()`** — it reports an
+intersection ratio, and the lookup defect below produced "viewport ratio 0": the
+element was in the document and zero percent on screen.
+
+Use `toBeVisible` for "this exists and is rendered". Use `toBeInViewport` for any
+claim about what a person can SEE without scrolling — which is most claims about
+a phone.
+
+### 2026-08-24 — /lookup: "I tap search and nothing happens"
+
+Reported from a phone. **Reproduced in Chromium at 390x844 against the live
+server over the LAN** (not on the physical device).
+
+**Neither hypothesis was the cause, and both were checked rather than assumed.**
+The button is not dead: the request fires, `GET /api/discogs/search` returns
+**200** with live Discogs data, there are no console errors, and the button does
+flip to "Searching…". `DISCOGS_TOKEN` is present and valid — an authenticated
+curl returned real releases — so the credential-at-point-of-use theory is ruled
+out. (`DISCOGS_USER_AGENT` is absent from `.env.local`, but search works without
+it; noted, not the cause.)
+
+**The defect is positional.** The 50 results rendered at **y=921 on an 844px
+viewport** — below the fold, behind a twelve-field form. A successful search
+produced no visible change, which is indistinguishable from a dead button.
+
+**Why 44 passing mobile tests could not see it.** Two reasons, both worth
+naming. `lookup-flows` stubs the endpoint with `page.route(...route.fulfill)`,
+so it exercises the renderer and never the round trip — correct, since the suite
+must not make live calls. And every assertion is `toBeVisible`, which is true
+off-screen (see the rule above). Same shape as the wall: the tests assert
+EXISTENCE, never that you can see it.
+
+**The fix is a shape, not a scroll.** Scrolling to the results was smaller and
+treats the symptom: the form stays a screen tall, and what you look at after
+submitting is still the query you just typed — a position that happens rather
+than one anyone chose. Instead:
+
+  - Four essentials visible — catno, artist, title, format. Format earns its
+    place on a measured finding already recorded in the file: a Carpenters
+    search returned 32 results, mostly CD and cassette, when one medium is in
+    the hand. The other eight go behind "More search terms"; all twelve §5.7
+    parameters stay expressible.
+  - **After a search the query collapses to one tappable line** — "Searched:
+    Artist Discharge · Edit" — and the results take the screen. Re-opened
+    automatically when a search errors or returns nothing, because then the
+    query IS what needs attention.
+
+Results now start at **y=345**, on screen with no scrolling. The same collapse
+as /records/new an hour earlier, with one difference that argued for going
+further: on that form the hidden fields may never be filled, whereas here the
+query is re-run, so it must stop being the thing you look at.
+
+**A flake in the sleeve test, found by the full matrix.** The
+`fits INSIDE the visible wall region` test failed once in a full run, passed in
+isolation against the IDENTICAL database, and passed across all 223 chromium
+tests. So it was neither leftover fixtures nor the wall's layout.
+
+The cause: after the phase reaches `settled` — a state flag — the test waited a
+FIXED 400ms for the texture to upload and paint. Under the full matrix, where
+chromium and mobile compete for one dev server, that is not enough; the scan
+photographed a frame where the sleeve had not rendered and found lit wall at the
+region top, which is indistinguishable from the clipping defect the test exists
+for. It now polls until the sleeve is painted as a solid block.
+
+**A fixed timeout standing in for a render is the same class as a hard-coded
+coordinate** — it encodes one machine's timing rather than the condition that
+matters. Re-mutated the placement fix afterwards to confirm the test still fails
+on the real defect: it does, same `sleeve top 172` message.

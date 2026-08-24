@@ -563,6 +563,23 @@ test('the form offers every §5.7 search parameter', async ({ page }) => {
   await page.goto('/lookup');
   await formReady(page);
 
+  /*
+    **The refinements are behind "More search terms", so open it first.**
+
+    Four fields are visible on arrival — catno, artist, title, format — and the
+    other eight are one tap away, because twelve fields before any answer is
+    what made a phone search look like it had done nothing. What §5.7 requires
+    is that every parameter is OFFERED, not that all twelve are on screen at
+    once, so this opens the disclosure exactly as a person does and then checks
+    the full dozen. A version that asserted only the visible four would let a
+    parameter go missing again — the defect this test was written for.
+  */
+  const refinements = page.locator('details').filter({
+    has: page.locator('summary', { hasText: 'More search terms' }),
+  });
+  await refinements.locator('summary').click();
+  await expect(refinements).toHaveAttribute('open', '');
+
   for (const field of [
     'catno',
     'barcode',
@@ -1224,4 +1241,50 @@ test('the spread asks only about the format in hand', async ({ page }) => {
   await expect(page.getByTestId('version-spread')).toBeVisible({ timeout: 15_000 });
 
   expect(requested, 'the medium travels with the request').toContain('format=Vinyl');
+});
+
+test('the results are ON SCREEN after a search on a phone, not below the form', async ({
+  page,
+}) => {
+  /**
+   * **§11 flow 10's other half, and the defect 44 passing mobile tests could
+   * not see.** Reported from a phone as "I tap search and nothing happens".
+   * The request fired and returned 200 with real data; the fifty results
+   * rendered at y=921 on an 844px viewport — below the fold, behind a
+   * twelve-field form. A successful search produced no visible change, which
+   * is indistinguishable from a dead button.
+   *
+   * **`toBeInViewport`, not `toBeVisible`.** Every existing assertion here uses
+   * `toBeVisible`, which in Playwright means "in the layout with a non-empty
+   * box" — true for an element scrolled a thousand pixels out of view, and
+   * Playwright auto-scrolls before interacting. That is why the suite was green
+   * against this. Only `toBeInViewport` can fail on it.
+   *
+   * §5.7's screen is a search run standing in a shop with a record in hand, so
+   * what must be on screen afterwards is the ANSWER — not the query you just
+   * typed.
+   */
+  await stubLookup(page, { results: [searchResult()] });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/lookup');
+  await formReady(page);
+
+  await page.getByLabel('Artist').fill('Discharge');
+  await page.getByRole('button', { name: 'Search Discogs' }).click();
+
+  const first = page.getByTestId('result-card').first();
+  await expect(first).toBeVisible({ timeout: 15_000 });
+
+  /*
+    The load-bearing assertion. No scrolling between the tap and this check —
+    a `scrollIntoView` here would restore exactly the blindness being fixed.
+  */
+  await expect(first, 'the first result is on screen without scrolling').toBeInViewport();
+
+  /* And the count, so "did anything come back" is answered before the cards. */
+  await expect(
+    page.getByTestId('lookup-summary'),
+    'the result count is on screen too',
+  ).toBeInViewport();
 });

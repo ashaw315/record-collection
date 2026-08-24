@@ -1140,13 +1140,55 @@ test('the pulled sleeve fits INSIDE the visible wall region on a short viewport'
       { timeout: 10_000 },
     )
     .toMatch(/settled/);
-  await page.waitForTimeout(400);
 
   const region = await page.evaluate(() => {
     const host = document.querySelector('[data-testid="wall-scene"]') as HTMLElement;
     const rect = host.querySelector('canvas')!.getBoundingClientRect();
     return { top: Math.max(Math.round(rect.top), 0), bottom: window.innerHeight };
   });
+
+  /*
+    **Wait for the sleeve to be PAINTED, not for a fixed delay.**
+
+    `settled` is a state flag; the texture upload and the next paint happen
+    after it. This waited 400ms and assumed that was enough — which held alone
+    and on a single project, and failed under the FULL matrix, where chromium
+    and mobile compete for one dev server. The scan then photographed a frame
+    where the sleeve had not rendered and reported its top pinned to the
+    region's top, which is indistinguishable from the clipping defect this test
+    exists for.
+
+    A fixed timeout standing in for a render is the same class as a hard-coded
+    coordinate: it encodes a machine's timing rather than the condition that
+    matters. Polling for the solid block itself is the condition.
+  */
+  await expect
+    .poll(
+      async () => {
+        const shot = await page.screenshot();
+        const raw = await sharp(shot).raw().toBuffer({ resolveWithObject: true });
+        const { width, height, channels } = raw.info;
+        const from = Math.floor(width * 0.35);
+        const to = Math.floor(width * 0.65);
+        let rows = 0;
+        for (let y = region.top; y < Math.min(region.bottom, height); y += 1) {
+          let min = Infinity;
+          let max = -Infinity;
+          let sum = 0;
+          for (let x = from; x < to; x += 1) {
+            const i = (y * width + x) * channels;
+            const l = 0.2126 * raw.data[i] + 0.7152 * raw.data[i + 1] + 0.0722 * raw.data[i + 2];
+            if (l < min) min = l;
+            if (l > max) max = l;
+            sum += l;
+          }
+          if (max - min < 12 && sum / (to - from) > 50) rows += 1;
+        }
+        return rows;
+      },
+      { timeout: 15_000, message: 'the sleeve is painted as a solid block' },
+    )
+    .toBeGreaterThan(150);
 
   /**
    * **The sleeve is found by horizontal UNIFORMITY, not by brightness.**
