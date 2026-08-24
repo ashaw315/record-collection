@@ -137,3 +137,103 @@ describe('the credential is NOT the protection, and the guard is', () => {
     expect(value, 'never the developer real token').not.toMatch(/^[A-Za-z]{40}$/);
   });
 });
+
+/**
+ * **The guard must be structurally unable to fire on a deployment.**
+ *
+ * R6's finding, and it is the inverse of everything above: those assert the
+ * guard is PRESENT everywhere a test runs, and this asserts it is ABSENT
+ * everywhere a test cannot run.
+ *
+ * `isTestContext()` returns true when `TEST_DATABASE_URL` is set AT ALL, and
+ * `.env.example` documents that variable — so one plausible paste into Vercel's
+ * environment refuses every Discogs, MusicBrainz and Anthropic call in
+ * production. The message it refuses with says "A test tried to reach
+ * api.discogs.com… CLAUDE.md §2 forbids live external calls from tests", on a
+ * deployment, with no test running, which sends whoever is on call to entirely
+ * the wrong place.
+ *
+ * `VERCEL` is the right signal because it is set by the platform rather than by
+ * a file: nothing a person pastes into an env config produces it, and no test
+ * context has it. A guard keyed on an OBSERVATION beats one keyed on a flag —
+ * the same reasoning that made the database target beat `NODE_ENV` — and this
+ * is the observation "the platform says this is a deployment".
+ */
+describe('the guard cannot fire on a Vercel deployment', () => {
+  const TEST_SIGNALS = ['VITEST', 'NODE_ENV', 'TEST_DATABASE_URL'] as const;
+
+  function withEnv(overrides: Record<string, string | undefined>, run: () => void): void {
+    const saved = new Map<string, string | undefined>();
+    for (const key of Object.keys(overrides)) saved.set(key, process.env[key]);
+
+    try {
+      for (const [key, value] of Object.entries(overrides)) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
+      run();
+    } finally {
+      for (const [key, value] of saved) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
+    }
+  }
+
+  it('is inert on Vercel even when TEST_DATABASE_URL is set, the plausible paste', () => {
+    withEnv(
+      {
+        VERCEL: '1',
+        TEST_DATABASE_URL: 'postgresql://postgres:postgres@localhost:5433/record_collection_test',
+        VITEST: undefined,
+        NODE_ENV: 'production',
+      },
+      () => {
+        expect(isTestContext()).toBe(false);
+      },
+    );
+  });
+
+  it.each(TEST_SIGNALS)('is inert on Vercel even when %s says otherwise', (signal) => {
+    const value = signal === 'NODE_ENV' ? 'test' : 'true';
+
+    withEnv({ VERCEL: '1', [signal]: value }, () => {
+      expect(isTestContext(), `${signal} overrode the platform signal`).toBe(false);
+    });
+  });
+
+  it('is inert on Vercel when DATABASE_URL is unparseable, rather than erring to refusal', () => {
+    // pointsAtLocalDatabase catches an unparseable value and errs toward "this
+    // is a test", which is right in development and is a total integration
+    // outage on a deployment.
+    withEnv(
+      { VERCEL: '1', DATABASE_URL: 'not-a-url', VITEST: undefined, TEST_DATABASE_URL: undefined },
+      () => {
+        expect(isTestContext()).toBe(false);
+      },
+    );
+  });
+
+  it('still guards everywhere that is NOT a deployment', () => {
+    // The property above must not have been bought by weakening this one.
+    withEnv({ VERCEL: undefined, VITEST: 'true' }, () => {
+      expect(isTestContext()).toBe(true);
+    });
+
+    withEnv({ VERCEL: undefined, VITEST: undefined, NODE_ENV: 'test' }, () => {
+      expect(isTestContext()).toBe(true);
+    });
+
+    withEnv(
+      {
+        VERCEL: undefined,
+        VITEST: undefined,
+        NODE_ENV: 'development',
+        TEST_DATABASE_URL: 'postgresql://postgres:postgres@localhost:5433/record_collection_test',
+      },
+      () => {
+        expect(isTestContext()).toBe(true);
+      },
+    );
+  });
+});

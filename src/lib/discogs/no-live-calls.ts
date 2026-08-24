@@ -44,6 +44,31 @@ const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
  * what happened twice.
  */
 export function isTestContext(): boolean {
+  /**
+   * **A deployment is never a test context, whatever else the env says.**
+   *
+   * Checked FIRST and returning false unconditionally, because every signal
+   * below can be produced by a value someone pastes into a deploy config —
+   * `TEST_DATABASE_URL` is set AT ALL, and `.env.example` documents it — while
+   * `VERCEL` is set by the platform and by nothing else. One stray paste
+   * otherwise refuses every Discogs, MusicBrainz and Anthropic call in
+   * production, with a message about tests that sends whoever is on call to
+   * entirely the wrong place.
+   *
+   * This is the same OBSERVATION-over-flag reasoning that made the database
+   * target beat `NODE_ENV` below, applied one level up: "the platform says this
+   * is a deployment" is not something a configuration mistake can fake.
+   *
+   * It also closes the `catch` in `pointsAtLocalDatabase`, which errs toward
+   * "this is a test" on an unparseable `DATABASE_URL`. Right in development,
+   * a total integration outage on a deployment.
+   *
+   * **No test may run on a Vercel deployment**, which is what makes this safe:
+   * the guard exists to stop tests reaching the network, and there are no tests
+   * here to stop. NOTES records the environments this bet covers.
+   */
+  if (process.env.VERCEL === '1') return false;
+
   if (process.env.VITEST === 'true') return true;
   if (process.env.NODE_ENV === 'test') return true;
 

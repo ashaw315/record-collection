@@ -14863,3 +14863,63 @@ complete valid environment" was asserting something false. Corrected to 60, with
 a test asserting the length so it cannot drift back. Same shape as the NFD/NFC
 precondition entry: **a test whose precondition is silently wrong tests
 nothing.**
+
+---
+
+## "The script ran" is not "the script did what it is for"
+
+**Named 2026-08-24, fixing R6's `db:test:reset` finding.** §14 lists eleven
+scripts that "must pass", and passing is checked as an exit code.
+`db:test:reset` satisfied that bar for the entire project while being broken:
+`docker compose down && docker compose up` destroyed the container, and because
+`docker-compose.yml` puts the data directory on `tmpfs`, the recreated database
+had **zero tables**. Nothing in the script migrated. Exit 0.
+
+The damage is displaced, which is what makes it expensive: the next `npm test`
+fails somewhere unrelated, and the cause is a command earlier that reported
+success. R6 found it by running the script and counting tables rather than
+reading its exit code.
+
+Fixed by chaining `NODE_ENV=test drizzle-kit migrate`. The `NODE_ENV=test` is
+the load-bearing half — `drizzle.config.ts` loads `.env.test` only in that mode,
+and without it the CLI reads `.env.local` and points at the Neon database.
+`resolveDriver` would refuse, so the failure would be loud rather than
+destructive, but aiming a command correctly is not the same as relying on a
+downstream guard to catch it.
+
+### The audit R6 was asked for: does any other §14 script have this property?
+
+Checked all eleven. **Two do, and one of them matters.**
+
+- **`db:migrate` — YES, and this is the serious one.** R5 documented it: when
+  the ledger and journal diverge, drizzle recomputes the same batch, dies on
+  `42701`, rolls back, **prints success and exits 0** — permanently, since a
+  failed run changes neither ledger nor journal. That is the same shape as
+  `db:test:reset` but against the database where recovery is worst. It is
+  already mitigated rather than fixed: `db:verify` exists precisely because "exit
+  0 does not prove it" (`test/repo/migrations-complete.test.ts` says so in its
+  header), and R6 confirmed both Neon branches are currently consistent —
+  `drizzle-kit check` clean, `generate` reporting nothing pending, all 16 file
+  hashes matching ledger rows. **Not fixed here** because the fix is a
+  post-migrate schema assertion, which is step 16's deploy-path work, and
+  because inventing one mid-remediation against a database this session cannot
+  safely break is how a worse thing happens. **Trigger: step 16**, alongside the
+  cron and `vercel.json`.
+- **`db:generate` — yes, harmlessly.** "No schema changes, nothing to migrate"
+  exits 0, which is correct: nothing to do IS the job. Recorded so it is not
+  re-raised as an instance.
+- **`db:test:up` — no.** Its name is a claim about the CONTAINER, and it starts
+  one. `test/global-setup.ts` migrates on every run, so the path it sits on
+  applies migrations before any test reads a table. `db:test:reset` differed
+  because DESTROYING data is the thing it does, which made "and now there is no
+  schema" a surprise rather than a description.
+- **`dev`, `build`, `start`, `typecheck`, `lint`, `test`, `test:e2e` — no.**
+  Each fails non-zero on the thing it is for. The E2E caveat is not exit-code
+  shaped: `--retries=0` is what distinguishes "passes" from "passes on the
+  second try", and REVIEW-PLAN already carries it as a standing check.
+
+**The general form, worth carrying past this instance:** a script whose exit
+code reports the last command in a chain reports that command, not the chain's
+purpose. When the purpose is a STATE — a database with a schema, a branch at a
+revision — assert the state, not the exit. `db:verify` is the pattern; it exists
+because someone had already learned this once about the journal.
