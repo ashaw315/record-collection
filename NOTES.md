@@ -14588,3 +14588,21 @@ for. It now polls until the sleeve is painted as a solid block.
 coordinate** — it encodes one machine's timing rather than the condition that
 matters. Re-mutated the placement fix afterwards to confirm the test still fails
 on the real defect: it does, same `sleeve top 172` message.
+
+**Correction to the DISCOGS_USER_AGENT flag** (2026-08-24). Reported at the end
+of the /lookup unit as "absent from `.env.local`". That was right about the file
+and wrong about the premise: the Discogs User-Agent is not missing, it is
+HARD-CODED in `src/lib/discogs/client.ts` —
+`RecordCollection/0.1 +https://github.com/adamshaw/record-collection` — so §6's
+requirement is met and there is no absence bug. `DISCOGS_USER_AGENT` is not in
+the env schema and nothing reads it.
+
+Checking it properly turned up a real defect instead: **that contact URL 404s.**
+The remote is `ashaw315/record-collection`, not `adamshaw`. §6 wants the header
+to give Discogs "somewhere to look", and this one names nobody. Added to R6,
+which already owns every secret's path from `.env.local` to Vercel, with the
+production question attached: it is a literal where every other credential is
+environment-derived, so it cannot be changed without a deploy — which matters
+when the party you are identifying yourself to is the one asking you to change
+it. Not fixed here; R6 decides env-var-vs-literal, and the URL is wrong either
+way.
