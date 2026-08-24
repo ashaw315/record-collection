@@ -111,6 +111,23 @@ export const envSchema = z.object({
   CRON_SECRET: z.string().min(32, 'must be at least 32 characters'),
 
   DISCOGS_TOKEN: z.string().min(1),
+
+  /**
+   * The contact half of §6's User-Agent, which Discogs uses to reach whoever is
+   * making the requests.
+   *
+   * Optional, and it is the one credential-adjacent variable where that is
+   * right: it has a CORRECT default (the public repository), so an unset value
+   * produces a header that still identifies the app and still resolves. Unlike
+   * MUSICBRAINZ_CONTACT_EMAIL, which has no sensible default and therefore
+   * fails at point of use.
+   *
+   * It exists at all because R6 found the whole header was a literal pointing
+   * at a 404, and a header whose purpose is to identify you to the party who
+   * may ask you to change it should not require a deploy to change. See
+   * src/lib/discogs/user-agent.ts.
+   */
+  DISCOGS_CONTACT: z.string().min(1).optional(),
   /**
    * §12 step 11: MusicBrainz requires a User-Agent carrying contact
    * information, as a term of use. Optional here rather than required — the

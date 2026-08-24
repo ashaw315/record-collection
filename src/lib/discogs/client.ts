@@ -1,4 +1,5 @@
 import { getEnv } from '@/env';
+import { buildUserAgent } from './user-agent';
 import { TokenBucket } from './limiter';
 import { assertNoLiveCall, usesRealNetwork } from './no-live-calls';
 import { safeImageUrl } from './fields';
@@ -159,8 +160,11 @@ export function getDiscogsClient(): DiscogsClient {
       fetch: globalThis.fetch,
       token: getEnv().DISCOGS_TOKEN,
       // §6: "set a descriptive User-Agent header. Discogs rejects requests
-      // without one." Names the app and gives them somewhere to look.
-      userAgent: 'RecordCollection/0.1 +https://github.com/adamshaw/record-collection',
+      // without one." Composed rather than written out here: the contact half
+      // is environment-derived so it can be corrected without a deploy, which
+      // is the right property for the thing that identifies you to the party
+      // who may ask you to change it. See ./user-agent.
+      userAgent: buildUserAgent(getEnv().DISCOGS_CONTACT),
     });
   }
 

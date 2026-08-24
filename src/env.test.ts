@@ -126,6 +126,16 @@ describe('parseEnv', () => {
       expect(parsed.BLOB_READ_WRITE_TOKEN).toBeUndefined();
     });
 
+    it('parses without DISCOGS_CONTACT, which has a correct default', () => {
+      // §6's User-Agent still identifies the app when this is unset — the
+      // fallback is the public repository. Optional here, unlike
+      // MUSICBRAINZ_CONTACT_EMAIL, precisely because a good default exists.
+      const source = validEnv();
+      delete source.DISCOGS_CONTACT;
+
+      expect(parseEnv(source).DISCOGS_CONTACT).toBeUndefined();
+    });
+
     it('parses without TEST_DATABASE_URL', () => {
       const source = validEnv();
       delete source.TEST_DATABASE_URL;
