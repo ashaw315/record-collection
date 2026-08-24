@@ -29,6 +29,35 @@ export function discogsErrorResponse(error: DiscogsError): NextResponse {
     );
   }
 
+  if (error.status === 401 || error.status === 403) {
+    /**
+     * **A rejected credential is not an outage**, and calling it one sends the
+     * operator to check Discogs' status page for a problem that will still be
+     * there tomorrow. It cannot fix itself and retrying cannot help, so the
+     * message says neither.
+     *
+     * The same shape R5 fixed for the Anthropic client after a placeholder key
+     * produced a 500 the user could not act on: a distinct code, 502 because
+     * the rejection is upstream rather than our bug, and no retry advice. R6
+     * found Discogs had never been given the equivalent — the default below
+     * answered a dead token with "Try again shortly."
+     *
+     * It names the credential without naming the variable. §5 keeps deployment
+     * detail out of a response body; DISCOGS_TOKEN reaches the operator through
+     * the logs instead.
+     */
+    return NextResponse.json(
+      {
+        error: {
+          message:
+            'Discogs rejected this deployment’s credential. Lookups are unavailable until it is corrected.',
+          code: 'DISCOGS_UNAUTHORIZED',
+        },
+      },
+      { status: 502 },
+    );
+  }
+
   if (error.status === 404) {
     // Passed through as a 404 rather than folded into the upstream bucket: the
     // caller asked for something that does not exist, which is a different
