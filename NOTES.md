@@ -14606,3 +14606,260 @@ environment-derived, so it cannot be changed without a deploy — which matters
 when the party you are identifying yourself to is the one asking you to change
 it. Not fixed here; R6 decides env-var-vs-literal, and the URL is wrong either
 way.
+
+---
+
+# R6 — deploy readiness. 2026-08-24.
+
+Read-only review before step 16. Nothing fixed, nothing deployed. Baseline at
+the time of writing: `npm test` 2841 passed / 1 skipped / 184 files, typecheck
+clean, lint clean, `npm run build` exit 0.
+
+**The review's own central claim was wrong once, and the correction is the most
+useful thing in it.** I observed a production build boot with `env -i`, serve
+`/login` 200, and answer `POST /api/auth/login` with 401 "Incorrect password"
+and no log line — and drafted it as "fail-fast does not hold". It does hold.
+`next start` loads `.env.local` from the project directory regardless of cwd, so
+`env -i` never produced an empty environment. Hiding `.env.local` outright gives
+the designed behaviour: `instrumentation.ts` throws, EVERY route 500s including
+`/login`, and the log names all five missing variables. Verified, then restored.
+Standing rule earned again — the wrong version of this finding would have sent
+step 16 rewriting a boot path that works.
+
+## Confident, verified by reproduction
+
+1. **`APP_PASSWORD_HASH` accepts a truncated hash at boot.** `z.string().min(1)`
+   (`src/lib/env/schema.ts:47`). Probed `parseEnv` directly: the 60→46
+   truncation `.env.example` explicitly warns about is ACCEPTED, as are
+   `'hello'` and `' '`. Probed bcryptjs: a 46-char hash returns `false` (does
+   not throw), so `verifyPassword` yields false and the login route — which is
+   NOT wrapped in `withErrorHandling` — returns 401 "Incorrect password" and
+   logs nothing. **This is the worst failure mode found**, and worse than the
+   all-missing case: all-missing is loud 500s naming the variable, whereas a
+   malformed hash boots green, serves a normal-looking login screen, and rejects
+   the correct password forever. `SESSION_SECRET`/`CRON_SECRET` carry `.min(32)`
+   with stated reasoning; this one carries nothing. A boot-time shape check
+   (`/^\$2[aby]\$\d{2}\$.{53}$/`) costs nothing and does not weaken the
+   deliberately-vague 401.
+
+2. **The `cause`-chain log leak is real and reproduced.** `describeError`
+   (`src/lib/errors/describe.ts`) falls back to `JSON.stringify` for a
+   NON-Error cause. Probe output, verbatim:
+   `Upload failed ← caused by: {"status":401,"request":{"headers":{"authorization":"Bearer vercel_blob_rw_SUPERSECRET"}}}`
+   and a nested one serialising `{"connectionString":"postgresql://user:HUNTER2@..."}`.
+   `withErrorHandling` sends that to `logger.error`. Latent locally; the moment
+   logs are retained by Vercel it is not. The fix NOTES already specifies
+   (redacted projection + a test planting a secret in a nested cause) is right.
+
+3. **The test guard can fire in production.** `isTestContext()`
+   (`src/lib/discogs/no-live-calls.ts:46-55`) returns true if `TEST_DATABASE_URL`
+   is set AT ALL. It gates Discogs, MusicBrainz AND Anthropic. One stray
+   `TEST_DATABASE_URL` in Vercel — a plausible paste, since `.env.example`
+   documents it — refuses every external call with *"A test tried to reach
+   api.discogs.com… CLAUDE.md §2 forbids live external calls from tests"*, on
+   production, with no test running. **Correcting the subagent finding that
+   raised it:** the `catch → return true` branch is NOT independently
+   reachable, because an unparseable `DATABASE_URL` fails boot first. The
+   `TEST_DATABASE_URL` line is the whole risk.
+
+4. **Zero `maxDuration` exports repo-wide and no `vercel.json`.** Grepped: 0
+   hits. Every function gets the plan default. Three routes exceed 10s: the
+   lineup walk (`walkLineup` awaited inline at
+   `src/app/api/artists/[id]/lineup/route.ts:120,130`; ~32 sequential
+   MusicBrainz requests at 1/sec plus ~6-8 Neon round-trips per member), and
+   both LLM routes (Opus, effort `high`, 4000 max tokens, non-streaming).
+   Mitigation already in place for the walk: `walk-lineup.ts:115` commits each
+   membership as it resolves, so a kill is not data loss and a re-walk resumes
+   from cache.
+
+5. **A serverless timeout burns an LLM quota slot with no refund.**
+   `releaseLlmRequest` is called ONLY in the `isAuthFailure` branch
+   (`suggestions/ai/route.ts:95`, `snippet/route.ts:133`). A platform kill after
+   `claimLlmRequest` leaves the row. 10/hour, so repeated timeouts exhaust it
+   silently. Couples directly to (4).
+
+6. **Both rate limiters are per-isolate module state.** Discogs
+   (`client.ts:142,183`, 60/min) and MusicBrainz (`musicbrainz/client.ts:120,214`,
+   1/sec). `TokenBucket` sets `this.tokens = options.capacity` in its
+   constructor (`limiter.ts:43`), so **every cold start hands out a full
+   bucket**. `blockedUntil` (`limiter.ts:37`) means a learned `Retry-After` does
+   not propagate between isolates. MusicBrainz is the serious one: its limit is
+   per-IP and a term of use, and `walk-lineup.ts:141-144` turns the resulting
+   503 into a silently PARTIAL lineup. The codebase already reasoned this
+   through for the LLM quota (`llm/rate-limit.ts:15-17`, DB-backed with an
+   advisory lock — genuinely correct) and did not back-port it.
+
+7. **Discogs has no auth-failure branch.** `discogsErrorResponse`
+   (`src/lib/discogs/errors.ts:18-45`) branches on 429 and 404 only; a 401/403
+   falls through to *"Could not reach Discogs. Try again shortly."* — retry
+   advice for a credential that will never self-correct. This is R5's F1 shape,
+   fixed for Anthropic (`isAuthFailure`) and not here. Two paths swallow it
+   entirely: `discogs-prefill.ts:113-117` returns null (blank form, no notice)
+   and `verify-release.ts:50-58` calls it `unreachable`.
+
+8. **`db:test:reset` leaves an unusable database, exit 0.** Ran it: container
+   destroyed and recreated, and because `docker-compose.yml` puts the data dir
+   on `tmpfs`, the new database has **0 tables**. Nothing in the script
+   migrates. §14 lists it among scripts that must pass. Restored with
+   `NODE_ENV=test npx drizzle-kit migrate` → 23 tables.
+
+9. **The Discogs User-Agent URL 404s.** Measured: `adamshaw/record-collection`
+   → 404, `ashaw315/record-collection` → 200. Structure is otherwise sound —
+   validated at construction, injected via options — so only the literal is
+   wrong.
+
+## Verified and NOT a problem — worth recording so they are not re-proposed
+
+- **Production migration works, contradicting the prompt's premise.** `npm run
+  db:migrate` DOES reach the Neon branch: `drizzle.config.ts` → `resolveDriver`
+  returns `DATABASE_URL` whenever `TEST_DATABASE_URL` is absent. Ran it against
+  the dev/prod branch: "migrations applied successfully", exit 0, using the `pg`
+  driver over TCP. A supported command exists.
+- **No schema drift anywhere.** `drizzle-kit check` → "Everything's fine".
+  `drizzle-kit generate` → "No schema changes, nothing to migrate" (no file
+  created; `git status drizzle/` clean, still 16 migrations). Both Neon branches
+  carry an IDENTICAL 17-row ledger against a 16-entry journal; I hashed every
+  `.sql` file and all 16 match a ledger row exactly. The one extra row
+  (`1786715119768`, hash `73d1b9eb029c061e`) matches no file in the repo and its
+  `id` sequence skips 13-14, consistent with R5's hand-repair. It is harmless
+  going forward — drizzle compares by timestamp and it sits below the high-water
+  mark. **The open question "what applied 0011-0013 without ledger rows" is
+  still not answered**: `~/.zsh_history` is readable but stops at 2026-08-18 and
+  contains no `drizzle-kit push` for this project. The distinguishing diff the
+  NOTES entry proposed now returns clean, so that evidence has expired.
+- **Transactions over the real Neon driver pass.**
+  `test/integration/neon-transactions.test.ts` — 10 passed, 1 skipped (the skip
+  is the gate's own by-name test, correct when configured). Covers acquire,
+  PATCH, import rollback and concurrent acquire. CLAUDE.md §2's "verify before
+  deploy, do not assume" is DISCHARGED.
+- **`sslmode` is currently the STRONG behaviour, not the weak one.** Measured
+  with `pg-connection-string`: `sslmode=require` and `sslmode=verify-full` both
+  parse to `{}` (full verification); only `uselibpqcompat=true` yields
+  `rejectUnauthorized:false`. So this is a FUTURE risk on a `pg` v9 bump, not a
+  present weakness — and it affects the `pg` path (migrations, tests) only,
+  since production queries go over the Neon WebSocket driver, which does its own
+  TLS. One word, worth taking, but not urgent and not a deploy blocker.
+- **Build needs no secrets.** `env -i … npx next build` succeeds. A Vercel build
+  cannot fail on missing env — which also means a misconfigured deploy builds
+  green and fails at runtime.
+- **Filesystem, self-referential URLs, and detached background work are clean.**
+  No `fs` in runtime code; images go to Blob; every external URL is an absolute
+  https constant; the import route awaits the cover attach with a comment naming
+  the frozen-function hazard. Lineup progress is derived from committed DB rows
+  rather than a progress table — the right shape for serverless.
+- **`nanoid` high advisory is build-time only** — reaches the tree solely via
+  `postcss` (`npm ls nanoid`), not the request path.
+
+## The cron does not exist at all
+
+`CRON_PATHS` (`src/lib/auth/routes.ts:37`) and the middleware bearer check
+(`middleware.ts:47-55`) are wired for `/api/discogs/refresh-prices`. There is no
+such route file and no `vercel.json`. That is step 16's work, not a defect — but
+it means §14's "cron job registered" is unmet, and the auth half is already
+built and tested, which is the good half. **Coupling to record for step 16:**
+`PriceHistory.tsx:64` had its empty-state copy corrected in R4 specifically
+because it promised a cron that does not exist. When the cron lands, that copy
+has to be revisited or it will understate the truth in the other direction.
+
+## Residue — cannot be checked without deploying
+
+Handed to the after-deploy pass, stated rather than left implicit:
+whether the Neon WebSocket pool survives freeze/thaw and how the first query
+after a thaw behaves; actual cold-start frequency and therefore how much the
+full-bucket-per-isolate problem really costs; real function durations for the
+walk and the LLM routes against the plan limit; whether Vercel's env storage
+performs `$` expansion on a bcrypt hash (`.env.example` asserts it does not —
+unverified by me); and whether `BLOB_READ_WRITE_TOKEN` is auto-injected when a
+Blob store is linked, which would make its malformed case unreachable.
+
+**R6's E2E baseline, and a ninth data point on the mobile contention.**
+`npx playwright test --retries=0`, no file argument: **390 passed, 20 skipped, 0
+failed, exit 0, 10.8m.** Recorded because the mobile contention is a defect that
+only shows up as a RATE, and single runs cannot see one. R5's remediation
+measured two full runs in three producing seven and five HARD failures, 100%
+`[mobile]`, all at login. Step 15 unit 1 diagnosed accumulation WITHIN a run
+rather than contention between workers and fixed it with per-spec cleanup; the
+four runs after that produced one failure (an unrelated hydration flake). This
+run makes five clean-or-near-clean at `--retries=0` since the fix, and the first
+with zero failures of any kind. Not proof — the earlier rate was 2-in-3, so one
+clean run is weak evidence — but it is the right direction and worth a line so
+the next reviewer can count.
+
+---
+
+## Presence is not shape — a standing check, after the third instance
+
+**Named 2026-08-24, fixing R6's finding 1.** Three times now an is-configured
+check has tested that a credential is THERE rather than that it is USABLE, and
+each time the failure landed somewhere the check could not see.
+
+1. **The placeholder Anthropic key** (R5's F1). `isAnthropicConfigured()` tested
+   non-empty. A key ending `-put-your-key-here` passed, claimed a rate-limit
+   slot, and produced a 500 the user could not act on. Fixed by
+   `PLACEHOLDER_PATTERNS` — a shape check.
+2. **The shell-escaped password hash.** Next expands `$VAR` in env values, so an
+   unescaped 60-character bcrypt hash silently becomes 46. `.env.example`
+   documents the trap in full; nothing enforced it.
+3. **`APP_PASSWORD_HASH: z.string().min(1)`** — this one. The trap documented at
+   (2) was never checked at the boundary that could catch it.
+
+**Why this one was the worst.** The other two announce themselves: a 500, or a
+dev server that will not start. A malformed hash boots green, renders a normal
+`/login`, and rejects the CORRECT password forever with 401 "Incorrect password"
+and no log line — because bcryptjs returns `false` rather than throwing (probed:
+46 chars → false; only an illegal round count throws, and the catch swallows
+that too), and the login route is deliberately vague and not wrapped in
+`withErrorHandling`. **A deploy that looks healthy and is completely broken.**
+
+**The check to apply, not the fix to copy.** For every credential, ask what
+happens when it is ABSENT, MALFORMED, and VALID-BUT-WRONG — and whether the user
+is told something they can act on. Presence answers only the first. R6 ran this
+against all eight and the survivors are recorded above: `BLOB_READ_WRITE_TOKEN`
+still tests presence only (malformed → 500), `MUSICBRAINZ_CONTACT_EMAIL` accepts
+any string including `"x"`, and Discogs has no auth-failure branch at all so a
+dead token reads as an outage.
+
+**What the fix measured, and it answers R6's open question.** The escaping is
+genuinely environment-specific, which was a question and is now a fact:
+
+- **Next expands `$VAR` and needs `\$2b\$10\$`.** Verified by unescaping
+  `.env.test` and booting `next dev`: instrumentation threw, naming
+  APP_PASSWORD_HASH. Restored.
+- **dotenv — which vitest and drizzle-kit use — neither expands nor
+  unescapes**, so it hands the same file's value over with the backslashes
+  intact, 63 characters long. Verified directly.
+
+So the same file is read two different ways, and the schema is the one place
+both paths meet. `APP_PASSWORD_HASH` therefore **normalises before it
+validates** — `.transform(unescapeDollars)` then `.refine(BCRYPT_HASH)`. A
+backslash appears in no bcrypt hash, so collapsing `\$` to `$` is unambiguous,
+and the check itself still demands exactly 60 characters of real bcrypt. A value
+mis-escaped for the runtime that reads it still fails; a Vercel value, which
+needs no escaping, passes through untouched.
+
+**Two wrong versions of this fix were built and discarded, and the reason is
+worth keeping.** The first split the schema so `drizzle.config.ts` validated
+only the database variables — which worked for the CLI and left the 902
+integration-test failures untouched, because vitest loads `.env.test` through
+the same dotenv. The second was to accept the escaped form as a valid shape,
+which would have rebuilt the original defect: on Vercel nothing unescapes, so a
+genuinely mis-escaped hash would have passed boot and still broken every login.
+Normalising is the only version that keeps the check honest on all three paths.
+
+**How the wrong versions were caught, and it was nearly not.** Three full-suite
+runs reported exit 0 while this was broken. All three were CONTAMINATED — two
+`vitest run` processes were alive at once against the shared test database, my
+own harness error. The first clean single run failed 902 tests in 61 files.
+**Concurrent runs against one database do not report a weaker version of the
+truth; they report a different and false one.** The same shape as the E2E
+accumulation finding: passing in isolation is not evidence, and neither is
+passing in a crowd.
+
+**A fixture that was never valid.** Both `src/env.test.ts` and
+`src/lib/env/edge.test.ts` used `'$2b$12$abc…MNOPQR'` as their "valid
+environment" hash. It is **61 characters** — not a bcrypt hash. It passed only
+because the schema checked `.min(1)`, so the fixture asserting "this is a
+complete valid environment" was asserting something false. Corrected to 60, with
+a test asserting the length so it cannot drift back. Same shape as the NFD/NFC
+precondition entry: **a test whose precondition is silently wrong tests
+nothing.**

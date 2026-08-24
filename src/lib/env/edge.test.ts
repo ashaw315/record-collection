@@ -95,7 +95,9 @@ describe('the edge subset agrees with the full server schema', () => {
 
     const fullEnv = {
       DATABASE_URL: 'postgresql://user:pass@ep-test.aws.neon.tech/recorddb',
-      APP_PASSWORD_HASH: '$2b$12$abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQR',
+      // 60 characters exactly. This was 61 — not a bcrypt hash — and passed
+      // only while the schema checked `.min(1)`.
+      APP_PASSWORD_HASH: '$2b$12$abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQ',
       DISCOGS_TOKEN: 'token',
       ...validEdgeEnv(),
     };

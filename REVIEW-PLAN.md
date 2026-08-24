@@ -423,3 +423,69 @@ A reviewer reads code against a spec. It cannot tell you the spec is wrong about
 Four defects in this project were found by Adam using the thing — unreachable pressing entry, the fabricated 230g weight, a tier-1 badge that could never fire, illegible error reporting. None were spec violations, so no reviewer would have flagged them.
 
 **Manual QA after every step remains the highest-yield check available, and it is the one that keeps getting skipped.**
+**R6 — deploy readiness. 2026-08-24.** Read-only, before step 16. Nothing fixed,
+nothing deployed. 9 findings I hold confidently (all reproduced), 7 attack lines
+that came back clean, 1 open question that has now expired.
+
+*Buckets.*
+
+**Fix now** — one, and only because it is the shape this project keeps shipping:
+**a malformed `APP_PASSWORD_HASH` boots green and nobody can log in.**
+`z.string().min(1)` accepts the 60→46 truncation `.env.example` itself warns
+about; bcryptjs returns `false` rather than throwing; the login route is not
+wrapped, so it answers 401 "Incorrect password" and logs nothing. It qualifies
+because the user believes a false thing (their password is wrong) and there is
+no signal anywhere that says otherwise. Contrast the all-variables-missing case,
+which is loud 500s naming each one.
+
+**Fix in this remediation** — the `cause`-chain log leak (reproduced: a bearer
+token and a connection-string password both JSON-stringified into a log line);
+`isTestContext()`'s `TEST_DATABASE_URL` line, which lets one stray env var refuse
+every Discogs/MusicBrainz/Anthropic call in production with a message about
+tests; Discogs' missing 401/403 branch, which calls a dead credential an outage
+(R5's F1 shape, fixed for Anthropic and not here); the User-Agent URL, measured
+404 against a 200 for the correct path; and `db:test:reset`, which exits 0 and
+leaves 0 tables because the data dir is `tmpfs` and nothing re-migrates.
+
+**Defer with a named trigger** — `maxDuration` and the two per-isolate rate
+limiters. **Trigger: step 16 itself**, since both are `vercel.json`/route-config
+work and neither can be validated from here. The LLM quota-slot leak on timeout
+travels with them. `sslmode=require` → `verify-full`: **trigger, the next `pg`
+major bump** — measured, both currently parse to full verification, so this is a
+future risk on the migration path only, not a present weakness.
+
+**Decline** — the `nanoid` high advisory (build-time only, via `postcss`, not in
+the request path).
+
+*What the review got WRONG, which is the entry worth having.* I drafted "the
+fail-fast boot guarantee does not hold" from a production build that booted with
+`env -i`, served `/login` 200, and returned 401 on login with no log. It holds.
+`next start` loads `.env.local` from the project directory regardless of cwd, so
+`env -i` never produced an empty environment; hiding the file gives the designed
+behaviour exactly. Third review running where verify-before-fixing changed the
+finding, and the wrong version would have sent step 16 rewriting a working boot
+path.
+
+*What the review MISSED until a subagent swept for it:* the serverless execution
+model, which is the half of "deploy readiness" that reading for secrets does not
+touch — per-isolate rate limiters that start full on every cold start, the
+absence of any `maxDuration`, and the quota slot that a platform kill burns
+without refund. The prompt named the Neon driver under serverless conditions and
+I would have checked only that.
+
+*What the prompt's premise got wrong.* "There is no supported command to migrate
+the Neon branch" is false: `resolveDriver` returns `DATABASE_URL` whenever
+`TEST_DATABASE_URL` is absent, so `npm run db:migrate` targets production and
+was observed applying successfully over `pg`/TCP. And there is no drift left —
+`drizzle-kit check` clean, `generate` reports nothing pending, and all 16
+migration file hashes match ledger rows on both Neon branches. The R5 open
+question "what applied 0011-0013 without ledger rows" is now **unanswerable**:
+the distinguishing schema diff it proposed returns clean, and `~/.zsh_history`
+stops at 2026-08-18 with no `drizzle-kit push` for this project. Recorded as
+expired rather than open.
+
+*What ONLY deploying can show,* handed forward rather than left implicit: Neon
+WebSocket pool behaviour across freeze/thaw, real cold-start frequency (which
+sets the true cost of the full-bucket problem), actual function durations against
+the plan limit, whether Vercel's env storage expands `$` in a bcrypt hash, and
+whether a linked Blob store auto-injects its token.

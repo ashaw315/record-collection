@@ -38,13 +38,72 @@ const postgresUrl = z
     { message: 'must be a postgresql:// or postgres:// connection string with a host' },
   );
 
+/**
+ * `$2[aby]$` covers every prefix bcryptjs emits, and the 53 trailing characters
+ * are bcrypt's own base64 alphabet (`./A-Za-z0-9`) — not standard base64, so
+ * `+` and `=` never appear. 60 characters in total.
+ */
+const BCRYPT_HASH = /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/;
+
+/**
+ * Collapses `\$` to `$` so the two env loaders agree on one value.
+ *
+ * They do not agree on their own, and R6 measured both halves rather than
+ * assuming either. **Next expands `$VAR` references in env values**, so
+ * `.env.test` and `.env.local` must escape a bcrypt hash as `\$2b\$10\$…` —
+ * unescaping it makes `next dev` fail to boot. **dotenv — which vitest and
+ * drizzle-kit use — neither expands nor unescapes**, so it hands the same file's
+ * value over with the backslashes intact, 63 characters long.
+ *
+ * Normalising here rather than accepting both shapes downstream is what keeps
+ * the check honest: the schema still demands exactly 60 characters of real
+ * bcrypt, and a value that is mis-escaped for the runtime that reads it still
+ * fails. What this removes is only the backslash, which no bcrypt hash contains
+ * and which is therefore unambiguous.
+ *
+ * A Vercel value needs no escaping (the dashboard does not expand), and passes
+ * through untouched.
+ */
+function unescapeDollars(value: string): string {
+  return value.replaceAll('\\$', '$');
+}
+
 export const envSchema = z.object({
   DATABASE_URL: postgresUrl,
 
   // Present only when running against the local Docker Postgres (CLAUDE.md §2).
   TEST_DATABASE_URL: postgresUrl.optional(),
 
-  APP_PASSWORD_HASH: z.string().min(1),
+  /**
+   * A bcrypt hash, checked for SHAPE rather than mere presence.
+   *
+   * `.min(1)` was the third instance in this project of an is-configured check
+   * testing presence where the failure mode is malformation — after a
+   * placeholder Anthropic key that passed every check and spent a rate-limit
+   * slot, and a shell-escaped hash that passed and broke every login. See
+   * NOTES.md, "presence is not shape".
+   *
+   * This one is the worst of the three because it is SILENT. Next expands
+   * `$VAR` references in env values, truncating an unescaped 60-character hash
+   * to 46 (.env.example documents the trap); bcryptjs then returns `false`
+   * rather than throwing, and the login route — deliberately vague, and not
+   * wrapped in withErrorHandling — answers 401 "Incorrect password" and logs
+   * nothing. The result is a deploy that boots green, renders a normal /login,
+   * and rejects the correct password forever.
+   *
+   * Checking here does NOT weaken that vague 401: this fails at boot, naming
+   * the variable to an operator reading deploy logs, and says nothing to
+   * whoever is at the login form.
+   *
+   * The value is unescaped before it is checked — see unescapeDollars for why
+   * the two env loaders disagree and why normalising is safe.
+   */
+  APP_PASSWORD_HASH: z
+    .string()
+    .transform(unescapeDollars)
+    .refine((value) => BCRYPT_HASH.test(value), {
+      message: 'must be a 60-character bcrypt hash (see .env.example: escape every $ as \\$)',
+    }),
 
   // 32 chars is the floor for a signing key that is not trivially brute-forced.
   // The Edge subset in ./edge.ts must apply the same floor; a test asserts it.
