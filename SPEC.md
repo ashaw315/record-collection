@@ -570,8 +570,8 @@ The goal of this group of endpoints is: **the user fills in a structured form de
 | `artist` | `artist` | |
 | `title` | `release_title` | |
 | `label` | `label` | |
-| `catno` | `catno` | **Catalog number — the single most effective way to pin down a specific pressing.** |
-| `barcode` | `barcode` | Near-unique for modern pressings; strongest possible identifier when present. |
+| `catno` | `catno` | **Catalog number — the most NARROWING param on this form, and it narrows to an album, not a pressing.** Measured live 2026-08-25: `?catno=EKS-74007` returns **197 results**, every one the same master, spanning six countries and 1967–2007. It is the strongest field the user can read off the object, and it is not an identifier. Copy anywhere in the app must say narrows, never identifies or pins down — see §7.7 and CLAUDE.md §8. |
+| `barcode` | `barcode` | Near-unique **where it exists** — barcodes reach LPs in the mid-1980s, so the field is blank for most pre-1985 pressings and is ranked below artist and title on the form for that reason. Strongest available identifier on a modern release. |
 | `country` | `country` | Distinguishes UK/US/Japanese pressings of the same album. |
 | `year` | `year` | Separates originals from reissues. |
 | `format` | `format` | e.g. "Vinyl", "LP", "45 RPM", "180 Gram", "Picture Disc". |
@@ -597,6 +597,7 @@ The goal of this group of endpoints is: **the user fills in a structured form de
     label: string | null;
     catalogNumber: string | null;
     formats: string[];            // e.g. ["Vinyl", "LP", "Album", "180 Gram"]
+    formatText: string | null;    // the qualifier — see below
     isReissue: boolean;           // inferred from format descriptors
     communityHave: number | null; // how many collectors own it
     communityWant: number | null;
@@ -639,6 +640,42 @@ It is part of the result, not a second request. A card that renders and acquires
 This applies to the versions list as much as to search. The drill-down is where the user chooses *between* pressings, so knowing which of them are already on the shelf matters more there than anywhere else — a version table without ownership is a list of candidates with the answer withheld.
 
 `ownedPressing` is present on `owned_different_pressing` and names the year, country and catalog number of the copy already owned, since the question being answered is whether the copy in hand is better than the one at home. When the owned record has no pressing recorded — the common result of §10's quick in-store entry — say so explicitly rather than rendering an empty detail: the badge has something specific to report, namely that the album is owned and the copy cannot be identified.
+
+**`formatText` — the qualifier, and the measured ceiling on list-level
+identification.**
+
+Discogs search rows carry TWO format fields: `format`, a flat array of
+descriptor strings, and `formats`, an array of objects whose `text` holds a
+free-text qualifier. **`text` exists only on the plural key**, and it often
+names the pressing plant — "Specialty Records Corporation Pressing", "Allentown
+Pressing", "Terre Haute Pressing". It is the most discriminating thing Discogs
+offers at list level and the reason two otherwise identical cards can be told
+apart.
+
+**It is a hint, never an identity.** The value is contributor-entered free text
+and mixes plant with colour, weight and sleeve notes — real values include
+"180g", "Blue", "USA Cover" and "(Columbia Records Pressing) " with a trailing
+space. Render it as Discogs' own words, distinct from the controlled-vocabulary
+descriptors, and never labelled as a plant. §7.8 applies directly: never present
+a Discogs match as certain.
+
+**MEASURED 2026-08-25, five candidate sets, 377 live vinyl rows — quote this
+number when asked whether the matrix work is still needed:**
+
+| Measure | Result |
+|---|---|
+| rows carrying a non-empty qualifier | **50%** (28%–80% by set) |
+| rows colliding on every displayed column | 42% |
+| of those collisions, separated by the qualifier | **56%** |
+| of those collisions, still identical after it | **44%** |
+
+**So list-level identification is half-solved, not solved.** The qualifier
+halves the identical-card problem and leaves 44% of collisions untouched, and
+coverage is contributor effort rather than an API guarantee — high on
+well-documented scenes, low on mass-market reissues, and the variance does not
+average away. This is the ceiling that the two-phase matrix resolution exists to
+break, and it is a number rather than an impression precisely so that "lookup
+feels adequate now" cannot quietly retire that work.
 
 **Master → release drill-down.** If a search result is a master, the UI must let the user open it and see every version underneath (`/api/discogs/master/:id/versions`), displayed as a comparison table with country, year, label, catalog number, format descriptors and cover thumbnail. This is the step where the user identifies *their* pressing rather than just the album.
 
@@ -830,7 +867,7 @@ Responsive throughout — **desktop and mobile are equal priorities**, not deskt
 | Login | `/login` | Password field only. |
 | Collection | `/` | Three views of the owned collection: **shelf** (default, §10b), grid, and table. Search and filter chips for genre/label/store/tag. **The views differ structurally, not just in layout:** grid and table carry their controls on the page, above the rows; the shelf owns the screen and reaches the same controls through an overlay, because a wall arriving under four rows of chrome is a strip rather than a wall (§10b). Filtering, sorting and paging apply to grid and table; the shelf is a wall, not a result set. |
 | Record detail | `/records/:id` | All fields, pressing details incl. matrix number, images gallery, price history sparkline, journal entries with add-entry form. |
-| Record lookup | `/lookup` | **Structured search form** — fields for artist, title, label, catalog number, barcode, country, year, format. Results as cards with cover art, year, country, label, catalog number and format descriptors. Masters expand into a version-comparison table to pin down the exact pressing. Each result offers: "Add to collection", "Add to want list", and an ownership badge (see §7.7). Mobile-optimized — this is the in-store screen. No result may link out to a purchase page (§13). |
+| Record lookup | `/lookup` | **Structured search form** — fields for artist, title, label, catalog number, barcode, country, year, format. Results as cards with cover art, year, country, label, catalog number and format descriptors. Masters expand into a version-comparison table to compare pressings (see step 14b — the table is scoped to the candidates on the page, and comparing is not the same as identifying). Each result offers: "Add to collection", "Add to want list", and an ownership badge (see §7.7). Mobile-optimized — this is the in-store screen. No result may link out to a purchase page (§13). |
 | Add/edit record | `/records/new`, `/records/:id/edit` | Form prefilled from a lookup result, or blank for manual entry. All prefilled fields remain editable — the user verifies against the physical record and corrects. Inline create for artist/label/store/tag. Pressing details are entered here, not on a separate screen: catalog number, matrix/runout, country, year pressed, pressing plant, vinyl weight, colour variant, and whether it is a reissue. All optional — the in-store case must stay enterable in seconds. |
 | Add/edit want-list item | `/want-list/new`, `/want-list/:id/edit` | Form for a wanted record, mirroring the record form's structure. Fields: title, artist, label, priority, target pressing, best-dig notes, max price. Prefilled from a `/lookup` result via `?discogsReleaseId=`, or blank. **`best_dig_notes` and `max_price` are visually and structurally separate** (§7.2) — never one section, never one label. Reference rows are matched, never created: a prefill is not a commitment, and an artist created for an abandoned form is debris nothing points at. When a Discogs value matches no existing row, leave the field empty and name what could not be found. |
 | Want list | `/want-list` | Sorted by priority. Each row shows target pressing and best-dig notes. "Mark acquired" action opens the record form prefilled. |
@@ -1170,6 +1207,48 @@ Mock the Discogs, MusicBrainz and Anthropic APIs in tests. Never hit live extern
     Then build the assignment UI. **The importer does not assign slots automatically** — Discogs' types cannot distinguish a left leaf from a right leaf from a back cover, and a wrong guess opens a hinge onto artwork that is not the inner sleeve, which is the invented-stand-in failure §10b's strictest rule forbids. The add-record form surfaces the release's images as candidates and the user assigns them, the same shape §5.7 already uses for every other field: Discogs supplies the material, the user supplies the judgement.
 
     A single wide scan of an open gatefold cannot fill two square slots (A21b). It goes to the gallery as `other`, and a user who wants the hinge photographs the sleeve themselves. That is honest — splitting a scan down the middle and hoping the seam lands right is not.
+14b. **Scope "Compare pressings" to the candidates on the page (§5.7, §10).**
+    Added 2026-08-25 out of the three-findings lookup unit, as a build step
+    rather than a defect fix — it answers a **different question** from the one
+    §5.7 currently specifies, so it is an amendment and not a correction.
+
+    **The defect that prompted it.** The expanded panel fetches the master's
+    version list, page 1 of 26, unfiltered: for The Doors' debut that is 25 rows
+    all dated 1967, spanning NZ, UK, Canada and South Korea, out of 637 — and
+    the user's 1979 US reissue is on page 7. The panel excluded every candidate
+    the search had returned, at the exact moment the tool existed to
+    discriminate. `meta.pages` is normalized and then discarded by the client,
+    so nothing on screen says the list was truncated.
+
+    **Why filtering is the wrong fix, and this is the shape of the reasoning.**
+    Filtering the versions call (`country`, `format`, `released` are all
+    supported — measured: they narrow 637 rows to the 3 that include the target)
+    makes the right rows REACHABLE without making them the only rows, and it
+    needs a year to be useful. **Year is an output of identification, not an
+    input to it** — a 1967-filtered list is precisely what hid the record here.
+    A filter built from fields the user has not confirmed reintroduces the bug
+    in a new place. Country and format are read off the object in hand; year is
+    not, and if it is ever offered it is a user-driven control, never a default.
+
+    **What this step builds instead.** The panel shows the other results from
+    THIS SEARCH that share the master — the three 1979 US LPs in the reported
+    case — compared column by column, with the current row marked. Those rows
+    are already in hand from the search response, so it costs **no additional
+    API calls**. The full master list stays reachable behind a clearly labelled
+    secondary action, because sibling scoping cannot surface a pressing the
+    search did not return, and that is a real loss worth naming in the UI.
+
+    **The question each answers, since the label hides the difference:** the
+    master version list answers "what pressings of this album exist" — a
+    discography question. The candidate set answers "which of these is mine" —
+    an identification question, which is the one §5.7 says this screen is for
+    and the one a person standing in a shop is actually asking.
+
+    **Depends on nothing; may be built whenever a lookup unit is open.** The
+    identical-row collapse (§10) applies unchanged to the scoped set, and must:
+    the three 1979 US rows are identical on every displayed column, so scoping
+    makes them reachable and does not make them distinguishable.
+
 15. Mobile pass across all screens. E2E #10. **Unit 1 was the E2E flake, fixed by per-spec cleanup rather than the per-worker isolation originally prescribed** — see below.
 16. Vercel deploy config + cron for price refresh.
 
