@@ -263,6 +263,51 @@ form the records work had not shown — see the masking entry under Open.
 
 ## Open
 
+- **RULE: any measurement of Discogs metadata quality must be PER-GENRE. An
+  average across albums flatters exactly the scenes this collection is made of.**
+
+  Established 2026-08-25 from the `formats[].text` coverage work, and it is
+  bigger than that fix.
+
+  **Discogs metadata coverage is contributor effort, and contributors record
+  what their scene cares about.** Measured across six albums, 477 live vinyl
+  rows, the qualifier field breaks down completely differently by scene:
+
+  | Album | Any qualifier | **Names a plant** | What the qualifiers actually say |
+  |---|---|---|---|
+  | Discharge — Hear Nothing | **80%** | **0%** | Gatefold, Red Translucent, Textured Sleeve |
+  | Misfits — Walk Among Us | **70%** | **2%** | colour variants, almost exclusively |
+  | Doors debut (by catno) | 52% | **47%** | Allentown, Terre Haute, Pitman, Monarch |
+  | Fleetwood Mac — Rumours | 52% | 25% | plants and sleeves, mixed |
+  | Hot Tuna | 33% | 15% | mixed |
+
+  **Headline coverage is ANTI-CORRELATED with usefulness here.** The two albums
+  with the most metadata have essentially none of the kind that identifies a
+  pressing. For 1960s–70s US majors, collectors document pressing plants,
+  because that is what separates the copies. For punk and hardcore, they
+  document sleeve and colour variants, because that is what separates THOSE
+  copies — the pressing plant of a 1982 Clay LP is not what a collector of it
+  cares about, and largely nobody has typed it in.
+
+  **Why this matters beyond one field:** this collection is punk, hardcore and
+  adjacent scenes (CLAUDE.md §8 lists UK first-wave, UK82, US hardcore, horror
+  punk, psychobilly). **An average across popular albums measures the records
+  this app is NOT about.** Any future claim of the form "Discogs has X% coverage
+  of field Y" is misleading unless it is broken out by scene, and the aggregate
+  will systematically overstate what is available for the records actually being
+  held in a shop.
+
+  **The check: when measuring an external data source, sample by the categories
+  the USER's data falls into, not by whatever is popular or convenient.** Report
+  the spread and the worst case, never only the mean. The first version of the
+  qualifier measurement averaged six albums into "50%" and was wrong twice over
+  — once by counting separation instead of identification (see the proxy rule
+  under Resolved), and once by averaging across scenes that behave nothing alike.
+
+  This also bears on the two-phase matrix redesign: for the scenes this
+  collection is made of, the plant qualifier is **near-zero**, so matrix strings
+  are not a refinement over `formatText` there — they are the only signal.
+
 - **STEP 16 (deploy): `sslmode=require` will change meaning in `pg` v9. Fix is
   one word, and it is not urgent.**
 
