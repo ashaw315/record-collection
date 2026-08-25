@@ -15708,3 +15708,85 @@ specific way that caused this.
 distinguish a healthy settled wall from a permanently dead one — both draw
 nothing. `data-proud-z`, the hovered spine's own offset, is published instead:
 the thing the ease exists to produce.
+
+---
+
+## RULE: report a symptom as what is SEEN, not as what it looks like it means
+
+**Named 2026-08-25, after three descriptions of one defect were all wrong.**
+
+The report was *"the record renders BEHIND the shelf — the shelf plane and its
+lit edge draw over the sleeve"*. I accepted it, looked for an occlusion bug, and
+proposed checking the destination's z sign and depth testing. A screenshot
+appeared to confirm it. Three independent descriptions agreed.
+
+**All three were wrong.** Measurement:
+
+| | value |
+|---|---|
+| shelf lip's projected screen y (from the MESH) | canvas-y **247**, unchanged before and after a pull |
+| bright line "cutting across" the record | canvas-y **361** |
+| record's published centre / height | 246 / ~230px → bottom edge ≈ **361** |
+
+The bright line is **the record's own bottom edge**, lit. Nothing was behind
+anything. The record is a box at roughly 1:25 thickness, so its bottom edge is a
+thin bright horizontal strip — and a thin bright horizontal strip where a shelf
+would be *is what a shelf looks like*.
+
+**The description imported a mechanism.** "Behind" is not an observation; it is
+an inference from an observation, and it named the wrong object. Every step that
+followed searched the space that word defined: z sign, depth testing, render
+order, material assignment, layout branch. All clean, because the premise was.
+
+**The rule:** describe the pixels — *"a bright horizontal line crosses the sleeve
+about a third up, and the sleeve continues below it darker"* — and let the
+diagnosis assign the mechanism. The same rule the project already applies to
+tests (assert what is rendered, not what produced it), pointed at bug reports.
+
+**What broke the loop was publishing an object's own position** rather than
+inferring it from pixels. `data-shelf-lip-screen-y` exists for that reason and is
+kept: the pixel scan could say a bright line was *somewhere*, but only the mesh
+could say whether that somewhere was the shelf. Two objects at different heights
+had read as one shelf in two places, which is impossible with a fixed camera and
+stationary meshes — and the impossibility was the clue that the identification,
+not the geometry, was wrong.
+
+---
+
+## The band is composition, not rendering — measured on both viewports
+
+**2026-08-25.** Same column, same record, four records, 390px wide:
+
+| viewport | edge luma | edge y | shelf lip y | separation |
+|---|---|---|---|---|
+| 664 (short) | **235** | 361 | 247 | **114px** |
+| 844 (tall) | **235** | 538 | 247 | **291px** |
+
+**Identical luma. Same object. Only the separation changes.** The record's lit
+bottom edge is equally bright on the viewport where it looks correct; there it
+sits 291px from the shelf lip and reads as the record's own edge, and at 114px
+the eye merges the two into one piece of furniture.
+
+So there is **no rendering defect** — the lighting is not wrong, the depth is
+not wrong, and the edge is not being drawn by the wrong material. What differs
+is where the record sits relative to the shelf, which is a composition question
+for §10b rather than a bug. Left open deliberately rather than fixed: the fix
+would be geometric (where the record settles) or about the edge's prominence,
+and both are design decisions.
+
+**Trigger: the next §10b pass, or Adam judging it on a short viewport.**
+
+### The registration defect found on the way, and NOT the cause
+
+`wallMaterials` held the pulled record's own `faced` and `plain` materials — four
+of its six faces (`[faced, plain, plain, plain, cover, backFace]`) — so
+`setWallDim` darkened them along with the wall the record had just left. That is
+wrong on its own terms: the wall is what a record is pulled OUT of.
+
+**Mutation-tested, and it is NOT what produces the band.** With the defect the
+record's bottom edge measures luma 235; the edge was never dimming. Fixed
+separately, in its own commit, for its own reasons — and recorded here so a
+later reader does not mistake it for the fix to what was photographed.
+
+The fix keeps resting spines dimming (a spine IS wall) and exempts only the
+record that is out, by id.

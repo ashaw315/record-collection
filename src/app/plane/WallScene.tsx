@@ -17,6 +17,7 @@ import {
   TextureLoader,
   SRGBColorSpace,
   Vector2,
+  Vector3,
   WebGLRenderer,
   type Material,
 } from 'three';
@@ -517,6 +518,15 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
      * here — that is the whole point of moving the dim into the scene.
      */
     const wallMaterials: Array<{ material: MeshStandardMaterial; base: Color }> = [];
+    /*
+      Each record's own spine materials, keyed by record id. They dim WITH the
+      wall while the record is resting in it — a spine is wall — and are exempt
+      the moment that record is the one pulled out. See `setWallDim`.
+    */
+    const recordMaterials = new Map<
+      string,
+      Array<{ material: MeshStandardMaterial; base: Color }>
+    >();
 
     /*
       The shelves: one per row, spanning the full width. §10b's plane rule —
@@ -526,6 +536,7 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     const shelfGeometry = new PlaneGeometry(1, 1);
     disposables.push(shelfGeometry);
 
+    let shelfLipScreenY: Vector3 | null = null;
     for (const shelf of layout.shelves) {
       const surface = new Mesh(
         shelfGeometry,
@@ -552,6 +563,18 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
         material: lip.material as MeshStandardMaterial,
         base: new Color(SHELF_LIP),
       });
+
+      /*
+        **The lip's projected screen y, published for one diagnosis and kept.**
+        A pixel scan through the pulled record found a bright line at a
+        different height from the lip in a bare-wall column, which read as the
+        shelf drawing twice — an impossible finding, since the camera, the
+        canvas and these meshes are all fixed after build. Publishing where the
+        lip ACTUALLY projects is what distinguishes "the shelf moved" from "the
+        bright line is a different object". Only the first row's is published;
+        it is the one every short-viewport case shows.
+      */
+      if (shelfLipScreenY === null) shelfLipScreenY = lip.position.clone();
     }
 
     /*
@@ -623,16 +646,34 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
       disposables.push(texture);
 
       const plain = new MeshStandardMaterial({ color: new Color(colour), roughness: 0.7 });
-      /*
-        Kept so the wall can be dimmed behind a pulled record. `color` is the
-        base tint a material multiplies its map by, so scaling it dims a
-        textured spine and a plain one alike.
-      */
-      wallMaterials.push({ material: plain, base: new Color(colour) });
       const faced = new MeshStandardMaterial({ map: texture, roughness: 0.7 });
-      // The spine's labelled face dims with the rest of the wall. Its base is
-      // white because the colour is in the texture, not the material.
-      wallMaterials.push({ material: faced, base: new Color(0xffffff) });
+      /*
+        **A record's own materials are NOT in the wall's dim set**, and this
+        registration is what made a correct render look like a geometry bug.
+        `setWallDim` darkens everything in `wallMaterials` so the wall recedes
+        behind a pulled record — but these two materials are on the RECORD's box
+        (`[faced, plain, plain, plain, cover, backFace]`), so four of the six
+        faces of the record being pulled dimmed along with the wall it had just
+        left.
+
+        The record is roughly 1:25 thick, so its bottom edge is a thin lit
+        strip. Darkened, it reads exactly like a shelf lip drawn across the
+        sleeve, with the rest of that face reading as "the cover continuing
+        below, dimmed" — and three separate descriptions agreed the record was
+        rendering BEHIND the shelf. Measurement disagreed: the shelf lip
+        projects to canvas-y 247 and never moves, while the bright line sits at
+        358, the record's own bottom edge.
+
+        **The rule is ownership, not appearance.** The wall is what a record is
+        pulled OUT of, so nothing that travels with the record may be in the set
+        that dims behind it. The spines still dim — the RESTING records are wall
+        — which is why this cannot be fixed by excluding these materials
+        wholesale: `wallDimExempt` names the one record that is out.
+      */
+      recordMaterials.set(placed.id, [
+        { material: plain, base: new Color(colour) },
+        { material: faced, base: new Color(0xffffff) },
+      ]);
       /**
        * The cover face, revealed by the turn.
        *
@@ -835,7 +876,7 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
         that reason — a cubic ease-out is 39% dimmed at 15% progress and would
         put the record's arrival against an already-dark wall.
       */
-      setWallDim(wallDim(id === null ? 0 : progress));
+      setWallDim(wallDim(id === null ? 0 : progress), id);
         /*
           The LAYOUT's answer for where this record's slot is — read from
           `layout`, which the packer produced, rather than from the mesh's own
@@ -1005,6 +1046,22 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
           host.dataset.settledScreenY = String(Math.round(screenY));
 
           /*
+            The first shelf lip's projected screen y, through the SAME camera and
+            the same canvas rect. A pixel scan through a pulled record read a
+            bright line 80px above the lip found in a bare-wall column, which
+            looked like the shelf drawing in two places — impossible, since the
+            camera, the canvas and the shelf meshes are all fixed after build.
+            This is the value that settles it: if the lip projects to one y while
+            the pixels show a line elsewhere, the line is a different object.
+          */
+          if (shelfLipScreenY !== null) {
+            const lipNdc = shelfLipScreenY.clone().project(camera);
+            host.dataset.shelfLipScreenY = String(
+              Math.round(canvasRect.top + ((1 - lipNdc.y) / 2) * canvasRect.height),
+            );
+          }
+
+          /*
             **The size does not interpolate; the ROTATION reveals it.** The mesh
             is a record all along — SPINE_HEIGHT square, as thick as its spine —
             standing edge-on so only its thickness faces the viewer. Widening it
@@ -1037,9 +1094,27 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
      * overlay. A cover is a claim about a record's artwork (§10b) and 44% of
      * the sleeve is the app being wrong about the record.
      */
-    function setWallDim(amount: number) {
+    /**
+     * Dims the wall behind a pulled record.
+     *
+     * **`exempt` is the record that is OUT, and it is the whole correction.**
+     * A resting record's spine IS wall and must dim with it; the pulled
+     * record's own faces must not, because it is the thing being looked at.
+     * Registering both in one set made four of the pulled record's six faces
+     * darken along with the wall it had just left — which read as the shelf
+     * drawing across the sleeve, since a 1:25-thick box's bottom edge is a thin
+     * strip that looks like a lip once it is dark.
+     */
+    function setWallDim(amount: number, exempt: string | null) {
       for (const { material, base } of wallMaterials) {
         material.color.setRGB(base.r * amount, base.g * amount, base.b * amount);
+      }
+      for (const [recordId, materials] of recordMaterials) {
+        /* The pulled record keeps its own light, at every progress. */
+        const at = recordId === exempt ? 1 : amount;
+        for (const { material, base } of materials) {
+          material.color.setRGB(base.r * at, base.g * at, base.b * at);
+        }
       }
     }
 
@@ -1100,7 +1175,13 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
         const fromMesh = meshes.get(fromId);
         const toMesh = meshes.get(toId);
 
-        setWallDim(wallDim(1)); // stay dimmed throughout the slide
+        /*
+          Dimmed throughout the slide, exempting the record ARRIVING — it is the
+          one the reader is following. The outgoing record is leaving the frame
+          and reads correctly as it goes; exempting only one keeps this the same
+          single-subject rule the rise uses.
+        */
+        setWallDim(wallDim(1), toId);
 
         for (const [recordId, mesh] of meshes) {
           if (recordId === fromId || recordId === toId) continue;
