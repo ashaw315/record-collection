@@ -15,6 +15,7 @@ type SpreadResponse = SpreadSummary & {
   /** Per-version floors keyed by release id — the table joins on these. */
   prices?: Record<string, number | null>;
 };
+import { detailParts } from './detail-line';
 import { OwnershipBadge } from './OwnershipBadge';
 import { VersionTable, type VersionWithOwnership } from './VersionTable';
 import type { OwnershipPayload } from '@/lib/discogs/ownership-payload';
@@ -503,12 +504,9 @@ function ResultCard({
     }
   }
 
-  const details = [
-    result.year === null ? null : String(result.year),
-    result.country,
-    result.label,
-    result.catalogNumber,
-  ].filter((part): part is string => part !== null && part.trim() !== '');
+  // Keeps the year column occupied when Discogs has no year — see
+  // `detail-line.ts` for why absence is placeheld rather than closed up.
+  const details = detailParts(result);
 
   return (
     <li
@@ -554,9 +552,8 @@ function ResultCard({
             <OwnershipBadge ownership={result.ownership} />
           </div>
 
-          {details.length > 0 && (
-            <p className="font-mono text-xs text-muted-foreground">{details.join(' · ')}</p>
-          )}
+          {/* Always rendered: `detailParts` guarantees at least the year slot. */}
+          <p className="font-mono text-xs text-muted-foreground">{details.join(' · ')}</p>
 
           {result.formats.length > 0 && (
             <p className="text-xs text-muted-foreground">{result.formats.join(' · ')}</p>
