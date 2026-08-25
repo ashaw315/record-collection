@@ -37,7 +37,6 @@ import { centredSquareUv } from './skins';
 import { layoutWall, type WallLayout } from './wall-layout';
 import { WALL_FOV_DEGREES, wallCameraDistance } from './wall-camera';
 import { pulledDestination } from './pulled-destination';
-import { viewRegionCentre } from './view-region-centre';
 import { boxDepth } from './record-box';
 import { wallDim } from './wall-dim';
 import { PROUD_MS, proudOffset, shouldRedraw } from './hover-proud';
@@ -313,8 +312,33 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
 
       Guarded against SSR/measurement gaps with a sane floor, and it only ever
       GROWS the surface — a tall collection keeps its own height.
+
+      **The floor is the height BELOW the page chrome, not the whole window**,
+      and the difference is a bug this shipped with. The canvas starts under the
+      nav and heading (~197px), so a floor of `window.innerHeight` makes the
+      surface overshoot the fold by exactly that much: at 974px the canvas ran
+      to page-y 1171, and a record aimed at the centre of its visible slice
+      settled at 318..853 — on screen, but hanging below a 248px shelf into
+      black padding that only existed because the canvas was too tall.
+
+      Measured across four/125 records at three viewports; the fix changes the
+      short case only. When the content is taller than the visible height it
+      wins the `max()` and nothing moves — 125 records at 1280 stays 992, at 390
+      stays 3224 — so the page keeps scrolling a tall wall exactly as before.
+      No inner scroll container, no camera panning with scroll: those would be
+      forced by a literal "the wall always fills the viewport" rule, and A24a
+      does not say that. It says the wall is not a section of a page under four
+      rows of controls, which is about what sits ABOVE the canvas.
+
+      Deliberately NOT stretching the wall CONTENT to fill the viewport. A24c
+      removed the four-row minimum because empty shelves "say in furniture what
+      a count says in words"; a 248px shelf stretched to 777px is that mistake
+      in a different geometry. The shelf stays its own size and the space below
+      it inside the canvas is where the pulled record comes forward into.
     */
-    const viewportFloor = typeof window === 'undefined' ? 0 : window.innerHeight;
+    const chromeAbove = typeof window === 'undefined' ? 0 : host.getBoundingClientRect().top + window.scrollY;
+    const viewportFloor =
+      typeof window === 'undefined' ? 0 : Math.max(0, window.innerHeight - chromeAbove);
     const height = Math.max(layout.height, viewportFloor);
 
     const renderer = new WebGLRenderer({ antialias: true, alpha: false });
@@ -394,6 +418,11 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
      * `SPINE_HEIGHT` tall.
      */
     const viewRegionCentrePx = (scrollY: number): number => {
+      const docTop = canvasDocTop();
+      /* The visible slice of the canvas, in page coordinates. */
+      const regionTop = Math.max(docTop, scrollY);
+      const regionBottom = Math.min(docTop + height, scrollY + window.innerHeight);
+
       const halfAngle = (WALL_FOV_DEGREES * Math.PI) / 360;
       const probe = pulledDestination({
         wallWidth: width,
@@ -403,25 +432,20 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
       });
       const distance = cameraDistance - probe.z;
       const worldPerPx = (2 * distance * Math.tan(halfAngle)) / height;
+      const halfSleevePx = SPINE_HEIGHT / worldPerPx / 2;
 
+      const centre = (regionTop + regionBottom) / 2;
+      const lowest = regionTop + halfSleevePx;
+      const highest = regionBottom - halfSleevePx;
       /*
-        **`layout.height` and `height` are DIFFERENT NUMBERS, and this call is
-        where that stopped being invisible.** `height` is the render surface,
-        padded up to the viewport so a short collection reads as wall rather
-        than as empty shelves; `layout.height` is where the shelves actually
-        stop. They are equal for any collection tall enough to fill the view —
-        which is every fixture this feature was ever tested with — so aiming at
-        the padded surface was indistinguishable from aiming at the wall until
-        the collection got short.
+        `lowest > highest` means the region cannot hold the sleeve; the region's
+        own centre then spreads the overflow across both edges rather than
+        pinning it to one, which is what made the clipping read as "runs off the
+        top" instead of "slightly too big".
       */
-      return viewRegionCentre({
-        wallContentHeight: layout.height,
-        sceneHeight: height,
-        canvasDocTop: canvasDocTop(),
-        scrollY,
-        viewportHeight: window.innerHeight,
-        halfSleevePx: SPINE_HEIGHT / worldPerPx / 2,
-      });
+      const target = lowest > highest ? centre : Math.min(Math.max(centre, lowest), highest);
+
+      return target - docTop;
     };
     const destinationFor = (scrollY: number) =>
       pulledDestination({
@@ -741,15 +765,6 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     */
     host.dataset.rows = String(layout.shelves.length);
     host.dataset.wallWidth = String(width);
-    /*
-      **The WALL CONTENT's height, which is not the scene's.** The surface is
-      padded up to the viewport for a short collection (see `height` above), so
-      these two numbers differ exactly when the collection is small — the case
-      that reached production untested and put the pulled record below the
-      shelf. Published so a test can assert the record lands within the SHELF's
-      band rather than merely somewhere on screen, which the bug also satisfied.
-    */
-    host.dataset.wallContentHeight = String(layout.height);
 
     /**
      * **The draw count, published because it is a CONSTRAINT rather than a

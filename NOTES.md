@@ -15318,6 +15318,18 @@ expressible as a code path anyone forgot to test; it is a property of the DATA,
 and the data was always big. A suite whose fixtures are all large cannot see a
 branch that only a small one reaches.
 
+**CORRECTION, same day: the first fix for this was WRONG and was reverted.**
+Aiming at the wall content put the record's top at page-y 53 on a 974px
+viewport — ABOVE the page chrome at 197, behind the heading and controls. I
+verified it sat inside the CANVAS, which it did, and never checked it sat below
+the furniture drawn on top of the canvas. **A frame error in the verification of
+a frame error**, committed one entry after writing the rule. The real defect was
+narrower: the canvas's floor was `window.innerHeight` while the canvas starts
+~197px down the page, so the surface overshot the fold by exactly that much and
+the record settled in padding that existed only because the canvas was too tall.
+The fix is the floor (`innerHeight - chromeAbove`), measured to leave tall walls
+untouched. See "the canvas is a container" below.
+
 **The check to apply, past this instance:** when a code path is selected by
 `max()`, `min()`, or any comparison against a property of the user's data, ask
 which side of that comparison the fixtures sit on — and whether ANY fixture sits
@@ -15502,3 +15514,94 @@ makes the small-N case unreachable, and small-N is the state every real
 collection starts in. When a fixture is chosen to look like the mature product,
 something else has to cover the immature one — and here nothing did, for the
 whole life of the feature.
+
+---
+
+## The canvas is a container, and its height is a constraint on what renders inside it
+
+**2026-08-25, the second fix for the short-collection defect — the first was
+wrong and is corrected above.**
+
+`WallScene` floors its render surface at the viewport so a short collection
+reads as wall rather than as empty shelves. The floor was `window.innerHeight`.
+**The canvas starts below the nav and heading**, so the surface overshot the
+fold by exactly that chrome height: at 974px the canvas ran to page-y 1171.
+
+The record then settled at 318..853 — **on screen**, but hanging below a 248px
+shelf into black padding that existed only because the canvas was too tall.
+
+**Four candidates, measured rather than argued** (four records, three
+viewports):
+
+| | desktop 879 | phone 390 | desktop 1280 |
+|---|---|---|---|
+| A: aim at wall content (reverted) | 53..589 **above chrome** | 146..497 **above** | 74..569 **above** |
+| B: as shipped | 318..853 on screen, detached | 345..696 | 301..796 |
+| C: canvas = visible height | 372..799 ✓ | 345..696 ✓ | 355..742 ✓ |
+| D: floor = innerHeight − chrome | **identical to C** | identical | identical |
+
+**C and D are the same change described two ways**, which is worth recording:
+"make the canvas exactly the visible height" and "correct the floor" converge
+because `max(248, 777) = 777`. The one-line version was chosen for blast radius.
+
+**The tall-wall question, answered with numbers before building.** The two cases
+do NOT want different things — they want the same `max()` with a correct floor:
+
+| collection | wall | canvas before → after |
+|---|---|---|
+| 125 @1280 | 992 | 992 → 992 unchanged |
+| 125 @390 | 3224 | 3224 → 3224 unchanged |
+| 40 @1280 | 496 | 900 → **703** |
+| 12 @390 | 496 | 664 → **496** |
+
+When content exceeds the visible height it wins the `max()` and the page scrolls
+it exactly as before. **No inner scroll container and no camera panning with
+scroll** — both of which a literal "the wall always fills the viewport" rule
+would have forced. Asking for this measurement before the third fix is what kept
+that out.
+
+**A24a does not say the wall must be viewport-height.** Read again: "the shelf
+is a view that owns the screen, not a section of a page… they do not sit above
+the wall taking vertical space from it". That is about what sits ABOVE the
+canvas, not about the canvas's own height.
+
+**And the wall CONTENT is deliberately not stretched to fill the viewport.**
+A24c removed the four-row minimum because empty shelves "say in furniture what a
+count says in words"; stretching a 248px shelf to 777px is the same mistake in a
+different geometry. The shelf stays its size; the space below it inside the
+canvas is what the pulled record comes forward into.
+
+Two E2E tests, mutation-verified as a pair: restoring the old floor fails "a
+SHORT wall does not extend the canvas past the fold" (`canvas ends 852, fold
+720`) and leaves "a TALL wall still scrolls" green.
+
+---
+
+## UNEXPLAINED: "clicking a spine does nothing" does not match the arithmetic
+
+**Open, not closed, and deliberately not absorbed into the placement fix.**
+
+The reported symptom was *"the spine responds but no record appears"* and *"the
+record never opens"*. Under the code that was live at the time (B above), the
+record settled at **page-y 318..853 on a 974px viewport — on screen.** So the
+symptom and the geometry disagree, and the placement fix does not explain it.
+
+**Two candidate readings, neither asserted:**
+
+1. **It appeared and read as nothing.** A record hanging below a 248px shelf in
+   a black field, on a viewport the reader had never used the feature on, with
+   four records where every previous look had 125. "That is wrong" and "nothing
+   happened" are not easy to separate in the moment.
+2. **A second cause not yet found.** Something genuinely prevented the pull on
+   that session — a state the code paths read as sound do not cover.
+
+**What would distinguish them:** a spine click that produces NOTHING AT ALL after
+the floor fix is live. Under the fix the record lands at 372..799, mid-screen and
+overlapping the shelf; if that still reads as nothing happening, reading (1) is
+excluded and there is a second bug to find.
+
+**Trigger: the next time a spine click produces no visible record.** Same
+treatment as the 1093 intermittent — evidence preserved, trigger named, no story
+asserted. The earlier NOTES entry's confident "it read as clicking does nothing
+because the record went into the black" was written before the arithmetic was
+checked and is corrected by this one.
