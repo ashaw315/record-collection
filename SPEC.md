@@ -677,7 +677,13 @@ average away. This is the ceiling that the two-phase matrix resolution exists to
 break, and it is a number rather than an impression precisely so that "lookup
 feels adequate now" cannot quietly retire that work.
 
-**Master → release drill-down.** If a search result is a master, the UI must let the user open it and see every version underneath (`/api/discogs/master/:id/versions`), displayed as a comparison table with country, year, label, catalog number, format descriptors and cover thumbnail. This is the step where the user identifies *their* pressing rather than just the album.
+**Master → release drill-down.** If a search result is a master, the UI must let the user open it and see every version underneath (`/api/discogs/master/:id/versions`), displayed as a comparison table with country, year, label, catalog number, format descriptors and cover thumbnail.
+
+**This shows what pressings of an album EXIST. That is a discography question, and it is not the identification question.** The sentence here previously said this was "the step where the user identifies *their* pressing rather than just the album", which is a claim this endpoint cannot support: a master's version list is ordered by release date and unbounded — The Doors' debut has 637 versions across 26 pages — so the drill-down answers "what is out there" and answers it well. Asking it "which of these is mine" gives a list that may not contain the record in the user's hand at all, which is what shipped and what QA found (see §12 step 14b).
+
+**Identification lives in step 14b**, which scopes the comparison to the candidates the search actually returned. Both are legitimate and both are wanted; they are different questions and the UI must not let one label imply the other. Where the drill-down is offered, it is offered as browsing a discography, never as identifying a copy.
+
+**Neither view may present a match as certain**, and the reason is measured rather than cautious: the columns this table displays do not always discriminate. Rows identical on every displayed column collapse into one saying "N more look identical from here" (§10), and even with `formatText` — the most discriminating list-level field Discogs offers — 44% of colliding rows remain identical. A version table whose identical rows read as an answer is the same failure as a hallucinated record blessed by a search.
 
 **Honest limits — surface these in the UI, do not paper over them:**
 - Discogs data is user-submitted. Distinct pressings are sometimes merged into one release entry, and identical ones sometimes split across two. Treat a matched release as a strong starting point, never as proof.
