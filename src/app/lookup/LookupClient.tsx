@@ -76,6 +76,17 @@ const FIELDS = [
   { name: 'catno', label: 'Catalog no.', hint: 'On the spine or sleeve — narrows hardest' },
   { name: 'artist', label: 'Artist' },
   { name: 'title', label: 'Title' },
+  /**
+   * **Promoted to the arrival screen after QA on the live page**, above
+   * barcode and beside the catalogue number.
+   *
+   * It does more real work in a shop than any other refinement: it is printed
+   * on the label of essentially every pressing ever made, it is unambiguous,
+   * and unlike a catalogue number it is not reused across decades of
+   * repressings. A Doors search returning 530 matches drops to a handful once
+   * the country is known.
+   */
+  { name: 'country', label: 'Country', hint: 'On the label — cuts a big result set fast' },
   { name: 'barcode', label: 'Barcode', hint: 'Mid-1980s onward — blank on older pressings' },
   /**
    * FOUND IN REAL USE, and the reason the full twelve matter: a Carpenters
@@ -87,7 +98,6 @@ const FIELDS = [
    */
   { name: 'format', label: 'Format', hint: 'e.g. Vinyl, LP, 45 RPM, 180 Gram' },
   { name: 'label', label: 'Label' },
-  { name: 'country', label: 'Country' },
   { name: 'year', label: 'Year' },
   /**
    * The remaining §5.7 parameters. Lower because they narrow less reliably —
@@ -104,17 +114,19 @@ const FIELDS = [
 /**
  * **What you type standing in a shop, holding the record.**
  *
- * §5.7's screen is an in-store lookup, and these four are what is on the object
+ * §5.7's screen is an in-store lookup, and these five are what is on the object
  * in your hand: the catalogue number off the spine (the narrowest match), the
- * artist and title off the sleeve, and the format — which earns its place for a
- * measured reason recorded above, a Carpenters search returning 32 results
- * mostly on CD and cassette when only one medium is in the hand.
+ * artist and title off the sleeve, the country off the label, and the format —
+ * the last two both earn their place for measured reasons recorded above, a
+ * Carpenters search returning 32 results mostly on CD and cassette when only
+ * one medium is in the hand, and a Doors search returning 530 that the country
+ * alone cuts to a handful.
  *
- * The remaining eight are refinements. They stay reachable behind a disclosure
+ * The remaining seven are refinements. They stay reachable behind a disclosure
  * rather than being removed: §5.7 documents all twelve, and a form missing a
  * documented parameter is a search the user cannot express.
  */
-const ESSENTIAL_FIELDS = ['catno', 'artist', 'title', 'format'] as const;
+const ESSENTIAL_FIELDS = ['catno', 'artist', 'title', 'country', 'format'] as const;
 
 type FieldName = (typeof FIELDS)[number]['name'];
 

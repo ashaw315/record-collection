@@ -547,6 +547,49 @@ test('flow 11: the same album in two pressings persists as two records', async (
   await expect(page.getByText(`CLAY-${suffix}-B`)).toBeVisible();
 });
 
+test('country is on screen without opening the refinements', async ({ page }) => {
+  /**
+   * **Country is the highest-value field on this screen and it was buried.**
+   *
+   * QA on the live page, 2026-08-25. A Doors search returned 530 matches; the
+   * user is holding a record whose label says where it was pressed, and that
+   * one field cuts the set to a handful. It is read off the object, it is
+   * unambiguous, and unlike a catalogue number it is not reused across decades
+   * of repressings.
+   *
+   * It ranks above barcode for the same reason barcode was demoted in 917836e:
+   * barcodes reach LPs in the mid-1980s and are blank on most of this
+   * collection, while a country of manufacture is printed on essentially every
+   * pressing ever made.
+   *
+   * Fails against `ESSENTIAL_FIELDS` in `LookupClient.tsx` — with `country`
+   * absent from that list the input renders inside the collapsed `<details>`
+   * and is not visible until the disclosure is opened.
+   */
+  await page.goto('/lookup');
+  await formReady(page);
+
+  const refinements = page.locator('details').filter({
+    has: page.locator('summary', { hasText: 'More search terms' }),
+  });
+
+  // The precondition: the disclosure is CLOSED. Without this the assertion
+  // below would pass trivially on a page that happened to render it open.
+  await expect(refinements).not.toHaveAttribute('open', '');
+
+  await expect(page.locator('#country')).toBeVisible();
+
+  // The four that were already essential stay essential — promoting country
+  // must not push one of them behind the disclosure.
+  for (const field of ['catno', 'artist', 'title', 'format']) {
+    await expect(page.locator(`#${field}`), `${field} stays on arrival`).toBeVisible();
+  }
+
+  // Barcode stays a refinement. It is blank on most of this collection, and
+  // giving it arrival-screen weight is what the demotion corrected.
+  await expect(page.locator('#barcode')).not.toBeVisible();
+});
+
 test('the form offers every §5.7 search parameter', async ({ page }) => {
   /**
    * FOUND IN REAL USE: the form shipped with 7 of the 12 parameters §5.7
