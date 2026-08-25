@@ -322,13 +322,41 @@ form the records work had not shown — see the masking entry under Open.
   below, which is left in place because a display version is not a substitute
   for stored identification evidence if that is ever wanted for the collection.
 
-  **NOT BUILT. Open questions before it becomes a step:**
-  - Where it hangs: per-card expand, or automatic when the candidate set is
-    small. Cost is N calls against 60/min, so on-demand either way (§10a's
-    existing rule against eager fetching for a whole search page applies).
-  - Whether `notes` is shown at all, given it is long (up to 444 chars here)
-    and is release-level prose — see the release-versus-copy rule above.
-  - It is a SPEC amendment, like step 14b: §5.7 has no endpoint for this shape.
+  **DECIDED 2026-08-25 (Adam), now SPEC §12 step 14c. Not yet built.**
+
+  - **Per-card expand, never automatic.** Automatic pays the calls on every
+    search including the ones where the displayed columns already separate the
+    candidates. **And an expand is honest about what it is:** the user is
+    asking to compare, not being told the answer — which is the same
+    distinction §5.7 draws between showing what exists and identifying a copy.
+  - **Notes ARE shown, separately and labelled.** They earned it by resolving
+    the one group identifiers could not. But a runout is transcribed off the
+    object and checkable against what the user is holding, while notes are
+    someone's description of a release — **different KINDS of thing, kept
+    visually distinguishable the way §7.8 keeps the generated snippet distinct
+    from the facts.** Identifiers and companies come first because those are
+    what the user compares; notes read as context, never as evidence.
+  - **It supersedes the two-phase matrix design** rather than deferring
+    alongside it. See the deferral entry below.
+
+  **THE RULE THAT MAKES OR BREAKS IT: render runout strings EXACTLY as Discogs
+  holds them — spacing, strikethroughs, unicode glyphs and all.**
+
+  The user's eye is the matcher. Anything the app trims, collapses or strips is
+  **discrimination thrown away**, and it would be thrown away silently: a
+  tidied runout still looks like a runout. The real values include
+  `"BSK-1-3010 LW2 F12 (scratched out)-W-1 KP SUB #1 MASTERED BY CAPITOL"`,
+  `"JW10 FS7• #2"` and `"△21970"` — double spaces, a bullet, a triangle, and
+  parenthetical transcription notes, every one of them potentially the
+  character that separates two pressings.
+
+  **This inverts the normalizer's usual job and must be stated where the
+  normalizer lives.** Every other Discogs string in this app goes through
+  `meaningful()` and `bounded()` — absence-prose stripped, whitespace trimmed,
+  length capped. A runout must NOT: `bounded()` at a generous cap is
+  acceptable as a denial-of-service guard, `meaningful()` and any trimming are
+  not. **A test pins this rather than a comment**, because a comment does not
+  fail when someone adds a `.trim()` in good faith.
 
 - **RULE: any measurement of Discogs metadata quality must be PER-GENRE. An
   average across albums flatters exactly the scenes this collection is made of.**
@@ -986,12 +1014,23 @@ form the records work had not shown — see the masking entry under Open.
   are fetch-on-expand for a single row, or surfacing `stats`-based hints. Both
   cost calls. Recorded rather than guessed at.
 
-- **DEFERRED WITH A TRIGGER: two-phase resolution using matrix strings.**
+- **DEFERRED WITH A TRIGGER: pressing identification. The shape is
+  VERIFICATION-BY-DISPLAY; the two-phase stored-matrix design is SUPERSEDED.**
 
   Recorded 2026-08-25, at the close of the three-findings lookup unit, while
   the reasoning is fresh. **A deferral without a trigger is a decision never to
   act** — this project's own rule — so the trigger is written here rather than
   left to judgement later.
+
+  **SUPERSEDED, not deferred alongside** (decided by Adam, same day, on the
+  measurement above): the two-phase design stored a user-entered matrix string
+  and machine-matched it, and **the expensive half of it was matching messy
+  transcriptions** — normalisation rules, fuzzy comparison, a confidence enum
+  to express how sure the match was. Verification-by-display **skips that
+  problem rather than solving it**: the app displays what Discogs holds, the
+  user's eye does the comparison against the object in hand, and no match is
+  ever asserted. It measured 93% on the same collision groups, needs no schema,
+  and claims nothing. The triggers below now point at THIS feature.
 
   **The specific risk, stated so it can be watched for: the `formatText` fix
   makes lookup feel adequate, and adequate is what kills the follow-up.** The
@@ -1017,22 +1056,26 @@ form the records work had not shown — see the masking entry under Open.
      the fields on hand. Already flagged above as a possible forcing function;
      naming it here makes it a trigger rather than a note.
 
-  **REVISIT BEFORE FIRING (2026-08-25).** Verification-by-display measured at
-  93% on the same collision groups (see the entry above) and needs no stored
-  matrix, no matching and no confidence enum. When one of these triggers fires,
-  the first question is which SHAPE to build, not whether to build the design
-  below. The triggers stay because they describe when identification stops
-  being good enough; they do not settle what to do about it.
+  **What fires: verification-by-display**, per-card expand, as specified in the
+  entry above and in SPEC §12 step 14c. Release detail for the candidate the
+  user asks about, identifiers and companies first as the things being
+  compared, notes below them labelled as context. No stored matrix, no
+  matching, no confidence enum — because nothing is being decided by the app.
 
-  **What fires:** the two-phase resolution under discussion — matrix strings as
-  the second phase, an `unresolved` confidence state so the app can say it does
-  not know, and storing the identification evidence so a later answer can be
-  checked against what was seen. Matrix is user-authoritative per CLAUDE.md §8,
-  which is exactly why it belongs in phase two rather than being prefilled.
+  **The one rule that makes or breaks it: runout strings render EXACTLY as
+  Discogs holds them.** The user's eye is the matcher, so any character the app
+  trims, collapses or normalises is discrimination thrown away. See §12 step
+  14c and the test that pins it.
 
   **What does NOT fire it:** the qualifier being blank on a card. That is the
-  known 50% and it is expected; the trigger is about the app being unable to
+  known 47% and it is expected; the trigger is about the app being unable to
   distinguish, not about Discogs being sparse.
+
+  **What is NOT superseded:** storing identification evidence on a `records`
+  row, if that is ever wanted for the collection rather than for a lookup.
+  Display answers "which of these am I holding" at the moment of asking;
+  it does not record the answer. That is a separate feature with a separate
+  justification, and it should not be smuggled in as part of this one.
 
 - **DECLINED, do not re-propose: a sold/gone record status.**
 

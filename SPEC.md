@@ -1272,6 +1272,83 @@ Mock the Discogs, MusicBrainz and Anthropic APIs in tests. Never hit live extern
     the three 1979 US rows are identical on every displayed column, so scoping
     makes them reachable and does not make them distinguishable.
 
+14c. **Verification-by-display: identify a pressing by showing the evidence
+    (§5.7).** Added 2026-08-25 out of the lookup QA. **This SUPERSEDES the
+    two-phase stored-matrix design** that was previously deferred — see below
+    for why, because the reasoning is the point.
+
+    **The problem it solves.** Search payloads cannot distinguish pressings.
+    Measured: the `formatText` qualifier names a plant on 24% of rows, and 0%
+    on Discharge, 2% on Misfits — the genres this collection is made of. Cards
+    that look identical are the §7.7 confusion arriving through the search
+    screen.
+
+    **The mechanism.** Release detail carries what search does not:
+    `identifiers` (Matrix / Runout, Pressing Plant ID, Rights Society, Label
+    Code), `companies` (Pressed By / Manufactured By) and free-text `notes`.
+    Fetch detail for ONE candidate on demand and DISPLAY those fields. The
+    user compares them against the record in their hands. **The app asserts
+    nothing.**
+
+    **MEASURED before specifying, on 15 collision groups across six albums,
+    41 releases fetched:**
+
+    | Result | Figure |
+    |---|---|
+    | groups fully distinguished by identifiers + companies | **93%** |
+    | ...including notes | **100%** |
+    | releases carrying a Matrix / Runout | **93%** |
+    | calls to resolve one group | median 3, mean 2.7 |
+
+    It resolves Discharge and Misfits, the two albums where search-level text
+    was useless — which is what makes it worth building for this collection
+    rather than for a generic one.
+
+    **Why this supersedes rather than defers alongside the matrix design.** That
+    design stored a user-entered matrix string and matched against it, and **the
+    expensive half was matching messy transcriptions**: normalisation rules,
+    fuzzy comparison, and an `unresolved` confidence enum to express how sure
+    the match was. The real runouts are
+    `BSK-1-3010 LW2 F12 (scratched out)-W-1 KP SUB #1 MASTERED BY CAPITOL`,
+    `JW10 FS7• #2`, `△21970` — spacing, strikethroughs, unicode glyphs and
+    per-contributor conventions. Machine-matching those is a research project;
+    a person reading two strings side by side is instant. **This skips the
+    problem rather than solving it**, which is why it is cheaper AND more
+    honest: nothing is claimed, so nothing can be wrongly claimed.
+
+    **Per-card expand, never automatic.** Automatic would pay the calls on
+    every search, including the ones where the displayed columns already
+    separate the candidates. An expand is also honest about what it is: the
+    user is ASKING to compare rather than being told the answer — the same
+    distinction §5.7 draws between showing what exists and identifying a copy.
+    §10a's rule against eager fetching for a whole search page applies here
+    unchanged.
+
+    **Layout: identifiers and companies FIRST, notes below and labelled.**
+    They are different kinds of thing. A runout is transcribed off the object
+    and checkable against what the user is holding; `notes` is someone's
+    description of the release, up to several hundred characters. Notes earn
+    their place — they resolved the one group identifiers could not — but they
+    read as CONTEXT, not as evidence, and are kept visually distinct the way
+    §7.8 keeps a generated snippet distinct from the facts.
+
+    **THE RULE THIS FEATURE LIVES OR DIES BY: runout strings render EXACTLY as
+    Discogs holds them.** Spacing, strikethroughs, unicode glyphs, parenthetical
+    transcription notes — all of it. The user's eye is the matcher, so any
+    character the app trims, collapses or strips is discrimination thrown away,
+    and thrown away SILENTLY, because a tidied runout still looks like a
+    runout. **This inverts the normalizer's usual job**: every other Discogs
+    string in this app goes through `meaningful()` and `bounded()`, and a
+    runout must not. A generous `bounded()` cap is acceptable as a
+    denial-of-service guard; `meaningful()`, trimming and whitespace collapsing
+    are not. **A test pins this**, not a comment — a comment does not fail when
+    someone adds a `.trim()` in good faith.
+
+    **What it does NOT do.** It answers "which of these am I holding" at the
+    moment of asking; it does not RECORD the answer. Storing identification
+    evidence on a `records` row is a separate feature with a separate
+    justification and must not be smuggled in here.
+
 15. Mobile pass across all screens. E2E #10. **Unit 1 was the E2E flake, fixed by per-spec cleanup rather than the per-worker isolation originally prescribed** — see below.
 16. Vercel deploy config + cron for price refresh.
 
