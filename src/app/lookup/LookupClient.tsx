@@ -154,6 +154,18 @@ export function LookupClient() {
   const [error, setError] = useState<string | undefined>();
   const [searching, setSearching] = useState(false);
   /**
+   * The last page fetched, and whether one is in flight.
+   *
+   * **Paginating rather than only telling the user to narrow.** A search said
+   * "95 matches · showing 50" with no way to reach the rest, and the tail held
+   * a distinct Canadian quadraphonic pressing. Refining cannot surface a
+   * variant the user does not know exists — and not knowing is the reason they
+   * are on this screen. §5.7's honesty about the limit is kept; what changes
+   * is that the limit is now passable.
+   */
+  const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  /**
    * **The form collapses once there are results, and the results take the
    * screen.**
    *
@@ -201,10 +213,7 @@ export function LookupClient() {
     setSearching(true);
     setError(undefined);
 
-    const query = new URLSearchParams();
-    for (const [name, value] of Object.entries(values)) {
-      if (value.trim() !== '') query.set(name, value.trim());
-    }
+    const query = buildQuery();
 
     try {
       const response = await fetch(`/api/discogs/search?${query.toString()}`);
@@ -219,6 +228,8 @@ export function LookupClient() {
 
       setResults(body.data);
       setTotal(body.meta.total);
+      // A fresh search starts at page 1 whatever the previous one reached.
+      setPage(1);
       /* Nothing found means the query is what needs attention, not the answer. */
       setQueryOpen(body.meta.total === 0);
     } catch {
@@ -227,6 +238,50 @@ export function LookupClient() {
       setQueryOpen(true);
     } finally {
       setSearching(false);
+    }
+  }
+
+  function buildQuery() {
+    const query = new URLSearchParams();
+    for (const [name, value] of Object.entries(values)) {
+      if (value.trim() !== '') query.set(name, value.trim());
+    }
+    return query;
+  }
+
+  /**
+   * Fetches the next page and APPENDS it.
+   *
+   * Appending rather than replacing: the user has been reading this list, and
+   * a page that swaps its contents under them costs them their place and any
+   * comparison they were part-way through. It also keeps the summary honest —
+   * "showing N" counts what is on screen.
+   */
+  async function loadMore() {
+    if (loadingMore || results === null) return;
+
+    setLoadingMore(true);
+    const next = page + 1;
+
+    try {
+      const query = buildQuery();
+      query.set('page', String(next));
+
+      const response = await fetch(`/api/discogs/search?${query.toString()}`);
+      const body = await response.json();
+
+      if (!response.ok) {
+        setError(body?.error?.message ?? 'Could not load more results.');
+        return;
+      }
+
+      setResults([...results, ...body.data]);
+      setTotal(body.meta.total);
+      setPage(next);
+    } catch {
+      setError('Could not reach the server.');
+    } finally {
+      setLoadingMore(false);
     }
   }
 
@@ -350,6 +405,33 @@ export function LookupClient() {
                   total > results.length ? ` · showing ${results.length}` : ''
                 }`}
           </p>
+
+          {/*
+            **The truncation is passable, not merely honest.**
+
+            "95 matches · showing 50" told the truth and left 45 rows
+            unreachable — among them a distinct Canadian quadraphonic pressing.
+            Narrowing cannot surface a variant the user does not know exists,
+            and not knowing is why they are on this screen, so the tail gets a
+            way through rather than only advice to refine. The hint below the
+            control is the advice, kept as an addition rather than a substitute.
+          */}
+          {results.length < total && (
+            <div className="space-y-1">
+              <button
+                type="button"
+                data-testid="load-more"
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="w-full rounded-xs border border-border px-3 py-2 text-sm hover:bg-accent disabled:opacity-60"
+              >
+                {loadingMore ? 'Loading…' : `Show more (${total - results.length} left)`}
+              </button>
+              <p className="text-xs text-muted-foreground">
+                Country and format narrow a large set fastest.
+              </p>
+            </div>
+          )}
 
           {/*
             §5.7's honest limits, surfaced rather than papered over: Discogs is

@@ -547,6 +547,87 @@ test('flow 11: the same album in two pressings persists as two records', async (
   await expect(page.getByText(`CLAY-${suffix}-B`)).toBeVisible();
 });
 
+test('the results tail is reachable, not just honestly truncated', async ({ page }) => {
+  /**
+   * FOUND IN REAL USE, 2026-08-25. A Doors search said "95 matches · showing
+   * 50" and offered no way to reach the other 45.
+   *
+   * **The tail is not noise.** `EKS-75005 Q` is a distinct Canadian
+   * quadraphonic variant living in the unshown rows, and no amount of
+   * narrowing by country or format surfaces it if the user does not already
+   * know it exists. "Narrow your search" assumes you know what you are looking
+   * for; the whole point of a lookup is that you are holding something and
+   * trying to find out what it is. So this paginates rather than only telling
+   * the user to refine.
+   *
+   * Fails against `LookupClient.tsx` before the fix: the summary is honest
+   * about the count and there is no control that fetches page 2.
+   */
+  const pageOne = Array.from({ length: 50 }, (_, i) => ({
+    discogsId: 900_000 + i,
+    type: 'release',
+    masterId: null,
+    title: `Strange Days ${i}`,
+    artist: 'The Doors',
+    thumbUrl: null,
+    year: 1967,
+    country: 'US',
+    label: 'Elektra',
+    catalogNumber: 'EKS-74014',
+    formats: ['Vinyl', 'LP'],
+    formatText: null,
+    isReissue: false,
+    communityHave: null,
+    communityWant: null,
+    ownership: NO_OWNERSHIP,
+  }));
+
+  // The row the user could not reach. Page 2, and the only quadraphonic one.
+  const tailRow = {
+    ...pageOne[0],
+    discogsId: 31_239_436,
+    title: 'The Soft Parade',
+    year: null,
+    country: 'Canada',
+    catalogNumber: 'EKS-75005 Q',
+    formats: ['Vinyl', 'LP', 'Quadraphonic'],
+  };
+
+  await page.route('**/api/discogs/search**', async (route) => {
+    const requested = Number(new URL(route.request().url()).searchParams.get('page') ?? '1');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        data: requested >= 2 ? [tailRow] : pageOne,
+        meta: { total: 51, page: requested, pageSize: 50 },
+      }),
+    });
+  });
+
+  await page.goto('/lookup');
+  await formReady(page);
+  await page.getByLabel('Artist').fill('The Doors');
+  await page.getByRole('button', { name: 'Search Discogs' }).click();
+
+  await expect(page.getByTestId('lookup-summary')).toContainText('51 match');
+  await expect(page.getByTestId('result-card')).toHaveCount(50);
+
+  // The precondition: the tail row is NOT on screen before paging. Without
+  // this the assertion below could pass on a page that rendered everything.
+  await expect(page.getByText('EKS-75005 Q')).toHaveCount(0);
+
+  await page.getByTestId('load-more').click();
+
+  // The tail is now reachable, and the rows already seen are still there —
+  // appending, not replacing, so paging never costs the user their place.
+  await expect(page.getByText('EKS-75005 Q')).toBeVisible();
+  await expect(page.getByTestId('result-card')).toHaveCount(51);
+
+  // Nothing left to fetch, so the control goes rather than lying.
+  await expect(page.getByTestId('load-more')).toHaveCount(0);
+});
+
 test('country is on screen without opening the refinements', async ({ page }) => {
   /**
    * **Country is the highest-value field on this screen and it was buried.**
