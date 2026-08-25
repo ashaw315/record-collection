@@ -263,6 +263,73 @@ form the records work had not shown — see the masking entry under Open.
 
 ## Open
 
+- **MEASURED AND PROMISING: verification-by-display beats the matrix design on
+  cost AND honesty. Measure stands; not yet built.**
+
+  Proposed by Adam 2026-08-25 after the 24% plant-coverage number landed, and
+  measured the same day on the SAME SIX ALBUMS so the figures are comparable.
+
+  **The idea.** Search results cannot distinguish pressings — 24% plant
+  coverage, 0% on Discharge. But RELEASE DETAIL carries `identifiers`
+  (Matrix / Runout, Pressing Plant ID, Rights Society, Label Code), `companies`
+  (Pressed By / Manufactured By) and free-text `notes`, none of which are in
+  search payloads. Fetch detail for a small candidate set, DISPLAY those
+  fields, and let the user's eye compare them against the record in hand.
+
+  **No matrix INPUT is required**, and that is the whole point: the expensive
+  half of the deferred two-phase design is machine-matching messy
+  transcriptions — normalisation rules, fuzzy matching, a confidence enum. A
+  person reading two strings side by side skips that problem entirely.
+
+  **THE MEASUREMENT** — 15 collision groups (rows identical on every displayed
+  column INCLUDING `formatText`), 41 releases fetched:
+
+  | Result | Figure |
+  |---|---|
+  | groups fully distinguished by identifiers + companies alone | **14 / 15 — 93%** |
+  | ...including contributor notes | **15 / 15 — 100%** |
+  | releases carrying a Matrix / Runout | **38 / 41 — 93%** |
+  | calls to resolve one group | **median 3, mean 2.7, max 4** |
+
+  **It works on the genres where search-level text failed, which is the case
+  being made.** Discharge (0% plant coverage) and Misfits (2%) BOTH resolve.
+  Two 1984 UK `CLAY LP 3` repressings identical on every column separate on
+  `LYN-15062 Damont` vs the same runout with different notes, both `Pressed By:
+  Lyntone Recordings Ltd.`
+
+  **Why eyeball comparison is the right shape, in one example.** Four Rumours
+  pressings identical on every displayed column carry runouts reading
+  `BSK-1-3010 LW2 F12 … MASTERED BY CAPITOL`, `JW10 FS7• #2`, `F24`, and
+  `LW1 F6 4 △21970 4`. Machine-matching those is a research project — spacing,
+  strikethroughs, unicode glyphs, per-contributor transcription conventions. A
+  person holding the record reads their own runout and finds their row in
+  seconds. **The asymmetry between machine-matching and eyeball-matching IS the
+  argument.**
+
+  **The one failure is honest and worth keeping.** Three Portuguese unofficial
+  Misfits pressings have byte-identical runouts (`JRR-804-A 33 UPM`) and differ
+  only in contributor notes. Bootlegs copy each other's stampers, so the data
+  is genuinely the same. The correct behaviour is to SHOW that they are
+  indistinguishable — the existing identical-row collapse, applied one level
+  down — never to invent a difference.
+
+  **What this would change about the deferred matrix work.** The deferral's
+  three triggers currently point at a design that may be the wrong shape: they
+  assume storing a user-entered matrix string and matching against it. A
+  display-only version is cheaper, needs no schema, claims nothing, and is
+  strictly more honest — the app shows what Discogs says and the user decides.
+  **Revisit the deferral rather than merely firing it.** See the trigger entry
+  below, which is left in place because a display version is not a substitute
+  for stored identification evidence if that is ever wanted for the collection.
+
+  **NOT BUILT. Open questions before it becomes a step:**
+  - Where it hangs: per-card expand, or automatic when the candidate set is
+    small. Cost is N calls against 60/min, so on-demand either way (§10a's
+    existing rule against eager fetching for a whole search page applies).
+  - Whether `notes` is shown at all, given it is long (up to 444 chars here)
+    and is release-level prose — see the release-versus-copy rule above.
+  - It is a SPEC amendment, like step 14b: §5.7 has no endpoint for this shape.
+
 - **RULE: any measurement of Discogs metadata quality must be PER-GENRE. An
   average across albums flatters exactly the scenes this collection is made of.**
 
