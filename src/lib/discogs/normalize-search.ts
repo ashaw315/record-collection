@@ -47,6 +47,28 @@ const rawSearchResult = z
     genre: z.array(z.string()).optional(),
     style: z.array(z.string()).optional(),
     format: z.array(z.string()).optional(),
+    /**
+     * PLURAL, and a different shape from `format` above — this is not a
+     * duplicate of it.
+     *
+     * Search rows carry BOTH: `format` is a flat array of strings, `formats`
+     * is an array of objects whose `text` holds the free-text qualifier.
+     * `text` exists ONLY here. Declaring `format` alone let `.passthrough()`
+     * absorb this key, so the qualifier never reached the type boundary and
+     * two pressings rendered identically on the search card.
+     *
+     * `descriptions` is deliberately NOT read: it omits the medium ("Vinyl")
+     * that the flat array includes, and `isReissue` plus §10a's spread both
+     * depend on the medium being the first descriptor.
+     */
+    formats: z
+      .array(
+        z
+          .object({ text: z.string().optional() })
+          .passthrough(),
+      )
+      .optional()
+      .catch(undefined),
     thumb: z.string().optional(),
     cover_image: z.string().optional(),
     master_id: z.number().nullable().optional(),
@@ -80,6 +102,17 @@ export type NormalizedSearchResult = {
   label: string | null;
   catalogNumber: string | null;
   formats: string[];
+  /**
+   * The free-text qualifier from `formats[].text` — "Specialty Records
+   * Corporation Pressing", "Allentown Pressing", "Gatefold", "180g".
+   *
+   * Separate from `formats` because it is a different KIND of thing: the
+   * descriptors are a controlled vocabulary, this is prose a contributor
+   * typed. It is the most discriminating field Discogs offers at list level
+   * and it is also the least trustworthy, so it travels on its own and the UI
+   * presents it as a hint rather than as a resolved plant identity (§7.8).
+   */
+  formatText: string | null;
   genres: string[];
   styles: string[];
   isReissue: boolean;
@@ -151,6 +184,17 @@ export function normalizeSearchResult(input: unknown): NormalizedSearchResult {
     label: meaningful(raw.label?.[0]),
     catalogNumber: meaningful(raw.catno),
     formats,
+    /**
+     * First non-empty qualifier. A multi-disc release has one entry per disc
+     * and they repeat; taking the first is what the release page shows.
+     * Through `meaningful`/`bounded` like every other Discogs string — live
+     * values include a trailing space, and the column bounds apply to prose a
+     * stranger typed.
+     */
+    formatText: bounded(
+      meaningful(raw.formats?.map((entry) => meaningful(entry.text)).find((t) => t !== null)),
+      FIELD_LIMITS.name,
+    ),
     genres: raw.genre ?? [],
     styles: raw.style ?? [],
     isReissue: inferReissue(formats),

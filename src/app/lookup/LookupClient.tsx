@@ -48,6 +48,7 @@ type SearchResult = {
   label: string | null;
   catalogNumber: string | null;
   formats: string[];
+  formatText: string | null;
   isReissue: boolean;
   communityHave: number | null;
   communityWant: number | null;
@@ -57,15 +58,25 @@ type SearchResult = {
 /**
  * The fields §5.7 lists, in the order a collector reaches for them.
  *
- * Catalog number and barcode lead because §5.7 calls them the most effective
- * way to pin down a pressing — and they are printed on the object in the user's
- * hand, which artist and title also are but far less distinctively.
+ * Catalog number leads because it is printed on the object in the user's hand
+ * and narrows hardest — but it narrows to an ALBUM, not a pressing. Measured
+ * live 2026-08-25: `?catno=EKS-74007` returns 197 results, all one master. The
+ * hint says narrowest rather than strongest for that reason; the header copy
+ * was corrected at the same time.
+ *
+ * **Barcode is demoted below artist and title, deliberately.** It narrows
+ * further than a catalogue number WHERE IT EXISTS, and on this collection it
+ * usually does not: barcodes did not appear on LPs until the mid-1980s, so for
+ * a collector buying first-wave punk and 1960s pressings the field is blank on
+ * most of the shelf. Ranking it second gave prominent real estate to a field
+ * that is empty for the common case. It stays present — §5.7 documents it, and
+ * it is genuinely the best field for a modern reissue.
  */
 const FIELDS = [
-  { name: 'catno', label: 'Catalog no.', hint: 'On the spine or sleeve — the strongest match' },
-  { name: 'barcode', label: 'Barcode', hint: 'Near-unique on modern pressings' },
+  { name: 'catno', label: 'Catalog no.', hint: 'On the spine or sleeve — narrows hardest' },
   { name: 'artist', label: 'Artist' },
   { name: 'title', label: 'Title' },
+  { name: 'barcode', label: 'Barcode', hint: 'Mid-1980s onward — blank on older pressings' },
   /**
    * FOUND IN REAL USE, and the reason the full twelve matter: a Carpenters
    * search returned 32 results, most of them CDs and cassettes. A popular
@@ -94,7 +105,7 @@ const FIELDS = [
  * **What you type standing in a shop, holding the record.**
  *
  * §5.7's screen is an in-store lookup, and these four are what is on the object
- * in your hand: the catalogue number off the spine (the strongest match), the
+ * in your hand: the catalogue number off the spine (the narrowest match), the
  * artist and title off the sleeve, and the format — which earns its place for a
  * measured reason recorded above, a Carpenters search returning 32 results
  * mostly on CD and cassette when only one medium is in the hand.
@@ -537,6 +548,25 @@ function ResultCard({
 
           {result.formats.length > 0 && (
             <p className="text-xs text-muted-foreground">{result.formats.join(' · ')}</p>
+          )}
+
+          {/*
+            The qualifier from `formats[].text` — often the pressing plant, and
+            the most discriminating thing Discogs gives at list level. Two cards
+            on one screen can be identical on every other field and differ only
+            here.
+
+            Rendered SEPARATELY from the descriptor list rather than appended to
+            it, because it is a different kind of claim: the descriptors are a
+            controlled vocabulary, this is prose a contributor typed. Live
+            values include "Allentown Pressing" but also "180g", "Blue" and
+            "USA Cover" — so it is shown as Discogs' own words and never
+            labelled as a plant. §7.8: never present a Discogs match as certain.
+          */}
+          {result.formatText !== null && (
+            <p className="text-xs italic text-muted-foreground" data-testid="format-text">
+              {result.formatText}
+            </p>
           )}
 
           <div className="flex flex-wrap items-center gap-2 pt-1">

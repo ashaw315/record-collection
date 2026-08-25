@@ -731,6 +731,31 @@ form the records work had not shown — see the masking entry under Open.
   rediscovered expensively — it was already wrong once in the opposite
   direction and cost a round.
 
+  **MEASURED COVERAGE (2026-08-25) — how much of the identification problem
+  `formats[].text` actually solves. Recorded so it is not re-derived.**
+
+  Five candidate sets, live, vinyl-only, 377 rows total: the Doors debut by
+  catno (the reported case), Doors Strange Days, Discharge Hear Nothing, Hot
+  Tuna, Misfits Walk Among Us.
+
+  | Measure | Result |
+  |---|---|
+  | rows carrying a non-empty `text` | **187 / 377 — 50%** |
+  | rows COLLIDING on every displayed column | 160 / 377 — 42% |
+  | of those collisions, separated by `text` | **89 / 160 — 56%** |
+  | of those collisions, STILL identical after `text` | **71 / 160 — 44%** |
+
+  Per-set coverage ranges from **28%** (Doors Strange Days) to **80%**
+  (Discharge). It is contributor effort, not an API guarantee, so it is high on
+  well-documented scenes and low on mass-market reissues — the variance is the
+  point and it does not average away.
+
+  **So the parser fix is necessary and not sufficient, quantified.** It halves
+  the identical-card problem on the measured sets and leaves 44% of collisions
+  untouched. It must not be read as having solved pressing identification, and
+  it is direct evidence FOR the two-phase matrix redesign rather than against
+  it: the ceiling on list-level identification is now a measured number.
+
   **What it does NOT change:** `text` is free-text and user-submitted, not a
   plant field. Live values from one search include `"Barcode; SRC-Specialty
   Records Press"`, `"Allentown - Pub. Credit Misprint"`,
@@ -756,6 +781,47 @@ form the records work had not shown — see the masking entry under Open.
   shelf ordering, or a QA finding that expanding is too coarse — the options
   are fetch-on-expand for a single row, or surfacing `stats`-based hints. Both
   cost calls. Recorded rather than guessed at.
+
+- **DEFERRED WITH A TRIGGER: two-phase resolution using matrix strings.**
+
+  Recorded 2026-08-25, at the close of the three-findings lookup unit, while
+  the reasoning is fresh. **A deferral without a trigger is a decision never to
+  act** — this project's own rule — so the trigger is written here rather than
+  left to judgement later.
+
+  **The specific risk, stated so it can be watched for: the `formatText` fix
+  makes lookup feel adequate, and adequate is what kills the follow-up.** The
+  cards now differ where they used to collide, which is a visible improvement
+  and a partial one. The measured ceiling is above: 50% of rows carry a
+  qualifier at all, and 44% of colliding rows stay identical after it. Feeling
+  better is not the same as identifying a pressing, and the gap is now a number
+  rather than an impression.
+
+  **Fire the redesign on the FIRST of these, whichever comes first:**
+
+  1. **A collection entry turns out to be the wrong pressing.** One instance is
+     enough — no count, no threshold. CLAUDE.md §8 names this as the worst bug
+     the app can ship, and it has already happened once (the Hot Tuna
+     misidentification recorded above). A second means the list-level fix did
+     not hold.
+  2. **A lookup ends without the user being able to tell which row is theirs**,
+     three times. The honest signal already exists in the UI — the identical-row
+     collapse says "N more look identical from here" — so this is countable
+     rather than felt. Three collapses acted on, or three searches abandoned at
+     that message.
+  3. **Step 11 (shelf ordering) needs a pressing identity** it cannot get from
+     the fields on hand. Already flagged above as a possible forcing function;
+     naming it here makes it a trigger rather than a note.
+
+  **What fires:** the two-phase resolution under discussion — matrix strings as
+  the second phase, an `unresolved` confidence state so the app can say it does
+  not know, and storing the identification evidence so a later answer can be
+  checked against what was seen. Matrix is user-authoritative per CLAUDE.md §8,
+  which is exactly why it belongs in phase two rather than being prefilled.
+
+  **What does NOT fire it:** the qualifier being blank on a card. That is the
+  known 50% and it is expected; the trigger is about the app being unable to
+  distinguish, not about Discogs being sparse.
 
 - **DECLINED, do not re-propose: a sold/gone record status.**
 
