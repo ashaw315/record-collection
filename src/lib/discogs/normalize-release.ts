@@ -179,6 +179,17 @@ export function normalizeRelease(input: unknown): NormalizedRelease {
   const raw = rawRelease.parse(input);
 
   const identifiers = raw.identifiers ?? [];
+  /**
+   * **Runouts are NOT normalized, and that is load-bearing** (SPEC §12 step
+   * 14c). They are displayed for the user to compare against the object in
+   * their hands, so every character discriminates: interior double spaces,
+   * unicode glyphs (△ ✲ •), and parenthetical transcription notes are
+   * frequently the only difference between two pressings.
+   *
+   * `bounded()` stays as a denial-of-service guard. `meaningful()` and any
+   * trimming or whitespace collapsing must NOT be added here — see the
+   * verbatim block in the test file, which fails if they are.
+   */
   const matrixRunout = identifiers
     .filter((identifier) => (identifier.type ?? '').trim().toLowerCase() === MATRIX_TYPE)
     .map((identifier) => bounded(identifier.value ?? '', FIELD_LIMITS.matrix) ?? '')

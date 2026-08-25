@@ -76,6 +76,113 @@ describe('matrix / runout', () => {
   });
 });
 
+describe('runout strings survive VERBATIM (SPEC §12 step 14c)', () => {
+  /**
+   * **The rule verification-by-display lives or dies by**, pinned as a test
+   * rather than left as an intention.
+   *
+   * Step 14c shows a candidate's runout so the USER'S EYE can compare it
+   * against the record in their hands. That makes every character load-bearing:
+   * anything this normalizer trims, collapses or strips is discrimination
+   * thrown away, and thrown away SILENTLY, because a tidied runout still looks
+   * like a runout.
+   *
+   * **This inverts the usual job of this module.** Every other Discogs string
+   * here goes through `meaningful()` and gets trimmed. A runout must not.
+   * `bounded()` at §4.2's generous cap stays, as a denial-of-service guard
+   * against a hostile 50,000-character value.
+   *
+   * These are real values, measured live 2026-08-25 from the Rumours and
+   * Misfits collision groups. A comment would not fail when someone adds a
+   * `.trim()` in good faith; this does.
+   *
+   * **Every one of these passed on first run**, because the behaviour already
+   * existed — which CLAUDE.md §2 says to treat as a defect in the test until
+   * shown otherwise. Verified by MUTATION instead: adding
+   * `.trim().replace(/\s+/g, ' ')` to the value mapping fails the first three
+   * deterministically. The block is a regression guard on behaviour that is
+   * currently correct BY ACCIDENT — nothing but this file stops it changing.
+   */
+
+  const runout = (value: string) => ({
+    id: 1,
+    title: 'T',
+    identifiers: [{ type: 'Matrix / Runout', value }],
+  });
+
+  it('keeps interior double spaces', () => {
+    // Real: "JW10 FS7• #2  MASTERED BY CAPITOL  ✲  KP" — the doubled spaces
+    // are how the contributor recorded the stamping.
+    const value = 'BSK-1-3010 JW10 FS7\u2022 #2  MASTERED BY CAPITOL  \u2733  KP';
+    expect(normalizeRelease(runout(value)).matrixRunout[0]).toBe(value);
+  });
+
+  it('keeps leading and trailing whitespace', () => {
+    /**
+     * The likeliest regression: a `.trim()` added for tidiness. Leading space
+     * can be how a transcription marks an indented or offset stamp.
+     */
+    const value = '  BSK-1-3010 F24  ';
+    expect(normalizeRelease(runout(value)).matrixRunout[0]).toBe(value);
+  });
+
+  it('keeps unicode glyphs — triangle, bullet, six-pointed star', () => {
+    // Real: "LW1 F6 4  △21970 4", "FS7•", "✲". These are stamped symbols and
+    // are frequently the ONLY difference between two pressings.
+    const value = 'BSK-1-3010 LW1 F6 4  \u25B321970 4 \u2733 \u2022';
+    const [got] = normalizeRelease(runout(value)).matrixRunout;
+
+    expect(got).toBe(value);
+    expect(got).toContain('\u25B3');
+    expect(got).toContain('\u2733');
+  });
+
+  it('keeps parenthetical transcription notes and strikethrough wording', () => {
+    // Real: the "(scratched out)" marks a struck-through stamp, which is
+    // itself the identifying feature.
+    const value = 'BSK-1-3010 LW2 F12 (scratched out)-W-1 KP SUB #1 MASTERED BY CAPITOL';
+    expect(normalizeRelease(runout(value)).matrixRunout[0]).toBe(value);
+  });
+
+  it('does not put the value through `meaningful()`', () => {
+    /**
+     * `meaningful()` maps "none" and "unknown" to null. A runout genuinely
+     * reading "NONE" is a real stamping, and dropping it would remove a row's
+     * only distinguishing mark while looking like Discogs had nothing.
+     */
+    expect(normalizeRelease(runout('NONE')).matrixRunout).toEqual(['NONE']);
+  });
+
+  it('still bounds a hostile value, because that guard is not about tidiness', () => {
+    const [got] = normalizeRelease(runout('x'.repeat(50_000))).matrixRunout;
+
+    expect(got?.length).toBe(1_000);
+  });
+
+  it('keeps two runouts that differ ONLY in whitespace as two distinct values', () => {
+    /**
+     * The defect this whole block exists to prevent, stated end to end: two
+     * real Misfits pressings whose runouts differ by a single space. Collapse
+     * whitespace and they become the same string — the app would then show two
+     * candidates as identical when the object in hand can tell them apart.
+     */
+    const a = 'JRR-804-B SST 33 UPM';
+    const b = 'JRR 804 B SST 33 UPM';
+
+    const got = normalizeRelease({
+      id: 1,
+      title: 'T',
+      identifiers: [
+        { type: 'Matrix / Runout', value: a },
+        { type: 'Matrix / Runout', value: b },
+      ],
+    }).matrixRunout;
+
+    expect(got).toEqual([a, b]);
+    expect(got[0]).not.toBe(got[1]);
+  });
+});
+
 describe('pressing plant', () => {
   it('reads the company whose role is pressing, not the first company', () => {
     /**
