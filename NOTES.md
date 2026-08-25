@@ -32,9 +32,13 @@ needs a year, and year is an output of identification, not an input — a
 1967-filtered list is what hid the record).
 
 **Do not read finding 1's fix as having solved pressing identification.**
-Measured: the qualifier is present on 50% of rows and separates 56% of colliding
-rows, leaving 44% identical. The number is in §5.7 and below, and the two-phase
-matrix redesign now has written triggers rather than an open deferral.
+Measured, and CORRECTED the same day after QA on the live page: the qualifier
+appears on 53% of rows but names a pressing plant on only **24%**. The rest are
+colour, sleeve and weight notes, which separate two cards on screen without
+identifying either. The first figure recorded here (50% / 56%) counted
+separation and called it identification — see the proxy rule below. The number
+is in §5.7, and the two-phase matrix redesign now has written triggers rather
+than an open deferral.
 
 **The most reusable finding is fix 0, and it is about the suite, not the data.**
 A captured fixture carrying `formats[].text` sat in the repo unread since
@@ -880,10 +884,10 @@ form the records work had not shown — see the masking entry under Open.
   **The specific risk, stated so it can be watched for: the `formatText` fix
   makes lookup feel adequate, and adequate is what kills the follow-up.** The
   cards now differ where they used to collide, which is a visible improvement
-  and a partial one. The measured ceiling is above: 50% of rows carry a
-  qualifier at all, and 44% of colliding rows stay identical after it. Feeling
-  better is not the same as identifying a pressing, and the gap is now a number
-  rather than an impression.
+  and a partial one. The measured ceiling is above: a qualifier appears on 53%
+  of rows and names a plant on **24%**. Feeling better is not the same as
+  identifying a pressing, and the gap is now a number rather than an
+  impression — a number that got SMALLER, not larger, on closer measurement.
 
   **Fire the redesign on the FIRST of these, whichever comes first:**
 
