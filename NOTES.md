@@ -1017,6 +1017,13 @@ form the records work had not shown — see the masking entry under Open.
      the fields on hand. Already flagged above as a possible forcing function;
      naming it here makes it a trigger rather than a note.
 
+  **REVISIT BEFORE FIRING (2026-08-25).** Verification-by-display measured at
+  93% on the same collision groups (see the entry above) and needs no stored
+  matrix, no matching and no confidence enum. When one of these triggers fires,
+  the first question is which SHAPE to build, not whether to build the design
+  below. The triggers stay because they describe when identification stops
+  being good enough; they do not settle what to do about it.
+
   **What fires:** the two-phase resolution under discussion — matrix strings as
   the second phase, an `unresolved` confidence state so the app can say it does
   not know, and storing the identification evidence so a later answer can be
