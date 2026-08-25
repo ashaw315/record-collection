@@ -489,3 +489,43 @@ WebSocket pool behaviour across freeze/thaw, real cold-start frequency (which
 sets the true cost of the full-bucket problem), actual function durations against
 the plan limit, whether Vercel's env storage expands `$` in a bcrypt hash, and
 whether a linked Blob store auto-injects its token.
+
+**R6 after-deploy pass — 2026-08-25.** The second half, run against the live
+deployment. **3 findings, none blocking; 4 of R6's 5 handed-forward unknowns
+answered; 1 still open.**
+
+*Answered by deploying:* the Neon WebSocket driver works under real serverless
+conditions (4 records priced in 1.4s cold, 0.83s warm, three CONCURRENT runs all
+200 with no pool exhaustion); Vercel's env storage does NOT expand `$` in a
+bcrypt hash (the app boots, and the schema demands 60 real bcrypt characters);
+a linked Blob store does NOT auto-inject `BLOB_READ_WRITE_TOKEN`; function
+durations sit far under the 60s ceiling. **Still open:** Neon pool behaviour
+across freeze/thaw, which needs hours of genuine idleness — trigger, the first
+morning Adam opens the app cold.
+
+*Findings.* **A misconfigured `APP_URL` fails as 401, not 404**, because
+middleware runs before routing — so a wrong path in the workflow reads as "the
+secret is wrong". Recorded against the hour someone would otherwise lose.
+**My own verification wrote 24 duplicate rows** into the real price history
+(seven refresh runs × four records), flagged rather than cleaned, since deleting
+from an append-only table is Adam's call. **Two `llm_requests` rows carry
+`completed_at` NULL** and predate the column by five days — pre-existing, not a
+failure of the completion write.
+
+*Clean:* production migration state (`db:verify:state` → 17 of 17, exit 0,
+against the live database — unit 3's assertion doing its job on the database it
+was built for); the auth boundary across every protected route in production;
+region `iad1` as configured; the Discogs User-Agent defaulting to a URL that
+resolves.
+
+*What it could not reach:* everything behind the password. Blob, MusicBrainz and
+Anthropic all fail at point of use on authenticated routes, and R6's first
+attack line — does each fail LEGIBLY — needs Adam using the app. **That is the
+highest-value remaining check and it is manual**, which is the same conclusion
+R5 reached about QA and the one this project keeps re-learning.
+
+*The cron:* authentication holds both ways on the deployed endpoint; it is
+APPEND-ONLY rather than idempotent (per §7.5) and seven runs produced seven
+identical observations per record, which a weekly schedule makes into history
+and repeated runs make into noise; a failed run is visible by email and the
+route's own counts are in the workflow log.

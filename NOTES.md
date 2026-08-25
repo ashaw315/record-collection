@@ -15790,3 +15790,137 @@ later reader does not mistake it for the fix to what was photographed.
 
 The fix keeps resting spines dimming (a spine IS wall) and exempts only the
 record that is out, by id.
+
+---
+
+## Step 16 unit 4 — the cron fired from GitHub Actions, end to end
+
+**2026-08-25, 19:08 UTC.** The last unproven piece of step 16: not the route
+(which had already answered a direct call with the secret), but the WORKFLOW —
+that both secrets resolve, the URL is right, and a bearer header reaches the
+route from outside Vercel entirely.
+
+`gh workflow run "Refresh prices"` → **success in 13 seconds**, and the evidence
+is the three halves rather than the green tick:
+
+1. **The run's outcome:** `conclusion: success`.
+2. **The endpoint's response**, captured in the workflow log by the `tee` the
+   step was written with: `{"data":{"attempted":4,"written":4,"skipped":0,"failed":0}}`.
+   The counts are what distinguish a run that did nothing from a run that never
+   happened, which is why the route reports them.
+3. **The rows landed:** `price_history` 7 → 11, exactly four written, each
+   `asking`/`discogs` — Dire Straits $5.00, Luther Vandross $2.99, The Blues
+   Project $4.99, Discharge $23.24.
+
+**And the negative still holds:** no token → 401, wrong token → 401, on the same
+deployed endpoint minutes later. The bearer check is caller-agnostic in both
+directions, which is what makes an external scheduler safe here.
+
+Weekly at 04:17 UTC Mondays, plus `workflow_dispatch`. `APP_URL` and
+`CRON_SECRET` live in GitHub's encrypted secrets; neither appears in the
+workflow file, verified mechanically before the first push.
+
+**§14's "cron job registered" is now met** — and met more strongly than the spec
+asks, since it has been observed to fire rather than merely configured.
+
+---
+
+## R6 after-deploy pass — 2026-08-25
+
+The second half of R6, which REVIEW-PLAN specifies as "before step 16, and again
+after the first deploy". Everything below was measured against the live
+deployment, not inferred.
+
+### The residue R6 handed forward, now answered
+
+R6's pre-deploy pass listed five things "only deploying can show". Four are
+answered; one is not yet.
+
+**Neon WebSocket driver under real serverless conditions — WORKS.** The cron
+endpoint prices four records, each a live Discogs call plus DB writes, in
+**1.4s cold and 0.83s warm**. Three CONCURRENT runs all returned 200
+(0.98s/1.74s/1.83s) with no pool exhaustion and no error. Cold starts on static
+routes: 0.26s first, 0.12s after. The full-bucket-per-isolate problem R6 worried
+about costs nothing at this scale because a cold start is a quarter-second, not
+a stall.
+
+**Actual function durations against the plan limit — comfortable.** The refresh
+is the only route exercised in production so far and it finishes in under two
+seconds against a 60s ceiling. The LLM routes and the lineup walk remain
+unmeasured in production (nobody has run them there).
+
+**Whether Vercel's env storage expands `$` in a bcrypt hash — NO.** Answered at
+first deploy: the app boots, and since R6's fix `APP_PASSWORD_HASH` is
+`.transform(unescapeDollars).refine(BCRYPT_HASH)`, demanding exactly 60
+characters of real bcrypt. A `$`-truncated 46-char value would throw at
+instrumentation and 500 every route. It did not.
+
+**Whether a linked Blob store auto-injects its token — NO.** The project had a
+Blob store attached with `BLOB_STORE_ID` and `BLOB_WEBHOOK_PUBLIC_KEY` present,
+and `BLOB_READ_WRITE_TOKEN` absent. It had to be added by hand.
+
+**Neon pool behaviour across freeze/thaw — STILL OPEN.** Requires a genuinely
+idle deployment (hours), not a gap between test requests. Trigger: the first
+morning Adam opens the app after not touching it overnight.
+
+### The cron, against R6's four questions
+
+- **Authentication:** holds in both directions on the deployed endpoint. No
+  token → 401, wrong token → 401, correct token → 200, verified minutes apart.
+- **Idempotence: it is APPEND-ONLY, not idempotent, and that is per §7.5** — but
+  the consequence is worth stating. Seven runs produced **seven identical
+  observations per record** ($5.00 × 7 for Dire Straits). A weekly schedule
+  makes that a true price history; repeated runs make it noise. Nothing dedupes
+  a same-day repeat.
+- **Partial completion:** per-item isolation is built and unit-tested; not
+  exercised in production because no release has failed there yet.
+- **Is a failed run visible?** Yes — GitHub emails on workflow failure, and the
+  step uses `--fail-with-body` plus `tee`, so the route's own counts are in the
+  log whether it succeeds or fails.
+
+### Findings
+
+**1. A misconfigured `APP_URL` fails as 401, not 404.** Measured: POSTing to
+`/api/discogs/refresh-price` (a typo, no trailing `s`) returns **401**, because
+middleware runs before routing and a non-cron path with a bearer token is simply
+unauthenticated. So a wrong path in the workflow reads as "the secret is wrong"
+rather than "that endpoint does not exist" — the classic wrong-diagnosis shape.
+Not urgent; recorded so the next person debugging a red workflow does not spend
+an hour on the secret. **Trigger: if a scheduled run ever fails with 401.**
+
+**2. My own testing wrote 24 duplicate rows into the real price history.**
+Seven refresh runs (one workflow, six manual verification calls) × 4 records =
+28 `discogs` rows where the collection has seen four distinct prices. Flagged to
+Adam rather than cleaned unilaterally: they are real observations of a real
+price, just repeated, and deleting rows from an append-only table is a decision
+he should make.
+
+**3. `llm_requests` holds 2 rows with `completed_at` NULL, both from
+2026-08-20** — five days before the column existed. Pre-existing data, not a
+failure of unit 1's completion write; both are far outside the 1-hour window and
+count against nothing.
+
+### Attack lines that came back clean
+
+- **Production migration state:** `db:verify:state` → "Migration state
+  consistent: 17 of 17 migrations applied", exit 0, against the live Neon
+  database. The assertion unit 3 built is now doing its job on the database it
+  was built for.
+- **Auth boundary across the whole app:** `/`, `/stats`, `/manage`, `/lookup`,
+  `/want-list` all 307 to `/login`; `/login` 200. The middleware matcher holds
+  in production, not just in tests.
+- **Region:** serving from `iad1`, matching `vercel.json`.
+- **Discogs User-Agent:** `DISCOGS_CONTACT` is unset in production, which is
+  correct — the default names the public repository, which R6 measured as a 200.
+
+### What this pass could NOT check, and why
+
+Everything behind the password. The point-of-use failure paths R6 asked about —
+Blob, MusicBrainz contact, Anthropic — are all on authenticated routes, and I do
+not have the app password. Those need Adam, or an E2E run against production,
+which nothing is set up to do and which would write to his collection.
+
+**Trigger: Adam using the app.** Specifically: an image upload (Blob), a lineup
+walk (MusicBrainz contact), and a suggestion or snippet (Anthropic). Each should
+fail LEGIBLY if its credential is wrong, and that legibility is what R6's first
+attack line asked for and this pass cannot reach.
