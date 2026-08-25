@@ -1,0 +1,22 @@
+# Vercel builds from source; nothing here is input to that build.
+#
+# Written because `vercel deploy` aborted its upload against 2.4GB of local
+# build output (.next 1.4G, .next-test 1.0G). These are gitignored, but the
+# upload is the deploy's first step and making it explicit is cheaper than
+# depending on that inference.
+.next
+.next-test
+node_modules
+test-results
+playwright-report
+coverage
+
+# Test and review material: not needed to build or run the app.
+e2e
+test
+*.log
+
+# Working documents: build history and review notes, not build input.
+docs
+NOTES.md
+REVIEW-PLAN.md

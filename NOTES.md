@@ -14923,3 +14923,360 @@ code reports the last command in a chain reports that command, not the chain's
 purpose. When the purpose is a STATE — a database with a schema, a branch at a
 revision — assert the state, not the exit. `db:verify` is the pattern; it exists
 because someone had already learned this once about the journal.
+
+---
+
+## Step 16 unit 1 — the serverless limits, and three decisions that are not fixes
+
+**2026-08-24.** The four items R6 parked with "trigger: step 16 itself". Two
+were built; two were decided against and recorded, which is the part a later
+reader is most likely to misread.
+
+### A slot cannot be released when the isolate is killed — so the claim expires instead
+
+R6 finding 5 named the leak at the release site. **It cannot be fixed there,
+and this is a fact about the platform rather than a limitation of the code.** A
+function killed at `maxDuration` runs no `finally`, no cleanup callback and no
+signal handler; the isolate stops executing. Anything shaped like "release the
+slot on timeout" would have to run inside the function being killed.
+
+So the fix moved to the claim: `llm_requests.completed_at`, nullable, and a
+claim with no completion stops counting once it is older than
+`ABANDONED_CLAIM_MS` (90s). A row claimed and never completed IS the timeout
+signature.
+
+**90 seconds is derived, not chosen.** The ceiling is 60s, so nothing can still
+be running at 90 — the platform has already killed it. That margin is the whole
+safety argument: the rule must never evict a claim whose call is still in
+flight, because that would admit an eleventh concurrent request against a budget
+of ten. **If the ceiling ever rises this must rise with it**, and the test that
+holds the line is `does not evict a claim that could still be running`, which
+ages a row to 45s — past R5's measured 44s call and still inside the ceiling.
+
+**The completion is the half that makes the expiry safe**, and it is easy to
+read as bookkeeping. Without it every claim looks abandoned after 90 seconds and
+the budget refunds itself, which is worse than the leak: a quota that forgets is
+not a quota. Both routes mark completion ABOVE their readability check, because
+§9.2 is explicit that an unreadable response keeps its slot — it was served and
+billed. Only the auth-failure path removes its row, and that distinction is now
+asserted in both route test files.
+
+**A test whose fixture had silently stopped describing what it meant.** `a
+refusal names when capacity returns` inserted ten rows aged 30 minutes with no
+completion. Under the new rule those are ten TIMED-OUT calls, and refusing an
+eleventh on their account is exactly the leak being removed — so the test failed,
+correctly. The fixture was changed and the assertion was not: this test is about
+the refusal MESSAGE, and a genuinely full window now means ten calls that were
+*served*. Same shape as the NFD/NFC entry — a precondition that quietly stopped
+holding while the assertion still looked right.
+
+### The transport limiters stay in memory — a decision, not an oversight
+
+**A later reader will see per-isolate token buckets next to a DB-backed LLM
+quota and read it as something nobody got round to. It was decided.**
+
+The difference is what each limiter protects. The LLM quota caps a **paid
+budget** against a **hard external ceiling**, and needed to be durable — it is,
+via `llm_requests` and an advisory lock. The Discogs (60/min) and MusicBrainz
+(1/sec) buckets protect **politeness to an API that one person's usage will not
+strain**: 60 requests a minute is not reachable by someone clicking a UI, even
+across several warm isolates. Making them durable costs a database round-trip on
+the hot path of every Discogs call — real latency, plus a second thing that can
+fail — to remove a risk that does not exist at this scale.
+
+**Trigger: a production 429 from Discogs or a 503 from MusicBrainz.** That is
+the observation that would make the exposure real rather than theoretical.
+
+**The coupling that would invalidate this, written down because it would not
+look like a change to rate limiting.** What keeps MusicBrainz polite is §12 step
+11's design decision that the lineup walk is **on demand, per artist, never a
+bulk crawl** — one walk at a time, sequential, self-limiting. If the walk ever
+becomes eager or batched, this decision dies with it. That would arrive looking
+like a performance improvement.
+
+### Two facts about the deployed app — not defects, things to know before meeting them
+
+**A slow LLM response is killed at 60 seconds and the user gets nothing.**
+`maxDuration` covers the WHOLE function — auth, the claim, the collection
+summary, the model call, the parse — not just the Anthropic request. R5 measured
+44s for one gap analysis, so the nominal 16s of headroom is less than it sounds,
+and 60 is Hobby's ceiling rather than a tuned number: there is no larger value
+available. The quota slot is no longer lost when this happens, which is what
+unit 1 fixed; the answer still is.
+
+**A killed lineup walk keeps its partial data and resumes; the request dies
+without a response.** `walkLineup` commits each membership as it resolves and
+`saveMemberships` is idempotent (§4.3), so nothing resolved is lost and a
+re-walk continues rather than restarting. What is lost is the ANSWER: the UI
+shows a network error while the progress sits in the database, and clicking
+again picks it up. ~32 sequential requests at 1/sec is ~32s of the 60 before any
+database work counts, so this is marginal rather than safe — but it degrades to
+slow-and-recoverable rather than to lost.
+
+### `maxDuration` lives in the route files, not in `vercel.json`
+
+It was written as a `vercel.json` `functions` glob first and moved. **A glob
+that stops matching — a renamed directory, a moved route — fails SILENTLY back
+to the plan default**, and nothing in the build notices. A route segment export
+is validated by Next at build time and appears in
+`.next/server/functions-config-manifest.json`, which is what Vercel reads.
+
+That manifest is now asserted by `test/repo/serverless-limits.test.ts`, which
+began as a probe — reading the manifest to check the value had actually reached
+the output — and became a test per CLAUDE.md §2. It also asserts `vercel.json`
+declares NO `functions` block, so the drift of two sources for one limit cannot
+come back quietly. Verified by mutation: changing the limit to 10 and
+re-introducing a `functions` key each failed a test.
+
+**`vercel.json` carries no `crons` key**, because the price refresh is driven by
+GitHub Actions (Hobby caps Vercel crons at once a day; Actions has no such cap).
+The endpoint's auth is unaffected and was already caller-agnostic — see unit 2.
+
+---
+
+## Step 16 unit 2 — the cron route, and what absence means
+
+**2026-08-24.** `POST /api/discogs/refresh-prices` (§5.7, §6, §7.5). The route
+R6 recorded as "wired but nonexistent": `CRON_PATHS` and the middleware bearer
+check were built and tested, and there was no handler.
+
+### Absence is not an observation — no data, no row
+
+§6 says to write `price_history` rows from Discogs and **does not say what
+absence means**, so this was a decision rather than a reading. A row recording
+"no data" and no row at all are different claims and the difference is
+load-bearing here, because §7.6's chain reads `price_history` to compute what
+the collection is worth.
+
+**There is no honest row for absence.** `price_type` is `new | used | asking`
+(§4.2) and all three assert a price EXISTS — so recording "nothing found" means
+inventing either a figure or a type, and the value chain then reads it as what
+the record is worth. §10a states the governing rule in its own first sentence:
+*"later layers degrade to absence, never to a guess."* This project has already
+shipped the opposite once, when the market cache wrote `layersFetched:
+['floor','ladder']` unconditionally and served an empty range as measured truth
+for seven days.
+
+**What makes the choice safe is that absence is COUNTED, not silent.** A run
+that wrote zero rows and a run that never happened are the same observation from
+outside, which is R6's assert-the-state rule pointed at a cron's own report. The
+response carries `attempted / written / skipped / failed`.
+
+**And a 404 is not a 503.** Discogs answering "this release is gone" is a
+settled fact about that record — `skipped`. Discogs failing to answer is "we do
+not know" — `failed`. Folding them together would report an outage as "nothing
+to price", which is absence recorded as fact again. The market route already
+draws this exact line for its cache marker; the reasoning is reused rather than
+reinvented.
+
+### The floor is an `asking` price, and typing it wrongly would inflate the collection
+
+A marketplace floor is a listing nobody has paid, which is precisely §7.2's
+definition of `asking`. Not `used`: **§7.6's estimated-value chain reads `used`
+then `new` and excludes `asking` deliberately**, so typing these rows as `used`
+would silently inflate the collection's value with prices nobody paid. R4 fixed
+the mirror image of this in the sparkline. Mutation-verified: changing the type
+to `used` fails the test that names the rule.
+
+### Per-item isolation, demonstrated rather than implied
+
+Append-only means a partial run leaves no corrupt row — but **that is a property
+of the TABLE and says nothing about whether the loop keeps going.** A refresh
+that aborts on the first failure is equally append-safe and equally useless: one
+dead release would freeze every record after it, every week, with nothing to say
+so.
+
+So it is proved rather than inferred. The failing record is placed in the MIDDLE
+of three, because a failure at the end passes even on a route that aborts.
+Mutation-verified: replacing the per-item catch with a rethrow fails four tests,
+including the one that asserts the records either side are priced.
+
+The catch is deliberately broad rather than `DiscogsError`-only. An unexpected
+throw from a malformed payload is exactly the case where one dead record must
+not cost the other forty.
+
+### Three smaller decisions, stated so they are not read as oversights
+
+- **The cache is deliberately NOT read.** `market_cache`'s TTL is 7 days and
+  this job runs weekly, so reading it would hand the refresh its own last write
+  and record week-old figures as a new measurement. It writes to the cache but
+  never reads it.
+- **Layer 1 only.** The layer-2 ladder needs a second call per release, doubling
+  the largest scheduled spend of a 60/minute budget, and `price_history` stores
+  one figure per row.
+- **Records only, not the want list.** §10a is explicit that want-list market
+  figures sit "beside `max_price`, never merged with it", fetched on demand.
+  Refreshing them here would write rows nothing reads.
+- **One row per RECORD, not per release.** §4 makes duplicate records legal: two
+  copies of one pressing are two rows sharing a `pressing_id`, each with its own
+  history. A `DISTINCT` on the release id would leave one copy's history frozen.
+
+### The cron is GitHub Actions, not Vercel Cron
+
+Decided this session: Hobby caps Vercel crons at once a day, Actions has no such
+cap. **The consequence worth recording is that the request now comes from
+outside the deployment**, so `CRON_SECRET` is the only thing between the
+internet and this endpoint.
+
+The middleware check holds for it unchanged, and this was confirmed rather than
+assumed: it is a constant-time comparison against an `Authorization: Bearer`
+header with **no Vercel-specific signal** — no `x-vercel-*`, no IP allowlist.
+§3's wording ("Vercel Cron sends this automatically") describes the original
+caller, not a requirement.
+
+**A positive E2E was added**, because only the negative existed. `rejects the
+cron endpoint without a bearer token` passes even when the endpoint stops being
+a cron path at all — a mutation emptying `CRON_PATHS` leaves it green, since a
+session-protected endpoint also 401s without a token. The new test
+(`accepts the cron endpoint from any caller presenting the secret`) is the one
+that fails on that mutation. The pair pins both directions.
+
+**The secret goes in GitHub's encrypted secrets, never in the workflow file** —
+that file is committed and this repository is public.
+
+### The `PriceHistory` copy coupling, checked and deliberately NOT changed
+
+R6 recorded that `PriceHistory.tsx`'s empty state was corrected in R4 because it
+promised a cron that did not exist, and warned that when the cron landed the
+copy would "understate the truth in the other direction". Checked this unit.
+
+**It is still accurate today and was left alone.** The current copy makes no
+claim about a refresh at all — it says either "No prices recorded yet. 'What it
+goes for now' above shows what the market says today" or, with no Discogs
+release linked, that nothing can look one up. Both are present-tense facts, and
+both remain true while the route exists but nothing schedules it.
+
+It becomes understated only once the cron is **scheduled and running**, which is
+unit 4. Changing working copy mid-unit against a state that does not exist yet
+is the shape CLAUDE.md §4 forbids, so this is recorded rather than acted on.
+**Trigger: the first successful scheduled run.**
+
+Worth noting the neighbouring branch already anticipates these rows correctly:
+"Nothing here says what a copy sold for — only what someone asked" is exactly
+the right sentence for a history made of `asking`-typed cron rows, and it was
+written before the cron existed.
+
+---
+
+## Step 16 unit 3 — `db:migrate` asserts state, and WHICH state was the decision
+
+**2026-08-24.** The assertion R6 parked here, declining to invent one
+mid-remediation against a database it could not safely break.
+
+### The choice: ledger-versus-journal, not snapshot-versus-schema
+
+Two candidate assertions, decided against the three real incidents rather than
+in principle.
+
+| Incident | State when found | ledger↔journal | snapshot↔schema |
+|---|---|---|---|
+| **Dev** (R5) | ledger 12 vs journal 15; 0011–0013 present and unrecorded; 0014 absent | **catches** | catches, but only via 0014 |
+| **Neon test branch** (13c u1) | ledger 11 vs journal 16; 0011–0013 present and unrecorded | **catches** | **MISSES those three** |
+| **The orphan row** (both branches) | one inert ledger row matching no journal entry | correctly silent | silent |
+
+**The middle row decides it.** On the Neon branch 0011–0013's schema was already
+present and CORRECT — a schema diff reports clean on a database that is one
+`db:migrate` away from the permanent 42701 loop. The divergence was in the
+bookkeeping, and the bookkeeping is the INPUT to drizzle's decision about what
+to run. Asserting the schema checks the output of a process whose input is
+already corrupt.
+
+So the stronger-sounding check is the weaker one for the failure this project
+actually has. Recorded because "compare the snapshot to the database" is the
+obvious answer and would have passed the incident it most needed to catch.
+
+### Directional, and that is load-bearing
+
+**Every journal entry must have a ledger row; extra ledger rows are fine.** Both
+Neon branches carry the inert orphan (`created_at=1786715119768`, matching no
+file, below the high-water mark so it can never gate anything). NOTES already
+recorded that a first verification script asserted "row count equals journal
+length" and failed on a HEALTHY database — a check that cries wolf is a check
+somebody disables. That mistake is now pinned by a test.
+
+Matched on **hash**, not timestamp: a committed migration edited after being
+applied keeps its `when` and changes its bytes, so a timestamp match would call
+that consistent while the database holds something the repo no longer describes.
+The hash is sha256 of the raw `.sql` bytes — **measured against a row drizzle
+itself wrote**, not assumed, and pinned by a test that compares the reader's
+hash to the ledger's for migration 0000. Getting this wrong is the worst
+available failure here: every entry would look unapplied on a healthy database.
+
+### What it actually did, measured on a drifted database
+
+A throwaway database was migrated, then its three most recent ledger rows
+deleted — schema complete, ledger behind, the exact incident shape:
+
+- `drizzle-kit migrate` → **exit 0**, "applying migrations..."
+- `npm run db:verify:state` → **exit 1**, naming `0014_odd_susan_delgado`,
+  `0015_records_snippet`, `0016_elite_ben_grimm`
+- `npm run db:migrate` (now chained) → **exit 1**
+
+That comparison is the unit in one line: the same database, one command calling
+it fine and the other naming what is wrong with it.
+
+**The probe is committed as a test** rather than left in the session
+(CLAUDE.md §2). It builds and drops its own throwaway database, never the shared
+one — the point is to leave a database in a state nothing should be left in.
+Mutation-verified: an always-consistent comparison fails 6 tests including that
+one.
+
+### Two implementation notes worth keeping
+
+**A script, not a vitest file like `db:verify`.** That one targets the local
+container because vitest loads `.env.test`. This must verify whichever database
+`db:migrate` just migrated — **including production** — so it resolves its
+target through the same `parseEnv` and `resolveDriver` that `drizzle.config.ts`
+uses. A verifier pointed at a different database from the migration it verifies
+is worse than none.
+
+**No new dependency.** The obvious route was `tsx`, which is present but only
+transitively via drizzle-kit — depending on it directly would be an undeclared
+dependency. Node 24 strips TypeScript natively (`--experimental-strip-types`),
+so the shared comparison is IMPORTED rather than reimplemented in JavaScript. A
+second copy of this logic is how two callers end up disagreeing about what
+consistent means.
+
+`db:test:reset` gained the same assertion, since it migrates too.
+
+### An E2E finding this unit did not act on: `wall-scene` 1093 fails ~2 runs in 5, byte-identically
+
+**Measured across step 16's five full `--retries=0` runs**, recorded here rather
+than fixed because it is outside units 1–3's scope (CLAUDE.md §4).
+
+`e2e/wall-scene.spec.ts:1093` — "the pulled sleeve fits INSIDE the visible wall
+region on a short viewport" — failed runs 1 and 5 and passed runs 2, 3 and 4.
+Both failures are **byte-identical**:
+
+    Error: sleeve top 172 must clear the wall region top 172
+    Expected: > 172   Received: 172
+
+It also passed 3/3 when run in isolation with `-g`.
+
+**Why this is not simply "flake" and should not be filed as such.** NOTES'
+moving-failure rule works on the SET: flake presents as different tests failing
+each run. This is one test, one assertion, one pair of values, twice. The
+symptom is deterministic; only its occurrence is not. That is the signature of a
+genuine boundary rather than a race — the test scans screenshot rows starting
+AT `region.top` and fails on equality, so a one-pixel difference in WebGL raster
+under full-suite GPU contention lands the sleeve's first lit row exactly on the
+boundary.
+
+**Two readings, and they need different fixes**, which is why this is recorded
+rather than guessed at:
+1. The test is right and the scene genuinely clips the sleeve at the wall's top
+   edge under contention — a real §10b defect at a specific viewport.
+2. The measurement is right at the boundary and the scan should start one row
+   above `region.top` so "first lit row == region.top" can be distinguished from
+   "sleeve extends above the region".
+
+**The distinguishing evidence is already on disk**: Playwright saved
+`test-results/wall-scene-the-pulled-slee-909be--region-on-a-short-viewport-chromium/`
+with the screenshot from a failing run. Reading whether the sleeve is visibly
+clipped in that image answers which reading is right, without needing to
+reproduce the rate.
+
+**Trigger: R6's after-deploy pass**, which is already re-running the suite — or
+sooner if it appears in a run where the wall is what changed. Not deploy-
+blocking: it is a scene-geometry assertion, touches nothing on the deploy path,
+and the app is unaffected.
