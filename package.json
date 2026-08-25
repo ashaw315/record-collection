@@ -12,13 +12,14 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate": "drizzle-kit migrate && npm run db:verify:state",
     "db:verify": "vitest run test/repo/migrations-complete.test.ts",
     "db:test:up": "docker compose up -d --wait postgres",
-    "db:test:reset": "docker compose down postgres && docker compose up -d --wait postgres && NODE_ENV=test drizzle-kit migrate"
+    "db:test:reset": "docker compose down postgres && docker compose up -d --wait postgres && NODE_ENV=test drizzle-kit migrate && NODE_ENV=test npm run db:verify:state",
+    "db:verify:state": "node --experimental-strip-types --no-warnings scripts/verify-migration-state.mjs"
   },
   "dependencyNotes": {
-    "sharp": "PINNED to the version Next 16 already installs, and declared DELIBERATELY rather than added. It was in the tree transitively (next -> sharp) and loadable, so nothing new is installed by this entry — what was missing was the declaration. Undeclared, a minor Next release dropping or moving it would break §10b's shelf with a module-not-found from a package nobody chose. It decodes cover art to compute a spine colour (src/lib/images/spine-colour.ts); §5.9 accepts jpeg/png/webp and two of the three real covers are PROGRESSIVE jpeg, so hand-rolling a decoder would mean three decoders and a silently wrong colour on the ones it got wrong. Do not remove it as 'a heavy native dependency for one colour computation' — it ships in the Vercel bundle either way."
+    "sharp": "PINNED to the version Next 16 already installs, and declared DELIBERATELY rather than added. It was in the tree transitively (next -> sharp) and loadable, so nothing new is installed by this entry \u2014 what was missing was the declaration. Undeclared, a minor Next release dropping or moving it would break \u00a710b's shelf with a module-not-found from a package nobody chose. It decodes cover art to compute a spine colour (src/lib/images/spine-colour.ts); \u00a75.9 accepts jpeg/png/webp and two of the three real covers are PROGRESSIVE jpeg, so hand-rolling a decoder would mean three decoders and a silently wrong colour on the ones it got wrong. Do not remove it as 'a heavy native dependency for one colour computation' \u2014 it ships in the Vercel bundle either way."
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",
