@@ -15924,3 +15924,80 @@ which nothing is set up to do and which would write to his collection.
 walk (MusicBrainz contact), and a suggestion or snippet (Anthropic). Each should
 fail LEGIBLY if its credential is wrong, and that legibility is what R6's first
 attack line asked for and this pass cannot reach.
+
+---
+
+## A deliberate deletion from an append-only table, and why it was legitimate
+
+**2026-08-25.** 24 rows deleted from `price_history`. §7.5 makes that table
+append-only, so a deletion needs its reasoning recorded rather than assumed.
+
+**What was deleted:** every `source='discogs'` row except the earliest per
+record — 24 of 28, leaving 4.
+
+**Why it is not a violation of §7.5.** The rule exists to preserve a record of
+CHANGE. These 24 were seven runs of the same refresh within about five hours,
+each recording the identical price ($5.00 × 7 for Dire Straits, $23.24 × 7 for
+Grave New World, and so on). Repeating one observation seven times is not price
+history; it is the same observation seven times. Nothing in the deleted set
+carries information the surviving row does not — verified before deleting: the
+doomed set's distinct prices are exactly the four kept prices.
+
+**Provenance is the real argument.** These were not the app doing its job. One
+run was the workflow; six were MY verification calls while proving the cron
+worked. That is test residue in production data, and the fact that the mechanism
+which produced it is append-only does not make the residue an observation.
+
+**What was preserved:**
+- one `discogs` row per record, the earliest — the genuine first measurement;
+- all three of Adam's own manual entries on *Never Too Much* ($8.00 `new`,
+  $120.00 `asking`, $10.00 `used`), untouched. Asserted after the delete, not
+  assumed: non-discogs rows counted 3 before and 3 after.
+
+**Backed up first**, to `~/record-collection-backups/deleted-duplicate-prices-2026-08-25.json`
+— outside the working tree, so no `git add -A` can reach it. Read back and
+verified (24 rows, all `source='discogs'`) before the transaction ran. One
+transaction, `rowCount` 24, committed; state asserted afterwards rather than
+inferred from the count.
+
+**The two `llm_requests` rows with `completed_at` NULL are LEFT ALONE**, on
+Adam's instruction and correctly: they predate the column by five days, so their
+absence is accurate rather than missing. A null that means "this predates the
+question" is not the same as a null that means "nobody answered".
+
+**The general form:** a table being append-only constrains the APPLICATION, not
+the operator. What it forbids is the app quietly losing history. A deliberate,
+backed-up, reasoned removal of data the operator knows to be residue is a
+different act — but it has to be argued in writing, which is what this entry is.
+
+---
+
+## THE STANDING CONCLUSION: the highest-yield check is Adam using the app
+
+**Re-learned three times now, and today was the sharpest instance.**
+
+- **R5** concluded it: "Manual QA after every step remains the highest-yield
+  check available, and it is the one that keeps getting skipped." Four defects
+  in this project were found by Adam using the thing — unreachable pressing
+  entry, the fabricated 230g weight, a tier-1 badge that could never fire,
+  illegible error reporting. None were spec violations, so no reviewer would
+  have flagged them.
+- **R6's after-deploy pass** reached the same wall from a different side: every
+  point-of-use failure path is behind the password, so the question it most
+  wanted to answer — does each credential fail LEGIBLY — is one only a user can
+  ask.
+- **Today, 2026-08-25**: after 393 E2E tests passed, using the app on a real
+  browser found **four defects in one session** — the shared animation slot that
+  meant the wall had never once pulled a record; the stuck `hoveredId` behind
+  it; the canvas overshooting the fold on a short viewport; and the pulled
+  record's own faces dimming with the wall. Every one invisible to the suite.
+
+**What is still unproven, and it is everything behind the password:** image
+upload (Blob), the lineup walk (MusicBrainz contact), suggestions and snippets
+(Anthropic). Each fails at point of use rather than at boot, so each is
+un-exercised until someone does it.
+
+**This is not a review step.** R7 and R8 are reviews with prompts and buckets;
+this is Adam opening the app and using it, and the record of this project says
+that is worth more than either. Written here rather than in REVIEW-PLAN because
+it belongs to the build, not to the review schedule.
