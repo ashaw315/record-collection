@@ -36,7 +36,7 @@ for it and take the id from the result.
 | `release-discharge-hear-nothing.json` | The genre/style discriminator: `genres` and `styles` DISAGREE, so an implementation that reads `genres` and drops `styles` is caught (CLAUDE.md §8) |
 | `master-discharge-hear-nothing.json` | A master, for the drill-down |
 | `master-versions-discharge.json` | Versions under that master — several pressings differing by country, year and catalog number |
-| `search-by-catno.json` | The structured search that actually pins down a pressing |
+| `search-by-catno.json` | The structured search that narrows hardest — an album, not a pressing (§5.7's "most effective" is not "sufficient"). Also the payload carrying `formats[].text` |
 | `search-by-artist-only.json` | The bare-artist search, for the cardinality that makes `q` alone near-useless |
 | `release-detailed.json` | Rich pressing detail: Matrix / Runout identifiers, a pressing plant, weight and colour in format descriptors |
 | `release-no-year.json` | A release Discogs records NO year for — `year: 0` and no `released` field at all. The only committed payload with that shape, and the reason it is here: the entire suite otherwise exercises releases that carry their own year, so the master-year fallback was untestable and a defect in it invisible. Captured from the real US Carpenters LP (`SP-3502`, master 84975) |

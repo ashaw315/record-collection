@@ -148,9 +148,18 @@ describe('the §5.7 parameter mapping', () => {
     expect(params[theirs]).toBe(value);
   });
 
-  it('sends the catalog number as catno, which is what pins down a pressing', async () => {
-    // §5.7 calls this "the single most effective way to pin down a specific
-    // pressing". Worth its own assertion rather than trusting the table above.
+  it('sends the catalog number as catno, the most narrowing field the form has', async () => {
+    /**
+     * §5.7 calls catno "the single most effective way to pin down a specific
+     * pressing". MOST EFFECTIVE, not sufficient — measured live 2026-08-25,
+     * `?catno=EKS-74007` returns 197 results, all one master. It narrows to an
+     * album, not a pressing; the header copy was corrected to match. Renamed
+     * because a test name asserting "pins down a pressing" is the CLAUDE.md §8
+     * confusion restated in a place nothing checks.
+     *
+     * The assertion itself is unchanged and still worth making on its own
+     * rather than trusting the table above.
+     */
     const get = mockDiscogs();
 
     await search(request('?artist=Discharge&catno=CLAY+LP+3'));

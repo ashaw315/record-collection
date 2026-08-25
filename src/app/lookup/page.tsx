@@ -20,8 +20,8 @@ export default function LookupPage() {
       <main className="mx-auto w-full max-w-3xl px-4 py-5">
         <h1 className="mb-1 font-heading text-xl font-semibold tracking-tight">Look up a record</h1>
         <p className="mb-4 text-sm text-muted-foreground">
-          Search Discogs for the record in your hand. Catalog number or barcode pins down the exact
-          pressing; artist and title alone return thousands.
+          Search Discogs for the record in your hand. A catalogue number narrows to an album, not a
+          pressing — often dozens share one. A barcode narrows further.
         </p>
 
         <LookupClient />
