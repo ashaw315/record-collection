@@ -74,7 +74,19 @@ type SearchResult = {
  * it is genuinely the best field for a modern reissue.
  */
 const FIELDS = [
-  { name: 'catno', label: 'Catalog no.', hint: 'On the spine or sleeve — narrows hardest' },
+  /**
+   * **Type the suffix.** `EKS-75005 Q` is a quadraphonic Canadian pressing and
+   * `EKS-75005` is not: measured live, the first returns 1 result and the
+   * second 95. Suffixes encode configuration, territory and channel count, and
+   * nothing in this app strips them — the value is `.trim()`ed and passed
+   * through, here and in the route. Discogs' own matching ignores the space,
+   * so `EKS-75005Q` finds the same row.
+   */
+  {
+    name: 'catno',
+    label: 'Catalog no.',
+    hint: 'On the spine or sleeve — narrows hardest. Include any suffix',
+  },
   { name: 'artist', label: 'Artist' },
   { name: 'title', label: 'Title' },
   /**
@@ -97,7 +109,19 @@ const FIELDS = [
    *
    * Placed high for that reason — it is a filter almost every search wants.
    */
-  { name: 'format', label: 'Format', hint: 'e.g. Vinyl, LP, 45 RPM, 180 Gram' },
+  /**
+   * The hint lists DISCRIMINATING descriptors rather than obvious ones.
+   *
+   * "Vinyl, LP, 45 RPM, 180 Gram" undersold the field: it read as a medium
+   * filter, when Discogs' descriptors also carry Mono, Stereo, Quadraphonic,
+   * Promo, Club Edition, Test Pressing and Reissue — all readable off the
+   * object, and **Mono vs Stereo alone halves most 1960s titles**.
+   */
+  {
+    name: 'format',
+    label: 'Format',
+    hint: 'Mono, Stereo, Quadraphonic, Promo, Club Edition, Reissue — all on the label',
+  },
   { name: 'label', label: 'Label' },
   { name: 'year', label: 'Year' },
   /**
