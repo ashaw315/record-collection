@@ -659,23 +659,40 @@ space. Render it as Discogs' own words, distinct from the controlled-vocabulary
 descriptors, and never labelled as a plant. §7.8 applies directly: never present
 a Discogs match as certain.
 
-**MEASURED 2026-08-25, five candidate sets, 377 live vinyl rows — quote this
-number when asked whether the matrix work is still needed:**
+**MEASURED 2026-08-25, six albums, 477 live vinyl rows — quote the PLANT row
+when asked whether the matrix work is still needed:**
 
 | Measure | Result |
 |---|---|
-| rows carrying a non-empty qualifier | **50%** (28%–80% by set) |
-| rows colliding on every displayed column | 42% |
-| of those collisions, separated by the qualifier | **56%** |
-| of those collisions, still identical after it | **44%** |
+| rows carrying any non-empty qualifier | **53%** (33%–80% by album) |
+| — of which **names a pressing plant or label variant** | **24% of all rows** |
+| — colour / finish | 18% |
+| — sleeve, insert, cover | 8% |
+| — weight, other | 2% |
 
-**So list-level identification is half-solved, not solved.** The qualifier
-halves the identical-card problem and leaves 44% of collisions untouched, and
-coverage is contributor effort rather than an API guarantee — high on
-well-documented scenes, low on mass-market reissues, and the variance does not
-average away. This is the ceiling that the two-phase matrix resolution exists to
-break, and it is a number rather than an impression precisely so that "lookup
-feels adequate now" cannot quietly retire that work.
+**The only row that bears on identification is the plant row, and it is 24%.**
+An earlier version of this table recorded 50% coverage and "separates 56% of
+collisions", counting ANY qualifier as separating. That number is real but it
+answers the wrong question: "Gatefold" or "Red Translucent" distinguishes two
+rows on screen while telling the user nothing about which pressing is in their
+hands. **Separating two rows and identifying a pressing are different things,
+and only the second is what this screen is for** (CLAUDE.md §8). Corrected after
+QA on the live page; the overstatement is recorded in NOTES because the mistake
+— counting a proxy and reporting it as the thing — is more reusable than the
+figure.
+
+**The variance is not noise and does not average away.** Discharge — Hear
+Nothing has 80% qualifier coverage and **0% plant**: every value is a sleeve or
+colour note. Misfits — Walk Among Us is 70% coverage, **2% plant**, almost
+entirely colour variants. The Doors debut by catalogue number reaches 47% plant.
+Coverage tracks what a scene's contributors care about — colour variants for
+hardcore reissues, plants for 1960s US majors — so an album's headline coverage
+says nothing about whether it can be identified.
+
+**So list-level identification is roughly one row in four, not one in two.**
+That is the ceiling the two-phase matrix resolution exists to break, and it is a
+number rather than an impression precisely so "lookup feels adequate now" cannot
+quietly retire that work.
 
 **Master → release drill-down.** If a search result is a master, the UI must let the user open it and see every version underneath (`/api/discogs/master/:id/versions`), displayed as a comparison table with country, year, label, catalog number, format descriptors and cover thumbnail.
 
@@ -683,7 +700,7 @@ feels adequate now" cannot quietly retire that work.
 
 **Identification lives in step 14b**, which scopes the comparison to the candidates the search actually returned. Both are legitimate and both are wanted; they are different questions and the UI must not let one label imply the other. Where the drill-down is offered, it is offered as browsing a discography, never as identifying a copy.
 
-**Neither view may present a match as certain**, and the reason is measured rather than cautious: the columns this table displays do not always discriminate. Rows identical on every displayed column collapse into one saying "N more look identical from here" (§10), and even with `formatText` — the most discriminating list-level field Discogs offers — 44% of colliding rows remain identical. A version table whose identical rows read as an answer is the same failure as a hallucinated record blessed by a search.
+**Neither view may present a match as certain**, and the reason is measured rather than cautious: the columns this table displays do not always discriminate. Rows identical on every displayed column collapse into one saying "N more look identical from here" (§10), and `formatText` — the most discriminating list-level field Discogs offers — names a pressing plant on only 24% of rows. A version table whose identical rows read as an answer is the same failure as a hallucinated record blessed by a search.
 
 **Honest limits — surface these in the UI, do not paper over them:**
 - Discogs data is user-submitted. Distinct pressings are sometimes merged into one release entry, and identical ones sometimes split across two. Treat a matched release as a strong starting point, never as proof.

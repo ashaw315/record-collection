@@ -769,30 +769,80 @@ form the records work had not shown — see the masking entry under Open.
   rediscovered expensively — it was already wrong once in the opposite
   direction and cost a round.
 
-  **MEASURED COVERAGE (2026-08-25) — how much of the identification problem
-  `formats[].text` actually solves. Recorded so it is not re-derived.**
+  **CORRECTED 2026-08-25 (same day, after QA on the live page). The first
+  version of this measurement counted the wrong thing and overstated the fix by
+  roughly 2x. The corrected numbers are below the rule.**
+
+- **RULE: when a measurement stands in for a capability, count the capability,
+  not the proxy — and say which one you counted.**
+
+  I measured "does `formats[].text` separate two otherwise identical rows" and
+  reported it as how much of PRESSING IDENTIFICATION the fix solves. Those are
+  not the same question, and the gap is not small:
+
+  | Question | Answer |
+  |---|---|
+  | rows carrying any qualifier | 53% |
+  | **rows whose qualifier names a plant or label variant** | **24%** |
+
+  "Gatefold" and "Red Translucent" separate two rows on screen perfectly well.
+  Neither tells the user which pressing is in their hands, which is the only
+  thing this screen exists to do (CLAUDE.md §8). **A separator is not an
+  identifier**, and by counting separation I made a 24% capability read as a
+  50% one — in SPEC, where the next reader would have taken it as settled and
+  used it to argue the matrix work was half-done already.
+
+  **Caught by the developer using the live page**, who saw one qualifier in four
+  visible cards and asked for the plant-versus-sleeve split. The measurement was
+  real, the method was sound, and the label on the result was wrong — which is
+  the same shape as the `format.text` over-correction above: the artifact built
+  ON TOP of a good measurement is where the error lived, not in the measurement.
+
+  **The check: name the capability in the same sentence as the number.** "53% of
+  rows carry a qualifier" is a fact about the payload. "The qualifier identifies
+  the pressing on 24% of rows" is the claim anyone actually cares about, and
+  only the second one belongs in a spec.
+
+  **MEASURED COVERAGE (2026-08-25, corrected) — how much of the identification
+  problem `formats[].text` actually solves. Recorded so it is not re-derived.**
 
   Five candidate sets, live, vinyl-only, 377 rows total: the Doors debut by
   catno (the reported case), Doors Strange Days, Discharge Hear Nothing, Hot
   Tuna, Misfits Walk Among Us.
 
-  | Measure | Result |
-  |---|---|
-  | rows carrying a non-empty `text` | **187 / 377 — 50%** |
-  | rows COLLIDING on every displayed column | 160 / 377 — 42% |
-  | of those collisions, separated by `text` | **89 / 160 — 56%** |
-  | of those collisions, STILL identical after `text` | **71 / 160 — 44%** |
+  Six albums, 477 live vinyl rows, classified by what the qualifier actually
+  says:
 
-  Per-set coverage ranges from **28%** (Doors Strange Days) to **80%**
-  (Discharge). It is contributor effort, not an API guarantee, so it is high on
-  well-documented scenes and low on mass-market reissues — the variance is the
-  point and it does not average away.
+  | Class | Rows | Share | Identifies a pressing? |
+  |---|---|---|---|
+  | plant / label variant | 116 | **24.3%** | **yes** |
+  | colour / finish | 87 | 18.2% | no |
+  | sleeve, insert, cover | 39 | 8.2% | no |
+  | weight | 4 | 0.8% | no |
+  | other | 7 | 1.5% | mostly no |
+  | **empty** | **224** | **47%** | — |
 
-  **So the parser fix is necessary and not sufficient, quantified.** It halves
-  the identical-card problem on the measured sets and leaves 44% of collisions
-  untouched. It must not be read as having solved pressing identification, and
-  it is direct evidence FOR the two-phase matrix redesign rather than against
-  it: the ceiling on list-level identification is now a measured number.
+  **Per-album plant coverage, which is the number that matters and swings
+  hardest:**
+
+  | Album | Any text | **Plant** |
+  |---|---|---|
+  | Doors debut, by catno `EKS-74007` | 52% | **47%** |
+  | Doors debut, by artist+title | 42% | **29%** |
+  | Fleetwood Mac — Rumours | 52% | **25%** |
+  | Hot Tuna — Hot Tuna | 33% | **15%** |
+  | Misfits — Walk Among Us | 70% | **2%** |
+  | Discharge — Hear Nothing | 80% | **0%** |
+
+  **Discharge and Misfits are the entry worth remembering:** the two HIGHEST
+  headline-coverage albums have almost no identifying data. Their qualifiers are
+  colour variants and gatefold notes, because that is what those scenes'
+  contributors record. **Headline coverage is anti-correlated with usefulness
+  here**, so an average across albums actively misleads.
+
+  **So the parser fix is necessary and not sufficient, quantified honestly.** It
+  surfaces a plant name on about one row in four, and the two-phase matrix
+  redesign is what covers the other three.
 
   **What it does NOT change:** `text` is free-text and user-submitted, not a
   plant field. Live values from one search include `"Barcode; SRC-Specialty
