@@ -1,0 +1,58 @@
+# Weekly market-price refresh (SPEC.md §6, §12 step 16).
+#
+# GitHub Actions rather than Vercel Cron: the Hobby plan caps Vercel crons at
+# once a day and this needs no more than weekly, but Actions has no such cap and
+# so leaves the schedule free to change without a plan change.
+#
+# The consequence, recorded because it is the security-relevant one: the request
+# now arrives from OUTSIDE the deployment, so CRON_SECRET is the only thing
+# between the internet and this endpoint. The middleware check is caller-
+# agnostic by construction — a constant-time comparison against the
+# Authorization header with no Vercel-specific signal — and e2e/auth.spec.ts
+# pins both directions: refused without the token, accepted with it.
+name: Refresh prices
+
+on:
+  schedule:
+    # 04:17 UTC on Mondays. Not on the hour: scheduled runs cluster on round
+    # times across all of GitHub and are delayed proportionally.
+    - cron: '17 4 * * 1'
+  # Manual trigger, so the first run can be observed rather than waited for.
+  workflow_dispatch:
+
+# The workflow reads nothing from the repository and writes nothing to it.
+permissions:
+  contents: none
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request a refresh
+        env:
+          # Both from GitHub's encrypted secrets, never from this file.
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${APP_URL:-}" ] || [ -z "${CRON_SECRET:-}" ]; then
+            echo "APP_URL and CRON_SECRET must both be set as repository secrets." >&2
+            exit 1
+          fi
+
+          # -sS: quiet, but still print errors. --fail-with-body: a non-2xx is a
+          # failed step AND the body is shown, so a 401 says which it was rather
+          # than just failing.
+          #
+          # The body is the evidence: the route reports attempted/written/
+          # skipped/failed, and a run that wrote nothing is not the same as a run
+          # that never happened. `set -o pipefail` above means tee does not mask
+          # curl's exit status.
+          curl -sS --fail-with-body \
+               --max-time 120 \
+               --retry 2 --retry-delay 30 --retry-connrefused \
+               -X POST \
+               -H "Authorization: Bearer ${CRON_SECRET}" \
+               "${APP_URL}/api/discogs/refresh-prices" \
+            | tee /dev/stderr

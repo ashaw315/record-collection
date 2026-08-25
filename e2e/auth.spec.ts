@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 
 /**
@@ -100,4 +101,58 @@ test('the login form is usable the instant the DOM exists', async ({ page }) => 
   await page.getByRole('button', { name: 'Sign in' }).click();
 
   await expect(page, 'the password reached React state, so the login succeeded').toHaveURL('/');
+});
+
+/**
+ * **The cron endpoint accepts an external caller that presents the secret.**
+ *
+ * The sibling test above proves it REFUSES without one. This proves the other
+ * half, and only an over-HTTP test can: the bearer check lives in middleware,
+ * so a handler-level test never sees it, and a unit test of `verifyCronSecret`
+ * proves the comparison rather than the wiring.
+ *
+ * **It matters more now than when it was written.** §3 describes the token as
+ * the one "Vercel Cron sends automatically", but the schedule is a GitHub
+ * Actions workflow (step 16: Hobby caps Vercel crons at once a day), so the
+ * request arrives from outside the deployment. That makes `CRON_SECRET` the
+ * only thing between the internet and this endpoint — and makes "an arbitrary
+ * caller with the secret is admitted" a property worth pinning rather than
+ * assuming, since nothing else in the check is platform-specific.
+ *
+ * Reads the secret from `.env.test` because the Playwright process does not
+ * load it — only the web server started by `webServer` does.
+ */
+test('accepts the cron endpoint from any caller presenting the secret', async ({ request }) => {
+  // Playwright runs from the repo root, so a relative path resolves there.
+  const envFile = readFileSync('.env.test', 'utf8');
+  const secret = /^CRON_SECRET=(.*)$/m.exec(envFile)?.[1]?.trim();
+
+  /*
+   * Asserted rather than defaulted. A missing secret would make the request
+   * below 401 and the test would look like a genuine auth failure, so the
+   * precondition says which of the two went wrong.
+   */
+  expect(secret, 'CRON_SECRET must be set in .env.test').toBeTruthy();
+
+  const response = await request.post('/api/discogs/refresh-prices', {
+    headers: { authorization: `Bearer ${secret}` },
+    failOnStatusCode: false,
+  });
+
+  expect(response.status()).toBe(200);
+
+  /*
+   * The counts, not just the status: §5.7's refresh reports what it did, and a
+   * 200 with no body would satisfy a status assertion while telling an operator
+   * nothing about whether the run found any work.
+   */
+  const body = (await response.json()) as {
+    data: { attempted: number; written: number; skipped: number; failed: number };
+  };
+  expect(body.data).toMatchObject({
+    attempted: expect.any(Number),
+    written: expect.any(Number),
+    skipped: expect.any(Number),
+    failed: expect.any(Number),
+  });
 });
