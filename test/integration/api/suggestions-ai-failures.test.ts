@@ -240,3 +240,69 @@ describe('the unconfigured path obeys the same message rule', () => {
     expect(await db.select().from(llmRequests)).toHaveLength(0);
   });
 });
+
+/**
+ * **A spent slot must be MARKED spent — step 16 unit 1.**
+ *
+ * The tests above assert the row survives, and that was the whole story while
+ * age was the only thing that expired a claim. It no longer is: an uncompleted
+ * row is now read as a timed-out call and stops counting after 90 seconds
+ * (`ABANDONED_CLAIM_MS`). So "the row is still there" no longer means "the slot
+ * is still spent" — a served call that nobody marks completed refunds itself a
+ * minute and a half later, and the quota silently stops being a quota.
+ *
+ * That is the failure this whole change could have introduced, which is why it
+ * is tested at the route rather than only at the primitive.
+ */
+describe('a served call is marked completed, not merely left behind', () => {
+  /**
+   * Fails against: the route as written, which never calls
+   * `completeLlmRequest` — the row is left with `completed_at` NULL and expires
+   * at 90s despite the call having been served and billed.
+   */
+  it('a successful analysis completes its claim', async () => {
+    await seedCollection();
+    analyse.mockResolvedValue({ ok: true, suggestions: [] });
+
+    await call();
+
+    const rows = await db.select().from(llmRequests);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].completedAt).toBeInstanceOf(Date);
+  });
+
+  /**
+   * Fails against: a completion applied only to the happy path.
+   *
+   * §9.2 is explicit that an unreadable response KEEPS its slot — the call was
+   * served and billed. Left uncompleted it would keep it for 90 seconds instead
+   * of an hour, which is the same refund the rule forbids, arriving by a
+   * different route.
+   */
+  it('an unreadable response completes its claim too', async () => {
+    await seedCollection();
+    analyse.mockResolvedValue({ ok: false, reason: 'unreadable' });
+
+    await call();
+
+    const rows = await db.select().from(llmRequests);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].completedAt).toBeInstanceOf(Date);
+  });
+
+  /**
+   * Fails against: a completion that fires on the auth path as well.
+   *
+   * An auth failure deletes its row outright (`releaseLlmRequest`), so there is
+   * nothing to complete. Asserting zero rows rather than an uncompleted one
+   * keeps the two mechanisms distinct: refund removes, completion marks.
+   */
+  it('a rejected credential still removes its claim rather than completing it', async () => {
+    await seedCollection();
+    analyse.mockRejectedValue(authenticationError());
+
+    await call();
+
+    expect(await db.select().from(llmRequests)).toHaveLength(0);
+  });
+});

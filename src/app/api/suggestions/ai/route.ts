@@ -3,7 +3,27 @@ import { withErrorHandling } from '@/lib/api/handler';
 import { notConfigured } from '@/lib/api/errors';
 import { buildCollectionSummary } from '@/lib/llm/collection-summary';
 import { getGapAnalysisClient, isAnthropicConfigured, isAuthFailure } from '@/lib/llm/client';
-import { claimLlmRequest, releaseLlmRequest } from '@/lib/llm/rate-limit';
+import { claimLlmRequest, completeLlmRequest, releaseLlmRequest } from '@/lib/llm/rate-limit';
+
+/**
+ * **Hobby's ceiling, and the app can genuinely reach it.**
+ *
+ * R5 measured one gap analysis at 44 seconds. `maxDuration` covers the WHOLE
+ * function — auth, the claim transaction, `buildCollectionSummary`, the model
+ * call and the JSON parse — not just the Anthropic request, so 16 seconds of
+ * nominal headroom is less than it sounds. A slower response is killed and the
+ * user gets nothing back.
+ *
+ * 60 is not a tuned number: it is the maximum a Hobby plan allows, so there is
+ * no larger value to choose. The mitigation for the kill is elsewhere —
+ * `ABANDONED_CLAIM_MS` returns the quota slot the kill would otherwise burn,
+ * because no code in this function runs after the platform stops the isolate.
+ *
+ * Declared here rather than only in `vercel.json` because Next validates a
+ * route segment export at build time, while a `functions` glob that no longer
+ * matches a moved file fails SILENTLY back to the 10s default.
+ */
+export const maxDuration = 60;
 
 /**
  * SPEC.md §5.8 `POST /api/suggestions/ai` — §9.2's LLM gap analysis.
@@ -112,6 +132,20 @@ export const POST = withErrorHandling('api.suggestions.ai.POST', async () => {
       { status: 502 },
     );
   }
+
+  /*
+   * **The call was served, so the slot is spent for the hour — say so.**
+   *
+   * Placed here rather than on the happy path because both outcomes below have
+   * reached the model and cost the account: §9.2 is explicit that an unreadable
+   * response keeps its slot. The auth-failure branch above is the only one that
+   * did NOT reach it, and it removes its row instead.
+   *
+   * Without this the row stays `completed_at IS NULL` and
+   * `ABANDONED_CLAIM_MS` reads it as a timeout, refunding a billed call after
+   * 90 seconds. A quota that forgets is not a quota.
+   */
+  await completeLlmRequest(claim.id);
 
   if (!result.ok) {
     /*

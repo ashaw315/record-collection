@@ -11,7 +11,15 @@ import {
 } from '@/lib/db/queries/snippet';
 import { isAnthropicConfigured, isAuthFailure } from '@/lib/llm/client';
 import { getSnippetClient } from '@/lib/llm/snippet-client';
-import { claimLlmRequest, releaseLlmRequest } from '@/lib/llm/rate-limit';
+import { claimLlmRequest, completeLlmRequest, releaseLlmRequest } from '@/lib/llm/rate-limit';
+
+/**
+ * Hobby's ceiling — see the gap-analysis route for the reasoning, which applies
+ * unchanged. A snippet is one record rather than a whole collection so it is
+ * the faster of the two calls, but it is the same model on the same plan and
+ * there is no smaller limit worth choosing.
+ */
+export const maxDuration = 60;
 
 /**
  * SPEC.md §5.2 (A31b): the snippet's edit and delete paths.
@@ -143,6 +151,19 @@ export const POST = withErrorHandling(
         { status: 502 },
       );
     }
+
+    /*
+     * **Served, so the slot is spent for the hour — marked, not merely left.**
+     *
+     * Both outcomes below reached the model and cost the account, so this sits
+     * above the readability check rather than on the success path. The
+     * auth-failure branch above is the only one that never reached it, and it
+     * removes its row instead.
+     *
+     * An uncompleted row is read as a timeout by `ABANDONED_CLAIM_MS` and stops
+     * counting after 90 seconds, which would refund a billed call.
+     */
+    await completeLlmRequest(claim.id);
 
     if (!generated.ok) {
       /*

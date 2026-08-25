@@ -260,3 +260,46 @@ describe('an edit that lands WHILE the model is writing', () => {
     expect((await row(record.id)).snippet).toBe('Typed while it was thinking.');
   });
 });
+
+/**
+ * **A served snippet marks its claim completed — step 16 unit 1.**
+ *
+ * The same rule §9.2's gap analysis carries, and it has to be stated twice
+ * because the two routes claim independently. An uncompleted row is now read as
+ * a timed-out call and stops counting after 90 seconds
+ * (`ABANDONED_CLAIM_MS`), so a snippet that was written and billed would refund
+ * its own slot a minute and a half later — the quota quietly ceasing to be one.
+ */
+describe('a served snippet is marked completed', () => {
+  /**
+   * Fails against: the route as written, which never calls
+   * `completeLlmRequest`, leaving `completed_at` NULL on a call that reached
+   * the model.
+   */
+  it('a successful generation completes its claim', async () => {
+    const record = await seedRecord();
+
+    await post(record.id);
+
+    const rows = await db.select().from(llmRequests);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].completedAt).toBeInstanceOf(Date);
+  });
+
+  /**
+   * Fails against: a completion applied only to the happy path.
+   *
+   * An unreadable response stores nothing, but the call was still served and
+   * billed — so it keeps its slot for the hour rather than for 90 seconds.
+   */
+  it('an unreadable response completes its claim too', async () => {
+    const record = await seedRecord();
+    write.mockResolvedValue({ ok: false, reason: 'unreadable' });
+
+    await post(record.id);
+
+    const rows = await db.select().from(llmRequests);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].completedAt).toBeInstanceOf(Date);
+  });
+});

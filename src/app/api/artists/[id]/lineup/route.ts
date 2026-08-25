@@ -12,6 +12,27 @@ import { pickDisambiguated, searchArtistsByName } from '@/lib/musicbrainz/search
 import { walkLineup } from '@/lib/musicbrainz/walk-lineup';
 
 /**
+ * **The marginal one, stated rather than discovered.**
+ *
+ * §12 step 11 paces MusicBrainz at one request per second as a term of use, and
+ * a band like Discharge is ~32 sequential requests — so roughly 32 seconds of
+ * the 60 are spent waiting on the rate limiter before any database work counts.
+ * A larger lineup exceeds the ceiling and the platform kills the function.
+ *
+ * **What that costs is small, and deliberately so.** `walkLineup` commits each
+ * membership as it resolves and `saveMemberships` is idempotent (§4.3), so a
+ * kill keeps every row already resolved and a re-walk resumes from there rather
+ * than starting over. What is lost is the RESPONSE: the request dies with no
+ * answer, so the UI shows a network error while the progress sits in the
+ * database. Clicking again continues it.
+ *
+ * Degrading to slow-and-recoverable rather than to lost is why this is
+ * acceptable at 60s instead of blocking on a larger limit the plan does not
+ * offer.
+ */
+export const maxDuration = 60;
+
+/**
  * SPEC.md §12 step 11 — `POST /api/artists/:id/lineup`.
  *
  * **Every artist in the real collection is hand-entered and has no MBID**, so

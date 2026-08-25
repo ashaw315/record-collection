@@ -23,6 +23,28 @@ export const LLM_REQUESTS_PER_HOUR = 10;
 const WINDOW_MS = 60 * 60 * 1000;
 
 /**
+ * How long a claim with no completion keeps counting against the budget.
+ *
+ * **This is the only way a serverless timeout can give its slot back.** R6
+ * finding 5 named the leak at the release site, but it cannot be fixed there:
+ * a function killed at `maxDuration` runs no `finally`, no cleanup callback and
+ * no signal handler — the isolate stops executing. Code shaped like "release
+ * the slot on timeout" would have to run inside the function being killed.
+ *
+ * So an uncompleted claim expires instead. A row claimed and never completed is
+ * exactly the timeout signature.
+ *
+ * **90 seconds is derived from the platform, not chosen.** `vercel.json` sets
+ * `maxDuration` to Hobby's 60s ceiling, so nothing can still be running at 90s
+ * — the platform has already killed it. That margin is what makes this unable
+ * to evict a LIVE call, which is the only way the rule could do harm: evicting
+ * a claim whose request is still in flight would admit an eleventh concurrent
+ * call against a budget of ten. **If the ceiling ever rises, this must rise
+ * with it**, and a test asserts the margin rather than the number.
+ */
+export const ABANDONED_CLAIM_MS = 90 * 1000;
+
+/**
  * The advisory-lock key claimants serialise on. An arbitrary constant, but a
  * FIXED one: two different keys would let two claimants proceed in parallel,
  * which is the defect the lock exists to close.
@@ -60,6 +82,13 @@ export type ClaimResult =
 export async function claimLlmRequest(kind: LlmRequestKind): Promise<ClaimResult> {
   const db = getDb();
   const windowStart = new Date(Date.now() - WINDOW_MS);
+  /**
+   * Rows claimed before this and never completed are abandoned — see
+   * `ABANDONED_CLAIM_MS`. A COMPLETED row counts for the full hour regardless
+   * of age, because that call was served and billed; §9.2 is deliberate that
+   * even an unreadable response keeps its slot.
+   */
+  const abandonedBefore = new Date(Date.now() - ABANDONED_CLAIM_MS);
 
   /*
    * **`pg_advisory_xact_lock` first, and it is load-bearing — the conditional
@@ -88,7 +117,9 @@ export async function claimLlmRequest(kind: LlmRequestKind): Promise<ClaimResult
       INSERT INTO llm_requests (kind)
       SELECT ${kind}
       WHERE (
-        SELECT COUNT(*) FROM llm_requests WHERE requested_at > ${windowStart}
+        SELECT COUNT(*) FROM llm_requests
+         WHERE requested_at > ${windowStart}
+           AND (completed_at IS NOT NULL OR requested_at > ${abandonedBefore})
       ) < ${LLM_REQUESTS_PER_HOUR}
       RETURNING id
     `);
@@ -115,6 +146,7 @@ export async function claimLlmRequest(kind: LlmRequestKind): Promise<ClaimResult
   const oldest = await db.execute<{ requested_at: string | Date }>(sql`
     SELECT requested_at FROM llm_requests
      WHERE requested_at > ${windowStart}
+       AND (completed_at IS NOT NULL OR requested_at > ${abandonedBefore})
      ORDER BY requested_at ASC
      LIMIT 1
   `);
@@ -157,4 +189,32 @@ export async function releaseLlmRequest(id: string): Promise<void> {
   const db = getDb();
 
   await db.execute(sql`DELETE FROM llm_requests WHERE id = ${id}`);
+}
+
+/**
+ * Marks a claim as served, so it counts for the full hour.
+ *
+ * **The counterpart to `ABANDONED_CLAIM_MS`, and the reason the expiry is safe
+ * to have at all.** Without this every claim would look abandoned after 90
+ * seconds and the budget would refund itself, which is worse than the leak it
+ * replaces: the quota exists to cap a paid account, and a quota that forgets is
+ * not a quota. The expiry only ever releases rows that NOTHING completed.
+ *
+ * Called on every path that reached the model and got an answer — including an
+ * unreadable one, per §9.2: that call was served and billed, so it keeps its
+ * slot. The auth-failure path calls `releaseLlmRequest` instead, which removes
+ * the row entirely, because that request was never served.
+ *
+ * **By id, never by recency**, for the same reason the release is: marking "the
+ * newest" would complete a concurrent caller's claim and leave this one looking
+ * abandoned.
+ *
+ * Silent when the row is gone. This runs after a successful call, and throwing
+ * would turn the answer the user actually wanted into a 500 at the last step,
+ * for a bookkeeping write.
+ */
+export async function completeLlmRequest(id: string): Promise<void> {
+  const db = getDb();
+
+  await db.execute(sql`UPDATE llm_requests SET completed_at = now() WHERE id = ${id}`);
 }

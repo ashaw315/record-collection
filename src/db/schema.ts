@@ -511,6 +511,20 @@ export const llmRequests = pgTable(
     id,
     kind: text('kind').notNull(),
     requestedAt: timestamp('requested_at', { withTimezone: true }).notNull().defaultNow(),
+    /**
+     * When the call finished, or NULL if it never did.
+     *
+     * **Step 16: the only way a serverless timeout can give its slot back.**
+     * A function killed at `maxDuration` runs no `finally` and no cleanup —
+     * the isolate simply stops — so `releaseLlmRequest` cannot be reached on
+     * the path that most needs it. R6 finding 5. A claim with no completion is
+     * therefore the timeout signature, and `claimLlmRequest` stops counting it
+     * once it is older than the function ceiling.
+     *
+     * Nullable rather than defaulted: NULL is the load-bearing state here, and
+     * a default would erase the distinction the column exists to record.
+     */
+    completedAt: timestamp('completed_at', { withTimezone: true }),
   },
   (t) => [index('llm_requests_requested_at_idx').on(t.requestedAt)],
 );

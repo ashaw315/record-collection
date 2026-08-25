@@ -3,7 +3,12 @@ import { sql } from 'drizzle-orm';
 import { getTestDb, truncateAll, closeTestDb } from '../helpers/db';
 import { getDb } from '@/db/client';
 import { llmRequests } from '@/db/schema';
-import { claimLlmRequest, releaseLlmRequest, LLM_REQUESTS_PER_HOUR } from '@/lib/llm/rate-limit';
+import {
+  claimLlmRequest,
+  completeLlmRequest,
+  releaseLlmRequest,
+  LLM_REQUESTS_PER_HOUR,
+} from '@/lib/llm/rate-limit';
 
 /**
  * SPEC.md §4.3 `llm_requests` and §9.2's "rate limit to 10 requests/hour,
@@ -132,10 +137,25 @@ describe('claiming a request', () => {
    */
   it('a refusal names when capacity returns', async () => {
     const oldest = new Date(Date.now() - 30 * 60_000);
+    /**
+     * **`completedAt` is required here, and the fixture was changed rather than
+     * the assertion** (step 16 unit 1).
+     *
+     * These rows are 30 minutes old. Before the abandoned-claim rule, age was
+     * the only thing that mattered and this fixture described a full window.
+     * It no longer does: ten rows claimed half an hour ago that nothing ever
+     * completed are ten TIMED-OUT calls, and refusing an eleventh on their
+     * account is exactly the leak `ABANDONED_CLAIM_MS` removes.
+     *
+     * So the fixture was describing something it did not mean. This test is
+     * about the refusal MESSAGE, which needs a genuinely full window — and a
+     * genuinely full window is now ten calls that were served.
+     */
     await db.insert(llmRequests).values(
       Array.from({ length: LLM_REQUESTS_PER_HOUR }, () => ({
         kind: 'gap_analysis',
         requestedAt: oldest,
+        completedAt: oldest,
       })),
     );
 
@@ -407,5 +427,118 @@ describe('releasing a claim', () => {
     await releaseLlmRequest(claim.id);
 
     await expect(releaseLlmRequest(claim.id)).resolves.toBeUndefined();
+  });
+});
+
+/**
+ * **The abandoned claim — step 16 unit 1.**
+ *
+ * R6 finding 5: `releaseLlmRequest` is called only on the auth-failure branch,
+ * so a serverless timeout leaves the row behind. The fix is NOT at the release
+ * site and could not be: a function killed at `maxDuration` runs no `finally`,
+ * no cleanup callback and no signal handler — the isolate stops executing. Any
+ * code shaped like "release the slot on timeout" would have to run inside the
+ * function being killed, which is precisely the thing that is not running.
+ *
+ * So the claim expires instead. A row that was claimed and never completed is
+ * exactly the timeout signature, and it stops counting after
+ * `ABANDONED_CLAIM_MS` rather than after the full hour.
+ *
+ * **Why 90 seconds is safe rather than a guess.** Hobby's ceiling is 60s and
+ * `vercel.json` sets `maxDuration` to it, so no function can still be running
+ * at 90s — the platform has already killed it. The margin is what makes the
+ * rule unable to evict a LIVE call, which is the only way this could do harm:
+ * evicting a claim whose request is still in flight would admit an eleventh
+ * concurrent call against a budget of ten.
+ */
+describe('the abandoned claim', () => {
+  /**
+   * Fails against: `claimLlmRequest`'s count, which reads
+   * `requested_at > windowStart` alone and therefore counts a row no completion
+   * ever followed for the full hour.
+   */
+  it('a claim never completed stops counting once it is older than the ceiling', async () => {
+    // Ten claimed two minutes ago, none completed: every one is abandoned.
+    await fill(LLM_REQUESTS_PER_HOUR, 2);
+
+    const claim = await claimLlmRequest('gap_analysis');
+
+    expect(claim.ok).toBe(true);
+  });
+
+  /**
+   * **The load-bearing negative, and the reason for the margin.**
+   *
+   * Fails against: an expiry keyed to a duration shorter than the function
+   * ceiling — anything at or under 60s would evict a call that is still running
+   * and admit an eleventh against a budget of ten.
+   *
+   * Aged to 45 seconds: past any plausible LLM call (R5 measured 44s) and still
+   * inside the 60s ceiling, so this row is one the platform has NOT killed.
+   */
+  it('does not evict a claim that could still be running', async () => {
+    await fill(LLM_REQUESTS_PER_HOUR, 0.75);
+
+    const claim = await claimLlmRequest('gap_analysis');
+
+    expect(claim.ok).toBe(false);
+  });
+
+  /**
+   * Fails against: an expiry that ignores `completed_at` and treats every old
+   * row as abandoned, which would refund slots that were genuinely spent — the
+   * opposite of what the quota protects, and worse than the leak it fixes.
+   *
+   * §9.2 is deliberate that a completed call keeps its slot for the hour even
+   * when its response was unreadable: that call was served and billed.
+   */
+  it('a completed claim keeps its slot for the whole hour', async () => {
+    await fill(LLM_REQUESTS_PER_HOUR, 2);
+    await db.update(llmRequests).set({ completedAt: new Date() });
+
+    const claim = await claimLlmRequest('gap_analysis');
+
+    expect(claim.ok).toBe(false);
+  });
+
+  /**
+   * Fails against: a `completeLlmRequest` that does not exist, or one that
+   * writes to the wrong row.
+   *
+   * By id and not by recency, for the same reason `releaseLlmRequest` is —
+   * marking "the newest" would complete a concurrent caller's claim and leave
+   * this one looking abandoned.
+   */
+  it('completing a claim marks its own row, not the newest one', async () => {
+    const mine = await claimLlmRequest('gap_analysis');
+    if (!mine.ok) throw new Error('unreachable');
+
+    const theirs = await claimLlmRequest('snippet');
+    if (!theirs.ok) throw new Error('unreachable');
+
+    await completeLlmRequest(mine.id);
+
+    const rows = await db.select().from(llmRequests);
+    const mineRow = rows.find((row) => row.id === mine.id);
+    const theirsRow = rows.find((row) => row.id === theirs.id);
+
+    expect(mineRow?.completedAt).toBeInstanceOf(Date);
+    expect(theirsRow?.completedAt).toBeNull();
+  });
+
+  /**
+   * Fails against: a `completeLlmRequest` that throws when its row is gone.
+   *
+   * Same reasoning as the release path. This runs after a successful LLM call,
+   * and throwing here would turn a served answer into a 500 — the request the
+   * user actually wanted, lost at the last step for a bookkeeping write.
+   */
+  it('is silent when the row it completes is already gone', async () => {
+    const claim = await claimLlmRequest('gap_analysis');
+    if (!claim.ok) throw new Error('unreachable');
+
+    await releaseLlmRequest(claim.id);
+
+    await expect(completeLlmRequest(claim.id)).resolves.toBeUndefined();
   });
 });
