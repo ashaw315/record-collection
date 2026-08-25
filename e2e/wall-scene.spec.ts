@@ -1376,3 +1376,152 @@ test('a TALL wall still scrolls, rather than being squeezed into the viewport', 
     'a multi-row wall keeps its own height rather than being clipped to the view',
   ).toBeGreaterThan(geometry.fold - geometry.top);
 });
+
+test('a spine clicked DURING its hover ease still pulls the record', async ({ page }) => {
+  /**
+   * **The fixture nothing had, and the reason a feature that passes every test
+   * had never once worked in a real browser.**
+   *
+   * Every other click test in this file moves and clicks at the same coordinate
+   * in one `page.mouse.click()` call, so the hover ease and the click land in
+   * the same frame — before `settleProud` has installed its animation step. A
+   * real person hovers, watches the spine ease proud, and clicks a few hundred
+   * milliseconds later, while that ease is still running. **You must hover a
+   * spine to click it**, so the collision is guaranteed in real use and absent
+   * from every dispatched-click fixture.
+   *
+   * What it collided with: the render loop had ONE step slot. The rise's
+   * `animate` overwrote the hover ease mid-flight, so the ease's own
+   * `easing = false` line never ran and the flag was held for ever —
+   * `settleProud` then returned early on every subsequent hover, and no
+   * animation of any kind ran again for the life of the page.
+   *
+   * Measured on production before the fix: click a spine, it stays stuck proud
+   * and no record comes off the shelf; hover any other spine afterwards and
+   * nothing moves at all.
+   *
+   * The wait is the whole test. `PROUD_MS` is the ease's duration; clicking
+   * inside it is what no dispatched click did.
+   */
+  const { artistId } = await seed(page, 6);
+  await openWall(page, artistId);
+
+  const scene = page.getByTestId('wall-scene');
+  const box = await scene.locator('canvas').boundingBox();
+  expect(box).not.toBeNull();
+  if (box === null) return;
+
+  /* Find a spine by hovering along the row until one reports as hovered. */
+  let hoverX: number | null = null;
+  for (let offset = 20; offset < 400; offset += 12) {
+    await page.mouse.move(box.x + offset, box.y + 120);
+    const hovered = await page.evaluate(
+      () => (document.querySelector('[data-testid="wall-scene"]') as HTMLElement).dataset.hovered ?? '',
+    );
+    if (hovered !== '') {
+      hoverX = box.x + offset;
+      break;
+    }
+  }
+  expect(hoverX, 'a spine must be hoverable before this test means anything').not.toBeNull();
+  if (hoverX === null) return;
+
+  /*
+    **Mid-ease, deliberately.** Long enough that `settleProud` has installed its
+    step and the loop is running it, short enough that it has not finished —
+    which is exactly where a reader's click lands.
+  */
+  await page.waitForTimeout(80);
+
+  await page.mouse.click(hoverX, box.y + 120);
+
+  await expect(scene, 'the click pulls a record').not.toHaveAttribute('data-pulled', '');
+
+  /*
+    **The record actually LEAVES its slot**, not merely a state flag flipping.
+    The bug set `data-pulled` correctly and never moved the mesh — state reached
+    `rising` and the animation never ran — so a test asserting only the
+    attribute would have passed against it.
+  */
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          () =>
+            Number(
+              (document.querySelector('[data-testid="wall-scene"]') as HTMLElement).dataset
+                .slotGap ?? 0,
+            ),
+        ),
+      { timeout: 5_000, message: 'the pulled record leaves its slot' },
+    )
+    .toBeGreaterThan(50);
+
+  /*
+    **And the rise RAN rather than snapping.** The defect left `phase` at
+    'rising' for ever because the animation never advanced; a record that
+    settles has transitioned past it. Asserting the phase separately from the
+    slot gap is what distinguishes "the animation completed" from "something
+    put the mesh somewhere".
+  */
+  await expect(scene, 'the rise completes and settles').toHaveAttribute(
+    'data-phase',
+    'settled',
+    { timeout: 5_000 },
+  );
+});
+
+test('the wall keeps animating after a record has been pulled and returned', async ({ page }) => {
+  /**
+   * **The permanent half of the same defect.**
+   *
+   * The hover ease guarded itself with an `easing` flag that only its own final
+   * frame cleared. When the rise replaced that step mid-flight the flag was
+   * never released, so `settleProud` returned early for ever: after one click,
+   * no spine ever eased again for the life of the page.
+   *
+   * Fails against a fix that only unsticks the first pull — the record would
+   * come out, and the wall would still be dead behind it.
+   */
+  const { artistId } = await seed(page, 6);
+  await openWall(page, artistId);
+
+  const scene = page.getByTestId('wall-scene');
+  const box = await scene.locator('canvas').boundingBox();
+  if (box === null) return;
+
+  await clickASpine(page, box);
+  await expect(scene).not.toHaveAttribute('data-pulled', '');
+  await dismiss(page, box);
+  await expect(scene).toHaveAttribute('data-pulled', '');
+
+  /* Now hover a spine: the wall must still respond. */
+  /*
+    **Assert the spine MOVES, not that frames were drawn.** A draw-count
+    comparison is the wrong instrument here: the ease is 140ms and finishes
+    before a poll can sample it, and a settled wall correctly draws nothing —
+    so the count is flat whether the wall is healthy or dead. `proudZ` is the
+    hovered spine's own offset out of the wall, which is the thing the ease
+    exists to produce.
+  */
+  let hoveredId = '';
+  for (let offset = 20; offset < 400; offset += 12) {
+    await page.mouse.move(box.x + offset, box.y + 120);
+    const hovered = await page.evaluate(
+      () => (document.querySelector('[data-testid="wall-scene"]') as HTMLElement).dataset.hovered ?? '',
+    );
+    if (hovered !== '') {
+      hoveredId = hovered;
+      break;
+    }
+  }
+  expect(hoveredId, 'a spine is hoverable after a pull and return').not.toBe('');
+
+  await expect
+    .poll(
+      () => page.evaluate(() => Number(
+        (document.querySelector('[data-testid="wall-scene"]') as HTMLElement).dataset.proudZ ?? 0)),
+      { timeout: 5_000, message: 'the hovered spine eases proud of the wall again' },
+    )
+    .toBeGreaterThan(0);
+});

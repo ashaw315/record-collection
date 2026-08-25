@@ -1049,7 +1049,7 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     }
 
     live.current = {
-      animate: (step) => loop.animate(step),
+      animate: (step) => loop.animate('record', step),
       setFlip: (turn: number) => {
         flipTurn = turn;
         applyPose();
@@ -1203,17 +1203,31 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     let hoveredId: string | null = null;
     let proudFrom = new Map<string, number>();
     let proudStart: number | null = null;
-    let easing = false;
 
     /** Where each spine currently sits, so a new hover eases from there. */
     const currentProud = new Map<string, number>();
 
+    /**
+     * **No lock: the 'wall' lane's own replacement excludes.**
+     *
+     * This guarded itself with an `easing` flag that only the step's FINAL
+     * frame cleared — and when the rise (then sharing one step slot) replaced
+     * this step mid-ease, that frame never ran and the flag was held for ever.
+     * `settleProud` returned early on every later hover and no animation of any
+     * kind ran again for the life of the page: a feature that passed every test
+     * and had never once worked in a real browser, because you must hover a
+     * spine to click it and no dispatched click ever had a live ease behind it.
+     *
+     * A hand-rolled lock that only its holder can release turns a collision
+     * into a permanent one. Installing into the lane already does the excluding,
+     * and re-installing mid-ease is CORRECT here — `proudFrom` is re-read from
+     * `currentProud` by the caller, so a new hover eases from wherever the
+     * spines are now rather than restarting.
+     */
     const settleProud = () => {
-      if (easing) return;
-      easing = true;
       proudStart = null;
 
-      loop.animate((now) => {
+      loop.animate('wall', (now) => {
         if (proudStart === null) proudStart = now;
         const t = Math.min(1, (now - proudStart) / PROUD_MS);
         const eased = 1 - Math.pow(1 - t, 3);
@@ -1230,11 +1244,18 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
           const at = from + (to - from) * eased;
 
           currentProud.set(recordId, at);
+          /*
+            **The hovered spine's own offset out of the wall, published.**
+            A draw count cannot stand in for this: the ease is 140ms and a
+            settled wall correctly draws nothing, so the count is flat whether
+            the wall is animating or permanently dead — which is exactly the
+            state that shipped. This is the thing the ease produces.
+          */
+          if (recordId === hoveredId) host.dataset.proudZ = String(Math.round(at * 100) / 100);
           const home = mesh.userData.home as { z: number };
           mesh.position.z = home.z + at;
         }
 
-        if (t >= 1) easing = false;
         return t < 1;
       });
     };
@@ -1247,6 +1268,21 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
         alternative is a wall that twitches behind the thing being read.
       */
       if (pulledIdRef.current !== null) {
+        /*
+          **The closure's own `hoveredId` is cleared too, not just React's.**
+          It was left holding the pulled record's id — so after the record went
+          home, re-hovering that same spine gave `previous === next`,
+          `shouldRedraw` said no, and the ease never ran again for that spine.
+          The second half of the same defect: a value that outlived the state it
+          described.
+        */
+        if (hoveredId !== null) {
+          proudFrom = new Map(currentProud);
+          hoveredId = null;
+          host.dataset.hovered = '';
+          host.dataset.proudZ = '0';
+          settleProud();
+        }
         setHoveredRecordId(null);
         return;
       }
@@ -1291,6 +1327,7 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
       proudFrom = new Map(currentProud);
       hoveredId = null;
       host.dataset.hovered = '';
+      host.dataset.proudZ = '0';
       setHoveredRecordId(null);
       settleProud();
     };
@@ -1376,7 +1413,17 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
         */
         scene.setPulled(goingBack, 1 - eased);
 
-        if (elapsed >= 1) setState({ phase: 'idle' });
+        /*
+          **Guarded, like every other settle in this file.** An animation
+          finishing is a claim about the motion it was running, not about
+          whatever the state has become since. Unguarded, a return whose final
+          frame lands after a fresh pull stamps `idle` over `rising` and the new
+          record silently never comes out — the same shape as the hover ease
+          that held its lock, one layer along.
+        */
+        if (elapsed >= 1) {
+          setState((current) => (current.phase === 'returning' ? { phase: 'idle' } : current));
+        }
         return elapsed < 1;
       });
       return;

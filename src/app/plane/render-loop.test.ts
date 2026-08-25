@@ -151,7 +151,7 @@ describe('createRenderLoop', () => {
 
     loop.start();
     let calls = 0;
-    loop.animate(() => {
+    loop.animate('record', () => {
       calls += 1;
       return calls < 3;
     });
@@ -177,7 +177,7 @@ describe('createRenderLoop', () => {
 
     loop.start();
     let calls = 0;
-    loop.animate(() => {
+    loop.animate('record', () => {
       calls += 1;
       return calls < 2;
     });
@@ -204,5 +204,110 @@ describe('createRenderLoop', () => {
     loop.markDirty();
 
     expect(render).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * **Two lanes, because the wall and the record animate at the same time.**
+ *
+ * With one step slot, installing the record's rise silently replaced the wall's
+ * hover ease — and the ease's final frame, which released a lock it held, never
+ * ran. `settleProud` then refused every later hover and the scene stopped
+ * animating for the life of the page. A feature that passed every test and had
+ * never worked in a real browser, because you must hover a spine to click it.
+ */
+describe('animation lanes', () => {
+  /**
+   * Fails against a single shared slot: the wall step would be dropped the
+   * moment the record step is installed, and `wallFrames` would stop climbing.
+   */
+  it('a record animation does not cancel a wall animation', () => {
+    const frames = fakeFrames();
+    const loop = createRenderLoop(vi.fn(), frames);
+    loop.start();
+
+    let wallFrames = 0;
+    loop.animate('wall', () => {
+      wallFrames += 1;
+      return wallFrames < 10;
+    });
+
+    frames.tick();
+    expect(wallFrames).toBe(1);
+
+    // The rise arrives mid-ease, which is what a click during a hover does.
+    let recordFrames = 0;
+    loop.animate('record', () => {
+      recordFrames += 1;
+      return recordFrames < 3;
+    });
+
+    frames.tick();
+    frames.tick();
+
+    expect(wallFrames, 'the wall ease keeps running').toBe(3);
+    expect(recordFrames, 'and the record animation runs alongside it').toBe(2);
+  });
+
+  /**
+   * **Replacement WITHIN a lane is preserved, and that is load-bearing.**
+   *
+   * Rise, return, slide and flip all write the same record's pose; two running
+   * at once is the orphaned-slide hazard WallScene documents. They share the
+   * 'record' lane so starting one still cancels the others.
+   *
+   * Fails against a fix that gave every animation its own slot.
+   */
+  it('a record animation replaces another record animation', () => {
+    const frames = fakeFrames();
+    const loop = createRenderLoop(vi.fn(), frames);
+    loop.start();
+
+    let first = 0;
+    loop.animate('record', () => {
+      first += 1;
+      return true;
+    });
+    frames.tick();
+    expect(first).toBe(1);
+
+    let second = 0;
+    loop.animate('record', () => {
+      second += 1;
+      return true;
+    });
+    frames.tick();
+    frames.tick();
+
+    expect(first, 'the replaced step stops running').toBe(1);
+    expect(second).toBe(2);
+  });
+
+  /**
+   * Fails against a lane that deletes by key regardless of which step finished:
+   * a step that ends after being replaced would remove its successor.
+   */
+  it('a finishing step does not remove the step that replaced it', () => {
+    const frames = fakeFrames();
+    const loop = createRenderLoop(vi.fn(), frames);
+    loop.start();
+
+    let replaced = 0;
+    loop.animate('wall', () => {
+      replaced += 1;
+      return false; // ends immediately when next run
+    });
+
+    let successor = 0;
+    loop.animate('wall', () => {
+      successor += 1;
+      return true;
+    });
+
+    frames.tick();
+    frames.tick();
+
+    expect(replaced, 'the replaced step never ran').toBe(0);
+    expect(successor, 'the successor keeps running').toBe(2);
   });
 });

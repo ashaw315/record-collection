@@ -24,6 +24,22 @@ export type FrameSource = {
   cancel: (handle: number) => void;
 };
 
+/**
+ * Which animation a step belongs to.
+ *
+ * **Two, and the split is the domain's rather than a convenience.** The wall
+ * and the pulled record are different objects touching different meshes, and
+ * they animate at the same time in normal use — you hover a spine (the wall
+ * eases it proud) and then click it (the record rises). With one slot the
+ * second silently replaced the first.
+ *
+ * WITHIN a lane, replacement is deliberate and load-bearing: rise, return,
+ * slide and flip all write the same record's pose, and two at once is the
+ * orphaned-slide hazard `WallScene` documents. They share the 'record' lane so
+ * that starting one still cancels the others, exactly as before.
+ */
+export type AnimationLane = 'wall' | 'record';
+
 export type RenderLoop = {
   /** Ask for one render on the next frame. Cheap, and safe to call often. */
   markDirty: () => void;
@@ -34,8 +50,14 @@ export type RenderLoop = {
    * than a second mechanism so there is one place that decides whether a frame
    * draws. **It must END**: an animation that never returns false leaves the
    * loop running for ever, which is exactly the cost the flag exists to avoid.
+   *
+   * **Lane-scoped.** A step replaces only the step in its own lane; the other
+   * lane keeps running. Replacing within a lane is how mutually exclusive
+   * animations exclude each other, and is why `lane` is required rather than
+   * optional — a caller that omitted it would silently join whichever lane the
+   * default named.
    */
-  animate: (step: (now: number) => boolean) => void;
+  animate: (lane: AnimationLane, step: (now: number) => boolean) => void;
   start: () => void;
   stop: () => void;
 };
@@ -52,7 +74,7 @@ export function createRenderLoop(
   let dirty = false;
   let running = false;
   let handle: number | null = null;
-  let step: ((now: number) => boolean) | null = null;
+  const steps = new Map<AnimationLane, (now: number) => boolean>();
 
   const frame = (now: number) => {
     if (!running) return;
@@ -61,12 +83,17 @@ export function createRenderLoop(
       An animation asks for a frame every frame, so it sets the flag rather
       than rendering directly — one place decides whether a frame draws, and
       the two mechanisms cannot disagree about it.
+
+      Every lane runs on every frame. Iterating a snapshot rather than the map
+      itself, because a step may install or cancel another lane's animation as
+      it finishes — mutating a Map while iterating it is how the hover ease
+      would silently skip a frame.
     */
-    if (step !== null) {
+    for (const [lane, step] of [...steps]) {
       const more = step(now);
       dirty = true;
       // Cleared as soon as it says stop, so the loop goes quiet again.
-      if (!more) step = null;
+      if (!more && steps.get(lane) === step) steps.delete(lane);
     }
 
     /*
@@ -90,8 +117,8 @@ export function createRenderLoop(
       dirty = true;
     },
 
-    animate: (next) => {
-      step = next;
+    animate: (lane, next) => {
+      steps.set(lane, next);
     },
 
     start: () => {
@@ -106,7 +133,7 @@ export function createRenderLoop(
     // alone.
     stop: () => {
       running = false;
-      step = null;
+      steps.clear();
       if (handle !== null) frames.cancel(handle);
       handle = null;
     },

@@ -509,7 +509,7 @@ export function BoxCanvas({
       let framesDrawn = 0;
       const frameLog: Array<{ progress: number; at: number }> = [];
 
-      loop.animate((now) => {
+      loop.animate('record', (now: number) => {
         if (!shouldStartClock({ framesDrawn })) {
           framesDrawn += 1;
           // Drawn at the slot, so the warm-up frame shows the record where the
@@ -585,7 +585,7 @@ export function BoxCanvas({
     counter.__sceneBuilds = (counter.__sceneBuilds ?? 0) + 1;
 
     live.current = {
-      animate: (step) => loop.animate(step),
+      animate: (step) => loop.animate('record', step),
       /*
         Takes a POSE now, not a placement: the return is the rise reversed, and
         the rise turns. A position-and-scale channel could not express the

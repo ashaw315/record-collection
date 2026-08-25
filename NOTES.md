@@ -15605,3 +15605,106 @@ treatment as the 1093 intermittent — evidence preserved, trigger named, no sto
 asserted. The earlier NOTES entry's confident "it read as clicking does nothing
 because the record went into the black" was written before the arithmetic was
 checked and is corrected by this one.
+
+---
+
+## THE LARGEST FINDING IN THIS PROJECT: a feature that passed every test and had never once worked
+
+**2026-08-25.** §10b's wall — the primary screen, the app's signature feature —
+**had never pulled a record in a real browser.** Not once, on any build, since
+step 13. 393 E2E tests passed against it, including tests written specifically
+to assert that a record leaves its shelf.
+
+### What was wrong
+
+The render loop had ONE step slot (`animate: (next) => { step = next }`). Two
+independent animations shared it:
+
+- the **hover ease** (`settleProud`), which pushes a spine proud of the wall;
+- the **rise**, which pulls the record out.
+
+`settleProud` guarded itself with an `easing` flag that only the step's FINAL
+frame cleared. When the rise's `animate` replaced that step mid-ease, the flag
+was never released — so `settleProud` returned early on every subsequent hover,
+and **no animation of any kind ran again for the life of the page**.
+
+Observed on production, by eye: hover a spine, it eases proud. Click it, and it
+stays stuck out while no record comes off the shelf. Hover any other spine
+afterwards and nothing moves at all.
+
+**A second defect sat behind the first**, found only after fixing it: the
+closure's `hoveredId` was never cleared when a record was pulled. The guard
+"nothing hovers while a record is out" returns BEFORE clearing it, so after the
+record went home, re-hovering that same spine gave `previous === next`,
+`shouldRedraw` said no, and that spine could never ease again. Same shape one
+layer along: a value that outlived the state it described.
+
+### Why no test could see it — and this is the part worth carrying
+
+**You must hover a spine to click it.** A real person hovers, watches the ease,
+and clicks a few hundred milliseconds later — while the ease is still running.
+The collision is therefore GUARANTEED in real use.
+
+Every test dispatches `page.mouse.click(x, y)`, which moves and clicks in the
+same call, landing both in the same frame before `settleProud` has installed its
+step. **The fixture could not contain the bug**, because the fixture performs an
+interaction a real user cannot perform: a click with no live hover behind it.
+
+That is a different failure from every other instrument finding in this file.
+The others were about measuring the wrong thing. This one is about a fixture
+whose SHAPE excluded the defect — the test was not wrong, it was describing an
+interaction that does not exist outside a test harness.
+
+**The generalisation, and it is R7's territory:** *how many other tests dispatch
+an interaction that a real user cannot perform in isolation?* Anywhere a test
+synthesises one event where a human necessarily produces a sequence — click
+without hover, submit without focus, tap without touchstart, drop without drag —
+the test is asserting a path production never takes. This project has one
+confirmed instance and has never looked for others.
+
+### The fix
+
+**Two animation lanes, `'wall'` and `'record'`.** The split is the domain's, not
+a convenience: the wall and the pulled record are different objects touching
+different meshes, and they animate simultaneously in normal use. Within the
+`'record'` lane replacement is PRESERVED and load-bearing — rise, return, slide
+and flip all write the same pose, and two at once is the orphaned-slide hazard
+`WallScene` already documented. Replacement-as-mutual-exclusion survives exactly
+where it was correct.
+
+The `easing` flag is **deleted**. Installing into a lane already excludes; a
+hand-rolled lock that only its holder can release is what turned a collision
+into a permanent one.
+
+`lane` is a REQUIRED parameter rather than defaulted, and the compiler
+immediately found all five call sites — including two in `BoxCanvas` and two in
+the loop's own tests. A default would have silently put a future animation in
+whichever lane it named.
+
+**Also fixed, same unit, same shape:** the return's `setState({ phase: 'idle' })`
+was unguarded, where every other settle in the file reads
+`(current) => current.phase === X ? … : current`. An animation finishing is a
+claim about the motion it ran, not about whatever the state has become since.
+
+### The tests, and the division between them is deliberate
+
+- **Unit** (`render-loop.test.ts`): a record animation does not cancel a wall
+  animation; a record animation DOES replace another record animation; a
+  finishing step does not remove the step that replaced it. Mutation-verified —
+  restoring one shared slot fails the first and leaves the other two green.
+- **E2E**: "a spine clicked DURING its hover ease still pulls the record" (with
+  an explicit mid-ease wait, and asserting `slotGap` AND the settle, because the
+  bug set `data-pulled` correctly while never moving the mesh), and "the wall
+  keeps animating after a record has been pulled and returned".
+
+**Measured honestly: the E2E does NOT catch the lane collision.** Putting hover
+back in the record lane leaves both E2E tests green, because headless timing
+never lands a click mid-ease — the very reason this shipped. The unit test is
+the guard for the collision; the E2E is the guard for the stuck-hover state.
+Recorded because "we have a test for it" would otherwise be false in the
+specific way that caused this.
+
+**A draw-count assertion was written and discarded.** `__drawCount` cannot
+distinguish a healthy settled wall from a permanently dead one — both draw
+nothing. `data-proud-z`, the hovered spine's own offset, is published instead:
+the thing the ease exists to produce.
