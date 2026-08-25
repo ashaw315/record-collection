@@ -10,6 +10,44 @@ in.
 
 ## CURRENT POSITION — read this first
 
+**2026-08-25 — the three-findings lookup unit (QA from production use).**
+
+Three defects found by using `/lookup` on production against a Doors pressing.
+**Two fixed, one deliberately not built.**
+
+| # | Finding | State |
+|---|---|---|
+| 1 | Format line dropped `formats[].text` — the plant qualifier | **Fixed** (`917836e`) |
+| 2 | "Compare pressings" showed 25 of 637 master versions, excluding every candidate | **NOT BUILT — became step 14b** |
+| 3 | Header copy claimed a cat number pins down a pressing | **Fixed** (`c35cbdb`) |
+
+**Finding 2 is unbuilt on purpose and the panel is still wrong today.** It shows
+page 1 of 26 of the master's version list, unfiltered, and says nothing about
+the other 612 — for the Doors debut that is 25 rows all dated 1967 while the
+user's 1979 reissue sits on page 7. It was reclassified as a build step because
+scoping it to the search's candidates answers a DIFFERENT question than §5.7
+specifies, which needs a spec amendment rather than a fix. §12 step 14b now
+carries the full reasoning, including why filtering is the wrong answer (it
+needs a year, and year is an output of identification, not an input — a
+1967-filtered list is what hid the record).
+
+**Do not read finding 1's fix as having solved pressing identification.**
+Measured: the qualifier is present on 50% of rows and separates 56% of colliding
+rows, leaving 44% identical. The number is in §5.7 and below, and the two-phase
+matrix redesign now has written triggers rather than an open deferral.
+
+**The most reusable finding is fix 0, and it is about the suite, not the data.**
+A captured fixture carrying `formats[].text` sat in the repo unread since
+capture, populated on 10 of 12 rows, while the suite asserted against it the
+whole time. Every assertion was a named-id lookup or a negative check — shapes
+that can only confirm what the schema already knows. A new guard in
+`normalize-search.test.ts` now fails when the payload contains a key that is
+neither read nor listed as knowingly unread. See the over-correction rule below.
+
+---
+
+## PREVIOUS POSITION
+
 **Updated: 2026-08-10, end of step 7 and its security review.**
 
 **Where we are.** **Step 7 is COMPLETE** (SPEC.md §12: "Discogs integration:
