@@ -15280,3 +15280,225 @@ reproduce the rate.
 sooner if it appears in a run where the wall is what changed. Not deploy-
 blocking: it is a scene-geometry assertion, touches nothing on the deploy path,
 and the app is unaffected.
+
+---
+
+## A DATA change opened an untested branch, and the suite could not see it
+
+**Named 2026-08-25, found in production minutes after the first deploy.** New
+shape, and the most uncomfortable one in this file: **nothing in the code
+changed, no test failed, and the app broke.**
+
+Removing the wall seed took the collection from 125 records to 4.
+`WallScene.tsx:317` sizes the render surface `max(layout.height,
+viewportFloor)` — so with 125 records `layout.height` was 1488–3224px and won
+every time, and the padding branch **had never once executed**. Four records
+make the wall 248px, the viewport wins, and the surface is padded to 974.
+
+`viewRegionCentrePx` then aimed the pulled record at the centre of the visible
+slice of that PADDED SURFACE rather than at the wall content, which ends at 248.
+Measured before the fix:
+
+| viewport | records | padded | record landed |
+|---|---|---|---|
+| desktop 879 | 4 | yes | **195px below the shelf** |
+| desktop 1280 | 4 | yes | **154px below** |
+| phone 390 | 4 | yes | **107px below** |
+| any | 125 | no | on the shelf |
+
+It read as "clicking a spine does nothing", because the record was pulled into
+the black field below the wall every time. Clicking there dismissed it, and the
+return animation flying home through the visible area was the "appears for a
+second" the QA report described.
+
+**Why no test caught it, and this is the general form.** Every fixture in the
+suite — unit, E2E, and every manual QA pass — used a collection large enough to
+fill the viewport. The condition `layout.height < viewportFloor` is not
+expressible as a code path anyone forgot to test; it is a property of the DATA,
+and the data was always big. A suite whose fixtures are all large cannot see a
+branch that only a small one reaches.
+
+**The check to apply, past this instance:** when a code path is selected by
+`max()`, `min()`, or any comparison against a property of the user's data, ask
+which side of that comparison the fixtures sit on — and whether ANY fixture sits
+on the other. Here every fixture sat on one side for the whole project.
+
+**And a deployment note that generalises:** the four-record state was created by
+a database operation approved on its own merits (removing invented seed data
+before production). Nothing about that operation looked like a code change, and
+nothing about it suggested running the suite afterwards. **A data change can be
+a code change, when the code branches on the data's shape.**
+
+---
+
+## The frame family, tenth instance — a POSITION must name its frame too
+
+**2026-08-25.** The standing rule from step 13 says a size assertion must name
+which frame it is a fraction of. This is the same defect one axis over: **the
+scene surface and the wall content are two different heights, and the record was
+aimed at the wrong one.**
+
+    const height = Math.max(layout.height, viewportFloor);  // the RENDER SURFACE
+    layout.height                                            // where the SHELVES stop
+
+Both are "the height of the wall" in English. They are equal for every
+collection tall enough to fill the viewport, which is what made the confusion
+survive ten instances of a rule written to prevent exactly it.
+
+**The amendment: a position expressed in a frame's coordinates must name the
+frame, not just the axis.** `viewRegionCentre` now takes `wallContentHeight` and
+`sceneHeight` as separate named parameters rather than one `height`, so a caller
+cannot pass the wrong one without writing its name. That is the same mitigation
+the size rule uses — make the frame appear in the call — applied to position.
+
+Worth noting the two are not interchangeable even in principle: clamping to the
+content is right when the wall is SHORT, and following the visible region is
+right when it is TALL and scrolls. A single "height" cannot express a rule whose
+answer depends on which of two heights is larger.
+
+**A measurement trap inside the fix, recorded because it nearly caused a wrong
+second fix.** Checking the result in WORLD coordinates said the record was still
+76px below the shelf, and the obvious response was to adjust the clamp. It was
+the wrong comparison: `viewY` solves for the world-y that makes the record
+APPEAR at the aimed point, and the record floats nearer the camera than the
+wall, so its world-y is deliberately not its apparent y. Projected back to
+screen it appears at canvas-y 124 — the exact centre of a 248px wall. **The
+frame rule applies to the verification as much as to the code.**
+
+### Could the destination fix affect the 1093 intermittent? MEASURED: no, and "unrelated" was worth checking
+
+**The challenge was right.** `wall-scene.spec.ts:1093` ("the pulled sleeve fits
+INSIDE the visible wall region on a short viewport") seeds **12 records at
+390x664**, which is a **496px wall in a 664px scene — the PADDED branch.** So it
+runs through the exact code this fix changed, and calling it unrelated would
+have been a claim rather than an observation.
+
+**What the measurement shows: the clamp is inert there.** Computed before and
+after, same fixture:
+
+| | aim | sleeve drawn (page-y) |
+|---|---|---|
+| before | 234 | 255..606 |
+| after | 234 | 255..606 |
+
+Byte-identical. The reason is that the clamp is `min(visibleBottom,
+wallContentHeight)`, and on that fixture the VISIBLE REGION ends first — canvas-y
+467 against a 496px wall — so the new bound never binds. The clamp only changes
+anything when the wall is shorter than the visible region, and 12 records at
+390px is not that case.
+
+So: shared code path, no behavioural change, measured rather than asserted. The
+intermittent stands where it was, now on its **third sighting with byte-identical
+values** (`sleeve top 172 must clear the wall region top 172`) across seven full
+runs. Still a rate rather than a flake, still not fixed in this unit, trigger
+unchanged: R6's after-deploy pass, with the failing screenshot already on disk.
+
+### The two E2E tests, and why the old contract was weakened rather than narrowed
+
+`settles CENTRED in view, at any collection size` asserted two properties at
+once, and one of them is now deliberately false. Split rather than narrowed,
+because a narrowed test would leave the second property living in a fixture
+nobody reads as a contract — **which is exactly how this shipped: no fixture
+existed on the short side of the boundary.**
+
+- `settles in the same place regardless of which ROW it came from` — the
+  surviving property, the one the original defect was about.
+- `a wall SHORTER than the viewport puts the record over the shelf, not below
+  it` — the new contract, and the fixture that never existed.
+
+The reasoning is written in the spec file beside the assertions rather than only
+here, since a test being deliberately weakened is exactly what a later reader
+will otherwise take for drift.
+
+**The counts had to be MEASURED, and the first attempt was wrong.** Spine widths
+come from title text, so record count does not map to rows by arithmetic. I
+assumed 40 records would be two rows; it is one. Measured at 1280x720: 5 → 1 row
+(248px, padded), 40 → **still 1 row**, 90 → 2 rows (496px, still padded), 110 →
+3 rows (744px, unpadded), 200 → 4 rows (992px, unpadded). The row test now uses
+110 and 200 — same side of the boundary, different row counts, different camera
+distances.
+
+Mutation-verified, and the split is confirmed by which test fails: restoring the
+bug fails the short-wall test (`screenY 426, wall ends 380`) and leaves the row
+test GREEN. Two tests, two properties, no overlap.
+
+`data-wall-content-height` is published for the new test, because asserting the
+record is "somewhere on screen" passes against the bug — the record was on
+screen, just below the shelf. The assertion has to name the frame.
+
+### The 1093 intermittent, handed forward rather than left implicit
+
+**Four sightings, byte-identical every time**, across seven full `--retries=0`
+runs this session (failed runs 1 and 5 of the first seven; failed again after
+the destination fix):
+
+    Error: sleeve top 172 must clear the wall region top 172
+    Expected: > 172   Received: 172
+
+**It has never once failed differently.** That is a RATE on a deterministic
+symptom, not flake — NOTES' moving-failure rule works on the SET, and this set
+has one member with one pair of values. It also passes 3/3 when run in isolation
+with `-g`, so it needs full-suite load to appear.
+
+**Measured NOT to be touched by step 16's destination fix.** Its fixture (12
+records at 390x664) is on the padded side of the boundary, so it shares the
+changed code path — but the clamp is inert there: aim 234 and sleeve 255..606
+before and after, identical, because the visible region ends at canvas-y 467
+before the 496px wall does. Shared path, no behavioural change.
+
+**Whoever picks this up does not start from scratch.** On disk:
+`test-results/wall-scene-the-pulled-slee-909be--region-on-a-short-viewport-chromium/`
+holds the screenshot from a failing run. Reading whether the sleeve is visibly
+CLIPPED at the wall's top edge in that image decides between the two candidate
+readings without needing to reproduce the rate:
+
+1. the scene genuinely clips the sleeve at that viewport under contention — a
+   real §10b defect;
+2. the measurement sits exactly on the boundary and the scan should start one
+   row ABOVE `region.top`, so "first lit row == region.top" is distinguishable
+   from "sleeve extends past the region".
+
+**Trigger: R6's after-deploy pass**, which re-runs the suite anyway. Not
+deploy-blocking — scene geometry, nothing on the deploy path, app unaffected.
+
+---
+
+## The app had never run against a SMALL collection until today
+
+**2026-08-25, and this is the entry to re-read before adding records one at a
+time.**
+
+Every fixture, every screenshot, every manual judgement about the wall — the
+tilt, the rise, the destination, the panels, the phone pass at 390 and the
+desktop pass at 1280 — was made against **125 seeded records**. The seed existed
+to make the wall look like a wall, and it did its job. What nobody noticed is
+that it also made one branch of the wall's own sizing (`max(layout.height,
+viewportFloor)`) unreachable for the entire life of the feature.
+
+Removing the seed was right, and it surfaced within minutes a defect that had
+been **latent since the wall was built**: the pulled record aimed at the padded
+surface rather than the wall content, and on a short collection landed in the
+black below the shelf. On every viewport, including the phone.
+
+**What to expect while the collection grows from four to a hundred.** The wall
+crosses the padding boundary somewhere around one full row per viewport — at
+1280 that is roughly 40+ records for a second row, and the boundary itself
+(`layout.height >= viewportHeight`) around 110 records at 720px, 90 at 390px.
+Between four and there, the app is running in a regime nothing has ever
+exercised. Specific things worth a look as records are added:
+
+- **The first wrap to a second row**, which changes the wall's height for the
+  first time in real use.
+- **Crossing the padding boundary itself**, where the destination arithmetic
+  switches from content-clamped to region-following. Both sides are now tested;
+  the crossing is not.
+- **Facet counts, filters and the empty state at small N** — a filter that
+  matches one record now produces a one-spine wall, which is the shortest wall
+  the layout can make.
+- **Anything whose fixture was "125 records"**, which is most of the E2E suite.
+
+**The general rule this earns:** a seed that makes a feature look realistic also
+makes the small-N case unreachable, and small-N is the state every real
+collection starts in. When a fixture is chosen to look like the mature product,
+something else has to cover the immature one — and here nothing did, for the
+whole life of the feature.

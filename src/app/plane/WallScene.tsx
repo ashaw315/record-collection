@@ -37,6 +37,7 @@ import { centredSquareUv } from './skins';
 import { layoutWall, type WallLayout } from './wall-layout';
 import { WALL_FOV_DEGREES, wallCameraDistance } from './wall-camera';
 import { pulledDestination } from './pulled-destination';
+import { viewRegionCentre } from './view-region-centre';
 import { boxDepth } from './record-box';
 import { wallDim } from './wall-dim';
 import { PROUD_MS, proudOffset, shouldRedraw } from './hover-proud';
@@ -393,11 +394,6 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
      * `SPINE_HEIGHT` tall.
      */
     const viewRegionCentrePx = (scrollY: number): number => {
-      const docTop = canvasDocTop();
-      /* The visible slice of the canvas, in page coordinates. */
-      const regionTop = Math.max(docTop, scrollY);
-      const regionBottom = Math.min(docTop + height, scrollY + window.innerHeight);
-
       const halfAngle = (WALL_FOV_DEGREES * Math.PI) / 360;
       const probe = pulledDestination({
         wallWidth: width,
@@ -407,20 +403,25 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
       });
       const distance = cameraDistance - probe.z;
       const worldPerPx = (2 * distance * Math.tan(halfAngle)) / height;
-      const halfSleevePx = SPINE_HEIGHT / worldPerPx / 2;
 
-      const centre = (regionTop + regionBottom) / 2;
-      const lowest = regionTop + halfSleevePx;
-      const highest = regionBottom - halfSleevePx;
       /*
-        `lowest > highest` means the region cannot hold the sleeve; the region's
-        own centre then spreads the overflow across both edges rather than
-        pinning it to one, which is what made the clipping read as "runs off the
-        top" instead of "slightly too big".
+        **`layout.height` and `height` are DIFFERENT NUMBERS, and this call is
+        where that stopped being invisible.** `height` is the render surface,
+        padded up to the viewport so a short collection reads as wall rather
+        than as empty shelves; `layout.height` is where the shelves actually
+        stop. They are equal for any collection tall enough to fill the view —
+        which is every fixture this feature was ever tested with — so aiming at
+        the padded surface was indistinguishable from aiming at the wall until
+        the collection got short.
       */
-      const target = lowest > highest ? centre : Math.min(Math.max(centre, lowest), highest);
-
-      return target - docTop;
+      return viewRegionCentre({
+        wallContentHeight: layout.height,
+        sceneHeight: height,
+        canvasDocTop: canvasDocTop(),
+        scrollY,
+        viewportHeight: window.innerHeight,
+        halfSleevePx: SPINE_HEIGHT / worldPerPx / 2,
+      });
     };
     const destinationFor = (scrollY: number) =>
       pulledDestination({
@@ -740,6 +741,15 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     */
     host.dataset.rows = String(layout.shelves.length);
     host.dataset.wallWidth = String(width);
+    /*
+      **The WALL CONTENT's height, which is not the scene's.** The surface is
+      padded up to the viewport for a short collection (see `height` above), so
+      these two numbers differ exactly when the collection is small — the case
+      that reached production untested and put the pulled record below the
+      shelf. Published so a test can assert the record lands within the SHELF's
+      band rather than merely somewhere on screen, which the bug also satisfied.
+    */
+    host.dataset.wallContentHeight = String(layout.height);
 
     /**
      * **The draw count, published because it is a CONSTRAINT rather than a

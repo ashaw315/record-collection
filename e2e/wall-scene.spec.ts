@@ -237,7 +237,7 @@ test('pulling a record EMPTIES its slot in the wall', async ({ page }) => {
   expect(gap, `the pulled spine is ${Math.round(gap)}px from its slot`).toBeGreaterThan(240);
 });
 
-test('the pulled record settles CENTRED in view, at any collection size', async ({ page }) => {
+test('the pulled record settles in the same place regardless of which ROW it came from', async ({ page }) => {
   /**
    * **The defect this catches shipped with every assertion green.** The slot
    * emptied, the record occluded the wall, the rise completed — and the record
@@ -261,10 +261,41 @@ test('the pulled record settles CENTRED in view, at any collection size', async 
    *
    * 130 wraps to three rows, where a row-0 record's own height is 252 world
    * units above centre. That is the case the two designs disagree about.
+   *
+   * **This test's contract was DELIBERATELY WEAKENED on 2026-08-25, and the
+   * reason belongs here rather than only in NOTES.**
+   *
+   * It used to read "settles CENTRED in view, at ANY collection size" and used
+   * 5 and 130 records. That asserted two properties at once: the landing does
+   * not depend on which ROW a record came from (the real defect it was written
+   * for — a record kept its slot's row height and landed clipped at NDC 0.838),
+   * and the landing does not depend on the SIZE of the wall.
+   *
+   * The second is no longer true, on purpose. `WallScene` pads its render
+   * surface up to the viewport so a short collection reads as wall rather than
+   * as empty shelves — and a record aimed at the centre of that PADDED surface
+   * lands below a short wall, in the black. Measured in production with four
+   * records: 195px below the shelf at 879px wide, 107px below on a phone. §10b
+   * says the record comes off the shelf, so on a short wall it belongs over the
+   * shelf, which necessarily makes the destination depend on the wall's height.
+   *
+   * So the counts moved from 5 and 130 to 110 and 200, and the pair was
+   * MEASURED rather than reasoned about — spine widths come from title text, so
+   * record count does not map to rows by arithmetic. At 1280x720: 5 records is
+   * one row (248px, padded), 40 is STILL one row, 90 is two rows (496px, still
+   * padded), 110 is three rows (744px, unpadded) and 200 is four (992px,
+   * unpadded). The old pair straddled a boundary that did not exist when it was
+   * written; 110 and 200 sit on the same side of it with different row counts
+   * and different camera distances, so this test now asks only its surviving
+   * question: same wall, same landing, whichever row.
+   *
+   * **The short-wall case is not lost** — it is asserted by "a wall SHORTER
+   * than the viewport puts the record over the shelf" below, which is the
+   * fixture that never existed and whose absence is why this shipped.
    */
   const landedAt: number[] = [];
 
-  for (const count of [5, 130]) {
+  for (const count of [110, 200]) {
     const { artistId } = await seed(page, count);
     await openWall(page, artistId);
 
@@ -344,8 +375,92 @@ test('the pulled record settles CENTRED in view, at any collection size', async 
   */
   expect(
     Math.abs(landedAt[0] - landedAt[1]),
-    `same place from row 0 of a one-row wall (${landedAt[0]}) and a three-row wall (${landedAt[1]})`,
+    `same place from a three-row wall (${landedAt[0]}) and a four-row wall (${landedAt[1]})`,
   ).toBeLessThan(60);
+});
+
+test('a wall SHORTER than the viewport puts the record over the shelf, not below it', async ({
+  page,
+}) => {
+  /**
+   * **The fixture that never existed, and whose absence is why this shipped.**
+   *
+   * `WallScene` sizes its render surface `max(layout.height, viewportFloor)`, so
+   * a collection tall enough to fill the viewport makes those two equal and the
+   * padding branch never executes. Every fixture in this suite — and every
+   * manual QA pass — used a collection large enough for that. The branch was
+   * first reached in PRODUCTION, when removing the wall seed took the
+   * collection from 125 records to 4.
+   *
+   * The record was then aimed at the centre of the visible slice of the padded
+   * SURFACE rather than at the wall content, and landed in the black field
+   * below the shelf: measured 195px below at 879px wide, 154px at 1280, 107px
+   * on a phone. It read as "clicking a spine does nothing", because the record
+   * went somewhere off the visible wall every time.
+   *
+   * §10b: the record comes off the shelf. When the wall is one row at the top
+   * of a tall canvas, the record belongs over that row.
+   *
+   * **Three records at 1280px is one row of ~248px in a 720px viewport** — the
+   * padded case, expressed as the CONDITION (a wall shorter than the view)
+   * rather than as any particular width. The bug was found at 879px, which is
+   * neither width this feature was built against, and pinning that number would
+   * encode the accident instead of the case.
+   */
+  const { artistId } = await seed(page, 3);
+  await openWall(page, artistId);
+
+  const scene = page.getByTestId('wall-scene');
+  const box = await scene.locator('canvas').boundingBox();
+  expect(box).not.toBeNull();
+  if (box === null) return;
+
+  /* The precondition, asserted rather than assumed: without it a change to the
+     spine height or the shelf edge could make this wall TALLER than the view,
+     and the test would silently stop covering the padded branch — the exact
+     way this defect hid. */
+  const rows = await scene.getAttribute('data-rows');
+  expect(rows, 'the fixture must produce a ONE-ROW wall').toBe('1');
+
+  await clickASpine(page, box);
+  await expect(scene).not.toHaveAttribute('data-pulled', '');
+
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          () =>
+            (document.querySelector('[data-testid="wall-scene"]') as HTMLElement)?.dataset
+              .pulledProgress ?? '0',
+        ),
+      { timeout: 10_000 },
+    )
+    .toBe('1');
+
+  const settled = await page.evaluate(() => {
+    const el = document.querySelector('[data-testid="wall-scene"]') as HTMLElement;
+    const canvas = el.querySelector('canvas')!;
+    const rect = canvas.getBoundingClientRect();
+    return {
+      screenY: Number(el.dataset.settledScreenY ?? -1),
+      canvasTop: rect.top,
+      wallContentBottom: rect.top + Number(el.dataset.wallContentHeight ?? 0),
+      viewportH: window.innerHeight,
+    };
+  });
+
+  /*
+    **The load-bearing assertion: the record sits within the SHELF's own band,
+    not below it.** Restoring the defect aims at the padded surface's centre and
+    puts `screenY` past `wallContentBottom` — which is on screen, so a
+    visible-region assertion would pass against the bug. This one names the
+    frame the position must be inside, which is the whole finding.
+  */
+  expect(
+    settled.screenY,
+    `the record settles within the wall content (screenY ${settled.screenY}, wall ends ${settled.wallContentBottom})`,
+  ).toBeLessThanOrEqual(settled.wallContentBottom);
+  expect(settled.screenY, 'and below the canvas top').toBeGreaterThan(settled.canvasTop);
 });
 
 test('the record returns to its slot when dismissed', async ({ page }) => {
@@ -1300,3 +1415,4 @@ test('a record pulled from a SHORT wall is contained and full-size, not clipped'
   expect(Math.abs(m.ndcX), `ndcX ${m.ndcX} within frustum`).toBeLessThan(1);
   expect(Math.abs(m.ndcY), `ndcY ${m.ndcY} within frustum — not clipped below the canvas`).toBeLessThan(1);
 });
+
