@@ -612,7 +612,7 @@ form the records work had not shown — see the masking entry under Open.
   |---|---|---|---|
   | genre / style | **singular** (`genre`, `style`) | plural (`genres`, `styles`) | absent |
   | the year | `year` | `year` | **`released`** |
-  | format descriptors | array | array + `text` | **comma-joined string, no `text`** |
+  | format descriptors | **BOTH**: `format` array + `formats` array of objects **with `text`** | `formats` array of objects, with `text` | **comma-joined string, no `text`** |
 
   Each was found the hard way and each is documented at its own call site. The
   class is worth stating once: **these endpoints describe the same objects with
@@ -637,6 +637,59 @@ form the records work had not shown — see the masking entry under Open.
   differences are exactly where it breaks. `test/fixtures/discogs/` has captured
   payloads for all three; read the fixture rather than reasoning from memory.
 
+  **CORRECTED 2026-08-25: the Search cell of that table was wrong, and it was
+  wrong in the OPPOSITE direction from the error that produced it.**
+
+  Measured live against `/database/search` while diagnosing the Doors lookup.
+  Search rows carry **two** format fields, not one:
+
+  | key | value |
+  |---|---|
+  | `format` | `["Vinyl","LP","Album","Reissue","Stereo"]` — flat strings, no qualifier |
+  | `formats` | `[{name, qty, descriptions[], text}]` — **`text` is here** |
+
+  `normalize-search.ts` declares only the singular `format`. The plural
+  `formats` is absorbed by `.passthrough()` and dropped at the type boundary,
+  so `text` is not truncated — it is never read. Live from
+  `?catno=EKS-74007`: `"Allentown Pressing"`, `"Terre Haute Pressing"`,
+  `"Pitman Pressing"`, `"Quality Records Pressing"`,
+  `"Specialty Records Corporation Pressing"`.
+
+- **RULE: a correction can over-correct, and the summary written on top of a
+  measurement does not inherit the measurement's discipline.**
+
+  This is the shape, and it is worth more than the cell it fixes.
+
+  The original error (2026-08-11, above) was assuming `format.text` was on the
+  versions payload because it had been seen on the release payload — a field
+  wrongly assumed PRESENT. It was caught by measuring, corrected properly, and
+  the correction was then generalised into the endpoint table.
+
+  **The generalisation went one step too far.** Having been burned by assuming
+  `text` was everywhere, the table concluded `text` was release-only. That is a
+  field wrongly assumed ABSENT — the same class of error, arrived at from the
+  opposite direction, and introduced BY the fix for the first one.
+
+  **The fixture carrying the right answer was in the repo the entire time.**
+  `test/fixtures/discogs/search-by-catno.json` has held `formats[].text` since
+  capture: **10 of its 12 rows have it populated** (`"Red Translucent"`,
+  `"Gatefold"`, `"Red, Gatefold"`, `"Transparent"`). The check this very entry
+  prescribes four paragraphs above — "read the fixture rather than reasoning
+  from memory" — would have caught it in one grep.
+
+  **The practice worked; the generalisation did not inherit it.** The captured
+  fixture was correct, the measurement that produced the correction was
+  correct, and the SUMMARY written on top of both was never checked against
+  either. A measured fact and a rule induced from it are different artifacts
+  with different evidence, and only the first one here had any.
+
+  **The check: when a measurement is generalised into a rule, the rule needs
+  its own verification pass against the same fixtures.** Especially a rule
+  stated as a negative ("endpoint X does not have field Y") — see the
+  negative-claim rule under Open, which this is an instance of. Cost: a defect
+  that hid the single most discriminating field Discogs offers at list level,
+  on the screen where two pressings look identical.
+
 - **RULE: the comparison columns are FIXED, and for any given master the
   discriminating field may not be among them. That is a property of the design,
   not of one or two masters.**
@@ -658,6 +711,34 @@ form the records work had not shown — see the masking entry under Open.
   companies. `format.text` (which carries "Rockaway Pressing") is on the RELEASE
   endpoint, so showing it costs one rate-limited call per row: 11 calls for a
   table of eleven, against 60/minute.
+
+  **AMENDED 2026-08-25 — that cost estimate is right for the VERSIONS table and
+  wrong for the SEARCH results page. Bears on the two-phase redesign.**
+
+  Still true: the versions endpoint has no `text` and no companies, so the
+  plant costs one call per row THERE. Confirmed again by live measurement.
+
+  **But on the search results page the plant text is already in the payload
+  that has been paid for**, under the undeclared `formats[].text` — see the
+  corrected endpoint table above. **Zero additional calls.** The discriminator
+  problem has different economics on the two screens, and the earlier framing
+  ("not obtainable, one call per row") reads as if it applied to both.
+
+  **Why this is recorded against the two-phase redesign** (matrix strings, an
+  `unresolved` confidence state, storing identification evidence): a design
+  that budgets rate-limited calls for a plant hint on the search page would be
+  paying for something free. This is exactly the kind of fact that gets
+  rediscovered expensively — it was already wrong once in the opposite
+  direction and cost a round.
+
+  **What it does NOT change:** `text` is free-text and user-submitted, not a
+  plant field. Live values from one search include `"Barcode; SRC-Specialty
+  Records Press"`, `"Allentown - Pub. Credit Misprint"`,
+  `"(Columbia Records Pressing) "` (trailing space), `"180g"`, `"Blue"`,
+  `"USA Cover"`, `"SP"`. It mixes plant, colour, weight and sleeve notes, so it
+  is a HINT the user reads and judges, never a resolved plant identity. The
+  §7.7 rule against presenting a Discogs match as certain applies to it
+  directly.
 
   **What shipped instead** (2026-08-11): rows identical on every displayed
   column collapse into one saying "N more look identical from here", expandable.
@@ -2143,6 +2224,10 @@ form the records work had not shown — see the masking entry under Open.
   | Field | Search results | Master versions |
   |---|---|---|
   | format descriptors | ARRAY `["Vinyl","LP","Reissue"]` | STRING `"LP, Album, Reissue"` |
+  <!-- 2026-08-25: search ALSO sends a plural `formats` array of objects carrying
+       `text`, which this table's first row does not mention and which was
+       undeclared in the schema until the Doors lookup fix. See the corrected
+       endpoint table under the field-per-endpoint rule. -->
   | year | `year` | `released` |
   | genres / styles | `genre` / `style` (singular) | — |
   | community counts | `community.have` | `stats.community.in_collection` |
