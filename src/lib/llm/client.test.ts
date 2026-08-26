@@ -114,6 +114,32 @@ describe('the prompt is the feature', () => {
   });
 
   /**
+   * **A29g's cost, addressed as copy rather than as a spec change** (Adam,
+   * 2026-08-26, after reading a real suggestion).
+   *
+   * A29g asks the model to disclose when it is naming a different record by an
+   * owned artist, and that disclosure is correct and stays. But the reason it
+   * produced read as an APOLOGY — "a different record by an artist they own" —
+   * when the same fact is the strongest argument for the suggestion: you
+   * collect this artist and this record is missing.
+   *
+   * So the prompt now asks for the reason to be phrased as the POINT. Fails
+   * against reverting to a bare "say so" instruction, which is what produced
+   * the apologetic phrasing.
+   *
+   * **What this test canNOT check** is whether the next real gap analysis
+   * actually reads that way — that is judgeable only by running one against a
+   * real collection. It pins the instruction, not the output.
+   */
+  it('asks for the owned-artist disclosure to read as a reason, not an admission', () => {
+    const prompt = buildPrompt(SUMMARY);
+
+    expect(prompt).toMatch(/reason to want it|why it belongs|the point|makes the case/i);
+    // The example phrasing is what makes the instruction concrete for the model.
+    expect(prompt).toMatch(/own .*but not this one|but not this record/i);
+  });
+
+  /**
    * Fails against: dropping the want-list prohibition along with the owned one.
    *
    * **The asymmetry is the point.** The want list carries `artist` AND `title`

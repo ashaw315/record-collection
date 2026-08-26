@@ -224,9 +224,19 @@ export function buildPrompt(summary: CollectionSummary): string {
      * artist AND title, so a record-level prohibition there is checkable.
      */
     'The list above names the artists they own but not which records, so a',
-    'different record by an artist they already own is a welcome suggestion —',
-    'say so in the reason when that is what you are doing. Do not recommend',
-    'anything already on their want list, which is listed with titles.',
+    'different record by an artist they already own is a welcome suggestion.',
+    /*
+     * **The disclosure stays; its FRAMING changed** (Adam, 2026-08-26, on a
+     * real suggestion). "Say so" produced reasons reading as an apology — "a
+     * different record by an artist they own" — when that fact is the strongest
+     * argument available: they demonstrably collect this artist and this record
+     * is missing. A29g's disclosure requirement is unchanged, so nothing about
+     * §9.2's honesty is traded; only the sentence the model writes.
+     */
+    'When that is what you are doing, make it the REASON rather than a caveat:',
+    '"You own Miles Davis but not this one" is the point, not an admission.',
+    'Do not recommend anything already on their want list, which is listed',
+    'with titles.',
     '',
     'Prefer records you are confident exist, with the artist and title as',
     'actually released. If you are unsure a record exists, leave it out.',

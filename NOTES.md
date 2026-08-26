@@ -17297,3 +17297,84 @@ rule states a REASON, test the literal reading against that reason. If the
 reason is narrower than the rule, the rule is probably over-broad — and the
 place it will bite is wherever a user first tries to act on it.
 
+
+---
+
+## Finding 2 built — inline create on the want-list form (A36)
+
+**2026-08-26.** The dead end Adam hit on a Throbbing Gristle suggestion, fixed by
+applying `InlineCreate` to the second form. `RecordForm` uses it four times;
+`WantListForm` had a bare `<select>` and no create path.
+
+**Reused, not rebuilt.** `InlineCreate` was imported unmodified — it already
+handles the pre-filled suggestion box, collision-as-success (§5.4's
+`existingId`), and `cleanName` normalisation. Editing it would have been the
+signal that the reuse was misread.
+
+**Copy changed to the wording `/records/new` already settled**: "add them in
+Manage first" → "it is ready to add under **Artist**". That project had recorded
+the identical fix on the other screen; this form never got it.
+
+### The A36 regression test, and why it is asserted against the DATABASE
+
+**Adam's addition, and it changed what the test can catch.** The obvious version
+checks the UI — the box is closed, the field is empty. That version **passes
+against a form that creates the artist on arrival and hides the fact**, which is
+exactly the helpful-feeling shortcut A36 forbids and exactly what someone would
+add in good faith to save a click.
+
+So: arrive with a name that does not exist, ABANDON the form without clicking
+create, and ask `artists` whether a row appeared.
+
+**Mutation-verified, and the first attempt was WRONG in an instructive way.**
+Injecting an auto-create into `want-list/new/page.tsx` failed the test — but on
+`expect(unmatched-artist).toBeVisible()`, not on the row count: the auto-created
+artist now MATCHED, so the message disappeared. That test would still have passed
+against an implementation that created the row *and* kept showing the message.
+Re-keyed the wait to the title input, which a matching artist does not change,
+and re-ran the mutation:
+
+    Error: A36: arriving at the form with ?artist=Throbbing Gristle mta1za4w
+           must not create an artists row
+    Expected: 0   Received: 1
+
+**Now it fails on the assertion it exists for.** The general form is the one this
+project keeps meeting: a test can fail for the right reason and still be pinned
+to the wrong observation, and only a mutation shows which.
+
+### The A29g copy change — DISCLOSURE KEPT, FRAMING CHANGED
+
+    When that is what you are doing, make it the REASON rather than a caveat:
+    "You own Miles Davis but not this one" is the point, not an admission.
+
+A29g's requirement that the model disclose a same-artist suggestion is
+unchanged, so §9.2's honesty is not traded — only the sentence the model writes.
+
+**UNVERIFIED, and it cannot be verified here.** The test pins the INSTRUCTION;
+whether the next real gap analysis reads as a reason to buy is judgeable only by
+running one against a real collection. Same standing as the format hints.
+**Trigger: Adam's next /suggestions run.**
+
+### Suite
+
+- Unit **3024 passed**, 1 skipped. Lint, typecheck, build clean.
+- E2E **416 passed, 2 failed**, 20 skipped.
+
+**Both failures are `record-detail.spec.ts` at `login()` on
+`toHaveURL('/')`** — the documented accumulation signature (step 15 unit 1), not
+this change. Ruled out rather than assumed:
+
+- **17/17 in isolation.**
+- **No residue from the new tests**: `SELECT name FROM artists WHERE name LIKE
+  'Throbbing Gristle%'` → 0 rows after the run, so the created row was cleaned up
+  and the abandoned prefill genuinely created nothing.
+- The only want-list reference in that spec posts to the want-list **API**, not
+  the form, and that test PASSED; the two that failed are journal and price
+  tests with no want-list involvement.
+
+**Baseline note: the red is now moving between runs rather than sitting on one
+test.** 1093 (six sightings), wall-scene 449 (one), and now two record-detail
+logins. All share the late-in-run `login()` timeout shape, which the step 15
+diagnosis attributed to accumulation. **Worth treating as one question rather
+than three intermittents** when a harness unit next opens.
+

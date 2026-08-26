@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FORM_SECTIONS, buildWantListBody, type WantListFormValues } from './want-list-form';
+import { InlineCreate } from '@/app/records/InlineCreate';
 
 /**
  * SPEC.md §10's want-list form — `/want-list/new`.
@@ -36,6 +37,18 @@ export function WantListForm({
 }) {
   const router = useRouter();
   const [values, setValues] = useState<WantListFormValues>(initial);
+  /**
+   * Rows created inline during this form's life, appended to the server's list.
+   *
+   * A36 (SPEC §10, amended 2026-08-26): the PREFILL creates nothing, and this
+   * does not change that — a row appears here only after the user clicks Add.
+   */
+  const [addedArtists, setAddedArtists] = useState<ReferenceOption[]>([]);
+  const [addedLabels, setAddedLabels] = useState<ReferenceOption[]>([]);
+  const [createdNotice, setCreatedNotice] = useState<string | undefined>();
+
+  const allArtists = [...artists, ...addedArtists];
+  const allLabels = [...labels, ...addedLabels];
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | undefined>();
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -105,23 +118,62 @@ export function WantListForm({
                 label={section.labels[field] ?? field}
                 value={values[field]}
                 error={fieldErrors[field]}
-                artists={artists}
-                labels={labels}
+                artists={allArtists}
+                labels={allLabels}
                 onChange={(value) => set(field, value)}
+                /*
+                  §10 (A36): inline create on this form, as on the record form.
+                  Rendered UNDER the field it fills so the name it offers and the
+                  select it populates read as one control.
+                */
+                inlineCreate={
+                  field === 'artistId' || field === 'labelId' ? (
+                    <InlineCreate
+                      noun={field === 'artistId' ? 'artist' : 'label'}
+                      path={field === 'artistId' ? '/api/artists' : '/api/labels'}
+                      suggestion={
+                        (field === 'artistId' ? unmatched?.artist : unmatched?.label) ?? undefined
+                      }
+                      onCreated={(option, message) => {
+                        if (field === 'artistId') setAddedArtists((rows) => [...rows, option]);
+                        else setAddedLabels((rows) => [...rows, option]);
+                        set(field, option.id);
+                        setCreatedNotice(message);
+                      }}
+                    />
+                  ) : undefined
+                }
               />
             ))}
           </div>
         </section>
       ))}
 
+      {/*
+        **The dead end this unit fixes.** These previously read "add them in
+        Manage first", which meant leaving the form, creating the row by hand
+        and coming back — losing everything typed. `/records/new` had already
+        settled this exact wording; the want-list form never got it.
+
+        §9.2 makes it the MODAL case rather than an edge: gap analysis suggests
+        artists the collection has never heard of, so every genuinely good
+        suggestion hit the wall.
+      */}
       {unmatched?.artist != null && (
         <p data-testid="unmatched-artist" className="text-sm">
-          No artist named “{unmatched.artist}” in your collection yet — add them in Manage first.
+          No artist named “{unmatched.artist}” in your collection yet — it is ready to add under{' '}
+          <span className="font-medium">Artist</span>.
         </p>
       )}
       {unmatched?.label != null && (
         <p data-testid="unmatched-label" className="text-sm">
-          No label named “{unmatched.label}” yet — add it in Manage first.
+          No label named “{unmatched.label}” yet — it is ready to add under{' '}
+          <span className="font-medium">Label</span>.
+        </p>
+      )}
+      {createdNotice !== undefined && (
+        <p role="status" data-testid="inline-created-notice" className="text-sm text-muted-foreground">
+          {createdNotice}
         </p>
       )}
 
@@ -154,6 +206,7 @@ function Field({
   error,
   artists,
   labels,
+  inlineCreate,
   onChange,
 }: {
   field: keyof WantListFormValues;
@@ -162,6 +215,8 @@ function Field({
   error?: string;
   artists: ReferenceOption[];
   labels: ReferenceOption[];
+  /** §10 (A36): the inline-create control for this field, when it has one. */
+  inlineCreate?: React.ReactNode;
   onChange: (value: string) => void;
 }) {
   const describedBy = error === undefined ? undefined : `${field}-error`;
@@ -230,6 +285,8 @@ function Field({
             className={field === 'maxPrice' ? 'h-9 font-mono' : 'h-9'}
           />
         )}
+
+        {inlineCreate}
 
         {error !== undefined && (
           <p id={describedBy} className="text-xs text-destructive">

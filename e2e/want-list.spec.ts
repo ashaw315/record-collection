@@ -1,6 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { seedDiscogsCacheAs } from './seed';
+import { sql } from 'drizzle-orm';
+import { getTestDb } from '../test/helpers/db';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -529,4 +531,125 @@ test('three money figures, each saying what it is', async ({ page }) => {
   // And the pressing note is still a PRESSING, never a price (CLAUDE.md §8).
   expect(text).toMatch(/Best dig/i);
   expect(text).toMatch(/not the 1989 repress/i);
+});
+
+/**
+ * SPEC.md §10 as amended by **A36** (2026-08-26) — inline create on the
+ * want-list form.
+ *
+ * **The defect these cover, found by Adam using /suggestions on his own
+ * collection.** "Add to want list" on a §9.2 suggestion led to a form saying
+ * "No artist named Throbbing Gristle in your collection yet — add them in
+ * Manage first", so acting on a suggestion meant leaving, creating the artist
+ * by hand, and coming back.
+ *
+ * **This is the MODAL case, not an edge case.** §9.2 exists to surface records
+ * by artists the collection does not have, so every genuinely good suggestion
+ * hit the dead end. `/records/new` had already fixed the identical wording and
+ * uses `InlineCreate`; this form never got it.
+ */
+
+/** A name no fixture or seed uses, unique per run so a leak is visible. */
+const newArtistName = (run: string) => `Throbbing Gristle ${run}`;
+
+test('a suggestion for an unknown artist reaches a saved want-list row without leaving the form', async ({
+  page,
+}) => {
+  /*
+    The whole dead end, end to end. Arrives exactly as `GapAnalysis` links —
+    `?artist=` and `?title=` free text, no ids, because the model named an
+    artist this collection has never heard of.
+  */
+  const run = Date.now().toString(36);
+  const artist = newArtistName(run);
+  const db = getTestDb();
+
+  await login(page);
+  await page.goto(
+    `/want-list/new?artist=${encodeURIComponent(artist)}&title=${encodeURIComponent('20 Jazz Funk Greats')}`,
+  );
+
+  // The title arrives from the suggestion; the artist matched nothing.
+  await expect(page.getByLabel('Title')).toHaveValue('20 Jazz Funk Greats');
+  await expect(page.getByTestId('unmatched-artist')).toBeVisible();
+
+  /*
+    The fix: the name is waiting in the inline-create box, one click from done.
+    NOT created by arriving — that is the assertion in the next test.
+  */
+  const nameBox = page.getByLabel('New artist name');
+  await expect(nameBox, 'the suggested name is waiting in the box').toHaveValue(artist);
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
+
+  /*
+    Selected on the form once created, so the user is not asked to find it.
+    Targeted by the select's own id, because getByLabel('Artist') also matches
+    InlineCreate's sr-only "New artist name" label.
+  */
+  await expect(page.locator('#artistId')).not.toHaveValue('');
+
+  await page.getByRole('button', { name: /save|add to want list/i }).click();
+  await expect(page).toHaveURL(/\/want-list/);
+  await expect(page.getByText('20 Jazz Funk Greats')).toBeVisible();
+
+  // Cleanup: the row this test deliberately created.
+  const created = await db.execute(sql`SELECT id FROM artists WHERE name = ${artist}`);
+  const artistId = (created.rows[0] as { id: string } | undefined)?.id;
+  if (artistId !== undefined) {
+    await db.execute(sql`DELETE FROM want_list WHERE artist_id = ${artistId}`);
+    await db.execute(sql`DELETE FROM artists WHERE id = ${artistId}`);
+  }
+});
+
+test('a prefill alone creates NOTHING — asserted against the database, not the form', async ({
+  page,
+}) => {
+  /*
+    **A36's actual rule, and the assertion that stops it being "improved" away.**
+
+    §10: "No reference row is created FROM A PREFILL — a prefill is not a
+    commitment, and an artist created for an abandoned form is debris nothing
+    points at."
+
+    **Asserted against `artists`, never against the UI.** A test that checked the
+    inline-create box was merely closed, or that the field was empty, would PASS
+    against a form that creates the artist on arrival and hides the fact — which
+    is precisely the helpful-feeling shortcut A36 forbids, and precisely what
+    someone would add in good faith to save a click.
+
+    So: arrive with a name that does not exist, ABANDON the form without
+    clicking create, and ask the database whether a row appeared.
+  */
+  const run = Date.now().toString(36);
+  const artist = newArtistName(run);
+  const db = getTestDb();
+
+  const before = await db.execute(sql`SELECT count(*)::int AS n FROM artists WHERE name = ${artist}`);
+  expect(
+    (before.rows[0] as { n: number }).n,
+    'precondition: the artist must not exist before the prefill',
+  ).toBe(0);
+
+  await login(page);
+  await page.goto(`/want-list/new?artist=${encodeURIComponent(artist)}&title=${encodeURIComponent('Heathen Earth')}`);
+
+  /*
+    Wait for the form to have RENDERED before abandoning it, so the page has
+    genuinely run its server component and any creation it does would have
+    happened. Keyed on the title input rather than on `unmatched-artist`:
+    a form that auto-created the artist would MATCH it and drop that message,
+    so waiting on it would make this test fail for the wrong reason and mask
+    what the database assertion is here to say.
+  */
+  await expect(page.getByLabel('Title')).toHaveValue('Heathen Earth');
+
+  // Abandon it. No create click, no save.
+  await page.goto('/want-list');
+  await expect(page).toHaveURL(/\/want-list$/);
+
+  const after = await db.execute(sql`SELECT count(*)::int AS n FROM artists WHERE name = ${artist}`);
+  expect(
+    (after.rows[0] as { n: number }).n,
+    `A36: arriving at the form with ?artist=${artist} must not create an artists row`,
+  ).toBe(0);
 });
