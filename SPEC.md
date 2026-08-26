@@ -922,12 +922,19 @@ Both were specified in §9.1 and are not scored. Each is recorded with what it n
 
   **MEASURED, correcting an earlier estimate (A41, 2026-08-26).** The first two runs to record tokens, both six suggestions, both `end_turn`:
 
-  | run | input | output | headroom at 4,000 |
-  |---|---|---|---|
-  | first | 1,603 | **526** | 7.6× |
-  | second | 1,738 | **1,210** | **3.3×** |
+  | run | | input | output | headroom at 4,000 |
+  |---|---|---|---|---|
+  | 18:42 | pre-A41 | 1,603 | **526** | 7.6× |
+  | 19:10 | pre-A41 | 1,738 | **1,210** | 3.3× |
+  | 19:50 | **post-A41** | 1,886 | **1,736** | **2.3×** |
 
-  **Reason length varies 2.3× run to run, unprompted.** The earlier figure — "roughly 2.5× headroom" — was extrapolated from a single sample by assuming one representative reason length, and a single sample cannot bound variance. The number to carry forward is **3.3× on an observed verbose run**, not 2.5× on a hypothesised one; six suggestions is comfortable at both observed lengths, and the VARIANCE is the thing to watch as the collection grows. **So truncation becomes implausible rather than impossible**, the `cut` failure path stays, and its message stays accurate for the case where it genuinely happens.
+  **Reason length varies 3.3× across three runs of the same six suggestions, unprompted.** The original figure — "roughly 2.5× headroom" — was extrapolated from a single sample by assuming one representative reason length, and **a single sample cannot bound variance**. The observed worst case has since passed under it.
+
+  **A41 plausibly raised output, and the mechanism is legible:** a reason grounded in a specific owned title ("*Bitches Brew* is on your shelf, and this is the quieter session that opened the door it walked through") is simply longer than an ungrounded one. That is the feature working — the reasons are better — and it costs tokens.
+
+  **Input is NOT the concern and the measurement settles it.** Owned titles added **148 tokens for 17 records**, which extrapolates to roughly 1,700 at 200 records — against outputs already reaching 1,736. A38's finding holds: the pressure is entirely output-side.
+
+  **The number to carry forward is 2.3×**, and the trend across three runs is one direction. Six suggestions is comfortable at every observed length; a further doubling of reason length would not be. **What to watch is output per suggestion, not the count** — and `llm_requests` now records it on every run, so the trend is queryable rather than anecdotal. **So truncation becomes implausible rather than impossible**, the `cut` failure path stays, and its message stays accurate for the case where it genuinely happens.
 
 - **Rate limit to 10 requests/hour, enforced server-side against `llm_requests` (§4.3)** — never trusted from the client, and shared with §10b's snippet since both spend the same account. Exhaustion is a legible refusal naming when capacity returns, not a 500 and not silence: an exhausted quota is a fact the app knows, and reporting it as an internal error sends the reader to application logs for something the app could have said. Never call this on page load — user-initiated only.
 - **The last result is persisted for display, and re-asking always costs a call (A39, amended 2026-08-26).** This clause previously read "results are ephemeral (not persisted)", with no reasoning attached, and its own sentence paired ephemerality with the add-to-want-list action — which suggests the concern was that **a suggestion must never become a row in the collection**. That concern is untouched here and is enforced by the bullet below: the action still only prefills a form.
