@@ -18613,3 +18613,78 @@ exist. **If that entity arrives, a dismissal has somewhere real to attach and th
 string-matching problem dissolves.** Two features wanting the same missing entity
 is also what would justify building it, per A40's own trigger.
 
+
+---
+
+## Finding 3 built — the model's reason survives the hop, attributed and separable
+
+**2026-08-26.** Adam read why a record was suggested, clicked through, and
+arrived at a blank form with nothing explaining why he was there. §9.1's reasons
+DO render on that page — but only when regenerated from an `artistId`, which a
+§9.2 suggestion of a new artist never has.
+
+### Read, never regenerated — and that is the rule entry made concrete
+
+§9.1's reasons are DERIVED by walking `artist_influences` and
+`artist_memberships`; §9.2's is READ from A39's store. **Two reasons, two
+sources, two kinds of claim**, and the rule entry ("two things that look like the
+same field are not the same kind of claim") bound this unit to keep them apart.
+
+So the model's reason renders in its own block, attributed by name, italic,
+behind its own dashed rule — **the same treatment §12 step 14c gives contributor
+notes and §7.8 gives a generated snippet**, and for the same reason: rendering it
+through §9.1's "Suggested because:" block would give a model's assertion the
+standing of a computed fact.
+
+### The stale case is a CONSEQUENCE, and the code says so
+
+**A39 keeps ONE analysis.** So a reason exists for suggestions from the current
+analysis and never for older ones — a consequence of a decision made in a
+different unit, which Adam asked be noted in the code rather than only handled,
+so the next reader finds the connection rather than suspecting a bug. It is
+written at `reasonFor`'s docblock and again at the call site.
+
+**Null renders NOTHING** — not "no reason available", per Adam: *"a blank space
+where a reason sometimes appears is fine; a 'no reason available' message is
+worse, because it draws attention to a gap I would otherwise not notice and
+cannot act on."* **Mutation-verified**: rendering the apology fails the test.
+
+**Matched on artist AND title, never artist alone.** A29g welcomes a different
+record by an owned artist, so one artist can appear across analyses with
+different titles — returning the artist's reason for the wrong record would
+attribute to the model something it said about another album.
+
+### THE FINDING: a single-row feature meets a parallel harness
+
+Written as two specs, they **passed serially and failed together.**
+`gap_analysis_results` holds ONE row by design (A39), `fullyParallel: true`, and
+the second test saw the first's row.
+
+**Not a defect in either — the feature's single-row property meeting the
+harness.** And the fix is not `--workers=1` on a suite that is parallel by
+design; it is to stop two tests sharing one global row. Merged into one test with
+two phases.
+
+**The general form, worth carrying:** a test that seeds a table the FEATURE
+guarantees holds one row cannot run beside another that does the same. Global
+singletons in the schema are global singletons in the test database, and
+`fullyParallel` makes that visible immediately rather than as a late-run flake —
+**which is the better failure**, because it fails deterministically and names
+itself.
+
+**Verified on both projects**: 26 passed in parallel after the merge.
+
+### Verification
+
+- Unit **3068 passed**, 1 skipped. Typecheck, lint, build clean.
+- E2E **419 passed, 1 failed**. The failure is `record-form.spec.ts:456` with
+  **`ECONNRESET` on an API request** — a transport drop rather than an assertion
+  failure, passing in isolation, in a spec with zero references to anything this
+  unit touches. A new shape in the moving-red family: 1093, wall-scene 449,
+  record-detail 395/423, lookup-flows 1574, and now a connection reset. **Five
+  specs, one late-in-run signature**, which continues to argue for a single
+  harness cause rather than five flaky tests.
+- Mutation-verified: the apology-on-miss fails; the seeded-reason path is real.
+- **No schema change** — A39's store already held everything this needed, which
+  is why finding 3 was ordered after finding 4.
+

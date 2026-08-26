@@ -653,3 +653,90 @@ test('a prefill alone creates NOTHING — asserted against the database, not the
     `A36: arriving at the form with ?artist=${artist} must not create an artists row`,
   ).toBe(0);
 });
+
+/**
+ * SPEC.md §9.2 — the model's reason survives the hop to the want-list form.
+ *
+ * **Finding 3, from Adam's real use:** he read why a record was suggested, then
+ * arrived at a blank form with nothing explaining why he was there.
+ *
+ * **Seeded into the store directly rather than stubbed**, and that is
+ * deliberate: the page reads A39's store SERVER-SIDE, so `page.route` is not in
+ * the request path — stubbing would test nothing, which is the hollow-test
+ * mistake this file's A39 spec already made once.
+ */
+const AJA = {
+  artist: 'Steely Dan',
+  title: 'Aja',
+  reason: 'Gaucho is on your shelf, and this is the record it was chasing.',
+  genre: 'Jazz Rock',
+};
+
+test('the model\'s reason arrives with the suggestion, and is absent when superseded', async ({
+  page,
+}) => {
+  /*
+    **One test, two phases, deliberately.** `gap_analysis_results` holds ONE row
+    by design (A39: the screen shows the last answer, a superseded one is
+    debris), so two specs seeding it would contend under `fullyParallel` — and
+    they did: split across two tests they passed serially and failed together,
+    the second seeing the first's row.
+
+    That is the FEATURE's single-row property meeting the harness, not a defect
+    in either. The honest fix is not `--workers=1` on a suite that is parallel by
+    design; it is to stop two tests sharing one global row.
+  */
+  const db = getTestDb();
+
+  // --- phase 1: the reason is there, attributed ---
+  await db.execute(sql`DELETE FROM gap_analysis_results`);
+  await db.execute(
+    sql`INSERT INTO gap_analysis_results (suggestions, dropped)
+        VALUES (${JSON.stringify([AJA])}::jsonb, 0)`,
+  );
+
+  await login(page);
+  const url = `/want-list/new?artist=${encodeURIComponent(AJA.artist)}&title=${encodeURIComponent(AJA.title)}`;
+  await page.goto(url);
+
+  const reason = page.getByTestId('model-reason');
+  await expect(reason).toBeVisible();
+  await expect(reason).toContainText('Gaucho is on your shelf');
+
+  /*
+    **Attributed, and separable.** §9.1's reasons render on this same page from a
+    computation over the user's own data; this is a model's assertion. Reading
+    one as the other is the failure the rule entry in NOTES names, so the
+    attribution is asserted rather than assumed.
+  */
+  await expect(reason).toContainText('Why Claude suggested this');
+  await expect(reason).toContainText('not a fact this app checked');
+
+  // --- phase 2: superseded, so nothing at all ---
+  /*
+    A39 keeps ONE analysis, so a reason exists for suggestions from the current
+    one and never for older ones — a consequence of a decision made in another
+    unit, not a bug here.
+  */
+  await db.execute(sql`DELETE FROM gap_analysis_results`);
+  await db.execute(
+    sql`INSERT INTO gap_analysis_results (suggestions, dropped)
+        VALUES (${JSON.stringify([{ artist: 'Can', title: 'Tago Mago', reason: 'r', genre: 'Krautrock' }])}::jsonb, 0)`,
+  );
+
+  await page.goto(url);
+
+  // The form is fully usable; only the reason is absent.
+  await expect(page.getByLabel('Title')).toHaveValue('Aja');
+  await expect(page.getByTestId('model-reason')).toHaveCount(0);
+
+  /*
+    **And it says nothing ABOUT the absence** — a "no reason available" line
+    would draw attention to a gap the reader would not otherwise notice and
+    could not act on.
+  */
+  const body = await page.locator('main').innerText();
+  expect(body).not.toMatch(/no reason|unavailable|could not find|not available/i);
+
+  await db.execute(sql`DELETE FROM gap_analysis_results`);
+});

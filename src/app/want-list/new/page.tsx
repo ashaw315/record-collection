@@ -3,6 +3,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { WantListForm } from '../WantListForm';
 import { isUuid } from '@/lib/api/errors';
 import { suggestions } from '@/lib/db/queries/suggestions';
+import { reasonFor } from '@/lib/db/queries/gap-analysis';
 import { loadReferenceData } from '@/app/records/reference';
 import { loadDiscogsPrefill } from '@/app/records/discogs-prefill';
 import { toDiscogsId } from '@/lib/discogs/fields';
@@ -117,6 +118,26 @@ export default async function NewWantListItemPage({
   const unmatchedArtist =
     suggestedArtistName !== undefined && matchedByName === undefined ? suggestedArtistName : null;
 
+  /**
+   * §9.2's reason for THIS suggestion, read from A39's store.
+   *
+   * **Read rather than regenerated, and the distinction is the point.**
+   * `suggestionReasons` above are §9.1's, DERIVED from `artist_influences` and
+   * `artist_memberships` — a computation that cannot run for an artist with no
+   * row and no edges, which is exactly what an LLM suggestion of a new artist
+   * is. Two reasons, two sources, two kinds of claim.
+   *
+   * **Null is the common case and it is a CONSEQUENCE, not a bug.** A39 keeps
+   * ONE analysis — the last — so a reason exists for suggestions from the
+   * current analysis and never for older ones. Rendered as nothing at all: a
+   * "no reason available" line would draw attention to a gap the reader would
+   * not otherwise notice and could not act on.
+   */
+  const modelReason =
+    suggestedArtistName === undefined || suggestedTitle === undefined
+      ? null
+      : await reasonFor(suggestedArtistName, suggestedTitle);
+
   return (
     <>
       <AppHeader />
@@ -151,6 +172,34 @@ export default async function NewWantListItemPage({
                 <li key={reason}>{reason}</li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {/*
+          **§9.2's reason, and it is kept STRUCTURALLY apart from §9.1's block
+          above.** They read as the same kind of sentence in the same place and
+          they are not: §9.1's is computed from the user's own data and is
+          checkable; this is a model's assertion about music and is not.
+          Rendering this through that block would give an assertion the standing
+          of a computed fact — the failure §7.8 avoids for the snippet and §12
+          step 14c avoids for contributor notes.
+
+          So it is attributed by name, italic, behind its own dashed rule — the
+          same treatment the evidence panel gives notes, and for the same reason.
+
+          Nothing here reaches the saved row: `best_dig_notes` means a pressing
+          to hunt for (CLAUDE.md §8), `target_pressing` is a FK the model cannot
+          supply, and a reason is true only at the moment it was given.
+        */}
+        {modelReason !== null && (
+          <div
+            data-testid="model-reason"
+            className="mb-4 border-t border-dashed border-border pt-2"
+          >
+            <p className="text-xs font-medium text-muted-foreground">
+              Why Claude suggested this — the model&rsquo;s reasoning, not a fact this app checked
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground italic">{modelReason}</p>
           </div>
         )}
 

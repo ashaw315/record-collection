@@ -4,6 +4,7 @@ import { getTestDb, truncateAll, closeTestDb } from '../../helpers/db';
 import { artists, gapAnalysisResults, records } from '@/db/schema';
 import {
   latestGapAnalysis,
+  reasonFor,
   storeGapAnalysis,
 } from '@/lib/db/queries/gap-analysis';
 
@@ -170,5 +171,81 @@ describe('the store keeps only what it needs', () => {
       .orderBy(desc(gapAnalysisResults.askedAt));
 
     expect(rows).toHaveLength(1);
+  });
+});
+
+/**
+ * SPEC.md §9.2 — the model's reason, retrievable for the want-list form.
+ *
+ * **Finding 3, from Adam's real use.** He read why a record was suggested, then
+ * arrived at `/want-list/new` with the dig fields empty and nothing explaining
+ * why he was there. §9.1's reasons ARE shown on that page — but only when
+ * regenerated from an `artistId`, which a §9.2 suggestion of a new artist never
+ * has.
+ *
+ * **Nothing here reaches the `want_list` row**, and that is unchanged: the three
+ * arguments at `want-list/new/page.tsx` stand — `best_dig_notes` means something
+ * else (CLAUDE.md §8), `target_pressing` is a FK the model cannot supply, and a
+ * reason is true only at a moment.
+ */
+describe('the stored reason for one suggestion', () => {
+  const SUGGESTION = {
+    artist: 'Steely Dan',
+    title: 'Aja',
+    reason: 'Gaucho is on your shelf, and this is the record it was chasing.',
+    genre: 'Jazz Rock',
+  };
+
+  it('finds the reason for a suggestion in the stored analysis', async () => {
+    await storeGapAnalysis({ suggestions: [SUGGESTION], dropped: 0 });
+
+    expect(await reasonFor('Steely Dan', 'Aja')).toBe(SUGGESTION.reason);
+  });
+
+  /**
+   * Matched case- and whitespace-insensitively, because the value arrives back
+   * through a URL the user may have edited and Discogs-adjacent titles vary in
+   * casing. Fails against a strict equality match.
+   */
+  it('matches without being defeated by casing or spacing', async () => {
+    await storeGapAnalysis({ suggestions: [SUGGESTION], dropped: 0 });
+
+    expect(await reasonFor('  steely dan ', 'AJA')).toBe(SUGGESTION.reason);
+  });
+
+  /**
+   * **The stale-store case, and it is a CONSEQUENCE rather than a bug** (A39).
+   * That unit decided the store keeps ONE analysis — the last — because the
+   * screen shows the last answer and a superseded one is debris.
+   *
+   * So a reason exists for suggestions from the CURRENT analysis and never for
+   * older ones. Fails against a lookup that throws, or that returns some other
+   * suggestion's reason.
+   */
+  it('returns null for a suggestion from a superseded analysis', async () => {
+    await storeGapAnalysis({ suggestions: [SUGGESTION], dropped: 0 });
+    // A newer analysis supersedes it — A39 keeps one.
+    await storeGapAnalysis({
+      suggestions: [{ artist: 'Can', title: 'Tago Mago', reason: 'r', genre: 'Krautrock' }],
+      dropped: 0,
+    });
+
+    expect(await reasonFor('Steely Dan', 'Aja')).toBeNull();
+  });
+
+  it('returns null when nothing has ever been asked', async () => {
+    expect(await reasonFor('Steely Dan', 'Aja')).toBeNull();
+  });
+
+  /**
+   * **The artist alone is not enough.** A29g welcomes a different record by an
+   * owned artist, so one artist can appear across analyses with different
+   * titles — returning the artist's reason for the wrong record would attribute
+   * to the model something it said about a different album.
+   */
+  it('does not return one record\'s reason for another by the same artist', async () => {
+    await storeGapAnalysis({ suggestions: [SUGGESTION], dropped: 0 });
+
+    expect(await reasonFor('Steely Dan', 'Gaucho')).toBeNull();
   });
 });
