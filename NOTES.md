@@ -16397,6 +16397,12 @@ different act — but it has to be argued in writing, which is what this entry i
   it; the canvas overshooting the fold on a short viewport; and the pulled
   record's own faces dimming with the wall. Every one invisible to the suite.
 
+- **2026-08-25, again, hours later**: step 14c shipped with 3019 unit tests and
+  409 E2E passing. Adam ran ONE lookup on a real record and found a limit none
+  of them could express — the panel resolves to a RELEASE, not a stamper, and
+  says nothing about which. Not a defect; a boundary the spec never named. See
+  the entry at the end of this file.
+
 **What is still unproven, and it is everything behind the password:** image
 upload (Blob), the lineup walk (MusicBrainz contact), suggestions and snippets
 (Anthropic). Each fails at point of use rather than at boot, so each is
@@ -16814,3 +16820,98 @@ which is why the precondition has to be a TEST and not a careful eye.
 entry, so each guards two mutations rather than resembling one. Mutation-verified
 after rewriting: adding `.trim()` and whitespace collapse to the panel fails all
 six.
+
+---
+
+## The panel resolves to a RELEASE, not to a stamper — the limit named on first real use
+
+**2026-08-25, found by Adam using the app on a real record**, hours after step
+14c shipped. The standing conclusion holds again: the highest-yield check is
+Adam using the thing, and this is a boundary no test would have surfaced because
+every test asserted the feature does what it claims — which it does.
+
+**The lookup that found it.** Deadwax reads `EKS-75005-A-1 CTH`. Two candidates:
+
+- **card 1** — CSM / Santa Maria, `-A-2` stamper. **Not his.**
+- **card 2** — Terre Haute. Its *"Runout side A, variant 3"* reads
+  `o T 1 EKS-75005-A-1 CTH D`. **Matches.** The 1855 Broadway rim text in its
+  notes corroborates independently.
+
+**The feature worked exactly as specified**: two candidates the search could not
+separate, resolved by the user's eye against the object, with the app asserting
+nothing. Plant and stamper both discriminated, and a second field in the notes
+agreed.
+
+### The limit
+
+**Card 2 lists SIX runout variants for one release.** So a match tells you WHICH
+RELEASE you hold and not WHICH STAMPER — the variant that matched is one of six
+Discogs files under a single release id.
+
+**This is Discogs' data model, not a defect here.** A release groups pressings
+that share a catalogue entry; stampers within it are recorded as variants of the
+same identifier. The panel displays what Discogs holds, so it inherits that
+granularity exactly. There is nothing to fix in `pressingEvidence`.
+
+**It is the common case, not an oddity — measured across the committed
+fixtures**, and this is what makes it worth an entry rather than a passing note:
+
+| Fixture | Runout identifiers |
+|---|---|
+| `release-detailed` | **8** (4 variants × 2 sides) |
+| `release-discharge-hear-nothing` | **8** |
+| `release-no-year` (Carpenters) | **6** |
+| collision pair A / B | 2 each |
+
+**Three of five committed release fixtures carry multiple variants, and the
+panel has been rendering them since it shipped.** Nothing in SPEC §12 step 14c,
+the tests, or the UI copy says what a variant match does and does not establish.
+The tests all pass because they assert the panel DISPLAYS what Discogs holds —
+true, and silent about what the display MEANS.
+
+### Why this matters more than it first reads
+
+**CLAUDE.md §8: "A pressing is not an album."** Step 14c narrowed the question
+from "which album" to "which release", which is a real advance — the whole
+measured case. But §8's distinction has a further level the app now sits one
+step above: **a stamper is not a release.** Two records off different stampers
+of one release are different objects, and a collector hunting a first stamper
+cares about exactly that difference.
+
+**The honest reading of what shipped:** verification-by-display resolves the
+level the SEARCH could not — release, from a set of look-alike candidates. It
+does not resolve the level BELOW that, and it currently does not say so. Same
+family as the identical-row collapse: the app is at its most useful when it
+names the limit it has reached instead of letting a match imply more precision
+than it carries.
+
+### What is NOT decided, and must not be smuggled in
+
+**No change to the panel yet.** Three options exist and they are not equivalent:
+
+1. **Say nothing** — defensible. A user reading six labelled variants can see
+   for themselves that they are variants; Adam did, unprompted, on first use.
+2. **Label the limit** — one line near the runouts saying a match identifies the
+   release, and that variants are stampers within it. Cheap, honest, and the
+   same shape as the collapse message.
+3. **Mark the matching variant** — NO. That requires the app to decide which
+   string matches, which is machine-matching messy transcriptions: the research
+   project §12 step 14c exists to skip, arriving through the back door with a
+   friendlier name.
+
+Option 3 is ruled out on the reasoning already recorded. **Between 1 and 2 is
+Adam's call**, and it is a UI-copy decision rather than a defect fix.
+
+**Trigger: the next lookup unit, or a lookup where the variant count misleads
+rather than informs** — a match read as more precise than it is, which is the
+failure this entry exists to make visible in advance.
+
+### The general form
+
+> A feature that narrows a question by one level should say which level it
+> reached. Every test here asserted the panel shows what Discogs holds — all
+> true, all silent on what showing it ESTABLISHES. The gap between "displays
+> correctly" and "means what the reader takes it to mean" is not test-shaped,
+> and the only instrument that has ever found it in this project is someone
+> using the app with the object in their hand.
+
