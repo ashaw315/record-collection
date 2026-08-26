@@ -17245,3 +17245,55 @@ boundary, a separate structural field — not merely different content.
 renders the model's reason must be attributed and visually separable in the same
 way the snippet is, so it cannot later be read as something the app worked out.
 
+
+---
+
+## A36 — inline create on the want-list form. The clause forbade a PREFILL, not a button.
+
+**Amended 2026-08-26 (Adam), before the code, per the standing rule.** SPEC §10's
+want-list row previously read:
+
+> Reference rows are matched, never created: a prefill is not a commitment, and
+> an artist created for an abandoned form is debris nothing points at.
+
+Now:
+
+> **No reference row is created FROM A PREFILL** (A36): a prefill is not a
+> commitment, and an artist created for an abandoned form is debris nothing
+> points at. Inline create is available on this form as it is on the record form
+> — it creates nothing until a deliberate click, so the commitment is the user's
+> rather than the form's.
+
+**The clause's own stated reason decides it.** "A prefill is not a commitment"
+and "an artist created for an abandoned form" are both about a row appearing
+WITHOUT the user asking. `InlineCreate` creates nothing until a deliberate click,
+so the reason is satisfied and the literal reading was over-broad.
+
+**And the literal reading made §10 contradict itself**, since the same section
+mandates "Inline create for artist/label/store/tag". A reading under which one
+sentence forbids what another requires is the reading to suspect.
+
+### The ambiguity was found by a DEAD END, not by reading
+
+**Worth its own line, because it is the second time this week.** Nobody
+mis-implemented this clause: `WantListForm`'s bare `<select>` is a faithful
+reading of what it said, and it survived review, R5, R6 and every full-suite run.
+What exposed it was Adam clicking "Add to want list" on a Throbbing Gristle
+suggestion and hitting a wall.
+
+The other instance: §12 step 14c's variant limit, where the panel displayed six
+runout variants correctly and said nothing about what a match established — also
+invisible to 3023 tests, also found by one real use.
+
+**The shape:** a clause that admits two readings does not announce itself. Both
+readings produce working, testable, reviewable code, and the tests pin whichever
+was implemented. **The disambiguating instrument is someone trying to do the
+thing the clause is about** — which is the standing conclusion arriving from a
+new direction: not "manual QA finds bugs" but "manual QA finds AMBIGUITY, and
+ambiguity is invisible to a suite by construction."
+
+**The check that falls out**, cheap and applicable at spec-reading time: when a
+rule states a REASON, test the literal reading against that reason. If the
+reason is narrower than the rule, the rule is probably over-broad — and the
+place it will bite is wherever a user first tries to act on it.
+
