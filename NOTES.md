@@ -17910,3 +17910,91 @@ against the spec, not by reading it.** A36's ambiguity surfaced when a real user
 hit a dead end; this omission surfaced when a column had to be added next to it.
 A spec is checked by use, like everything else here.
 
+
+---
+
+## R6 NOTE: this project deploys on push and migrates by hand, so every schema unit opens a window
+
+**Found 2026-08-26 during A38, and recorded as a structural gap rather than as a
+mistake in that unit.** Adam's framing: *"'remember to migrate' is not a
+mechanism."*
+
+### What happened, and what it would have done
+
+A38 added three columns and the route began writing them. Push → Vercel builds
+and deploys on its own → **production ran the new code against the old schema.**
+Measured, not inferred:
+
+    production llm_requests columns: id, kind, requested_at, completed_at
+    output_tokens present: false
+
+`completeLlmRequest` now UPDATEs `input_tokens`, `output_tokens` and
+`stop_reason`. Against that schema it is a `42703` — so the next `/suggestions`
+would have **claimed a slot, called Anthropic, been billed, and then thrown**,
+losing the answer after paying for it. The 500 would have named a column, which
+is at least legible, but the request was already spent.
+
+**Closed in one operation** (Adam's call — three nullable ADD COLUMNs beats a
+rollback-and-redeploy, which is three operations against production to avoid a
+risk that only lands on a click in the next two minutes):
+
+    Migration state consistent: 18 of 18 migrations applied.
+    output_tokens  integer nullable=YES default=NONE
+    input_tokens   integer nullable=YES default=NONE
+    stop_reason    text    nullable=YES default=NONE
+    existing rows: 7, with tokens: 0
+
+Per step 16's rule, **`db:verify:state`'s output is the evidence, not
+`db:migrate`'s exit code** — and the columns were then asserted directly rather
+than inferred from either.
+
+### The gap is structural, and it has been there since step 1
+
+- **Code deploys automatically**, on push, via the Git integration.
+- **Schema migrates manually**, by someone running `db:migrate` against
+  `.env.local`.
+
+Nothing sequences them. **Every schema change therefore has a window where the
+deployed code is ahead of the deployed schema**, bounded only by how quickly a
+person remembers.
+
+**It has not bitten before because no earlier schema change was on a hot path.**
+Steps 2, 8, 9, 13c-1 and 15 added tables and columns the app wrote to only after
+the feature shipped, or read defensively. A38 is the first where the new code
+writes the new column on **the very next user action**, with a billed API call
+already spent before the write.
+
+### Two candidate fixes, and they are not equivalent
+
+1. **Migrate before push.** Ordering by discipline. Cheap, correct when
+   followed, and **it is the thing that just failed** — it is a habit, not a
+   mechanism, which is exactly Adam's objection. It also inverts badly for a
+   DESTRUCTIVE migration, where schema-first breaks the running code instead.
+2. **Make the code tolerate the column's absence.** Mechanical rather than
+   procedural, and it survives someone forgetting. Costs a real thing: the app
+   carries a branch for a state that should not exist, and a write that silently
+   no-ops when a column is missing is the absent-versus-unknown failure this
+   project keeps naming — a diagnostic that quietly records nothing is how A38's
+   own defect started.
+
+**A third exists and is probably the honest one: make the DEPLOY apply the
+migration**, so the two cannot separate. Vercel supports a build-time command,
+and `db:verify:state` already exists to assert the result rather than trust an
+exit code. The cost is that a bad migration then fails the deploy — which is
+arguably correct, since the alternative is a deploy that succeeds into a broken
+schema.
+
+**Not decided, and not built here.** It is deploy-path work, which is step 16's
+territory, and it wants the destructive-migration case thought through rather
+than the additive one alone. **Trigger: the next schema change, or R7.**
+
+### The narrower rule, usable immediately and free
+
+**A schema unit is not done when the migration runs locally. It is done when the
+migration has run on the database the deployed code talks to** — and for this
+project the deploy happens on push, so **the migration must be applied in the
+same session as the push, verified by `db:verify:state`, not left for later.**
+That is what NOTES' step-2 rule ("a schema unit is not done until `db:migrate`
+has run against NEON") already says; what it did not say is that the deploy does
+not wait for it.
+
