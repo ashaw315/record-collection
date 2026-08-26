@@ -162,12 +162,70 @@ describe('the prompt is the feature', () => {
    * actually reads that way — that is judgeable only by running one against a
    * real collection. It pins the instruction, not the output.
    */
+  /**
+   * **A29g's defect, found by Adam on a real run and fixed here (2026-08-26).**
+   *
+   * The prompt's example sentence used to be `"You own Miles Davis but not this
+   * one"`, and the model reproduced its form faithfully — producing *"You own
+   * one Miles Davis but not the record that founded the Fusion lineage"* about
+   * a record he owns.
+   *
+   * **"but not X" asserts non-ownership of a specific record, and the payload
+   * cannot support that**: owned artists are sent as a name, a count and
+   * genres, with no titles (A29g). The old wording — "a different record by an
+   * artist they own" — was true BY CONSTRUCTION; the example replaced it with
+   * the first falsifiable claim in that sentence.
+   *
+   * **This test pins TRUTHFULNESS where the one below pins tone.** A tone test
+   * cannot catch a truth defect, which is exactly why the defect shipped.
+   *
+   * Fails against any example or instruction telling the model to say what is
+   * NOT owned.
+   */
+  it('never invites a claim about which records are missing', () => {
+    const prompt = buildPrompt(SUMMARY);
+
+    /*
+     * Checked on the EXAMPLE SENTENCE rather than the whole prompt, because the
+     * prohibition necessarily quotes the phrase it forbids — naming the exact
+     * shape is what makes a rule concrete for a model, and a test that banned
+     * the string outright would forbid explaining the rule. Same shape as the
+     * `.env.test` comment that tripped its own credential guard (A39).
+     *
+     * The example is what the model imitates, so the example is what must be
+     * clean. Fails against restoring "You own Miles Davis but not this one".
+     */
+    const example = prompt.match(/"[^"]*is the/)?.[0] ?? '';
+
+    expect(example, 'the sentence the model copies must assert nothing unowned').not.toMatch(
+      /but not/i,
+    );
+    expect(example).toMatch(/you own/i);
+  });
+
+  /**
+   * And says so as a RULE, not merely by omission — the model needs to be told,
+   * because "make ownership the reason" otherwise reads as licence to reason
+   * about what is absent.
+   */
+  it('tells the model it cannot know which records are owned', () => {
+    const prompt = buildPrompt(SUMMARY);
+
+    expect(prompt).toMatch(/never (say|claim|assert)|do not (say|claim|assert)/i);
+    expect(prompt).toMatch(/which records|what they do not own|titles/i);
+  });
+
   it('asks for the owned-artist disclosure to read as a reason, not an admission', () => {
     const prompt = buildPrompt(SUMMARY);
 
     expect(prompt).toMatch(/reason to want it|why it belongs|the point|makes the case/i);
-    // The example phrasing is what makes the instruction concrete for the model.
-    expect(prompt).toMatch(/own .*but not this one|but not this record/i);
+    /*
+     * The example phrasing is what makes the instruction concrete. Updated
+     * 2026-08-26: it used to assert "own … but not this one", which was the
+     * defect — the example now leads with what IS owned and spends the rest on
+     * why the record matters.
+     */
+    expect(prompt).toMatch(/you own [^"]*, and this is/i);
   });
 
   /**

@@ -18130,3 +18130,112 @@ now lookup-flows 1574. Every one that was not a real defect shares the
 late-in-run timeout shape. That is four different specs exhibiting one signature,
 which argues for a single harness cause rather than five flaky tests — the
 existing accumulation trigger stands.
+
+---
+
+## A29g DEFECT: my copy example invited a claim the payload cannot support
+
+**2026-08-26, found by Adam on a real run.** *"You own one Miles Davis but not
+the record that founded the Fusion lineage"* — and he owns Bitches Brew.
+
+### The diagnosis: the prompt invites it, in my own example sentence
+
+Adam asked which of two it was — the prompt inviting the claim, or the model
+inferring it from being told to make ownership the reason. **It is the first, and
+the invitation is a sentence I wrote:**
+
+    "You own Miles Davis but not this one" is the point, not an admission.
+
+**"but not this one" asserts non-ownership of a specific record.** The model
+reproduced the template's FORM faithfully. This is not a hallucination or an
+over-reach; it is the instruction being followed.
+
+**Confirmed the payload genuinely withholds titles**, so the claim is
+unsupportable rather than merely unverified: owned artists render as
+`- Miles Davis (2 records; Jazz, Fusion)`. No titles, exactly as A29g specified.
+
+### The two reason lines from one run, which ARE the diagnosis
+
+    Discharge:   "You own Discharge BUT THIS IS the UK82 album that defined…"
+    Miles Davis: "You own one Miles Davis BUT NOT THE RECORD that founded…"
+
+Both follow the template. The first asserts nothing about what is unowned and is
+true by construction. The second asserts a title is missing and is false. **One
+template, two shapes, and my example licensed the wrong one.**
+
+### The regression this was, stated plainly
+
+**The old wording was true BY CONSTRUCTION and the new one is falsifiable.** "A
+different record by an artist they own" claims only that the ARTIST is owned —
+which the payload supports. My change, made to fix A29g's apologetic tone,
+introduced the first assertion in that sentence that could be false. Adam's
+framing is exact: *"my copy request introduced a falsifiable assertion into a
+sentence that previously made none."*
+
+**And it passed every test**, because the tests pin the INSTRUCTION and its
+tone — `asks for the owned-artist disclosure to read as a reason, not an
+admission` — never whether the instructed sentence is checkable against the
+payload. **A tone test cannot catch a truth defect.**
+
+### Frequency: 1 of 6, measured rather than assumed
+
+Read from A39's stored analysis — the persistence feature earning itself back on
+its first day:
+
+| result | count |
+|---|---|
+| already owned (a defect) | **1 / 6** — Miles Davis, *Bitches Brew* |
+| same artist, different record (A29g's intent) | 1 / 6 — Discharge |
+| new artist | 4 / 6 |
+
+**One data point, so this is not yet a rate.** But the structural argument does
+not need one: the model is asked to LEAD with ownership reasoning while being
+unable to check ownership at record level, which is a standing invitation to
+guess rather than an occasional slip. On a 17-record collection a sixth of the
+answer was wasted.
+
+### What is NOT the fix, and what is
+
+**Not a copy fix alone.** The honest sentence must read as a reason to buy while
+asserting nothing about titles — because titles are exactly what §9.2
+deliberately withheld. The Discharge line shows the shape already works:
+**assert what is owned, then say why THIS record matters.** Never "but not X".
+
+**A29g's declined trade is now worth reopening if this recurs.** A29g refused to
+send owned titles to keep §9.2's disclosure narrow, and recorded that refusal so
+it would not be re-proposed as an obvious gap. That reasoning still stands — but
+it was made when the cost was "the model may repeat a record you own", not "the
+model asserts you lack a record you own". **Trigger: a second already-owned
+suggestion**, at which point the trade is between disclosure and accuracy rather
+than disclosure and tidiness.
+
+### The fix, and the test that should have existed
+
+    "You own Discharge, and this is the album that defined their scene" is the
+    point, not an admission.
+
+    NEVER say which records they do not own. You are told which ARTISTS they own
+    and never which titles, so any claim that a particular record is missing
+    from their shelves is a guess — and it is wrong often enough to matter. Name
+    what they own; say why THIS record earns its place. Do not write "but not
+    this one", "but not the record that…", or anything else asserting a specific
+    record is absent.
+
+**The example now asserts only what is owned**, and the shape is proven rather
+than hoped for — it is the Discharge line the model already produced correctly.
+
+**A new test pins TRUTHFULNESS where the old one pinned TONE.** `never invites a
+claim about which records are missing` checks the EXAMPLE SENTENCE, not the whole
+prompt, because the prohibition necessarily quotes the phrase it forbids —
+naming the exact shape is what makes a rule concrete for a model, and banning
+the string outright would forbid explaining the rule. **Same shape as the
+`.env.test` comment that tripped its own credential guard one unit earlier.**
+
+**Mutation-verified**: restoring `"You own Miles Davis but not this one"` fails
+both the truthfulness test and the tone test.
+
+**The rule worth carrying:** a test that pins how a sentence READS cannot catch
+whether it is TRUE. Tone and truth are different properties, and the tone test
+passed through the entire defect.
+
+Unit **3061 passed**. Prompt-only change: no route, no schema, no UI.

@@ -255,8 +255,33 @@ export function buildPrompt(summary: CollectionSummary): string {
      * is missing. A29g's disclosure requirement is unchanged, so nothing about
      * §9.2's honesty is traded; only the sentence the model writes.
      */
+    /*
+     * **The example is the load-bearing part, and the first version of it was
+     * the defect** (found by Adam, 2026-08-26). It read "You own Miles Davis
+     * but not this one" — and the model faithfully produced "You own one Miles
+     * Davis but not the record that founded the Fusion lineage" about a record
+     * he owns.
+     *
+     * "but not X" asserts non-ownership of a specific record, which THIS
+     * PAYLOAD CANNOT SUPPORT: the artists list carries a name, a count and
+     * genres, and no titles at all. The example licensed a claim the model had
+     * no way to check.
+     *
+     * So the example now asserts only what is owned and spends the rest of the
+     * sentence on why the record matters. That shape was already appearing in
+     * good output — "You own Discharge but this is the UK82 album that defined
+     * the scene" — so it is proven rather than hoped for.
+     */
     'When that is what you are doing, make it the REASON rather than a caveat:',
-    '"You own Miles Davis but not this one" is the point, not an admission.',
+    '"You own Discharge, and this is the album that defined their scene" is the',
+    'point, not an admission.',
+    '',
+    'NEVER say which records they do not own. You are told which ARTISTS they',
+    'own and never which titles, so any claim that a particular record is',
+    'missing from their shelves is a guess — and it is wrong often enough to',
+    'matter. Name what they own; say why THIS record earns its place. Do not',
+    'write "but not this one", "but not the record that…", or anything else',
+    'asserting a specific record is absent.',
     'Do not recommend anything already on their want list, which is listed',
     'with titles.',
     '',
