@@ -210,9 +210,18 @@ export const POST = withErrorHandling('api.suggestions.ai.POST', async () => {
       {
         error: {
           message: ranOutOfRoom
-            ? 'The suggestion service ran out of room before finishing its answer. ' +
-              'This used one of your ten hourly requests, and trying again will likely ' +
-              'stop at the same place.'
+            ? /*
+               * **Still accurate, and no longer the expected failure** (A37).
+               * The prompt now asks for at most six suggestions, so a request
+               * that still runs out of room did so writing unusually long
+               * reasons rather than too many suggestions — measured headroom is
+               * roughly 2.5x at six. A retry is therefore worth something here
+               * in a way it was not before the count, so the advice softens
+               * from "will likely" to "may".
+               */
+              'The suggestion service ran out of room before finishing its answer. ' +
+              'This used one of your ten hourly requests, and trying again may stop ' +
+              'at the same place.'
             : 'The suggestion service returned something we could not read. ' +
               'This used one of your ten hourly requests. Trying again may work.',
           code: 'LLM_UNREADABLE',

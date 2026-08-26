@@ -215,6 +215,28 @@ export function buildPrompt(summary: CollectionSummary): string {
     'band adjacent to several they own.',
     '',
     /*
+     * **A37: the count lives in the PROMPT** (SPEC §9.2, 2026-08-26).
+     *
+     * Measured rather than assumed: a real gap analysis over 17 records was
+     * truncated with `out_tokens=4000` against a 4000 ceiling and only 1,533
+     * input tokens, so the pressure is entirely output-side. With no count the
+     * model returns as many as it judges warranted — R5 measured 34 — and that
+     * grows with the collection, which is why raising `max_tokens` buys a few
+     * more suggestions and fails again later.
+     *
+     * A server-side slice was rejected by R5 for a reason that still holds: it
+     * discards output the account was already billed for.
+     *
+     * **"At most", never "exactly".** A quota to fill invites padding a short
+     * list with weak suggestions, which is output produced to satisfy a number
+     * rather than because the gap is real — the same failure shape as any
+     * fabricated field.
+     */
+    'Give AT MOST SIX suggestions, the six most worth their attention. Fewer is',
+    'correct when fewer are genuinely warranted — do not pad the list to reach',
+    'six. Keep each reason to one sentence.',
+    '',
+    /*
      * **R5's finding 3, decided at the ARTIST level, because that is the only
      * level the payload can express.** The artists section carries a name, a
      * count and genre names — no record titles — so "do not recommend anything

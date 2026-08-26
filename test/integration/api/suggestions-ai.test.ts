@@ -259,8 +259,17 @@ describe('why the response could not be read, and what the user is told', () => 
     expect(response.status).toBe(502);
     expect(body.error.message).toContain('ran out of room');
     expect(body.error.message).toContain('stop at the same place');
-    // The advice it must NOT give on this branch.
-    expect(body.error.message).not.toMatch(/may work/i);
+
+    /*
+     * **A37 softened this from "will likely" to "may"**, and the reason is a
+     * measurement rather than a preference. With at most six suggestions asked
+     * for, a response that still truncates did so writing unusually long
+     * reasons — roughly 2.5x headroom at six — so a retry is worth something
+     * here in a way it was not when the model returned 34 unbounded.
+     *
+     * The message stays for the genuine case; it is no longer the expected one.
+     */
+    expect(body.error.message).toContain('may stop at the same place');
   });
 
   /**

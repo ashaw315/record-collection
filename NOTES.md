@@ -17626,3 +17626,88 @@ is what the 1093 entry established — but it does mean **none of them is a
 deterministic break introduced by recent work**, which was the open question.
 The accumulation reading survives; the harness question stays open with its
 existing trigger.
+
+---
+
+## A37 — bound the count in the prompt. The log answered the scaling question.
+
+**2026-08-26.** The diagnostic unit built yesterday paid for itself on its first
+real failure: one log line confirmed the hypothesis AND chose between the three
+scaling shapes that were recorded as open.
+
+    [api.suggestions.ai.unreadable] reason=cut stop_reason=max_tokens
+    chars=3399 in_tokens=1533 out_tokens=4000 max_tokens=4000
+
+**Truncation confirmed** — `stop_reason=max_tokens`, `out_tokens` exactly at the
+ceiling. The hypothesis was right, and it is now measured rather than guessed.
+
+**And the input/output question the scaling entry said would decide it is
+answered: 1,533 input tokens for 17 records.** The summary is names, counts and
+labels, so it is cheap; the pressure is **entirely output-side**. Even at 200
+records the input would not be the problem.
+
+**That eliminates two of the three shapes.** Scoping by genre or by depth
+(options 2 and 3 in the scaling entry) reduce the INPUT, which was never the
+constraint. They may still be good features for other reasons — a narrower
+question is more actionable in a shop — but they do not fix this, and building
+them as a fix would have been the wrong tool aimed at a measured problem.
+
+**Raising `max_tokens` is also eliminated, and this is the useful part.** With no
+count the model returns as many suggestions as it judges warranted — R5 measured
+34 — and that number grows with the collection. A higher ceiling buys a few more
+suggestions and fails again at 40 records. **A count fixes it at any size.**
+
+### The number is SIX, and it is a product judgement
+
+Recorded with the same standing as A27's 2.0 and 1.5 link weights, which are
+also chosen rather than derived — that precedent is why this is written down as a
+judgement rather than presented as a result.
+
+**The reasoning, which is about reading rather than about fitting:** R5's run
+produced 34 suggestions and Adam read the first six. A gap analysis is a prompt
+for the next dig, not a catalogue. Six fills a phone screen without scrolling and
+is small enough that the sixth is still considered rather than skimmed.
+
+**Deliberately NOT chosen by what fits the ceiling.** ~34 would fit a raised
+ceiling; that is the wrong question. The count is set by what gets read, and the
+token saving is a consequence rather than the goal.
+
+**Revisit if the list is consistently too short** — a real signal, and the number
+is one line of prompt text.
+
+**"At most", never "exactly".** A quota to fill invites padding a short list with
+weak suggestions — output produced to satisfy a number rather than because the
+gap is real, which is the fabricated-field failure in a new place.
+**Mutation-verified**: changing the prompt to "exactly six… padding if needed"
+fails `states the count as a maximum, not a quota to fill`.
+
+### A bounded response CAN still truncate, and the copy says so honestly
+
+Adam asked this explicitly rather than letting the count be assumed to remove the
+failure mode. **It does not.** The count bounds how many suggestions are asked
+for, not how long each reason may be.
+
+Measured from R5's complete run: ~88 output tokens per suggestion, so six is
+~530. A model writing reasons **three times** longer than average still lands
+near 1,600 against 4,000 — roughly **2.5x headroom**.
+
+**So truncation goes from expected to implausible, not impossible.** The `cut`
+path stays, and its message stays accurate — but the advice softened from
+"trying again **will likely** stop at the same place" to "**may** stop at the
+same place", because with a bounded request a retry is now worth something in a
+way it was not when the model was returning 34 unbounded. The test asserts the
+softened wording, so the change is pinned rather than incidental.
+
+### Suite
+
+Unit **3035 passed**, 1 skipped. E2E **418 passed, 0 failed**, 20 skipped —
+green twice running now. Typecheck, lint, build clean.
+
+### Still unverified, and only Adam can
+
+Whether six is the right number, and whether the next gap analysis completes.
+The prompt change is pinned by tests; what the model DOES with it is judgeable
+only by running one. **Trigger: Adam's next /suggestions run** — which will also
+be the first to log `stop_reason=end_turn` and a real `out_tokens` under the
+count, the measurement that says how much headroom six actually leaves.
+

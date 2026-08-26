@@ -114,6 +114,37 @@ describe('the prompt is the feature', () => {
   });
 
   /**
+   * **A37 (2026-08-26): the prompt asks for a bounded number of suggestions.**
+   *
+   * Measured, not assumed. A real gap analysis over 17 records was truncated:
+   * `stop_reason=max_tokens out_tokens=4000 max_tokens=4000`, the ceiling hit
+   * exactly, with input only 1,533 tokens — so the pressure is entirely on
+   * output and a count fixes it at any collection size where raising the
+   * ceiling would not.
+   *
+   * Fails against a prompt with no count, which is what produced 34 suggestions
+   * on R5's smaller collection and the truncation on this one.
+   */
+  it('asks for a bounded number of suggestions', () => {
+    const prompt = buildPrompt(SUMMARY);
+
+    expect(prompt).toMatch(/\bsix\b|\b6\b/i);
+    expect(prompt).toMatch(/suggestion/i);
+  });
+
+  /**
+   * The count must be stated as a LIMIT rather than a target, so a collection
+   * with fewer real gaps than six is not padded to reach it. Inventing two
+   * weak suggestions to fill a quota is the same failure as the fabricated
+   * weight: output that looks considered and was produced to fill a slot.
+   */
+  it('states the count as a maximum, not a quota to fill', () => {
+    const prompt = buildPrompt(SUMMARY);
+
+    expect(prompt).toMatch(/at most|no more than|up to|fewer/i);
+  });
+
+  /**
    * **A29g's cost, addressed as copy rather than as a spec change** (Adam,
    * 2026-08-26, after reading a real suggestion).
    *
