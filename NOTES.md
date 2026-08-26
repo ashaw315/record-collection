@@ -17378,3 +17378,95 @@ logins. All share the late-in-run `login()` timeout shape, which the step 15
 diagnosis attributed to accumulation. **Worth treating as one question rather
 than three intermittents** when a harness unit next opens.
 
+
+---
+
+## LLM_UNREADABLE on a real gap analysis — and the diagnostic that was never written
+
+**2026-08-26, reported by Adam** on a 17-record collection. `POST
+/api/suggestions/ai` → 502 `LLM_UNREADABLE`, "The suggestion service returned
+something we could not read."
+
+### THE FIRST FINDING: the answer does not live anywhere
+
+Adam's instruction was to read what actually came back — "the server logs the
+response body or its parse failure, and that is the only place the answer lives."
+**It does not, and this is the more serious finding of the two.**
+
+- `parseSuggestions` swallows BOTH failure paths into a bare
+  `{ ok: false, reason: 'unreadable' }`: the `catch` around `JSON.parse`
+  discards the error, and `envelope.safeParse` discards `.error.issues`.
+- The route logs NOTHING before returning 502.
+- `withErrorHandling` logs only THROWN errors. `LLM_UNREADABLE` is a RETURNED
+  response, so it never reaches `logger.error`.
+
+**Confirmed against production**: `vercel logs` for the live deployment has no
+suggestion, LLM, 502 or error line for this call. The information was never
+written down.
+
+**So a billed, user-visible failure is undiagnosable after the fact.** The user
+pays a slot, sees an error, and the one artefact that would say WHY — the raw
+text, or the parse issues — is discarded at the moment it is known. This is the
+same family as the earlier findings where a mechanism's own signal did not report
+what it claimed, except worse: there is no wrong signal, there is no signal.
+
+**And it makes the retry advice hollow.** The message says "Try again", which is
+correct if the failure is transient and wrong if it is structural — and nothing
+recorded can distinguish those, so the app is advising a second billed call
+without knowing whether the first was reproducible.
+
+### The diagnosis, by mechanism rather than by log
+
+Both of Adam's candidates were tested against `parseSuggestions` directly:
+
+| input | result |
+|---|---|
+| JSON cut mid-object (truncation) | `{ok: false, reason: 'unreadable'}` — **matches the symptom** |
+| complete, valid JSON | `{ok: true, suggestions: [...], dropped: 0}` |
+| out-of-vocabulary genre | `{ok: true, suggestions: [], dropped: 1}` — **200, not 502** |
+
+**A29d is RULED OUT, as Adam predicted.** Genre validation is per-suggestion and
+returns `ok: true` with a `dropped` count; it cannot produce this status.
+
+**Truncation is the leading hypothesis and the numbers support it.** R5's live run
+returned **34 suggestions in 2994 output tokens** against a
+`GAP_ANALYSIS_MAX_TOKENS` of 4000 — 75% of the ceiling — and stopped on
+`end_turn`, meaning it finished by luck of fit rather than by design. That was a
+SMALLER collection. §9.2 has no count limit, deliberately (R5 finding 4), so a
+larger, more varied collection invites a longer answer, and the ceiling is the
+only thing bounding it.
+
+**NOT PROVEN, and it cannot be proven from what exists.** `stop_reason` would
+settle it in one field — `max_tokens` versus `end_turn` — and it is on the
+response the client already receives and does not record. **This is the same gap
+as the first finding: the evidence existed at runtime and was thrown away.**
+
+**Measurement declined rather than faked:** building the real prompt needs
+`buildCollectionSummary`, which is `server-only` and whose driver guard refuses
+to point test code at the production database. That guard is correct and was not
+worked around, so the exact payload size is unmeasured.
+
+### The quota, since it was asked
+
+    COUNTING AGAINST THE QUOTA: 1 of 10
+    REMAINING NOW: 9
+    gap_analysis 8m ago | completed: yes | frees 14:04Z
+
+**The slot correctly stayed spent** — `completed_at` is set, so the failure was
+billed and counted, exactly as §9.2 requires and as the refund carve-out (401/403
+only) intends.
+
+### What this asks for, not built here
+
+1. **Record `stop_reason` and the parse failure.** One log line at the moment the
+   parse fails, carrying `stop_reason`, output token count, and the first N
+   characters of the raw text. Without it every future instance is equally blind.
+2. **Then decide about `max_tokens`** — raising it, or asking for a count in the
+   prompt as R5 already identified as the honest place. **Do not raise it before
+   (1)**: that is fixing the hypothesis rather than the fault, and if truncation
+   is not the cause the raise is invisible and the next failure is identical.
+
+**Ordering note:** this now precedes finding 4 (persisted results). A feature that
+stores the last successful result is less useful than one that can say why a call
+failed — and 4's store would have had nothing to store here.
+
