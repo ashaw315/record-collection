@@ -17031,3 +17031,152 @@ point it is a rate rather than an event, and the two wall-scene intermittents
 should be diagnosed together, since "the scene mis-measures under contention"
 would explain both.
 
+
+---
+
+# /suggestions on the real collection — 2026-08-26
+
+Four items from Adam using §9.2 against his own records. Diagnosed before any
+fix, per the standing rule; **two are defects, one is the feature working as
+designed, and one is a product question that needs answering before it is
+built.**
+
+## 1. Miles Davis — Bitches Brew: NOT A DEFECT. The prompt says it and the model obeyed.
+
+**Adam asked which of two it was — the prompt does not say it, or it says it and
+the model ignored it. It is neither.** The prompt says it, the model followed it,
+and the reason line Adam read is *the prompt asking for that sentence*:
+
+    'The list above names the artists they own but not which records, so a',
+    'different record by an artist they already own is a welcome suggestion —',
+    'say so in the reason when that is what you are doing. Do not recommend',
+    'anything already on their want list, which is listed with titles.'
+                                          — src/lib/llm/client.ts:226-229
+
+So "the suggestion's own reason says 'a different record by an artist they own'"
+is not evidence the model knew and suggested anyway. It is the model **complying
+with an explicit instruction to disclose what it was doing.** The disclosure that
+made the behaviour look like a bug is the honesty mechanism working.
+
+**This is A29g, exactly as decided.** The payload sends artist names, counts and
+genres — no owned titles — so "already own" is only enforceable at artist level.
+A29g welcomed same-artist suggestions deliberately and required the model to say
+so. `client.test.ts` pins all three clauses.
+
+**The live case is a GOOD suggestion by A29g's own reasoning**, same shape as the
+Dire Straits case recorded there: an artist with records on the shelf is
+demonstrably collected, so naming another is the gap the feature exists to find.
+
+**What would change it, and it was declined once already:** sending owned record
+titles would make a record-level rule enforceable, at the cost of putting every
+title in the collection on the wire. §9.2's disclosure boundary is deliberately
+narrow. **Not re-proposed here** — but noted that the cost of A29g is exactly
+this moment: a suggestion that looks wrong, is right, and needs a paragraph to
+explain. If Adam judges that trade badly made, it is a spec decision, not a bug.
+
+## 2. DEFECT: the want-list form dead-ends on a new artist, and /records/new already fixed this
+
+**Confirmed, and the fix already exists twenty lines away in a sibling file.**
+
+| screen | unmatched artist message |
+|---|---|
+| `/records/new` | "…not in your collection yet — **it is ready to add under Artist**" |
+| `/want-list/new` | "…not in your collection yet — **add them in Manage first**" |
+
+`records/new/page.tsx:118` carries a comment recording that the want-list wording
+is a version this project ALREADY diagnosed and fixed on the other screen:
+
+> It previously read "add them with + New artist", which was a dead end on a new
+> collection: nothing matches, so every import lost its label.
+
+**`RecordForm` uses `InlineCreate` four times. `WantListForm` has a bare
+`<select>` and no create path at all.** So the fix is not new work — it is
+applying an existing component to the second form.
+
+**Why this is worse than it looks.** §9.2 exists to surface records the
+collection does NOT have, and an LLM suggestion is by construction most often an
+artist the collection has never heard of (`want-list/new/page.tsx:92` says
+exactly this). **So the dead end is not an edge case of the suggestion flow; it
+is the modal case.** Every good suggestion — the ones naming a genuinely new
+artist — hits it. Throbbing Gristle is not unlucky, it is typical.
+
+**§10's constraint is real and the fix must respect it:** "Reference rows are
+matched, never created: a prefill is not a commitment, and an artist created for
+an abandoned form is debris nothing points at." `InlineCreate` satisfies this —
+it creates on a deliberate user action inside the form, not from the prefill.
+
+## 3. The suggestion's knowledge does not transfer — and the existing reasoning says it SHOULD NOT
+
+**Adam's instinct that "it may belong nowhere" is already the recorded decision,
+and the reasoning is stronger than the observation.** `want-list/new/page.tsx:70`:
+
+> It is CONTEXT, never data: nothing here reaches the `want_list` row. A
+> suggestion is true of a collection at a moment, and freezing it into a row
+> would leave a stale claim behind the first time the collection changed. There
+> is also nowhere honest to put it — `best_dig_notes` is the only free text on
+> the table and §7.2 gives it a different meaning.
+
+Three separate arguments, each sufficient:
+
+1. **`best_dig_notes` means something else.** CLAUDE.md §8: "best dig" is the
+   highest-fidelity pressing worth hunting. A model's reason for suggesting an
+   album is not a pressing note, and putting it there makes the field mean two
+   things — the exact flattening §8 forbids.
+2. **`target_pressing` cannot be filled at all.** It is a FK to a `pressings`
+   row. The model named an artist and a title; it knows nothing about a
+   pressing, and inventing one is the fabricated-230g-weight failure again.
+3. **A reason is true at a moment.** Written into a row it becomes a stale claim
+   the first time the collection changes.
+
+**So: nothing transfers into the row, and that is correct.** But there is a real
+gap Adam is pointing at, and it is not about storage:
+
+**The reason is DISPLAYED on `/want-list/new` only when §9.1 can regenerate it
+for an artist the collection already owns** (`suggestedArtistId`, from
+`suggestions({limit:200})`). For an LLM suggestion of a NEW artist — the modal
+case from finding 2 — there is no `artistId`, so `suggestionReasons` is empty and
+**the page shows nothing at all.** The user arrives at a blank form having just
+read a paragraph about why this record matters.
+
+**The honest fix is display-only and needs no storage**: carry the reason so the
+form can SHOW what the model said, marked as the model's claim, while still
+writing nothing to the row. The existing code refuses to carry it in the URL for
+a good reason — "attacker-controlled text rendered on a page… would let a URL
+claim a reason the engine never produced" — so a URL parameter is the wrong
+mechanism and that refusal stands.
+
+**Not designed here.** Recorded as the real finding underneath Adam's
+observation: **the decision "it belongs nowhere" is right about the ROW and
+wrong about the SCREEN.**
+
+## 4. QUESTION: should gap analysis be cached? The two products are different.
+
+Adam asked the right question and named the fork himself. Neither is "caching"
+in a way the other reader would recognise:
+
+**(a) Return the same suggestions.** A read-through cache: the second ask inside
+the window returns the stored list and spends no budget. **Product: suggestions
+are a document you can re-open.** Cheap, but a "Suggest" button that returns
+byte-identical output feels broken — and it is a lie about freshness if the
+collection changed in between.
+
+**(b) Suppress the fresh call.** Refuse or defer the second ask with a message.
+**Product: suggestions are an event with a cooldown.** Honest about spending
+nothing, and it makes the limit legible rather than silent — but it gives the
+user nothing for the click.
+
+**A third exists and may be what he wants: PERSIST the last result.** The
+suggestions from the last run stay on the page across navigation, with their
+timestamp, and "Suggest" always means a fresh call. Re-asking twice stops being
+necessary because the first answer never went away. **This addresses the actual
+cost — Adam burned a call re-asking for something he had already been told —
+without making the button lie.**
+
+Note what §4.3 already provides: `llm_requests` records every call with a
+timestamp, so "when did I last ask" is answerable today. What is NOT stored is
+the RESPONSE.
+
+**Not decided. Needs Adam's answer**, because (a), (b) and (3) are three
+different products and the implementation follows from the choice, not the other
+way round. **Recorded rather than guessed at**, per the standing rule.
+
