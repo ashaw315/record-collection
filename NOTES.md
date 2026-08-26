@@ -18688,3 +18688,217 @@ itself.
 - **No schema change** — A39's store already held everything this needed, which
   is why finding 3 was ordered after finding 4.
 
+
+# SCOPING PASS — six items, sized and sequenced. 2026-08-26.
+
+**Adam's instruction: scope, do not build.** Nothing below is written as code.
+Each item is sized, and the album entity's reach is answered at the end — his
+instinct that it touches more than the two features he named is **correct**.
+
+---
+
+## 0. The snippet (13c) — ALREADY BUILT, and it may remove an item
+
+`SnippetPanel.tsx` on `/records/:id`, all three units, deployed. **But it has
+never been RUN**: NOTES lists snippets among the credential paths unproven at
+point of use. **Adam to try it.** If it does what he was about to ask for, that
+is an item off the list before it is written down.
+
+---
+
+## 1. DROP step 14b ("Compare pressings") — a deferral closed rather than left
+
+**Adam, on 17 records: "14c does the identification job and I have not missed
+the discography view."**
+
+**The reasoning is 14b's own.** That step exists to scope the master version list
+to the search's candidates, and its clause already draws the distinction that
+now retires it: **the master version list answers "what pressings of this album
+exist" — a discography question. The candidate set answers "which of these is
+mine" — an identification question**, which is what §5.7 says the screen is for.
+
+**14c answered the identification question by a different route** — display the
+evidence, let the eye match — and did it without the master call at all.
+
+**Closing rather than deferring, and that is the point.** This project's own rule
+is that a deferral without a trigger is a decision never to act; 14b has a
+trigger ("may be built whenever a lookup unit is open") that has now passed
+through three lookup units unfired. **A deferral that survives its own trigger is
+a decision nobody made.** If the discography view is ever wanted it returns as a
+new step with its own justification, which is a better artefact than a stale one.
+
+**Size: SPEC edit only.** No code — 14b was never built.
+
+---
+
+## 2. Past suggestions in an accordion — STORAGE AND DISPLAY ONLY
+
+**Adam: "the accordion is a transcript rather than a filter. Do not let the two
+get bundled."**
+
+**The decline on suppression stands** (see the entry above): repetition is
+honest, and remembering-so-as-not-to-repeat would make the answer a function of
+what the user was told rather than what their shelf looks like.
+
+**This is the opposite feature and the distinction must survive contact with the
+code**: keeping past answers so they can be READ is a transcript; using them to
+change a future answer is a filter. The first is what A39 already does for ONE
+analysis, extended to N.
+
+**Size: SMALL-MEDIUM.** A39's store drops its superseded row on write
+(`storeGapAnalysis` deletes before inserting) — that deletion is the only thing
+to change, plus retention and a disclosure. **The risk is not technical**: it is
+that "we have the history, why not use it" is a one-line change once the rows
+exist, and nothing in the schema would object. **A test asserting the payload
+does NOT carry past suggestions is what keeps the two apart**, in the same file
+that already asserts field-by-field disclosure.
+
+---
+
+## 3. Genre drill-down — "what am I missing in UK82"
+
+**Adam is right that the token measurement reframes this.** It was recorded as
+scaling option 2 when truncation looked like the problem; A38 showed input was
+never the constraint. **So it is not a fix and must not be justified as one — it
+is a better QUESTION.**
+
+**Why it is better, and this is the case for it:** a whole-collection answer
+gives six suggestions across 34 genres. A scoped answer gives six inside one
+scene, which is the granularity a person actually shops at — and it is
+**actionable in a shop**, which the whole-collection answer is not.
+
+**Size: SMALL.** The payload already carries the genre hierarchy and per-artist
+genres; the change is a filter on the summary plus a scope parameter. **No new
+disclosure** — a subset of what is already sent.
+
+**Blocked by item 4 in practice, not in code.** Drilling into UK82 is only
+meaningful if UK82 has a distinct membership, and today every genre is top level.
+
+---
+
+## 4. Genre hierarchy assistance — suggest-a-parent-I-confirm
+
+**Measured, and it confirms the screenshot: 34 genres, 2 with a parent, 32 flat**
+— including `Punk`, `UK82` and `US Hardcore` as SIBLINGS, which is exactly the
+flattening CLAUDE.md §8 forbids, sitting in the live database.
+
+**Adam's framing is the design and it is right: suggest, never assign.** *"The
+hierarchy is my vocabulary and §8 protects it specifically — a model assigning
+parents silently would make it the model's taxonomy wearing mine."*
+
+**Where the control belongs: `/manage`, on the genre list**, because that is
+where the hierarchy is already edited by hand and the feature's whole purpose is
+to make that same edit cheaper. **Not on a record, not on `/suggestions`** — this
+changes the vocabulary, not a record.
+
+**What it does on disagreement**, which Adam asked for specifically:
+
+- **Reject is a first-class outcome, not an absence.** The suggestion disappears
+  and the genre stays top level.
+- **A rejected pairing must not be re-suggested**, or the feature becomes
+  something to dismiss repeatedly — which is the noise argument A37's variant
+  limit and the dismissal decline both turn on.
+- **That needs somewhere to record the rejection**, and unlike §9.2's dismissal
+  state it has a real identity to attach to: **both genres are rows.** So this is
+  cheap where the suggestion dismissal was not — `(genre_id, rejected_parent_id)`
+  is a join table over two real keys, not a string match.
+- **Nothing is written on accept except the parent the user confirmed.** No
+  provenance column saying "a model proposed this": once accepted it is the
+  user's hierarchy, the same as one typed by hand.
+
+**Same shape as A40's tiers, as Adam noted:** a judgement about music only the
+user can make, with the app structuring rather than deciding. **Worth naming as a
+PATTERN rather than a coincidence** — it is now the third instance (14c's
+display-not-match, A40's tiers, this), and the shape is:
+*the app assembles the material and orders the question; the user supplies the
+judgement; nothing is recorded that the user did not confirm.*
+
+**Size: MEDIUM.** A suggestion path through the existing LLM client and limiter,
+a confirm/reject UI on `/manage`, and one small table. **The prompt is the
+delicate part** — it must propose parents from the user's OWN vocabulary rather
+than inventing a taxonomy, which is the same constraint A29d already enforces for
+suggestion genres and can reuse.
+
+---
+
+## 5. Want-list row → detail view
+
+**Adam: "I filled them in and cannot see them."** `target_pressing` and
+`best_dig_notes` exist on the row and are invisible unless editing.
+
+**That is a display gap, not a schema problem**, and it is the cheapest item
+here: the data is on the row, the record detail page is the precedent for how to
+render a pressing, and §7.2's rule that `best_dig_notes` and `max_price` stay
+visually and structurally separate is already implemented in the FORM and needs
+carrying to the view.
+
+**Size: SMALL.** One page, one query, no schema.
+
+**Explicitly NOT the tiered version.** A40's ranking belongs to the album and
+would vanish on acquisition — which is exactly when it stops being a hunt and
+becomes an upgrade question. Building tiers into `want_list` as a workaround
+would reintroduce the failure A40 was written to avoid.
+
+---
+
+## THE ALBUM ENTITY: justified, and it touches more than two features
+
+**Adam asked plainly whether it is justified now. Yes — and by A40's own stated
+trigger**, which was "a second feature needing the same entity". There are more
+than two.
+
+**What wants it, measured against the current schema:**
+
+| Feature | Why |
+|---|---|
+| **A40 tiers** | a ranking of pressings belongs to the album, survives acquisition |
+| **Dismissal state** | needs identity for a record neither owned nor wanted |
+| **Marking acted-on suggestions** | currently a `(artist, title)` string join |
+| **`reasonFor` (finding 3, BUILT)** | matches on artist+title strings TODAY |
+| **Want-list ↔ record continuity** | acquiring copies a title from one table to another |
+| **Genre drill-down** | unaffected — genres attach to records, not albums |
+
+**Five features, four of them blocked or brittle without it.** And one is already
+SHIPPED on the workaround: `reasonFor` matches suggestions to want-list arrivals
+on lowercased artist+title. It works, and it is exactly the string-identity
+brittleness that would dissolve.
+
+**The cost, measured rather than estimated:**
+
+- **18 modules** in the query layer and API read a title;
+- **15 query-layer references** treat `(title, artist_id)` as identity;
+- **22 E2E specs** exercise titles;
+- plus a migration that must BACKFILL — every existing record and want-list row
+  needs an album row, matched on artist and title, with duplicates merged.
+
+**That is a step-2-sized change**, and the backfill is the risky half rather than
+the schema: merging "Rumours" and "rumours " is `cleanName` territory, and a
+wrong merge fuses two albums permanently. §4.1's find-or-create keys exist
+because a NAME does not identify an artist — **the same argument applies to a
+title, and an album entity keyed on a name alone would inherit the problem it is
+meant to solve.**
+
+**So: justified, expensive, and it should be its own step with its own
+verification** — not a prerequisite quietly absorbed into a want-list unit.
+
+---
+
+## SEQUENCE
+
+**Adam to answer the snippet question first** (item 0) — it may remove work.
+
+1. **Item 1 (drop 14b)** — SPEC only, no dependencies, closes a stale deferral.
+2. **Item 5 (want-list detail)** — small, self-contained, and it makes data he
+   has already entered visible. Highest ratio of value to cost here.
+3. **Item 4 (genre hierarchy)** — medium, and it UNBLOCKS item 3. Also the item
+   with a live §8 violation sitting in the database.
+4. **Item 3 (genre drill-down)** — small once 4 lands, and meaningless before it.
+5. **Item 2 (suggestion accordion)** — small-medium, independent, no blockers.
+6. **The album entity** — its own step, scoped and sized before anything depends
+   on it. **Then A40's tiers and the dismissal state become small.**
+
+**Why 4 before 3, and 5 early:** the genre hierarchy is the only item with a
+correctness argument (a §8 violation in the live database) rather than a
+usefulness one, and item 5 makes already-entered data visible, which is the
+cheapest real improvement available.
+
