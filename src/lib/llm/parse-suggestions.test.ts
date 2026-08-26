@@ -98,13 +98,22 @@ describe('failures that are not the same failure', () => {
    * **The distinction R5 asks for.** A truncated response is unreadable, and
    * reporting it as "no suggestions" tells the user the model had nothing to
    * say when in fact the app could not read the answer.
+   *
+   * **Updated 2026-08-26, and the contract changed rather than the test being
+   * bent to fit.** This asserted `reason === 'unreadable'`, the single value
+   * that made Adam's live 502 undiagnosable. The reason is now `'cut'` or
+   * `'malformed'` — a REFINEMENT in the direction this test was already
+   * reaching: its own title says "truncated", and this input is truncated, so
+   * `'cut'` is the more precise version of what it always meant to assert.
+   * Nothing it was protecting is given up: the failure is still not empty, and
+   * it is still not `ok`.
    */
-  it('a truncated response is malformed, not empty', () => {
+  it('a truncated response is cut, not empty', () => {
     const result = parseSuggestions('{"suggestions":[{"artist":"Anti-Cim', VOCABULARY);
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('unreachable');
-    expect(result.reason).toBe('unreadable');
+    expect(result.reason).toBe('cut');
   });
 
   /**
@@ -253,5 +262,108 @@ describe('per-suggestion validation', () => {
     if (!result.ok) throw new Error('unreachable');
     expect(result.suggestions).toEqual([]);
     expect(result.dropped).toBe(2);
+  });
+});
+
+/**
+ * SPEC.md §5.8 — WHY a response could not be read.
+ *
+ * The failure that prompted this: Adam's gap analysis over 17 records returned
+ * 502 `LLM_UNREADABLE`, and nothing anywhere recorded why. `parseSuggestions`
+ * collapsed both failure paths into a bare `reason: 'unreadable'`, the route
+ * logged nothing, and `withErrorHandling` only logs THROWN errors — so a
+ * billed, user-visible failure was undiagnosable after the fact.
+ *
+ * **The distinction is what the USER is told**, not only what an operator sees:
+ * "ran out of room" and "returned something unreadable" imply different
+ * actions, and one of them is that retrying will likely fail the same way.
+ */
+describe('why a response could not be read', () => {
+  const VOCAB = ['UK82', 'Hardcore'];
+
+  /**
+   * Fails against `parseSuggestions` returning a bare `'unreadable'` — the shape
+   * that made the live failure undiagnosable.
+   */
+  it('reports incomplete JSON as CUT, distinguishably from malformed', () => {
+    const cut =
+      '{"suggestions":[{"artist":"Crass","title":"Feeding","reason":"x","genre":"UK82"},{"artist":"Peni","tit';
+
+    const result = parseSuggestions(cut, VOCAB);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toBe('cut');
+  });
+
+  /**
+   * Complete JSON that is not the expected shape is a DIFFERENT failure: the
+   * model finished and answered wrongly, so a retry is worth something.
+   * Truncation is not, and telling a user to retry a request that will stop at
+   * the same place spends their quota for nothing.
+   */
+  it('reports complete-but-wrong JSON as MALFORMED', () => {
+    const wrong = '{"recommendations":[{"band":"Crass"}]}';
+
+    const result = parseSuggestions(wrong, VOCAB);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toBe('malformed');
+  });
+
+  /**
+   * **Shape, never content** (Adam, 2026-08-26). The prompt carries the user's
+   * artists, labels and want-list titles, so the model's reply can echo them —
+   * and Vercel logs are readable by anyone with dashboard access. That is the
+   * same argument that turned `describeError` into a redacted projection after
+   * R6 reproduced a token reaching a log line.
+   *
+   * **A deliberate log must not get a weaker standard than an accidental one.**
+   * So the diagnostic carries lengths and positions, and quotes nothing.
+   *
+   * Fails against any implementation that puts response text in the result.
+   */
+  it('carries no response TEXT, only its shape', () => {
+    const secretish =
+      '{"suggestions":[{"artist":"Throbbing Gristle","title":"20 Jazz Funk Greats","rea';
+
+    const result = parseSuggestions(secretish, VOCAB);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+
+    const serialised = JSON.stringify(result);
+    expect(serialised).not.toContain('Throbbing Gristle');
+    expect(serialised).not.toContain('20 Jazz Funk Greats');
+    // The precondition: those strings really are in the input being described.
+    expect(secretish).toContain('Throbbing Gristle');
+  });
+
+  /** The length is shape, and it is what says how much arrived before it stopped. */
+  it('reports how long the response was', () => {
+    const cut = '{"suggestions":[{"artist":"Crass","tit';
+
+    const result = parseSuggestions(cut, VOCAB);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.length).toBe(cut.length);
+  });
+
+  /**
+   * A29d is NOT this failure, verified rather than assumed: genre validation is
+   * per-suggestion and returns `ok: true` with a `dropped` count. Adam predicted
+   * this when reporting the defect and was right.
+   */
+  it('does not report an out-of-vocabulary genre as unreadable at all', () => {
+    const offVocab =
+      '{"suggestions":[{"artist":"Miles Davis","title":"Bitches Brew","reason":"x","genre":"Jazz Fusion"}]}';
+
+    const result = parseSuggestions(offVocab, VOCAB);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.dropped).toBe(1);
   });
 });

@@ -22,9 +22,35 @@ export type Suggestion = {
   genre: string;
 };
 
-export type ParseResult =
-  | { ok: true; suggestions: Suggestion[]; dropped: number }
-  | { ok: false; reason: 'unreadable' };
+/**
+ * Why a response could not be read — SHAPE ONLY, never content.
+ *
+ * **Both halves matter.** The reason distinguishes a response that ran out of
+ * room from one that finished and answered wrongly, which is the difference
+ * between "retrying will stop at the same place" and "a retry is worth
+ * something". The user is told which, not only the operator.
+ *
+ * **And nothing here quotes the response.** The prompt carries the user's
+ * artists, labels and want-list titles (`collection-summary.ts`), so the reply
+ * can echo them, and Vercel logs are readable by anyone with dashboard access.
+ * `describeError` became a redacted projection for exactly this reason after R6
+ * reproduced a credential reaching a log line — and a DELIBERATE log must not
+ * get a weaker standard than an accidental one. So: lengths and positions, and
+ * no text. `parse-suggestions.test.ts` pins it.
+ */
+export type ParseFailure = {
+  ok: false;
+  /**
+   * `cut` — the JSON ended mid-structure, so the response stopped before it
+   * finished. `malformed` — it parsed as JSON but is not the expected shape,
+   * so the model finished and answered wrongly.
+   */
+  reason: 'cut' | 'malformed';
+  /** How much text arrived, in characters. Shape, not content. */
+  length: number;
+};
+
+export type ParseResult = { ok: true; suggestions: Suggestion[]; dropped: number } | ParseFailure;
 
 const suggestionSchema = z.object({
   artist: z.string().trim().min(1),
@@ -93,15 +119,27 @@ function extractJson(raw: string): string {
  * weaker suggestion; being wrong here deletes a good one.
  */
 export function parseSuggestions(raw: string, genreVocabulary: string[]): ParseResult {
+  const candidate = extractJson(raw);
+
   let parsed: unknown;
   try {
-    parsed = JSON.parse(extractJson(raw));
+    parsed = JSON.parse(candidate);
   } catch {
-    return { ok: false, reason: 'unreadable' };
+    /*
+     * **`cut` versus `malformed`, decided from STRUCTURE rather than from the
+     * error message.** A JSON syntax error's text is engine-specific prose; the
+     * bracket balance is a fact about the document. An unclosed brace or
+     * bracket means the text stopped before the structure did, which is what a
+     * truncated response looks like — and is the hypothesis this whole unit
+     * exists to confirm or kill.
+     */
+    return { ok: false, reason: isUnclosed(candidate) ? 'cut' : 'malformed', length: raw.length };
   }
 
   const envelope = envelopeSchema.safeParse(parsed);
-  if (!envelope.success) return { ok: false, reason: 'unreadable' };
+  // Parsed cleanly but is not our shape: the model FINISHED and answered
+  // wrongly, which is a different thing to tell the user.
+  if (!envelope.success) return { ok: false, reason: 'malformed', length: raw.length };
 
   /*
    * Case- and whitespace-insensitive, mapping back to the USER's spelling.
@@ -132,4 +170,36 @@ export function parseSuggestions(raw: string, genreVocabulary: string[]): ParseR
   }
 
   return { ok: true, suggestions, dropped };
+}
+
+/**
+ * Whether a JSON document ends with structure still open.
+ *
+ * Counts braces and brackets OUTSIDE string literals, honouring escapes — a
+ * runout-like value containing `{` would otherwise be counted as structure, and
+ * a trailing backslash would swallow the closing quote. Depth below zero means
+ * more closers than openers, which is malformed rather than cut.
+ */
+function isUnclosed(text: string): boolean {
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (const char of text) {
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (inString) {
+      if (char === '\\') escaped = true;
+      else if (char === '"') inString = false;
+      continue;
+    }
+    if (char === '"') inString = true;
+    else if (char === '{' || char === '[') depth += 1;
+    else if (char === '}' || char === ']') depth -= 1;
+  }
+
+  // An unterminated string is also a stop mid-structure.
+  return depth > 0 || inString;
 }

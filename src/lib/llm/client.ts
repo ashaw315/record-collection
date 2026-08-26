@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { assertNoLiveCall, usesRealNetwork } from '@/lib/discogs/no-live-calls';
 import type { CollectionSummary } from './collection-summary';
-import { parseSuggestions, type ParseResult } from './parse-suggestions';
+import { parseSuggestions, type Suggestion } from './parse-suggestions';
 
 /**
  * SPEC.md §9.2's Anthropic client, and the prompt that is the feature.
@@ -255,10 +255,45 @@ export type MessageCreate = (request: {
   max_tokens: number;
   output_config?: { effort: typeof EFFORT };
   messages: Array<{ role: 'user'; content: string }>;
-}) => Promise<{ content: Array<{ type: string; text?: string }> }>;
+}) => Promise<AnthropicResponse>;
+
+/**
+ * What the SDK returns, including the two fields the previous cast discarded.
+ *
+ * **`stop_reason` is the field that settles truncation**, and it was on every
+ * response the client already received. Adam's live 502 could not be diagnosed
+ * because it was thrown away at this type boundary — the evidence existed at
+ * runtime and nothing kept it.
+ */
+type AnthropicResponse = {
+  content: Array<{ type: string; text?: string }>;
+  /** `max_tokens` means it ran out of room; `end_turn` means it finished. */
+  stop_reason?: string | null;
+  usage?: { input_tokens?: number; output_tokens?: number } | null;
+};
+
+/**
+ * A failure, plus what the transport observed about it.
+ *
+ * SHAPE ONLY — token counts, a stop reason and a length. Never response text:
+ * the prompt carries the user's collection, so the reply can echo it, and these
+ * fields are written to logs (see `ParseFailure`).
+ */
+export type GapAnalysisFailure = {
+  ok: false;
+  reason: 'cut' | 'malformed' | 'no-text';
+  length: number;
+  stopReason: string | null;
+  inputTokens: number | null;
+  outputTokens: number | null;
+};
+
+export type GapAnalysisResult =
+  | { ok: true; suggestions: Suggestion[]; dropped: number }
+  | GapAnalysisFailure;
 
 export type GapAnalysisClient = {
-  analyse: (summary: CollectionSummary) => Promise<ParseResult>;
+  analyse: (summary: CollectionSummary) => Promise<GapAnalysisResult>;
 };
 
 /**
@@ -280,14 +315,29 @@ export function createGapAnalysisClient(transport: { create: MessageCreate }): G
       const text = response.content.find((block) => block.type === 'text')?.text;
 
       /*
+       * Carried alongside every failure so the route can log WHY and tell the
+       * user which failure it was. `stop_reason` is the one field that
+       * distinguishes "ran out of room" from "finished and answered wrongly".
+       */
+      const observed = {
+        stopReason: response.stop_reason ?? null,
+        inputTokens: response.usage?.input_tokens ?? null,
+        outputTokens: response.usage?.output_tokens ?? null,
+      };
+
+      /*
        * No text block is UNREADABLE, not empty — the same distinction the
        * parser draws, one layer up. A response carrying only a refusal or only
        * thinking has told us nothing about the collection's gaps, and reporting
        * that as "no gaps found" would be a confident lie.
        */
-      if (text === undefined) return { ok: false, reason: 'unreadable' };
+      if (text === undefined) {
+        return { ok: false, reason: 'no-text', length: 0, ...observed };
+      }
 
-      return parseSuggestions(text, summary.genreVocabulary);
+      const parsed = parseSuggestions(text, summary.genreVocabulary);
+
+      return parsed.ok ? parsed : { ...parsed, ...observed };
     },
   };
 }
@@ -316,7 +366,7 @@ export function getGapAnalysisClient(): GapAnalysisClient {
           max_tokens: request.max_tokens,
           output_config: request.output_config,
           messages: request.messages,
-        }) as unknown as Promise<{ content: Array<{ type: string; text?: string }> }>;
+        }) as unknown as Promise<AnthropicResponse>;
       },
     });
   }

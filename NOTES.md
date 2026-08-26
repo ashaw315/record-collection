@@ -17509,3 +17509,120 @@ logging unit is what starts recording them.
 **Trigger: the first logged gap-analysis failure or success carrying token
 counts.** Until then any choice here is a guess with a number attached.
 
+
+---
+
+## The gap-analysis diagnostic, built — and what "log the raw text" turned into
+
+**2026-08-26.** The fix for the undiagnosable 502. Three changes: the parser says
+WHICH failure, the client stops discarding `stop_reason`, and the route logs and
+tells the truth.
+
+### What was checked before logging model output, rather than assumed
+
+Adam's instruction: raw model output is a new category of thing to log, and R6's
+cause-chain rule applies — "it should not contain anything from my collection,
+but say what you checked."
+
+**Checked, and the assumption does NOT hold.** `CollectionSummary` sends
+`artists[].name`, `labels[].name`, `wantList[].{artist,title,priority}` and the
+genre vocabulary. The model's reply is generated FROM that, and A29g explicitly
+asks it to reference owned artists in its reasons. So the response can echo the
+collection by design.
+
+| category | can appear in model output? | sensitivity |
+|---|---|---|
+| credentials / tokens | **no** — never in the prompt; the key is a header | — |
+| the user's collection | **yes, by design** | personal, not secret |
+| the model's own suggestions | yes | not sensitive |
+
+**So it cannot leak a credential, and it can put a want list into Vercel logs
+readable by anyone with dashboard access.** That is exactly the argument that
+turned `describeError` into a redacted projection after R6 reproduced a Blob
+token and a connection-string password reaching a log line.
+
+**DECIDED (Adam): shape only, no raw text at all.** His reasoning, which is
+better than the option I recommended: *"a deliberate log should not get a weaker
+standard than an accidental one"*, and the diagnostic case for a tail is weaker
+than it looks — `stop_reason` alone settles truncation, which is the live
+hypothesis. A tail only helps for malformed-but-complete output, which nothing
+has evidence for. **If shape-only proves insufficient that is a finding, and we
+widen it deliberately.**
+
+So the failure carries `reason`, `length`, `stopReason`, `inputTokens`,
+`outputTokens` — and quotes nothing. **Mutation-verified**: adding
+`tail: raw.slice(-200)` to the parse failure fails `carries no response TEXT,
+only its shape`.
+
+### `cut` versus `malformed`, decided from STRUCTURE not from the error message
+
+A JSON syntax error's text is engine-specific prose. Bracket balance is a fact
+about the document, so `isUnclosed` counts braces and brackets OUTSIDE string
+literals, honouring escapes — a value containing `{` would otherwise be counted
+as structure. Depth below zero is malformed rather than cut.
+
+**A contract change, not a test bent to fit code.** `parse-suggestions.test.ts`
+had a test asserting `reason === 'unreadable'` — the single value that made the
+live failure undiagnosable. It now asserts `'cut'`. That is a REFINEMENT in the
+direction the test was already reaching: its own title said "truncated", its
+input is truncated, and nothing it protected is given up. Reasoning recorded in
+the test rather than in a commit message.
+
+### The copy, and the sentence that was cut from it
+
+    ran out of room: "The suggestion service ran out of room before finishing
+    its answer. This used one of your ten hourly requests, and trying again will
+    likely stop at the same place."
+
+    unreadable:      "The suggestion service returned something we could not
+    read. This used one of your ten hourly requests. Trying again may work."
+
+**"Try again" was advice the app had no reason to believe** — the same shape as
+the 401 that said "try again" until R6 fixed it. On truncation a retry stops in
+the same place and spends another of ten.
+
+**The cost is named**, because the app knew it and the screen did not say it.
+
+**AND A SENTENCE WAS CUT, which is the finding worth keeping.** My draft ended
+*"your collection has outgrown what one request can cover."* Adam rejected it:
+`stop_reason: max_tokens` proves the ANSWER ran out of room; it does not prove
+the COLLECTION is why — *"the model could have written thirty-four verbose
+suggestions about four records."*
+
+**That is the app publishing a hypothesis as a diagnosis**, in user-facing copy,
+where it reads as something measured. Exactly the failure this project keeps
+naming: the fabricated 230g weight, the tier-1 badge that could never fire,
+"presence is not shape". **A test now pins it** — `does not blame the collection
+for a truncated answer` fails against copy matching
+`/collection|outgrown|too (large|big|many)/`.
+
+**Offering nothing beats offering a guess.** When the scaling work lands and
+there is a narrower request to offer, the copy can point at it.
+
+### Mutation-verified, both guarantees
+
+- **Log removed** (reproducing the live defect) → `logs stop_reason and token
+  counts` fails.
+- **Response tail added** to the failure → `carries no response TEXT` fails.
+
+### What this does NOT do
+
+`max_tokens` is unchanged. The evidence to choose between raising it, bounding
+the count in the prompt, or scoping the request does not exist until a real
+failure is logged. **Trigger: Adam's next gap analysis** — success or failure, it
+now records `stop_reason` and both token counts, which is the measurement the
+scaling entry above says will decide between the three shapes.
+
+### Suite: the first fully green E2E run this session
+
+Unit **3033 passed**, 1 skipped. E2E **418 passed, 0 failed**, 20 skipped —
+`.last-run.json` `"status": "passed"`. Typecheck, lint, build clean.
+
+**Worth recording because the baseline has been one-red or two-red all session**
+and the red kept MOVING: 1093 (six sightings), wall-scene 449 (one),
+record-detail 395/423 (one). All three share the late-in-run `login()` timeout
+shape. A clean run does not disprove them — it is consistent with a rate, which
+is what the 1093 entry established — but it does mean **none of them is a
+deterministic break introduced by recent work**, which was the open question.
+The accumulation reading survives; the harness question stays open with its
+existing trigger.

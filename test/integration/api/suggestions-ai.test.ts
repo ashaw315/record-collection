@@ -2,6 +2,8 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vites
 import { getTestDb, truncateAll, closeTestDb } from '../../helpers/db';
 import { artists, genres, llmRequests, records, recordGenres } from '@/db/schema';
 import { LLM_REQUESTS_PER_HOUR } from '@/lib/llm/rate-limit';
+import { GAP_ANALYSIS_MAX_TOKENS } from '@/lib/llm/client';
+import { logger } from '@/lib/logger';
 
 /**
  * SPEC.md §5.8 `POST /api/suggestions/ai` — §9.2's gap analysis.
@@ -150,7 +152,14 @@ describe('POST /api/suggestions/ai', () => {
    */
   it('reports an unreadable response as an error, not as no suggestions', async () => {
     await seedCollection();
-    analyse.mockResolvedValue({ ok: false, reason: 'unreadable' });
+    analyse.mockResolvedValue({
+      ok: false,
+      reason: 'malformed',
+      length: 42,
+      stopReason: 'end_turn',
+      inputTokens: 100,
+      outputTokens: 50,
+    });
 
     const response = await call();
     const body = await response.json();
@@ -200,10 +209,118 @@ describe('POST /api/suggestions/ai', () => {
    */
   it('a failed analysis still consumes its slot', async () => {
     await seedCollection();
-    analyse.mockResolvedValue({ ok: false, reason: 'unreadable' });
+    analyse.mockResolvedValue({
+      ok: false,
+      reason: 'malformed',
+      length: 42,
+      stopReason: 'end_turn',
+      inputTokens: 100,
+      outputTokens: 50,
+    });
 
     await call();
 
     expect(await db.select().from(llmRequests)).toHaveLength(1);
+  });
+});
+
+/**
+ * SPEC.md §5.8 — the diagnostic and the copy, both added 2026-08-26 after a
+ * live failure that could not be diagnosed.
+ *
+ * Adam's gap analysis over 17 records returned 502 `LLM_UNREADABLE` and nothing
+ * anywhere recorded why: the parser collapsed both failures into one value, the
+ * route logged nothing, and `withErrorHandling` only logs THROWN errors while
+ * this is a RETURNED response.
+ */
+describe('why the response could not be read, and what the user is told', () => {
+  const truncated = {
+    ok: false as const,
+    reason: 'cut' as const,
+    length: 3980,
+    stopReason: 'max_tokens',
+    inputTokens: 1200,
+    outputTokens: 4000,
+  };
+
+  /**
+   * **The copy R6's 401 lesson demands.** "Try again" was advice the app had no
+   * reason to believe: a truncated answer stops in the same place, and the
+   * retry costs another of ten hourly requests.
+   *
+   * Fails against a single message for both failure kinds.
+   */
+  it('tells a truncated response apart from an unreadable one', async () => {
+    analyse.mockResolvedValue(truncated);
+
+    const response = await POST(new Request('http://localhost/api/suggestions/ai', { method: 'POST' }));
+    const body = await response.json();
+
+    expect(response.status).toBe(502);
+    expect(body.error.message).toContain('ran out of room');
+    expect(body.error.message).toContain('stop at the same place');
+    // The advice it must NOT give on this branch.
+    expect(body.error.message).not.toMatch(/may work/i);
+  });
+
+  /**
+   * **The cost, named.** A slot was spent whatever the outcome (§9.2's refund
+   * covers 401 and 403 only), and the screen did not say so — information the
+   * app had and the user could not see.
+   */
+  it('says a request was spent, on both failure kinds', async () => {
+    for (const result of [truncated, { ...truncated, reason: 'malformed' as const, stopReason: 'end_turn' }]) {
+      analyse.mockResolvedValue(result);
+
+      const response = await POST(new Request('http://localhost/api/suggestions/ai', { method: 'POST' }));
+      const body = await response.json();
+
+      expect(body.error.message).toMatch(/one of your ten hourly requests/i);
+    }
+  });
+
+  /**
+   * **The cause the app must NOT assert** (Adam, 2026-08-26).
+   * `stop_reason: max_tokens` proves the answer ran out of room. It does not
+   * prove the collection is why — the model could have written a few verbose
+   * suggestions about four records. Naming the collection would publish a
+   * hypothesis as a diagnosis.
+   *
+   * Fails against copy that blames the collection's size.
+   */
+  it('does not blame the collection for a truncated answer', async () => {
+    analyse.mockResolvedValue(truncated);
+
+    const response = await POST(new Request('http://localhost/api/suggestions/ai', { method: 'POST' }));
+    const body = await response.json();
+
+    expect(body.error.message).not.toMatch(/collection|outgrown|too (large|big|many)/i);
+  });
+
+  /**
+   * **The log, and SHAPE ONLY.** The prompt carries the user's artists, labels
+   * and want-list titles, so the reply can echo them, and Vercel logs are
+   * readable by anyone with dashboard access. `describeError` became a redacted
+   * projection for this reason after R6 reproduced a credential in a log line —
+   * a deliberate log must not get a weaker standard than an accidental one.
+   *
+   * Fails against a route that logs nothing (the live defect), and against one
+   * that logs response text.
+   */
+  it('logs stop_reason and token counts, and no response text', async () => {
+    const errors: string[] = [];
+    const spy = vi.spyOn(logger, 'error').mockImplementation((_scope, message) => {
+      errors.push(message);
+    });
+
+    analyse.mockResolvedValue(truncated);
+    await POST(new Request('http://localhost/api/suggestions/ai', { method: 'POST' }));
+    spy.mockRestore();
+
+    const line = errors.join('\n');
+    expect(line, 'the diagnostic that did not exist').toContain('stop_reason=max_tokens');
+    expect(line).toContain('reason=cut');
+    expect(line).toContain('out_tokens=4000');
+    expect(line).toContain(`max_tokens=${GAP_ANALYSIS_MAX_TOKENS}`);
   });
 });

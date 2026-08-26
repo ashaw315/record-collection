@@ -2,7 +2,13 @@ import { NextResponse } from 'next/server';
 import { withErrorHandling } from '@/lib/api/handler';
 import { notConfigured } from '@/lib/api/errors';
 import { buildCollectionSummary } from '@/lib/llm/collection-summary';
-import { getGapAnalysisClient, isAnthropicConfigured, isAuthFailure } from '@/lib/llm/client';
+import {
+  GAP_ANALYSIS_MAX_TOKENS,
+  getGapAnalysisClient,
+  isAnthropicConfigured,
+  isAuthFailure,
+} from '@/lib/llm/client';
+import { logger } from '@/lib/logger';
 import { claimLlmRequest, completeLlmRequest, releaseLlmRequest } from '@/lib/llm/rate-limit';
 
 /**
@@ -160,10 +166,55 @@ export const POST = withErrorHandling('api.suggestions.ai.POST', async () => {
      * would let a persistently failing model be retried without limit — the
      * opposite of what the quota protects.
      */
+
+    /*
+     * **The log this route did not have**, and its absence is what made Adam's
+     * live 502 undiagnosable: `withErrorHandling` logs THROWN errors, and this
+     * is a RETURNED response, so nothing here ever reached `logger.error`.
+     *
+     * SHAPE ONLY. The prompt carries the user's artists, labels and want-list
+     * titles, so the reply can echo them, and Vercel logs are readable by
+     * anyone with dashboard access — the same argument that made
+     * `describeError` a redacted projection after R6 reproduced a credential in
+     * a log line. A deliberate log does not get a weaker standard than an
+     * accidental one, so this quotes nothing.
+     */
+    logger.error(
+      'api.suggestions.ai.unreadable',
+      `reason=${result.reason} stop_reason=${result.stopReason ?? 'unknown'} ` +
+        `chars=${result.length} in_tokens=${result.inputTokens ?? 'unknown'} ` +
+        `out_tokens=${result.outputTokens ?? 'unknown'} max_tokens=${GAP_ANALYSIS_MAX_TOKENS}`,
+    );
+
+    /*
+     * **The message says which failure it was, because they imply different
+     * actions.** "Try again" was advice the app had no reason to believe: on a
+     * truncated answer a retry stops in the same place and spends another of
+     * ten hourly requests. That is the same shape as the 401 that said "try
+     * again" until R6 fixed it.
+     *
+     * **The cost is named**, because the app knows it and the user could not
+     * see it: a slot was spent whatever the outcome (§9.2's refund covers 401
+     * and 403 only).
+     *
+     * **And no cause is asserted beyond what the signal carries.**
+     * `stop_reason: max_tokens` proves the answer ran out of room; it does NOT
+     * prove the collection is why — the model could equally have written a few
+     * verbose suggestions. Naming the collection here would be the app
+     * publishing a hypothesis as a diagnosis. When the scaling work lands and
+     * there is a narrower request to offer, this copy can point at it.
+     */
+    const ranOutOfRoom = result.reason === 'cut' || result.stopReason === 'max_tokens';
+
     return NextResponse.json(
       {
         error: {
-          message: 'The suggestion service returned something we could not read. Try again.',
+          message: ranOutOfRoom
+            ? 'The suggestion service ran out of room before finishing its answer. ' +
+              'This used one of your ten hourly requests, and trying again will likely ' +
+              'stop at the same place.'
+            : 'The suggestion service returned something we could not read. ' +
+              'This used one of your ten hourly requests. Trying again may work.',
           code: 'LLM_UNREADABLE',
         },
       },
