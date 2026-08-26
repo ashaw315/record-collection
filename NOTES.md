@@ -18539,3 +18539,77 @@ of what a model said, not a row in the collection.
 cost the marker would remove, and until it is felt the string-matching brittleness
 buys nothing.
 
+
+---
+
+## DECIDED: past suggestions are NOT remembered, and dismissal does not earn a column yet
+
+**Adam's question, 2026-08-26, closing the §9.2 queue.** A39 stores the last
+result only — should past suggestions be remembered so the model does not repeat
+them?
+
+**No.** And his own framing did most of the work: a repeat is a defect or a
+feature depending on what he did about it.
+
+### Repetition is the honest DEFAULT, not merely sometimes-correct
+
+A gap analysis answers "what is conspicuously missing from this collection,
+NOW". If *Hear Nothing See Nothing Say Nothing* is still missing next week, the
+honest answer still contains it.
+
+**Suppressing it would make the second answer a function of what the user was
+TOLD before rather than what their shelf looks like** — the list would drift from
+describing the collection to describing the conversation history with it. That is
+a different feature, and a worse one for the question §9.2 exists to ask.
+
+### The suppressions that matter already exist, and both are grounded in data
+
+| user did | suppressed by | why it is honest |
+|---|---|---|
+| bought it | owned titles (A41) | the gap closed |
+| decided to buy it | want list, on the wire | already committed |
+| **ignored it** | **nothing** | **the gap is still there** |
+
+**Ignoring is not a decision the app can observe.** Not clicking is
+indistinguishable from not having read that far, and treating silence as
+rejection is absent-versus-unknown in a new place.
+
+### The third state — dismissed-but-not-wanted — DOES NOT EARN A COLUMN YET
+
+Adam asked exactly the right question: *does it earn a column*. **No, on cost
+rather than correctness — the same shape as the declined sold/gone status**,
+which was a real need that lost to what it dragged behind it.
+
+**The case for is real.** "Never suggest this again" is a genuine judgement, and
+being told about a record monthly that you have decided against is noise you
+cannot clear.
+
+**The case against:**
+
+- **It needs a durable identity for a record that is neither owned nor wanted.**
+  No `records` row, no `want_list` row — so it is `(artist, title)` STRINGS, the
+  brittleness A40 flagged and §4.1 avoids by keying find-or-create on external
+  ids. **And it fails OPEN**: a dismissal that stops matching because the model
+  phrased the title differently silently returns the suggestion, so the user
+  never learns the feature stopped working.
+- **It grows the payload in the direction now constrained.** A dismissal list
+  goes on the wire, and output is already at 2.3x headroom.
+- **A29g's asymmetry again.** A dismissal list IS supportable by the payload —
+  but only if the identity holds, which is the first problem.
+
+**What tips it: nothing has been repeated across runs yet.** Three runs, and the
+only repeat was the owned-record bug A41 fixed. Discharge appeared twice, which
+by Adam's own reading is correct.
+
+**Trigger: a deliberately-dismissed suggestion appearing a THIRD time** — a
+measured annoyance rather than an anticipated one, at which point the identity
+problem is worth solving because something concrete depends on it.
+
+### If it is ever built, the honest place is probably not a suppression list
+
+"Never suggest this again" is a judgement about MUSIC — the same kind of thing
+A40's pressing tiers are, and A40 already needs an album entity that does not
+exist. **If that entity arrives, a dismissal has somewhere real to attach and the
+string-matching problem dissolves.** Two features wanting the same missing entity
+is also what would justify building it, per A40's own trigger.
+
