@@ -18239,3 +18239,69 @@ whether it is TRUE. Tone and truth are different properties, and the tone test
 passed through the entire defect.
 
 Unit **3061 passed**. Prompt-only change: no route, no schema, no UI.
+
+---
+
+## A40 scoped, not built — ranked pressings, and the entity it needs does not exist
+
+**2026-08-26.** Written to SPEC §12a. Recorded here for the reasoning that does
+not belong in a spec.
+
+**Adam's reframing settled the attachment question**, which I had posed as a
+choice between `want_list` and `records`: *"they are the same object at different
+times."* A ranked pressing list belongs to the ALBUM — true whether he owns a
+copy, wants one, or neither — reachable from both sides, answering a different
+question from each.
+
+**And the durability argument is the one that decides it**, not tidiness: a
+want-list attachment would not survive acquisition. Acquiring clears the hunt,
+and the knowledge would go with it **at exactly the moment it becomes most
+useful** — the user now owns a copy and wants to know whether it is the good one.
+
+### What the scoping found that neither of us had said
+
+**There is no album in this schema.** Measured: no `albums` or `masters` table,
+and `records` and `want_list` EACH carry their own `title` and `artist_id`. So
+"Rumours by Fleetwood Mac" exists as free text in up to two places with nothing
+joining them.
+
+**The feature attaches to a thing that does not exist**, which is a bigger open
+question than either of the two Adam raised, and it is why this is spec'd rather
+than built. Three options are recorded; the honest one (an album entity) is a
+step-2-sized change touching the two central tables, every query over them, and
+the import path. **It should be judged on its own merits rather than adopted as a
+side effect of a want-list feature** — hence the trigger: a second caller needing
+the same entity, so the entity is justified twice.
+
+### Whose judgement, and why it makes the feature cheap
+
+The user's, and only the user's. Discogs has no fidelity ranking — `have`/`want`
+measures popularity, price measures scarcity plus hype, neither is "sounds
+better" — and nothing in the schema knows a Porky-stamped first press beats a
+1989 repress.
+
+**So the app records a preference and never computes a ranking**, and everything
+follows: it can only misrender the list, never be wrong about it. That is what
+makes it closer to `want_list` than to anything §9 computes.
+
+**The tier-1 badge is NOT a precedent against this, and checking that mattered.**
+That failure was a claim about ownership MATCHING — importer wrote
+`discogs_release_id`, matcher read it, form path never sent it — a SEAM defect
+between two components. **This feature has no seam because nothing computes it.**
+Adam was right to name it as adjacent; reading it showed the adjacency is
+superficial.
+
+### The two questions he raised, both real
+
+- **What identifies the thing being ranked** is 14c's tension one level up. "The
+  first US press" is a description, not a row. The resolution is the same shape:
+  **a tier carries the user's own words AND an optional link**, never requiring a
+  row to point at — so the app cannot refuse to record a judgement it cannot look
+  up.
+- **What happens when a tier is wrong** wants editing and probably a timestamp.
+  The `snippet_edited_at` parallel is close but NOT exact, and the difference is
+  worth having noticed: that column distinguishes GENERATED text from text the
+  user took ownership of, whereas here everything is the user's from the start.
+  **A timestamp here carries AGE, not authorship** — nearer to A39's "asked 20
+  minutes ago" than to §7.8.
+

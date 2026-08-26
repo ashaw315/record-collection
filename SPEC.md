@@ -1454,6 +1454,74 @@ Each step should end with its tests green before moving on.
 
 ---
 
+## 12a. SPEC'D, NOT BUILT — ranked pressings (A40)
+
+**Proposed by Adam 2026-08-26. Written up rather than built, and the open questions below are why: two of them change the schema, and one has no answer in the current model at all.**
+
+### What it is
+
+When a pressing matters, the app carries **which pressing to get** — a first choice, a second, a third if it is all you can find — each clickable through to the detail behind it.
+
+### What it is NOT, since two things in this project are adjacent
+
+**It is not `best_dig_notes`, but it is close.** §7.2 already gives one free-text field per want-list row ("caveats, e.g. bootleg warnings, how to spot a fake"), and "1st UK Clay press, Porky stamp; avoid the 1989 repress" fits in it today. **What is missing is structure, not knowledge:** an ordering, and a link through to the pressing. This feature is a structured version of a note the user already writes — which is the whole reason it is cheap and the whole reason it must not become something else.
+
+**It is not §7.7's tier-1 badge, and that failure is not a precedent against it.** That badge was a claim about OWNERSHIP MATCHING — the importer wrote `discogs_release_id`, the matcher read it, and the form path never sent it, so the badge could never fire. It was a SEAM defect between two components. **This feature has no equivalent seam because nothing computes it** (see below), so the class of failure that killed the badge cannot occur here.
+
+### Whose judgement a tier is, which decides the design
+
+**The user's, and only the user's.**
+
+- **Not Discogs'.** It has no fidelity ranking. It has community `have`/`want` counts, which measure popularity, and marketplace prices, which measure scarcity plus hype. Neither is "sounds better", and treating either as one would be the fabricated-230g-weight failure at feature scale.
+- **Not the app's.** Nothing in the schema knows a Porky-stamped first press beats a 1989 repress. Deriving it means inventing an authority the data cannot support, and CLAUDE.md §8 is explicit that "best dig" is a judgement about SOUND.
+
+**So the app records a preference; it never computes a ranking.** Everything follows from that: the app can only misrender the list, never be wrong about it. That is what makes this closer to `want_list` — rows the user creates, ordered by a priority they set — than to anything §9 computes.
+
+### Where it attaches: the album, reachable from both sides
+
+**A ranked pressing list belongs to the ALBUM, not to a row in a table.** "For *Rumours*, the first US press beats the 1979 repress" is true whether the user owns a copy, wants one, or neither.
+
+- the want-list row asks **"which one am I hunting"**;
+- the owned record asks **"is mine the good one, and what would an upgrade be"**.
+
+**Same list, two questions.** And the attachment is load-bearing rather than tidy: **a want-list attachment would not survive acquisition.** Acquiring clears the hunt, and the knowledge must not go with it — that is the moment it becomes most useful, because the user now owns a copy and wants to know whether it is the good one.
+
+### THE BLOCKING QUESTION: there is no album in this schema
+
+**Measured before writing this, not assumed.** There is no `albums` or `masters` table. `records` and `want_list` EACH carry their own `title` and `artist_id`, and `pressings` are shared and found-or-created (§4.2). So "Rumours by Fleetwood Mac" exists as free text in up to two places with nothing joining them.
+
+**This feature attaches to a thing that does not exist**, and that is the first question to answer:
+
+1. **Introduce an album entity** and migrate `records`/`want_list` to reference it. Correct, and the largest change in the project since step 2 — it touches the two central tables, every query over them, and the import path.
+2. **Key the list on `(artist_id, normalized title)`** — no new entity, a derived key. Cheap, and brittle in the way this project has been bitten by before: a title edited on one row silently orphans the list.
+3. **Key it on Discogs' `master_id`.** Precise where it exists, absent for anything Discogs does not list, and it makes a user's own judgement depend on an external catalogue.
+
+**None is obviously right, which is why this is not built.**
+
+### Open question: what identifies the thing being RANKED
+
+Adam's, and it is 14c's tension one level up. **"The first US press" is a description, not a row.** Pinning a tier to a `discogs_release_id` makes it precise and brittle at once: precise because it links through to real detail, brittle because a user may rank a pressing Discogs does not list, or rank a class of pressings ("any Porky-stamped copy") that no single release id names.
+
+**14c resolved the same tension by DISPLAYING rather than MATCHING** — the app showed the evidence and the user's eye did the work. The analogous resolution here is that **a tier carries the user's own words AND an optional link**, rather than requiring a row to point at. What must not happen is the link becoming mandatory, which would make the app refuse to record a judgement it cannot look up.
+
+### Open question: what happens when a tier is wrong
+
+Also Adam's. **This is a judgement recorded at a moment, and judgements about pressings change** — a user hears a better copy, or learns the repress they dismissed used the original stampers.
+
+So it needs editing, and it should probably record **when it was written**, the same way `snippet_edited_at` (§7.8) makes ownership of a piece of text legible. The parallel is close but not exact and the difference matters: `snippet_edited_at` distinguishes GENERATED text from text the user took ownership of, whereas here everything is the user's from the start. **What a timestamp would carry is age, not authorship** — "you ranked this two years ago" is a fact worth showing next to a judgement, in the same way A39 shows when a gap analysis was asked.
+
+### Non-goals, stated now so they are not smuggled in later
+
+- **The app never ranks.** No score, no "recommended pressing", no ordering derived from community counts or price.
+- **No purchase path** (§13), unchanged: a tier says which pressing to look for, never where to buy it.
+- **It does not make `best_dig_notes` redundant** until it demonstrably replaces it. Free text holds things a ranked list cannot — "avoid the 1989 repress, the stampers were worn" is a caveat, not a tier.
+
+### What would fire it
+
+**Nothing yet, deliberately.** The blocking question needs an answer, and answering it well probably means the album entity — which is a step-2-sized change and should be judged on its own merits, not adopted as a side effect of a want-list feature. **Trigger: Adam deciding the album question, or a second feature needing the same entity** — at which point the entity is justified by two callers rather than one.
+
+---
+
 ## 13. Explicit non-goals for v1
 
 Do not build these. Do not add schema for them beyond what §4 specifies.
