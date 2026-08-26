@@ -320,8 +320,18 @@ Name collision is rare enough that asking is cheap, and it is the only signal th
 | id | UUID PRIMARY KEY DEFAULT gen_random_uuid() | |
 | kind | TEXT NOT NULL | `gap_analysis` \| `snippet` — the two callers, counted together |
 | requested_at | TIMESTAMPTZ NOT NULL DEFAULT now() | |
+| completed_at | TIMESTAMPTZ | When the call finished, NULL if it never did. **Nullable is load-bearing:** a serverless function killed at `maxDuration` runs no cleanup, so a claim with no completion is the timeout signature and `claimLlmRequest` stops counting it past the function ceiling (R6 finding 5). Added at step 16; **this table omitted it until A38** |
+| input_tokens | INTEGER | What the call cost, A38 |
+| output_tokens | INTEGER | " |
+| stop_reason | TEXT | `end_turn` \| `max_tokens`, or NULL if unreported |
 
 Index on `requested_at`, which is the only column the limit reads.
+
+**The usage columns are DIAGNOSTIC and are never read by the limiter (A38, 2026-08-26).** They exist to answer "how has this changed over time" — whether output grows with the collection, and whether §9.2's six-suggestion count still leaves the headroom it was estimated to leave. A log line answers "what happened just now"; a column answers the question that outlives the incident, which is the one that matters as a collection grows from 17 records to 200.
+
+**Tokens must not become the quota, and this will look wrong to someone reasonable.** A request returning 4,000 tokens plainly costs more than one returning 200, so counting requests looks like a crude proxy for the thing that matters. It is not a proxy: **the quota protects a REQUEST budget agreed with Anthropic, not a token budget.** Swapping the unit silently changes what "ten" means — a user who asked ten cheap questions has capacity left under one rule and none under the other, with nothing in the UI or the spec explaining the difference. Metering on tokens is a different feature with a different agreement behind it and needs its own specification first.
+
+**Nullable, never defaulted.** Rows predating the migration have unknown usage, not zero usage; a `DEFAULT 0` would fabricate a measurement for a call nobody measured. Same reasoning as `completed_at`, and the same distinction as the two live rows whose NULL means "this predates the question".
 
 **A log of requests, not a counter.** A single mutable `count` row needs resetting on a schedule nothing runs, and answers "how many this hour" only if the reset fired. Rows carry their own timestamps, so the window is a `WHERE` clause and no scheduled job exists to fail. Rows older than the window are deletable at any time by anything, or never — the query is correct either way.
 

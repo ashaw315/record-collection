@@ -1,4 +1,5 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { desc } from 'drizzle-orm';
 import { getTestDb, truncateAll, closeTestDb } from '../../helpers/db';
 import { artists, genres, llmRequests, records, recordGenres } from '@/db/schema';
 import { LLM_REQUESTS_PER_HOUR } from '@/lib/llm/rate-limit';
@@ -331,5 +332,105 @@ describe('why the response could not be read, and what the user is told', () => 
     expect(line).toContain('reason=cut');
     expect(line).toContain('out_tokens=4000');
     expect(line).toContain(`max_tokens=${GAP_ANALYSIS_MAX_TOKENS}`);
+  });
+});
+
+/**
+ * SPEC.md §4.3 (A38, 2026-08-26) — what a call COST, recorded on both paths.
+ *
+ * **The defect this fixes, and it is mine.** After A37 shipped I asked Adam for
+ * the `out_tokens` of a successful run, having built a diagnostic that only
+ * fires on failure: the log sits inside `!result.ok`, `llm_requests` had no
+ * token columns, and `vercel logs` tails forward. The count was gone and the
+ * 2.5x headroom estimate stayed an estimate.
+ *
+ * Same shape as the defect it was built to fix, one branch over — "a failure
+ * records nothing" became "a success records nothing". **The success path is
+ * where the BASELINE lives**, and it is invisible when a diagnostic is written
+ * during an incident because nothing is going wrong on it.
+ */
+describe('what a call cost is recorded, on success as well as failure', () => {
+  const usage = { stopReason: 'end_turn', inputTokens: 1533, outputTokens: 530 };
+
+  /**
+   * **The one that would have answered Adam's question.** Fails against the
+   * shipped code, where `analyse` drops usage on success in a single ternary
+   * (`parsed.ok ? parsed : {...parsed, ...observed}`).
+   */
+  it('records tokens for a SUCCESSFUL gap analysis', async () => {
+    analyse.mockResolvedValue({
+      ok: true,
+      suggestions: [{ artist: 'Crass', title: 'Feeding', reason: 'x', genre: 'UK82' }],
+      dropped: 0,
+      ...usage,
+    });
+
+    const response = await POST(new Request('http://localhost/api/suggestions/ai', { method: 'POST' }));
+    expect(response.status).toBe(200);
+
+    const [row] = await getTestDb()
+      .select()
+      .from(llmRequests)
+      .orderBy(desc(llmRequests.requestedAt))
+      .limit(1);
+
+    expect(row.outputTokens, 'the baseline the headroom estimate needs').toBe(530);
+    expect(row.inputTokens).toBe(1533);
+    expect(row.stopReason).toBe('end_turn');
+  });
+
+  /** The failure path keeps recording, so a truncation is comparable to a success. */
+  it('records tokens for a TRUNCATED gap analysis too', async () => {
+    analyse.mockResolvedValue({
+      ok: false,
+      reason: 'cut',
+      length: 3399,
+      stopReason: 'max_tokens',
+      inputTokens: 1533,
+      outputTokens: 4000,
+    });
+
+    await POST(new Request('http://localhost/api/suggestions/ai', { method: 'POST' }));
+
+    const [row] = await getTestDb()
+      .select()
+      .from(llmRequests)
+      .orderBy(desc(llmRequests.requestedAt))
+      .limit(1);
+
+    expect(row.outputTokens).toBe(4000);
+    expect(row.stopReason).toBe('max_tokens');
+  });
+
+  /**
+   * **NULL means "not measured", never zero** (A38's first constraint).
+   *
+   * Rows predating the migration have unknown usage, and a `DEFAULT 0` would
+   * fabricate a measurement for a call nobody measured — the same reasoning
+   * that keeps `completed_at` nullable, and the same distinction as the two
+   * pre-existing rows whose NULL means "this predates the question".
+   *
+   * Fails against a defaulted column.
+   */
+  it('leaves usage NULL when the transport reported none', async () => {
+    analyse.mockResolvedValue({
+      ok: true,
+      suggestions: [],
+      dropped: 0,
+      stopReason: null,
+      inputTokens: null,
+      outputTokens: null,
+    });
+
+    await POST(new Request('http://localhost/api/suggestions/ai', { method: 'POST' }));
+
+    const [row] = await getTestDb()
+      .select()
+      .from(llmRequests)
+      .orderBy(desc(llmRequests.requestedAt))
+      .limit(1);
+
+    expect(row.outputTokens, 'unknown is not zero').toBeNull();
+    expect(row.stopReason).toBeNull();
   });
 });

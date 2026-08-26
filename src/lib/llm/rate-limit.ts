@@ -213,8 +213,36 @@ export async function releaseLlmRequest(id: string): Promise<void> {
  * would turn the answer the user actually wanted into a 500 at the last step,
  * for a bookkeeping write.
  */
-export async function completeLlmRequest(id: string): Promise<void> {
+/**
+ * What the call cost, as the transport reported it (A38).
+ *
+ * Optional throughout: a caller with nothing to report writes NULL, which means
+ * "not measured" and never zero.
+ */
+export type LlmUsage = {
+  stopReason?: string | null;
+  inputTokens?: number | null;
+  outputTokens?: number | null;
+};
+
+export async function completeLlmRequest(id: string, usage?: LlmUsage): Promise<void> {
   const db = getDb();
 
-  await db.execute(sql`UPDATE llm_requests SET completed_at = now() WHERE id = ${id}`);
+  /*
+   * **The same UPDATE that was already running on both paths**, which is why
+   * this is the right place: `completeLlmRequest` is called before the
+   * success/failure branch, so recording here cannot repeat the defect it
+   * fixes — a diagnostic that fires on one branch only.
+   *
+   * These columns are DIAGNOSTIC. Nothing in `claimLlmRequest` reads them; see
+   * the rule at the column in `schema.ts` for why the quota counts requests
+   * rather than tokens.
+   */
+  await db.execute(sql`
+    UPDATE llm_requests
+       SET completed_at = now(),
+           input_tokens = ${usage?.inputTokens ?? null},
+           output_tokens = ${usage?.outputTokens ?? null},
+           stop_reason = ${usage?.stopReason ?? null}
+     WHERE id = ${id}`);
 }

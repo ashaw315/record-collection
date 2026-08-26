@@ -120,6 +120,13 @@
       "when": 1787588583328,
       "tag": "0016_elite_ben_grimm",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1787761942714,
+      "tag": "0017_ancient_stryfe",
+      "breakpoints": true
     }
   ]
 }

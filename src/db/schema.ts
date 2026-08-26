@@ -525,6 +525,40 @@ export const llmRequests = pgTable(
      * a default would erase the distinction the column exists to record.
      */
     completedAt: timestamp('completed_at', { withTimezone: true }),
+    /**
+     * What the call COST, recorded on success as well as failure (A38).
+     *
+     * **NEVER READ BY THE LIMITER, and this is a rule rather than a
+     * description.** It will look wrong to someone reasonably concluding that
+     * tokens are a better quota than requests — a request that returns 4,000
+     * tokens plainly costs more than one returning 200, so counting requests
+     * looks like a crude proxy for the thing that actually matters.
+     *
+     * **It is not a proxy. The quota protects a REQUEST budget agreed with
+     * Anthropic, not a token budget.** §9.2 says ten requests an hour, and
+     * swapping the unit silently changes what "ten" means: a user who asked ten
+     * cheap questions would find themselves with capacity left over under one
+     * rule and exhausted under the other, and nothing in the UI or the spec
+     * would explain the difference. Metering on tokens is a different feature
+     * with a different agreement behind it, and it needs its own specification
+     * before any of these columns gates anything.
+     *
+     * These exist to answer "how has this changed over time" — whether output
+     * grows with the collection, and whether A37's six-suggestion count still
+     * leaves the headroom it was estimated to leave. A log line answers "what
+     * happened just now"; a column answers the question that outlives the
+     * incident.
+     *
+     * **Nullable, never defaulted.** Rows predating this migration have unknown
+     * usage, not zero usage, and a `DEFAULT 0` would fabricate a measurement
+     * for a call nobody measured. Same reasoning as `completed_at` above, and
+     * the same distinction as the two rows whose NULL means "this predates the
+     * question".
+     */
+    inputTokens: integer('input_tokens'),
+    outputTokens: integer('output_tokens'),
+    /** `end_turn` finished; `max_tokens` ran out of room. NULL if unreported. */
+    stopReason: text('stop_reason'),
   },
   (t) => [index('llm_requests_requested_at_idx').on(t.requestedAt)],
 );

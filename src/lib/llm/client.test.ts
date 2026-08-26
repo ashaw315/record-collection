@@ -506,3 +506,72 @@ describe('the prompt supplies the hierarchy A29d claims it does', () => {
     expect(prompt).not.toMatch(/AOR[^\n]*a kind of/);
   });
 });
+
+/**
+ * SPEC.md §4.3 (A38) — usage survives the CLIENT, on success as well as failure.
+ *
+ * **Written after a mutation exposed a hollow test.** The first version of this
+ * assertion lived in the route's integration tests, which mock `analyse`
+ * directly — so it never executed the ternary in `client.ts` that drops usage,
+ * and restoring the defective line left all 15 route tests green. The
+ * assertion has to sit where the code under test actually runs, which is here,
+ * driving `analyse` through a fake transport.
+ *
+ * CLAUDE.md §2: "For every test, name the line of source it would fail
+ * against." This one fails against `analyse`'s return statement.
+ */
+describe('what the call cost survives the client', () => {
+  const respond = (body: unknown, extra: Record<string, unknown> = {}) =>
+    vi.fn().mockResolvedValue({
+      content: [{ type: 'text', text: JSON.stringify(body) }],
+      ...extra,
+    });
+
+  /**
+   * **The defect A38 fixes, pinned at its source.** Fails against
+   * `return parsed.ok ? parsed : { ...parsed, ...observed }` — the shipped line
+   * that recorded nothing for a completed run and left the headroom estimate
+   * with no baseline.
+   */
+  it('carries stop_reason and tokens on a SUCCESSFUL parse', async () => {
+    const create = respond(
+      { suggestions: [{ artist: 'Crass', title: 'Feeding', reason: 'r', genre: 'UK82' }] },
+      { stop_reason: 'end_turn', usage: { input_tokens: 1533, output_tokens: 530 } },
+    );
+
+    const result = await createGapAnalysisClient({ create }).analyse(SUMMARY);
+
+    expect(result.ok).toBe(true);
+    expect(result.stopReason).toBe('end_turn');
+    expect(result.outputTokens, 'the baseline a completed run must record').toBe(530);
+    expect(result.inputTokens).toBe(1533);
+  });
+
+  /** And on a failure, which already worked — asserted so it cannot regress. */
+  it('carries stop_reason and tokens on a TRUNCATED response', async () => {
+    const create = vi.fn().mockResolvedValue({
+      content: [{ type: 'text', text: '{"suggestions":[{"artist":"Cra' }],
+      stop_reason: 'max_tokens',
+      usage: { input_tokens: 1533, output_tokens: 4000 },
+    });
+
+    const result = await createGapAnalysisClient({ create }).analyse(SUMMARY);
+
+    expect(result.ok).toBe(false);
+    expect(result.stopReason).toBe('max_tokens');
+    expect(result.outputTokens).toBe(4000);
+  });
+
+  /**
+   * NULL is "not measured", never zero — a transport that reports no usage must
+   * not have zeros invented for it.
+   */
+  it('reports null rather than zero when the transport omits usage', async () => {
+    const create = respond({ suggestions: [] });
+
+    const result = await createGapAnalysisClient({ create }).analyse(SUMMARY);
+
+    expect(result.outputTokens).toBeNull();
+    expect(result.stopReason).toBeNull();
+  });
+});

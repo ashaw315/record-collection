@@ -151,7 +151,16 @@ export const POST = withErrorHandling('api.suggestions.ai.POST', async () => {
    * `ABANDONED_CLAIM_MS` reads it as a timeout, refunding a billed call after
    * 90 seconds. A quota that forgets is not a quota.
    */
-  await completeLlmRequest(claim.id);
+  /*
+   * A38: what the call cost, on BOTH paths. `result` carries usage whether or
+   * not it parsed, so the success path records its baseline — the measurement
+   * the failure-only diagnostic could not take.
+   */
+  await completeLlmRequest(claim.id, {
+    stopReason: result.stopReason,
+    inputTokens: result.inputTokens,
+    outputTokens: result.outputTokens,
+  });
 
   if (!result.ok) {
     /*

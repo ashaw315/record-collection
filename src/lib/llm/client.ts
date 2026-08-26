@@ -310,8 +310,15 @@ export type GapAnalysisFailure = {
   outputTokens: number | null;
 };
 
+/** What the transport observed, carried on success and failure alike (A38). */
+export type GapAnalysisUsage = {
+  stopReason: string | null;
+  inputTokens: number | null;
+  outputTokens: number | null;
+};
+
 export type GapAnalysisResult =
-  | { ok: true; suggestions: Suggestion[]; dropped: number }
+  | ({ ok: true; suggestions: Suggestion[]; dropped: number } & GapAnalysisUsage)
   | GapAnalysisFailure;
 
 export type GapAnalysisClient = {
@@ -359,7 +366,13 @@ export function createGapAnalysisClient(transport: { create: MessageCreate }): G
 
       const parsed = parseSuggestions(text, summary.genreVocabulary);
 
-      return parsed.ok ? parsed : { ...parsed, ...observed };
+      /*
+       * **`observed` on BOTH branches**, and the previous version of this line
+       * is the defect A38 fixes: `parsed.ok ? parsed : {...parsed, ...observed}`
+       * dropped usage on success, so a completed run recorded nothing and the
+       * headroom estimate had no baseline to be checked against.
+       */
+      return { ...parsed, ...observed };
     },
   };
 }

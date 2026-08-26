@@ -17805,3 +17805,108 @@ belongs in its own unit, with the question of WHERE it goes (a log line, or
 deliberately rather than in passing. **Trigger: the next §9.2 unit** — finding 4
 is next and touches this route, so it is the natural place.
 
+
+---
+
+## A38 — usage columns on `llm_requests`, and a hollow test caught by mutation
+
+**2026-08-26, Unit A of finding 4.** Fixes the defect recorded last turn: a
+successful gap analysis recorded nothing, so the 2.5x headroom estimate had no
+baseline.
+
+### Columns over a log line, argued rather than assumed
+
+**Adam's framing decided it:** a log line answers "what happened just now";
+columns answer "how has this changed over time" — the actual question, since the
+headroom estimate has to hold as the collection grows from 17 records to 200.
+
+Three things checked that support it:
+
+1. **The write point already existed.** `completeLlmRequest(claim.id)` runs on
+   BOTH paths, before the success/failure branch — which is exactly why the
+   failure-only log was the wrong shape. Tokens go into the same UPDATE: no new
+   call site, no new path, no new failure mode.
+2. **The table is already the durable per-call record**, and `kind` is
+   precedent for a column that informs rather than enforces (§4.3 says it "is
+   not part of the count").
+3. **It makes the success path record something at all**, which a log line would
+   have fixed more narrowly.
+
+**The case against, stated fairly:** a schema change is forward-only and
+permanent, for three nullable columns on a table whose only job today is a
+`WHERE` clause. If the question were asked once, a log line would be cheaper and
+reversible. **It is not asked once** — it is asked every time the collection
+grows, and it is the input to whether six stays the right count.
+
+### The rule at the column, and why it needs to be there
+
+Adam: *"never read by the limiter" is the kind of rule that gets broken by
+someone reasonably thinking tokens are a better quota than requests.*
+
+So the comment argues rather than asserts, at the column and in §4.3: **the
+quota protects a REQUEST budget agreed with Anthropic, not a token budget**, and
+swapping the unit silently changes what "ten" means — a user who asked ten cheap
+questions has capacity left under one rule and none under the other, with nothing
+in the UI or the spec explaining the difference.
+
+**Nullable, never defaulted.** A `DEFAULT 0` would fabricate a measurement for a
+call nobody measured, and the two live rows whose NULL means "this predates the
+question" are the precedent.
+
+### THE FINDING: my first test was hollow, and only the mutation showed it
+
+The success-path assertion first went into the ROUTE's integration tests. It
+passed. Then the mutation — restoring the shipped ternary
+`parsed.ok ? parsed : { ...parsed, ...observed }` — **left all 15 route tests
+green.**
+
+**Because those tests mock `analyse` directly, so they never execute the line
+the defect lives on.** They prove usage reaches the ROW given a client that
+supplies it; they cannot prove the client supplies it. The assertion was one
+layer above the code it named.
+
+Moved to `client.test.ts`, driving `analyse` through a fake transport, which is
+where the ternary actually runs. Re-mutated: **2 tests fail.**
+
+**This is CLAUDE.md §2's rule — "name the line of source it would fail against"
+— failing in a way reading could not catch.** I could name the line; the test
+was not executing it. The route tests kept their value and are still there, but
+what pins the fix is the client test.
+
+**The general form:** a test placed one layer above the defect passes for the
+same reason the defect survives — the layer under test is mocked, and the mock
+supplies what the real code fails to. **Only a mutation distinguishes "the
+system behaves" from "this code is what makes it behave."**
+
+### The migration test earned its keep
+
+`migrations-complete.test.ts` failed after the migration was generated, and it
+was RIGHT: it copies TRACKED FILES ONLY into a simulated fresh clone, and
+`0017_ancient_stryfe.sql` was untracked while `_journal.json` (tracked) already
+referenced it. **A fresh clone would have had a journal citing a file that did
+not exist.**
+
+Fixed by `git add drizzle/`, not by touching the test. **It enforces that a
+migration and its journal entry are committed together**, which is a real hazard
+and not an artefact — and it reproduced deterministically, which is what
+separated it from the accumulation flakes.
+
+### Verification
+
+- `npm run db:test:reset` — **18 of 18 migrations applied**, clean from empty.
+- Migration is three nullable `ADD COLUMN`s, no defaults, non-destructive.
+- Unit **3041 passed**, 1 skipped. E2E **418 passed, 0 failed**. Typecheck,
+  lint, build clean.
+
+### SPEC drift fixed in the same amendment
+
+§4.3's `llm_requests` table **did not list `completed_at`** — added at step 16
+and never reflected. Adam: *"a spec describing a table that has not existed for
+two steps is the drift these amendments exist to catch, and it is the second
+time this session."* Now listed with its load-bearing nullability.
+
+**Worth noting as a pattern: both instances this session were found by BUILDING
+against the spec, not by reading it.** A36's ambiguity surfaced when a real user
+hit a dead end; this omission surfaced when a column had to be added next to it.
+A spec is checked by use, like everything else here.
+
