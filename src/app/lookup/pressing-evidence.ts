@@ -34,6 +34,16 @@ export type PressingEvidence = {
    */
   notes: string | null;
   /**
+   * Whether this release files MULTIPLE runouts for the same side — Discogs'
+   * "variant 2", "variant 3" and so on.
+   *
+   * Found on first real use (NOTES): a release can carry six, so a match
+   * establishes the RELEASE and not the stamper. The panel says so when it is
+   * true, and stays quiet when it is not — a limit named where it does not bite
+   * is noise that trains the reader to skip the line where it does.
+   */
+  hasRunoutVariants: boolean;
+  /**
    * Whether Discogs holds anything to compare at all.
    *
    * §12 step 14c: "Absence reads as absence." 3 of 41 measured releases carry
@@ -59,10 +69,27 @@ export function pressingEvidence(release: NormalizedRelease): PressingEvidence {
 
   return {
     runouts,
+    hasRunoutVariants: hasVariants(runouts),
     otherIdentifiers: release.otherIdentifiers,
     companies,
     notes: release.notes,
     hasEvidence:
       runouts.length > 0 || companies.length > 0 || release.otherIdentifiers.length > 0,
   };
+}
+
+/**
+ * Variants are read off the DESCRIPTION, never off the runout count.
+ *
+ * A double LP carries four runouts — sides A, B, C and D — and no variants at
+ * all. Counting rows would announce a stamper limit on every gatefold, which is
+ * exactly the noise this line has to avoid to stay worth reading.
+ *
+ * Measured on the committed fixtures: Discogs writes "Etched runout side A,
+ * variant 3" and "Side 1 Etched, variant 2" — the word appears in the
+ * description, in lower case, after the side. Matching the word alone is enough
+ * and does not depend on the surrounding format, which varies per contributor.
+ */
+function hasVariants(runouts: PressingEvidence['runouts']): boolean {
+  return runouts.some((runout) => /\bvariant\b/i.test(runout.description ?? ''));
 }

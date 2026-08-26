@@ -16915,3 +16915,119 @@ failure this entry exists to make visible in advance.
 > and the only instrument that has ever found it in this project is someone
 > using the app with the object in their hand.
 
+
+---
+
+## DECIDED: the variant limit is labelled. Option 2, one line.
+
+**2026-08-25 (Adam), resolving the entry above.** Built the same day.
+
+**The copy, quoted because a test quotes it:**
+
+    Variants are different stampers within this release — a match identifies
+    the release.
+
+**Phrased as what a match ESTABLISHES, not what it fails to.** A person standing
+in a shop wants the boundary of the answer, not a disclaimer about it. And it
+does NOT explain what a stamper is — anyone reading a deadwax already knows, and
+explaining it would pad the line into something skippable.
+
+**Why option 1 lost, and the argument is Adam's own and better than mine.** The
+case for saying nothing was that he read six labelled variants and drew the
+right conclusion unprompted. His correction: *"I drew it while reading carefully
+with you watching, not because the screen said so."* The observed success came
+with a condition attached that does not hold in a shop with a record in one hand
+— which is the case the screen exists for. **A user succeeding under favourable
+conditions is not evidence the interface communicated.**
+
+**Shown only where variants exist**, and that is load-bearing rather than tidy:
+a limit named where it does not bite is noise, and noise trains the reader to
+skip the line in the case where it does.
+
+### Detected by DESCRIPTION, never by counting runouts
+
+`hasVariants` matches the word "variant" in the identifier description, because
+Discogs writes `Etched runout side A, variant 3` and `Side 1 Etched, variant 2`.
+
+**Counting rows is the obvious wrong implementation and it is wrong on a real
+case**: a double LP carries four runouts — sides A, B, C, D — with no variants
+at all, so a count rule announces a stamper limit on every gatefold in the
+collection. **Mutation-verified**: replacing the description test with
+`runouts.length > 2` fails `reads a four-sided release as sides, not as
+variants`, and nothing else. That test exists only because the wrong
+implementation was considered before it was written, which is what a
+count-shaped rule looks like from the inside.
+
+### Option 3 stays ruled out
+
+Marking WHICH variant matched requires the app to decide which string matches —
+machine-matching messy transcriptions, the research project §12 step 14c exists
+to skip. Rejected on first raising, rejected again here, and recorded twice so
+it is not proposed a third time with a friendlier name.
+
+---
+
+## 14c IN REAL USE: several records added, identification accurate each time
+
+**Adam, 2026-08-25**, after using the feature on his own collection rather than
+on fixtures:
+
+> I have since added a number of records through the lookup and the
+> identification has been accurate each time.
+
+**Recorded because it is the evidence the suite structurally cannot produce.**
+3023 unit tests and 411 E2E assertions establish that the panel displays what
+Discogs holds; none of them establish that the displayed evidence lets a person
+find their own record. That is a claim about the world, and only use can make it.
+
+**And it closes the loop on the trigger that fired this feature.** The deferral
+entry named three triggers, the second being "a lookup ends without the user
+being able to tell which row is theirs, three times". The reverse now has
+evidence: several lookups where the user COULD tell. The measured 93% held up in
+practice on this collection.
+
+**The one limit found in real use is the variant/stamper boundary above**, now
+labelled. Adam's report: *"this copy change is the last thing I have noticed
+about it."* Step 14c is done as a feature, not merely as a build step.
+
+
+---
+
+## FIRST SIGHTING: `wall-scene.spec.ts:449` "the return re-measures the slot"
+
+**2026-08-25**, on the full `--retries=0` run verifying the variant-limit copy
+change. Recorded at first sighting rather than after four, because the 1093
+entry's cost was that nobody wrote the first three down.
+
+    Error: the record is back in its own slot, horizontally
+    expect(received).toBeCloseTo(expected)
+    Expected precision:    0
+    Expected difference: < 0.5
+    Received difference:   401.5
+
+**Not 1093, and 1093 PASSED on this same run** — which is itself information:
+that intermittent is genuinely intermittent rather than load-monotonic, and two
+different wall-scene tests now fail under full-suite load in different runs.
+
+**401.5px is not a rounding wobble.** `toBeCloseTo(x, 0)` wants < 0.5, so the
+record landed in a DIFFERENT SLOT, not slightly off its own. Whatever this is,
+it is a whole-slot error, which argues for a genuine mis-measure under
+contention rather than a tolerance that needs loosening. **Do not "fix" this by
+widening the precision** — that would convert a slot-level error into a passing
+test, which is the shape CLAUDE.md §2 forbids.
+
+**Passes in isolation** (1/1, 8.3s). Needs full-suite load, same as 1093.
+
+**Verified NOT caused by the change under test:** `wall-scene.spec.ts` contains
+zero references to `lookup` or `pressing-evidence`, and the variant-limit change
+touches one module, one component and one spec, all under `/lookup`. The
+14c tests all passed in this run — 16 matching ✓ lines across both projects.
+
+**Evidence on disk from the failing run:**
+`test-results/wall-scene-the-return-re-m-fbdd0-slot-rather-than-caching-it-chromium/`
+
+**Trigger: the next §10b or wall-scene unit**, or a second sighting — at which
+point it is a rate rather than an event, and the two wall-scene intermittents
+should be diagnosed together, since "the scene mis-measures under contention"
+would explain both.
+

@@ -64,6 +64,28 @@ export function PressingEvidencePanel({ evidence }: { evidence: Evidence }) {
               </div>
             ))}
           </dl>
+
+          {/*
+            **What a match ESTABLISHES**, said once, only where variants exist.
+            Found by Adam on first real use: a release can file six runout
+            variants, so finding your deadwax among them identifies the release
+            and not the stamper (NOTES).
+
+            Phrased as what it DOES establish rather than what it does not —
+            a reader standing in a shop wants the boundary, not a disclaimer.
+            It does not explain what a stamper is: anyone reading a deadwax
+            already knows, and explaining it would make the line skippable.
+
+            CLAUDE.md §8's "a pressing is not an album" has a level below the
+            one this screen reaches, and this is the app naming which level it
+            got to — the same honesty as the identical-row collapse.
+          */}
+          {evidence.hasRunoutVariants && (
+            <p data-testid="variant-limit" className="mt-1 text-xs text-muted-foreground">
+              Variants are different stampers within this release — a match identifies the
+              release.
+            </p>
+          )}
         </section>
       )}
 

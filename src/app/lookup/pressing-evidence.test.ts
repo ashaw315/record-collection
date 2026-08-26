@@ -181,6 +181,77 @@ describe('runouts render verbatim', () => {
   });
 });
 
+describe('the variant limit is named', () => {
+  /**
+   * Adam, on first real use with a record in hand (NOTES): a release can list
+   * SIX runout variants, so a match establishes the RELEASE and not the
+   * stamper. Discogs' data model, not a defect — but the screen said nothing
+   * about it, and he drew the right conclusion by reading carefully rather than
+   * because the panel told him.
+   *
+   * CLAUDE.md §8's "a pressing is not an album" has a level below the one 14c
+   * reached: a stamper is not a release.
+   *
+   * Fails against `pressingEvidence` not reporting the variant count — the
+   * panel needs it to decide whether the line applies.
+   */
+  it('counts the runout variants a release carries', () => {
+    // 8 identifiers, 4 variants across 2 sides — measured on the fixture.
+    expect(pressingEvidence(normalizeRelease(detailed)).hasRunoutVariants).toBe(true);
+  });
+
+  /**
+   * The line must NOT appear where there is nothing to disambiguate. A release
+   * with one runout per side has no variants, and telling the user their match
+   * is release-level would name a limit that is not biting — noise that trains
+   * them to skip the line where it matters.
+   */
+  it('does not claim variants when a release has one runout per side', () => {
+    const evidence = pressingEvidence(
+      normalizeRelease({
+        id: 1,
+        identifiers: [
+          { type: 'Matrix / Runout', value: 'A-1', description: 'Runout side A' },
+          { type: 'Matrix / Runout', value: 'B-1', description: 'Runout side B' },
+        ],
+      }),
+    );
+
+    expect(evidence.hasRunoutVariants).toBe(false);
+  });
+
+  /**
+   * The committed collision pair carries exactly two runouts, one per side —
+   * so the line stays off there. Pinned because it is the fixture every other
+   * test in this file uses, and a count-based rule that fired on it would be
+   * firing on the wrong thing.
+   */
+  it('stays off for the collision pair, which has one runout per side', () => {
+    expect(pressingEvidence(normalizeRelease(collisionA)).hasRunoutVariants).toBe(false);
+    expect(pressingEvidence(normalizeRelease(collisionB)).hasRunoutVariants).toBe(false);
+  });
+
+  /**
+   * Variants are detected by DESCRIPTION, not by counting runouts. A double LP
+   * legitimately carries four runouts — sides A/B/C/D — with no variants at
+   * all, and a rule that counted rows would announce a limit that is not there.
+   */
+  it('reads a four-sided release as sides, not as variants', () => {
+    const evidence = pressingEvidence(
+      normalizeRelease({
+        id: 1,
+        identifiers: ['A', 'B', 'C', 'D'].map((side) => ({
+          type: 'Matrix / Runout',
+          value: `EKS-75005-${side}-1`,
+          description: `Runout side ${side}`,
+        })),
+      }),
+    );
+
+    expect(evidence.hasRunoutVariants).toBe(false);
+  });
+});
+
 describe('notes are structurally separate from evidence', () => {
   /**
    * §12 step 14c: identifiers and companies are checkable against the object;

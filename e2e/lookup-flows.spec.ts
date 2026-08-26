@@ -1652,3 +1652,71 @@ test('the evidence panel is never fetched until asked for', async ({ page }) => 
   expect(counter.calls).toEqual([]);
   await expect(page.getByTestId('pressing-evidence')).toHaveCount(0);
 });
+
+test('a release with runout variants says what a match identifies', async ({ page }) => {
+  /*
+    Found by Adam on first real use (NOTES): a release can file six runout
+    variants, so a match establishes the RELEASE and not the stamper. He read
+    the six labelled rows and drew that conclusion himself — while reading
+    carefully, which is not the condition that holds in a shop.
+
+    The copy is QUOTED here rather than pattern-matched, per the standing rule
+    that assertions about copy quote the copy.
+  */
+  await stubLookup(page, { results: [collisionRow(4878030)] });
+  await page.route('**/api/discogs/release/*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(
+        normalizeRelease({
+          id: 4878030,
+          identifiers: [
+            {
+              type: 'Matrix / Runout',
+              value: 'EKS-75005-A-1 CTH',
+              description: 'Etched runout side A, variant 1',
+            },
+            {
+              type: 'Matrix / Runout',
+              value: 'o T 1 EKS-75005-A-1 CTH D',
+              description: 'Etched runout side A, variant 3',
+            },
+          ],
+        }),
+      ),
+    });
+  });
+
+  await login(page);
+  await page.goto('/lookup');
+  await formReady(page);
+  await page.getByLabel('Artist').fill('Discharge');
+  await page.getByRole('button', { name: 'Search Discogs' }).click();
+  await page.getByTestId('expand-evidence').click();
+
+  await expect(page.getByTestId('variant-limit')).toHaveText(
+    'Variants are different stampers within this release — a match identifies the release.',
+  );
+});
+
+test('the variant line stays off where there is nothing to disambiguate', async ({ page }) => {
+  /*
+    A limit named where it does not bite is noise, and noise trains the reader
+    to skip the line where it DOES bite. The collision pair carries one runout
+    per side, so the line must not appear on it.
+  */
+  const counter = { calls: [] as number[] };
+  await stubLookup(page, { results: [collisionRow(4878030)] });
+  await stubReleaseDetail(page, counter);
+
+  await login(page);
+  await page.goto('/lookup');
+  await formReady(page);
+  await page.getByLabel('Artist').fill('Discharge');
+  await page.getByRole('button', { name: 'Search Discogs' }).click();
+  await page.getByTestId('expand-evidence').click();
+
+  await expect(page.getByTestId('evidence-runouts')).toBeVisible();
+  await expect(page.getByTestId('variant-limit')).toHaveCount(0);
+});
