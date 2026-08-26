@@ -147,6 +147,26 @@ describe('what leaves the machine', () => {
     // The want list, with its priority — §9.2 names it explicitly.
     expect(serialised).toContain('Raped Ass');
     expect(serialised).toContain('Anti-Cimex');
+
+    /*
+     * **Owned record titles, PERMITTED as of A41 (2026-08-26).** Previously
+     * absent by omission and asserted neither way — which made the exclusion an
+     * accident rather than a decision, and this file exists so that every field
+     * leaving the machine is a decision.
+     *
+     * A29g withheld them to keep §9.2's disclosure narrow, and the trade was
+     * reopened on its own trigger after a second already-owned suggestion:
+     * "Miles Davis — Bitches Brew" twice in two runs, 1 of 6 each time.
+     *
+     * **The design asked the model to reason about ownership while withholding
+     * the data that makes that reasoning checkable.** A rule the payload cannot
+     * support is either enforced by data or dropped from the prompt, and
+     * dropping it means giving up same-artist suggestions — the case A29g
+     * deliberately wanted.
+     */
+    expect(serialised, 'A41: owned titles are sent, so the model can avoid them').toContain(
+      'Hear Nothing See Nothing Say Nothing',
+    );
   });
 
   /**

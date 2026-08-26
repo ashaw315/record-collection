@@ -19,8 +19,8 @@ import type { CollectionSummary } from './collection-summary';
 
 const SUMMARY: CollectionSummary = {
   artists: [
-    { name: 'Discharge', recordCount: 4, genres: ['UK82', 'D-beat'] },
-    { name: 'Black Flag', recordCount: 2, genres: ['US Hardcore'] },
+    { name: 'Discharge', recordCount: 4, genres: ['UK82', 'D-beat'], titles: ['Hear Nothing See Nothing Say Nothing', 'Why'] },
+    { name: 'Black Flag', recordCount: 2, genres: ['US Hardcore'], titles: ['Damaged'] },
   ],
   labels: [{ name: 'Clay Records', recordCount: 4 }],
   wantList: [{ artist: 'Anti-Cimex', title: 'Raped Ass', priority: 1 }],
@@ -204,15 +204,57 @@ describe('the prompt is the feature', () => {
   });
 
   /**
-   * And says so as a RULE, not merely by omission — the model needs to be told,
-   * because "make ownership the reason" otherwise reads as licence to reason
-   * about what is absent.
+   * And says so as a RULE, not merely by omission — "make ownership the reason"
+   * otherwise reads as licence to reason about what is absent.
+   *
+   * **Rewritten at A41 (2026-08-26), because its premise stopped being true.**
+   * It asserted the prompt tells the model it CANNOT KNOW which records are
+   * owned — accurate while titles were withheld, and false once A41 sends them.
+   * A test whose premise the contract has overturned must change with the
+   * contract, and the reasoning belongs here rather than in a commit message.
+   *
+   * **What survives is the behaviour, not the justification.** The model still
+   * must not tell the user which records they lack: the list is what they own,
+   * not an inventory of what they have heard or once owned, so an absence there
+   * is not a fact about their shelves. Fails against dropping that instruction.
    */
-  it('tells the model it cannot know which records are owned', () => {
+  it('tells the model not to claim which records are missing', () => {
     const prompt = buildPrompt(SUMMARY);
 
-    expect(prompt).toMatch(/never (say|claim|assert)|do not (say|claim|assert)/i);
-    expect(prompt).toMatch(/which records|what they do not own|titles/i);
+    expect(prompt).toMatch(/do not tell them which records they lack/i);
+    // And says WHY, so the rule is followable rather than arbitrary.
+    expect(prompt).toMatch(/not everything they have heard|not a fact about their shelves/i);
+  });
+
+  /**
+   * **A41: the ownership rule is now stated at RECORD level**, because the
+   * payload can support it. Fails against leaving A29g's artist-level wording
+   * in place after titles started being sent — the mismatch that produced the
+   * duplicate suggestion.
+   */
+  it('forbids recommending a record the collection already contains', () => {
+    /*
+     * Newlines collapsed before matching: the prompt is assembled from an array
+     * of lines, so a rule that reads as one sentence to the model spans two
+     * entries here. Asserting the source's line breaks would pin formatting
+     * rather than content.
+     */
+    const flat = buildPrompt(SUMMARY).replace(/\s+/g, ' ');
+
+    expect(flat).toMatch(/listed with the records they own/i);
+    expect(flat).toMatch(/do not recommend a record that appears there/i);
+  });
+
+  /**
+   * And the titles are actually rendered — the rule is worthless if the data it
+   * refers to never reaches the prompt. Fails against a builder that carries
+   * titles and a renderer that drops them.
+   */
+  it('renders the owned titles it tells the model to check against', () => {
+    const prompt = buildPrompt(SUMMARY);
+
+    expect(prompt).toContain('Hear Nothing See Nothing Say Nothing');
+    expect(prompt).toContain('Damaged');
   });
 
   it('asks for the owned-artist disclosure to read as a reason, not an admission', () => {
@@ -283,7 +325,7 @@ describe('the prompt is the feature', () => {
   it('sends nothing beyond the summary it was given', () => {
     const prompt = buildPrompt({
       ...SUMMARY,
-      artists: [{ name: 'SENTINEL-ARTIST', recordCount: 1, genres: [] }],
+      artists: [{ name: 'SENTINEL-ARTIST', recordCount: 1, genres: [], titles: [] }],
     });
 
     expect(prompt).toContain('SENTINEL-ARTIST');
@@ -473,8 +515,8 @@ describe('configuration rejects a placeholder, not only an absence', () => {
  */
 const HIERARCHY: CollectionSummary = {
   artists: [
-    { name: 'Discharge', recordCount: 4, genres: ['UK82'] },
-    { name: 'Minor Threat', recordCount: 3, genres: ['US Hardcore'] },
+    { name: 'Discharge', recordCount: 4, genres: ['UK82'], titles: ['Why'] },
+    { name: 'Minor Threat', recordCount: 3, genres: ['US Hardcore'], titles: ['Out of Step'] },
   ],
   labels: [],
   wantList: [],

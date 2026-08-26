@@ -38,7 +38,24 @@ import { getDb } from '@/db/client';
  */
 
 export type CollectionSummary = {
-  artists: Array<{ name: string; recordCount: number; genres: string[] }>;
+  /**
+   * Owned artists, with the TITLES they own (A41, 2026-08-26).
+   *
+   * **Titles were withheld until A41 and their absence was the defect.** A29g
+   * made "already owned" an artist-level rule precisely because titles were not
+   * sent — then asked the model to lead with ownership reasoning anyway, which
+   * produced "Miles Davis — Bitches Brew" twice in two runs against a
+   * collection that contains it.
+   *
+   * A rule the payload cannot support is either enforced by data or dropped
+   * from the prompt. Dropping it means giving up same-artist suggestions, which
+   * is the case A29g deliberately wanted — so the data is sent instead.
+   *
+   * **The cost is INPUT SIZE, not privacy**, and A29g named the wrong one:
+   * ~150 tokens at 17 records, ~2,000 at 200. A38 measured input as the cheap
+   * side (1,603–1,738 against outputs of 526–1,210).
+   */
+  artists: Array<{ name: string; recordCount: number; genres: string[]; titles: string[] }>;
   labels: Array<{ name: string; recordCount: number }>;
   wantList: Array<{ artist: string; title: string; priority: number }>;
   /**
@@ -81,11 +98,15 @@ export async function buildCollectionSummary(): Promise<CollectionSummary> {
     name: string;
     record_count: number;
     genres: string[] | null;
+    titles: string[] | null;
   }>(sql`
     SELECT
       a.name,
       COUNT(DISTINCT r.id)::int AS record_count,
-      ARRAY_REMOVE(ARRAY_AGG(DISTINCT g.name), NULL) AS genres
+      ARRAY_REMOVE(ARRAY_AGG(DISTINCT g.name), NULL) AS genres,
+      -- A41: the titles themselves, so "already owned" is checkable at record
+      -- level the way the want-list prohibition already is.
+      ARRAY_REMOVE(ARRAY_AGG(DISTINCT r.title), NULL) AS titles
     FROM records r
     JOIN artists a ON a.id = r.artist_id
     LEFT JOIN record_genres rg ON rg.record_id = r.id
@@ -142,6 +163,7 @@ export async function buildCollectionSummary(): Promise<CollectionSummary> {
       name: row.name,
       recordCount: row.record_count,
       genres: row.genres ?? [],
+      titles: row.titles ?? [],
     })),
     labels: labelRows.rows.map((row) => ({ name: row.name, recordCount: row.record_count })),
     wantList: wantRows.rows.map((row) => ({

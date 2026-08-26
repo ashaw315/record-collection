@@ -153,8 +153,18 @@ export function isAuthFailure(error: unknown): boolean {
  * direction. The hierarchy the user actually built is the vocabulary.
  */
 export function buildPrompt(summary: CollectionSummary): string {
+  /*
+   * **A41: titles are rendered, so "already own" is checkable at record level.**
+   * Withholding them made A29g's ownership rule unenforceable while the prompt
+   * still asked the model to reason about ownership — which produced the same
+   * already-owned suggestion twice in two runs.
+   */
   const owned = summary.artists
-    .map((a) => `- ${a.name} (${a.recordCount} records${a.genres.length > 0 ? `; ${a.genres.join(', ')}` : ''})`)
+    .map((a) => {
+      const meta = a.genres.length > 0 ? `; ${a.genres.join(', ')}` : '';
+      const titles = a.titles.length > 0 ? `: ${a.titles.join(', ')}` : '';
+      return `- ${a.name} (${a.recordCount} records${meta})${titles}`;
+    })
     .join('\n');
 
   const labels = summary.labels.map((l) => `- ${l.name} (${l.recordCount})`).join('\n');
@@ -245,8 +255,18 @@ export function buildPrompt(summary: CollectionSummary): string {
      * The want list is different and the asymmetry is deliberate: it carries
      * artist AND title, so a record-level prohibition there is checkable.
      */
-    'The list above names the artists they own but not which records, so a',
-    'different record by an artist they already own is a welcome suggestion.',
+    /*
+     * **A41 (2026-08-26): titles are now sent, so this rule changed shape.**
+     * A29g made "already owned" artist-level BECAUSE titles were withheld, then
+     * asked the model to reason about ownership anyway — and it suggested a
+     * record the collection contains, twice in two runs. The rule is now
+     * enforceable at record level, the way the want-list prohibition already
+     * was, so it is stated at record level.
+     */
+    'Each artist above is listed with the records they own. Do not recommend a',
+    'record that appears there — that is checkable, and naming one wastes a',
+    'suggestion. A DIFFERENT record by an artist they own is still a welcome',
+    'suggestion.',
     /*
      * **The disclosure stays; its FRAMING changed** (Adam, 2026-08-26, on a
      * real suggestion). "Say so" produced reasons reading as an apology — "a
@@ -276,12 +296,19 @@ export function buildPrompt(summary: CollectionSummary): string {
     '"You own Discharge, and this is the album that defined their scene" is the',
     'point, not an admission.',
     '',
-    'NEVER say which records they do not own. You are told which ARTISTS they',
-    'own and never which titles, so any claim that a particular record is',
-    'missing from their shelves is a guess — and it is wrong often enough to',
-    'matter. Name what they own; say why THIS record earns its place. Do not',
-    'write "but not this one", "but not the record that…", or anything else',
-    'asserting a specific record is absent.',
+    /*
+     * **Kept after A41, and the reason changed rather than disappearing.**
+     * Titles are now sent, so a "you do not own X" claim is no longer a pure
+     * guess. It is still the wrong sentence: the list is what they own, not an
+     * inventory of everything they have ever owned or heard, so "you lack X"
+     * over-reads it — and the shape produced a false claim once already. The
+     * positive form needs no such caveat and reads better.
+     */
+    'Do not tell them which records they lack. The list shows what they own,',
+    'not everything they have heard or once owned, so an absence there is not a',
+    'fact about their shelves. Name what they own; say why THIS record earns',
+    'its place. Do not write "but not this one", "but not the record that…", or',
+    'anything else asserting a specific record is absent.',
     'Do not recommend anything already on their want list, which is listed',
     'with titles.',
     '',

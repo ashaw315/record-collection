@@ -18305,3 +18305,146 @@ superficial.
   **A timestamp here carries AGE, not authorship** — nearer to A39's "asked 20
   minutes ago" than to §7.8.
 
+
+---
+
+## A41 — A29g's declined trade REOPENED and reversed: owned titles are sent
+
+**2026-08-26.** A29g refused to send owned record titles, recording the refusal
+so it would not be re-proposed as an obvious gap. **Reopened on the trigger it
+set — a second already-owned suggestion — and reversed.**
+
+### The measurement that reopened it
+
+Two runs, two occurrences, on a 17-record / 17-artist collection:
+
+| run | already owned | of |
+|---|---|---|
+| 18:42 | Miles Davis — *Bitches Brew* | 6 |
+| 19:10 | Miles Davis — *Bitches Brew* | 6 |
+
+**1 in 6 of every answer, twice, the same record.** Not a rate from one sample
+any more.
+
+### The argument that decided it, and it is not the privacy one
+
+**A29g named the wrong cost.** It declined on DISCLOSURE grounds — keeping
+§9.2's boundary narrow — and the argument that actually scales is INPUT SIZE.
+Adam's own framing on being shown the qualification: *"privacy was the easier
+thing to reason about."*
+
+**Adam's premise, qualified rather than accepted.** He argued titles are already
+on the wire for the want list, so owned titles are not meaningfully more
+sensitive. Measured: **exactly ONE want-list row is sent, against 17 owned
+records withheld.** The precedent exists; the volume does not. Sending owned
+titles is a 17x increase in title disclosure, not a marginal addition — and that
+is the honest strongest argument AGAINST, which he accepted.
+
+**Why it still lands on sending them:**
+
+- **Same KIND of fact.** A want-list entry arguably reveals more intent than
+  ownership — it is a stated future purchase, where ownership may be a gift.
+- **Neither is identifying.** No names, addresses, payment details or timestamps.
+  A list of titles is a taste profile, and §9.2 ALREADY sends a full taste
+  profile in outline: every artist owned, with counts and genres. Titles sharpen
+  the resolution of a picture already sent.
+- **The asymmetry is volume, not kind**, and volume is a scale concern.
+
+**And the correctness argument A29g could not have made**, because the failure
+had not happened yet: **the design asks the model to reason about ownership while
+withholding the data that makes that reasoning checkable.** A rule the payload
+cannot support is either enforced by data or dropped from the prompt — and
+dropping it means giving up same-artist suggestions, which is the case A29g
+deliberately wanted.
+
+**The real cost, stated so the next reader sees the right one:** input grows
+~150 tokens now and ~2,000 at 200 records, roughly doubling input at that size.
+Affordable — A38 measured input as the cheap side — but it is what scales.
+
+### THE HEADROOM CORRECTION, which matters more than this trade
+
+**Recorded here rather than buried, because the A37 count decision depends on it
+and my published figure was wrong.**
+
+First two runs to record tokens (A38's columns doing their job):
+
+| run | stop_reason | input | OUTPUT | suggestions |
+|---|---|---|---|---|
+| 18:42 | `end_turn` | 1,603 | **526** | 6 |
+| 19:10 | `end_turn` | 1,738 | **1,210** | 6 |
+
+**My A37 estimate was ~530 for six. The first run hit 526 — near-exact. The
+second was 1,210 for the same six.**
+
+**So reason length varies 2.3x run to run, unprompted.** I claimed "~2.5x
+headroom" from an estimate that assumed one representative length. The true
+picture:
+
+- good run: 4000 / 526 = **7.6x headroom**
+- verbose run: 4000 / 1210 = **3.3x headroom**
+- my hypothesised "3x verbose" worst case (~1,584) = **2.5x** — reached by
+  extrapolating from the LOW sample, so it understated the spread rather than
+  bounding it
+
+**The correction is not that headroom is worse than claimed — it is that a
+single sample cannot bound variance, and I published a bound from one.** Six
+suggestions is still comfortable at both observed lengths. But the figure to
+carry forward is **3.3x on an observed verbose run**, not 2.5x on a hypothesised
+one, and the variance is the thing to watch as the collection grows.
+
+### NOT A DEFECT: the want-list exclusion is working
+
+**Adam reported Portishead as still-suggested-despite-being-wanted, a separate
+defect needing no new data. Checked before acting, and the data says otherwise:**
+
+    18:42  analysis run — suggested Portishead — Dummy
+    18:46  Portishead added to the want list FROM that suggestion
+    19:10  analysis re-run — Portishead ABSENT; Massive Attack and
+           Nicolas Jaar appear instead
+
+**The model suggested it BEFORE it was on the want list, then correctly excluded
+it once it was.** A39 keeps only the last analysis, so the 18:42 result is gone
+and the 19:10 result is the evidence — and it shows the record-level prohibition
+holding, which is the half of A29g the payload CAN support.
+
+**Recorded because I was about to accept the report and go looking for a cause.**
+The standing rule — verify before fixing — applied to a defect report from the
+person whose reports have been right all session. **A correct report of what was
+SEEN can still be a wrong diagnosis of what happened, and the timeline is what
+separates them.**
+
+### What A41 changed, and the test whose premise it overturned
+
+- `collection-summary.ts` aggregates `r.title` per artist; the prompt renders
+  `- Miles Davis (2 records; Jazz, Fusion): Kind of Blue, Bitches Brew`.
+- The ownership rule moves from ARTIST level to RECORD level, matching the
+  want-list prohibition that always had it.
+- **SPEC §9.2 gains an explicit sent/withheld table**, per Adam: this changes
+  what leaves the machine, and R5's first attack line was "field by field, not a
+  summary". `llm-payload.test.ts` now asserts owned titles are PRESENT with the
+  reason attached, so the inclusion is a decision rather than an accident — the
+  same standing its exclusion should have had and did not.
+
+**A test's premise was overturned and it had to change with the contract.**
+`tells the model it cannot know which records are owned` asserted something true
+while titles were withheld and false once A41 sends them. Rewritten as
+`tells the model not to claim which records are missing`: **the behaviour
+survives, the justification does not.** The model still must not say what the
+user lacks — the list is what they own, not an inventory of what they have heard
+or once owned — but the reason is now over-reading rather than guessing.
+
+Reasoning recorded in the test, not the commit message, because that is where the
+next reader meets it.
+
+**Mutation-verified:** a builder that carries titles with a renderer that drops
+them fails `renders the owned titles it tells the model to check against` — the
+seam that would otherwise leave the rule referring to data the model never sees.
+
+**Unit 3063 passed**, 1 skipped. **E2E 418 passed, 0 failed.** Typecheck, lint,
+build clean.
+
+**Unverified, and only Adam can:** whether the duplicate actually stops. The
+tests pin that titles reach the prompt and that the rule is stated at record
+level; whether the model then honours it is judgeable only by running one.
+**Trigger: the next /suggestions run** — and it now also records tokens, so the
+input cost of titles is measurable rather than estimated.

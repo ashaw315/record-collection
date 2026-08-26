@@ -875,7 +875,23 @@ Both were specified in §9.1 and are not scored. Each is recorded with what it n
 
 `POST /api/suggestions/ai`. Server-side call to the Anthropic API.
 
-- Build a compact summary of the collection: owned artists grouped by genre, want-list with priorities, label counts. Do not dump raw rows.
+- Build a compact summary of the collection: owned artists grouped by genre **and with the titles they own (A41)**, want-list with priorities, label counts. Do not dump raw rows.
+
+  **What leaves the machine, field by field** — R5's first attack line, and `test/integration/llm-payload.test.ts` asserts it against the serialised payload with a sentinel per excluded field:
+
+  | Sent | Withheld |
+  |---|---|
+  | artist names, record counts, genres | purchase price, purchase date |
+  | **owned record titles (A41)** | store names, journal entries |
+  | want-list artist, title, priority | record notes, matrix/runout, catalogue numbers |
+  | label names and counts | best-dig notes, max price |
+  | the genre hierarchy | every database id |
+
+  **Owned titles were withheld until A41 and their absence was the defect.** A29g made "already owned" an ARTIST-level rule because titles were not sent, and then asked the model to lead with ownership reasoning anyway — producing "Miles Davis — *Bitches Brew*" twice in two runs against a collection that contains it, 1 of 6 suggestions each time.
+
+  **A rule the payload cannot support is either enforced by data or dropped from the prompt.** Dropping it means giving up same-artist suggestions, which is the case A29g deliberately wanted, so the data is sent instead and the rule is stated at record level — the same level the want-list prohibition has always had.
+
+  **A29g named the wrong cost, and this is worth recording rather than quietly correcting.** It declined on DISCLOSURE grounds; the argument that actually scales is INPUT SIZE. Measured: owned titles add ~150 tokens at 17 records and ~2,000 at 200, against inputs of 1,603–1,738 and A38's finding that input is the cheap side. On disclosure the honest position is that owned titles are the same KIND of fact as want-list titles — which §9.2 has always sent — and that §9.2 already sends a full taste profile in outline (every artist, count and genre); titles sharpen a picture already disclosed. The real asymmetry was volume (17 owned against 1 wanted), which is a scale concern rather than a category one.
 - Prompt asks for **gap analysis**: named records that are conspicuous absences given what's owned, with a one-sentence rationale each. Ask explicitly for genre-accurate reasoning — the distinctions between UK first-wave punk, UK82, US hardcore, horror punk, and psychobilly are meaningful and should not be flattened into "punk".
 - Require JSON-only output: `{ suggestions: [{ artist, title, reason, genre }] }`. Strip markdown fences before parsing. Handle parse failure gracefully with a user-visible error, not a crash.
 - **"Already owned" is an ARTIST-level rule, because the payload cannot express a record-level one.** The summary sends owned ARTISTS — a name, a record count and genre names — and **no record titles**. So "do not recommend anything they already own" could not be honoured at record level by either side: the model is never told which records they are.
@@ -902,7 +918,16 @@ Both were specified in §9.1 and are not scored. Each is recorded with what it n
 
   **Six is a PRODUCT JUDGEMENT, not a measured value, and is recorded as one** — the same standing as A27's 2.0 and 1.5 link weights, which are also chosen rather than derived. The reasoning: R5's run produced 34 suggestions and the user read the first six. A gap analysis is a prompt for the next dig, not a catalogue, and a list nobody reaches the end of spends tokens on suggestions that are never read. Six fills a phone screen without scrolling and is small enough that the sixth is still considered rather than skimmed. **Revisit if the user finds the list consistently too short** — that is a real signal and the number is one line of prompt text.
 
-  **A bounded response can still truncate, and the copy must not pretend otherwise.** The count bounds how many suggestions are asked for, not how long each `reason` may be. Measured from R5's complete run, a suggestion averages ~88 output tokens; six is therefore ~530, and a model writing reasons three times longer than average still lands near 1,600 against the 4,000 ceiling — roughly 2.5× headroom. **So truncation becomes implausible rather than impossible**, the `cut` failure path stays, and its message stays accurate for the case where it genuinely happens.
+  **A bounded response can still truncate, and the copy must not pretend otherwise.** The count bounds how many suggestions are asked for, not how long each `reason` may be.
+
+  **MEASURED, correcting an earlier estimate (A41, 2026-08-26).** The first two runs to record tokens, both six suggestions, both `end_turn`:
+
+  | run | input | output | headroom at 4,000 |
+  |---|---|---|---|
+  | first | 1,603 | **526** | 7.6× |
+  | second | 1,738 | **1,210** | **3.3×** |
+
+  **Reason length varies 2.3× run to run, unprompted.** The earlier figure — "roughly 2.5× headroom" — was extrapolated from a single sample by assuming one representative reason length, and a single sample cannot bound variance. The number to carry forward is **3.3× on an observed verbose run**, not 2.5× on a hypothesised one; six suggestions is comfortable at both observed lengths, and the VARIANCE is the thing to watch as the collection grows. **So truncation becomes implausible rather than impossible**, the `cut` failure path stays, and its message stays accurate for the case where it genuinely happens.
 
 - **Rate limit to 10 requests/hour, enforced server-side against `llm_requests` (§4.3)** — never trusted from the client, and shared with §10b's snippet since both spend the same account. Exhaustion is a legible refusal naming when capacity returns, not a 500 and not silence: an exhausted quota is a fact the app knows, and reporting it as an internal error sends the reader to application logs for something the app could have said. Never call this on page load — user-initiated only.
 - **The last result is persisted for display, and re-asking always costs a call (A39, amended 2026-08-26).** This clause previously read "results are ephemeral (not persisted)", with no reasoning attached, and its own sentence paired ephemerality with the add-to-want-list action — which suggests the concern was that **a suggestion must never become a row in the collection**. That concern is untouched here and is enforced by the bullet below: the action still only prefills a form.
