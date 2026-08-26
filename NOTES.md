@@ -17711,3 +17711,97 @@ only by running one. **Trigger: Adam's next /suggestions run** — which will al
 be the first to log `stop_reason=end_turn` and a real `out_tokens` under the
 count, the measurement that says how much headroom six actually leaves.
 
+
+---
+
+## A37 VERIFIED in real use — and the measurement I asked for cannot be taken
+
+**2026-08-26, Adam's run after the count shipped.** Six suggestions, no
+truncation. The fix works. Three separate things were verified that only a real
+run could verify, and one thing was NOT measured because of a defect in what I
+built.
+
+### VERIFIED: the count
+
+**Six suggestions, complete, no truncation.** `llm_requests` confirms the run:
+`gap_analysis | completed: yes`, quota 1 of 10.
+
+**Six is the right number, on the evidence that decided it.** Adam: *"I read all
+six, which I did not do with thirty-four."* That is the product judgement being
+confirmed against the thing it was chosen for — what gets read, not what fits.
+A27's precedent held: a chosen number, recorded as chosen, then checked.
+
+**No padding**, so the "at most, never exactly" phrasing is doing its job on real
+output rather than only in a mutation test.
+
+### VERIFIED: the A29g copy — the unverified half from that unit
+
+The reason line now reads:
+
+> "You own Miles Davis but not the record that invented the Fusion idiom Jeff
+> Beck and Steely Dan later borrowed from"
+
+**That is a reason to buy rather than an admission**, which is exactly what the
+change was for and exactly what the test could not check. The unit's report said
+"UNVERIFIED, and it cannot be verified here… judgeable only by running one
+against a real collection. Trigger: Adam's next /suggestions run." **Trigger
+fired, verdict positive.**
+
+### VERIFIED: A29d's genre precision on a real vocabulary
+
+Adam: UK82 and US Hardcore kept apart, Trip Hop distinguished from Downtempo,
+Ambient from Electronic — *"using my actual vocabulary rather than flattening"*.
+
+**This is the mechanism §9.2 describes doing its job on data no fixture
+covers.** The hierarchy-in-the-prompt (R5's F2) is what prevents flattening, and
+the validation catches an invented genre; two mechanisms, two failures, neither
+a backstop for the other. CLAUDE.md §8's rule — the scenes are not
+interchangeable — held on a live run against a collection whose vocabulary has
+grown well past the fixtures.
+
+### VERIFIED: §9.1's lineup walk, on real data
+
+Adam: *"Broken Bones — shares 4 members with Discharge"*.
+
+**This is the case NOTES predicted when step 11's membership import went in**,
+arriving unprompted on a real collection. Broken Bones was formed by Discharge
+members, so four shared people is the genuine side-project signal — and A27's
+argument for keeping the two link terms separate is exactly what makes it
+legible: in a merged sum, four shared members and one strong influence edge
+would be the same number, and the side project would be indistinguishable from a
+tribute act. **The distinction the import was built to expose is visible in the
+output.**
+
+### NOT MEASURED, and it is a defect in the diagnostic: a SUCCESS records nothing
+
+**I asked Adam to send the `out_tokens` from a successful run, having built a
+diagnostic that only fires on failure.**
+
+- `logger.error` is inside the `!result.ok` branch;
+- `llm_requests` stores `kind`, `requested_at`, `completed_at` — no tokens;
+- `vercel logs` tails forward rather than returning history.
+
+**So the token count for the successful run is gone, and the 2.5x headroom
+estimate stays an estimate.** All that can be said is that output was under
+4,000, which bounds it above and says nothing about the margin.
+
+**This is the same shape as the defect it was built to fix, one branch over.**
+That one was "a failure records nothing"; this is "a success records nothing" —
+written while fixing the first, having just argued that evidence existing at
+runtime and being discarded is the failure to avoid. The asymmetry felt natural
+because logging is associated with errors, which is precisely how it escaped
+notice.
+
+**The general form, and it generalises past this feature:**
+
+> A diagnostic built during an incident records what the incident needed. The
+> success path is where the BASELINE lives — how close to a limit a normal run
+> runs, what changed after a fix — and it is invisible at the moment the
+> diagnostic is written, because nothing is going wrong on it.
+
+**Not fixed here** — it is a change to §5.8's route on the success path and
+belongs in its own unit, with the question of WHERE it goes (a log line, or
+`llm_requests` columns that would make it queryable over time) decided
+deliberately rather than in passing. **Trigger: the next §9.2 unit** — finding 4
+is next and touches this route, so it is the natural place.
+
