@@ -18697,12 +18697,23 @@ instinct that it touches more than the two features he named is **correct**.
 
 ---
 
-## 0. The snippet (13c) — ALREADY BUILT, and it may remove an item
+## 0. The snippet (13c) — BUILT, RUN, AND BROKEN. Now item 0 of the sequence.
 
-`SnippetPanel.tsx` on `/records/:id`, all three units, deployed. **But it has
-never been RUN**: NOTES lists snippets among the credential paths unproven at
-point of use. **Adam to try it.** If it does what he was about to ask for, that
-is an item off the list before it is written down.
+`SnippetPanel.tsx` on `/records/:id`, all three units, deployed — and Adam ran
+it. **It carries both defects the last two units fixed on the sibling route**:
+no A38 logging, no cut/malformed distinction, and a length instruction with
+nothing enforcing it. Both stored snippets are truncated; both are unedited. See
+the full entry above.
+
+**This displaces the rest of the sequence.** It is a live defect writing silently
+wrong text into the collection, where every other item is an improvement. **The
+fix belongs in the shared client rather than in the snippet caller** — see the
+third-instance argument above.
+
+**Size: MEDIUM.** Move `stop_reason`/usage/cut-malformed handling into the shared
+transport so both callers inherit it; bound the snippet's length the way A37
+bounds the count; delete the two truncated snippets (safe: `snippet_edited_at IS
+NULL` on both). **The delete is the part to get right rather than the plumbing.**
 
 ---
 
@@ -18885,8 +18896,12 @@ verification** — not a prerequisite quietly absorbed into a want-list unit.
 
 ## SEQUENCE
 
-**Adam to answer the snippet question first** (item 0) — it may remove work.
+**Item 0 answered itself, and it goes FIRST** — the snippet is not a possible
+item removal, it is a live defect.
 
+0. **Item 0 (snippet + shared client)** — the only item fixing something
+   currently WRONG rather than adding something missing, and it is writing
+   silently truncated text into the collection today.
 1. **Item 1 (drop 14b)** — SPEC only, no dependencies, closes a stale deferral.
 2. **Item 5 (want-list detail)** — small, self-contained, and it makes data he
    has already entered visible. Highest ratio of value to cost here.
@@ -18901,4 +18916,84 @@ verification** — not a prerequisite quietly absorbed into a want-list unit.
 correctness argument (a §8 violation in the live database) rather than a
 usefulness one, and item 5 makes already-entered data visible, which is the
 cheapest real improvement available.
+
+
+---
+
+## THE SNIPPET HAS BOTH DEFECTS WE JUST FIXED NEXT DOOR — and it is exactly two callers
+
+**2026-08-26, found by Adam trying 13c.** *"The Hurdy Gurdy Man"*'s stored
+snippet ends mid-sentence — *"…and lighter acoustic pieces. It"* — and "Write a
+new one" failed with an unreadable-response 502.
+
+**His reading is right on every point, verified against the code:**
+
+| | gap analysis | snippet |
+|---|---|---|
+| A37 count/length instruction | fixed | **the prompt asks, but nothing bounds a long answer** |
+| A38 `stop_reason` + token logging | fixed | **absent — `completeLlmRequest(claim.id)` with no usage** |
+| parse-failure logging | fixed | **absent** |
+| `cut` vs `malformed` distinction | fixed | **absent — one message for both** |
+
+**So it truncates silently on success and 502s undiagnosably on failure**, which
+is the exact pair the last two units addressed on the sibling route.
+
+### BOTH stored snippets are truncated, not one
+
+Measured, and this is worse than reported:
+
+    "The Hurdy Gurdy Man"  295 chars  ends: "...lighter acoustic pieces. It"
+    "Gaucho"               355 chars  ends: "...What's left is Bec"
+
+**`Gaucho` ends mid-WORD.** Neither has `snippet_edited_at` set, so neither is
+the user's own text — both are recoverable without touching anything he wrote.
+
+### What happens to text already stored in that state
+
+**Adam's question, and it is the sharper half.** A truncated snippet is
+displayed as if complete: *"a written record in my collection that is silently
+wrong, and nothing marks it — the same shape as the market cache serving an
+empty ladder as measured truth."*
+
+**The options, and only one is honest:**
+
+1. **Leave them.** No — they read as finished prose and nothing distinguishes
+   them from a good one. That is the market-cache failure repeated.
+2. **Mark them as truncated.** Needs a column, and it can only be inferred
+   retrospectively — nothing recorded `stop_reason` at the time, which is the
+   defect itself.
+3. **Delete them.** §7.8's delete path already exists and clears the text while
+   keeping `snippet_edited_at` — and BOTH are unedited, so nothing the user wrote
+   is at risk. **The gap then reads as "no snippet yet", which is TRUE**, rather
+   than as a complete note that is not.
+
+**Option 3, and the reason it is safe here is measurable rather than assumed:
+`snippet_edited_at IS NULL` on both.** If either had been edited, deleting would
+destroy the user's own text and the answer would be different — which is exactly
+the ownership distinction §7.8 exists to make, doing its job on the first
+occasion it has mattered.
+
+### The third instance test: it is exactly TWO callers, so the fix goes in the CLIENT
+
+**Adam: "Two is a coincidence; a third would mean the fix belongs in the client
+rather than in each caller."**
+
+**Measured: there are exactly two LLM callers** — `client.ts` (gap analysis) and
+`snippet-client.ts` (snippet) — and two route callers of `completeLlmRequest`.
+There is no third to find.
+
+**But the conclusion holds anyway, and by a stronger argument than counting.**
+Two callers, one of which got the fix and one of which did not, is not a
+coincidence — **it is evidence that the fix was applied where the defect was
+NOTICED rather than where it lives.** `stop_reason` handling, usage recording and
+the cut/malformed distinction are properties of *calling Anthropic*, not
+properties of gap analysis. They belong in the shared transport, where a third
+caller would inherit them and where a second cannot forget them.
+
+**The narrow rule:** when a fix is applied to one of two siblings, the question
+is not "is there a third" but "which layer does the defect belong to". Counting
+callers answers the wrong question — **it asks how much duplication there is
+rather than whether the code is in the right place.**
+
+**Not built.** Sized in the scoping pass below as its own item.
 
