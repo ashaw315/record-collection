@@ -17180,3 +17180,68 @@ the RESPONSE.
 different products and the implementation follows from the choice, not the other
 way round. **Recorded rather than guessed at**, per the standing rule.
 
+
+---
+
+## RULE: two things that look like the same field are not the same KIND of claim
+
+**Named 2026-08-26, on the fourth instance.** Recorded as a finding rather than
+as a scheduling note (Adam's instruction), because the scheduling consequence is
+the smallest thing about it.
+
+**The instance that named it.** Finding 3 above asked for the §9.2 suggestion's
+reason to render on `/want-list/new` "as it already does for §9.1". Both are a
+sentence saying why this record is worth wanting, in the same place on the same
+screen. They are not the same kind of claim:
+
+| | §9.1's reason | §9.2's reason |
+|---|---|---|
+| origin | COMPUTED from `artist_influences` / `artist_memberships` | ASSERTED by a language model |
+| checkable against | the user's own data | nothing |
+| regenerable | yes — walk the edges again | no |
+| survives the collection changing | recomputed, so yes | becomes stale silently |
+
+**Which is why "regenerate it server-side for the §9.2 path" cannot be built.**
+Not a missing parameter — there is no derivation to run. §9.1's reasons come
+from graph edges between `artists` ROWS, and a model naming Throbbing Gristle
+names something with no row, no edges and no lineup. Passing an artist id
+through does not rescue it either: for a genuinely new artist there is no id,
+and creating one to have something to pass is §10's forbidden debris.
+
+**The failure it prevents is the one that matters.** Rendering the model's
+sentence through §9.1's mechanism would give a model's assertion the standing of
+a computed fact — identical presentation, identical position, no way for the
+reader to tell which they are looking at.
+
+### The other three instances, which are the same shape
+
+1. **§7.8's snippet against the facts.** `RecordSummary` carries
+   `snippet: {text, generated}` and `factGroups` as SEPARATE fields so the panel
+   cannot flatten them; the snippet renders above a boundary with a generated
+   label. A generated sentence and a recorded fact look alike in a paragraph.
+2. **§12 step 14c's notes against the identifiers.** A runout is transcribed off
+   the object and checkable against what the user is holding; `notes` is
+   someone's description of the release. Both are text in the same panel, and
+   the panel keeps them structurally apart with a rule and a label.
+3. **The search qualifier against the runout** (14c's measurement). Both name
+   something about the pressing; one is a search-payload string present on 24%
+   of rows, the other is evidence off the deadwax. Treating the qualifier as
+   sufficient is what made cards collide.
+
+**The general form:**
+
+> Two values that occupy the same slot, read as the same sentence, and answer
+> the same question can still be different KINDS of claim — computed versus
+> asserted, checkable versus not. The presentation is where the distinction is
+> either preserved or destroyed, and destroying it is silent: nothing fails, the
+> reader simply believes the wrong thing about where the sentence came from.
+
+**The check to apply**, and it is cheap: for any field about to be filled from a
+second source, ask **what would make this wrong, and could the reader tell?** If
+the two sources fail differently, they need different presentation — a label, a
+boundary, a separate structural field — not merely different content.
+
+**Binding on the finding-3 unit when it lands** (Adam, explicitly): whatever
+renders the model's reason must be attributed and visually separable in the same
+way the snippet is, so it cannot later be read as something the app worked out.
+
