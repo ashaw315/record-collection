@@ -219,6 +219,116 @@ describe('pressing plant', () => {
   });
 });
 
+/**
+ * SPEC.md §12 step 14c — verification-by-display needs two facts the existing
+ * fields deliberately discard, and BOTH omissions are correct for their own
+ * purpose. These are additions, not corrections:
+ *
+ *   - `pressingPlant` is one name for §4.2's `pressing_plant` COLUMN, so it
+ *     narrows four companies to the one that pressed the record;
+ *   - `matrixRunout` is the deadwax strings for the form field, so it drops the
+ *     per-side descriptions.
+ *
+ * The evidence panel compares releases rather than filling a column, and the
+ * committed collision pair is the proof it needs more: it separates on
+ * `Lacquer Cut At: Tape One` and on identifier descriptions — the exact two
+ * things the fields above throw away.
+ */
+describe('manufacturing companies, for the evidence panel', () => {
+  it('carries EVERY manufacturing role, not just the pressing plant', () => {
+    // The same fixture the `pressingPlant` test uses, read for what that field
+    // discards: taking one company answers §4.2's column and cannot separate
+    // two pressings that share a plant.
+    const roles = normalizeRelease(detailed).manufacturingCompanies.map((c) => c.role);
+
+    expect(roles).toContain('Pressed By');
+    expect(roles).toContain('Lacquer Cut At');
+  });
+
+  it('keeps the role attached to the name', () => {
+    const [company] = normalizeRelease({
+      id: 1,
+      companies: [{ name: 'Lyntone Recordings Ltd.', entity_type_name: 'Pressed By' }],
+    }).manufacturingCompanies;
+
+    expect(company).toEqual({ role: 'Pressed By', name: 'Lyntone Recordings Ltd.' });
+  });
+
+  /**
+   * A company with no manufacturing role is not evidence about the OBJECT.
+   * "Published By" is a rights fact and appears on both members of the
+   * collision pair, so including it would add noise to a comparison without
+   * adding discrimination.
+   */
+  it('excludes non-manufacturing roles', () => {
+    const roles = normalizeRelease({
+      id: 1,
+      companies: [
+        { name: 'Clay Music', entity_type_name: 'Published By' },
+        { name: 'Pinnacle (3)', entity_type_name: 'Distributed By' },
+        { name: 'Damont', entity_type_name: 'Mastered At' },
+      ],
+    }).manufacturingCompanies.map((c) => c.role);
+
+    expect(roles).toEqual(['Mastered At']);
+  });
+
+  it('is empty rather than absent when a release lists no companies', () => {
+    expect(normalizeRelease({ id: 1 }).manufacturingCompanies).toEqual([]);
+  });
+});
+
+describe('runout descriptions, for the evidence panel', () => {
+  /**
+   * **Measured on the committed collision pair**: releases 4878030 and
+   * 10405725 carry BYTE-IDENTICAL runout values, and 4878030 alone labels them
+   * "Runout side A" / "Runout side B". Without the description the panel shows
+   * two identical lists for two different records.
+   */
+  it('carries the per-side description alongside the value', () => {
+    const [first] = normalizeRelease({
+      id: 1,
+      identifiers: [
+        { type: 'Matrix / Runout', value: 'CLAY-LP-3-A2', description: 'Runout side A' },
+      ],
+    }).matrixRunoutDetail;
+
+    expect(first).toEqual({ value: 'CLAY-LP-3-A2', description: 'Runout side A' });
+  });
+
+  it('is null-described rather than dropped when Discogs has no description', () => {
+    const [first] = normalizeRelease({
+      id: 1,
+      identifiers: [{ type: 'Matrix / Runout', value: 'CLAY-LP-3-A2' }],
+    }).matrixRunoutDetail;
+
+    expect(first).toEqual({ value: 'CLAY-LP-3-A2', description: null });
+  });
+
+  /**
+   * The verbatim rule (§12 step 14c) applies to the new field too. A guard on
+   * `matrixRunout` alone would leave the field the PANEL actually reads
+   * unprotected — which is the whole hazard the prompt names at the render
+   * layer, arriving one field earlier.
+   */
+  it('preserves the value verbatim, exactly as matrixRunout does', () => {
+    const value = '  BSK-1-3010  LW2 (scratched out) △21970  ';
+
+    const [detail] = normalizeRelease({
+      id: 1,
+      identifiers: [{ type: 'Matrix / Runout', value }],
+    }).matrixRunoutDetail;
+
+    expect(detail.value).toBe(value);
+  });
+
+  it('agrees with matrixRunout on which identifiers are runouts', () => {
+    const normalized = normalizeRelease(detailed);
+
+    expect(normalized.matrixRunoutDetail.map((d) => d.value)).toEqual(normalized.matrixRunout);
+  });
+});
+
 describe('format descriptors', () => {
   it('parses the colour variant from the format text', () => {
     // §5.7: "colorVariant — parsed from format descriptors". The no-matrix

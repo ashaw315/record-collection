@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { seedDiscogsCache } from './seed';
+import { normalizeRelease } from '@/lib/discogs/normalize-release';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -1411,4 +1412,243 @@ test('the results are ON SCREEN after a search on a phone, not below the form', 
     page.getByTestId('lookup-summary'),
     'the result count is on screen too',
   ).toBeInViewport();
+});
+
+/**
+ * SPEC.md §12 step 14c — verification-by-display.
+ *
+ * **The discriminating fixture is a collision GROUP, not a single release.** A
+ * test that expands one card can only show that a panel renders; the point of
+ * this feature is two candidates that were indistinguishable becoming
+ * distinguishable, so both members of the committed pair are on screen at once.
+ *
+ * `/api/discogs/release/:id` is called by the CLIENT here — the expand is in
+ * `ResultCard` — so `page.route` is genuinely in the request path, unlike the
+ * `/records/new` prefill above. See the header note.
+ */
+const COLLISION_A = JSON.parse(
+  readFileSync('test/fixtures/discogs/release-collision-clay-lp-3-a.json', 'utf8'),
+) as Record<string, unknown>;
+const COLLISION_B = JSON.parse(
+  readFileSync('test/fixtures/discogs/release-collision-clay-lp-3-b.json', 'utf8'),
+) as Record<string, unknown>;
+
+/** Both members as the SEARCH returns them: identical on every displayed column. */
+const collisionRow = (discogsId: number) => ({
+  discogsId,
+  type: 'release',
+  masterId: MASTER,
+  title: `Discharge - ${TITLE}`,
+  artist: 'Discharge',
+  thumbUrl: null,
+  year: 1984,
+  country: 'UK',
+  label: 'Clay Records',
+  catalogNumber: 'CLAY LP 3',
+  formats: ['Vinyl', 'LP', 'Album', 'Repress'],
+  formatText: 'Gatefold',
+  isReissue: true,
+  communityHave: null,
+  communityWant: null,
+  ownership: NO_OWNERSHIP,
+});
+
+/** Serves release detail from the committed pair, and counts the calls. */
+async function stubReleaseDetail(page: Page, counter: { calls: number[] }) {
+  await page.route('**/api/discogs/release/*', async (route) => {
+    const id = Number(new URL(route.request().url()).pathname.split('/').pop());
+    counter.calls.push(id);
+
+    const payload = id === 4878030 ? COLLISION_A : COLLISION_B;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      // Through the real normalizer, so the test exercises the shape the app
+      // actually receives rather than a hand-shaped one.
+      body: JSON.stringify(normalizeRelease(payload)),
+    });
+  });
+}
+
+test('two candidates identical on every column become distinguishable when expanded', async ({
+  page,
+}) => {
+  const counter = { calls: [] as number[] };
+  await stubLookup(page, { results: [collisionRow(4878030), collisionRow(10405725)] });
+  await stubReleaseDetail(page, counter);
+
+  await login(page);
+  await page.goto('/lookup');
+  // The hydration wait every other spec in this file uses. Without it the
+  // mobile project fills a form the client has not taken over yet.
+  await formReady(page);
+  await page.getByLabel('Artist').fill('Discharge');
+  await page.getByRole('button', { name: 'Search Discogs' }).click();
+
+  const cards = page.getByTestId('result-card');
+  await expect(cards).toHaveCount(2);
+
+  /*
+    **The premise, asserted on screen rather than assumed.** If the two cards
+    were already distinguishable the feature would be demonstrated on a case
+    that never needed it — so the test proves the collision exists in the UI
+    before proving the expand resolves it.
+  */
+  const visibleText = async (index: number) =>
+    ((await cards.nth(index).innerText()) ?? '').trim();
+  expect(await visibleText(0)).toBe(await visibleText(1));
+
+  // Expand BOTH — one panel cannot demonstrate a difference.
+  await cards.nth(0).getByTestId('expand-evidence').click();
+  await expect(cards.nth(0).getByTestId('pressing-evidence')).toBeVisible();
+  await cards.nth(1).getByTestId('expand-evidence').click();
+  await expect(cards.nth(1).getByTestId('pressing-evidence')).toBeVisible();
+
+  const panelA = await cards.nth(0).getByTestId('pressing-evidence').textContent();
+  const panelB = await cards.nth(1).getByTestId('pressing-evidence').textContent();
+
+  // THE ASSERTION THE FEATURE EXISTS FOR.
+  expect(panelA).not.toBe(panelB);
+
+  /*
+    And WHERE they differ, because "the panels differ" would also pass if the
+    only difference were incidental. Measured on the captured payloads:
+    `Lacquer Cut At: Tape One` is on 4878030 and absent from 10405725.
+  */
+  await expect(cards.nth(0).getByTestId('evidence-companies')).toContainText('Tape One');
+  await expect(cards.nth(1).getByTestId('evidence-companies')).not.toContainText('Tape One');
+
+  // One call per expand, no more — §10a's rule against eager fetching.
+  expect(counter.calls).toEqual([4878030, 10405725]);
+});
+
+test('the runout renders verbatim, spacing and glyphs intact', async ({ page }) => {
+  /*
+    **The rule this feature lives or dies by** (§12 step 14c), asserted at the
+    RENDER layer. The parse layer has its own guard; this one catches a CSS
+    regression that the DOM-level tests cannot see — `white-space: normal`
+    collapses interior double spaces in the browser even when the string
+    reached the element intact.
+  */
+  const RUNOUT = 'BSK-1-3010  LW2 F12 (scratched out)  △21970  ✲ KP';
+
+  await stubLookup(page, { results: [collisionRow(4878030)] });
+  await page.route('**/api/discogs/release/*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(
+        normalizeRelease({
+          id: 4878030,
+          identifiers: [
+            { type: 'Matrix / Runout', value: RUNOUT, description: 'Runout side A' },
+          ],
+        }),
+      ),
+    });
+  });
+
+  await login(page);
+  await page.goto('/lookup');
+  // The hydration wait every other spec in this file uses. Without it the
+  // mobile project fills a form the client has not taken over yet.
+  await formReady(page);
+  await page.getByLabel('Artist').fill('Discharge');
+  await page.getByRole('button', { name: 'Search Discogs' }).click();
+  await page.getByTestId('expand-evidence').click();
+
+  const value = page.getByTestId('runout-value');
+  await expect(value).toBeVisible();
+
+  // `textContent` is the DOM string — unaffected by CSS collapsing.
+  expect(await value.textContent()).toBe(RUNOUT);
+
+  /*
+    **What the user actually SEES.** `innerText` reflects rendered whitespace, so
+    it catches the missing `whitespace-pre-wrap` that `textContent` would not.
+    This is the assertion the prompt asks for at the render layer.
+  */
+  expect(await value.evaluate((el) => (el as HTMLElement).innerText)).toBe(RUNOUT);
+});
+
+test('notes stay separable from the evidence they sit beside', async ({ page }) => {
+  /*
+    §12 step 14c: notes read as CONTEXT, not evidence — the same shape §7.8 uses
+    to keep a generated snippet distinct from the facts. Structural, so a future
+    refactor cannot merge them.
+  */
+  const counter = { calls: [] as number[] };
+  await stubLookup(page, { results: [collisionRow(10405725)] });
+  await stubReleaseDetail(page, counter);
+
+  await login(page);
+  await page.goto('/lookup');
+  // The hydration wait every other spec in this file uses. Without it the
+  // mobile project fills a form the client has not taken over yet.
+  await formReady(page);
+  await page.getByLabel('Artist').fill('Discharge');
+  await page.getByRole('button', { name: 'Search Discogs' }).click();
+  await page.getByTestId('expand-evidence').click();
+
+  const notes = page.getByTestId('evidence-notes');
+  await expect(notes).toBeVisible();
+  await expect(notes).toContainText('Identical (matrix) to');
+  await expect(notes).toContainText('context, not evidence');
+
+  // The note text must NOT be inside the identifier or company sections.
+  await expect(page.getByTestId('evidence-companies')).not.toContainText('Identical (matrix) to');
+  await expect(page.getByTestId('evidence-runouts')).not.toContainText('Identical (matrix) to');
+});
+
+test('a release with no pressing details says so rather than rendering blank', async ({ page }) => {
+  /*
+    §12 step 14c: "Absence reads as absence." 3 of 41 measured releases carry no
+    matrix. An empty panel looks like a fetch that failed.
+  */
+  await stubLookup(page, { results: [collisionRow(4878030)] });
+  await page.route('**/api/discogs/release/*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(normalizeRelease({ id: 4878030 })),
+    });
+  });
+
+  await login(page);
+  await page.goto('/lookup');
+  // The hydration wait every other spec in this file uses. Without it the
+  // mobile project fills a form the client has not taken over yet.
+  await formReady(page);
+  await page.getByLabel('Artist').fill('Discharge');
+  await page.getByRole('button', { name: 'Search Discogs' }).click();
+  await page.getByTestId('expand-evidence').click();
+
+  const none = page.getByTestId('evidence-none');
+  await expect(none).toBeVisible();
+  await expect(none).toContainText('holds no matrix');
+  // Says whose gap it is: a database absence, not a fact about the record.
+  await expect(none).toContainText('not a fact about the record');
+});
+
+test('the evidence panel is never fetched until asked for', async ({ page }) => {
+  /*
+    §10a's rule against eager fetching, and §12 step 14c's "per-card expand,
+    never automatic" — asserted as a call COUNT, since a panel that is merely
+    hidden would still have spent the call.
+  */
+  const counter = { calls: [] as number[] };
+  await stubLookup(page, { results: [collisionRow(4878030), collisionRow(10405725)] });
+  await stubReleaseDetail(page, counter);
+
+  await login(page);
+  await page.goto('/lookup');
+  // The hydration wait every other spec in this file uses. Without it the
+  // mobile project fills a form the client has not taken over yet.
+  await formReady(page);
+  await page.getByLabel('Artist').fill('Discharge');
+  await page.getByRole('button', { name: 'Search Discogs' }).click();
+  await expect(page.getByTestId('result-card')).toHaveCount(2);
+
+  expect(counter.calls).toEqual([]);
+  await expect(page.getByTestId('pressing-evidence')).toHaveCount(0);
 });

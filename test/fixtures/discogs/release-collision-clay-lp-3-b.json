@@ -1,0 +1,506 @@
+{
+  "id": 10405725,
+  "status": "Accepted",
+  "year": 1984,
+  "resource_url": "https://api.discogs.com/releases/10405725",
+  "uri": "https://www.discogs.com/release/10405725-Discharge-Hear-Nothing-See-Nothing-Say-Nothing",
+  "artists": [
+    {
+      "name": "Discharge",
+      "anv": "",
+      "join": "",
+      "role": "",
+      "tracks": "",
+      "id": 257137,
+      "resource_url": "https://api.discogs.com/artists/257137",
+      "thumbnail_url": "https://i.discogs.com/tXXdwk0RHFtJgpwZ57Ciqj1XUUHPbanNB1M1SaU3DHc/rs:fit/g:sm/q:90/h:371/w:316/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9BLTI1NzEz/Ny0xMTEwNTY0MTU2/LmpwZw.jpeg"
+    }
+  ],
+  "artists_sort": "Discharge",
+  "labels": [
+    {
+      "name": "Clay Records",
+      "catno": "CLAY LP 3",
+      "entity_type": "1",
+      "entity_type_name": "Label",
+      "id": 2069,
+      "resource_url": "https://api.discogs.com/labels/2069",
+      "thumbnail_url": "https://i.discogs.com/rVCmL4m4JzQqFodjNZA-dEwlhpJsHCn5fxwuOTpILuk/rs:fit/g:sm/q:90/h:296/w:291/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTIwNjkt/MTM3NDIxMjE5Mi0y/NzU2LmpwZWc.jpeg"
+    }
+  ],
+  "series": [],
+  "companies": [
+    {
+      "name": "Pinnacle (3)",
+      "catno": "",
+      "entity_type": "9",
+      "entity_type_name": "Distributed By",
+      "id": 264522,
+      "resource_url": "https://api.discogs.com/labels/264522",
+      "thumbnail_url": "https://i.discogs.com/RFTqsB0SqhpiPNXF7UenuAZ-IJ11sXt_7_8G4YHrzas/rs:fit/g:sm/q:90/h:177/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI2NDUy/Mi0xMzMzMzU5NTM2/LmdpZg.jpeg"
+    },
+    {
+      "name": "Clay Music",
+      "catno": "",
+      "entity_type": "21",
+      "entity_type_name": "Published By",
+      "id": 392998,
+      "resource_url": "https://api.discogs.com/labels/392998"
+    },
+    {
+      "name": "Intersong",
+      "catno": "",
+      "entity_type": "21",
+      "entity_type_name": "Published By",
+      "id": 264447,
+      "resource_url": "https://api.discogs.com/labels/264447"
+    },
+    {
+      "name": "Damont",
+      "catno": "",
+      "entity_type": "29",
+      "entity_type_name": "Mastered At",
+      "id": 141989,
+      "resource_url": "https://api.discogs.com/labels/141989",
+      "thumbnail_url": "https://i.discogs.com/VuTwFRoB2Cr-UC0vjUuRjLSjZjZ_gOWXLS6jzjwduYU/rs:fit/g:sm/q:90/h:291/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTE0MTk4/OS0xNTE0MzA4ODg5/LTExNTIuanBlZw.jpeg"
+    },
+    {
+      "name": "Lyntone Recordings Ltd.",
+      "catno": "LYN-15062",
+      "entity_type": "17",
+      "entity_type_name": "Pressed By",
+      "id": 310516,
+      "resource_url": "https://api.discogs.com/labels/310516",
+      "thumbnail_url": "https://i.discogs.com/RtB38hlL2ThCP27lzeR5CEjRyyB5YVK3Co0Fz7p817o/rs:fit/g:sm/q:90/h:600/w:599/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTMxMDUx/Ni0xMzQwNDAyNjMy/LTUzNDkuanBlZw.jpeg"
+    },
+    {
+      "name": "Lyntone Recordings Ltd.",
+      "catno": "LYN-15063",
+      "entity_type": "17",
+      "entity_type_name": "Pressed By",
+      "id": 310516,
+      "resource_url": "https://api.discogs.com/labels/310516",
+      "thumbnail_url": "https://i.discogs.com/RtB38hlL2ThCP27lzeR5CEjRyyB5YVK3Co0Fz7p817o/rs:fit/g:sm/q:90/h:600/w:599/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTMxMDUx/Ni0xMzQwNDAyNjMy/LTUzNDkuanBlZw.jpeg"
+    }
+  ],
+  "formats": [
+    {
+      "name": "Vinyl",
+      "qty": "1",
+      "descriptions": [
+        "LP",
+        "Album",
+        "Repress"
+      ],
+      "text": "Gatefold"
+    }
+  ],
+  "data_quality": "Needs Vote",
+  "community": {
+    "have": 281,
+    "want": 354,
+    "rating": {
+      "count": 16,
+      "average": 4.81
+    },
+    "submitter": {
+      "username": "Kill_ugly_pop",
+      "resource_url": "https://api.discogs.com/users/Kill_ugly_pop"
+    },
+    "contributors": [
+      {
+        "username": "Kill_ugly_pop",
+        "resource_url": "https://api.discogs.com/users/Kill_ugly_pop"
+      },
+      {
+        "username": "ftrwhat...",
+        "resource_url": "https://api.discogs.com/users/ftrwhat..."
+      },
+      {
+        "username": "sickure",
+        "resource_url": "https://api.discogs.com/users/sickure"
+      },
+      {
+        "username": "HrFlick",
+        "resource_url": "https://api.discogs.com/users/HrFlick"
+      },
+      {
+        "username": "rOIb83",
+        "resource_url": "https://api.discogs.com/users/rOIb83"
+      },
+      {
+        "username": "bungabunga",
+        "resource_url": "https://api.discogs.com/users/bungabunga"
+      }
+    ],
+    "data_quality": "Needs Vote",
+    "status": "Accepted"
+  },
+  "format_quantity": 1,
+  "date_added": "2017-06-06T14:36:12-07:00",
+  "date_changed": "2024-08-17T10:02:50-07:00",
+  "num_for_sale": 1,
+  "lowest_price": 85.99,
+  "master_id": 50683,
+  "master_url": "https://api.discogs.com/masters/50683",
+  "title": "Hear Nothing See Nothing Say Nothing",
+  "country": "UK",
+  "released": "1984",
+  "notes": "Original sound recording by Clay Records \nPublishing Clay/Intersong Producer Mike Stone\n\nNo barcode.\nIdentical (matrix) to [r=4878030] but without the \"Pay no more than £3.99\" mention on the sleeve.",
+  "released_formatted": "1984",
+  "identifiers": [
+    {
+      "type": "Matrix / Runout",
+      "value": "Back With Bilbo Clay-LP-3-A2 LYN-15062 Damont"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "Total Blitz Bilbo Tape One Clay-LP.-3-B2 LYN-15063 Damont"
+    }
+  ],
+  "videos": [
+    {
+      "uri": "https://www.youtube.com/watch?v=h49yLu6kkVs",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "description": "Provided to YouTube by BMG Rights Management (UK) Limited\n\nHear Nothing See Nothing Say Nothing · Discharge\n\nHear Nothing See Nothing Say Nothing\n\n℗ 1982 Sanctuary Records Group Ltd., a BMG Company\n\nReleased on: 2008-11-24\n\nPerformer: Discharge\nCompose",
+      "duration": 91,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=JlQCQ2YyUFU",
+      "title": "The Nightmare Continues",
+      "description": "Provided to YouTube by Noise Records\n\nThe Nightmare Continues · Discharge\n\nHear Nothing See Nothing Say Nothing\n\n℗ 1982 Sanctuary Records Group Ltd., a BMG Company\n\nReleased on: 2008-11-24\n\nPerformer: Discharge\nComposer: Anthony Roberts\nComposer: Garry",
+      "duration": 109,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=2a8uQIY_jHI",
+      "title": "The Final Blood Bath",
+      "description": "Provided to YouTube by Noise Records\n\nThe Final Blood Bath · Discharge\n\nHear Nothing See Nothing Say Nothing\n\n℗ 1982 Sanctuary Records Group Ltd., a BMG Company\n\nReleased on: 2008-11-24\n\nPerformer: Discharge\nComposer: Garry Maloney\nComposer: Anthony Ro",
+      "duration": 100,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=-2ZxmNfY-gw",
+      "title": "Protest and Survive",
+      "description": "Provided to YouTube by Noise Records\n\nProtest and Survive · Discharge\n\nHear Nothing See Nothing Say Nothing\n\n℗ 1982 Sanctuary Records Group Ltd., a BMG Company\n\nReleased on: 2008-11-24\n\nPerformer: Discharge\nComposer: Kelvin Morris\nComposer: Roy Wainwri",
+      "duration": 134,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=vbAN6Z6Njxs",
+      "title": "I Won't Subscribe",
+      "description": "Provided to YouTube by Noise Records\n\nI Won't Subscribe · Discharge\n\nHear Nothing See Nothing Say Nothing\n\n℗ 1982 Sanctuary Records Group Ltd., a BMG Company\n\nReleased on: 2008-11-24\n\nPerformer: Discharge\nComposer: Tony Roberts\nComposer: Garry Maloney\n",
+      "duration": 97,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=j2kj0peqI-A",
+      "title": "Drunk with Power",
+      "description": "Provided to YouTube by Noise Records\n\nDrunk with Power · Discharge\n\nHear Nothing See Nothing Say Nothing\n\n℗ 1982 Sanctuary Records Group Ltd., a BMG Company\n\nReleased on: 2008-11-24\n\nPerformer: Discharge\nComposer: Garry Maloney\nComposer: Anthony Robert",
+      "duration": 165,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=4Z3Hkfz_xxc",
+      "title": "Meanwhile",
+      "description": "Provided to YouTube by Noise Records\n\nMeanwhile · Discharge\n\nHear Nothing See Nothing Say Nothing\n\n℗ 1982 Sanctuary Records Group Ltd., a BMG Company\n\nReleased on: 2008-11-24\n\nPerformer: Discharge\nComposer: Tony Roberts\nComposer: Garry Maloney\nComposer",
+      "duration": 88,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=dEGcVrc12k0",
+      "title": "A Hell on Earth",
+      "description": "Provided to YouTube by BMG Rights Management (UK) Limited\n\nA Hell on Earth · Discharge\n\nHear Nothing See Nothing Say Nothing\n\n℗ 1982 Sanctuary Records Group Ltd., a BMG Company\n\nReleased on: 2008-11-24\n\nPerformer: Discharge\nComposer: Tony Roberts\nCompo",
+      "duration": 234,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=msXfF0_SKtc",
+      "title": "Cries of Help",
+      "description": "Provided to YouTube by Noise Records\n\nCries of Help · Discharge\n\nHear Nothing See Nothing Say Nothing\n\n℗ 1982 Sanctuary Records Group Ltd., a BMG Company\n\nReleased on: 2008-11-24\n\nPerformer: Discharge\nComposer: Tony Roberts\nComposer: Garry Maloney\nComp",
+      "duration": 66,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=Oo4-mtxuk4Y",
+      "title": "The Possibility of Life's Destruction",
+      "description": "Provided to YouTube by Noise Records\n\nThe Possibility of Life's Destruction · Discharge\n\nHear Nothing See Nothing Say Nothing\n\n℗ 1982 Sanctuary Records Group Ltd., a BMG Company\n\nReleased on: 2008-11-24\n\nPerformer: Discharge\nComposer: Anthony Roberts\nC",
+      "duration": 75,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=kj5OJWlUBWo",
+      "title": "Q: And Children A: And Children",
+      "description": "Provided to YouTube by Noise Records\n\nQ: And Children A: And Children · Discharge\n\nHear Nothing See Nothing Say Nothing\n\n℗ 1982 Sanctuary Records Group Ltd., a BMG Company\n\nReleased on: 2008-11-24\n\nPerformer: Discharge\nComposer: Tony Roberts\nComposer: ",
+      "duration": 107,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=EErZiMI88nw",
+      "title": "The Blood Runs Red",
+      "description": "Provided to YouTube by Noise Records\n\nThe Blood Runs Red · Discharge\n\nHear Nothing See Nothing Say Nothing\n\n℗ 1982 Sanctuary Records Group Ltd., a BMG Company\n\nReleased on: 2008-11-24\n\nComposer: Anthony Roberts\nComposer: Garry Maloney\nComposer: Kelvin ",
+      "duration": 94,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=dAevTkd11sM",
+      "title": "Free Speech for the Dumb",
+      "description": "Provided to YouTube by BMG Rights Management (UK) Limited\n\nFree Speech for the Dumb · Discharge\n\nHear Nothing See Nothing Say Nothing\n\n℗ 1982 Sanctuary Records Group Ltd., a BMG Company\n\nReleased on: 2008-11-24\n\nPerformer: Discharge\nComposer: Tony Robe",
+      "duration": 136,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=wRgt-H50Pxk",
+      "title": "The End",
+      "description": "Provided to YouTube by Noise Records\n\nThe End · Discharge\n\nHear Nothing See Nothing Say Nothing\n\n℗ 1982 Sanctuary Records Group Ltd., a BMG Company\n\nReleased on: 2008-11-24\n\nPerformer: Discharge\nComposer: Tony Roberts\nComposer: Garry Maloney\nComposer: ",
+      "duration": 152,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=nsp0DMipMpI",
+      "title": "Discharge - Hear Nothing See Nothing Say Nothing (1982) FULL ALBUM",
+      "description": "Hugely influential British hardcore punk\n\nArtist: Discharge\nAlbum: Hear Nothing See Nothing Say Nothing\nLabel: Clay\nYear: 1982\n\nTracklist:\n0:00 Hear Nothing See Nothing Say Nothing\n1:31 The Nightmare Continues\n3:20 The Final Blood Bath\n5:00 Protest and Su",
+      "duration": 0,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=4pfiLjL6-HI",
+      "title": "Discharge - Hear Nothing See Nothing Say Nothing (1982)",
+      "description": "Absolute classic in it's whole\n\n0:00 Hear Nothing See Nothing Say Nothing\n1:31 The Nightmare Continues\n3:30 The Final Blood Bath\n5:00 Protest And Survive\n7:14 I Won't Subscribe\n8:51 Drunk With Power\n11:35 Meanwhile\n13:03 A Hell On Earth\n14:55 Cries Of Hel",
+      "duration": 0,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=Bf6Q77qQZbs",
+      "title": "Hear Nothing, See Nothing, Say Nothing (2020 - Remaster)",
+      "description": "Provided to YouTube by Sanctuary Records\n\nHear Nothing, See Nothing, Say Nothing (2020 - Remaster) · Discharge\n\nProtest and Survive: The Anthology\n\n℗ 2020 Sanctuary Records Group Ltd., a BMG Company\n\nPerformance: Discharge\nComposer: Anthony Roberts\nCompos",
+      "duration": 92,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=vxPR_2xKHcA",
+      "title": "State Violence/State Control",
+      "description": "Provided to YouTube by Noise Records\n\nState Violence/State Control · Discharge\n\nHear Nothing See Nothing Say Nothing\n\n℗ 1982 Sanctuary Records Group Ltd., a BMG Company\n\nReleased on: 2008-11-24\n\nPerformer: Discharge\nComposer: Garry Maloney\nComposer: Antho",
+      "duration": 165,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=rk9v6AM1hUk",
+      "title": "Discharge-Hear Nothing See Nothing Say Nothing",
+      "description": "Enjoy (A)//(E)",
+      "duration": 91,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=J_ICxxknV5s",
+      "title": "Discharge - Hear Nothing See Nothing Say Nothing",
+      "description": "Discharge - Hear Nothing See Nothing Say Nothing\n\n1. Hear Nothing See Nothing Say Nothing \n2. The Nightmare Continues \n3. The Final Blood Bath \n4. Protest And Survive \n5. I Won't Subscribe \n6. Drunk With Power \n7. Meanwhile \n8. A Hell On Earth \n9. Cries O",
+      "duration": 0,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=vYNsYZKxJTw",
+      "title": "Discharge - Hear Nothing See Nothing Say Nothing (Lyrics video)",
+      "description": "",
+      "duration": 93,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=PtngOnoe7qE",
+      "title": "Discharge - Hear Nothing See Nothing Say Nothing (Full Album)",
+      "description": "Band : Discharge\nAlbum : Hear Nothing See Nothing Say Nothing\nReleased : 1982\nGenres : Hardcore Punk\n\n* Tracks\n01. Hear Nothing See Nothing Say Nothing 00:00\n02. The Nightmare Continues 01:30\n03. The Final Blood Bath 03:19\n04. Protest and Survive 04:59\n05",
+      "duration": 0,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=DiAH_aXGCX4",
+      "title": "Discharge Hear Nothing See Nothing Say Nothing (With Lyrics in the Description)",
+      "description": "Discharge Hear Nothing See Nothing Say Nothing \nhttp://punk-lyrics.com/listing/discharge-lyrics-hear-nothing-see-nothing-say-nothing/\n\nLied to threatened cheated and deceived\nHear nothing see nothing say nothing\nLed up garden paths and into blind alleys\nH",
+      "duration": 92,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=ZbNIn8-kkkE",
+      "title": "DISCHARGE-HEAR NOTHING,SEE NOTHING,SAY NOTHING",
+      "description": "PROMOTIONAL VIDEO ONLY\nClassic hardcore punk from Discharge.The title track from the album \"Hear Nothing,See Nothing,Say Nothing\"......",
+      "duration": 91,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=nsp0DMipMpI",
+      "title": "Discharge - Hear Nothing See Nothing Say Nothing (1982) FULL ALBUM",
+      "description": "Hugely influential British hardcore punk\n\nArtist: Discharge\nAlbum: Hear Nothing See Nothing Say Nothing\nLabel: Clay\nYear: 1982\n\nTracklist:\n0:00 Hear Nothing See Nothing Say Nothing\n1:31 The Nightmare Continues\n3:20 The Final Blood Bath\n5:00 Protest and Su",
+      "duration": 0,
+      "embed": true
+    }
+  ],
+  "genres": [
+    "Rock"
+  ],
+  "styles": [
+    "Hardcore",
+    "Punk"
+  ],
+  "tracklist": [
+    {
+      "position": "A1",
+      "type_": "track",
+      "title": "Hear Nothing See Nothing Say Nothing",
+      "duration": ""
+    },
+    {
+      "position": "A2",
+      "type_": "track",
+      "title": "The Nightmare Continues",
+      "duration": ""
+    },
+    {
+      "position": "A3",
+      "type_": "track",
+      "title": "The Final Blood Bath",
+      "duration": ""
+    },
+    {
+      "position": "A4",
+      "type_": "track",
+      "title": "Protest And Survive",
+      "duration": ""
+    },
+    {
+      "position": "A5",
+      "type_": "track",
+      "title": "I Won't Subscribe",
+      "duration": ""
+    },
+    {
+      "position": "A6",
+      "type_": "track",
+      "title": "Drunk With Power",
+      "duration": ""
+    },
+    {
+      "position": "A7",
+      "type_": "track",
+      "title": "Meanwhile",
+      "duration": ""
+    },
+    {
+      "position": "B1",
+      "type_": "track",
+      "title": "A Hell On Earth",
+      "duration": ""
+    },
+    {
+      "position": "B2",
+      "type_": "track",
+      "title": "Cries Of Help",
+      "duration": ""
+    },
+    {
+      "position": "B3",
+      "type_": "track",
+      "title": "The Possibility Of Lifes Destruction",
+      "duration": ""
+    },
+    {
+      "position": "B4",
+      "type_": "track",
+      "title": "Q: And Children? A: And Children",
+      "duration": ""
+    },
+    {
+      "position": "B5",
+      "type_": "track",
+      "title": "The Blood Runs Red",
+      "duration": ""
+    },
+    {
+      "position": "B6",
+      "type_": "track",
+      "title": "Free Speech For The Dumb",
+      "duration": ""
+    },
+    {
+      "position": "B7",
+      "type_": "track",
+      "title": "The End",
+      "duration": ""
+    }
+  ],
+  "extraartists": [
+    {
+      "name": "BilBo (3)",
+      "anv": "",
+      "join": "",
+      "role": "Mastered By",
+      "tracks": "",
+      "id": 804570,
+      "resource_url": "https://api.discogs.com/artists/804570"
+    },
+    {
+      "name": "Biffo Gasmask",
+      "anv": "",
+      "join": "",
+      "role": "Photography By",
+      "tracks": "",
+      "id": 2257126,
+      "resource_url": "https://api.discogs.com/artists/2257126"
+    },
+    {
+      "name": "Mike Stone (2)",
+      "anv": "",
+      "join": "",
+      "role": "Producer",
+      "tracks": "",
+      "id": 261780,
+      "resource_url": "https://api.discogs.com/artists/261780"
+    }
+  ],
+  "images": [
+    {
+      "type": "primary",
+      "uri": "https://i.discogs.com/UWbnd812OxtxpVv2didWv_Am5lttMReMiO9RLdHy4fQ/rs:fit/g:sm/q:90/h:596/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNDA1/NzI1LTE1MDAwMzgw/NjEtMzgzNy5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/UWbnd812OxtxpVv2didWv_Am5lttMReMiO9RLdHy4fQ/rs:fit/g:sm/q:90/h:596/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNDA1/NzI1LTE1MDAwMzgw/NjEtMzgzNy5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/nA2vcsR4fp3B7NqW58w-htcRVvXWQGvqr3zqG-Or_PA/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNDA1/NzI1LTE1MDAwMzgw/NjEtMzgzNy5qcGVn.jpeg",
+      "width": 600,
+      "height": 596
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/YOkQauNWDbrViduz9E9S9eKLDqMU9dhVmz_fgiwpbTo/rs:fit/g:sm/q:90/h:600/w:594/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNDA1/NzI1LTE1MDAwMzc2/NDUtNjA4NS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/YOkQauNWDbrViduz9E9S9eKLDqMU9dhVmz_fgiwpbTo/rs:fit/g:sm/q:90/h:600/w:594/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNDA1/NzI1LTE1MDAwMzc2/NDUtNjA4NS5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/LgBsl3wUT9CdbxxOkS2gn8QDU0g4L-gvH4k5L1LsMjU/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNDA1/NzI1LTE1MDAwMzc2/NDUtNjA4NS5qcGVn.jpeg",
+      "width": 594,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/cPNnjjVvtokx7OsNAzDQCnMC90fSQRGxULLKtp8rN5M/rs:fit/g:sm/q:90/h:290/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNDA1/NzI1LTE1MDAwMzc2/NDUtOTM1OC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/cPNnjjVvtokx7OsNAzDQCnMC90fSQRGxULLKtp8rN5M/rs:fit/g:sm/q:90/h:290/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNDA1/NzI1LTE1MDAwMzc2/NDUtOTM1OC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/qXElpCcyPaQ7YWakK6Pt6ZLXXY8RbguPp6mSqPAif4c/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNDA1/NzI1LTE1MDAwMzc2/NDUtOTM1OC5qcGVn.jpeg",
+      "width": 600,
+      "height": 290
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/SDSW1r1drmcsMKU5QGt0MU7lP8fdqSrxzbmy3ayE-H0/rs:fit/g:sm/q:90/h:570/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNDA1/NzI1LTE1MDAwMzc2/NTItMzI3Mi5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/SDSW1r1drmcsMKU5QGt0MU7lP8fdqSrxzbmy3ayE-H0/rs:fit/g:sm/q:90/h:570/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNDA1/NzI1LTE1MDAwMzc2/NTItMzI3Mi5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/gTKfkMS3h74a9y7cmBCi4cBin6sxgsSl7AicyZgGaCY/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNDA1/NzI1LTE1MDAwMzc2/NTItMzI3Mi5qcGVn.jpeg",
+      "width": 600,
+      "height": 570
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/7QyQWTFmO0ZrMnvM2Ih4qto6CoSPXIILCYTi9rNYW7s/rs:fit/g:sm/q:90/h:594/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNDA1/NzI1LTE1MDAwMzc2/NTItMjQ0Ni5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/7QyQWTFmO0ZrMnvM2Ih4qto6CoSPXIILCYTi9rNYW7s/rs:fit/g:sm/q:90/h:594/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNDA1/NzI1LTE1MDAwMzc2/NTItMjQ0Ni5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/RvEIULPxGM_955TqjLwQtdTp19fX0TQ-UiDNCNOH1j0/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNDA1/NzI1LTE1MDAwMzc2/NTItMjQ0Ni5qcGVn.jpeg",
+      "width": 600,
+      "height": 594
+    }
+  ],
+  "thumb": "https://i.discogs.com/nA2vcsR4fp3B7NqW58w-htcRVvXWQGvqr3zqG-Or_PA/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNDA1/NzI1LTE1MDAwMzgw/NjEtMzgzNy5qcGVn.jpeg",
+  "estimated_weight": 230,
+  "blocked_from_sale": false,
+  "is_offensive": false
+}

@@ -18,6 +18,8 @@ type SpreadResponse = SpreadSummary & {
 import { detailParts } from './detail-line';
 import { OwnershipBadge } from './OwnershipBadge';
 import { VersionTable, type VersionWithOwnership } from './VersionTable';
+import { PressingEvidencePanel } from './PressingEvidence';
+import { pressingEvidence, type PressingEvidence } from './pressing-evidence';
 import type { OwnershipPayload } from '@/lib/discogs/ownership-payload';
 
 /**
@@ -511,6 +513,11 @@ function ResultCard({
   const [loadingMarket, setLoadingMarket] = useState(false);
   const [marketError, setMarketError] = useState<string | undefined>();
 
+  /** §12 step 14c — verification-by-display, per card and never automatic. */
+  const [evidence, setEvidence] = useState<PressingEvidence | null>(null);
+  const [loadingEvidence, setLoadingEvidence] = useState(false);
+  const [evidenceError, setEvidenceError] = useState<string | undefined>();
+
   /**
    * §10a layers 1-2, ON DEMAND. Two calls per release, and a search returns
    * fifty results — fetching eagerly would spend up to a hundred calls of a
@@ -560,6 +567,49 @@ function ResultCard({
     const timer = setTimeout(() => void loadMarket(), 0);
     return () => clearTimeout(timer);
   }, [autoResolve, loadMarket]);
+
+  /**
+   * §12 step 14c. ONE release detail call, on demand, for the card the user
+   * asked about.
+   *
+   * **Never automatic**, and §10a's rule against eager fetching is only half the
+   * reason. Paying the call on every search would also spend it on the searches
+   * where the displayed columns already separate the candidates — and an expand
+   * is honest about what it is: the user is ASKING to compare rather than being
+   * told the answer, which is the distinction §5.7 draws between showing what
+   * exists and identifying a copy.
+   *
+   * Goes through `/api/discogs/release/:id`, so it is paced by the same 60/min
+   * transport limiter as every other Discogs call and served from the 7-day
+   * cache on a second look. Nothing here talks to Discogs directly.
+   */
+  async function loadEvidence() {
+    // A second click closes it. The fetched evidence is kept, so reopening the
+    // same card costs nothing.
+    if (evidence !== null) {
+      setEvidence(null);
+      return;
+    }
+
+    setLoadingEvidence(true);
+    setEvidenceError(undefined);
+
+    try {
+      const response = await fetch(`/api/discogs/release/${result.discogsId}`);
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        setEvidenceError(body?.error?.message ?? 'Could not load pressing details.');
+        return;
+      }
+
+      setEvidence(pressingEvidence(await response.json()));
+    } catch {
+      setEvidenceError('Could not reach the server.');
+    } finally {
+      setLoadingEvidence(false);
+    }
+  }
 
   async function loadVersions() {
     if (result.masterId === null) return;
@@ -755,6 +805,35 @@ function ResultCard({
             )}
           </div>
 
+          {/*
+            §12 step 14c. The label says what the panel is FOR — the user is
+            about to compare the deadwax against the record in their hand — and
+            deliberately does not promise an answer, because the app does not
+            supply one.
+          */}
+          <div className="mt-1">
+            <button
+              type="button"
+              onClick={() => void loadEvidence()}
+              disabled={loadingEvidence}
+              data-testid="expand-evidence"
+              aria-expanded={evidence !== null}
+              className="text-xs text-foreground underline underline-offset-2 disabled:text-muted-foreground"
+            >
+              {loadingEvidence
+                ? 'Loading pressing details…'
+                : evidence === null
+                  ? 'Identify this pressing'
+                  : 'Hide pressing details'}
+            </button>
+
+            {evidenceError !== undefined && (
+              <p role="status" data-testid="evidence-error" className="text-xs text-muted-foreground">
+                {evidenceError}
+              </p>
+            )}
+          </div>
+
           {versionsError !== undefined && (
             <p role="alert" className="text-xs text-destructive">
               {versionsError}
@@ -762,6 +841,8 @@ function ResultCard({
           )}
         </div>
       </div>
+
+      {evidence !== null && <PressingEvidencePanel evidence={evidence} />}
 
       {versions !== null && (
         <>

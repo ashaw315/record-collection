@@ -121,8 +121,29 @@ export type NormalizedRelease = {
   isReissue: boolean;
   images: Array<{ url: string; type: 'primary' | 'secondary' }>;
   matrixRunout: string[];
+  /**
+   * The same runouts, each with the per-side description Discogs holds
+   * ("Runout side A"). §12 step 14c's evidence panel reads THIS rather than
+   * `matrixRunout`: on the committed collision pair the values are
+   * byte-identical and the descriptions are not, so dropping them shows two
+   * identical lists for two different records.
+   *
+   * `matrixRunout` is unchanged and still feeds the form field (§5.7), which
+   * wants the strings alone.
+   */
+  matrixRunoutDetail: Array<{ value: string; description: string | null }>;
   otherIdentifiers: Array<{ type: string; value: string; description: string | null }>;
   pressingPlant: string | null;
+  /**
+   * EVERY manufacturing role, for comparing two pressings — where
+   * `pressingPlant` narrows to the one company §4.2's column can hold.
+   *
+   * Both are correct for their own purpose. A panel that compares releases
+   * needs the roles the column discards: the collision pair separates on
+   * `Lacquer Cut At: Tape One`, which is not a pressing plant and must not
+   * become one.
+   */
+  manufacturingCompanies: Array<{ role: string; name: string }>;
   vinylWeightGrams: number | null;
   colorVariant: string | null;
   tracklist: Array<{ position: string | null; title: string | null; duration: string | null }>;
@@ -152,6 +173,25 @@ const MATRIX_TYPE = 'matrix / runout';
  * catches the mastering studio, putting the wrong name in `pressing_plant`.
  */
 const PRESSING_ROLES = new Set(['pressed by', 'repressed by', 'manufactured by']);
+
+/**
+ * Roles that describe MAKING the physical object, for §12 step 14c's panel.
+ *
+ * A superset of `PRESSING_ROLES`, and deliberately still an allowlist rather
+ * than "every company". "Published By" and "Distributed By" are rights and
+ * logistics facts: they appear identically on both members of the collision
+ * pair, so including them adds rows to a comparison without adding anything to
+ * compare.
+ */
+const MANUFACTURING_ROLES = new Set([
+  ...PRESSING_ROLES,
+  'lacquer cut at',
+  'mastered at',
+  'recorded at',
+  'mixed at',
+  'glass mastered at',
+  'pressed at',
+]);
 
 /**
  * Colour is Discogs' `text` field, which also carries non-colour sleeve facts
@@ -190,10 +230,17 @@ export function normalizeRelease(input: unknown): NormalizedRelease {
    * trimming or whitespace collapsing must NOT be added here — see the
    * verbatim block in the test file, which fails if they are.
    */
-  const matrixRunout = identifiers
+  const matrixRunoutDetail = identifiers
     .filter((identifier) => (identifier.type ?? '').trim().toLowerCase() === MATRIX_TYPE)
-    .map((identifier) => bounded(identifier.value ?? '', FIELD_LIMITS.matrix) ?? '')
-    .filter((value) => value.trim() !== '');
+    .map((identifier) => ({
+      value: bounded(identifier.value ?? '', FIELD_LIMITS.matrix) ?? '',
+      // The DESCRIPTION is prose about which side it came from, so it goes
+      // through `meaningful()` — the verbatim rule protects the runout itself.
+      description: meaningful(identifier.description),
+    }))
+    .filter((detail) => detail.value.trim() !== '');
+
+  const matrixRunout = matrixRunoutDetail.map((detail) => detail.value);
 
   const otherIdentifiers = identifiers
     .filter((identifier) => (identifier.type ?? '').trim().toLowerCase() !== MATRIX_TYPE)
@@ -250,8 +297,18 @@ export function normalizeRelease(input: unknown): NormalizedRelease {
         type: image.type === 'primary' ? ('primary' as const) : ('secondary' as const),
       })),
     matrixRunout,
+    matrixRunoutDetail,
     otherIdentifiers,
     pressingPlant: meaningful(pressedBy?.name),
+    manufacturingCompanies: (raw.companies ?? [])
+      .filter((company) =>
+        MANUFACTURING_ROLES.has((company.entity_type_name ?? '').trim().toLowerCase()),
+      )
+      .map((company) => ({
+        role: (company.entity_type_name ?? '').trim(),
+        name: (company.name ?? '').trim(),
+      }))
+      .filter((company) => company.role !== '' && company.name !== ''),
     /**
      * ONLY from an explicit descriptor. Never from `estimated_weight`.
      *

@@ -16406,3 +16406,411 @@ un-exercised until someone does it.
 this is Adam opening the app and using it, and the record of this project says
 that is worth more than either. Written here rather than in REVIEW-PLAN because
 it belongs to the build, not to the review schedule.
+
+---
+
+## `| tail` discards the exit code, and CLAUDE.md §10's E2E rule is what walks into it
+
+**2026-08-25, session start for step 14c.** The full `--retries=0` E2E run
+reported **exit code 0** while `test-results/.last-run.json` said
+`{"status":"failed"}` and the terminal output said `1 failed`. Three signals
+from one run, one of them wrong.
+
+**The cause is the pipe, and it is NOT Playwright.** Reproduced by probe rather
+than reasoned about, because the first reading — "Playwright exits 0 on
+failure" — was wrong and would have sent the next person to the wrong file:
+
+| Invocation | Exit |
+|---|---|
+| `npx playwright test <failing spec>` | **1** |
+| `npx playwright test --grep <matches nothing>` | **1** |
+| `npx playwright test <failing spec> 2>&1 \| tail -3` | **0** |
+
+A shell pipeline reports the exit status of its LAST command. `tail` succeeds at
+tailing whatever it is given, including the output of a run that failed. The
+probe was a deliberate `expect(1).toBe(2)` spec, run both ways back to back;
+`PIPESTATUS[0]` is empty under `zsh`, so the masking is total rather than merely
+inconvenient.
+
+**Why this is the same shape as `db:test:reset` and `db:migrate`, and belongs
+with them.** All three are mechanisms whose success signal does not report what
+it appears to report. `db:test:reset` exited 0 having produced a database with
+zero tables; `db:migrate` exits 0 having rolled back on `42701`; this exits 0
+having run a suite that failed. The general form already written there covers
+it: **a script whose exit code reports the last command in a chain reports that
+command, not the chain's purpose.** A pipeline is that chain, made ad hoc at the
+call site — which is worse, because no file records it and it is retyped
+differently every time.
+
+**The specific trap, and it is named in CLAUDE.md.** §10's definition of done
+requires "a full unopinionated `npx playwright test` run with no file argument".
+A full run prints hundreds of lines, so the natural way to invoke it — the way
+this session invoked it — is to pipe it through `tail`, `head` or `grep` to see
+the summary. **Every one of those pipes destroys the exit code.** So long as a
+human reads the summary text, this is harmless: the words `1 failed` were right
+there and were acted on. It becomes a defect the moment the run is AUTOMATED —
+a CI step, a pre-push hook, a wrapper script — because the automation reads the
+number, and the number says the suite passed.
+
+**What saved it here was `.last-run.json`**, which is state rather than an exit
+code — exactly the fix pattern `db:verify` established for `db:migrate`. It is
+already on disk after every run and it is unambiguous:
+
+    test-results/.last-run.json → {"status":"failed","failedTests":[...]}
+
+**The rule, for anyone automating §10's E2E requirement:** never key on the exit
+code of a piped Playwright run. Either do not pipe (let the reporter write and
+read the summary afterwards), or assert `.last-run.json`'s `status` field. The
+same caution REVIEW-PLAN already carries about `--retries=0` applies here — both
+are cases where the invocation, not the suite, decides whether the result means
+what it looks like.
+
+**Not fixed, because nothing is currently automated on it.** No CI workflow, npm
+script or hook runs the E2E suite piped; §14's audit of the eleven scripts
+covered `test:e2e` and correctly found it exit-code-honest, because the script
+itself does not pipe. This is a hazard in how the suite is INVOKED by hand and by
+whatever automates it next. **Trigger: the first time a full E2E run is put
+behind a script, workflow or hook** — that is when the number starts being read
+by something that cannot see the word "failed".
+
+---
+
+## The 1093 intermittent: trigger FIRED, sighting five, deciding screenshot on disk
+
+**2026-08-25.** Recorded against the handed-forward entry above rather than
+replacing it, because the entry's value is its measurement and that has not
+changed.
+
+**Sighting five, byte-identical to the previous four:**
+
+    Error: sleeve top 172 must clear the wall region top 172
+    Expected: > 172   Received: 172
+
+Full `--retries=0` run at step 14c session start: **399 passed, 1 failed, 20
+skipped**, 10.7m. Re-run in isolation immediately afterwards, 3/3 passed — the
+same signature the entry records, needing full-suite load to appear. Five
+sightings, one failure mode, one pair of values.
+
+**The trigger has fired.** The entry named "R6's after-deploy pass, which
+re-runs the suite anyway"; that pass happened earlier the same day, and this is
+a further full run on top of it. Naming this explicitly because a fired trigger
+that nobody notices firing is the failure mode a trigger exists to prevent —
+this project's own rule that a deferral without a trigger is a decision never to
+act has a corollary, which is that the trigger has to be OBSERVED.
+
+**The deciding artifact is on disk, from THIS run:**
+
+    test-results/wall-scene-the-pulled-slee-909be--region-on-a-short-viewport-chromium/
+
+The entry says reading whether the sleeve is visibly CLIPPED at the wall's top
+edge in that screenshot decides between the two candidate readings — a real
+§10b geometry defect, or an off-by-one in where the scan starts — without
+needing to reproduce the rate. That artifact is fresh rather than inferred.
+
+**DELIBERATELY NOT RESOLVED, and by whose decision.** Adam's, at step 14c
+session start: it is scene geometry on `/`, untouched by anything in a lookup
+unit, and opening a WebGL diagnosis inside 14c is how a unit stops being one
+unit. Recorded here so the next reader does not mistake five sightings and an
+unopened screenshot for something nobody looked at.
+
+**SIGHTING SIX, 2026-08-25**, on 14c's final full run: byte-identical again
+(`sleeve top 172 must clear the wall region top 172`), 409 passed / 1 failed.
+The count is now six and the reading is unchanged.
+
+**The consequence for 14c's report, stated in advance so it is not quietly
+dropped:** the baseline going into this unit is **one-red**. "Nothing regressed"
+at step 7 is therefore a claim about the OTHER ~400 tests, not a clean sheet,
+and 14c's report will say so in those words.
+
+
+---
+
+## Step 14c — verification-by-display, and the fixture that corrected the design
+
+**2026-08-25.** Built as specified in SPEC §12 step 14c. The measurement held;
+one thing about the chosen fixture did not, and it made the feature better.
+
+### THE CORRECTION: the collision pair's runouts are BYTE-IDENTICAL
+
+**Promoted to its own entry below** — see "A note that implied a difference, and
+a payload that did not". Kept here in summary because it is what shaped this
+unit.
+
+The NOTES entry proposing this feature said the two 1984 UK `CLAY LP 3`
+Discharge repressings "separate on `LYN-15062 Damont` vs the same runout with
+different notes". The second half is right. The first half implies the runout
+STRINGS differ, and the captured payloads say they do not:
+
+    4878030  Matrix/Runout: 'Back With Bilbo Clay-LP-3-A2 LYN-15062 Damont'
+    10405725 Matrix/Runout: 'Back With Bilbo Clay-LP-3-A2 LYN-15062 Damont'
+
+Identical, both sides. Discogs itself says so in 10405725's notes: *"Identical
+(matrix) to [r=4878030] but without the 'Pay no more than £3.99' mention on the
+sleeve."* What actually separates them:
+
+| Field | 4878030 | 10405725 |
+|---|---|---|
+| `Lacquer Cut At` | Tape One | *absent* |
+| runout descriptions | "Runout side A"/"B" | `null` |
+| notes | — | names the sleeve difference |
+
+**Why this made the fixture better rather than worse.** A pair whose runouts
+differed would have passed against the NAIVE implementation — display the runout
+values and stop. This pair fails that implementation, because on it the runout
+values resolve nothing. **Mutation-verified**: stripping companies and
+descriptions from `pressingEvidence` makes the collision E2E fail with "Tape
+One: element(s) not found". The fixture I *described* would not have caught
+that; the fixture Discogs actually holds does.
+
+**And it delivers the honest case in the primary fixture.** These two records
+genuinely cannot be told apart by deadwax — the distinguishing fact is printed
+on the sleeve. §12 step 14c's rule is that the correct behaviour is to SHOW they
+are the same, never to invent a difference. That is now pinned by a test
+(`reports the runouts as identical, because they are`) rather than described,
+and it arrived in the main fixture instead of needing the Portuguese Misfits
+bootlegs as a separate case.
+
+### The design change the fixture forced: two new normalizer fields
+
+`NormalizedRelease` discarded exactly the two things that separate this pair,
+and **both omissions are correct for their own purpose** — this is an addition,
+not a correction of a defect:
+
+- `pressingPlant` narrows four companies to the one that pressed the record,
+  because §4.2's `pressing_plant` is ONE COLUMN. `Lacquer Cut At: Tape One` is
+  not a pressing plant and must not become one.
+- `matrixRunout` is the strings alone, because §5.7's form field wants them.
+
+So `manufacturingCompanies` and `matrixRunoutDetail` were added ALONGSIDE, and
+the existing fields are untouched — verified by the 33 pre-existing normalizer
+tests still passing, and by leaving the prefill path (`discogs-prefill.ts`,
+`save-destination.ts`, `record-detail-format.ts`) unmodified. Changing the shape
+of a field the add-record form depends on is not in this unit's scope.
+
+`manufacturingCompanies` stays an ALLOWLIST for the same reason `PRESSING_ROLES`
+is one: "Published By" and "Distributed By" are identical on both members of the
+pair, so admitting them adds rows to a comparison without adding anything to
+compare.
+
+### The verbatim rule needed a THIRD guard, at the CSS layer
+
+The prompt said the parse layer was guarded and the render layer was not. That
+was right, and the render layer turned out to have two separate failure modes,
+not one:
+
+1. **The DOM string** — a `.trim()` or whitespace collapse in the panel.
+   Mutation-verified: adding one fails 6 hazard-string tests.
+2. **What the user SEES** — CSS. `white-space: normal` is the browser default
+   and it COLLAPSES interior double spaces, so a runout can reach the DOM
+   perfectly intact and still render tidied. `textContent` cannot see this.
+
+**Mutation-verified, and this is the finding worth keeping:** removing
+`whitespace-pre-wrap` from the panel leaves `textContent` byte-perfect while
+`innerText` reads `BSK-1-3010 LW2 F12 (scratched out) △21970 ✲ KP` instead of
+`BSK-1-3010  LW2 F12 (scratched out)  △21970  ✲ KP`. Every double space gone,
+silently, with no code change to any string. So the E2E asserts BOTH
+`textContent` and `innerText` — the second is the one that catches a
+class-name refactor, and a project whose whole feature rests on "the user's eye
+is the matcher" has to assert what the eye receives.
+
+**The general form:** a rule about what the user SEES is not fully guarded by an
+assertion about what the code HOLDS. Same family as the frame findings and "a
+page that told the truth in text and a lie in pixels".
+
+### My own hazard list was three-fifths decorative, and the precondition test caught it
+
+**Promoted to its own entry below** — see "A hazard fixture that does not
+exercise its hazard".
+
+The first version of the verbatim test used five hazard strings. Three —
+`'BSK-1-3010 LW2 F12 (scratched out)-W-1 KP'`, `'△␗ • glyphs'`,
+`'JW10 FS7• #2'` — survive `.trim().replace(/\s+/g,' ')` UNCHANGED. They would
+have passed against a normalizing implementation and proved nothing: CLAUDE.md
+§2's decorative-test shape, written by me, in the test for the rule the feature
+lives or dies by.
+
+**What caught it was the precondition test** — the one asserting each hazard
+string is actually changed by tidying. It failed on the first run, which is the
+only reason the list was rewritten with strings carrying BOTH a whitespace
+hazard and a content hazard. §2's instruction to assert a precondition rather
+than assume it paid for itself inside one unit.
+
+### Calls, pacing and what was NOT built
+
+- **One call per expand**, asserted as a call count in E2E rather than inferred
+  from the UI. Two cards expanded = exactly `[4878030, 10405725]`.
+- **Nothing fetched until asked**: a separate test asserts the count is `[]`
+  after a search returning two results, because a panel that is merely hidden
+  would still have spent the call.
+- Goes through `/api/discogs/release/:id`, so it is paced by the existing 60/min
+  transport limiter and served from the 7-day cache on a second look. **No new
+  endpoint, no new dependency, no schema change, no migration.**
+- **NOT built, per the carve-out:** any storage of the identification, any
+  matching, scoring or confidence value. The panel answers "which of these am I
+  holding" at the moment of asking and records nothing.
+
+### The full-suite run caught what the chromium run could not — twice over
+
+**Both of these were invisible to `--project=chromium`, and CLAUDE.md §10's
+"full unopinionated run, no file argument" is the rule that found them.**
+
+**1. All five new E2E tests failed on `[mobile]` while passing on chromium.**
+Not a mobile defect in the feature — a defect in MY tests. Two omissions, both
+of the established idiom in the file they were added to:
+
+- the button is named **`Search Discogs`**, and I wrote `Search`. Playwright's
+  accessible-name matching is substring-tolerant, so chromium matched anyway
+  and mobile did not;
+- I omitted **`formReady(page)`**, the `form[data-hydrated="true"]` wait every
+  other spec in `lookup-flows.spec.ts` uses before filling a field.
+
+Symptom was `toHaveCount(2)` receiving 0 — no result cards at all, which reads
+as "the feature is broken on mobile" and was nothing of the kind. Fixed, then
+re-run on BOTH projects: **10/10 pass**. The lesson is the one §10 already
+states — a green spec-scoped run is not evidence — arriving through the project
+axis rather than the file axis.
+
+**2. `manage.spec.ts:450` (lineup picker) failed once under load**, taking
+**17.3s against 2.2s in isolation**, and passed on the next full run. Load-
+sensitive timeout, same family as the 1093 intermittent. **Not mine**: grepped
+`manage.spec.ts` for `lookup|pressing-evidence|normalize-release` → 0 hits, and
+14c touches no MusicBrainz path. Recorded rather than acted on; if it recurs it
+wants the same treatment 1093 got.
+
+**Final baseline: 409 passed, 1 failed, 20 skipped.** The one failure is 1093,
+**sighting six**, byte-identical again. So "nothing regressed" in this unit is a
+claim about the other 409 tests, not a clean sheet — as the 1093 entry above
+committed to saying in advance.
+
+### OBSERVATION (out of scope, not acted on): Discogs lists one company twice
+
+The evidence panel renders `Pressed By: Lyntone Recordings Ltd.` **twice** on
+both members of the collision pair. Verified it is not a rendering bug: the
+payload genuinely carries two entries with the SAME `id` (310516) and the same
+`resource_url`. Real duplicate data at Discogs.
+
+**Deliberately not deduplicated**, and the reasoning is 14c's own: the panel
+shows what Discogs holds, and silently collapsing rows is the same class of act
+as tidying a runout — a decision the app makes on the user's behalf about what
+is worth seeing. It is also harmless here, where both rows agree.
+
+**But it is worth a decision later**, because the honest fix is not obvious: two
+entries with the same id are clearly one company, while two with different ids
+and the same NAME might be two plants a collector would want to tell apart.
+**Trigger: a panel where duplicate rows make a comparison harder to read**, or
+Adam judging it noise on a real lookup.
+
+---
+
+## A note that implied a difference, and a payload that did not
+
+**2026-08-25, out of step 14c.** The finding of that unit, recorded separately
+because it is not about verification-by-display. It is about what a written
+measurement carries forward and what it quietly drops.
+
+**What my own NOTES entry said**, proposing the feature: the two 1984 UK
+`CLAY LP 3` Discharge repressings "separate on `LYN-15062 Damont` vs the same
+runout with different notes."
+
+**What the captured payload shows:**
+
+    4878030   Matrix / Runout: 'Back With Bilbo Clay-LP-3-A2 LYN-15062 Damont'
+    10405725  Matrix / Runout: 'Back With Bilbo Clay-LP-3-A2 LYN-15062 Damont'
+
+Byte-identical, both sides. Discogs itself says so in 10405725's notes:
+*"Identical (matrix) to [r=4878030] but without the 'Pay no more than £3.99'
+mention on the sleeve."* The distinguishing fact is printed on the SLEEVE. The
+deadwax cannot separate these two records at all.
+
+**The sentence was not false — "the same runout with different notes" is
+literally correct.** But read forward six weeks it implies the runout STRINGS
+discriminate, because that is what a feature called verification-by-display
+would be expected to lean on. The phrase carried an implication its author did
+not check and its reader had no way to test.
+
+**Why the correction improved the work rather than costing it.** A pair whose
+runouts differed would pass the NAIVE implementation — render the runout values
+and stop. This pair fails it, because on it the runout values resolve nothing.
+Mutation-verified: stripping companies and descriptions from `pressingEvidence`
+makes the collision E2E fail with `"Tape One": element(s) not found`. **The
+fixture I described would not have caught the obvious wrong implementation; the
+fixture Discogs actually holds does.**
+
+**And it moved the honest case from the margin to the centre.** §12 step 14c
+names "genuinely indistinguishable candidates" as a case to handle — the
+Portuguese Misfits bootlegs, byte-identical because bootlegs copy each other's
+stampers — and the correct behaviour is to SHOW two things are the same, never
+to invent a difference. That was going to be a secondary fixture demonstrating
+an edge. It is now the PRIMARY fixture, pinned by a test that fails if the
+runouts ever stop matching (`reports the runouts as identical, because they
+are`). The feature's most delicate rule is exercised by its main test rather
+than by an afterthought.
+
+**The general form, which is the reason this is its own entry:**
+
+> A measurement written as prose keeps its NUMBERS honest and loses its
+> IMPLICATIONS. "93% of groups resolve" survives being read later; "they
+> separate on X" does not, because it silently answers a question — *which
+> field discriminates* — that the measurement may never have asked.
+
+Related in shape to "a partial mutation understates coverage", and to the
+`master-versions-hot-tuna` docblock that claimed five identical versions while
+the committed capture showed three. Same family: **a written claim about data,
+with nothing in the repository able to contradict it.** The fix is the same one
+that worked there — commit the data and let a test assert the property, so the
+prose is checkable rather than merely quotable.
+
+---
+
+## A hazard fixture that does not exercise its hazard
+
+**2026-08-25, out of step 14c.** Recorded separately because it generalises past
+runouts, and because it happened in the test guarding the rule the feature "lives
+or dies by" — written by someone who had just finished explaining why that rule
+mattered.
+
+**What happened.** The verbatim test used five hazard strings. Three of them —
+
+    'BSK-1-3010 LW2 F12 (scratched out)-W-1 KP'
+    '△␗ • glyphs'
+    'JW10 FS7• #2'
+
+— survive `.trim().replace(/\s+/g, ' ')` **unchanged**. They look hazardous:
+parenthetical transcription notes, unicode glyphs, the exact texture of a real
+runout. They exercise nothing. Against a normalizing implementation all three
+pass, and the test reports that the verbatim rule holds when it does not.
+
+**Two of five were real, so the test would still have failed on a tidying
+mutation** — which is what makes this the dangerous version rather than the
+harmless one. It would have gone on passing and looking thorough, with 60% of
+its coverage decorative, and nobody would learn that from a green run.
+
+**What caught it: the precondition test**, asserting that each hazard string is
+actually changed by tidying. It failed on its first run. That test exists only
+because CLAUDE.md §2 demands a precondition be asserted rather than assumed —
+the rule written after the NFD/NFC string was silently normalized on being
+written to disk.
+
+**The general form:**
+
+> A fixture chosen to exercise a hazard must be verified to CONTAIN the hazard.
+> Looking like the real thing is not the same as being hard in the way that
+> matters, and the resemblance is exactly what stops anyone checking.
+
+Same shape as the fixture README's own rule — "a fixture without its property is
+worse than no fixture: it looks authoritative, and the test built on it passes
+for the wrong reason" — arriving one level down, in the hand-written strings
+inside a test rather than in a captured payload. **The README's discipline was
+applied to the fixtures and not to the test data**, which is where it was
+needed just as much.
+
+It is also the same shape as a test asserting what the schema already knows: in
+both cases the assertion runs, passes, and constrains nothing. The difference is
+that a schema-shaped test is visibly redundant on reading, while a hazard string
+that does not exercise its hazard is invisible without running the mutation —
+which is why the precondition has to be a TEST and not a careful eye.
+
+**The rewritten list** carries a whitespace hazard AND a content hazard in every
+entry, so each guards two mutations rather than resembling one. Mutation-verified
+after rewriting: adding `.trim()` and whitespace collapse to the panel fails all
+six.

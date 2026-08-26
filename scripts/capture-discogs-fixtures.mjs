@@ -31,7 +31,7 @@
  * asserted here, next to the capture, rather than discovered later in a test
  * that then quietly passes for the wrong reason.
  */
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { config } from 'dotenv';
 
 config({ path: '.env.local', quiet: true });
@@ -72,6 +72,45 @@ function scrub(value) {
 
 const matrixIdentifiers = (payload) =>
   (payload.identifiers ?? []).filter((i) => /matrix|runout/i.test(i.type ?? ''));
+
+/**
+ * The columns a `/lookup` search result DISPLAYS. A collision is defined
+ * against these and not against "the payloads differ somewhere" — two releases
+ * always differ somewhere (ids, thumbnails, community counts), and none of that
+ * reaches the user's eye or discriminates a pressing.
+ */
+const DISPLAYED_COLUMNS = ['country', 'released', 'catno', 'format', 'label'];
+
+/** The release payload reduced to what a search row would show. */
+function displayedColumns(payload) {
+  const format = payload.formats?.[0];
+
+  return {
+    country: payload.country ?? null,
+    released: String(payload.year ?? payload.released ?? ''),
+    catno: payload.labels?.[0]?.catno ?? null,
+    label: payload.labels?.[0]?.name ?? null,
+    format: [format?.name, ...(format?.descriptions ?? [])].filter(Boolean).join(', '),
+  };
+}
+
+/**
+ * A collision member must be the release we asked for AND carry the evidence
+ * the feature displays. Checked per-release; whether the pair actually
+ * COLLIDES needs both, so it is checked after the loop.
+ */
+function verifyCollisionMember(payload, expectedId) {
+  if (payload.id !== expectedId) {
+    return `expected release ${expectedId}, got ${payload.id}`;
+  }
+  if (!/discharge/i.test(payload.artists_sort ?? '')) {
+    return `expected a Discharge release, got artist "${payload.artists_sort}"`;
+  }
+  if (matrixIdentifiers(payload).length === 0) {
+    return 'needs a Matrix / Runout — this fixture exists to be READ against the deadwax';
+  }
+  return null;
+}
 
 /**
  * Each capture states the property it exists for, as an assertion.
@@ -248,6 +287,43 @@ const captures = [
         ? null
         : 'needs at least one Matrix / Runout identifier',
   },
+  /**
+   * THE COLLISION PAIR (SPEC §12 step 14c). Two releases that a search result
+   * CANNOT tell apart, so verification-by-display has something real to
+   * distinguish.
+   *
+   * **Where these ids came from, since the README forbids guessing them.** They
+   * were read out of `master-versions-discharge.json` — Discogs' own answer for
+   * master 50683 — not invented. Both are UK / 1984 / `CLAY LP 3` / Vinyl /
+   * `LP, Album, Repress` / Clay Records, byte-identical on every column the
+   * versions endpoint returns and every column the search results DISPLAY. A
+   * third row, 12681954, differs only by a `Mispress` descriptor and is
+   * deliberately NOT used: it is separable at the list level, so it would let a
+   * broken implementation look like it worked.
+   *
+   * **Why Discharge rather than the Rumours group**, which collides equally
+   * well: the measurement behind step 14c found search-level qualifier coverage
+   * of **0% on Discharge and 2% on Misfits** against 24% overall. This is the
+   * case where the list-level fix has nothing left to give, and it is the genre
+   * this collection is actually made of (CLAUDE.md §8 — the scenes are not
+   * interchangeable). A fixture from a genre where the qualifier usually works
+   * would demonstrate the feature on the easy case.
+   *
+   * The pair is captured as TWO fixtures because a collision fixture with one
+   * member cannot demonstrate a collision — there is nothing to be identical
+   * to. The verifier below enforces exactly that, and the cross-check after the
+   * loop enforces that they really do collide and really do separate.
+   */
+  {
+    name: 'release-collision-clay-lp-3-a',
+    path: '/releases/4878030',
+    verify: (payload) => verifyCollisionMember(payload, 4878030),
+  },
+  {
+    name: 'release-collision-clay-lp-3-b',
+    path: '/releases/10405725',
+    verify: (payload) => verifyCollisionMember(payload, 10405725),
+  },
   {
     name: 'release-no-matrix',
     /**
@@ -337,6 +413,64 @@ for (const capture of captures) {
   }
 }
 
+/**
+ * THE CROSS-CHECK the pair exists for, and it cannot be done per-release.
+ *
+ * Each member verified alone only proves it is the right release. What makes
+ * them a COLLISION FIXTURE is a relationship between them, so it is asserted
+ * between them:
+ *
+ *   1. they are IDENTICAL on every displayed column — otherwise the list-level
+ *      display already separates them and the feature is being demonstrated on
+ *      a case that did not need it;
+ *   2. they are DIFFERENT on identifiers-plus-companies — otherwise the feature
+ *      cannot separate them either, and a test built on this pair would assert
+ *      that two things look the same, which any broken implementation passes.
+ *
+ * Both directions matter. (1) alone admits a fixture the feature cannot help
+ * with; (2) alone admits a fixture that never needed it.
+ */
+function verifyCollisionPair() {
+  const read = (name) => {
+    try {
+      return JSON.parse(readFileSync(`${OUT}/${name}.json`, 'utf8'));
+    } catch {
+      return null;
+    }
+  };
+
+  const a = read('release-collision-clay-lp-3-a');
+  const b = read('release-collision-clay-lp-3-b');
+
+  if (a === null || b === null) {
+    return 'both members must be captured — a collision fixture with one member cannot collide';
+  }
+
+  const [colsA, colsB] = [displayedColumns(a), displayedColumns(b)];
+  const differing = DISPLAYED_COLUMNS.filter(
+    (column) => String(colsA[column]) !== String(colsB[column]),
+  );
+
+  if (differing.length > 0) {
+    return `not a collision: releases differ on displayed column(s) [${differing.join(', ')}] — ${differing
+      .map((c) => `${c}: ${JSON.stringify(colsA[c])} vs ${JSON.stringify(colsB[c])}`)
+      .join('; ')}`;
+  }
+
+  // What the panel actually puts side by side.
+  const evidence = (payload) =>
+    JSON.stringify({
+      identifiers: (payload.identifiers ?? []).map((i) => [i.type, i.value, i.description]),
+      companies: (payload.companies ?? []).map((c) => [c.entity_type_name, c.name]),
+    });
+
+  if (evidence(a) === evidence(b)) {
+    return 'identifiers AND companies are identical, so the feature cannot separate this pair either';
+  }
+
+  return null;
+}
+
 // The no-matrix fixture is SEARCHED for rather than guessed.
 const noMatrix = captures.find((c) => c.name === 'release-no-matrix');
 if (wanted(noMatrix.name)) {
@@ -359,6 +493,22 @@ try {
 } catch (error) {
   failures.push(`release-no-matrix: ${error.message}`);
 }
+}
+
+/**
+ * Run whenever both members were in scope — including a full run. Skipped when
+ * only one was requested by name, since the other's file on disk may predate
+ * whatever is being retried.
+ */
+if (wanted('release-collision-clay-lp-3-a') && wanted('release-collision-clay-lp-3-b')) {
+  console.log('\ncross-checking the collision pair');
+  const problem = verifyCollisionPair();
+  if (problem === null) {
+    console.log('  ✓ identical on displayed columns, separable on identifiers/companies');
+  } else {
+    failures.push(`collision-pair: ${problem}`);
+    console.log(`  ✗ collision-pair — ${problem}`);
+  }
 }
 
 if (failures.length > 0) {
