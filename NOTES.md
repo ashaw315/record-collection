@@ -17470,3 +17470,42 @@ only) intends.
 stores the last successful result is less useful than one that can say why a call
 failed — and 4's store would have had nothing to store here.
 
+
+---
+
+## OPEN, not yet actionable: §9.2 does not scale, and max_tokens is a ceiling not a fix
+
+**Raised by Adam 2026-08-26** while deciding the logging unit, recorded rather
+than acted on because **the evidence that would choose between the options does
+not exist yet** — that is what the logging unit produces.
+
+**The problem, if truncation is confirmed.** Raising `GAP_ANALYSIS_MAX_TOKENS`
+moves the wall; it does not remove it. §9.2 deliberately has NO count limit (R5
+finding 4), so the model returns as many suggestions as it judges warranted — 34
+on R5's smaller collection. At 17 records that may already be the ceiling. At 200
+it returns whatever a 200-record collection warrants, and the ceiling is hit
+again at whatever value was chosen.
+
+**Three shapes, Adam's, worth weighing when evidence lands:**
+
+1. **Bounded overall** — ask for five rather than thirty-four. Cheapest, and R5
+   already identified the PROMPT as the honest place for a count rather than a
+   server-side slice, which would discard output already billed for.
+2. **Scoped by genre** — "what am I missing in UK82". Smaller payload, sharper
+   question, actionable in a shop, and it relieves token pressure STRUCTURALLY
+   rather than by raising a ceiling.
+3. **Scoped by depth** — "where am I one record deep". **Computable from the
+   user's own data before any model is involved**, which makes it the only one of
+   the three that can be partly answered without spending a slot at all.
+
+**The measurement that decides it, and it is not yet taken: is the pressure on
+INPUT or OUTPUT?** The summary is names, counts and labels — cheap per artist —
+so a 200-record collection might still send a small prompt while the model's
+ANSWER grows without bound. If the pressure is output-side, (1) fixes it and (2)
+is optional; if input-side, (2) is the structural answer and (1) alone will not
+hold. **`stop_reason` plus input/output token counts answer this**, and the
+logging unit is what starts recording them.
+
+**Trigger: the first logged gap-analysis failure or success carrying token
+counts.** Until then any choice here is a guess with a number attached.
+
