@@ -9,6 +9,7 @@ import {
   isAuthFailure,
 } from '@/lib/llm/client';
 import { logger } from '@/lib/logger';
+import { storeGapAnalysis } from '@/lib/db/queries/gap-analysis';
 import { claimLlmRequest, completeLlmRequest, releaseLlmRequest } from '@/lib/llm/rate-limit';
 
 /**
@@ -245,6 +246,14 @@ export const POST = withErrorHandling('api.suggestions.ai.POST', async () => {
    * user's hierarchy is discarded, and a shorter list with no explanation makes
    * the model's error invisible.
    */
+  /*
+   * A39: kept for DISPLAY, never served in place of a call. This runs AFTER a
+   * successful analysis, so the store always holds a real answer — and the
+   * route above has already made the request, which is what keeps "Suggest"
+   * meaning fresh.
+   */
+  await storeGapAnalysis({ suggestions: result.suggestions, dropped: result.dropped });
+
   return NextResponse.json({
     data: { suggestions: result.suggestions, dropped: result.dropped },
   });

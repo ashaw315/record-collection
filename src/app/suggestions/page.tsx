@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { AppHeader } from '@/components/AppHeader';
 import { suggestions } from '@/lib/db/queries/suggestions';
+import { latestGapAnalysis } from '@/lib/db/queries/gap-analysis';
 import { isAnthropicConfigured } from '@/lib/llm/client';
 import { GapAnalysis } from './GapAnalysis';
 
@@ -36,6 +37,13 @@ const LIMIT = 20;
 export default async function SuggestionsPage() {
   const rows = await suggestions({ limit: LIMIT });
 
+  /*
+   * A39: the last analysis, so navigating away no longer costs a request to see
+   * the same answer again. Read here rather than fetched by the client, because
+   * this page is a server component and the value is already on the server.
+   */
+  const lastGapAnalysis = await latestGapAnalysis();
+
   return (
     <>
       <AppHeader />
@@ -57,7 +65,7 @@ export default async function SuggestionsPage() {
         </p>
 
         <div className="mb-6">
-          <GapAnalysis configured={isAnthropicConfigured()} />
+          <GapAnalysis last={lastGapAnalysis} configured={isAnthropicConfigured()} />
         </div>
 
         {rows.length === 0 ? (

@@ -313,6 +313,21 @@ Name collision is rare enough that asking is cheap, and it is the only signal th
 
 **A confirmed MBID is written to `artists.musicbrainz_id`; an inferred one is not.** §4.3's resolver refuses to attach an id on a name match precisely because a wrong attachment is silent and self-reinforcing. A user who has been shown the candidates and chosen one has supplied the evidence the resolver lacked — that is a different act, and the id may be stored. The distinction is who decided, not how confident the code is.
 
+**`gap_analysis_results`** — the last §9.2 gap analysis, kept for display (A39).
+
+| Column | Type | Notes |
+|---|---|---|
+| id | UUID PRIMARY KEY DEFAULT gen_random_uuid() | |
+| asked_at | TIMESTAMPTZ NOT NULL DEFAULT now() | What the screen shows as "asked N minutes ago" |
+| suggestions | JSONB NOT NULL | The model's output, exactly as parsed and validated (A29d) |
+| dropped | INTEGER NOT NULL DEFAULT 0 | A29d's count of suggestions discarded for an out-of-vocabulary genre |
+
+**One row, superseded rather than accumulated.** The screen shows the last analysis, so an older one is debris; the store deletes before inserting rather than relying on a scheduled cleanup, for the reason §4.3 gives about rows carrying their own timestamps — a job that must run is a job that can fail to run.
+
+**Exempt from §4's `created_at`/`updated_at` rule**, on the same grounds as `llm_requests`: `asked_at` is the only time this table has an opinion about. An `updated_at` would be worse than redundant — it would imply a row that changes, and a new analysis supersedes rather than updates, because an answer is a transcript of what was said at a moment.
+
+**Stored as JSON deliberately.** These are the model's output, not the app's data: nothing joins to them and nothing queries inside them. Columns would invite exactly that — a schema implying these are facts about the collection. §9.2's rule that a suggestion never becomes a row in the collection is untouched; **this table is not the collection.**
+
 **`llm_requests`** — one row per outbound Anthropic request, for §9.2's and §10b's rate limit.
 
 | Column | Type | Notes |
@@ -890,7 +905,19 @@ Both were specified in §9.1 and are not scored. Each is recorded with what it n
   **A bounded response can still truncate, and the copy must not pretend otherwise.** The count bounds how many suggestions are asked for, not how long each `reason` may be. Measured from R5's complete run, a suggestion averages ~88 output tokens; six is therefore ~530, and a model writing reasons three times longer than average still lands near 1,600 against the 4,000 ceiling — roughly 2.5× headroom. **So truncation becomes implausible rather than impossible**, the `cut` failure path stays, and its message stays accurate for the case where it genuinely happens.
 
 - **Rate limit to 10 requests/hour, enforced server-side against `llm_requests` (§4.3)** — never trusted from the client, and shared with §10b's snippet since both spend the same account. Exhaustion is a legible refusal naming when capacity returns, not a 500 and not silence: an exhausted quota is a fact the app knows, and reporting it as an internal error sends the reader to application logs for something the app could have said. Never call this on page load — user-initiated only.
-- Results are ephemeral (not persisted) but the UI offers an "add to want-list" action per suggestion.
+- **The last result is persisted for display, and re-asking always costs a call (A39, amended 2026-08-26).** This clause previously read "results are ephemeral (not persisted)", with no reasoning attached, and its own sentence paired ephemerality with the add-to-want-list action — which suggests the concern was that **a suggestion must never become a row in the collection**. That concern is untouched here and is enforced by the bullet below: the action still only prefills a form.
+
+  **What ephemeral cost in practice.** The result lived in component state, so navigating away destroyed it, and the only way to see the same answer again was to ask again — spending one of ten hourly requests to be told what the user had already been told. Reported from real use.
+
+  **The stored copy is a RECORD OF WHAT WAS SAID, not a cache.** "Suggest" always performs a fresh call; nothing is ever served from the store in place of a request the user made. That distinction is the whole design: a button that silently returned a previous answer would be a button that lies about what it did, and one that refused the call would give the user nothing for the click. Persisting instead removes the reason to re-ask.
+
+  **It is displayed with when it was asked, and with what has changed since.** A timestamp alone is a fact about the REQUEST; what the reader needs is whether the answer still applies. Those diverge in the direction that matters: twenty minutes with nothing added is a current answer that reads as stale, while two minutes with five records added is a stale answer that reads as fresh — and a gap analysis is a claim about what is MISSING, so adding records is exactly the event that invalidates it.
+
+  So the app states the count of records added since the analysis was asked, from `records.created_at`, and **only when it is non-zero** — a caveat shown when nothing has changed is noise that spends the credibility of the one that matters (the same rule as §12 step 14c's variant limit).
+
+  **It STATES, it does not advise.** "Asked 20 minutes ago, before you added 5 records" is a fact about what the answer covers. Whether five more records is worth one of ten hourly requests is the user's judgement, and copy that nudges toward re-asking is the app spending the user's quota on its own opinion.
+
+  **Records only, and want-list additions are deliberately not counted.** A want-list row does change what the model is told (it is sent with titles, as the prohibition the payload can enforce), but records are what the suggestions are ABOUT, and a sentence carrying two numbers — or blurring both into "changes" — is vaguer than either and less likely to be read.
 - **That action prefills the want-list form; it never writes a row directly.** An LLM suggestion names a record, so unlike §9.1 a title exists — but it is a title the model produced, and §5.7's architecture exists because a client asserting a fact the server can establish is the pattern to eliminate. A model is a less reliable client than a user: it can name a record that does not exist, misattribute one, or invent a pressing. A direct write puts an unverified assertion in the same table as records the user typed, where nothing afterwards distinguishes them.
 
   **Prefilling through `/lookup` was considered and rejected**, though it is the only option where a hallucinated record cannot land. Discogs search is fuzzy and returns something for almost any string, so a hallucinated title finds a near-match and the user confirms a record the model did not mean. That converts a visible failure — a record that does not exist — into an invisible one, a different record blessed by a search. The same shape as a version table whose identical rows read as an answer.

@@ -5,6 +5,7 @@ import { artists, genres, llmRequests, records, recordGenres } from '@/db/schema
 import { LLM_REQUESTS_PER_HOUR } from '@/lib/llm/rate-limit';
 import { GAP_ANALYSIS_MAX_TOKENS } from '@/lib/llm/client';
 import { logger } from '@/lib/logger';
+import { latestGapAnalysis } from '@/lib/db/queries/gap-analysis';
 
 /**
  * SPEC.md §5.8 `POST /api/suggestions/ai` — §9.2's gap analysis.
@@ -432,5 +433,85 @@ describe('what a call cost is recorded, on success as well as failure', () => {
 
     expect(row.outputTokens, 'unknown is not zero').toBeNull();
     expect(row.stopReason).toBeNull();
+  });
+});
+
+/**
+ * SPEC.md §9.2 (A39) — the route STORES what it said, and never serves it.
+ *
+ * **Here rather than in E2E, and the first attempt is the lesson.** An E2E spec
+ * stubbed `POST /api/suggestions/ai` with `page.route` and then asserted the
+ * answer survived navigation — but stubbing the route means the real handler
+ * never runs, so nothing was ever written. `gap_analysis_results` held 0 rows
+ * while the test claimed to be testing persistence.
+ *
+ * Same family as the hollow test a mutation caught in A38: an assertion placed
+ * where the code it names cannot execute. The behaviour is the ROUTE writing to
+ * the database, so it belongs against a real database with the real handler.
+ */
+describe('the route records what it said', () => {
+  const answer = {
+    ok: true as const,
+    suggestions: [{ artist: 'Rudimentary Peni', title: 'Death Church', reason: 'r', genre: 'UK82' }],
+    dropped: 1,
+    stopReason: 'end_turn',
+    inputTokens: 1200,
+    outputTokens: 480,
+  };
+
+  it('stores a successful analysis so it can be shown again', async () => {
+    analyse.mockResolvedValue(answer);
+
+    await POST(new Request('http://localhost/api/suggestions/ai', { method: 'POST' }));
+
+    const stored = await latestGapAnalysis();
+
+    expect(stored?.suggestions).toEqual(answer.suggestions);
+    expect(stored?.dropped).toBe(1);
+  });
+
+  /**
+   * **A failure must not overwrite a good answer.** The user's last real result
+   * is what the screen shows; replacing it with nothing because a later request
+   * was truncated would destroy the thing this feature exists to keep.
+   *
+   * Fails against a route that stores unconditionally.
+   */
+  it('leaves the stored answer alone when a later call fails', async () => {
+    analyse.mockResolvedValue(answer);
+    await POST(new Request('http://localhost/api/suggestions/ai', { method: 'POST' }));
+
+    analyse.mockResolvedValue({
+      ok: false,
+      reason: 'cut',
+      length: 3399,
+      stopReason: 'max_tokens',
+      inputTokens: 1533,
+      outputTokens: 4000,
+    });
+    await POST(new Request('http://localhost/api/suggestions/ai', { method: 'POST' }));
+
+    const stored = await latestGapAnalysis();
+
+    expect(stored?.suggestions, 'the good answer survives a failed re-ask').toEqual(
+      answer.suggestions,
+    );
+  });
+
+  /**
+   * **"Suggest" always calls.** Persisting removes the REASON to re-ask; it must
+   * never intercept the ask. A route that returned the stored answer would be a
+   * button that lies about what it did.
+   *
+   * Fails against a short-circuit that serves from the store.
+   */
+  it('calls the model again even when a stored answer exists', async () => {
+    analyse.mockResolvedValue(answer);
+    await POST(new Request('http://localhost/api/suggestions/ai', { method: 'POST' }));
+
+    analyse.mockClear();
+    await POST(new Request('http://localhost/api/suggestions/ai', { method: 'POST' }));
+
+    expect(analyse, 'a second ask must reach the model').toHaveBeenCalledTimes(1);
   });
 });

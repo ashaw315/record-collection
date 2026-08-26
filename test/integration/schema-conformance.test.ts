@@ -273,6 +273,17 @@ describe('§4 conformance — NOT NULL where the spec requires it', () => {
       // the same question, and an `updated_at` would imply a row that changes —
       // these never do, which is what makes the window a WHERE clause.
       'llm_requests',
+      // §9.2's `gap_analysis_results` (A39). Same reasoning as `llm_requests`
+      // one line up: `asked_at` is the only time this table has an opinion
+      // about, and it is the column the screen reads. `created_at` would be a
+      // second answer to the same question.
+      //
+      // `updated_at` would be worse than redundant — it would imply a row that
+      // changes, and this one never does. A new analysis SUPERSEDES rather than
+      // updates (the store deletes before inserting), because an answer is a
+      // transcript of what was said at a moment and editing it in place would
+      // make "asked 20 minutes ago" describe text that had since changed.
+      'gap_analysis_results',
       'record_genres',
       'want_list_genres',
       'artist_genres',

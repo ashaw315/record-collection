@@ -17998,3 +17998,135 @@ That is what NOTES' step-2 rule ("a schema unit is not done until `db:migrate`
 has run against NEON") already says; what it did not say is that the deploy does
 not wait for it.
 
+
+---
+
+## A39 — the last gap analysis is kept for display, and two hollow tests on the way
+
+**2026-08-26, Unit B of finding 4.** The result used to live in component state,
+so navigating away destroyed it and seeing the same answer again cost one of ten
+hourly requests.
+
+### The staleness decision, which Adam asked to settle rather than discover
+
+**"Asked 20 minutes ago" is a fact about the REQUEST; what the reader needs is
+whether the answer still applies.** They diverge in both directions, and the
+dangerous one is the reason to surface it:
+
+- twenty minutes, nothing added → a CURRENT answer that reads as stale;
+- two minutes, five records added → a STALE answer that reads as fresh.
+
+A gap analysis is a claim about what is MISSING, so adding records is exactly the
+event that invalidates it — and it is computable, `records.created_at` already
+exists and is populated.
+
+**Records only.** A want-list row does change what the model is told, but records
+are what the suggestions are ABOUT, and a sentence carrying two numbers — or
+blurring both into "changes" — is vaguer than either. Recorded at the type and in
+§9.2 so the omission reads as a decision, per Adam's instruction.
+
+**Shown only when non-zero**, which is load-bearing: a caveat on a current answer
+is noise that spends the credibility of the one that matters. Same rule as §12
+step 14c's variant limit.
+
+**It STATES, it does not advise** (Adam). "Asked 20 minutes ago, before you added
+5 records" is a fact about what the answer covers; whether five records is worth
+one of ten requests is his judgement. **A test pins it** —
+`states a fact and gives no instruction` fails against
+`/again|re-?ask|refresh|should|out of date|stale/`, because that nudge is the
+natural thing to write.
+
+### "A record of what was said, never a cache"
+
+The distinction is the whole design and is asserted three ways: the route always
+calls (`calls the model again even when a stored answer exists`), a failure never
+overwrites a good answer, and the stored copy is only ever a starting state for
+the UI. **A button that silently returned a previous answer would lie about what
+it did; one that refused the call would give nothing for the click. Persisting
+removes the REASON to re-ask rather than intercepting the ask.**
+
+### TWO HOLLOW TESTS, and the second is the same shape as A38's
+
+**1. An E2E asserting persistence while preventing persistence.** I wrote a
+Playwright spec that stubbed `POST /api/suggestions/ai` with `page.route`, then
+asserted the answer survived navigation. It failed — and the diagnosis is the
+finding: **stubbing the route means the real handler never runs, so nothing was
+ever written.** `gap_analysis_results` held 0 rows while the test claimed to be
+testing storage.
+
+Deleted, and the behaviour moved to `suggestions-ai.test.ts` against a real
+database with the real handler. **Same family as A38's hollow test one unit ago:
+an assertion placed at a layer where the code it names cannot execute.** A38's
+was caught by a mutation; this one was caught by simply failing — but only
+because the feature genuinely did not work through that path. Had the component
+seeded from anything else, it would have passed and proved nothing.
+
+**The rule, now twice in two units:** when a test stubs the boundary the
+behaviour lives behind, it cannot test that behaviour. Ask what the stub replaces
+before asserting past it.
+
+**2. `getByText('Death Church')` found nothing while the text was on the page.**
+Diagnosed by dumping `innerText`, which showed `Rudimentary Peni — Death Church`
+present and rendered. Chasing the locator was the wrong instinct: the real cause
+was (1), and the locator was fine. **Recorded because the wasted step was
+believing the symptom's surface** — NOTES' own rule about reporting what is SEEN
+rather than what it looks like it means.
+
+### Two guardrails caught this unit, and both were right
+
+- **`env-test-safety.test.ts`** rejected the fake Anthropic key I added to
+  `.env.test`, because it carried Anthropic's real prefix — a guard that exists
+  so a REAL key can never be committed there. It was right: a fake with the real
+  shape trains the check to accept the shape it exists to reject. **It then
+  caught my COMMENT too**, which quoted the forbidden pattern — the file is
+  matched whole, so explaining the guard tripped the guard.
+
+  **AND THE KEY SHOULD NOT HAVE BEEN THERE AT ALL — the full E2E caught what the
+  unit suite could not.** `snippet.spec.ts:118` ("the control names itself
+  unconfigured rather than vanishing") failed on BOTH projects, deterministically.
+  Its whole subject is the UNCONFIGURED state, so **`ANTHROPIC_API_KEY` being
+  absent from `.env.test` was itself a test fixture**, not an oversight — and I
+  had changed a shared fixture to make my own tests convenient.
+
+  Reverted; the key is gone. This is what made deleting the A39 E2E the right
+  call rather than merely the tidy one: that spec needed a fixture that was not
+  mine to change, and the behaviour it wanted belongs in an integration test
+  anyway. **The narrow rule: a test fixture's ABSENCE can be load-bearing, and
+  nothing labels it as such.** The only instrument that finds it is a full run —
+  CLAUDE.md §10's no-file-argument requirement, earning its place again.
+- **`schema-conformance.test.ts`** rejected the new table for lacking
+  `created_at`/`updated_at`. Added to the exemption list WITH its argument, as
+  every other entry has: `asked_at` is the only time this table has an opinion
+  about, and an `updated_at` would imply a row that changes — a new analysis
+  supersedes rather than updates, because an answer is a transcript of a moment.
+
+**A fake credential must be fake in SHAPE, not only in value.** That is the
+narrow rule worth carrying: the guard keys on shape, so a shape-correct fake
+defeats it silently.
+
+### Verification
+
+- Migration `0018` — one CREATE TABLE, non-destructive. `db:test:reset` →
+  **19 of 19 applied** clean from empty.
+- Mutation-verified: storing unconditionally fails 2 tests; counting all records
+  rather than those added since fails 2.
+- Unit **3059 passed**, 1 skipped. Typecheck, lint, build clean.
+
+### Suite, and a baseline note
+
+- Unit **3059 passed**, 1 skipped. Typecheck, lint, build clean.
+- Migration `0018` — one CREATE TABLE, non-destructive; `db:test:reset` **19 of
+  19** clean from empty.
+- E2E **417 passed, 1 failed**. The failure is `lookup-flows.spec.ts:1574`
+  ("notes stay separable"), a `toBeVisible` timeout that **passes in isolation**
+  — the accumulation signature. Ruled out as mine rather than assumed: that spec
+  contains zero §9.2 references (its one "suggestions" match is a Discogs
+  `price_suggestions` comment), and A39 touches only the suggestions route, its
+  store, and `/suggestions`.
+
+**The red keeps MOVING, which is now the pattern worth naming**: 1093 (seven
+sightings), wall-scene 449, record-detail 395/423, snippet 118 (mine, fixed), and
+now lookup-flows 1574. Every one that was not a real defect shares the
+late-in-run timeout shape. That is four different specs exhibiting one signature,
+which argues for a single harness cause rather than five flaky tests — the
+existing accumulation trigger stands.

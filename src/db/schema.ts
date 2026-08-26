@@ -492,6 +492,42 @@ export const recordTags = pgTable(
  * collision `market_cache` was created to avoid.
  */
 /**
+ * SPEC.md §9.2 (A39) — the last gap analysis, kept for DISPLAY.
+ *
+ * **A record of what was said, never a cache.** Nothing is served from here in
+ * place of a request the user made: "Suggest" always performs a fresh call. A
+ * button that silently returned a previous answer would lie about what it did,
+ * and one that refused the call would give the user nothing for the click.
+ * Persisting removes the REASON to re-ask rather than intercepting the ask.
+ *
+ * **Why it exists:** the result used to live in component state, so navigating
+ * away destroyed it, and seeing the same answer again meant spending one of ten
+ * hourly requests to be told what you had already been told.
+ *
+ * **Suggestions are stored as JSON, deliberately.** They are the model's
+ * output, not the app's data: nothing joins to them and nothing queries inside
+ * them. Giving them columns would invite exactly that — a schema implying these
+ * are facts about the collection rather than a transcript of one answer. §9.2's
+ * rule that a suggestion never becomes a row in the collection is untouched and
+ * enforced elsewhere; this table is not the collection.
+ *
+ * **One row.** The screen shows the last analysis, so a superseded one is
+ * debris. `storeGapAnalysis` deletes before inserting rather than relying on a
+ * scheduled cleanup — the same reasoning §4.3 gives for rows carrying their own
+ * timestamps: no job exists to fail.
+ */
+export const gapAnalysisResults = pgTable('gap_analysis_results', {
+  id,
+  /** When the call was made — what the UI shows as "asked N minutes ago". */
+  askedAt: timestamp('asked_at', { withTimezone: true }).notNull().defaultNow(),
+  /** The model's suggestions, exactly as parsed and validated (A29d). */
+  suggestions: jsonb('suggestions').notNull(),
+  /** A29d's count of suggestions discarded for an out-of-vocabulary genre. */
+  dropped: integer('dropped').notNull().default(0),
+});
+
+
+/**
  * §4.3 `llm_requests` — one row per outbound Anthropic request, for §9.2's and
  * §10b's shared 10/hour rate limit.
  *
