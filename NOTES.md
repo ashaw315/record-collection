@@ -19579,3 +19579,81 @@ instantaneous races it in whichever project is slower.**
 - The three failures from the previous run (`lookup-flows:1525`,
   `collection-filters:427`, and my own mobile race) all pass; the first two
   showed `Failed to fetch RSC payload` and were the same transport shape.
+
+---
+
+## A43 — A40 was scoped wrong, and the error is an incomplete enumeration
+
+**Adam, 2026-08-27:** *"The dig is fields I fill in, storing what I already know.
+What I actually want is the app telling me whether a pressing matters for this
+record, and which one to hunt."*
+
+**He is right, and the error is mine and precise.** A40 asked "whose judgement is
+a tier?" and answered "the user's, and only the user's", from two premises:
+
+- **not Discogs'** — `have`/`want` is popularity, price is scarcity plus hype;
+- **not the app's** — nothing in the schema knows a first press beats a repress.
+
+**Both premises are true. The conclusion does not follow.** The enumeration was
+incomplete: **the app has a third source of judgement about music, and §9.2 has
+used it since step 14.** Claude knows which *Rumours* stampers to find, which
+Clay pressing of *Hear Nothing* is the good one, and whether a record has a
+pressing worth chasing at all.
+
+**I reasoned about the DATA the app holds and forgot the CAPABILITY the app has**
+— on the same day three §9.2 units shipped, in a document that cites §9.2
+elsewhere. The two premises were sound and exhaustive-sounding, which is exactly
+what stopped me asking whether there was a third.
+
+> **The check that would have caught it:** when an argument rules out every
+> source and concludes "only the user", ask what the app can already DO rather
+> than only what it already KNOWS. A capability is not in the schema and will not
+> appear in a survey of tables.
+
+Same family as the layer error in item 0 — I moved the diagnostic to the shared
+transport and left the defect's cause at the call site. **Both are cases of
+reasoning carefully within a frame that was drawn one element too small.**
+
+### Q1: the album entity does NOT block it, and the reason is the shape of the answer
+
+**A40's ranking is a persistent fact about an ALBUM** — true whether the user
+owns a copy, wants one, or neither — which genuinely wants an entity that does
+not exist.
+
+**An assessment is asked, about a row, at a moment**, like a gap analysis. It
+attaches to the want-list row the way §9.2's reason attaches to a suggestion.
+**Both can exist**: A43 answers "is this worth chasing" today; A40 records "this
+is my ranking" when the entity arrives — **and A43 must not be built as if it
+replaced A40**, because a model's assessment is not the user's judgement.
+
+### Q2: "any copy is fine" is a RESULT, and A40 could not express it
+
+**Adam's sharpest point, and it is a design finding rather than a preference.** A
+ranked list has no way to say "ranking is not the question here": an empty list
+means "nobody has ranked these", which is a different fact.
+
+**Three states that must stay distinguishable:**
+
+| state | meaning |
+|---|---|
+| not assessed | nobody has asked |
+| assessed: it matters | pressings worth hunting, named |
+| **assessed: it does not** | **any copy is fine — a RESULT, stated** |
+
+**Rendering the third as an empty assessment collapses it into the first**, which
+is the market-cache and truncated-snippet failure again: complete presented as
+absent. **And it is the state that saves the most time — it ENDS a hunt rather
+than directing one.**
+
+### Written to SPEC §12b, not built
+
+Four open questions left unanswered on purpose (what it is asked about, re-asking
+and staleness, want-list versus record, cost). **Medium, and smaller than A40
+because it needs no schema change and no entity.** Sequenced after the genre
+hierarchy, which is the only queued item fixing something currently wrong.
+
+**The pattern is now the fourth instance** — 14c's display-not-match, A40's
+tiers, the genre-parent suggestion, and this: *the app assembles the material and
+orders the question; the user supplies the judgement; nothing is recorded the
+user did not confirm.*
+

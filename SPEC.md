@@ -1492,9 +1492,11 @@ Each step should end with its tests green before moving on.
 
 ---
 
-## 12a. SPEC'D, NOT BUILT — ranked pressings (A40)
+## 12a. SPEC'D, NOT BUILT — ranked pressings (A40), **substantially amended by A43**
 
 **Proposed by Adam 2026-08-26. Written up rather than built, and the open questions below are why: two of them change the schema, and one has no answer in the current model at all.**
+
+> **A43 (2026-08-27) CORRECTS A40's central argument.** A40 concluded that only the user can judge which pressing matters, from two premises that are both true — Discogs has no fidelity ranking, and nothing in the schema knows a first press beats a repress. **The conclusion does not follow from those premises, because the enumeration was incomplete: the app already has a third source of judgement about music, and §9.2 has been using it since step 14.** Read §12b below before building anything from this section; the parts of A40 that survive are marked there.
 
 ### What it is
 
@@ -1557,6 +1559,84 @@ So it needs editing, and it should probably record **when it was written**, the 
 ### What would fire it
 
 **Nothing yet, deliberately.** The blocking question needs an answer, and answering it well probably means the album entity — which is a step-2-sized change and should be judged on its own merits, not adopted as a side effect of a want-list feature. **Trigger: Adam deciding the album question, or a second feature needing the same entity** — at which point the entity is justified by two callers rather than one.
+
+---
+
+## 12b. SPEC'D, NOT BUILT — pressing assessment (A43)
+
+**Adam, 2026-08-27, correcting A40's scoping.** *"The dig is fields I fill in, storing what I already know. What I actually want is the app telling me whether a pressing matters for this record, and which one to hunt."*
+
+### The error in A40, stated plainly because it is a reasoning error rather than a missing feature
+
+A40 asked "whose judgement is a tier?" and answered "the user's, and only the user's", from two premises:
+
+- **not Discogs'** — it has `have`/`want` counts (popularity) and prices (scarcity plus hype), and neither is "sounds better";
+- **not the app's** — nothing in the schema knows a Porky-stamped first press beats a 1989 repress.
+
+**Both premises are true. The conclusion does not follow, because the enumeration was incomplete.** The app has a third source of judgement about music, it is already integrated, rate-limited and disclosure-bounded, and §9.2 has used it since step 14: **the model.** Claude knows which *Rumours* stampers are worth finding, which Clay pressing of *Hear Nothing* is the good one, and — critically — **whether a record has a pressing worth chasing at all.**
+
+**The mistake was reasoning about the DATA the app holds and forgetting the CAPABILITY the app has.** A40 was written the same day three §9.2 units shipped.
+
+### The standing is §9.2's, exactly, and that is what makes it buildable
+
+**A model's assertion about music, displayed as such, never stored as truth.** §9.2 already establishes every rule this needs:
+
+- **"Suggestions must read as generated"** (§10b's labelling rule) — the assessment is attributed, visually separable, and never rendered through the same presentation as a fact the app computed (see the NOTES rule on two things that look like the same field);
+- **it never writes a row** — §9.2's own clause anticipates precisely this case: a model *"can name a record that does not exist, misattribute one, **or invent a pressing**"*;
+- **the shared limiter and `llm_requests` quota** apply unchanged, and the shared transport (A38, item 0) gives it `stop_reason`, token recording and truncation refusal for free.
+
+**What the user supplies is unchanged: judgement.** The app assembles the material and orders the question; the user decides. **This is the same pattern as 14c's display-not-match, A40's tiers and the genre-parent suggestion — now the fourth instance**, and the shape is the project's most reusable: *the app never asserts what it cannot check; it puts the material where a person can judge it.*
+
+### Q1 — does the album entity block this? **NO, and the reason is the shape of the answer**
+
+**A40's ranking is a persistent fact about an ALBUM** — "for *Rumours*, the first US press beats the 1979 repress" is true whether the user owns a copy, wants one, or neither. That genuinely wants an album entity, and that entity genuinely does not exist.
+
+**An assessment is a different shape: it is asked, about a row, at a moment.** Like a gap analysis, it is a model's answer to a question posed now — not a stored ranking accumulating across the collection. So it attaches to the want-list row the way §9.2's reason attaches to a suggestion, and **it needs no album entity to be honest.**
+
+**The distinction that makes this safe rather than convenient:**
+
+| A40's tiers | A43's assessment |
+|---|---|
+| the user's own ranking | the model's assessment |
+| persists, survives acquisition | asked at a moment, like a gap analysis |
+| belongs to the album | belongs to the asking |
+| **needs the entity** | **does not** |
+
+**Both can exist.** A43 answers "is this worth chasing, and which one" today; A40 records "this is my ranking" when the entity arrives. **A43 does not replace A40 and must not be built as if it did** — a model's assessment is not the user's judgement, and storing one as the other is the flattening this project keeps refusing.
+
+### Q2 — what it says when a pressing does NOT matter
+
+**Adam: "'Any copy is fine, do not spend time on this' is as useful as naming a specific one, and it is the answer the current design cannot express at all."**
+
+**He is right that A40 could not express it.** A ranked list has no way to say "ranking is not the question here" — an empty list means "nobody has ranked these", which is a different fact.
+
+**Three states, and they must stay distinguishable** — the absent-versus-unknown distinction this project keeps meeting, here with a third value:
+
+| state | meaning | how it must read |
+|---|---|---|
+| **not assessed** | nobody has asked | no assessment shown; asking is offered |
+| **assessed: it matters** | the model named pressings worth hunting | the assessment, attributed |
+| **assessed: it does not** | the model's answer is that any copy is fine | **stated explicitly, as a result** |
+
+**The third is a RESULT, not an absence**, and rendering it as an empty assessment would collapse it into the first — telling the user nobody has looked when in fact the answer is that it makes no difference. That is the market-cache failure and the truncated-snippet failure in a new place: **incomplete or absent presented as complete, or complete presented as absent.**
+
+**And the third state is the one that saves the most time**, which is the argument for building it: it ends a hunt rather than directing one.
+
+### What must NOT be built
+
+- **No storage of the assessment as fact.** It is displayed at the moment of asking. If it is ever persisted, it is persisted the way A39 persists a gap analysis — a transcript, timestamped, attributed, never a column on `want_list` that later readers mistake for the user's own note.
+- **It must not write `best_dig_notes`.** That field is the USER's, and §7.8's ownership lesson applies before the fact rather than after: text a model produced sitting in a field the user owns is indistinguishable from text they wrote.
+- **No purchase path** (§13), unchanged.
+- **It must not silently replace A40.** If the user has recorded their own ranking, that is theirs and outranks any assessment.
+
+### Open questions, unanswered on purpose
+
+1. **What it is asked ABOUT.** A want-list row carries artist and title; a pressing assessment may need more (country, year, the pressings actually available). Sending too little gets a generic answer; sending the collection is §9.2's disclosure boundary again.
+2. **Whether an assessment can be re-asked, and what shows meanwhile.** A39's "asked N minutes ago, before you added 5 records" is the precedent for saying what an answer covers.
+3. **Whether it belongs on the want-list row, the record, or both.** Adam's own A40 insight applies — the question changes after acquisition, from "which do I hunt" to "is mine the good one".
+4. **What it costs.** One call per assessment against a 10/hour shared quota, and §9.2's measurements (input ~1,900, output 526–1,736) are the closest available estimate.
+
+**Size: MEDIUM**, and smaller than A40 because it needs no schema change and no entity. **Not built; sequenced after the genre hierarchy**, which has a live §8 violation and is the only queued item fixing something currently wrong.
 
 ---
 
