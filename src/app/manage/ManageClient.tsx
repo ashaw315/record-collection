@@ -23,6 +23,8 @@ import {
 import { RESOURCES, type ResourceSpec } from './resources';
 import { ResourceTable, type Row } from './ResourceTable';
 import { GenreTree } from './GenreTree';
+import { ParentProposal } from './ParentProposal';
+import type { Evidence, ProposedPairing } from './parent-proposal';
 import { nameOf, type GenreRow } from './genre-tree';
 
 /**
@@ -148,6 +150,59 @@ function ResourcePanel({ resource, rows }: { resource: ResourceSpec; rows: Row[]
     }
   }
 
+  /**
+   * §12c (A44) — the suggested hierarchy, and it is only ever a SUGGESTION.
+   *
+   * `null` means nothing has been asked. **That is not the same as an empty
+   * proposal**, which means the model was asked and had nothing to place — the
+   * distinction the whole feature turns on, so the state carries it rather than
+   * leaving the UI to infer it from a length.
+   */
+  const [proposal, setProposal] = useState<{
+    pairings: ProposedPairing[];
+    noParentFits: string[];
+    evidence: Record<string, Evidence>;
+  } | null>(null);
+  const [proposing, setProposing] = useState(false);
+  const [proposalError, setProposalError] = useState<string | undefined>();
+
+  async function proposeParents() {
+    setProposing(true);
+    setProposalError(undefined);
+    try {
+      const response = await fetch('/api/genres/parent-suggestions', { method: 'POST' });
+      const body = await response.json();
+
+      if (!response.ok) {
+        /*
+         * Each failure says what it is: a rate limit names when capacity
+         * returns, and a truncated tree says why nothing is shown rather than
+         * appearing to have found nothing.
+         */
+        const retryAt =
+          typeof body?.error?.retryAt === 'string'
+            ? new Date(body.error.retryAt).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            : null;
+
+        setProposalError(
+          retryAt === null
+            ? (body?.error?.message ?? 'Could not get suggestions.')
+            : `${body.error.message} Capacity returns at ${retryAt}.`,
+        );
+        return;
+      }
+
+      setProposal(body.data);
+    } catch {
+      setProposalError('Could not reach the suggestion service.');
+    } finally {
+      setProposing(false);
+    }
+  }
+
   /** Genre reparent — the one call whose 409 needs both names to explain itself. */
   async function move(id: string, parentGenreId: string | null) {
     setBusyId(id);
@@ -206,6 +261,7 @@ function ResourcePanel({ resource, rows }: { resource: ResourceSpec; rows: Row[]
         className="min-w-0 flex-1"
       >
         {resource.hierarchical === true ? (
+          <>
           <GenreTree
             rows={rows as GenreRow[]}
             busyId={busyId}
@@ -216,6 +272,70 @@ function ResourcePanel({ resource, rows }: { resource: ResourceSpec; rows: Row[]
             onMove={(id, parentGenreId) => void move(id, parentGenreId)}
             onDelete={(row) => setPendingDelete({ row: row as Row, resource })}
           />
+
+            {/*
+              §12c (A44). **The button is separate from the tree and says what
+              it costs**, because it spends one of ten hourly requests — §9.2's
+              rule that a call is user-initiated and never incidental.
+            */}
+            <div className="mt-4 border-t border-border pt-3">
+              <button
+                type="button"
+                data-testid="propose-parents"
+                disabled={proposing}
+                onClick={() => void proposeParents()}
+                className="text-sm underline underline-offset-2 disabled:text-muted-foreground"
+              >
+                {proposing ? 'Thinking…' : 'Suggest a hierarchy'}
+              </button>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Sends your genre names and a few records carrying each. Uses one of ten hourly
+                requests.
+              </p>
+
+              {proposalError !== undefined && (
+                <p role="status" data-testid="proposal-error" className="mt-2 text-sm text-destructive">
+                  {proposalError}
+                </p>
+              )}
+
+              {/*
+                **An empty proposal is a RESULT, not an absence.** `null` means
+                nothing was asked; an empty `pairings` means the model was asked
+                and had nothing to place. Collapsing them would tell the user
+                nobody looked.
+              */}
+              {proposal !== null && proposal.pairings.length === 0 && (
+                <p data-testid="proposal-empty" className="mt-2 text-sm">
+                  No hierarchy suggested — every genre already sits where it can.
+                </p>
+              )}
+
+              {proposal !== null && proposal.pairings.length > 0 && (
+                <ParentProposal
+                  pairings={proposal.pairings}
+                  noParentFits={proposal.noParentFits}
+                  evidence={proposal.evidence}
+                  onAccept={async (pairing) => {
+                    // Reuses `move`, so an accepted pairing goes through the
+                    // same PATCH — and the same §4.1 cycle rejection — as a
+                    // parent chosen by hand from the dropdown.
+                    await move(pairing.genreId, pairing.parentId);
+                  }}
+                  onReject={async (pairing) => {
+                    await fetch('/api/genres/parent-suggestions/rejections', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        genreId: pairing.genreId,
+                        rejectedParentId: pairing.parentId,
+                      }),
+                    });
+                  }}
+                />
+              )}
+            </div>
+          </>
         ) : (
           <ResourceTable
             resource={resource}

@@ -20114,3 +20114,65 @@ empty array. **Mutation-verified**: dropping childless parents fails the test.
 Unit **3116 passed**. Typecheck, lint clean. **Remaining: wiring into
 `ManageClient` and the E2E.**
 
+
+---
+
+## A44 COMPLETE — wired into `/manage`, and the feature is reachable
+
+**2026-08-27.** The last piece: `ParentProposal` rendered inside the genre
+resource, a rejections endpoint, and the E2E.
+
+### Accepting reuses `move()`, which was already right
+
+The proposal's accept handler calls **the same `move()` the dropdown uses** —
+so an accepted pairing goes through `PATCH /api/genres/:id` and hits **the same
+§4.1 cycle rejection**, with the same both-names error message. **§12c's open
+question 1 needed no new code**: a tree accepted piecemeal cannot construct a
+cycle because every confirmation is an ordinary reparent.
+
+**That is the pattern working as intended** — the app proposed, and the WRITE is
+the one the user could have made by hand.
+
+### Two absences kept distinct in the UI
+
+- **`proposal === null`** — nothing asked. Nothing renders.
+- **`pairings.length === 0`** — asked, and the model had nothing to place.
+  *"No hierarchy suggested — every genre already sits where it can."*
+
+**Collapsing them would tell the user nobody looked**, which is the same failure
+the empty-parent heading avoids one level down. Both are asserted in E2E.
+
+### Mutation-verified: rejecting writes nothing
+
+Making reject ALSO apply the parent — the plausible slip, since both handlers sit
+adjacent — fails with the message naming the rule:
+
+    Error: the rejected pairing changed nothing
+
+**A rejection is a decision not to change anything**, and §8 makes that the whole
+point: the vocabulary is the user's, so declining must leave it exactly as it was.
+
+### The E2E stubs the SUGGESTION and nothing the confirmation touches
+
+The route calls Anthropic, so §2 forbids reaching it. **But accepting really
+PATCHes and rejecting really writes a rejection** — the assertions read the
+genres back through the API and check `parentGenreId` directly, which is the
+difference between testing the screen and testing the outcome.
+
+### Verification
+
+- Unit **3116 passed**, 1 skipped. Typecheck, lint, build clean.
+- E2E **434 passed, 1 failed** — `scroll-lock:118`, landing on `/login` instead
+  of `/`: the documented login-timeout signature, passing in isolation, in a spec
+  with **zero** references to genres, manage or parents. Accumulation family.
+- Migrations **21 of 21** clean from empty.
+
+### Still unverified, and only Adam can
+
+**Whether the proposal is any good on his real 32 genres.** Every test uses
+seeded fixtures; the whole layout rests on a MEASUREMENT of shape (~9 groups,
+2-3 children each) that only a live proposal confirms. **And the `Rock` question
+resolves here too**: nesting may absorb it as a legitimate parent of
+`Psychedelic Rock` and `Rock & Roll`, or expose it as a bucket — which is the
+trigger recorded against that finding.
+

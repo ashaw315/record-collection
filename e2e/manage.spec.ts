@@ -616,3 +616,152 @@ test('the artist list defaults to what you collect, and says what it is hiding',
     timeout: 15_000,
   });
 });
+
+/**
+ * SPEC.md §12c (A44) — the genre hierarchy assistant.
+ *
+ * **The friction this exists to remove**: 32 unparented genres, assigned one
+ * dropdown at a time with no view of the shape. Measured, the proposal is ~9
+ * groups rather than 32 rows — so these assert that the screen GROUPS, and that
+ * every decision stays the user's.
+ *
+ * The suggestion route is stubbed: it calls Anthropic, and CLAUDE.md §2 forbids
+ * a test reaching it. What is NOT stubbed is everything the user's confirmation
+ * touches — accepting really PATCHes, rejecting really writes a rejection.
+ */
+
+async function seedGenre(page: Page, name: string): Promise<string> {
+  const response = await page.request.post('/api/genres', { data: { name } });
+  expect(response.status(), `seeding ${name} must succeed`).toBe(201);
+  return ((await response.json()) as { id: string }).id;
+}
+
+test('a suggested hierarchy is grouped, evidenced, and applied only where accepted', async ({
+  page,
+}) => {
+  await login(page);
+
+  const run = `${Date.now()}`;
+  const rock = await seedGenre(page, `Rock-${run}`);
+  const psych = await seedGenre(page, `Psychedelic Rock-${run}`);
+  const aor = await seedGenre(page, `AOR-${run}`);
+
+  await page.route('**/api/genres/parent-suggestions', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        data: {
+          pairings: [
+            { genreId: psych, genre: `Psychedelic Rock-${run}`, parentId: rock, parent: `Rock-${run}` },
+            { genreId: aor, genre: `AOR-${run}`, parentId: rock, parent: `Rock-${run}` },
+          ],
+          noParentFits: [],
+          dropped: 0,
+          evidence: {
+            [`Psychedelic Rock-${run}`]: { recordCount: 3, examples: ['The Doors — The Soft Parade'] },
+            [`AOR-${run}`]: { recordCount: 1, examples: ['Dire Straits — Dire Straits'] },
+          },
+        },
+      }),
+    });
+  });
+
+  await page.goto('/manage');
+  await openResource(page, 'Genres');
+  await page.getByTestId('propose-parents').click();
+
+  /*
+    **Grouped under one heading, not listed as two independent rows.** "Is Rock
+    the right bucket for these?" is one judgement, which is what makes 32
+    pairings readable in a pass.
+  */
+  const proposal = page.getByTestId('parent-proposal');
+  await expect(proposal).toBeVisible();
+  await expect(proposal.getByRole('heading', { name: `Rock-${run}` })).toBeVisible();
+
+  /*
+    **The evidence STATES and never RATES.** A count is a fact the user weighs;
+    a grade would be the app judging its own output — and `Rock` at ten records
+    across ten unrelated artists is the standing proof that count and quality are
+    different axes.
+  */
+  await expect(page.getByTestId(`evidence-${aor}`)).toContainText('1 record: Dire Straits');
+  await expect(proposal).not.toContainText(/well supported|confiden|strong|likely/i);
+
+  // Accept one, reject the other.
+  await page.getByTestId(`accept-${psych}`).click();
+  await expect(page.getByTestId(`pairing-${psych}`)).toContainText('Accepted');
+
+  await page.getByTestId(`reject-${aor}`).click();
+  await expect(page.getByTestId(`pairing-${aor}`)).toContainText('will not be suggested again');
+
+  /*
+    **The load-bearing assertion: only what was ACCEPTED is written.** Rejecting
+    leaves the genre exactly where it was — §8's vocabulary is the user's, and a
+    rejection is a decision not to change anything.
+  */
+  const genres = await (await page.request.get('/api/genres?pageSize=200')).json();
+  const rowOf = (id: string) =>
+    (genres.data as Array<{ id: string; parentGenreId: string | null }>).find((g) => g.id === id);
+
+  expect(rowOf(psych)?.parentGenreId, 'the accepted pairing was applied').toBe(rock);
+  expect(rowOf(aor)?.parentGenreId, 'the rejected pairing changed nothing').toBeNull();
+});
+
+test('a rejected pairing is never proposed again', async ({ page }) => {
+  /*
+    A feature that must be dismissed repeatedly is one nobody uses twice — the
+    noise argument A37's variant limit and the §9.2 dismissal decline both turn
+    on. The rejection is stored, so the SERVER filters it out next time.
+  */
+  await login(page);
+
+  const run = `${Date.now()}`;
+  const rock = await seedGenre(page, `RejRock-${run}`);
+  const aor = await seedGenre(page, `RejAOR-${run}`);
+
+  const rejected = await page.request.post('/api/genres/parent-suggestions/rejections', {
+    data: { genreId: aor, rejectedParentId: rock },
+  });
+  expect(rejected.status()).toBe(204);
+
+  // Idempotent — clicking reject twice is the same fact, not an error.
+  const again = await page.request.post('/api/genres/parent-suggestions/rejections', {
+    data: { genreId: aor, rejectedParentId: rock },
+  });
+  expect(again.status(), 'rejecting twice is the same fact').toBe(204);
+});
+
+test('an empty proposal says the model found nothing, not that nothing was asked', async ({
+  page,
+}) => {
+  /*
+    **Absent versus unknown, in the UI's own vocabulary.** An empty proposal
+    means the model was asked and had nothing to place; no proposal means nobody
+    asked. Collapsing them would tell the user nobody looked.
+  */
+  await login(page);
+
+  await page.route('**/api/genres/parent-suggestions', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        data: { pairings: [], noParentFits: [], dropped: 0, evidence: {} },
+      }),
+    });
+  });
+
+  await page.goto('/manage');
+  await openResource(page, 'Genres');
+
+  // Before asking: nothing at all, because nothing has been asked.
+  await expect(page.getByTestId('proposal-empty')).toHaveCount(0);
+  await expect(page.getByTestId('parent-proposal')).toHaveCount(0);
+
+  await page.getByTestId('propose-parents').click();
+
+  // After asking: an explicit result.
+  await expect(page.getByTestId('proposal-empty')).toBeVisible();
+});
