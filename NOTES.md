@@ -19864,3 +19864,69 @@ Unit **3090 passed**, 1 skipped. E2E **428 passed, 1 failed** —
 isolation on both projects, in a spec whose only match for this unit's subject is
 the word "snippet" inside a comment. Accumulation family. Typecheck, lint, build
 clean.
+
+---
+
+## A44 unit A — the genre-parent client, and the layer rule HELD
+
+**2026-08-27.** The third LLM caller, built as the proof of the transport work.
+
+### The claim, and the evidence for it
+
+**`genre-parent-client.ts` never calls `observeUsage` or `ranOutOfRoom`.**
+Grepped: zero occurrences outside a comment saying so. It destructures
+`{ text, observed, ranOutOfRoom }` from `callAnthropic` and uses them.
+
+**Mutation-verified**: rewriting it to call `transport.create` directly and
+invent empty diagnostics — the exact shape the snippet shipped in for months —
+fails 2 tests, `carries stop_reason and tokens without being asked to` and
+`refuses a response that ran out of room`.
+
+**So the layer rule passed its own test this time**, and the sequencing was the
+reason: Adam refused to build A44 on tools-assembled-by-hand and refused to defer
+the transport fix, on the grounds that *"option 3 means writing code we already
+know is wrong on a promise to fix it later — which is exactly how the snippet
+went months without A38's logging."* **The unit that proves a refactor should be
+written after it, not before.**
+
+### Four decisions in the prompt, each recorded in §12c
+
+- **§8 stated in the project's own terms**, naming the scenes rather than asking
+  vaguely for care: "UK first-wave punk, UK82, US hardcore, horror punk and
+  psychobilly are different scenes… never merely because two names share a word."
+- **Existing names only**, and **the parser ENFORCES it** rather than trusting
+  the instruction — A29c's rule that an instruction is not a verification. A
+  pairing naming an unknown genre is dropped and the count reported, because a
+  shorter list with no explanation makes the model's error invisible (A29d).
+- **`noParentFits` carries "no existing genre fits" as a RESULT**, so the
+  constraint cannot turn silence into a lie. Adam's point, and the same shape as
+  A43's "any copy is fine".
+- **Genres with zero records are INCLUDED.** `Punk` and `US Hardcore` carry none
+  and exist because they were created as intended parents — dropping them for
+  lack of evidence would remove the answer.
+
+**And the prompt never asks the model to rate itself**, pinned by a test against
+`/confidence|how sure|score|rate/`. A count is a fact the user weighs; a grade is
+the app judging its own output.
+
+### Two things that could have gone wrong and did not
+
+**A truncated tree is REFUSED, not proposed.** Unlike a gap analysis, a partial
+taxonomy would nest some genres and silently leave others — a hierarchy the user
+did not choose. The snippet's reasoning, applied to a different shape.
+
+**`effort: 'low'`**, like the snippet: grouping named genres under named parents
+is recall, not reasoning across a collection. `max_tokens` bounds thinking PLUS
+output, which is what cut two snippets at ~80 tokens under a 400 ceiling.
+
+### A test fixture I got wrong
+
+`carries an explicit "no parent fits" answer` used `'Swing'` — a real genre in
+the collection but **absent from that test's fixture** — so the client correctly
+dropped it as unknown and the test failed. **The code was right and the fixture
+was wrong**, which is the distinction CLAUDE.md §2 asks for before touching
+either.
+
+Unit **3102 passed**. Typecheck, lint clean. **No schema change yet** — unit B
+brings the rejection table, the route and the UI.
+
