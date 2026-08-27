@@ -19396,3 +19396,186 @@ Bumping the count alone would have satisfied the arithmetic and left that
 unasserted — **the failure mode the guard was built to prevent, reintroduced by
 the laziest way of making it pass.**
 
+
+---
+
+## Item 2 follow-up: TWO findings, and the second explains the first
+
+**2026-08-26, both from Adam using the screen he had just been given.**
+
+### 1. The feature has never been seen working on real data
+
+**Measured, and it contradicts what we both assumed:**
+
+    unacquired want-list rows: 2
+      Portishead — Dummy   target_pressing: —  notes: —  max_price: —
+      Steely Dan — Aja     target_pressing: —  notes: —  max_price: —
+
+    want_list rows that have EVER carried a dig field: 0 of 2
+
+**Adam's inference was exactly right**: *"if none do, then the feature has never
+been seen working on real data and 'it renders when present' is only a fixture
+claim."* It is. The E2E creates a row WITH dig fields through the API and asserts
+they render — which proves the code path and proves nothing about whether a user
+can get data into it.
+
+**And it explains why he remembered filling them in and the database disagrees.**
+He did not misremember the intent; see below.
+
+### 2. DEFECT: `/want-list/:id/edit` is SPECIFIED and was never built
+
+**Adam: "Edit from the want-list detail view leads to a 404. Diagnose rather
+than patch the href."** Correct instinct, and the diagnosis is the first of his
+two candidates:
+
+- **the route does not exist at that path** — `find src/app -path "*want-list*edit*"`
+  returns nothing. `src/app/want-list` has `page.tsx`, `new/page.tsx` and the new
+  `[id]/page.tsx`, and no `edit` anywhere;
+- NOT an id-passing problem, which would have been the other fix.
+
+**SPEC §10 promises it**: *"Add/edit want-list item — `/want-list/new`,
+`/want-list/:id/edit`"*. Built in step 6, half-delivered, and nothing noticed for
+ten steps.
+
+**`WantListRow` has NO edit affordance either** — grepped, there is none. So
+**there has never been a way to change a want-list row after creating it**, which
+is why zero rows carry a dig field: the create form offers those fields, and once
+past it they are unreachable.
+
+**That is the real defect, and my detail view exposed it rather than caused it.**
+I linked to a route SPEC says exists; the link is correct and the route is
+missing.
+
+### Why no test caught it, which is Adam's sharpest question
+
+**`every-page-has-nav` caught the new screen in this same unit** — so why not
+this?
+
+**Because it counts `page.tsx` files and asserts each RENDERS.** A link to a
+route that does not exist is not a page it can count: there is no file to find.
+**The guard's subject is "can the user get back FROM a screen", not "does every
+link lead somewhere".**
+
+> **A render-only assertion cannot see a dead link.** My E2E asserted the detail
+> page shows what it should, and every assertion passed — because rendering an
+> `<a href>` to a 404 is indistinguishable, in the DOM, from rendering one to a
+> real page. The href is a string either way.
+
+**The narrow rule:** an assertion that a link EXISTS is an assertion about
+markup. Only following it is an assertion about the app. A new screen's outbound
+links need a click-through, not a `toBeVisible`.
+
+**And the specification gap made it invisible from the other side too**: nothing
+tested `/want-list/:id/edit` because nothing built it, and §10's table is prose
+rather than a checked artefact. **A route promised in SPEC and absent from the
+app is a gap no test asks about**, because tests are written against what exists.
+
+
+---
+
+## The want-list edit route: SPECIFIED IN STEP 6, NEVER BUILT, unnoticed for ten steps
+
+**2026-08-26. Adam clicked Edit on the detail view he had just been given and
+got a 404.** He asked for a diagnosis rather than a patched href, because "the
+route does not exist" and "the id is not passed as expected" are different fixes.
+
+**It is the first.** `find src/app -path "*want-list*edit*"` returns nothing.
+SPEC §10's table promises `/want-list/new` AND `/want-list/:id/edit`; step 6
+delivered the first and not the second.
+
+### The finding is not the 404
+
+**`WantListRow` had no edit affordance either.** So **a want-list row has never
+been editable after creation** — and that explains the measurement from an hour
+earlier:
+
+    want_list rows that have EVER carried a dig field: 0 of 2
+
+The create form offers `target_pressing`, `best_dig_notes` and `max_price`; once
+past it they were unreachable. **Adam did not misremember filling them in — there
+was nowhere to fill them in.**
+
+**My detail view exposed this rather than causing it.** I linked to a route SPEC
+says exists. The link was right and the route was missing.
+
+### Why no test caught it — Adam's sharpest question, and I owed him a direct answer
+
+**`every-page-has-nav` caught the new SCREEN in this same unit**, so the guard
+family exists. It missed this because:
+
+- **it counts `page.tsx` files and asserts each RENDERS.** A link to a route that
+  does not exist is not a page it can count — there is no file to find. Its
+  subject is "can the user get back FROM a screen", not "does every link lead
+  somewhere";
+- **a render-only assertion structurally cannot see a dead link.** Every
+  assertion in my detail-view E2E passed, because **in the DOM an `<a href>` to a
+  404 is indistinguishable from one to a real page. The href is a string either
+  way.**
+
+> An assertion that a link EXISTS is an assertion about markup. Only FOLLOWING
+> it is an assertion about the app.
+
+**And the specification gap hid it from the other side**: nothing tested
+`/want-list/:id/edit` because nothing built it. Tests are written against what
+exists, so **a route promised in SPEC and absent from the app is a gap no test
+asks about.** §10's table is prose rather than a checked artefact.
+
+**The new tests FOLLOW the links** — `page.getByTestId('want-list-edit').click()`
+rather than `page.goto` to a path the author chose. A `goto` would pass even if
+nothing rendered the link.
+
+### Two defects the build surfaced that were not the reported one
+
+**1. The submit button said "Add to want list" unconditionally.** Invisible while
+the form only ever created; **wrong the moment the edit route existed** — a save
+button promising to ADD an item the user is EDITING suggests a second row is
+about to appear. Now `Save changes` when editing.
+
+**2. A redirect/PATCH race in my own test.** The first version clicked save and
+asserted the detail view; it failed because `router.push` landed before the PATCH
+completed. **Fixed in the TEST, not the app** — asserting the PATCH response
+directly, which is also a stronger assertion: it proves the write succeeded
+rather than inferring it from a later render.
+
+### Recorded, not built: a dead-link guard
+
+Adam declined bolting it onto this fix — *"a harness feature with its own
+brittleness questions, and bolting it onto a defect fix means neither gets judged
+properly."*
+
+**Trigger: the second dead link this app renders.** And the note that matters for
+whoever picks it up: **the first was found by Adam clicking, not by any test.**
+
+### The route guard fired a THIRD time, and the count discipline held
+
+`every-page-has-nav` failed again when `/want-list/:id/edit` was added — as
+designed. **Fixed by asserting both new routes' nav, not by bumping the number**:
+a count raised without a matching assertion is the arithmetic satisfied and the
+guarantee dropped, which is precisely what the guard exists to prevent.
+
+### A SECOND race in my own test, and only `[mobile]` saw it
+
+The PATCH assertion fixed the write; a navigation race remained. After saving,
+`router.push('/want-list')` was still in flight when the test's `page.goto`
+fired: *"Navigation to /want-list/:id is interrupted by another navigation to
+/want-list"*.
+
+**Chromium passed and `[mobile]` failed**, which is CLAUDE.md §10's rule arriving
+through the project axis again — I had run only chromium while iterating. Fixed
+by awaiting the redirect's DESTINATION (`toHaveURL(/\/want-list$/)`) rather than
+sleeping: the wait is on the thing that must happen, not on a duration.
+
+**Both races were in the TEST, not the app**, and both were introduced by me
+asserting an outcome without waiting for the mechanism that produces it. The
+pattern: **a redirect is an event with a duration, and a test that treats it as
+instantaneous races it in whichever project is slower.**
+
+### Suite
+
+- Unit **3086 passed**, 1 skipped. Typecheck, lint, build clean.
+- E2E **428 passed, 1 failed** — `record-layout-fork:107` with `ECONNRESET`,
+  passing in isolation, zero want-list references. Transport family, under a load
+  average that reached 49 at run start.
+- The three failures from the previous run (`lookup-flows:1525`,
+  `collection-filters:427`, and my own mobile race) all pass; the first two
+  showed `Failed to fetch RSC payload` and were the same transport shape.

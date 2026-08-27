@@ -105,6 +105,7 @@ export default async function WantListItemPage({
         <div className="mt-6 flex gap-2">
           <Link
             href={`/want-list/${item.id}/edit`}
+            data-testid="want-list-edit"
             className="rounded-xs border border-border px-3 py-1.5 text-sm"
           >
             Edit

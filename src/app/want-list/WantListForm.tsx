@@ -28,10 +28,21 @@ export function WantListForm({
   artists,
   labels,
   unmatched,
+  itemId,
 }: {
   initial: WantListFormValues;
   artists: ReferenceOption[];
   labels: ReferenceOption[];
+  /**
+   * The row being edited, or undefined when creating (SPEC §10).
+   *
+   * **`/want-list/:id/edit` was specified in step 6 and never built**, and this
+   * form was POST-only as a result — so a want-list row could be created and
+   * never changed. That is why no row in the live collection carried
+   * `best_dig_notes`, `target_pressing_id` or `max_price`: the create form
+   * offers those fields and nothing could reach them afterwards.
+   */
+  itemId?: string;
   /** Names a Discogs prefill could not match to a row (§10). */
   unmatched?: { artist: string | null; label: string | null };
 }) {
@@ -74,11 +85,18 @@ export function WantListForm({
     setFieldErrors({});
 
     try {
-      const response = await fetch('/api/want-list', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(buildWantListBody(values)),
-      });
+      /*
+       * The same body either way — §5's PATCH accepts the identical shape, so
+       * the edit path cannot drift from the create path field by field.
+       */
+      const response = await fetch(
+        itemId === undefined ? '/api/want-list' : `/api/want-list/${itemId}`,
+        {
+          method: itemId === undefined ? 'POST' : 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(buildWantListBody(values)),
+        },
+      );
 
       const body = await response.json();
 
@@ -185,7 +203,14 @@ export function WantListForm({
 
       <div className="flex items-center gap-3 border-t border-border pt-4">
         <Button type="submit" disabled={saving}>
-          {saving ? 'Saving…' : 'Add to want list'}
+          {/*
+            **The label states what the button DOES.** It read "Add to want
+            list" unconditionally, which was invisible while the form only ever
+            created — and became wrong the moment §10's edit route was built:
+            a save button promising to ADD an item the user is EDITING would
+            suggest a second row is about to appear.
+          */}
+          {saving ? 'Saving…' : itemId === undefined ? 'Add to want list' : 'Save changes'}
         </Button>
         <button
           type="button"

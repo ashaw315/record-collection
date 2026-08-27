@@ -82,7 +82,7 @@ const STATIC_ROUTES = [
 const EXPECTED_PAGE_COUNT =
   STATIC_ROUTES.length +
   2 /* /records/:id and its /edit */ +
-  1 /* /want-list/:id — dynamic, so not a static route; nav asserted below */;
+  2 /* /want-list/:id and its /edit — dynamic; nav asserted below */;
 
 test.beforeEach(async ({ page }) => {
   await login(page);
@@ -91,8 +91,9 @@ test.beforeEach(async ({ page }) => {
 test('the route list has not fallen behind the app', async () => {
   /**
    * The vacuity guard, and it is doing the job the old test's directory walk
-   * did. `src/app` has 14 `page.tsx` files: the eight static routes above, the
-   * two record routes and `/want-list/:id` covered below, and two exempt —
+   * did. `src/app` has 15 `page.tsx` files: the eight static routes above, the
+   * two record routes and the two want-list routes covered below, and two
+   * exempt —
    * `/login` and `/plane`.
    *
    * `/suggestions` is listed here and has NO header link, deliberately (NOTES,
@@ -214,9 +215,16 @@ test('the want-list detail screen renders the main nav', async ({ page }) => {
   expect(item.status(), 'the fixture item must exist for this to test anything').toBe(201);
   const itemId = ((await item.json()) as { id: string }).id;
 
-  await page.goto(`/want-list/${itemId}`);
-  await expect(
-    page.getByRole('navigation', { name: 'Main' }),
-    'the want-list detail screen has no visible main nav',
-  ).toBeVisible();
+  /*
+    Both want-list dynamic routes, because the count above covers both — a
+    number bumped without a matching assertion is the arithmetic satisfied and
+    the guarantee dropped, which is the failure this guard exists to prevent.
+  */
+  for (const route of [`/want-list/${itemId}`, `/want-list/${itemId}/edit`]) {
+    await page.goto(route);
+    await expect(
+      page.getByRole('navigation', { name: 'Main' }),
+      `${route} has no visible main nav`,
+    ).toBeVisible();
+  }
 });

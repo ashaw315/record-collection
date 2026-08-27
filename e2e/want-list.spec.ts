@@ -822,3 +822,99 @@ test('a row with nothing recorded shows no hunt section, not placeholders', asyn
   const body = await page.locator('main').innerText();
   expect(body).not.toMatch(/not recorded|none recorded|no target|unknown|n\/a/i);
 });
+
+/**
+ * SPEC.md §10 — `/want-list/:id/edit`, **specified in step 6 and never built.**
+ *
+ * **The defect Adam found by clicking, and it is larger than the 404.** The
+ * route was promised in §10's table, half-delivered with `/want-list/new`, and
+ * `WantListRow` carried no edit affordance either — so **a want-list row has
+ * never been editable after creation.** That is why zero rows in the live
+ * database carry `best_dig_notes`, `target_pressing_id` or `max_price`: the
+ * create form offers those fields, and once past it they were unreachable.
+ *
+ * **These tests FOLLOW the link rather than asserting it renders.** A
+ * render-only assertion cannot see a dead link — in the DOM an `<a href>` to a
+ * 404 is indistinguishable from one to a real page, because the href is a string
+ * either way. That is why `every-page-has-nav` caught the new screen in the same
+ * unit and missed this: it counts `page.tsx` files and asserts each renders.
+ */
+test('a want-list row is editable, and the dig fields survive the round trip', async ({ page }) => {
+  await login(page);
+
+  const artist = await post(page, '/api/artists', { name: `Edit-${Date.now()}` });
+  trackArtist(artist.id as string);
+  const item = await post(page, '/api/want-list', {
+    title: 'Hounds of Love',
+    artistId: artist.id,
+    priority: 2,
+  });
+
+  // Nothing recorded yet, so the detail view shows no hunt — the state every
+  // real row is in today.
+  await page.goto(`/want-list/${item.id}`);
+  await expect(page.getByTestId('hunt')).toHaveCount(0);
+
+  /*
+    **Reached by CLICKING, not by navigating to a known URL.** Following the
+    app's own link is what proves the route exists; `page.goto` to a path the
+    test author chose would pass even if nothing rendered that link.
+  */
+  await page.getByTestId('want-list-edit').click();
+  await expect(page).toHaveURL(new RegExp(`/want-list/${item.id}/edit$`));
+
+  // The form arrives carrying what is already recorded.
+  await expect(page.getByLabel('Title')).toHaveValue('Hounds of Love');
+
+  await page.getByLabel(/best dig/i).fill('1st UK press on EMI, avoid the 2018 remaster');
+
+  const patched = page.waitForResponse(
+    (r) => r.url().includes(`/api/want-list/${item.id}`) && r.request().method() === 'PATCH',
+  );
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  const response = await patched;
+  expect(response.status(), 'the PATCH must succeed for the round trip to mean anything').toBe(200);
+
+  /*
+    **The assertion the whole finding turns on:** a dig field entered by a USER
+    through the FORM, visible on the detail view. Every previous assertion about
+    these fields created them through the API, which proves the render path and
+    proves nothing about whether a person can get data in.
+  */
+  /*
+    **Wait for the form's own redirect to LAND before navigating.** The first
+    version raced it: `router.push('/want-list')` was still in flight when
+    `page.goto` fired, and Playwright reported "navigation interrupted by
+    another navigation" — on `[mobile]` only, where the timing differs.
+
+    Asserting the destination rather than sleeping, so the wait is on the thing
+    that must happen rather than on a duration.
+  */
+  await expect(page).toHaveURL(/\/want-list$/);
+
+  await page.goto(`/want-list/${item.id}`);
+  await expect(page.getByTestId('hunt')).toContainText('avoid the 2018 remaster');
+});
+
+test('the want-list ROW offers editing, not only the detail view', async ({ page }) => {
+  /*
+    Adam: "a route reachable only from a detail page I built yesterday is half
+    the fix." The list is where a user manages the hunt, so the affordance
+    belongs there too.
+  */
+  await login(page);
+
+  const artist = await post(page, '/api/artists', { name: `RowEdit-${Date.now()}` });
+  trackArtist(artist.id as string);
+  const item = await post(page, '/api/want-list', {
+    title: 'The Dreaming',
+    artistId: artist.id,
+    priority: 4,
+  });
+
+  await page.goto('/want-list');
+  await page.getByTestId(`want-list-row-edit-${item.id}`).click();
+
+  await expect(page).toHaveURL(new RegExp(`/want-list/${item.id}/edit$`));
+  await expect(page.getByLabel('Title')).toHaveValue('The Dreaming');
+});

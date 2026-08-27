@@ -88,6 +88,20 @@ export function WantListRow({ item }: { item: WantListItem }) {
           >
             {item.title}
           </Link>
+          {/*
+            **Edit belongs on the ROW as well as the detail view** (Adam): a
+            route reachable only from a page built yesterday is half the fix.
+            The list is where the hunt is managed, and §10 has specified this
+            route since step 6 — it was simply never built, which is why no row
+            in the collection carries a dig field.
+          */}
+          <Link
+            href={`/want-list/${item.id}/edit`}
+            data-testid={`want-list-row-edit-${item.id}`}
+            className="ml-2 text-xs text-muted-foreground underline underline-offset-2"
+          >
+            Edit
+          </Link>
           <p className="text-sm text-muted-foreground">
             {item.artist.name}
             {item.label !== null && ` · ${item.label.name}`}
