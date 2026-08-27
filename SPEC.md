@@ -1640,6 +1640,62 @@ A40 asked "whose judgement is a tier?" and answered "the user's, and only the us
 
 ---
 
+## 12c. SPEC'D, NOT BUILT — genre hierarchy assistance (A44)
+
+**Scoped 2026-08-27.** §4.1 specifies `parent_genre_id` and the live collection has **34 genres with 2 parents** — `Punk`, `UK82` and `US Hardcore` are siblings, which is CLAUDE.md §8's flattening sitting in the database. Assigning parents is a manual edit per genre, and 32 of 34 were never done: **the friction is the feature's whole justification.**
+
+### Suggest, never assign
+
+**The hierarchy is the user's vocabulary and §8 protects it specifically.** A model assigning parents silently would make it the model's taxonomy wearing the user's names. The app proposes; the user confirms or rejects; **nothing is written that the user did not confirm.** Fourth instance of the project's most reusable pattern, after 14c's display-not-match, A40's tiers and A43's assessment.
+
+**Where: `/manage`, on the genre list** — where the hierarchy is already edited by hand, and where the same edit is being made cheaper. Not on a record, not on `/suggestions`: this changes the vocabulary, not a record.
+
+### What the model is sent: genre names AND the records carrying them
+
+**Measured, and the measurement is why this is not optional.** `Rock` carries 10 records across 10 distinct artists — Buddy Rich to Death Grips to Discharge. From the NAME a model proposes a sensible tree; from the RECORDS it can see how a term is actually being used on this shelf.
+
+So each genre is sent with its **record count and up to three example titles with artists** — the shape §9.2 already sends for artists, inside the established disclosure boundary. Not the whole collection.
+
+### The basis is STATED, never RATED (A44's sharpest rule)
+
+**Every proposed pairing shows what it is based on** — `UK82 (1 record: Discharge — Grave New World)`.
+
+**Stated, not rated**, and the distinction is load-bearing. A count is a fact the user can weigh; a grade is the app judging its own suggestion. **The evidence count is not a confidence score and must not read as one:** ten records can mean a well-understood genre or a meaningless catch-all, and only the user can tell which. `Rock` at ten records is the proof — best-evidenced by count, and an import artefact rather than a chosen category (NOTES).
+
+**Shown on EVERY pairing, not only thin ones.** Marking only the weak cases makes an unmarked row assert nothing about its own support, so the reader infers strength from an absence — which is how a ten-record pairing and a zero-record pairing come to look identical. **A basis is something every claim has**, unlike §12 step 14c's variant limit, which is a fact about data that applies sometimes.
+
+**And the genres the user cares most about are the least evidenced**: `Punk` and `US Hardcore` at zero, `UK82` at one. A design that hid the basis would hide it exactly where it matters.
+
+### Existing genre names only — the model may not invent a parent
+
+**§8: the vocabulary is the user's.** A model proposing `Post-Punk` as a parent adds a term the user never chose, which is taxonomy authorship rather than structuring. Flagging it as new makes the introduction visible without changing what it is.
+
+**Practically the constraint costs nothing**: `Punk` and `US Hardcore` already exist as empty intended parents. If a real gap appears, "New genre" is a text field on the same screen and the user adds it — **which is the right way round.**
+
+**But the model may say a parent is MISSING without proposing one.** *"No existing genre fits as a parent for this"* is useful information and is not the same as leaving the genre unproposed. **That keeps the constraint without making the model pretend a bad fit is a good one** — the same honesty as A43's "any copy is fine" being a result rather than an absence.
+
+### A whole tree, rejected in parts
+
+**One confirmation at a time is 32 decisions, which is the friction that stopped this being done by hand** — a design reproducing it has failed regardless of correctness.
+
+**And a hierarchy is a STRUCTURE, not 32 independent facts.** "UK82 under Punk" and "US Hardcore under Punk" are one decision about how punk is organised; proposing them separately hides that.
+
+So: **one call, one proposed tree, rendered as a tree, each pairing individually accepted or rejected.**
+
+- **Rejecting one pairing leaves the genre top-level and touches nothing else.** No cascade — a rejection is about that pairing.
+- **Rejections are recorded** as `(genre_id, rejected_parent_id)`, and **a rejected pairing is never re-proposed** or the feature becomes something to dismiss repeatedly. **Cheap here where §9.2's dismissal state was not: both genres are real rows**, so this is a join table over two real keys rather than a string match.
+- **Accept-all exists** for the common case where the tree is right, as a deliberate action rather than a default.
+
+### Open questions
+
+1. **Cycle prevention on accept.** §4.1 already forbids a genre being its own ancestor; a proposed tree accepted piecemeal could construct one across separate confirmations.
+2. **Re-asking**, and what the screen shows meanwhile — A39's "asked N minutes ago" is the precedent.
+3. **Interaction with the `Rock` finding** (NOTES): nesting may absorb it or expose it as a bucket. **Not solved here** — one problem is "the hierarchy was never populated", the other is "some genres were never chosen".
+
+**Size: MEDIUM.** One call through the existing client, limiter and quota; a confirm/reject UI on `/manage`; one small table. **The prompt is the delicate part** — it must propose from the user's own vocabulary, which is the constraint A29d already enforces for suggestion genres and can reuse.
+
+---
+
 ## 13. Explicit non-goals for v1
 
 Do not build these. Do not add schema for them beyond what §4 specifies.

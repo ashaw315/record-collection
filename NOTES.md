@@ -19657,3 +19657,126 @@ tiers, the genre-parent suggestion, and this: *the app assembles the material an
 orders the question; the user supplies the judgement; nothing is recorded the
 user did not confirm.*
 
+
+---
+
+## SEPARATE FINDING (Adam): `Rock` is an import artefact, not a category he chose
+
+**Raised while scoping item 3, and recorded separately because it is a different
+problem from the hierarchy being flat.** Measured:
+
+    genre              records  distinct artists
+      Rock               10         10          ← 59% of the collection
+      Electronic          5          5
+      Jazz / Pop Rock / Psychedelic Rock / Pop / Fusion   3 each
+
+    collection: 17 records
+
+**`Rock` is on 10 of 17 records across 10 DISTINCT artists** — Buddy Rich,
+Darkside, Dire Straits, Discharge, Donovan, Jeff Beck, John Lennon, MGMT, Simon &
+Garfunkel, The Doors. A tag spanning a jazz drummer, a UK82 band and a folk
+singer is not a category a collector chose; **it is what Discogs stamps on
+almost everything**, arriving through §5.7's import.
+
+**Adam's framing:** *"A genre carrying ten records across five unrelated artists
+is evidence that it is functioning as an import artefact rather than a category I
+chose — and that is a different problem from the hierarchy being flat."*
+
+**Why it matters to the hierarchy work without being part of it.** A parent
+suggestion reasoning from record counts would read `Rock` as the best-evidenced
+genre in the collection and a natural parent — and it might even be right about
+the tree while being wrong about the vocabulary. **The two problems interact and
+must not be solved together**: one is "the hierarchy was never populated", the
+other is "some genres were never chosen".
+
+**Not acted on.** Options exist and none is obviously right — prune imported
+genres, mark provenance (user-created versus imported), or leave it and let the
+hierarchy absorb it by nesting the specific under the general.
+
+**Trigger: the genre hierarchy landing.** Once genres are nested, `Rock` as a
+parent of `Psychedelic Rock` and `Rock & Roll` may be exactly right and the
+problem dissolves; or it will be visibly a bucket, and pruning becomes the
+question. **Either way the hierarchy work makes the answer legible, so this waits
+for it rather than blocking it.**
+
+
+---
+
+## A44 — genre hierarchy assistance scoped, and two corrections from Adam
+
+**2026-08-27. Written to SPEC §12c, not built.** Both of his open questions
+shaped the design, and both of his answers corrected framings of mine.
+
+### The measurement that changed Q1's answer
+
+Sent-to-the-model was going to be "names plus records, because a fact about the
+collection is a better basis than a general music fact". True, and the data made
+it necessary rather than merely better — **and turned up something neither of us
+expected:**
+
+    Punk         0 records
+    US Hardcore  0 records
+    UK82         1 record  (Discharge — Grave New World)
+    Rock        10 records across 10 DISTINCT artists
+
+**The genres Adam cares most about are the least evidenced**, and `Rock` — the
+best-evidenced by count — spans Buddy Rich, Death Grips and Donovan. From names
+alone a model proposes a plausible tree; from records it can see how a term is
+actually used on this shelf.
+
+**And `Punk`/`US Hardcore` existing with zero records is not a gap — it is
+intent.** They were created as parents and nothing was ever nested under them,
+which is the whole feature in one observation.
+
+### CORRECTION 1: state the basis, never rate it — and show it on EVERY pairing
+
+**I proposed marking only thin pairings, citing A37's variant limit ("name a
+limit only where it bites"). Adam rejected the parallel and he is right:**
+
+> *"The variant limit is a fact about data that applies sometimes; a basis is
+> something every claim has. Marking only the thin ones means an unmarked row
+> asserts nothing about its own support, and the reader infers strength from an
+> absence."*
+
+**That is the absent-versus-unknown failure arriving through a UI convention**
+rather than through data — and it would make a ten-record pairing and a
+zero-record pairing look identical.
+
+**And the second half is sharper still:** *"the evidence count is not a
+confidence score and should not read as one — ten records can mean a
+well-understood genre or a meaningless catch-all, and only I can tell which."*
+
+So the display **states** `UK82 (1 record: Discharge — Grave New World)` and never
+**rates** ("well supported"). **A count is a fact the user weighs; a grade is the
+app judging its own suggestion** — confidence-without-basis wearing a number, and
+`Rock` is the standing proof that count and quality are not the same axis.
+
+### CORRECTION 2: existing names only, and the model may say a parent is MISSING
+
+Adam took the strict option and used my own argument against the middle one:
+**"only when nothing existing fits" delegates to the model the judgement of when
+nothing fits**, which is the judgement being withheld.
+
+**And he added the piece I had not thought of.** The constraint as I wrote it
+would force a bad fit: a model told to use existing names only, facing a genre
+nothing parents, must either propose something wrong or stay silent.
+
+> *"If the model believes a genre needs a parent that does not exist, it should
+> be able to say so without proposing one."*
+
+**"No existing genre fits as a parent for this" is information, and it is not the
+same as leaving the genre unproposed.** Same shape as A43's "any copy is fine"
+being a RESULT rather than an absence — **a constraint that cannot express its own
+edge case turns silence into a lie.**
+
+### Q2: a whole tree, rejected in parts
+
+**One-at-a-time is 32 decisions, the friction that stopped this being done by
+hand** — a design reproducing it has failed regardless of correctness. **And a
+hierarchy is a STRUCTURE**: "UK82 under Punk" and "US Hardcore under Punk" are one
+decision about how punk is organised, and proposing them separately hides that.
+
+Rejections recorded as `(genre_id, rejected_parent_id)` — **cheap here where
+§9.2's dismissal state was expensive, because both genres are real rows.** That
+is the identity problem A43 and the dismissal state both hit, absent for once.
+
