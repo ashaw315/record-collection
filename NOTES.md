@@ -20039,3 +20039,78 @@ comments.
 Unit **3109 passed**. Migrations **21 of 21** clean from empty. Typecheck, lint
 clean.
 
+
+---
+
+## A44 — how the proposal READS at 32 pairings, measured before the layout was settled
+
+**Adam, 2026-08-27:** *"I have 32 genres to place in a single pass, so the screen
+has to make a whole tree readable at once rather than being a long list I scroll
+through deciding one row at a time. That was the friction that stopped me doing
+this by hand, and a proposal I have to grind through reproduces it in a new
+form."*
+
+**Measured rather than designed around a guess**, and the measurement changed the
+problem:
+
+    32 unparented genres
+      → ~9 plausible parents (Rock, Electronic, Jazz, Pop, Punk, Hip Hop,
+        Folk/World/Country, Funk/Soul, Heavy Metal)
+      → 22-23 children, averaging 2-3 each
+      → about 31 lines: ONE SCREEN, no scrolling
+
+**So it is not a 32-row list, it is NINE GROUPS** — and that turns "how do I make
+a long list bearable" into "how do I make a small tree scannable", which is a
+much better problem.
+
+**What the user actually reads is nine headings.** `Rock` holding seven children
+is ONE judgement — *is Rock the right bucket for these?* — not seven. **The
+grouping does the work that made hand-assignment unbearable**: doing it in
+`/manage` today means choosing from a dropdown 32 times with no view of the
+shape.
+
+### Three things that follow from the measurement
+
+- **Per-GROUP accept, not only per-pairing.** If `Jazz → Fusion, Jazz-Rock,
+  Swing` is right that is one click. **Per-pairing reject stays, because that is
+  where the real judgement is** — Adam: *"I will accept most of Rock and stop at
+  one or two."*
+- **Accept-all is deliberate and at the BOTTOM**, after the tree has been read,
+  naming how many it will change. §8: a tree accepted by not looking is a
+  taxonomy the user did not choose.
+- **Largest group first**, so the biggest judgement leads.
+
+### The evidence line: inline and compact, and Adam's reason beat my option
+
+I offered hiding examples behind a hover to keep the tree tight. **His own
+caveat-turned-argument decided it:**
+
+> *"The examples are what reveal Rock as a catch-all, and behind a hover I would
+> only find that if I already suspected it. The count tells me how much evidence
+> there is; the examples tell me whether the evidence means anything. Ten records
+> across ten unrelated artists is the fact, and only the names carry it."*
+
+**That is the difference between quantity and meaning, and only one of them is a
+number.** `AOR (1 record: Dire Straits — Dire Straits)` inline on every pairing.
+
+**Mutation-verified that it states rather than rates**: adding "(well supported)"
+above five records fails `never grades the suggestion`.
+
+### CORRECTION: an empty parent must say WHY it is empty
+
+I proposed showing `Punk` with no children. **Adam accepted and sharpened it:**
+
+> *"Make sure it reads as 'no children proposed' rather than as an empty parent I
+> created by mistake. Punk sitting empty is the whole reason this feature exists,
+> and after the tree lands it should either have children or be a genre I decide
+> to delete — not a blank heading whose meaning I have to reconstruct."*
+
+**That is absent-versus-unknown one level up from the data**, in the UI's own
+vocabulary: a blank heading is ambiguous between "the model had nothing to put
+here" and "you made this by mistake", and the user cannot tell which. So
+`noChildrenProposed` is a field on the group rather than an inference from an
+empty array. **Mutation-verified**: dropping childless parents fails the test.
+
+Unit **3116 passed**. Typecheck, lint clean. **Remaining: wiring into
+`ManageClient` and the E2E.**
+
