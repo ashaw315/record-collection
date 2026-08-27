@@ -99,3 +99,80 @@ export function observeUsage(response: AnthropicResponse): Observed {
 export function ranOutOfRoom(observed: Observed): boolean {
   return observed.stopReason === 'max_tokens';
 }
+
+/**
+ * The transport a caller injects — the SDK in production, a fake in tests.
+ *
+ * **The enforcement this provides, stated precisely rather than overclaimed.**
+ * `output_config` is required by the TYPE, so omitting effort is a compile
+ * error. The diagnostics are enforced differently and more weakly: a caller
+ * that goes through `callAnthropic` cannot forget them, because there is
+ * nothing to compute — but nothing in the type system STOPS a caller invoking
+ * `create` directly and inventing its own empty `Observed`.
+ *
+ * **That bypass is a visible act rather than an omission**, which is the real
+ * improvement: the snippet's missing diagnostics were three helpers nobody
+ * called, invisible in review. Writing `stopReason: null` by hand is a line
+ * someone has to justify.
+ *
+ * A stronger guarantee would need `create` to be unexported or branded, which
+ * costs the injectable-fake pattern every client here depends on. **Recorded as
+ * a known limit, not a solved problem.**
+ */
+export type MessageTransport = {
+  create: (request: AnthropicRequest) => Promise<AnthropicResponse>;
+};
+
+/**
+ * One call, with what it observed — **the shape that makes diagnostics
+ * impossible to forget.**
+ *
+ * `text` is `undefined` when the response carried no text block, which is a real
+ * case (a refusal, or thinking only) and is NOT the same as empty text. Both
+ * callers draw that distinction and the transport must not collapse it.
+ */
+export type AnthropicCall = {
+  text: string | undefined;
+  observed: Observed;
+  /**
+   * Whether the model stopped at the ceiling — **reported, never acted on.**
+   *
+   * The two callers legitimately differ: the snippet REFUSES a cut response,
+   * because a half-sentence reaches the record as finished prose; the gap
+   * analysis lets its parser discover the cut through unparseable JSON. A
+   * transport that forced either behaviour would break the other, so this hands
+   * back the fact and each caller decides. **That is the difference between a
+   * shared layer and a shared opinion.**
+   */
+  ranOutOfRoom: boolean;
+};
+
+/**
+ * Make an Anthropic call and observe it.
+ *
+ * **Why this exists rather than the helpers alone.** `observeUsage` and
+ * `ranOutOfRoom` were exported as TOOLS, and every caller assembled them by
+ * hand — so `output_config` was enforced by the type system while the
+ * diagnostics were enforced by memory. That is the exact asymmetry that let the
+ * snippet ship without A38's logging for months: it compiled, it ran, and it
+ * silently recorded nothing.
+ *
+ * **Tools that must be assembled by hand are documentation with a type
+ * signature.** There is no path through this function that returns text without
+ * `observed`, so a caller cannot omit diagnostics by forgetting — only by
+ * discarding a value it was handed, which is a visible act rather than an
+ * absent one.
+ */
+export async function callAnthropic(
+  transport: MessageTransport,
+  request: AnthropicRequest,
+): Promise<AnthropicCall> {
+  const response = await transport.create(request);
+  const observed = observeUsage(response);
+
+  return {
+    text: response.content.find((block) => block.type === 'text')?.text,
+    observed,
+    ranOutOfRoom: ranOutOfRoom(observed),
+  };
+}

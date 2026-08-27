@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { assertNoLiveCall, usesRealNetwork } from '@/lib/discogs/no-live-calls';
 import type { MessageCreate } from './client';
-import { observeUsage, ranOutOfRoom, type Observed } from './transport';
+import { callAnthropic, type AnthropicRequest, type Observed } from './transport';
 
 /**
  * SPEC.md §10b's snippet generator.
@@ -140,15 +140,18 @@ export type SnippetClient = {
 export function createSnippetClient(transport: { create: MessageCreate }): SnippetClient {
   return {
     async write(subject) {
-      const response = await transport.create({
+      /*
+       * Through `callAnthropic`, so the diagnostics arrive with the response
+       * rather than being assembled here. The refusal below is still THIS
+       * caller's decision — the transport reports truncation and does not act
+       * on it, because §9.2 legitimately handles a cut response differently.
+       */
+      const { text, observed, ranOutOfRoom: cut } = await callAnthropic(transport, {
         model: MODEL,
         max_tokens: SNIPPET_MAX_TOKENS,
         output_config: { effort: SNIPPET_EFFORT },
         messages: [{ role: 'user', content: buildSnippetPrompt(subject) }],
       });
-
-      const observed = observeUsage(response);
-      const text = response.content.find((block) => block.type === 'text')?.text;
 
       /*
        * **A truncated snippet is worse than a failed one, so this refuses
@@ -165,7 +168,7 @@ export function createSnippetClient(transport: { create: MessageCreate }): Snipp
        * text block is cut, not merely unreadable, and the message the user gets
        * differs.
        */
-      if (ranOutOfRoom(observed)) return { ok: false, reason: 'cut', ...observed };
+      if (cut) return { ok: false, reason: 'cut', ...observed };
 
       /*
        * **Empty is UNREADABLE here, not an empty snippet**, and the difference
@@ -210,7 +213,7 @@ export function getSnippetClient(): SnippetClient {
     const sdk = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
     shared = createSnippetClient({
-      create: async (request) => {
+      create: async (request: AnthropicRequest) => {
         if (usesRealNetwork(globalThis.fetch)) {
           assertNoLiveCall('https://api.anthropic.com/v1/messages');
         }

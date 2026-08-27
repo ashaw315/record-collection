@@ -19780,3 +19780,87 @@ Rejections recorded as `(genre_id, rejected_parent_id)` — **cheap here where
 §9.2's dismissal state was expensive, because both genres are real rows.** That
 is the identity problem A43 and the dismissal state both hit, absent for once.
 
+
+---
+
+## The transport now PERFORMS the call — and the enforcement is weaker than I first claimed
+
+**2026-08-27, before A44.** Adam tested the layer rule against its own claim:
+*"the LLM caller is the third one… it should inherit A37's length bound and
+A38's logging by construction rather than by being remembered. If it does not,
+that is the layer rule failing its own test."*
+
+**It did not, and saying so before building was the point.** `transport.ts`
+enforced `output_config` by TYPE — omission is a compile error — while
+`observeUsage`, `ranOutOfRoom` and the failure logging were exported as TOOLS
+that every caller assembled by hand. So a third caller would inherit the effort
+guard by construction and the diagnostics only by remembering: **the exact
+asymmetry that let the snippet ship without A38's logging for months.**
+
+> **Tools that must be assembled by hand are documentation with a type
+> signature.**
+
+### `callAnthropic` — one call, text plus what was observed
+
+**There is no path through it that returns text without `observed`**, so a
+caller cannot omit diagnostics by forgetting. Only by discarding a value it was
+handed, which is a visible act rather than an absent one.
+
+**Truncation is REPORTED, never decided**, and that distinction preserved a real
+difference between the callers: the snippet REFUSES a cut response, because a
+half-sentence reaches the record as finished prose; the gap analysis lets its
+parser discover the cut through unparseable JSON, which distinguishes `cut` from
+`malformed` with more precision than `stop_reason` alone. **A transport that
+forced either behaviour would have broken the other — the difference between a
+shared layer and a shared opinion.**
+
+### THE OVERCLAIM I CAUGHT AND CORRECTED
+
+**A mutation showed a bypass fails 3 tests — but those were the SNIPPET's tests,
+and a genuinely new caller has none.** So I probed the case that matters: a
+careless third caller invoking `transport.create` directly and inventing
+`{stopReason: null, ...}`.
+
+**It compiles.** No error.
+
+**So the enforcement is not "impossible", it is "the easy path does it for you
+and the bypass is visible"** — and the difference is worth stating rather than
+glossing:
+
+| | `output_config` | diagnostics |
+|---|---|---|
+| guarantee | compile error | easy path, visible bypass |
+| a careless caller | **cannot** omit it | **can**, by writing nulls by hand |
+
+**That is still a real improvement** — the snippet's missing diagnostics were
+three helpers nobody called, invisible in review, whereas writing
+`stopReason: null` by hand is a line someone must justify. **But it is not the
+compile-time guarantee, and claiming otherwise would be the confidence-without-
+basis failure applied to my own work.**
+
+A stronger guarantee needs `create` unexported or branded, which costs the
+injectable-fake pattern every client depends on. **Recorded at the type as a
+known limit rather than a solved problem.**
+
+### Verification, per Adam's instruction
+
+*"The tests that matter are the ones asserting they still record what they
+record — stop_reason, tokens, cut-versus-unreadable — rather than that they still
+return text."*
+
+**91 tests pass and NEITHER caller's test file was edited.** That is the
+verification: behaviour preserved rather than redefined. A refactor that required
+editing its subjects' assertions would have been changing behaviour and calling
+it a move.
+
+**Also consolidated:** `MessageCreate` was a second transport type living in
+`client.ts` — a CALLER's file — which is the original layer smell. It now derives
+from `MessageTransport` and is marked deprecated.
+
+### Suite
+
+Unit **3090 passed**, 1 skipped. E2E **428 passed, 1 failed** —
+`lookup-flows:1656` (14c's variant limit) not finding its element, passing 2/2 in
+isolation on both projects, in a spec whose only match for this unit's subject is
+the word "snippet" inside a comment. Accumulation family. Typecheck, lint, build
+clean.

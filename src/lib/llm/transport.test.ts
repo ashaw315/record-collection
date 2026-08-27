@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { observeUsage, type AnthropicRequest, type AnthropicResponse } from './transport';
 
 /**
@@ -128,5 +128,114 @@ describe('every call must state its reasoning effort', () => {
     };
 
     expect(request.output_config.effort).toBe('low');
+  });
+});
+
+/**
+ * SPEC.md §4.3 — **the transport PERFORMS the call**, so diagnostics cannot be
+ * forgotten.
+ *
+ * **The layer rule failing its own test, and Adam caught it.** `transport.ts`
+ * enforced `output_config` by type — omission is a compile error — but
+ * `observeUsage`, `ranOutOfRoom` and the failure logging were still assembled by
+ * hand in every caller. So a third caller inherited the effort guard BY
+ * CONSTRUCTION and the diagnostics only BY REMEMBERING, which is precisely the
+ * shape that let the snippet ship without A38's logging for months.
+ *
+ * **Tools that must be assembled by hand are documentation with a type
+ * signature.** A caller cannot forget if there is nothing to forget, so the
+ * transport now makes the call and hands back text plus what it observed.
+ */
+describe('the transport makes the call and observes it', () => {
+  const REQUEST = {
+    model: 'claude-opus-5',
+    max_tokens: 400,
+    output_config: { effort: 'low' as const },
+    messages: [{ role: 'user' as const, content: 'hello' }],
+  };
+
+  it('returns the text and what it observed, in one shape', async () => {
+    const { callAnthropic } = await import('./transport');
+    const create = vi.fn().mockResolvedValue({
+      content: [{ type: 'text', text: 'a note' }],
+      stop_reason: 'end_turn',
+      usage: { input_tokens: 100, output_tokens: 20 },
+    });
+
+    const result = await callAnthropic({ create }, REQUEST);
+
+    expect(result.text).toBe('a note');
+    expect(result.observed).toEqual({
+      stopReason: 'end_turn',
+      inputTokens: 100,
+      outputTokens: 20,
+    });
+  });
+
+  /**
+   * **Truncation is REPORTED, not decided.** The two existing callersdiffer here and
+   * both are right: the snippet REFUSES a cut response because a half-sentence
+   * reaches the record as finished prose, while the gap analysis lets its parser
+   * discover the cut through unparseable JSON. A transport that forced either
+   * behaviour would break the other.
+   *
+   * So it hands back the fact and each caller decides — which is the difference
+   * between a shared layer and a shared opinion.
+   */
+  it('reports truncation rather than deciding what to do about it', async () => {
+    const { callAnthropic } = await import('./transport');
+    const create = vi.fn().mockResolvedValue({
+      content: [{ type: 'text', text: 'cut off half' }],
+      stop_reason: 'max_tokens',
+      usage: { input_tokens: 100, output_tokens: 400 },
+    });
+
+    const result = await callAnthropic({ create }, REQUEST);
+
+    expect(result.ranOutOfRoom).toBe(true);
+    // And the text is still handed back: refusing it here would take the
+    // decision away from the caller.
+    expect(result.text).toBe('cut off half');
+  });
+
+  /**
+   * A response with no text block is a real case — a refusal, or thinking only.
+   * The transport reports `undefined` and does not invent an empty string,
+   * because empty and absent mean different things to both callers.
+   */
+  it('distinguishes no text block from empty text', async () => {
+    const { callAnthropic } = await import('./transport');
+    const create = vi.fn().mockResolvedValue({
+      content: [{ type: 'thinking' }],
+      stop_reason: 'end_turn',
+      usage: { input_tokens: 10, output_tokens: 1 },
+    });
+
+    const result = await callAnthropic({ create }, REQUEST);
+
+    expect(result.text).toBeUndefined();
+    expect(result.observed.stopReason).toBe('end_turn');
+  });
+
+  /**
+   * **The enforcement, and the point of the whole change.** There is no path to
+   * a response that skips observation: `callAnthropic` returns `observed`
+   * unconditionally, so a caller that wanted to omit diagnostics would have to
+   * discard a value it was handed rather than merely forget to compute one.
+   *
+   * Fails against a transport that returns bare text.
+   */
+  it('has no path that returns text without observation', async () => {
+    const { callAnthropic } = await import('./transport');
+    const create = vi.fn().mockResolvedValue({ content: [{ type: 'text', text: 'x' }] });
+
+    const result = await callAnthropic({ create }, REQUEST);
+
+    expect(result).toHaveProperty('observed');
+    expect(result.observed).toEqual({
+      stopReason: null,
+      inputTokens: null,
+      outputTokens: null,
+    });
   });
 });

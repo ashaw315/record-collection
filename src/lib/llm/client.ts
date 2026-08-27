@@ -2,7 +2,12 @@ import Anthropic from '@anthropic-ai/sdk';
 import { assertNoLiveCall, usesRealNetwork } from '@/lib/discogs/no-live-calls';
 import type { CollectionSummary } from './collection-summary';
 import { parseSuggestions, type Suggestion } from './parse-suggestions';
-import { observeUsage, type AnthropicResponse, type Effort } from './transport';
+import {
+  callAnthropic,
+  type AnthropicRequest,
+  type AnthropicResponse,
+  type MessageTransport,
+} from './transport';
 
 /**
  * SPEC.md §9.2's Anthropic client, and the prompt that is the feature.
@@ -325,18 +330,14 @@ export function buildPrompt(summary: CollectionSummary): string {
 }
 
 /** The one method this app needs, so a fake is three lines in a test. */
-export type MessageCreate = (request: {
-  model: string;
-  max_tokens: number;
-  /**
-   * **Required, and defined in `transport.ts`.** This was `typeof EFFORT` — the
-   * gap-analysis constant — so a shared type encoded one caller's decision and
-   * the snippet could not set its own. It was then OPTIONAL, which is worse: a
-   * caller omitting it loses its output budget to reasoning, silently.
-   */
-  output_config: { effort: Effort };
-  messages: Array<{ role: 'user'; content: string }>;
-}) => Promise<AnthropicResponse>;
+/**
+ * @deprecated Use `MessageTransport` from `transport.ts`.
+ *
+ * A second transport type living in a CALLER's file — the original layer smell,
+ * kept only so existing signatures compile. New callers take
+ * `MessageTransport`, which is where a property of calling Anthropic belongs.
+ */
+export type MessageCreate = MessageTransport['create'];
 
 /**
  * Moved to `transport.ts` — these are properties of CALLING ANTHROPIC rather
@@ -385,21 +386,29 @@ export type GapAnalysisClient = {
 export function createGapAnalysisClient(transport: { create: MessageCreate }): GapAnalysisClient {
   return {
     async analyse(summary) {
-      const response = await transport.create({
+      /*
+       * Through `callAnthropic`, so usage and `stop_reason` arrive with the
+       * response rather than being assembled here — the asymmetry that let the
+       * snippet ship without them for months.
+       *
+       * Truncation is NOT refused here, deliberately: unlike the snippet, a cut
+       * response fails to PARSE, and `parseSuggestions` distinguishes `cut` from
+       * `malformed` with more precision than `stop_reason` alone. The transport
+       * reports the fact; this caller lets its parser use it.
+       */
+      const { text, observed } = await callAnthropic(transport, {
         model: MODEL,
         max_tokens: GAP_ANALYSIS_MAX_TOKENS,
         output_config: { effort: EFFORT },
         messages: [{ role: 'user', content: buildPrompt(summary) }],
       });
 
-      const text = response.content.find((block) => block.type === 'text')?.text;
-
       /*
        * Carried alongside every failure so the route can log WHY and tell the
        * user which failure it was. `stop_reason` is the one field that
        * distinguishes "ran out of room" from "finished and answered wrongly".
        */
-      const observed = observeUsage(response);
+
 
       /*
        * No text block is UNREADABLE, not empty — the same distinction the
@@ -438,7 +447,7 @@ export function getGapAnalysisClient(): GapAnalysisClient {
     const sdk = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
     shared = createGapAnalysisClient({
-      create: async (request) => {
+      create: async (request: AnthropicRequest) => {
         if (usesRealNetwork(globalThis.fetch)) {
           assertNoLiveCall('https://api.anthropic.com/v1/messages');
         }
