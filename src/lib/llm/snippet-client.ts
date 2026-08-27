@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { assertNoLiveCall, usesRealNetwork } from '@/lib/discogs/no-live-calls';
 import type { MessageCreate } from './client';
+import { observeUsage, ranOutOfRoom, type Observed } from './transport';
 
 /**
  * SPEC.md §10b's snippet generator.
@@ -50,8 +51,28 @@ const MODEL = 'claude-opus-5';
  * **The ceiling is a backstop, not the instruction.** A response truncated here
  * is a half-sentence, which is worse than a short one — so the prompt asks for
  * the length as well, and this only bounds the damage.
+ *
+ * **RAISED 400 → 1200 (2026-08-26), and the reason is a measurement rather than
+ * a hunch.** Two live snippets truncated at ~80 and ~96 output tokens — far
+ * under 400 — which ruled out the prose being too long. The cause is that
+ * `max_tokens` bounds THINKING PLUS OUTPUT, and this client sent no
+ * `output_config`, so reasoning consumed the budget before the note was
+ * finished. §9.2's client sets `effort` explicitly; this one never did, which is
+ * the same one-sibling-fixed pattern as the logging.
+ *
+ * So: `effort: 'low'` below, because a two-sentence note about a record needs no
+ * extended reasoning, AND a ceiling with room for the thinking that remains.
+ * 1200 is still 12x a compliant answer and far short of an essay.
  */
-export const SNIPPET_MAX_TOKENS = 400;
+export const SNIPPET_MAX_TOKENS = 1_200;
+
+/**
+ * **Low, deliberately.** §10b asks for two or three sentences about a record —
+ * a recall task, not an analysis. §9.2 uses `high` because a gap analysis
+ * reasons across a whole collection; asking for the same here spends the
+ * ceiling on thinking and truncates the prose, which is exactly what happened.
+ */
+const SNIPPET_EFFORT = 'low' as const;
 
 /**
  * What the model is told about the record — **artist and title, nothing else.**
@@ -71,8 +92,8 @@ export type SnippetSubject = {
 };
 
 export type SnippetResult =
-  | { ok: true; snippet: string }
-  | { ok: false; reason: 'unreadable' };
+  | ({ ok: true; snippet: string } & Observed)
+  | ({ ok: false; reason: 'unreadable' | 'cut' } & Observed);
 
 /**
  * The prompt.
@@ -122,10 +143,29 @@ export function createSnippetClient(transport: { create: MessageCreate }): Snipp
       const response = await transport.create({
         model: MODEL,
         max_tokens: SNIPPET_MAX_TOKENS,
+        output_config: { effort: SNIPPET_EFFORT },
         messages: [{ role: 'user', content: buildSnippetPrompt(subject) }],
       });
 
+      const observed = observeUsage(response);
       const text = response.content.find((block) => block.type === 'text')?.text;
+
+      /*
+       * **A truncated snippet is worse than a failed one, so this refuses
+       * rather than storing** (found by Adam on "The Hurdy Gurdy Man", which
+       * stored "…and lighter acoustic pieces. It").
+       *
+       * Unlike §9.2, nothing here fails to PARSE — a snippet is prose, so a
+       * half-sentence looks exactly like a whole one and reaches the record as
+       * finished text. §4.2 lets the user take ownership of stored snippet text,
+       * so writing an incomplete one puts text in that position which should
+       * never have been offered.
+       *
+       * Checked BEFORE the empty test: a response cut at the ceiling with no
+       * text block is cut, not merely unreadable, and the message the user gets
+       * differs.
+       */
+      if (ranOutOfRoom(observed)) return { ok: false, reason: 'cut', ...observed };
 
       /*
        * **Empty is UNREADABLE here, not an empty snippet**, and the difference
@@ -135,9 +175,9 @@ export function createSnippetClient(transport: { create: MessageCreate }): Snipp
        * nothing in it fails rather than writing.
        */
       const trimmed = unwrap(text ?? '');
-      if (trimmed === '') return { ok: false, reason: 'unreadable' };
+      if (trimmed === '') return { ok: false, reason: 'unreadable', ...observed };
 
-      return { ok: true, snippet: trimmed };
+      return { ok: true, snippet: trimmed, ...observed };
     },
   };
 }

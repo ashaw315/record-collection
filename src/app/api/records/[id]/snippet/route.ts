@@ -12,6 +12,8 @@ import {
 import { isAnthropicConfigured, isAuthFailure } from '@/lib/llm/client';
 import { getSnippetClient } from '@/lib/llm/snippet-client';
 import { claimLlmRequest, completeLlmRequest, releaseLlmRequest } from '@/lib/llm/rate-limit';
+import { SNIPPET_MAX_TOKENS } from '@/lib/llm/snippet-client';
+import { logger } from '@/lib/logger';
 
 /**
  * Hobby's ceiling — see the gap-analysis route for the reasoning, which applies
@@ -163,7 +165,15 @@ export const POST = withErrorHandling(
      * An uncompleted row is read as a timeout by `ABANDONED_CLAIM_MS` and stops
      * counting after 90 seconds, which would refund a billed call.
      */
-    await completeLlmRequest(claim.id);
+    /*
+     * A38's usage recording, now inherited from the shared transport rather
+     * than reimplemented — the same call the gap-analysis route makes.
+     */
+    await completeLlmRequest(claim.id, {
+      stopReason: generated.stopReason,
+      inputTokens: generated.inputTokens,
+      outputTokens: generated.outputTokens,
+    });
 
     if (!generated.ok) {
       /*
@@ -171,10 +181,36 @@ export const POST = withErrorHandling(
        * indistinguishable from one the user deleted, which §4.2 treats as a
        * deliberate act.
        */
+      /*
+       * **The diagnostic this route did not have.** `withErrorHandling` logs
+       * THROWN errors and this is a RETURNED response, so nothing here ever
+       * reached `logger.error` — the identical gap A38 closed on the sibling
+       * route, and the reason Adam's failure could not be diagnosed.
+       *
+       * SHAPE ONLY: counts and a stop reason, never the response text.
+       */
+      logger.error(
+        'api.records.snippet.unreadable',
+        `reason=${generated.reason} stop_reason=${generated.stopReason ?? 'unknown'} ` +
+          `in_tokens=${generated.inputTokens ?? 'unknown'} ` +
+          `out_tokens=${generated.outputTokens ?? 'unknown'} max_tokens=${SNIPPET_MAX_TOKENS}`,
+      );
+
+      /*
+       * **Says WHICH failure, because they imply different actions** — the same
+       * distinction §9.2 draws. A note cut at the ceiling will be cut again;
+       * an unreadable one may not be.
+       */
       return NextResponse.json(
         {
           error: {
-            message: 'The snippet service returned something we could not read. Try again.',
+            message:
+              generated.reason === 'cut'
+                ? 'The note ran out of room before it was finished, so nothing was saved. ' +
+                  'This used one of your ten hourly requests, and trying again may stop at ' +
+                  'the same place.'
+                : 'The snippet service returned something we could not read, so nothing was ' +
+                  'saved. This used one of your ten hourly requests. Trying again may work.',
             code: 'LLM_UNREADABLE',
           },
         },

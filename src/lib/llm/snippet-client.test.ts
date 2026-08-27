@@ -36,11 +36,42 @@ describe('the count decision (R5 finding 4)', () => {
    *
    * A shared ceiling is not a safety net for the snippet: it is a budget so
    * loose that a runaway response is indistinguishable from a normal one.
+   *
+   * **The BOUND moved and the principle did not (2026-08-26).** This asserted
+   * `<= 500` on the reasoning that ~100 tokens of prose needs no more. Two live
+   * snippets then truncated at ~80 and ~96 output tokens — UNDER the old 400
+   * ceiling — which disproved the premise rather than the rule: **`max_tokens`
+   * bounds THINKING PLUS OUTPUT**, and this client sent no `output_config`, so
+   * reasoning consumed the budget before the prose was finished.
+   *
+   * So the fix is `effort: 'low'` plus room for the thinking that remains. The
+   * assertion that survives is the one that was always the point — **the
+   * snippet's budget is much smaller than a gap analysis's** — and the number
+   * is now 1,200, still 12x a compliant answer and far short of an essay.
    */
   it('gives the snippet a much smaller budget than gap analysis', () => {
     expect(SNIPPET_MAX_TOKENS).toBeLessThan(GAP_ANALYSIS_MAX_TOKENS);
-    // Enough for three sentences with room to spare, not enough for an essay.
-    expect(SNIPPET_MAX_TOKENS).toBeLessThanOrEqual(500);
+    // Room for low-effort thinking plus three sentences; nowhere near an essay.
+    expect(SNIPPET_MAX_TOKENS).toBeLessThanOrEqual(1_500);
+  });
+
+  /**
+   * **The cause of the truncation, pinned.** Fails against a client that sends
+   * no `output_config` — which is how two snippets were cut at ~80 tokens under
+   * a 400-token ceiling, and how this differed from §9.2's client for months.
+   */
+  it('asks for LOW effort, because a two-sentence note is recall not analysis', async () => {
+    const create = vi.fn().mockResolvedValue({
+      content: [{ type: 'text', text: 'A note.' }],
+      stop_reason: 'end_turn',
+      usage: { input_tokens: 10, output_tokens: 5 },
+    });
+
+    await createSnippetClient({ create }).write(SUBJECT);
+
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({ output_config: { effort: 'low' } }),
+    );
   });
 
   /**
@@ -196,5 +227,67 @@ describe('the response boundary', () => {
     await createSnippetClient({ create }).write(SUBJECT);
 
     expect(create.mock.calls[0][0].max_tokens).toBe(SNIPPET_MAX_TOKENS);
+  });
+});
+
+/**
+ * SPEC.md §10b — the snippet inherits what the transport observes.
+ *
+ * **Adam found this by using it.** *"The Hurdy Gurdy Man"* stored a snippet
+ * ending mid-sentence, and "Write a new one" 502'd undiagnosably — A37 and A38
+ * fixed on the gap-analysis route and not on this one, which shares the
+ * transport and the quota.
+ *
+ * **A truncated snippet is worse than a failed one**, which is why this is a
+ * refusal rather than a warning: a half-sentence is stored on the record and
+ * displayed as finished prose, and nothing distinguishes it from a good note.
+ * §4.2 treats stored snippet text as something the user may take ownership of,
+ * so writing an incomplete one puts text in that position which should never
+ * have been offered.
+ */
+describe('a truncated response is never stored', () => {
+  const truncating = () =>
+    vi.fn().mockResolvedValue({
+      content: [{ type: 'text', text: 'moves between Eastern-tinged mysticism and lighter acoustic pieces. It' }],
+      stop_reason: 'max_tokens',
+      usage: { input_tokens: 300, output_tokens: 400 },
+    });
+
+  /**
+   * Fails against the shipped client, which reads only the text and returns
+   * `ok: true` for a half-sentence.
+   */
+  it('refuses a response that ran out of room', async () => {
+    const result = await createSnippetClient({ create: truncating() }).write(SUBJECT);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toBe('cut');
+  });
+
+  /** And carries what it observed, so the route can log why (A38's half). */
+  it('carries stop_reason and tokens on the refusal', async () => {
+    const result = await createSnippetClient({ create: truncating() }).write(SUBJECT);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.stopReason).toBe('max_tokens');
+    expect(result.outputTokens).toBe(400);
+  });
+
+  /** A complete response is unaffected — and carries its usage too. */
+  it('stores a response that finished, with its usage', async () => {
+    const create = vi.fn().mockResolvedValue({
+      content: [{ type: 'text', text: 'A complete note about the record.' }],
+      stop_reason: 'end_turn',
+      usage: { input_tokens: 300, output_tokens: 40 },
+    });
+
+    const result = await createSnippetClient({ create }).write(SUBJECT);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.snippet).toBe('A complete note about the record.');
+    expect(result.outputTokens).toBe(40);
   });
 });

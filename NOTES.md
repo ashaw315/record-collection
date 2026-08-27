@@ -18997,3 +18997,237 @@ rather than whether the code is in the right place.**
 
 **Not built.** Sized in the scoping pass below as its own item.
 
+
+---
+
+## RULE: when one defect appears in two callers of a dependency, ask which LAYER it belongs to
+
+**Named 2026-08-26, on the snippet carrying both defects the gap analysis had
+just been fixed for.** Recorded as a standing rule because it is more general
+than that instance, and because the moment it matters most is the moment it is
+hardest to see.
+
+**The wrong question is "is there a third caller".** That asks how much
+DUPLICATION there is. Two is tolerable, three is a refactor — a threshold, and
+thresholds invite waiting for one more instance.
+
+**The right question is "which layer does this defect belong to".** A37's length
+bound and A38's `stop_reason` logging are properties of **calling Anthropic**:
+every caller needs them, none of them is about gap analysis or about snippets.
+They were written into `client.ts` and the gap-analysis route because that is
+where the failure was OBSERVED, not because that is where they live.
+
+**So two callers, one fixed and one not, is not a coincidence to be tolerated
+until a third arrives. It is EVIDENCE the fix was applied at the wrong layer** —
+and the second caller is the thing that reveals it, which is the whole value of
+having two.
+
+### Why the incident is exactly when this is hardest to see
+
+**Both A37 and A38 were built during a live failure**, and that is the condition
+that produces call-site fixes:
+
+- the failing route is in front of you and the sibling is not;
+- the fix must be verified against the failure, which means the caller that
+  failed;
+- "does this belong lower" is a design question, and a design question during an
+  incident reads as scope creep.
+
+**Each of those is individually reasonable and together they place the fix
+wrong.** Nothing in either unit was careless — A38's own entry argues at length
+about where the diagnostic should live, and settles between a log line and
+columns without ever asking which MODULE should own it.
+
+**The tell, and it is checkable at the time:** ask whether the fix's docblock
+would read strangely if pasted into the sibling. `stop_reason` handling explained
+in terms of gap analysis is a comment about a transport concern written in a
+feature's vocabulary — the mismatch is visible before the second instance exists.
+
+### The narrow form
+
+> A defect fixed at the call site during an incident is fixed where it was seen.
+> Whether that is where it LIVES is a separate question, and the pressure of the
+> incident is precisely what stops it being asked. Ask it afterwards, on the
+> sibling — not when a third caller finally forces it.
+
+**Related:** "the script ran is not the script did what it is for", and the
+observation that a diagnostic built during an incident records what the incident
+needed (A38). Same family — **the incident shapes the fix, and the shape outlives
+the incident.**
+
+
+---
+
+## Item 0 built — and the truncation was NOT the ceiling
+
+**2026-08-26.** The snippet inherits A37 and A38 from a shared transport, and the
+cause of the truncation turned out to be something neither of us had proposed.
+
+### THE CORRECTION: 400 tokens was not the binding constraint
+
+**My plan said "bound the snippet's length the way A37 bounds the count". The
+measurement said otherwise.** Both truncated snippets were:
+
+    "The Hurdy Gurdy Man"  295 chars ≈  80 output tokens
+    "Gaucho"               355 chars ≈  96 output tokens
+
+**Against a 400-token ceiling.** So the prose was nowhere near the limit, and
+"the answer is too long" was the wrong diagnosis — the one I would have shipped
+by analogy with A37.
+
+**The actual cause: `max_tokens` bounds THINKING PLUS OUTPUT, and this client
+sent no `output_config`.** §9.2's client sets `effort: 'high'` explicitly; the
+snippet never set anything, so reasoning consumed the budget before the note was
+finished.
+
+**Which is the same one-sibling-fixed pattern as the logging**, arriving in a
+third place: a decision made deliberately for the gap analysis, absent from the
+snippet because nobody carried it across. **And the shared `MessageCreate` type
+made it worse** — `output_config?: { effort: typeof EFFORT }` pinned the field to
+the gap-analysis constant, so the snippet COULD NOT have set its own effort
+without a type change. A shared type encoding one caller's choice.
+
+**Fix: `effort: 'low'`** — a two-sentence note about a record is recall, not
+analysis — **plus 400 → 1,200** for the thinking that remains. Still 12x a
+compliant answer.
+
+**An existing test asserted `<= 500` and had to move.** Its PRINCIPLE was right
+(the snippet's budget should be much smaller than a gap analysis's) and its
+PREMISE was wrong (that the ceiling bounds prose alone). The principle survives
+in the assertion; the number changed, with the measurement recorded in the test.
+**A test disproved by data is different from a test bent to fit code**, and the
+difference is whether the reasoning still holds.
+
+### The shared transport, and what moved into it
+
+`transport.ts`: `AnthropicResponse`, `observeUsage`, `ranOutOfRoom`. **Both
+callers now use it**, and the snippet gained in one place what the gap analysis
+took two units to learn:
+
+- **truncation is REFUSED, never stored.** Unlike §9.2 nothing here fails to
+  parse — a snippet is prose, so a half-sentence looks exactly like a whole one.
+  §4.2 lets the user take ownership of stored snippet text, so writing an
+  incomplete one puts text in that position which should never have been offered.
+- `stop_reason` and both token counts reach `llm_requests` on every call;
+- the route LOGS the failure — it never did, for the identical reason §9.2's
+  didn't: `withErrorHandling` logs thrown errors and this is a returned one;
+- the message distinguishes `cut` from unreadable and names the spent slot.
+
+### The two truncated snippets: deleted, and the safety re-measured at the moment
+
+**Not trusted from the earlier reading.** `snippet_edited_at IS NULL` was
+re-asserted immediately before the delete, and the query aborts if ANY edited
+snippet exists. Backed up to
+`~/record-collection-backups/deleted-truncated-snippets-2026-08-26.json` —
+outside the working tree — and **read back before the delete ran**, because a
+backup nobody has read is a belief rather than a backup.
+
+    unedited (deletable): 2   edited (must not touch): 0
+    cleared: 2 — The Hurdy Gurdy Man, Gaucho
+    snippets remaining: 0  (asserted after, not inferred)
+
+**§7.8's semantics applied by hand: the TEXT is cleared and `snippet_edited_at`
+is left alone.** Both were NULL, so the record now reads "no snippet yet" —
+which is TRUE — rather than "the user deleted one".
+
+**This is the second deliberate data removal in this project** (after the
+duplicate price rows), and it followed the same discipline: precondition
+asserted, backup written and read back, state asserted afterwards rather than
+inferred from a row count.
+
+
+---
+
+## The layer argument turned on me: I fixed two callers and left the trap open
+
+**2026-08-26, Adam.** *"That is a property of the shared client and it should be
+guarded there rather than remembered — if effort is unset, the caller is one
+prompt away from the defect you just fixed, and nothing would tell them."*
+
+**He was right, and the answer to his question was the bad one.** `transport.ts`
+did **not** govern effort at all. `output_config` stayed OPTIONAL on
+`MessageCreate`, a type still owned by `client.ts`. So:
+
+- a third caller omitting it **compiles, passes review, and silently loses its
+  output budget to reasoning**;
+- which is precisely the state the snippet was in for months;
+- **and I had just moved `observeUsage` and `ranOutOfRoom` into the transport
+  while arguing that properties of calling Anthropic belong there.**
+
+**I fixed the two existing callers and left the trap exactly where it was.** The
+diagnostics moved down a layer; the defect that produced them did not.
+
+### There is no safe default, which is why the answer is REQUIRED rather than defaulted
+
+Adam asked whether the default is the safe one. **Neither value is:**
+
+- `low` would degrade a gap analysis, which reasons across a whole collection;
+- `high` is what truncated a two-sentence note.
+
+**The two callers genuinely need different values**, so any default is right for
+one and silently wrong for the other. **A required field is the only honest
+shape** — omission becomes a compile error rather than a runtime half-sentence.
+
+`transport.ts` now exports `Effort` and `AnthropicRequest` with
+`output_config` **not optional**, and `client.ts`'s `MessageCreate` uses them.
+
+**Mutation-verified, and the mutation IS the original defect:** removing
+`output_config` from the snippet caller — reproducing the exact state that cut
+two snippets — now fails typecheck:
+
+    error TS2345: Argument of type '{ model; max_tokens; messages }' is not
+    assignable to parameter of type '{ …; output_config: { effort: Effort }; … }'
+
+**The test that pins it cannot fail at runtime.** A required property is enforced
+by the compiler, so the assertion is `@ts-expect-error` and it fails at TYPECHECK
+if the field becomes optional again — which is where the defect would return.
+
+### The general form, which is sharper than the earlier layer rule
+
+The earlier rule said: when one defect appears in two callers, ask which layer it
+belongs to. **This is the correction to how I applied it.**
+
+> Moving the DIAGNOSTIC to the shared layer is not the same as moving the
+> DEFECT's cause there. I moved what detects the problem and left what permits
+> it — so the shared module could observe a truncation it was still possible to
+> cause.
+
+**The check: after fixing at a layer, ask whether a NEW caller written tomorrow
+would inherit the fix or inherit the bug.** If the answer is "it depends what
+they remember", the guard is documentation rather than a mechanism — and this
+project's own rule is that "remember to X" is not a mechanism.
+
+**Adam found this by asking a question I had not asked myself**, which is the
+second time today: the same instinct that asked whether `.env.test`'s missing key
+was load-bearing, and whether a want-list attachment would survive acquisition.
+
+### Suite, and a run that measured the machine
+
+**The first full E2E of this unit took 4.2 HOURS and failed 17 tests.** Not a
+result: **load averages 49 / 108 / 117** on a machine that idles near 2-4, with
+Adobe Creative Cloud at 62% CPU and a VM at 27% — none of it this project's.
+
+**Every failure was transport or timeout and not one was a behavioural
+assertion:**
+
+| count | error |
+|---|---|
+| 10 | `toHaveURL` — the documented login-timeout signature |
+| 8 | "destination stream closed early" |
+| 2 | `page.goto` timeout |
+| 1 each | `ECONNRESET`, `apiRequestContext.post` timeout |
+
+**And the code under change was green: all 8 snippet specs passed, 0 failed.**
+The 17 failures were in specs this unit never touched.
+
+**Re-run after the load fell: 12.1 minutes, 419 passed, 1 failed** — and that one
+is `wall-scene:578` with "destination stream closed early", passing in isolation,
+in a spec with zero references to anything here. Same transport family, one
+instance instead of eight, with the 15-minute load still at 67.
+
+**The rule this earns:** a run whose failures are ALL transport-shaped and whose
+duration is an order of magnitude off is measuring the host, not the code. Check
+`uptime` before diagnosing seventeen defects — **the same discipline as verifying
+before fixing, applied to the harness rather than the app.**
+
+Unit **3077 passed**, 1 skipped. Typecheck, lint, build clean.

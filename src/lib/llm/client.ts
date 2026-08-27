@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { assertNoLiveCall, usesRealNetwork } from '@/lib/discogs/no-live-calls';
 import type { CollectionSummary } from './collection-summary';
 import { parseSuggestions, type Suggestion } from './parse-suggestions';
+import { observeUsage, type AnthropicResponse, type Effort } from './transport';
 
 /**
  * SPEC.md §9.2's Anthropic client, and the prompt that is the feature.
@@ -327,24 +328,22 @@ export function buildPrompt(summary: CollectionSummary): string {
 export type MessageCreate = (request: {
   model: string;
   max_tokens: number;
-  output_config?: { effort: typeof EFFORT };
+  /**
+   * **Required, and defined in `transport.ts`.** This was `typeof EFFORT` — the
+   * gap-analysis constant — so a shared type encoded one caller's decision and
+   * the snippet could not set its own. It was then OPTIONAL, which is worse: a
+   * caller omitting it loses its output budget to reasoning, silently.
+   */
+  output_config: { effort: Effort };
   messages: Array<{ role: 'user'; content: string }>;
 }) => Promise<AnthropicResponse>;
 
 /**
- * What the SDK returns, including the two fields the previous cast discarded.
- *
- * **`stop_reason` is the field that settles truncation**, and it was on every
- * response the client already received. Adam's live 502 could not be diagnosed
- * because it was thrown away at this type boundary — the evidence existed at
- * runtime and nothing kept it.
+ * Moved to `transport.ts` — these are properties of CALLING ANTHROPIC rather
+ * than of gap analysis, and living here is what let the snippet ship without
+ * them. See NOTES: "when one defect appears in two callers of a dependency, ask
+ * which LAYER it belongs to".
  */
-type AnthropicResponse = {
-  content: Array<{ type: string; text?: string }>;
-  /** `max_tokens` means it ran out of room; `end_turn` means it finished. */
-  stop_reason?: string | null;
-  usage?: { input_tokens?: number; output_tokens?: number } | null;
-};
 
 /**
  * A failure, plus what the transport observed about it.
@@ -400,11 +399,7 @@ export function createGapAnalysisClient(transport: { create: MessageCreate }): G
        * user which failure it was. `stop_reason` is the one field that
        * distinguishes "ran out of room" from "finished and answered wrongly".
        */
-      const observed = {
-        stopReason: response.stop_reason ?? null,
-        inputTokens: response.usage?.input_tokens ?? null,
-        outputTokens: response.usage?.output_tokens ?? null,
-      };
+      const observed = observeUsage(response);
 
       /*
        * No text block is UNREADABLE, not empty — the same distinction the
