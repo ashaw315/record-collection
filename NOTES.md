@@ -20176,3 +20176,83 @@ resolves here too**: nesting may absorb it as a legitimate parent of
 `Psychedelic Rock` and `Rock & Roll`, or expose it as a bucket — which is the
 trigger recorded against that finding.
 
+
+---
+
+## A44 VERIFIED on the real 32 — and the evidence line earned itself on first use
+
+**Adam, 2026-08-27.** *"It grouped roughly as predicted and reads well on one
+screen — the design held."*
+
+**The measurement that drove the layout was right**: ~9 groups, 2-3 children
+each, one screen. **23 genres placed, 11 still top-level, 2 rejected.**
+
+### THE FINDING: the evidence line caught two wrong pairings a count could not
+
+**Both rejections were catchable only because the EXAMPLES were shown**, which is
+the decision Adam made over my objection:
+
+- **Gospel under Funk/Soul**, proposed from Simon & Garfunkel's *Bridge Over
+  Troubled Water* — *"a folk record with gospel colour rather than a gospel
+  record."*
+- **Jazz-Rock under Fusion**, which would make `Jazz → Fusion → Jazz-Rock` when
+  *"those two are near-synonyms and probably want to be siblings."*
+
+**His verdict:** *"Without the examples I would have accepted both. A count alone
+would have shown '1 record' for each and told me nothing."*
+
+**That is "states rather than rates" paying off on its first real use**, and it
+validates the specific thing I got wrong. I proposed hiding examples behind a
+hover to keep the tree tight; he refused on the grounds that *"the count tells me
+how much evidence there is; the examples tell me whether the evidence means
+anything."* **Two pairings would have entered his vocabulary if I had won that
+argument.**
+
+**And note what the count would have said: "1 record" for both.** Identical
+figures, opposite verdicts — the clearest possible demonstration that quantity
+and meaning are different axes and only one of them is a number.
+
+### The `Rock` import-artefact trigger CLOSES, with a different answer than expected
+
+**Adam:** *"Rock did absorb its subgenres rather than being exposed as a bucket…
+that is a different answer from the one the ten-unrelated-artists measurement
+suggested."*
+
+`Rock` now parents ten genres — AOR, Blues Rock, Classic Rock, Folk Rock, Heavy
+Metal, Indie Rock, Pop Rock, Psychedelic Rock, Punk, Rock & Roll — **while also
+carrying records directly.**
+
+**The measurement was not wrong; the INFERENCE from it was.** Ten records across
+ten unrelated artists is a real observation, and I read it as evidence of an
+import artefact. **It was evidence of a genuinely broad parent** — which looks
+identical in a record count and differs entirely in what should be done about it.
+
+> **A measurement can be sound and its interpretation still be the wrong one of
+> two available.** The count could not distinguish "a bucket nobody chose" from
+> "a legitimate top of the tree", and the thing that separated them was
+> populating the hierarchy and looking — not more data.
+
+**Trigger closed.** The pruning question does not need answering.
+
+### FLAGGED, not acted on: the hierarchy is now three levels deep
+
+Measured after the run, and neither of us discussed it:
+
+    UK82 → Punk → Rock
+    Black Metal → Heavy Metal → Rock
+
+**`Punk` and `Heavy Metal` are now both parents AND children.** That is legal
+(§4.1 allows nesting and forbids only cycles) and probably correct — but §7.1's
+ancestor rule now walks three levels, so a record tagged `UK82` is implicitly
+`Punk` AND `Rock`.
+
+**Worth knowing because it was not the shape anyone designed for**: every prior
+discussion assumed parent-and-child, and the facet counts, the drill-down (item
+4) and any future genre filter all traverse this. **Not a defect** — `genreSubtree`
+is already recursive, and the conformance tests pass. **Recorded so the depth is
+a known property rather than a surprise** the first time a query looks wrong.
+
+**Trigger: item 4's genre drill-down**, which is the first feature that will care
+whether "what am I missing in Punk" means UK82 and US Hardcore only, or
+everything under Rock as well.
+
