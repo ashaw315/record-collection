@@ -20655,3 +20655,107 @@ precondition never happened passes, and looks exactly like one that works.**
 
 Migrations **22 of 22** clean from empty. Typecheck, lint clean.
 
+
+---
+
+## STANDING HAZARD, UPGRADED: the Neon WebSocket path fails while HTTP works — and it has now cost time twice
+
+**2026-08-27.** Recorded properly rather than as an aside, on Adam's instruction:
+*"'it predates today' is how something goes six months unexamined."*
+
+### What is measured
+
+    npm test  →  9 failures, all in test/integration/neon-transactions.test.ts
+                 Error: Failed query: begin
+
+    Neon over HTTP (`neon()` / `sql\`SELECT 1\``)  →  REACHABLE
+    Neon over WebSocket (`Pool` / `drizzle-orm/neon-serverless`)  →  FAILS
+
+**Verified pre-existing by stashing the whole A43 storage unit and re-running:
+identical nine failures on a clean tree.** So it is environmental and not this
+unit's — but that is the whole reason it needs a trigger rather than a shrug.
+
+### Why it matters more than nine red tests
+
+**The suite these tests belong to is the one CLAUDE.md §2 demanded**: the
+acquire-flow transaction test *"must run against real Postgres"*, and
+`neon-transactions` exists because **the production driver is the serverless one
+and transactional behaviour differs between the two paths.** So the nine failing
+tests are precisely the ones covering the difference nobody else covers.
+
+**While they fail, the app's transactional behaviour over the driver it actually
+deploys on is unverified.** That is not urgent — every one of them passed
+previously, and the code they cover is unchanged — but it is exactly the kind of
+gap that is invisible until a transaction misbehaves in production.
+
+### The cost, which is the argument for a trigger
+
+**Twice now** a unit has stopped to determine whether these failures were its
+own: once during A43's storage work, and once earlier in the session. **Each
+time the answer was no, and each time it took a stash-and-rerun to establish
+it.** A standing red in a suite makes every future run ambiguous — the "moving
+red" problem, but permanent.
+
+### TRIGGERS — fire on the FIRST of these
+
+1. **The next unit that touches the driver, the pool, or transaction code.**
+   Anything editing `neon-test-branch.ts`, `resolveDriver`, or a
+   `db.transaction()` call site inherits this: the tests that would catch a
+   regression are already failing, so a real break would be indistinguishable
+   from the standing red.
+2. **The first time it fails against PRODUCTION rather than the test branch.**
+   HTTP is currently fine, so production reads and writes work; a WebSocket
+   failure there would mean §5.3's acquire transaction is at risk, which is the
+   one place §2 says the distinction matters.
+3. **A second session losing time to "is this mine?"** — already at two, so a
+   third makes the ambiguity cost more than the diagnosis.
+
+**Not diagnosed here, deliberately.** Adam: *"I would rather not open a
+diagnosis mid-ship."* The likely causes are recorded so whoever picks it up does
+not start cold: the test branch drifting (the existing hazard entry above),
+WebSocket egress being blocked, or a `@neondatabase/serverless` version change
+altering pool behaviour. **`neon-test-branch.ts` is where to start**, because it
+is what stands the branch up.
+
+---
+
+## CHECK: before asserting a stored thing exists, prove something stored it
+
+**Named 2026-08-27 by Adam, on the THIRD instance in one session.** He is right
+that the sequence is the useful part, because each failed attempt looked exactly
+like a working test:
+
+| attempt | what it did | why it proved nothing |
+|---|---|---|
+| 1 | let the real route run | the no-live-call guard refused it, so **nothing was stored** |
+| 2 | stubbed the route | the stub intercepted the POST, so **the write never landed** |
+| 3 | seeded the database directly | **the row exists**, and the assertion means something |
+
+**Both of the first two PASSED.** "Reloading spends no request" is trivially true
+when there is nothing stored to reload — and a green test that asserts a
+consequence of a precondition that never happened is indistinguishable, from the
+outside, from one that works.
+
+### The check, stated so it can be applied rather than remembered
+
+> **Before asserting that a stored thing is read back, prove something stored
+> it.** Not "the code that stores it ran" — that the ROW EXISTS. Query it,
+> or seed it directly and assert the seed.
+
+**And the corollary that makes it operational:** the layer that stores is usually
+the layer a test stubs for convenience. **Stubbing the boundary the behaviour
+lives behind means the behaviour cannot happen** — the same rule the A39 hollow
+E2E produced, arriving from the storage side rather than the routing side.
+
+### The three instances, so the pattern is documented rather than recalled
+
+1. **A39** — an E2E stubbed `POST /api/suggestions/ai` and asserted persistence;
+   `gap_analysis_results` held 0 rows.
+2. **A38** — a success-path assertion in the route's tests, where `analyse` is
+   mocked and the line under test never executes.
+3. **A43** (this one) — twice in a row, above.
+
+**All three passed. All three were caught by mutation or by measurement, never by
+reading** — which is why this is a check to run rather than a lesson to
+remember.
+
