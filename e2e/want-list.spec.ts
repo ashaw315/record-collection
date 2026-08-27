@@ -1020,3 +1020,57 @@ test('"any copy is fine" and "not known" do not look alike', async ({ page }) =>
   await expect(unknown).toContainText(/not known to claude/i);
   await expect(unknown).not.toContainText(/there is nothing|does not exist/i);
 });
+
+test('a stored assessment renders on load without spending a request', async ({ page }) => {
+  /*
+    **A43's storage argument, stronger than A39's.** A gap analysis is a claim
+    about a collection that CHANGES; a pressing assessment is a claim about an
+    album's pressing history, which does not. So there is no reason to ask twice,
+    and each album costs one of ten hourly requests exactly once.
+
+    **Seeded through the DATABASE, not through the route.** Two earlier versions
+    of this test were hollow: the first let the real route run and the
+    no-live-call guard refused it, the second stubbed the route so the write
+    never landed. Both left nothing stored, which made "reloading spends nothing"
+    trivially true — the same shape as the A39 E2E that asserted persistence
+    while preventing it. **The precondition has to actually happen.**
+  */
+  await login(page);
+  const id = await seedWanted(page, 'Aja');
+
+  const db = getTestDb();
+  await db.execute(sql`
+    INSERT INTO pressing_assessments (want_list_id, verdict, pressings, dropped)
+    VALUES (
+      ${id},
+      'matters',
+      ${JSON.stringify([{ description: 'First US press', identifier: 'ABC AB-1006' }])}::jsonb,
+      0
+    )
+  `);
+
+  let calls = 0;
+  await page.route('**/api/want-list/*/pressing-assessment**', async (route) => {
+    calls += 1;
+    await route.continue();
+  });
+
+  await page.goto(`/want-list/${id}`);
+
+  /*
+    **The assertion the feature exists for**: the stored answer is on the page
+    at load — read server-side — and the ask button is gone, because there is
+    nothing to ask.
+  */
+  await expect(page.getByTestId('verdict-matters')).toBeVisible();
+  await expect(page.getByTestId('pressings-to-hunt')).toContainText('AB-1006');
+  await expect(page.getByTestId('ask-pressing')).toHaveCount(0);
+
+  await page.waitForLoadState('networkidle');
+  expect(calls, 'viewing a stored assessment must spend nothing').toBe(0);
+
+  // And removing it is available — delete, never edit (§7.8).
+  await expect(page.getByTestId('clear-pressing')).toBeVisible();
+
+  await db.execute(sql`DELETE FROM pressing_assessments WHERE want_list_id = ${id}`);
+});

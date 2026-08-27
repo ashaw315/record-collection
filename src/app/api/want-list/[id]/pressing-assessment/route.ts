@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server';
 import { badRequest, isUuid, notConfigured, notFound } from '@/lib/api/errors';
 import { withErrorHandling } from '@/lib/api/handler';
 import { hydrateWantListItem } from '@/lib/db/queries/want-list';
+import {
+  clearAssessment,
+  latestAssessment,
+  storeAssessment,
+} from '@/lib/db/queries/pressing-assessment';
 import { isAnthropicConfigured, isAuthFailure } from '@/lib/llm/client';
 import {
   PRESSING_ASSESSMENT_MAX_TOKENS,
@@ -29,7 +34,7 @@ type Context = { params: Promise<{ id: string }> };
 
 export const POST = withErrorHandling(
   'api.want-list.pressing-assessment.POST',
-  async (_request: Request, context: Context) => {
+  async (request: Request, context: Context) => {
     const { id } = await context.params;
     if (!isUuid(id)) return badRequest('Invalid want-list id', 'INVALID_ID');
 
@@ -43,6 +48,24 @@ export const POST = withErrorHandling(
      */
     const item = await hydrateWantListItem(id);
     if (item === undefined) return notFound('Want-list item not found');
+
+    /*
+     * **Never asked twice** (A43). A pressing assessment is a claim about an
+     * album's pressing history, which does not change — unlike a gap analysis,
+     * which is a claim about a collection that does. So a stored answer is
+     * returned without spending a request, and each album costs one of ten
+     * hourly requests exactly once.
+     *
+     * `?fresh=1` is the deliberate re-ask: it replaces the stored answer and
+     * costs a request, which is what the user chose by asking.
+     */
+    const fresh = new URL(request.url).searchParams.get('fresh') === '1';
+    if (!fresh) {
+      const stored = await latestAssessment(id);
+      if (stored !== null) {
+        return NextResponse.json({ data: { ...stored, askedAt: stored.askedAt.toISOString() } });
+      }
+    }
 
     const claim = await claimLlmRequest('pressing_assessment');
     if (!claim.ok) {
@@ -109,6 +132,17 @@ export const POST = withErrorHandling(
       );
     }
 
+    /*
+     * Stored so it survives a reload, and so it survives ACQUISITION: §7.3 keeps
+     * the want-list row (`acquireWantListItem` marks rather than deletes), which
+     * is why this needs no album entity — see the schema docblock.
+     */
+    await storeAssessment(id, {
+      verdict: result.verdict,
+      pressings: result.pressings,
+      dropped: result.dropped,
+    });
+
     return NextResponse.json({
       data: {
         verdict: result.verdict,
@@ -122,5 +156,24 @@ export const POST = withErrorHandling(
         askedAt: new Date().toISOString(),
       },
     });
+  },
+);
+
+/**
+ * Removes a stored assessment.
+ *
+ * **Delete, never edit** (§7.8). Editing would transfer ownership and leave text
+ * that is neither Claude's nor cleanly the user's while still labelled Claude's.
+ * Removing writes nothing and leaves the row exactly as it was.
+ */
+export const DELETE = withErrorHandling(
+  'api.want-list.pressing-assessment.DELETE',
+  async (_request: Request, context: Context) => {
+    const { id } = await context.params;
+    if (!isUuid(id)) return badRequest('Invalid want-list id', 'INVALID_ID');
+
+    await clearAssessment(id);
+
+    return new NextResponse(null, { status: 204 });
   },
 );

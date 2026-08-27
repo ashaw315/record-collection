@@ -27,18 +27,35 @@ const TONE = {
   open: 'border-l-2 border-l-dashed border-l-border',
 } as const;
 
-export function PressingAssessment({ itemId }: { itemId: string }) {
-  const [assessment, setAssessment] = useState<Assessment | null>(null);
+export function PressingAssessment({
+  itemId,
+  stored,
+}: {
+  itemId: string;
+  /**
+   * The assessment already on this row, read server-side (A43).
+   *
+   * **A stored answer is shown without spending a request**, because a pressing
+   * assessment is a claim about an album's pressing history and does not go
+   * stale — the distinction from A39, whose gap analysis IS about a collection
+   * that changes.
+   */
+  stored?: Assessment | null;
+}) {
+  const [assessment, setAssessment] = useState<Assessment | null>(stored ?? null);
   const [asking, setAsking] = useState(false);
   const [error, setError] = useState<string | undefined>();
 
-  async function ask() {
+  async function ask(refresh = false) {
     setAsking(true);
     setError(undefined);
     try {
-      const response = await fetch(`/api/want-list/${itemId}/pressing-assessment`, {
-        method: 'POST',
-      });
+      // `fresh=1` only on a deliberate re-ask: the plain call reuses a stored
+      // answer and spends nothing.
+      const response = await fetch(
+        `/api/want-list/${itemId}/pressing-assessment${refresh ? '?fresh=1' : ''}`,
+        { method: 'POST' },
+      );
       const body = await response.json();
 
       if (!response.ok) {
@@ -61,6 +78,16 @@ export function PressingAssessment({ itemId }: { itemId: string }) {
       setAssessment(body.data);
     } catch {
       setError('Could not reach the assessment service.');
+    } finally {
+      setAsking(false);
+    }
+  }
+
+  async function clear() {
+    setAsking(true);
+    try {
+      await fetch(`/api/want-list/${itemId}/pressing-assessment`, { method: 'DELETE' });
+      setAssessment(null);
     } finally {
       setAsking(false);
     }
@@ -159,6 +186,37 @@ export function PressingAssessment({ itemId }: { itemId: string }) {
           <p className="mt-2 text-xs text-muted-foreground italic">
             Claude’s assessment, not a fact this app checked — verify against the record.
           </p>
+
+          {/*
+            **Re-ask and delete, never EDIT** (§7.8). Editing transfers
+            ownership, and an edited assessment would be neither Claude's nor
+            cleanly the user's while still carrying Claude's name.
+            `best_dig_notes` is where the user's own judgement goes, and keeping
+            them apart is what makes disagreement visible.
+
+            Re-asking says it costs a request, because a stored answer costs
+            nothing and the difference should be the user's choice.
+          */}
+          <div className="mt-2 flex gap-3">
+            <button
+              type="button"
+              data-testid="reask-pressing"
+              disabled={asking}
+              onClick={() => void ask(true)}
+              className="text-xs underline underline-offset-2 disabled:text-muted-foreground"
+            >
+              {asking ? 'Asking…' : 'Ask again (uses a request)'}
+            </button>
+            <button
+              type="button"
+              data-testid="clear-pressing"
+              disabled={asking}
+              onClick={() => void clear()}
+              className="text-xs text-muted-foreground underline underline-offset-2"
+            >
+              Remove
+            </button>
+          </div>
         </div>
       )}
     </section>

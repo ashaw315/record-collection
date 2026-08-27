@@ -492,6 +492,55 @@ export const recordTags = pgTable(
  * collision `market_cache` was created to avoid.
  */
 /**
+ * SPEC.md §12b (A43) — the stored pressing assessment for one want-list row.
+ *
+ * **Stored because it does not go stale, which is a stronger case than A39's.**
+ * A gap analysis is a claim about a COLLECTION THAT CHANGES, so A39 shows when
+ * it was asked and how many records have been added since. **A pressing
+ * assessment is a claim about an album's pressing history, which does not
+ * change** — so there is no reason to ask twice, and each album costs one of ten
+ * hourly requests exactly once.
+ *
+ * **Attached to the want-list row, and that is NOT a second caller for A40's
+ * album entity.** The two look alike and are not:
+ *
+ *   - **A40's ranking must exist for an album the user NEITHER OWNS NOR WANTS**,
+ *     so there is no row anywhere to hold it — hence the entity.
+ *   - **An assessment is always asked ABOUT A ROW THAT EXISTS**, and §7.3 keeps
+ *     that row after acquisition (`acquireWantListItem` sets `is_acquired` and
+ *     `acquired_record_id`; it does not delete). **So it survives the move from
+ *     want list to collection by construction.**
+ *
+ * The test worth applying to the next feature is that one: does the thing being
+ * attached need to exist for an album with no row?
+ *
+ * **NOT EDITABLE, per §7.8's ownership lesson.** Editing transfers ownership,
+ * and an edited assessment would be neither Claude's nor cleanly the user's
+ * while still labelled Claude's. `best_dig_notes` is where the user's own
+ * judgement goes, and keeping them separate is what makes disagreement visible —
+ * the same reason the user's notes are not sent to the model.
+ *
+ * **One row per want-list item, replaced on re-ask.** Nothing in the app reads a
+ * superseded assessment, so keeping a history would be a table growing for a use
+ * case nobody has named.
+ */
+export const pressingAssessments = pgTable('pressing_assessments', {
+  id,
+  wantListId: uuid('want_list_id')
+    .notNull()
+    .unique()
+    .references(() => wantList.id, { onDelete: 'cascade' }),
+  /** `matters` | `any-copy` | `unknown` — the three answered states (A43). */
+  verdict: text('verdict').notNull(),
+  /** The pressings worth hunting, each with something checkable off the object. */
+  pressings: jsonb('pressings').notNull(),
+  /** A29d's count of claims discarded for naming nothing checkable. */
+  dropped: integer('dropped').notNull().default(0),
+  /** What the UI shows as "asked N ago" — the only time this table holds. */
+  askedAt: timestamp('asked_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
  * SPEC.md §12c (A44) — pairings the user has REJECTED, so they are never
  * proposed again.
  *

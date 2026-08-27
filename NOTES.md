@@ -20574,3 +20574,84 @@ and none is A43's:
 references to anything A43 touches.** Checked rather than assumed, because
 `lookup-flows:1525` is a test whose subject — a runout rendering verbatim — is
 adjacent enough to A43's pressing identifiers to be worth ruling out by hand.
+
+---
+
+## A43 storage — and the album-entity question answered NO, with a test rather than a conclusion
+
+**Adam, 2026-08-27**, after the assessment produced *"six pressings, every one
+with a catalogue number or runout I can check against a record in my hands"* —
+and vanished on reload.
+
+### Why storing this is a STRONGER case than A39's
+
+**A gap analysis is a claim about a collection that CHANGES**, which is why A39
+shows "asked 20 minutes ago, before you added 5 records". **A pressing assessment
+is a claim about an album's pressing history, which does not.**
+
+> **There is no reason to ask twice** — and each album now costs one of ten
+> hourly requests exactly once, which is what makes the budget go far.
+
+### Q1: NOT a second caller for the album entity, and the TEST is the finding
+
+**Measured before deciding:** `acquireWantListItem` sets `is_acquired` and
+`acquired_record_id`. **It does not delete the row** (§7.3 keeps it as history),
+so an assessment attached to it survives acquisition by construction.
+
+**Adam asked that the distinction be recorded rather than the conclusion**, so
+the next person weighing "does this need the entity" finds the test:
+
+> **A40's ranking must exist for an album the user NEITHER OWNS NOR WANTS**, so
+> there is no row anywhere to hold it — hence the entity. **An assessment is
+> always asked ABOUT A ROW THAT EXISTS**, and that row outlives the hunt.
+>
+> **The test: does the thing being attached need to exist for an album with no
+> row?**
+
+**And the caveat is recorded honestly, because he named its shape:** the
+record→want-list path was *"true in the schema and unproven in the app"* — the
+same shape as `/want-list/:id/edit`, specified and absent for ten steps. **So it
+gets a test, not a comment.** `assessmentForRecord` is exercised through a REAL
+acquisition, and **mutation-verified**: making acquire delete the row instead of
+marking it fails both durability tests.
+
+### Q2: not editable, and the reason is the comparison
+
+**§7.8: editing transfers ownership.** An edited assessment would be neither
+Claude's nor cleanly the user's while still carrying Claude's name.
+
+**And Adam's stronger half:** `best_dig_notes` is where his own judgement goes,
+and keeping them apart is what makes disagreement visible — **the same reason his
+notes are not sent to the model.** Editing the assessment would collapse the
+comparison he deliberately preserved. **Delete and re-ask; never edit.**
+
+### THREE HOLLOW TESTS IN ONE SITTING, and the third was the honest one
+
+The reload test was written three times, and the first two proved nothing:
+
+1. **Let the real route run** — the no-live-call guard refused it, so nothing was
+   stored and "reloading spends nothing" was trivially true;
+2. **Stubbed the route** — the stub intercepted the POST, so the write never
+   landed and the assertion was trivially true again;
+3. **Seeded the database directly** — the precondition actually exists, and
+   mutation-verified: making the page not read the stored assessment fails it.
+
+**Same shape as A39's hollow E2E, which asserted persistence while preventing
+it.** The lesson repeats because the failure is comfortable: **a test whose
+precondition never happened passes, and looks exactly like one that works.**
+
+### The suite, reported honestly
+
+- **9 pre-existing failures in `neon-transactions`** — `Failed query: begin` over
+  the WebSocket pool. **Verified pre-existing by stashing this unit's changes and
+  re-running: identical 9 failures on a clean tree.** Neon HTTP is reachable; the
+  WebSocket path is not, which is the standing test-branch hazard NOTES already
+  records. **Not this unit's, and not fixed here.**
+- **2 schema-conformance guards were mine** and are registered with reasoning —
+  the CASCADE (an assessment is a claim about a row; if the row goes it describes
+  nothing) and the timestamp exemption (`asked_at` is the only time this table
+  holds, and an `updated_at` would imply a row that changes when a re-ask
+  REPLACES).
+
+Migrations **22 of 22** clean from empty. Typecheck, lint clean.
+

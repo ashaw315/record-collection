@@ -4,6 +4,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { hydrateWantListItem } from '@/lib/db/queries/want-list';
 import { formatCeiling, huntFacts, priorityLabel } from '../want-list-format';
 import { PressingAssessment } from '../PressingAssessment';
+import { latestAssessment } from '@/lib/db/queries/pressing-assessment';
 
 /**
  * SPEC.md §10 — the want-list item detail view.
@@ -32,6 +33,12 @@ export default async function WantListItemPage({
   // A malformed or unknown id is a not-found page, never a server error — the
   // same treatment `/records/:id` gives it.
   if (item === undefined) notFound();
+
+  /*
+   * Read server-side so a stored assessment is on the page at load — it costs
+   * nothing, because a pressing assessment does not go stale (A43).
+   */
+  const assessment = await latestAssessment(id);
 
   const hunt = huntFacts({
     bestDigNotes: item.bestDigNotes,
@@ -108,7 +115,14 @@ export default async function WantListItemPage({
           section poses — "which pressing" — and above the ceiling because it is
           about the record rather than about money.
         */}
-        <PressingAssessment itemId={item.id} />
+        <PressingAssessment
+          itemId={item.id}
+          stored={
+            assessment === null
+              ? null
+              : { ...assessment, askedAt: assessment.askedAt.toISOString() }
+          }
+        />
 
         <div className="mt-6 flex gap-2">
           <Link

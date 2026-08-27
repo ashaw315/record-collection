@@ -91,6 +91,13 @@ describe('§4 conformance — cascade directions', () => {
       'genres.parent_genre_id -> genres: NO ACTION',
       'images.record_id -> records: CASCADE',
       'journal_entries.record_id -> records: CASCADE',
+      /*
+        §12b (A43). CASCADE because an assessment is a claim ABOUT a want-list
+        row: if the row goes, the assessment describes nothing. Note this does
+        NOT fire on acquisition — §7.3 keeps the row and marks it, which is
+        exactly why the assessment survives the move to the collection.
+      */
+      'pressing_assessments.want_list_id -> want_list: CASCADE',
       'price_history.pressing_id -> pressings: NO ACTION',
       'price_history.record_id -> records: CASCADE',
       'price_history.want_list_id -> want_list: CASCADE',
@@ -293,6 +300,13 @@ describe('§4 conformance — NOT NULL where the spec requires it', () => {
       // transcript of what was said at a moment and editing it in place would
       // make "asked 20 minutes ago" describe text that had since changed.
       'gap_analysis_results',
+      /*
+        §12b (A43). `asked_at` is the only time this table has an opinion about
+        — a `created_at` would be a second answer to the same question. And an
+        `updated_at` would imply a row that changes, when an assessment is never
+        edited (§7.8: editing transfers ownership) and a re-ask REPLACES it.
+      */
+      'pressing_assessments',
       /*
         §12c (A44). `rejected_at` is the only time this table has an opinion
         about, so a `created_at` would be a second answer to the same question —
