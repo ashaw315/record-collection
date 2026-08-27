@@ -38,6 +38,14 @@ export function ParentProposal({
   onReject,
 }: Props) {
   const [settled, setSettled] = useState<Record<string, 'accepted' | 'rejected'>>({});
+  /**
+   * The row currently being settled — **per row, not global.**
+   *
+   * A global flag disabled every button while any pairing was in flight, and on
+   * a slower project a second click landed while the first was still awaiting
+   * and was silently swallowed. **One pairing's decision has nothing to do with
+   * another's**, so the guard is scoped to the row it protects.
+   */
   const [busy, setBusy] = useState<string | undefined>();
 
   const groups = groupProposal(pairings, [], evidence);
@@ -100,7 +108,7 @@ export function ParentProposal({
                       <button
                         type="button"
                         data-testid={`accept-${child.genreId}`}
-                        disabled={busy !== undefined}
+                        disabled={busy === child.genreId}
                         onClick={() => void settle(child, 'accepted')}
                         className="text-xs underline underline-offset-2 disabled:text-muted-foreground"
                       >
@@ -109,7 +117,7 @@ export function ParentProposal({
                       <button
                         type="button"
                         data-testid={`reject-${child.genreId}`}
-                        disabled={busy !== undefined}
+                        disabled={busy === child.genreId}
                         onClick={() => void settle(child, 'rejected')}
                         className="text-xs text-muted-foreground underline underline-offset-2"
                       >

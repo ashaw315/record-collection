@@ -693,7 +693,17 @@ test('a suggested hierarchy is grouped, evidenced, and applied only where accept
   await page.getByTestId(`accept-${psych}`).click();
   await expect(page.getByTestId(`pairing-${psych}`)).toContainText('Accepted');
 
+  /*
+    Waits for the reject's own write before asserting, rather than assuming the
+    click settled. The first version raced it on `[mobile]` — a per-row decision
+    is a request, and a test that treats it as instantaneous races whichever
+    project is slower. Same shape as the want-list redirect race.
+  */
+  const rejected = page.waitForResponse(
+    (r) => r.url().includes('/parent-suggestions/rejections') && r.request().method() === 'POST',
+  );
   await page.getByTestId(`reject-${aor}`).click();
+  await rejected;
   await expect(page.getByTestId(`pairing-${aor}`)).toContainText('will not be suggested again');
 
   /*

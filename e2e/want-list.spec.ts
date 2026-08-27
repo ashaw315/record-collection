@@ -918,3 +918,105 @@ test('the want-list ROW offers editing, not only the detail view', async ({ page
   await expect(page).toHaveURL(new RegExp(`/want-list/${item.id}/edit$`));
   await expect(page.getByLabel('Title')).toHaveValue('The Dreaming');
 });
+
+/**
+ * SPEC.md §12b (A43) — the four states, told apart at a glance.
+ *
+ * **Adam's constraint is habituation:** *"if they render as two similar grey
+ * paragraphs I will stop distinguishing them within a week."* So these assert
+ * the STRUCTURE that carries the difference, not the sentences — wording is the
+ * part a reader stops parsing once a screen is familiar.
+ *
+ * The route is stubbed: it calls Anthropic, and §2 forbids a test reaching it.
+ */
+async function stubAssessment(page: Page, data: Record<string, unknown>) {
+  await page.route('**/api/want-list/*/pressing-assessment', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ data: { askedAt: new Date().toISOString(), dropped: 0, ...data } }),
+    });
+  });
+}
+
+async function seedWanted(page: Page, title: string): Promise<string> {
+  const artist = await post(page, '/api/artists', { name: `Assess-${Date.now()}` });
+  trackArtist(artist.id as string);
+  const item = await post(page, '/api/want-list', {
+    title,
+    artistId: artist.id,
+    priority: 3,
+  });
+  return item.id as string;
+}
+
+test('a pressing that matters names something checkable against the record', async ({ page }) => {
+  await login(page);
+  const id = await seedWanted(page, 'Rumours');
+
+  await stubAssessment(page, {
+    verdict: 'matters',
+    pressings: [{ description: 'First US press', identifier: 'Warner BSK 3010, LW in the deadwax' }],
+  });
+
+  await page.goto(`/want-list/${id}`);
+
+  // Never automatic: nothing is asked until the user asks (§10a).
+  await expect(page.getByTestId('verdict-matters')).toHaveCount(0);
+
+  await page.getByTestId('ask-pressing').click();
+  await expect(page.getByTestId('verdict-matters')).toBeVisible();
+  await expect(page.getByTestId('pressings-to-hunt')).toContainText('BSK 3010');
+
+  // And it reads as the model's, never as something the app established.
+  await expect(page.getByTestId('pressing-assessment')).toContainText('not a fact this app checked');
+});
+
+test('"any copy is fine" and "not known" do not look alike', async ({ page }) => {
+  /*
+    **The pair Adam named.** Both leave him without a pressing to hunt and they
+    mean opposite things: one ENDS the hunt, the other says he is on his own.
+    Asserted as different rendered elements with different markers, because
+    identical-looking states are the failure he predicted within a week.
+  */
+  await login(page);
+
+  const settled = await seedWanted(page, 'Any Copy Album');
+  await stubAssessment(page, { verdict: 'any-copy', pressings: [] });
+  await page.goto(`/want-list/${settled}`);
+  await page.getByTestId('ask-pressing').click();
+
+  const anyCopy = page.getByTestId('verdict-any-copy');
+  await expect(anyCopy).toBeVisible();
+  await expect(anyCopy).toContainText('Any copy is fine');
+  const anyCopyMarker = (await anyCopy.innerText()).trim()[0];
+
+  // A result, not a failure — it saves time rather than reporting an absence.
+  await expect(anyCopy).not.toContainText(/could not|unable|nothing found/i);
+
+  const open = await seedWanted(page, 'Obscure Album');
+  await page.unroute('**/api/want-list/*/pressing-assessment');
+  await stubAssessment(page, { verdict: 'unknown', pressings: [] });
+  await page.goto(`/want-list/${open}`);
+  await page.getByTestId('ask-pressing').click();
+
+  const unknown = page.getByTestId('verdict-unknown');
+  await expect(unknown).toBeVisible();
+  const unknownMarker = (await unknown.innerText()).trim()[0];
+
+  /*
+    **The load-bearing assertion**: different glyphs, so the states are separable
+    before a word is read.
+  */
+  expect(unknownMarker, 'the two non-actionable states must not share a marker').not.toBe(
+    anyCopyMarker,
+  );
+
+  /*
+    And "not known" says WHOSE gap it is — the model's, not the record's. "There
+    is nothing to find" is a negative the app never established, and 14c draws
+    the same distinction with "Discogs holds no matrix".
+  */
+  await expect(unknown).toContainText(/not known to claude/i);
+  await expect(unknown).not.toContainText(/there is nothing|does not exist/i);
+});

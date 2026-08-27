@@ -59,7 +59,11 @@ const CLAIM_LOCK_KEY = 8_141_972;
  * ten requests an hour against the same account, because two independent limits
  * would be a twenty-per-hour limit nobody specified.
  */
-export type LlmRequestKind = 'gap_analysis' | 'snippet' | 'genre_parents';
+export type LlmRequestKind =
+  | 'gap_analysis'
+  | 'snippet'
+  | 'genre_parents'
+  | 'pressing_assessment';
 
 export type ClaimResult =
   /**

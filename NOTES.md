@@ -20370,3 +20370,60 @@ standing rule that assertions about copy quote the copy.
 Unit **3132 passed**. Fourth LLM caller, through `callAnthropic`, with its own
 no-live-call test. **Route and UI next.**
 
+
+---
+
+## A43 unit B — the four states, made distinguishable by STRUCTURE rather than wording
+
+**2026-08-27.** Route, presentation and panel on `/want-list/:id`.
+
+### Adam's constraint is habituation, not clarity
+
+> *"They should be visually distinct enough that I can tell them apart at a
+> glance without reading… if they render as two similar grey paragraphs I will
+> stop distinguishing them within a week."*
+
+**That is a sharper requirement than "make them clear", and it changes what the
+test can assert.** A distinction that survives careful reading but not habit is
+not a distinction — and **wording is exactly the part a reader stops parsing once
+a screen is familiar.**
+
+So the difference is carried by **marker, tone and heading**, and the tests
+assert those carriers rather than the sentences:
+
+| verdict | marker | tone | actionable |
+|---|---|---|---|
+| `matters` | `◆` | positive | **yes** |
+| `any-copy` | `●` | settled | no |
+| `unknown` | `○` | open | no |
+
+**Mutation-verified against the exact failure he predicted**: making `any-copy`
+and `unknown` share a marker and tone — the plausible drift, since both are
+non-actionable — fails two tests.
+
+### The two states that mean "no pressing to hunt" and opposite things
+
+- **`any-copy` ENDS the hunt** and must read as a RESULT. A user who reads it as
+  "the app found nothing" will treat the feature as broken at the moment it is
+  most useful, so the heading is asserted NOT to match `/no|none|nothing|unable/`.
+- **`unknown` LEAVES IT OPEN** and says whose gap it is: *"Not known to Claude…
+  which is not the same as there being nothing to find."* **14c's distinction
+  exactly** — "Discogs holds no matrix… that is a gap in the database, not a fact
+  about the record" — and the test forbids `/there is nothing|does not exist/`.
+
+### Route decisions
+
+- **The row is read BEFORE a slot is claimed**, so a 404 does not cost one of ten
+  requests.
+- **`pressing_assessment` is a fourth `LlmRequestKind`**, sharing the same budget.
+- **Artist and title only**, with the anchoring reason recorded at the call site
+  rather than only in NOTES.
+- **Nothing is stored** — §7.8's ownership lesson applied before the fact: text a
+  model produced sitting in `best_dig_notes` would be indistinguishable from text
+  the user wrote.
+- **`dropped` travels to the UI** (A29d): a pressing discarded for naming nothing
+  checkable makes the answer shorter, and a shorter answer with no explanation
+  makes the rule invisible.
+
+Unit **3139 passed**. Typecheck, lint, build clean.
+

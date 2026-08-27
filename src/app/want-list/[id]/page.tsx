@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { AppHeader } from '@/components/AppHeader';
 import { hydrateWantListItem } from '@/lib/db/queries/want-list';
 import { formatCeiling, huntFacts, priorityLabel } from '../want-list-format';
+import { PressingAssessment } from '../PressingAssessment';
 
 /**
  * SPEC.md §10 — the want-list item detail view.
@@ -101,6 +102,13 @@ export default async function WantListItemPage({
             <p className="mt-2 font-mono text-sm">{ceiling}</p>
           </section>
         )}
+
+        {/*
+          §12b (A43). Below the hunt because it ANSWERS the question the hunt
+          section poses — "which pressing" — and above the ceiling because it is
+          about the record rather than about money.
+        */}
+        <PressingAssessment itemId={item.id} />
 
         <div className="mt-6 flex gap-2">
           <Link
