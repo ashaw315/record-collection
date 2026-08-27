@@ -33,6 +33,7 @@ const ASSESSMENT = {
   verdict: 'matters' as const,
   pressings: [{ description: 'First US press', identifier: 'ABC AB-1006, AB-1006-A in the runout' }],
   dropped: 1,
+  orderedBy: null,
 };
 
 async function seedWanted(title = 'Aja') {
@@ -72,7 +73,7 @@ describe('storing and reading back', () => {
     const { itemId } = await seedWanted();
 
     await storeAssessment(itemId, ASSESSMENT);
-    await storeAssessment(itemId, { verdict: 'any-copy', pressings: [], dropped: 0 });
+    await storeAssessment(itemId, { verdict: 'any-copy', pressings: [], dropped: 0, orderedBy: null });
 
     const stored = await latestAssessment(itemId);
     expect(stored?.verdict).toBe('any-copy');
@@ -98,7 +99,7 @@ describe('storing and reading back', () => {
   it('stores an any-copy verdict as a verdict, not as an absence', async () => {
     const { itemId } = await seedWanted();
 
-    await storeAssessment(itemId, { verdict: 'any-copy', pressings: [], dropped: 0 });
+    await storeAssessment(itemId, { verdict: 'any-copy', pressings: [], dropped: 0, orderedBy: null });
     const stored = await latestAssessment(itemId);
 
     expect(stored, 'an answered "any copy" is not the same as never asked').not.toBeNull();

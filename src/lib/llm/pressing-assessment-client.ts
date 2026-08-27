@@ -63,6 +63,19 @@ export type PressingAssessment =
       ok: true;
       verdict: PressingVerdict;
       pressings: Array<{ description: string; identifier: string }>;
+      /**
+       * The model's own description of what the list's order means, or null.
+       *
+       * **STATED, never RATED.** The list reads best-first by convention, and
+       * measured on two real assessments the model DOES order — differently each
+       * time: original-then-chronological for one, sought-after-then-territory
+       * for the other. So "unordered" would be false and "best first" would be a
+       * claim the assessment cannot support — value is the user's (§8).
+       *
+       * **Attributed when rendered**, because this is the model describing its
+       * own output rather than a property the app determined.
+       */
+      orderedBy: string | null;
       /** Pressings dropped for naming nothing checkable (A29d's reported count). */
       dropped: number;
     } & Observed)
@@ -70,6 +83,14 @@ export type PressingAssessment =
 
 const responseSchema = z.object({
   verdict: z.enum(['matters', 'any-copy', 'unknown']),
+  /**
+   * What the ORDER of `pressings` means, in the model's own words.
+   *
+   * **Optional, because "ordered by nothing in particular" is a real answer**
+   * and inventing a basis to fill the field is the fabrication this exists to
+   * prevent — the same shape as `noParentFits` and the `unknown` verdict.
+   */
+  orderedBy: z.string().trim().min(1).optional(),
   pressings: z
     .array(z.object({ description: z.string(), identifier: z.string() }))
     .optional()
@@ -156,8 +177,26 @@ export function buildPressingAssessmentPrompt(subject: PressingSubject): string 
     '"It sounds better" is not an identifier. If you cannot name something',
     'checkable, answer "unknown" instead.',
     '',
+    /*
+     * **What the order MEANS, not a ranking.** A ranking would be a claim about
+     * VALUE, and value here is the collector's (§8) — so the model is asked to
+     * describe its own ordering rather than to sort by quality.
+     *
+     * And "no particular order" is offered explicitly, because a model asked for
+     * a basis will invent one, which is the fabrication this field exists to
+     * prevent.
+     */
+    'Say what order you have listed them in, as "orderedBy" — for example',
+    '"original pressing first, then chronologically" or "most sought-after',
+    'first". Describe the order you used; do NOT rank them by which sounds best,',
+    'which is the collector’s judgement to make.',
+    '',
+    'If they are in no particular order, leave "orderedBy" out entirely rather',
+    'than inventing a basis.',
+    '',
     'Respond with JSON only, no prose and no markdown fences:',
     '{ "verdict": "matters" | "any-copy" | "unknown",',
+    '  "orderedBy": "..." (optional),',
     '  "pressings": [{ "description": "...", "identifier": "..." }] }',
   ].join('\n');
 }
@@ -207,9 +246,18 @@ export function createPressingAssessmentClient(
           ? 'unknown'
           : envelope.data.verdict;
 
+      /*
+       * A basis describes an ORDER, so it is meaningless without a list to
+       * order — an `any-copy` or `unknown` verdict names no pressings, and
+       * carrying a basis there would describe nothing.
+       */
+      const orderedBy =
+        verdict === 'matters' && kept.length > 1 ? (envelope.data.orderedBy ?? null) : null;
+
       return {
         ok: true,
         verdict,
+        orderedBy,
         // An `any-copy` verdict names no pressings by design, so the rule above
         // cannot demote it.
         pressings: verdict === 'matters' ? kept : [],

@@ -1,0 +1,1 @@
+ALTER TABLE "pressing_assessments" ADD COLUMN "ordered_by" text;

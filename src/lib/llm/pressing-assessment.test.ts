@@ -131,6 +131,103 @@ describe('the four states stay distinguishable', () => {
   });
 });
 
+describe('the ordering states its own basis', () => {
+  const respond = (body: unknown) =>
+    vi.fn().mockResolvedValue({
+      content: [{ type: 'text', text: JSON.stringify(body) }],
+      stop_reason: 'end_turn',
+      usage: { input_tokens: 200, output_tokens: 300 },
+    });
+
+  /**
+   * **The defect Adam found: the app was letting him infer a claim it never
+   * made.** The list reads best-first by convention, and nothing asked for an
+   * order or said what one meant.
+   *
+   * **Measured on his two real assessments, the model DOES order — differently
+   * each time.** Aja was original-first-then-chronological (MFSL below a common
+   * MCA reissue, which is nobody's fidelity ranking); Dummy was
+   * sought-after-first-then-territory. So "unordered" would be false and "best
+   * first" would be a claim the assessment cannot support.
+   *
+   * Fails against a client that drops the basis.
+   */
+  it('carries the model’s stated basis for the order', async () => {
+    /*
+      TWO pressings: a basis describes an ORDER, and a single-entry list has no
+      order to describe. The client carries a basis only when there is a list.
+    */
+    const create = respond({
+      verdict: 'matters',
+      orderedBy: 'original pressing first, then chronologically by reissue',
+      pressings: [
+        { description: 'US original', identifier: 'ABC AB-1006' },
+        { description: 'Japanese pressing', identifier: 'ABC/Victor VIM-6243' },
+      ],
+    });
+
+    const result = await createPressingAssessmentClient({ create }).assess(SUBJECT);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.orderedBy).toBe('original pressing first, then chronologically by reissue');
+  });
+
+  /**
+   * **"Ordered by nothing in particular" is a real answer** (Adam), and
+   * inventing a basis to fill the field is the fabrication this rule exists to
+   * prevent — the same shape as `noParentFits` and `unknown`.
+   *
+   * Fails against a client that defaults the field to a plausible string.
+   */
+  it('reports no basis rather than inventing one', async () => {
+    const create = respond({
+      verdict: 'matters',
+      pressings: [{ description: 'US original', identifier: 'ABC AB-1006' }],
+    });
+
+    const result = await createPressingAssessmentClient({ create }).assess(SUBJECT);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.orderedBy).toBeNull();
+  });
+
+  /**
+   * **The basis is STATED, never RATED** — the rule this project has now landed
+   * on three times. "Best first" is a claim about VALUE, and value here is the
+   * user's (§8). A basis is a fact he weighs.
+   *
+   * Fails against a prompt asking the model to rank by quality.
+   */
+  it('never asks the model to rank by how good the pressings are', () => {
+    const prompt = buildPressingAssessmentPrompt(SUBJECT).replace(/\s+/g, ' ');
+
+    /*
+      The prohibition necessarily quotes what it forbids — "do NOT rank them by
+      which sounds best" contains "rank them". A whole-prompt ban would forbid
+      explaining the rule, which is the same trap A44's example-sentence test
+      hit. So this asserts the instruction is NEGATED where it appears.
+    */
+    expect(prompt).toMatch(/do not rank them by which sounds best/i);
+    expect(prompt).toMatch(/collector’s judgement to make/i);
+
+    // And it asks what the order MEANS rather than for a ranking.
+    expect(prompt).toMatch(/say what order you have listed them in/i);
+  });
+
+  /** A one-entry list has no order to describe, and must not claim one. */
+  it('carries no basis when there is nothing to order', async () => {
+    const create = respond({ verdict: 'any-copy', pressings: [] });
+
+    const result = await createPressingAssessmentClient({ create }).assess(SUBJECT);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.orderedBy).toBeNull();
+  });
+});
+
 describe('a claim without something checkable collapses to unknown', () => {
   const respond = (body: unknown) =>
     vi.fn().mockResolvedValue({

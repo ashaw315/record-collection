@@ -20759,3 +20759,110 @@ E2E produced, arriving from the storage side rather than the routing side.
 reading** — which is why this is a check to run rather than a lesson to
 remember.
 
+
+---
+
+## RULE: state what it IS, never rate what it is WORTH — third instance, so a rule
+
+**Named 2026-08-27 by Adam**, on the A43 ordering question: *"that is now the
+third time this project has landed on stating over rating, which probably makes
+it a rule rather than three decisions."*
+
+**The three instances, and they arrived from different directions:**
+
+| where | the RATING that was refused | the STATEMENT built instead |
+|---|---|---|
+| **A44** genre parents | "well supported" / a confidence score | `UK82 (1 record: Discharge — Grave New World)` |
+| **A43** verdicts | a certainty figure on the assessment | three named states — `matters`, `any-copy`, `unknown` |
+| **A43** ordering | "best first" | the model's own basis: *"original first, then chronological"* |
+
+### Why the distinction holds across all three
+
+**A rating is a claim about VALUE, and value in this app is the user's.** §8 says
+"best dig" is a judgement about sound; §12c says the vocabulary is his; A43 says
+which pressing to chase is his to decide. **An app that rates is making the
+judgement it was built to support.**
+
+**A statement is a fact the user weighs.** It can be checked, it can be
+disagreed with, and it does not pretend to have done the deciding.
+
+**And the failure mode is identical every time**: a rating LOOKS like more help
+and is less. "Well supported" would have hidden that `Rock`'s ten records are ten
+unrelated artists. "Best first" would have hidden that MFSL sits below a common
+MCA reissue in the model's own list — **which is nobody's fidelity ranking, and
+is the tell that the order means something else entirely.**
+
+### The check
+
+> When about to render a judgement the app did not make, ask whether the words
+> describe **what the thing is** or **how good it is**. Describe it. If the
+> quality assessment is genuinely wanted, the user makes it — and what they need
+> from the app is the material, not the verdict.
+
+**Corollary, and it is what makes this operational:** the honest version is
+usually MORE informative, not less. `1 record: Dire Straits` beats "limited
+support"; *"original first, then chronological"* beats "best first"; `unknown`
+beats a hedged guess. **Rating compresses; stating carries the thing that lets a
+person disagree.**
+
+
+---
+
+## A43 ordering: the app was letting an inference stand as a claim
+
+**Adam, 2026-08-27:** *"The Aja list reads best-first by convention… and I will
+read it as ranked whether or not it is. Nothing in the prompt asks for an order
+and nothing on screen says what the order means."*
+
+**That is the app letting the reader infer a claim it never made** — the shape
+this project keeps refusing, arriving through LAYOUT rather than through copy.
+
+### The measurement ruled out both of his options
+
+Read from his two stored assessments:
+
+    Aja:   1. US original "the reference copy"  2. Japanese  3. MCA "commonly
+           found"  4. MFSL  5. 45rpm  6. Cisco
+             → original first, then CHRONOLOGICAL. MFSL sits BELOW a common MCA
+               reissue, which is nobody's fidelity ranking.
+
+    Dummy: 1. "the most sought-after"  2. "also an early edition"  3. US original
+             → sought-after first, then territory.
+
+**The model IS ordering, and differently each time.** So:
+
+- **"unordered" would be FALSE** — there is an order, and telling him to ignore
+  it asks him to un-see a pattern that is really there;
+- **"best first" would be a claim it is not making** — and would invite a ranking
+  about SOUND, which §8 says is his.
+
+**MFSL below a common MCA reissue is the tell**, and it is only visible because
+the assessment was stored and could be read back.
+
+### The fix: it states its own basis
+
+`orderedBy` — *"original pressing first, then chronologically"* — rendered
+attributed: **"Claude listed these …"**, because this is the model describing its
+own output rather than a property the app determined.
+
+**And "no particular order" is sayable rather than forced** (Adam), the same
+shape as `noParentFits` and the `unknown` verdict: a basis invented to fill a
+field is the fabrication the field exists to prevent. **Mutation-verified** —
+defaulting it to "best first" fails `no basis is shown when the model named
+none`.
+
+**Carried only when there is a list to order**: a single pressing has no order to
+describe, and an `any-copy` verdict names none.
+
+### Close to A40 without being it, as Adam said
+
+**A40 is HIS ranking, stored.** This is **Claude's ordering, displayed and never
+stored as truth** — the same standing the rest of the assessment already has. The
+boundary held without needing the album entity.
+
+### Suite
+
+Unit **3141 passed**, 9 failed — **exactly the pre-existing Neon set**, nothing
+else. E2E **444 passed, 1 failed** — `wall-scene:1093`, **sighting eight**,
+byte-identical. Migrations **23 of 23** clean from empty.
+

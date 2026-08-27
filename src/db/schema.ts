@@ -536,6 +536,14 @@ export const pressingAssessments = pgTable('pressing_assessments', {
   pressings: jsonb('pressings').notNull(),
   /** A29d's count of claims discarded for naming nothing checkable. */
   dropped: integer('dropped').notNull().default(0),
+  /**
+   * What the model said its ordering means, or NULL for "no particular order".
+   *
+   * **Nullable is load-bearing**: a list ordered by nothing in particular is a
+   * real answer, and a default would be a basis nobody stated — the fabrication
+   * the field exists to prevent.
+   */
+  orderedBy: text('ordered_by'),
   /** What the UI shows as "asked N ago" — the only time this table holds. */
   askedAt: timestamp('asked_at', { withTimezone: true }).notNull().defaultNow(),
 });

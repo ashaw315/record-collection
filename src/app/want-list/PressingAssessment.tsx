@@ -18,6 +18,8 @@ type Assessment = {
   verdict: PressingVerdict;
   pressings: Array<{ description: string; identifier: string }>;
   dropped: number;
+  /** The model's stated ordering basis, or null for no particular order. */
+  orderedBy: string | null;
   askedAt: string;
 };
 
@@ -147,6 +149,27 @@ export function PressingAssessment({
             {presented.heading}
           </p>
           <p className="mt-0.5 text-xs text-muted-foreground">{presented.detail}</p>
+
+          {/*
+            **What the order MEANS, in the model's own words** (A43).
+
+            The defect this closes: the list reads best-first by convention, and
+            nothing said what the order was — so the app let the reader infer a
+            claim it never made. Measured on two real assessments, the model DOES
+            order and differently each time: original-then-chronological for one,
+            sought-after-then-territory for the other. **"Best first" would have
+            been a ranking about SOUND, which §8 says is the user's to make.**
+
+            **Attributed**, because this is the model describing its own output
+            rather than a property the app determined — and absent entirely when
+            it named no basis, because "ordered by nothing in particular" is a
+            real answer and a filled-in default would be a basis nobody stated.
+          */}
+          {presented.actionable && assessment.orderedBy !== null && (
+            <p data-testid="ordered-by" className="mt-2 text-xs text-muted-foreground">
+              Claude listed these {assessment.orderedBy}.
+            </p>
+          )}
 
           {presented.actionable && assessment.pressings.length > 0 && (
             <ul data-testid="pressings-to-hunt" className="mt-2 space-y-1">

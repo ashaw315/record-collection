@@ -141,11 +141,13 @@ export const POST = withErrorHandling(
       verdict: result.verdict,
       pressings: result.pressings,
       dropped: result.dropped,
+      orderedBy: result.orderedBy,
     });
 
     return NextResponse.json({
       data: {
         verdict: result.verdict,
+        orderedBy: result.orderedBy,
         pressings: result.pressings,
         /*
          * `dropped` travels to the UI for A29d's reason: a pressing discarded

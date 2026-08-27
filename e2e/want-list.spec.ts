@@ -1040,12 +1040,16 @@ test('a stored assessment renders on load without spending a request', async ({ 
 
   const db = getTestDb();
   await db.execute(sql`
-    INSERT INTO pressing_assessments (want_list_id, verdict, pressings, dropped)
+    INSERT INTO pressing_assessments (want_list_id, verdict, pressings, dropped, ordered_by)
     VALUES (
       ${id},
       'matters',
-      ${JSON.stringify([{ description: 'First US press', identifier: 'ABC AB-1006' }])}::jsonb,
-      0
+      ${JSON.stringify([
+        { description: 'First US press', identifier: 'ABC AB-1006' },
+        { description: 'Japanese pressing', identifier: 'ABC/Victor VIM-6243' },
+      ])}::jsonb,
+      0,
+      'original pressing first, then chronologically'
     )
   `);
 
@@ -1071,6 +1075,76 @@ test('a stored assessment renders on load without spending a request', async ({ 
 
   // And removing it is available — delete, never edit (§7.8).
   await expect(page.getByTestId('clear-pressing')).toBeVisible();
+
+  await db.execute(sql`DELETE FROM pressing_assessments WHERE want_list_id = ${id}`);
+});
+
+test('the list says what its order MEANS, attributed, and never claims a ranking', async ({
+  page,
+}) => {
+  /*
+    **The defect Adam found:** the list reads best-first by convention, and
+    nothing said what the order was — so the app let him infer a claim it never
+    made. Measured on his two real assessments the model DOES order, and
+    differently each time, so "unordered" would be false and "best first" would
+    be a ranking about SOUND, which §8 says is his.
+  */
+  await login(page);
+  const id = await seedWanted(page, 'Aja');
+  const db = getTestDb();
+
+  await db.execute(sql`
+    INSERT INTO pressing_assessments (want_list_id, verdict, pressings, dropped, ordered_by)
+    VALUES (
+      ${id}, 'matters',
+      ${JSON.stringify([
+        { description: 'US original', identifier: 'ABC AB-1006' },
+        { description: 'MCA reissue', identifier: 'MCA-37214' },
+      ])}::jsonb,
+      0, 'original pressing first, then chronologically'
+    )
+  `);
+
+  await page.goto(`/want-list/${id}`);
+
+  const orderedBy = page.getByTestId('ordered-by');
+  await expect(orderedBy).toBeVisible();
+  await expect(orderedBy).toContainText('original pressing first, then chronologically');
+
+  // Attributed: the model describing its own output, not a property the app found.
+  await expect(orderedBy).toContainText('Claude listed these');
+
+  // And it never claims a ranking by quality.
+  await expect(page.getByTestId('pressing-assessment')).not.toContainText(
+    /best first|ranked|in order of quality/i,
+  );
+
+  await db.execute(sql`DELETE FROM pressing_assessments WHERE want_list_id = ${id}`);
+});
+
+test('no basis is shown when the model named none', async ({ page }) => {
+  /*
+    **"Ordered by nothing in particular" is a real answer** (Adam), and a
+    filled-in default would be a basis nobody stated — the fabrication the field
+    exists to prevent, and the same shape as noParentFits and the unknown verdict.
+  */
+  await login(page);
+  const id = await seedWanted(page, 'Dummy');
+  const db = getTestDb();
+
+  await db.execute(sql`
+    INSERT INTO pressing_assessments (want_list_id, verdict, pressings, dropped, ordered_by)
+    VALUES (
+      ${id}, 'matters',
+      ${JSON.stringify([{ description: 'UK original', identifier: 'Go! Beat 828 522-1' }])}::jsonb,
+      0, NULL
+    )
+  `);
+
+  await page.goto(`/want-list/${id}`);
+
+  await expect(page.getByTestId('verdict-matters')).toBeVisible();
+  await expect(page.getByTestId('ordered-by')).toHaveCount(0);
 
   await db.execute(sql`DELETE FROM pressing_assessments WHERE want_list_id = ${id}`);
 });

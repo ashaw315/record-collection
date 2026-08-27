@@ -23,12 +23,19 @@ export type StoredAssessment = {
   verdict: PressingVerdict;
   pressings: Array<{ description: string; identifier: string }>;
   dropped: number;
+  /** The model's stated ordering basis, or null for no particular order. */
+  orderedBy: string | null;
   askedAt: Date;
 };
 
 export async function storeAssessment(
   wantListId: string,
-  input: { verdict: string; pressings: Array<{ description: string; identifier: string }>; dropped: number },
+  input: {
+    verdict: string;
+    pressings: Array<{ description: string; identifier: string }>;
+    dropped: number;
+    orderedBy: string | null;
+  },
 ): Promise<void> {
   const db = getDb();
 
@@ -45,6 +52,7 @@ export async function storeAssessment(
       verdict: input.verdict,
       pressings: input.pressings,
       dropped: input.dropped,
+      orderedBy: input.orderedBy,
     })
     .onConflictDoUpdate({
       target: pressingAssessments.wantListId,
@@ -52,6 +60,7 @@ export async function storeAssessment(
         verdict: input.verdict,
         pressings: input.pressings,
         dropped: input.dropped,
+        orderedBy: input.orderedBy,
         askedAt: sql`now()`,
       },
     });
@@ -73,6 +82,7 @@ export async function latestAssessment(wantListId: string): Promise<StoredAssess
     verdict: row.verdict as PressingVerdict,
     pressings: row.pressings as StoredAssessment['pressings'],
     dropped: row.dropped,
+    orderedBy: row.orderedBy,
     askedAt: row.askedAt,
   };
 }
@@ -102,6 +112,7 @@ export async function assessmentForRecord(recordId: string): Promise<StoredAsses
       verdict: pressingAssessments.verdict,
       pressings: pressingAssessments.pressings,
       dropped: pressingAssessments.dropped,
+      orderedBy: pressingAssessments.orderedBy,
       askedAt: pressingAssessments.askedAt,
     })
     .from(pressingAssessments)
@@ -115,6 +126,7 @@ export async function assessmentForRecord(recordId: string): Promise<StoredAsses
     verdict: row.verdict as PressingVerdict,
     pressings: row.pressings as StoredAssessment['pressings'],
     dropped: row.dropped,
+    orderedBy: row.orderedBy,
     askedAt: row.askedAt,
   };
 }
