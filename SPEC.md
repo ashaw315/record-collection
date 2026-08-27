@@ -98,6 +98,12 @@ All tables: `id UUID PRIMARY KEY DEFAULT gen_random_uuid()`, `created_at TIMESTA
 
 Guard against cycles in `parent_genre_id` at the application layer — a genre may not be its own ancestor.
 
+**MEASURED 2026-08-26: the hierarchy is specified and effectively unpopulated.** The live collection carries **34 genres, 2 of which have a parent**. `Punk`, `UK82` and `US Hardcore` are SIBLINGS at the top level — and `UK82 under Punk` is this table's own worked example, one row above.
+
+**That is the flattening CLAUDE.md §8 forbids, sitting in the database rather than in the code.** §8 is explicit that UK first-wave punk, UK82, US hardcore, horror punk and psychobilly are different scenes with different sounds; a flat vocabulary asserts they are peers of each other and of their own parent. Nothing in the app produced this: `parent_genre_id` has been correct and available since step 2, and assigning it is a manual edit per genre on `/manage`, which is why 32 of 34 were never done.
+
+**Recorded here so the gap is legible as UNFILLED rather than unspecified.** A reader finding a flat genre list should see that the structure was always intended and never populated — not conclude that the hierarchy is aspirational or that flatness is the design. Any feature that helps assign parents is filling this gap, not inventing a structure, and it inherits §8's constraint: **the vocabulary is the user's, so a parent may be suggested and must never be assigned without confirmation.**
+
 **`labels`**
 | Column | Type | Notes |
 |---|---|---|
@@ -1307,47 +1313,47 @@ Mock the Discogs, MusicBrainz and Anthropic APIs in tests. Never hit live extern
     Then build the assignment UI. **The importer does not assign slots automatically** — Discogs' types cannot distinguish a left leaf from a right leaf from a back cover, and a wrong guess opens a hinge onto artwork that is not the inner sleeve, which is the invented-stand-in failure §10b's strictest rule forbids. The add-record form surfaces the release's images as candidates and the user assigns them, the same shape §5.7 already uses for every other field: Discogs supplies the material, the user supplies the judgement.
 
     A single wide scan of an open gatefold cannot fill two square slots (A21b). It goes to the gallery as `other`, and a user who wants the hinge photographs the sleeve themselves. That is honest — splitting a scan down the middle and hoping the seam lands right is not.
-14b. **Scope "Compare pressings" to the candidates on the page (§5.7, §10).**
-    Added 2026-08-25 out of the three-findings lookup unit, as a build step
-    rather than a defect fix — it answers a **different question** from the one
-    §5.7 currently specifies, so it is an amendment and not a correction.
+14b. **WITHDRAWN 2026-08-26 (A42) — "Compare pressings", scoped to the candidates on the page. Never built.**
+    Specified 2025-08-25, superseded by 14c the following day, and closed here
+    rather than left deferred.
 
-    **The defect that prompted it.** The expanded panel fetches the master's
-    version list, page 1 of 26, unfiltered: for The Doors' debut that is 25 rows
-    all dated 1967, spanning NZ, UK, Canada and South Korea, out of 637 — and
-    the user's 1979 US reissue is on page 7. The panel excluded every candidate
-    the search had returned, at the exact moment the tool existed to
-    discriminate. `meta.pages` is normalized and then discarded by the client,
-    so nothing on screen says the list was truncated.
+    **What it would have been.** The expanded panel fetches a master's version
+    list unfiltered — 25 rows of 637 for The Doors' debut, with the user's copy
+    on page 7 — so 14b would have scoped that list to the other results from the
+    same search, comparing them column by column at no additional API cost.
 
-    **Why filtering is the wrong fix, and this is the shape of the reasoning.**
-    Filtering the versions call (`country`, `format`, `released` are all
-    supported — measured: they narrow 637 rows to the 3 that include the target)
-    makes the right rows REACHABLE without making them the only rows, and it
-    needs a year to be useful. **Year is an output of identification, not an
-    input to it** — a 1967-filtered list is precisely what hid the record here.
-    A filter built from fields the user has not confirmed reintroduces the bug
-    in a new place. Country and format are read off the object in hand; year is
-    not, and if it is ever offered it is a user-driven control, never a default.
+    **Why it is withdrawn, and the argument is 14b's own.** Its clause already
+    drew the distinction that retires it: **the master version list answers
+    "what pressings of this album exist" — a discography question. The candidate
+    set answers "which of these is mine" — an identification question**, which
+    is what §5.7 says the screen is for.
 
-    **What this step builds instead.** The panel shows the other results from
-    THIS SEARCH that share the master — the three 1979 US LPs in the reported
-    case — compared column by column, with the current row marked. Those rows
-    are already in hand from the search response, so it costs **no additional
-    API calls**. The full master list stays reachable behind a clearly labelled
-    secondary action, because sibling scoping cannot surface a pressing the
-    search did not return, and that is a real loss worth naming in the UI.
+    **14c answered the identification question by a different route.** Fetching
+    release detail for one candidate and displaying its identifiers, companies
+    and notes lets the user's eye match against the record in hand — measured at
+    93% on identifiers alone, 100% including notes — and it does that without
+    the master call at all. **Verified in real use** (NOTES, 2026-08-26): a
+    Terre Haute pressing identified against `EKS-75005-A-1 CTH` in the deadwax,
+    corroborated by the rim text in its notes.
 
-    **The question each answers, since the label hides the difference:** the
-    master version list answers "what pressings of this album exist" — a
-    discography question. The candidate set answers "which of these is mine" —
-    an identification question, which is the one §5.7 says this screen is for
-    and the one a person standing in a shop is actually asking.
+    **Adam, on a 17-record collection: "14c does the identification job and I
+    have not missed the discography view."**
 
-    **Depends on nothing; may be built whenever a lookup unit is open.** The
-    identical-row collapse (§10) applies unchanged to the scoped set, and must:
-    the three 1979 US rows are identical on every displayed column, so scoping
-    makes them reachable and does not make them distinguishable.
+    **Closed rather than deferred, and that is the point.** This project's rule
+    is that a deferral without a trigger is a decision never to act. 14b HAD a
+    trigger — "may be built whenever a lookup unit is open" — and three lookup
+    units have opened and closed since without it firing. **A deferral that
+    survives its own trigger is a decision nobody made**, and leaving it in the
+    build order would misrepresent a settled question as pending work.
+
+    **If the discography view is ever wanted it returns as a NEW step with its
+    own justification**, which is a better artefact than a stale one: the case
+    would be made against the collection as it is then, not against a defect
+    report from 2026-08-25 that a different feature has since answered.
+
+    **What survives from it:** the identical-row collapse (§10) it relied on,
+    which is built and unaffected; and the reasoning above, which is why this
+    entry is a paragraph rather than a deletion.
 
 14c. **Verification-by-display: identify a pressing by showing the evidence
     (§5.7).** Added 2026-08-25 out of the lookup QA. **This SUPERSEDES the

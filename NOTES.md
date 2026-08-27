@@ -19231,3 +19231,72 @@ duration is an order of magnitude off is measuring the host, not the code. Check
 before fixing, applied to the harness rather than the app.**
 
 Unit **3077 passed**, 1 skipped. Typecheck, lint, build clean.
+
+---
+
+## Item 1 — 14b WITHDRAWN (A42), and the genre gap made legible
+
+**2026-08-26.** Two SPEC edits, no code. Item 0 was confirmed working in real use
+first — Adam generated a snippet that came back clean and complete, which closes
+that unit on the only evidence that counts.
+
+### 14b withdrawn rather than left deferred
+
+**Specified 2026-08-25, superseded by 14c the next day, closed today.**
+
+**The argument is 14b's own clause**, which already drew the distinction that
+retires it: the master version list answers "what pressings of this album exist"
+— a discography question — while the candidate set answers "which of these is
+mine", an identification question, which is what §5.7 says the screen is for.
+
+**14c answered the identification question by a different route** and without the
+master call at all: fetch release detail for one candidate, display the evidence,
+let the user's eye match. 93% on identifiers alone, and **verified in real use**
+— a Terre Haute pressing identified against `EKS-75005-A-1 CTH` in the deadwax.
+
+**Adam, on 17 records: "14c does the identification job and I have not missed the
+discography view."**
+
+**Closed, not deferred, and the reasoning generalises.** This project's rule is
+that a deferral without a trigger is a decision never to act. **14b HAD a
+trigger** — "may be built whenever a lookup unit is open" — **and three lookup
+units opened and closed without it firing.**
+
+> **A deferral that survives its own trigger is a decision nobody made.** Leaving
+> it in the build order misrepresents a settled question as pending work, and the
+> longer it sits the more it reads as an obligation rather than an option.
+
+**If the discography view is ever wanted it returns as a NEW step**, which is a
+better artefact: the case would be made against the collection as it is then,
+rather than against a 2026-08-25 defect report that a different feature has since
+answered. **Kept as a paragraph rather than a deletion** so the reasoning
+survives — the build order is numbered and referenced, and a silent gap at 14b
+would send a reader looking for what used to be there.
+
+### The genre gap, recorded at §4.1 where the hierarchy is specified
+
+**Adam asked for this so the next reader knows the feature fills a gap rather
+than inventing a structure.** It belongs at §4.1 rather than in the build order,
+because that is where `parent_genre_id` is defined — **and §4.1's own worked
+example is `UK82 under Punk`, which is exactly the pairing now sitting flat.**
+
+    34 genres, 2 with a parent.
+    Punk, UK82 and US Hardcore are siblings at the top level.
+
+**That is CLAUDE.md §8's flattening sitting in the DATABASE rather than in the
+code**, which is why no test caught it: every mechanism works. `parent_genre_id`
+has been correct and available since step 2; assigning it is a manual edit per
+genre on `/manage`, and 32 of 34 were never done.
+
+**The distinction the note draws:** a reader finding a flat genre list should see
+that the structure was always intended and never populated — not conclude that
+the hierarchy is aspirational, or that flatness is the design. **A gap that is
+legible as unfilled is a different artefact from one that reads as unspecified.**
+
+And it carries §8's constraint forward to whatever fills it: **the vocabulary is
+the user's, so a parent may be SUGGESTED and must never be assigned without
+confirmation.**
+
+**Verification: SPEC only.** No code references 14b; `test/repo` (110 tests,
+including the file that reads SPEC.md) passes; build clean.
+
