@@ -20256,3 +20256,117 @@ a known property rather than a surprise** the first time a query looks wrong.
 whether "what am I missing in Punk" means UK82 and US Hardcore only, or
 everything under Rock as well.
 
+
+---
+
+## A43 unit A — the pressing assessment client, and four answers to the scoping questions
+
+**2026-08-27.** Taken before item 4 at Adam's direction: *"the drill-down is a
+better question than a whole-collection gap analysis, but the pressing
+assessment is the thing I asked for and the reason I noticed the want-list form
+was the wrong shape."*
+
+### Q1 — what it is asked about: ARTIST AND TITLE ALONE
+
+**Measured first, and the measurement was smaller than the scoping assumed:** a
+want-list row carries artist, title and priority. **No label, no genres, no
+year**, and both live rows are bare because they arrived from suggestion
+prefills.
+
+Adam chose artist+title, ruling out the two richer options with better arguments
+than mine:
+
+- **Not what Discogs lists.** *"The question is about the album's pressing
+  history, which is what the model knows; grounding it in what Discogs lists
+  today is a different question and the one 14c already answers."*
+- **NOT the user's own dig notes**, and this is the argument I had not made.
+  I called option 3 redundant-today. **He identified it as ANCHORING:** *"sending
+  my own dig notes invites the model to agree with me. An assessment confirming
+  'first UK press on Clay' is worth much less than one arrived at independently.
+  Keeping them separate means I can compare what I believe against what it says,
+  and disagreement is informative."*
+
+  **That is a reason the fields must stay apart permanently**, not merely a
+  reason they are equivalent while the rows are empty — and it is recorded as
+  such at the client.
+
+### Q2 — staleness: show WHEN it was asked, and nothing else
+
+A39 shows "before you added 5 records" because a gap analysis is a claim about a
+**collection that changes**. **A pressing assessment is a claim about an album's
+pressing history, which does not** — so the records-added count is irrelevant
+here, and showing it would be the noise A37's variant limit warns about.
+
+### Q3 — want-list first, both eventually
+
+**Adam's instinct, and it is the design:** the hunt is where the assessment
+changes a decision — time and money about to be spent. On a record already owned
+the question is quieter, *"is mine the good one and is an upgrade worth it"*,
+which needs to know WHICH copy is owned — 14c's identification problem, and
+closer to A40's territory.
+
+### Q4 — one call, per row, never automatic
+
+Against the shared 10/hour. §9.2's figures are the estimate; a single row sends
+far less than a collection, so input is small and output is the variable. Same
+shape as `/lookup`'s market check.
+
+### THE FOURTH STATE, which Adam required and the scoping missed
+
+The scoping named three states. **He asked whether there is a fourth: "any copy
+is fine" and "I have nothing useful to say about this record" are different
+answers, and the second is likely for obscure records — which is most of what he
+buys.**
+
+**They do not collapse:**
+
+| verdict | what it tells the user |
+|---|---|
+| `matters` | pressings to hunt, named |
+| `any-copy` | **stop looking** — it ends the hunt |
+| `unknown` | **you are on your own** — it leaves the hunt open |
+| (no result) | nobody asked |
+
+**Collapsing `unknown` into `any-copy` would turn "I have no information" into
+"there is nothing to find"** — a negative the app never established, on exactly
+the records this collection is made of.
+
+### CHECKABLE IS A PARSE-LEVEL RULE, and the accepted list is written down
+
+**Adam: make it a requirement rather than a prompt request, the way A44 drops
+pairings naming unknown genres. An instruction is not a verification (A29c).**
+
+| accepted | why |
+|---|---|
+| catalogue number | printed on sleeve and label |
+| pressing plant | named in the deadwax or on the label |
+| matrix / runout | stamped in the deadwax — 14c's whole subject |
+| country | printed on the sleeve |
+
+**A YEAR is NOT accepted, and the reason is 14b's**: a year is an OUTPUT of
+identification rather than an input to it. Adam: *"'the 1977 pressing' cannot be
+checked in a shop."* Years are stripped before matching, so a string carrying
+only a year cannot pass on another pattern's leniency.
+
+**The intended cost is suppressing genuine but general knowledge**, which Adam
+asked for explicitly: *"a model that knows an album has notable pressings but
+cannot name one has told me nothing I did not know from the fact that I am
+holding a record."*
+
+**And a "matters" verdict whose pressings are all dropped becomes `unknown`** —
+because claiming pressings matter without naming one IS the vague answer the
+rule exists to suppress.
+
+**Mutation-verified**: removing the filter fails both `drops a pressing
+identified only by vague praise` and `does not accept a year alone`.
+
+### Two test assertions of mine were wrong, not the prompt
+
+`/any copy|does not matter/` and `/not (a )?year/` failed against a prompt that
+says both things correctly — the text spans a line break, and it reads "A year is
+NOT enough". **Fixed by flattening whitespace and quoting the copy**, per the
+standing rule that assertions about copy quote the copy.
+
+Unit **3132 passed**. Fourth LLM caller, through `callAnthropic`, with its own
+no-live-call test. **Route and UI next.**
+
