@@ -20427,3 +20427,38 @@ non-actionable — fails two tests.
 
 Unit **3139 passed**. Typecheck, lint, build clean.
 
+
+### A REAL DEFECT the full run caught, in code written this unit
+
+**`manage.spec.ts:639` failed on `[mobile]` only**, and it was NOT load — despite
+the run being contaminated (load 88/95/78, four of six failures the `toHaveURL`
+login signature):
+
+    Expected substring: "will not be suggested again"
+    Received: "AOR-…(1 record: Dire Straits)AcceptReject"
+
+**The reject click was silently swallowed.** `ParentProposal` disabled every
+button while ANY pairing was settling (`disabled={busy !== undefined}`), so on
+the slower project the accept's await was still in flight when the reject fired.
+
+**Two things were wrong and both are fixed:**
+
+- **the guard was global when the decision is per row.** One pairing's decision
+  has nothing to do with another's, so `busy` now gates only its own row;
+- **the test assumed the click settled.** It now waits for the rejection's own
+  POST — the same correction the want-list redirect race needed.
+
+**Second time this session an unwaited write produced a mobile-only failure**,
+and the pattern is worth naming: **a per-row action is a REQUEST, and a test that
+treats it as instantaneous races whichever project is slower.** Chromium passing
+is not evidence — CLAUDE.md §10's rule arriving through the project axis for the
+third time.
+
+**Both projects pass after the fix.**
+
+### The rest of that run measured the machine
+
+**433 passed, 6 failed, 17.6 minutes at load 88/95/78.** Four were `toHaveURL`
+login timeouts, three were "destination stream closed early" — the documented
+contaminated-run signature. **Only the one above was a defect, and it was found
+by reading the failure rather than by the count.**
