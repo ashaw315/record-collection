@@ -20462,3 +20462,115 @@ third time.
 login timeouts, three were "destination stream closed early" — the documented
 contaminated-run signature. **Only the one above was a defect, and it was found
 by reading the failure rather than by the count.**
+
+---
+
+## RULE: a visual distinction asked for is a STRUCTURAL distinction built
+
+**Named 2026-08-27 by Adam, on the A43 verdict rendering.** He asked for the four
+states to be *"visually distinct enough that I can tell them apart at a glance
+without reading"*, and the build turned that into a structural guarantee. **His
+observation is why it is worth a rule:**
+
+> *"A test asserting two headings differ passes right up until someone rewords
+> one, and by then the drift has already happened."*
+
+**The failure mode is drift, not error.** Nobody breaks a visual distinction on
+purpose; it erodes one reasonable edit at a time — a heading softened, a colour
+harmonised, two paragraphs converging because they say similar things. **Each
+edit is defensible and the guarantee is gone.**
+
+### Why asserting the wording is the weak version
+
+A test that checks `headingA !== headingB` is satisfied by any two different
+strings, **including two that read identically at a glance**: "Any copy is fine"
+and "Any copy will do" differ, pass the test, and are indistinguishable to
+someone who has seen the screen fifty times.
+
+**And it fails in the wrong direction**: it goes green while the distinction is
+lost, so the test reports success at exactly the moment it stops being true.
+
+### What was asserted instead
+
+The presentation returns a **marker, a tone and a heading**, and the tests assert
+those CARRIERS:
+
+    expect(anyCopy.tone).not.toBe(unknown.tone)
+    expect(new Set([a.marker, b.marker, c.marker]).size).toBe(3)
+
+**A marker cannot be softened into another marker by a wording change.** A tone
+drives colour and cannot converge by paraphrase. **The distinction survives edits
+to the sentences, which is precisely the drift a wording assertion cannot see.**
+
+### The general form
+
+> **Wording is the part a reader stops parsing once a screen is familiar** — so a
+> distinction carried only by wording is a distinction that expires with
+> familiarity. When someone asks for states to be *visibly* different, the
+> testable version is that they are *structurally* different: a marker, a
+> position, a shape, a tone. Assert the carrier, not the copy.
+
+**Adam's framing of the value:** a structural guarantee is stronger than the
+visual one he asked for, because it holds through the rewordings that would
+silently undo a visual one.
+
+Related but distinct from "assertions about copy quote the copy" — that rule is
+about pinning a sentence that MUST NOT change, and this one is about a difference
+that must survive the sentence changing.
+
+---
+
+## RULE, second half now the load-bearing one: chromium passing is NOT evidence
+
+**Twice this session**, a per-row action raced its own write and the defect was
+**invisible until `[mobile]` ran it**:
+
+| unit | what raced |
+|---|---|
+| item 2 (want-list edit) | `router.push` still in flight when `page.goto` fired |
+| A43/A44 (`ParentProposal`) | accept's await in flight when reject was clicked, and a GLOBAL busy flag swallowed it |
+
+**The rule has two halves and the second is the one that keeps biting:**
+
+1. **A per-row action is a REQUEST**, and a test that treats it as instantaneous
+   races whichever project is slower.
+2. **Chromium passing is not evidence.** Adam: *"both times the defect was
+   invisible until the slower project ran it."*
+
+**Why the second half is the harder one.** The first is a thing you can learn and
+apply — await the write, assert the response. **The second is about what you
+CONCLUDE from a green run**, and the temptation is structural: iterating on one
+project is faster, so every unit is developed against chromium and the mobile
+result arrives only at the end.
+
+**Both defects were in code that passed every chromium run**, including the
+targeted `-g` runs used while building. **A spec-scoped, single-project green is
+the weakest signal in this project and the one most often acted on**, because it
+is the one available soonest.
+
+**And note what made the A44 case worse than a flake**: the global `busy` flag
+was a real design error — one pairing's decision has nothing to do with
+another's — and the slower project did not CAUSE it, it merely made it visible.
+**A timing-sensitive failure can be a genuine defect wearing a flake's clothes**,
+which is the opposite of the accumulation family and has to be diagnosed rather
+than pattern-matched.
+
+**The practical consequence, already in CLAUDE.md §10 and now with two more
+instances behind it:** run both projects before believing a unit is done, and
+treat a chromium-only pass as "not yet contradicted" rather than "verified".
+
+### The clean run, for the record
+
+**436 passed, 3 failed, 13.2 minutes at load ~15** — a normal duration, so this
+measures the app rather than the host. All three failures are documented shapes
+and none is A43's:
+
+- `wall-scene:1093` — byte-identical to sightings 1-7, the documented
+  intermittent;
+- `collection-widths:151` — `ECONNRESET`, transport family;
+- `lookup-flows:1525` — element not visible, 14c's verbatim test.
+
+**All pass in isolation (4/4 across both projects), and both specs contain ZERO
+references to anything A43 touches.** Checked rather than assumed, because
+`lookup-flows:1525` is a test whose subject — a runout rendering verbatim — is
+adjacent enough to A43's pressing identifiers to be worth ruling out by hand.
