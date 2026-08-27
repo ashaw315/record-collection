@@ -6,6 +6,7 @@ import {
   MAX_PRICE_LABEL,
   formatCeiling,
   priorityLabel,
+  huntFacts,
   targetPressingSummary,
 } from './want-list-format';
 
@@ -228,5 +229,89 @@ describe('three money figures, three meanings (§7.2 extended by §10a)', () => 
     for (const label of [MAX_PRICE_LABEL, MARKET_FLOOR_LABEL, MARKET_RANGE_LABEL]) {
       expect(label.toLowerCase()).not.toContain('best dig');
     }
+  });
+});
+
+/**
+ * SPEC.md §10 — the want-list detail view's hunt section.
+ *
+ * **The defect, from Adam's real use:** `target_pressing` and `best_dig_notes`
+ * exist on the row and are invisible unless editing. *"I filled them in and
+ * cannot see them."*
+ *
+ * **The absence rule, decided rather than discovered.** The screen's job is
+ * showing what the user RECORDED about the hunt, so a row with nothing recorded
+ * is a legitimate state and not a gap to be filled. Absent fields are omitted,
+ * and an entirely empty hunt returns `[]` so the caller renders no section at
+ * all — the same shape as `pressingFacts`, and the same reasoning as §12 step
+ * 14c's variant limit: a line shown where it does not bite is noise that trains
+ * the reader to skip the one that does.
+ */
+describe('what the hunt section shows', () => {
+  it('lists what was recorded, in reading order', () => {
+    const facts = huntFacts({
+      bestDigNotes: '1st UK Clay press, Porky stamp',
+      targetPressing: {
+        catalogNumber: 'CLAY LP 3',
+        countryPressed: 'UK',
+        yearPressed: 1982,
+        matrixRunout: null,
+      },
+    });
+
+    /*
+      `BEST_DIG_LABEL` rather than a literal: it reads "Best dig — the pressing
+      to hunt for", and the qualifier is load-bearing (CLAUDE.md §8 — never a
+      price, never a deal). Asserting a shortened string here would let the
+      protective half be dropped without failing a test.
+    */
+    expect(facts.map((f) => f.label)).toEqual(['Target pressing', BEST_DIG_LABEL]);
+  });
+
+  /**
+   * Fails against a formatter that emits "not recorded" placeholders — which
+   * would put a line on every field of every row that has nothing to say.
+   */
+  it('omits a field that was not recorded, rather than placeholding it', () => {
+    const facts = huntFacts({ bestDigNotes: 'Avoid the 1989 repress', targetPressing: null });
+
+    expect(facts.map((f) => f.label)).toEqual([BEST_DIG_LABEL]);
+    expect(JSON.stringify(facts)).not.toMatch(/not recorded|none|n\/a|unknown/i);
+  });
+
+  /**
+   * **The common case today, and the one that decides the design.** Most rows
+   * carry nothing about the hunt, and a section of placeholders on every one of
+   * them would read as a broken page rather than as an honest blank.
+   *
+   * Fails against a formatter that always returns rows.
+   */
+  it('returns nothing at all when the hunt was never described', () => {
+    expect(huntFacts({ bestDigNotes: null, targetPressing: null })).toEqual([]);
+  });
+
+  /** Whitespace is not a recorded value — the form can save an empty textarea. */
+  it('treats a whitespace-only note as absent', () => {
+    expect(huntFacts({ bestDigNotes: '   \n ', targetPressing: null })).toEqual([]);
+  });
+
+  /**
+   * **§7.2 / CLAUDE.md §8: `max_price` is NOT a hunt fact.** "Best dig" is the
+   * highest-fidelity pressing worth hunting for; `max_price` is an unrelated
+   * ceiling the user set. §7.2 requires them visually and structurally separate,
+   * which means the ceiling cannot enter this list even when it is set.
+   *
+   * Fails against a formatter that folds price into the hunt for tidiness.
+   */
+  it('never carries the price ceiling among the hunt facts', () => {
+    const facts = huntFacts({
+      bestDigNotes: '1st press only',
+      targetPressing: null,
+      // @ts-expect-error maxPrice is deliberately not part of the input shape:
+      // §7.2's separation is enforced by the TYPE, not by remembering.
+      maxPrice: '40.00',
+    });
+
+    expect(JSON.stringify(facts)).not.toContain('40.00');
   });
 });

@@ -79,7 +79,10 @@ const STATIC_ROUTES = [
 ] as const;
 
 /** Every `page.tsx` under `src/app`, minus `/login`, must appear above. */
-const EXPECTED_PAGE_COUNT = STATIC_ROUTES.length + 2 /* /records/:id and its /edit */;
+const EXPECTED_PAGE_COUNT =
+  STATIC_ROUTES.length +
+  2 /* /records/:id and its /edit */ +
+  1 /* /want-list/:id — dynamic, so not a static route; nav asserted below */;
 
 test.beforeEach(async ({ page }) => {
   await login(page);
@@ -88,8 +91,9 @@ test.beforeEach(async ({ page }) => {
 test('the route list has not fallen behind the app', async () => {
   /**
    * The vacuity guard, and it is doing the job the old test's directory walk
-   * did. `src/app` has 13 `page.tsx` files: the eight static routes above, the
-   * two record routes covered below, and two exempt — `/login` and `/plane`.
+   * did. `src/app` has 14 `page.tsx` files: the eight static routes above, the
+   * two record routes and `/want-list/:id` covered below, and two exempt —
+   * `/login` and `/plane`.
    *
    * `/suggestions` is listed here and has NO header link, deliberately (NOTES,
    * step 14 unit 3). This spec's subject is whether a screen is reachable FROM,
@@ -184,4 +188,35 @@ test('/login deliberately has no main nav', async ({ page, context }) => {
   await page.goto('/login');
 
   await expect(page.getByRole('navigation', { name: 'Main' })).toHaveCount(0);
+});
+
+test('the want-list detail screen renders the main nav', async ({ page }) => {
+  /**
+   * Dynamic, so it cannot sit in `STATIC_ROUTES` — and the vacuity guard above
+   * counts it, so this test existing is what makes that count honest.
+   *
+   * **It is exactly the arrival-by-link case this spec exists for**: reached
+   * from a row on `/want-list`, which is where the app's own copy sends the
+   * user, so the way back has to be on the page rather than in the history.
+   *
+   * `page.request`, not the standalone fixture — see the record test above for
+   * the 401 trap that cost someone a silently-dead test.
+   */
+  const suffix = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+
+  const artist = await page.request.post('/api/artists', { data: { name: `WLNav-${suffix}` } });
+  const artistId = ((await artist.json()) as { id: string }).id;
+  trackArtist(artistId);
+
+  const item = await page.request.post('/api/want-list', {
+    data: { title: `WL Nav ${suffix}`, artistId, priority: 3 },
+  });
+  expect(item.status(), 'the fixture item must exist for this to test anything').toBe(201);
+  const itemId = ((await item.json()) as { id: string }).id;
+
+  await page.goto(`/want-list/${itemId}`);
+  await expect(
+    page.getByRole('navigation', { name: 'Main' }),
+    'the want-list detail screen has no visible main nav',
+  ).toBeVisible();
 });

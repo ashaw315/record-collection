@@ -111,3 +111,54 @@ export function targetPressingSummary(
   const matrix = pressing.matrixRunout;
   return matrix === null || matrix.trim() === '' ? undefined : matrix;
 }
+
+/**
+ * What the user recorded about the hunt, for the detail view — omitting
+ * whatever they did not record.
+ *
+ * **The absence rule, and it is a decision rather than a default.** Most rows
+ * carry nothing here. The screen's job is showing what the user RECORDED about
+ * the hunt, so **a row with nothing recorded is a legitimate state, not a gap to
+ * be filled** — and "no target pressing recorded" on every field of every such
+ * row would treat blank as a defect and imply work to do.
+ *
+ * Returns `[]` when nothing was described, so the caller renders **no section at
+ * all** rather than an empty one. Same shape as `pressingFacts`, and the same
+ * reasoning as §12 step 14c's variant limit: a line shown where it does not bite
+ * is noise that trains the reader to skip the one that does.
+ *
+ * **Where absence-as-absence WOULD be needed, and why it is not here.** On
+ * `/lookup`, "Discogs holds no matrix" earns its place because a blank could be
+ * misread as *this pressing has no runout*. Here a blank hunt can only mean the
+ * user wrote nothing — there is no wrong inference available to prevent.
+ *
+ * **`max_price` is deliberately not in the input shape.** §7.2 and CLAUDE.md §8:
+ * "best dig" is the highest-fidelity pressing worth hunting for and `max_price`
+ * is an unrelated ceiling, kept visually and structurally separate. Excluding it
+ * from the TYPE means the separation cannot be lost by someone folding the two
+ * together for tidiness — enforced rather than remembered.
+ */
+export type HuntFact = { label: string; value: string };
+
+export function huntFacts(input: {
+  bestDigNotes: string | null;
+  targetPressing: TargetPressing | null;
+}): HuntFact[] {
+  const facts: HuntFact[] = [];
+
+  const push = (label: string, value: string | null | undefined) => {
+    // Whitespace is not a recorded value: the form can save an empty textarea.
+    if (value === null || value === undefined || value.trim() === '') return;
+    facts.push({ label, value });
+  };
+
+  /*
+   * Target pressing first: it names the OBJECT to look for, and the notes are
+   * caveats about finding it. Reading order follows what the user does in a
+   * shop — identify the pressing, then check the warnings.
+   */
+  push('Target pressing', targetPressingSummary(input.targetPressing));
+  push(BEST_DIG_LABEL, input.bestDigNotes);
+
+  return facts;
+}

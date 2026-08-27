@@ -740,3 +740,85 @@ test('the model\'s reason arrives with the suggestion, and is absent when supers
 
   await db.execute(sql`DELETE FROM gap_analysis_results`);
 });
+
+/**
+ * SPEC.md §10 — the want-list detail view.
+ *
+ * **Adam's report: "I filled them in and cannot see them."** `target_pressing`
+ * and `best_dig_notes` live on the row and were reachable only by editing.
+ */
+test('the dig fields Adam recorded are visible without editing', async ({ page }) => {
+  await login(page);
+
+  // Created through the API so the test exercises the VIEW rather than the form.
+  const artist = await post(page, '/api/artists', { name: `Dig-${Date.now()}` });
+  trackArtist(artist.id as string);
+  const item = await post(page, '/api/want-list', {
+    title: 'Rumours',
+    artistId: artist.id,
+    priority: 2,
+    bestDigNotes: '1st US press, Porky stamp; avoid the 1979 repress',
+    maxPrice: '40.00',
+  });
+
+  await page.goto('/want-list');
+  await page.getByTestId('want-list-detail-link').first().click();
+  await expect(page).toHaveURL(new RegExp(`/want-list/${item.id}$`));
+
+  // The whole point: recorded once, visible without editing.
+  const hunt = page.getByTestId('hunt');
+  await expect(hunt).toBeVisible();
+  await expect(hunt).toContainText('Porky stamp');
+
+  /*
+    **§7.2 / CLAUDE.md §8: the ceiling is a SEPARATE section.** "Best dig" is the
+    pressing worth hunting for; `max_price` is an unrelated limit. Sharing a
+    heading would read as one judgement about value, which is the conflation §8
+    forbids — so this asserts the price is NOT inside the hunt.
+  */
+  await expect(hunt).not.toContainText('40');
+
+  /*
+    **Asserted as a SECTION WITH ITS OWN HEADING, not merely as a separate
+    element.** §7.2 says "never one section, never one label" — and a first
+    version of this checked only that the price was outside the hunt's testid,
+    which a mutation passed by moving the ceiling into a bare <p> beside it.
+    Not nested is not the same as separate.
+  */
+  const ceiling = page.getByTestId('ceiling');
+  await expect(ceiling).toContainText('40');
+  await expect(
+    ceiling.getByRole('heading'),
+    'the ceiling carries its own label, so it cannot read as part of the hunt',
+  ).toBeVisible();
+});
+
+test('a row with nothing recorded shows no hunt section, not placeholders', async ({ page }) => {
+  /*
+    **The common case today, and the decision the unit turned on.** The screen
+    shows what the user RECORDED about the hunt, so a row with nothing recorded
+    is a legitimate state rather than a gap to be filled — "no target pressing
+    recorded" on every field would treat blank as a defect and imply work to do.
+  */
+  await login(page);
+
+  const artist = await post(page, '/api/artists', { name: `Bare-${Date.now()}` });
+  trackArtist(artist.id as string);
+  const item = await post(page, '/api/want-list', {
+    title: 'Nothing Recorded',
+    artistId: artist.id,
+    priority: 3,
+  });
+
+  await page.goto(`/want-list/${item.id}`);
+
+  // The page renders and identifies the record — it is not broken.
+  await expect(page.getByRole('heading', { name: 'Nothing Recorded' })).toBeVisible();
+
+  // And says nothing about what is absent.
+  await expect(page.getByTestId('hunt')).toHaveCount(0);
+  await expect(page.getByTestId('ceiling')).toHaveCount(0);
+
+  const body = await page.locator('main').innerText();
+  expect(body).not.toMatch(/not recorded|none recorded|no target|unknown|n\/a/i);
+});

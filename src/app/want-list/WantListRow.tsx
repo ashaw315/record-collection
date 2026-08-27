@@ -76,7 +76,18 @@ export function WantListRow({ item }: { item: WantListItem }) {
     <li className="border-b border-border py-3 last:border-0">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <div className="min-w-0">
-          <p className="font-medium">{item.title}</p>
+          {/*
+            Clickable through to the detail view, where `target_pressing` and
+            `best_dig_notes` are visible — they live on the row and were
+            previously only reachable by editing.
+          */}
+          <Link
+            href={`/want-list/${item.id}`}
+            data-testid="want-list-detail-link"
+            className="font-medium underline-offset-2 hover:underline"
+          >
+            {item.title}
+          </Link>
           <p className="text-sm text-muted-foreground">
             {item.artist.name}
             {item.label !== null && ` · ${item.label.name}`}

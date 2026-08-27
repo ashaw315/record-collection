@@ -19300,3 +19300,99 @@ confirmation.**
 **Verification: SPEC only.** No code references 14b; `test/repo` (110 tests,
 including the file that reads SPEC.md) passes; build clean.
 
+
+---
+
+## Item 2 — the want-list detail view, and an absence decision made rather than defaulted
+
+**2026-08-26.** Adam: *"I filled them in and cannot see them."* `target_pressing`
+and `best_dig_notes` live on the row and were reachable only by editing. **No new
+data — data the app already held and never showed.**
+
+### What the screen does when the dig fields are empty, which is most rows
+
+**Adam asked this be decided in the unit rather than discovered, and his framing
+is the answer:** *"the screen's job is showing what I recorded about the hunt, so
+a row with nothing recorded is a legitimate state rather than a gap to be
+filled."*
+
+**So: omit each absent field, and render NO SECTION AT ALL when the hunt is
+empty.** `huntFacts` returns `[]` and the section disappears. A page of "no
+target pressing recorded" placeholders would treat blank as a defect and imply
+work to do.
+
+**The precedent was already settled** — `pressingFacts` does exactly this and
+returns `[]` "so the caller renders no section at all rather than an empty one".
+Reusing a decided question rather than re-deciding it.
+
+**The distinction worth keeping, because absence-as-absence IS right elsewhere:**
+
+> Absence needs naming where the reader could mistake a gap for a FACT. On
+> `/lookup`, "Discogs holds no matrix" earns its place because a blank could be
+> read as *this pressing has no runout*. A blank hunt section can only mean the
+> user wrote nothing — **there is no wrong inference available to prevent.**
+
+Same family as §12 step 14c's variant limit and A39's silent stale-reason: a line
+shown where it does not bite is noise that trains the reader to skip the one that
+does.
+
+### §7.2 enforced by the TYPE, not by remembering
+
+`huntFacts`' input shape carries `bestDigNotes` and `targetPressing` and **not
+`maxPrice`** — so the conflation CLAUDE.md §8 forbids cannot be introduced by
+someone folding the two together for tidiness. The test asserts it with
+`@ts-expect-error`, which fails at typecheck rather than at runtime.
+
+### THE FINDING: my §7.2 E2E assertion was weaker than I claimed
+
+**Mutation-verified, and the first version FAILED to catch the mutation.** I
+moved the ceiling out of its own `<section>` into a bare `<p>` beside the hunt —
+a straightforward §7.2 violation, "never one section, never one label" — **and
+the test passed**, because it only asserted the price was outside the hunt's
+testid.
+
+**Not nested is not the same as separate.** The assertion now checks the ceiling
+carries its own heading, and re-running the mutation fails with the message
+naming the rule.
+
+**The general form:** an assertion about SEPARATION has to name what separation
+means, or it degrades into an assertion about nesting — which is satisfied by
+two elements sitting side by side under one heading, the exact thing §7.2
+forbids. **A rule quoted in a comment and half-asserted in a test is weaker than
+either alone**, because the comment makes the test look stronger than it is.
+
+### Verification
+
+- Unit **3085 passed**, 1 skipped. **E2E 425 passed, 0 failed** (12.4m).
+  Typecheck, lint, build clean.
+- Mutation-verified twice: placeholders instead of omission fails 3 tests; the
+  §7.2 fold fails after the assertion was strengthened.
+- **No schema change, no new query** — `hydrateWantListItem` already existed.
+- Machine load checked before the E2E (**9.7**, down from 117) so the run
+  measures the app rather than the host.
+
+### The route guard caught the new screen, in a file this unit never opened
+
+**`every-page-has-nav.spec.ts:88` failed on the full run** — "the route list has
+not fallen behind the app". `/want-list/[id]` is a new `page.tsx` and the vacuity
+guard counts every one of them.
+
+**The test was right and this is the second time it has done this job**; its own
+comment records catching `/plane` the same way. It exists because an earlier
+version walked `src/app` for `page.tsx` files and could only check that a FILE
+existed, never that the page was reachable — so the count is asserted instead,
+and adding a screen without registering it fails rather than going silently
+unchecked.
+
+**Fixed by registering the route AND asserting its nav**, not by bumping the
+number. The count comment now says `/want-list/:id` is "covered below", and a
+comment that promises coverage which does not exist is worse than no comment —
+so the test it promises was written.
+
+**Worth noting what the guard is really protecting.** The new screen is reached
+from a row on `/want-list`, which makes it exactly the arrival-by-link case the
+spec exists for: the way back must be on the page rather than in the history.
+Bumping the count alone would have satisfied the arithmetic and left that
+unasserted — **the failure mode the guard was built to prevent, reintroduced by
+the laziest way of making it pass.**
+
