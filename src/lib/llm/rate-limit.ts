@@ -51,7 +51,15 @@ export const ABANDONED_CLAIM_MS = 90 * 1000;
  */
 const CLAIM_LOCK_KEY = 8_141_972;
 
-export type LlmRequestKind = 'gap_analysis' | 'snippet';
+/**
+ * §4.3's `kind`, and every caller that spends the shared budget.
+ *
+ * **`genre_parents` added by A44** — the third caller. `kind` records WHICH
+ * asked, for diagnosis, and takes no part in the count: all three spend the same
+ * ten requests an hour against the same account, because two independent limits
+ * would be a twenty-per-hour limit nobody specified.
+ */
+export type LlmRequestKind = 'gap_analysis' | 'snippet' | 'genre_parents';
 
 export type ClaimResult =
   /**

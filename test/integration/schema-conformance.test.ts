@@ -79,6 +79,15 @@ describe('§4 conformance — cascade directions', () => {
       // here would make DELETE /api/artists/:id fail on an FK violation.
       'artist_memberships.group_artist_id -> artists: CASCADE',
       'artist_memberships.person_artist_id -> artists: CASCADE',
+      /*
+        §12c (A44). BOTH sides cascade, and the reasoning is the same for each:
+        a rejection is a fact ABOUT a pair of genres — "do not propose UK82 under
+        Rock again" — so if either genre is deleted the fact is meaningless.
+        Keeping it would leave a dangling row that resurrects the moment a name
+        is reused, silently suppressing a proposal the user never declined.
+      */
+      'genre_parent_rejections.genre_id -> genres: CASCADE',
+      'genre_parent_rejections.rejected_parent_id -> genres: CASCADE',
       'genres.parent_genre_id -> genres: NO ACTION',
       'images.record_id -> records: CASCADE',
       'journal_entries.record_id -> records: CASCADE',
@@ -284,6 +293,13 @@ describe('§4 conformance — NOT NULL where the spec requires it', () => {
       // transcript of what was said at a moment and editing it in place would
       // make "asked 20 minutes ago" describe text that had since changed.
       'gap_analysis_results',
+      /*
+        §12c (A44). `rejected_at` is the only time this table has an opinion
+        about, so a `created_at` would be a second answer to the same question —
+        and an `updated_at` would imply a row that changes, when a rejection is
+        recorded once and deleted or kept. Same reasoning as `llm_requests`.
+      */
+      'genre_parent_rejections',
       'record_genres',
       'want_list_genres',
       'artist_genres',

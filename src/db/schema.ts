@@ -492,6 +492,52 @@ export const recordTags = pgTable(
  * collision `market_cache` was created to avoid.
  */
 /**
+ * SPEC.md §12c (A44) — pairings the user has REJECTED, so they are never
+ * proposed again.
+ *
+ * **A rejection is a first-class outcome, not an absence.** Without this, a
+ * user who declines "UK82 under Rock" is offered it again on the next run, and
+ * a feature that must be dismissed repeatedly is one nobody uses twice — the
+ * noise argument A37's variant limit and the §9.2 dismissal decline both turn
+ * on.
+ *
+ * **Cheap here where §9.2's dismissal state was not, and the difference is
+ * identity.** A dismissed SUGGESTION names a record that is neither owned nor
+ * wanted, so it has no row to point at and would need `(artist, title)` string
+ * matching — brittle, and failing OPEN. Both halves of a genre pairing are real
+ * rows with real ids, so this is a join table over two foreign keys.
+ *
+ * **`ON DELETE CASCADE` on both.** A rejection is a fact ABOUT a pair of
+ * genres; if either is deleted the rejection is meaningless, and keeping it
+ * would resurrect as a dangling row the moment a name was reused.
+ */
+export const genreParentRejections = pgTable(
+  'genre_parent_rejections',
+  {
+    id,
+    genreId: uuid('genre_id')
+      .notNull()
+      .references(() => genres.id, { onDelete: 'cascade' }),
+    rejectedParentId: uuid('rejected_parent_id')
+      .notNull()
+      .references(() => genres.id, { onDelete: 'cascade' }),
+    rejectedAt: timestamp('rejected_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    // One row per pairing: rejecting the same pair twice is the same fact.
+    unique('genre_parent_rejections_pair_key').on(t.genreId, t.rejectedParentId),
+    index('genre_parent_rejections_genre_id_idx').on(t.genreId),
+    /*
+     * §4.4: every FK column indexed. Not decoration here — BOTH columns cascade
+     * on delete, so removing a genre scans this table by whichever side it
+     * appears on, and the unique index above only serves lookups leading with
+     * `genre_id`.
+     */
+    index('genre_parent_rejections_rejected_parent_id_idx').on(t.rejectedParentId),
+  ],
+);
+
+/**
  * SPEC.md §9.2 (A39) — the last gap analysis, kept for DISPLAY.
  *
  * **A record of what was said, never a cache.** Nothing is served from here in

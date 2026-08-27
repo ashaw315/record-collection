@@ -215,3 +215,25 @@ describe('what comes back is constrained to the user vocabulary', () => {
     expect(result.noParentFits).toEqual(['Rock']);
   });
 });
+
+/**
+ * CLAUDE.md §2: **no test may make a live external call.**
+ *
+ * Every other LLM client here carries this test, and the third caller needs it
+ * for the same reason: `assertNoLiveCall` fires at the REQUEST SITE, so every
+ * test above — which injects a fake — is exempt by design and proves nothing
+ * about the real path. **`getGenreParentClient()` is the only path that could
+ * reach Anthropic, and it is the one no other test touches.**
+ *
+ * The guard's own comment predicted it would cover clients written later. This
+ * project has been caught trusting predictions in comments, so it is measured.
+ */
+describe('the real client cannot reach Anthropic from a test', () => {
+  it('refuses to reach api.anthropic.com, naming the host', async () => {
+    const { getGenreParentClient } = await import('./genre-parent-client');
+
+    await expect(
+      getGenreParentClient().propose([{ name: 'UK82', recordCount: 1, examples: [] }]),
+    ).rejects.toThrow(/api\.anthropic\.com/);
+  });
+});

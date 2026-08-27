@@ -19930,3 +19930,112 @@ either.
 Unit **3102 passed**. Typecheck, lint clean. **No schema change yet** — unit B
 brings the rejection table, the route and the UI.
 
+
+---
+
+## DECIDED: a truncated genre tree is refused, and the reasoning is NOT the snippet's
+
+**Adam, 2026-08-27**, on my flagging that refusing a partial tree was a decision
+made on his behalf.
+
+**He confirmed the conclusion and supplied a better argument for it**, which is
+worth recording precisely because the two look identical from the outside:
+
+| | snippet | genre tree |
+|---|---|---|
+| what is wrong | a half-sentence | a partial taxonomy |
+| how it fails | **visibly** — prose that stops mid-word | **invisibly** — a shorter list |
+| where the damage lands | text on a screen | **the vocabulary, by confirmed clicks** |
+
+**His words:** *"I would accept pairings from it without knowing the tree was
+cut, so the genres that never got proposed look like genres the model had nothing
+to say about. That is absent-versus-unknown again, and it would be baked into my
+vocabulary rather than sitting on a screen."*
+
+**That is the sharpest version of absent-versus-unknown this project has
+produced**, and it differs from every prior instance in one way: the others put
+a wrong thing where a user could see it (an empty market ladder read as measured
+truth, a truncated snippet read as a finished note, "no reason available" drawing
+attention to a gap). **This one puts nothing where something should be, and the
+user's own confirmations then make the absence permanent.**
+
+**Recorded at the ceiling constant rather than in a commit message**, because
+that is where the next reader meets the number and asks why it is refused rather
+than raised.
+
+**The general form, which generalises past this feature:**
+
+> When a partial result is INDISTINGUISHABLE from a complete one, refusing it is
+> not conservatism — it is the only way the user can tell what they are
+> deciding on. And when the user's decision is then WRITTEN, the cost of not
+> telling them compounds rather than passing.
+
+
+---
+
+## A44 unit B checkpoint — schema, query layer, route. Three guards fired, all correctly.
+
+**2026-08-27.** The half that stores and serves; the tree UI follows.
+
+### `genre_parent_rejections`, and the identity that made it cheap
+
+**One row per declined pairing, both FKs cascading.** A rejection is a fact ABOUT
+a pair — "do not propose UK82 under Rock again" — so if either genre is deleted
+the fact is meaningless, and keeping it would leave a dangling row that
+resurrects the moment a name is reused, **silently suppressing a proposal the
+user never declined.**
+
+**Cheap here where §9.2's dismissal state was not**, and the difference is
+exactly the one A43 hit: a dismissed SUGGESTION names a record that is neither
+owned nor wanted, so it has no row and needs `(artist, title)` string matching —
+brittle, and failing OPEN. **Both halves of a genre pairing are real rows.**
+
+### Three schema guards fired, and each asked a real question
+
+**None was bulk-registered.** §4 conformance is a whitelist precisely so an
+addition must be argued:
+
+1. **`rejected_parent_id` was unindexed** — a genuine gap, not a formality. Both
+   columns cascade, so deleting a genre scans this table by whichever side it
+   appears on, and the unique index only serves lookups leading with `genre_id`.
+   **Fixed in the schema, not the test.**
+2. **The cascade whitelist** — registered with the reasoning above.
+3. **The `created_at`/`updated_at` exemption** — `rejected_at` is the only time
+   this table has an opinion about; an `updated_at` would imply a row that
+   changes, when a rejection is recorded once and then kept or deleted.
+
+**And a fourth failure that was my own sloppiness**: the cascade list is sorted,
+I inserted alphabetically wrong, and the diff showed identical strings on both
+sides. **A test asserting a sorted list fails on ORDER with a diff that looks
+like a content mismatch** — worth knowing before spending time on the wrong
+question.
+
+### The no-live-call test the third client did not have
+
+`assertNoLiveCall` fires at the REQUEST SITE, so **every test that injects a fake
+is exempt by design and proves nothing about the real path.** The other two
+clients each carry a test exercising the production factory; this one did not
+until it was added.
+
+**Measured rather than assumed** — the guard's own comment predicts it will cover
+clients written later, and this project has been caught trusting predictions in
+comments.
+
+### Route decisions
+
+- **`genre_parents` is a third `LlmRequestKind`.** All three spend the same ten
+  requests an hour: `kind` records which asked, for diagnosis, and takes no part
+  in the count.
+- **Rejections filtered SERVER-SIDE, not in the prompt.** Telling the model what
+  was declined spends tokens on a constraint the server enforces exactly — and an
+  instruction is not a verification (A29c).
+- **The `cut` message names what refusing protects**: *"a partial tree would hide
+  which genres were never considered"*, which is Adam's argument rather than the
+  snippet's.
+- **The route writes no `parent_genre_id`.** Confirmation goes through
+  `PATCH /api/genres/:id`, which already enforces §4.1's cycle rule — so a tree
+  accepted piecemeal cannot construct a cycle, which was §12c's open question 1.
+
+Unit **3109 passed**. Migrations **21 of 21** clean from empty. Typecheck, lint
+clean.
+

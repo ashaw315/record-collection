@@ -1,5 +1,6 @@
 import 'server-only';
 import { sql } from 'drizzle-orm';
+import { getDb } from '@/db/client';
 import { genres } from '@/db/schema';
 
 /**
@@ -58,4 +59,91 @@ export function genreSubtree(genreId: string) {
     )
     SELECT id FROM subtree
   )`;
+}
+
+/**
+ * SPEC.md §12c (A44) — the genres a parent proposal is built from, each with
+ * what it is based on.
+ *
+ * **Record counts and examples, because the records are what distinguish a
+ * general music fact from a fact about THIS shelf.** Measured on the live
+ * collection: `Rock` carries 10 records across 10 artists from Buddy Rich to
+ * Death Grips — visible in the examples and invisible in the name.
+ *
+ * **Genres carrying NO records are INCLUDED.** `Punk` and `US Hardcore` carry
+ * zero and exist because the user created them as intended parents; dropping
+ * them for lack of evidence would remove the answer rather than sharpen it.
+ *
+ * **Genres the user has already parented are EXCLUDED.** The feature fills the
+ * gap §4.1 left; a genre already placed is a decision already made, and
+ * re-proposing it would invite overwriting the user's own hierarchy.
+ */
+export async function genresForParentProposal(): Promise<
+  Array<{ id: string; name: string; recordCount: number; examples: string[] }>
+> {
+  const db = getDb();
+
+  const rows = await db.execute<{
+    id: string;
+    name: string;
+    record_count: number;
+    examples: string[] | null;
+  }>(sql`
+    SELECT
+      g.id,
+      g.name,
+      count(DISTINCT r.id)::int AS record_count,
+      -- Three is enough to show how a term is USED without sending the shelf.
+      (array_agg(DISTINCT a.name || ' — ' || r.title) FILTER (WHERE r.id IS NOT NULL))[1:3]
+        AS examples
+    FROM genres g
+    LEFT JOIN record_genres rg ON rg.genre_id = g.id
+    LEFT JOIN records r ON r.id = rg.record_id
+    LEFT JOIN artists a ON a.id = r.artist_id
+    WHERE g.parent_genre_id IS NULL
+    GROUP BY g.id, g.name
+    ORDER BY count(DISTINCT r.id) DESC, g.name
+  `);
+
+  return rows.rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    recordCount: row.record_count,
+    examples: row.examples ?? [],
+  }));
+}
+
+/**
+ * Record that the user declined a pairing, so it is never proposed again.
+ *
+ * **Idempotent**, because clicking reject twice is the same fact rather than an
+ * error — the unique constraint says so and this must not throw on a repeat.
+ */
+export async function rejectParentPairing(input: {
+  genreId: string;
+  rejectedParentId: string;
+}): Promise<void> {
+  const db = getDb();
+
+  await db.execute(sql`
+    INSERT INTO genre_parent_rejections (genre_id, rejected_parent_id)
+    VALUES (${input.genreId}, ${input.rejectedParentId})
+    ON CONFLICT (genre_id, rejected_parent_id) DO NOTHING
+  `);
+}
+
+/** Every declined pairing, for filtering a fresh proposal. */
+export async function rejectedPairings(): Promise<
+  Array<{ genreId: string; rejectedParentId: string }>
+> {
+  const db = getDb();
+
+  const rows = await db.execute<{ genre_id: string; rejected_parent_id: string }>(
+    sql`SELECT genre_id, rejected_parent_id FROM genre_parent_rejections`,
+  );
+
+  return rows.rows.map((row) => ({
+    genreId: row.genre_id,
+    rejectedParentId: row.rejected_parent_id,
+  }));
 }

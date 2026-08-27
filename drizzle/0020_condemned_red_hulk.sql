@@ -1,0 +1,1 @@
+CREATE INDEX "genre_parent_rejections_rejected_parent_id_idx" ON "genre_parent_rejections" USING btree ("rejected_parent_id");
