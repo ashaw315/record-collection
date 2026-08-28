@@ -21988,3 +21988,38 @@ Both are now known signatures rather than mysteries.
 `mv .env.local.env-loading-test-stash .env.local` and
 `rm -rf test/repo/.env-loading-probe/`.
 
+
+---
+
+## TRAP: passing a path to `vitest run` bypasses `fileParallelism: false`
+
+**2026-08-28**, found while trying to get a clean number around the hanging
+`env-loading` test.
+
+    npx vitest run src test/integration test/helpers
+      →  260 failed | 2817 passed
+
+**Not a regression.** The failures are `23505` duplicate-key violations on shared
+fixture names — `tags_name_unique` on `signed`, `labels_name_unique` on `Clay`,
+`genres_name_unique` on `UK82` — which is the signature of integration files
+running CONCURRENTLY against the one shared database.
+
+**Passing positional paths changes the run's shape**, and the serialisation the
+config sets for exactly this reason does not survive it. The same tree under a
+plain `npm test` is **3175 passed / 5 failed** with no duplicate keys at all.
+
+> **A filtered run is not a smaller version of the full run — it can be a
+> differently-scheduled one.** The number it produces is not comparable, and a
+> 260-failure result that is entirely an artifact of the invocation is exactly
+> the kind of thing that gets reported as a catastrophic regression.
+
+**The rule already in CLAUDE.md §10 covers the direction that matters** — run the
+full suite with no file argument. This is the same rule earning itself a third
+way: the first was "a change breaks tests in files it never opened", the second
+"a change to the runner breaks tests no change touched", and this is **"a
+narrowed invocation reports failures the real suite does not have"**.
+
+**For the record**, the two legitimate ways to get a number while `env-loading`
+hangs: run `npm test` and read past it, or `--project component` for that layer
+alone. Not positional paths.
+
