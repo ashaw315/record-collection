@@ -1,0 +1,2 @@
+ALTER TABLE "gap_analysis_results" ADD COLUMN "genre_id" uuid;--> statement-breakpoint
+ALTER TABLE "gap_analysis_results" ADD CONSTRAINT "gap_analysis_results_genre_id_genres_id_fk" FOREIGN KEY ("genre_id") REFERENCES "public"."genres"("id") ON DELETE cascade ON UPDATE no action;

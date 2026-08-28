@@ -1,5 +1,5 @@
 import 'server-only';
-import { desc, sql } from 'drizzle-orm';
+import { desc, eq, isNull, sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
 import { gapAnalysisResults } from '@/db/schema';
 import type { Suggestion } from '@/lib/llm/parse-suggestions';
@@ -37,6 +37,8 @@ export type StoredGapAnalysis = {
 export async function storeGapAnalysis(input: {
   suggestions: Suggestion[];
   dropped: number;
+  /** The genre this answer covers, or omitted for the whole collection (A45). */
+  genreId?: string | null;
 }): Promise<void> {
   const db = getDb();
 
@@ -50,21 +52,43 @@ export async function storeGapAnalysis(input: {
    * the reason §4.3 gives about `llm_requests` carrying its own timestamps:
    * a job that must run is a job that can fail to run.
    */
+  const genreId = input.genreId ?? null;
+
   await db.transaction(async (tx) => {
-    await tx.delete(gapAnalysisResults);
+    /*
+     * **Deletes only THIS SCOPE** (A45). A39 cleared the table because there was
+     * one question; a UK82 answer overwriting the collection-wide one would
+     * discard something the user still wants — the retention mistake recorded
+     * against A43.
+     */
+    await tx
+      .delete(gapAnalysisResults)
+      .where(
+        genreId === null
+          ? isNull(gapAnalysisResults.genreId)
+          : eq(gapAnalysisResults.genreId, genreId),
+      );
+
     await tx.insert(gapAnalysisResults).values({
       suggestions: input.suggestions,
       dropped: input.dropped,
+      genreId,
     });
   });
 }
 
-export async function latestGapAnalysis(): Promise<StoredGapAnalysis | null> {
+export async function latestGapAnalysis(
+  genreId?: string | null,
+): Promise<StoredGapAnalysis | null> {
   const db = getDb();
+  const scope = genreId ?? null;
 
   const [row] = await db
     .select()
     .from(gapAnalysisResults)
+    .where(
+      scope === null ? isNull(gapAnalysisResults.genreId) : eq(gapAnalysisResults.genreId, scope),
+    )
     .orderBy(desc(gapAnalysisResults.askedAt))
     .limit(1);
 
@@ -75,9 +99,36 @@ export async function latestGapAnalysis(): Promise<StoredGapAnalysis | null> {
    * record to compare timestamps, which is the collection-scan §9.2 avoids
    * everywhere else.
    */
-  const counted = await db.execute<{ n: number }>(
-    sql`SELECT count(*)::int AS n FROM records WHERE created_at > ${row.askedAt}`,
-  );
+  /*
+   * **Counted within the SCOPE, walking the same subtree the question walks**
+   * (A45, Adam's requirement).
+   *
+   * Adding five jazz records does not make a UK82 answer stale, and a shared
+   * counter would say it did — A37's rule that a limit named where it does not
+   * bite spends the credibility of the one that does.
+   *
+   * **And it must recurse.** `Punk` has no records of its own and gains through
+   * `UK82`, so a direct-only count would report zero while the answer's scope
+   * had changed. The staleness walks what the question walks, or the two
+   * disagree.
+   */
+  const counted =
+    scope === null
+      ? await db.execute<{ n: number }>(
+          sql`SELECT count(*)::int AS n FROM records WHERE created_at > ${row.askedAt}`,
+        )
+      : await db.execute<{ n: number }>(sql`
+          WITH RECURSIVE subtree AS (
+            SELECT id FROM genres WHERE id = ${scope}
+            UNION
+            SELECT g.id FROM genres g JOIN subtree s ON g.parent_genre_id = s.id
+          )
+          SELECT count(DISTINCT r.id)::int AS n
+            FROM records r
+            JOIN record_genres rg ON rg.record_id = r.id
+           WHERE rg.genre_id IN (SELECT id FROM subtree)
+             AND r.created_at > ${row.askedAt}
+        `);
 
   return {
     // Stored as JSON because it is the model's output rather than the app's

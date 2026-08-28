@@ -20947,3 +20947,162 @@ should be argued on its own rather than bolted onto an observation. **Trigger:
 Adam re-asking any assessment a second time** — which is now guaranteed to
 happen, since he has already done it once.
 
+
+---
+
+## DECIDED AGAINST: A40's tiered pressing ranking. Do not re-propose.
+
+**Adam, 2026-08-28**, after living with A43's assessments on two real records.
+**The feature that started this whole line of work is declined by the person who
+asked for it**, and the reasoning is worth keeping because it is not "we did
+something else instead".
+
+> *"Claude's assessment already carries the qualitative information in prose —
+> 'the reference copy', 'commonly found' — and a tier ordinal would compress that
+> into a preference order that varies by listener and by copy. The descriptions
+> are reporting provenance and collector consensus, which is real; the ranking
+> would be presenting consensus as a fact about sound, which is not."*
+
+**Two distinct arguments, and the second is the stronger:**
+
+1. **A tier COMPRESSES what the prose already carries.** "The reference copy" and
+   "commonly found" say different things about a pressing — one about fidelity
+   lineage, one about availability — and both collapse into "1" and "3". The
+   ordinal is less information wearing more authority.
+2. **Provenance and consensus are REAL; a fidelity ranking is not the same
+   claim.** "Cut by Bob Ludwig at Sterling" is a fact about how a record was
+   made. "This one sounds best" is a judgement that varies by listener, by
+   playback system, and **by the individual copy** — a mint MCA reissue beats a
+   worn first press, and no ordinal can express that.
+
+**This is the states-not-rates rule reaching its own origin.** A40 was scoped as
+*the user's* ranking precisely to avoid the app rating — and Adam's conclusion is
+that the ranking is the wrong shape even when HE makes it, because the thing
+being ranked is not a stable property of a pressing.
+
+**What survives:** `best_dig_notes` (§7.2), which is free text and can say "first
+UK press, but the 1989 repress on a good copy is fine" — a sentence no tier can
+hold.
+
+**And the album entity question closes with it.** A40 was the feature that needed
+it; A43 demonstrated it did not need one, and the dismissal state remains
+speculative. **Nothing currently requires an album entity**, which is the honest
+state of that question.
+
+**TRIGGER to revisit, in Adam's words:** *"if I find myself re-reading an
+assessment trying to work out which pressing to chase, the descriptions are not
+doing the job and it is worth revisiting."*
+
+---
+
+## The states-not-rates rule has generalised past DISPLAY
+
+**Adam, on the drill-down scope decision:** *"'Don't gate the question, state its
+scope' is the states-not-rates rule applying to a CONTROL rather than to copy,
+which is worth noting — it has now generalised past display."*
+
+**The three display instances** (A44's evidence line, A43's verdicts, A43's
+ordering) were all about what a screen SAYS. **This one is about what the app
+LETS YOU DO:**
+
+- **gating** — forbid asking about `Rock` because the answer would be broad;
+- **stating** — let the question be asked, and say the answer covers 10 of 17
+  records.
+
+**Same failure mode as rating**: a gate is the app making a judgement it was
+built to support, and it makes that judgement in advance, for every case, on a
+threshold nobody can derive. **The measurement showed exactly that** — a depth
+rule would have blocked `Rock` for a reason that is false (its breadth is direct
+tagging, not accumulation) and blocked `Jazz` for one that is true.
+
+> **Extended form: don't gate the question, state its scope.** When tempted to
+> forbid an action because its result might mislead, ask whether the result can
+> instead SAY what it is. A refusal removes the user's judgement; a statement
+> informs it.
+
+
+---
+
+## A45 — the genre drill-down. Depth question answered by MEASUREMENT, not by a rule.
+
+**2026-08-28.** Adam's view going in: asking about `Punk` should mean Punk and
+everything beneath it, since a parent with no records of its own is the normal
+case in his hierarchy. **Right, and the measurement showed it is right for a
+sharper reason than he gave.**
+
+### What the subtree actually adds
+
+    genre          direct  subtree  ADDED BY DESCENDANTS
+    Rock               10       10        0
+    Electronic          5        5        0
+    Pop                 3        3        0
+    Jazz                3        4      **1**
+    Punk                0        1      **1**
+    (all others)                          0
+
+**Descendants add records for exactly TWO genres.** Everything else gains
+nothing, because a record tagged `Psychedelic Rock` is tagged `Rock` as well.
+
+**And `Punk` has ZERO direct records** — so a direct-only reading returns nothing
+at all, and the ancestor-inclusive reading is what makes the question answerable.
+That is Adam's argument, confirmed.
+
+### The depth worry dissolves, and a depth rule would have been wrong twice
+
+He asked whether an ancestor-inclusive `Rock` becomes *"a whole-collection gap
+analysis wearing a genre label"*. **Measured: `Rock` reaches 10 of 17 — 59%, not
+"nearly everything" — and it gets there DIRECTLY.** Its descendants add zero.
+
+**So `Rock`'s breadth is how he tags, not accumulation through the hierarchy.** A
+depth rule would have:
+
+- **blocked `Rock` for a reason that is false** — its breadth is direct;
+- **blocked `Jazz`, which is depth-1 and genuinely gains from its subtree.**
+
+**Decision: no depth rule. State the scope instead** — "10 of 17 records, tagged
+Rock or beneath it". Adam: *"a threshold nobody can derive is the kind of number
+that looks principled and isn't."*
+
+**And he named what that generalises to**: this is states-not-rates applied to a
+CONTROL rather than to copy. Recorded separately above.
+
+### Scope storage: one row per SCOPE, and the structural reason beats the precedent
+
+He cited the A43 retention mistake — a UK82 answer overwriting the
+collection-wide one would be discard-because-nothing-reads-it again. True, **but
+there is a stronger reason and he accepted it as better**: A39's staleness counts
+records added since, and **that means something different for a collection-wide
+claim than for a genre-scoped one. One row cannot carry both semantics.**
+
+`gap_analysis_results` gains a nullable `genre_id`: NULL is collection-wide, a
+genre id is that drill-down. Storing deletes only its own scope.
+
+### Staleness walks the SAME SUBTREE the question walks
+
+**Adam's requirement, and it is the thing I would have got wrong:**
+
+> *"Punk gains through UK82, so the count has to walk the subtree the same way
+> the question does, or the staleness will disagree with the scope."*
+
+A direct-only count on a `Punk` answer reports **zero** while the answer's scope
+has changed — the genre with no records of its own is exactly where the bug
+lands. **Mutation-verified twice**: making staleness ignore scope fails `ignores
+records added outside the genre`; removing the recursive walk fails `counts a
+record added to a DESCENDANT`.
+
+**And scope-blindness matters for A37's reason**: adding five jazz records must
+not age a UK82 answer, because a limit named where it does not bite spends the
+credibility of the one that does.
+
+### Where it hangs: `/suggestions`
+
+Adam's instinct, and the reason is worth stating: **`/manage` is where the
+vocabulary is CHANGED; `/suggestions` is where gaps are ASKED ABOUT.** The
+drill-down is the same question narrowed, not a property of a genre — and keeping
+both scopes on one screen matters now they are separately stored.
+
+**Layout: a picker beside the Ask button, one result area**, showing whichever
+scope is selected with its own "asked N ago".
+
+Migrations **24 of 24** clean from empty. **Route and UI next.**
+

@@ -627,6 +627,22 @@ export const gapAnalysisResults = pgTable('gap_analysis_results', {
   suggestions: jsonb('suggestions').notNull(),
   /** A29d's count of suggestions discarded for an out-of-vocabulary genre. */
   dropped: integer('dropped').notNull().default(0),
+  /**
+   * The genre this answer is SCOPED to, or NULL for the whole collection (A45).
+   *
+   * **One row per SCOPE, not one row total.** A39 kept a single row because
+   * there was a single question; the drill-down makes "what am I missing in
+   * UK82" a different question from "what am I missing", and a UK82 answer
+   * overwriting the collection-wide one would discard something the user still
+   * wants — the retention mistake recorded against A43.
+   *
+   * **And they could not share a row even in principle**, which is the
+   * structural reason rather than the lesson-from-last-time: A39's staleness
+   * counts records added since, and that means something different for a
+   * collection-wide claim than for a genre-scoped one. One row cannot carry both
+   * semantics.
+   */
+  genreId: uuid('genre_id').references(() => genres.id, { onDelete: 'cascade' }),
 });
 
 
