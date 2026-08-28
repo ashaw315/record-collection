@@ -31,29 +31,90 @@ if (
 }
 
 export default defineConfig({
-  resolve: { tsconfigPaths: true },
-  // Server modules are marked with `import 'server-only'` (CLAUDE.md §6). That
-  // package resolves to a throwing stub unless the `react-server` condition is
-  // set, which would fail every server-side unit test at import time. Vitest
-  // loads test modules through the SSR pipeline, so the condition belongs here
-  // rather than under `resolve`.
-  ssr: {
-    resolve: {
-      conditions: ['react-server', 'node'],
-      externalConditions: ['react-server', 'node'],
-    },
-  },
   test: {
-    environment: 'node',
-    globalSetup: ['./test/global-setup.ts'],
-    // Every integration test shares one local Postgres database and truncates
-    // it in beforeEach (CLAUDE.md §2). Running files concurrently means one
-    // file's truncate lands inside another file's test, which surfaces as rows
-    // vanishing mid-test in a file nobody edited, with a different subset
-    // failing each run. Serializing files is the price of a shared database.
+    /*
+     * **Serialised ACROSS projects, not only within one.**
+     *
+     * `fileParallelism: false` inside the server project serialises that
+     * project's files, but vitest schedules the PROJECTS themselves
+     * concurrently — so the component project running alongside makes vitest
+     * parallelise, and the integration files start overlapping each other
+     * again. Measured: `deadlock detected (code=40P01)` on a plain SELECT, with
+     * ~16 failures scattered across files nobody had touched.
+     *
+     * The component project owns no database, which is exactly why this is
+     * confusing: the harm is not contention with IT, it is that its presence
+     * changes how the other project is scheduled.
+     */
     fileParallelism: false,
-    include: ['src/**/*.test.ts', 'test/**/*.test.ts'],
-    // Playwright specs live in e2e/ and are run by `npm run test:e2e`.
-    exclude: ['node_modules/**', '.next/**', 'e2e/**'],
+
+    /**
+     * Two projects, because the two layers need INCOMPATIBLE resolve conditions.
+     *
+     * `server-only` (CLAUDE.md §6) resolves to a throwing stub unless the
+     * `react-server` condition is set, so every server-side test needs it. But
+     * `react-dom/server` refuses to load WITH it — "react-dom/server is not
+     * supported in React Server Components" — so the component layer needs it
+     * absent. One config cannot satisfy both, and that incompatibility is the
+     * whole reason this project split exists rather than a second `include`.
+     *
+     * Both run under a plain `npm test`, which SPEC.md §14 requires. A layer
+     * nobody executes is not a layer.
+     */
+    projects: [
+      {
+        extends: true,
+        // Server modules are marked with `import 'server-only'` (CLAUDE.md §6).
+        // That package resolves to a throwing stub unless the `react-server`
+        // condition is set, which would fail every server-side unit test at
+        // import time. Vitest loads test modules through the SSR pipeline, so
+        // the condition belongs here rather than under `resolve`.
+        ssr: {
+          resolve: {
+            conditions: ['react-server', 'node'],
+            externalConditions: ['react-server', 'node'],
+          },
+        },
+        test: {
+          name: 'server',
+          environment: 'node',
+          globalSetup: ['./test/global-setup.ts'],
+          // Every integration test shares one local Postgres database and
+          // truncates it in beforeEach (CLAUDE.md §2). Running files
+          // concurrently means one file's truncate lands inside another file's
+          // test, which surfaces as rows vanishing mid-test in a file nobody
+          // edited, with a different subset failing each run. Serializing files
+          // is the price of a shared database.
+          fileParallelism: false,
+          include: ['src/**/*.test.ts', 'test/**/*.test.ts'],
+          // Playwright specs live in e2e/ and are run by `npm run test:e2e`.
+          exclude: ['node_modules/**', '.next/**', 'e2e/**'],
+        },
+      },
+      {
+        extends: true,
+        /**
+         * SPEC.md §11 component layer (A46). **Static rendering only.**
+         *
+         * No `react-server` condition, so `react-dom/server` loads. The
+         * consequence is that a `server-only` module CANNOT be imported from a
+         * component test — which is the correct constraint rather than a
+         * limitation: this layer tests client components, and a client component
+         * importing a server module is the §6 violation the marker exists to
+         * catch.
+         *
+         * **No database and no global setup.** These tests render markup; a
+         * component test that needed a database would be an integration test in
+         * the wrong directory.
+         */
+        test: {
+          name: 'component',
+          environment: 'node',
+          include: ['src/**/*.test.tsx'],
+          exclude: ['node_modules/**', '.next/**', 'e2e/**'],
+        },
+      },
+    ],
   },
+  resolve: { tsconfigPaths: true },
 });

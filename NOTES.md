@@ -20658,6 +20658,8 @@ Migrations **22 of 22** clean from empty. Typecheck, lint clean.
 
 ---
 
+## STANDING HAZARD — **DIAGNOSED 2026-08-28. The headline below is WRONG; read the correction at the end of this entry.**
+
 ## STANDING HAZARD, UPGRADED: the Neon WebSocket path fails while HTTP works — and it has now cost time twice
 
 **2026-08-27.** Recorded properly rather than as an aside, on Adam's instruction:
@@ -21563,3 +21565,371 @@ themselves.
 `pressing_assessments.want_list_id`'s unique constraint — **flagged, explicitly
 NOT confirmed, and not to be written on the strength of a message that merely
 sequences it.** Confirmation will be given explicitly when that unit opens.
+
+---
+
+## FINDING: nine sightings were classified by WHERE they appeared, not by WHAT they asserted
+
+**Adam and me, 2026-08-28**, on `wall-scene.spec.ts:1093`. **Both of us filed it
+under the accumulation family, and it does not belong there.**
+
+### The misclassification
+
+The accumulation family is real and has real members: late-in-run `login()`
+timeouts, seen across `record-detail`, `lookup-flows`, `wall-scene:449` and
+`snippet:118`. Its signature is a `toBeVisible`/`login` timeout appearing only
+under full-suite load and passing in isolation.
+
+**1093 shares the "only under full load" half and NOTHING else.** It is a
+geometry assertion at a 390×664 viewport, and it fails with two numbers that have
+been **byte-identical across all nine sightings**:
+
+    Error: sleeve top 172 must clear the wall region top 172
+    Expected: > 172   Received: 172
+
+> **A load-dependent flake produces varying numbers. `172 === 172` nine times is
+> a boundary condition.** Timing jitter does not land on the same pixel nine
+> times running.
+
+### Why the misclassification survived nine sightings
+
+**Because the family it was assigned to was real and had other members.** Every
+new sighting was read as another instance of a pattern that genuinely existed, so
+the classification kept getting confirmed by things that were not it. Nothing
+prompted a re-read, because the file it was filed in was not empty.
+
+> **A signature that fits SOME evidence is not a diagnosis of all of it.** The
+> shared attribute — "appears under full-suite load" — was doing all the
+> classifying work, and it is the weakest attribute in the set. The
+> discriminating one, the actual assertion and its values, was recorded in the
+> notes from sighting one and never used to sort.
+
+**The practical check:** when adding a sighting to a family, name the attribute
+that puts it there, and confirm it is not merely the attribute every member of
+every family shares.
+
+### What the two readings still are
+
+The test's own comment decides what a pin at the region top MEANS:
+
+> *"A sleeve whose top is pinned to the region's top edge is one that has been
+> CLIPPED there — its real top is above it."*
+
+1. **A real §10b geometry defect** on short viewports — every real Safari
+   viewport once the URL bar and toolbar are subtracted. The test exists because
+   a centred-ness assertion was a tautology that "reported delta 0 while the
+   sleeve ran off the top of the wall on a phone".
+2. **An off-by-one in the scan**, since `region.top` is both the first row
+   scanned and the strict lower bound — a sleeve legitimately starting on the
+   first scanned row reports as clipped.
+
+**Reading 2 is a defect in the TEST and is the cheaper one to check.** It needs
+no WebGL diagnosis.
+
+**Split into its own unit** (Adam, 2026-08-28), out of the harness unit: it is
+§10b scene geometry, not tooling, and folding it in is how a unit stops being one
+unit.
+
+---
+
+## THE DECIDING EVIDENCE WAS DELETED BY THE SUITE PASSING
+
+**2026-08-28.** The screenshot that decides between 1093's two readings —
+recorded at sighting five as "the deciding artifact is on disk, from THIS run" —
+**is gone.**
+
+    test-results/wall-scene-the-pulled-slee-909be--region-on-a-short-viewport-chromium/
+
+`test-results/` is cleared at the start of each Playwright run. The retention
+unit's full E2E pass came back **445 passed, 0 failed**, and a green run writes
+no artifacts — so it cleared the directory and left nothing.
+
+> **The evidence for a nine-sighting intermittent was destroyed by the suite
+> passing.** Not by a failure, not by a cleanup anybody ran deliberately — by the
+> success of an unrelated run. An intermittent's evidence lives exactly where the
+> next green run will delete it.
+
+**And it was preserved in NOTES as a PATH rather than as content**, which is the
+compounding half: the note recorded where the artifact was, which is worthless
+once the directory is cleared. A note pointing at mutable state is a note with a
+shelf life nobody wrote down.
+
+**FOR C's UNIT, FIRST STEP:** reproduce 1093 to regenerate the screenshot, and
+**copy it somewhere a run cannot clear** — `docs/` or an attachment in the notes,
+not `test-results/`. Only then diagnose. Whatever else that unit does, it should
+not begin by discovering the evidence is missing a second time.
+
+
+---
+
+## THE NEON HAZARD, DIAGNOSED — and BOTH standing explanations were wrong
+
+**2026-08-28.** Two candidate diagnoses were offered and measured this session.
+**Neither survived**, and the entry above is now corrected rather than confirmed.
+
+### What it actually is
+
+    DATABASE_URL           →  OK
+    NEON_TEST_DATABASE_URL →  FAIL: password authentication failed for user 'neondb_owner'
+
+Same host, same user, **different password, only one of which works.** The test
+branch's credential is stale. `Failed query: begin` was the driver reporting a
+connection it never authenticated.
+
+**Not fixable from here** — it needs the branch password regenerated in the Neon
+console and pasted into `.env.local`. Flagged for Adam rather than worked around.
+
+### Wrong explanation #1 — the entry above: "WebSocket fails while HTTP works"
+
+**Measured today, both fail, identically:**
+
+    HTTP  (neon()/sql`SELECT 1`)          →  FAIL: password authentication failed
+    WS    (Pool/neon-serverless)          →  FAIL: password authentication failed
+
+The original measurement recorded HTTP as REACHABLE — and it WAS, because the
+HTTP probe was run against `DATABASE_URL` while the failing tests use
+`NEON_TEST_DATABASE_URL`. **Two different credentials were compared as though
+they were two different transports.** The transport hypothesis was born there and
+survived two sessions.
+
+> **When a probe and a failing test read DIFFERENT configuration, the probe is
+> not testing the failure.** The variable that differed was not the one named in
+> the conclusion — and "HTTP works, WebSocket doesn't" is a far more interesting
+> finding than "one of my two passwords is stale", which is exactly why it stuck.
+
+### Wrong explanation #2 — mine, earlier today: the stashed `.env.local`
+
+I found `.env.local` renamed to `.env.local.env-loading-test-stash` (Aug 25) and
+concluded that was the cause, since `NEON_TEST_DATABASE_URL` lives in that file.
+**Restored it, re-ran, and the nine still failed.** The stash was real, was worth
+fixing, and was NOT this.
+
+**What it actually changed:** with the file absent the suite SKIPPED the Neon
+tests by design (`describe.skipIf(!configured)`); the nine "failures" recorded
+against the file since Aug 25 were... still failures, because the gate names a
+skip as a passing test rather than a failing one. Restoring made them RUN and
+fail honestly on auth.
+
+> **A plausible cause found next to a symptom is not the cause.** The stash
+> explained a fact about the same file, on a consistent date, in the right
+> variable — and was still wrong. The only thing that separated them was
+> re-running after the fix, which is the step that turns a diagnosis into a
+> finding.
+
+### What this costs, stated plainly
+
+**Three sessions have now recorded this as environmental**, with candidate causes
+"the test branch drifting, WebSocket egress being blocked, or a
+`@neondatabase/serverless` version change". **It is none of those, and the real
+one — a stale password — was reachable at any point by running the two URLs side
+by side.** Ten minutes, three sessions late.
+
+**And the honest restatement**: every "nothing regressed" in this session and the
+last was measured against a baseline that was red for a **recoverable local
+credential reason**, not an environmental one. The claim was true about the other
+~3,170 tests and it was never a clean sheet.
+
+---
+
+## RULE: a test that mutates state OUTSIDE the repo has cleanup nothing guarantees
+
+**Adam, 2026-08-28**, from the stashed `.env.local`. Recorded even though it was
+not the Neon cause, because the failure mode is real and it nearly cost more.
+
+`test/repo/env-loading.test.ts` renames `.env.local` aside and restores it in a
+`finally`. **A `finally` does not run on a kill** — SIGKILL, an OOM, a crash
+between the two `renameSync` calls — and the file then stays stashed
+indefinitely. It sat that way from Aug 25 to Aug 28.
+
+**The damage is invisible in the one place anybody would look.** The file is
+gitignored, so:
+
+- `git status` shows an unfamiliar NEW name (`.env.local.env-loading-test-stash`)
+  rather than a missing one;
+- nothing reports the absence, because absence is the normal state for a
+  gitignored file on a fresh clone;
+- the consequence surfaces far away, as tests failing to connect.
+
+> **When a test mutates state outside the repo, its cleanup is not guaranteed and
+> its failure will not look like a test failure. It will look like the
+> environment.** That is precisely how it gets recorded: three candidate causes,
+> all environmental, none of them "a test broke it".
+
+**The check:** for any test that moves, renames, or deletes something outside the
+repo, ask what a kill -9 halfway through leaves behind, and whether anything
+would ever report it. If the answer is "an untracked file with an unfamiliar
+name", that is a silent failure with a long fuse.
+
+
+---
+
+## A46 — the component layer, built. And a capability probe that lied the same way its test did.
+
+**2026-08-28.** SPEC §11 amended FIRST, at Adam's instruction: *"a layer the spec
+does not know about is the drift these amendments exist to catch, and it should
+be amended before the layer is built rather than after."*
+
+### Why it is two vitest projects rather than one `include`
+
+**The two layers need incompatible resolve conditions, and that is structural:**
+
+- `server-only` (CLAUDE.md §6) resolves to a throwing stub UNLESS the
+  `react-server` condition is set — every server-side test needs it;
+- `react-dom/server` refuses to load WITH it — *"react-dom/server is not
+  supported in React Server Components"*.
+
+One config cannot satisfy both. **Both projects run under a plain `npm test`**,
+which SPEC §14 requires: a layer nobody executes is not a layer.
+
+**No new dependency.** `react-dom` is already a production dependency. `jsdom`
+and `@testing-library/react` were explicitly NOT added — Adam: *"if interaction
+coverage turns out to matter, that is a decision with its own justification
+rather than a convenience bought while building something else."*
+
+### THE FINDING: my capability probe lied, and it lied the same way the test did
+
+I ran a probe BEFORE building, to answer "can this layer assert closed-by-default
+and no-link-inside-the-disclosure?" It reported **yes** to both. **The first was
+wrong, and the probe and the eventual test shared one bug.**
+
+React serialises the attribute as `open=""`, not a bare `open`. My pattern was:
+
+    /<details[^>]*\sopen[\s>]/     ← requires whitespace or '>' AFTER the word
+
+which never matches `open="`. So:
+
+- the **probe** rendered an unmutated component, saw no match, and reported
+  "closed by default — assertable";
+- the **test** asserted the same pattern was absent and passed;
+- and it **kept passing against `<details open>`**, caught only by mutation.
+
+> **A probe answering "can this layer SEE X" must be run against a version where
+> X is FALSE.** Run against the state you already have, a broken detector and a
+> working one give the same answer — and the probe's "yes" then licenses building
+> on a capability that was never demonstrated.
+
+Same family as the hollow-test check and its inverse, with a new twist: the
+verification step meant to DE-RISK the build carried the defect into it.
+
+### What the layer covers, and what it will never cover
+
+**Covers:** element presence and nesting, DOM attributes (`<details open>` is an
+attribute question, not a CSS one), presence/absence within a subtree, text, and
+`useState` INITIAL state.
+
+**Never covers:** interaction (`renderToStaticMarkup` returns a string, not a
+tree), CSS (a class name asserted is a class name, not an appearance),
+`useEffect` or any post-mount behaviour.
+
+**So for the five gated LLM features: initial-render STRUCTURE is coverable and
+interaction is not.** The scope-switch clear-and-load remains uncovered at every
+layer, and that is recorded rather than papered over.
+
+---
+
+## RULE: stub a framework CONTEXT, never a value under test — and the rule enforces itself
+
+**Adam, 2026-08-28**, approving a `next/navigation` stub for the component layer
+while refusing the general form.
+
+**13 of this app's client components call `next/navigation`**, and `useRouter()`
+throws `invariant expected app router to be mounted` outside a request context.
+Without a stub, most of the layer's intended reach is unreachable. **But "stub it
+so the tests run" is exactly how this project has produced four hollow tests.**
+
+**The distinction that makes it safe, and it is about WHEN the value is read:**
+
+| usage | components | stub honest? |
+|---|---|---|
+| `router.refresh()` **inside handlers** | SnippetPanel, RecordJournal, WantListRow, ManageClient | **YES** — this layer cannot reach handlers at all, so the stub stands in for a path no assertion exercises |
+| `usePathname()` **read during render** | AppHeader (drives active-link styling) | **NO** — the stub would supply the very value a test then asserts on |
+
+> **Stubbing a framework CONTEXT that no assertion depends on is different in
+> kind from stubbing past the boundary the behaviour lives behind.** The first
+> makes a component renderable; the second answers the test's question for it.
+
+**`test/component/next-navigation.ts` stubs `useRouter` ONLY.** Render-time hooks
+are left out deliberately, and **the omission enforces the rule by itself** —
+verified rather than assumed:
+
+    [vitest] No "usePathname" export is defined on the "next/navigation" mock.
+
+**AppHeader stays uncovered at this layer, by construction rather than by
+discipline.** Nobody can accidentally cover it with a stubbed pathname; they
+would have to widen the stub deliberately, past a comment saying why not. It is
+covered in E2E, where a real router exists.
+
+**And the better escape hatch is named in the file:** a component needing a
+pathname at render time should take it as a PROP — which is what `configured`
+already does for the Anthropic gate, and is why both gated components were
+testable here at all.
+
+---
+
+## Item B — the snippet panel's CONFIGURED branch had no test at any layer
+
+**2026-08-28.** `snippet.spec.ts` documents its own gap, in its own words: the
+regenerate control needs `ANTHROPIC_API_KEY`, `.env.test` deliberately has none,
+*"so the button that raises A31a's dialog does not render here, and a spec
+clicking it waits 30s for a locator that will never appear"*.
+
+**The DECISIONS behind that branch were covered** — `snippet-view.test.ts` pins
+when the confirmation fires and what it says, `record-snippet-post.test.ts` pins
+the server's refusal. **What nothing checked was that the COMPONENT renders those
+decisions**: that the control appears when configured, and that the attribution
+label follows `labelAsGenerated` rather than being hard-coded.
+
+**That seam is what a component test is for** — not re-testing the view model,
+but the wiring between a decision already tested and the markup carrying it.
+
+**Mutation-verified, and one mutation justifies a test's shape:** hard-coding the
+label to `snippet-generated-label` fails ONLY `labels an edited snippet as the
+user's own`. **A single-direction test would have passed against it** — which is
+why §10b's labelling rule is asserted in BOTH directions. Misattributing the
+user's writing to the model is the same error as presenting the model's writing
+as fact, in the other direction, and only the second test catches it.
+
+
+---
+
+## A NEW LAYER RESCHEDULED THE OLD ONE — and the layer that broke things owns no database
+
+**2026-08-28**, caught by the full run rather than by the component project's own
+green.
+
+Adding the component project turned ~16 integration tests red across files
+nothing had touched — `records-create`, `records-update`, `formats`,
+`discogs-spread`, `merge-artists`, `shelf`. The deciding line:
+
+    deadlock detected (code=40P01)
+
+on a plain `SELECT` — which is what happens when another connection truncates
+mid-query. **The exact hazard `fileParallelism: false` was written to prevent**,
+reappearing after two years of it working.
+
+### The cause, and why it is counterintuitive
+
+`fileParallelism: false` was set INSIDE the server project. It serialises that
+project's FILES. **But vitest schedules the PROJECTS themselves concurrently**,
+so the integration files started overlapping again the moment a second project
+existed. Hoisted to the root `test` block, it applies across both.
+
+> **The component project owns no database, and that is what makes this
+> confusing.** The harm was never contention with the new layer — it was that the
+> new layer's PRESENCE changed how the old one was scheduled. A component asked
+> "could these two collide over the database?" would answer no, correctly, and
+> miss it.
+
+### The near-miss worth recording
+
+**The component project passed 10/10 on its own, every time.** Had the unit been
+reported on the strength of its own tests plus a spec-scoped run, this ships as
+"~16 flaky integration tests" — a moving red, in a suite that has spent three
+sessions chasing exactly that.
+
+**CLAUDE.md §10's no-file-argument rule caught it**, in a new variant: not "a
+change broke a test in a file it never opened", but **"a change to the RUNNER
+broke tests no change touched at all"**. Same rule, one level further out —
+passing in isolation is not evidence a change is clean, and the isolation that
+lied here was the project's, not the file's.
+

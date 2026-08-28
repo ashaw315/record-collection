@@ -45,6 +45,7 @@ Step 8 is the one you will be most tempted to skip. Don't. The developer is revi
 |---|---|---|
 | Unit | Vitest | Pure functions: scoring, ordering, mapping, parsing, validation |
 | Integration | Vitest + test DB | Route handlers, transactions, constraints, auth |
+| Component | Vitest + `react-dom/server` | Initial-render structure of a component, incl. features the `.env.test` gate hides from E2E (§11). No interaction, no CSS. |
 | E2E | Playwright | The eleven user flows in `SPEC.md` §11 |
 
 **Rules:**

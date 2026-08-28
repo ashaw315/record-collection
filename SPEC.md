@@ -1271,6 +1271,42 @@ Note that `has_genre` was **not** among the survivors, though an earlier version
 - `409` on deleting in-use reference rows.
 - `price_history` CHECK constraint rejects rows with both or neither parent ID.
 
+### Component (Vitest + `react-dom/server`) — A46
+
+**Added 2026-08-28**, after the `.env.test` gate cost coverage on a fifth
+feature. **The gate is correct and stays**: `ANTHROPIC_API_KEY` is deliberately
+absent so `snippet.spec.ts` can assert the unconfigured state, which makes that
+absence a fixture other specs depend on. A component test supplies `configured`
+as a **prop**, so it reaches a gated feature without touching the fixture — the
+fix rather than the workaround.
+
+**Static rendering only. No new dependency**: `react-dom` is already a
+production dependency, and neither `jsdom` nor `@testing-library/react` is
+added. Interaction coverage is a separate decision needing its own
+justification, not a convenience bought while building this.
+
+**What this layer asserts:** the structure of a component's INITIAL render.
+
+- element presence and nesting;
+- DOM attributes, including `<details open>` — a closed disclosure is an
+  attribute question, not a CSS one;
+- the presence or absence of an element within a subtree (e.g. no action link
+  inside a disclosure);
+- text and `useState` initial state as rendered.
+
+**What it CANNOT assert, stated so nothing is built on a false expectation:**
+
+- **no interaction** — `renderToStaticMarkup` returns a string, not a tree.
+  Clicking, scope switching, and `ask()` are unreachable;
+- **no CSS.** Anything checked by class name asserts a class name, not an
+  appearance;
+- **no `useEffect`** or any post-mount behaviour.
+
+**The consequence, and it is why this layer does not close every gap:** for the
+five gated LLM features, initial-render structure is coverable and interaction
+is not. The scope-switch clear-and-load stays uncovered by any layer, and that
+is recorded rather than papered over.
+
 ### E2E (Playwright) — these flows must be covered
 1. Log in with a wrong password, then the correct one.
 2. Add a record manually, end to end, and see it in the collection list.
