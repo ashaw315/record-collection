@@ -21466,9 +21466,100 @@ which CLAUDE.md §4 puts outside a unit that did not ask for it.
 the want-list link from the current answer, or opening the details by default,
 would be caught by nothing.
 
-> **PROPOSED NEXT (small):** a `components` vitest project with `conditions:
-> ['node']` and `include: ['src/**/*.test.tsx']`, and the probe committed as its
-> first test. That would close this for the retention disclosure AND give the
-> four other gated features a layer they can actually be tested at — which is a
-> better answer than "no E2E" repeated a sixth time.
+**Folded into the harness unit** (Adam, 2026-08-28) rather than left as a
+proposal here — see the scoping entry below. His reasoning: *"it is the same
+subject as the `.env.test` gate, which is what makes both of them the fix rather
+than the workaround. Six recorded costs is enough evidence that 'no E2E' is a
+structural gap rather than a per-unit accident."*
 
+
+---
+
+# THE HARNESS UNIT — scoped, not built. Two subjects, and they are one subject.
+
+**Adam, 2026-08-28**, folding the components-vitest proposal into the standing
+harness work rather than letting it accumulate as a sixth note saying the same
+thing.
+
+> *"Six recorded costs is enough evidence that 'no E2E' is a structural gap
+> rather than a per-unit accident."*
+
+**The argument for treating them together:** the `.env.test` gate and the missing
+component layer are the same problem seen from two ends. The gate makes a
+feature unreachable in a browser; the missing layer means there is nowhere else
+to put the test. Either one alone forces a workaround — change a shared fixture,
+or stub past the boundary. **Together they are a fix**, because a component layer
+is exactly where a gated feature can be tested WITHOUT touching the fixture that
+another spec's subject depends on.
+
+---
+
+## Item A: a component test layer, which this project has never had
+
+**There is no `.tsx` test anywhere in the repo.** `vitest.config.mts` includes
+only `src/**/*.test.ts`, and its global `react-server` resolve condition — needed
+so `server-only` modules import at all — makes `react-dom/server` throw.
+
+**Shape (verified working during the retention unit, then removed):** a second
+vitest project with `conditions: ['node']` and `include:
+['src/**/*.test.tsx']`. A `renderToStaticMarkup` probe against `GapAnalysis`
+rendered correctly under it and confirmed every structural claim the retention
+unit made. **`react-dom` is already a dependency — no new dependency.**
+
+**First test, ready to commit:** the retention disclosure — details present and
+closed, both staleness lines distinct, 1 want-list link on the page and 0 inside
+the disclosure, and no disclosure at all when there is no previous answer.
+Currently **verified but not guarded**: opening the details by default, or
+removing the current answer's want-list link, would be caught by nothing.
+
+---
+
+## Item B: the five gated LLM features, and what the layer buys them
+
+Recorded costs of `ANTHROPIC_API_KEY` being absent from `.env.test` — an absence
+that is a FIXTURE, since `snippet.spec.ts:131` asserts the unconfigured state:
+
+1. A39's persistence E2E — deleted, moved to integration.
+2. A45's scope picker — two E2E written and deleted.
+3. A45's scoped answer display.
+4. The scope-switch clear/reload.
+5. The retention disclosure (this unit).
+
+**The gate itself is CORRECT and must not be changed.** Every previous unit
+reached that conclusion independently, and one of them proved it by breaking
+`snippet.spec.ts` while trying. **A component layer is the fix that does not
+touch it**, because a component test supplies `configured` as a prop.
+
+---
+
+## Item C: the moving red, already scoped here
+
+The accumulation signature — `1093` (seven sightings), wall-scene `449`,
+record-detail `395`/`423`, snippet `118`, lookup-flows `1574`. **One question,
+not five flaky tests.**
+
+**Datapoint from the retention unit:** a full E2E run came back **445 passed, 20
+skipped, 0 failed** — the first fully green run recorded in a while, with none of
+the usual suspects firing. That is consistent with accumulation (load-dependent,
+not deterministic) and is evidence the reds are not defects in the specs
+themselves.
+
+---
+
+## Also in scope, previously recorded
+
+- **The dead-link guard** (declined as a bolt-on, correctly). Trigger was "the
+  second dead link this app renders"; the first was found by Adam clicking, not
+  by a test.
+- **The Neon WebSocket standing hazard** is NOT in this unit. It is a driver
+  question, not a harness one, and it has its own triggers.
+
+---
+
+## SEQUENCE
+
+**The harness unit comes BEFORE pressing-assessment retention** (Adam,
+2026-08-28). The assessment unit needs a destructive migration dropping
+`pressing_assessments.want_list_id`'s unique constraint — **flagged, explicitly
+NOT confirmed, and not to be written on the strength of a message that merely
+sequences it.** Confirmation will be given explicitly when that unit opens.
