@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { AppHeader } from '@/components/AppHeader';
 import { suggestions } from '@/lib/db/queries/suggestions';
-import { latestGapAnalysis } from '@/lib/db/queries/gap-analysis';
+import { gapAnalysisWithPrevious } from '@/lib/db/queries/gap-analysis';
 import { listGenreTree, type GenreNode } from '@/lib/db/queries/genres';
 import { isAnthropicConfigured } from '@/lib/llm/client';
 import { GapAnalysis } from './GapAnalysis';
@@ -43,7 +43,8 @@ export default async function SuggestionsPage() {
    * the same answer again. Read here rather than fetched by the client, because
    * this page is a server component and the value is already on the server.
    */
-  const lastGapAnalysis = await latestGapAnalysis();
+  const { current: lastGapAnalysis, previous: previousGapAnalysis } =
+    await gapAnalysisWithPrevious();
 
   /*
    * §12d (A45): every genre is offerable as a scope. No depth rule — measured,
@@ -89,6 +90,7 @@ export default async function SuggestionsPage() {
         <div className="mb-6">
           <GapAnalysis
             last={lastGapAnalysis}
+            previous={previousGapAnalysis}
             genres={scopeOptions}
             configured={isAnthropicConfigured()}
           />

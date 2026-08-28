@@ -21308,3 +21308,167 @@ before inserting (`storeGapAnalysis`), which is the line that would change.
 `latestGapAnalysis` computes `recordsAddedSince` from `row.askedAt`, which is
 already the right shape for a per-row answer.
 
+
+---
+
+## RETENTION BUILT — current plus one, per scope, and the previous answer carries its own staleness
+
+**2026-08-28.** The unit deferred at `c302bac`, built from its handoff. Gap
+analysis only; **pressing assessments are the next unit** and need a destructive
+migration that is flagged and not yet confirmed.
+
+### What changed
+
+`storeGapAnalysis` was delete-then-insert; it is now **insert-then-trim to the
+newest two of the scope**. The trim uses `genre_id IS NOT DISTINCT FROM $1`,
+which is load-bearing rather than stylistic: `genre_id = NULL` matches no row, so
+a plain `=` would trim nothing and let the collection-wide scope grow forever.
+
+`gapAnalysisWithPrevious(genreId)` returns `{ current, previous }` from one read.
+`latestGapAnalysis` survives unchanged in behaviour, now sharing the same row
+hydration.
+
+### The design question, answered by construction rather than by care
+
+**`recordsAddedSince` is computed per ROW, from that row's own `asked_at`**, by a
+`recordsAddedSince(scope, askedAt)` helper both answers call separately. The
+natural implementation — count once, show twice — is precisely what the unit
+existed to avoid, and it is what the mutation tests for.
+
+Measured in one render: current says `Asked 5 minutes ago.` and previous says
+`before you added 4 records`, from the same page.
+
+### How "previous" is made visibly previous, and it is STRUCTURE not wording
+
+A `<details>` disclosure, closed by default, so the current answer is the only
+thing rendered at full weight. **And opening it does not make the two peers**,
+which was Adam's specific requirement — the distinction has to survive the moment
+of comparison, which is when it matters most:
+
+- **no "Add to want list" link inside the disclosure.** A superseded suggestion
+  is not something to act on — a fact about what it IS, not a display choice —
+  and a missing affordance is a difference no rewording can erase;
+- **no per-suggestion card.** Plain rows, so the shape differs at a glance.
+
+Verified in rendered HTML: 1 want-list link on the page, **0 inside the
+disclosure**; `<details>` present and not `open`; no previous answer renders no
+disclosure at all.
+
+### And the client keeps the answer it just superseded
+
+`ask()` captures the on-screen answer before the call and installs it as the
+previous one when the new answer lands. **The Aja case was two CONSECUTIVE
+asks** — needing a page reload to see the answer just replaced is the friction
+that lost the first one.
+
+### Mutations, all four caught
+
+| mutation | fails |
+|---|---|
+| previous borrows the current answer's `recordsAddedSince` | `gives the previous answer a LARGER count than the current one` |
+| the pair read ignores scope | all three scope-leak tests |
+| the trim bounds the TABLE rather than the scope | `keeps two per scope rather than two per table`, plus A45's own `re-asking a scope replaces only that scope` |
+| `reasonFor` searches every stored row | `returns null for a suggestion from a superseded analysis` |
+
+---
+
+## THE INVERSE OF THE HOLLOW-TEST CHECK: a data-model change gave an existing test its teeth
+
+**2026-08-28, and this is a new shape.** Not a test fixed, not a test written —
+**the same assertion, against the same code, becoming real because a precondition
+finally exists.**
+
+`gap-analysis-store.test.ts` has asserted since A39:
+
+    it('returns null for a suggestion from a superseded analysis', ...)
+
+**Under keep-one it could pass for the wrong reason.** The superseded row was
+DELETED, so `reasonFor` returned null no matter how carelessly it read — a
+correct assertion that constrained nothing, because the state it was written to
+exclude could not occur.
+
+**Demonstrated rather than argued**, which is the part worth keeping. The same
+broken `reasonFor` — one that searches every stored row instead of the current
+one — was run against both retention policies:
+
+| retention policy | careless `reasonFor` |
+|---|---|
+| keep one (A39) | **PASSES** — the superseded row does not exist |
+| keep two (this unit) | **FAILS** — the row is there to be wrongly found |
+
+> **A test can be hollow because of the DATA MODEL rather than because of how it
+> was written.** The hollow-test check asks "before asserting a stored thing is
+> read back, prove something stored it". Its inverse: a test whose precondition
+> the schema makes impossible is decorative until the schema changes — and
+> nothing about the test's text says so. It reads as a real constraint in both
+> worlds.
+
+**The practical form:** when a retention or deletion policy changes, the tests
+that were passing *because* of the old policy are now doing different work.
+Re-verify them rather than assuming they carried over — one of them just went
+from decorative to load-bearing without a character changing.
+
+---
+
+## A HANDOFF CAN CARRY A DECISION CORRECTLY AND CARRY THE REASONING SOMEWHERE IT DOES NOT APPLY
+
+**Adam, 2026-08-28**, on his own prompt for this unit, which said pressing
+assessments have "the same shape and the same decision applies".
+
+**True about RETENTION. False about the design question.** The prompt's central
+requirement — *the previous answer must carry its own staleness, computed from
+its own `asked_at`* — **does not apply to pressing assessments at all**, because
+A43 stored them precisely on the argument that they do not go stale: a claim
+about an album's pressing history, which does not change. There is no
+`recordsAddedSince` there and no per-row staleness to compute.
+
+**The Aja case generated the SECOND requirement** (visibly previous, not merely
+older) **and not the first** — and it is a pressing-assessment finding, so the
+one requirement that came from it is the one that transfers.
+
+> **A decision and the argument that produced it travel together, and the
+> argument has a narrower domain than the decision.** "Keep current plus one"
+> generalises across both features. "Because the previous answer covers a
+> different collection" is true of exactly one of them. A handoff that carries
+> both as a unit will apply the second wherever it applies the first.
+
+**Caught at the restatement step** (CLAUDE.md §1.1), which is what that step is
+for — and it changed the unit, splitting one into two.
+
+---
+
+## THE `.env.test` GATE HAS NOW COST COVERAGE ON A FIFTH FEATURE
+
+**Unchanged and still correct, recorded because the cost should stay visible.**
+
+`ANTHROPIC_API_KEY` is deliberately absent from `.env.test`; `snippet.spec.ts:131`
+asserts the UNCONFIGURED state, so that absence is a fixture. `GapAnalysis`
+renders "not configured on this deployment" in E2E, so **the retention disclosure
+cannot be reached by a browser test** — same as A45's picker before it.
+
+**Not worked around.** Adding the key breaks another spec's subject; stubbing
+past the gate is the hollow shape this project has produced four times.
+
+### What verified the display instead, and what that is NOT
+
+A `renderToStaticMarkup` probe against the real component, which confirmed every
+structural claim above. **It is not a committed test, and that is a gap I am
+naming rather than hiding.**
+
+**Why it could not become one within this unit:** `vitest.config.mts` includes
+only `src/**/*.test.ts` — **there is no `.tsx` test anywhere in this project** —
+and its global `react-server` resolve condition (needed so `server-only` modules
+import at all) makes `react-dom/server` throw. Committing the probe therefore
+needs a second vitest project with different resolve conditions: new tooling,
+which CLAUDE.md §4 puts outside a unit that did not ask for it.
+
+**So the disclosure's rendering is verified but not GUARDED.** A change removing
+the want-list link from the current answer, or opening the details by default,
+would be caught by nothing.
+
+> **PROPOSED NEXT (small):** a `components` vitest project with `conditions:
+> ['node']` and `include: ['src/**/*.test.tsx']`, and the probe committed as its
+> first test. That would close this for the retention disclosure AND give the
+> four other gated features a layer they can actually be tested at — which is a
+> better answer than "no E2E" repeated a sixth time.
+

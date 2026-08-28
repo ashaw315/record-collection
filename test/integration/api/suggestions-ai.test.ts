@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { desc } from 'drizzle-orm';
+import { desc, sql } from 'drizzle-orm';
 import { getTestDb, truncateAll, closeTestDb } from '../../helpers/db';
 import { artists, genres, llmRequests, records, recordGenres } from '@/db/schema';
 import { LLM_REQUESTS_PER_HOUR } from '@/lib/llm/rate-limit';
@@ -646,6 +646,77 @@ describe('reading a stored answer costs nothing', () => {
    * distinction A39 built and this read must preserve: `null` means nobody
    * asked, an empty suggestions array means the model was asked and had nothing.
    */
+  /**
+   * RETENTION — the read carries the previous answer too, in ONE response.
+   *
+   * **One read, not two.** They are one answer's worth of information — "here is
+   * what Claude says now, and what it said last time" — and two reads could
+   * observe the table either side of a re-ask, leaving the UI to reconcile a
+   * disagreement it cannot resolve.
+   *
+   * Fails against a GET that returns only the current answer.
+   */
+  it('returns the previous answer alongside the current one', async () => {
+    analyse.mockResolvedValue({ ...answer, dropped: 1 });
+    await POST(new Request('http://localhost/api/suggestions/ai', { method: 'POST' }));
+
+    analyse.mockResolvedValue({
+      ...answer,
+      suggestions: [{ artist: 'Discharge', title: 'Hear Nothing', reason: 'r', genre: 'UK82' }],
+      dropped: 2,
+    });
+    await POST(new Request('http://localhost/api/suggestions/ai', { method: 'POST' }));
+
+    const body = await (await GET(new Request('http://localhost/api/suggestions/ai'))).json();
+
+    expect(body.data.suggestions[0].artist, 'the newest is current').toBe('Discharge');
+    expect(body.previous, 'the one before it survives the re-ask').not.toBeNull();
+    expect(body.previous.suggestions[0].artist).toBe('Crass');
+    expect(body.previous.dropped).toBe(1);
+  });
+
+  /**
+   * **A single ask has no previous**, and the read must say so rather than
+   * repeating the current answer — which would render as a comparison of an
+   * answer with itself.
+   */
+  it('reports a null previous after a single ask', async () => {
+    analyse.mockResolvedValue(answer);
+    await POST(new Request('http://localhost/api/suggestions/ai', { method: 'POST' }));
+
+    const body = await (await GET(new Request('http://localhost/api/suggestions/ai'))).json();
+
+    expect(body.data).not.toBeNull();
+    expect(body.previous, 'asked once').toBeNull();
+  });
+
+  /**
+   * Each answer states what IT covers. Fails against a response that sends one
+   * staleness figure, or reuses the current answer's for both.
+   */
+  it('gives each answer its own recordsAddedSince', async () => {
+    analyse.mockResolvedValue(answer);
+    await POST(new Request('http://localhost/api/suggestions/ai', { method: 'POST' }));
+
+    // Backdate the first answer, then add a record between the two asks.
+    await getTestDb().execute(
+      sql`UPDATE gap_analysis_results SET asked_at = now() - interval '2 hours'`,
+    );
+    const [artist] = await getTestDb().insert(artists).values({ name: 'Between' }).returning();
+    await getTestDb().insert(records).values({
+      artistId: artist.id,
+      title: 'Between LP',
+      createdAt: new Date(Date.now() - 60 * 60 * 1000),
+    });
+
+    await POST(new Request('http://localhost/api/suggestions/ai', { method: 'POST' }));
+
+    const body = await (await GET(new Request('http://localhost/api/suggestions/ai'))).json();
+
+    expect(body.data.recordsAddedSince, 'nothing added since the second ask').toBe(0);
+    expect(body.previous.recordsAddedSince, 'one record added since the first').toBe(1);
+  });
+
   it('reports null for a scope never asked about', async () => {
     const [genre] = await getTestDb().insert(genres).values({ name: 'Jazz' }).returning();
 

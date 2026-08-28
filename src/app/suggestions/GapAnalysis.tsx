@@ -37,10 +37,18 @@ export type LastGapAnalysis = {
 export function GapAnalysis({
   configured,
   last,
+  previous,
   genres = [],
 }: {
   configured: boolean;
   last?: LastGapAnalysis | null;
+  /**
+   * The answer before the current one for this scope, or null (retention).
+   *
+   * **Null after a single ask**, which is not an empty comparison: nothing
+   * renders rather than an empty disclosure inviting a click that shows nothing.
+   */
+  previous?: LastGapAnalysis | null;
   /**
    * The genres a question can be scoped to (A45).
    *
@@ -71,6 +79,15 @@ export function GapAnalysis({
   const [asked, setAsked] = useState<LastGapAnalysis | null>(last ?? null);
 
   /**
+   * The previous answer for the SELECTED scope.
+   *
+   * Tracked beside `asked` rather than derived from it, because the two are
+   * separate answers with separate staleness — the previous one is not the
+   * current one seen from a different angle.
+   */
+  const [prior, setPrior] = useState<LastGapAnalysis | null>(previous ?? null);
+
+  /**
    * The scope being asked about — '' is the whole collection.
    *
    * **Scopes are stored separately** (A45), so switching the picker shows that
@@ -95,6 +112,9 @@ export function GapAnalysis({
     setScope(next);
     setState({ phase: 'idle' });
     setAsked(null);
+    // Cleared AND reloaded below: a clear alone is half a feature — the defect
+    // this function was written to close, one row further down.
+    setPrior(null);
 
     try {
       const response = await fetch(
@@ -113,6 +133,7 @@ export function GapAnalysis({
         dropped: body.data.dropped ?? 0,
       });
       setAsked(body.data);
+      setPrior(body.previous ?? null);
     } catch {
       // A failed background read leaves the idle state: the user can still ask,
       // and an error banner for a load they did not request would be noise.
@@ -121,6 +142,15 @@ export function GapAnalysis({
 
   async function ask() {
     setState({ phase: 'loading' });
+
+    /*
+     * **The answer on screen becomes the previous one**, because that is exactly
+     * what the store just did with it. Captured before the call so the
+     * comparison is available the moment the new answer lands — the Aja case is
+     * two CONSECUTIVE asks, and having to reload the page to see the answer that
+     * was just replaced is the friction that lost the first one.
+     */
+    const superseded = asked;
     setAsked(null);
 
     try {
@@ -161,6 +191,7 @@ export function GapAnalysis({
         suggestions: body.data.suggestions,
         dropped: body.data.dropped ?? 0,
       });
+      setPrior(superseded);
     } catch {
       setState({ phase: 'error', message: 'Could not reach the suggestion service.' });
     }
@@ -299,6 +330,68 @@ export function GapAnalysis({
                 ? '1 suggestion was discarded for naming a genre outside your collection.'
                 : `${state.dropped} suggestions were discarded for naming genres outside your collection.`}
             </p>
+          )}
+
+          {/*
+            RETENTION — the answer before this one, for the same scope.
+
+            **Collapsed behind a disclosure, and that is a STRUCTURAL
+            distinction rather than a label.** "Previous" as a heading is
+            wording, and wording is the part a reader stops parsing once a
+            screen is familiar; a closed disclosure means the current answer is
+            the only thing rendered at full weight, and that survives someone
+            rewording the summary text.
+
+            **Opening it must not make the two peers**, which is the failure
+            mode that matters — the distinction would collapse at exactly the
+            moment the user is comparing them. So the expanded previous answer
+            is deliberately NOT the current one repeated at a different
+            indentation:
+
+            - **no "Add to want list" link.** A superseded suggestion is not
+              something to act on, which is a fact about what it IS rather than
+              a display choice — and removing the affordance is a difference no
+              rewording can erase;
+            - **no per-suggestion card.** Plain rows, so the shape differs at a
+              glance rather than only in its contents.
+          */}
+          {prior !== null && (
+            <details data-testid="previous-analysis" className="mt-4 border-t border-border pt-3">
+              <summary className="cursor-pointer text-xs text-muted-foreground">
+                What Claude said last time
+              </summary>
+
+              {/*
+                **Its OWN staleness, from its OWN askedAt** — the design question
+                this unit turned on. A previous answer superseded before five
+                records were added covers something different from the current
+                one, and one figure shown twice would present them as equally
+                current claims about the same collection.
+              */}
+              <p data-testid="previous-asked-line" className="mt-2 text-xs text-muted-foreground">
+                {askedLine({
+                  askedAt: new Date(prior.askedAt),
+                  recordsAddedSince: prior.recordsAddedSince,
+                })}
+              </p>
+
+              {prior.suggestions.length === 0 ? (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  No gaps were suggested that time.
+                </p>
+              ) : (
+                <ul className="mt-2 space-y-1">
+                  {prior.suggestions.map((suggestion) => (
+                    <li
+                      key={`prev-${suggestion.artist}-${suggestion.title}`}
+                      className="text-xs text-muted-foreground"
+                    >
+                      {suggestion.artist} — {suggestion.title}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </details>
           )}
         </div>
       )}

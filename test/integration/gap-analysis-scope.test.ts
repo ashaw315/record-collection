@@ -1,7 +1,11 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { getTestDb, truncateAll, closeTestDb } from '../helpers/db';
 import { artists, genres, recordGenres, records } from '@/db/schema';
-import { latestGapAnalysis, storeGapAnalysis } from '@/lib/db/queries/gap-analysis';
+import {
+  gapAnalysisWithPrevious,
+  latestGapAnalysis,
+  storeGapAnalysis,
+} from '@/lib/db/queries/gap-analysis';
 
 /**
  * SPEC.md §12d (A45) — the genre drill-down's scope and staleness.
@@ -134,5 +138,65 @@ describe('staleness counts records in the SCOPE, not overall', () => {
     await seedRecord('Discharge', uk82.id);
 
     expect((await latestGapAnalysis())?.recordsAddedSince).toBe(2);
+  });
+});
+
+
+/**
+ * Retention is PER SCOPE, and the previous answer must not cross scopes.
+ *
+ * **A collection-wide answer shown as UK82's previous would be the scope defect
+ * wearing a new label** — the same failure A45 fixed for the current answer,
+ * reintroduced one row down. The comparison is only meaningful between two
+ * answers to the SAME question.
+ */
+describe('the previous answer does not leak across scopes', () => {
+  it('does not offer a collection-wide answer as a genre answer\'s previous', async () => {
+    const { uk82 } = await seedHierarchy();
+
+    await storeGapAnalysis({ suggestions: SUGGESTIONS, dropped: 0 });
+    await storeGapAnalysis({ suggestions: SUGGESTIONS, dropped: 0 });
+    await storeGapAnalysis({ suggestions: SUGGESTIONS, dropped: 7, genreId: uk82.id });
+
+    const scoped = await gapAnalysisWithPrevious(uk82.id);
+
+    expect(scoped.current?.dropped, 'the genre answer').toBe(7);
+    expect(scoped.previous, 'UK82 has been asked once, so it has no previous').toBeNull();
+  });
+
+  it('does not offer a genre answer as the collection-wide previous', async () => {
+    const { uk82 } = await seedHierarchy();
+
+    await storeGapAnalysis({ suggestions: SUGGESTIONS, dropped: 0 });
+    await storeGapAnalysis({ suggestions: SUGGESTIONS, dropped: 4, genreId: uk82.id });
+    await storeGapAnalysis({ suggestions: SUGGESTIONS, dropped: 5, genreId: uk82.id });
+
+    const wide = await gapAnalysisWithPrevious();
+
+    expect(wide.current?.dropped).toBe(0);
+    expect(wide.previous, 'asked once collection-wide').toBeNull();
+  });
+
+  /**
+   * Retention counts WITHIN a scope: a scope re-asked twice keeps both, and the
+   * other scope's rows take none of its budget. Fails against a store that
+   * trims by table rather than by scope — which would let a busy genre evict the
+   * collection-wide answer entirely.
+   */
+  it('keeps two per scope rather than two per table', async () => {
+    const { uk82 } = await seedHierarchy();
+
+    await storeGapAnalysis({ suggestions: SUGGESTIONS, dropped: 1 });
+    await storeGapAnalysis({ suggestions: SUGGESTIONS, dropped: 2 });
+    await storeGapAnalysis({ suggestions: SUGGESTIONS, dropped: 3, genreId: uk82.id });
+    await storeGapAnalysis({ suggestions: SUGGESTIONS, dropped: 4, genreId: uk82.id });
+
+    const wide = await gapAnalysisWithPrevious();
+    const scoped = await gapAnalysisWithPrevious(uk82.id);
+
+    expect(wide.current?.dropped).toBe(2);
+    expect(wide.previous?.dropped, 'not evicted by the genre asks').toBe(1);
+    expect(scoped.current?.dropped).toBe(4);
+    expect(scoped.previous?.dropped).toBe(3);
   });
 });

@@ -43,79 +43,94 @@ export async function storeGapAnalysis(input: {
   const db = getDb();
 
   /*
-   * Delete-then-insert rather than an upsert on a fixed id: the table has no
+   * Insert-then-trim rather than an upsert on a fixed id: the table has no
    * natural key, and inventing a sentinel row to update would make "never
    * asked" and "asked and got nothing" indistinguishable — the absent-versus-
    * unknown failure this project keeps naming.
    *
-   * Superseded rows are removed here rather than by a scheduled cleanup, for
-   * the reason §4.3 gives about `llm_requests` carrying its own timestamps:
-   * a job that must run is a job that can fail to run.
+   * **RETENTION: current plus one previous, per scope.** A39 kept exactly one,
+   * on the argument that nothing in the app read a superseded answer. That was
+   * accurate and was not the right question: the Aja case produced two
+   * assessments of one album, minutes apart, where NEITHER DOMINATED — the
+   * second more actionable on what it kept, the first with better coverage —
+   * and that is a fact about the tool observable only across two answers.
+   *
+   * **The value of a stored answer is not only what the app reads; it is what
+   * the user can compare.** Two is where the evidence pointed: the finding came
+   * from CONSECUTIVE asks, and nothing has named a use for the third-most-recent
+   * answer.
    */
   const genreId = input.genreId ?? null;
 
   await db.transaction(async (tx) => {
-    /*
-     * **Deletes only THIS SCOPE** (A45). A39 cleared the table because there was
-     * one question; a UK82 answer overwriting the collection-wide one would
-     * discard something the user still wants — the retention mistake recorded
-     * against A43.
-     */
-    await tx
-      .delete(gapAnalysisResults)
-      .where(
-        genreId === null
-          ? isNull(gapAnalysisResults.genreId)
-          : eq(gapAnalysisResults.genreId, genreId),
-      );
-
     await tx.insert(gapAnalysisResults).values({
       suggestions: input.suggestions,
       dropped: input.dropped,
       genreId,
     });
+
+    /*
+     * **Trim to the newest TWO of this scope** — current plus one previous.
+     *
+     * Inserted first, then trimmed, so the row just written is inside the
+     * window it is measured against. Trimming before inserting would need the
+     * new row's timestamp before it has one.
+     *
+     * **Bounded by construction.** The ceiling follows from this statement
+     * rather than from a scheduled job, for the reason §4.3 gives about
+     * `llm_requests` carrying its own timestamps: a job that must run is a job
+     * that can fail to run, and a table with no policy is a decision deferred.
+     *
+     * **Trims only THIS SCOPE** (A45), and `IS NOT DISTINCT FROM` is what makes
+     * that true for the collection-wide answer: `genre_id = NULL` matches no
+     * row, so a plain `=` would trim nothing and let the NULL scope grow
+     * forever. Two per scope, never two per table — otherwise a busy genre
+     * would evict the collection-wide answer.
+     */
+    await tx.execute(sql`
+      DELETE FROM gap_analysis_results
+       WHERE genre_id IS NOT DISTINCT FROM ${genreId}
+         AND id NOT IN (
+           SELECT id FROM gap_analysis_results
+            WHERE genre_id IS NOT DISTINCT FROM ${genreId}
+            ORDER BY asked_at DESC
+            LIMIT 2
+         )
+    `);
   });
 }
 
-export async function latestGapAnalysis(
-  genreId?: string | null,
-): Promise<StoredGapAnalysis | null> {
+/**
+ * Records added since ONE answer was asked, within that answer's own scope.
+ *
+ * **Per row, never per query** — this is the design question the retention unit
+ * turned on. `recordsAddedSince` is a fact about what a PARTICULAR answer
+ * covers, so the current and previous answers get separate counts from their own
+ * `asked_at`. A collection-wide answer from before five records were added is
+ * superseded in a way a later one is not, and presenting two answers as equally
+ * current claims about the same collection is exactly what the comparison exists
+ * to avoid.
+ *
+ * Counted in the database rather than in JS: the alternative is loading every
+ * record to compare timestamps, which is the collection-scan §9.2 avoids
+ * everywhere else.
+ *
+ * **Counted within the SCOPE, walking the same subtree the question walks**
+ * (A45). Adding five jazz records does not make a UK82 answer stale, and a
+ * shared counter would say it did — A37's rule that a limit named where it does
+ * not bite spends the credibility of the one that does.
+ *
+ * **And it must recurse.** `Punk` has no records of its own and gains through
+ * `UK82`, so a direct-only count would report zero while the answer's scope had
+ * changed. The staleness walks what the question walks, or the two disagree.
+ */
+async function recordsAddedSince(scope: string | null, askedAt: Date): Promise<number> {
   const db = getDb();
-  const scope = genreId ?? null;
 
-  const [row] = await db
-    .select()
-    .from(gapAnalysisResults)
-    .where(
-      scope === null ? isNull(gapAnalysisResults.genreId) : eq(gapAnalysisResults.genreId, scope),
-    )
-    .orderBy(desc(gapAnalysisResults.askedAt))
-    .limit(1);
-
-  if (row === undefined) return null;
-
-  /*
-   * Counted in the database rather than in JS: the alternative is loading every
-   * record to compare timestamps, which is the collection-scan §9.2 avoids
-   * everywhere else.
-   */
-  /*
-   * **Counted within the SCOPE, walking the same subtree the question walks**
-   * (A45, Adam's requirement).
-   *
-   * Adding five jazz records does not make a UK82 answer stale, and a shared
-   * counter would say it did — A37's rule that a limit named where it does not
-   * bite spends the credibility of the one that does.
-   *
-   * **And it must recurse.** `Punk` has no records of its own and gains through
-   * `UK82`, so a direct-only count would report zero while the answer's scope
-   * had changed. The staleness walks what the question walks, or the two
-   * disagree.
-   */
   const counted =
     scope === null
       ? await db.execute<{ n: number }>(
-          sql`SELECT count(*)::int AS n FROM records WHERE created_at > ${row.askedAt}`,
+          sql`SELECT count(*)::int AS n FROM records WHERE created_at > ${askedAt}`,
         )
       : await db.execute<{ n: number }>(sql`
           WITH RECURSIVE subtree AS (
@@ -127,16 +142,77 @@ export async function latestGapAnalysis(
             FROM records r
             JOIN record_genres rg ON rg.record_id = r.id
            WHERE rg.genre_id IN (SELECT id FROM subtree)
-             AND r.created_at > ${row.askedAt}
+             AND r.created_at > ${askedAt}
         `);
 
+  return Number(counted.rows[0]?.n ?? 0);
+}
+
+/** The newest answers for a scope, newest first, at most `limit` of them. */
+async function rowsForScope(scope: string | null, limit: number) {
+  const db = getDb();
+
+  return db
+    .select()
+    .from(gapAnalysisResults)
+    .where(
+      scope === null ? isNull(gapAnalysisResults.genreId) : eq(gapAnalysisResults.genreId, scope),
+    )
+    .orderBy(desc(gapAnalysisResults.askedAt))
+    .limit(limit);
+}
+
+type Row = Awaited<ReturnType<typeof rowsForScope>>[number];
+
+async function hydrate(scope: string | null, row: Row): Promise<StoredGapAnalysis> {
   return {
     // Stored as JSON because it is the model's output rather than the app's
     // data; validated on the way IN by `parseSuggestions` (A29d).
     suggestions: row.suggestions as Suggestion[],
     dropped: row.dropped,
     askedAt: row.askedAt,
-    recordsAddedSince: Number(counted.rows[0]?.n ?? 0),
+    recordsAddedSince: await recordsAddedSince(scope, row.askedAt),
+  };
+}
+
+export async function latestGapAnalysis(
+  genreId?: string | null,
+): Promise<StoredGapAnalysis | null> {
+  const scope = genreId ?? null;
+  const [row] = await rowsForScope(scope, 1);
+
+  if (row === undefined) return null;
+
+  return hydrate(scope, row);
+}
+
+/**
+ * The current answer for a scope and the one before it — SPEC.md §9.2, retention.
+ *
+ * **One read returning both**, rather than two reads the caller reconciles. They
+ * are one answer's worth of information — "here is what Claude says now, and
+ * what it said last time" — and two reads could observe different states of the
+ * table either side of a re-ask, leaving the UI to reconcile a disagreement it
+ * has no way to resolve.
+ *
+ * **`previous` is null after a single ask**, which is not the same as a previous
+ * answer that was empty: A39's absent-versus-empty distinction, one row further
+ * down. A caller must render nothing rather than an empty comparison.
+ *
+ * **Both carry their OWN staleness.** See `recordsAddedSince` above — that is
+ * the requirement this function exists to satisfy, and the natural
+ * implementation (count once, show twice) is precisely what it must not do.
+ */
+export async function gapAnalysisWithPrevious(genreId?: string | null): Promise<{
+  current: StoredGapAnalysis | null;
+  previous: StoredGapAnalysis | null;
+}> {
+  const scope = genreId ?? null;
+  const [current, previous] = await rowsForScope(scope, 2);
+
+  return {
+    current: current === undefined ? null : await hydrate(scope, current),
+    previous: previous === undefined ? null : await hydrate(scope, previous),
   };
 }
 

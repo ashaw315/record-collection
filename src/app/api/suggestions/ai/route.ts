@@ -10,7 +10,11 @@ import {
   isAuthFailure,
 } from '@/lib/llm/client';
 import { logger } from '@/lib/logger';
-import { latestGapAnalysis, storeGapAnalysis } from '@/lib/db/queries/gap-analysis';
+import {
+  gapAnalysisWithPrevious,
+  storeGapAnalysis,
+  type StoredGapAnalysis,
+} from '@/lib/db/queries/gap-analysis';
 import { claimLlmRequest, completeLlmRequest, releaseLlmRequest } from '@/lib/llm/rate-limit';
 
 /**
@@ -300,17 +304,28 @@ export const GET = withErrorHandling('api.suggestions.ai.GET', async (request: R
     return badRequest('Invalid genre id', 'INVALID_ID');
   }
 
-  const stored = await latestGapAnalysis(genreId);
+  const { current, previous } = await gapAnalysisWithPrevious(genreId);
 
-  return NextResponse.json({
-    data:
-      stored === null
-        ? null
-        : {
-            suggestions: stored.suggestions,
-            dropped: stored.dropped,
-            askedAt: stored.askedAt.toISOString(),
-            recordsAddedSince: stored.recordsAddedSince,
-          },
-  });
+  /*
+   * **One read returning both.** They are one answer's worth of information —
+   * what Claude says now and what it said last time — and two round trips could
+   * observe the store either side of a re-ask, handing the UI a disagreement it
+   * has no way to resolve.
+   *
+   * **Each carries its OWN `recordsAddedSince`**, computed from its own
+   * `askedAt`. A previous answer superseded before five records were added
+   * covers something different from the current one, and sending a single figure
+   * would present them as equally current claims about the same collection.
+   */
+  const shape = (answer: StoredGapAnalysis | null) =>
+    answer === null
+      ? null
+      : {
+          suggestions: answer.suggestions,
+          dropped: answer.dropped,
+          askedAt: answer.askedAt.toISOString(),
+          recordsAddedSince: answer.recordsAddedSince,
+        };
+
+  return NextResponse.json({ data: shape(current), previous: shape(previous) });
 });
