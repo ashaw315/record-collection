@@ -21933,3 +21933,58 @@ broke tests no change touched at all"**. Same rule, one level further out —
 passing in isolation is not evidence a change is clean, and the isolation that
 lied here was the project's, not the file's.
 
+
+---
+
+## `env-loading.test.ts` HANGS, and it stashed `.env.local` three times in one session
+
+**2026-08-28.** The rule above ("a test that mutates state outside the repo has
+cleanup nothing guarantees") was written from a stash dated Aug 25. **It then
+reproduced live, three times, while this session ran** — which upgrades it from a
+recorded hazard to an active defect.
+
+### What happens
+
+`test/repo/env-loading.test.ts` spawns a CHILD vitest run
+(`npx vitest run --config test/repo/.env-loading-probe/vitest.probe.mts`) to
+prove the config loads `.env.test` without an exported `TEST_DATABASE_URL`. It
+renames `.env.local` aside for the duration.
+
+**The child hangs.** Observed: 21 minutes at **0.0% CPU**, no database
+connections, no progress. The parent's own `120_000` timeout does not kill it —
+`execFileSync` has no timeout set, so the parent blocks on a child that never
+exits, and the whole suite stalls behind it.
+
+    3607  24:54  0.0  vitest run                              ← parent, blocked
+    4448  21:10  0.0  npm exec vitest run --config .../probe  ← child, hung
+    5402  17:50  0.0  npm exec vitest run --config .../probe  ← second child
+
+Killing the run leaves `.env.local` stashed, because `finally` does not run on a
+kill. **That is the Aug 25 artifact's provenance, now watched rather than
+inferred.**
+
+### Why it went unnoticed for three days
+
+The suite "passed" because **the file's absence makes the Neon tests SKIP by
+design** (`describe.skipIf(!configured)`), and the gate names a skip as a passing
+test. So the damage was invisible at the only place that would have reported it,
+and the consequence surfaced two days later as "an environmental Neon hazard".
+
+### NOT FIXED HERE, deliberately
+
+Diagnosing why a child vitest hangs is its own unit, and this one is already
+carrying a layer, a stub rule and three findings. **What is known, for whoever
+picks it up:**
+
+- `execFileSync` in `runProbe()` has **no `timeout` option** — the single
+  smallest change that would convert a hang into a failure;
+- and `finally` is not enough on its own: the restore needs to survive a kill,
+  which argues for the probe reading a COPY rather than moving the original.
+
+**Trigger: the next time the suite stalls, or `.env.local` is found stashed.**
+Both are now known signatures rather than mysteries.
+
+**Immediate workaround, if the suite hangs:** `pkill -f env-loading-probe`, then
+`mv .env.local.env-loading-test-stash .env.local` and
+`rm -rf test/repo/.env-loading-probe/`.
+
