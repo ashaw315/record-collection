@@ -48,6 +48,36 @@ export default defineConfig({
      */
     fileParallelism: false,
 
+    /*
+     * **One worker for the whole run, not one per project.**
+     *
+     * `fileParallelism: false` stops files within a project from overlapping. It
+     * does NOT stop the two projects from running concurrently in separate
+     * workers, and the integration project shares one Postgres database whose
+     * every test truncates it — so a component-project worker running alongside
+     * is enough to let the server project's own files interleave. Measured:
+     * `40P01` deadlocks and `23505` duplicate keys on shared fixture names.
+     *
+     * **KEPT WITHOUT A DEMONSTRATED DEFECT, deliberately.** The deadlocks above
+     * were measured while `env-loading.test.ts` was spawning an unbounded number
+     * of child vitest runs — several of them full two-project suites against
+     * this one shared database. On a clean run of the fixed tree the signature
+     * does not reproduce: 3188 passed, 0 `40P01`, 0 `23505`, 251s. So the
+     * contention this guards against may have been the fork bomb itself.
+     *
+     * It stays because it costs little on a four-minute suite and removing it is
+     * a change that deserves its own measurement, not because a race has been
+     * shown to need it. **Trigger to revisit: the suite exceeding ~8 minutes, or
+     * CI wall-clock becoming a complaint.** The measurement to run is specified
+     * in NOTES.md, "RE-MEASURED on the fixed tree" — three full runs without it,
+     * grepping for `40P01` and `23505`, because the race was intermittent and one
+     * green run proves nothing.
+     *
+     * (`minWorkers: 1` was here too and is removed: it is not a key vitest 4
+     * accepts — `tsc` rejects it — so it never had any effect.)
+     */
+    maxWorkers: 1,
+
     /**
      * Two projects, because the two layers need INCOMPATIBLE resolve conditions.
      *

@@ -15192,11 +15192,47 @@ the next reviewer can count.
 
 ---
 
-## Presence is not shape — a standing check, after the third instance
+## Presence is not shape, and shape is not EFFECT — a standing check, after the fourth instance
 
-**Named 2026-08-24, fixing R6's finding 1.** Three times now an is-configured
-check has tested that a credential is THERE rather than that it is USABLE, and
-each time the failure landed somewhere the check could not see.
+> ### FOURTH INSTANCE, 2026-08-28 — and it widens the rule
+>
+> **The Neon verification gate tests that `NEON_TEST_DATABASE_URL` LOOKS like a
+> branch URL, not that it authenticates.** With a rotated password the summary
+> reads:
+>
+>     ✓ transactional code IS verified against the real Neon driver
+>     × ...nine transaction tests, every one 28P01 password authentication failed
+>
+> **The gate line claims verification while nothing was verified.** Recorded as
+> an instance of this family rather than as its own note, because it is the same
+> defect a fourth time and the pattern is the finding.
+>
+> **What it adds: the previous three were fixed by moving from PRESENCE to
+> SHAPE — non-empty → placeholder pattern → bcrypt regex. Shape is not enough
+> here.** `NEON_TEST_DATABASE_URL` has a perfectly valid shape and a dead
+> password; no regex can tell those apart. The only check that distinguishes
+> them is USE — connect, or run the thing the credential is for.
+>
+> So the ladder is **presence → shape → effect**, and each rung catches a class
+> the one below cannot see. This gate is the first case in the project where the
+> top rung is the only one that works.
+>
+> **Why it is recorded rather than fixed, and this is a real distinction.** The
+> other three failed SILENTLY — a green boot, a working login page that rejects
+> the right password. This one fails LOUDLY: nine tests go red and name `28P01`
+> in their output. It is the same family and a milder member, so it does not get
+> to hijack a hang fix.
+>
+> **The fix, when it comes, is a `SELECT 1` against the branch before deciding
+> `configured`** — which puts a network call at module scope in a file this
+> session has already rewritten once, and deserves its own unit.
+>
+> **Trigger: the next time a rotated Neon credential produces a green gate line
+> over red tests.** Now a known signature rather than a surprise.
+
+**Named 2026-08-24, fixing R6's finding 1. Extended 2026-08-28.** Four times now
+an is-configured check has tested that a credential is THERE rather than that it
+is USABLE, and each time the failure landed somewhere the check could not see.
 
 1. **The placeholder Anthropic key** (R5's F1). `isAnthropicConfigured()` tested
    non-empty. A key ending `-put-your-key-here` passed, claimed a rate-limit
@@ -15218,7 +15254,9 @@ that too), and the login route is deliberately vague and not wrapped in
 
 **The check to apply, not the fix to copy.** For every credential, ask what
 happens when it is ABSENT, MALFORMED, and VALID-BUT-WRONG — and whether the user
-is told something they can act on. Presence answers only the first. R6 ran this
+is told something they can act on. **Presence answers only the first; shape
+answers the second; only USE answers the third**, which is the rung the Neon gate
+above sits on and the reason a regex cannot rescue it. R6 ran this
 against all eight and the survivors are recorded above: `BLOB_READ_WRITE_TOKEN`
 still tests presence only (malformed → 500), `MUSICBRAINZ_CONTACT_EMAIL` accepts
 any string including `"x"`, and Discogs has no auth-failure branch at all so a
@@ -21938,6 +21976,26 @@ lied here was the project's, not the file's.
 
 ## `env-loading.test.ts` HANGS, and it stashed `.env.local` three times in one session
 
+> ### ⚠ CORRECTED 2026-08-28 — THIS ENTRY UNDERSTATES THE DEFECT
+>
+> **This entry describes one child hanging for 21 minutes. That is not what
+> happens.** Observed directly on 2026-08-28, watching the process table from the
+> start of a run rather than discovering it mid-hang:
+>
+> **A new probe child spawns every ~5 seconds, each hanging at 0.0% CPU — 45+
+> processes in two minutes, still climbing when the run was killed.** It is a
+> fork bomb, not a stall.
+>
+> **The mechanism:** the probe config spread `base`, so `projects` came with it;
+> `projects` beats a sibling `include`; the child therefore ran the WHOLE suite
+> including `env-loading.test.ts` itself, which spawned another child, forever.
+>
+> **Why the difference matters rather than being a detail.** "One test hangs" is
+> a stalled suite you wait out or kill. "Processes multiply without bound" is a
+> machine degrading for as long as it runs — and it means every measurement taken
+> during such a run was competing with an exponentially growing process count.
+> **The numbers in the accidental-mutex entry below were taken under it.**
+
 **2026-08-28.** The rule above ("a test that mutates state outside the repo has
 cleanup nothing guarantees") was written from a stash dated Aug 25. **It then
 reproduced live, three times, while this session ran** — which upgrades it from a
@@ -22023,3 +22081,509 @@ narrowed invocation reports failures the real suite does not have"**.
 hangs: run `npm test` and read past it, or `--project component` for that layer
 alone. Not positional paths.
 
+
+---
+
+## RULE: a comparison with an uncontrolled variable, and the wrong answer being more interesting
+
+**Adam, 2026-08-28**, on the Neon misdiagnosis. **The strongest methodological
+catch of the session**, recorded as a shape rather than as a fix.
+
+### What was carried for two sessions
+
+    Neon over HTTP (`neon()`)      →  REACHABLE
+    Neon over WebSocket (`Pool`)   →  FAILS
+
+A clean, plausible, TRANSPORT-shaped conclusion — and it generated three
+candidate causes, all transport-shaped: WebSocket egress blocked, a
+`@neondatabase/serverless` version change, the branch drifting.
+
+**The HTTP probe read `DATABASE_URL`. The failing tests read
+`NEON_TEST_DATABASE_URL`.** Same host, same user, DIFFERENT PASSWORD — and only
+one of the two was stale.
+
+> **The comparison had a variable nobody controlled for.** Two credentials were
+> compared as though they were two transports, and the variable that actually
+> differed was not the one named in the conclusion. Run with the same credential,
+> both transports fail identically; run with the working one, both succeed.
+
+### Why it survived, which is the half worth keeping
+
+**The wrong answer was more interesting than the right one.** "HTTP works,
+WebSocket doesn't" is a real finding about a driver, worth a note and a trigger.
+"One of my two passwords is stale" is a chore. **An explanation that is more
+interesting recruits more attention and gets re-derived rather than re-tested**,
+and each retelling made it more established without adding evidence.
+
+### And my own theory failed the SAME way, hours later
+
+I found `.env.local` stranded under a stash name and concluded that was the Neon
+cause — **right file, right date, right variable, wrong cause.** It was
+compelling for the same reason: it explained a real fact about the same file, and
+`NEON_TEST_DATABASE_URL` genuinely lives there.
+
+**Only re-running after the fix separated them.** The nine still failed.
+
+> **A plausible cause found NEXT TO a symptom is not the cause, and the step that
+> tells them apart is applying the fix and re-measuring — not reasoning harder.**
+> Both wrong diagnoses would have survived any amount of additional thought; both
+> died instantly on one re-run.
+
+**The check, in two questions:**
+
+1. **When comparing A against B, what else differs between them?** If the two
+   arms read different configuration, the comparison is not testing what its
+   conclusion names.
+2. **Is my explanation more interesting than "something mundane is broken"?** If
+   so, it deserves MORE scepticism, not less — interest is not evidence, and it
+   is the property that keeps a wrong answer alive across sessions.
+
+---
+
+### SECOND INSTANCE, same day: THE INSTRUMENT AS THE UNCONTROLLED VARIABLE
+
+**Adam, 2026-08-28**, on the 204-failure baseline: *"A measurement taken while a
+fork bomb was running is not a measurement."*
+
+**The same shape, one level further out.** The Neon case compared two
+CREDENTIALS as though they were two transports. This one compared two RUNS as
+though the only thing that differed was the fix:
+
+    with the hang     →  1553s, 5 failed
+    hang fixed        →   431s, 204 failed
+    conclusion        →  "the fix revealed a pre-existing race"
+
+**What else differed: `env-loading.test.ts` was spawning an unbounded number of
+child vitest runs** — a new one every ~5 seconds, several of them full
+two-project suites hitting the one shared test database. That is not background
+noise, it is *exactly* the thing that produces `40P01` and `23505` on shared
+fixture names.
+
+**So the apparatus was generating the phenomenon it was being used to measure.**
+On a clean re-run of the same tree: **3188 passed, 0 deadlocks, 0 duplicate keys,
+251s.** The 204 failures did not shrink. They were never there.
+
+> **The rule generalises: when comparing A against B, "what else differs" must
+> include the INSTRUMENT.** A process table, a test runner, a profiler, a logging
+> harness — anything doing the observing is also a participant, and a pathological
+> one contributes its pathology to every number it produces.
+
+**And the reasoning that made it survive was sound, which is the unsettling
+part.** The entry argued: *a one-file change to a repo-guard test cannot make
+3,000 unrelated tests fail, therefore the failures pre-existed and the fix merely
+revealed them.* Both steps are correct. **The missing branch was a third
+possibility — that neither the change nor the codebase produced them, but the
+broken measurement did.**
+
+**Interest again did the work.** "A fix that reveals failures is not a fix that
+causes them" is a genuinely good insight, and the entry says so at length. "My
+test harness was forking bombs and poisoning its own numbers" is a chore. **The
+more interesting reading was recorded as the lesson and the mundane one was never
+checked** — the identical failure mode as the transport theory, four entries
+above, found the same day by the same means: applying the fix and re-measuring.
+
+**The check, now in three questions:**
+
+1. **When comparing A against B, what else differs between them?** — including
+   the instrument, the harness, and the machine's own load.
+2. **Is my explanation more interesting than "something mundane is broken"?**
+3. **Was the measurement taken while the system was pathological?** If the run
+   being measured was hanging, thrashing, forking or retrying, its numbers
+   describe the pathology, not the code.
+
+---
+
+## The env-loading hang, FIXED — and it was mine, from four hours earlier
+
+**2026-08-28.** Fixed ahead of C at Adam's direction: *"it means the suite cannot
+be trusted to run unattended, and every subsequent unit inherits it."*
+
+### Root cause: A46's `projects` change broke a test that reads the config's SHAPE
+
+`env-loading.test.ts` spawns a child vitest on a generated config built by
+spreading the real one:
+
+    const { globalSetup: _omit, ...test } = base.test ?? {};
+    export default { ...base, test: { ...test, include: [ONE_FILE] } };
+
+**A46 moved `globalSetup` and `include` into `test.projects[]`.** Both lines
+silently stopped working:
+
+- the destructure stripped a key that was no longer at that level, so the child
+  ran the REAL global setup — which throws on the missing `TEST_DATABASE_URL`
+  this very test removes;
+- `projects` beats a sibling `include`, so the child ran the WHOLE two-project
+  suite recursively instead of one file.
+
+**Verified both by reproducing the child run directly**: it printed "applying
+migrations" (setup running, supposedly stripped) and then threw in setup under
+the hostile environment.
+
+> **A test coupled to another file's SHAPE degrades silently when the shape
+> moves.** The coupling is legitimate — the probe must run the REAL config or it
+> proves nothing — so it gets a guard rather than being removed:
+> `test/repo/probe-config-integrity.test.ts`.
+
+**And it HUNG rather than failed, which is why A46's own full run stayed green.**
+
+### Three fixes, each verified by mutation
+
+| fix | verified |
+|---|---|
+| probe config built explicitly, not spread | mutating the child's config back to a non-loading one still reports `UNSET (vitest never loaded .env.test)` — the guarantee is intact |
+| `timeout: 90_000` + `killSignal` on both spawns | a deliberately-hanging child now FAILS in ~6s instead of stalling forever |
+| the rename is gone entirely | `probe-config-integrity` fails if `renameSync` returns |
+
+### The rename was defending against something that cannot happen here
+
+The stash existed because *"a machine whose `.env.local` defines a local
+`TEST_DATABASE_URL` would make a broken config and a working one resolve
+identically"*. **`vitest.config.mts` already prevents that**, and reading it
+settles the question:
+
+    config({ path: '.env.local', processEnv: localOnly, quiet: true });
+    // ...then copies exactly ONE variable out: NEON_TEST_DATABASE_URL
+
+`.env.local` is loaded into an ISOLATED object. `TEST_DATABASE_URL` is never read
+from it by any path. **The isolation the rename performed is already performed by
+the config under test** — so the file is simply left alone, and there is nothing
+for a kill to strand.
+
+**Before: 5 files, indefinite hang, four manual interventions in one session.
+After: 19 repo-guard files, 118 tests, 31 seconds.**
+
+---
+
+## The Neon gate reported "we could not check" as "we checked and it was fine"
+
+**Adam, 2026-08-28**: *"That is absent-versus-unknown in the test harness
+itself."* Fixed alongside the hang, because it is what let the hang hide.
+
+**The old formulation:**
+
+    it.skipIf(configured)('SKIPPED: ... NOT verified ...', () => {
+      expect(configured).toBe(false);   // ← PASSES
+    });
+
+**A39 made the skip NAMED, which was right and insufficient.** A named test that
+PASSES still adds one to the green count, and nobody reads 200 passing lines
+looking for the one whose name says it checked nothing.
+
+**What it cost:** `.env.local` was stranded 2026-08-25. The Neon suite skipped
+from then on. Every summary read green. The consequence surfaced two days later
+as an "environmental hazard" with three wrong candidate causes — and two sessions
+lost time asking "is this mine?"
+
+**The fix:** when the variable is absent, the gate is DECLARED as `it.skip`, so
+vitest counts it under SKIPPED — a separate number that cannot be mistaken for
+verification. `skipIf` cannot express this: it RUNS the test when its condition
+is false, which is exactly the unverified case.
+
+    ↓ UNVERIFIED: transactional code is NOT checked against the real Neon driver
+    Tests  0 passed | 11 skipped
+
+**Zero passed, where it used to say one.** The honest state of an unchecked
+driver is unknown, and the summary now says so.
+
+
+---
+
+## THE HANG WAS AN ACCIDENTAL MUTEX — fixing it turned the suite red, and that is the honest state
+
+> ### ⚠ MEASUREMENTS UNRELIABLE — re-taken 2026-08-28, see below
+>
+> **Adam, 2026-08-28: *"A measurement taken while a fork bomb was running is not
+> a measurement."*** The 1553s and 431s figures in this entry, and the 204-failure
+> count, were recorded while the probe was spawning a child every five seconds.
+> The "with the hang" run was competing with an unbounded and growing number of
+> processes, so its duration measures process starvation as much as it measures
+> serialisation.
+>
+> **The QUALITATIVE claim may still hold** — a blocked parent does serialise what
+> queues behind it — **but the 3.6× figure is not evidence for it**, and the
+> 204 failures are not established as pre-existing. Both are treated as UNVERIFIED
+> until re-measured on the fixed tree. See the re-measurement entry at the end of
+> this file.
+
+**2026-08-28, immediately after fixing the env-loading hang.** The most
+uncomfortable finding of the session and the one most worth keeping.
+
+### What happened
+
+Fixing the hang made the full suite **finish unattended for the first time all
+day** — and report **204 failures**, `40P01` deadlocks and `23505` duplicate keys
+on shared fixture names, across integration files nothing had touched.
+
+**The durations settle what happened:**
+
+| run | duration | result |
+|---|---|---|
+| with the hang | **1553s** | 3175 passed, 5 failed |
+| hang fixed | **431s** | 2992 passed, 204 failed |
+
+**3.6× faster, and red.** That is not a regression introduced by the fix — it is
+the race that was always there, finally able to occur.
+
+> **`env-loading.test.ts` blocked for ~21 minutes on a child that never exited,
+> and while it blocked, everything queued behind it ran one at a time.** The hang
+> was acting as an accidental mutex. The suite's green depended on a bug.
+
+### Why `fileParallelism: false` was not enough, twice
+
+`fileParallelism: false` stops FILES within a project from overlapping. **It does
+not stop the two A46 projects from running concurrently in separate workers** —
+and the integration project shares one Postgres database that every test
+truncates, so a single concurrent worker is enough to let its files interleave.
+
+Hoisting the flag to the root (earlier today) looked like it worked, because the
+run that verified it was still being serialised by the hang. **The verification
+and the bug were the same event.**
+
+**The actual fix is `maxWorkers: 1` / `minWorkers: 1`** — one worker for the
+whole run rather than one per project.
+
+### The shape
+
+> **A fix that reveals failures is not the same as a fix that causes them, and
+> the difference is worth stating loudly** — because the first instinct on seeing
+> 204 red after a one-file change is to revert the change.
+
+**And the second-order lesson, which is nastier:** a slow suite can be slow
+*because* something is serialising it by accident, and speeding it up is then
+indistinguishable from breaking it. **The duration was the evidence** — a change
+to one repo-guard test cannot make the other 3,000 tests 3.6× faster, so
+something structural about scheduling had changed.
+
+**"The suite passes" meant "the suite passes while one test hangs for 21
+minutes."** Every green run in the days this was live carried that asterisk.
+
+
+
+---
+
+## RULE: after an interruption, a clean tree is not evidence nothing was lost — check the stash
+
+**Adam, 2026-08-28**, on finding the previous session's entire fix sitting in a
+stash the tree gave no sign of.
+
+### What happened
+
+A session was cut off mid-run. The next session opened on `git status` reporting
+**clean**, at `HEAD`, nothing modified. That reads as "the interrupted session
+committed its work or did nothing" — and both were false.
+
+    stash@{0}: On main: wip-envloading
+      NOTES.md                                   | 208 +++
+      test/integration/neon-transactions.test.ts |  49 +-
+      test/repo/env-loading.test.ts              |  72 +-
+      test/repo/neon-gate.test.ts                |  53 +-
+      vitest.config.mts                          |  19 +
+      test/repo/probe-config-integrity.test.ts   |  97 +++   ← UNTRACKED
+
+**The whole fix, plus its 208 lines of reasoning, and a 97-line guard file that
+existed in no commit, on no branch, nowhere else in the repository.**
+
+### The part that makes it a hazard rather than an inconvenience
+
+**`git stash show` does not list untracked files.** The default output showed
+five files. The sixth — the only copy of `probe-config-integrity.test.ts` —
+appeared only under `--include-untracked`. A `git stash drop`, or a `git stash
+pop` that hit a conflict and got abandoned, destroys it with no warning and no
+reflog entry that names it.
+
+> **A clean working tree after an interruption is ambiguous between "nothing was
+> lost" and "everything was set aside", and the second is invisible unless you
+> ask.** The stash is the one place git hides work from `git status`.
+
+### The check
+
+1. **`git stash list` before trusting a clean tree**, every time a session
+   follows an interruption.
+2. **`git stash show --include-untracked --stat`**, never the bare form — the
+   bare form omits exactly the files that exist nowhere else.
+3. **Back the contents up before popping.** `git diff HEAD > patch` plus a copy
+   of each untracked file. The pop is the risky step: it drops the stash on
+   success, and on this occasion it first failed with `could not write index`
+   against a stale `.git/index.lock` left by the killed run.
+
+**The lock is worth its own line.** `rm -f .git/index.lock` is correct ONLY after
+confirming no git process holds it (`ps`, `lsof`) — the same file is a genuine
+mutex during a real operation, and removing it under a live process corrupts the
+index.
+
+### Why this belongs with the env-loading entry rather than filed separately
+
+The interruption that stranded the stash was **the fork bomb** — a run killed
+because it was spawning a child every five seconds. So the two are one causal
+chain: the hang forced a kill, the kill stranded the work, and the clean tree
+hid it. Fixing the hang removes the reason anyone kills a run mid-suite, which
+is the same reason `.env.local` kept being stranded.
+
+
+---
+
+## RE-MEASURED on the fixed tree: the 204 failures were NOT pre-existing
+
+**2026-08-28.** The accidental-mutex entry above claimed that fixing the hang
+revealed 204 pre-existing failures — `40P01` deadlocks and `23505` duplicate keys
+— and that this was "the honest state" of a suite whose green depended on a bug.
+**Adam directed that the claim be treated as unverified**, because the run that
+produced it was competing with a fork bomb.
+
+### The clean measurement
+
+Full `npm test`, no file arguments, on the fixed tree, watched from start to
+finish with the process table sampled every 10 seconds:
+
+| | contaminated run | **clean run** |
+|---|---|---|
+| duration | 431s | **251.9s** |
+| passed | 2992 | **3188** |
+| failed | **204** | **9** |
+| `40P01` deadlocks | many | **0** |
+| `23505` duplicate keys | many | **0** |
+| peak probe children | unbounded | **0** |
+
+**All 9 failures are in ONE file, from ONE cause:** `28P01 password
+authentication failed for user 'neondb_owner'` in `neon-transactions.test.ts` —
+the stale credential, which is a known outstanding item and not a suite defect.
+
+### What this means for the mutex claim
+
+**The 204 failures do not reproduce.** Not reduced — absent. The deadlock and
+duplicate-key signatures that the entry treated as "the race that was always
+there" appear zero times in a clean run of the same tree.
+
+> **The fork bomb was itself the source of the contention it was credited with
+> revealing.** An unbounded number of vitest children, several of them running
+> the full two-project suite against the one shared test database, is more than
+> enough to produce `40P01` and `23505` on shared fixture names. The entry
+> reasoned that a fix cannot cause failures in files it never touched — correct —
+> and concluded the failures were pre-existing. **The missing third possibility
+> was that the measurement apparatus was generating them.**
+
+**`maxWorkers: 1` may therefore be unnecessary.** It was added to fix a race
+whose evidence has evaporated. It is KEPT for now — removing it is a separate
+change that wants its own measurement — but it is recorded here as **a fix
+without a demonstrated defect**, which is the kind of thing this project
+otherwise refuses.
+
+**TRIGGER, because a deferral without one is a decision never to act** (this
+file's own rule, and 14b is the precedent — a deferral that outlived its trigger
+turned out to be a decision nobody made):
+
+> **Revisit when the vitest suite exceeds ~8 minutes, or when CI wall-clock
+> becomes a complaint — whichever comes first.** It is 233s today, so the cost is
+> not worth a measurement yet.
+
+**And the measurement it needs is specified now**, while the reasoning is fresh,
+so the next session does not have to reconstruct it: remove `maxWorkers`, run the
+full suite **three times** on the fixed tree, and grep for `40P01` and `23505`.
+Three runs because the race was always intermittent — one green run is not
+evidence of absence, which is the same trap as the flake finding. If all three
+are clean, the flag goes and this entry records why; if any run shows the
+signature, the flag stays and has finally earned itself a defect.
+
+### The shape, which is the same one twice in two days
+
+The uncontrolled-variable rule earlier in this file says: *when comparing A
+against B, what else differs between them?* Here A was "the suite with the hang"
+and B was "the suite without it", and what else differed was **an exponentially
+growing process count in A**. The conclusion named serialisation; the variable
+that actually differed was load.
+
+> **A measurement taken while the system is pathological measures the pathology.**
+> The 3.6× speedup and the 204 failures were both artifacts of the same
+> uncontrolled variable, and both dissolved on a clean re-run — exactly as the
+> two earlier wrong diagnoses did, and for the same reason: **applying the fix and
+> re-measuring is what separates a plausible cause from an actual one.**
+
+
+---
+
+## Observations from the env-loading fix, recorded not acted on
+
+**2026-08-28**, out-of-scope findings from the hang unit (CLAUDE.md §4).
+
+### 1. The Neon gate checks the URL's SHAPE, not that it AUTHENTICATES
+
+`isNeonTestBranchConfigured` tests whether `NEON_TEST_DATABASE_URL` looks like a
+Neon branch URL. It cannot tell a live credential from a stale one, so with a
+rotated password the gate reports:
+
+    ✓ transactional code IS verified against the real Neon driver
+    × ...nine transaction tests, all 28P01 password authentication failed
+
+**The gate line says verified while nothing was verified.** This is a smaller
+instance of the bug the gate was built to fix — but genuinely smaller, and that
+distinction is the reason it is recorded rather than fixed: the nine tests go
+RED and loudly name `28P01`, so the failure is visible. The original bug was
+invisible.
+
+**A fix would connect** — `SELECT 1` against the branch before deciding
+`configured` — which turns a shape check into a network call at module scope.
+That is a real design change to a gate this session has already rewritten once,
+and it belongs in its own unit rather than smuggled into a hang fix.
+
+**Trigger: the next time a rotated Neon credential produces a green gate line
+over red tests.** Now a known signature.
+
+### 2. `maxWorkers: 1` guards a race that no longer reproduces
+
+Recorded in full in the re-measurement entry. Kept, documented in the config as
+a fix without a demonstrated defect, and worth revisiting if suite duration ever
+matters — it is currently 4 minutes.
+
+### 3. `minWorkers: 1` was never a valid vitest 4 option
+
+Shipped in the stashed fix and rejected by `tsc` the moment the file was
+typechecked. It had no effect at any point. **Removed.** The interesting part is
+the sequencing: the previous session was interrupted before running `npm run
+typecheck`, so a config key that does nothing sat in a fix that was believed
+complete. **CLAUDE.md §10's gate list is what caught it**, and only because the
+list is run in full rather than sampled.
+
+### 4. `test/repo/probe-config-integrity.test.ts` is the first test to import `vitest.config.mts` as a module
+
+Every other reference is a string inside a spawned child. That makes it the
+first to meet TS5097 — `tsc` rejects a literal `.mts` import specifier under this
+tsconfig, and cannot resolve the extensionless form. Resolved by holding the
+specifier in a variable and typing the result structurally, which is documented
+at the import. **Noted because the next test that wants to read the config will
+hit exactly this**, and the workaround is not obvious.
+
+
+---
+
+## E2E state at the close of the env-loading unit — and a datapoint for wall-scene 1093
+
+**2026-08-28**, full `npx playwright test`, no file argument, per CLAUDE.md §10.
+
+    443 passed | 20 skipped | 2 flaky | 11.1m | exit 0
+
+**Both flaky tests passed on retry #1**, and neither is a cross-file break from
+this unit:
+
+| test | first | retry | other project |
+|---|---|---|---|
+| `wall-scene.spec.ts:1093` — pulled sleeve fits inside the wall on a short viewport | ✘ 5.0s | ✓ 8.2s | not run on `[mobile]` |
+| `want-list.spec.ts:604` — a prefill alone creates NOTHING | ✘ 3.6s | ✓ 5.1s | ✓ passed outright on `[mobile]` |
+
+**Why this run was worth doing anyway.** `maxWorkers: 1` is a change to the
+RUNNER, and this file already records a case where a runner change broke tests
+no change had touched. It did not happen here — but that is now measured rather
+than assumed, which is the whole point of the no-file-argument rule.
+
+### The 1093 datapoint, for the unit that comes next
+
+**1093 is the next unit's subject and it is intermittent, not deterministic.**
+That is worth having in advance, because it decides how the diagnosis must be
+run: **a single green run proves nothing about it.** The retry passing at 8.2s
+against a 5.0s failure hints at a timing or layout-settling dependency rather
+than a fixed geometry error — but one observation is not a diagnosis, and the
+temptation to treat "it passed on retry" as "it is fine" is exactly the shape
+this file keeps recording.
+
+**When that unit opens: reproduce it N times before theorising.** The flake
+entry's rule applies unchanged — passing in isolation is not evidence, and here
+passing at all is not evidence either.

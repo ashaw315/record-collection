@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, renameSync, writeFileSync, rmSync, mkdirSync } from 'node:fs';
+import { writeFileSync, rmSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -53,13 +53,32 @@ function writeProbe(): void {
      });
     `,
   );
+  /*
+   * **Built explicitly, NOT spread from `base.test`.**
+   *
+   * The previous version did `const { globalSetup: _omit, ...test } = base.test`
+   * and added an `include`. Both stopped working the day A46 introduced
+   * `test.projects[]`: `globalSetup` moved inside a project, so the destructure
+   * stripped a key that was no longer there, and a sibling `include` loses to
+   * `projects`, so the probe recursively spawned the WHOLE suite — whose global
+   * setup then threw on the very variable this test removes.
+   *
+   * **It hung rather than failed**, which is why the run that broke it stayed
+   * green. `test/repo/probe-config-integrity.test.ts` now guards the shape.
+   *
+   * `resolve` is still taken from the real config, because path aliases are what
+   * the probe needs in order to load at all. What must NOT be inherited is the
+   * project structure and its setup.
+   */
   writeFileSync(
     PROBE_CONFIG,
     `import base from '../../../vitest.config.mts';
-     const { globalSetup: _omit, ...test } = base.test ?? {};
      export default {
        ...base,
-       test: { ...test, include: ['test/repo/.env-loading-probe/probe.test.ts'] },
+       test: {
+         environment: 'node',
+         include: ['test/repo/.env-loading-probe/probe.test.ts'],
+       },
      };
     `,
   );
@@ -73,22 +92,45 @@ function writeProbe(): void {
 function resolveUrlUnderVitest(): string {
   writeProbe();
 
-  // `.env.local` is temporarily hidden for the same reason the drizzle-config
-  // suite hides it: on a machine whose .env.local defines a local
-  // TEST_DATABASE_URL, it supplies the same value the .env.test load would, so
-  // a working and a broken config resolve identically and the test cannot tell
-  // them apart.
-  const envLocal = join(REPO_ROOT, '.env.local');
-  const stashed = join(REPO_ROOT, '.env.local.env-loading-test-stash');
-  const hadEnvLocal = existsSync(envLocal);
-
+  /*
+   * **`.env.local` is no longer hidden, because it CANNOT affect this probe.**
+   *
+   * The original rationale — "on a machine whose .env.local defines a local
+   * TEST_DATABASE_URL, it supplies the same value the .env.test load would, so a
+   * working and a broken config resolve identically" — no longer holds, and
+   * `vitest.config.mts` is why. It loads that file into an ISOLATED object:
+   *
+   *     config({ path: '.env.local', processEnv: localOnly, quiet: true });
+   *
+   * and then copies exactly ONE variable out of it, `NEON_TEST_DATABASE_URL`.
+   * `TEST_DATABASE_URL` is never read from `.env.local` by any path, so the file
+   * cannot make a broken config look like a working one here. The isolation the
+   * rename was performing is already performed by the config under test.
+   *
+   * **And the rename had a failure mode worth being rid of.** It restored in
+   * `finally`, which does not run on a kill: a killed run stranded the
+   * developer's credentials under an unfamiliar name, gitignored and therefore
+   * invisible, from 2026-08-25 to 08-28 — surfacing as a Neon suite that
+   * silently skipped and three wrong diagnoses of an "environmental" hazard.
+   *
+   * **Nothing on disk is touched now, so there is nothing for a kill to
+   * strand.** `test/repo/probe-config-integrity.test.ts` fails if a rename
+   * returns.
+   */
   let output = '';
-  if (hadEnvLocal) renameSync(envLocal, stashed);
   try {
     output = execFileSync('npx', PROBE_ARGS, {
       cwd: REPO_ROOT,
       encoding: 'utf-8',
       stdio: ['ignore', 'pipe', 'pipe'],
+      /*
+       * **Bounded, because a hang here stalls the WHOLE suite.** Without it the
+       * parent blocks forever on a child that never exits, and the run reads as
+       * "still going" rather than as a failure — which cost four interventions
+       * in one session before it was diagnosed.
+       */
+      timeout: 90_000,
+      killSignal: 'SIGKILL',
       env: {
         ...process.env,
         // The ambient environment a CI runner presents: no test database URL
@@ -102,7 +144,6 @@ function resolveUrlUnderVitest(): string {
     const e = error as { stdout?: string; stderr?: string; message?: string };
     output = `${e.stdout ?? ''}${e.stderr ?? ''}${e.message ?? ''}`;
   } finally {
-    if (hadEnvLocal) renameSync(stashed, envLocal);
     rmSync(PROBE_DIR, { recursive: true, force: true });
   }
 
@@ -140,6 +181,9 @@ describe('npm test loads .env.test without help from the caller', () => {
         cwd: REPO_ROOT,
         encoding: 'utf-8',
         stdio: ['ignore', 'pipe', 'pipe'],
+        // Bounded for the same reason as the probe above.
+        timeout: 90_000,
+        killSignal: 'SIGKILL',
         env: {
           ...process.env,
           TEST_DATABASE_URL: 'postgresql://postgres:postgres@127.0.0.1:5433/override_db',

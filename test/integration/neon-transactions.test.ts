@@ -40,16 +40,51 @@ const configured = isNeonTestBranchConfigured(branchUrl);
  * be missed the same way.
  */
 describe('Neon verification gate', () => {
-  it.skipIf(configured)(
-    'SKIPPED: transactional code is NOT verified against the real Neon driver — set NEON_TEST_DATABASE_URL to a throwaway branch',
+  /**
+   * **Reported as SKIPPED, never as passed.**
+   *
+   * The original formulation was `it.skipIf(configured)(...)` with a body that
+   * PASSED, so an unverified driver added one to the green count. **That is
+   * absent-versus-unknown inside the harness** — "we could not check" rendered
+   * as "we checked and it was fine" — and it hid a three-day outage: `.env.local`
+   * was stranded on 2026-08-25, this suite skipped from then on, the summary
+   * stayed green, and the consequence surfaced two days later as a mysterious
+   * "environmental hazard" with three wrong candidate causes.
+   *
+   * **Naming the skip was right and insufficient.** Nobody reads 200 green lines
+   * looking for the one whose name says it checked nothing. `it.skip` puts it in
+   * vitest's SKIPPED count, which is a separate number a reader cannot mistake
+   * for verification.
+   *
+   * The name still carries the instruction, because the summary line is where
+   * someone will read it.
+   */
+  it.skipIf(!configured)(
+    'transactional code IS verified against the real Neon driver',
     () => {
-      // Intentionally passes. The point is the NAME, which appears in the
-      // summary and states plainly what has not been checked. CLAUDE.md §2
-      // requires this verification before deploy; local pg passing does not
-      // imply Neon passes.
-      expect(configured).toBe(false);
+      expect(configured).toBe(true);
     },
   );
+
+  /*
+   * **`it.skip`, unconditionally, when the variable is absent** — declared only
+   * in that case, so the harness emits a SKIPPED entry naming what was not
+   * checked.
+   *
+   * `skipIf(configured)` cannot express this: it runs the test when `configured`
+   * is false, which is exactly the unverified case, putting it back in the
+   * passed count. The condition therefore selects whether to DECLARE the test,
+   * and the declaration itself is always a skip.
+   */
+  if (!configured) {
+    it.skip(
+      'UNVERIFIED: transactional code is NOT checked against the real Neon driver — set NEON_TEST_DATABASE_URL to a throwaway branch',
+      () => {
+        // Never executed: the entry exists to occupy a line in the SKIPPED
+        // count, where a reader cannot mistake it for verification.
+      },
+    );
+  }
 });
 
 describe.skipIf(!configured)('transactions over the Neon serverless driver', () => {
