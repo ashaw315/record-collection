@@ -21227,3 +21227,84 @@ uncommitted work in the same file. Caught immediately by the tests going red.
 **`cp` from a scratch copy is the reversal that does not overreach**, and it is
 what every other mutation this session used.
 
+
+---
+
+## RULE: a clear and a load are two behaviours, and only one of them has a test shape
+
+**Named 2026-08-28 by Adam**, from the scope-reload defect. Recorded separately
+because the general form is not the one it looks like.
+
+**It is NOT a missing-test story.** That is the tempting reading and it is wrong:
+
+- an E2E existed for `switching scope does not present one answer as another` —
+  it asserted the CLEAR;
+- **it would have passed**, because the clear worked perfectly;
+- and it was deleted for an unrelated reason (the `isAnthropicConfigured` gate),
+  so its absence is not the cause either.
+
+**The cause is that the two halves are not equally assertable.**
+
+| behaviour | what a test asserts | shape |
+|---|---|---|
+| "don't show the WRONG answer" | an element is **absent** | easy, obvious, and I wrote it |
+| "show the RIGHT one" | an element is **present with specific content** | needs a stored answer to exist for the new scope |
+
+**The second has no observable claim unless something was already stored for the
+scope being switched TO.** So the test that suggests itself — switch scope, see
+the old answer go — covers the half that worked, and the other half never
+prompted a test because there was nothing on screen to point at.
+
+> **A clear is a negative assertion and a load is a positive one, and negatives
+> are cheap to write.** When a UI action both hides something and shows something
+> else, the hide gets tested and the show gets forgotten — not through
+> carelessness, but because the hide is assertable from the state you are already
+> in, and the show needs a fixture you have to go and create.
+
+**The check:** for any interaction that replaces content, ask what should now be
+PRESENT, not only what should be gone. If the answer is "whatever belongs to the
+new selection", that is a second test needing its own seeded state — and its
+absence is invisible, because the first test is green.
+
+**Related but distinct from the hollow-test check** ("before asserting a stored
+thing is read back, prove something stored it"). That one is about a precondition
+that never happened; this is about a behaviour that was never named.
+
+---
+
+## NEXT SESSION: the retention unit starts fresh, at Adam's direction
+
+**Deferred deliberately, 2026-08-28**, not for lack of time: *"it has a real
+design question in it — the previous answer carrying its own staleness — and that
+deserves a session that has read the spec cold rather than one that has been
+building for hours."*
+
+**DECIDED, so the next session does not re-litigate it:**
+
+- **Keep current + one previous per scope.** Bounded by construction rather than
+  by a chosen number — the Aja finding came from CONSECUTIVE asks, and nothing
+  has named a use for the third-most-recent answer. "Keep everything" was ruled
+  out as a decision deferred rather than made: *"fine for years at my rate of
+  asking is a bet on my behaviour, not a design."*
+- **Five was rejected** as a number nobody can derive — the same objection Adam
+  raised against a depth threshold for the drill-down.
+
+**THE DESIGN QUESTION, and it is the reason for a fresh session:**
+
+> **The previous answer must carry ITS OWN staleness, not the current one's.**
+>
+> `recordsAddedSince` is computed per scope FROM `asked_at`, so a previous row
+> must compute it from **its own** `asked_at`. A collection-wide answer from
+> before five records were added is superseded in a way a Punk answer from before
+> a jazz record is not — and presenting two answers as equally current claims
+> about the same collection is exactly what the comparison exists to avoid.
+
+**And the second requirement:** the previous answer must be **visibly previous,
+not merely older**. The Aja case is the evidence — two lists that looked equally
+authoritative, distinguished only by their timestamps.
+
+**Where the work sits:** `gap_analysis_results` currently deletes its own scope
+before inserting (`storeGapAnalysis`), which is the line that would change.
+`latestGapAnalysis` computes `recordsAddedSince` from `row.askedAt`, which is
+already the right shape for a per-row answer.
+
