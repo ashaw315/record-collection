@@ -80,8 +80,43 @@ export type CollectionSummary = {
   genres: Array<{ name: string; parent: string | null }>;
 };
 
-export async function buildCollectionSummary(): Promise<CollectionSummary> {
+/**
+ * @param options.genreId — scope the summary to one genre AND EVERYTHING BENEATH
+ * IT (A45), or omit for the whole collection.
+ *
+ * **The subtree walk is not optional.** `Punk` carries no records of its own and
+ * gains through `UK82`, so a direct-only scope would send an empty collection
+ * for exactly the genre the drill-down exists to answer — and it must walk the
+ * SAME recursion the staleness count does, or the answer disagrees with its own
+ * scope.
+ */
+export async function buildCollectionSummary(options?: {
+  genreId?: string | null;
+}): Promise<CollectionSummary> {
   const db = getDb();
+  const scope = options?.genreId ?? null;
+
+  /*
+   * The scoped record set, as a CTE reused by every query below — one definition
+   * of "in scope", so the artists, labels and want list cannot drift apart.
+   */
+  const inScope = scope === null ? sql`TRUE` : sql`r.id IN (SELECT id FROM scoped)`;
+  const subtree =
+    scope === null
+      ? sql``
+      : sql`
+          WITH RECURSIVE tree AS (
+            SELECT id FROM genres WHERE id = ${scope}
+            UNION
+            SELECT g.id FROM genres g JOIN tree t ON g.parent_genre_id = t.id
+          ),
+          scoped AS (
+            SELECT DISTINCT r.id
+              FROM records r
+              JOIN record_genres rg ON rg.record_id = r.id
+             WHERE rg.genre_id IN (SELECT id FROM tree)
+          )
+        `;
 
   /*
    * `COUNT(DISTINCT r.id)`, because the genre join multiplies rows: a record
@@ -100,6 +135,7 @@ export async function buildCollectionSummary(): Promise<CollectionSummary> {
     genres: string[] | null;
     titles: string[] | null;
   }>(sql`
+    ${subtree}
     SELECT
       a.name,
       COUNT(DISTINCT r.id)::int AS record_count,
@@ -111,6 +147,7 @@ export async function buildCollectionSummary(): Promise<CollectionSummary> {
     JOIN artists a ON a.id = r.artist_id
     LEFT JOIN record_genres rg ON rg.record_id = r.id
     LEFT JOIN genres g ON g.id = rg.genre_id
+    WHERE ${inScope}
     GROUP BY a.name
     ORDER BY COUNT(DISTINCT r.id) DESC, a.name
   `);
@@ -121,9 +158,11 @@ export async function buildCollectionSummary(): Promise<CollectionSummary> {
    * here would hide a label the model could legitimately reason about.
    */
   const labelRows = await db.execute<{ name: string; record_count: number }>(sql`
+    ${subtree}
     SELECT l.name, COUNT(*)::int AS record_count
     FROM records r
     JOIN labels l ON l.id = r.label_id
+    WHERE ${inScope}
     GROUP BY l.name
     ORDER BY COUNT(*) DESC, l.name
   `);
@@ -133,11 +172,33 @@ export async function buildCollectionSummary(): Promise<CollectionSummary> {
    * history, and an acquired row is a record the user OWNS — offering it as a
    * gap would recommend something already on the shelf.
    */
+  /*
+   * **Scoped through `want_list_genres`, not through `records`** — a want-list
+   * row has no record yet, so it carries its own genre links and needs its own
+   * predicate. A29g's record-level prohibition is only useful if it names rows
+   * in the scope; sending the whole want list to a UK82 question spends tokens
+   * on rows the answer cannot be about.
+   */
+  const wantInScope =
+    scope === null
+      ? sql`TRUE`
+      : sql`EXISTS (
+          SELECT 1 FROM want_list_genres wg
+           WHERE wg.want_list_id = w.id AND wg.genre_id IN (SELECT id FROM tree)
+        )`;
+
   const wantRows = await db.execute<{ artist: string; title: string; priority: number }>(sql`
+    ${scope === null ? sql`` : sql`
+      WITH RECURSIVE tree AS (
+        SELECT id FROM genres WHERE id = ${scope}
+        UNION
+        SELECT g.id FROM genres g JOIN tree t ON g.parent_genre_id = t.id
+      )
+    `}
     SELECT a.name AS artist, w.title, w.priority
     FROM want_list w
     JOIN artists a ON a.id = w.artist_id
-    WHERE w.is_acquired = false
+    WHERE w.is_acquired = false AND ${wantInScope}
     ORDER BY w.priority ASC, a.name, w.title
   `);
 

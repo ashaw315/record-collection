@@ -515,3 +515,71 @@ describe('the route records what it said', () => {
     expect(analyse, 'a second ask must reach the model').toHaveBeenCalledTimes(1);
   });
 });
+
+/**
+ * SPEC.md §12d (A45) — the genre drill-down, at the ROUTE.
+ *
+ * **Not in E2E, and the reason is a fixture that is not mine to change.** The
+ * `/suggestions` ask button renders only when `isAnthropicConfigured()`, and
+ * `ANTHROPIC_API_KEY` is deliberately absent from `.env.test` — `snippet.spec.ts`
+ * asserts the UNCONFIGURED state, so that absence is a fixture two specs depend
+ * on. An E2E clicking the button would need a key, and adding one broke the
+ * snippet spec when it was tried (recorded at A39).
+ *
+ * **So the behaviour is covered where it actually runs.** These exercise the
+ * real handler against a real database, which is stronger than a stubbed E2E
+ * would have been anyway.
+ */
+describe('the gap analysis can be scoped to a genre', () => {
+  const answer = {
+    ok: true as const,
+    suggestions: [{ artist: 'Discharge', title: 'Hear Nothing', reason: 'r', genre: 'UK82' }],
+    dropped: 0,
+    stopReason: 'end_turn',
+    inputTokens: 400,
+    outputTokens: 200,
+  };
+
+  async function seedGenre(name: string) {
+    const [genre] = await getTestDb().insert(genres).values({ name }).returning();
+    return genre;
+  }
+
+  it('stores a scoped answer without touching the collection-wide one', async () => {
+    const genre = await seedGenre('UK82');
+    analyse.mockResolvedValue(answer);
+
+    await POST(new Request('http://localhost/api/suggestions/ai', { method: 'POST' }));
+    await POST(
+      new Request(`http://localhost/api/suggestions/ai?genreId=${genre.id}`, { method: 'POST' }),
+    );
+
+    expect((await latestGapAnalysis())?.suggestions, 'collection-wide survives').toHaveLength(1);
+    expect((await latestGapAnalysis(genre.id))?.suggestions, 'and the scope has its own').toHaveLength(1);
+  });
+
+  /** A bad scope must not cost one of ten requests. */
+  it('rejects an unknown genre before claiming a slot', async () => {
+    const before = await getTestDb().select().from(llmRequests);
+
+    const response = await POST(
+      // A well-formed v4 uuid that names nothing: the 400 branch is tested
+      // separately, and this must reach the NOT-FOUND branch to mean anything.
+      new Request('http://localhost/api/suggestions/ai?genreId=11111111-2222-4333-8444-555555555555', {
+        method: 'POST',
+      }),
+    );
+
+    expect(response.status).toBe(404);
+    const after = await getTestDb().select().from(llmRequests);
+    expect(after.length, 'a 404 spends nothing').toBe(before.length);
+  });
+
+  it('rejects a malformed genre id as a 400', async () => {
+    const response = await POST(
+      new Request('http://localhost/api/suggestions/ai?genreId=not-a-uuid', { method: 'POST' }),
+    );
+
+    expect(response.status).toBe(400);
+  });
+});

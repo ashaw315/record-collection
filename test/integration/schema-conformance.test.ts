@@ -80,6 +80,13 @@ describe('§4 conformance — cascade directions', () => {
       'artist_memberships.group_artist_id -> artists: CASCADE',
       'artist_memberships.person_artist_id -> artists: CASCADE',
       /*
+        §12d (A45). CASCADE because a scoped answer is a claim ABOUT a genre: if
+        the genre is deleted the answer describes nothing, and keeping it would
+        leave a row scoped to something that no longer exists. The
+        collection-wide answer is unaffected — its `genre_id` is NULL.
+      */
+      'gap_analysis_results.genre_id -> genres: CASCADE',
+      /*
         §12c (A44). BOTH sides cascade, and the reasoning is the same for each:
         a rejection is a fact ABOUT a pair of genres — "do not propose UK82 under
         Rock again" — so if either genre is deleted the fact is meaningless.

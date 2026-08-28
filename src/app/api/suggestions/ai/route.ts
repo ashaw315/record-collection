@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withErrorHandling } from '@/lib/api/handler';
-import { notConfigured } from '@/lib/api/errors';
+import { badRequest, isUuid, notConfigured, notFound } from '@/lib/api/errors';
+import { findGenreById } from '@/lib/db/queries/genres';
 import { buildCollectionSummary } from '@/lib/llm/collection-summary';
 import {
   GAP_ANALYSIS_MAX_TOKENS,
@@ -48,7 +49,7 @@ export const maxDuration = 60;
  * rather than a full collection scan, and claiming before calling is what makes
  * the limit a limit on requests rather than on responses.
  */
-export const POST = withErrorHandling('api.suggestions.ai.POST', async () => {
+export const POST = withErrorHandling('api.suggestions.ai.POST', async (request: Request) => {
   /*
    * §9.2's key is optional at boot so a missing one degrades this feature
    * rather than stopping the server (env/schema.ts). The cost is that the
@@ -73,6 +74,21 @@ export const POST = withErrorHandling('api.suggestions.ai.POST', async () => {
     );
   }
 
+  /*
+   * §12d (A45): the scope, or null for the whole collection. Validated as a
+   * real genre BEFORE a slot is claimed — a bad id should not cost the user one
+   * of ten requests.
+   */
+  const raw = new URL(request.url).searchParams.get('genreId');
+  const genreId = raw === null || raw === '' ? null : raw;
+
+  if (genreId !== null) {
+    if (!isUuid(genreId)) return badRequest('Invalid genre id', 'INVALID_ID');
+    if ((await findGenreById(genreId)) === undefined) {
+      return notFound('Genre not found');
+    }
+  }
+
   const claim = await claimLlmRequest('gap_analysis');
 
   if (!claim.ok) {
@@ -94,7 +110,7 @@ export const POST = withErrorHandling('api.suggestions.ai.POST', async () => {
     );
   }
 
-  const summary = await buildCollectionSummary();
+  const summary = await buildCollectionSummary({ genreId });
 
   let result;
   try {
@@ -252,7 +268,7 @@ export const POST = withErrorHandling('api.suggestions.ai.POST', async () => {
    * route above has already made the request, which is what keeps "Suggest"
    * meaning fresh.
    */
-  await storeGapAnalysis({ suggestions: result.suggestions, dropped: result.dropped });
+  await storeGapAnalysis({ suggestions: result.suggestions, dropped: result.dropped, genreId });
 
   return NextResponse.json({
     data: { suggestions: result.suggestions, dropped: result.dropped },

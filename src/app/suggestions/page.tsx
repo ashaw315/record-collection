@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { AppHeader } from '@/components/AppHeader';
 import { suggestions } from '@/lib/db/queries/suggestions';
 import { latestGapAnalysis } from '@/lib/db/queries/gap-analysis';
+import { listGenreTree, type GenreNode } from '@/lib/db/queries/genres';
 import { isAnthropicConfigured } from '@/lib/llm/client';
 import { GapAnalysis } from './GapAnalysis';
 
@@ -44,6 +45,27 @@ export default async function SuggestionsPage() {
    */
   const lastGapAnalysis = await latestGapAnalysis();
 
+  /*
+   * §12d (A45): every genre is offerable as a scope. No depth rule — measured,
+   * `Rock`'s breadth is direct tagging rather than accumulation, so a gate would
+   * forbid it for a false reason and forbid `Jazz` for a true one.
+   */
+  const genreTree = await listGenreTree();
+
+  /*
+   * Flattened with an indent, so the picker shows the hierarchy the scope
+   * actually walks — asking about `Punk` includes `UK82` beneath it, and a flat
+   * alphabetical list would hide that the two are related.
+   */
+  const scopeOptions: Array<{ id: string; name: string }> = [];
+  const walk = (nodes: GenreNode[], depth: number) => {
+    for (const node of nodes) {
+      scopeOptions.push({ id: node.id, name: `${'\u00a0\u00a0'.repeat(depth)}${node.name}` });
+      walk(node.children, depth + 1);
+    }
+  };
+  walk(genreTree.nodes, 0);
+
   return (
     <>
       <AppHeader />
@@ -65,7 +87,11 @@ export default async function SuggestionsPage() {
         </p>
 
         <div className="mb-6">
-          <GapAnalysis last={lastGapAnalysis} configured={isAnthropicConfigured()} />
+          <GapAnalysis
+            last={lastGapAnalysis}
+            genres={scopeOptions}
+            configured={isAnthropicConfigured()}
+          />
         </div>
 
         {rows.length === 0 ? (

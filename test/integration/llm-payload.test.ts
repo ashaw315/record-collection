@@ -10,6 +10,7 @@ import {
   records,
   recordStores,
   wantList,
+  wantListGenres,
 } from '@/db/schema';
 import { buildCollectionSummary } from '@/lib/llm/collection-summary';
 
@@ -293,5 +294,101 @@ describe('the genre hierarchy, not a flat list (R5 F2)', () => {
     expect(summary.genres).toEqual(
       expect.arrayContaining([{ name: 'Powerviolence', parent: 'Hardcore' }]),
     );
+  });
+});
+
+/**
+ * SPEC.md §12d (A45) — the payload for a genre-scoped gap analysis.
+ *
+ * **The scope must walk the same subtree the staleness does.** `Punk` has no
+ * records of its own and gains through `UK82`, so a direct-only summary would
+ * send an empty collection for exactly the genre the drill-down exists to
+ * answer — and the answer would then disagree with its own scope.
+ */
+describe('a genre-scoped summary', () => {
+  async function seedScoped() {
+    const [punk] = await db.insert(genres).values({ name: 'Punk' }).returning();
+    const [uk82] = await db
+      .insert(genres)
+      .values({ name: 'UK82', parentGenreId: punk.id })
+      .returning();
+    const [jazz] = await db.insert(genres).values({ name: 'Jazz' }).returning();
+
+    const [discharge] = await db.insert(artists).values({ name: 'Discharge' }).returning();
+    const [miles] = await db.insert(artists).values({ name: 'Miles Davis' }).returning();
+
+    const [punkRecord] = await db
+      .insert(records)
+      .values({ title: 'Hear Nothing', artistId: discharge.id })
+      .returning();
+    const [jazzRecord] = await db
+      .insert(records)
+      .values({ title: 'Bitches Brew', artistId: miles.id })
+      .returning();
+
+    await db.insert(recordGenres).values([
+      { recordId: punkRecord.id, genreId: uk82.id },
+      { recordId: jazzRecord.id, genreId: jazz.id },
+    ]);
+
+    return { punk, uk82, jazz };
+  }
+
+  /**
+   * **The case the drill-down exists for.** Asking about Punk must reach the
+   * UK82 record beneath it — a direct-only summary would send nothing, because
+   * Punk carries no records itself.
+   */
+  it('includes records tagged with a DESCENDANT of the scoped genre', async () => {
+    const { punk } = await seedScoped();
+
+    const summary = await buildCollectionSummary({ genreId: punk.id });
+
+    expect(summary.artists.map((a) => a.name)).toEqual(['Discharge']);
+  });
+
+  it('excludes records outside the scoped genre', async () => {
+    const { punk } = await seedScoped();
+
+    const summary = await buildCollectionSummary({ genreId: punk.id });
+
+    expect(summary.artists.map((a) => a.name)).not.toContain('Miles Davis');
+  });
+
+  it('sends the whole collection when no scope is given', async () => {
+    await seedScoped();
+
+    const summary = await buildCollectionSummary();
+
+    expect(summary.artists.map((a) => a.name).sort()).toEqual(['Discharge', 'Miles Davis']);
+  });
+
+  /**
+   * **The want list is scoped too.** A29g's record-level prohibition is only
+   * useful if it names records in the scope — sending the whole want list to a
+   * UK82 question spends tokens on rows the answer cannot be about.
+   */
+  it('scopes the want list to the same subtree', async () => {
+    const { punk, uk82, jazz } = await seedScoped();
+    const [crass] = await db.insert(artists).values({ name: 'Crass' }).returning();
+    const [coltrane] = await db.insert(artists).values({ name: 'Coltrane' }).returning();
+
+    const [wanted] = await db
+      .insert(wantList)
+      .values({ title: 'Feeding', artistId: crass.id, priority: 1 })
+      .returning();
+    const [unwanted] = await db
+      .insert(wantList)
+      .values({ title: 'A Love Supreme', artistId: coltrane.id, priority: 1 })
+      .returning();
+
+    await db.insert(wantListGenres).values([
+      { wantListId: wanted.id, genreId: uk82.id },
+      { wantListId: unwanted.id, genreId: jazz.id },
+    ]);
+
+    const summary = await buildCollectionSummary({ genreId: punk.id });
+
+    expect(summary.wantList.map((w) => w.title)).toEqual(['Feeding']);
   });
 });

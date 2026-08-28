@@ -21106,3 +21106,76 @@ scope is selected with its own "asked N ago".
 
 Migrations **24 of 24** clean from empty. **Route and UI next.**
 
+
+---
+
+## A45 route and picker — and a feature whose UI cannot be E2E'd
+
+**2026-08-28.** The drill-down is reachable: a scope picker beside the Ask button
+on `/suggestions`, a scoped route, and a scoped summary.
+
+### The summary walks the same subtree as the staleness, and that is now THREE places
+
+`buildCollectionSummary({ genreId })` recurses the hierarchy exactly as
+`latestGapAnalysis` does — because **`Punk` carries no records of its own**, so a
+direct-only summary would send an empty collection for the very genre the
+drill-down exists to answer.
+
+**Three places now share that recursion**: the question's payload, the staleness
+count, and the scope the picker names. **If any one of them stopped recursing the
+answer would disagree with its own scope** — and each has its own test, because
+"they all walk the subtree" is a property no single test can hold.
+
+**The want list is scoped through `want_list_genres`, not through `records`** — a
+want-list row has no record yet, so it carries its own genre links and needed its
+own predicate. A29g's record-level prohibition is only useful if it names rows in
+the scope.
+
+**Mutation-verified**: removing the recursion from the summary fails `includes
+records tagged with a DESCENDANT`.
+
+### THE CONSTRAINT: this feature's UI cannot be exercised in E2E
+
+**Two E2E tests were written and then DELETED**, and the reason is worth
+recording rather than working around.
+
+The `/suggestions` ask button renders only when `isAnthropicConfigured()`, and
+**`ANTHROPIC_API_KEY` is deliberately absent from `.env.test`** — `snippet.spec.ts:131`
+asserts the UNCONFIGURED state, so **that absence is a fixture two specs depend
+on.** Adding a key was tried at A39 and broke the snippet spec.
+
+**So the button never renders in E2E, and any test clicking it times out.** Mine
+did, twice.
+
+**Deleted rather than made to pass**, because the alternatives were both worse:
+adding the key breaks another spec's subject, and stubbing around the gate would
+be a test asserting a behaviour the fixture prevents — **the hollow-test shape
+this session has already produced three times.**
+
+**Covered at the ROUTE instead**, against a real handler and a real database:
+scoped storage not touching the collection-wide answer, a 404 for an unknown
+genre spending no request, a 400 for a malformed id. **Stronger than the stubbed
+E2E would have been**, which is the honest silver lining rather than a
+consolation.
+
+> **A fixture's ABSENCE can make a feature untestable at one layer.** The answer
+> is to test it where it runs, not to change a fixture another spec's subject
+> depends on — and to record which layer is uncovered, because "no E2E" is
+> otherwise indistinguishable from "nobody wrote one".
+
+**What is therefore unverified**: that the picker renders, that switching scope
+clears the previous answer, and that a scoped answer displays. **Only Adam
+running it can show that.**
+
+### Two schema guards fired again, and one was a real gap
+
+- **`genre_id` was unindexed** — not decoration: it is the column EVERY scoped
+  read filters on, and the cascade means deleting a genre scans by it. Fixed in
+  the schema.
+- **The cascade** is registered with its reasoning: a scoped answer is a claim
+  about a genre, so if the genre goes the answer describes nothing — and the
+  collection-wide answer is unaffected because its `genre_id` is NULL.
+
+Unit **3155 passed**, 9 failed — **exactly the pre-existing Neon set**.
+Migrations **25 of 25** clean from empty.
+

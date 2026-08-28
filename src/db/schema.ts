@@ -619,7 +619,9 @@ export const genreParentRejections = pgTable(
  * scheduled cleanup — the same reasoning §4.3 gives for rows carrying their own
  * timestamps: no job exists to fail.
  */
-export const gapAnalysisResults = pgTable('gap_analysis_results', {
+export const gapAnalysisResults = pgTable(
+  'gap_analysis_results',
+  {
   id,
   /** When the call was made — what the UI shows as "asked N minutes ago". */
   askedAt: timestamp('asked_at', { withTimezone: true }).notNull().defaultNow(),
@@ -642,8 +644,17 @@ export const gapAnalysisResults = pgTable('gap_analysis_results', {
    * collection-wide claim than for a genre-scoped one. One row cannot carry both
    * semantics.
    */
-  genreId: uuid('genre_id').references(() => genres.id, { onDelete: 'cascade' }),
-});
+    genreId: uuid('genre_id').references(() => genres.id, { onDelete: 'cascade' }),
+  },
+  (t) => [
+    /*
+     * §4.4: every FK column indexed — and not decoration here. `genre_id` is
+     * the column EVERY scoped read filters on (`latestGapAnalysis(genreId)`),
+     * and the cascade means deleting a genre scans this table by it.
+     */
+    index('gap_analysis_results_genre_id_idx').on(t.genreId),
+  ],
+);
 
 
 /**

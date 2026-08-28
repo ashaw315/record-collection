@@ -169,6 +169,13 @@
       "when": 1787878386714,
       "tag": "0023_red_morgan_stark",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1787880916015,
+      "tag": "0024_legal_ezekiel",
+      "breakpoints": true
     }
   ]
 }

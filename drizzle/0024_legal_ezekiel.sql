@@ -1,0 +1,1 @@
+CREATE INDEX "gap_analysis_results_genre_id_idx" ON "gap_analysis_results" USING btree ("genre_id");

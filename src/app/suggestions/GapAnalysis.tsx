@@ -37,9 +37,20 @@ export type LastGapAnalysis = {
 export function GapAnalysis({
   configured,
   last,
+  genres = [],
 }: {
   configured: boolean;
   last?: LastGapAnalysis | null;
+  /**
+   * The genres a question can be scoped to (A45).
+   *
+   * **Every genre is offered, with no depth rule.** Measured: `Rock` reaches 59%
+   * of the collection but gets there DIRECTLY — its descendants add nothing — so
+   * a depth gate would forbid it for a reason that is false, and forbid `Jazz`,
+   * which is depth-1 and genuinely gains from its subtree. **Don't gate the
+   * question, state its scope.**
+   */
+  genres?: Array<{ id: string; name: string }>;
 }) {
   /*
    * **A39: the stored answer is the starting state, not a cache.** It is what
@@ -59,12 +70,24 @@ export function GapAnalysis({
    */
   const [asked, setAsked] = useState<LastGapAnalysis | null>(last ?? null);
 
+  /**
+   * The scope being asked about — '' is the whole collection.
+   *
+   * **Scopes are stored separately** (A45), so switching the picker shows that
+   * scope's own stored answer rather than overwriting anything: a UK82 answer
+   * and the collection-wide one are different questions and both survive.
+   */
+  const [scope, setScope] = useState('');
+
   async function ask() {
     setState({ phase: 'loading' });
     setAsked(null);
 
     try {
-      const response = await fetch('/api/suggestions/ai', { method: 'POST' });
+      const response = await fetch(
+        `/api/suggestions/ai${scope === '' ? '' : `?genreId=${encodeURIComponent(scope)}`}`,
+        { method: 'POST' },
+      );
       const body = await response.json();
 
       if (!response.ok) {
@@ -126,6 +149,35 @@ export function GapAnalysis({
             prices, dates, stores or notes.
           </p>
         </div>
+        {/*
+          §12d (A45). The scope sits BESIDE the ask, because it is the same
+          question narrowed rather than a different feature — and `/suggestions`
+          is where gaps are asked about, while `/manage` is where the vocabulary
+          is changed.
+        */}
+        {genres.length > 0 && (
+          <select
+            aria-label="Scope"
+            data-testid="gap-scope"
+            value={scope}
+            onChange={(event) => {
+              setScope(event.target.value);
+              // A different scope is a different question: clear the answer on
+              // screen rather than letting it read as this scope's.
+              setState({ phase: 'idle' });
+              setAsked(null);
+            }}
+            className="h-9 shrink-0 rounded-xs border border-border bg-background px-2 text-sm"
+          >
+            <option value="">Whole collection</option>
+            {genres.map((genre) => (
+              <option key={genre.id} value={genre.id}>
+                {genre.name}
+              </option>
+            ))}
+          </select>
+        )}
+
         <button
           type="button"
           onClick={ask}
