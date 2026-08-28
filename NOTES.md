@@ -20866,3 +20866,84 @@ Unit **3141 passed**, 9 failed — **exactly the pre-existing Neon set**, nothin
 else. E2E **444 passed, 1 failed** — `wall-scene:1093`, **sighting eight**,
 byte-identical. Migrations **23 of 23** clean from empty.
 
+
+---
+
+## The re-ask comparison Adam asked for was NOT AVAILABLE — and that is a decision I recommended
+
+**2026-08-28.** He re-asked Aja, got four entries against six, and asked for the
+stored payloads to be compared: *"both are now in the database and this is
+exactly the comparison storage makes possible."*
+
+**They are not.** A43 stores ONE assessment per row, replaced on re-ask — which I
+proposed and he chose, on my argument that *"nothing in the app reads a
+superseded assessment, so keeping a history would be a table growing for a use
+case nobody has named."*
+
+**A use case has now been named, by the person who accepted the argument, three
+days later.** Comparing two answers about the same album is the thing storage
+makes possible, and the design threw the material away.
+
+**Recovered from my own terminal output**, not from the app — which is the point:
+the data existed, the app had it, and the app deleted it.
+
+### The comparison, from that output
+
+| # | first ask (6, dropped 0) | second ask (4, dropped 2) |
+|---|---|---|
+| 1 | `ABC AB-1006` + `AB 1006-A/B` + `STERLING`/`RL` | `ABC AB-1006` |
+| 2 | `ABC/Victor VIM-6243` | `ABC/Victor VIM-6243` |
+| 3 | `MCA-1006 or MCA-37214` | `MCA-37214 / MCA-1006` |
+| 4 | **`MFSL 1-033 (US)`** | **absent** |
+| 5 | **`APP 1006-45 (US)`** | **absent** |
+| 6 | `Cisco CLP-1006` | `Cisco CLP-1006` |
+
+### Adam's two hypotheses, and the evidence decides between them
+
+He offered: *"either the model produced vaguer versions of them this time, or the
+checkable rule is applying inconsistently."*
+
+**It is the first, and `dropped: 2` is what settles it.** Had the model simply
+omitted MFSL and Analogue Productions, `dropped` would be 0 — the counter only
+increments when a claim was made and REFUSED. So it named them, in a form
+carrying no catalogue number.
+
+**Verified by probe rather than reasoned:** the first ask's identifiers
+(`MFSL 1-033 (US), 'Original Master Recording' banner` and
+`APP 1006-45 (US)`) both PASS the checkable rule; vague forms of the same two
+(`the Mobile Fidelity audiophile edition`) are dropped. **The rule is
+consistent; the model's specificity is not.**
+
+**So the rule did exactly its job** — and `dropped: 2` on screen is what let him
+see it happen rather than getting a silently shorter list, which is the A29d
+argument working in the case it was written for.
+
+### Adam's third observation, recorded because it is the interesting one
+
+> *"The second ask is more actionable where it matters: 'many copies pressed at
+> Santa Maria (Allied) or Monarch — check runout for plant stamps' is something I
+> can do standing in a shop, where the first ask's Sterling/RL note was harder to
+> act on. Not a rule, just an observation that specificity varies run to run in a
+> way I would not have seen without both."*
+
+**The second ask is BETTER on the entries it kept and WORSE on coverage** — four
+against six. Neither run dominates, and that is only visible with both.
+
+### THE FINDING: "nothing reads it" was true and not the right question
+
+**I argued against a history because nothing in the app would read the older
+rows.** That was accurate. **But the value of a stored answer is not only what
+the app reads — it is what the USER can compare**, and a re-ask is precisely the
+moment two answers about one album exist.
+
+> **A design that discards data because no CODE path reads it forecloses uses a
+> PERSON might make of it.** The question is not "does the app read this" but
+> "would anyone want it back", and the second is harder to answer in advance —
+> which argues for keeping cheap things rather than for keeping everything.
+
+**Not fixed here.** Retaining assessment history is a real change (a table that
+grows, a UI that shows two answers, a decision about how many to keep) and it
+should be argued on its own rather than bolted onto an observation. **Trigger:
+Adam re-asking any assessment a second time** — which is now guaranteed to
+happen, since he has already done it once.
+
