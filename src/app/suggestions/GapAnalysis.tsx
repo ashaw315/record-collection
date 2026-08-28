@@ -79,6 +79,46 @@ export function GapAnalysis({
    */
   const [scope, setScope] = useState('');
 
+  /**
+   * Switch scope, and LOAD that scope's stored answer.
+   *
+   * **The defect this closes**: clearing the display was right — a different
+   * scope is a different question, and leaving the previous answer would present
+   * it as this one's — but clearing ALONE meant switching back to a scope
+   * already answered showed nothing, while the answer sat in the database.
+   *
+   * **The read spends no request.** It is a GET precisely so it cannot be
+   * confused with an ask, and so §9.2's "never on page load" rule is not bent by
+   * a scope change.
+   */
+  async function selectScope(next: string) {
+    setScope(next);
+    setState({ phase: 'idle' });
+    setAsked(null);
+
+    try {
+      const response = await fetch(
+        `/api/suggestions/ai${next === '' ? '' : `?genreId=${encodeURIComponent(next)}`}`,
+      );
+      if (!response.ok) return;
+
+      const body = await response.json();
+      // `null` is "nobody asked about this scope", which is NOT an empty answer
+      // — so the idle state stays and the screen offers the ask.
+      if (body.data === null) return;
+
+      setState({
+        phase: 'done',
+        suggestions: body.data.suggestions,
+        dropped: body.data.dropped ?? 0,
+      });
+      setAsked(body.data);
+    } catch {
+      // A failed background read leaves the idle state: the user can still ask,
+      // and an error banner for a load they did not request would be noise.
+    }
+  }
+
   async function ask() {
     setState({ phase: 'loading' });
     setAsked(null);
@@ -161,11 +201,7 @@ export function GapAnalysis({
             data-testid="gap-scope"
             value={scope}
             onChange={(event) => {
-              setScope(event.target.value);
-              // A different scope is a different question: clear the answer on
-              // screen rather than letting it read as this scope's.
-              setState({ phase: 'idle' });
-              setAsked(null);
+              void selectScope(event.target.value);
             }}
             className="h-9 shrink-0 rounded-xs border border-border bg-background px-2 text-sm"
           >

@@ -10,7 +10,7 @@ import {
   isAuthFailure,
 } from '@/lib/llm/client';
 import { logger } from '@/lib/logger';
-import { storeGapAnalysis } from '@/lib/db/queries/gap-analysis';
+import { latestGapAnalysis, storeGapAnalysis } from '@/lib/db/queries/gap-analysis';
 import { claimLlmRequest, completeLlmRequest, releaseLlmRequest } from '@/lib/llm/rate-limit';
 
 /**
@@ -272,5 +272,45 @@ export const POST = withErrorHandling('api.suggestions.ai.POST', async (request:
 
   return NextResponse.json({
     data: { suggestions: result.suggestions, dropped: result.dropped },
+  });
+});
+
+/**
+ * SPEC.md §12d (A45) `GET /api/suggestions/ai` — a stored answer for a scope.
+ *
+ * **A GET, and the verb is the point.** §9.2 made this route POST because a POST
+ * spends one of ten hourly requests; reading a stored answer spends nothing, so
+ * it cannot share the verb — the read would otherwise be indistinguishable from
+ * an ask, which is the confusion §9.2's "user-initiated, never on page load"
+ * rule exists to prevent.
+ *
+ * **The defect it closes**, found by Adam: switching the scope picker back to
+ * "Whole collection" showed nothing while the answer sat in the database. The
+ * page read one scope server-side at load, and nothing re-read on a scope
+ * change — the clear was right, the reload was missing.
+ *
+ * **`data: null` means nobody asked**, distinct from an empty suggestions array,
+ * which means the model was asked and had nothing (A39).
+ */
+export const GET = withErrorHandling('api.suggestions.ai.GET', async (request: Request) => {
+  const raw = new URL(request.url).searchParams.get('genreId');
+  const genreId = raw === null || raw === '' ? null : raw;
+
+  if (genreId !== null && !isUuid(genreId)) {
+    return badRequest('Invalid genre id', 'INVALID_ID');
+  }
+
+  const stored = await latestGapAnalysis(genreId);
+
+  return NextResponse.json({
+    data:
+      stored === null
+        ? null
+        : {
+            suggestions: stored.suggestions,
+            dropped: stored.dropped,
+            askedAt: stored.askedAt.toISOString(),
+            recordsAddedSince: stored.recordsAddedSince,
+          },
   });
 });

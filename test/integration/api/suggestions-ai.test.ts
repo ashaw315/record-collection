@@ -27,7 +27,7 @@ vi.mock('@/lib/llm/client', async (importOriginal) => {
   };
 });
 
-const { POST } = await import('@/app/api/suggestions/ai/route');
+const { GET, POST } = await import('@/app/api/suggestions/ai/route');
 
 const db = getTestDb();
 
@@ -581,5 +581,80 @@ describe('the gap analysis can be scoped to a genre', () => {
     );
 
     expect(response.status).toBe(400);
+  });
+});
+
+/**
+ * SPEC.md §12d (A45) — reading a stored answer for a scope, without asking.
+ *
+ * **The defect this closes, found by Adam:** switching the picker back to
+ * "Whole collection" showed nothing, while the answer sat in the database. The
+ * page reads one scope's answer server-side at load and the client cleared the
+ * display on a scope change — correctly, since a different scope is a different
+ * question — but nothing re-read the store for the newly selected scope.
+ *
+ * **A GET, deliberately.** §9.2 makes POST the verb because a POST spends a
+ * request; reading a stored answer spends nothing, so it must not be the same
+ * verb — or the read would be indistinguishable from an ask.
+ */
+describe('reading a stored answer costs nothing', () => {
+  const answer = {
+    ok: true as const,
+    suggestions: [{ artist: 'Crass', title: 'Feeding', reason: 'r', genre: 'UK82' }],
+    dropped: 0,
+    stopReason: 'end_turn',
+    inputTokens: 400,
+    outputTokens: 200,
+  };
+
+  it('returns the collection-wide answer without spending a request', async () => {
+    analyse.mockResolvedValue(answer);
+    await POST(new Request('http://localhost/api/suggestions/ai', { method: 'POST' }));
+
+    const before = await getTestDb().select().from(llmRequests);
+    const response = await GET(new Request('http://localhost/api/suggestions/ai'));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.suggestions).toHaveLength(1);
+
+    const after = await getTestDb().select().from(llmRequests);
+    expect(after.length, 'reading spends nothing').toBe(before.length);
+  });
+
+  it('returns the answer for a scope, distinct from the collection-wide one', async () => {
+    const [genre] = await getTestDb().insert(genres).values({ name: 'UK82' }).returning();
+
+    analyse.mockResolvedValue(answer);
+    await POST(new Request('http://localhost/api/suggestions/ai', { method: 'POST' }));
+    analyse.mockResolvedValue({ ...answer, suggestions: [], dropped: 3 });
+    await POST(
+      new Request(`http://localhost/api/suggestions/ai?genreId=${genre.id}`, { method: 'POST' }),
+    );
+
+    const wide = await (await GET(new Request('http://localhost/api/suggestions/ai'))).json();
+    const scoped = await (
+      await GET(new Request(`http://localhost/api/suggestions/ai?genreId=${genre.id}`))
+    ).json();
+
+    expect(wide.data.suggestions, 'the collection-wide answer is still readable').toHaveLength(1);
+    expect(scoped.data.dropped, 'and the scope has its own').toBe(3);
+  });
+
+  /**
+   * **Never asked is not the same as asked-and-empty**, which is the
+   * distinction A39 built and this read must preserve: `null` means nobody
+   * asked, an empty suggestions array means the model was asked and had nothing.
+   */
+  it('reports null for a scope never asked about', async () => {
+    const [genre] = await getTestDb().insert(genres).values({ name: 'Jazz' }).returning();
+
+    const response = await GET(
+      new Request(`http://localhost/api/suggestions/ai?genreId=${genre.id}`),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data, 'nobody asked, so there is no answer').toBeNull();
   });
 });

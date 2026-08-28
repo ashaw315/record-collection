@@ -21179,3 +21179,51 @@ running it can show that.**
 Unit **3155 passed**, 9 failed — **exactly the pre-existing Neon set**.
 Migrations **25 of 25** clean from empty.
 
+
+---
+
+## DEFECT: switching scope back showed nothing. The clear was right; the RELOAD was missing.
+
+**2026-08-28, found by Adam** on the first real use of the drill-down: *"switching
+back to Whole collection shows no suggestions, and it should show the one I asked
+for earlier."*
+
+**He asked which half failed** — the migration not preserving the row, or the read
+not matching NULL scope. **Neither. The data is intact and the query is correct:**
+
+    rows: 2
+      genre_id=NULL  | 6 suggestions | 2026-08-26T19:50
+      genre_id=ffeb… | 6 suggestions | 2026-08-28T12:08
+
+**The third possibility, which is mine:** the page reads `latestGapAnalysis()`
+ONCE, server-side, at load. The client seeds state from it. My `onChange` cleared
+the display on a scope change — **correct**, because leaving the previous answer
+would present it as the new scope's — **but nothing re-read the store for the
+newly selected scope.**
+
+> **The clear was half a feature.** "Don't show the wrong answer" and "show the
+> right one" are two behaviours, and I built one and tested one. The E2E I
+> deleted for the configured-gate reason would not have caught it either — it
+> asserted the clear, which worked.
+
+### The fix is a GET, and the verb is the point
+
+`POST /api/suggestions/ai` was the only way to reach the store, and it spends one
+of ten hourly requests. **Reading a stored answer spends nothing, so it cannot
+share the verb** — §9.2 chose POST precisely because a GET is prefetchable and
+cacheable, and a read that looked like an ask would bend the "never on page load"
+rule it was written to enforce.
+
+`data: null` means **nobody asked**, distinct from an empty suggestions array
+meaning **asked and nothing found** (A39's distinction, preserved through the new
+route).
+
+**Mutation-verified**: making the read ignore its scope fails `returns the answer
+for a scope, distinct from the collection-wide one`.
+
+**And a self-inflicted scare worth recording**: I reverted that mutation with
+`git checkout`, which wiped the GET handler I had just written along with it —
+uncommitted work in the same file. Caught immediately by the tests going red.
+**`cp` from a scratch copy is the reversal that does not overreach**, and it is
+what every other mutation this session used.
+
