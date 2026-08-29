@@ -149,68 +149,78 @@ describe('the shelf has depth, so a record stands ON it', () => {
    *     240px plane  ->  73.9px
    */
   /**
-   * **The shelf is as deep as a RECORD, not as deep as a sleeve is tall.**
+   * **THE SHELF IS SIZED TO HOLD A SLEEVE, not to match a record's thickness.**
    *
-   * The previous rule said 240px because a 12" sleeve is square — true of a
-   * sleeve lying flat, and wrong here. **These records stand EDGE-ON.** What
-   * occupies shelf depth is a record's THICKNESS, and a shelf ten times deeper
-   * than the thing standing on it reads as a plank the records are perched on
-   * the front of, which is exactly what the 3/4 orbit showed.
+   * Three wrong answers preceded this and the anchor moved each time:
    *
-   * Adam: *"the shelf runs back much further than a record is deep, so it is
-   * both too deep and in the wrong place relative to the things standing on
-   * it."*
+   * 1. **24px, the deepest spine** — no surface visible behind the records.
+   * 2. **240px, "a sleeve is square"** — right depth, WRONG PLACEMENT: the span
+   *    ran `z = -210..30`, so the records perched on the front lip of a board
+   *    running away behind them. The depth took the blame for the placement.
+   * 3. **38px, record thickness + margins** — an over-correction that made the
+   *    shelf a BATTEN: 6px thick by 38px deep, a 6:1 section. Adam: *"Records
+   *    appear to be sitting on a thin stick."*
    *
-   * So: the deepest record, plus a small overhang at the front.
+   * **A real LP shelf is ~320mm deep and ~18mm thick — an 18:1 section — because
+   * it is built to hold a 314mm SLEEVE.** A record standing edge-on occupies only
+   * its thickness, but the shelf still has to be a shelf. At 6px thick, 240px
+   * deep is 40:1: a board.
+   *
+   * So the depth returns to the sleeve's own dimension, and the placement — which
+   * was the actual defect in (2) — is fixed separately below.
    */
-  it('is as deep as a record, plus a small front overhang', () => {
-    const deepestSpine = Math.round(SPINE_HEIGHT / 10); // MAX_SPINE_WIDTH = 24
-    expect(shelfSurfaceDepth()).toBeGreaterThan(deepestSpine);
-    expect(
-      shelfSurfaceDepth(),
-      'a shelf many times a record deep reads as a plank, not a shelf',
-    ).toBeLessThan(deepestSpine * 2);
-  });
-
-  /**
-   * A little surface must remain visible behind the records — enough to read as
-   * a shelf they stand ON rather than a ledge they sit at the edge of — but not
-   * the 210px the sleeve-is-square rule produced.
-   */
-  it('leaves a little surface behind the records, not a plank', () => {
+  it('is deep enough to hold a sleeve, not merely a record edge', () => {
     const deepestSpine = Math.round(SPINE_HEIGHT / 10);
-    const behind = shelfSurfaceDepth() - deepestSpine;
-    expect(behind, 'some surface behind the record').toBeGreaterThan(0);
-    expect(behind, 'but not a plank running off behind them').toBeLessThan(deepestSpine);
+    expect(shelfSurfaceDepth()).toBeGreaterThan(deepestSpine * 4);
   });
 
   /**
-   * **THE RECORDS STAND AT THE FRONT OF THE SHELF, and the surface runs BACK.**
-   *
-   * `+z` is toward the camera. Records span `z = 0..width` — their backs flush
-   * with the wall — so a surface spanning `z = 0..240` extends 216px toward the
-   * VIEWER, in front of them. The records end up perched on the shelf's rear
-   * edge with a plank jutting out under nothing, which is what "the shelf runs
-   * out before the records do" describes from the other side.
-   *
-   * A shelf you browse holds the record at the front, sleeve face-on, with the
-   * surface running back toward the wall. So the surface starts BEHIND the wall
-   * plane and ends just past the deepest record.
+   * **The section is what makes a board read as a surface rather than a stick.**
+   * Fails against the 38px batten, whose 6:1 section is what the 3/4 orbit showed
+   * as a diagonal rod passing through the records.
    */
+  it('has a board-like section, not a batten', () => {
+    const thickness = SHELF_EDGE - SHELF_LIP_DEPTH;
+    expect(
+      shelfSurfaceDepth() / thickness,
+      'a real LP shelf is about 18:1; under ~10:1 reads as a stick',
+    ).toBeGreaterThan(12);
+  });
+
+  /**
+   * Surface must remain visible behind the records — that is what a tilt reveals
+   * and what makes them read as standing on something.
+   */
+  it('leaves surface visible behind the records', () => {
+    const deepestSpine = Math.round(SPINE_HEIGHT / 10);
+    expect(shelfSurfaceDepth() - deepestSpine).toBeGreaterThan(deepestSpine * 3);
+  });
+
   /**
    * **The record stands ON the surface, with the surface reaching past it on
    * BOTH sides.** Verified in the 3/4 orbit, which is the only view in which
    * this dimension is visible at all — square-on compresses it to nothing, which
    * is how a shelf the wrong depth survived three rounds of looking.
    */
-  it('brackets the record: surface behind it and a small overhang in front', () => {
+  /**
+   * **The depth runs FORWARD, toward the viewer**, because the wall is at `z = 0`
+   * and the records back onto it — there is nowhere behind them for a surface to
+   * go. A real shelf seen from the front shows the sleeve toward you and the
+   * board running toward you underneath.
+   *
+   * Fails against both earlier versions, which ran the surface to `z = -210` and
+   * left the records perched on its back edge.
+   */
+  it('runs the depth forward, with the records at its back edge', () => {
     const { back, front } = shelfSurfaceSpan();
     const deepestSpine = Math.round(SPINE_HEIGHT / 10);
 
-    expect(back, 'surface continues behind the deepest record').toBeLessThan(0);
-    expect(front, 'and overhangs a little in front of it').toBeGreaterThan(deepestSpine);
-    expect(front - deepestSpine, 'a small overhang, not a ledge').toBeLessThan(deepestSpine);
-    expect(Math.abs(back), 'and not a plank behind').toBeLessThan(deepestSpine);
+    expect(back, 'a sliver behind the deepest record').toBeLessThan(0);
+    expect(Math.abs(back), 'only a sliver, not a plank').toBeLessThan(deepestSpine);
+    expect(front, 'and the depth extends toward the viewer').toBeGreaterThan(
+      deepestSpine * 4,
+    );
+    expect(front - back).toBe(shelfSurfaceDepth());
   });
 
   it('is deeper than a record, so the record sits ON it rather than filling it', () => {

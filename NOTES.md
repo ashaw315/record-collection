@@ -23675,3 +23675,83 @@ compared to what the diagnostic shows."* C now uses the same shadow machinery as
 the diagnostic in the wall's own colours — but the diagnostic's hard shadow
 remains the strongest depth cue anything in this scene has produced, and that is
 the bar C has to clear.
+
+
+---
+
+## FOUR ANSWERS FOR ONE DIMENSION: the anchor moved every time, and only the picture settled it
+
+**2026-08-29.** Shelf depth, in order:
+
+| # | value | anchor | what the orbit showed |
+|---|---|---|---|
+| 1 | **24px** | the deepest spine's width | nothing visible behind the records |
+| 2 | **240px** | "a 12in sleeve is square" | a plank — records perched on its front lip |
+| 3 | **38px** | a record's thickness + margins | **a batten**: *"records sitting on a thin stick"* |
+| 4 | **240px**, span corrected | the sleeve the shelf HOLDS | a shelf |
+
+**(2) and (4) are the same depth.** The difference is the span: (2) ran
+`z = -210..30` in a scene where I had also mis-placed the surface, so the records
+sat on a board's front edge with 210px trailing behind — and **I blamed the depth
+for what the placement was doing.** (3) is the over-correction that produced.
+
+### The measurement that would have prevented (3)
+
+**Depth-to-thickness ratio**, which nobody computed until Adam's screenshot forced it:
+
+    38px deep / 6px thick  =  6:1    a batten
+    240px / 6px            = 40:1    a board
+    real LP shelf 320/18   = 18:1
+    real bookshelf 250/20  = 12.5:1
+
+**A board reads as a surface because it is much wider than it is thick.** Matching
+the shelf's depth to a record's 24px thickness guaranteed a stick, and the
+arithmetic said it was "correct" because I had anchored on the wrong object.
+
+> **A record standing edge-on occupies its THICKNESS in depth. A shelf is built to
+> hold the SLEEVE.** Those are different dimensions of the same object — 3-5mm
+> against 314mm — and every wrong answer here came from anchoring the shelf to
+> whichever one I had most recently been thinking about.
+
+### The pattern across all four
+
+Each answer was defended with arithmetic that was internally correct and anchored
+to the wrong thing. **The tests passed at every step**, including on (3), because
+they encoded the same wrong anchor as the implementation.
+
+**Only the 3/4 orbit distinguished them**, and it did so instantly in each case —
+which is the point Adam made when the orbit landed: *"every previous judgement
+about this shelf was made from a camera that compresses the exact dimension the
+defect lives in."*
+
+**A test that asserts a relationship you derived from the same reasoning as the
+code cannot catch an error in that reasoning.** The section-ratio test now in
+`wall-framing.test.ts` is the first one here anchored to something external — real
+furniture — rather than to another number in this codebase.
+
+
+### AND THE SPAN, which is the half I kept getting wrong
+
+**The depth was right at 240px twice; the PLACEMENT was wrong three times.**
+
+    v2   z = -210 .. 30    210px behind the records   "a plank"
+    v3   z =   -8 .. 30    38px total                 "a thin stick"
+    v4   z = -210 .. 30    same as v2                 reverted the fault
+    v5   z =   -8 .. 232   208px in FRONT             a shelf
+
+**Adam, twice: *"the shelf needs to be shifted towards the front of the
+records."*** He was right both times, and the second time I had reintroduced the
+exact fault I had already identified and fixed — restoring the depth from v2 and
+carrying its span back with it.
+
+**The geometry that settles the direction:** `+z` is toward the camera and the
+WALL is at `z = 0`, with the records backing onto it. **There is nowhere behind
+them for a surface to go** — a shelf extending to negative z is inside the wall.
+So the depth must run FORWARD, which is also what a real shelf looks like from
+the front: the sleeve face toward you, the board running toward you underneath.
+
+> **Restoring a value from an earlier version restores its bugs unless you also
+> restore what was learned since.** v4 took v2's depth and, with it, v2's span —
+> after v3 had already established the span was the defect. The commit message
+> for v4 even says *"the span placement was what was wrong"*, and the code did not
+> do it.

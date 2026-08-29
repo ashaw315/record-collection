@@ -76,32 +76,31 @@ export function framedCameraDistance({
  * the front, and put the records on the surface rather than in front of it."*
  */
 export function shelfSurfaceDepth(): number {
-  return MAX_SPINE_WIDTH + SHELF_FRONT_OVERHANG + SHELF_BACK_MARGIN;
+  return SPINE_HEIGHT;
 }
 
-/**
- * How far the surface reaches behind the deepest record.
- *
- * Enough that a record reads as standing ON a surface rather than at the edge of
- * one; small enough that the shelf does not run away behind them as a plank.
- */
-const SHELF_BACK_MARGIN = 8;
+
 
 export function shelfSurfaceSpan(): { back: number; front: number } {
   /*
-    The record spans `z = 0..width`. The surface brackets it: `SHELF_BACK_MARGIN`
-    behind the wall plane and `SHELF_FRONT_OVERHANG` past the deepest record, so
-    the record stands ON the surface with a little visible either side rather
-    than perched at one end of a plank.
+    **The depth runs FORWARD, toward the viewer.**
+
+    The wall is at `z = 0` and the records back onto it, so there is no room
+    behind them — a surface extending to negative z would be inside the wall. A
+    real shelf viewed from the front shows the sleeve face toward you and the
+    board running toward you underneath, and that is what this reproduces.
+
+    Two earlier versions ran it the other way (`z = -210..30`), which put the
+    records at the board's back edge with the depth trailing away behind them —
+    Adam, twice: *"the shelf needs to be shifted towards the front of the
+    records."*
+
+    `SHELF_BACK_MARGIN` is the sliver behind the deepest record, enough that a
+    tilt shows surface there rather than the record's own edge.
   */
-  const front = MAX_SPINE_WIDTH + SHELF_FRONT_OVERHANG;
-  return { back: -SHELF_BACK_MARGIN, front };
+  const back = -SHELF_BACK_MARGIN;
+  return { back, front: back + shelfSurfaceDepth() };
 }
 
-/**
- * How far the surface projects past the deepest record.
- *
- * Enough that the record is standing ON the shelf rather than at its very lip;
- * small enough that the shelf does not read as a ledge the records sit back from.
- */
-const SHELF_FRONT_OVERHANG = 6;
+/** The sliver of surface behind the records, so a tilt shows shelf rather than edge. */
+const SHELF_BACK_MARGIN = 8;
