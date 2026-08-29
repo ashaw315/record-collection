@@ -52,6 +52,7 @@ export function SceneHarness() {
   const [count, setCount] = useState<number>(17);
   const [width, setWidth] = useState<number>(1280);
   const [treatment, setTreatment] = useState<ShelfTreatment>('depth');
+  const [diagnostic, setDiagnostic] = useState(false);
 
   const records = sceneFixtures(count);
 
@@ -141,8 +142,25 @@ export function SceneHarness() {
           ))}
         </span>
 
+        <button
+          type="button"
+          onClick={() => setDiagnostic((d) => !d)}
+          aria-pressed={diagnostic}
+          title="White spines and a hard cast shadow — for reading geometry, not for judging looks"
+          style={{
+            padding: '4px 10px',
+            border: '1px solid #ddd4c6',
+            borderRadius: 3,
+            background: diagnostic ? '#1c1917' : '#fff',
+            color: diagnostic ? '#fff' : '#1c1917',
+            cursor: 'pointer',
+          }}
+        >
+          {diagnostic ? '◼ diagnostic ON' : '◻ diagnostic'}
+        </button>
+
         <span style={{ color: '#8a8078' }} data-testid="scene-state">
-          {count} records · {width === 0 ? 'full' : `${width}px`} · {treatment}
+          {count} records · {width === 0 ? 'full' : `${width}px`} · {treatment}{diagnostic ? ' · diagnostic' : ''}
         </span>
       </div>
 
@@ -154,7 +172,12 @@ export function SceneHarness() {
           outline: width === 0 ? 'none' : '1px dashed #ddd4c6',
         }}
       >
-        <WallScene key={treatment} records={records} treatment={treatment} />
+        <WallScene
+          key={`${treatment}-${diagnostic}`}
+          records={records}
+          treatment={treatment}
+          diagnostic={diagnostic}
+        />
       </div>
     </div>
   );

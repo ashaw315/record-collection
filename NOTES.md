@@ -23489,3 +23489,66 @@ disqualified one, and C and D are no longer "the whole available answer".
 view direction has no extent whatever its depth. So the choice is genuinely
 between a small tilt and a cue — but now with a shelf that exists for either to
 work on.
+
+
+---
+
+## The records were standing at the shelf's BACK edge, and a white-and-shadow diagnostic is what settled it
+
+**2026-08-29.** Adam, on the detail shot: *"the shelf runs out before the records
+do, so they are standing partly on nothing. That is a proportion problem rather
+than a projection one, and it is the thing I have been trying to name since the
+start."*
+
+### The bug, introduced by my own previous fix
+
+`+z` is toward the camera. A record's box spans `z = 0..width` — its back flush
+against the wall. Making the shelf 240px deep spanning `z = 0..240` therefore ran
+it **240px toward the VIEWER**:
+
+    wall plane      z = 0
+    record          z = 0 .. 24     (24px out from the wall)
+    shelf surface   z = 0 .. 240    (216px in FRONT of the records)
+    lip             z = 240         (at the far front, nowhere near the records)
+
+**So the records stood on the shelf's rear edge with a 216px plank jutting out
+under nothing.** Deepening the shelf fixed the "no surface exists" problem and
+created a "surface is in the wrong place" one — visible from the front as records
+running past the end of their support.
+
+**The fix** (`shelfSurfaceSpan`): the surface runs BACK from a front edge just
+past the deepest record — `front = MAX_SPINE_WIDTH + 6`, `back = front - 240` —
+so the record stands on the front portion and what a tilt reveals behind it is
+shelf. The 6px overhang is deliberate: a record flush with the front edge reads
+as about to fall off.
+
+### THE DIAGNOSTIC, which is the reusable part
+
+Adam: *"make the spines white and cast a hard shadow from them onto the shelf.
+Not as a design proposal — as a diagnostic. A white object with a hard shadow is
+how you see whether something is sitting on a surface or floating in front of
+one."*
+
+**This is the single most effective debugging tool this scene has had.** The
+wall's own lighting is nearly shadowless by design (ambient 1.5, one raking key),
+which is right for the wall and useless for judging contact. Computed spine tints
+against a near-black wall make geometry almost unreadable — **which is how a shelf
+exactly as deep as its records survived three rounds of looking at screenshots.**
+
+Enabled: `renderer.shadowMap`, ambient dropped to 0.55, key raised to 2.6 with a
+2048 map. Spines get one white `MeshStandardMaterial` across all six faces.
+
+> **A material choice was hiding a geometry defect.** Every earlier judgement was
+> made against coloured spines on a dark wall, where "is that record touching the
+> shelf" is genuinely undecidable by eye. The colours are the product; they are
+> not the right instrument for reading form.
+
+### It is INDEPENDENT of the treatment, and that was a real finding
+
+First built as a sixth `ShelfTreatment` value — which made it mutually exclusive
+with the tilts, and **the diagnostic combined with a tilt is the single most
+useful view**, because a tilt is what brings the surface into shot for the shadow
+to land on. Square-on, the shadow has nowhere to fall that the viewer can see.
+
+Split into its own boolean. The lesson is small and general: **an instrument that
+cannot be combined with the thing it measures is the wrong shape.**

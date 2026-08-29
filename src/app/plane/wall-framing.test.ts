@@ -5,6 +5,7 @@ import {
   framedCameraDistance,
   topClipMargin,
   shelfSurfaceDepth,
+  shelfSurfaceSpan,
   SHELF_PLANE_DEPTH,
   SHELF_LIP_DEPTH,
 } from './wall-framing';
@@ -157,6 +158,37 @@ describe('the shelf has depth, so a record stands ON it', () => {
       shelfSurfaceDepth() - deepestSpine,
       'a shelf as deep as its records shows nothing behind them at any angle',
     ).toBeGreaterThan(100);
+  });
+
+  /**
+   * **THE RECORDS STAND AT THE FRONT OF THE SHELF, and the surface runs BACK.**
+   *
+   * `+z` is toward the camera. Records span `z = 0..width` — their backs flush
+   * with the wall — so a surface spanning `z = 0..240` extends 216px toward the
+   * VIEWER, in front of them. The records end up perched on the shelf's rear
+   * edge with a plank jutting out under nothing, which is what "the shelf runs
+   * out before the records do" describes from the other side.
+   *
+   * A shelf you browse holds the record at the front, sleeve face-on, with the
+   * surface running back toward the wall. So the surface starts BEHIND the wall
+   * plane and ends just past the deepest record.
+   */
+  it('starts behind the wall plane so records stand at its front', () => {
+    const { back, front } = shelfSurfaceSpan();
+    const deepestSpine = Math.round(SPINE_HEIGHT / 10);
+
+    expect(back, 'the surface runs back behind the wall plane').toBeLessThan(0);
+    expect(front, 'and ends just past the deepest record, not far in front').toBeLessThanOrEqual(
+      deepestSpine * 1.5,
+    );
+    expect(front, 'while still carrying the whole record').toBeGreaterThanOrEqual(deepestSpine);
+  });
+
+  it('is deeper than a record, so the record sits ON it rather than filling it', () => {
+    const { back, front } = shelfSurfaceSpan();
+    const deepestSpine = Math.round(SPINE_HEIGHT / 10);
+    expect(front - back, 'total surface depth').toBe(shelfSurfaceDepth());
+    expect(front - back).toBeGreaterThan(deepestSpine);
   });
 
   it('keeps the authored lip depth, which is what the eye judges', () => {

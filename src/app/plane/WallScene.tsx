@@ -10,6 +10,7 @@ import {
   Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
+  PCFSoftShadowMap,
   PerspectiveCamera,
   Raycaster,
   Scene,
@@ -40,6 +41,7 @@ import { WALL_FOV_DEGREES } from './wall-camera';
 import {
   framedCameraDistance,
   shelfSurfaceDepth,
+  shelfSurfaceSpan,
   SHELF_LIP_DEPTH,
 } from './wall-framing';
 import { pulledDestination } from './pulled-destination';
@@ -125,14 +127,30 @@ import { type Surface, surfaceKind } from './surface-kind';
  *
  * `undefined` is production's behaviour and must stay the default.
  */
-export type ShelfTreatment = 'depth' | 'tilt' | 'tilt-12' | 'tilt-20' | 'shadow' | 'gradient';
+export type ShelfTreatment =
+  | 'depth'
+  | 'tilt'
+  | 'tilt-12'
+  | 'tilt-20'
+  | 'shadow'
+  | 'gradient';
 
 export function WallScene({
   records,
   treatment,
+  diagnostic: diagnosticProp,
 }: {
   records: ShelfRecord[];
   treatment?: ShelfTreatment;
+  /**
+   * **Independent of `treatment`, deliberately.** The diagnostic answers "is this
+   * record sitting on a surface"; the treatments answer "which shelf looks
+   * right". Making the diagnostic one of the treatment values meant it could not
+   * be combined with a tilt — which is the single most useful combination,
+   * because a tilt is what brings the surface into view for the shadow to land
+   * on. `/scene` only.
+   */
+  diagnostic?: boolean;
 }) {
   const mount = useRef<HTMLDivElement>(null);
   /**
@@ -368,6 +386,10 @@ export function WallScene({
 
     const renderer = new WebGLRenderer({ antialias: true, alpha: false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    if (diagnosticProp === true) {
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = PCFSoftShadowMap;
+    }
     renderer.setSize(width, height);
     renderer.outputColorSpace = SRGBColorSpace;
     host.appendChild(renderer.domElement);
@@ -565,9 +587,30 @@ export function WallScene({
       Raked rather than head-on so a spine's edge catches and the pulled record
       shades as it turns (A19c).
     */
-    scene.add(new AmbientLight(0xffffff, 1.5));
-    const key = new DirectionalLight(0xffffff, 1.9);
+    const diagnostic = diagnosticProp === true;
+    /*
+      **The diagnostic view trades the wall's lighting for readability.** A dim
+      ambient and a strong raking key throw a hard shadow; the normal rig is
+      almost shadowless by design, which is right for the wall and useless for
+      judging whether a record is standing on anything.
+    */
+    scene.add(new AmbientLight(0xffffff, diagnostic ? 0.55 : 1.5));
+    const key = new DirectionalLight(0xffffff, diagnostic ? 2.6 : 1.9);
     key.position.set(-0.4, 0.8, 1);
+    if (diagnostic) {
+      key.castShadow = true;
+      key.shadow.mapSize.set(2048, 2048);
+      const extent = Math.max(width, height);
+      key.shadow.camera.left = -extent;
+      key.shadow.camera.right = extent;
+      key.shadow.camera.top = extent;
+      key.shadow.camera.bottom = -extent;
+      key.shadow.camera.near = 0.5;
+      key.shadow.camera.far = extent * 4;
+      key.position.set(-extent * 0.4, extent * 0.8, extent);
+      key.target.position.set(width / 2, -height / 2, 0);
+      scene.add(key.target);
+    }
     scene.add(key);
 
     const disposables: Array<{ dispose: () => void }> = [];
@@ -614,6 +657,13 @@ export function WallScene({
     const shelfGeometry = new BoxGeometry(1, 1, 1);
     disposables.push(shelfGeometry);
     const surfaceDepth = shelfSurfaceDepth();
+    /*
+      The surface runs BACK from a front edge just past the records, rather than
+      forward from the wall. `+z` is toward the camera, so a surface starting at
+      `z = 0` extends toward the viewer and leaves the records perched on its
+      rear edge — see `shelfSurfaceSpan`.
+    */
+    const surfaceSpan = shelfSurfaceSpan();
 
     let shelfLipScreenY: Vector3 | null = null;
     for (const shelf of layout.shelves) {
@@ -645,8 +695,9 @@ export function WallScene({
       surface.position.set(
         shelf.x + shelf.width / 2,
         -(shelf.y + (shelf.height - SHELF_LIP_DEPTH) / 2),
-        surfaceDepth / 2,
+        (surfaceSpan.back + surfaceSpan.front) / 2,
       );
+      surface.receiveShadow = diagnosticProp === true;
       scene.add(surface);
       disposables.push(surface.material as Material);
       wallMaterials.push({
@@ -667,8 +718,9 @@ export function WallScene({
       lip.position.set(
         shelf.x + shelf.width / 2,
         -(shelf.y + shelf.height - SHELF_LIP_DEPTH / 2),
-        surfaceDepth,
+        surfaceSpan.front,
       );
+      lip.receiveShadow = diagnosticProp === true;
       scene.add(lip);
       disposables.push(lip.material as Material);
       wallMaterials.push({
@@ -905,6 +957,19 @@ export function WallScene({
         -(placed.y + SPINE_HEIGHT / 2),
         placed.width / 2,
       );
+      if (diagnosticProp === true) {
+        /*
+          White, unlit-looking but LIT, so the shadow reads. The spine's own
+          colour and its label texture are what make the geometry unreadable, so
+          both go.
+        */
+        const white = new MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 });
+        disposables.push(white);
+        // BoxGeometry takes one material per face; all six are the same here.
+        mesh.material = [white, white, white, white, white, white];
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+      }
       mesh.userData.recordId = placed.id;
       mesh.userData.home = mesh.position.clone();
       scene.add(mesh);
@@ -1541,7 +1606,7 @@ export function WallScene({
       renderer.dispose();
     };
     }
-  }, [spines, records, treatment]);
+  }, [spines, records, treatment, diagnosticProp]);
 
   /** Drives the rise when the pulled record changes. */
   useEffect(() => {
