@@ -22890,3 +22890,75 @@ without waiting for the mechanism. **That family already has a name here** (NOTE
 A42: *"a redirect is an event with a duration, and a test that treats it as
 instantaneous races it in whichever project is slower"*), and this looks like the
 same shape with a different event.
+
+
+---
+
+## 427 MEASURED over three runs rather than assumed — and it is NOT a rate
+
+**2026-08-28**, at Adam's direction: *"Run the full suite twice more first,
+unattended... 1093's whole history was nine sightings nobody counted properly."*
+
+**The measurement, three consecutive full runs on the fixed harness:**
+
+| run | result | 427 | 1093 |
+|---|---|---|---|
+| 1 (the fix's own verification) | 444 passed, **1 failed** | **failed THROUGH retry** | clean |
+| A | **445 passed, 0 failed, 0 flaky** | clean | clean |
+| B | 444 passed, **1 flaky** (`lookup-flows:1525`) | clean | clean |
+
+**427 did not reappear.** One failure in three runs, and the retry-surviving
+failure was a one-off rather than a rate.
+
+### What this changes, and what it does not
+
+**It does not clear 427.** The A42-era entry already measured this file at
+*roughly 1 run in 5*, and three runs cannot distinguish 1-in-5 from 1-in-20. What
+the measurement rules out is the thing that would have justified opening a unit
+now: a step change to failing-through-retry every run.
+
+> **The retry-surviving failure was real and remains the worst sighting of this
+> test.** It is one observation, not a trend, and acting on one observation is
+> what produced two wrong readings of 1093.
+
+**And my "passes 3/3 in isolation" was weak evidence, which the older entry
+already said.** NOTES line ~1996 records that an earlier version of that entry
+claimed the failure never reproduced in isolation, **and that this was wrong** —
+unit 5 reproduced it running the file alone. So isolation passes are not evidence
+of anything here, and I repeated a mistake this file had already corrected once.
+
+### A hypothesis, recorded and NOT acted on
+
+`collection-filters.spec.ts:459` asserts `getByLabel('Sort by')` has value
+`releaseYear:desc` **on a cold page that never waited for `controlsReady`.** Every
+other interaction in that file goes through `controlsReady(page)`, which waits for
+`[data-hydrated="true"]`; the cold context calls `login`, `goto`, `expectTitles`
+and two control assertions without it.
+
+The failure log fits: the locator **resolved 14 times** to a real `<select>` whose
+value was `""` — an element present in the DOM but not yet carrying its
+client-side value. That is the "asserting an outcome without waiting for the
+mechanism" family A42 named for this same file.
+
+**Not acted on, because a plausible cause found next to a symptom is not the
+cause** — this file's own rule, learned from the `.env.local` misdiagnosis. The
+fix is one line (`await controlsReady(cold)`), which is exactly why it is
+tempting to apply it and declare victory on a failure that occurs 1 run in 5 and
+would look fixed either way.
+
+**Trigger: the next retry-surviving failure of 427, or two failures of that file
+in five runs.** Then it gets 1093's treatment — reproduce, measure, and prove the
+fix by making the test fail on demand rather than by watching it not fail.
+
+### `lookup-flows:1525` — and the screenshot fix earning itself immediately
+
+Run B's one flaky was `lookup-flows.spec.ts:1525` ("the runout renders verbatim"),
+`getByTestId('runout-value')` not found, passing on retry and passing outright on
+`[mobile]`. **Also named in the same A42 entry as a known transport-shaped
+flake**, so this is the third member of that group seen this session.
+
+**`screenshot: 'only-on-failure'` captured `test-failed-1.png` for it** — on the
+FAILING run, the first real opportunity the setting had. **Nine sightings of 1093
+produced no image at all.** The change is doing the job it was added for, and the
+next intermittent starts its diagnosis with a picture rather than five weeks of
+inference.
