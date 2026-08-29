@@ -234,9 +234,9 @@ describe('the shelf has depth, so a record stands ON it', () => {
     expect(behind, 'clearance behind the deepest record').toBeGreaterThan(deepestSpine * 2);
     expect(
       behind / depth,
-      'roughly a third of the board is behind the records',
-    ).toBeGreaterThan(0.2);
-    expect(behind / depth, 'and the rest runs forward').toBeLessThan(0.45);
+      'a substantial share of the board is behind the records',
+    ).toBeGreaterThan(0.4);
+    expect(behind / depth, 'but the board still reaches forward past the records').toBeLessThan(0.5);
 
     expect(front, 'most of the depth extends toward the viewer').toBeGreaterThan(depth * 0.5);
     expect(front - back).toBe(depth);

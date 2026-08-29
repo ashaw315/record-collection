@@ -103,11 +103,11 @@ export function shelfSurfaceSpan(): { back: number; front: number } {
 }
 
 /**
- * How much of the board sits BEHIND the records — about 30% of its depth.
+ * How much of the board sits BEHIND the records — just under half its depth.
  *
  * An 8px sliver left the records' back edge overhanging the board: from 3/4 the
  * rear corner hung past the shelf's rear edge with nothing under it. A real
  * shelf sets the sleeve back from the wall with clearance behind, and runs the
  * rest of its depth forward toward whoever is browsing.
  */
-const SHELF_BACK_MARGIN = Math.round(SPINE_HEIGHT * 0.3);
+const SHELF_BACK_MARGIN = Math.round(SPINE_HEIGHT * 0.475);

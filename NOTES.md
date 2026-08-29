@@ -23793,3 +23793,76 @@ specifically.
 have, plus a person looking at it. The section-ratio test (against real furniture
 dimensions) is the one assertion here that could have caught a wrong answer,
 because it is the only one anchored outside this codebase.
+
+
+### FINAL: the shelf, after eight versions
+
+    depth   240px            (SPINE_HEIGHT — the sleeve the shelf holds)
+    span    z = -114 .. 126  (47.5% behind the records, the rest forward)
+    record  z = 0 .. 24
+
+**Eight versions of one piece of geometry**, converged by Adam looking at
+successive screenshots and saying how much further back: 30%, then 10% more, then
+another 5-10%. **Each correction was a fraction, not a diagnosis** — and each was
+right, which is the interesting part.
+
+> **The last four versions were not debugging. They were a person adjusting a
+> value against their own eye, one increment at a time**, because the quantity
+> being tuned — how much shelf should show behind a record — is a judgement about
+> how furniture looks, not a fact that can be derived. My arithmetic could find
+> 240px from the sleeve dimension; it could not find 47.5% from anything.
+
+**What the whole sequence teaches, and it is not "measure more carefully":**
+
+1. **Depth came from a physical fact** (a 12" sleeve is 314mm) and was findable
+   by reasoning once the right object was named.
+2. **Placement came from a judgement** and was findable only by looking.
+3. **I conflated the two for six versions**, treating placement as though it had
+   a derivable answer, which produced confident arithmetic for values that were
+   simply wrong.
+
+**The tests now encode both kinds honestly:** the section-ratio assertion is
+anchored to real furniture and would fail a genuinely wrong depth; the placement
+assertion is a loose band (40-50% behind) that documents a judgement rather than
+pretending to derive it.
+
+
+### A REPORTING FAILURE OF MINE: two runs with 137-140 failures I never read
+
+**2026-08-29.** Auditing 1094 across the session's E2E logs turned up something
+that was not about 1094:
+
+    e2e-orbit   140 failed, 302 passed
+    e2e-v7      137 failed, 307 passed
+
+**Both were `ECONNREFUSED` — the dev server was down**, because I had killed it
+before the run. **And I never read either result.** In both cases I was
+interrupted mid-wait and moved on to the next thing, so two runs that were
+catastrophically red were silently skipped.
+
+> **A background run whose result is never read is worse than one not started.**
+> It consumes twelve minutes, produces a definitive answer, and leaves the
+> impression that verification happened.
+
+**The 1094 audit is what found it**, and only because I went looking for that
+test's history across every log rather than at the most recent one.
+
+### And the audit's actual finding: 1094 is NOT caused by the shelf work
+
+    e2e-shelf    1 fail    (before ANY depth work)
+    e2e-margin   0
+    e2e-span     0
+    e2e-final2   0
+    e2e-v5       1 fail
+    e2e-v6       0
+    e2e-v8       2 fails   (through the retry)
+    e2e-v8b      0         (clean rerun, same tree)
+
+**It fails intermittently across the whole session, on trees with and without
+every shelf change**, always on the paint poll (10 rows against >150) and never on
+the geometry assertion. v6 and v8 have identical shelf code and differ only in the
+margin constant; v6 was clean and v8 failed twice.
+
+**Verified the direct way too:** 3/3 in isolation with the new 47.5% margin AND
+3/3 with the old 8px margin — inconclusive on its own, which is why the history
+was the deciding evidence rather than the reproduction attempt.
