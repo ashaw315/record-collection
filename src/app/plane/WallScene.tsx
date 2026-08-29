@@ -10,7 +10,7 @@ import {
   Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
-  PCFSoftShadowMap,
+  PCFShadowMap,
   PerspectiveCamera,
   Raycaster,
   Scene,
@@ -403,7 +403,13 @@ export function WallScene({
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     if (diagnosticProp === true || treatment === 'shadow') {
       renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = PCFSoftShadowMap;
+      /*
+        `PCFShadowMap`, not `PCFSoftShadowMap`: the latter is deprecated in
+        three 0.185 and silently falls back to this one anyway, warning on every
+        frame. The render is unchanged — the fallback was already what was being
+        drawn.
+      */
+      renderer.shadowMap.type = PCFShadowMap;
     }
     renderer.setSize(width, height);
     renderer.outputColorSpace = SRGBColorSpace;

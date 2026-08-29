@@ -1,5 +1,5 @@
 import { PLANE_DEPTH, LIP_DEPTH } from '../shelf/shelf-surface';
-import { MAX_SPINE_WIDTH, SPINE_HEIGHT } from '../shelf/spine';
+import { SPINE_HEIGHT } from '../shelf/spine';
 import { WALL_FOV_DEGREES } from './wall-camera';
 
 /**
@@ -63,7 +63,7 @@ export function framedCameraDistance({
  * Two wrong answers preceded this, and both were found by looking rather than by
  * arithmetic:
  *
- * 1. **`MAX_SPINE_WIDTH` (24px)** — exactly as deep as the record standing on
+ * 1. **The deepest spine's width (24px)** — exactly as deep as the record standing on
  *    it, so no surface was visible behind the records at any angle. The shelf
  *    could not be seen because there was nothing to see.
  * 2. **`SPINE_HEIGHT` (240px)**, on the reasoning that a 12" sleeve is square.
@@ -83,20 +83,18 @@ export function shelfSurfaceDepth(): number {
 
 export function shelfSurfaceSpan(): { back: number; front: number } {
   /*
-    **The depth runs FORWARD, toward the viewer.**
+    **The board is set back from the records by `SHELF_BACK_MARGIN`, and runs
+    forward from there.**
 
-    The wall is at `z = 0` and the records back onto it, so there is no room
-    behind them — a surface extending to negative z would be inside the wall. A
-    real shelf viewed from the front shows the sleeve face toward you and the
-    board running toward you underneath, and that is what this reproduces.
+    `+z` is toward the camera and the wall sits at `z = 0`, so most of a shelf's
+    depth has to extend toward the viewer — which is also what a real shelf looks
+    like from the front: the sleeve face toward you, the board running toward you
+    underneath.
 
-    Two earlier versions ran it the other way (`z = -210..30`), which put the
-    records at the board's back edge with the depth trailing away behind them —
-    Adam, twice: *"the shelf needs to be shifted towards the front of the
-    records."*
-
-    `SHELF_BACK_MARGIN` is the sliver behind the deepest record, enough that a
-    tilt shows surface there rather than the record's own edge.
+    The remaining question — how much board should sit BEHIND the records — has
+    no derivation. It was settled over four increments of Adam looking at the 3/4
+    orbit and saying how much further, from 3% of the depth to 44.5%. See
+    `SHELF_BACK_MARGIN`.
   */
   const back = -SHELF_BACK_MARGIN;
   return { back, front: back + shelfSurfaceDepth() };
