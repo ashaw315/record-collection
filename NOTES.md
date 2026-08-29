@@ -23755,3 +23755,41 @@ the front: the sleeve face toward you, the board running toward you underneath.
 > after v3 had already established the span was the defect. The commit message
 > for v4 even says *"the span placement was what was wrong"*, and the code did not
 > do it.
+
+
+### The last placement fix, and the shape of the whole sequence
+
+**v6: `SHELF_BACK_MARGIN` from 8px to 72px (30% of the depth).** An 8px sliver
+left the records' back edge overhanging the board — visible in the 3/4 orbit as
+the rear corner hanging past the shelf with nothing under it. Adam marked it on a
+screenshot with a circle and an arrow, which is the fastest correction in this
+whole sequence.
+
+**Final geometry:** depth 240px, span `z = -72..168`, records at `z = 0..24` —
+72px of board behind them, 144px in front. A real shelf does the same: the sleeve
+sits back near the wall with clearance, and most of the board runs forward toward
+whoever is browsing.
+
+### Six versions, and what actually converged them
+
+    v1  24px   depth wrong
+    v2  240px  depth right, span wrong (-210..30)
+    v3  38px   depth wrong (batten), span wrong
+    v4  240px  depth right, span reverted to v2's fault
+    v5  240px  depth right, span forward (-8..232), too little behind
+    v6  240px  depth right, span -72..168                     correct
+
+**Every version passed its tests.** Every version was defended with arithmetic.
+**Not one of the six was settled by reasoning** — each was corrected by Adam
+looking at a picture, and four of the six by looking at the 3/4 orbit
+specifically.
+
+> **The tests tracked the implementation's assumptions rather than the object's
+> reality**, because I wrote both from the same anchor each time. A test derived
+> from the same premise as the code cannot falsify the premise — it can only
+> confirm the code matches what I already believed.
+
+**What broke the loop was not a better test.** It was a view the product does not
+have, plus a person looking at it. The section-ratio test (against real furniture
+dimensions) is the one assertion here that could have caught a wrong answer,
+because it is the only one anchored outside this codebase.

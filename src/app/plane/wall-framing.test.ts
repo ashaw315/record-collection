@@ -211,16 +211,35 @@ describe('the shelf has depth, so a record stands ON it', () => {
    * Fails against both earlier versions, which ran the surface to `z = -210` and
    * left the records perched on its back edge.
    */
-  it('runs the depth forward, with the records at its back edge', () => {
+  /**
+   * **The board sits about 30% behind the records and 70% in front.**
+   *
+   * `+z` is toward the camera and the wall is at `z = 0`, so most of the depth
+   * has to run forward. But an 8px sliver behind the records left their back
+   * edge overhanging the board — visible in the 3/4 orbit as the records' rear
+   * corner hanging past the shelf's rear edge.
+   *
+   * Adam, with a marked-up screenshot: *"the back is hanging off. shelf needs to
+   * shift maybe 30% back."*
+   *
+   * A real shelf does the same: the sleeve sits back near the wall with
+   * clearance behind it, and most of the board extends toward the browser.
+   */
+  it('sets the records back from the board\'s rear edge', () => {
     const { back, front } = shelfSurfaceSpan();
+    const depth = shelfSurfaceDepth();
     const deepestSpine = Math.round(SPINE_HEIGHT / 10);
 
-    expect(back, 'a sliver behind the deepest record').toBeLessThan(0);
-    expect(Math.abs(back), 'only a sliver, not a plank').toBeLessThan(deepestSpine);
-    expect(front, 'and the depth extends toward the viewer').toBeGreaterThan(
-      deepestSpine * 4,
-    );
-    expect(front - back).toBe(shelfSurfaceDepth());
+    const behind = -back;
+    expect(behind, 'clearance behind the deepest record').toBeGreaterThan(deepestSpine * 2);
+    expect(
+      behind / depth,
+      'roughly a third of the board is behind the records',
+    ).toBeGreaterThan(0.2);
+    expect(behind / depth, 'and the rest runs forward').toBeLessThan(0.45);
+
+    expect(front, 'most of the depth extends toward the viewer').toBeGreaterThan(depth * 0.5);
+    expect(front - back).toBe(depth);
   });
 
   it('is deeper than a record, so the record sits ON it rather than filling it', () => {
