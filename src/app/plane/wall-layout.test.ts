@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   WALL_EDGE_MARGIN,
+  WALL_TOP_MARGIN,
   layoutWall,
   type WallSpine,
 } from './wall-layout';
@@ -156,7 +157,17 @@ describe('layoutWall', () => {
     */
     const rows = wall.placed[wall.placed.length - 1].row + 1;
     expect(wall.shelves.length).toBe(rows);
-    expect(wall.height).toBeCloseTo(rows * (SPINE_HEIGHT + SHELF_EDGE), 5);
+    /*
+      **`WALL_TOP_MARGIN` is added, and this assertion states the RULE rather
+      than restating the arithmetic.** The wall is its rows plus the gap above
+      the first one — no floor, no padding below. The previous form was
+      `rows * (SPINE_HEIGHT + SHELF_EDGE)` exactly, which is the same claim with
+      the margin's existence baked out of it.
+    */
+    expect(wall.height).toBeCloseTo(
+      WALL_TOP_MARGIN + rows * (SPINE_HEIGHT + SHELF_EDGE),
+      5,
+    );
   });
 
   it('survives a viewport narrower than one spine without looping forever', () => {
@@ -201,7 +212,15 @@ describe('layoutWall', () => {
         wall.shelves.length,
         `${count} records get exactly the rows they fill, no empty floor`,
       ).toBe(rows);
-      expect(wall.height).toBeCloseTo(rows * (SPINE_HEIGHT + SHELF_EDGE), 5);
+      /*
+        Still proportional to the rows FILLED — the A24d rule this test defends —
+        with the constant top margin added. A floor would show up as height not
+        varying with `rows`, which this still catches across 1, 5 and 26.
+      */
+      expect(wall.height).toBeCloseTo(
+        WALL_TOP_MARGIN + rows * (SPINE_HEIGHT + SHELF_EDGE),
+        5,
+      );
     }
   });
 

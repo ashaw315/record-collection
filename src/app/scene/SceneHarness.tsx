@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { WallScene } from '../plane/WallScene';
+import { WallScene, type ShelfTreatment } from '../plane/WallScene';
 import { sceneFixtures, SCENE_COUNTS } from './fixtures';
 
 /**
@@ -24,6 +24,23 @@ import { sceneFixtures, SCENE_COUNTS } from './fixtures';
  * the same arithmetic — but it does NOT change `window.innerHeight`, so
  * anything keyed to the viewport's height behaves as the desktop case.
  */
+/**
+ * The four shelf treatments, as a comparison rather than a proposal.
+ *
+ * `depth` is what ships today: real BoxGeometry depth that is invisible from
+ * square-on. The other three are the ways out — one honest (tilt the camera so
+ * the top face is actually seen) and two cues (draw something that suggests a
+ * surface). Adam picks by looking.
+ */
+const TREATMENTS: { key: ShelfTreatment; label: string }[] = [
+  { key: 'depth', label: 'A · depth (current)' },
+  { key: 'tilt', label: 'B · tilt 6°' },
+  { key: 'tilt-12', label: 'B2 · tilt 12°' },
+  { key: 'tilt-20', label: 'B3 · tilt 20°' },
+  { key: 'shadow', label: 'C · cast shadow' },
+  { key: 'gradient', label: 'D · lit gradient' },
+];
+
 const WIDTHS = [
   { label: '390 — phone', px: 390 },
   { label: '820 — panel threshold', px: 820 },
@@ -34,6 +51,7 @@ const WIDTHS = [
 export function SceneHarness() {
   const [count, setCount] = useState<number>(17);
   const [width, setWidth] = useState<number>(1280);
+  const [treatment, setTreatment] = useState<ShelfTreatment>('depth');
 
   const records = sceneFixtures(count);
 
@@ -101,8 +119,30 @@ export function SceneHarness() {
           ))}
         </span>
 
+        <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          shelf:
+          {TREATMENTS.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setTreatment(t.key)}
+              aria-pressed={treatment === t.key}
+              style={{
+                padding: '4px 10px',
+                border: '1px solid #ddd4c6',
+                borderRadius: 3,
+                background: treatment === t.key ? '#4d3b2b' : '#fff',
+                color: treatment === t.key ? '#fff' : '#1c1917',
+                cursor: 'pointer',
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </span>
+
         <span style={{ color: '#8a8078' }} data-testid="scene-state">
-          {count} records · {width === 0 ? 'full' : `${width}px`}
+          {count} records · {width === 0 ? 'full' : `${width}px`} · {treatment}
         </span>
       </div>
 
@@ -114,7 +154,7 @@ export function SceneHarness() {
           outline: width === 0 ? 'none' : '1px dashed #ddd4c6',
         }}
       >
-        <WallScene records={records} />
+        <WallScene key={treatment} records={records} treatment={treatment} />
       </div>
     </div>
   );

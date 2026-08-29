@@ -114,7 +114,26 @@ import { type Surface, surfaceKind } from './surface-kind';
 
 
 
-export function WallScene({ records }: { records: ShelfRecord[] }) {
+/**
+ * **Shelf treatments, for the `/scene` comparison only.**
+ *
+ * The wall is viewed square-on, so a horizontal surface has no visible extent —
+ * the shelf's top face projects to almost nothing whatever depth it is given.
+ * Every option here except `tilt` is therefore a CUE that suggests depth rather
+ * than depth being visible, which is the finding that reopened the camera
+ * question (NOTES, "a decision held on one axis").
+ *
+ * `undefined` is production's behaviour and must stay the default.
+ */
+export type ShelfTreatment = 'depth' | 'tilt' | 'tilt-12' | 'tilt-20' | 'shadow' | 'gradient';
+
+export function WallScene({
+  records,
+  treatment,
+}: {
+  records: ShelfRecord[];
+  treatment?: ShelfTreatment;
+}) {
   const mount = useRef<HTMLDivElement>(null);
   /**
    * **What the record is doing — one value.**
@@ -521,8 +540,25 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
     /* Recomputed when a record is pulled; the initial value is only a placeholder. */
     let destination = destinationFor(window.scrollY);
     const camera = new PerspectiveCamera(WALL_FOV_DEGREES, width / height, 1, cameraDistance * 2);
-    camera.position.set(width / 2, -height / 2, cameraDistance);
-    camera.lookAt(width / 2, -height / 2, 0);
+    /*
+      **The tilt option raises the camera and looks down**, which is the only
+      treatment that makes the shelf's top face genuinely visible rather than
+      suggesting it. A DOWNWARD pitch is a different thing from the raking room
+      §10b rejected: that rotated spines sideways and foreshortened the ones at
+      the edges, costing the legibility the wall exists for. Tilting down
+      foreshortens nothing horizontally — every spine keeps its width and its
+      readable face.
+    */
+    const tiltDegrees =
+      treatment === 'tilt' ? 6 : treatment === 'tilt-12' ? 12 : treatment === 'tilt-20' ? 20 : 0;
+    const tiltRadians = (tiltDegrees * Math.PI) / 180;
+    const lookAtY = -height / 2;
+    camera.position.set(
+      width / 2,
+      lookAtY + cameraDistance * Math.sin(tiltRadians),
+      cameraDistance * Math.cos(tiltRadians),
+    );
+    camera.lookAt(width / 2, lookAtY, 0);
 
     /*
       One light on the wall AND the records, which is the point of one scene.
@@ -581,9 +617,24 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
 
     let shelfLipScreenY: Vector3 | null = null;
     for (const shelf of layout.shelves) {
+      /*
+        **`gradient` and `shadow` are CUES, not geometry.**
+
+        `gradient` darkens the plane toward the back so the eye reads a surface
+        receding; `shadow` darkens it overall as though the records were casting
+        onto it. Both are the app drawing something that suggests depth, which is
+        what a square-on camera leaves as the only option — see the tilt above
+        for the one treatment that does not have to pretend.
+      */
+      const planeColour = new Color(SHELF_PLANE);
+      if (treatment === 'shadow') planeColour.multiplyScalar(0.55);
       const surface = new Mesh(
         shelfGeometry,
-        new MeshStandardMaterial({ color: new Color(SHELF_PLANE), roughness: 0.75 }),
+        new MeshStandardMaterial({
+          color: planeColour,
+          roughness: treatment === 'gradient' ? 0.35 : 0.75,
+          metalness: treatment === 'gradient' ? 0.15 : 0,
+        }),
       );
       /*
         The horizontal top surface: thin in Y, deep in Z so it runs back under
@@ -1490,7 +1541,7 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
       renderer.dispose();
     };
     }
-  }, [spines, records]);
+  }, [spines, records, treatment]);
 
   /** Drives the rise when the pulled record changes. */
   useEffect(() => {

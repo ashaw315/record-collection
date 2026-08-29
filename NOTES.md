@@ -23239,3 +23239,189 @@ test's own comment documents, not a regression.
 
 **That is the second time today isolation passes were weak evidence and the
 argument had to come from the geometry instead.**
+
+
+---
+
+## A DECISION HELD ON ONE AXIS WAS IMPLICITLY A DECISION ON ANOTHER
+
+**Adam, 2026-08-28**, on the parked orthographic camera: *"I parked that decision
+on spine slant alone, and nobody had asked me to weigh the shelf cost."*
+
+### What happened
+
+The orthographic camera was proposed to fix a measured 19% edge compression, and
+held after Adam looked at the wall and judged the spines fine. **That was a sound
+judgement about the axis he was shown.**
+
+Then a different symptom — the shelf reading as a line rather than a surface —
+was traced to the same cause: **the wall is viewed square-on, so a horizontal
+surface has no visible extent.** The shelf's top face projects to nearly nothing
+by construction.
+
+> **Orthographic moves the WRONG WAY for that problem.** A perspective camera at
+> 16° shows a sliver of the shelf's top face; an orthographic one shows exactly
+> zero, because parallel projection of a plane parallel to the view direction has
+> no extent at all. The camera decision was never only about slant.
+
+### The shape
+
+**A decision was framed as one trade-off and settled on that basis, while
+silently settling a second one nobody had named.** The second cost only became
+visible when an unrelated-looking symptom was traced back to the same property of
+the camera.
+
+This is not the uncontrolled-variable family — nothing was mismeasured. It is
+narrower and worth its own name: **the question presented for decision was
+smaller than the decision actually being made.**
+
+**What makes it hard to catch:** the person deciding cannot weigh a cost nobody
+has stated, and the person presenting genuinely did not know it yet. There is no
+error to attribute. The only defence is the one that worked here — **when a
+second symptom traces to a cause already ruled on, re-open the ruling rather than
+routing around it**, because the ruling was made on incomplete terms.
+
+**The check:** before recording a decision as settled, ask *what else does this
+property govern?* A camera angle is not a fact about spines; it is a fact about
+every surface in the scene, and each one is a separate consequence.
+
+### Consequence here
+
+The camera is back open, on new terms: not "does the slant bother you" but
+"can this wall read as furniture from square-on at all". A small DOWNWARD tilt is
+being built as a comparison — and it is a different thing from the raking room
+§10b rejected, which rotated spines SIDEWAYS and foreshortened the ones at the
+edges. Tilting down foreshortens nothing horizontally: every spine keeps its
+width and its readable face, so it is cheap in exactly the dimension §10b was
+protecting.
+
+
+---
+
+## CORRECTION: the "remaining 7px of clipping" did not exist — I measured my own chrome
+
+**2026-08-28.** After the shelf unit shipped, Adam reported the clipping was not
+fixed and looked far worse than 1.69px. Measured on the harness, I reported the
+spine rendering **233px of 240** and a **3.63px shortfall** unexplained by the fix.
+
+**Both numbers were wrong.** Screenshotting the CANVAS ELEMENT alone rather than
+the full page:
+
+    x=2%   spine spans device rows 0..493  = 247.0 CSS px
+    x=5%   0..493  = 247.0
+    x=10%  0..493  = 247.0
+    x=30%  0..493  = 247.0
+
+**240px of spine plus ~7px of shelf. Nothing missing, at any column.** The
+frustum arithmetic says exactly 0 clipping at the spine's front face after the
+fix, and the pixels agree.
+
+### The error
+
+**I scanned a FULL-PAGE screenshot, and the harness's own control bar truncated
+the column I was measuring.** The 7px "missing from the top" was the distance
+between the top of my scan window and the top of the spine — I measured the
+scene harness's chrome and reported it as a defect in the scene.
+
+> **The harness was built so defects would be visible in an image rather than
+> inferred from arithmetic. I then inferred a defect from arithmetic performed on
+> an image of the harness.** The instrument I built to stop me theorising became
+> the thing I theorised about.
+
+**Fifth instance of the apparatus generating the signal**, and the first where the
+apparatus was one I had built for exactly this purpose, in this session, after
+writing three entries about the failure mode.
+
+### What Adam was actually seeing, which is real
+
+**The spine tops are flush against the canvas's first pixel — zero margin.** A
+record whose top edge touches the frame reads as cut off even when every pixel of
+it is present, and at 100% zoom on a full screen that reads as "the tops are
+missing".
+
+**A composition problem, not a projection one**, fixable in layout rather than in
+the camera. Being fixed in the shelf-comparison unit, and applied to every option
+so the shelf treatments are not judged against a wall that still looks clipped.
+
+### The lesson that is not "measure more carefully"
+
+The measurement was careful; it was scoped wrong. **A screenshot of a page
+containing the subject is not a screenshot of the subject**, and the difference is
+invisible in the resulting numbers — a truncated column produces a plausible
+smaller value, not an obvious error. Playwright's `locator.screenshot()` on the
+element under test is what makes the scope explicit, and it is what should have
+been used from the first measurement.
+
+
+---
+
+## The shelf comparison, and what the tilt actually revealed
+
+**2026-08-28/29.** Four treatments built on `/scene` as a comparison rather than a
+proposal, at Adam's direction: *"I do not care how you get there... I will pick by
+looking."*
+
+| option | what it does |
+|---|---|
+| **A · depth** | what ships: real `BoxGeometry` depth, invisible from square-on |
+| **B · tilt 6° / 12° / 20°** | pitch the camera down so the top face is genuinely seen |
+| **C · cast shadow** | darken the plane as though the records shadowed it |
+| **D · lit gradient** | lower roughness + slight metalness so the plane catches a falloff |
+
+**Measured visible shelf band, 17 records at 1280px:**
+
+    A  8.0 CSS px, peak luminance 66
+    B  10.0 CSS px (6° tilt), peak 65
+    C  8.0 CSS px, peak 66
+    D  8.0 CSS px, peak 57
+
+### THE FINDING: tilting reveals the RECORDS' tops, not the SHELF's
+
+At 20° the wall clearly shows the top faces of the spines — and **the shelf is
+still a line.** That is not a failure of the tilt; it is geometry, and it
+sharpens the earlier finding rather than confirming it.
+
+> **The shelf's top surface is BEHIND the records and below their tops.** Tilting
+> the camera down brings horizontal surfaces into view in order of what is
+> unoccluded — and what is unoccluded is the top of every 240px spine, which sits
+> 240px above the 8px shelf and directly in front of it. **The records occlude
+> their own shelf.** More tilt shows more record-top, never more shelf.
+
+**So a downward tilt cannot make the shelf read as a surface, at any angle.** The
+only camera that would is one low enough to look UP at the shelf's underside,
+which is not a bookshelf view.
+
+**And it costs something real:** at 20° the spine faces begin to foreshorten
+vertically, which is the legibility §10b protects — approaching from the other
+axis than the raking room did, but arriving at the same place.
+
+### What this means for the orthographic question, now twice reopened
+
+The camera was parked on spine slant, reopened when the shelf's invisibility
+traced to the same square-on property, and **this measurement partly closes it
+again**: the shelf is not fixable by camera angle in either direction. Square-on
+versus tilted is not what decides whether the shelf reads as furniture.
+
+**Which leaves the cues — C and D — as the whole available answer**, exactly as
+Adam predicted: *"every option you bring will be a cue rather than a surface."*
+He was right, and the tilt option is what proved it rather than what escaped it.
+
+### The flush-top fix, which was the real complaint
+
+**`WALL_TOP_MARGIN = 24`**, applied to every row, the shelves and the wall's own
+height. Nothing was ever clipped — the spines rendered their full 240px starting
+at the canvas's first pixel — but **a shape touching the frame edge reads as
+continuing past it**, which is what "the tops are cut off" was describing.
+
+The horizontal `WALL_EDGE_MARGIN` already existed for the identical reason ("QA
+saw the leftmost spines cut mid-word... A real shelf has ends"). **A shelf has a
+top too**, and that was missed because the horizontal case produced visibly
+severed words while the vertical case produced a subtler wrongness nobody could
+name.
+
+**Two existing tests changed, and per CLAUDE.md §2 the reason is stated rather
+than assumed:** both asserted `height === rows × (SPINE_HEIGHT + SHELF_EDGE)`
+exactly. That is a restatement of the old arithmetic, not a defence of a
+behaviour — the A24d rule they exist for ("no minimum, a small result is a small
+wall") is unchanged and still checked across 1, 5 and 26 records. Only the
+constant moved.

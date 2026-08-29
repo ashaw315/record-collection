@@ -80,6 +80,21 @@ export const WALL_EDGE_MARGIN = 40;
   size of what is on it.
 */
 
+/**
+ * The gap above the first row, so the records do not begin on the frame's edge.
+ *
+ * **A shelf has a top as well as ends.** `WALL_EDGE_MARGIN` exists because the
+ * leftmost spines were cut mid-word and "the wall bled off both edges"; the same
+ * argument applies upward, and was missed because nothing was actually clipped
+ * there — the spines rendered their full height starting at the canvas's first
+ * pixel, which the eye reads as a shape continuing past the frame.
+ *
+ * Smaller than the horizontal margin, and its own constant rather than a reuse:
+ * the ends of a shelf and the air above the records are different questions, and
+ * tying them would make neither adjustable alone.
+ */
+export const WALL_TOP_MARGIN = 24;
+
 const WALL_PADDING = WALL_EDGE_MARGIN;
 
 export function layoutWall({
@@ -121,7 +136,7 @@ export function layoutWall({
     placed.push({
       id: spine.id,
       x: cursor,
-      y: row * (SPINE_HEIGHT + SHELF_EDGE),
+      y: WALL_TOP_MARGIN + row * (SPINE_HEIGHT + SHELF_EDGE),
       width: spine.width,
       row,
     });
@@ -148,7 +163,7 @@ export function layoutWall({
   const shelves: Shelf[] = Array.from({ length: rowCount }, (_, index) => ({
     row: index,
     x: 0,
-    y: index * (SPINE_HEIGHT + SHELF_EDGE) + SPINE_HEIGHT,
+    y: WALL_TOP_MARGIN + index * (SPINE_HEIGHT + SHELF_EDGE) + SPINE_HEIGHT,
     width: viewportWidth,
     height: SHELF_EDGE,
   }));
@@ -156,7 +171,7 @@ export function layoutWall({
   return {
     placed,
     shelves,
-    height: rowCount * (SPINE_HEIGHT + SHELF_EDGE),
+    height: WALL_TOP_MARGIN + rowCount * (SPINE_HEIGHT + SHELF_EDGE),
     gap,
   };
 }
