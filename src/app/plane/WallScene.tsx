@@ -11,7 +11,6 @@ import {
   MeshBasicMaterial,
   MeshStandardMaterial,
   PerspectiveCamera,
-  PlaneGeometry,
   Raycaster,
   Scene,
   TextureLoader,
@@ -24,6 +23,7 @@ import {
 import type { ShelfRecord } from '@/lib/db/queries/shelf';
 import {
   DEFAULT_SPINE_COLOUR,
+  MAX_SPINE_WIDTH,
   SPINE_HEIGHT,
   spineText,
   spineWidth,
@@ -36,7 +36,12 @@ import { RISE_MS, prefersReducedMotion } from './BoxCanvas';
 import { spineLabelPlan } from './spine-texture';
 import { centredSquareUv } from './skins';
 import { layoutWall, type WallLayout } from './wall-layout';
-import { WALL_FOV_DEGREES, wallCameraDistance } from './wall-camera';
+import { WALL_FOV_DEGREES } from './wall-camera';
+import {
+  framedCameraDistance,
+  shelfSurfaceDepth,
+  SHELF_LIP_DEPTH,
+} from './wall-framing';
 import { pulledDestination } from './pulled-destination';
 import { boxDepth } from './record-box';
 import { wallDim } from './wall-dim';
@@ -381,10 +386,37 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
      * layout is computed in pixels.
      *
      * The consequence is that the camera distance scales with the collection,
-     * and that is fine for the camera and NOT fine for the pull depth. See
-     * `PULL_DEPTH_CAP` below.
+     * and that is fine for the camera and NOT fine for the pull depth.
+     *
+     * **The safeguard this comment used to promise was never written.** It said
+     * "see PULL_DEPTH_CAP below"; no such constant has ever existed, in this file
+     * or anywhere else, and the defect it described is live: the settle distance
+     * is a CONSTANT (1552px, from FRAME_FILL and the FOV) while the camera's
+     * distance scales with wall height, so on a short wall the camera stands
+     * closer than the record needs and the record travels BACKWARDS to reach its
+     * framing. Measured on a 17-record desktop wall: the camera at 882px, the
+     * record settling at z = -670 — 680px behind the wall plane, at 0.57x the
+     * size of its own slot.
+     *
+     * Recorded rather than fixed here: this unit is the shelf. See NOTES.md,
+     * "A comment that promised a safeguard nobody wrote".
      */
-    const cameraDistance = wallCameraDistance({ wallHeight: height });
+    /*
+      **Framed against the plane the SPINES occupy, not the wall behind them.**
+
+      `wallCameraDistance` frames `z = 0`, where nothing is drawn: spines are
+      boxes spanning `z = 0..width`, so every one of them stands in front of the
+      framed plane. A perspective frustum is narrower nearer the camera, so the
+      top row's caps fell outside it — measured at 1.69px, and the SAME 1.69px on
+      a 1-record wall and a 125-record one, because wall height cancels out of
+      `spineDepth · tan(halfFOV)`. That is why no amount of testing with a large
+      fixture would have shown it.
+    */
+    const deepestSpine = MAX_SPINE_WIDTH;
+    const cameraDistance = framedCameraDistance({
+      wallHeight: height,
+      spineDepth: deepestSpine,
+    });
     /*
       **The viewport is passed so the record fits the frame's WIDTH** (the aspect
       fix). The camera keeps `width / height` (the canvas ratio) — a viewport
@@ -533,8 +565,19 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
       "the surface runs edge to edge and ends where the wall ends", not where
       the records do.
     */
-    const shelfGeometry = new PlaneGeometry(1, 1);
+    /*
+      **BoxGeometry, because a shelf is a surface and a vertical quad is not.**
+
+      Both surfaces were `PlaneGeometry` — a 5.6px-tall vertical strip for the
+      plane and a 2.4px one for the lip, standing at `z = 1` while the records
+      stood at `z = 0..24` in front of them. §10b's lighting order ("the plane
+      lighter than the wall because a room lit from the front puts light on a
+      HORIZONTAL surface") has nothing to act on when the surface is vertical, so
+      the shelf read as two thin stripes with the records floating before them.
+    */
+    const shelfGeometry = new BoxGeometry(1, 1, 1);
     disposables.push(shelfGeometry);
+    const surfaceDepth = shelfSurfaceDepth({ deepestSpine });
 
     let shelfLipScreenY: Vector3 | null = null;
     for (const shelf of layout.shelves) {
@@ -542,8 +585,17 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
         shelfGeometry,
         new MeshStandardMaterial({ color: new Color(SHELF_PLANE), roughness: 0.75 }),
       );
-      surface.scale.set(shelf.width, shelf.height * 0.7, 1);
-      surface.position.set(shelf.x + shelf.width / 2, -(shelf.y + shelf.height * 0.35), 1);
+      /*
+        The horizontal top surface: thin in Y, deep in Z so it runs back under
+        the whole of every spine (`z = 0..width`) rather than stopping at the
+        wall plane.
+      */
+      surface.scale.set(shelf.width, shelf.height - SHELF_LIP_DEPTH, surfaceDepth);
+      surface.position.set(
+        shelf.x + shelf.width / 2,
+        -(shelf.y + (shelf.height - SHELF_LIP_DEPTH) / 2),
+        surfaceDepth / 2,
+      );
       scene.add(surface);
       disposables.push(surface.material as Material);
       wallMaterials.push({
@@ -555,8 +607,17 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
         shelfGeometry,
         new MeshStandardMaterial({ color: new Color(SHELF_LIP), roughness: 0.9 }),
       );
-      lip.scale.set(shelf.width, shelf.height * 0.3, 1);
-      lip.position.set(shelf.x + shelf.width / 2, -(shelf.y + shelf.height * 0.85), 1);
+      /*
+        The lip is the front FACE the viewer sees, so it sits at the surface's
+        front edge and faces the camera — which is what makes it darker than the
+        plane under a light from the front, per §10b's ordering.
+      */
+      lip.scale.set(shelf.width, SHELF_LIP_DEPTH, SHELF_LIP_DEPTH);
+      lip.position.set(
+        shelf.x + shelf.width / 2,
+        -(shelf.y + shelf.height - SHELF_LIP_DEPTH / 2),
+        surfaceDepth,
+      );
       scene.add(lip);
       disposables.push(lip.material as Material);
       wallMaterials.push({
@@ -1580,7 +1641,7 @@ export function WallScene({ records }: { records: ShelfRecord[] }) {
   /**
    * **The slide between records (13b).** A lateral move: `fromId` leaves one
    * side, `toId` arrives from the other, at the settled depth — not a return
-   * and a fresh rise. `SLIDE_MS` is the single movement the developer asked for,
+   * and a fresh rise. That single movement is what the developer asked for,
    * where `pull(current, nextId)` was two full rises and read as jerky and as
    * "done with this one, get me that one" rather than "let me see the next".
    *

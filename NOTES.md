@@ -23003,3 +23003,239 @@ by a clock.
 
 **When it fires, the destructive migration is still a separate approval**, asked
 fresh with the drop enumerated and what becomes unrecoverable stated plainly.
+
+
+---
+
+## The wall's geometry, looked at: three defects, one re-scoped by the eye
+
+**2026-08-28.** Adam, on method: *"I am reviewing screenshots one iteration
+behind while you reason from numbers, and every geometry defect this project has
+found was invisible to arithmetic and obvious in an image."*
+
+**So the scene harness came first**, before any fix. `/scene` renders the real
+`WallScene` with synthesised records at 1 / 17 / 125 and 390 / 820 / 1280px — no
+database, no login. It immediately paid for itself twice.
+
+### It inverted the camera finding
+
+The perspective slant was measured at **19.05% edge compression** against a 0.97%
+guarantee, and the natural assumption was that a bigger wall would be worse.
+
+| collection | rows | camera distance | horizontal half-angle | edge compression |
+|---|---|---|---|---|
+| 1 record | 1 | 882px | **36.0°** | **19.1%** |
+| 17 records | 1 | 882px | **36.0°** | **19.1%** |
+| 125 records | 3 | 2647px | 13.6° | 2.8% |
+
+**A taller wall pushes the camera back, so the defect is WORST on small
+collections.** The 17-record collection sits at the bad end. Anyone testing with a
+large fixture would have seen nothing — which is how it shipped.
+
+### And then the eye overruled the arithmetic entirely
+
+**Adam, having looked: *"The spines are fine — a single spine at 1280 reads as a
+record with thickness, not as a distortion. The slant is not the problem I have
+been seeing. The shelf is."***
+
+> **A defect measured at 19% was not the defect being experienced.** The
+> arithmetic was right about the geometry and wrong about what mattered, and no
+> amount of further measurement would have found that out. The orthographic
+> camera — a three-part scene rebuild — was held on the strength of one look.
+
+**The dependency chain collapsed with it.** Item 3, the dual camera, existed only
+because orthographic breaks the rise; without the camera change there is nothing
+for it to fix, and the rise problems become the separate question they always
+were.
+
+### What was actually built: two defects, two different causes
+
+**1. The shelf had no depth.** Plane and lip were vertical `PlaneGeometry` quads
+at `z = 1` — a 5.6px strip and a 2.4px one. §10b's lighting order ("the plane
+lighter than the wall because a room lit from the front puts light on a
+HORIZONTAL surface") has nothing to act on when the surface is vertical, so the
+shelf read as two stripes with the records floating in front.
+
+`shelf-surface.ts` had carried `PLANE_DEPTH = 6` and `LIP_DEPTH = 2` since the CSS
+wall. **The WebGL wall never used them.**
+
+**A correction found by the test, not by reading:** a spine's box is positioned at
+`z = width/2` and scaled to `width`, so it spans `z = 0..width` — front face at
+up to **24px**, not the 12 I had diagnosed. `PLANE_DEPTH = 6` reaches z = 6,
+leaving two thirds of every record's foot over nothing. The constant is NOT
+changed — it is a judgement about the visible lip, decided by looking — so the
+surface depth is derived from the spines instead and the authored constant keeps
+its own job.
+
+**2. The top row was clipped, and it is NOT the same cause.** The camera frames
+the wall plane at `z = 0` so the frustum's top edge lands at exactly `y = 0` —
+the top of row 0, zero margin. Spines stand in front of that plane, and a
+perspective frustum is narrower nearer the camera, so their caps fall outside it.
+
+    clip = spineDepth · tan(halfFOV) = 12 · tan(8°) = 1.69px
+
+**Wall height cancels**, so it is the same 1.69px at 1, 17 and 125 records.
+Adam: *"the severity finding on the camera turned out to be inverted from what
+everyone expected and the same may be true here."* It was not inverted — it is
+FLAT, which is a third possibility neither of us named, and checking all three
+sizes is what showed it.
+
+**Fixed by framing against the plane the spines occupy** rather than the empty
+wall behind them: stand back by `spineDepth` and the frustum at the spine's depth
+is the one the wall plane used to get.
+
+### The camera, held with its measurements
+
+Not built, and recorded rather than dropped. **`wall-camera.ts`'s header says the
+perspective camera was a deliberate resolution of a conflict** — A24b (square-on,
+for legibility) against §10b (a record turns from edge-on to face-on), which
+cannot both hold under an orthographic camera, "measured on `/plane` twice". So
+orthographic is not a free correction of an oversight; it needs the dual camera,
+which is the third item.
+
+**Trigger: if the slant is ever judged a problem by eye, at any collection size.**
+The measurements are above and the harness makes the judgement cheap.
+
+
+---
+
+## A COMMENT THAT PROMISED A SAFEGUARD NOBODY WROTE
+
+**Adam, 2026-08-28:** *"A comment that correctly identifies a defect and
+references a safeguard nobody wrote is a shape this project has not seen: the
+reasoning survived and the mechanism did not, so the comment reads as protection
+while providing none."*
+
+**`WallScene.tsx` carried this for weeks:**
+
+    the camera distance scales with the collection, and that is fine for the
+    camera and NOT fine for the pull depth. See `PULL_DEPTH_CAP` below.
+
+**There is no `PULL_DEPTH_CAP`.** One reference, no definition, in this file or
+anywhere else in the repository. Checked against git history: it was never
+written, not written-and-removed.
+
+**And the defect the comment describes is LIVE.** The settle distance is a
+constant — 1552px, from `FRAME_FILL` and the FOV — while the camera's distance
+scales with wall height. On a 17-record desktop wall the camera stands at 882px,
+so the record settles at **z = −670**: 680px BEHIND the wall plane, at **0.57×
+the size of its own slot**. It does not come into your hands; it recedes.
+
+### Why this is a new shape, and worse than the ones before it
+
+| shape | what survived | what was missing |
+|---|---|---|
+| dead `isUniqueViolation` | the mechanism (code that ran) | the effect (it did nothing) |
+| the decorative length test | the appearance of verification | the constraint |
+| **`PULL_DEPTH_CAP`** | **the reasoning** | **the mechanism** |
+
+The first two leave something a reader can execute and find wanting. This one
+leaves a sentence that is *correct about the problem* and points at a solution
+that does not exist. **A reader who greps for the constant finds the comment,
+assumes the cap lives somewhere else, and moves on** — which is how it survived
+every reading of this file, including three of mine in this session.
+
+> **The comment was not wrong. It was true about the defect and false about the
+> remedy**, and the second half is invisible unless someone checks.
+
+### The check, and it caught more than one
+
+`test/repo/comment-references-exist.test.ts`: a `CONSTANT_CASE` name written in
+backticks inside a comment must exist somewhere in the code. Cheap, and the
+failure mode it catches is a comment that lies with complete sincerity.
+
+**It found two genuine phantoms** — `PULL_DEPTH_CAP`, and `SLIDE_MS` in a comment
+describing 13b, a feature §12 lists as specified-but-not-built. Both comments are
+now corrected to say what is true.
+
+**And three false positives worth keeping the exemptions for**, because they are
+each a legitimate practice the naive check would punish:
+
+- `LLM_UNREADABLE` — a string-literal error code, defined and used;
+- `CURRENT_DATE` — a SQL keyword, not a promise about this codebase;
+- `MIN_SHELF_FRACTION` — a comment explicitly recording a DELETION ("was here and
+  is deleted, not left inert"), which is exactly the practice this project wants.
+  Requiring that name to exist would punish the good habit.
+
+**The deletion-note exemption is the interesting one.** A comment saying a
+constant is GONE is the opposite of a comment promising one exists, and a check
+that cannot tell them apart would push authors toward deleting the explanation
+rather than the code.
+
+**Verified by mutation:** reintroducing the `PULL_DEPTH_CAP` reference fails the
+guard.
+
+
+---
+
+## FOURTH INSTANCE, and this one was mine while the rule was on screen
+
+**2026-08-28.** The shelf unit's suite reported **63 failures across 12
+integration files** — 35 deadlocks, 19 `40P01`, 4 `23505`. Files nothing in the
+unit had touched.
+
+**Cause: I had left a dev server running.** It holds connections to the same
+Postgres the integration tests truncate. Killed it, re-ran, **3217 passed, 211
+files, ZERO deadlock signatures.**
+
+    with a dev server live   →  63 failed, 35 deadlocks, 331s
+    nothing else running     →  3217 passed, 0 deadlocks, 264s
+
+### Why this is worth recording rather than quietly fixing
+
+**It is the same shape as the fork bomb, five hours later, committed by the
+person who wrote the entry about it.** The re-measurement entry says, in this
+file: *"A measurement taken while the system is pathological measures the
+pathology."* I then measured the suite while a process I had started was holding
+the database open.
+
+**And the near-miss is the part that matters.** The first instinct on seeing 63
+red across untouched integration files was to look for a regression in the unit —
+which is precisely the reflex the fork-bomb entry warns about, and which would
+have sent me hunting through shelf geometry for a cause that was not there.
+
+What broke the pattern was the checklist rather than insight: **check what else
+is running before believing a number.** `maxWorkers: 1` was intact, the config
+was unchanged, and one `ps` answered it.
+
+### The `maxWorkers` note now has a second data point
+
+That flag is recorded as "kept without a demonstrated defect" because the 204
+failures did not reproduce. **This run is evidence it is doing real work**: with a
+competing connection the deadlocks appear even at one worker, so serialising
+vitest is not sufficient protection against contention from OUTSIDE the runner —
+and nothing can make it so.
+
+**A practical consequence for this project's own workflow:** the scene harness
+(`/scene`) makes running a dev server routine, which makes this collision more
+likely than it used to be. The rule is simply: **no dev server while the suite
+runs.** Written here because it is now a foreseeable trap rather than an accident.
+
+
+### E2E after the shelf unit, and the guard that caught the new route
+
+**443 passed, 20 skipped, 1 failed, 1 flaky.**
+
+**The failure was `every-page-has-nav:91` — "the route list has not fallen behind
+the app" — failing THROUGH its retry**, in a file this unit never opened. It is
+the §10 no-file-argument rule earning itself again:
+
+    src/app has 13 non-login pages; this spec covers 12.
+
+**Working exactly as designed.** `/scene` is a new page, and the guard exists
+because a screen was once added without being covered. Resolved by adding it to
+`EXEMPT` alongside `/plane` — the same category, a dev-only harness with no nav —
+**with the reason written down**, because an exemption stated with its reason is
+a decision and one added silently is an omission.
+
+**The flaky was `wall-scene:1094`**, the test fixed earlier today, failing on the
+paint poll (10 sleeve rows against >150) and passing on retry; 4/4 in isolation
+afterwards. **Checked rather than assumed**, since it sits on the surface this
+unit changed: the camera moves back by `MAX_SPINE_WIDTH` and the record's settle
+distance from the camera is a constant, so the record ends up 24px further from
+the wall plane and **exactly as far from the camera as before** — same apparent
+size, same screen position. The failure is the "texture had not uploaded" mode the
+test's own comment documents, not a regression.
+
+**That is the second time today isolation passes were weak evidence and the
+argument had to come from the geometry instead.**

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { routeAuthMode, MIDDLEWARE_MATCHER, middlewareRuns } from './routes';
 
 /**
@@ -188,5 +188,58 @@ describe('middlewareRuns (the matcher)', () => {
     // \. once parsed — compare against the runtime value of the constant.
     const registered = found?.[1].replace(/\\\\/g, '\\') ?? '';
     expect(registered).toBe(MIDDLEWARE_MATCHER);
+  });
+});
+
+describe('the scene harness is a DEV-ONLY route', () => {
+  /**
+   * **`/scene` renders the wall with synthesised records, no database and no
+   * login**, so the geometry can be looked at directly — which is how every
+   * geometry defect in this project has actually been found, arithmetic having
+   * missed all of them.
+   *
+   * **It must never be reachable in production.** A page that bypasses §3's
+   * password gate is a hole in the auth boundary if it ships, so the exemption
+   * is conditional on the environment rather than a new entry in PUBLIC_PATHS.
+   *
+   * These tests set NODE_ENV around the call because the rule is a function of
+   * it; `routeAuthMode` reads it at call time for exactly this reason.
+   */
+  const withEnv = (value: string, fn: () => void) => {
+    vi.stubEnv('NODE_ENV', value);
+    try {
+      fn();
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  };
+
+  it('is public in development, so it opens without a login', () => {
+    withEnv('development', () => {
+      expect(routeAuthMode('/scene')).toBe('public');
+    });
+  });
+
+  it('is public under test, so an E2E spec can screenshot it', () => {
+    withEnv('test', () => {
+      expect(routeAuthMode('/scene')).toBe('public');
+    });
+  });
+
+  /**
+   * The one that matters. Fails against a plain `PUBLIC_PATHS.add('/scene')`,
+   * which is the obvious implementation and the one that ships a hole.
+   */
+  it('FALLS BACK TO SESSION AUTH IN PRODUCTION', () => {
+    withEnv('production', () => {
+      expect(routeAuthMode('/scene')).toBe('session');
+    });
+  });
+
+  it('does not make neighbouring paths public, in any environment', () => {
+    withEnv('development', () => {
+      expect(routeAuthMode('/scene-admin')).toBe('session');
+      expect(routeAuthMode('/scenes')).toBe('session');
+    });
   });
 });

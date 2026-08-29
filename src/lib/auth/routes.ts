@@ -34,6 +34,24 @@ export function middlewareRuns(pathname: string): boolean {
 /** Exact matches only — a prefix rule would make /login-as-admin public. */
 const PUBLIC_PATHS = new Set(['/login', '/api/auth/login']);
 
+/**
+ * **The scene harness, public in development and test ONLY.**
+ *
+ * `/scene` renders the wall with synthesised records — no database, no login —
+ * so the geometry can be LOOKED AT. Every geometry defect this project has found
+ * was invisible to arithmetic and obvious in an image, and reaching the wall
+ * previously meant logging in and manipulating a real collection into each state.
+ *
+ * **Deliberately not an entry in PUBLIC_PATHS.** That set is the §3 auth
+ * boundary, and a permanently public page that renders app components is a hole
+ * in it. This exemption evaporates in production, where the route falls back to
+ * session auth like any other — verified by a test that fails against the
+ * obvious `PUBLIC_PATHS.add('/scene')` implementation.
+ *
+ * Read at call time rather than captured at module load, so a test can vary it.
+ */
+const DEV_ONLY_PUBLIC_PATHS = new Set(['/scene']);
+
 const CRON_PATHS = new Set(['/api/discogs/refresh-prices']);
 
 function normalize(pathname: string): string {
@@ -52,6 +70,9 @@ export function routeAuthMode(pathname: string): AuthMode {
   const path = normalize(pathname);
 
   if (PUBLIC_PATHS.has(path)) return 'public';
+  if (DEV_ONLY_PUBLIC_PATHS.has(path) && process.env.NODE_ENV !== 'production') {
+    return 'public';
+  }
   if (CRON_PATHS.has(path)) return 'cron';
   return 'session';
 }

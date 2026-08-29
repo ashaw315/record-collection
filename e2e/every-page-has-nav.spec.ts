@@ -118,7 +118,18 @@ test('the route list has not fallen behind the app', async () => {
     return found;
   };
 
-  const EXEMPT = [join('app', 'login'), join('app', 'plane')];
+  /*
+    `/scene` joins `/plane` as an exempt harness, and for the same reason: it is
+    a DEV-ONLY page that renders the wall with synthesised records so the
+    geometry can be looked at. It carries no nav because it is not part of the
+    app's navigation — `routeAuthMode` makes it public outside production and
+    the page itself 404s in production, so it is not a screen a user can reach.
+
+    Listed rather than counted away: this guard exists because a screen was once
+    added without being covered, and an exemption stated with its reason is the
+    difference between a decision and an omission.
+  */
+  const EXEMPT = [join('app', 'login'), join('app', 'plane'), join('app', 'scene')];
   const pages = findPages('src/app').filter((p) => !EXEMPT.some((dir) => p.includes(dir)));
 
   expect(
