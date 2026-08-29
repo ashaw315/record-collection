@@ -1,4 +1,5 @@
 import { PLANE_DEPTH, LIP_DEPTH } from '../shelf/shelf-surface';
+import { SPINE_HEIGHT } from '../shelf/spine';
 import { WALL_FOV_DEGREES } from './wall-camera';
 
 /**
@@ -56,19 +57,28 @@ export function framedCameraDistance({
 }
 
 /**
- * How far back the shelf's horizontal surface must run.
+ * How far back the shelf's horizontal surface runs: **as deep as a record is
+ * tall, because a 12" sleeve is SQUARE.**
  *
- * A spine's box spans `z = 0` (flush with the wall) to `z = width`, so a shelf
- * shallower than the widest spine leaves part of every record's foot over
- * nothing — which is what makes the top row look like it overhangs and lets the
- * viewer see underneath it.
+ * The first version derived this from the deepest spine's WIDTH, which made the
+ * plane exactly as deep as the record standing on it — so the surface visible
+ * BEHIND the records was zero, at every angle, by construction. The shelf could
+ * not be seen because there was nothing there to see, not because the camera
+ * was square-on.
  *
- * **Derived from the spines rather than authored**, and deliberately not by
- * changing `PLANE_DEPTH`. That constant is about the visible LIP — "deeper than
- * this and the shelf reads as a plinth each row stands on" — which is a judgement
- * about what the eye sees at the shelf's front edge, not about how far the
- * surface runs back underneath the records where nothing is visible anyway.
+ * Adam, on the 20° comparison: *"At 20° I can see the top of every record and
+ * still nothing of the surface they stand on. That is not occlusion hiding the
+ * shelf. There is no surface there to hide."*
+ *
+ * A record occupies its own THICKNESS of depth — 17-24px here, §10b's 1:12. The
+ * shelf runs back the sleeve's full dimension, and the sleeve is square, so that
+ * is `SPINE_HEIGHT`. The wall is drawn one wall-pixel to one screen-pixel and a
+ * spine is 240px tall, so the shelf is 240px deep. The previous value was short
+ * by a factor of ten.
+ *
+ * Nothing behind the wall plane is ever seen, so the extra depth costs one quad
+ * and no legibility.
  */
-export function shelfSurfaceDepth({ deepestSpine }: { deepestSpine: number }): number {
-  return deepestSpine;
+export function shelfSurfaceDepth(): number {
+  return SPINE_HEIGHT;
 }

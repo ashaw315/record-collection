@@ -613,7 +613,7 @@ export function WallScene({
     */
     const shelfGeometry = new BoxGeometry(1, 1, 1);
     disposables.push(shelfGeometry);
-    const surfaceDepth = shelfSurfaceDepth({ deepestSpine });
+    const surfaceDepth = shelfSurfaceDepth();
 
     let shelfLipScreenY: Vector3 | null = null;
     for (const shelf of layout.shelves) {

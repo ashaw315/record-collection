@@ -23425,3 +23425,67 @@ exactly. That is a restatement of the old arithmetic, not a defence of a
 behaviour — the A24d rule they exist for ("no minimum, a small result is a small
 wall") is unchanged and still checked across 1, 5 and 26 records. Only the
 constant moved.
+
+
+---
+
+## THE SHELF WAS NOT INVISIBLE — IT WAS TOO SHALLOW TO EXIST
+
+**Adam, 2026-08-29**, looking at the 20° tilt: *"At 20° I can see the top of
+every record and still nothing of the surface they stand on. That is not
+occlusion hiding the shelf. There is no surface there to hide."*
+
+**He was right and my occlusion explanation was wrong.**
+
+### The arithmetic, which settles it
+
+`shelfSurfaceDepth` derived the plane's depth from the deepest spine's WIDTH:
+
+    plane depth      24px   (MAX_SPINE_WIDTH)
+    record depth  17-24px   (§10b's 1:12 spine)
+
+**Exactly equal.** The surface visible BEHIND the records was therefore **zero,
+at every tilt angle, by construction** — I had written a function that guaranteed
+the shelf could never be seen.
+
+### What a shelf actually needs, from geometry already in the codebase
+
+**A 12" sleeve is SQUARE.** The wall draws one wall-pixel to one screen-pixel and
+a spine is 240px tall, so a record is 240px front-to-back. A shelf holding it
+runs back the sleeve's full dimension.
+
+    built:     24px      short by a factor of TEN
+    correct:  240px      = SPINE_HEIGHT, because the sleeve is square
+
+**Visible plane behind the records, measured on the harness at 20°:**
+
+    24px shelf   ->  16.0 CSS px   (that is the LIP, not the surface)
+    240px shelf  ->  92.0 CSS px
+
+### Why my occlusion story was wrong, and why it was seductive
+
+I claimed the records occlude their own shelf, so more tilt shows more
+record-top and never more shelf. **That is true of a shelf exactly as deep as its
+records and false of a real one** — the occluded region is the part UNDER the
+records, and a proper shelf extends well past it.
+
+> **I explained an absence with a mechanism instead of checking whether the thing
+> was there.** The measurement that settled it — plane depth versus record depth,
+> two numbers already in the code — took one command and was available before the
+> tilt comparison was ever built.
+
+**The tilt comparison was still worth building**, and it is what exposed this:
+20° made the records' depth unmistakable and the shelf's absence equally so. An
+option built to answer one question answered a different and better one.
+
+### The correction to the earlier entry
+
+The previous entry concluded that a downward tilt *cannot* make the shelf read as
+a surface at any angle. **That conclusion was drawn against a 24px shelf and does
+not survive a 240px one.** The tilt is now a live option rather than a
+disqualified one, and C and D are no longer "the whole available answer".
+
+**What holds:** square-on still shows no plane, because a surface parallel to the
+view direction has no extent whatever its depth. So the choice is genuinely
+between a small tilt and a cue — but now with a shelf that exists for either to
+work on.

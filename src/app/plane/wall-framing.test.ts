@@ -127,12 +127,36 @@ describe('the shelf has depth, so a record stands ON it', () => {
    * the depth the geometry needs is derived from the spines instead, and the
    * authored constant keeps its own job.
    */
-  it('runs back far enough to carry the deepest spine', () => {
+  /**
+   * **A SHELF IS AS DEEP AS THE RECORD IS TALL, because a 12" sleeve is SQUARE.**
+   *
+   * The first version derived this from spine WIDTH, which made the plane
+   * exactly as deep as the deepest record — so the surface visible BEHIND the
+   * records was zero, at every tilt angle, by construction. Adam, looking at the
+   * 20° comparison: *"At 20° I can see the top of every record and still nothing
+   * of the surface they stand on. That is not occlusion hiding the shelf. There
+   * is no surface there to hide."*
+   *
+   * He was right and my occlusion explanation was wrong. A record standing on a
+   * shelf occupies its own THICKNESS of depth (17-24px here); the shelf it
+   * stands on runs back the sleeve's full DIMENSION, which for a square sleeve
+   * is the same 240px as its height. The built plane was short by a factor of 10.
+   *
+   * Measured at 20° tilt, plane visible behind the records:
+   *
+   *     24px plane   ->   0.0px
+   *     240px plane  ->  73.9px
+   */
+  it('is as deep as a record is tall, because a sleeve is square', () => {
+    expect(shelfSurfaceDepth()).toBe(SPINE_HEIGHT);
+  });
+
+  it('leaves surface visible BEHIND the deepest record, which is the whole point', () => {
     const deepestSpine = Math.round(SPINE_HEIGHT / 10); // MAX_SPINE_WIDTH = 24
     expect(
-      shelfSurfaceDepth({ deepestSpine }),
-      'a spine spanning z = 0..width must have shelf under all of it',
-    ).toBeGreaterThanOrEqual(deepestSpine);
+      shelfSurfaceDepth() - deepestSpine,
+      'a shelf as deep as its records shows nothing behind them at any angle',
+    ).toBeGreaterThan(100);
   });
 
   it('keeps the authored lip depth, which is what the eye judges', () => {
