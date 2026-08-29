@@ -22962,3 +22962,44 @@ FAILING run, the first real opportunity the setting had. **Nine sightings of 109
 produced no image at all.** The change is doing the job it was added for, and the
 next intermittent starts its diagnosis with a picture rather than five weeks of
 inference.
+
+
+---
+
+## PARKED: pressing-assessment retention — scoping intact, migration unapproved and unwritten
+
+**Adam, 2026-08-28:** *"It is small, nothing depends on it, and it only matters
+when I re-ask about a record — which has happened once."*
+
+**Parked with its scoping intact rather than abandoned**, and parked BEFORE the
+destructive migration was written. Nothing was built; there is no half-finished
+column and no migration file to reconcile later.
+
+**The destructive migration stays UNAPPROVED and UNWRITTEN.** CLAUDE.md §7
+requires explicit confirmation before a drop-column / drop-table / lossy-type
+change, and that confirmation has not been given. A future session must not read
+this entry as approval: the park is the decision, and the approval question is
+still open.
+
+### Why parked rather than built
+
+The retention only pays when a pressing assessment is re-asked for the same
+record — **observed once.** Every other feature in the queue pays on first use.
+A feature whose value depends on a repeat that has happened once is a feature
+waiting for evidence, not for implementation time.
+
+### TRIGGER: Adam's SECOND re-ask of a pressing assessment
+
+**The same shape as the gap-analysis case that justified retention there** — that
+feature earned its storage when the re-ask became a pattern rather than an
+incident, and the argument transfers exactly. One re-ask is an anecdote; two is a
+rate, and a rate is what makes stored state cheaper than recomputation.
+
+**Not a date, and deliberately so.** A time-based trigger would fire on a
+calendar rather than on the behaviour the feature serves, which is this file's
+standing objection to open-ended deferrals: a deferral without a trigger is a
+decision never to act, and a deferral with the WRONG trigger is a decision made
+by a clock.
+
+**When it fires, the destructive migration is still a separate approval**, asked
+fresh with the drop enumerated and what becomes unrecoverable stated plainly.
