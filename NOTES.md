@@ -23552,3 +23552,126 @@ to land on. Square-on, the shadow has nowhere to fall that the viewer can see.
 
 Split into its own boolean. The lesson is small and general: **an instrument that
 cannot be combined with the thing it measures is the wrong shape.**
+
+
+---
+
+## The orbit view, and the lens that made it useless twice
+
+**2026-08-29.** Adam: *"I cannot judge shelf depth against record depth from any
+of these views, and neither can you — square-on and even at 20°, the shelf's
+extent toward the viewer compresses to nearly nothing. That is the whole problem
+with judging this by looking at the app's own camera."*
+
+**Correct, and it is the one thing the harness lacked.** `OrbitControls` ships
+with three (no new dependency), wired to the existing dirty-flag render loop
+rather than its own rAF, with three presets — 3/4, high, low — because a free
+orbit is easy to roll and hard to aim.
+
+### Two failed attempts, same root cause
+
+**First:** `radius` set as a fraction of `cameraDistance`. That distance is
+derived from wall HEIGHT, and a one-row 1280px wall is 5× wider than tall — so
+the camera landed inside the scene. Changed to a multiple of the wall's EXTENT.
+
+**Second, and the real one:** the orbit camera inherited the wall's **16°
+telephoto**. Measured: at r=1472 a 16° lens frames **414px** of a 1280px scene —
+a close-up crop, which is exactly what the first two screenshots showed.
+
+> **The wall's lens is a deliberate choice for the wall and wrong for every other
+> purpose.** 16° exists so edge spines do not foreshorten (A24b). An orbit needs
+> an ordinary viewport lens; 45° shows the whole object.
+
+**Twice I changed a position when the problem was the projection.** The tell was
+available both times: the object was correctly placed and wrongly *framed*.
+
+### What the orbit shows, in numbers
+
+    shelf surface   z = -210 .. 30    depth 240px
+    record box      z =    0 .. 24    depth  24px
+
+    record depth is 10% of shelf depth
+    88% of the surface lies behind the deepest record
+    6px overhangs in front of it
+
+**And a subtlety the orbit makes obvious:** the records are EDGE-ON, so what
+occupies shelf depth is their THICKNESS, not their face. That is geometrically
+right — a real shelf holds many records across its depth — but it means the scene
+reads as a thin block of records on a wide plane, which is a look to judge rather
+than a bug to fix.
+
+### Option C, upgraded because the diagnostic proved the cue
+
+Adam: *"the shadow is the strongest depth cue in any of these shots, and option C
+was meant to test exactly that... the coloured version may just be too timid."*
+
+**C was a colour multiply — `planeColour.multiplyScalar(0.55)` — which is uniform
+darkening, not a shadow, and tested nothing.** It now uses the same shadow
+machinery as the diagnostic, in the wall's own colours: ambient 1.05 (down from
+1.5, so a shadow has somewhere to land) and key 2.3, against the diagnostic's
+0.55 / 2.6 where legibility beats fidelity.
+
+**The diagnostic proved the mechanism; C tests whether it survives in the
+product.** That is the right division, and it only became visible because the
+diagnostic was built first.
+
+
+---
+
+## THE 3/4 ORBIT SHOULD HAVE BEEN THE FIRST THING IN THE HARNESS
+
+**Adam, 2026-08-29:** *"The 3/4 view answers it immediately, and it found in one
+screenshot what three rounds of square-on measurement missed. That view should
+have been the first thing in the harness — every previous judgement about this
+shelf was made from a camera that compresses the exact dimension the defect lives
+in."*
+
+**This is the strongest methodological finding of the shelf work.** Three separate
+wrong answers about shelf depth were produced, defended with arithmetic, and
+shipped — every one judged from the app's own square-on camera, which projects
+the Z axis to nothing. **The defect lived entirely in the dimension the
+instrument could not see.**
+
+    24px   "as deep as the deepest spine"    -> nothing visible behind the records
+    240px  "a 12in sleeve is square"         -> a plank the records perch on
+    38px   record depth + overhang           -> a shelf
+
+The third answer was obvious within one 3/4 screenshot.
+
+> **A harness inherits the product's blind spots unless it is deliberately given
+> a view the product does not have.** `/scene` was built to make defects visible,
+> and for three rounds it showed them from exactly the angle that hid this one.
+> Orbit was the missing capability, not more measurement.
+
+### The two faults the orbit exposed
+
+**1. Too deep.** `SPINE_HEIGHT` was chosen because a 12" sleeve is square — true
+of a sleeve lying flat, **wrong for records standing EDGE-ON**, where what
+occupies shelf depth is a record's THICKNESS. A shelf ten times deeper than the
+thing on it is a plank.
+
+**2. In the wrong place.** The span ran `z = -210..30`, so 210px sat behind the
+records and 6px in front: from 3/4 they read as perched on the front lip of a
+board running away behind them. Now `z = -8..30` — the record at `0..24`
+bracketed by 8px behind and 6px in front.
+
+**The vertical contact was never wrong**, which is worth recording because it was
+the obvious suspect: the record's foot and the surface's top face were both at
+`y = -264`, gap exactly 0. **The float was a Z-axis illusion produced by a
+mismatched depth**, and checking Y first would have found nothing.
+
+### What is NOT a defect, confirmed
+
+Adam: *"The shelf width is fine. Fifteen records occupying part of a wider shelf
+is correct — a shelf is as wide as the wall, not as wide as its contents."* The
+board running on under nothing to the right is §10b's plane rule working. Measured
+at 17 records: they occupy 30% of a 1280px shelf. **Recorded so a future session
+does not "fix" it.**
+
+### For the treatment decision, when it comes
+
+Adam: *"option C was meant to test a cast shadow and it was far too timid
+compared to what the diagnostic shows."* C now uses the same shadow machinery as
+the diagnostic in the wall's own colours — but the diagnostic's hard shadow
+remains the strongest depth cue anything in this scene has produced, and that is
+the bar C has to clear.

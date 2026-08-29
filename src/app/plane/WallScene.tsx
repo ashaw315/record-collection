@@ -37,6 +37,7 @@ import { RISE_MS, prefersReducedMotion } from './BoxCanvas';
 import { spineLabelPlan } from './spine-texture';
 import { centredSquareUv } from './skins';
 import { layoutWall, type WallLayout } from './wall-layout';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { WALL_FOV_DEGREES } from './wall-camera';
 import {
   framedCameraDistance,
@@ -139,6 +140,7 @@ export function WallScene({
   records,
   treatment,
   diagnostic: diagnosticProp,
+  orbit: orbitProp,
 }: {
   records: ShelfRecord[];
   treatment?: ShelfTreatment;
@@ -151,6 +153,19 @@ export function WallScene({
    * on. `/scene` only.
    */
   diagnostic?: boolean;
+  /**
+   * **Free orbit, `/scene` only, and never a treatment for the app.**
+   *
+   * The app's camera is fixed square-on, which is exactly the view in which a
+   * horizontal surface has no extent — so shelf depth and record depth cannot be
+   * compared from it at any tilt. Adam: *"I cannot judge shelf depth against
+   * record depth from any of these views, and neither can you."*
+   *
+   * An orbit is what any 3D tool gives by default and the one thing the harness
+   * lacked: from 3/4 above, the plane's depth and the record's depth are two
+   * lengths you can hold against each other.
+   */
+  orbit?: 'off' | 'three-quarter' | 'high' | 'low';
 }) {
   const mount = useRef<HTMLDivElement>(null);
   /**
@@ -386,7 +401,7 @@ export function WallScene({
 
     const renderer = new WebGLRenderer({ antialias: true, alpha: false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    if (diagnosticProp === true) {
+    if (diagnosticProp === true || treatment === 'shadow') {
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = PCFSoftShadowMap;
     }
@@ -589,15 +604,35 @@ export function WallScene({
     */
     const diagnostic = diagnosticProp === true;
     /*
+      **`shadow` casts a REAL shadow now, at full strength.**
+
+      The first version multiplied the plane's colour by 0.55 — "as though the
+      records were casting onto it" — which is a uniform darkening, not a shadow,
+      and it tested nothing. The diagnostic view then proved a hard cast shadow
+      is the strongest depth cue in this scene by a distance. Adam: *"the
+      diagnostic proves a hard shadow works and the coloured version may just be
+      too timid."*
+
+      So C now uses the same shadow machinery as the diagnostic, keeping the
+      wall's own colours and lighting balance — the question it answers is
+      whether a real shadow reads in the PRODUCT, not whether it reads at all.
+    */
+    const castsShadow = diagnostic || treatment === 'shadow';
+    /*
       **The diagnostic view trades the wall's lighting for readability.** A dim
       ambient and a strong raking key throw a hard shadow; the normal rig is
       almost shadowless by design, which is right for the wall and useless for
       judging whether a record is standing on anything.
     */
-    scene.add(new AmbientLight(0xffffff, diagnostic ? 0.55 : 1.5));
-    const key = new DirectionalLight(0xffffff, diagnostic ? 2.6 : 1.9);
+    /*
+      C keeps the wall's ambient (its colours must stay true) but drops it enough
+      that a shadow has somewhere to land; the diagnostic goes further because
+      legibility beats fidelity there.
+    */
+    scene.add(new AmbientLight(0xffffff, diagnostic ? 0.55 : treatment === 'shadow' ? 1.05 : 1.5));
+    const key = new DirectionalLight(0xffffff, diagnostic ? 2.6 : treatment === 'shadow' ? 2.3 : 1.9);
     key.position.set(-0.4, 0.8, 1);
-    if (diagnostic) {
+    if (castsShadow) {
       key.castShadow = true;
       key.shadow.mapSize.set(2048, 2048);
       const extent = Math.max(width, height);
@@ -677,7 +712,6 @@ export function WallScene({
         for the one treatment that does not have to pretend.
       */
       const planeColour = new Color(SHELF_PLANE);
-      if (treatment === 'shadow') planeColour.multiplyScalar(0.55);
       const surface = new Mesh(
         shelfGeometry,
         new MeshStandardMaterial({
@@ -697,7 +731,7 @@ export function WallScene({
         -(shelf.y + (shelf.height - SHELF_LIP_DEPTH) / 2),
         (surfaceSpan.back + surfaceSpan.front) / 2,
       );
-      surface.receiveShadow = diagnosticProp === true;
+      surface.receiveShadow = castsShadow;
       scene.add(surface);
       disposables.push(surface.material as Material);
       wallMaterials.push({
@@ -720,7 +754,7 @@ export function WallScene({
         -(shelf.y + shelf.height - SHELF_LIP_DEPTH / 2),
         surfaceSpan.front,
       );
-      lip.receiveShadow = diagnosticProp === true;
+      lip.receiveShadow = castsShadow;
       scene.add(lip);
       disposables.push(lip.material as Material);
       wallMaterials.push({
@@ -957,6 +991,10 @@ export function WallScene({
         -(placed.y + SPINE_HEIGHT / 2),
         placed.width / 2,
       );
+      if (castsShadow) {
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+      }
       if (diagnosticProp === true) {
         /*
           White, unlit-looking but LIT, so the shadow reads. The spine's own
@@ -967,8 +1005,6 @@ export function WallScene({
         disposables.push(white);
         // BoxGeometry takes one material per face; all six are the same here.
         mesh.material = [white, white, white, white, white, white];
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
       }
       mesh.userData.recordId = placed.id;
       mesh.userData.home = mesh.position.clone();
@@ -1021,14 +1057,70 @@ export function WallScene({
     let tiltNow = NO_TILT;
     const DEG = Math.PI / 180;
 
+    /*
+      **Orbit is wired to the dirty-flag loop rather than running its own.** The
+      scene renders on demand — a free-running rAF would burn a frame budget the
+      wall deliberately does not spend.
+    */
+    let controls: OrbitControls | null = null;
+    if (orbitProp !== undefined && orbitProp !== 'off') {
+      controls = new OrbitControls(camera, renderer.domElement);
+      const target = new Vector3(width / 2, -height / 2, 0);
+      controls.target.copy(target);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.08;
+
+      /*
+        **Presets, because a free orbit is hard to aim and easy to roll.** These
+        put the camera off to one side and above, looking down at the shelf —
+        the view in which the plane's depth and the record's depth are two
+        lengths you can hold against each other. Dragging from a preset still
+        works; the preset is a starting point, not a lock.
+
+        `radius` is a multiple of the wall's own EXTENT, not of the framing
+        camera's distance: that distance is derived from wall HEIGHT, and a
+        1280px-wide one-row wall is 5x wider than it is tall, so a fraction of it
+        puts the camera inside the scene.
+      */
+      const presets: Record<string, { azimuth: number; elevation: number; radius: number }> = {
+        'three-quarter': { azimuth: 38, elevation: 28, radius: 1.15 },
+        'high': { azimuth: 22, elevation: 55, radius: 1.25 },
+        'low': { azimuth: 55, elevation: 12, radius: 1.05 },
+      };
+      const preset = presets[orbitProp] ?? presets['three-quarter'];
+      const extent = Math.max(width, height);
+      const az = (preset.azimuth * Math.PI) / 180;
+      const el = (preset.elevation * Math.PI) / 180;
+      const r = extent * preset.radius;
+      camera.position.set(
+        target.x + r * Math.cos(el) * Math.sin(az),
+        target.y + r * Math.sin(el),
+        target.z + r * Math.cos(el) * Math.cos(az),
+      );
+      /*
+        **A normal lens for the orbit.** The wall's own camera is a 16° telephoto
+        chosen so edge spines do not foreshorten — correct for the wall, useless
+        for an orbit, where 16° at any usable distance frames a few hundred
+        pixels of a 1280px scene and reads as a close-up crop. 45° is an ordinary
+        3D-viewport lens and shows the whole object.
+      */
+      camera.fov = 45;
+      camera.near = 1;
+      camera.far = r * 6;
+      camera.updateProjectionMatrix();
+      controls.update();
+    }
+
     const counter = window as unknown as { __drawCount?: number };
 
     const loop = createRenderLoop(() => {
+      controls?.update();
       renderer.render(scene, camera);
       counter.__drawCount = (counter.__drawCount ?? 0) + 1;
     });
     loop.start();
     loop.markDirty();
+    controls?.addEventListener('change', () => loop.markDirty());
 
     /**
      * Pulling a record: the mesh leaves its slot.
@@ -1602,11 +1694,12 @@ export function WallScene({
       loop.stop();
       live.current = null;
       renderer.domElement.remove();
+      controls?.dispose();
       for (const item of disposables) item.dispose();
       renderer.dispose();
     };
     }
-  }, [spines, records, treatment, diagnosticProp]);
+  }, [spines, records, treatment, diagnosticProp, orbitProp]);
 
   /** Drives the rise when the pulled record changes. */
   useEffect(() => {

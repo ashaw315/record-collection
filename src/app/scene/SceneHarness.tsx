@@ -53,6 +53,7 @@ export function SceneHarness() {
   const [width, setWidth] = useState<number>(1280);
   const [treatment, setTreatment] = useState<ShelfTreatment>('depth');
   const [diagnostic, setDiagnostic] = useState(false);
+  const [orbit, setOrbit] = useState<'off' | 'three-quarter' | 'high' | 'low'>('off');
 
   const records = sceneFixtures(count);
 
@@ -159,8 +160,36 @@ export function SceneHarness() {
           {diagnostic ? '◼ diagnostic ON' : '◻ diagnostic'}
         </button>
 
+        <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          orbit:
+          {([
+            ['off', 'off'],
+            ['three-quarter', '3/4'],
+            ['high', 'high'],
+            ['low', 'low'],
+          ] as const).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setOrbit(key)}
+              aria-pressed={orbit === key}
+              title="Harness only — the app's camera is fixed square-on. Drag to rotate, scroll to zoom."
+              style={{
+                padding: '4px 10px',
+                border: '1px solid #ddd4c6',
+                borderRadius: 3,
+                background: orbit === key ? '#1c1917' : '#fff',
+                color: orbit === key ? '#fff' : '#1c1917',
+                cursor: 'pointer',
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </span>
+
         <span style={{ color: '#8a8078' }} data-testid="scene-state">
-          {count} records · {width === 0 ? 'full' : `${width}px`} · {treatment}{diagnostic ? ' · diagnostic' : ''}
+          {count} records · {width === 0 ? 'full' : `${width}px`} · {treatment}{diagnostic ? ' · diagnostic' : ''}{orbit !== 'off' ? ` · orbit ${orbit}` : ''}
         </span>
       </div>
 
@@ -173,10 +202,11 @@ export function SceneHarness() {
         }}
       >
         <WallScene
-          key={`${treatment}-${diagnostic}`}
+          key={`${treatment}-${diagnostic}-${orbit}`}
           records={records}
           treatment={treatment}
           diagnostic={diagnostic}
+          orbit={orbit}
         />
       </div>
     </div>

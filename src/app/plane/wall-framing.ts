@@ -57,54 +57,45 @@ export function framedCameraDistance({
 }
 
 /**
- * How far back the shelf's horizontal surface runs: **as deep as a record is
- * tall, because a 12" sleeve is SQUARE.**
+ * How deep the shelf's horizontal surface runs: **as deep as a RECORD, plus a
+ * small overhang at the front.**
  *
- * The first version derived this from the deepest spine's WIDTH, which made the
- * plane exactly as deep as the record standing on it — so the surface visible
- * BEHIND the records was zero, at every angle, by construction. The shelf could
- * not be seen because there was nothing there to see, not because the camera
- * was square-on.
+ * Two wrong answers preceded this, and both were found by looking rather than by
+ * arithmetic:
  *
- * Adam, on the 20° comparison: *"At 20° I can see the top of every record and
- * still nothing of the surface they stand on. That is not occlusion hiding the
- * shelf. There is no surface there to hide."*
+ * 1. **`MAX_SPINE_WIDTH` (24px)** — exactly as deep as the record standing on
+ *    it, so no surface was visible behind the records at any angle. The shelf
+ *    could not be seen because there was nothing to see.
+ * 2. **`SPINE_HEIGHT` (240px)**, on the reasoning that a 12" sleeve is square.
+ *    True of a sleeve lying flat and wrong here: **these records stand EDGE-ON,
+ *    so what occupies shelf depth is a record's THICKNESS.** A shelf ten times
+ *    deeper than the thing on it reads as a plank the records are perched on the
+ *    front of — visible immediately in the 3/4 orbit, invisible square-on.
  *
- * A record occupies its own THICKNESS of depth — 17-24px here, §10b's 1:12. The
- * shelf runs back the sleeve's full dimension, and the sleeve is square, so that
- * is `SPINE_HEIGHT`. The wall is drawn one wall-pixel to one screen-pixel and a
- * spine is 240px tall, so the shelf is 240px deep. The previous value was short
- * by a factor of ten.
- *
- * Nothing behind the wall plane is ever seen, so the extra depth costs one quad
- * and no legibility.
+ * Adam: *"match the shelf's depth to a record's depth with a small overhang at
+ * the front, and put the records on the surface rather than in front of it."*
  */
 export function shelfSurfaceDepth(): number {
-  return SPINE_HEIGHT;
+  return MAX_SPINE_WIDTH + SHELF_FRONT_OVERHANG + SHELF_BACK_MARGIN;
 }
 
 /**
- * Where the shelf's surface begins and ends along Z.
+ * How far the surface reaches behind the deepest record.
  *
- * **`+z` is toward the camera**, and a record's box spans `z = 0..width` with its
- * back flush against the wall. So a surface spanning `z = 0..240` runs 216px
- * toward the VIEWER — the records end up perched on its rear edge with a plank
- * jutting out in front of them under nothing at all.
- *
- * Adam: *"the shelf runs out before the records do, so they are standing partly
- * on nothing"* — the same defect seen from the front.
- *
- * A shelf you browse holds the record at the FRONT, sleeve face-on, with the
- * surface running BACK toward the wall. So the surface starts behind the wall
- * plane and ends just past the deepest record: the record stands on the front
- * portion, and what is visible behind it when the camera tilts is shelf.
- *
- * The small overhang past the deepest spine is deliberate — a record sitting
- * exactly flush with the front edge reads as about to fall off.
+ * Enough that a record reads as standing ON a surface rather than at the edge of
+ * one; small enough that the shelf does not run away behind them as a plank.
  */
+const SHELF_BACK_MARGIN = 8;
+
 export function shelfSurfaceSpan(): { back: number; front: number } {
+  /*
+    The record spans `z = 0..width`. The surface brackets it: `SHELF_BACK_MARGIN`
+    behind the wall plane and `SHELF_FRONT_OVERHANG` past the deepest record, so
+    the record stands ON the surface with a little visible either side rather
+    than perched at one end of a plank.
+  */
   const front = MAX_SPINE_WIDTH + SHELF_FRONT_OVERHANG;
-  return { back: front - shelfSurfaceDepth(), front };
+  return { back: -SHELF_BACK_MARGIN, front };
 }
 
 /**
