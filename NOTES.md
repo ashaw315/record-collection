@@ -23798,7 +23798,7 @@ because it is the only one anchored outside this codebase.
 ### FINAL: the shelf, after eight versions
 
     depth   240px            (SPINE_HEIGHT — the sleeve the shelf holds)
-    span    z = -114 .. 126  (47.5% behind the records, the rest forward)
+    span    z = -107 .. 133  (44.5% behind the records, the rest forward)
     record  z = 0 .. 24
 
 **Eight versions of one piece of geometry**, converged by Adam looking at
@@ -23866,3 +23866,29 @@ margin constant; v6 was clean and v8 failed twice.
 **Verified the direct way too:** 3/3 in isolation with the new 47.5% margin AND
 3/3 with the old 8px margin — inconclusive on its own, which is why the history
 was the deciding evidence rather than the reproduction attempt.
+
+
+### SETTLED at 44.5%, after nine versions
+
+**One last 3% forward** from 47.5%, which had gone a shade too far back. Final:
+`z = -107..133` — 107px of board behind the records, 109px in front. Very nearly
+centred on them, arrived at by successive looking rather than by any derivation.
+
+**Nine versions. Every one passed its tests. Not one was corrected by
+reasoning.** The convergence pattern is worth stating plainly because it is the
+opposite of how this project usually works:
+
+- **Depth (240px)** was a physical fact — the sleeve a shelf is built to hold —
+  and reasoning found it once the right object was named.
+- **Placement (44.5%)** was a judgement about how furniture looks. There is no
+  fact to derive it from, and the only instrument that could settle it was a
+  person looking at a picture and saying "a bit more".
+
+**The failure was not in either kind of answer. It was in not distinguishing
+them** — six versions spent producing confident arithmetic for a quantity that
+never had an arithmetic answer.
+
+**The tests reflect that now:** an external anchor (real LP shelf proportions)
+where a fact exists, and a documented band (40-50%) where a judgement does. The
+second does not pretend to derive the value; it records that someone chose it and
+fences the range a future change should stay inside.

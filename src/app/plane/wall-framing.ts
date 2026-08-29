@@ -110,4 +110,4 @@ export function shelfSurfaceSpan(): { back: number; front: number } {
  * shelf sets the sleeve back from the wall with clearance behind, and runs the
  * rest of its depth forward toward whoever is browsing.
  */
-const SHELF_BACK_MARGIN = Math.round(SPINE_HEIGHT * 0.475);
+const SHELF_BACK_MARGIN = Math.round(SPINE_HEIGHT * 0.445);
