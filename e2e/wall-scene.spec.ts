@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import sharp from 'sharp';
 import { seedRecords } from './seed';
+import { rowIsSleeve, type RowStats } from '../test/helpers/sleeve-rows';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -1141,10 +1142,29 @@ test('the pulled sleeve fits INSIDE the visible wall region on a short viewport'
     )
     .toMatch(/settled/);
 
+  /*
+    **The scan window is the CANVAS, not the viewport.**
+
+    This read `Math.max(Math.round(rect.top), 0)`, which clamps to the top of the
+    VIEWPORT — so whenever the canvas began above the fold the window opened over
+    the page above it, and the scan photographed the heading. Combined with a
+    predicate that matched white, `region.top` was the only thing separating the
+    sleeve from the page chrome, by a single pixel: at 172 the scan started just
+    below the white heading and passed; at 171 it started inside it and reported
+    the sleeve clipped at the wall's edge while it sat 111px clear.
+
+    `ceil` rather than `round` because a partial first row belongs to whatever
+    lies above it, and the bottom is likewise the canvas's own end. The window is
+    now a claim about where the wall IS, which is what the assertions below are
+    about.
+  */
   const region = await page.evaluate(() => {
     const host = document.querySelector('[data-testid="wall-scene"]') as HTMLElement;
     const rect = host.querySelector('canvas')!.getBoundingClientRect();
-    return { top: Math.max(Math.round(rect.top), 0), bottom: window.innerHeight };
+    return {
+      top: Math.max(Math.ceil(rect.top), 0),
+      bottom: Math.min(Math.floor(rect.bottom), window.innerHeight),
+    };
   });
 
   /*
@@ -1182,7 +1202,7 @@ test('the pulled sleeve fits INSIDE the visible wall region on a short viewport'
             if (l > max) max = l;
             sum += l;
           }
-          if (max - min < 12 && sum / (to - from) > 50) rows += 1;
+          if (rowIsSleeve({ range: max - min, mean: sum / (to - from) })) rows += 1;
         }
         return rows;
       },
@@ -1212,7 +1232,7 @@ test('the pulled sleeve fits INSIDE the visible wall region on a short viewport'
   const { width, height, channels } = raw.info;
   const bandFrom = Math.floor(width * 0.35);
   const bandTo = Math.floor(width * 0.65);
-  const rowIsSleeve = (y: number) => {
+  const rowAtIsSleeve = (y: number) => {
     let min = Infinity;
     let max = -Infinity;
     let sum = 0;
@@ -1224,13 +1244,13 @@ test('the pulled sleeve fits INSIDE the visible wall region on a short viewport'
       sum += l;
     }
     const mean = sum / (bandTo - bandFrom);
-    return max - min < 12 && mean > 50;
+    return rowIsSleeve({ range: max - min, mean } satisfies RowStats);
   };
 
   let first = -1;
   let last = -1;
   for (let y = region.top; y < Math.min(region.bottom, height); y += 1) {
-    if (rowIsSleeve(y)) {
+    if (rowAtIsSleeve(y)) {
       if (first < 0) first = y;
       last = y;
     }

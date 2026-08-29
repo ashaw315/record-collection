@@ -15684,6 +15684,15 @@ consistent means.
 
 ### An E2E finding this unit did not act on: `wall-scene` 1093 fails ~2 runs in 5, byte-identically
 
+> **⚠ RESOLVED 2026-08-28 — BOTH READINGS BELOW ARE WRONG.** The sleeve is 111px
+> clear of `region.top`; nothing is clipped. `rowIsSleeve` matches the WHITE PAGE
+> HEADING above the canvas, and `region.top` separates them by exactly one pixel.
+> **The byte-identical values were structural** — `first >= region.top` is a loop
+> invariant, so `172/172` is the only failing value emittable. See "1093 DIAGNOSED
+> after nine sightings" at the end of this file. The measurement below is kept
+> because it is accurate about the RATE, and because the two readings it proposes
+> are a useful record of how the diagnosis went wrong.
+
 **Measured across step 16's five full `--retries=0` runs**, recorded here rather
 than fixed because it is outside units 1–3's scope (CLAUDE.md §4).
 
@@ -16520,6 +16529,11 @@ by something that cannot see the word "failed".
 ---
 
 ## The 1093 intermittent: trigger FIRED, sighting five, deciding screenshot on disk
+
+> **⚠ RESOLVED 2026-08-28. And the "deciding screenshot" was never on disk** —
+> `trace: 'on-first-retry'` captures the RETRY, which passes, so the failing
+> render was never recorded. Checked: that directory holds only
+> `error-context.md`. See the diagnosis at the end of this file.
 
 **2026-08-25.** Recorded against the handed-forward entry above rather than
 replacing it, because the entry's value is its measurement and that has not
@@ -22182,7 +22196,9 @@ more interesting reading was recorded as the lesson and the mundane one was neve
 checked** — the identical failure mode as the transport theory, four entries
 above, found the same day by the same means: applying the fix and re-measuring.
 
-**The check, now in three questions:**
+**The check, now in FOUR questions** (the fourth added by the 1093 diagnosis,
+2026-08-28 — see "1093 DIAGNOSED after nine sightings" at the end of this file,
+the third instance of this family):
 
 1. **When comparing A against B, what else differs between them?** — including
    the instrument, the harness, and the machine's own load.
@@ -22190,6 +22206,11 @@ above, found the same day by the same means: applying the fix and re-measuring.
 3. **Was the measurement taken while the system was pathological?** If the run
    being measured was hanging, thrashing, forking or retrying, its numbers
    describe the pathology, not the code.
+4. **Could the instrument produce any value OTHER than the one I am reading
+   meaning into?** 1093 failed nine times with byte-identical values, which read
+   as a deterministic boundary; the scan loop could not emit any other failing
+   value, so the consistency was arithmetic rather than evidence. **A constant is
+   only informative if the apparatus was free to report something else.**
 
 ---
 
@@ -22587,3 +22608,285 @@ this file keeps recording.
 **When that unit opens: reproduce it N times before theorising.** The flake
 entry's rule applies unchanged — passing in isolation is not evidence, and here
 passing at all is not evidence either.
+
+
+---
+
+## 1093 DIAGNOSED after nine sightings: both candidate readings were wrong, and the predicate matches WHITE
+
+**2026-08-28.** `e2e/wall-scene.spec.ts:1093` — "the pulled sleeve fits INSIDE
+the visible wall region on a short viewport". Nine sightings across five weeks,
+byte-identical every time, two written readings, neither correct.
+
+### The actual mechanism
+
+`rowIsSleeve` is `range < 12 && mean > 50` — "uniform and not dark". **The white
+page heading ABOVE the canvas satisfies it exactly**: rows 0..171 measure
+`range=0.0 mean=250.0`. The predicate cannot tell a sleeve from a blank page.
+
+The real sleeve is rows **283..526**, `mean=64.6` — **111px BELOW `region.top`**,
+with generous clearance. Confirmed against the screenshot: the sleeve sits well
+inside the wall, nowhere near the top edge. Nothing is clipped and nothing ever
+was.
+
+`region.top` is the ONLY thing separating the two populations, and the margin is
+one pixel. Simulated against a real frame:
+
+| `region.top` | `first` | verdict |
+|---|---|---|
+| **172** | 283 | PASS |
+| **171** | 171 | **FAIL** |
+| 170 | 170 | FAIL |
+
+The white block ends at row 171. At 172 the scan starts just below it; at 171 or
+less it starts INSIDE the heading, matches on its first row, and reports
+`first == region.top`. Four idle runs all measured `region.top=172` — stable,
+which is exactly why it passes 3/3 in isolation and needs full-suite layout
+variation to shift by the single pixel that breaks it.
+
+### Both recorded readings were wrong, and it is worth saying which
+
+1. **"A real §10b geometry defect on short viewports."** No. The sleeve has 111px
+   of clearance.
+2. **"An off-by-one where a sleeve legitimately starting at the first scanned row
+   reports as clipped."** Also no — closer, and wrong about the object. It assumed
+   the sleeve starts at the first scanned row. The sleeve starts at 283. The scan
+   start IS implicated, but as a window onto page chrome, not as a bound on the
+   sleeve.
+
+**Both readings shared an assumption nobody stated: that the rows the scan
+matched were the sleeve.** The debate was about where the sleeve's edge lay
+relative to a boundary. The measurement was not looking at the sleeve at all.
+
+---
+
+### THIRD INSTANCE: the apparatus generating the signal
+
+**Adam, 2026-08-28**, and this belongs with the uncontrolled-variable rule and
+the fork-bomb re-measurement, as the third of a family.
+
+**The nine byte-identical values were INSTRUMENT OUTPUT, not observation.** The
+scan loop:
+
+    let first = -1;
+    for (let y = region.top; y < ...; y += 1) {
+      if (rowIsSleeve(y)) { if (first < 0) first = y; last = y; }
+    }
+
+`first` is initialised to `-1` and can only ever be assigned some `y`; `y` starts
+at `region.top`. **So `first >= region.top` is a structural invariant of the
+loop**, and the assertion is `first > region.top`. Therefore *any* failure of
+this assertion must report `first == region.top`. `172 / 172` is the only failing
+value the loop is capable of emitting.
+
+> **Nine identical sightings carried no information about the scene.** They would
+> have looked identical under any cause whatsoever — clipping, a white heading, a
+> blank frame, a crashed renderer. The consistency that made this look like "a
+> genuine boundary rather than a race" was a property of the counter.
+
+**Both of us read them as a boundary condition**, and the original entry says so
+explicitly: *"the symptom is deterministic; only its occurrence is not. That is
+the signature of a genuine boundary."* The reasoning was careful and the premise
+was never checked.
+
+**The family, now three:**
+
+| # | the comparison | the uncontrolled thing |
+|---|---|---|
+| 1 | HTTP vs WebSocket to Neon | two different CREDENTIALS, one stale |
+| 2 | suite with the hang vs without | the harness was FORKING BOMBS into the shared DB |
+| 3 | nine identical failure values | the loop can emit no OTHER failing value |
+
+**And the same tell each time: the interesting reading survived because it was
+interesting.** "A transport-specific driver failure", "a fix that reveals a
+pre-existing race", "a genuine one-pixel geometry boundary" are all findings
+worth writing up. "One password is stale", "my test harness poisoned its own
+numbers", "the predicate matches white" are chores. **In all three the chore was
+true.**
+
+**What separates them, all three times: applying a fix and re-measuring, or in
+this case simply MEASURING THE THING ITSELF** — scanning the whole frame instead
+of from `region.top`, which took one probe and answered in one run what nine
+sightings across five weeks had not.
+
+---
+
+### THE MISSING SCREENSHOTS WERE STRUCTURAL, not bad luck
+
+`playwright.config.ts:93` sets `trace: 'on-first-retry'`, and there is no
+`screenshot` setting at all. **The trace is captured on the RETRY — which
+passes.** So the failing render is never recorded, by design, and the passing one
+is.
+
+**That is why a nine-sighting intermittent had no evidence.** The 2026-08-25
+entry names a "deciding screenshot on disk" and points at a `test-results`
+directory; checked on 2026-08-28, the failing run's directory holds only
+`error-context.md`, and the `trace.zip` belongs to the retry that passed.
+
+> **A capture policy keyed to retries cannot photograph a failure that retries
+> away.** For a flaky test — the exact case where evidence is hardest to get —
+> the default captures the one run that has nothing to show.
+
+**Fixed in the same unit** (`screenshot: 'only-on-failure'`), because a
+diagnosis that took five weeks for want of an image should not be able to happen
+the same way twice.
+
+---
+
+### THE PATTERN: three fixes, each NARROWING a measurement that could not name its subject
+
+This test has now been corrected three times, and its own comments record the
+first two:
+
+1. **A centred-ness tautology.** It compared `settledScreenY` against
+   `innerHeight/2` — both computed from the same two quantities, so no mutation
+   could fail it. *"It reported delta 0 while the sleeve ran off the top of the
+   wall on a phone."*
+2. **A brightness scan.** First row over a luminance floor down the middle
+   column — but the LIT SPINES above the sleeve clear that floor too. *"A
+   measurement that cannot tell the sleeve from the wall behind it cannot testify
+   about either."*
+3. **A uniformity predicate — this one.** `range < 12 && mean > 50` separates the
+   sleeve from the striped wall and the dark panel, and matches the white heading
+   perfectly.
+
+**Each fix NARROWED the predicate; none asked whether the predicate could name
+the thing at all.** Fix 2's comment is the sharpest statement of the principle in
+this whole file — and fix 2 then wrote a predicate with the same defect against a
+different confounder. Fix 3 narrowed it again, against the confounders that had
+already bitten, and left it wide open to a region the scan had simply never
+looked at.
+
+> **Narrowing a wrong measurement produces a measurement that is wrong less
+> often, which is worse than one that is obviously wrong** — it survives longer
+> and accumulates confident commentary. The question a narrowing fix does not ask
+> is "what ELSE satisfies this?", and the answer has to be sought outside the
+> range already being scanned.
+
+**The structural giveaway, available from the source without running anything:**
+the scan's window and the assertion's bound were **the same quantity**,
+`region.top`. A measurement whose search window is also its pass/fail threshold
+cannot distinguish "the subject is at the boundary" from "the window starts on
+something else". That is checkable by reading, and it went unread through three
+fixes and nine sightings.
+
+
+---
+
+## 1093 FIXED — both fixes, and the mutation that finally proved the test works
+
+**2026-08-28**, immediately after the diagnosis above.
+
+### What changed
+
+| | before | after |
+|---|---|---|
+| predicate | `range < 12 && mean > 50` | **+ `mean < 160`** — an upper bound |
+| where it lives | written out TWICE in the spec | `test/helpers/sleeve-rows.ts`, one definition |
+| scan window | `Math.max(round(rect.top), 0)` — the VIEWPORT | `Math.max(ceil(rect.top), 0)` to `min(floor(rect.bottom), innerHeight)` — the CANVAS |
+| capture | `trace: 'on-first-retry'` only | **+ `screenshot: 'only-on-failure'`** |
+
+**Both fixes, not one, and the measurement says why.** Simulated against the real
+captured frame across every plausible `region.top`:
+
+    region.top    OLD first -> verdict     NEW first -> verdict
+       172          283 -> PASS              283 -> PASS
+       171          171 -> FAIL              283 -> PASS
+       165          165 -> FAIL              283 -> PASS
+       134          134 -> FAIL              283 -> PASS
+         0            0 -> FAIL              283 -> PASS
+
+The tightened predicate alone finds the sleeve at 283 wherever the scan starts —
+so it does fix the failure. **The scan bound is kept anyway**: relying on the
+predicate alone leaves the test one design change away from breaking again the
+day the page chrome above the canvas darkens below 160. Bounding the window
+removes the dependency; tightening the predicate fixes the actual bug. Doing one
+leaves either a fragile margin or a predicate that still cannot tell a sleeve
+from a heading.
+
+### The predicate is now a unit test, and it fails against the old one
+
+`test/helpers/sleeve-rows.test.ts` — six tests, no browser, because the predicate
+is arithmetic on pixel statistics. Written FIRST, against the old implementation:
+
+    × rejects the white page heading above the canvas
+      AssertionError: expected true to be false
+
+The three tests covering the confounders previous fixes handled — the striped
+wall, the dark panel, the sleeve itself — **passed against the old predicate**,
+which is what makes the failing one discriminating rather than decorative.
+
+**This is the fix for the pattern, not only for the bug.** Three previous
+corrections narrowed a predicate that lived inside a Playwright spec, where it
+could only ever be exercised by running a browser under load. Extracted, it can
+be asked directly what it matches — and "what ELSE satisfies this?" becomes a
+test rather than a question nobody thought to ask.
+
+### VERIFIED BY MUTATION, and the first two mutations were WRONG
+
+The test passes 3/3 in isolation, which proves nothing — it always did. The real
+question is whether it still catches the §10b defect it exists for.
+
+**Mutation 1** (aim at viewport centre): passed. **Mutation 2** (unclamped aim):
+passed. Two dead mutations in a row is the §9 signal to stop and check the
+mutation rather than try a third.
+
+**The cause: `WallScene.tsx` has TWO guards, and I had disabled one.** The aim is
+computed from the visible region AND then clamped by `lowest`/`highest` so the
+sleeve stays inside it. Defeating the aim alone leaves the clamp to put the
+sleeve back. **A mutation that another guard repairs is not a mutation**, and a
+test that "passes" against it has been told nothing.
+
+**Mutation 3** (`target = regionTop - halfSleevePx * 0.6`) genuinely clipped —
+confirmed by photographing the mutated render, sleeve visibly cut off at the
+canvas edge. The fixed test failed. **Mutation 4**, a milder clip, failed on the
+assertion the test is NAMED for:
+
+    Error: sleeve top 172 must clear the wall region top 172
+
+> **That is byte-identical to the nine false sightings.** The difference is that
+> the screenshot beside it now shows a sleeve genuinely flush against the canvas
+> boundary. **The same message, and now it means what it says** — which is
+> exactly what a failing value should do, and what it could not do while the loop
+> could emit no other.
+
+### The capture fix, verified in the same run
+
+The mutated failing runs produced `test-failed-1.png`. **Nine sightings over five
+weeks produced none**, because `trace: 'on-first-retry'` photographs the retry
+and a flaky test's retry is the run that passes. The next intermittent gets its
+image on the first failure.
+
+
+### Suite state at the close of the 1093 fix — and one pre-existing failure that got WORSE
+
+**Unit: 3203 passed, 209 files, 261s.** Typecheck, lint, build clean.
+
+**E2E: 444 passed, 20 skipped, 1 failed, 11.9m.**
+
+**1093 is GONE from the flaky list**, where it had appeared in every full run
+for five weeks.
+
+**The one failure is `collection-filters.spec.ts:427` on `[mobile]`** —
+`getByLabel('Sort by')` expected `releaseYear:desc`, received `""` in a cold
+browser context. **Pre-existing and already recorded** (NOTES, A42: *"the three
+failures from the previous run — `lookup-flows:1525`, `collection-filters:427`,
+and my own mobile race — all pass"*), same load-sensitive shape: a value asserted
+before the mechanism that populates it has finished. Passes 3/3 in isolation.
+
+**Not from this unit.** The unit touched a pixel predicate, a scan window and the
+screenshot policy; this failure is a select's value in a fresh context, in a file
+nothing here imports.
+
+> **But it is worse than the recorded version and that is not waved past.** It
+> failed through its RETRY — twice in one run — where the earlier sightings were
+> single failures that a retry cleared. A flake that survives its retry is closer
+> to a defect than to noise.
+
+**Trigger: the next full run.** If it fails through the retry again, it is a
+defect with a misleading label and wants the treatment 1093 just got — which
+would make it the second test in this suite whose measurement asserts an outcome
+without waiting for the mechanism. **That family already has a name here** (NOTES,
+A42: *"a redirect is an event with a duration, and a test that treats it as
+instantaneous races it in whichever project is slower"*), and this looks like the
+same shape with a different event.

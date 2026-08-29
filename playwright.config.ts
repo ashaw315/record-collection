@@ -91,6 +91,24 @@ export default defineConfig({
   use: {
     baseURL,
     trace: 'on-first-retry',
+
+    /*
+      **Screenshot on FAILURE, not on retry — the two are not the same run.**
+
+      `trace: 'on-first-retry'` captures the RETRY, and a flaky test's retry is
+      the run that PASSES. So for exactly the tests where evidence is hardest to
+      get, the default photographs the one attempt with nothing to show.
+
+      Measured: `wall-scene.spec.ts:1093` failed nine times over five weeks, and
+      an entry in NOTES pointed at a "deciding screenshot on disk" that was never
+      there — the failing run's directory held only `error-context.md` while the
+      `trace.zip` belonged to the passing retry. The diagnosis took five weeks
+      for want of an image that a capture policy had structurally excluded.
+
+      The trace stays: it is the better artifact when it fires, and it fires on a
+      different run.
+    */
+    screenshot: 'only-on-failure',
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] }, testIgnore: [/touch-tilt\.spec\.ts$/] },
