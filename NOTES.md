@@ -23892,3 +23892,51 @@ never had an arithmetic answer.
 where a fact exists, and a documented band (40-50%) where a judgement does. The
 second does not pretend to derive the value; it records that someone chose it and
 fences the range a future change should stay inside.
+
+
+---
+
+## THE CAST SHADOW SHIPS, at the diagnostic's strength
+
+**Adam, 2026-08-29:** *"Make sure the shadow that ships is the one I saw in the
+diagnostic — hard enough to read as contact — rather than a softened version
+tuned to look tasteful. The whole finding was that timid was indistinguishable
+from absent."*
+
+**And the treatment question is settled without picking a treatment:** what ships
+is square-on (§10b's reasoning holds and nothing in this work overturned it) with
+the shelf depth fix plus a real cast shadow. None of A/B/C/D.
+
+**Adam's diagnosis of why C failed is the important part:** *"option C was too
+timid because it was competing against a shelf that had no depth to land on."*
+The cue was not weak; it had no surface to fall on. Once the shelf became a real
+board, the same mechanism reads immediately.
+
+### What changed
+
+The shadow was gated behind the `shadow` treatment, so **the default wall had
+none.** Now:
+
+- `renderer.shadowMap.enabled` unconditionally, every spine casts, surface and
+  lip receive;
+- **ambient 1.5 → 1.05**, which is the load-bearing change — *a shadow cast into
+  a 1.5 ambient is washed to nothing regardless of key strength*, and that is why
+  the original treatment read as no change at all;
+- key 1.9 → 2.3. The diagnostic keeps its own 0.55 / 2.6, trading fidelity for
+  legibility.
+
+### `wall-shadow.test.ts`, and why source assertions
+
+Four guards, each naming a specific way the shadow could be switched off by
+accident, **verified by mutation**: ambient back to 1.5 fails; the
+`multiplyScalar` fake fails; disabling the shadow map fails.
+
+They assert on SOURCE rather than on a render because the scene needs WebGL,
+which the unit layer has not got. That is a real weakness — a source assertion
+cannot see what is drawn — and it is accepted here because the alternative is no
+guard at all on a property that was already lost once.
+
+> **The finding being protected is not "shadows are nice". It is that a subtle
+> shadow and no shadow are the same image**, so an edit that softens this for
+> taste reintroduces the exact defect the nine-version shelf investigation was
+> about.

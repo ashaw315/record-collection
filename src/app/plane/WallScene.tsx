@@ -401,7 +401,16 @@ export function WallScene({
 
     const renderer = new WebGLRenderer({ antialias: true, alpha: false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    if (diagnosticProp === true || treatment === 'shadow') {
+    /*
+      **Shadows are always on now — the cast shadow SHIPS.**
+
+      It was gated behind the `shadow` treatment, which meant the default wall
+      had none. The diagnostic established that a hard shadow is what reads as a
+      record CONTACTING a surface, and the earlier timid version was
+      indistinguishable from no shadow at all — which is the whole finding, so a
+      softened "tasteful" variant would reintroduce the defect.
+    */
+    {
       renderer.shadowMap.enabled = true;
       /*
         `PCFShadowMap`, not `PCFSoftShadowMap`: the latter is deprecated in
@@ -623,7 +632,12 @@ export function WallScene({
       wall's own colours and lighting balance — the question it answers is
       whether a real shadow reads in the PRODUCT, not whether it reads at all.
     */
-    const castsShadow = diagnostic || treatment === 'shadow';
+    /*
+      Every wall casts. The diagnostic changes the LIGHTING (dimmer ambient,
+      stronger key) so geometry is legible; it does not change whether a shadow
+      exists.
+    */
+    const castsShadow = true;
     /*
       **The diagnostic view trades the wall's lighting for readability.** A dim
       ambient and a strong raking key throw a hard shadow; the normal rig is
@@ -635,8 +649,14 @@ export function WallScene({
       that a shadow has somewhere to land; the diagnostic goes further because
       legibility beats fidelity there.
     */
-    scene.add(new AmbientLight(0xffffff, diagnostic ? 0.55 : treatment === 'shadow' ? 1.05 : 1.5));
-    const key = new DirectionalLight(0xffffff, diagnostic ? 2.6 : treatment === 'shadow' ? 2.3 : 1.9);
+    /*
+      **Ambient dropped from 1.5 to 1.05 for the shipping wall**, because a
+      shadow cast into a 1.5 ambient is washed to nothing. This is the value the
+      `shadow` treatment used and it is now the default; the diagnostic goes
+      further still, trading fidelity for legibility.
+    */
+    scene.add(new AmbientLight(0xffffff, diagnostic ? 0.55 : 1.05));
+    const key = new DirectionalLight(0xffffff, diagnostic ? 2.6 : 2.3);
     key.position.set(-0.4, 0.8, 1);
     if (castsShadow) {
       key.castShadow = true;
