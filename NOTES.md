@@ -23940,3 +23940,61 @@ guard at all on a property that was already lost once.
 > shadow and no shadow are the same image**, so an edit that softens this for
 > taste reintroduces the exact defect the nine-version shelf investigation was
 > about.
+
+
+---
+
+## The rise and the return: the duration was shared, the curve already was not
+
+**2026-08-31.** Adam's read: *"slightly slower overall, and both animations
+should slow down toward the end rather than stopping at a constant rate"*, plus
+three things to check.
+
+### His three, answered from the code
+
+**1. "The return probably wants to be faster than the pull."** Correct, and it
+was not — both ran on `RISE_MS = 620`. *"Reaching for something is deliberate,
+putting it back is casual, and the same duration both ways reads as
+mechanical."* Now 720ms rise / 480ms return.
+
+**2. "Say whether RISE_MS and its curve are shared, because if they are, that is
+the thing to split first."** **The duration was shared; the curve was not.**
+Someone had already split it deliberately, with the reasoning recorded in the
+file: *"a record going back accelerates toward the gap rather than drifting into
+it, and reusing the rise's easing reads as the animation played backwards"* —
+and quadratic over cubic because cubic covers only 13% of the distance by
+halfway, so the record hangs and then snaps.
+
+**So the duration was the thing to split, not the curve.**
+
+**3. "The landing is where smoothness actually lives... stopping dead reads
+wrong at any speed."** **Half right, and the half that is wrong is the
+interesting one.** Measured velocity over the final 5% of each motion:
+
+    rise    0.01   decelerating almost to rest
+    return  1.90   accelerating INTO the slot, then stopping instantly
+
+**"Stopping dead" is real, and it is the RETURN only** — the rise already does
+what Adam asked for. And the return's behaviour may be correct: a record dropped
+into a slot *does* arrive with speed. So "slow down toward the end" should not be
+applied to it sight-unseen; both variants exist on `/scene` instead.
+
+### What was built
+
+`motion-tuning.ts` — durations and curves as values rather than inlined, so the
+harness can sweep them. `easeReturnSettled` eases only the last quarter, keeping
+the brisk middle: still slow off the mark (0.06 at t=0.25) but arriving at
+velocity 0.5 rather than 1.9.
+
+**Harness:** rise and return sliders, a `return: lands / settles` toggle, and a
+**loop button** that pulls, waits, puts back and repeats — driven off the scene's
+own `data-phase` rather than a timer, because the durations are the thing being
+tuned and a fixed schedule would drift out of step with exactly the change under
+test.
+
+**The slide (13b) and the flip keep `RISE_MS`.** They are different motions, and
+sharing one constant with the rise is what made the rise and the return read as
+one mechanical movement in the first place.
+
+**Verified by mutation:** a settled curve that is secretly the plain one fails; a
+return duration equal to the rise fails.

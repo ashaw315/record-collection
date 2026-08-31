@@ -33,6 +33,13 @@ import {
 import { SHELF_LIP, SHELF_PLANE, WALL_BACK } from '../shelf/shelf-surface';
 import { createRenderLoop } from './render-loop';
 import { risePose } from './rise-pose';
+import {
+  RETURN_DEFAULT_MS,
+  RISE_DEFAULT_MS,
+  easeReturn,
+  easeReturnSettled,
+  type MotionTuning,
+} from './motion-tuning';
 import { RISE_MS, prefersReducedMotion } from './BoxCanvas';
 import { spineLabelPlan } from './spine-texture';
 import { centredSquareUv } from './skins';
@@ -141,6 +148,7 @@ export function WallScene({
   treatment,
   diagnostic: diagnosticProp,
   orbit: orbitProp,
+  motion,
 }: {
   records: ShelfRecord[];
   treatment?: ShelfTreatment;
@@ -166,6 +174,13 @@ export function WallScene({
    * lengths you can hold against each other.
    */
   orbit?: 'off' | 'three-quarter' | 'high' | 'low';
+  /**
+   * **Motion overrides, `/scene` only.** The rise and the return are judged by
+   * watching them, so the harness sweeps duration and the return's curve rather
+   * than requiring an edit and a reload per candidate. Production passes
+   * nothing and gets the defaults.
+   */
+  motion?: MotionTuning;
 }) {
   const mount = useRef<HTMLDivElement>(null);
   /**
@@ -1762,7 +1777,7 @@ export function WallScene({
 
       scene.animate((now) => {
         if (backFrom === null) backFrom = now;
-        const elapsed = Math.min(1, (now - backFrom) / RISE_MS);
+        const elapsed = Math.min(1, (now - backFrom) / (motion?.returnMs ?? RETURN_DEFAULT_MS));
 
         /**
          * **Ease IN, the mirror of the rise's ease-out** — a record going back
@@ -1781,7 +1796,14 @@ export function WallScene({
          * 25% by halfway, which still accelerates into the slot without the
          * lurch.
          */
-        const eased = elapsed * elapsed;
+        /*
+          The plain ease-in arrives at full speed; the settled variant eases over
+          the last quarter. Which reads better is a look-at-it question, so both
+          exist and `/scene` switches between them.
+        */
+        const eased = (motion?.returnSettle ?? false)
+          ? easeReturnSettled(elapsed)
+          : easeReturn(elapsed);
 
         /*
           The SAME `risePose`, read from 1 down to 0. One description of the
@@ -1858,7 +1880,12 @@ export function WallScene({
 
     scene.animate((now) => {
       if (start === null) start = now;
-      const progress = Math.min(1, (now - start) / RISE_MS);
+      /*
+        The RISE's own duration. The slide (13b) and the flip keep `RISE_MS`:
+        they are different motions and sharing a constant with the rise is what
+        made the rise and the RETURN read as one mechanical movement.
+      */
+      const progress = Math.min(1, (now - start) / (motion?.riseMs ?? RISE_DEFAULT_MS));
       scene.setPulled(pulledId, progress);
 
       /*
@@ -1871,7 +1898,7 @@ export function WallScene({
 
       return progress < 1;
     });
-  }, [pulledId, returningId, state.phase]);
+  }, [pulledId, returningId, state.phase, motion]);
 
   /**
    * **The slide between records (13b).** A lateral move: `fromId` leaves one

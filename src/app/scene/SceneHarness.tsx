@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { WallScene, type ShelfTreatment } from '../plane/WallScene';
+import { RETURN_DEFAULT_MS, RISE_DEFAULT_MS } from '../plane/motion-tuning';
 import { sceneFixtures, SCENE_COUNTS } from './fixtures';
 
 /**
@@ -54,6 +56,59 @@ export function SceneHarness() {
   const [treatment, setTreatment] = useState<ShelfTreatment>('depth');
   const [diagnostic, setDiagnostic] = useState(false);
   const [orbit, setOrbit] = useState<'off' | 'three-quarter' | 'high' | 'low'>('off');
+  const [riseMs, setRiseMs] = useState(RISE_DEFAULT_MS);
+  const [returnMs, setReturnMs] = useState(RETURN_DEFAULT_MS);
+  const [returnSettle, setReturnSettle] = useState(false);
+  const [looping, setLooping] = useState(false);
+  const frame = useRef<HTMLDivElement | null>(null);
+
+  /**
+   * **Pull, wait, put back, wait, repeat** — so the motion can be watched
+   * dozens of times rather than reloaded and re-clicked for each candidate.
+   *
+   * Driven off the scene's own `data-phase` rather than a fixed schedule: the
+   * durations are the thing being tuned, so a timer would drift out of step
+   * with exactly the change under test.
+   */
+  useEffect(() => {
+    if (!looping) return;
+    let stopped = false;
+
+    const host = () => frame.current?.querySelector('[data-testid="wall-scene"]');
+    const canvas = () => frame.current?.querySelector('canvas');
+
+    const clickAt = (xFraction: number) => {
+      const el = canvas();
+      if (!el) return;
+      const box = el.getBoundingClientRect();
+      const x = box.left + box.width * xFraction;
+      const y = box.top + 120;
+      for (const type of ['pointerdown', 'pointerup', 'click']) {
+        el.dispatchEvent(
+          new MouseEvent(type, { bubbles: true, clientX: x, clientY: y }),
+        );
+      }
+    };
+
+    const tick = async () => {
+      while (!stopped) {
+        const phase = host()?.getAttribute('data-phase');
+        if (phase === 'idle') {
+          clickAt(0.04); // a spine near the left edge
+        } else if (phase === 'settled') {
+          await new Promise((r) => setTimeout(r, 700));
+          if (stopped) return;
+          clickAt(0.75); // empty wall — dismisses
+        }
+        await new Promise((r) => setTimeout(r, 160));
+      }
+    };
+    void tick();
+
+    return () => {
+      stopped = true;
+    };
+  }, [looping]);
 
   const records = sceneFixtures(count);
 
@@ -188,12 +243,72 @@ export function SceneHarness() {
           ))}
         </span>
 
+        <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          rise
+          <input
+            type="range"
+            min={300}
+            max={1400}
+            step={20}
+            value={riseMs}
+            onChange={(e) => setRiseMs(Number(e.target.value))}
+            style={{ width: 90 }}
+          />
+          <span style={{ width: 42, fontVariantNumeric: 'tabular-nums' }}>{riseMs}</span>
+          return
+          <input
+            type="range"
+            min={200}
+            max={1400}
+            step={20}
+            value={returnMs}
+            onChange={(e) => setReturnMs(Number(e.target.value))}
+            style={{ width: 90 }}
+          />
+          <span style={{ width: 42, fontVariantNumeric: 'tabular-nums' }}>{returnMs}</span>
+        </span>
+
+        <button
+          type="button"
+          onClick={() => setReturnSettle((v) => !v)}
+          aria-pressed={returnSettle}
+          title="Ease the return's last quarter instead of arriving at full speed"
+          style={{
+            padding: '4px 10px',
+            border: '1px solid #ddd4c6',
+            borderRadius: 3,
+            background: returnSettle ? '#4d3b2b' : '#fff',
+            color: returnSettle ? '#fff' : '#1c1917',
+            cursor: 'pointer',
+          }}
+        >
+          {returnSettle ? 'return: settles' : 'return: lands'}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setLooping((v) => !v)}
+          aria-pressed={looping}
+          title="Pull, pause, put back, repeat — so the motion can be watched rather than re-clicked"
+          style={{
+            padding: '4px 10px',
+            border: '1px solid #ddd4c6',
+            borderRadius: 3,
+            background: looping ? '#7a2e33' : '#fff',
+            color: looping ? '#fff' : '#1c1917',
+            cursor: 'pointer',
+          }}
+        >
+          {looping ? '■ stop loop' : '▶ loop pull'}
+        </button>
+
         <span style={{ color: '#8a8078' }} data-testid="scene-state">
           {count} records · {width === 0 ? 'full' : `${width}px`} · {treatment}{diagnostic ? ' · diagnostic' : ''}{orbit !== 'off' ? ` · orbit ${orbit}` : ''}
         </span>
       </div>
 
       <div
+        ref={frame}
         data-testid="scene-frame"
         style={{
           width: width === 0 ? '100%' : width,
@@ -207,6 +322,7 @@ export function SceneHarness() {
           treatment={treatment}
           diagnostic={diagnostic}
           orbit={orbit}
+          motion={{ riseMs, returnMs, returnSettle }}
         />
       </div>
     </div>
