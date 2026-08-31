@@ -613,7 +613,15 @@ export function WallScene({
           evenly rather than dumping it at one edge.
         */
         viewCentrePx: viewRegionCentrePx(scrollY),
-        viewportHeight: window.innerHeight,
+        /*
+          **The VISIBLE canvas height, not the window's.** `window.innerHeight`
+          includes the nav and heading above the canvas, and it is also what made
+          the camera derive from the wall: `pulledDestination` frames on the
+          viewport only when this is the height it actually frames. With the wall
+          used instead, the record settled 561px BEHIND it on a one-row
+          collection and 7380px past the viewer at ten.
+        */
+        viewportHeight: viewportFloor,
       });
     /* Recomputed when a record is pulled; the initial value is only a placeholder. */
     let destination = destinationFor(window.scrollY);

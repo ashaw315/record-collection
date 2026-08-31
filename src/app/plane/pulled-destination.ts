@@ -1,5 +1,5 @@
 import { SPINE_HEIGHT } from '../shelf/spine';
-import { WALL_FOV_DEGREES, wallCameraDistance } from './wall-camera';
+import { WALL_FOV_DEGREES, viewportCameraDistance, wallCameraDistance } from './wall-camera';
 
 /**
  * Where a pulled record ends up — an explicit pose, not an accident.
@@ -76,7 +76,17 @@ export function pulledDestination({
   viewCentrePx?: number;
   viewportHeight?: number;
 }): PulledPose {
-  const cameraZ = wallCameraDistance({ wallHeight });
+  /*
+    **Framed on the VIEWPORT when one is given, not on the wall.** The wall
+    framing makes the camera's distance scale with the collection, which puts the
+    record behind the wall on a short one and far past the viewer on a tall one —
+    see `viewportCameraDistance`. Callers without a viewport (the pure-geometry
+    tests) keep the old derivation.
+  */
+  const cameraZ =
+    viewportHeight === undefined
+      ? wallCameraDistance({ wallHeight })
+      : viewportCameraDistance({ viewportHeight });
   const halfAngle = (WALL_FOV_DEGREES * Math.PI) / 360;
 
   /*
@@ -103,7 +113,14 @@ export function pulledDestination({
     because further is smaller and a record that fits width and height both is at
     the max of the two. With no viewport, height alone decides, as before.
   */
-  const canvasAspect = wallWidth / wallHeight;
+  /*
+    **The aspect of what the camera FRAMES.** This was `wallWidth / wallHeight`,
+    which reintroduces the collection's size through the width fit even after the
+    camera itself stopped scaling — a taller wall gave a narrower aspect and so a
+    different settle distance. With a viewport given, the camera frames the
+    viewport, so that is the ratio its frame has.
+  */
+  const canvasAspect = wallWidth / (viewportHeight ?? wallHeight);
   const byWidth =
     viewport === undefined
       ? 0

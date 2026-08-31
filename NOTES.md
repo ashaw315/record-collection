@@ -24331,3 +24331,61 @@ everything except the blur.
 the pixel-to-texture conversion, the bounds), the harness dim comparison, and the
 findings — layer separation, zero idle draws under a composer, and the Criterion
 reference behaviour. **The composer wiring is dropped.**
+
+
+---
+
+## PULL DEPTH FIXED: the camera stopped scaling with the collection
+
+**2026-08-31.** The defect `WallScene.tsx` described for weeks and never guarded
+— *"the camera distance scales with the collection, and that is fine for the
+camera and NOT fine for the pull depth. See `PULL_DEPTH_CAP` below"*, where there
+was no below.
+
+### The mechanism, and why the obvious fix was wrong
+
+`pulledDestination` solves for the distance at which a record fills `FRAME_FILL`
+of the frame. **That is a CONSTANT** — 1552px at this FOV. The camera's distance
+was derived from wall HEIGHT, so the record's world position `cameraZ - 1552`
+moved with the collection:
+
+    1 row    z =  -561    BEHIND the wall it came out of
+    3 rows   z =  1204
+    10 rows  z =  7380    far past the viewer
+
+**Pinning the record's depth was tried first and reverted.** It breaks a §10b
+property asserted next door — *"lands at the SAME APPARENT SIZE at 5 records and
+at 125"* — and the conflict is structural: under a camera whose distance scales,
+position and size cannot both be constant.
+
+### The fix removes the scaling rather than compensating for it
+
+`viewportCameraDistance` frames on the VISIBLE height instead of the wall's, so
+both properties hold at once. Measured in the running app:
+
+    17 records (1 row)   slotGap 1241.6
+    125 records (3 rows) slotGap 1242.6
+
+**1px apart, where it was thousands.**
+
+**And the second half was `window.innerHeight`.** The existing `viewportHeight`
+argument passed the WINDOW's height, which includes the nav and heading above the
+canvas — so `pulledDestination` still framed something that was not what the
+camera framed. It now passes `viewportFloor`, the visible canvas height.
+
+**A third place carried the same shape:** `canvasAspect` was `wallWidth /
+wallHeight`, which reintroduces the collection's size through the WIDTH fit even
+after the camera stops scaling. A taller wall gave a narrower aspect and so a
+different settle distance.
+
+> **Three quantities all derived from the wall where they meant the frame.** The
+> camera, the viewport argument, and the aspect. Fixing one at a time would have
+> looked like it worked at whichever collection size was on screen.
+
+### One test changed, and CLAUDE.md §2 requires saying why
+
+`places the record so it projects to the visible centre at every scroll` computed
+`camZ` itself with `wallCameraDistance` — **a restatement of the implementation's
+own derivation, not an independent check of it**, so it began comparing the
+record against a camera that no longer exists. The BEHAVIOUR it asserts is
+unchanged; only the camera it measures against moved.

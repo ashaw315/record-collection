@@ -131,3 +131,35 @@ export function viewportAspect({
   if (height <= 0) return 1;
   return width / height;
 }
+
+
+/**
+ * **How far back the camera stands, framed on what the reader can SEE.**
+ *
+ * `wallCameraDistance` frames the whole WALL, so the camera's distance scales
+ * with the collection — correct for the wall, and the cause of the pull-depth
+ * defect `WallScene.tsx` described for weeks and never guarded:
+ *
+ *     "the camera distance scales with the collection, and that is fine for the
+ *      camera and NOT fine for the pull depth. See PULL_DEPTH_CAP below."
+ *
+ * There was no below. And the defect is real: `pulledDestination` solves for a
+ * CONSTANT distance (1552px at this FOV, from `FRAME_FILL`), so the record's
+ * world position `cameraZ - 1552` moved with the collection — settling 561px
+ * BEHIND the wall on a one-row collection and 7380px past the viewer at ten.
+ *
+ * **Pinning the record's depth was tried and reverted.** It breaks §10b's other
+ * requirement, asserted next door: a record must land at the same APPARENT SIZE
+ * at 5 records and at 125. Under a camera that scales, position and size cannot
+ * both be constant — the two properties are in direct conflict.
+ *
+ * **Framing on the viewport removes the scaling rather than compensating for
+ * it**, so both hold at once. The wall may be taller than the frame; that is a
+ * scroll question, and the canvas scrolls with the page — which is what the
+ * fixed camera bought in the first place.
+ */
+export function viewportCameraDistance({ viewportHeight }: { viewportHeight: number }): number {
+  const halfAngle = (WALL_FOV_DEGREES * Math.PI) / 360;
+
+  return viewportHeight / 2 / Math.tan(halfAngle);
+}

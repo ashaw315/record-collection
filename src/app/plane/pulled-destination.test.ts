@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { pulledDestination } from './pulled-destination';
-import { WALL_FOV_DEGREES, wallCameraDistance } from './wall-camera';
+import { WALL_FOV_DEGREES, viewportCameraDistance, wallCameraDistance } from './wall-camera';
 import { SPINE_HEIGHT } from '../shelf/spine';
 
 /**
@@ -289,7 +289,18 @@ describe('the record settles at the VISIBLE viewport centre, not the wall centre
    * WALL centre and so lands off-screen at the extremes.
    */
   it('places the record so it projects to the visible centre at every scroll', () => {
-    const camZ = wallCameraDistance({ wallHeight });
+    /*
+      **The camera the scene actually builds**, which is framed on the VIEWPORT
+      rather than the wall since the pull-depth fix. This line read
+      `wallCameraDistance({ wallHeight })` — a restatement of the implementation's
+      old derivation, not an independent check of it, so it began comparing the
+      record's position against a camera that no longer exists.
+
+      The BEHAVIOUR asserted below is unchanged: the record projects to the
+      centre of the visible slice at every scroll. Only the camera it is measured
+      against moved.
+    */
+    const camZ = viewportCameraDistance({ viewportHeight });
     for (const scrollY of [0, 500, 2000]) {
       const viewCentrePx = scrollY + viewportHeight / 2;
       const target = pulledDestination({
