@@ -24190,3 +24190,79 @@ that should change it, **suspect the measurement before the fourth theory.**
 **The open question, now well-scoped:** the wall does not render through
 `RenderPass` when the camera is restricted to the wall layer. First measurement
 on pickup samples inside the canvas bounding box only.
+
+
+---
+
+## WHEN A FIX DOES NOT MOVE THE NUMBER, STOP PROPOSING MECHANISMS AND START REMOVING COMPONENTS
+
+**2026-08-31.** Two hours on the blur composer, **six wrong diagnoses**, and the
+test that isolated it in one measurement was available from the first minute.
+
+### The six, in order
+
+1. **Composer output not reaching the screen** — wrong, it reaches it.
+2. **Blur step against the wrong dimension** — real (wall height vs canvas
+   height, a 1.5x error) but *backwards*: it makes the blur too subtle.
+3. **Shader tap weights summing to 0.9** — wrong, they sum to exactly 1.0.
+4. **A colour-space round trip** — the strongest-looking, endorsed by Adam on the
+   same evidence, and tested three ways: an `OutputShader` pass, its
+   `SRGB_TRANSFER` define, and the targets' own `colorSpace`. **All three moved
+   the ratio by zero.**
+5. **`renderToScreen` set by hand** — a real mistake (`EffectComposer.render()`
+   assigns it every frame from `isLastEnabledPass`) and not the cause.
+6. **Layer restriction hiding the geometry** — wrong.
+
+### The test that settled it, in one line
+
+**Remove the layer restriction entirely and render everything through the
+composer:**
+
+    composer + layer restriction   ->  wall band 14.4
+    composer, NO layer restriction ->  wall band 14.4
+    direct render                  ->  wall band 101.0
+
+**14.4 is exactly the luminance of `WALL_BACK` (#100e0d).** The composer draws
+`scene.background` and no geometry, with or without layers. Every theory above
+was a mechanism proposed for an effect nobody had confirmed was happening.
+
+> **Adam:** *"Every theory before it was a mechanism proposed for an effect
+> nobody had confirmed was happening. When a fix does not move the number, stop
+> proposing mechanisms and start removing components."*
+
+**The tell was there from theory 4 onward and I did not read it.** A ratio that
+holds at 0.463 to three decimals across five unrelated interventions is not
+responding to the code being changed. That is evidence about the *experiment*,
+not about the code — and the response to it is subtraction, not another
+hypothesis.
+
+### And a correction to the previous entry
+
+That entry said the 0.463 mean "included the page background". **Also wrong.** A
+canvas-scoped capture gives identical numbers; the bright pixels are harness
+chrome inside the canvas region. The conclusion (the wall is not drawn) was
+right, the mechanism offered for how I had been misled was not.
+
+**Re-scoping a measurement does not validate the story built around it.** The
+measurement-scope rule stands on its own evidence — the 233px spine — and this
+was a second, different error wearing its clothes.
+
+### Why the tool is the finding, not the debugging
+
+**Adam:** *"Six wrong diagnoses is a signal about the tool, not about you. A
+composer that fights the scene at every step, in a codebase that already
+partitions wall from record everywhere else, is the wrong shape."*
+
+Every step needed something worked around: layer masks to exempt the record,
+`renderToScreen` the composer overwrites, targets with their own colour space,
+sizing that must track a renderer sized to the wall rather than the viewport.
+**The scene already separates wall from record in three other places** — the dim
+exempts by material, the meshes are keyed by id, the chrome is DOM. The composer
+was the only mechanism that required re-establishing that partition rather than
+inheriting it.
+
+**What survives, and it is most of the work:** `wall-blur.ts` and its six tests,
+the layer-separation finding (a screen-space effect cannot exempt an object the
+way a per-mesh one can), the zero-idle-draws measurement, and the Criterion
+reference behaviour. **The composer wiring goes because the approach was wrong,
+not because the work was bad.**
