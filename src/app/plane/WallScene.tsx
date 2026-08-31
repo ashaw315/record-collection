@@ -11,7 +11,10 @@ import {
   MeshBasicMaterial,
   MeshStandardMaterial,
   PCFShadowMap,
+  OrthographicCamera,
   PerspectiveCamera,
+  PlaneGeometry,
+  WebGLRenderTarget,
   Raycaster,
   Scene,
   TextureLoader,
@@ -56,6 +59,7 @@ import {
 import { pulledDestination } from './pulled-destination';
 import { boxDepth } from './record-box';
 import { WALL_DIM_FLOOR, wallDimTo } from './wall-dim';
+import { BAKE_DOWNSAMPLE, bakeOpacity, bakeResolution } from './wall-bake';
 import { PROUD_MS, proudOffset, shouldRedraw } from './hover-proud';
 import { NO_TILT, tiltFor } from '../shelf/tilt';
 import { beginDrag, endDrag, shouldStartTiltDrag, swipeDirection, type TiltDrag } from './touch-tilt';
@@ -151,6 +155,7 @@ export function WallScene({
   orbit: orbitProp,
   motion,
   dimFloor,
+  bakeBlur,
 }: {
   records: ShelfRecord[];
   treatment?: ShelfTreatment;
@@ -192,6 +197,13 @@ export function WallScene({
    * what a blur would".
    */
   dimFloor?: number;
+  /**
+   * **`/scene` only: bake the wall to a low-res texture while a record is out.**
+   *
+   * The blur is the downsample — see `wall-bake.ts`. `0` leaves the scene
+   * exactly as it is, which is production today.
+   */
+  bakeBlur?: boolean;
 }) {
   const mount = useRef<HTMLDivElement>(null);
   /**
@@ -1171,11 +1183,122 @@ export function WallScene({
       controls.update();
     }
 
+    /*
+      **The baked wall: a low-res render of the wall, drawn back as one quad.**
+
+      Captured once when a record leaves the shelf, which is safe because hover
+      is disabled during a pull — the wall is static for as long as the bake is
+      on screen. The blur is the magnification of a small texture, so there is no
+      pass and no shader.
+
+      The quad is drawn by a second, orthographic camera over the main render, so
+      it composites without touching the scene graph the record lives in.
+    */
+    let bakeTarget: WebGLRenderTarget | null = null;
+    let bakeQuad: Mesh | null = null;
+    let bakeScene: Scene | null = null;
+    let bakeCamera: OrthographicCamera | null = null;
+    let bakeMaterial: MeshBasicMaterial | null = null;
+
+    if (bakeBlur === true) {
+      const res = bakeResolution({ width, height });
+      bakeTarget = new WebGLRenderTarget(res.width, res.height);
+      bakeTarget.texture.colorSpace = SRGBColorSpace;
+      disposables.push(bakeTarget);
+
+      bakeScene = new Scene();
+      bakeCamera = new OrthographicCamera(-0.5, 0.5, 0.5, -0.5, 0, 1);
+      bakeMaterial = new MeshBasicMaterial({
+        map: bakeTarget.texture,
+        depthTest: false,
+        depthWrite: false,
+      });
+      disposables.push(bakeMaterial);
+      const quadGeometry = new PlaneGeometry(1, 1);
+      disposables.push(quadGeometry);
+      bakeQuad = new Mesh(quadGeometry, bakeMaterial);
+      bakeScene.add(bakeQuad);
+    }
+
+    /** Captures the wall as it stands, undimmed, with the record hidden. */
+    const captureWall = () => {
+      if (bakeTarget === null) return;
+      const pulledMesh = pulledNow === null ? null : meshes.get(pulledNow);
+      const wasVisible = pulledMesh?.visible ?? false;
+      if (pulledMesh !== undefined && pulledMesh !== null) pulledMesh.visible = false;
+
+      renderer.setRenderTarget(bakeTarget);
+      renderer.render(scene, camera);
+      renderer.setRenderTarget(null);
+
+      if (pulledMesh !== undefined && pulledMesh !== null) pulledMesh.visible = wasVisible;
+    };
+
     const counter = window as unknown as { __drawCount?: number };
 
     const loop = createRenderLoop(() => {
       controls?.update();
-      renderer.render(scene, camera);
+
+      if (bakeQuad !== null && bakeScene !== null && bakeCamera !== null && pulledNow !== null) {
+        /*
+          **The baked wall stands in for the real one while a record is out.**
+
+          Two renders, not three: the baked quad first (it IS the wall now), then
+          the scene with every wall mesh hidden, which leaves the record and the
+          chrome-free background. The record is sharp because it is a different
+          object from the picture behind it — the partition is physical rather
+          than a mask someone must keep correct.
+
+          The dim rides on the quad's opacity rather than being baked in. A baked
+          dim would snap to full strength at capture time, which is the
+          front-loading `wallDim` was tuned to avoid.
+        */
+        for (const [id, mesh] of meshes) {
+          if (id !== pulledNow) mesh.visible = false;
+        }
+        /*
+          **The quad is OPAQUE and it IS the wall.** An earlier version drew it
+          with `opacity` carrying the dim, which let the still-dimmed live wall
+          show through underneath and darkened everything twice — measured, the
+          spine band fell to 0.43 of its unbaked value.
+
+          So the dim rides on the quad's COLOUR instead: a white base multiplied
+          down, which dims the picture without blending it against whatever is
+          behind. Nothing is behind it — the wall meshes are hidden and the
+          background is drawn first.
+        */
+        if (bakeMaterial !== null) {
+          const level = bakeOpacity(riseProgress);
+          bakeMaterial.color.setScalar(level);
+        }
+        renderer.render(bakeScene, bakeCamera);
+
+        /*
+          **The background is nulled for the second pass, and that is the whole
+          compositing fix.**
+
+          `renderer.render(scene, camera)` redraws `scene.background` — an opaque
+          fill — straight over the quad, then the record on top. Hiding the spine
+          MESHES does not hide the BACKGROUND, so the baked wall was being
+          painted out every frame.
+
+          Found by subtraction rather than by theory: drawing the quad alone gave
+          a bright blurred wall at mean 79.8, against 18.1 for the composite. The
+          capture was never the problem.
+        */
+        const sceneBackground = scene.background;
+        scene.background = null;
+        renderer.autoClear = false;
+        renderer.clearDepth();
+        renderer.render(scene, camera);
+        renderer.autoClear = true;
+        scene.background = sceneBackground;
+        for (const [id, mesh] of meshes) {
+          if (id !== pulledNow) mesh.visible = true;
+        }
+      } else {
+        renderer.render(scene, camera);
+      }
       counter.__drawCount = (counter.__drawCount ?? 0) + 1;
     });
     loop.start();
@@ -1195,8 +1318,20 @@ export function WallScene({
      * change what the record looks like.
      */
     function setPulledInternal(id: string | null, progress: number) {
+      const pulledBefore = pulledNow;
       pulledNow = id;
       riseProgress = progress;
+
+      /*
+        **Capture the wall once, the moment a record leaves the shelf.**
+
+        Taken while the wall is still undimmed and the record still edge-on in
+        its slot, so the picture is of the wall as it stands. Hover is disabled
+        for the duration of a pull — *"a wall that twitches behind the thing
+        being read"* — so nothing behind the record changes until it goes home,
+        which is what makes one frame enough.
+      */
+      if (id !== null && pulledBefore === null) captureWall();
 
       /*
         **The wall dims with the record's own progress**, so unit 11's ordering

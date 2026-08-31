@@ -26,8 +26,19 @@
  * Dark enough that the record is plainly the subject; not so dark that the wall
  * stops being the thing the record came out of — the empty slot is what the
  * whole rewrite was for, and a black rectangle behind the cover loses it.
+ *
+ * **0.1, down from 0.28, chosen by looking at both on `/scene`.** The deeper
+ * floor was first built as the cheap alternative to a blur and rejected in that
+ * comparison — Adam: *"The cheap option looks cheap."* But that was the wrong
+ * comparison for this constant. Against the SHIPPING 0.28 rather than against a
+ * blur, the deeper floor is plainly better, and if the blur lands the two
+ * compose rather than competing.
+ *
+ * Measured with a record out: wall mean luminance 54.0 at 0.28, 42.1 at 0.1,
+ * with the brightest spine pixel unchanged at 235 — the record's own brightness
+ * is untouched by `wallDimExempt`.
  */
-export const WALL_DIM_FLOOR = 0.28;
+export const WALL_DIM_FLOOR = 0.1;
 
 /**
  * The wall's brightness multiplier at a given point in the rise.
@@ -50,20 +61,14 @@ export function wallDim(progress: number): number {
 }
 
 /**
- * **A deeper floor, for the `/scene` comparison against a real blur.**
+ * **Retained as an alias, because the deep floor IS the shipping floor now.**
  *
- * A blur is a screen-space post-process — `EffectComposer`, a render target, a
- * custom pass, and resize handling in a scene whose resize deliberately tracks
- * width only. That is a large addition for an effect described in one sentence,
- * so the cheap alternative is tried first: **if pushing the wall darker gets
- * most of the way, the dim wins and the composer is never built.**
- *
- * `WALL_DIM_FLOOR`'s own reasoning is the constraint on how far this can go —
- * "not so dark that the wall stops being the thing the record came out of, the
- * empty slot is what the whole rewrite was for". A floor of 0 is a black
- * rectangle behind the cover, which loses the slot; this keeps a little.
+ * It was built as the cheap alternative to a blur and compared against 0.28 on
+ * `/scene`; the comparison it lost was against a blur, and the one it won was
+ * against the value that was shipping. The harness switch keeps both entries so
+ * the comparison stays reproducible, and they now name the same number.
  */
-export const WALL_DIM_FLOOR_DEEP = 0.1;
+export const WALL_DIM_FLOOR_DEEP = WALL_DIM_FLOOR;
 
 /**
  * The wall's brightness at a given rise progress, at a chosen floor.

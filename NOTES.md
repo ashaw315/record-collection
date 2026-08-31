@@ -24389,3 +24389,70 @@ different settle distance.
 own derivation, not an independent check of it**, so it began comparing the
 record against a camera that no longer exists. The BEHAVIOUR it asserts is
 unchanged; only the camera it measures against moved.
+
+
+---
+
+## THE STOPPING RULE EARNED ITSELF, and that is separate from whether the fix landed
+
+**2026-08-31.** Before starting the baked-wall attempt I set a rule out loud,
+because the composer had just cost two hours: **two failed diagnoses, then take
+the dim.** Not three — the error rate on this surface was demonstrably high
+enough that a third attempt was likelier to be a fourth wrong turn than a fix.
+And: **at any surprising result, subtract a component rather than propose a
+mechanism.**
+
+**It fired once, and it worked.**
+
+The first fix — making the quad opaque and moving the dim onto its colour —
+**moved the measurement by exactly zero**: 18.1 before, 18.1 after. Under the old
+habit that is where theory five gets written. Instead:
+
+    SUBTRACT: draw ONLY the quad, nothing else.
+
+    quad alone      mean 79.8    a bright, blurred, colourful wall
+    quad + scene    mean 18.1    the wall goes dark
+
+**One measurement.** The capture was perfect all along; the compositing was the
+entire fault. The composer session spent four theories on a question this
+answered in a single step.
+
+> **Adam:** *"That is the composer session's cost being repaid, and it should
+> read as a rule that earned itself rather than a lesson learned."*
+
+**The cause, once the question was scoped right:** `renderer.render(scene,
+camera)` after the quad redraws `scene.background` — an opaque fill — straight
+over it. **Hiding the spine MESHES does not hide the BACKGROUND.** One line:
+null the background for the record pass.
+
+### Why the baked wall works where the composer did not
+
+**It replaces the wall with a picture of itself rather than filtering the frame.**
+The record stays an ordinary mesh in front of a quad, sharp because it is a
+DIFFERENT OBJECT — the partition is physical rather than a layer mask someone
+must keep correct. That is precisely what fought the composer at every step.
+
+**And the blur is bilinear filtering, not a shader.** The wall renders to a
+target at 1/8 scale and is magnified back; the GPU's own filtering does the
+softening. No `EffectComposer`, no `RenderPass`, no swap buffers, no
+`renderToScreen`, no output encoding, no render-target colour space — the
+machinery that produced six wrong diagnoses is *absent* rather than configured.
+
+**One frame, not every frame**, and the premise was verified rather than assumed:
+`WallScene` disables hover while a record is out — *"a wall that twitches behind
+the thing being read"* — so the wall is genuinely static for as long as the bake
+is on screen.
+
+### Measured
+
+    unbaked, dimmed      spine band 42.2
+    baked                spine band 72.5   identical to the quad alone
+    idle draws, 2s       0                 the dirty flag holds
+
+**Brighter than the dimmed wall it replaces**, because the dim no longer stacks
+on it — which is the Criterion behaviour Adam asked for: *detail dissolves,
+luminance holds.*
+
+**The dim rides on the quad's colour rather than being baked in.** A baked dim
+would snap to full strength at capture time, which is the front-loading `wallDim`
+was tuned to avoid.

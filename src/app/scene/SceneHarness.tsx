@@ -62,6 +62,7 @@ export function SceneHarness() {
   const [returnSettle, setReturnSettle] = useState(RETURN_SETTLES_BY_DEFAULT);
   const [looping, setLooping] = useState(false);
   const [dimFloor, setDimFloor] = useState(WALL_DIM_FLOOR);
+  const [bakeBlur, setBakeBlur] = useState(false);
   const frame = useRef<HTMLDivElement | null>(null);
 
   /**
@@ -315,6 +316,23 @@ export function SceneHarness() {
 
         <button
           type="button"
+          onClick={() => setBakeBlur((v) => !v)}
+          aria-pressed={bakeBlur}
+          title="Bake the wall to a low-res texture while a record is out — the blur is the downsample"
+          style={{
+            padding: '4px 10px',
+            border: '1px solid #ddd4c6',
+            borderRadius: 3,
+            background: bakeBlur ? '#4d3b2b' : '#fff',
+            color: bakeBlur ? '#fff' : '#1c1917',
+            cursor: 'pointer',
+          }}
+        >
+          {bakeBlur ? 'baked blur ON' : 'baked blur'}
+        </button>
+
+        <button
+          type="button"
           onClick={() => setLooping((v) => !v)}
           aria-pressed={looping}
           title="Pull, pause, put back, repeat — so the motion can be watched rather than re-clicked"
@@ -345,13 +363,14 @@ export function SceneHarness() {
         }}
       >
         <WallScene
-          key={`${treatment}-${diagnostic}-${orbit}`}
+          key={`${treatment}-${diagnostic}-${orbit}-${bakeBlur}`}
           records={records}
           treatment={treatment}
           diagnostic={diagnostic}
           orbit={orbit}
           motion={{ riseMs, returnMs, returnSettle }}
           dimFloor={dimFloor}
+          bakeBlur={bakeBlur}
         />
       </div>
     </div>

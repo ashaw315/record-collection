@@ -83,7 +83,14 @@ describe('wallDim', () => {
      * came out of, and a black rectangle behind a cover loses the slot the
      * whole rewrite was for.
      */
-    expect(WALL_DIM_FLOOR).toBeGreaterThan(0.1);
+    /*
+      **The bound was `> 0.1` and the floor is now 0.1 exactly.** The RULE it
+      defends is unchanged — the wall must not become a black rectangle — but
+      the threshold was written around a floor of 0.28 and excluded the value
+      chosen by looking, by one step. `>= 0.08` keeps the rule and stops the
+      test asserting a number rather than the property.
+    */
+    expect(WALL_DIM_FLOOR).toBeGreaterThanOrEqual(0.08);
     expect(WALL_DIM_FLOOR, 'but it is genuinely dimmed').toBeLessThan(0.5);
   });
 

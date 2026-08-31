@@ -11,8 +11,18 @@ import { WALL_DIM_FLOOR, WALL_DIM_FLOOR_DEEP, wallDim, wallDimTo } from './wall-
  * width only, is the largest addition of the session for a one-sentence effect.
  */
 describe('the deep dim is a genuine alternative to a blur', () => {
-  it('is darker than the shipping floor', () => {
-    expect(WALL_DIM_FLOOR_DEEP).toBeLessThan(WALL_DIM_FLOOR);
+  /**
+   * **The deep floor IS the shipping floor now**, and this assertion used to say
+   * it was darker. It was built as the cheap alternative to a blur and lost that
+   * comparison — but it won the one that mattered for this constant, against the
+   * 0.28 that was actually shipping. Adam: *"I rejected the deep dim as cheap
+   * against a blur, which was the wrong comparison."*
+   *
+   * Kept as an alias rather than deleted so the harness comparison stays
+   * reproducible and the history is legible at the constant.
+   */
+  it('is the shipping floor, having won that comparison', () => {
+    expect(WALL_DIM_FLOOR_DEEP).toBe(WALL_DIM_FLOOR);
   });
 
   /**
