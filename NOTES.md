@@ -24266,3 +24266,68 @@ the layer-separation finding (a screen-space effect cannot exempt an object the
 way a per-mesh one can), the zero-idle-draws measurement, and the Criterion
 reference behaviour. **The composer wiring goes because the approach was wrong,
 not because the work was bad.**
+
+
+---
+
+## PARKED: the wall blur, and the CSS-wall architecture that would make it easy
+
+**2026-08-31.** The blur is parked after the composer failed. **What killed the
+alternatives is a seam analysis, not the failure.**
+
+### Why two canvases is the same problem relocated
+
+The obvious escape from the composer is to render wall and record on separate
+canvases and blur the wall's with CSS. **It is worse than it looks.**
+
+`mesh.userData.home` is the record's slot position in WALL coordinates, and it is
+**read in 17 places**: the rise interpolates from `home` to `destination`,
+`slotGap` is measured against it, the return lands on it, `slotDepth` is
+`destination.z - home.z`. The raycast for the tilt reads
+`renderer.domElement.getBoundingClientRect()`.
+
+§10b already names this as the hard part: *"the renderer must map a DOM rect into
+world coordinates and keep that mapping correct across scroll, resize and
+re-wrap. That is a number two systems share, and it is the hardest part of this
+work."*
+
+> **Two canvases makes it a number THREE systems share.** That is the same
+> difficulty relocated, which is the thing to check for before committing to an
+> escape route rather than after.
+
+### THE CSS-WALL OPTION, recorded as real rather than rejected
+
+**§10b originally argued the wall should be CSS**, and was right: *"the wall is
+viewed square on, so there is no perspective to render and nothing for a 3D
+engine to do. Criterion's wall is `three.js` because it is a room; this is a flat
+wall, and CSS is what a flat wall is made of."*
+
+**The reversal was to get the record rising out of it in one scene** — the
+continuity that makes the pull read as a record leaving a slot rather than a
+modal opening.
+
+**But for this effect that architecture is strictly better:**
+
+- a CSS wall takes `filter: blur()` **natively** — no composer, no render target,
+  no output pass, no colour-space handling;
+- the record's canvas sits **above** it and is sharp **by construction**, which is
+  §10b's requirement rather than something layer masks must be kept correct for;
+- it removes the partition problem entirely instead of re-establishing it.
+
+**It is far larger than the effect warrants today**, and it re-opens a decision
+this project already made and reversed once, with reasoning that still holds for
+everything except the blur.
+
+**TRIGGER, two ways:**
+
+1. **The blur becomes something Adam wants badly enough to re-open the
+   architecture.** It is one sentence of polish on a wall that now works, and
+   that is not today.
+2. **Another feature independently wants the wall in CSS.** Then the blur comes
+   free with it and the architecture question is being asked for a better reason
+   than an effect.
+
+**What survives and is committed:** `wall-blur.ts` and its six tests (the curve,
+the pixel-to-texture conversion, the bounds), the harness dim comparison, and the
+findings — layer separation, zero idle draws under a composer, and the Criterion
+reference behaviour. **The composer wiring is dropped.**
