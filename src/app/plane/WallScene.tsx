@@ -55,7 +55,7 @@ import {
 } from './wall-framing';
 import { pulledDestination } from './pulled-destination';
 import { boxDepth } from './record-box';
-import { wallDim } from './wall-dim';
+import { WALL_DIM_FLOOR, wallDimTo } from './wall-dim';
 import { PROUD_MS, proudOffset, shouldRedraw } from './hover-proud';
 import { NO_TILT, tiltFor } from '../shelf/tilt';
 import { beginDrag, endDrag, shouldStartTiltDrag, swipeDirection, type TiltDrag } from './touch-tilt';
@@ -150,6 +150,7 @@ export function WallScene({
   diagnostic: diagnosticProp,
   orbit: orbitProp,
   motion,
+  dimFloor,
 }: {
   records: ShelfRecord[];
   treatment?: ShelfTreatment;
@@ -182,6 +183,15 @@ export function WallScene({
    * nothing and gets the defaults.
    */
   motion?: MotionTuning;
+  /**
+   * **`/scene` only: how far the wall dims behind a pulled record.**
+   *
+   * A stronger dim is the cheap alternative to a screen-space blur, and the two
+   * have to be judged against each other rather than in isolation — "judging a
+   * stronger dim alone would tell me whether it looks good, not whether it does
+   * what a blur would".
+   */
+  dimFloor?: number;
 }) {
   const mount = useRef<HTMLDivElement>(null);
   /**
@@ -1187,7 +1197,7 @@ export function WallScene({
         that reason — a cubic ease-out is 39% dimmed at 15% progress and would
         put the record's arrival against an already-dark wall.
       */
-      setWallDim(wallDim(id === null ? 0 : progress), id);
+      setWallDim(wallDimTo(id === null ? 0 : progress, dimFloor ?? WALL_DIM_FLOOR), id);
         /*
           The LAYOUT's answer for where this record's slot is — read from
           `layout`, which the packer produced, rather than from the mesh's own
@@ -1492,7 +1502,7 @@ export function WallScene({
           and reads correctly as it goes; exempting only one keeps this the same
           single-subject rule the rise uses.
         */
-        setWallDim(wallDim(1), toId);
+        setWallDim(wallDimTo(1, dimFloor ?? WALL_DIM_FLOOR), toId);
 
         for (const [recordId, mesh] of meshes) {
           if (recordId === fromId || recordId === toId) continue;
@@ -1741,7 +1751,7 @@ export function WallScene({
       renderer.dispose();
     };
     }
-  }, [spines, records, treatment, diagnosticProp, orbitProp]);
+  }, [spines, records, treatment, diagnosticProp, orbitProp, dimFloor]);
 
   /** Drives the rise when the pulled record changes. */
   useEffect(() => {
@@ -1899,7 +1909,7 @@ export function WallScene({
 
       return progress < 1;
     });
-  }, [pulledId, returningId, state.phase, motion]);
+  }, [pulledId, returningId, state.phase, motion, dimFloor]);
 
   /**
    * **The slide between records (13b).** A lateral move: `fromId` leaves one

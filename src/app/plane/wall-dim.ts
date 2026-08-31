@@ -48,3 +48,33 @@ export function wallDim(progress: number): number {
 
   return 1 - (1 - WALL_DIM_FLOOR) * t;
 }
+
+/**
+ * **A deeper floor, for the `/scene` comparison against a real blur.**
+ *
+ * A blur is a screen-space post-process — `EffectComposer`, a render target, a
+ * custom pass, and resize handling in a scene whose resize deliberately tracks
+ * width only. That is a large addition for an effect described in one sentence,
+ * so the cheap alternative is tried first: **if pushing the wall darker gets
+ * most of the way, the dim wins and the composer is never built.**
+ *
+ * `WALL_DIM_FLOOR`'s own reasoning is the constraint on how far this can go —
+ * "not so dark that the wall stops being the thing the record came out of, the
+ * empty slot is what the whole rewrite was for". A floor of 0 is a black
+ * rectangle behind the cover, which loses the slot; this keeps a little.
+ */
+export const WALL_DIM_FLOOR_DEEP = 0.1;
+
+/**
+ * The wall's brightness at a given rise progress, at a chosen floor.
+ *
+ * Linear for the same reason `wallDim` is, and that reason is worth keeping in
+ * one place: a cubic ease-out is 88% dimmed by halfway, so the wall goes dark
+ * ahead of the record and the arrival happens against an already-black backdrop
+ * — the modal opening this exists to avoid.
+ */
+export function wallDimTo(progress: number, floor: number): number {
+  const t = Math.min(1, Math.max(0, progress));
+
+  return 1 - (1 - floor) * t;
+}

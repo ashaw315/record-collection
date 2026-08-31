@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useEffect, useRef } from 'react';
 import { WallScene, type ShelfTreatment } from '../plane/WallScene';
 import { RETURN_DEFAULT_MS, RETURN_SETTLES_BY_DEFAULT, RISE_DEFAULT_MS } from '../plane/motion-tuning';
+import { WALL_DIM_FLOOR, WALL_DIM_FLOOR_DEEP } from '../plane/wall-dim';
 import { sceneFixtures, SCENE_COUNTS } from './fixtures';
 
 /**
@@ -60,6 +61,7 @@ export function SceneHarness() {
   const [returnMs, setReturnMs] = useState(RETURN_DEFAULT_MS);
   const [returnSettle, setReturnSettle] = useState(RETURN_SETTLES_BY_DEFAULT);
   const [looping, setLooping] = useState(false);
+  const [dimFloor, setDimFloor] = useState(WALL_DIM_FLOOR);
   const frame = useRef<HTMLDivElement | null>(null);
 
   /**
@@ -285,6 +287,32 @@ export function SceneHarness() {
           {returnSettle ? 'return: settles' : 'return: lands'}
         </button>
 
+        <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          behind:
+          {([
+            [WALL_DIM_FLOOR, `dim ${WALL_DIM_FLOOR}`],
+            [WALL_DIM_FLOOR_DEEP, `deep ${WALL_DIM_FLOOR_DEEP}`],
+          ] as const).map(([value, label]) => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => setDimFloor(value)}
+              aria-pressed={dimFloor === value}
+              title="How dark the wall goes behind a pulled record — the cheap alternative to a blur"
+              style={{
+                padding: '4px 10px',
+                border: '1px solid #ddd4c6',
+                borderRadius: 3,
+                background: dimFloor === value ? '#4d3b2b' : '#fff',
+                color: dimFloor === value ? '#fff' : '#1c1917',
+                cursor: 'pointer',
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </span>
+
         <button
           type="button"
           onClick={() => setLooping((v) => !v)}
@@ -303,7 +331,7 @@ export function SceneHarness() {
         </button>
 
         <span style={{ color: '#8a8078' }} data-testid="scene-state">
-          {count} records · {width === 0 ? 'full' : `${width}px`} · {treatment}{diagnostic ? ' · diagnostic' : ''}{orbit !== 'off' ? ` · orbit ${orbit}` : ''}
+          {count} records · {width === 0 ? 'full' : `${width}px`} · {treatment}{diagnostic ? ' · diagnostic' : ''}{orbit !== 'off' ? ` · orbit ${orbit}` : ''}{dimFloor !== WALL_DIM_FLOOR ? ` · deep dim` : ''}
         </span>
       </div>
 
@@ -323,6 +351,7 @@ export function SceneHarness() {
           diagnostic={diagnostic}
           orbit={orbit}
           motion={{ riseMs, returnMs, returnSettle }}
+          dimFloor={dimFloor}
         />
       </div>
     </div>

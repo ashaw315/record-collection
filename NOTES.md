@@ -24049,3 +24049,59 @@ in for, and is that state observable?** On this scene almost all of them are —
 `data-phase`, `data-pulled` and `data-hovered` are already exposed for exactly
 this reason. A timeout is right only when the thing being waited for is genuinely
 unobservable, and then the test should say so.
+
+
+---
+
+## The stronger dim, tried BEFORE the composer
+
+**2026-08-31.** Adam wanted the wall to blur behind a pulled record. Before
+building it: *"Twenty minutes against a few hours is the right trade, and if a
+stronger dim gets most of the effect I would rather not add a composer to the
+scene at all."*
+
+### The cost that made the cheap option worth trying
+
+A real blur is screen-space: `EffectComposer`, a render target, a custom
+separable-Gaussian pass, and resize handling for those targets **in a scene whose
+`wall-resize` deliberately tracks width only**. Roughly 3× the fragment work per
+frame while blurred, at ~5.7M pixels per pass on a 1512×945 DPR-2 display.
+
+**The largest single addition of the session, for an effect described in one
+sentence.**
+
+### The dirty-flag answer, recorded because it is reassuring and non-obvious
+
+**A post-process blur does NOT force continuous rendering.** The composer draws
+on demand exactly as `renderer.render` does, so `if (dirty) draw()` is unchanged
+and the `__drawCount` E2E guard keeps passing. And the frames where blur radius
+changes every frame are **already dirty because the record is moving**.
+
+> **The thing that WOULD break it is animating the blur on a timer independent of
+> the rise.** Adam: *"if the comparison sends us to the composer, that constraint
+> should be written at the code rather than remembered."* Noted here and to be
+> written at the pass if it is ever built.
+
+### What was built instead
+
+`WALL_DIM_FLOOR_DEEP = 0.1` against the shipping `0.28`, and `wallDimTo(progress,
+floor)` generalising `wallDim` — which it reduces to exactly at the shipping
+floor, asserted.
+
+**Both are on `/scene` as a `behind:` switch**, because *"judging a stronger dim
+in isolation would tell me whether it looks good, not whether it does what a blur
+would"*.
+
+**Measured with a record out, wall band beside it:**
+
+    dim 0.28    mean luminance 54.0    brightest spine 235
+    deep 0.1    mean luminance 42.1    brightest spine 235
+
+A 22% reduction in wall luminance with the record's own brightness untouched —
+the `wallDimExempt` partition already guarantees the second, and it is what makes
+a blur structurally easy too if it comes to that.
+
+**Linear at any floor**, and the test says why: the recorded reason a cubic
+ease-out was rejected for the dim — 88% dimmed by halfway, so the wall goes dark
+ahead of the record — applies to any floor, and that assertion is where a future
+"make it ease" edit gets caught.
