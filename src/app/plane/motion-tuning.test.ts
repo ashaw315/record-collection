@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  easeRiseInOut,
   RISE_DEFAULT_MS,
   RETURN_DEFAULT_MS,
   RETURN_SETTLES_BY_DEFAULT,
@@ -113,5 +114,56 @@ describe('the curves do what their names claim', () => {
   it('keeps the settled return brisk through the middle', () => {
     // It should not become an ease-out in disguise: still slow off the mark.
     expect(easeReturnSettled(0.25)).toBeLessThan(0.2);
+  });
+});
+
+
+/**
+ * **Ease IN as well as out, for the rise.**
+ *
+ * Adam: *"ease in ease out should be better."* The measurement agrees — the
+ * cubic ease-out LEAPS off the mark at velocity 2.85 and covers 39% of the
+ * distance in the first 15% of the time, so the record jumps and then coasts.
+ * That reads as launched rather than lifted.
+ *
+ * An ease-in-out starts at 0.01, builds, and settles at 0.01 — a hand taking a
+ * record off a shelf accelerates it and then slows it into place, and both ends
+ * of that are motion the eye reads as deliberate.
+ */
+describe('the rise eases at both ends', () => {
+  const velocity = (f: (t: number) => number, t: number) => (f(t) - f(t - 0.05)) / 0.05;
+
+  it('starts gently rather than leaping', () => {
+    expect(velocity(easeRiseInOut, 0.05)).toBeLessThan(0.5);
+  });
+
+  it('settles rather than stopping at speed', () => {
+    expect(velocity(easeRiseInOut, 1)).toBeLessThan(0.5);
+  });
+
+  it('is fastest in the middle, which is what "in and out" means', () => {
+    const mid = velocity(easeRiseInOut, 0.5);
+    expect(mid).toBeGreaterThan(velocity(easeRiseInOut, 0.05));
+    expect(mid).toBeGreaterThan(velocity(easeRiseInOut, 1));
+  });
+
+  it('runs 0 to 1 without overshooting or reversing', () => {
+    expect(easeRiseInOut(0)).toBeCloseTo(0, 6);
+    expect(easeRiseInOut(1)).toBeCloseTo(1, 6);
+    let previous = -Infinity;
+    for (let t = 0; t <= 1; t += 0.02) {
+      const value = easeRiseInOut(t);
+      expect(value).toBeGreaterThanOrEqual(previous - 1e-9);
+      expect(value).toBeLessThanOrEqual(1 + 1e-9);
+      previous = value;
+    }
+  });
+
+  /**
+   * The half-way point is the tell: a cubic ease-OUT is 87.5% done by then, an
+   * ease-in-out exactly half. Fails against the old curve renamed.
+   */
+  it('is exactly half done at half time', () => {
+    expect(easeRiseInOut(0.5)).toBeCloseTo(0.5, 6);
   });
 });

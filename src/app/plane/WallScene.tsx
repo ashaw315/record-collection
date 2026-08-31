@@ -11,6 +11,8 @@ import {
   MeshBasicMaterial,
   MeshStandardMaterial,
   PCFShadowMap,
+  LinearFilter,
+  LinearMipmapLinearFilter,
   OrthographicCamera,
   PerspectiveCamera,
   PlaneGeometry,
@@ -59,7 +61,7 @@ import {
 import { pulledDestination } from './pulled-destination';
 import { boxDepth } from './record-box';
 import { WALL_DIM_FLOOR, wallDimTo } from './wall-dim';
-import { BAKE_DOWNSAMPLE, bakeOpacity, bakeResolution } from './wall-bake';
+import { bakeOpacity, bakeResolution } from './wall-bake';
 import { PROUD_MS, proudOffset, shouldRedraw } from './hover-proud';
 import { NO_TILT, tiltFor } from '../shelf/tilt';
 import { beginDrag, endDrag, shouldStartTiltDrag, swipeDirection, type TiltDrag } from './touch-tilt';
@@ -1204,6 +1206,13 @@ export function WallScene({
       const res = bakeResolution({ width, height });
       bakeTarget = new WebGLRenderTarget(res.width, res.height);
       bakeTarget.texture.colorSpace = SRGBColorSpace;
+      /*
+        Mipmaps and linear filtering, so magnifying the small texture ramps
+        smoothly rather than showing the sample grid as blocks.
+      */
+      bakeTarget.texture.generateMipmaps = true;
+      bakeTarget.texture.minFilter = LinearMipmapLinearFilter;
+      bakeTarget.texture.magFilter = LinearFilter;
       disposables.push(bakeTarget);
 
       bakeScene = new Scene();
@@ -1894,7 +1903,7 @@ export function WallScene({
       renderer.dispose();
     };
     }
-  }, [spines, records, treatment, diagnosticProp, orbitProp, dimFloor]);
+  }, [spines, records, treatment, diagnosticProp, orbitProp, dimFloor, bakeBlur]);
 
   /** Drives the rise when the pulled record changes. */
   useEffect(() => {
@@ -2052,7 +2061,7 @@ export function WallScene({
 
       return progress < 1;
     });
-  }, [pulledId, returningId, state.phase, motion, dimFloor]);
+  }, [pulledId, returningId, state.phase, motion, dimFloor, bakeBlur]);
 
   /**
    * **The slide between records (13b).** A lateral move: `fromId` leaves one

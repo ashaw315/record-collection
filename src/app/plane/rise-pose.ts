@@ -23,6 +23,8 @@
  * between.
  */
 
+import { easeRiseInOut } from './motion-tuning';
+
 export type RisePose = {
   /** Radians about Y: π/2 is edge-on, 0 is face-on. */
   rotationY: number;
@@ -33,13 +35,17 @@ export type RisePose = {
 };
 
 /**
- * Ease-out on both channels: a record accelerates out of the gap and settles.
+ * **Ease at BOTH ends**, shared by rotation and depth.
  *
- * Shared by rotation and depth deliberately — they are one movement, and
- * easing them differently makes the turn and the approach read as two separate
- * things happening to the same object.
+ * They are one movement, and easing them differently makes the turn and the
+ * approach read as two separate things happening to the same object.
+ *
+ * This was a cubic ease-OUT, which leaps: velocity 2.85 off the mark and 39% of
+ * the distance in the first 15% of the time — the record jumped, then coasted.
+ * `easeRiseInOut` starts gently, is fastest mid-travel and settles, which is
+ * what a hand lifting a record does.
  */
-const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+const easeOut = easeRiseInOut;
 
 export function risePose({
   progress,

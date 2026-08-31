@@ -24456,3 +24456,63 @@ luminance holds.*
 **The dim rides on the quad's colour rather than being baked in.** A baked dim
 would snap to full strength at capture time, which is the front-loading `wallDim`
 was tuned to avoid.
+
+
+---
+
+## Ease in AND out for the rise, and a blur "improvement" that measured worse
+
+**2026-08-31.** Adam, comparing our wall to Criterion's side by side: *"ease in
+ease out should be better. also identify where improvements can be made."*
+
+### The rise now eases at both ends
+
+The cubic ease-OUT it replaces **leaps**: velocity 2.85 off the mark, and **39%
+of the distance covered in the first 15% of the time**. The record jumped and
+then coasted, which reads as launched rather than lifted.
+
+    t      ease-out    ease-in-out
+    0.15     0.386        0.013
+    0.50     0.875        0.500
+    start velocity  2.85   0.01
+    end velocity    0.00   0.01
+
+**Exactly half done at half time** is the tell, and the assertion that would fail
+against the old curve renamed. A hand taking a record off a shelf accelerates it
+and then slows it into place; both ends of that are motion the eye reads as
+deliberate.
+
+### The blur downsample: 1/5 was tried and is WORSE
+
+The Criterion comparison shows their wall is soft *and* smooth; at 1/8 ours is
+soft but slightly stepped. So 1/5 was tried, with mipmaps and linear
+magnification — and measured worse.
+
+**Relative contrast** — detail as a fraction of brightness, which is what the eye
+reads — over the spine band:
+
+    no blur   0.255
+    1/5       0.223    barely blurred; individual spines still readable
+    1/8       0.140    detail halved
+
+**A single downsample cannot be both soft and smooth.** Criterion's is both
+because a real Gaussian has a wide falloff. 1/8 stays; the mipmaps are kept
+because they smooth the ramp for free.
+
+### AND THE MEASUREMENT NEEDED NORMALISING, which is the third time this session
+
+Absolute contrast said **1/5 was SHARPER than no blur at all** — 15.35 against
+11.08, which is impossible for a blur.
+
+**Cause: the baked wall is 1.7x brighter** than the dimmed one it replaces,
+because the dim no longer stacks on it. A bright blurred image beats a dark sharp
+one on absolute difference.
+
+> **A ratio between two images is meaningless if their brightness differs.** The
+> measure had to be contrast RELATIVE to mean, and normalised it inverts the
+> conclusion. The tell was that the number was impossible — a blur cannot add
+> detail — and an impossible result is a measurement bug, not a discovery.
+
+Third instance this session of a measurement producing a confident wrong answer:
+the spine "clipped by 7px" (scope), the composer "at 0.463" (scope), and this
+(normalisation). **All three were stable, reproducible, and wrong.**

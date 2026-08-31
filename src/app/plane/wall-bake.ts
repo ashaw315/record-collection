@@ -28,7 +28,26 @@
  *
  * This IS the blur radius: a texture at 1/n scale, magnified back, is softened
  * by exactly the filtering that magnification requires. Too small and nothing
- * softens; too large and the wall reads as blocks rather than as out of focus.
+ * softens; too large and the wall reads as BLOCKS rather than as out of focus —
+ * which is the tension, because a single downsample cannot be both soft and
+ * smooth.
+ *
+ * **1/8, and 1/5 was tried and measured worse.** Relative contrast — detail as a
+ * fraction of brightness, which is what the eye reads — over the spine band:
+ *
+ *     no blur   0.255
+ *     1/5       0.223    barely blurred; individual spines still readable
+ *     1/8       0.140    detail halved
+ *
+ * The blockiness 1/5 was reaching for is real but secondary: mipmaps and linear
+ * magnification smooth the ramp, and a wall that is *soft but slightly stepped*
+ * reads better than one that is *smooth but still legible*. Criterion's is both,
+ * because a real Gaussian has a wide falloff; a single downsample cannot be.
+ *
+ * **The measurement needed normalising to mean anything.** Absolute contrast
+ * said 1/5 was SHARPER than no blur at all — because the baked wall is 1.7x
+ * brighter (the dim no longer stacks on it), and a bright blurred image beats a
+ * dark sharp one on absolute difference.
  */
 export const BAKE_DOWNSAMPLE = 8;
 

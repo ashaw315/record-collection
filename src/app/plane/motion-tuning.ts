@@ -108,3 +108,20 @@ export const easeReturnSettled = (t: number): number => {
  * hand, not released.
  */
 export const RETURN_SETTLES_BY_DEFAULT = true;
+
+
+/**
+ * **The rise, easing at BOTH ends.**
+ *
+ * The cubic ease-out it replaces leaps: velocity 2.85 off the mark, 39% of the
+ * distance covered in the first 15% of the time. The record jumps and then
+ * coasts, which reads as launched rather than lifted.
+ *
+ * A hand taking a record off a shelf accelerates it and then slows it into
+ * place. This starts at 0.01, is fastest at the midpoint, and settles at 0.01 —
+ * and it is exactly half done at half time, which the ease-out (87.5%) is not.
+ *
+ * Adam: *"ease in ease out should be better."*
+ */
+export const easeRiseInOut = (t: number): number =>
+  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
