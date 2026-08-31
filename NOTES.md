@@ -24105,3 +24105,88 @@ a blur structurally easy too if it comes to that.
 ease-out was rejected for the dim — 88% dimmed by halfway, so the wall goes dark
 ahead of the record — applies to any floor, and that assertion is where a future
 "make it ease" edit gets caught.
+
+
+---
+
+## MEASURE INSIDE THE ELEMENT UNDER TEST, NOT THE SCREENSHOT THAT CONTAINS IT
+
+**2026-08-31.** Second occurrence this session, same cause, and both times it
+produced **a confident wrong diagnosis rather than a null result** — which is
+what makes it dangerous.
+
+    #1  the spine measured 233px of 240, "7px clipped"
+        -> the harness CONTROL BAR truncated the scan column. Nothing was clipped.
+
+    #2  the composer output measured 0.463 of the direct render, "a gamma error"
+        -> the mean included the PAGE BACKGROUND outside the canvas.
+           The wall was not being drawn at all.
+
+> **A badly scoped measurement does not look uncertain. It looks like an
+> answer.** Both numbers were stable, reproducible and precise to three decimals.
+> Neither was measuring the thing its name claimed.
+
+### What the second one cost
+
+**Four wrong theories, each downstream of the same bad number:**
+
+1. composer output not reaching the screen — wrong, it reaches it;
+2. blur step against the wrong dimension — real but backwards, makes the blur
+   *too subtle*;
+3. shader weights summing to 0.9 — wrong, they sum to exactly 1.0;
+4. **a colour-space round trip** — wrong, and the one that survived longest.
+
+The colour-space theory was tested three ways: an `OutputShader` pass, its
+`SRGB_TRANSFER` define, and the render targets' own `colorSpace`. **All three
+moved the ratio by zero.** Five interventions at 0.463 is what finally made me
+question the measurement instead of the fix.
+
+**The luminance distribution, which should have been the first thing looked at:**
+
+                0-32  32-64 64-96 96-128 128-160 160-192 192-224  224+
+    direct      16.1   15.3  14.6   17.4    10.9     6.6     2.8   16.3
+    composer    83.1    0.2   0.0    0.0     0.0     0.0     0.4   16.3
+
+**Binary — 83% crushed to black, nothing in the middle.** A gamma error
+compresses a distribution; it does not crush it to two values. And the 16.3% top
+bin matches EXACTLY in both, because it is the page background: the only pixels
+my "mean" was really comparing.
+
+### THE REVIEWER INHERITS THE MEASUREMENT'S FLAWS
+
+**Adam endorsed the colour-space theory on the same evidence**, and asked for it
+to be recorded: *"You had it wrong and I agreed with it on the same evidence, so
+this is not a case of you reasoning alone into a corner — the number looked
+convincing to both of us because neither of us asked what region it covered."*
+
+He had good grounds. He named the signature precisely — *"46% across the whole
+canvas is not something a blur kernel does"* — and connected it to the
+photograph-is-unlit finding, a +0.030 additive lift that read as a blue cast.
+**The reasoning was sound and the input was not.**
+
+> **A second pair of eyes catches bad reasoning about a number. It does not catch
+> a number that is measuring the wrong region**, because the reviewer sees the
+> conclusion and the figure, not the sampling bounds. That has to be checked at
+> the point of measurement or it is not checked at all.
+
+### The rule, narrowly
+
+**Sample inside the bounding box of the element under test.** Playwright's
+`locator.screenshot()` on that element is what makes the scope explicit, and it
+is what both of these needed. When a ratio refuses to move under interventions
+that should change it, **suspect the measurement before the fourth theory.**
+
+### What survives from the blur work, all still established
+
+- **The blur kernel is not the cause** — identical at radius 1 and radius 12.
+- **Layer separation is required and works.** A screen-space pass cannot exempt
+  the record the way the per-mesh dim does; with layers the record renders sharp.
+- **Zero idle draws with the composer active** — measured over 2s at rest, so the
+  dirty-flag discipline holds.
+- **The reference behaviour**, from Adam's Criterion screenshot: detail dissolves,
+  **luminance holds**. The wall stays bright and colourful, just unresolvable.
+  Independent confirmation that darkening is a bug rather than a taste question.
+
+**The open question, now well-scoped:** the wall does not render through
+`RenderPass` when the camera is restricted to the wall layer. First measurement
+on pickup samples inside the canvas bounding box only.
