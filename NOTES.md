@@ -23998,3 +23998,54 @@ one mechanical movement in the first place.
 
 **Verified by mutation:** a settled curve that is secretly the plain one fails; a
 return duration equal to the rise fails.
+
+
+---
+
+## A TIMEOUT STANDING IN FOR A STATE IS LATENT UNTIL SOMEONE CHANGES A CONSTANT
+
+**2026-08-31.** Changing the rise from 620ms to 1400ms turned **four**
+`wall-scene` specs flaky at once. None had failed in the previous run. Every one
+was a hardcoded duration used as a proxy for a state:
+
+| wait | meant | why it broke |
+|---|---|---|
+| `waitForTimeout(900)` ×4 | "the rise finished" | was `620 + margin`; now SHORTER than the rise |
+| `waitForTimeout(1100)` | "settled, so the tilt applies" | same |
+| `waitForTimeout(150)` | "mid-return" | 1.1% into a 1400ms settled curve — the record has not visibly moved |
+| `waitForTimeout(1400)` | "the return finished" | **equals the duration**, with no margin for the completing frame |
+
+**Adam:** *"A wait equal to the duration is a race by construction, and 900ms
+standing in for 'the rise finished' only ever worked because 620 happened to be
+smaller. They were latent the whole time and a duration change is what exposed
+them."*
+
+> **None of these tests were failing, and none of them were correct.** They
+> encoded a NUMBER where they meant a CONDITION, and passed because the number
+> happened to sit on the right side of the animation. A tuning change is the only
+> thing that can reveal that, which means the same shape survives indefinitely in
+> any suite where nobody edits a constant.
+
+### The fix, and why it is not "use bigger timeouts"
+
+Each became a wait on the state it meant: `data-phase === 'settled'` for the rise,
+`'idle'` for the return, and a FRACTION of the tuned constant (`RETURN_DEFAULT_MS
+* 0.5`) where the test genuinely wants mid-flight. **A larger magic number would
+have the same defect and would only survive until the next tuning pass** — which,
+on this surface, is a thing that happens every few days.
+
+### One was a genuine pre-existing race, not just a stale number
+
+`the composition arrives with the record` read `getComputedStyle(...).opacity`
+the instant the phase became `settled`. **The chrome fades over a `duration-300`
+CSS transition**, so a single `evaluate` samples it mid-fade — measured at 0.884
+against an expected >0.9. It is now polled. The shorter rise happened to win that
+race; nothing about it was ever safe.
+
+### The check for anywhere else
+
+**Grep for `waitForTimeout` and ask, for each: what STATE does this number stand
+in for, and is that state observable?** On this scene almost all of them are —
+`data-phase`, `data-pulled` and `data-hovered` are already exposed for exactly
+this reason. A timeout is right only when the thing being waited for is genuinely
+unobservable, and then the test should say so.

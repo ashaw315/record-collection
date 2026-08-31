@@ -23,22 +23,35 @@ export type MotionTuning = {
 };
 
 /**
- * **Slower than the 620ms both motions shared.**
+ * **1400ms, chosen by watching the loop rather than derived.**
  *
- * Adam's read was "slightly slower overall". The rise is the deliberate half —
- * reaching for a record — and it carries the quarter-turn from edge-on to
- * face-on, which is the most information-dense moment in the motion.
+ * The first guess was 720 — "slightly slower" than the 620 both motions shared.
+ * Watching it repeatedly took it much further: the rise carries the quarter-turn
+ * from edge-on to face-on, the most information-dense moment in the motion, and
+ * at 620ms that turn is over before the eye has followed it.
+ *
+ * **Noted for whoever revisits:** 1400 was the harness slider's ceiling when it
+ * was chosen. The ceiling was raised to 2000 and the value re-checked, so this
+ * is a number rather than the place a control stopped.
  */
-export const RISE_DEFAULT_MS = 720;
+export const RISE_DEFAULT_MS = 1400;
 
 /**
- * **Faster than the rise, because putting something back is casual.**
+ * **EQUAL to the rise, and the asymmetry this replaces was wrong.**
  *
- * Not so much faster that it reads as the record being thrown: a return that
- * undercuts the rise by about a third keeps the two recognisably the same
- * object moving, which sharing a duration did not achieve either.
+ * The first split made the return faster, reasoning that *"reaching for
+ * something is deliberate, putting it back is casual"*. Watching it overturned
+ * that — Adam: *"A record going back into a slot at speed reads as dropped
+ * rather than replaced, and the slowness is what makes it feel handled."*
+ *
+ * **Replacing a record is not dropping one.** The casualness argument describes
+ * a different action than the one this animation depicts.
+ *
+ * Kept as its own constant rather than collapsed into `RISE_DEFAULT_MS`: they
+ * are equal by JUDGEMENT, not by definition, and a change to one should have to
+ * state whether it means the other.
  */
-export const RETURN_DEFAULT_MS = 480;
+export const RETURN_DEFAULT_MS = 1400;
 
 /** Cubic ease-out: accelerates out of the slot and settles almost to rest. */
 export const easeRise = (t: number): number => 1 - Math.pow(1 - t, 3);
@@ -73,3 +86,25 @@ export const easeReturnSettled = (t: number): number => {
   const local = (t - knee) / (1 - knee);
   return atKnee + remaining * (1 - Math.pow(1 - local, 2));
 };
+
+
+/**
+ * **The return SETTLES: it eases over the last quarter rather than arriving at
+ * full speed.**
+ *
+ * Chosen by watching, and the velocity numbers are why it reads better. Over the
+ * final 5% of the motion:
+ *
+ *     plain ease-in      1.90   accelerating into the slot, then stopping dead
+ *     settled variant    0.50   decelerating, so the record seats
+ *
+ * Adam: *"arriving at 1.9 and stopping instantly is what I was seeing as
+ * stopping dead, and easing the last quarter to 0.5 is what makes it seat rather
+ * than halt."*
+ *
+ * **The counter-argument, and why it loses:** a real record dropped into a slot
+ * genuinely does arrive with speed. But *"that is true of dropping one, and that
+ * is not what this animation is depicting"* — the record is being replaced by
+ * hand, not released.
+ */
+export const RETURN_SETTLES_BY_DEFAULT = true;

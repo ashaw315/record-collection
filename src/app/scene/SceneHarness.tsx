@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useEffect, useRef } from 'react';
 import { WallScene, type ShelfTreatment } from '../plane/WallScene';
-import { RETURN_DEFAULT_MS, RISE_DEFAULT_MS } from '../plane/motion-tuning';
+import { RETURN_DEFAULT_MS, RETURN_SETTLES_BY_DEFAULT, RISE_DEFAULT_MS } from '../plane/motion-tuning';
 import { sceneFixtures, SCENE_COUNTS } from './fixtures';
 
 /**
@@ -58,7 +58,7 @@ export function SceneHarness() {
   const [orbit, setOrbit] = useState<'off' | 'three-quarter' | 'high' | 'low'>('off');
   const [riseMs, setRiseMs] = useState(RISE_DEFAULT_MS);
   const [returnMs, setReturnMs] = useState(RETURN_DEFAULT_MS);
-  const [returnSettle, setReturnSettle] = useState(false);
+  const [returnSettle, setReturnSettle] = useState(RETURN_SETTLES_BY_DEFAULT);
   const [looping, setLooping] = useState(false);
   const frame = useRef<HTMLDivElement | null>(null);
 
@@ -248,7 +248,7 @@ export function SceneHarness() {
           <input
             type="range"
             min={300}
-            max={1400}
+            max={2000}
             step={20}
             value={riseMs}
             onChange={(e) => setRiseMs(Number(e.target.value))}
@@ -259,7 +259,7 @@ export function SceneHarness() {
           <input
             type="range"
             min={200}
-            max={1400}
+            max={2000}
             step={20}
             value={returnMs}
             onChange={(e) => setReturnMs(Number(e.target.value))}

@@ -35,6 +35,7 @@ import { createRenderLoop } from './render-loop';
 import { risePose } from './rise-pose';
 import {
   RETURN_DEFAULT_MS,
+  RETURN_SETTLES_BY_DEFAULT,
   RISE_DEFAULT_MS,
   easeReturn,
   easeReturnSettled,
@@ -1801,7 +1802,7 @@ export function WallScene({
           the last quarter. Which reads better is a look-at-it question, so both
           exist and `/scene` switches between them.
         */
-        const eased = (motion?.returnSettle ?? false)
+        const eased = (motion?.returnSettle ?? RETURN_SETTLES_BY_DEFAULT)
           ? easeReturnSettled(elapsed)
           : easeReturn(elapsed);
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   RISE_DEFAULT_MS,
   RETURN_DEFAULT_MS,
+  RETURN_SETTLES_BY_DEFAULT,
   easeRise,
   easeReturn,
   easeReturnSettled,
@@ -17,20 +18,45 @@ const velocityAt = (f: (t: number) => number, t: number) => (f(t) - f(t - 0.05))
  * and differed only in curve.
  */
 describe('the pull and the return are tuned separately', () => {
-  it('returns faster than it rises', () => {
-    expect(RETURN_DEFAULT_MS).toBeLessThan(RISE_DEFAULT_MS);
+  /**
+   * **These assertions used to require the return to be FASTER, and that was
+   * wrong.** The reasoning was mine — "reaching for something is deliberate,
+   * putting it back is casual" — and Adam overturned it by watching the loop:
+   * *"A record going back into a slot at speed reads as dropped rather than
+   * replaced, and the slowness is what makes it feel handled."*
+   *
+   * Per CLAUDE.md §2 the change is stated rather than made quietly: the old
+   * tests were not wrong about the code, they encoded a judgement that looking
+   * overruled. What survives is the property that actually matters — the two
+   * durations are separate values, so a change to one has to say whether it
+   * means the other.
+   */
+  it('keeps the two durations as separate constants', () => {
+    expect(RISE_DEFAULT_MS).toBeGreaterThan(0);
+    expect(RETURN_DEFAULT_MS).toBeGreaterThan(0);
   });
 
-  it('is slower overall than the 620ms both motions shared', () => {
-    expect(RISE_DEFAULT_MS).toBeGreaterThan(620);
+  it('runs both slowly enough to read as handled rather than flicked', () => {
+    // The 620ms both motions once shared read as mechanical at this scale.
+    expect(RISE_DEFAULT_MS).toBeGreaterThan(1000);
+    expect(RETURN_DEFAULT_MS).toBeGreaterThan(1000);
   });
 
-  /*
-    Not so much faster that the two read as different objects. A third or so
-    under the rise is brisk; half would read as the record being thrown back.
-  */
-  it('does not make the return so brisk it reads as thrown', () => {
-    expect(RETURN_DEFAULT_MS / RISE_DEFAULT_MS).toBeGreaterThan(0.55);
+  /**
+   * Equal by judgement rather than by definition — but far enough apart from
+   * "one is a fraction of the other" that a reintroduced asymmetry is visible
+   * here rather than only on screen.
+   */
+  it('returns at the same pace it rises', () => {
+    expect(RETURN_DEFAULT_MS).toBe(RISE_DEFAULT_MS);
+  });
+
+  /**
+   * **The settled return is the shipping choice, not merely an option.** It was
+   * behind a harness toggle defaulting to off; watching decided it.
+   */
+  it('ships the settled return', () => {
+    expect(RETURN_SETTLES_BY_DEFAULT).toBe(true);
   });
 });
 

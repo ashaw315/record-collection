@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { RETURN_DEFAULT_MS } from '../src/app/plane/motion-tuning';
 import { registerCleanup, trackArtist } from './cleanup';
 import sharp from 'sharp';
 import { seedRecords } from './seed';
@@ -222,8 +223,14 @@ test('pulling a record EMPTIES its slot in the wall', async ({ page }) => {
 
   await expect(scene, 'a spine was hit').not.toHaveAttribute('data-pulled', '');
 
-  // Let the rise run.
-  await page.waitForTimeout(900);
+  /*
+    **Wait for the PHASE, not for a duration.** This was `waitForTimeout(900)`,
+    which was `RISE_MS` plus margin when the rise took 620ms — so it silently
+    became a wait SHORTER than the animation when the rise moved to 1400ms, and
+    three specs in this file went flaky at once. `settled` is what "the rise has
+    finished" actually means, and it does not have to be re-derived per tuning.
+  */
+  await expect(scene).toHaveAttribute('data-phase', 'settled');
 
   const gap = await page.evaluate(() => {
     const el = document.querySelector('[data-testid="wall-scene"]') as HTMLElement;
@@ -359,7 +366,8 @@ test('the record returns to its slot when dismissed', async ({ page }) => {
 
   await clickASpine(page, box);
   await expect(scene).not.toHaveAttribute('data-pulled', '');
-  await page.waitForTimeout(900);
+  // The rise has finished when the scene says so — see the note above.
+  await expect(scene).toHaveAttribute('data-phase', 'settled');
 
   // Clicking empty wall puts it back — the raycast misses every spine.
   await dismiss(page, box);
@@ -406,7 +414,8 @@ test('the record ANIMATES back rather than vanishing', async ({ page }) => {
 
   await clickASpine(page, box);
   await expect(scene).not.toHaveAttribute('data-pulled', '');
-  await page.waitForTimeout(900);
+  // The rise has finished when the scene says so — see the note above.
+  await expect(scene).toHaveAttribute('data-phase', 'settled');
 
   const out = await page.evaluate(() =>
     Number(
@@ -415,9 +424,19 @@ test('the record ANIMATES back rather than vanishing', async ({ page }) => {
   );
   expect(out, 'the record is out of the wall to begin with').toBeGreaterThan(200);
 
-  // Dismiss, then sample immediately — before the return can have finished.
+  /*
+    **Sampled at a fraction of the RETURN, not at a fixed delay.**
+
+    This was `waitForTimeout(150)`, which was a quarter of the way into a 620ms
+    return and is 1.1% of the way into a 1400ms one under the settled curve —
+    which decelerates at the end and is therefore deliberately slow off the mark.
+    At 1.1% the record has not visibly moved, so `midFlight` still equals `out`
+    and the assertion below fails while the animation is working correctly.
+
+    Half the duration is what "mid-flight" means, and it survives re-tuning.
+  */
   await dismiss(page, box);
-  await page.waitForTimeout(150);
+  await page.waitForTimeout(RETURN_DEFAULT_MS * 0.5);
 
   const midFlight = await page.evaluate(() =>
     Number(
@@ -468,7 +487,8 @@ test('the return re-measures the slot rather than caching it', async ({ page }) 
 
   await clickASpine(page, box);
   await expect(scene).not.toHaveAttribute('data-pulled', '');
-  await page.waitForTimeout(900);
+  // The rise has finished when the scene says so — see the note above.
+  await expect(scene).toHaveAttribute('data-phase', 'settled');
 
   // Re-wrap the wall while the record is out — every slot moves.
   await page.setViewportSize({ width: 900, height: 900 });
@@ -495,7 +515,13 @@ test('the return re-measures the slot rather than caching it', async ({ page }) 
   if (after === null) return;
 
   await dismiss(page, after);
-  await page.waitForTimeout(1400);
+  /*
+    **`idle` is what "the return finished" means.** This was a fixed 1400ms,
+    which is exactly the return's duration with no margin for the frame that
+    completes it — the record was sampled at 52.2 against an expected 51. A
+    duration that equals the animation is a race by construction.
+  */
+  await expect(page.getByTestId('wall-scene')).toHaveAttribute('data-phase', 'idle');
 
   /**
    * **Measured absolutely, not against the record's own reference.**
@@ -886,11 +912,33 @@ test('the composition arrives with the record: scrim, facts, actions', async ({ 
   */
   await expect(chrome.getByTestId('panel-detail-link')).toHaveAttribute('href', /\/records\//);
 
-  const settled = await page.evaluate(
-    () => getComputedStyle(document.querySelector('[data-testid="record-chrome"]') as HTMLElement).opacity,
-  );
+  /*
+    **Polled, because the chrome FADES.** `chromeOpacity` flips to 1 when the
+    phase becomes `settled` and a `duration-300` CSS transition animates it, so
+    reading the computed style the instant `settled` appears samples the fade
+    mid-flight — measured at 0.884 with a 1400ms rise. A single `evaluate` here
+    was a race that the shorter rise happened to win.
+  */
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() =>
+          Number(
+            getComputedStyle(
+              document.querySelector('[data-testid="record-chrome"]') as HTMLElement,
+            ).opacity,
+          ),
+        ),
+      { message: 'the chrome has arrived once the record settles' },
+    )
+    .toBeGreaterThan(0.9);
 
-  expect(Number(settled), 'the chrome has arrived once the record settles').toBeGreaterThan(0.9);
+  const settled = await page.evaluate(() =>
+    Number(
+      getComputedStyle(document.querySelector('[data-testid="record-chrome"]') as HTMLElement)
+        .opacity,
+    ),
+  );
   expect(
     Number(early),
     `the chrome must not be there before the record is (was ${early})`,
@@ -926,7 +974,8 @@ test('the panel values are READABLE against the scrim', async ({ page }) => {
 
   await clickASpine(page, box);
   await expect(page.getByTestId('record-chrome').getByTestId('panel-facts')).toBeVisible();
-  await page.waitForTimeout(900);
+  // The rise has finished when the scene says so, not after a guessed duration.
+  await expect(page.getByTestId('wall-scene')).toHaveAttribute('data-phase', 'settled');
 
   const worst = await page.evaluate(() => {
     const facts = document.querySelector(
@@ -1041,7 +1090,13 @@ test('the pulled record TILTS with the pointer, and the cover is on its face', a
 
   await clickASpine(page, box);
   await expect(page.getByTestId('record-chrome')).toBeVisible();
-  await page.waitForTimeout(1100);
+  /*
+    The tilt only applies once the record has settled, so this waits for the
+    PHASE rather than a duration. It was `waitForTimeout(1100)` — ample for a
+    620ms rise and shorter than a 1400ms one, at which point the pointer moves
+    during the rise and the tilt reads 0.
+  */
+  await expect(page.getByTestId('wall-scene')).toHaveAttribute('data-phase', 'settled');
 
   const read = () =>
     page.evaluate(() => {
