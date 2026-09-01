@@ -13143,6 +13143,7 @@ instruments that were WRONG:
 | 2 | a hook that never fired | nothing, silently |
 | 3 | `npx playwright test \| tail -8` | `tail`'s exit code |
 | **4** | **a fixed click coordinate** | **empty wall, against a raycast** |
+| **5** | **`SceneHarness`'s `loop pull`, still live** | **below the first row at 390px** |
 
 The first three had no correct version sitting beside them. **This one did.**
 `e2e/wall-scene.spec.ts` contains `clickASpine`, whose comment states the exact
@@ -13160,6 +13161,34 @@ comment is: scar tissue, written down, ignored.
 **The rule this yields:** when probing behaviour the suite already exercises,
 start from the suite's helper. If the helper looks over-complicated, that
 complexity is a record of what went wrong before.
+
+### INSTANCE 5, and it is still live: `SceneHarness`'s `loop pull`
+
+`src/app/scene/SceneHarness.tsx` drives its loop with
+
+    const y = box.top + 120;   // a fixed offset into the canvas
+
+which is **the same hazard as instance 4, in the harness rather than in a test.**
+At 1280px the first spine row is well within 120px of the canvas top and it
+works. At 390px the wall is narrow, the rows are packed differently, and y=120
+lands BELOW the first row — the raycast hits nothing, the click is swallowed, and
+the phase never leaves `idle`. Measured 2026-09-01: the loop fired zero times at
+390px, and a click at y=40 pulled a record immediately.
+
+**It survived the writing of instance 4's own lesson**, which is the point worth
+recording: that entry was about a probe written in a test file, and the same
+pattern sitting in the harness was not recognised as the same thing. **A rule
+filed under "tests" does not get applied to "the harness that drives the tests"
+without someone making the connection explicitly.**
+
+`clickASpine` in `e2e/wall-scene.spec.ts` already solves this correctly — it
+raycasts for a real spine rather than guessing — and is the helper this should
+adopt.
+
+**Left as an observation, not fixed:** it is the instrument rather than the
+product, no test depends on it, and the phone can be driven by clicking a real
+spine. **TRIGGER: the next unit that touches `SceneHarness` for any reason.** At
+that point the file is open and adopting the existing helper is small.
 
 ### The lesson, which is the one this project keeps relearning
 
@@ -25267,3 +25296,55 @@ was the fourth.
 was user-facing. Rounded. **Floating point reaches the UI wherever a stored
 fraction is displayed as a percentage** — worth checking anywhere else that
 pattern appears.
+
+---
+
+## The harness chrome ate the thing under test, and two hypotheses were wrong first
+
+**Symptom:** at 390px in `/scene`, the pulled record appeared enormous and
+clipped to a sliver at the top of the canvas. It read as a serious mobile
+rendering defect.
+
+**It was the control bar.** `SceneHarness`'s sticky control row wraps at narrow
+widths and had grown to roughly **700px tall on an 844px viewport**, leaving the
+canvas ~140px of visible space. The record was rendering correctly and almost all
+of it was below the fold. Capped at `maxHeight: 40vh` with `overflowY: auto`, the
+canvas returns and the record is whole.
+
+**Production was never affected** — the real page has no control bar, and Adam's
+own screenshot at 390px shows the record correctly framed. The defect existed
+only in the instrument.
+
+> **A harness whose chrome eats the thing under test is worse than no harness**:
+> it produces confident wrong readings about the product. Same family as the
+> fixtures having `coverUrl: null` — the instrument disagreeing with the thing it
+> is supposed to show.
+
+### Two wrong hypotheses first, both plausible and both measured away
+
+1. **"The probe omits `viewportHeight`, so `halfSleevePx` is computed against the
+   wall-framed camera."** Real-looking: that probe genuinely does omit it, and the
+   wall/viewport framing distinction has caused defects before. **Measured: 172px
+   either way.** The two framings agree at this size, so it could not be the
+   cause.
+2. **"`slotGap` of 736 on a 520px canvas means the record is placed off-canvas."**
+   **Measured: desktop reports 1431 on a 644px canvas and looks correct**, so a
+   gap exceeding the canvas height is normal and says nothing.
+
+Both were abandoned on measurement rather than argument, which is the only reason
+the third look — screenshotting the WHOLE PAGE rather than the canvas element —
+happened at all.
+
+**The rule that would have found it first:** when an element looks wrong, capture
+the page around it before capturing the element. Every previous instance of this
+family in this file is the same shape — the truncated scan column, the page
+background wrongly blamed, the debug line inside the branch it measured. The
+element-scoped view cannot show that the element is in the wrong place, or that
+something else is on top of it.
+
+**And a second harness bug found on the way:** `loop pull` clicks at a fixed
+`box.top + 120`, which on a 390px wall lands below the first row, so the loop
+never fires and the phase never leaves `idle`. That is the fixed-click-coordinate
+hazard already recorded here, still live in the harness. **Left as an
+observation** — it is the harness, not the product, and the phone can be driven
+by clicking a real spine. **Trigger: the next unit that touches `SceneHarness`.**

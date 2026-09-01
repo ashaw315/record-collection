@@ -136,6 +136,19 @@ export function SceneHarness() {
           top: 0,
           background: '#fbf8f3',
           zIndex: 10,
+          /*
+            **Capped, because the bar wrapped to ~700px at 390px wide and pushed
+            the canvas off the screen** — at which point the harness shows a
+            sliver of scene and the phone layout cannot be judged at all. It read
+            as a rendering defect (the record clipped to its top edge) and was
+            entirely this bar.
+
+            A harness whose chrome eats the thing under test is worse than no
+            harness: it produces confident wrong readings about the product, which
+            is the same family as the fixtures having no artwork.
+          */
+          maxHeight: '40vh',
+          overflowY: 'auto',
         }}
       >
         <strong>Scene harness</strong>
