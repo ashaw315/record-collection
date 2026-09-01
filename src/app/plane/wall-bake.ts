@@ -52,13 +52,21 @@
 export const BAKE_DOWNSAMPLE = 8;
 
 /** The render target's size for a given canvas, never zero. */
-export function bakeResolution({ width, height }: { width: number; height: number }): {
+export function bakeResolution({
+  width,
+  height,
+  downsample = BAKE_DOWNSAMPLE,
+}: {
   width: number;
   height: number;
-} {
+  /** `/scene` sweeps this; production takes the default. */
+  downsample?: number;
+}): { width: number; height: number } {
+  const n = downsample > 0 ? downsample : BAKE_DOWNSAMPLE;
+
   return {
-    width: Math.max(1, Math.round(width / BAKE_DOWNSAMPLE)),
-    height: Math.max(1, Math.round(height / BAKE_DOWNSAMPLE)),
+    width: Math.max(1, Math.round(width / n)),
+    height: Math.max(1, Math.round(height / n)),
   };
 }
 
@@ -76,4 +84,58 @@ export function bakeOpacity(progress: number): number {
   const t = Math.min(1, Math.max(0, progress));
 
   return 1 - 0.35 * t;
+}
+
+
+/**
+ * How much of the RETURN the blur takes to clear, as a fraction.
+ *
+ * **The asymmetry here is the opposite of the one that was wrong for durations**,
+ * and the reason is different in kind. There, equal durations won because a
+ * record going back at speed reads as DROPPED rather than replaced — a claim
+ * about the object.
+ *
+ * This is a claim about ATTENTION. Adam: *"the wall coming back into focus is
+ * not something I am watching."* On the way out the blur is part of what the eye
+ * follows; on the way back it is scenery, and holding it for the full 1400ms
+ * leaves a soft wall sitting behind a record that has already gone home.
+ *
+ * Not instant, because instant is the snap this fixes arriving from the other
+ * side.
+ */
+export const RETURN_CLEAR_FRACTION = 0.45;
+
+/**
+ * How much of the blurred wall shows, against the sharp one beneath it.
+ *
+ * **This is the fix for the snap.** The quad used to replace the wall outright
+ * the moment a record left the shelf, so the blur was binary — only its
+ * BRIGHTNESS ramped, which is why the wall went out of focus before the record
+ * had moved.
+ *
+ * Linear on the way out, for the reason `wallDim` is linear: the backdrop
+ * arrives WITH the record rather than ahead of it. A curve that is 88% of the
+ * way by halfway puts the arrival against an already-soft wall, which is the
+ * modal opening §10b exists to avoid.
+ */
+export function bakeMix({
+  progress,
+  returning,
+}: {
+  progress: number;
+  returning: boolean;
+}): number {
+  const t = Math.min(1, Math.max(0, progress));
+
+  if (!returning) return t;
+
+  /*
+    Reading 1 -> 0 on the way home, the blur is gone by the time the record has
+    travelled `RETURN_CLEAR_FRACTION` of the way — so it clears early and the
+    rest of the return happens against a wall already back in focus.
+  */
+  const travelled = 1 - t;
+  const cleared = Math.min(1, travelled / RETURN_CLEAR_FRACTION);
+
+  return 1 - cleared;
 }

@@ -24516,3 +24516,91 @@ one on absolute difference.
 Third instance this session of a measurement producing a confident wrong answer:
 the spine "clipped by 7px" (scope), the composer "at 0.463" (scope), and this
 (normalisation). **All three were stable, reproducible, and wrong.**
+
+
+---
+
+## AN INLINE COMPUTATION IS INVISIBLE TO EVERY LAYER OF THE SUITE BY CONSTRUCTION
+
+**2026-08-31.** Third regression in the pull animation, and the root cause is
+structural rather than a slip.
+
+**Every driven property came from a pure function — except one.** Position was
+lerped inline in `WallScene`:
+
+    const eased = 1 - Math.pow(1 - progress, 3);   // position, inline
+    const pose = risePose({ progress, ... });      // rotation, depth, scale
+
+They were the same curve, so the duplication was invisible. Changing the rise to
+ease-in-out touched `rise-pose.ts` and left the inline copy behind, and the two
+came apart:
+
+    t      position   rotation   divergence
+    0.15     0.386      0.013      0.372
+    0.25     0.578      0.063      0.516
+
+**At t=0.15 the record had travelled 39% of the way to centre having turned
+1.3%** — sliding to the middle still edge-on, which is exactly what Adam
+reported: *"record moves to center first instead of coming off of shelf
+naturally."*
+
+> **Adam:** *"a quantity that lives only inside a component is one no test can
+> sample, and it drifted precisely because it was the only one nobody could
+> see."*
+
+**Not under-tested — UNTESTABLE.** The unit layer cannot import it, the component
+layer does not evaluate it, and E2E sees only its rendered result. Extracting it
+as `riseTravel` is what made the whole verification method possible.
+
+### The method: sample the WHOLE motion, not properties one at a time
+
+Adam: *"every one of them was a property out of step with the others, and every
+one was found by looking at a screenshot and describing what looked wrong."* The
+blur snap, the backwards travel, this — each property was correct alone, and the
+defect was always in the RELATIONSHIP.
+
+`motion-sample.ts` samples every driven property at fixed intervals across a pull
+and a return, as **both** a printed table and a divergence test. A test fires on
+a threshold set in advance; the table shows the shape, including what nobody
+thought to assert.
+
+    PULL
+          t  travel    turn   depth   scale    blur   level     dim
+      0.100   0.004   0.004   0.004   0.084   0.100   0.965   0.910
+      0.500   0.500   0.500   0.500   0.540   0.500   0.825   0.550
+      0.900   0.996   0.996   0.996   0.996   0.900   0.685   0.190
+
+**Verified by mutation:** restoring the split fails three tests at t=0.05 with
+the exact 0.142 divergence.
+
+### THE BEST PART OF THE TEST IS THE DIVERGENCE IT PERMITS
+
+Adam: *"Without it someone fixes the divergence and reintroduces the
+front-loading that wallDim's reasoning exists to prevent — a test that asserts
+things agree would have made the codebase worse."*
+
+`blur` and `dim` advance LINEARLY and are supposed to differ from the eased
+group, because an eased dim is 88% of the way by halfway and arrives ahead of the
+record. So the test states two rules: the record's own properties must agree
+within 0.02, and the backdrop's must track raw progress. **The designed
+divergence is asserted as firmly as the required agreement.**
+
+### What it cannot cover, recorded AT THE TABLE rather than here
+
+A reader finding a "motion table" will assume it covers motion; it covers **value
+relationships between pure functions**. The gaps are written into
+`motion-sample.ts` itself:
+
+1. **Timing** — every column is parameterised by progress, not milliseconds. The
+   duration mismatch and the four `waitForTimeout` races were the same week and
+   neither would appear.
+2. **Anything not driven by a pure function** — camera, shelf geometry, the
+   chrome's CSS fade, the tilt.
+3. **Rendering** — the composite that painted the baked wall out, the
+   colour-space chase, the record blurred by the composer. All had correct values
+   and a wrong image.
+4. **Whether the design is right** — it shows properties agreeing, not that
+   agreement is wanted.
+
+**Three of this session's regressions would have been caught; none of the
+rendering ones.**

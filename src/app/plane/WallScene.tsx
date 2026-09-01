@@ -61,7 +61,8 @@ import {
 import { pulledDestination } from './pulled-destination';
 import { boxDepth } from './record-box';
 import { WALL_DIM_FLOOR, wallDimTo } from './wall-dim';
-import { bakeOpacity, bakeResolution } from './wall-bake';
+import { bakeMix, bakeOpacity, bakeResolution } from './wall-bake';
+import { riseTravel } from './motion-sample';
 import { PROUD_MS, proudOffset, shouldRedraw } from './hover-proud';
 import { NO_TILT, tiltFor } from '../shelf/tilt';
 import { beginDrag, endDrag, shouldStartTiltDrag, swipeDirection, type TiltDrag } from './touch-tilt';
@@ -158,6 +159,7 @@ export function WallScene({
   motion,
   dimFloor,
   bakeBlur,
+  bakeDownsample,
 }: {
   records: ShelfRecord[];
   treatment?: ShelfTreatment;
@@ -206,6 +208,8 @@ export function WallScene({
    * exactly as it is, which is production today.
    */
   bakeBlur?: boolean;
+  /** `/scene` only: the blur's downsample factor. Larger is softer. */
+  bakeDownsample?: number;
 }) {
   const mount = useRef<HTMLDivElement>(null);
   /**
@@ -268,6 +272,15 @@ export function WallScene({
    * time, which is always null. A ref is the read-through.
    */
   const pulledIdRef = useRef<string | null>(null);
+  /**
+   * **The return, readable from the render loop without rebuilding the scene.**
+   *
+   * Adding `returningId` to the scene effect's dependency array — to satisfy
+   * exhaustive-deps — tore the whole scene down the moment a return started, and
+   * left the record frozen edge-on outside its slot. A loop that reads live
+   * state needs a ref; a dependency rebuilds.
+   */
+  const returningIdRef = useRef<string | null>(null);
 
   /*
     **The scroll position from BEFORE the rise scrolled the wall.** The rise
@@ -295,6 +308,10 @@ export function WallScene({
   useEffect(() => {
     pulledIdRef.current = pulledId;
   }, [pulledId]);
+
+  useEffect(() => {
+    returningIdRef.current = returningId;
+  }, [returningId]);
 
   /**
    * Memoised, because the scene effect depends on it.
@@ -1203,7 +1220,7 @@ export function WallScene({
     let bakeMaterial: MeshBasicMaterial | null = null;
 
     if (bakeBlur === true) {
-      const res = bakeResolution({ width, height });
+      const res = bakeResolution({ width, height, downsample: bakeDownsample });
       bakeTarget = new WebGLRenderTarget(res.width, res.height);
       bakeTarget.texture.colorSpace = SRGBColorSpace;
       /*
@@ -1219,6 +1236,13 @@ export function WallScene({
       bakeCamera = new OrthographicCamera(-0.5, 0.5, 0.5, -0.5, 0, 1);
       bakeMaterial = new MeshBasicMaterial({
         map: bakeTarget.texture,
+        /*
+          **Transparent, because the blur CROSS-FADES against the sharp wall.**
+          An earlier version drew it opaque, which made the blur binary — the
+          snap Adam reported. Blending it over the live wall is what lets the
+          softening arrive with the record.
+        */
+        transparent: true,
         depthTest: false,
         depthWrite: false,
       });
@@ -1262,49 +1286,64 @@ export function WallScene({
           dim would snap to full strength at capture time, which is the
           front-loading `wallDim` was tuned to avoid.
         */
-        for (const [id, mesh] of meshes) {
-          if (id !== pulledNow) mesh.visible = false;
-        }
         /*
-          **The quad is OPAQUE and it IS the wall.** An earlier version drew it
-          with `opacity` carrying the dim, which let the still-dimmed live wall
-          show through underneath and darkened everything twice — measured, the
-          spine band fell to 0.43 of its unbaked value.
+          **Three draws, and the middle one is the cross-fade.**
 
-          So the dim rides on the quad's COLOUR instead: a white base multiplied
-          down, which dims the picture without blending it against whatever is
-          behind. Nothing is behind it — the wall meshes are hidden and the
-          background is drawn first.
+          1. the SHARP wall, undimmed — it is what the blur fades in over, and
+             leaving it undimmed is what stops the dim being applied twice;
+          2. the blurred quad at `bakeMix`, which carries the dim on its colour;
+          3. the record, over both, with the background nulled so it does not
+             repaint the wall.
+
+          The quad's opacity is the blur's strength, so the wall goes out of
+          focus AS the record comes forward rather than the instant it is
+          clicked.
         */
-        if (bakeMaterial !== null) {
-          const level = bakeOpacity(riseProgress);
-          bakeMaterial.color.setScalar(level);
+        /*
+          **Read from a REF, never from the effect's dependencies.**
+
+          `returningId` was added to this effect's dependency array to satisfy
+          the exhaustive-deps lint, and that REBUILT THE WHOLE SCENE the moment a
+          return began — tearing down the animation mid-flight and leaving the
+          record frozen edge-on outside its slot. A render loop reads live state
+          through a ref; adding it as a dependency is a different thing entirely.
+        */
+        const mix = bakeMix({
+          progress: riseProgress,
+          returning: returningIdRef.current !== null,
+        });
+
+        /*
+          **The sharp wall, drawn UNDIMMED so the quad alone carries the dim.**
+
+          Restored after the draw rather than left, because `setPulledInternal`
+          owns the dim and a render-loop write that outlives the frame fights it.
+        */
+        for (const [id, mesh] of meshes) {
+          if (id === pulledNow) mesh.visible = false;
         }
+        setWallDim(1, null);
+        renderer.render(scene, camera);
+
+        if (bakeMaterial !== null) {
+          bakeMaterial.opacity = mix;
+          bakeMaterial.color.setScalar(bakeOpacity(riseProgress));
+        }
+        renderer.autoClear = false;
         renderer.render(bakeScene, bakeCamera);
 
-        /*
-          **The background is nulled for the second pass, and that is the whole
-          compositing fix.**
-
-          `renderer.render(scene, camera)` redraws `scene.background` — an opaque
-          fill — straight over the quad, then the record on top. Hiding the spine
-          MESHES does not hide the BACKGROUND, so the baked wall was being
-          painted out every frame.
-
-          Found by subtraction rather than by theory: drawing the quad alone gave
-          a bright blurred wall at mean 79.8, against 18.1 for the composite. The
-          capture was never the problem.
-        */
+        for (const [id, mesh] of meshes) {
+          mesh.visible = id === pulledNow;
+        }
         const sceneBackground = scene.background;
         scene.background = null;
-        renderer.autoClear = false;
         renderer.clearDepth();
         renderer.render(scene, camera);
         renderer.autoClear = true;
         scene.background = sceneBackground;
-        for (const [id, mesh] of meshes) {
-          if (id !== pulledNow) mesh.visible = true;
-        }
+        setWallDim(wallDimTo(riseProgress, dimFloor ?? WALL_DIM_FLOOR), pulledNow);
+
+        for (const mesh of meshes.values()) mesh.visible = true;
       } else {
         renderer.render(scene, camera);
       }
@@ -1434,7 +1473,17 @@ export function WallScene({
            * many records are owned. `risePose` still owns what happens on the
            * way — the quarter turn and the forward travel are unchanged.
            */
-          const eased = 1 - Math.pow(1 - progress, 3);
+          /*
+            **The SAME curve the pose uses.** This was a hardcoded cubic
+            ease-out while `risePose` moved to ease-in-out, so the record
+            travelled 39% of the way to centre having turned 1.3% — sliding to
+            the middle still edge-on.
+
+            `riseTravel` names it in `motion-sample.ts`, where the divergence
+            test can see it. A quantity lerped inline in a component is one no
+            test can sample, which is why this drifted unnoticed.
+          */
+          const eased = riseTravel(progress);
           const pose = risePose({ progress, slotDepth: destination.z - home.z });
 
           mesh.position.set(
@@ -1903,7 +1952,7 @@ export function WallScene({
       renderer.dispose();
     };
     }
-  }, [spines, records, treatment, diagnosticProp, orbitProp, dimFloor, bakeBlur]);
+  }, [spines, records, treatment, diagnosticProp, orbitProp, dimFloor, bakeBlur, bakeDownsample]);
 
   /** Drives the rise when the pulled record changes. */
   useEffect(() => {

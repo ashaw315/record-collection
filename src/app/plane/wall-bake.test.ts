@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { bakeResolution, BAKE_DOWNSAMPLE, bakeOpacity } from './wall-bake';
+import {
+  bakeResolution,
+  BAKE_DOWNSAMPLE,
+  bakeOpacity,
+  bakeMix,
+  RETURN_CLEAR_FRACTION,
+} from './wall-bake';
 
 /**
  * **The wall is baked to a texture once when a record is pulled, and the blur
@@ -28,6 +34,22 @@ describe('the baked wall texture', () => {
   it('renders at a fraction of the canvas, which is what blurs it', () => {
     expect(BAKE_DOWNSAMPLE).toBeGreaterThan(1);
     expect(BAKE_DOWNSAMPLE, 'but not so coarse the wall becomes blocks').toBeLessThan(24);
+  });
+
+  /**
+   * **The harness sweeps well below the shipping value**, because Adam judged
+   * 1/8 too strong — *"I can barely read the wall as records"* — and asked for
+   * 1/3 and 1/2, which are far softer blurs than the range first built.
+   */
+  it('accepts a much gentler downsample than the default', () => {
+    expect(bakeResolution({ width: 1280, height: 768, downsample: 2 })).toEqual({
+      width: 640,
+      height: 384,
+    });
+    expect(bakeResolution({ width: 1280, height: 768, downsample: 3 })).toEqual({
+      width: 427,
+      height: 256,
+    });
   });
 
   it('scales the target with the canvas', () => {
@@ -62,5 +84,61 @@ describe('the baked wall texture', () => {
     const quarter = bakeOpacity(0) - bakeOpacity(0.25);
     const half = bakeOpacity(0) - bakeOpacity(0.5);
     expect(half / quarter).toBeCloseTo(2, 6);
+  });
+});
+
+
+/**
+ * **The blur EASES IN with the record, and clears faster on the way back.**
+ *
+ * Adam: *"On click the blur snaps to full instantly. It should ease in — the
+ * wall going out of focus as the record comes forward, not before it."* That was
+ * a defect rather than tuning: the quad either replaced the wall or did not, so
+ * the blur was binary while only its brightness ramped.
+ */
+describe('the blur mixes in rather than snapping', () => {
+  it('is absent at rest and full when the record is out', () => {
+    expect(bakeMix({ progress: 0, returning: false })).toBe(0);
+    expect(bakeMix({ progress: 1, returning: false })).toBe(1);
+  });
+
+  it('tracks the rise, so the wall softens AS the record comes forward', () => {
+    // Linear on the way out: the blur arrives with the record, not before it —
+    // the same reasoning `wallDim` records for rejecting a cubic ease-out.
+    expect(bakeMix({ progress: 0.25, returning: false })).toBeCloseTo(0.25, 6);
+    expect(bakeMix({ progress: 0.5, returning: false })).toBeCloseTo(0.5, 6);
+  });
+
+  /**
+   * **The asymmetry, and it is the OPPOSITE of the one that was wrong for
+   * durations.** There, equal was right: a record going back at speed read as
+   * dropped. Here the claim is about ATTENTION rather than the object — the wall
+   * coming back into focus is not what the reader is watching, so it can clear
+   * early and leave the return uncluttered.
+   *
+   * Checked rather than trusted: the test states what "clears early" means, so
+   * the value is a decision rather than a feeling.
+   */
+  it('clears early on the return rather than tracking the whole way', () => {
+    expect(RETURN_CLEAR_FRACTION).toBeLessThan(1);
+    expect(RETURN_CLEAR_FRACTION, 'but not instantly, which is the snap again').toBeGreaterThan(0.2);
+
+    // Reading 1 -> 0, the blur is gone before the record is home.
+    const atClear = bakeMix({ progress: 1 - RETURN_CLEAR_FRACTION, returning: true });
+    expect(atClear).toBeCloseTo(0, 6);
+  });
+
+  it('is still full at the start of the return', () => {
+    expect(bakeMix({ progress: 1, returning: true })).toBe(1);
+  });
+
+  it('never leaves the 0..1 range in either direction', () => {
+    for (const returning of [false, true]) {
+      for (let t = 0; t <= 1; t += 0.05) {
+        const mix = bakeMix({ progress: t, returning });
+        expect(mix).toBeGreaterThanOrEqual(0);
+        expect(mix).toBeLessThanOrEqual(1);
+      }
+    }
   });
 });

@@ -63,6 +63,7 @@ export function SceneHarness() {
   const [looping, setLooping] = useState(false);
   const [dimFloor, setDimFloor] = useState(WALL_DIM_FLOOR);
   const [bakeBlur, setBakeBlur] = useState(false);
+  const [bakeDownsample, setBakeDownsample] = useState(8);
   const frame = useRef<HTMLDivElement | null>(null);
 
   /**
@@ -331,6 +332,31 @@ export function SceneHarness() {
           {bakeBlur ? 'baked blur ON' : 'baked blur'}
         </button>
 
+        {bakeBlur && (
+          <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            softness
+            {[2, 3, 5, 6, 7, 8].map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setBakeDownsample(n)}
+                aria-pressed={bakeDownsample === n}
+                title={`1/${n} downsample — larger is softer`}
+                style={{
+                  padding: '4px 9px',
+                  border: '1px solid #ddd4c6',
+                  borderRadius: 3,
+                  background: bakeDownsample === n ? '#4d3b2b' : '#fff',
+                  color: bakeDownsample === n ? '#fff' : '#1c1917',
+                  cursor: 'pointer',
+                }}
+              >
+                1/{n}
+              </button>
+            ))}
+          </span>
+        )}
+
         <button
           type="button"
           onClick={() => setLooping((v) => !v)}
@@ -363,7 +389,7 @@ export function SceneHarness() {
         }}
       >
         <WallScene
-          key={`${treatment}-${diagnostic}-${orbit}-${bakeBlur}`}
+          key={`${treatment}-${diagnostic}-${orbit}-${bakeBlur}-${bakeDownsample}`}
           records={records}
           treatment={treatment}
           diagnostic={diagnostic}
@@ -371,6 +397,7 @@ export function SceneHarness() {
           motion={{ riseMs, returnMs, returnSettle }}
           dimFloor={dimFloor}
           bakeBlur={bakeBlur}
+          bakeDownsample={bakeDownsample}
         />
       </div>
     </div>
