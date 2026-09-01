@@ -25,10 +25,28 @@ import { WALL_FOV_DEGREES, viewportCameraDistance, wallCameraDistance } from './
 /**
  * How much of the frame's height the settled record fills.
  *
- * Big enough to read a cover, small enough that the wall is still visible
- * behind it — the record is in your hands, not pressed against the lens.
+ * **0.9, chosen by looking with real cover art.** Adam: *"i think huge looks
+ * great."*
+ *
+ * It was 0.55 from the first implementation and had never been compared against
+ * anything — and for most of this project the record's apparent size was judged
+ * against the plain-sleeve fallback, a flat grey rectangle (see NOTES on the
+ * harness having no artwork). At 0.55 the record read as a stamp on the wall; at
+ * 0.9 it reads as an object in your hands, which is what §10b's *"it was on the
+ * shelf a moment ago and now it is in your hands"* asks for.
+ *
+ * **This changes the DESKTOP only, and that is measured rather than assumed.**
+ * On a phone the frame is tall and narrow, so the record's WIDTH is the binding
+ * constraint and `widthFill` (0.9) already decides its size: at 390px the record
+ * fills 39% of height and 90% of width at both values. On a 1280px desktop the
+ * height binds, and 0.55 -> 0.9 takes it from 55% to 90% of frame height.
+ *
+ * The old rationale — *"small enough that the wall is still visible behind it"* —
+ * was written when the wall behind was undimmed. `WALL_DIM_FLOOR` is 0.1 now, so
+ * the wall recedes on its own and does not need the record to stay small to be
+ * seen past.
  */
-export const FRAME_FILL = 0.55;
+export const FRAME_FILL = 0.9;
 
 /**
  * How much of the frame the settled record fills, as `/scene` sweeps it.
@@ -45,9 +63,10 @@ export const FRAME_FILL = 0.55;
  */
 export const FRAME_FILLS = {
   small: 0.4,
-  current: FRAME_FILL,
+  medium: 0.55,
   large: 0.7,
-  huge: 0.9,
+  /** The shipping value. */
+  huge: FRAME_FILL,
 } as const;
 
 export type FrameFill = keyof typeof FRAME_FILLS;

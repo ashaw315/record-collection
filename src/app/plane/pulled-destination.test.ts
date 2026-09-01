@@ -96,15 +96,47 @@ describe('pulledDestination', () => {
      * small and it is a thumbnail hovering over a wall; too large and it fills
      * the frame flat with no wall visible behind it, which is what the
      * near-the-lens hypothesis predicted and the measurement ruled out.
+     *
+     * ---
+     *
+     * **THE AXIS WAS CORRECTED, NOT THE BOUND RELAXED.**
+     *
+     * This asserted `< 0.8` on the record's HEIGHT fill, and `FRAME_FILL` moving
+     * to 0.9 broke it. The bound was not loosened to let the new value through:
+     * the rule it encodes — *"the wall is still visible behind it"* — is a claim
+     * about the FRAME, and **height alone cannot see it.**
+     *
+     * The frame is wider than it is tall on a desktop, so a record at 90% of
+     * frame height fills only **64% of frame width**, leaving 36% of the frame's
+     * width as visible wall — measured, and visible as spines flanking the
+     * record on both sides. The rule held the whole time; the measurement was on
+     * the wrong axis and reported a violation that was not happening.
+     *
+     * So the width fill is what is bounded now. A record that genuinely filled
+     * the frame edge to edge would fail this exactly as before — which is the
+     * test the original was trying to be.
+     *
+     * (A `viewport` is passed because the width constraint only exists when one
+     * is given; the original call had none, so there was no width to measure.)
      */
     const wallHeight = wallOf(3);
-    const target = pulledDestination({ wallWidth: wallPx(1280), wallHeight });
-    const distance = wallCameraDistance({ wallHeight }) - target.z;
+    const viewportHeight = framePx(886);
+    const wallWidth = wallPx(1280);
+    const target = pulledDestination({
+      wallWidth,
+      wallHeight,
+      viewport: { width: canvasPx(1280), height: canvasPx(900) },
+      viewportHeight,
+    });
+    const distance = raw(viewportCameraDistance({ viewportHeight })) - raw(target.z);
     const frameHeight = 2 * distance * Math.tan((WALL_FOV_DEGREES * Math.PI) / 360);
-    const fraction = SPINE_HEIGHT / frameHeight;
+    const frameWidth = frameHeight * (raw(wallWidth) / raw(viewportHeight));
 
-    expect(fraction, 'the record is a good part of the frame').toBeGreaterThan(0.35);
-    expect(fraction, 'but the wall is still visible behind it').toBeLessThan(0.8);
+    const heightFill = SPINE_HEIGHT / frameHeight;
+    const widthFill = SPINE_HEIGHT / frameWidth;
+
+    expect(heightFill, 'the record is a good part of the frame').toBeGreaterThan(0.35);
+    expect(widthFill, 'but the wall is still visible either side of it').toBeLessThan(0.8);
   });
 
   it('stays in FRONT of the wall, so it occludes what it came from', () => {
@@ -384,11 +416,53 @@ describe('the settled size is a parameter, not a constant', () => {
     }
   });
 
-  /** The range must reach past the current value in both directions. */
-  it('offers a range around the shipped value', () => {
+  /** The range must reach below the shipped value, which is now the ceiling. */
+  it('offers a range below the shipped value', () => {
     const values = Object.values(FRAME_FILLS);
 
     expect(Math.min(...values)).toBeLessThan(FRAME_FILL);
-    expect(Math.max(...values), 'a ceiling worth trying').toBeGreaterThan(0.8);
+    expect(Math.max(...values)).toBe(FRAME_FILL);
+  });
+
+  /**
+   * **The shipped value, pinned by what it PRODUCES rather than by its number.**
+   *
+   * Asserting `FRAME_FILL === 0.9` would restate the constant. This asserts the
+   * record fills nine tenths of the desktop frame's height, which is the
+   * property Adam chose by looking and the one a change to the formula would
+   * break while leaving the constant intact.
+   */
+  it('fills nine tenths of the desktop frame at the shipped value', () => {
+    const target = pulledDestination(base);
+    const cameraZ = raw(viewportCameraDistance({ viewportHeight: framePx(886) }));
+    const distance = cameraZ - raw(target.z);
+    const frameHeight = 2 * distance * Math.tan((WALL_FOV_DEGREES * Math.PI) / 360);
+
+    expect(SPINE_HEIGHT / frameHeight).toBeCloseTo(0.9, 3);
+  });
+
+  /**
+   * **A PHONE IS UNAFFECTED, and this is the reason the change is safe to ship.**
+   *
+   * On a tall narrow frame the record's WIDTH binds and `widthFill` decides its
+   * size, so `frameFill` changes nothing at 390px — measured at 39% of height
+   * and 90% of width for both 0.55 and 0.9. Without this, raising the desktop
+   * fill would look like a change to every viewport.
+   *
+   * Fails against a formula that lets the height term win on a narrow canvas.
+   */
+  it('leaves the phone untouched, where width binds instead', () => {
+    const phone = {
+      wallWidth: wallPx(358),
+      wallHeight: wallOf(10),
+      viewport: { width: canvasPx(390), height: canvasPx(844) },
+      viewportHeight: framePx(830),
+      widthFill: 0.9,
+    };
+
+    const atMedium = pulledDestination({ ...phone, frameFill: 0.55 });
+    const atHuge = pulledDestination({ ...phone, frameFill: 0.9 });
+
+    expect(raw(atMedium.z), 'width binds, so the fill does not move it').toBe(raw(atHuge.z));
   });
 });

@@ -38,6 +38,22 @@ export const LIGHT_RIGS = {
   high: { elevation: 62, azimuth: 30 },
   /** Almost on the camera axis: shadows collapse behind their casters. */
   frontal: { elevation: 12, azimuth: 6 },
+  /**
+   * **Between `studio` and `frontal`, on the axis that actually separates them.**
+   *
+   * Adam liked `studio` and found `frontal` a close second, and wanted something
+   * between. The two differ on BOTH axes, which is why "in between" was
+   * ambiguous — and the axes do different jobs:
+   *
+   *   - **elevation** sets shadow LENGTH (39deg throws 1.23x, 12deg throws 4.70x)
+   *   - **azimuth** sets shadow DIRECTION, and does not affect length at all
+   *
+   * So what `frontal` changes relative to `studio` is where the shadow goes, not
+   * how far. These two hold `studio`'s elevation and walk the azimuth in, which
+   * is the interpolation that isolates the difference.
+   */
+  'studio-near': { elevation: 39, azimuth: 24 },
+  'studio-axial': { elevation: 39, azimuth: 12 },
 } as const;
 
 export type LightRig = keyof typeof LIGHT_RIGS;

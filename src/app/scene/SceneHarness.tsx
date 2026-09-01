@@ -67,7 +67,7 @@ export function SceneHarness() {
   const [covers, setCovers] = useState(true);
   const [wallColour, setWallColour] = useState('#100e0d');
   const [lightRig, setLightRig] = useState<LightRig>(LIGHT_RIG_DEFAULT);
-  const [frameFill, setFrameFill] = useState<FrameFill>('current');
+  const [frameFill, setFrameFill] = useState<FrameFill>('huge');
   const frame = useRef<HTMLDivElement | null>(null);
 
   /**

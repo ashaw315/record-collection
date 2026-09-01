@@ -60,6 +60,66 @@ So the honest split, which the single phrase had flattened:
 
 ---
 
+## A TEST THAT MEASURES A SET CONSTRAINS NO MEMBER OF IT
+
+**Three decorative tests were found in one day, and this is the shape that hides
+best**, because it does not look decorative at all: it computes a real number
+from real data and asserts a real threshold.
+
+`light-rig.test.ts` asserted that the rig set spanned more than 4x in shadow
+throw — a genuine property, genuinely measured. **A mutation moving `raking` from
+12 deg to 35 deg SURVIVED it.** `frontal` (12 deg) and `high` (62 deg) kept the
+aggregate spread wide while the entry actually named "raking" quietly stopped
+raking.
+
+> **A test that measures a property of a SET does not constrain any member of
+> it.** The aggregate stayed healthy; the thing under test broke.
+
+CLAUDE.md §2 already demands that every test **name the line of source it would
+fail against.** This one could not: `Math.max(...) / Math.min(...)` names no
+entry, so no single value's drift can fail it. The rewrite asserts
+`shadowThrow(LIGHT_RIGS.raking) > 3` — a claim about the member whose name makes
+the promise.
+
+**Why this is worth its own entry.** The three decorative tests already recorded
+here were recognisable as weak once seen: a probe deleted after it proved a
+branch; a length test that measured `[...str].length` inline instead of calling
+`nameLength`; a whitespace test caught incidentally by a different test. **An
+aggregate assertion is not recognisable that way** — it reads as more rigorous
+than a single-value check, not less. The tell is structural rather than stylistic:
+**if the assertion's subject is `Object.values(...)`, `Math.max`, an average, a
+count, or any reduction, ask which member it would fail for.** If the answer is
+"none in particular", it constrains nothing in particular.
+
+**Found only because the mutation sweep ran on every guard rather than on the
+ones that looked risky.** Three of four mutations in that unit were caught
+instantly; this was the fourth, and the one that looked safest.
+
+### The sibling finding: the same day, an axis measured the wrong thing
+
+`pulled-destination.test.ts` bounded the settled record at `< 0.8` of the frame's
+HEIGHT, under the rule *"the wall is still visible behind it."* Shipping
+`FRAME_FILL = 0.9` broke it.
+
+**The bound was not relaxed; the axis was corrected.** The rule is a claim about
+the FRAME, and the frame is wider than it is tall: at 90% of frame height the
+record fills **64% of frame width**, leaving 36% of the frame's width as visible
+wall — measured, and visible as spines flanking the record in the screenshot. The
+rule held the entire time. The measurement was on an axis that could not see it,
+and reported a violation that was not happening.
+
+Verified by mutation that the correction kept its teeth in BOTH directions: a
+record overfilling the frame still fails, and a thumbnail-sized one still fails.
+
+> Adam: *"Option 2 leaves it measuring the wrong thing, which is how a test
+> drifts into being decorative."*
+
+**Both findings are the same failure in different clothes: an assertion whose
+subject is not the thing the rule is about.** One measured a set where the rule
+was about a member; the other measured height where the rule was about the frame.
+
+---
+
 ## THE FINDING THAT OUTRANKS THE FIXES: a stand-in wrong in what it LACKED
 
 **Read this before trusting any judgement made in a harness.**
