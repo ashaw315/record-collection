@@ -1,6 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { LIGHT_RIGS, LIGHT_RIG_DEFAULT, type LightRig } from '@/app/plane/light-rig';
+import { FRAME_FILLS, type FrameFill } from '@/app/plane/pulled-destination';
 import { useEffect, useRef } from 'react';
 import { WallScene, type ShelfTreatment } from '../plane/WallScene';
 import { RETURN_DEFAULT_MS, RETURN_SETTLES_BY_DEFAULT, RISE_DEFAULT_MS } from '../plane/motion-tuning';
@@ -64,6 +66,8 @@ export function SceneHarness() {
   const [dimFloor, setDimFloor] = useState(WALL_DIM_FLOOR);
   const [covers, setCovers] = useState(true);
   const [wallColour, setWallColour] = useState('#100e0d');
+  const [lightRig, setLightRig] = useState<LightRig>(LIGHT_RIG_DEFAULT);
+  const [frameFill, setFrameFill] = useState<FrameFill>('current');
   const frame = useRef<HTMLDivElement | null>(null);
 
   /**
@@ -357,6 +361,52 @@ export function SceneHarness() {
           )}
         </span>
 
+        <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          light:
+          {(Object.keys(LIGHT_RIGS) as LightRig[]).map((name) => (
+            <button
+              key={name}
+              type="button"
+              onClick={() => setLightRig(name)}
+              aria-pressed={lightRig === name}
+              title={`${LIGHT_RIGS[name].elevation}° elevation, ${LIGHT_RIGS[name].azimuth}° azimuth`}
+              style={{
+                padding: '4px 10px',
+                border: '1px solid #ddd4c6',
+                borderRadius: 3,
+                background: lightRig === name ? '#4d3b2b' : '#fff',
+                color: lightRig === name ? '#fff' : '#1c1917',
+                cursor: 'pointer',
+              }}
+            >
+              {name}
+            </button>
+          ))}
+        </span>
+
+        <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          size:
+          {(Object.keys(FRAME_FILLS) as FrameFill[]).map((name) => (
+            <button
+              key={name}
+              type="button"
+              onClick={() => setFrameFill(name)}
+              aria-pressed={frameFill === name}
+              title={`The settled record fills ${Math.round(FRAME_FILLS[name] * 100)}% of the frame height`}
+              style={{
+                padding: '4px 10px',
+                border: '1px solid #ddd4c6',
+                borderRadius: 3,
+                background: frameFill === name ? '#4d3b2b' : '#fff',
+                color: frameFill === name ? '#fff' : '#1c1917',
+                cursor: 'pointer',
+              }}
+            >
+              {name}
+            </button>
+          ))}
+        </span>
+
         <button
           type="button"
           onClick={() => setLooping((v) => !v)}
@@ -389,7 +439,7 @@ export function SceneHarness() {
         }}
       >
         <WallScene
-          key={`${treatment}-${diagnostic}-${orbit}-${covers}-${wallColour}`}
+          key={`${treatment}-${diagnostic}-${orbit}-${covers}-${wallColour}-${lightRig}-${frameFill}`}
           records={records}
           treatment={treatment}
           diagnostic={diagnostic}
@@ -397,6 +447,8 @@ export function SceneHarness() {
           motion={{ riseMs, returnMs, returnSettle }}
           dimFloor={dimFloor}
           wallColour={wallColour}
+          lightRig={lightRig}
+          frameFill={FRAME_FILLS[frameFill]}
         />
       </div>
     </div>

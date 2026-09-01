@@ -28,7 +28,29 @@ import { WALL_FOV_DEGREES, viewportCameraDistance, wallCameraDistance } from './
  * Big enough to read a cover, small enough that the wall is still visible
  * behind it — the record is in your hands, not pressed against the lens.
  */
-const FRAME_FILL = 0.55;
+export const FRAME_FILL = 0.55;
+
+/**
+ * How much of the frame the settled record fills, as `/scene` sweeps it.
+ *
+ * **0.55 was never compared against anything.** It is the value the first
+ * implementation used, and the record's apparent size has been judged against a
+ * flat grey rectangle for most of this work — see NOTES on the harness having no
+ * artwork. With real covers the question "is it big enough to be in your hands"
+ * becomes answerable, and it needs a range to be answered.
+ *
+ * The ceiling is deliberately past what looks right: **0.9 fills the frame
+ * almost edge to edge**, and the shelf's own finding is that a range whose ends
+ * are both cautious cannot show where the limit is.
+ */
+export const FRAME_FILLS = {
+  small: 0.4,
+  current: FRAME_FILL,
+  large: 0.7,
+  huge: 0.9,
+} as const;
+
+export type FrameFill = keyof typeof FRAME_FILLS;
 
 export type PulledPose = { x: WallPx; y: WallPx; z: SceneZ };
 
@@ -39,6 +61,7 @@ export function pulledDestination({
   widthFill,
   viewCentrePx,
   viewportHeight,
+  frameFill,
 }: {
   wallWidth: WallPx;
   wallHeight: WallPx;
@@ -77,6 +100,13 @@ export function pulledDestination({
    */
   viewCentrePx?: CanvasPx;
   viewportHeight?: FramePx;
+  /**
+   * How much of the frame's HEIGHT the settled record fills. `/scene` sweeps
+   * this; production takes `FRAME_FILL`. Height is the binding constraint on a
+   * desktop — measured at 55% of height against 39% of width — so this is the
+   * lever that changes the record's apparent size.
+   */
+  frameFill?: number;
 }): PulledPose {
   /*
     **Framed on the VIEWPORT when one is given, not on the wall.** The wall
@@ -98,7 +128,8 @@ export function pulledDestination({
       frameHeight = 2 · distance · tan(halfAngle)
       SPINE_HEIGHT / frameHeight = FRAME_FILL
   */
-  const byHeight = SPINE_HEIGHT / (2 * FRAME_FILL * Math.tan(halfAngle));
+  const fill = frameFill ?? FRAME_FILL;
+  const byHeight = SPINE_HEIGHT / (2 * fill * Math.tan(halfAngle));
 
   /*
     **The aspect fix.** The camera's aspect is the CANVAS's — width/height of the
@@ -126,7 +157,7 @@ export function pulledDestination({
   const byWidth =
     viewport === undefined
       ? 0
-      : SPINE_HEIGHT / (2 * (widthFill ?? FRAME_FILL) * Math.tan(halfAngle) * canvasAspect);
+      : SPINE_HEIGHT / (2 * (widthFill ?? fill) * Math.tan(halfAngle) * canvasAspect);
 
   const distance = Math.max(byHeight, byWidth);
 

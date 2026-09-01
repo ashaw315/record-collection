@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { canvasPx, framePx, raw, wallPx } from './frames';
-import { pulledDestination } from './pulled-destination';
+import { FRAME_FILL, FRAME_FILLS, pulledDestination } from './pulled-destination';
 import { WALL_FOV_DEGREES, viewportCameraDistance, wallCameraDistance } from './wall-camera';
 import { SPINE_HEIGHT } from '../shelf/spine';
 
@@ -328,5 +328,67 @@ describe('the record settles at the VISIBLE viewport centre, not the wall centre
     /* The geometry tests and any caller without a scroll position are unchanged. */
     const target = pulledDestination({ wallWidth: wallPx(358), wallHeight });
     expect(target.y).toBe(-wallHeight / 2);
+  });
+});
+
+/**
+ * `FRAME_FILL` was hardcoded and had never been compared against anything — and
+ * for most of this work the record's apparent size was being judged against the
+ * plain-sleeve fallback, a flat grey rectangle, because the harness had no
+ * artwork. A sweepable fill is what makes "is it big enough to be in your hands"
+ * an answerable question.
+ */
+describe('the settled size is a parameter, not a constant', () => {
+  const base = {
+    wallWidth: wallPx(1248),
+    wallHeight: wallOf(4),
+    viewport: { width: canvasPx(1280), height: canvasPx(900) },
+    viewportHeight: framePx(886),
+  };
+
+  /**
+   * **A bigger fill brings the record CLOSER**, which is the whole mechanism:
+   * apparent size is set by distance under a fixed lens.
+   *
+   * Fails against an implementation that ignores `frameFill` — which is exactly
+   * what the width branch did before it was threaded through too.
+   */
+  it('settles nearer the camera for a larger fill', () => {
+    const small = pulledDestination({ ...base, frameFill: 0.4 });
+    const large = pulledDestination({ ...base, frameFill: 0.9 });
+
+    expect(raw(large.z), 'larger fill is closer to the viewer').toBeGreaterThan(raw(small.z));
+  });
+
+  /** Omitting it must reproduce the shipped value exactly, or every existing judgement moves. */
+  it('defaults to the shipped fill', () => {
+    const omitted = pulledDestination(base);
+    const explicit = pulledDestination({ ...base, frameFill: FRAME_FILL });
+
+    expect(raw(omitted.z)).toBe(raw(explicit.z));
+  });
+
+  /**
+   * **The fill must actually be the fraction it claims.** Solving the projection
+   * back out is what catches an off-by-one in the formula that a
+   * relative-ordering test would pass.
+   */
+  it('fills the fraction of frame height it names', () => {
+    for (const fill of [0.4, 0.55, 0.9]) {
+      const target = pulledDestination({ ...base, frameFill: fill });
+      const cameraZ = raw(viewportCameraDistance({ viewportHeight: framePx(886) }));
+      const distance = cameraZ - raw(target.z);
+      const frameHeight = 2 * distance * Math.tan((WALL_FOV_DEGREES * Math.PI) / 360);
+
+      expect(SPINE_HEIGHT / frameHeight, `fill ${fill}`).toBeCloseTo(fill, 4);
+    }
+  });
+
+  /** The range must reach past the current value in both directions. */
+  it('offers a range around the shipped value', () => {
+    const values = Object.values(FRAME_FILLS);
+
+    expect(Math.min(...values)).toBeLessThan(FRAME_FILL);
+    expect(Math.max(...values), 'a ceiling worth trying').toBeGreaterThan(0.8);
   });
 });

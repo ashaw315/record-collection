@@ -34,6 +34,7 @@ import {
 import { SHELF_LIP, SHELF_PLANE, WALL_BACK } from '../shelf/shelf-surface';
 import type { WallPx } from './frames';
 import { canvasPx, framePx, raw, sceneZ, wallPx } from './frames';
+import { LIGHT_RIGS, LIGHT_RIG_DEFAULT, type LightRig, lightPosition } from './light-rig';
 import { createRenderLoop } from './render-loop';
 import { risePose } from './rise-pose';
 import {
@@ -157,6 +158,8 @@ export function WallScene({
   motion,
   dimFloor,
   wallColour,
+  lightRig,
+  frameFill,
 }: {
   records: ShelfRecord[];
   treatment?: ShelfTreatment;
@@ -200,6 +203,10 @@ export function WallScene({
   dimFloor?: number;
   /** `/scene` only: the wall's ground colour, for judging light vs dark walls. */
   wallColour?: string;
+  /** `/scene` only: where the key light stands. See `light-rig.ts`. */
+  lightRig?: LightRig;
+  /** `/scene` only: how much of the frame the settled record fills. */
+  frameFill?: number;
 }) {
   const mount = useRef<HTMLDivElement>(null);
   /**
@@ -588,6 +595,7 @@ export function WallScene({
         wallHeight: height,
         viewport: { width: canvasPx(window.innerWidth), height: canvasPx(window.innerHeight) },
         widthFill: 0.9,
+        frameFill,
       });
       const distance = raw(cameraDistance) - raw(probe.z);
       const worldPerPx = (2 * distance * Math.tan(halfAngle)) / raw(height);
@@ -618,6 +626,7 @@ export function WallScene({
           as a distant speck.
         */
         widthFill: 0.9,
+        frameFill,
         /*
           In CANVAS coordinates: the viewport centre's page-y minus the canvas's
           own offset from the document top. The canvas starts below the nav (~197
@@ -731,7 +740,15 @@ export function WallScene({
       key.shadow.camera.bottom = -extent;
       key.shadow.camera.near = 0.5;
       key.shadow.camera.far = extent * 4;
-      key.position.set(-extent * 0.4, extent * 0.8, extent);
+      /*
+        **Spherical, so elevation is sweepable.** The old triple encoded 39.3deg
+        elevation at 42deg azimuth and had to be run through `atan2` to discover
+        what angle it even was — §10b asks for a RAKING key, and nothing could
+        judge that without a second option to look at.
+      */
+      const rig = LIGHT_RIGS[lightRig ?? LIGHT_RIG_DEFAULT];
+      const at = lightPosition({ ...rig, distance: extent * 1.4 });
+      key.position.set(raw(width) / 2 + at.x, -raw(height) / 2 + at.y, at.z);
       key.target.position.set(width / 2, -height / 2, 0);
       scene.add(key.target);
     }
@@ -1861,7 +1878,7 @@ export function WallScene({
       renderer.dispose();
     };
     }
-  }, [spines, records, treatment, diagnosticProp, orbitProp, dimFloor, wallColour]);
+  }, [spines, records, treatment, diagnosticProp, orbitProp, dimFloor, wallColour, lightRig, frameFill]);
 
   /** Drives the rise when the pulled record changes. */
   useEffect(() => {

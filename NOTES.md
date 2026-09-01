@@ -25145,3 +25145,65 @@ nobody ever picks up.
 **code 0 with 1 failed** in run A. A green exit code is not evidence; the summary
 line is. This is the third time in one session an exit code has concealed a real
 result — after the truncated 210-test run and the contaminated 137-failure runs.
+
+---
+
+## The light became an angle, and a test that measured an aggregate missed a drift
+
+**Two controls added to `/scene`, both because a value had never been compared
+against anything.**
+
+### `light:` — the rig is now elevation and azimuth
+
+The key was one hardcoded triple, `(-0.4, 0.8, 1)` scaled by the wall's extent.
+Its angle was unknown until it was run through `atan2`: **39.3 deg elevation at
+42 deg azimuth** — a studio three-quarter light, where §10b asks for a RAKING
+key. Nobody could judge which was right because there was no second option.
+
+| rig | elevation | shadow throw |
+|---|---|---|
+| raking | 12 | 4.70x |
+| low | 25 | 2.14x |
+| studio | 39 | **1.23x** — what shipped |
+| high | 62 | 0.53x |
+| frontal | 12, near-axis | collapses behind casters |
+
+**Spherical rather than Cartesian, and that is the point**: elevation and azimuth
+are the quantities being judged, and a position encoding them implicitly cannot
+be swept. The `cos(elevation)` horizontal term is what keeps the two independent
+— without it, raising the light also swings it sideways, and no single axis can
+be isolated.
+
+### `size:` — `FRAME_FILL` was never compared either
+
+0.55, hardcoded since the first implementation, and **judged for most of this
+work against the plain-sleeve fallback** — a flat grey rectangle, per the harness
+finding above. Height is the binding constraint on desktop (55% of frame height
+against 39% of its width, measured), so it is the lever that moves apparent size.
+Range 0.4 to 0.9, ceiling deliberately past what looks right.
+
+### THE TEST FINDING: an aggregate assertion cannot see one member drift
+
+A test asserted the rig set spanned more than 4x in shadow throw. **A mutation
+moving `raking` from 12 deg to 35 deg SURVIVED it** — `frontal` (12) and `high`
+(62) kept the aggregate spread wide while the entry named "raking" quietly
+stopped raking.
+
+> **A test that measures a property of a SET does not constrain any member of
+> it.** The set stayed wide; the thing under test broke.
+
+This is the decorative-test shape CLAUDE.md §2 names, in a form that looks
+rigorous: it computes a real number from real data and asserts a real threshold.
+What it does not do is name the line it would fail against. Rewritten to assert
+`shadowThrow(LIGHT_RIGS.raking) > 3` directly, which the mutation now fails.
+
+**Found only because the mutation sweep ran on every guard rather than on the
+ones that looked risky.** Three of four mutations were caught immediately; this
+was the fourth.
+
+### A real bug the harness work surfaced
+
+`0.55 * 100` renders as `55.00000000000001`. It was in a control's `title`, so it
+was user-facing. Rounded. **Floating point reaches the UI wherever a stored
+fraction is displayed as a percentage** — worth checking anywhere else that
+pattern appears.
