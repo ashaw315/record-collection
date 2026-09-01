@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useEffect, useRef } from 'react';
 import { WallScene, type ShelfTreatment } from '../plane/WallScene';
 import { RETURN_DEFAULT_MS, RETURN_SETTLES_BY_DEFAULT, RISE_DEFAULT_MS } from '../plane/motion-tuning';
@@ -62,8 +62,8 @@ export function SceneHarness() {
   const [returnSettle, setReturnSettle] = useState(RETURN_SETTLES_BY_DEFAULT);
   const [looping, setLooping] = useState(false);
   const [dimFloor, setDimFloor] = useState(WALL_DIM_FLOOR);
-  const [bakeBlur, setBakeBlur] = useState(false);
-  const [bakeDownsample, setBakeDownsample] = useState(8);
+  const [covers, setCovers] = useState(true);
+  const [wallColour, setWallColour] = useState('#100e0d');
   const frame = useRef<HTMLDivElement | null>(null);
 
   /**
@@ -114,7 +114,7 @@ export function SceneHarness() {
     };
   }, [looping]);
 
-  const records = sceneFixtures(count);
+  const records = useMemo(() => sceneFixtures(count, covers), [count, covers]);
 
   return (
     <div style={{ minHeight: '100vh', background: '#f4efe6' }}>
@@ -317,45 +317,45 @@ export function SceneHarness() {
 
         <button
           type="button"
-          onClick={() => setBakeBlur((v) => !v)}
-          aria-pressed={bakeBlur}
-          title="Bake the wall to a low-res texture while a record is out — the blur is the downsample"
+          onClick={() => setCovers((v) => !v)}
+          aria-pressed={covers}
+          title="Real cover art from the collection, versus the plain-sleeve fallback the fixtures used to force"
           style={{
             padding: '4px 10px',
             border: '1px solid #ddd4c6',
             borderRadius: 3,
-            background: bakeBlur ? '#4d3b2b' : '#fff',
-            color: bakeBlur ? '#fff' : '#1c1917',
+            background: covers ? '#4d3b2b' : '#fff',
+            color: covers ? '#fff' : '#1c1917',
             cursor: 'pointer',
           }}
         >
-          {bakeBlur ? 'baked blur ON' : 'baked blur'}
+          {covers ? 'real covers' : 'plain sleeves'}
         </button>
 
-        {bakeBlur && (
-          <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            softness
-            {[2, 3, 5, 6, 7, 8].map((n) => (
+        <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          wall:
+          {([['#100e0d', 'dark'], ['#6b6660', 'mid'], ['#e8e3d9', 'light'], ['#f7f5f0', 'white']] as const).map(
+            ([value, label]) => (
               <button
-                key={n}
+                key={label}
                 type="button"
-                onClick={() => setBakeDownsample(n)}
-                aria-pressed={bakeDownsample === n}
-                title={`1/${n} downsample — larger is softer`}
+                onClick={() => setWallColour(value)}
+                aria-pressed={wallColour === value}
+                title={`Wall ground ${value} — does depth read better light or dark?`}
                 style={{
-                  padding: '4px 9px',
+                  padding: '4px 10px',
                   border: '1px solid #ddd4c6',
                   borderRadius: 3,
-                  background: bakeDownsample === n ? '#4d3b2b' : '#fff',
-                  color: bakeDownsample === n ? '#fff' : '#1c1917',
+                  background: wallColour === value ? '#4d3b2b' : '#fff',
+                  color: wallColour === value ? '#fff' : '#1c1917',
                   cursor: 'pointer',
                 }}
               >
-                1/{n}
+                {label}
               </button>
-            ))}
-          </span>
-        )}
+            ),
+          )}
+        </span>
 
         <button
           type="button"
@@ -389,15 +389,14 @@ export function SceneHarness() {
         }}
       >
         <WallScene
-          key={`${treatment}-${diagnostic}-${orbit}-${bakeBlur}-${bakeDownsample}`}
+          key={`${treatment}-${diagnostic}-${orbit}-${covers}-${wallColour}`}
           records={records}
           treatment={treatment}
           diagnostic={diagnostic}
           orbit={orbit}
           motion={{ riseMs, returnMs, returnSettle }}
           dimFloor={dimFloor}
-          bakeBlur={bakeBlur}
-          bakeDownsample={bakeDownsample}
+          wallColour={wallColour}
         />
       </div>
     </div>

@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { SPINE_HEIGHT, SHELF_EDGE } from '../shelf/spine';
+import { raw, sceneZ, wallPx } from './frames';
+import { SPINE_HEIGHT, SHELF_EDGE, MAX_SPINE_WIDTH } from '../shelf/spine';
 import { WALL_FOV_DEGREES, wallCameraDistance } from './wall-camera';
 import {
   framedCameraDistance,
   topClipMargin,
   shelfSurfaceDepth,
   shelfSurfaceSpan,
+  shelfBackPanelZ,
   SHELF_PLANE_DEPTH,
   SHELF_LIP_DEPTH,
 } from './wall-framing';
@@ -32,7 +34,7 @@ const t = Math.tan((WALL_FOV_DEGREES * Math.PI) / 360);
 describe('the top row is not clipped by the frustum', () => {
   it('reports the shortfall a wall-plane framing leaves at the spine depth', () => {
     // A 12px-deep spine at 16 degrees loses z * tan(8deg).
-    expect(topClipMargin({ spineDepth: 12 })).toBeCloseTo(12 * t, 5);
+    expect(topClipMargin({ spineDepth: sceneZ(12) })).toBeCloseTo(12 * t, 5);
   });
 
   /**
@@ -40,10 +42,10 @@ describe('the top row is not clipped by the frustum', () => {
    * distance derived from the wall plane.
    */
   it('is INDEPENDENT of wall height, which is why every collection size shows it', () => {
-    const twelve = topClipMargin({ spineDepth: 12 });
+    const twelve = topClipMargin({ spineDepth: sceneZ(12) });
     expect(twelve).toBeCloseTo(1.69, 1);
     // Same answer whatever the wall height, because height is not an input.
-    expect(topClipMargin({ spineDepth: 12 })).toBe(twelve);
+    expect(topClipMargin({ spineDepth: sceneZ(12) })).toBe(twelve);
   });
 
   /**
@@ -52,8 +54,8 @@ describe('the top row is not clipped by the frustum', () => {
    * depth by exactly the amount that was being lost.
    */
   it('stands the camera back so the spine plane is fully framed', () => {
-    const wallHeight = 248;
-    const spineDepth = 12;
+    const wallHeight = wallPx(248);
+    const spineDepth = sceneZ(12);
 
     const framed = framedCameraDistance({ wallHeight, spineDepth });
     const naive = wallCameraDistance({ wallHeight });
@@ -66,11 +68,11 @@ describe('the top row is not clipped by the frustum', () => {
   });
 
   it('leaves the top of row 0 inside the frame, not exactly on its edge', () => {
-    const wallHeight = 248;
-    const spineDepth = 12;
+    const wallHeight = wallPx(248);
+    const spineDepth = sceneZ(12);
     const framed = framedCameraDistance({ wallHeight, spineDepth });
 
-    const cameraY = -wallHeight / 2;
+    const cameraY = -raw(wallHeight) / 2;
     const visibleTop = cameraY + (framed - spineDepth) * t;
 
     // Row 0's spines run from y = 0 down to y = -SPINE_HEIGHT.
@@ -78,8 +80,8 @@ describe('the top row is not clipped by the frustum', () => {
   });
 
   it('still frames the wall when there is no spine depth to account for', () => {
-    expect(framedCameraDistance({ wallHeight: 248, spineDepth: 0 })).toBeCloseTo(
-      wallCameraDistance({ wallHeight: 248 }),
+    expect(framedCameraDistance({ wallHeight: wallPx(248), spineDepth: sceneZ(0) })).toBeCloseTo(
+      wallCameraDistance({ wallHeight: wallPx(248) }),
       5,
     );
   });
@@ -252,5 +254,48 @@ describe('the shelf has depth, so a record stands ON it', () => {
   it('keeps the authored lip depth, which is what the eye judges', () => {
     // The lip is the front face the viewer sees; its 2px was chosen by looking.
     expect(SHELF_LIP_DEPTH).toBe(2);
+  });
+});
+
+/**
+ * The back panel is the shelf being complete rather than an effect. These pin
+ * the two properties that make it a BACK: it is behind everything, and it is at
+ * the shelf's own rear rather than at an arbitrary depth.
+ */
+describe('the shelf has a back', () => {
+  /**
+   * Fails against a panel placed at the wall plane (`z = 0`), which is the
+   * obvious wrong answer — it would sit in FRONT of the shelf's rear portion
+   * and cut through the board.
+   */
+  it('sits at the back of the shelf, not at the wall plane', () => {
+    const span = shelfSurfaceSpan();
+
+    expect(raw(shelfBackPanelZ())).toBe(raw(span.back));
+    expect(raw(shelfBackPanelZ()), 'behind the wall plane').toBeLessThan(0);
+  });
+
+  /**
+   * **Behind every spine.** Spines stand at `z = width/2`, at most
+   * `MAX_SPINE_WIDTH / 2`; a panel in front of that would occlude the wall it
+   * is supposed to back.
+   *
+   * Fails against a panel at the shelf's FRONT edge.
+   */
+  it('is behind the deepest spine', () => {
+    expect(raw(shelfBackPanelZ())).toBeLessThan(MAX_SPINE_WIDTH / 2);
+    expect(raw(shelfBackPanelZ())).toBeLessThan(raw(shelfSurfaceSpan().front));
+  });
+
+  /**
+   * **The gap that decides whether a shadow reads as contact.** A spine sits
+   * ~12 units off the panel — 0.05x its height — which is the near-field case
+   * this panel exists to serve. Recorded as a test because it is the number the
+   * whole "does a cast shadow work here" question turns on.
+   */
+  it('is close enough to a spine for its shadow to read as contact', () => {
+    const spineToPanel = MAX_SPINE_WIDTH / 2 - raw(shelfBackPanelZ());
+
+    expect(spineToPanel / SPINE_HEIGHT, 'a near-field shadow').toBeLessThan(1);
   });
 });

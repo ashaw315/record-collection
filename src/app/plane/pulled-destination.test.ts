@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { canvasPx, framePx, raw, wallPx } from './frames';
 import { pulledDestination } from './pulled-destination';
 import { WALL_FOV_DEGREES, viewportCameraDistance, wallCameraDistance } from './wall-camera';
 import { SPINE_HEIGHT } from '../shelf/spine';
@@ -21,7 +22,7 @@ import { SPINE_HEIGHT } from '../shelf/spine';
  */
 
 /** A wall as tall as N rows, which is what the camera frames. */
-const wallOf = (rows: number) => rows * (SPINE_HEIGHT + 8);
+const wallOf = (rows: number) => wallPx(rows * (SPINE_HEIGHT + 8));
 
 describe('pulledDestination', () => {
   it('centres the record in view, not at its slot\'s row', () => {
@@ -34,7 +35,7 @@ describe('pulledDestination', () => {
      * Fails against `pulled-destination.ts` if it returns the slot's height.
      */
     const wallHeight = wallOf(3);
-    const target = pulledDestination({ wallWidth: 1280, wallHeight });
+    const target = pulledDestination({ wallWidth: wallPx(1280), wallHeight });
 
     expect(target.x, 'centred across the wall').toBeCloseTo(640, 0);
     expect(target.y, 'centred in the camera\'s view, which looks at -height/2').toBeCloseTo(
@@ -56,7 +57,7 @@ describe('pulledDestination', () => {
      * which is what the fixed camera bought.
      */
     const wallHeight = wallOf(4);
-    const target = pulledDestination({ wallWidth: 1280, wallHeight });
+    const target = pulledDestination({ wallWidth: wallPx(1280), wallHeight });
 
     expect(target.y, 'on the axis the camera looks down').toBeCloseTo(-wallHeight / 2, 5);
     expect(target.x).toBeCloseTo(640, 5);
@@ -77,9 +78,9 @@ describe('pulledDestination', () => {
      */
     const apparent = (rows: number) => {
       const wallHeight = wallOf(rows);
-      const target = pulledDestination({ wallWidth: 1280, wallHeight });
+      const target = pulledDestination({ wallWidth: wallPx(1280), wallHeight });
       const cameraZ = wallCameraDistance({ wallHeight });
-      const distance = cameraZ - target.z;
+      const distance = raw(cameraZ) - raw(target.z);
       const halfFrame = distance * Math.tan((WALL_FOV_DEGREES * Math.PI) / 360);
       return SPINE_HEIGHT / (halfFrame * 2);
     };
@@ -97,7 +98,7 @@ describe('pulledDestination', () => {
      * near-the-lens hypothesis predicted and the measurement ruled out.
      */
     const wallHeight = wallOf(3);
-    const target = pulledDestination({ wallWidth: 1280, wallHeight });
+    const target = pulledDestination({ wallWidth: wallPx(1280), wallHeight });
     const distance = wallCameraDistance({ wallHeight }) - target.z;
     const frameHeight = 2 * distance * Math.tan((WALL_FOV_DEGREES * Math.PI) / 360);
     const fraction = SPINE_HEIGHT / frameHeight;
@@ -111,7 +112,7 @@ describe('pulledDestination', () => {
      * The finding this whole rewrite was for. A destination behind the wall
      * plane would put the record inside the shelf.
      */
-    const target = pulledDestination({ wallWidth: 1280, wallHeight: wallOf(3) });
+    const target = pulledDestination({ wallWidth: wallPx(1280), wallHeight: wallOf(3) });
 
     expect(target.z).toBeGreaterThan(SPINE_HEIGHT / 2);
   });
@@ -124,14 +125,14 @@ describe('pulledDestination', () => {
      */
     for (const rows of [1, 3, 5, 9, 20]) {
       const wallHeight = wallOf(rows);
-      const target = pulledDestination({ wallWidth: 1280, wallHeight });
+      const target = pulledDestination({ wallWidth: wallPx(1280), wallHeight });
       expect(target.z, `${rows} rows`).toBeLessThan(wallCameraDistance({ wallHeight }));
     }
   });
 
   it('is deterministic', () => {
-    const a = pulledDestination({ wallWidth: 1280, wallHeight: wallOf(3) });
-    const b = pulledDestination({ wallWidth: 1280, wallHeight: wallOf(3) });
+    const a = pulledDestination({ wallWidth: wallPx(1280), wallHeight: wallOf(3) });
+    const b = pulledDestination({ wallWidth: wallPx(1280), wallHeight: wallOf(3) });
     expect(a).toEqual(b);
   });
 });
@@ -163,8 +164,8 @@ describe('the pulled record fits the viewport, not just the canvas', () => {
   }
 
   const CASES = [
-    { name: 'phone', viewport: { width: 390, height: 844 }, wall: { width: 358, height: wallOf(10) } },
-    { name: 'desktop', viewport: { width: 1280, height: 900 }, wall: { width: 1248, height: wallOf(4) } },
+    { name: 'phone', viewport: { width: canvasPx(390), height: canvasPx(844) }, wall: { width: wallPx(358), height: wallOf(10) } },
+    { name: 'desktop', viewport: { width: canvasPx(1280), height: canvasPx(900) }, wall: { width: wallPx(1248), height: wallOf(4) } },
   ];
 
   for (const { name, viewport, wall } of CASES) {
@@ -175,7 +176,7 @@ describe('the pulled record fits the viewport, not just the canvas', () => {
         viewport,
       });
       const cameraZ = wallCameraDistance({ wallHeight: wall.height });
-      const canvasAspect = wall.width / wall.height;
+      const canvasAspect = raw(wall.width) / raw(wall.height);
       const frameW = frameWidthAt(cameraZ, target.z, canvasAspect);
 
       expect(
@@ -188,9 +189,9 @@ describe('the pulled record fits the viewport, not just the canvas', () => {
   it('pushes the record further back on a portrait viewport than a landscape one', () => {
     // A tall narrow canvas needs the record deeper to fit its width; a wide one does not.
     const phone = pulledDestination({
-      wallWidth: 358,
+      wallWidth: wallPx(358),
       wallHeight: wallOf(10),
-      viewport: { width: 390, height: 844 },
+      viewport: { width: canvasPx(390), height: canvasPx(844) },
     });
     const cameraPhone = wallCameraDistance({ wallHeight: wallOf(10) });
     // The record must sit closer to the camera than the wall, but the gap is larger on a phone.
@@ -199,14 +200,14 @@ describe('the pulled record fits the viewport, not just the canvas', () => {
 
   it('still accepts the viewport being omitted, and then frames by height as before', () => {
     // Back-compat: the destination tests above call it without a viewport.
-    const noViewport = pulledDestination({ wallWidth: 1280, wallHeight: wallOf(3) });
+    const noViewport = pulledDestination({ wallWidth: wallPx(1280), wallHeight: wallOf(3) });
     expect(Number.isFinite(noViewport.z)).toBe(true);
   });
 });
 
 describe('the record is always camera-centred — no lift (A33a)', () => {
-  const wall = { wallWidth: 358, wallHeight: wallOf(10) };
-  const viewport = { width: 390, height: 844 };
+  const wall = { wallWidth: wallPx(358), wallHeight: wallOf(10) };
+  const viewport = { width: canvasPx(390), height: canvasPx(844) };
 
   /**
    * **A33a removed the stacked lift.** The summary card became an OVERLAY on
@@ -231,11 +232,11 @@ describe('the record is always camera-centred — no lift (A33a)', () => {
   });
 
   it('is the same Y at a phone and a desktop wall', () => {
-    const phone = pulledDestination({ wallWidth: 358, wallHeight: wallOf(10), viewport, widthFill: 0.9 });
+    const phone = pulledDestination({ wallWidth: wallPx(358), wallHeight: wallOf(10), viewport, widthFill: 0.9 });
     const desktop = pulledDestination({
-      wallWidth: 1248,
+      wallWidth: wallPx(1248),
       wallHeight: wallOf(4),
-      viewport: { width: 1280, height: 900 },
+      viewport: { width: canvasPx(1280), height: canvasPx(900) },
       widthFill: 0.9,
     });
     /* Both on their own wall's axis — the record is centred at every width. */
@@ -271,7 +272,7 @@ describe('the record is always camera-centred — no lift (A33a)', () => {
 
 describe('the record settles at the VISIBLE viewport centre, not the wall centre', () => {
   const wallHeight = wallOf(10); // a tall wall, so scroll matters
-  const viewportHeight = 844;
+  const viewportHeight = framePx(844);
 
   function ndcAt(y: number, z: number, camZ: number): number {
     const halfAngle = (WALL_FOV_DEGREES * Math.PI) / 360;
@@ -302,11 +303,11 @@ describe('the record settles at the VISIBLE viewport centre, not the wall centre
     */
     const camZ = viewportCameraDistance({ viewportHeight });
     for (const scrollY of [0, 500, 2000]) {
-      const viewCentrePx = scrollY + viewportHeight / 2;
+      const viewCentrePx = canvasPx(scrollY + raw(viewportHeight) / 2);
       const target = pulledDestination({
-        wallWidth: 358,
+        wallWidth: wallPx(358),
         wallHeight,
-        viewport: { width: 390, height: viewportHeight },
+        viewport: { width: canvasPx(390), height: canvasPx(raw(viewportHeight)) },
         widthFill: 0.9,
         viewCentrePx,
         viewportHeight,
@@ -325,7 +326,7 @@ describe('the record settles at the VISIBLE viewport centre, not the wall centre
 
   it('falls back to the wall centre when no view centre is given', () => {
     /* The geometry tests and any caller without a scroll position are unchanged. */
-    const target = pulledDestination({ wallWidth: 358, wallHeight });
+    const target = pulledDestination({ wallWidth: wallPx(358), wallHeight });
     expect(target.y).toBe(-wallHeight / 2);
   });
 });

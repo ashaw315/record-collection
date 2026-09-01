@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { canvasPx } from './frames';
 import { BoxCanvas } from './BoxCanvas';
 import { WIDTH_CANDIDATES, recordSizeFor } from './fill-candidates';
 import { recordSummary } from './summary';
@@ -90,7 +91,9 @@ export function FillComparison({
 
   useEffect(() => {
     const measure = () =>
-      setAspect(viewportAspect({ width: window.innerWidth, height: window.innerHeight }));
+      setAspect(
+        viewportAspect({ width: canvasPx(window.innerWidth), height: canvasPx(window.innerHeight) }),
+      );
     measure();
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);

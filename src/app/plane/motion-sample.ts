@@ -1,6 +1,5 @@
 import { risePose } from './rise-pose';
 import { easeRiseInOut } from './motion-tuning';
-import { bakeMix, bakeOpacity } from './wall-bake';
 import { wallDimTo } from './wall-dim';
 import { WALL_DIM_FLOOR } from './wall-dim';
 
@@ -39,9 +38,11 @@ import { WALL_DIM_FLOOR } from './wall-dim';
  *    neither would appear here: they are about WHEN progress advances, not what
  *    holds at a given progress.
  * 2. **Anything not driven by a pure function** — the camera, the shelf
- *    geometry, the chrome's CSS fade, the tilt. Note that the blur SNAP would
- *    only have been caught once `bakeMix` existed; before that, blur was not a
- *    sampled quantity at all, which is the same invisibility as position's.
+ *    geometry, the chrome's CSS fade, the tilt. **A property only becomes
+ *    visible here once it is a sampled quantity**, which is why the blur's snap
+ *    stayed invisible until the blur became a sampled column. (The blur has
+ *    since been dropped — see NOTES — but the lesson generalises to every
+ *    property not yet sampled.)
  * 3. **Rendering.** Everything downstream of the numbers: the composite that
  *    painted the baked wall out, the colour-space chase, the record blurred by
  *    the composer. All of those had correct values and a wrong image.
@@ -60,10 +61,6 @@ export type MotionSample = {
   depth: number;
   /** Size in the scene, spine-sized to full. */
   scale: number;
-  /** How much of the blurred wall shows, 0..1. */
-  blurMix: number;
-  /** The baked quad's brightness. */
-  blurLevel: number;
   /** The wall's brightness multiplier. */
   dim: number;
 };
@@ -104,8 +101,6 @@ export function motionSample({
     rotationY: pose.rotationY,
     depth: pose.z,
     scale: pose.scale,
-    blurMix: bakeMix({ progress, returning }),
-    blurLevel: bakeOpacity(progress),
     dim: wallDimTo(progress, dimFloor),
   };
 }
@@ -127,7 +122,7 @@ export function motionTable({
   steps = 10,
 }: { returning?: boolean; steps?: number } = {}): string {
   const rows: string[] = [];
-  const header = ['t', 'travel', 'turn', 'depth', 'scale', 'blur', 'level', 'dim'];
+  const header = ['t', 'travel', 'turn', 'depth', 'scale', 'dim'];
   rows.push(header.map((h) => h.padStart(7)).join(' '));
 
   for (let i = 0; i <= steps; i += 1) {
@@ -136,7 +131,7 @@ export function motionTable({
     /* Turn as 0..1 from edge-on to face-on, so it reads like the others. */
     const turn = 1 - s.rotationY / (Math.PI / 2);
     rows.push(
-      [t, s.travel, turn, s.depth, s.scale, s.blurMix, s.blurLevel, s.dim]
+      [t, s.travel, turn, s.depth, s.scale, s.dim]
         .map((v) => v.toFixed(3).padStart(7))
         .join(' '),
     );

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { canvasPx } from './frames';
 import {
   CARD_SHARE,
   WIDTH_CANDIDATES,
@@ -19,8 +20,8 @@ import { viewportAspect } from './wall-camera';
  * candidate that overflows the frame never reaches the developer's eye.
  */
 
-const PHONE = viewportAspect({ width: 390, height: 844 });
-const DESKTOP = viewportAspect({ width: 1280, height: 900 });
+const PHONE = viewportAspect({ width: canvasPx(390), height: canvasPx(844) });
+const DESKTOP = viewportAspect({ width: canvasPx(1280), height: canvasPx(900) });
 
 /**
  * **The size rule: frame in, record dimensions out.**

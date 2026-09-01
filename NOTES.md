@@ -8,6 +8,110 @@ in.
 
 ---
 
+## "THE SCENE RESISTS IT" — a conclusion one step too broad
+
+**The finding here is the framing correction, not the back panel that followed
+it.**
+
+After three failed cast-shadow attempts I wrote that the blur and the shadow had
+both failed because *"this scene resists it"*, and recorded it as a decision. The
+phrase asserts an INTRINSIC property. The truth was a **missing object**: the
+wall was not a surface, so nothing could receive a shadow and the composer had
+nothing to filter. Add the object and both become ordinary.
+
+> Adam: *"'The scene resists it' implied an intrinsic property and the truth was
+> a missing object, and I would have accepted the stronger claim if I had not
+> asked which one you were making."*
+
+**Why the overreach felt earned.** Three attempts had failed, each measured
+rather than guessed, each failure real. The evidence was genuine — and the
+conclusion drawn from it was one step broader than the evidence supported.
+"Three mechanisms failed" licenses *"I have not found a way"*; it does not
+license *"there is no way."* Accumulated failure is exactly the condition under
+which the stronger claim feels justified, which is what makes it the moment to
+check which claim is being made.
+
+**What surfaced the error was a question about scope, not about evidence.** Adam
+asked whether the conclusion was a fact about the geometry as it is, or about
+what was affordable. Neither reading had been stated, and separating them
+collapsed the claim immediately: cost had never entered any measurement. The
+whole of it was "the object is absent."
+
+> **When reporting that something cannot be done, name WHICH claim is being
+> made:** this specific approach failed; no approach I found works; or the thing
+> is impossible. They need different evidence and the third is almost never what
+> was measured.
+
+### The one part that WAS intrinsic, and stays
+
+A cast shadow does not give the PULLED record contact, and that survives any
+budget. At settle it is ~1552 units forward of the wall — **6.9x its own
+height** from a back panel — and a shadow at that distance is large, faint and
+diffuse: ambient darkening rather than contact. Compare a spine on its shelf at
+**0.05x its height**, which is the ratio that reads as an object standing on
+something, and which already shipped.
+
+So the honest split, which the single phrase had flattened:
+
+| Claim | Verdict |
+|---|---|
+| Nothing to cast onto | **A missing object.** Fixed by the back panel. |
+| No contact shadow for the pulled record at 6.9x its height | **Geometry.** Stands regardless. |
+
+---
+
+## THE FINDING THAT OUTRANKS THE FIXES: a stand-in wrong in what it LACKED
+
+**Read this before trusting any judgement made in a harness.**
+
+> Adam: *"the fixture differed from reality in a null field, so the rendering
+> code looked complete and the harness looked correct. Two units of work went
+> into effects that compensated for missing artwork. That is the seeded-wall
+> finding in a form that was harder to see — a stand-in that was wrong in what
+> it lacked rather than in what it contained."*
+
+`sceneFixtures` set `coverUrl: null` on every record. Its artists and titles were
+ALREADY the real collection, so the harness looked like the product. Every pulled
+record therefore rendered as the plain-sleeve fallback: a flat mid-grey rectangle
+with no internal contrast and no edges of its own — which reads as a hole in the
+wall rather than as an object in front of it.
+
+**Two units of work were spent making that rectangle separate from its
+background:**
+
+1. The **wall blur** — two approaches, six wrong diagnoses on the composer,
+   hours across two sessions. Dropped.
+2. The **cast shadow** — three mechanisms, each measured to fail, stopped under
+   §9's two-attempt rule.
+
+Supplying the real `coverUrl`s ends the problem with **no change to the scene at
+all** — no shadow, no blur, no lighting, no geometry. Same wall, same dim, same
+camera; the artwork alone is the difference.
+
+### Why this was harder to see than the seeded wall
+
+The seeded wall was wrong in what it CONTAINED — synthetic data that looked
+synthetic. This fixture was wrong in what it OMITTED, and an omission has no
+appearance. Nothing in `WallScene.tsx` looked incomplete, because the code that
+renders a cover is correct and simply never ran. **A null field renders as a
+supported case, not as an error.**
+
+### The check this earns
+
+Before judging any visual property in a harness, ask **which fields the fixtures
+leave null, and whether any of them is the property being judged.** In
+`sceneFixtures` those are `coverUrl`, `backUrl`, `gatefoldLeftUrl`,
+`gatefoldRightUrl` — every photographed face. `/scene` now carries a
+`real covers` / `plain sleeves` toggle, defaulting to real, so the default view
+is the product rather than the stand-in.
+
+**The generalisation, which is the part worth carrying forward:** a stand-in is
+dangerous in proportion to how COMPLETE it looks, not how different it is. One
+that is obviously fake gets checked; one missing a single optional field gets
+trusted, and every judgement made against it inherits the gap silently.
+
+---
+
 ## CURRENT POSITION — read this first
 
 **2026-08-25 — the three-findings lookup unit (QA from production use).**
@@ -24604,3 +24708,440 @@ relationships between pure functions**. The gaps are written into
 
 **Three of this session's regressions would have been caught; none of the
 rendering ones.**
+
+---
+
+## Branded coordinate frames, and the false diagnosis that preceded them
+
+### The diagnosis that dissolved
+
+A screenshot after click showed a spine-shaped gap in the wall and, apparently,
+no record. Diagnosed as "live pull state outliving the pull" and presented as the
+third instance of a class, with a three-part fix Adam approved. **All of it was
+wrong, and the approval inherited the error.**
+
+What was actually in the screenshot:
+
+- **The black right-hand region** was a third-full shelf. 17 records at 1280px
+  genuinely occupy the left third. At 125 the wall fills edge to edge.
+- **The grey rectangle WAS the record**, rendering correctly. `sceneFixtures`
+  sets `coverUrl: null` on every fixture, so every pulled record shows the
+  plain-sleeve fallback — §10b's "honest absence". The harness has no cover art
+  by design.
+
+Nothing was latched. `outRecordId` returns null at `idle`, the effect re-runs,
+`setPulled(null, 0)` lands: instrumented, final write `0001->undefined@0`,
+`clears: 6`.
+
+### The instrumentation lesson — the session's best finding
+
+**A debug line inside the branch it measures cannot observe the branch not
+running.**
+
+The line was written inside the bake branch, which is gated on `pulledNow !==
+null`. When the clear fired, the branch stopped running and `data-dbg` kept its
+last value — reporting `pn:"0001"` at `idle` forever. A working clear and a stuck
+latch produce **byte-identical output**.
+
+This is worse than the earlier measurement-scope errors (the truncated scan
+column, the page-background blame) because **the reading was live rather than
+stale-looking**. It updated on every frame it was supposed to. The frames it
+should have reported were exactly the ones where it was silent.
+
+> Adam: *"an approval based on your diagnosis inherits its error, and you are
+> better placed than I am to notice when the premise dissolves."*
+
+Corollary to the existing rule: measure inside the element under test — **and
+place the instrument outside the condition under test.**
+
+### The class that IS real: wrong-frame derivation
+
+The "three regressions, all live pull state" finding was corrected to two — the
+`returningId` teardown and the closure's `hoveredId` (`WallScene.tsx`). Two is a
+pattern; it is not yet the trend that justifies predicting a fourth.
+
+The class with more than two instances is **a value derived from the wrong
+space**:
+
+- `pulledDestination` framed the camera on `wallHeight` where it meant the
+  viewport's — three quantities, wrong the same way, for weeks.
+- `framedCameraDistance` vs `wallCameraDistance`: one argument name reaching two
+  framings.
+- The shelf's depth, answered six times in scene-Z, checked against spine
+  geometry in wall space.
+
+**A test cannot catch this class, and neither can the motion table.** A value
+derived from the wrong frame is perfectly self-consistent — which is why all six
+wrong shelf-depth values passed, and why the table cannot see it either: it
+asserts driven properties AGREE WITH EACH OTHER, and two quantities from the same
+wrong space agree perfectly.
+
+A compiler can. `src/app/plane/frames.ts` brands four spaces — `WallPx`,
+`FramePx`, `CanvasPx`, `SceneZ` — costing nothing at runtime.
+
+**The constructors are the entire attack surface**, and there are five:
+`wallPx`, `framePx`, `canvasPx`, `sceneZ`, plus `raw` to leave the branded world.
+Two named crossings, `wallToCanvas` and `canvasToFrame`, exist so a conversion is
+greppable rather than an invisible cast. A brand is only as good as the places
+that assert it; keeping these few is what makes the file reviewable by reading.
+
+**Verified by mutation** rather than assumed. Passing `WallPx` where `FramePx` is
+required — literally the pull-depth defect — is rejected, as is a bare `number`.
+**One gap, measured:** TypeScript permits `+` between two brands, so `sceneZ(-107)
++ canvasPx(743)` still compiles. Branding catches wrong-frame ARGUMENTS, not
+wrong-frame ARITHMETIC. Every defect listed above was an argument, so this covers
+the majority of the class — but not all of it.
+
+### The limit: time frames stay uncovered
+
+Position and pose reading different clocks (the rise's split easing) is the same
+class in a dimension branding will not reach: both are `number` in [0, 1] and
+both are legitimately progress, so there is **no wrong space to name**.
+
+That remains `motion-sample.ts`'s job, and is the reason the table has to keep
+existing rather than being replaced by this. The two mechanisms are complements:
+**types catch a quantity from the wrong space; the table catches two quantities
+from the wrong clock.**
+
+### Tooling hazard: `npx prettier` is not this repo's formatter
+
+Running `npx prettier --write "src/app/plane/*.ts"` to tidy the branded files
+reformatted **65 files** — flipping the repo's single quotes to double throughout,
+because there is no `.prettierrc` and prettier is not even a dependency here. The
+repo formats via eslint alone.
+
+The branding diff was 11 files; the diff I nearly shipped was 65, with the real
+change buried in quote churn. Caught by reading `git diff --stat` before
+committing, and fixed by reverting everything and reapplying without prettier.
+
+**`npx <tool>` silently installs and runs a tool the project does not use, with
+that tool's defaults rather than the project's.** Check `package.json` before
+reaching for a formatter, and read `--stat` before committing any change that
+touched a directory rather than a file.
+
+---
+
+## The wall blur: dropped, as a decision
+
+**The dim ships alone. The bake path is removed.** Not a failure to fix later —
+a decision about where the effort belongs.
+
+Adam: *"the effect was worth trying, both approaches were sound in principle, and
+the honest result is that this scene resists it."*
+
+### What was tried, and what each cost
+
+**1. Screen-space composer** (`EffectComposer` + `ShaderPass`). Six wrong
+diagnoses: output not reaching screen, blur step dimension, shader weights,
+colour space (three separate attempts), layer restriction. Ended by SUBTRACTION
+rather than by a seventh theory — removing the layer restriction gave 14.4 either
+way, which is exactly `WALL_BACK` luminance, so the pass had never been filtering
+the wall at all.
+
+Structural reason it could not work cleanly: **a screen-space pass filters the
+FRAME**, so the wall and the record are the same pixels by the time it runs.
+Every step needed the partition the scene already has everywhere else — material
+dim, id-keyed meshes, DOM chrome — re-established through layer masks somebody
+must keep correct.
+
+**2. Baked texture** (`wall-bake.ts`, three draws per frame). The partition was
+physical rather than maintained, which was the right correction. It produced a
+correct image at rest and **broke the pull animation**: three draws with
+`mesh.visible` flipped between them, a nulled background, and a `clearDepth`
+in the middle of a frame the rest of the scene assumes it owns.
+
+The blur also cost two false diagnoses of its own — a "record disappears" report
+that was a third-full shelf plus the plain-sleeve fallback, and a "latched
+`pulledId`" that was an instrument reporting from inside the branch it measured.
+
+### Why the dim is enough
+
+`WALL_DIM_FLOOR = 0.1` — dropped from 0.28 during the blur work, and that change
+alone did most of what the blur was reaching for. The dim has worked the entire
+time, costs one material write per frame, and needs no second render path.
+
+The earlier objection — *"Darkening is not the effect. The wall goes dim rather
+than going out of focus, and at 125 records the noise is still all there, just
+darker"* — was made against the 0.28 floor. It is preserved in `wall-blur.ts`
+because it is still the correct description of what a dim does; it is no longer
+the description of what this scene looks like.
+
+### What survives, and why
+
+- **`wall-blur.ts` and its tests** — unused by the scene, kept for the reasoning:
+  the zero-draw constraint, the composer's structural problem, the dim-vs-blur
+  argument. The next person to want this should read it before starting.
+- **`frames.ts`** (branded coordinate spaces) — came out of chasing wrong-frame
+  values during the blur work; outlives it entirely.
+- **`motion-sample.ts`** and its divergence test — the blur columns are gone; the
+  dim's designed divergence from the eased travel is now asserted **directly**
+  rather than implied by sitting alongside a second linear column. Mutation-
+  verified: easing `wallDimTo` collapses all three gaps to 0.0000.
+  **t = 0.5 is excluded from that assertion** — an ease-in-out is symmetric about
+  its midpoint, so any linear column genuinely crosses it there. Measured gaps:
+  0.137, 0.192, **0.000**, 0.192. Asserting a gap at the midpoint would assert
+  something false about the easing.
+- **The `/scene` harness** — minus the two bake controls, which drove only the
+  removed path.
+- **Every finding** — the measurement-scope rule, the instrument-placement rule,
+  the subtraction rule, the prettier hazard.
+
+### The path that stays parked
+
+**The CSS wall** remains the version that makes this trivial: a DOM element
+behind the canvas takes `filter: blur()` for free, with no second render path and
+no partition to maintain. It is parked with its existing trigger, not rejected.
+
+The reason it is not being taken now is that it is a rewrite of how the wall is
+drawn, not a blur feature — and the wall is done.
+
+### Self-interference, third instance: a dev server started mid-E2E
+
+**Observed, not inferred.** A full E2E run was started, then a `npm run dev` was
+started on port 3000 while it was in flight to capture a screenshot. The run
+produced failures like
+
+    ✘ 59 [chromium] › every-page-has-nav.spec.ts:160 › ... (325ms)
+    ✘ 60 [chromium] › every-page-has-nav.spec.ts:191 › /login deliberately has no main nav
+
+— 325ms failures on pages that pass in isolation, because the tests reached a dev
+server carrying the DEVELOPER's env instead of `NODE_ENV=test`'s.
+
+`playwright.config.ts` already sets `reuseExistingServer: false` and its comment
+names this exact hazard: *"A stale dev server would carry the developer's own
+env, not these values, and the login tests would fail confusingly."* **The config
+was right and the hazard still landed**, because that setting stops Playwright
+from ADOPTING a server it finds — it cannot stop one appearing on the port
+afterward and winning races against the one Playwright started.
+
+**This is the third instance of the same shape this session**, after the
+env-loading fork bomb and the 63 integration failures (35 deadlocks) caused by a
+dev server left running against the shared test database:
+
+> **A long-running verification run owns the machine's shared resources — the
+> port, the database, the CPU — for its whole duration.** Anything started
+> alongside it is not "in parallel", it is INSIDE the experiment.
+
+The run was killed and re-run clean rather than read, which is the correct
+handling: **a contaminated run's result is not evidence in either direction.** A
+green one would have been luck and a red one would have been noise. Reading it
+either way is the reporting failure recorded twice already this session.
+
+Practical rule, since three instances is enough: **do not start anything on port
+3000 or against the test database while a suite is running.** Screenshots and
+probes wait for the run to finish. If a run must be interrupted for one, kill it
+and restart it afterwards rather than overlapping them.
+
+---
+
+## The harness had no cover art, and two effects were built to compensate
+
+**Adam, before any more work on making the record pop:** *"I have been judging
+'does it pop' against the wrong thing. The /scene fixtures have coverUrl: null,
+so every pulled record is the plain-sleeve fallback — a flat coloured rectangle.
+My real records have artwork, and artwork against dimmed spines separates far
+better than a flat rectangle does."*
+
+**He was right, and it is visible in one comparison.** Same wall, same dim, same
+geometry, same camera — only the artwork differs:
+
+- **Plain sleeve**: a flat mid-grey rectangle on a dark wall. No internal
+  contrast, no edges of its own. It reads as a hole, not an object.
+- **Real cover** (Death Grips, *The Money Store*): reads as an object
+  immediately. Its own light, its own contrast, its own edges.
+
+**Nothing was added to the scene to achieve this.** No shadow, no blur, no
+lighting change. The fixtures were given the real `coverUrl`s.
+
+### What this cost
+
+Two effects were built and abandoned trying to make the flat rectangle separate
+from its background:
+
+1. **The wall blur** — two approaches, six wrong diagnoses on the composer,
+   hours across two sessions. Dropped.
+2. **The cast shadow** — three mechanisms, all measured to fail, stopped under
+   §9. It also surfaced a real structural gap (below).
+
+Both were solving *the harness's* problem. The artists and titles in
+`fixtures.ts` were already this collection; only the artwork was missing, which
+is exactly what made the gap invisible — the harness looked like the real thing.
+
+### The rule, which is the seeded-wall finding again
+
+> **A stand-in that differs from the real thing in the property under test is
+> worse than no harness at all**, because it produces confident judgements about
+> a problem that does not exist.
+
+The seeded wall taught this once. It recurred because the fixture's difference
+was in a field (`coverUrl: null`) rather than in anything visible in the code
+that renders it — `sceneFixtures` looked complete.
+
+**Practical check, before judging any visual property in `/scene`:** ask which
+fields the fixtures leave null, and whether any of them is the property being
+judged. `coverUrl`, `backUrl` and the two gatefold slots are all null by default;
+`covers` now toggles the real ones.
+
+### Still real, and deliberately NOT built: the wall is not a surface
+
+**`WALL_BACK` is `scene.background` — a clear colour, not geometry.** The orbit
+view shows spines floating against nothing behind them. This is why the composer
+had nothing to filter and why a cast shadow had nowhere to land: three shadow
+mechanisms failed against it, and a shadow-catching plane at the shelf's back
+edge was measured to do nothing, because at `z = -107` it sits behind spines at
+`z ≈ +12` and is occluded by the very wall it was meant to be. Proved by
+subtraction — an opaque red material on that plane showed red ONLY in the empty
+region below the shelves.
+
+**A back plane was scoped and declined.** It is cheap — one `PlaneGeometry`, one
+`MeshStandardMaterial` in `WALL_BACK`, at the shelf's back edge; invisible
+square-on because it is the colour the background already paints; one extra draw
+call and no per-frame work. The one real hazard is that `setWallDim` walks
+`wallMaterials`, so the plane must join that list or stay bright while the spines
+darken.
+
+**BUILT — see `shelfBackPanelZ` in `wall-framing.ts`.** It was declined once, on
+the reasoning that a debug view is thin justification for geometry; that was
+reversed on a better argument, which is that **a shelf has a back and its absence
+is a fact about the model rather than about the diagnostic**. The orbit view was
+reporting a real incompleteness, and the case for fixing it is that the spines'
+shadows now land on something — not that the debug view looks nicer.
+
+Both dim hazards were flagged before building and both are handled by
+registering the panel in `wallMaterials`: it dims WITH the wall (otherwise it
+stays bright while every spine darkens), and it is structurally ineligible for
+the pulled-record exemption, which is keyed by record id in `recordMaterials`.
+
+**And it would probably not deliver the shadow anyway.** The record settles ~1550
+units forward of the wall; a shadow cast that far onto a plane behind the spines
+is large and near-uniform, where what reads as contact is a TIGHT shadow with a
+visible gap. That is the same geometry that defeated all three attempts, not a
+new guess.
+
+**Trigger to revisit:** a feature that needs the wall to be a real surface —
+anything lit, shadowed, or filtered against it — or the orbit view becoming
+load-bearing for a decision rather than a spot check.
+
+---
+
+## The shelf was invisible to light, and the panel is what revealed it
+
+**Diagnosed, fixed.** A record's shadow crossed the shelf board and reappeared
+below it — impossible for a solid shelf.
+
+**Cause: the board was never a caster.** It set `receiveShadow` and not
+`castShadow`, so light passed straight through. The ONLY caster in the entire
+scene was the record mesh. The board and lip are now both.
+
+**The finding is not the fix, it is that nothing could have shown this before.**
+With no back panel there was no surface behind the shelf for the escaped light to
+land on, so a board that blocked nothing and a board that blocked correctly
+produced identical frames. **Adding the receiver is what made the missing caster
+visible** — the same shape as the fixture's `coverUrl: null`, one layer down: a
+property that had no way to be observed was assumed correct.
+
+> Adding a surface to a scene does not only let shadows land. It makes every
+> existing shadow claim checkable for the first time.
+
+## The light is not the raking key §10b describes
+
+Computed rather than guessed, at 1280x768:
+
+    light at    (-512, 1024, 1280)   aimed at (640, -384, 0)
+    direction   (0.518, -0.633, -0.575)
+    elevation   39.3 deg above horizon
+    azimuth     42.0 deg from the left
+
+Shadow offset is **1.10x the caster's depth downward, 0.90x to the right**, which
+is exactly the down-right wedge on screen. **The shape follows from the light**,
+so nothing else is distorting it.
+
+But 39 deg at 42 deg is a **studio three-quarter light, not a raking one.** A
+raking light grazes the surface to pick out relief. This is a real gap between
+§10b's language and the rig — a design question rather than a defect: lowering
+the elevation lengthens the shadows and increases relief on the spines, at the
+cost of longer, more dominant wedges. **Not changed unilaterally.**
+
+## Wall colour: measured, and the naive metric says the wrong thing
+
+`/scene` now has a `wall:` control (dark / mid / light / white). Shadow contrast
+on the back panel, scanning a row across the wedge:
+
+| wall  | lit   | shadow | delta | ratio |
+|-------|-------|--------|-------|-------|
+| dark  | 27.7  | 5.0    | 22.7  | 5.54  |
+| mid   | 101.7 | 59.3   | 42.4  | 1.72  |
+| light | 225.3 | 137.7  | 87.6  | 1.64  |
+| white | 244.0 | 149.3  | 94.7  | 1.63  |
+
+**The two metrics disagree, and the ratio is the misleading one.** Dark wins on
+ratio (5.54x) only because its shadow bottoms out near black — a ratio against
+~5 levels is unstable and says nothing about whether a shadow is well-formed.
+Absolute delta is what decides whether depth reads, and **the light wall is 4x
+better** (94.7 vs 22.7). Below ~20 levels a difference stops being reliably
+visible across displays; the dark wall's 22.7 sits on that edge, which is why its
+shadows have felt marginal through all of this work.
+
+**A first measurement of this got the sign backwards** — sampling fixed points
+put the "shadow" patch on a brighter region than the "lit" one, reporting the
+dark wall's shadow as brighter than its wall. Caught because the number was
+impossible, not because the method was checked. Replaced with a row scan taking
+the true max and min, which needs no assumption about where the wedge is.
+
+**Not decided here.** Wall colour is not only a shadow question — it changes what
+spine colours do (dark objects on a ground, versus lit objects in a void), what
+the dim means, and whether cover art still separates when the wall is brighter
+than most sleeves. Adam: *"if it does that is a design question worth putting to
+the design pass rather than something to decide by defaulting to the dark one we
+started with."*
+
+### `lookup-flows.spec.ts` flakes under full-suite load — pre-existing, investigated
+
+**Two full runs on the wall-work tree each showed one failure in
+`lookup-flows.spec.ts`, on a DIFFERENT test each time:**
+
+- run A: `:1525 the runout renders verbatim` — **failed**
+- run B: `:817 versions that look identical collapse into one honest row` —
+  **flaky** (passed on retry)
+
+**Not caused by the wall work, established by measurement rather than by
+inspection:**
+
+| tree | full chromium runs | result |
+|---|---|---|
+| `cc1f900` baseline | 1 | clean, 253 passed |
+| wall-work tree | 4 | 2 clean, 2 with one flake each |
+
+The diff is entirely `src/app/plane/`, `src/app/scene/` and NOTES. `/lookup` is a
+DOM screen that imports none of it. **The one plausible mechanism — the new
+fixture cover URLs firing network requests — was ruled out empirically: no E2E
+spec visits `/scene` at all** (`grep goto('/scene')` returns nothing), so those
+URLs never load during a test run.
+
+The file passes 32/32 three times in isolation, and both failures appear only in
+the full 465-test run. That is a load-dependent fault in the file itself, not a
+cross-file contract break: **the two named tests are unrelated to each other**,
+which rules out a shared assertion regressing.
+
+**Left as an observation, not fixed** — it is out of scope for the wall work
+(CLAUDE.md §4), and a flake needs its own unit with repeated runs to characterise
+rather than a guess appended to someone else's.
+
+**TRIGGER — act on this when either happens:**
+
+1. **Two more sightings** of a `lookup-flows.spec.ts` failure or flake under full
+   load, bringing it to four across the tree's history. Record each sighting here
+   with its test name and whether it was `failed` or `flaky`; the two named so
+   far are `:1525` (failed) and `:817` (flaky).
+2. **The next unit that touches `lookup-flows.spec.ts` for any reason** — at that
+   point the file is already open and the cost of characterising is small.
+
+Adam: *"it now has four samples on your tree and one on baseline, which is more
+characterisation than most flakes here get before someone acts."* The trigger
+exists so it does not sit loose: an observation with no condition attached is one
+nobody ever picks up.
+
+**The reporting hazard is the part to carry forward:** `playwright test` exited
+**code 0 with 1 failed** in run A. A green exit code is not evidence; the summary
+line is. This is the third time in one session an exit code has concealed a real
+result — after the truncated 210-test run and the contaminated 137-failure runs.

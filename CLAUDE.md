@@ -140,6 +140,14 @@ This app is about vinyl records. Several distinctions matter and are easy to fla
 
 - Be direct. Report what is broken plainly.
 - **Never claim something works that you have not run.** If you did not execute the test, say so.
+- **Report the summary line, never the exit code.** An exit status is not evidence
+  a run passed. Three concealments happened in a single session: a pipeline
+  reporting `tail`'s status; a run killed mid-flight that reported 210 of 465
+  tests; and a genuine `444 passed, 1 failed` — all three exited 0. Read the
+  counts, and say what they say. `scripts/run-result.ts` does this and is guarded
+  by `test/repo/run-result.test.ts`; use it rather than re-deriving the judgement.
+  **No summary line at all is a FAILURE, not a pass** — a crashed run reports
+  nothing, and "nothing failed" is not what that means.
 - If you are uncertain, say you are uncertain and state what would resolve it. Do not present a guess in confident prose.
 - If you get stuck, stop and say so after two failed attempts at the same problem. Do not thrash, and do not start rewriting adjacent code hoping something shakes loose.
 - If an instruction from the developer conflicts with `SPEC.md`, flag the conflict rather than silently picking one.

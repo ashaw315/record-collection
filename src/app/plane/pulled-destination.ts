@@ -1,4 +1,6 @@
 import { SPINE_HEIGHT } from '../shelf/spine';
+import type { CanvasPx, FramePx, SceneZ, WallPx } from './frames';
+import { raw, sceneZ, wallPx } from './frames';
 import { WALL_FOV_DEGREES, viewportCameraDistance, wallCameraDistance } from './wall-camera';
 
 /**
@@ -28,7 +30,7 @@ import { WALL_FOV_DEGREES, viewportCameraDistance, wallCameraDistance } from './
  */
 const FRAME_FILL = 0.55;
 
-export type PulledPose = { x: number; y: number; z: number };
+export type PulledPose = { x: WallPx; y: WallPx; z: SceneZ };
 
 export function pulledDestination({
   wallWidth,
@@ -38,8 +40,8 @@ export function pulledDestination({
   viewCentrePx,
   viewportHeight,
 }: {
-  wallWidth: number;
-  wallHeight: number;
+  wallWidth: WallPx;
+  wallHeight: WallPx;
   /**
    * **Set when rendering on the wall, omitted for the pure-geometry tests.**
    *
@@ -54,7 +56,7 @@ export function pulledDestination({
    * reason, not a size input. Typed as the viewport it represents rather than a
    * bare boolean, so a caller passes what it means.
    */
-  viewport?: { width: number; height: number };
+  viewport?: { width: CanvasPx; height: CanvasPx };
   /**
    * How much of the frame's WIDTH the record fills when a viewport is given.
    * The stacked phone layout wants the record near full-bleed (≈0.9); the
@@ -73,8 +75,8 @@ export function pulledDestination({
    * not on the wall plane, so parallax shifts an off-axis point — the world-y is
    * solved through the projection rather than set to the raw canvas position.
    */
-  viewCentrePx?: number;
-  viewportHeight?: number;
+  viewCentrePx?: CanvasPx;
+  viewportHeight?: FramePx;
 }): PulledPose {
   /*
     **Framed on the VIEWPORT when one is given, not on the wall.** The wall
@@ -120,7 +122,7 @@ export function pulledDestination({
     different settle distance. With a viewport given, the camera frames the
     viewport, so that is the ratio its frame has.
   */
-  const canvasAspect = wallWidth / (viewportHeight ?? wallHeight);
+  const canvasAspect = raw(wallWidth) / raw(viewportHeight ?? wallHeight);
   const byWidth =
     viewport === undefined
       ? 0
@@ -131,7 +133,7 @@ export function pulledDestination({
 
   return {
     // Centred across the wall.
-    x: wallWidth / 2,
+    x: wallPx(raw(wallWidth) / 2),
 
     /**
      * **On the camera's axis**, which is the wall's centre.
@@ -148,7 +150,7 @@ export function pulledDestination({
      * canvas scrolls with the page — which is what the fixed camera bought.
      */
     y: viewY({ viewCentrePx, viewportHeight, wallHeight, cameraZ, distance, halfAngle }),
-    z: cameraZ - distance,
+    z: sceneZ(raw(cameraZ) - distance),
   };
 }
 
@@ -175,21 +177,21 @@ function viewY({
   distance,
   halfAngle,
 }: {
-  viewCentrePx?: number;
-  viewportHeight?: number;
-  wallHeight: number;
-  cameraZ: number;
+  viewCentrePx?: CanvasPx;
+  viewportHeight?: FramePx;
+  wallHeight: WallPx;
+  cameraZ: SceneZ;
   distance: number;
   halfAngle: number;
-}): number {
-  const cameraY = -wallHeight / 2;
-  if (viewCentrePx === undefined || viewportHeight === undefined) return cameraY;
+}): WallPx {
+  const cameraY = -raw(wallHeight) / 2;
+  if (viewCentrePx === undefined || viewportHeight === undefined) return wallPx(cameraY);
 
   // The target's world-y on the wall plane (canvas 1:1 with world there).
-  const targetWorldY = -viewCentrePx;
+  const targetWorldY = -raw(viewCentrePx);
   // Its NDC-y through the fixed camera: offset from the axis over the frustum
   // half-height at the wall plane (z = 0).
-  const halfHeightAtWall = cameraZ * Math.tan(halfAngle);
+  const halfHeightAtWall = raw(cameraZ) * Math.tan(halfAngle);
   const ndc = (targetWorldY - cameraY) / halfHeightAtWall;
   /*
     The frustum half-height at the RECORD's plane. The camera-to-record distance
@@ -199,5 +201,5 @@ function viewY({
     the wrong plane.
   */
   const halfHeightAtRecord = distance * Math.tan(halfAngle);
-  return cameraY + ndc * halfHeightAtRecord;
+  return wallPx(cameraY + ndc * halfHeightAtRecord);
 }

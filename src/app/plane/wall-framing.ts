@@ -1,5 +1,7 @@
 import { PLANE_DEPTH, LIP_DEPTH } from '../shelf/shelf-surface';
 import { SPINE_HEIGHT } from '../shelf/spine';
+import type { SceneZ, WallPx } from './frames';
+import { raw, sceneZ, wallPx } from './frames';
 import { WALL_FOV_DEGREES } from './wall-camera';
 
 /**
@@ -29,8 +31,8 @@ const halfAngleTan = () => Math.tan((WALL_FOV_DEGREES * Math.PI) / 360);
  * That is why the clipping is the same ~1.7px on a one-record wall and a
  * 125-record one, and why looking at a large collection never revealed it.
  */
-export function topClipMargin({ spineDepth }: { spineDepth: number }): number {
-  return spineDepth * halfAngleTan();
+export function topClipMargin({ spineDepth }: { spineDepth: SceneZ }): WallPx {
+  return wallPx(raw(spineDepth) * halfAngleTan());
 }
 
 /**
@@ -50,10 +52,10 @@ export function framedCameraDistance({
   wallHeight,
   spineDepth,
 }: {
-  wallHeight: number;
-  spineDepth: number;
-}): number {
-  return wallHeight / 2 / halfAngleTan() + spineDepth;
+  wallHeight: WallPx;
+  spineDepth: SceneZ;
+}): SceneZ {
+  return sceneZ(raw(wallHeight) / 2 / halfAngleTan() + raw(spineDepth));
 }
 
 /**
@@ -75,13 +77,13 @@ export function framedCameraDistance({
  * Adam: *"match the shelf's depth to a record's depth with a small overhang at
  * the front, and put the records on the surface rather than in front of it."*
  */
-export function shelfSurfaceDepth(): number {
-  return SPINE_HEIGHT;
+export function shelfSurfaceDepth(): SceneZ {
+  return sceneZ(SPINE_HEIGHT);
 }
 
 
 
-export function shelfSurfaceSpan(): { back: number; front: number } {
+export function shelfSurfaceSpan(): { back: SceneZ; front: SceneZ } {
   /*
     **The board is set back from the records by `SHELF_BACK_MARGIN`, and runs
     forward from there.**
@@ -96,8 +98,8 @@ export function shelfSurfaceSpan(): { back: number; front: number } {
     orbit and saying how much further, from 3% of the depth to 44.5%. See
     `SHELF_BACK_MARGIN`.
   */
-  const back = -SHELF_BACK_MARGIN;
-  return { back, front: back + shelfSurfaceDepth() };
+  const back = sceneZ(-SHELF_BACK_MARGIN);
+  return { back, front: sceneZ(raw(back) + raw(shelfSurfaceDepth())) };
 }
 
 /**
@@ -109,3 +111,39 @@ export function shelfSurfaceSpan(): { back: number; front: number } {
  * rest of its depth forward toward whoever is browsing.
  */
 const SHELF_BACK_MARGIN = Math.round(SPINE_HEIGHT * 0.445);
+
+/**
+ * **Where the shelf's BACK PANEL sits, in scene Z.**
+ *
+ * A shelf has a back, and this one did not: the board and the lip existed and
+ * behind them was nothing. `WALL_BACK` is `scene.background` — a clear colour,
+ * not geometry — so from the 3/4 orbit the shelves read as slabs floating in
+ * space, and nothing in the scene could receive a shadow.
+ *
+ * **This is correctness rather than cosmetics.** Adam: *"A real shelf has a back
+ * panel, and its absence is why nothing can receive a shadow and why the orbit
+ * view reads as slabs floating in space."* The orbit view was showing a true
+ * fact about the model, not a rendering artefact.
+ *
+ * **At the back of the shelf's own depth**, so it closes the box the board and
+ * lip already describe. Everything else in the scene — spines at `z ≈ +12`, the
+ * board spanning -107..133 — is in front of it, which is what makes it a back
+ * rather than an occluder.
+ *
+ * ---
+ *
+ * **WHAT THIS DOES NOT DO, recorded so it is not expected of it.**
+ *
+ * It does not give the PULLED record a contact shadow. That record settles
+ * ~1552 units forward of the wall, which is **6.9x its own height** from this
+ * panel; a cast shadow at that distance is large, faint and diffuse — ambient
+ * darkening rather than contact. That is geometry and no amount of shadow-map
+ * resolution changes it.
+ *
+ * What it does do is let the shadows already being cast land somewhere: the
+ * spines sit ~12 units off it, **0.05x their height**, which is the ratio that
+ * reads as an object standing ON something.
+ */
+export function shelfBackPanelZ(): SceneZ {
+  return shelfSurfaceSpan().back;
+}

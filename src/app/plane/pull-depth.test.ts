@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import { canvasPx, framePx, wallPx } from './frames';
 import { SPINE_HEIGHT, MAX_SPINE_WIDTH, SHELF_EDGE } from '../shelf/spine';
 import { WALL_TOP_MARGIN } from './wall-layout';
 import { WALL_FOV_DEGREES, viewportCameraDistance } from './wall-camera';
 import { pulledDestination } from './pulled-destination';
 
-const wallOf = (rows: number) => WALL_TOP_MARGIN + rows * (SPINE_HEIGHT + SHELF_EDGE);
+const wallOf = (rows: number) => wallPx(WALL_TOP_MARGIN + rows * (SPINE_HEIGHT + SHELF_EDGE));
 const VIEWPORT = 886;
 
 /**
@@ -35,10 +36,10 @@ describe('the pulled record settles at one depth, whatever the collection', () =
   it('stays in front of the wall it came out of', () => {
     for (const rows of [1, 2, 3, 5, 10]) {
       const d = pulledDestination({
-        wallWidth: 1280,
+        wallWidth: wallPx(1280),
         wallHeight: wallOf(rows),
-        viewportHeight: VIEWPORT,
-        viewport: { width: 1280, height: 900 },
+        viewportHeight: framePx(VIEWPORT),
+        viewport: { width: canvasPx(1280), height: canvasPx(900) },
       });
       expect(d.z, `at ${rows} row(s)`).toBeGreaterThan(MAX_SPINE_WIDTH);
     }
@@ -52,10 +53,10 @@ describe('the pulled record settles at one depth, whatever the collection', () =
     const zs = [1, 2, 3, 5, 10].map(
       (rows) =>
         pulledDestination({
-          wallWidth: 1280,
+          wallWidth: wallPx(1280),
           wallHeight: wallOf(rows),
-          viewportHeight: VIEWPORT,
-          viewport: { width: 1280, height: 900 },
+          viewportHeight: framePx(VIEWPORT),
+          viewport: { width: canvasPx(1280), height: canvasPx(900) },
         }).z,
     );
     expect(Math.max(...zs) - Math.min(...zs)).toBeLessThan(1);
@@ -69,12 +70,12 @@ describe('the pulled record settles at one depth, whatever the collection', () =
     const apparent = (rows: number) => {
       const wallHeight = wallOf(rows);
       const target = pulledDestination({
-        wallWidth: 1280,
+        wallWidth: wallPx(1280),
         wallHeight,
-        viewportHeight: VIEWPORT,
-        viewport: { width: 1280, height: 900 },
+        viewportHeight: framePx(VIEWPORT),
+        viewport: { width: canvasPx(1280), height: canvasPx(900) },
       });
-      const cameraZ = viewportCameraDistance({ viewportHeight: VIEWPORT });
+      const cameraZ = viewportCameraDistance({ viewportHeight: framePx(VIEWPORT) });
       const halfFrame = (cameraZ - target.z) * Math.tan((WALL_FOV_DEGREES * Math.PI) / 360);
       return SPINE_HEIGHT / (halfFrame * 2);
     };
@@ -84,8 +85,8 @@ describe('the pulled record settles at one depth, whatever the collection', () =
   });
 
   it('does not depend on wall height at all', () => {
-    const a = viewportCameraDistance({ viewportHeight: VIEWPORT });
-    const b = viewportCameraDistance({ viewportHeight: VIEWPORT });
+    const a = viewportCameraDistance({ viewportHeight: framePx(VIEWPORT) });
+    const b = viewportCameraDistance({ viewportHeight: framePx(VIEWPORT) });
     expect(a).toBe(b);
     expect(a).toBeGreaterThan(0);
   });

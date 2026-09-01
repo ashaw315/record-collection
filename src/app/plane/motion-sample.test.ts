@@ -74,9 +74,13 @@ describe('the record moves as one object', () => {
  * **THIS BLOCK IS WHY THE TEST IS NOT "ASSERT EVERYTHING AGREES".**
  *
  * A test that required every column to advance together would be worse than no
- * test: someone would see `blur` and `dim` diverging from the eased group, call
- * it the bug, and ease them — reintroducing exactly the front-loading
- * `wallDim`'s reasoning exists to prevent, with a green suite confirming it.
+ * test: someone would see `dim` diverging from the eased group, call it the bug,
+ * and ease it — reintroducing exactly the front-loading `wallDim`'s reasoning
+ * exists to prevent, with a green suite confirming it.
+ *
+ * (This originally covered `blur` and `dim` together. The blur was dropped — see
+ * NOTES — and the rule is unchanged: it was never about there being two linear
+ * columns, but about a designed divergence being asserted rather than assumed.)
  *
  * So the divergence that is DESIGNED is asserted as firmly as the agreement
  * that is required. Two groups, two rules, both stated.
@@ -85,13 +89,12 @@ describe('the backdrop tracks the rise linearly, and that difference is the desi
   /**
    * `wallDim` is linear deliberately: *"a cubic ease-out is 39% dimmed at 15%
    * progress and would put the record's arrival against an already-dark wall."*
-   * The same argument was applied to the blur. So these SHOULD differ from the
-   * eased group, and the test states that rather than leaving it to be rederived.
+   * So the dim SHOULD differ from the eased group, and the test states that
+   * rather than leaving it to be rederived.
    */
-  it('dims and blurs in proportion to raw progress, not to the eased curve', () => {
+  it('dims in proportion to raw progress, not to the eased curve', () => {
     for (const t of [0.15, 0.3, 0.5, 0.7]) {
       const s = motionSample({ t });
-      expect(s.blurMix, `blur at t=${t}`).toBeCloseTo(t, 6);
       // dim runs 1 -> floor linearly.
       const dimmed = (1 - s.dim) / (1 - 0.1);
       expect(dimmed, `dim at t=${t}`).toBeCloseTo(t, 6);
@@ -99,13 +102,26 @@ describe('the backdrop tracks the rise linearly, and that difference is the desi
   });
 
   /**
-   * **The blur clears EARLY on the return** — an asymmetry about attention
-   * rather than about the object, which is why it is the opposite of the
-   * durations' answer and still correct.
+   * **The divergence itself, asserted rather than left implicit.**
+   *
+   * The rule above pins the dim to raw progress; this pins it AWAY from the
+   * eased travel, so a dim quietly eased to "agree" with position fails here.
+   * That was the whole reason this block exists, and with the blur gone the dim
+   * is the only column carrying it.
+   *
+   * **t = 0.5 is excluded because the two curves genuinely cross there** — an
+   * ease-in-out is symmetric about the midpoint, so any linear column meets it
+   * at exactly 0.5. Measured: gaps of 0.137, 0.192, 0.000, 0.192. Asserting a
+   * gap at the midpoint would be asserting something false about the easing.
    */
-  it('clears the blur before the record is home', () => {
-    expect(motionSample({ t: 0.5, returning: true }).blurMix).toBe(0);
-    expect(motionSample({ t: 0.1, returning: true }).blurMix).toBeGreaterThan(0);
+  it('does not track the eased travel, which is what makes it a divergence', () => {
+    for (const t of [0.15, 0.3, 0.7]) {
+      const s = motionSample({ t });
+      const dimmed = (1 - s.dim) / (1 - 0.1);
+      expect(Math.abs(dimmed - s.travel), `dim must not track travel at t=${t}`).toBeGreaterThan(
+        0.1,
+      );
+    }
   });
 });
 
@@ -114,7 +130,6 @@ describe('the table', () => {
     const table = motionTable({ steps: 4 });
     expect(table).toContain('travel');
     expect(table).toContain('turn');
-    expect(table).toContain('blur');
     expect(table).toContain('dim');
     /* Header plus one row per step, inclusive. */
     expect(table.split('\n')).toHaveLength(6);

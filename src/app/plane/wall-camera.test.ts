@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { wallPx } from './frames';
 import {
   PULL_FRACTION,
   WALL_FOV_DEGREES,
@@ -40,7 +41,7 @@ describe('the wall camera is near-orthographic ACROSS the wall', () => {
      * Fails against `wall-camera.ts` if the field of view is widened to a
      * normal lens, which is exactly the change that would break the wall.
      */
-    const compression = edgeCompression({ wallWidth: 1280 });
+    const compression = edgeCompression({ wallWidth: wallPx(1280) });
 
     expect(compression, 'an edge spine is within 3% of a centre spine').toBeLessThan(0.03);
   });
@@ -52,10 +53,11 @@ describe('the wall camera is near-orthographic ACROSS the wall', () => {
      * and a 2560px display is ordinary. Swept rather than spot-checked, which
      * is unit 17's finding.
      */
-    for (const wallWidth of [768, 1280, 1920, 2560, 3440]) {
+    for (const w of [768, 1280, 1920, 2560, 3440]) {
+      const wallWidth = wallPx(w);
       expect(
         edgeCompression({ wallWidth }),
-        `an edge spine at ${wallWidth}px is within 3% of a centre spine`,
+        `an edge spine at ${w}px is within 3% of a centre spine`,
       ).toBeLessThan(0.03);
     }
   });
@@ -76,7 +78,7 @@ describe('the wall camera is near-orthographic ACROSS the wall', () => {
      * this wrong crops the wall or leaves it a postage stamp in the middle —
      * both obvious, but obvious after a render rather than before one.
      */
-    const distance = wallCameraDistance({ wallHeight: 744 });
+    const distance = wallCameraDistance({ wallHeight: wallPx(744) });
     const halfHeight = Math.tan((WALL_FOV_DEGREES * Math.PI) / 360) * distance;
 
     expect(halfHeight * 2, 'the frame is the wall').toBeCloseTo(744, 0);
@@ -88,8 +90,8 @@ describe('the wall camera is near-orthographic ACROSS the wall', () => {
      * collection reads as short, not broken" applies to the camera as much as
      * to the shelf plane.
      */
-    const short = wallCameraDistance({ wallHeight: 248 });
-    const tall = wallCameraDistance({ wallHeight: 992 });
+    const short = wallCameraDistance({ wallHeight: wallPx(248) });
+    const tall = wallCameraDistance({ wallHeight: wallPx(992) });
 
     expect(tall / short).toBeCloseTo(4, 5);
   });
@@ -126,7 +128,7 @@ describe('the wall camera gives a TURN enough convergence to read', () => {
      * across the wall. That is the whole trick: near-orthographic where the
      * spines are, perspective where the record is.
      */
-    const wallDistance = wallCameraDistance({ wallHeight: 744 });
+    const wallDistance = wallCameraDistance({ wallHeight: wallPx(744) });
 
     /*
       **The pull is a FRACTION of the camera distance, not a fixed number of

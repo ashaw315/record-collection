@@ -11,12 +11,8 @@ import {
   MeshBasicMaterial,
   MeshStandardMaterial,
   PCFShadowMap,
-  LinearFilter,
-  LinearMipmapLinearFilter,
-  OrthographicCamera,
-  PerspectiveCamera,
   PlaneGeometry,
-  WebGLRenderTarget,
+  PerspectiveCamera,
   Raycaster,
   Scene,
   TextureLoader,
@@ -36,6 +32,8 @@ import {
   textColourOn,
 } from '../shelf/spine';
 import { SHELF_LIP, SHELF_PLANE, WALL_BACK } from '../shelf/shelf-surface';
+import type { WallPx } from './frames';
+import { canvasPx, framePx, raw, sceneZ, wallPx } from './frames';
 import { createRenderLoop } from './render-loop';
 import { risePose } from './rise-pose';
 import {
@@ -55,13 +53,13 @@ import { WALL_FOV_DEGREES } from './wall-camera';
 import {
   framedCameraDistance,
   shelfSurfaceDepth,
+  shelfBackPanelZ,
   shelfSurfaceSpan,
   SHELF_LIP_DEPTH,
 } from './wall-framing';
 import { pulledDestination } from './pulled-destination';
 import { boxDepth } from './record-box';
 import { WALL_DIM_FLOOR, wallDimTo } from './wall-dim';
-import { bakeMix, bakeOpacity, bakeResolution } from './wall-bake';
 import { riseTravel } from './motion-sample';
 import { PROUD_MS, proudOffset, shouldRedraw } from './hover-proud';
 import { NO_TILT, tiltFor } from '../shelf/tilt';
@@ -158,8 +156,7 @@ export function WallScene({
   orbit: orbitProp,
   motion,
   dimFloor,
-  bakeBlur,
-  bakeDownsample,
+  wallColour,
 }: {
   records: ShelfRecord[];
   treatment?: ShelfTreatment;
@@ -201,15 +198,8 @@ export function WallScene({
    * what a blur would".
    */
   dimFloor?: number;
-  /**
-   * **`/scene` only: bake the wall to a low-res texture while a record is out.**
-   *
-   * The blur is the downsample — see `wall-bake.ts`. `0` leaves the scene
-   * exactly as it is, which is production today.
-   */
-  bakeBlur?: boolean;
-  /** `/scene` only: the blur's downsample factor. Larger is softer. */
-  bakeDownsample?: number;
+  /** `/scene` only: the wall's ground colour, for judging light vs dark walls. */
+  wallColour?: string;
 }) {
   const mount = useRef<HTMLDivElement>(null);
   /**
@@ -402,7 +392,7 @@ export function WallScene({
         // The previous scene goes before the next one is built: two WebGL
         // contexts for one wall is the cost this scene is careful about.
         teardown?.();
-        teardown = build(host, width, layoutWall({ spines, viewportWidth: width }));
+        teardown = build(host, wallPx(width), layoutWall({ spines, viewportWidth: width }));
       },
     });
 
@@ -412,7 +402,7 @@ export function WallScene({
       teardown?.();
     };
 
-    function build(host: HTMLDivElement, width: number, layout: WallLayout): () => void {
+    function build(host: HTMLDivElement, width: WallPx, layout: WallLayout): () => void {
 
     /*
       **Two heights, since A35 removed the four-row minimum.** `layout.height` is
@@ -452,9 +442,16 @@ export function WallScene({
       it inside the canvas is where the pulled record comes forward into.
     */
     const chromeAbove = typeof window === 'undefined' ? 0 : host.getBoundingClientRect().top + window.scrollY;
-    const viewportFloor =
-      typeof window === 'undefined' ? 0 : Math.max(0, window.innerHeight - chromeAbove);
-    const height = Math.max(layout.height, viewportFloor);
+    /*
+      **`viewportFloor` is FRAME space and `height` is WALL space**, and the
+      brands keep them apart because conflating them is exactly the pull-depth
+      defect: the camera must be framed on what the reader can SEE, while the
+      canvas is as tall as the whole collection.
+    */
+    const viewportFloor = framePx(
+      typeof window === 'undefined' ? 0 : Math.max(0, window.innerHeight - chromeAbove),
+    );
+    const height = wallPx(Math.max(layout.height, raw(viewportFloor)));
 
     const renderer = new WebGLRenderer({ antialias: true, alpha: false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -477,12 +474,13 @@ export function WallScene({
       */
       renderer.shadowMap.type = PCFShadowMap;
     }
-    renderer.setSize(width, height);
+    renderer.setSize(raw(width), raw(height));
     renderer.outputColorSpace = SRGBColorSpace;
     host.appendChild(renderer.domElement);
 
     const scene = new Scene();
-    scene.background = new Color(WALL_BACK);
+    const wallGround = wallColour ?? WALL_BACK;
+    scene.background = new Color(wallGround);
 
     /**
      * **One perspective camera with a very long lens** — near-orthographic
@@ -540,7 +538,7 @@ export function WallScene({
       `spineDepth · tan(halfFOV)`. That is why no amount of testing with a large
       fixture would have shown it.
     */
-    const deepestSpine = MAX_SPINE_WIDTH;
+    const deepestSpine = sceneZ(MAX_SPINE_WIDTH);
     const cameraDistance = framedCameraDistance({
       wallHeight: height,
       spineDepth: deepestSpine,
@@ -588,11 +586,11 @@ export function WallScene({
       const probe = pulledDestination({
         wallWidth: width,
         wallHeight: height,
-        viewport: { width: window.innerWidth, height: window.innerHeight },
+        viewport: { width: canvasPx(window.innerWidth), height: canvasPx(window.innerHeight) },
         widthFill: 0.9,
       });
-      const distance = cameraDistance - probe.z;
-      const worldPerPx = (2 * distance * Math.tan(halfAngle)) / height;
+      const distance = raw(cameraDistance) - raw(probe.z);
+      const worldPerPx = (2 * distance * Math.tan(halfAngle)) / raw(height);
       const halfSleevePx = SPINE_HEIGHT / worldPerPx / 2;
 
       const centre = (regionTop + regionBottom) / 2;
@@ -612,7 +610,7 @@ export function WallScene({
       pulledDestination({
         wallWidth: width,
         wallHeight: height,
-        viewport: { width: window.innerWidth, height: window.innerHeight },
+        viewport: { width: canvasPx(window.innerWidth), height: canvasPx(window.innerHeight) },
         /*
           Near full-bleed. On a narrow canvas the width is what binds, and 0.9
           makes the record own the frame (≈320px on screen at 390px, its readable
@@ -643,7 +641,7 @@ export function WallScene({
           collapses to the region's own centre, which distributes the overflow
           evenly rather than dumping it at one edge.
         */
-        viewCentrePx: viewRegionCentrePx(scrollY),
+        viewCentrePx: canvasPx(viewRegionCentrePx(scrollY)),
         /*
           **The VISIBLE canvas height, not the window's.** `window.innerHeight`
           includes the nav and heading above the canvas, and it is also what made
@@ -791,6 +789,58 @@ export function WallScene({
     */
     const surfaceSpan = shelfSurfaceSpan();
 
+    /**
+     * **THE SHELF'S BACK PANEL — the wall as a real surface.**
+     *
+     * The board and the lip existed and behind them was nothing: `WALL_BACK` is
+     * `scene.background`, a clear colour rather than geometry. From the 3/4 orbit
+     * the shelves read as slabs floating in space, and no shadow in the scene had
+     * anywhere to land.
+     *
+     * Adam: *"A real shelf has a back panel, and its absence is why nothing can
+     * receive a shadow and why the orbit view reads as slabs floating in space."*
+     * The orbit view was showing a true fact about the model.
+     *
+     * **Invisible square-on by construction** — it is `WALL_BACK`, the colour
+     * the background already paints there — so this changes what the scene IS
+     * without changing what the shipping view looks like. What it changes is
+     * that the spines' shadows now land on something.
+     *
+     * Sized past the wall's own bounds so it never shows an edge at any orbit
+     * angle the harness offers.
+     */
+    {
+      const panelColour = new Color(wallGround);
+      const panelGeometry = new PlaneGeometry(raw(width) * 2, raw(height) * 2);
+      disposables.push(panelGeometry);
+      const panelMaterial = new MeshStandardMaterial({ color: panelColour.clone(), roughness: 0.95 });
+      disposables.push(panelMaterial);
+      const panel = new Mesh(panelGeometry, panelMaterial);
+      panel.position.set(raw(width) / 2, -raw(height) / 2, raw(shelfBackPanelZ()));
+      /*
+        Receives, never casts. A back panel that cast would shadow the very
+        surfaces standing in front of it.
+      */
+      panel.receiveShadow = castsShadow;
+      panel.castShadow = false;
+      scene.add(panel);
+      /**
+       * **Registered as WALL, which is both dim corrections at once.**
+       *
+       * `setWallDim` darkens everything in `wallMaterials` uniformly and applies
+       * the pulled-record exemption only to `recordMaterials`. So joining this
+       * list makes the panel dim WITH the wall — without it the panel would stay
+       * bright while every spine darkened, which is the brighter-hole defect —
+       * and makes it structurally ineligible for the record's exemption, so a
+       * pulled record cannot light the panel behind it.
+       *
+       * Both were flagged before building. The second is the subtler one: the
+       * exemption is keyed by record id, and a panel in `recordMaterials` would
+       * have been exempt whenever the record in front of it was pulled.
+       */
+      wallMaterials.push({ material: panelMaterial, base: panelColour });
+    }
+
     let shelfLipScreenY: Vector3 | null = null;
     for (const shelf of layout.shelves) {
       /*
@@ -822,6 +872,13 @@ export function WallScene({
         -(shelf.y + (shelf.height - SHELF_LIP_DEPTH) / 2),
         (surfaceSpan.back + surfaceSpan.front) / 2,
       );
+      /*
+        **The board CASTS as well as receives.** It was a receiver only, so
+        light passed straight through it: a record's shadow crossed the board
+        and reappeared on the back panel below, which is what a solid shelf
+        cannot do. Observed in the 3/4 orbit once the panel existed to show it.
+      */
+      surface.castShadow = castsShadow;
       surface.receiveShadow = castsShadow;
       scene.add(surface);
       disposables.push(surface.material as Material);
@@ -845,6 +902,7 @@ export function WallScene({
         -(shelf.y + shelf.height - SHELF_LIP_DEPTH / 2),
         surfaceSpan.front,
       );
+      lip.castShadow = castsShadow;
       lip.receiveShadow = castsShadow;
       scene.add(lip);
       disposables.push(lip.material as Material);
@@ -1109,7 +1167,7 @@ export function WallScene({
       canvas's own size changes for reasons that are not re-wrapping.
     */
     host.dataset.rows = String(layout.shelves.length);
-    host.dataset.wallWidth = String(width);
+    host.dataset.wallWidth = String(raw(width));
 
     /**
      * **The draw count, published because it is a CONSTRAINT rather than a
@@ -1202,151 +1260,13 @@ export function WallScene({
       controls.update();
     }
 
-    /*
-      **The baked wall: a low-res render of the wall, drawn back as one quad.**
-
-      Captured once when a record leaves the shelf, which is safe because hover
-      is disabled during a pull — the wall is static for as long as the bake is
-      on screen. The blur is the magnification of a small texture, so there is no
-      pass and no shader.
-
-      The quad is drawn by a second, orthographic camera over the main render, so
-      it composites without touching the scene graph the record lives in.
-    */
-    let bakeTarget: WebGLRenderTarget | null = null;
-    let bakeQuad: Mesh | null = null;
-    let bakeScene: Scene | null = null;
-    let bakeCamera: OrthographicCamera | null = null;
-    let bakeMaterial: MeshBasicMaterial | null = null;
-
-    if (bakeBlur === true) {
-      const res = bakeResolution({ width, height, downsample: bakeDownsample });
-      bakeTarget = new WebGLRenderTarget(res.width, res.height);
-      bakeTarget.texture.colorSpace = SRGBColorSpace;
-      /*
-        Mipmaps and linear filtering, so magnifying the small texture ramps
-        smoothly rather than showing the sample grid as blocks.
-      */
-      bakeTarget.texture.generateMipmaps = true;
-      bakeTarget.texture.minFilter = LinearMipmapLinearFilter;
-      bakeTarget.texture.magFilter = LinearFilter;
-      disposables.push(bakeTarget);
-
-      bakeScene = new Scene();
-      bakeCamera = new OrthographicCamera(-0.5, 0.5, 0.5, -0.5, 0, 1);
-      bakeMaterial = new MeshBasicMaterial({
-        map: bakeTarget.texture,
-        /*
-          **Transparent, because the blur CROSS-FADES against the sharp wall.**
-          An earlier version drew it opaque, which made the blur binary — the
-          snap Adam reported. Blending it over the live wall is what lets the
-          softening arrive with the record.
-        */
-        transparent: true,
-        depthTest: false,
-        depthWrite: false,
-      });
-      disposables.push(bakeMaterial);
-      const quadGeometry = new PlaneGeometry(1, 1);
-      disposables.push(quadGeometry);
-      bakeQuad = new Mesh(quadGeometry, bakeMaterial);
-      bakeScene.add(bakeQuad);
-    }
-
-    /** Captures the wall as it stands, undimmed, with the record hidden. */
-    const captureWall = () => {
-      if (bakeTarget === null) return;
-      const pulledMesh = pulledNow === null ? null : meshes.get(pulledNow);
-      const wasVisible = pulledMesh?.visible ?? false;
-      if (pulledMesh !== undefined && pulledMesh !== null) pulledMesh.visible = false;
-
-      renderer.setRenderTarget(bakeTarget);
-      renderer.render(scene, camera);
-      renderer.setRenderTarget(null);
-
-      if (pulledMesh !== undefined && pulledMesh !== null) pulledMesh.visible = wasVisible;
-    };
-
     const counter = window as unknown as { __drawCount?: number };
 
     const loop = createRenderLoop(() => {
       controls?.update();
 
-      if (bakeQuad !== null && bakeScene !== null && bakeCamera !== null && pulledNow !== null) {
-        /*
-          **The baked wall stands in for the real one while a record is out.**
+      renderer.render(scene, camera);
 
-          Two renders, not three: the baked quad first (it IS the wall now), then
-          the scene with every wall mesh hidden, which leaves the record and the
-          chrome-free background. The record is sharp because it is a different
-          object from the picture behind it — the partition is physical rather
-          than a mask someone must keep correct.
-
-          The dim rides on the quad's opacity rather than being baked in. A baked
-          dim would snap to full strength at capture time, which is the
-          front-loading `wallDim` was tuned to avoid.
-        */
-        /*
-          **Three draws, and the middle one is the cross-fade.**
-
-          1. the SHARP wall, undimmed — it is what the blur fades in over, and
-             leaving it undimmed is what stops the dim being applied twice;
-          2. the blurred quad at `bakeMix`, which carries the dim on its colour;
-          3. the record, over both, with the background nulled so it does not
-             repaint the wall.
-
-          The quad's opacity is the blur's strength, so the wall goes out of
-          focus AS the record comes forward rather than the instant it is
-          clicked.
-        */
-        /*
-          **Read from a REF, never from the effect's dependencies.**
-
-          `returningId` was added to this effect's dependency array to satisfy
-          the exhaustive-deps lint, and that REBUILT THE WHOLE SCENE the moment a
-          return began — tearing down the animation mid-flight and leaving the
-          record frozen edge-on outside its slot. A render loop reads live state
-          through a ref; adding it as a dependency is a different thing entirely.
-        */
-        const mix = bakeMix({
-          progress: riseProgress,
-          returning: returningIdRef.current !== null,
-        });
-
-        /*
-          **The sharp wall, drawn UNDIMMED so the quad alone carries the dim.**
-
-          Restored after the draw rather than left, because `setPulledInternal`
-          owns the dim and a render-loop write that outlives the frame fights it.
-        */
-        for (const [id, mesh] of meshes) {
-          if (id === pulledNow) mesh.visible = false;
-        }
-        setWallDim(1, null);
-        renderer.render(scene, camera);
-
-        if (bakeMaterial !== null) {
-          bakeMaterial.opacity = mix;
-          bakeMaterial.color.setScalar(bakeOpacity(riseProgress));
-        }
-        renderer.autoClear = false;
-        renderer.render(bakeScene, bakeCamera);
-
-        for (const [id, mesh] of meshes) {
-          mesh.visible = id === pulledNow;
-        }
-        const sceneBackground = scene.background;
-        scene.background = null;
-        renderer.clearDepth();
-        renderer.render(scene, camera);
-        renderer.autoClear = true;
-        scene.background = sceneBackground;
-        setWallDim(wallDimTo(riseProgress, dimFloor ?? WALL_DIM_FLOOR), pulledNow);
-
-        for (const mesh of meshes.values()) mesh.visible = true;
-      } else {
-        renderer.render(scene, camera);
-      }
       counter.__drawCount = (counter.__drawCount ?? 0) + 1;
     });
     loop.start();
@@ -1366,20 +1286,9 @@ export function WallScene({
      * change what the record looks like.
      */
     function setPulledInternal(id: string | null, progress: number) {
-      const pulledBefore = pulledNow;
       pulledNow = id;
       riseProgress = progress;
 
-      /*
-        **Capture the wall once, the moment a record leaves the shelf.**
-
-        Taken while the wall is still undimmed and the record still edge-on in
-        its slot, so the picture is of the wall as it stands. Hover is disabled
-        for the duration of a pull — *"a wall that twitches behind the thing
-        being read"* — so nothing behind the record changes until it goes home,
-        which is what makes one frame enough.
-      */
-      if (id !== null && pulledBefore === null) captureWall();
 
       /*
         **The wall dims with the record's own progress**, so unit 11's ordering
@@ -1952,7 +1861,7 @@ export function WallScene({
       renderer.dispose();
     };
     }
-  }, [spines, records, treatment, diagnosticProp, orbitProp, dimFloor, bakeBlur, bakeDownsample]);
+  }, [spines, records, treatment, diagnosticProp, orbitProp, dimFloor, wallColour]);
 
   /** Drives the rise when the pulled record changes. */
   useEffect(() => {
@@ -2110,7 +2019,7 @@ export function WallScene({
 
       return progress < 1;
     });
-  }, [pulledId, returningId, state.phase, motion, dimFloor, bakeBlur]);
+  }, [pulledId, returningId, state.phase, motion, dimFloor]);
 
   /**
    * **The slide between records (13b).** A lateral move: `fromId` leaves one

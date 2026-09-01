@@ -1,3 +1,6 @@
+import type { CanvasPx, FramePx, SceneZ, WallPx } from './frames';
+import { raw, sceneZ } from './frames';
+
 /**
  * The wall's camera: ONE perspective camera with a very long focal length.
  *
@@ -67,9 +70,9 @@ export const PULL_FRACTION = 0.4;
  * hundred are framed the same way — §10b's "a short collection reads as short,
  * not broken" applies to the camera as much as to the shelf plane.
  */
-export function wallCameraDistance({ wallHeight }: { wallHeight: number }): number {
+export function wallCameraDistance({ wallHeight }: { wallHeight: WallPx }): SceneZ {
   const halfAngle = (WALL_FOV_DEGREES * Math.PI) / 360;
-  return wallHeight / 2 / Math.tan(halfAngle);
+  return sceneZ(raw(wallHeight) / 2 / Math.tan(halfAngle));
 }
 
 /**
@@ -83,7 +86,7 @@ export function wallCameraDistance({ wallHeight }: { wallHeight: number }): numb
  *
  * Returned as a fraction: 0.02 means the edge spine is 2% narrower.
  */
-export function edgeCompression({ wallWidth }: { wallWidth: number }): number {
+export function edgeCompression({ wallWidth }: { wallWidth: WallPx }): number {
   /*
     Framing is driven by height, and a wall is wider than it is tall, so the
     camera distance for the WIDEST realistic wall is what this must hold at.
@@ -91,8 +94,8 @@ export function edgeCompression({ wallWidth }: { wallWidth: number }): number {
     puts the camera closer than height-framing would, so the compression this
     reports is never optimistic.
   */
-  const distance = wallCameraDistance({ wallHeight: wallWidth });
-  const halfWidth = wallWidth / 2;
+  const distance = raw(wallCameraDistance({ wallHeight: wallWidth }));
+  const halfWidth = raw(wallWidth) / 2;
 
   // Distance to the outermost spine, versus to one on the axis.
   const toEdge = Math.sqrt(distance * distance + halfWidth * halfWidth);
@@ -125,11 +128,11 @@ export function viewportAspect({
   width,
   height,
 }: {
-  width: number;
-  height: number;
+  width: CanvasPx;
+  height: CanvasPx;
 }): number {
-  if (height <= 0) return 1;
-  return width / height;
+  if (raw(height) <= 0) return 1;
+  return raw(width) / raw(height);
 }
 
 
@@ -158,8 +161,8 @@ export function viewportAspect({
  * scroll question, and the canvas scrolls with the page — which is what the
  * fixed camera bought in the first place.
  */
-export function viewportCameraDistance({ viewportHeight }: { viewportHeight: number }): number {
+export function viewportCameraDistance({ viewportHeight }: { viewportHeight: FramePx }): SceneZ {
   const halfAngle = (WALL_FOV_DEGREES * Math.PI) / 360;
 
-  return viewportHeight / 2 / Math.tan(halfAngle);
+  return sceneZ(raw(viewportHeight) / 2 / Math.tan(halfAngle));
 }
