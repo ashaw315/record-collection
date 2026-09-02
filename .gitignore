@@ -68,3 +68,13 @@ drizzle.config.fresh-clone-test.ts
 # migrate` reads the journal to decide what to apply, and without it a fresh
 # clone silently applies zero migrations and exits 0.
 .next-test
+
+# Scratch space for one-off handoffs — never repo content.
+#
+# `scratch/design-handoff/` holds the design brief exported for attaching to a
+# design tool, which cannot read the artifact URL (it renders client-side behind
+# a session). The artifact at claude.ai/code/artifact/4c24fa29 remains the
+# canonical copy; these are disposable exports of it.
+#
+# Ignored rather than merely untracked so a `git add -A` cannot sweep them in.
+scratch/
