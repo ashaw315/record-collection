@@ -63,6 +63,29 @@ export function ownershipBadge(ownership: OwnershipPayload): OwnershipBadge | nu
 
     case 'owned_different_pressing':
       /**
+       * **THE SIXTH MARK: owned elsewhere AND the pressing being hunted.**
+       *
+       * The strongest buy signal the app can produce — the user owns a copy,
+       * and this exact pressing is the upgrade they have been looking for. It
+       * was unreachable until the want list was carried through every tier
+       * (see `ownership.ts`), so this branch had nothing to render and the
+       * signal was silently dropped at the moment it mattered most.
+       *
+       * Tone stays `wanted` rather than `caution`: caution means "look
+       * closely, you may already have this", and that is the wrong instruction
+       * for a record the user has explicitly decided they want. The label
+       * carries both facts because both are needed — owning a different copy
+       * is what makes this an upgrade rather than a first purchase.
+       */
+      if (ownership.isTargetPressing) {
+        return {
+          label: 'Want list — THIS pressing · you own another',
+          detail: `Yours: ${describeOwnedPressing(ownership.ownedPressing)}`,
+          tone: 'wanted',
+        };
+      }
+
+      /**
        * The tier §7.7 singles out, and the one that must never be mistaken for
        * the one above. A DIFFERENT tone, not merely different words — this is
        * the badge that means "look closely", where the exact badge means

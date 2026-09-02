@@ -656,6 +656,14 @@ The goal of this group of endpoints is: **the user fills in a structured form de
 }
 ```
 
+**Ownership and `is_acquired` are INDEPENDENT, so a want entry survives every tier.**
+
+A want-list row with `is_acquired = false` on an album the user already owns is not corruption and not an untidied mistake — it is the ordinary consequence of two rules that do not talk to each other. The acquire flow sets the flag; a record added any other way (direct entry, an import, a purchase logged separately) leaves the want row untouched. §7.3 keeps acquired rows forever as history, and nothing tidies the un-acquired ones.
+
+So the want entry must be **carried through every tier rather than treated as a fallback for when nothing is owned.** The state this makes reachable is the most valuable answer the screen can give: *you own a different pressing of this album, and this exact pressing is the one you have been hunting* — a copy plus an upgrade, which is a buy signal that neither half expresses alone. Resolving the want list only after ownership misses drops it silently, on the tier §7.7 exists to protect.
+
+The filter stays `is_acquired = false`: surfacing an acquired row would tell the user they are still hunting something they have already bought.
+
 **Ownership travels with every result.** Each entry from `/api/discogs/search` and from `/api/discogs/master/:id/versions` carries the §7.7 ownership tier for that release, resolved server-side in the same request:
 
 ```ts

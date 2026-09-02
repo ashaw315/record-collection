@@ -134,6 +134,35 @@ export async function matchOwnership(input: {
    * answer, which is the degradation §7.7 asks for: a bad id becomes tier 2 or
    * no badge rather than a confident wrong answer.
    */
+  /**
+   * **The want list is resolved for EVERY tier, not only when nothing is owned.**
+   *
+   * It used to be tier 3's body, reached only after tiers 1 and 2 had missed —
+   * so an owned album always reported `wantList: null`, and the state that
+   * matters most in a shop was unreachable: *you own a different pressing AND
+   * this exact one is what you have been hunting*. That is the buy signal, and
+   * it was indistinguishable from an ordinary tier 2.
+   *
+   * **The stale entry is the normal case, not corruption.** Ownership and
+   * `is_acquired` are independent: the acquire flow sets the flag, but a record
+   * added any other way — direct entry, an import, a purchase logged separately
+   * — leaves the want row untouched at false. §7.3 keeps acquired rows forever
+   * as history and nothing tidies the un-acquired ones. So a want entry on an
+   * owned album is a thing the app holds on purpose, and it must be RENDERABLE
+   * rather than filtered away.
+   *
+   * **The tier ORDER is unchanged.** §7.7 ranks owning above wanting and that
+   * reasoning still holds — "you already own this album" is the more urgent
+   * fact. What changes is that the tier no longer destroys the other half of
+   * the answer on its way out.
+   *
+   * **Resolved BEFORE tier 1**, because tier 1 returns early and would
+   * otherwise never see it. `findWantEntry` returns null for a null artist or
+   * title, which is why it is safe here: tier 1 alone can match without them
+   * (on `discogs_release_id`), and the tiers below guard separately.
+   */
+  const wantEntry = await findWantEntry(db, input);
+
   const [exact] =
     input.artist === null || input.title === null
       ? []
@@ -165,7 +194,7 @@ export async function matchOwnership(input: {
         countryPressed: exact.countryPressed,
         yearPressed: exact.yearPressed,
       },
-      wantList: null,
+      wantList: wantEntry,
     };
   }
 
@@ -181,6 +210,7 @@ export async function matchOwnership(input: {
    * pressings reported "no badge" for a record sitting on the shelf.
    */
   if (input.artist === null || input.title === null) return NONE;
+
 
   /**
    * TIER 2: the same album, some other pressing — or no pressing recorded.
@@ -238,7 +268,7 @@ export async function matchOwnership(input: {
             yearPressed: owned.yearPressed,
           }
         : null,
-      wantList: null,
+      wantList: wantEntry,
     };
   }
 
@@ -246,10 +276,48 @@ export async function matchOwnership(input: {
    * TIER 3: on the want list and not yet acquired.
    *
    * Ranked below owning a copy because "you already own this album" is the more
-   * urgent fact in a shop — a want-list entry for something already bought is
-   * stale information the user has not tidied up, and §7.3 keeps acquired
-   * entries forever precisely so it can be.
+   * urgent fact in a shop.
+   *
+   * **The lookup itself now happens above tier 1** (`wantEntry`), because the
+   * want list is part of the answer at every tier rather than a fallback. This
+   * branch is only about the TIER NAME: when nothing is owned, wanting is what
+   * the badge leads with.
    */
+  if (wantEntry !== null) {
+    return {
+      tier: 'wanted',
+      recordId: null,
+      ownedPressing: null,
+      wantList: wantEntry,
+    };
+  }
+
+  return NONE;
+}
+
+/**
+ * The most urgent un-acquired want-list entry for this album, or null.
+ *
+ * **Extracted from tier 3 so every tier can carry it.** Left inline, it ran
+ * only when nothing was owned — see the note at its call site.
+ *
+ * `is_acquired = false` is the filter, and the boundary of what this returns:
+ * §7.3 keeps acquired rows forever as acquisition history, and surfacing one
+ * would tell the user they are still hunting something they have already
+ * bought. A row still sitting at false on an album they own is a different
+ * thing entirely — an entry the app holds on purpose — and that is the one
+ * this must return.
+ *
+ * Returns null without querying when the artist or title is absent: tier 1 can
+ * match on `discogs_release_id` alone and calls this before the guard those
+ * tiers use.
+ */
+async function findWantEntry(
+  db: ReturnType<typeof getDb>,
+  input: { discogsReleaseId: number; artist: string | null; title: string | null },
+): Promise<OwnershipMatch['wantList']> {
+  if (input.artist === null || input.title === null) return null;
+
   const [wanted] = await db
     .select({
       id: wantList.id,
@@ -274,18 +342,11 @@ export async function matchOwnership(input: {
     .orderBy(wantList.priority, wantList.id)
     .limit(1);
 
-  if (wanted !== undefined) {
-    return {
-      tier: 'wanted',
-      recordId: null,
-      ownedPressing: null,
-      wantList: {
-        id: wanted.id,
-        priority: wanted.priority,
-        isTargetPressing: wanted.targetDiscogsReleaseId === input.discogsReleaseId,
-      },
-    };
-  }
+  if (wanted === undefined) return null;
 
-  return NONE;
+  return {
+    id: wanted.id,
+    priority: wanted.priority,
+    isTargetPressing: wanted.targetDiscogsReleaseId === input.discogsReleaseId,
+  };
 }

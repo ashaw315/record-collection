@@ -25348,3 +25348,49 @@ never fires and the phase never leaves `idle`. That is the fixed-click-coordinat
 hazard already recorded here, still live in the harness. **Left as an
 observation** — it is the harness, not the product, and the phone can be driven
 by clicking a real spine. **Trigger: the next unit that touches `SceneHarness`.**
+
+---
+
+## "Five" and "six" were both right, and the gap between them was the defect
+
+**How the ownership state count was settled**, recorded because the disagreement
+was the useful part rather than an error by either side.
+
+A design session reading `ownership-badge.ts` counted **five** renderable marks:
+no badge, own-this-pressing, own-a-different-pressing, on-your-want-list, and
+want-list-THIS-pressing. That is an exact and correct reading of the mapper.
+
+Scoping the payload counted **six** reachable states, adding: *owns a different
+pressing AND this is the hunted target*.
+
+**Neither count was wrong. One was counting the MAPPER and the other the QUERY,
+and they differed by exactly one state — the one the tiering made unreachable.**
+Tiers 1 and 2 hardcoded `wantList: null` and returned before the want-list query
+ran, so the sixth state existed in the type, was reachable in the database, and
+could never arrive at the mapper.
+
+> **A number confirmed twice from the same layer is not confirmed.** Five was
+> verified against the code that renders; six against the code that answers. The
+> defect lived precisely in the space between the two readings, which is why
+> agreeing early would have hidden it.
+
+Resolved by enumerating all six against a real database rather than by
+constructing values — `test/integration/ownership-six-states.test.ts`. A state
+that only type-checks is not a state the app can show, and that file is now the
+unit's spine: it was written to prove the defect, watched failing on state 6,
+and kept.
+
+### The mutation that survived, and what it says about enumerations
+
+Five mutations were run against the fix. Four were caught. **Dropping the want
+entry from TIER 1 alone survived all six state tests** — because the enumeration
+was built around states that differ in what the BADGE shows, and tier 1's carry
+does not change the badge. It changes what the payload holds.
+
+> **An enumeration is only as complete as the axis it was enumerated along.**
+> Six states, chosen by visible outcome, left a branch untested that differed on
+> a different axis.
+
+Fixed by testing tier 1's carry directly. The lesson is the same family as the
+aggregate assertion recorded above: both look exhaustive and constrain less than
+they appear to.

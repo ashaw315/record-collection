@@ -178,3 +178,82 @@ describe('describeOwnedPressing', () => {
     ).toBe('1982');
   });
 });
+
+/**
+ * **The sixth mark.**
+ *
+ * Five marks shipped before this: no badge, own-this, own-different, wanted,
+ * wanted-this-pressing. That count was accurate for the mapper and wrong for
+ * the app — the query could reach a sixth state the mapper had no branch for,
+ * and the mapper could not have been fixed alone because the state never
+ * arrived. See `test/integration/ownership-six-states.test.ts`.
+ */
+describe('owning a copy AND hunting this pressing is its own mark', () => {
+  const OWNED = { year: 1982, country: 'UK', catalogNumber: 'CLAY LP 3' };
+
+  /** Fails against the five-branch mapper, which rendered the tier-2 caution badge. */
+  it('does not render the same badge as an ordinary different-pressing match', () => {
+    const upgrade = ownershipBadge({
+      tier: 'owned_different_pressing',
+      ownedPressing: OWNED,
+      wantedPriority: 1,
+      isTargetPressing: true,
+    });
+    const ordinary = ownershipBadge({
+      tier: 'owned_different_pressing',
+      ownedPressing: OWNED,
+      wantedPriority: null,
+      isTargetPressing: false,
+    });
+
+    expect(upgrade?.label).not.toBe(ordinary?.label);
+  });
+
+  /**
+   * **Both facts, because either alone misleads.** "You own a different
+   * pressing" reads as a reason to put it down; "want list — this pressing"
+   * omits that they already have a copy, which is what makes this an upgrade
+   * rather than a first buy.
+   */
+  it('says both that it is wanted and that another copy is owned', () => {
+    const badge = ownershipBadge({
+      tier: 'owned_different_pressing',
+      ownedPressing: OWNED,
+      wantedPriority: 1,
+      isTargetPressing: true,
+    });
+
+    expect(badge?.label).toMatch(/want list/i);
+    expect(badge?.label).toMatch(/own/i);
+    expect(badge?.detail, 'and still names the copy at home').toContain('CLAY LP 3');
+  });
+
+  /**
+   * **Tone is `wanted`, not `caution`.** Caution means "look closely, you may
+   * already have this" — the wrong instruction for a record the user has
+   * explicitly decided they want.
+   */
+  it('uses the wanted tone rather than the caution tone', () => {
+    const badge = ownershipBadge({
+      tier: 'owned_different_pressing',
+      ownedPressing: OWNED,
+      wantedPriority: 1,
+      isTargetPressing: true,
+    });
+
+    expect(badge?.tone).toBe('wanted');
+  });
+
+  /** The tier-2 badge is unchanged when no want entry rode along. */
+  it('leaves an ordinary different-pressing match on the caution tone', () => {
+    const badge = ownershipBadge({
+      tier: 'owned_different_pressing',
+      ownedPressing: OWNED,
+      wantedPriority: null,
+      isTargetPressing: false,
+    });
+
+    expect(badge?.tone).toBe('caution');
+    expect(badge?.label).toBe('You own a DIFFERENT pressing');
+  });
+});
