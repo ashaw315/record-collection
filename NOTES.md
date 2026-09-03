@@ -25230,6 +25230,43 @@ characterisation than most flakes here get before someone acts."* The trigger
 exists so it does not sit loose: an observation with no condition attached is one
 nobody ever picks up.
 
+**SIGHTINGS 3 AND 4 — 2026-09-03, during the 14a measurement unit. The trigger's
+condition 1 is now MET.**
+
+Full suite, both projects, on the 14a tree: `442 passed, 3 flaky, 20 skipped, 0
+failed` (13.2m). All three flaky, all `[chromium]`, all passing on retry:
+
+| spec | test | state |
+|---|---|---|
+| `lookup-flows.spec.ts:1656` | a release with runout variants says what a match identifies | flaky |
+| `lookup-flows.spec.ts:1703` | the variant line stays off where there is nothing to disambiguate | flaky |
+| `want-list.spec.ts:604` | a prefill alone creates NOTHING — asserted against the database | flaky |
+
+That brings `lookup-flows.spec.ts` to **four sightings** — `:1525` (failed),
+`:817` (flaky), and now `:1656` and `:1703`. Condition 1 asked for four across
+the tree's history; it has them.
+
+**Not caused by the unit, and this was established rather than assumed.** The
+14a diff contains NO runtime source: two documents, a hand-run capture script, a
+Vitest-only test, and three fixtures. `grep -rn 'release-gatefold' e2e src`
+returns nothing outside `gatefold-inner-images.test.ts`, so no Playwright run can
+reach the new files at all. The immediately preceding full run on the same tree
+was `445 passed, 0 flaky` — same code, different outcome, which is the signature
+of load-dependence rather than of a change.
+
+**A THIRD FILE now, which is new information and slightly weakens the
+file-local diagnosis.** Every prior sighting was `lookup-flows.spec.ts`, and the
+entry above reasons about "a load-dependent fault in the file itself".
+`want-list.spec.ts:604` is a different file, and the accumulation diagnosis
+recorded further up this document — `/` slowing as records pile up within a run,
+every spec's `login()` waiting on that render — predicts exactly this
+cross-file spread. Whoever picks up the trigger should treat "fault in
+lookup-flows" as the weaker of the two hypotheses.
+
+**Still not fixed here** (CLAUDE.md §4): characterising a flake needs its own
+unit with repeated runs, and appending a guess to a measurement unit is what the
+trigger exists to prevent.
+
 **The reporting hazard is the part to carry forward:** `playwright test` exited
 **code 0 with 1 failed** in run A. A green exit code is not evidence; the summary
 line is. This is the third time in one session an exit code has concealed a real
@@ -25394,3 +25431,47 @@ does not change the badge. It changes what the payload holds.
 Fixed by testing tier 1's carry directly. The lesson is the same family as the
 aggregate assertion recorded above: both look exhaustive and constrain less than
 they appear to.
+
+---
+
+## §12 step 14a — the Discogs inner-image measurement (2026-09-03)
+
+Measured across four verified gatefolds: 381756 (Discharge), 14451455 (Grateful
+Dead), 10155238 (Deep Purple), 6758287 (Cat Stevens). Findings are in SPEC §12
+14a and pinned by `src/lib/discogs/gatefold-inner-images.test.ts`. What follows
+is what the measurement produced that does NOT belong in the spec.
+
+**A live-path finding, outside this unit's scope.** A gatefold need not carry a
+`primary` image at all — release 14451455 has seven images and not one is
+`primary`. `attach-cover.ts` picks the primary and falls back to `images[0]`, so
+on such a release the attached cover is whichever image a contributor happened to
+upload first: possibly a label close-up, possibly the 2:1 inner spread.
+
+Not a defect in the fallback existing — without it such a release would get no
+cover at all, which is worse. What the measurement changes is its status: **the
+fallback is a live path, not a guard**, while the comment above it reads as
+though it were defending against something unusual.
+
+**The shape worth recognising elsewhere:** a fallback whose comment reads as
+defensive while it is doing routine work. The measurement test records the fact
+and asserts no behaviour, because nothing has been decided.
+
+**A method finding about the capture script.** `format=Gatefold` returns HTTP
+200 with zero results — the format facet indexes the medium, not the descriptor.
+The correct facet is `format_desc=Gatefold`. This is the silent-absence shape
+this repo keeps meeting: a wrong facet name fails as an empty result set, and
+the first run of the extended script reported "found 0 qualifying releases"
+without anything being obviously broken.
+
+The facet is also UNRELIABLE where it does work: 22 of the first 24 candidates
+it returned were not gatefolds by their own `formats` payload. Per-release
+verification is what makes the captures trustworthy, and it is the reason the
+script fetches and checks every candidate rather than trusting the query. Any
+future gatefold capture must keep that check.
+
+**`normalizeRelease` drops `width`/`height`, and the test pins it deliberately.**
+This is 14a's Q3 answer and the one §6 change the assignment UI needs. The test
+asserting the absence is a tripwire on a known omission, not an assertion that
+the omission is correct — whoever closes the gap should delete that test and say
+so in the unit report. Left as-is here because adding the fields with no consumer
+would be speculative work outside this unit.

@@ -1,0 +1,506 @@
+{
+  "id": 10155238,
+  "status": "Accepted",
+  "year": 1971,
+  "resource_url": "https://api.discogs.com/releases/10155238",
+  "uri": "https://www.discogs.com/release/10155238-Deep-Purple-Fireball",
+  "artists": [
+    {
+      "name": "Deep Purple",
+      "anv": "",
+      "join": "",
+      "role": "",
+      "tracks": "",
+      "id": 170355,
+      "resource_url": "https://api.discogs.com/artists/170355",
+      "thumbnail_url": "https://i.discogs.com/53Qt8vZl-wO-5m1ENErFuRa8yyPYcnGJopin6mllQWQ/rs:fit/g:sm/q:90/h:572/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9BLTE3MDM1/NS0xMzE4MDgwOTAx/LmpwZWc.jpeg"
+    }
+  ],
+  "artists_sort": "Deep Purple",
+  "labels": [
+    {
+      "name": "Harvest",
+      "catno": "SHVL 793",
+      "entity_type": "1",
+      "entity_type_name": "Label",
+      "id": 2564,
+      "resource_url": "https://api.discogs.com/labels/2564",
+      "thumbnail_url": "https://i.discogs.com/V70cKw5XmG3aw3oTfxD39_6gXY0-bgZjFVyMQcy_kYE/rs:fit/g:sm/q:90/h:600/w:515/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI1NjQt/MTY0MjU0NDU2MC02/MTMwLmpwZWc.jpeg"
+    },
+    {
+      "name": "Harvest",
+      "catno": "2C 064-92726",
+      "entity_type": "1",
+      "entity_type_name": "Label",
+      "id": 2564,
+      "resource_url": "https://api.discogs.com/labels/2564",
+      "thumbnail_url": "https://i.discogs.com/V70cKw5XmG3aw3oTfxD39_6gXY0-bgZjFVyMQcy_kYE/rs:fit/g:sm/q:90/h:600/w:515/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI1NjQt/MTY0MjU0NDU2MC02/MTMwLmpwZWc.jpeg"
+    }
+  ],
+  "series": [],
+  "companies": [
+    {
+      "name": "Edwards Coletta Productions",
+      "catno": "",
+      "entity_type": "37",
+      "entity_type_name": "Produced For",
+      "id": 615701,
+      "resource_url": "https://api.discogs.com/labels/615701"
+    },
+    {
+      "name": "Les Industries Musicales Et Electriques Pathé Marconi",
+      "catno": "",
+      "entity_type": "4",
+      "entity_type_name": "Record Company",
+      "id": 50112,
+      "resource_url": "https://api.discogs.com/labels/50112",
+      "thumbnail_url": "https://i.discogs.com/hVvEuJRpV6ciWm9viwj79-e-C1NgUbWVynPuIJkjAsU/rs:fit/g:sm/q:90/h:35/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTUwMTEy/LTEyNjQ5NjUyMjAu/anBlZw.jpeg"
+    },
+    {
+      "name": "Feldman",
+      "catno": "",
+      "entity_type": "21",
+      "entity_type_name": "Published By",
+      "id": 292244,
+      "resource_url": "https://api.discogs.com/labels/292244",
+      "thumbnail_url": "https://i.discogs.com/fFHejX4xfNZjUroxBOK4TM1tUOvJYzaK0M57jQl5kDk/rs:fit/g:sm/q:90/h:200/w:200/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI5MjI0/NC0xNTA0MDEwOTg1/LTc2OTIucG5n.jpeg"
+    },
+    {
+      "name": "Pathé Marconi",
+      "catno": "",
+      "entity_type": "16",
+      "entity_type_name": "Made By",
+      "id": 82793,
+      "resource_url": "https://api.discogs.com/labels/82793",
+      "thumbnail_url": "https://i.discogs.com/dgOVrKDAO0fBgk6yQxDDeyW-6wZudpxw-2G53id7eH0/rs:fit/g:sm/q:90/h:353/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTgyNzkz/LTE2NDgwMjM2Nzgt/NDI1OS5qcGVn.jpeg"
+    },
+    {
+      "name": "Pathé Marconi, Chatou",
+      "catno": "280700",
+      "entity_type": "17",
+      "entity_type_name": "Pressed By",
+      "id": 407968,
+      "resource_url": "https://api.discogs.com/labels/407968",
+      "thumbnail_url": "https://i.discogs.com/mXG1CRQWE7q1CJ65Z2kJjeU3HHr6msFoqHebcLpq6tE/rs:fit/g:sm/q:90/h:268/w:500/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTQwNzk2/OC0xMzYyNzQ1NDY2/LTM1MTcuZ2lm.jpeg"
+    },
+    {
+      "name": "Pathé Marconi, Chatou",
+      "catno": "280701",
+      "entity_type": "17",
+      "entity_type_name": "Pressed By",
+      "id": 407968,
+      "resource_url": "https://api.discogs.com/labels/407968",
+      "thumbnail_url": "https://i.discogs.com/mXG1CRQWE7q1CJ65Z2kJjeU3HHr6msFoqHebcLpq6tE/rs:fit/g:sm/q:90/h:268/w:500/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTQwNzk2/OC0xMzYyNzQ1NDY2/LTM1MTcuZ2lm.jpeg"
+    },
+    {
+      "name": "I.D.N.",
+      "catno": "",
+      "entity_type": "19",
+      "entity_type_name": "Printed By",
+      "id": 270508,
+      "resource_url": "https://api.discogs.com/labels/270508",
+      "thumbnail_url": "https://i.discogs.com/8dMYeJuOcxhn1suheKhtDC-45kZlNxhkc8gFlBOTb60/rs:fit/g:sm/q:90/h:259/w:259/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI3MDUw/OC0xNDQ3NDUyOTY5/LTc0NzguanBlZw.jpeg"
+    }
+  ],
+  "formats": [
+    {
+      "name": "Vinyl",
+      "qty": "1",
+      "descriptions": [
+        "LP",
+        "Album"
+      ],
+      "text": "Gatefold"
+    }
+  ],
+  "data_quality": "Needs Vote",
+  "community": {
+    "have": 1462,
+    "want": 245,
+    "rating": {
+      "count": 115,
+      "average": 4.12
+    },
+    "submitter": {
+      "username": "Stamina_Records",
+      "resource_url": "https://api.discogs.com/users/Stamina_Records"
+    },
+    "contributors": [
+      {
+        "username": "Stamina_Records",
+        "resource_url": "https://api.discogs.com/users/Stamina_Records"
+      },
+      {
+        "username": "LeDji",
+        "resource_url": "https://api.discogs.com/users/LeDji"
+      },
+      {
+        "username": "ukygreg",
+        "resource_url": "https://api.discogs.com/users/ukygreg"
+      },
+      {
+        "username": "Jackany",
+        "resource_url": "https://api.discogs.com/users/Jackany"
+      },
+      {
+        "username": "kaynaky",
+        "resource_url": "https://api.discogs.com/users/kaynaky"
+      },
+      {
+        "username": "AndyWhelan",
+        "resource_url": "https://api.discogs.com/users/AndyWhelan"
+      }
+    ],
+    "data_quality": "Needs Vote",
+    "status": "Accepted"
+  },
+  "format_quantity": 1,
+  "date_added": "2017-04-18T22:13:32-07:00",
+  "date_changed": "2023-11-16T11:52:19-08:00",
+  "num_for_sale": 34,
+  "lowest_price": 10.45,
+  "master_id": 1632,
+  "master_url": "https://api.discogs.com/masters/1632",
+  "title": "Fireball",
+  "country": "France",
+  "released": "1971",
+  "notes": "Includes insert with lyrics printed by [l270508].\nRear Sleeve; Les industries musicales et electriques PATHE MARCONI Paris.\nMade in France.\nⓅ 1971.\nReferenced by the [url=https://catalogue.bnf.fr/ark:/12148/cb38609325v]BnF[/url].",
+  "released_formatted": "1971",
+  "identifiers": [
+    {
+      "type": "Matrix / Runout",
+      "value": "SHVL 793 A",
+      "description": "Label Side A"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "SHVL 793 B",
+      "description": "Label Side B"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "SHVL 793 A 21 M6 280700",
+      "description": "Runout Side A [Stamped]"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "SHVL 793 B 21 M6 280701",
+      "description": "Runout Side B [Stamped]"
+    },
+    {
+      "type": "Price Code",
+      "value": "Ⓤ"
+    }
+  ],
+  "videos": [],
+  "genres": [
+    "Rock"
+  ],
+  "styles": [
+    "Hard Rock"
+  ],
+  "tracklist": [
+    {
+      "position": "A1",
+      "type_": "track",
+      "title": "Fireball",
+      "duration": ""
+    },
+    {
+      "position": "A2",
+      "type_": "track",
+      "title": "No No No",
+      "duration": ""
+    },
+    {
+      "position": "A3",
+      "type_": "track",
+      "title": "Demon's Eye",
+      "duration": ""
+    },
+    {
+      "position": "A4",
+      "type_": "track",
+      "title": "Anyone's Daughter",
+      "duration": ""
+    },
+    {
+      "position": "B1",
+      "type_": "track",
+      "title": "The Mule",
+      "duration": ""
+    },
+    {
+      "position": "B2",
+      "type_": "track",
+      "title": "Fools",
+      "duration": ""
+    },
+    {
+      "position": "B3",
+      "type_": "track",
+      "title": "No One Came",
+      "duration": ""
+    }
+  ],
+  "extraartists": [
+    {
+      "name": "Ian Gillan",
+      "anv": "",
+      "join": "",
+      "role": "Band",
+      "tracks": "",
+      "id": 349634,
+      "resource_url": "https://api.discogs.com/artists/349634"
+    },
+    {
+      "name": "Ian Paice",
+      "anv": "",
+      "join": "",
+      "role": "Band",
+      "tracks": "",
+      "id": 261635,
+      "resource_url": "https://api.discogs.com/artists/261635"
+    },
+    {
+      "name": "Jon Lord",
+      "anv": "",
+      "join": "",
+      "role": "Band",
+      "tracks": "",
+      "id": 262410,
+      "resource_url": "https://api.discogs.com/artists/262410"
+    },
+    {
+      "name": "Ritchie Blackmore",
+      "anv": "",
+      "join": "",
+      "role": "Band",
+      "tracks": "",
+      "id": 309402,
+      "resource_url": "https://api.discogs.com/artists/309402"
+    },
+    {
+      "name": "Roger Glover",
+      "anv": "",
+      "join": "",
+      "role": "Band",
+      "tracks": "",
+      "id": 123906,
+      "resource_url": "https://api.discogs.com/artists/123906"
+    },
+    {
+      "name": "Castle, Chappell & Partners Limited",
+      "anv": "Castle, Chappell And Partners Limited",
+      "join": "",
+      "role": "Design",
+      "tracks": "",
+      "id": 1911371,
+      "resource_url": "https://api.discogs.com/artists/1911371"
+    },
+    {
+      "name": "Alan O'Duffy",
+      "anv": "",
+      "join": "",
+      "role": "Engineer",
+      "tracks": "",
+      "id": 151084,
+      "resource_url": "https://api.discogs.com/artists/151084"
+    },
+    {
+      "name": "Louis Austin",
+      "anv": "Lou Austin",
+      "join": "",
+      "role": "Engineer",
+      "tracks": "",
+      "id": 94067,
+      "resource_url": "https://api.discogs.com/artists/94067"
+    },
+    {
+      "name": "Martin Birch",
+      "anv": "",
+      "join": "",
+      "role": "Engineer",
+      "tracks": "",
+      "id": 251596,
+      "resource_url": "https://api.discogs.com/artists/251596"
+    },
+    {
+      "name": "Ian Hansford",
+      "anv": "",
+      "join": "",
+      "role": "Equipment",
+      "tracks": "",
+      "id": 1826190,
+      "resource_url": "https://api.discogs.com/artists/1826190"
+    },
+    {
+      "name": "Rob Cooksey",
+      "anv": "",
+      "join": "",
+      "role": "Equipment",
+      "tracks": "",
+      "id": 1826191,
+      "resource_url": "https://api.discogs.com/artists/1826191"
+    },
+    {
+      "name": "Ron Quinton",
+      "anv": "",
+      "join": "",
+      "role": "Equipment",
+      "tracks": "",
+      "id": 1963136,
+      "resource_url": "https://api.discogs.com/artists/1963136"
+    },
+    {
+      "name": "Chagford Studios",
+      "anv": "",
+      "join": "",
+      "role": "Photography By",
+      "tracks": "",
+      "id": 5914764,
+      "resource_url": "https://api.discogs.com/artists/5914764"
+    },
+    {
+      "name": "Tony Burrett",
+      "anv": "",
+      "join": "",
+      "role": "Photography By",
+      "tracks": "",
+      "id": 2350558,
+      "resource_url": "https://api.discogs.com/artists/2350558"
+    },
+    {
+      "name": "Deep Purple",
+      "anv": "",
+      "join": "",
+      "role": "Producer",
+      "tracks": "",
+      "id": 170355,
+      "resource_url": "https://api.discogs.com/artists/170355"
+    },
+    {
+      "name": "Ian Gillan",
+      "anv": "Gillan",
+      "join": "",
+      "role": "Written-By",
+      "tracks": "",
+      "id": 349634,
+      "resource_url": "https://api.discogs.com/artists/349634"
+    },
+    {
+      "name": "Ian Paice",
+      "anv": "Paice",
+      "join": "",
+      "role": "Written-By",
+      "tracks": "",
+      "id": 261635,
+      "resource_url": "https://api.discogs.com/artists/261635"
+    },
+    {
+      "name": "Jon Lord",
+      "anv": "Lord",
+      "join": "",
+      "role": "Written-By",
+      "tracks": "",
+      "id": 262410,
+      "resource_url": "https://api.discogs.com/artists/262410"
+    },
+    {
+      "name": "Ritchie Blackmore",
+      "anv": "Blackmore",
+      "join": "",
+      "role": "Written-By",
+      "tracks": "",
+      "id": 309402,
+      "resource_url": "https://api.discogs.com/artists/309402"
+    },
+    {
+      "name": "Roger Glover",
+      "anv": "Glover",
+      "join": "",
+      "role": "Written-By",
+      "tracks": "",
+      "id": 123906,
+      "resource_url": "https://api.discogs.com/artists/123906"
+    }
+  ],
+  "images": [
+    {
+      "type": "primary",
+      "uri": "https://i.discogs.com/RYWnsdyymQIT-c1-hqhrj0tWQh_XL0guXCwwaaPKN9o/rs:fit/g:sm/q:90/h:599/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NTQ4ODMy/NjYtMjk2MS5wbmc.jpeg",
+      "resource_url": "https://i.discogs.com/RYWnsdyymQIT-c1-hqhrj0tWQh_XL0guXCwwaaPKN9o/rs:fit/g:sm/q:90/h:599/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NTQ4ODMy/NjYtMjk2MS5wbmc.jpeg",
+      "uri150": "https://i.discogs.com/9xXlZt_Lp9dvkp0z_p3_lvZMcZ091mgIBYS7Eo8LZpg/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NTQ4ODMy/NjYtMjk2MS5wbmc.jpeg",
+      "width": 600,
+      "height": 599
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/x9QxwYP2JuBt_HM-4gxKqNi0SywH6ADFXdzb3k3VRl4/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NTQ4ODMz/NDktMjcxNC5wbmc.jpeg",
+      "resource_url": "https://i.discogs.com/x9QxwYP2JuBt_HM-4gxKqNi0SywH6ADFXdzb3k3VRl4/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NTQ4ODMz/NDktMjcxNC5wbmc.jpeg",
+      "uri150": "https://i.discogs.com/4MjA4Q6qPmW5UiSLk-qxkGRbs8bvG0xZF_EpJgSX1Ko/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NTQ4ODMz/NDktMjcxNC5wbmc.jpeg",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/Ba2VvNn8XJJSFIt5WNCUzrK-6iV4h4GCBxCqJIFBkao/rs:fit/g:sm/q:90/h:598/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NTQ4ODMz/NDUtNTMxNC5wbmc.jpeg",
+      "resource_url": "https://i.discogs.com/Ba2VvNn8XJJSFIt5WNCUzrK-6iV4h4GCBxCqJIFBkao/rs:fit/g:sm/q:90/h:598/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NTQ4ODMz/NDUtNTMxNC5wbmc.jpeg",
+      "uri150": "https://i.discogs.com/_Lq5u67hMOxVF3ov2c9fyt6nBhC5QL1J2oMdRIIIQ50/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NTQ4ODMz/NDUtNTMxNC5wbmc.jpeg",
+      "width": 600,
+      "height": 598
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/bTlN5Ep5TujUha5LkzO-HzyIa0wlcUnLPRYwylxYyfU/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NTQ4ODM0/MDEtMzcxMC5wbmc.jpeg",
+      "resource_url": "https://i.discogs.com/bTlN5Ep5TujUha5LkzO-HzyIa0wlcUnLPRYwylxYyfU/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NTQ4ODM0/MDEtMzcxMC5wbmc.jpeg",
+      "uri150": "https://i.discogs.com/C3TNu3I8L4rEVTFCdHrnq8D51MoSWRwp5J5qisXtO6w/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NTQ4ODM0/MDEtMzcxMC5wbmc.jpeg",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/SyYUAWzhguUm6iwS5m7zgjqO0Io_Lt5uBk9YySIxaTs/rs:fit/g:sm/q:90/h:600/w:592/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NDI1NzQw/MzItNjAwMy5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/SyYUAWzhguUm6iwS5m7zgjqO0Io_Lt5uBk9YySIxaTs/rs:fit/g:sm/q:90/h:600/w:592/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NDI1NzQw/MzItNjAwMy5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/7hOPKni3yENVQLmGiMEpwA39E_Q0vyIXLoEO49tiWcQ/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NDI1NzQw/MzItNjAwMy5qcGVn.jpeg",
+      "width": 592,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/VIywDoWrt7VtcqjAlSFxjo9YtGCkFPzL-jfJ2eZ-KRM/rs:fit/g:sm/q:90/h:600/w:592/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NDI1NzQw/MzMtMzUxNy5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/VIywDoWrt7VtcqjAlSFxjo9YtGCkFPzL-jfJ2eZ-KRM/rs:fit/g:sm/q:90/h:600/w:592/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NDI1NzQw/MzMtMzUxNy5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/wbFTvpOjtI8gwG7Eh5M9gloX2mStdOAxf5pMTDIyfh8/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NDI1NzQw/MzMtMzUxNy5qcGVn.jpeg",
+      "width": 592,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/76qdIz-nede9ns4TU1zYE06ah-sIUO1XgAlrFFNZ_KY/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NTQ4ODM0/ODItNTg1OS5wbmc.jpeg",
+      "resource_url": "https://i.discogs.com/76qdIz-nede9ns4TU1zYE06ah-sIUO1XgAlrFFNZ_KY/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NTQ4ODM0/ODItNTg1OS5wbmc.jpeg",
+      "uri150": "https://i.discogs.com/g-HPrKvPgeX4rN8p3pvrMBiyxN50hLI4XNbP6is3Pzg/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NTQ4ODM0/ODItNTg1OS5wbmc.jpeg",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/qMhw7FrYivOpQz1PsBK5oR_vt0ayPdBqRMdQR4-0em4/rs:fit/g:sm/q:90/h:599/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NTQ4ODM1/MTYtODg4MC5wbmc.jpeg",
+      "resource_url": "https://i.discogs.com/qMhw7FrYivOpQz1PsBK5oR_vt0ayPdBqRMdQR4-0em4/rs:fit/g:sm/q:90/h:599/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NTQ4ODM1/MTYtODg4MC5wbmc.jpeg",
+      "uri150": "https://i.discogs.com/w8eKQNzT0icUCJo3ID2IJjV0TtCPeFvteWoMBH6EBA0/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NTQ4ODM1/MTYtODg4MC5wbmc.jpeg",
+      "width": 600,
+      "height": 599
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/W3ohMb5wF29hL5uepKBVFoLXy6ZfKTpdbghs8zWP338/rs:fit/g:sm/q:90/h:324/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NDI1NzQw/MzAtNjg1OC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/W3ohMb5wF29hL5uepKBVFoLXy6ZfKTpdbghs8zWP338/rs:fit/g:sm/q:90/h:324/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NDI1NzQw/MzAtNjg1OC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/VfvoMKUdk1z1ogSDUT6up7_ry-ERvp8htq7n6gb43cQ/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NDI1NzQw/MzAtNjg1OC5qcGVn.jpeg",
+      "width": 600,
+      "height": 324
+    }
+  ],
+  "thumb": "https://i.discogs.com/9xXlZt_Lp9dvkp0z_p3_lvZMcZ091mgIBYS7Eo8LZpg/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTU1/MjM4LTE1NTQ4ODMy/NjYtMjk2MS5wbmc.jpeg",
+  "estimated_weight": 230,
+  "blocked_from_sale": false,
+  "is_offensive": false
+}

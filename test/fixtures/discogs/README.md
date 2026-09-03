@@ -42,6 +42,9 @@ for it and take the id from the result.
 | `release-no-year.json` | A release Discogs records NO year for — `year: 0` and no `released` field at all. The only committed payload with that shape, and the reason it is here: the entire suite otherwise exercises releases that carry their own year, so the master-year fallback was untestable and a defect in it invisible. Captured from the real US Carpenters LP (`SP-3502`, master 84975) |
 | `release-no-matrix.json` | A release with NO matrix — §5.7 calls this "frequently missing", and it is the common real case. The script SEARCHES for a qualifying release rather than naming one: a low release id is not a sparse entry, it is a heavily-edited one, which is how the first attempt came back with two Matrix / Runout identifiers |
 | `master-versions-hot-tuna.json` | **The evidence that indistinguishable versions are real**, not an invented hazard. Three US/1970/`LSP-4353` versions on RCA Victor agree on every column the versions endpoint returns, so the table cannot separate them — and a fourth differs *only* by `Repress`, which is the near-miss that makes the comparison key's descriptor handling testable. `identical-versions.test.ts` loads it through `normalizeVersion`. It was orphaned for a while, and that had a cost: the test's docblock claimed five identical versions "measured against the live API" while the committed capture showed three, and nothing could contradict it |
+| `release-gatefold-a.json` | **§12 step 14a's measurement**, release 14451455 (Grateful Dead — *From The Mars Hotel*). Also the release carrying **NO `primary` image at all** — seven images, none primary, which is what makes `attach-cover.ts`'s `images[0]` fallback a live path rather than a guard |
+| `release-gatefold-b.json` | 14a measurement, release 10155238 (Deep Purple — *Fireball*), 9 images |
+| `release-gatefold-c.json` | 14a measurement, release 6758287 (Cat Stevens — *Catch Bull At Four*), 5 images — the smallest gatefold set measured, and the one that shows the 2:1 spread is present even where a release carries few images |
 | `release-collision-clay-lp-3-a.json` | **The collision pair, member A** — release 4878030. See below |
 | `release-collision-clay-lp-3-b.json` | **The collision pair, member B** — release 10405725. See below |
 
@@ -107,3 +110,56 @@ Re-capture with:
 If the cross-check ever fails after a re-capture, that is information and not a
 nuisance: a contributor has edited one of these releases, and the README's
 standing rule applies — establish which before touching a test.
+
+
+## The gatefold fixtures, and why their ids are not in this file
+
+`release-gatefold-a/b/c` exist for SPEC §12 step 14a: what Discogs actually
+carries for a gatefold's inner artwork. Three beyond the 381756 capture, because
+one release cannot distinguish "this is Discogs' convention" from "this is one
+contributor's habit" — and the measurement's whole purpose was to stop the slot
+assignment UI being built on a guess.
+
+**Their ids were DISCOVERED by search and are now PINNED.** There was no
+committed fixture carrying gatefold ids to read them out of — the versions
+endpoint's `format` column does not include the descriptor — so they were found
+by a `format_desc=Gatefold` search and each candidate was fetched and checked
+against its own `formats` payload before being accepted.
+
+They were then pinned, because searching is right for FINDING a fixture and
+wrong for KEEPING one. `gatefold-inner-images.test.ts` names all three and pins
+the no-primary finding to `release-gatefold-a` specifically; a re-capture that
+returned a different gatefold would leave the file loading fine and the test
+running fine while the no-primary assertion quietly measured a release that no
+longer has that property. That is the fixture-wrong-in-what-it-LACKS shape this
+README opens with. The capture now asserts the id, so a swap fails loudly.
+
+`findGatefoldReleases` is kept in the script for finding a REPLACEMENT if one of
+these releases is ever deleted from Discogs — not for routine re-capture.
+
+**Two facts about that search, both measured 2026-09-03 and both worth keeping:**
+
+1. **The facet is `format_desc=Gatefold`, not `format=Gatefold`.** The latter
+   returns HTTP 200 with zero results — `format` indexes the medium (`Vinyl`,
+   `LP`), not the descriptor. A wrong facet name here fails as SILENCE rather
+   than as an error, which is the same absence-as-success shape the rest of this
+   file guards against.
+2. **The facet is unreliable even when correct.** 22 of the first 24 candidates
+   it returned were not gatefolds by their own `formats` payload. This is why
+   every candidate is fetched and verified rather than trusted — a capture built
+   on the query alone would have produced three plausible non-gatefolds.
+
+Re-capture with:
+
+    node scripts/capture-discogs-fixtures.mjs release-gatefold-a release-gatefold-b release-gatefold-c
+
+A re-capture fetches these three ids and **refuses to write anything else**.
+Two failures are worth reading rather than working around:
+
+- `expected release 14451455, got N` — the pin caught a swap. Something changed
+  the path; it is not a reason to unpin.
+- `release 14451455 now HAS n primary image(s)` — a contributor has edited the
+  release and it no longer carries the property it was captured for (§12 14a
+  Q1a). Find a new no-primary gatefold and repoint the fixture. **Do not adjust
+  the test to match**: the finding is about Discogs' data permitting no primary
+  at all, and a release that gained one does not refute it.

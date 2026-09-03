@@ -74,6 +74,42 @@ const matrixIdentifiers = (payload) =>
   (payload.identifiers ?? []).filter((i) => /matrix|runout/i.test(i.type ?? ''));
 
 /**
+ * A release is a gatefold when its FORMAT says so. §12 step 14a's measurement
+ * is about what Discogs carries for a gatefold, so the property being captured
+ * for is "this really is a gatefold", and the format text is the only place
+ * Discogs states it.
+ *
+ * Checked across `descriptions` AND `text`, because it appears in both
+ * depending on the contributor: release 381756 carries it in `formats[0].text`
+ * while other releases list it as a description. Reading only one is how a
+ * genuine gatefold gets rejected as a candidate.
+ */
+const isGatefold = (payload) =>
+  (payload.formats ?? []).some((format) =>
+    [format.text ?? '', ...(format.descriptions ?? [])].some((value) =>
+      /gatefold/i.test(String(value)),
+    ),
+  );
+
+/**
+ * The measurement itself, for 14a: what a gatefold release's images actually
+ * look like. Recorded per-image rather than summarised, because the two open
+ * questions — whether the payload TYPES an inner image, and whether the inner
+ * arrives as one wide spread or two square leaves — are both answered by the
+ * type/aspect of individual entries and would be destroyed by an average.
+ */
+const imageShapes = (payload) =>
+  (payload.images ?? []).map((image) => ({
+    type: image.type ?? null,
+    width: image.width ?? null,
+    height: image.height ?? null,
+    ratio:
+      typeof image.width === 'number' && typeof image.height === 'number' && image.height !== 0
+        ? Number((image.width / image.height).toFixed(3))
+        : null,
+  }));
+
+/**
  * The columns a `/lookup` search result DISPLAYS. A collision is defined
  * against these and not against "the payloads differ somewhere" — two releases
  * always differ somewhere (ids, thumbnails, community counts), and none of that
@@ -342,7 +378,116 @@ const captures = [
         ? null
         : `release ${payload.id} has ${matrixIdentifiers(payload).length} Matrix / Runout identifiers`,
   },
+  /**
+   * §12 step 14a's MEASUREMENT — three additional gatefolds beyond 381756.
+   *
+   * The question is what Discogs carries for a gatefold's inner artwork, and
+   * SPEC §12 14a poses it in three parts: how the payload types an inner image
+   * (given `images[].type` is only `primary`/`secondary`), whether the inner
+   * arrives as one wide spread or two square leaves, and what §6's mapping
+   * would need to gain to carry them.
+   *
+   * **Three releases rather than one, because 381756 alone cannot answer it.**
+   * That release shows six `secondary` images and a single 600×300 — which is
+   * either the wide-spread case A21b anticipates, or one release's contributor
+   * uploading one odd scan. One sample cannot tell those apart, and building
+   * the slot-assignment UI on the wrong reading is what the measurement exists
+   * to prevent.
+   *
+   * **The ids were DISCOVERED by search and are now PINNED.** The README's
+   * standing rule is that ids are never guessed: the first run of this script
+   * produced five wrong fixtures from plausible-looking guesses. There was no
+   * committed fixture carrying gatefold ids to read them out of — the versions
+   * endpoint's `format` column does not include the descriptor — so they came
+   * from a search whose results were CHECKED for the property, then pinned.
+   *
+   * **Why pinned, having been searched.** These three were originally SEARCHED
+   * for, the way `release-no-matrix` still is — correct for discovering them,
+   * wrong for keeping them.
+   *
+   * A searched capture may legitimately return DIFFERENT releases on a
+   * re-capture. `gatefold-inner-images.test.ts` names all three in its docblock
+   * and pins the no-primary finding to `release-gatefold-a` specifically, so a
+   * re-capture that swapped in another gatefold would leave the fixture loading
+   * fine, the test running fine, and the no-primary assertion quietly measuring
+   * a release that no longer has that property.
+   *
+   * That is this repo's recurring fixture-wrong-in-what-it-LACKS shape — the
+   * one the README's opening section was written for. The ids are pinned and
+   * the identity is asserted, so a swap fails loudly instead.
+   *
+   * They are not guesses: each was found by `format_desc=Gatefold` search and
+   * verified against its own `formats` payload before being written (§12 14a,
+   * 2026-09-03). The search that discovered them is preserved below as
+   * `findGatefoldReleases`, for finding a REPLACEMENT if one of these is ever
+   * deleted from Discogs — not for routine re-capture.
+   */
+  {
+    name: 'release-gatefold-a',
+    path: '/releases/14451455',
+    /**
+     * Grateful Dead — *From The Mars Hotel*. Carries the no-primary property:
+     * seven images, NOT ONE of them `primary`. That is what the test pins to
+     * this id, so it is asserted here at capture time as well.
+     */
+    verify: (payload) => verifyGatefoldCandidate(payload, 14451455, { noPrimary: true }),
+  },
+  {
+    name: 'release-gatefold-b',
+    path: '/releases/10155238',
+    /** Deep Purple — *Fireball*. 9 images, the largest gatefold set measured. */
+    verify: (payload) => verifyGatefoldCandidate(payload, 10155238),
+  },
+  {
+    name: 'release-gatefold-c',
+    path: '/releases/6758287',
+    /**
+     * Cat Stevens — *Catch Bull At Four*. 5 images, the SMALLEST set measured —
+     * it carries the 2:1 spread even with few images, which is what stops Q2's
+     * finding looking like an artefact of image-rich releases.
+     */
+    verify: (payload) => verifyGatefoldCandidate(payload, 6758287),
+  },
 ];
+
+/**
+ * A gatefold fixture must BE a gatefold and must carry images to measure.
+ * A gatefold release with no images answers none of 14a's three questions —
+ * it would look like a valid capture and measure nothing.
+ */
+function verifyGatefoldCandidate(payload, expectedId = null, options = {}) {
+  /**
+   * Identity FIRST, because it is the check that makes pinning mean anything.
+   * Without it a re-capture returning a different gatefold passes every
+   * remaining assertion — it really is a gatefold, it really has images — and
+   * the swap is invisible.
+   */
+  if (expectedId !== null && payload.id !== expectedId) {
+    return `expected release ${expectedId}, got ${payload.id} (${payload.title})`;
+  }
+  if (!isGatefold(payload)) {
+    return `release ${payload.id} is not a gatefold: formats ${JSON.stringify(
+      (payload.formats ?? []).map((f) => [f.name, f.descriptions, f.text]),
+    )}`;
+  }
+  if ((payload.images ?? []).length === 0) {
+    return `release ${payload.id} is a gatefold but carries no images — nothing to measure`;
+  }
+
+  /**
+   * The property `gatefold-inner-images.test.ts` pins to THIS id. Asserted at
+   * capture time too, because a contributor adding a primary image to release
+   * 14451455 would otherwise be discovered as a confusing unit-test failure
+   * rather than as what it is: real data changing under a fixture.
+   */
+  if (options.noPrimary === true) {
+    const primaries = (payload.images ?? []).filter((image) => image.type === 'primary');
+    if (primaries.length > 0) {
+      return `release ${payload.id} now HAS ${primaries.length} primary image(s) — it was captured for having none (§12 14a Q1a). A contributor has edited it; pick a new no-primary release rather than adjusting the test.`;
+    }
+  }
+  return null;
+}
 
 /**
  * Finds a release Discogs genuinely has no runout data for, by checking
@@ -370,6 +515,73 @@ async function findReleaseWithoutMatrix(searchPayload) {
     }
   }
   return null;
+}
+
+/**
+ * Finds gatefold releases WITH images, by checking search candidates rather
+ * than naming ids. Returns at most `wantedCount` full release payloads.
+ *
+ * Searched on `format_desc=Gatefold`, which is Discogs' own index of the
+ * property — but the result is still verified per-release, because a search
+ * facet is a claim about a release and `verifyGatefoldCandidate` is the check.
+ * The distinction matters: the five wrong fixtures in this script's first run
+ * all came back from queries that looked right.
+ *
+ * **`format_desc`, NOT `format`.** Measured 2026-09-03: `format=Gatefold`
+ * returns `200` with ZERO results — the format facet indexes the medium
+ * (`Vinyl`, `LP`), not the descriptor, and a wrong facet name here fails as an
+ * empty result set rather than as an error. That is the same silent-absence
+ * shape the rest of this script guards against, and it cost a round.
+ *
+ * Deliberately spread across the collection's genres rather than drawn from one
+ * search. CLAUDE.md §8 is explicit that these scenes are not interchangeable,
+ * and a gatefold convention is a manufacturing habit that can vary by label and
+ * era — three samples from one 1970s prog search would measure one convention
+ * three times.
+ */
+async function findGatefoldReleases(queries, wantedCount) {
+  const found = [];
+  const seen = new Set();
+
+  for (const query of queries) {
+    if (found.length >= wantedCount) break;
+    console.log(`  searching: ${query}`);
+
+    let pool;
+    try {
+      pool = await get(`/database/search?${query}`);
+    } catch (error) {
+      console.log(`    search failed (${error.message.slice(0, 60)})`);
+      continue;
+    }
+
+    /**
+     * Twelve rather than a handful, because the facet's hit rate is LOW:
+     * measured 2026-09-03, `format_desc=Gatefold` returned 22 non-gatefolds in
+     * the first 24 candidates checked. The facet is a claim, not the property —
+     * which is the whole reason each candidate is fetched and verified.
+     */
+    for (const result of (pool.results ?? []).slice(0, 12)) {
+      if (found.length >= wantedCount) break;
+      if (!result.id || seen.has(result.id)) continue;
+      seen.add(result.id);
+
+      process.stdout.write(`    checking release ${result.id}… `);
+      try {
+        const payload = await get(`/releases/${result.id}`);
+        const problem = verifyGatefoldCandidate(payload);
+        if (problem === null) {
+          console.log(`gatefold, ${payload.images.length} images — using it`);
+          found.push(payload);
+        } else {
+          console.log(`skipping (${problem.slice(0, 60)})`);
+        }
+      } catch (error) {
+        console.log(`failed (${error.message.slice(0, 60)})`);
+      }
+    }
+  }
+  return found;
 }
 
 const failures = [];
@@ -493,6 +705,91 @@ try {
 } catch (error) {
   failures.push(`release-no-matrix: ${error.message}`);
 }
+}
+
+/**
+ * §12 step 14a's MEASUREMENT, printed from the pinned captures.
+ *
+ * The fixtures themselves are captured by the main loop above like every other
+ * pinned fixture. This block only MEASURES them, and prints per-image rather
+ * than summarised: an average would destroy exactly the distinction 14a asks
+ * about — whether the inner arrives as one wide spread or two square leaves.
+ *
+ * Printed so the run itself is the record. The durable version lives in
+ * `src/lib/discogs/gatefold-inner-images.test.ts`.
+ */
+const GATEFOLD_FIXTURES = [
+  'release-discharge-hear-nothing',
+  'release-gatefold-a',
+  'release-gatefold-b',
+  'release-gatefold-c',
+];
+
+/**
+ * When a PINNED gatefold capture fails, the likely cause is that Discogs
+ * changed underneath it — the release was deleted, or a contributor edited away
+ * the property it was captured for. Both need a replacement release, and
+ * finding one by hand means re-deriving the search and the facet caveat.
+ *
+ * So the finder runs as a DIAGNOSTIC on exactly that failure, printing
+ * candidates rather than writing anything. Repointing a pinned fixture is a
+ * human decision — the script's job is to hand over the material for it.
+ */
+const gatefoldFailure = failures.find((f) => f.startsWith('release-gatefold-'));
+if (gatefoldFailure !== undefined) {
+  console.log(`\na pinned gatefold capture failed — looking for replacement candidates`);
+  console.log('  (nothing is written; repointing a pinned id is a human decision)');
+  try {
+    const replacements = await findGatefoldReleases(
+      [
+        'type=release&format_desc=Gatefold&genre=Rock&style=Punk&per_page=25',
+        'type=release&format_desc=Gatefold&genre=Rock&per_page=25',
+      ],
+      3,
+    );
+    for (const candidate of replacements) {
+      const primaries = (candidate.images ?? []).filter((i) => i.type === 'primary').length;
+      console.log(
+        `  candidate ${candidate.id} — ${String(candidate.title).slice(0, 40)} · ${candidate.images.length} images · ${primaries} primary`,
+      );
+    }
+    if (replacements.length === 0) console.log('  none found — widen the search');
+  } catch (error) {
+    console.log(`  replacement search failed: ${error.message.slice(0, 80)}`);
+  }
+}
+
+if (GATEFOLD_FIXTURES.some(wanted)) {
+  console.log('\n--- §12 step 14a measurement -------------------------------');
+
+  for (const name of GATEFOLD_FIXTURES) {
+    let payload;
+    try {
+      payload = JSON.parse(readFileSync(`${OUT}/${name}.json`, 'utf8'));
+    } catch {
+      console.log(`\n${name}: not on disk, skipping`);
+      continue;
+    }
+    if (!isGatefold(payload)) {
+      failures.push(`${name}: no longer reports a gatefold format — the measurement rests on it`);
+      continue;
+    }
+
+    const shapes = imageShapes(payload);
+    const types = [...new Set(shapes.map((s) => s.type))];
+    const wide = shapes.filter((s) => s.ratio !== null && s.ratio >= 1.5);
+    const square = shapes.filter((s) => s.ratio !== null && s.ratio > 0.9 && s.ratio < 1.1);
+
+    console.log(`\nrelease ${payload.id} — ${String(payload.title).slice(0, 50)}`);
+    console.log(`  format text : ${JSON.stringify((payload.formats ?? []).map((f) => f.text))}`);
+    console.log(`  images      : ${shapes.length}`);
+    console.log(`  types seen  : ${JSON.stringify(types)}`);
+    console.log(`  square (~1:1): ${square.length}   wide (>=1.5:1): ${wide.length}`);
+    for (const [i, s] of shapes.entries()) {
+      console.log(`    [${i}] ${s.type} ${s.width}x${s.height} ratio ${s.ratio}`);
+    }
+  }
+  console.log('\n------------------------------------------------------------');
 }
 
 /**

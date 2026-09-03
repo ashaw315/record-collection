@@ -1183,6 +1183,12 @@ Cropping loses artwork at the edges. That is a real cost and it is the right one
 
 The inner is **two photographs, not one spread.** A real gatefold inner is continuous, and mapping one wide image across both leaves would be more faithful — but it asks for a photograph most phones take badly, and it makes the inner the only non-square image in the collection. Two straight-on shots are what someone can actually take. The cost is a seam down the middle wherever the two differ in lighting or crop, and that is accepted: a visible seam is honest about being two photographs.
 
+**AMENDED 2026-09-03 by 14a's measurement — the two photographs are the user's OWN, essentially always.** This clause was written expecting Discogs to supply inner artwork with a wide scan as the awkward exception. The measurement found the reverse: on four of four verified gatefolds Discogs carries exactly one image at roughly 2:1 and nothing else non-square, so **the wide spread is Discogs' convention, not an edge case**, and it cannot fill two square slots. Combined with 14a's Q1 — no `images[].type` value distinguishes a leaf from a back cover — the consequence for this section is direct:
+
+**A four-face record is something the user photographs into existence. An import does not produce one.** The hinge opens onto two photographs taken by hand, in one sitting, of one physical sleeve — which is why the seam this clause already accepts is the NORMAL case rather than the degraded one. Two shots from the same sitting under the same light are the best case available, not a fallback from a better one.
+
+This matters beyond the importer, and it is why the measurement runs before the design pass (§12): designing the inner as though stock artwork will usually fill it would design for a state the data cannot reach. The gatefold is rare, hand-made, and the user's own — the pass should treat it that way.
+
 **A gatefold opens as a real hinge** — two **leaves** rotating about their shared edge, inner artwork mapped across both. Front → turn → back is rotation; front → open → inner spread is a hinge. Two physical acts, two motions, and sharing one would flatten the distinction.
 
 The halves are called *leaves* throughout, deliberately: a *panel* in this section is the DOM block of facts beside the record, and the two must not be confused. One is a surface of the object; the other is the place text lives precisely because it is not on the object.

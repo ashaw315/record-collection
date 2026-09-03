@@ -1,0 +1,856 @@
+{
+  "id": 6758287,
+  "status": "Accepted",
+  "year": 1972,
+  "resource_url": "https://api.discogs.com/releases/6758287",
+  "uri": "https://www.discogs.com/release/6758287-Cat-Stevens-Catch-Bull-At-Four",
+  "artists": [
+    {
+      "name": "Cat Stevens",
+      "anv": "",
+      "join": "",
+      "role": "",
+      "tracks": "",
+      "id": 37606,
+      "resource_url": "https://api.discogs.com/artists/37606",
+      "thumbnail_url": "https://i.discogs.com/fLTDZp77R4njfqmYh0w_e6pTu1Ar0No8Q8ItRZ7mUGE/rs:fit/g:sm/q:90/h:600/w:483/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9BLTM3NjA2/LTEzOTk3MTkzMzIt/MjI5OC5qcGVn.jpeg"
+    }
+  ],
+  "artists_sort": "Cat Stevens",
+  "labels": [
+    {
+      "name": "A&M Records",
+      "catno": "SP 4365",
+      "entity_type": "1",
+      "entity_type_name": "Label",
+      "id": 904,
+      "resource_url": "https://api.discogs.com/labels/904",
+      "thumbnail_url": "https://i.discogs.com/Q9MDIgi0APJGemq-xddyJB41sI-g172DIZ_xl628StE/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTkwNC0x/Mzc5NTAyOTM2LTI1/MDcucG5n.jpeg"
+    }
+  ],
+  "series": [],
+  "companies": [
+    {
+      "name": "Silven Productions",
+      "catno": "",
+      "entity_type": "37",
+      "entity_type_name": "Produced For",
+      "id": 348985,
+      "resource_url": "https://api.discogs.com/labels/348985"
+    },
+    {
+      "name": "Sterling Sound",
+      "catno": "",
+      "entity_type": "30",
+      "entity_type_name": "Lacquer Cut At",
+      "id": 264060,
+      "resource_url": "https://api.discogs.com/labels/264060",
+      "thumbnail_url": "https://i.discogs.com/Z8f0gMBrt5jLL4TAcCYDGXmMPOLi9V0UW593WXP6BUU/rs:fit/g:sm/q:90/h:118/w:400/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI2NDA2/MC0xNTAwMjgzMzYy/LTMyMTguanBlZw.jpeg"
+    },
+    {
+      "name": "Columbia Records Pressing Plant, Santa Maria",
+      "catno": "",
+      "entity_type": "17",
+      "entity_type_name": "Pressed By",
+      "id": 376197,
+      "resource_url": "https://api.discogs.com/labels/376197",
+      "thumbnail_url": "https://i.discogs.com/swlgg4wcTUvFw93Z_ivocCUIfGTidgqdPPU1tGCtgdc/rs:fit/g:sm/q:90/h:146/w:273/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTM3NjE5/Ny0xMzQxNzMzMTQy/LTk1MjAuanBlZw.jpeg"
+    },
+    {
+      "name": "Island Records Ltd.",
+      "catno": "",
+      "entity_type": "6",
+      "entity_type_name": "Licensed From",
+      "id": 63313,
+      "resource_url": "https://api.discogs.com/labels/63313",
+      "thumbnail_url": "https://i.discogs.com/dXfebumJOLE3qgv4kTWzX-tCCBBSdFcp9OWpjPhR-yg/rs:fit/g:sm/q:90/h:501/w:500/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTYzMzEz/LTE0NDY4NTI3NDMt/OTY1NC5qcGVn.jpeg"
+    },
+    {
+      "name": "Ackee Music, Inc.",
+      "catno": "",
+      "entity_type": "21",
+      "entity_type_name": "Published By",
+      "id": 321827,
+      "resource_url": "https://api.discogs.com/labels/321827",
+      "thumbnail_url": "https://i.discogs.com/Td10zHSM50fR8NW3HzlWkrTKN3BihvnQRFwHTqgYCP8/rs:fit/g:sm/q:90/h:182/w:598/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTMyMTgy/Ny0xNjU2MjczMDg1/LTExMDcuanBlZw.jpeg"
+    },
+    {
+      "name": "A&M Records, Inc.",
+      "catno": "",
+      "entity_type": "13",
+      "entity_type_name": "Phonographic Copyright (p)",
+      "id": 74446,
+      "resource_url": "https://api.discogs.com/labels/74446",
+      "thumbnail_url": "https://i.discogs.com/HdaqIfkJGqmTLQFGAyA1_ZOXu0yjA0Hy3FK7A0ETXjM/rs:fit/g:sm/q:90/h:120/w:245/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTc0NDQ2/LTE1NDA2NDkzMDEt/OTQ2Ni5wbmc.jpeg"
+    },
+    {
+      "name": "Ackee Music, Inc.",
+      "catno": "",
+      "entity_type": "14",
+      "entity_type_name": "Copyright (c)",
+      "id": 321827,
+      "resource_url": "https://api.discogs.com/labels/321827",
+      "thumbnail_url": "https://i.discogs.com/Td10zHSM50fR8NW3HzlWkrTKN3BihvnQRFwHTqgYCP8/rs:fit/g:sm/q:90/h:182/w:598/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTMyMTgy/Ny0xNjU2MjczMDg1/LTExMDcuanBlZw.jpeg"
+    }
+  ],
+  "formats": [
+    {
+      "name": "Vinyl",
+      "qty": "1",
+      "descriptions": [
+        "LP",
+        "Album",
+        "Stereo"
+      ],
+      "text": "Santa Maria Press, Embossed Gatefold"
+    }
+  ],
+  "data_quality": "Needs Vote",
+  "community": {
+    "have": 1295,
+    "want": 72,
+    "rating": {
+      "count": 77,
+      "average": 3.55
+    },
+    "submitter": {
+      "username": "mossinterest",
+      "resource_url": "https://api.discogs.com/users/mossinterest"
+    },
+    "contributors": [
+      {
+        "username": "mossinterest",
+        "resource_url": "https://api.discogs.com/users/mossinterest"
+      },
+      {
+        "username": "mr_mando",
+        "resource_url": "https://api.discogs.com/users/mr_mando"
+      },
+      {
+        "username": "donnleppard",
+        "resource_url": "https://api.discogs.com/users/donnleppard"
+      },
+      {
+        "username": "Same.Old.Me",
+        "resource_url": "https://api.discogs.com/users/Same.Old.Me"
+      },
+      {
+        "username": "Mr_Bojingles",
+        "resource_url": "https://api.discogs.com/users/Mr_Bojingles"
+      },
+      {
+        "username": "wiedmann",
+        "resource_url": "https://api.discogs.com/users/wiedmann"
+      },
+      {
+        "username": "Showbiz_Kid",
+        "resource_url": "https://api.discogs.com/users/Showbiz_Kid"
+      }
+    ],
+    "data_quality": "Needs Vote",
+    "status": "Accepted"
+  },
+  "format_quantity": 1,
+  "date_added": "2015-03-10T11:00:00-07:00",
+  "date_changed": "2026-04-03T11:53:07-07:00",
+  "num_for_sale": 55,
+  "lowest_price": 0.85,
+  "master_id": 37180,
+  "master_url": "https://api.discogs.com/masters/37180",
+  "title": "Catch Bull At Four",
+  "country": "US",
+  "released": "1972",
+  "notes": "[l=Columbia Records Pressing Plant, Santa Maria] pressing denoted by \"S\" etches in runouts. Embossed gatefold cover.\n\n℗ 1972 A&M Records, Inc.; all selections © 1972 Ackee Music, Inc.",
+  "released_formatted": "1972",
+  "identifiers": [
+    {
+      "type": "Pressing Plant ID",
+      "value": "S",
+      "description": "Runouts"
+    },
+    {
+      "type": "Rights Society",
+      "value": "ASCAP"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "SP 4629 S-2 STERLING 3 LH Ƨ 1",
+      "description": "Runout A variant 1"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "SP 4630 S3 STERLING 3 LH 1S",
+      "description": "Runout B variant 1"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "SP 4629 S-1 STERLING 2 LH Ƨ",
+      "description": "Runout A variant 2"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "SP 4630 S3 STERLING 3 LH S1",
+      "description": "Runout B variant 2"
+    }
+  ],
+  "videos": [
+    {
+      "uri": "https://www.youtube.com/watch?v=iXwwLfNA4Bw",
+      "title": "Sitting",
+      "description": "Provided to YouTube by Universal Music Group\n\nSitting · Cat Stevens\n\nThe Very Best Of Cat Stevens\n\n℗ An A&M Records release; ℗ 1972 Universal Music Operations Limited\n\nReleased on: 2000-01-01\n\nProducer: Paul Samwell-Smith\nAssociated  Performer, Mandolin, ",
+      "duration": 194,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=AaUii7TOvLM",
+      "title": "The Boy With A Moon And Star On His Head",
+      "description": "Provided to YouTube by Universal Music Group\n\nThe Boy With A Moon And Star On His Head · Cat Stevens\n\nCatch Bull At Four\n\n℗ 1972 Island Records, a division of Universal Music Operations Limited\n\nReleased on: 1972-01-01\n\nProducer: Paul Samwell-Smith\nCompos",
+      "duration": 358,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=4h6oeDq3Wf8",
+      "title": "O' Caritas",
+      "description": "Provided to YouTube by Universal Music Group\n\nO' Caritas · Cat Stevens\n\nCatch Bull At Four\n\n℗ 1972 Island Records, a division of Universal Music Operations Limited\n\nReleased on: 1972-01-01\n\nProducer: Paul Samwell-Smith\nProducer, Associated  Performer, Voc",
+      "duration": 222,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=-i80k6C9lmU",
+      "title": "Angelsea",
+      "description": "Provided to YouTube by Universal Music Group\n\nAngelsea · Cat Stevens\n\nCatch Bull At Four\n\n℗ 1972 Island Records, a division of Universal Music Operations Limited\n\nReleased on: 1972-01-01\n\nProducer: Paul Samwell-Smith\nComposer  Lyricist: Cat Stevens\n\nAuto-",
+      "duration": 271,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=Hbu4Vp3G7_w",
+      "title": "Silent Sunlight",
+      "description": "Provided to YouTube by Universal Music Group\n\nSilent Sunlight · Cat Stevens\n\nCatch Bull At Four\n\n℗ 1972 Island Records, a division of Universal Music Operations Limited\n\nReleased on: 1972-01-01\n\nProducer: Paul Samwell-Smith\nComposer  Lyricist: Cat Stevens",
+      "duration": 181,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=cIyfriqd2Nk",
+      "title": "Can't Keep It In",
+      "description": "Provided to YouTube by Universal Music Group\n\nCan't Keep It In · Cat Stevens\n\nCatch Bull At Four\n\n℗ 1972 Island Records, a division of Universal Music Operations Limited\n\nReleased on: 1972-01-01\n\nProducer: Paul Samwell-Smith\nComposer  Lyricist: Cat Steven",
+      "duration": 180,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=SnrUJgL4apg",
+      "title": "18th Avenue (Kansas City Nightmare)",
+      "description": "Provided to YouTube by Universal Music Group\n\n18th Avenue (Kansas City Nightmare) · Cat Stevens\n\nCatch Bull At Four\n\n℗ 1972 Island Records, a division of Universal Music Operations Limited\n\nReleased on: 1972-01-01\n\nProducer: Paul Samwell-Smith\nComposer  L",
+      "duration": 262,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=8YfrVbDLMS8",
+      "title": "Freezing Steel",
+      "description": "Provided to YouTube by Universal Music Group\n\nFreezing Steel · Cat Stevens\n\nCatch Bull At Four\n\n℗ 1972 Island Records, a division of Universal Music Operations Limited\n\nReleased on: 1972-01-01\n\nProducer: Paul Samwell-Smith\nComposer  Lyricist: Cat Stevens\n",
+      "duration": 221,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=jiYsO1gcJXo",
+      "title": "Sweet Scarlet",
+      "description": "Provided to YouTube by Universal Music Group\n\nSweet Scarlet · Cat Stevens\n\nCatch Bull At Four\n\n℗ 1972 Island Records, a division of Universal Music Operations Limited\n\nReleased on: 1972-01-01\n\nProducer: Paul Samwell-Smith\nComposer  Lyricist: Cat Stevens\n\n",
+      "duration": 230,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=AQ5ak_aVpv8",
+      "title": "Ruins",
+      "description": "Provided to YouTube by Universal Music Group\n\nRuins · Cat Stevens\n\nCatch Bull At Four\n\n℗ 1972 Island Records, a division of Universal Music Operations Limited\n\nReleased on: 1972-01-01\n\nProducer: Paul Samwell-Smith\nComposer  Lyricist: Cat Stevens\n\nAuto-gen",
+      "duration": 265,
+      "embed": true
+    }
+  ],
+  "genres": [
+    "Rock"
+  ],
+  "styles": [
+    "Acoustic",
+    "Folk Rock",
+    "Pop Rock"
+  ],
+  "tracklist": [
+    {
+      "position": "A1",
+      "type_": "track",
+      "title": "Sitting",
+      "extraartists": [
+        {
+          "name": "Alun Davies",
+          "anv": "",
+          "join": "",
+          "role": "Acoustic Guitar",
+          "tracks": "",
+          "id": 328765,
+          "resource_url": "https://api.discogs.com/artists/328765"
+        },
+        {
+          "name": "Alan James",
+          "anv": "",
+          "join": "",
+          "role": "Bass",
+          "tracks": "",
+          "id": 453216,
+          "resource_url": "https://api.discogs.com/artists/453216"
+        },
+        {
+          "name": "Gerry Conway",
+          "anv": "",
+          "join": "",
+          "role": "Drums",
+          "tracks": "",
+          "id": 297526,
+          "resource_url": "https://api.discogs.com/artists/297526"
+        },
+        {
+          "name": "Jean Roussel",
+          "anv": "",
+          "join": "",
+          "role": "Piano",
+          "tracks": "",
+          "id": 261041,
+          "resource_url": "https://api.discogs.com/artists/261041"
+        },
+        {
+          "name": "Cat Stevens",
+          "anv": "",
+          "join": "",
+          "role": "Piano, Mandolin [Electric]",
+          "tracks": "",
+          "id": 37606,
+          "resource_url": "https://api.discogs.com/artists/37606"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "A2",
+      "type_": "track",
+      "title": "Boy With A Moon & Star On His Head",
+      "extraartists": [
+        {
+          "name": "Alun Davies",
+          "anv": "",
+          "join": "",
+          "role": "Acoustic Guitar",
+          "tracks": "",
+          "id": 328765,
+          "resource_url": "https://api.discogs.com/artists/328765"
+        },
+        {
+          "name": "Cat Stevens",
+          "anv": "",
+          "join": "",
+          "role": "Classical Guitar [Spanish Guitar], Synthesizer",
+          "tracks": "",
+          "id": 37606,
+          "resource_url": "https://api.discogs.com/artists/37606"
+        },
+        {
+          "name": "Jean Roussel",
+          "anv": "",
+          "join": "",
+          "role": "Organ",
+          "tracks": "",
+          "id": 261041,
+          "resource_url": "https://api.discogs.com/artists/261041"
+        },
+        {
+          "name": "Gerry Conway",
+          "anv": "",
+          "join": "",
+          "role": "Percussion",
+          "tracks": "",
+          "id": 297526,
+          "resource_url": "https://api.discogs.com/artists/297526"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "A3",
+      "type_": "track",
+      "title": "Angelsea",
+      "extraartists": [
+        {
+          "name": "Alun Davies",
+          "anv": "",
+          "join": "",
+          "role": "Acoustic Guitar, Vocals",
+          "tracks": "",
+          "id": 328765,
+          "resource_url": "https://api.discogs.com/artists/328765"
+        },
+        {
+          "name": "Gerry Conway",
+          "anv": "",
+          "join": "",
+          "role": "Drums, Vocals",
+          "tracks": "",
+          "id": 297526,
+          "resource_url": "https://api.discogs.com/artists/297526"
+        },
+        {
+          "name": "Cat Stevens",
+          "anv": "",
+          "join": "",
+          "role": "Synthesizer, Acoustic Guitar, Vocals",
+          "tracks": "",
+          "id": 37606,
+          "resource_url": "https://api.discogs.com/artists/37606"
+        },
+        {
+          "name": "Alan James",
+          "anv": "",
+          "join": "",
+          "role": "Vocals",
+          "tracks": "",
+          "id": 453216,
+          "resource_url": "https://api.discogs.com/artists/453216"
+        },
+        {
+          "name": "Linda Lewis",
+          "anv": "",
+          "join": "",
+          "role": "Vocals",
+          "tracks": "",
+          "id": 10552,
+          "resource_url": "https://api.discogs.com/artists/10552"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "A4",
+      "type_": "track",
+      "title": "Silent Sunlight",
+      "extraartists": [
+        {
+          "name": "Alun Davies",
+          "anv": "",
+          "join": "",
+          "role": "Classical Guitar [Spanish Guitar]",
+          "tracks": "",
+          "id": 328765,
+          "resource_url": "https://api.discogs.com/artists/328765"
+        },
+        {
+          "name": "Cat Stevens",
+          "anv": "",
+          "join": "",
+          "role": "Electric Piano, Tin Whistle [Penny Whistle]",
+          "tracks": "",
+          "id": 37606,
+          "resource_url": "https://api.discogs.com/artists/37606"
+        },
+        {
+          "name": "Gerry Conway",
+          "anv": "",
+          "join": "",
+          "role": "Percussion",
+          "tracks": "",
+          "id": 297526,
+          "resource_url": "https://api.discogs.com/artists/297526"
+        },
+        {
+          "name": "Jean Roussel",
+          "anv": "",
+          "join": "",
+          "role": "Piano",
+          "tracks": "",
+          "id": 261041,
+          "resource_url": "https://api.discogs.com/artists/261041"
+        },
+        {
+          "name": "Del Newman",
+          "anv": "",
+          "join": "",
+          "role": "Strings",
+          "tracks": "",
+          "id": 270141,
+          "resource_url": "https://api.discogs.com/artists/270141"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "A5",
+      "type_": "track",
+      "title": "Can't Keep It In",
+      "extraartists": [
+        {
+          "name": "Alun Davies",
+          "anv": "",
+          "join": "",
+          "role": "Acoustic Guitar",
+          "tracks": "",
+          "id": 328765,
+          "resource_url": "https://api.discogs.com/artists/328765"
+        },
+        {
+          "name": "Alan James",
+          "anv": "",
+          "join": "",
+          "role": "Bass",
+          "tracks": "",
+          "id": 453216,
+          "resource_url": "https://api.discogs.com/artists/453216"
+        },
+        {
+          "name": "Gerry Conway",
+          "anv": "",
+          "join": "",
+          "role": "Drums",
+          "tracks": "",
+          "id": 297526,
+          "resource_url": "https://api.discogs.com/artists/297526"
+        },
+        {
+          "name": "Cat Stevens",
+          "anv": "",
+          "join": "",
+          "role": "Electric Guitar, Organ [Diamond]",
+          "tracks": "",
+          "id": 37606,
+          "resource_url": "https://api.discogs.com/artists/37606"
+        },
+        {
+          "name": "Jean Roussel",
+          "anv": "",
+          "join": "",
+          "role": "Piano",
+          "tracks": "",
+          "id": 261041,
+          "resource_url": "https://api.discogs.com/artists/261041"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "B1",
+      "type_": "track",
+      "title": "18th Avenue",
+      "extraartists": [
+        {
+          "name": "Alun Davies",
+          "anv": "",
+          "join": "",
+          "role": "Acoustic Guitar",
+          "tracks": "",
+          "id": 328765,
+          "resource_url": "https://api.discogs.com/artists/328765"
+        },
+        {
+          "name": "Alan James",
+          "anv": "",
+          "join": "",
+          "role": "Bass",
+          "tracks": "",
+          "id": 453216,
+          "resource_url": "https://api.discogs.com/artists/453216"
+        },
+        {
+          "name": "Gerry Conway",
+          "anv": "",
+          "join": "",
+          "role": "Drums",
+          "tracks": "",
+          "id": 297526,
+          "resource_url": "https://api.discogs.com/artists/297526"
+        },
+        {
+          "name": "Cat Stevens",
+          "anv": "",
+          "join": "",
+          "role": "Electric Piano, Piano, Percussion",
+          "tracks": "",
+          "id": 37606,
+          "resource_url": "https://api.discogs.com/artists/37606"
+        },
+        {
+          "name": "Jean Roussel",
+          "anv": "",
+          "join": "",
+          "role": "Organ",
+          "tracks": "",
+          "id": 261041,
+          "resource_url": "https://api.discogs.com/artists/261041"
+        },
+        {
+          "name": "Del Newman",
+          "anv": "",
+          "join": "",
+          "role": "Strings",
+          "tracks": "",
+          "id": 270141,
+          "resource_url": "https://api.discogs.com/artists/270141"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "B2",
+      "type_": "track",
+      "title": "Freezing Steel",
+      "extraartists": [
+        {
+          "name": "Alun Davies",
+          "anv": "",
+          "join": "",
+          "role": "Acoustic Guitar",
+          "tracks": "",
+          "id": 328765,
+          "resource_url": "https://api.discogs.com/artists/328765"
+        },
+        {
+          "name": "Alan James",
+          "anv": "",
+          "join": "",
+          "role": "Bass",
+          "tracks": "",
+          "id": 453216,
+          "resource_url": "https://api.discogs.com/artists/453216"
+        },
+        {
+          "name": "Gerry Conway",
+          "anv": "",
+          "join": "",
+          "role": "Drums",
+          "tracks": "",
+          "id": 297526,
+          "resource_url": "https://api.discogs.com/artists/297526"
+        },
+        {
+          "name": "Cat Stevens",
+          "anv": "",
+          "join": "",
+          "role": "Electric Guitar, Synthesizer",
+          "tracks": "",
+          "id": 37606,
+          "resource_url": "https://api.discogs.com/artists/37606"
+        },
+        {
+          "name": "Jean Roussel",
+          "anv": "",
+          "join": "",
+          "role": "Piano",
+          "tracks": "",
+          "id": 261041,
+          "resource_url": "https://api.discogs.com/artists/261041"
+        },
+        {
+          "name": "C. S. Choir",
+          "anv": "",
+          "join": "",
+          "role": "Vocals",
+          "tracks": "",
+          "id": 569759,
+          "resource_url": "https://api.discogs.com/artists/569759"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "B3",
+      "type_": "track",
+      "title": "O Caritas",
+      "extraartists": [
+        {
+          "name": "Andreas Toumazis",
+          "anv": "",
+          "join": "",
+          "role": "Bouzouki",
+          "tracks": "",
+          "id": 447006,
+          "resource_url": "https://api.discogs.com/artists/447006"
+        },
+        {
+          "name": "Cat Stevens",
+          "anv": "",
+          "join": "",
+          "role": "Classical Guitar [Spanish Guitar], Drums",
+          "tracks": "",
+          "id": 37606,
+          "resource_url": "https://api.discogs.com/artists/37606"
+        },
+        {
+          "name": "Jean Roussel",
+          "anv": "",
+          "join": "",
+          "role": "Piano",
+          "tracks": "",
+          "id": 261041,
+          "resource_url": "https://api.discogs.com/artists/261041"
+        },
+        {
+          "name": "C. S. Choir",
+          "anv": "",
+          "join": "",
+          "role": "Vocals",
+          "tracks": "",
+          "id": 569759,
+          "resource_url": "https://api.discogs.com/artists/569759"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "B4",
+      "type_": "track",
+      "title": "Sweet Scarlet",
+      "extraartists": [
+        {
+          "name": "Cat Stevens",
+          "anv": "",
+          "join": "",
+          "role": "Piano",
+          "tracks": "",
+          "id": 37606,
+          "resource_url": "https://api.discogs.com/artists/37606"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "B5",
+      "type_": "track",
+      "title": "Ruins",
+      "extraartists": [
+        {
+          "name": "Cat Stevens",
+          "anv": "",
+          "join": "",
+          "role": "Acoustic Guitar, Organ [Diamond], Electric Piano [R.M.I.]",
+          "tracks": "",
+          "id": 37606,
+          "resource_url": "https://api.discogs.com/artists/37606"
+        },
+        {
+          "name": "Gerry Conway",
+          "anv": "",
+          "join": "",
+          "role": "Drums",
+          "tracks": "",
+          "id": 297526,
+          "resource_url": "https://api.discogs.com/artists/297526"
+        }
+      ],
+      "duration": ""
+    }
+  ],
+  "extraartists": [
+    {
+      "name": "Andreas Toumazis",
+      "anv": "Toumazis",
+      "join": "",
+      "role": "Composed By",
+      "tracks": "B3",
+      "id": 447006,
+      "resource_url": "https://api.discogs.com/artists/447006"
+    },
+    {
+      "name": "Cat Stevens",
+      "anv": "",
+      "join": "",
+      "role": "Composed By",
+      "tracks": "",
+      "id": 37606,
+      "resource_url": "https://api.discogs.com/artists/37606"
+    },
+    {
+      "name": "Jeremy Taylor",
+      "anv": "Taylor",
+      "join": "",
+      "role": "Composed By",
+      "tracks": "B3",
+      "id": 789716,
+      "resource_url": "https://api.discogs.com/artists/789716"
+    },
+    {
+      "name": "Cat Stevens",
+      "anv": "C. S.",
+      "join": "",
+      "role": "Design [Cover], Realization",
+      "tracks": "",
+      "id": 37606,
+      "resource_url": "https://api.discogs.com/artists/37606"
+    },
+    {
+      "name": "Lee Hulko",
+      "anv": "LH",
+      "join": "",
+      "role": "Lacquer Cut By",
+      "tracks": "",
+      "id": 383212,
+      "resource_url": "https://api.discogs.com/artists/383212"
+    },
+    {
+      "name": "Homer Sykes",
+      "anv": "",
+      "join": "",
+      "role": "Photography By",
+      "tracks": "",
+      "id": 2262988,
+      "resource_url": "https://api.discogs.com/artists/2262988"
+    },
+    {
+      "name": "Paul Samwell-Smith",
+      "anv": "",
+      "join": "",
+      "role": "Producer",
+      "tracks": "",
+      "id": 274221,
+      "resource_url": "https://api.discogs.com/artists/274221"
+    }
+  ],
+  "images": [
+    {
+      "type": "primary",
+      "uri": "https://i.discogs.com/SmjExtxcuO1tZFoqPAE0M-FJnSX_vatidwj1iGE9Zhk/rs:fit/g:sm/q:90/h:597/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY3NTgy/ODctMTQyNjAyNzM3/MS0zMDA0LmpwZWc.jpeg",
+      "resource_url": "https://i.discogs.com/SmjExtxcuO1tZFoqPAE0M-FJnSX_vatidwj1iGE9Zhk/rs:fit/g:sm/q:90/h:597/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY3NTgy/ODctMTQyNjAyNzM3/MS0zMDA0LmpwZWc.jpeg",
+      "uri150": "https://i.discogs.com/3GPUL8xMUPzFAkggQvQtxPwr_Cr6PNMZ3CavKm9GKzk/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY3NTgy/ODctMTQyNjAyNzM3/MS0zMDA0LmpwZWc.jpeg",
+      "width": 600,
+      "height": 597
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/tJf4_flh9trkuO-w-WvCUxY5HYJrfBRzRogV0bZYwJA/rs:fit/g:sm/q:90/h:598/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY3NTgy/ODctMTQyNjAyNzM3/Ny04MjAxLmpwZWc.jpeg",
+      "resource_url": "https://i.discogs.com/tJf4_flh9trkuO-w-WvCUxY5HYJrfBRzRogV0bZYwJA/rs:fit/g:sm/q:90/h:598/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY3NTgy/ODctMTQyNjAyNzM3/Ny04MjAxLmpwZWc.jpeg",
+      "uri150": "https://i.discogs.com/tPU6qhfgHvEwPs09xm9cn0pkuAJAulpHEFoRRD8p4vQ/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY3NTgy/ODctMTQyNjAyNzM3/Ny04MjAxLmpwZWc.jpeg",
+      "width": 600,
+      "height": 598
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/IKM0T5hZD7CETnUTij2tJ0zvtd7nE3NGwdNNeCRvjXY/rs:fit/g:sm/q:90/h:296/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY3NTgy/ODctMTQyNjAyNzM4/MC03MTI2LmpwZWc.jpeg",
+      "resource_url": "https://i.discogs.com/IKM0T5hZD7CETnUTij2tJ0zvtd7nE3NGwdNNeCRvjXY/rs:fit/g:sm/q:90/h:296/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY3NTgy/ODctMTQyNjAyNzM4/MC03MTI2LmpwZWc.jpeg",
+      "uri150": "https://i.discogs.com/o9u9tpllQ0AagIC4suKQbsPsEu2TQQAOQIH9ZJ0LY3k/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY3NTgy/ODctMTQyNjAyNzM4/MC03MTI2LmpwZWc.jpeg",
+      "width": 600,
+      "height": 296
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/YZZLlV5xrsqLzlCdtfMlAYrnnsi13zTK8OaI22KmkHQ/rs:fit/g:sm/q:90/h:534/w:536/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY3NTgy/ODctMTQyNjAyNzM4/My05NDU1LmpwZWc.jpeg",
+      "resource_url": "https://i.discogs.com/YZZLlV5xrsqLzlCdtfMlAYrnnsi13zTK8OaI22KmkHQ/rs:fit/g:sm/q:90/h:534/w:536/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY3NTgy/ODctMTQyNjAyNzM4/My05NDU1LmpwZWc.jpeg",
+      "uri150": "https://i.discogs.com/ry0ZFsiuWmYBaIBNAPsq8728bgGpF-3bXj55gWS7Q4g/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY3NTgy/ODctMTQyNjAyNzM4/My05NDU1LmpwZWc.jpeg",
+      "width": 536,
+      "height": 534
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/d8_6aptXBS-bKH7KylRTRPwd7QoqmMs_pfKnq67ni9s/rs:fit/g:sm/q:90/h:545/w:544/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY3NTgy/ODctMTQyNjAyNzM5/Mi04MzAzLmpwZWc.jpeg",
+      "resource_url": "https://i.discogs.com/d8_6aptXBS-bKH7KylRTRPwd7QoqmMs_pfKnq67ni9s/rs:fit/g:sm/q:90/h:545/w:544/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY3NTgy/ODctMTQyNjAyNzM5/Mi04MzAzLmpwZWc.jpeg",
+      "uri150": "https://i.discogs.com/WA29icvOk1inIV0dbm2l0R4ufW64qNzW5QfE6H4dGr8/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY3NTgy/ODctMTQyNjAyNzM5/Mi04MzAzLmpwZWc.jpeg",
+      "width": 544,
+      "height": 545
+    }
+  ],
+  "thumb": "https://i.discogs.com/3GPUL8xMUPzFAkggQvQtxPwr_Cr6PNMZ3CavKm9GKzk/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY3NTgy/ODctMTQyNjAyNzM3/MS0zMDA0LmpwZWc.jpeg",
+  "estimated_weight": 230,
+  "blocked_from_sale": false,
+  "is_offensive": false
+}
