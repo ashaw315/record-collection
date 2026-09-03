@@ -25441,20 +25441,22 @@ Dead), 10155238 (Deep Purple), 6758287 (Cat Stevens). Findings are in SPEC §12
 14a and pinned by `src/lib/discogs/gatefold-inner-images.test.ts`. What follows
 is what the measurement produced that does NOT belong in the spec.
 
-**A live-path finding, outside this unit's scope.** A gatefold need not carry a
-`primary` image at all — release 14451455 has seven images and not one is
-`primary`. `attach-cover.ts` picks the primary and falls back to `images[0]`, so
-on such a release the attached cover is whichever image a contributor happened to
-upload first: possibly a label close-up, possibly the 2:1 inner spread.
+**A live-path finding — PROMOTED OUT OF NOTES to SPEC §12 step 14f.** A gatefold
+need not carry a `primary` image at all (release 14451455: seven images, none
+primary), so `attach-cover.ts`'s `images[0]` fallback is a live path rather than
+a guard, and the attached cover may be a label close-up or the 2:1 inner spread.
 
-Not a defect in the fallback existing — without it such a release would get no
-cover at all, which is worse. What the measurement changes is its status: **the
-fallback is a live path, not a guard**, while the comment above it reads as
-though it were defending against something unusual.
+Adam's call, 2026-09-03: this is a defect and not an observation — there are
+gatefolds in the collection — so it gets a TRIGGER rather than a note. It is now
+14f, fired by the first wrong-looking imported cover or by the 14d unit,
+whichever comes first. The options this entry once listed as undecided are
+inputs to that step now.
 
-**The shape worth recognising elsewhere:** a fallback whose comment reads as
-defensive while it is doing routine work. The measurement test records the fact
-and asserts no behaviour, because nothing has been decided.
+**Recorded here only as the shape it belongs to:** a fallback whose comment reads
+as defensive while it is doing routine work. That is worth recognising elsewhere
+in the codebase, which is the part that is a NOTES observation rather than a
+build step. The measurement test records the fact and asserts no behaviour,
+because 14f has not run.
 
 **A method finding about the capture script.** `format=Gatefold` returns HTTP
 200 with zero results — the format facet indexes the medium, not the descriptor.
@@ -25470,8 +25472,8 @@ script fetches and checks every candidate rather than trusting the query. Any
 future gatefold capture must keep that check.
 
 **`normalizeRelease` drops `width`/`height`, and the test pins it deliberately.**
-This is 14a's Q3 answer and the one §6 change the assignment UI needs. The test
-asserting the absence is a tripwire on a known omission, not an assertion that
-the omission is correct — whoever closes the gap should delete that test and say
-so in the unit report. Left as-is here because adding the fields with no consumer
+This is 14a's Q3 answer and the one §6 change 14d needs. The test asserting the
+absence is a tripwire on a known omission, not an assertion that the omission is
+correct — whoever closes the gap in 14d should delete that test and say so in
+the unit report. Left as-is here because adding the fields with no consumer
 would be speculative work outside this unit.

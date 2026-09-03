@@ -1356,13 +1356,20 @@ Mock the Discogs, MusicBrainz and Anthropic APIs in tests. Never hit live extern
 12. Graph endpoint + visualization. **Built and retired at step 13** — see §8. Kept in this list because the steps are numbered and referenced; the work happened, the screen no longer exists, and the data it read from is still populated by steps 10 and 11.
 13. **The shelf (§10b).** The collection as a wall of sleeves, replacing the shelf-ordering feature and the graph screen. Delivered: the wall and the pulled record in one `three.js` scene, so a record leaves an emptied slot; hover, tilt, turn, the flanking panels, filtering, and a keyboard-reachable list of every record. Three §10b clauses are deliberately **not** in this step and are listed at 13a, 13b and 13c below.
 14. Suggestions — relationship-based first (§9.1), then LLM-assisted (§9.2). E2E #8. **§9.2 and 13c are separate units sharing one module**, not one unit: see the deferral note below.
-14a. **Measure Discogs' inner images, then build slot assignment.** Discogs carries gatefold artwork on some releases, which makes 13a reachable — but three things are assumptions rather than facts and this project's record on assuming API shapes is poor (`format.text`, the versions payload, the master-year fallback each cost a round).
+14a. **Measure Discogs' inner images. DONE 2026-09-03.** Discogs carries gatefold artwork on some releases, which makes 13a reachable — but three things were assumptions rather than facts and this project's record on assuming API shapes is poor (`format.text`, the versions payload, the master-year fallback each cost a round).
 
-    Measure against the live API on a known gatefold release, before designing anything on top: how the payload types an inner image, given `images[].type` is only `primary`/`secondary`; whether it is one wide spread or two square leaves; and what §6's field mapping would have to gain for the importer to carry them at all.
+    Measured against the live API across **four verified gatefold releases** — 381756 (Discharge), 14451455 (Grateful Dead), 10155238 (Deep Purple), 6758287 (Cat Stevens) — captured by `scripts/capture-discogs-fixtures.mjs` and kept as `src/lib/discogs/gatefold-inner-images.test.ts`. The measurement is a TEST rather than a note, because its conclusions are what 14d and 13a get built on, and a note does not fail when someone builds an importer that assumes otherwise (CLAUDE.md §2).
 
-    Then build the assignment UI. **The importer does not assign slots automatically** — Discogs' types cannot distinguish a left leaf from a right leaf from a back cover, and a wrong guess opens a hinge onto artwork that is not the inner sleeve, which is the invented-stand-in failure §10b's strictest rule forbids. The add-record form surfaces the release's images as candidates and the user assigns them, the same shape §5.7 already uses for every other field: Discogs supplies the material, the user supplies the judgement.
+    **Q1 — how the payload types an inner image: it does not.** `images[].type` is `primary`/`secondary` and nothing else. Every inner-sleeve photograph is `secondary`, the same value carried by the back cover, the labels and the dead-wax close-ups. There is no per-image field that separates them, which settles 14d's central rule below as measured fact rather than caution.
 
-    A single wide scan of an open gatefold cannot fill two square slots (A21b). It goes to the gallery as `other`, and a user who wants the hinge photographs the sleeve themselves. That is honest — splitting a scan down the middle and hoping the seam lands right is not.
+    **Q1a, unasked and found anyway — a gatefold need not carry a `primary` at all.** Release 14451455 has seven images and not one is `primary`. `attach-cover.ts:54` falls back to `images[0]`, so that fallback is doing real work on live releases rather than defending against a hypothetical: the cover attached for such a release is whichever image a contributor happened to upload first. Recorded here because it is a live-path finding outside 14a's scope; see NOTES.
+
+    **Q2 — one wide spread, or two square leaves: a wide spread, on 4 of 4.** Each release carries exactly one image at roughly 2:1 (measured 2.083, 2.0, 1.852, 2.027) and every other image within 10% of square. A21b anticipated the wide scan as an edge case; the measurement makes it **the common case** — Discogs' convention for an open gatefold is one photograph of the spread, not two leaves. So the honest consequence stands and is the expected case rather than the exception: the app cannot fill two square slots from Discogs, and a user who wants the hinge photographs their own sleeve. **Four releases is a small sample and is stated as one** — it is enough to establish that the wide spread is Discogs' convention rather than one contributor's habit, which is what 14d needed to know, and not enough to put a percentage on it.
+
+    **Q3 — what §6's mapping must gain: `width` and `height`, and only those.** Every candidate already reaches the importer with its URL and type (`normalize-release.ts:292`), so nothing new needs fetching. But the normalizer drops dimensions, and Q1 plus Q2 together mean **aspect ratio is the only signal that distinguishes a spread from a leaf**. Without it the assignment UI cannot warn that a wide scan will not fill a square slot, and A21b becomes unenforceable at the point of choice. The measurement test pins this omission deliberately and is expected to fail when 14d closes it.
+
+    **A caveat the measurement produced about its own method:** `format_desc=Gatefold` is the search facet (`format=Gatefold` returns 200 with zero results — a wrong facet name fails as silence, not as an error), and the facet is unreliable: 22 of the first 24 candidates it returned were not gatefolds. Any future capture must verify the property per release rather than trust the query.
+
 14b. **WITHDRAWN 2026-08-26 (A42) — "Compare pressings", scoped to the candidates on the page. Never built.**
     Specified 2025-08-25, superseded by 14c the following day, and closed here
     rather than left deferred.
@@ -1482,6 +1489,44 @@ Mock the Discogs, MusicBrainz and Anthropic APIs in tests. Never hit live extern
     evidence on a `records` row is a separate feature with a separate
     justification and must not be smuggled in here.
 
+14d. **Gatefold slot assignment (the UI half of the original 14a).** **Trigger: after the design pass (14e below) — so this step is lettered before 14e and RUNS AFTER IT.** The letters here are feature identifiers, not a sequence, exactly as the 13a/13b/13c block already warns; execution order for this run of steps is 14a (done) → 14e → 14d (with 14f, or earlier if a cover looks wrong first) → 13a. The add-record form surfaces the release's images as candidates and the user assigns them to `cover`, `back`, `gatefold_left` and `gatefold_right`.
+
+    **The importer does not assign slots automatically** — 14a's Q1 measured that Discogs' types cannot distinguish a left leaf from a right leaf from a back cover, and a wrong guess opens a hinge onto artwork that is not the inner sleeve, which is the invented-stand-in failure §10b's strictest rule forbids. Discogs supplies the material, the user supplies the judgement, the same shape §5.7 already uses for every other field.
+
+    Carries §6's `width`/`height` addition (14a Q3), since the UI cannot enforce A21b without it. A single wide scan of an open gatefold cannot fill two square slots: it goes to the gallery as `other`, and a user who wants the hinge photographs the sleeve themselves. That is honest — splitting a scan down the middle and hoping the seam lands right is not.
+
+14e. **The design pass.** The visual system, decided once and written down, rather than settled screen by screen as each was built.
+
+    **It produces a SPEC amendment, not code.** The output is a new section describing the visual system — type, colour, spacing, surface, motion — which this build order then implements as ordinary numbered units afterwards, under the same §1 loop and the same definition of done as everything else. Nothing ships from inside this step. That separation is the point: a design decision argued while a route handler is open gets made by whatever is easiest to type, and the reason this step exists at all is that the pass has been running as a thing that happens rather than a step that produces something.
+
+    **Sequence inside it, and the reason for that order:**
+
+    1. **The system, built on `/lookup`.** The densest screen in the app and the one carrying the most distinct kinds of information — search results, pressing evidence, ownership tiers, market ranges. A system that survives `/lookup` survives everything; one derived from a simpler screen gets amended the first time it meets a real table.
+    2. **Applied to the other DOM screens.** Collection, record detail, want list, `/manage`, stats, the add/edit form. Application, not re-derivation — a screen that needs a new rule is evidence the system is wrong, and the rule goes back into step 1 rather than being special-cased here.
+    3. **The wall's open questions (§10b).** Held to last because the wall is a lit three-dimensional scene rather than a DOM surface, and because two of its questions are already parked waiting for exactly this: **wall colour** (measured, deliberately not decided — it changes what spine colours do, what the dim means, and whether cover art still separates against a lighter ground) and **the sheen on the pulled record**.
+
+    **The gatefold belongs in step 3's inputs, and that is why 14a precedes this step.** The record is not a two-faced object: §10b gives it four (`cover`, `back`, `gatefold_left`, `gatefold_right`), and a gatefold **opens** rather than turns — two leaves rotating about a shared edge, which means a surface whose angle to the key light changes mid-motion. The sheen question in particular is different for a surface that may be opening than for one that only rotates, so settling sheen for a flat object first produces a decision that has to be re-made rather than refined.
+
+    14a's measurement is what makes those inputs honest rather than aspirational: it established that Discogs supplies one 2:1 spread and no way to type a leaf, so **the four-face state exists only where the user has photographed their own sleeve** — the design pass should know how often four faces actually occur before designing for them.
+
+    **Numbered 14e rather than before 13a because of a real ordering constraint.** The wall's questions are the pass's third input, and they are best judged against a scene that can show what it is deciding about — but 13a (the hinge) cannot be built until 14d supplies images to open, and 14d should not be built before the pass has decided what the assignment UI looks like. The circle is broken by 14a: the pass gets the gatefold as a **measured fact** about the object's geometry and Discogs' supply, without needing the hinge to exist first. So the pass decides the system, then 14d and 13a implement inside it.
+
+    **The known cost of that order**, stated rather than discovered later: step 3 settles the hinge's look — the sheen across an opening leaf, the seam where two photographs meet — against a description and a still scene rather than against a running hinge. If building 13a shows a decision was wrong in motion, that is an amendment to the pass's section, not a licence to re-decide it in the implementation unit.
+
+14f. **The no-primary cover fallback (§6).** **Trigger: the first time an imported cover looks wrong, OR the 14d unit — whichever comes first.** A DEFECT with a trigger, not an observation: it is live now and it affects records already in the collection.
+
+    **What is wrong.** `attach-cover.ts` picks `images[].type === 'primary'` and falls back to `images[0]`. 14a measured that **a gatefold need not carry a primary at all** — release 14451455 has seven images and not one is primary — so on such a release the fallback is the live path, and the attached cover is whichever image a contributor happened to upload first. That can be a label close-up, a runout shot, or the 2:1 inner spread. The front sleeve is not privileged in any way.
+
+    **Why it is worse on exactly the records this feature is about.** Q2 established that a gatefold reliably carries a wide inner spread. A gatefold with no primary is therefore the case most likely to attach something that is not a cover, and most likely to attach the *inner artwork* as the cover — on the wall, in the shelf's spine colour derivation, and as the pulled record's front face. Adam has gatefolds in the collection.
+
+    **The fallback is not deleted.** Without it a no-primary release gets no cover at all, which is worse. What changes is what it prefers and whether it says so — both decided in the unit, with these as the inputs the measurement supplies:
+
+    - a wide (≳1.5:1) image is the one thing 14a proved is *never* a front cover, so it should be the last thing chosen rather than an equal candidate;
+    - `width`/`height` reach the normalizer as part of 14d (14a Q3), so a shape-aware fallback costs nothing extra if the two are built together — which is why 14d is one of the two triggers;
+    - an import that had no primary to choose from is worth surfacing, since §7.8 already forbids overwriting user data and the user is the one who can tell a cover from an inner leaf.
+
+    **Not fixed inside 14a**, which was a measurement unit; recorded here rather than in NOTES because a live defect with a named trigger is a build step, and NOTES is for observations that have not earned one.
+
 15. Mobile pass across all screens. E2E #10. **Unit 1 was the E2E flake, fixed by per-spec cleanup rather than the per-worker isolation originally prescribed** — see below.
 16. Vercel deploy config + cron for price refresh.
 
@@ -1490,6 +1535,8 @@ Mock the Discogs, MusicBrainz and Anthropic APIs in tests. Never hit live extern
 **Deferred out of step 13, each with a trigger.** These are §10b features, built later rather than never:
 
 This block is in **execution order** — 13c, then 13a, then 13b. The numbering is by feature and does not run in sequence: 13c happens first, at step 14.
+
+**13a's position moved when the design pass was numbered (14e).** It still runs after 13c, but no longer immediately: 14a (measurement, done), then 14e (the design pass), then 14d (slot assignment), then 13a. The block's relative order is unchanged; what sits between 13c and 13a grew.
 
 **13c. The snippet** (§10b), in THREE UNITS. **Trigger: step 14**, immediately after §9.2 and built on the module §9.2 extracts — the Anthropic client, the shared rate limit (§4.3's `llm_requests`) and the JSON-parse boundary. R5 still reviews one boundary, because there is one.
 
@@ -1503,7 +1550,9 @@ This block is in **execution order** — 13c, then 13a, then 13b. The numbering 
 
 Judging a disclosure decision and a stored-ownership decision in one review is what splitting §9.1 from §9.2 was meant to avoid.
 
-**13a. The gatefold hinge.** Two leaves about a shared edge, and the affordance only where both inner photographs exist (§10b, A21c). **Trigger: after the Discogs inner-image measurement and the add-record slot-assignment UI** (14a). Nothing in the collection can open a gatefold until images can be assigned to `gatefold_left` and `gatefold_right`, so the hinge has nothing to act on. The scene already wires both slots through the surface-kind rule, so the geometry is what is missing.
+**13a. The gatefold hinge.** Two leaves about a shared edge, and the affordance only where both inner photographs exist (§10b, A21c). **Trigger: after the slot-assignment UI (14d), which is itself after the design pass (14e).** Nothing in the collection can open a gatefold until images can be assigned to `gatefold_left` and `gatefold_right`, so the hinge has nothing to act on. The scene already wires both slots through the surface-kind rule, so the geometry is what is missing.
+
+The measurement half of the old trigger is **done** (14a, 2026-09-03) and sharpens what this step is building for: Discogs supplies one 2:1 spread and no way to type a leaf, so both `gatefold_left` and `gatefold_right` will in practice come from **the user's own photographs**. The hinge will therefore open onto two images taken in one sitting rather than two stock scans — which is what A21a's accepted seam was always describing, now known to be the normal case rather than the fallback.
 
 **13b. Arrow navigation between records** (§10b). Moving through the collection without putting the record back. **Trigger: step 15's mobile pass**, which is already touching how the wall is navigated on a small screen, and where "browsing is continuous" matters most.
 
