@@ -25290,6 +25290,28 @@ as records pile up within a run, and every spec's `login()` waits on that
 render. Whoever picks up the trigger should start there rather than in the spec
 files.
 
+**SIGHTING 6 — 2026-09-05, during the shadow-config extraction.**
+
+`444 passed, 1 flaky, 20 skipped, 0 failed` (12.7m). One flake, `[chromium]`,
+passing on retry:
+
+| spec | test |
+|---|---|
+| `manage.spec.ts:388` | merging names what moves and what is destroyed, then does it |
+
+**A FOURTH distinct file**, after `lookup-flows`, `want-list` and
+`record-layout-fork`. `manage.spec.ts` is the reference-data admin screen and
+never loads the wall — `grep -l 'plane\|WallScene\|shadow'` returns nothing —
+so it cannot be touched by a change confined to `src/app/plane/`.
+
+**Four files, four different tests, four runs.** Any remaining "fault in a
+particular spec file" reading is now dead. The accumulation diagnosis is the
+only one that survives contact with this evidence, and the fix it implies —
+per-spec cleanup already landed, so what remains is the `/` render cost under
+an accumulated database — is where the eventual unit should start. The trigger's
+condition has been met three times over; what is missing is not evidence but a
+scheduled unit.
+
 **The reporting hazard is the part to carry forward:** `playwright test` exited
 **code 0 with 1 failed** in run A. A green exit code is not evidence; the summary
 line is. This is the third time in one session an exit code has concealed a real

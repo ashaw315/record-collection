@@ -35,6 +35,7 @@ import { SHELF_LIP, SHELF_PLANE, WALL_BACK } from '../shelf/shelf-surface';
 import type { WallPx } from './frames';
 import { canvasPx, framePx, raw, sceneZ, wallPx } from './frames';
 import { LIGHT_RIGS, LIGHT_RIG_DEFAULT, type LightRig, lightPosition } from './light-rig';
+import { SHADOW, shadowCamera, shadowRoles } from './shadow-config';
 import { createRenderLoop } from './render-loop';
 import { risePose } from './rise-pose';
 import {
@@ -709,7 +710,8 @@ export function WallScene({
       stronger key) so geometry is legible; it does not change whether a shadow
       exists.
     */
-    const castsShadow = true;
+    const { enabled: castsShadow } = SHADOW;
+    const roles = shadowRoles(castsShadow);
     /*
       **The diagnostic view trades the wall's lighting for readability.** A dim
       ambient and a strong raking key throw a hard shadow; the normal rig is
@@ -727,19 +729,28 @@ export function WallScene({
       `shadow` treatment used and it is now the default; the diagnostic goes
       further still, trading fidelity for legibility.
     */
-    scene.add(new AmbientLight(0xffffff, diagnostic ? 0.55 : 1.05));
-    const key = new DirectionalLight(0xffffff, diagnostic ? 2.6 : 2.3);
+    scene.add(
+      new AmbientLight(
+        0xffffff,
+        diagnostic ? SHADOW.ambient.diagnostic : SHADOW.ambient.shipping,
+      ),
+    );
+    const key = new DirectionalLight(
+      0xffffff,
+      diagnostic ? SHADOW.keyIntensity.diagnostic : SHADOW.keyIntensity.shipping,
+    );
     key.position.set(-0.4, 0.8, 1);
     if (castsShadow) {
       key.castShadow = true;
-      key.shadow.mapSize.set(2048, 2048);
+      key.shadow.mapSize.set(SHADOW.mapSize, SHADOW.mapSize);
       const extent = Math.max(width, height);
-      key.shadow.camera.left = -extent;
-      key.shadow.camera.right = extent;
-      key.shadow.camera.top = extent;
-      key.shadow.camera.bottom = -extent;
-      key.shadow.camera.near = 0.5;
-      key.shadow.camera.far = extent * 4;
+      const frustum = shadowCamera(extent);
+      key.shadow.camera.left = frustum.left;
+      key.shadow.camera.right = frustum.right;
+      key.shadow.camera.top = frustum.top;
+      key.shadow.camera.bottom = frustum.bottom;
+      key.shadow.camera.near = frustum.near;
+      key.shadow.camera.far = frustum.far;
       /*
         **Spherical, so elevation is sweepable.** The old triple encoded 39.3deg
         elevation at 42deg azimuth and had to be run through `atan2` to discover
@@ -838,8 +849,8 @@ export function WallScene({
         Receives, never casts. A back panel that cast would shadow the very
         surfaces standing in front of it.
       */
-      panel.receiveShadow = castsShadow;
-      panel.castShadow = false;
+      panel.receiveShadow = roles.backPanel.receive;
+      panel.castShadow = roles.backPanel.cast;
       scene.add(panel);
       /**
        * **Registered as WALL, which is both dim corrections at once.**
@@ -895,8 +906,8 @@ export function WallScene({
         and reappeared on the back panel below, which is what a solid shelf
         cannot do. Observed in the 3/4 orbit once the panel existed to show it.
       */
-      surface.castShadow = castsShadow;
-      surface.receiveShadow = castsShadow;
+      surface.castShadow = roles.surface.cast;
+      surface.receiveShadow = roles.surface.receive;
       scene.add(surface);
       disposables.push(surface.material as Material);
       wallMaterials.push({
@@ -919,8 +930,8 @@ export function WallScene({
         -(shelf.y + shelf.height - SHELF_LIP_DEPTH / 2),
         surfaceSpan.front,
       );
-      lip.castShadow = castsShadow;
-      lip.receiveShadow = castsShadow;
+      lip.castShadow = roles.lip.cast;
+      lip.receiveShadow = roles.lip.receive;
       scene.add(lip);
       disposables.push(lip.material as Material);
       wallMaterials.push({
@@ -1157,10 +1168,8 @@ export function WallScene({
         -(placed.y + SPINE_HEIGHT / 2),
         placed.width / 2,
       );
-      if (castsShadow) {
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-      }
+      mesh.castShadow = roles.spine.cast;
+      mesh.receiveShadow = roles.spine.receive;
       if (diagnosticProp === true) {
         /*
           White, unlit-looking but LIT, so the shadow reads. The spine's own
