@@ -25267,6 +25267,29 @@ lookup-flows" as the weaker of the two hypotheses.
 unit with repeated runs, and appending a guess to a measurement unit is what the
 trigger exists to prevent.
 
+**SIGHTING 5 — 2026-09-05, during the PressingAssessment tone fix.**
+
+Full suite, both projects: `443 passed, 2 flaky, 20 skipped, 0 failed` (12.0m).
+Both flaky, both `[chromium]`, both passing on retry:
+
+| spec | test |
+|---|---|
+| `lookup-flows.spec.ts:1603` | a release with no pressing details says so rather than rendering blank |
+| `record-layout-fork.spec.ts:107` | both shapes reach the detail page by a link inside the expanded panel (A33) |
+
+`lookup-flows.spec.ts` is now at **five sightings** and a THIRD file has appeared
+(`record-layout-fork.spec.ts`), after `want-list.spec.ts` on 09-03. Neither spec
+touches the changed code — `grep -l 'verdict-\|PressingAssessment\|pressing-verdict'`
+returns nothing for either — and the change is one component plus its own test
+file.
+
+**The cross-file spread is now the dominant reading.** Three distinct files
+across two runs, each failing a different test, is not "a fault in
+lookup-flows". It matches the accumulation diagnosis recorded above: `/` slows
+as records pile up within a run, and every spec's `login()` waits on that
+render. Whoever picks up the trigger should start there rather than in the spec
+files.
+
 **The reporting hazard is the part to carry forward:** `playwright test` exited
 **code 0 with 1 failed** in run A. A green exit code is not evidence; the summary
 line is. This is the third time in one session an exit code has concealed a real
@@ -25477,3 +25500,103 @@ absence is a tripwire on a known omission, not an assertion that the omission is
 correct — whoever closes the gap in 14d should delete that test and say so in
 the unit report. Left as-is here because adding the fields with no consumer
 would be speculative work outside this unit.
+
+---
+
+## CI: yes, and not yet — decided 2026-09-05
+
+**There is no test-running CI in this repo.** The only workflow is
+`refresh-prices.yml`, a weekly cron that runs no tests. So the question was never
+"add `neon-transactions.test.ts` to CI" — it is "introduce CI at all", with that
+file as one motivation among many.
+
+**Adam's decision: yes, and not yet.** *"A visual conversion is coming that will
+churn assertions across every screen, and standing up CI in the middle means
+every run is red for reasons already known, which trains everyone to ignore it
+before it has earned anything."*
+
+**Trigger: once the visual conversion lands and green means something again.**
+
+**The reframing that settled it**, recorded because the original question was
+narrower than the answer: the argument for CI is not this one opt-in file. It is
+that **3341 tests run only when someone remembers**. This session alone found a
+stale Neon credential, a fake CSS class shipping a nearly-invisible verdict
+state, and five sightings of a load-dependent E2E flake — all things CI surfaces
+early and a human sweep found late.
+
+### The four requirements, so the decision does not have to be reconstructed
+
+1. **A dedicated Neon branch that CI owns**, separate from the local one.
+   Sharing means CI's deliberately-failed transactions and a local run race on
+   the same tables. The `neon-tx-<timestamp>-<random>` probe prefix keeps ROWS
+   unique, but `afterAll` deletes by `LIKE` prefix, and concurrent runs would
+   interleave setup and teardown.
+2. **`NEON_TEST_DATABASE_URL` as a repository secret**, accepting that a branch
+   credential then lives in GitHub. `assertNeonTestBranch`'s host check limits
+   the blast radius — the harness cannot address main — but does not eliminate
+   the exposure.
+3. **Docker Postgres in the same workflow.** The other ~220 integration files
+   need `TEST_DATABASE_URL`; running the Neon file alone verifies the driver
+   while leaving everything it depends on unchecked.
+4. **A branch-liveness decision.** Neon auto-suspends idle branches, so a
+   scheduled run regularly hits a cold start and eventually a DELETED branch if
+   anyone prunes. Without the reachability probe added 2026-09-05 that failure
+   would have read as a broken test in CI exactly as it did locally.
+
+---
+
+## DEFERRED WITH A TRIGGER — concurrent import against the shared `pressings` row
+
+**Scoped 2026-09-05 from the gaps in `neon-transactions.test.ts`.**
+
+`importRelease` finds-or-creates a `pressings` row (§4.2: pressings are SHARED).
+Two simultaneous imports of the same `discogs_release_id` therefore race on that
+row, and nothing tests it. It is the same shape as the acquire race already
+covered — two writers, one row that must not double — and the acquire test
+proves that shape is worth covering: removing the `is_acquired = false` guard
+fails it, so the equivalent guard here, if there is one, is equally load-bearing
+and currently unverified.
+
+**Why it is NOT queued now, in Adam's words:** *"Two simultaneous imports of the
+same discogs_release_id is a collision I can only cause by importing fast, and I
+import one record at a time in a shop — so it may never fire for me and the unit
+may never be worth building."*
+
+That is the right reading. A single-user app importing by hand cannot produce
+concurrent writes, so the defect is unreachable in practice — and a unit that
+sits in the queue looking urgent while being unreachable trains everyone to
+ignore the queue.
+
+**TRIGGER — build it when EITHER happens, whichever comes first:**
+
+1. **A duplicate `pressings` row is found** — two rows sharing a
+   `discogs_release_id`, or two that should have been found-or-created as one.
+   That is the defect having actually occurred, and it makes the unit a fix
+   rather than a precaution.
+2. **Import runs from anything other than Adam's hands** — a bulk importer, a
+   retry-on-failure path, a background job, a cron, or a second user. Any of
+   these makes concurrency reachable, and the trigger fires on the mechanism
+   arriving rather than on damage appearing.
+
+**What the unit would be:** a `neon-transactions.test.ts` case in the shape of
+`lets only one of two simultaneous acquires win` — two `importRelease` calls for
+one release id started before either is awaited, asserting exactly one
+`pressings` row survives and both imports reference it. Small, because the
+harness, the guard and the concurrency pattern all already exist.
+
+### The other two gaps from the same review, both closed rather than deferred
+
+**Delete paths: NOT a gap.** Checked 2026-09-05 — no delete spans tables in a
+transaction. `deleteRecord` (`records.ts:623`) and `deleteWantListItem`
+(`want-list.ts:289`) are each a single-table statement, and junction cleanup is
+`onDelete: 'cascade'` in the schema (e.g. `recordGenres`, `schema.ts:427`), which
+is the database's own atomicity rather than the driver's. Nothing to verify on
+the Neon driver, so nothing is deferred.
+
+**Pool interruption: deliberately not built.** A WebSocket dropped
+mid-transaction is the file's own premise — that Neon's pool multiplexes
+differently from pg — left untested, since every current test fails the
+transaction from INSIDE. Adam: *"simulating a dropped WebSocket mid-transaction
+costs more than it returns right now."* Recorded so the gap is known rather than
+overlooked; no trigger, because nothing cheap would fire it.
+

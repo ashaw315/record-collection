@@ -37,6 +37,22 @@ Step 8 is the one you will be most tempted to skip. Don't. The developer is revi
 - **For every test, name the line of source it would fail against.** If the answer is "none directly", or "some other test would catch that", the test is decorative — it resembles verification without constraining the code under test. Rewrite it to call the function it names and assert its output, or delete it.
   Three instances of this shape have already shipped here: a probe that proved a branch worked and was then deleted; a length test that measured `[...str].length` inline rather than calling `nameLength`, so it passed whatever that function did; and a whitespace test whose real failure mode was caught incidentally by a different test. A fourth variant is worse — **a test whose precondition is silently destroyed**, as when an NFD string literal is normalized to NFC on being written to disk, leaving `expect(nfc).not.toBe(nfd)` comparing a value with itself. When a test depends on a precondition that tooling can quietly break, assert the precondition explicitly and construct the value from escapes.
 
+- **A test's NAME is a claim, and the assertion has to be able to support it.** This is the generalisation of the rule above, and it is the one that keeps being violated in new places. Read the name, then read the assertion, and ask: *if the thing the name promises broke, would this line fail?* If the name says "verified" and the assertion proves only "configured", the name is a lie the summary repeats every run — and a green line claiming verification is worse than a missing test, because it stops anyone looking.
+
+  **Three instances in one week, in three different layers**, which is why this is a rule and not a note:
+
+  | name claimed | assertion actually made | what broke undetected |
+  |---|---|---|
+  | `transactional code IS verified against the real Neon driver` | the env var string is non-empty | a stale branch credential: three days reported as verified while nothing ran |
+  | `gives any-copy and unknown different tones` | two token strings differ | `border-l-dashed` generated no CSS; the state rendered at 1.29:1, nearly unmarked |
+  | `has every spine cast and the shelf receive` | the source text contains `castShadow` | one character at `WallScene.tsx:712` removes every shadow in the scene, file stays green |
+
+  The shape is identical each time: **the assertion tests a proxy one layer below the claim** — a variable instead of a connection, a token instead of a rendering, a source string instead of a behaviour. The proxy is easy to assert and cannot fail on the thing the name names.
+
+  **The fix is always the same:** assert the channel that actually carries the claim, or rename the test to what it really checks. Both are acceptable; leaving a name that overstates is not. When a proxy is genuinely all that is reachable at that layer, say so in the test body and name the test after the proxy (`a Neon test branch is configured`, not `is verified`).
+
+- **Distinguish absent from broken from working — three states, not two.** A gate that asks only "is this configured?" cannot tell a missing thing from a dead one, and the dead case is the dangerous one: absent is honestly reported, whereas configured-but-unreachable *looks* verified. Where a resource can be configured and still not work, probe it, and fail loudly rather than skipping — an unreachable dependency is a broken environment, not an absent one. And gate teardown on the same probe: cleanup that also fails prints last and buries the message that says what is actually wrong.
+
 **The one carve-out.** A few build steps have no meaningful test-first path: project scaffolding, config files, migrations themselves, and deploy configuration. For these, the verification is a **command that must succeed**, not a unit test. State up front which command proves the step (e.g. `npm run build` succeeds; `npm run db:migrate` runs clean on an empty database; the dev server boots and `/login` renders). Run it, paste the output, and treat a failing command exactly as you would a failing test. Do not invent hollow unit tests to satisfy the TDD rule where none are warranted — and do not use this carve-out for anything containing business logic.
 
 **Test layers** (see `SPEC.md` §11 for required coverage):
