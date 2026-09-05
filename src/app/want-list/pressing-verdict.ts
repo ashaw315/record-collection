@@ -30,6 +30,39 @@ export type VerdictPresentation = {
   actionable: boolean;
 };
 
+/**
+ * What each tone RENDERS AS. Lives here, beside the tone it maps, and is
+ * exported so it can be tested — `PressingAssessment.tsx` held it privately and
+ * nothing guarded it.
+ *
+ * **No border on any tone, deliberately.** The three tones used to carry a 2px
+ * left border, and `open`'s was `border-l-dashed` — not a Tailwind utility, so
+ * it generated no rule and silently fell back. The colour it fell back to
+ * measured **1.29:1** against the page: below even the 3:1 non-text floor, so
+ * the verdict meaning "nothing is settled here, you are on your own" rendered
+ * as very nearly no mark. **A state signalled by near-absence** is the failure
+ * this project has spent the most effort removing.
+ *
+ * **Repairing the typo was not the fix, because dashed is already spent.**
+ * `OwnershipBadge.tsx` uses `border-dashed` for want INTENT — "a want is a
+ * plan, not a fact about the shelf". A dashed stroke here would mean
+ * want-intent on `/lookup` and no-knowledge on the want-list detail: one
+ * stroke, two meanings, two screens. The broken class was masking that
+ * collision rather than causing it.
+ *
+ * So the border goes entirely — it was a redundant channel that had already
+ * failed once — and the distinction rides on the marker and the heading, which
+ * are text and cannot fall back to nothing. Tone now only decides ink versus
+ * muted, and `muted` is `--muted-foreground`: **6.28:1** on the light ground,
+ * **7.63:1** on the dark, and already the token used by the detail line
+ * directly beneath.
+ */
+export const TONE_CLASS: Record<VerdictPresentation['tone'], string> = {
+  positive: '',
+  settled: '',
+  open: 'text-muted-foreground',
+};
+
 export function verdictPresentation(verdict: PressingVerdict): VerdictPresentation {
   switch (verdict) {
     case 'matters':

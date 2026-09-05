@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { verdictPresentation } from './pressing-verdict';
+import { TONE_CLASS, verdictPresentation } from './pressing-verdict';
 import type { PressingVerdict } from '@/lib/llm/pressing-assessment-client';
 
 /**
@@ -22,12 +22,6 @@ type Assessment = {
   orderedBy: string | null;
   askedAt: string;
 };
-
-const TONE = {
-  positive: 'border-l-2 border-l-foreground',
-  settled: 'border-l-2 border-l-muted-foreground',
-  open: 'border-l-2 border-l-dashed border-l-border',
-} as const;
 
 export function PressingAssessment({
   itemId,
@@ -133,7 +127,7 @@ export function PressingAssessment({
       {assessment !== null && presented !== null && (
         <div
           data-testid={`verdict-${assessment.verdict}`}
-          className={`mt-2 pl-3 ${TONE[presented.tone]}`}
+          className={`mt-2 ${TONE_CLASS[presented.tone]}`.trimEnd()}
         >
           {/*
             **The marker carries the state before any word is read.** Adam's
