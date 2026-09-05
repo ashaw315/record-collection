@@ -59,12 +59,23 @@ describe('Neon verification gate', () => {
    * The name still carries the instruction, because the summary line is where
    * someone will read it.
    */
-  it.skipIf(!configured)(
-    'transactional code IS verified against the real Neon driver',
-    () => {
-      expect(configured).toBe(true);
-    },
-  );
+  /**
+   * **The name says CONFIGURED, not VERIFIED, and the difference is the whole
+   * point.** This assertion only proves the variable is set and non-empty. It
+   * cannot prove the branch exists, accepts the password, or ran a single
+   * statement — a deleted branch or a rotated credential leaves `configured`
+   * true.
+   *
+   * The earlier name, "transactional code IS verified against the real Neon
+   * driver", claimed the stronger thing. When the branch went stale it kept
+   * passing and read as verification while the nine real tests errored out in
+   * setup — absent-versus-unknown one level up from the case this file's
+   * header already records. The verification itself is the nine tests below;
+   * the reachability probe in `beforeAll` is what makes their absence loud.
+   */
+  it.skipIf(!configured)('a Neon test branch is configured', () => {
+    expect(configured).toBe(true);
+  });
 
   /*
    * **`it.skip`, unconditionally, when the variable is absent** — declared only
@@ -90,9 +101,11 @@ describe('Neon verification gate', () => {
 describe.skipIf(!configured)('transactions over the Neon serverless driver', () => {
   let pool: Pool;
   let db: ReturnType<typeof drizzle>;
+  /** Set once the probe in `beforeAll` has actually reached the branch. */
+  let reachable = false;
   const probe = `neon-tx-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     /**
      * Structural, not procedural. This harness WRITES and deliberately fails
      * transactions, so it may only ever address the throwaway branch. Both
@@ -103,10 +116,71 @@ describe.skipIf(!configured)('transactions over the Neon serverless driver', () 
 
     pool = new Pool({ connectionString: url });
     db = drizzle(pool);
+
+    /**
+     * **Reachability is checked HERE, before any test runs.**
+     *
+     * The gate above answers "is a branch configured"; it cannot answer "does
+     * that branch still exist and accept this password". A Neon branch can be
+     * deleted or have its credential rotated while the variable stays set and
+     * well-formed, and that is not hypothetical — it happened, and the nine
+     * failures read as `Failed query: DELETE FROM want_list ... password
+     * authentication failed`, which points at the harness rather than at the
+     * credential. A reader debugs the DELETE.
+     *
+     * A one-statement probe in `beforeAll` turns that into one setup failure
+     * naming the variable, the host, and what to do. It costs a single round
+     * trip on a file that already opens a pool.
+     *
+     * Deliberately NOT a skip. An unreachable branch is a BROKEN environment,
+     * not an absent one, and the difference matters: absent is honestly
+     * reported by the skip above, while unreachable means someone believes
+     * these guarantees are verified when nothing has checked them. Downgrading
+     * it to a skip would recreate the three-day silent outage this file's
+     * header records.
+     */
+    try {
+      await db.execute(sql`SELECT 1`);
+      reachable = true;
+    } catch (cause) {
+      const host = (() => {
+        try {
+          return new URL(url).hostname;
+        } catch {
+          return '(unparseable host)';
+        }
+      })();
+
+      throw new Error(
+        `NEON_TEST_DATABASE_URL is set but the branch is unreachable (host: ${host}).\n\n` +
+          'This variable points at a THROWAWAY Neon branch, and this file is the only ' +
+          'place the production `neon-serverless` driver is exercised at all — CLAUDE.md ' +
+          '§2 requires transactional code to be verified against it rather than local pg. ' +
+          'These tests cannot run without a reachable branch.\n\n' +
+          'It is local-only: not in Vercel, not in CI, so it lives in .env.local and is ' +
+          'the variable most likely to be missing or stale on a new machine or after a ' +
+          'branch is deleted.\n\n' +
+          'Fix: branch a fresh Neon database and put its connection string in ' +
+          '.env.local as NEON_TEST_DATABASE_URL. Do NOT point it at the main branch — ' +
+          'this harness writes and deliberately fails transactions, and ' +
+          'assertNeonTestBranch will refuse.\n\n' +
+          `Underlying error: ${cause instanceof Error ? cause.message : String(cause)}`,
+        { cause },
+      );
+    }
   });
 
   afterAll(async () => {
-    if (pool !== undefined) {
+    /**
+     * `reachable` gates the cleanup, not just `pool !== undefined`.
+     *
+     * When the probe above fails the pool exists but nothing can run through
+     * it, so this DELETE fails too — and its error is the one vitest prints
+     * LAST, burying the setup message that says what is actually wrong. That
+     * is how the original outage read as "Failed query: DELETE FROM want_list"
+     * rather than as a stale credential.
+     */
+    if (pool !== undefined && reachable) {
       await db.execute(
         sql`DELETE FROM want_list WHERE artist_id IN
               (SELECT id FROM artists WHERE name LIKE ${`${probe}%`})`,
@@ -118,6 +192,9 @@ describe.skipIf(!configured)('transactions over the Neon serverless driver', () 
       await db.execute(sql`DELETE FROM genres WHERE name LIKE ${`${probe}%`}`);
       await db.execute(sql`DELETE FROM artists WHERE name LIKE ${`${probe}%`}`);
       await pool.end();
+    } else if (pool !== undefined) {
+      // Unreachable: no cleanup to do, but the socket still needs closing.
+      await pool.end().catch(() => {});
     }
   });
 
