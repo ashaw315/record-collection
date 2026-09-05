@@ -25312,6 +25312,92 @@ an accumulated database — is where the eventual unit should start. The trigger
 condition has been met three times over; what is missing is not evidence but a
 scheduled unit.
 
+---
+
+## THE ACCUMULATION DIAGNOSIS IS REFUTED FOR THE CURRENT FLAKE — measured 2026-09-05
+
+**Including by the entry directly above, which was wrong.** It said accumulation
+"is the only one that survives contact with this evidence". It does not survive
+contact with a measurement, which is the point of taking one.
+
+**What was measured.** A full instrumented pass (`--reporter=json`), with row
+counts before and after, per-test durations and start times, split by project.
+
+### Finding 1 — there is no accumulation
+
+| | records | artists | genres | pressings |
+|---|---|---|---|---|
+| before the run | 15 | 15 | 121 | 32 |
+| after the run | **14** | **14** | 121 | 32 |
+
+The database does not grow across a run. Per-spec cleanup (`registerCleanup` /
+`trackArtist`, 19 of 28 specs) works. The 724-record accumulation the original
+diagnosis rested on **no longer happens** — that fix landed and holds.
+
+### Finding 2 — the flaking tests do not cluster late
+
+Position of the four files that have flaked, within the chromium run of 253:
+
+| file | position | through the run |
+|---|---|---|
+| `lookup-flows.spec.ts` | 65-99 | **26%-39%** |
+| `manage.spec.ts` | 94-111 | 37%-44% |
+| `record-layout-fork.spec.ts` | 151-153 | 60% |
+| `want-list.spec.ts` | 231-252 | 91%-100% |
+
+The original measurement's core claim was *"earliest failure 194 of 262, not one
+in the first 190, across roughly 800 executions"*. The most frequent flaker now
+sits at **26%**. Whatever is happening is not the thing that was measured in
+step 15 unit 1.
+
+### Finding 3 — the apparent late slowdown is COMPOSITION, not time
+
+Quarter medians looked like accumulation at first (chromium 2187 → 3408ms, +56%),
+which is how a plausible reading survives. Split further, it dissolves:
+
+- **mobile does not slow at all** (2745, 2771, 2832, **2374**) — it ends
+  FASTER. A shared database would slow both projects.
+- chromium's last quarter is dominated by `wall-scene.spec.ts` at a **6595ms**
+  median: a WebGL spec that is slow wherever it runs.
+- `cover-unlit.spec.ts` posts **6316ms** in the FIRST quarter, so slowness is
+  not a function of position.
+- The only spec running in both halves changed by **12%** — noise.
+
+**The rise is which specs happen to run late, not tests getting slower.**
+
+### Finding 4 — the flaky tests are not slow tests
+
+All six historically-flaky tests, in this clean run: 2561-5207ms, against a 30s
+test timeout. They are ordinary-speed tests, not ones sitting near a limit.
+
+### What this run also shows
+
+**445 passed, 0 flaky.** A clean full pass. Combined with the sightings, the
+rate is roughly 1-3 flakes per run and NOT every run — consistent with something
+genuinely intermittent rather than a threshold being crossed at a predictable
+point.
+
+### What is NOT yet established
+
+The mechanism. This measurement refutes a diagnosis; it does not supply one. The
+honest position is that four files across six sightings show **no positional
+pattern, no accumulation, and no slow-test correlation**, which rules out the
+leading hypothesis and leaves the field open.
+
+**The strongest remaining lead is the pre-existing hydration flake** already
+recorded in this file (step 15 unit 1's own residual: *"four valid runs at
+`--retries=0` produced ONE failure: a pre-existing hydration flake unrelated to
+load"*). That was set aside as unrelated to the accumulation problem, and with
+accumulation gone it is the only characterised candidate left. Three specs also
+carry `toHaveURL('/', { timeout: 30_000 })` overrides — `record-navigation`,
+`record-panel`, `touch-tilt` — which are patches on individual specs from an
+earlier encounter with this.
+
+**Next measurement, when this is picked up:** capture the failure itself rather
+than the timings around it — run with `--retries=0` repeatedly and keep the
+trace of a genuine failure. Six sightings have all been observed through the
+summary line; not one trace has been read. That is the gap now.
+
 **The reporting hazard is the part to carry forward:** `playwright test` exited
 **code 0 with 1 failed** in run A. A green exit code is not evidence; the summary
 line is. This is the third time in one session an exit code has concealed a real
@@ -25621,4 +25707,73 @@ differently from pg — left untested, since every current test fails the
 transaction from INSIDE. Adam: *"simulating a dropped WebSocket mid-transaction
 costs more than it returns right now."* Recorded so the gap is known rather than
 overlooked; no trigger, because nothing cheap would fire it.
+
+---
+
+## KNOWN GAP — nothing automated can see whether the shadow actually renders
+
+**Recorded 2026-09-05, at the end of the shadow-config extraction, so this is a
+decision someone can make rather than something rediscovered the next time a
+shadow silently disappears.**
+
+`shadow-config.ts` makes the wall's shadow CONFIGURATION assertable, and nine
+mutations now fail at least one test. **That is the values the scene is built
+from, not the pixels it produces.** Asserting `SHADOW.enabled === true` proves
+three.js was TOLD to cast. It cannot prove:
+
+- a shadow lands anywhere visible;
+- the key is angled to throw one (elevation/azimuth live in `light-rig.ts`);
+- the ambient does not wash it out at the value actually shipped;
+- the shadow camera frustum covers the geometry that needs to cast;
+- the receiving surfaces are positioned where a shadow would fall on them.
+
+Every one of those has been wrong at least once during the shelf work, and each
+was found by LOOKING. Nothing in the unit layer can look: vitest has no WebGL,
+and CLAUDE.md's component layer is explicitly "no interaction, no CSS".
+
+**Where the guard would have to live: a visual check at `/plane?diagnostic=1`.**
+That view exists and is exactly the instrument the shelf investigation used — a
+white, unlit-looking-but-lit object over a hard shadow, with the wall's colour
+and label textures removed precisely so the geometry reads. The diagnostic is
+already built; what is missing is anything that ASSERTS against it.
+
+### What it would cost, so the tradeoff is visible
+
+**The mechanism: a Playwright screenshot comparison against a WebGL canvas.**
+`toHaveScreenshot` with a masked region around the shadow, on the chromium
+project only.
+
+The costs, none of them hypothetical for this repo:
+
+1. **WebGL rendering is not deterministic across machines.** GPU, driver and
+   ANGLE backend all change antialiasing and shadow-map sampling. A baseline
+   captured on this Mac will not match CI's headless Linux, so the baseline is
+   per-environment — and this repo has no CI yet (see the CI entry above), so
+   today it would be a one-machine guard, the same shape as the Neon harness.
+2. **A tolerance has to be chosen, and it is the whole test.** Too tight and it
+   flakes on driver updates; too loose and it cannot see the failure it exists
+   for. "The shadow got 20% weaker" is exactly the change a pixel tolerance is
+   worst at catching, and "make it subtler" is the documented failure mode this
+   whole area guards against.
+3. **It would be added to a suite that currently has a live flake** (see the
+   sightings above). A screenshot test is the least diagnosable kind of flake,
+   and adding one before the existing flake is understood would make both
+   harder to read.
+4. **Baseline maintenance.** Every deliberate visual change to the wall — and a
+   design pass is queued at §12 14e — requires regenerating and eyeballing the
+   baseline. That is real work per change, and eyeballing a regenerated
+   baseline is exactly the manual check the test was meant to replace.
+
+**Cheaper alternatives that are NOT equivalent, listed so they are not mistaken
+for the fix:** asserting the canvas is non-blank catches a dead renderer, not a
+missing shadow; sampling pixel luminance through `page.evaluate` on the WebGL
+context is more targeted but needs a fixed camera and known geometry, and is
+still a per-environment baseline.
+
+**Not built, deliberately.** The honest position is that the config is guarded
+and the rendering is not, which is why both test files are named after what they
+check rather than after the scene. **Trigger: the design pass (§12 14e), if it
+changes the wall's lighting** — at that point a baseline has to be regenerated
+anyway, the tolerance question is live, and the cost of the guard is being paid
+in manual looking regardless.
 
