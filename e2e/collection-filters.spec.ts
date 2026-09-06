@@ -451,6 +451,24 @@ test('clicking through to a filtered view equals loading that URL directly', asy
     await expectTitles(cold, f.suffix, clickedTitles);
     expect(new URL(cold.url()).search).toBe(new URL(clickedUrl).search);
 
+    /**
+     * **`controlsReady` on the COLD page too, and its absence was a real flake.**
+     *
+     * Caught with a trace on 2026-09-05: `toHaveValue` read `""` while the
+     * locator resolved fourteen times, so the element was present and its value
+     * was not. `CollectionFilters.tsx` renders a CONTROLLED select whose value
+     * comes from client state — before hydration the server markup carries
+     * `value=""`, which is exactly what was observed.
+     *
+     * The first page is guarded at the top of this test. This one is a FRESH
+     * context that has to hydrate from scratch, so it is the one that races —
+     * and it was the only assertion here made on a control's value without
+     * waiting for `data-hydrated`. `CollectionFilters.tsx` already says why
+     * that attribute exists: these controls are server-rendered, so their
+     * presence proves nothing about interactivity.
+     */
+    await controlsReady(cold);
+
     // The controls must reflect the URL too, or the rows and the chips disagree.
     await expect(cold.getByRole('button', { name: `Punk-${f.suffix}` })).toHaveAttribute(
       'aria-pressed',

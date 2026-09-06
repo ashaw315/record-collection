@@ -23,7 +23,7 @@ async function login(page: Page) {
   await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
   await page.getByLabel('Password').pressSequentially(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/', { timeout: 30_000 });
+  await expect(page).toHaveURL('/');
 }
 
 async function pullTheRecord(page: Page) {

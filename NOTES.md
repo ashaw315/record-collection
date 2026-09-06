@@ -25398,6 +25398,304 @@ than the timings around it — run with `--retries=0` repeatedly and keep the
 trace of a genuine failure. Six sightings have all been observed through the
 summary line; not one trace has been read. That is the gap now.
 
+---
+
+## THE TRACE, CAUGHT — and it is a hydration race, not a timeout (2026-09-05)
+
+**Three runs at `--retries=0 --trace=retain-on-failure`; run 2 failed.** Runs 1
+and 3 were clean at 445 passed. The failure, in a FIFTH spec file:
+
+    [mobile] collection-filters.spec.ts:427
+    'clicking through to a filtered view equals loading that URL directly'
+
+    Error: expect(locator).toHaveValue(expected) failed
+      Locator:  getByLabel('Sort by')
+      Expected: "releaseYear:desc"
+      Received: ""
+      Timeout:  5000ms
+      14 x locator resolved to <select id="collection-sort" ...>
+         - unexpected value ""
+
+**Nothing to do with login, `/`, or a slow render.** The element is found
+immediately and resolves fourteen times; its VALUE never arrives.
+
+### The mechanism, and it was already documented one file over
+
+`CollectionFilters.tsx:265` renders a CONTROLLED select:
+
+    value={params.sort === undefined ? '' : `${params.sort.field}:${params.sort.direction}`}
+
+`params` is client state. Before hydration the server markup carries `value=""`
+— exactly the observed value. `CollectionFilters.tsx:189-200` already says this
+in as many words: *"These controls are server-rendered, so their PRESENCE proves
+nothing about interactivity, and a test that waits for a visible control still
+races hydration on WebKit."* That is why `data-hydrated` exists.
+
+**The test waits for it on the first page and not on the second.** It calls
+`controlsReady(page)` at line 432, then opens a FRESH context at 445-446 to
+prove the URL alone carries the state — and asserts `toHaveValue` on that cold
+page at 459 with no `controlsReady(cold)` between. The cold page is the one that
+has to hydrate from scratch, so it is the one that races.
+
+### Why this reconciles every sighting
+
+- **No positional pattern** — a hydration race fires whenever the machine is
+  briefly busy, not late in a run. Explains 26%-100%.
+- **Not slow tests** — the element is present instantly; only its value lags.
+- **Both projects, five files** — every screen has server-rendered controls
+  behind `data-hydrated`, so any test asserting control state before that
+  attribute can race.
+- **Intermittent at ~1 per 2-3 runs** — matches the sightings.
+
+It also matches step 15 unit 1's own residual, set aside at the time: *"four
+valid runs at `--retries=0` produced ONE failure: a pre-existing hydration flake
+unrelated to load."* That was the same thing, correctly identified and then
+overshadowed by the accumulation work.
+
+### The three `timeout: 30_000` overrides are unrelated — dated, not diagnosed
+
+`record-navigation`, `record-panel` and `touch-tilt` all carry
+`toHaveURL('/', { timeout: 30_000 })`, and all three arrived **on 2026-08-21 in
+the commit that created the spec** — the day after `832e598` established the
+accumulation diagnosis and two days before `1f13ff2` actually fixed it. None has
+a comment or a commit-message rationale. They are PROPHYLACTIC: written against
+a suite believed to slow down late, during the window when that was the accepted
+reading. `wall-scene.spec.ts` has 59 `/plane` references — more than all three
+combined — a byte-identical `login()`, and no override, so it is not a property
+of WebGL specs. It is a property of the week the spec was written.
+
+They now mask up to 25s of login latency on three specs, which is exactly what
+would hide a real regression during a visual conversion.
+
+### The general shape, because the next person to find one will misread it
+
+**A defensive measure encodes a BELIEF, and outlives the correction of that
+belief, because nothing connects the two.**
+
+A bare `timeout: 30_000` with no comment reads like evidence: someone met a slow
+login and raised the bound. It is not. It records what somebody THOUGHT on
+2026-08-21 — that the suite slows down late — during the two days when that was
+the accepted diagnosis and before the fix landed. When `1f13ff2` closed the
+accumulation on 08-23, nothing pointed back at the three specs written against
+it, so the belief's correction never reached its artefacts.
+
+**The control that settles it** is `wall-scene.spec.ts`: 59 `/plane` references,
+more than all three overrides combined, a byte-identical `login()`, and no
+override. If the overrides were reacting to something in the code they would be
+a property of the specs. They are a property of their DATE.
+
+This is the same shape as the rest of this week, one layer over from the tests:
+
+| artefact | encoded belief | how it outlived the correction |
+|---|---|---|
+| `timeout: 30_000` x3 | "the suite slows late" | fix landed 2 days later, nothing linked back |
+| `border-l-dashed` | "this tone is dashed" | the class never existed, nothing rendered it |
+| "IS verified" gate name | "a set variable means verified" | branch died, name kept claiming |
+| `castShadow` regex | "matching the name proves the value" | one boolean removed every shadow |
+
+**The rule that follows: a defensive measure needs its reason attached, or it
+becomes evidence for a belief nobody holds any more.** A timeout override with a
+comment naming what was observed can be re-evaluated when the cause is fixed. A
+bare number cannot, and the next reader will treat it as a measurement.
+
+**Removed 2026-09-05**, after the trace hunt finished rather than during it, so
+the hunt's six runs were measured against an unchanged instrument.
+
+### Not yet established
+
+Only ONE trace was caught, in one spec. The mechanism explains the other five
+sightings but is not yet proven for them — their failures were never traced, and
+`lookup-flows`, `want-list`, `manage` and `record-layout-fork` each fail on a
+different assertion. **The fix for THIS instance is one line** (`await
+controlsReady(cold)` before the assertion at :459); whether the other four share
+the shape needs their own traces, or an audit of every assertion made on a
+control before `data-hydrated`.
+
+---
+
+## THE HUNT, COMPLETE — six runs, SEVEN failures, and it is not one bug
+
+**Boxed at six full runs at `--retries=0`, all on the same tree. Result:**
+
+| run | outcome |
+|---|---|
+| 1 | clean, 445 passed |
+| 2 | 1 failed — `collection-filters:427` |
+| 3 | clean, 445 passed |
+| 4 | **3 failed** — `lookup-flows:1656`, `wall-scene:1149`, `manage:639` |
+| 5 | clean, 445 passed |
+| 6 | **3 failed** — `lookup-flows:1603`, `wall-scene:1149`, `record-detail:188` |
+
+**Seven failures across six runs, in six distinct tests and five spec files —
+and FOUR different failure signatures.** The single-mechanism hypothesis is
+dead:
+
+| test | signature |
+|---|---|
+| `collection-filters:427` | `toHaveValue` got `""` — controlled select, pre-hydration |
+| `lookup-flows:1656` | `element(s) not found` — `getByTestId('variant-limit')` |
+| `manage:639` | `page.waitForResponse: Test timeout of 30000ms exceeded` |
+| `record-detail:188` | `apiRequestContext.post: read ECONNRESET` |
+| `wall-scene:1149` | WebGL predicate: sleeve uniformity 10, expected >150 |
+
+An `ECONNRESET` on an API post and a WebGL pixel predicate are not the same
+defect as a controlled select racing hydration. **"The flake" was always plural,
+and six sightings read through summary lines could not show that** — every one
+recorded WHICH test failed and none recorded HOW.
+
+### `wall-scene:1149` is NOT a flake and should be split out
+
+It failed in runs 4 and 6 and passed in 1, 2, 3, 5 — same code throughout, so it
+is intermittent rather than broken. But it is the only failure that REPEATED,
+and its signature is stable: the sleeve-uniformity predicate reads 10 against a
+floor of 150, i.e. the sleeve is not painted where the test looks for it. That
+is a rendering-timing question in the same file the config comment records as
+having cost five weeks (`wall-scene.spec.ts:1093`).
+
+**Not caused by the shadow-config extraction** (`737016c`): that commit was
+already in the tree for all six runs, and the test passed in four of them.
+
+### What the ambient failure rate actually is
+
+**3 of 6 runs had at least one failure; 7 failures in ~2670 test executions,
+about 0.26%.** The earlier estimate of "1-3 flakes per run and not every run"
+was right about the rate and wrong about the cause being singular.
+
+### What this changes about the plan
+
+Fixing `collection-filters:427` — the one-line `controlsReady(cold)` — removes
+ONE of at least four causes. It is still worth doing and it is still correct,
+but it will not make the suite green, and a report claiming it would be wrong.
+
+**The remaining four each need their own trace and their own unit.** Ranked by
+what the evidence supports:
+
+1. `wall-scene:1149` — repeated, stable signature, most diagnosable.
+2. `manage:639` / `record-detail:188` — both are server-interaction timeouts
+   (`waitForResponse`, `ECONNRESET`), so they may share a cause at the dev-server
+   or worker level rather than in the specs.
+
+### FIRST TRACE COLLECTED BY THE NEW CONFIG — `manage:639`, 2026-09-05
+
+**The change validated itself within one run.** The verification pass after
+`trace: 'retain-on-failure'` landed produced `manage.spec.ts:639` failing at
+`--retries=0`, and its directory holds `trace.zip` (2.8MB), `test-failed-1.png`
+and `error-context.md`. **Under `on-first-retry` that directory would have held
+only the error context** — the artefact that took five weeks to be missing on
+`wall-scene:1093`.
+
+**Signature, characterised rather than fixed:**
+
+    Test timeout of 30000ms exceeded.
+    Error: page.waitForResponse: Test timeout of 30000ms exceeded.
+
+`manage.spec.ts:702` waits for a `POST /parent-suggestions/rejections` that
+never arrives inside 30s. The page snapshot shows the app rendered and idle, not
+mid-navigation.
+
+**The comment directly above that wait is the interesting part** — it records
+the SAME race already being patched once: *"The first version raced it on
+`[mobile]` — a per-row decision is a request, and a test that treats it as
+instantaneous races whichever project is slower."* So the wait was added because
+the click was assumed instantaneous; now the wait itself times out. Either the
+request is not being issued at all on this path, or it is issued and lost.
+
+**Both failures in this family are on `[mobile]`** (`manage:639` here and in run
+4; `record-detail:188` in run 6 with `ECONNRESET` on an API post). That is a
+second data point for the "server-interaction, mobile project" grouping and
+against it being a spec-local defect. Not diagnosed — the trace is on disk and
+unread beyond its error context.
+
+**Deliberately not fixed.** Characterising against the signature is the standing
+approach: four signatures with four traces is a different starting position from
+four signatures with none, and guessing at three of them now is what the last
+six sightings already cost.
+3. `lookup-flows:1656` / `:1603` — element-not-found in the same file, twice in
+   six runs, different tests.
+
+### `wall-scene:1149` IS NOT A TEST PROBLEM — and it bears on settled values
+
+**Adam, 2026-09-05:** *"That is an assertion about what rendered — the only one
+in the suite, and exactly the class the shadow unit concluded the unit layer
+could not guard. So either the render genuinely varies run to run, or something
+in the scene is intermittently wrong."*
+
+The assertion reads a sleeve-uniformity predicate of **10 against a floor of
+150** — a fifteen-fold miss, not a marginal one — and it passed in four of six
+runs on identical code. Nothing about that is fixed by touching the test.
+
+**Why it matters beyond the flake.** Adam: *"I spent a week judging wall
+geometry by looking at screenshots, and a render that swings a uniformity
+assertion by fifteen times is a render some of those judgements were made
+against."* §10b's settled values — light elevation and azimuth, shelf depth,
+records at 44.5% back, the dim floor, the record at 0.9 of the frame — were all
+reached by looking. If the thing being looked at varies run to run, some of
+those comparisons were between a value and noise.
+
+**The question to answer, and the two answers have different consequences:**
+
+- **Variance in the SCENE** — the render itself differs between runs (a race in
+  texture upload, a frame captured before the scene settles, a material or light
+  applied inconsistently). Then the settled values were judged against a moving
+  target, and the wall work needs a settling guarantee before anything else is
+  decided.
+- **Variance in the CAPTURE** — the scene is stable and the screenshot catches
+  it at different moments (timing, compositor, readback). Then the settled
+  values are fine and the TEST needs a settle-wait, but the visual-guard entry
+  above gets much more expensive: a per-environment baseline is already its
+  main cost, and a per-RUN baseline would make screenshot comparison
+  unworkable on this scene.
+
+**Not diagnosable without the artefact.** `trace: 'retain-on-failure'` now keeps
+the failing run's trace, and `screenshot: 'only-on-failure'` was already
+correct, so the next occurrence yields both. **When it lands: capture the
+screenshot with the trace and record what the scene actually looked like** —
+whether the sleeve is absent, half-drawn, drawn elsewhere, or drawn correctly
+and mis-measured. That single image separates the two hypotheses.
+
+**Before the wall design starts**, because if it is scene variance the
+visual-guard cost estimate above is wrong and the design pass would be judging
+against the same moving target the last week of geometry work was.
+
+**With `trace: 'retain-on-failure'` now the default (changed in the same unit),
+the next run that fails keeps its own evidence** rather than the passing retry's.
+That is the instrument the previous six runs lacked.
+
+### THE FRAMING ERROR, named because it did work
+
+**"The flake", singular, for six sightings.** Both of us used it, from the first
+sighting to the sixth, and it is part of why the accumulation diagnosis survived
+four of them unchallenged: a single name implies a single cause, so each new
+sighting read as more evidence for the one open question rather than as possibly
+a different question. Four signatures were sitting in those runs the whole time
+and the word could not hold them.
+
+**And it was reproduced in the reasoning about it.** One trace was caught, it
+showed a hydration race, and that was presented as THE mechanism explaining all
+six sightings. It explains one failure of seven. Generalising from a single
+trace to five untraced sightings is the same move as accepting a diagnosis
+because nothing had contradicted it — done while writing up the correction of
+exactly that.
+
+**Third instance this week of a singular framing hiding a plural reality:**
+
+| framing | actual cardinality | what it hid |
+|---|---|---|
+| `isTargetPressing` as a boolean | several distinct states | the want-list/ownership overlap |
+| `tier` as the whole state | tier PLUS want-list membership | the sixth renderable mark |
+| "the flake", one phenomenon | at least four causes | four signatures, one hypothesis |
+
+**The rule: a name for a phenomenon is a claim about its CARDINALITY, and it
+needs testing like any other claim.** "The flake" asserts one. Six sightings
+that record WHICH test failed and never HOW cannot test that assertion — they
+are compatible with one cause and with twenty, so they accumulate without ever
+discriminating. The discriminating evidence is the signature, and nothing was
+capturing it.
+
+**Practically: when a phenomenon gets a singular name, the first question is
+what evidence would show it plural.** Here that was one line of failure output,
+available from the first sighting, and never read.
+
 **The reporting hazard is the part to carry forward:** `playwright test` exited
 **code 0 with 1 failed** in run A. A green exit code is not evidence; the summary
 line is. This is the third time in one session an exit code has concealed a real

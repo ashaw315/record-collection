@@ -90,24 +90,33 @@ export default defineConfig({
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL,
-    trace: 'on-first-retry',
-
     /*
-      **Screenshot on FAILURE, not on retry — the two are not the same run.**
+      **Both artifacts capture the FAILING run, because the retry is a different
+      run and usually the one that passes.**
 
-      `trace: 'on-first-retry'` captures the RETRY, and a flaky test's retry is
-      the run that PASSES. So for exactly the tests where evidence is hardest to
-      get, the default photographs the one attempt with nothing to show.
+      This was `trace: 'on-first-retry'`, which captures the RETRY — so for
+      exactly the tests where evidence is hardest to get, it recorded the one
+      attempt with nothing to show.
 
       Measured: `wall-scene.spec.ts:1093` failed nine times over five weeks, and
-      an entry in NOTES pointed at a "deciding screenshot on disk" that was never
-      there — the failing run's directory held only `error-context.md` while the
-      `trace.zip` belonged to the passing retry. The diagnosis took five weeks
-      for want of an image that a capture policy had structurally excluded.
+      an entry in NOTES pointed at a "deciding screenshot on disk" that was
+      never there — the failing run's directory held only `error-context.md`
+      while the `trace.zip` belonged to the passing retry. **The diagnosis took
+      five weeks for want of an image that a capture policy had structurally
+      excluded.**
 
-      The trace stays: it is the better artifact when it fires, and it fires on a
-      different run.
+      The screenshot was moved to `only-on-failure` at the time and the trace
+      was left behind, on the reasoning that it "fires on a different run" —
+      which concedes the problem rather than solving it. Changed 2026-09-05,
+      after a flake hunt had to pass `--trace=retain-on-failure` on the command
+      line to capture anything at `--retries=0`: a setting that has to be
+      overridden to do the job it exists for is the wrong default.
+
+      `retain-on-failure` keeps the trace from every attempt that FAILED,
+      including a retry that also fails, and discards it when the test passes.
+      The cost is disk on failing runs only.
     */
+    trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
   projects: [
