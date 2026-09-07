@@ -553,3 +553,138 @@ describe('a derived act is not a suggestion (A48)', () => {
     expect(find(rows, origin.id)).toBeDefined();
   });
 });
+
+/**
+ * SPEC.md §9.1 (A50, 2026-09-07) — convergence is a TIER above adjacency.
+ *
+ * **Two different questions, not one question at two confidences.** Four shared
+ * members with one owned band says a band grew out of another — real, and
+ * Broken Bones earns the top of that tier. Two people from two DIFFERENT owned
+ * bands says two threads in the collection meet somewhere, which is something
+ * the user could not have worked out themselves. **Only the second is a
+ * discovery, and no amount of the first adds up to it.**
+ *
+ * **This is A27's argument one level in.** A27 refused to merge the influence
+ * and shared-member terms because a sum makes four shared people and one strong
+ * influence edge indistinguishable. The same objection applies within the
+ * shared-member term: adjacency and convergence are different claims, and a
+ * single number would let one substitute for the other.
+ *
+ * **A TIER, never a large coefficient**, and the distinction is the point. A
+ * coefficient invites someone later to tune it until the tiers overlap — which
+ * is precisely what must not happen. The tests below therefore pin the
+ * ordering, not the arithmetic.
+ */
+describe('convergence outranks adjacency by construction (A50)', () => {
+  /**
+   * Two people from two DIFFERENT owned bands meeting in one unowned band.
+   * Measured against production data as the shape that yields ownedBands=2 —
+   * and note the user need own NEITHER parent of the candidate.
+   */
+  async function convergence(name: string) {
+    const bandA = await makeArtist(`${name}-ownedA`);
+    const bandB = await makeArtist(`${name}-ownedB`);
+    const p1 = await makeArtist(`${name}-p1`);
+    const p2 = await makeArtist(`${name}-p2`);
+    const candidate = await makeArtist(name);
+    await own(bandA.id, `${name}-recA`);
+    await own(bandB.id, `${name}-recB`);
+    await member(p1.id, bandA.id, null);
+    await member(p2.id, bandB.id, null);
+    await member(p1.id, candidate.id, null);
+    await member(p2.id, candidate.id, null);
+    return candidate;
+  }
+
+  /** N people from ONE owned band — the Notting Hillbillies / Broken Bones shape. */
+  async function adjacency(name: string, people: number) {
+    const band = await makeArtist(`${name}-owned`);
+    const candidate = await makeArtist(name);
+    await own(band.id, `${name}-rec`);
+    for (let i = 0; i < people; i += 1) {
+      const person = await makeArtist(`${name}-p${i}`);
+      await member(person.id, band.id, null);
+      await member(person.id, candidate.id, null);
+    }
+    return candidate;
+  }
+
+  /**
+   * **The load-bearing test.** Fails against ANY coefficient scheme, however
+   * large, because a coefficient can always be out-summed by enough shared
+   * members. Twenty people in one band must still rank below two people from
+   * two bands — that is what "by construction" means.
+   */
+  it('a 2-band candidate outranks a 1-band candidate with TWENTY shared members', async () => {
+    const converged = await convergence('Audioslave');
+    const adjacent = await adjacency('NottingHillbillies', 20);
+
+    const rows = await suggestions({ limit: 20 });
+    const names = rows.map((r) => r.artistId);
+
+    expect(names.indexOf(converged.id)).toBeLessThan(names.indexOf(adjacent.id));
+  });
+
+  it('ranks convergences among THEMSELVES by people count', async () => {
+    const two = await convergence('TwoPeople');
+
+    // A three-person convergence: a third owned band contributes another person.
+    const bandC = await makeArtist('ThreePeople-ownedC');
+    const p3 = await makeArtist('ThreePeople-p3');
+    const three = await convergence('ThreePeople');
+    await own(bandC.id, 'ThreePeople-recC');
+    await member(p3.id, bandC.id, null);
+    await member(p3.id, three.id, null);
+
+    const rows = await suggestions({ limit: 20 });
+    const names = rows.map((r) => r.artistId);
+
+    expect(names.indexOf(three.id)).toBeLessThan(names.indexOf(two.id));
+  });
+
+  /**
+   * Fails against a tier that flattens the adjacency band. Broken Bones at four
+   * members must still beat a one-member neighbour — the existing ranking is
+   * correct WITHIN a tier and must survive.
+   */
+  it('still ranks adjacency by people count within its own tier', async () => {
+    const four = await adjacency('BrokenBones', 4);
+    const one = await adjacency('Blitzkrieg', 1);
+
+    const rows = await suggestions({ limit: 20 });
+    const names = rows.map((r) => r.artistId);
+
+    expect(names.indexOf(four.id)).toBeLessThan(names.indexOf(one.id));
+  });
+
+  /**
+   * Fails against a tier implemented so that it overrides want-list
+   * suppression. §9.1's "suppress, don't hide" must still work inside a tier —
+   * a converged candidate already on the want list should fall behind one that
+   * is not.
+   */
+  it('want-list suppression still orders within the convergence tier', async () => {
+    const plain = await convergence('Unwanted');
+    const wanted = await convergence('AlreadyWanted');
+    await want(wanted.id, 'Some Record');
+
+    const rows = await suggestions({ limit: 20 });
+    const names = rows.map((r) => r.artistId);
+
+    expect(names.indexOf(plain.id)).toBeLessThan(names.indexOf(wanted.id));
+  });
+
+  /**
+   * The reason string must SAY which claim fired, per §9.1's rule that a reader
+   * who can see the evidence can judge it. "Shares 2 members with X" is true of
+   * both tiers and does not distinguish them.
+   */
+  it('names the convergence in the reason, distinctly from adjacency', async () => {
+    const converged = await convergence('Audioslave');
+
+    const rows = await suggestions({ limit: 20 });
+    const row = find(rows, converged.id);
+
+    expect(row?.reasons.join(' ')).toMatch(/2 (bands|artists) you own/i);
+  });
+});

@@ -884,6 +884,24 @@ The proof is above and it is exact: Guitar Heroes and The Notting Hillbillies sh
 
 **What it leaves OPEN:** signals from OUTSIDE the membership graph. MusicBrainz's `tribute` relation is one — it is a different edge type carrying an explicit statement of intent, which is precisely why it works where the count cannot (A48 uses it, catching 2 of 6 measured cases). Release-level data, dates, and the user's own judgement are others. **The rule is not "this cannot be improved" but "it cannot be improved from the membership graph alone."**
 
+#### Convergence is a TIER above adjacency (A50, 2026-09-07)
+
+**A candidate reaching TWO OR MORE owned artists ranks above every candidate reaching one, whatever the scores say.** Within each tier the existing order stands: score descending, so Broken Bones still tops the adjacency tier and want-list suppression still orders inside both.
+
+**Two different questions, not one question at two confidences.** Four shared members with one owned band says a band grew out of another — real, and Broken Bones earns its place. Two people from two DIFFERENT owned bands says two threads in the collection meet somewhere, which is something the user could not have worked out themselves. **Only the second is a discovery, and no amount of the first adds up to it.**
+
+**This is A27's argument one level in.** A27 refused to merge the influence and shared-member terms because a sum makes four shared people and one strong influence edge indistinguishable. The same objection applies WITHIN the shared-member term: adjacency and convergence are different claims, and a single number lets one substitute for the other.
+
+**A TIER, never a large coefficient, and this is the load-bearing decision.** A coefficient — however large — can be out-summed by enough shared members, and it invites someone later to tune it until the tiers overlap. That overlap is exactly what must not happen. So the ordering is structural: the sort compares the tier first and the tier is never added to `score`. A test pins that a 2-band candidate beats a 1-band candidate carrying **twenty** shared members, which no coefficient scheme can satisfy.
+
+**The candidate need not have an owned parent.** Measured: two people who each reach the collection through a DIFFERENT owned band, meeting in a band the user owns nothing by, yields `sharedMemberArtistCount = 2`. The unowned band is the discovery — Chris Cornell and Tom Morello converging in Audioslave is the case, and it fires whether or not Soundgarden and Rage Against the Machine are themselves owned.
+
+**The quantity is OWNED BANDS, not people.** `sharedMemberWeight` counts distinct people; `sharedMemberArtistCount` counts distinct owned artists those people come from. Two people from Dire Straits is adjacency (`people=2, ownedBands=1`); one person each from two owned bands is convergence. The Notting Hillbillies is the proof that the people count cannot discriminate: it scores 2 people and is the case this ranks DOWN.
+
+**The reason string says which claim fired.** "Shares 2 members with X" is true of both tiers and cannot explain an order the tier produced, so a convergence names the count of owned artists it reaches. §9.1's rule that a reader who sees the evidence can judge it applies to the tier as much as to the terms.
+
+**DORMANT BY CONSTRUCTION, and that is not a defect** — recorded here so nobody later reads zero convergences as a bug. Measured against the live collection: **zero of 34 candidates reach two owned artists**, because two artists are walked (§9.1b) and their lineups do not intersect. A convergence requires at least two walked artists whose members meet in a third band. This is the same state as §9.1a's terms awaiting a source: the term is right and the data has not arrived. **Walking more artists is what makes it fire**, which is why the scoring was built first — it is cheap and safe now, and it stays quiet until the data can exercise it.
+
 #### Derived acts are EXCLUDED, not suppressed (A48, 2026-09-07)
 
 `artist_derived_acts` records a `tribute` or `subgroup` relation between two artists, read from the same MusicBrainz payload the lineup walk already fetches — **no extra request, which is why this signal is free.** A candidate is dropped from §9.1 when it is the DERIVED side of a relation whose ORIGIN the user owns.

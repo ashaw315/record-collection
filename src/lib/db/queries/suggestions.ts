@@ -201,8 +201,48 @@ const INFLUENCE_WEIGHT = 2.0;
 const SHARED_MEMBER_WEIGHT = 1.5;
 const WANT_LIST_SUPPRESSION = 3.0;
 
+/**
+ * §9.1 (A50): candidates reaching TWO OR MORE owned artists rank above every
+ * candidate reaching one, whatever the scores say.
+ *
+ * **A tier, deliberately NOT a coefficient**, and the difference is the whole
+ * design. A coefficient — however large — can be out-summed by enough shared
+ * members, and it invites someone later to tune it until the tiers overlap.
+ * That overlap is exactly what must not happen, so the ordering is structural:
+ * `sortKey` compares the tier first and never adds it to the score.
+ *
+ * **Because they answer different questions.** Four shared members with one
+ * owned band says a band grew out of another — real, and Broken Bones earns the
+ * top of that tier. Two people from two different owned bands says two threads
+ * in the collection MEET somewhere, which is something the user could not have
+ * worked out themselves. Only the second is a discovery, and no amount of the
+ * first adds up to it.
+ *
+ * **This is A27's argument one level in.** A27 refused to merge the influence
+ * and shared-member terms because a sum makes four shared people and one strong
+ * edge indistinguishable. The same objection applies inside the shared-member
+ * term.
+ *
+ * **DORMANT BY CONSTRUCTION, not broken** (§9.1b). Measured against the live
+ * collection: zero of 34 candidates reach two owned artists, because two bands
+ * are walked and their lineups do not intersect. A convergence needs at least
+ * two walked artists whose members meet in a third band. Zero convergences is a
+ * fact about how much has been walked — like §9.1a's unsourced terms — and must
+ * not be read as a defect.
+ */
+const CONVERGENCE_TIER_MINIMUM = 2;
+
 export type Suggestion = CandidateLinkTerms & {
   score: number;
+  /**
+   * §9.1 (A50): 1 when this candidate reaches two or more owned artists.
+   *
+   * **Separate from `score` on purpose.** Merging it in would make the tier a
+   * coefficient, which is the thing this exists not to be — see
+   * `CONVERGENCE_TIER_MINIMUM`. Exposed rather than kept private so a caller can
+   * SEE which tier produced an order it is rendering.
+   */
+  convergence: boolean;
   /**
    * One clause per contributing term.
    *
@@ -239,9 +279,26 @@ export async function suggestions(options: { limit: number }): Promise<Suggestio
     }
     if (candidate.sharedMemberWeight > 0 && candidate.sharedMemberExemplar !== null) {
       const n = candidate.sharedMemberWeight;
-      reasons.push(
-        `Shares ${n} member${n === 1 ? '' : 's'} with ${candidate.sharedMemberExemplar}`,
-      );
+      /*
+       * **A50: convergence gets its OWN sentence**, because "shares 2 members
+       * with X" is true of both tiers and so cannot explain an order the tier
+       * produced. §9.1 requires a reader who sees the evidence to be able to
+       * judge it, and a clause that reads identically for the two claims asks
+       * them to trust a ranking they cannot see the basis for — the same
+       * objection A27 raised against a merged clause.
+       *
+       * The exemplar is still named, so the sentence stays concrete, but the
+       * COUNT of owned artists is what carries the claim.
+       */
+      if (candidate.sharedMemberArtistCount >= CONVERGENCE_TIER_MINIMUM) {
+        reasons.push(
+          `Shares ${n} member${n === 1 ? '' : 's'} with ${candidate.sharedMemberArtistCount} artists you own, including ${candidate.sharedMemberExemplar}`,
+        );
+      } else {
+        reasons.push(
+          `Shares ${n} member${n === 1 ? '' : 's'} with ${candidate.sharedMemberExemplar}`,
+        );
+      }
     }
     // §9.1: never a bare score with no reasoning. A row scoring 9 where the
     // arithmetic says 12 is exactly that unless the subtraction is stated.
@@ -249,7 +306,12 @@ export async function suggestions(options: { limit: number }): Promise<Suggestio
       reasons.push('Already on your want list');
     }
 
-    return { ...candidate, score: influence + shared - suppression, reasons };
+    return {
+      ...candidate,
+      score: influence + shared - suppression,
+      convergence: candidate.sharedMemberArtistCount >= CONVERGENCE_TIER_MINIMUM,
+      reasons,
+    };
   });
 
   /*
@@ -261,7 +323,21 @@ export async function suggestions(options: { limit: number }): Promise<Suggestio
    * returns name-ordered rows, so a stable sort preserves that without a second
    * comparison to keep in step with the first.
    */
-  scored.sort((a, b) => b.score - a.score);
+  /*
+   * **Tier FIRST, then score.** A50: a candidate reaching two or more owned
+   * artists outranks every candidate reaching one, whatever the scores say —
+   * which is why this is a comparison step rather than a term added to `score`.
+   * Twenty shared members in one band must still lose to two people from two
+   * bands, and no arithmetic can express that.
+   *
+   * Within a tier the existing order is untouched: score descending, so Broken
+   * Bones still tops the adjacency tier and want-list suppression still orders
+   * inside both.
+   */
+  scored.sort((a, b) => {
+    if (a.convergence !== b.convergence) return a.convergence ? -1 : 1;
+    return b.score - a.score;
+  });
 
   return scored.slice(0, options.limit);
 }
