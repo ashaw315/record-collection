@@ -857,7 +857,32 @@ What remains is a **relationship engine**: an artist is suggested because you as
 
 **The two link terms are separate on purpose, and must not be merged.** An `artist_influences` edge carries a 1–5 `strength` the user typed; a shared membership carries a count of people imported from MusicBrainz. Merging them into one link total requires an exchange rate between a judgement and a measurement — a number nothing in the collection can supply, which would be guessed once and cited as settled thereafter. §4.3 already forbids the version of this that writes membership into `artist_influences`; scoring them as one term is the same conflation one layer up.
 
-Merging also destroys the distinction the membership import was built to expose. A tribute act shares one hired player with a band the user owns; a genuine side project shares several (§4.3). In a sum, four shared members and one strong influence edge are the same number, and the tribute is indistinguishable from the side project — the one comparison this data answers.
+Merging also destroys the distinction the membership import was built to expose. In a sum, four shared members and one strong influence edge are the same number, so the terms must stay separate. **But the claim this paragraph used to make about WHICH distinction the count draws is false, and is corrected below.**
+
+**MEASURED AND REFUTED (A48, 2026-09-07): the shared-member count does NOT separate a tribute act from a side project.** This paragraph read *"a tribute act shares one hired player with a band the user owns; a genuine side project shares several"* — an appealing rule, asserted from nothing, and Adam's collection falsifies it directly:
+
+| candidate | shared with Dire Straits | what it is |
+|---|---|---|
+| Mark Knopfler's Guitar Heroes | 2 — Guy Fletcher, Mark Knopfler | a member's side band |
+| The Notting Hillbillies | 2 — Guy Fletcher, Mark Knopfler | a member's side band |
+| The Straits | 2 — Alan Clark, Chris White | a continuation act |
+| Dire Straits Experience | 1 — Chris White | a tribute act |
+
+**The same two people produce both of the middle rows**, and the tribute act at the bottom shares FEWER than the side projects — the exact inverse of the rule. The count is a real measure of connection strength and it is not a measure of what kind of connection it is.
+
+#### The honest limit of §9.1 — a graph cannot represent intent
+
+**This is the general statement, and it is the thing to meet BEFORE proposing an improvement to this ranking.**
+
+**A graph can represent that relationships exist and cannot represent why.** `artist_memberships` records that a person played in two groups. It does not record — and MusicBrainz does not record anywhere reachable — whether the second group was formed to continue the first, to pay tribute to it, to give one member a side outlet, or for reasons unrelated to it. Those differ ONLY in intention, and intention is not a property of graph shape.
+
+**So any signal derived from graph shape alone will conflate cases that differ only in intention.** No weighting, threshold or normalisation escapes this, because the information is absent from the input rather than obscured within it. A cleverer function of the same edges cannot recover what the edges never carried.
+
+The proof is above and it is exact: Guitar Heroes and The Notting Hillbillies share the **identical pair** of people with Dire Straits. Any function of the membership graph returns the same value for both. They are different things — one is a guitarist's side band, the other a different member configuration — and nothing in the data says so.
+
+**What this rules OUT, so the next attempt does not re-derive it:** tuning the shared-member weight, adding a normalisation by band size, ranking by the fraction of a lineup shared, or any threshold on the count. Each is a function of the same edges and each conflates the same cases.
+
+**What it leaves OPEN:** signals from OUTSIDE the membership graph. MusicBrainz's `tribute` relation is one — it is a different edge type carrying an explicit statement of intent, which is precisely why it works where the count cannot (A48 uses it, catching 2 of 6 measured cases). Release-level data, dates, and the user's own judgement are others. **The rule is not "this cannot be improved" but "it cannot be improved from the membership graph alone."**
 
 **Weight the shared-member term by people in common**, not by whether any exist: the count is the signal. Ties break on artist name, so the same collection scores the same way on every call.
 
@@ -868,6 +893,28 @@ The two link terms appear as separate clauses, naming which one fired. "Linked t
 The example previously continued *"; shares the UK82 genre; on Clay Records, a label you own 4 records from"* — clauses from the two terms now at §9.1a. They return when their terms do.
 
 Suggestions must be explainable. Never return a bare score with no reasoning.
+
+#### The influence term has never run in production (A48, 2026-09-07)
+
+**Measured in Adam's live database: `artist_influences` has ZERO rows.** So §9.1 is specified as a two-term ranking and has only ever been a one-term ranking. The 2.0 coefficient, the "Linked to N artists you own" clause, and the deliberate refusal to merge the terms have never been exercised against real data — only against test fixtures that POST to the API directly.
+
+**Why: there is no production entry point.** `POST /api/influences` exists and works, `createInfluence` exists, and **nothing in `src/app/**/*.tsx` or `src/components` ever calls them.** The only client that does is `e2e/suggestions.spec.ts`, setting up its own fixtures. The sole place the UI touches influences is artist MERGING (`merge-summary.ts`), which rewires existing rows and cannot create one.
+
+**This is a finding about the spec, not only the code.** §9.1's primary term — the one weighted highest, precisely because the user typed it — is unreachable through the app. **A term with no entry point is a term that cannot be evaluated**, so every judgement made about this ranking's behaviour, including judgements about its tail, has been about the shared-member term alone.
+
+**Consequence for anyone tuning this ranking:** do not draw conclusions about §9.1's output until the influence term has contributed at least once. Adam's six-tribute complaint, and the distribution measured from it, are the shape of ONE term reading TWO walked lineups (§9.1b) — not the shape of this feature.
+
+**Not fixed here, and deliberately not.** Whether influence edges get a UI is a product decision (§13 governs what gets built), and inventing one to satisfy a coefficient is the wrong order. What is fixed in A48 is the LIE about it: `/suggestions` told the user influence edges are "recorded in Manage" and `/manage` has no such control — the app directing the user somewhere to do something they cannot do.
+
+### 9.1b The ranking's inputs are two lineups, not a collection (A48, 2026-09-07)
+
+**Measured, and it governs how the current output should be read.** Of 17 owned artists, **2 have been walked** — Discharge and Dire Straits. Every one of the 34 candidates the engine can produce descends from those two.
+
+So the observed distribution — 1 candidate at 4 shared members, 1 at 3, 6 at 2, and 26 at 1 — **is the shape of two lineups, one of which is a band with thirty years of continuation acts.** It is not a property of the collection, and a threshold fitted to it would be fitted to 12% of the collection and to one band's unusual tribute footprint.
+
+**So no cut is specified here**, though the tail is plainly noisy. Adam's decision, recorded because the reasoning outlives it: *"a threshold measured now is fitted to 12% of my collection"*, and judging the tail before the primary term has ever contributed is judging something else. **Walk more lineups first, then measure, then decide.** The next measurement is four unambiguous groups — The Doors, Steely Dan, Simon & Garfunkel, The Blues Project — which answers whether the Dire Straits tribute footprint is anomalous or typical without needing all fifteen.
+
+**The walk's cost, corrected and measured** (an earlier estimate of "fifteen calls, one a second" was wrong and is recorded as such): `walkLineup` fetches the band and then fetches EVERY MEMBER individually, because following a member into their other bands is the entire point. Discharge was 24 members — 25 requests. None of the 15 unwalked artists has an MBID, so each also needs a search, and an ambiguous name STOPS the walk for a user decision (§4.3's disambiguation). Realistic total: **250–350 requests, 4–6 minutes, punctuated by prompts** — not unattended, and `maxDuration = 60` makes it inherently one artist at a time.
 
 ### 9.1a Two terms awaiting a source
 

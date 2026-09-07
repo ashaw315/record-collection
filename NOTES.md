@@ -26400,3 +26400,48 @@ needs absent / declined / resolved, and only the middle one is unrepresentable.
 > broken, nothing is lost that the user typed, and a table for a decision
 > nobody has asked to resume is a schema built on speculation. **Cheap when
 > built for a stated need; debris when built for a possible one.**
+
+---
+
+## THE ACCOUNT-VERSUS-ARTEFACT GAP, ARRIVING THROUGH AGREEMENT
+
+**Named by Adam (2026-09-07), and neither of us had this shape written down.**
+
+He proposed a cost estimate inside a question: *"If the answer is fifteen
+MusicBrainz calls paced at one a second, that is a minute of waiting."* I let it
+stand as roughly right, and then read `walk-lineup.ts` and found it wrong by an
+order of magnitude — the walk fetches the band AND every member individually,
+because following a member into their other bands is the entire point. Fifteen
+artists is 250–350 requests, not 15.
+
+> Adam: *"You let a number stand that I supplied, before reading the code that
+> determines it. That is the account-versus-artefact gap arriving through
+> AGREEMENT rather than through memory, which is a shape neither of us had
+> named."*
+
+**Why this variant is harder to catch than the familiar one.** The known failure
+is describing an artefact from memory instead of reading it — and the defence is
+"go read it", which is easy to apply because the claim is visibly mine. Here the
+claim was the USER'S, offered hypothetically, with the conditional right there in
+the sentence (*"if the answer is..."*). Agreeing felt like cooperation rather
+than assertion. **But a hypothetical the assistant confirms stops being
+hypothetical**: it was going to be planned against, and the conditional had been
+answered — by me, without checking.
+
+**The tell is grammatical and worth learning.** A user's *"if X, then Y"* is an
+invitation to verify X, not to affirm it. Agreement converts their conditional
+into my assertion, and I inherit responsibility for a number I never checked.
+The cost is invisible at the moment it happens, because agreeing produces no
+artefact to be wrong in.
+
+> **Before agreeing with a number, a mechanism, or a cost the user proposes,
+> check whether it is something the repository can answer.** If it is, answer it
+> from the repository — and say so, whether the user's figure survives or not.
+> "That is roughly right" about an unread artefact is the same failure as
+> reciting it from memory, with the evidence trail removed.
+
+**Second instance in one session, one layer up.** Earlier the guard's own
+verification was accepted from reading rather than from staging the scenario, and
+three defects survived until it was actually run. Same root: **a claim about an
+artefact was settled without consulting the artefact.** Both times the correction
+came from doing the cheap concrete thing — read the loop; stage the run.
