@@ -13,17 +13,17 @@ const at = (minutesAgo: number) => new Date(Date.now() - minutesAgo * 60_000);
 
 describe('the asked line', () => {
   it('says when it was asked', () => {
-    expect(askedLine({ askedAt: at(20), recordsAddedSince: 0 })).toBe('Asked 20 minutes ago.');
+    expect(askedLine({ askedAt: at(20), gapsClosedSince: 0 })).toBe('Asked 20 minutes ago.');
   });
 
   it('reads naturally for a single minute and for just now', () => {
-    expect(askedLine({ askedAt: at(1), recordsAddedSince: 0 })).toBe('Asked 1 minute ago.');
-    expect(askedLine({ askedAt: at(0), recordsAddedSince: 0 })).toBe('Asked just now.');
+    expect(askedLine({ askedAt: at(1), gapsClosedSince: 0 })).toBe('Asked 1 minute ago.');
+    expect(askedLine({ askedAt: at(0), gapsClosedSince: 0 })).toBe('Asked just now.');
   });
 
   it('uses hours once minutes stop being readable', () => {
-    expect(askedLine({ askedAt: at(90), recordsAddedSince: 0 })).toBe('Asked 1 hour ago.');
-    expect(askedLine({ askedAt: at(200), recordsAddedSince: 0 })).toBe('Asked 3 hours ago.');
+    expect(askedLine({ askedAt: at(90), gapsClosedSince: 0 })).toBe('Asked 1 hour ago.');
+    expect(askedLine({ askedAt: at(200), gapsClosedSince: 0 })).toBe('Asked 3 hours ago.');
   });
 
   /**
@@ -31,16 +31,35 @@ describe('the asked line', () => {
    * shows only the age — which reads as reassurance in exactly the case where
    * the answer is about a different collection.
    */
+  /**
+   * **CORRECTED (A47): the count is records AND want-list additions**, so the
+   * copy can no longer say "records". A number's NAME must match what it
+   * measures — the test-name rule applied to UI copy — and "before you added 5
+   * records" is a claim that would be false the moment one of the five was a
+   * want-list row.
+   */
   it('names what has changed since, when something has', () => {
-    expect(askedLine({ askedAt: at(20), recordsAddedSince: 5 })).toBe(
-      'Asked 20 minutes ago, before you added 5 records.',
+    expect(askedLine({ askedAt: at(20), gapsClosedSince: 5 })).toBe(
+      'Asked 20 minutes ago, before you added 5 records or wanted records.',
     );
   });
 
-  it('says one record without pluralising', () => {
-    expect(askedLine({ askedAt: at(20), recordsAddedSince: 1 })).toBe(
-      'Asked 20 minutes ago, before you added 1 record.',
+  it('says one without pluralising', () => {
+    expect(askedLine({ askedAt: at(20), gapsClosedSince: 1 })).toBe(
+      'Asked 20 minutes ago, before you added 1 record or wanted record.',
     );
+  });
+
+  /**
+   * Fails against copy that still claims a RECORD count. The defect this
+   * corrects was a line asserting nothing had changed when a want-list addition
+   * had staled the answer; a line that counts both and still says "records" is
+   * the same overclaim in the other direction.
+   */
+  it('does not describe the count as records alone', () => {
+    const line = askedLine({ askedAt: at(20), gapsClosedSince: 3 });
+
+    expect(line).toMatch(/wanted/i);
   });
 
   /**
@@ -51,9 +70,9 @@ describe('the asked line', () => {
    * Fails against a line that always appends a clause.
    */
   it('says nothing about changes when there are none', () => {
-    const line = askedLine({ askedAt: at(20), recordsAddedSince: 0 });
+    const line = askedLine({ askedAt: at(20), gapsClosedSince: 0 });
 
-    expect(line).not.toMatch(/record|added|chang/i);
+    expect(line).not.toMatch(/record|wanted|added|chang/i);
   });
 
   /**
@@ -61,7 +80,7 @@ describe('the asked line', () => {
    * the user re-ask — "you may want to ask again", "re-run", "out of date".
    */
   it('states a fact and gives no instruction', () => {
-    const line = askedLine({ askedAt: at(20), recordsAddedSince: 5 });
+    const line = askedLine({ askedAt: at(20), gapsClosedSince: 5 });
 
     expect(line).not.toMatch(/again|re-?ask|re-?run|refresh|update|should|may want|out of date|stale/i);
   });

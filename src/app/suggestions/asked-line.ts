@@ -6,15 +6,17 @@
  * applies, and those diverge in the dangerous direction: twenty minutes with
  * nothing added is a current answer that reads as stale, while two minutes with
  * five records added is a stale answer that reads as fresh. A gap analysis is a
- * claim about what is MISSING, so adding records is exactly the event that
- * invalidates it.
+ * claim about what is MISSING, so adding a record is exactly the event that
+ * invalidates it — and so is want-listing one, which A47 corrected: both remove
+ * something from the set of gaps, and counting only the first left this line
+ * asserting nothing had changed when the answer had gone stale.
  *
  * **It STATES, it does not advise.** Whether five more records is worth one of
  * ten hourly requests is the user's judgement. Copy that nudges toward re-asking
  * is the app spending the user's quota on its own opinion — and a test pins it,
  * because that nudge is the natural thing to write.
  */
-export function askedLine(input: { askedAt: Date; recordsAddedSince: number }): string {
+export function askedLine(input: { askedAt: Date; gapsClosedSince: number }): string {
   const when = `Asked ${elapsed(input.askedAt)}`;
 
   /*
@@ -23,10 +25,24 @@ export function askedLine(input: { askedAt: Date; recordsAddedSince: number }): 
    * the reader to skip the line in the case where it matters (the same rule as
    * §12 step 14c's variant limit).
    */
-  if (input.recordsAddedSince === 0) return `${when}.`;
+  if (input.gapsClosedSince === 0) return `${when}.`;
 
-  const records = input.recordsAddedSince === 1 ? '1 record' : `${input.recordsAddedSince} records`;
-  return `${when}, before you added ${records}.`;
+  /*
+   * **A47: "records or wanted records", because that is what was counted.**
+   *
+   * This read "before you added N records" while the number counted records
+   * alone — and the omission was the defect: a want-listed record left a
+   * suggestion on screen beside a line asserting nothing had changed. The count
+   * now includes want-list additions, so the copy must say so. **A number's NAME
+   * must match what it measures**; a line claiming a record count while counting
+   * something else is the proxy-assertion failure in UI copy.
+   *
+   * **One count, not two figures.** Both events invalidate the answer for the
+   * same reason — each removes something from the set of gaps — and A39 was
+   * right that a sentence carrying two numbers is read less than either.
+   */
+  const noun = input.gapsClosedSince === 1 ? 'record or wanted record' : 'records or wanted records';
+  return `${when}, before you added ${input.gapsClosedSince} ${noun}.`;
 }
 
 /**

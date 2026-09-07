@@ -13,25 +13,54 @@ import type { Suggestion } from '@/lib/llm/parse-suggestions';
  * a second of ten hourly requests to see the same answer again.
  */
 
+/**
+ * A stored suggestion, plus what is true of it NOW (A47).
+ *
+ * **`onWantList` is not part of the model's answer** and is deliberately not
+ * stored: it is recomputed on every read against the want list as it is at
+ * display time. The stored row stays exactly what the model returned, so the
+ * panel remains a transcript rather than becoming a live list.
+ */
+export type DisplayedSuggestion = Suggestion & {
+  /**
+   * The user has since added this record to their want list.
+   *
+   * **Marked, never dropped.** The panel is a record of what the model SAID;
+   * silently editing it would make it a live list while it claims to be a
+   * transcript — the same decision that keeps a suggestion on screen after it
+   * has been acted on. A dropped line also hides the exclusion working, where a
+   * marked one shows the user they acted on it.
+   */
+  onWantList: boolean;
+};
+
 export type StoredGapAnalysis = {
-  suggestions: Suggestion[];
+  suggestions: DisplayedSuggestion[];
   dropped: number;
   askedAt: Date;
   /**
-   * Records added since the analysis was asked.
+   * Records added AND records want-listed since the analysis was asked (A47).
    *
    * **The fact the timestamp does not carry.** "Asked 20 minutes ago" is about
    * the REQUEST; what the reader needs is whether the answer still applies, and
    * the two diverge in the dangerous direction — two minutes with five records
    * added reads as fresh and is not. A gap analysis is a claim about what is
-   * MISSING, so adding records is exactly the event that invalidates it.
+   * MISSING, so adding a record is exactly the event that invalidates it.
    *
-   * **Records only.** A want-list row does change what the model is told, but
-   * records are what the suggestions are ABOUT, and a sentence carrying two
-   * numbers — or blurring both into "changes" — is vaguer than either and less
-   * likely to be read. Deliberate omission, not an oversight (A39).
+   * **CORRECTED (A47): want-list additions count too.** This was records only,
+   * on the argument that records are what the suggestions are ABOUT. That is
+   * true of what the model REASONS OVER and false of what INVALIDATES its
+   * answer, and this number is about the second. The cost of the conflation was
+   * real: a want-listed record stayed on screen while this count asserted
+   * nothing had changed — blind to precisely the change that staled the answer.
+   *
+   * **Still ONE number, and the old bullet was right about why:** a sentence
+   * carrying two figures is vaguer than either and less likely to be read. Both
+   * events invalidate for the SAME reason — each removes something from the set
+   * of gaps — which is what makes one count honest rather than a blur. The copy
+   * that renders it must name what it counted; see `GapAnalysis.tsx`.
    */
-  recordsAddedSince: number;
+  gapsClosedSince: number;
 };
 
 export async function storeGapAnalysis(input: {
@@ -124,25 +153,47 @@ export async function storeGapAnalysis(input: {
  * `UK82`, so a direct-only count would report zero while the answer's scope had
  * changed. The staleness walks what the question walks, or the two disagree.
  */
-async function recordsAddedSince(scope: string | null, askedAt: Date): Promise<number> {
+async function gapsClosedSince(scope: string | null, askedAt: Date): Promise<number> {
   const db = getDb();
 
+  /*
+   * **A47: want-list rows are counted alongside records**, and scoped the same
+   * way. A want-list row carries its OWN genre links (it has no record yet), so
+   * the scoped predicate goes through `want_list_genres` — the same asymmetry
+   * `buildCollectionSummary` already handles.
+   *
+   * **Acquired rows are excluded.** §7.3 makes the want list double as
+   * acquisition history, and an acquired row's record is counted as a RECORD —
+   * counting the pair would report one event twice.
+   */
   const counted =
     scope === null
-      ? await db.execute<{ n: number }>(
-          sql`SELECT count(*)::int AS n FROM records WHERE created_at > ${askedAt}`,
-        )
+      ? await db.execute<{ n: number }>(sql`
+          SELECT (
+            (SELECT count(*) FROM records WHERE created_at > ${askedAt})
+            + (SELECT count(*) FROM want_list
+                WHERE is_acquired = false AND created_at > ${askedAt})
+          )::int AS n
+        `)
       : await db.execute<{ n: number }>(sql`
           WITH RECURSIVE subtree AS (
             SELECT id FROM genres WHERE id = ${scope}
             UNION
             SELECT g.id FROM genres g JOIN subtree s ON g.parent_genre_id = s.id
           )
-          SELECT count(DISTINCT r.id)::int AS n
-            FROM records r
-            JOIN record_genres rg ON rg.record_id = r.id
-           WHERE rg.genre_id IN (SELECT id FROM subtree)
-             AND r.created_at > ${askedAt}
+          SELECT (
+            (SELECT count(DISTINCT r.id)
+               FROM records r
+               JOIN record_genres rg ON rg.record_id = r.id
+              WHERE rg.genre_id IN (SELECT id FROM subtree)
+                AND r.created_at > ${askedAt})
+            + (SELECT count(DISTINCT w.id)
+                 FROM want_list w
+                 JOIN want_list_genres wg ON wg.want_list_id = w.id
+                WHERE wg.genre_id IN (SELECT id FROM subtree)
+                  AND w.is_acquired = false
+                  AND w.created_at > ${askedAt})
+          )::int AS n
         `);
 
   return Number(counted.rows[0]?.n ?? 0);
@@ -164,14 +215,66 @@ async function rowsForScope(scope: string | null, limit: number) {
 
 type Row = Awaited<ReturnType<typeof rowsForScope>>[number];
 
+/**
+ * The key two spellings of one record must share (A47).
+ *
+ * Case- and whitespace-insensitive, matching `reasonFor` below: the model's
+ * casing is its own and the want-list row was typed by hand, so an exact
+ * comparison would read two spellings as two records and leave the line
+ * unmarked — the defect, one layer down.
+ */
+const matchKey = (artist: string, title: string) =>
+  `${artist.trim().toLowerCase()}\u0000${title.trim().toLowerCase()}`;
+
+/**
+ * Every unacquired want-list record, as match keys (A47).
+ *
+ * **UNSCOPED, deliberately, unlike the staleness count.** A suggestion is
+ * want-listed or it is not; that fact does not depend on which genre the
+ * question was asked about, and scoping it would leave a line unmarked in one
+ * panel and marked in another for the same record.
+ *
+ * **Acquired rows are excluded** (§7.3): an acquired row is a record the user
+ * OWNS, and "now on your want list" would be false of it.
+ */
+async function wantListedKeys(): Promise<Set<string>> {
+  const db = getDb();
+
+  const rows = await db.execute<{ artist: string; title: string }>(sql`
+    SELECT a.name AS artist, w.title
+      FROM want_list w
+      JOIN artists a ON a.id = w.artist_id
+     WHERE w.is_acquired = false
+  `);
+
+  return new Set(rows.rows.map((row) => matchKey(row.artist, row.title)));
+}
+
 async function hydrate(scope: string | null, row: Row): Promise<StoredGapAnalysis> {
+  /*
+   * **A47: recomputed here, on every read, never written back.** The stored row
+   * stays exactly what the model returned — the panel is a transcript — so the
+   * marking must reflect the want list as it is NOW. Removing a want-list row
+   * unmarks the line on the next render, with nothing to migrate.
+   */
+  const wantListed = await wantListedKeys();
+
   return {
     // Stored as JSON because it is the model's output rather than the app's
     // data; validated on the way IN by `parseSuggestions` (A29d).
-    suggestions: row.suggestions as Suggestion[],
+    suggestions: (row.suggestions as Suggestion[]).map((suggestion) => ({
+      ...suggestion,
+      /*
+       * Matched on artist AND title, never artist alone: A29g welcomes a
+       * DIFFERENT record by an artist already present, so one artist can appear
+       * with several titles, and flagging all of them because one is
+       * want-listed would mark a record the user has not decided to hunt.
+       */
+      onWantList: wantListed.has(matchKey(suggestion.artist, suggestion.title)),
+    })),
     dropped: row.dropped,
     askedAt: row.askedAt,
-    recordsAddedSince: await recordsAddedSince(scope, row.askedAt),
+    gapsClosedSince: await gapsClosedSince(scope, row.askedAt),
   };
 }
 

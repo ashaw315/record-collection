@@ -5,7 +5,7 @@ import { artists, genres, llmRequests, records, recordGenres } from '@/db/schema
 import { LLM_REQUESTS_PER_HOUR } from '@/lib/llm/rate-limit';
 import { GAP_ANALYSIS_MAX_TOKENS } from '@/lib/llm/client';
 import { logger } from '@/lib/logger';
-import { latestGapAnalysis } from '@/lib/db/queries/gap-analysis';
+import { latestGapAnalysis, storeGapAnalysis } from '@/lib/db/queries/gap-analysis';
 
 /**
  * SPEC.md §5.8 `POST /api/suggestions/ai` — §9.2's gap analysis.
@@ -57,6 +57,9 @@ async function seedCollection() {
     .values({ title: 'Why', artistId: artist.id })
     .returning();
   await db.insert(recordGenres).values({ recordId: record.id, genreId: genre.id });
+
+  // A47's scope test needs the genre it seeded, to store an answer against it.
+  return { genreId: genre.id };
 }
 
 const ONE_SUGGESTION = {
@@ -466,7 +469,14 @@ describe('the route records what it said', () => {
 
     const stored = await latestGapAnalysis();
 
-    expect(stored?.suggestions).toEqual(answer.suggestions);
+    /*
+     * A47: `onWantList` is added at READ, never stored, so the model's own
+     * fields are compared with the flag stripped. Stronger than a
+     * `toMatchObject`, which would stop noticing a field that went missing.
+     */
+    expect(stored?.suggestions.map((s) => ({ artist: s.artist, title: s.title, reason: s.reason, genre: s.genre }))).toEqual(
+      answer.suggestions,
+    );
     expect(stored?.dropped).toBe(1);
   });
 
@@ -493,7 +503,10 @@ describe('the route records what it said', () => {
 
     const stored = await latestGapAnalysis();
 
-    expect(stored?.suggestions, 'the good answer survives a failed re-ask').toEqual(
+    expect(
+      stored?.suggestions.map((s) => ({ artist: s.artist, title: s.title, reason: s.reason, genre: s.genre })),
+      'the good answer survives a failed re-ask',
+    ).toEqual(
       answer.suggestions,
     );
   });
@@ -694,7 +707,7 @@ describe('reading a stored answer costs nothing', () => {
    * Each answer states what IT covers. Fails against a response that sends one
    * staleness figure, or reuses the current answer's for both.
    */
-  it('gives each answer its own recordsAddedSince', async () => {
+  it('gives each answer its own gapsClosedSince', async () => {
     analyse.mockResolvedValue(answer);
     await POST(new Request('http://localhost/api/suggestions/ai', { method: 'POST' }));
 
@@ -713,8 +726,8 @@ describe('reading a stored answer costs nothing', () => {
 
     const body = await (await GET(new Request('http://localhost/api/suggestions/ai'))).json();
 
-    expect(body.data.recordsAddedSince, 'nothing added since the second ask').toBe(0);
-    expect(body.previous.recordsAddedSince, 'one record added since the first').toBe(1);
+    expect(body.data.gapsClosedSince, 'nothing added since the second ask').toBe(0);
+    expect(body.previous.gapsClosedSince, 'one record added since the first').toBe(1);
   });
 
   it('reports null for a scope never asked about', async () => {
@@ -727,5 +740,68 @@ describe('reading a stored answer costs nothing', () => {
 
     expect(response.status).toBe(200);
     expect(body.data, 'nobody asked, so there is no answer').toBeNull();
+  });
+});
+
+/**
+ * SPEC.md §9.2 (A47): the ask carries what was said last time.
+ *
+ * **Integration rather than unit, because the claim spans two layers**: the
+ * route must READ the stored answer and HAND it to the client. A unit test of
+ * either half passes while the wiring between them is missing.
+ */
+describe('POST /api/suggestions/ai carries the previous answer (A47)', () => {
+  it('passes the last stored suggestions to analyse', async () => {
+    await seedCollection();
+
+    await storeGapAnalysis({
+      suggestions: [
+        { artist: 'Massive Attack', title: 'Blue Lines', reason: 'r', genre: 'UK82' },
+      ],
+      dropped: 0,
+    });
+
+    analyse.mockResolvedValue(ONE_SUGGESTION);
+    await call();
+
+    expect(analyse).toHaveBeenCalledWith(
+      expect.anything(),
+      [expect.objectContaining({ artist: 'Massive Attack', title: 'Blue Lines' })],
+    );
+  });
+
+  it('passes an EMPTY list on a first ask, never undefined', async () => {
+    /*
+     * Absent and empty must stay distinguishable at the call site: an empty
+     * list is "you have said nothing yet", and the prompt renders no heading
+     * for it.
+     */
+    await seedCollection();
+    analyse.mockResolvedValue(ONE_SUGGESTION);
+
+    await call();
+
+    expect(analyse).toHaveBeenCalledWith(expect.anything(), []);
+  });
+
+  /**
+   * Fails against: a route that reads the previous answer from the WRONG SCOPE.
+   *
+   * A45 scopes an answer to a genre, so a whole-collection ask must not be told
+   * it previously said something it said about UK82 alone.
+   */
+  it('reads the previous answer from the same scope as the ask', async () => {
+    const { genreId } = await seedCollection();
+
+    await storeGapAnalysis({
+      suggestions: [{ artist: 'Scoped', title: 'Only', reason: 'r', genre: 'UK82' }],
+      dropped: 0,
+      genreId,
+    });
+
+    analyse.mockResolvedValue(ONE_SUGGESTION);
+    await call();
+
+    expect(analyse).toHaveBeenCalledWith(expect.anything(), []);
   });
 });

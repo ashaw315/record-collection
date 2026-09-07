@@ -18,6 +18,15 @@ type Suggestion = {
   title: string;
   reason: string;
   genre: string;
+  /**
+   * The user has since added this record to their want list (A47).
+   *
+   * **Computed at DISPLAY, not stored** — the stored answer is a transcript of
+   * what the model said, and this is a fact about now. Optional because a fresh
+   * result from `POST` has not been through the marking (nothing can have been
+   * want-listed in the moment between asking and rendering).
+   */
+  onWantList?: boolean;
 };
 
 type State =
@@ -31,7 +40,7 @@ export type LastGapAnalysis = {
   suggestions: Suggestion[];
   dropped: number;
   askedAt: string | Date;
-  recordsAddedSince: number;
+  gapsClosedSince: number;
 };
 
 export function GapAnalysis({
@@ -277,7 +286,7 @@ export function GapAnalysis({
             <p data-testid="asked-line" className="mb-1 text-xs text-muted-foreground">
               {askedLine({
                 askedAt: new Date(asked.askedAt),
-                recordsAddedSince: asked.recordsAddedSince,
+                gapsClosedSince: asked.gapsClosedSince,
               })}
             </p>
           )}
@@ -297,7 +306,22 @@ export function GapAnalysis({
                   className="rounded-xs border border-border p-3"
                 >
                   <div className="flex items-baseline justify-between gap-4">
-                    <h3 className="text-sm font-medium">
+                    {/*
+                      **Struck through as well as labelled** (A47). The label
+                      names the state and the strike makes it legible without
+                      reading — but the strike alone would be ambiguous
+                      (dismissed? unavailable?), so the words carry the meaning
+                      and the styling carries the glance. Never the styling
+                      alone: that is the border-l-dashed failure, a state
+                      rendered so faintly it was nearly unmarked.
+                    */}
+                    <h3
+                      className={
+                        suggestion.onWantList === true
+                          ? 'text-sm font-medium text-muted-foreground line-through'
+                          : 'text-sm font-medium'
+                      }
+                    >
                       {suggestion.artist} — {suggestion.title}
                     </h3>
                     {/*
@@ -305,13 +329,24 @@ export function GapAnalysis({
                       title came from a model, and a direct write would put an
                       unverified assertion in the same table as records the user
                       typed.
+
+                      **A47: replaced by a marker once the record is want-listed.**
+                      Offering the action again would either create a second row
+                      for one record or send the user to a form for a decision
+                      they have already made.
                     */}
-                    <Link
-                      href={`/want-list/new?artist=${encodeURIComponent(suggestion.artist)}&title=${encodeURIComponent(suggestion.title)}`}
-                      className="shrink-0 text-xs underline underline-offset-2"
-                    >
-                      Add to want list
-                    </Link>
+                    {suggestion.onWantList === true ? (
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        Now on your want list
+                      </span>
+                    ) : (
+                      <Link
+                        href={`/want-list/new?artist=${encodeURIComponent(suggestion.artist)}&title=${encodeURIComponent(suggestion.title)}`}
+                        className="shrink-0 text-xs underline underline-offset-2"
+                      >
+                        Add to want list
+                      </Link>
+                    )}
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">{suggestion.reason}</p>
                   <p className="mt-1 text-xs text-muted-foreground">{suggestion.genre}</p>
@@ -371,7 +406,7 @@ export function GapAnalysis({
               <p data-testid="previous-asked-line" className="mt-2 text-xs text-muted-foreground">
                 {askedLine({
                   askedAt: new Date(prior.askedAt),
-                  recordsAddedSince: prior.recordsAddedSince,
+                  gapsClosedSince: prior.gapsClosedSince,
                 })}
               </p>
 
@@ -386,7 +421,16 @@ export function GapAnalysis({
                       key={`prev-${suggestion.artist}-${suggestion.title}`}
                       className="text-xs text-muted-foreground"
                     >
-                      {suggestion.artist} — {suggestion.title}
+                      {/*
+                        **A47: marked here too.** The query layer flags both
+                        answers, and marking only the current one would leave
+                        the same staleness in the panel the retention exists to
+                        let the user compare.
+                      */}
+                      <span className={suggestion.onWantList === true ? 'line-through' : undefined}>
+                        {suggestion.artist} — {suggestion.title}
+                      </span>
+                      {suggestion.onWantList === true && ' — now on your want list'}
                     </li>
                   ))}
                 </ul>

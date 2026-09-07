@@ -675,3 +675,95 @@ describe('what the call cost survives the client', () => {
     expect(result.stopReason).toBeNull();
   });
 });
+
+/**
+ * SPEC.md §9.2 (A47): the prompt names what the model suggested before.
+ *
+ * **These tests exist because a probe measured the defect and would otherwise
+ * have been deleted** (CLAUDE.md §2). The diagnosis was that two asks over an
+ * unchanged collection build a byte-identical prompt — so the repetition Adam
+ * reported was the model being consistent against an input that gave it nothing
+ * to be consistent AGAINST. The hash comparison below is that probe, kept.
+ */
+describe('what varies between asks (A47)', () => {
+  const previous = [
+    { artist: 'Massive Attack', title: 'Blue Lines', reason: 'r', genre: 'Punk' },
+    { artist: 'Brian Eno', title: 'Another Green World', reason: 'r', genre: 'Punk' },
+  ];
+
+  it('WITHOUT previous suggestions, two asks build a byte-identical prompt', () => {
+    /*
+     * The defect, pinned. This is the measurement that showed the input was
+     * constant; it must keep holding, because the fix is to ADD a varying
+     * section rather than to make the base prompt unstable.
+     */
+    expect(buildPrompt(SUMMARY)).toBe(buildPrompt(SUMMARY));
+  });
+
+  it('names the previously suggested records, artist AND title', () => {
+    const prompt = buildPrompt(SUMMARY, previous);
+
+    expect(prompt).toContain('Massive Attack — Blue Lines');
+    expect(prompt).toContain('Brian Eno — Another Green World');
+  });
+
+  it('changes the prompt, so the model has something new to reason about', () => {
+    expect(buildPrompt(SUMMARY, previous)).not.toBe(buildPrompt(SUMMARY));
+  });
+
+  it('PERMITS repetition rather than forbidding it', () => {
+    /*
+     * The load-bearing assertion of this unit. A prohibition would suppress a
+     * gap that is genuinely still a gap — exactly what the original repetition
+     * decision protected. The instruction must let the model repeat a record
+     * when it is still the most worth naming.
+     *
+     * Asserted against the PROMPT TEXT because the prompt is where this rule
+     * lives; there is no other channel that carries it.
+     */
+    const prompt = buildPrompt(SUMMARY, previous);
+
+    expect(prompt).toMatch(/may|still/i);
+    expect(prompt).not.toMatch(/do not (repeat|suggest|recommend) (any of )?(these|the above|them)/i);
+  });
+
+  it('says nothing about previous suggestions when there are none', () => {
+    /*
+     * A first ask has no previous answer, and a heading over an empty list
+     * would tell the model it had said something it had not — the
+     * absent-versus-empty failure this project keeps naming.
+     */
+    const prompt = buildPrompt(SUMMARY, []);
+
+    expect(prompt).toBe(buildPrompt(SUMMARY));
+    expect(prompt).not.toMatch(/suggested (before|previously|last time)/i);
+  });
+});
+
+describe('analyse forwards the previous answer to the prompt (A47)', () => {
+  it('sends the previously suggested records in the message it builds', async () => {
+    /*
+     * The channel that actually carries the claim (CLAUDE.md §2): asserting on
+     * the MESSAGE the transport is handed, not on `buildPrompt` in isolation —
+     * a client that accepted the argument and dropped it would pass the
+     * prompt-level tests above and fail this one.
+     */
+    let sent = '';
+    const client = createGapAnalysisClient({
+      create: async (request) => {
+        sent = String(request.messages[0]?.content ?? '');
+        return {
+          content: [{ type: 'text', text: '{"suggestions":[]}' }],
+          stop_reason: 'end_turn',
+          usage: { input_tokens: 1, output_tokens: 1 },
+        };
+      },
+    });
+
+    await client.analyse(SUMMARY, [
+      { artist: 'Donna Summer', title: 'I Feel Love', reason: 'r', genre: 'Punk' },
+    ]);
+
+    expect(sent).toContain('Donna Summer — I Feel Love');
+  });
+});

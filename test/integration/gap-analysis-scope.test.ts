@@ -99,7 +99,7 @@ describe('staleness counts records in the SCOPE, not overall', () => {
     await seedRecord('Miles', jazz.id);
 
     const scoped = await latestGapAnalysis(uk82.id);
-    expect(scoped?.recordsAddedSince, 'a jazz record does not age a UK82 answer').toBe(0);
+    expect(scoped?.gapsClosedSince, 'a jazz record does not age a UK82 answer').toBe(0);
   });
 
   it('counts a record added in the genre itself', async () => {
@@ -108,7 +108,7 @@ describe('staleness counts records in the SCOPE, not overall', () => {
     await storeGapAnalysis({ suggestions: SUGGESTIONS, dropped: 0, genreId: uk82.id });
     await seedRecord('Discharge', uk82.id);
 
-    expect((await latestGapAnalysis(uk82.id))?.recordsAddedSince).toBe(1);
+    expect((await latestGapAnalysis(uk82.id))?.gapsClosedSince).toBe(1);
   });
 
   /**
@@ -124,7 +124,7 @@ describe('staleness counts records in the SCOPE, not overall', () => {
     await seedRecord('Discharge', uk82.id);
 
     expect(
-      (await latestGapAnalysis(punk.id))?.recordsAddedSince,
+      (await latestGapAnalysis(punk.id))?.gapsClosedSince,
       'Punk gains through UK82, so its staleness must too',
     ).toBe(1);
   });
@@ -137,7 +137,7 @@ describe('staleness counts records in the SCOPE, not overall', () => {
     await seedRecord('Miles', jazz.id);
     await seedRecord('Discharge', uk82.id);
 
-    expect((await latestGapAnalysis())?.recordsAddedSince).toBe(2);
+    expect((await latestGapAnalysis())?.gapsClosedSince).toBe(2);
   });
 });
 

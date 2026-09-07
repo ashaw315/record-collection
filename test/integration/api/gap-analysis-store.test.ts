@@ -66,9 +66,34 @@ describe('the stored gap analysis', () => {
 
     const stored = await latestGapAnalysis();
 
-    expect(stored?.suggestions).toEqual(SUGGESTIONS);
+    /*
+     * **A47: the model's fields survive verbatim, plus a display-time flag.**
+     * Asserted field-by-field rather than by whole-object equality, which now
+     * says something stronger: what the model returned is UNCHANGED by storage,
+     * and `onWantList` is added at READ rather than written into the row. A
+     * `toEqual` against the input could only be kept by dropping the flag, and
+     * a `toMatchObject` would stop noticing if a stored field went missing.
+     */
+    expect(stored?.suggestions.map((s) => ({ artist: s.artist, title: s.title, reason: s.reason, genre: s.genre }))).toEqual(SUGGESTIONS);
+    expect(stored?.suggestions.every((s) => s.onWantList === false)).toBe(true);
     expect(stored?.dropped).toBe(1);
     expect(stored?.askedAt).toBeInstanceOf(Date);
+  });
+
+  /**
+   * Fails against a `hydrate` that writes the marking back into the row, or a
+   * `storeGapAnalysis` that persists it.
+   *
+   * **The stored row must stay exactly what the model returned** — the panel is
+   * a transcript, and the marking is a fact about NOW recomputed on every read.
+   */
+  it('does not persist the display-time want-list flag', async () => {
+    await storeGapAnalysis({ suggestions: SUGGESTIONS, dropped: 0 });
+
+    const db = getTestDb();
+    const [row] = await db.select().from(gapAnalysisResults);
+
+    expect(JSON.stringify(row.suggestions)).not.toContain('onWantList');
   });
 
   /**
@@ -135,7 +160,7 @@ describe('what has changed since it was asked', () => {
 
     const stored = await latestGapAnalysis();
 
-    expect(stored?.recordsAddedSince, 'only the two added after').toBe(2);
+    expect(stored?.gapsClosedSince, 'only the two added after').toBe(2);
   });
 
   /**
@@ -149,18 +174,23 @@ describe('what has changed since it was asked', () => {
 
     const stored = await latestGapAnalysis();
 
-    expect(stored?.recordsAddedSince).toBe(0);
+    expect(stored?.gapsClosedSince).toBe(0);
   });
 
   /**
-   * **Records only — want-list additions are deliberately not counted** (A39).
-   * A want-list row does change what the model is told, but records are what
-   * the suggestions are ABOUT, and a sentence carrying two numbers is vaguer
-   * than either.
+   * **REVERSED BY A47 (2026-09-07), deliberately** — this test encoded the old
+   * contract correctly and the contract changed.
    *
-   * Fails against a count that reaches into `want_list`.
+   * It previously asserted that a want-list row was NOT counted, on A39's
+   * argument that records are what the suggestions are ABOUT. That argument is
+   * true of what the model REASONS OVER and false of what INVALIDATES its
+   * answer, and this count is about the second. The cost was a real defect: a
+   * want-listed record stayed on screen while this number asserted nothing had
+   * changed — blind to exactly the change that staled the answer.
+   *
+   * Fails against a count that reads `records` alone.
    */
-  it('does not count want-list additions', async () => {
+  it('counts want-list additions, which also close a gap', async () => {
     await storeGapAnalysis({ suggestions: SUGGESTIONS, dropped: 0 });
 
     const db = getTestDb();
@@ -171,7 +201,29 @@ describe('what has changed since it was asked', () => {
 
     const stored = await latestGapAnalysis();
 
-    expect(stored?.recordsAddedSince, 'a want-list row is not a record').toBe(0);
+    expect(stored?.gapsClosedSince, 'want-listing a record closes a gap').toBe(1);
+  });
+
+  /**
+   * Fails against a count that reads every want-list row regardless of state.
+   *
+   * §7.3 makes the want list double as acquisition history: an acquired row's
+   * record is counted as a RECORD, so counting the pair would report one event
+   * twice and overstate how stale the answer is.
+   */
+  it('does not double-count an ACQUIRED want-list row', async () => {
+    await storeGapAnalysis({ suggestions: SUGGESTIONS, dropped: 0 });
+
+    const db = getTestDb();
+    const [artist] = await db.insert(artists).values({ name: 'Acquired' }).returning();
+    await db.execute(
+      sql`INSERT INTO want_list (artist_id, title, priority, is_acquired)
+          VALUES (${artist.id}, 'Owned LP', 3, true)`,
+    );
+
+    const stored = await latestGapAnalysis();
+
+    expect(stored?.gapsClosedSince).toBe(0);
   });
 });
 
@@ -296,7 +348,7 @@ describe('the previous answer is kept alongside the current one', () => {
  * **THE DESIGN QUESTION IN THIS UNIT: the previous answer carries ITS OWN
  * staleness, computed from ITS OWN `asked_at`.**
  *
- * `recordsAddedSince` is a fact about what an answer COVERS. A collection-wide
+ * `gapsClosedSince` is a fact about what an answer COVERS. A collection-wide
  * answer from before five records were added is superseded in a way a later one
  * is not — so the previous row cannot borrow the current row's count.
  * Presenting two answers as equally current claims about the same collection is
@@ -335,8 +387,8 @@ describe('each answer carries its own staleness', () => {
 
     const both = await gapAnalysisWithPrevious();
 
-    expect(both.current?.recordsAddedSince, 'one record after the second ask').toBe(1);
-    expect(both.previous?.recordsAddedSince, 'two records after the first ask').toBe(2);
+    expect(both.current?.gapsClosedSince, 'one record after the second ask').toBe(1);
+    expect(both.previous?.gapsClosedSince, 'two records after the first ask').toBe(2);
   });
 
   /**
@@ -353,8 +405,8 @@ describe('each answer carries its own staleness', () => {
 
     const both = await gapAnalysisWithPrevious();
 
-    expect(both.current?.recordsAddedSince).toBe(0);
-    expect(both.previous?.recordsAddedSince).toBe(0);
+    expect(both.current?.gapsClosedSince).toBe(0);
+    expect(both.previous?.gapsClosedSince).toBe(0);
   });
 });
 

@@ -158,7 +158,35 @@ export function isAuthFailure(error: unknown): boolean {
  * collection organised around dub or post-punk just as badly, in the other
  * direction. The hierarchy the user actually built is the vocabulary.
  */
-export function buildPrompt(summary: CollectionSummary): string {
+export function buildPrompt(
+  summary: CollectionSummary,
+  /**
+   * What the model suggested on the previous ask, or empty on a first ask
+   * (A47, 2026-09-07).
+   *
+   * **The input that was missing, measured rather than assumed.** Two asks over
+   * an unchanged collection built a byte-identical prompt — no previous answer,
+   * no instruction to differ, and no `temperature` anywhere — so successive asks
+   * returned the same handful of names. "The six most worth their attention"
+   * over a fixed input is a request for a STABLE RANKING; asked twice, a good
+   * model should answer twice the same. The repetition was the model being
+   * consistent and the feature giving it nothing to be consistent AGAINST.
+   *
+   * **Not a reversal of the repetition decision.** That decision kept repetition
+   * because a still-missing record is still missing — which defended not
+   * SUPPRESSING a gap. It never argued the ask should be unable to reach a
+   * seventh, and "the top six of a fixed ranking, forever" leaves records 7-12
+   * unreachable by any number of asks. The model now knows what it said and
+   * stays free to repeat it; the difference is that it CHOOSES to.
+   *
+   * **Told, not sampled.** A `temperature` would produce different answers to
+   * the same question rather than a model reaching past what it already said —
+   * drift rather than intent. This project prefers the model knowing something
+   * over the model guessing (the genre hierarchy, A41's titles); this is the
+   * same choice again.
+   */
+  previouslySuggested: readonly Suggestion[] = [],
+): string {
   /*
    * **A41: titles are rendered, so "already own" is checkable at record level.**
    * Withholding them made A29g's ownership rule unenforceable while the prompt
@@ -318,6 +346,33 @@ export function buildPrompt(summary: CollectionSummary): string {
     'Do not recommend anything already on their want list, which is listed',
     'with titles.',
     '',
+    /*
+     * **A47: what was said last time, and permission to say it again.**
+     *
+     * **Empty on a first ask produces NOTHING** — not a heading over an empty
+     * list, which would tell the model it had said something it had not. Absent
+     * and empty are different states and the prompt must not blur them.
+     *
+     * **Permissive, never prohibitive.** "Do not repeat these" would suppress a
+     * record that is genuinely still the most worth naming, which is exactly
+     * what the original repetition decision protected. The instruction asks the
+     * model to look PAST what it has already said where it can, and to repeat
+     * deliberately where the gap still stands.
+     */
+    ...(previouslySuggested.length === 0
+      ? []
+      : [
+          'YOU SUGGESTED THESE LAST TIME:',
+          ...previouslySuggested.map((s) => `- ${s.artist} — ${s.title}`),
+          '',
+          'They were not necessarily acted on, and a record still missing is',
+          'still a gap — so you MAY suggest one again if it is genuinely still',
+          'among the most worth their attention. Say so in the reason when you',
+          'do. But prefer to look past them where something else has a real',
+          'claim: they have already read that list, and a second identical',
+          'answer tells them nothing they do not know.',
+          '',
+        ]),
     'Prefer records you are confident exist, with the artist and title as',
     'actually released. If you are unsure a record exists, leave it out.',
     '',
@@ -374,7 +429,15 @@ export type GapAnalysisResult =
   | GapAnalysisFailure;
 
 export type GapAnalysisClient = {
-  analyse: (summary: CollectionSummary) => Promise<GapAnalysisResult>;
+  /**
+   * @param previouslySuggested — what the model said on the last ask (A47), so
+   * it can reach past its own answer rather than re-deriving the same stable
+   * ranking. Defaulted to empty: a first ask has no previous answer.
+   */
+  analyse: (
+    summary: CollectionSummary,
+    previouslySuggested?: readonly Suggestion[],
+  ) => Promise<GapAnalysisResult>;
 };
 
 /**
@@ -385,7 +448,7 @@ export type GapAnalysisClient = {
  */
 export function createGapAnalysisClient(transport: { create: MessageCreate }): GapAnalysisClient {
   return {
-    async analyse(summary) {
+    async analyse(summary, previouslySuggested = []) {
       /*
        * Through `callAnthropic`, so usage and `stop_reason` arrive with the
        * response rather than being assembled here — the asymmetry that let the
@@ -400,7 +463,7 @@ export function createGapAnalysisClient(transport: { create: MessageCreate }): G
         model: MODEL,
         max_tokens: GAP_ANALYSIS_MAX_TOKENS,
         output_config: { effort: EFFORT },
-        messages: [{ role: 'user', content: buildPrompt(summary) }],
+        messages: [{ role: 'user', content: buildPrompt(summary, previouslySuggested) }],
       });
 
       /*

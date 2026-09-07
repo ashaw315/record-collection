@@ -12,6 +12,7 @@ import {
 import { logger } from '@/lib/logger';
 import {
   gapAnalysisWithPrevious,
+  latestGapAnalysis,
   storeGapAnalysis,
   type StoredGapAnalysis,
 } from '@/lib/db/queries/gap-analysis';
@@ -116,9 +117,28 @@ export const POST = withErrorHandling('api.suggestions.ai.POST', async (request:
 
   const summary = await buildCollectionSummary({ genreId });
 
+  /*
+   * **A47: what the model said last time, sent with the ask.**
+   *
+   * Read from the SAME SCOPE as the question (A45): a whole-collection ask must
+   * not be told it previously said something it said about UK82 alone, which
+   * would be a claim about a different question.
+   *
+   * **Null on a first ask becomes an empty list, not `undefined`** — absent and
+   * empty stay distinguishable, and `buildPrompt` renders no heading for empty
+   * rather than announcing a previous answer that does not exist.
+   *
+   * **A39's retention is load-bearing here for a second reason.** It was built
+   * so the user could COMPARE two answers; it happens to store exactly what
+   * this prompt needs, so nothing new is persisted. The coupling is worth
+   * naming: reducing retention would silently weaken this prompt.
+   */
+  const lastAnswer = await latestGapAnalysis(genreId);
+  const previouslySuggested = lastAnswer?.suggestions ?? [];
+
   let result;
   try {
-    result = await getGapAnalysisClient().analyse(summary);
+    result = await getGapAnalysisClient().analyse(summary, previouslySuggested);
   } catch (error) {
     /*
      * **The case R5's live run actually hit**, and the reason §9.2 did not work.
@@ -312,7 +332,7 @@ export const GET = withErrorHandling('api.suggestions.ai.GET', async (request: R
    * observe the store either side of a re-ask, handing the UI a disagreement it
    * has no way to resolve.
    *
-   * **Each carries its OWN `recordsAddedSince`**, computed from its own
+   * **Each carries its OWN `gapsClosedSince`**, computed from its own
    * `askedAt`. A previous answer superseded before five records were added
    * covers something different from the current one, and sending a single figure
    * would present them as equally current claims about the same collection.
@@ -324,7 +344,7 @@ export const GET = withErrorHandling('api.suggestions.ai.GET', async (request: R
           suggestions: answer.suggestions,
           dropped: answer.dropped,
           askedAt: answer.askedAt.toISOString(),
-          recordsAddedSince: answer.recordsAddedSince,
+          gapsClosedSince: answer.gapsClosedSince,
         };
 
   return NextResponse.json({ data: shape(current), previous: shape(previous) });
