@@ -688,3 +688,100 @@ describe('convergence outranks adjacency by construction (A50)', () => {
     expect(row?.reasons.join(' ')).toMatch(/2 (bands|artists) you own/i);
   });
 });
+
+/**
+ * SPEC.md §9.1 (A51, 2026-09-07) — a REJOINING member is one person.
+ *
+ * **Predicted by Adam from the `original` finding, then measured.** Discharge
+ * marks "10 original" where only FOUR distinct people are original — the same
+ * person is recorded once per stint across 37 years. He asked whether §9.1's
+ * shared-member score had the same defect, since a count of ROWS would be
+ * inflated by exactly the churn that makes a band's lineup interesting.
+ *
+ * **It does not: the query counts `DISTINCT person_artist_id`.** Verified
+ * against live data — Broken Bones is 6 membership rows and reports 4, which is
+ * the correct number and the one on Adam's screen.
+ *
+ * **But the existing guard covered only the MULTI-INSTRUMENT case**, and these
+ * are different mechanisms producing the same duplication. §4.3 keys a
+ * membership on (person, group, instrument), so a player who rejoins ON A
+ * DIFFERENT INSTRUMENT is legitimately several rows — measured: Tezz has three
+ * Discharge rows, `lead vocals` 1977, `drums` 2001-2006, `guitar` 2014-. A test
+ * pinning only the instrument case would pass against a query that broke for
+ * rejoining, so the case is pinned in its own right.
+ */
+describe('a member who rejoins is still one person (A51)', () => {
+  /**
+   * Fails against `COUNT(*)`: three stints on three instruments would report a
+   * three-person overlap for one person, weighting the ranking by an artefact
+   * of how MusicBrainz records rejoining.
+   *
+   * Modelled on the real Tezz rows rather than invented.
+   */
+  it('counts three stints on three instruments as ONE shared member', async () => {
+    const owned = await makeArtist('Discharge');
+    const candidate = await makeArtist('UK Subs');
+    const tezz = await makeArtist('Tezz');
+    await own(owned.id, 'Hear Nothing');
+
+    await member(tezz.id, owned.id, 'lead vocals');
+    await member(tezz.id, owned.id, 'drums (drum set)');
+    await member(tezz.id, owned.id, 'guitar');
+    await member(tezz.id, candidate.id, null);
+
+    const rows = await suggestions({ limit: 10 });
+    const got = find(rows, candidate.id);
+
+    expect(got?.sharedMemberWeight, 'one person, however many stints').toBe(1);
+    expect(got?.score).toBe(1.5);
+  });
+
+  /**
+   * The reason string carries the same number, so a correct score cannot be
+   * reported through a wrong sentence — the proxy-assertion shape (CLAUDE.md §2)
+   * applied to copy the user actually reads.
+   */
+  it('says one member in the reason, not three', async () => {
+    const owned = await makeArtist('Discharge');
+    const candidate = await makeArtist('UK Subs');
+    const tezz = await makeArtist('Tezz');
+    await own(owned.id, 'Hear Nothing');
+
+    await member(tezz.id, owned.id, 'lead vocals');
+    await member(tezz.id, owned.id, 'drums (drum set)');
+    await member(tezz.id, candidate.id, null);
+
+    const rows = await suggestions({ limit: 10 });
+
+    expect(find(rows, candidate.id)?.reasons.join(' ')).toMatch(/Shares 1 member with/);
+  });
+
+  /**
+   * Fails against a query that de-duplicates too aggressively — collapsing on
+   * person alone across BANDS would lose the convergence signal A50 depends on.
+   * Two people rejoining across two owned bands is still a 2-band convergence.
+   */
+  it('still sees two owned bands when both members rejoined', async () => {
+    const bandA = await makeArtist('BandA');
+    const bandB = await makeArtist('BandB');
+    const p1 = await makeArtist('P1');
+    const p2 = await makeArtist('P2');
+    const candidate = await makeArtist('Audioslave');
+    await own(bandA.id, 'recA');
+    await own(bandB.id, 'recB');
+
+    await member(p1.id, bandA.id, 'guitar');
+    await member(p1.id, bandA.id, 'bass guitar');
+    await member(p2.id, bandB.id, 'drums (drum set)');
+    await member(p2.id, bandB.id, 'lead vocals');
+    await member(p1.id, candidate.id, null);
+    await member(p2.id, candidate.id, null);
+
+    const rows = await suggestions({ limit: 10 });
+    const got = find(rows, candidate.id);
+
+    expect(got?.sharedMemberWeight).toBe(2);
+    expect(got?.sharedMemberArtistCount).toBe(2);
+    expect(got?.convergence).toBe(true);
+  });
+});

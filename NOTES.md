@@ -26635,3 +26635,65 @@ derivable from the edges anyone enters, while intent must be typed by a
 contributor who cared. **So the honest expectation for any future MusicBrainz
 attribute is minority coverage, and the design question is always "what happens
 for the majority that lacks it" rather than "what does it give me when present".**
+
+---
+
+## CHECKED AND CLEAN — but the guard covered the wrong mechanism
+
+**Adam predicted a live defect from the `original` finding and asked for it to be
+checked rather than assumed.** The reasoning was sound and general: *"Anywhere
+the app counts membership rows rather than distinct people, it overstates for
+exactly the bands where churn makes the count matter."* Discharge marks ten
+`original` relations for four distinct people, so if §9.1's shared-member score
+counted rows, "shares 4 members with Discharge" would be an artefact of how
+MusicBrainz records rejoining.
+
+**It does not. The query is correct** — `COUNT(DISTINCT m1.person_artist_id)` —
+and the live numbers confirm it: Broken Bones is **6 membership rows and reports
+4**, which is right and is what the screen shows. Five candidates in the live
+collection have rows > people (Broken Bones 6/4, The Varukers 3/2, UK Subs 3/1,
+Blitzkrieg 2/1, Spring 2/1), so the discrepancy is real and the code already
+handles it.
+
+### The gap that WAS there
+
+**The existing guard pinned the multi-instrument case only** — one player holding
+guitar and keyboards. The rejoining case is a different mechanism producing the
+same duplication, and nothing pinned it.
+
+§4.3 keys a membership on `(person, group, instrument)`, so a player who rejoins
+**on a different instrument** is legitimately several rows. Measured from the
+real data:
+
+```
+Tezz  Discharge  lead vocals        1977-1977
+Tezz  Discharge  drums (drum set)   2001-2006
+Tezz  Discharge  guitar             2014-
+```
+
+Three rows, three stints, three instruments, one person. **A test pinning only
+the instrument case passes against a query that breaks for rejoining**, because
+the fixture never has the same person twice with different years. Three tests
+added, modelled on the real Tezz rows rather than invented.
+
+### Proving a passing test is not decorative
+
+All three passed on first run, which CLAUDE.md §2 calls a defect in the test
+until shown otherwise. **So `COUNT(DISTINCT person)` was replaced with `COUNT(*)`
+and the suite re-run: all three failed, plus the original instrument guard.**
+Restored afterwards. That is what makes them constraints rather than
+descriptions — and it is the cheap technique for any test written against code
+that is already correct.
+
+> **A characterization test earns its place by failing against an injected
+> break.** Writing one for correct code is legitimate — the behaviour was
+> unguarded — but the passing run proves nothing on its own, and the injection
+> takes a minute.
+
+### The general form
+
+**Two mechanisms can produce one symptom, and a guard against the first is
+routinely mistaken for a guard against both.** The comment above the query named
+multi-instrument as the hazard; rejoining was never mentioned, and the test
+followed the comment. When a defect class has several causes, pin each cause —
+not the symptom once.
