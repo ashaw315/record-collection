@@ -26559,3 +26559,79 @@ confirmation is where the two-deploy split gets planned.**
 **Not closed, and named so nobody assumes otherwise:** a migration that succeeds
 and is wrong, a migration exceeding the build timeout, and a code rollback to a
 version older than the schema.
+
+---
+
+## MEASURED — the MusicBrainz vocabulary exists and the data does not
+
+**Three attributes investigated across A48-A51, all the same shape.** Adam named
+it after the third: *"The vocabulary exists; the data does not."*
+
+| attribute | what it would give | coverage measured |
+|---|---|---|
+| `tribute` / `subgroup` | separates a tribute act from a side project | **2 of 6** Dire Straits derivatives |
+| `task: touring member` | separates a founder from a hired player | **1 of 8 bands** (MGMT only) |
+| `original` | the founding-era lineup | **10 of 43 people; 3 of 5 bands mark NONE** |
+
+Each is first-class, machine-readable, and documented. Each is populated by a
+minority of the contributors who could populate it. **This is CLAUDE.md §8's
+"Discogs data is user-submitted and imperfect" holding for MusicBrainz too, and
+the failure mode is specific: the SCHEMA promises a distinction the DATA does not
+deliver, so a filter built on it silently does nothing on most inputs.**
+
+### `task: touring member` — one band in eight
+
+MGMT is real and exactly as Adam read it off the page:
+
+```
+MGMT   members=32  original=11  task=5  {'touring member': 5}
+```
+
+The structure is `attributes: ["task"]` + `attribute-values: {task: "touring
+member"}`. **Every other band sampled has zero** — Discharge, Dire Straits,
+Steely Dan, Pink Floyd, The Rolling Stones, DARKSIDE, The Doors, The Blues
+Project, Simon & Garfunkel. The only other `task` seen anywhere was Black Flag's
+`task: "production"` (the engineer Spot), which is a different value entirely.
+
+**MGMT is unusually well documented, not representative.** A touring-member
+filter would, on Adam's actual collection, filter nothing.
+
+### `original` — better, and still not reliable
+
+**And it does NOT mean what the word suggests, which Adam predicted before the
+measurement.** He asked whether Discharge's "10 of 31 original" could really be
+ten founders for a band with a famously unstable lineup. It is not:
+
+```
+Discharge: 31 relations, 21 DISTINCT people, 10 original RELATIONS,
+           4 DISTINCT original people
+           begin-years on those relations: 1977, 1977, 1977, 1977,
+                                           2001, 2001, 2001, 2014
+```
+
+**The ten are four people with repeat stints** — Tezz, Rainy, Nigel Bamford,
+Tony Atkinson, rejoining across 37 years. `original` correctly marks the PERSON
+as original and is repeated on each of their stints. So it means "was in the
+founding lineup", not "joined at the founding", and **counting relations instead
+of distinct people overstates it 2.5x.** Dire Straits, with a stable lineup, has
+4 relations and 4 people — the discrepancy only appears for churning bands,
+which is exactly where it matters.
+
+**Coverage across five walked bands: 10 of 43 distinct people, and 3 of 5 bands
+mark none at all** (The Doors 0 of 4, The Blues Project 0 of 7, and Steely Dan 0
+of 12 sampled separately).
+
+> **Adam's rule, and it is the general one:** *"a walk that follows only
+> originals walks nothing for a band with none marked, and following too few is a
+> worse failure than following too many because it is silent."* Preference with
+> fallback, and **the fallback is the load-bearing half** — it is what runs for
+> the majority of bands.
+
+### Why this pattern keeps appearing
+
+Every signal in this thread that would separate INTENT from SHAPE lives in an
+optional, sparsely-populated attribute. That is not a coincidence: shape is
+derivable from the edges anyone enters, while intent must be typed by a
+contributor who cared. **So the honest expectation for any future MusicBrainz
+attribute is minority coverage, and the design question is always "what happens
+for the majority that lacks it" rather than "what does it give me when present".**
