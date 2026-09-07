@@ -26279,3 +26279,124 @@ fixed ranking).
 > saying so is part of reporting the work.** The alternative is a green suite
 > standing in for a verification it cannot perform — the proxy-assertion failure
 > at the level of a whole feature.
+
+---
+
+## MEASURED — "shares members" catches 2 of 6 Dire Straits impostors, and the floor is real
+
+**Reported by Adam (2026-09-07): six of twenty relationship suggestions were
+Dire Straits in disguise** — Dire Straits Experience, Dire Straits Legacy, The
+Straits, Mark Knopfler's Guitar Heroes, John Illsley Band, The Notting
+Hillbillies. His framing, which the measurement confirms: this is not a scoring
+problem. A27's ranking is honest about what it measures. **"Shares members"
+conflates LINEAGE with CONTINUATION, and only the second is useless** — Broken
+Bones sharing four members with Discharge is a real signal; The Straits sharing
+two with Dire Straits is the same band under another name.
+
+**Measured against his real `musicbrainz_cache`, not reasoned about.** The Dire
+Straits payload carries `member of band` ×9 and `tribute` ×23 — no `subgroup`,
+no `rename`.
+
+| suggestion | reachable by relation type? | how it actually arrives |
+|---|---|---|
+| Dire Straits Experience | **`tribute/backward`** | — |
+| Dire Straits Legacy | **`tribute/backward`** | — |
+| The Straits | **no relation at all** | 2 shared: Alan Clark, Chris White |
+| Mark Knopfler's Guitar Heroes | **no relation at all** | 2 shared: Guy Fletcher, Mark Knopfler |
+| The Notting Hillbillies | **no relation at all** | 2 shared: Guy Fletcher, Mark Knopfler |
+| John Illsley Band | **no relation at all** | 1 shared: John Illsley |
+
+**2 of 6. This is a partial fix with a floor, and the floor is where Adam
+predicted it.** He called it before the query ran: *"Mark Knopfler's Guitar
+Heroes and John Illsley Band are a guitarist's side band and a bassist's solo
+act — neither is a tribute and neither is a reunion, so if member of band is the
+only edge they carry, they are genuinely indistinguishable from Broken Bones by
+relation type alone."* That is exactly what the data shows.
+
+**The two hardest cases are indistinguishable BY CONSTRUCTION, not by missing
+data.** Mark Knopfler's Guitar Heroes and The Notting Hillbillies share the same
+two people (Guy Fletcher, Mark Knopfler) with Dire Straits. A side project of a
+member and a band formed from members of another band are the same graph shape.
+No relation type separates them because there is nothing to separate — the
+distinction is about intent, which MusicBrainz does not record.
+
+> **Name containment was considered and REJECTED before it was proposed.** Adam:
+> *"reaching for name containment ... would catch 'Dire Straits Legacy' and miss
+> 'The Notting Hillbillies'."* It also catches the two cases `tribute` already
+> catches, so it adds nothing where it works and fails where the problem is
+> hardest — a heuristic whose coverage is the complement of its usefulness.
+
+**What is NOT yet decided** (deliberately, pending Adam): whether to use
+`tribute` for the two it catches, and what the ranking should do about the
+remaining four. His stated condition was that if the signal has a floor, *"the
+ranking should stop pretending the tail is worth showing"* — and it does have
+one. The relations are already in `musicbrainz_cache` as raw payloads
+(`artist-cache.ts` caches raw, never normalized), so using them needs no
+re-import.
+
+### The sharper version, found while measuring
+
+**§9.1 suggests ARTISTS; the only action offered expects a RECORD.** The link is
+`/want-list/new?artistId=...`, and `want_list.title` is NOT NULL because the
+want list holds records.
+
+**The form already handles this correctly and the reasoning is written down**
+(`want-list/new/page.tsx:59`): the artist prefills, the user names the record,
+and inventing a title ('TBC', the artist's name, empty) is called out as *"the
+app asserting a fact nobody supplied"*. So no title-less row can be created, and
+a want-list row from a suggestion is indistinguishable from a typed one because
+the user typed the title either way. **The suggestion reasons are regenerated on
+that page rather than carried in the URL, and reach no column** — a reason is
+true of a collection at a moment, and freezing it into a row would leave a stale
+claim.
+
+**The artist row, however, is already permanent and predates the click.**
+Measured: **83 artists, 66 from MusicBrainz, 64 of those with no records at
+all.** The lineup walk created them; acting on a suggestion adds nothing new.
+They appear in every artist dropdown on every form. That is a real cost of the
+step 11 import, observed rather than introduced here, and it is not what the
+want-list action does.
+
+---
+
+## OBSERVED, NOT ACTED ON — a declined disambiguation leaves no trace
+
+**Reported by Adam (2026-09-07): `/manage` showed an artist with no name
+resolved and ten candidate identities** — English punk rock band, Czech band,
+electro, sound engineer, several with no description at all.
+
+**What state the row is in: none. There is no row.** The ten candidates are
+client-side React state (`LineupAction.tsx:63`), returned by
+`POST /api/artists/:id/lineup` and held only in the open page. The route is
+explicit (`lineup/route.ts:43`): *"anything else -> return the candidates, walk
+nothing, write nothing."* The artist's `musicbrainz_id` is still null, exactly as
+before the click.
+
+- **Waiting on the user?** Only while the page is open. Navigate away and the
+  list is gone; clicking again re-runs the search and shows the same ten.
+- **Anything blocked?** No. The artist contributes no `artist_memberships`, so
+  it is absent from §9.1's shared-member term — it can neither be suggested via
+  lineup nor cause suggestions. Influence edges are unaffected.
+
+**The cost, in Adam's words:** *"'Never tried' and 'tried, ambiguous, ten
+candidates' being identical in the database is the absent-versus-unknown
+distinction again, and it has a specific cost: a decision I decline to make
+leaves no trace, so it cannot be resumed, counted, or listed."*
+
+This project has now hit absent-versus-unknown in five places (the Neon gate,
+the empty-vs-unreadable LLM response, `previous` vs an empty answer, the
+want-list marking, and here). **The novelty is the third state: a decision
+OFFERED and DECLINED.** The first four distinguish absent from broken; this one
+needs absent / declined / resolved, and only the middle one is unrepresentable.
+
+> **TRIGGER — revisit when any of these becomes true:**
+> - `/manage` needs to LIST which artists are awaiting a decision (the
+>   capability that does not exist today, and the one that makes this bite)
+> - a second walk of the same artist should remember it was already ambiguous
+>   rather than re-asking identically
+> - the count of unresolved artists is ever wanted as a number, anywhere
+>
+> Until one of those is real, the current behaviour is defensible: nothing is
+> broken, nothing is lost that the user typed, and a table for a decision
+> nobody has asked to resume is a schema built on speculation. **Cheap when
+> built for a stated need; debris when built for a possible one.**
