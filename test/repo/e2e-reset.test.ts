@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 /**
@@ -34,7 +34,27 @@ describe('the Playwright E2E database reset', () => {
     // Specs run in parallel across two projects against one database. A
     // mid-run truncate would delete another spec's fixtures — the defect
     // `fileParallelism: false` fixed on the vitest side.
-    expect(config).not.toMatch(/globalTeardown/);
+    /*
+     * **The assertion now names the risk instead of banning the hook** (A47).
+     *
+     * It read `expect(config).not.toMatch(/globalTeardown/)` — a PROXY one layer
+     * below the claim its name makes, which is CLAUDE.md §2's recurring defect:
+     * the name is about TRUNCATING, and "no teardown hook exists" is a different
+     * and stricter fact. It rejected A47's teardown, which truncates nothing and
+     * deletes one harness row so the next run is not blocked by a stale hold.
+     *
+     * What the name actually claims is checked instead: no teardown may reset
+     * the database. `truncateAll` and a raw TRUNCATE are both refused, in the
+     * teardown as well as the config.
+     */
+    expect(config).not.toMatch(/TRUNCATE/i);
+
+    const teardown = existsSync('e2e/global-teardown.ts')
+      ? readFileSync('e2e/global-teardown.ts', 'utf8')
+      : '';
+
+    expect(teardown).not.toContain('truncateAll');
+    expect(teardown).not.toMatch(/TRUNCATE\s+TABLE/i);
     expect(setup).not.toContain('beforeEach');
   });
 });

@@ -14,6 +14,10 @@ For every unit of work, follow this sequence without exception:
 
 1. **Restate the task.** One paragraph: what you are about to build, which `SPEC.md` sections govern it, and what is explicitly out of scope for this unit.
 2. **State your plan.** Files you will create or modify, and why. If the plan touches more than 8 files, stop and propose splitting the unit.
+
+   **The count is a PROXY for how much independent judgement a diff contains, and it is sometimes the wrong measure.** A47's unit touched 13 files and was one decision: a shared type gained a field and a rename followed it into every call site. Six were source, five were tests of those six, two were docs. Nothing there could be reviewed separately, because splitting it would have meant shipping a type nothing used or a rename half-applied.
+
+   **So the threshold asks a question rather than forbidding a number:** how many independent judgements is a reviewer being asked to check? Thirteen files carrying one decision is one; five files carrying five is five. **When the count trips on mechanical fan-out — a rename, a type change, a signature that propagates — say so and ask, rather than deciding alone that the rule does not apply.** The asking is the part that is not optional; the number is what starts the conversation, not what settles it.
 3. **Write the tests first.** See §2.
 4. **Run the tests. Watch them fail.** Paste the failure output. A test that has never failed has not been shown to test anything.
 5. **Write the minimum code to pass.** No speculative abstraction, no "while I'm here" refactors, no unrequested features.
@@ -156,6 +160,23 @@ This app is about vinyl records. Several distinctions matter and are easy to fla
 
 - Be direct. Report what is broken plainly.
 - **Never claim something works that you have not run.** If you did not execute the test, say so.
+- **Before believing a number, check what else was running.** Five times in one
+  session a measurement was reported before the apparatus producing it was
+  checked; the worst was a Playwright run and `npm test` sharing one local
+  database, where `truncateAll` wiped the E2E seed data mid-flight and produced
+  **52 bogus E2E failures in specs the diff never touched**, plus phantom unit
+  failures in three unrelated files. Both re-ran clean serially.
+
+  **This is now a MECHANISM and not a rule to remember** — `test/helpers/db.ts`
+  refuses the second runner outright, naming the owner and pid, because the
+  habit had already been learned and failed anyway (the same argument that
+  produced `run-result.ts`). **Never run the unit suite and Playwright
+  concurrently**; they share `record_collection_test` on port 5433. The guard
+  will now stop you, but a refusal costs a run — so serialise them yourself.
+
+  **A guard is not verified by reading it.** Three defects in this one were
+  invisible to inspection and obvious the moment the scenario was staged for
+  real. Stage it.
 - **Report the summary line, never the exit code.** An exit status is not evidence
   a run passed. Three concealments happened in a single session: a pipeline
   reporting `tail`'s status; a run killed mid-flight that reported 210 of 465

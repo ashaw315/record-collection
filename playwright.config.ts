@@ -13,6 +13,7 @@ export default defineConfig({
    * see e2e/global-setup.ts. Asserted by test/repo/e2e-reset.test.ts.
    */
   globalSetup: './e2e/global-setup.ts',
+  globalTeardown: './e2e/global-teardown.ts',
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   /**

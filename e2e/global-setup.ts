@@ -1,5 +1,5 @@
 import { config } from 'dotenv';
-import { closeTestDb, truncateAll } from '../test/helpers/db';
+import { closeTestDb, holdTestDatabase, truncateAll } from '../test/helpers/db';
 
 /**
  * Resets the E2E database once per Playwright run.
@@ -41,5 +41,17 @@ export default async function globalSetup(): Promise<void> {
   config({ path: '.env.test', quiet: true });
 
   await truncateAll();
+
+  /*
+   * **A47: hold the database for the WHOLE run, not just this setup.**
+   *
+   * `truncateAll` takes a session advisory lock, but that dies with the pool
+   * `closeTestDb()` ends below — so without this the E2E run released the
+   * database before its first test, which is the window a concurrent `npm test`
+   * wiped the seed data in (52 bogus failures across specs the diff never
+   * touched). The row survives the connection; `global-teardown.ts` removes it.
+   */
+  await holdTestDatabase('playwright e2e');
+
   await closeTestDb();
 }

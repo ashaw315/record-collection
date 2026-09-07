@@ -26075,3 +26075,156 @@ changes the wall's lighting** — at that point a baseline has to be regenerated
 anyway, the tolerance question is live, and the cost of the guard is being paid
 in manual looking regardless.
 
+
+---
+
+## A COUNT'S NAME IS A CLAIM — the test-name rule, applied to UI copy
+
+**Noticed in A47 (2026-09-07), diagnosing why a want-listed record was still
+being suggested.**
+
+The staleness line under a stored gap analysis read *"Asked 20 minutes ago,
+before you added 5 records."* The number counted `records` only, deliberately:
+A39 argued that records are what the suggestions are ABOUT, and that a sentence
+carrying two figures is read less than either. Both halves of that were
+defensible when written.
+
+**The defect was that the argument answered a different question.** "What are
+the suggestions about" and "what invalidates this answer" are not the same
+question, and the staleness line is about the second. Want-listing a record
+removes it from the set of gaps exactly as owning it does — so the count read
+zero while the answer had gone stale, and the line actively asserted that
+nothing had changed.
+
+> Adam: *"SPEC §966's reasoning was that records are what suggestions are about,
+> and that is true of what the model reasons over and false of what invalidates
+> its answer."*
+
+**This is CLAUDE.md §2's test-name rule outside of tests.** The table there
+records three assertions that tested a proxy one layer below the claim their
+name made. A number rendered into a sentence has the same shape: the sentence is
+the name, the query is the assertion, and *"before you added 5 records"* is a
+claim that the count did not support. The failure mode is identical and worse in
+one respect — **a wrong test is read by a developer; wrong copy is read by the
+user, and reassures them.**
+
+> **When a number reaches the UI inside a sentence, check the sentence against
+> the query that produced it.** Either count what the sentence claims, or say
+> what was counted. `gapsClosedSince` is named for the event it measures rather
+> than for one of its two sources, which is what stops the next reader
+> reintroducing the same gap.
+
+### The related half: an exclusion enforced on ONE path
+
+The same investigation found the want-list exclusion working perfectly on the
+wire and absent from the screen. Measured rather than assumed — the payload
+carries want-list titles and the prompt states the prohibition.
+
+**A rule enforced when data is WRITTEN is not thereby enforced when it is READ.**
+A stored answer is a claim from the moment it was made, and any rule about "what
+the user has already decided" goes stale the instant the user decides something
+new. Where an answer is persisted and displayed later, ask which of its rules are
+facts about THEN and which are facts about NOW — and re-evaluate the second kind
+at display.
+
+**Worth pairing with the retention coupling A47 created:** the prompt now reads
+the previous answer, so retention depth silently feeds prompt quality. Two
+features now depend on a number that was chosen for one of them.
+
+---
+
+## OBSERVED, NOT ACTED ON — a cross-file flake between two integration files
+
+**Noticed during A47's verification (2026-09-07), out of scope for that unit.**
+
+`test/integration/api/discogs-import.test.ts` and
+`test/integration/api/record-snippet-post.test.ts` are each stable when run
+alone — three consecutive clean runs of each — and fail intermittently when run
+in the same invocation. Observed failure:
+
+```
+FAIL test/integration/api/discogs-import.test.ts > the cover comes across on import
+     > attaches the release cover to the imported record
+```
+
+**Confirmed PRE-EXISTING rather than introduced**, which is the only part that
+was actually established: stashing the A47 changes and running the pair three
+times on unmodified `main` reproduced it (1 failed, then two clean). Neither
+file touches gap analysis.
+
+**Not diagnosed.** No hypothesis was formed about the cause; the shared test
+database and the truncate-between-tests strategy are the obvious place to look
+and were NOT investigated. Recording the reproduction rather than a diagnosis,
+because a guess written here would read like a finding.
+
+> The value of this entry is the reproduction recipe: run those two files
+> together, repeatedly. A flake that needs two named files to appear is
+> invisible to any single-file run, which is the same shape as the
+> spec-scoped-run rule in CLAUDE.md §10.
+
+---
+
+## THE APPARATUS GENERATING THE SIGNAL — now a mechanism, not a habit
+
+**Fifth instance in one session (A47, 2026-09-07), and the one that got a
+guard.**
+
+A Playwright run and `npm test` shared one local database on port 5433.
+`truncateAll` deleted the E2E seed data mid-flight and produced **52 bogus E2E
+failures** across specs the diff never touched, plus two rounds of phantom unit
+failures in three unrelated files. Both suites re-ran clean serially. Nothing was
+wrong with the code.
+
+> Adam: *"the concurrent-run contamination is the fifth instance of the
+> apparatus generating the signal, this session alone... worth asking whether
+> that can be a mechanism rather than a habit, since it has now cost time four
+> or five times."*
+
+**The cheap guard was already known — "check what else is running before
+believing a number" — and knowing it is exactly what did not help.** This is the
+same argument `scripts/run-result.ts` was built on: the exit-code rule was
+written down and then walked into three more times, because *a rule that must be
+remembered fails at the moment it matters, and that moment looks like every
+other moment.*
+
+**So the second runner is REFUSED rather than trusted to notice**
+(`test/helpers/db.ts`):
+
+| mechanism | catches | released by |
+|---|---|---|
+| session advisory lock | a concurrent run sharing one connection | the connection dying (automatic) |
+| `test_run_hold` row + pid | a run spanning connections (E2E closes its setup pool) | `global-teardown.ts`, or swept when the pid is dead |
+
+Neither subsumes the other, which is why both are there.
+
+### Two defects found by MEASURING the guard rather than reasoning about it
+
+Both would have shipped a mechanism that looked right and protected nothing.
+
+1. **The advisory lock alone missed the actual incident.** A session lock dies
+   with its pool, and `global-setup.ts` calls `truncateAll()` then
+   `closeTestDb()` — so E2E held the database for its SETUP and released it
+   before the first test ran. That is precisely the window the contamination
+   happened in. **The guard would have passed the scenario it was written for.**
+
+2. **`truncateAll` erased the guard's own evidence.** `test_run_hold` was not in
+   the exclusion list, so a unit run wiped the hold row on its first reset and
+   then read an empty table — reporting all clear while doing exactly the damage
+   the row exists to prevent. A guard that destroys its own precondition is the
+   silently-destroyed-precondition failure (CLAUDE.md §2), one layer down.
+
+**And a third, found by a test failing only when run with its neighbours:** the
+check was memoised for the whole process, so a runner starting mid-suite was
+invisible. Only the lock acquisition is memoised now; the hold is re-read every
+truncate.
+
+> **A guard is not verified by reading it.** Each of these three was invisible
+> to inspection and obvious the moment the real scenario was staged: start E2E,
+> start `npm test` against it, watch what happens. The final proof was a unit run
+> refused by name and pid while E2E completed clean — the incident, reproduced,
+> and blocked.
+
+**Timing note for anyone re-staging it:** the hold exists for the middle of a
+run, not its edges. A probe at 22 seconds into a 27-second run reads an empty
+table and looks like a broken guard; the window is what was wrong, not the
+mechanism. Sample repeatedly rather than once.

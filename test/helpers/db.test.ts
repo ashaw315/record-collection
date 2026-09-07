@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { parse } from 'pg-connection-string';
 import { Pool } from 'pg';
-import { assertLocalTestDatabase } from './db';
+import { sql } from 'drizzle-orm';
+import { assertLocalTestDatabase, getTestDb } from './db';
 
 /**
  * These tests attack the guard. The previous version of this file confirmed it
@@ -228,5 +229,153 @@ describe('end-to-end: the bypass string never reaches a connection', () => {
     } finally {
       await pool.end();
     }
+  });
+});
+
+/**
+ * **The apparatus generating the signal — made structural rather than
+ * remembered** (A47, 2026-09-07).
+ *
+ * Five times in one session a number was believed before the thing producing it
+ * was checked. The dramatic instance: a Playwright run and `npm test` against
+ * the SAME local database on port 5433, where `truncateAll` deleted the E2E
+ * seed data mid-flight and produced **52 bogus E2E failures** across specs the
+ * diff never touched, plus two rounds of phantom unit failures in three
+ * different files. Both suites re-ran clean serially. Nothing was wrong with
+ * the code; the instrument was measuring itself.
+ *
+ * **"Check what else is running" is a habit, and habits are what this project
+ * has already learned not to rely on** — `run-result.ts` exists because the
+ * exit-code rule was written down and then walked into three more times. A rule
+ * that must be remembered fails at the moment it matters, because that moment
+ * looks like every other moment.
+ *
+ * So the SECOND runner is refused rather than trusted to notice: a session-level
+ * advisory lock is held for the life of the run, and a second `truncateAll`
+ * against the same database cannot take it.
+ */
+describe('concurrent runs against one test database (A47)', () => {
+  /**
+   * Fails against: a `truncateAll` that proceeds while another runner holds the
+   * lock — which is the shipped behaviour this guards, and the one that produced
+   * 52 failures in code that was fine.
+   */
+  it('refuses to truncate while another runner holds the database', async () => {
+    const { assertExclusiveTestDatabase, TRUNCATE_LOCK_KEY } = await import('./db');
+
+    const connectionString = process.env.TEST_DATABASE_URL;
+    if (connectionString === undefined) return;
+
+    // A SEPARATE connection standing in for the other suite's runner.
+    const rival = new Pool({ connectionString });
+
+    try {
+      const { rows } = await rival.query<{ locked: boolean }>(
+        'SELECT pg_try_advisory_lock($1::bigint) AS locked',
+        [TRUNCATE_LOCK_KEY],
+      );
+      expect(rows[0].locked, 'the rival should hold the lock').toBe(true);
+
+      await expect(assertExclusiveTestDatabase()).rejects.toThrow(/another test run/i);
+    } finally {
+      await rival.query('SELECT pg_advisory_unlock_all()');
+      await rival.end();
+    }
+  });
+
+  /**
+   * Fails against: a guard that refuses when nothing else is running — which
+   * would make every ordinary run fail and get the mechanism deleted.
+   */
+  it('permits the run when nothing else holds the database', async () => {
+    const { assertExclusiveTestDatabase } = await import('./db');
+
+    if (process.env.TEST_DATABASE_URL === undefined) return;
+
+    await expect(assertExclusiveTestDatabase()).resolves.toBeUndefined();
+  });
+
+  /**
+   * Fails against: a guard that takes the lock and drops it, so the window it
+   * protects closes the moment it is checked.
+   *
+   * **The lock must be held for the LIFE of the run**, because the contention it
+   * prevents happens between tests, not at startup.
+   */
+  it('holds the lock rather than releasing it after checking', async () => {
+    const { assertExclusiveTestDatabase, TRUNCATE_LOCK_KEY } = await import('./db');
+
+    const connectionString = process.env.TEST_DATABASE_URL;
+    if (connectionString === undefined) return;
+
+    await assertExclusiveTestDatabase();
+
+    const rival = new Pool({ connectionString });
+    try {
+      const { rows } = await rival.query<{ locked: boolean }>(
+        'SELECT pg_try_advisory_lock($1::bigint) AS locked',
+        [TRUNCATE_LOCK_KEY],
+      );
+      expect(rows[0].locked, 'a rival must NOT be able to take the held lock').toBe(false);
+    } finally {
+      await rival.query('SELECT pg_advisory_unlock_all()');
+      await rival.end();
+    }
+  });
+});
+
+/**
+ * **The gap the first version of this guard left, found by measuring it** (A47).
+ *
+ * A session advisory lock dies with its connection. `e2e/global-setup.ts` calls
+ * `truncateAll()` then `closeTestDb()`, so the E2E run held the lock for its
+ * SETUP and released it before a single test ran — which is precisely the window
+ * the incident happened in. The guard would have passed the scenario it was
+ * written for.
+ *
+ * So E2E holds the database through a lock that survives the pool: a row, with
+ * the owner's pid, removed when the run ends.
+ */
+describe('the E2E hold outlives its setup connection (A47)', () => {
+  it('still blocks a unit run after the setup pool has closed', async () => {
+    const { holdTestDatabase, releaseTestDatabase, assertExclusiveTestDatabase, closeTestDb } =
+      await import('./db');
+
+    if (process.env.TEST_DATABASE_URL === undefined) return;
+
+    await holdTestDatabase('e2e');
+    // What `global-setup.ts` does immediately afterwards.
+    await closeTestDb();
+
+    /*
+     * **Rewritten to a DIFFERENT pid**, because the hold deliberately exempts
+     * its own process — a run must not block itself between `globalSetup` and
+     * its tests. `process.pid + 1` stands in for the other runner; the row is
+     * what survives, which is the property under test.
+     *
+     * `ppid` rather than an invented number: `currentHolder` clears a hold whose
+     * process is gone, so a fake pid would be swept as dead and the guard would
+     * correctly let the run through — testing the sweep instead of the block.
+     */
+    const db = getTestDb();
+    await db.execute(sql`UPDATE test_harness.run_hold SET pid = ${process.ppid} WHERE id = 1`);
+
+    try {
+      await expect(assertExclusiveTestDatabase()).rejects.toThrow(/another test run/i);
+    } finally {
+      await releaseTestDatabase();
+    }
+  });
+
+  it('lets the next run proceed once released', async () => {
+    const { holdTestDatabase, releaseTestDatabase, assertExclusiveTestDatabase } =
+      await import('./db');
+
+    if (process.env.TEST_DATABASE_URL === undefined) return;
+
+    await holdTestDatabase('e2e');
+    await releaseTestDatabase();
+
+    await expect(assertExclusiveTestDatabase()).resolves.toBeUndefined();
   });
 });
