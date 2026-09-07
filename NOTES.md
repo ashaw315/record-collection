@@ -26228,3 +26228,54 @@ truncate.
 run, not its edges. A probe at 22 seconds into a 27-second run reads an empty
 table and looks like a broken guard; the window is what was wrong, not the
 mechanism. Sample repeatedly rather than once.
+
+---
+
+## THE MODEL'S PROSE AS A UI CHANNEL — cheaper and more specific than a badge
+
+**Observed by Adam (2026-09-07) across three live gap analyses, after A47 gave
+the prompt the previous answer.**
+
+Discharge recurred in all three asks, and the model said why each time: *"still
+the most conspicuous gap flagged last time"*, *"worth raising again"*. The
+permissive instruction asked it to disclose a repeat, and the disclosure turned
+out to carry more than the instruction was written for.
+
+> Adam: *"A design session would have had to invent a visual treatment for
+> 'suggested before, still true'; the model saying it in prose is cheaper and
+> more specific than any badge would be."*
+
+**The badge that was never needed.** A repeat is a state a UI would ordinarily
+mark — an icon, a "seen before" tag, a muted row. Every one of those is
+GENERIC: it says a repeat happened, not which gap survived or why. The prose
+says *this* record is still the most conspicuous absence, which is the fact the
+reader actually wants, and it costs one line of prompt rather than a design
+decision, a component and a test.
+
+> **When a model is already writing a reason, ask whether the state you are
+> about to render is something it could say better.** A generic marker beside a
+> specific sentence is noise with a credibility cost — the same rule the variant
+> limit states for caveats. This is the fourth instance of the project's most
+> reusable pattern: *the app never asserts what it cannot check; it puts the
+> material where a person can judge it.*
+
+**The limit, so this is not over-read.** It works because the model is producing
+prose ANYWAY and the state is one it can observe (it was told what it said last
+time). It does not generalise to states the model cannot see — a want-listed
+record is marked in the UI precisely because the stored answer predates the
+want-listing and no prompt could have known. **Prose for what the model knows;
+markup for what only the app knows.** A47 shipped both, one for each.
+
+### The verification note this closes
+
+The prompt change could not be verified in-session: everything the suite asserts
+is about prompt TEXT and transport, and whether a model reaches past its own
+previous answer is not observable from inside a fixture. Three live asks settled
+it — three different sets, repeats marked as repeats, and the tail opening
+(Augustus Pablo, Nicolas Jaar, MGMT reached in ask 3, all unreachable under the
+fixed ranking).
+
+> **Some claims are only testable by the person with the running system, and
+> saying so is part of reporting the work.** The alternative is a green suite
+> standing in for a verification it cannot perform — the proxy-assertion failure
+> at the level of a whole feature.

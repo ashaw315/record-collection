@@ -988,6 +988,24 @@ Both were specified in §9.1 and are not scored. Each is recorded with what it n
 
   The instruction is permissive, never prohibitive: naming the previous suggestions and saying they may be repeated **if still the most worth naming** preserves the gap that is genuinely still a gap, while asking the model to look past what it has already said when it can. A prohibition would suppress real gaps, which is exactly what the original decision protected.
 
+  **MEASURED against the live model (Adam, 2026-09-07), and this is the only test that could settle it.** Everything asserted in the test suite is about the prompt TEXT and the transport; whether a model actually reaches past its own previous answer is not observable from inside a fixture. Three consecutive asks over one collection:
+
+  | ask | suggestions |
+  |---|---|
+  | 1 | Discharge, Black Sabbath, Chic, Brian Eno, Herbie Hancock, Minor Threat |
+  | 2 | Massive Attack, Miles Davis, Mahavishnu Orchestra, The Doors, Public Enemy, Discharge |
+  | 3 | Discharge, MGMT, Herbie Hancock, Chic, Augustus Pablo, Nicolas Jaar |
+
+  **Three different sets, and the repeats are marked AS repeats** — Discharge recurs all three times with reasons saying so ("still the most conspicuous gap flagged last time", "worth raising again"). That is the model repeating DELIBERATELY because the gap still stands, which is exactly what the permissive framing was for: the distinction between honest consistency and an inaccessible tail now renders as copy rather than being invisible.
+
+  **And the tail opened.** Ask 3 reached Augustus Pablo for Dub, Nicolas Jaar, and MGMT's debut — records unreachable by any number of asks under the fixed ranking. That was the concrete cost being paid, and it is no longer paid.
+
+- **A repeated suggestion explains ITSELF, in prose, and no visual treatment should replace that (A47, 2026-09-07).** Observed by Adam across the three asks above: the model's reason for a repeat is doing work no other channel could. "Still the most conspicuous gap flagged last time" is specific to THIS record on THIS ask — it names which gap and why it survived — where a badge reading "suggested before" would be generic, and a design session would have had to invent one.
+
+  **The cheaper mechanism is the one already present.** The prompt asks the model to say when it is repeating; it does, and it says something a UI element could not. **This is the same shape as §9.2's reason field generally and A40's stated-not-rated rule** — the app puts the material where the reader can judge it rather than compressing a specific claim into a generic marker.
+
+  **Carried to the design pass as a CONSTRAINT, not a problem to solve there:** when that work reaches `/suggestions`, a repeat needs no badge, no icon and no "seen before" styling. If a marker is added anyway it must not displace the reason, because the reason is the part carrying the information. A badge alongside a sentence that already says it better is noise with a credibility cost, which is the rule §12 step 14c's variant limit states for caveats.
+
 - **That action prefills the want-list form; it never writes a row directly.** An LLM suggestion names a record, so unlike §9.1 a title exists — but it is a title the model produced, and §5.7's architecture exists because a client asserting a fact the server can establish is the pattern to eliminate. A model is a less reliable client than a user: it can name a record that does not exist, misattribute one, or invent a pressing. A direct write puts an unverified assertion in the same table as records the user typed, where nothing afterwards distinguishes them.
 
   **Prefilling through `/lookup` was considered and rejected**, though it is the only option where a hallucinated record cannot land. Discogs search is fuzzy and returns something for almost any string, so a hallucinated title finds a near-match and the user confirms a record the model did not mean. That converts a visible failure — a record that does not exist — into an invisible one, a different record blessed by a search. The same shape as a version table whose identical rows read as an answer.
