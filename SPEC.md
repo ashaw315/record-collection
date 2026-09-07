@@ -884,6 +884,21 @@ The proof is above and it is exact: Guitar Heroes and The Notting Hillbillies sh
 
 **What it leaves OPEN:** signals from OUTSIDE the membership graph. MusicBrainz's `tribute` relation is one — it is a different edge type carrying an explicit statement of intent, which is precisely why it works where the count cannot (A48 uses it, catching 2 of 6 measured cases). Release-level data, dates, and the user's own judgement are others. **The rule is not "this cannot be improved" but "it cannot be improved from the membership graph alone."**
 
+#### Derived acts are EXCLUDED, not suppressed (A48, 2026-09-07)
+
+`artist_derived_acts` records a `tribute` or `subgroup` relation between two artists, read from the same MusicBrainz payload the lineup walk already fetches — **no extra request, which is why this signal is free.** A candidate is dropped from §9.1 when it is the DERIVED side of a relation whose ORIGIN the user owns.
+
+**Excluded rather than suppressed, and the asymmetry with the want list is deliberate.** A want-listed candidate keeps its row and loses 3.0 because it is a real suggestion the user has already acted on. A tribute act is not a weak suggestion — it is the band the user already owns under another name, and there is no score at which "you own Dire Straits, consider The Dire Straits Experience" becomes useful. Subtracting a constant would put it on a scale it does not sit on.
+
+**Three things this must not do**, each pinned by a test because each is a plausible over-correction:
+- **Drop a genuine side project.** Broken Bones shares members with Discharge and has no derivation relation; it is the suggestion the feature exists to produce.
+- **Match on the derived artist alone.** A tribute to a band the user has never heard of says nothing about their collection.
+- **Drop the ORIGIN.** Matching either column would hide an unowned original because it happens to have a tribute act — the direction error, one layer up from `normalizeDerivedActs`'s `backward` check.
+
+**These are NOT memberships and must never be written to `artist_memberships`.** That table holds person→group facts; a band in it would inflate the very shared-member count §9.1 reads, corrupting the signal this exists to clean up.
+
+**Coverage is 2 of 6, measured (§9.1's honest limit).** The remaining four carry no such relation and are unreachable by any graph-derived signal. This is a floor, not a fix, and no threshold is specified to close the gap — see §9.1b for why the tail is left alone.
+
 **Weight the shared-member term by people in common**, not by whether any exist: the count is the signal. Ties break on artist name, so the same collection scores the same way on every call.
 
 Return the top `limit` sorted descending, each with a **reason string** assembled from which terms contributed — e.g. "Linked to 3 artists you own; shares 4 members with Discharge."

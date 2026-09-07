@@ -149,6 +149,35 @@ export async function linkTermsForCandidates(): Promise<CandidateLinkTerms[]> {
     FULL OUTER JOIN shared_member_links sml ON sml.artist_id = il.artist_id
     JOIN artists a ON a.id = COALESCE(il.artist_id, sml.artist_id)
     /*
+     * **A48: a band MusicBrainz says derives from one the user OWNS is not a
+     * suggestion, and is dropped rather than scored down.**
+     *
+     * The asymmetry with the want-list suppression below is deliberate. A
+     * want-listed candidate is a REAL suggestion already acted on, so it keeps
+     * its row and loses 3.0. A tribute act is not a weak suggestion — it is the
+     * band the user already owns under another name, and there is no score at
+     * which "you own Dire Straits, consider The Dire Straits Experience" becomes
+     * useful. Subtracting a constant would put it on a scale it does not sit on.
+     *
+     * **The ORIGIN must be owned.** A tribute to a band the user has never heard
+     * of says nothing about their collection, and dropping it would discard a
+     * legitimate suggestion for an unrelated reason.
+     *
+     * **Only the DERIVED side is excluded.** Matching either column would hide
+     * an unowned ORIGINAL because it happens to have a tribute act — the
+     * direction error normalizeDerivedActs guards one layer down, repeated
+     * here because this is where it would actually bite.
+     *
+     * **PARTIAL by measurement: 2 of 6 in Adam's collection** (§9.1). The other
+     * four carry no such relation and are unreachable by any graph-derived
+     * signal. A test naming this as a floor sits beside the ones that pin it.
+     */
+    WHERE NOT EXISTS (
+      SELECT 1 FROM artist_derived_acts d
+       WHERE d.derived_artist_id = a.id
+         AND d.origin_artist_id IN (SELECT id FROM owned)
+    )
+    /*
      * A27: ties break on artist name so the same collection scores the same way
      * on every call — §8.2's determinism rule, which outlived the feature it was
      * written for. a.id last makes the order total even when two artists share

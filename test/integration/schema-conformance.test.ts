@@ -64,6 +64,16 @@ describe('§4 conformance — cascade directions', () => {
    */
   it('matches §4.2 and §4.3 exactly, including additions', async () => {
     expect(await foreignKeys()).toEqual([
+      /*
+       * §9.1's `artist_derived_acts` (A48). Both FKs CASCADE, for the reason
+       * §4.3 gives for memberships: this row is a LINK between two artists, not
+       * an entity, so it is meaningless once either endpoint is gone. Deleting
+       * an artist must not be blocked by a derivation claim about them, and a
+       * dangling row would silently suppress — or stop suppressing — a
+       * candidate whose partner no longer exists.
+       */
+      'artist_derived_acts.derived_artist_id -> artists: CASCADE',
+      'artist_derived_acts.origin_artist_id -> artists: CASCADE',
       'artist_genres.artist_id -> artists: CASCADE',
       'artist_genres.genre_id -> genres: NO ACTION',
       'artist_influences.source_artist_id -> artists: CASCADE',

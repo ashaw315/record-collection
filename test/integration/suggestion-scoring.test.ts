@@ -1,6 +1,13 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { getTestDb, truncateAll, closeTestDb } from '../helpers/db';
-import { artists, artistInfluences, artistMemberships, records, wantList } from '@/db/schema';
+import {
+  artists,
+  artistDerivedActs,
+  artistInfluences,
+  artistMemberships,
+  records,
+  wantList,
+} from '@/db/schema';
 import { suggestions } from '@/lib/db/queries/suggestions';
 
 /**
@@ -425,5 +432,124 @@ describe('the empty collection', () => {
     const rows = await suggestions({ limit: 10 });
 
     expect(rows).toEqual([]);
+  });
+});
+
+/**
+ * SPEC.md §9.1 (A48, 2026-09-07) — a band MusicBrainz says derives from one you
+ * own is not a suggestion.
+ *
+ * **EXCLUDED, not suppressed, and the asymmetry with the want list is
+ * deliberate.** A want-listed candidate is suppressed because it is still a
+ * REAL suggestion the user has already acted on — the link is true and the row
+ * stays visible. A tribute act is not a weak suggestion; it is the band the
+ * user already owns, under another name. There is no score at which "you own
+ * Dire Straits, consider The Dire Straits Experience" becomes useful, so
+ * subtracting a constant would be pretending it sits on the same scale.
+ *
+ * **Coverage is partial and measured: 2 of 6 in Adam's collection.** The rest
+ * carry no such relation and are unreachable by any graph-derived signal
+ * (§9.1's honest limit). This is a floor, not a fix, and these tests must not
+ * be read as claiming otherwise.
+ */
+describe('a derived act is not a suggestion (A48)', () => {
+  async function derives(originId: string, derivedId: string, kind = 'tribute') {
+    await db.insert(artistDerivedActs).values({
+      originArtistId: originId,
+      derivedArtistId: derivedId,
+      kind,
+    });
+  }
+
+  /**
+   * Fails against the shipped behaviour — the tribute act ranks on its shared
+   * members like any other candidate, which is the defect Adam reported.
+   */
+  it('drops a tribute act of a band you own', async () => {
+    const owned = await makeArtist('Dire Straits');
+    const person = await makeArtist('Chris White');
+    const tribute = await makeArtist('The Dire Straits Experience');
+    await own(owned.id, 'Brothers in Arms');
+    await member(person.id, owned.id, 'sax');
+    await member(person.id, tribute.id, 'sax');
+    await derives(owned.id, tribute.id);
+
+    const rows = await suggestions({ limit: 20 });
+
+    expect(find(rows, tribute.id)).toBeUndefined();
+  });
+
+  it('drops a subgroup (reunion) act too', async () => {
+    const owned = await makeArtist('Black Flag');
+    const person = await makeArtist('Greg Ginn');
+    const flag = await makeArtist('FLAG');
+    await own(owned.id, 'Damaged');
+    await member(person.id, owned.id, 'guitar');
+    await member(person.id, flag.id, 'guitar');
+    await derives(owned.id, flag.id, 'subgroup');
+
+    const rows = await suggestions({ limit: 20 });
+
+    expect(find(rows, flag.id)).toBeUndefined();
+  });
+
+  /**
+   * **The load-bearing test of this unit.** Fails against a fix that drops every
+   * band sharing members — the over-correction that would remove Broken Bones,
+   * which is the suggestion the whole feature exists to produce.
+   */
+  it('KEEPS a genuine side project that shares members', async () => {
+    const owned = await makeArtist('Discharge');
+    const person = await makeArtist('Tezz');
+    const real = await makeArtist('Broken Bones');
+    await own(owned.id, 'Hear Nothing');
+    await member(person.id, owned.id, 'guitar');
+    await member(person.id, real.id, 'guitar');
+
+    const rows = await suggestions({ limit: 20 });
+
+    expect(find(rows, real.id)).toBeDefined();
+  });
+
+  /**
+   * Fails against a suppression keyed on the derived artist alone. The relation
+   * only matters when the ORIGIN is a band the user owns — a tribute to some
+   * band they have never heard of says nothing about their collection, and
+   * dropping it would discard a legitimate suggestion for an unrelated reason.
+   */
+  it('ignores a derivation whose origin is NOT owned', async () => {
+    const owned = await makeArtist('Discharge');
+    const stranger = await makeArtist('Some Band');
+    const person = await makeArtist('Rat');
+    const derived = await makeArtist('A Tribute To Some Band');
+    await own(owned.id, 'Hear Nothing');
+    await member(person.id, owned.id, 'drums');
+    await member(person.id, derived.id, 'drums');
+    await derives(stranger.id, derived.id);
+
+    const rows = await suggestions({ limit: 20 });
+
+    expect(find(rows, derived.id)).toBeDefined();
+  });
+
+  /**
+   * Fails against a fix that drops the ORIGIN instead of the derived act — the
+   * direction error the relation's `backward` handling exists to prevent, one
+   * layer down. An unowned original must still be suggestible.
+   */
+  it('does not drop the ORIGIN when it is the one not owned', async () => {
+    const ownedBand = await makeArtist('Discharge');
+    const person = await makeArtist('Rat');
+    const origin = await makeArtist('An Unowned Original');
+    await own(ownedBand.id, 'Hear Nothing');
+    await member(person.id, ownedBand.id, 'drums');
+    await member(person.id, origin.id, 'drums');
+    // The unowned original has a tribute act somewhere; that must not hide IT.
+    const someTribute = await makeArtist('Its Tribute Band');
+    await derives(origin.id, someTribute.id);
+
+    const rows = await suggestions({ limit: 20 });
+
+    expect(find(rows, origin.id)).toBeDefined();
   });
 });

@@ -109,13 +109,25 @@ export default async function SuggestionsPage() {
            */
           <div className="rounded-md border border-border bg-muted/30 p-4 text-sm">
             <p className="font-medium">Nothing to suggest yet.</p>
+            {/*
+              **A48: this used to name a path that does not exist.** It read
+              "influence edges you record in Manage" and linked there — and
+              /manage has no such control. `artist_influences` has no production
+              entry point at all (§9.1), so the app was directing the user
+              somewhere to do something they cannot do, which is worse than a
+              missing feature: it spends their time proving the app wrong.
+
+              Names only the mechanism that IS reachable, and says plainly that
+              the other is not. A one-line honesty fix; whether influence edges
+              get a UI is a separate product decision.
+            */}
             <p className="mt-1 text-muted-foreground">
-              Suggestions come from two things: influence edges you record in{' '}
+              Suggestions come from band line-ups imported from MusicBrainz — use{' '}
               <Link href="/manage" className="underline underline-offset-2">
                 Manage
-              </Link>
-              , and band line-ups imported from MusicBrainz. Neither is filled in
-              automatically — with both empty there is nothing to reach from.
+              </Link>{' '}
+              to import a band&rsquo;s line-up. Influence edges also count toward
+              suggestions, but there is currently no way to add one in the app.
             </p>
           </div>
         ) : (

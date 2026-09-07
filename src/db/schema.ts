@@ -794,6 +794,54 @@ export const artistMatchCandidates = pgTable(
  * §4.3 asks for is preserved by the constraint below; only its mechanism
  * differs, and every other table here already carries a uuid `id`.
  */
+/**
+ * SPEC.md §9.1 (A48) — a band MusicBrainz says derives from another.
+ *
+ * **A statement of INTENT, which is the one thing the membership graph cannot
+ * carry.** §9.1's honest-limit section: a graph records that two groups share a
+ * person and never why, so any signal from graph shape alone conflates cases
+ * differing only in intention. `tribute` and `subgroup` are MusicBrainz
+ * asserting the relationship's purpose, so they escape that limit — the reason
+ * this works where no weighting of the shared-member count can.
+ *
+ * **A separate table, never a column on `artist_memberships`.** That table holds
+ * person→group facts; this is a band→band claim, and putting FLAG in it as a
+ * "member" of Black Flag would corrupt the very count §9.1 reads.
+ *
+ * **Derived, not authored.** Every row comes from a MusicBrainz payload, so a
+ * re-import must be idempotent — hence the unique pair.
+ */
+export const artistDerivedActs = pgTable(
+  'artist_derived_acts',
+  {
+    id,
+    /** The ORIGINAL — the band that was tributed or spun off from. */
+    originArtistId: uuid('origin_artist_id')
+      .notNull()
+      .references(() => artists.id, { onDelete: 'cascade' }),
+    /** The DERIVED act — the tribute band or reunion project. */
+    derivedArtistId: uuid('derived_artist_id')
+      .notNull()
+      .references(() => artists.id, { onDelete: 'cascade' }),
+    /** `tribute` | `subgroup`, as MusicBrainz classified it. */
+    kind: text('kind').notNull(),
+    ...timestamps,
+  },
+  (t) => [
+    unique('artist_derived_acts_pair_key').on(t.originArtistId, t.derivedArtistId, t.kind),
+    index('artist_derived_acts_derived_artist_id_idx').on(t.derivedArtistId),
+    /*
+     * A band cannot derive from itself. The same structural guard
+     * `artist_match_candidates` uses — a payload naming the artist we asked
+     * about would otherwise make it suppress itself.
+     */
+    check(
+      'artist_derived_acts_no_self_reference',
+      sql`${t.originArtistId} <> ${t.derivedArtistId}`,
+    ),
+  ],
+);
+
 export const artistMemberships = pgTable(
   'artist_memberships',
   {

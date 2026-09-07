@@ -13,6 +13,13 @@ import { z } from 'zod';
  * relationships between artists, and neither is membership. Greg Ginn founded
  * Black Flag AND was a member, but those are two different assertions and only
  * the second is one this table records.
+ *
+ * **`normalizeRelations` still keeps exactly one type; A48 added a SECOND
+ * function rather than widening it.** `normalizeDerivedActs` below reads
+ * `tribute` and `subgroup` for §9.1's suppression — a band-to-band claim, which
+ * is a different shape from a person→group membership and belongs in a
+ * different table. The rule this docblock states is unchanged: nothing but
+ * `member of band` becomes a membership row.
  */
 
 /** The only relation type §4.3's table can hold. */
@@ -151,4 +158,80 @@ export function normalizeRelations(relations: unknown): MembershipRelation[] {
   }
 
   return memberships;
+}
+
+
+/**
+ * Band-to-band relations that state INTENT (SPEC.md §9.1, A48, 2026-09-07).
+ *
+ * **What the membership graph structurally cannot supply.** §9.1's honest-limit
+ * section states it: a graph records that two groups share a person and never
+ * why, so any signal from graph shape alone conflates cases differing only in
+ * intention. Measured proof — Mark Knopfler's Guitar Heroes and The Notting
+ * Hillbillies share the IDENTICAL pair with Dire Straits and are different
+ * things.
+ *
+ * `tribute` and `subgroup` are different: they are MusicBrainz asserting the
+ * relationship's PURPOSE. That is a statement of intent rather than a shape, so
+ * it escapes the limit — which is why this works where no weighting can.
+ *
+ * **NOT memberships, and kept out of that table on purpose.** §4.3's
+ * `artist_memberships` holds person→group facts. Recording FLAG as a "member"
+ * of Black Flag would corrupt the very count §9.1 reads.
+ *
+ * **`founder` and `collaboration` are excluded**, and Minuteflag in the Black
+ * Flag payload is why: a real collaboration between two bands is a legitimate
+ * suggestion, and suppressing it would hide something the user wants.
+ *
+ * **Coverage is PARTIAL and that is measured, not assumed.** Against Adam's
+ * collection this catches 2 of 6 Dire Straits derivatives; the other four carry
+ * no such relation and are unreachable by any graph-derived signal (§9.1). This
+ * is a floor, not a fix.
+ */
+export type DerivedAct = {
+  artistMbid: string;
+  artistName: string;
+  /** `tribute` — a tribute act. `subgroup` — a reunion or offshoot. */
+  kind: 'tribute' | 'subgroup';
+};
+
+const DERIVED_TYPES = new Set(['tribute', 'subgroup']);
+
+export function normalizeDerivedActs(relations: unknown): DerivedAct[] {
+  if (!Array.isArray(relations)) return [];
+
+  const derived: DerivedAct[] = [];
+
+  for (const candidate of relations) {
+    const parsed = rawRelation.safeParse(candidate);
+
+    // One unusable relation must not lose the rest — the same rule
+    // `normalizeRelations` applies, for the same reason.
+    if (!parsed.success) continue;
+
+    const relation = parsed.data;
+
+    if (!DERIVED_TYPES.has(relation.type)) continue;
+    if (relation['target-type'] !== undefined && relation['target-type'] !== 'artist') continue;
+
+    /*
+     * **`backward` only, and the direction is load-bearing.** Asked about a
+     * band, `backward` means the OTHER artist is the tribute to / subgroup of
+     * this one. A `forward` relation says the opposite — that this band derives
+     * from the other — and recording that would let a band mark its own
+     * ANCESTOR as derivable, suppressing the original rather than the copy.
+     *
+     * Same hazard `normalizeRelations` documents for membership direction, in a
+     * new place.
+     */
+    if (relation.direction !== 'backward') continue;
+
+    derived.push({
+      artistMbid: relation.artist.id,
+      artistName: relation.artist.name ?? '',
+      kind: relation.type === 'tribute' ? 'tribute' : 'subgroup',
+    });
+  }
+
+  return derived;
 }

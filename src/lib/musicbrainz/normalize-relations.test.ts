@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { normalizeRelations } from './normalize-relations';
+import { normalizeDerivedActs, normalizeRelations } from './normalize-relations';
 
 /**
  * SPEC.md §12 step 11 and §4.3's `artist_memberships`.
@@ -287,3 +287,85 @@ function relationWith(overrides: Record<string, unknown>) {
     ...overrides,
   };
 }
+
+/**
+ * SPEC.md §9.1 (A48, 2026-09-07) — relations that state INTENT.
+ *
+ * **These are the one thing the membership graph cannot supply.** A graph
+ * records that two groups share a person and never why; `tribute` and
+ * `subgroup` are MusicBrainz asserting the relationship's PURPOSE, which is
+ * exactly the information §9.1's honest-limit section says the count cannot
+ * carry.
+ *
+ * **Not memberships, and deliberately kept out of that table.** §4.3's
+ * `artist_memberships` holds person→group facts; a band-to-band claim is a
+ * different shape and storing it there would make FLAG a "member" of Black
+ * Flag. `normalizeRelations` continues to return memberships only.
+ */
+describe('band-to-band relations that state intent (A48)', () => {
+  const blackFlag = JSON.parse(
+    readFileSync('test/fixtures/musicbrainz/artist-black-flag.json', 'utf8'),
+  ) as { relations: unknown[] };
+
+  it('extracts a tribute act from a real payload', () => {
+    const derived = normalizeDerivedActs(blackFlag.relations);
+
+    expect(derived).toContainEqual(
+      expect.objectContaining({ artistName: 'Black Fag', kind: 'tribute' }),
+    );
+  });
+
+  it('extracts a reunion/subgroup from a real payload', () => {
+    const derived = normalizeDerivedActs(blackFlag.relations);
+
+    expect(derived).toContainEqual(
+      expect.objectContaining({ artistName: 'FLAG', kind: 'subgroup' }),
+    );
+  });
+
+  /**
+   * Fails against a normalizer that also returns `member of band`, `founder` or
+   * `collaboration` — Minuteflag is a real collaboration in this payload and is
+   * NOT a derived act. Suppressing it would hide a legitimate suggestion.
+   */
+  it('returns ONLY tribute and subgroup, not founder or collaboration', () => {
+    const kinds = new Set(normalizeDerivedActs(blackFlag.relations).map((d) => d.kind));
+
+    expect(kinds).toEqual(new Set(['tribute', 'subgroup']));
+  });
+
+  /**
+   * **Direction decides which artist is the derived one**, the same hazard
+   * `normalizeRelations` documents for membership. `backward` from the band we
+   * asked about means the OTHER artist derives from it. A forward relation
+   * would mean this band derives from the other — which must not be recorded as
+   * the other being derivable, or a band would suppress its own ancestor.
+   */
+  it('ignores a FORWARD relation, which points the other way', () => {
+    const forward = [
+      {
+        type: 'tribute',
+        direction: 'forward',
+        'target-type': 'artist',
+        artist: { id: 'x', name: 'The Original Band', type: 'Group' },
+      },
+    ];
+
+    expect(normalizeDerivedActs(forward)).toEqual([]);
+  });
+
+  it('carries the MBID, which is what the suppression joins on', () => {
+    const [first] = normalizeDerivedActs(blackFlag.relations);
+
+    expect(first.artistMbid).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
+  it('survives a malformed relation rather than losing the payload', () => {
+    const mixed = [
+      { type: 'tribute' },
+      ...blackFlag.relations,
+    ];
+
+    expect(normalizeDerivedActs(mixed).length).toBeGreaterThan(0);
+  });
+});

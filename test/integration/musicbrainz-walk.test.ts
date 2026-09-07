@@ -449,3 +449,102 @@ describe('incremental saves — progress the client can observe', () => {
     expect(await count('artist_memberships'), 'and both are there at the end').toBe(2);
   });
 });
+
+/**
+ * SPEC.md §9.1 (A48) — the walk records tribute and subgroup relations.
+ *
+ * **Integration rather than unit, because the claim spans three layers**: the
+ * normalizer must extract them, the walk must resolve the artist and hand them
+ * over, and the save must persist them. A unit test of any one passes while the
+ * wiring between them is missing — which is exactly what shipped before A48:
+ * the relations were in every cached payload and nothing read them.
+ */
+describe('tribute and subgroup relations are recorded (A48)', () => {
+  const TRIBUTE = { id: 'mb-tribute-band', name: 'Dis-charge' };
+  const REUNION = { id: 'mb-reunion', name: 'Discharge Reunited' };
+
+  function derivedRel(band: { id: string; name: string }, type: 'tribute' | 'subgroup') {
+    return {
+      type,
+      direction: 'backward',
+      'target-type': 'artist',
+      artist: { id: band.id, name: band.name, type: 'Group' },
+    };
+  }
+
+  it('writes a row for each, from the band fetch that already happened', async () => {
+    mockMusicBrainz({
+      [DISCHARGE.id]: [
+        memberRel(SHARED),
+        derivedRel(TRIBUTE, 'tribute'),
+        derivedRel(REUNION, 'subgroup'),
+      ],
+      [SHARED.id]: [bandRel(DISCHARGE)],
+    });
+
+    await walkLineup(DISCHARGE.id);
+
+    expect(await count('artist_derived_acts')).toBe(2);
+  });
+
+  /**
+   * Fails against a walk that spends a request per derived act. The whole value
+   * of this signal is that it is FREE — the relations arrive on the band fetch
+   * that the walk already makes, and a per-act request would make a 25-request
+   * walk longer for data already in hand.
+   */
+  it('costs no extra MusicBrainz requests', async () => {
+    const plain = mockMusicBrainz({
+      [DISCHARGE.id]: [memberRel(SHARED)],
+      [SHARED.id]: [bandRel(DISCHARGE)],
+    });
+    await walkLineup(DISCHARGE.id);
+    const withoutDerived = plain.get.mock.calls.length;
+
+    vi.restoreAllMocks();
+    await truncateAll();
+
+    const withActs = mockMusicBrainz({
+      [DISCHARGE.id]: [
+        memberRel(SHARED),
+        derivedRel(TRIBUTE, 'tribute'),
+        derivedRel(REUNION, 'subgroup'),
+      ],
+      [SHARED.id]: [bandRel(DISCHARGE)],
+    });
+    await walkLineup(DISCHARGE.id);
+
+    expect(withActs.get.mock.calls.length).toBe(withoutDerived);
+  });
+
+  /**
+   * Fails against a walk that records a derived act as a MEMBER. §4.3's table
+   * holds person→group facts, and a band in it would inflate the very
+   * shared-member count §9.1 reads — corrupting the signal this fix exists to
+   * clean up.
+   */
+  it('does NOT add them to artist_memberships', async () => {
+    mockMusicBrainz({
+      [DISCHARGE.id]: [memberRel(SHARED), derivedRel(TRIBUTE, 'tribute')],
+      [SHARED.id]: [bandRel(DISCHARGE)],
+    });
+
+    await walkLineup(DISCHARGE.id);
+
+    // Only the one real member, not the tribute band.
+    expect(await count('artist_memberships')).toBe(1);
+  });
+
+  it('is idempotent across a re-walk', async () => {
+    const relations = {
+      [DISCHARGE.id]: [memberRel(SHARED), derivedRel(TRIBUTE, 'tribute')],
+      [SHARED.id]: [bandRel(DISCHARGE)],
+    };
+    mockMusicBrainz(relations);
+
+    await walkLineup(DISCHARGE.id);
+    await walkLineup(DISCHARGE.id);
+
+    expect(await count('artist_derived_acts')).toBe(1);
+  });
+});

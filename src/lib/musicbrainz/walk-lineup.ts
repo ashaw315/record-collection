@@ -1,10 +1,15 @@
 import 'server-only';
 import { MusicBrainzError, getMusicBrainzClient } from './client';
-import { normalizeRelations, type MembershipRelation } from './normalize-relations';
+import {
+  normalizeDerivedActs,
+  normalizeRelations,
+  type MembershipRelation,
+} from './normalize-relations';
 import { readCachedArtist, writeCachedArtist } from './artist-cache';
 import { resolveArtist } from './resolve-artist';
 import { recordMatchCandidates } from '@/lib/db/queries/artist-match-candidates';
 import { saveMemberships } from '@/lib/db/queries/artist-memberships';
+import { saveDerivedActs } from '@/lib/db/queries/artist-derived-acts';
 
 /**
  * Walking a band's lineup (SPEC.md §12 step 11).
@@ -36,6 +41,8 @@ type Fetched = {
   mbid: string;
   name: string;
   relations: MembershipRelation[];
+  /** A48: `tribute`/`subgroup` relations from the same payload. */
+  derived: ReturnType<typeof normalizeDerivedActs>;
   /** The payload as fetched, so a deferred cache write has something to store. */
   raw: unknown;
 };
@@ -47,7 +54,13 @@ async function fetchArtist(
 ): Promise<Fetched> {
   const cached = await readCachedArtist(mbid);
   if (cached !== null) {
-    return { mbid, name, relations: normalizeRelations(cached.relations), raw: cached.payload };
+    return {
+      mbid,
+      name,
+      relations: normalizeRelations(cached.relations),
+      derived: normalizeDerivedActs(cached.relations),
+      raw: cached.payload,
+    };
   }
 
   const client = getMusicBrainzClient();
@@ -68,6 +81,7 @@ async function fetchArtist(
     mbid,
     name: payload.name ?? name,
     relations: normalizeRelations(payload.relations),
+    derived: normalizeDerivedActs(payload.relations),
     raw: payload,
   };
 }
@@ -89,6 +103,27 @@ export async function walkLineup(bandMbid: string): Promise<WalkResult> {
   const band = await fetchArtist(bandMbid, bandMbid, { cache: false });
   const bandArtist = await resolveArtist({ mbid: band.mbid, name: band.name });
   await recordMatchCandidates(bandArtist.artistId, bandArtist.candidateIds);
+
+  /*
+   * **A48: the band's OWN tribute and subgroup relations, from the same
+   * payload.** No extra request — these ride along on the band fetch that
+   * already happened, which is why this signal is free.
+   *
+   * Resolved through `resolveArtist` like any other artist so a derived act
+   * that is already in the collection is matched rather than duplicated. The
+   * candidates it reports are recorded for the same review as everything else.
+   */
+  const derivedActs = [];
+  for (const act of band.derived) {
+    const resolved = await resolveArtist({ mbid: act.artistMbid, name: act.artistName });
+    await recordMatchCandidates(resolved.artistId, resolved.candidateIds);
+    derivedActs.push({
+      originArtistId: bandArtist.artistId,
+      derivedArtistId: resolved.artistId,
+      kind: act.kind,
+    });
+  }
+  await saveDerivedActs(derivedActs);
 
   const members = band.relations.filter((relation) => relation.role === 'person');
   const total = members.length;

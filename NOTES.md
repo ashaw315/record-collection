@@ -26445,3 +26445,42 @@ verification was accepted from reading rather than from staging the scenario, an
 three defects survived until it was actually run. Same root: **a claim about an
 artefact was settled without consulting the artefact.** Both times the correction
 came from doing the cheap concrete thing — read the loop; stage the run.
+
+---
+
+## OBSERVED, NOT ACTED ON — a sort-control flake under full-suite load
+
+**Seen during A48's verification (2026-09-07), out of scope for that unit.**
+
+`e2e/collection-filters.spec.ts:427` — *"clicking through to a filtered view
+equals loading that URL directly"* — failed twice (original plus retry) in a full
+465-test run:
+
+```
+expect(locator).toHaveValue(expected) failed
+Locator: getByLabel('Sort by')
+Expected: "releaseYear:desc"   Received: ""
+14 x locator resolved to <select id="collection-sort" ...> - unexpected value ""
+```
+
+The select RESOLVES and its value is empty, so this is the control rendering
+before its value is applied — a hydration/timing shape rather than a wrong URL.
+
+**Not reproducible in isolation:** the whole spec file passes (20 passed, 2
+skipped), and the mobile project alone passed three consecutive runs (10 passed
+each). It appeared only under the parallel load of the full suite.
+
+**Confirmed unrelated to A48** rather than assumed: that spec references neither
+suggestions nor derived acts, and A48 touches the suggestion query, the
+MusicBrainz walk and one new table.
+
+> **A stash-based A/B was attempted and was INVALID** — stashing removed
+> migration 0025, so the schema no longer matched and the spec SKIPPED rather
+> than running. A skip is not a pass, and reading it as one would have been the
+> absent-versus-broken failure inside the verification method itself. Recorded
+> because the trick is otherwise a good one and this is its failure mode: **a
+> stash that removes a migration changes the schema, so any schema-dependent
+> spec silently stops testing.**
+
+Second flake recorded this session that needs concurrency to appear (see the
+`discogs-import`/`record-snippet-post` pair). Neither is diagnosed.
