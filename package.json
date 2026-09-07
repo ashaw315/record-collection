@@ -13,6 +13,8 @@
     "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate && npm run db:verify:state",
+    "db:deploy": "drizzle-kit migrate && npm run db:verify:state && next build",
+    "_db:deploy": "MIGRATE, VERIFY, THEN BUILD. The order is the mechanism: a failed migration must fail the deploy before an artifact exists to ship. Verifying between them is not optional -- drizzle-kit prints success and exits 0 when a diverged ledger made it apply nothing.",
     "db:verify": "vitest run test/repo/migrations-complete.test.ts",
     "db:test:up": "docker compose up -d --wait postgres",
     "db:test:reset": "docker compose down postgres && docker compose up -d --wait postgres && NODE_ENV=test drizzle-kit migrate && NODE_ENV=test npm run db:verify:state",

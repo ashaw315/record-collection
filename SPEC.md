@@ -1634,6 +1634,56 @@ Mock the Discogs, MusicBrainz and Anthropic APIs in tests. Never hit live extern
 15. Mobile pass across all screens. E2E #10. **Unit 1 was the E2E flake, fixed by per-spec cleanup rather than the per-worker isolation originally prescribed** — see below.
 16. Vercel deploy config + cron for price refresh.
 
+    **THE DEPLOY APPLIES MIGRATIONS (A49, 2026-09-07).** `buildCommand` is
+    `npm run db:deploy` — `drizzle-kit migrate && db:verify:state && next build`.
+
+    **Why this is a mechanism and not a reminder.** Code deployed automatically
+    on push; schema migrated by hand. Nothing sequenced them, so every schema
+    change had a window where the deployed code was ahead of the deployed
+    schema. NOTES recorded three options and predicted the serious failure; it
+    then arrived exactly as described. A48 shipped a write to
+    `artist_derived_acts`, the migration was never applied to production, and a
+    lineup import returned a live 500 — `42P01 relation does not exist`,
+    surfaced to the user as "Internal server error" because nothing catches a
+    database fault on that path.
+
+    "Migrate before push" is a habit, and it is the thing that failed. "Tolerate
+    the column's absence" buys a silently-no-op write, which is the
+    absent-versus-unknown failure this project keeps naming. **The two must not
+    be able to separate**, so one command does both.
+
+    **The ORDER is the mechanism**: migrate, verify, then build. A build that
+    compiled first would still ship code ahead of schema when the migration
+    failed, because the artifact exists and Vercel deploys it. Verifying between
+    the two is not optional — `drizzle-kit migrate` prints "migrations applied
+    successfully" and exits 0 when a diverged ledger made it apply nothing, which
+    three databases in this project have reached.
+
+    **A failed migration now fails the deploy.** That is the intended behaviour
+    rather than a cost: the alternative is a deploy that succeeds into a schema
+    the code cannot use, which is precisely what just happened.
+
+    **THE DESTRUCTIVE CASE, which is why this was deferred and is the part that
+    needed thinking through.** Schema-first is correct for an ADDITIVE migration
+    and inverts for a destructive one: dropping a column before the new code
+    deploys breaks the running code in the window between migrate and build. The
+    deploy gate does not fix that, and must not be read as fixing it.
+
+    **The rule that resolves it, which §7 already half-states:** a destructive
+    change is TWO deploys, never one. Deploy 1 ships code that no longer reads
+    the column, with no migration. Deploy 2 drops it. Each is additive-safe on
+    its own, and the window between them is a schema carrying one unused column
+    rather than an outage. This is the standard expand/contract discipline and it
+    is the only shape under which "migrate before build" is safe in both
+    directions — which is exactly why §7's "never write a destructive migration
+    without flagging it and getting confirmation first" is load-bearing rather
+    than ceremonial: the confirmation is where the two-deploy split gets planned.
+
+    **What this does NOT cover, stated so nobody assumes it does:** a migration
+    that succeeds and is wrong, a long migration exceeding the build timeout, and
+    a rollback of code to a version older than the schema. Each is a real gap and
+    none is closed here.
+
 **Why 10 and 11 come before 12.** The original order put the graph immediately after the stats screen, and it read its edges from `artist_influences` — a table nothing populated automatically. Built in that order it would have rendered unconnected dots, with no way to tell whether the layout or the clustering was at fault. Seeding first made it verifiable, and what that verification eventually showed was that the screen was not worth keeping (§8) — which is a better outcome than shipping it blind. Step 11's membership data survives the screen and now feeds §9. Market data moved ahead of both because it has no dependency at all and answers the question the app exists for.
 
 **Deferred out of step 13, each with a trigger.** These are §10b features, built later rather than never:

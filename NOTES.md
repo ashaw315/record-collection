@@ -26484,3 +26484,78 @@ MusicBrainz walk and one new table.
 
 Second flake recorded this session that needs concurrency to appear (see the
 `discogs-import`/`record-snippet-post` pair). Neither is diagnosed.
+
+---
+
+## A GREEN SUITE CANNOT SEE THE SCHEMA IT DEPLOYS AGAINST
+
+**A48/A49, 2026-09-07. The predicted failure arrived, and the useful finding is
+what the verification could not have caught.**
+
+A48 shipped `saveDerivedActs` writing to `artist_derived_acts`. Locally: 3406
+unit tests passing, 445 E2E passing, typecheck, lint and build clean, migration
+generated and applied. In production the table did not exist, and the first
+lineup import Adam ran by hand returned a live 500 — `42P01 relation
+"artist_derived_acts" does not exist`, surfaced as "Internal server error"
+because nothing on the walk catches a DATABASE fault.
+
+> Adam: *"the test database has migrations applied automatically and production
+> does not, so a green suite proves the code is correct given the schema and says
+> nothing about whether the schema exists where it deploys. That is a gap no
+> amount of testing closes, because the thing being tested is not the thing that
+> ships."*
+
+**That is the shape, and it generalises past this bug.** Every test in this repo
+runs against a database that `vitest.config.mts` migrates on startup. The
+schema is therefore a GUARANTEED PRECONDITION of the test run and a VARIABLE of
+the deployment. The suite cannot fail on a missing migration because the harness
+supplies the migration. **More tests, better tests, and a stricter suite all
+leave this exactly where it is** — the property is about what the harness
+provides, not about coverage.
+
+> **When a test's environment guarantees something production does not, that
+> thing is invisible to the whole suite.** Testing cannot close it; only a
+> mechanism outside the tests can. Ask of any fixture: what does this SUPPLY that
+> the real environment merely HAPPENS to have?
+
+This is the same family as the run-result and apparatus findings — an instrument
+reporting on something other than the thing under test — but sharper, because
+here the instrument is *correct* and simply cannot observe the variable.
+
+### What was built (A49), and why it is not a fourth reminder
+
+`vercel.json` sets `buildCommand: npm run db:deploy` —
+`drizzle-kit migrate && db:verify:state && next build`. Code and schema can no
+longer separate, because one command does both.
+
+The three options were recorded before this bit, and the recording was right:
+
+| option | verdict |
+|---|---|
+| migrate before push | **a habit, not a mechanism — the thing that just failed** |
+| tolerate the column's absence | buys a silently-no-op write: absent-versus-unknown again |
+| **make the deploy apply the migration** | called "probably the honest one"; deferred pending the destructive case |
+
+**The deferral is what cost the 500.** The note named the trigger — *"the next
+schema change"* — and the next schema change is the one that broke production.
+A deferral with a trigger is only as good as noticing the trigger fired, and
+nothing was watching for it. **That is an argument for building the mechanism at
+the moment the analysis is done, when the reasoning is loaded, rather than
+recording a conclusion and a condition.**
+
+### The destructive case, resolved rather than deferred again
+
+Schema-first is right for an ADDITIVE migration and inverts for a destructive
+one: dropping a column before the new code deploys breaks the running code. The
+resolution is expand/contract — **a destructive change is TWO deploys, never
+one.** Deploy 1 ships code that stops reading the column. Deploy 2 drops it. Each
+is additive-safe alone, and the gap between them is an unused column rather than
+an outage.
+
+That makes CLAUDE.md §7's "never write a destructive migration without flagging
+it and getting confirmation first" load-bearing rather than ceremonial: **the
+confirmation is where the two-deploy split gets planned.**
+
+**Not closed, and named so nobody assumes otherwise:** a migration that succeeds
+and is wrong, a migration exceeding the build timeout, and a code rollback to a
+version older than the schema.
