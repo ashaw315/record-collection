@@ -26948,3 +26948,75 @@ because sharing a member is what makes something a candidate at all. Dire
 Straits' derivatives employ Alan Clark and Chris White; The Doors' fourteen
 tribute bands are strangers to The Doors. So the filter is correctly built and
 structurally narrow, and the row count cannot show that — only the join can.
+
+---
+
+## MEASURED BEFORE BUILDING — what a Person walk would actually yield
+
+**Adam's instruction: "Measure what a Person walk would actually yield on Miles
+Davis before building the write path." It changes what the unit should be.**
+
+Miles Davis's 11 `member of band` relations, all `direction: forward`:
+
+```
+Miles Davis Quintet    Miles Davis Septet     Miles Davis All Stars
+Miles Davis Sextet     The Miles Davis Nonet  Miles Davis Group
+Miles Davis Quartet    Miles Davis and His Orchestra
+Miles Davis and His Band
+Charlie Parker Quintet    <-- not his own
+Charlie Parker Septet     <-- not his own
+```
+
+**NINE OF ELEVEN ARE HIS OWN NAMED ENSEMBLES.** That is the Dire Straits
+derivation problem in a new form: "Miles Davis Quintet" is not a discovery for
+someone who owns Miles Davis, any more than The Notting Hillbillies is for
+someone who owns Dire Straits. The two Charlie Parker groups are the real reach.
+
+**And every one becomes a candidate immediately.** A candidate must share a
+member with an owned artist; Miles is owned and is in all eleven, so all eleven
+qualify at `people=1` — the weakest tier, where 39 of the current 55 candidates
+already sit. **A Person walk as specified would add ~11 candidates of which 9 are
+the artist's own ensembles.**
+
+### The lineups, measured on 3 of 11 (throttling stopped the rest)
+
+```
+Miles Davis Quintet     14 members   (Coltrane, Hancock, Ron Carter, Shorter, Corea...)
+Charlie Parker Quintet   7 members
+Miles Davis Nonet       17 members
+--> 34 distinct people from 3 groups; ~90-120 projected across all 11
+```
+
+**Cost: 12 requests for the groups; ~112 to follow every person.** The groups-only
+walk is cheap and the full depth is not.
+
+### Whether convergence would fire — the honest answer is NOT FROM THIS ALONE
+
+Convergence needs a candidate reaching TWO owned artists. Checked against the
+real owned list (Buddy Rich, Darkside, Death Grips, Dire Straits, Discharge,
+Donna Summer, Donovan, Jeff Beck, John Lennon, Luther Vandross, MGMT, Miles
+Davis, Simon & Garfunkel, Smerz, Steely Dan, The Blues Project, The Doors):
+**of the 34 people found, the only owned artist is Miles Davis himself.**
+
+So a Miles walk alone produces 11 candidates all reaching exactly one owned
+artist. **Convergence fires only if a SECOND owned Person is walked and their
+groups share a player** — Buddy Rich and Jeff Beck are the plausible pairs, both
+Person-type, both unwalked.
+
+> **The correction to my own earlier claim:** I told Adam the session-heavy
+> artists were "most likely to make convergence fire". Measured, a single Person
+> walk cannot make it fire at all — it produces one-hop candidates like every
+> other walk. What it does is make convergence POSSIBLE, by putting a second kind
+> of artist into the graph. The claim was directionally right and overstated in
+> the way that matters: it named a cause where it should have named a
+> precondition.
+
+### What this means for the unit
+
+Three things it should NOT do:
+1. **Suggest the artist's own ensembles.** Nine of eleven for Miles. The tribute
+   suppression is the wrong mechanism (these are not tributes) — a name-based
+   rule is not available either (§9.1's honest limit). **Open question, not
+   solved here.**
+2. **Follow every person by default.** 112 requests against a 60s cap.
+3. **Report "0 members." for a Person.** The silent zero Adam named.

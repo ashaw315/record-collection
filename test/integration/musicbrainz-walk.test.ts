@@ -548,3 +548,73 @@ describe('tribute and subgroup relations are recorded (A48)', () => {
     expect(await count('artist_derived_acts')).toBe(1);
   });
 });
+
+/**
+ * SPEC.md §12 step 11 (A52, 2026-09-08) — a zero must say WHICH zero.
+ *
+ * **The silent-zero defect, named by Adam:** a walk that follows nobody and
+ * reports success is "the app saying it did something it did not do". Three
+ * different states currently render identically as `0 members.`:
+ *
+ *   1. a PERSON — `walkLineup` follows `role === 'person'` relations, and every
+ *      relation on a Person is `role: 'group'`, so it follows nobody. Measured:
+ *      Miles Davis has 11 groups and would report "0 members."
+ *   2. a GROUP MusicBrainz has no lineup for — nothing to follow, honestly
+ *   3. a group whose lineup was fetched and was genuinely empty
+ *
+ * **This is the same absent-versus-unknown shape as the progress count**, in the
+ * same feature — which is Adam's point that fixing the walk without fixing what
+ * it reports leaves the next silent case just as silent.
+ */
+describe('a zero says which zero it is (A52)', () => {
+  const MILES = { id: 'mb-miles', name: 'Miles Davis' };
+  const QUINTET = { id: 'mb-quintet', name: 'Miles Davis Quintet' };
+
+  /**
+   * Fails against the shipped text, which reports `0 members.` for a Person and
+   * so cannot be told from a band with no lineup.
+   */
+  it('says a PERSON is not a band, rather than reporting zero members', async () => {
+    mockMusicBrainz({
+      // A Person's relations are all `forward` — the groups they were in.
+      [MILES.id]: [bandRel(QUINTET)],
+    });
+
+    const result = await walkLineup(MILES.id);
+
+    expect(result.text).not.toMatch(/^0 members/);
+    expect(result.text).toMatch(/person|not a band|line-?up/i);
+  });
+
+  /**
+   * Fails against a fix that reports every zero the same way. A group
+   * MusicBrainz has no lineup for is a DIFFERENT fact from a person, and
+   * collapsing them reintroduces the defect one level up.
+   */
+  it('distinguishes a group with no lineup from a person', async () => {
+    mockMusicBrainz({ [DISCHARGE.id]: [] });
+
+    const result = await walkLineup(DISCHARGE.id);
+
+    expect(result.text).toMatch(/no line-?up|no members/i);
+    expect(result.text).not.toMatch(/person/i);
+  });
+
+  /**
+   * Fails against a walk that reports a Person as a successful zero-member
+   * walk. `partial` is the field the UI reads to decide whether to offer a
+   * retry, and a Person is neither complete nor interrupted — it is unhandled.
+   */
+  it('does not cache a Person as a completed walk', async () => {
+    mockMusicBrainz({ [MILES.id]: [bandRel(QUINTET)] });
+
+    await walkLineup(MILES.id);
+
+    /*
+     * Caching a Person would freeze the "we cannot walk this" answer for 90
+     * days — so when the Person path IS built, a re-walk would read the cache
+     * and do nothing. The same reasoning that stops a partial walk caching.
+     */
+    expect(await readCachedArtist(MILES.id)).toBeNull();
+  });
+});

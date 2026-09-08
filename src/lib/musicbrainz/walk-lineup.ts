@@ -128,6 +128,40 @@ export async function walkLineup(bandMbid: string): Promise<WalkResult> {
   const members = band.relations.filter((relation) => relation.role === 'person');
   const total = members.length;
 
+  /*
+   * **A52: a PERSON is not a band, and saying "0 members." would be a lie.**
+   *
+   * `walkLineup` follows `role === 'person'` relations — the people IN a group.
+   * Every membership relation on a PERSON points the other way (`role: 'group'`,
+   * the bands they were in), so a Person walk follows nobody, writes nothing and
+   * currently reports success with a zero. Measured: Miles Davis has 11 groups
+   * and reports "0 members."
+   *
+   * **Three states rendered identically before this**, which is the
+   * absent-versus-unknown shape in the same feature as the progress count: a
+   * Person, a group MusicBrainz has no lineup for, and a group whose lineup is
+   * genuinely empty. They are different facts and the user can act on only one
+   * of them.
+   *
+   * **Not walked, not cached, and SAID.** Caching would freeze "cannot walk
+   * this" for 90 days, so the Person path — when it is built — would read the
+   * cache and do nothing. The same reasoning that stops a partial walk caching.
+   */
+  const groupsThisPersonWasIn = band.relations.filter((relation) => relation.role === 'group');
+
+  if (total === 0 && groupsThisPersonWasIn.length > 0) {
+    return {
+      artistId: bandArtist.artistId,
+      checked: 0,
+      total: 0,
+      partial: false,
+      text:
+        `This is a person, not a band — MusicBrainz lists ${groupsThisPersonWasIn.length} ` +
+        `group${groupsThisPersonWasIn.length === 1 ? '' : 's'} they played in. ` +
+        'Walking a person is not supported yet, so nothing was imported.',
+    };
+  }
+
   let checked = 0;
   let stopped = false;
 
@@ -226,8 +260,15 @@ export async function walkLineup(bandMbid: string): Promise<WalkResult> {
      * denominator is known from the band's own relation list before any member
      * is fetched, so the honest sentence is always available.
      */
+    /*
+     * **A52: a genuine zero is named as one.** A group MusicBrainz has no lineup
+     * for is a real answer and a different fact from the Person case above —
+     * reporting both as "0 members." is the collapse this unit exists to undo.
+     */
     text: partial
       ? `Checked ${checked} of ${total} members before MusicBrainz stopped responding. There may be more.`
-      : `${total} member${total === 1 ? '' : 's'}.`,
+      : total === 0
+        ? 'MusicBrainz has no line-up recorded for this band, so no members were imported.'
+        : `${total} member${total === 1 ? '' : 's'}.`,
   };
 }
