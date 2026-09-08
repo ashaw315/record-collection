@@ -26697,3 +26697,66 @@ routinely mistaken for a guard against both.** The comment above the query named
 multi-instrument as the hazard; rejoining was never mentioned, and the test
 followed the comment. When a defect class has several causes, pin each cause —
 not the symptom once.
+
+---
+
+## OBSERVED, NOT ACTED ON — a progress count cannot say finished from dead
+
+**Reported by Adam (2026-09-08): The Doors "stalls at 4 members and does not
+progress. Reloading and re-clicking resumes at the same count."**
+
+**The walk had finished.** The Doors has exactly four members in MusicBrainz, all
+four were written, and three independent facts confirm completion: the payload
+carries 4 member relations (not 4-of-many); the band payload IS cached, and
+`walk-lineup.ts` caches the band only on a COMPLETE walk, deliberately, so a
+cut-short one is retried; and every member was followed into their other bands —
+Krieger, Manzarek and Densmore each reached 4 bands, Morrison 2 — which is the
+member-following step Adam believed was failing. 14 membership rows, 24 artists
+created including Manzarek-Krieger, Nite City, Butts Band and Zun.
+
+Re-clicking resumes at the same count because the work is done and the writes are
+idempotent (§4.3). A re-walk adds nothing, so nothing moves.
+
+### The defect is in the REPORTING, not the walking
+
+`/api/artists/:id/lineup/progress` returns committed rows — a number that stops
+moving on success and on death alike. The completion path returns result text,
+but a lost response (504, reload, closed tab) leaves only the polled count. **So
+the interface renders a completed walk and a dead one identically.**
+
+> Adam: *"a progress count that stops moving means finished or dead, and the
+> interface cannot say which. That is absent-versus-unknown in the reporting
+> layer, and it is the same shape as the artist disambiguation leaving no trace —
+> both are states the app is in and cannot express."*
+
+**They ARE the same family, and that is the useful part.** Both are states the
+application genuinely occupies that no column, endpoint or rendering can report:
+
+| state the app is in | what it can report | what is lost |
+|---|---|---|
+| walk finished vs walk died | a row count that stopped | which one |
+| disambiguation offered and declined | nothing at all | that it was ever asked |
+
+**Fixing one may suggest the shape for the other**, which is Adam's point and the
+reason to record them together: both want a small piece of durable state saying
+what happened, not more inference from what already exists. A terminal status the
+server can report on re-poll is the walk's version; a row recording a declined
+decision is the disambiguation's.
+
+**Contributing cause worth owning:** I predicted The Doors at "4-6 members,
+~10-15s" and did NOT say "expect it to stop at 4, and that means done." The
+estimate was right and useless in the form given — a predicted terminal count is
+what makes a stopped counter legible, and stating a range instead of the number
+left the ambiguity intact.
+
+> **When a progress indicator has a knowable end state, say the number before the
+> user starts.** It converts "it stopped" from a symptom into a confirmation, and
+> costs one sentence.
+
+**Deferred deliberately** (Adam): *"I would rather have convergence firing than a
+better progress bar."* Predicted counts for the remaining walks were supplied
+instead, which is the free version of the fix — Simon & Garfunkel stops at 2, The
+Blues Project at 7.
+
+**Trigger: whichever comes first — a walk that genuinely dies and is misread as
+finished, or the disambiguation work, since they want the same shape.**
