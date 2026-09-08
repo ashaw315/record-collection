@@ -27124,3 +27124,91 @@ Second instance this session of a claim confirmed before checking — the first 
 agreeing to the user's own cost estimate before reading `walk-lineup.ts`. Same
 root: **a statement about an artefact settled by reasoning when the artefact was
 available.**
+
+---
+
+## CONVERGENCE FIRED — one candidate, after seven walks, and it is real
+
+**2026-09-08, after Adam walked Steely Dan.** First convergence in the entire
+thread.
+
+```
+Four on the Floor — 2 people via Steely Dan + The Blues Project
+   Jeff "Skunk" Baxter  <- Steely Dan
+   Al Kooper            <- The Blues Project
+```
+
+**A real discovery, not an artefact.** Two different people, from two different
+owned artists, in a band Adam owns nothing by. That is precisely the Audioslave
+shape he described — *"two threads in my collection meet somewhere"* — and it
+ranked above Broken Bones at four shared members, which is A50's tier working as
+built.
+
+**It took seven walked artists to produce one.** MGMT(28), Discharge(24), Steely
+Dan(12), Dire Straits(9), The Blues Project(7), The Doors(4), Simon &
+Garfunkel(2). Recorded because it calibrates the feature: convergence is rare by
+nature, not merely dormant, and a collection needs several walked artists from
+OVERLAPPING scenes before one appears. Steely Dan supplied the bridge because
+70s LA session players are the connective tissue the earlier six walks lacked.
+
+### The tail got worse, as expected
+
+| | 2 walks | 6 walks | 7 walks |
+|---|---|---|---|
+| candidates | 34 | 55 | **74** |
+| at 1 shared member | 26 (76%) | 39 (71%) | **55 (74%)** |
+| convergences | 0 | 0 | **1** |
+
+**Each walk adds roughly 10 candidates, ~74% of them single-share adjacency.**
+The threshold question is more pressing than before, and now has a seven-band
+distribution behind it.
+
+## THE RATIO TEST FAILS, and the reason generalises
+
+Adam proposed: **shared members / the candidate's total lineup** should separate
+a renamed act (Tom & Jerry IS Simon & Garfunkel; Manzarek-Krieger and Butts Band
+are Doors members) from a genuine destination (Blood Sweat & Tears, The Doobie
+Brothers).
+
+**Measured: every candidate scores exactly 1.00.**
+
+```
+1.00  4/4  Broken Bones          1.00  3/3  The Doobie Brothers
+1.00  2/2  Tom & Jerry           1.00  2/2  Blood, Sweat & Tears
+1.00  2/2  Four on the Floor     1.00  2/2  Butts Band
+```
+
+**The denominator IS the numerator.** A candidate is by definition a band we have
+never walked, so the only members we know are the ones shared with an owned
+artist. The Doobie Brothers has 20+ members; our database holds 3 — Baxter,
+McDonald, and one more, all ex-Steely Dan. `shared / known_lineup` is therefore
+1.00 by construction for every unwalked candidate, and the test cannot
+discriminate.
+
+> **A ratio is only meaningful when its denominator is measured independently of
+> its numerator.** Here they are the same query. This is a new member of the
+> family with the aggregate assertion, the decorative fixture and rows-written:
+> **a number that looks like evidence and is structurally incapable of varying.**
+> It would have read as a strong signal on any dashboard — every candidate at
+> 1.00 looks like a confident classifier rather than a broken one.
+
+**What would make it work:** walking the candidate, which costs a request per
+candidate and is what the metric was meant to avoid. The information needed to
+cheaply rank a candidate is exactly the information only an expensive fetch
+supplies.
+
+**The same-act-renamed pattern is real and unsolved.** Tom & Jerry, Tico & The
+Triumphs (Simon & Garfunkel under earlier names), Manzarek-Krieger, Butts Band,
+Rick & The Ravens (Doors members), The Straits, The Notting Hillbillies. **This
+is §9.1's intent limit for the third time** — the graph records shared membership
+and cannot record that two names denote one act. Neither `tribute`, nor name
+containment, nor now the ratio test separates them.
+
+### The good suggestions this walk produced
+
+**The Doobie Brothers (3 shared with Steely Dan)** — Baxter and McDonald both
+joined, which is real music history rather than a rename. **Blood, Sweat & Tears
+(2 via The Blues Project)** — Kooper founded it after leaving. **The Dukes of
+September (2, Steely Dan)** — Fagen's later project. So the walk produced
+genuine discoveries alongside the renames, and no available signal tells them
+apart.
