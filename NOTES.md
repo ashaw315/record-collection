@@ -27330,3 +27330,63 @@ fails under parallel load, and every one cost a verification cycle to rule out.*
 > configuration, the shared dev server, and the single test database. Recording
 > the count so the decision to investigate is based on frequency rather than on
 > whichever one is most annoying today.
+
+---
+
+## RELATIONS ARE NEVER PEOPLE — the tell, after three appearances
+
+**Adam's rule, 2026-09-08, after the third instance in one feature:**
+
+> *"the tell is any count of MusicBrainz membership rows: the API records one
+> relation per instrument per stint, so rows are never people, and the error
+> scales with churn."*
+
+| where | rows | people | overstatement |
+|---|---|---|---|
+| Discharge's `original` count | 10 | 4 | **2.5x** |
+| §9.1's shared-member score | — | — | **avoided** — the query counts DISTINCT person |
+| MGMT's completion text | 32 | 7 | **4.5x** |
+| MGMT's progress endpoint | 32 | 7 | **4.5x** |
+
+**Every instance reads as a plausible number**, which is why it survived three
+layers. "32 members" is not absurd for a band with touring personnel; only
+knowing that Will Berman appears eight times and Andrew VanWyngarden six reveals
+it. **The error scales with churn and multi-instrumentalists — precisely the
+bands where the count is most interesting.**
+
+**Fixed in A54** in both places the user reads: the completion text and the
+progress endpoint. `checked` had to move with `total`, or a partial walk would
+report *"Checked 12 of 7 members"* — visibly impossible, and worse than the
+overstatement it replaced.
+
+> **Any `.length` on a membership list is suspect.** The honest counter is a Set
+> of `personArtistId`, or `COUNT(DISTINCT person_artist_id)` in SQL. The schema
+> says this plainly — §4.3 keys a membership on (person, group, instrument) — and
+> three separate sites read the row count anyway.
+
+### A decorative assertion, written and caught within minutes
+
+The first version of A54's partial-walk test asserted
+`expect(text).not.toMatch(/Checked (\d+) of \1?\d* members/)`, intending to
+catch "checked > total". **The regex matches ANY "Checked N of M", so it failed
+the CORRECT output** — the test would have rejected the fix it was written to
+verify.
+
+Replaced with an exact comparison against the fields themselves, so the sentence
+and the numbers cannot disagree. **Recorded because it is the same family as the
+decorative fixture and it happened while writing a test for that very family** —
+a clever assertion that looks precise and does not test what its name says.
+
+### What MGMT's walk actually yielded, and the rule it gives
+
+Adam predicted touring members would each contribute one band. **The truth: seven
+distinct people, of whom FOUR have no other band in MusicBrainz at all.** Only
+VanWyngarden (2), Asti (1) and O'Connor (1) reach outward — 4 candidates from a
+band that reported 32.
+
+> **A walk's yield is bounded by distinct people with ONWARD REACH, not by the
+> reported member count.** The Doors reported 4 and produced 3 candidates
+> (Manzarek-Krieger, Butts Band, Rick & The Ravens) because four people with long
+> side careers. MGMT reported 32 and produced 4. **A band reporting a large
+> number can be worth less than one reporting four**, and nothing on the screen
+> predicts which.

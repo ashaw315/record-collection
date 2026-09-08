@@ -26,6 +26,15 @@ export const GET = withErrorHandling(
 
     const memberships = await membershipsForArtist(id);
 
-    return NextResponse.json({ found: memberships.length });
+    /*
+     * **A54: distinct PEOPLE, not rows.** §4.3 keys a membership on
+     * (person, group, instrument) and MusicBrainz records one relation per
+     * instrument per stint, so a row count is never a member count. This is the
+     * number Adam watched climb to 32 for a band with seven members, and it
+     * disagreed with the completion text for the same walk.
+     */
+    const people = new Set(memberships.map((membership) => membership.personArtistId));
+
+    return NextResponse.json({ found: people.size });
   },
 );

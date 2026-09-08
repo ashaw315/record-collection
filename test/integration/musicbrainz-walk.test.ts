@@ -618,3 +618,132 @@ describe('a zero says which zero it is (A52)', () => {
     expect(await readCachedArtist(MILES.id)).toBeNull();
   });
 });
+
+/**
+ * SPEC.md §12 step 11 (A54, 2026-09-08) — "N members" must be a count of PEOPLE.
+ *
+ * **The app stated something false, not merely imprecise.** MGMT's walk reported
+ * "32 members." and MusicBrainz lists 32 member-of-band RELATIONS for seven
+ * people — Will Berman appears 8 times, Andrew VanWyngarden 6 — because the API
+ * records one relation per instrument per stint. A 4.5x overstatement, phrased
+ * as a fact.
+ *
+ * **Third appearance of relations-versus-people.** It overstated Discharge's
+ * `original` count 2.5x (10 relations, 4 people), it would have overstated the
+ * shared-member score had the query counted rows, and now the completion text.
+ * Same distinction, three layers, and it reads as a plausible number every time.
+ */
+describe('the completion text counts PEOPLE, not relations (A54)', () => {
+  const BERMAN = { id: 'mb-berman', name: 'Will Berman' };
+
+  /** One person, three instruments — three relations, one member. */
+  function multiInstrument(person: { id: string; name: string }) {
+    return ['drums (drum set)', 'percussion', 'guitar'].map((instrument) => ({
+      type: 'member of band',
+      direction: 'backward',
+      'target-type': 'artist',
+      attributes: [instrument],
+      artist: { id: person.id, name: person.name, type: 'Person' },
+    }));
+  }
+
+  /**
+   * Fails against `total = members.length`, the shipped behaviour, which counts
+   * the relation list and so reports 3 for one person.
+   */
+  it('reports one member for one person with three instrument credits', async () => {
+    mockMusicBrainz({
+      [DISCHARGE.id]: multiInstrument(BERMAN),
+      [BERMAN.id]: [bandRel(DISCHARGE)],
+    });
+
+    const result = await walkLineup(DISCHARGE.id);
+
+    expect(result.text).toBe('1 member.');
+    expect(result.total).toBe(1);
+  });
+
+  /**
+   * Fails against a fix that de-duplicates the TEXT but leaves `total` as a
+   * relation count — the progress display reads `total`, so the two must agree
+   * or the bar and the sentence disagree about the same walk.
+   */
+  it('counts two distinct people as two, not as their relation count', async () => {
+    mockMusicBrainz({
+      [DISCHARGE.id]: [...multiInstrument(BERMAN), ...multiInstrument(SHARED)],
+      [BERMAN.id]: [bandRel(DISCHARGE)],
+      [SHARED.id]: [bandRel(DISCHARGE)],
+    });
+
+    const result = await walkLineup(DISCHARGE.id);
+
+    expect(result.total).toBe(2);
+    expect(result.text).toBe('2 members.');
+  });
+
+  /**
+   * Fails against a fix that also de-duplicates the FETCH loop incorrectly. A
+   * person with three instrument rows must still be fetched once — the walk
+   * already resolves per relation, and counting people must not change how many
+   * requests are made.
+   */
+  it('does not refetch a person once per instrument', async () => {
+    const mock = mockMusicBrainz({
+      [DISCHARGE.id]: multiInstrument(BERMAN),
+      [BERMAN.id]: [bandRel(DISCHARGE)],
+    });
+
+    await walkLineup(DISCHARGE.id);
+
+    const bermanFetches = mock.requested.filter((id) => id === BERMAN.id).length;
+    expect(bermanFetches, 'one person, one fetch').toBe(1);
+  });
+});
+
+/**
+ * A54, second half: `checked` and `total` must count the SAME thing.
+ *
+ * Fixing `total` alone leaves the partial message incoherent — `checked`
+ * increments once per relation, so a band whose members hold several
+ * instruments could report "Checked 12 of 7 members", which is worse than the
+ * overstatement it replaced because it is visibly impossible.
+ */
+describe('a partial walk counts people on both sides (A54)', () => {
+  it('never reports checking more members than exist', async () => {
+    const p1 = { id: 'mb-p1', name: 'One' };
+    const p2 = { id: 'mb-p2', name: 'Two' };
+    const multi = (person: { id: string; name: string }) =>
+      ['guitar', 'bass guitar', 'drums (drum set)'].map((instrument) => ({
+        type: 'member of band',
+        direction: 'backward',
+        'target-type': 'artist',
+        attributes: [instrument],
+        artist: { id: person.id, name: person.name, type: 'Person' },
+      }));
+
+    // Fail after the band fetch plus one member, so the walk stops partway.
+    mockMusicBrainz(
+      {
+        [DISCHARGE.id]: [...multi(p1), ...multi(p2)],
+        [p1.id]: [bandRel(DISCHARGE)],
+        [p2.id]: [bandRel(DISCHARGE)],
+      },
+      { failAfter: 2 },
+    );
+
+    const result = await walkLineup(DISCHARGE.id);
+
+    expect(result.partial).toBe(true);
+    expect(result.total).toBe(2);
+    expect(result.checked).toBeLessThanOrEqual(result.total);
+    /*
+     * The sentence must agree with the fields. An earlier version of this
+     * assertion used a regex intended to catch "checked > total" and matched
+     * ANY "Checked N of M" — it would have failed the correct output, which is
+     * the decorative-assertion shape in a test written minutes ago.
+     */
+    expect(result.text).toBe(
+      `Checked ${result.checked} of ${result.total} members before MusicBrainz stopped responding. There may be more.`,
+    );
+  });
+});

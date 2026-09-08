@@ -126,7 +126,25 @@ export async function walkLineup(bandMbid: string): Promise<WalkResult> {
   await saveDerivedActs(derivedActs);
 
   const members = band.relations.filter((relation) => relation.role === 'person');
-  const total = members.length;
+
+  /*
+   * **A54: "N members" counts PEOPLE, not relations.**
+   *
+   * MusicBrainz records one `member of band` relation per instrument per stint,
+   * so a relation count is never a member count. MGMT's walk reported "32
+   * members." against SEVEN people — Will Berman appears eight times, Andrew
+   * VanWyngarden six — a 4.5x overstatement stated as a fact.
+   *
+   * **Third appearance of relations-versus-people**: it overstated Discharge's
+   * `original` count 2.5x, it would have overstated the shared-member score had
+   * that query counted rows (it counts DISTINCT person, correctly), and it
+   * reached the user here. The tell is any count of membership rows.
+   *
+   * `members` itself is NOT de-duplicated: the loop below writes one row per
+   * (person, instrument) as §4.3 requires, and the cache already prevents a
+   * second fetch of the same person. Only the COUNT changes.
+   */
+  const total = new Set(members.map((relation) => relation.artistMbid)).size;
 
   /*
    * **A52: a PERSON is not a band, and saying "0 members." would be a lie.**
@@ -162,7 +180,14 @@ export async function walkLineup(bandMbid: string): Promise<WalkResult> {
     };
   }
 
-  let checked = 0;
+  /*
+   * **A54: `checked` counts PEOPLE, matching `total`.** The loop runs once per
+   * (person, instrument) relation, so incrementing per iteration would report
+   * "Checked 12 of 7 members" — visibly impossible, and worse than the
+   * overstatement it replaced. A Set is the honest counter because the same
+   * person legitimately appears several times in `members`.
+   */
+  const checkedPeople = new Set<string>();
   let stopped = false;
 
   for (const member of members) {
@@ -214,7 +239,7 @@ export async function walkLineup(bandMbid: string): Promise<WalkResult> {
       throw cause;
     }
 
-    checked += 1;
+    checkedPeople.add(member.artistMbid);
 
     for (const otherBand of personRelations.filter((relation) => relation.role === 'group')) {
       if (otherBand.artistMbid === bandMbid) continue;
@@ -251,7 +276,7 @@ export async function walkLineup(bandMbid: string): Promise<WalkResult> {
 
   return {
     artistId: bandArtist.artistId,
-    checked,
+    checked: checkedPeople.size,
     total,
     partial,
     /**
@@ -266,7 +291,7 @@ export async function walkLineup(bandMbid: string): Promise<WalkResult> {
      * reporting both as "0 members." is the collapse this unit exists to undo.
      */
     text: partial
-      ? `Checked ${checked} of ${total} members before MusicBrainz stopped responding. There may be more.`
+      ? `Checked ${checkedPeople.size} of ${total} members before MusicBrainz stopped responding. There may be more.`
       : total === 0
         ? 'MusicBrainz has no line-up recorded for this band, so no members were imported.'
         : `${total} member${total === 1 ? '' : 's'}.`,
