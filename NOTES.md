@@ -27020,3 +27020,107 @@ Three things it should NOT do:
    solved here.**
 2. **Follow every person by default.** 112 requests against a 60s cap.
 3. **Report "0 members." for a Person.** The silent zero Adam named.
+
+---
+
+## PERSON-WALKING IS BLOCKED ON A PROBLEM THE DATA CANNOT SOLVE
+
+**Checked at Adam's instruction rather than assumed** — he asked whether
+MusicBrainz has any relation distinguishing an artist's OWN ensembles from bands
+they merely joined, before accepting that Person-walking is blocked.
+
+**It does not.** Miles Davis's 11 groups, nine of which are his own ensembles:
+
+| candidate mechanism | catches | of 9 |
+|---|---|---|
+| `founder` | Miles Davis and His Band | **1** |
+| `named after artist` | Miles Davis and His Band | **1** |
+| either | the same one | **1** |
+| `subgroup` on the group side | — | **0** |
+| shared `area` | — | **0** (no area on any) |
+
+**The ensembles carry ONLY `member of band` and nothing else.** Measured on three
+of them: the Miles Davis Quintet's entire relation list is 14 membership
+relations, the Nonet's is 17, and neither has a single relation pointing back at
+Miles as their originator. `founder` and `named after artist` both exist in
+MusicBrainz's vocabulary, both appear on Miles, and both are populated for
+exactly one group out of nine.
+
+> **So this is §9.1's honest limit arriving from the Person side, and Adam named
+> it before the check confirmed it:** *"the graph records that Miles Davis was in
+> the Miles Davis Quintet and cannot record that this is the same act under
+> another name."* The Quintet and the Charlie Parker Quintet are the same shape —
+> a person in a group — and only intent separates them.
+
+**Both available mechanisms fail, and they fail differently**, which is why
+neither is a fallback for the other:
+
+- **Tribute suppression is the wrong relation.** The Quintet is not a tribute to
+  Miles Davis; it is Miles Davis. A48's edge does not fire and should not.
+- **Name containment catches "Miles Davis Quintet" and misses "The Notting
+  Hillbillies"** — the exact failure Adam identified for the Dire Straits case,
+  where its coverage is the complement of its usefulness. It would also
+  false-positive on any band legitimately named after a member.
+
+**So Person-walking stays blocked.** Not on effort, not on cost — it is 12
+requests — but on a distinction the source data does not carry. Building it would
+add 11 candidates of which 9 are the artist's own ensembles, landing in the
+`people=1` tier where 39 of 55 candidates already sit. **That is shipping the
+Dire Straits problem a second time knowing in advance that it is there.**
+
+**What would unblock it**, so the entry is not merely a refusal: a rule from
+outside the membership graph. Release-level artist credits would show that the
+Miles Davis Quintet's records are credited to Miles Davis — the same class of
+signal as `tribute`, from a different table, and not something §9.1 reads today.
+Unmeasured, and out of scope.
+
+---
+
+## A CAUSE AND A PRECONDITION READ THE SAME IN A SUMMARY
+
+**Adam's naming of a failure mode in this loop, 2026-09-08.** Worth its own entry
+because it is about how claims travel between us, not about a bug.
+
+I wrote that the session-heavy unwalked artists — Miles Davis, Steely Dan, John
+Lennon, Jeff Beck — were **"most likely to make convergence fire."** Adam acted
+on it: he asked for Person-walking as a unit, on the strength of that claim.
+
+**Measured afterwards, a single Person walk cannot make convergence fire at
+all.** Of the 34 people across Miles's groups, the only owned artist is Miles
+himself, so the walk yields 11 candidates all reaching exactly ONE owned artist.
+Convergence needs a candidate reaching two, which needs a SECOND owned Person
+walked whose groups share a player.
+
+> Adam: *"you named a cause where the truth was a precondition, and I acted on
+> it... 'most likely to make X fire' and 'necessary before X can fire' read the
+> same in a summary and mean different things for what gets built."*
+
+**The two claims and what each licenses:**
+
+| claim | means | what it licenses |
+|---|---|---|
+| *"most likely to make X fire"* | doing this produces X | build it, expect X |
+| *"necessary before X can fire"* | X is impossible without this | build it, expect nothing yet |
+
+The second is still a reason to build — but it is a reason to build **and wait**,
+and to say so. Presenting a precondition as a cause invites the user to judge the
+work by an outcome it was never going to produce, and the disappointment lands on
+the feature rather than on the description.
+
+> **Before writing "this would make X happen", ask whether it makes X HAPPEN or
+> makes X POSSIBLE.** If the honest answer is "possible", say "necessary before X
+> can fire, and not sufficient" — and name what else is required. It is one extra
+> clause and it changes what the user decides to build.
+
+**How to catch it:** the tell is a claim about a FUTURE state made from structural
+reasoning rather than measurement. "Session-heavy artists cross-pollinate" is
+true and was the basis; it does not follow that walking one produces a
+convergence, and nothing had been measured when the claim was made. **Cheap test
+— name the concrete outcome and check whether the data can produce it.** Here
+that meant listing the 34 people and intersecting with the owned artists, which
+took one query and would have caught it before Adam acted.
+
+Second instance this session of a claim confirmed before checking — the first was
+agreeing to the user's own cost estimate before reading `walk-lineup.ts`. Same
+root: **a statement about an artefact settled by reasoning when the artefact was
+available.**
