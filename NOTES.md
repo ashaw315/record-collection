@@ -27390,3 +27390,100 @@ band that reported 32.
 > side careers. MGMT reported 32 and produced 4. **A band reporting a large
 > number can be worth less than one reporting four**, and nothing on the screen
 > predicts which.
+
+---
+
+## A FABRICATED IDENTIFIER IS A DIFFERENT FAILURE CLASS FROM AN UNCERTAIN CLAIM
+
+**Reported by Adam from real use, 2026-09-08.** A43's pressing assessment for
+Deerhunter's *Halcyon Digest* produced three pressings under **CAD 3016**, a
+gatefold sleeve that does not exist, and a US/EU/repress frame. The real release
+is **CAD 3X38**, and the genuine distinction — two variants differing in whether
+*Desire Lines* fades early, discriminated by **"Salt" etched in the side B
+runout** — was in the app's possession from a `/lookup` session and was not used.
+
+Verified against the stored row: the output is exactly as reported, and the
+want-list row carries **no target pressing at all** (`catalog_number`,
+`matrix_runout`, `color_variant`, `discogs_release_id` all null).
+
+### Root cause: the prompt never receives the release
+
+`PressingSubject` is `{ artist, title }`. Two strings. The model was asked *"A
+record collector is hunting for: Deerhunter — Halcyon Digest"* and nothing more,
+so CAD 3016 is training-data recall about 4AD catalogue numbering and
+US/EU/repress is the template it falls back on with no release in front of it.
+
+### FINDING 1 — the disclaimer does not cover this
+
+> Adam: *"It covers uncertainty and does not cover output contradicting stored
+> data — a fabricated catalogue number sends me to the wrong record regardless of
+> what the caption says."*
+
+**A caption mitigates "this might be wrong about music". It cannot mitigate "this
+identifier does not exist."** The first is epistemic and a hedge is a real
+answer to it; the second is NAVIGATIONAL — the user goes to the wrong record, and
+no amount of hedging changes where they end up. **Two failure classes, one
+mitigation, and it was only ever built for the first.**
+
+> **Where output names an IDENTITY rather than a judgement, a disclaimer is not
+> mitigation.** Identity is checkable against data the app holds; a judgement is
+> not. The honest options are to check it, to display the held value instead of
+> generating one, or not to ask.
+
+### FINDING 2 — the checkable-claim rule tests SHAPE, not truth
+
+Adam asked for this rule in A43 and read it as stronger protection than it is:
+
+```js
+/\b[A-Z][A-Z0-9]*[\s-][A-Z0-9]*\d{2,}\b/   // the catalogue-number pattern
+```
+
+**`CAD 3016` matches. So does every plausible fabrication.** `isCheckable` asks
+*"could this be checked against the object?"* and cannot ask *"is this real?"* —
+it was built to suppress *"the first press sounds better"*, which it does well,
+and it is not a fabrication guard.
+
+> **This is the proxy-assertion shape again** — "well-formed identifier" is a
+> proxy for "correct identifier", one layer below the claim, and it cannot fail
+> on the thing that matters. Fifth instance this week, and the first where the
+> proxy is in PRODUCTION code rather than in a test.
+
+**The name is the trap.** `isCheckable` sounds like verification and performs
+validation. A rule named for the property it cannot establish will be read as
+establishing it — by the person who asked for it, which is what happened here.
+
+### FINDING 3 — the dig-notes exclusion over-reached by one category
+
+The route justifies artist-and-title-only as: sending the user's own dig notes
+*"invites the model to agree, and an assessment confirming what the user already
+believes is worth less than one arrived at independently — disagreement is the
+informative case."*
+
+**That reasoning is correct and was applied to the wrong category.**
+
+> Adam: *"Excluding my beliefs so the model cannot flatter them is sound;
+> excluding Discogs-derived facts because they arrived alongside is not, and the
+> difference is that one is a belief and the other is the identity of the
+> object."*
+
+A catalogue number from Discogs is not a belief the model might flatter — it is
+**what record this is**. Withholding it does not protect independence; it removes
+the only thing that could have anchored the answer. **The comment reads as
+covering both categories and should not.**
+
+### FINDING 4 — snippets carry the same exposure, with an instruction between
+
+`SnippetSubject` is also `{ artist, title }`, and the snippet prompt forbids the
+output class — *"Do not state a pressing, a catalogue number, a specific release
+year or any price"* — with a docblock admitting it is **"INSTRUCTED, not
+enforced — the real protection is that none of these values are in the payload
+above."**
+
+> Adam: *"that is protection against a value being copied, not against one being
+> recalled. A snippet inventing a pressing year has the same shape as CAD 3016,
+> and nothing would catch it."*
+
+**Exactly right, and the docblock's confidence is misplaced.** Absence from the
+payload prevents echo, not invention — and invention is the failure that
+happened. There is no parser-level rejection of a catalogue number in snippet
+output. **Not fixed here; recorded as the same defect one screen over.**

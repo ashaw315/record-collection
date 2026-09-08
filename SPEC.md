@@ -1867,7 +1867,39 @@ So it needs editing, and it should probably record **when it was written**, the 
 
 ---
 
-## 12b. SPEC'D, NOT BUILT — pressing assessment (A43)
+## 12b. Pressing assessment (A43), amended by A55
+
+### A55 (2026-09-08) — the held pressing is DISPLAYED, above the generated assessment
+
+**Reported by Adam from real use, and it is a fabrication rather than an inaccuracy.** Asked about Deerhunter's *Halcyon Digest*, the assessment produced three pressings under **CAD 3016** — not this release, whose number is **CAD 3X38** — described a gatefold sleeve that does not exist, and framed the variance as US/EU/repress, which is a template rather than a description of this record. The genuine distinction was **already in the app's possession** from a lookup: two variants differing in whether *Desire Lines* fades early, told apart by **"Salt" etched in the side B runout**.
+
+**Root cause: `PressingSubject` is `{ artist, title }`.** The prompt receives two strings and nothing about the release, so CAD 3016 is training-data recall about 4AD catalogue numbering.
+
+**The fix is display, not description.** `/want-list/:id` now shows the pressing facts the row HOLDS — catalogue number, matrix/runout, variant descriptor, plant, country — verbatim, above the generated assessment. **A model cannot fabricate an identifier it was never asked to produce**, which is a stronger guarantee than any prompt rule.
+
+**Three empty states, reusing A52's distinction rather than rebuilding it:**
+
+| state | meaning | what it says |
+|---|---|---|
+| `no-pressing` | nothing attached to the row | the app does not know which record is being hunted |
+| `no-detail` | attached, carrying nothing distinguishing | it knows the record and has no variant facts |
+| `detail` | facts to show | shows them |
+
+**Showing nothing for Halcyon Digest is the CORRECT outcome**, not a shortfall — no pressing was ever attached to that row, so the app genuinely does not know which record is being hunted. **Fetching on demand was considered and rejected**: it would reintroduce the identity question the panel exists to answer, and inherit the lookup's ambiguity into the panel that is supposed to be the answer. It also makes attaching a target pressing the thing that unlocks the panel, which is the right incentive.
+
+**A year is displayed but never counts as detail**, carrying A43's rule forward: a year is an output of identification rather than an input to it.
+
+### Two limits of A43, recorded because both were read as stronger than they are
+
+**1. The disclaimer does not cover this failure class.** A caption mitigates *"this might be wrong about music"*. It cannot mitigate *"this identifier does not exist"* — the first is epistemic and a hedge answers it; the second is **navigational**, and the user reaches the wrong record regardless of what the caption says. **Where output names an IDENTITY rather than a judgement, a disclaimer is not mitigation.**
+
+**2. `isCheckable` tests SHAPE, not truth.** The rule accepts `/\b[A-Z][A-Z0-9]*[\s-][A-Z0-9]*\d{2,}\b/`, and **`CAD 3016` matches** — as does every plausible fabrication. It asks *"could this be checked against the object?"* and cannot ask *"is this real?"*. It was built to suppress "the first press sounds better", which it does; **it is not a fabrication guard and must not be relied on as one.** The name is the trap: a rule called `isCheckable` reads as verification and performs validation.
+
+### Not fixed, recorded: snippets carry the same exposure
+
+`SnippetSubject` is also `{ artist, title }`, and §10b's prohibition on stating a pressing or catalogue number is **instructed, not enforced** — its own docblock says "the real protection is that none of these values are in the payload". **That prevents a value being ECHOED, not one being RECALLED**, and recall is the failure that happened. A snippet inventing a pressing year has the same shape as CAD 3016 and nothing would catch it.
+
+## 12b (original). SPEC'D, NOT BUILT — pressing assessment (A43)
 
 **Adam, 2026-08-27, correcting A40's scoping.** *"The dig is fields I fill in, storing what I already know. What I actually want is the app telling me whether a pressing matters for this record, and which one to hunt."*
 

@@ -4,6 +4,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { hydrateWantListItem } from '@/lib/db/queries/want-list';
 import { formatCeiling, huntFacts, priorityLabel } from '../want-list-format';
 import { PressingAssessment } from '../PressingAssessment';
+import { PressingVariants } from '../PressingVariants';
 import { latestAssessment } from '@/lib/db/queries/pressing-assessment';
 
 /**
@@ -109,6 +110,19 @@ export default async function WantListItemPage({
             <p className="mt-2 font-mono text-sm">{ceiling}</p>
           </section>
         )}
+
+        {/*
+          **A55: what the app HOLDS, before what a model says about it.**
+
+          Placed ABOVE the assessment deliberately. The held facts are the
+          record's identity — a catalogue number and a runout the user can read
+          off the object — while the assessment is a model's claim about pressing
+          history. Adam's Halcyon Digest report is why the order matters: the
+          assessment invented CAD 3016 for a record whose number is CAD 3X38, and
+          a fabricated identifier is a navigational failure rather than an
+          uncertain judgement. What the app knows goes first.
+        */}
+        <PressingVariants pressing={item.targetPressing ?? null} />
 
         {/*
           §12b (A43). Below the hunt because it ANSWERS the question the hunt
