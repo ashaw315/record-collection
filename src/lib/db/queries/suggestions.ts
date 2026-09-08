@@ -232,6 +232,41 @@ const WANT_LIST_SUPPRESSION = 3.0;
  */
 const CONVERGENCE_TIER_MINIMUM = 2;
 
+/**
+ * How many ADJACENCY suggestions are shown (A53, 2026-09-08).
+ *
+ * **A display decision, not a cut, and the distinction is the whole point.**
+ * Measured over 74 candidates from seven walks: a numeric threshold on the
+ * shared-member count cannot work. At 2 you keep Tom & Jerry and
+ * Manzarek-Krieger — the same act under another name — and lose nothing worth
+ * losing. At 3 you lose Blood, Sweat & Tears, a real discovery, while KEEPING
+ * Rick & The Ravens, a rename. **The renames rank high by construction**,
+ * because a band of the same people shares the most members with it.
+ *
+ * So nothing is filtered and no candidate is judged. The list simply stops.
+ * **74 rows where 3 are useful trains the reader to skim; 6 rows where 3 are
+ * useful does not** — and 55 of those 74 sit at a single shared member, which
+ * is graph adjacency rather than a recommendation.
+ *
+ * **This does NOT require solving the same-act-renamed problem**, which is
+ * confirmed unsolvable from the membership graph three ways: the `tribute`
+ * relation is the wrong edge, name containment catches "Miles Davis Quintet" and
+ * misses "The Notting Hillbillies", and the ratio test is structurally incapable
+ * of varying (§9.1's honest limit, NOTES).
+ *
+ * **Five is a PRODUCT JUDGEMENT, not a measured value** — the same standing as
+ * A27's 2.0 and 1.5 weights and §9.2's six suggestions. The reasoning: the
+ * measured collection has one convergence and a long adjacency tail, so the
+ * screen should carry the discovery plus enough context to judge it. Revisit if
+ * Adam finds the list consistently too short; it is one line.
+ *
+ * **Convergences are NEVER capped.** They are rare — one in 74 measured — and a
+ * cap applied to the whole list could push the only real discovery off the
+ * screen to make room for adjacency, which inverts the tier A50 exists to
+ * enforce.
+ */
+export const ADJACENCY_SHOWN = 5;
+
 export type Suggestion = CandidateLinkTerms & {
   score: number;
   /**
@@ -264,6 +299,20 @@ export type Suggestion = CandidateLinkTerms & {
  * BEFORE the sort is what makes it a suppression rather than a cosmetic
  * adjustment to a row whose position was already decided.
  */
+/**
+ * How many candidates existed before A53's display cap, and how many are shown.
+ *
+ * **Returned so the screen can SAY it truncated**, rather than rendering six
+ * rows that look like the whole answer. A list silently cut is the
+ * absent-versus-unknown failure this project keeps naming: "these are all the
+ * links" and "these are the strongest six of seventy-four" are different claims
+ * and the reader cannot tell them apart.
+ */
+export async function suggestionCount(): Promise<number> {
+  const candidates = await linkTermsForCandidates();
+  return candidates.length;
+}
+
 export async function suggestions(options: { limit: number }): Promise<Suggestion[]> {
   const candidates = await linkTermsForCandidates();
 
@@ -339,5 +388,34 @@ export async function suggestions(options: { limit: number }): Promise<Suggestio
     return b.score - a.score;
   });
 
+  /*
+   * **A53's display cap is NOT applied here**, and that was a real mistake
+   * caught by `suggestions.test.ts`: capping in this function silently changed
+   * §5.8's `GET /api/suggestions`, which the spec says returns `limit` results
+   * and defaults to 10. **A screen's editorial decision must not rewrite an API
+   * contract** — the endpoint returns the ranking, and the page decides how much
+   * of it to render. See `forDisplay` below.
+   */
   return scored.slice(0, options.limit);
+}
+
+
+/**
+ * The §10 screen's slice of the ranking (A53, 2026-09-08).
+ *
+ * **Separate from `suggestions` because the cap is EDITORIAL, not a property of
+ * the ranking.** §5.8's endpoint returns what the caller asks for; the screen
+ * decides how much is worth reading. Collapsing the two silently changed the API
+ * contract, which is what `suggestions.test.ts` caught.
+ *
+ * **Every convergence, then five adjacency rows.** Slicing the combined list
+ * would let adjacency push the only real discovery off the screen — the
+ * inversion A50's tier exists to prevent, arriving through the display instead
+ * of the sort.
+ */
+export function forDisplay(scored: Suggestion[]): Suggestion[] {
+  const convergences = scored.filter((row) => row.convergence);
+  const adjacency = scored.filter((row) => !row.convergence).slice(0, ADJACENCY_SHOWN);
+
+  return [...convergences, ...adjacency];
 }

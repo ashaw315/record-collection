@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { AppHeader } from '@/components/AppHeader';
-import { suggestions } from '@/lib/db/queries/suggestions';
+import { forDisplay, suggestionCount, suggestions } from '@/lib/db/queries/suggestions';
 import { gapAnalysisWithPrevious } from '@/lib/db/queries/gap-analysis';
 import { listGenreTree, type GenreNode } from '@/lib/db/queries/genres';
 import { isAnthropicConfigured } from '@/lib/llm/client';
@@ -36,7 +36,15 @@ export const metadata = { title: 'Suggestions · Record Collection' };
 const LIMIT = 20;
 
 export default async function SuggestionsPage() {
-  const rows = await suggestions({ limit: LIMIT });
+  // A53: the ranking, then the screen's editorial slice of it.
+  const rows = forDisplay(await suggestions({ limit: LIMIT }));
+  /*
+   * A53: how many links exist, so a shortened list can SAY it is shortened.
+   * Six rows that look like the whole answer is the absent-versus-unknown
+   * failure — "these are all the links" and "these are the strongest six of
+   * seventy-four" are different claims.
+   */
+  const totalLinks = await suggestionCount();
 
   /*
    * A39: the last analysis, so navigating away no longer costs a request to see
@@ -169,6 +177,24 @@ export default async function SuggestionsPage() {
          * built from two of four terms is not wrong, but presenting it as the
          * whole judgement would overstate what the app knows.
          */}
+        {/*
+          **A53: the list STOPS, and says so.** It is shortened rather than
+          filtered — no candidate is judged and nothing is scored differently.
+          Measured: 55 of 74 links are a single shared member, which is graph
+          adjacency rather than a recommendation, and a list running to
+          exhaustion trains the reader to skim the rows that matter.
+
+          **Stated rather than silent** because six rows that look like the whole
+          answer is the absent-versus-unknown failure this project keeps naming.
+        */}
+        {totalLinks > rows.length && (
+          <p className="mt-4 text-xs text-muted-foreground">
+            Showing {rows.length} of {totalLinks} linked artists — the strongest
+            connections, not the whole graph. Most of the rest share a single
+            member with one artist you own.
+          </p>
+        )}
+
         <p className="mt-6 border-t border-border pt-4 text-xs text-muted-foreground">
           Ranked on recorded influences and shared line-ups only. Genre and label
           overlap are specified but not scored — nothing in the app fills in an

@@ -884,6 +884,40 @@ The proof is above and it is exact: Guitar Heroes and The Notting Hillbillies sh
 
 **What it leaves OPEN:** signals from OUTSIDE the membership graph. MusicBrainz's `tribute` relation is one — it is a different edge type carrying an explicit statement of intent, which is precisely why it works where the count cannot (A48 uses it, catching 2 of 6 measured cases). Release-level data, dates, and the user's own judgement are others. **The rule is not "this cannot be improved" but "it cannot be improved from the membership graph alone."**
 
+#### The list STOPS rather than running to exhaustion (A53, 2026-09-08)
+
+**Every convergence is shown; adjacency stops at five.** A display decision, not a cut — nothing is filtered, no candidate is judged, and no score changes.
+
+**A numeric threshold cannot work, and this is measured rather than argued.** Over 74 candidates from seven walked artists: at a cut of 2 you keep Tom & Jerry and Manzarek–Krieger (the same act under another name) and lose nothing worth losing; at 3 you lose Blood, Sweat & Tears — a real discovery — while KEEPING Rick & The Ravens, a rename. **The renames rank high by construction**, because a band of the same people shares the most members with it. No threshold on the shared count separates a rename from a destination.
+
+**So the fix is to show fewer, not to judge more.** 55 of the 74 links sit at a single shared member, which is graph adjacency rather than a recommendation. **74 rows where 3 are useful trains the reader to skim; 6 rows where 3 are useful does not.**
+
+**Convergences are never capped**, because a cap on the combined list could push the only real discovery off the screen to make room for adjacency — the exact inversion A50's tier exists to prevent, arriving through the display instead of the sort. They are rare: one in 74 measured.
+
+**Five is a product judgement**, the same standing as A27's weights and §9.2's six suggestions. Revisit if the list reads as consistently too short.
+
+**The cap lives on the SCREEN, not in the query, and the first implementation got this wrong.** Capping inside `suggestions()` silently changed `GET /api/suggestions` — which §5.8 specifies as returning `limit` results, default 10 — and its contract test caught it. **A screen's editorial decision must not rewrite an API contract**: the endpoint returns the ranking, `forDisplay` decides how much of it a reader sees.
+
+**And the truncation is STATED** — "Showing 6 of 74 linked artists" — because a silently shortened list makes "these are all the links" and "these are the strongest six of seventy-four" indistinguishable. That is the absent-versus-unknown rule applied to a list length.
+
+**This deliberately does NOT solve the same-act-renamed problem**, which is confirmed unsolvable from the membership graph three separate ways (below). A display decision does not need to.
+
+##### The same-act-renamed problem, and three mechanisms that fail
+
+Tom & Jerry and Tico & The Triumphs are Simon & Garfunkel under earlier names; Manzarek–Krieger, Butts Band and Rick & The Ravens are Doors members; The Straits and The Notting Hillbillies are Dire Straits players. All rank high because they share the most members. Three mechanisms were tried against them:
+
+| mechanism | why it fails |
+|---|---|
+| MusicBrainz `tribute`/`subgroup` | the wrong relation — these are not tributes; the edge does not fire and should not |
+| name containment | catches "Miles Davis Quintet", misses "The Notting Hillbillies" — coverage is the complement of usefulness |
+| **shared ÷ candidate's lineup** | **structurally incapable of varying — see below** |
+
+**THE RATIO TEST IS THE MOST DANGEROUS OF THE THREE AND MUST NOT BE RETRIED.** The proposal is sound in principle: a renamed act shares most of its lineup with the original, while a genuine destination shares a few players out of many. **Measured, every candidate scores exactly 1.00** — Blood, Sweat & Tears and The Doobie Brothers alongside Tom & Jerry and Butts Band.
+
+**The denominator is the numerator.** A candidate is by definition a band that has never been walked, so the only members the database holds are the ones shared with an owned artist. The Doobie Brothers has 20+ members; the database has 3, all ex-Steely Dan. `shared ÷ known_lineup` is therefore 1.00 by construction for every candidate.
+
+**It reads as a confident classifier rather than a broken one**, which is why it is recorded here rather than in NOTES alone: a uniform 1.00 across every row looks like a signal that has decided, and nothing about the number suggests it cannot vary. **A ratio is only meaningful when its denominator is measured independently of its numerator.** Making it work would require walking each candidate — one request each, which is exactly the cost a cheap ranking metric exists to avoid.
+
 #### Convergence is a TIER above adjacency (A50, 2026-09-07)
 
 **A candidate reaching TWO OR MORE owned artists ranks above every candidate reaching one, whatever the scores say.** Within each tier the existing order stands: score descending, so Broken Bones still tops the adjacency tier and want-list suppression still orders inside both.

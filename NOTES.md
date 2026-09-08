@@ -27212,3 +27212,121 @@ joined, which is real music history rather than a rename. **Blood, Sweat & Tears
 September (2, Steely Dan)** — Fagen's later project. So the walk produced
 genuine discoveries alongside the renames, and no available signal tells them
 apart.
+
+---
+
+## THE FOURTH IN THE FAMILY, AND THE MOST DANGEROUS — a ratio that cannot vary
+
+**Adam asked for this recorded prominently, and his reason is the finding:**
+*"the other three produce a number that could vary and happens not to. This one
+cannot vary at all, and I would have believed it."*
+
+The four, and what makes the last one different:
+
+| instance | the number | could it have varied? |
+|---|---|---|
+| aggregate assertion | a variable, a token, a source string | **yes** — it just tested the wrong layer |
+| decorative fixture | that a test ran | **yes** — it could have failed on other input |
+| rows written (A48) | 16 tribute rows | **yes** — the count is real and grew 8x |
+| **ratio test (A53)** | **shared ÷ candidate's lineup** | **NO — 1.00 by construction, always** |
+
+**The proposal was sound.** A renamed act shares most of its lineup with the
+original; a genuine destination shares a few players out of many. That is true of
+the world.
+
+**Measured, every candidate scores exactly 1.00** — Blood, Sweat & Tears and The
+Doobie Brothers indistinguishable from Tom & Jerry and Butts Band.
+
+**The denominator IS the numerator.** A candidate is by definition a band never
+walked, so the only members the database holds are the ones shared with an owned
+artist. The Doobie Brothers has 20+ members and the database holds 3 — Baxter,
+McDonald, and one more, all ex-Steely Dan. There is no arrangement of the data
+in which this ratio is anything but 1.
+
+> **A ratio is only meaningful when its denominator is measured independently of
+> its numerator.** Here both come from the same query, so the metric is a
+> tautology wearing the shape of a classifier.
+
+**Why it is the most dangerous of the four.** A uniform 1.00 across every row
+does not look broken — it looks like a signal that has decided. The other three
+produce numbers that vary and mislead about WHAT they measure; this one produces
+a constant that misleads about WHETHER it measures. Adam's own assessment: *"I
+would have believed it."* On a dashboard it would read as a confident
+classifier, and the only way to catch it is to ask what the denominator is
+counted from.
+
+**The cheap test, generalised:** before trusting a derived metric, construct the
+case where it should be LOW and check that it is. Here that is The Doobie
+Brothers — 3 shared of 20+ real members — and the query returns 1.00 because it
+cannot see the other 17. One check, and it collapses.
+
+**What would make it work is what it was meant to avoid:** walking each
+candidate, one request apiece. **The information needed to cheaply rank a
+candidate is exactly the information only an expensive fetch supplies** — which
+is worth remembering the next time a free ranking signal looks available.
+
+---
+
+## AN EDITORIAL DECISION PUT IN THE WRONG LAYER REWROTE AN API CONTRACT
+
+**A53, caught by an existing test rather than by review.**
+
+The decision was Adam's and correct: show every convergence, then five adjacency
+rows, and stop. A DISPLAY decision — nothing filtered, no candidate judged, no
+score changed.
+
+**I implemented it inside `suggestions()`**, the shared query. That function also
+backs `GET /api/suggestions`, which §5.8 specifies as returning `limit` results
+with a default of 10. So a screen's editorial choice silently changed a specified
+endpoint: the API began returning 5 rows where its contract says 10.
+
+**`test/integration/api/suggestions.test.ts` caught it immediately** —
+*"defaults to 10 results ... expected length 10 but got 5"* — which is the
+contract test doing exactly its job, on a change I did not think of as touching
+the API at all.
+
+> **The tell I missed: I described the change as "display only" and then edited a
+> function whose name says nothing about display.** `suggestions()` is the
+> RANKING; `forDisplay()` is the screen's slice of it. If a decision is editorial,
+> it belongs where the editing happens — and the layer boundary is exactly the
+> line between "what the data says" and "how much of it is worth reading".
+
+**The fix restores the boundary rather than adjusting the number:** the query
+returns the ranking, `forDisplay` takes every convergence plus five adjacency
+rows, and the page calls it. The API is untouched.
+
+**Two things worth carrying:**
+
+1. **A shared query is a contract with every caller, not just the one being
+   changed.** The screen and the endpoint had different needs and one function
+   served both; the moment their needs diverged, the shared function was the
+   wrong place for either.
+2. **"Display only" as a scope claim should be checked against the file being
+   edited.** The words were right about the intent and wrong about the change —
+   and the gap between them is where the defect lived.
+
+---
+
+## OBSERVED — a third full-suite-only E2E flake, this time in wall-scene
+
+**During A53's verification (2026-09-08).** `wall-scene.spec.ts:1149` — *"the
+pulled sleeve fits INSIDE the visible wall region on a short viewport"* — failed
+twice (original plus retry) in the full 465-test run, taking 22.8s and 23.7s
+against a normal ~14s.
+
+**Passes three consecutive times in isolation** (20.2s, 14.3s, 13.0s), and the
+spec contains zero references to suggestions, `forDisplay` or convergence, while
+A53's diff touches only the suggestions query, its tests and the suggestions
+page. The elevated durations point at contention rather than geometry.
+
+**Third full-suite-only flake recorded this session**, with the
+`discogs-import`/`record-snippet-post` pair and the `collection-filters` sort
+control. None diagnosed. **The pattern across all three is worth naming even
+without a cause: every one is a timing-sensitive assertion that passes alone and
+fails under parallel load, and every one cost a verification cycle to rule out.**
+
+> If a fourth appears, the shared cause is worth chasing properly rather than
+> ruling out one at a time — the candidates are the two-worker Playwright
+> configuration, the shared dev server, and the single test database. Recording
+> the count so the decision to investigate is based on frequency rather than on
+> whichever one is most annoying today.

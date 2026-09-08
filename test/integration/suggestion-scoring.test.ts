@@ -8,7 +8,7 @@ import {
   records,
   wantList,
 } from '@/db/schema';
-import { suggestions } from '@/lib/db/queries/suggestions';
+import { ADJACENCY_SHOWN, forDisplay, suggestions } from '@/lib/db/queries/suggestions';
 
 /**
  * SPEC.md §9.1 as amended by A28 — the two SCORED terms, want-list suppression,
@@ -783,5 +783,120 @@ describe('a member who rejoins is still one person (A51)', () => {
     expect(got?.sharedMemberWeight).toBe(2);
     expect(got?.sharedMemberArtistCount).toBe(2);
     expect(got?.convergence).toBe(true);
+  });
+});
+
+/**
+ * SPEC.md §9.1/§10 (A53, 2026-09-08) — the list STOPS rather than running to
+ * exhaustion.
+ *
+ * **A display decision, deliberately not a cut**, and the evidence says a
+ * numeric cut cannot work. Measured over 74 candidates from seven walks: at a
+ * threshold of 2 you keep Tom & Jerry and Manzarek-Krieger (renames) and lose
+ * nothing worth losing; at 3 you lose Blood, Sweat & Tears (a real discovery)
+ * while keeping Rick & The Ravens (a rename). **The renames rank high BY
+ * CONSTRUCTION** — a band of the same people shares the most members — so no
+ * threshold on the shared count separates them.
+ *
+ * So the list is shortened rather than filtered. Nothing is scored differently
+ * and no candidate is judged: the ranking already puts convergence first, and
+ * this stops showing the part of the tail nobody reads.
+ *
+ * **74 rows where 3 are useful trains the reader to skim; 6 rows where 3 are
+ * useful does not.** That is the whole argument, and it does not require solving
+ * the rename problem — which is confirmed unsolvable from the graph three ways
+ * (tribute relation, name containment, the ratio test).
+ */
+describe('the list stops rather than running to exhaustion (A53)', () => {
+  async function adjacent(name: string, people: number) {
+    const band = await makeArtist(`${name}-owned`);
+    const candidate = await makeArtist(name);
+    await own(band.id, `${name}-rec`);
+    for (let i = 0; i < people; i += 1) {
+      const person = await makeArtist(`${name}-p${i}`);
+      await member(person.id, band.id, null);
+      await member(person.id, candidate.id, null);
+    }
+    return candidate;
+  }
+
+  /**
+   * Fails against the shipped behaviour, which returns every candidate up to
+   * `limit` and so runs to 20 rows where the useful ones are the first few.
+   *
+   * **Asserted against `forDisplay`, not `suggestions`.** The cap is the
+   * SCREEN's editorial decision; putting it in the query silently changed
+   * §5.8's endpoint, which `suggestions.test.ts` caught.
+   */
+  it('caps the adjacency tier at a handful', async () => {
+    for (let i = 0; i < 12; i += 1) await adjacent(`Band${i}`, 1);
+
+    const rows = forDisplay(await suggestions({ limit: 100 }));
+
+    expect(rows.length).toBeLessThanOrEqual(ADJACENCY_SHOWN);
+  });
+
+  /**
+   * **The load-bearing test.** Fails against a cap applied to the whole list
+   * rather than to the adjacency tier: a convergence must never be pushed out
+   * by adjacency, however much adjacency there is. Measured reality — one
+   * convergence among 74 candidates — makes this the case that matters.
+   */
+  it('never drops a convergence to make room for adjacency', async () => {
+    for (let i = 0; i < 12; i += 1) await adjacent(`Band${i}`, 4);
+
+    // One convergence, deliberately with the FEWEST shared members, so only the
+    // tier can save it.
+    const bandA = await makeArtist('ownedA');
+    const bandB = await makeArtist('ownedB');
+    const p1 = await makeArtist('conv-p1');
+    const p2 = await makeArtist('conv-p2');
+    const converged = await makeArtist('Four on the Floor');
+    await own(bandA.id, 'recA');
+    await own(bandB.id, 'recB');
+    await member(p1.id, bandA.id, null);
+    await member(p2.id, bandB.id, null);
+    await member(p1.id, converged.id, null);
+    await member(p2.id, converged.id, null);
+
+    const rows = forDisplay(await suggestions({ limit: 100 }));
+
+    expect(find(rows, converged.id), 'the discovery must survive the cap').toBeDefined();
+    expect(rows[0]?.artistId).toBe(converged.id);
+  });
+
+  /**
+   * Fails against a cap that hides convergences beyond the first. They are rare
+   * — one in 74 measured — so there is no case for truncating them.
+   */
+  it('shows EVERY convergence, however many', async () => {
+    const made: string[] = [];
+    for (let i = 0; i < 8; i += 1) {
+      const a = await makeArtist(`oA${i}`);
+      const b = await makeArtist(`oB${i}`);
+      const p1 = await makeArtist(`cp1-${i}`);
+      const p2 = await makeArtist(`cp2-${i}`);
+      const c = await makeArtist(`Conv${i}`);
+      await own(a.id, `rA${i}`);
+      await own(b.id, `rB${i}`);
+      await member(p1.id, a.id, null);
+      await member(p2.id, b.id, null);
+      await member(p1.id, c.id, null);
+      await member(p2.id, c.id, null);
+      made.push(c.id);
+    }
+
+    const rows = forDisplay(await suggestions({ limit: 100 }));
+
+    for (const id of made) expect(find(rows, id)).toBeDefined();
+  });
+
+  /** A short collection is unaffected — nothing is padded and nothing is cut. */
+  it('leaves a list shorter than the cap alone', async () => {
+    await adjacent('OnlyOne', 2);
+
+    const rows = forDisplay(await suggestions({ limit: 100 }));
+
+    expect(rows).toHaveLength(1);
   });
 });
