@@ -26717,6 +26717,25 @@ created including Manzarek-Krieger, Nite City, Butts Band and Zun.
 Re-clicking resumes at the same count because the work is done and the writes are
 idempotent (§4.3). A re-walk adds nothing, so nothing moves.
 
+### NARROWED BY MEASUREMENT (Adam, 2026-09-08)
+
+**The app DOES distinguish finished from partial, and says which.** Adam noticed
+the later walks read "2 members." and "7 members." rather than a bare number, and
+asked whether that was the completion text arriving intact. It is —
+`walk-lineup.ts` returns `${total} members.` on success and `Checked N of M
+members before MusicBrainz stopped responding` on a partial, and the POST carries
+it to the page.
+
+**So the defect is narrower than recorded below: it bites only when the browser
+LOSES that response** — a reload, a 504, a closed tab. That is what happened on
+The Doors, where Adam reloaded. The entry stands, and its scope is one case
+rather than every walk.
+
+Worth keeping as its own lesson: **the first recording of a defect was broader
+than the evidence supported**, and the correction came from the user noticing the
+app behaving better than described. A defect observed once through a lost
+response is not a defect in the reporting generally.
+
 ### The defect is in the REPORTING, not the walking
 
 `/api/artists/:id/lineup/progress` returns committed rows — a number that stops
@@ -26760,3 +26779,66 @@ Blues Project at 7.
 
 **Trigger: whichever comes first — a walk that genuinely dies and is misread as
 finished, or the disambiguation work, since they want the same shape.**
+
+---
+
+## MEASURED — six walked bands, 55 candidates, still zero convergences
+
+**After Adam walked The Doors, Simon & Garfunkel and The Blues Project
+(2026-09-08).** Six of seventeen owned artists now walked.
+
+| | before | after |
+|---|---|---|
+| walked artists | 2 | **6** |
+| candidates | 34 | **55** |
+| convergences (>1 owned band) | 0 | **0** |
+
+**The pool grew 62% and not one candidate reaches two owned artists.** This is
+§9.1's dormancy holding across six bands rather than two, which makes it a
+stronger statement than before rather than a weaker one: the walked lineups are
+genuinely disjoint scenes — British punk, British rock, 60s American folk-rock,
+60s American blues-rock, 2000s indie. The Blues Project was the best hope (Kooper
+and Katz into Blood, Sweat & Tears) and bridged to nothing owned.
+
+**What would actually fire it:** the unwalked artists in cross-pollinated session
+worlds — Miles Davis, Steely Dan, John Lennon, Jeff Beck. Convergence needs
+OVERLAPPING lineages walked, and breadth alone does not supply that if the bands
+chosen are from separate scenes.
+
+### The Dire Straits footprint: anomalous in KIND, not in volume
+
+Candidates contributed per walked band:
+
+```
+Dire Straits        19        The Doors            6
+Discharge           15        Simon & Garfunkel    3
+The Blues Project   12
+```
+
+Dire Straits is the largest contributor and not an outlier — 19 against
+Discharge's 15, on a lineup less than half the size. **What was anomalous is the
+KIND**: six Dire Straits derivatives reached Adam's top twenty where the other
+four bands contributed none.
+
+### The finding that reframes A48
+
+**The Doors has FOURTEEN tribute acts recorded** — the Droors, The Odors, The
+Poorz, Magical Mystery Doors, Wild Child — against Dire Straits' two. By tribute
+count it is far more encumbered.
+
+**And none of the sixteen tribute rows suppress anything**, because not one
+tribute act shares a member with an owned band. Measured: every derived act has
+zero members known and `is_candidate = no`. The suppression column reads 0 for
+every walked band.
+
+> **So the tribute edge is INSURANCE, not an active filter.** It is correct,
+> free (it rides on a band fetch already made), and currently doing none of the
+> work its 16 rows suggest. The reason Dire Straits' derivatives were the problem
+> is that its ex-members STAFFED them — Alan Clark, Chris White, John Illsley —
+> whereas a Doors tribute band is strangers. **A tribute act only becomes a
+> suggestion when it employs the original's players**, which is the narrow case
+> A48 catches and the reason the coverage was 2 of 6 rather than 6 of 6.
+
+This is worth carrying: **a fix measured by rows written can look far more
+effective than it is.** The row count grew 8x with the new walks; the suppression
+it performs is still zero.
