@@ -26842,3 +26842,109 @@ every walked band.
 This is worth carrying: **a fix measured by rows written can look far more
 effective than it is.** The row count grew 8x with the new walks; the suppression
 it performs is still zero.
+
+---
+
+## THE WALK DOES NOTHING FOR A PERSON, and the four artists most likely to converge are People
+
+**Measured while answering Adam's cost question (2026-09-08), and it displaces
+the question entirely.**
+
+He asked what walking Miles Davis, Steely Dan, John Lennon and Jeff Beck would
+cost, reasoning — correctly — that these are the cross-pollinated session world
+where the same players recur, and that his six walked bands are disjoint scenes
+because *"I walked the bands that were easy to disambiguate rather than the ones
+most likely to intersect."*
+
+**Three of the four are MusicBrainz `Person` artists, and `walkLineup` follows
+only `role === 'person'` relations** (`walk-lineup.ts:128`). For a Person, every
+`member of band` relation is `direction: forward`, which `normalizeRelations`
+maps to `role: 'group'`. Measured:
+
+```
+Miles Davis  (Person): {'group': 11}  -> walk follows 0
+John Lennon  (Person): {'group': 7}   -> walk follows 0
+Steely Dan   (Group):  12 rels, 10 distinct people -> follows 10
+```
+
+**So a Miles Davis walk fetches the artist, follows nobody, writes no
+memberships, and reports "0 members."** It is not expensive — it is inert. The
+band-shaped assumption is in the walk's own name and in `total =
+members.length`.
+
+**This is not a bug in the sense of broken code**: §12 step 11 specifies walking
+a BAND's lineup, and the function does that correctly. It is a gap between what
+the feature does and what the collection contains. Adam owns 17 artists; a
+Person-type artist among them can never contribute to §9.1's shared-member term,
+and nothing anywhere says so.
+
+**The asymmetry that makes it interesting:** a Person's `forward` relations name
+the bands they were in — which is EXACTLY the convergence signal. Miles Davis's
+11 groups are 11 places his collaborators can be found. The data is one fetch
+away and the walk discards it.
+
+> **A feature named for one shape silently excludes the others.** "Walk a band's
+> lineup" reads as complete until you notice the collection also holds people,
+> and the failure is silent: a walk that follows nobody reports success with a
+> zero.
+
+### The cost question, answered anyway
+
+| artist | type | requests | note |
+|---|---|---|---|
+| Miles Davis | Person | 1 | follows nobody |
+| John Lennon | Person | 1 | follows nobody |
+| Steely Dan | **Group** | **11** | 10 distinct members |
+| Jeff Beck | Person (unverified) | 1 | expected same |
+
+**Steely Dan is the only walkable one and it is cheap** — 11 requests, well
+inside the 60s cap. The "enormous personnel list" fear was about Miles Davis, and
+it does not apply because the walk does not follow session players; MusicBrainz
+records those as performance credits on releases, not `member of band`.
+
+### Partial-walk behaviour, verified
+
+`if (!partial) await writeCachedArtist(...)` — **a killed walk caches nothing and
+keeps every membership it wrote.** Rows are committed per member as they resolve,
+so a walk cut off at member 8 of 30 keeps those 8 and re-walking resumes rather
+than restarting. **A truncated walk is usable, not wasted.** The one cost is that
+the platform kill returns no response, so the completion text is lost — see the
+progress-reporting entry.
+
+---
+
+## MEASUREMENTS THAT LOOK LIKE EVIDENCE AND CONSTRAIN NOTHING — the third instance
+
+**Named by Adam (2026-09-08) after the A48 reframing**, and it belongs beside the
+aggregate-assertion and decorative-fixture entries as one family.
+
+> Adam: *"a fix measured by rows written can look far more effective than it is.
+> Sixteen tribute rows suppressing nothing, and the row count would have read as
+> coverage on any dashboard."*
+
+The three, and what each substitutes for the thing it claims:
+
+| instance | what was counted | what it claimed | why it constrained nothing |
+|---|---|---|---|
+| aggregate assertion | a variable, a token, a source string | a connection, a rendering, a behaviour | the proxy sits one layer below the claim |
+| decorative fixture | that a test ran | that a branch works | nothing would fail if the branch broke |
+| **rows written (A48)** | **16 `artist_derived_acts` rows** | **a working tribute filter** | **no tribute act was ever a candidate; suppression is 0** |
+
+**The new one is the most seductive of the three**, because the number is real,
+correct, and grew 8x when more bands were walked. Nothing is wrong with the
+count. It simply measures INPUT — how much the importer found — while reading as
+OUTPUT: how much the filter removed. **A dashboard showing "16 tribute
+relationships captured" would be true and would mean nothing.**
+
+> **When a fix produces rows, measure the rows it CHANGES, not the rows it
+> WRITES.** The suppression column is the honest metric here and it reads zero
+> for every walked band. Ask: if this table were empty, what would differ on
+> screen? For A48 today, nothing — the two Dire Straits derivatives it caught are
+> the whole effect, and they predate the new walks.
+
+**The underlying reason, worth keeping because it predicts where this recurs:**
+the tribute edge only bites when a tribute act SHARES A MEMBER with the original,
+because sharing a member is what makes something a candidate at all. Dire
+Straits' derivatives employ Alan Clark and Chris White; The Doors' fourteen
+tribute bands are strangers to The Doors. So the filter is correctly built and
+structurally narrow, and the row count cannot show that — only the join can.
