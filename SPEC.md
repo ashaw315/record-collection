@@ -1889,6 +1889,20 @@ So it needs editing, and it should probably record **when it was written**, the 
 
 **A year is displayed but never counts as detail**, carrying A43's rule forward: a year is an output of identification rather than an input to it.
 
+### A56/A57/A58 (2026-09-08) — the fabrication is not stable, and three changes follow
+
+**A second report: the same prompt produced CAD 3020 where the first run gave CAD 3016**, for a record numbered CAD 3X38. **Two different invented numbers from identical input**, so the model is generating an identifier to fill a required field rather than recalling one — and neither run is flagged.
+
+**A56 — no anchor, no assessment.** A row with no target pressing gives the model two strings and nothing else, so neither the ask nor a stored answer is shown for such a row, and `POST /api/want-list/:id/pressing-assessment` refuses with `NO_TARGET_PRESSING` before claiming a rate-limit slot. The stored row is KEPT in the database and not rendered: it is a record of the model answering a question the app never gave it enough to answer.
+
+**Why suppress rather than show both.** The variants panel correctly said *"No target pressing on this want-list entry"* while the assessment beneath it named CAD 3020 — two contradictory claims about one row, with nothing on screen showing that the lower panel never saw the row. **Adjacency is clarifying only when the panels are COMPARABLE**: a held CAD 3X38 above a model's claim below makes a conflict legible. With nothing above there is no comparison, only an unanchored identifier under a statement that the app has no anchor. The gate shares `assessmentAvailable` with the screen so the two cannot disagree.
+
+**A57 — the prompt carries the held pressing.** `PressingSubject` gains `held`: catalogue number, matrix/runout, variant and country, with instructions never to contradict them and not to restate them back. **The dig-notes exclusion stays**: withholding the user's BELIEFS so the model cannot flatter them is sound, and a catalogue number is not a belief but the identity of the object.
+
+**This NARROWS the fabrication; it does not eliminate it**, and that is stated rather than discovered later. The prompt asks for pressings plural, so rows two and three — a reissue, a US press — are still generated from recall and carry the same risk. `isCheckable` cannot tell: a second invented number passes the same shape test. And if the model echoes the held value back, agreement is not verification. **What it fixes is the case where EVERY row is wrong because the model never knew which record it was discussing.**
+
+**A58 — retention is current plus one.** The unique constraint on `want_list_id` is dropped (migration 0026) and `storeAssessment` trims to two, exactly as A39 does for gap analyses. **The disagreement between runs is the strongest evidence available that neither answer is knowledge, and one-per-row destroyed it.** A43's argument — "nothing reads a superseded one" — was accurate and answered the wrong question: the reader is the user, comparing.
+
 ### Two limits of A43, recorded because both were read as stronger than they are
 
 **1. The disclaimer does not cover this failure class.** A caption mitigates *"this might be wrong about music"*. It cannot mitigate *"this identifier does not exist"* — the first is epistemic and a hedge answers it; the second is **navigational**, and the user reaches the wrong record regardless of what the caption says. **Where output names an IDENTITY rather than a judgement, a disclaimer is not mitigation.**

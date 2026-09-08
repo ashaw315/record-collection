@@ -16,7 +16,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
+import { desc, sql } from 'drizzle-orm';
 
 /**
  * SPEC.md §4. Every table carries `id`, `created_at` and `updated_at` unless the
@@ -526,9 +526,22 @@ export const recordTags = pgTable(
  */
 export const pressingAssessments = pgTable('pressing_assessments', {
   id,
+  /**
+   * **No longer UNIQUE (A58, 2026-09-08).** A43 kept exactly one assessment per
+   * row, on the argument that nothing reads a superseded one. That was accurate
+   * and answered the wrong question.
+   *
+   * Adam asked twice about the same record and got CAD 3016, then CAD 3020, for
+   * a release numbered CAD 3X38. **The disagreement between runs is the
+   * strongest evidence available that neither answer is knowledge** — and
+   * one-per-row destroyed it, so he caught the fabrication only by happening to
+   * ask twice and remember.
+   *
+   * Retention is current plus one, trimmed on write, exactly as A39 does for gap
+   * analyses.
+   */
   wantListId: uuid('want_list_id')
     .notNull()
-    .unique()
     .references(() => wantList.id, { onDelete: 'cascade' }),
   /** `matters` | `any-copy` | `unknown` — the three answered states (A43). */
   verdict: text('verdict').notNull(),
@@ -546,7 +559,24 @@ export const pressingAssessments = pgTable('pressing_assessments', {
   orderedBy: text('ordered_by'),
   /** What the UI shows as "asked N ago" — the only time this table holds. */
   askedAt: timestamp('asked_at', { withTimezone: true }).notNull().defaultNow(),
-});
+},
+  (t) => [
+    /*
+     * **A58: the index the dropped UNIQUE was providing.**
+     *
+     * `unique()` creates an index as a side effect, so removing it left
+     * `want_list_id` — a foreign key read on every assessment lookup —
+     * unindexed. §4.4 requires every FK column to be indexed and its
+     * conformance test caught this, which is the guard working: a constraint
+     * change quietly removed an index nobody had declared.
+     *
+     * Ordered by `asked_at` DESC alongside it, because every read of this table
+     * is "the newest for this row" and the retention trim uses the same
+     * ordering.
+     */
+    index('pressing_assessments_want_list_id_idx').on(t.wantListId, desc(t.askedAt)),
+  ],
+);
 
 /**
  * SPEC.md §12c (A44) — pairings the user has REJECTED, so they are never

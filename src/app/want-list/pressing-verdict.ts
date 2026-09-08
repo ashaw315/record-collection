@@ -1,3 +1,4 @@
+import { pressingVariantPanel, type HeldPressing } from './pressing-variants';
 import type { PressingVerdict } from '@/lib/llm/pressing-assessment-client';
 
 /**
@@ -111,4 +112,29 @@ export function verdictPresentation(verdict: PressingVerdict): VerdictPresentati
         actionable: false,
       };
   }
+}
+
+
+/**
+ * Whether §12b's assessment may be asked for or shown (A56, 2026-09-08).
+ *
+ * **Gated on an ANCHOR, because without one the model fabricates.** Adam's
+ * report: for a row with no target pressing, two runs of the same prompt named
+ * CAD 3016 and then CAD 3020 for a record whose catalogue number is CAD 3X38.
+ * The prompt received `{ artist, title }` and nothing else, so the identifier was
+ * generated rather than recalled — and the INSTABILITY is the proof, since a
+ * recall error would at least be consistent.
+ *
+ * **Keyed on the pressing carrying an identifier, not on the row existing.** An
+ * empty pressing anchors nothing: the prompt would be exactly as unanchored, and
+ * a gate that passed it would be checking presence rather than usefulness — the
+ * absent-versus-empty distinction this project keeps naming.
+ *
+ * **A year is not an anchor**, carrying A43's rule forward: it is an output of
+ * identification rather than an input to it. `pressingVariantPanel` applies the
+ * same rule, and the two must agree or the screen contradicts itself — which is
+ * exactly the defect A56 closes.
+ */
+export function assessmentAvailable(pressing: HeldPressing | null): boolean {
+  return pressingVariantPanel(pressing).state === 'detail';
 }

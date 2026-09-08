@@ -62,9 +62,15 @@ export function pressingVariantPanel(pressing: HeldPressing | null): VariantPane
     return {
       state: 'no-pressing',
       fields: [],
+      /*
+       * **A56: the message also names why the assessment is unavailable.** The
+       * two statements belong together — the app cannot say which pressing is
+       * being hunted, and therefore cannot ask about one either. Splitting them
+       * across two panels is what let "no anchor" sit above an invented CAD 3020.
+       */
       message:
         'No target pressing on this want-list entry, so there is nothing recorded ' +
-        'about which pressing you are hunting. Add one to see its identifying details here.',
+        'about which pressing you are hunting. Attach a target pressing to ask about it.',
     };
   }
 

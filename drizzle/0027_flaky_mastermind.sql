@@ -1,0 +1,1 @@
+CREATE INDEX "pressing_assessments_want_list_id_idx" ON "pressing_assessments" USING btree ("want_list_id","asked_at" desc);

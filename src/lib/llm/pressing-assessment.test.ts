@@ -330,3 +330,94 @@ describe('the real client cannot reach Anthropic from a test', () => {
     );
   });
 });
+
+/**
+ * SPEC.md §12b (A57, 2026-09-08) — the prompt is told WHICH record.
+ *
+ * **The fix rather than the guard.** A56 stops an unanchored ask; this stops the
+ * ask being unanchored. `PressingSubject` was `{ artist, title }`, so for
+ * Deerhunter's *Halcyon Digest* the model produced CAD 3016 on one run and
+ * CAD 3020 on the next — a record numbered CAD 3X38. **The instability is the
+ * proof it was generated rather than recalled.**
+ *
+ * **The dig-notes exclusion stays and is not weakened.** Withholding the user's
+ * own beliefs so the model cannot flatter them is sound; the catalogue number is
+ * not a belief, it is the identity of the object. That distinction is the whole
+ * amendment.
+ */
+describe('the prompt carries the held pressing (A57)', () => {
+  const SUBJECT = { artist: 'Deerhunter', title: 'Halcyon Digest' };
+
+  it('names the catalogue number the app holds', () => {
+    const prompt = buildPressingAssessmentPrompt({
+      ...SUBJECT,
+      held: { catalogNumber: 'CAD 3X38', matrixRunout: null, countryPressed: null, colorVariant: null },
+    });
+
+    expect(prompt).toContain('CAD 3X38');
+  });
+
+  it('names the runout and the variant descriptor', () => {
+    const prompt = buildPressingAssessmentPrompt({
+      ...SUBJECT,
+      held: {
+        catalogNumber: 'CAD 3X38',
+        matrixRunout: 'Salt',
+        countryPressed: 'UK',
+        colorVariant: 'White, Early fadeout (Desire Lines)',
+      },
+    });
+
+    expect(prompt).toContain('Salt');
+    expect(prompt).toContain('White, Early fadeout (Desire Lines)');
+  });
+
+  /**
+   * **The load-bearing instruction.** Fails against a prompt that supplies the
+   * catalogue number without forbidding contradiction of it — which would leave
+   * the model free to name CAD 3020 alongside, exactly as before.
+   */
+  it('forbids contradicting the held identifiers', () => {
+    const prompt = buildPressingAssessmentPrompt({
+      ...SUBJECT,
+      held: { catalogNumber: 'CAD 3X38', matrixRunout: null, countryPressed: null, colorVariant: null },
+    });
+
+    expect(prompt).toMatch(/do not contradict|must not contradict|never contradict/i);
+  });
+
+  /**
+   * Fails against a prompt that asks the model to confirm what it was given.
+   * Echoing the held value back is the flattery risk the dig-notes reasoning
+   * correctly identified — a confirmation that reads as corroboration.
+   */
+  it('asks the model NOT to simply repeat the value it was given', () => {
+    const prompt = buildPressingAssessmentPrompt({
+      ...SUBJECT,
+      held: { catalogNumber: 'CAD 3X38', matrixRunout: null, countryPressed: null, colorVariant: null },
+    });
+
+    expect(prompt).toMatch(/already know|do not repeat|no need to restate/i);
+  });
+
+  /**
+   * Fails against a prompt that renders an empty "the collector holds" block.
+   * A56 gates the ask on an anchor, so this should not occur — but a heading
+   * over nothing would tell the model it had been given facts it had not.
+   */
+  it('says nothing about held facts when there are none', () => {
+    const prompt = buildPressingAssessmentPrompt(SUBJECT);
+
+    expect(prompt).not.toMatch(/the collector (already )?(holds|has recorded)/i);
+  });
+
+  /** Unchanged: the user's own dig notes are still never sent. */
+  it('still sends no dig notes', () => {
+    const prompt = buildPressingAssessmentPrompt({
+      ...SUBJECT,
+      held: { catalogNumber: 'CAD 3X38', matrixRunout: null, countryPressed: null, colorVariant: null },
+    });
+
+    expect(prompt).not.toMatch(/dig note|best dig|their notes/i);
+  });
+});

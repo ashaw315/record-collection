@@ -40,30 +40,75 @@ export async function storeAssessment(
   const db = getDb();
 
   /*
-   * Upsert on the unique `want_list_id`: one assessment per row, replaced on
-   * re-ask. Nothing reads a superseded one, so a history would be a table
-   * growing for a use case nobody has named — and re-asking is a deliberate act
-   * that costs a request, so replacing is what the user asked for.
+   * **Insert-then-trim, keeping CURRENT PLUS ONE** (A58, 2026-09-08).
+   *
+   * A43 upserted: one assessment per row, replaced on re-ask, because "nothing
+   * reads a superseded one". Accurate, and the wrong question. Adam asked twice
+   * about one record and got CAD 3016 then CAD 3020 for a release numbered
+   * CAD 3X38 — **the disagreement is the strongest evidence available that
+   * neither answer is knowledge**, and replacing destroyed it.
+   *
+   * Same shape and same reasoning as A39's gap-analysis retention: the value of
+   * a stored answer is not only what the app reads, it is what the user can
+   * compare.
    */
-  await db
-    .insert(pressingAssessments)
-    .values({
-      wantListId,
-      verdict: input.verdict,
-      pressings: input.pressings,
-      dropped: input.dropped,
-      orderedBy: input.orderedBy,
-    })
-    .onConflictDoUpdate({
-      target: pressingAssessments.wantListId,
-      set: {
-        verdict: input.verdict,
-        pressings: input.pressings,
-        dropped: input.dropped,
-        orderedBy: input.orderedBy,
-        askedAt: sql`now()`,
-      },
-    });
+  await db.insert(pressingAssessments).values({
+    wantListId,
+    verdict: input.verdict,
+    pressings: input.pressings,
+    dropped: input.dropped,
+    orderedBy: input.orderedBy,
+  });
+
+  /*
+   * Trim to two. A delete keyed on "not in the newest two" rather than a count,
+   * so a concurrent write cannot leave three — the row set is decided by the
+   * same ordering the reads use.
+   */
+  await db.execute(sql`
+    DELETE FROM pressing_assessments
+     WHERE want_list_id = ${wantListId}
+       AND id NOT IN (
+         SELECT id FROM pressing_assessments
+          WHERE want_list_id = ${wantListId}
+          ORDER BY asked_at DESC, id DESC
+          LIMIT 2
+       )
+  `);
+}
+
+/**
+ * The current assessment and the one before it (A58).
+ *
+ * **`previous` is null after a single ask**, which is not the same as a previous
+ * answer that was empty — A39's absent-versus-empty distinction, one row down. A
+ * caller must render nothing rather than an empty comparison.
+ */
+export async function assessmentWithPrevious(wantListId: string): Promise<{
+  current: StoredAssessment | null;
+  previous: StoredAssessment | null;
+}> {
+  const db = getDb();
+
+  const rows = await db
+    .select()
+    .from(pressingAssessments)
+    .where(eq(pressingAssessments.wantListId, wantListId))
+    .orderBy(desc(pressingAssessments.askedAt), desc(pressingAssessments.id))
+    .limit(2);
+
+  const shape = (row: (typeof rows)[number] | undefined): StoredAssessment | null =>
+    row === undefined
+      ? null
+      : {
+          verdict: row.verdict as PressingVerdict,
+          pressings: row.pressings as Array<{ description: string; identifier: string }>,
+          dropped: row.dropped,
+          orderedBy: row.orderedBy,
+          askedAt: row.askedAt,
+        };
+
+  return { current: shape(rows[0]), previous: shape(rows[1]) };
 }
 
 export async function latestAssessment(wantListId: string): Promise<StoredAssessment | null> {
@@ -73,7 +118,14 @@ export async function latestAssessment(wantListId: string): Promise<StoredAssess
     .select()
     .from(pressingAssessments)
     .where(eq(pressingAssessments.wantListId, wantListId))
-    .orderBy(desc(pressingAssessments.askedAt))
+    /*
+     * **`id` breaks the tie** (A58). With retention now keeping two rows,
+     * `asked_at` alone is not a total order — two assessments written in the
+     * same millisecond would return either, and the trim above uses this exact
+     * ordering. A read disagreeing with the trim could return the row the trim
+     * is about to delete.
+     */
+    .orderBy(desc(pressingAssessments.askedAt), desc(pressingAssessments.id))
     .limit(1);
 
   if (row === undefined) return null;

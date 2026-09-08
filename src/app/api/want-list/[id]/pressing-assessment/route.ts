@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { badRequest, isUuid, notConfigured, notFound } from '@/lib/api/errors';
 import { withErrorHandling } from '@/lib/api/handler';
 import { hydrateWantListItem } from '@/lib/db/queries/want-list';
+import { assessmentAvailable } from '@/app/want-list/pressing-verdict';
 import {
   clearAssessment,
   latestAssessment,
@@ -50,6 +51,31 @@ export const POST = withErrorHandling(
     if (item === undefined) return notFound('Want-list item not found');
 
     /*
+     * **A56: no anchor, no ask — enforced HERE, not only in the UI.**
+     *
+     * Hiding the button stops the ordinary path and leaves this endpoint
+     * reachable, which would spend one of ten hourly requests producing exactly
+     * the fabrication the gate exists to prevent. Adam's report: for a row with
+     * no target pressing, two runs named CAD 3016 and then CAD 3020 for a record
+     * numbered CAD 3X38 — the instability is the proof it was generated rather
+     * than recalled.
+     *
+     * **Before the stored-answer read and before the claim**, so a refusal costs
+     * neither a request slot nor a misleading cached answer.
+     *
+     * Shares `assessmentAvailable` with the screen, so the two cannot disagree —
+     * a gate that drifted from the panel would reintroduce the contradiction of
+     * an unanchored identifier beneath a statement that the app has no anchor.
+     */
+    if (!assessmentAvailable(item.targetPressing ?? null)) {
+      return badRequest(
+        'This entry has no target pressing, so there is nothing to assess. ' +
+          'Attach a target pressing with a catalogue number or runout first.',
+        'NO_TARGET_PRESSING',
+      );
+    }
+
+    /*
      * **Never asked twice** (A43). A pressing assessment is a claim about an
      * album's pressing history, which does not change — unlike a gap analysis,
      * which is a claim about a collection that does. So a stored answer is
@@ -84,14 +110,31 @@ export const POST = withErrorHandling(
     let result;
     try {
       /*
-       * **Artist and title only** (A43). Not the user's own dig notes: sending
-       * them invites the model to agree, and an assessment confirming what the
-       * user already believes is worth less than one arrived at independently —
-       * disagreement is the informative case.
+       * **Not the user's own dig notes** (A43): sending them invites the model
+       * to agree, and an assessment confirming what the user already believes is
+       * worth less than one arrived at independently — disagreement is the
+       * informative case.
+       *
+       * **AMENDED BY A57.** That reasoning was correct and over-reached by one
+       * category: it also excluded Discogs-derived pressing facts, which are not
+       * beliefs the model might flatter but the IDENTITY of the object. With
+       * only artist and title, two runs named CAD 3016 and CAD 3020 for a record
+       * numbered CAD 3X38. The held facts go; the dig notes stay out.
        */
       result = await getPressingAssessmentClient().assess({
         artist: item.artist?.name ?? '',
         title: item.title,
+        /*
+         * **A57: the record's identity, which is what stops the fabrication.**
+         * Discogs-derived and user-entered pressing facts — never the dig notes
+         * above, which remain excluded for the reason that comment gives.
+         */
+        held: {
+          catalogNumber: item.targetPressing?.catalogNumber ?? null,
+          matrixRunout: item.targetPressing?.matrixRunout ?? null,
+          countryPressed: item.targetPressing?.countryPressed ?? null,
+          colorVariant: item.targetPressing?.colorVariant ?? null,
+        },
       });
     } catch (error) {
       if (isAuthFailure(error)) {

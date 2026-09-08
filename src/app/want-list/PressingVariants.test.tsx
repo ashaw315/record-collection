@@ -36,10 +36,24 @@ describe('the rendered variant panel (A55)', () => {
    * empty state must SAY which empty it is — "no pressing attached" and "this
    * pressing has no variant data" suggest different actions.
    */
-  it('says which empty it is when no pressing is attached', () => {
+  /**
+   * **AMENDED after E2E found a conflict.** The first version asserted the panel
+   * said "no target pressing" on a bare row — which broke §10's existing rule
+   * that a row with nothing recorded says NOTHING about what is absent
+   * (`want-list.spec.ts:796`). Blank is a legitimate state, not a gap to be
+   * filled, and a bare row must not become a list of things the user failed to
+   * record.
+   *
+   * What a bare row DOES get is one sentence explaining the affordance that
+   * vanished — the Ask button — because a control disappearing with no
+   * explanation is a different problem from a blank field.
+   */
+  it('renders one sentence and no panel when no pressing is attached', () => {
     const html = render({ pressing: null });
 
-    expect(html).toMatch(/no target pressing/i);
+    expect(html).toMatch(/attach a target pressing/i);
+    expect(html, 'no heading, no panel chrome').not.toMatch(/The pressing you are hunting/i);
+    expect(html).not.toMatch(/nothing recorded about which pressing/i);
   });
 
   it('says something different when a pressing carries no detail', () => {
@@ -106,5 +120,51 @@ describe('the rendered variant panel (A55)', () => {
     expect(list).not.toContain('—');
     expect(list).not.toMatch(/Matrix/i);
     expect(list).toContain('CAD 3X38');
+  });
+});
+
+/**
+ * SPEC.md §12b (A56, 2026-09-08) — no anchor, no assessment.
+ *
+ * **The state this closes**, from Adam's second report: the variants panel
+ * correctly said *"No target pressing on this want-list entry"* while a stored
+ * assessment beneath it named CAD 3020 — for a record whose catalogue number is
+ * CAD 3X38, and which the previous run had called CAD 3016.
+ *
+ * **Two contradictory claims about one row, and the contradiction is
+ * invisible.** Nothing on screen tells the reader the lower panel never saw the
+ * row; adjacency invites the inference that it is ANSWERING the upper one.
+ *
+ * Adjacency is clarifying when the panels are COMPARABLE — a held CAD 3X38 above
+ * a model's claim below, where a conflict is legible. With nothing above there is
+ * no comparison, only an unanchored identifier under a statement that the app has
+ * no anchor.
+ */
+describe('the assessment is gated on an anchor (A56)', () => {
+  it('reports that an assessment cannot be asked for without a pressing', () => {
+    const html = render({ pressing: null });
+
+    expect(html).toMatch(/attach a target pressing/i);
+    expect(html).toMatch(/ask/i);
+  });
+
+  /**
+   * Fails against a panel that shows the gate message when a pressing IS
+   * attached — the assessment is available then, and saying otherwise would
+   * suppress a working feature.
+   */
+  it('does not show the gate when a pressing is attached', () => {
+    const html = render({
+      pressing: {
+        catalogNumber: 'CAD 3X38',
+        matrixRunout: 'Salt',
+        countryPressed: null,
+        colorVariant: null,
+        pressingPlant: null,
+        yearPressed: null,
+      },
+    });
+
+    expect(html).not.toMatch(/attach a target pressing/i);
   });
 });

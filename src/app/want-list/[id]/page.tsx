@@ -5,6 +5,7 @@ import { hydrateWantListItem } from '@/lib/db/queries/want-list';
 import { formatCeiling, huntFacts, priorityLabel } from '../want-list-format';
 import { PressingAssessment } from '../PressingAssessment';
 import { PressingVariants } from '../PressingVariants';
+import { assessmentAvailable } from '../pressing-verdict';
 import { latestAssessment } from '@/lib/db/queries/pressing-assessment';
 
 /**
@@ -129,14 +130,34 @@ export default async function WantListItemPage({
           section poses — "which pressing" — and above the ceiling because it is
           about the record rather than about money.
         */}
-        <PressingAssessment
-          itemId={item.id}
-          stored={
-            assessment === null
-              ? null
-              : { ...assessment, askedAt: assessment.askedAt.toISOString() }
-          }
-        />
+        {/*
+          **A56: no anchor, no assessment — neither the ask nor a stored answer.**
+
+          Adam's second report: this panel named CAD 3020 directly beneath the
+          variants panel saying "No target pressing on this want-list entry",
+          for a record numbered CAD 3X38 — and the run before had said CAD 3016.
+          Two contradictory claims about one row, with nothing on screen to show
+          that the lower one never saw the row.
+
+          **The stored row is kept in the database and not rendered.** It is a
+          record of the model answering a question the app never gave it enough
+          to answer, which is not worth showing beside a statement that the app
+          has no anchor.
+
+          Adjacency is clarifying when the panels are COMPARABLE — a held
+          CAD 3X38 above a model's claim below makes a conflict legible. With
+          nothing above there is no comparison, only an unanchored identifier.
+        */}
+        {assessmentAvailable(item.targetPressing ?? null) && (
+          <PressingAssessment
+            itemId={item.id}
+            stored={
+              assessment === null
+                ? null
+                : { ...assessment, askedAt: assessment.askedAt.toISOString() }
+            }
+          />
+        )}
 
         <div className="mt-6 flex gap-2">
           <Link

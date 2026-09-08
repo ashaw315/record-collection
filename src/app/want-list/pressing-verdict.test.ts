@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { TONE_CLASS, verdictPresentation } from './pressing-verdict';
+import { TONE_CLASS, verdictPresentation, assessmentAvailable } from './pressing-verdict';
 
 /**
  * SPEC.md §12b (A43) — the four states, told apart AT A GLANCE.
@@ -194,5 +194,69 @@ describe('TONE_CLASS — what the verdict actually renders as', () => {
       verdictPresentation('matters').marker,
       'so the distinction is carried by the marker instead',
     ).not.toBe(verdictPresentation('any-copy').marker);
+  });
+});
+
+/**
+ * SPEC.md §12b (A56, 2026-09-08) — whether the assessment renders at all.
+ *
+ * **Gated on an anchor.** A row with no target pressing gave the model two
+ * strings and nothing else, which is how it produced CAD 3016 on one run and
+ * CAD 3020 on the next for a record numbered CAD 3X38. Neither ask nor stored
+ * answer is shown for such a row.
+ *
+ * **The stored row is KEPT in the database and not rendered** (Adam): it is a
+ * record of the model answering a question the app never gave it enough to
+ * answer, which is not worth showing beside a statement that the app has no
+ * anchor.
+ */
+describe('assessmentAvailable (A56)', () => {
+  it('is false when the row has no target pressing', () => {
+    expect(assessmentAvailable(null)).toBe(false);
+  });
+
+  /**
+   * Fails against a gate keyed on the pressing ROW existing rather than on it
+   * carrying an identifier — an empty pressing anchors nothing, and the prompt
+   * would be exactly as unanchored as before.
+   */
+  it('is false when a pressing exists but carries no identifier', () => {
+    expect(
+      assessmentAvailable({
+        catalogNumber: null,
+        matrixRunout: null,
+        countryPressed: null,
+        colorVariant: null,
+        pressingPlant: null,
+        yearPressed: 2010,
+      }),
+    ).toBe(false);
+  });
+
+  it('is true once the pressing carries a catalogue number', () => {
+    expect(
+      assessmentAvailable({
+        catalogNumber: 'CAD 3X38',
+        matrixRunout: null,
+        countryPressed: null,
+        colorVariant: null,
+        pressingPlant: null,
+        yearPressed: null,
+      }),
+    ).toBe(true);
+  });
+
+  /** A runout alone is an anchor too — it is what is read off the deadwax. */
+  it('is true on a runout alone', () => {
+    expect(
+      assessmentAvailable({
+        catalogNumber: null,
+        matrixRunout: 'Salt',
+        countryPressed: null,
+        colorVariant: null,
+        pressingPlant: null,
+        yearPressed: null,
+      }),
+    ).toBe(true);
   });
 });

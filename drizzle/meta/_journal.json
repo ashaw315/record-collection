@@ -183,6 +183,20 @@
       "when": 1788808131857,
       "tag": "0025_needy_harrier",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1788897710456,
+      "tag": "0026_tough_dark_phoenix",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1788898115280,
+      "tag": "0027_flaky_mastermind",
+      "breakpoints": true
     }
   ]
 }

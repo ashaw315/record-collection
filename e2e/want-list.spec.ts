@@ -819,8 +819,26 @@ test('a row with nothing recorded shows no hunt section, not placeholders', asyn
   await expect(page.getByTestId('hunt')).toHaveCount(0);
   await expect(page.getByTestId('ceiling')).toHaveCount(0);
 
+  /*
+    **AMENDED BY A56 (2026-09-08), and the rule this test asserts WON.**
+
+    A56 gates the pressing assessment on an anchor, so the Ask button no longer
+    renders on a bare row. A first version of that change also rendered a panel
+    saying "No target pressing on this want-list entry" — which broke exactly the
+    rule below: blank is a legitimate state, not a gap to be filled, and a bare
+    row must not become a list of things the user failed to record.
+
+    **So the panel was removed from this row and one sentence kept**, explaining
+    the affordance that vanished rather than the fields that were always absent.
+    "Attach a target pressing to ask Claude about it" is about a control, not
+    about a blank field, which is why it is permitted here and the panel is not.
+  */
   const body = await page.locator('main').innerText();
-  expect(body).not.toMatch(/not recorded|none recorded|no target|unknown|n\/a/i);
+  expect(body).not.toMatch(/not recorded|none recorded|unknown|n\/a/i);
+  expect(body, 'no panel describing absent fields').not.toMatch(
+    /The pressing you are hunting/i,
+  );
+  expect(body, 'but the vanished control IS explained').toMatch(/attach a target pressing/i);
 });
 
 /**
@@ -939,13 +957,35 @@ async function stubAssessment(page: Page, data: Record<string, unknown>) {
   });
 }
 
+/**
+ * **AMENDED BY A56 (2026-09-08): the row now carries a TARGET PRESSING.**
+ *
+ * These three tests seeded a bare want-list row, which was correct under the old
+ * contract and is no longer enough: A56 gates the assessment on an anchor,
+ * because a row with no pressing gave the model `{ artist, title }` and nothing
+ * else — which is how it produced CAD 3016 on one run and CAD 3020 on the next
+ * for a record numbered CAD 3X38.
+ *
+ * **The tests encoded the old contract correctly and the contract changed**, so
+ * the seeding changes rather than the assertions. What each test is about — that
+ * a pressing which matters names something checkable, that "any copy" and "not
+ * known" do not look alike, that a stored assessment renders on load — is
+ * untouched.
+ */
 async function seedWanted(page: Page, title: string): Promise<string> {
   const artist = await post(page, '/api/artists', { name: `Assess-${Date.now()}` });
   trackArtist(artist.id as string);
+
+  // A56's anchor: the assessment is unavailable without one.
+  const pressing = await post(page, '/api/pressings', {
+    catalogNumber: `CAT-${Date.now()}`,
+  });
+
   const item = await post(page, '/api/want-list', {
     title,
     artistId: artist.id,
     priority: 3,
+    targetPressingId: pressing.id,
   });
   return item.id as string;
 }

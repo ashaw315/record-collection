@@ -1,0 +1,1 @@
+ALTER TABLE "pressing_assessments" DROP CONSTRAINT "pressing_assessments_want_list_id_unique";

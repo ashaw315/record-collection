@@ -78,3 +78,15 @@ drizzle.config.fresh-clone-test.ts
 #
 # Ignored rather than merely untracked so a `git add -A` cannot sweep them in.
 scratch/
+
+# Ad-hoc database probes written at the repo root to query production.
+#
+# Module resolution forces them here rather than into the scratchpad — `@/`
+# aliases and `dotenv` only resolve inside the project — so they sit beside
+# tracked files and `git add -A` sweeps them in. That happened: `q-probe.mjs`
+# reached commit 1315709, was then deleted, and `dotenv-quiet.test.ts` failed
+# reading a tracked file that no longer existed.
+#
+# Ignored rather than merely remembered, for the reason `scratch/` above gives.
+q-probe.mjs
+*-probe.mjs

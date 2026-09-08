@@ -18,6 +18,34 @@ import { pressingVariantPanel, type HeldPressing } from './pressing-variants';
 export function PressingVariants({ pressing }: { pressing: HeldPressing | null }) {
   const panel = pressingVariantPanel(pressing);
 
+  /*
+   * **A bare row renders ONE SENTENCE, no panel** (A56, amended after E2E).
+   *
+   * §10's existing rule — asserted by `want-list.spec.ts:796` — is that a row
+   * with nothing recorded says NOTHING about what is absent: blank is a
+   * legitimate state rather than a gap to be filled, and a list of absences
+   * would turn a bare row into a form with holes in it. The first version of
+   * this panel broke that rule by rendering a heading and a message on exactly
+   * such a row.
+   *
+   * **But the Ask button vanished from that row**, and an affordance
+   * disappearing with no explanation is a different problem from a blank field.
+   * So one sentence explains the thing that CHANGED, where the button was — no
+   * heading, no panel chrome, no description of empty fields.
+   *
+   * The three-state distinction stays and shows for `no-detail`, which is the
+   * case it was built for: "this pressing has no identifying details" is about a
+   * thing that exists, where "no target pressing" is about a thing that does not,
+   * and only the first belongs in a panel.
+   */
+  if (panel.state === 'no-pressing') {
+    return (
+      <p data-testid="variants-no-pressing" className="mt-6 text-xs text-muted-foreground">
+        Attach a target pressing to ask Claude about it.
+      </p>
+    );
+  }
+
   return (
     <section className="mt-6 border-t border-border pt-4">
       <h2 className="font-heading text-sm font-semibold tracking-tight">

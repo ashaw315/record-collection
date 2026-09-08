@@ -39,7 +39,33 @@ export const PRESSING_ASSESSMENT_MAX_TOKENS = 1_500;
 /** Recall about a record, not reasoning across a collection. See the snippet. */
 const EFFORT = 'low' as const;
 
-export type PressingSubject = { artist: string; title: string };
+/**
+ * What the app HOLDS about the pressing being hunted (A57, 2026-09-08).
+ *
+ * **Discogs-derived facts and the user's own entry — never their dig notes.**
+ * The distinction is the whole amendment: withholding the user's BELIEFS so the
+ * model cannot flatter them is sound, and a catalogue number is not a belief, it
+ * is the identity of the object.
+ */
+export type HeldPressingFacts = {
+  catalogNumber: string | null;
+  matrixRunout: string | null;
+  countryPressed: string | null;
+  colorVariant: string | null;
+};
+
+/**
+ * **`held` is what stops the fabrication** (A57). With `{ artist, title }` alone
+ * the model produced CAD 3016 on one run and CAD 3020 on the next for a record
+ * numbered CAD 3X38 — the instability proving it was generated rather than
+ * recalled. Optional because the type outlives A56's gate; in practice the route
+ * refuses an ask with no anchor.
+ */
+export type PressingSubject = {
+  artist: string;
+  title: string;
+  held?: HeldPressingFacts;
+};
 
 /**
  * **Four states, and they do not collapse into three.**
@@ -141,10 +167,56 @@ function isCheckable(identifier: string): boolean {
   return CHECKABLE.some((pattern) => pattern.test(withoutYears));
 }
 
+/**
+ * The held-facts block, or nothing.
+ *
+ * **Three instructions, and the second and third are what make this a fix rather
+ * than a longer prompt.** Supplying the catalogue number without forbidding
+ * contradiction would leave the model free to name CAD 3020 alongside CAD 3X38,
+ * exactly as before. And asking it not to restate what it was given prevents the
+ * flattery the dig-notes reasoning correctly identified — an echo that reads as
+ * corroboration.
+ */
+function heldFacts(held: HeldPressingFacts | undefined): string[] {
+  if (held === undefined) return [];
+
+  const lines = [
+    held.catalogNumber === null ? null : `- catalogue number: ${held.catalogNumber}`,
+    held.matrixRunout === null ? null : `- matrix / runout: ${held.matrixRunout}`,
+    held.colorVariant === null ? null : `- variant: ${held.colorVariant}`,
+    held.countryPressed === null ? null : `- country: ${held.countryPressed}`,
+  ].filter((line): line is string => line !== null);
+
+  if (lines.length === 0) return [];
+
+  return [
+    'The collector already holds these details about the copy they are hunting:',
+    ...lines,
+    '',
+    'These are FACTS about the record in question. Do not contradict them: if you',
+    'name a pressing, it must be consistent with the catalogue number above, and',
+    'you must NEVER give a different catalogue number for the same release.',
+    '',
+    'They already know these values, so do not repeat them back as your answer.',
+    'Tell them what they do NOT already have — which pressings of THIS release',
+    'differ, and how to tell those apart. If you know of no distinction beyond',
+    'what they hold, answer "any-copy" or "unknown" rather than restating it.',
+    '',
+  ];
+}
+
 export function buildPressingAssessmentPrompt(subject: PressingSubject): string {
   return [
     `A record collector is hunting for: ${subject.artist} — ${subject.title}.`,
     '',
+    /*
+     * **A57: the record's identity, so the model does not invent one.**
+     *
+     * Rendered only when something is held — a heading over an empty list would
+     * tell the model it had been given facts it had not, which is the
+     * absent-versus-empty failure this project keeps naming.
+     */
+    ...heldFacts(subject.held),
     'Does the pressing matter for this record, and if so which one should they',
     'look for?',
     '',
