@@ -196,6 +196,24 @@ export const pressings = pgTable(
     vinylWeightGrams: integer('vinyl_weight_grams'),
     colorVariant: text('color_variant'),
     discogsReleaseId: integer('discogs_release_id'),
+    /**
+     * The Discogs MASTER this release belongs to (A60, 2026-09-08).
+     *
+     * **A live gap, found while costing the retired pressing assessment.**
+     * `normalizeRelease` has always parsed `master_id` and dropped it — 40 cached
+     * payloads carry it and no column mentioned `master`, so it was recoverable
+     * by re-parsing a cache entry and not queryable at all.
+     *
+     * **Captured because the versions endpoint is addressed by MASTER, not by
+     * release** (`/masters/:id/versions`), so any comparison of a pressing
+     * against its siblings needs this id. Cheaper to store on import than to
+     * re-derive from a cache that expires.
+     *
+     * **Nullable, and that is not an oversight**: a standalone release Discogs
+     * has not grouped under a master has none, and requiring one would make
+     * those unimportable. Absent means "not grouped", never "not looked up".
+     */
+    discogsMasterId: integer('discogs_master_id'),
     isReissue: boolean('is_reissue').notNull().default(false),
     notes: text('notes'),
     ...timestamps,

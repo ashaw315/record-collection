@@ -35,6 +35,7 @@ export type Pressing = {
   vinylWeightGrams: number | null;
   colorVariant: string | null;
   discogsReleaseId: number | null;
+  discogsMasterId: number | null;
   isReissue: boolean;
   notes: string | null;
   createdAt: Date;
@@ -51,6 +52,7 @@ const columns = {
   vinylWeightGrams: pressings.vinylWeightGrams,
   colorVariant: pressings.colorVariant,
   discogsReleaseId: pressings.discogsReleaseId,
+  discogsMasterId: pressings.discogsMasterId,
   isReissue: pressings.isReissue,
   notes: pressings.notes,
   createdAt: pressings.createdAt,
@@ -96,6 +98,8 @@ export async function findPressingById(id: string): Promise<Pressing | undefined
 /** The fields §4 designates as the fallback match key. */
 export type MatchKey = {
   discogsReleaseId?: number | null;
+  /** A60: the Discogs MASTER, which survives a correction — see `discogs-import`. */
+  discogsMasterId?: number | null;
   catalogNumber?: string | null;
   countryPressed?: string | null;
   yearPressed?: number | null;

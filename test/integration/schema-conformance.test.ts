@@ -398,3 +398,40 @@ describe('§4.2 conformance — price_history one-parent CHECK', () => {
     expect(rows[0].def).toMatch(/<>/);
   });
 });
+
+/**
+ * SPEC.md §4.2 (A60, 2026-09-08) — the master id is persisted.
+ *
+ * **A live gap found while costing the retired assessment.** `normalizeRelease`
+ * parses `master_id` and drops it: 40 cached Discogs payloads carry it and no
+ * column anywhere mentions `master`, so it is recoverable by re-parsing a cache
+ * entry and not queryable at all.
+ *
+ * **Captured now because it is cheaper than re-deriving later** (Adam), and
+ * because any future version-comparison work needs it — the versions endpoint is
+ * addressed by master, not by release.
+ */
+describe('§4.2 — the Discogs master id is stored (A60)', () => {
+  it('pressings carries discogs_master_id', async () => {
+    const columns = await db.execute<{ column_name: string }>(sql`
+      SELECT column_name FROM information_schema.columns
+       WHERE table_name = 'pressings' AND column_name = 'discogs_master_id'
+    `);
+
+    expect(columns.rows).toHaveLength(1);
+  });
+
+  /**
+   * Fails against a NOT NULL column. A master id is absent for a release Discogs
+   * has not grouped — a standalone release has none — and requiring one would
+   * make those unimportable.
+   */
+  it('is nullable, because a release need not belong to a master', async () => {
+    const columns = await db.execute<{ is_nullable: string }>(sql`
+      SELECT is_nullable FROM information_schema.columns
+       WHERE table_name = 'pressings' AND column_name = 'discogs_master_id'
+    `);
+
+    expect(columns.rows[0]?.is_nullable).toBe('YES');
+  });
+});

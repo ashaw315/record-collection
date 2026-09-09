@@ -295,6 +295,18 @@ export async function importRelease(
 
     const pressingId = await findOrCreatePressing(tx, {
       discogsReleaseId: corrected ? null : release.discogsId,
+      /**
+       * **A60: kept even when `corrected` drops the release id**, and the
+       * asymmetry is deliberate.
+       *
+       * A corrected pressing is a DIFFERENT pressing, so the release id — which
+       * identifies one specific release — must not follow it. The master id
+       * identifies the ALBUM, and correcting a catalogue number does not make it
+       * a different album. So the link to the master survives, which is what a
+       * future comparison against sibling pressings needs
+       * (`/masters/:id/versions`).
+       */
+      discogsMasterId: release.masterId,
       catalogNumber: pick(overrides.catalogNumber, release.catalogNumber),
       countryPressed: pick(overrides.countryPressed, release.country),
       yearPressed: pick(overrides.yearPressed, release.year),

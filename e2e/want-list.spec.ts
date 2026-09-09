@@ -938,253 +938,73 @@ test('the want-list ROW offers editing, not only the detail view', async ({ page
 });
 
 /**
- * SPEC.md §12b (A43) — the four states, told apart at a glance.
+ * SPEC.md §12b — **the generated pressing assessment is RETIRED (A59,
+ * 2026-09-08), and the tests that covered it go with it.**
  *
- * **Adam's constraint is habituation:** *"if they render as two similar grey
- * paragraphs I will stop distinguishing them within a week."* So these assert
- * the STRUCTURE that carries the difference, not the sentences — wording is the
- * part a reader stops parsing once a screen is familiar.
+ * **These encoded a real contract and the feature was removed**, so they are
+ * replaced rather than quietly deleted. What they asserted — that the four
+ * verdict states were told apart by STRUCTURE rather than wording, per Adam's
+ * habituation constraint — was correct while a model was naming pressings.
  *
- * The route is stubbed: it calls Anthropic, and §2 forbids a test reaching it.
+ * **Why the feature went**, three arguments, none about the implementation:
+ *
+ * 1. `/masters/:id/versions` omits `formats[].text`, the free-text descriptor
+ *    that distinguishes pressings. Both Deerhunter variants are CAD 3X38, so the
+ *    descriptor IS the distinction — retrieval returns everything except it.
+ * 2. Once you have the versions list you have answered "which pressing should I
+ *    look for" without a model.
+ * 3. **J. Lambert @ JLM**: a model with retrieval AND a correcting interlocutor
+ *    offered a mastering credit present on every pressing of the title as a
+ *    discriminator, twice. Not fixable by grounding.
+ *
+ * SPEC §12b carries the full rationale and the trail back through A40.
  */
-async function stubAssessment(page: Page, data: Record<string, unknown>) {
-  await page.route('**/api/want-list/*/pressing-assessment', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ data: { askedAt: new Date().toISOString(), dropped: 0, ...data } }),
-    });
-  });
-}
+test('the retired assessment is gone, and real versions are pointed at instead', async ({
+  page,
+}) => {
+  await login(page);
 
-/**
- * **AMENDED BY A56 (2026-09-08): the row now carries a TARGET PRESSING.**
- *
- * These three tests seeded a bare want-list row, which was correct under the old
- * contract and is no longer enough: A56 gates the assessment on an anchor,
- * because a row with no pressing gave the model `{ artist, title }` and nothing
- * else — which is how it produced CAD 3016 on one run and CAD 3020 on the next
- * for a record numbered CAD 3X38.
- *
- * **The tests encoded the old contract correctly and the contract changed**, so
- * the seeding changes rather than the assertions. What each test is about — that
- * a pressing which matters names something checkable, that "any copy" and "not
- * known" do not look alike, that a stored assessment renders on load — is
- * untouched.
- */
-async function seedWanted(page: Page, title: string): Promise<string> {
-  const artist = await post(page, '/api/artists', { name: `Assess-${Date.now()}` });
+  const artist = await post(page, '/api/artists', { name: `Retired-${Date.now()}` });
   trackArtist(artist.id as string);
-
-  // A56's anchor: the assessment is unavailable without one.
-  const pressing = await post(page, '/api/pressings', {
-    catalogNumber: `CAT-${Date.now()}`,
-  });
-
+  const pressing = await post(page, '/api/pressings', { catalogNumber: `CAD-${Date.now()}` });
   const item = await post(page, '/api/want-list', {
-    title,
+    title: 'Retired Assessment',
     artistId: artist.id,
     priority: 3,
     targetPressingId: pressing.id,
   });
-  return item.id as string;
-}
 
-test('a pressing that matters names something checkable against the record', async ({ page }) => {
-  await login(page);
-  const id = await seedWanted(page, 'Rumours');
+  await page.goto(`/want-list/${item.id}`);
 
-  await stubAssessment(page, {
-    verdict: 'matters',
-    pressings: [{ description: 'First US press', identifier: 'Warner BSK 3010, LW in the deadwax' }],
-  });
+  // The held facts are shown — A55's panel, which replaced the generated answer.
+  await expect(page.getByTestId('variants-detail')).toBeVisible();
 
-  await page.goto(`/want-list/${id}`);
+  // And the model's panel is gone, not merely hidden behind a gate.
+  await expect(page.getByTestId('pressing-assessment')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Ask Claude' })).toHaveCount(0);
 
-  // Never automatic: nothing is asked until the user asks (§10a).
-  await expect(page.getByTestId('verdict-matters')).toHaveCount(0);
-
-  await page.getByTestId('ask-pressing').click();
-  await expect(page.getByTestId('verdict-matters')).toBeVisible();
-  await expect(page.getByTestId('pressings-to-hunt')).toContainText('BSK 3010');
-
-  // And it reads as the model's, never as something the app established.
-  await expect(page.getByTestId('pressing-assessment')).toContainText('not a fact this app checked');
+  /*
+    **Points at what EXISTS, never at what is better.** The versions table lists
+    releases; desirability is the collector's judgement (§8), and a link claiming
+    otherwise would rebuild A43's error in one sentence.
+  */
+  const body = await page.locator('main').innerText();
+  expect(body).toMatch(/search Discogs/i);
+  expect(body).not.toMatch(/sounds better|which to buy|we recommend/i);
 });
 
-test('"any copy is fine" and "not known" do not look alike', async ({ page }) => {
-  /*
-    **The pair Adam named.** Both leave him without a pressing to hunt and they
-    mean opposite things: one ENDS the hunt, the other says he is on his own.
-    Asserted as different rendered elements with different markers, because
-    identical-looking states are the failure he predicted within a week.
-  */
-  await login(page);
+/*
+  **Two more A43 tests removed by A59 (2026-09-08): "the list says what its order
+  MEANS" and "no basis is shown when the model named none".**
 
-  const settled = await seedWanted(page, 'Any Copy Album');
-  await stubAssessment(page, { verdict: 'any-copy', pressings: [] });
-  await page.goto(`/want-list/${settled}`);
-  await page.getByTestId('ask-pressing').click();
+  Both asserted behaviour of the generated assessment panel — that `orderedBy` was
+  attributed to Claude and never read as a quality ranking, and that an absent
+  basis rendered nothing. **Both were correct and both covered a retired
+  feature**: the panel no longer renders, so the assertions could only pass
+  vacuously or fail.
 
-  const anyCopy = page.getByTestId('verdict-any-copy');
-  await expect(anyCopy).toBeVisible();
-  await expect(anyCopy).toContainText('Any copy is fine');
-  const anyCopyMarker = (await anyCopy.innerText()).trim()[0];
-
-  // A result, not a failure — it saves time rather than reporting an absence.
-  await expect(anyCopy).not.toContainText(/could not|unable|nothing found/i);
-
-  const open = await seedWanted(page, 'Obscure Album');
-  await page.unroute('**/api/want-list/*/pressing-assessment');
-  await stubAssessment(page, { verdict: 'unknown', pressings: [] });
-  await page.goto(`/want-list/${open}`);
-  await page.getByTestId('ask-pressing').click();
-
-  const unknown = page.getByTestId('verdict-unknown');
-  await expect(unknown).toBeVisible();
-  const unknownMarker = (await unknown.innerText()).trim()[0];
-
-  /*
-    **The load-bearing assertion**: different glyphs, so the states are separable
-    before a word is read.
-  */
-  expect(unknownMarker, 'the two non-actionable states must not share a marker').not.toBe(
-    anyCopyMarker,
-  );
-
-  /*
-    And "not known" says WHOSE gap it is — the model's, not the record's. "There
-    is nothing to find" is a negative the app never established, and 14c draws
-    the same distinction with "Discogs holds no matrix".
-  */
-  await expect(unknown).toContainText(/not known to claude/i);
-  await expect(unknown).not.toContainText(/there is nothing|does not exist/i);
-});
-
-test('a stored assessment renders on load without spending a request', async ({ page }) => {
-  /*
-    **A43's storage argument, stronger than A39's.** A gap analysis is a claim
-    about a collection that CHANGES; a pressing assessment is a claim about an
-    album's pressing history, which does not. So there is no reason to ask twice,
-    and each album costs one of ten hourly requests exactly once.
-
-    **Seeded through the DATABASE, not through the route.** Two earlier versions
-    of this test were hollow: the first let the real route run and the
-    no-live-call guard refused it, the second stubbed the route so the write
-    never landed. Both left nothing stored, which made "reloading spends nothing"
-    trivially true — the same shape as the A39 E2E that asserted persistence
-    while preventing it. **The precondition has to actually happen.**
-  */
-  await login(page);
-  const id = await seedWanted(page, 'Aja');
-
-  const db = getTestDb();
-  await db.execute(sql`
-    INSERT INTO pressing_assessments (want_list_id, verdict, pressings, dropped, ordered_by)
-    VALUES (
-      ${id},
-      'matters',
-      ${JSON.stringify([
-        { description: 'First US press', identifier: 'ABC AB-1006' },
-        { description: 'Japanese pressing', identifier: 'ABC/Victor VIM-6243' },
-      ])}::jsonb,
-      0,
-      'original pressing first, then chronologically'
-    )
-  `);
-
-  let calls = 0;
-  await page.route('**/api/want-list/*/pressing-assessment**', async (route) => {
-    calls += 1;
-    await route.continue();
-  });
-
-  await page.goto(`/want-list/${id}`);
-
-  /*
-    **The assertion the feature exists for**: the stored answer is on the page
-    at load — read server-side — and the ask button is gone, because there is
-    nothing to ask.
-  */
-  await expect(page.getByTestId('verdict-matters')).toBeVisible();
-  await expect(page.getByTestId('pressings-to-hunt')).toContainText('AB-1006');
-  await expect(page.getByTestId('ask-pressing')).toHaveCount(0);
-
-  await page.waitForLoadState('networkidle');
-  expect(calls, 'viewing a stored assessment must spend nothing').toBe(0);
-
-  // And removing it is available — delete, never edit (§7.8).
-  await expect(page.getByTestId('clear-pressing')).toBeVisible();
-
-  await db.execute(sql`DELETE FROM pressing_assessments WHERE want_list_id = ${id}`);
-});
-
-test('the list says what its order MEANS, attributed, and never claims a ranking', async ({
-  page,
-}) => {
-  /*
-    **The defect Adam found:** the list reads best-first by convention, and
-    nothing said what the order was — so the app let him infer a claim it never
-    made. Measured on his two real assessments the model DOES order, and
-    differently each time, so "unordered" would be false and "best first" would
-    be a ranking about SOUND, which §8 says is his.
-  */
-  await login(page);
-  const id = await seedWanted(page, 'Aja');
-  const db = getTestDb();
-
-  await db.execute(sql`
-    INSERT INTO pressing_assessments (want_list_id, verdict, pressings, dropped, ordered_by)
-    VALUES (
-      ${id}, 'matters',
-      ${JSON.stringify([
-        { description: 'US original', identifier: 'ABC AB-1006' },
-        { description: 'MCA reissue', identifier: 'MCA-37214' },
-      ])}::jsonb,
-      0, 'original pressing first, then chronologically'
-    )
-  `);
-
-  await page.goto(`/want-list/${id}`);
-
-  const orderedBy = page.getByTestId('ordered-by');
-  await expect(orderedBy).toBeVisible();
-  await expect(orderedBy).toContainText('original pressing first, then chronologically');
-
-  // Attributed: the model describing its own output, not a property the app found.
-  await expect(orderedBy).toContainText('Claude listed these');
-
-  // And it never claims a ranking by quality.
-  await expect(page.getByTestId('pressing-assessment')).not.toContainText(
-    /best first|ranked|in order of quality/i,
-  );
-
-  await db.execute(sql`DELETE FROM pressing_assessments WHERE want_list_id = ${id}`);
-});
-
-test('no basis is shown when the model named none', async ({ page }) => {
-  /*
-    **"Ordered by nothing in particular" is a real answer** (Adam), and a
-    filled-in default would be a basis nobody stated — the fabrication the field
-    exists to prevent, and the same shape as noParentFits and the unknown verdict.
-  */
-  await login(page);
-  const id = await seedWanted(page, 'Dummy');
-  const db = getTestDb();
-
-  await db.execute(sql`
-    INSERT INTO pressing_assessments (want_list_id, verdict, pressings, dropped, ordered_by)
-    VALUES (
-      ${id}, 'matters',
-      ${JSON.stringify([{ description: 'UK original', identifier: 'Go! Beat 828 522-1' }])}::jsonb,
-      0, NULL
-    )
-  `);
-
-  await page.goto(`/want-list/${id}`);
-
-  await expect(page.getByTestId('verdict-matters')).toBeVisible();
-  await expect(page.getByTestId('ordered-by')).toHaveCount(0);
-
-  await db.execute(sql`DELETE FROM pressing_assessments WHERE want_list_id = ${id}`);
-});
+  Recorded rather than silently dropped because the DECISION they encoded
+  survives the feature: a model describing its own ordering is attributed, and an
+  absent basis is never invented. If a ranking feature is ever built from real
+  retrieved releases (SPEC §12b), those two rules apply to it unchanged.
+*/

@@ -1,0 +1,1 @@
+ALTER TABLE "pressings" ADD COLUMN "discogs_master_id" integer;

@@ -3,10 +3,7 @@ import { notFound } from 'next/navigation';
 import { AppHeader } from '@/components/AppHeader';
 import { hydrateWantListItem } from '@/lib/db/queries/want-list';
 import { formatCeiling, huntFacts, priorityLabel } from '../want-list-format';
-import { PressingAssessment } from '../PressingAssessment';
 import { PressingVariants } from '../PressingVariants';
-import { assessmentAvailable } from '../pressing-verdict';
-import { latestAssessment } from '@/lib/db/queries/pressing-assessment';
 
 /**
  * SPEC.md §10 — the want-list item detail view.
@@ -35,12 +32,6 @@ export default async function WantListItemPage({
   // A malformed or unknown id is a not-found page, never a server error — the
   // same treatment `/records/:id` gives it.
   if (item === undefined) notFound();
-
-  /*
-   * Read server-side so a stored assessment is on the page at load — it costs
-   * nothing, because a pressing assessment does not go stale (A43).
-   */
-  const assessment = await latestAssessment(id);
 
   const hunt = huntFacts({
     bestDigNotes: item.bestDigNotes,
@@ -131,33 +122,31 @@ export default async function WantListItemPage({
           about the record rather than about money.
         */}
         {/*
-          **A56: no anchor, no assessment — neither the ask nor a stored answer.**
+          **A59 (2026-09-08): the generated assessment is RETIRED, not hidden.**
 
-          Adam's second report: this panel named CAD 3020 directly beneath the
-          variants panel saying "No target pressing on this want-list entry",
-          for a record numbered CAD 3X38 — and the run before had said CAD 3016.
-          Two contradictory claims about one row, with nothing on screen to show
-          that the lower one never saw the row.
+          Three arguments converged and none was about the implementation:
 
-          **The stored row is kept in the database and not rendered.** It is a
-          record of the model answering a question the app never gave it enough
-          to answer, which is not worth showing beside a statement that the app
-          has no anchor.
+          1. Discogs' master-versions endpoint omits `formats[].text` — the
+             free-text descriptor that distinguishes pressings. Both Deerhunter
+             variants are CAD 3X38; the descriptor IS the distinction, so
+             retrieval-plus-ranking cannot be built cheaply.
+          2. Once you HAVE the versions list you have answered "which pressing
+             should I look for" without a model.
+          3. **J. Lambert @ JLM** — a model with retrieval AND a correcting
+             interlocutor produced a mastering credit present on every pressing
+             as a discriminator, twice. Not a prompt defect, not a grounding
+             defect, and more real data nearby arguably makes it worse.
 
-          Adjacency is clarifying when the panels are COMPARABLE — a held
-          CAD 3X38 above a model's claim below makes a conflict legible. With
-          nothing above there is no comparison, only an unanchored identifier.
+          **Stored assessments are KEPT in the database and not rendered**
+          (Adam): they are a record of what the feature said, and this whole
+          thread turns on being able to compare answers across runs.
+          `latestAssessment` and `assessmentWithPrevious` still work; nothing
+          reads them on this screen.
+
+          What replaces it is in `PressingVariants` above — the held facts, plus
+          a pointer at real releases. See SPEC §12b for the full rationale and
+          what the versions table does and does not answer.
         */}
-        {assessmentAvailable(item.targetPressing ?? null) && (
-          <PressingAssessment
-            itemId={item.id}
-            stored={
-              assessment === null
-                ? null
-                : { ...assessment, askedAt: assessment.askedAt.toISOString() }
-            }
-          />
-        )}
 
         <div className="mt-6 flex gap-2">
           <Link

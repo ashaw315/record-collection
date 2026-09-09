@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { pressingVariantPanel, type HeldPressing } from './pressing-variants';
 
 /**
@@ -40,8 +41,14 @@ export function PressingVariants({ pressing }: { pressing: HeldPressing | null }
    */
   if (panel.state === 'no-pressing') {
     return (
+      /*
+        **A59: no longer "to ask Claude about it".** The generated assessment is
+        retired, so the sentence names what attaching a pressing actually does —
+        records which record is being hunted — rather than an affordance that no
+        longer exists.
+      */
       <p data-testid="variants-no-pressing" className="mt-6 text-xs text-muted-foreground">
-        Attach a target pressing to ask Claude about it.
+        Attach a target pressing to record which one you are hunting.
       </p>
     );
   }
@@ -86,6 +93,30 @@ export function PressingVariants({ pressing }: { pressing: HeldPressing | null }
           <p className="mt-2 text-xs text-muted-foreground">
             Recorded on this entry — from your own notes or a Discogs lookup. Check them
             against the record in your hand.
+          </p>
+
+          {/*
+            **A59: a pointer at REAL releases, replacing the generated
+            assessment.** §12b's model-written answer is retired, and this is the
+            removal's other half.
+
+            **It promises existence, not desirability.** The versions table lists
+            what Discogs has under a master — catalogue number, year, country,
+            format — and says nothing about which sounds better. That judgement is
+            the collector's (§8), and claiming otherwise in a link would rebuild
+            A43's error in one sentence.
+
+            **No prefill, because `/lookup` accepts none.** The link reaches the
+            search screen rather than this record's versions, which is stated
+            plainly rather than implied by a hopeful URL.
+          */}
+          <p className="mt-3 text-xs text-muted-foreground">
+            To compare this against other pressings of the same record,{' '}
+            <Link href="/lookup" className="underline underline-offset-2">
+              search Discogs
+            </Link>{' '}
+            and open its versions — they list every catalogue number, year and country
+            Discogs has, which is what tells two pressings apart.
           </p>
         </>
       )}

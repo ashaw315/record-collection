@@ -27599,3 +27599,140 @@ a spec-scoped E2E run of the files I had touched. The conflicting rule lived in 
 test file the unit never opened, encoded as a comment explaining a decision made
 in an earlier step. **A design decision recorded only in a test is discoverable
 only by running that test.**
+
+---
+
+## ANCHORING MADE THE OUTPUT HARDER TO DISTRUST — a cost of A57
+
+**Adam's argument, 2026-09-08, and it holds:**
+
+> *"Three invented catalogue numbers are uniformly suspect — nothing corroborates
+> anything. One real number beside two invented ones reads as a verified list,
+> because the true entry lends its authority to the false ones. So A57 improved
+> accuracy and reduced the legibility of the error at the same time."*
+
+**Worse here than in the general case**, for a reason specific to the design: the
+held value ALWAYS matches, because the app sends it. Row one reads as confirmed by
+construction, every run. The prompt asks the model not to restate it, but the
+output format is a list of identifiers, and a model that uses the held number for
+row one while inventing rows two and three produces exactly that shape with
+nothing distinguishing the rows.
+
+**A list's credibility is set by its most verifiable entry, not its least.** One
+true row creates an implicit warrant — *the app clearly knows this record* — and
+the warrant transfers to neighbours that never earned it.
+
+**The usage condition decides the weight.** Read standing in a shop at speed, the
+question is "which of these do I look for", so a list that appears corroborated
+gets LESS scrutiny per row. **Accuracy up, legibility-of-error down, in the
+context where the second matters more.**
+
+> **Partial grounding can be worse than none.** Mixing verified and generated
+> items in one list, with no per-item marking, transfers trust from the former to
+> the latter. Either mark provenance per item or keep the kinds in separate lists
+> — never interleave them silently.
+
+### The retrieval proposal: CHECKED, and the data does not support it
+
+Adam proposed retrieving real releases from Discogs' master-versions endpoint and
+letting the model only rank or annotate them — *"Judgement about desirability is a
+reasonable thing to ask a model for. Existence is not."* He asked specifically
+whether the versions list carries the free-text descriptor, and named it as the
+check that decides the proposal.
+
+**It does not.** Measured against the captured fixtures:
+
+| endpoint | format field | free text? |
+|---|---|---|
+| `/masters/:id/versions` | `format: "LP, Album, Repress"` — a comma-joined string | **NO** |
+| `/releases/:id` | `formats[].descriptions` + **`formats[].text`** | **YES** — `"Gatefold"` |
+
+A version row has exactly twelve keys — `catno, country, format, id, label,
+major_formats, released, resource_url, stats, status, thumb, title` — and **none
+of them is free text.** The `format` string carries controlled vocabulary only:
+`Repress`, `Promo`, `Mispress`, `Stereo`, `Misprint`.
+
+**`formats[].text` is where `"White, Early fadeout (Desire Lines)"` lives, and it
+exists only on the RELEASE endpoint.** Adam's instinct that he had seen it in
+search output was right, and his caution about not having confirmed the versions
+endpoint was the correct caution.
+
+**Why this weakens the proposal badly, in his own terms:** catalogue number alone
+would not have distinguished the two Deerhunter variants either — both are
+CAD 3X38. The descriptor IS the distinction, and retrieving the versions list
+gets everything except the distinguishing field.
+
+### What it would cost
+
+- **The master id is NOT persisted.** No column anywhere mentions `master`;
+  `normalizeRelease` parses `master_id` and drops it. 40 cached payloads carry it,
+  so it is recoverable from the cache but not queryable.
+- **One call for the versions list**, then **one call PER RELEASE** to obtain the
+  descriptors that make the list useful. The Discharge master has 25 versions.
+  Against a 60/minute bucket that is a burst the limiter already handles — but it
+  is 26 calls to assemble what one assessment currently spends zero on, and the
+  descriptors are the only reason to make 25 of them.
+
+---
+
+## A FEATURE RETIRED ON THREE ARGUMENTS, NONE ABOUT ITS IMPLEMENTATION
+
+**A59, 2026-09-08.** §12b's generated pressing assessment is retired — a removal
+plus a link, not a fix. Recorded because the chain now runs through **two closed
+units**, and the need they shared is real and unmet.
+
+### The trail, which is the deliverable
+
+| unit | proposed | closed by |
+|---|---|---|
+| A40 | the user ranks pressings by hand | A43 — "only the user can judge" did not follow from its premises |
+| A43 | ask a model which pressing matters | **A59** |
+| A59 | display held facts, point at real releases | built |
+
+**The still-unmet need, in Adam's words:** *"What I actually want is the app
+telling me whether a pressing matters for this record, and which one to hunt."*
+A55's panel shows what the user RECORDED; it does not say whether pressing
+matters, and it does not rank. **Anyone feeling that need again is feeling the
+same need, not a gap someone forgot** — SPEC §12b's retirement block carries this
+so the trail is findable from the spec rather than from a commit.
+
+### The three arguments
+
+**1. The grounding endpoint omits the distinguishing field.** `/masters/:id/versions`
+returns catalogue number, year, country and a controlled-vocabulary `format`
+string. It does NOT return `formats[].text`, the free-text descriptor where
+`"White, Early fadeout (Desire Lines)"` lives — that exists only on
+`/releases/:id`. **Both Deerhunter variants are CAD 3X38**, so the descriptor IS
+the distinction, and retrieval returns everything except it. Grounding would cost
+one call plus one per release — 26 for the Discharge master — with 25 existing
+solely for the omitted field.
+
+**2. Retrieval answers the question without the model.** A list of real releases
+with catalogue numbers, years and countries IS "which pressing should I look
+for". A model ranking those rows is a smaller, different feature.
+
+**3. J. LAMBERT @ JLM — the argument that settles it.** In the session that
+produced CAD 3016, the assistant also offered "J. Lambert @ JLM" as a pressing
+discriminator, **twice, with search available**. It is the mastering studio
+credit, present across EVERY vinyl pressing of that title.
+
+> **A model with retrieval and a correcting interlocutor still invented a
+> discriminator from adjacent data.** That is neither a prompt defect nor a
+> grounding defect. The mechanism — taking something real and nearby and
+> promoting it to the thing being asked for — is not addressed by supplying more
+> real things nearby, and A57's recorded cost argues it is made WORSE by it,
+> because a plausible identifier acquires the authority of its true neighbours.
+
+### What this generalises to
+
+**Existence is not a thing to ask a model for; desirability is.** Adam's
+formulation, and it is the reusable line: *"Judgement about desirability is a
+reasonable thing to ask a model for. Existence is not."* A43 asked for both in one
+output shape — a list of identifiers with descriptions — and the identifier half
+is the half a model cannot supply.
+
+**And a retirement is a DECISION, not a cleanup.** The stored assessments stay in
+the database (Adam): they are a record of what the feature said, and the thread
+that retired it turned on comparing answers across runs. Deleting them would
+destroy the evidence that produced the decision. The route and client stay too,
+unreferenced, so the trail is inspectable rather than archaeological.

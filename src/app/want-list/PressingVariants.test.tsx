@@ -141,11 +141,17 @@ describe('the rendered variant panel (A55)', () => {
  * no anchor.
  */
 describe('the assessment is gated on an anchor (A56)', () => {
-  it('reports that an assessment cannot be asked for without a pressing', () => {
+  /**
+   * **AMENDED BY A59**: the assessment is retired, so the sentence no longer
+   * names an ask. It names what attaching a pressing actually does — records
+   * which record is being hunted — because an affordance that no longer exists
+   * cannot be the thing an empty state explains.
+   */
+  it('reports what attaching a pressing would record', () => {
     const html = render({ pressing: null });
 
     expect(html).toMatch(/attach a target pressing/i);
-    expect(html).toMatch(/ask/i);
+    expect(html).not.toMatch(/ask|claude|assess/i);
   });
 
   /**
@@ -166,5 +172,84 @@ describe('the assessment is gated on an anchor (A56)', () => {
     });
 
     expect(html).not.toMatch(/attach a target pressing/i);
+  });
+});
+
+/**
+ * SPEC.md §12b (A59, 2026-09-08) — the generated assessment is RETIRED, and the
+ * surface points at real releases instead.
+ *
+ * **Three arguments converged, none about this implementation:**
+ *
+ * 1. The master-versions endpoint omits `formats[].text` — the free-text
+ *    descriptor that actually distinguishes pressings. Both Deerhunter variants
+ *    are CAD 3X38; the descriptor IS the distinction, and retrieval returns
+ *    everything except it. So retrieval-plus-ranking cannot be built cheaply.
+ * 2. Once you HAVE the versions list you have answered "which pressing should I
+ *    look for" without a model.
+ * 3. **J. Lambert @ JLM** — a model with retrieval AND a correcting interlocutor
+ *    produced a mastering credit present on every pressing of the title as a
+ *    discriminator, twice. Not a prompt defect and not a grounding defect, and
+ *    more real data nearby arguably makes it worse.
+ */
+describe('the retired assessment is replaced by a pointer (A59)', () => {
+  it('points at the lookup where real versions can be compared', () => {
+    const html = render({
+      pressing: {
+        catalogNumber: 'CAD 3X38',
+        matrixRunout: 'Salt',
+        countryPressed: null,
+        colorVariant: null,
+        pressingPlant: null,
+        yearPressed: null,
+      },
+    });
+
+    expect(html).toContain('/lookup');
+  });
+
+  /**
+   * **The load-bearing assertion.** Fails against copy that promises the
+   * versions table answers which pressing is BETTER. It lists what exists;
+   * desirability is the user's judgement (§8), and claiming otherwise would
+   * rebuild A43's error in a link.
+   */
+  it('promises existence, not desirability', () => {
+    const html = render({
+      pressing: {
+        catalogNumber: 'CAD 3X38',
+        matrixRunout: null,
+        countryPressed: null,
+        colorVariant: null,
+        pressingPlant: null,
+        yearPressed: null,
+      },
+    });
+
+    expect(html).not.toMatch(/best|better|which to (get|buy|choose)|recommend|worth (seeking|hunting)/i);
+  });
+
+  /** No model vocabulary survives the retirement. */
+  it('says nothing about asking Claude', () => {
+    const html = render({
+      pressing: {
+        catalogNumber: 'CAD 3X38',
+        matrixRunout: null,
+        countryPressed: null,
+        colorVariant: null,
+        pressingPlant: null,
+        yearPressed: null,
+      },
+    });
+
+    expect(html).not.toMatch(/claude|assessment|ask/i);
+  });
+
+  /** A bare row still says only what changed — A56's resolution is untouched. */
+  it('leaves a bare row with one sentence and no link', () => {
+    const html = render({ pressing: null });
+
+    expect(html).not.toMatch(/claude/i);
+    expect(html).toMatch(/attach a target pressing/i);
   });
 });

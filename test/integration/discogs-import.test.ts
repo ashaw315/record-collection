@@ -317,3 +317,45 @@ describe('atomicity', () => {
     expect(await count('genres')).toBe(0);
   });
 });
+
+/**
+ * SPEC.md §4.2 (A60, 2026-09-08) — the master id survives the import.
+ *
+ * **A live gap found while costing the retired pressing assessment.**
+ * `normalizeRelease` has always parsed `master_id` and the import dropped it: 40
+ * cached payloads carried it and no column mentioned `master`, so it was
+ * recoverable by re-parsing a cache entry and not queryable at all.
+ *
+ * **Captured because the versions endpoint is addressed by MASTER**
+ * (`/masters/:id/versions`), so any future comparison of a pressing against its
+ * siblings needs this id — and storing it on import is cheaper than re-deriving
+ * it from a cache that expires.
+ */
+describe('the Discogs master id is persisted (A60)', () => {
+  it('stores the master id the release carried', async () => {
+    expect(RELEASE.masterId, 'the fixture must carry one, or this proves nothing').toBe(50683);
+
+    await importRelease({ release: RELEASE, target: 'record' });
+
+    const rows = await db.execute<{ discogs_master_id: number | null }>(
+      sql`SELECT discogs_master_id FROM pressings`,
+    );
+
+    expect(rows.rows[0]?.discogs_master_id).toBe(50683);
+  });
+
+  /**
+   * Fails against an import that writes 0 or -1 for a release Discogs has not
+   * grouped. Absent must mean "not grouped", never "not looked up" — the
+   * absent-versus-unknown distinction this project keeps naming.
+   */
+  it('leaves it null for a release with no master', async () => {
+    await importRelease({ release: { ...RELEASE, masterId: null }, target: 'record' });
+
+    const rows = await db.execute<{ discogs_master_id: number | null }>(
+      sql`SELECT discogs_master_id FROM pressings`,
+    );
+
+    expect(rows.rows[0]?.discogs_master_id).toBeNull();
+  });
+});

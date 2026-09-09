@@ -197,6 +197,7 @@ The averaging rule itself is a product decision recorded in §10b, not a schema 
 | country_pressed | TEXT | |
 | vinyl_weight_grams | INTEGER | e.g. 140, 180 |
 | color_variant | TEXT | e.g. "black", "clear w/ splatter" |
+| discogs_master_id | INTEGER | the Discogs MASTER this release belongs to (A60) |
 | discogs_release_id | INTEGER | nullable, unique when present |
 | is_reissue | BOOLEAN NOT NULL DEFAULT false | |
 | notes | TEXT | |
@@ -1797,9 +1798,11 @@ Each step should end with its tests green before moving on.
 
 ---
 
-## 12a. SPEC'D, NOT BUILT — ranked pressings (A40), **substantially amended by A43**
+## 12a. RETIRED — ranked pressings (A40), amended by A43, both retired by A59
 
 **Proposed by Adam 2026-08-26. Written up rather than built, and the open questions below are why: two of them change the schema, and one has no answer in the current model at all.**
+
+> **BOTH THIS AND A43 ARE NOW RETIRED (A59, 2026-09-08), and the need they shared is UNMET.** A40 was closed on the argument that A43 covered it; A43 was retired because a model cannot be trusted to establish which pressings EXIST. **Read §12b's retirement block before building from either** — it names the chain, the still-unmet need in Adam's own words, and what Discogs' versions table does and does not answer. A40's own conclusion — that desirability is the user's judgement — turns out to be right, for a different reason than it gave.
 
 > **A43 (2026-08-27) CORRECTS A40's central argument.** A40 concluded that only the user can judge which pressing matters, from two premises that are both true — Discogs has no fidelity ranking, and nothing in the schema knows a first press beats a repress. **The conclusion does not follow from those premises, because the enumeration was incomplete: the app already has a third source of judgement about music, and §9.2 has been using it since step 14.** Read §12b below before building anything from this section; the parts of A40 that survive are marked there.
 
@@ -1867,7 +1870,45 @@ So it needs editing, and it should probably record **when it was written**, the 
 
 ---
 
-## 12b. Pressing assessment (A43), amended by A55
+## 12b. RETIRED — pressing assessment (A43), retired by A59 (2026-09-08)
+
+> **READ THIS BEFORE REBUILDING ANYTHING IN THIS SECTION.** A43 is retired, and so is A40 before it (§12a). The need both were built for is **real and now unmet** — this block exists so the next person to feel it finds the trail rather than reinventing the same feature a third time.
+
+### The chain, because the trail runs through two closed units
+
+| unit | what it proposed | how it closed |
+|---|---|---|
+| **A40** | the user ranks pressings by hand — tiers, first choice, second | closed by A43, which found the reasoning incomplete: the app has a third source of judgement (a model), so "only the user can judge" did not follow |
+| **A43** | ask a model which pressing matters and which to hunt | **retired by A59**, below |
+| **A59** | display what the app holds; point at real releases | built (§12b's surviving half, and A55) |
+
+### The need, in Adam's own words, still unmet
+
+> *"What I actually want is the app telling me whether a pressing matters for this record, and which one to hunt."* (A43, 2026-08-27)
+
+**That is a good want and nothing in the app now answers it.** A55's panel shows the pressing the user RECORDED; it does not say whether pressing matters for the record, and it does not rank. **If you are reading this because you felt that need again, it is the same need — not a gap someone forgot.**
+
+### Why A43 was retired: three arguments, none about the implementation
+
+**1. The endpoint that would ground it omits the distinguishing field.** Discogs' `/masters/:id/versions` returns catalogue number, year, country and a controlled-vocabulary `format` string (`Repress`, `Promo`, `Mispress`). It does **not** return `formats[].text` — the free-text descriptor, which is where `"White, Early fadeout (Desire Lines)"` lives. That field exists only on `/releases/:id`. **Both Deerhunter variants are CAD 3X38**, so the descriptor IS the distinction, and retrieval returns everything except it. Grounding the feature would cost one call for the list plus one per release — 26 for the Discharge master — with 25 of those existing solely for the field the list omits.
+
+**2. Once you have the versions list, the question is already answered.** A list of real releases with catalogue numbers, years and countries *is* "which pressing should I look for". A model ranking those rows adds a desirability judgement over data the user can read — a different and smaller feature than the one A43 proposed.
+
+**3. The failure is not fixable by grounding, and this is the one that settles it.** In the session that produced the fabricated CAD 3016, the assistant also offered **"J. Lambert @ JLM"** as a pressing discriminator — twice, with search available. It is the mastering studio credit, present across *every* vinyl pressing of that title. **A model with retrieval and a correcting interlocutor still invented a discriminator from adjacent data.** That is not a prompt defect and not a grounding defect; more real data nearby arguably makes it worse, because a plausible-looking identifier acquires the authority of its true neighbours (see A57's recorded cost).
+
+### What the versions table DOES and DOES NOT answer
+
+**Does:** which releases exist under a master; their catalogue numbers, years, countries and format descriptors; how many collectors have or want each (`stats.community`). **It establishes EXISTENCE**, which is the thing a model cannot be trusted with.
+
+**Does not:** which pressing sounds better; which is worth hunting; whether pressing matters for this record at all; the free-text variant descriptor that separates two releases sharing a catalogue number. **It does not establish DESIRABILITY**, which is the collector's judgement (§8) — and the honest position is that the app has no source for it, which is where A40 started and was right for the wrong reason.
+
+### What was KEPT rather than deleted
+
+**Stored assessments stay in the database.** `pressing_assessments` is not dropped, `latestAssessment` and `assessmentWithPrevious` still work, and A58's current-plus-one retention is intact. Nothing renders them. They are a record of what the feature said, and this thread turned on being able to compare answers across runs — deleting them would destroy the evidence that produced the retirement.
+
+**The route and client remain** (`/api/want-list/:id/pressing-assessment`, `pressing-assessment-client.ts`) with A56's anchor gate and A57's held-pressing prompt. Unreferenced by any screen. Kept so the trail is inspectable rather than archaeological.
+
+## 12b (surviving half). The held pressing, displayed — A55, amended by A56
 
 ### A55 (2026-09-08) — the held pressing is DISPLAYED, above the generated assessment
 
@@ -1898,6 +1939,16 @@ So it needs editing, and it should probably record **when it was written**, the 
 **Why suppress rather than show both.** The variants panel correctly said *"No target pressing on this want-list entry"* while the assessment beneath it named CAD 3020 — two contradictory claims about one row, with nothing on screen showing that the lower panel never saw the row. **Adjacency is clarifying only when the panels are COMPARABLE**: a held CAD 3X38 above a model's claim below makes a conflict legible. With nothing above there is no comparison, only an unanchored identifier under a statement that the app has no anchor. The gate shares `assessmentAvailable` with the screen so the two cannot disagree.
 
 **A57 — the prompt carries the held pressing.** `PressingSubject` gains `held`: catalogue number, matrix/runout, variant and country, with instructions never to contradict them and not to restate them back. **The dig-notes exclusion stays**: withholding the user's BELIEFS so the model cannot flatter them is sound, and a catalogue number is not a belief but the identity of the object.
+
+**A COST OF A57, recorded against it (Adam, 2026-09-08): anchoring may have made the output harder to DISTRUST.**
+
+> *"Three invented catalogue numbers are uniformly suspect — nothing corroborates anything. One real number beside two invented ones reads as a verified list, because the true entry lends its authority to the false ones."*
+
+**This holds, and it is worse here than in the general case.** The held value will ALWAYS match, because the app sends it — so row one reads as confirmed by construction, every time. The prompt asks the model not to restate it, but the output format is a list of identifiers, and a model that uses the held number for row one and invents rows two and three produces precisely that shape with nothing distinguishing the rows.
+
+**A list's credibility is set by its most verifiable entry, not its least.** One true row creates an implicit warrant — *the app clearly knows this record* — which transfers to neighbours that never earned it.
+
+**And the usage condition decides the weight.** This screen is read standing in a shop at speed, where the question is "which of these do I look for" — so a list that appears corroborated gets LESS scrutiny per row. **A57 raised accuracy and lowered the legibility of its own errors, and in this context the second may outweigh the first.**
 
 **This NARROWS the fabrication; it does not eliminate it**, and that is stated rather than discovered later. The prompt asks for pressings plural, so rows two and three — a reissue, a US press — are still generated from recall and carry the same risk. `isCheckable` cannot tell: a second invented number passes the same shape test. And if the model echoes the held value back, agreement is not verification. **What it fixes is the case where EVERY row is wrong because the model never knew which record it was discussing.**
 

@@ -197,6 +197,13 @@
       "when": 1788898115280,
       "tag": "0027_flaky_mastermind",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1788913971425,
+      "tag": "0028_fair_hairball",
+      "breakpoints": true
     }
   ]
 }
