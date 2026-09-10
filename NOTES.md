@@ -27910,3 +27910,72 @@ produced (a trigger, or depth bounds on six walks that already terminate) would
 have added machinery against a state the write path already prevents. **The
 guard being untested was the one real finding underneath it**, and it is now
 pinned by `test/integration/genre-subtree-cycle.test.ts`.
+
+---
+
+## wall-scene:1149 — the failing frame, captured at last: the wall does not render at all
+
+**The image the five-week investigation could never get.** `wall-scene.spec.ts:1149`
+failed once under the full matrix on 2026-09-10 and passed on retry, and this
+time the capture policy held: `trace: 'retain-on-failure'` plus
+`screenshot: 'only-on-failure'` produced a screenshot **of the failing attempt**
+rather than of the passing retry. Preserved at `/tmp/wall-1149-evidence/`
+(screenshot, trace.zip, error-context.md) before the next run overwrites
+`test-results/`.
+
+**Received: 10, expected > 150** — the same fifteen-fold miss recorded above
+under the resolution finding, reproduced.
+
+### What the image shows, which is none of the five candidates
+
+The discriminating question was: absent, half-drawn, drawn elsewhere, drawn
+correctly and mis-measured, or drawn at a different moment of an animation.
+
+**None of them. The canvas drew NOTHING.** No sleeve, no spines, no shelf, no
+wall — the region below the heading is empty page. The page chrome is fully
+present: heading, the `/plane` blurb, the record-name panel reading
+`Wall 00 1789051992181-262440`, "Nothing else recorded yet", and both controls
+(`Turn over`, `Put back`). The accessibility snapshot confirms the pull
+succeeded — `button "Put the record back"` and `button "Next record"` are in the
+tree.
+
+So the app's STATE was correct and its RENDER was absent. The record was pulled,
+the chrome updated, the phase advanced — and the WebGL surface painted nothing
+for the whole 15s poll.
+
+### Why this was never visible before
+
+**A scene that renders nothing is indistinguishable from a scene rendering the
+wrong thing, through a predicate that counts uniform rows.** `rowIsSleeve` asks
+for `range < 12 && 50 < mean < 160`; blank page is uniform and bright
+(`mean ≈ 250`), so it fails the ceiling and contributes ~0 rows. An absent wall
+and a mis-positioned sleeve both report a number near zero, which is why the
+count could never discriminate and the image could.
+
+The 10 rows that DID match are the panel and control band at the foot of the
+frame, which is mid-luminance and uniform — not the sleeve.
+
+### What it does NOT show
+
+**Not scene variance in the settled values.** 21 isolated runs produced
+bit-identical output (276 rows, extent 246..521, zero variance), so the light
+rig, shelf depth, 44.5% back, dim floor and 0.9 frame fill are not implicated —
+they were never judged against a moving target. This failure is binary: the
+scene renders correctly, or it does not render.
+
+**Not capture variance either**, in the sense of catching a good scene at a bad
+moment. A settle-wait cannot fix a frame that never arrives; the poll already
+waited 15 seconds.
+
+> **The mechanism is initialisation under contention, not geometry.** It happens
+> only under the full matrix, where two projects drive one dev server — the
+> condition `playwright.config.ts` documents at length as producing
+> `ECONNRESET` and saturation timeouts. A WebGL context that fails to acquire,
+> or a texture upload that never completes, would produce exactly this: correct
+> state, absent render, silent.
+
+**Still not repaired, deliberately.** A settle-wait, a tolerance change and a
+scene change remain three different fixes and all three would hide this one —
+the frame is empty, so no tolerance admits it and no wait produces it. The next
+measurement is the trace: `npx playwright show-trace` on the preserved zip will
+say whether the canvas ever received a context. That is a separate unit.
