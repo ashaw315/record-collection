@@ -27736,3 +27736,98 @@ the database (Adam): they are a record of what the feature said, and the thread
 that retired it turned on comparing answers across runs. Deleting them would
 destroy the evidence that produced the decision. The route and client stay too,
 unreferenced, so the trail is inspectable rather than archaeological.
+
+---
+
+## An assertion's resolution is a property of the instrument, not of the number it reports
+
+**Observation, not a defect to fix.** `wall-scene.spec.ts:1149` counts screenshot
+rows matching `rowIsSleeve` and asserts `> 150`. It reads as a count with range —
+it reported 276 passing and 10 failing, a fifteen-fold miss, which invites the
+reading that something dramatic happened.
+
+**It has one bit of resolution.** Measured over 21 isolated runs at
+`--retries=0`: `rows` was **276 every single time**, and so was every
+intermediate poll sample within every run — one distinct value, zero variance,
+sleeve extent `246..521` identically. The sleeve's rows measure luminance
+**57–58.7** against `SLEEVE_MIN_LUMINANCE = 50`, and because a sleeve is a solid
+block its rows are near-identical, so they cross that floor *together*.
+Modelling a uniform dimming of the captured frame:
+
+| dimming | rows | verdict |
+|---|---|---|
+| 0.90 | 267 | PASS |
+| 0.88 | 266 | PASS |
+| **0.85** | **0** | **FAIL** |
+
+266 to 0 with nothing in between. The predicate is a **step function**, so
+"a value that drifted across the range" is not an observation the instrument can
+produce. A fifteen-fold miss is the *only* miss available to it, and it looks
+identical whether the cause is a slightly dimmer frame, a pre-paint frame, or a
+genuinely absent sleeve. **The number's apparent precision is an artefact of the
+counting, not evidence about the scene.**
+
+### The third instance, and the general form
+
+| name / claim | instrument actually used | distinction it could not make |
+|---|---|---|
+| Neon transactional code `is verified` | the env var string is non-empty | configured-but-dead vs. working |
+| any-copy and unknown get `different tones` | two token strings differ | tokens differing vs. pixels differing (1.29:1) |
+| the sleeve `is painted as a solid block` | count of rows passing a hard threshold | ~276 vs. ~0, and nothing between |
+
+The first two are recorded above under the test-naming rule; this is the third,
+and it is the one that shows the shape is not only about *names*. Here the name
+is honest and the assertion does call the real channel — pixels that actually
+rendered. **What is wrong is the resolution.** A threshold predicate over a
+uniform region is one bit wide however large the number it prints.
+
+> **Before believing a measurement, ask what values the instrument could have
+> returned.** Not "what did it report" but "what else *could* it have reported" —
+> an instrument with two reachable outputs cannot support a claim about degree,
+> no matter how many digits it prints. This is the resolution analogue of the
+> apparatus rule: that one says check what else was running, this one says check
+> what else could have been read.
+
+**Deliberately not repaired.** A settle-wait, a tolerance change and a scene
+change are three different fixes, and two of them would hide the phenomenon.
+The diagnosis is recorded first, on Adam's instruction; the repair is a separate
+decision. Note also that 21 isolated passes mean the failures (runs 4 and 6 of a
+six-run hunt) are **not reproducible in isolation** — which points at the suite,
+where two projects share one dev server, rather than at the scene.
+
+---
+
+## A62's "three records" is a LINKED PAIR — two sites, one figure, fix them together
+
+**Not a defect, and that is why it is recorded here rather than fixed.** A62
+(SPEC.md §10b, 2026-09-09) names three records whose derived spine colour is
+indistinguishable from the `#3a3a3a` no-cover fallback — `MGMT` 1.088,
+`Discharge` 1.134, `Jeff Beck` 1.374. The figure appears **twice**, deliberately,
+in two shapes:
+
+| site | form |
+|---|---|
+| the blockquote at the head of §10b | the three named, with their ratios |
+| the retired clause in place, at the spine-colour bullet | "three records that have covers" |
+
+Both are correct, and the figure is **evidence for the rule rather than an
+inventory of the collection** — it is a property of sixteen particular covers
+against one particular fallback constant, not a count of what is on the shelf. A
+seventeenth cover changes the set without changing the finding, which is exactly
+why A62's ratios went in as measured rather than dated-and-superseded.
+
+> **The hazard is a single-site fix.** It is the only figure in the amendment
+> with two occurrences, and the two are phrased differently — one enumerates,
+> one counts — so a search for the number finds one and a search for the names
+> finds the other. **If `SLEEVE`'s fallback constant `#3a3a3a` is ever revisited,
+> or the contrast floor that produced "three" moves, both sites change together
+> or they disagree.** A shelf whose blockquote names three records and whose
+> clause says "three" while the real count is two is worse than either being
+> wrong alone: the disagreement is invisible unless both are read at once, and
+> nothing reads them at once.
+
+**The general form, which is the transferable part:** a figure restated in two
+registers — once enumerated, once counted — has no single site to grep for. This
+is the same shape as the two-callers-one-rule smell recorded above under
+`genreSubtree` and `hasGatefold`, arriving in prose instead of code. **Prose has
+no type system and no test, so the only defence is writing the linkage down.**
