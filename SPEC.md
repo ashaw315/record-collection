@@ -861,6 +861,39 @@ exception, one token, one line to change. `DialogTitle`'s `text-base` is a third
 covered by this — it is a heading, no zoom rule applies to it, and it converts
 by role like anything else.
 
+**The three role rules, stated so they are rules rather than habits (A68,
+2026-09-10).** They carried 102 sites across three screens — `/records/[id]`,
+`/lookup` and `/stats` — while existing only in a conversation. Six sites on the
+first screen could not be classified without a design call; on the second and
+third the count was zero, because these three sentences replaced what would
+otherwise have been about forty individual judgements across 333 sites.
+
+1. **A value takes `detail` whether or not its label renders.** A label that is
+   absent or implied is a layout fact, not a change of role — the artist · year
+   line under a record title and a price row are both values whose label the
+   layout omits.
+2. **Provenance takes `meta`.** Where a value came from, when it was fetched,
+   how much of a set is shown: `meta` is what the app knows about how the value
+   got there, where `detail` is what the value is. That boundary is the one the
+   small end of the scale kept blurring.
+3. **Anything the user types into takes `typed`, regardless of what the text
+   is.** A67's exception as a rule: an input's size is a claim about Safari, not
+   about the text, so a textarea holding continuous prose still takes `typed`
+   and not `prose`.
+
+**The ambiguity clustered rather than scattering, which is what made three
+sentences enough.** It fell in exactly two places — controls, and the
+meta/caption/detail boundary — so naming those two boundaries settled the rest.
+A per-site role table would have been the enumeration this section's own type
+scale rule warns about.
+
+**Presence and the scale compose; they do not contend.** Measured on `/stats`,
+the first screen where both act on one element: the scale sets the SIZE from
+what the text is, presence sets the WEIGHT of the mark from how much of its
+subject the figure covers. `totalRecords` is `display` and ink; the estimated
+value is muted, and takes `prose` rather than `display` because it is a sentence
+with a figure in it rather than the subject's own count.
+
 **Text meets 4.5:1 against what is behind it.** *The defect:* a specimen arguing contrast arithmetic shipped its own absence marker at **2.66** and its labels at 4.29 on `#100e0d`. The element carrying the meaning was the one below the floor.
 
 ### 7a.1 The settler register (A61a, 2026-09-09)
