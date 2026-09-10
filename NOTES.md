@@ -27994,6 +27994,7 @@ watches to have happened.
 | `trace: 'on-first-retry'` | the retry attempt | the FAILING attempt, which is the only one with evidence on it |
 | `pgrep -f "playwright test"` | any process whose command string contains the phrase | a running Playwright — it matched the watcher shells looping on that literal |
 | `until ! pgrep -f "playwright test"; do …` | the condition being true at t=0 | a run that had not spawned yet, so the watcher fired at test 13 of 457 |
+| `--output=/tmp/fresh-trace` with the run log inside it | the log path, which the flag had just deleted | the log — Playwright wipes its output dir, so `tail` failed and the task reported failure while the run exited 0 and produced all 23 traces |
 
 The middle one is a false POSITIVE and the other two are false NEGATIVES, which
 is why they did not look like one family at first. The common structure is not
@@ -28024,6 +28025,15 @@ at 13/457. The run itself was then orphaned when its launching shell exited,
 leaving a `next-server` holding port 3100 — the shape recorded above under
 `pgrep -f "next-server"`. Two apparatus defects compounding: one reported done,
 the other made it true.
+
+**The `--output` wipe cost a diagnosis being briefly misread as a failure.**
+Playwright clears its output directory on start, and the run log had been
+written inside it — so the log was deleted by the run it was recording, `tail`
+exited 1, and the task reported failure. The run itself exited 0 and produced
+all 23 traces. **An observer reporting on a subject it had itself destroyed**,
+which is the same shape one turn further round: not "the subject never existed"
+but "the observer removed it and then looked."
+
 
 > **Ask of any observer: could this be satisfied if the thing it watches never
 > happened?** A retry policy that captures the passing attempt, a guard matching
@@ -28067,3 +28077,76 @@ not broken outright.
 gets diagnosed.** This is the second, and the three candidate repairs remain
 wrong for the reason they were always wrong: no tolerance admits a frame that
 never arrives, and no wait produces one.
+
+---
+
+## RESOLVED — 1149 was never flaky: it fails whenever context restoration is slow
+
+**This supersedes the "worsening" note above, and the reframe is the finding.**
+Six sightings across five weeks were read as an intermittent failure. They were
+six observations of a **conditional** one, and the condition was a latency
+nobody was measuring.
+
+### What the traces say
+
+Two traces of the same test, one failing under the full matrix and one passing
+in isolation. **Their console output is byte-identical** — sixteen
+`WARNING: Too many active WebGL contexts. Oldest context will be lost.`, one
+`THREE.WebGLRenderer: Context Lost.`, one `Context Restored.` in each. No
+errors, no failed requests, nothing else at any severity.
+
+So context loss was never the discriminator. This is the measurement that is:
+
+| | lost | restored | **gap** | first screenshot | shots |
+|---|---|---|---|---|---|
+| **failing** (matrix) | 5.75s | 19.19s | **13.44s** | 7.88s | 17 |
+| **passing** (isolated) | 4.88s | 5.34s | **0.46s** | 6.63s | 2 |
+
+Twenty-nine times longer under load. In the passing run the scene is back before
+the poll starts. In the failing run the poll opens at 7.88s against a blank
+canvas, exhausts its 15s budget at ~22.4s, and the scene returns at 19.19s —
+**about three seconds before the deadline, but eleven seconds after the
+assertion had already been failing.** The wall does draw. The test has stopped
+looking.
+
+### Why it happened at all
+
+`/plane` mounts **seven WebGL canvases**: `WallScene`, `PlaneCanvas`, two
+`BoxCanvas` groups, `RiseDemo`, `BoxGeometryProbe`, `FillComparison` — most
+gated only on `records.length > 0`, true in every test. Chromium caps active
+contexts and evicts oldest-first; `WallScene` renders first, so `WallScene` is
+what gets evicted. And none of the three renderers released its context:
+`renderer.dispose()` frees Three's objects and leaves the context to garbage
+collection.
+
+### The half that was repaired, measured
+
+`renderer.forceContextLoss()` before each `renderer.dispose()`, in all three
+canvases. Same spec, same command, before and after:
+
+    before:  23 of 23 traces show eviction warnings (16 each)
+    after:    0 of 23
+
+Not reduced — **gone**. No `Context Lost`, no `Context Restored`, no warnings at
+any severity. 23 of 23 tests pass in 1.9m.
+
+> **"Intermittent" is a description of the observations, not of the fault.** A
+> conditional failure looks intermittent exactly when the condition is something
+> nobody is measuring — here a restore latency that is invisible unless you go
+> looking for two console lines and subtract their timestamps. The three
+> candidate repairs were all wrong for the same reason, and the reason survives
+> the diagnosis: a settle-wait, a tolerance and a scene change all treat the
+> observations rather than the condition.
+
+**Still open, and it is a product question rather than a test one.** A real user
+with other WebGL tabs open loses the wall and gets it back thirteen seconds
+later with nothing on screen saying anything is happening — the same class as
+the upload with no placeholder. `webglcontextlost` and `webglcontextrestored`
+are standard DOM events on the canvas element and Three already attaches its own
+handlers to them (`three.module.js:16381`), so **the app can observe both**; it
+currently listens for neither. That is a design decision, not a repair.
+
+**And the scaffolding is not all dead.** `FillComparison` and `BoxGeometryProbe`
+back four E2E tests in `box-canvas-geometry.spec.ts`; deleting them deletes
+those. `RiseDemo` is genuinely unread — 99 lines, one testid nothing queries,
+absent from SPEC.md.
