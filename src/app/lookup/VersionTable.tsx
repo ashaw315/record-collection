@@ -66,7 +66,7 @@ export function VersionTable({
 
   if (versions.length === 0) {
     return (
-      <p className="px-3 py-4 text-sm text-muted-foreground">
+      <p className="px-3 py-4 text-prose text-muted-foreground">
         Discogs lists no other versions of this release.
       </p>
     );
@@ -140,7 +140,7 @@ export function VersionTable({
         The count first, because it is the answer to "have I got this already?"
         before any row is read — and on a phone it is what fits above the fold.
       */}
-      <p data-testid="version-table-summary" className="px-3 py-2 text-xs text-muted-foreground">
+      <p data-testid="version-table-summary" className="px-3 py-2 text-meta text-muted-foreground">
         {versions.length} version{versions.length === 1 ? '' : 's'}
         {ownershipChecked && ownedCount > 0 && (
           <span className="font-medium text-foreground"> · {ownedCount} already on your shelf</span>
@@ -164,7 +164,7 @@ export function VersionTable({
         <p
           data-testid="ownership-unchecked"
           role="status"
-          className="mx-3 mb-2 rounded-xs border border-primary px-2 py-1.5 text-xs font-medium"
+          className="mx-3 mb-2 rounded-xs border border-primary px-2 py-1.5 text-label font-medium"
         >
           Could not check what you already own — this list does not show your collection. Search
           again in a moment.
@@ -176,7 +176,7 @@ export function VersionTable({
         fine and cannot be COMPARED, which is the only thing this table is for.
       */}
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[34rem] border-collapse text-xs">
+        <table className="w-full min-w-[34rem] border-collapse text-detail">
           <thead>
             <tr className="border-y border-border text-left text-muted-foreground">
               <th scope="col" className="w-6 px-2 py-1.5" aria-label="Owned" />
@@ -287,7 +287,7 @@ export function VersionTable({
                         type="button"
                         data-testid="identical-toggle"
                         onClick={() => toggle(comparisonKey(version))}
-                        className="mt-1 block text-left text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                        className="mt-1 block text-left text-label text-muted-foreground underline underline-offset-2 hover:text-foreground"
                       >
                         {(standsFor.get(version.discogsId) ?? 1) - 1} more look identical from here
                       </button>

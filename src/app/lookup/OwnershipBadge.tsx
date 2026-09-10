@@ -35,14 +35,14 @@ export function OwnershipBadge({
       data-testid="ownership-badge"
       data-tier={ownership.tier}
       className={cn(
-        'inline-flex flex-col gap-0.5 rounded-xs border px-2 py-1 text-xs',
+        'inline-flex flex-col gap-0.5 rounded-xs border px-2 py-1 text-label',
         TONE_STYLES[badge.tone],
         className,
       )}
     >
       <span className="whitespace-nowrap">{badge.label}</span>
       {badge.detail !== null && (
-        <span data-testid="ownership-detail" className="font-mono text-[0.7rem] opacity-90">
+        <span data-testid="ownership-detail" className="font-mono text-meta opacity-90">
           {badge.detail}
         </span>
       )}

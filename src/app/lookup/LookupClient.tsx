@@ -313,7 +313,7 @@ export function LookupClient() {
 
   const renderField = (field: (typeof FIELDS)[number]) => (
     <div key={field.name} className="space-y-1">
-      <label htmlFor={field.name} className="block text-xs text-muted-foreground uppercase">
+      <label htmlFor={field.name} className="block text-label text-muted-foreground uppercase">
         {field.label}
       </label>
       <Input
@@ -327,7 +327,7 @@ export function LookupClient() {
         autoComplete="off"
       />
       {'hint' in field && field.hint !== undefined && (
-        <p className="text-[0.7rem] text-muted-foreground">{field.hint}</p>
+        <p className="text-meta text-muted-foreground">{field.hint}</p>
       )}
     </div>
   );
@@ -350,7 +350,7 @@ export function LookupClient() {
           type="button"
           data-testid="lookup-query-summary"
           onClick={() => setQueryOpen(true)}
-          className="w-full rounded-xs border border-border px-3 py-2 text-left text-xs text-muted-foreground"
+          className="w-full rounded-xs border border-border px-3 py-2 text-left text-label text-muted-foreground"
         >
           <span className="font-medium text-foreground">Searched:</span>{' '}
           {querySummary === '' ? 'everything' : querySummary}
@@ -386,7 +386,7 @@ export function LookupClient() {
           open={refinementsOpen}
           onToggle={(event) => setRefinementsOpen((event.target as HTMLDetailsElement).open)}
         >
-          <summary className="cursor-pointer text-xs text-muted-foreground underline underline-offset-2">
+          <summary className="cursor-pointer text-label text-muted-foreground underline underline-offset-2">
             More search terms
           </summary>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -408,7 +408,7 @@ export function LookupClient() {
                 setResults(null);
                 setError(undefined);
               }}
-              className="text-xs text-muted-foreground underline underline-offset-2"
+              className="text-label text-muted-foreground underline underline-offset-2"
             >
               Clear
             </button>
@@ -416,7 +416,7 @@ export function LookupClient() {
         </div>
 
         {error !== undefined && (
-          <p role="alert" data-testid="lookup-error" className="text-sm text-destructive">
+          <p role="alert" data-testid="lookup-error" className="text-prose text-destructive">
             {error}
           </p>
         )}
@@ -424,7 +424,7 @@ export function LookupClient() {
 
       {results !== null && (
         <section aria-label="Results" className="space-y-3">
-          <p data-testid="lookup-summary" className="text-xs text-muted-foreground">
+          <p data-testid="lookup-summary" className="text-meta text-muted-foreground">
             {total === 0
               ? 'No matches on Discogs.'
               : `${total} match${total === 1 ? '' : 'es'}${
@@ -449,11 +449,11 @@ export function LookupClient() {
                 data-testid="load-more"
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="w-full rounded-xs border border-border px-3 py-2 text-sm hover:bg-accent disabled:opacity-60"
+                className="w-full rounded-xs border border-border px-3 py-2 text-label hover:bg-accent disabled:opacity-60"
               >
                 {loadingMore ? 'Loading…' : `Show more (${total - results.length} left)`}
               </button>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-meta text-muted-foreground">
                 Country and format narrow a large set fastest.
               </p>
             </div>
@@ -466,7 +466,7 @@ export function LookupClient() {
             a starting point.
           */}
           {total > 0 && (
-            <p className="text-[0.7rem] text-muted-foreground">
+            <p className="text-meta text-muted-foreground">
               Discogs data is contributed by collectors — check the details against the record in
               your hand before saving.
             </p>
@@ -700,7 +700,7 @@ function ResultCard({
             <div className="min-w-0">
               <p className="font-medium">{result.title}</p>
               {result.artist !== null && (
-                <p className="text-sm text-muted-foreground">{result.artist}</p>
+                <p className="text-detail text-muted-foreground">{result.artist}</p>
               )}
             </div>
 
@@ -709,10 +709,10 @@ function ResultCard({
           </div>
 
           {/* Always rendered: `detailParts` guarantees at least the year slot. */}
-          <p className="font-mono text-xs text-muted-foreground">{details.join(' · ')}</p>
+          <p className="font-mono text-detail text-muted-foreground">{details.join(' · ')}</p>
 
           {result.formats.length > 0 && (
-            <p className="text-xs text-muted-foreground">{result.formats.join(' · ')}</p>
+            <p className="text-detail text-muted-foreground">{result.formats.join(' · ')}</p>
           )}
 
           {/*
@@ -729,7 +729,7 @@ function ResultCard({
             labelled as a plant. §7.8: never present a Discogs match as certain.
           */}
           {result.formatText !== null && (
-            <p className="text-xs italic text-muted-foreground" data-testid="format-text">
+            <p className="text-prose italic text-muted-foreground" data-testid="format-text">
               {result.formatText}
             </p>
           )}
@@ -742,13 +742,13 @@ function ResultCard({
             */}
             <Link
               href={`/records/new?discogsReleaseId=${result.discogsId}`}
-              className="rounded-xs bg-primary px-2 py-1 text-xs text-primary-foreground"
+              className="rounded-xs bg-primary px-2 py-1 text-label text-primary-foreground"
             >
               Add to collection
             </Link>
             <Link
               href={`/want-list/new?discogsReleaseId=${result.discogsId}`}
-              className="rounded-xs border border-border px-2 py-1 text-xs"
+              className="rounded-xs border border-border px-2 py-1 text-label"
             >
               Add to want list
             </Link>
@@ -760,7 +760,7 @@ function ResultCard({
                 data-testid="expand-versions"
                 aria-expanded={versions !== null}
                 className={cn(
-                  'ml-auto text-xs underline underline-offset-2',
+                  'ml-auto text-label underline underline-offset-2',
                   versions === null ? 'text-foreground' : 'text-muted-foreground',
                 )}
               >
@@ -786,20 +786,20 @@ function ResultCard({
                 onClick={() => void loadMarket()}
                 disabled={loadingMarket}
                 data-testid="check-market"
-                className="text-xs text-foreground underline underline-offset-2 disabled:text-muted-foreground"
+                className="text-label text-foreground underline underline-offset-2 disabled:text-muted-foreground"
               >
                 {loadingMarket ? 'Checking the market…' : 'Check the market'}
               </button>
             )}
 
             {market !== null && (
-              <p data-testid="market-summary" className="text-xs text-muted-foreground">
+              <p data-testid="market-summary" className="text-meta text-muted-foreground">
                 {marketSummary(market)}
               </p>
             )}
 
             {marketError !== undefined && (
-              <p role="status" data-testid="market-error" className="text-xs text-muted-foreground">
+              <p role="status" data-testid="market-error" className="text-meta text-muted-foreground">
                 {marketError}
               </p>
             )}
@@ -818,7 +818,7 @@ function ResultCard({
               disabled={loadingEvidence}
               data-testid="expand-evidence"
               aria-expanded={evidence !== null}
-              className="text-xs text-foreground underline underline-offset-2 disabled:text-muted-foreground"
+              className="text-label text-foreground underline underline-offset-2 disabled:text-muted-foreground"
             >
               {loadingEvidence
                 ? 'Loading pressing details…'
@@ -828,14 +828,14 @@ function ResultCard({
             </button>
 
             {evidenceError !== undefined && (
-              <p role="status" data-testid="evidence-error" className="text-xs text-muted-foreground">
+              <p role="status" data-testid="evidence-error" className="text-meta text-muted-foreground">
                 {evidenceError}
               </p>
             )}
           </div>
 
           {versionsError !== undefined && (
-            <p role="alert" className="text-xs text-destructive">
+            <p role="alert" className="text-meta text-destructive">
               {versionsError}
             </p>
           )}
@@ -853,7 +853,7 @@ function ResultCard({
             — see `summariseSpread`.
           */}
           {spread !== null && (
-            <p data-testid="version-spread" className="mt-2 px-3 text-xs text-muted-foreground">
+            <p data-testid="version-spread" className="mt-2 px-3 text-meta text-muted-foreground">
               {spread.text}
             </p>
           )}

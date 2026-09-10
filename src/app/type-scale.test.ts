@@ -169,6 +169,7 @@ describe('the type scale resolves to the sizes §7a states', () => {
       expect.arrayContaining([
         'headline',
         'title',
+        'lede',
         'prose',
         'detail',
         'caption',

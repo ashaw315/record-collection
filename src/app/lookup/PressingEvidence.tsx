@@ -17,7 +17,7 @@ export function PressingEvidencePanel({ evidence }: { evidence: Evidence }) {
   if (!evidence.hasEvidence) {
     return (
       <div data-testid="pressing-evidence" className="mt-2 border-t border-border px-3 pt-2">
-        <p data-testid="evidence-none" className="text-xs text-muted-foreground">
+        <p data-testid="evidence-none" className="text-meta text-muted-foreground">
           Discogs holds no matrix, runout or pressing details for this release. That is a gap in
           the database, not a fact about the record.
         </p>
@@ -36,10 +36,10 @@ export function PressingEvidencePanel({ evidence }: { evidence: Evidence }) {
       */}
       {evidence.runouts.length > 0 && (
         <section data-testid="evidence-runouts">
-          <h4 className="text-xs font-medium">Matrix / runout</h4>
+          <h4 className="text-label font-medium">Matrix / runout</h4>
           <dl className="mt-1 space-y-1">
             {evidence.runouts.map((runout, index) => (
-              <div key={`${runout.value}-${index}`} className="text-xs">
+              <div key={`${runout.value}-${index}`} className="text-detail">
                 {runout.description !== null && (
                   <dt className="text-muted-foreground">{runout.description}</dt>
                 )}
@@ -81,7 +81,7 @@ export function PressingEvidencePanel({ evidence }: { evidence: Evidence }) {
             got to — the same honesty as the identical-row collapse.
           */}
           {evidence.hasRunoutVariants && (
-            <p data-testid="variant-limit" className="mt-1 text-xs text-muted-foreground">
+            <p data-testid="variant-limit" className="mt-1 text-meta text-muted-foreground">
               Variants are different stampers within this release — a match identifies the
               release.
             </p>
@@ -91,10 +91,10 @@ export function PressingEvidencePanel({ evidence }: { evidence: Evidence }) {
 
       {evidence.otherIdentifiers.length > 0 && (
         <section data-testid="evidence-identifiers" className="mt-2">
-          <h4 className="text-xs font-medium">Other identifiers</h4>
+          <h4 className="text-label font-medium">Other identifiers</h4>
           <ul className="mt-1 space-y-0.5">
             {evidence.otherIdentifiers.map((identifier, index) => (
-              <li key={`${identifier.type}-${index}`} className="text-xs text-muted-foreground">
+              <li key={`${identifier.type}-${index}`} className="text-detail text-muted-foreground">
                 <span className="text-foreground">{identifier.type}: </span>
                 <span className="whitespace-pre-wrap font-mono break-words">
                   {identifier.value}
@@ -108,10 +108,10 @@ export function PressingEvidencePanel({ evidence }: { evidence: Evidence }) {
 
       {evidence.companies.length > 0 && (
         <section data-testid="evidence-companies" className="mt-2">
-          <h4 className="text-xs font-medium">Made by</h4>
+          <h4 className="text-label font-medium">Made by</h4>
           <ul className="mt-1 space-y-0.5">
             {evidence.companies.map((company, index) => (
-              <li key={`${company.role}-${company.name}-${index}`} className="text-xs">
+              <li key={`${company.role}-${company.name}-${index}`} className="text-detail">
                 <span className="text-muted-foreground">{company.role}: </span>
                 {company.name}
               </li>
@@ -140,10 +140,10 @@ export function PressingEvidencePanel({ evidence }: { evidence: Evidence }) {
 function Notes({ notes }: { notes: string }) {
   return (
     <section data-testid="evidence-notes" className="mt-2 border-t border-dashed border-border pt-2">
-      <h4 className="text-xs font-medium text-muted-foreground">
+      <h4 className="text-label font-medium text-muted-foreground">
         Contributor notes — context, not evidence
       </h4>
-      <p className="mt-1 text-xs whitespace-pre-wrap text-muted-foreground italic">{notes}</p>
+      <p className="mt-1 text-prose whitespace-pre-wrap text-muted-foreground italic">{notes}</p>
     </section>
   );
 }
