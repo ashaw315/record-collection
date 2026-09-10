@@ -27979,3 +27979,70 @@ scene change remain three different fixes and all three would hide this one —
 the frame is empty, so no tolerance admits it and no wait produces it. The next
 measurement is the trace: `npx playwright show-trace` on the preserved zip will
 say whether the canvas ever received a context. That is a separate unit.
+
+---
+
+## The capture policy paid for itself in one run, five weeks after it was wrong
+
+**The sharpest apparatus finding of the pass, and it is about a default rather
+than about a test.**
+
+`wall-scene.spec.ts:1149` had failed nine times over five weeks and the
+diagnosis could not be made, because `trace: 'on-first-retry'` captures the
+RETRY — and for a test that fails intermittently and passes on retry, that is
+the one attempt with nothing to show. NOTES already recorded the symptom: an
+entry pointing at a "deciding screenshot on disk" that was never there, because
+the failing run's directory held only `error-context.md` while `trace.zip`
+belonged to the passing retry.
+
+Changed 2026-09-05 to `retain-on-failure`, after a flake hunt had to pass
+`--trace=retain-on-failure` on the command line to capture anything at
+`--retries=0`.
+
+**On 2026-09-10 it fired once and the diagnosis fell out immediately.** One
+flaky run, one screenshot of the FAILING attempt, and the answer was visible in
+the image in seconds: the canvas rendered nothing at all while every piece of
+page chrome was present. Five weeks of a question nobody could answer, closed by
+a run that cost nothing extra because the setting was finally right.
+
+> **A setting that has to be overridden on the command line to do the job it
+> exists for is the wrong default, and the cost of the wrong default is not the
+> setting — it is every diagnosis that could not be made while it stood.** Five
+> weeks, nine sightings, and an entry in this file confidently pointing at
+> evidence that had been structurally excluded from ever existing.
+
+The general form: **when an instrument is configured to observe the common case,
+it will be blind to the case you are actually hunting** — a retry policy that
+captures the passing attempt, a log that rotates before the crash, a metric
+sampled at an interval longer than the fault. The question to ask of any
+apparatus is not "does it record" but "does it record the attempt that failed".
+
+---
+
+## A guard that matches its own watchers is a guard that will be ignored
+
+**Small, and recorded because it fired falsely on the run that mattered.**
+
+Before running the unit suite I check that Playwright is not also running —
+CLAUDE.md §9 forbids the two sharing `record_collection_test`. The check was:
+
+    pgrep -f "playwright test"
+
+which matched **my own orphaned watcher shells**, whose command strings contain
+the literal text `until ! pgrep -f "playwright test"; do sleep 30; done`. The
+guard printed `PLAYWRIGHT RUNNING — stop` while no Playwright process existed
+and port 3100 was free.
+
+I verified the suite had in fact run alone (no browser processes, port free) and
+proceeded — which is the corrosive part. **A guard that cries wolf teaches the
+reader to override it, and the next time it fires correctly it will be
+overridden too.** That is the same failure the `retries: 1` comment warns about
+from the other direction: a signal that is usually noise stops being a signal.
+
+    pgrep -f "npx playwright test"    # the invocation, not the phrase
+
+**The REAL guard is unaffected and is the one that matters** —
+`test/helpers/db.ts` holds a session-scoped advisory lock and refuses the second
+runner outright, naming the owner and pid. That is a mechanism rather than a
+habit, which is exactly why it was built. The shell check is a courtesy ahead of
+it, and a courtesy that lies is worse than none.
