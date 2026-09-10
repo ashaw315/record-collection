@@ -58,15 +58,15 @@ function Breakdown({
 
   return (
     <section className="mt-6" data-testid={testId}>
-      <h2 className="mb-2 font-heading text-sm font-semibold tracking-tight">{title}</h2>
+      <h2 className="mb-2 font-heading text-title font-semibold tracking-tight">{title}</h2>
 
       {rows.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{emptyMessage}</p>
+        <p className="text-prose text-muted-foreground">{emptyMessage}</p>
       ) : (
         <ul className="space-y-2">
           {rows.map((row) => (
             <li key={row.id}>
-              <div className="flex items-baseline justify-between gap-3 text-sm">
+              <div className="flex items-baseline justify-between gap-3 text-detail">
                 {/* Linked where the collection can be filtered by it: a
                     breakdown is only useful if you can open what it counts. */}
                 <span className="min-w-0 truncate">
@@ -78,7 +78,7 @@ function Breakdown({
                     </Link>
                   )}
                 </span>
-                <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
+                <span className="shrink-0 font-mono text-meta tabular-nums text-muted-foreground">
                   {row.extra === undefined ? row.count : `${row.count} · ${row.extra}`}
                 </span>
               </div>
@@ -99,10 +99,31 @@ export default async function StatsPage() {
       <AppHeader />
 
       <main className="mx-auto w-full max-w-3xl px-4 py-6">
-        <h1 className="font-heading text-xl font-semibold tracking-tight">Stats</h1>
+        <h1 className="font-heading text-headline font-semibold tracking-tight">Stats</h1>
 
-        <p className="mt-3 text-sm">
-          <span className="font-mono tabular-nums">{stats.totalRecords}</span>{' '}
+        {/*
+          **The record count takes `display`, and it is the only figure on this
+          screen that does.** §7a's register holds `display` for the count of
+          the page's SUBJECT, and /stats' subject is records — so the money
+          figures and the breakdowns do not take it however large they are.
+
+          **Presence and the scale compose here rather than colliding**, which
+          this is the first screen to test. They act on different properties:
+          the scale sets the SIZE from what the text is, presence sets the
+          WEIGHT of the mark from how much of its subject the figure covers.
+          `totalRecords` covers its subject entirely, so it is ink — no muting —
+          at `display`. The estimated value covers a minority of records, so it
+          is muted; it is `prose` rather than `display` because it is a sentence
+          about a figure rather than the subject's own count.
+
+          A61: a zero keeps display and takes muted. An empty collection renders
+          `0` here at the same size, muted rather than absent — a figure that
+          covers nothing is still a figure. No test renders that state today.
+        */}
+        <p className="mt-3 text-detail">
+          <span data-testid="total-records" className="font-mono text-display tabular-nums">
+            {stats.totalRecords}
+          </span>{' '}
           {stats.totalRecords === 1 ? 'record' : 'records'} in the collection.
         </p>
 
@@ -110,11 +131,11 @@ export default async function StatsPage() {
           Each figure is a SENTENCE, not a number with a caption. See the note at
           the top of this file and NOTES' §7.6 hazard.
         */}
-        <p data-testid="estimated-value" className="mt-3 text-sm">
+        <p data-testid="estimated-value" className="mt-3 text-prose">
           {estimatedValueStatement(stats.estimatedValue)}
         </p>
 
-        <p data-testid="total-spend" className="mt-2 text-sm text-muted-foreground">
+        <p data-testid="total-spend" className="mt-2 text-prose text-muted-foreground">
           {spendStatement(stats.totalSpend)}
         </p>
 

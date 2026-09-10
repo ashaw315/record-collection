@@ -167,6 +167,7 @@ describe('the type scale resolves to the sizes §7a states', () => {
 
     expect(inUse, 'roles in use').toEqual(
       expect.arrayContaining([
+        'display',
         'headline',
         'title',
         'lede',
