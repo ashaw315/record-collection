@@ -831,6 +831,36 @@ Rules that hold across screens rather than within one. No existing section owned
 
 **The type scale.** `72 · 40 · 15 · 13 · 12 · 11 · 10 · 9`, with 15 and 13 each carrying two entries under the two-entry predicate. **13/400 sans is the size for continuous text.** *The defect:* the scale had no comfortable size for prose, and one design document's own body copy reached for 12.5px in fifteen separate places — a convention held in fifteen places with nothing owning it, which is an enumeration. `/lookup` never exposed it because `/lookup` has no paragraphs. 13/500 mono was the candidate and was rejected: it changes family, weight and letterform to solve a size problem.
 
+**16px is ABSENT from the scale and REQUIRED on one control (A67, 2026-09-10).**
+The chasm between 15 and 20 is where 16 would sit, and the scale declines it
+deliberately — but a text input is not free to decline it. **Safari zooms the
+viewport when a focused input's font-size is under 16px**, so an input set at 15
+zooms the page on every focus on iOS. That is a browser behaviour, not a design
+preference, and no role name changes it.
+
+So `components/ui/input.tsx` carries `text-base md:text-sm` — 16px on mobile,
+smaller from `md` up, where no zoom rule applies — and it has eight consumers.
+`app/login/page.tsx`'s password field carries the same for the same reason.
+
+**Recorded as an exception with its reason attached rather than left to be
+rediscovered.** The next person to notice 16 is missing from an eight-size scale
+will find these two sites using it and reasonably try to fix them; this says why
+they are not a mistake. Moving them to 15 reintroduces the zoom on every form
+field in the app, through a shared component, on the one screen size where §10
+says the app must be fastest.
+
+The exception is the CONTROL, not the size: prose at 16 is still outside the
+scale and still wrong.
+
+**Carried as a role token rather than as a standing exception**, so the rule
+travels with the code: the scale gains `typed`, scoped to controls that accept
+typed text, and it is deliberately not `prose`. Both would otherwise read as
+"text someone reads or writes", and the next person moving `prose` down the
+scale would move every form field with it and reintroduce the zoom. One
+exception, one token, one line to change. `DialogTitle`'s `text-base` is a third site and is NOT
+covered by this — it is a heading, no zoom rule applies to it, and it converts
+by role like anything else.
+
 **Text meets 4.5:1 against what is behind it.** *The defect:* a specimen arguing contrast arithmetic shipped its own absence marker at **2.66** and its labels at 4.29 on `#100e0d`. The element carrying the meaning was the one below the floor.
 
 ### 7a.1 The settler register (A61a, 2026-09-09)

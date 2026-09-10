@@ -10,6 +10,59 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
+
+  /*
+    SPEC.md §7a's type scale: 72 · 40 · 15 · 13 · 12 · 11 · 10 · 9.
+
+    **Named by ROLE, not by size**, so the eight sizes stay an implementation
+    detail and a later change to what a role measures touches one line here
+    rather than every site using it. `text-13` would put the size back into
+    every call site and make the next change a rename.
+
+    **Added BESIDE the built-in scale rather than overriding it.** Redefining
+    --text-sm would change 333 existing sites with no diff at any of them,
+    which is the silent failure the conversion's guard exists to prevent: a
+    test asserting `text-sm` keeps passing when `text-sm` moves. Old classes
+    keep their meaning; each site changes when it is edited, and the edit is
+    visible.
+
+    Two entries at 15 and two at 13, per A61's two-entry predicate — a size may
+    carry a second entry only where the two differ in more than weight.
+    `src/app/type-scale.test.ts` asserts every value against the compiled CSS.
+
+    16px is deliberately absent and is required on text inputs; see A67.
+  */
+  --text-display: 72px;
+  --text-headline: 40px;
+  --text-title: 15px;
+  --text-lede: 15px;
+  --text-prose: 13px;
+  --text-detail: 13px;
+  --text-caption: 12px;
+  --text-label: 11px;
+  --text-meta: 10px;
+  --text-micro: 9px;
+
+  /*
+    **A67's exception, expressed as a token rather than as a second exception.**
+
+    Anything the user types into takes this, regardless of what the text is.
+    16px is not a size the scale chose — Safari zooms the viewport when a
+    focused input's font-size is under 16px, so this is a claim about a browser
+    behaviour where every other role is a claim about the text.
+
+    **Named `typed`, not `input`.** `--color-input` already exists, so
+    `text-input` is taken as a text-COLOUR utility and colour wins — the token
+    generated `.text-input{color:var(--input)}` and the size never reached the
+    element. Any role name colliding with a `--color-*` name has the same
+    problem, silently.
+
+    **It must not inherit `prose`'s meaning.** They would both be "the text
+    someone reads or writes", and the next person moving `prose` to 12 would
+    move this with it and reintroduce the zoom on every form field. Kept
+    separate so that change touches one line and not both.
+  */
+  --text-typed: 16px;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
