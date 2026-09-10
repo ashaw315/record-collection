@@ -114,15 +114,31 @@ describe('spineFootprint', () => {
      * gives the wall texture instead of a barcode, and a footprint that
      * collapsed to a constant would pass a single-id check.
      */
-    const widths = new Set<number>();
+    /**
+     * **The RANGE, not the count of distinct values.** `size > 3` passes on four
+     * footprints spanning 3px — a wall within a hair of uniform, which is the
+     * barcode this test is named against. A count cannot express a spread; it is
+     * the resolution defect NOTES records three times, and `spine.test.ts` has
+     * the same assertion in the same units.
+     *
+     * **Assumes N distributes**, which at 200 ids it comfortably does. A small
+     * fixture could legitimately produce a narrow spread from a correct hash.
+     */
+    const widths: number[] = [];
     for (let i = 0; i < 200; i += 1) {
       const w = spineFootprint(`record-${i}`);
       expect(w).toBeGreaterThanOrEqual(MIN_SPINE_WIDTH);
       expect(w).toBeLessThanOrEqual(MAX_SPINE_WIDTH);
-      widths.add(w);
+      widths.push(w);
     }
 
-    expect(widths.size, 'the wall has texture, not one repeated width').toBeGreaterThan(3);
+    const spread = Math.max(...widths) - Math.min(...widths);
+    const available = MAX_SPINE_WIDTH - MIN_SPINE_WIDTH;
+
+    expect(
+      spread,
+      `footprints span ${spread}px of the ${available}px the bounds allow — under half is a barcode`,
+    ).toBeGreaterThanOrEqual(4);
   });
 
   it('is deterministic per record, so the wall does not reshuffle', () => {

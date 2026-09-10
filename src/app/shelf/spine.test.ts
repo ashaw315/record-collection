@@ -108,6 +108,52 @@ describe('spineText — fitting the budget', () => {
     expect(text.length).toBeLessThanOrEqual(SPINE_TEXT_BUDGET);
   });
 
+  /**
+   * **The degenerate fixture is DERIVED, because a picked number drifts.**
+   *
+   * `SPINE_TEXT_BUDGET` is `floor(SPINE_HEIGHT / 5.4)`, so every fixture stated
+   * as a literal stops testing what it was written for the next time the spine
+   * changes height. That has already happened twice here — a fixture asserting
+   * an ellipsis at a 31-character budget, another asserting a dropped title at
+   * 29 — and both comments still cite those budgets while the value is now 44.
+   * Neither reaches the branch it names.
+   *
+   * So the padding is computed from the budget rather than chosen: the artist is
+   * grown until the two identifiers ALONE cannot fit, which is the definition of
+   * the degenerate case. Change `SPINE_HEIGHT` and the fixture moves with it.
+   */
+  const CATALOGUE = 'FTS3077';
+  /** The real record: `The Blues Project`, whose label is the collection's longest. */
+  const REAL_ARTIST = 'The Blues Project';
+
+  /**
+   * An artist long enough that artist + gap + catalogue exceeds the budget.
+   *
+   * `+ 5` is margin past the boundary rather than a second magic number: at
+   * exactly the budget the branch is not entered, and a fixture sitting on the
+   * edge is one rounding change from testing the other side of it.
+   */
+  const degenerateArtist = REAL_ARTIST.padEnd(SPINE_TEXT_BUDGET + 5, ' the Blues Project');
+
+  it('the degenerate fixture really does exceed the budget on identifiers alone', () => {
+    /*
+      **The precondition, asserted rather than assumed.** The test below asserts
+      the artist is cut — but an ellipsis in the output can come from the TITLE
+      being truncated, which is a different branch reached by a fixture that
+      fits. That is exactly how the previous version of this test passed while
+      never entering the branch it was named for: it matched `/…/` while the
+      artist was whole.
+
+      Two spaces of gap, matching `GAP` in spine.ts.
+    */
+    const fixed = degenerateArtist.length + 2 + CATALOGUE.length;
+
+    expect(
+      fixed,
+      'artist + gap + catalogue must exceed the budget, or the branch is never entered',
+    ).toBeGreaterThan(SPINE_TEXT_BUDGET);
+  });
+
   it('drops the title entirely rather than showing a stub of it', () => {
     /**
      * Below a couple of characters a truncated title is noise — "N…" tells the
@@ -136,8 +182,7 @@ describe('spineText — fitting the budget', () => {
     /**
      * **The degenerate case, and it is not hypothetical.** Measured across
      * plausible collections, four of six artist/catalogue pairs blow the budget
-     * before the title gets a character: Crosby, Stills, Nash & Young + SD 7200
-     * is 37 against 31.
+     * before the title gets a character.
      *
      * The artist gives way, not the catalogue number, and the measurement
      * decided it rather than taste:
@@ -150,15 +195,26 @@ describe('spineText — fitting the budget', () => {
      * a stub of one is not an identifier at all.
      */
     const text = spineText({
-      artistName: 'Crosby, Stills, Nash & Young',
-      title: 'Déjà Vu',
-      catalogNumber: 'SD 7200',
+      artistName: degenerateArtist,
+      title: 'The Best Of The Blues Project',
+      catalogNumber: CATALOGUE,
     });
 
     expect(text.length).toBeLessThanOrEqual(SPINE_TEXT_BUDGET);
-    expect(text, 'the identifier survives intact').toContain('SD 7200');
-    expect(text, 'the artist is cut but still recognisable').toMatch(/^Crosby, Stills/);
-    expect(text).toMatch(/…/);
+    expect(text, 'the identifier survives intact').toContain(CATALOGUE);
+
+    /*
+      **The branch is asserted, not inferred from an ellipsis.** The title is
+      absent entirely — not truncated — which only happens on this branch: the
+      fitting branch always gives the title whatever room is left, and drops it
+      only when that room falls under three characters. Checking the ARTIST was
+      cut is the direct evidence.
+    */
+    expect(text, 'the artist gave way, which is the branch under test').not.toContain(
+      degenerateArtist,
+    );
+    expect(text, 'and it is cut rather than replaced').toMatch(/^The Blues Project/);
+    expect(text, 'no title survives when the identifiers alone overflow').not.toContain('Best Of');
   });
 
   it('keeps a catalogue number that alone fills the budget', () => {
@@ -279,11 +335,38 @@ describe('spineWidth', () => {
   });
 
   it('varies between records, so the wall is not a barcode', () => {
-    const widths = new Set(
-      ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'].map(spineWidth),
-    );
+    /**
+     * **The RANGE, not the count of distinct values.**
+     *
+     * `widths.size > 1` passes on a two-value spread of 17 and 18 — every spine
+     * within a pixel of every other, which is precisely the barcode this test is
+     * named against. A count standing in for a range is the resolution defect
+     * recorded three times in NOTES: the predicate cannot distinguish the wall
+     * having texture from the wall having none.
+     *
+     * Expressed in the same units as the bounds it is about. `MIN_SPINE_WIDTH`
+     * and `MAX_SPINE_WIDTH` are derived from `SPINE_HEIGHT` (240/14 and 240/10),
+     * so the available span is 7px and this asks the realised spread to cover
+     * more than half of it. Deriving the threshold from the bounds rather than
+     * stating 4 outright would be better still — but half of an integer span is
+     * not an integer, and a fixture that rounds is the drift this same commit is
+     * removing from the budget fixtures.
+     *
+     * **The assumption, stated rather than relied on:** this needs N large
+     * enough for the hash to distribute. At two or three records a correct hash
+     * can legitimately produce a narrow spread, and this test would fail on
+     * working code — so the fixture is eight ids, and shrinking it is what would
+     * make this flaky rather than any change to `spineWidth`.
+     */
+    const widths = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'].map(spineWidth);
 
-    expect(widths.size, 'eight records produce more than one width').toBeGreaterThan(1);
+    const spread = Math.max(...widths) - Math.min(...widths);
+    const available = MAX_SPINE_WIDTH - MIN_SPINE_WIDTH;
+
+    expect(
+      spread,
+      `spines span ${spread}px of the ${available}px the bounds allow — under half is a barcode`,
+    ).toBeGreaterThanOrEqual(4);
   });
 });
 
