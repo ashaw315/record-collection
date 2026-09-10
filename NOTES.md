@@ -27831,3 +27831,82 @@ registers — once enumerated, once counted — has no single site to grep for. 
 is the same shape as the two-callers-one-rule smell recorded above under
 `genreSubtree` and `hasGatefold`, arriving in prose instead of code. **Prose has
 no type system and no test, so the only defence is writing the linkage down.**
+
+---
+
+## When an ad-hoc query finds a defect the production queries do not, suspect the ad-hoc query
+
+**The apparatus entry that names where to look, rather than what to check.**
+
+A recursive CTE written for the occasion exhausted Postgres' memory (`53200`,
+`Failed on request of size 32800 in memory context "HashBatchContext"`) while
+walking `genres.parent_genre_id`. The conclusion drawn — and reported, and
+carried into an amendment file as a scoped-out finding — was **"the data
+contains at least one loop; a genre can be its own ancestor."**
+
+**There was no loop.** Zero self-parented rows, zero cycles, zero dangling
+parent pointers, maximum depth 2 across 40 genres. The bug was one column in the
+query that produced the evidence:
+
+```sql
+-- written (WRONG): recurses on s.root, which never changes, so every
+-- iteration re-attaches the ROOT's children instead of descending
+SELECT s.root, g.id FROM sub s JOIN genres g ON g.parent_genre_id = s.root
+
+-- correct: recurses on s.id, the row just produced
+SELECT s.root, g.id FROM sub s JOIN genres g ON g.parent_genre_id = s.id
+```
+
+Measured growth of the broken form on **acyclic** data — 40 rows at depth 0,
+then 23, 129, 1073, 10197, 112015. The corrected form returns **66 rows total,
+unbounded and unguarded**. Exponential blow-up on a two-level tree looks exactly
+like a cycle from the outside: same error, same context, same runaway.
+
+### The tell, which was available immediately and went unused
+
+**Seven recursive walks of the same column already existed in the codebase and
+every one was fine.** Six use `UNION` (duplicate elimination, which cannot
+revisit a row and so terminates on any cycle); the seventh pairs `UNION ALL`
+with `depth < 16`. `genre-hierarchy.ts` even documents the reasoning — *"the
+cycle guard is the only thing preventing a loop in the data, and if it is ever
+defeated, duplicate elimination stops this walking forever."* And the write path
+has `wouldCreateCycle`, called on `PATCH /api/genres/:id` before any parent
+change.
+
+So the evidence at the moment of the failure was: **one query written minutes ago
+fails; seven queries written over months succeed.** That ratio is the finding.
+The new query was treated as the instrument and the old ones as irrelevant, when
+the correct reading is the reverse — production code that has run against this
+data for months is a control, and a fresh query is the variable.
+
+> **The rule: when an ad-hoc query finds a defect the production queries do not,
+> suspect the ad-hoc query first.** Not "check the data", not "add a guard" —
+> *look at the thing you just wrote*, because it is the only part of the system
+> that has never been exercised. The corollary is that existing working code is
+> evidence, and a diagnosis that requires all of it to be silently wrong needs
+> much stronger support than a diagnosis that requires one new line to be wrong.
+
+### Why this belongs with the other two apparatus entries
+
+It is the same family as *an assertion's resolution is a property of the
+instrument* and the test-name/proxy rule, and it is **more useful than either,
+because it names where to look rather than what to check**:
+
+| entry | asks |
+|---|---|
+| a test's name is a claim the assertion must support | is this assertion measuring the thing it is named for? |
+| an assertion's resolution is a property of the instrument | what values *could* this have returned? |
+| **this one** | **which part of the apparatus is new?** |
+
+The first two are checks to run on a measurement. This one is a search order to
+apply when a measurement disagrees with the system around it, and a search order
+is cheaper than a check because it terminates: look at the newest component
+first, and most of the time you stop there.
+
+**What it cost, and what it did not.** The false finding reached a prompt file
+and was correctly kept out of SPEC.md by its own scoping rule, so nothing shipped
+— but a unit was opened to fix a non-existent cycle, and the fix it would have
+produced (a trigger, or depth bounds on six walks that already terminate) would
+have added machinery against a state the write path already prevents. **The
+guard being untested was the one real finding underneath it**, and it is now
+pinned by `test/integration/genre-subtree-cycle.test.ts`.
