@@ -1,6 +1,8 @@
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { OwnershipPayload } from '@/lib/discogs/ownership-payload';
-import { describeOwnedPressing, ownershipBadge } from './ownership-badge';
+import { describeOwnedPressing, ownershipBadge, TONE_STYLES } from './ownership-badge';
 
 /**
  * SPEC.md §7.7's badge: "the UI must show which tier matched — never a bare
@@ -44,6 +46,97 @@ describe('the three tiers are distinguishable at a glance', () => {
     const tones = [exact, differentPressing, wanted].map((match) => ownershipBadge(match)?.tone);
 
     expect(new Set(tones).size, 'three tiers, three tones').toBe(3);
+  });
+
+  /**
+   * **Three distinct tone NAMES is not three distinct appearances.**
+   *
+   * The assertion above counts labels on a map; it passes unchanged if every
+   * tone renders as the same class string, which is the state it exists to
+   * forbid. That is the proxy-below-the-claim defect NOTES records — and this
+   * is the highest-stakes place in the app for it, because §7.7's tier 1 and
+   * tier 2 differ by whether you already own THIS pressing, which CLAUDE.md §8
+   * calls the worst bug the app can ship.
+   *
+   * So this asserts the channel that actually carries the distinction.
+   */
+  it('renders each tone as a DIFFERENT set of classes, not merely a different name', () => {
+    const styles = [TONE_STYLES.owned, TONE_STYLES.caution, TONE_STYLES.wanted];
+
+    expect(new Set(styles).size, 'three tones, three class strings').toBe(3);
+  });
+
+  /**
+   * The two ownership tiers specifically, because a shared class between them is
+   * the one collision that misleads about ownership rather than about intent.
+   */
+  it('does not let the two ownership tiers share a treatment', () => {
+    expect(TONE_STYLES.owned).not.toBe(TONE_STYLES.caution);
+  });
+});
+
+/**
+ * **The classes reach the DOM, so they are checked against the CSS that is
+ * actually built.**
+ *
+ * `border-l-dashed` shipped in `TONE_CLASS` as a utility Tailwind never
+ * generated: it looked plausible, produced no rule, and rendered the state at
+ * 1.29:1. Nothing caught it because the map was only ever compared with itself.
+ * `pressing-verdict.test.ts` closed that hole for the verdict tones; this closes
+ * the same hole for the ownership badge, which had no test of its classes at all
+ * until `TONE_STYLES` was lifted out of the component.
+ */
+describe('TONE_STYLES — what the tiers actually render as', () => {
+  const TONES = ['owned', 'caution', 'wanted'] as const;
+
+  /**
+   * Read from the COMPILED stylesheet rather than hand-listed, because a
+   * hand-list encodes what we believe Tailwind emits — the belief that was
+   * wrong. Skipped when the build output is absent (a clean checkout, CI before
+   * `npm run build`) rather than failing for a reason unrelated to the code;
+   * `npm run build` is in the definition of done, so it bites on any tree that
+   * has been built.
+   */
+  const compiled = (() => {
+    const dir = join(process.cwd(), '.next', 'static', 'chunks');
+    if (!existsSync(dir)) return null;
+    const css = readdirSync(dir)
+      .filter((f) => f.endsWith('.css'))
+      .map((f) => readFileSync(join(dir, f), 'utf8'))
+      .join('\n');
+    return css === '' ? null : css;
+  })();
+
+  const generatesRule = (cls: string) =>
+    compiled === null ||
+    new RegExp(`\\.${cls.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![a-zA-Z0-9_-])`).test(compiled);
+
+  it('names only utilities Tailwind actually generates', () => {
+    for (const tone of TONES) {
+      for (const cls of TONE_STYLES[tone].split(/\s+/).filter(Boolean)) {
+        expect(generatesRule(cls), `${cls} (on ${tone}) generates no rule`).toBe(true);
+      }
+    }
+  });
+
+  /**
+   * §7.7's loudest tier carries weight as well as colour, so it survives being
+   * glanced at rather than relying on a hue difference alone — the reading
+   * situation is a phone at arm's length in a shop.
+   */
+  it('gives the caution tier a second channel beyond colour', () => {
+    expect(TONE_STYLES.caution).toMatch(/font-semibold/);
+  });
+
+  /**
+   * A want is a plan, not a fact about the shelf, and the dashed outline is what
+   * says so. It is also the one border style in this map, so it distinguishes
+   * `wanted` from both owned tiers by stroke rather than by fill.
+   */
+  it('outlines the want-list tier rather than filling it', () => {
+    expect(TONE_STYLES.wanted).toMatch(/border-dashed/);
+    expect(TONE_STYLES.owned, 'only the want tier is dashed').not.toMatch(/border-dashed/);
+    expect(TONE_STYLES.caution, 'only the want tier is dashed').not.toMatch(/border-dashed/);
   });
 
   it('does not let the two ownership labels differ by only one word', () => {

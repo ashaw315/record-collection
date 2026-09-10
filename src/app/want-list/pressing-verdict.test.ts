@@ -43,11 +43,23 @@ describe('the three assessed states are structurally distinct', () => {
    * so that is what is asserted here.
    */
   it('gives any-copy and unknown different tones', () => {
-    expect(anyCopy.tone).not.toBe(unknown.tone);
+    /*
+      **The class comparison is the assertion; the token comparison is not a
+      second one.** `TONE_CLASS` is keyed by tone, so two distinct classes imply
+      two distinct tones — the token check below cannot fail while the class
+      check passes, and it CAN pass while the rendering is identical, which is
+      the state this test exists to forbid.
+
+      Kept rather than deleted, and demoted rather than left leading: it names
+      the mechanism by which the classes differ, so a reader sees that the map
+      is keyed on the token. Leading with it is what made the original version
+      of this test unable to fail.
+    */
     expect(
       TONE_CLASS[anyCopy.tone],
-      'the tokens differ AND the classes they render as differ',
+      'the classes they render as differ, which is what the reader sees',
     ).not.toBe(TONE_CLASS[unknown.tone]);
+    expect(anyCopy.tone, 'and they differ because the tones do').not.toBe(unknown.tone);
   });
 
   it('gives each state its own marker, so none is told apart by prose alone', () => {

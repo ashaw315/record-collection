@@ -1,39 +1,21 @@
 import { cn } from '@/lib/utils';
 import type { OwnershipPayload } from '@/lib/discogs/ownership-payload';
-import { ownershipBadge } from './ownership-badge';
+import { ownershipBadge, TONE_STYLES } from './ownership-badge';
 
 /**
  * The §7.7 badge, rendered.
  *
- * The copy and the tone come from `ownership-badge.ts`, which is tested as
- * data; this file is ONLY how they look. An earlier version restated the copy
- * here — two definitions of the most consequential text in the app, which is
- * the create-schema failure exactly. §7.7: "the UI must show which tier
- * matched — never a bare yes/no."
+ * The copy, the tone AND the classes each tone renders as all come from
+ * `ownership-badge.ts`, which is tested as data; this file is ONLY the markup
+ * they go into. An earlier version restated the copy here — two definitions of
+ * the most consequential text in the app, which is the create-schema failure
+ * exactly. §7.7: "the UI must show which tier matched — never a bare yes/no."
  *
- * **The tones are chosen to be distinguishable at arm's length on a phone**,
- * because that is the reading situation: someone holding a record in one hand,
- * glancing at a screen in the other, in a shop. Two badges that differ only in
- * wording get read wrong there — and reading "you own this pressing" when it
- * says "you own a DIFFERENT pressing" is the mistake that makes them put back
- * a record they wanted.
+ * **`TONE_STYLES` moved out rather than staying local**, so the classes are
+ * assertable without a component test — see the note on it there. While it
+ * lived here, the only test of the three tiers' appearance compared tone NAMES,
+ * which cannot fail if every tone maps to the same class string.
  */
-
-const TONE_STYLES = {
-  /**
-   * Solid and quiet. This badge means "stop, you have it" — it does not need
-   * to shout, and it should not compete with the caution tone.
-   */
-  owned: 'bg-muted text-foreground border-border',
-  /**
-   * The loudest thing on the card, deliberately. This is the tier §7.7 singles
-   * out: the user owns the album but NOT this pressing, so the badge has to
-   * survive being glanced at and say "look closer" rather than "move on".
-   */
-  caution: 'bg-primary text-primary-foreground border-primary font-semibold',
-  /** Outlined rather than filled — a want is a plan, not a fact about the shelf. */
-  wanted: 'bg-background text-foreground border-foreground border-dashed',
-} as const;
 
 export function OwnershipBadge({
   ownership,
