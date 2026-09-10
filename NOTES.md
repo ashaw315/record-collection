@@ -28150,3 +28150,43 @@ currently listens for neither. That is a design decision, not a repair.
 back four E2E tests in `box-canvas-geometry.spec.ts`; deleting them deletes
 those. `RiseDemo` is genuinely unread — 99 lines, one testid nothing queries,
 absent from SPEC.md.
+
+---
+
+## A test that reads a build artifact is only as current as the last build
+
+**Fifth instance of the observer shape, and the first one that is a property of
+a design we chose deliberately.**
+
+Three tests assert against the compiled CSS — `type-scale.test.ts`,
+`ownership-badge.test.ts`, `pressing-verdict.test.ts` — and that is the right
+design: it is what catches a class Tailwind never generates, and reading the
+utility is the only channel that carries the claim. `border-l-dashed` cost five
+weeks precisely because nothing did this.
+
+**But the artifact is mutable and separate from the source.** One full-suite run
+during the /lookup conversion reported 2 failed; two later runs passed, and a
+clean rebuild gave 3510 — exactly 3508 + 2, the same two tests. The cause was
+mine: the suite read CSS built at 17:01 while I had edited two components after
+that build. The tests were correctly reporting the state of an artifact that no
+longer matched the source.
+
+> **The failure mode is the dangerous direction, not this one.** A stale
+> artifact that makes a test fail is noisy and gets investigated. A stale
+> artifact that makes a test PASS is silent: delete a token from globals.css,
+> skip the rebuild, and every assertion about it still passes against yesterday's
+> CSS. The guard cannot fail when it should, which is the same structure as a
+> retry policy capturing the passing attempt.
+
+**What makes it safe is ordering, and the ordering is not enforced.**
+`npm run build` is in CLAUDE.md §10's definition of done, so a unit that follows
+the checklist rebuilds before its final run — but nothing checks that the build
+is NEWER than the sources it describes. The tests skip when the artifact is
+absent and trust it when it is present, and "present" is not "current".
+
+Recorded rather than fixed. A timestamp comparison would close it — fail if any
+`src/**` file is newer than the newest built CSS — but it would also fire on
+every ordinary edit-then-test cycle, which is the guard-that-cries-wolf problem
+this file already has an entry about. **The honest position is that these three
+tests answer a question about the last build, and that the build must be the
+last thing before the run.**
