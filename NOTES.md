@@ -27982,67 +27982,88 @@ say whether the canvas ever received a context. That is a separate unit.
 
 ---
 
-## The capture policy paid for itself in one run, five weeks after it was wrong
+## An observer that can be satisfied without its subject ever existing
 
-**The sharpest apparatus finding of the pass, and it is about a default rather
-than about a test.**
+**Three instances in one session, in three different layers, which is why this
+is a named shape and not three notes.** Each is an apparatus that reports
+success — or reports at all — on evidence that does not require the thing it
+watches to have happened.
 
-`wall-scene.spec.ts:1149` had failed nine times over five weeks and the
-diagnosis could not be made, because `trace: 'on-first-retry'` captures the
-RETRY — and for a test that fails intermittently and passes on retry, that is
-the one attempt with nothing to show. NOTES already recorded the symptom: an
-entry pointing at a "deciding screenshot on disk" that was never there, because
-the failing run's directory held only `error-context.md` while `trace.zip`
-belonged to the passing retry.
+| observer | satisfied by | the subject that never existed |
+|---|---|---|
+| `trace: 'on-first-retry'` | the retry attempt | the FAILING attempt, which is the only one with evidence on it |
+| `pgrep -f "playwright test"` | any process whose command string contains the phrase | a running Playwright — it matched the watcher shells looping on that literal |
+| `until ! pgrep -f "playwright test"; do …` | the condition being true at t=0 | a run that had not spawned yet, so the watcher fired at test 13 of 457 |
 
-Changed 2026-09-05 to `retain-on-failure`, after a flake hunt had to pass
-`--trace=retain-on-failure` on the command line to capture anything at
-`--retries=0`.
+The middle one is a false POSITIVE and the other two are false NEGATIVES, which
+is why they did not look like one family at first. The common structure is not
+the polarity — it is that **the observer's condition is a proxy that the
+subject's existence is not required to satisfy.**
 
-**On 2026-09-10 it fired once and the diagnosis fell out immediately.** One
-flaky run, one screenshot of the FAILING attempt, and the answer was visible in
-the image in seconds: the canvas rendered nothing at all while every piece of
-page chrome was present. Five weeks of a question nobody could answer, closed by
-a run that cost nothing extra because the setting was finally right.
+### What each cost
 
-> **A setting that has to be overridden on the command line to do the job it
-> exists for is the wrong default, and the cost of the wrong default is not the
-> setting — it is every diagnosis that could not be made while it stood.** Five
-> weeks, nine sightings, and an entry in this file confidently pointing at
-> evidence that had been structurally excluded from ever existing.
+**The capture policy cost five weeks.** `wall-scene.spec.ts:1149` failed nine
+times and the diagnosis could not be made, because for a test that fails
+intermittently and passes on retry, `on-first-retry` records the one attempt
+with nothing to show. NOTES already carried the symptom: an entry pointing at a
+"deciding screenshot on disk" that was never there. Changed to
+`retain-on-failure` on 2026-09-05; on 2026-09-10 it fired once and the answer
+was visible in the image in seconds.
 
-The general form: **when an instrument is configured to observe the common case,
-it will be blind to the case you are actually hunting** — a retry policy that
-captures the passing attempt, a log that rotates before the crash, a metric
-sampled at an interval longer than the fault. The question to ask of any
-apparatus is not "does it record" but "does it record the attempt that failed".
+**The pgrep guard cost nothing yet, and that is the point.** It printed
+`PLAYWRIGHT RUNNING — stop` while no Playwright process existed and port 3100
+was free. I verified it was false and proceeded — which is the corrosive part: a
+guard that cries wolf teaches the reader to override it, and the next time it
+fires correctly it will be overridden too. The same argument the `retries: 1`
+comment makes from the other direction. Now `pgrep -f "npx playwright test"`,
+matching the invocation rather than the phrase.
+
+**The watcher race cost one E2E run.** `until ! pgrep …` evaluated before the
+process spawned, so "not running" was true, so the watcher announced completion
+at 13/457. The run itself was then orphaned when its launching shell exited,
+leaving a `next-server` holding port 3100 — the shape recorded above under
+`pgrep -f "next-server"`. Two apparatus defects compounding: one reported done,
+the other made it true.
+
+> **Ask of any observer: could this be satisfied if the thing it watches never
+> happened?** A retry policy that captures the passing attempt, a guard matching
+> its own watcher, a wait condition true before the subject starts, a log that
+> rotates before the crash, a metric sampled slower than the fault. All the same
+> question. It is the companion to the resolution rule above — that one asks
+> what values an instrument COULD return, this one asks whether it needs its
+> subject to return them at all.
+
+**The mechanism beats the habit, again.** The real guard against two suites on
+one database is `test/helpers/db.ts`'s session-scoped advisory lock, which
+refuses the second runner by pid and cannot be satisfied by a process that does
+not hold it. That is why it was built as a mechanism after the habit failed —
+and it is untouched by all three defects above. A courtesy check ahead of it is
+fine; a courtesy that lies is worse than none.
 
 ---
 
-## A guard that matches its own watchers is a guard that will be ignored
+## wall-scene:1149 is WORSENING, not a flake being characterised
 
-**Small, and recorded because it fired falsely on the run that mattered.**
+**Recorded as its own line because the distinction changes what the next reader
+should do with it.**
 
-Before running the unit suite I check that Playwright is not also running —
-CLAUDE.md §9 forbids the two sharing `record_collection_test`. The check was:
+| run | date | result |
+|---|---|---|
+| 21 isolated runs, `--retries=0` | 2026-09-08 | 21 passed, bit-identical output |
+| full matrix | 2026-09-10 | **1 flaky** — failed once (10 rows), passed on retry |
+| full matrix | 2026-09-10 | **1 failed** — failed BOTH attempts (10 rows, then 11) |
 
-    pgrep -f "playwright test"
+Two consecutive matrix runs with the same signature, and in the second the retry
+no longer absorbed it. The `retries: 1` comment warns that a spec failing ~50% of
+the time passes silently; this one has crossed out of that band.
 
-which matched **my own orphaned watcher shells**, whose command strings contain
-the literal text `until ! pgrep -f "playwright test"; do sleep 30; done`. The
-guard printed `PLAYWRIGHT RUNNING — stop` while no Playwright process existed
-and port 3100 was free.
+The signature matches the preserved evidence at `/tmp/wall-1149-evidence/`
+exactly — `Received: 10` against `> 150`, the canvas drawing nothing while every
+piece of page chrome renders and the accessibility tree confirms the pull
+succeeded. It still passes in isolation (12.1s, clean), so it is load-dependent,
+not broken outright.
 
-I verified the suite had in fact run alone (no browser processes, port free) and
-proceeded — which is the corrosive part. **A guard that cries wolf teaches the
-reader to override it, and the next time it fires correctly it will be
-overridden too.** That is the same failure the `retries: 1` comment warns about
-from the other direction: a signal that is usually noise stops being a signal.
-
-    pgrep -f "npx playwright test"    # the invocation, not the phrase
-
-**The REAL guard is unaffected and is the one that matters** —
-`test/helpers/db.ts` holds a session-scoped advisory lock and refuses the second
-runner outright, naming the owner and pid. That is a mechanism rather than a
-habit, which is exactly why it was built. The shell check is a courtesy ahead of
-it, and a courtesy that lies is worse than none.
+**A flake being characterised gets a tolerance or a wait. A defect worsening
+gets diagnosed.** This is the second, and the three candidate repairs remain
+wrong for the reason they were always wrong: no tolerance admits a frame that
+never arrives, and no wait produces one.
