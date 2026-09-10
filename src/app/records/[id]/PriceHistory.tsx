@@ -57,7 +57,7 @@ export function PriceHistory({
 
   return (
     <section className="mt-6" data-testid="price-history">
-      <h2 className="mb-1 font-heading text-sm font-semibold tracking-tight">Price history</h2>
+      <h2 className="mb-1 font-heading text-title font-semibold tracking-tight">Price history</h2>
 
       {/*
         **The empty state says what is true now, not what is planned.** It read
@@ -80,7 +80,7 @@ export function PriceHistory({
         forthcoming feature.
       */}
       {observations.length === 0 ? (
-        <p className="mb-3 text-sm text-muted-foreground">
+        <p className="mb-3 text-prose text-muted-foreground">
           {hasMarketPanel
             ? 'No prices recorded yet. “What it goes for now” above shows what the market says today.'
             : 'No prices recorded yet, and this record has no Discogs release linked, so nothing can look one up.'}
@@ -94,7 +94,7 @@ export function PriceHistory({
             would assert a value nobody paid.
           */}
           {points.length === 0 && (
-            <p data-testid="no-paid-prices" className="text-xs text-muted-foreground">
+            <p data-testid="no-paid-prices" className="text-meta text-muted-foreground">
               Nothing here says what a copy sold for — only what someone asked.
             </p>
           )}
@@ -142,7 +142,7 @@ export function PriceHistory({
             third that is not on the chart.
           */}
           {range !== null && (
-            <p data-testid="price-range" className="mt-1 text-xs text-muted-foreground">
+            <p data-testid="price-range" className="mt-1 text-meta text-muted-foreground">
               {paid.length} sale{paid.length === 1 ? '' : 's'},{' '}
               <span className="font-mono tabular-nums">{formatPrice(range.low)}</span> to{' '}
               <span className="font-mono tabular-nums">{formatPrice(range.high)}</span>
@@ -161,7 +161,7 @@ export function PriceHistory({
               <li
                 key={line.id}
                 data-testid="price-observation"
-                className="flex flex-wrap items-baseline gap-x-2 text-xs"
+                className="flex flex-wrap items-baseline gap-x-2 text-detail"
               >
                 <time dateTime={line.date} className="font-mono tabular-nums text-muted-foreground">
                   {line.date}
@@ -180,7 +180,7 @@ export function PriceHistory({
         §7.5 stated where it is felt. Without this, the absence of an edit
         control reads as an oversight rather than a rule.
       */}
-      <p className="mt-1 text-xs text-muted-foreground">
+      <p className="mt-1 text-meta text-muted-foreground">
         Prices are a record of observations — each one is added, never edited.
       </p>
 

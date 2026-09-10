@@ -136,7 +136,7 @@ export function RecordJournal({
 
   return (
     <section className="mt-6" data-testid="journal">
-      <h2 className="mb-1 font-heading text-sm font-semibold tracking-tight">Journal</h2>
+      <h2 className="mb-1 font-heading text-title font-semibold tracking-tight">Journal</h2>
 
       <div
         ref={formRef}
@@ -175,7 +175,7 @@ export function RecordJournal({
             value={note}
             onChange={(event) => setNote(event.target.value)}
             placeholder="Played it after the pub. Still loud."
-            className="w-full rounded-xs border border-input bg-transparent px-2 py-1.5 text-sm"
+            className="w-full rounded-xs border border-input bg-transparent px-2 py-1.5 text-typed"
           />
         </div>
 
@@ -185,13 +185,13 @@ export function RecordJournal({
       </div>
 
       {error !== undefined && (
-        <p role="alert" className="mb-3 text-xs text-destructive">
+        <p role="alert" className="mb-3 text-meta text-destructive">
           {error}
         </p>
       )}
 
       {entries.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-prose text-muted-foreground">
           No entries yet. Note when you played it, or what you noticed.
         </p>
       ) : (
@@ -204,17 +204,17 @@ export function RecordJournal({
             >
               <time
                 dateTime={entry.entryDate}
-                className="w-24 shrink-0 font-mono text-xs text-muted-foreground tabular-nums"
+                className="w-24 shrink-0 font-mono text-meta text-muted-foreground tabular-nums"
               >
                 {entry.entryDate}
               </time>
-              <p className="flex-1 text-sm whitespace-pre-line">{entry.note}</p>
+              <p className="flex-1 text-prose whitespace-pre-line">{entry.note}</p>
               <button
                 type="button"
                 disabled={busy}
                 onClick={() => void remove(entry.id, entry.note)}
                 aria-label={`Delete this entry from ${entry.entryDate}`}
-                className="shrink-0 text-xs text-muted-foreground underline underline-offset-2 hover:text-destructive"
+                className="shrink-0 text-label text-muted-foreground underline underline-offset-2 hover:text-destructive"
               >
                 Delete
               </button>

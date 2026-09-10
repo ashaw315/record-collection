@@ -71,7 +71,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
             arrived from a link or a fresh tab, where back goes nowhere useful. */}
         <Link
           href="/"
-          className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          className="text-meta text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
         >
           ← Collection
         </Link>
@@ -99,7 +99,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
               <p
                 data-testid="cover-notice"
                 role="status"
-                className="mt-6 rounded-xs border border-border px-3 py-2 text-sm text-muted-foreground"
+                className="mt-6 rounded-xs border border-border px-3 py-2 text-prose text-muted-foreground"
               >
                 The cover art could not be fetched from Discogs. The record saved normally — you
                 can add an image below.
@@ -117,7 +117,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
               <p
                 data-testid="cover-notice-unconfigured"
                 role="status"
-                className="mt-6 rounded-xs border border-border px-3 py-2 text-sm text-muted-foreground"
+                className="mt-6 rounded-xs border border-border px-3 py-2 text-prose text-muted-foreground"
               >
                 The record saved normally, but this deployment has no image storage configured, so
                 no cover was kept and uploads are unavailable.
@@ -197,7 +197,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
           <div className="mt-1 flex shrink-0 flex-col items-end">
             <Link
               href={`/records/${id}/edit`}
-              className="rounded-xs border border-border px-3 py-1.5 text-sm transition-colors hover:bg-accent"
+              className="rounded-xs border border-border px-3 py-1.5 text-label transition-colors hover:bg-accent"
             >
               Edit
             </Link>

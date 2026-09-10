@@ -105,7 +105,7 @@ export function ImageGallery({
 
   return (
     <section className="mt-6" data-testid="image-gallery">
-      <h2 className="mb-1 font-heading text-sm font-semibold tracking-tight">Images</h2>
+      <h2 className="mb-1 font-heading text-title font-semibold tracking-tight">Images</h2>
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <label htmlFor="image-type" className="sr-only">
@@ -115,7 +115,7 @@ export function ImageGallery({
           id="image-type"
           value={imageType}
           onChange={(event) => setImageType(event.target.value)}
-          className="h-8 rounded-xs border border-input bg-transparent px-2 text-sm"
+          className="h-8 rounded-xs border border-input bg-transparent px-2 text-label"
         >
           {IMAGE_TYPE_ORDER.map((type) => (
             <option key={type} value={type}>
@@ -137,10 +137,10 @@ export function ImageGallery({
             const file = event.target.files?.[0];
             if (file !== undefined) void upload(file);
           }}
-          className="text-xs file:mr-2 file:rounded-xs file:border file:border-border file:bg-transparent file:px-2 file:py-1 file:text-xs"
+          className="text-label file:mr-2 file:rounded-xs file:border file:border-border file:bg-transparent file:px-2 file:py-1 file:text-label"
         />
 
-        {busy && <span className="text-xs text-muted-foreground">Working…</span>}
+        {busy && <span className="text-meta text-muted-foreground">Working…</span>}
       </div>
 
       {/*
@@ -148,24 +148,24 @@ export function ImageGallery({
         discoverable from an empty file picker, and finding them out by having a
         10MB upload rejected is a bad way to learn them.
       */}
-      <p className="mb-3 text-xs text-muted-foreground">
+      <p className="mb-3 text-meta text-muted-foreground">
         JPEG, PNG or WebP, up to {MAX_IMAGE_BYTES / (1024 * 1024)}MB.
       </p>
 
       {error !== undefined && (
-        <p role="alert" className="mb-3 text-xs text-destructive">
+        <p role="alert" className="mb-3 text-meta text-destructive">
           {error}
         </p>
       )}
 
       {groups.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-prose text-muted-foreground">
           No images yet. Photograph the sleeve, the label, or the dead wax.
         </p>
       ) : (
         groups.map((group) => (
           <div key={group.type} className="mb-4">
-            <h3 className="mb-1.5 text-xs tracking-wide text-muted-foreground uppercase">
+            <h3 className="mb-1.5 text-label tracking-wide text-muted-foreground uppercase">
               {imageTypeLabel(group.type)}
             </h3>
 
@@ -197,14 +197,14 @@ export function ImageGallery({
                     variant="outline"
                     disabled={busy}
                     onClick={() => void remove(image.id, imageTypeLabel(group.type))}
-                    className="absolute top-1 right-1 h-6 bg-background/90 px-1.5 text-xs"
+                    className="absolute top-1 right-1 h-6 bg-background/90 px-1.5 text-label"
                     aria-label={`Delete this ${imageTypeLabel(group.type).toLowerCase()} image`}
                   >
                     Delete
                   </Button>
 
                   {image.caption !== null && (
-                    <p className="mt-1 text-xs text-muted-foreground">{image.caption}</p>
+                    <p className="mt-1 text-caption text-muted-foreground">{image.caption}</p>
                   )}
                 </li>
               ))}

@@ -98,7 +98,7 @@ export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured }:
         wide screen nothing changes — the two still sit on one baseline.
       */}
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h2 className="shrink-0 font-heading text-sm tracking-wide uppercase text-muted-foreground">
+        <h2 className="shrink-0 font-heading text-title tracking-wide uppercase text-muted-foreground">
           About this record
         </h2>
 
@@ -119,14 +119,14 @@ export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured }:
             data-testid="snippet-generate"
             onClick={regenerate}
             disabled={busy}
-            className="shrink-0 text-xs underline underline-offset-2 disabled:opacity-60"
+            className="shrink-0 text-label underline underline-offset-2 disabled:opacity-60"
           >
             {busy ? 'Working…' : view.kind === 'absent' ? 'Write one' : 'Write a new one'}
           </button>
         ) : (
           <span
             data-testid="snippet-unconfigured"
-            className="text-xs text-muted-foreground"
+            className="text-meta text-muted-foreground"
           >
             Writing notes is not configured on this deployment.
           </span>
@@ -144,7 +144,7 @@ export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured }:
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             rows={4}
-            className="w-full rounded-xs border border-input bg-transparent p-2 text-sm"
+            className="w-full rounded-xs border border-input bg-transparent p-2 text-typed"
           />
           <div className="mt-2 flex gap-3">
             <button
@@ -152,7 +152,7 @@ export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured }:
               data-testid="snippet-save"
               disabled={busy || draft.trim() === ''}
               onClick={() => send('PATCH', { snippet: draft.trim() })}
-              className="rounded-xs border border-border px-3 py-1.5 text-sm disabled:opacity-60"
+              className="rounded-xs border border-border px-3 py-1.5 text-label disabled:opacity-60"
             >
               Save
             </button>
@@ -162,7 +162,7 @@ export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured }:
                 setEditing(false);
                 setDraft(snippet ?? '');
               }}
-              className="text-sm text-muted-foreground underline underline-offset-2"
+              className="text-label text-muted-foreground underline underline-offset-2"
             >
               Cancel
             </button>
@@ -175,12 +175,12 @@ export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured }:
               §10b: "Absence is fine. A record with no snippet shows none, and no
               placeholder invites one." So this states a fact and does not nag.
             */
-            <p data-testid="snippet-absent" className="mt-2 text-sm text-muted-foreground">
+            <p data-testid="snippet-absent" className="mt-2 text-prose text-muted-foreground">
               No note about this record.
             </p>
           ) : (
             <>
-              <p data-testid="snippet-text" className="mt-2 text-sm">
+              <p data-testid="snippet-text" className="mt-2 text-prose">
                 {snippet}
               </p>
 
@@ -192,7 +192,7 @@ export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured }:
               */}
               <p
                 data-testid={view.labelAsGenerated ? 'snippet-generated-label' : 'snippet-yours'}
-                className="mt-1 text-xs text-muted-foreground"
+                className="mt-1 text-meta text-muted-foreground"
               >
                 {view.labelAsGenerated
                   ? 'Written by Claude — about the music, not a fact this app checked.'
@@ -204,7 +204,7 @@ export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured }:
                   type="button"
                   data-testid="snippet-edit"
                   onClick={() => setEditing(true)}
-                  className="text-xs underline underline-offset-2"
+                  className="text-label underline underline-offset-2"
                 >
                   Edit
                 </button>
@@ -213,7 +213,7 @@ export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured }:
                   data-testid="snippet-delete"
                   disabled={busy}
                   onClick={() => send('DELETE')}
-                  className="text-xs underline underline-offset-2 disabled:opacity-60"
+                  className="text-label underline underline-offset-2 disabled:opacity-60"
                 >
                   Delete
                 </button>
@@ -224,7 +224,7 @@ export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured }:
       )}
 
       {error !== null && (
-        <p role="alert" data-testid="snippet-error" className="mt-2 text-sm text-destructive">
+        <p role="alert" data-testid="snippet-error" className="mt-2 text-prose text-destructive">
           {error}
         </p>
       )}

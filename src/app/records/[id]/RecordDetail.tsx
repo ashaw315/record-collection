@@ -38,10 +38,10 @@ function Field({
 }) {
   return (
     <div className="border-b border-border py-2 last:border-0 sm:flex sm:gap-4">
-      <dt className="text-xs tracking-wide text-muted-foreground uppercase sm:w-40 sm:shrink-0 sm:pt-0.5">
+      <dt className="text-label tracking-wide text-muted-foreground uppercase sm:w-40 sm:shrink-0 sm:pt-0.5">
         {label}
       </dt>
-      <dd className={mono ? 'font-mono text-sm' : 'text-sm'}>{children}</dd>
+      <dd className={mono ? 'font-mono text-detail' : 'text-detail'}>{children}</dd>
     </div>
   );
 }
@@ -49,7 +49,7 @@ function Field({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-6">
-      <h2 className="mb-1 font-heading text-sm font-semibold tracking-tight">{title}</h2>
+      <h2 className="mb-1 font-heading text-title font-semibold tracking-tight">{title}</h2>
       <dl>{children}</dl>
     </section>
   );
@@ -82,10 +82,10 @@ export function RecordDetail({ record }: { record: HydratedRecord }) {
   return (
     <article>
       <header className="mb-5">
-        <h1 className="font-heading text-xl font-semibold tracking-tight">{record.title}</h1>
+        <h1 className="font-heading text-headline font-semibold tracking-tight">{record.title}</h1>
         {/* The artist links to the collection filtered by them — the question
             "what else do I have by this artist" is one click, not a search. */}
-        <p className="mt-0.5 text-sm">
+        <p className="mt-0.5 text-detail">
           <Link
             href={`/?artistId=${record.artist.id}`}
             className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
@@ -168,7 +168,7 @@ export function RecordDetail({ record }: { record: HydratedRecord }) {
               Same rule as the observation list below and §7.6's total: the
               number and its meaning arrive together.
             */}
-            <span className="ml-2 text-xs text-muted-foreground">
+            <span className="ml-2 text-meta text-muted-foreground">
               {priceTypeMeaning(record.latestPrice.priceType as PriceType)}
             </span>
           </Field>
@@ -184,7 +184,7 @@ export function RecordDetail({ record }: { record: HydratedRecord }) {
                   <Link
                     key={genre.id}
                     href={`/?genreId=${genre.id}`}
-                    className="rounded-xs border border-border px-1.5 py-0.5 text-xs hover:bg-accent"
+                    className="rounded-xs border border-border px-1.5 py-0.5 text-label hover:bg-accent"
                   >
                     {genre.name}
                   </Link>
@@ -199,7 +199,7 @@ export function RecordDetail({ record }: { record: HydratedRecord }) {
                   <Link
                     key={tag.id}
                     href={`/?tagId=${tag.id}`}
-                    className="rounded-xs border border-border px-1.5 py-0.5 text-xs hover:bg-accent"
+                    className="rounded-xs border border-border px-1.5 py-0.5 text-label hover:bg-accent"
                   >
                     {tag.name}
                   </Link>
@@ -213,7 +213,7 @@ export function RecordDetail({ record }: { record: HydratedRecord }) {
       {record.notes !== null && record.notes !== '' && (
         <Section title="Notes">
           {/* whitespace-pre-line: a note typed with line breaks keeps them. */}
-          <p className="text-sm whitespace-pre-line">{record.notes}</p>
+          <p className="text-prose whitespace-pre-line">{record.notes}</p>
         </Section>
       )}
     </article>

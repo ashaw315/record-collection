@@ -77,7 +77,7 @@ export function DeleteRecord({
       {error !== undefined && (
         <p
           role="alert"
-          className="mt-3 rounded-xs border border-destructive px-3 py-2 text-sm text-destructive"
+          className="mt-3 rounded-xs border border-destructive px-3 py-2 text-prose text-destructive"
         >
           {error}
         </p>
@@ -86,7 +86,7 @@ export function DeleteRecord({
       <button
         type="button"
         onClick={() => setConfirming(true)}
-        className="mt-1 text-xs text-muted-foreground underline underline-offset-2 hover:text-destructive"
+        className="mt-1 text-label text-muted-foreground underline underline-offset-2 hover:text-destructive"
       >
         Delete record
       </button>
