@@ -110,6 +110,9 @@ export function PlaneCanvas({ textureUrl }: { textureUrl: string }) {
       geometry.dispose();
       material.map?.dispose();
       material.dispose();
+      // `dispose()` frees Three's objects, not the WebGL context — see the note
+      // in WallScene's teardown. Released first, while the context is live.
+      renderer.forceContextLoss();
       renderer.dispose();
     };
   }, [textureUrl]);

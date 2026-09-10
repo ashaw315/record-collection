@@ -618,6 +618,9 @@ export function BoxCanvas({
       geometry.dispose();
       for (const texture of owned) texture.dispose();
       for (const material of materials) material.dispose();
+      // `dispose()` frees Three's objects, not the WebGL context — see the note
+      // in WallScene's teardown. Released first, while the context is live.
+      renderer.forceContextLoss();
       renderer.dispose();
     };
 

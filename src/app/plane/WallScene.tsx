@@ -1884,6 +1884,19 @@ export function WallScene({
       renderer.domElement.remove();
       controls?.dispose();
       for (const item of disposables) item.dispose();
+      /*
+        **`dispose()` does not release the WebGL context**, and this page mounts
+        several canvases. Measured on `/plane`: sixteen consecutive "Too many
+        active WebGL contexts. Oldest context will be lost." on every load, then
+        `THREE.WebGLRenderer: Context Lost.` — WallScene renders first, so it is
+        the oldest, so it is the one evicted. It returns via `Context Restored`,
+        but the restore took 0.46s isolated and 13.44s under the full matrix,
+        which is the whole of wall-scene.spec.ts:1149's intermittent failure.
+
+        Released BEFORE dispose: `forceContextLoss` needs a live context, so the
+        reverse order is a no-op that reads correctly in a diff.
+      */
+      renderer.forceContextLoss();
       renderer.dispose();
     };
     }
