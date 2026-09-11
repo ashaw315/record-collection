@@ -37,12 +37,12 @@ export default async function EditWantListItemPage({
       <main className="mx-auto w-full max-w-2xl px-4 py-5">
         <Link
           href={`/want-list/${item.id}`}
-          className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          className="text-meta text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
         >
           ← {item.title}
         </Link>
 
-        <h1 className="mt-3 text-xl font-medium">Edit want-list item</h1>
+        <h1 className="mt-3 text-headline font-medium">Edit want-list item</h1>
 
         <div className="mt-4">
           <WantListForm

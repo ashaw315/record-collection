@@ -120,11 +120,11 @@ export function WantListForm({
       {FORM_SECTIONS.map((section) => (
         <section key={section.key} data-testid={`section-${section.key}`} className="space-y-2">
           <div>
-            <h2 className="font-heading text-sm font-semibold tracking-tight">
+            <h2 className="font-heading text-title font-semibold tracking-tight">
               {section.heading}
             </h2>
             {section.hint !== undefined && (
-              <p className="text-xs text-muted-foreground">{section.hint}</p>
+              <p className="text-meta text-muted-foreground">{section.hint}</p>
             )}
           </div>
 
@@ -178,25 +178,25 @@ export function WantListForm({
         suggestion hit the wall.
       */}
       {unmatched?.artist != null && (
-        <p data-testid="unmatched-artist" className="text-sm">
+        <p data-testid="unmatched-artist" className="text-prose">
           No artist named “{unmatched.artist}” in your collection yet — it is ready to add under{' '}
           <span className="font-medium">Artist</span>.
         </p>
       )}
       {unmatched?.label != null && (
-        <p data-testid="unmatched-label" className="text-sm">
+        <p data-testid="unmatched-label" className="text-prose">
           No label named “{unmatched.label}” yet — it is ready to add under{' '}
           <span className="font-medium">Label</span>.
         </p>
       )}
       {createdNotice !== undefined && (
-        <p role="status" data-testid="inline-created-notice" className="text-sm text-muted-foreground">
+        <p role="status" data-testid="inline-created-notice" className="text-prose text-muted-foreground">
           {createdNotice}
         </p>
       )}
 
       {error !== undefined && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-prose text-destructive">
           {error}
         </p>
       )}
@@ -215,7 +215,7 @@ export function WantListForm({
         <button
           type="button"
           onClick={() => router.push('/want-list')}
-          className="text-sm text-muted-foreground underline underline-offset-2"
+          className="text-label text-muted-foreground underline underline-offset-2"
         >
           Cancel
         </button>
@@ -248,7 +248,7 @@ function Field({
 
   return (
     <div className="grid gap-1 sm:grid-cols-[10rem_1fr] sm:items-baseline sm:gap-3">
-      <label htmlFor={field} className="text-xs text-muted-foreground uppercase">
+      <label htmlFor={field} className="text-label text-muted-foreground uppercase">
         {label}
       </label>
 
@@ -260,7 +260,7 @@ function Field({
             onChange={(event) => onChange(event.target.value)}
             aria-describedby={describedBy}
             aria-invalid={error !== undefined}
-            className="h-9 w-full rounded-xs border border-border bg-background px-2 text-sm"
+            className="h-9 w-full rounded-xs border border-border bg-background px-2 text-label"
           >
             <option value="">{field === 'artistId' ? 'Choose an artist' : 'No label'}</option>
             {(field === 'artistId' ? artists : labels).map((option) => (
@@ -274,7 +274,7 @@ function Field({
             id={field}
             value={value}
             onChange={(event) => onChange(event.target.value)}
-            className="h-9 w-full rounded-xs border border-border bg-background px-2 text-sm"
+            className="h-9 w-full rounded-xs border border-border bg-background px-2 text-label"
           >
             {/* Named, not numbered — §4.2 makes 1 the highest and a bare digit
                 cannot tell the reader which end is the top. */}
@@ -297,7 +297,7 @@ function Field({
             onChange={(event) => onChange(event.target.value)}
             rows={3}
             placeholder="e.g. UK first press on Clay, Porky stamp in the dead wax"
-            className="w-full rounded-xs border border-border bg-background px-2 py-1.5 text-sm"
+            className="w-full rounded-xs border border-border bg-background px-2 py-1.5 text-typed"
           />
         ) : (
           <Input
@@ -314,7 +314,7 @@ function Field({
         {inlineCreate}
 
         {error !== undefined && (
-          <p id={describedBy} className="text-xs text-destructive">
+          <p id={describedBy} className="text-meta text-destructive">
             {error}
           </p>
         )}

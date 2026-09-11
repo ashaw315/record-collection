@@ -46,10 +46,10 @@ export default async function WantListPage({ searchParams }: PageProps<'/want-li
       <main className="mx-auto w-full max-w-3xl px-4 py-6">
         <header className="mb-4 flex items-start justify-between gap-4">
           <div>
-            <h1 className="font-heading text-xl font-semibold tracking-tight">
+            <h1 className="font-heading text-headline font-semibold tracking-tight">
               {showAcquired ? 'Acquired' : 'Want list'}
             </h1>
-            <p className="mt-0.5 text-sm text-muted-foreground">
+            <p className="mt-0.5 text-lede text-muted-foreground">
               {total === 1 ? '1 record' : `${total} records`}
               {showAcquired ? ' acquired' : ' still wanted'}
             </p>
@@ -68,7 +68,7 @@ export default async function WantListPage({ searchParams }: PageProps<'/want-li
           */}
           <Link
             href="/suggestions"
-            className="shrink-0 text-sm underline underline-offset-2 hover:text-foreground"
+            className="shrink-0 text-label underline underline-offset-2 hover:text-foreground"
           >
             Suggestions
           </Link>
@@ -89,7 +89,7 @@ export default async function WantListPage({ searchParams }: PageProps<'/want-li
               href={tab.href}
               aria-current={tab.active ? 'page' : undefined}
               className={cn(
-                'rounded-xs border px-2 py-1 text-xs transition-colors',
+                'rounded-xs border px-2 py-1 text-label transition-colors',
                 tab.active
                   ? 'border-primary bg-primary text-primary-foreground'
                   : 'border-border hover:bg-accent',
@@ -102,7 +102,7 @@ export default async function WantListPage({ searchParams }: PageProps<'/want-li
 
         {hydrated.length === 0 ? (
           <div className="border border-border px-4 py-12 text-center">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-prose text-muted-foreground">
               {showAcquired ? 'Nothing acquired yet.' : 'Nothing on the want list.'}
             </p>
           </div>

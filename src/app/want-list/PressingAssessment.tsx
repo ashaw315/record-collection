@@ -93,7 +93,7 @@ export function PressingAssessment({
 
   return (
     <section data-testid="pressing-assessment" className="mt-5 border-t border-border pt-3">
-      <h2 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+      <h2 className="text-label font-medium tracking-wide text-muted-foreground uppercase">
         Does the pressing matter?
       </h2>
 
@@ -108,18 +108,18 @@ export function PressingAssessment({
             data-testid="ask-pressing"
             disabled={asking}
             onClick={() => void ask()}
-            className="text-sm underline underline-offset-2 disabled:text-muted-foreground"
+            className="text-label underline underline-offset-2 disabled:text-muted-foreground"
           >
             {asking ? 'Asking…' : 'Ask Claude'}
           </button>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-1 text-meta text-muted-foreground">
             Sends the artist and title only. Uses one of ten hourly requests.
           </p>
         </div>
       )}
 
       {error !== undefined && (
-        <p role="status" data-testid="assessment-error" className="mt-2 text-sm text-destructive">
+        <p role="status" data-testid="assessment-error" className="mt-2 text-prose text-destructive">
           {error}
         </p>
       )}
@@ -136,13 +136,13 @@ export function PressingAssessment({
             lives in structure rather than in wording — which is the part a
             reader stops parsing once a screen is familiar.
           */}
-          <p className="text-sm font-medium">
+          <p className="text-detail font-medium">
             <span aria-hidden className="mr-1">
               {presented.marker}
             </span>
             {presented.heading}
           </p>
-          <p className="mt-0.5 text-xs text-muted-foreground">{presented.detail}</p>
+          <p className="mt-0.5 text-meta text-muted-foreground">{presented.detail}</p>
 
           {/*
             **What the order MEANS, in the model's own words** (A43).
@@ -160,7 +160,7 @@ export function PressingAssessment({
             real answer and a filled-in default would be a basis nobody stated.
           */}
           {presented.actionable && assessment.orderedBy !== null && (
-            <p data-testid="ordered-by" className="mt-2 text-xs text-muted-foreground">
+            <p data-testid="ordered-by" className="mt-2 text-meta text-muted-foreground">
               Claude listed these {assessment.orderedBy}.
             </p>
           )}
@@ -168,14 +168,14 @@ export function PressingAssessment({
           {presented.actionable && assessment.pressings.length > 0 && (
             <ul data-testid="pressings-to-hunt" className="mt-2 space-y-1">
               {assessment.pressings.map((pressing) => (
-                <li key={pressing.identifier} className="text-sm">
+                <li key={pressing.identifier} className="text-detail">
                   <span>{pressing.description}</span>
                   {/*
                     Mono, because this is the string compared character by
                     character against the object — 14c's reasoning for the
                     runout, applied to the same class of value.
                   */}
-                  <span className="ml-1 font-mono text-xs text-muted-foreground">
+                  <span className="ml-1 font-mono text-meta text-muted-foreground">
                     {pressing.identifier}
                   </span>
                 </li>
@@ -189,7 +189,7 @@ export function PressingAssessment({
             checkable, and the user is told rather than left with a quiet gap.
           */}
           {assessment.dropped > 0 && (
-            <p data-testid="assessment-dropped" className="mt-2 text-xs text-muted-foreground">
+            <p data-testid="assessment-dropped" className="mt-2 text-meta text-muted-foreground">
               {assessment.dropped === 1
                 ? '1 suggestion was discarded for naming nothing you could check against a record.'
                 : `${assessment.dropped} suggestions were discarded for naming nothing you could check against a record.`}
@@ -200,7 +200,7 @@ export function PressingAssessment({
             §10b's labelling rule, and A43's: this is the model's assertion about
             music, not something the app verified.
           */}
-          <p className="mt-2 text-xs text-muted-foreground italic">
+          <p className="mt-2 text-meta text-muted-foreground italic">
             Claude’s assessment, not a fact this app checked — verify against the record.
           </p>
 
@@ -220,7 +220,7 @@ export function PressingAssessment({
               data-testid="reask-pressing"
               disabled={asking}
               onClick={() => void ask(true)}
-              className="text-xs underline underline-offset-2 disabled:text-muted-foreground"
+              className="text-label underline underline-offset-2 disabled:text-muted-foreground"
             >
               {asking ? 'Asking…' : 'Ask again (uses a request)'}
             </button>
@@ -229,7 +229,7 @@ export function PressingAssessment({
               data-testid="clear-pressing"
               disabled={asking}
               onClick={() => void clear()}
-              className="text-xs text-muted-foreground underline underline-offset-2"
+              className="text-label text-muted-foreground underline underline-offset-2"
             >
               Remove
             </button>

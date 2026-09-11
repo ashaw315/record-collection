@@ -81,16 +81,16 @@ export default async function SuggestionsPage() {
       <main className="mx-auto w-full max-w-3xl px-4 py-5">
         <Link
           href="/want-list"
-          className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          className="text-meta text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
         >
           ← Want list
         </Link>
 
-        <h1 className="mt-3 mb-1 font-heading text-xl font-semibold tracking-tight">
+        <h1 className="mt-3 mb-1 font-heading text-headline font-semibold tracking-tight">
           Suggestions
         </h1>
 
-        <p className="mb-5 text-sm text-muted-foreground">
+        <p className="mb-5 text-lede text-muted-foreground">
           Artists you don&rsquo;t own, reached from ones you do — through influences you&rsquo;ve
           recorded, or a shared line-up.
         </p>
@@ -115,7 +115,7 @@ export default async function SuggestionsPage() {
            * because "no suggestions" with no explanation is indistinguishable
            * from a broken screen.
            */
-          <div className="rounded-md border border-border bg-muted/30 p-4 text-sm">
+          <div className="rounded-md border border-border bg-muted/30 p-4 text-prose">
             <p className="font-medium">Nothing to suggest yet.</p>
             {/*
               **A48: this used to name a path that does not exist.** It read
@@ -149,7 +149,7 @@ export default async function SuggestionsPage() {
                   <h2 className="font-medium">{row.artistName}</h2>
                   <Link
                     href={`/want-list/new?artistId=${row.artistId}`}
-                    className="shrink-0 text-sm underline underline-offset-2 hover:text-foreground"
+                    className="shrink-0 text-label underline underline-offset-2 hover:text-foreground"
                   >
                     Add to want list
                   </Link>
@@ -162,7 +162,7 @@ export default async function SuggestionsPage() {
                  * 8.5 means nothing to a reader, while "linked to 3 artists you
                  * own" is the same fact in a form they can check.
                  */}
-                <ul className="mt-2 space-y-0.5 text-sm text-muted-foreground">
+                <ul className="mt-2 space-y-0.5 text-prose text-muted-foreground">
                   {row.reasons.map((reason) => (
                     <li key={reason}>{reason}</li>
                   ))}
@@ -188,14 +188,14 @@ export default async function SuggestionsPage() {
           answer is the absent-versus-unknown failure this project keeps naming.
         */}
         {totalLinks > rows.length && (
-          <p className="mt-4 text-xs text-muted-foreground">
+          <p className="mt-4 text-meta text-muted-foreground">
             Showing {rows.length} of {totalLinks} linked artists — the strongest
             connections, not the whole graph. Most of the rest share a single
             member with one artist you own.
           </p>
         )}
 
-        <p className="mt-6 border-t border-border pt-4 text-xs text-muted-foreground">
+        <p className="mt-6 border-t border-border pt-4 text-meta text-muted-foreground">
           Ranked on recorded influences and shared line-ups only. Genre and label
           overlap are specified but not scored — nothing in the app fills in an
           artist&rsquo;s genres or labels yet.

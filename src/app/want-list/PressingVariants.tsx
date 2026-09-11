@@ -47,7 +47,7 @@ export function PressingVariants({ pressing }: { pressing: HeldPressing | null }
         records which record is being hunted — rather than an affordance that no
         longer exists.
       */
-      <p data-testid="variants-no-pressing" className="mt-6 text-xs text-muted-foreground">
+      <p data-testid="variants-no-pressing" className="mt-6 text-meta text-muted-foreground">
         Attach a target pressing to record which one you are hunting.
       </p>
     );
@@ -55,7 +55,7 @@ export function PressingVariants({ pressing }: { pressing: HeldPressing | null }
 
   return (
     <section className="mt-6 border-t border-border pt-4">
-      <h2 className="font-heading text-sm font-semibold tracking-tight">
+      <h2 className="font-heading text-title font-semibold tracking-tight">
         The pressing you are hunting
       </h2>
 
@@ -66,14 +66,14 @@ export function PressingVariants({ pressing }: { pressing: HeldPressing | null }
           has no variant data" are different facts implying different actions,
           and collapsing them would rebuild the defect the walk just fixed.
         */
-        <p data-testid={`variants-${panel.state}`} className="mt-2 text-sm text-muted-foreground">
+        <p data-testid={`variants-${panel.state}`} className="mt-2 text-prose text-muted-foreground">
           {panel.message}
         </p>
       ) : (
         <>
           <dl data-testid="variants-detail" className="mt-2 space-y-1">
             {panel.fields.map((field) => (
-              <div key={field.label} className="flex gap-2 text-sm">
+              <div key={field.label} className="flex gap-2 text-detail">
                 <dt className="shrink-0 text-muted-foreground">{field.label}</dt>
                 {/*
                   Mono, and verbatim. A runout is a string of glyphs read off the
@@ -90,7 +90,7 @@ export function PressingVariants({ pressing }: { pressing: HeldPressing | null }
             that Discogs is "a strong starting point, never proof", applied to a
             panel whose entire content is relayed.
           */}
-          <p className="mt-2 text-xs text-muted-foreground">
+          <p className="mt-2 text-meta text-muted-foreground">
             Recorded on this entry — from your own notes or a Discogs lookup. Check them
             against the record in your hand.
           </p>
@@ -110,7 +110,7 @@ export function PressingVariants({ pressing }: { pressing: HeldPressing | null }
             search screen rather than this record's versions, which is stated
             plainly rather than implied by a hopeful URL.
           */}
-          <p className="mt-3 text-xs text-muted-foreground">
+          <p className="mt-3 text-meta text-muted-foreground">
             To compare this against other pressings of the same record,{' '}
             <Link href="/lookup" className="underline underline-offset-2">
               search Discogs

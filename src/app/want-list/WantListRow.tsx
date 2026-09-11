@@ -98,11 +98,11 @@ export function WantListRow({ item }: { item: WantListItem }) {
           <Link
             href={`/want-list/${item.id}/edit`}
             data-testid={`want-list-row-edit-${item.id}`}
-            className="ml-2 text-xs text-muted-foreground underline underline-offset-2"
+            className="ml-2 text-label text-muted-foreground underline underline-offset-2"
           >
             Edit
           </Link>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-detail text-muted-foreground">
             {item.artist.name}
             {item.label !== null && ` · ${item.label.name}`}
           </p>
@@ -111,19 +111,19 @@ export function WantListRow({ item }: { item: WantListItem }) {
         <div className="flex shrink-0 items-center gap-2">
           {/* Named, not numbered: §4.2 makes 1 the highest and a bare digit
               cannot tell the reader which end is the top. */}
-          <span className="rounded-xs border border-border px-1.5 py-0.5 text-xs text-muted-foreground">
+          <span className="rounded-xs border border-border px-1.5 py-0.5 text-meta text-muted-foreground">
             {priorityLabel(item.priority)}
           </span>
 
           {item.isAcquired ? (
             <>
-              <span className="rounded-xs border border-border bg-accent px-1.5 py-0.5 text-xs">
+              <span className="rounded-xs border border-border bg-accent px-1.5 py-0.5 text-detail">
                 Acquired
               </span>
               {item.acquiredRecordId !== null && (
                 <Link
                   href={`/records/${item.acquiredRecordId}`}
-                  className="text-xs underline underline-offset-2"
+                  className="text-label underline underline-offset-2"
                 >
                   View record
                 </Link>
@@ -137,7 +137,7 @@ export function WantListRow({ item }: { item: WantListItem }) {
              */
             <Link
               href={`/records/new?wantListId=${item.id}`}
-              className="rounded-xs bg-primary px-2 py-1 text-xs text-primary-foreground transition-opacity hover:opacity-90"
+              className="rounded-xs bg-primary px-2 py-1 text-label text-primary-foreground transition-opacity hover:opacity-90"
             >
               Mark acquired
             </Link>
@@ -160,7 +160,7 @@ export function WantListRow({ item }: { item: WantListItem }) {
           <button
             type="button"
             onClick={() => setConfirming(true)}
-            className="ml-auto pl-3 text-xs text-muted-foreground underline underline-offset-2 hover:text-destructive sm:ml-1 sm:pl-0"
+            className="ml-auto pl-3 text-label text-muted-foreground underline underline-offset-2 hover:text-destructive sm:ml-1 sm:pl-0"
           >
             Delete
           </button>
@@ -174,21 +174,21 @@ export function WantListRow({ item }: { item: WantListItem }) {
         them, and adjacency in one line is how that starts.
       */}
       {pressing !== undefined && (
-        <p className="mt-1.5 text-xs">
+        <p className="mt-1.5 text-detail">
           <span className="text-muted-foreground">Target pressing: </span>
           <span className="font-mono">{pressing}</span>
         </p>
       )}
 
       {item.bestDigNotes !== null && item.bestDigNotes !== '' && (
-        <p className="mt-1 text-xs">
+        <p className="mt-1 text-detail">
           <span className="text-muted-foreground">{BEST_DIG_LABEL}: </span>
           {item.bestDigNotes}
         </p>
       )}
 
       {ceiling !== undefined && (
-        <p className="mt-1 text-xs">
+        <p className="mt-1 text-detail">
           <span className="text-muted-foreground">{MAX_PRICE_LABEL}: </span>
           <span className="font-mono tabular-nums">{ceiling}</span>
         </p>

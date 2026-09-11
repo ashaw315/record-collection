@@ -45,15 +45,15 @@ export default async function WantListItemPage({
       <main className="mx-auto w-full max-w-2xl px-4 py-5">
         <Link
           href="/want-list"
-          className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          className="text-meta text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
         >
           ← Want list
         </Link>
 
         <header className="mt-3">
-          <h1 className="text-xl font-medium">{item.title}</h1>
-          <p className="text-sm text-muted-foreground">{item.artist?.name ?? 'Unknown artist'}</p>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <h1 className="text-headline font-medium">{item.title}</h1>
+          <p className="text-detail text-muted-foreground">{item.artist?.name ?? 'Unknown artist'}</p>
+          <p className="mt-1 text-meta text-muted-foreground">
             Priority: {priorityLabel(item.priority)}
           </p>
         </header>
@@ -73,14 +73,14 @@ export default async function WantListItemPage({
         */}
         {hunt.length > 0 && (
           <section data-testid="hunt" className="mt-5 border-t border-border pt-3">
-            <h2 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            <h2 className="text-label font-medium tracking-wide text-muted-foreground uppercase">
               The hunt
             </h2>
             <dl className="mt-2 space-y-2">
               {hunt.map((fact) => (
                 <div key={fact.label}>
-                  <dt className="text-xs text-muted-foreground">{fact.label}</dt>
-                  <dd className="text-sm whitespace-pre-wrap">{fact.value}</dd>
+                  <dt className="text-label text-muted-foreground">{fact.label}</dt>
+                  <dd className="text-detail whitespace-pre-wrap">{fact.value}</dd>
                 </div>
               ))}
             </dl>
@@ -96,10 +96,10 @@ export default async function WantListItemPage({
         */}
         {ceiling !== undefined && (
           <section data-testid="ceiling" className="mt-5 border-t border-border pt-3">
-            <h2 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            <h2 className="text-label font-medium tracking-wide text-muted-foreground uppercase">
               What you are willing to pay
             </h2>
-            <p className="mt-2 font-mono text-sm">{ceiling}</p>
+            <p className="mt-2 font-mono text-detail">{ceiling}</p>
           </section>
         )}
 
@@ -152,7 +152,7 @@ export default async function WantListItemPage({
           <Link
             href={`/want-list/${item.id}/edit`}
             data-testid="want-list-edit"
-            className="rounded-xs border border-border px-3 py-1.5 text-sm"
+            className="rounded-xs border border-border px-3 py-1.5 text-label"
           >
             Edit
           </Link>

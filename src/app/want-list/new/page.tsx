@@ -144,12 +144,12 @@ export default async function NewWantListItemPage({
       <main className="mx-auto w-full max-w-2xl px-4 py-5">
         <Link
           href="/want-list"
-          className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          className="text-meta text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
         >
           ← Want list
         </Link>
 
-        <h1 className="mt-3 mb-1 font-heading text-xl font-semibold tracking-tight">
+        <h1 className="mt-3 mb-1 font-heading text-headline font-semibold tracking-tight">
           Add to want list
         </h1>
 
@@ -157,7 +157,7 @@ export default async function NewWantListItemPage({
           <p
             data-testid="prefill-failed"
             role="status"
-            className="mb-4 rounded-xs border border-border px-3 py-2 text-sm"
+            className="mb-4 rounded-xs border border-border px-3 py-2 text-prose"
           >
             Could not load that release from Discogs. The form is blank — enter what you know by
             hand.
@@ -165,7 +165,7 @@ export default async function NewWantListItemPage({
         )}
 
         {suggestionReasons.length > 0 && (
-          <div className="mb-4 rounded-xs border border-border px-3 py-2 text-sm">
+          <div className="mb-4 rounded-xs border border-border px-3 py-2 text-prose">
             <p className="text-muted-foreground">Suggested because:</p>
             <ul className="mt-1 space-y-0.5">
               {suggestionReasons.map((reason) => (
@@ -196,15 +196,15 @@ export default async function NewWantListItemPage({
             data-testid="model-reason"
             className="mb-4 border-t border-dashed border-border pt-2"
           >
-            <p className="text-xs font-medium text-muted-foreground">
+            <p className="text-label font-medium text-muted-foreground">
               Why Claude suggested this — the model&rsquo;s reasoning, not a fact this app checked
             </p>
-            <p className="mt-1 text-sm text-muted-foreground italic">{modelReason}</p>
+            <p className="mt-1 text-prose text-muted-foreground italic">{modelReason}</p>
           </div>
         )}
 
         {prefill !== null && (
-          <p className="mb-4 text-sm text-muted-foreground">
+          <p className="mb-4 text-prose text-muted-foreground">
             Prefilled from Discogs. These details are contributed by collectors — a starting point
             for the hunt, not proof.
           </p>
