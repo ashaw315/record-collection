@@ -236,3 +236,66 @@ test('an empty collection renders its zero rather than hiding it', async ({ page
   ]);
   expect(colour, 'and takes muted, which is not the ink the heading uses').not.toBe(ink);
 });
+
+/**
+ * **Four absence sentences collapse to one at page scope, and ONLY at zero.**
+ *
+ * §7a's scope predicate: a claim renders at the scope of its subject. On an
+ * empty collection the subject of "no records have a label yet" is not the
+ * label breakdown — it is the collection, and four claims with one subject
+ * belong at that subject's scope. Nothing is withheld, so this is not the
+ * withheld-set rule; the breakdowns are genuinely empty.
+ *
+ * §7a also gives the screen with no action exactly one, in the only state where
+ * "what should I record next" has an unambiguous answer.
+ */
+test('an empty collection says it once, at the scope of the collection', async ({ page }) => {
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Silent-${suffix}` });
+  trackArtist(artist.id as string);
+
+  await page.goto(`/stats?artistId=${artist.id}`);
+
+  await expect(
+    page.getByTestId('stats-empty'),
+    'one sentence at the collection\'s scope',
+  ).toBeVisible();
+
+  /*
+    The four per-section sentences are suppressed, not restyled. Asserted on the
+    sections themselves rather than on their text: a section rendering with an
+    empty body would pass a text assertion and still leave four headings.
+  */
+  for (const section of ['by-genre', 'by-decade', 'by-label', 'by-store']) {
+    await expect(page.getByTestId(section), `${section} is absent at zero`).toHaveCount(0);
+  }
+
+  await expect(
+    page.getByTestId('stats-empty-action'),
+    'and the one action the state has an unambiguous answer for',
+  ).toBeVisible();
+});
+
+/**
+ * **The partial case is untouched, and this is the half that would rot.**
+ *
+ * The per-section sentences were written for a collection that HAS records and
+ * whose breakdown is empty — "records exist and none carry a store" is a
+ * different claim from "there are no records", it is actionable, and its subject
+ * really is that breakdown. A conditional written as "hide when the breakdown is
+ * empty" would pass the test above and silently take this case with it.
+ */
+test('a stocked collection keeps its per-section absence sentences', async ({ page }) => {
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Partial-${suffix}` });
+  trackArtist(artist.id as string);
+  /* A record with no store, no label, no genre and no year: every breakdown
+     empty while the collection is not. */
+  await post(page, '/api/records', { title: `Bare ${suffix}`, artistId: artist.id });
+
+  await page.goto(`/stats?artistId=${artist.id}`);
+
+  await expect(page.getByTestId('stats-empty'), 'the page-scope sentence is for zero only').toHaveCount(0);
+  await expect(page.getByTestId('by-store'), 'the section stays').toBeVisible();
+  await expect(page.getByTestId('by-store')).toContainText('No records record where they were bought.');
+});

@@ -148,7 +148,14 @@ export default async function StatsPage({
           `0` here at the same size, muted rather than absent — a figure that
           covers nothing is still a figure. No test renders that state today.
         */}
-        <p className="mt-3 text-detail">
+        {/*
+          **`display` never shares a baseline with prose (§7a, A71).** A display
+          figure is a figure, not a word in a sentence: baseline-aligning 72px to
+          13px at a 5.5:1 ratio puts the phrase against the digit's lower half,
+          which reads as a caption that lost its figure. The prose sits BENEATH
+          it instead.
+        */}
+        <div className="mt-3">
           <span
             data-testid="total-records"
             /*
@@ -163,14 +170,16 @@ export default async function StatsPage({
               the presence half, on a state no test and no browser had ever
               shown.
             */
-            className={`font-mono text-display tabular-nums${
+            className={`block font-mono text-display leading-none tabular-nums${
               stats.totalRecords === 0 ? ' text-muted-foreground' : ''
             }`}
           >
             {stats.totalRecords}
-          </span>{' '}
-          {stats.totalRecords === 1 ? 'record' : 'records'} in the collection.
-        </p>
+          </span>
+          <p className="text-detail">
+            {stats.totalRecords === 1 ? 'record' : 'records'} in the collection.
+          </p>
+        </div>
 
         {/*
           Each figure is a SENTENCE, not a number with a caption. See the note at
@@ -184,6 +193,48 @@ export default async function StatsPage({
           {spendStatement(stats.totalSpend)}
         </p>
 
+        {/*
+          **At zero the four breakdowns collapse to ONE sentence at page scope
+          (§7a).**
+
+          The scope predicate, not the withheld-set rule: nothing is being
+          withheld here, the breakdowns are genuinely empty. What decides it is
+          whose claim it is. On an empty collection the subject of "no records
+          have a label yet" is not the label breakdown — it is the collection,
+          and four claims sharing one subject belong at that subject's scope.
+
+          **Only at zero.** With records present and a breakdown empty, the
+          subject really is that breakdown — "records exist and none carry a
+          store" is a different claim, it is actionable, and it stays where it
+          is. The existing sentences were written for that case and are correct
+          there.
+
+          §10b's removed genre sections are the same picture from a different
+          cause, and the distinction is worth keeping: there, five bands were
+          structurally near-empty and the fix was removing the device. Here one
+          device is repeated because one fact is being said four times.
+          Collapsing to the cause's scope is the same move.
+
+          **The action is §7a's** — the screen with no action gets exactly one,
+          in the only state where "what should I record next" has an
+          unambiguous answer.
+        */}
+        {stats.totalRecords === 0 ? (
+          <section className="mt-6" data-testid="stats-empty">
+            <p className="text-prose text-muted-foreground">
+              Nothing is recorded yet, so there is nothing to break down by genre, decade,
+              label or store.
+            </p>
+            <Link
+              href="/records/new"
+              data-testid="stats-empty-action"
+              className="mt-3 inline-block text-label underline underline-offset-2"
+            >
+              Add a record
+            </Link>
+          </section>
+        ) : (
+          <>
         <Breakdown
           title="By genre"
           testId="by-genre"
@@ -225,6 +276,8 @@ export default async function StatsPage({
           emptyMessage="No records record where they were bought."
           href={(id) => `/?storeId=${id}`}
         />
+          </>
+        )}
       </main>
     </>
   );

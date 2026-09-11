@@ -922,6 +922,19 @@ count of converted sites is not the measure; 267 sites with two reasoned
 exceptions is a better outcome than every site with two forced calls, and the
 exceptions are in this document so the next reader does not finish the job.
 
+**`display` never shares a baseline with prose (A71, 2026-09-11).** A display
+figure is a figure, not a word in a sentence. Setting 72px inline with 13px
+baseline-aligns them, which puts the phrase against the lower half of the digit
+— it reads as a caption that has lost its figure rather than as a number with a
+label. **The prose sits beneath it**, and the figure gets `leading-none` so the
+gap is the layout's rather than the line box's.
+
+**Written as prevention rather than repair.** `display` had no site at all until
+`/stats`, so this is the first opportunity to state the rule before a second
+screen copies the first. The ratio is what makes it specific: at 5.5:1 the
+mismatch is not a nudge, and any pairing of `display` with any prose role is at
+least 4.8:1. **No role above `headline` shares a line with text.**
+
 **Text meets 4.5:1 against what is behind it.** *The defect:* a specimen arguing contrast arithmetic shipped its own absence marker at **2.66** and its labels at 4.29 on `#100e0d`. The element carrying the meaning was the one below the floor.
 
 ### 7a.1 The settler register (A61a, 2026-09-09)

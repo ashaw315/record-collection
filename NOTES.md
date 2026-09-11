@@ -28280,3 +28280,43 @@ behaviours that must NOT change: role-against-role still resolves last-wins, and
 colour-against-colour is untouched. A fix that stopped merging `text-*`
 altogether would have made every role additive — a different defect, and a
 quieter one.
+
+---
+
+## The empty screen's gap was never the copy — collapsing it made the gap larger
+
+**A measurement that inverted its own hypothesis, which is why it is worth
+keeping.**
+
+`/stats` rendered empty for the first time and read as broken rather than short:
+a `0` at 72px, six absence sentences, four of them the same grammatical shape
+under four headings, and **~40% of a 1000px viewport empty below the fold**. The
+reading was that the repetition caused it.
+
+Design collapsed the four breakdown sentences to one at page scope and added the
+screen's single action. The content block went from ~530px to ~290px — and the
+empty portion went **from ~40% to ~65%**.
+
+> **Removing the copy made the gap bigger, so the copy was never making the
+> gap.** The four sentences were filling space, not causing it. That reframes
+> the finding entirely: this is not a sparse-case problem, it is a TERMINATION
+> problem. `<main>` has no minimum height, the content ends where it ends, and
+> nothing on the screen says it has ended.
+
+**It applies to every short state on that screen, not to the empty one.** The
+stocked `/stats` at 17 records has exactly the same property — more rows simply
+hide it. Any filter, any small collection, any future breakdown that returns few
+rows lands in the same place.
+
+**Recorded rather than fixed, and the spacing was deliberately left alone.** A
+layout that terminates is a different decision from copy that repeats, and
+closing the gap by padding would have buried the measurement that distinguishes
+them. The empty screen is now the clean demonstration of it, which a description
+would not have been.
+
+**The §10b parallel is right about the picture and wrong about the cause**, and
+the two will look identical to whoever reads the screenshots later. There, five
+genre bands were STRUCTURALLY near-empty and the fix was removing the device.
+Here one device was repeated because one fact was being said four times, and the
+fix was collapsing to the cause's scope. Same symptom, same move, different
+reason — and neither of them was the gap.
