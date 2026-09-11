@@ -1515,6 +1515,56 @@ Manual price entry on a record the user owns. Neither real use case needs it: th
 > **So: under line, an edge is an edge at any value, because there is no camera
 > angle for it to disappear at.** That is the whole argument and it is enough.
 
+### Position was never identifying anything (A74, 2026-09-11)
+
+**A62 concluded that the shelf "identifies by position and pull". The pull half
+stands. The position half was never true, and the way it came to be believed is
+the part worth recording.**
+
+**It was concluded at the one collection size where its own mechanism cannot be
+tested.** At seventeen records the whole wall is visible at once, so finding a
+record is an exhaustive scan — you look at all of them. Position contributes
+nothing, because there is nothing for it to narrow. The claim would only begin
+to carry weight at a size where scanning fails, and it was never observed there.
+
+> **Same shape as the wall values judged against a moving target**, and worth
+> stating in those terms rather than as a simple correction: a property was
+> asserted in the one condition under which it could not be falsified. There the
+> instrument could not vary; here the mechanism could not engage. **A conclusion
+> reached where its mechanism is inert is not a weak conclusion, it is an
+> untested one.**
+
+**And position cannot take over later, by construction.** Records sort by their
+**alphabetically-first top-level genre ancestor**, computed in `shelfRecords`'
+`section` CTE and then deliberately dropped — `sectionName` never reaches the
+caller, so nothing on screen carries the key the order was built from. A reader
+cannot predict that a record tagged both `Rock` and `Electronic` files under
+`Electronic`, because the rule is "alphabetically first among top-level
+ancestors" and neither the ancestors nor the alphabetisation are visible.
+
+**Measured, and it is not an edge case: 9 of 17 records resolve to more than one
+top-level ancestor.** `Jeff Beck — Wired` carries Jazz and Rock and files under
+Jazz. `MGMT — Loss Of Life` carries Electronic, Pop and Rock and files under
+Electronic. **More than half the collection sits somewhere the reader cannot
+derive.**
+
+No ordering change fixes this without exposing the key — which would mean
+rendering the section headings §10b removed, for the reason §10b removed them.
+
+**What follows: retrieval was never this surface's job.** `/collection` does
+retrieval — it has search, filters, facet counts and a sort control, all of them
+legible. **The wall is for ENCOUNTER**: seeing what you own, being reminded of a
+record you were not looking for, pulling one out. That is what the adjacency
+ordering actually delivers — punk near punk — and it needs no predictable key,
+because nobody navigates by it.
+
+**Which makes §10's grouping gap sufficient rather than half an answer.** The
+wall states no sections and offers no index, and that was recorded as something
+signposting would eventually have to solve "at three hundred records". It does
+not: at three hundred the wall is still for encounter, and a reader who wants a
+specific record uses the screen built for that. The gap is the correct shape for
+what the surface is for.
+
 ### What survives 5a, and what is discarded
 
 **Most of the week is not lost, and the split is by what each fact is ABOUT.**
@@ -1570,7 +1620,7 @@ been unfalsifiable, because the measurement agreed with the eventual answer.
 >
 > Worse than the fallback collision: **`MGMT` measures 1.016 against `SHELF_PLANE`**, so a record and the board it stands on are the same lightness, and no ground decision repairs it because the colour belongs to the record.
 >
-> **So the shelf identifies by position and pull, not by naming, and the spine's job is presence.** That is what the physical shelf does. All ratios above are computed on stored albedo, not rendered pixels: a lit spine at roughness 0.7 facing away from the key renders *lower* separation than these figures, so these are the optimistic numbers. **Measured 2026-09-04 and re-read at placement: the record count did not move** — still 17, still sixteen covers and one without, the same sixteen values — so these ratios go in as measured rather than dated-and-superseded. **They are evidence for the rule, not an inventory of the collection** — they are properties of sixteen particular covers, and a seventeenth cover changes the set without changing the finding.
+> ~~**So the shelf identifies by position and pull, not by naming, and the spine's job is presence.**~~ **CORRECTED (A74, 2026-09-11) — position was never doing the work; the spine's job is presence and the wall is for ENCOUNTER, not retrieval. See below.** That is what the physical shelf does. All ratios above are computed on stored albedo, not rendered pixels: a lit spine at roughness 0.7 facing away from the key renders *lower* separation than these figures, so these are the optimistic numbers. **Measured 2026-09-04 and re-read at placement: the record count did not move** — still 17, still sixteen covers and one without, the same sixteen values — so these ratios go in as measured rather than dated-and-superseded. **They are evidence for the rule, not an inventory of the collection** — they are properties of sixteen particular covers, and a seventeenth cover changes the set without changing the finding.
 
 **The collection rendered as a shelf of sleeves, browsed by eye rather than read as a table.** You know your records by their spines and covers; a table row is an index of them. This is the default view of `/`, at every width. Only the view *control* is hidden on narrow screens, so nothing becomes unreachable and a `?view=grid` link shared from a desktop still opens as a grid.
 

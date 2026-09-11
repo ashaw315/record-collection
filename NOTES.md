@@ -28368,3 +28368,50 @@ supersample applies to the label TEXTURE, not to geometry.** Geometry renders at
 the canvas pixel ratio, so "1px inset = 3 device px" was three times too
 generous throughout the first pass. A constant borrowed from an adjacent
 subsystem is not a property of the thing being measured.
+
+---
+
+## A conclusion reached where its mechanism is inert is not weak, it is untested
+
+**A62 concluded the shelf "identifies by position and pull" (2026-09-09).
+Corrected by A74 two days later: position was never doing the work.**
+
+At seventeen records the whole wall is visible at once, so finding a record is an
+exhaustive scan — you look at all of them. **Position contributes nothing,
+because there is nothing for it to narrow.** The claim needs a collection large
+enough that scanning fails before it means anything, and it was asserted at the
+one size where it could not be.
+
+> **Same family as the wall values judged against a moving target, and as the
+> resolution finding.** There, an instrument could not vary and so could not
+> disagree. Here, a MECHANISM could not engage and so could not be observed
+> failing. Both produce a conclusion that looks supported and rests on nothing —
+> and the give-away is identical: the supporting condition was never present.
+
+### Why it could not have quietly become true later
+
+Records sort by their **alphabetically-first top-level genre ancestor**, computed
+in `shelfRecords`' `section` CTE and then deliberately dropped — the comment says
+why, so a caller cannot render the headings §10b removed. The consequence is that
+**the key the order is built from never reaches the screen**, so no amount of
+growth makes the order legible.
+
+Measured against the real collection: **9 of 17 records resolve to more than one
+top-level ancestor.** `Jeff Beck — Wired` is Jazz and Rock, files under Jazz.
+`MGMT — Loss Of Life` is Electronic, Pop and Rock, files under Electronic. More
+than half the collection sits somewhere a reader cannot derive — so this is the
+common case rather than an edge.
+
+### What the correction is actually worth
+
+**Not a downgrade — a clarification of what the surface is for.** Retrieval was
+never the wall's job: `/collection` has search, filters, facet counts and a sort
+control, all legible. The wall is for ENCOUNTER — seeing what you own, being
+reminded of something you were not looking for. Adjacency delivers that without
+a predictable key, because nobody navigates by it.
+
+And it resolves an open item rather than adding one. §10's missing grouping was
+recorded as a problem signposting would have to solve "at three hundred
+records"; it is not, because at three hundred the wall is still for encounter.
+**A gap can be the correct shape for what a surface is for**, and calling it a
+gap was itself a retrieval assumption.
