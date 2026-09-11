@@ -28225,3 +28225,58 @@ old scale was wrong rather than where the app was undisciplined.
 The remaining escapes are worth reading the same way when their screens convert:
 `0.7rem` is 11.2px against `label`'s 11, and `0.8rem` is 12.8px against
 `caption`'s 12 — near misses that suggest the same conclusion.
+
+---
+
+## A class can be in the source, absent from the output, and correct at every layer between
+
+**The type-scale conversion's one real regression, and it survived every guard
+the conversion had built.**
+
+`tailwind-merge` resolves conflicts by class-group. Every `text-*` utility it
+does not recognise as a font size falls into the COLOUR group — and §7a's ten
+role tokens are sizes it has never heard of. So anywhere `cn()` merged a role
+with a colour, the role was silently discarded:
+
+    twMerge('text-label text-primary-foreground')  ->  'text-primary-foreground'
+
+Eight call sites had that shape. Measured on `/`'s view chips, which carry
+`text-label` plus a conditional `text-primary-foreground`:
+
+    active chip    16px    the browser default — the role was gone
+    inactive chip  12.8px
+
+**Selecting a control changed its text size by a quarter**, on the collection
+screen, for the length of the conversion.
+
+### Why every existing guard missed it
+
+| layer | what it said | why it was right and still blind |
+|---|---|---|
+| `type-scale.test.ts` | the token resolves to 11px in the compiled CSS | true — the token was never wrong |
+| the conversion diff | `text-label` is at the call site | true — it is in the source |
+| a `toHaveClass` assertion | would have passed | the class IS in the `className` prop |
+| the E2E suite | 437 passed | nothing read a rendered font size |
+
+**Each layer was correct about its own layer.** The token was right, the source
+was right, the markup was right — and the rendered output was wrong, because a
+transformation sat between the last two and no test spanned it.
+
+> **The general form: a guard proves a property of the layer it reads.** Reading
+> the compiled CSS proves the stylesheet is right. Reading the source proves the
+> author wrote the right thing. Neither proves the class SURVIVED the journey
+> between them, and a merge step is exactly a place where things do not survive.
+> When a value passes through a transformation, the assertion has to be on the
+> far side of it — which for anything visual means the rendered element.
+
+This is the fourth instance of the family, and the sharpest: the previous three
+were observers satisfied without their subject, and this is an observer
+correctly reporting on a subject that had already been replaced downstream.
+
+**Fixed once in `cn` rather than at eight call sites**, via
+`extendTailwindMerge`, so the ninth does not arrive with whoever writes it.
+`src/lib/utils.test.ts` pins every role against every colour, and pins the two
+behaviours that must NOT change: role-against-role still resolves last-wins, and
+colour-against-colour is untouched. A fix that stopped merging `text-*`
+altogether would have made every role additive — a different defect, and a
+quieter one.
