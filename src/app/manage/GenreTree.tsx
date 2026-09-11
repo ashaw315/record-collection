@@ -85,13 +85,13 @@ export function GenreTree({
       </div>
 
       {createError !== undefined && (
-        <p role="alert" className="px-3 py-2 text-sm text-destructive">
+        <p role="alert" className="px-3 py-2 text-prose text-destructive">
           {createError}
         </p>
       )}
 
       {nodes.length === 0 ? (
-        <p className="px-3 py-8 text-center text-sm text-muted-foreground">No genres yet.</p>
+        <p className="px-3 py-8 text-center text-prose text-muted-foreground">No genres yet.</p>
       ) : (
         <ul className="list-none">
           {nodes.map((node) => {
@@ -111,7 +111,7 @@ export function GenreTree({
                   style={{ paddingLeft: `${Math.min(node.depth, 6) * 1.1 + 0.75}rem` }}
                 >
                   {node.depth > 0 && (
-                    <span aria-hidden="true" className="font-mono text-xs text-muted-foreground">
+                    <span aria-hidden="true" className="font-mono text-meta text-muted-foreground">
                       └
                     </span>
                   )}
@@ -131,7 +131,7 @@ export function GenreTree({
                       className="h-8 max-w-[14rem]"
                     />
                   ) : (
-                    <span className="min-w-0 flex-1 truncate text-sm">{node.name}</span>
+                    <span className="min-w-0 flex-1 truncate text-detail">{node.name}</span>
                   )}
 
                   {/*
@@ -143,7 +143,7 @@ export function GenreTree({
                     is normally unreachable from here — it remains the
                     guarantee for the concurrent case.
                   */}
-                  <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <label className="flex items-center gap-1.5 text-label text-muted-foreground">
                     <span className="sr-only">Move {node.name} under</span>
                     <span aria-hidden="true">Under</span>
                     <select
@@ -152,7 +152,7 @@ export function GenreTree({
                       onChange={(event) =>
                         onMove(node.id, event.target.value === '' ? null : event.target.value)
                       }
-                      className="h-9 min-w-[8rem] rounded-xs border border-input bg-background px-2 text-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                      className="h-9 min-w-[8rem] rounded-xs border border-input bg-background px-2 text-label focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
                     >
                       <option value="">— top level —</option>
                       {parents.map((parent) => (
@@ -190,7 +190,7 @@ export function GenreTree({
                 </div>
 
                 {rowError?.id === node.id && (
-                  <p role="alert" className="px-3 pb-2 text-xs text-destructive">
+                  <p role="alert" className="px-3 pb-2 text-meta text-destructive">
                     {rowError.message}
                   </p>
                 )}

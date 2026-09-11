@@ -28190,3 +28190,38 @@ every ordinary edit-then-test cycle, which is the guard-that-cries-wolf problem
 this file already has an entry about. **The honest position is that these three
 tests answer a question about the last build, and that the build must be the
 last thing before the run.**
+
+---
+
+## The scale was derived from what the app already reached for, not imposed on it
+
+**The strongest available evidence that §7a's scale fits this app, and it came
+from the conversion rather than from the design pass.**
+
+`/manage`'s `ResourceTable` carried two ARBITRARY sizes — Tailwind escapes
+rather than scale classes:
+
+    text-[0.8125rem]   a mono table value      ->  text-detail   (13px)
+    text-[0.625rem]    a badge beside a name   ->  text-meta     (10px)
+
+`0.8125rem` **is exactly 13px**. `0.625rem` **is exactly 10px**. Both mapped to
+the role that already held their precise pixel value, with no rounding and no
+judgement — the role name was the only thing missing.
+
+> **The sizes were right and nothing named them.** That is A61's own defect
+> resolving itself: a convention held in N places with nothing owning it is an
+> enumeration, and the fix is a name rather than a number. The design pass
+> reached 13 and 10 independently, and the app had already reached the same two
+> values by hand where it needed them.
+
+**Why this is evidence about the scale rather than about the conversion.** A
+scale imposed on an app produces friction at conversion — sites that fit no role,
+or roles that fit no site. This produced the opposite: the two places that
+escaped the old scale escaped it toward the new one. Eleven arbitrary sizes
+existed across the app at the census (`text-[11px]` ×4, `text-[0.7rem]` ×3, plus
+`9px`, `0.8rem`, `0.8125rem`, `0.625rem`), and they are a record of where the
+old scale was wrong rather than where the app was undisciplined.
+
+The remaining escapes are worth reading the same way when their screens convert:
+`0.7rem` is 11.2px against `label`'s 11, and `0.8rem` is 12.8px against
+`caption`'s 12 — near misses that suggest the same conclusion.

@@ -284,17 +284,17 @@ function ResourcePanel({ resource, rows }: { resource: ResourceSpec; rows: Row[]
                 data-testid="propose-parents"
                 disabled={proposing}
                 onClick={() => void proposeParents()}
-                className="text-sm underline underline-offset-2 disabled:text-muted-foreground"
+                className="text-label underline underline-offset-2 disabled:text-muted-foreground"
               >
                 {proposing ? 'Thinking…' : 'Suggest a hierarchy'}
               </button>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 text-meta text-muted-foreground">
                 Sends your genre names and a few records carrying each. Uses one of ten hourly
                 requests.
               </p>
 
               {proposalError !== undefined && (
-                <p role="status" data-testid="proposal-error" className="mt-2 text-sm text-destructive">
+                <p role="status" data-testid="proposal-error" className="mt-2 text-prose text-destructive">
                   {proposalError}
                 </p>
               )}
@@ -306,7 +306,7 @@ function ResourcePanel({ resource, rows }: { resource: ResourceSpec; rows: Row[]
                 nobody looked.
               */}
               {proposal !== null && proposal.pairings.length === 0 && (
-                <p data-testid="proposal-empty" className="mt-2 text-sm">
+                <p data-testid="proposal-empty" className="mt-2 text-prose">
                   No hierarchy suggested — every genre already sits where it can.
                 </p>
               )}
@@ -389,8 +389,8 @@ export function ManageClient({
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6">
       <header className="mb-5">
-        <h1 className="font-heading text-xl font-semibold tracking-tight">Manage</h1>
-        <p className="mt-0.5 text-sm text-muted-foreground">
+        <h1 className="font-heading text-headline font-semibold tracking-tight">Manage</h1>
+        <p className="mt-0.5 text-lede text-muted-foreground">
           Reference data used across the collection.
         </p>
       </header>
@@ -407,7 +407,7 @@ export function ManageClient({
                   aria-current={entry.key === activeKey ? 'page' : undefined}
                   onClick={() => setActiveKey(entry.key)}
                   className={cn(
-                    'w-full rounded-xs px-3 py-2 text-left text-sm whitespace-nowrap transition-colors',
+                    'w-full rounded-xs px-3 py-2 text-left text-label whitespace-nowrap transition-colors',
                     entry.key === activeKey
                       ? 'bg-primary text-primary-foreground'
                       : 'hover:bg-accent',
@@ -447,7 +447,7 @@ function ArtistCountSummary({ counts }: { counts: ArtistCounts }) {
   if (counts.hidden === 0 && !counts.showingAll) return null;
 
   return (
-    <p data-testid="artist-count-summary" className="mb-2 text-xs text-muted-foreground">
+    <p data-testid="artist-count-summary" className="mb-2 text-meta text-muted-foreground">
       {counts.showingAll ? (
         <>
           Showing all {counts.shown} artists.{' '}

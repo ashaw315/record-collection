@@ -77,7 +77,7 @@ export function ResourceTable({
       {/* Horizontal scroll rather than hiding columns: on a phone the catalog
           number and year are exactly what you came to check. */}
       <div className="-mx-4 overflow-x-auto sm:mx-0">
-        <table className="w-full min-w-[34rem] border-collapse text-sm">
+        <table className="w-full min-w-[34rem] border-collapse text-detail">
           <thead>
             <tr className="border-b border-border text-left">
               {fields.map((field) => (
@@ -85,7 +85,7 @@ export function ResourceTable({
                   key={field.name}
                   scope="col"
                   style={field.width === undefined ? undefined : { width: field.width }}
-                  className="px-3 py-2 text-xs font-medium tracking-wide text-muted-foreground uppercase"
+                  className="px-3 py-2 text-label font-medium tracking-wide text-muted-foreground uppercase"
                 >
                   {field.label}
                 </th>
@@ -138,7 +138,7 @@ export function ResourceTable({
             {createError !== undefined && (
               <tr>
                 <td colSpan={fields.length + 1} className="px-3 py-1.5">
-                  <p role="alert" className="text-sm text-destructive">
+                  <p role="alert" className="text-prose text-destructive">
                     {createError}
                   </p>
                 </td>
@@ -149,7 +149,7 @@ export function ResourceTable({
               <tr>
                 <td
                   colSpan={fields.length + 1}
-                  className="px-3 py-8 text-center text-sm text-muted-foreground"
+                  className="px-3 py-8 text-center text-prose text-muted-foreground"
                 >
                   No {resource.label.toLowerCase()} yet.
                 </td>
@@ -168,7 +168,7 @@ export function ResourceTable({
                       key={field.name}
                       className={cn(
                         'px-3 py-1.5 align-middle',
-                        field.mono === true && 'font-mono text-[0.8125rem] tabular-nums',
+                        field.mono === true && 'font-mono text-detail tabular-nums',
                       )}
                     >
                       {isEditing && field.kind !== 'boolean' ? (
@@ -191,7 +191,7 @@ export function ResourceTable({
                         <span className={displayValue(row, field) === '' ? 'text-muted-foreground' : ''}>
                           {displayValue(row, field) === '' ? '—' : displayValue(row, field)}
                           {field.name === 'name' && isSeeded && (
-                            <span className="ml-2 rounded-xs border border-border px-1 py-0.5 text-[0.625rem] tracking-wide text-muted-foreground uppercase">
+                            <span className="ml-2 rounded-xs border border-border px-1 py-0.5 text-meta tracking-wide text-muted-foreground uppercase">
                               Built in
                             </span>
                           )}
@@ -289,7 +289,7 @@ export function ResourceTable({
                     </div>
 
                     {rowError?.id === row.id && (
-                      <p role="alert" className="mt-1 text-right text-xs text-destructive">
+                      <p role="alert" className="mt-1 text-right text-meta text-destructive">
                         {rowError.message}
                       </p>
                     )}

@@ -146,7 +146,7 @@ export function LineupAction({ artistId, artistName }: { artistId: string; artis
       </Button>
 
       {walking && (
-        <p data-testid="lineup-progress" role="status" className="text-xs text-muted-foreground">
+        <p data-testid="lineup-progress" role="status" className="text-meta text-muted-foreground">
           {/*
             A COUNT, not a spinner. The walk is a request per member at one per
             second, so a screen that only says "working" is indistinguishable
@@ -159,7 +159,7 @@ export function LineupAction({ artistId, artistName }: { artistId: string; artis
       )}
 
       {result !== null && (
-        <p data-testid="lineup-result" role="status" className="text-xs text-muted-foreground">
+        <p data-testid="lineup-result" role="status" className="text-meta text-muted-foreground">
           {result}
         </p>
       )}
@@ -167,7 +167,7 @@ export function LineupAction({ artistId, artistName }: { artistId: string; artis
       {candidates !== null && <CandidatePicker candidates={candidates} onPick={walk} />}
 
       {error !== undefined && (
-        <p role="alert" className="text-xs text-destructive">
+        <p role="alert" className="text-meta text-destructive">
           {error}
         </p>
       )}
@@ -194,7 +194,7 @@ function CandidatePicker({
 }) {
   if (candidates.length === 0) {
     return (
-      <p data-testid="lineup-picker" className="text-xs text-muted-foreground">
+      <p data-testid="lineup-picker" className="text-meta text-muted-foreground">
         MusicBrainz has no artist by that name.
       </p>
     );
@@ -207,7 +207,7 @@ function CandidatePicker({
       aria-label="Choose the right artist"
       className="mt-1 w-72 rounded-xs border border-border p-2 text-left"
     >
-      <p className="text-xs text-muted-foreground">
+      <p className="text-meta text-muted-foreground">
         More than one artist has this name. Which one is it?
       </p>
 
@@ -218,7 +218,7 @@ function CandidatePicker({
               type="button"
               data-testid="lineup-candidate"
               onClick={() => onPick(candidate.mbid)}
-              className="w-full rounded-xs border border-border p-2 text-left text-xs hover:bg-accent"
+              className="w-full rounded-xs border border-border p-2 text-left text-label hover:bg-accent"
             >
               <span className="block font-medium">
                 {candidate.disambiguation ?? 'no description'}

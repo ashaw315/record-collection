@@ -68,14 +68,14 @@ export function ParentProposal({
         the user's and the app is proposing changes to it, so it says whose
         suggestion this is before any of it is read.
       */}
-      <p className="text-xs text-muted-foreground">
+      <p className="text-meta text-muted-foreground">
         Suggested by Claude from your genre names and the records carrying them. Nothing changes
         until you accept a pairing.
       </p>
 
       {groups.map((group) => (
         <div key={group.parent} className="mt-3">
-          <h4 className="text-sm font-medium">{group.parent}</h4>
+          <h4 className="text-detail font-medium">{group.parent}</h4>
 
           <ul className="mt-1 space-y-1">
             {group.children.map((child) => {
@@ -85,7 +85,7 @@ export function ParentProposal({
                 <li
                   key={child.genreId}
                   data-testid={`pairing-${child.genreId}`}
-                  className="flex items-baseline gap-2 pl-3 text-sm"
+                  className="flex items-baseline gap-2 pl-3 text-detail"
                 >
                   <span className={state === 'rejected' ? 'text-muted-foreground line-through' : ''}>
                     {child.genre}
@@ -99,7 +99,7 @@ export function ParentProposal({
                     and it is the EXAMPLE that reveals it, which is why the line
                     carries one rather than a number alone.
                   */}
-                  <span data-testid={`evidence-${child.genreId}`} className="text-xs text-muted-foreground">
+                  <span data-testid={`evidence-${child.genreId}`} className="text-meta text-muted-foreground">
                     ({evidenceLine(child.evidence)})
                   </span>
 
@@ -110,7 +110,7 @@ export function ParentProposal({
                         data-testid={`accept-${child.genreId}`}
                         disabled={busy === child.genreId}
                         onClick={() => void settle(child, 'accepted')}
-                        className="text-xs underline underline-offset-2 disabled:text-muted-foreground"
+                        className="text-label underline underline-offset-2 disabled:text-muted-foreground"
                       >
                         Accept
                       </button>
@@ -119,13 +119,13 @@ export function ParentProposal({
                         data-testid={`reject-${child.genreId}`}
                         disabled={busy === child.genreId}
                         onClick={() => void settle(child, 'rejected')}
-                        className="text-xs text-muted-foreground underline underline-offset-2"
+                        className="text-label text-muted-foreground underline underline-offset-2"
                       >
                         Reject
                       </button>
                     </span>
                   ) : (
-                    <span className="ml-auto text-xs text-muted-foreground">
+                    <span className="ml-auto text-meta text-muted-foreground">
                       {state === 'accepted' ? 'Accepted' : 'Rejected — will not be suggested again'}
                     </span>
                   )}
@@ -150,7 +150,7 @@ export function ParentProposal({
                   if (settled[child.genreId] === undefined) await settle(child, 'accepted');
                 }
               }}
-              className="mt-1 ml-3 text-xs underline underline-offset-2"
+              className="mt-1 ml-3 text-label underline underline-offset-2"
             >
               Accept all under {group.parent}
             </button>
@@ -166,11 +166,11 @@ export function ParentProposal({
       */}
       {noParentFits.length > 0 && (
         <div data-testid="no-parent-fits" className="mt-4 border-t border-dashed border-border pt-2">
-          <h4 className="text-xs font-medium text-muted-foreground">
+          <h4 className="text-label font-medium text-muted-foreground">
             No existing genre fits as a parent for these
           </h4>
-          <p className="mt-1 text-sm">{noParentFits.join(', ')}</p>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-1 text-detail">{noParentFits.join(', ')}</p>
+          <p className="mt-1 text-meta text-muted-foreground">
             They stay at the top level. Add a genre yourself if one is missing.
           </p>
         </div>

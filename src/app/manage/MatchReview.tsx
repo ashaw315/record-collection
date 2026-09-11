@@ -70,10 +70,10 @@ export function MatchReview({ candidates }: { candidates: OpenMatchCandidate[] }
 
   return (
     <section data-testid="match-review" className="mb-6 rounded-xs border border-border p-3">
-      <h2 className="font-heading text-sm font-semibold tracking-tight">
+      <h2 className="font-heading text-title font-semibold tracking-tight">
         Possible duplicate artists
       </h2>
-      <p className="mt-1 text-xs text-muted-foreground">
+      <p className="mt-1 text-meta text-muted-foreground">
         An import found {candidates.length === 1 ? 'an artist' : 'artists'} sharing a name with
         {candidates.length === 1 ? ' one' : ' ones'} you already had. Two bands genuinely can
         share a name, so nothing was merged.
@@ -84,7 +84,7 @@ export function MatchReview({ candidates }: { candidates: OpenMatchCandidate[] }
           <li
             key={candidate.id}
             data-testid="match-candidate"
-            className="rounded-xs border border-border p-3 text-sm"
+            className="rounded-xs border border-border p-3 text-detail"
           >
             <p className="font-medium">{candidate.artist.name}</p>
 
@@ -121,7 +121,7 @@ export function MatchReview({ candidates }: { candidates: OpenMatchCandidate[] }
                 data-testid="merge-confirm"
                 role="group"
                 aria-label="Confirm merge"
-                className="mt-3 rounded-xs border border-destructive/40 p-3 text-xs"
+                className="mt-3 rounded-xs border border-destructive/40 p-3 text-meta"
               >
                 {/*
                   Names what MOVES and what is DESTROYED, the way the delete
@@ -154,7 +154,7 @@ export function MatchReview({ candidates }: { candidates: OpenMatchCandidate[] }
       </ul>
 
       {error !== undefined && (
-        <p role="alert" className="mt-2 text-xs text-destructive">
+        <p role="alert" className="mt-2 text-meta text-destructive">
           {error}
         </p>
       )}
@@ -176,7 +176,7 @@ function ArtistFacts({
   ].filter((part): part is string => part !== null && part !== '');
 
   return (
-    <div className="rounded-xs bg-muted/40 p-2 text-xs">
+    <div className="rounded-xs bg-muted/40 p-2 text-meta">
       <p className="tracking-wide text-muted-foreground uppercase">{label}</p>
 
       {/*
