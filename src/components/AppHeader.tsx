@@ -39,6 +39,18 @@ export function AppHeader() {
   return (
     <header className="border-b border-border">
       <div className="mx-auto flex w-full max-w-6xl items-baseline gap-6 px-4 py-3">
+        {/*
+          **`text-sm` is NOT converted to a role, and the gap is deliberate
+          (§7a, A70).** Every role in the scale answers *what is this text doing
+          on this screen*; chrome is the thing that is not on a screen — it is
+          around all of them. A wordmark is the app's name and the links below
+          navigate BETWEEN screens rather than acting within one, so neither
+          `title` nor `label` describes them.
+
+          Forcing a role here would make twelve screens inherit one chosen
+          because the list was the list. A chrome role can be added later if it
+          earns one.
+        */}
         {/* The wordmark is not a link to itself when already home; it stays a
             link regardless so its position never shifts between screens. */}
         <Link

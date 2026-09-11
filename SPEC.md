@@ -894,6 +894,34 @@ subject the figure covers. `totalRecords` is `display` and ink; the estimated
 value is muted, and takes `prose` rather than `display` because it is a sentence
 with a figure in it rather than the subject's own count.
 
+**What the scale does NOT cover, stated as a gap rather than discovered as one
+(A70, 2026-09-10).** The conversion reached every built screen and stopped at
+two shared components. Both were left unconverted deliberately, and the reason
+is the same in each case: the rules produce an answer, and the answer is one
+nobody would choose.
+
+**Persistent chrome has no role, and should not borrow one.** Every role in the
+scale answers *what is this text doing on this screen*. `AppHeader` is the thing
+that is not on a screen — it is around all of them. A wordmark is the app's
+name; its links navigate BETWEEN screens rather than acting within one. Neither
+`title` nor `label` describes that, and forcing one would make twelve screens
+inherit a role chosen because the list was the list. A chrome role can be added
+if it earns one.
+
+**A control's size is not a claim about its text.** §7a sizes text by what the
+text is; a button's size comes from its hit target and its variant — `xs`, `sm`,
+default — which is a different system expressed in the same units. Three button
+sizes do not collapse into one role without inventing a button-size mapping this
+section does not state. The rules do answer — a button is a control, so `label`
+— and that answer is 14px to 11px on every submit and action across sixteen
+consumers. **A rule producing an answer nobody would choose is evidence the rule
+does not reach the case**, not evidence the answer is right.
+
+**Two components correctly left alone is a result rather than a shortfall.** The
+count of converted sites is not the measure; 267 sites with two reasoned
+exceptions is a better outcome than every site with two forced calls, and the
+exceptions are in this document so the next reader does not finish the job.
+
 **Text meets 4.5:1 against what is behind it.** *The defect:* a specimen arguing contrast arithmetic shipped its own absence marker at **2.66** and its labels at 4.29 on `#100e0d`. The element carrying the meaning was the one below the floor.
 
 ### 7a.1 The settler register (A61a, 2026-09-09)

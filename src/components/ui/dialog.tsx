@@ -50,6 +50,13 @@ function DialogContent({
   return (
     <DialogPortal>
       <DialogOverlay />
+      {/*
+        `text-sm` here is an inherited CONTAINER DEFAULT rather than a role, so
+        it is left as it is: every child a dialog renders today — DialogTitle,
+        DialogDescription, Button — sets its own size, so this reaches nothing.
+        Converting it would name a role for text that does not exist. If a
+        dialog ever renders unclassed prose, that element takes a role, not this.
+      */}
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
@@ -127,7 +134,7 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
         // the space here fixes every dialog rather than each caller — seen with
         // a full record title, which is the normal case for a delete
         // confirmation naming what it is about to remove.
-        "font-heading pr-6 text-base leading-snug font-medium",
+        "font-heading pr-6 text-title leading-snug font-medium",
         className
       )}
       {...props}
@@ -143,7 +150,7 @@ function DialogDescription({
     <DialogPrimitive.Description
       data-slot="dialog-description"
       className={cn(
-        "text-sm text-muted-foreground *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground",
+        "text-prose text-muted-foreground *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground",
         className
       )}
       {...props}
