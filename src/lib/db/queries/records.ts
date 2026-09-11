@@ -663,14 +663,31 @@ export async function deleteRecord(id: string): Promise<RecordDeleteOutcome> {
  * removing either alone fails no test, removing BOTH fails the double-count
  * test. NOTES.md case 3 — do not delete one because it "looks unreachable".
  */
-export async function genreRollup(): Promise<
-  Array<{ id: string; name: string; count: number }>
-> {
+export async function genreRollup(
+  filters: RecordFilters = {},
+): Promise<Array<{ id: string; name: string; count: number }>> {
   const db = getDb();
+
+  /**
+   * **The filter constrains the CTE's SEED, not its output.**
+   *
+   * Appending a WHERE to the final SELECT would filter the genres rather than
+   * the records, so a scoped call would still roll up every record in the
+   * collection and only hide some rows of the answer. The seed is where
+   * `record_genres` meets `records`, so that is where the scope belongs.
+   *
+   * `buildWhere` is reused rather than restated, and composes into raw SQL the
+   * way `shelf.ts` does — Drizzle renders `"records"."artist_id"`, which is why
+   * the join names the table `records` rather than aliasing it.
+   */
+  const where = buildWhere(filters);
 
   const result = await db.execute<{ id: string; name: string; count: number }>(sql`
     WITH RECURSIVE ancestry AS (
-      SELECT rg.record_id, rg.genre_id FROM ${recordGenres} rg
+      SELECT rg.record_id, rg.genre_id
+        FROM ${recordGenres} rg
+        JOIN ${records} records ON records.id = rg.record_id
+       ${where === undefined ? sql`` : sql`WHERE ${where}`}
       UNION
       SELECT a.record_id, g.parent_genre_id
         FROM ancestry a
@@ -773,8 +790,18 @@ export type RecordStats = {
  * NUMERIC(10,2) in JavaScript would route it through a float and lose cents on
  * a large collection.
  */
-export async function recordStats(): Promise<RecordStats> {
+export async function recordStats(filters: RecordFilters = {}): Promise<RecordStats> {
   const db = getDb();
+
+  /**
+   * **Scoped the same way `/plane` scopes the wall**, through the same
+   * `RecordFilters` the collection views use rather than a stats-only path.
+   *
+   * Unfiltered by default, so `recordFacets` and every existing caller are
+   * untouched. The screen passes `?artistId=` and nothing links to it — see the
+   * note on `StatsPage`.
+   */
+  const scope = buildWhere(filters);
 
   const latestOfType = (type: 'used' | 'new') => sql`(
     SELECT ph.price FROM ${priceHistory} ph
@@ -793,7 +820,8 @@ export async function recordStats(): Promise<RecordStats> {
         COALESCE(${latestOfType('used')}, ${latestOfType('new')}, ${records.purchasePrice}, 0)
       ), 0)::numeric(12,2)::text`,
     })
-    .from(records);
+    .from(records)
+    .where(scope);
 
   /**
    * §7.1 applies here too: a record tagged Oi! counts towards UK82 and Punk.
@@ -816,7 +844,7 @@ export async function recordStats(): Promise<RecordStats> {
    * because they guard different things: UNION also bounds the walk if a cycle
    * ever reaches the data, the same reasoning as wouldCreateCycle in ./genres.
    */
-  const byGenre = await genreRollup();
+  const byGenre = await genreRollup(filters);
 
   const byDecade = await db
     .select({
@@ -825,7 +853,7 @@ export async function recordStats(): Promise<RecordStats> {
     })
     .from(records)
     // A null release year has no decade; bucketing it would invent a category.
-    .where(sql`${records.releaseYear} IS NOT NULL`)
+    .where(and(sql`${records.releaseYear} IS NOT NULL`, scope))
     .groupBy(sql`(${records.releaseYear} / 10) * 10`)
     .orderBy(sql`(${records.releaseYear} / 10) * 10`);
 
@@ -838,6 +866,7 @@ export async function recordStats(): Promise<RecordStats> {
     })
     .from(records)
     .innerJoin(recordStores, eq(recordStores.id, records.storeId))
+    .where(scope)
     .groupBy(recordStores.id, recordStores.name)
     .orderBy(desc(sql`count(*)`), recordStores.name);
 
@@ -857,6 +886,7 @@ export async function recordStats(): Promise<RecordStats> {
     })
     .from(records)
     .innerJoin(labels, eq(labels.id, records.labelId))
+    .where(scope)
     .groupBy(labels.id, labels.name)
     .orderBy(desc(sql`count(*)`), labels.name);
 

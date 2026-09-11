@@ -91,8 +91,36 @@ function Breakdown({
   );
 }
 
-export default async function StatsPage() {
-  const stats = await recordStats();
+export default async function StatsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  /**
+   * **`artistId` narrows the stats, and it is TEST-FACING rather than a
+   * feature.**
+   *
+   * Nothing links to it: the nav points at `/stats` bare, and the breakdown rows
+   * link OUTWARD to `/?genreId=` rather than inward. A user reaching this would
+   * have to construct the URL.
+   *
+   * It exists because the screen could not otherwise be rendered EMPTY. `/stats`
+   * showed the whole collection, so "no records" meant an empty database — and
+   * `e2e/global-setup.ts` says why that is unavailable: specs run in parallel
+   * across two projects against one database, so a mid-run truncate deletes
+   * another spec's fixtures. An artist with no records is an empty collection of
+   * one, and the E2E test then runs in parallel like everything else.
+   *
+   * `/plane` carries the same parameter for the same class of reason, through
+   * the same `RecordFilters` the collection views use rather than a stats-only
+   * path. **Latently it is meaningful** — "stats for one artist" is a coherent
+   * question — but making it a feature needs a nav path and a spec line, so it
+   * is noted here as a decision rather than left as an oversight.
+   */
+  const params = await searchParams;
+  const artistId = typeof params.artistId === 'string' ? params.artistId : undefined;
+
+  const stats = await recordStats(artistId === undefined ? {} : { artistId });
 
   return (
     <>
@@ -121,7 +149,24 @@ export default async function StatsPage() {
           covers nothing is still a figure. No test renders that state today.
         */}
         <p className="mt-3 text-detail">
-          <span data-testid="total-records" className="font-mono text-display tabular-nums">
+          <span
+            data-testid="total-records"
+            /*
+              **A zero keeps display and takes muted** (§7a). Presence sets the
+              weight of the mark from how much of its subject the figure covers,
+              and a zero covers nothing — so it stays the same size, because a
+              figure that covers nothing is still a figure, and it goes muted,
+              because it is not a count of anything.
+
+              This was missing until an empty collection was rendered for the
+              first time: the conversion applied `display` and nothing applied
+              the presence half, on a state no test and no browser had ever
+              shown.
+            */
+            className={`font-mono text-display tabular-nums${
+              stats.totalRecords === 0 ? ' text-muted-foreground' : ''
+            }`}
+          >
             {stats.totalRecords}
           </span>{' '}
           {stats.totalRecords === 1 ? 'record' : 'records'} in the collection.

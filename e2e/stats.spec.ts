@@ -173,3 +173,66 @@ test('a breakdown row opens the collection filtered by it', async ({ page }) => 
     timeout: 15_000,
   });
 });
+
+/**
+ * **The empty collection, which nothing had ever rendered** — not a test, not a
+ * browser. §7a: *a zero keeps display and takes muted — a figure that covers
+ * nothing is still a figure.*
+ *
+ * **Scoped with `?artistId=` rather than emptied globally.** `/stats` showed the
+ * whole collection and took no parameters, so "empty" would have meant an empty
+ * DATABASE — and `e2e/global-setup.ts` says why that is not available: specs run
+ * in parallel across two projects against one database, so a mid-run truncate
+ * deletes another spec's fixtures. That is the defect NOTES records as 52 bogus
+ * E2E failures. `/plane` already solved this, and this follows its shape rather
+ * than inventing one: an artist with no records is an empty collection of one.
+ *
+ * **Asserted on COMPUTED STYLE, not on class names.** A class assertion passes
+ * when the class stops generating a rule — `border-l-dashed` shipped exactly
+ * that way and rendered the state at 1.29:1. The browser is here, so the
+ * rendered pixel size and colour are readable, and they are what the reader
+ * sees.
+ */
+test('an empty collection renders its zero rather than hiding it', async ({ page }) => {
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Empty-${suffix}` });
+  trackArtist(artist.id as string);
+
+  /*
+    **A SECOND artist with a record, so the scope is doing work.**
+
+    Without this the assertions below pass on an empty database for the wrong
+    reason — the collection is globally empty, `0` renders whatever the filter
+    does, and the test would pass against a `/stats` that ignores `artistId`
+    entirely. Measured: it did exactly that before the parameter existed.
+
+    With a record present, `0` is only reachable if the scope is applied.
+  */
+  const other = await post(page, '/api/artists', { name: `Stocked-${suffix}` });
+  trackArtist(other.id as string);
+  await post(page, '/api/records', { title: `Stocked ${suffix}`, artistId: other.id });
+
+  await page.goto(`/stats?artistId=${artist.id}`);
+
+  const count = page.getByTestId('total-records');
+  await expect(count, 'the zero is rendered, not omitted').toHaveText('0');
+
+  /*
+    §7a's `display` is 72px. Read from the element rather than from its class:
+    the claim is about what the reader sees, and a class that generates no rule
+    leaves the text at its inherited size while the markup still looks right.
+  */
+  const size = await count.evaluate((el) => getComputedStyle(el).fontSize);
+  expect(size, 'a zero keeps display').toBe('72px');
+
+  /*
+    Muted is a COLOUR, so it is compared against the two colours it could be —
+    asserting "not the ink colour" would pass for any of a thousand wrongs,
+    including transparent.
+  */
+  const [colour, ink] = await Promise.all([
+    count.evaluate((el) => getComputedStyle(el).color),
+    page.getByRole('heading', { level: 1 }).evaluate((el) => getComputedStyle(el).color),
+  ]);
+  expect(colour, 'and takes muted, which is not the ink the heading uses').not.toBe(ink);
+});
