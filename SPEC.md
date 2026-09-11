@@ -1287,7 +1287,47 @@ Responsive throughout — **desktop and mobile are equal priorities**, not deskt
 | Stats | `/stats` | Total records, total spend, estimated value, breakdown charts by genre/decade/store/label. **Genre is a tree, not a bar chart** — see the note below the table (A66). |
 | Manage | `/manage` | CRUD for genres (incl. hierarchy editor), labels, formats, tags, artists, influences. **Not pressings** — see below. |
 
-**`/stats`' genre series renders as a tree of pairs (A66, 2026-09-09).** Genre counts render as a pair, direct and subtree, both, always, labelled. *Four examples, from the tree as it stood on 2026-09-04, chosen because between them they cover every case the pair distinguishes — they specimen the format and are not a current count:* `Rock 10 · 10` (a parent whose branch adds nothing to its own total), `Jazz 3 · 4` (a parent holding less than its branch), `Punk 0 · 1` (a parent holding nothing of its own but something below it), `Black Metal 0 · 0` (a genre holding nothing anywhere). **The bar chart is retired for this series rather than restyled:** a bar is one length and this is two numbers, so no chart style could be honest about it. `/stats` hosts the genre tree, not a genre chart — a distinct component, not the flat breakdown configured twice.
+**`/stats`' genre series renders as a tree of pairs (A66, 2026-09-09).** *(Amended
+2026-09-11, when the component was built.)* Genre counts render as a pair, direct
+and subtree — **wherever a branch exists to walk.** A row with no children renders
+one number, at any depth: a second figure there would assert a walk that never
+happened.
+
+*The specimens, split by what each demonstrates rather than listed as four of a
+kind. From the tree as it stood on 2026-09-04; they specimen the format and are
+not a current count.*
+
+**Cases the PAIR distinguishes** — all three have branches, so all three render
+two numbers, and the second number is what tells them apart:
+
+  - `Jazz 3 · 4` — a parent holding less than its branch. **The load-bearing
+    one**: it proves the second number is not redundant, and it is top-level, so
+    it does that in the collapsed view rather than two clicks down.
+  - `Rock 10 · 10` — a parent whose branch adds nothing to its own total. The
+    second number is a **receipt**: the branch was walked and added nothing.
+  - `Punk 0 · 1` — a parent holding nothing of its own but something below it.
+
+**A case the ABSENCE of the pair distinguishes:**
+
+  - `Dub 1` — no branch, so no second figure. `Rock 10 · 10` and `Dub 1` are the
+    whole argument for the format and both are visible by default: the receipt
+    and the collapse, side by side.
+
+**A case with no instance in the data**, named rather than drawn: a parent WITH
+children whose every descendant is empty, rendering `0 · 0`. The code handles it
+because it falls out of the rule, and `genre-pairs.test.ts` constructs the shape
+— but no such genre exists today, so nothing on screen demonstrates it. Reachable
+and unobserved, which is not the same as unreachable.
+
+> **`Black Metal 0 · 0` was specimened here until 2026-09-11 and was not a
+> mistake.** The childless rule below read *"top-level genres with no children
+> collapse to one number"*, scoped to the top because that is where the collapse
+> argument sits — and `Black Metal` is childless at DEPTH 2, so the rule as
+> written never reached it. Two correct readings a week apart, disagreeing on one
+> row, and the disagreement only surfaced when the tree was built and the row had
+> to render something. The rule is now scoped to any depth and `Black Metal`
+> renders `0`. Recorded because the next reader will otherwise see a
+> contradiction and assume one side was sloppy. **The bar chart is retired for this series rather than restyled:** a bar is one length and this is two numbers, so no chart style could be honest about it. `/stats` hosts the genre tree, not a genre chart — a distinct component, not the flat breakdown configured twice.
 
 *The defect, and it is a reasoning error rather than a missing feature:* the section previously stated *"direct counts sum to the collection; subtree counts do not"*, and kept it as the honest claim the bar was pretending to make. **It is false, and no count is needed to see why:** a record carries several genres, so the direct counts sum to the number of **genre tags** and exceed the number of records. The honest sentence names the mechanism instead of the arithmetic: *a record is counted under every genre it carries, and again under each of their parents.*
 
@@ -1295,7 +1335,7 @@ Responsive throughout — **desktop and mobile are equal priorities**, not deskt
 
 **The pair is the format at every depth; the collapse to top level is a default view state, not a different format.** Of the four specimens above only `Rock` and `Jazz` are top-level, so three of the four appear on expansion rather than at rest — and that is evidence about the default rather than about the specimens. **A screen that could only ever show top-level rows would not need the pair at all**, because two of the three cases it distinguishes occur only below the top: a parent holding nothing of its own but something below it, and a genre holding nothing anywhere. The specimen set needs depth to cover its cases, which is the argument that the default must be expandable rather than an argument that the specimens were wrongly chosen.
 
-**The collapse is what pays the row cost, and the pair is what makes the reduction auditable.** A collapsed parent's subtree count states what is underneath without expanding it: **on the same 2026-09-04 table, of the six top-level genres that had children, all but `Jazz` said *the branch adds nothing*, and `Jazz 3 · 4` says the opposite.** One differing parent in six is the minimum that proves the second number is not redundant — if every pair matched it would be provably so — and the reader cannot know which parent differs without seeing all six pairs. **Top-level genres with no children collapse to one number by construction**, which is what the other three breakdowns are throughout.
+**The collapse is what pays the row cost, and the pair is what makes the reduction auditable.** A collapsed parent's subtree count states what is underneath without expanding it: **on the same 2026-09-04 table, of the six top-level genres that had children, all but `Jazz` said *the branch adds nothing*, and `Jazz 3 · 4` says the opposite.** One differing parent in six is the minimum that proves the second number is not redundant — if every pair matched it would be provably so — and the reader cannot know which parent differs without seeing all six pairs. **Genres with no children collapse to one number by construction — at ANY depth**, which is what the other three breakdowns are throughout. Originally written as *top-level genres*, scoped to where the collapse argument sits; the tree renders every depth, and a pair on a childless row asserts a walk that never happened wherever it appears.
 
 **`/collection`'s filter row needs a limit, and the pair is not why.** Genres holding nothing anywhere are not offered, and the remainder is still enough chips that the filter competes with the results it filters — enough that dropping the second number would not fix it. Top rows by direct count, remainder behind a line naming its criterion, per §7a's withheld-set rule. Containment is stated on the result rather than encoded in the control: a child's count sits inside its parent's, so selecting both returns what the parent alone returns.
 

@@ -299,3 +299,158 @@ test('a stocked collection keeps its per-section absence sentences', async ({ pa
   await expect(page.getByTestId('by-store'), 'the section stays').toBeVisible();
   await expect(page.getByTestId('by-store')).toContainText('No records record where they were bought.');
 });
+
+/**
+ * **A66's genre tree: the cases the pair exists to distinguish, on screen.**
+ *
+ * Built as a real hierarchy rather than asserted against the live collection,
+ * because the suite seeds in parallel and a shared tree would make the numbers
+ * another spec's business. The SHAPE is the live one — `Rock > Punk > UK82` and
+ * `Rock > Heavy Metal > Black Metal` are the real branches these cases come
+ * from.
+ *
+ *   Rock  N · N   a branch walked that added nothing — the receipt
+ *   Punk  0 · 1   nothing of its own, something below   (expansion only)
+ *   Black 0       childless, so one number              (expansion only)
+ *   Dub   1       no branch, so no second figure
+ *
+ * Scoped with `?artistId=` so the tree counts only this fixture's records.
+ */
+test('the genre tree renders the pair where a branch exists, one number where not', async ({
+  page,
+}) => {
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Tree-${suffix}` });
+  trackArtist(artist.id as string);
+
+  const rock = await post(page, '/api/genres', { name: `Rock-${suffix}` });
+  const punk = await post(page, '/api/genres', {
+    name: `Punk-${suffix}`,
+    parentGenreId: rock.id,
+  });
+  const uk82 = await post(page, '/api/genres', {
+    name: `UK82-${suffix}`,
+    parentGenreId: punk.id,
+  });
+  const metal = await post(page, '/api/genres', {
+    name: `Metal-${suffix}`,
+    parentGenreId: rock.id,
+  });
+  await post(page, '/api/genres', { name: `Black-${suffix}`, parentGenreId: metal.id });
+  const dub = await post(page, '/api/genres', { name: `Dub-${suffix}` });
+
+  /* One record under Rock AND under UK82 beneath it: the subtree must count it
+     once, which is what makes Rock a receipt rather than a sum. */
+  await post(page, '/api/records', {
+    title: `Both ${suffix}`,
+    artistId: artist.id,
+    genreIds: [rock.id, uk82.id],
+  });
+  await post(page, '/api/records', {
+    title: `Dubwise ${suffix}`,
+    artistId: artist.id,
+    genreIds: [dub.id],
+  });
+
+  await page.goto(`/stats?artistId=${artist.id}`);
+
+  /*
+    **The collapsed view carries the argument.** Rock's pair is the receipt and
+    Dub's single number is the collapse, and both are visible without a click.
+  */
+  await expect(page.getByTestId(`genre-pair-${rock.id}`), 'the receipt').toHaveText('1 · 1');
+  await expect(
+    page.getByTestId(`genre-pair-${dub.id}`),
+    'no branch, so no second figure',
+  ).toHaveText('1');
+
+  /*
+    **Punk and Black Metal are reachable only through expansion**, which is why
+    expansion is not optional: two of the cases the pair exists for do not
+    render in the collapsed view at all.
+  */
+  await page.getByTestId(`genre-branch-${rock.id}`).locator('summary').first().click();
+  await page.getByTestId(`genre-branch-${punk.id}`).locator('summary').first().click();
+
+  await expect(
+    page.getByTestId(`genre-pair-${punk.id}`),
+    'nothing of its own, something below',
+  ).toHaveText('0 · 1');
+
+  await page.getByTestId(`genre-branch-${metal.id}`).locator('summary').first().click();
+  const black = page.getByTestId(/^genre-pair-/).filter({ hasText: /^0$/ });
+  await expect(black.first(), 'childless at depth 2 renders one number').toBeVisible();
+});
+
+/**
+ * **The four cases must RENDER as four different things**, not merely hold
+ * different numbers. This is the discriminating assertion at the screen layer:
+ * `genre-pairs.test.ts` makes the same claim about the data.
+ */
+test('a zero that was walked and a zero with nothing to walk look different', async ({ page }) => {
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Zeros-${suffix}` });
+  trackArtist(artist.id as string);
+
+  /* A parent whose whole branch is empty, beside a childless empty genre. */
+  const shell = await post(page, '/api/genres', { name: `Shell-${suffix}` });
+  await post(page, '/api/genres', { name: `Hollow-${suffix}`, parentGenreId: shell.id });
+  const lone = await post(page, '/api/genres', { name: `Lone-${suffix}` });
+
+  /*
+    **One record, carrying neither genre.** Without it the collection is empty
+    and §7a's page-scope collapse correctly replaces every breakdown with one
+    sentence — so the tree would be absent for a reason that has nothing to do
+    with what this test is about. The record makes the collection non-empty
+    while leaving both genres at zero.
+  */
+  const filler = await post(page, '/api/genres', { name: `Filler-${suffix}` });
+  await post(page, '/api/records', {
+    title: `Filler ${suffix}`,
+    artistId: artist.id,
+    genreIds: [filler.id],
+  });
+
+  await page.goto(`/stats?artistId=${artist.id}`);
+
+  await expect(
+    page.getByTestId(`genre-pair-${shell.id}`),
+    'the branch was walked and found nothing',
+  ).toHaveText('0 · 0');
+  await expect(
+    page.getByTestId(`genre-pair-${lone.id}`),
+    'nothing to walk, so one number',
+  ).toHaveText('0');
+});
+
+/**
+ * §7a: **a zero keeps display and takes muted.** The empty rows recede without
+ * being hidden — the difference between receding and being withheld, and the
+ * device that makes eight zeros in seventeen rows payable.
+ */
+test('empty genres stay on the screen and recede', async ({ page }) => {
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Muted-${suffix}` });
+  trackArtist(artist.id as string);
+
+  const filled = await post(page, '/api/genres', { name: `Filled-${suffix}` });
+  const empty = await post(page, '/api/genres', { name: `Empty-${suffix}` });
+  await post(page, '/api/records', {
+    title: `One ${suffix}`,
+    artistId: artist.id,
+    genreIds: [filled.id],
+  });
+
+  await page.goto(`/stats?artistId=${artist.id}`);
+
+  await expect(page.getByTestId(`genre-row-${empty.id}`), 'not hidden').toBeVisible();
+
+  /* Computed style, not class names: a class that stops generating a rule
+     leaves the markup looking right and the colour wrong. */
+  const [emptyColour, filledColour] = await Promise.all([
+    page.getByTestId(`genre-row-${empty.id}`).evaluate((el) => getComputedStyle(el).color),
+    page.getByTestId(`genre-row-${filled.id}`).evaluate((el) => getComputedStyle(el).color),
+  ]);
+
+  expect(emptyColour, 'the empty row recedes').not.toBe(filledColour);
+});

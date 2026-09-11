@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { AppHeader } from '@/components/AppHeader';
 import { formatTotal } from '@/app/collection-format';
-import { recordStats } from '@/lib/db/queries/records';
+import { genreDirectRecords, recordStats } from '@/lib/db/queries/records';
+import { genrePairs } from './genre-pairs';
+import { GenreTree } from './GenreTree';
 import { estimatedValueStatement, spendStatement } from './value-statement';
 
 /**
@@ -120,7 +122,24 @@ export default async function StatsPage({
   const params = await searchParams;
   const artistId = typeof params.artistId === 'string' ? params.artistId : undefined;
 
-  const stats = await recordStats(artistId === undefined ? {} : { artistId });
+  const filters = artistId === undefined ? {} : { artistId };
+  const stats = await recordStats(filters);
+
+  /**
+   * **One query, subtree derived in JS** (A66). `byGenre` cannot serve this —
+   * it returns only genres that HAVE records, and a genre holding nothing
+   * anywhere is a gap this screen exists to show rather than hide.
+   */
+  const genreRows = await genreDirectRecords(filters);
+  const genreNodes = genrePairs(
+    genreRows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      parentGenreId: row.parentGenreId,
+      direct: row.recordIds.length,
+    })),
+    new Map(genreRows.map((row) => [row.id, new Set(row.recordIds)])),
+  );
 
   return (
     <>
@@ -235,13 +254,11 @@ export default async function StatsPage({
           </section>
         ) : (
           <>
-        <Breakdown
-          title="By genre"
-          testId="by-genre"
-          rows={stats.byGenre.map((row) => ({ id: row.id, name: row.name, count: row.count }))}
-          emptyMessage="No records are filed under a genre yet."
-          href={(id) => `/?genreId=${id}`}
-        />
+        {/*
+          **A66: the genre series is a tree of pairs, not a chart.** It keeps the
+          position the flat breakdown held; only the device changes.
+        */}
+        <GenreTree nodes={genreNodes} href={(id) => `/?genreId=${id}`} />
 
         <Breakdown
           title="By decade"

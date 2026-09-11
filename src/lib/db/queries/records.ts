@@ -663,6 +663,60 @@ export async function deleteRecord(id: string): Promise<RecordDeleteOutcome> {
  * removing either alone fails no test, removing BOTH fails the double-count
  * test. NOTES.md case 3 — do not delete one because it "looks unreachable".
  */
+/**
+ * Every genre, with the records filed under it DIRECTLY (A66).
+ *
+ * **One query, and the subtree is derived in JS** over `genre-pairs.ts`'s
+ * cycle-guarded walk. `genreRollup` cannot serve this: it returns only genres
+ * that have records, and `Black Metal 0 · 0` — a genre holding nothing anywhere
+ * — is the case the amendment was written for. A `/stats` that hides a genre
+ * created and never filled would be the screen committing the defect it was
+ * designed against.
+ *
+ * **Record IDS rather than counts**, because subtree counts deduplicate: a
+ * record tagged both `Oi!` and `UK82` reaches `Punk` by two paths and is still
+ * one record. A sum over per-genre counts reports it twice, which is §7.1
+ * arriving as arithmetic.
+ *
+ * Scoped by the same `RecordFilters` the rest of the screen uses, so
+ * `?artistId=` narrows the tree with everything else.
+ */
+export async function genreDirectRecords(
+  filters: RecordFilters = {},
+): Promise<Array<{ id: string; name: string; parentGenreId: string | null; recordIds: string[] }>> {
+  const db = getDb();
+  const where = buildWhere(filters);
+
+  const result = await db.execute<{
+    id: string;
+    name: string;
+    parent_genre_id: string | null;
+    record_ids: string[] | null;
+  }>(sql`
+    SELECT
+      g.id,
+      g.name,
+      g.parent_genre_id,
+      COALESCE(
+        array_agg(DISTINCT rg.record_id) FILTER (WHERE rg.record_id IS NOT NULL),
+        '{}'
+      ) AS record_ids
+    FROM ${genres} g
+    LEFT JOIN ${recordGenres} rg ON rg.genre_id = g.id
+    LEFT JOIN ${records} records ON records.id = rg.record_id
+      ${where === undefined ? sql`` : sql`AND ${where}`}
+    GROUP BY g.id, g.name, g.parent_genre_id
+    ORDER BY g.name
+  `);
+
+  return result.rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    parentGenreId: row.parent_genre_id,
+    recordIds: row.record_ids ?? [],
+  }));
+}
+
 export async function genreRollup(
   filters: RecordFilters = {},
 ): Promise<Array<{ id: string; name: string; count: number }>> {
