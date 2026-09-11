@@ -60,7 +60,7 @@ export function ShelfControls({
               aria-expanded={open}
               aria-controls="shelf-controls-panel"
               onClick={() => setOpen((current) => !current)}
-              className="flex items-center gap-2 rounded-xs border border-border bg-background/90 px-3 py-1.5 text-sm text-foreground backdrop-blur-sm hover:bg-accent"
+              className="flex items-center gap-2 rounded-xs border border-border bg-background/90 px-3 py-1.5 text-label text-foreground backdrop-blur-sm hover:bg-accent"
             >
               {open ? 'Hide controls' : 'Search and filter'}
 
@@ -77,7 +77,7 @@ export function ShelfControls({
               {activeCount > 0 && (
                 <span
                   data-testid="shelf-controls-active"
-                  className="rounded-xs bg-primary px-1.5 py-0.5 text-xs text-primary-foreground"
+                  className="rounded-xs bg-primary px-1.5 py-0.5 text-meta text-primary-foreground"
                 >
                   {activeCount === 1 ? '1 filter' : `${activeCount} filters`}
                 </span>

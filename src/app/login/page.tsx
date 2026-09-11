@@ -76,11 +76,11 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-dvh items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <h1 className="mb-1 text-2xl font-semibold tracking-tight">Record Collection</h1>
-        <p className="mb-6 text-sm text-muted-foreground">Enter the password to continue.</p>
+        <h1 className="mb-1 text-headline font-semibold tracking-tight">Record Collection</h1>
+        <p className="mb-6 text-lede text-muted-foreground">Enter the password to continue.</p>
 
         <form ref={formRef} onSubmit={onSubmit} noValidate>
-          <label htmlFor="password" className="mb-2 block text-sm font-medium">
+          <label htmlFor="password" className="mb-2 block text-label font-medium">
             Password
           </label>
           <input
@@ -93,11 +93,11 @@ export default function LoginPage() {
             onChange={(event) => setPassword(event.target.value)}
             aria-invalid={error !== null}
             aria-describedby={error === null ? undefined : 'password-error'}
-            className="mb-4 h-11 w-full rounded-md border border-input bg-background px-3 text-base shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="mb-4 h-11 w-full rounded-md border border-input bg-background px-3 text-typed shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
           />
 
           {error !== null && (
-            <p id="password-error" role="alert" className="mb-4 text-sm text-destructive">
+            <p id="password-error" role="alert" className="mb-4 text-prose text-destructive">
               {error}
             </p>
           )}

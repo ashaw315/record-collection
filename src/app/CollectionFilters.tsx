@@ -123,7 +123,7 @@ export function ViewToggle({
           aria-pressed={params.view === mode}
           onClick={() => change((current) => withFacet(current, { view: mode }))}
           className={cn(
-            'rounded-xs border px-2 py-1 text-xs capitalize transition-colors',
+            'rounded-xs border px-2 py-1 text-label capitalize transition-colors',
             params.view === mode
               ? 'border-primary bg-primary text-primary-foreground'
               : 'border-border hover:bg-accent',
@@ -274,7 +274,7 @@ export function CollectionFilters({
               }),
             );
           }}
-          className="h-9 shrink-0 rounded-xs border border-input bg-transparent px-2 text-sm"
+          className="h-9 shrink-0 rounded-xs border border-input bg-transparent px-2 text-label"
         >
           <option value="">Sort: default</option>
           {RECORD_SORT_FIELDS.map((field) => (
@@ -297,7 +297,7 @@ export function CollectionFilters({
 
         return (
           <div key={group.key} className="flex items-baseline gap-2">
-            <span className="w-12 shrink-0 text-xs tracking-wide text-muted-foreground uppercase">
+            <span className="w-12 shrink-0 text-label tracking-wide text-muted-foreground uppercase">
               {group.label}
             </span>
             <div className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1">
@@ -319,7 +319,7 @@ export function CollectionFilters({
                       )
                     }
                     className={cn(
-                      'shrink-0 rounded-xs border px-2 py-1 text-xs whitespace-nowrap transition-colors',
+                      'shrink-0 rounded-xs border px-2 py-1 text-label whitespace-nowrap transition-colors',
                       active
                         ? 'border-primary bg-primary text-primary-foreground'
                         : 'border-border hover:bg-accent',
@@ -349,7 +349,7 @@ export function CollectionFilters({
         never invisible (NOTES.md, and SPEC.md §5.2's meta.undatedCount).
       */}
       {(hasYearFilter || undatedCount > 0) && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-meta text-muted-foreground">
           {hasYearFilter && (
             <label className="flex items-center gap-1.5">
               <input
@@ -387,7 +387,7 @@ export function CollectionFilters({
                 page: 1,
               }))
             }
-            className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            className="text-label text-muted-foreground underline underline-offset-2 hover:text-foreground"
           >
             Clear {activeCount === 1 ? 'filter' : `all ${activeCount} filters`}
           </button>

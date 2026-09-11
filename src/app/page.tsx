@@ -101,8 +101,8 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
       <main className="mx-auto w-full max-w-6xl px-4 py-6">
         <header className="mb-5 flex items-start justify-between gap-4">
           <div>
-            <h1 className="font-heading text-xl font-semibold tracking-tight">Collection</h1>
-            <p className="mt-0.5 text-sm text-muted-foreground">
+            <h1 className="font-heading text-headline font-semibold tracking-tight">Collection</h1>
+            <p className="mt-0.5 text-lede text-muted-foreground">
               {/*
                 Filter-aware: "34 of 312 records" when a filter is active. This
                 is the signal the wall's four-row minimum used to carry in empty
@@ -120,7 +120,7 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
               on this screen besides an active filter. */}
           <Link
             href="/records/new"
-            className="shrink-0 rounded-xs bg-primary px-3 py-1.5 text-sm text-primary-foreground transition-opacity hover:opacity-90"
+            className="shrink-0 rounded-xs bg-primary px-3 py-1.5 text-label text-primary-foreground transition-opacity hover:opacity-90"
           >
             Add record
           </Link>
