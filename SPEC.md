@@ -935,6 +935,56 @@ screen copies the first. The ratio is what makes it specific: at 5.5:1 the
 mismatch is not a nudge, and any pairing of `display` with any prose role is at
 least 4.8:1. **No role above `headline` shares a line with text.**
 
+**A finished state must not be renderable as an unfinished one (A72,
+2026-09-11).** Whitespace is the shared rendering of *done* and *still
+arriving*, so a screen whose content runs short reads as failed rather than as
+short: the terminal state and the loading state render identically. **That is an
+ambiguity between two states, not an aesthetic problem** — the same defect as
+the already-recorded constraint that a loading placeholder must not resemble a
+55%-dimmed cover, which was this rule about one component.
+
+**Two terminators, chosen by whether a next step exists.**
+
+  - **A screen with one unambiguous action ends with the action.** Already
+    settled and already built: `/stats` empty renders *Add a record*, in the one
+    state where "what should I record next" has a single answer.
+  - **A screen without one ends with the app speaking at page scope**, naming
+    the account's extent. On a stocked `/stats` that is a line about what the
+    page covers — content on an account screen rather than padding, and the same
+    sentence class the screen already carries.
+
+**Not a region.** No `min-height`, no footer band, no vertical centring. A
+`min-height: 100vh` converts a termination problem into a taller empty region,
+which is precisely the failure that removed genre sections from the wall —
+near-empty bands reading as broken rather than as short. **The signal belongs to
+the content.**
+
+**And the terminator is a fixed small signal whose presence does not depend on
+how much room is left.** The measurement that produced this rule is that the
+same content at the same sizes reads better at 390×844 than at 1280×1000, so the
+failure scales with LEFTOVER VIEWPORT rather than with content quantity. Anything
+sized to fill the gap would be solving the wrong variable.
+
+*Measured on `/stats` empty: collapsing four absence sentences to one took the
+content from ~530px to ~290px and took the empty portion from ~40% to ~65% — the
+copy was never making the gap.*
+
+**The page-scope terminator has no site today, and that is a fact about the
+current screens rather than a gap in the rule.** `/stats` was the screen that
+produced the rule and no longer exhibits the problem: stocked at 1280×1000 it
+renders 1091px and OVERFLOWS by 91px, ending mid-content. The genre tree (A66)
+closed it — seventeen top-level rows at ~27px is ~460px of content where the
+retired bar chart rendered five or six rows — so a component built for an
+unrelated reason turned a 40%-empty page into overflow. Empty `/stats` takes the
+other terminator, the action, which is already built.
+
+**A rule written for a real ambiguity with no current instance is waiting
+correctly.** Same shape as A66's fourth format case and §6's withdrawn spine
+verdict, both named as reachable and unobserved rather than deleted for lacking
+an instance. **Do not go looking for a screen to put a terminator on** — that
+would be building an instance to justify the rule rather than to solve a
+problem. When a screen runs short, the rule is here.
+
 **Text meets 4.5:1 against what is behind it.** *The defect:* a specimen arguing contrast arithmetic shipped its own absence marker at **2.66** and its labels at 4.29 on `#100e0d`. The element carrying the meaning was the one below the floor.
 
 ### 7a.1 The settler register (A61a, 2026-09-09)
