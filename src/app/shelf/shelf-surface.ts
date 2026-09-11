@@ -32,6 +32,19 @@ import { SHELF_EDGE, SPINE_HEIGHT, SPINE_ROW_HEIGHT } from './spine';
  */
 
 /** Behind and above the records. Not shelf. */
+/**
+ * **DISCARDED with the lit medium (A73, 2026-09-11), and kept rather than
+ * deleted.**
+ *
+ * The wall is the isometric line drawing; these three grounds were facts about
+ * a lit scene. They stay because the MEASUREMENTS behind them outlive the
+ * rendering that produced them — `WALL_DIM_FLOOR`'s 0.1 was chosen against 0.28
+ * with a record pulled, and that is a fact about how far a background must
+ * recede for a foreground to read as subject, not about how it was lit.
+ *
+ * Marked the way §6's spine verdict was marked. Deleting them would take the
+ * measurements with them.
+ */
 export const WALL_BACK = '#100e0d';
 
 /** The horizontal surface records stand on, catching the light. */

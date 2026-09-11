@@ -1478,6 +1478,90 @@ Manual price entry on a record the user owns. Neither real use case needs it: th
 
 ## 10b. The shelf
 
+> **THE WALL IS THE ISOMETRIC LINE DRAWING (A73, 2026-09-11). The lit medium is
+> retired, and a measurement decided it rather than a preference.**
+>
+> **The deciding fact is a projection argument.** Three records render as if they
+> had no cover — `MGMT` #473e35 at 1.088, `Discharge` #363129 at 1.134,
+> `Jeff Beck` #3b5259 at 1.374 against the `#3a3a3a` fallback — and `MGMT`
+> measures **1.016 against `SHELF_PLANE`**, so it disappears into the board it
+> stands on. All three HAVE covers; their derived colours collide with the
+> fallback and the ground. A stroke was tested and failed: no grey in 256 clears
+> 3:1 on `Discharge` against both grounds and on `Dire Straits` simultaneously.
+>
+> Three routes to fixing it in the lit medium, three different reasons, all
+> closed:
+>
+>   - **Pattern fails on arithmetic.** The spine texture is 51×720 device px at
+>     minimum width against a 32-device-px glyph floor, so two repeats across a
+>     17px spine is an edge and a middle. The long axis has room and belongs to
+>     the label.
+>   - **Material tops out at 1.035.** Computed GGX square-on under the shipping
+>     rig, roughness 0.3 against 0.62 gives 1.035 — below the 1.088 collision it
+>     exists to fix. And at a fixed view angle a roughness difference IS a
+>     luminance difference: the spine never moves relative to the camera, so
+>     there is no highlight travel to disambiguate it.
+>   - **Geometry is invisible by projection.** A recess wall is parallel to the
+>     view axis. The camera is 16° — an **8° half-angle** — so square-on the wall
+>     projects to **zero width**, and at the frame edge to **0.28px at 2px
+>     depth**. No amount of depth changes that. Measured as well as computed: the
+>     internal contrast across the `MGMT` spine is **1.137 with and without the
+>     recess** at 17px, identical.
+>
+> **The 1.753 luminance ratio computed for an unlit inset wall was correct about
+> the surface and wrong about the question** — a right number for a thing with no
+> projected area.
+>
+> **So: under line, an edge is an edge at any value, because there is no camera
+> angle for it to disappear at.** That is the whole argument and it is enough.
+
+### What survives 5a, and what is discarded
+
+**Most of the week is not lost, and the split is by what each fact is ABOUT.**
+
+**Survives — facts about how the wall should LOOK, not how it is rendered.**
+These carry into 5b unchanged and their reasoning is untouched below: the lens
+angle and the square-on rule; the spine proportions at roughly 1:12 and the
+11–15px width band; the **9px legibility floor**; the 1400ms rise; the **0.9
+frame fill**; the character budget derived from spine height; the ordering,
+adjacency and the no-section-headings rule.
+
+**Discarded — facts about the lit medium.** Marked rather than deleted, the way
+§6's spine verdict was: the light rig and its seven positions, the orbit, the
+shadow configuration, and the three ground constants `WALL_BACK`,
+`SHELF_PLANE` and `SHELF_LIP`.
+
+> **The reasoning outlives the code that produced it, which is why none of it is
+> removed.** The orbit is what settled the **44.5% back panel** — four increments
+> of looking at a 3/4 view, from 3% to 44.5% — and that proportion is a fact
+> about how deep a shelf reads, not about how it was lit. `WALL_DIM_FLOOR`'s 0.1,
+> measured against 0.28 with a record out, is a fact about how far a background
+> must recede for a foreground to read as subject. Both are reusable under line.
+> Deleting the constants would take the measurements with them.
+
+### The instrument catch, recorded beside the finding
+
+**The first recess probe used an ORTHOGRAPHIC camera and rendered the recess
+invisible at every width — including the 125px control.**
+
+Under orthographic projection a recess wall is exactly edge-on and therefore
+zero pixels wide *at every size*, so the probe reported the treatment as failing
+when what had failed was the probe. Attributed to the recess, that is a false
+negative that reaches the same conclusion by the wrong route — and it would have
+been unfalsifiable, because the measurement agreed with the eventual answer.
+
+> **A treatment that fails at BOTH sizes is a broken instrument, not a result.**
+> The 125px control existed to catch exactly that and did: a recess must read at
+> 125px, so a probe showing it absent there is disqualified before its 17px
+> reading is worth anything. **This is the argument for always including a size
+> where the effect is known to work** — a probe with only the size under test has
+> no way to distinguish "the treatment does not work" from "the probe does not".
+>
+> Same family as the resolution and observer findings in NOTES: an instrument
+> that cannot fail differently from the hypothesis is not measuring the
+> hypothesis.
+
+
 > **The spine's derived colour is not an identifying channel, and the absence clause below is RETIRED (A62, 2026-09-09).**
 >
 > **The clause reads that a record with no cover gets a plain spine, "an honest absence, not a gap in the wall". The honest half is refuted.** Measured on the stored `averageColour` values: **`MGMT` 1.088, `Discharge` 1.134 and `Jeff Beck` 1.374 against the `#3a3a3a` fallback** — three records that *have* covers rendering as if they had none. So a plain spine does not read as an absence; it reads as one of several possibilities, and the reader cannot tell which. **An absence that is indistinguishable from a present value is ambiguous, not honest.**

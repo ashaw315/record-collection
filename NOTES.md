@@ -28320,3 +28320,51 @@ genre bands were STRUCTURALLY near-empty and the fix was removing the device.
 Here one device was repeated because one fact was being said four times, and the
 fix was collapsing to the cause's scope. Same symptom, same move, different
 reason — and neither of them was the gap.
+
+---
+
+## A probe needs a size where the effect is known to work, or it cannot fail differently from its hypothesis
+
+**Sixth instance of the instrument family, and the one that would have been
+unfalsifiable.**
+
+The question was whether a recess reads as depth on a 17px spine. The first
+probe rendered it at 17px and at 125px — and showed **no recess at either
+width**. Read naively that is a clean answer: the treatment does not work.
+
+It was the probe. The probe used an **orthographic** camera; the shipping wall
+uses `PerspectiveCamera(16°)`. Under orthographic projection a recess wall is
+exactly edge-on and therefore **zero pixels wide at every size**, so the probe
+could not have shown a recess at any width, for any depth, ever.
+
+> **A treatment that fails at BOTH sizes is a broken instrument, not a result.**
+> The 125px control is what caught it: a 2px recess on a 125px spine must read,
+> so a probe showing it absent there is disqualified before its 17px reading is
+> worth anything.
+
+### Why this one was more dangerous than the others
+
+**The false negative agreed with the eventual answer.** The recess genuinely
+does not read at 17px — confirmed afterwards with the correct camera, and
+measured: internal contrast across the `MGMT` spine is 1.137 with and without
+the recess, identical. So the broken probe reached the *right conclusion by the
+wrong route*, and nothing downstream would have contradicted it.
+
+An instrument that cannot fail differently from the hypothesis is not measuring
+the hypothesis. The other instances in this file were caught because something
+disagreed — a retry passed, a count came back identical, a suite went red. **This
+one had nothing to disagree with it**, and would have been recorded as a
+measured finding.
+
+### The rule
+
+**Every probe includes a condition where the effect is known to be present.**
+Not a second data point — a CONTROL, chosen because the answer there is already
+known. Without it a probe has no way to distinguish *the treatment does not
+work* from *the probe does not work*, and those two produce identical output.
+
+The related error, worth naming because it was in the same measurement: **the 3×
+supersample applies to the label TEXTURE, not to geometry.** Geometry renders at
+the canvas pixel ratio, so "1px inset = 3 device px" was three times too
+generous throughout the first pass. A constant borrowed from an adjacent
+subsystem is not a property of the thing being measured.
