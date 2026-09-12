@@ -38,6 +38,16 @@ export type ShelfRun = {
   ids: string[];
   /** How many records are seated on this run. Never zero. */
   length: number;
+  /**
+   * How many SEATS the run spans, including one whose record is pulled.
+   *
+   * **The shelf's extent is seats, not occupants.** §2: the outline runs
+   * unbroken under an empty slot, because the shelf is still there and the
+   * record is not on it. A polygon drawn from `length` would shrink when a
+   * record is pulled — the same lie as splitting the run, drawn as a gap at the
+   * end instead of the middle.
+   */
+  seatCount: number;
 };
 
 /**
@@ -58,10 +68,13 @@ export function shelfRuns(seats: readonly ShelfSeat[], pulledId: string | null):
     */
     let run = bySection.get(seat.section);
     if (run === undefined) {
-      run = { section: seat.section, ids: [], length: 0 };
+      run = { section: seat.section, ids: [], length: 0, seatCount: 0 };
       bySection.set(seat.section, run);
       runs.push(run);
     }
+
+    /* The seat exists whether or not its record is on it. */
+    run.seatCount += 1;
 
     if (seat.id === pulledId) continue;
 

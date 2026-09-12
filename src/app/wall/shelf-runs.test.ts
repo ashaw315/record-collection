@@ -165,6 +165,36 @@ describe('a pull never splits a run', () => {
   });
 });
 
+describe('seats outlast their occupants', () => {
+  /**
+   * **The extent the shelf outline is drawn from.** `length` counts records
+   * still seated; `seatCount` counts the slots the run spans. They differ by
+   * exactly one while a record is pulled, and that difference is what keeps the
+   * outline whole beneath an empty slot — see `shelfPolygon`, which draws from
+   * `seatCount` for that reason.
+   */
+  it('keeps the seat count when a record is pulled from the middle', () => {
+    const [jazz] = shelfRuns(SHELF, 'a2');
+
+    expect(jazz.length, 'one fewer record is seated').toBe(2);
+    expect(jazz.seatCount, 'but the run still spans three seats').toBe(3);
+  });
+
+  it('has seatCount equal to length when nothing is pulled', () => {
+    for (const run of shelfRuns(SHELF, null)) {
+      expect(run.seatCount, run.section).toBe(run.length);
+    }
+  });
+
+  it('counts the pulled seat in exactly one run', () => {
+    const runs = shelfRuns(SHELF, 'b2');
+    const total = runs.reduce((sum, run) => sum + run.seatCount, 0);
+
+    // Every seat on the shelf is still spanned by some run.
+    expect(total).toBe(SHELF.length);
+  });
+});
+
 describe('an empty or single-section shelf', () => {
   it('has no runs when there are no records', () => {
     expect(shelfRuns([], null)).toEqual([]);
