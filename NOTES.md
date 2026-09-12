@@ -28485,6 +28485,26 @@ channel that carries the claim. **An inert fixture is repaired by changing the
 INPUT, and the assertions may be perfect throughout.** That is why it is the one
 nobody checks: every local signal says the test is good.
 
+### Four instances, and the accumulation is the point
+
+| fixture | why the defect could not occur | fixed by |
+|---|---|---|
+| contiguous shelf (`shelf-runs`) | each section was one block, so filtering a record out never split a run | interleaving the sections |
+| **single accent on a drab field (`spine-colour`)** | **a mean over one accent still comes back tinted, so averaging passed** | **three saturated bands at opposing hues** |
+
+Both went green against the exact implementation they were written to replace,
+and in both cases the assertions were about the right invariant. The
+spine-colour one is the sharper example: the test claimed to prove that
+averaging destroys chroma, and its fixture was an image whose average *keeps*
+chroma. **The mean of one accent and one field is tinted; only opposing hues
+cancel.** So the fixture had to contain the cancelling operation, not merely
+some colour.
+
+Written as a table because this is now a recurring shape rather than an
+incident, and the count is the argument: a control condition applied to the
+assertions catches a weak test, and nothing catches an inert fixture except
+staging the defect and watching it survive.
+
 ### The fixture justification is half the fix
 
 Interleaving the fixture is not a contrivance chosen to make a test fail.
@@ -28651,3 +28671,58 @@ wall lands, along with `WallScene.tsx`, `PlaneCanvas`, `BoxCanvas`,
 that gets deleted. The reason it is written down anyway: **it is true today, and
 the wall build is not tomorrow.** If that build slips, this line is what says a
 decision was made rather than missed.
+
+---
+
+## A measurement that improves a conclusion's stated reason and strengthens the conclusion
+
+A62 concluded the spine's derived colour is not an identifying channel. One of
+its supporting figures was **"six of sixteen under 10% saturation"**, measured on
+the averaged derivation. A75 replaced that derivation with the dominant
+chromatic region, so the figure had to be re-measured.
+
+| | A62 (averaged) | resampled |
+|---|---|---|
+| median pairwise contrast | 1.623 | **1.974** |
+| pairs under 1.1 | 12 | **14** |
+| pairs under 1.2 | 22 | 21 |
+| under 10% saturation | 12 of 16 | **6 of 16** |
+| worst vs `SHELF_PLANE` | 1.088 | 1.088 (unchanged) |
+| within 1.4 of the no-cover fallback | 3 records | 2 records |
+
+**The premise improved and the conclusion got stronger.** The saturation figure
+halved — so that clause genuinely was about the derivation. But **pairs under 1.1
+rose from 12 to 14**, and the closest pair is now tighter than A62's worst
+(Gaucho vs The Soft Parade at 1.007, against A62's 1.016).
+
+### Why both moved the same way
+
+**Raising chroma moves a spine around the hue wheel; contrast measures
+lightness.** Nine covers gained real colour without gaining separation, and two
+of them landed at each other's lightness. So the more colourful wall is no more
+legible as an index — and slightly less so.
+
+### The shape worth distinguishing
+
+Three different things can happen when you re-measure the evidence for a settled
+conclusion, and they are not interchangeable:
+
+1. **The evidence collapses** — the conclusion has to be reopened.
+2. **The evidence holds** — nothing changes.
+3. **A stated reason improves while the conclusion strengthens** — which is this
+   one, and it is the easiest to misread as (1).
+
+The trap is that "the figure you cited halved" *sounds* like the conclusion is in
+trouble. It is not, because the halved figure was one supporting clause and the
+load-bearing evidence — pairs colliding at matched lightness, the `SHELF_PLANE`
+collision, hue unreadable at 17px — was untouched or worse. **A premise can be
+wrong in the direction that makes the conclusion more secure.**
+
+So when re-measuring, ask which figures were load-bearing and which were
+corroborating, BEFORE looking at how they moved. Otherwise the direction of the
+change decides the reading, and here the two directions disagreed.
+
+**A62 stands, unchanged, and stronger than when it was written.** The one real
+improvement is unrelated to identification: `Wired` escapes the band where a
+spine reads like an absent cover, so two records collide with the no-cover
+fallback rather than three.
