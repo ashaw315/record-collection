@@ -1,3 +1,4 @@
+import { notFound } from 'next/navigation';
 import { PullProbe } from '../PullProbe';
 
 /**
@@ -11,6 +12,8 @@ import { PullProbe } from '../PullProbe';
 export const dynamic = 'force-dynamic';
 
 export default function PullProbePage() {
+  if (process.env.NODE_ENV === 'production') notFound();
+
   return (
     <main style={{ padding: 24, fontFamily: 'Geist, sans-serif' }}>
       <h1 style={{ font: "600 15px 'Geist', sans-serif", margin: '0 0 4px' }}>

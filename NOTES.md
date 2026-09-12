@@ -28501,3 +28501,153 @@ So the question to ask of a fixture is not "is this enough data?" but **"can the
 failure I am guarding against happen to this input at all?"** Where the answer
 is no, every assertion over it is decorative no matter how sharply it is
 written.
+
+---
+
+## A rule kept by a backstop reads identically to a rule kept by the code
+
+`e2e/auth.spec.ts`'s cron test posted to `/api/discogs/refresh-prices` with the
+real secret, got a 200, and asserted §5.7's counts with `expect.any(Number)`. It
+was green in every run. It was also making **four live requests to
+api.discogs.com per E2E run**, and the only thing stopping them was
+`no-live-calls.ts` refusing each one and the route counting it as `failed`.
+
+CLAUDE.md §2 says never allow a test to make a live external call. **That test
+allowed it; something else stopped it.** Remove the guard, or let
+`isTestContext()` return false for any reason, and four real requests go out on
+every run — with the test still passing.
+
+**The only way to tell the two apart is to remove the backstop and see what
+happens.** From the outside they are the same green line.
+
+### A weak assertion concealed the signal
+
+`expect.any(Number)` passes on `failed: 4` — and `failed: 4` was the actual
+state. So **the assertion that kept the test green was also what made the
+guard's firing invisible.** It did not merely fail to catch the problem; it
+concealed the evidence that would have revealed it. The firings only surfaced
+when `run-tests.ts` started capturing the web server's full output, four
+wrappers into a session about wrappers.
+
+### Third instance this session
+
+The control condition — stage the failure and check the thing actually fires —
+applied to three different subjects:
+
+| subject | staged | found |
+|---|---|---|
+| a guard's exemption | a real new page | fired at 13-against-12; exemption was narrow, not a hole |
+| a fixture | the adjacency bug | 13 tests passed; the fixture could not express the defect |
+| **a rule's enforcement** | **removing the backstop** | **the rule was held by the guard, not by the test** |
+
+The transferable form: **for anything that looks like it is working, ask what
+would happen if the thing you believe is doing the work were removed.** Where
+the answer is "it would still look the same", you do not yet know which of them
+is load-bearing.
+
+### The fix, and what it cost
+
+The auth test narrowed to its actual subject — admission is decided by
+middleware, so "the secret was accepted" is exactly "this is not a 401", and the
+loop never runs. The test body says it stops short deliberately, so the
+narrowing is not read as an omission and widened back.
+
+**Nothing else needed doing.** §5.7's counts were already covered, in
+`test/integration/api/refresh-prices.test.ts` — 332 lines that mock the client
+module, pin each outcome separately, and distinguish skipped from failed. The
+E2E test was a redundant and much weaker second assertion of a contract already
+tested properly, so narrowing it removed a liability rather than coverage.
+
+That file and `e2e/auth.spec.ts` already pointed at each other: it explains why
+auth is NOT tested there and names the E2E spec as where it lives. See
+[[a-search-whose-scope-excludes-the-answer]] for what it cost to not read that
+from both ends.
+
+---
+
+## A search whose scope cannot contain the answer
+
+I overwrote `test/integration/api/refresh-prices.test.ts` — 332 committed lines
+— believing I was creating a new file. Then I reported, as a finding, that
+§5.7's counts were "named in an E2E test and tested nowhere."
+
+They were tested, in the file I had just destroyed, at exactly the layer I was
+proposing to build. It already used `vi.mock` on the client module — the seam I
+presented as my own conclusion. It already covered skipped-vs-failed,
+deleted-release-as-skipped, outage-as-failed, per-item isolation, append-only,
+and `asking` typing.
+
+Recovered with `git checkout HEAD --`; it had not been committed over, so
+nothing was lost. **The destruction was recoverable. The false conclusion built
+on top of it was going to be committed.**
+
+### Sample-not-population, with a new face
+
+Two searches produced the conclusion. I listed the route's own directory
+(`src/app/api/discogs/refresh-prices/`, which holds only `route.ts`) and grepped
+for `vi.mock` usage. Neither can reach a test living in a parallel tree under
+`test/integration/api/`.
+
+**The search space excluded the answer by construction.** This is the
+sample-treated-as-population failure — but not the familiar form, where a
+partial report is read as complete. Here the method itself could not have
+returned the thing being looked for, whatever the codebase contained. A negative
+result from such a search carries no information, and I read it as evidence of
+absence.
+
+So: **before concluding something does not exist, state what your search would
+have had to look like to find it.** Where the answer is "not like the search I
+ran", the result is not a finding. One `ls test/integration/api/` would have
+refuted it.
+
+**And the fix is not "search harder".** A more thorough version of the same two
+searches returns the same nothing, because the scope excluded the answer by
+construction rather than by accident. The check is a DIFFERENT QUESTION asked
+first: **name the places a thing like this could live, then look in each.** For
+a route's tests that list is three lines long — beside the route, in the
+integration tree, in the e2e tree — and writing it down is what makes the gap
+visible.
+
+This is the control condition's shape applied to searching. A control condition
+is not a stronger assertion, it is the question "could this fail at all?" asked
+before trusting a pass. Enumerating the search space is the same move: not a
+better search, but "could this search have found it?" asked before trusting a
+negative. **Both convert a result you want to believe into a claim about the
+instrument that produced it.**
+
+### A cross-reference is only a safeguard if it is read from both ends
+
+The two files knew about each other. `refresh-prices.test.ts` says why auth is
+not covered there and names `e2e/auth.spec.ts` as where it is. **I was editing
+the file it points at**, and did not look at what pointed back.
+
+Cross-references are written by the person who knows both sides and read by the
+person who knows one. The pointer is only load-bearing in the direction it is
+followed.
+
+### Check existence before writing a file you believe is new
+
+The thing that caught this was `git status --short --branch` showing ` M` where
+I expected `??`, and it surfaced only because Adam asked about the push. The
+file being TRACKED is what made it recoverable and what made it visible.
+
+**The cost is asymmetric: a redundant existence check costs one command, and a
+wrong assumption destroys work.** There is no case where checking first is
+expensive enough to skip.
+
+---
+
+## Observation: a deployed app currently serves a workbench route
+
+`/plane` has no production gate. `/scene` 404s in production
+(`scene/page.tsx:16`) and `/wall/probe` now does too, matching it — but `/plane`
+does not, so **if `main` deploys today it serves a three.js workbench behind the
+login.** Bounded: it is not in `PUBLIC_PATHS`, so middleware redirects anonymous
+visitors, and it renders synthesised geometry with no database access.
+
+**Recorded rather than fixed, deliberately.** `/plane` is deleted when §10b's
+wall lands, along with `WallScene.tsx`, `PlaneCanvas`, `BoxCanvas`,
+`FillComparison`, `BoxGeometryProbe` and `/wall/probe`, so gating it now is work
+that gets deleted. The reason it is written down anyway: **it is true today, and
+the wall build is not tomorrow.** If that build slips, this line is what says a
+decision was made rather than missed.

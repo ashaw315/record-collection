@@ -131,8 +131,14 @@ test('the route list has not fallen behind the app', async () => {
   /*
     `/wall/probe` joins them, and is the shortest-lived of the three: it exists
     to run the pull as a REAL animation so `getScreenCTM()` can be sampled
-    against the curve, which is the one question a drawing cannot settle. It
-    comes out with `/plane` and `/scene` when §10b's wall lands.
+    against the curve, which is the one question a drawing cannot settle.
+
+    **REMOVAL CONDITION, stated because its absence is how this count drifted
+    once already.** When §10b's wall lands, `/plane` and `/wall/probe` are
+    deleted, and these three things come out TOGETHER: the route, this
+    exemption, and the `notFound()` guard in `wall/probe/page.tsx`. A temporary
+    exemption with no removal condition is indistinguishable from a permanent
+    one, and reads as a free slot to whoever finds it next.
   */
   const EXEMPT = [
     join('app', 'login'),

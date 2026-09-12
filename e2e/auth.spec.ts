@@ -134,25 +134,61 @@ test('accepts the cron endpoint from any caller presenting the secret', async ({
    */
   expect(secret, 'CRON_SECRET must be set in .env.test').toBeTruthy();
 
-  const response = await request.post('/api/discogs/refresh-prices', {
+  /**
+   * **GET, not POST — so the request is admitted without running the refresh.**
+   *
+   * `routeAuthMode` takes only the pathname (routes.ts:69), so middleware's
+   * decision is method-agnostic: a GET with a valid secret is admitted exactly
+   * as a POST would be. The route exports only POST, so Next answers 405 —
+   * after middleware, without the handler.
+   *
+   * That is what makes this test honour §2 itself rather than relying on the
+   * backstop. A POST here runs the real refresh loop, which calls Discogs once
+   * per refreshable record; those four calls were only ever stopped by
+   * `no-live-calls.ts` refusing them.
+   */
+  const response = await request.get('/api/discogs/refresh-prices', {
     headers: { authorization: `Bearer ${secret}` },
     failOnStatusCode: false,
   });
 
-  expect(response.status()).toBe(200);
-
-  /*
-   * The counts, not just the status: §5.7's refresh reports what it did, and a
-   * 200 with no body would satisfy a status assertion while telling an operator
-   * nothing about whether the run found any work.
+  /**
+   * **Admission is the subject, and this test deliberately stops there.**
+   *
+   * Auth for this route is entirely middleware's (src/middleware.ts): a bad
+   * token returns 401 and a good one returns `NextResponse.next()`. So "the
+   * secret was accepted" is exactly "this is not a 401", decided before the
+   * handler runs. Asserting the status is NOT 401 pins the whole of what this
+   * test is about.
+   *
+   * **What it no longer covers, and why that is deliberate.** It used to assert
+   * §5.7's counts. That did two bad things. It made an AUTH test drive the full
+   * refresh loop, which calls Discogs once per refreshable record — four live
+   * requests per E2E run, stopped only by the guard in `no-live-calls.ts`.
+   * CLAUDE.md §2 says never allow a test to make a live external call; this
+   * test allowed it and something else stopped it, which is a rule held by a
+   * backstop rather than by the code.
+   *
+   * And the counts assertion could not fail: `expect.any(Number)` passes on
+   * `failed: 4`, which is what was actually happening — so it could not tell a
+   * healthy refresh from a totally failed one.
+   *
+   * **Narrowing loses no coverage**, because §5.7's counts are covered properly
+   * in `test/integration/api/refresh-prices.test.ts`, which mocks the client
+   * module and pins each outcome separately. That file explains why auth is not
+   * tested there and names THIS spec as where it lives — the two are a pair,
+   * and this end is the auth end.
+   *
+   * **Do not widen this back to a POST that asserts the body.** A second,
+   * weaker assertion of a contract already tested there is what created the
+   * problem above — and the POST is what made the live calls.
    */
-  const body = (await response.json()) as {
-    data: { attempted: number; written: number; skipped: number; failed: number };
-  };
-  expect(body.data).toMatchObject({
-    attempted: expect.any(Number),
-    written: expect.any(Number),
-    skipped: expect.any(Number),
-    failed: expect.any(Number),
-  });
+  /*
+    405 is the positive result: middleware admitted the request and the route
+    had no GET handler. 401 would mean the secret was rejected.
+  */
+  expect(
+    response.status(),
+    'the secret must be admitted — 401 means middleware rejected it',
+  ).toBe(405);
 });
