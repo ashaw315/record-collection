@@ -28451,3 +28451,53 @@ the first rendering that can measure it rather than at the next review that
 cannot. A review can only confirm intent; it cannot substitute for an
 instrument, and a value that only ever faced reviews has never been tested at
 all.
+
+---
+
+## A fixture that cannot express the defect
+
+**Thirteen well-shaped tests passed against the bug they were written to
+catch.** `shelf-runs.test.ts` guards the thing §2 of the drawing names — *"the
+pull must not be allowed to split a run. A pull that shortens its run produces a
+section break that says a group ended."* The assertions were specific, the
+invariant was stated at every seat, and one test asserted the lie directly.
+Staging the bug — filter the pulled record out, then group consecutive seats —
+left **all thirteen green.**
+
+The fixture was a shelf whose sections were each one contiguous block. On such a
+shelf, filtering a record out and regrouping by adjacency produces exactly the
+right answer. **The defect could not occur, so nothing could detect it.**
+
+### Two different failures with the same symptom
+
+This is NOT the control-condition rule, and folding it into that rule would lose
+the part that bites.
+
+| | asks | fails when |
+|---|---|---|
+| control condition | can the assertions fail? | a guard is vacuous, an exemption is a widened hole |
+| **fixture adequacy** | **can the defect occur?** | **the inputs cannot express the thing guarded** |
+
+A control condition is what caught this one, so the two are related in practice
+— staging the bug is how you discover the fixture is inert. But the diagnosis
+differs and so does the fix. A vacuous assertion is repaired by asserting the
+channel that carries the claim. **An inert fixture is repaired by changing the
+INPUT, and the assertions may be perfect throughout.** That is why it is the one
+nobody checks: every local signal says the test is good.
+
+### The fixture justification is half the fix
+
+Interleaving the fixture is not a contrivance chosen to make a test fail.
+Records sort by their alphabetically-first top-level genre ancestor, and **9 of
+17 real records resolve to more than one** — so a section sitting between
+another section's records is the COMMON case. The contiguous shelf was the
+unrepresentative one.
+
+**A fixture that cannot express the common case is worse than a fixture that is
+merely small**, because small is visible and unrepresentative is not. The
+interleaved shelf is the same size; it is only arranged like the data.
+
+So the question to ask of a fixture is not "is this enough data?" but **"can the
+failure I am guarding against happen to this input at all?"** Where the answer
+is no, every assertion over it is decorative no matter how sharply it is
+written.
