@@ -168,6 +168,55 @@ describe('the shelf outline tells the truth about groups', () => {
   });
 });
 
+describe('the shelf meets the spines standing on it', () => {
+  /**
+   * **Caught by looking, not by measuring.** The first rendering at true size
+   * showed the outlines floating below the spines and sagging away from them —
+   * and every existing test passed, because they all asked about run COUNTS and
+   * never about whether the shelf touches the records.
+   *
+   * That is the fixture-adequacy failure in a new place: the assertions were
+   * about the right invariant and no assertion described the surface itself.
+   */
+  const run = shelfRuns(
+    Array.from({ length: 3 }, (_, index) => ({ id: `r${index}`, section: 'A' })),
+    null,
+  )[0];
+
+  it('starts where the spines end, including the isometric lift', () => {
+    const spine = spinePolygon(0, 0, SPINE_WIDTH_MAX);
+    const shelf = shelfPolygon(run, 0, 0);
+
+    /* The spine's lower-RIGHT corner is the shelf's upper-right corner. */
+    const spineFootRight = spine[2];
+    const shelfTopRight = shelf[1];
+
+    expect(shelfTopRight[1], 'the shelf top meets the spine foot').toBeCloseTo(
+      spineFootRight[1],
+      5,
+    );
+  });
+
+  it('rises at the projection rate, not in proportion to its length', () => {
+    /*
+      The defect the drawing showed: rise was computed from the run's whole
+      span, so a forty-seat shelf sagged forty times as far as a one-seat one.
+      The shelf's rise is a property of its DEPTH under the projection.
+    */
+    const short = shelfPolygon(run, 0, 0);
+    const longRun = shelfRuns(
+      Array.from({ length: 30 }, (_, index) => ({ id: `x${index}`, section: 'A' })),
+      null,
+    )[0];
+    const long = shelfPolygon(longRun, 0, 0);
+
+    const rise = (polygon: ReadonlyArray<readonly [number, number]>) =>
+      polygon[0][1] - polygon[1][1];
+
+    expect(rise(long), 'a longer shelf does not sag further').toBeCloseTo(rise(short), 5);
+  });
+});
+
 describe('the shelf gap is provisional', () => {
   /**
    * **Authored, not measured — and pinned here so it cannot become settled by

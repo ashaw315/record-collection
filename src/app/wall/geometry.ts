@@ -123,7 +123,16 @@ export function spinePolygon(x: number, y: number, width: number): readonly Poin
 export function shelfPolygon(run: ShelfRun, originX: number, originY: number): readonly Point[] {
   /* The extent counts every SEAT, including the one whose record is pulled. */
   const span = run.seatCount * SPINE_WIDTH_MAX;
-  const rise = (span * SIN30) / COS30;
+
+  /*
+    **The rise is the shelf's DEPTH under the projection, not its length.**
+    Deriving it from `span` made a forty-seat shelf sag forty times as far as a
+    one-seat one — the outline peeled away from the spines standing on it. The
+    first rendering at true size showed it immediately; every existing test
+    passed, because they all asked about run counts and none asked whether the
+    shelf touches the records.
+  */
+  const rise = (DEPTH * SIN30) / COS30;
   const y = originY + SPINE_HEIGHT;
 
   return [
