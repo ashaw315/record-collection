@@ -1,6 +1,7 @@
 import Link from 'next/link';
-import { formatPrice, formatYear } from '../../collection-format';
-import { conditionLabel, pressingFacts } from '../record-detail-format';
+import { HAIRLINE, LABEL } from './grid-type';
+import { formatPrice } from '../../collection-format';
+import { pressingFacts } from '../record-detail-format';
 import { priceTypeMeaning, type PriceType } from './price-line';
 import type { HydratedRecord } from '@/lib/db/queries/records';
 
@@ -37,8 +38,8 @@ function Field({
   mono?: boolean;
 }) {
   return (
-    <div className="border-b border-border py-2 last:border-0 sm:flex sm:gap-4">
-      <dt className="text-label tracking-wide text-muted-foreground uppercase sm:w-40 sm:shrink-0 sm:pt-0.5">
+    <div className={`border-b ${HAIRLINE} py-2 last:border-0 sm:flex sm:gap-4`}>
+      <dt className={`${LABEL} sm:w-40 sm:shrink-0 sm:pt-0.5`}>
         {label}
       </dt>
       <dd className={mono ? 'font-mono text-detail' : 'text-detail'}>{children}</dd>
@@ -49,7 +50,7 @@ function Field({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-6">
-      <h2 className="mb-1 font-heading text-title font-semibold tracking-tight">{title}</h2>
+      <h2 className={`mb-2 ${LABEL}`}>{title}</h2>
       <dl>{children}</dl>
     </section>
   );
@@ -69,57 +70,43 @@ export function RecordDetail({ record }: { record: HydratedRecord }) {
     },
   );
 
-  const grade = (value: string | null) => {
-    if (value === null) return <span className="text-muted-foreground">Not graded</span>;
-    const full = conditionLabel(value);
-    return (
-      <span className="font-mono" title={full}>
-        {value}
-      </span>
-    );
-  };
+  /**
+   * The facts the GRID already shows, excluded here so the page does not state
+   * anything twice. Named as a list rather than filtered by position, because a
+   * reorder of `pressingFacts` must not silently change what this renders.
+   */
+  const GRID_CARRIES = new Set(['Catalog number', 'Country', 'Pressed']);
+  const remainingFacts = facts.filter((fact) => !GRID_CARRIES.has(fact.label));
 
   return (
     <article>
-      <header className="mb-5">
-        <h1 className="font-heading text-headline font-semibold tracking-tight">{record.title}</h1>
-        {/* The artist links to the collection filtered by them — the question
-            "what else do I have by this artist" is one click, not a search. */}
-        <p className="mt-0.5 text-detail">
-          <Link
-            href={`/?artistId=${record.artist.id}`}
-            className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-          >
-            {record.artist.name}
-          </Link>
-        </p>
-      </header>
+      {/*
+        **The title, artist, Record, Pressing and Acquisition sections are gone
+        (7a §6).** The grid above this renders all of them, and §6's rule —
+        "labels that duplicate their content are dropped rather than restyled" —
+        applies at the seam as much as inside a cell. Keeping both made the page
+        state every fact twice, which broke 24 locators across six E2E files by
+        making `getByText` ambiguous; the duplication was visible on screen
+        before any test found it.
 
-      <Section title="Record">
-        <Field label="Release year">
-          {record.releaseYear === null ? (
-            <span className="text-muted-foreground">Unknown</span>
-          ) : (
-            <span className="font-mono tabular-nums">{formatYear(record.releaseYear)}</span>
-          )}
-        </Field>
-        {record.label !== null && (
-          <Field label="Label">
-            <Link href={`/?labelId=${record.label.id}`} className="underline-offset-2 hover:underline">
-              {record.label.name}
-            </Link>
-          </Field>
-        )}
-        {record.format !== null && <Field label="Format">{record.format.name}</Field>}
-        <Field label="Media condition">{grade(record.conditionMedia)}</Field>
-        <Field label="Sleeve condition">{grade(record.conditionSleeve)}</Field>
-      </Section>
+        What remains is what the grid does NOT carry: the matrix/runout and the
+        other pressing facts too specific for a two-line block, Tags, and Notes.
+      */}
 
-      {/* Only when the pressing carries something. A found-or-created pressing
-          row can be nearly empty (§4), and an empty section is worse than none. */}
-      {facts.length > 0 && (
-        <Section title="Pressing">
-          {facts.map((fact) => (
+      {/*
+        **The pressing facts the grid does NOT carry.** The grid's two-line
+        pressing block holds label, format, catalog number, country and year;
+        these five are too specific for it and have nowhere else to go —
+        matrix/runout especially, which §4 of SPEC.md calls user-authoritative
+        and is how a collector identifies a pressing when catalogue numbers
+        agree.
+
+        Filtered rather than re-listed, so a new fact added to `pressingFacts`
+        appears here automatically unless the grid claims it.
+      */}
+      {remainingFacts.length > 0 && (
+        <Section title="Pressing detail">
+          {remainingFacts.map((fact) => (
             <Field key={fact.label} label={fact.label} mono={fact.mono}>
               {fact.value}
             </Field>
@@ -127,26 +114,14 @@ export function RecordDetail({ record }: { record: HydratedRecord }) {
         </Section>
       )}
 
+      {/*
+        **Acquisition's Paid / Bought / From fields are gone** — the grid's
+        provenance module carries them (§6). `Latest price` stays, because it
+        answers a different question from the grid's market median: the latest
+        OBSERVATION whatever its type, against the median of all of them. Two
+        numbers that can legitimately differ, each labelled with what it is.
+      */}
       <Section title="Acquisition">
-        <Field label="Paid">
-          {record.purchasePrice === null ? (
-            <span className="text-muted-foreground">Not recorded</span>
-          ) : (
-            <span className="font-mono tabular-nums">{formatPrice(record.purchasePrice)}</span>
-          )}
-        </Field>
-        {record.purchaseDate !== null && (
-          <Field label="Bought">
-            <span className="font-mono tabular-nums">{record.purchaseDate}</span>
-          </Field>
-        )}
-        {record.store !== null && (
-          <Field label="From">
-            <Link href={`/?storeId=${record.store.id}`} className="underline-offset-2 hover:underline">
-              {record.store.name}
-            </Link>
-          </Field>
-        )}
         {/*
           The LATEST price, whatever its type — NOT §7.6's used → new →
           purchase_price chain, which is defined for the collection-value
@@ -175,23 +150,15 @@ export function RecordDetail({ record }: { record: HydratedRecord }) {
         )}
       </Section>
 
-      {(record.genres.length > 0 || record.tags.length > 0) && (
+      {/*
+        **Genres left this section for the grid's pressing block** (7a §1.1:
+        "the genres line moves into the pressing block, which is where it
+        belongs on the facts side anyway"). Tags stay — the grid has no tags
+        cell, and a tag is the owner's own filing rather than a fact about the
+        pressing.
+      */}
+      {record.tags.length > 0 && (
         <Section title="Filed under">
-          {record.genres.length > 0 && (
-            <Field label="Genres">
-              <span className="flex flex-wrap gap-1">
-                {record.genres.map((genre) => (
-                  <Link
-                    key={genre.id}
-                    href={`/?genreId=${genre.id}`}
-                    className="rounded-xs border border-border px-1.5 py-0.5 text-label hover:bg-accent"
-                  >
-                    {genre.name}
-                  </Link>
-                ))}
-              </span>
-            </Field>
-          )}
           {record.tags.length > 0 && (
             <Field label="Tags">
               <span className="flex flex-wrap gap-1">

@@ -78,16 +78,55 @@ test('shows every recorded field, and omits what is absent', async ({ page }) =>
 
   await page.goto(`/records/${record.id}`);
 
-  await expect(page.getByRole('heading', { name: `Hear Nothing ${suffix}` })).toBeVisible();
-  await expect(page.getByRole('link', { name: `Discharge-${suffix}` })).toBeVisible();
+  /**
+   * **Restated for 7a's grid, not loosened.** Every fact below is still
+   * asserted — what changed is WHERE it lives and HOW it is located.
+   *
+   * The facts moved: title, artist, catalog number, year, genres, price, source
+   * and condition are now in the grid at the top of the screen, and
+   * `RecordDetail` below keeps only what the grid does not carry. A spec that
+   * stopped checking a fact because the fact moved is a spec that will not
+   * notice when it moves again, so each one is checked in its new cell.
+   *
+   * And they are located by `data-cell` / `data-field` rather than by text.
+   * These assertions used `getByText`, which broke the moment two elements on
+   * the page said the same thing — 24 locators across six files. A handle
+   * survives the wording changing, so a failure now means the fact moved.
+   */
+  const grid = page.getByTestId('record-grid');
+
+  await expect(grid.locator('[data-field="title"]')).toHaveText(`Hear Nothing ${suffix}`);
+  await expect(grid.locator('[data-field="artist"]')).toHaveText(`Discharge-${suffix}`);
 
   // The identifiers that decide WHICH pressing this is (CLAUDE.md §8).
-  await expect(page.getByText(`CLAY-LP-3-${suffix}`)).toBeVisible();
+  // The catalog number is the grid's; the matrix/runout stays below, because
+  // the grid's two-line pressing block has no room for it.
+  await expect(grid.locator('[data-field="pressing-line"]')).toContainText(
+    `CLAY-LP-3-${suffix}`,
+  );
+  await expect(grid.locator('[data-field="origin"]')).toContainText('1982');
+  await expect(grid.locator('[data-field="year"]')).toHaveText('1982');
+  await expect(grid.locator('[data-field="genres"]')).toContainText(`UK82-${suffix}`);
+
+  /*
+    Provenance is one merged block now (§6: "six provenance fields become one
+    block"), so the price and the source are lines within one cell rather than
+    labelled fields.
+  */
+  await expect(grid.locator('[data-cell="provenance"]')).toContainText('$24.50');
+  await expect(grid.locator('[data-cell="provenance"]')).toContainText(`Amoeba-${suffix}`);
+  await expect(grid.locator('[data-cell="provenance"]')).toContainText('VG+ media');
+
+  /* A populated module carries no diagonal — §1.4's rule, asserted. */
+  await expect(grid.locator('[data-cell="provenance"]')).not.toHaveAttribute(
+    'data-diagonal',
+    'single',
+  );
+
+  // Below the grid: the pressing facts it does not carry, and the notes.
   await expect(page.getByText(`CLAYLP3-A1-${suffix}`)).toBeVisible();
   await expect(page.getByText('Damont')).toBeVisible();
   await expect(page.getByText('180 g')).toBeVisible();
-
-  await expect(page.getByText('$24.50')).toBeVisible();
   await expect(page.getByText('First pressing, bought in person.')).toBeVisible();
 
   // is_reissue defaults false, and only the true case earns a row.
@@ -111,12 +150,34 @@ test('renders a record that has only the required fields', async ({ page }) => {
 
   await page.goto(`/records/${record.id}`);
 
-  await expect(page.getByRole('heading', { name: `Bare ${suffix}` })).toBeVisible();
-  await expect(page.getByText('Not graded').first()).toBeVisible();
-  await expect(page.getByText('Not recorded')).toBeVisible();
+  const grid = page.getByTestId('record-grid');
 
-  // No pressing, so no Pressing section at all rather than an empty one.
-  await expect(page.getByRole('heading', { name: 'Pressing' })).toHaveCount(0);
+  await expect(grid.locator('[data-field="title"]')).toHaveText(`Bare ${suffix}`);
+
+  /**
+   * **Absence is now a DRAWN CELL, not the words "Not recorded" (7a §1.1).**
+   *
+   * The old screen printed "Not graded" and "Not recorded" as field values.
+   * 7a draws the empty module instead and marks it with a diagonal: one line
+   * means not recorded and the owner can fill it, crossed means not applicable
+   * and they cannot. So the assertion moved from the text to the mark — and
+   * this is the sparse record the §10 mobile case is designed around, which is
+   * why it is asserted here rather than only in the component tests.
+   */
+  await expect(grid.locator('[data-cell="provenance"]')).toHaveAttribute(
+    'data-diagonal',
+    'single',
+  );
+
+  /*
+    No pressing and no Discogs release, so the market figure can never exist:
+    CROSSED rather than single, because the owner cannot fill it.
+  */
+  await expect(grid.locator('[data-cell="market"]')).toHaveAttribute('data-diagonal', 'crossed');
+
+  // A record with no pressing has no pressing-detail section rather than an
+  // empty one — the grid's own pressing cell carries what little there is.
+  await expect(page.getByRole('heading', { name: 'Pressing detail' })).toHaveCount(0);
   /**
    * The gallery is PRESENT with no images, unlike Pressing above — and the
    * difference is deliberate. A pressing section with nothing in it would

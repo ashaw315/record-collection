@@ -90,3 +90,17 @@ scratch/
 # Ignored rather than merely remembered, for the reason `scratch/` above gives.
 q-probe.mjs
 *-probe.mjs
+
+# Design artefacts: working documents, deliberately NOT committed.
+#
+# SPEC.md is self-contained by design — a link to a file outside it rots while
+# the document claims it is still good, and a copy inside the repo is the same
+# problem with an extra copy. These are read where they are and left untracked;
+# the screenshots that supersede them live in docs/record-detail/.
+docs/design/
+
+# The same artefacts' STALE root copies, from before they moved into
+# docs/design/. Each root file is smaller than its docs/design counterpart, so
+# the moved ones are current. Ignored rather than deleted: they are Adam's
+# working files and a diff I cannot prove is a duplicate is not mine to remove.
+/*.dc.html

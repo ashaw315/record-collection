@@ -1,0 +1,97 @@
+<!doctype html><meta charset="utf-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;800&family=Geist+Mono:wght@400;500&display=swap');
+  *{box-sizing:border-box;margin:0}
+  body{width:1440px;height:900px;overflow:hidden;font-family:'Inter Tight',sans-serif;color:oklch(0.19 0.008 60);background:oklch(0.985 0.004 85)}
+  .app{height:53px;display:flex;align-items:center;gap:22px;padding:0 24px;border-bottom:1px solid oklch(0.19 0.008 60);font-size:13px}
+  .app b{font-weight:800}
+  .grid{height:847px;display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:40px 300px 186px 160px 161px;gap:0}
+  .c{padding:18px;min-width:0;overflow:hidden}
+  .lab{font:500 11px/1 'Geist Mono',monospace;text-transform:uppercase;letter-spacing:.09em;color:oklch(0.55 0.008 60);margin-bottom:6px}
+  .v{font-size:13px;line-height:1.45}
+  .hdr{grid-column:span 12;display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid oklch(0.19 0.008 60)}
+  .v6{border-left:6px solid oklch(0.19 0.008 60)}
+  .h6{border-top:6px solid oklch(0.19 0.008 60)}
+  .hair{border-top:1px solid oklch(0.7 0.006 60)}
+  .sleeve{grid-column:8 / 13;grid-row:2 / 4;padding:0;overflow:hidden;display:flex}
+  .sleeve img{width:100%;height:100%;object-fit:cover;display:block}
+  .disp{grid-column:1 / 5;grid-row:3;background:#ac6132;display:flex;flex-direction:column;justify-content:flex-end}
+  .disp .n{font:800 72px/0.86 'Inter Tight';color:#000}
+  .mkt{grid-column:1 / 5;grid-row:4;display:flex;flex-direction:column;justify-content:flex-end}
+  .mkt .n{font:800 40px/1 'Inter Tight'}
+  .meta{font:400 10px/1 'Geist Mono',monospace;color:oklch(0.55 0.008 60)}
+  .diag{position:relative}
+  .diag::after{content:'';position:absolute;inset:0;background-image:linear-gradient(135deg,transparent calc(50% - 0.5px),oklch(0.15 0.005 60) calc(50% - 0.5px),oklch(0.15 0.005 60) calc(50% + 0.5px),transparent calc(50% + 0.5px))}
+  .disc{font:500 11px/1 'Geist Mono',monospace;text-transform:uppercase;letter-spacing:.09em;color:oklch(0.19 0.008 60);border-bottom:1px solid oklch(0.19 0.008 60);display:inline-block;cursor:pointer}
+  .cnt{font:800 40px/1 'Inter Tight'}
+  .mono{font:400 12px/1.5 'Geist Mono',monospace;word-break:break-all}
+</style>
+<div class="app"><b>Record Collection</b><span>Collection</span><span>Want list</span><span>Look up</span><span>Stats</span><span>Manage</span></div>
+<div class="grid">
+
+  <div class="hdr">
+    <span class="lab" style="margin:0">Collection</span>
+    <span><span class="lab" style="margin:0;display:inline">Edit</span> &nbsp; <span class="lab" style="margin:0;display:inline">Delete</span></span>
+  </div>
+
+  <!-- ROW 2: identity + pressing | sleeve -->
+  <div class="c" style="grid-column:1 / 5;grid-row:2;display:flex;flex-direction:column">
+    <div style="flex:1">
+      <div class="v" style="font-weight:800">Never Too Much</div>
+      <div class="v" style="font-weight:300">Luther Vandross</div>
+    </div>
+    <div>
+      <div class="lab">Pressing</div>
+      <div class="v">Epic · LP · FE 36811</div>
+      <div class="v">United States, 1981</div>
+      <div class="v">Soul, Disco</div>
+    </div>
+  </div>
+
+  <div class="c v6" style="grid-column:5 / 8;grid-row:2;display:flex;flex-direction:column;justify-content:flex-end">
+    <div class="lab">Matrix / runout</div>
+    <div class="mono">SP-3503 / SP-3504 / A&amp;M SP3503-P10 …</div>
+    <div style="margin-top:8px"><span class="disc">8 variants</span></div>
+  </div>
+
+  <div class="sleeve v6"><img src="https://z29f9nqxxuy5nwb2.public.blob.vercel-storage.com/records/e73e1de1-3686-4a81-8544-ca2300e187bb/43ecded3-cce0-48c2-9cbc-dc29df091cde.jpg"></div>
+
+  <!-- ROW 3: display band | provenance | market -->
+  <div class="c disp h6">
+    <div class="lab" style="color:oklch(0.30 0.03 40)">Released · pressed the same year</div>
+    <div class="n">1981</div>
+  </div>
+  <div class="c h6" style="grid-column:5 / 8;grid-row:3">
+    <div class="lab">Provenance</div>
+    <div class="v">Paid $18.00</div>
+    <div class="v">at Academy Records</div>
+    <div class="v">VG+ media, VG sleeve</div>
+  </div>
+  <div class="c mkt v6 h6">
+    <div class="lab">Market median</div>
+    <div style="display:flex;align-items:baseline;gap:14px"><span class="n">$24.00</span><span class="meta">$9.99–$61.00</span></div>
+    <div style="margin-top:10px"><span class="disc">6 observations</span></div>
+  </div>
+  <div class="c v6 hair" style="grid-column:5 / 8;grid-row:4">
+    <div class="lab">Latest</div>
+    <div class="v" style="font-family:'Geist Mono',monospace">$61.00</div>
+    <div class="meta" style="margin-top:4px">asking</div>
+  </div>
+
+  <!-- ROW 4: journal | note | cover count -->
+  <div class="c hair v6" style="grid-column:8 / 13;grid-row:4">
+    <div class="lab">Journal</div>
+    <div class="v">Bought for the B-side. Sleeve has a split at the bottom seam.</div>
+    <div style="margin-top:10px"><span class="disc">Add entry</span></div>
+  </div>
+  <div class="c hair" style="grid-column:1 / 5;grid-row:5">
+    <div class="lab">About this record</div>
+    <div class="v" style="color:oklch(0.55 0.008 60)">No note about this record.</div>
+    <div style="margin-top:10px"><span class="disc">Write one</span></div>
+  </div>
+  <div class="c hair v6" style="grid-column:5 / 13;grid-row:5">
+    <div class="lab">Images</div>
+    <div class="cnt">1</div>
+    <div style="margin-top:10px"><span class="disc">Manage</span></div>
+  </div>
+</div>

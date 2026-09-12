@@ -9,6 +9,8 @@ import { SnippetPanel } from './SnippetPanel';
 import { isAnthropicConfigured } from '@/lib/llm/client';
 import { RecordJournal } from './RecordJournal';
 import { RecordDetail } from './RecordDetail';
+import { RecordGrid } from './RecordGrid';
+import { marketFigures } from './market-median';
 import { listPricesForRecord } from '@/lib/db/queries/prices';
 import { hydrateRecord } from '@/lib/db/queries/records';
 import { isUuid } from '@/lib/api/errors';
@@ -62,11 +64,14 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
    */
   const prices = await listPricesForRecord(id);
 
+  /* §4's 40px figure, and it must be the number it claims to be. */
+  const figures = marketFigures(prices.map((row) => row.price));
+
   return (
     <>
       <AppHeader />
 
-      <main className="mx-auto w-full max-w-3xl px-4 py-6">
+      <main className="w-full py-6">
         {/* Back to the collection, not browser-back: the reader may have
             arrived from a link or a fresh tab, where back goes nowhere useful. */}
         <Link
@@ -76,9 +81,87 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
           ← Collection
         </Link>
 
-        <div className="mt-3 flex items-start justify-between gap-4">
-          <div className="min-w-0 flex-1">
-            <RecordDetail record={record} />
+        <div className="mt-3">
+          <div className="min-w-0">
+            {/*
+              **The seam.** 7a's grid covers the top of the screen; the gallery,
+              snippet panel and delete control below it are unchanged, so the
+              page reads as half-redesigned deliberately. The grid is the thing
+              under judgement, not the page.
+            */}
+            <RecordGrid
+              controls={
+                <>
+                  {/*
+                    Delete reads as a link rather than a button: §7.3's
+                    precedent is that a destructive action must be deliberate,
+                    and giving it Edit's visual weight invites the misclick the
+                    confirmation then has to catch.
+                  */}
+                  <Link
+                    href={`/records/${id}/edit`}
+                    className="text-label font-mono tracking-[0.09em] uppercase no-underline hover:underline"
+                  >
+                    Edit
+                  </Link>
+                  <DeleteRecord
+                    recordId={id}
+                    title={record.title}
+                    imageCount={record.images.length}
+                    journalCount={record.journalEntries.length}
+                  />
+                </>
+              }
+              record={{
+                title: record.title,
+                artistName: record.artist.name,
+                artistId: record.artist.id,
+                labelName: record.label?.name ?? null,
+                formatName: record.format?.name ?? null,
+                catalogNumber: record.pressing?.catalogNumber ?? null,
+                countryPressed: record.pressing?.countryPressed ?? null,
+                releaseYear: record.releaseYear,
+                yearPressed: record.pressing?.yearPressed ?? null,
+                genres: record.genres.map((genre) => ({ id: genre.id, name: genre.name })),
+                purchasePrice: record.purchasePrice,
+                storeName: record.store?.name ?? null,
+                conditionMedia: record.conditionMedia,
+                conditionSleeve: record.conditionSleeve,
+                /*
+                  From the stored observations rather than a live fetch: §7 calls
+                  the drawing's market values illustrative, and the server
+                  already holds what was actually observed.
+
+                  Through `marketFigures` rather than indexing: the rows arrive
+                  newest-first, so `prices[0]` is the most RECENT observation and
+                  labelling it a median showed $61.00 for a record observed at
+                  24.00 / 9.99 / 61.00.
+                */
+                marketMedian: figures?.median ?? null,
+                marketLow: figures?.low ?? null,
+                marketHigh: figures?.high ?? null,
+                marketFetchedAt: prices[0]?.recordedAt ?? null,
+                hasDiscogsRelease: record.pressing?.discogsReleaseId != null,
+                journalEntry:
+                  record.journalEntries.length === 0
+                    ? null
+                    : {
+                        entry: record.journalEntries[0].note,
+                        entryDate: String(record.journalEntries[0].entryDate),
+                      },
+                coverUrl: record.images.find((image) => image.imageType === 'cover')?.url ?? null,
+                spineColour: record.spineColour,
+              }}
+            />
+
+            {/*
+              **The measure returns below the grid.** The grid spans the
+              viewport because §8 makes it a fragment of a larger one; the
+              sections under it are continuous text and panels, which need a
+              reading width. This wrapper is the seam made explicit.
+            */}
+            <div className="mx-auto w-full max-w-3xl px-4">
+              <RecordDetail record={record} />
 
             {/*
               §10's "images gallery". Rendered here rather than inside
@@ -187,26 +270,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
                 note: entry.note,
               }))}
             />
-          </div>
-          {/*
-            Delete sits UNDER Edit and reads as a link rather than a button:
-            §7.3's precedent is that a destructive action must be deliberate,
-            and giving it the same visual weight as Edit invites the misclick
-            the confirmation then has to catch.
-          */}
-          <div className="mt-1 flex shrink-0 flex-col items-end">
-            <Link
-              href={`/records/${id}/edit`}
-              className="rounded-xs border border-border px-3 py-1.5 text-label transition-colors hover:bg-accent"
-            >
-              Edit
-            </Link>
-            <DeleteRecord
-              recordId={id}
-              title={record.title}
-              imageCount={record.images.length}
-              journalCount={record.journalEntries.length}
-            />
+            </div>
           </div>
         </div>
       </main>

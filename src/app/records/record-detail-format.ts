@@ -94,6 +94,25 @@ const GRADE_NAMES: Record<ConditionGrade, string> = {
   P: 'Poor',
 };
 
+/**
+ * Expands a condition grade to its full name (`VG+` → `Very Good Plus`).
+ *
+ * **This has a caller on a different surface: `src/app/shelf/back-face.ts`.**
+ * The wall's sleeve back-face renders Media and Sleeve conditions through this
+ * same helper, so the function outliving its detail-screen caller is correct
+ * rather than dead code.
+ *
+ * Named here because it is not discoverable from either end. The detail screen
+ * stopped rendering conditions when 7a's grid took over the top of the page
+ * (§6), and a tidy-up that removed "the now-unused formatter" would have broken
+ * the wall SILENTLY — nothing on the detail screen would fail, and the wall has
+ * no test that renders a back-face with a graded record.
+ *
+ * The dependency was found by enumerating the places a consumer could live
+ * rather than by searching for the ones expected: a search for consumers of
+ * `RecordDetail` returns one file, and a search of the places a consumer could
+ * live returns a surface nobody would have thought of.
+ */
 export function conditionLabel(grade: string | null): string | undefined {
   // Null is "not yet graded" (§4.2), which is not a grade and must not be
   // given one.

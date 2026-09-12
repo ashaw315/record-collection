@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { LABEL } from './grid-type';
 import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { IMAGE_TYPE_ORDER, groupImages, imageTypeLabel, type GalleryImage } from './gallery-order';
@@ -105,7 +106,7 @@ export function ImageGallery({
 
   return (
     <section className="mt-6" data-testid="image-gallery">
-      <h2 className="mb-1 font-heading text-title font-semibold tracking-tight">Images</h2>
+      <h2 className={`mb-2 ${LABEL}`}>Images</h2>
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <label htmlFor="image-type" className="sr-only">

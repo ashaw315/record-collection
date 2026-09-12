@@ -1,0 +1,108 @@
+<!doctype html><meta charset="utf-8">
+<title>Record detail — A, Kunstismen construction</title>
+<style>
+ @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;800;900&family=Geist+Mono:wght@400;500&display=swap');
+ *{box-sizing:border-box;margin:0}
+ body{width:1440px;height:900px;overflow:hidden;font-family:'Inter Tight',sans-serif;
+      color:oklch(0.19 0.008 60);background:oklch(0.985 0.004 85)}
+ .app{height:53px;display:flex;align-items:center;gap:22px;padding:0 24px;
+      border-bottom:1px solid oklch(0.19 0.008 60);font-size:13px}
+ .app b{font-weight:800}
+
+ /* Twelve columns, zero gutter. Blocks lock edge to edge at different scales —
+    Kunstismen's construction is orthogonal, so nothing needs to overlap. */
+ .grid{height:847px;display:grid;grid-template-columns:repeat(12,1fr);
+       grid-template-rows:40px 258px 282px 267px;gap:0}
+ .c{padding:18px;min-width:0;overflow:hidden}
+ .lab{font:500 11px/1 'Geist Mono',monospace;text-transform:uppercase;
+      letter-spacing:.09em;color:oklch(0.55 0.008 60);margin-bottom:6px}
+ .v{font-size:13px;line-height:1.45}
+ .meta{font:400 10px/1 'Geist Mono',monospace;color:oklch(0.55 0.008 60)}
+ .mono{font:400 12px/1.5 'Geist Mono',monospace}
+ .ink{border-color:oklch(0.19 0.008 60)}
+ .v6{border-left:6px solid oklch(0.19 0.008 60)}
+ .h6{border-top:6px solid oklch(0.19 0.008 60)}
+ .h1{border-top:1px solid oklch(0.62 0.006 60)}
+ .disc{font:500 11px/1 'Geist Mono',monospace;text-transform:uppercase;
+       letter-spacing:.09em;border-bottom:1px solid currentColor}
+
+ /* THE TIER THE FRAME WAS MISSING: the title at 40, which is the record's
+    identity rather than a decorative size. Kunstismen sets the thing the page
+    is ABOUT largest. */
+ .t40{font:800 40px/0.95 'Inter Tight';letter-spacing:-0.02em}
+ .t72{font:900 72px/0.86 'Inter Tight';letter-spacing:-0.03em}
+
+ /* The colour as a LOCKED BLOCK — a whole cell region, edge to edge, not a
+    mark and not a band with soft ends. The record supplies the hue. */
+ .field{background:#ac6132}
+ .onfield{color:#000}
+ .labonfield{font:500 11px/1 'Geist Mono',monospace;text-transform:uppercase;
+             letter-spacing:.09em;color:oklch(0.28 0.04 42);margin-bottom:6px}
+ .sleeve{padding:0;overflow:hidden;display:flex}
+ .sleeve img{width:100%;height:100%;object-fit:cover;display:block}
+</style>
+<div class="app"><b>Record Collection</b><span>Collection</span><span>Want list</span>
+ <span>Look up</span><span>Stats</span><span>Manage</span></div>
+
+<div class="grid">
+  <div class="c" style="grid-column:1/13;grid-row:1;display:flex;justify-content:space-between;
+       align-items:center;padding:11px 14px;border-bottom:1px solid oklch(0.19 0.008 60)">
+    <span class="lab" style="margin:0">Collection</span>
+    <span><span class="lab" style="margin:0">Edit</span> &nbsp;
+          <span class="lab" style="margin:0">Delete</span></span>
+  </div>
+
+  <!-- ROW 2 — the identity block at 40 is the structural element, locked to the
+       sleeve's 6px edge. Nothing floats. -->
+  <div class="c" style="grid-column:1/8;grid-row:2;display:flex;flex-direction:column;justify-content:space-between">
+    <div>
+      <div class="t40">Never Too Much</div>
+      <div class="v" style="font-weight:300;margin-top:6px">Luther Vandross</div>
+    </div>
+    <div>
+      <div class="lab">Pressing</div>
+      <div class="v">Epic · LP · FE 36811 · United States, 1981</div>
+      <div class="v">Soul, Disco</div>
+    </div>
+  </div>
+
+  <div class="sleeve v6" style="grid-column:8/13;grid-row:2/4"><img src="https://z29f9nqxxuy5nwb2.public.blob.vercel-storage.com/records/e73e1de1-3686-4a81-8544-ca2300e187bb/43ecded3-cce0-48c2-9cbc-dc29df091cde.jpg"></div>
+
+  <!-- ROW 3 — the colour takes a whole block, and the 72 sits IN it, upright.
+       The field is locked between the frame edge and the sleeve's rule. -->
+  <div class="c field h6" style="grid-column:1/5;grid-row:3;display:flex;flex-direction:column;justify-content:flex-end">
+    <div class="labonfield">Released · pressed the same year</div>
+    <div class="t72 onfield">1981</div>
+  </div>
+
+  <div class="c h6" style="grid-column:5/8;grid-row:3;display:flex;flex-direction:column;justify-content:flex-end">
+    <div class="lab">Market median</div>
+    <div class="t40">$24.00</div>
+    <div class="meta" style="margin-top:8px">$9.99–$61.00 · <span class="disc">6 observations</span></div>
+  </div>
+
+  <!-- ROW 4 — four equal cells, hairline above, 6px verticals ranking them. -->
+  <div class="c h1" style="grid-column:1/4;grid-row:4">
+    <div class="lab">Provenance</div>
+    <div class="v">Paid $18.00</div>
+    <div class="v">at Academy Records</div>
+    <div class="v">VG+ media, VG sleeve</div>
+  </div>
+  <div class="c h1 v6" style="grid-column:4/7;grid-row:4">
+    <div class="lab">Matrix / runout</div>
+    <div class="mono">SP-3503 / SP-3504 /<br>A&amp;M SP3503-P10 …</div>
+    <div style="margin-top:8px"><span class="disc">8 variants</span></div>
+  </div>
+  <div class="c h1 v6" style="grid-column:7/10;grid-row:4">
+    <div class="lab">Journal</div>
+    <div class="v">Bought for the B-side. Sleeve has a split at the bottom seam.</div>
+    <div style="margin-top:8px"><span class="disc">Add entry</span></div>
+  </div>
+  <div class="c h1 v6" style="grid-column:10/13;grid-row:4">
+    <div class="lab">About this record</div>
+    <div class="v" style="color:oklch(0.55 0.008 60)">No note.</div>
+    <div style="margin-top:10px"><span class="disc">Write one</span></div>
+    <div style="margin-top:10px"><span class="lab" style="margin:0">Images</span>
+      <span class="t40" style="font-size:24px">1</span> <span class="disc">Manage</span></div>
+  </div>
+</div>

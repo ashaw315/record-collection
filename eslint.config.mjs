@@ -23,6 +23,13 @@ const eslintConfig = defineConfig([
     // reports ~1,550 errors in code nobody wrote. Same reasoning as
     // playwright-report below.
     ".next-test/**",
+    // Design's working artefacts, and `support.js` among them is a vendored
+    // bundle: minified names, `ReactDOM.render`, an assignment to `module`.
+    // Ten problems in code nobody here wrote, and lint is a gate — a red gate
+    // for a reason unrelated to the change under test is a gate that gets
+    // ignored. Git-ignored too (.gitignore), and for the same reason: they are
+    // read where they are and never committed.
+    "docs/design/**",
     "out/**",
     "build/**",
     "next-env.d.ts",

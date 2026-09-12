@@ -1,0 +1,141 @@
+<!doctype html><meta charset="utf-8">
+<title>Record detail — B, the diagonal as boundary</title>
+<style>
+ @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;800;900&family=Geist+Mono:wght@400;500&display=swap');
+ *{box-sizing:border-box;margin:0}
+ body{width:1440px;height:900px;overflow:hidden;font-family:'Inter Tight',sans-serif;
+      color:oklch(0.19 0.008 60);background:oklch(0.985 0.004 85)}
+ .app{height:53px;display:flex;align-items:center;gap:22px;padding:0 24px;
+      border-bottom:1px solid oklch(0.19 0.008 60);font-size:13px}
+ .app b{font-weight:800}
+ .stage{position:relative;height:847px;overflow:hidden}
+
+ .lab{font:500 11px/1 'Geist Mono',monospace;text-transform:uppercase;
+      letter-spacing:.09em;color:oklch(0.55 0.008 60);margin-bottom:6px}
+ .v{font-size:13px;line-height:1.45}
+ .meta{font:400 10px/1 'Geist Mono',monospace;color:oklch(0.55 0.008 60)}
+ .mono{font:400 12px/1.5 'Geist Mono',monospace}
+ .disc{font:500 11px/1 'Geist Mono',monospace;text-transform:uppercase;
+       letter-spacing:.09em;border-bottom:1px solid currentColor}
+ .t40{font:800 40px/0.95 'Inter Tight';letter-spacing:-0.02em}
+ .t72{font:900 72px/0.86 'Inter Tight';letter-spacing:-0.03em}
+
+ /* ── THE DIAGONAL IS A BOUNDARY ──
+    30°, the app's own isometric angle: across 1440px it rises 831px against
+    847px of frame. Regions are CLIPPED to either side of it, so cells are
+    wedges and content is displaced rather than overlaid. Nothing crosses it.
+
+    Upper-left wedge: the record's own material (identity, pressing).
+    Lower-right wedge: the colour field, carrying the display figure.
+    The line itself is the 6px structural rule, drawn as the boundary. */
+ .wedge{position:absolute;inset:0}
+
+ /* Above the line: everything left/up of it. */
+ .above{clip-path:polygon(0 0, 1440px 0, 1440px 16px, 0 847px);}
+
+ /* Below the line: the colour region, edge to edge, a whole half-frame. */
+ .below{clip-path:polygon(0 847px, 1440px 16px, 1440px 847px);
+        background:#ac6132}
+
+ /* The boundary itself, at 6px — the structural weight, as the rule it is. */
+ .boundary{position:absolute;left:0;top:847px;width:1663px;height:6px;
+           background:oklch(0.19 0.008 60);transform-origin:0 0;
+           transform:rotate(-30deg)}
+
+ .content{position:absolute;inset:0;z-index:3}
+ .cell{position:absolute;padding:18px}
+
+ /* Content in the lower wedge is set against the boundary: the block's top edge
+    runs parallel to it, so the type is positioned BY the construction. */
+ .onfield{color:#000}
+ .labonfield{font:500 11px/1 'Geist Mono',monospace;text-transform:uppercase;
+             letter-spacing:.09em;color:oklch(0.30 0.045 42);margin-bottom:6px}
+
+ /* The sleeve sits in the upper-right wedge, its lower-left corner cut by the
+    boundary — so the artwork is displaced by the line rather than sitting over
+    it. */
+ .sleeve{position:absolute;right:0;top:40px;width:470px;height:470px;
+         border-left:6px solid oklch(0.19 0.008 60);overflow:hidden;
+         clip-path:polygon(0 0, 100% 0, 100% 100%, 0 100%, 0 0)}
+ .sleeve img{width:100%;height:100%;object-fit:cover;display:block}
+ .hdr{position:absolute;left:0;right:0;top:0;height:40px;display:flex;
+      align-items:center;justify-content:space-between;padding:11px 14px;
+      border-bottom:1px solid oklch(0.19 0.008 60);z-index:4}
+ .v6{border-left:6px solid oklch(0.19 0.008 60)}
+</style>
+<div class="app"><b>Record Collection</b><span>Collection</span><span>Want list</span>
+ <span>Look up</span><span>Stats</span><span>Manage</span></div>
+
+<div class="stage">
+  <div class="wedge below"></div>
+  <div class="boundary"></div>
+
+  <div class="hdr">
+    <span class="lab" style="margin:0">Collection</span>
+    <span><span class="lab" style="margin:0">Edit</span> &nbsp;
+          <span class="lab" style="margin:0">Delete</span></span>
+  </div>
+
+  <div class="sleeve"><img src="https://z29f9nqxxuy5nwb2.public.blob.vercel-storage.com/records/e73e1de1-3686-4a81-8544-ca2300e187bb/43ecded3-cce0-48c2-9cbc-dc29df091cde.jpg"></div>
+
+  <div class="content">
+    <!-- UPPER WEDGE: identity at the widest point of the wedge. -->
+    <div class="cell" style="left:0;top:56px;width:700px">
+      <div class="t40">Never Too Much</div>
+      <div class="v" style="font-weight:300;margin-top:6px">Luther Vandross</div>
+    </div>
+
+    <!-- Facts stepped DOWN the wedge, each line ending before the boundary —
+         the column narrows as the wedge does, which is the displacement. -->
+    <div class="cell" style="left:0;top:170px;width:560px">
+      <div class="lab">Pressing</div>
+      <div class="v">Epic · LP · FE 36811</div>
+      <div class="v">United States, 1981 · Soul, Disco</div>
+    </div>
+
+    <div class="cell" style="left:0;top:268px;width:430px">
+      <div class="lab">Matrix / runout</div>
+      <div class="mono">SP-3503 / SP-3504 / A&amp;M SP3503-P10 …</div>
+      <div style="margin-top:6px"><span class="disc">8 variants</span></div>
+    </div>
+
+    <div class="cell" style="left:0;top:390px;width:300px">
+      <div class="lab">Provenance</div>
+      <div class="v">Paid $18.00</div>
+      <div class="v">at Academy Records</div>
+      <div class="v">VG+ media, VG sleeve</div>
+    </div>
+
+    <div class="cell" style="left:0;top:530px;width:160px">
+      <div class="lab">Images</div>
+      <div class="t40" style="font-size:24px">1</div>
+      <div style="margin-top:6px"><span class="disc">Manage</span></div>
+    </div>
+
+    <!-- LOWER WEDGE, on the colour: the display figure and the market, both
+         upright, their top edges parallel to the boundary. -->
+    <div class="cell onfield" style="left:210px;top:660px;width:420px">
+      <div class="labonfield">Released · pressed the same year</div>
+      <div class="t72">1981</div>
+    </div>
+
+    <div class="cell onfield" style="left:700px;top:520px;width:330px">
+      <div class="labonfield">Market median</div>
+      <div class="t40">$24.00</div>
+      <div class="meta" style="color:oklch(0.32 0.04 42);margin-top:6px">
+        $9.99–$61.00 · 6 observations</div>
+    </div>
+
+    <div class="cell onfield" style="left:1080px;top:600px;width:330px">
+      <div class="labonfield">Journal</div>
+      <div class="v">Bought for the B-side. Sleeve has a split at the bottom seam.</div>
+      <div style="margin-top:8px"><span class="disc">Add entry</span></div>
+    </div>
+
+    <div class="cell onfield" style="left:700px;top:740px;width:330px">
+      <div class="labonfield">About this record</div>
+      <div class="v" style="color:oklch(0.34 0.035 42)">No note.</div>
+      <div style="margin-top:8px"><span class="disc">Write one</span></div>
+    </div>
+  </div>
+</div>

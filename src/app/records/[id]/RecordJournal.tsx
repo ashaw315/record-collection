@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { LABEL } from './grid-type';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -136,7 +137,7 @@ export function RecordJournal({
 
   return (
     <section className="mt-6" data-testid="journal">
-      <h2 className="mb-1 font-heading text-title font-semibold tracking-tight">Journal</h2>
+      <h2 className={`mb-2 ${LABEL}`}>Journal</h2>
 
       <div
         ref={formRef}

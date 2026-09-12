@@ -123,6 +123,29 @@ export default defineConfig({
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] }, testIgnore: [/touch-tilt\.spec\.ts$/] },
     /*
+      **The capture project: a tool, not a suite.** `e2e/capture/` regenerates
+      the screenshots in `docs/` that 7a's grid is judged against. Opted into by
+      name — `--project=capture` — because it writes files and asserts almost
+      nothing, and a capture running in CI would add time for no signal.
+
+      Its files end `.capture.ts` rather than `.spec.ts`, so the default
+      `testMatch` never picks them up either.
+    */
+    {
+      name: 'capture',
+      use: { ...devices['Desktop Chrome'] },
+      /*
+        `testDir` rather than a global `testIgnore`: a global ignore wins over a
+        project's own `testMatch`, so the capture became unreachable from BOTH
+        the default run and `--project=capture`. Pointing this project at its own
+        directory keeps the default `testDir` (`./e2e`) from seeing it, because
+        the filename ends `.capture.ts` and the default `testMatch` wants
+        `.spec.ts`.
+      */
+      testDir: './e2e/capture',
+      testMatch: /.*\.capture\.ts$/,
+    },
+    /*
       **A touch-enabled Chromium project, scoped to the touch-tilt spec.**
       §10b's touch drag needs a real touch stream, and the only reliable one in
       Playwright is CDP `Input.dispatchTouchEvent` — Chromium-only, so the

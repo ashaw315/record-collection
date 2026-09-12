@@ -120,3 +120,40 @@ describe('the unconfigured deployment', () => {
     expect(html, 'and offers nothing that would do nothing').not.toContain('snippet-generate');
   });
 });
+
+/**
+ * **The seam: this panel's heading joined the grid's vocabulary.**
+ *
+ * It was `font-heading text-title uppercase` — sans, 15px — while the grid
+ * above sets every label in mono at 11px. Two typographic systems on one screen
+ * is most of why the page read as incoherent, and §4 forbids 15px outright:
+ * "Nothing at 15 anywhere on the screen."
+ *
+ * Checked rather than assumed, because this is the one converted heading inside
+ * a CLIENT component with interactive state — the other four are server
+ * components where a className swap cannot do anything else.
+ */
+describe('the heading uses the shared label treatment', () => {
+  const render = () =>
+    renderToStaticMarkup(
+      <SnippetPanel recordId="r1" snippet="A note." snippetEditedAt={null} configured />,
+    );
+
+  it('is mono, uppercase and 11px rather than 15px sans', () => {
+    const html = render();
+
+    expect(html).toMatch(/text-label/);
+    expect(html).toMatch(/font-mono/);
+    expect(html, '§4: nothing at 15px on this screen').not.toMatch(/text-title/);
+    expect(html, 'the sans heading face is gone').not.toMatch(/font-heading/);
+  });
+
+  it('renders the same content and controls as before the swap', () => {
+    // The change was a className; anything else moving is a defect.
+    const html = render();
+
+    expect(html).toContain('About this record');
+    expect(html).toContain('A note.');
+    expect(html).toMatch(/<button/);
+  });
+});

@@ -1,4 +1,5 @@
 import { formatPrice } from '@/app/collection-format';
+import { LABEL } from './grid-type';
 import { priceLine } from './price-line';
 import {
   SPARK_HEIGHT,
@@ -57,7 +58,7 @@ export function PriceHistory({
 
   return (
     <section className="mt-6" data-testid="price-history">
-      <h2 className="mb-1 font-heading text-title font-semibold tracking-tight">Price history</h2>
+      <h2 className={`mb-2 ${LABEL}`}>Price history</h2>
 
       {/*
         **The empty state says what is true now, not what is planned.** It read

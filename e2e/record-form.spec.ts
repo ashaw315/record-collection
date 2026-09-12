@@ -201,7 +201,21 @@ test('clearing a field removes it rather than leaving it set', async ({ page }) 
 
   await expect(page).toHaveURL(new RegExp(`/records/${record.id}$`), { timeout: 15_000 });
   await expect(page.getByText(`ClearLabel-${suffix}`)).toHaveCount(0);
-  await expect(page.getByText('Not recorded')).toBeVisible();
+
+  /**
+   * **The cleared price now reads as a DRAWN EMPTY CELL, not the words "Not
+   * recorded" (7a §1.1).** The grid marks an empty module with a diagonal: one
+   * line means not recorded and the owner can fill it. So the assertion moves
+   * to the mark rather than being dropped — this test's subject is that
+   * clearing a field actually clears it, and the diagonal is now how the screen
+   * says so.
+   *
+   * Located by `data-cell` rather than by text, because text is not a handle:
+   * asserting on the words broke the moment the page said them in two places.
+   */
+  await expect(
+    page.getByTestId('record-grid').locator('[data-cell="provenance"]'),
+  ).toHaveAttribute('data-diagonal', 'single');
 });
 
 test('removing every genre clears them, rather than leaving them alone', async ({ page }) => {
