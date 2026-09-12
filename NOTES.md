@@ -28415,3 +28415,39 @@ recorded as a problem signposting would have to solve "at three hundred
 records"; it is not, because at three hundred the wall is still for encounter.
 **A gap can be the correct shape for what a surface is for**, and calling it a
 gap was itself a retrieval assumption.
+
+---
+
+## A value that survived every review because nothing could test it
+
+**`PULL_DURATION_MS` was 1400 from §10b until the first rendering that could
+measure it, which found the gesture ends at ~1000ms.** It is now 1000. The curve
+is unchanged — see `src/app/wall/pull-curve.ts` for why softening it would have
+been the wrong fix.
+
+The point worth keeping is the **shape of the failure**, which is new here.
+
+This is not a stale figure: nothing about it drifted, and it described the same
+intent on the last day as on the first. It is not a verdict earned against a
+replaced drawing either — the three.js wall was discarded, but 1400 did not
+survive on the strength of that wall's evidence, because that wall never
+produced any about the duration. It was on the discard list and survived
+**precisely because no instrument existed to check it.** Every review that
+touched it could only ask whether it was still the intended number, and it
+always was.
+
+**The asymmetry within the same unit is the tell.** The curve and the duration
+went into this round with identical standing — both inherited from §10b, both
+uncontested. The curve came out with evidence it had never had: its five frames
+were measured, `1-(1-t)³` was fitted to them, and a live run matched to within
+1.31 percentage points. The duration came out reduced by 400ms, because the same
+rendering that confirmed the curve was the first thing capable of asking whether
+the duration described anything perceivable. It did not.
+
+**So the question to ask of a long-settled value is not "is this still right?"
+but "what would have told us if it weren't?"** Where the answer is "nothing
+yet", the value is not settled — it is untested, and it should be re-asked at
+the first rendering that can measure it rather than at the next review that
+cannot. A review can only confirm intent; it cannot substitute for an
+instrument, and a value that only ever faced reviews has never been tested at
+all.

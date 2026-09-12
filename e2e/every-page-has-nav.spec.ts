@@ -30,8 +30,8 @@ registerCleanup();
  * `/login` is exempt: it is the unauthenticated screen and its nav would link
  * to pages the visitor cannot reach.
  *
- * `/plane` is exempt for a different reason: it is a DEVELOPMENT SCAFFOLD, not
- * a screen. §10b's renderer is being proven one piece at a time (step 13 unit
+ * `/plane`, `/scene` and `/wall/probe` are exempt for a different reason: they
+ * are DEVELOPMENT SCAFFOLDS, not screens. §10b's renderer is being proven one piece at a time (step 13 unit
  * 15), and that route exists to put a textured plane beside its source image so
  * a human can compare them. Nothing links to it, nobody navigates to it, and
  * giving it a nav to satisfy this test would make a scaffold impersonate a
@@ -91,10 +91,9 @@ test.beforeEach(async ({ page }) => {
 test('the route list has not fallen behind the app', async () => {
   /**
    * The vacuity guard, and it is doing the job the old test's directory walk
-   * did. `src/app` has 15 `page.tsx` files: the eight static routes above, the
-   * two record routes and the two want-list routes covered below, and two
-   * exempt —
-   * `/login` and `/plane`.
+   * did. `src/app` has 16 `page.tsx` files: the eight static routes above, the
+   * two record routes and the two want-list routes covered below, and four
+   * exempt — `/login`, `/plane`, `/scene` and `/wall/probe`.
    *
    * `/suggestions` is listed here and has NO header link, deliberately (NOTES,
    * step 14 unit 3). This spec's subject is whether a screen is reachable FROM,
@@ -129,7 +128,18 @@ test('the route list has not fallen behind the app', async () => {
     added without being covered, and an exemption stated with its reason is the
     difference between a decision and an omission.
   */
-  const EXEMPT = [join('app', 'login'), join('app', 'plane'), join('app', 'scene')];
+  /*
+    `/wall/probe` joins them, and is the shortest-lived of the three: it exists
+    to run the pull as a REAL animation so `getScreenCTM()` can be sampled
+    against the curve, which is the one question a drawing cannot settle. It
+    comes out with `/plane` and `/scene` when §10b's wall lands.
+  */
+  const EXEMPT = [
+    join('app', 'login'),
+    join('app', 'plane'),
+    join('app', 'scene'),
+    join('app', 'wall', 'probe'),
+  ];
   const pages = findPages('src/app').filter((p) => !EXEMPT.some((dir) => p.includes(dir)));
 
   expect(
