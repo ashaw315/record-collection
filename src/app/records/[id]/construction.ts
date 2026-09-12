@@ -86,6 +86,15 @@ const SHAPE: Record<Archetype, readonly [number, number, number]> = {
  * earlier version placed them around a single origin and produced a
  * centre-weighted cluster; spread is half of what gave the composition depth to
  * read, the 6:1 band being the other half.
+ *
+ * **The set varies as one of eight RIGID SYMMETRIES, never per slot.** That is
+ * the structural answer to the cluster risk rather than a tuning: a rigid
+ * transform preserves every distance in the set exactly, and the cluster was
+ * per-slot drift toward a common origin — so there is no freedom left to drift.
+ *
+ * The cost is named rather than discovered: eight silhouettes across seventeen
+ * records means at least three collisions, and which pairs is a fact about the
+ * real ids that only the sheet can report.
  */
 const SLOTS: ReadonlyArray<readonly [number, number]> = [
   [-4.0, -1.5],
@@ -106,6 +115,9 @@ export type Face = {
 
 export type Form = {
   archetype: Archetype;
+  /** The slot it took, after the set's rigid transform. Exposed so the
+      rigidity is assertable rather than described. */
+  slot: readonly [number, number];
   /** Along its own long axis, 0.80–1.25× — the hash's per-form variation. */
   extent: number;
   faces: readonly Face[];
@@ -159,6 +171,21 @@ const SCALE = 15;
 
 /** The frame, parsed once, as the envelope every form is clamped into. */
 const [FRAME_X, FRAME_Y, FRAME_W, FRAME_H] = CONSTRUCTION_FRAME.split(' ').map(Number);
+
+/**
+ * The eight rigid symmetries of the ground plane: four quarter turns, each with
+ * and without a reflection. Applied to the WHOLE slot set.
+ */
+const SYMMETRIES: ReadonlyArray<(slot: readonly [number, number]) => readonly [number, number]> = [
+  ([u, v]) => [u, v],
+  ([u, v]) => [-v, u],
+  ([u, v]) => [-u, -v],
+  ([u, v]) => [v, -u],
+  ([u, v]) => [v, u],
+  ([u, v]) => [-u, v],
+  ([u, v]) => [-v, -u],
+  ([u, v]) => [u, -v],
+];
 
 /**
  * Shifts a form's origin so its whole box lands inside the frame.
@@ -267,21 +294,38 @@ export function construction(recordId: string): Construction {
   const order = shuffled(ARCHETYPES, next);
 
   /*
-    Exactly one coloured form and two coloured faces, and §2's re-judgement puts
-    those faces on two DIFFERENT forms so the eye traces a path rather than
-    landing once. The slab and the needle are always ink.
+    One of eight rigid symmetries, applied to the whole set. Drawn before the
+    per-form values so the choice is a property of the record rather than of
+    the iteration.
   */
-  const colourable = order.filter((a) => a !== 'slab' && a !== 'needle');
-  const carrierA = colourable[Math.floor(next() * colourable.length)];
-  const rest = colourable.filter((a) => a !== carrierA);
-  const carrierB = rest[Math.floor(next() * rest.length)];
+  const symmetry = SYMMETRIES[Math.floor(next() * SYMMETRIES.length)];
+
+  /*
+    **The colour form is hash-chosen; the two coloured FACES are determined.**
+
+    The slab and the needle are always ink, so four archetypes can take colour.
+    One of those is the colour form. That leaves exactly two — so there is
+    nothing to rank and no sort to get wrong. Design's own first attempt sorted
+    by area and filtered on identity but not tone, and the slab's footprint
+    outranked the panel and cube: a base-step top on six of seventeen tiles,
+    breaking the ink rule in the same paragraph.
+  */
+  const INK_ARCHETYPES: readonly Archetype[] = ['slab', 'needle'];
+  const colourable = order.filter((a) => !INK_ARCHETYPES.includes(a));
+
+  /*
+    Four grey archetypes; the hash picks which two of them are "the colour
+    form" pair by picking the two it EXCLUDES. Exactly two remain, so the
+    selection is fully determined once the exclusion is drawn — there is no
+    ranking and therefore no sort to filter wrongly.
+  */
+  const excluded = shuffled(colourable, next).slice(0, colourable.length - 2);
+  const facesCarryColour = colourable.filter((a) => !excluded.includes(a));
 
   const forms: Form[] = order.map((archetype, index) => {
     const [su, sv, sw] = SHAPE[archetype];
-    /* Bounded jitter on the slot: ±9 units, so slots stay legible. */
-    const [slotU, slotV] = SLOTS[index];
-    const u = slotU + (next() * 18 - 9) * 0.1;
-    const v = slotV + (next() * 18 - 9) * 0.1;
+    const slot = symmetry(SLOTS[index]);
+    const [u, v] = slot;
 
     /* Each form's extent along its own long axis. */
     const extent = 0.8 + next() * 0.45;
@@ -290,23 +334,28 @@ export function construction(recordId: string): Construction {
     const dv = sv * extent;
     const dw = sw * extent;
 
-    const isInk = archetype === 'slab' || archetype === 'needle';
-    const carriesColour = archetype === carrierA || archetype === carrierB;
+    const isInk = INK_ARCHETYPES.includes(archetype);
+    /*
+      §5.5: shade is a right-hand face and nothing else, and a coloured right
+      face on a small form is the darkest step on the smallest area — the least
+      findable thing the rule can produce. Top is the largest visible face and
+      carries the lightest step, so that is where base goes.
+    */
+    const topStep: MarkStep = isInk
+      ? 'ink'
+      : facesCarryColour.includes(archetype)
+        ? 'base'
+        : 'tint';
 
     return {
       archetype,
-      /* The band is measured on the long axis, which is what 6:1 refers to. */
+      slot,
       extent: Math.max(du, dv, dw),
       depth: u + v + dw,
       faces: boxFaces(...containedOrigin(u, v, du, dv, dw), du, dv, dw, {
-        top: isInk ? 'ink' : 'tint',
+        top: topStep,
         left: isInk ? 'ink' : 'tint',
-        /*
-          `shade` only ever lands on a right-hand face (§5.5), and the coloured
-          face is `base` — so a carrier shows base on its right and the
-          non-carriers show shade there.
-        */
-        right: isInk ? 'ink' : carriesColour ? 'base' : 'shade',
+        right: isInk ? 'ink' : 'shade',
       }),
     };
   });
@@ -318,10 +367,17 @@ export function construction(recordId: string): Construction {
     viewBox: CONSTRUCTION_FRAME,
     forms,
     disc: {
-      cx: (next() * 2 - 1) * 40,
-      cy: (next() * 2 - 1) * 40,
-      /* 0.22–0.28 of the frame's smaller dimension (300). */
-      r: (0.22 + next() * 0.06) * 300,
+      cx: (next() * 2 - 1) * 30,
+      cy: (next() * 2 - 1) * 30,
+      /*
+        **0.15–0.19 of the frame's smaller dimension, down from 0.22–0.28.** The
+        disc read as the subject because it was the largest area on the tile —
+        an area problem with an area fix. Measured on this generator's sheet, at
+        17% the existing spread already crosses it (3 to 5 of 6 forms beyond
+        51px on every record), so the edge-breaks come for nothing rather than
+        costing the frame's margins.
+      */
+      r: (0.15 + next() * 0.04) * 300,
       step: 'tint',
     },
   };

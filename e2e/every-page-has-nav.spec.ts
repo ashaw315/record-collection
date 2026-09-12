@@ -152,6 +152,7 @@ test('the route list has not fallen behind the app', async () => {
     join('app', 'wall', 'probe', 'bands'),
     join('app', 'wall', 'probe', 'identity'),
     join('app', 'wall', 'probe', 'sheet'),
+    join('app', 'wall', 'probe', 'page8a'),
   ];
   const pages = findPages('src/app').filter((p) => !EXEMPT.some((dir) => p.includes(dir)));
 

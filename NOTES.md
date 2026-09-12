@@ -20994,6 +20994,28 @@ the layer a test stubs for convenience. **Stubbing the boundary the behaviour
 lives behind means the behaviour cannot happen** — the same rule the A39 hollow
 E2E produced, arriving from the storage side rather than the routing side.
 
+### A fourth, from the same round, and it is the clearest
+
+Waiting for a captured screenshot's cover image, `img.complete` looked like the
+right property. It is a real property and a reasonable thing to wait on — and it
+goes **true when the browser finishes trying, including when the load failed.**
+`naturalWidth > 0` is the channel that carries "the image decoded".
+
+So the capture waited successfully and photographed a broken-image marker. The
+proxy was not weaker or lazier; it answered an adjacent question.
+
+**And the same round produced a worse error of the same family.** From that one
+broken frame I diagnosed `ERR_BLOCKED_BY_ORB`, wrote it up as a live production
+defect, and proposed a fix. Re-tested properly: the image loads on the probe page
+and from a plain `<img>`, `naturalWidth=597`, HTTP 200 — three attribute
+variants all decode. **One observation, treated as the population.** The
+`ERR_BLOCKED_BY_ORB` was real and transient, and everything built on it was
+wrong.
+
+The lesson is not "check twice". It is that **a single failing sample supports a
+claim about that sample and nothing else** — and a diagnosis is a claim about the
+population.
+
 ### The three instances, so the pattern is documented rather than recalled
 
 1. **A39** — an E2E stubbed `POST /api/suggestions/ai` and asserted persistence;
@@ -28553,6 +28575,59 @@ written.
 
 ---
 
+## An assertion aimed at a proxy for the thing it names — third instance
+
+`e2e/page8a-marks.spec.ts` was written to prove that no mark escapes the cell
+hosting it. It compared each mark's `getBoundingClientRect` against its host's,
+and **it passed with `overflow-hidden` removed from every cell.**
+
+Layout boxes never escape. The PAINT does — a gradient fills its box and draws
+beyond it when nothing clips. So the assertion measured a channel adjacent to
+the one it claimed, and the claim was the load-bearing half.
+
+Caught by the control condition: staging the defect the test exists for and
+watching it pass. Rewritten to assert the CLIP — `getComputedStyle(host).overflow`
+— and removing `overflow-hidden` now fails four marks by name.
+
+### The three instances
+
+| test claimed | assertion made | channel that carried the claim |
+|---|---|---|
+| two states get different tones | two token strings differ | the rendered CSS (`border-l-dashed` emitted nothing) |
+| the spines are distinguishable | a count of distinct values | pairwise contrast at matched lightness |
+| **no mark escapes its cell** | **the mark's layout box vs the host's** | **whether the host clips** |
+
+The shape is the same each time and CLAUDE.md §2 already names it: **the
+assertion tests a proxy one layer below the claim.** What is new here is that
+the proxy was not obviously weaker — a bounding box is a real measurement of a
+real thing, just not of the thing the name promised. The tell was that the
+property was about PAINTING and the measurement was about LAYOUT.
+
+So: **name the channel that carries the claim before choosing what to measure.**
+Where the claim is about what is visible, a geometric measurement of the
+elements is not evidence.
+
+## A mark's box may not contain type
+
+§5.5 makes tint ground, and **ground does not overlap content — it sits where
+content is not.** The identity triangle at 150×150 anchored bottom-left covered
+`Pressing`, the catalogue line and the format line by up to 132×16px on all
+three assembled records.
+
+Fixed by moving it to the cell's right edge, past the 412px text measure — not
+by a z-index, which is a stacking fix for a placement problem, and not by
+shrinking, which trades the mark's presence for the collision without settling
+where a mark may sit.
+
+**Asserted across all marks rather than fixed on the one**, because otherwise
+the next mark added collides somewhere else. The test walks every text node's
+client rects and every mark's box and reports overlaps by name and pixel count.
+
+**The sheet could not have caught this**, which is the interesting part: the
+construction has no type in it. The collision only exists once the marks sit in
+a page with real text under them — so the assembly is an instrument the sheet is
+not, and each has found things the other cannot.
+
 ## A rule kept by a backstop reads identically to a rule kept by the code
 
 `e2e/auth.spec.ts`'s cron test posted to `/api/discogs/refresh-prices` with the
@@ -28798,6 +28873,35 @@ tiles. A sheet is the only instrument that has caught any of them.
 check the operation is defined over that axis rather than over something
 correlated with it.** Where those differ, the result is variation everywhere
 except where it matters.
+
+### Two independent variations correlating, which neither test could catch
+
+The sheet's fourth distinct finding, and the one that argues hardest for drawing
+one before anything ships.
+
+The slot set varies as one of eight rigid symmetries; the derived colour varies
+per cover. **Measured across the real seventeen, symmetry 5 holds Bitches Brew,
+Psychic, The Money Store and The Soft Parade — and three of those four are
+near-grey.** So on that family, layout and palette correlate: four records
+sharing a slot layout, most of them also sharing a quiet palette, and on the
+sheet they are visibly the most similar cluster.
+
+**Not a defect, and not fixed.** Eight symmetries over seventeen records means
+families; Design named that cost explicitly. The correlation is a fact about
+which records happen to have drab covers rather than a property of the
+generator, and the alternative — hashing position freely — is exactly the
+cluster the rigid symmetries exist to prevent.
+
+**What makes it worth recording is that no test could have found it.** There is
+a test for the symmetries being rigid and a test for the colour ladder's
+clamping, and both pass. The finding lives in the JOIN of two variations that
+are individually correct and independently asserted, on four specific ids. A
+test would have to know which records have drab covers AND which symmetry they
+draw — which is to say it would have to be the sheet.
+
+So: **where two independent variations are applied to the same set, the thing to
+look at is their correlation on the real members, and only a view showing both
+at once can show it.**
 
 ### The containment fix, for the record
 
