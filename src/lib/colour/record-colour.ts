@@ -1,18 +1,28 @@
 /**
- * The record's stored colour, derived into the marks §5 of the 7a build target
- * requires.
+ * The record's stored colour, lightened until black type is legible on it —
+ * §5 of the 7a build target.
  *
- * **One stored value, two variants, pulling in opposite directions.** The 72px
- * year and its label sit ON the filled module in black, so the fill must be
- * light enough to carry black text; the 40px market figure is ink on white, so
- * the same hue must be dark enough to read there. Neither is guaranteed by the
- * stored value, which is the average colour of a cover and owes nothing to
- * legibility.
+ * **One stored value, one derived variant.** The 72px year and its label sit ON
+ * the filled module in black, so the fill must be light enough to carry black
+ * text. That is not guaranteed by the stored value, which is the dominant
+ * chromatic region of a cover and owes nothing to legibility.
+ *
+ * **The `ink` variant is gone (revised §5).** It darkened the same hue for the
+ * 40px market figure set in the colour — and that figure is retired along with
+ * the 8px path bar, because the cover now carries the colour: at six columns it
+ * is 23.4% of the grid where the derived mark it replaced was 0.06%. Pale 40px
+ * ink reads as dark text and a pale 8px bar reads as a hairline, so both failed
+ * once the chroma measurement came in. The filled module survives at low chroma
+ * because area substitutes for chroma — a pale tint at 412 × 226 still reads as
+ * a deliberate field.
+ *
+ * So nothing is set in the colour any more, and the only obligation left is the
+ * one this module was built for.
  *
  * **The contrast floor is enforced here rather than trusted.** A state shipped
  * in this repo at 1.29:1 behind a test asserting two token strings differed, so
  * the derivation loops until the ratio clears 4.5:1 and the tests measure the
- * ratio rather than the fact that a variant exists.
+ * ratio rather than the fact that a variant was produced.
  *
  * Pure and browser-independent: the conversions are the same ones `oklch()`
  * uses, so what the tests measure is what renders.
@@ -106,16 +116,20 @@ export function contrastRatio(a: string, b: string): number {
 export type RecordColour = {
   /** Lightened: carries BLACK text on the filled module. */
   fill: string;
-  /** Darkened: reads as INK on white. */
-  ink: string;
-  /** True when the stored colour has too little chroma to read as a colour. */
+  /**
+   * True when the stored colour has too little chroma to read as a colour.
+   *
+   * **Reported, and deliberately NOT acted on.** Revised §5: the marks are not
+   * conditional on chroma, because a field shown only above a threshold makes
+   * the composition differ between records for a reason the reader cannot see.
+   * All records or none, decided once from the collection-wide measurement —
+   * twelve of seventeen near-grey, six of which no derivation rescues.
+   */
   isNearGrey: boolean;
   chroma: number;
   storedHue: number;
   fillHue: number;
-  inkHue: number;
   fillL: number;
-  inkL: number;
 };
 
 /**
@@ -155,19 +169,15 @@ export function deriveRecordColour(stored: string | null): RecordColour | null {
 
   const base = rgbToOklch(rgb);
 
-  /* Lighten for the fill (black sits on it), darken for the ink (white behind). */
+  /* Lighten only: black type sits on this, and nothing is set in the colour. */
   const fill = resolve(base, '#000000', 1);
-  const ink = resolve(base, '#ffffff', -1);
 
   return {
     fill: oklchToHex(fill),
-    ink: oklchToHex(ink),
     isNearGrey: base.C < NEAR_GREY_CHROMA,
     chroma: base.C,
     storedHue: base.h,
     fillHue: fill.h,
-    inkHue: ink.h,
     fillL: fill.L,
-    inkL: ink.L,
   };
 }

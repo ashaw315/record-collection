@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { contrastRatio, deriveRecordColour, NEAR_GREY_CHROMA } from './record-colour';
 
 /**
- * The record's stored colour, derived into the two variants §5 requires.
+ * The record's stored colour, lightened until black type is legible on it.
  *
  * **The assertions are against the CONTRAST FLOOR, not against the derivation
  * having run.** This repo has shipped a state at 1.29:1 behind a test that
@@ -10,12 +10,13 @@ import { contrastRatio, deriveRecordColour, NEAR_GREY_CHROMA } from './record-co
  * CLAUDE.md §2 tabulates. So every test here computes a real ratio and checks
  * it clears 4.5:1; none of them assert "a variant was produced".
  *
- * §5's two obligations, which the stored value does not guarantee:
- *   - the 72px year and its label sit ON the filled module in BLACK, so the
- *     fill must be light enough to clear 4.5:1 against black;
- *   - the 40px market figure is ink ON WHITE, so the same hue must be dark
- *     enough to clear 4.5:1 against white.
- * One stored value, two derived variants, pulling in opposite directions.
+ * **One obligation, which the stored value does not guarantee:** the 72px year
+ * and its label sit ON the filled module in BLACK, so the fill must be light
+ * enough to clear 4.5:1 against black.
+ *
+ * The `ink` variant these tests used to cover is retired with revised §5 — the
+ * 40px figure set in the colour is gone, along with the 8px path bar, because
+ * the cover now carries the colour. Nothing is set in the colour any more.
  */
 
 /** Every stored colour in the real collection, measured 2026-09-12. */
@@ -62,58 +63,39 @@ describe('the fill carries black text', () => {
   });
 });
 
-describe('the figure is ink on white', () => {
-  it('clears 4.5:1 against white for every colour in the collection', () => {
-    for (const stored of REAL_COLLECTION) {
-      const { ink } = derive(stored);
-      expect(contrastRatio(ink, '#ffffff'), `${stored} → ink ${ink}`).toBeGreaterThanOrEqual(4.5);
-    }
-  });
-
-  it('darkens a near-white stored colour enough to be read on white', () => {
-    const { ink } = derive('#ffffff');
-    expect(contrastRatio(ink, '#ffffff')).toBeGreaterThanOrEqual(4.5);
-  });
-});
-
-describe('the two variants are the same hue, pulled apart', () => {
+describe('the fill is the stored hue, lightened', () => {
   /**
-   * **The point of deriving rather than picking.** If fill and ink were
-   * independently chosen the page would carry two colours; §5 says one stored
-   * value and two variants, so the hue has to survive both derivations.
+   * **The point of deriving rather than picking.** A fill chosen independently
+   * would put a second colour on the page; §5 says one stored value and one
+   * derived variant, so the hue has to survive the lightening.
    */
-  it('keeps fill and ink within a few degrees of the stored hue', () => {
+  it('keeps the fill within a few degrees of the stored hue', () => {
     for (const stored of REAL_COLLECTION) {
-      const { fillHue, inkHue, storedHue, chroma } = derive(stored);
+      const { fillHue, storedHue, chroma } = derive(stored);
 
       /* A near-grey has no meaningful hue to preserve — see the next block. */
       if (chroma < NEAR_GREY_CHROMA) continue;
 
       expect(Math.abs(fillHue - storedHue), `fill hue for ${stored}`).toBeLessThan(6);
-      expect(Math.abs(inkHue - storedHue), `ink hue for ${stored}`).toBeLessThan(6);
     }
   });
 
-  it('never makes the fill darker than the ink', () => {
-    /*
-      Not strictly greater: a colour in the middle of the range can already
-      clear 4.5:1 against BOTH black and white, and then neither variant moves
-      and the two are equal. `#94698a` is exactly that case — L=0.576, legible
-      either way. Asserting strict inequality would have forced a pointless
-      adjustment on the one colour that needs none.
-    */
+  it('never darkens a colour to reach the floor', () => {
+    // Lightening is the only direction: the fill carries black type, so a
+    // darker fill is always further from legible, never closer.
     for (const stored of REAL_COLLECTION) {
-      const { fillL, inkL } = derive(stored);
-      expect(fillL, `${stored}`).toBeGreaterThanOrEqual(inkL);
+      const { fill } = derive(stored);
+      expect(
+        contrastRatio(fill, '#000000'),
+        `${stored} → ${fill}`,
+      ).toBeGreaterThanOrEqual(contrastRatio(stored, '#000000'));
     }
   });
 
-  it('moves nothing for a colour already legible on both grounds', () => {
-    const both = derive('#94698a');
-
-    expect(contrastRatio(both.fill, '#000000')).toBeGreaterThanOrEqual(4.5);
-    expect(contrastRatio(both.ink, '#ffffff')).toBeGreaterThanOrEqual(4.5);
-    expect(both.fill, 'no adjustment was needed in either direction').toBe(both.ink);
+  it('leaves a colour that already clears the floor alone', () => {
+    // #d8cbb8 is light enough as stored, so the derivation returns it unchanged
+    // rather than lightening it further for no reason.
+    expect(derive('#d8cbb8').fill).toBe('#d8cbb8');
   });
 });
 
@@ -139,12 +121,14 @@ describe('near-grey is reported, not hidden', () => {
     }
   });
 
-  it('still meets both contrast obligations for a pure grey', () => {
-    // Reporting it must not mean skipping it: the marks still have to be legible.
-    const { fill, ink } = derive('#9b9b9a');
-
-    expect(contrastRatio(fill, '#000000')).toBeGreaterThanOrEqual(4.5);
-    expect(contrastRatio(ink, '#ffffff')).toBeGreaterThanOrEqual(4.5);
+  it('still meets the contrast obligation for a pure grey', () => {
+    /*
+      Reporting it must not mean skipping it. Revised §5 is explicit that the
+      marks are NOT conditional on chroma — a field shown only above a threshold
+      makes the composition differ between records for a reason the reader cannot
+      see. So a near-grey record still gets a legible filled module.
+    */
+    expect(contrastRatio(derive('#9b9b9a').fill, '#000000')).toBeGreaterThanOrEqual(4.5);
   });
 });
 
