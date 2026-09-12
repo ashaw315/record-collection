@@ -129,3 +129,75 @@ describe('the CLI cannot report success about nothing', () => {
     expect(stdout).toMatch(/a line the suite printed/);
   });
 });
+
+/**
+ * **The tee, and the test is about VISIBILITY rather than the verdict.**
+ *
+ * The first version used `spawnSync`, which withholds everything the child
+ * wrote until it exits. A fifteen-minute Playwright run showed nothing for
+ * fifteen minutes and then printed all of it — twice in one session the honest
+ * answer to "how is it going?" was "still running, I cannot see."
+ *
+ * That is the same family as the four wrapper concealments this file opens
+ * with: an instrument that reports nothing is not evidence. **The verdict was
+ * never the broken part** — `spawnSync` judged correctly every time — so
+ * asserting the verdict is unchanged would test the half that worked. These
+ * tests watch the stream while the child is still alive.
+ */
+describe('the CLI streams as the child writes', () => {
+  /**
+   * A child that prints, waits, then prints again. If output is buffered to
+   * exit, the first line is invisible for the whole wait; if it is teed, it
+   * arrives immediately.
+   */
+  const CHILD = [
+    'node',
+    '-e',
+    `console.log('EARLY LINE'); setTimeout(() => { console.log('  Tests  4 passed (4)'); }, 2500);`,
+  ];
+
+  it('shows a line the child wrote long before the child exits', async () => {
+    const { spawn } = await import('node:child_process');
+
+    const child = spawn('npx', ['tsx', 'scripts/run-tests.ts', ...CHILD], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    let seen = '';
+    child.stdout.on('data', (chunk: Buffer) => {
+      seen += chunk.toString();
+    });
+
+    /* Sampled WHILE the child is alive: the whole claim is about this moment. */
+    const early = await new Promise<string>((resolve) => {
+      setTimeout(() => resolve(seen), 1500);
+    });
+
+    const exitCode = await new Promise<number>((resolve) => {
+      child.on('close', (code) => resolve(code ?? 1));
+    });
+
+    expect(early, 'the early line must be visible before the child exits').toMatch(/EARLY LINE/);
+    /* And it must not have finished yet, or the sample proves nothing. */
+    expect(early, 'the run must still be in flight at the sample').not.toMatch(/4 passed/);
+
+    expect(exitCode).toBe(0);
+    expect(seen).toMatch(/4 passed/);
+  }, 20_000);
+
+  /**
+   * The verdict still has to be right, judged over everything the child wrote
+   * across multiple chunks — teeing must not cost the parse.
+   */
+  it('still judges the summary correctly when output arrives in pieces', async () => {
+    const { stdout, status } = run([
+      'node',
+      '-e',
+      `console.log('chunk one'); setTimeout(() => { console.log('  1 failed\\n  9 passed'); }, 300);`,
+    ]);
+
+    expect(status, 'a failure in a late chunk must still fail the wrapper').not.toBe(0);
+    expect(stdout).toMatch(/chunk one/);
+    expect(stdout).toMatch(/NOT OK/);
+  });
+});
