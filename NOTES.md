@@ -28418,6 +28418,35 @@ gap was itself a retrieval assumption.
 
 ---
 
+## The wrapper caught a real crashed run, unstaged
+
+`npx tsx scripts/run-tests.ts npm test` reported:
+
+    0 passed — NOT OK — no summary line found — the run did not report
+
+Docker had closed, which took the local test Postgres down with it, so
+`drizzle-kit migrate` failed inside vitest's global setup and **no test ran at
+all**. The verdict was right: nothing reported, which is not the same as nothing
+failed.
+
+**This is the first of the five wrapper findings to prove itself on something
+nobody arranged.** The other four were reconstructed after the fact or staged
+deliberately — the buffered pipe, the kill-and-relaunch race, the task
+notification reading exit 0 against a log saying `exit=1`, and the library
+invoked as a CLI. This one happened by itself, mid-unit, on an environment
+failure with no connection to the code under test.
+
+Worth recording because the failure mode it prevented is specific and quiet: a
+crashed run produces **no counts and a clean-looking tail**, so a check that
+greps for the word "failed" finds nothing and reads it as success. The guard's
+own rule — *no summary is the WORST case, not the best* — is what turned a
+missing line into a refusal.
+
+The fix was `npm run db:test:up`. The point is that the fix was needed, and the
+instrument said so instead of printing a green line over an empty run.
+
+---
+
 ## A value that survived every review because nothing could test it
 
 **`PULL_DURATION_MS` was 1400 from §10b until the first rendering that could

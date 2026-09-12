@@ -136,7 +136,10 @@ test('the route list has not fallen behind the app', async () => {
     **REMOVAL CONDITION, stated because its absence is how this count drifted
     once already.** When §10b's wall lands, `/plane` and `/wall/probe` are
     deleted, and these three things come out TOGETHER: the route, this
-    exemption, and the `notFound()` guard in `wall/probe/page.tsx`. A temporary
+    exemption, and the `notFound()` guard in `wall/probe/page.tsx`.
+    `/wall/overview` is the same: a harness that renders the wall at 17 and 200
+    records at true size, so the shelf gap can be judged by looking rather than
+    measured. It comes out with the others. A temporary
     exemption with no removal condition is indistinguishable from a permanent
     one, and reads as a free slot to whoever finds it next.
   */
@@ -145,6 +148,7 @@ test('the route list has not fallen behind the app', async () => {
     join('app', 'plane'),
     join('app', 'scene'),
     join('app', 'wall', 'probe'),
+    join('app', 'wall', 'overview'),
   ];
   const pages = findPages('src/app').filter((p) => !EXEMPT.some((dir) => p.includes(dir)));
 
