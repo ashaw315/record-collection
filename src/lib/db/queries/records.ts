@@ -954,3 +954,25 @@ export async function recordStats(filters: RecordFilters = {}): Promise<RecordSt
     byLabel,
   };
 }
+
+/**
+ * Id, title and spine colour for every record, for the construction sheet.
+ *
+ * **The sheet needs the REAL ids**, because the construction is hashed from the
+ * id and a synthetic one exercises the hash without exercising the collection.
+ * Both of the generator's faults were invisible until the real seventeen sat
+ * side by side.
+ *
+ * Ordered by title so the sheet is stable between runs — a sheet whose tiles
+ * move is a sheet you cannot compare against yesterday's.
+ */
+export async function listRecordsForSheet(): Promise<
+  Array<{ id: string; title: string; spineColour: string | null }>
+> {
+  const db = getDb();
+
+  return db
+    .select({ id: records.id, title: records.title, spineColour: records.spineColour })
+    .from(records)
+    .orderBy(records.title);
+}

@@ -28755,3 +28755,55 @@ change decides the reading, and here the two directions disagreed.
 improvement is unrelated to identification: `Wired` escapes the band where a
 spine reads like an absent cover, so two records collide with the no-cover
 fallback rather than three.
+
+---
+
+## Variation applied to the wrong axis
+
+Three instances now, in three layers, and the tell is identical in all of them:
+**the operation was defined over an axis that does not carry the thing being
+preserved.**
+
+| operation | defined over | signal was in | symptom |
+|---|---|---|---|
+| `averageColour`'s mean | the whole cover | hue | twelve of sixteen covers near-grey |
+| the construction's fitted `viewBox` | the whole arrangement | overall size | six records looked like one drawing |
+| the construction's slot shuffle | archetype **assignment** | silhouette **position** | seventeen tiles, one silhouette |
+
+### The newest instance
+
+The generator shuffles which archetype occupies which of six fixed ground slots.
+The slot POSITIONS never move, so every tile is disc-centre-left with a beam
+running right: the hash varies what sits where and not where anything sits. The
+compositions differ measurably — extents differ, assignments differ, no two
+serialise the same — and they look the same, because a silhouette is made of
+positions.
+
+**So measurable difference and identical composition are compatible**, which is
+what makes this family of defect hard to see from inside the code. Every local
+check passes: the hash is deterministic, the variation is real, the numbers
+spread. The thing that fails is the one property nobody asserted, because it
+only exists across instances.
+
+### Why the form is worth stating
+
+Each time, the fix was obvious once the axis was named and invisible before:
+sample the dominant chromatic region rather than the mean; hold the frame
+constant and let the forms move; vary position, not only assignment. The
+diagnosis is what took the time, and in all three cases it arrived from **seeing
+instances side by side and staying still** — six spines, six tiles, seventeen
+tiles. A sheet is the only instrument that has caught any of them.
+
+**Before adding variation, name the axis the difference has to appear on, and
+check the operation is defined over that axis rather than over something
+correlated with it.** Where those differ, the result is variation everywhere
+except where it matters.
+
+### The containment fix, for the record
+
+The same sheet showed forms escaping the constant frame — worst case 17 points
+outside, x reaching 220 against an edge at 150. Fixed in the SLOTS and by
+clamping each form's origin into the envelope before drawing, never by fitting
+the frame: fitting is instance two above. Now asserted as a property the
+generator cannot violate — every drawn point inside the frame on all seventeen
+real ids — rather than something a sheet has to catch again.
