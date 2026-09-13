@@ -23,6 +23,8 @@ export type PageRecord = {
   id: string;
   title: string;
   artistName: string;
+  /* For the collection link — §10's "what else do I have by this artist". */
+  artistId: string;
   pressingLine: string;
   formatLine: string | null;
   matrixRunout: string | null;
@@ -268,8 +270,10 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
           <IdentityCell
             title={record.title}
             artistName={record.artistName}
+            artistId={record.artistId}
             pressingLine={record.pressingLine}
             formatLine={record.formatLine}
+            genres={record.genres}
           />
         </div>
 
@@ -490,6 +494,7 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
             rather than left to arithmetic that happens to fit.
           */}
           <div
+            data-field="year"
             className="text-[72px] leading-[0.86] font-extrabold"
             style={{ minWidth: '203px', marginInline: '-18px', paddingInline: '18px' }}
           >

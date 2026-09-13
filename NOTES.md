@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 95 declared rules. Regenerate with
+Generated from 98 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -34,6 +34,7 @@ Generated from 95 declared rules. Regenerate with
 | a feature works correctly and you are debating how to improve it | [A FEATURE RETIRED ON THREE ARGUMENTS, NONE ABOUT ITS IMPLEMENTATION](#a-feature-retired-on-three-arguments-none-about-its-implementation) |
 | the number is in band and you cannot say what it would forbid | [A measurement correlated with the signal instead of being it — fifth instance](#a-measurement-correlated-with-the-signal-instead-of-being-it-fifth-instance) |
 | a rule collides with rules that were never in tension, or a figure moves while nothing changes size | [A rule scoped past its subject, and a ratio that moved when nothing did](#a-rule-scoped-past-its-subject-and-a-ratio-that-moved-when-nothing-did) |
+| a page states a fact twice after a rebuild, and getByText starts failing with "resolved to 2 elements" | [A seam that has to move when the screen above it moves](#a-seam-that-has-to-move-when-the-screen-above-it-moves) |
 | a long-settled constant has never been wrong, and you cannot say what would have told you | [A value that survived every review because nothing could test it](#a-value-that-survived-every-review-because-nothing-could-test-it) |
 | a verification was requested and the thing it needs was never recorded | [A37 VERIFIED in real use — and the measurement I asked for cannot be taken](#a37-verified-in-real-use-and-the-measurement-i-asked-for-cannot-be-taken) |
 | an average across a dataset is being quoted and the set has kinds in it | [RULE: any measurement of Discogs metadata quality must be PER-GENRE. An](#rule-any-measurement-of-discogs-metadata-quality-must-be-per-genre-an) |
@@ -48,6 +49,7 @@ Generated from 95 declared rules. Regenerate with
 | You are here if | The rule |
 | --- | --- |
 | a validator checks a value is non-empty and the value has a required shape | [`z.string().min(1)` on APP_PASSWORD_HASH — presence where shape was needed](#zstringmin1-on-app_password_hash-presence-where-shape-was-needed) |
+| a screen was rebuilt, every fact still appears, and something that used to be clickable is now plain text | [A capability lost three times, and the assertion shape that keeps missing it](#a-capability-lost-three-times-and-the-assertion-shape-that-keeps-missing-it) |
 | a comment describes a protection and you have not found the code that performs it | [A COMMENT THAT PROMISED A SAFEGUARD NOBODY WROTE](#a-comment-that-promised-a-safeguard-nobody-wrote) |
 | the data changed, no code changed, and the suite is still green | [A DATA change opened an untested branch, and the suite could not see it](#a-data-change-opened-an-untested-branch-and-the-suite-could-not-see-it) |
 | the tests are well shaped and you staged the bug and they all passed | [A fixture that cannot express the defect](#a-fixture-that-cannot-express-the-defect) |
@@ -146,6 +148,7 @@ Generated from 95 declared rules. Regenerate with
 | a migration passed locally and has not run anywhere else | [RULE: a schema unit is not done until `db:migrate` has run against NEON](#rule-a-schema-unit-is-not-done-until-dbmigrate-has-run-against-neon) |
 | work was interrupted and the tree looks clean | [RULE: after an interruption, a clean tree is not evidence nothing was lost — check the stash](#rule-after-an-interruption-a-clean-tree-is-not-evidence-nothing-was-lost-check-the-stash) |
 | a command exited green and you have not checked it did anything | [RULE: this toolchain reports ABSENCE as SUCCESS in at least three distinct](#rule-this-toolchain-reports-absence-as-success-in-at-least-three-distinct) |
+| a layout constant has a passing test and no instrument has ever measured the rendered screen it describes | [The 900 was arithmetic about constants, and the page it described was not measured](#the-900-was-arithmetic-about-constants-and-the-page-it-described-was-not-measured) |
 | something hangs and you are looking at the code you just changed | [The env-loading hang, FIXED — and it was mine, from four hours earlier](#the-env-loading-hang-fixed-and-it-was-mine-from-four-hours-earlier) |
 | a suite hangs or slows and you are treating it as load rather than a lock | [THE HANG WAS AN ACCIDENTAL MUTEX — fixing it turned the suite red, and that is the honest state](#the-hang-was-an-accidental-mutex-fixing-it-turned-the-suite-red-and-that-is-the-honest-state) |
 | a harness stands in for real data and features are being tuned against it | [The harness had no cover art, and two effects were built to compensate](#the-harness-had-no-cover-art-and-two-effects-were-built-to-compensate) |
@@ -153,6 +156,8 @@ Generated from 95 declared rules. Regenerate with
 | a run reported no counts and you are reading that as nothing failed | [The wrapper caught a real crashed run, unstaged](#the-wrapper-caught-a-real-crashed-run-unstaged) |
 
 <!-- APPARATUS-INDEX:END -->
+
+98 rules indexed.
 
 ## "THE SCENE RESISTS IT" — a conclusion one step too broad
 
@@ -29496,3 +29501,90 @@ clamping each form's origin into the envelope before drawing, never by fitting
 the frame: fitting is instance two above. Now asserted as a property the
 generator cannot violate — every drawn point inside the frame on all seventeen
 real ids — rather than something a sheet has to catch again.
+
+## A capability lost three times, and the assertion shape that keeps missing it
+
+**Shape:** check-cannot-fail
+**You are here if:** a screen was rebuilt, every fact still appears, and something that used to be clickable is now plain text
+
+Wiring 8a into `/records/[id]` dropped two capabilities, and the history says
+this is a pattern rather than an accident:
+
+| capability | lost when | caught by |
+|---|---|---|
+| artist → collection filtered by artist | the grid replaced the header | a spec, restored with a comment saying why |
+| genres → collection filtered by genre | the grid replaced the "Filed under" section | a spec, restored with a comment saying why |
+| BOTH | 8a replaced the grid | `record-form.spec.ts` and `record-detail.spec.ts` |
+
+**The same two capabilities, lost twice each, each time to a rebuild that kept
+the text.** `RecordGrid` carried comments explaining both restorations, and 8a
+still dropped them — a comment on the code that HAS the behaviour does not
+protect the behaviour when that code is replaced wholesale.
+
+**What the E2E was doing right:** `record-detail.spec.ts` asserts the genre link
+by ROLE and then follows it to a filtered collection, and `record-form.spec.ts`
+asserts `getByRole('link', { name: artistName })`. Those are why this was caught
+at all. The per-case assertions I had written first used `toContainText`, which
+passed against plain text — the swap would have shipped green.
+
+**So: for any fact whose value is that it is actionable, assert the ROLE, not
+the text.** `toContainText('Soul')` and `getByRole('link', {name: 'Soul'})` look
+like the same assertion and are not: the first survives losing the link.
+
+This is the same family as the colour regression committed this session — a rule
+with no failing input is not a rule — but the failing input here is not a
+different value, it is a different ELEMENT for the same value.
+
+## A seam that has to move when the screen above it moves
+
+**Shape:** measurement-not-governing
+**You are here if:** a page states a fact twice after a rebuild, and getByText starts failing with "resolved to 2 elements"
+
+`RecordDetail` renders what the screen above it does not, filtered by a named
+set: `GRID_CARRIES = {'Catalog number', 'Country', 'Pressed'}`. The mechanism is
+good — the file's own comment records that duplication once broke 24 locators
+across six E2E files, and that naming the list beats filtering by position.
+
+**But the set names the facts of a SPECIFIC screen, and the screen was
+replaced.** 8a carries two facts `RecordGrid` did not — the matrix/runout, which
+has a cell of its own, and the note, which 8a renders as `About` in the journal
+cell. Neither was in the set, so both rendered twice, and the E2E found them as
+strict-mode violations rather than as anything about layout.
+
+**The seam is data, and data about another component's contents goes stale
+exactly when that component is swapped.** The fix was two entries in the set and
+deleting a section. What is worth recording is the trigger: when you replace a
+screen, the list of what it carries is part of the diff, and nothing type-checks
+it — `GRID_CARRIES` is a set of strings, so a screen carrying a new fact is not
+a compile error, it is a page that says something twice.
+
+## The 900 was arithmetic about constants, and the page it described was not measured
+
+**Shape:** instrument-reports-nothing
+**You are here if:** a layout constant has a passing test and no instrument has ever measured the rendered screen it describes
+
+`band-geometry.test.ts` asserts `BAND_TOTAL === NO_SCROLL_HEIGHT` — four numbers
+adding to 900. That cannot fail when the rendering overflows: it is a claim
+about addition, and the claim anyone reading it takes away is that the record
+fits one screen.
+
+Three things the first real measurement found, none visible to that test:
+
+1. The route was rendering the OLD screen entirely, so the budget described a
+   component the user had never loaded.
+2. `main`'s `py-6`, a `← Collection` link and a controls row put 8a at y=145.5
+   instead of 53 — **92.5px of a budget with no slack**, pushing the tail off
+   the fold while every band was still exactly its drawn height.
+3. 8a's own bands are 847, not 900; the missing 53 is `AppHeader`, which is
+   outside the component. My first assertion targeted the wrong element and
+   failed at 847 — correctly, and the number named its own cause.
+
+**The assertion that carries the claim measures the RENDERED element against the
+viewport**: 8a is exactly 847 and starts at exactly `BANDS.nav`, so nav plus
+record is 900 and a header that grew would fail even with 8a's height correct.
+
+**And the first version of that assertion was also wrong, in the opposite
+direction:** it measured `document.scrollHeight` and failed by 699px, because
+the route legitimately keeps the gallery, snippet, market and journal below the
+seam. Those are MEANT to scroll. A budget test has to name which thing is
+budgeted — the screen, not the document.

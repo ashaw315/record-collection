@@ -9,7 +9,9 @@ import { SnippetPanel } from './SnippetPanel';
 import { isAnthropicConfigured } from '@/lib/llm/client';
 import { RecordJournal } from './RecordJournal';
 import { RecordDetail } from './RecordDetail';
-import { RecordGrid } from './RecordGrid';
+import { RecordPage8a } from './RecordPage8a';
+import { pressingLine } from './page-record';
+import { MAX_GRID_WIDTH } from './band-geometry';
 import { marketFigures } from './market-median';
 import { listPricesForRecord } from '@/lib/db/queries/prices';
 import { hydrateRecord } from '@/lib/db/queries/records';
@@ -71,55 +73,54 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
     <>
       <AppHeader />
 
-      <main className="w-full py-6">
-        {/* Back to the collection, not browser-back: the reader may have
-            arrived from a link or a fresh tab, where back goes nowhere useful. */}
-        <Link
-          href="/"
-          className="text-meta text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-        >
-          ← Collection
-        </Link>
+      {/*
+        **No padding above 8a, and nothing between it and the nav.**
 
-        <div className="mt-3">
+        8a's four bands budget the 900px screen exactly — 53 of nav and 847 of
+        record — so anything inserted above it pushes the tail below the fold
+        while 8a's own height stays correct. Measured on the first run of the
+        no-scroll assertion: `py-6`, a `← Collection` link and the controls row
+        put 8a at y=145.5 instead of 53, costing 92.5px of a budget with no
+        slack.
+
+        The chrome did not have to go: it had to go BELOW the seam, where the
+        sections that are meant to scroll already live.
+      */}
+      <main className="w-full">
+        <div>
           <div className="min-w-0">
             {/*
-              **The seam.** 7a's grid covers the top of the screen; the gallery,
-              snippet panel and delete control below it are unchanged, so the
-              page reads as half-redesigned deliberately. The grid is the thing
-              under judgement, not the page.
+              **8a, on the route rather than on a probe.**
+
+              Every assertion 8a passed was made against `/wall/probe/page8a`,
+              which renders this component from literals. The route went on
+              rendering `RecordGrid` — so the cap that "was not applying" was a
+              probe measured against a screen that never had one, and the three
+              symptoms reported from the rendered page (stretched, cover cropped,
+              dead band) were all `RecordGrid` having no cap by design.
+
+              The seam is unchanged: 8a covers the top of the screen and the
+              gallery, snippet, market and journal below it are as they were.
             */}
-            <RecordGrid
-              controls={
-                <>
-                  {/*
-                    Delete reads as a link rather than a button: §7.3's
-                    precedent is that a destructive action must be deliberate,
-                    and giving it Edit's visual weight invites the misclick the
-                    confirmation then has to catch.
-                  */}
-                  <Link
-                    href={`/records/${id}/edit`}
-                    className="text-label font-mono tracking-[0.09em] uppercase no-underline hover:underline"
-                  >
-                    Edit
-                  </Link>
-                  <DeleteRecord
-                    recordId={id}
-                    title={record.title}
-                    imageCount={record.images.length}
-                    journalCount={record.journalEntries.length}
-                  />
-                </>
-              }
+            <RecordPage8a
               record={{
+                id: record.id,
                 title: record.title,
                 artistName: record.artist.name,
                 artistId: record.artist.id,
-                labelName: record.label?.name ?? null,
-                formatName: record.format?.name ?? null,
-                catalogNumber: record.pressing?.catalogNumber ?? null,
-                countryPressed: record.pressing?.countryPressed ?? null,
+                /*
+                  Composed by a tested function rather than inline: the probe
+                  supplied this as a string, so how it handles four nullable
+                  columns was never exercised. See `page-record.test.ts`.
+                */
+                pressingLine: pressingLine({
+                  labelName: record.label?.name ?? null,
+                  catalogNumber: record.pressing?.catalogNumber ?? null,
+                  countryPressed: record.pressing?.countryPressed ?? null,
+                  yearPressed: record.pressing?.yearPressed ?? null,
+                }),
+                formatLine: record.format?.name ?? null,
+                matrixRunout: record.pressing?.matrixRunout ?? null,
                 releaseYear: record.releaseYear,
                 yearPressed: record.pressing?.yearPressed ?? null,
                 genres: record.genres.map((genre) => ({ id: genre.id, name: genre.name })),
@@ -127,20 +128,10 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
                 storeName: record.store?.name ?? null,
                 conditionMedia: record.conditionMedia,
                 conditionSleeve: record.conditionSleeve,
-                /*
-                  From the stored observations rather than a live fetch: §7 calls
-                  the drawing's market values illustrative, and the server
-                  already holds what was actually observed.
-
-                  Through `marketFigures` rather than indexing: the rows arrive
-                  newest-first, so `prices[0]` is the most RECENT observation and
-                  labelling it a median showed $61.00 for a record observed at
-                  24.00 / 9.99 / 61.00.
-                */
+                /* Through `marketFigures`, not `prices[0]` — see below. */
                 marketMedian: figures?.median ?? null,
                 marketLow: figures?.low ?? null,
                 marketHigh: figures?.high ?? null,
-                marketFetchedAt: prices[0]?.recordedAt ?? null,
                 hasDiscogsRelease: record.pressing?.discogsReleaseId != null,
                 journalEntry:
                   record.journalEntries.length === 0
@@ -149,10 +140,50 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
                         entry: record.journalEntries[0].note,
                         entryDate: String(record.journalEntries[0].entryDate),
                       },
+                note: record.notes,
+                imageCount: record.images.length,
                 coverUrl: record.images.find((image) => image.imageType === 'cover')?.url ?? null,
                 spineColour: record.spineColour,
               }}
             />
+
+            {/*
+              **The chrome sits below 8a, because the screen above it is spoken
+              for.** Edit, Delete and the way back are real controls and none of
+              them is in 8a's drawing — its bands are identity / record / tail
+              and it draws no controls cell. Putting them here keeps the 900px
+              screen whole without inventing a cell to hold them, which would be
+              a design decision made to fit an existing control.
+            */}
+            <div
+              data-testid="record-controls"
+              className="mx-auto flex items-center justify-between gap-3 px-[14px] py-4"
+              style={{ maxWidth: MAX_GRID_WIDTH }}
+            >
+              {/* Back to the collection, not browser-back: the reader may have
+                  arrived from a link or a fresh tab, where back goes nowhere. */}
+              <Link
+                href="/"
+                className="text-meta text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+              >
+                ← Collection
+              </Link>
+
+              <div className="flex items-center gap-3">
+                <Link
+                  href={`/records/${id}/edit`}
+                  className="text-label font-mono tracking-[0.09em] uppercase no-underline hover:underline"
+                >
+                  Edit
+                </Link>
+                <DeleteRecord
+                  recordId={id}
+                  title={record.title}
+                  imageCount={record.images.length}
+                  journalCount={record.journalEntries.length}
+                />
+              </div>
+            </div>
 
             {/*
               **The measure returns below the grid.** The grid spans the

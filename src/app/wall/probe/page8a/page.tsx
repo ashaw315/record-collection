@@ -5,6 +5,26 @@ import { RecordPage8a, type PageRecord } from '@/app/records/[id]/RecordPage8a';
 /**
  * 8a assembled, on three real records — the assembly IS the measurement.
  *
+ * **The real screen has landed: `/records/[id]` renders `RecordPage8a`.** This
+ * probe is therefore no longer the only place 8a exists, and the removal
+ * condition in `e2e/every-page-has-nav.spec.ts` applies to it — route,
+ * exemption and guard come out together.
+ *
+ * **It does not come out yet, and the reason is stated so its absence cannot be
+ * mistaken for an omission.** Two specs and three captures still drive it, and
+ * one of them is `?case=nocover` — §5.3's record with no cover at all, where
+ * every mark falls back to ink. On the real route that case needs a record with
+ * no cover image row, which `e2e/record-page-8a.spec.ts` cannot create through
+ * the API it uses; the probe supplies it as a literal.
+ *
+ * So the sequence is: move those five onto the real route, then delete the
+ * route, the exemption and the guard together. Deleting it now would take the
+ * no-cover case with it.
+ */
+
+/**
+ * (original note)
+ *
  * Every piece has been measured in isolation. This is the first view of all of
  * it at once: the richest record, the modal one with its two diagonals, and the
  * emptiest.
@@ -22,6 +42,7 @@ const CASES: Record<string, PageRecord> = {
     id: 'd7047c62-149e-42fa-8cda-fac3f90c47cc',
     title: 'Never Too Much',
     artistName: 'Luther Vandross',
+    artistId: 'a-luther',
     pressingLine: 'Epic · FE 36811 · United States, 1981',
     formatLine: 'Vinyl, LP, Album',
     matrixRunout: 'FE 36811-1A / FE 36811-1B <stamped>',
@@ -50,6 +71,7 @@ const CASES: Record<string, PageRecord> = {
     id: 'e73e1de1-3686-4a81-8544-ca2300e187bb',
     title: 'The Hurdy Gurdy Man',
     artistName: 'Donovan',
+    artistId: 'a-donovan',
     pressingLine: 'Epic · BN 26420 · United States, 1968',
     formatLine: 'Vinyl, LP, Album',
     matrixRunout: 'BN 26420-1A / BN 26420-1B',
@@ -78,6 +100,7 @@ const CASES: Record<string, PageRecord> = {
     id: '158a3163-6a56-4673-8f88-27e7b2aec724',
     title: 'Grave New World',
     artistName: 'Discharge',
+    artistId: 'a-discharge',
     pressingLine: 'Clay Records · United Kingdom',
     formatLine: null,
     matrixRunout: null,
@@ -110,6 +133,7 @@ CASES.nocover = {
   id: '4a1e2b7c-0000-4000-8000-000000000005',
   title: 'The Best Of The Blues Project',
   artistName: 'The Blues Project',
+  artistId: 'a-blues-project',
   pressingLine: 'Verve Forecast · United States, 1969',
   releaseYear: 1969,
   coverUrl: null,

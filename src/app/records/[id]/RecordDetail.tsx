@@ -75,7 +75,18 @@ export function RecordDetail({ record }: { record: HydratedRecord }) {
    * anything twice. Named as a list rather than filtered by position, because a
    * reorder of `pressingFacts` must not silently change what this renders.
    */
-  const GRID_CARRIES = new Set(['Catalog number', 'Country', 'Pressed']);
+  const GRID_CARRIES = new Set([
+    'Catalog number',
+    'Country',
+    'Pressed',
+    /*
+      **8a carries the matrix, which `RecordGrid` did not.** It has a cell of
+      its own — mono, "because a character matters" — so leaving it here stated
+      it twice, and `getByText` went ambiguous exactly as the note above
+      describes. The seam moved when the screen did; this list is how it moves.
+    */
+    'Matrix / runout',
+  ]);
   const remainingFacts = facts.filter((fact) => !GRID_CARRIES.has(fact.label));
 
   return (
@@ -90,7 +101,8 @@ export function RecordDetail({ record }: { record: HydratedRecord }) {
         before any test found it.
 
         What remains is what the grid does NOT carry: the matrix/runout and the
-        other pressing facts too specific for a two-line block, Tags, and Notes.
+        other pressing facts too specific for a two-line block, and Tags. (The
+        note itself is 8a's, in the journal cell's `About` block.)
       */}
 
       {/*
@@ -177,12 +189,13 @@ export function RecordDetail({ record }: { record: HydratedRecord }) {
         </Section>
       )}
 
-      {record.notes !== null && record.notes !== '' && (
-        <Section title="Notes">
-          {/* whitespace-pre-line: a note typed with line breaks keeps them. */}
-          <p className="text-prose whitespace-pre-line">{record.notes}</p>
-        </Section>
-      )}
+      {/*
+        **Notes moved above the seam with 8a.** 8a's journal cell renders the
+        note under an `About` rule, so a `Notes` section here stated it twice
+        and `getByText` went ambiguous — the same duplication the note at the
+        top of this file describes, arriving again because the screen above
+        changed and the seam did not move with it.
+      */}
     </article>
   );
 }

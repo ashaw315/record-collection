@@ -36,8 +36,15 @@ export default function IdentityProbePage() {
           <IdentityCell
             title={c.title}
             artistName={c.artist}
+            artistId="a-probe"
             pressingLine="Harvest · SHVL 795 · United Kingdom, 1981"
             formatLine="Vinyl, LP, Album"
+            /* Two, because the measure question this probe asks is about the
+               block's height and a genres line is part of it. */
+            genres={[
+              { id: 'g1', name: 'Psychedelic Rock' },
+              { id: 'g2', name: 'Prog Rock' },
+            ]}
           />
         </div>
       ))}

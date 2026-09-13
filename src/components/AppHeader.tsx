@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { MAX_GRID_WIDTH } from '@/app/records/[id]/band-geometry';
 
 /**
  * The application's one piece of persistent chrome.
@@ -36,9 +37,34 @@ const LINKS = [
 export function AppHeader() {
   const pathname = usePathname();
 
+  /*
+    The record detail screen is 8a's 1728 measure; every other screen is the
+    1152 the app has used throughout. Matched on the route rather than passed as
+    a prop so a screen cannot forget to say which it is and silently misalign.
+  */
+  const wide = /^\/records\/[^/]+$/.test(pathname) || pathname.startsWith('/wall/probe/page8a');
+
   return (
     <header className="border-b border-border">
-      <div className="mx-auto flex w-full max-w-6xl items-baseline gap-6 px-4 py-3">
+      {/*
+        **The nav shares its page's measure.**
+
+        This bar carried `max-w-6xl` (1152) while the record page caps at 1728,
+        so on a wide display the nav was narrower than the page and left-aligned
+        against it — reported from the rendered screen, and visible on the probe
+        too.
+
+        Widening it to 1728 everywhere would have been the mirror defect: `/` and
+        `/manage` cap their own content at 1152, and a nav wider than the content
+        it sits above is the same misalignment pointing the other way. So the bar
+        takes the measure of the page it is on — 1728 where the page is 1728,
+        1152 where the page is 1152 — which is why this is a variable and not a
+        class.
+      */}
+      <div
+        className="mx-auto flex w-full items-baseline gap-6 px-4 py-3"
+        style={{ maxWidth: wide ? MAX_GRID_WIDTH : 1152 }}
+      >
         {/*
           **`text-sm` is NOT converted to a role, and the gap is deliberate
           (§7a, A70).** Every role in the scale answers *what is this text doing

@@ -213,8 +213,12 @@ test('clearing a field removes it rather than leaving it set', async ({ page }) 
    * Located by `data-cell` rather than by text, because text is not a handle:
    * asserting on the words broke the moment the page said them in two places.
    */
+  /*
+    The attribute is on the MARK inside the cell rather than on the cell: 8a
+    draws the diagonal as an element, so the cell holds it rather than being it.
+  */
   await expect(
-    page.getByTestId('record-grid').locator('[data-cell="provenance"]'),
+    page.getByTestId('record-page-8a').locator('[data-cell="provenance"] [data-diagonal]'),
   ).toHaveAttribute('data-diagonal', 'single');
 });
 

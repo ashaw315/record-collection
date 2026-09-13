@@ -93,7 +93,7 @@ test('shows every recorded field, and omits what is absent', async ({ page }) =>
    * the page said the same thing — 24 locators across six files. A handle
    * survives the wording changing, so a failure now means the fact moved.
    */
-  const grid = page.getByTestId('record-grid');
+  const grid = page.getByTestId('record-page-8a');
 
   await expect(grid.locator('[data-field="title"]')).toHaveText(`Hear Nothing ${suffix}`);
   await expect(grid.locator('[data-field="artist"]')).toHaveText(`Discharge-${suffix}`);
@@ -104,7 +104,13 @@ test('shows every recorded field, and omits what is absent', async ({ page }) =>
   await expect(grid.locator('[data-field="pressing-line"]')).toContainText(
     `CLAY-LP-3-${suffix}`,
   );
-  await expect(grid.locator('[data-field="origin"]')).toContainText('1982');
+  /*
+    **The origin folded into the pressing line.** 8a composes
+    `Label · Catalog · Country, Year` as one field; there is no separate
+    `origin`. The FACT is still asserted — it moved, so the assertion moves
+    with it rather than being dropped.
+  */
+  await expect(grid.locator('[data-field="pressing-line"]')).toContainText('1982');
   await expect(grid.locator('[data-field="year"]')).toHaveText('1982');
   await expect(grid.locator('[data-field="genres"]')).toContainText(`UK82-${suffix}`);
 
@@ -150,7 +156,7 @@ test('renders a record that has only the required fields', async ({ page }) => {
 
   await page.goto(`/records/${record.id}`);
 
-  const grid = page.getByTestId('record-grid');
+  const grid = page.getByTestId('record-page-8a');
 
   await expect(grid.locator('[data-field="title"]')).toHaveText(`Bare ${suffix}`);
 
@@ -164,7 +170,8 @@ test('renders a record that has only the required fields', async ({ page }) => {
    * this is the sparse record the §10 mobile case is designed around, which is
    * why it is asserted here rather than only in the component tests.
    */
-  await expect(grid.locator('[data-cell="provenance"]')).toHaveAttribute(
+  /* The mark inside the cell carries the attribute, not the cell itself. */
+  await expect(grid.locator('[data-cell="provenance"] [data-diagonal]')).toHaveAttribute(
     'data-diagonal',
     'single',
   );
@@ -173,7 +180,10 @@ test('renders a record that has only the required fields', async ({ page }) => {
     No pressing and no Discogs release, so the market figure can never exist:
     CROSSED rather than single, because the owner cannot fill it.
   */
-  await expect(grid.locator('[data-cell="market"]')).toHaveAttribute('data-diagonal', 'crossed');
+  await expect(grid.locator('[data-cell="market"] [data-diagonal]')).toHaveAttribute(
+    'data-diagonal',
+    'crossed',
+  );
 
   // A record with no pressing has no pressing-detail section rather than an
   // empty one — the grid's own pressing cell carries what little there is.

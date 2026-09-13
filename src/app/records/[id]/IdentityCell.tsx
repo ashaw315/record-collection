@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { LABEL } from './grid-type';
 
 /**
@@ -44,13 +45,17 @@ const INSET_RULE = 'oklch(0.72 0.004 80)';
 export function IdentityCell({
   title,
   artistName,
+  artistId,
   pressingLine,
+  genres,
   formatLine,
 }: {
   title: string;
   artistName: string;
+  artistId: string;
   /** Label · catalogue · country, year — one line, absent parts dropped. */
   pressingLine: string;
+  genres: ReadonlyArray<{ id: string; name: string }>;
   /** §4: sans 500, because it describes rather than identifies. */
   formatLine: string | null;
 }) {
@@ -78,7 +83,20 @@ export function IdentityCell({
           {title}
         </h1>
         <div data-field="artist" className={ARTIST}>
-          {artistName}
+          {/*
+            **A LINK, restored for the second time.** The deleted header linked
+            the artist; `RecordGrid` had to put it back and recorded why; 8a
+            dropped it again, and `record-form.spec.ts` caught it — §10 makes
+            "what else do I have by this artist" one click rather than a search.
+
+            Three losses of the same shape in one component's history (this, the
+            genres line, and the grid's own note about the header) is why the
+            capability is asserted by ROLE in the E2E rather than by text: plain
+            text satisfies a text assertion and loses the click.
+          */}
+          <Link href={`/?artistId=${artistId}`} className="underline-offset-2 hover:underline">
+            {artistName}
+          </Link>
         </div>
       </div>
 
@@ -101,6 +119,45 @@ export function IdentityCell({
         {formatLine !== null && (
           <div data-field="format" className="text-prose font-medium">
             {formatLine}
+          </div>
+        )}
+        {/*
+          **Genres, as LINKS — the capability the swap dropped.**
+
+          `PageRecord` declared them, the route supplied them and `gridModules`
+          carried them into `modules.pressing.genres`, but nothing rendered
+          them: the richest record went straight from the pressing line to
+          Provenance. §1.1 puts the genres line in the pressing block, so this
+          is where they were meant to be.
+
+          Links rather than text, for the reason the deleted grid recorded and
+          `record-detail.spec.ts` asserts: §10 makes "what else is like this"
+          one click, and plain text would have hidden the loss while looking
+          right. Dropping them a second time is what made this a rule.
+
+          The block is anchored to the cell's floor, so this line grows UP into
+          the gap the title leaves rather than pushing anything.
+        */}
+        {genres.length > 0 && (
+          /*
+            `leading-none` because the inline links' leading otherwise pushes
+            the block's last line box 4px past its content box, and the cell's
+            floor is measured from the BLOCK — `e2e/identity-cell.spec.ts`
+            caught it as an 18px gap becoming 14. The line still sits on the
+            18px padding; only the half-leading below the glyphs is removed.
+          */
+          <div data-field="genres" className="text-prose leading-none">
+            {genres.map((genre, index) => (
+              <span key={genre.id}>
+                {index > 0 && ', '}
+                <Link
+                  href={`/?genreId=${genre.id}`}
+                  className="underline-offset-2 hover:underline"
+                >
+                  {genre.name}
+                </Link>
+              </span>
+            ))}
           </div>
         )}
       </div>
