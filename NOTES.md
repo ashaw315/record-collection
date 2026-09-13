@@ -18,47 +18,98 @@ is titled as its own conclusion, which makes it findable only if you already
 know it — so this table is keyed by the circumstance instead. Each entry keeps
 its evidence: follow the link rather than trusting the line.
 
-Generated from 10 declared rules. Regenerate with
+Generated from 61 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
 
 | You are here if | The rule |
 | --- | --- |
+| a feature works correctly and you are debating how to improve it | [A FEATURE RETIRED ON THREE ARGUMENTS, NONE ABOUT ITS IMPLEMENTATION](#a-feature-retired-on-three-arguments-none-about-its-implementation) |
 | the number is in band and you cannot say what it would forbid | [A measurement correlated with the signal instead of being it — fifth instance](#a-measurement-correlated-with-the-signal-instead-of-being-it-fifth-instance) |
 | a rule collides with rules that were never in tension, or a figure moves while nothing changes size | [A rule scoped past its subject, and a ratio that moved when nothing did](#a-rule-scoped-past-its-subject-and-a-ratio-that-moved-when-nothing-did) |
 | a long-settled constant has never been wrong, and you cannot say what would have told you | [A value that survived every review because nothing could test it](#a-value-that-survived-every-review-because-nothing-could-test-it) |
+| a verification was requested and the thing it needs was never recorded | [A37 VERIFIED in real use — and the measurement I asked for cannot be taken](#a37-verified-in-real-use-and-the-measurement-i-asked-for-cannot-be-taken) |
+| a number surprised you and you have not checked what else was running | [THE APPARATUS GENERATING THE SIGNAL — now a mechanism, not a habit](#the-apparatus-generating-the-signal-now-a-mechanism-not-a-habit) |
+| a feature computes something correct and you cannot say what a user does with it | [THE WALK DOES NOTHING FOR A PERSON, and the four artists most likely to converge are People](#the-walk-does-nothing-for-a-person-and-the-four-artists-most-likely-to-converge-are-people) |
+| a metric is easy to compute and you have not checked it tracks what you care about | [Wall colour: measured, and the naive metric says the wrong thing](#wall-colour-measured-and-the-naive-metric-says-the-wrong-thing) |
 
 ### Checks that cannot fail
 
 | You are here if | The rule |
 | --- | --- |
+| a validator checks a value is non-empty and the value has a required shape | [`z.string().min(1)` on APP_PASSWORD_HASH — presence where shape was needed](#zstringmin1-on-app_password_hash-presence-where-shape-was-needed) |
+| a comment describes a protection and you have not found the code that performs it | [A COMMENT THAT PROMISED A SAFEGUARD NOBODY WROTE](#a-comment-that-promised-a-safeguard-nobody-wrote) |
+| the data changed, no code changed, and the suite is still green | [A DATA change opened an untested branch, and the suite could not see it](#a-data-change-opened-an-untested-branch-and-the-suite-could-not-see-it) |
 | the tests are well shaped and you staged the bug and they all passed | [A fixture that cannot express the defect](#a-fixture-that-cannot-express-the-defect) |
 | a rule holds, and you are not sure whether the code or a guard is holding it | [A rule kept by a backstop reads identically to a rule kept by the code](#a-rule-kept-by-a-backstop-reads-identically-to-a-rule-kept-by-the-code) |
+| a test computes a real number from real data and you cannot say which value it would reject | [A TEST THAT MEASURES A SET CONSTRAINS NO MEMBER OF IT](#a-test-that-measures-a-set-constrains-no-member-of-it) |
 | a test measures something real, but not the thing its name promises | [An assertion aimed at a proxy for the thing it names — third instance](#an-assertion-aimed-at-a-proxy-for-the-thing-it-names-third-instance) |
+| a property regressed three times and every pure function covering it still passes | [AN INLINE COMPUTATION IS INVISIBLE TO EVERY LAYER OF THE SUITE BY CONSTRUCTION](#an-inline-computation-is-invisible-to-every-layer-of-the-suite-by-construction) |
+| a gate checks that a value exists or looks right, and you have not checked it works | [Presence is not shape, and shape is not EFFECT — a standing check, after the fourth instance](#presence-is-not-shape-and-shape-is-not-effect-a-standing-check-after-the-fourth-instance) |
+| a test passes with a mock and you have not checked the mock was reached | [RULE: a mock can fail by not answering, not only by answering wrongly](#rule-a-mock-can-fail-by-not-answering-not-only-by-answering-wrongly) |
+| a feature has comprehensive passing tests and nobody has used it in a browser | [THE LARGEST FINDING IN THIS PROJECT: a feature that passed every test and had never once worked](#the-largest-finding-in-this-project-a-feature-that-passed-every-test-and-had-never-once-worked) |
+| you fixed the callers of a shared thing rather than the shared thing | [The layer argument turned on me: I fixed two callers and left the trap open](#the-layer-argument-turned-on-me-i-fixed-two-callers-and-left-the-trap-open) |
+| a test asserts a total or an average over a set that is allowed to vary | [The light became an angle, and a test that measured an aggregate missed a drift](#the-light-became-an-angle-and-a-test-that-measured-an-aggregate-missed-a-drift) |
+| a guard was added and you have not checked it sits where the work happens | [The transport now PERFORMS the call — and the enforcement is weaker than I first claimed](#the-transport-now-performs-the-call-and-the-enforcement-is-weaker-than-i-first-claimed) |
+| a spec item is assumed built and no test names it | [The want-list edit route: SPECIFIED IN STEP 6, NEVER BUILT, unnoticed for ten steps](#the-want-list-edit-route-specified-in-step-6-never-built-unnoticed-for-ten-steps) |
 
 ### Variation applied to the wrong axis
 
 | You are here if | The rule |
 | --- | --- |
+| a value crosses between systems and nothing in its type says which one it is in | [Branded coordinate frames, and the false diagnosis that preceded them](#branded-coordinate-frames-and-the-false-diagnosis-that-preceded-them) |
+| a layout is correct at one viewport and you have not looked at another | [DIAGNOSED, NOT FIXED: the pulled record fills 457% of the frame's width at 390px](#diagnosed-not-fixed-the-pulled-record-fills-457-of-the-frames-width-at-390px) |
+| the same quantity keeps measuring differently and you have not asked from where | [FOUR ANSWERS FOR ONE DIMENSION: the anchor moved every time, and only the picture settled it](#four-answers-for-one-dimension-the-anchor-moved-every-time-and-only-the-picture-settled-it) |
+| two fields hold the same shape of value and you are about to treat them alike | [RULE: two things that look like the same field are not the same KIND of claim](#rule-two-things-that-look-like-the-same-field-are-not-the-same-kind-of-claim) |
+| content renders smaller or clipped and the element it sits in was not measured | [The canvas is a container, and its height is a constraint on what renders inside it](#the-canvas-is-a-container-and-its-height-is-a-constraint-on-what-renders-inside-it) |
+| a coordinate or position is being compared and you have not said in which frame | [The frame family, tenth instance — a POSITION must name its frame too](#the-frame-family-tenth-instance-a-position-must-name-its-frame-too) |
+| something renders and cannot be seen, and you are looking at colour rather than size | [THE SHELF WAS NOT INVISIBLE — IT WAS TOO SHALLOW TO EXIST](#the-shelf-was-not-invisible-it-was-too-shallow-to-exist) |
+| a screen works on desktop and the mobile case was reasoned about rather than rendered | [The wall at 390px: 462px of non-shrinkable chrome, and no touch handlers at all](#the-wall-at-390px-462px-of-non-shrinkable-chrome-and-no-touch-handlers-at-all) |
 | instances differ measurably and look identical | [Variation applied to the wrong axis](#variation-applied-to-the-wrong-axis) |
 
 ### Observers satisfied without a subject
 
 | You are here if | The rule |
 | --- | --- |
+| an error path renders and you have not checked what it exposes | [A 403 on a JS chunk became a credential disclosure](#a-403-on-a-js-chunk-became-a-credential-disclosure) |
+| an output names a thing and you have not checked the thing exists | [A FABRICATED IDENTIFIER IS A DIFFERENT FAILURE CLASS FROM AN UNCERTAIN CLAIM](#a-fabricated-identifier-is-a-different-failure-class-from-an-uncertain-claim) |
 | a rule passes and you have not checked that it had anything to govern | [An observer that can be satisfied without its subject ever existing](#an-observer-that-can-be-satisfied-without-its-subject-ever-existing) |
+| a feature answers a question and you have not checked it is the question asked | [The panel resolves to a RELEASE, not to a stamper — the limit named on first real use](#the-panel-resolves-to-a-release-not-to-a-stamper-the-limit-named-on-first-real-use) |
 
 ### Samples read as populations
 
 | You are here if | The rule |
 | --- | --- |
+| a defect has two plausible readings and you are about to fix the likelier one | [1093 DIAGNOSED after nine sightings: both candidate readings were wrong, and the predicate matches WHITE](#1093-diagnosed-after-nine-sightings-both-candidate-readings-were-wrong-and-the-predicate-matches-white) |
+| a failure has a number attached and you have not run it more than once | [427 MEASURED over three runs rather than assumed — and it is NOT a rate](#427-measured-over-three-runs-rather-than-assumed-and-it-is-not-a-rate) |
+| a written measurement is being carried forward and you have not re-read the source | [A note that implied a difference, and a payload that did not](#a-note-that-implied-a-difference-and-a-payload-that-did-not) |
 | a search came back empty and you are about to conclude the thing does not exist | [A search whose scope cannot contain the answer](#a-search-whose-scope-cannot-contain-the-answer) |
+| two options were compared and the more interesting one won | [RULE: a comparison with an uncontrolled variable, and the wrong answer being more interesting](#rule-a-comparison-with-an-uncontrolled-variable-and-the-wrong-answer-being-more-interesting) |
+| a diagnosis explained the last occurrence and you are applying it to this one | [THE ACCUMULATION DIAGNOSIS IS REFUTED FOR THE CURRENT FLAKE — measured 2026-09-05](#the-accumulation-diagnosis-is-refuted-for-the-current-flake-measured-2026-09-05) |
+| a flake has a prescription attached that nobody measured | [The E2E flake is ACCUMULATION, not worker contention — the prescription was wrong](#the-e2e-flake-is-accumulation-not-worker-contention-the-prescription-was-wrong) |
+| repeated failures are being treated as one bug | [THE HUNT, COMPLETE — six runs, SEVEN failures, and it is not one bug](#the-hunt-complete-six-runs-seven-failures-and-it-is-not-one-bug) |
+| two standing explanations exist for a failure and neither has been tested | [THE NEON HAZARD, DIAGNOSED — and BOTH standing explanations were wrong](#the-neon-hazard-diagnosed-and-both-standing-explanations-were-wrong) |
+| an intermittent failure is being called a timeout without a trace | [THE TRACE, CAUGHT — and it is a hydration race, not a timeout (2026-09-05)](#the-trace-caught-and-it-is-a-hydration-race-not-a-timeout-2026-09-05) |
 
 ### Instruments that report nothing
 
 | You are here if | The rule |
 | --- | --- |
+| a command exited zero and you are reading that as the work being done | ["The script ran" is not "the script did what it is for"](#the-script-ran-is-not-the-script-did-what-it-is-for) |
+| you are about to commit with -A and have not read what is staged | [A bookkeeping failure: `git add -A` swept code into NOTES commits](#a-bookkeeping-failure-git-add--a-swept-code-into-notes-commits) |
+| everything is green locally and you are about to deploy a schema change | [A GREEN SUITE CANNOT SEE THE SCHEMA IT DEPLOYS AGAINST](#a-green-suite-cannot-see-the-schema-it-deploys-against) |
+| a judgement is being made from a rendering and you have not checked the rendering is right | [A page that told the truth in text and a lie in pixels](#a-page-that-told-the-truth-in-text-and-a-lie-in-pixels) |
+| a failure is logged as a category and the raw input was not kept | [LLM_UNREADABLE on a real gap analysis — and the diagnostic that was never written](#llm_unreadable-on-a-real-gap-analysis-and-the-diagnostic-that-was-never-written) |
+| a measurement came from a screenshot and you have not measured the element itself | [MEASURE INSIDE THE ELEMENT UNDER TEST, NOT THE SCREENSHOT THAT CONTAINS IT](#measure-inside-the-element-under-test-not-the-screenshot-that-contains-it) |
+| a progress indicator stopped moving and you cannot tell done from stuck | [OBSERVED, NOT ACTED ON — a progress count cannot say finished from dead](#observed-not-acted-on-a-progress-count-cannot-say-finished-from-dead) |
+| two instruments disagree and you are about to trust the one you built | [RESOLVED: there was no instrument disagreement. My probe missed the spine.](#resolved-there-was-no-instrument-disagreement-my-probe-missed-the-spine) |
+| a migration passed locally and has not run anywhere else | [RULE: a schema unit is not done until `db:migrate` has run against NEON](#rule-a-schema-unit-is-not-done-until-dbmigrate-has-run-against-neon) |
+| work was interrupted and the tree looks clean | [RULE: after an interruption, a clean tree is not evidence nothing was lost — check the stash](#rule-after-an-interruption-a-clean-tree-is-not-evidence-nothing-was-lost-check-the-stash) |
+| something hangs and you are looking at the code you just changed | [The env-loading hang, FIXED — and it was mine, from four hours earlier](#the-env-loading-hang-fixed-and-it-was-mine-from-four-hours-earlier) |
+| a suite hangs or slows and you are treating it as load rather than a lock | [THE HANG WAS AN ACCIDENTAL MUTEX — fixing it turned the suite red, and that is the honest state](#the-hang-was-an-accidental-mutex-fixing-it-turned-the-suite-red-and-that-is-the-honest-state) |
+| a harness stands in for real data and features are being tuned against it | [The harness had no cover art, and two effects were built to compensate](#the-harness-had-no-cover-art-and-two-effects-were-built-to-compensate) |
+| a measurement was taken on different hardware from the one the claim is about | [The instrument must be judged on the device that judges it](#the-instrument-must-be-judged-on-the-device-that-judges-it) |
 | a run reported no counts and you are reading that as nothing failed | [The wrapper caught a real crashed run, unstaged](#the-wrapper-caught-a-real-crashed-run-unstaged) |
 
 <!-- APPARATUS-INDEX:END -->
@@ -116,6 +167,9 @@ So the honest split, which the single phrase had flattened:
 ---
 
 ## A TEST THAT MEASURES A SET CONSTRAINS NO MEMBER OF IT
+
+**Shape:** check-cannot-fail
+**You are here if:** a test computes a real number from real data and you cannot say which value it would reject
 
 **Three decorative tests were found in one day, and this is the shape that hides
 best**, because it does not look decorative at all: it computes a real number
@@ -4781,6 +4835,9 @@ form the records work had not shown — see the masking entry under Open.
 
 ## RULE: a schema unit is not done until `db:migrate` has run against NEON
 
+**Shape:** instrument-reports-nothing
+**You are here if:** a migration passed locally and has not run anywhere else
+
 Twice now a step has looked complete — migrations clean from an empty local
 database, full suite green — and then failed in QA because the deployed Neon
 database was still on the previous schema. The local test database and Neon are
@@ -4956,6 +5013,9 @@ stopped matching", which cost a diagnosis cycle. The guard prevents the dangerou
 outcome; it does not make the cause legible.
 
 ## RULE: a mock can fail by not answering, not only by answering wrongly
+
+**Shape:** check-cannot-fail
+**You are here if:** a test passes with a mock and you have not checked the mock was reached
 
 Alongside the mock-shape family already recorded here (a fixture that answers
 every path identically; a fixture that does not discriminate between rules), this
@@ -5959,6 +6019,9 @@ mechanically instead of by reading, and R7 is where the answer is worth the
 tooling. Recorded here so R7 inherits the mechanism rather than rediscovering it.
 
 ## The E2E flake is ACCUMULATION, not worker contention — the prescription was wrong
+
+**Shape:** sample-as-population
+**You are here if:** a flake has a prescription attached that nobody measured
 
 Diagnosed 2026-08-20, step 15 unit 1. **This overturns a deferral carried through
 eleven sightings**, and the prescription it carried would have looked like a fix
@@ -9118,6 +9181,9 @@ visibly mid-way and a fake one has already finished. If the midpoint frame looks
 like the endpoint, there is no motion — only a delay.
 
 ## A bookkeeping failure: `git add -A` swept code into NOTES commits
+
+**Shape:** instrument-reports-nothing
+**You are here if:** you are about to commit with -A and have not read what is staged
 
 Unit 4b's component work — `PulledRecord.tsx`, `faces.ts`, the `Shelf.tsx`
 conversion, and the back-face reflow — is in the tree and correct, but it landed
@@ -12405,6 +12471,9 @@ the question of what ships to a host somebody else runs.
 
 ## The wall at 390px: 462px of non-shrinkable chrome, and no touch handlers at all
 
+**Shape:** wrong-axis-variation
+**You are here if:** a screen works on desktop and the mobile case was reasoned about rather than rendered
+
 Surveyed 2026-08-20, step 15 unit 2, **before** any mobile screen work — recorded
 here rather than acted on, because the unit that acts on it is not this one and
 the phone-default question (§10b) comes first.
@@ -12765,6 +12834,9 @@ Not a decision. Recorded for the unit that touches those controls.
 
 ## `z.string().min(1)` on APP_PASSWORD_HASH — presence where shape was needed
 
+**Shape:** check-cannot-fail
+**You are here if:** a validator checks a value is non-empty and the value has a required shape
+
 Found 2026-08-20, step 15 unit 3, by being unable to log in on a phone.
 **Recorded rather than fixed** (CLAUDE.md §4): the env fix that unblocked the
 session was a value in an untracked file; this is a defect in `schema.ts` and
@@ -12859,6 +12931,9 @@ The npm-audit observation above is already triggered on R6 for the same reason
 (what ships to a host somebody else runs). These two travel together.
 
 ## A 403 on a JS chunk became a credential disclosure
+
+**Shape:** observer-without-subject
+**You are here if:** an error path renders and you have not checked what it exposes
 
 Found 2026-08-20, step 15 unit 3, trying to reach the dev server from a phone.
 **This is the finding of the unit, and it is not about Next's config.**
@@ -13034,6 +13109,9 @@ file-level check had already passed.
 
 ## DIAGNOSED, NOT FIXED: the pulled record fills 457% of the frame's width at 390px
 
+**Shape:** wrong-axis-variation
+**You are here if:** a layout is correct at one viewport and you have not looked at another
+
 Found 2026-08-20 on a REAL PHONE at 390px, step 15 unit 3. **Fix is unit 4.**
 Nobody predicted it, and none of the three guesses made before measuring — the
 plain-sleeve fallback at viewport scale, the record scaled to fill, the camera
@@ -13134,6 +13212,9 @@ against a 2976px-tall buffer, timing — are for that investigation, and
 **none of them should be assumed**; three guesses were already wrong today.
 
 ## RESOLVED: there was no instrument disagreement. My probe missed the spine.
+
+**Shape:** instrument-reports-nothing
+**You are here if:** two instruments disagree and you are about to trust the one you built
 
 Step 15 unit 4, first question, and it is **withdrawn rather than answered**.
 
@@ -13340,6 +13421,9 @@ The picture is what separated them, and it took one screenshot.
 
 ## A page that told the truth in text and a lie in pixels
 
+**Shape:** instrument-reports-nothing
+**You are here if:** a judgement is being made from a rendering and you have not checked the rendering is right
+
 Step 15 unit 4. **Fifth in the instrument family, and the second this session
 where the measuring device was the thing that was wrong.**
 
@@ -13525,6 +13609,9 @@ after this, that is a THIRD instrument failure and the comparison gets rethought
 rather than the numbers adjusted.** Recorded so it is not quietly relitigated.
 
 ## The instrument must be judged on the device that judges it
+
+**Shape:** instrument-reports-nothing
+**You are here if:** a measurement was taken on different hardware from the one the claim is about
 
 Step 15 unit 4. **The sharpest form of this unit's recurring failure, and it
 arrived one level out from the last one.**
@@ -15442,6 +15529,9 @@ the next reviewer can count.
 
 ## Presence is not shape, and shape is not EFFECT — a standing check, after the fourth instance
 
+**Shape:** check-cannot-fail
+**You are here if:** a gate checks that a value exists or looks right, and you have not checked it works
+
 > ### FOURTH INSTANCE, 2026-08-28 — and it widens the rule
 >
 > **The Neon verification gate tests that `NEON_TEST_DATABASE_URL` LOOKS like a
@@ -15558,6 +15648,9 @@ nothing.**
 ---
 
 ## "The script ran" is not "the script did what it is for"
+
+**Shape:** instrument-reports-nothing
+**You are here if:** a command exited zero and you are reading that as the work being done
 
 **Named 2026-08-24, fixing R6's `db:test:reset` finding.** §14 lists eleven
 scripts that "must pass", and passing is checked as an exit code.
@@ -15985,6 +16078,9 @@ and the app is unaffected.
 
 ## A DATA change opened an untested branch, and the suite could not see it
 
+**Shape:** check-cannot-fail
+**You are here if:** the data changed, no code changed, and the suite is still green
+
 **Named 2026-08-25, found in production minutes after the first deploy.** New
 shape, and the most uncomfortable one in this file: **nothing in the code
 changed, no test failed, and the app broke.**
@@ -16044,6 +16140,9 @@ a code change, when the code branches on the data's shape.**
 ---
 
 ## The frame family, tenth instance — a POSITION must name its frame too
+
+**Shape:** wrong-axis-variation
+**You are here if:** a coordinate or position is being compared and you have not said in which frame
 
 **2026-08-25.** The standing rule from step 13 says a size assertion must name
 which frame it is a fraction of. This is the same defect one axis over: **the
@@ -16219,6 +16318,9 @@ whole life of the feature.
 
 ## The canvas is a container, and its height is a constraint on what renders inside it
 
+**Shape:** wrong-axis-variation
+**You are here if:** content renders smaller or clipped and the element it sits in was not measured
+
 **2026-08-25, the second fix for the short-collection defect — the first was
 wrong and is corrected above.**
 
@@ -16309,6 +16411,9 @@ checked and is corrected by this one.
 ---
 
 ## THE LARGEST FINDING IN THIS PROJECT: a feature that passed every test and had never once worked
+
+**Shape:** check-cannot-fail
+**You are here if:** a feature has comprehensive passing tests and nobody has used it in a browser
 
 **2026-08-25.** §10b's wall — the primary screen, the app's signature feature —
 **had never pulled a record in a real browser.** Not once, on any build, since
@@ -17010,6 +17115,9 @@ Adam judging it noise on a real lookup.
 
 ## A note that implied a difference, and a payload that did not
 
+**Shape:** sample-as-population
+**You are here if:** a written measurement is being carried forward and you have not re-read the source
+
 **2026-08-25, out of step 14c.** The finding of that unit, recorded separately
 because it is not about verification-by-display. It is about what a written
 measurement carries forward and what it quietly drops.
@@ -17124,6 +17232,9 @@ six.
 ---
 
 ## The panel resolves to a RELEASE, not to a stamper — the limit named on first real use
+
+**Shape:** observer-without-subject
+**You are here if:** a feature answers a question and you have not checked it is the question asked
 
 **2026-08-25, found by Adam using the app on a real record**, hours after step
 14c shipped. The standing conclusion holds again: the highest-yield check is
@@ -17485,6 +17596,9 @@ way round. **Recorded rather than guessed at**, per the standing rule.
 
 ## RULE: two things that look like the same field are not the same KIND of claim
 
+**Shape:** wrong-axis-variation
+**You are here if:** two fields hold the same shape of value and you are about to treat them alike
+
 **Named 2026-08-26, on the fourth instance.** Recorded as a finding rather than
 as a scheduling note (Adam's instruction), because the scheduling consequence is
 the smallest thing about it.
@@ -17682,6 +17796,9 @@ than three intermittents** when a harness unit next opens.
 ---
 
 ## LLM_UNREADABLE on a real gap analysis — and the diagnostic that was never written
+
+**Shape:** instrument-reports-nothing
+**You are here if:** a failure is logged as a category and the raw input was not kept
 
 **2026-08-26, reported by Adam** on a 17-record collection. `POST
 /api/suggestions/ai` → 502 `LLM_UNREADABLE`, "The suggestion service returned
@@ -18015,6 +18132,9 @@ count, the measurement that says how much headroom six actually leaves.
 ---
 
 ## A37 VERIFIED in real use — and the measurement I asked for cannot be taken
+
+**Shape:** measurement-not-governing
+**You are here if:** a verification was requested and the thing it needs was never recorded
 
 **2026-08-26, Adam's run after the count shipped.** Six suggestions, no
 truncation. The fix works. Three separate things were verified that only a real
@@ -19440,6 +19560,9 @@ inferred from a row count.
 
 ## The layer argument turned on me: I fixed two callers and left the trap open
 
+**Shape:** check-cannot-fail
+**You are here if:** you fixed the callers of a shared thing rather than the shared thing
+
 **2026-08-26, Adam.** *"That is a property of the shared client and it should be
 guarded there rather than remembered — if effort is unset, the caller is one
 prompt away from the defect you just fixed, and nothing would tell them."*
@@ -19775,6 +19898,9 @@ app is a gap no test asks about**, because tests are written against what exists
 
 ## The want-list edit route: SPECIFIED IN STEP 6, NEVER BUILT, unnoticed for ten steps
 
+**Shape:** check-cannot-fail
+**You are here if:** a spec item is assumed built and no test names it
+
 **2026-08-26. Adam clicked Edit on the detail view he had just been given and
 got a 404.** He asked for a diagnosis rather than a patched href, because "the
 route does not exist" and "the id is not passed as expected" are different fixes.
@@ -20084,6 +20210,9 @@ is the identity problem A43 and the dismissal state both hit, absent for once.
 ---
 
 ## The transport now PERFORMS the call — and the enforcement is weaker than I first claimed
+
+**Shape:** check-cannot-fail
+**You are here if:** a guard was added and you have not checked it sits where the work happens
 
 **2026-08-27, before A44.** Adam tested the layer rule against its own claim:
 *"the LLM caller is the third one… it should inherit A37's length bound and
@@ -21986,6 +22115,9 @@ not begin by discovering the evidence is missing a second time.
 
 ## THE NEON HAZARD, DIAGNOSED — and BOTH standing explanations were wrong
 
+**Shape:** sample-as-population
+**You are here if:** two standing explanations exist for a failure and neither has been tested
+
 **2026-08-28.** Two candidate diagnoses were offered and measured this session.
 **Neither survived**, and the entry above is now corrected rather than confirmed.
 
@@ -22370,6 +22502,9 @@ alone. Not positional paths.
 
 ## RULE: a comparison with an uncontrolled variable, and the wrong answer being more interesting
 
+**Shape:** sample-as-population
+**You are here if:** two options were compared and the more interesting one won
+
 **Adam, 2026-08-28**, on the Neon misdiagnosis. **The strongest methodological
 catch of the session**, recorded as a shape rather than as a fix.
 
@@ -22486,6 +22621,9 @@ the third instance of this family):
 
 ## The env-loading hang, FIXED — and it was mine, from four hours earlier
 
+**Shape:** instrument-reports-nothing
+**You are here if:** something hangs and you are looking at the code you just changed
+
 **2026-08-28.** Fixed ahead of C at Adam's direction: *"it means the suite cannot
 be trusted to run unattended, and every subsequent unit inherits it."*
 
@@ -22581,6 +22719,9 @@ driver is unknown, and the summary now says so.
 
 ## THE HANG WAS AN ACCIDENTAL MUTEX — fixing it turned the suite red, and that is the honest state
 
+**Shape:** instrument-reports-nothing
+**You are here if:** a suite hangs or slows and you are treating it as load rather than a lock
+
 > ### ⚠ MEASUREMENTS UNRELIABLE — re-taken 2026-08-28, see below
 >
 > **Adam, 2026-08-28: *"A measurement taken while a fork bomb was running is not
@@ -22653,6 +22794,9 @@ minutes."** Every green run in the days this was live carried that asterisk.
 ---
 
 ## RULE: after an interruption, a clean tree is not evidence nothing was lost — check the stash
+
+**Shape:** instrument-reports-nothing
+**You are here if:** work was interrupted and the tree looks clean
 
 **Adam, 2026-08-28**, on finding the previous session's entire fix sitting in a
 stash the tree gave no sign of.
@@ -22883,6 +23027,9 @@ passing at all is not evidence either.
 ---
 
 ## 1093 DIAGNOSED after nine sightings: both candidate readings were wrong, and the predicate matches WHITE
+
+**Shape:** sample-as-population
+**You are here if:** a defect has two plausible readings and you are about to fix the likelier one
 
 **2026-08-28.** `e2e/wall-scene.spec.ts:1093` — "the pulled sleeve fits INSIDE
 the visible wall region on a short viewport". Nine sightings across five weeks,
@@ -23166,6 +23313,9 @@ same shape with a different event.
 
 ## 427 MEASURED over three runs rather than assumed — and it is NOT a rate
 
+**Shape:** sample-as-population
+**You are here if:** a failure has a number attached and you have not run it more than once
+
 **2026-08-28**, at Adam's direction: *"Run the full suite twice more first,
 unattended... 1093's whole history was nine sightings nobody counted properly."*
 
@@ -23370,6 +23520,9 @@ The measurements are above and the harness makes the judgement cheap.
 ---
 
 ## A COMMENT THAT PROMISED A SAFEGUARD NOBODY WROTE
+
+**Shape:** check-cannot-fail
+**You are here if:** a comment describes a protection and you have not found the code that performs it
 
 **Adam, 2026-08-28:** *"A comment that correctly identifies a defect and
 references a safeguard nobody wrote is a shape this project has not seen: the
@@ -23701,6 +23854,9 @@ constant moved.
 
 ## THE SHELF WAS NOT INVISIBLE — IT WAS TOO SHALLOW TO EXIST
 
+**Shape:** wrong-axis-variation
+**You are here if:** something renders and cannot be seen, and you are looking at colour rather than size
+
 **Adam, 2026-08-29**, looking at the 20° tilt: *"At 20° I can see the top of
 every record and still nothing of the surface they stand on. That is not
 occlusion hiding the shelf. There is no surface there to hide."*
@@ -23950,6 +24106,9 @@ the bar C has to clear.
 ---
 
 ## FOUR ANSWERS FOR ONE DIMENSION: the anchor moved every time, and only the picture settled it
+
+**Shape:** wrong-axis-variation
+**You are here if:** the same quantity keeps measuring differently and you have not asked from where
 
 **2026-08-29.** Shelf depth, in order:
 
@@ -24381,6 +24540,9 @@ ahead of the record — applies to any floor, and that assertion is where a futu
 
 ## MEASURE INSIDE THE ELEMENT UNDER TEST, NOT THE SCREENSHOT THAT CONTAINS IT
 
+**Shape:** instrument-reports-nothing
+**You are here if:** a measurement came from a screenshot and you have not measured the element itself
+
 **2026-08-31.** Second occurrence this session, same cause, and both times it
 produced **a confident wrong diagnosis rather than a null result** — which is
 what makes it dangerous.
@@ -24792,6 +24954,9 @@ the spine "clipped by 7px" (scope), the composer "at 0.463" (scope), and this
 
 ## AN INLINE COMPUTATION IS INVISIBLE TO EVERY LAYER OF THE SUITE BY CONSTRUCTION
 
+**Shape:** check-cannot-fail
+**You are here if:** a property regressed three times and every pure function covering it still passes
+
 **2026-08-31.** Third regression in the pull animation, and the root cause is
 structural rather than a slip.
 
@@ -24878,6 +25043,9 @@ rendering ones.**
 ---
 
 ## Branded coordinate frames, and the false diagnosis that preceded them
+
+**Shape:** wrong-axis-variation
+**You are here if:** a value crosses between systems and nothing in its type says which one it is in
 
 ### The diagnosis that dissolved
 
@@ -25102,6 +25270,9 @@ and restart it afterwards rather than overlapping them.
 
 ## The harness had no cover art, and two effects were built to compensate
 
+**Shape:** instrument-reports-nothing
+**You are here if:** a harness stands in for real data and features are being tuned against it
+
 **Adam, before any more work on making the record pop:** *"I have been judging
 'does it pop' against the wrong thing. The /scene fixtures have coverUrl: null,
 so every pulled record is the plain-sleeve fallback — a flat coloured rectangle.
@@ -25229,6 +25400,9 @@ the elevation lengthens the shadows and increases relief on the spines, at the
 cost of longer, more dominant wedges. **Not changed unilaterally.**
 
 ## Wall colour: measured, and the naive metric says the wrong thing
+
+**Shape:** measurement-not-governing
+**You are here if:** a metric is easy to compute and you have not checked it tracks what you care about
 
 `/scene` now has a `wall:` control (dark / mid / light / white). Shadow contrast
 on the back panel, scanning a row across the wedge:
@@ -25393,6 +25567,9 @@ scheduled unit.
 
 ## THE ACCUMULATION DIAGNOSIS IS REFUTED FOR THE CURRENT FLAKE — measured 2026-09-05
 
+**Shape:** sample-as-population
+**You are here if:** a diagnosis explained the last occurrence and you are applying it to this one
+
 **Including by the entry directly above, which was wrong.** It said accumulation
 "is the only one that survives contact with this evidence". It does not survive
 contact with a measurement, which is the point of taking one.
@@ -25478,6 +25655,9 @@ summary line; not one trace has been read. That is the gap now.
 ---
 
 ## THE TRACE, CAUGHT — and it is a hydration race, not a timeout (2026-09-05)
+
+**Shape:** sample-as-population
+**You are here if:** an intermittent failure is being called a timeout without a trace
 
 **Three runs at `--retries=0 --trace=retain-on-failure`; run 2 failed.** Runs 1
 and 3 were clean at 445 passed. The failure, in a FIFTH spec file:
@@ -25591,6 +25771,9 @@ control before `data-hydrated`.
 ---
 
 ## THE HUNT, COMPLETE — six runs, SEVEN failures, and it is not one bug
+
+**Shape:** sample-as-population
+**You are here if:** repeated failures are being treated as one bug
 
 **Boxed at six full runs at `--retries=0`, all on the same tree. Result:**
 
@@ -25781,6 +25964,9 @@ result — after the truncated 210-test run and the contaminated 137-failure run
 ---
 
 ## The light became an angle, and a test that measured an aggregate missed a drift
+
+**Shape:** check-cannot-fail
+**You are here if:** a test asserts a total or an average over a set that is allowed to vary
 
 **Two controls added to `/scene`, both because a value had never been compared
 against anything.**
@@ -26243,6 +26429,9 @@ because a guess written here would read like a finding.
 
 ## THE APPARATUS GENERATING THE SIGNAL — now a mechanism, not a habit
 
+**Shape:** measurement-not-governing
+**You are here if:** a number surprised you and you have not checked what else was running
+
 **Fifth instance in one session (A47, 2026-09-07), and the one that got a
 guard.**
 
@@ -26566,6 +26755,9 @@ Second flake recorded this session that needs concurrency to appear (see the
 
 ## A GREEN SUITE CANNOT SEE THE SCHEMA IT DEPLOYS AGAINST
 
+**Shape:** instrument-reports-nothing
+**You are here if:** everything is green locally and you are about to deploy a schema change
+
 **A48/A49, 2026-09-07. The predicted failure arrived, and the useful finding is
 what the verification could not have caught.**
 
@@ -26779,6 +26971,9 @@ not the symptom once.
 
 ## OBSERVED, NOT ACTED ON — a progress count cannot say finished from dead
 
+**Shape:** instrument-reports-nothing
+**You are here if:** a progress indicator stopped moving and you cannot tell done from stuck
+
 **Reported by Adam (2026-09-08): The Doors "stalls at 4 members and does not
 progress. Reloading and re-clicking resumes at the same count."**
 
@@ -26923,6 +27118,9 @@ it performs is still zero.
 ---
 
 ## THE WALK DOES NOTHING FOR A PERSON, and the four artists most likely to converge are People
+
+**Shape:** measurement-not-governing
+**You are here if:** a feature computes something correct and you cannot say what a user does with it
 
 **Measured while answering Adam's cost question (2026-09-08), and it displaces
 the question entirely.**
@@ -27472,6 +27670,9 @@ band that reported 32.
 
 ## A FABRICATED IDENTIFIER IS A DIFFERENT FAILURE CLASS FROM AN UNCERTAIN CLAIM
 
+**Shape:** observer-without-subject
+**You are here if:** an output names a thing and you have not checked the thing exists
+
 **Reported by Adam from real use, 2026-09-08.** A43's pressing assessment for
 Deerhunter's *Halcyon Digest* produced three pressings under **CAD 3016**, a
 gatefold sleeve that does not exist, and a US/EU/repress frame. The real release
@@ -27753,6 +27954,9 @@ gets everything except the distinguishing field.
 ---
 
 ## A FEATURE RETIRED ON THREE ARGUMENTS, NONE ABOUT ITS IMPLEMENTATION
+
+**Shape:** measurement-not-governing
+**You are here if:** a feature works correctly and you are debating how to improve it
 
 **A59, 2026-09-08.** §12b's generated pressing assessment is retired — a removal
 plus a link, not a fix. Recorded because the chain now runs through **two closed
