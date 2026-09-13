@@ -555,12 +555,25 @@ function formsFor(recordId: string, forceSymmetry?: number): { forms: Form[]; sy
       a shaded one. Everything else is the neutral grey the reference uses,
       which is what lets two accent faces read as accents.
     */
+    /**
+     * **A carrier is a GREY form with one coloured face, not a coloured form.**
+     *
+     * The non-carrying forms went grey two rounds ago and that half held. What
+     * did not: a carrier's own non-accent faces still took `tint` and `shade`,
+     * both on the ladder — so each of the two carriers was coloured on all three
+     * faces and the construction read as coloured again. Measured: 3 tint + 2
+     * base + 1 shade against 6 grey, so two of six forms were fully in the
+     * record's hue.
+     *
+     * §5.5 says the accent is what carries colour. A form showing colour on
+     * every face is not an accent on a form, it is a coloured form — which is
+     * exactly the reading the grey step was introduced to remove.
+     */
     const stepFor = (kind: 'top' | 'left' | 'right'): MarkStep => {
       if (isInk) return 'ink';
       if (!carries) return 'grey';
-      if (kind === largest) return 'base';
-      /* §5.5: shade is a right-hand face and never a shape. */
-      return kind === 'right' ? 'shade' : 'tint';
+      /* The accent, and nothing else on this form. */
+      return kind === largest ? 'base' : 'grey';
     };
 
     return {

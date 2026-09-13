@@ -420,6 +420,58 @@ describe('the colour placement is narrow, and the disc never takes base (§5)', 
     }
   });
 
+  /**
+   * **The rule that had no assertion, which is why it regressed silently.**
+   *
+   * Non-carrying forms went grey two rounds ago and nothing tested it, so when
+   * a later rewrite left carriers tinted on their non-accent faces, 23 tests
+   * passed and the construction read as coloured again. A rule with no failing
+   * input is not a rule — it is a comment that happened to be true.
+   *
+   * §5.5's reference is grey forms with colour IN them: a carrier is a grey
+   * form with ONE accent face, not a coloured form.
+   */
+  it('shows colour on exactly two faces, and nothing else', () => {
+    for (const id of REAL_IDS) {
+      const faces = construction(id).forms.flatMap((form) => form.faces);
+      const coloured = faces.filter((face) => face.step === 'base');
+      const onLadder = faces.filter((face) =>
+        ['base', 'tint', 'shade'].includes(face.step),
+      );
+
+      expect(coloured.length, `${id}: two accent faces`).toBe(2);
+      /*
+        And no OTHER face is on the ladder. Tint and shade on a carrier's own
+        faces is what made each carrier a coloured object.
+      */
+      expect(
+        onLadder.length,
+        `${id}: ${onLadder.length} faces on the ladder — ${onLadder
+          .map((f) => f.step)
+          .join(', ')}`,
+      ).toBe(2);
+    }
+  });
+
+  it('leaves every non-accent face grey or ink', () => {
+    for (const id of REAL_IDS) {
+      for (const form of construction(id).forms) {
+        const accent = form.faces.filter((face) => face.step === 'base');
+
+        for (const face of form.faces) {
+          if (face.step === 'base') continue;
+          expect(
+            ['grey', 'ink'],
+            `${id} ${form.archetype} ${face.kind}: ${face.step}`,
+          ).toContain(face.step);
+        }
+
+        /* A carrier has exactly one accent; a non-carrier has none. */
+        expect(accent.length, `${id} ${form.archetype}`).toBeLessThanOrEqual(1);
+      }
+    }
+  });
+
   it('never puts a base step on an ink form, which the area sort did', () => {
     for (const id of REAL_IDS) {
       for (const form of construction(id).forms) {
