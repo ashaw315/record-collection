@@ -10,8 +10,8 @@ Measured on the assembled page at 1440 × 900.
    identityTriangle     0.46%
    sleeveBlock          0.23%
    journalEdge          0.07%
-   construction faces   0.38%
-   TOTAL 12.11%  — in band
+   construction faces   0.85%
+   TOTAL 12.58%  — in band
 
 ── modal ──
    releaseYearField     7.82%
@@ -20,8 +20,8 @@ Measured on the assembled page at 1440 × 900.
    identityTriangle     0.46%
    sleeveBlock          0.23%
    journalEdge          0.07%
-   construction faces   0.43%
-   TOTAL 10.79%  — BELOW the 12% floor
+   construction faces   0.70%
+   TOTAL 11.05%  — BELOW the 12% floor
 
 ── emptiest ──
    releaseYearField     7.82%
@@ -30,5 +30,5 @@ Measured on the assembled page at 1440 × 900.
    identityTriangle     0.46%
    sleeveBlock          0.23%
    journalEdge          0.07%
-   construction faces   0.37%
-   TOTAL 10.66%  — BELOW the 12% floor
+   construction faces   0.83%
+   TOTAL 11.12%  — BELOW the 12% floor

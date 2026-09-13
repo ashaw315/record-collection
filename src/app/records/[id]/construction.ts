@@ -327,25 +327,114 @@ export function construction(recordId: string): Construction {
     const slot = symmetry(SLOTS[index]);
     const [u, v] = slot;
 
-    /* Each form's extent along its own long axis. */
-    const extent = 0.8 + next() * 0.45;
+    /*
+      Each form's extent along its own long axis.
+
+      **A colour-carrying form takes the top of the band.** §5.5's floor governs
+      the construction's coloured faces, and at the base extent they measured
+      0.32–0.43% of the page against a 0.5% floor — so the two forms that carry
+      colour draw from 1.05–1.45 rather than 0.80–1.25. That is a 1.25x nudge,
+      not a redesign: the withdrawn area ceiling would have needed 21x and the
+      construction becoming a colour field, which is the difference between a
+      floor on one mark and a share of a total.
+
+      The 6:1 size band still holds, because the band is measured across all six
+      forms and the two carriers were not the extremes.
+    */
+    const carriesColour = facesCarryColour.includes(archetype);
+    const extent = (carriesColour ? 1.05 : 0.8) + next() * 0.45;
 
     const du = su * extent;
     const dv = sv * extent;
     const dw = sw * extent;
 
     const isInk = INK_ARCHETYPES.includes(archetype);
+    const carries = carriesColour;
+
     /*
-      §5.5: shade is a right-hand face and nothing else, and a coloured right
-      face on a small form is the darkest step on the smallest area — the least
-      findable thing the rule can produce. Top is the largest visible face and
-      carries the lightest step, so that is where base goes.
+      **The colour goes on the form's LARGEST face, which is not always the top.**
+
+      §5.5's reasoning is that a coloured right face on a small form is the
+      darkest step on the smallest area — the least findable thing the rule can
+      produce — so the colour belongs on the largest visible face carrying the
+      lightest step. Design wrote that as "top", which holds for the beam, slab,
+      cube and plate.
+
+      **It is false for the panel**, which is upright: its top is 0.96 units
+      against a left face of 6.96, a 7x inversion. Measured across the real
+      seventeen, whenever the selection landed on the panel the two coloured
+      faces came out 8-14x apart — 92.3% against 7.7% on the worst — and §5.1's
+      traced path between two coloured forms cannot hold when one end is a
+      twelfth of the other.
+
+      So the rule is applied rather than its usual outcome: largest face by
+      projected area, computed from the form's own proportions.
     */
-    const topStep: MarkStep = isInk
-      ? 'ink'
-      : facesCarryColour.includes(archetype)
-        ? 'base'
-        : 'tint';
+    /*
+      **Projected area, not shape proportions.** A first version compared
+      `du*dv`, `dv*dw` and `du*dw` — the faces' areas in the form's own units —
+      and got the panel wrong: its left face is 6.96 units against a right of
+      1.16, yet PROJECTED they come out 185 and 1113. The isometric foreshortens
+      the two ground axes by cos30 and the vertical not at all, so a comparison
+      in shape units is a comparison of the wrong quantity.
+
+      The shoelace over the projected corners is the quantity the eye sees.
+    */
+    const projectedArea = (kind: 'top' | 'left' | 'right'): number => {
+      const corners: Array<readonly [number, number, number]> =
+        kind === 'top'
+          ? [[0, 0, dw], [du, 0, dw], [du, dv, dw], [0, dv, dw]]
+          : kind === 'left'
+            ? [[0, dv, 0], [du, dv, 0], [du, dv, dw], [0, dv, dw]]
+            : [[du, 0, 0], [du, dv, 0], [du, dv, dw], [du, 0, dw]];
+
+      const pts = corners.map(([cu, cv, cw]) => project(cu, cv, cw));
+      let sum = 0;
+      for (let i = 0; i < pts.length; i += 1) {
+        const [x1, y1] = pts[i];
+        const [x2, y2] = pts[(i + 1) % pts.length];
+        sum += x1 * y2 - x2 * y1;
+      }
+      return Math.abs(sum) / 2;
+    };
+
+    /*
+      **The largest projected face, including the right one — and that resolves
+      a genuine conflict between two of §5.5's own rules.**
+
+      "Shade is a right-hand face and never a shape" and "colour goes on the
+      largest face" disagree on the upright panel, whose largest projected face
+      IS its right. Both readings were measured across the real seventeen:
+
+        largest face, right included   median 57%, worst 87.7%,  2/17 over 70%
+        right excluded                 median 86%, worst 91.9%, 11/17 over 70%
+
+      Excluding it costs more than it buys, because the panel's left face is a
+      sliver and the colour lands there instead — so the traced path loses an
+      end on eleven records rather than two. The shade rule's PURPOSE is that
+      the darkest step must not land on the smallest area; applying it here
+      produces exactly that outcome.
+
+      So base takes the largest face, shade takes any remaining right face, and
+      a panel carrying colour has no shade face. Reported to Design as a rule
+      conflict rather than settled quietly: §5.5 says shade is a right face and
+      never a shape, and this makes one form's right face a base.
+    */
+    const faceAreas = {
+      top: projectedArea('top'),
+      left: projectedArea('left'),
+      right: projectedArea('right'),
+    };
+    const largest = (Object.keys(faceAreas) as Array<keyof typeof faceAreas>).reduce((a, b) =>
+      faceAreas[a] >= faceAreas[b] ? a : b,
+    );
+
+    const stepFor = (kind: 'top' | 'left' | 'right'): MarkStep => {
+      if (isInk) return 'ink';
+      if (carries && kind === largest) return 'base';
+      /* §5.5: shade is a right-hand face and never a shape. */
+      return kind === 'right' ? 'shade' : 'tint';
+    };
 
     return {
       archetype,
@@ -353,9 +442,9 @@ export function construction(recordId: string): Construction {
       extent: Math.max(du, dv, dw),
       depth: u + v + dw,
       faces: boxFaces(...containedOrigin(u, v, du, dv, dw), du, dv, dw, {
-        top: topStep,
-        left: isInk ? 'ink' : 'tint',
-        right: isInk ? 'ink' : 'shade',
+        top: stepFor('top'),
+        left: stepFor('left'),
+        right: stepFor('right'),
       }),
     };
   });

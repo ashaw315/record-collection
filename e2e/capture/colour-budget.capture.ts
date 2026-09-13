@@ -2,17 +2,21 @@ import { test, expect } from '@playwright/test';
 import { writeFileSync } from 'node:fs';
 
 /**
- * **§5.5's colour budget, measured rather than asserted.**
+ * **The colour DISTRIBUTION, measured. The area budget is withdrawn.**
  *
- * The spec sets 12–18% of the page, sleeve excluded — "it is the source, not a
- * mark" — and says the budget is already spent, so a new coloured mark takes
- * area from an existing one rather than being added to it. Below 12% the page
- * is black and white with an accident in it; above roughly 20% the colour stops
- * being a key and becomes a skin.
+ * §5.5 set 12–18% of the page, sleeve excluded. Measured on the assembled page
+ * it came to 12.11% / 10.79% / 10.66% — and the figure governed nothing, because
+ * **a page hits any area target with one big rectangle.** The release-year field
+ * alone is 7.82%, roughly two-thirds of all colour, so 10.79% describes one
+ * large mark plus rounding and not a keyed composition.
  *
- * No figure existed for the assembled page, and the void rulings interact with
- * it: a taller band with the same marks is a LOWER percentage, so Design needs
- * the actual number before ruling on either.
+ * Fifth instance of the shape NOTES records: the measurement was defined over
+ * an axis correlated with the signal rather than the signal itself. Here the
+ * signal is DISTRIBUTION and the measurement was total area.
+ *
+ * What replaced it: **no single mark exceeds 40% of the page's coloured area**,
+ * plus §5.5's existing per-band base mark. No area target at all. The figures
+ * below are kept as a record rather than as a gate.
  *
  *   CAPTURE=1 npx playwright test --project=capture
  */

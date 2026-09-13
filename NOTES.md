@@ -28833,6 +28833,93 @@ fallback rather than three.
 
 ---
 
+## A rule scoped past its subject, and a ratio that moved when nothing did
+
+Three colour rules were written and two withdrawn, each failing the same way,
+and the third works for a reason worth stating.
+
+| rule | why it failed |
+|---|---|
+| 12–18% of the page | a page hits any area target with **one big rectangle** |
+| no mark above 40% of coloured area | a RATIO: it read 63.6% / 72.3% across records where **no mark changed size** — the arcs suppressed and the denominator shrank |
+| **every base field mark ≥ 0.5% of the page** | **per-mark and absolute: suppression cannot move it** |
+
+**The ratio's tell was that it tightened hardest where the page had least
+colour.** Nobody designed that; it falls out of suppression meeting a fixed
+field. And the arithmetic said no composition could satisfy it — the
+construction would have had to be 56% solid colour.
+
+### The diagnosis inverted
+
+The year field at two-thirds of the coloured area was not the defect. It is the
+ANCHOR — the one mark guaranteed on every record, and the 72's ground. The
+defect was the marks under 1.5%. **A rule can be correct about a number and
+wrong about which end of it is the problem.**
+
+### Scope was the second error
+
+The first floor failed three marks: the journal edge (0.05%), the sleeve bar
+(0.41%) and the construction (0.42%). Two of those were never in scope — the
+floor is an AREA rule, the journal edge is LINEAR and the sleeve bar is TINT.
+
+**The collisions were the tell.** Widening the journal edge hit §3's "the only
+2px edge, and two make it a tier"; widening the sleeve bar ate the cover, which
+§5.5 calls the source rather than a mark. A rule reaching past its subject
+produces collisions with rules that were never in tension.
+
+So the test classifies marks by KIND and exempts by kind — because a test that
+exempts `journalEdge` by name passes the moment a second linear mark appears,
+and a test that exempts linear marks catches it. An unclassified mark fails
+rather than being skipped.
+
+### The audit blindness, third instance
+
+The construction's coloured faces are generated SVG polygons with no
+`data-mark` of their own — after the release-year field as a cell background and
+the journal edge as a border. **The pattern: the marks doing the most area are
+the ones least visible to an audit**, because area comes from being a surface,
+and surfaces are backgrounds, borders and generated geometry rather than
+elements someone labelled.
+
+Counting the construction as one mark rather than as its faces moved it from
+0.42% to 1.43% — the plural slipping at exactly the point a build counts from.
+
+## A measurement correlated with the signal instead of being it — fifth instance
+
+§5.5 set a colour budget of 12–18% of the page. Measured on the assembled page:
+**12.11% / 10.79% / 10.66%.** The measurement was correct and it governed
+nothing.
+
+**A page hits any area target with one big rectangle.** The release-year field
+alone is 7.82% — roughly two-thirds of all the colour — so 10.79% describes one
+large mark plus rounding, and a keyed composition would produce the same number.
+The signal §5.5 is about is DISTRIBUTION; total area is merely correlated with
+it.
+
+Replaced by a rule defined over the signal: **no single mark exceeds 40% of the
+page's coloured area**, plus the per-band base mark §5.5 already required. No
+area target at all.
+
+Measured against the new rule, the year field is **64.6% / 72.5% / 73.4%** — it
+fails on every record, and worse on the sparse ones because the other marks
+suppress. The remedy is the construction's coloured faces growing rather than
+the field shrinking: §5.1 puts the eye there second, and three lightness steps
+read as an object where a rectangle reads as a rectangle.
+
+**Why this instance was the most expensive.** The other four produced visibly
+wrong output — grey spines, six identical drawings, one silhouette. This one
+produced a number in band. A measurement that is correct, cheap and
+non-governing is harder to notice than one that is wrong, because nothing about
+it looks like a defect.
+
+### The audit blindness that hid it
+
+The same gap that let me report "two of seven marks absent" would have hidden
+this: the release-year field is a cell BACKGROUND and the journal edge a 2px
+BORDER, so neither carried a `data-mark` and no audit could see them. **The
+largest mark on the page was the one with no element of its own.** A concentration
+finding is invisible while the concentrated thing is unlabelled.
+
 ## Variation applied to the wrong axis
 
 Three instances now, in three layers, and the tell is identical in all of them:

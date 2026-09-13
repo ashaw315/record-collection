@@ -109,8 +109,24 @@ test.describe('every mark stays in its cell', () => {
           }
         }
 
+        /*
+          **The rule governs marks that sit IN a cell, not marks that ARE one.**
+
+          The release-year field is its cell's background and the journal edge
+          its border, so each one's box contains that cell's own type by
+          definition — the 72 sits ON the field, which §5.2 requires and clamps
+          the lightness for. A rule written for ornament cannot be applied to a
+          ground that type is meant to sit on.
+
+          Both were unlabelled until the mark audit, so this only surfaced when
+          they gained `data-mark` — the check was passing because the two
+          largest marks were invisible to it.
+        */
+        const CELL_MARKS = new Set(['releaseYearField', 'journalEdge']);
+
         for (const mark of document.querySelectorAll('[data-mark]')) {
           const name = mark.getAttribute('data-mark') ?? '?';
+          if (CELL_MARKS.has(name)) continue;
           /* The sleeve bar and block sit over artwork, never over type. */
           const box = mark.getBoundingClientRect();
 

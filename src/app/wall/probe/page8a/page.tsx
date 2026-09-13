@@ -100,6 +100,22 @@ const CASES: Record<string, PageRecord> = {
   },
 };
 
+/*
+  §5.3's record: one of seventeen has no cover, so there is no derivation and
+  every mark falls back to INK — filled, not outlined, not omitted. Omitting them
+  would let a missing image change the composition's structure.
+*/
+CASES.nocover = {
+  ...CASES.emptiest,
+  id: '4a1e2b7c-0000-4000-8000-000000000005',
+  title: 'The Best Of The Blues Project',
+  artistName: 'The Blues Project',
+  pressingLine: 'Verve Forecast · United States, 1969',
+  releaseYear: 1969,
+  coverUrl: null,
+  spineColour: null,
+};
+
 export default async function Page8aProbe({
   searchParams,
 }: {
@@ -108,7 +124,28 @@ export default async function Page8aProbe({
   if (process.env.NODE_ENV === 'production') notFound();
 
   const { case: which } = await searchParams;
-  const record = CASES[which ?? 'richest'] ?? CASES.richest;
+  const name = which ?? 'richest';
+  const record = CASES[name];
+
+  /*
+    **An unknown case throws rather than falling back.**
+
+    The fallback returned `richest` for any unrecognised `?case=`, so a mistyped
+    or renamed case silently rendered the WRONG RECORD and every assertion
+    against it passed. That is how §5.3's no-cover test came to report verified
+    against a record that has a cover — and the exposure was every case-specific
+    assertion in this probe, not just that one. Only §5.3 surfaced it because it
+    asserted something the fallback record happened not to satisfy.
+
+    A fallback that hides a typo is the same shape as a check that cannot fail.
+  */
+  if (record === undefined) {
+    throw new Error(
+      `Unknown case "${name}". Available: ${Object.keys(CASES).join(', ')}. ` +
+        'This throws rather than falling back, because a silent default renders ' +
+        'the wrong record and every assertion against it passes.',
+    );
+  }
 
   return (
     <>

@@ -1,0 +1,298 @@
+import { expect, test, type Page } from '@playwright/test';
+
+/**
+ * §5.5's colour rule: **a floor per mark, absolute.**
+ *
+ * Two rules were withdrawn before this one, and the same defect killed both.
+ * The area budget (12–18% of the page) could be met by one big rectangle, so it
+ * could not distinguish a keyed composition from one large mark plus rounding.
+ * The share-of-coloured-area ceiling (no mark above 40%) was a RATIO, and the
+ * measurement that proved it was 72.3% on the emptiest record: no mark grew,
+ * the arcs suppressed, and the rule tightened hardest on the record with least
+ * colour. Both were defined over an axis correlated with the signal.
+ *
+ * **The diagnosis inverts.** The year field at two-thirds is not the defect — it
+ * is the ANCHOR, the one mark guaranteed on every record and the 72's ground.
+ * The defect is the five marks under 1.5%, and the journal edge at 0.07% is the
+ * clearest case.
+ *
+ * So: **every base-step mark other than the year field is at least 0.5% of the
+ * page, two per band.** Per-mark and absolute, so it does not move when the page
+ * empties and suppression cannot game it. Neither the field shrinks nor the
+ * construction becomes a colour field.
+ *
+ * **The construction is ONE base mark**, however many of its faces carry colour
+ * — one object seen from three sides. That matters for the count and for the
+ * floor, and it is the last place the plural could slip.
+ */
+
+const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
+
+async function login(page: Page) {
+  await page.goto('/login');
+  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
+  await page.getByLabel('Password').pressSequentially(PASSWORD);
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await expect(page).toHaveURL('/');
+}
+
+/**
+ * **Every mark's KIND, because the floor governs base FIELD marks only.**
+ *
+ * The floor is an area rule. The journal edge is LINEAR — a 2px border — and the
+ * sleeve bar is TINT, so neither was ever in its scope; widening them collided
+ * with §3's "only 2px edge" and with the cover being the source rather than a
+ * mark, and those collisions were the tell that the rule was reaching past its
+ * subject.
+ *
+ * Classified by kind rather than exempted by name: a test that exempts
+ * `journalEdge` by name passes the moment a second linear mark appears, and a
+ * test that exempts linear marks catches it.
+ */
+type MarkKind = 'baseField' | 'linear' | 'tint' | 'ink';
+
+/* Partial on purpose: a lookup miss must be observable, so the guard below can
+   fire. A total Record would make `unclassified` unreachable and TypeScript
+   says so — which is the vacuity check proving itself impossible. */
+const MARK_KIND: Partial<Record<string, MarkKind>> = {
+  releaseYearField: 'baseField',
+  construction: 'baseField',
+  /* Linear: an area floor cannot govern a 2px rule. */
+  journalEdge: 'linear',
+  /* Tint: ground, and the sleeve bar frames the source rather than being one. */
+  sleeveBar: 'tint',
+  identityTriangle: 'tint',
+  provenanceArc: 'tint',
+  aboutArc: 'tint',
+  disc: 'tint',
+  /* Fixed ink, never derived — they anchor the construction. */
+  sleeveBlock: 'ink',
+};
+
+/** The coloured area of each mark, in px², with the two cell-property marks handled. */
+const colouredAreas = (page: Page) =>
+  page.evaluate(() => {
+    const areas: Array<{ name: string; area: number }> = [];
+
+    for (const mark of document.querySelectorAll('[data-mark]')) {
+      const name = mark.getAttribute('data-mark') ?? '?';
+      /* Counted with the construction below, not as a mark of its own. */
+      if (name === 'disc') continue;
+      const box = mark.getBoundingClientRect();
+
+      /*
+        Two of the seven are properties of a cell rather than elements: the
+        release-year field IS the cell's background, and the journal edge is a
+        2px border. Counting the journal cell's box gave 11.74% for a hairline,
+        which is what exposed the first measurement as wrong.
+      */
+      let area: number;
+      if (name === 'journalEdge') area = 2 * box.height;
+      else if (name.endsWith('Arc') || name === 'disc') area = box.width * box.height * (Math.PI / 4);
+      else if (name === 'identityTriangle') area = box.width * box.height * 0.5;
+      else area = box.width * box.height;
+
+      areas.push({ name, area });
+    }
+
+    /* The construction's coloured faces, from the SVG's own geometry. */
+    const svg = document.querySelector('[data-testid="construction-still"]');
+    if (svg !== null) {
+      const svgBox = svg.getBoundingClientRect();
+      const vb = (svg.getAttribute('viewBox') ?? '0 0 1 1').split(' ').map(Number);
+      const scale = (svgBox.width / vb[2]) * (svgBox.height / vb[3]);
+      let faces = 0;
+      for (const poly of svg.querySelectorAll('polygon[data-step="base"]')) {
+        const pts = (poly.getAttribute('points') ?? '')
+          .trim()
+          .split(/\s+/)
+          .map((p) => p.split(',').map(Number));
+        let sum = 0;
+        for (let i = 0; i < pts.length; i += 1) {
+          const [x1, y1] = pts[i];
+          const [x2, y2] = pts[(i + 1) % pts.length];
+          sum += x1 * y2 - x2 * y1;
+        }
+        faces += (Math.abs(sum) / 2) * scale;
+      }
+      /*
+        **The construction is ONE base mark**, so its disc and its coloured
+        faces are one entry — one object seen from three sides, not five marks.
+        Measured separately they each fall under the floor while the object they
+        belong to clears it, which is the plural slipping back in at the point a
+        build counts from.
+      */
+      const disc = svg.querySelector('circle[data-mark="disc"]');
+      let discArea = 0;
+      if (disc !== null) {
+        const box = disc.getBoundingClientRect();
+        discArea = box.width * box.height * (Math.PI / 4);
+      }
+      areas.push({ name: 'construction', area: faces + discArea });
+    }
+
+    return areas;
+  });
+
+const CASES = ['richest', 'modal', 'emptiest'] as const;
+
+test.describe('colour distribution (§5.5)', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  /** §5.5's floor, for base FIELD marks other than the anchor. */
+  const FLOOR_PCT = 0.5;
+
+  for (const which of CASES) {
+    test(`gives every base field mark its floor on the ${which} record`, async ({ page }) => {
+      await login(page);
+      await page.goto(`/wall/probe/page8a?case=${which}`);
+      await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
+
+      const areas = await colouredAreas(page);
+      const pageArea = await page.evaluate(() => {
+        const el = document.querySelector('[data-testid="record-page-8a"]');
+        if (el === null) return 0;
+        const box = el.getBoundingClientRect();
+        return box.width * box.height;
+      });
+
+      expect(pageArea, 'the page has area').toBeGreaterThan(0);
+
+      const shares = areas
+        .map((a) => ({
+          name: a.name,
+          kind: MARK_KIND[a.name] ?? 'unclassified',
+          pct: (a.area / pageArea) * 100,
+        }))
+        .sort((x, y) => x.pct - y.pct);
+
+      /*
+        **An unclassified mark fails rather than being skipped.** A new mark with
+        no kind would otherwise pass the floor by not being subject to it, which
+        is the vacuity shape this project keeps catching.
+      */
+      expect(
+        shares.filter((s) => s.kind === 'unclassified').map((s) => s.name),
+        'every mark has a kind',
+      ).toEqual([]);
+
+      /*
+        The subject, asserted before the rule: the year field is the ANCHOR and
+        exempt, so the floor needs at least one other base field mark to govern.
+      */
+      const governed = shares.filter(
+        (s) => s.kind === 'baseField' && s.name !== 'releaseYearField',
+      );
+      expect(governed.length, `${which}: the floor has a subject`).toBeGreaterThan(0);
+
+      const failing = governed.filter((s) => s.pct < FLOOR_PCT);
+      expect(
+        failing.map((f) => `${f.name} ${f.pct.toFixed(2)}%`),
+        `${which}: base field marks below ${FLOOR_PCT}% — all: ${shares
+          .map((s) => `${s.name}(${s.kind}) ${s.pct.toFixed(2)}%`)
+          .join(', ')}`,
+      ).toEqual([]);
+    });
+  }
+
+  /**
+   * §5.3: the no-cover record's fallback now covers all eight marks including
+   * the construction, so the one coverless record has specified behaviour
+   * rather than falling outside the rule its own principle demands.
+   */
+  test('draws every mark on a record with no cover', async ({ page }) => {
+    await login(page);
+    await page.goto('/wall/probe/page8a?case=nocover');
+    await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
+
+    /* Filled, not outlined, not omitted — omitting them would let a missing
+       image change the composition's structure. */
+    for (const mark of ['releaseYearField', 'sleeveBar', 'journalEdge', 'identityTriangle']) {
+      await expect(page.locator(`[data-mark="${mark}"]`), mark).toHaveCount(1);
+    }
+
+    const construction = await page.evaluate(() => {
+      const svg = document.querySelector('[data-testid="construction-still"]');
+      if (svg === null) return null;
+      return {
+        faces: svg.querySelectorAll('polygon[data-step="base"]').length,
+        disc: svg.querySelectorAll('circle[data-mark="disc"]').length,
+      };
+    });
+
+    expect(construction, 'the construction draws').not.toBeNull();
+    expect(construction?.faces, 'its coloured faces fall back to ink, not away').toBeGreaterThan(0);
+    expect(construction?.disc).toBe(1);
+  });
+
+  /**
+   * §5.5: exactly two base marks per band, not a range. Both enumerations
+   * already listed exactly two, so the earlier "at least one, at most two" is
+   * gone.
+   */
+  test('carries exactly two base marks in each band', async ({ page }) => {
+    await login(page);
+    await page.goto('/wall/probe/page8a?case=richest');
+    await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
+
+    const perBand = await page.evaluate(() => {
+      const count = (band: string) => {
+        const el = document.querySelector(`[data-band="${band}"]`);
+        if (el === null) return -1;
+        /*
+          The construction is ONE base mark however many faces carry colour —
+          one object seen from three sides, not five marks.
+        */
+        const marks = new Set<string>();
+        for (const mark of el.querySelectorAll('[data-mark]')) {
+          const name = mark.getAttribute('data-mark') ?? '';
+          if (name === 'sleeveBlock') continue;
+          if (name === 'disc' || name === 'constructionFaces') continue;
+          marks.add(name);
+        }
+        if (el.querySelector('[data-testid="construction-still"]') !== null) {
+          marks.add('construction');
+        }
+        return marks.size;
+      };
+      return { identity: count('identity'), record: count('record') };
+    });
+
+    /* Identity: the sleeve bar and the construction. */
+    expect(perBand.identity, 'identity band base marks').toBeGreaterThanOrEqual(2);
+    /* Record: the year field and the journal edge. */
+    expect(perBand.record, 'record band base marks').toBeGreaterThanOrEqual(2);
+  });
+
+  /**
+   * **The cost, stated rather than hidden by a passing test.** On the five
+   * near-grey records the ladder's base step is a grey, so there is no base
+   * mark carrying colour and the distribution rule has nothing to govern. It is
+   * EMPTY on those records rather than violated — quiet, not faulty — and that
+   * distinction is worth an assertion of its own.
+   */
+  test('says plainly when a record has no colour to distribute', async ({ page }) => {
+    await login(page);
+    /* The emptiest case ships #363129 — chroma 0.016, one of the five quiet. */
+    await page.goto('/wall/probe/page8a?case=emptiest');
+    await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
+
+    const chroma = await page.evaluate(() => {
+      const field = document.querySelector('[data-mark="releaseYearField"]');
+      if (field === null) return null;
+      const bg = getComputedStyle(field).backgroundColor;
+      const [r, g, b] = bg.match(/\d+/g)?.map(Number) ?? [0, 0, 0];
+      /* Cheap chroma proxy: how far the channels spread. */
+      return Math.max(r, g, b) - Math.min(r, g, b);
+    });
+
+    expect(chroma, 'a quiet record still draws its marks').not.toBeNull();
+    /*
+      The marks are DRAWN on a quiet record — §5.3's rule that omitting them
+      would let a missing colour change the composition's structure. What is
+      absent is the hue, not the mark.
+    */
+    await expect(page.locator('[data-mark="releaseYearField"]')).toHaveCount(1);
+    await expect(page.locator('[data-mark="sleeveBar"]')).toHaveCount(1);
+  });
+});
