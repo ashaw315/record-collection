@@ -77,11 +77,45 @@ describe('the frame is constant, and that was the whole finding (§4)', () => {
    * was applied to preserve. Same shape as the averaging that cancelled the
    * chroma it was sampling for.
    */
-  it('gives every record the identical viewBox', () => {
-    const frames = new Set(REAL_IDS.map((id) => construction(id).viewBox));
+  /**
+   * **One frame per SYMMETRY, not one frame overall — and that is the fix
+   * rather than a loosening.**
+   *
+   * A single frame unioned over every archetype-by-slot combination is the
+   * worst case over the SPACE of arrangements, so every arrangement that
+   * actually occurs under-fills it by construction. The frames are now fitted
+   * to the seventeen real arrangements drawn under each orientation.
+   *
+   * The property that mattered survives: records sharing a symmetry share a
+   * frame exactly, so the forms still move inside a fixed box rather than the
+   * box moving to them. What is gone is the pretence that eight different
+   * orientations need the same rectangle.
+   */
+  it('gives records sharing a symmetry the identical viewBox', () => {
+    const byFrame = new Map<string, string[]>();
+    for (const id of REAL_IDS) {
+      const frame = construction(id).viewBox;
+      byFrame.set(frame, [...(byFrame.get(frame) ?? []), id]);
+    }
 
-    expect(frames.size, 'one frame across the whole collection').toBe(1);
-    expect([...frames][0]).toBe(CONSTRUCTION_FRAME);
+    /* Fewer frames than records: records really do share them. */
+    expect(byFrame.size, 'frames are shared, not per-record').toBeLessThan(REAL_IDS.length);
+    /* And no more than one per symmetry. */
+    expect(byFrame.size, 'at most one frame per symmetry').toBeLessThanOrEqual(8);
+  });
+
+  it('never fits a frame to a single record', () => {
+    /*
+      The defect this replaced: a frame fitted per arrangement normalises away
+      the variation it was applied to preserve, and six records looked like one
+      drawing. A frame shared by several records cannot be doing that.
+    */
+    const frames = REAL_IDS.map((id) => construction(id).viewBox);
+    const shared = frames.filter((f) => frames.filter((g) => g === f).length > 1);
+
+    expect(shared.length, 'most records share their frame with another').toBeGreaterThan(
+      REAL_IDS.length / 2,
+    );
   });
 
   it('does not fit the frame to the forms', () => {

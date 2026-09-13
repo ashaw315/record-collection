@@ -41,6 +41,14 @@ test.describe('every mark stays in its cell', () => {
       */
       const escapes = await page.evaluate(() => {
         const out: string[] = [];
+
+        /*
+          **Exactly one cell crosses, and it is named.** The construction reaches
+          into the title cell by ruling — "one crosser, one edge, and the rule
+          stays drawn at full strength underneath". Exempting `still` BY NAME
+          rather than relaxing the rule means a second crosser fails here.
+        */
+        const CROSSES = new Set(['still']);
         for (const mark of document.querySelectorAll('[data-mark], [data-diagonal]')) {
           const host = mark.closest('[data-cell]');
           const name = `${host?.getAttribute('data-cell') ?? '?'}/${
@@ -52,8 +60,11 @@ test.describe('every mark stays in its cell', () => {
             continue;
           }
 
+          const cellName = host.getAttribute('data-cell') ?? '';
           const clip = getComputedStyle(host).overflow;
-          if (clip !== 'hidden') out.push(`${name}: host overflow is ${clip}, not hidden`);
+          if (!CROSSES.has(cellName) && clip !== 'hidden') {
+            out.push(`${name}: host overflow is ${clip}, not hidden`);
+          }
 
           const m = mark.getBoundingClientRect();
           const h = host.getBoundingClientRect();

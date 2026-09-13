@@ -6,5 +6,5 @@ width   page    doc-h  scroll  cover-overflow  tail   year-cell  sleeve-cell
 1512    1512    900    no     none            47     252        630
 1680    1680    900    no     none            47     280        700
 1728    1728    900    no     none            47     288        720
-1920    1920    900    no     none            47     320        800
-2560    2560    900    no     none            47     427        1067
+1920    1728    900    no     none            47     288        720
+2560    1728    900    no     none            47     288        720

@@ -58,6 +58,96 @@ export const SIZE_BAND = 6;
  */
 export const CONSTRUCTION_FRAME = '-150 -170 300 340';
 
+/**
+ * **One frame per symmetry, computed from the arrangements that actually
+ * occur.**
+ *
+ * A single frame unioned over every archetype-by-slot combination is the worst
+ * case over the SPACE of possible arrangements, so every realised arrangement
+ * under-fills it by construction — the forms sat in the middle of a box sized
+ * for a composition no record renders.
+ *
+ * Third time this mechanism has appeared. The fitted viewBox normalised over a
+ * whole arrangement when the signal was its size; the averaged mean over a
+ * whole cover when the signal was its hue; and here a frame unioned over a
+ * whole space when the signal is which arrangements exist. Each time the
+ * operation was defined over a superset of the thing it was measuring.
+ *
+ * So the frame is still CONSTANT PER SYMMETRY — the property that made six
+ * records look like six rather than one — but it is fitted to the seventeen
+ * real arrangements that use that orientation rather than to every arrangement
+ * that could.
+ */
+const SYMMETRY_FRAMES = new Map<number, string>();
+
+/**
+ * Every record id the collection holds, so the frames are fitted to
+ * arrangements that exist rather than to arrangements that could.
+ *
+ * Listed rather than queried: the generator is pure and synchronous, and a
+ * frame that depended on a database read would make a record's construction
+ * depend on when it was drawn.
+ */
+const COLLECTION_IDS: readonly string[] = [
+  'e73e1de1-3686-4a81-8544-ca2300e187bb',
+  'd7047c62-149e-42fa-8cda-fac3f90c47cc',
+  '158a3163-6a56-4673-8f88-27e7b2aec724',
+  'c61c5919-8f50-4782-8e04-419fb3d2b148',
+  'a31591e7-2e28-42e7-84d5-2a1f96ad31fd',
+  'b9a9a9db-4bf5-42e6-b751-0eba2dfe8002',
+  '30504952-8d43-4c2e-b687-b89558371df5',
+  '78da2ee9-f7c7-40ea-8149-269454437ef6',
+  '372aba39-59ad-46c8-b76b-f33ecae75c98',
+  '464979c3-aaa2-43c5-afd4-8dc4ee2e98c6',
+  '7d35194b-5a02-4e31-a568-d95a9b32b0cd',
+  'b4abf39a-df33-4a9e-b65c-64d3d0a39b78',
+  '4a1e2b7c-0000-4000-8000-000000000001',
+  '4a1e2b7c-0000-4000-8000-000000000002',
+  '4a1e2b7c-0000-4000-8000-000000000003',
+  '4a1e2b7c-0000-4000-8000-000000000004',
+  '4a1e2b7c-0000-4000-8000-000000000005',
+];
+
+/**
+ * The frame for one symmetry: the union of every real arrangement drawn AS IF
+ * it used that orientation, padded so nothing touches the edge.
+ *
+ * Computed once per symmetry and cached. `formsFor` is the generator's body
+ * without the frame, so this does not recurse.
+ */
+function frameFor(symmetryIndex: number): string {
+  const cached = SYMMETRY_FRAMES.get(symmetryIndex);
+  if (cached !== undefined) return cached;
+
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+
+  for (const id of COLLECTION_IDS) {
+    for (const point of formsFor(id, symmetryIndex).forms.flatMap((form) =>
+      form.faces.flatMap((face) => face.points),
+    )) {
+      minX = Math.min(minX, point[0]);
+      maxX = Math.max(maxX, point[0]);
+      minY = Math.min(minY, point[1]);
+      maxY = Math.max(maxY, point[1]);
+    }
+  }
+
+  /* A margin so the outermost form has air, and the shadows have room. */
+  const pad = 16;
+  const frame = [
+    (minX - pad).toFixed(1),
+    (minY - pad).toFixed(1),
+    (maxX - minX + pad * 2).toFixed(1),
+    (maxY - minY + pad * 2).toFixed(1),
+  ].join(' ');
+
+  SYMMETRY_FRAMES.set(symmetryIndex, frame);
+  return frame;
+}
+
 /** Each archetype's proportions along u, v and w, before its extent is applied. */
 const SHAPE: Record<Archetype, readonly [number, number, number]> = {
   /*
@@ -300,7 +390,13 @@ function boxFaces(
   ];
 }
 
-export function construction(recordId: string): Construction {
+/**
+ * The forms for a record, optionally forced onto a given symmetry.
+ *
+ * Split out of `construction` so `frameFor` can ask "what would every record
+ * look like under symmetry N" without recursing into the frame it is computing.
+ */
+function formsFor(recordId: string, forceSymmetry?: number): { forms: Form[]; symmetryIndex: number } {
   const next = seedFrom(recordId);
 
   /* Which archetype takes which slot — one of each, never a random bag. */
@@ -311,7 +407,9 @@ export function construction(recordId: string): Construction {
     per-form values so the choice is a property of the record rather than of
     the iteration.
   */
-  const symmetry = SYMMETRIES[Math.floor(next() * SYMMETRIES.length)];
+  const drawn = Math.floor(next() * SYMMETRIES.length);
+  const symmetryIndex = forceSymmetry ?? drawn;
+  const symmetry = SYMMETRIES[symmetryIndex];
 
   /*
     **The colour form is hash-chosen; the two coloured FACES are determined.**
@@ -481,8 +579,26 @@ export function construction(recordId: string): Construction {
   /* Painter's sort: near forms last. */
   forms.sort((a, b) => a.depth - b.depth);
 
+  return { forms, symmetryIndex };
+}
+
+export function construction(recordId: string): Construction {
+  const { forms, symmetryIndex } = formsFor(recordId);
+
+  /*
+    The disc's own draws continue the same stream the forms used, so it is
+    re-seeded and fast-forwarded rather than replayed — replaying meant
+    duplicating the draw order in two places, which is two things that must
+    agree.
+  */
+  const next = seedFrom(recordId);
+  shuffled(ARCHETYPES, next);
+  next();
+  shuffled(ARCHETYPES.filter((a) => a !== 'slab' && a !== 'needle'), next);
+  for (let i = 0; i < ARCHETYPES.length * 3; i += 1) next();
+
   return {
-    viewBox: CONSTRUCTION_FRAME,
+    viewBox: frameFor(symmetryIndex),
     forms,
     disc: {
       cx: (next() * 2 - 1) * 30,

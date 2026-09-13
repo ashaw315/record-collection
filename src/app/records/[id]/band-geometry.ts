@@ -23,6 +23,22 @@
 export const NO_SCROLL_HEIGHT = 900;
 
 /**
+ * **The grid caps at 1728 and centres; paper bleeds beyond it.**
+ *
+ * 8a was drawn at 1440 and §2.1's full-bleed sentence is now scoped to this
+ * cap. Below it the grid is unchanged — twelve columns across the viewport,
+ * no page margin. Above it the bleed becomes margin.
+ *
+ * **The cap bounds the degradation; it does not remove it.** At 1728 the
+ * identity cell is 576px against a fixed 412px measure, the diagonals have
+ * flattened as far as the cap allows, and the cover has already dropped from
+ * 83% of the artwork visible. The page at 1728 is partway degraded on all three
+ * axes and stays there — that is the chosen worst case rather than a fix, and
+ * reading the cap as having solved it is the mistake to avoid.
+ */
+export const MAX_GRID_WIDTH = 1728;
+
+/**
  * The four bands.
  *
  * `nav` is 53 because the built `AppHeader` measures 53. 8a's drawing showed

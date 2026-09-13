@@ -20,8 +20,23 @@ import { recordLadder } from '@/lib/colour/record-ladder';
  * what keeps the disc from becoming a heavy dark mass on them.
  */
 
-/** §5.4: shadows are drawn, flat, one offset footprint per form at 7% ink. */
-const SHADOW = 'oklch(0.19 0.008 60 / 0.07)';
+/**
+ * **Three offset footprints per form, tight-and-dark to broad-and-faint.**
+ *
+ * A single flat 7% parallelogram measured 1.14:1 against paper and grounded
+ * nothing — it read as a stain beside the form rather than under it. The
+ * contact step at 20% does the grounding, and the outer two stop that step
+ * reading as a hard stamp.
+ *
+ * **The honest residual:** a real penumbra is smooth and this is three steps.
+ * At 360px the banding is not visible; it is the one place the flat medium
+ * imitates a rendered one and loses.
+ */
+const SHADOW_STEPS = [
+  { offset: 3, opacity: 0.2 },
+  { offset: 9, opacity: 0.09 },
+  { offset: 18, opacity: 0.05 },
+] as const;
 const INK = 'oklch(0.19 0.008 60)';
 
 export function ConstructionStill({
@@ -79,16 +94,21 @@ export function ConstructionStill({
       />
 
       {/* Flat footprints, light from upper-left. They stop the forms floating. */}
-      {scene.forms.map((form, index) => {
+      {scene.forms.flatMap((form, index) => {
         const base = form.faces.find((f) => f.kind === 'top');
-        if (base === undefined) return null;
-        return (
+        if (base === undefined) return [];
+        /* Broadest first, so the contact step lands on top of the others. */
+        return [...SHADOW_STEPS].reverse().map((step, s) => (
           <polygon
-            key={`shadow-${index}`}
-            points={points(base.points.map(([x, y]) => [x + 7, y + 9] as const))}
-            fill={SHADOW}
+            key={`shadow-${index}-${s}`}
+            points={points(
+              base.points.map(
+                ([x, y]) => [x + step.offset * 0.8, y + step.offset] as const,
+              ),
+            )}
+            fill={`oklch(0.19 0.008 60 / ${step.opacity})`}
           />
-        );
+        ));
       })}
 
       {/* Painter's sort is already applied: near forms come last. */}

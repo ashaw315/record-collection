@@ -1,4 +1,4 @@
-import { BANDS, IDENTITY_SPANS, LOWER_SPANS } from './band-geometry';
+import { BANDS, IDENTITY_SPANS, LOWER_SPANS, MAX_GRID_WIDTH } from './band-geometry';
 import { ConstructionStill } from './ConstructionStill';
 import { IdentityCell } from './IdentityCell';
 import { gridModules, type Diagonal } from './grid-modules';
@@ -52,6 +52,58 @@ export type PageRecord = {
  * shape, so it reads as the same vocabulary — the difference between one system
  * and two.
  */
+/**
+ * A small isometric solid in the construction's vocabulary.
+ *
+ * **§5.1's arcs and triangle are withdrawn for these.** Flat circles and a
+ * triangle read as a second system beside an isometric construction; a small
+ * solid drawn with the same `project()` reads as the same one. That settles the
+ * vocabulary question and changes both void rulings with it — an empty region
+ * now takes a small mark from the same system rather than a line across its
+ * box.
+ */
+function IsoMark({
+  name,
+  fill,
+  size = 1,
+  className,
+}: {
+  name: string;
+  fill: string;
+  size?: number;
+  className: string;
+}) {
+  const p = (u: number, v: number, w: number) => {
+    const [x, y] = project(u, v, w);
+    return [x * 15 * size + 62, y * 15 * size + 56] as const;
+  };
+  const face = (pts: ReadonlyArray<readonly [number, number]>) =>
+    pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+
+  const [du, dv, dw] = [1.7, 1.7, 1.1];
+
+  return (
+    <svg
+      data-mark={name}
+      aria-hidden="true"
+      viewBox="0 0 124 112"
+      className={`pointer-events-none absolute ${className}`}
+    >
+      <polygon points={face([p(0, 0, dw), p(du, 0, dw), p(du, dv, dw), p(0, dv, dw)])} fill={fill} />
+      <polygon
+        points={face([p(0, dv, 0), p(du, dv, 0), p(du, dv, dw), p(0, dv, dw)])}
+        fill={fill}
+        opacity="0.72"
+      />
+      <polygon
+        points={face([p(du, 0, 0), p(du, dv, 0), p(du, dv, dw), p(du, 0, dw)])}
+        fill={fill}
+        opacity="0.5"
+      />
+    </svg>
+  );
+}
+
 function MatrixSolid() {
   const p = (u: number, v: number, w: number) => {
     const [x, y] = project(u, v, w);
@@ -169,7 +221,16 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
   const cell = 'relative min-w-0 overflow-hidden p-[18px]';
 
   return (
-    <div data-testid="record-page-8a" style={{ color: INK }}>
+    /*
+      Capped and centred, with paper bleeding past it. The wrapper is the page's
+      only element that knows about the viewport; everything inside is the grid
+      8a specifies at a width it specifies.
+    */
+    <div
+      data-testid="record-page-8a"
+      className="mx-auto"
+      style={{ color: INK, maxWidth: MAX_GRID_WIDTH }}
+    >
       {/* IDENTITY BAND — 4 / 3 / 5. */}
       <div
         data-band="identity"
@@ -198,14 +259,11 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
             does not reach, and `e2e/page8a-marks.spec.ts` asserts no mark's box
             contains type on any of the three records.
           */}
-          <div
-            data-mark="identityTriangle"
-            aria-hidden="true"
-            className="pointer-events-none absolute top-[175px] right-0 h-[150px] w-[56px]"
-            style={{
-              background: tint,
-              clipPath: 'polygon(100% 0, 100% 100%, 0 50%)',
-            }}
+          <IsoMark
+            name="identityTriangle"
+            fill={tint}
+            size={1.5}
+            className="top-[168px] right-[6px] h-[112px] w-[124px]"
           />
           <IdentityCell
             title={record.title}
@@ -216,9 +274,16 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
         </div>
 
         {/* The construction, with its tint disc as ground. */}
+        {/*
+          **Exactly one crosser, one edge.** The construction's forms reach into
+          the title cell, and the hairline stays drawn at full strength
+          underneath — a grid that breaks for what crosses it is not a grid, and
+          a crossing that nothing resists is not a crossing. `overflow-visible`
+          on this cell only; every other cell still clips.
+        */}
         <div
           data-cell="still"
-          className="relative overflow-hidden"
+          className="relative"
           style={{ gridColumn: `span ${IDENTITY_SPANS[1]}`, borderRight: `1px solid ${RULE}` }}
         >
           {/*
@@ -235,18 +300,42 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
           className="relative overflow-hidden"
           style={{ gridColumn: `span ${IDENTITY_SPANS[2]}` }}
         >
+          {/*
+            **Fitted, not cropped.** `object-cover` on a square source in a cell
+            that widens without heightening shows a horizontal slice — measured
+            at 83% of the artwork visible at 1440 and 47% at 2560. The sleeve is
+            §5's entry point and the source of the page's colour, so showing
+            less than half of it was the worst cost of the unspecified widths.
+
+            `object-contain` with the artwork centred, and the bar anchored to
+            the ARTWORK'S edge rather than the cell's, so the mark stays on the
+            thing it marks.
+          */}
           {record.coverUrl === null ? (
             /* §5.3: a frame at paper luminance, never a filled rectangle. */
             <div className="absolute inset-[18px]" style={{ border: `1px solid ${RULE}` }} />
           ) : (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={record.coverUrl} alt="" className="block h-full w-full object-cover" />
+            <div className="relative flex h-full w-full items-center justify-end">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={record.coverUrl}
+                alt=""
+                className="block h-full w-auto max-w-full object-contain"
+              />
+              <div
+                data-mark="sleeveBar"
+                className="h-full w-[10px] shrink-0"
+                style={{ background: base }}
+              />
+            </div>
           )}
-          <div
-            data-mark="sleeveBar"
-            className="absolute top-0 right-0 h-full w-[10px]"
-            style={{ background: base }}
-          />
+          {record.coverUrl === null && (
+            <div
+              data-mark="sleeveBar"
+              className="absolute top-0 right-0 h-full w-[10px]"
+              style={{ background: base }}
+            />
+          )}
           {/*
             Inside the bar, not straddling the frame edge. It anchors the
             construction (§5.1) and a mark half off the page reads as a crop.
@@ -289,11 +378,10 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
                 when the cell is empty (§5.4) — a decorated empty cell reads as
                 a designed state rather than as a gap the reader can fill.
               */}
-              <div
-                data-mark="provenanceArc"
-                aria-hidden="true"
-                className="pointer-events-none absolute right-[14px] bottom-[14px] h-[96px] w-[96px] rounded-full"
-                style={{ background: tint }}
+              <IsoMark
+                name="provenanceArc"
+                fill={tint}
+                className="right-[14px] bottom-[14px] h-[112px] w-[124px]"
               />
               {record.purchasePrice !== null && (
                 <div className="text-prose">Paid ${record.purchasePrice}</div>
@@ -394,7 +482,19 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
           <div className={`${LABEL} whitespace-nowrap`} style={{ color: INK }}>
             {modules.pressing.pressedSameYear ? 'Released · same year' : 'Released'}
           </div>
-          <div className="text-[72px] leading-[0.86] font-extrabold">{record.releaseYear}</div>
+          {/*
+            **A reserved box, where the padding yields before the glyph does.**
+            At 1440 the cell is 240px, the padding 36px and a four-digit year at
+            72pt is 203px — 1px of slack. The figure filling its field is
+            intended; one pixel of proof is a coincidence, so the box is stated
+            rather than left to arithmetic that happens to fit.
+          */}
+          <div
+            className="text-[72px] leading-[0.86] font-extrabold"
+            style={{ minWidth: '203px', marginInline: '-18px', paddingInline: '18px' }}
+          >
+            {record.releaseYear}
+          </div>
         </div>
 
         {/* Market median: the only 40, and the one number the owner does not control. */}
@@ -452,11 +552,10 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
           )}
           {/* §5.1's tint arc, suppressed when the cell is empty (§5.4). */}
           {!modules.journal.empty && (
-            <div
-              data-mark="aboutArc"
-              aria-hidden="true"
-              className="absolute right-[14px] bottom-[14px] h-[76px] w-[76px] rounded-full"
-              style={{ background: tint }}
+            <IsoMark
+              name="aboutArc"
+              fill={tint}
+              className="right-[14px] bottom-[14px] h-[112px] w-[124px]"
             />
           )}
         </div>
