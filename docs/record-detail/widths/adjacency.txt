@@ -1,0 +1,9 @@
+Does the 72 still dominate its cell as the viewport grows?
+§4 adjacency needs the figure LARGE RELATIVE TO ITS SURROUNDINGS.
+
+width  year-cell  72-width  72 as % of cell   sleeve-cell  cover-visible
+1440   240        203       85%               600          83%
+1512   252        215       85%               630          79%
+1728   288        251       87%               720          69%
+1920   320        283       88%               800          62%
+2560   427        390       91%               1067         47%

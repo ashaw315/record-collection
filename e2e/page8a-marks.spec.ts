@@ -157,7 +157,15 @@ test.describe('every mark stays in its cell', () => {
     await page.goto('/wall/probe/page8a?case=richest');
     await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
 
-    for (const mark of ['sleeveBar', 'sleeveBlock', 'identityTriangle', 'provenanceArc', 'aboutArc']) {
+    for (const mark of [
+      'sleeveBar',
+      'sleeveBlock',
+      'identityTriangle',
+      'provenanceArc',
+      'aboutArc',
+      /* §5.4's small solid, in the construction's own vocabulary. */
+      'matrixSolid',
+    ]) {
       await expect(page.locator(`[data-mark="${mark}"]`), mark).toHaveCount(1);
     }
 

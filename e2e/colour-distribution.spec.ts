@@ -67,6 +67,12 @@ const MARK_KIND: Partial<Record<string, MarkKind>> = {
   disc: 'tint',
   /* Fixed ink, never derived — they anchor the construction. */
   sleeveBlock: 'ink',
+  /*
+    §5.4's second rendered still: record-independent artwork that never
+    recolours, so it is off the ladder like the black marks. Not a base field
+    mark, so the area floor does not govern it.
+  */
+  matrixSolid: 'ink',
 };
 
 /** The coloured area of each mark, in px², with the two cell-property marks handled. */

@@ -2,6 +2,7 @@ import { BANDS, IDENTITY_SPANS, LOWER_SPANS } from './band-geometry';
 import { ConstructionStill } from './ConstructionStill';
 import { IdentityCell } from './IdentityCell';
 import { gridModules, type Diagonal } from './grid-modules';
+import { project } from './construction';
 import { LABEL } from './grid-type';
 import { recordLadder } from '@/lib/colour/record-ladder';
 
@@ -42,6 +43,48 @@ export type PageRecord = {
   coverUrl: string | null;
   spineColour: string | null;
 };
+
+/**
+ * §5.4's small solid: one box in the construction's own projection, at a
+ * fraction of its scale, anchored to the matrix cell's empty lower half.
+ *
+ * Drawn from the same `project()` the construction uses rather than as a flat
+ * shape, so it reads as the same vocabulary — the difference between one system
+ * and two.
+ */
+function MatrixSolid() {
+  const p = (u: number, v: number, w: number) => {
+    const [x, y] = project(u, v, w);
+    return [x * 13 + 60, y * 13 + 52] as const;
+  };
+  const face = (pts: ReadonlyArray<readonly [number, number]>) =>
+    pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+
+  /* A low slab: wide on the ground, shallow in height. */
+  const [du, dv, dw] = [2.6, 1.5, 0.55];
+
+  return (
+    <svg
+      data-mark="matrixSolid"
+      aria-hidden="true"
+      viewBox="0 0 120 104"
+      className="pointer-events-none absolute right-[18px] bottom-[18px] h-[104px] w-[120px]"
+    >
+      <polygon
+        points={face([p(0, 0, dw), p(du, 0, dw), p(du, dv, dw), p(0, dv, dw)])}
+        fill="oklch(0.80 0.004 80)"
+      />
+      <polygon
+        points={face([p(0, dv, 0), p(du, dv, 0), p(du, dv, dw), p(0, dv, dw)])}
+        fill="oklch(0.66 0.004 80)"
+      />
+      <polygon
+        points={face([p(du, 0, 0), p(du, dv, 0), p(du, dv, dw), p(du, 0, dw)])}
+        fill="oklch(0.52 0.004 80)"
+      />
+    </svg>
+  );
+}
 
 /** §1.3's mark: one line means not recorded, crossed means not applicable. */
 function EmptyMark({ diagonal }: { diagonal: Exclude<Diagonal, 'none'> }) {
@@ -217,7 +260,19 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
       </div>
 
       {/* RECORD BAND — 3 / 2 / 2 / 2 / 3. */}
-      <div data-band="record" className="grid grid-cols-12 gap-0" style={{ height: BANDS.record }}>
+      {/*
+        **The grid closes.** §3 puts a 1px rule on "every structural edge", and
+        the bottom of the lower band is one — without it the last thing on the
+        page is nothing, and nothing is also what a page that failed to load
+        shows. The rule sits on the BAND rather than in the tail, because §2.1
+        is explicit that "the tail is paper, not a footer; nothing is drawn in
+        it".
+      */}
+      <div
+        data-band="record"
+        className="grid grid-cols-12 gap-0"
+        style={{ height: BANDS.record, borderBottom: `1px solid ${RULE}` }}
+      >
         {/* Provenance. */}
         <div
           data-cell="provenance"
@@ -263,6 +318,20 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
           style={{ gridColumn: `span ${LOWER_SPANS[1]}`, borderRight: `1px solid ${RULE}` }}
         >
           <div className={LABEL}>Matrix / runout</div>
+          {/*
+            **§5.4's second rendered still**, and it was simply never built:
+            "the isometric still in the identity band and the small solid in
+            Matrix are record-independent artwork". It sits in the cell's empty
+            lower half, in the construction's own vocabulary at a fraction of
+            the scale — which is what makes the page one system rather than an
+            isometric cell surrounded by flat shapes.
+
+            Record-independent, so it does not recolour: a neutral solid on
+            every record, like the still it belongs with.
+          */}
+          {record.matrixRunout !== null && (
+            <MatrixSolid />
+          )}
           {record.matrixRunout === null ? (
             <EmptyMark diagonal="single" />
           ) : (
