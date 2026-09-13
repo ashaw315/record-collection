@@ -70,8 +70,21 @@ const SHAPE: Record<Archetype, readonly [number, number, number]> = {
     best (1.25 against 0.80) to 11.7 — so the assertion allows the measured
     spread rather than a single figure.
   */
-  beam: [7.6, 0.8, 0.8],
-  slab: [3.1, 2.6, 0.5],
+  /*
+    **The long axis is VERTICAL on the two largest forms, and that is the fix
+    for a composition that lay down.**
+
+    Measured against the reference: it stacks — a slab standing upright, a beam
+    crossing above it, a panel on end — and gets its presence from HEIGHT. Ours
+    put its 7.6-unit beam along a ground axis, so the largest form ran
+    horizontally and the whole arrangement hugged the bottom of its cell. The
+    6:1 band was right and the axis was wrong.
+
+    The beam now rises and the slab stands; the plate stays flat because a plate
+    that stands is a panel, and the set is six distinct things.
+  */
+  beam: [0.8, 0.8, 7.6],
+  slab: [2.6, 0.5, 3.1],
   cube: [1.45, 1.45, 1.45],
   plate: [2.8, 2.8, 0.28],
   panel: [0.4, 2.4, 2.9],
@@ -429,9 +442,25 @@ export function construction(recordId: string): Construction {
       faceAreas[a] >= faceAreas[b] ? a : b,
     );
 
+    /*
+      **A form that does not carry the accent is GREY, not tinted.**
+
+      Compared against the reference: it is silver and black forms with a
+      coloured disc behind and one small coloured cube — a grey object with
+      colour IN it. Ours tinted every face of every non-ink form, so four of six
+      forms were in the record's hue and the construction read as a coloured
+      object. Only two faces were ever `base`; the other ten were tint and shade
+      doing the same work at lower saturation.
+
+      So the ladder now applies only to the carrier: its largest face takes base
+      and its right face takes shade, which is the object having a lit side and
+      a shaded one. Everything else is the neutral grey the reference uses,
+      which is what lets two accent faces read as accents.
+    */
     const stepFor = (kind: 'top' | 'left' | 'right'): MarkStep => {
       if (isInk) return 'ink';
-      if (carries && kind === largest) return 'base';
+      if (!carries) return 'grey';
+      if (kind === largest) return 'base';
       /* §5.5: shade is a right-hand face and never a shape. */
       return kind === 'right' ? 'shade' : 'tint';
     };

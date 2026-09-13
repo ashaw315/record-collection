@@ -17,7 +17,17 @@
  */
 
 /** §5.5's steps, plus the fixed ink the two black marks take. */
-export type MarkStep = 'tint' | 'base' | 'shade' | 'ink';
+export type MarkStep =
+  | 'tint'
+  | 'base'
+  | 'shade'
+  | 'ink'
+  /**
+   * Neutral, and NOT on the ladder. The construction's non-carrying forms take
+   * it: the reference is silver and black forms with colour in them, and
+   * tinting every face made the whole object the record's hue.
+   */
+  | 'grey';
 
 /**
  * Where in its cell a mark hangs. Not a coordinate — the generator resolves an

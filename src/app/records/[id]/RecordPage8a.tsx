@@ -291,10 +291,24 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
           budget could not be measured. A mark that happens to be implemented as
           a background is still a mark.
         */}
+        {/*
+          **The label sits directly ON the 72, with nothing between them.**
+
+          §4: "11px mono label directly above the 72 in the release-year field
+          ... small first, large beneath, NO INTERVENING ELEMENT." Justifying to
+          the cell's end put a ~200px gap between them, which is the adjacency
+          device broken in the one place the page's largest mark sits — the
+          render's year field is a wide short band with the label immediately
+          above the figure, and ours was a tall square with its content dropped
+          to the floor.
+
+          The pair is centred as a block, so the field reads as a band carrying
+          a figure rather than a square with something at the bottom.
+        */}
         <div
           data-cell="year"
           data-mark="releaseYearField"
-          className="relative flex min-w-0 flex-col justify-end overflow-hidden p-[18px]"
+          className="relative flex min-w-0 flex-col justify-center overflow-hidden p-[18px]"
           style={{
             gridColumn: `span ${LOWER_SPANS[2]}`,
             borderRight: `1px solid ${RULE}`,
@@ -317,7 +331,7 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
         {/* Market median: the only 40, and the one number the owner does not control. */}
         <div
           data-cell="market"
-          className="relative flex min-w-0 flex-col justify-end overflow-hidden p-[18px]"
+          className="relative flex min-w-0 flex-col justify-center overflow-hidden p-[18px]"
           style={{ gridColumn: `span ${LOWER_SPANS[3]}`, borderRight: `1px solid ${RULE}` }}
         >
           <div className={LABEL}>Market median</div>

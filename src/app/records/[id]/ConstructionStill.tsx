@@ -41,6 +41,7 @@ export function ConstructionStill({
     the composition's structure.
   */
   const fill = (step: string): string => {
+    if (step === 'grey') return 'oklch(0.74 0.004 80)';
     if (ladder === null) return step === 'ink' ? INK : 'oklch(0.19 0.008 60 / 0.55)';
     switch (step) {
       case 'base':
@@ -49,6 +50,9 @@ export function ConstructionStill({
         return ladder.tint;
       case 'shade':
         return ladder.shade;
+      case 'grey':
+        /* Neutral silver: the forms the reference leaves uncoloured. */
+        return 'oklch(0.74 0.004 80)';
       default:
         return INK;
     }
