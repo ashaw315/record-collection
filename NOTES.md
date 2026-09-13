@@ -18,7 +18,13 @@ is titled as its own conclusion, which makes it findable only if you already
 know it — so this table is keyed by the circumstance instead. Each entry keeps
 its evidence: follow the link rather than trusting the line.
 
-Generated from 61 declared rules. Regenerate with
+**Checks that cannot fail is the largest shape by a distance**, and with
+*instruments that report nothing* it is close to half of everything recorded
+here. They are one defect seen from two sides: an assertion with no failing
+input, and an observation with no subject. Both produce green. If you are
+looking at something that passes and you are not sure why, start in those two.
+
+Generated from 95 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -30,6 +36,9 @@ Generated from 61 declared rules. Regenerate with
 | a rule collides with rules that were never in tension, or a figure moves while nothing changes size | [A rule scoped past its subject, and a ratio that moved when nothing did](#a-rule-scoped-past-its-subject-and-a-ratio-that-moved-when-nothing-did) |
 | a long-settled constant has never been wrong, and you cannot say what would have told you | [A value that survived every review because nothing could test it](#a-value-that-survived-every-review-because-nothing-could-test-it) |
 | a verification was requested and the thing it needs was never recorded | [A37 VERIFIED in real use — and the measurement I asked for cannot be taken](#a37-verified-in-real-use-and-the-measurement-i-asked-for-cannot-be-taken) |
+| an average across a dataset is being quoted and the set has kinds in it | [RULE: any measurement of Discogs metadata quality must be PER-GENRE. An](#rule-any-measurement-of-discogs-metadata-quality-must-be-per-genre-an) |
+| a comment or summary describes work more rigorously than the work | [RULE: prose is more rigorous than the work it describes, and it is always](#rule-prose-is-more-rigorous-than-the-work-it-describes-and-it-is-always) |
+| a number stands in for a capability and you counted the proxy | [RULE: when a measurement stands in for a capability, count the capability,](#rule-when-a-measurement-stands-in-for-a-capability-count-the-capability) |
 | a number surprised you and you have not checked what else was running | [THE APPARATUS GENERATING THE SIGNAL — now a mechanism, not a habit](#the-apparatus-generating-the-signal-now-a-mechanism-not-a-habit) |
 | a feature computes something correct and you cannot say what a user does with it | [THE WALK DOES NOTHING FOR A PERSON, and the four artists most likely to converge are People](#the-walk-does-nothing-for-a-person-and-the-four-artists-most-likely-to-converge-are-people) |
 | a metric is easy to compute and you have not checked it tracks what you care about | [Wall colour: measured, and the naive metric says the wrong thing](#wall-colour-measured-and-the-naive-metric-says-the-wrong-thing) |
@@ -42,12 +51,26 @@ Generated from 61 declared rules. Regenerate with
 | a comment describes a protection and you have not found the code that performs it | [A COMMENT THAT PROMISED A SAFEGUARD NOBODY WROTE](#a-comment-that-promised-a-safeguard-nobody-wrote) |
 | the data changed, no code changed, and the suite is still green | [A DATA change opened an untested branch, and the suite could not see it](#a-data-change-opened-an-untested-branch-and-the-suite-could-not-see-it) |
 | the tests are well shaped and you staged the bug and they all passed | [A fixture that cannot express the defect](#a-fixture-that-cannot-express-the-defect) |
+| a mutation failed N tests and you have not read which N | [A mutation is code, and it can be wrong. "Fails N tests" is not evidence](#a-mutation-is-code-and-it-can-be-wrong-fails-n-tests-is-not-evidence) |
 | a rule holds, and you are not sure whether the code or a guard is holding it | [A rule kept by a backstop reads identically to a rule kept by the code](#a-rule-kept-by-a-backstop-reads-identically-to-a-rule-kept-by-the-code) |
+| a test passes and its fixture may not have created the condition | [A test fixture can fail to create the condition its test claims — and](#a-test-fixture-can-fail-to-create-the-condition-its-test-claims-and) |
 | a test computes a real number from real data and you cannot say which value it would reject | [A TEST THAT MEASURES A SET CONSTRAINS NO MEMBER OF IT](#a-test-that-measures-a-set-constrains-no-member-of-it) |
 | a test measures something real, but not the thing its name promises | [An assertion aimed at a proxy for the thing it names — third instance](#an-assertion-aimed-at-a-proxy-for-the-thing-it-names-third-instance) |
 | a property regressed three times and every pure function covering it still passes | [AN INLINE COMPUTATION IS INVISIBLE TO EVERY LAYER OF THE SUITE BY CONSTRUCTION](#an-inline-computation-is-invisible-to-every-layer-of-the-suite-by-construction) |
 | a gate checks that a value exists or looks right, and you have not checked it works | [Presence is not shape, and shape is not EFFECT — a standing check, after the fourth instance](#presence-is-not-shape-and-shape-is-not-effect-a-standing-check-after-the-fourth-instance) |
+| a test asserts a value read from a captured fixture | [RULE: a captured fixture contains VOLATILE fields. Assert the property, not](#rule-a-captured-fixture-contains-volatile-fields-assert-the-property-not) |
+| a guard is justified by what its current callers happen to do | [RULE: a guard justified by its CURRENT CALLERS is an assumption about](#rule-a-guard-justified-by-its-current-callers-is-an-assumption-about) |
+| a test asserts that something throws without asserting what | [RULE: a message-less `.toThrow()` asserts only that SOMETHING failed](#rule-a-message-less-tothrow-asserts-only-that-something-failed) |
 | a test passes with a mock and you have not checked the mock was reached | [RULE: a mock can fail by not answering, not only by answering wrongly](#rule-a-mock-can-fail-by-not-answering-not-only-by-answering-wrongly) |
+| a test passes with a mock and you have not checked which calls it intercepted | [RULE: a mock that intercepts EVERY call disables the function; a mock that](#rule-a-mock-that-intercepts-every-call-disables-the-function-a-mock-that) |
+| a module is exercised only by its own tests | [RULE: a module whose only consumers are its TESTS has an unvalidated](#rule-a-module-whose-only-consumers-are-its-tests-has-an-unvalidated) |
+| a test asserts something is absent and nothing marks when that stops being true | [RULE: a test asserting a feature is ABSENT is a dated claim, and nothing](#rule-a-test-asserting-a-feature-is-absent-is-a-dated-claim-and-nothing) |
+| a test passes and its fixture admits only one ordering or selection | [RULE: a test is only as discriminating as its fixture. When several](#rule-a-test-is-only-as-discriminating-as-its-fixture-when-several) |
+| a reproduction fails and you have not seen it pass | [RULE: make a reproduction GREEN once before trusting it red](#rule-make-a-reproduction-green-once-before-trusting-it-red) |
+| a claim rests on a probe you wrote and ran | [RULE: probes are code too, and a verified-by-execution claim still needs its](#rule-probes-are-code-too-and-a-verified-by-execution-claim-still-needs-its) |
+| a comparison shows fixed columns and the discriminating field may not be among them | [RULE: the comparison columns are FIXED, and for any given master the](#rule-the-comparison-columns-are-fixed-and-for-any-given-master-the) |
+| a Zod schema sits at a trust boundary and uses coercion | [RULE: Zod's coercion layer is SYSTEMATICALLY PERMISSIVE at trust](#rule-zods-coercion-layer-is-systematically-permissive-at-trust) |
+| a test looks reasonable and you have not asked what would make it fail | [The decorative-test check has now caught one in ADVANCE rather than by](#the-decorative-test-check-has-now-caught-one-in-advance-rather-than-by) |
 | a feature has comprehensive passing tests and nobody has used it in a browser | [THE LARGEST FINDING IN THIS PROJECT: a feature that passed every test and had never once worked](#the-largest-finding-in-this-project-a-feature-that-passed-every-test-and-had-never-once-worked) |
 | you fixed the callers of a shared thing rather than the shared thing | [The layer argument turned on me: I fixed two callers and left the trap open](#the-layer-argument-turned-on-me-i-fixed-two-callers-and-left-the-trap-open) |
 | a test asserts a total or an average over a set that is allowed to vary | [The light became an angle, and a test that measured an aggregate missed a drift](#the-light-became-an-angle-and-a-test-that-measured-an-aggregate-missed-a-drift) |
@@ -61,7 +84,12 @@ Generated from 61 declared rules. Regenerate with
 | a value crosses between systems and nothing in its type says which one it is in | [Branded coordinate frames, and the false diagnosis that preceded them](#branded-coordinate-frames-and-the-false-diagnosis-that-preceded-them) |
 | a layout is correct at one viewport and you have not looked at another | [DIAGNOSED, NOT FIXED: the pulled record fills 457% of the frame's width at 390px](#diagnosed-not-fixed-the-pulled-record-fills-457-of-the-frames-width-at-390px) |
 | the same quantity keeps measuring differently and you have not asked from where | [FOUR ANSWERS FOR ONE DIMENSION: the anchor moved every time, and only the picture settled it](#four-answers-for-one-dimension-the-anchor-moved-every-time-and-only-the-picture-settled-it) |
+| a summary line and the columns it replaces hide at different breakpoints | [RULE, responsive layout: a summary line must hide at the WIDEST breakpoint](#rule-responsive-layout-a-summary-line-must-hide-at-the-widest-breakpoint) |
+| two stores must agree and you are choosing which to write first | [RULE, two stores that must agree: choose the order whose failure mode is](#rule-two-stores-that-must-agree-choose-the-order-whose-failure-mode-is) |
+| an upstream field looks like one of yours and you are about to store it there | [RULE: a Discogs field describing the CATALOGUE OBJECT belongs beside our](#rule-a-discogs-field-describing-the-catalogue-object-belongs-beside-our) |
+| you are caching a derived value rather than the payload it came from | [RULE: cache the UPSTREAM payload, never your interpretation of it — your](#rule-cache-the-upstream-payload-never-your-interpretation-of-it-your) |
 | two fields hold the same shape of value and you are about to treat them alike | [RULE: two things that look like the same field are not the same KIND of claim](#rule-two-things-that-look-like-the-same-field-are-not-the-same-kind-of-claim) |
+| a check can fail in two directions and you are choosing the default | [RULE: when a check can fail in two directions, pick the default by asking](#rule-when-a-check-can-fail-in-two-directions-pick-the-default-by-asking) |
 | content renders smaller or clipped and the element it sits in was not measured | [The canvas is a container, and its height is a constraint on what renders inside it](#the-canvas-is-a-container-and-its-height-is-a-constraint-on-what-renders-inside-it) |
 | a coordinate or position is being compared and you have not said in which frame | [The frame family, tenth instance — a POSITION must name its frame too](#the-frame-family-tenth-instance-a-position-must-name-its-frame-too) |
 | something renders and cannot be seen, and you are looking at colour rather than size | [THE SHELF WAS NOT INVISIBLE — IT WAS TOO SHALLOW TO EXIST](#the-shelf-was-not-invisible-it-was-too-shallow-to-exist) |
@@ -74,7 +102,10 @@ Generated from 61 declared rules. Regenerate with
 | --- | --- |
 | an error path renders and you have not checked what it exposes | [A 403 on a JS chunk became a credential disclosure](#a-403-on-a-js-chunk-became-a-credential-disclosure) |
 | an output names a thing and you have not checked the thing exists | [A FABRICATED IDENTIFIER IS A DIFFERENT FAILURE CLASS FROM AN UNCERTAIN CLAIM](#a-fabricated-identifier-is-a-different-failure-class-from-an-uncertain-claim) |
+| a mutation failed nothing and you are reading that as dead code | [A mutation that fails nothing does not mean the code is dead. Three](#a-mutation-that-fails-nothing-does-not-mean-the-code-is-dead-three) |
 | a rule passes and you have not checked that it had anything to govern | [An observer that can be satisfied without its subject ever existing](#an-observer-that-can-be-satisfied-without-its-subject-ever-existing) |
+| a comment calls a generalised thing a special case | [RULE: a class can be SOLVED and not RECOGNISED, and the giveaway is a](#rule-a-class-can-be-solved-and-not-recognised-and-the-giveaway-is-a) |
+| a defect is real and you cannot write an assertion that fails on it | [RULE: some defects cannot be expressed as a failing assertion, and the](#rule-some-defects-cannot-be-expressed-as-a-failing-assertion-and-the) |
 | a feature answers a question and you have not checked it is the question asked | [The panel resolves to a RELEASE, not to a stamper — the limit named on first real use](#the-panel-resolves-to-a-release-not-to-a-stamper-the-limit-named-on-first-real-use) |
 
 ### Samples read as populations
@@ -85,7 +116,15 @@ Generated from 61 declared rules. Regenerate with
 | a failure has a number attached and you have not run it more than once | [427 MEASURED over three runs rather than assumed — and it is NOT a rate](#427-measured-over-three-runs-rather-than-assumed-and-it-is-not-a-rate) |
 | a written measurement is being carried forward and you have not re-read the source | [A note that implied a difference, and a payload that did not](#a-note-that-implied-a-difference-and-a-payload-that-did-not) |
 | a search came back empty and you are about to conclude the thing does not exist | [A search whose scope cannot contain the answer](#a-search-whose-scope-cannot-contain-the-answer) |
+| a failure resembles an earlier one and you are applying the same diagnosis | [RULE: "same family" is a hypothesis, not a diagnosis. Measure which](#rule-same-family-is-a-hypothesis-not-a-diagnosis-measure-which) |
 | two options were compared and the more interesting one won | [RULE: a comparison with an uncontrolled variable, and the wrong answer being more interesting](#rule-a-comparison-with-an-uncontrolled-variable-and-the-wrong-answer-being-more-interesting) |
+| a correction has been written on top of an earlier measurement | [RULE: a correction can over-correct, and the summary written on top of a](#rule-a-correction-can-over-correct-and-the-summary-written-on-top-of-a) |
+| a payload shape was learned from one endpoint and applied to another | [RULE: a field seen on one Discogs endpoint's payload is not evidence about](#rule-a-field-seen-on-one-discogs-endpoints-payload-is-not-evidence-about) |
+| a measurement is being compared against a baseline from different code | [RULE: a measurement compared against a baseline taken on DIFFERENT CODE](#rule-a-measurement-compared-against-a-baseline-taken-on-different-code) |
+| you are about to say a file or codebase does not contain something | [RULE: a negative claim about a file needs a search that could have found it](#rule-a-negative-claim-about-a-file-needs-a-search-that-could-have-found-it) |
+| a search returned a count and you have not checked it covered the space | [RULE: a search that does not cover the space returns a confident](#rule-a-search-that-does-not-cover-the-space-returns-a-confident) |
+| four fixes have failed and the diagnosis has not changed | [RULE: environmental causes look like logic bugs, and a diagnosis that](#rule-environmental-causes-look-like-logic-bugs-and-a-diagnosis-that) |
+| you are debugging where the symptom appeared | [RULE: the symptom names a location, and the location is where everyone](#rule-the-symptom-names-a-location-and-the-location-is-where-everyone) |
 | a diagnosis explained the last occurrence and you are applying it to this one | [THE ACCUMULATION DIAGNOSIS IS REFUTED FOR THE CURRENT FLAKE — measured 2026-09-05](#the-accumulation-diagnosis-is-refuted-for-the-current-flake-measured-2026-09-05) |
 | a flake has a prescription attached that nobody measured | [The E2E flake is ACCUMULATION, not worker contention — the prescription was wrong](#the-e2e-flake-is-accumulation-not-worker-contention-the-prescription-was-wrong) |
 | repeated failures are being treated as one bug | [THE HUNT, COMPLETE — six runs, SEVEN failures, and it is not one bug](#the-hunt-complete-six-runs-seven-failures-and-it-is-not-one-bug) |
@@ -106,6 +145,7 @@ Generated from 61 declared rules. Regenerate with
 | two instruments disagree and you are about to trust the one you built | [RESOLVED: there was no instrument disagreement. My probe missed the spine.](#resolved-there-was-no-instrument-disagreement-my-probe-missed-the-spine) |
 | a migration passed locally and has not run anywhere else | [RULE: a schema unit is not done until `db:migrate` has run against NEON](#rule-a-schema-unit-is-not-done-until-dbmigrate-has-run-against-neon) |
 | work was interrupted and the tree looks clean | [RULE: after an interruption, a clean tree is not evidence nothing was lost — check the stash](#rule-after-an-interruption-a-clean-tree-is-not-evidence-nothing-was-lost-check-the-stash) |
+| a command exited green and you have not checked it did anything | [RULE: this toolchain reports ABSENCE as SUCCESS in at least three distinct](#rule-this-toolchain-reports-absence-as-success-in-at-least-three-distinct) |
 | something hangs and you are looking at the code you just changed | [The env-loading hang, FIXED — and it was mine, from four hours earlier](#the-env-loading-hang-fixed-and-it-was-mine-from-four-hours-earlier) |
 | a suite hangs or slows and you are treating it as load rather than a lock | [THE HANG WAS AN ACCIDENTAL MUTEX — fixing it turned the suite red, and that is the honest state](#the-hang-was-an-accidental-mutex-fixing-it-turned-the-suite-red-and-that-is-the-honest-state) |
 | a harness stands in for real data and features are being tuned against it | [The harness had no cover art, and two effects were built to compensate](#the-harness-had-no-cover-art-and-two-effects-were-built-to-compensate) |
@@ -536,6 +576,341 @@ form the records work had not shown — see the masking entry under Open.
 
 ## Open
 
+**Work someone will do.** A live defect, a blocked item, a dated task, a named
+debt, or a fix with a file attached. Anything here should be actionable by
+reading it.
+
+Things that were true once — observations, deferrals with triggers, corrections,
+resolved items — live under **Considered** below, and transferable rules live as
+their own entries in the apparatus index. Those three were one list until
+2026-09-13: 62% of "Open" was apparatus rules, which is why the index could not
+find them.
+
+- **STEP 16 (deploy): `sslmode=require` will change meaning in `pg` v9. Fix is
+  one word, and it is not urgent.**
+
+  Every server start logs a `pg` deprecation warning: `sslmode=require`
+  currently behaves as `verify-full` (certificate AND hostname verified), and in
+  `pg` v9 it will adopt libpq semantics — encryption without verifying the
+  certificate. **Weaker, silently, on a version bump.**
+
+  Not caused by our code: the string comes from Neon's dashboard and appears in
+  `DATABASE_URL` and `NEON_TEST_DATABASE_URL` alike.
+
+  **The fix, named so nobody has to re-derive it: replace `sslmode=require`
+  with `sslmode=verify-full`.** That pins today's behaviour explicitly and the
+  warning goes away. Do it in the deploy step, where the environment variables
+  are being set anyway, rather than piecemeal across `.env` files that are not
+  in the repo.
+
+  Worth doing at step 16 rather than later: after a `pg` major bump the same
+  string still WORKS, just less safely, so nothing fails to draw attention to
+  it. A security property that degrades quietly is exactly the kind that
+  outlives the person who knew about it.
+
+- **BLOCKED, awaiting Adam: §10a's range-with-conditions needs Discogs seller
+  settings.**
+
+  Measured against the live API before starting step 10 (2026-08-12):
+
+  | Endpoint | Result |
+  |---|---|
+  | `marketplace/price_suggestions/:id` | **404** — *"You must fill out your seller settings first"*, on two different releases |
+  | `marketplace/stats/:id` | 200 — `num_for_sale: 11`, `lowest_price: 41.14 EUR` |
+  | release payload (already cached) | the same two fields |
+
+  The token authenticates (`oauth/identity` → 200), so this is an ACCOUNT STATE,
+  not a bad path: per-condition pricing requires Discogs seller settings.
+
+  §10a specifies "a range, never a single number" — *"VG £12–18, NM £40+"* — and
+  names collapsing conditions into one figure as the §8 flattening error. **With
+  seller settings unset, the range is not obtainable and building it as one
+  number is the thing the section forbids.**
+
+  Adam is filling in the seller settings. Two outcomes:
+  - **works** → build §10a as written, `price_suggestions` supplies the range;
+  - **does not** → build the honest subset ("11 for sale, from £41.14", no
+    invented range, no condition claims) and §10a is amended to match.
+
+  **The split is approved either way** — the three-placement architecture and the
+  caching are identical; only the payload's richness changes.
+
+  **Unit 1's normalizer is built against a CAPTURED fixture**, per the step 7
+  practice: the shape must come from a measured payload, not from what the docs
+  describe. That is the discipline whose absence produced this blocker in the
+  first place, and the `format.text` error before it.
+
+- **E2E RUNTIME crossed the 6-minute threshold: measure before optimising.**
+
+  The agreed trigger was "revisit past 6m". Measured 2026-08-12 across
+  consecutive full runs: **6.4m and 6.9m**, against ~4.0m when the suite held
+  246 tests. The suite is now 270 tests in 13 files — **+10% tests for +60%
+  wall clock**, which is disproportionate and the reason this is recorded rather
+  than accepted.
+
+  **Where the time goes** (total test-time, summed across workers, from one
+  run's JSON):
+
+  | File | Test-time |
+  |---|---|
+  | `record-form` | 366s |
+  | `discogs-prefill` | 300s |
+  | `record-detail` | 282s |
+  | `lookup-flows` | 232s |
+  | `collection-filters` | 209s |
+  | `manage` | 187s |
+
+  ~32 minutes of test-time over ~4 workers. **No single file dominates**, so
+  there is no one hotspot to fix — the cost is spread, which points at
+  per-test overhead rather than a slow feature.
+
+  **The individual outliers are all `manage`**: 32.7s, 23.4s, 22.3s for the
+  genre-move tests — the same file with the long-standing unexplained failure,
+  and one of two files whose controlled inputs still lack `data-hydrated`. Those
+  two facts may be the same fact.
+
+  **Candidates, none measured yet:**
+
+  1. **`login()` runs per test** — 270 logins, each a navigation, a hydration
+     wait and a form round trip. A shared storage state (`storageState`) would
+     make it once per worker. Biggest single lever if the overhead is real.
+  2. The `manage` genre-move tests specifically, which are 3× the median.
+  3. Worker count against available cores.
+
+  **Do not optimise before measuring which.** The suite is green and the
+  runtime is inconvenient rather than blocking; guessing here would trade a
+  known cost for an unknown regression. Its own unit, with a before/after.
+
+- **DEBT: `login()` is copy-pasted into TWELVE spec files.**
+
+  Every E2E spec carries its own identical `login()` — `goto('/login')`, wait
+  for `data-hydrated`, type the password, click, assert the URL.
+
+  **The cost is already measured, not hypothetical.** The login-hydration fix
+  was one attribute on the page and one `waitFor` in the helper; it landed as
+  twelve edits because there are twelve helpers. A shared helper would have made
+  it one, and any future change to how login works pays the same tax again.
+
+  **Deliberately NOT consolidated when found.** It touches every spec file, so
+  the diff would span the whole suite — and a regression hidden inside a
+  suite-wide mechanical change is exactly the thing this build's full-E2E gate
+  exists to catch, made maximally hard to see. It belongs in its own unit with
+  its own before/after run, not appended to a feature step.
+
+  When it is done: one helper in `e2e/seed.ts` or a new `e2e/auth-helper.ts`,
+  and the twelve copies deleted in a single commit that changes nothing else.
+  Noticed: step 8 close, 2026-08-11.
+
+- **OPEN, ~1 run in 5: `collection-filters.spec.ts` fails a spec on BOTH
+  projects. Which spec varies between runs.**
+
+  **THE DIAGNOSTIC, first because it is the useful part: a MOVING failure is
+  the flake; a FIXED failure is a regression.** If `collection-filters` fails,
+  run that file two or three more times on the same build. A change that broke
+  something fails the same spec every time; this fails a different one, or
+  none. Ten seconds, and it settles the question without an investigation.
+
+  Corollary, learned the hard way in unit 5: **do not baseline by stashing and
+  running once.** A single clean baseline run is indistinguishable from the
+  flake not firing, and it will tell you your change caused the failure. Run
+  the CURRENT build several times instead — the stale-baseline rule, in
+  miniature.
+
+  Its signature differs from the WebKit hydration flake above, so it is
+  deliberately not treated as the same problem — "same family" is a hypothesis
+  (see the rule below), and bundling them is what let the /manage flake survive
+  four attempts.
+
+  **Signature, for whoever picks it up:**
+  - specs seen failing, one at a time and not the same one twice running:
+    `a parent-genre chip finds a record tagged with its grandchild`,
+    `clicking the active chip clears it`, and
+    `clicking through to a filtered view equals loading that URL directly`;
+  - fails on **chromium AND mobile**, unlike the hydration flake which was
+    WebKit-only;
+  - roughly 1 run in 5, in a full suite AND in isolation. An earlier version of
+    this entry said "never in isolation"; that was wrong — unit 5 reproduced it
+    running the file alone;
+  - present with `data-hydrated` waits already in place, so it is not that
+    mechanism.
+
+  **Measured in the step 5+6 remediation, unit 5:** a full-suite run failed two
+  specs; an immediate isolated run of the file passed those two and failed a
+  third; three further runs on the same build gave 10 passed / 1 failed / 10
+  passed. So it is a property of the FILE — most likely its fixtures or its
+  shared filter state — not of any spec in it.
+
+  Left undiagnosed deliberately: at 1 in 5 any measurement is mostly noise, and
+  the suite is currently clean enough that a real regression would still stand
+  out. **If the rate climbs or it spreads to other specs, it needs its own
+  investigation** — starting with measurement, not with the assumption that it
+  is the hydration issue returning. Noticed: step 5, final unit.
+
+- **FOR THE SECURITY REVIEW: `POST /api/discogs/import` re-fetches the release
+  by id rather than accepting a release payload from the client. That is a
+  SECURITY decision, not a spec-reading, and it should be reviewed as one.**
+
+  §5.7 gives the body as `{ discogsReleaseId, target, overrides }` — no release
+  payload — and the implementation follows it. The distinction the shape
+  enforces: **a client asserting facts about a pressing versus the server
+  establishing them.**
+
+  If the endpoint accepted a payload, any caller could claim any pressing
+  identity — a `discogs_release_id` belonging to a different release, a matrix
+  that was never in the dead wax, a catalog number matching a rare original.
+  Those values are found-or-created into SHARED `pressings` rows (§4), so a
+  false claim does not stay local to one record: it becomes the pressing every
+  future import of that release matches against. §7.7's ownership tiers then
+  read from it, and CLAUDE.md §8 calls getting that distinction wrong the worst
+  bug this app can ship.
+
+  The user's corrections still arrive — as `overrides`, which are an explicit,
+  strictly-validated, bounded field list rather than an arbitrary object.
+
+  **Single-user app, so the threat model is thin today.** Recorded because the
+  property is easy to lose: accepting the payload the client already has looks
+  like an obvious optimisation — it saves a rate-limited call — and the reason
+  not to is not visible from the endpoint alone. `test/integration/api/
+  discogs-import.test.ts` asserts both halves (it re-fetches; it rejects a
+  client-supplied `release` key).
+
+  **The general shape for the review: which endpoints let a client assert a
+  fact the server could establish itself?** Noticed: step 7, unit 7.
+
+- **UX HAZARD for step 9's stats screen: one record legitimately shows two
+  different prices, and it will read as a bug.**
+
+  SPEC.md §5.2's record detail shows "latest price" — the most recent
+  `price_history` row, whatever its type. §7.6's estimated collection value uses
+  a different rule: the most recent row of type `used`, falling back to `new`,
+  then `purchase_price`. Both verified against the database.
+
+  So a record with an old `used` price of 20.00 and a newer `new` price of 99.00
+  displays **99.00** on its detail screen while contributing **20.00** to the
+  collection total. Both numbers are correct and the separation is deliberate —
+  they answer different questions — but whoever meets the discrepancy first will
+  reasonably read it as an arithmetic bug.
+
+  **What step 9 must do:** the stats screen states in words what it is summing,
+  rather than presenting a bare number. Something to the effect of "estimated
+  from the most recent second-hand price, or the new price, or what you paid" —
+  the point is that the rule is visible, not that the wording is exact. A
+  tooltip on the figure is not enough if the figure is what gets screenshotted.
+  Noticed: step 5, unit 6.
+
+- **COLLECTION SCREEN: undated records are invisible to ANY year range, by
+  design, with no way to surface them.** `release_year` is nullable (a record
+  can be logged before its year is known), and both year filters compare
+  against it, so `yearFrom=1980` and `yearTo=1990` and any combination all
+  exclude every null-year record. That is correct SQL semantics and correct
+  filter behaviour.
+
+  It is a UI problem, not a query bug: a user who sets any year filter silently
+  stops seeing part of their collection, with nothing on screen saying so. The
+  step 5 collection screen has to decide — an "undated" chip, a count of
+  excluded records next to the filter, or a documented choice not to. **Do not
+  "fix" this in the query layer** by making nulls pass the filter; that would
+  make `yearFrom=1980` return records that may well be from 1972.
+
+  Related and separate: this was found while fixing the empty-string coercion
+  bug, where `yearFrom=` silently applied `release_year >= 0` and dropped every
+  undated record behind a 200. That bug is fixed; this design consequence
+  remains. Noticed: step 5 remediation, unit 3.
+
+- **`/manage` has the same 200-row assumption the collection chips had, and it
+  is NOT fixed.** `src/app/manage/page.tsx` fetches every reference resource
+  with `{ limit: 200, offset: 0 }` on the reasoning that "reference data is
+  small, so one page of 200 covers every resource and this screen needs no
+  pagination controls."
+
+  That assumption is now known to break: a single full E2E suite run produces
+  **300 genres**, and the 201st onward simply do not render — no pagination
+  control, no indication, no error. A user with many genres would silently be
+  unable to see or edit some of them, on the screen whose entire purpose is
+  editing them.
+
+  Unlike the collection chips, the facets fix does NOT apply here: `/manage`
+  must show every reference row including unused ones, because deleting an
+  unused genre is exactly what that screen is for. So this needs real
+  pagination or a search field, not a narrower query.
+
+  Deliberately not fixed in step 5 — `/manage` is step 4's screen and this is
+  scope discipline (CLAUDE.md §4). Noticed: step 5, unit 7b.
+
+- **DO NOT run `prettier` in this repo. There is no config, so it formats to
+  ITS defaults, not the house style.** Run once on a single route file during
+  the step 5+6 remediation, it rewrote every string in the file from single to
+  double quotes — a whole-file diff of unreviewed cosmetic changes wrapped
+  around a three-line fix, which is exactly the large-unreviewed-diff problem
+  CLAUDE.md §1 splits units to avoid. Reverted with `git checkout` and the
+  change reapplied by hand.
+
+  Lint does not object, because ESLint here carries no formatting rules — so
+  nothing in the toolchain will catch this on the way in. Match the surrounding
+  file by hand instead.
+
+  **If formatting is wanted, it is a deliberate step-14 decision** with a
+  committed `.prettierrc` matching the existing style and one sweeping commit
+  that touches nothing else — not an ad-hoc run inside a feature unit. Noticed:
+  step 5+6 remediation, unit 3.
+
+- **`--reporter=basic` no longer exists in Vitest 4.** It is now resolved as a
+  custom reporter *module*, so passing it fails the run with `ERR_LOAD_URL`
+  before any test executes rather than with a "no such reporter" message. Cost a
+  debugging round in unit 0. Nothing in the repo passes it today (the new probe
+  in `test/repo/env-loading.test.ts` deliberately omits any `--reporter` flag),
+  but it is the obvious thing to reach for when adding CI output formatting
+  later — the Vitest 4 equivalents are `default`, `dot`, `json`, `junit`, etc.
+  Noticed: step 4, unit 0.
+
+- **A failing assertion in `test/repo/drizzle-config.test.ts` prints a vitest
+  sourcemap error instead of the assertion message.** When vitest formats a
+  failure from that file it walks the repo root looking for sourcemaps and
+  chokes on a binary (`favicon.ico`), emitting
+  `SyntaxError: Unexpected token '<9f>', "<9f>" is not valid JSON` in place of
+  the diagnosis. **The detection itself is unaffected** — the mutation that
+  removes `.env.test` loading is reliably caught (5 passing drops to 4) — only
+  the message is unreadable. Two attempts to avoid it failed: `node
+  --experimental-strip-types` cannot load the config (its imports omit file
+  extensions under TypeScript `bundler` resolution), and reducing the assertion
+  to a short string label did not stop vitest from source-mapping the frame.
+  Left as is per CLAUDE.md §9 rather than thrashing. If it bites someone, the
+  likely fix is a vitest `server.sourcemap` setting or moving the probe into a
+  helper module outside `test/repo/`. Noticed: step 1–3 remediation, unit 3.
+
+- **README.md is a 20-byte stub.** SPEC.md §14 requires it to cover local setup,
+  running migrations, obtaining a Discogs token, running each test suite, and
+  deploying. That is project-level definition-of-done, not build step 1, so it
+  was left untouched. Noticed: step 1.
+
+- **`npm audit` reports 4 moderate advisories, all one transitive chain.**
+  `drizzle-kit` → `@esbuild-kit/esm-loader` → `@esbuild-kit/core-utils` → an old
+  `esbuild` (GHSA-67mh-4wv8-2f99: the esbuild dev server will answer cross-origin
+  requests). It is devDependency-only and does not reach the app or production
+  bundle. `npm audit fix --force` resolves it by downgrading drizzle-kit to
+  0.18.1, a breaking major regression, so it was left alone. Worth rechecking
+  when drizzle-kit next updates its bundler. Noticed: step 1.
+
+- **`d3-force` was installed in step 1 though not used until step 10.** SPEC.md §2
+  names it in the fixed stack, so it was installed with the rest of the stack
+  rather than deferred. No code imports it yet. Noticed: step 1.
+
+- **Next 16 deprecates the `middleware` file convention in favour of `proxy`.**
+  The dev server warns on every boot and offers a codemod
+  (`npx @next/codemod@canary middleware-to-proxy .`). `src/middleware.ts` works
+  correctly today and SPEC.md §3 says "Next.js middleware" explicitly, so it was
+  left alone rather than migrated mid-step. Worth doing before step 14 (deploy).
+  Noticed: step 3.
+
+## Considered
+
+**Read this to find out whether something was already thought about.** Deferrals
+with their triggers, observations recorded and not acted on, corrections to
+earlier entries, and items resolved elsewhere but worth the record.
+
+Nothing here is work. If an item becomes work it moves to **Open** with a file
+or a trigger attached.
+
 - **MEASURED AND PROMISING: verification-by-display beats the matrix design on
   cost AND honesty. Measure stands; not yet built.**
 
@@ -631,73 +1006,6 @@ form the records work had not shown — see the masking entry under Open.
   not. **A test pins this rather than a comment**, because a comment does not
   fail when someone adds a `.trim()` in good faith.
 
-- **RULE: any measurement of Discogs metadata quality must be PER-GENRE. An
-  average across albums flatters exactly the scenes this collection is made of.**
-
-  Established 2026-08-25 from the `formats[].text` coverage work, and it is
-  bigger than that fix.
-
-  **Discogs metadata coverage is contributor effort, and contributors record
-  what their scene cares about.** Measured across six albums, 477 live vinyl
-  rows, the qualifier field breaks down completely differently by scene:
-
-  | Album | Any qualifier | **Names a plant** | What the qualifiers actually say |
-  |---|---|---|---|
-  | Discharge — Hear Nothing | **80%** | **0%** | Gatefold, Red Translucent, Textured Sleeve |
-  | Misfits — Walk Among Us | **70%** | **2%** | colour variants, almost exclusively |
-  | Doors debut (by catno) | 52% | **47%** | Allentown, Terre Haute, Pitman, Monarch |
-  | Fleetwood Mac — Rumours | 52% | 25% | plants and sleeves, mixed |
-  | Hot Tuna | 33% | 15% | mixed |
-
-  **Headline coverage is ANTI-CORRELATED with usefulness here.** The two albums
-  with the most metadata have essentially none of the kind that identifies a
-  pressing. For 1960s–70s US majors, collectors document pressing plants,
-  because that is what separates the copies. For punk and hardcore, they
-  document sleeve and colour variants, because that is what separates THOSE
-  copies — the pressing plant of a 1982 Clay LP is not what a collector of it
-  cares about, and largely nobody has typed it in.
-
-  **Why this matters beyond one field:** this collection is punk, hardcore and
-  adjacent scenes (CLAUDE.md §8 lists UK first-wave, UK82, US hardcore, horror
-  punk, psychobilly). **An average across popular albums measures the records
-  this app is NOT about.** Any future claim of the form "Discogs has X% coverage
-  of field Y" is misleading unless it is broken out by scene, and the aggregate
-  will systematically overstate what is available for the records actually being
-  held in a shop.
-
-  **The check: when measuring an external data source, sample by the categories
-  the USER's data falls into, not by whatever is popular or convenient.** Report
-  the spread and the worst case, never only the mean. The first version of the
-  qualifier measurement averaged six albums into "50%" and was wrong twice over
-  — once by counting separation instead of identification (see the proxy rule
-  under Resolved), and once by averaging across scenes that behave nothing alike.
-
-  This also bears on the two-phase matrix redesign: for the scenes this
-  collection is made of, the plant qualifier is **near-zero**, so matrix strings
-  are not a refinement over `formatText` there — they are the only signal.
-
-- **STEP 16 (deploy): `sslmode=require` will change meaning in `pg` v9. Fix is
-  one word, and it is not urgent.**
-
-  Every server start logs a `pg` deprecation warning: `sslmode=require`
-  currently behaves as `verify-full` (certificate AND hostname verified), and in
-  `pg` v9 it will adopt libpq semantics — encryption without verifying the
-  certificate. **Weaker, silently, on a version bump.**
-
-  Not caused by our code: the string comes from Neon's dashboard and appears in
-  `DATABASE_URL` and `NEON_TEST_DATABASE_URL` alike.
-
-  **The fix, named so nobody has to re-derive it: replace `sslmode=require`
-  with `sslmode=verify-full`.** That pins today's behaviour explicitly and the
-  warning goes away. Do it in the deploy step, where the environment variables
-  are being set anyway, rather than piecemeal across `.env` files that are not
-  in the repo.
-
-  Worth doing at step 16 rather than later: after a `pg` major bump the same
-  string still WORKS, just less safely, so nothing fails to draw attention to
-  it. A security property that degrades quietly is exactly the kind that
-  outlives the person who knew about it.
-
 - **§10a's placement was specified without the arithmetic, and measuring it
   changed the design. Third time in this feature.**
 
@@ -750,52 +1058,6 @@ form the records work had not shown — see the masking entry under Open.
   | for sale | zero copies listed — a fact about scarcity | fetch failed |
   | genre chips | record filed under nothing | import never attached them |
 
-- **RULE: a captured fixture contains VOLATILE fields. Assert the property, not
-  the reading.**
-
-  Re-capturing for step 10 refreshed all seven Discogs fixtures and broke a test
-  that had passed for three steps: `lowest_price` moved 43.96 → 55.59, because
-  it is a live market figure. The code had not changed; the market had.
-
-  `num_for_sale` was asserted as `11` in the same test and passed — **by
-  coincidence**. It is equally volatile and would have broken on the next
-  capture, in a step with no connection to marketplace data.
-
-  | Field kind | Example | Assert |
-  |---|---|---|
-  | stable identity | `id`, `catno`, `country`, `title` | the exact value |
-  | curated but slow | `genres`, `styles`, `formats` | the exact value |
-  | **volatile** | **`lowest_price`, `num_for_sale`, `community.have/want`** | **the property** |
-
-  **Stated generally: any fixture refreshed from a live API carries fields that
-  change without anything being wrong.** The test that broke had passed for
-  three steps and the code had not moved — the market had. The one beside it
-  passed by coincidence and was equally volatile, which is the more dangerous
-  half: a coincidence looks exactly like coverage until the day it does not.
-
-  Rewritten, the test asserts the normalizer CARRIES the field —
-  `expect(normalized.lowestPrice).toBe(raw.lowest_price)` plus a type check —
-  which still fails when a mutation drops it (verified) and never fails because
-  a record got more expensive.
-
-  **The tell: an assertion whose expected value came from the API rather than
-  from the behaviour.** If re-running the capture could change the number, the
-  number is not the thing under test.
-
-  **A second trap in the same refresh: the DIFF lies about identity fields.**
-  `master-versions-discharge.json` appeared to swap `CLAY LP 3` for `CLAY CD 3`
-  at the same array position — which would mean the fixture had lost the vinyl
-  pressing the identical-rows tests depend on.
-
-  It had not. Compared as SETS rather than by line: 25 versions before, 25
-  after, zero dropped, zero added, still 8 `CLAY LP 3` UK versions. Discogs had
-  reordered the array, and a line-oriented diff aligned unrelated entries.
-
-  **Before concluding a captured array changed, compare it as a set.** A
-  reordered list produces a diff that reads as wholesale replacement, and the
-  natural reaction — reverting the fixture — would discard a legitimate refresh.
-  `git diff` is the wrong instrument for an unordered payload.
-
 - **MEASURED, for step 10 unit 1: `curr_abbr` works on `stats` and is IGNORED by
   `price_suggestions`.**
 
@@ -830,169 +1092,6 @@ form the records work had not shown — see the masking entry under Open.
   honours `curr_abbr` on `price_suggestions`, or the account moves, the panel
   keeps telling the truth.
 
-- **BLOCKED, awaiting Adam: §10a's range-with-conditions needs Discogs seller
-  settings.**
-
-  Measured against the live API before starting step 10 (2026-08-12):
-
-  | Endpoint | Result |
-  |---|---|
-  | `marketplace/price_suggestions/:id` | **404** — *"You must fill out your seller settings first"*, on two different releases |
-  | `marketplace/stats/:id` | 200 — `num_for_sale: 11`, `lowest_price: 41.14 EUR` |
-  | release payload (already cached) | the same two fields |
-
-  The token authenticates (`oauth/identity` → 200), so this is an ACCOUNT STATE,
-  not a bad path: per-condition pricing requires Discogs seller settings.
-
-  §10a specifies "a range, never a single number" — *"VG £12–18, NM £40+"* — and
-  names collapsing conditions into one figure as the §8 flattening error. **With
-  seller settings unset, the range is not obtainable and building it as one
-  number is the thing the section forbids.**
-
-  Adam is filling in the seller settings. Two outcomes:
-  - **works** → build §10a as written, `price_suggestions` supplies the range;
-  - **does not** → build the honest subset ("11 for sale, from £41.14", no
-    invented range, no condition claims) and §10a is amended to match.
-
-  **The split is approved either way** — the three-placement architecture and the
-  caching are identical; only the payload's richness changes.
-
-  **Unit 1's normalizer is built against a CAPTURED fixture**, per the step 7
-  practice: the shape must come from a measured payload, not from what the docs
-  describe. That is the discipline whose absence produced this blocker in the
-  first place, and the `format.text` error before it.
-
-- **RULE: a negative claim about a file needs a search that could have found it.**
-
-  Step 10 planning, 2026-08-12. I reported that §12's reorder "did not land" and
-  that MusicBrainz "appears nowhere in SPEC.md". Both were false. The reorder was
-  present and complete through step 16.
-
-  The search was `grep -in "market|musicbrainz"` **inside a `sed` slice of §12**
-  — and the slice ended at `^## 13\.`, while the reordered list runs to step 16,
-  so the range closed before the entries. A second grep for "musicbrainz" across
-  the whole file returned nothing because I had already convinced myself and read
-  the empty output as confirmation.
-
-  **"I searched and found nothing" is only evidence if the search would have
-  found it.** Before reporting an absence, prove the method works: grep for
-  something you KNOW is in the file, using the same command shape. Here,
-  searching for "Market data" — the §10a heading I had just read — would have
-  returned a hit inside §12 and ended it immediately.
-
-  Same family as the wrong-anchor mutation trap and the `getByRole('row')`
-  reproduction: **a null result from an instrument never shown to work is not a
-  measurement.** Third instance, and the first where the instrument was a grep.
-
-  **FOURTH INSTANCE, and the class is now worth stating on its own: `git diff`
-  is an instrument, and it aligned unrelated array entries.**
-
-  Re-capturing `master-versions-discharge.json` produced a diff reporting that
-  `CLAY LP 3` had become `CLAY CD 3` at the same position — vinyl replaced by
-  CD, which would mean the fixture had lost the pressing the identical-rows
-  tests depend on. Compared as SETS: 25 versions before, 25 after, zero dropped,
-  zero added, still 8 `CLAY LP 3` UK versions. Discogs had reordered the array
-  and a line-oriented diff paired unrelated entries.
-
-  **The natural response — reverting the fixture — would have discarded a
-  legitimate refresh** on the strength of a change that never happened.
-
-  **What unites all four: each produced a confident WRONG ANSWER rather than an
-  error.** A tool that fails loudly is harmless; these returned plausible output
-  and were believed.
-
-  | Instrument | Reported | Actually |
-  |---|---|---|
-  | `str.index()` anchor | mutation applied, 0 failures | applied to a different query |
-  | `getByRole('row')` | 8/8 reproduction of a defect | locator matched nothing |
-  | `grep` in a `sed` slice | §12 reorder absent | present, outside the slice |
-  | `git diff` on an array | catalog number changed | array reordered, content identical |
-
-  **The check that would have caught every one: exercise the instrument against
-  a case whose answer you already know.** Grep for something you know is
-  present; make the reproduction pass once; confirm the mutation landed; compare
-  the array as a set. One extra command each time.
-
-- **RULE: make a reproduction GREEN once before trusting it red.**
-
-  A reproduction that confirms your hypothesis needs the same scrutiny as one
-  that refutes it — and gets less, because it agrees with you.
-
-  Step 9's `manage` investigation. A forced-race probe failed **8 of 8**, which
-  read as decisive proof of a hydration defect. It was measuring
-  `getByRole('row')` against a tree that renders `listitem` — a locator matching
-  nothing, failing perfectly every time. Four further timing measurements
-  (500ms to 6s, all "0 rows") looked like proof the refresh never landed. Every
-  one was the locator.
-
-  **The check costs one run: exercise the assertion against known-good
-  conditions and confirm it can PASS.** A red result from an assertion never
-  observed green is not evidence — it cannot distinguish "the behaviour is
-  broken" from "this never matched anything".
-
-  Related: the same investigation's earlier probe printed `posts: 1` and a 201
-  carrying the right name. That said plainly that the write worked, and it was
-  read past because it did not fit the theory. **Read the parts of a probe that
-  contradict you first.**
-
-- **RULE: the symptom names a location, and the location is where everyone
-  looks.**
-
-  `manage.spec.ts` failed intermittently for four investigations across several
-  steps. Every one examined the test, the component, and the `/manage` screen —
-  because the failure said `manage`. The cause was `workers` in
-  `playwright.config.ts`: ~6 workers against one dev server, saturating it.
-
-  Nothing in the symptom pointed at the config. The test that fails first under
-  contention is simply the one doing the most sequential round trips, and its
-  name is then attached to a cause it has nothing to do with.
-
-  **The tell: a failure that resists investigation AT the place it names.** After
-  two failed attempts inside the named location, ask what is shared —
-  the server, the database, the config, the fixtures — and vary that instead.
-  The four-attempt cost here is the argument for asking earlier.
-
-- **E2E RUNTIME crossed the 6-minute threshold: measure before optimising.**
-
-  The agreed trigger was "revisit past 6m". Measured 2026-08-12 across
-  consecutive full runs: **6.4m and 6.9m**, against ~4.0m when the suite held
-  246 tests. The suite is now 270 tests in 13 files — **+10% tests for +60%
-  wall clock**, which is disproportionate and the reason this is recorded rather
-  than accepted.
-
-  **Where the time goes** (total test-time, summed across workers, from one
-  run's JSON):
-
-  | File | Test-time |
-  |---|---|
-  | `record-form` | 366s |
-  | `discogs-prefill` | 300s |
-  | `record-detail` | 282s |
-  | `lookup-flows` | 232s |
-  | `collection-filters` | 209s |
-  | `manage` | 187s |
-
-  ~32 minutes of test-time over ~4 workers. **No single file dominates**, so
-  there is no one hotspot to fix — the cost is spread, which points at
-  per-test overhead rather than a slow feature.
-
-  **The individual outliers are all `manage`**: 32.7s, 23.4s, 22.3s for the
-  genre-move tests — the same file with the long-standing unexplained failure,
-  and one of two files whose controlled inputs still lack `data-hydrated`. Those
-  two facts may be the same fact.
-
-  **Candidates, none measured yet:**
-
-  1. **`login()` runs per test** — 270 logins, each a navigation, a hydration
-     wait and a form round trip. A shared storage state (`storageState`) would
-     make it once per worker. Biggest single lever if the overhead is real.
-  2. The `manage` genre-move tests specifically, which are 3× the median.
-  3. Worker count against available cores.
-
-  **Do not optimise before measuring which.** The suite is green and the
-  runtime is inconvenient rather than blocking; guessing here would trade a
-  known cost for an unknown regression. Its own unit, with a before/after.
-
 - **`data-hydrated` should be a DEFAULT for controlled forms, not a discovery.
   Four instances is a pattern; the fifth diagnosis is waste.**
 
@@ -1025,267 +1124,6 @@ form the records work had not shown — see the masking entry under Open.
   Not done here because it touches four components and the manage specs, which
   is its own unit with its own before/after. **Until then: any new controlled
   form gets the marker while it is being written.** Noticed: step 9, unit 2.
-
-- **RULE: a Discogs field describing the CATALOGUE OBJECT belongs beside our
-  field, never in it. Two instances; a third will come.**
-
-  The distinction is release-versus-copy. Discogs describes a release — every
-  copy ever pressed. Several of our fields describe THE COPY IN HAND, and they
-  are not the same fact even when they share a name.
-
-  | Field | What Discogs holds | What ours holds |
-  |---|---|---|
-  | `matrix_runout` | every runout its contributors submitted, across pressings | what is etched in YOUR dead wax |
-  | `notes` | sleeve text, gatefold, publishing, copyright | where you found it, why you kept it |
-
-  **Prefilling either is wrong in the same way**, and the harm is not merely
-  clutter:
-
-  - it writes a value describing no physical object into a field whose whole
-    purpose is describing one;
-  - a filled field reads as VERIFIED, which inverts §5.7's "check every field
-    against the record in your hand";
-  - it makes §7.8 unenforceable. "Never overwrite user-entered data with
-    external data" requires knowing whose text it is, and a prefilled field
-    that the user then edited is indistinguishable from one they wrote.
-
-  **The treatment, established for matrix in step 7 and applied to notes in
-  step 8:** render it as reference text beside an empty field, through `Row`'s
-  `after` slot. Nothing is dropped — a Discharge first pressing's "Pay no more
-  than £3.99" is genuinely useful in a shop — and nothing is claimed.
-
-  **The test when a new field is added: does this describe the release, or the
-  copy?** If the release, it goes beside. Note that §6's field mapping is the
-  authority on what is imported AT ALL — it lists title, artist, label, catalog
-  number, year, country, format, matrix and genres, and `notes` is deliberately
-  absent. Two of us read "notes is dropped" as a defect without checking that.
-
-- **RULE: a field seen on one Discogs endpoint's payload is not evidence about
-  another's. Three instances makes it a property of the API, not an accident.**
-
-  | Field | Search | Release | Master versions |
-  |---|---|---|---|
-  | genre / style | **singular** (`genre`, `style`) | plural (`genres`, `styles`) | absent |
-  | the year | `year` | `year` | **`released`** |
-  | format descriptors | **BOTH**: `format` array + `formats` array of objects **with `text`** | `formats` array of objects, with `text` | **comma-joined string, no `text`** |
-
-  Each was found the hard way and each is documented at its own call site. The
-  class is worth stating once: **these endpoints describe the same objects with
-  different field names, different types, and different completeness.**
-
-  **The instance that cost the most** (step 8 close, 2026-08-11): `format.text`
-  carries "Rockaway Pressing" and would have separated the two Hot Tuna
-  releases that misled a user about which pressing they owned. It was observed
-  on the RELEASE payload and reported — by me, and agreed by the developer — as
-  "already in the versions payload". It is not there at all. The versions
-  endpoint returns `id, label, country, title, major_formats, format, catno,
-  released, status, resource_url, thumb, stats`.
-
-  Caught only because the instruction was to measure it against the real rows
-  before building. Building first would have produced a column `undefined` for
-  every row — and one that LOOKED right in tests, since a hand-written fixture
-  would have carried whatever shape the author assumed.
-
-  **The check: before using a field, confirm it on the payload of the endpoint
-  that will actually be called** — not on a sibling endpoint describing the same
-  release. The overlap is large enough to make the assumption feel safe and the
-  differences are exactly where it breaks. `test/fixtures/discogs/` has captured
-  payloads for all three; read the fixture rather than reasoning from memory.
-
-  **CORRECTED 2026-08-25: the Search cell of that table was wrong, and it was
-  wrong in the OPPOSITE direction from the error that produced it.**
-
-  Measured live against `/database/search` while diagnosing the Doors lookup.
-  Search rows carry **two** format fields, not one:
-
-  | key | value |
-  |---|---|
-  | `format` | `["Vinyl","LP","Album","Reissue","Stereo"]` — flat strings, no qualifier |
-  | `formats` | `[{name, qty, descriptions[], text}]` — **`text` is here** |
-
-  `normalize-search.ts` declares only the singular `format`. The plural
-  `formats` is absorbed by `.passthrough()` and dropped at the type boundary,
-  so `text` is not truncated — it is never read. Live from
-  `?catno=EKS-74007`: `"Allentown Pressing"`, `"Terre Haute Pressing"`,
-  `"Pitman Pressing"`, `"Quality Records Pressing"`,
-  `"Specialty Records Corporation Pressing"`.
-
-- **RULE: a correction can over-correct, and the summary written on top of a
-  measurement does not inherit the measurement's discipline.**
-
-  This is the shape, and it is worth more than the cell it fixes.
-
-  The original error (2026-08-11, above) was assuming `format.text` was on the
-  versions payload because it had been seen on the release payload — a field
-  wrongly assumed PRESENT. It was caught by measuring, corrected properly, and
-  the correction was then generalised into the endpoint table.
-
-  **The generalisation went one step too far.** Having been burned by assuming
-  `text` was everywhere, the table concluded `text` was release-only. That is a
-  field wrongly assumed ABSENT — the same class of error, arrived at from the
-  opposite direction, and introduced BY the fix for the first one.
-
-  **The fixture carrying the right answer was in the repo the entire time.**
-  `test/fixtures/discogs/search-by-catno.json` has held `formats[].text` since
-  capture: **10 of its 12 rows have it populated** (`"Red Translucent"`,
-  `"Gatefold"`, `"Red, Gatefold"`, `"Transparent"`). The check this very entry
-  prescribes four paragraphs above — "read the fixture rather than reasoning
-  from memory" — would have caught it in one grep.
-
-  **The practice worked; the generalisation did not inherit it.** The captured
-  fixture was correct, the measurement that produced the correction was
-  correct, and the SUMMARY written on top of both was never checked against
-  either. A measured fact and a rule induced from it are different artifacts
-  with different evidence, and only the first one here had any.
-
-  **The check: when a measurement is generalised into a rule, the rule needs
-  its own verification pass against the same fixtures.** Especially a rule
-  stated as a negative ("endpoint X does not have field Y") — see the
-  negative-claim rule under Open, which this is an instance of. Cost: a defect
-  that hid the single most discriminating field Discogs offers at list level,
-  on the screen where two pressings look identical.
-
-- **RULE: the comparison columns are FIXED, and for any given master the
-  discriminating field may not be among them. That is a property of the design,
-  not of one or two masters.**
-
-  §5.7's version table shows year, country, format, catalog number and label —
-  chosen because they discriminate MOST releases. They are not guaranteed to
-  discriminate ANY particular one, and Discogs offers no field that always does.
-
-  Two instances so far, and the second cost a user their pressing identity:
-
-  | Master | What collapses | The real discriminator |
-  |---|---|---|
-  | Carpenters | four cards identical on every column | not established |
-  | Hot Tuna 133514 | **three US 1970 versions byte-identical** | pressing plant — `RCA Records Pressing Plant, Rockaway` vs `…Hollywood` |
-
-  **The plant is not obtainable here.** Measured against the live API: the
-  versions endpoint returns `id, label, country, title, major_formats, format,
-  catno, released, status, resource_url, thumb, stats` — no `text`, no
-  companies. `format.text` (which carries "Rockaway Pressing") is on the RELEASE
-  endpoint, so showing it costs one rate-limited call per row: 11 calls for a
-  table of eleven, against 60/minute.
-
-  **AMENDED 2026-08-25 — that cost estimate is right for the VERSIONS table and
-  wrong for the SEARCH results page. Bears on the two-phase redesign.**
-
-  Still true: the versions endpoint has no `text` and no companies, so the
-  plant costs one call per row THERE. Confirmed again by live measurement.
-
-  **But on the search results page the plant text is already in the payload
-  that has been paid for**, under the undeclared `formats[].text` — see the
-  corrected endpoint table above. **Zero additional calls.** The discriminator
-  problem has different economics on the two screens, and the earlier framing
-  ("not obtainable, one call per row") reads as if it applied to both.
-
-  **Why this is recorded against the two-phase redesign** (matrix strings, an
-  `unresolved` confidence state, storing identification evidence): a design
-  that budgets rate-limited calls for a plant hint on the search page would be
-  paying for something free. This is exactly the kind of fact that gets
-  rediscovered expensively — it was already wrong once in the opposite
-  direction and cost a round.
-
-  **CORRECTED 2026-08-25 (same day, after QA on the live page). The first
-  version of this measurement counted the wrong thing and overstated the fix by
-  roughly 2x. The corrected numbers are below the rule.**
-
-- **RULE: when a measurement stands in for a capability, count the capability,
-  not the proxy — and say which one you counted.**
-
-  I measured "does `formats[].text` separate two otherwise identical rows" and
-  reported it as how much of PRESSING IDENTIFICATION the fix solves. Those are
-  not the same question, and the gap is not small:
-
-  | Question | Answer |
-  |---|---|
-  | rows carrying any qualifier | 53% |
-  | **rows whose qualifier names a plant or label variant** | **24%** |
-
-  "Gatefold" and "Red Translucent" separate two rows on screen perfectly well.
-  Neither tells the user which pressing is in their hands, which is the only
-  thing this screen exists to do (CLAUDE.md §8). **A separator is not an
-  identifier**, and by counting separation I made a 24% capability read as a
-  50% one — in SPEC, where the next reader would have taken it as settled and
-  used it to argue the matrix work was half-done already.
-
-  **Caught by the developer using the live page**, who saw one qualifier in four
-  visible cards and asked for the plant-versus-sleeve split. The measurement was
-  real, the method was sound, and the label on the result was wrong — which is
-  the same shape as the `format.text` over-correction above: the artifact built
-  ON TOP of a good measurement is where the error lived, not in the measurement.
-
-  **The check: name the capability in the same sentence as the number.** "53% of
-  rows carry a qualifier" is a fact about the payload. "The qualifier identifies
-  the pressing on 24% of rows" is the claim anyone actually cares about, and
-  only the second one belongs in a spec.
-
-  **MEASURED COVERAGE (2026-08-25, corrected) — how much of the identification
-  problem `formats[].text` actually solves. Recorded so it is not re-derived.**
-
-  Five candidate sets, live, vinyl-only, 377 rows total: the Doors debut by
-  catno (the reported case), Doors Strange Days, Discharge Hear Nothing, Hot
-  Tuna, Misfits Walk Among Us.
-
-  Six albums, 477 live vinyl rows, classified by what the qualifier actually
-  says:
-
-  | Class | Rows | Share | Identifies a pressing? |
-  |---|---|---|---|
-  | plant / label variant | 116 | **24.3%** | **yes** |
-  | colour / finish | 87 | 18.2% | no |
-  | sleeve, insert, cover | 39 | 8.2% | no |
-  | weight | 4 | 0.8% | no |
-  | other | 7 | 1.5% | mostly no |
-  | **empty** | **224** | **47%** | — |
-
-  **Per-album plant coverage, which is the number that matters and swings
-  hardest:**
-
-  | Album | Any text | **Plant** |
-  |---|---|---|
-  | Doors debut, by catno `EKS-74007` | 52% | **47%** |
-  | Doors debut, by artist+title | 42% | **29%** |
-  | Fleetwood Mac — Rumours | 52% | **25%** |
-  | Hot Tuna — Hot Tuna | 33% | **15%** |
-  | Misfits — Walk Among Us | 70% | **2%** |
-  | Discharge — Hear Nothing | 80% | **0%** |
-
-  **Discharge and Misfits are the entry worth remembering:** the two HIGHEST
-  headline-coverage albums have almost no identifying data. Their qualifiers are
-  colour variants and gatefold notes, because that is what those scenes'
-  contributors record. **Headline coverage is anti-correlated with usefulness
-  here**, so an average across albums actively misleads.
-
-  **So the parser fix is necessary and not sufficient, quantified honestly.** It
-  surfaces a plant name on about one row in four, and the two-phase matrix
-  redesign is what covers the other three.
-
-  **What it does NOT change:** `text` is free-text and user-submitted, not a
-  plant field. Live values from one search include `"Barcode; SRC-Specialty
-  Records Press"`, `"Allentown - Pub. Credit Misprint"`,
-  `"(Columbia Records Pressing) "` (trailing space), `"180g"`, `"Blue"`,
-  `"USA Cover"`, `"SP"`. It mixes plant, colour, weight and sleeve notes, so it
-  is a HINT the user reads and judges, never a resolved plant identity. The
-  §7.7 rule against presenting a Discogs match as certain applies to it
-  directly.
-
-  **What shipped instead** (2026-08-11): rows identical on every displayed
-  column collapse into one saying "N more look identical from here", expandable.
-  Three identical rows LOOK LIKE AN ANSWER; one row that admits the limit is
-  honest. Within a group, most-owned first — the only signal available, and a
-  real one, though it does not identify which pressing is in the user's hands
-  and the UI does not imply it does.
-
-  **A group containing something the user OWNS never collapses.** §7.7's badge
-  outranks the tidier table: hiding "you already have this" turns it into
-  silence, and someone in a shop reads no badge as "buy it".
-
-  **What is still open:** the collapse makes the limit visible; it does not
-  resolve it. If identifying the exact pressing becomes important — step 11's
-  shelf ordering, or a QA finding that expanding is too coarse — the options
-  are fetch-on-expand for a single row, or surfacing `stats`-based hints. Both
-  cost calls. Recorded rather than guessed at.
 
 - **DEFERRED WITH A TRIGGER: pressing identification. The shape is
   VERIFICATION-BY-DISPLAY; the two-phase stored-matrix design is SUPERSEDED.**
@@ -1379,802 +1217,6 @@ form the records work had not shown — see the masking entry under Open.
   written.** It is accurate, and there is no alternative action to offer — a
   confirmation that hedged would be worse than one that states the fact.
 
-- **DEBT: `login()` is copy-pasted into TWELVE spec files.**
-
-  Every E2E spec carries its own identical `login()` — `goto('/login')`, wait
-  for `data-hydrated`, type the password, click, assert the URL.
-
-  **The cost is already measured, not hypothetical.** The login-hydration fix
-  was one attribute on the page and one `waitFor` in the helper; it landed as
-  twelve edits because there are twelve helpers. A shared helper would have made
-  it one, and any future change to how login works pays the same tax again.
-
-  **Deliberately NOT consolidated when found.** It touches every spec file, so
-  the diff would span the whole suite — and a regression hidden inside a
-  suite-wide mechanical change is exactly the thing this build's full-E2E gate
-  exists to catch, made maximally hard to see. It belongs in its own unit with
-  its own before/after run, not appended to a feature step.
-
-  When it is done: one helper in `e2e/seed.ts` or a new `e2e/auth-helper.ts`,
-  and the twelve copies deleted in a single commit that changes nothing else.
-  Noticed: step 8 close, 2026-08-11.
-
-- **RULE: a test asserting a feature is ABSENT is a dated claim, and nothing
-  marks its expiry.**
-
-  `toHaveCount(0)` on a heading, `not.toContain` on a field, "no section for the
-  part that is not built yet" — each is true only until the step that builds it.
-  The assertion does not know which step that is, and the unit that makes it
-  false is usually not the unit that opened the file.
-
-  **Stated as evidence rather than principle: both instances so far were caught
-  by a FULL-SUITE run, not by the unit that invalidated them.**
-
-  | Instance | Invalidated by | The unit's own spec file |
-  |---|---|---|
-  | `Matrix / runout` prefilled value | the matrix change | green |
-  | `Images` heading absent | the gallery | green |
-
-  Two for two. That is the argument for CLAUDE.md §10's full-E2E gate in one
-  line — a contract change breaks the tests that encoded the old contract, and
-  those live in files the unit never opened.
-
-  **What to do about it, in order of preference:**
-
-  1. Prefer asserting what IS true over what is not. "The gallery says 'no
-     images yet'" survives the feature being built; "there is no Images
-     heading" does not.
-  2. When an absence assertion is genuinely the point — a section that must
-     stay hidden when empty — say WHY it is absent, so the next reader can tell
-     a rule from a placeholder. `record-detail.spec.ts` now distinguishes the
-     two: Pressing stays hidden by design, Journal is pending step 9.
-  3. Name the step in the comment when it IS a placeholder, so a grep before
-     starting that step finds it.
-
-  Established: step 8, unit 3.
-
-- **RULE, two stores that must agree: choose the order whose failure mode is
-  INVISIBLE AND CHEAP over the one that is VISIBLE AND PERMANENT.**
-
-  When a write spans two stores — here Vercel Blob and Postgres — and either can
-  fail independently, no order is transactional. The choice is not "which order
-  is safe" but "which wreckage would I rather live with".
-
-  For §5.9's images the two failure modes are not symmetric:
-
-  | Wreckage | Cost |
-  |---|---|
-  | Blob with no row | invisible, pennies, nothing renders it |
-  | Row with no blob | **a permanently broken image on the detail screen** |
-
-  A row pointing at a dead blob is also indistinguishable from a real image
-  until it fails to load, which puts it in the absence-as-success family — the
-  screen asserts something it cannot deliver.
-
-  So the orders are OPPOSITE and both fall toward the leaked blob:
-
-  - **Upload: store the blob, THEN write the row.** A failed store writes no
-    row.
-  - **Delete: delete the row, THEN delete the blob** (best-effort, leak logged).
-    A failed blob delete leaves an orphan nothing points at.
-
-  Generalises beyond images: whenever a second store cannot be enrolled in the
-  database transaction, order the operations so the survivable failure is the
-  one that happens. State which failure you chose and why, rather than picking
-  an order by habit. Established: step 8, units 1-2.
-
-- **RULE: a test is only as discriminating as its fixture.** When several
-  orderings, selections, or matches agree in the seed data, NO assertion can
-  tell which one the code used. The test looks correct, passes, and constrains
-  nothing.
-
-  **Before writing an assertion about ordering, selection, or matching, check
-  that the fixture makes the alternatives produce DIFFERENT output — and prove
-  it by mutation.** Reading cannot catch this; the test reads as correct in
-  exactly the case where it is worthless.
-
-  Five instances, all in this build:
-
-  | Fixture | Alternatives that agreed | Caught by |
-  |---|---|---|
-  | 2-row list seed | artist order == title order | mutation: artist expr → `records.title` passed 29/29 |
-  | Same seed, 4 scalar sorts | title == date == price order | mutation: 3 fields → title failed 2, neither the test naming them |
-  | 2-level genre tree | recursive CTE == single join | mutation: one-level walk |
-  | Successive price fixtures | recency == enum declaration order | mutation, after 3 fixtures and 2 wrong hypotheses |
-  | `from=X&to=X` year range | yearFrom bound == yearTo bound | mutation: either bound failed BOTH tests |
-
-  The fix is always the same shape: add rows that INVERT the relationship. Two
-  artists whose names sort opposite to their titles; four records giving each
-  sortable field a different permutation; a three-level hierarchy so a
-  grandparent filter must find a grandchild; a query sending only the bound
-  under test.
-
-  **The tell:** ask "if the code used the OTHER rule, would this fixture produce
-  different output?" If the answer is no, or you cannot answer it, the fixture
-  is the defect and the assertion is decorative regardless of how it is written.
-  Noticed across steps 4–5; stated as a rule during the step 5 remediation.
-
-  **TERMINAL CASE: sometimes no fixture can discriminate, and the honest move is
-  to say so.** "The fix is always the same shape" above is not quite true — it
-  assumes an inverting fixture exists. For some properties none does, because
-  the query's own contract forbids the rows that would invert it.
-
-  `findArtistsNamed` (step 11 unit 4a) is the instance. It matches names
-  EXACTLY, so every row it can return shares one name — which makes `ORDER BY
-  created_at`, `ORDER BY name` and no ordering at all mutually indistinguishable
-  in its output. Two mutations confirmed it: swapping to a name sort and
-  deleting the clause both pass. There is no seed data that separates them,
-  because any row that would separate them is a row the query does not return.
-
-  When that happens: assert the property that IS observable (there, that the
-  first row is the earliest by `created_at`), and state in the test's own
-  comment that it does not prove the mechanism. A test that silently claims
-  more than it constrains is the thing this whole rule exists to prevent, and
-  that failure does not stop being a failure because the gap is unavoidable.
-
-  **THE STING, and the reason this class keeps recurring: a fixture drawn from
-  TYPICAL data tests the typical path — which is the one least likely to be
-  wrong.**
-
-  Step 8 unit 4. `attachDiscogsCover` must pick the image whose `type` is
-  `primary`, not merely the first. The fixture listed primary first, so "find
-  the primary" and "take `images[0]`" agreed, and the mutation replacing one
-  with the other **failed zero tests**.
-
-  What makes it worse than an ordinary weak fixture: **real Discogs releases
-  usually DO list the primary first.** So `images[0]` would have been correct in
-  the common case and wrong exactly where it mattered — a release whose
-  contributor ordered them differently, silently attaching a back cover or an
-  inner sleeve as the record's front. The bug would have been invisible in
-  testing, invisible in most use, and wrong in the case a person would notice.
-
-  Reordering the fixture so `secondary` comes first makes the same mutation fail
-  1 test. **When a fixture is built from what the source usually sends, it
-  cannot discriminate rules that agree on the usual case — deliberately
-  construct the atypical ordering.**
-
-  **VISIBILITY VARIANT (third instance of the class): `textContent` cannot see
-  visibility, so an assertion built on it is blind to the entire property it
-  claims to test.**
-
-  Hidden elements keep their text in the DOM. Tailwind hides with
-  `display:none`; `textContent` — and therefore Playwright's `toContainText`
-  and `toHaveText` — returns the text of a hidden node exactly as it returns a
-  visible one.
-
-  Measured: a spec asserting a label was readable at seven widths passed at all
-  seven, INCLUDING the width where the label rendered nowhere on screen. It
-  would have passed whatever the layout did.
-
-  ```ts
-  await expect(row).toContainText(label);              // blind to display:none
-  expect(await visibleText(row)).toContain(label);      // innerText — sees it
-  ```
-
-  **Any assertion about what the user can SEE must read `innerText`**, or use a
-  visibility-aware matcher (`toBeVisible`). `collection-widths.spec.ts` is the
-  worked example.
-
-  **THE CHECK THAT UNIFIES THIS WHOLE CLASS — apply it to every assertion:
-  "would this produce a different result if the property it names were wrong?"**
-  Three instances so far, all failing that check the same way:
-
-  | Instance | Names | Actually constrains |
-  |---|---|---|
-  | `.toThrow()` with no message | that the RIGHT error was thrown | that *something* threw |
-  | `toEqual` on an object shape | the fields that matter | every field, including irrelevant ones — and passes when the ones that matter are absent from both sides |
-  | `toContainText` on layout | that the value is VISIBLE | that the value is in the markup |
-  | `toHaveCount` on a hidden subtree | that the elements are ON SCREEN | that they are in the DOM — `display:none` changes neither the count nor the locator |
-
-  Each resembles verification while leaving the named property free to be
-  wrong. Noticed: steps 5-7; stated as a class 2026-08-10.
-
-  **Fourth instance, unit 12g — same cause as the `toContainText` variant.**
-  The graph's `sm:hidden` / `hidden sm:block` swap hides the canvas on phones
-  with CSS, so the SVG subtree still mounts. Two E2E tests that count
-  `graph-node` elements passed unchanged on the mobile project **while the
-  canvas was invisible to a user.** They read the markup, not the screen.
-
-  This is also the same family as the dead node click (unit 12d): green because
-  the element EXISTS, while the feature it stands for is unavailable. In both
-  cases the counting assertion was satisfied and the thing a user would do —
-  see the graph, click a node — did not work.
-
-  `toBeVisible` / `toBeHidden` are the matchers that know the difference. The
-  narrow/wide test in graph.spec.ts asserts with both, at both widths, in one
-  test: a fallback that appeared everywhere, or nowhere, would satisfy half of
-  that and be plainly wrong.
-
-  **CONCURRENCY VARIANT: a concurrency test that is not actually concurrent
-  proves only what the sequential path already covers.** Same failure in a
-  different costume — the test looks like it exercises the race and does not.
-
-  The acquire guard (`WHERE is_acquired = false` on the UPDATE) exists for two
-  callers reading `is_acquired = false` at the same time. Written sequentially:
-
-  ```ts
-  await acquire(item);          // succeeds
-  await expect(acquire(item)).rejects.toThrow();   // "proves" the guard
-  ```
-
-  That passes with the guard REMOVED, because by the second call the first has
-  committed and the endpoint pre-check refuses it anyway. It exercises the
-  pre-check, not the guard.
-
-  Starting both before awaiting either is the first step:
-
-  ```ts
-  const outcomes = await Promise.allSettled([acquire(item), acquire(item)]);
-  expect(outcomes.filter((o) => o.status === 'fulfilled')).toHaveLength(1);
-  ```
-
-  **CORRECTION (step 6 remediation, unit 3): that is NECESSARY AND NOT
-  SUFFICIENT, and this entry said otherwise.** Two promises in flight still
-  race in real time, so whether they collide is decided by scheduling — and a
-  pre-check that completes before the second caller reads closes the window
-  before the guarded code is reached.
-
-  Measured on the acquire endpoint, same test, same code, opposite verdicts:
-
-  | Run | Statuses | Defect |
-  |---|---|---|
-  | the test alone | `[201, 500]` | visible |
-  | the whole file | `[201, 409]` | **hidden** |
-
-  Under load the first request cleared its pre-check-to-commit window before the
-  second one read, so the pre-check answered and the transaction guard never
-  ran. The test passed against broken code in the configuration it would
-  normally be run in.
-
-  **What makes a concurrency test real is FORCING both callers past the point
-  the guard defends**, not hoping they arrive together. Hook the pre-check and
-  release only once both have cleared it:
-
-  ```ts
-  let arrived: () => void;
-  const bothArrived = new Promise<void>((r) => { arrived = r; });
-  let waiting = 0;
-  vi.spyOn(queries, 'findWantListItemById').mockImplementation(async (id) => {
-    const item = await real(id);
-    if (++waiting === 2) arrived();   // both are past the check
-    await bothArrived;                // neither proceeds until then
-    return item;
-  });
-  ```
-
-  Note this hooks EVERY call, which the mock-scope rule below warns against —
-  correctly, for its case. The difference: there the mock must let a LATER call
-  fall through; here the release condition is the second ARRIVAL, and exactly
-  two callers exist. Both rules are really the same instruction — know how many
-  times the code under test calls the thing you hooked.
-
-  **The isolation asymmetry is worth its own alarm.** A test that finds the
-  defect ALONE and hides it in a full run looks exactly like flake, and the
-  standard response to flake is to quarantine or delete it. It is the opposite:
-  the isolated run is the honest one. Before writing off a race test as flaky,
-  check whether the passing configuration is the one where the race does not
-  happen.
-
-  **The tells, in order:** an `await` between the two operations that should
-  collide; then, once that is fixed, a result that changes between an isolated
-  run and a full one. The first means there is no window at all, the second
-  means the window is real but not guaranteed. Noticed: step 6 unit 4;
-  corrected and extended in the step 5+6 remediation, unit 3.
-
-  **CROSS-SPEC VARIANT: a test can assume something about SHARED STATE that no
-  other test is obliged to preserve.** The rule above is about one test's own
-  fixture. This is the same defect between tests, and it only appears once
-  specs share a database — which every E2E spec here does, running fully
-  parallel across two browser projects.
-
-  Three instances in one unit (step 5, unit 7d), all deterministic once
-  pagination existed and all invisible when the spec ran alone:
-
-  | Assumption | Broken by |
-  |---|---|
-  | "my record is on page 1" | another spec's 110-row fixture sorting ahead of it |
-  | "my 110 rows don't matter" | every other spec reading page 1 |
-  | "my search term is unique" | the other browser project seeding the same title |
-
-  The last one is worth spelling out, because the obvious fix failed. Searching
-  `'Hear Nothing'` matched the parallel project's copy; scoping it to
-  `'Hear Nothing <suffix>'` then matched all THREE of the run's own records,
-  because §5.2 makes `q` fuzzy across the ARTIST name too and the artist is
-  `Discharge-<suffix>`. Two collisions at different scopes, and each obvious
-  fix only closed one. Measuring each attempt is what found the second.
-
-  **FOURTH INSTANCE, step 7, and the count is the point: ALL FOUR PRESENTED AS
-  SOMETHING ELSE.** Not one of them looked like shared state at first sight.
-
-  | What it looked like | What it was |
-  |---|---|
-  | a width-dependent layout bug at 390px | two shots seeding identical titles |
-  | a broken unmatched-artist notice | a sibling test creating an artist the fuzzy match found |
-  | a flaky prefill spec, three different failures in three runs | `beforeAll` seeding with `afterAll` cleanup, removing a row a parallel worker was using |
-  | the no-live-call guard not firing | another spec seeding the release, so the cache answered and the guard was never reached |
-
-  **The diagnostic value is in the count.** After four, the right first question
-  for any E2E failure that is not obviously deterministic is "what else touches
-  this row, this title, this id?" — before reading the code under test at all.
-  Three of the four cost a full debugging round because that question came
-  second.
-
-  **The specific trap in the last two: a test can be broken by a fixture that
-  makes it PASS a check it should fail.** The guard specs asserted "nothing has
-  cached this release", and another spec cached it — so the assertion inverted
-  rather than erroring. Seeding is not only an interference risk, it is a way to
-  satisfy a precondition that was supposed to be absent.
-
-  **The rules:**
-
-  - scope every assertion to something no other spec can produce — an id you
-    created, not a title, a term, or a position;
-  - a spec that seeds bulk data deletes it in a `finally`, so a failure does
-    not cascade into every later spec and bury the original cause;
-  - prefer navigating to a filtered URL over clicking through an unfiltered
-    page, which is a page-1 assumption in disguise.
-
-  Expect this to recur: every remaining UI step adds specs to the same shared
-  database. Noticed: step 5, unit 7d.
-
-  **PRESENTATION VARIANT: a duplicate-fixture error can present as a
-  width-dependent LAYOUT bug.** The cross-spec variant above is about assertions
-  going wrong. This is about the failure pointing somewhere else entirely.
-
-  The step 6 unit 5 screenshot harness captured `/want-list` at 1280 and 390.
-  The 1280 shot passed; **390 failed, alone and in parallel, on
-  `getByText(title)` timing out.** Everything about that says the row renders
-  differently at narrow width — a wrapped element, a responsive branch, a
-  `hidden md:block`. The row component was read looking for exactly that, and
-  has no width-dependent behaviour at all.
-
-  Both shots seeded the SAME titles. By the second run two rows matched, so the
-  locator resolved to two elements and Playwright raised a strict-mode
-  violation — which surfaces as a TIMEOUT on `toBeVisible`, not as "found 2".
-  The message names the thing that was not visible, so it reads as absence.
-  Fixed by suffixing each shot's fixtures with its own viewport name.
-
-  **Why it belongs here rather than under the E2E entries:** nothing was wrong
-  with the page, and nothing was wrong with the assertion. The fixture was
-  duplicated, and the only surprising part is where the symptom appeared. A
-  variable that differs between two runs (viewport) gets blamed for a failure
-  caused by one that does not (the seed).
-
-  **The tell:** a failure that correlates with a dimension the code does not
-  read. Before investigating why 390 differs from 1280, confirm the two runs
-  differ ONLY in width — here they also differed in how much data was already
-  present, which is the same axis-confusion the "same family" rule warns about.
-
-- **RULE, responsive layout: a summary line must hide at the WIDEST breakpoint
-  of any column it substitutes for, never the narrowest.**
-
-  A table that hides columns at narrow widths and reprints them in a summary
-  line is only correct while the two are exact complements. In
-  `CollectionList.tsx` they were not: the summary was `sm:hidden` (gone at 640)
-  while the label column was `hidden md:table-cell` (arriving at 768), so
-  **between 640 and 767 the label rendered nowhere**. Real, found in use, fixed
-  2026-08-10.
-
-  Deriving it each time is error-prone; the rule states it once. When adding or
-  moving a hidden column, the summary line's breakpoint is part of that change.
-
-  **Why this class of defect is worse than it looks:** the table draws absence
-  as `—`, meaning "not recorded". A value dropped by the LAYOUT is
-  indistinguishable from one the user never entered, so the screen is
-  confidently misleading rather than obviously broken — CLAUDE.md §8 ranks that
-  the worse of the two. Another instance of the absence-as-success family.
-
-  **COROLLARY, from the testing side: 390 and 1280 both pass, so responsive
-  defects live at the BOUNDARIES and only a sweep finds them.** The two
-  habitual screenshot widths sit either side of the gap and see nothing. Sweep
-  each breakpoint and one pixel below it — `collection-widths.spec.ts` uses
-  375/639/640/700/767/768/1280 against Tailwind's sm=640 and md=768.
-
-  Pair it with the visibility rule above: such a sweep MUST assert `innerText`,
-  because a `textContent` assertion passes at every width including the broken
-  one.
-  Noticed: step 6, unit 5.
-
-  **SECOND INSTANCE, and it is becoming a habit worth naming: A FIXTURE THAT
-  MAKES A TEST PASS BY REMOVING WHAT IT TESTS.** Twice in two units, both caught
-  while writing rather than by mutation.
-
-  | Fixture convenience | What it silently removed |
-  |---|---|
-  | `mockMaster(year = 1971)` — a DEFAULT | passing `undefined` to model "master has no year" got 1971 instead, so the test failed against correct code |
-  | suffixing an artist name to dodge `artists_name_unique` | the two records would have had DIFFERENT artists, and §7.7 matches on artist — the test would have passed while testing nothing |
-
-  The second is the more dangerous, because it fails in the *passing*
-  direction. A default that supplies a value makes a test fail loudly and gets
-  fixed; a suffix that separates two rows makes the assertion trivially true
-  and gets committed.
-
-  **Both came from solving a test-mechanics problem — a required argument, a
-  unique constraint — without asking what the workaround changed about the
-  scenario.** The unique constraint wanted found-or-created, not a fresh name:
-  the whole point was two records belonging to the SAME artist.
-
-  **The check: after working around a constraint in a fixture, restate what the
-  test is now testing.** If the restatement is narrower than the test's name,
-  the workaround ate the scenario.
-
-  **SUITE-SCALE VARIANT: the fixture rule applies to the whole CORPUS, not just
-  to one test's data. If every committed fixture shares a property, no test can
-  see what happens without it — however well written.**
-
-  Step 7's prefill fabricated a pressing year from the master's album year, and
-  no test caught it. Not because the tests were weak: because every captured
-  Discogs payload in the repository carried its own `year`, so the master
-  fallback never ran in any of them. The defect lived on a path the entire
-  suite avoided.
-
-  It surfaced only from a real lookup — the US Carpenters LP, `year: 0` and no
-  `released` field at all, a shape I could not construct from imagination
-  because every variation I invented recovered the year correctly.
-
-  **The response was to make it a permanent fixture** (`release-no-year.json`),
-  not to fix the code and move on. A payload that exercises a path nothing else
-  reaches is worth more than a payload that duplicates coverage, and the
-  argument for keeping it is the same one that justifies capturing fixtures at
-  all: it encodes what the world does rather than what we imagined.
-
-  **The check, at corpus scale: for each fixture, what property does it share
-  with every other one?** Shared properties are unexercised branches. Here it
-  was "carries a year"; the same question applies to "has a matrix", "has a
-  catalog number", "is a release rather than a master". Noticed: step 7, and
-  named by the security review.
-
-  **CONCURRENCY-HARNESS VARIANT: a fake `sleep` that ADVANCES THE SHARED CLOCK
-  turns a concurrency test into a spread-over-time test — and the correct fix
-  then reads as broken.**
-
-  The security review found the Discogs limiter bypassable: `waitMs()` then
-  `take()` is check-then-act, so 200 concurrent requests ran 200 in flight
-  against a 60/minute bucket. The fix — an atomic `reserve()` — was correct and
-  the test still reported 200.
-
-  The harness was the reason. Its `sleep` did `now += ms`, so every waiting
-  caller's wake-up moved the clock forward and REFILLED the bucket for the next
-  one. It was modelling 200 requests spread over several minutes, which is a
-  scenario the limiter should allow, rather than 200 arriving at once.
-
-  Established by probing rather than reasoning: `reserve()` against a stable
-  clock returns 60 free then 1000/2000/3000ms staggered; against a jumping
-  clock it returns one identical 1000ms to everyone.
-
-  **A sleep that resolves WITHOUT moving time is the honest model of
-  concurrency**: every caller arrives in the same instant, which is the whole
-  premise. Advancing the clock inside `sleep` is right for a test about
-  elapsed-time behaviour and wrong for one about simultaneity, and the same
-  helper cannot serve both.
-
-  **The tell:** a concurrency test whose result does not change when the
-  implementation's atomicity does. Before trusting either outcome, check
-  whether the harness lets the callers actually overlap. Noticed: step 7,
-  security unit 2.
-
-  **A RELATED LIMIT, worth knowing rather than working around: SOME PROPERTIES
-  RESIST AN INJECTED CLOCK, because they are ABOUT the real timer.**
-
-  Every other property of the Discogs client is testable on an injected clock —
-  refill arithmetic, retry counts, deadline accounting — which is why the clock
-  is injected at all. The request timeout is not: the abort fires from
-  `setTimeout`, the very thing a fake clock replaces, so a fake clock can never
-  make it fire.
-
-  The resolution was to inject the CEILING rather than the clock:
-  `maxElapsedMs: 50` in the test against 10s in production, with a real timer
-  doing real work for 50ms. Not a workaround so much as recognising which knob
-  the property is actually attached to.
-
-  **The general form: when a property cannot be tested on the standard
-  substitute, ask what it is a property OF.** Usually the answer names a
-  different injection point. Knowing which properties resist the house
-  technique is more useful than the individual workaround, because the next one
-  will resist it too.
-
-  **PASSIVE-PATH VARIANT: when every test exercises the DELIBERATE path, the
-  passive path is unconstrained — and the passive path is usually the common
-  one.** Not a fixture problem: each test is individually well-built. The gap is
-  in what the SET of them chose to do.
-
-  Found in step 6 unit 4 (pressing prefill) by a mutation that failed nothing.
-  The tests covered prefilling, editing a prefilled field, and the no-target
-  case. All four passed with the "silently copied" mutation in place, which
-  should have been impossible — so the question was not "is there anything to
-  constrain" but "why can't these see it".
-
-  The answer: **every test edited something.** The form builds a pressing from
-  the form values, so an edited field always produces a new row and the
-  mutation never changed the outcome. The uncovered case was the one a user
-  actually performs most: check the prefilled details against the sleeve and
-  save without touching them. Under the mutation that yields `pressing_id`
-  null — fields visibly filled, save succeeds, pressing gone.
-
-  **Why this shape recurs:** tests are written from the feature's description,
-  and a description says what the feature DOES ("prefills the pressing
-  section", "lets you edit it"). Accepting a default is not a feature, so
-  nothing in the description prompts a test for it — while for the user it is
-  the path of least effort and therefore the default behaviour.
-
-  **The check:** for any screen with prefilled or default values, ask what
-  happens if the user changes NOTHING and submits. Same for a filter left at its
-  default, a toggle left unticked, a prefilled date accepted. If no test covers
-  the do-nothing path, the most common flow is the untested one. Noticed: step 6
-  unit 4, during the step 5+6 remediation.
-
-  **THE LIMIT OF MUTATION TESTING, and it is a real one: mutation cannot see a
-  SYSTEMATICALLY PERMISSIVE layer, because the existing fixtures are all cases
-  that layer already rejects.**
-
-  This build leans on mutation harder than on any other technique, so where it
-  fails is worth stating plainly.
-
-  Step 7 unit 5: removing the `/^\d+$/` check in front of
-  `z.coerce.number()` failed ZERO tests. The obvious reading is "the check is
-  redundant" — and NOTES already says not to conclude that, so I probed
-  instead. Coercion accepts `'5e4'` as 50000 and `'0x50'` as 80, so the check
-  was load-bearing and its removal silently fetched a different record.
-
-  **Why mutation was blind to it.** Every id in the test set —
-  `'not-a-master'`, `'-1'`, `'0'`, `'50683/../..'` — is a value coercion
-  ALREADY rejects. The guard and the coercion agreed on all of them, so
-  removing the guard changed nothing observable. The values that discriminate
-  (`'5e4'`, `'0x50'`, `' 50683 '`) are the ones nobody writes down, precisely
-  because they do not look like inputs a user would send.
-
-  **The general shape:** mutation asks "does removing this change the output on
-  the inputs I have?" It cannot ask "what inputs have I failed to imagine?" —
-  and a permissive layer's whole nature is accepting inputs you did not
-  imagine. Same structural blind spot as the fixture rule above, one level up:
-  there the fixture could not discriminate two RULES, here it cannot
-  discriminate two INPUT SETS.
-
-  **What to do instead, when a mutation on a validation guard fails nothing:**
-  enumerate what the layer underneath accepts, by execution, before concluding
-  anything. Not "does removing this break a test" but "what does the thing I am
-  guarding say yes to". Five minutes in `node -e` answered it here.
-
-  **SEAM RULE — third instance, and the one to state as a rule: LAYER TESTS
-  PROVE A LAYER, NEVER THE JOIN. When two correct layers must agree, the test
-  that matters runs end to end through both, and neither side's suite can
-  substitute for it.**
-
-  Three instances now, all found by use rather than by tests:
-
-  | Layer A | Layer B | What fell in the gap |
-  |---|---|---|
-  | normalizer (24 tests) | search route | raw payloads returned; every normalizer test still passed |
-  | search endpoint (accepts 12 params) | lookup form (offers 7) | five §5.7 parameters unreachable; no endpoint test can see a form |
-  | import writes `discogs_release_id` | ownership matches on it | the FORM path never sent it — §7.7 tier 1 unreachable for every record the user owned |
-
-  **The third is the sharpest.** Both sides were correct and both were tested:
-  every ownership test built pressings directly WITH an id, every import test
-  asserted what was written. The defect existed only in the join, and the
-  mutation that exposes it — never sending the id — failed ZERO tests before a
-  seam test existed and three after.
-
-  **Why layer tests cannot catch it, structurally.** A layer test supplies its
-  own inputs. That is what makes it fast and precise, and it is exactly why it
-  cannot tell you whether the real producer supplies those inputs — the fixture
-  stands in for the other layer and always agrees with it. Two suites can be
-  green, complete, and jointly silent.
-
-  **The rule: for any property that requires two components to agree, write one
-  test that goes through both.** `test/integration/import-then-own.test.ts` is
-  the shape — real import in, real ownership query out, no fixture in between.
-  It is slower and less precise than either layer's tests and that is the
-  point: precision is what hides the seam.
-
-  **The tell:** a property stated in the spec that no single module owns. §7.7's
-  tier 1 is a claim about the importer AND the matcher; §5.7's twelve
-  parameters are a claim about the endpoint AND the form. Whenever a
-  requirement spans components, ask which test would fail if they stopped
-  agreeing. Noticed: steps 7 units 4, the search-params QA finding, and the
-  tier-1 QA finding.
-
-  **WIRING VARIANT: a pure-function test proves the TRANSFORMATION, never that
-  anything calls it.** Not a fixture problem at all — the fixtures are fine and
-  the assertions are real. The gap is that a change bypassing the function
-  entirely passes every one of its tests.
-
-  Measured in step 7 unit 4. `normalize-search.test.ts` has 24 tests over real
-  payloads: genres and styles kept separate, absence-prose mapped to null, the
-  combined "Artist - Title" split. Making the route return the RAW Discogs
-  payload instead of the normalized one:
-
-  | Layer | Result |
-  |---|---|
-  | normalizer's own 24 tests | **all still pass** |
-  | endpoint tests | **5 fail** |
-
-  Nothing was wrong with the normalizer, so nothing testing the normalizer
-  could notice. A user would see a record pressed in a country called
-  "Unknown", with a green suite.
-
-  **The rule: for any transformation that exists to protect the user from
-  something, assert the property at the layer the USER reaches, not only where
-  it is implemented.** The pure-function tests stay — they are where the
-  behaviour is pinned down, and they discriminate far more finely than an
-  endpoint test can. But at least one assertion per property belongs at the
-  boundary, and it should be the property that matters rather than a smoke
-  test: "styles survive", "absence is null", not "returns 200".
-
-  **The tell:** a module whose tests all pass but which nothing imports. Same
-  family as the extraction-with-one-importer check above — both are questions
-  about whether the code is CONNECTED, which no test of the code itself can
-  answer. Noticed: step 7, unit 4.
-
-  **UNREACHABLE-PATH VARIANT — the tell above came true at full scale, and this
-  is the extreme case of it: `POST /api/discogs/import` is not called by any UI
-  code in the repository.**
-
-  Found by QA (2026-08-11): imported records have no genres. `discogs-import.ts`
-  implements §6's mapping correctly — `findOrCreateGenres(tx, [...styles,
-  ...genres])`, styles first, with a comment citing CLAUDE.md §8 on not
-  flattening the hierarchy — and its tests pass and genuinely prove genres
-  attach.
-
-  **They are honest tests of code nothing runs.** Every assertion is real, the
-  fixtures are real, the transaction is real. What no test in that file can
-  express is whether any caller exists. The lookup screen links to
-  `/records/new?discogsReleaseId=`, which goes through `loadDiscogsPrefill` —
-  a path that reads neither `genres` nor `styles`.
-
-  **The rule, and it belongs beside the seam rule: passing tests establish that
-  a unit WORKS, never that anything calls it.** "Do we implement §6's genre
-  mapping?" answers yes from the test suite and no from the running app. Any
-  audit that greps for an implementation and finds one with green tests will
-  reach the wrong conclusion.
-
-  **The cheap check, worth running when a feature is reported missing despite
-  being implemented:** grep for callers of the module OUTSIDE its own tests. One
-  command, and it distinguishes "broken" from "never invoked" — which are
-  different bugs with different fixes.
-
-  Compounding factor worth noting: the two paths were not merely duplicates. The
-  live one has format matching, the master-year fallback and the cover fetch;
-  the dead one has genres and styles. Each was correct about different fields,
-  so neither could be deleted in favour of the other without measuring first —
-  and a field-by-field comparison was the only way to see it.
-
-  **SELF-MATCHING VARIANT: a checker that scans the repo can end up inside its
-  own subject set, and it fails on its own matchers rather than on real code.**
-  The cross-spec variant one level up: the shared state is the REPOSITORY.
-
-  `test/repo/dotenv-quiet.test.ts` asserts that every tracked file calling
-  dotenv's `config()` passes `quiet: true`, finding those files by search. Its
-  own source contains the strings `dotenv` and `config(` — inside the regexes
-  doing the matching — so once it was committed and `git ls-files` could see
-  it, it matched itself and failed against the bare `config()` in its own
-  matcher.
-
-  **It passed alone and failed in the full suite**, which is the tell, and the
-  timing is the trap: the file is invisible to `git ls-files` until the commit,
-  so the defect appears one commit AFTER the code that causes it. Verified by
-  running the file in isolation (green) and the suite (red).
-
-  **The rules for any repo-scanning check:** exclude the checker from its own
-  subject list explicitly, by path, with a comment saying why — and keep the
-  vacuity guard, because an exclusion that silently over-matches turns the
-  whole assertion into a loop over nothing. Both are in place there. Noticed:
-  step 7, unit 1.
-
-  **VARIANT: sometimes no value on that axis CAN discriminate, and the fix is a
-  different axis rather than a better fixture.** The five cases above are all
-  repaired by adding inverting rows. This one cannot be.
-
-  `formatPrice` keeps money as a string so it never routes through a float, and
-  the test asserted that with `'12345678.91'` — "a value beyond float
-  precision". It is not: `NUMERIC(10,2)` allows at most 8 digits before the
-  decimal, which is comfortably inside a double, so **no value the column can
-  hold** produces a different answer from `Number(v).toFixed(2)`. Enumerating
-  the candidates is what established that; the test looked rigorous and
-  constrained nothing.
-
-  The discriminator was on another axis entirely — ROUNDING, not magnitude.
-  `'8.567'` truncates to `8.56` and rounds to `8.57`. That value is not even
-  storable in the column; it can arrive from an unsaved form field, which is
-  precisely why the helper must not round.
-
-  **The check when a fixture resists repair:** before concluding the property
-  is untestable, ask what OTHER observable difference the two implementations
-  have. "Same output for every legal input" means the axis is wrong, not that
-  the behaviour is unconstrainable. Noticed: step 5, unit 6.
-
-- **RULE: "same family" is a hypothesis, not a diagnosis. Measure which
-  component DOMINATES before choosing a fix.**
-
-  Two failures can share a shape exactly and need opposite responses. Fixing
-  the shape fixes neither.
-
-  The instance, both found in step 5 unit 7b and describable in the same
-  sentence — *"a click acts on state the server has not caught up with"*:
-
-  | | Collection filters | `/manage` genre move (Mode 2) |
-  |---|---|---|
-  | Trigger | `router.push` | `router.refresh` |
-  | What is stale | URL, props AND `useSearchParams` | rendered props |
-  | Dominant cost | the server render | **the PATCH (1264ms vs 142ms)** |
-  | Consequence | wrong href built → a filter is silently DROPPED | assertion runs early |
-  | Nature | **product bug** — a user hits it | **test bug** — the app is correct |
-  | Fix | hold the last-pushed query and build from it | wait for the response |
-
-  Described in prose they are the same problem. Measured, they are not related
-  at all: one needs application code, the other needs one line in a spec. Four
-  earlier attempts on Mode 2 failed because the diagnosis named the 142ms
-  component and the 1264ms component was doing the work.
-
-  **The check:** before adopting a fix because a failure "looks like" one
-  already understood, measure the components and confirm the same one dominates.
-  A shared description is a reason to look, not a reason to conclude. This
-  compounds badly with the "a mutation is code and can be wrong" rule: an
-  inherited diagnosis is never re-derived, so a wrong emphasis survives every
-  subsequent attempt. Noticed: step 5, unit 7b.
-
-- **RULE: Zod's coercion layer is SYSTEMATICALLY PERMISSIVE at trust
-  boundaries. Four instances is a class, not a run.**
-
-  **The standing rule: no `.coerce` appears in a boundary schema without an
-  explicit FORMAT CHECK in front of it.** Not "be careful with coercion" —
-  coercion's job is to say yes to things that resemble the target type, and a
-  trust boundary's job is to say no to everything it was not promised. Those
-  are opposite jobs, so the format check is not belt-and-braces, it is the
-  actual validation and the coercion is only the conversion.
-
-  Four instances, all in this build, all invisible to every downstream test —
-  because each produced a *valid-looking* value rather than an error:
-
-  | Modifier | Input | Becomes | Consequence |
-  |---|---|---|---|
-  | `.default([])` on `genreIds` | absent | `[]` | "leave alone" becomes "REMOVE ALL" — silent data loss on PATCH |
-  | `z.coerce.number()` on `yearFrom` | `''` | `0` | applies `release_year >= 0`, drops every undated record behind a 200 |
-  | `z.coerce.boolean()` on `includeUndated` | `'false'` | `true` | the flag cannot be turned off; every non-empty string is true |
-  | `z.coerce.number()` on a Discogs master id | `'0x50'` | `80` | fetches a DIFFERENT master's versions and presents them as the answer |
-
-  The fourth adds a dimension the first three did not have: **the coerced value
-  left our process.** `"5e4"` becomes 50000 and `"0x50"` becomes 80 — both
-  accepted, both interpolated into a URL, both returning real data for the
-  wrong record. Probed rather than assumed, after a mutation removing the
-  format check failed nothing:
-
-  ```
-  z.coerce.number().int().positive()
-    '50683'  → 50683      ' 50683 ' → 50683
-    '5e4'    → 50000      '0x50'    → 80        '50683\n' → 50683
-  ```
-
-  **Why they are hard to catch.** A validation bug that REJECTS is loud — a 400
-  arrives and someone investigates. All four ACCEPT, and produce a plausible
-  value, so the endpoint returns 200 with the wrong rows. Nothing downstream
-  can tell: the query layer received a legitimate number, the handler received a
-  legitimate array. The defect exists entirely in the gap between what the
-  caller wrote and what the schema decided they meant.
-
-  **Nor will a mutation necessarily catch it.** Removing the digit check in
-  front of `z.coerce.number()` failed ZERO tests, because the existing tests
-  only sent ids that coercion rejects anyway (`'not-a-master'`, `'-1'`). The
-  test set has to contain values coercion ACCEPTS but the format forbids, and
-  those are not the values anyone thinks to write down.
-
-  **The rule.** In a boundary schema, prefer an explicit shape that cannot
-  reinterpret:
-
-  - a boolean flag is `z.enum(['true','false']).transform(v => v === 'true')`,
-    never `z.coerce.boolean()`;
-  - a numeric param validates its STRING form first
-    (`.refine(v => /^-?\d+$/.test(v))`) and only then transforms — coercing
-    first is what destroys the absent/blank distinction;
-  - `.optional()` preserves absent-vs-empty; `.default()` destroys it. If
-    absence and emptiness mean different things — and for a nested array they
-    always do — `.default()` is wrong.
-
-  **The test that catches this class** is not "does a valid value work" but
-  "does an EMPTY or MALFORMED value get rejected rather than reinterpreted".
-  Every filter now has one; `yearTo=` was found only because the empty-string
-  case was tested for each param separately rather than once. Noticed across
-  steps 4–5; stated as a class during the step 5 UI work.
-
 - **DIAGNOSED: the E2E flake was WebKit outrunning React hydration. Here is
   everything that was ruled out, so the next investigation does not repeat it.**
 
@@ -2241,80 +1283,6 @@ form the records work had not shown — see the masking entry under Open.
   mitigation for the test harness is in place. Recorded so that a future
   autofill bug report is diagnosed in minutes rather than rediscovered.
   Noticed: step 5, E2E flake work.
-
-- **OPEN, ~1 run in 5: `collection-filters.spec.ts` fails a spec on BOTH
-  projects. Which spec varies between runs.**
-
-  **THE DIAGNOSTIC, first because it is the useful part: a MOVING failure is
-  the flake; a FIXED failure is a regression.** If `collection-filters` fails,
-  run that file two or three more times on the same build. A change that broke
-  something fails the same spec every time; this fails a different one, or
-  none. Ten seconds, and it settles the question without an investigation.
-
-  Corollary, learned the hard way in unit 5: **do not baseline by stashing and
-  running once.** A single clean baseline run is indistinguishable from the
-  flake not firing, and it will tell you your change caused the failure. Run
-  the CURRENT build several times instead — the stale-baseline rule, in
-  miniature.
-
-  Its signature differs from the WebKit hydration flake above, so it is
-  deliberately not treated as the same problem — "same family" is a hypothesis
-  (see the rule below), and bundling them is what let the /manage flake survive
-  four attempts.
-
-  **Signature, for whoever picks it up:**
-  - specs seen failing, one at a time and not the same one twice running:
-    `a parent-genre chip finds a record tagged with its grandchild`,
-    `clicking the active chip clears it`, and
-    `clicking through to a filtered view equals loading that URL directly`;
-  - fails on **chromium AND mobile**, unlike the hydration flake which was
-    WebKit-only;
-  - roughly 1 run in 5, in a full suite AND in isolation. An earlier version of
-    this entry said "never in isolation"; that was wrong — unit 5 reproduced it
-    running the file alone;
-  - present with `data-hydrated` waits already in place, so it is not that
-    mechanism.
-
-  **Measured in the step 5+6 remediation, unit 5:** a full-suite run failed two
-  specs; an immediate isolated run of the file passed those two and failed a
-  third; three further runs on the same build gave 10 passed / 1 failed / 10
-  passed. So it is a property of the FILE — most likely its fixtures or its
-  shared filter state — not of any spec in it.
-
-  Left undiagnosed deliberately: at 1 in 5 any measurement is mostly noise, and
-  the suite is currently clean enough that a real regression would still stand
-  out. **If the rate climbs or it spreads to other specs, it needs its own
-  investigation** — starting with measurement, not with the assumption that it
-  is the hydration issue returning. Noticed: step 5, final unit.
-
-- **RULE: a measurement compared against a baseline taken on DIFFERENT CODE
-  overstates the change, and the error always flatters the change.**
-
-  The step 5 flake work produced two measurements of the same thing:
-
-  | Wait signal | Submissions lost | Taken on |
-  |---|---|---|
-  | rendered control | 6 of 8 | the build BEFORE unit 9b |
-  | rendered control | 1 of 12 | the build AFTER unit 9b |
-  | `data-hydrated` | 0 of 12 | the same build |
-
-  Reporting "6 of 8 → 0 of 12" would have been arithmetic on two different
-  programs. Unit 9b added an inline-create button that renders LATER in the
-  tree than the old wait signal, so the control arm had silently become a
-  longer wait — the earlier "fix" was waiting longer rather than waiting
-  correctly, and the difference the new signal actually makes is 1 in 12, not
-  6 in 8.
-
-  **Why the error is never neutral:** a stale baseline was measured before the
-  intervening work, and intervening work is usually improvement. So the "before"
-  is worse than the true control, and every comparison against it flatters
-  whatever came next. Nobody re-measures a baseline that already tells a good
-  story.
-
-  **The rule:** when a fix is verified by comparison, run BOTH ARMS on the
-  CURRENT build. A baseline is a property of a build, not a number you can
-  carry forward — and the moment any other change lands, the old number is
-  measuring something that no longer exists. Noticed: step 5, E2E flake work.
 
 - **PATTERN, for a decision at step 14: SPEC.md §4 states ranges in prose that
   nothing below the API boundary enforces.** Two instances so far — the year
@@ -2413,791 +1381,6 @@ form the records work had not shown — see the masking entry under Open.
   is the concurrent case — and it needs its own test at the layer where it
   lives. Noticed: step 6, units 1-3.
 
-- **RULE: a mock that intercepts EVERY call disables the function; a mock that
-  intercepts only the FIRST simulates the race.**
-
-  Race tests here hook a pre-check so a concurrent write appears to land in the
-  window between check and insert. The natural way to write that is:
-
-  ```ts
-  vi.spyOn(queries, 'findLabelByName').mockImplementation(async () => {
-    await db.execute(sql`INSERT INTO labels (name) VALUES ('Dischord')`);
-    return undefined;              // "no such row" — the race window
-  });
-  ```
-
-  That works only while the handler calls the function ONCE. The moment the
-  recovery path calls it again — which §5.4's `existingId` made it do, to name
-  the winner — the mock answers "no such row" a second time, the handler
-  concludes something impossible has happened, and the test sees a 500 instead
-  of the 409 it asserts.
-
-  **Five existing race tests had this shape and broke together**, and the new
-  test written in the same unit had it too. They were not wrong when written:
-  the mock matched the code as it then was, and only became a lie when the
-  function acquired a second caller.
-
-  **The fix** is to hook the first call and fall through afterwards:
-
-  ```ts
-  const real = queries.findLabelByName;
-  let firstCall = true;
-  vi.spyOn(queries, 'findLabelByName').mockImplementation(async (name) => {
-    if (!firstCall) return real(name);
-    firstCall = false;
-    await db.execute(sql`INSERT INTO labels (name) VALUES ('Dischord')`);
-    return undefined;
-  });
-  ```
-
-  **Why it belongs with the fixture rules:** it is the assumed-precondition
-  pattern in mock form. The fixture assumes something about the data; this
-  assumes something about the CALL COUNT of the code under test — and neither
-  assumption is stated, checked, or visible when reading the test. The tell is
-  identical: the test looks correct and passes, right up until the thing it
-  silently assumed stops being true.
-
-  Expect it on every recovery path: a catch that has to identify what it
-  collided with will re-read, and any mock covering that read has to let the
-  second call through. Noticed: step 5, unit 9b.
-
-  **THIRD INSTANCE — a mock answering EVERY PATH IDENTICALLY cannot
-  distinguish code that calls one path from code that calls both** (step 7,
-  unit 8c). The family so far:
-
-  | Mock shape | What it could not see |
-  |---|---|
-  | intercepts every CALL rather than the first | the recovery path's second read |
-  | returns `undefined` from the name finder | that the finder was reached at all |
-  | answers every PATH with one fixture | which endpoints were actually called |
-
-  The versions endpoint fetches two things: the versions list, and the master
-  for the artist name. My mock returned the versions fixture for both, so the
-  master lookup yielded no artist — and §7.7's tiers 2 and 3 match on artist,
-  so every unowned row would have come back badgeless **with the tests
-  agreeing**. The mock made the endpoint look correct while removing the data
-  half its logic depends on.
-
-  **The rule for a multi-call mock: branch on the path and assert the branches
-  were taken.** If a mock ignores its arguments, it is asserting that the
-  arguments do not matter — which is a claim about the code under test, and
-  usually a false one.
-
-  **The unifying shape across all three:** a mock is a MODEL of the dependency,
-  and every simplification is an assumption. Call count, return shape, path
-  discrimination — each one silently states "this does not matter here", and
-  the test cannot tell you when the statement stops being true.
-
-- **RULE: a message-less `.toThrow()` asserts only that SOMETHING failed.**
-  Six instances have now accepted a different exception than intended, and the
-  sixth was in the guard built to prevent the fifth.
-
-  **Swept the whole suite (step 5 remediation): 91 occurrences, 13 files.**
-
-  | Form | Count | Risk |
-  |---|---|---|
-  | `.not.toThrow()` | 11 | none by construction |
-  | `toThrow(<matcher>)` | 8 | constrained |
-  | bare `toThrow()` positive | 49 | the at-risk set |
-
-  The 49 were **tested, not rewritten**, by asking of each: *if the intended
-  failure were impossible, would something else still throw and satisfy it?*
-
-  **30 database-constraint assertions came back sound in substance.** Each was
-  probed for the error it actually catches, and every one is the intended
-  SQLSTATE — 23514 for the `price_history` XOR, 23505 duplicate, 23503 foreign
-  key, 23001 append-only trigger. Control cases confirm valid input SUCCEEDS, so
-  the throw comes from the constraint under test and not from setup. Left as-is
-  deliberately: Drizzle wraps everything as `Failed query: …`, so a message
-  matcher is near useless. **If they are ever tightened, the matcher is
-  `error.cause.code`, not the message** — that is where the SQLSTATE lives.
-
-  **Two real findings:**
-
-  1. **The sixth instance** — the `catch` around pg-connection-string's `parse()`
-     in `resolveConnectionHost` failed NOTHING when removed. Probed rather than
-     assumed dead: `parse()` genuinely throws on `postgresql://[`,
-     `postgresql://%` and a non-numeric port, all of which pass the scheme check
-     first. So it was LIVE BUT UNCONSTRAINED (case 2 below), not dead. Four
-     tests now reach it and assert the parse message specifically.
-
-  2. **A test whose NAME asserted what its assertion did not check.**
-     `expect(() => resolveConnectionHost('mysql://user:pass@localhost:3306/db')).toThrow()`
-     sat in a test called "rejects a non-postgres scheme" — but that URL's host
-     is `localhost`, which the host allowlist ACCEPTS. The scheme check was the
-     only thing rejecting it, and a bare `.toThrow()` would have passed if the
-     rejection came from anywhere else. This is the cleanest illustration of the
-     whole pattern: the name carries a claim the assertion never makes.
-
-  **The shape to watch for:** a test that manipulates environment or input to
-  reach a code path can be defeated by a DIFFERENT guard reading the same input.
-  The hollow Neon test is the worst case — see the Neon entry below.
-  Swept: step 5 remediation.
-
-  **WORSE STILL, and the one to remember: A TEST THAT MANUFACTURED FALSE
-  CONFIDENCE ABOUT THE EXACT PROPERTY IT NAMED.**
-
-  A repo test asserted that `client.ts` contains the string `guardedFetch`,
-  under the name "is wired into the shared client, not merely available". It
-  passed. The name existed — and covered ONE OF TWO construction paths:
-  `getDiscogsClient` wrapped its fetch, `createDiscogsClient` did not, so any
-  caller passing `globalThis.fetch` reached Discogs for real.
-
-  **The test written to prove the guard was what stopped anyone checking whether
-  the guard was complete.** Its green tick answered "is the guard wired in?"
-  with evidence about a NAME, and the question was never asked again. The hole
-  was found only when a DIFFERENT test — replacing another file-text assertion
-  with a behavioural one — resolved with a genuine 36-field Discogs payload.
-
-  **Why this is worse than the config-text case below.** That one asserted a
-  fact about a file and inferred behaviour. This one asserted a fact about the
-  IMPLEMENTATION and inferred completeness — a stronger claim, from weaker
-  evidence, about the property the test was named for. A grep can tell you a
-  mechanism exists. It cannot tell you the mechanism has no exceptions, and a
-  guard's entire value is in having none.
-
-  **The rule: never assert a guard by searching for it. Exercise the paths it
-  must cover, including the one you think nobody uses.** Both replacements do:
-  one drives `createDiscogsClient` with the real `fetch` and expects a refusal,
-  the other drives it with an injected `fetch` and expects success, so the
-  guard is pinned in both directions.
-
-  **The tell: a test whose assertion is `toMatch` on source code.** If the
-  answer to "what would have to be true for this to pass while the property is
-  false" is "a name in the wrong place", it is not a test of the property.
-  Noticed: step 7, security unit 5.
-
-  **CORRECTED — this rule was recorded too bluntly, and the test-quality pass
-  found the counterexample.** "A test whose assertion is `toMatch` on source
-  code" is not the tell. The tell is narrower:
-
-  > **A file-text assertion is right exactly when the property is about a FILE,
-  > and wrong when it stands in for behaviour that can be observed.**
-
-  `neon-gate.test.ts` greps `neon-transactions.test.ts` for its gate test's
-  name, which reads like the shape condemned above. Mutation says otherwise:
-  renaming the gate away is caught ONLY by that grep. Its behavioural sibling —
-  which actually runs vitest and greps the output — PASSES, because the warning
-  text it matches is unchanged.
-
-  **No behavioural test can notice that another test was deleted.** A deleted
-  test does not fail; it stops existing, and the suite goes green with less
-  coverage. The property "this test still exists" is genuinely a property of a
-  file, and a file-text assertion is the only instrument for it.
-
-  So the question to ask is not "does this assert on source text" but "is the
-  thing being asserted a fact about the file, or about the running system". The
-  `guardedFetch` case above was the second: it asserted a NAME and inferred a
-  guard was complete. `every-page-has-nav` was the second too — it asserted a
-  string and inferred a nav renders, and passed 11/11 against
-  `{false && <AppHeader />}`. `neon-gate` is the first, and stays.
-  Corrected: test-quality pass after R4.
-
-  **SAME CLASS, WORST FORM YET: asserting a CONFIG FILE'S TEXT rather than the
-  running system's BEHAVIOUR.** The test passed for the entire period the thing
-  it named was inert.
-
-  A repo test asserted that `playwright.config.ts` starts the dev server with
-  `NODE_ENV=test`. It does — and Next FORCES `NODE_ENV` to "development" for
-  `next dev`, discarding it. So the config line was present, the test was
-  green, and the guard keyed off that variable never applied to a single E2E
-  run. Two live calls reached api.discogs.com underneath it.
-
-  **Why it is worse than the other two in this entry.** A message-less
-  `.toThrow()` at least observes the code under test; it just cannot tell which
-  failure. This observes a FILE, and infers behaviour from it. The inference was
-  wrong in a way no amount of reading either the config or the guard would have
-  revealed — only running the system and asking what it saw.
-
-  Replaced with a Playwright spec that drives a real endpoint and asserts the
-  call is refused, mutation-verified: disabling the guard fails 2 of its 3
-  specs. Cost: an extra E2E spec. Value: the assertion is about the thing whose
-  behaviour matters.
-
-  **The tell: a test whose subject is a file path.** `readFileSync` in a test
-  is not automatically wrong — the dotenv and migration checks legitimately
-  assert repository FACTS — but the moment the assertion is a proxy for
-  "therefore the system behaves like X", it has stopped testing X. Ask what
-  would have to be true at RUNTIME, and whether anything checks it. Noticed:
-  step 7, the no-live-calls guard.
-
-  **SAME CLASS, DIFFERENT MATCHER: `toEqual` cannot catch an explicit
-  `undefined` where a key should be absent.** Verified rather than assumed:
-
-  ```
-  expect({ q: 'x', genreId: undefined }).toEqual({ q: 'x'})        // PASSES
-  expect({ q: 'x', genreId: undefined }).toStrictEqual({ q: 'x' }) // fails
-  ```
-
-  Found in `withFacet` (step 5, unit 7a), where clearing a filter must DELETE
-  the key rather than assign `undefined`. Replacing the delete with an
-  assignment failed no test, and a comment in the source asserted that `toEqual`
-  would have caught it — wrong, and wrong in the confident direction.
-
-  It belongs in this entry because it is the same defect shape as a bare
-  `.toThrow()`: **an assertion that appears to constrain a property it cannot
-  express.** `.toThrow()` cannot distinguish which error; `toEqual` cannot
-  distinguish absent from undefined. In both cases the test reads as though it
-  checks the thing and does not.
-
-  Compounding it here: `toQueryString` skips `undefined` too, so the serialised
-  URL is identical either way. TWO layers each blind to the difference, which is
-  why the mutation came back clean. The fix was a `toStrictEqual` test on the
-  state object plus an `Object.keys` assertion.
-
-  **Worth a sweep of `toEqual` on object shapes**, the same way `.toThrow()` was
-  swept — every place a test asserts a whole object and an extra undefined key
-  would slip through. NOT done yet; recorded so it is not lost. Noticed: step 5,
-  unit 7a.
-
-- **RULE: some defects cannot be expressed as a failing assertion, and the
-  honest move is to say so in the test rather than write one that looks like it
-  covers them.** A hang is the clearest case.
-
-  Step 7 unit 1's Discogs client retries a 429 a bounded number of times.
-  Removing the bound does NOT fail its test — it kills the vitest worker
-  ("Worker exited unexpectedly"). The loop spins on an injected `sleep` that
-  resolves immediately, so it never yields: `testTimeout` cannot fire, no
-  assertion is reached, and the harness exhausts memory first. The run reports
-  no counts at all.
-
-  **Two attempts to convert that into a clean failure both failed, each for a
-  reason worth knowing:**
-
-  | Attempt | Why it did not work |
-  |---|---|
-  | mock throws after a call ceiling | the client catches every `fetch` rejection as a network error and RETRIES — the escape hatch fed the loop it was meant to break |
-  | mock returns a non-retryable status after a ceiling | the worker dies before reaching the ceiling; the retry counter is not what runs out first |
-
-  Abandoned there per CLAUDE.md §9 rather than attempting a third.
-
-  **RESOLVED, and the resolution is the transferable part: the gap was closed
-  by adding a SECOND bound of a different kind, not by a third attempt at the
-  test.** A total elapsed-time deadline (`MAX_ELAPSED_MS`) now sits alongside
-  the attempt count. With it, removing the attempt bound FAILS the test rather
-  than crashing the worker — the runaway loop terminates on time, so the
-  assertion is reached and reports.
-
-  **Two bounds, and each makes the other testable.** Neither alone is enough:
-  the attempt count catches a fast retry storm, the deadline catches a slow one
-  — including a hostile or mistaken `Retry-After: 3600`, which a count-based
-  limit would obey to the letter. Both are mutation-verified, including the
-  plausible mistake of checking the deadline AFTER sleeping rather than before,
-  which fails 2 because the sleep has already spent the budget being protected.
-
-  **Why the deadline was the right instrument** — it matches the actual
-  production risk. An unbounded retry in a vitest worker is an OOM; in a
-  serverless function it is a WEDGED REQUEST holding execution time until the
-  platform kills it, with the user watching a spinner. So the useful guarantee
-  is "this returns within ten seconds either way", not "this makes at most four
-  attempts". A lint rule against unbounded loops was the other candidate and
-  was rejected: it would fight the `for (;;)` retry idiom and constrain the
-  shape of the code rather than the risk.
-
-  **SECOND INSTANCE, and it means the OPPOSITE — read the crash before
-  concluding anything from it.**
-
-  Step 8 unit 4: removing `readCapped`'s streaming size cap (`arrayBuffer()`
-  instead) also killed the worker, `FATAL ERROR: ... heap out of memory`, no
-  counts reported. Same symptom, same absence of a red assertion. The
-  interpretation is inverted:
-
-  | | Step 7, retry bound | Step 8, size cap |
-  |---|---|---|
-  | Crash is | **the defect** — the test never reached its assertion, so the bound was UNVERIFIED | **the consequence** — the mutated code did the harmful thing, loudly |
-  | Evidence value | none; the gap stayed open | stronger than a failed assertion |
-  | Action | add a second bound of a different kind | none; the cap is verified by other tests too |
-
-  **The distinguishing question: does the CRASH itself demonstrate the harm the
-  code prevents?** Buffering an unbounded stream IS the production failure —
-  the process dying is the property under test, arriving in person. An
-  unbounded retry loop spinning on an immediate `sleep` is an artefact of the
-  test harness's fake clock, not what production does.
-
-  **The rule: a mutation that crashes is not automatically a bad mutation, and
-  not automatically a good one.** Ask whether the crash is the behaviour being
-  prevented. If yes, record it as evidence and keep an ordinary assertion
-  alongside it (here, `cancelled === true`, which fails cleanly). If no, the
-  mutation proved nothing and the gap is still open.
-
-  **The general rules, both still standing:**
-
-  1. When a mutation produces a CRASH rather than a failure, the test does not
-     cover it. Say so, in terms of what it does and does not constrain — a
-     stated gap is a smaller problem than a false claim of coverage.
-  2. **Before concluding a property is untestable, ask whether a DIFFERENT
-     guarantee would make it testable.** The same move as the `formatPrice`
-     variant above, where the discriminator was on another axis: here the
-     answer was not a cleverer harness but a second bound the code was arguably
-     missing anyway. A property that resists testing is sometimes telling you
-     the code is underspecified. Noticed and closed: step 7, unit 1.
-
-- **RULE: this toolchain reports ABSENCE as SUCCESS in at least three distinct
-  ways. A green result can mean "nothing ran", not "nothing broke".**
-
-  Three instances, three different mechanisms, all in this build:
-
-  | What was absent | How it appeared | Found by |
-  |---|---|---|
-  | A test file that could not be imported | `Tests no tests`, after `Test Files 1 failed` | reading past the summary line |
-  | A whole file's worth of skipped tests | a `console.warn` at module scope, swallowed | investigating something else |
-  | A test that never reached Neon | a passing `.rejects.toThrow()` catching the wrong error | probing what the error actually was |
-
-  **The third one is the reason this entry exists**: the hollow Neon test
-  reported green for weeks while never contacting the database it existed to
-  verify. The other two are cheaper but the same shape.
-
-  **The first is the newest** (step 6, unit 2). A `ReferenceError` thrown while
-  IMPORTING a test file — `uuid is not defined`, left by an incomplete deletion
-  — surfaces in the summary as `Tests no tests`. There is a `Failed Suites 1`
-  section above it with the stack trace, but the line most readers scan for a
-  verdict says the tests did not run rather than that they failed. A run that
-  collects zero tests from a file that had thirteen is a failure; it reads as a
-  skip.
-
-  **The common shape: the absence of a signal is being rendered in the same
-  visual register as a positive result.** Vitest's summary, a swallowed warn,
-  and a satisfied assertion all look like the thing worked.
-
-  **The rule: for any check that matters, know its POSITIVE count and assert
-  it.** Not "did the suite pass" but "did the number of tests that ran match
-  what should have run". This is why the Neon gate reports "9 passed" rather
-  than "green", why `test/repo/neon-gate.test.ts` fails BY NAME when the branch
-  is unconfigured, and why CURRENT POSITION carries counts rather than ticks. A
-  count can be wrong in a way a tick cannot. Noticed across steps 4-6.
-
-  **FOURTH INSTANCE, and the first originating OUTSIDE this system: Discogs
-  encodes absence as PROSE.** Every entry above is our own tooling reporting
-  nothing-happened as nothing-broke. This one arrives over the network from a
-  third party, which makes it a different problem: no amount of discipline in
-  our own code prevents it, and it is invisible until someone reads real
-  payloads.
-
-  Real values from the captured search fixtures (step 7, unit 3):
-
-  | Field | Discogs sends | Passed through, it means |
-  |---|---|---|
-  | `country` | `"Unknown"` | pressed in a country called Unknown |
-  | `catno` | `"none"` | catalog number "none" |
-  | `label` | `["Not On Label"]` | released by a label called Not On Label |
-
-  **These are worse than nulls, because they look ENTERED.** A blank country
-  reads as "we don't know"; the string "Unknown" reads as a fact somebody
-  recorded, and it will sort, filter and display as one. §5.7 already says
-  Discogs data is user-submitted and imperfect — this is the concrete form that
-  takes, and it fabricates data rather than omitting it.
-
-  **No hand-written fixture would have contained them**, which is the argument
-  for captured fixtures in one line. I would have written `country: null` for a
-  missing country, because that is what a sane API does.
-
-  **THE INVERSE, and it is the same error wearing the other face: a value that
-  is PRESENT and means something else.** Absence-prose fabricates data where
-  there was none; this misfiles data that exists.
-
-  Discogs' format `text` field carries whatever a contributor wrote about that
-  pressing's physical form. On release 381756 it is `"Gatefold"`; on the
-  no-matrix fixture it is `"Blue/Green"`. Same field, same type, and one is a
-  sleeve fact while the other is the vinyl colour §4.2 asks for.
-
-  Read unconditionally into `color_variant`, every gatefold record in the
-  collection acquires a colour of "Gatefold" — wrong in the confident
-  direction, exactly like `country: "Unknown"`, and for the same reason: it
-  looks entered, so nobody questions it.
-
-  **The rule: when an external field is a free-text catch-all, require positive
-  evidence before mapping it to a typed column.** The colour mapping now needs
-  a colour word to appear. Conservative on purpose — a missed colour is a blank
-  the user fills in, a wrong one is data they have to notice is wrong first.
-
-  **SAME SOURCE, DIFFERENT SHAPE PER ENDPOINT — and the mismatch is silent.**
-  Discogs sends the same information in different shapes depending on which
-  endpoint answered, and nothing announces the change:
-
-  | Field | Search results | Master versions |
-  |---|---|---|
-  | format descriptors | ARRAY `["Vinyl","LP","Reissue"]` | STRING `"LP, Album, Reissue"` |
-  <!-- 2026-08-25: search ALSO sends a plural `formats` array of objects carrying
-       `text`, which this table's first row does not mention and which was
-       undeclared in the schema until the Doors lookup fix. See the corrected
-       endpoint table under the field-per-endpoint rule. -->
-  | year | `year` | `released` |
-  | genres / styles | `genre` / `style` (singular) | — |
-  | community counts | `community.have` | `stats.community.in_collection` |
-
-  **The consequence is worse than a missing field.** Treating the version
-  string as an array yields ONE descriptor that matches nothing, so
-  `isReissue` is false for every row — on the screen built specifically to tell
-  an original from a reissue. It does not throw, it does not warn, and the
-  table looks complete. Reading `year` instead of `released` empties the column
-  that separates the 1982 original from the 1989 repress.
-
-  **The rule: normalize per endpoint, and never assume two endpoints of the
-  same API share a field's shape.** Where the RULES are shared (absence-prose,
-  reissue inference) extract them; where the SHAPES differ, keep separate
-  parsers and let each one state what it expects. A single "clever" normalizer
-  spanning both is how the string-as-array case gets written.
-
-  **The rule for any external boundary: enumerate how the source spells
-  ABSENCE, from real payloads, before mapping its fields.** Null and undefined
-  are the easy cases. The dangerous ones are sentinel strings, `0` for "not
-  set", `"0000-00-00"` dates, and empty arrays that mean "unknown" rather than
-  "none". Normalize them to null at the boundary, in one place, and test the
-  mapping at the ENDPOINT as well as in the normalizer — a pure function is
-  easy to bypass with a wiring change. Noticed: step 7, unit 3.
-
-- **RULE: prose is more rigorous than the work it describes, and it is always
-  wrong in the flattering direction.** Comments, headers and STATUS REPORTS all
-  do this. Three instances now, the third the worst:
-
-  1. `isUniqueViolation` sat dead for a whole build unit behind a confident
-     comment describing what it caught.
-  2. A comment in `withFacet` asserted that `toEqual` would catch an
-     `undefined`-vs-absent mutation. It cannot — verified.
-  3. **`src/lib/records/create-schema.ts` (step 6, unit 3).** Its header says
-     the schema is "shared by `POST /api/records` and
-     `POST /api/want-list/:id/acquire`", and argues the case: *"Defining it
-     twice is how they drift — and the drift would be silent."* Only acquire
-     ever imported it. `POST /api/records` kept its own local `createSchema`,
-     so the module warning against a second definition WAS the second
-     definition. Found by the step 5+6 adversarial review, not by any test.
-
-  **What makes the third one different: the artifact that outran the work was
-  the REPORT.** The unit 3 report stated as fact that the schema was "shared
-  with POST /api/records". Nobody checked, because a status report is read as
-  a record of what happened rather than as a claim needing verification — and
-  it is written by the party least able to audit it. The comment then encoded
-  the same false claim in the source, where the next person editing one file
-  would reasonably believe both had moved.
-
-  **Why this class is nastier than a wrong comment.** A wrong comment misleads a
-  reader. A wrong report misleads the REVIEW — it removes the item from the list
-  of things anyone will look at again. Every other rule in this file assumes
-  something eventually gets checked; this is the failure that opts out of that.
-
-  4. **A false JUSTIFICATION, which is the most durable form** (step 6 unit 2).
-     The same `create-schema.ts` header explained WHY the copy existed:
-     "`MAX_NESTED_IDS` is inlined rather than imported from the query layer,
-     which is `server-only`… pulling a server-only module through it would be a
-     needless coupling." Two files already did exactly that import
-     (`api/records/route.ts:7`, `api/records/[id]/schema.ts:3`), and this module
-     is imported only by route handlers, so the coupling it warned of could not
-     occur.
-
-     **A false comment misleads a reader; a false justification survives
-     review.** A bare "copied from X" invites the question "why not import it?"
-     — the reasoning is missing, so a reviewer supplies it. A stated rationale
-     answers that question before it is asked, and a reviewer who accepts the
-     premise stops there. The more plausible the reason, the longer the copy
-     lives: this one named a real project rule (CLAUDE.md §6) and a real
-     constraint that simply did not apply here.
-
-     **The check:** when a comment explains why the obvious approach was NOT
-     taken, verify the obstacle exists — usually one grep for whether anything
-     else already does the thing being called impossible. Treat a justification
-     as a claim with a higher burden than a description, not a lower one.
-
-  **The rule: a report sentence claiming a code property is an assertion, and
-  gets verified like one before it is written.** "Shared by both endpoints" is
-  one grep. Specifically, when a unit says it EXTRACTED or CONSOLIDATED
-  something, grep for the importers and count them — an extraction with one
-  importer is a copy, whatever the header says. Same discipline as a mutation:
-  do not report the property, report what you ran. Noticed: step 6 unit 3,
-  found by the step 5+6 adversarial review.
-
-- **RULE: when a check can fail in two directions, pick the default by asking
-  which error the user NEVER FINDS OUT ABOUT. Not by which is more likely, and
-  not by treating them as equivalent.**
-
-  (See also the guard-and-its-callers rule below, which is how the same badge
-  came to be silently missing on the versions table.)
-
-  §7.7's ownership tiers were settled this way, and the reasoning is recorded
-  because a future change would otherwise undo it without knowing there was an
-  argument. The two errors:
-
-  | Wrong answer | What happens | Does the user learn? |
-  |---|---|---|
-  | "You own this pressing" when they own a DIFFERENT one | they put back a record they wanted | **No.** They walk away and never discover it |
-  | "You own a different pressing" when they own THIS one | they buy a duplicate | Yes — at home, within the hour |
-
-  **The second error corrects itself; the first is permanent and invisible.**
-  So the exact tier requires POSITIVE EVIDENCE — a pressing row carrying the
-  same `discogs_release_id` — and everything short of it falls to tier 2. The
-  design is not "match as precisely as possible", it is "be reluctant to claim
-  the specific thing".
-
-  A record logged with no pressing at all reads as tier 2 for the same reason:
-  the user owns the album, nothing establishes which pressing, and "you own a
-  different pressing" is honest where "you own this pressing" is a claim
-  nothing supports. That case is also the LIKELIEST one in practice, since
-  §10's quick in-store entry exists to create records without pressings.
-
-  **The general form: symmetry is the assumption to check, not the default.**
-  Two failure directions are rarely equally costly, and the asymmetry is
-  usually in DISCOVERABILITY rather than in frequency or severity. An error the
-  user cannot detect gets no correction and no bug report — it is not merely
-  worse, it is worse in a way that never appears in any feedback anyone
-  receives.
-
-  **The tell that this reasoning has been lost:** a later change making the
-  matching "smarter" or "more accurate" without saying which direction it
-  loosens. Noticed: step 7, unit 8a.
-
-- **The decorative-test check has now caught one in ADVANCE rather than by
-  mutation** (step 7, unit 8c). Sixth instance overall, first prevented.
-
-  The test asserted that a column list is "static, not computed from the rows":
-
-  ```ts
-  expect(Object.isFrozen(COMPARISON_COLUMNS) || Array.isArray(COMPARISON_COLUMNS)).toBe(true);
-  expect(COMPARISON_COLUMNS).toHaveLength(5);
-  ```
-
-  `Array.isArray` on an array is trivially true and a length check constrains
-  nothing — it asserted the property in its NAME and not in its body, which is
-  the shape CLAUDE.md §2 describes. Deleted while writing, not after a mutation
-  came back clean.
-
-  The five before it were all found afterwards: a probe deleted, a length test
-  measuring itself, a whitespace test caught incidentally, an NFD literal
-  normalised on disk, and "Misprint" colliding with no reissue prefix. The
-  difference here was applying §2's question — *name the line of source this
-  would fail against* — BEFORE running it rather than after.
-
-  **What replaced it is worth more than a better test: the TYPE SYSTEM holds
-  the decision.** A data-dependent column order changes the export's shape from
-  a constant to a function, and the compiler names every call site. A guarantee
-  the compiler enforces does not need a test, and a test that cannot fail is
-  worse than the absence of one — it reports coverage that is not there.
-
-  **The general form: before writing a test for a property, ask whether
-  something already makes the property unrepresentable.** Types, constraints
-  and unique indexes all do this. The identity assertion in
-  `create-schema.test.ts` is the same move from the other direction — making
-  drift unrepresentable rather than detectable.
-
-- **RULE: a module whose only consumers are its TESTS has an unvalidated
-  interface. Tests exercise a function; callers exercise a DESIGN.**
-
-  `ownership-badge.ts` was written in unit 8b with 16 passing tests, mutation-
-  verified in four directions. All of that was true and none of it established
-  that the module's SHAPE was right — it took the internal `OwnershipMatch`,
-  because that was the only ownership type that existed when it was written.
-
-  The §5.7 amendment then made the endpoints emit a different wire shape, and
-  the component that finally consumed the badge received THAT. The module could
-  not serve it. What happened next is the point: rather than failing, the
-  component grew its own copy of the labels — a second definition of the most
-  consequential text in the app, appearing exactly where the real caller was.
-
-  **Passing tests on an uncalled module tell you the function is correct, not
-  that anyone can use it.** The tests were written by the same person, in the
-  same hour, with the same picture in mind; they inherit the design's
-  assumptions rather than testing them. A caller is an independent party with
-  its own requirements, which is what makes it evidence.
-
-  **The practical rule: while a module's only importers are test files, treat
-  its interface as provisional.** Wire it to something real before adding more
-  to it, and expect the first real caller to change its shape. The failure mode
-  is not a broken module — it is a duplicate appearing at the call site,
-  because copying is easier than reshaping something that already looks
-  finished.
-
-  **The tell:** `grep` for importers excluding `*.test.*` returns nothing. Same
-  check as the extraction-with-one-importer rule, asking a different question:
-  that one asks whether a claimed consolidation happened, this asks whether the
-  design has ever met a consumer. Noticed: step 7, unit 8c.
-
-- **RULE: a guard justified by its CURRENT CALLERS is an assumption about
-  callers, not about the function — and it fails on the first caller that does
-  not fit.**
-
-  `matchOwnership` opened with `if (artist === null || title === null) return
-  NONE`. Correct for every caller that existed: all of them came from search
-  results, which carry both. And correct-LOOKING forever, because a guard at
-  the top of a function reads as input validation.
-
-  It is not. §7.7's tier 1 matches on `discogs_release_id` ALONE — a stronger
-  identification than any text comparison — so it never needed the artist. The
-  guard skipped it anyway.
-
-  **The first caller that did not fit was the versions endpoint**, where
-  Discogs' rows carry a title and no artist. The result: a table of pressings
-  reporting "no badge" for a record sitting on the shelf, on the screen built
-  to compare pressings. Nothing failed — every existing test supplied an
-  artist.
-
-  **The tell: a guard at the TOP of a function that serves only SOME of the
-  paths below it.** The check belongs next to the code that needs it. Moved
-  down, tier 1 runs regardless and tiers 2 and 3 return honestly; a regression
-  test now covers the null-artist path in both directions.
-
-  **The general form:** "no caller does that" is a fact about today. A
-  precondition that is really about one branch, hoisted to the entry point,
-  silently disables the branches that never had it. Noticed: step 7, unit 8c.
-
-- **FOR THE SECURITY REVIEW: `POST /api/discogs/import` re-fetches the release
-  by id rather than accepting a release payload from the client. That is a
-  SECURITY decision, not a spec-reading, and it should be reviewed as one.**
-
-  §5.7 gives the body as `{ discogsReleaseId, target, overrides }` — no release
-  payload — and the implementation follows it. The distinction the shape
-  enforces: **a client asserting facts about a pressing versus the server
-  establishing them.**
-
-  If the endpoint accepted a payload, any caller could claim any pressing
-  identity — a `discogs_release_id` belonging to a different release, a matrix
-  that was never in the dead wax, a catalog number matching a rare original.
-  Those values are found-or-created into SHARED `pressings` rows (§4), so a
-  false claim does not stay local to one record: it becomes the pressing every
-  future import of that release matches against. §7.7's ownership tiers then
-  read from it, and CLAUDE.md §8 calls getting that distinction wrong the worst
-  bug this app can ship.
-
-  The user's corrections still arrive — as `overrides`, which are an explicit,
-  strictly-validated, bounded field list rather than an arbitrary object.
-
-  **Single-user app, so the threat model is thin today.** Recorded because the
-  property is easy to lose: accepting the payload the client already has looks
-  like an obvious optimisation — it saves a rate-limited call — and the reason
-  not to is not visible from the endpoint alone. `test/integration/api/
-  discogs-import.test.ts` asserts both halves (it re-fetches; it rejects a
-  client-supplied `release` key).
-
-  **The general shape for the review: which endpoints let a client assert a
-  fact the server could establish itself?** Noticed: step 7, unit 7.
-
-- **RULE: cache the UPSTREAM payload, never your interpretation of it — your
-  interpretation is the part that changes.**
-
-  The Discogs release cache stores the raw payload and normalizes on every
-  read, rather than storing the normalized result. Two reasons, and the second
-  is the one that decides it:
-
-  1. **Normalization is our code and it keeps changing.** Six units into this
-     step the mapping has already been corrected several times — the colour
-     rule, the pressing-plant role, the matrix array. Caching output freezes
-     today's mapping for seven days, so a fix does not reach any record someone
-     has already viewed. The bug is fixed and the user still sees it.
-  2. **Double-normalization.** Feeding normalized output back through the
-     normalizer produces a different shape again, so the second request for a
-     release returns something the first did not.
-
-  **The second failure is invisible to any test that fetches once**, which is
-  most tests. It appears only on a cache HIT, meaning in production, after a
-  release has been looked at twice — and it presents as an intermittent shape
-  difference rather than an error. The test that catches it is explicitly "the
-  cached body equals the fresh body".
-
-  **The general shape: a cache stores a snapshot of something. Make sure it is
-  a snapshot of THEIRS, not of yours.** Theirs changes when they edit it, which
-  is what the TTL is for; yours changes when you deploy, which no TTL accounts
-  for. Noticed: step 7, unit 6.
-
-- **RULE: a search that does not cover the space returns a confident
-  UNDERCOUNT, and an undercount looks exactly like a correct count.** Third
-  instance of "verified by execution, wrong premise", and the cheapest to
-  prevent.
-
-  Step 7's `validationError` defect was reported as affecting TWO endpoints. It
-  was eight. The grep was real, it ran, its output was accurate — and it
-  covered `src/app/api/records/` and `src/lib/records/` rather than `src/`.
-  Every PATCH endpoint in the project carries the same object-level refine.
-
-  **Why this is worse than a failed search.** A search that finds NOTHING
-  prompts a second look; nobody accepts "no results" for something they know
-  exists. A search that finds SOMETHING closes the question — the number gets
-  written into a report, scoped into a unit, and nothing about it invites
-  re-checking. The two-endpoint figure survived into a commit message and a
-  plan.
-
-  **The check, and it is one line:** before quoting a count, run the search
-  once more from the repository ROOT with no path filter, and confirm the two
-  numbers agree. If they differ, the narrower one was measuring your assumption
-  about where the code lives.
-
-  Related and already recorded: the extraction-with-one-importer check, which
-  is the same discipline for a different question. Both are about whether a
-  claim covers the space it appears to. Noticed: step 7, validationError unit.
-
-  **Fourth instance, and the first where the instrument was a hand enumeration
-  in a planning document rather than a grep in code.** The SPEC amendment sets
-  under-counted the same class three times running — "four places use this
-  term" was five, then six. Each pass found the ones the previous pass named
-  plus one more, because each searched for the specific phrase (`graph-based`)
-  rather than the root (`graph`). The correction is not a more careful list: it
-  is that a claim about coverage in a planning document is an assertion, and
-  gets verified by execution like any other. Same family as the
-  `validationError` two-endpoints-that-were-eight finding. Noticed: SPEC
-  amendments A16–A17.
-
-- **RULE: a class can be SOLVED and not RECOGNISED, and the giveaway is a
-  comment calling the general case an exception.**
-
-  Distinct from the prose-outran-the-work family above, and worth separating:
-  there the comment was FALSE and the work undone. Here the work was correct,
-  the comment was accurate, and the FRAMING was too small — which is why no
-  amount of verifying the claim would have caught it.
-
-  `validationError` handled `unrecognized_keys` as a special case because Zod
-  gives it an empty `path`. The header said so, in writing:
-
-  > "`unrecognized_keys` is the exception that made this more than a one-liner:
-  > it describes the object, not a field, so Zod gives it an empty path"
-
-  That sentence contains the general rule — *issues describing the object have
-  no path* — and files it under "exception". Object-level `.refine` has exactly
-  the same shape, and its message was dropped by the same line of code for
-  eight endpoints.
-
-  **The tell: a comment that explains WHY a case is special in terms that would
-  apply to other cases too.** "It describes the object, not a field" is not a
-  property of `unrecognized_keys`; it is a property of a category. When the
-  justification for a special case generalises, the case is not special —
-  enumerate the others before writing the branch.
-
-  **The check when adding one:** ask what else has the property just used to
-  justify it. Here, one search of Zod's issue codes for those with an empty
-  path would have found the refine case years of sessions earlier. Noticed:
-  step 7, validationError unit.
-
-- **RULE: probes are code too, and a verified-by-execution claim still needs its
-  premise checked.** NOTES already says "a mutation is code, and it can be
-  wrong". Extend that to probes, and to the review loop around them.
-
-  **The instance.** The `.toThrow()` sweep above reported a seventh finding that
-  was FALSE: that `assertLocalHost` accepts `postgresql://u:p@[::1]/db` while
-  rejecting four other loopback spellings, making the guard "comprehensive-
-  looking but holed". The probe output was accurate — `[::1]` IS accepted. The
-  INFERENCE was wrong. `::1` is deliberately allowed: there is a comment
-  directly above `LOCAL_HOSTS` saying so, `stripBrackets` exists for no other
-  purpose than to make it match, the error message names `::1` in its allowed
-  set, and two existing tests cover it as accepted.
-
-  **What made it look like a hole** was reading one probe result without
-  checking what produced it — the same error the sweep existed to find in tests.
-
-  **What caught it** was not re-reading. It was testing whether the POLICY held
-  across spellings: `[0:0:0:0:0:0:0:1]` and `[::0001]` also came back accepted,
-  which looked like confirmation of a real gap until tracing the resolved host
-  showed pg-connection-string NORMALISES all three to `[::1]` before the guard
-  runs. They are accepted because they ARE `::1`. The genuinely non-loopback
-  addresses — `[::2]`, `[fe80::1]`, `[::ffff:127.0.0.1]` — are all correctly
-  rejected. The guard is right as written; no code changed.
-
-  **The part that is about the loop, not the probe.** The finding was APPROVED
-  for fixing on the strength of the report, without the guard being read — so
-  both sides of the review accepted a conclusion whose premise neither had
-  checked. A claim being "verified by execution" makes the OBSERVATION reliable;
-  it says nothing about whether the observation means what the reporter says it
-  means. Both roles have to check the premise, and the reviewer's approval is
-  not a substitute for the reporter's having done so, nor the reverse.
-
-  The prior commit message (`b2c7129`) records the false finding as fact. Left
-  unrewritten deliberately — a pushed commit is history — which is why the
-  correction lives here. Noticed: step 5 remediation.
-
 - **CORRECTED — the database DOES protect reference rows; an earlier entry here
   said the opposite.** This entry previously claimed `record_tags.tag_id` was
   `ON DELETE CASCADE` and that only the application layer stood between a delete
@@ -3219,208 +1402,6 @@ form the records work had not shown — see the masking entry under Open.
   reference count before attempting the delete, not to prevent data loss. Both
   layers are kept deliberately; see unit C. Corrected: step 4, unit E.
 
-- **RULE: environmental causes look like logic bugs, and a diagnosis that
-  survives four failed fixes is probably about the wrong thing.**
-
-  **Four instances now** — the two below, the prerendered `/manage` page, and
-  the 390px screenshot failure recorded further down. The count is the point:
-  this is not a one-off, it is the most common way an investigation here goes
-  wrong. When something fails, the environment is a first-class hypothesis, not
-  what you fall back to after the logic explanations run out.
-
-  Two `/manage` genre specs were quarantined from step 4 until step 5's E2E
-  stability unit — weeks — against the diagnosis "`router.refresh()` has not
-  delivered new props when the assertion runs". Four fix attempts aimed at that
-  mechanism, including two `aria-busy` approaches, and NOTES recorded that they
-  "made it worse".
-
-  **Neither actual cause was in the application.** Both were environmental:
-
-  1. **Accumulated fixture rows.** E2E specs wrote through the real API and
-     nothing cleaned up, so every run's genres persisted. The move select's
-     contents depend on how many genres exist. Fixed by resetting the E2E
-     database once per run.
-  2. **`/manage` was prerendered at build time.** It reads seven tables and
-     uses no request-scoped API — auth is in middleware, which does not opt a
-     page into dynamic rendering — so a production build served a snapshot.
-     Found only by running E2E against a production build.
-
-  After both, the specs passed **9/9 across every configuration** and are
-  unquarantined.
-
-  **Why the diagnosis persisted:** it was plausible, it named a real mechanism,
-  and it was never re-derived — each attempt inherited it. The measurement that
-  would have refuted it (PATCH 1264ms vs refresh 142ms) took ten minutes when
-  finally done. See the "same family is a hypothesis" rule above; this is the
-  same failure one level up, where a *cause* rather than a *resemblance* went
-  unchecked.
-
-  **The check:** when a fix aimed at a diagnosis fails twice, stop fixing and
-  re-derive the diagnosis. Test the environment — data volume, build mode,
-  caching — before the application logic. Environmental causes produce
-  symptoms indistinguishable from logic bugs, and they do not respond to
-  logic fixes, which is exactly why the attempts "made it worse".
-
-  **Mode 1 (`Protocol error … session closed`) never recurred** in ~30 runs
-  during the investigation. Possibly also environmental; not claimed as fixed.
-
-- **A test fixture can fail to create the condition its test claims — and
-  reading the test cannot catch it.** Two instances so far, both invisible to
-  review and both found only by mutation:
-
-  1. **NFC/NFD literals.** A typed NFD string is normalized to NFC when written
-     to disk, so `expect(nfc).not.toBe(nfd)` compared a value with itself. The
-     test passed while testing nothing.
-  2. **Enum sort order.** `price_type` is a Postgres enum and sorts by
-     DECLARATION order (`new` < `used` < `best_dig`), not alphabetically. Two
-     successive fixtures accidentally made the newest row ALSO sort first under
-     type ordering, so a type-ordered implementation passed a test asserting
-     recency.
-
-  **The rule:** when a test's precondition depends on an ordering, encoding, or
-  normalization that the DATABASE or RUNTIME controls rather than the test,
-  query the actual behavior instead of reasoning about it. `enum_range()` over
-  an assumption about sort order; `\uXXXX` escapes over a typed literal;
-  `pg_constraint` over a memory of what the schema says.
-
-  **Why it needs its own rule:** a mutation only exposes this if the fixture
-  happens to be wrong in a way that mutation reveals — in the enum case it took
-  three fixtures and two wrong hypotheses. Reading the test never catches it,
-  because the test looks correct. The tell is a fixture whose *discriminating
-  property* is assumed rather than verified. Noticed: step 5, unit 3.
-
-- **A mutation is code, and it can be wrong. "Fails N tests" is not evidence
-  until the N that failed are the ones that SHOULD have.**
-
-  In step 5 unit 6 a global-recency mutation appeared to fail 5 tests — which
-  looked like strong evidence the chain was well covered. It was not. The
-  mutation's subquery referenced `price_history` unqualified inside a Drizzle
-  template, so the correlation to the outer row silently broke and EVERY record
-  fell through the entire chain to its purchase price. It was not testing
-  "global recency instead of per-type", it was testing "no price history at
-  all".
-
-  **The tell:** a test that should have been INDIFFERENT to the change failed
-  anyway. Both rules return the same value for a record whose only prices are
-  `used`, so the used-only test had no business failing. Checking that one case
-  in isolation exposed it.
-
-  Rewritten correctly — using the same helper style as the real code, so the
-  correlation works — it fails 2, which are exactly the two cases that
-  distinguish the rules. **The smaller number was the honest one.**
-
-  An inflated count is worse than a small one: it reads as stronger evidence
-  while actually meaning the mutation broke something other than the behaviour
-  under test, leaving that behaviour unverified. Add to the mutation checklist
-  alongside "what produced the correct outcome instead" — before trusting a
-  count, confirm the failures are the predicted ones. Noticed: step 5, unit 6.
-
-  **COROLLARY: a mutation result from a DIRTY BASELINE is not a result — and
-  the specific trap is that `git checkout` does not restore an UNTRACKED file.**
-
-  A mutation on a file created in the current unit is not yet in git, so
-  `git checkout <path>` succeeds, prints nothing, and changes nothing. The
-  mutation silently persists into the next one, and every subsequent count is
-  measuring two mutations stacked while appearing to measure one.
-
-  Hit in step 8 unit 2: M3 reported 2 failures against a file still carrying M2,
-  so the number was unattributable. Restored from source and re-run alone, the
-  honest count was 1.
-
-  **The habit:** for a new file, snapshot it (`cp`) before the first mutation
-  and restore from the copy — or commit first. Then verify the baseline is
-  green BETWEEN mutations, not only at the end. A green run between two
-  mutations is the cheapest possible proof the previous one was undone.
-
-  **THIRD TRAP, distinct from both: the mutation can apply CLEANLY to the wrong
-  code.** Not a dirty baseline and not a changed test count — the edit succeeds,
-  the suite runs, and it measures a query nobody was testing.
-
-  Step 9 unit 4. `records.ts` contains `.innerJoin(labels, ...)` TWICE. A
-  `str.index()` anchor found the first occurrence, in an unrelated query, so the
-  `byLabel` LEFT JOIN mutation reported "0 failures" and I nearly concluded the
-  test was decorative. It was correct — measured directly against Postgres, a
-  LEFT JOIN yields a null-named group, exactly what the test asserts against.
-  Re-anchored on `const byLabel` first, it fails 2.
-
-  **The tell: a mutation you expected to fail something that reports zero.**
-  Before concluding the test is weak, confirm the mutation LANDED — grep the
-  mutated file for the change, or count occurrences of the anchor first. Three
-  traps now, all producing a number that looks like evidence:
-
-  | Trap | Symptom | Check |
-  |---|---|---|
-  | dirty baseline | plausible count, unattributable | green run between mutations |
-  | changed test set | count moves for the wrong reason | run the whole file, fixed set |
-  | **wrong anchor** | **zero failures on a real gap** | **confirm the edit landed where intended** |
-
-- **UX HAZARD for step 9's stats screen: one record legitimately shows two
-  different prices, and it will read as a bug.**
-
-  SPEC.md §5.2's record detail shows "latest price" — the most recent
-  `price_history` row, whatever its type. §7.6's estimated collection value uses
-  a different rule: the most recent row of type `used`, falling back to `new`,
-  then `purchase_price`. Both verified against the database.
-
-  So a record with an old `used` price of 20.00 and a newer `new` price of 99.00
-  displays **99.00** on its detail screen while contributing **20.00** to the
-  collection total. Both numbers are correct and the separation is deliberate —
-  they answer different questions — but whoever meets the discrepancy first will
-  reasonably read it as an arithmetic bug.
-
-  **What step 9 must do:** the stats screen states in words what it is summing,
-  rather than presenting a bare number. Something to the effect of "estimated
-  from the most recent second-hand price, or the new price, or what you paid" —
-  the point is that the rule is visible, not that the wording is exact. A
-  tooltip on the figure is not enough if the figure is what gets screenshotted.
-  Noticed: step 5, unit 6.
-
-- **A mutation that fails nothing does not mean the code is dead.** Three
-  distinct patterns have now produced "removing this breaks no test", and only
-  one of them meant the code was genuinely unused:
-
-  1. **Genuinely dead** — `isUniqueViolation` read `.code` off Drizzle's
-     wrapper, where it is always undefined, so the branch never matched.
-  2. **Live but unconstrained** — the branch executes and is correct, but no
-     test holds it: both `isUniqueViolation` call sites after the unit C fix,
-     and the `'is missing'` branch in `parseEnv`.
-  3. **Masked by a different mechanism** — the branch is real and load-bearing,
-     but its absence produces the same observable outcome by another path. The
-     `pressings` discogs-id match branch: remove it and the request falls
-     through to create, the partial unique index rejects the duplicate, and
-     POST's recovery returns the winning row. Same 200, same body, different
-     mechanism. It looks dead to a mutation test *and* to a reviewer, and the
-     "delete unreachable code" instinct removes it.
-
-  **The check:** when a mutation fails nothing, do not conclude the code is
-  dead — determine what produced the correct outcome instead. If the answer is
-  a different mechanism, both are real and each needs an isolating test.
-  Removing both layers together is what distinguishes case 3 from case 1.
-  Noticed: step 4, pressings.
-
-  **Two more instances in the step 5 remediation, and they resolved OPPOSITE
-  ways — which is the point of doing the determination rather than guessing:**
-
-  4. **KEPT (case 3).** `count(DISTINCT record_id)` in the stats ancestry CTE.
-     Removing it fails nothing, because `UNION` (not `UNION ALL`) has already
-     deduped the `(record_id, genre_id)` pairs as the walk produces them.
-     Removing BOTH fails the double-count test. Probed the CTE directly to
-     establish that UNION was doing it. Both kept, because they guard different
-     things: UNION also bounds the walk if a cycle ever reaches the data, the
-     same reasoning as `wouldCreateCycle`. Documented in the source, since the
-     "delete unreachable code" instinct removes one, sees green, and removes the
-     other in a later pass.
-
-  5. **REMOVED (subsumed).** A `.min(1, 'must not be empty')` on the year
-     filter schema. Its mutation also failed nothing — but probing showed the
-     empty string is already rejected TWICE over: the digit regex `/^-?\d+$/`
-     fails on `''`, and `isValidFormedYear(0)` is false. Unlike case 4, this
-     layer guarded nothing the others did not already cover, so it went.
-
-  **The distinguishing question is not "does removing it fail a test" — both of
-  these answered no. It is "what would go wrong that nothing else catches".**
-  For 4 the answer was a cycle in the data; for 5 there was no answer.
-
 - **DEFERRED to step 14 — concurrent PATCHes to one record can interleave their
   genre replacements.** `updateRecordWithNested` now wraps all three writes in
   one transaction, so a FAILED PATCH rolls back completely. That is a different
@@ -3435,25 +1416,6 @@ form the records work had not shown — see the masking entry under Open.
   transaction, or `SERIALIZABLE` isolation with a retry — not a change to the
   replacement logic. Developer decision: revisit at step 14. Noticed: step 5
   remediation, unit 1.
-
-- **COLLECTION SCREEN: undated records are invisible to ANY year range, by
-  design, with no way to surface them.** `release_year` is nullable (a record
-  can be logged before its year is known), and both year filters compare
-  against it, so `yearFrom=1980` and `yearTo=1990` and any combination all
-  exclude every null-year record. That is correct SQL semantics and correct
-  filter behaviour.
-
-  It is a UI problem, not a query bug: a user who sets any year filter silently
-  stops seeing part of their collection, with nothing on screen saying so. The
-  step 5 collection screen has to decide — an "undated" chip, a count of
-  excluded records next to the filter, or a documented choice not to. **Do not
-  "fix" this in the query layer** by making nulls pass the filter; that would
-  make `yearFrom=1980` return records that may well be from 1972.
-
-  Related and separate: this was found while fixing the empty-string coercion
-  bug, where `yearFrom=` silently applied `release_year >= 0` and dropped every
-  undated record behind a 200. That bug is fixed; this design consequence
-  remains. Noticed: step 5 remediation, unit 3.
 
 - **RESOLVED: `validationError` discarded the message from any object-level
   `.refine`, and EIGHT endpoints were answering "Invalid request" with the
@@ -3565,26 +1527,6 @@ form the records work had not shown — see the masking entry under Open.
   but choosing it before the importer exists risks blocking a legitimate flow
   nobody has designed yet. Noticed: step 5+6 adversarial review.
 
-- **`/manage` has the same 200-row assumption the collection chips had, and it
-  is NOT fixed.** `src/app/manage/page.tsx` fetches every reference resource
-  with `{ limit: 200, offset: 0 }` on the reasoning that "reference data is
-  small, so one page of 200 covers every resource and this screen needs no
-  pagination controls."
-
-  That assumption is now known to break: a single full E2E suite run produces
-  **300 genres**, and the 201st onward simply do not render — no pagination
-  control, no indication, no error. A user with many genres would silently be
-  unable to see or edit some of them, on the screen whose entire purpose is
-  editing them.
-
-  Unlike the collection chips, the facets fix does NOT apply here: `/manage`
-  must show every reference row including unused ones, because deleting an
-  unused genre is exactly what that screen is for. So this needs real
-  pagination or a search field, not a narrower query.
-
-  Deliberately not fixed in step 5 — `/manage` is step 4's screen and this is
-  scope discipline (CLAUDE.md §4). Noticed: step 5, unit 7b.
-
 - **The 1877 `formed_year` floor is the start of recorded sound, not of music.**
   §4.1 bounds `artists.formed_year` at 1877 (Edison's phonograph) on the
   reasoning that no *recording* artist predates it. A classical or early-jazz
@@ -3595,47 +1537,6 @@ form the records work had not shown — see the masking entry under Open.
   fix is to lower the floor or make it nullable-with-a-note, not to remove the
   bound, which is the only thing keeping 999999 out of §8's graph. Noticed:
   step 4, artists.
-
-- **DO NOT run `prettier` in this repo. There is no config, so it formats to
-  ITS defaults, not the house style.** Run once on a single route file during
-  the step 5+6 remediation, it rewrote every string in the file from single to
-  double quotes — a whole-file diff of unreviewed cosmetic changes wrapped
-  around a three-line fix, which is exactly the large-unreviewed-diff problem
-  CLAUDE.md §1 splits units to avoid. Reverted with `git checkout` and the
-  change reapplied by hand.
-
-  Lint does not object, because ESLint here carries no formatting rules — so
-  nothing in the toolchain will catch this on the way in. Match the surrounding
-  file by hand instead.
-
-  **If formatting is wanted, it is a deliberate step-14 decision** with a
-  committed `.prettierrc` matching the existing style and one sweeping commit
-  that touches nothing else — not an ad-hoc run inside a feature unit. Noticed:
-  step 5+6 remediation, unit 3.
-
-- **`--reporter=basic` no longer exists in Vitest 4.** It is now resolved as a
-  custom reporter *module*, so passing it fails the run with `ERR_LOAD_URL`
-  before any test executes rather than with a "no such reporter" message. Cost a
-  debugging round in unit 0. Nothing in the repo passes it today (the new probe
-  in `test/repo/env-loading.test.ts` deliberately omits any `--reporter` flag),
-  but it is the obvious thing to reach for when adding CI output formatting
-  later — the Vitest 4 equivalents are `default`, `dot`, `json`, `junit`, etc.
-  Noticed: step 4, unit 0.
-
-- **A failing assertion in `test/repo/drizzle-config.test.ts` prints a vitest
-  sourcemap error instead of the assertion message.** When vitest formats a
-  failure from that file it walks the repo root looking for sourcemaps and
-  chokes on a binary (`favicon.ico`), emitting
-  `SyntaxError: Unexpected token '<9f>', "<9f>" is not valid JSON` in place of
-  the diagnosis. **The detection itself is unaffected** — the mutation that
-  removes `.env.test` loading is reliably caught (5 passing drops to 4) — only
-  the message is unreadable. Two attempts to avoid it failed: `node
-  --experimental-strip-types` cannot load the config (its imports omit file
-  extensions under TypeScript `bundler` resolution), and reducing the assertion
-  to a short string label did not stop vitest from source-mapping the frame.
-  Left as is per CLAUDE.md §9 rather than thrashing. If it bites someone, the
-  likely fix is a vitest `server.sourcemap` setting or moving the probe into a
-  helper module outside `test/repo/`. Noticed: step 1–3 remediation, unit 3.
 
 - **DEFERRED (from step 1–3 adversarial review): timing leak distinguishes a
   malformed `APP_PASSWORD_HASH` from a wrong password.** `src/lib/auth/password.ts`
@@ -3701,23 +1602,6 @@ form the records work had not shown — see the masking entry under Open.
   one a cold session reads when asking "is the Neon gate open", and it has
   already been stale once in exactly that situation.
 
-- **README.md is a 20-byte stub.** SPEC.md §14 requires it to cover local setup,
-  running migrations, obtaining a Discogs token, running each test suite, and
-  deploying. That is project-level definition-of-done, not build step 1, so it
-  was left untouched. Noticed: step 1.
-
-- **`npm audit` reports 4 moderate advisories, all one transitive chain.**
-  `drizzle-kit` → `@esbuild-kit/esm-loader` → `@esbuild-kit/core-utils` → an old
-  `esbuild` (GHSA-67mh-4wv8-2f99: the esbuild dev server will answer cross-origin
-  requests). It is devDependency-only and does not reach the app or production
-  bundle. `npm audit fix --force` resolves it by downgrading drizzle-kit to
-  0.18.1, a breaking major regression, so it was left alone. Worth rechecking
-  when drizzle-kit next updates its bundler. Noticed: step 1.
-
-- **`d3-force` was installed in step 1 though not used until step 10.** SPEC.md §2
-  names it in the fixed stack, so it was installed with the rest of the stack
-  rather than deferred. No code imports it yet. Noticed: step 1.
-
 - **CORRECTED — `price_history` append-only IS enforced by the database.** This
   entry previously said the opposite: that nothing in the schema prevents an
   `UPDATE` and that `set_updated_at` was attached, implying updates were
@@ -3742,12 +1626,2321 @@ form the records work had not shown — see the masking entry under Open.
   its own updates; a `PATCH` that reaches this table is a bug that will surface
   as a 500, not silent corruption. Corrected before step 5.
 
-- **Next 16 deprecates the `middleware` file convention in favour of `proxy`.**
-  The dev server warns on every boot and offers a codemod
-  (`npx @next/codemod@canary middleware-to-proxy .`). `src/middleware.ts` works
-  correctly today and SPEC.md §3 says "Next.js middleware" explicitly, so it was
-  left alone rather than migrated mid-step. Worth doing before step 14 (deploy).
-  Noticed: step 3.
+## The decorative-test check has now caught one in ADVANCE rather than by
+
+**Shape:** check-cannot-fail
+**You are here if:** a test looks reasonable and you have not asked what would make it fail
+
+mutation** (step 7, unit 8c). Sixth instance overall, first prevented.
+
+The test asserted that a column list is "static, not computed from the rows":
+
+```ts
+expect(Object.isFrozen(COMPARISON_COLUMNS) || Array.isArray(COMPARISON_COLUMNS)).toBe(true);
+expect(COMPARISON_COLUMNS).toHaveLength(5);
+```
+
+`Array.isArray` on an array is trivially true and a length check constrains
+nothing — it asserted the property in its NAME and not in its body, which is
+the shape CLAUDE.md §2 describes. Deleted while writing, not after a mutation
+came back clean.
+
+The five before it were all found afterwards: a probe deleted, a length test
+measuring itself, a whitespace test caught incidentally, an NFD literal
+normalised on disk, and "Misprint" colliding with no reissue prefix. The
+difference here was applying §2's question — *name the line of source this
+would fail against* — BEFORE running it rather than after.
+
+**What replaced it is worth more than a better test: the TYPE SYSTEM holds
+the decision.** A data-dependent column order changes the export's shape from
+a constant to a function, and the compiler names every call site. A guarantee
+the compiler enforces does not need a test, and a test that cannot fail is
+worse than the absence of one — it reports coverage that is not there.
+
+**The general form: before writing a test for a property, ask whether
+something already makes the property unrepresentable.** Types, constraints
+and unique indexes all do this. The identity assertion in
+`create-schema.test.ts` is the same move from the other direction — making
+drift unrepresentable rather than detectable.
+
+## A test fixture can fail to create the condition its test claims — and
+
+**Shape:** check-cannot-fail
+**You are here if:** a test passes and its fixture may not have created the condition
+
+reading the test cannot catch it.** Two instances so far, both invisible to
+review and both found only by mutation:
+
+1. **NFC/NFD literals.** A typed NFD string is normalized to NFC when written
+   to disk, so `expect(nfc).not.toBe(nfd)` compared a value with itself. The
+   test passed while testing nothing.
+2. **Enum sort order.** `price_type` is a Postgres enum and sorts by
+   DECLARATION order (`new` < `used` < `best_dig`), not alphabetically. Two
+   successive fixtures accidentally made the newest row ALSO sort first under
+   type ordering, so a type-ordered implementation passed a test asserting
+   recency.
+
+**The rule:** when a test's precondition depends on an ordering, encoding, or
+normalization that the DATABASE or RUNTIME controls rather than the test,
+query the actual behavior instead of reasoning about it. `enum_range()` over
+an assumption about sort order; `\uXXXX` escapes over a typed literal;
+`pg_constraint` over a memory of what the schema says.
+
+**Why it needs its own rule:** a mutation only exposes this if the fixture
+happens to be wrong in a way that mutation reveals — in the enum case it took
+three fixtures and two wrong hypotheses. Reading the test never catches it,
+because the test looks correct. The tell is a fixture whose *discriminating
+property* is assumed rather than verified. Noticed: step 5, unit 3.
+
+## A mutation is code, and it can be wrong. "Fails N tests" is not evidence
+
+**Shape:** check-cannot-fail
+**You are here if:** a mutation failed N tests and you have not read which N
+
+until the N that failed are the ones that SHOULD have.**
+
+In step 5 unit 6 a global-recency mutation appeared to fail 5 tests — which
+looked like strong evidence the chain was well covered. It was not. The
+mutation's subquery referenced `price_history` unqualified inside a Drizzle
+template, so the correlation to the outer row silently broke and EVERY record
+fell through the entire chain to its purchase price. It was not testing
+"global recency instead of per-type", it was testing "no price history at
+all".
+
+**The tell:** a test that should have been INDIFFERENT to the change failed
+anyway. Both rules return the same value for a record whose only prices are
+`used`, so the used-only test had no business failing. Checking that one case
+in isolation exposed it.
+
+Rewritten correctly — using the same helper style as the real code, so the
+correlation works — it fails 2, which are exactly the two cases that
+distinguish the rules. **The smaller number was the honest one.**
+
+An inflated count is worse than a small one: it reads as stronger evidence
+while actually meaning the mutation broke something other than the behaviour
+under test, leaving that behaviour unverified. Add to the mutation checklist
+alongside "what produced the correct outcome instead" — before trusting a
+count, confirm the failures are the predicted ones. Noticed: step 5, unit 6.
+
+**COROLLARY: a mutation result from a DIRTY BASELINE is not a result — and
+the specific trap is that `git checkout` does not restore an UNTRACKED file.**
+
+A mutation on a file created in the current unit is not yet in git, so
+`git checkout <path>` succeeds, prints nothing, and changes nothing. The
+mutation silently persists into the next one, and every subsequent count is
+measuring two mutations stacked while appearing to measure one.
+
+Hit in step 8 unit 2: M3 reported 2 failures against a file still carrying M2,
+so the number was unattributable. Restored from source and re-run alone, the
+honest count was 1.
+
+**The habit:** for a new file, snapshot it (`cp`) before the first mutation
+and restore from the copy — or commit first. Then verify the baseline is
+green BETWEEN mutations, not only at the end. A green run between two
+mutations is the cheapest possible proof the previous one was undone.
+
+**THIRD TRAP, distinct from both: the mutation can apply CLEANLY to the wrong
+code.** Not a dirty baseline and not a changed test count — the edit succeeds,
+the suite runs, and it measures a query nobody was testing.
+
+Step 9 unit 4. `records.ts` contains `.innerJoin(labels, ...)` TWICE. A
+`str.index()` anchor found the first occurrence, in an unrelated query, so the
+`byLabel` LEFT JOIN mutation reported "0 failures" and I nearly concluded the
+test was decorative. It was correct — measured directly against Postgres, a
+LEFT JOIN yields a null-named group, exactly what the test asserts against.
+Re-anchored on `const byLabel` first, it fails 2.
+
+**The tell: a mutation you expected to fail something that reports zero.**
+Before concluding the test is weak, confirm the mutation LANDED — grep the
+mutated file for the change, or count occurrences of the anchor first. Three
+traps now, all producing a number that looks like evidence:
+
+| Trap | Symptom | Check |
+|---|---|---|
+| dirty baseline | plausible count, unattributable | green run between mutations |
+| changed test set | count moves for the wrong reason | run the whole file, fixed set |
+| **wrong anchor** | **zero failures on a real gap** | **confirm the edit landed where intended** |
+
+## A mutation that fails nothing does not mean the code is dead. Three
+
+**Shape:** observer-without-subject
+**You are here if:** a mutation failed nothing and you are reading that as dead code
+
+distinct patterns have now produced "removing this breaks no test", and only
+one of them meant the code was genuinely unused:
+
+1. **Genuinely dead** — `isUniqueViolation` read `.code` off Drizzle's
+   wrapper, where it is always undefined, so the branch never matched.
+2. **Live but unconstrained** — the branch executes and is correct, but no
+   test holds it: both `isUniqueViolation` call sites after the unit C fix,
+   and the `'is missing'` branch in `parseEnv`.
+3. **Masked by a different mechanism** — the branch is real and load-bearing,
+   but its absence produces the same observable outcome by another path. The
+   `pressings` discogs-id match branch: remove it and the request falls
+   through to create, the partial unique index rejects the duplicate, and
+   POST's recovery returns the winning row. Same 200, same body, different
+   mechanism. It looks dead to a mutation test *and* to a reviewer, and the
+   "delete unreachable code" instinct removes it.
+
+**The check:** when a mutation fails nothing, do not conclude the code is
+dead — determine what produced the correct outcome instead. If the answer is
+a different mechanism, both are real and each needs an isolating test.
+Removing both layers together is what distinguishes case 3 from case 1.
+Noticed: step 4, pressings.
+
+**Two more instances in the step 5 remediation, and they resolved OPPOSITE
+ways — which is the point of doing the determination rather than guessing:**
+
+4. **KEPT (case 3).** `count(DISTINCT record_id)` in the stats ancestry CTE.
+   Removing it fails nothing, because `UNION` (not `UNION ALL`) has already
+   deduped the `(record_id, genre_id)` pairs as the walk produces them.
+   Removing BOTH fails the double-count test. Probed the CTE directly to
+   establish that UNION was doing it. Both kept, because they guard different
+   things: UNION also bounds the walk if a cycle ever reaches the data, the
+   same reasoning as `wouldCreateCycle`. Documented in the source, since the
+   "delete unreachable code" instinct removes one, sees green, and removes the
+   other in a later pass.
+
+5. **REMOVED (subsumed).** A `.min(1, 'must not be empty')` on the year
+   filter schema. Its mutation also failed nothing — but probing showed the
+   empty string is already rejected TWICE over: the digit regex `/^-?\d+$/`
+   fails on `''`, and `isValidFormedYear(0)` is false. Unlike case 4, this
+   layer guarded nothing the others did not already cover, so it went.
+
+**The distinguishing question is not "does removing it fail a test" — both of
+these answered no. It is "what would go wrong that nothing else catches".**
+For 4 the answer was a cycle in the data; for 5 there was no answer.
+
+## RULE: any measurement of Discogs metadata quality must be PER-GENRE. An
+
+**Shape:** measurement-not-governing
+**You are here if:** an average across a dataset is being quoted and the set has kinds in it
+
+average across albums flatters exactly the scenes this collection is made of.**
+
+Established 2026-08-25 from the `formats[].text` coverage work, and it is
+bigger than that fix.
+
+**Discogs metadata coverage is contributor effort, and contributors record
+what their scene cares about.** Measured across six albums, 477 live vinyl
+rows, the qualifier field breaks down completely differently by scene:
+
+| Album | Any qualifier | **Names a plant** | What the qualifiers actually say |
+|---|---|---|---|
+| Discharge — Hear Nothing | **80%** | **0%** | Gatefold, Red Translucent, Textured Sleeve |
+| Misfits — Walk Among Us | **70%** | **2%** | colour variants, almost exclusively |
+| Doors debut (by catno) | 52% | **47%** | Allentown, Terre Haute, Pitman, Monarch |
+| Fleetwood Mac — Rumours | 52% | 25% | plants and sleeves, mixed |
+| Hot Tuna | 33% | 15% | mixed |
+
+**Headline coverage is ANTI-CORRELATED with usefulness here.** The two albums
+with the most metadata have essentially none of the kind that identifies a
+pressing. For 1960s–70s US majors, collectors document pressing plants,
+because that is what separates the copies. For punk and hardcore, they
+document sleeve and colour variants, because that is what separates THOSE
+copies — the pressing plant of a 1982 Clay LP is not what a collector of it
+cares about, and largely nobody has typed it in.
+
+**Why this matters beyond one field:** this collection is punk, hardcore and
+adjacent scenes (CLAUDE.md §8 lists UK first-wave, UK82, US hardcore, horror
+punk, psychobilly). **An average across popular albums measures the records
+this app is NOT about.** Any future claim of the form "Discogs has X% coverage
+of field Y" is misleading unless it is broken out by scene, and the aggregate
+will systematically overstate what is available for the records actually being
+held in a shop.
+
+**The check: when measuring an external data source, sample by the categories
+the USER's data falls into, not by whatever is popular or convenient.** Report
+the spread and the worst case, never only the mean. The first version of the
+qualifier measurement averaged six albums into "50%" and was wrong twice over
+— once by counting separation instead of identification (see the proxy rule
+under Resolved), and once by averaging across scenes that behave nothing alike.
+
+This also bears on the two-phase matrix redesign: for the scenes this
+collection is made of, the plant qualifier is **near-zero**, so matrix strings
+are not a refinement over `formatText` there — they are the only signal.
+
+## RULE: a captured fixture contains VOLATILE fields. Assert the property, not
+
+**Shape:** check-cannot-fail
+**You are here if:** a test asserts a value read from a captured fixture
+
+the reading.**
+
+Re-capturing for step 10 refreshed all seven Discogs fixtures and broke a test
+that had passed for three steps: `lowest_price` moved 43.96 → 55.59, because
+it is a live market figure. The code had not changed; the market had.
+
+`num_for_sale` was asserted as `11` in the same test and passed — **by
+coincidence**. It is equally volatile and would have broken on the next
+capture, in a step with no connection to marketplace data.
+
+| Field kind | Example | Assert |
+|---|---|---|
+| stable identity | `id`, `catno`, `country`, `title` | the exact value |
+| curated but slow | `genres`, `styles`, `formats` | the exact value |
+| **volatile** | **`lowest_price`, `num_for_sale`, `community.have/want`** | **the property** |
+
+**Stated generally: any fixture refreshed from a live API carries fields that
+change without anything being wrong.** The test that broke had passed for
+three steps and the code had not moved — the market had. The one beside it
+passed by coincidence and was equally volatile, which is the more dangerous
+half: a coincidence looks exactly like coverage until the day it does not.
+
+Rewritten, the test asserts the normalizer CARRIES the field —
+`expect(normalized.lowestPrice).toBe(raw.lowest_price)` plus a type check —
+which still fails when a mutation drops it (verified) and never fails because
+a record got more expensive.
+
+**The tell: an assertion whose expected value came from the API rather than
+from the behaviour.** If re-running the capture could change the number, the
+number is not the thing under test.
+
+**A second trap in the same refresh: the DIFF lies about identity fields.**
+`master-versions-discharge.json` appeared to swap `CLAY LP 3` for `CLAY CD 3`
+at the same array position — which would mean the fixture had lost the vinyl
+pressing the identical-rows tests depend on.
+
+It had not. Compared as SETS rather than by line: 25 versions before, 25
+after, zero dropped, zero added, still 8 `CLAY LP 3` UK versions. Discogs had
+reordered the array, and a line-oriented diff aligned unrelated entries.
+
+**Before concluding a captured array changed, compare it as a set.** A
+reordered list produces a diff that reads as wholesale replacement, and the
+natural reaction — reverting the fixture — would discard a legitimate refresh.
+`git diff` is the wrong instrument for an unordered payload.
+
+## RULE: a negative claim about a file needs a search that could have found it
+
+**Shape:** sample-as-population
+**You are here if:** you are about to say a file or codebase does not contain something
+
+Step 10 planning, 2026-08-12. I reported that §12's reorder "did not land" and
+that MusicBrainz "appears nowhere in SPEC.md". Both were false. The reorder was
+present and complete through step 16.
+
+The search was `grep -in "market|musicbrainz"` **inside a `sed` slice of §12**
+— and the slice ended at `^## 13\.`, while the reordered list runs to step 16,
+so the range closed before the entries. A second grep for "musicbrainz" across
+the whole file returned nothing because I had already convinced myself and read
+the empty output as confirmation.
+
+**"I searched and found nothing" is only evidence if the search would have
+found it.** Before reporting an absence, prove the method works: grep for
+something you KNOW is in the file, using the same command shape. Here,
+searching for "Market data" — the §10a heading I had just read — would have
+returned a hit inside §12 and ended it immediately.
+
+Same family as the wrong-anchor mutation trap and the `getByRole('row')`
+reproduction: **a null result from an instrument never shown to work is not a
+measurement.** Third instance, and the first where the instrument was a grep.
+
+**FOURTH INSTANCE, and the class is now worth stating on its own: `git diff`
+is an instrument, and it aligned unrelated array entries.**
+
+Re-capturing `master-versions-discharge.json` produced a diff reporting that
+`CLAY LP 3` had become `CLAY CD 3` at the same position — vinyl replaced by
+CD, which would mean the fixture had lost the pressing the identical-rows
+tests depend on. Compared as SETS: 25 versions before, 25 after, zero dropped,
+zero added, still 8 `CLAY LP 3` UK versions. Discogs had reordered the array
+and a line-oriented diff paired unrelated entries.
+
+**The natural response — reverting the fixture — would have discarded a
+legitimate refresh** on the strength of a change that never happened.
+
+**What unites all four: each produced a confident WRONG ANSWER rather than an
+error.** A tool that fails loudly is harmless; these returned plausible output
+and were believed.
+
+| Instrument | Reported | Actually |
+|---|---|---|
+| `str.index()` anchor | mutation applied, 0 failures | applied to a different query |
+| `getByRole('row')` | 8/8 reproduction of a defect | locator matched nothing |
+| `grep` in a `sed` slice | §12 reorder absent | present, outside the slice |
+| `git diff` on an array | catalog number changed | array reordered, content identical |
+
+**The check that would have caught every one: exercise the instrument against
+a case whose answer you already know.** Grep for something you know is
+present; make the reproduction pass once; confirm the mutation landed; compare
+the array as a set. One extra command each time.
+
+## RULE: make a reproduction GREEN once before trusting it red
+
+**Shape:** check-cannot-fail
+**You are here if:** a reproduction fails and you have not seen it pass
+
+A reproduction that confirms your hypothesis needs the same scrutiny as one
+that refutes it — and gets less, because it agrees with you.
+
+Step 9's `manage` investigation. A forced-race probe failed **8 of 8**, which
+read as decisive proof of a hydration defect. It was measuring
+`getByRole('row')` against a tree that renders `listitem` — a locator matching
+nothing, failing perfectly every time. Four further timing measurements
+(500ms to 6s, all "0 rows") looked like proof the refresh never landed. Every
+one was the locator.
+
+**The check costs one run: exercise the assertion against known-good
+conditions and confirm it can PASS.** A red result from an assertion never
+observed green is not evidence — it cannot distinguish "the behaviour is
+broken" from "this never matched anything".
+
+Related: the same investigation's earlier probe printed `posts: 1` and a 201
+carrying the right name. That said plainly that the write worked, and it was
+read past because it did not fit the theory. **Read the parts of a probe that
+contradict you first.**
+
+## RULE: the symptom names a location, and the location is where everyone
+
+**Shape:** sample-as-population
+**You are here if:** you are debugging where the symptom appeared
+
+looks.**
+
+`manage.spec.ts` failed intermittently for four investigations across several
+steps. Every one examined the test, the component, and the `/manage` screen —
+because the failure said `manage`. The cause was `workers` in
+`playwright.config.ts`: ~6 workers against one dev server, saturating it.
+
+Nothing in the symptom pointed at the config. The test that fails first under
+contention is simply the one doing the most sequential round trips, and its
+name is then attached to a cause it has nothing to do with.
+
+**The tell: a failure that resists investigation AT the place it names.** After
+two failed attempts inside the named location, ask what is shared —
+the server, the database, the config, the fixtures — and vary that instead.
+The four-attempt cost here is the argument for asking earlier.
+
+## RULE: a Discogs field describing the CATALOGUE OBJECT belongs beside our
+
+**Shape:** wrong-axis-variation
+**You are here if:** an upstream field looks like one of yours and you are about to store it there
+
+field, never in it. Two instances; a third will come.**
+
+The distinction is release-versus-copy. Discogs describes a release — every
+copy ever pressed. Several of our fields describe THE COPY IN HAND, and they
+are not the same fact even when they share a name.
+
+| Field | What Discogs holds | What ours holds |
+|---|---|---|
+| `matrix_runout` | every runout its contributors submitted, across pressings | what is etched in YOUR dead wax |
+| `notes` | sleeve text, gatefold, publishing, copyright | where you found it, why you kept it |
+
+**Prefilling either is wrong in the same way**, and the harm is not merely
+clutter:
+
+- it writes a value describing no physical object into a field whose whole
+  purpose is describing one;
+- a filled field reads as VERIFIED, which inverts §5.7's "check every field
+  against the record in your hand";
+- it makes §7.8 unenforceable. "Never overwrite user-entered data with
+  external data" requires knowing whose text it is, and a prefilled field
+  that the user then edited is indistinguishable from one they wrote.
+
+**The treatment, established for matrix in step 7 and applied to notes in
+step 8:** render it as reference text beside an empty field, through `Row`'s
+`after` slot. Nothing is dropped — a Discharge first pressing's "Pay no more
+than £3.99" is genuinely useful in a shop — and nothing is claimed.
+
+**The test when a new field is added: does this describe the release, or the
+copy?** If the release, it goes beside. Note that §6's field mapping is the
+authority on what is imported AT ALL — it lists title, artist, label, catalog
+number, year, country, format, matrix and genres, and `notes` is deliberately
+absent. Two of us read "notes is dropped" as a defect without checking that.
+
+## RULE: a field seen on one Discogs endpoint's payload is not evidence about
+
+**Shape:** sample-as-population
+**You are here if:** a payload shape was learned from one endpoint and applied to another
+
+another's. Three instances makes it a property of the API, not an accident.**
+
+| Field | Search | Release | Master versions |
+|---|---|---|---|
+| genre / style | **singular** (`genre`, `style`) | plural (`genres`, `styles`) | absent |
+| the year | `year` | `year` | **`released`** |
+| format descriptors | **BOTH**: `format` array + `formats` array of objects **with `text`** | `formats` array of objects, with `text` | **comma-joined string, no `text`** |
+
+Each was found the hard way and each is documented at its own call site. The
+class is worth stating once: **these endpoints describe the same objects with
+different field names, different types, and different completeness.**
+
+**The instance that cost the most** (step 8 close, 2026-08-11): `format.text`
+carries "Rockaway Pressing" and would have separated the two Hot Tuna
+releases that misled a user about which pressing they owned. It was observed
+on the RELEASE payload and reported — by me, and agreed by the developer — as
+"already in the versions payload". It is not there at all. The versions
+endpoint returns `id, label, country, title, major_formats, format, catno,
+released, status, resource_url, thumb, stats`.
+
+Caught only because the instruction was to measure it against the real rows
+before building. Building first would have produced a column `undefined` for
+every row — and one that LOOKED right in tests, since a hand-written fixture
+would have carried whatever shape the author assumed.
+
+**The check: before using a field, confirm it on the payload of the endpoint
+that will actually be called** — not on a sibling endpoint describing the same
+release. The overlap is large enough to make the assumption feel safe and the
+differences are exactly where it breaks. `test/fixtures/discogs/` has captured
+payloads for all three; read the fixture rather than reasoning from memory.
+
+**CORRECTED 2026-08-25: the Search cell of that table was wrong, and it was
+wrong in the OPPOSITE direction from the error that produced it.**
+
+Measured live against `/database/search` while diagnosing the Doors lookup.
+Search rows carry **two** format fields, not one:
+
+| key | value |
+|---|---|
+| `format` | `["Vinyl","LP","Album","Reissue","Stereo"]` — flat strings, no qualifier |
+| `formats` | `[{name, qty, descriptions[], text}]` — **`text` is here** |
+
+`normalize-search.ts` declares only the singular `format`. The plural
+`formats` is absorbed by `.passthrough()` and dropped at the type boundary,
+so `text` is not truncated — it is never read. Live from
+`?catno=EKS-74007`: `"Allentown Pressing"`, `"Terre Haute Pressing"`,
+`"Pitman Pressing"`, `"Quality Records Pressing"`,
+`"Specialty Records Corporation Pressing"`.
+
+## RULE: a correction can over-correct, and the summary written on top of a
+
+**Shape:** sample-as-population
+**You are here if:** a correction has been written on top of an earlier measurement
+
+measurement does not inherit the measurement's discipline.**
+
+This is the shape, and it is worth more than the cell it fixes.
+
+The original error (2026-08-11, above) was assuming `format.text` was on the
+versions payload because it had been seen on the release payload — a field
+wrongly assumed PRESENT. It was caught by measuring, corrected properly, and
+the correction was then generalised into the endpoint table.
+
+**The generalisation went one step too far.** Having been burned by assuming
+`text` was everywhere, the table concluded `text` was release-only. That is a
+field wrongly assumed ABSENT — the same class of error, arrived at from the
+opposite direction, and introduced BY the fix for the first one.
+
+**The fixture carrying the right answer was in the repo the entire time.**
+`test/fixtures/discogs/search-by-catno.json` has held `formats[].text` since
+capture: **10 of its 12 rows have it populated** (`"Red Translucent"`,
+`"Gatefold"`, `"Red, Gatefold"`, `"Transparent"`). The check this very entry
+prescribes four paragraphs above — "read the fixture rather than reasoning
+from memory" — would have caught it in one grep.
+
+**The practice worked; the generalisation did not inherit it.** The captured
+fixture was correct, the measurement that produced the correction was
+correct, and the SUMMARY written on top of both was never checked against
+either. A measured fact and a rule induced from it are different artifacts
+with different evidence, and only the first one here had any.
+
+**The check: when a measurement is generalised into a rule, the rule needs
+its own verification pass against the same fixtures.** Especially a rule
+stated as a negative ("endpoint X does not have field Y") — see the
+negative-claim rule under Open, which this is an instance of. Cost: a defect
+that hid the single most discriminating field Discogs offers at list level,
+on the screen where two pressings look identical.
+
+## RULE: the comparison columns are FIXED, and for any given master the
+
+**Shape:** check-cannot-fail
+**You are here if:** a comparison shows fixed columns and the discriminating field may not be among them
+
+discriminating field may not be among them. That is a property of the design,
+not of one or two masters.**
+
+§5.7's version table shows year, country, format, catalog number and label —
+chosen because they discriminate MOST releases. They are not guaranteed to
+discriminate ANY particular one, and Discogs offers no field that always does.
+
+Two instances so far, and the second cost a user their pressing identity:
+
+| Master | What collapses | The real discriminator |
+|---|---|---|
+| Carpenters | four cards identical on every column | not established |
+| Hot Tuna 133514 | **three US 1970 versions byte-identical** | pressing plant — `RCA Records Pressing Plant, Rockaway` vs `…Hollywood` |
+
+**The plant is not obtainable here.** Measured against the live API: the
+versions endpoint returns `id, label, country, title, major_formats, format,
+catno, released, status, resource_url, thumb, stats` — no `text`, no
+companies. `format.text` (which carries "Rockaway Pressing") is on the RELEASE
+endpoint, so showing it costs one rate-limited call per row: 11 calls for a
+table of eleven, against 60/minute.
+
+**AMENDED 2026-08-25 — that cost estimate is right for the VERSIONS table and
+wrong for the SEARCH results page. Bears on the two-phase redesign.**
+
+Still true: the versions endpoint has no `text` and no companies, so the
+plant costs one call per row THERE. Confirmed again by live measurement.
+
+**But on the search results page the plant text is already in the payload
+that has been paid for**, under the undeclared `formats[].text` — see the
+corrected endpoint table above. **Zero additional calls.** The discriminator
+problem has different economics on the two screens, and the earlier framing
+("not obtainable, one call per row") reads as if it applied to both.
+
+**Why this is recorded against the two-phase redesign** (matrix strings, an
+`unresolved` confidence state, storing identification evidence): a design
+that budgets rate-limited calls for a plant hint on the search page would be
+paying for something free. This is exactly the kind of fact that gets
+rediscovered expensively — it was already wrong once in the opposite
+direction and cost a round.
+
+**CORRECTED 2026-08-25 (same day, after QA on the live page). The first
+version of this measurement counted the wrong thing and overstated the fix by
+roughly 2x. The corrected numbers are below the rule.**
+
+## RULE: when a measurement stands in for a capability, count the capability,
+
+**Shape:** measurement-not-governing
+**You are here if:** a number stands in for a capability and you counted the proxy
+
+not the proxy — and say which one you counted.**
+
+I measured "does `formats[].text` separate two otherwise identical rows" and
+reported it as how much of PRESSING IDENTIFICATION the fix solves. Those are
+not the same question, and the gap is not small:
+
+| Question | Answer |
+|---|---|
+| rows carrying any qualifier | 53% |
+| **rows whose qualifier names a plant or label variant** | **24%** |
+
+"Gatefold" and "Red Translucent" separate two rows on screen perfectly well.
+Neither tells the user which pressing is in their hands, which is the only
+thing this screen exists to do (CLAUDE.md §8). **A separator is not an
+identifier**, and by counting separation I made a 24% capability read as a
+50% one — in SPEC, where the next reader would have taken it as settled and
+used it to argue the matrix work was half-done already.
+
+**Caught by the developer using the live page**, who saw one qualifier in four
+visible cards and asked for the plant-versus-sleeve split. The measurement was
+real, the method was sound, and the label on the result was wrong — which is
+the same shape as the `format.text` over-correction above: the artifact built
+ON TOP of a good measurement is where the error lived, not in the measurement.
+
+**The check: name the capability in the same sentence as the number.** "53% of
+rows carry a qualifier" is a fact about the payload. "The qualifier identifies
+the pressing on 24% of rows" is the claim anyone actually cares about, and
+only the second one belongs in a spec.
+
+**MEASURED COVERAGE (2026-08-25, corrected) — how much of the identification
+problem `formats[].text` actually solves. Recorded so it is not re-derived.**
+
+Five candidate sets, live, vinyl-only, 377 rows total: the Doors debut by
+catno (the reported case), Doors Strange Days, Discharge Hear Nothing, Hot
+Tuna, Misfits Walk Among Us.
+
+Six albums, 477 live vinyl rows, classified by what the qualifier actually
+says:
+
+| Class | Rows | Share | Identifies a pressing? |
+|---|---|---|---|
+| plant / label variant | 116 | **24.3%** | **yes** |
+| colour / finish | 87 | 18.2% | no |
+| sleeve, insert, cover | 39 | 8.2% | no |
+| weight | 4 | 0.8% | no |
+| other | 7 | 1.5% | mostly no |
+| **empty** | **224** | **47%** | — |
+
+**Per-album plant coverage, which is the number that matters and swings
+hardest:**
+
+| Album | Any text | **Plant** |
+|---|---|---|
+| Doors debut, by catno `EKS-74007` | 52% | **47%** |
+| Doors debut, by artist+title | 42% | **29%** |
+| Fleetwood Mac — Rumours | 52% | **25%** |
+| Hot Tuna — Hot Tuna | 33% | **15%** |
+| Misfits — Walk Among Us | 70% | **2%** |
+| Discharge — Hear Nothing | 80% | **0%** |
+
+**Discharge and Misfits are the entry worth remembering:** the two HIGHEST
+headline-coverage albums have almost no identifying data. Their qualifiers are
+colour variants and gatefold notes, because that is what those scenes'
+contributors record. **Headline coverage is anti-correlated with usefulness
+here**, so an average across albums actively misleads.
+
+**So the parser fix is necessary and not sufficient, quantified honestly.** It
+surfaces a plant name on about one row in four, and the two-phase matrix
+redesign is what covers the other three.
+
+**What it does NOT change:** `text` is free-text and user-submitted, not a
+plant field. Live values from one search include `"Barcode; SRC-Specialty
+Records Press"`, `"Allentown - Pub. Credit Misprint"`,
+`"(Columbia Records Pressing) "` (trailing space), `"180g"`, `"Blue"`,
+`"USA Cover"`, `"SP"`. It mixes plant, colour, weight and sleeve notes, so it
+is a HINT the user reads and judges, never a resolved plant identity. The
+§7.7 rule against presenting a Discogs match as certain applies to it
+directly.
+
+**What shipped instead** (2026-08-11): rows identical on every displayed
+column collapse into one saying "N more look identical from here", expandable.
+Three identical rows LOOK LIKE AN ANSWER; one row that admits the limit is
+honest. Within a group, most-owned first — the only signal available, and a
+real one, though it does not identify which pressing is in the user's hands
+and the UI does not imply it does.
+
+**A group containing something the user OWNS never collapses.** §7.7's badge
+outranks the tidier table: hiding "you already have this" turns it into
+silence, and someone in a shop reads no badge as "buy it".
+
+**What is still open:** the collapse makes the limit visible; it does not
+resolve it. If identifying the exact pressing becomes important — step 11's
+shelf ordering, or a QA finding that expanding is too coarse — the options
+are fetch-on-expand for a single row, or surfacing `stats`-based hints. Both
+cost calls. Recorded rather than guessed at.
+
+## RULE: a test asserting a feature is ABSENT is a dated claim, and nothing
+
+**Shape:** check-cannot-fail
+**You are here if:** a test asserts something is absent and nothing marks when that stops being true
+
+marks its expiry.**
+
+`toHaveCount(0)` on a heading, `not.toContain` on a field, "no section for the
+part that is not built yet" — each is true only until the step that builds it.
+The assertion does not know which step that is, and the unit that makes it
+false is usually not the unit that opened the file.
+
+**Stated as evidence rather than principle: both instances so far were caught
+by a FULL-SUITE run, not by the unit that invalidated them.**
+
+| Instance | Invalidated by | The unit's own spec file |
+|---|---|---|
+| `Matrix / runout` prefilled value | the matrix change | green |
+| `Images` heading absent | the gallery | green |
+
+Two for two. That is the argument for CLAUDE.md §10's full-E2E gate in one
+line — a contract change breaks the tests that encoded the old contract, and
+those live in files the unit never opened.
+
+**What to do about it, in order of preference:**
+
+1. Prefer asserting what IS true over what is not. "The gallery says 'no
+   images yet'" survives the feature being built; "there is no Images
+   heading" does not.
+2. When an absence assertion is genuinely the point — a section that must
+   stay hidden when empty — say WHY it is absent, so the next reader can tell
+   a rule from a placeholder. `record-detail.spec.ts` now distinguishes the
+   two: Pressing stays hidden by design, Journal is pending step 9.
+3. Name the step in the comment when it IS a placeholder, so a grep before
+   starting that step finds it.
+
+Established: step 8, unit 3.
+
+## RULE, two stores that must agree: choose the order whose failure mode is
+
+**Shape:** wrong-axis-variation
+**You are here if:** two stores must agree and you are choosing which to write first
+
+INVISIBLE AND CHEAP over the one that is VISIBLE AND PERMANENT.**
+
+When a write spans two stores — here Vercel Blob and Postgres — and either can
+fail independently, no order is transactional. The choice is not "which order
+is safe" but "which wreckage would I rather live with".
+
+For §5.9's images the two failure modes are not symmetric:
+
+| Wreckage | Cost |
+|---|---|
+| Blob with no row | invisible, pennies, nothing renders it |
+| Row with no blob | **a permanently broken image on the detail screen** |
+
+A row pointing at a dead blob is also indistinguishable from a real image
+until it fails to load, which puts it in the absence-as-success family — the
+screen asserts something it cannot deliver.
+
+So the orders are OPPOSITE and both fall toward the leaked blob:
+
+- **Upload: store the blob, THEN write the row.** A failed store writes no
+  row.
+- **Delete: delete the row, THEN delete the blob** (best-effort, leak logged).
+  A failed blob delete leaves an orphan nothing points at.
+
+Generalises beyond images: whenever a second store cannot be enrolled in the
+database transaction, order the operations so the survivable failure is the
+one that happens. State which failure you chose and why, rather than picking
+an order by habit. Established: step 8, units 1-2.
+
+## RULE: a test is only as discriminating as its fixture. When several
+
+**Shape:** check-cannot-fail
+**You are here if:** a test passes and its fixture admits only one ordering or selection
+
+orderings, selections, or matches agree in the seed data, NO assertion can
+tell which one the code used. The test looks correct, passes, and constrains
+nothing.
+
+**Before writing an assertion about ordering, selection, or matching, check
+that the fixture makes the alternatives produce DIFFERENT output — and prove
+it by mutation.** Reading cannot catch this; the test reads as correct in
+exactly the case where it is worthless.
+
+Five instances, all in this build:
+
+| Fixture | Alternatives that agreed | Caught by |
+|---|---|---|
+| 2-row list seed | artist order == title order | mutation: artist expr → `records.title` passed 29/29 |
+| Same seed, 4 scalar sorts | title == date == price order | mutation: 3 fields → title failed 2, neither the test naming them |
+| 2-level genre tree | recursive CTE == single join | mutation: one-level walk |
+| Successive price fixtures | recency == enum declaration order | mutation, after 3 fixtures and 2 wrong hypotheses |
+| `from=X&to=X` year range | yearFrom bound == yearTo bound | mutation: either bound failed BOTH tests |
+
+The fix is always the same shape: add rows that INVERT the relationship. Two
+artists whose names sort opposite to their titles; four records giving each
+sortable field a different permutation; a three-level hierarchy so a
+grandparent filter must find a grandchild; a query sending only the bound
+under test.
+
+**The tell:** ask "if the code used the OTHER rule, would this fixture produce
+different output?" If the answer is no, or you cannot answer it, the fixture
+is the defect and the assertion is decorative regardless of how it is written.
+Noticed across steps 4–5; stated as a rule during the step 5 remediation.
+
+**TERMINAL CASE: sometimes no fixture can discriminate, and the honest move is
+to say so.** "The fix is always the same shape" above is not quite true — it
+assumes an inverting fixture exists. For some properties none does, because
+the query's own contract forbids the rows that would invert it.
+
+`findArtistsNamed` (step 11 unit 4a) is the instance. It matches names
+EXACTLY, so every row it can return shares one name — which makes `ORDER BY
+created_at`, `ORDER BY name` and no ordering at all mutually indistinguishable
+in its output. Two mutations confirmed it: swapping to a name sort and
+deleting the clause both pass. There is no seed data that separates them,
+because any row that would separate them is a row the query does not return.
+
+When that happens: assert the property that IS observable (there, that the
+first row is the earliest by `created_at`), and state in the test's own
+comment that it does not prove the mechanism. A test that silently claims
+more than it constrains is the thing this whole rule exists to prevent, and
+that failure does not stop being a failure because the gap is unavoidable.
+
+**THE STING, and the reason this class keeps recurring: a fixture drawn from
+TYPICAL data tests the typical path — which is the one least likely to be
+wrong.**
+
+Step 8 unit 4. `attachDiscogsCover` must pick the image whose `type` is
+`primary`, not merely the first. The fixture listed primary first, so "find
+the primary" and "take `images[0]`" agreed, and the mutation replacing one
+with the other **failed zero tests**.
+
+What makes it worse than an ordinary weak fixture: **real Discogs releases
+usually DO list the primary first.** So `images[0]` would have been correct in
+the common case and wrong exactly where it mattered — a release whose
+contributor ordered them differently, silently attaching a back cover or an
+inner sleeve as the record's front. The bug would have been invisible in
+testing, invisible in most use, and wrong in the case a person would notice.
+
+Reordering the fixture so `secondary` comes first makes the same mutation fail
+1 test. **When a fixture is built from what the source usually sends, it
+cannot discriminate rules that agree on the usual case — deliberately
+construct the atypical ordering.**
+
+**VISIBILITY VARIANT (third instance of the class): `textContent` cannot see
+visibility, so an assertion built on it is blind to the entire property it
+claims to test.**
+
+Hidden elements keep their text in the DOM. Tailwind hides with
+`display:none`; `textContent` — and therefore Playwright's `toContainText`
+and `toHaveText` — returns the text of a hidden node exactly as it returns a
+visible one.
+
+Measured: a spec asserting a label was readable at seven widths passed at all
+seven, INCLUDING the width where the label rendered nowhere on screen. It
+would have passed whatever the layout did.
+
+```ts
+await expect(row).toContainText(label);              // blind to display:none
+expect(await visibleText(row)).toContain(label);      // innerText — sees it
+```
+
+**Any assertion about what the user can SEE must read `innerText`**, or use a
+visibility-aware matcher (`toBeVisible`). `collection-widths.spec.ts` is the
+worked example.
+
+**THE CHECK THAT UNIFIES THIS WHOLE CLASS — apply it to every assertion:
+"would this produce a different result if the property it names were wrong?"**
+Three instances so far, all failing that check the same way:
+
+| Instance | Names | Actually constrains |
+|---|---|---|
+| `.toThrow()` with no message | that the RIGHT error was thrown | that *something* threw |
+| `toEqual` on an object shape | the fields that matter | every field, including irrelevant ones — and passes when the ones that matter are absent from both sides |
+| `toContainText` on layout | that the value is VISIBLE | that the value is in the markup |
+| `toHaveCount` on a hidden subtree | that the elements are ON SCREEN | that they are in the DOM — `display:none` changes neither the count nor the locator |
+
+Each resembles verification while leaving the named property free to be
+wrong. Noticed: steps 5-7; stated as a class 2026-08-10.
+
+**Fourth instance, unit 12g — same cause as the `toContainText` variant.**
+The graph's `sm:hidden` / `hidden sm:block` swap hides the canvas on phones
+with CSS, so the SVG subtree still mounts. Two E2E tests that count
+`graph-node` elements passed unchanged on the mobile project **while the
+canvas was invisible to a user.** They read the markup, not the screen.
+
+This is also the same family as the dead node click (unit 12d): green because
+the element EXISTS, while the feature it stands for is unavailable. In both
+cases the counting assertion was satisfied and the thing a user would do —
+see the graph, click a node — did not work.
+
+`toBeVisible` / `toBeHidden` are the matchers that know the difference. The
+narrow/wide test in graph.spec.ts asserts with both, at both widths, in one
+test: a fallback that appeared everywhere, or nowhere, would satisfy half of
+that and be plainly wrong.
+
+**CONCURRENCY VARIANT: a concurrency test that is not actually concurrent
+proves only what the sequential path already covers.** Same failure in a
+different costume — the test looks like it exercises the race and does not.
+
+The acquire guard (`WHERE is_acquired = false` on the UPDATE) exists for two
+callers reading `is_acquired = false` at the same time. Written sequentially:
+
+```ts
+await acquire(item);          // succeeds
+await expect(acquire(item)).rejects.toThrow();   // "proves" the guard
+```
+
+That passes with the guard REMOVED, because by the second call the first has
+committed and the endpoint pre-check refuses it anyway. It exercises the
+pre-check, not the guard.
+
+Starting both before awaiting either is the first step:
+
+```ts
+const outcomes = await Promise.allSettled([acquire(item), acquire(item)]);
+expect(outcomes.filter((o) => o.status === 'fulfilled')).toHaveLength(1);
+```
+
+**CORRECTION (step 6 remediation, unit 3): that is NECESSARY AND NOT
+SUFFICIENT, and this entry said otherwise.** Two promises in flight still
+race in real time, so whether they collide is decided by scheduling — and a
+pre-check that completes before the second caller reads closes the window
+before the guarded code is reached.
+
+Measured on the acquire endpoint, same test, same code, opposite verdicts:
+
+| Run | Statuses | Defect |
+|---|---|---|
+| the test alone | `[201, 500]` | visible |
+| the whole file | `[201, 409]` | **hidden** |
+
+Under load the first request cleared its pre-check-to-commit window before the
+second one read, so the pre-check answered and the transaction guard never
+ran. The test passed against broken code in the configuration it would
+normally be run in.
+
+**What makes a concurrency test real is FORCING both callers past the point
+the guard defends**, not hoping they arrive together. Hook the pre-check and
+release only once both have cleared it:
+
+```ts
+let arrived: () => void;
+const bothArrived = new Promise<void>((r) => { arrived = r; });
+let waiting = 0;
+vi.spyOn(queries, 'findWantListItemById').mockImplementation(async (id) => {
+  const item = await real(id);
+  if (++waiting === 2) arrived();   // both are past the check
+  await bothArrived;                // neither proceeds until then
+  return item;
+});
+```
+
+Note this hooks EVERY call, which the mock-scope rule below warns against —
+correctly, for its case. The difference: there the mock must let a LATER call
+fall through; here the release condition is the second ARRIVAL, and exactly
+two callers exist. Both rules are really the same instruction — know how many
+times the code under test calls the thing you hooked.
+
+**The isolation asymmetry is worth its own alarm.** A test that finds the
+defect ALONE and hides it in a full run looks exactly like flake, and the
+standard response to flake is to quarantine or delete it. It is the opposite:
+the isolated run is the honest one. Before writing off a race test as flaky,
+check whether the passing configuration is the one where the race does not
+happen.
+
+**The tells, in order:** an `await` between the two operations that should
+collide; then, once that is fixed, a result that changes between an isolated
+run and a full one. The first means there is no window at all, the second
+means the window is real but not guaranteed. Noticed: step 6 unit 4;
+corrected and extended in the step 5+6 remediation, unit 3.
+
+**CROSS-SPEC VARIANT: a test can assume something about SHARED STATE that no
+other test is obliged to preserve.** The rule above is about one test's own
+fixture. This is the same defect between tests, and it only appears once
+specs share a database — which every E2E spec here does, running fully
+parallel across two browser projects.
+
+Three instances in one unit (step 5, unit 7d), all deterministic once
+pagination existed and all invisible when the spec ran alone:
+
+| Assumption | Broken by |
+|---|---|
+| "my record is on page 1" | another spec's 110-row fixture sorting ahead of it |
+| "my 110 rows don't matter" | every other spec reading page 1 |
+| "my search term is unique" | the other browser project seeding the same title |
+
+The last one is worth spelling out, because the obvious fix failed. Searching
+`'Hear Nothing'` matched the parallel project's copy; scoping it to
+`'Hear Nothing <suffix>'` then matched all THREE of the run's own records,
+because §5.2 makes `q` fuzzy across the ARTIST name too and the artist is
+`Discharge-<suffix>`. Two collisions at different scopes, and each obvious
+fix only closed one. Measuring each attempt is what found the second.
+
+**FOURTH INSTANCE, step 7, and the count is the point: ALL FOUR PRESENTED AS
+SOMETHING ELSE.** Not one of them looked like shared state at first sight.
+
+| What it looked like | What it was |
+|---|---|
+| a width-dependent layout bug at 390px | two shots seeding identical titles |
+| a broken unmatched-artist notice | a sibling test creating an artist the fuzzy match found |
+| a flaky prefill spec, three different failures in three runs | `beforeAll` seeding with `afterAll` cleanup, removing a row a parallel worker was using |
+| the no-live-call guard not firing | another spec seeding the release, so the cache answered and the guard was never reached |
+
+**The diagnostic value is in the count.** After four, the right first question
+for any E2E failure that is not obviously deterministic is "what else touches
+this row, this title, this id?" — before reading the code under test at all.
+Three of the four cost a full debugging round because that question came
+second.
+
+**The specific trap in the last two: a test can be broken by a fixture that
+makes it PASS a check it should fail.** The guard specs asserted "nothing has
+cached this release", and another spec cached it — so the assertion inverted
+rather than erroring. Seeding is not only an interference risk, it is a way to
+satisfy a precondition that was supposed to be absent.
+
+**The rules:**
+
+- scope every assertion to something no other spec can produce — an id you
+  created, not a title, a term, or a position;
+- a spec that seeds bulk data deletes it in a `finally`, so a failure does
+  not cascade into every later spec and bury the original cause;
+- prefer navigating to a filtered URL over clicking through an unfiltered
+  page, which is a page-1 assumption in disguise.
+
+Expect this to recur: every remaining UI step adds specs to the same shared
+database. Noticed: step 5, unit 7d.
+
+**PRESENTATION VARIANT: a duplicate-fixture error can present as a
+width-dependent LAYOUT bug.** The cross-spec variant above is about assertions
+going wrong. This is about the failure pointing somewhere else entirely.
+
+The step 6 unit 5 screenshot harness captured `/want-list` at 1280 and 390.
+The 1280 shot passed; **390 failed, alone and in parallel, on
+`getByText(title)` timing out.** Everything about that says the row renders
+differently at narrow width — a wrapped element, a responsive branch, a
+`hidden md:block`. The row component was read looking for exactly that, and
+has no width-dependent behaviour at all.
+
+Both shots seeded the SAME titles. By the second run two rows matched, so the
+locator resolved to two elements and Playwright raised a strict-mode
+violation — which surfaces as a TIMEOUT on `toBeVisible`, not as "found 2".
+The message names the thing that was not visible, so it reads as absence.
+Fixed by suffixing each shot's fixtures with its own viewport name.
+
+**Why it belongs here rather than under the E2E entries:** nothing was wrong
+with the page, and nothing was wrong with the assertion. The fixture was
+duplicated, and the only surprising part is where the symptom appeared. A
+variable that differs between two runs (viewport) gets blamed for a failure
+caused by one that does not (the seed).
+
+**The tell:** a failure that correlates with a dimension the code does not
+read. Before investigating why 390 differs from 1280, confirm the two runs
+differ ONLY in width — here they also differed in how much data was already
+present, which is the same axis-confusion the "same family" rule warns about.
+
+## RULE, responsive layout: a summary line must hide at the WIDEST breakpoint
+
+**Shape:** wrong-axis-variation
+**You are here if:** a summary line and the columns it replaces hide at different breakpoints
+
+of any column it substitutes for, never the narrowest.**
+
+A table that hides columns at narrow widths and reprints them in a summary
+line is only correct while the two are exact complements. In
+`CollectionList.tsx` they were not: the summary was `sm:hidden` (gone at 640)
+while the label column was `hidden md:table-cell` (arriving at 768), so
+**between 640 and 767 the label rendered nowhere**. Real, found in use, fixed
+2026-08-10.
+
+Deriving it each time is error-prone; the rule states it once. When adding or
+moving a hidden column, the summary line's breakpoint is part of that change.
+
+**Why this class of defect is worse than it looks:** the table draws absence
+as `—`, meaning "not recorded". A value dropped by the LAYOUT is
+indistinguishable from one the user never entered, so the screen is
+confidently misleading rather than obviously broken — CLAUDE.md §8 ranks that
+the worse of the two. Another instance of the absence-as-success family.
+
+**COROLLARY, from the testing side: 390 and 1280 both pass, so responsive
+defects live at the BOUNDARIES and only a sweep finds them.** The two
+habitual screenshot widths sit either side of the gap and see nothing. Sweep
+each breakpoint and one pixel below it — `collection-widths.spec.ts` uses
+375/639/640/700/767/768/1280 against Tailwind's sm=640 and md=768.
+
+Pair it with the visibility rule above: such a sweep MUST assert `innerText`,
+because a `textContent` assertion passes at every width including the broken
+one.
+Noticed: step 6, unit 5.
+
+**SECOND INSTANCE, and it is becoming a habit worth naming: A FIXTURE THAT
+MAKES A TEST PASS BY REMOVING WHAT IT TESTS.** Twice in two units, both caught
+while writing rather than by mutation.
+
+| Fixture convenience | What it silently removed |
+|---|---|
+| `mockMaster(year = 1971)` — a DEFAULT | passing `undefined` to model "master has no year" got 1971 instead, so the test failed against correct code |
+| suffixing an artist name to dodge `artists_name_unique` | the two records would have had DIFFERENT artists, and §7.7 matches on artist — the test would have passed while testing nothing |
+
+The second is the more dangerous, because it fails in the *passing*
+direction. A default that supplies a value makes a test fail loudly and gets
+fixed; a suffix that separates two rows makes the assertion trivially true
+and gets committed.
+
+**Both came from solving a test-mechanics problem — a required argument, a
+unique constraint — without asking what the workaround changed about the
+scenario.** The unique constraint wanted found-or-created, not a fresh name:
+the whole point was two records belonging to the SAME artist.
+
+**The check: after working around a constraint in a fixture, restate what the
+test is now testing.** If the restatement is narrower than the test's name,
+the workaround ate the scenario.
+
+**SUITE-SCALE VARIANT: the fixture rule applies to the whole CORPUS, not just
+to one test's data. If every committed fixture shares a property, no test can
+see what happens without it — however well written.**
+
+Step 7's prefill fabricated a pressing year from the master's album year, and
+no test caught it. Not because the tests were weak: because every captured
+Discogs payload in the repository carried its own `year`, so the master
+fallback never ran in any of them. The defect lived on a path the entire
+suite avoided.
+
+It surfaced only from a real lookup — the US Carpenters LP, `year: 0` and no
+`released` field at all, a shape I could not construct from imagination
+because every variation I invented recovered the year correctly.
+
+**The response was to make it a permanent fixture** (`release-no-year.json`),
+not to fix the code and move on. A payload that exercises a path nothing else
+reaches is worth more than a payload that duplicates coverage, and the
+argument for keeping it is the same one that justifies capturing fixtures at
+all: it encodes what the world does rather than what we imagined.
+
+**The check, at corpus scale: for each fixture, what property does it share
+with every other one?** Shared properties are unexercised branches. Here it
+was "carries a year"; the same question applies to "has a matrix", "has a
+catalog number", "is a release rather than a master". Noticed: step 7, and
+named by the security review.
+
+**CONCURRENCY-HARNESS VARIANT: a fake `sleep` that ADVANCES THE SHARED CLOCK
+turns a concurrency test into a spread-over-time test — and the correct fix
+then reads as broken.**
+
+The security review found the Discogs limiter bypassable: `waitMs()` then
+`take()` is check-then-act, so 200 concurrent requests ran 200 in flight
+against a 60/minute bucket. The fix — an atomic `reserve()` — was correct and
+the test still reported 200.
+
+The harness was the reason. Its `sleep` did `now += ms`, so every waiting
+caller's wake-up moved the clock forward and REFILLED the bucket for the next
+one. It was modelling 200 requests spread over several minutes, which is a
+scenario the limiter should allow, rather than 200 arriving at once.
+
+Established by probing rather than reasoning: `reserve()` against a stable
+clock returns 60 free then 1000/2000/3000ms staggered; against a jumping
+clock it returns one identical 1000ms to everyone.
+
+**A sleep that resolves WITHOUT moving time is the honest model of
+concurrency**: every caller arrives in the same instant, which is the whole
+premise. Advancing the clock inside `sleep` is right for a test about
+elapsed-time behaviour and wrong for one about simultaneity, and the same
+helper cannot serve both.
+
+**The tell:** a concurrency test whose result does not change when the
+implementation's atomicity does. Before trusting either outcome, check
+whether the harness lets the callers actually overlap. Noticed: step 7,
+security unit 2.
+
+**A RELATED LIMIT, worth knowing rather than working around: SOME PROPERTIES
+RESIST AN INJECTED CLOCK, because they are ABOUT the real timer.**
+
+Every other property of the Discogs client is testable on an injected clock —
+refill arithmetic, retry counts, deadline accounting — which is why the clock
+is injected at all. The request timeout is not: the abort fires from
+`setTimeout`, the very thing a fake clock replaces, so a fake clock can never
+make it fire.
+
+The resolution was to inject the CEILING rather than the clock:
+`maxElapsedMs: 50` in the test against 10s in production, with a real timer
+doing real work for 50ms. Not a workaround so much as recognising which knob
+the property is actually attached to.
+
+**The general form: when a property cannot be tested on the standard
+substitute, ask what it is a property OF.** Usually the answer names a
+different injection point. Knowing which properties resist the house
+technique is more useful than the individual workaround, because the next one
+will resist it too.
+
+**PASSIVE-PATH VARIANT: when every test exercises the DELIBERATE path, the
+passive path is unconstrained — and the passive path is usually the common
+one.** Not a fixture problem: each test is individually well-built. The gap is
+in what the SET of them chose to do.
+
+Found in step 6 unit 4 (pressing prefill) by a mutation that failed nothing.
+The tests covered prefilling, editing a prefilled field, and the no-target
+case. All four passed with the "silently copied" mutation in place, which
+should have been impossible — so the question was not "is there anything to
+constrain" but "why can't these see it".
+
+The answer: **every test edited something.** The form builds a pressing from
+the form values, so an edited field always produces a new row and the
+mutation never changed the outcome. The uncovered case was the one a user
+actually performs most: check the prefilled details against the sleeve and
+save without touching them. Under the mutation that yields `pressing_id`
+null — fields visibly filled, save succeeds, pressing gone.
+
+**Why this shape recurs:** tests are written from the feature's description,
+and a description says what the feature DOES ("prefills the pressing
+section", "lets you edit it"). Accepting a default is not a feature, so
+nothing in the description prompts a test for it — while for the user it is
+the path of least effort and therefore the default behaviour.
+
+**The check:** for any screen with prefilled or default values, ask what
+happens if the user changes NOTHING and submits. Same for a filter left at its
+default, a toggle left unticked, a prefilled date accepted. If no test covers
+the do-nothing path, the most common flow is the untested one. Noticed: step 6
+unit 4, during the step 5+6 remediation.
+
+**THE LIMIT OF MUTATION TESTING, and it is a real one: mutation cannot see a
+SYSTEMATICALLY PERMISSIVE layer, because the existing fixtures are all cases
+that layer already rejects.**
+
+This build leans on mutation harder than on any other technique, so where it
+fails is worth stating plainly.
+
+Step 7 unit 5: removing the `/^\d+$/` check in front of
+`z.coerce.number()` failed ZERO tests. The obvious reading is "the check is
+redundant" — and NOTES already says not to conclude that, so I probed
+instead. Coercion accepts `'5e4'` as 50000 and `'0x50'` as 80, so the check
+was load-bearing and its removal silently fetched a different record.
+
+**Why mutation was blind to it.** Every id in the test set —
+`'not-a-master'`, `'-1'`, `'0'`, `'50683/../..'` — is a value coercion
+ALREADY rejects. The guard and the coercion agreed on all of them, so
+removing the guard changed nothing observable. The values that discriminate
+(`'5e4'`, `'0x50'`, `' 50683 '`) are the ones nobody writes down, precisely
+because they do not look like inputs a user would send.
+
+**The general shape:** mutation asks "does removing this change the output on
+the inputs I have?" It cannot ask "what inputs have I failed to imagine?" —
+and a permissive layer's whole nature is accepting inputs you did not
+imagine. Same structural blind spot as the fixture rule above, one level up:
+there the fixture could not discriminate two RULES, here it cannot
+discriminate two INPUT SETS.
+
+**What to do instead, when a mutation on a validation guard fails nothing:**
+enumerate what the layer underneath accepts, by execution, before concluding
+anything. Not "does removing this break a test" but "what does the thing I am
+guarding say yes to". Five minutes in `node -e` answered it here.
+
+**SEAM RULE — third instance, and the one to state as a rule: LAYER TESTS
+PROVE A LAYER, NEVER THE JOIN. When two correct layers must agree, the test
+that matters runs end to end through both, and neither side's suite can
+substitute for it.**
+
+Three instances now, all found by use rather than by tests:
+
+| Layer A | Layer B | What fell in the gap |
+|---|---|---|
+| normalizer (24 tests) | search route | raw payloads returned; every normalizer test still passed |
+| search endpoint (accepts 12 params) | lookup form (offers 7) | five §5.7 parameters unreachable; no endpoint test can see a form |
+| import writes `discogs_release_id` | ownership matches on it | the FORM path never sent it — §7.7 tier 1 unreachable for every record the user owned |
+
+**The third is the sharpest.** Both sides were correct and both were tested:
+every ownership test built pressings directly WITH an id, every import test
+asserted what was written. The defect existed only in the join, and the
+mutation that exposes it — never sending the id — failed ZERO tests before a
+seam test existed and three after.
+
+**Why layer tests cannot catch it, structurally.** A layer test supplies its
+own inputs. That is what makes it fast and precise, and it is exactly why it
+cannot tell you whether the real producer supplies those inputs — the fixture
+stands in for the other layer and always agrees with it. Two suites can be
+green, complete, and jointly silent.
+
+**The rule: for any property that requires two components to agree, write one
+test that goes through both.** `test/integration/import-then-own.test.ts` is
+the shape — real import in, real ownership query out, no fixture in between.
+It is slower and less precise than either layer's tests and that is the
+point: precision is what hides the seam.
+
+**The tell:** a property stated in the spec that no single module owns. §7.7's
+tier 1 is a claim about the importer AND the matcher; §5.7's twelve
+parameters are a claim about the endpoint AND the form. Whenever a
+requirement spans components, ask which test would fail if they stopped
+agreeing. Noticed: steps 7 units 4, the search-params QA finding, and the
+tier-1 QA finding.
+
+**WIRING VARIANT: a pure-function test proves the TRANSFORMATION, never that
+anything calls it.** Not a fixture problem at all — the fixtures are fine and
+the assertions are real. The gap is that a change bypassing the function
+entirely passes every one of its tests.
+
+Measured in step 7 unit 4. `normalize-search.test.ts` has 24 tests over real
+payloads: genres and styles kept separate, absence-prose mapped to null, the
+combined "Artist - Title" split. Making the route return the RAW Discogs
+payload instead of the normalized one:
+
+| Layer | Result |
+|---|---|
+| normalizer's own 24 tests | **all still pass** |
+| endpoint tests | **5 fail** |
+
+Nothing was wrong with the normalizer, so nothing testing the normalizer
+could notice. A user would see a record pressed in a country called
+"Unknown", with a green suite.
+
+**The rule: for any transformation that exists to protect the user from
+something, assert the property at the layer the USER reaches, not only where
+it is implemented.** The pure-function tests stay — they are where the
+behaviour is pinned down, and they discriminate far more finely than an
+endpoint test can. But at least one assertion per property belongs at the
+boundary, and it should be the property that matters rather than a smoke
+test: "styles survive", "absence is null", not "returns 200".
+
+**The tell:** a module whose tests all pass but which nothing imports. Same
+family as the extraction-with-one-importer check above — both are questions
+about whether the code is CONNECTED, which no test of the code itself can
+answer. Noticed: step 7, unit 4.
+
+**UNREACHABLE-PATH VARIANT — the tell above came true at full scale, and this
+is the extreme case of it: `POST /api/discogs/import` is not called by any UI
+code in the repository.**
+
+Found by QA (2026-08-11): imported records have no genres. `discogs-import.ts`
+implements §6's mapping correctly — `findOrCreateGenres(tx, [...styles,
+...genres])`, styles first, with a comment citing CLAUDE.md §8 on not
+flattening the hierarchy — and its tests pass and genuinely prove genres
+attach.
+
+**They are honest tests of code nothing runs.** Every assertion is real, the
+fixtures are real, the transaction is real. What no test in that file can
+express is whether any caller exists. The lookup screen links to
+`/records/new?discogsReleaseId=`, which goes through `loadDiscogsPrefill` —
+a path that reads neither `genres` nor `styles`.
+
+**The rule, and it belongs beside the seam rule: passing tests establish that
+a unit WORKS, never that anything calls it.** "Do we implement §6's genre
+mapping?" answers yes from the test suite and no from the running app. Any
+audit that greps for an implementation and finds one with green tests will
+reach the wrong conclusion.
+
+**The cheap check, worth running when a feature is reported missing despite
+being implemented:** grep for callers of the module OUTSIDE its own tests. One
+command, and it distinguishes "broken" from "never invoked" — which are
+different bugs with different fixes.
+
+Compounding factor worth noting: the two paths were not merely duplicates. The
+live one has format matching, the master-year fallback and the cover fetch;
+the dead one has genres and styles. Each was correct about different fields,
+so neither could be deleted in favour of the other without measuring first —
+and a field-by-field comparison was the only way to see it.
+
+**SELF-MATCHING VARIANT: a checker that scans the repo can end up inside its
+own subject set, and it fails on its own matchers rather than on real code.**
+The cross-spec variant one level up: the shared state is the REPOSITORY.
+
+`test/repo/dotenv-quiet.test.ts` asserts that every tracked file calling
+dotenv's `config()` passes `quiet: true`, finding those files by search. Its
+own source contains the strings `dotenv` and `config(` — inside the regexes
+doing the matching — so once it was committed and `git ls-files` could see
+it, it matched itself and failed against the bare `config()` in its own
+matcher.
+
+**It passed alone and failed in the full suite**, which is the tell, and the
+timing is the trap: the file is invisible to `git ls-files` until the commit,
+so the defect appears one commit AFTER the code that causes it. Verified by
+running the file in isolation (green) and the suite (red).
+
+**The rules for any repo-scanning check:** exclude the checker from its own
+subject list explicitly, by path, with a comment saying why — and keep the
+vacuity guard, because an exclusion that silently over-matches turns the
+whole assertion into a loop over nothing. Both are in place there. Noticed:
+step 7, unit 1.
+
+**VARIANT: sometimes no value on that axis CAN discriminate, and the fix is a
+different axis rather than a better fixture.** The five cases above are all
+repaired by adding inverting rows. This one cannot be.
+
+`formatPrice` keeps money as a string so it never routes through a float, and
+the test asserted that with `'12345678.91'` — "a value beyond float
+precision". It is not: `NUMERIC(10,2)` allows at most 8 digits before the
+decimal, which is comfortably inside a double, so **no value the column can
+hold** produces a different answer from `Number(v).toFixed(2)`. Enumerating
+the candidates is what established that; the test looked rigorous and
+constrained nothing.
+
+The discriminator was on another axis entirely — ROUNDING, not magnitude.
+`'8.567'` truncates to `8.56` and rounds to `8.57`. That value is not even
+storable in the column; it can arrive from an unsaved form field, which is
+precisely why the helper must not round.
+
+**The check when a fixture resists repair:** before concluding the property
+is untestable, ask what OTHER observable difference the two implementations
+have. "Same output for every legal input" means the axis is wrong, not that
+the behaviour is unconstrainable. Noticed: step 5, unit 6.
+
+## RULE: "same family" is a hypothesis, not a diagnosis. Measure which
+
+**Shape:** sample-as-population
+**You are here if:** a failure resembles an earlier one and you are applying the same diagnosis
+
+component DOMINATES before choosing a fix.**
+
+Two failures can share a shape exactly and need opposite responses. Fixing
+the shape fixes neither.
+
+The instance, both found in step 5 unit 7b and describable in the same
+sentence — *"a click acts on state the server has not caught up with"*:
+
+| | Collection filters | `/manage` genre move (Mode 2) |
+|---|---|---|
+| Trigger | `router.push` | `router.refresh` |
+| What is stale | URL, props AND `useSearchParams` | rendered props |
+| Dominant cost | the server render | **the PATCH (1264ms vs 142ms)** |
+| Consequence | wrong href built → a filter is silently DROPPED | assertion runs early |
+| Nature | **product bug** — a user hits it | **test bug** — the app is correct |
+| Fix | hold the last-pushed query and build from it | wait for the response |
+
+Described in prose they are the same problem. Measured, they are not related
+at all: one needs application code, the other needs one line in a spec. Four
+earlier attempts on Mode 2 failed because the diagnosis named the 142ms
+component and the 1264ms component was doing the work.
+
+**The check:** before adopting a fix because a failure "looks like" one
+already understood, measure the components and confirm the same one dominates.
+A shared description is a reason to look, not a reason to conclude. This
+compounds badly with the "a mutation is code and can be wrong" rule: an
+inherited diagnosis is never re-derived, so a wrong emphasis survives every
+subsequent attempt. Noticed: step 5, unit 7b.
+
+## RULE: Zod's coercion layer is SYSTEMATICALLY PERMISSIVE at trust
+
+**Shape:** check-cannot-fail
+**You are here if:** a Zod schema sits at a trust boundary and uses coercion
+
+boundaries. Four instances is a class, not a run.**
+
+**The standing rule: no `.coerce` appears in a boundary schema without an
+explicit FORMAT CHECK in front of it.** Not "be careful with coercion" —
+coercion's job is to say yes to things that resemble the target type, and a
+trust boundary's job is to say no to everything it was not promised. Those
+are opposite jobs, so the format check is not belt-and-braces, it is the
+actual validation and the coercion is only the conversion.
+
+Four instances, all in this build, all invisible to every downstream test —
+because each produced a *valid-looking* value rather than an error:
+
+| Modifier | Input | Becomes | Consequence |
+|---|---|---|---|
+| `.default([])` on `genreIds` | absent | `[]` | "leave alone" becomes "REMOVE ALL" — silent data loss on PATCH |
+| `z.coerce.number()` on `yearFrom` | `''` | `0` | applies `release_year >= 0`, drops every undated record behind a 200 |
+| `z.coerce.boolean()` on `includeUndated` | `'false'` | `true` | the flag cannot be turned off; every non-empty string is true |
+| `z.coerce.number()` on a Discogs master id | `'0x50'` | `80` | fetches a DIFFERENT master's versions and presents them as the answer |
+
+The fourth adds a dimension the first three did not have: **the coerced value
+left our process.** `"5e4"` becomes 50000 and `"0x50"` becomes 80 — both
+accepted, both interpolated into a URL, both returning real data for the
+wrong record. Probed rather than assumed, after a mutation removing the
+format check failed nothing:
+
+```
+z.coerce.number().int().positive()
+  '50683'  → 50683      ' 50683 ' → 50683
+  '5e4'    → 50000      '0x50'    → 80        '50683\n' → 50683
+```
+
+**Why they are hard to catch.** A validation bug that REJECTS is loud — a 400
+arrives and someone investigates. All four ACCEPT, and produce a plausible
+value, so the endpoint returns 200 with the wrong rows. Nothing downstream
+can tell: the query layer received a legitimate number, the handler received a
+legitimate array. The defect exists entirely in the gap between what the
+caller wrote and what the schema decided they meant.
+
+**Nor will a mutation necessarily catch it.** Removing the digit check in
+front of `z.coerce.number()` failed ZERO tests, because the existing tests
+only sent ids that coercion rejects anyway (`'not-a-master'`, `'-1'`). The
+test set has to contain values coercion ACCEPTS but the format forbids, and
+those are not the values anyone thinks to write down.
+
+**The rule.** In a boundary schema, prefer an explicit shape that cannot
+reinterpret:
+
+- a boolean flag is `z.enum(['true','false']).transform(v => v === 'true')`,
+  never `z.coerce.boolean()`;
+- a numeric param validates its STRING form first
+  (`.refine(v => /^-?\d+$/.test(v))`) and only then transforms — coercing
+  first is what destroys the absent/blank distinction;
+- `.optional()` preserves absent-vs-empty; `.default()` destroys it. If
+  absence and emptiness mean different things — and for a nested array they
+  always do — `.default()` is wrong.
+
+**The test that catches this class** is not "does a valid value work" but
+"does an EMPTY or MALFORMED value get rejected rather than reinterpreted".
+Every filter now has one; `yearTo=` was found only because the empty-string
+case was tested for each param separately rather than once. Noticed across
+steps 4–5; stated as a class during the step 5 UI work.
+
+## RULE: a measurement compared against a baseline taken on DIFFERENT CODE
+
+**Shape:** sample-as-population
+**You are here if:** a measurement is being compared against a baseline from different code
+
+overstates the change, and the error always flatters the change.**
+
+The step 5 flake work produced two measurements of the same thing:
+
+| Wait signal | Submissions lost | Taken on |
+|---|---|---|
+| rendered control | 6 of 8 | the build BEFORE unit 9b |
+| rendered control | 1 of 12 | the build AFTER unit 9b |
+| `data-hydrated` | 0 of 12 | the same build |
+
+Reporting "6 of 8 → 0 of 12" would have been arithmetic on two different
+programs. Unit 9b added an inline-create button that renders LATER in the
+tree than the old wait signal, so the control arm had silently become a
+longer wait — the earlier "fix" was waiting longer rather than waiting
+correctly, and the difference the new signal actually makes is 1 in 12, not
+6 in 8.
+
+**Why the error is never neutral:** a stale baseline was measured before the
+intervening work, and intervening work is usually improvement. So the "before"
+is worse than the true control, and every comparison against it flatters
+whatever came next. Nobody re-measures a baseline that already tells a good
+story.
+
+**The rule:** when a fix is verified by comparison, run BOTH ARMS on the
+CURRENT build. A baseline is a property of a build, not a number you can
+carry forward — and the moment any other change lands, the old number is
+measuring something that no longer exists. Noticed: step 5, E2E flake work.
+
+## RULE: a mock that intercepts EVERY call disables the function; a mock that
+
+**Shape:** check-cannot-fail
+**You are here if:** a test passes with a mock and you have not checked which calls it intercepted
+
+intercepts only the FIRST simulates the race.**
+
+Race tests here hook a pre-check so a concurrent write appears to land in the
+window between check and insert. The natural way to write that is:
+
+```ts
+vi.spyOn(queries, 'findLabelByName').mockImplementation(async () => {
+  await db.execute(sql`INSERT INTO labels (name) VALUES ('Dischord')`);
+  return undefined;              // "no such row" — the race window
+});
+```
+
+That works only while the handler calls the function ONCE. The moment the
+recovery path calls it again — which §5.4's `existingId` made it do, to name
+the winner — the mock answers "no such row" a second time, the handler
+concludes something impossible has happened, and the test sees a 500 instead
+of the 409 it asserts.
+
+**Five existing race tests had this shape and broke together**, and the new
+test written in the same unit had it too. They were not wrong when written:
+the mock matched the code as it then was, and only became a lie when the
+function acquired a second caller.
+
+**The fix** is to hook the first call and fall through afterwards:
+
+```ts
+const real = queries.findLabelByName;
+let firstCall = true;
+vi.spyOn(queries, 'findLabelByName').mockImplementation(async (name) => {
+  if (!firstCall) return real(name);
+  firstCall = false;
+  await db.execute(sql`INSERT INTO labels (name) VALUES ('Dischord')`);
+  return undefined;
+});
+```
+
+**Why it belongs with the fixture rules:** it is the assumed-precondition
+pattern in mock form. The fixture assumes something about the data; this
+assumes something about the CALL COUNT of the code under test — and neither
+assumption is stated, checked, or visible when reading the test. The tell is
+identical: the test looks correct and passes, right up until the thing it
+silently assumed stops being true.
+
+Expect it on every recovery path: a catch that has to identify what it
+collided with will re-read, and any mock covering that read has to let the
+second call through. Noticed: step 5, unit 9b.
+
+**THIRD INSTANCE — a mock answering EVERY PATH IDENTICALLY cannot
+distinguish code that calls one path from code that calls both** (step 7,
+unit 8c). The family so far:
+
+| Mock shape | What it could not see |
+|---|---|
+| intercepts every CALL rather than the first | the recovery path's second read |
+| returns `undefined` from the name finder | that the finder was reached at all |
+| answers every PATH with one fixture | which endpoints were actually called |
+
+The versions endpoint fetches two things: the versions list, and the master
+for the artist name. My mock returned the versions fixture for both, so the
+master lookup yielded no artist — and §7.7's tiers 2 and 3 match on artist,
+so every unowned row would have come back badgeless **with the tests
+agreeing**. The mock made the endpoint look correct while removing the data
+half its logic depends on.
+
+**The rule for a multi-call mock: branch on the path and assert the branches
+were taken.** If a mock ignores its arguments, it is asserting that the
+arguments do not matter — which is a claim about the code under test, and
+usually a false one.
+
+**The unifying shape across all three:** a mock is a MODEL of the dependency,
+and every simplification is an assumption. Call count, return shape, path
+discrimination — each one silently states "this does not matter here", and
+the test cannot tell you when the statement stops being true.
+
+## RULE: a message-less `.toThrow()` asserts only that SOMETHING failed
+
+**Shape:** check-cannot-fail
+**You are here if:** a test asserts that something throws without asserting what
+
+Six instances have now accepted a different exception than intended, and the
+sixth was in the guard built to prevent the fifth.
+
+**Swept the whole suite (step 5 remediation): 91 occurrences, 13 files.**
+
+| Form | Count | Risk |
+|---|---|---|
+| `.not.toThrow()` | 11 | none by construction |
+| `toThrow(<matcher>)` | 8 | constrained |
+| bare `toThrow()` positive | 49 | the at-risk set |
+
+The 49 were **tested, not rewritten**, by asking of each: *if the intended
+failure were impossible, would something else still throw and satisfy it?*
+
+**30 database-constraint assertions came back sound in substance.** Each was
+probed for the error it actually catches, and every one is the intended
+SQLSTATE — 23514 for the `price_history` XOR, 23505 duplicate, 23503 foreign
+key, 23001 append-only trigger. Control cases confirm valid input SUCCEEDS, so
+the throw comes from the constraint under test and not from setup. Left as-is
+deliberately: Drizzle wraps everything as `Failed query: …`, so a message
+matcher is near useless. **If they are ever tightened, the matcher is
+`error.cause.code`, not the message** — that is where the SQLSTATE lives.
+
+**Two real findings:**
+
+1. **The sixth instance** — the `catch` around pg-connection-string's `parse()`
+   in `resolveConnectionHost` failed NOTHING when removed. Probed rather than
+   assumed dead: `parse()` genuinely throws on `postgresql://[`,
+   `postgresql://%` and a non-numeric port, all of which pass the scheme check
+   first. So it was LIVE BUT UNCONSTRAINED (case 2 below), not dead. Four
+   tests now reach it and assert the parse message specifically.
+
+2. **A test whose NAME asserted what its assertion did not check.**
+   `expect(() => resolveConnectionHost('mysql://user:pass@localhost:3306/db')).toThrow()`
+   sat in a test called "rejects a non-postgres scheme" — but that URL's host
+   is `localhost`, which the host allowlist ACCEPTS. The scheme check was the
+   only thing rejecting it, and a bare `.toThrow()` would have passed if the
+   rejection came from anywhere else. This is the cleanest illustration of the
+   whole pattern: the name carries a claim the assertion never makes.
+
+**The shape to watch for:** a test that manipulates environment or input to
+reach a code path can be defeated by a DIFFERENT guard reading the same input.
+The hollow Neon test is the worst case — see the Neon entry below.
+Swept: step 5 remediation.
+
+**WORSE STILL, and the one to remember: A TEST THAT MANUFACTURED FALSE
+CONFIDENCE ABOUT THE EXACT PROPERTY IT NAMED.**
+
+A repo test asserted that `client.ts` contains the string `guardedFetch`,
+under the name "is wired into the shared client, not merely available". It
+passed. The name existed — and covered ONE OF TWO construction paths:
+`getDiscogsClient` wrapped its fetch, `createDiscogsClient` did not, so any
+caller passing `globalThis.fetch` reached Discogs for real.
+
+**The test written to prove the guard was what stopped anyone checking whether
+the guard was complete.** Its green tick answered "is the guard wired in?"
+with evidence about a NAME, and the question was never asked again. The hole
+was found only when a DIFFERENT test — replacing another file-text assertion
+with a behavioural one — resolved with a genuine 36-field Discogs payload.
+
+**Why this is worse than the config-text case below.** That one asserted a
+fact about a file and inferred behaviour. This one asserted a fact about the
+IMPLEMENTATION and inferred completeness — a stronger claim, from weaker
+evidence, about the property the test was named for. A grep can tell you a
+mechanism exists. It cannot tell you the mechanism has no exceptions, and a
+guard's entire value is in having none.
+
+**The rule: never assert a guard by searching for it. Exercise the paths it
+must cover, including the one you think nobody uses.** Both replacements do:
+one drives `createDiscogsClient` with the real `fetch` and expects a refusal,
+the other drives it with an injected `fetch` and expects success, so the
+guard is pinned in both directions.
+
+**The tell: a test whose assertion is `toMatch` on source code.** If the
+answer to "what would have to be true for this to pass while the property is
+false" is "a name in the wrong place", it is not a test of the property.
+Noticed: step 7, security unit 5.
+
+**CORRECTED — this rule was recorded too bluntly, and the test-quality pass
+found the counterexample.** "A test whose assertion is `toMatch` on source
+code" is not the tell. The tell is narrower:
+
+> **A file-text assertion is right exactly when the property is about a FILE,
+> and wrong when it stands in for behaviour that can be observed.**
+
+`neon-gate.test.ts` greps `neon-transactions.test.ts` for its gate test's
+name, which reads like the shape condemned above. Mutation says otherwise:
+renaming the gate away is caught ONLY by that grep. Its behavioural sibling —
+which actually runs vitest and greps the output — PASSES, because the warning
+text it matches is unchanged.
+
+**No behavioural test can notice that another test was deleted.** A deleted
+test does not fail; it stops existing, and the suite goes green with less
+coverage. The property "this test still exists" is genuinely a property of a
+file, and a file-text assertion is the only instrument for it.
+
+So the question to ask is not "does this assert on source text" but "is the
+thing being asserted a fact about the file, or about the running system". The
+`guardedFetch` case above was the second: it asserted a NAME and inferred a
+guard was complete. `every-page-has-nav` was the second too — it asserted a
+string and inferred a nav renders, and passed 11/11 against
+`{false && <AppHeader />}`. `neon-gate` is the first, and stays.
+Corrected: test-quality pass after R4.
+
+**SAME CLASS, WORST FORM YET: asserting a CONFIG FILE'S TEXT rather than the
+running system's BEHAVIOUR.** The test passed for the entire period the thing
+it named was inert.
+
+A repo test asserted that `playwright.config.ts` starts the dev server with
+`NODE_ENV=test`. It does — and Next FORCES `NODE_ENV` to "development" for
+`next dev`, discarding it. So the config line was present, the test was
+green, and the guard keyed off that variable never applied to a single E2E
+run. Two live calls reached api.discogs.com underneath it.
+
+**Why it is worse than the other two in this entry.** A message-less
+`.toThrow()` at least observes the code under test; it just cannot tell which
+failure. This observes a FILE, and infers behaviour from it. The inference was
+wrong in a way no amount of reading either the config or the guard would have
+revealed — only running the system and asking what it saw.
+
+Replaced with a Playwright spec that drives a real endpoint and asserts the
+call is refused, mutation-verified: disabling the guard fails 2 of its 3
+specs. Cost: an extra E2E spec. Value: the assertion is about the thing whose
+behaviour matters.
+
+**The tell: a test whose subject is a file path.** `readFileSync` in a test
+is not automatically wrong — the dotenv and migration checks legitimately
+assert repository FACTS — but the moment the assertion is a proxy for
+"therefore the system behaves like X", it has stopped testing X. Ask what
+would have to be true at RUNTIME, and whether anything checks it. Noticed:
+step 7, the no-live-calls guard.
+
+**SAME CLASS, DIFFERENT MATCHER: `toEqual` cannot catch an explicit
+`undefined` where a key should be absent.** Verified rather than assumed:
+
+```
+expect({ q: 'x', genreId: undefined }).toEqual({ q: 'x'})        // PASSES
+expect({ q: 'x', genreId: undefined }).toStrictEqual({ q: 'x' }) // fails
+```
+
+Found in `withFacet` (step 5, unit 7a), where clearing a filter must DELETE
+the key rather than assign `undefined`. Replacing the delete with an
+assignment failed no test, and a comment in the source asserted that `toEqual`
+would have caught it — wrong, and wrong in the confident direction.
+
+It belongs in this entry because it is the same defect shape as a bare
+`.toThrow()`: **an assertion that appears to constrain a property it cannot
+express.** `.toThrow()` cannot distinguish which error; `toEqual` cannot
+distinguish absent from undefined. In both cases the test reads as though it
+checks the thing and does not.
+
+Compounding it here: `toQueryString` skips `undefined` too, so the serialised
+URL is identical either way. TWO layers each blind to the difference, which is
+why the mutation came back clean. The fix was a `toStrictEqual` test on the
+state object plus an `Object.keys` assertion.
+
+**Worth a sweep of `toEqual` on object shapes**, the same way `.toThrow()` was
+swept — every place a test asserts a whole object and an extra undefined key
+would slip through. NOT done yet; recorded so it is not lost. Noticed: step 5,
+unit 7a.
+
+## RULE: some defects cannot be expressed as a failing assertion, and the
+
+**Shape:** observer-without-subject
+**You are here if:** a defect is real and you cannot write an assertion that fails on it
+
+honest move is to say so in the test rather than write one that looks like it
+covers them.** A hang is the clearest case.
+
+Step 7 unit 1's Discogs client retries a 429 a bounded number of times.
+Removing the bound does NOT fail its test — it kills the vitest worker
+("Worker exited unexpectedly"). The loop spins on an injected `sleep` that
+resolves immediately, so it never yields: `testTimeout` cannot fire, no
+assertion is reached, and the harness exhausts memory first. The run reports
+no counts at all.
+
+**Two attempts to convert that into a clean failure both failed, each for a
+reason worth knowing:**
+
+| Attempt | Why it did not work |
+|---|---|
+| mock throws after a call ceiling | the client catches every `fetch` rejection as a network error and RETRIES — the escape hatch fed the loop it was meant to break |
+| mock returns a non-retryable status after a ceiling | the worker dies before reaching the ceiling; the retry counter is not what runs out first |
+
+Abandoned there per CLAUDE.md §9 rather than attempting a third.
+
+**RESOLVED, and the resolution is the transferable part: the gap was closed
+by adding a SECOND bound of a different kind, not by a third attempt at the
+test.** A total elapsed-time deadline (`MAX_ELAPSED_MS`) now sits alongside
+the attempt count. With it, removing the attempt bound FAILS the test rather
+than crashing the worker — the runaway loop terminates on time, so the
+assertion is reached and reports.
+
+**Two bounds, and each makes the other testable.** Neither alone is enough:
+the attempt count catches a fast retry storm, the deadline catches a slow one
+— including a hostile or mistaken `Retry-After: 3600`, which a count-based
+limit would obey to the letter. Both are mutation-verified, including the
+plausible mistake of checking the deadline AFTER sleeping rather than before,
+which fails 2 because the sleep has already spent the budget being protected.
+
+**Why the deadline was the right instrument** — it matches the actual
+production risk. An unbounded retry in a vitest worker is an OOM; in a
+serverless function it is a WEDGED REQUEST holding execution time until the
+platform kills it, with the user watching a spinner. So the useful guarantee
+is "this returns within ten seconds either way", not "this makes at most four
+attempts". A lint rule against unbounded loops was the other candidate and
+was rejected: it would fight the `for (;;)` retry idiom and constrain the
+shape of the code rather than the risk.
+
+**SECOND INSTANCE, and it means the OPPOSITE — read the crash before
+concluding anything from it.**
+
+Step 8 unit 4: removing `readCapped`'s streaming size cap (`arrayBuffer()`
+instead) also killed the worker, `FATAL ERROR: ... heap out of memory`, no
+counts reported. Same symptom, same absence of a red assertion. The
+interpretation is inverted:
+
+| | Step 7, retry bound | Step 8, size cap |
+|---|---|---|
+| Crash is | **the defect** — the test never reached its assertion, so the bound was UNVERIFIED | **the consequence** — the mutated code did the harmful thing, loudly |
+| Evidence value | none; the gap stayed open | stronger than a failed assertion |
+| Action | add a second bound of a different kind | none; the cap is verified by other tests too |
+
+**The distinguishing question: does the CRASH itself demonstrate the harm the
+code prevents?** Buffering an unbounded stream IS the production failure —
+the process dying is the property under test, arriving in person. An
+unbounded retry loop spinning on an immediate `sleep` is an artefact of the
+test harness's fake clock, not what production does.
+
+**The rule: a mutation that crashes is not automatically a bad mutation, and
+not automatically a good one.** Ask whether the crash is the behaviour being
+prevented. If yes, record it as evidence and keep an ordinary assertion
+alongside it (here, `cancelled === true`, which fails cleanly). If no, the
+mutation proved nothing and the gap is still open.
+
+**The general rules, both still standing:**
+
+1. When a mutation produces a CRASH rather than a failure, the test does not
+   cover it. Say so, in terms of what it does and does not constrain — a
+   stated gap is a smaller problem than a false claim of coverage.
+2. **Before concluding a property is untestable, ask whether a DIFFERENT
+   guarantee would make it testable.** The same move as the `formatPrice`
+   variant above, where the discriminator was on another axis: here the
+   answer was not a cleverer harness but a second bound the code was arguably
+   missing anyway. A property that resists testing is sometimes telling you
+   the code is underspecified. Noticed and closed: step 7, unit 1.
+
+## RULE: this toolchain reports ABSENCE as SUCCESS in at least three distinct
+
+**Shape:** instrument-reports-nothing
+**You are here if:** a command exited green and you have not checked it did anything
+
+ways. A green result can mean "nothing ran", not "nothing broke".**
+
+Three instances, three different mechanisms, all in this build:
+
+| What was absent | How it appeared | Found by |
+|---|---|---|
+| A test file that could not be imported | `Tests no tests`, after `Test Files 1 failed` | reading past the summary line |
+| A whole file's worth of skipped tests | a `console.warn` at module scope, swallowed | investigating something else |
+| A test that never reached Neon | a passing `.rejects.toThrow()` catching the wrong error | probing what the error actually was |
+
+**The third one is the reason this entry exists**: the hollow Neon test
+reported green for weeks while never contacting the database it existed to
+verify. The other two are cheaper but the same shape.
+
+**The first is the newest** (step 6, unit 2). A `ReferenceError` thrown while
+IMPORTING a test file — `uuid is not defined`, left by an incomplete deletion
+— surfaces in the summary as `Tests no tests`. There is a `Failed Suites 1`
+section above it with the stack trace, but the line most readers scan for a
+verdict says the tests did not run rather than that they failed. A run that
+collects zero tests from a file that had thirteen is a failure; it reads as a
+skip.
+
+**The common shape: the absence of a signal is being rendered in the same
+visual register as a positive result.** Vitest's summary, a swallowed warn,
+and a satisfied assertion all look like the thing worked.
+
+**The rule: for any check that matters, know its POSITIVE count and assert
+it.** Not "did the suite pass" but "did the number of tests that ran match
+what should have run". This is why the Neon gate reports "9 passed" rather
+than "green", why `test/repo/neon-gate.test.ts` fails BY NAME when the branch
+is unconfigured, and why CURRENT POSITION carries counts rather than ticks. A
+count can be wrong in a way a tick cannot. Noticed across steps 4-6.
+
+**FOURTH INSTANCE, and the first originating OUTSIDE this system: Discogs
+encodes absence as PROSE.** Every entry above is our own tooling reporting
+nothing-happened as nothing-broke. This one arrives over the network from a
+third party, which makes it a different problem: no amount of discipline in
+our own code prevents it, and it is invisible until someone reads real
+payloads.
+
+Real values from the captured search fixtures (step 7, unit 3):
+
+| Field | Discogs sends | Passed through, it means |
+|---|---|---|
+| `country` | `"Unknown"` | pressed in a country called Unknown |
+| `catno` | `"none"` | catalog number "none" |
+| `label` | `["Not On Label"]` | released by a label called Not On Label |
+
+**These are worse than nulls, because they look ENTERED.** A blank country
+reads as "we don't know"; the string "Unknown" reads as a fact somebody
+recorded, and it will sort, filter and display as one. §5.7 already says
+Discogs data is user-submitted and imperfect — this is the concrete form that
+takes, and it fabricates data rather than omitting it.
+
+**No hand-written fixture would have contained them**, which is the argument
+for captured fixtures in one line. I would have written `country: null` for a
+missing country, because that is what a sane API does.
+
+**THE INVERSE, and it is the same error wearing the other face: a value that
+is PRESENT and means something else.** Absence-prose fabricates data where
+there was none; this misfiles data that exists.
+
+Discogs' format `text` field carries whatever a contributor wrote about that
+pressing's physical form. On release 381756 it is `"Gatefold"`; on the
+no-matrix fixture it is `"Blue/Green"`. Same field, same type, and one is a
+sleeve fact while the other is the vinyl colour §4.2 asks for.
+
+Read unconditionally into `color_variant`, every gatefold record in the
+collection acquires a colour of "Gatefold" — wrong in the confident
+direction, exactly like `country: "Unknown"`, and for the same reason: it
+looks entered, so nobody questions it.
+
+**The rule: when an external field is a free-text catch-all, require positive
+evidence before mapping it to a typed column.** The colour mapping now needs
+a colour word to appear. Conservative on purpose — a missed colour is a blank
+the user fills in, a wrong one is data they have to notice is wrong first.
+
+**SAME SOURCE, DIFFERENT SHAPE PER ENDPOINT — and the mismatch is silent.**
+Discogs sends the same information in different shapes depending on which
+endpoint answered, and nothing announces the change:
+
+| Field | Search results | Master versions |
+|---|---|---|
+| format descriptors | ARRAY `["Vinyl","LP","Reissue"]` | STRING `"LP, Album, Reissue"` |
+<!-- 2026-08-25: search ALSO sends a plural `formats` array of objects carrying
+     `text`, which this table's first row does not mention and which was
+     undeclared in the schema until the Doors lookup fix. See the corrected
+     endpoint table under the field-per-endpoint rule. -->
+| year | `year` | `released` |
+| genres / styles | `genre` / `style` (singular) | — |
+| community counts | `community.have` | `stats.community.in_collection` |
+
+**The consequence is worse than a missing field.** Treating the version
+string as an array yields ONE descriptor that matches nothing, so
+`isReissue` is false for every row — on the screen built specifically to tell
+an original from a reissue. It does not throw, it does not warn, and the
+table looks complete. Reading `year` instead of `released` empties the column
+that separates the 1982 original from the 1989 repress.
+
+**The rule: normalize per endpoint, and never assume two endpoints of the
+same API share a field's shape.** Where the RULES are shared (absence-prose,
+reissue inference) extract them; where the SHAPES differ, keep separate
+parsers and let each one state what it expects. A single "clever" normalizer
+spanning both is how the string-as-array case gets written.
+
+**The rule for any external boundary: enumerate how the source spells
+ABSENCE, from real payloads, before mapping its fields.** Null and undefined
+are the easy cases. The dangerous ones are sentinel strings, `0` for "not
+set", `"0000-00-00"` dates, and empty arrays that mean "unknown" rather than
+"none". Normalize them to null at the boundary, in one place, and test the
+mapping at the ENDPOINT as well as in the normalizer — a pure function is
+easy to bypass with a wiring change. Noticed: step 7, unit 3.
+
+## RULE: prose is more rigorous than the work it describes, and it is always
+
+**Shape:** measurement-not-governing
+**You are here if:** a comment or summary describes work more rigorously than the work
+
+wrong in the flattering direction.** Comments, headers and STATUS REPORTS all
+do this. Three instances now, the third the worst:
+
+1. `isUniqueViolation` sat dead for a whole build unit behind a confident
+   comment describing what it caught.
+2. A comment in `withFacet` asserted that `toEqual` would catch an
+   `undefined`-vs-absent mutation. It cannot — verified.
+3. **`src/lib/records/create-schema.ts` (step 6, unit 3).** Its header says
+   the schema is "shared by `POST /api/records` and
+   `POST /api/want-list/:id/acquire`", and argues the case: *"Defining it
+   twice is how they drift — and the drift would be silent."* Only acquire
+   ever imported it. `POST /api/records` kept its own local `createSchema`,
+   so the module warning against a second definition WAS the second
+   definition. Found by the step 5+6 adversarial review, not by any test.
+
+**What makes the third one different: the artifact that outran the work was
+the REPORT.** The unit 3 report stated as fact that the schema was "shared
+with POST /api/records". Nobody checked, because a status report is read as
+a record of what happened rather than as a claim needing verification — and
+it is written by the party least able to audit it. The comment then encoded
+the same false claim in the source, where the next person editing one file
+would reasonably believe both had moved.
+
+**Why this class is nastier than a wrong comment.** A wrong comment misleads a
+reader. A wrong report misleads the REVIEW — it removes the item from the list
+of things anyone will look at again. Every other rule in this file assumes
+something eventually gets checked; this is the failure that opts out of that.
+
+4. **A false JUSTIFICATION, which is the most durable form** (step 6 unit 2).
+   The same `create-schema.ts` header explained WHY the copy existed:
+   "`MAX_NESTED_IDS` is inlined rather than imported from the query layer,
+   which is `server-only`… pulling a server-only module through it would be a
+   needless coupling." Two files already did exactly that import
+   (`api/records/route.ts:7`, `api/records/[id]/schema.ts:3`), and this module
+   is imported only by route handlers, so the coupling it warned of could not
+   occur.
+
+   **A false comment misleads a reader; a false justification survives
+   review.** A bare "copied from X" invites the question "why not import it?"
+   — the reasoning is missing, so a reviewer supplies it. A stated rationale
+   answers that question before it is asked, and a reviewer who accepts the
+   premise stops there. The more plausible the reason, the longer the copy
+   lives: this one named a real project rule (CLAUDE.md §6) and a real
+   constraint that simply did not apply here.
+
+   **The check:** when a comment explains why the obvious approach was NOT
+   taken, verify the obstacle exists — usually one grep for whether anything
+   else already does the thing being called impossible. Treat a justification
+   as a claim with a higher burden than a description, not a lower one.
+
+**The rule: a report sentence claiming a code property is an assertion, and
+gets verified like one before it is written.** "Shared by both endpoints" is
+one grep. Specifically, when a unit says it EXTRACTED or CONSOLIDATED
+something, grep for the importers and count them — an extraction with one
+importer is a copy, whatever the header says. Same discipline as a mutation:
+do not report the property, report what you ran. Noticed: step 6 unit 3,
+found by the step 5+6 adversarial review.
+
+## RULE: when a check can fail in two directions, pick the default by asking
+
+**Shape:** wrong-axis-variation
+**You are here if:** a check can fail in two directions and you are choosing the default
+
+which error the user NEVER FINDS OUT ABOUT. Not by which is more likely, and
+not by treating them as equivalent.**
+
+(See also the guard-and-its-callers rule below, which is how the same badge
+came to be silently missing on the versions table.)
+
+§7.7's ownership tiers were settled this way, and the reasoning is recorded
+because a future change would otherwise undo it without knowing there was an
+argument. The two errors:
+
+| Wrong answer | What happens | Does the user learn? |
+|---|---|---|
+| "You own this pressing" when they own a DIFFERENT one | they put back a record they wanted | **No.** They walk away and never discover it |
+| "You own a different pressing" when they own THIS one | they buy a duplicate | Yes — at home, within the hour |
+
+**The second error corrects itself; the first is permanent and invisible.**
+So the exact tier requires POSITIVE EVIDENCE — a pressing row carrying the
+same `discogs_release_id` — and everything short of it falls to tier 2. The
+design is not "match as precisely as possible", it is "be reluctant to claim
+the specific thing".
+
+A record logged with no pressing at all reads as tier 2 for the same reason:
+the user owns the album, nothing establishes which pressing, and "you own a
+different pressing" is honest where "you own this pressing" is a claim
+nothing supports. That case is also the LIKELIEST one in practice, since
+§10's quick in-store entry exists to create records without pressings.
+
+**The general form: symmetry is the assumption to check, not the default.**
+Two failure directions are rarely equally costly, and the asymmetry is
+usually in DISCOVERABILITY rather than in frequency or severity. An error the
+user cannot detect gets no correction and no bug report — it is not merely
+worse, it is worse in a way that never appears in any feedback anyone
+receives.
+
+**The tell that this reasoning has been lost:** a later change making the
+matching "smarter" or "more accurate" without saying which direction it
+loosens. Noticed: step 7, unit 8a.
+
+## RULE: a module whose only consumers are its TESTS has an unvalidated
+
+**Shape:** check-cannot-fail
+**You are here if:** a module is exercised only by its own tests
+
+interface. Tests exercise a function; callers exercise a DESIGN.**
+
+`ownership-badge.ts` was written in unit 8b with 16 passing tests, mutation-
+verified in four directions. All of that was true and none of it established
+that the module's SHAPE was right — it took the internal `OwnershipMatch`,
+because that was the only ownership type that existed when it was written.
+
+The §5.7 amendment then made the endpoints emit a different wire shape, and
+the component that finally consumed the badge received THAT. The module could
+not serve it. What happened next is the point: rather than failing, the
+component grew its own copy of the labels — a second definition of the most
+consequential text in the app, appearing exactly where the real caller was.
+
+**Passing tests on an uncalled module tell you the function is correct, not
+that anyone can use it.** The tests were written by the same person, in the
+same hour, with the same picture in mind; they inherit the design's
+assumptions rather than testing them. A caller is an independent party with
+its own requirements, which is what makes it evidence.
+
+**The practical rule: while a module's only importers are test files, treat
+its interface as provisional.** Wire it to something real before adding more
+to it, and expect the first real caller to change its shape. The failure mode
+is not a broken module — it is a duplicate appearing at the call site,
+because copying is easier than reshaping something that already looks
+finished.
+
+**The tell:** `grep` for importers excluding `*.test.*` returns nothing. Same
+check as the extraction-with-one-importer rule, asking a different question:
+that one asks whether a claimed consolidation happened, this asks whether the
+design has ever met a consumer. Noticed: step 7, unit 8c.
+
+## RULE: a guard justified by its CURRENT CALLERS is an assumption about
+
+**Shape:** check-cannot-fail
+**You are here if:** a guard is justified by what its current callers happen to do
+
+callers, not about the function — and it fails on the first caller that does
+not fit.**
+
+`matchOwnership` opened with `if (artist === null || title === null) return
+NONE`. Correct for every caller that existed: all of them came from search
+results, which carry both. And correct-LOOKING forever, because a guard at
+the top of a function reads as input validation.
+
+It is not. §7.7's tier 1 matches on `discogs_release_id` ALONE — a stronger
+identification than any text comparison — so it never needed the artist. The
+guard skipped it anyway.
+
+**The first caller that did not fit was the versions endpoint**, where
+Discogs' rows carry a title and no artist. The result: a table of pressings
+reporting "no badge" for a record sitting on the shelf, on the screen built
+to compare pressings. Nothing failed — every existing test supplied an
+artist.
+
+**The tell: a guard at the TOP of a function that serves only SOME of the
+paths below it.** The check belongs next to the code that needs it. Moved
+down, tier 1 runs regardless and tiers 2 and 3 return honestly; a regression
+test now covers the null-artist path in both directions.
+
+**The general form:** "no caller does that" is a fact about today. A
+precondition that is really about one branch, hoisted to the entry point,
+silently disables the branches that never had it. Noticed: step 7, unit 8c.
+
+## RULE: cache the UPSTREAM payload, never your interpretation of it — your
+
+**Shape:** wrong-axis-variation
+**You are here if:** you are caching a derived value rather than the payload it came from
+
+interpretation is the part that changes.**
+
+The Discogs release cache stores the raw payload and normalizes on every
+read, rather than storing the normalized result. Two reasons, and the second
+is the one that decides it:
+
+1. **Normalization is our code and it keeps changing.** Six units into this
+   step the mapping has already been corrected several times — the colour
+   rule, the pressing-plant role, the matrix array. Caching output freezes
+   today's mapping for seven days, so a fix does not reach any record someone
+   has already viewed. The bug is fixed and the user still sees it.
+2. **Double-normalization.** Feeding normalized output back through the
+   normalizer produces a different shape again, so the second request for a
+   release returns something the first did not.
+
+**The second failure is invisible to any test that fetches once**, which is
+most tests. It appears only on a cache HIT, meaning in production, after a
+release has been looked at twice — and it presents as an intermittent shape
+difference rather than an error. The test that catches it is explicitly "the
+cached body equals the fresh body".
+
+**The general shape: a cache stores a snapshot of something. Make sure it is
+a snapshot of THEIRS, not of yours.** Theirs changes when they edit it, which
+is what the TTL is for; yours changes when you deploy, which no TTL accounts
+for. Noticed: step 7, unit 6.
+
+## RULE: a search that does not cover the space returns a confident
+
+**Shape:** sample-as-population
+**You are here if:** a search returned a count and you have not checked it covered the space
+
+UNDERCOUNT, and an undercount looks exactly like a correct count.** Third
+instance of "verified by execution, wrong premise", and the cheapest to
+prevent.
+
+Step 7's `validationError` defect was reported as affecting TWO endpoints. It
+was eight. The grep was real, it ran, its output was accurate — and it
+covered `src/app/api/records/` and `src/lib/records/` rather than `src/`.
+Every PATCH endpoint in the project carries the same object-level refine.
+
+**Why this is worse than a failed search.** A search that finds NOTHING
+prompts a second look; nobody accepts "no results" for something they know
+exists. A search that finds SOMETHING closes the question — the number gets
+written into a report, scoped into a unit, and nothing about it invites
+re-checking. The two-endpoint figure survived into a commit message and a
+plan.
+
+**The check, and it is one line:** before quoting a count, run the search
+once more from the repository ROOT with no path filter, and confirm the two
+numbers agree. If they differ, the narrower one was measuring your assumption
+about where the code lives.
+
+Related and already recorded: the extraction-with-one-importer check, which
+is the same discipline for a different question. Both are about whether a
+claim covers the space it appears to. Noticed: step 7, validationError unit.
+
+**Fourth instance, and the first where the instrument was a hand enumeration
+in a planning document rather than a grep in code.** The SPEC amendment sets
+under-counted the same class three times running — "four places use this
+term" was five, then six. Each pass found the ones the previous pass named
+plus one more, because each searched for the specific phrase (`graph-based`)
+rather than the root (`graph`). The correction is not a more careful list: it
+is that a claim about coverage in a planning document is an assertion, and
+gets verified by execution like any other. Same family as the
+`validationError` two-endpoints-that-were-eight finding. Noticed: SPEC
+amendments A16–A17.
+
+## RULE: a class can be SOLVED and not RECOGNISED, and the giveaway is a
+
+**Shape:** observer-without-subject
+**You are here if:** a comment calls a generalised thing a special case
+
+comment calling the general case an exception.**
+
+Distinct from the prose-outran-the-work family above, and worth separating:
+there the comment was FALSE and the work undone. Here the work was correct,
+the comment was accurate, and the FRAMING was too small — which is why no
+amount of verifying the claim would have caught it.
+
+`validationError` handled `unrecognized_keys` as a special case because Zod
+gives it an empty `path`. The header said so, in writing:
+
+> "`unrecognized_keys` is the exception that made this more than a one-liner:
+> it describes the object, not a field, so Zod gives it an empty path"
+
+That sentence contains the general rule — *issues describing the object have
+no path* — and files it under "exception". Object-level `.refine` has exactly
+the same shape, and its message was dropped by the same line of code for
+eight endpoints.
+
+**The tell: a comment that explains WHY a case is special in terms that would
+apply to other cases too.** "It describes the object, not a field" is not a
+property of `unrecognized_keys`; it is a property of a category. When the
+justification for a special case generalises, the case is not special —
+enumerate the others before writing the branch.
+
+**The check when adding one:** ask what else has the property just used to
+justify it. Here, one search of Zod's issue codes for those with an empty
+path would have found the refine case years of sessions earlier. Noticed:
+step 7, validationError unit.
+
+## RULE: probes are code too, and a verified-by-execution claim still needs its
+
+**Shape:** check-cannot-fail
+**You are here if:** a claim rests on a probe you wrote and ran
+
+premise checked.** NOTES already says "a mutation is code, and it can be
+wrong". Extend that to probes, and to the review loop around them.
+
+**The instance.** The `.toThrow()` sweep above reported a seventh finding that
+was FALSE: that `assertLocalHost` accepts `postgresql://u:p@[::1]/db` while
+rejecting four other loopback spellings, making the guard "comprehensive-
+looking but holed". The probe output was accurate — `[::1]` IS accepted. The
+INFERENCE was wrong. `::1` is deliberately allowed: there is a comment
+directly above `LOCAL_HOSTS` saying so, `stripBrackets` exists for no other
+purpose than to make it match, the error message names `::1` in its allowed
+set, and two existing tests cover it as accepted.
+
+**What made it look like a hole** was reading one probe result without
+checking what produced it — the same error the sweep existed to find in tests.
+
+**What caught it** was not re-reading. It was testing whether the POLICY held
+across spellings: `[0:0:0:0:0:0:0:1]` and `[::0001]` also came back accepted,
+which looked like confirmation of a real gap until tracing the resolved host
+showed pg-connection-string NORMALISES all three to `[::1]` before the guard
+runs. They are accepted because they ARE `::1`. The genuinely non-loopback
+addresses — `[::2]`, `[fe80::1]`, `[::ffff:127.0.0.1]` — are all correctly
+rejected. The guard is right as written; no code changed.
+
+**The part that is about the loop, not the probe.** The finding was APPROVED
+for fixing on the strength of the report, without the guard being read — so
+both sides of the review accepted a conclusion whose premise neither had
+checked. A claim being "verified by execution" makes the OBSERVATION reliable;
+it says nothing about whether the observation means what the reporter says it
+means. Both roles have to check the premise, and the reviewer's approval is
+not a substitute for the reporter's having done so, nor the reverse.
+
+The prior commit message (`b2c7129`) records the false finding as fact. Left
+unrewritten deliberately — a pushed commit is history — which is why the
+correction lives here. Noticed: step 5 remediation.
+
+## RULE: environmental causes look like logic bugs, and a diagnosis that
+
+**Shape:** sample-as-population
+**You are here if:** four fixes have failed and the diagnosis has not changed
+
+survives four failed fixes is probably about the wrong thing.**
+
+**Four instances now** — the two below, the prerendered `/manage` page, and
+the 390px screenshot failure recorded further down. The count is the point:
+this is not a one-off, it is the most common way an investigation here goes
+wrong. When something fails, the environment is a first-class hypothesis, not
+what you fall back to after the logic explanations run out.
+
+Two `/manage` genre specs were quarantined from step 4 until step 5's E2E
+stability unit — weeks — against the diagnosis "`router.refresh()` has not
+delivered new props when the assertion runs". Four fix attempts aimed at that
+mechanism, including two `aria-busy` approaches, and NOTES recorded that they
+"made it worse".
+
+**Neither actual cause was in the application.** Both were environmental:
+
+1. **Accumulated fixture rows.** E2E specs wrote through the real API and
+   nothing cleaned up, so every run's genres persisted. The move select's
+   contents depend on how many genres exist. Fixed by resetting the E2E
+   database once per run.
+2. **`/manage` was prerendered at build time.** It reads seven tables and
+   uses no request-scoped API — auth is in middleware, which does not opt a
+   page into dynamic rendering — so a production build served a snapshot.
+   Found only by running E2E against a production build.
+
+After both, the specs passed **9/9 across every configuration** and are
+unquarantined.
+
+**Why the diagnosis persisted:** it was plausible, it named a real mechanism,
+and it was never re-derived — each attempt inherited it. The measurement that
+would have refuted it (PATCH 1264ms vs refresh 142ms) took ten minutes when
+finally done. See the "same family is a hypothesis" rule above; this is the
+same failure one level up, where a *cause* rather than a *resemblance* went
+unchecked.
+
+**The check:** when a fix aimed at a diagnosis fails twice, stop fixing and
+re-derive the diagnosis. Test the environment — data volume, build mode,
+caching — before the application logic. Environmental causes produce
+symptoms indistinguishable from logic bugs, and they do not respond to
+logic fixes, which is exactly why the attempts "made it worse".
+
+**Mode 1 (`Protocol error … session closed`) never recurred** in ~30 runs
+during the investigation. Possibly also environmental; not claimed as fixed.
 
 ## Resolved
 

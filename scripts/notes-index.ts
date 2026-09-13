@@ -27,6 +27,13 @@
  * Nothing else in an entry changes, and **no rule is compressed** — the index
  * points at the entry, which keeps its evidence. A rule without the instance
  * that produced it is a rule the next reader argues with.
+ *
+ * **Two rules sharing a circumstance is anticipated and unhandled.** It has not
+ * occurred across 61 entries, so a guard for it would be speculative. If it
+ * arises the index renders two rows with identical left cells, which reads
+ * correctly — a situation that forks, with both rules reachable from it. That is
+ * the intended behaviour rather than a duplication to resolve, and it is left
+ * alone deliberately.
  */
 
 import { readFileSync } from 'node:fs';
@@ -116,6 +123,12 @@ export function renderIndex(rules: IndexedRule[]): string {
     'is titled as its own conclusion, which makes it findable only if you already',
     'know it — so this table is keyed by the circumstance instead. Each entry keeps',
     'its evidence: follow the link rather than trusting the line.',
+    '',
+    '**Checks that cannot fail is the largest shape by a distance**, and with',
+    '*instruments that report nothing* it is close to half of everything recorded',
+    'here. They are one defect seen from two sides: an assertion with no failing',
+    'input, and an observation with no subject. Both produce green. If you are',
+    'looking at something that passes and you are not sure why, start in those two.',
     '',
     `Generated from ${rules.length} declared rules. Regenerate with`,
     '`npx tsx scripts/notes-index.ts --write`.',
