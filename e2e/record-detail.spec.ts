@@ -210,7 +210,15 @@ test('renders a record that has only the required fields', async ({ page }) => {
    * built yet" — a dated claim, and the second one this file has carried. Kept
    * as a real assertion rather than deleted.
    */
-  await expect(page.getByRole('heading', { name: 'Journal' })).toHaveCount(1);
+  /*
+    **The section, not its heading.** The heading is gone — 8a's journal cell
+    carries the label, and repeating it below was the repetition. What this
+    test actually claims is that the journal is PRESENT with no entries,
+    because it carries the add-entry form; that is asserted on the section and
+    on the form, which is what "present" means here.
+  */
+  await expect(page.getByTestId('journal')).toHaveCount(1);
+  await expect(page.getByTestId('journal-form')).toBeVisible();
   await expect(page.getByTestId('journal')).toContainText('No entries yet');
 });
 

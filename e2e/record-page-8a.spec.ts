@@ -355,3 +355,29 @@ test('the page caps, and the header caps with it', async ({ page }) => {
     expect(measured.hl, `header left at ${width} (page ${measured.pl})`).toBe(measured.pl);
   }
 });
+
+test('the frame labels the journal, and the section below does not repeat it', async ({ page }) => {
+  /**
+   * **The second of the two pure repetitions.** 8a's journal cell carries the
+   * `Journal` label; the section below it carried an h2 saying the same word in
+   * the same treatment, so the page named one thing twice in two places.
+   *
+   * §8 makes the sections below the fold the full set behind the frame's
+   * summary — the ENTRIES are that full set and stay. The heading is not part
+   * of the set: it is the label the cell already applies.
+   *
+   * Asserted as a count over the whole page rather than by locating the h2,
+   * because the claim is "once on this screen" and an assertion that the
+   * section lacks a heading would pass if the frame lost its label too.
+   */
+  const suffix = makeSuffix();
+  const id = await createRecord(page, CASES[0], suffix);
+  await page.goto(`/records/${id}`);
+  await expect(page.getByTestId('record-page-8a')).toBeVisible();
+
+  const labelled = page.locator('main').getByText('Journal', { exact: true });
+  await expect(labelled, 'the word Journal appears once on the screen').toHaveCount(1);
+
+  /* And the one that remains is the frame's, not a surviving section heading. */
+  await expect(page.getByTestId('record-page-8a').getByText('Journal', { exact: true })).toHaveCount(1);
+});

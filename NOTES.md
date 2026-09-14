@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 98 declared rules. Regenerate with
+Generated from 99 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -60,6 +60,7 @@ Generated from 98 declared rules. Regenerate with
 | a test measures something real, but not the thing its name promises | [An assertion aimed at a proxy for the thing it names — third instance](#an-assertion-aimed-at-a-proxy-for-the-thing-it-names-third-instance) |
 | a property regressed three times and every pure function covering it still passes | [AN INLINE COMPUTATION IS INVISIBLE TO EVERY LAYER OF THE SUITE BY CONSTRUCTION](#an-inline-computation-is-invisible-to-every-layer-of-the-suite-by-construction) |
 | a gate checks that a value exists or looks right, and you have not checked it works | [Presence is not shape, and shape is not EFFECT — a standing check, after the fourth instance](#presence-is-not-shape-and-shape-is-not-effect-a-standing-check-after-the-fourth-instance) |
+| you removed something from one of two places and the remaining place describes its own contents | [Removing a duplicate created a false statement, in the state every record is in](#removing-a-duplicate-created-a-false-statement-in-the-state-every-record-is-in) |
 | a test asserts a value read from a captured fixture | [RULE: a captured fixture contains VOLATILE fields. Assert the property, not](#rule-a-captured-fixture-contains-volatile-fields-assert-the-property-not) |
 | a guard is justified by what its current callers happen to do | [RULE: a guard justified by its CURRENT CALLERS is an assumption about](#rule-a-guard-justified-by-its-current-callers-is-an-assumption-about) |
 | a test asserts that something throws without asserting what | [RULE: a message-less `.toThrow()` asserts only that SOMETHING failed](#rule-a-message-less-tothrow-asserts-only-that-something-failed) |
@@ -156,6 +157,8 @@ Generated from 98 declared rules. Regenerate with
 | a run reported no counts and you are reading that as nothing failed | [The wrapper caught a real crashed run, unstaged](#the-wrapper-caught-a-real-crashed-run-unstaged) |
 
 <!-- APPARATUS-INDEX:END -->
+
+99 rules indexed.
 
 98 rules indexed.
 
@@ -29588,3 +29591,44 @@ direction:** it measured `document.scrollHeight` and failed by 699px, because
 the route legitimately keeps the gallery, snippet, market and journal below the
 seam. Those are MEANT to scroll. A budget test has to name which thing is
 budgeted — the screen, not the document.
+
+## Removing a duplicate created a false statement, in the state every record is in
+
+**Shape:** check-cannot-fail
+**You are here if:** you removed something from one of two places and the remaining place describes its own contents
+
+8a's sleeve cell renders the cover; the gallery below rendered it again, so the
+same image appeared twice on one screen. The fix is one line — exclude covers
+from `groupImages` — and it is correct.
+
+**What it did to the gallery's empty state is the finding.** Excluding the
+cover makes a record whose only image IS a cover produce no groups, exactly like
+a record with no images at all. The gallery's empty state says:
+
+> No images yet. Photograph the sleeve, the label, or the dead wax.
+
+Which is now **false**, and visibly so: the cover is on the same screen, six
+columns wide. And it is not an edge case — **seventeen of seventeen records have
+exactly one image and it is a cover**, so the false sentence is what the entire
+collection would render. The duplicate was removed and a lie took its place in
+the identical set of records.
+
+**The two states are genuinely indistinguishable at the grouping layer**, and
+that is asserted on purpose: `groupImages([cover])` and `groupImages([])` both
+return `[]`, and a test pins them equal so nobody attempts the fix there. The
+component has the information — it receives every image — so the component
+decides which sentence to say.
+
+**The general form: when a fact moves out of a view, the view's statements about
+its own emptiness stop being true, and nothing type-checks a sentence.** The
+duplicate was measurable and the falsehood was not; only asking what the
+remaining place now claims finds it.
+
+### A rule that fired on its own explanation
+
+Smaller, same session, worth one paragraph. The guard for off-scale type
+(`test/repo/record-screen-vocabulary.test.ts`) scanned raw source for
+`text-xs`/`text-sm`. It failed on the COMMENT recording what a value used to
+be — so writing down the defect reintroduced it. Scoped to `className` strings
+instead. **A rule that cannot survive being explained in the file it governs is
+scoped wrong.**

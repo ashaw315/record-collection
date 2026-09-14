@@ -160,13 +160,34 @@ export function ImageGallery({
       )}
 
       {groups.length === 0 ? (
-        <p className="text-prose text-muted-foreground">
-          No images yet. Photograph the sleeve, the label, or the dead wax.
-        </p>
+        /*
+          **Two empty states, because there are two kinds of empty.** The frame
+          owns the cover, so `groupImages` returns nothing both for a record
+          with no images and for one whose only image is its cover — and those
+          want opposite sentences. "No images yet" is FALSE for the second, and
+          the reader can see it is false: the cover is on the same screen.
+
+          Every record in the collection is in the second state (seventeen of
+          seventeen have one image and it is a cover), so the wrong sentence
+          here would be the one the whole collection renders.
+        */
+        images.some((image) => image.imageType === 'cover') ? (
+          <p data-testid="gallery-cover-note" className="text-prose text-muted-foreground">
+            The cover is shown above. Photograph the back, the label, or the dead wax.
+          </p>
+        ) : (
+          <p className="text-prose text-muted-foreground">
+            No images yet. Photograph the sleeve, the label, or the dead wax.
+          </p>
+        )
       ) : (
         groups.map((group) => (
           <div key={group.type} className="mb-4">
-            <h3 className="mb-1.5 text-label tracking-wide text-muted-foreground uppercase">
+            {/*
+              Uppercase INTER was the only one on the page — a second label
+              treatment standing beside §4's. Same words, one definition.
+            */}
+            <h3 className={`mb-1.5 ${LABEL}`}>
               {imageTypeLabel(group.type)}
             </h3>
 

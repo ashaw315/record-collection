@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { LABEL } from '@/app/records/[id]/grid-type';
 import { marketSummary, type MarketView } from '@/app/lookup/market-summary';
 
 /**
@@ -77,7 +78,14 @@ export function MarketPanel({
 
   return (
     <div className="mt-2" data-testid="market-panel">
-      <p className="text-xs tracking-wide text-muted-foreground uppercase">{label}</p>
+      {/*
+        **The shared label, not a second one.** This was `text-xs uppercase` —
+        12px sans, off the scale entirely, and the only uppercase-sans label on
+        either screen that renders it. §4's label is mono, uppercase, tracked,
+        one grey; `grid-type.ts` is the single definition and this is a section
+        label like any other.
+      */}
+      <p className={LABEL}>{label}</p>
 
       {market === null && error === undefined && (
         <button
@@ -85,20 +93,20 @@ export function MarketPanel({
           onClick={() => void load()}
           disabled={loading}
           data-testid="market-check"
-          className="text-xs text-foreground underline underline-offset-2 disabled:text-muted-foreground"
+          className="text-label underline underline-offset-2 disabled:text-muted-foreground"
         >
           {loading ? 'Checking Discogs…' : 'Check the market'}
         </button>
       )}
 
       {market !== null && (
-        <p data-testid="market-summary" className="text-sm">
+        <p data-testid="market-summary" className="text-prose">
           {marketSummary(market)}
         </p>
       )}
 
       {error !== undefined && (
-        <p role="status" data-testid="market-error" className="text-xs text-muted-foreground">
+        <p role="status" data-testid="market-error" className="text-meta text-muted-foreground">
           {error}
         </p>
       )}

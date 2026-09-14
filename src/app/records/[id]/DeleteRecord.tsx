@@ -83,10 +83,18 @@ export function DeleteRecord({
         </p>
       )}
 
+      {/*
+        **Matched to the `Edit` it stands beside.** The two are one pair of
+        controls in the chrome row and were set in two vocabularies — Edit mono
+        uppercase per §4, this one sans sentence-case. §4's treatment is what
+        carries the 11px label role, so the pair takes it; only the destructive
+        hover is kept, because that is a claim about the action rather than
+        about the type.
+      */}
       <button
         type="button"
         onClick={() => setConfirming(true)}
-        className="mt-1 text-label text-muted-foreground underline underline-offset-2 hover:text-destructive"
+        className="mt-1 text-label font-mono tracking-[0.09em] uppercase text-muted-foreground underline-offset-2 hover:text-destructive hover:underline"
       >
         Delete record
       </button>

@@ -1,7 +1,6 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { LABEL } from './grid-type';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -137,7 +136,16 @@ export function RecordJournal({
 
   return (
     <section className="mt-6" data-testid="journal">
-      <h2 className={`mb-2 ${LABEL}`}>Journal</h2>
+      {/*
+        **No heading: 8a's journal cell already carries the label.** The frame
+        says `Journal` in §4's treatment, and repeating the same word in the
+        same treatment below it named one thing twice.
+
+        The ENTRIES are not repetition — §8 makes the sections below the fold
+        the full set behind the frame's summary, and the cell shows one entry
+        where this shows all of them. The heading was the part the cell had
+        already done.
+      */}
 
       <div
         ref={formRef}

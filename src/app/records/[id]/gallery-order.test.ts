@@ -41,23 +41,25 @@ describe('IMAGE_TYPE_ORDER', () => {
 
 describe('groupImages', () => {
   it('returns groups in IMAGE_TYPE_ORDER, whatever order the rows arrive in', () => {
+    /* Not a cover among them: the frame owns that one, so ordering it here
+       would assert a group the gallery no longer produces. */
     const groups = groupImages([
       image('a', 'matrix'),
-      image('b', 'cover'),
+      image('b', 'back'),
       image('c', 'label'),
     ]);
 
-    expect(groups.map((group) => group.type)).toEqual(['cover', 'label', 'matrix']);
+    expect(groups.map((group) => group.type)).toEqual(['back', 'label', 'matrix']);
   });
 
   it('omits a type with no images rather than showing an empty heading', () => {
     // An empty "Back" heading asserts a back photo exists and failed to load —
     // absence rendered as something, which is the family this build keeps
     // meeting. Nothing is the honest rendering of nothing.
-    const groups = groupImages([image('a', 'cover')]);
+    const groups = groupImages([image('a', 'back')]);
 
     expect(groups).toHaveLength(1);
-    expect(groups[0].type).toBe('cover');
+    expect(groups[0].type).toBe('back');
   });
 
   it('keeps an untyped image rather than dropping it', () => {
@@ -85,8 +87,8 @@ describe('groupImages', () => {
     // The gallery is a record of a physical object, not a feed. A newest-first
     // order would move an image every time another is added.
     const groups = groupImages([
-      image('newer', 'cover', '2026-03-01T00:00:00Z'),
-      image('older', 'cover', '2026-01-01T00:00:00Z'),
+      image('newer', 'back', '2026-03-01T00:00:00Z'),
+      image('older', 'back', '2026-01-01T00:00:00Z'),
     ]);
 
     expect(groups[0].images.map((row) => row.id)).toEqual(['older', 'newer']);
@@ -183,5 +185,55 @@ describe('gatefold — §10b\'s third state', () => {
     expect(groups).toHaveLength(1);
     expect(groups[0].type).toBe('gatefold_left');
     expect(groups[0].images).toHaveLength(1);
+  });
+});
+
+describe('the frame owns the cover, so the gallery does not repeat it', () => {
+  /**
+   * **The one pure repetition the inventory found.** 8a's sleeve cell renders
+   * the cover at six columns; the gallery rendered it again below the fold, so
+   * the same image appeared twice on one screen. §8 makes the sections below
+   * the fold the FULL SET behind the frame's summary — but a cover shown whole
+   * in the frame has no fuller version, so it is repetition rather than depth.
+   *
+   * Excluded here rather than in the component, because "which images the
+   * gallery shows" is the grouping function's question and a component-level
+   * filter would leave `groupImages` claiming to group every image.
+   */
+  it('leaves the cover out of the groups', () => {
+    const groups = groupImages([
+      { id: '1', url: 'u1', imageType: 'cover', caption: null, createdAt: '2024-01-01' },
+      { id: '2', url: 'u2', imageType: 'back', caption: null, createdAt: '2024-01-02' },
+    ]);
+
+    expect(groups.map((group) => group.type)).toEqual(['back']);
+  });
+
+  it('returns nothing for a record whose only image is its cover', () => {
+    /*
+      **The common case, and the reason this needs its own assertion.** Every
+      record in the collection has exactly one image and it is always a cover,
+      so this is what the gallery renders on all seventeen — not an edge case.
+    */
+    expect(
+      groupImages([
+        { id: '1', url: 'u1', imageType: 'cover', caption: null, createdAt: '2024-01-01' },
+      ]),
+    ).toEqual([]);
+  });
+
+  it('is not distinguishable from a record with no images, and that is the defect', () => {
+    /**
+     * Both return `[]`, so the component cannot tell "no images" from "only a
+     * cover, which the frame is showing" — and the empty state says "No images
+     * yet", which is FALSE for the second. The component has to be told which
+     * it is; this asserts the two really are identical at this layer so the
+     * fix cannot be attempted here.
+     */
+    const onlyCover = groupImages([
+      { id: '1', url: 'u1', imageType: 'cover', caption: null, createdAt: '2024-01-01' },
+    ]);
+
+    expect(onlyCover).toEqual(groupImages([]));
   });
 });

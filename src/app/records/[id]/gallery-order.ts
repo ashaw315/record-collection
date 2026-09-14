@@ -78,9 +78,23 @@ function time(value: string | Date): number {
  * from a future migration is filed the same way, for the same reason.
  */
 export function groupImages(images: GalleryImage[]): ImageGroup[] {
+  /*
+    **The cover belongs to the frame.** 8a's sleeve cell renders it at six
+    columns, so a gallery copy below the fold is the same image twice on one
+    screen. §8 makes the sections below the fold the full set behind the
+    frame's summary — but a cover shown whole has no fuller version, which is
+    what separates this from the price list or the journal.
+
+    Note what this does to the common case: every record in the collection has
+    exactly one image and it is always a cover, so `groupImages` returns [] for
+    all seventeen. That is correct here and WRONG in the component, which says
+    "No images yet" — see `ImageGallery`.
+  */
+  const withoutCover = images.filter((image) => image.imageType !== 'cover');
+
   return IMAGE_TYPE_ORDER.map((type) => ({
     type,
-    images: images
+    images: withoutCover
       .filter((image) =>
         type === 'other' ? !isKnownType(image.imageType) || image.imageType === 'other' : image.imageType === type,
       )

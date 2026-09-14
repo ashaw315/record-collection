@@ -89,11 +89,17 @@ test('flow 9: an uploaded image appears in the gallery', async ({ page }) => {
   // The empty state says what to do rather than showing nothing at all.
   await expect(page.getByTestId('image-gallery')).toContainText('No images yet');
 
-  await seedImage({ recordId, imageType: 'cover' });
+  /*
+    **`back`, not `cover`.** The frame owns the cover now, so the gallery
+    excludes it — seeding one here would assert the gallery shows an image it
+    deliberately does not. The claim is unchanged: an uploaded image appears,
+    under its heading, carrying its stored URL.
+  */
+  await seedImage({ recordId, imageType: 'back' });
   await page.reload();
 
   await expect(page.getByTestId('gallery-image')).toHaveCount(1);
-  await expect(page.getByRole('heading', { name: 'Cover' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Back' })).toBeVisible();
   // The rendered <img> carries the stored URL, rather than the row merely
   // existing in the DOM as text.
   await expect(page.getByTestId('gallery-image').locator('img')).toHaveAttribute(
@@ -112,8 +118,10 @@ test('the gallery groups by type, in examination order', async ({ page }) => {
    */
   const { recordId } = await seedRecord(page);
 
+  /* `back` stands in for the cover: same position in examination order, and
+     the cover itself is the frame's. */
   await seedImage({ recordId, imageType: 'matrix' });
-  await seedImage({ recordId, imageType: 'cover' });
+  await seedImage({ recordId, imageType: 'back' });
   await seedImage({ recordId, imageType: 'label' });
 
   await page.goto(`/records/${recordId}`);
@@ -131,7 +139,7 @@ test('the gallery groups by type, in examination order', async ({ page }) => {
    * the collection-widths rule, seen from the other side.)
    */
   expect(headings.map((heading) => heading.toLowerCase())).toEqual([
-    'cover',
+    'back',
     'label',
     'matrix / runout',
   ]);
@@ -232,15 +240,20 @@ test('confirming the delete removes it, and the gallery reflects that', async ({
   // The other half: the cancelled path above passes equally well against a
   // delete button that does nothing at all.
   const { recordId } = await seedRecord(page);
-  await seedImage({ recordId, imageType: 'cover' });
+  await seedImage({ recordId, imageType: 'back' });
 
   await page.goto(`/records/${recordId}`);
   await expect(page.getByTestId('gallery-image')).toHaveCount(1);
 
   page.on('dialog', (dialog) => dialog.accept());
-  await page.getByRole('button', { name: /Delete this cover image/i }).click();
+  await page.getByRole('button', { name: /Delete this back image/i }).click();
 
   await expect(page.getByTestId('gallery-image')).toHaveCount(0, { timeout: 15_000 });
+  /*
+    This record has no cover, so the gallery is genuinely empty and says so.
+    The other empty state — a record whose only image IS its cover — says
+    something different, and `ImageGallery.test.tsx` pins both.
+  */
   await expect(page.getByTestId('image-gallery')).toContainText('No images yet');
 });
 
