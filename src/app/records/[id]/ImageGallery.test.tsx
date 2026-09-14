@@ -33,7 +33,7 @@ const image = (id: string, imageType: GalleryImage['imageType']): GalleryImage =
 
 describe('the gallery says which kind of empty it is', () => {
   it('invites a first photograph when the record has no images at all', () => {
-    const html = renderToStaticMarkup(<ImageGallery recordId="r1" images={[]} />);
+    const html = renderToStaticMarkup(<ImageGallery recordId="r1" images={[]} base="oklch(0.7 0.06 60)" />);
 
     expect(html).toContain('No images yet');
   });
@@ -45,7 +45,7 @@ describe('the gallery says which kind of empty it is', () => {
       cover is on the same screen, six columns wide.
     */
     const html = renderToStaticMarkup(
-      <ImageGallery recordId="r1" images={[image('c', 'cover')]} />,
+      <ImageGallery recordId="r1" images={[image('c', 'cover')]} base="oklch(0.7 0.06 60)" />,
     );
 
     expect(html).not.toContain('No images yet');
@@ -58,7 +58,7 @@ describe('the gallery says which kind of empty it is', () => {
      * above an empty region reads as a failed upload.
      */
     const html = renderToStaticMarkup(
-      <ImageGallery recordId="r1" images={[image('c', 'cover')]} />,
+      <ImageGallery recordId="r1" images={[image('c', 'cover')]} base="oklch(0.7 0.06 60)" />,
     );
 
     /*
@@ -71,7 +71,7 @@ describe('the gallery says which kind of empty it is', () => {
 
   it('shows the groups when there is a non-cover image, and no empty sentence', () => {
     const html = renderToStaticMarkup(
-      <ImageGallery recordId="r1" images={[image('c', 'cover'), image('b', 'back')]} />,
+      <ImageGallery recordId="r1" images={[image('c', 'cover'), image('b', 'back')]} base="oklch(0.7 0.06 60)" />,
     );
 
     expect(html).not.toContain('No images yet');
@@ -81,7 +81,7 @@ describe('the gallery says which kind of empty it is', () => {
   it('never renders the cover itself', () => {
     /* The repetition this whole pass exists to remove, asserted on the markup. */
     const html = renderToStaticMarkup(
-      <ImageGallery recordId="r1" images={[image('c', 'cover'), image('b', 'back')]} />,
+      <ImageGallery recordId="r1" images={[image('c', 'cover'), image('b', 'back')]} base="oklch(0.7 0.06 60)" />,
     );
 
     expect(html).not.toContain('/c.jpg');

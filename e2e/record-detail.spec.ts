@@ -198,7 +198,14 @@ test('renders a record that has only the required fields', async ({ page }) => {
    * This line asserted `toHaveCount(0)` until step 8, as a placeholder for
    * "not built yet". Kept as a real assertion rather than deleted.
    */
-  await expect(page.getByRole('heading', { name: 'Images' })).toHaveCount(1);
+  /*
+    **The section, not a heading.** §9.1 moved every section's name into the
+    rail as a label, so `Images` is no longer an `<h2>` — the claim this line
+    makes is that the gallery is PRESENT on a record with no images, and the
+    section is what carries that.
+  */
+  await expect(page.locator('[data-section="images"]')).toHaveCount(1);
+  await expect(page.locator('[data-section="images"]')).toContainText('Images');
   await expect(page.getByTestId('image-gallery')).toContainText('No images yet');
 
   /**

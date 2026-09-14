@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 99 declared rules. Regenerate with
+Generated from 102 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -35,6 +35,7 @@ Generated from 99 declared rules. Regenerate with
 | the number is in band and you cannot say what it would forbid | [A measurement correlated with the signal instead of being it — fifth instance](#a-measurement-correlated-with-the-signal-instead-of-being-it-fifth-instance) |
 | a rule collides with rules that were never in tension, or a figure moves while nothing changes size | [A rule scoped past its subject, and a ratio that moved when nothing did](#a-rule-scoped-past-its-subject-and-a-ratio-that-moved-when-nothing-did) |
 | a page states a fact twice after a rebuild, and getByText starts failing with "resolved to 2 elements" | [A seam that has to move when the screen above it moves](#a-seam-that-has-to-move-when-the-screen-above-it-moves) |
+| a test you did not touch fails after a design change, and you are about to fix the code | [A test can fail because its ruling was superseded, and the message looks identical](#a-test-can-fail-because-its-ruling-was-superseded-and-the-message-looks-identical) |
 | a long-settled constant has never been wrong, and you cannot say what would have told you | [A value that survived every review because nothing could test it](#a-value-that-survived-every-review-because-nothing-could-test-it) |
 | a verification was requested and the thing it needs was never recorded | [A37 VERIFIED in real use — and the measurement I asked for cannot be taken](#a37-verified-in-real-use-and-the-measurement-i-asked-for-cannot-be-taken) |
 | an average across a dataset is being quoted and the set has kinds in it | [RULE: any measurement of Discogs metadata quality must be PER-GENRE. An](#rule-any-measurement-of-discogs-metadata-quality-must-be-per-genre-an) |
@@ -53,12 +54,14 @@ Generated from 99 declared rules. Regenerate with
 | a comment describes a protection and you have not found the code that performs it | [A COMMENT THAT PROMISED A SAFEGUARD NOBODY WROTE](#a-comment-that-promised-a-safeguard-nobody-wrote) |
 | the data changed, no code changed, and the suite is still green | [A DATA change opened an untested branch, and the suite could not see it](#a-data-change-opened-an-untested-branch-and-the-suite-could-not-see-it) |
 | the tests are well shaped and you staged the bug and they all passed | [A fixture that cannot express the defect](#a-fixture-that-cannot-express-the-defect) |
+| a test passes and you have not asked which of its inputs the fixture actually set | [A fixture that produced the right output for the wrong reason, third time](#a-fixture-that-produced-the-right-output-for-the-wrong-reason-third-time) |
 | a mutation failed N tests and you have not read which N | [A mutation is code, and it can be wrong. "Fails N tests" is not evidence](#a-mutation-is-code-and-it-can-be-wrong-fails-n-tests-is-not-evidence) |
 | a rule holds, and you are not sure whether the code or a guard is holding it | [A rule kept by a backstop reads identically to a rule kept by the code](#a-rule-kept-by-a-backstop-reads-identically-to-a-rule-kept-by-the-code) |
 | a test passes and its fixture may not have created the condition | [A test fixture can fail to create the condition its test claims — and](#a-test-fixture-can-fail-to-create-the-condition-its-test-claims-and) |
 | a test computes a real number from real data and you cannot say which value it would reject | [A TEST THAT MEASURES A SET CONSTRAINS NO MEMBER OF IT](#a-test-that-measures-a-set-constrains-no-member-of-it) |
 | a test measures something real, but not the thing its name promises | [An assertion aimed at a proxy for the thing it names — third instance](#an-assertion-aimed-at-a-proxy-for-the-thing-it-names-third-instance) |
 | a property regressed three times and every pure function covering it still passes | [AN INLINE COMPUTATION IS INVISIBLE TO EVERY LAYER OF THE SUITE BY CONSTRUCTION](#an-inline-computation-is-invisible-to-every-layer-of-the-suite-by-construction) |
+| you asserted something about a function's signature in order to claim something about what it does | [Arity is a real property that looks like a reasonable proxy for behaviour](#arity-is-a-real-property-that-looks-like-a-reasonable-proxy-for-behaviour) |
 | a gate checks that a value exists or looks right, and you have not checked it works | [Presence is not shape, and shape is not EFFECT — a standing check, after the fourth instance](#presence-is-not-shape-and-shape-is-not-effect-a-standing-check-after-the-fourth-instance) |
 | you removed something from one of two places and the remaining place describes its own contents | [Removing a duplicate created a false statement, in the state every record is in](#removing-a-duplicate-created-a-false-statement-in-the-state-every-record-is-in) |
 | a test asserts a value read from a captured fixture | [RULE: a captured fixture contains VOLATILE fields. Assert the property, not](#rule-a-captured-fixture-contains-volatile-fields-assert-the-property-not) |
@@ -157,6 +160,10 @@ Generated from 99 declared rules. Regenerate with
 | a run reported no counts and you are reading that as nothing failed | [The wrapper caught a real crashed run, unstaged](#the-wrapper-caught-a-real-crashed-run-unstaged) |
 
 <!-- APPARATUS-INDEX:END -->
+
+102 rules indexed.
+
+101 rules indexed.
 
 99 rules indexed.
 
@@ -29632,3 +29639,119 @@ Smaller, same session, worth one paragraph. The guard for off-scale type
 be — so writing down the defect reintroduced it. Scoped to `className` strings
 instead. **A rule that cannot survive being explained in the file it governs is
 scoped wrong.**
+
+## Arity is a real property that looks like a reasonable proxy for behaviour
+
+**Shape:** check-cannot-fail
+**You are here if:** you asserted something about a function's signature in order to claim something about what it does
+
+§9.3 rules that a section's colour mark is decided by the SCHEMA, never by the
+record — a bar that appears when a record has images and vanishes when it does
+not makes the mark encode that fact. The build needs a test that the predicate
+cannot consult the record.
+
+I asserted `carriesMark.length === 1`, reasoning that a per-record predicate
+needs a second argument. It does. **`Function.length` cannot see it:** the count
+stops at the first default, so `(section, hasContent = true)` also reports 1 —
+and that is the exact shape the change would take, because a default is how you
+add a parameter without breaking callers.
+
+Staged, the per-record implementation failed a DIFFERENT test (the one checking
+which four sections are marked) and left this one green — the test named for the
+property, the only one whose failure would have said what was wrong.
+
+**What makes this a new variant rather than the old one:** the previous
+instances asserted a proxy that was obviously weaker than the claim — a source
+string for a behaviour, a token for a rendering. Arity is not obviously weaker.
+It is a real, load-bearing property of the function, it is checkable, and "a
+predicate that takes only a section cannot consult a record" is a true sentence.
+It fails only because of a language detail that has nothing to do with the
+design ruling.
+
+**The fix is the general form: call the function the way the wrong
+implementation would be called, and require it to make no difference.**
+
+```ts
+const ask = carriesMark as unknown as (s: SectionName, ...rest: unknown[]) => boolean;
+for (const extra of [false, true, 0, 1, null, undefined, [], {}]) {
+  expect(ask(section, extra)).toBe(ask(section));
+}
+```
+
+That fires on any arity, on a default parameter, on `arguments` access, on a
+closure over module state read through a second call — because it tests the
+behaviour the ruling is about instead of the signature that usually implies it.
+
+## A fixture that produced the right output for the wrong reason, third time
+
+**Shape:** check-cannot-fail
+**You are here if:** a test passes and you have not asked which of its inputs the fixture actually set
+
+`seedImage` writes an image row and never `spine_colour` — that column is
+computed by the import path from real artwork. So an E2E record built with
+`seedImage({ imageType: 'cover' })` has an image and a NULL ladder, and §9.3's
+bar is correctly suppressed.
+
+The first run of the bar assertion timed out waiting for a bar. The output was
+right for a reason that had nothing to do with the code under test, and the
+diagnosis could easily have been "the bar is not rendering" followed by a fix to
+working code.
+
+**Third instance in three different places this cycle:** a control condition
+that caught its own fixture rather than the defect; `groupImages` returning `[]`
+for both "no images" and "only a cover"; this. The general form of the fix is
+the same each time — **set the thing the test depends on explicitly, rather than
+inheriting it from a helper that has its own reasons** — and it is cheap:
+
+```ts
+await getTestDb().execute(
+  sql`UPDATE records SET spine_colour = ${'#a25829'} WHERE id = ${recordId}::uuid`,
+);
+```
+
+The test now states its precondition. A reader can see what it needs without
+reading `seedImage`, and a change to the helper cannot silently remove it.
+
+## A test can fail because its ruling was superseded, and the message looks identical
+
+**Shape:** measurement-not-governing
+**You are here if:** a test you did not touch fails after a design change, and you are about to fix the code
+
+Four instances in one unit, and the first three were nearly mis-fixed.
+
+`record-page-8a.spec.ts` asserted the word `Journal` appears **once** on the
+screen. §8.3 had removed a stacked-column `<h2>` that duplicated the frame's
+journal cell label. Then §9.1 made a rail label the extended grid's structural
+element — *"every label starts at the same x on every section"* — so the word
+came back and the count went to 2.
+
+**Read as a defect, that is a regression I caused.** It is not. §4 requires the
+frame's cell label and §9.1 requires the rail label; removing either breaks a
+ruling to honour one it replaced. The h2 and the rail label are different
+things: one was a heading stacked under the frame's in a column with no
+structure of its own, the other is *where §9.1 says a section's name lives*.
+
+The same round, three more:
+
+| test | asserted | why it failed |
+|---|---|---|
+| `record-bands` × 2 | identity 500, tail 47, typed in | the band took the tail (547 / 0) |
+| `identity-cell` floor | `cellBottom - pressingBottom === 18` | the cell became a two-track grid; 18 + 140 = 158 |
+
+**The failure message cannot tell you which it is.** `Expected: 18, Received:
+158` is what a broken layout says and what a superseded assertion says. The
+distinguishing question is not in the output: *has the rule this test encodes
+been replaced since it was written?*
+
+**Two things reduce it.** First, **import the constants rather than typing the
+numbers** — `record-bands` hard-coded 500 and 47, so it encoded the old ruling;
+against `BANDS` it fails only when the RENDERING disagrees with the declaration,
+which is the claim it is actually for. Second, **when a test fails after a design
+change, read the ruling before reading the code.** Three of these four would
+have been "fixed" in the component.
+
+What must not happen is deleting the test. Each of these four still had a live
+claim underneath the stale number — *the pressing block anchors to the bottom of
+the space the content has*, *the journal is named where the structure says and
+nowhere else* — and the repair is to restate the claim against the current
+ruling, not to drop it.

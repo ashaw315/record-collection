@@ -2,6 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { LABEL } from './grid-type';
+import { Section } from './Section';
+import { CONTROL_HEIGHT, FIELD_HEIGHT } from './extended-grid';
 import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { IMAGE_TYPE_ORDER, groupImages, imageTypeLabel, type GalleryImage } from './gallery-order';
@@ -26,9 +28,12 @@ const ACCEPT = 'image/jpeg,image/png,image/webp';
 export function ImageGallery({
   recordId,
   images,
+  base,
 }: {
   recordId: string;
   images: GalleryImage[];
+  /** §5.5's base step, for §9.3's rail bar. */
+  base: string | null;
 }) {
   const router = useRouter();
   const fileInput = useRef<HTMLInputElement>(null);
@@ -105,10 +110,9 @@ export function ImageGallery({
   }
 
   return (
-    <section className="mt-6" data-testid="image-gallery">
-      <h2 className={`mb-2 ${LABEL}`}>Images</h2>
-
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+    <Section name="images" title="Images" base={base}>
+      <div data-testid="image-gallery">
+      <div className="mb-3 flex flex-wrap items-center gap-[10px]">
         <label htmlFor="image-type" className="sr-only">
           Image type
         </label>
@@ -116,7 +120,18 @@ export function ImageGallery({
           id="image-type"
           value={imageType}
           onChange={(event) => setImageType(event.target.value)}
-          className="h-8 rounded-xs border border-input bg-transparent px-2 text-label"
+          /*
+            §9.2: a control is 44px, 1px ink box, no fill, no radius, 11px mono
+            uppercase. The select is a control rather than a field — it chooses
+            rather than takes typing — so it takes the control vocabulary.
+          */
+          className={`${LABEL} bg-transparent px-[10px]`}
+          style={{
+            height: CONTROL_HEIGHT,
+            border: '1px solid oklch(0.18 0.005 60)',
+            borderRadius: 0,
+            boxSizing: 'border-box',
+          }}
         >
           {IMAGE_TYPE_ORDER.map((type) => (
             <option key={type} value={type}>
@@ -138,7 +153,14 @@ export function ImageGallery({
             const file = event.target.files?.[0];
             if (file !== undefined) void upload(file);
           }}
-          className="text-label file:mr-2 file:rounded-xs file:border file:border-border file:bg-transparent file:px-2 file:py-1 file:text-label"
+          /*
+            §9.2's uploader is a dashed 1px grey square. The file input's own
+            button takes the control vocabulary; the dashed treatment is on the
+            button rather than the input, because the input's box is the
+            browser's and cannot be sized reliably.
+          */
+          className={`${LABEL} file:mr-[10px] file:border file:border-dashed file:bg-transparent file:px-[10px] file:py-[8px] file:text-[11px] file:uppercase`}
+          style={{ height: FIELD_HEIGHT }}
         />
 
         {busy && <span className="text-meta text-muted-foreground">Working…</span>}
@@ -234,6 +256,7 @@ export function ImageGallery({
           </div>
         ))
       )}
-    </section>
+      </div>
+    </Section>
   );
 }

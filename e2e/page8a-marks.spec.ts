@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 
 /**
  * 8a's marks stay inside the cells that host them.
@@ -24,7 +25,7 @@ async function login(page: Page) {
 const CASES = ['richest', 'modal', 'emptiest'] as const;
 
 test.describe('every mark stays in its cell', () => {
-  test.use({ viewport: { width: 1440, height: 900 } });
+  test.use({ viewport: { width: 1440, height: NO_SCROLL_HEIGHT } });
 
   for (const which of CASES) {
     test(`contains every mark on the ${which} record`, async ({ page }) => {

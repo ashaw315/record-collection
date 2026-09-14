@@ -11,7 +11,9 @@ import { RecordJournal } from './RecordJournal';
 import { RecordDetail } from './RecordDetail';
 import { RecordPage8a } from './RecordPage8a';
 import { pressingLine } from './page-record';
+import { recordLadder } from '@/lib/colour/record-ladder';
 import { MAX_GRID_WIDTH } from './band-geometry';
+import { LABEL } from './grid-type';
 import { marketFigures } from './market-median';
 import { listPricesForRecord } from '@/lib/db/queries/prices';
 import { hydrateRecord } from '@/lib/db/queries/records';
@@ -68,6 +70,16 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
 
   /* §4's 40px figure, and it must be the number it claims to be. */
   const figures = marketFigures(prices.map((row) => row.price));
+
+  /*
+    §5.5's base step, derived once here and passed down: the frame draws from it
+    and §9.3's rail bars take the same value, so the colour below the fold is
+    the colour above it rather than a second derivation that could drift.
+
+    Null when the record has no cover — §5.3 keeps the coverless record's marks
+    but the ladder has no hue to invent, so those sections draw no bar.
+  */
+  const ladderBase = recordLadder(record.spineColour)?.base ?? null;
 
   return (
     <>
@@ -172,7 +184,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
               <div className="flex items-center gap-3">
                 <Link
                   href={`/records/${id}/edit`}
-                  className="text-label font-mono tracking-[0.09em] uppercase no-underline hover:underline"
+                  className={`${LABEL} no-underline hover:underline`}
                 >
                   Edit
                 </Link>
@@ -186,13 +198,21 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
             </div>
 
             {/*
-              **The measure returns below the grid.** The grid spans the
-              viewport because §8 makes it a fragment of a larger one; the
-              sections under it are continuous text and panels, which need a
-              reading width. This wrapper is the seam made explicit.
+              **`RecordDetail` carries its own measure now**, because it holds
+              both a converted §9.1 section — which must reach the composition's
+              edge — and the sections still on the old stacked column, which
+              still need a reading width. The split lives inside it while the
+              conversion is partway done.
             */}
-            <div className="mx-auto w-full max-w-3xl px-4">
-              <RecordDetail record={record} />
+            <RecordDetail record={record} base={ladderBase} />
+
+            {/*
+              **No measure wrapper: §9.1 replaced it.** The rail is what holds
+              the region together, and a max-width here would inset the section
+              rules — making the region's only structural element the wrong kind
+              of edge by §3's vocabulary. The old `max-w-3xl` went with the last
+              section that needed it.
+            */}
 
             {/*
               §10's "images gallery". Rendered here rather than inside
@@ -238,7 +258,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
               </p>
             )}
 
-            <ImageGallery recordId={id} images={record.images} />
+            <ImageGallery recordId={id} images={record.images} base={ladderBase} />
 
             {/*
               §10b's snippet. Between the gallery and the journal deliberately:
@@ -250,6 +270,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
               snippet={record.snippet}
               snippetEditedAt={record.snippetEditedAt}
               configured={isAnthropicConfigured()}
+              base={ladderBase}
             />
 
             {/*
@@ -274,6 +295,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
             />
 
             <PriceHistory
+              base={ladderBase}
               // The same id the panel above is built from, so the empty state
               // cannot point at a control that did not render.
               hasMarketPanel={record.pressing?.discogsReleaseId != null}
@@ -294,6 +316,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
             />
 
             <RecordJournal
+              base={ladderBase}
               recordId={id}
               entries={record.journalEntries.map((entry) => ({
                 id: entry.id,
@@ -301,7 +324,6 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
                 note: entry.note,
               }))}
             />
-            </div>
           </div>
         </div>
       </main>

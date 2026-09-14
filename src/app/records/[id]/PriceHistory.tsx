@@ -1,5 +1,6 @@
 import { formatPrice } from '@/app/collection-format';
-import { LABEL } from './grid-type';
+
+import { Section } from './Section';
 import { priceLine } from './price-line';
 import {
   SPARK_HEIGHT,
@@ -39,7 +40,10 @@ export function PriceHistory({
    * disagree.
    */
   hasMarketPanel = false,
+  base,
 }: {
+  /** §5.5's base step, for §9.3's rail bar. */
+  base: string | null;
   observations: PriceObservation[];
   hasMarketPanel?: boolean;
 }) {
@@ -57,8 +61,8 @@ export function PriceHistory({
   const range = priceRange(paid);
 
   return (
-    <section className="mt-6" data-testid="price-history">
-      <h2 className={`mb-2 ${LABEL}`}>Price history</h2>
+    <Section name="price-history" title="Price history" base={base}>
+      <div data-testid="price-history">
 
       {/*
         **The empty state says what is true now, not what is planned.** It read
@@ -185,6 +189,7 @@ export function PriceHistory({
         Prices are a record of observations — each one is added, never edited.
       </p>
 
-    </section>
+      </div>
+    </Section>
   );
 }

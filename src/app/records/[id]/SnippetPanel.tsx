@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { LABEL } from './grid-type';
+
+import { Section } from './Section';
 import { useRouter } from 'next/navigation';
 import { snippetView } from './snippet-view';
 
@@ -27,9 +28,12 @@ type Props = {
   snippet: string | null;
   snippetEditedAt: Date | null;
   configured: boolean;
+  /** §5.5's base step, for §9.3's rail bar. Unmarked section, passed anyway so
+      the primitive decides rather than the caller. */
+  base: string | null;
 };
 
-export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured }: Props) {
+export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured, base }: Props) {
   const router = useRouter();
   const view = snippetView({ snippet, snippetEditedAt });
 
@@ -85,7 +89,8 @@ export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured }:
   }
 
   return (
-    <section className="mt-8" data-testid="snippet-panel">
+    <Section name="snippet" title="About this record" base={base}>
+      <div data-testid="snippet-panel">
       {/*
         **Wraps rather than squeezing.** This was `flex items-baseline
         justify-between` with `shrink-0` on the right-hand element. At 390px the
@@ -99,10 +104,6 @@ export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured }:
         wide screen nothing changes — the two still sit on one baseline.
       */}
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h2 className={`shrink-0 ${LABEL}`}>
-          About this record
-        </h2>
-
         {/*
           **Named when unconfigured, never silently absent** — the same choice
           `GapAnalysis` makes for §9.2, and for its reason: "a button that
@@ -229,6 +230,7 @@ export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured }:
           {error}
         </p>
       )}
-    </section>
+      </div>
+    </Section>
   );
 }

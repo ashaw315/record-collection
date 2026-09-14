@@ -49,6 +49,7 @@ export function IdentityCell({
   pressingLine,
   genres,
   formatLine,
+  ornament,
 }: {
   title: string;
   artistName: string;
@@ -58,12 +59,42 @@ export function IdentityCell({
   genres: ReadonlyArray<{ id: string; name: string }>;
   /** §4: sans 500, because it describes rather than identifies. */
   formatLine: string | null;
+  /**
+   * §5.1's corner field, rendered INSIDE the cell as a grid track.
+   *
+   * It was an absolutely-positioned mark with a fixed height, which is why the
+   * reserve could not yield: an absolute box is out of flow and shares no space
+   * with anything. As a track it is what remains after the content takes what
+   * it needs.
+   */
+  ornament?: React.ReactNode;
 }) {
   return (
+    /*
+      **A two-track grid: content at 1fr, ornament at minmax(0, 140px).**
+
+      The corner field is a TRACK that shrinks by exactly what the content
+      takes. What it replaces was static padding plus a fixed absolute height —
+      two independent numbers with nothing coupling either to remaining space,
+      so "the reserve yields" was a claim with no mechanism behind it. It
+      produced plausible numbers, which is why a test pinning figures would
+      have passed on it; `e2e/identity-cell.spec.ts` asserts the relationship
+      instead.
+
+      **The content track keeps its automatic min-content minimum.** Do not add
+      `min-height: 0` here: it reads as flex-overflow hygiene and is the one
+      declaration that defeats the mechanism it sits inside — it pins the 1fr
+      track, so content overflows the ornament rather than displacing it, and
+      the numbers still look reasonable. Asserted on the computed style,
+      because the defect is invisible until a title is long enough to need the
+      give.
+    */
     <div
       data-cell="identity"
-      className="flex h-full flex-col justify-between overflow-hidden p-[18px]"
+      className="grid h-full overflow-hidden p-[18px]"
+      style={{ gridTemplateRows: '1fr minmax(0, 140px)' }}
     >
+      <div data-track="content" className="flex flex-col justify-between">
       {/*
         The title block flows from the TOP. It grows downward into the gap and
         cannot displace the pressing block, which is anchored below.
@@ -160,6 +191,17 @@ export function IdentityCell({
             ))}
           </div>
         )}
+      </div>
+      </div>
+
+      {/*
+        The ornament track. It takes what is left of 140px after the content
+        above has taken what it needs — 76.2px at four title lines, 8.6px at
+        five, and the full reserve at one. The field shrinks on two records and
+        disappears on none.
+      */}
+      <div data-track="ornament" className="relative min-h-px">
+        {ornament}
       </div>
     </div>
   );

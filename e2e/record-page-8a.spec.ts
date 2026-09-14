@@ -289,7 +289,7 @@ test('every real record fills 900px exactly, at 1440 and wider', async ({ page }
     ids.push([which.name, await createRecord(page, which, suffix)]);
   }
 
-  for (const width of [1440, 1728]) {
+  for (const width of [1440, MAX_GRID_WIDTH]) {
     await page.setViewportSize({ width, height: NO_SCROLL_HEIGHT });
 
     for (const [name, id] of ids) {
@@ -304,8 +304,17 @@ test('every real record fills 900px exactly, at 1440 and wider', async ({ page }
         **8a's own bands are 847; the nav's 53 is `AppHeader`, outside it.**
         Measured 847 on the first run of this assertion, which is exactly
         900 - BANDS.nav — the budget was right and the element was wrong.
+
+        **Summed from the bands rather than subtracted from the total**, which
+        is not a cosmetic difference: `900 - nav` is 847 whatever the identity
+        and record bands are individually, so it survived the identity band
+        taking the tail's 47px without registering the change. The bands are
+        the claim; the total is their consequence.
       */
-      const bands = NO_SCROLL_HEIGHT - BANDS.nav;
+      const bands = BANDS.identity + BANDS.record + BANDS.tail;
+      expect(bands, 'the bands below the nav spend the rest of the screen').toBe(
+        NO_SCROLL_HEIGHT - BANDS.nav,
+      );
       expect(Math.round(box.height), `${name} at ${width}: 8a is ${box.height}px, not ${bands}`).toBe(bands);
 
       /*
@@ -356,28 +365,47 @@ test('the page caps, and the header caps with it', async ({ page }) => {
   }
 });
 
-test('the frame labels the journal, and the section below does not repeat it', async ({ page }) => {
+test('the journal is named once in the frame and once on the rail, and nowhere else', async ({
+  page,
+}) => {
   /**
-   * **The second of the two pure repetitions.** 8a's journal cell carries the
-   * `Journal` label; the section below it carried an h2 saying the same word in
-   * the same treatment, so the page named one thing twice in two places.
+   * **This test's claim was superseded, and the supersession is the point.**
    *
-   * §8 makes the sections below the fold the full set behind the frame's
-   * summary — the ENTRIES are that full set and stay. The heading is not part
-   * of the set: it is the label the cell already applies.
+   * It was written for §8.3: 8a's journal cell carried the `Journal` label and
+   * the section below it carried an h2 saying the same word in the same
+   * treatment, so the page named one thing twice. The h2 went.
    *
-   * Asserted as a count over the whole page rather than by locating the h2,
-   * because the claim is "once on this screen" and an assertion that the
-   * section lacks a heading would pass if the frame lost its label too.
+   * §9.1 then made a rail label the region's structural element — "every label
+   * starts at the same x on every section" is the whole mechanism, and a
+   * section without one puts a hole in the one edge that never moves. So the
+   * word returns, and this test caught it: the count went back to 2.
+   *
+   * **The two are not the same repetition.** The h2 was a heading stacked under
+   * the frame's cell in a column that had no structure of its own. The rail
+   * label is the structure: it is where §9.1 says a section's name lives, at
+   * the x every other section's name is at. Removing it to satisfy the old
+   * count would break §9.1 to honour a rule §9.1 replaced.
+   *
+   * What survives from the original claim, and is asserted here: the word
+   * appears in exactly those two places and nowhere else. A third would be the
+   * defect §8.3 actually found.
    */
   const suffix = makeSuffix();
   const id = await createRecord(page, CASES[0], suffix);
   await page.goto(`/records/${id}`);
   await expect(page.getByTestId('record-page-8a')).toBeVisible();
 
-  const labelled = page.locator('main').getByText('Journal', { exact: true });
-  await expect(labelled, 'the word Journal appears once on the screen').toHaveCount(1);
+  const frame = page.getByTestId('record-page-8a');
+  const rail = page.locator('[data-section="journal"] [data-rail]');
 
-  /* And the one that remains is the frame's, not a surviving section heading. */
-  await expect(page.getByTestId('record-page-8a').getByText('Journal', { exact: true })).toHaveCount(1);
+  await expect(frame.getByText('Journal', { exact: true }), "the frame's cell label").toHaveCount(
+    1,
+  );
+  await expect(rail.getByText('Journal', { exact: true }), "§9.1's rail label").toHaveCount(1);
+
+  /* And nowhere else — no surviving heading, no third naming. */
+  await expect(
+    page.locator('main').getByText('Journal', { exact: true }),
+    'named in the frame and on the rail, and nowhere else',
+  ).toHaveCount(2);
 });

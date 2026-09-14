@@ -1,11 +1,16 @@
 /**
  * 8a §2.1 — the record detail's three fixed bands and twelve columns.
  *
- * **The total is the bet.** 53 + 500 + 300 + 47 = 900 is the whole no-scroll
- * claim at 1440 × 900, and it is spent: an empty module changes nothing about
- * the geometry, because the lower band is 300px whether five cells carry text
- * or one does. That is what makes §6 a question about MARKS rather than about
+ * **The total is the bet.** 53 + 547 + 300 = 900 is the whole no-scroll claim
+ * at 1440 × 900, and it is spent: an empty module changes nothing about the
+ * geometry, because the lower band is 300px whether five cells carry text or
+ * one does. That is what makes §6 a question about MARKS rather than about
  * reflow.
+ *
+ * **The total alone cannot detect a reallocation.** The identity band took the
+ * tail's 47px and the sum stayed exactly 900 — so `BAND_TOTAL === 900` passes
+ * on both the old bands and the new. The per-band assertions in
+ * `band-geometry.test.ts` are what that case exists for.
  *
  * **Heights are fixed, not content-derived.** A band that grew with its content
  * would make the no-scroll claim depend on the record, and the sparse case is
@@ -39,24 +44,30 @@ export const NO_SCROLL_HEIGHT = 900;
 export const MAX_GRID_WIDTH = 1728;
 
 /**
- * The four bands.
+ * The bands. **53 · 547 · 300, and no tail.**
  *
  * `nav` is 53 because the built `AppHeader` measures 53. 8a's drawing showed
  * 56, and the file says a spec that restates a measurable component's height
- * wrongly is worse than one that omits it — so the three pixels went to the
- * tail, the only band with nothing drawn in it.
+ * wrongly is worse than one that omits it.
  *
- * `identity` and `record` keep their drawn heights exactly: §7's open questions
- * — the 72 title's measure, the journal cell's capacity — are measured against
- * them, so they must not absorb adjustments made elsewhere.
+ * **The identity band took the tail, because the give had to ADD height rather
+ * than reallocate it.** 140px of reserve could not absorb 203px of title
+ * growth: no rearrangement inside a 500px band closes a 63px shortfall, so the
+ * band grew and the only band that could pay was the one drawing nothing.
  *
- * The tail is paper, not a footer.
+ * **So the fold is now a composition edge.** With a tail the screen closed on
+ * empty paper; it now closes on the record band's own rule — the edge every
+ * other band ends on — and nothing may straddle 900.
+ *
+ * `tail` stays in the type rather than being deleted: it is 0 because it was
+ * SPENT, and a removed key would read as a band that never existed. It is also
+ * what `record-page-8a.spec.ts` measures 8a's own height against.
  */
 export const BANDS = {
   nav: 53,
-  identity: 500,
+  identity: 547,
   record: 300,
-  tail: 47,
+  tail: 0,
 } as const;
 
 export const BAND_TOTAL = BANDS.nav + BANDS.identity + BANDS.record + BANDS.tail;

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 
 /**
  * §5.5's colour rule: **a floor per mark, absolute.**
@@ -143,7 +144,7 @@ const colouredAreas = (page: Page) =>
 const CASES = ['richest', 'modal', 'emptiest'] as const;
 
 test.describe('colour distribution (§5.5)', () => {
-  test.use({ viewport: { width: 1440, height: 900 } });
+  test.use({ viewport: { width: 1440, height: NO_SCROLL_HEIGHT } });
 
   /** §5.5's floor, for base FIELD marks other than the anchor. */
   const FLOOR_PCT = 0.5;

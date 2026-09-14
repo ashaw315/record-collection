@@ -33,6 +33,7 @@ import { SnippetPanel } from './SnippetPanel';
 
 const BASE = {
   recordId: '11111111-1111-4111-8111-111111111111',
+    base: null,
   snippetEditedAt: null,
 };
 
@@ -132,11 +133,23 @@ describe('the unconfigured deployment', () => {
  * Checked rather than assumed, because this is the one converted heading inside
  * a CLIENT component with interactive state — the other four are server
  * components where a className swap cannot do anything else.
+ *
+ * **The heading now comes from §9.1's `Section`**, which renders the label in
+ * the rail. The assertions below still hold and still matter: they check the
+ * treatment reaching the rendered markup, and the section title surviving the
+ * move into the primitive. What they no longer pin is a className in THIS
+ * file — which is the point of a shared definition.
  */
 describe('the heading uses the shared label treatment', () => {
   const render = () =>
     renderToStaticMarkup(
-      <SnippetPanel recordId="r1" snippet="A note." snippetEditedAt={null} configured />,
+      <SnippetPanel
+        recordId="r1"
+        snippet="A note."
+        snippetEditedAt={null}
+        configured
+        base={null}
+      />,
     );
 
   it('is mono, uppercase and 11px rather than 15px sans', () => {

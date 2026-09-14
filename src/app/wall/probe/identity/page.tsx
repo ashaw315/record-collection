@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { IdentityCell } from '@/app/records/[id]/IdentityCell';
+import { IsoMark } from '@/app/records/[id]/RecordPage8a';
 import { BANDS } from '@/app/records/[id]/band-geometry';
 
 /**
@@ -17,6 +18,9 @@ export const dynamic = 'force-dynamic';
 
 const CASES = [
   { id: 'five', title: 'On The Radio: Greatest Hits Vol. 1 & 2', artist: 'Donna Summer' },
+  /* Four lines: the case the ornament track's resolved figures are stated at,
+     and the one between "shrinks a little" and "nearly gone". */
+  { id: 'four', title: 'Hear Nothing See Nothing Say Nothing', artist: 'Discharge' },
   { id: 'three', title: 'The Best Of The Blues Project', artist: 'The Blues Project' },
   { id: 'two', title: 'The Hurdy Gurdy Man', artist: 'Donovan' },
   { id: 'one', title: 'Meddle', artist: 'Pink Floyd' },
@@ -45,6 +49,20 @@ export default function IdentityProbePage() {
               { id: 'g1', name: 'Psychedelic Rock' },
               { id: 'g2', name: 'Prog Rock' },
             ]}
+            /*
+              **The real mark, not an empty track.** The probe rendered no
+              ornament at all, so the first version of the shrink assertion
+              measured a track with nothing in it — a weaker claim than the one
+              it was named for, and one an empty div would satisfy.
+            */
+            ornament={
+              <IsoMark
+                name="identityTriangle"
+                fill="oklch(0.86 0.04 80)"
+                size={1.5}
+                className="right-[6px] bottom-0 h-full w-[124px]"
+              />
+            }
           />
         </div>
       ))}

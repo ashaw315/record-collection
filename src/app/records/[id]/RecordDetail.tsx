@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { HAIRLINE, LABEL } from './grid-type';
+import { Section } from './Section';
+import { CHIP_HEIGHT, SECTION_RULE } from './extended-grid';
 import { formatPrice } from '../../collection-format';
 import { pressingFacts } from '../record-detail-format';
 import { priceTypeMeaning, type PriceType } from './price-line';
@@ -47,16 +49,14 @@ function Field({
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="mt-6">
-      <h2 className={`mb-2 ${LABEL}`}>{title}</h2>
-      <dl>{children}</dl>
-    </section>
-  );
-}
-
-export function RecordDetail({ record }: { record: HydratedRecord }) {
+export function RecordDetail({
+  record,
+  base,
+}: {
+  record: HydratedRecord;
+  /** §5.5's base step, for §9.3's rail bar. Null when the record has no cover. */
+  base: string | null;
+}) {
   const facts = pressingFacts(
     record.pressing ?? {
       catalogNumber: null,
@@ -90,7 +90,17 @@ export function RecordDetail({ record }: { record: HydratedRecord }) {
   const remainingFacts = facts.filter((fact) => !GRID_CARRIES.has(fact.label));
 
   return (
-    <article>
+    <>
+      {/*
+        **The converted section renders OUTSIDE the old measure**, because
+        §9.1's rules bleed to the composition's edge and the `max-w-3xl` wrapper
+        below insets them by 386px — which makes the region's only structural
+        element the wrong kind of edge by §3's vocabulary.
+
+        The fragment is the seam made visible: everything above this line is on
+        the rail, everything below is still in the stacked column. It closes as
+        the remaining seven convert.
+      */}
       {/*
         **The title, artist, Record, Pressing and Acquisition sections are gone
         (7a §6).** The grid above this renders all of them, and §6's rule —
@@ -117,12 +127,14 @@ export function RecordDetail({ record }: { record: HydratedRecord }) {
         appears here automatically unless the grid claims it.
       */}
       {remainingFacts.length > 0 && (
-        <Section title="Pressing detail">
-          {remainingFacts.map((fact) => (
-            <Field key={fact.label} label={fact.label} mono={fact.mono}>
-              {fact.value}
-            </Field>
-          ))}
+        <Section name="pressing-detail" title="Pressing detail" base={base}>
+          <dl>
+            {remainingFacts.map((fact) => (
+              <Field key={fact.label} label={fact.label} mono={fact.mono}>
+                {fact.value}
+              </Field>
+            ))}
+          </dl>
         </Section>
       )}
 
@@ -133,7 +145,19 @@ export function RecordDetail({ record }: { record: HydratedRecord }) {
         OBSERVATION whatever its type, against the median of all of them. Two
         numbers that can legitimately differ, each labelled with what it is.
       */}
-      <Section title="Acquisition">
+      {/*
+        **Not rendered when it holds nothing.** §9.1: an empty section is not
+        rendered at all below the fold — no diagonal, no label, no reserved
+        space. On the modal record there is no latest price, so this section had
+        a rail, a label and an empty content track, which is the "reserved
+        space" the rule forbids.
+
+        §9.1's control-only exception does not apply: it covers a section whose
+        CONTROL is its content, and Acquisition has no control here — the fields
+        it would edit live in the frame's provenance cell and in the edit form.
+      */}
+      {record.latestPrice !== null && (
+      <Section name="acquisition" title="Acquisition" base={base}>
         {/*
           The LATEST price, whatever its type — NOT §7.6's used → new →
           purchase_price chain, which is defined for the collection-value
@@ -161,6 +185,7 @@ export function RecordDetail({ record }: { record: HydratedRecord }) {
           </Field>
         )}
       </Section>
+      )}
 
       {/*
         **Genres left this section for the grid's pressing block** (7a §1.1:
@@ -169,23 +194,33 @@ export function RecordDetail({ record }: { record: HydratedRecord }) {
         cell, and a tag is the owner's own filing rather than a fact about the
         pressing.
       */}
+      {/*
+        **Tags, as §9.2's chips.** 30px, 1px grey box, 11px mono uppercase — no
+        radius and no fill, like every other control in the region.
+
+        The section is titled `Tags` rather than `Filed under`: genres left for
+        the frame's pressing block, so the heading described a section that no
+        longer files anything. It is unmarked by §9.3 — a tag is a control, not
+        a fact.
+      */}
       {record.tags.length > 0 && (
-        <Section title="Filed under">
-          {record.tags.length > 0 && (
-            <Field label="Tags">
-              <span className="flex flex-wrap gap-1">
-                {record.tags.map((tag) => (
-                  <Link
-                    key={tag.id}
-                    href={`/?tagId=${tag.id}`}
-                    className="rounded-xs border border-border px-1.5 py-0.5 text-label hover:bg-accent"
-                  >
-                    {tag.name}
-                  </Link>
-                ))}
-              </span>
-            </Field>
-          )}
+        <Section name="tags" title="Tags" base={base}>
+          <div className="flex flex-wrap gap-[8px]">
+            {record.tags.map((tag) => (
+              <Link
+                key={tag.id}
+                href={`/?tagId=${tag.id}`}
+                className={`${LABEL} inline-flex items-center px-[10px] no-underline`}
+                style={{
+                  height: CHIP_HEIGHT,
+                  border: `1px solid ${SECTION_RULE}`,
+                  boxSizing: 'border-box',
+                }}
+              >
+                {tag.name}
+              </Link>
+            ))}
+          </div>
         </Section>
       )}
 
@@ -196,6 +231,6 @@ export function RecordDetail({ record }: { record: HydratedRecord }) {
         top of this file describes, arriving again because the screen above
         changed and the seam did not move with it.
       */}
-    </article>
+    </>
   );
 }

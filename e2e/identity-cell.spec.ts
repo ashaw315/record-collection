@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 
 /**
  * 8a §4.2 — the identity cell's structural guard and its line breaking.
@@ -40,7 +41,7 @@ async function login(page: Page) {
   await expect(page).toHaveURL('/');
 }
 
-const CASES = ['one', 'two', 'three', 'five'] as const;
+const CASES = ['one', 'two', 'three', 'four', 'five'] as const;
 
 const measure = (page: Page) =>
   page.evaluate(() => {
@@ -52,6 +53,13 @@ const measure = (page: Page) =>
       if (title === null || pressing === null) return null;
 
       const cellBox = cell.getBoundingClientRect();
+      /*
+        The content track, whose floor the pressing block anchors to. The CELL's
+        floor is 140px lower — that is the ornament track — so the two are
+        measured separately rather than one standing in for the other.
+      */
+      const track = cell.querySelector('[data-track="content"]');
+      const trackBox = (track ?? cell).getBoundingClientRect();
       const titleBox = title.getBoundingClientRect();
       const pressingBox = pressing.getBoundingClientRect();
 
@@ -64,6 +72,7 @@ const measure = (page: Page) =>
 
       return {
         cellBottom: Math.round(cellBox.bottom),
+        trackBottom: Math.round(trackBox.bottom),
         cellTop: Math.round(cellBox.top),
         titleTop: Math.round(titleBox.top),
         titleHeight: Math.round(titleBox.height),
@@ -72,11 +81,17 @@ const measure = (page: Page) =>
         overflows: cellBox.height < cell.scrollHeight,
       };
     };
-    return { one: read('one'), two: read('two'), three: read('three'), five: read('five') };
+    return {
+      one: read('one'),
+      two: read('two'),
+      three: read('three'),
+      four: read('four'),
+      five: read('five'),
+    };
   });
 
 test.describe('the identity cell (§4.2)', () => {
-  test.use({ viewport: { width: 2200, height: 900 } });
+  test.use({ viewport: { width: 2200, height: NO_SCROLL_HEIGHT } });
 
   /**
    * **THE assertion.** The pressing block's bottom edge sits at the cell floor
@@ -95,8 +110,16 @@ test.describe('the identity cell (§4.2)', () => {
       expect(c, `${id} rendered`).not.toBeNull();
       if (c === null) continue;
 
-      /* 18px of cell padding below the block. */
-      expect(c.cellBottom - c.pressingBottom, `${id}: pressing sits on the floor`).toBe(18);
+      /**
+       * **The floor is the CONTENT TRACK's floor, not the cell's.**
+       *
+       * §4.2 made the identity cell a two-track grid — content at 1fr,
+       * ornament at minmax(0, 140px) — so the cell's bottom is now 140px below
+       * the content, and this measured 158 (18 + 140). The claim is unchanged:
+       * the pressing block anchors to the bottom of the space the content has,
+       * and the title cannot push it. What moved is which box that is.
+       */
+      expect(c.trackBottom - c.pressingBottom, `${id}: pressing sits on the floor`).toBe(0);
     }
   });
 
@@ -169,5 +192,150 @@ test.describe('the identity cell (§4.2)', () => {
     if (five === null) return;
 
     expect(five.overflows, 'the unbalanced fallback still fits').toBe(false);
+  });
+});
+
+test.describe('the corner field is a track, not a reserve (§4.2)', () => {
+  test.use({ viewport: { width: 2200, height: NO_SCROLL_HEIGHT } });
+
+  /**
+   * **The mechanism, asserted as a mechanism.**
+   *
+   * The previous version was static padding plus a fixed absolute height — two
+   * independent numbers with nothing coupling either to remaining space, so
+   * "the reserve yields" was a claim with no mechanism behind it. It produced
+   * numbers, and a test pinning those numbers would have passed on it.
+   *
+   * So this asserts the RELATIONSHIP: the ornament track shrinks by exactly
+   * what the content takes, at every real title length. A two-track grid with
+   * `1fr` and `minmax(0, 140px)` has that property by construction; padding
+   * plus an absolute height does not have it at all.
+   */
+  test('shrinks the ornament track as the title grows, at every title length', async ({ page }) => {
+    await login(page);
+    await page.goto('/wall/probe/identity');
+    await page.locator('[data-case="five"]').waitFor({ timeout: 15_000 });
+
+    const tracks = await page.evaluate(() =>
+      ['one', 'two', 'three', 'four', 'five'].map((id) => {
+        const cell = document.querySelector(`[data-case="${id}"] [data-cell="identity"]`);
+        const ornament = cell?.querySelector('[data-track="ornament"]');
+        const content = cell?.querySelector('[data-track="content"]');
+        if (cell == null || ornament == null || content == null) return null;
+        return {
+          id,
+          ornament: Math.round(ornament.getBoundingClientRect().height * 10) / 10,
+          content: Math.round(content.getBoundingClientRect().height * 10) / 10,
+          cell: Math.round(cell.getBoundingClientRect().height * 10) / 10,
+          hasMark: ornament.querySelector('[data-mark]') !== null,
+        };
+      }),
+    );
+
+    for (const track of tracks) expect(track, 'every case renders both tracks').not.toBeNull();
+    const rows = tracks.filter((t): t is NonNullable<typeof t> => t !== null);
+
+    /*
+      **The track must contain the mark.** The first version of this test
+      measured an empty track — the probe passed no ornament — so "the track
+      shrinks" was true of a div with nothing in it, which an empty box
+      satisfies trivially. The mark is what the field is FOR.
+    */
+    for (const row of rows) {
+      expect(row.hasMark, `${row.id}: the ornament track draws the mark`).toBe(true);
+    }
+
+    /*
+      **Monotonic, not equal to a figure.** Longer title, no more ornament —
+      this is what "the track shrinks by exactly what the content takes" means
+      observationally, and it fails on any layout where the two are independent.
+    */
+    for (let i = 1; i < rows.length; i += 1) {
+      expect(
+        rows[i].ornament,
+        `${rows[i].id} (${rows[i].ornament}) must not exceed ${rows[i - 1].id} (${rows[i - 1].ornament})`,
+      ).toBeLessThanOrEqual(rows[i - 1].ornament);
+    }
+
+    /* And it genuinely moves: a track that never changed would pass the above. */
+    expect(
+      rows[0].ornament - rows[rows.length - 1].ornament,
+      'the track actually yields between the shortest and longest title',
+    ).toBeGreaterThan(40);
+
+    /*
+      The two tracks together are the cell: the ornament is displaced by the
+      content rather than overlapping it or overflowing the cell.
+    */
+    for (const row of rows) {
+      expect(row.content + row.ornament, `${row.id}: tracks fill the cell`).toBeLessThanOrEqual(
+        row.cell + 1,
+      );
+    }
+  });
+
+  test('never closes the corner field entirely, and never drops a fact', async ({ page }) => {
+    /**
+     * The field shrinks on two records and disappears on none. A track that
+     * collapsed to zero would be a reserve that failed rather than yielded, and
+     * the fact the cell must never trade away is a line of the record.
+     */
+    await login(page);
+    await page.goto('/wall/probe/identity');
+    await page.locator('[data-case="five"]').waitFor({ timeout: 15_000 });
+
+    const rows = await page.evaluate(() =>
+      ['one', 'two', 'three', 'four', 'five'].map((id) => {
+        const cell = document.querySelector(`[data-case="${id}"] [data-cell="identity"]`)!;
+        const ornament = cell.querySelector('[data-track="ornament"]')!;
+        return {
+          id,
+          ornament: Math.round(ornament.getBoundingClientRect().height * 10) / 10,
+          overflows: cell.scrollHeight > Math.ceil(cell.getBoundingClientRect().height),
+          hasPressing: cell.querySelector('[data-field="pressing-line"]') !== null,
+          hasGenres: cell.querySelector('[data-field="genres"]') !== null,
+          hasFormat: cell.querySelector('[data-field="format"]') !== null,
+        };
+      }),
+    );
+
+    for (const row of rows) {
+      expect(row.ornament, `${row.id}: the field is still there`).toBeGreaterThan(0);
+      expect(row.overflows, `${row.id}: nothing overflows the cell`).toBe(false);
+      expect(row.hasPressing, `${row.id}: keeps the pressing line`).toBe(true);
+      expect(row.hasGenres, `${row.id}: keeps the genres`).toBe(true);
+      expect(row.hasFormat, `${row.id}: keeps the format`).toBe(true);
+    }
+  });
+
+  test('leaves the ornament track its min-content minimum', async ({ page }) => {
+    /**
+     * **`min-height: 0` on the content wrapper is the declaration that defeats
+     * the mechanism it sits inside.** It reads as flex-overflow hygiene and is
+     * exactly wrong here: it pins the `1fr` track, so content overflows the
+     * ornament instead of displacing it — the track stops yielding and the
+     * numbers still look plausible.
+     *
+     * Asserted on the computed style, because the defect is invisible in the
+     * geometry until a title is long enough to need the give.
+     */
+    await login(page);
+    await page.goto('/wall/probe/identity');
+    await page.locator('[data-case="five"]').waitFor({ timeout: 15_000 });
+
+    const mins = await page.evaluate(() =>
+      ['one', 'five'].map((id) => {
+        const content = document.querySelector(
+          `[data-case="${id}"] [data-cell="identity"] [data-track="content"]`,
+        )!;
+        return { id, minHeight: getComputedStyle(content).minHeight };
+      }),
+    );
+
+    for (const row of mins) {
+      expect(row.minHeight, `${row.id}: the content track keeps its automatic minimum`).not.toBe(
+        '0px',
+      );
+    }
   });
 });

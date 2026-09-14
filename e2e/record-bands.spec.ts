@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { BANDS, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 
 /**
  * 8a §2.1's no-scroll budget, measured in a browser rather than declared.
@@ -41,7 +42,7 @@ const heights = (page: Page) =>
   });
 
 test.describe('the bands render to the height they declare', () => {
-  test.use({ viewport: { width: 1440, height: 900 } });
+  test.use({ viewport: { width: 1440, height: NO_SCROLL_HEIGHT } });
 
   test('spends exactly 900px, measured rather than summed', async ({ page }) => {
     await login(page);
@@ -51,17 +52,29 @@ test.describe('the bands render to the height they declare', () => {
     const m = await heights(page);
 
     /* Each band first, so a failure names which one moved. */
-    expect(m.nav, 'the built AppHeader, which 8a takes 53 from').toBe(53);
-    expect(m.identity, 'the identity band, rule included').toBe(500);
-    expect(m.record).toBe(300);
-    expect(m.tail).toBe(47);
+    /*
+      **From `BANDS` rather than typed in.** These read 500 and 47 until the
+      identity band took the tail (500 → 547, tail → 0) because 140px of
+      reserve could not absorb 203px of title growth. Hard-coded numbers made
+      this spec encode the OLD ruling, so it failed for having been superseded
+      rather than for anything being wrong — indistinguishable from a real
+      break in the failure message.
+
+      Importing the constants means the rendering is checked against what the
+      components actually use, and a band moving fails here only when the
+      RENDERING disagrees with the declaration.
+    */
+    expect(m.nav, 'the built AppHeader, which 8a takes 53 from').toBe(BANDS.nav);
+    expect(m.identity, 'the identity band, rule included').toBe(BANDS.identity);
+    expect(m.record).toBe(BANDS.record);
+    expect(m.tail, 'spent on the identity band').toBe(BANDS.tail);
 
     /*
       **THE assertion.** Borders inside the box, nothing rounding up, nothing
       collapsing: the rendered parts add to the viewport exactly.
     */
     const total = (m.nav ?? 0) + (m.identity ?? 0) + (m.record ?? 0) + (m.tail ?? 0);
-    expect(total, '53 + 500 + 300 + 47, as RENDERED').toBe(900);
+    expect(total, '53 + 547 + 300 + 0, as RENDERED').toBe(NO_SCROLL_HEIGHT);
   });
 
   test('does not scroll at 1440 × 900', async ({ page }) => {
@@ -94,7 +107,7 @@ test.describe('the bands render to the height they declare', () => {
 
     const m = await heights(page);
 
-    expect(m.identity, 'fixed, not derived from one label').toBe(500);
-    expect(m.record).toBe(300);
+    expect(m.identity, 'fixed, not derived from one label').toBe(BANDS.identity);
+    expect(m.record).toBe(BANDS.record);
   });
 });

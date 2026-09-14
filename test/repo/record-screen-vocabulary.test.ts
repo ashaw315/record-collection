@@ -63,32 +63,54 @@ describe('the record screen speaks one type vocabulary', () => {
     expect(offenders, `off-scale sizes:\n${offenders.join('\n')}`).toEqual([]);
   });
 
-  it('labels every section through the shared definition', () => {
-    /*
-      The six sections below the fold all label themselves, and six copies of a
-      label style is A61's fifteen-places defect. `grid-type.ts` names itself
-      the one definition; this asserts the files it names actually import it.
-    */
-    /*
-      `RecordJournal` is deliberately absent: 8a's journal cell carries the
-      label, so the section below it has no heading of its own to share a
-      definition with. A file listed here that stops labelling itself should
-      leave this list rather than keep an unused import to satisfy it.
-    */
-    const LABELLED = [
+  it('labels every section through one definition, not six', () => {
+    /**
+     * **The rule survived; its subject moved.**
+     *
+     * This asserted that each of six components imported `LABEL` from
+     * `grid-type`, because each labelled itself and six copies of a label
+     * style is A61's fifteen-places defect.
+     *
+     * §9.1 then made the label a property of the SECTION: `Section.tsx`
+     * renders it in the rail, and `SnippetPanel`, `PriceHistory` and
+     * `RecordJournal` stopped importing `LABEL` because they no longer label
+     * anything. The old assertion failed — and it failed for having been
+     * superseded, not for anything being wrong, which is the shape recorded in
+     * NOTES this round.
+     *
+     * So it asserts the claim rather than the old mechanism: **every component
+     * that renders a label gets it from the one definition.** A component that
+     * does not label is not required to import a label.
+     */
+    const LABELLING = [
+      'src/app/records/[id]/Section.tsx',
       'src/app/records/[id]/RecordDetail.tsx',
       'src/app/records/[id]/ImageGallery.tsx',
-      'src/app/records/[id]/SnippetPanel.tsx',
-      'src/app/records/[id]/PriceHistory.tsx',
       'src/app/market/MarketPanel.tsx',
     ];
 
-    for (const file of LABELLED) {
+    for (const file of LABELLING) {
       const source = readFileSync(file, 'utf8');
       expect(source, `${file} imports the shared label`).toMatch(
         /from '(\.\/|@\/app\/records\/\[id\]\/)grid-type'/,
       );
     }
+
+    /*
+      And nothing defines a second one: the treatment appears in `grid-type`
+      and nowhere else. This is the half that would catch a component
+      hand-rolling `text-label font-mono uppercase` instead of importing it.
+    */
+    const SCREEN_SOURCES = SCREEN.map((file) => [file, readFileSync(file, 'utf8')] as const);
+    const handRolled = SCREEN_SOURCES.filter(
+      ([file, source]) =>
+        file !== 'src/app/records/[id]/grid-type.ts' &&
+        /text-label[^'"`]*font-mono[^'"`]*uppercase/.test(source),
+    ).map(([file]) => file);
+
+    expect(handRolled, `these rebuild the label instead of importing it:\n${handRolled.join('\n')}`).toEqual(
+      [],
+    );
   });
 
   it('sets no uppercase label in the sans face', () => {

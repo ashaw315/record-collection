@@ -12,9 +12,16 @@ import {
 /**
  * 8a §2.1 — three fixed bands and twelve columns, at 1440 × 900.
  *
- * **The total is the bet, not the bands.** 53 + 500 + 300 + 47 = 900 is the
- * whole no-scroll claim, and a test that checks each band separately passes
- * while the sum drifts. So the sum is pinned first and the parts second.
+ * **The total is the bet, and the total alone is not enough.** 53 + 547 + 300
+ * = 900 is the whole no-scroll claim, and a test that checks each band
+ * separately passes while the sum drifts — so the sum is pinned first and the
+ * parts second.
+ *
+ * **The reverse just happened, which is why the parts are pinned at all.** The
+ * identity band took the tail's 47px (500 → 547, tail → 0) and the total
+ * stayed exactly 900. A suite asserting only `BAND_TOTAL === 900` passes on
+ * both the old bands and the new ones, and would have reported a screen built
+ * to the wrong numbers as correct.
  *
  * Heights are FIXED, not content-derived: the lower band is 300px whether five
  * cells carry text or one does, which is what makes §6 a question about marks
@@ -33,10 +40,10 @@ describe('the no-scroll budget (§2.1)', () => {
     expect(BAND_TOTAL).toBe(900);
   });
 
-  it('is the sum of the four declared bands', () => {
+  it('is the sum of the declared bands', () => {
     const summed = BANDS.nav + BANDS.identity + BANDS.record + BANDS.tail;
 
-    expect(summed, '53 + 500 + 300 + 47').toBe(BAND_TOTAL);
+    expect(summed, '53 + 547 + 300 + 0').toBe(BAND_TOTAL);
   });
 
   /**
@@ -47,25 +54,44 @@ describe('the no-scroll budget (§2.1)', () => {
    */
   it('takes the nav height from the built component, not the drawing', () => {
     expect(BANDS.nav, 'the measured AppHeader').toBe(53);
-    expect(BANDS.tail, 'the drawing said 44; the 3px went here').toBe(47);
   });
 
-  it('keeps the identity and record bands at their drawn heights', () => {
-    // §7's open questions — the 72 title's measure and the journal's capacity —
-    // are measured against these two, so they do not absorb adjustments.
-    expect(BANDS.identity).toBe(500);
+  it('gives the identity band the tail, because the give had to ADD height', () => {
+    /**
+     * **500 → 547, and the tail is gone.**
+     *
+     * 140px of reserve could not absorb 203px of title growth, so the shortfall
+     * had to add height to the band rather than be reallocated inside it. The
+     * tail was the only band that could give, and it gave all of it.
+     */
+    expect(BANDS.identity, 'took the tail').toBe(547);
     expect(BANDS.record).toBe(300);
+    expect(BANDS.tail, 'spent').toBe(0);
+  });
+
+  it('closes the screen on the record band rather than on paper', () => {
+    /**
+     * **The fold is a composition edge, and it moved.** With a 47px tail the
+     * screen ended on empty paper; with no tail it ends on the record band's
+     * closing rule — the edge every other band ends on.
+     *
+     * Asserted as "the last band drawn reaches the fold", which is what that
+     * sentence means geometrically.
+     */
+    expect(BANDS.nav + BANDS.identity + BANDS.record, 'the drawn bands reach the fold').toBe(
+      NO_SCROLL_HEIGHT,
+    );
   });
 
   it('leaves no slack for a band to grow into', () => {
     /*
-      Stated as a property rather than a comment: any increase has to come out
-      of another band, and the only band that can give is the tail, which has
-      47px and draws nothing.
+      There is no longer ANY give: the tail was the only band drawing nothing
+      and it has been spent. Any further growth has to come out of a band with
+      content in it, which is a composition decision rather than an adjustment.
     */
     const drawn = BANDS.nav + BANDS.identity + BANDS.record;
 
-    expect(NO_SCROLL_HEIGHT - drawn, 'all the give there is').toBe(BANDS.tail);
+    expect(NO_SCROLL_HEIGHT - drawn, 'all the give there is').toBe(0);
   });
 });
 

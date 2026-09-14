@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { deleteConsequence, deleteFailureMessage } from './delete-record';
+import { LABEL } from './grid-type';
 
 /**
  * Deleting a record (SPEC.md §5.2), with §7.3's confirmation rule applied.
@@ -94,7 +95,7 @@ export function DeleteRecord({
       <button
         type="button"
         onClick={() => setConfirming(true)}
-        className="mt-1 text-label font-mono tracking-[0.09em] uppercase text-muted-foreground underline-offset-2 hover:text-destructive hover:underline"
+        className={`mt-1 ${LABEL} text-muted-foreground underline-offset-2 hover:text-destructive hover:underline`}
       >
         Delete record
       </button>

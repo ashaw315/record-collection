@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { writeFileSync } from 'node:fs';
+import { NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/band-geometry';
 
 /**
  * **The colour DISTRIBUTION, measured. The area budget is withdrawn.**
@@ -23,7 +24,7 @@ import { writeFileSync } from 'node:fs';
 
 const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 
-test.use({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
+test.use({ viewport: { width: 1440, height: NO_SCROLL_HEIGHT }, deviceScaleFactor: 1 });
 
 test('measure the colour budget', async ({ page }) => {
   test.skip(process.env.CAPTURE !== '1', 'A measurement tool: run with CAPTURE=1');

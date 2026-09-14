@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { writeFileSync } from 'node:fs';
+import { MAX_GRID_WIDTH, NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/band-geometry';
 
 /**
  * **What the layout does at widths 8a did not specify.**
@@ -16,7 +17,7 @@ import { writeFileSync } from 'node:fs';
 const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 
 /** 1440 is the specified frame; the rest are real displays. */
-const WIDTHS = [1440, 1512, 1680, 1728, 1920, 2560] as const;
+const WIDTHS = [1440, 1512, 1680, MAX_GRID_WIDTH, 1920, 2560] as const;
 
 test('capture the page at the specified width and wider', async ({ browser }) => {
   test.skip(process.env.CAPTURE !== '1', 'A capture tool: run with CAPTURE=1');
@@ -30,7 +31,7 @@ test('capture the page at the specified width and wider', async ({ browser }) =>
 
   for (const width of WIDTHS) {
     const context = await browser.newContext({
-      viewport: { width, height: 900 },
+      viewport: { width, height: NO_SCROLL_HEIGHT },
       deviceScaleFactor: 1,
     });
     const page = await context.newPage();

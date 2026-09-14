@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { Section } from './Section';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { COLLECTION_DATE_MIN } from '@/lib/api/date';
@@ -45,9 +46,12 @@ function todayIso(): string {
 export function RecordJournal({
   recordId,
   entries,
+  base,
 }: {
   recordId: string;
   entries: JournalEntryView[];
+  /** §5.5's base step, for §9.3's rail bar. */
+  base: string | null;
 }) {
   const router = useRouter();
   const today = todayIso();
@@ -135,7 +139,22 @@ export function RecordJournal({
   }
 
   return (
-    <section className="mt-6" data-testid="journal">
+    /*
+      **§9.1's section, and the rail carries the name.**
+
+      §8.3 removed this section's `<h2>` because it duplicated the frame's
+      journal cell label. §9.1 then made the rail label structural — "every
+      label starts at the same x on every section" — so the word is back, in a
+      different role: not a heading stacked under the frame's, but the one x
+      this region trains the reader to read down.
+
+      The comment here previously claimed the rail "restores a label without
+      restoring the repetition". That was wrong as stated — the word does appear
+      twice — and `record-page-8a.spec.ts` caught it. What is true is that the
+      two namings are different things, and that test now asserts exactly two.
+    */
+    <Section name="journal" title="Journal" base={base}>
+      <div data-testid="journal">
       {/*
         **No heading: 8a's journal cell already carries the label.** The frame
         says `Journal` in §4's treatment, and repeating the same word in the
@@ -231,6 +250,7 @@ export function RecordJournal({
           ))}
         </ul>
       )}
-    </section>
+      </div>
+    </Section>
   );
 }

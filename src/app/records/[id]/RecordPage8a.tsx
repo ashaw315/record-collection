@@ -64,7 +64,7 @@ export type PageRecord = {
  * now takes a small mark from the same system rather than a line across its
  * box.
  */
-function IsoMark({
+export function IsoMark({
   name,
   fill,
   size = 1,
@@ -244,29 +244,6 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
           className="relative overflow-hidden"
           style={{ gridColumn: `span ${IDENTITY_SPANS[0]}`, borderRight: `1px solid ${RULE}` }}
         >
-          {/*
-            §5.1's triangle: tint, ground, anchored to the cell's RIGHT EDGE at
-            mid-height.
-
-            **Ground does not overlap content — it sits where content is not.**
-            §5.5 makes tint ground, and at bottom-left this mark covered
-            `Pressing`, the catalogue line and the format line by up to 132×16px.
-            A z-index would have been a stacking fix for a placement problem, and
-            shrinking would have traded the mark's presence for the collision
-            without settling where a mark may sit.
-
-            The identity cell's type occupies the left: the title flows from the
-            top-left and the pressing block anchors bottom-left inside a 412px
-            measure. The right edge past that measure is the corner the block
-            does not reach, and `e2e/page8a-marks.spec.ts` asserts no mark's box
-            contains type on any of the three records.
-          */}
-          <IsoMark
-            name="identityTriangle"
-            fill={tint}
-            size={1.5}
-            className="top-[168px] right-[6px] h-[112px] w-[124px]"
-          />
           <IdentityCell
             title={record.title}
             artistName={record.artistName}
@@ -274,6 +251,32 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
             pressingLine={record.pressingLine}
             formatLine={record.formatLine}
             genres={record.genres}
+            /*
+              §5.1's triangle: tint, ground, in the cell's corner FIELD.
+
+              **Ground does not overlap content — it sits where content is
+              not.** §5.5 makes tint ground, and at bottom-left this mark
+              covered `Pressing`, the catalogue line and the format line by up
+              to 132×16px. A z-index would have been a stacking fix for a
+              placement problem, and shrinking would have traded the mark's
+              presence for the collision without settling where a mark may sit.
+
+              **Passed as the ornament rather than positioned against the
+              cell.** It was `absolute` at a fixed 112px height, which is why
+              the reserve could not yield: an absolute box is out of flow and
+              shares space with nothing. It now fills a track that shrinks by
+              what the content takes, so the mark is displaced rather than
+              overlapped — and `e2e/page8a-marks.spec.ts` still asserts no
+              mark's box contains type on any of the three records.
+            */
+            ornament={
+              <IsoMark
+                name="identityTriangle"
+                fill={tint}
+                size={1.5}
+                className="right-[6px] bottom-0 h-full w-[124px]"
+              />
+            }
           />
         </div>
 

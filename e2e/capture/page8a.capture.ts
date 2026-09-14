@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/band-geometry';
 
 /**
  * **The assembly, on three real records at 1440 × 900.** Every piece so far has
@@ -9,7 +10,7 @@ import { test, expect } from '@playwright/test';
 
 const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 
-test.use({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
+test.use({ viewport: { width: 1440, height: NO_SCROLL_HEIGHT }, deviceScaleFactor: 1 });
 
 test('capture 8a assembled', async ({ page }) => {
   test.skip(process.env.CAPTURE !== '1', 'A capture tool: run with CAPTURE=1');
