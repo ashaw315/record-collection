@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 111 declared rules. Regenerate with
+Generated from 112 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -87,6 +87,7 @@ Generated from 111 declared rules. Regenerate with
 | a test asserts a total or an average over a set that is allowed to vary | [The light became an angle, and a test that measured an aggregate missed a drift](#the-light-became-an-angle-and-a-test-that-measured-an-aggregate-missed-a-drift) |
 | a guard was added and you have not checked it sits where the work happens | [The transport now PERFORMS the call — and the enforcement is weaker than I first claimed](#the-transport-now-performs-the-call-and-the-enforcement-is-weaker-than-i-first-claimed) |
 | a spec item is assumed built and no test names it | [The want-list edit route: SPECIFIED IN STEP 6, NEVER BUILT, unnoticed for ten steps](#the-want-list-edit-route-specified-in-step-6-never-built-unnoticed-for-ten-steps) |
+| a design file has changed its mind and you are relying on something to notice | [When a ruling is reversed, the code implementing it does not fail](#when-a-ruling-is-reversed-the-code-implementing-it-does-not-fail) |
 
 ### Variation applied to the wrong axis
 
@@ -169,6 +170,8 @@ Generated from 111 declared rules. Regenerate with
 | a run reported no counts and you are reading that as nothing failed | [The wrapper caught a real crashed run, unstaged](#the-wrapper-caught-a-real-crashed-run-unstaged) |
 
 <!-- APPARATUS-INDEX:END -->
+
+112 rules indexed.
 
 111 rules indexed.
 
@@ -30050,3 +30053,54 @@ visible height is 0.62 of the section by definition. It cannot fire. Kept as a
 guard against a future size change, and **the test says so** rather than
 claiming it filters — at the withdrawn fixed size the four cells measured 0.40,
 0.39, 0.43 and 0.32, so it could never have fired then either.
+
+## When a ruling is reversed, the code implementing it does not fail
+
+**Shape:** check-cannot-fail
+**You are here if:** a design file has changed its mind and you are relying on something to notice
+
+§5.1's three edge fields — a corner triangle and two quarter-circles — were
+built flat. On 13 Sep a ruling withdrew them for isometric solids, on the
+argument that flat circles beside an isometric construction read as a second
+system, and the build followed correctly. That ruling was later reversed in the
+drawing: *"that was true for one turn, under the withdrawn isometric ruling, and
+is not true now."*
+
+**Nothing propagated.** The code kept rendering the superseded rule for two
+days. Every test passed, the types were unchanged, the build was clean, and the
+page looked deliberate — because it WAS deliberate, against a rule that no
+longer existed.
+
+**The only evidence was the names.** Three marks called `identityTriangle`,
+`provenanceArc` and `aboutArc` were each drawing three polygons at three
+opacities: a triangle and two arcs that were cubes.
+
+This is the superseded-ruling shape in a new place. The recorded instances were
+TESTS encoding a stale rule, where the failure at least arrives — as a message
+indistinguishable from a real break, which is its own problem. **An
+IMPLEMENTATION encoding a stale rule produces no event at all.** A reversed
+ruling is not a regression, a bug report, or a failing assertion; it is a
+document changing while the code stays exactly as correct as it was.
+
+**What made it findable was asking what a name claims.** `arc` is a claim about
+shape, and nothing tested that a mark is the shape its name says — so the check
+now counts painted regions: a plane is one, a solid is three faces at three
+lightnesses. Restaging the cube fails with `provenanceArc is not built from
+faces — Received: 3`.
+
+**The general form: a name is an untested assertion.** Where a rule is about
+what something IS rather than what it does, the name is often the only place the
+claim is written down, and names do not fail.
+
+### Two smaller things from the same unit
+
+`IsoMark` is deleted rather than left unused. It drew three faces and served
+only the three edge fields, so it was the mechanism by which the withdrawn
+ruling kept rendering — and an unused isometric helper invites the same
+substitution again. `MatrixSolid` still draws the one in-cell solid the frame
+keeps.
+
+And `/wall/probe/identity` was passing an `IsoMark` as the identity cell's
+ornament while the page drew a plane, so **the view built to judge the corner
+reserve was not showing the mark that occupies it.** Fourth instance of a probe
+rendering something other than what it is a probe for.

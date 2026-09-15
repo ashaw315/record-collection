@@ -54,57 +54,13 @@ export type PageRecord = {
  * shape, so it reads as the same vocabulary — the difference between one system
  * and two.
  */
-/**
- * A small isometric solid in the construction's vocabulary.
- *
- * **§5.1's arcs and triangle are withdrawn for these.** Flat circles and a
- * triangle read as a second system beside an isometric construction; a small
- * solid drawn with the same `project()` reads as the same one. That settles the
- * vocabulary question and changes both void rulings with it — an empty region
- * now takes a small mark from the same system rather than a line across its
- * box.
- */
-export function IsoMark({
-  name,
-  fill,
-  size = 1,
-  className,
-}: {
-  name: string;
-  fill: string;
-  size?: number;
-  className: string;
-}) {
-  const p = (u: number, v: number, w: number) => {
-    const [x, y] = project(u, v, w);
-    return [x * 15 * size + 62, y * 15 * size + 56] as const;
-  };
-  const face = (pts: ReadonlyArray<readonly [number, number]>) =>
-    pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
-
-  const [du, dv, dw] = [1.7, 1.7, 1.1];
-
-  return (
-    <svg
-      data-mark={name}
-      aria-hidden="true"
-      viewBox="0 0 124 112"
-      className={`pointer-events-none absolute ${className}`}
-    >
-      <polygon points={face([p(0, 0, dw), p(du, 0, dw), p(du, dv, dw), p(0, dv, dw)])} fill={fill} />
-      <polygon
-        points={face([p(0, dv, 0), p(du, dv, 0), p(du, dv, dw), p(0, dv, dw)])}
-        fill={fill}
-        opacity="0.72"
-      />
-      <polygon
-        points={face([p(du, 0, 0), p(du, dv, 0), p(du, dv, dw), p(du, 0, dw)])}
-        fill={fill}
-        opacity="0.5"
-      />
-    </svg>
-  );
-}
+/*
+  **`IsoMark` is deleted.** It drew three faces at three opacities and was used
+  only by §5.1's three edge fields, which are flat planes — so it was the
+  mechanism by which a withdrawn ruling kept rendering. `MatrixSolid` still
+  draws the one in-cell solid the frame keeps; nothing else needs a generic
+  isometric helper, and leaving one invites the same substitution again.
+*/
 
 function MatrixSolid() {
   const p = (u: number, v: number, w: number) => {
@@ -277,11 +233,44 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
               mark's box contains type on any of the three records.
             */
             ornament={
-              <IsoMark
-                name="identityTriangle"
-                fill={tint}
-                size={1.5}
-                className="right-[6px] bottom-0 h-full w-[124px]"
+              /*
+                **§5.1's corner triangle: a FLAT plane, not a solid.**
+
+                A mark that touches a page edge is a flat plane of the derived
+                colour; a mark that does not is an isometric solid. This one
+                sits in the identity block's lower-left corner and runs to the
+                cell's edge, so it is a plane.
+
+                It was built flat, replaced with an `IsoMark` on 13 Sep under a
+                ruling that withdrew §5.1's arcs and triangle for isometric
+                solids, and that ruling was itself withdrawn — "that was true
+                for one turn, under the withdrawn isometric ruling, and is not
+                true now". Nothing failed when the ruling reversed, because
+                code implementing a superseded rule keeps working; the only
+                evidence was a mark named `triangle` drawing three faces.
+
+                In the ornament TRACK rather than positioned against the cell,
+                so §4.2's corner reserve yields structurally: 140px at two
+                title lines, 115.4 at three, 47.7 at four, gone at five. The
+                HEIGHT is the drawing's; the track supplies it.
+
+                **The width is a build decision and is flagged as one.** §5.1
+                gives the edge fields "a count, a value, a step and a
+                suppression rule, and stops" — no geometry — and the drawing
+                fixes only the height. Filling the cell's full 443px made a
+                corner mark into a band across the block, so it is held to
+                180px against the left edge, which is a corner. If Design wants
+                a width, this is the number to replace.
+              */
+              <div
+                data-mark="identityTriangle"
+                aria-hidden="true"
+                className="pointer-events-none absolute bottom-0 left-0 h-full w-[180px] max-w-full"
+                style={{
+                  background: tint,
+                  /* Lower-left corner: the hypotenuse runs up to the right. */
+                  clipPath: 'polygon(0 0, 0 100%, 100% 100%)',
+                }}
               />
             }
           />
@@ -392,10 +381,21 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
                 when the cell is empty (§5.4) — a decorated empty cell reads as
                 a designed state rather than as a gap the reader can fill.
               */}
-              <IsoMark
-                name="provenanceArc"
-                fill={tint}
-                className="right-[14px] bottom-[14px] h-[112px] w-[124px]"
+              {/*
+                **§5.1's quarter-circle: a FLAT plane.** It bleeds off the
+                record band's left end, so it touches a page edge and the frame
+                rule sends it flat — one fill, one corner rounded, no faces.
+
+                No inset: it was `right-14 bottom-14`, which is a mark NEAR an
+                edge rather than one touching it, and the rule turns on
+                touching. A quarter-circle held 14px clear of the corner is a
+                disc with two sides hidden.
+              */}
+              <div
+                data-mark="provenanceArc"
+                aria-hidden="true"
+                className="pointer-events-none absolute bottom-0 left-0 h-[112px] w-[112px]"
+                style={{ background: tint, borderTopRightRadius: '100%' }}
               />
               {record.purchasePrice !== null && (
                 <div className="text-prose">Paid ${record.purchasePrice}</div>
@@ -565,12 +565,19 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
               <div className="text-prose">{record.note}</div>
             </>
           )}
-          {/* §5.1's tint arc, suppressed when the cell is empty (§5.4). */}
+          {/*
+            §5.1's second quarter-circle, bleeding off the band's right end.
+            Flat for the same reason as the first — it touches a page edge —
+            and rounded on the corner that faces into the page. Suppressed when
+            the cell is empty (§5.4): a decorated empty cell reads as a designed
+            state rather than as a gap the reader can fill.
+          */}
           {!modules.journal.empty && (
-            <IsoMark
-              name="aboutArc"
-              fill={tint}
-              className="right-[14px] bottom-[14px] h-[112px] w-[124px]"
+            <div
+              data-mark="aboutArc"
+              aria-hidden="true"
+              className="pointer-events-none absolute right-0 bottom-0 h-[112px] w-[112px]"
+              style={{ background: tint, borderTopLeftRadius: '100%' }}
             />
           )}
         </div>

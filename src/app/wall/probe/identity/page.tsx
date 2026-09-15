@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation';
 import { IdentityCell } from '@/app/records/[id]/IdentityCell';
-import { IsoMark } from '@/app/records/[id]/RecordPage8a';
 import { BANDS } from '@/app/records/[id]/band-geometry';
 
 /**
@@ -56,11 +55,20 @@ export default function IdentityProbePage() {
               it was named for, and one an empty div would satisfy.
             */
             ornament={
-              <IsoMark
-                name="identityTriangle"
-                fill="oklch(0.86 0.04 80)"
-                size={1.5}
-                className="right-[6px] bottom-0 h-full w-[124px]"
+              /*
+                **The flat corner triangle the cell actually renders.** This
+                probe passed an `IsoMark` — a three-faced solid — while the
+                page draws §5.1's plane, so the view built to judge the corner
+                reserve was not showing the mark that occupies it.
+              */
+              <div
+                data-mark="identityTriangle"
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  background: 'oklch(0.86 0.04 80)',
+                  clipPath: 'polygon(0 0, 0 100%, 100% 100%)',
+                }}
               />
             }
           />

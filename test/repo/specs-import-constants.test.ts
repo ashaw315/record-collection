@@ -45,6 +45,7 @@ const GOVERNED = [
   'e2e/capture/viewport-widths.capture.ts',
   'e2e/record-detail.spec.ts',
   'e2e/record-form.spec.ts',
+  'e2e/frame-planes.spec.ts',
 ];
 
 /** The values a record-screen spec must not type. */
