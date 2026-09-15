@@ -19,7 +19,7 @@ import { SOLID_HEIGHT, SOLID_WIDTH } from './ornament';
 export function Ornament({ tint }: { tint: string }) {
   const p = (u: number, v: number, w: number) => {
     const [x, y] = project(u, v, w);
-    return [x * 17 + SOLID_WIDTH, y * 17 + 40] as const;
+    return [x * 8.5 + SOLID_WIDTH / 2, y * 8.5 + 20] as const;
   };
   const face = (points: ReadonlyArray<readonly [number, number]>) =>
     points.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
@@ -30,7 +30,7 @@ export function Ornament({ tint }: { tint: string }) {
     <svg
       data-ornament="solid"
       aria-hidden="true"
-      viewBox={`0 0 ${SOLID_WIDTH * 2} ${SOLID_HEIGHT * 2}`}
+      viewBox={`0 0 ${SOLID_WIDTH} ${SOLID_HEIGHT}`}
       className="pointer-events-none absolute"
       style={{
         /*
@@ -40,8 +40,13 @@ export function Ornament({ tint }: { tint: string }) {
         */
         right: -SOLID_WIDTH / 3,
         bottom: -SOLID_HEIGHT / 3,
-        width: SOLID_WIDTH * 2,
-        height: SOLID_HEIGHT * 2,
+        /*
+          **60 × 64, the drawn size.** This rendered at `SOLID_WIDTH * 2` —
+          a 120 × 128 box, double the spec, which read as much larger than the
+          frame's marks. The constant was right and the box around it was not.
+        */
+        width: SOLID_WIDTH,
+        height: SOLID_HEIGHT,
         zIndex: -1,
       }}
     >

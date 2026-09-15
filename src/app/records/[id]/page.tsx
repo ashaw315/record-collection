@@ -109,11 +109,28 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
       <main className="w-full">
         <div>
           {/*
-            `relative` so §9.2's edge fields have the REGION to attach to. They
-            bleed off the composition's bottom edge, which is the one height
-            below the fold that is known.
+            **The composition's edge, which is what §9.1's rules bleed to.**
+
+            §9.1: section boundaries bleed to the composition's edge — the
+            viewport up to the 1728 cap, the capped container beyond it. The cap
+            reached the frame and not §9, so at 3440 the frame sat at 1728@856
+            while every section below started at 0: one grid rendered at two
+            widths, with the frame appearing to start a long way in from the
+            left. Invisible at 1440, where the two are identical.
+
+            Capping HERE rather than per section is what makes them one
+            composition: the frame and the region share this element, so a
+            section cannot bleed to a different edge from the frame above it.
+            The rules still run edge to edge — that edge is now the
+            composition's rather than the window's.
+
+            `relative` also gives §9.2's edge fields the region to attach to,
+            so they leave the composition rather than the viewport.
           */}
-          <div className="relative min-w-0">
+          <div
+            className="relative mx-auto min-w-0"
+            style={{ maxWidth: MAX_GRID_WIDTH }}
+          >
             {/*
               **8a, on the route rather than on a probe.**
 

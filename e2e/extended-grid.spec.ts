@@ -3,6 +3,8 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { seedImage } from './seed';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
+import { MAX_GRID_WIDTH } from '../src/app/records/[id]/band-geometry';
+import { SOLID_HEIGHT, SOLID_WIDTH } from '../src/app/records/[id]/ornament';
 import {
   CELL_PADDING,
   CONTROL_HEIGHT,
@@ -713,5 +715,94 @@ test('draws a solid only where the gate passes, and only in type-only cells', as
   /* And one per section, never two. */
   for (const row of placed) {
     expect(row.solids, `${row.name} carries at most one solid`).toBeLessThanOrEqual(1);
+  }
+});
+
+test('the region caps with the frame, so the page is one grid', async ({ page }) => {
+  /**
+   * **§9.1's boundaries bleed to the COMPOSITION's edge — the viewport up to
+   * the 1728 cap, the capped container beyond it.**
+   *
+   * They were bleeding to the viewport at every width, so at 3440 the frame
+   * sat at 1728@856 while every section below started at 0: one grid rendered
+   * at two widths, and the frame appeared to start a long way in from the left.
+   *
+   * **Measured wide, because at 1440 the two are identical and the defect is
+   * invisible** — which is why it shipped.
+   */
+  const suffix = makeSuffix();
+  const id = await richRecord(page, suffix);
+
+  for (const width of [1440, MAX_GRID_WIDTH, 2560, 3440]) {
+    await page.setViewportSize({ width, height: NO_SCROLL_HEIGHT });
+    await page.goto(`/records/${id}`);
+    await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+
+    const measured = await page.evaluate(() => {
+      const frame = document.querySelector('[data-testid="record-page-8a"]')!.getBoundingClientRect();
+      const sections = Array.from(document.querySelectorAll('[data-section]')).map((section) => {
+        const box = section.getBoundingClientRect();
+        return { left: Math.round(box.left), width: Math.round(box.width) };
+      });
+      const edge = document.querySelector('[data-ornament="edge-fields"]')?.getBoundingClientRect();
+      return {
+        frame: { left: Math.round(frame.left), width: Math.round(frame.width) },
+        sections,
+        edge: edge === undefined ? null : { left: Math.round(edge.left), width: Math.round(edge.width) },
+      };
+    });
+
+    const expected = Math.min(width, MAX_GRID_WIDTH);
+
+    expect(measured.frame.width, `frame at ${width}`).toBe(expected);
+
+    for (const section of measured.sections) {
+      /* Same measure AND same edge: equal widths at different x still misalign. */
+      expect(section.width, `section width at ${width}`).toBe(expected);
+      expect(section.left, `section left at ${width} (frame ${measured.frame.left})`).toBe(
+        measured.frame.left,
+      );
+    }
+
+    if (measured.edge !== null) {
+      expect(measured.edge.width, `edge fields at ${width}`).toBe(expected);
+      expect(measured.edge.left, 'the fields leave the COMPOSITION, not the viewport').toBe(
+        measured.frame.left,
+      );
+    }
+  }
+});
+
+test('a solid is 60 x 64 at every viewport', async ({ page }) => {
+  /**
+   * §9.2 sizes the solid by width because width is the one dimension the region
+   * inherited as fixed — but "half a column" is 60px at the reference width and
+   * a constant thereafter, not half of whatever a column happens to be. At 3440
+   * an uncapped column is 287px, and a solid tracking it would be four times
+   * the drawn size.
+   *
+   * Measured at four widths rather than one, because a derived size is
+   * indistinguishable from a constant at the width it was derived for.
+   */
+  const suffix = makeSuffix();
+  const id = await richRecord(page, suffix);
+
+  for (const width of [1440, MAX_GRID_WIDTH, 2560, 3440]) {
+    await page.setViewportSize({ width, height: NO_SCROLL_HEIGHT });
+    await page.goto(`/records/${id}`);
+    await page.locator('[data-ornament="solid"]').first().waitFor({ timeout: 20_000 });
+
+    const boxes = await page.evaluate(() =>
+      Array.from(document.querySelectorAll('[data-ornament="solid"]')).map((solid) => {
+        const box = solid.getBoundingClientRect();
+        return { w: Math.round(box.width), h: Math.round(box.height) };
+      }),
+    );
+
+    expect(boxes.length, `solids at ${width}`).toBeGreaterThan(0);
+    for (const box of boxes) {
+      expect(box.w, `solid width at ${width}`).toBe(SOLID_WIDTH);
+      expect(box.h, `solid height at ${width}`).toBe(SOLID_HEIGHT);
+    }
   }
 });

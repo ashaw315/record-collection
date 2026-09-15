@@ -227,6 +227,13 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
       Capped and centred, with paper bleeding past it. The wrapper is the page's
       only element that knows about the viewport; everything inside is the grid
       8a specifies at a width it specifies.
+
+      **Redundant on `/records/[id]` and kept deliberately.** The route now caps
+      the whole composition — frame and §9 region together — so §9.1's section
+      rules bleed to the same edge this does. This cap still governs where the
+      component renders alone, which is `/wall/probe/page8a`; removing it would
+      leave the probe uncapped and make the two disagree about the composition's
+      width.
     */
     <div
       data-testid="record-page-8a"

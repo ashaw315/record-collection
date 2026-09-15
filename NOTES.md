@@ -24,13 +24,14 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 108 declared rules. Regenerate with
+Generated from 109 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
 
 | You are here if | The rule |
 | --- | --- |
+| two parts of one page are meant to share an edge and only one of them knows the rule | [A cap applied to the component instead of the composition](#a-cap-applied-to-the-component-instead-of-the-composition) |
 | a feature works correctly and you are debating how to improve it | [A FEATURE RETIRED ON THREE ARGUMENTS, NONE ABOUT ITS IMPLEMENTATION](#a-feature-retired-on-three-arguments-none-about-its-implementation) |
 | the number is in band and you cannot say what it would forbid | [A measurement correlated with the signal instead of being it — fifth instance](#a-measurement-correlated-with-the-signal-instead-of-being-it-fifth-instance) |
 | a rule collides with rules that were never in tension, or a figure moves while nothing changes size | [A rule scoped past its subject, and a ratio that moved when nothing did](#a-rule-scoped-past-its-subject-and-a-ratio-that-moved-when-nothing-did) |
@@ -166,6 +167,8 @@ Generated from 108 declared rules. Regenerate with
 | a run reported no counts and you are reading that as nothing failed | [The wrapper caught a real crashed run, unstaged](#the-wrapper-caught-a-real-crashed-run-unstaged) |
 
 <!-- APPARATUS-INDEX:END -->
+
+109 rules indexed.
 
 108 rules indexed.
 
@@ -29937,3 +29940,54 @@ describing.
 The ruling states the guard itself: a section needing a fourth split is a
 section whose content has not been identified yet. Built as a union so a fourth
 does not compile, with the COUNT asserted rather than the membership.
+
+## A cap applied to the component instead of the composition
+
+**Shape:** measurement-not-governing
+**You are here if:** two parts of one page are meant to share an edge and only one of them knows the rule
+
+§2.1's 1728 cap reached `RecordPage8a` and never reached §9. Every test passed,
+including the ones written for the cap — because they measured the frame, and
+the frame was capped correctly.
+
+At 1440 and 1728 the composition and the viewport are the same width, so a
+section bleeding to the viewport and a section bleeding to the composition are
+pixel-identical. **The defect exists only above the cap**, which is where no
+test looked:
+
+```
+          frame          section
+W1440     1440@0         1440@0      identical
+W1728     1728@0         1728@0      identical
+W2560     1728@416       2560@0      the frame starts 416px in
+W3440     1728@856       3440@0      the frame starts 856px in
+```
+
+The page read as two grids because it WAS two grids — one capped and centred,
+one running to the window — and the frame appeared to start a long way in from
+the left.
+
+**The fix is where the cap goes, not how many places repeat it.** Capping the
+element that contains both the frame and the region makes them one composition
+by construction: a section cannot bleed to a different edge from the frame above
+it, because they share the element the edge is on. Repeating `maxWidth` per
+section would have produced the same pixels and left the next section free to
+omit it.
+
+**The general form: when a rule is about a relationship between two things,
+applying it to each of them separately is a different rule that happens to
+agree.** §9.1's wording said "the composition's edge", which is a relationship;
+the build read it as a width, which is a property.
+
+**And the measurement rule: a viewport-dependent claim is untested at the width
+where its two readings coincide.** Every cap test ran at 1440 or at the cap
+itself. The first measurement above 1728 found it immediately.
+
+### The ornament's box, found in the same measurement
+
+`SOLID_WIDTH` is a constant 60, so solids do not grow with the viewport — that
+half of the question was fine. But the component rendered them at
+`SOLID_WIDTH * 2`, a 120 × 128 box for a 60 × 64 solid, so they read as much
+larger than the frame's marks. The constant was right and the box around it was
+not, which is why "is it derived or constant?" did not reach it: both answers
+were about the same variable, and the defect was in its use.
