@@ -4,7 +4,7 @@ import { seedImage } from './seed';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
 import { MAX_GRID_WIDTH } from '../src/app/records/[id]/band-geometry';
-import { SIZE_RATIO, SOLID_ASPECT } from '../src/app/records/[id]/ornament';
+import { ARCHETYPE_ASPECT, SIZE_RATIO, archetypeFor } from '../src/app/records/[id]/ornament';
 import {
   CELL_PADDING,
   CONTROL_HEIGHT,
@@ -815,9 +815,17 @@ test('a solid is 0.62 of its section, and not a fixed size', async ({ page }) =>
         `${solid.name} at ${width}: ${Math.round(solid.height)}px in a ${Math.round(solid.sectionHeight)}px section`,
       ).toBeCloseTo(SIZE_RATIO, 2);
 
-      /* Width follows from height by the projection, never the other way. */
-      expect(solid.height / solid.width, `${solid.name} aspect at ${width}`).toBeCloseTo(
-        SOLID_ASPECT,
+      /*
+        **Width follows the ARCHETYPE**, never a constant: `h / 1.06` was the
+        cube's instance of the rule, not the rule. Height is governed and each
+        section's silhouette differs.
+      */
+      const archetype = archetypeFor(solid.name ?? '');
+      expect(archetype, `${solid.name} has an archetype`).not.toBeNull();
+      if (archetype === null) continue;
+
+      expect(solid.width / solid.height, `${solid.name} aspect at ${width}`).toBeCloseTo(
+        ARCHETYPE_ASPECT[archetype],
         1,
       );
     }
@@ -854,4 +862,95 @@ test('solids differ from each other, because their sections do', async ({ page }
       `sections differ so solids must: ${JSON.stringify(heights)}`,
     ).toBeGreaterThan(1);
   }
+});
+
+test('the region has one full fill, in the last section, at tint', async ({ page }) => {
+  /**
+   * §9.4's fill: **once per region, not once per section**, in the last
+   * section's widest cell, at the tint step.
+   *
+   * It is ground rather than a mark — a mark anchors by contrast, ground
+   * anchors by area — so the section's bar stays and §9.4's count of four is
+   * unaffected. Both halves are asserted: exactly one fill, and the bar still
+   * there beside it.
+   */
+  const suffix = makeSuffix();
+  const id = await richRecord(page, suffix);
+  await page.goto(`/records/${id}`);
+  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+
+  const region = await page.evaluate(() => {
+    const fills = Array.from(document.querySelectorAll('[data-ornament="fill"]'));
+    const sections = Array.from(document.querySelectorAll('[data-section]'));
+    const last = sections[sections.length - 1];
+
+    return {
+      count: fills.length,
+      section: fills[0]?.closest('[data-section]')?.getAttribute('data-section') ?? null,
+      cell: fills[0]?.closest('[data-cell]')?.getAttribute('data-cell') ?? null,
+      isLastSection: fills[0]?.closest('[data-section]') === last,
+      /* The bar in that section, which the fill must not displace. */
+      barsInFilledSection:
+        fills[0]?.closest('[data-section]')?.querySelectorAll('[data-mark="section-bar"]').length ??
+        0,
+      totalBars: document.querySelectorAll('[data-mark="section-bar"]').length,
+      /* Area, which is how ground anchors. */
+      fillArea: fills[0] === undefined ? 0 : Math.round(fills[0].getBoundingClientRect().width * fills[0].getBoundingClientRect().height),
+      barArea: (() => {
+        const bar = document.querySelector('[data-mark="section-bar"]');
+        if (bar === null) return 0;
+        const box = bar.getBoundingClientRect();
+        return Math.round(box.width * box.height);
+      })(),
+    };
+  });
+
+  expect(region.count, 'one fill in the whole region').toBe(1);
+  expect(region.section, "the last section's").toBe('journal');
+  expect(region.cell, 'the widest cell, holding type').toBe('content-0');
+  expect(region.isLastSection, 'last, because the page thins downward').toBe(true);
+
+  /* A mark and its ground are different objects. */
+  expect(region.barsInFilledSection, 'the section keeps its bar').toBe(1);
+  expect(region.totalBars, 'still four marks').toBeGreaterThanOrEqual(2);
+
+  /*
+    Ground anchors by area. The ruling puts the fill at forty times a bar; the
+    assertion is the ORDER of magnitude rather than the figure, since both
+    depend on the record's content.
+  */
+  expect(region.fillArea / region.barArea, 'the fill is ground-scale').toBeGreaterThan(10);
+});
+
+test('the four solids are four silhouettes, not one stamp', async ({ page }) => {
+  /**
+   * All four were the same cube, which read as a repeated stamp rather than as
+   * the frame's vocabulary appearing small. Height stays governed at 0.62 and
+   * the WIDTH varies by archetype.
+   *
+   * Asserted as distinct aspect ratios rather than four widths, because the
+   * widths depend on the sections' heights and the silhouette does not.
+   */
+  const suffix = makeSuffix();
+  const id = await richRecord(page, suffix);
+  await page.goto(`/records/${id}`);
+  await page.locator('[data-ornament="solid"]').first().waitFor({ timeout: 20_000 });
+
+  const solids = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('[data-ornament="solid"]')).map((solid) => {
+      const box = solid.getBoundingClientRect();
+      return {
+        name: solid.closest('[data-section]')!.getAttribute('data-section'),
+        aspect: Math.round((box.width / box.height) * 100) / 100,
+      };
+    }),
+  );
+
+  expect(solids.length, 'solids rendered').toBeGreaterThan(1);
+
+  const aspects = new Set(solids.map((solid) => solid.aspect));
+  expect(
+    aspects.size,
+    `each section its own silhouette: ${JSON.stringify(solids)}`,
+  ).toBe(solids.length);
 });

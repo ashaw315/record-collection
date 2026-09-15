@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 112 declared rules. Regenerate with
+Generated from 113 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -129,6 +129,7 @@ Generated from 112 declared rules. Regenerate with
 | a defect has two plausible readings and you are about to fix the likelier one | [1093 DIAGNOSED after nine sightings: both candidate readings were wrong, and the predicate matches WHITE](#1093-diagnosed-after-nine-sightings-both-candidate-readings-were-wrong-and-the-predicate-matches-white) |
 | a failure has a number attached and you have not run it more than once | [427 MEASURED over three runs rather than assumed — and it is NOT a rate](#427-measured-over-three-runs-rather-than-assumed-and-it-is-not-a-rate) |
 | a written measurement is being carried forward and you have not re-read the source | [A note that implied a difference, and a payload that did not](#a-note-that-implied-a-difference-and-a-payload-that-did-not) |
+| you are about to derive a per-member value from a property of the members, and have not looked at the spread of that property | [A rule deriving variety from an axis the set does not vary along produces none](#a-rule-deriving-variety-from-an-axis-the-set-does-not-vary-along-produces-none) |
 | a search came back empty and you are about to conclude the thing does not exist | [A search whose scope cannot contain the answer](#a-search-whose-scope-cannot-contain-the-answer) |
 | a placement rule was written against the cases in front of you and you have not counted how many positions it actually permits | [Half a column, because a rule permitting one position is not a rule](#half-a-column-because-a-rule-permitting-one-position-is-not-a-rule) |
 | a failure resembles an earlier one and you are applying the same diagnosis | [RULE: "same family" is a hypothesis, not a diagnosis. Measure which](#rule-same-family-is-a-hypothesis-not-a-diagnosis-measure-which) |
@@ -170,6 +171,8 @@ Generated from 112 declared rules. Regenerate with
 | a run reported no counts and you are reading that as nothing failed | [The wrapper caught a real crashed run, unstaged](#the-wrapper-caught-a-real-crashed-run-unstaged) |
 
 <!-- APPARATUS-INDEX:END -->
+
+113 rules indexed.
 
 112 rules indexed.
 
@@ -30104,3 +30107,38 @@ And `/wall/probe/identity` was passing an `IsoMark` as the identity cell's
 ornament while the page drew a plane, so **the view built to judge the corner
 reserve was not showing the mark that occupies it.** Fourth instance of a probe
 rendering something other than what it is a probe for.
+
+## A rule deriving variety from an axis the set does not vary along produces none
+
+**Shape:** sample-as-population
+**You are here if:** you are about to derive a per-member value from a property of the members, and have not looked at the spread of that property
+
+§9.2's four solids were all the same cube, and the obvious fix is to derive the
+archetype from something about the cell — beam for a wide one, cube for a square
+one. **That is a better rule than a written-down list, and it is vacuous here.**
+The four carrying cells measure **4.75, 6.27, 4.92 and 4.00 : 1**. Every one is
+"wide", so the rule yields one archetype for all four — the exact defect it was
+written to fix — and at exactly 4.00 it yields no verdict at all.
+
+So the assignment is a decision, written down: Pressing detail beam, Snippet
+plate, Market cube, Price history panel. **That is also the honest description
+of what it is**, where deriving it would have dressed a decision as a mechanism.
+
+**The check costs one measurement: compute the derivation input for every real
+member and look at the spread before writing the rule.** A derived rule needs
+its input to vary across the set at the granularity the output varies at, and
+nothing about the rule's form tells you whether it does.
+
+This is the third instance in one subsection, and §9.2 says so: the first gate
+permitted zero positions, the first clearance barred a solid 200px clear of its
+control, and this would have produced one silhouette from four. **All three were
+rules whose parameters made them vacuous while the predicate looked sound** —
+check the parameters before the predicate when a rule will not settle.
+
+### And the constant that was one member's instance
+
+`h / 1.06` looked like the projection and was the CUBE's aspect. Height is the
+governed term and width follows the archetype: 1.46 for a beam, 1.57 for a
+plate, 0.51 for a panel. A constant extracted from one member of a set that was
+about to gain variety is the same shape one level down — it was correct while
+the set had one member, and correctness there says nothing about the rule.

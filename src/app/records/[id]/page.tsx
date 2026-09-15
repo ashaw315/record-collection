@@ -372,6 +372,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
 
             <RecordJournal
               base={ladderBase}
+              tint={ladderTint}
               recordId={id}
               entries={record.journalEntries.map((entry) => ({
                 id: entry.id,

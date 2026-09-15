@@ -1,6 +1,6 @@
 import { LABEL } from './grid-type';
 import { Ornament } from './OrnamentMarks';
-import { mayOrnament } from './ornament';
+import { archetypeFor, mayOrnament, takesFill } from './ornament';
 import {
   CELL_PADDING,
   CONTENT_SPLITS,
@@ -175,7 +175,34 @@ export function Section({
               isolates, so this sits at the bottom of that stacking context and
               every piece of content is above it by being in flow.
             */}
-            {tint !== null && mayOrnament(name, index) && <Ornament tint={tint} />}
+            {/*
+              §9.4's full fill — once per region, in the last section's widest
+              cell, at the TINT step.
+
+              **Not a mark, so it displaces none**: the section's bar stays and
+              §9.4's count of four is unaffected. Base would be wrong twice — a
+              second mass at the record's colour, and §5.2's lightness
+              derivation depends on the year field being the only base mark
+              carrying type.
+
+              **Ground anchors by area where a mark anchors by contrast**, and
+              a tint plane at cell scale has forty times a bar's area, which is
+              why it can be the region's floor at a step the bars would be
+              invisible at.
+            */}
+            {tint !== null && takesFill(name, index) && (
+              <div
+                data-ornament="fill"
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0"
+                style={{ background: tint, zIndex: -1 }}
+              />
+            )}
+            {tint !== null &&
+              mayOrnament(name, index) &&
+              archetypeFor(name) !== null && (
+                <Ornament tint={tint} archetype={archetypeFor(name)!} />
+              )}
             {child}
           </div>
         ))}

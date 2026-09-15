@@ -56,8 +56,91 @@ export const CELL_SIZE_RATIO = 0.627;
 /** The gap between a section and its cell, from §9.2's 126.4 against 127. */
 export const SECTION_CELL_DELTA = 1.2;
 
-/** The projection, unchanged: a solid is 1.06 times as tall as it is wide. */
-export const SOLID_ASPECT = 1.06;
+/**
+ * **Width follows the ARCHETYPE, not a constant.**
+ *
+ * `h / 1.06` was never the rule — it was the cube's instance of it, and even
+ * that has been redrawn. Height stays the governed term at 0.62 of the section
+ * because height carries presence; width varies so a beam draws wide and
+ * shallow, a plate wide and flat, a panel narrow.
+ *
+ * Each ratio is width ÷ height, read off §9.2's four drawn solids:
+ * beam 115 × 79, plate 113 × 72, cube 66 × 76, panel 48 × 94.
+ */
+export const ARCHETYPE_ASPECT = {
+  beam: 115 / 79,
+  plate: 113 / 72,
+  cube: 66 / 76,
+  panel: 48 / 94,
+} as const;
+
+export type OrnamentArchetype = keyof typeof ARCHETYPE_ASPECT;
+
+/**
+ * **Fixed per section and written down, not derived.**
+ *
+ * Design's first version derived the archetype from the cell's proportion —
+ * beam for a wide cell, cube for a square one — which is a better rule and is
+ * vacuous here: the four carrying cells measure 4.75, 6.27, 4.92 and 4.00 : 1,
+ * so every one is "wide", the rule yields one archetype for all four, and at
+ * exactly 4.00 it yields no verdict at all.
+ *
+ * **A rule that derives variety from an axis the real set does not vary along
+ * produces none.** So the assignment is a decision, which is also the honest
+ * description of what it is.
+ *
+ * **Per section, never per record** — the same ruling §9.4 makes for the bars.
+ * A hashed or per-record archetype would make the region's ornament encode
+ * which record you are on, and the page already has something that does that
+ * deliberately: the construction in the frame. The frame's ornament is the
+ * record's; the region's is the page's, and an index whose decoration changes
+ * per entry asks to be read as data.
+ */
+const SECTION_ARCHETYPE: Partial<Record<string, OrnamentArchetype>> = {
+  'pressing-detail': 'beam',
+  snippet: 'plate',
+  market: 'cube',
+  'price-history': 'panel',
+};
+
+export function archetypeFor(section: string): OrnamentArchetype | null {
+  return SECTION_ARCHETYPE[section] ?? null;
+}
+
+/**
+ * §9.4 — **the full fill, admitted once per region, at the tint step.**
+ *
+ * **Tint rather than base, and base is wrong twice.** It would put a second
+ * mass at the record's colour, and §5.2's lightness derivation depends on the
+ * year field being the only base mark carrying type.
+ *
+ * **The objection that ground is too weak to anchor mistakes how the two
+ * anchor**: a mark anchors by CONTRAST, ground anchors by AREA, and a tint
+ * plane at cell scale has forty times a bar's area. That is why it can be the
+ * region's floor at a step the bars would be invisible at.
+ *
+ * **It is not a mark and does not displace one** — the section's bar stays,
+ * because a mark and its ground are different objects, so no count is affected.
+ *
+ * Last section, because §10.3 orders the region by density and a page thinning
+ * downward needs something to stop on; widest cell, because area is the
+ * mechanism.
+ */
+export const FILLED_SECTION = 'journal';
+export const FILLED_CELL = 0;
+
+/** Whether this cell takes §9.4's one full fill. */
+export function takesFill(section: string, cellIndex: number): boolean {
+  return section === FILLED_SECTION && cellIndex === FILLED_CELL;
+}
+
+/** The drawn sizes, for the tests that check the ratios against them. */
+export const DRAWN_SOLIDS = {
+  beam: { width: 115, height: 79 },
+  plate: { width: 113, height: 72 },
+  cube: { width: 66, height: 76 },
+  panel: { width: 48, height: 94 },
+} as const;
 
 /**
  * **Height is the primary term and width is derived from it.**
@@ -75,10 +158,13 @@ export const SOLID_ASPECT = 1.06;
  * other; the gate's ceiling is checked against the cell, which is the box that
  * clips the solid.
  */
-export function solidSize(sectionHeight: number): { width: number; height: number } {
+export function solidSize(
+  sectionHeight: number,
+  archetype: OrnamentArchetype,
+): { width: number; height: number } {
   const height = Math.round(sectionHeight * SIZE_RATIO);
 
-  return { height, width: Math.round(height / SOLID_ASPECT) };
+  return { height, width: Math.round(height * ARCHETYPE_ASPECT[archetype]) };
 }
 
 /**
@@ -136,7 +222,14 @@ export const CONTROL_CLEARANCE = 60;
 export function gatePasses(sectionHeight: number, cellHeight: number): boolean {
   if (cellHeight <= 0 || sectionHeight <= 0) return false;
 
-  const { height } = solidSize(sectionHeight);
+  /*
+    **Height only, so the archetype does not enter.** The gate asks how much of
+    the cell the solid occupies vertically, and height is the governed term for
+    every archetype — a beam and a panel at the same section height gate
+    identically. Passing an archetype here would suggest it could change the
+    answer.
+  */
+  const height = Math.round(sectionHeight * SIZE_RATIO);
 
   /* The solid sits against the bottom, so what is visible is what fits. */
   return Math.min(height, cellHeight) / cellHeight <= GATE_RATIO;
@@ -150,7 +243,7 @@ export function gatePasses(sectionHeight: number, cellHeight: number): boolean {
 export function visibleRatio(sectionHeight: number, cellHeight: number): number {
   if (cellHeight <= 0) return Number.POSITIVE_INFINITY;
 
-  const { height } = solidSize(sectionHeight);
+  const height = Math.round(sectionHeight * SIZE_RATIO);
 
   return Math.min(height, cellHeight) / cellHeight;
 }

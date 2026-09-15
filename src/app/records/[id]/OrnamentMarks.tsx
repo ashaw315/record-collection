@@ -1,5 +1,5 @@
 import { project } from './construction';
-import { CELL_SIZE_RATIO, SOLID_ASPECT } from './ornament';
+import { ARCHETYPE_ASPECT, CELL_SIZE_RATIO, type OrnamentArchetype } from './ornament';
 
 /**
  * §9.2's in-cell solid — half a column wide, against the cell's bottom-right
@@ -16,7 +16,33 @@ import { CELL_SIZE_RATIO, SOLID_ASPECT } from './ornament';
  * isolates, this sits at the bottom of that stacking context, and everything
  * else is above it by being in flow. See `Section`.
  */
-export function Ornament({ tint }: { tint: string }) {
+/**
+ * The three extents of each archetype, in the projection's own units.
+ *
+ * **Four silhouettes, one height rule.** All four solids were the same cube,
+ * which read as a repeated stamp rather than as one vocabulary — the frame's
+ * generator has six archetypes and §9 was using none of them.
+ *
+ * The proportions follow the generator's own `SHAPE`, except that the beam lies
+ * DOWN here where the frame stands it up: the frame's beam rises because a
+ * construction gets its presence from height in a tall cell, and §9.2 draws the
+ * region's beam wide and shallow at 115 × 79 in a cell eleven times wider than
+ * tall.
+ */
+const EXTENTS: Record<OrnamentArchetype, readonly [number, number, number]> = {
+  beam: [2.6, 0.9, 0.9],
+  plate: [2.4, 2.4, 0.3],
+  cube: [1.5, 1.5, 1.5],
+  panel: [0.45, 1.5, 2.2],
+};
+
+export function Ornament({
+  tint,
+  archetype,
+}: {
+  tint: string;
+  archetype: OrnamentArchetype;
+}) {
   /*
     The projection in the solid's own coordinate space. The viewBox scales to
     whatever height the container query resolves, so these numbers are a shape
@@ -29,13 +55,13 @@ export function Ornament({ tint }: { tint: string }) {
   const face = (points: ReadonlyArray<readonly [number, number]>) =>
     points.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
 
-  const [du, dv, dw] = [1.6, 1.6, 1.15];
+  const [du, dv, dw] = EXTENTS[archetype];
 
   return (
     <svg
       data-ornament="solid"
       aria-hidden="true"
-      viewBox="0 0 100 106"
+      viewBox="0 0 100 100"
       preserveAspectRatio="xMidYMid meet"
       className="pointer-events-none absolute"
       style={{
@@ -62,7 +88,8 @@ export function Ornament({ tint }: { tint: string }) {
           already resolves against.
         */
         height: `${CELL_SIZE_RATIO * 100}%`,
-        aspectRatio: `1 / ${SOLID_ASPECT}`,
+        /* Width follows the archetype; height stays the governed term. */
+        aspectRatio: `${ARCHETYPE_ASPECT[archetype]} / 1`,
 
         /* Against the bottom-right corner, bleeding past it. */
         right: '-3%',
