@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 109 declared rules. Regenerate with
+Generated from 111 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -39,6 +39,7 @@ Generated from 109 declared rules. Regenerate with
 | a test you did not touch fails after a design change, and you are about to fix the code | [A test can fail because its ruling was superseded, and the message looks identical](#a-test-can-fail-because-its-ruling-was-superseded-and-the-message-looks-identical) |
 | a long-settled constant has never been wrong, and you cannot say what would have told you | [A value that survived every review because nothing could test it](#a-value-that-survived-every-review-because-nothing-could-test-it) |
 | a verification was requested and the thing it needs was never recorded | [A37 VERIFIED in real use — and the measurement I asked for cannot be taken](#a37-verified-in-real-use-and-the-measurement-i-asked-for-cannot-be-taken) |
+| a rule has been loosened twice and still excludes cases it should permit | [Check the parameters before the predicate when a rule will not settle](#check-the-parameters-before-the-predicate-when-a-rule-will-not-settle) |
 | an average across a dataset is being quoted and the set has kinds in it | [RULE: any measurement of Discogs metadata quality must be PER-GENRE. An](#rule-any-measurement-of-discogs-metadata-quality-must-be-per-genre-an) |
 | a comment or summary describes work more rigorously than the work | [RULE: prose is more rigorous than the work it describes, and it is always](#rule-prose-is-more-rigorous-than-the-work-it-describes-and-it-is-always) |
 | a number stands in for a capability and you counted the proxy | [RULE: when a measurement stands in for a capability, count the capability,](#rule-when-a-measurement-stands-in-for-a-capability-count-the-capability) |
@@ -114,6 +115,7 @@ Generated from 109 declared rules. Regenerate with
 | an error path renders and you have not checked what it exposes | [A 403 on a JS chunk became a credential disclosure](#a-403-on-a-js-chunk-became-a-credential-disclosure) |
 | an output names a thing and you have not checked the thing exists | [A FABRICATED IDENTIFIER IS A DIFFERENT FAILURE CLASS FROM AN UNCERTAIN CLAIM](#a-fabricated-identifier-is-a-different-failure-class-from-an-uncertain-claim) |
 | a mutation failed nothing and you are reading that as dead code | [A mutation that fails nothing does not mean the code is dead. Three](#a-mutation-that-fails-nothing-does-not-mean-the-code-is-dead-three) |
+| you built a view to judge something and the view has its own layout rules | [A view that normalises away the signal it was made to show — third instance](#a-view-that-normalises-away-the-signal-it-was-made-to-show-third-instance) |
 | a rule passes and you have not checked that it had anything to govern | [An observer that can be satisfied without its subject ever existing](#an-observer-that-can-be-satisfied-without-its-subject-ever-existing) |
 | a comment calls a generalised thing a special case | [RULE: a class can be SOLVED and not RECOGNISED, and the giveaway is a](#rule-a-class-can-be-solved-and-not-recognised-and-the-giveaway-is-a) |
 | a defect is real and you cannot write an assertion that fails on it | [RULE: some defects cannot be expressed as a failing assertion, and the](#rule-some-defects-cannot-be-expressed-as-a-failing-assertion-and-the) |
@@ -167,6 +169,8 @@ Generated from 109 declared rules. Regenerate with
 | a run reported no counts and you are reading that as nothing failed | [The wrapper caught a real crashed run, unstaged](#the-wrapper-caught-a-real-crashed-run-unstaged) |
 
 <!-- APPARATUS-INDEX:END -->
+
+111 rules indexed.
 
 109 rules indexed.
 
@@ -29991,3 +29995,58 @@ half of the question was fine. But the component rendered them at
 larger than the frame's marks. The constant was right and the box around it was
 not, which is why "is it derived or constant?" did not reach it: both answers
 were about the same variable, and the defect was in its use.
+
+## A view that normalises away the signal it was made to show — third instance
+
+**Shape:** observer-without-subject
+**You are here if:** you built a view to judge something and the view has its own layout rules
+
+Design's comparison drawing for §9.2 put three panes side by side at 39.8%
+width, which clipped 47.8% of each pane — and every solid sits at `right: 34px`,
+so **the hidden half was the half the ornament lives in**. The same drawing
+showed the sections at 5.7 : 1 rather than 11 : 1, so a view built to judge
+ornament presence in a wide band was not showing a wide band.
+
+Third recorded instance, after the fitted viewBox and the averaged mean. The
+shape each time: **the view applied a transformation that was reasonable for a
+view and destructive for the measurement** — fitting, averaging, and here
+side-by-side clipping plus an aspect change.
+
+**The tell is that the transformation is about the view's own constraints** —
+fitting three things on a page, making a long band legible — rather than about
+the subject. A view whose layout is chosen for the viewer is not neutral about
+what it shows.
+
+## Check the parameters before the predicate when a rule will not settle
+
+**Shape:** measurement-not-governing
+**You are here if:** a rule has been loosened twice and still excludes cases it should permit
+
+§9.2 took four rounds. Three of them relaxed the gate and the clearance — first
+"the whole box against 1.5×" to "visible height against two-thirds", then "never
+in the same cell as a control" to "half a column of distance". Both corrections
+were right and neither fixed the problem, because **the term that was wrong was
+the size**.
+
+At a fixed 120px the solid is 127px tall, and no combination of gate and
+clearance leaves more than one legal cell. The predicate kept getting blamed for
+a vacuity the parameter caused.
+
+**The tell is a rule that keeps needing loosening and keeps not converging.**
+Four rounds amounting to relaxing two constraints that were both correct against
+a size that was not.
+
+The fix changed the term rather than the values: the size is now relative —
+0.62 of the section's height, width derived from it — and the earlier rule's
+unit was the real error. Half a column is a WIDTH, and in cells eleven times
+wider than tall the dimension carrying presence is height. That is the
+granularity shape one level out: **the rule named a width and its reason was
+about presence.**
+
+### And the gate stopped discriminating, which is worth stating in the test
+
+Under a height-relative size the gate binds at a single value by construction:
+visible height is 0.62 of the section by definition. It cannot fire. Kept as a
+guard against a future size change, and **the test says so** rather than
+claiming it filters — at the withdrawn fixed size the four cells measured 0.40,
+0.39, 0.43 and 0.32, so it could never have fired then either.

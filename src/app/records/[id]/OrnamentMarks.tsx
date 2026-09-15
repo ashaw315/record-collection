@@ -1,5 +1,5 @@
 import { project } from './construction';
-import { SOLID_HEIGHT, SOLID_WIDTH } from './ornament';
+import { CELL_SIZE_RATIO, SOLID_ASPECT } from './ornament';
 
 /**
  * §9.2's in-cell solid — half a column wide, against the cell's bottom-right
@@ -17,9 +17,14 @@ import { SOLID_HEIGHT, SOLID_WIDTH } from './ornament';
  * else is above it by being in flow. See `Section`.
  */
 export function Ornament({ tint }: { tint: string }) {
+  /*
+    The projection in the solid's own coordinate space. The viewBox scales to
+    whatever height the container query resolves, so these numbers are a shape
+    rather than a size — nothing here is measured in pixels.
+  */
   const p = (u: number, v: number, w: number) => {
     const [x, y] = project(u, v, w);
-    return [x * 8.5 + SOLID_WIDTH / 2, y * 8.5 + 20] as const;
+    return [x * 14 + 50, y * 14 + 33] as const;
   };
   const face = (points: ReadonlyArray<readonly [number, number]>) =>
     points.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
@@ -30,23 +35,38 @@ export function Ornament({ tint }: { tint: string }) {
     <svg
       data-ornament="solid"
       aria-hidden="true"
-      viewBox={`0 0 ${SOLID_WIDTH} ${SOLID_HEIGHT}`}
+      viewBox="0 0 100 106"
+      preserveAspectRatio="xMidYMid meet"
       className="pointer-events-none absolute"
       style={{
         /*
-          Against the bottom-right corner and bleeding past it. The bleed is
-          deliberate and is why §9.2's gate measures the VISIBLE height: a
-          clearance on the whole box could never be satisfied.
+          **Height is the primary term; width follows by the projection.**
+
+          **A percentage of the cell, because that is what a percentage height
+          resolves against.** §9.2 sizes the solid at 0.62 of the SECTION — the
+          height a build has before the cells lay out — and states that the same
+          solid is 0.627 of its CELL, which is about 1.2px shorter. Both numbers
+          are §9.2's and neither contradicts the other; this authors the cell
+          one because that is the box in hand, and `CELL_SIZE_RATIO` records
+          which rule it came from.
+
+          `aspect-ratio` gives the width FROM that height, so the value is never
+          round-tripped: the defect §9.2 names is computing height, deriving
+          width, then re-deriving height from the width, which inflates every
+          solid by a pixel and draws 0.63 where the rule says 0.62.
+
+          **Not `container-type: size`**, which was tried and collapses the
+          layout: size containment removes a cell's contents from its own height
+          calculation, so a section that should be 140px rendered at 69 and the
+          solid at 0×0. The container the ratio needs is the one the percentage
+          already resolves against.
         */
-        right: -SOLID_WIDTH / 3,
-        bottom: -SOLID_HEIGHT / 3,
-        /*
-          **60 × 64, the drawn size.** This rendered at `SOLID_WIDTH * 2` —
-          a 120 × 128 box, double the spec, which read as much larger than the
-          frame's marks. The constant was right and the box around it was not.
-        */
-        width: SOLID_WIDTH,
-        height: SOLID_HEIGHT,
+        height: `${CELL_SIZE_RATIO * 100}%`,
+        aspectRatio: `1 / ${SOLID_ASPECT}`,
+
+        /* Against the bottom-right corner, bleeding past it. */
+        right: '-3%',
+        bottom: '-8%',
         zIndex: -1,
       }}
     >

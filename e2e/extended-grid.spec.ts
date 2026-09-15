@@ -4,7 +4,7 @@ import { seedImage } from './seed';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
 import { MAX_GRID_WIDTH } from '../src/app/records/[id]/band-geometry';
-import { SOLID_HEIGHT, SOLID_WIDTH } from '../src/app/records/[id]/ornament';
+import { SIZE_RATIO, SOLID_ASPECT } from '../src/app/records/[id]/ornament';
 import {
   CELL_PADDING,
   CONTROL_HEIGHT,
@@ -773,16 +773,18 @@ test('the region caps with the frame, so the page is one grid', async ({ page })
   }
 });
 
-test('a solid is 60 x 64 at every viewport', async ({ page }) => {
+test('a solid is 0.62 of its section, and not a fixed size', async ({ page }) => {
   /**
-   * §9.2 sizes the solid by width because width is the one dimension the region
-   * inherited as fixed — but "half a column" is 60px at the reference width and
-   * a constant thereafter, not half of whatever a column happens to be. At 3440
-   * an uncapped column is 287px, and a solid tracking it would be four times
-   * the drawn size.
+   * **The size term is relative now, so the assertion is a ratio.**
    *
-   * Measured at four widths rather than one, because a derived size is
-   * indistinguishable from a constant at the width it was derived for.
+   * The withdrawn rule was half a column — a WIDTH — and in cells eleven times
+   * wider than tall the dimension carrying presence is height. A fixed-size
+   * assertion would pass on the old rule and fail on this one, which is the
+   * point: the four solids differ because their sections do.
+   *
+   * Measured at four viewports because the size must track the SECTION, not the
+   * window: above the 1728 cap the composition stops growing, so a solid keyed
+   * to the viewport would keep growing and one keyed to its section would not.
    */
   const suffix = makeSuffix();
   const id = await richRecord(page, suffix);
@@ -792,17 +794,64 @@ test('a solid is 60 x 64 at every viewport', async ({ page }) => {
     await page.goto(`/records/${id}`);
     await page.locator('[data-ornament="solid"]').first().waitFor({ timeout: 20_000 });
 
-    const boxes = await page.evaluate(() =>
+    const solids = await page.evaluate(() =>
       Array.from(document.querySelectorAll('[data-ornament="solid"]')).map((solid) => {
+        const section = solid.closest('[data-section]')!;
         const box = solid.getBoundingClientRect();
-        return { w: Math.round(box.width), h: Math.round(box.height) };
+        return {
+          name: section.getAttribute('data-section'),
+          sectionHeight: section.getBoundingClientRect().height,
+          height: box.height,
+          width: box.width,
+        };
       }),
     );
 
-    expect(boxes.length, `solids at ${width}`).toBeGreaterThan(0);
-    for (const box of boxes) {
-      expect(box.w, `solid width at ${width}`).toBe(SOLID_WIDTH);
-      expect(box.h, `solid height at ${width}`).toBe(SOLID_HEIGHT);
+    expect(solids.length, `solids at ${width}`).toBeGreaterThan(0);
+
+    for (const solid of solids) {
+      expect(
+        solid.height / solid.sectionHeight,
+        `${solid.name} at ${width}: ${Math.round(solid.height)}px in a ${Math.round(solid.sectionHeight)}px section`,
+      ).toBeCloseTo(SIZE_RATIO, 2);
+
+      /* Width follows from height by the projection, never the other way. */
+      expect(solid.height / solid.width, `${solid.name} aspect at ${width}`).toBeCloseTo(
+        SOLID_ASPECT,
+        1,
+      );
     }
+  }
+});
+
+test('solids differ from each other, because their sections do', async ({ page }) => {
+  /*
+    **The check a fixed size would fail.** Under the withdrawn rule every solid
+    was identical; under this one they are 79, 72, 76 and 94 on the four drawn
+    cells. Asserted as "not all the same" rather than as four numbers, because
+    the heights depend on the record and the RELATIONSHIP is the rule.
+  */
+  const suffix = makeSuffix();
+  const id = await richRecord(page, suffix);
+  await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
+  await page.goto(`/records/${id}`);
+  await page.locator('[data-ornament="solid"]').first().waitFor({ timeout: 20_000 });
+
+  const heights = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('[data-ornament="solid"]')).map((solid) => ({
+      name: solid.closest('[data-section]')!.getAttribute('data-section'),
+      section: Math.round(solid.closest('[data-section]')!.getBoundingClientRect().height),
+      solid: Math.round(solid.getBoundingClientRect().height),
+    })),
+  );
+
+  expect(heights.length, 'more than one solid to compare').toBeGreaterThan(1);
+
+  const sectionsDiffer = new Set(heights.map((row) => row.section)).size > 1;
+  if (sectionsDiffer) {
+    expect(
+      new Set(heights.map((row) => row.solid)).size,
+      `sections differ so solids must: ${JSON.stringify(heights)}`,
+    ).toBeGreaterThan(1);
   }
 });
