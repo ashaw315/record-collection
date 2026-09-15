@@ -34,6 +34,7 @@ import { SnippetPanel } from './SnippetPanel';
 const BASE = {
   recordId: '11111111-1111-4111-8111-111111111111',
     base: null,
+    tint: null,
   snippetEditedAt: null,
 };
 
@@ -149,6 +150,7 @@ describe('the heading uses the shared label treatment', () => {
         snippetEditedAt={null}
         configured
         base={null}
+        tint={null}
       />,
     );
 

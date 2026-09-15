@@ -41,9 +41,12 @@ export function PriceHistory({
    */
   hasMarketPanel = false,
   base,
+  tint,
 }: {
-  /** §5.5's base step, for §9.3's rail bar. */
+  /** §5.5's base step, for §9.4's label-span bar. */
   base: string | null;
+  /** §5.5's tint step, for §9.2's ornament. */
+  tint: string | null;
   observations: PriceObservation[];
   hasMarketPanel?: boolean;
 }) {
@@ -61,7 +64,7 @@ export function PriceHistory({
   const range = priceRange(paid);
 
   return (
-    <Section name="price-history" title="Price history" base={base} shape="pair">
+    <Section name="price-history" title="Price history" base={base} shape="pair" tint={tint}>
       <div data-testid="price-history">
 
       {/*

@@ -565,3 +565,153 @@ test('renders exactly one cell per span in its split', async ({ page }) => {
     expect(section.empty, `${section.name} renders no empty cell`).toBe(0);
   }
 });
+
+test('ornament sits behind everything, structurally rather than per element', async ({ page }) => {
+  /**
+   * §9.2's layer, which is the part most easily built wrong.
+   *
+   * **Every §9 cell isolates and the ornament sits at `z-index: -1` inside
+   * it.** Nothing else carries a z-index: controls, ruled fields, chips,
+   * uploaders, textareas and type runs are above ornament because they are IN
+   * FLOW, not because each was named. Design's first implementation lifted
+   * eleven elements by matching control heights and missed the textarea, the
+   * uploader and the three tag chips — a list of things to raise is a list
+   * someone has to keep complete.
+   *
+   * So this asserts the mechanism AND its absence: the cells isolate, and no
+   * content element in the region carries a stacking value of its own.
+   */
+  const suffix = makeSuffix();
+  const id = await richRecord(page, suffix);
+  await page.goto(`/records/${id}`);
+  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+
+  const layer = await page.evaluate(() => {
+    const cells = Array.from(document.querySelectorAll('[data-section] [data-cell]'));
+    const wrong = cells
+      .map((cell) => {
+        const style = getComputedStyle(cell);
+        return {
+          cell: cell.getAttribute('data-cell'),
+          position: style.position,
+          isolation: style.isolation,
+          overflow: style.overflow,
+        };
+      })
+      .filter(
+        (row) =>
+          row.position !== 'relative' || row.isolation !== 'isolate' || row.overflow !== 'hidden',
+      );
+
+    /* Anything inside a cell that lifts itself — the defect this replaces. */
+    const lifted: string[] = [];
+    for (const cell of cells) {
+      for (const node of Array.from(cell.querySelectorAll('*'))) {
+        if (node.getAttribute('data-ornament') !== null) continue;
+        const z = getComputedStyle(node).zIndex;
+        if (z !== 'auto' && z !== '0') lifted.push(`${node.tagName} z-index:${z}`);
+      }
+    }
+    return { cells: cells.length, wrong, lifted };
+  });
+
+  expect(layer.cells, 'cells rendered').toBeGreaterThan(0);
+  expect(
+    layer.wrong,
+    `cells missing the structural layer:\n${JSON.stringify(layer.wrong, null, 2)}`,
+  ).toEqual([]);
+  expect(
+    layer.lifted,
+    `elements lifting themselves instead of relying on flow:\n${layer.lifted.join('\n')}`,
+  ).toEqual([]);
+});
+
+test('no ornament covers a control or a ruled field', async ({ page }) => {
+  /**
+   * §9.2's clearance, checked on the rendering rather than on the placement
+   * rule: no solid may intersect a control's box or come within half a column.
+   *
+   * **Measured as overlap in both directions**, because the failure mode is a
+   * solid painting over an underline — which is what the first version of the
+   * drawing did to 120px of the Date field. A test asserting only "ornament is
+   * behind" would pass on a solid sitting exactly on top of a field at a lower
+   * layer, and the reader still cannot see the underline.
+   */
+  const suffix = makeSuffix();
+  const id = await richRecord(page, suffix);
+  await page.goto(`/records/${id}`);
+  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+
+  const collisions = await page.evaluate(() => {
+    const CLEARANCE = 60;
+    const out: string[] = [];
+    const solids = Array.from(document.querySelectorAll('[data-ornament="solid"]'));
+    const controls = Array.from(
+      document.querySelectorAll('[data-section] button, [data-section] input, [data-section] select, [data-section] textarea, [data-section] a'),
+    );
+
+    for (const solid of solids) {
+      const s = solid.getBoundingClientRect();
+      for (const control of controls) {
+        const c = control.getBoundingClientRect();
+        if (c.width === 0 || c.height === 0) continue;
+
+        const gapX = Math.max(c.left - s.right, s.left - c.right);
+        const gapY = Math.max(c.top - s.bottom, s.top - c.bottom);
+        const clear = Math.max(gapX, gapY);
+
+        if (clear < CLEARANCE) {
+          out.push(
+            `${control.tagName} is ${Math.round(clear)}px from a solid (needs ${CLEARANCE})`,
+          );
+        }
+      }
+    }
+    return out;
+  });
+
+  expect(collisions, `ornament too close to a control:\n${collisions.join('\n')}`).toEqual([]);
+
+  /*
+    **And the check was not vacuous.** A clearance test passes trivially when no
+    solid renders at all, which is the state this whole subsection is one
+    mistake away from — the first gate permitted zero positions while the
+    drawing showed two.
+  */
+  const solids = await page.locator('[data-ornament="solid"]').count();
+  expect(solids, 'solids actually rendered, so the clearance was tested').toBeGreaterThan(0);
+});
+
+test('draws a solid only where the gate passes, and only in type-only cells', async ({ page }) => {
+  const suffix = makeSuffix();
+  const id = await richRecord(page, suffix);
+  await page.goto(`/records/${id}`);
+  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+
+  const placed = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('[data-section]')).map((section) => ({
+      name: section.getAttribute('data-section'),
+      solids: section.querySelectorAll('[data-ornament="solid"]').length,
+    })),
+  );
+
+  const carrying = placed.filter((row) => row.solids > 0).map((row) => row.name);
+
+  /*
+    The positive half first: the type-only cells DO carry one. Without this the
+    exclusions below are satisfied by a page with no ornament anywhere.
+  */
+  expect(carrying, 'the type-only cells carry solids').toContain('pressing-detail');
+  expect(carrying).toContain('snippet');
+  expect(carrying).toContain('price-history');
+
+  /* Acquisition, Images, Journal and Tags are excluded by their controls. */
+  for (const excluded of ['acquisition', 'images', 'journal', 'tags']) {
+    expect(carrying, `${excluded} holds a control and carries none`).not.toContain(excluded);
+  }
+
+  /* And one per section, never two. */
+  for (const row of placed) {
+    expect(row.solids, `${row.name} carries at most one solid`).toBeLessThanOrEqual(1);
+  }
+});

@@ -15,6 +15,7 @@ import { recordLadder } from '@/lib/colour/record-ladder';
 import { MAX_GRID_WIDTH } from './band-geometry';
 import { LABEL } from './grid-type';
 import { Section } from './Section';
+import { EdgeFields } from './OrnamentMarks';
 import { marketFigures } from './market-median';
 import { listPricesForRecord } from '@/lib/db/queries/prices';
 import { hydrateRecord } from '@/lib/db/queries/records';
@@ -82,6 +83,12 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
   */
   const ladderBase = recordLadder(record.spineColour)?.base ?? null;
 
+  /*
+    §9.2's ornament is the TINT step throughout — ground, not the record's
+    colour arriving. The four base-step bars are unaffected.
+  */
+  const ladderTint = recordLadder(record.spineColour)?.tint ?? null;
+
   return (
     <>
       <AppHeader />
@@ -101,7 +108,12 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
       */}
       <main className="w-full">
         <div>
-          <div className="min-w-0">
+          {/*
+            `relative` so §9.2's edge fields have the REGION to attach to. They
+            bleed off the composition's bottom edge, which is the one height
+            below the fold that is known.
+          */}
+          <div className="relative min-w-0">
             {/*
               **8a, on the route rather than on a probe.**
 
@@ -205,7 +217,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
               still need a reading width. The split lives inside it while the
               conversion is partway done.
             */}
-            <RecordDetail record={record} base={ladderBase} />
+            <RecordDetail record={record} base={ladderBase} tint={ladderTint} />
 
             {/*
               **No measure wrapper: §9.1 replaced it.** The rail is what holds
@@ -272,6 +284,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
               snippetEditedAt={record.snippetEditedAt}
               configured={isAnthropicConfigured()}
               base={ladderBase}
+              tint={ladderTint}
             />
 
             {/*
@@ -301,7 +314,13 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
               section's label span instead of drawing a second one.
             */}
             {record.pressing?.discogsReleaseId != null && (
-              <Section name="market" title="What it goes for now" base={ladderBase} shape="pair">
+              <Section
+                name="market"
+                title="What it goes for now"
+                base={ladderBase}
+                shape="pair"
+                tint={ladderTint}
+              >
                 <MarketPanel
                   discogsReleaseId={record.pressing?.discogsReleaseId ?? null}
                   label="What it goes for now"
@@ -314,6 +333,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
 
             <PriceHistory
               base={ladderBase}
+              tint={ladderTint}
               // The same id the panel above is built from, so the empty state
               // cannot point at a control that did not render.
               hasMarketPanel={record.pressing?.discogsReleaseId != null}
@@ -342,6 +362,17 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
                 note: entry.note,
               }))}
             />
+
+            {/*
+              §9.2's flat edge fields. **They attach to the REGION rather than
+              to a cell**, and bleed off the composition's bottom edge — the one
+              place below the fold where a height is known, because it is the
+              region's own end.
+
+              §5.1's frame rule re-derived: a mark touching a page edge is a
+              flat plane, a mark not touching it is an isometric solid.
+            */}
+            {ladderTint !== null && <EdgeFields tint={ladderTint} />}
           </div>
         </div>
       </main>

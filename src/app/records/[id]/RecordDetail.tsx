@@ -52,8 +52,11 @@ function Field({
 export function RecordDetail({
   record,
   base,
+  tint,
 }: {
   record: HydratedRecord;
+  /** §5.5's tint step, for §9.2's ornament. */
+  tint: string | null;
   /** §5.5's base step, for §9.3's rail bar. Null when the record has no cover. */
   base: string | null;
 }) {
@@ -127,7 +130,7 @@ export function RecordDetail({
         appears here automatically unless the grid claims it.
       */}
       {remainingFacts.length > 0 && (
-        <Section name="pressing-detail" title="Pressing detail" base={base} shape="pair">
+        <Section name="pressing-detail" title="Pressing detail" base={base} shape="pair" tint={tint}>
           {/*
             **The pairs divide ACROSS the split, not inside one cell.** §9.1's
             5+5 is "two comparable things — pressing pairs", and a single list

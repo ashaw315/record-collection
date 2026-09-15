@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 105 declared rules. Regenerate with
+Generated from 108 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -43,6 +43,7 @@ Generated from 105 declared rules. Regenerate with
 | a number stands in for a capability and you counted the proxy | [RULE: when a measurement stands in for a capability, count the capability,](#rule-when-a-measurement-stands-in-for-a-capability-count-the-capability) |
 | a number surprised you and you have not checked what else was running | [THE APPARATUS GENERATING THE SIGNAL — now a mechanism, not a habit](#the-apparatus-generating-the-signal-now-a-mechanism-not-a-habit) |
 | a feature computes something correct and you cannot say what a user does with it | [THE WALK DOES NOTHING FOR A PERSON, and the four artists most likely to converge are People](#the-walk-does-nothing-for-a-person-and-the-four-artists-most-likely-to-converge-are-people) |
+| a rule enumerates cases and you cannot tell whether it constrains anything | [Three shapes that force a decision are structural; three that describe are not](#three-shapes-that-force-a-decision-are-structural-three-that-describe-are-not) |
 | a metric is easy to compute and you have not checked it tracks what you care about | [Wall colour: measured, and the naive metric says the wrong thing](#wall-colour-measured-and-the-naive-metric-says-the-wrong-thing) |
 
 ### Checks that cannot fail
@@ -61,6 +62,7 @@ Generated from 105 declared rules. Regenerate with
 | a test passes and its fixture may not have created the condition | [A test fixture can fail to create the condition its test claims — and](#a-test-fixture-can-fail-to-create-the-condition-its-test-claims-and) |
 | a test computes a real number from real data and you cannot say which value it would reject | [A TEST THAT MEASURES A SET CONSTRAINS NO MEMBER OF IT](#a-test-that-measures-a-set-constrains-no-member-of-it) |
 | a test measures something real, but not the thing its name promises | [An assertion aimed at a proxy for the thing it names — third instance](#an-assertion-aimed-at-a-proxy-for-the-thing-it-names-third-instance) |
+| a control is enabled, visible, motionless, inside the viewport — and does not respond | [An empty cell is a click target, and it is invisible in a screenshot](#an-empty-cell-is-a-click-target-and-it-is-invisible-in-a-screenshot) |
 | a property regressed three times and every pure function covering it still passes | [AN INLINE COMPUTATION IS INVISIBLE TO EVERY LAYER OF THE SUITE BY CONSTRUCTION](#an-inline-computation-is-invisible-to-every-layer-of-the-suite-by-construction) |
 | you asserted something about a function's signature in order to claim something about what it does | [Arity is a real property that looks like a reasonable proxy for behaviour](#arity-is-a-real-property-that-looks-like-a-reasonable-proxy-for-behaviour) |
 | a gate checks that a value exists or looks right, and you have not checked it works | [Presence is not shape, and shape is not EFFECT — a standing check, after the fourth instance](#presence-is-not-shape-and-shape-is-not-effect-a-standing-check-after-the-fourth-instance) |
@@ -124,6 +126,7 @@ Generated from 105 declared rules. Regenerate with
 | a failure has a number attached and you have not run it more than once | [427 MEASURED over three runs rather than assumed — and it is NOT a rate](#427-measured-over-three-runs-rather-than-assumed-and-it-is-not-a-rate) |
 | a written measurement is being carried forward and you have not re-read the source | [A note that implied a difference, and a payload that did not](#a-note-that-implied-a-difference-and-a-payload-that-did-not) |
 | a search came back empty and you are about to conclude the thing does not exist | [A search whose scope cannot contain the answer](#a-search-whose-scope-cannot-contain-the-answer) |
+| a placement rule was written against the cases in front of you and you have not counted how many positions it actually permits | [Half a column, because a rule permitting one position is not a rule](#half-a-column-because-a-rule-permitting-one-position-is-not-a-rule) |
 | a failure resembles an earlier one and you are applying the same diagnosis | [RULE: "same family" is a hypothesis, not a diagnosis. Measure which](#rule-same-family-is-a-hypothesis-not-a-diagnosis-measure-which) |
 | two options were compared and the more interesting one won | [RULE: a comparison with an uncontrolled variable, and the wrong answer being more interesting](#rule-a-comparison-with-an-uncontrolled-variable-and-the-wrong-answer-being-more-interesting) |
 | a correction has been written on top of an earlier measurement | [RULE: a correction can over-correct, and the summary written on top of a](#rule-a-correction-can-over-correct-and-the-summary-written-on-top-of-a) |
@@ -163,6 +166,8 @@ Generated from 105 declared rules. Regenerate with
 | a run reported no counts and you are reading that as nothing failed | [The wrapper caught a real crashed run, unstaged](#the-wrapper-caught-a-real-crashed-run-unstaged) |
 
 <!-- APPARATUS-INDEX:END -->
+
+108 rules indexed.
 
 105 rules indexed.
 
@@ -29853,3 +29858,82 @@ so the control the defect covered was not on the page at all. Fourth instance
 this cycle of a fixture that cannot contain the defect it is written for; the
 fix each time is to construct the state explicitly rather than hope a general
 fixture happens to include it.
+
+## An empty cell is a click target, and it is invisible in a screenshot
+
+**Shape:** check-cannot-fail
+**You are here if:** a control is enabled, visible, motionless, inside the viewport — and does not respond
+
+§9.1's `Section` rendered one cell per SPAN. A `pair` section passing a single
+child therefore got a second cell containing nothing: a real box, taking its
+five columns, sitting beside the content. Five of the eight sections were in
+that state.
+
+**Nothing about it is visible.** It has no background, no border, no text — a
+screenshot of the page is correct. What it does is take the clicks landing in
+its half of the section, and the symptom is a Playwright timeout on an element
+that passes every check the runner reports: `visible, enabled and stable` all
+succeed, and the click still goes nowhere.
+
+The fix is that a section renders one cell per CHILD and collapses unused spans
+into the last one with content. The split still governs where the internal edge
+falls when a section supplies both halves; it no longer invents a box when it
+does not.
+
+**The general form: a layout primitive that generates containers from a
+declaration will generate empty ones, and an empty container is not nothing.**
+The declaration says how the space divides, not how many things there are.
+
+## Half a column, because a rule permitting one position is not a rule
+
+**Shape:** sample-as-population
+**You are here if:** a placement rule was written against the cases in front of you and you have not counted how many positions it actually permits
+
+§9.2 sizes an in-cell solid at half a column rather than a full one, and the
+argument is a count. At 120px a solid is 127px tall; once the two-thirds gate
+and the control clearance are both applied, **exactly one cell in the region can
+legally hold one**. At 60px the solid is 64px and four can.
+
+A rule permitting one position is indistinguishable from naming that position,
+which is the enumeration defect wearing a formula. The tell is available without
+building anything: apply the rule to every member and count the survivors. One
+survivor means the rule is a list.
+
+The same subsection records the inverse, and it shipped first: an earlier gate
+measured the solid's WHOLE box against 1.5× the cell, which no one-column solid
+can satisfy — a 127px box needs a 190px cell and the tallest non-control cell is
+175px. That rule permitted **zero** positions while the drawing showed two, and
+it read as perfectly reasonable.
+
+### The gate's boolean cannot see what its name claims
+
+Smaller, same unit. `gatePasses` measures the VISIBLE height — `min(64, h)/h` —
+because the solid bleeds past the cell's bottom. I wrote a test named "measures
+the VISIBLE part, not the whole box"; staged against a gate using the total
+height, **all thirteen tests passed**, including that one.
+
+The two formulations differ only where `h < 64`, and there both reject, because
+`64/h > 1 > 2/3`. So no test of the boolean can distinguish them — the
+distinction is real but lives in `visibleRatio`, which clamps at 1 rather than
+reporting 1.6. Assert a property where it is observable, not where its name
+suggests it should be.
+
+## Three shapes that force a decision are structural; three that describe are not
+
+**Shape:** measurement-not-governing
+**You are here if:** a rule enumerates cases and you cannot tell whether it constrains anything
+
+§9.1 gives the ten columns right of the label exactly three divisions. The
+evidence that this is a real rule rather than a description of what was drawn:
+**five sections were passing one child and leaving an empty cell**, so declaring
+`pair` or `body` forced a decision about what the two cells actually hold.
+
+Each was decided by the shape without argument — pressing pairs divide across
+the split, price history is series and rows, snippet and journal are a body with
+an action beside it. **A rule that makes you decide something, and then decides
+it for you, is doing work.** One that accepts whatever you already had is
+describing.
+
+The ruling states the guard itself: a section needing a fourth split is a
+section whose content has not been identified yet. Built as a union so a fourth
+does not compile, with the COUNT asserted rather than the membership.

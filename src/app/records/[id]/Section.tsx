@@ -1,4 +1,6 @@
 import { LABEL } from './grid-type';
+import { Ornament } from './OrnamentMarks';
+import { mayOrnament } from './ornament';
 import {
   CELL_PADDING,
   CONTENT_SPLITS,
@@ -25,12 +27,38 @@ import {
  * tall as its tallest cell, a section as tall as its row, the region as tall as
  * its sections — a form that grows pushes everything below it down.
  */
+/**
+ * **The stacking layer, which is structural rather than per-element.**
+ *
+ * Every §9 cell gets these three together, and ornament sits at `z-index: -1`
+ * inside it. Nothing else in the region carries a z-index at all: controls,
+ * ruled fields, chips, uploaders, textareas and type runs are above ornament
+ * because they are IN FLOW, not because each was named.
+ *
+ * The first implementation of this lifted eleven elements by matching control
+ * heights and missed the textarea, the uploader and the three tag chips — a
+ * list of things to raise is a list someone has to keep complete, and the frame
+ * failed the same way first, as three patches. All eleven came out when it went
+ * structural. **Do not add per-element z-index.**
+ *
+ * - `position: relative` gives the ornament something to position against.
+ * - `isolation: isolate` makes the cell a stacking context, so `-1` cannot
+ *   escape behind the section's own background or the page's.
+ * - `overflow: hidden` keeps the bleed inside the cell that owns it.
+ */
+const CELL_LAYER = {
+  position: 'relative',
+  isolation: 'isolate',
+  overflow: 'hidden',
+} as const;
+
 export function Section({
   name,
   title,
   base,
   shape,
   children,
+  tint = null,
 }: {
   name: SectionName;
   title: string;
@@ -43,6 +71,8 @@ export function Section({
   shape: ContentShape;
   /** One node per span in the chosen split. */
   children: React.ReactNode;
+  /** §5.5's tint step, for §9.2's ornament. Null when there is no cover. */
+  tint?: string | null;
 }) {
   const split = CONTENT_SPLITS[shape];
 
@@ -97,6 +127,7 @@ export function Section({
             gridColumn: `span ${LABEL_SPAN}`,
             padding: CELL_PADDING,
             borderRight: `1px solid ${SECTION_RULE}`,
+            ...CELL_LAYER,
           }}
         >
           <div className={LABEL}>{title}</div>
@@ -135,8 +166,16 @@ export function Section({
               padding: CELL_PADDING,
               borderRight:
                 index === cells.length - 1 ? undefined : `1px solid ${SECTION_RULE}`,
+              ...CELL_LAYER,
             }}
           >
+            {/*
+              §9.2's solid, where the section's type-only cell is. It carries
+              `z-index: -1` and nothing else carries anything: the cell
+              isolates, so this sits at the bottom of that stacking context and
+              every piece of content is above it by being in flow.
+            */}
+            {tint !== null && mayOrnament(name, index) && <Ornament tint={tint} />}
             {child}
           </div>
         ))}
