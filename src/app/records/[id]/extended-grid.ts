@@ -154,8 +154,28 @@ const MARKED: ReadonlySet<SectionName> = new Set<SectionName>([
   'images',
   /* The frame shows one figure, never the series. */
   'price-history',
-  /* The frame's journal cell shows the snippet, not an entry. */
+  /*
+    **The frame has no journal cell at all now**, so it shows no entry. The
+    earlier ground — "the frame's journal cell shows the snippet, not an
+    entry" — was true of neither half: the cell drew a journal ENTRY above the
+    owner's NOTE, and never the snippet.
+  */
   'journal',
+  /**
+   * **Snippet was unmarked on a duplication that does not exist.**
+   *
+   * §9.4's ground was "its text is exactly what the frame's journal cell
+   * draws". The frame drew `notes` under an `About` rule — the owner's own
+   * text — while the snippet is §10b's GENERATED text in a separate column,
+   * and the frame has never drawn it.
+   *
+   * So the predicate was applied correctly to a false fact about the build.
+   * Nothing in the reasoning failed: the rule was right, the application was
+   * right, the input was wrong. Freshly applied, the snippet is a kind of fact
+   * that appears nowhere above the fold, so it is marked — and would have been
+   * before the frame's journal cell was removed.
+   */
+  'snippet',
 ]);
 
 /**

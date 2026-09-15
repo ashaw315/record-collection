@@ -100,10 +100,18 @@ describe("§9.3's mark predicate", () => {
     acquisition: { holds: 'paid / from / condition', shownAbove: true },
     tags: { holds: 'a control, not a fact', shownAbove: true },
     images: { holds: 'the images themselves', shownAbove: false },
-    snippet: { holds: 'the snippet text', shownAbove: true },
+    /*
+      **Corrected: the frame has never drawn the snippet.** §9.4's ground was
+      "its text is exactly what the frame's journal cell draws", but that cell
+      drew `notes` — the owner's own text — under an `About` rule, while the
+      snippet is §10b's generated text in a separate column. The predicate was
+      applied correctly to a false fact about the build.
+    */
+    snippet: { holds: "§10b's generated snippet", shownAbove: false },
     market: { holds: 'the median', shownAbove: true },
     'price-history': { holds: 'the series of observations', shownAbove: false },
-    journal: { holds: 'an entry', shownAbove: false },
+    /* The frame has no journal cell at all now. */
+    journal: { holds: 'journal entries', shownAbove: false },
   };
 
   it('marks a section when it holds a fact that appears nowhere above the fold', () => {
@@ -117,7 +125,7 @@ describe("§9.3's mark predicate", () => {
     }
   });
 
-  it('marks four of eight, and Price history rather than Market', () => {
+  it('marks five of eight, and Price history rather than Market', () => {
     /*
       The flip, asserted by name because it is the specific error that shipped:
       the frame shows the median in full and never the series, so Market only
@@ -126,15 +134,21 @@ describe("§9.3's mark predicate", () => {
     */
     const marked = SECTIONS.filter(carriesMark);
 
-    expect(marked).toHaveLength(4);
+    /*
+      Five, not four. §9.4 states four as an observation of the predicate's
+      output rather than as a target, and sets no minimum or maximum — so the
+      count follows the rule. Snippet joined when its ground turned out to
+      describe a duplication that does not exist.
+    */
+    expect(marked).toHaveLength(5);
     expect(marked, 'the series is not shown above').toContain('price-history');
     expect(marked, 'the median IS shown above').not.toContain('market');
   });
 
-  it('leaves the other four unmarked', () => {
+  it('leaves the other three unmarked', () => {
     const unmarked = SECTIONS.filter((section) => !carriesMark(section));
 
-    expect(unmarked).toEqual(['acquisition', 'tags', 'snippet', 'market']);
+    expect(unmarked).toEqual(['acquisition', 'tags', 'market']);
   });
 
   it('decides on the SCHEMA, so the same section marks on every record', () => {

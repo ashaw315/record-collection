@@ -254,18 +254,22 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
                 title lines, 115.4 at three, 47.7 at four, gone at five. The
                 HEIGHT is the drawing's; the track supplies it.
 
-                **The width is a build decision and is flagged as one.** §5.1
-                gives the edge fields "a count, a value, a step and a
-                suppression rule, and stops" — no geometry — and the drawing
-                fixes only the height. Filling the cell's full 443px made a
-                corner mark into a band across the block, so it is held to
-                180px against the left edge, which is a corner. If Design wants
-                a width, this is the number to replace.
+                **268 × 140, ratio 1.91** — read off the drawing, where all
+                three instances have carried it since they were drawn.
+
+                It was 180 for one round, which was a build decision taken
+                because §5.1 gives the edge fields "a count, a value, a step and
+                a suppression rule, and stops" and fixes only the height. Full
+                cell width made a corner mark into a band across the block, so
+                the constraint was real and the value was not ruled. Design's
+                own first answer derived 1.30 from the projection and landed
+                86px from the mark it described — a number reached by reasoning
+                rather than read off the drawing.
               */
               <div
                 data-mark="identityTriangle"
                 aria-hidden="true"
-                className="pointer-events-none absolute bottom-0 left-0 h-full w-[180px] max-w-full"
+                className="pointer-events-none absolute bottom-0 left-0 h-full w-[268px] max-w-full"
                 style={{
                   background: tint,
                   /* Lower-left corner: the hypotenuse runs up to the right. */
@@ -533,46 +537,57 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
           )}
         </div>
 
-        {/* Journal and About: the 2px derived edge, the only non-grey rule. */}
+        {/* About: the 2px derived edge, the only non-grey rule. */}
         {/*
           The journal's 2px derived edge — §3's only non-grey rule and only 2px
           edge. Labelled for the same reason as the year field above.
         */}
         <div
-          data-cell="journal"
+          data-cell="about"
+          /*
+            **The mark keeps its name.** `journalEdge` is the 2px derived edge
+            at the band's right end, and the name is load-bearing —
+            `mark-boxes.ts` keys its step and suppression off it, and three
+            specs classify it by it. The CELL changed what it holds; the edge is
+            the same mark in the same position, so renaming it would have been
+            a cosmetic change that cost six call sites.
+          */
           data-mark="journalEdge"
           className={cell}
           style={{ gridColumn: `span ${LOWER_SPANS[4]}`, borderRight: `2px solid ${base}` }}
         >
-          <div className={LABEL}>Journal</div>
-          {modules.journal.empty ? (
-            <>
-              <EmptyMark diagonal="single" />
-              <div className={`${LABEL} relative mt-[10px]`} style={{ color: INK }}>
-                Add entry
-              </div>
-            </>
+          {/*
+            **The journal has left the frame.** It has its own §9 section at the
+            bottom of the page, so the frame does not need a cell for it — and
+            this cell was drawing two facts at once: a journal entry, then an
+            `About` rule with the owner's note under it.
+
+            What stays is the note, which is what the markup already pointed at.
+            The snippet is a DIFFERENT fact — a separate column carrying §10b's
+            generated text — and lives in its own section.
+
+            §8.1's trigger goes with the entry. Its rule forbids a form's submit
+            from sharing a label with the trigger that opened it; with no cell
+            here there is no trigger, so the rule is vacuous rather than
+            violated and the section keeps `Save entry`. The journal is reached
+            by scrolling to it, not by a control.
+          */}
+          <div className={LABEL}>About this record</div>
+          {record.note === null ? (
+            <EmptyMark diagonal="single" />
           ) : (
-            <div className="text-prose">{record.journalEntry?.entry}</div>
-          )}
-          {record.note !== null && (
-            <>
-              <div
-                className="mt-[14px] mb-[8px] w-[220px]"
-                style={{ borderTop: `1px solid ${RULE}` }}
-              />
-              <div className={LABEL}>About</div>
-              <div className="text-prose">{record.note}</div>
-            </>
+            <div className="text-prose">{record.note}</div>
           )}
           {/*
             §5.1's second quarter-circle, bleeding off the band's right end.
             Flat for the same reason as the first — it touches a page edge —
             and rounded on the corner that faces into the page. Suppressed when
             the cell is empty (§5.4): a decorated empty cell reads as a designed
-            state rather than as a gap the reader can fill.
+            state rather than as a gap the reader can fill — and the cell's
+            content is the NOTE now, so its emptiness is the note's absence
+            rather than the journal's.
           */}
-          {!modules.journal.empty && (
+          {record.note !== null && (
             <div
               data-mark="aboutArc"
               aria-hidden="true"

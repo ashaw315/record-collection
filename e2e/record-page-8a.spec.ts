@@ -365,54 +365,42 @@ test('the page caps, and the header caps with it', async ({ page }) => {
   }
 });
 
-test('the journal is named once in the frame and once on the rail, and nowhere else', async ({
-  page,
-}) => {
+test('the journal is named once, on its own section', async ({ page }) => {
   /**
-   * **This test's claim was superseded, and the supersession is the point.**
+   * **This test has now been superseded twice, and both times the claim
+   * survived while its ground moved.**
    *
-   * It was written for §8.3: 8a's journal cell carried the `Journal` label and
-   * the section below it carried an h2 saying the same word in the same
-   * treatment, so the page named one thing twice. The h2 went.
+   * §8.3 removed a stacked-column `<h2>` that duplicated the frame's journal
+   * cell label, and the test asserted "once". §9.1 then made a section label
+   * structural, so the word returned and the test asserted "twice — the frame's
+   * cell and the rail". Now the frame has no journal cell at all: the journal
+   * has its own section at the bottom of the page and the frame's last cell
+   * carries `About this record`.
    *
-   * §9.1 then made a section label structural — first as a 216px rail, now as
-   * the first two columns of the twelve — and a section without one puts a hole
-   * in the one edge that never moves. So the word returns, and this test caught
-   * it: the count went back to 2.
-   *
-   * **The two are not the same repetition.** The h2 was a heading stacked under
-   * the frame's cell in a column that had no structure of its own. The rail
-   * label is the structure: it is where §9.1 says a section's name lives, at
-   * the x every other section's name is at. Removing it to satisfy the old
-   * count would break §9.1 to honour a rule §9.1 replaced.
-   *
-   * What survives from the original claim, and is asserted here: the word
-   * appears in exactly those two places and nowhere else. A third would be the
-   * defect §8.3 actually found.
+   * So it is once again — but the surviving instance is the SECTION's, where
+   * before it was the frame's. Asserted as a count over the page plus which
+   * one remains, because "once" alone would pass if the section lost its label
+   * and the frame kept a cell.
    */
   const suffix = makeSuffix();
   const id = await createRecord(page, CASES[0], suffix);
   await page.goto(`/records/${id}`);
   await expect(page.getByTestId('record-page-8a')).toBeVisible();
 
-  const frame = page.getByTestId('record-page-8a');
-  /*
-    The label CELL, not a rail: §9.1's rail became a two-column span when the
-    region returned to twelve columns, so the handle moved with it.
-  */
-  const rail = page.locator('[data-section="journal"] [data-cell="label"]');
-
-  await expect(frame.getByText('Journal', { exact: true }), "the frame's cell label").toHaveCount(
-    1,
-  );
   await expect(
-    rail.getByText('Journal', { exact: true }),
+    page.getByTestId('record-page-8a').getByText('Journal', { exact: true }),
+    'the frame has no journal cell',
+  ).toHaveCount(0);
+
+  await expect(
+    page.locator('[data-section="journal"] [data-cell="label"]').getByText('Journal', {
+      exact: true,
+    }),
     "§9.1's label span",
   ).toHaveCount(1);
 
-  /* And nowhere else — no surviving heading, no third naming. */
   await expect(
     page.locator('main').getByText('Journal', { exact: true }),
-    'named in the frame and on the rail, and nowhere else',
-  ).toHaveCount(2);
+    'named once on the screen',
+  ).toHaveCount(1);
 });

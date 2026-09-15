@@ -199,3 +199,60 @@ test('the triangle lives in the ornament track and yields with it', async ({ pag
   /* It fills the reserve it is given rather than overflowing it. */
   expect(placed?.markHeight).toBeLessThanOrEqual((placed?.trackHeight ?? 0) + 1);
 });
+
+test('the frame\'s last cell is About this record, not Journal', async ({ page }) => {
+  /**
+   * **The journal leaves the frame entirely.** It has its own section at the
+   * bottom of the page, so the frame does not need a cell for it — and the cell
+   * it had was drawing two different facts at once: a journal entry above an
+   * `About` rule with the owner's note under it.
+   *
+   * What stays is the note, which is what the markup already pointed at. The
+   * snippet is a different fact (a separate column, §10b's generated text) and
+   * lives in its own section.
+   */
+  const suffix = makeSuffix();
+  const id = await aRecord(page, suffix);
+  await page.goto(`/records/${id}`);
+  await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
+
+  const frame = page.getByTestId('record-page-8a');
+
+  await expect(frame.getByText('About this record', { exact: true })).toHaveCount(1);
+  await expect(frame.getByText('Journal', { exact: true }), 'no journal cell').toHaveCount(0);
+
+  /* And the note itself, which is the cell's content. */
+  await expect(frame).toContainText(`A note ${suffix}`);
+});
+
+test('the journal entry and its trigger leave the frame', async ({ page }) => {
+  /**
+   * **§8.1's rule becomes vacuous rather than violated.** It forbids a form's
+   * submit from sharing a label with the trigger that opened it; with no
+   * journal cell there is no trigger, so there is only one label.
+   *
+   * The journal is reached by scrolling to its section, not by a control, and
+   * the section keeps `Save entry` — a form permanently visible in its own
+   * section needs no opening.
+   */
+  const suffix = makeSuffix();
+  const id = await aRecord(page, suffix);
+  await page.goto(`/records/${id}`);
+  await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
+
+  const frame = page.getByTestId('record-page-8a');
+
+  await expect(frame.getByText('Add entry', { exact: true }), 'no trigger').toHaveCount(0);
+  await expect(
+    frame.getByText(`Bought it ${suffix}`),
+    'the entry belongs to the section below',
+  ).toHaveCount(0);
+
+  /* The section still has its submit — a target without one is a dead end. */
+  await expect(
+    page.locator('[data-section="journal"]').getByRole('button', { name: 'Save entry' }),
+  ).toHaveCount(1);
+
+  /* And ADD ENTRY is nowhere on the page, since nothing opens the form now. */
+  await expect(page.locator('main').getByText('Add entry', { exact: true })).toHaveCount(0);
+});

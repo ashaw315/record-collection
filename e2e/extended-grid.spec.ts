@@ -374,41 +374,40 @@ test('renders no empty section, and no diagonal below the fold', async ({ page }
   expect(below.empty, `no section renders with empty content (all: ${below.all.join(', ')})`).toEqual([]);
 });
 
-test('the trigger and the submit never share a label', async ({ page }) => {
+test('the journal has one label, because it has no trigger', async ({ page }) => {
   /**
-   * §9.2: a form's submit is not the trigger that opened it. The frame's
-   * journal cell carries `Add entry` (§8.1's trigger); this region's Journal
-   * section carries `Save entry` (the submit).
+   * **§8.1's rule is now vacuous rather than violated, and that is the claim.**
    *
-   * **Both halves are asserted.** `ADD ENTRY` rendered twice before this —
-   * once in the frame and once on the section's button — which is one control
-   * announced in two places 900px apart, and a reader who has already pressed
-   * it is not adding anything by pressing it again. Asserting only that the
-   * section says `Save entry` would stay green if the frame's trigger vanished,
-   * and a target with no trigger is as broken as a trigger with no target.
+   * It forbids a form's submit from sharing a label with the trigger that
+   * opened it — the frame carried `Add entry` and the section `Save entry`.
+   * With the journal cell gone from the frame there is no trigger, so there is
+   * only one label and nothing to share.
+   *
+   * The section keeps its submit: a target without one is a dead end, and the
+   * journal is reached by scrolling rather than by a control.
+   *
+   * **Written as a count over the page**, so it fails if a second entry point
+   * reappears anywhere — which is what the original rule was protecting
+   * against, one control announced in two places.
    */
   const suffix = makeSuffix();
   const id = await richRecord(page, suffix);
   await page.goto(`/records/${id}`);
   await page.locator('[data-section="journal"]').waitFor({ timeout: 20_000 });
 
-  const frame = page.getByTestId('record-page-8a');
-  const journal = page.locator('[data-section="journal"]');
-
-  await expect(frame.getByText('Add entry', { exact: true }), "the frame's trigger").toHaveCount(1);
   await expect(
-    journal.getByRole('button', { name: 'Save entry' }),
+    page.locator('[data-section="journal"]').getByRole('button', { name: 'Save entry' }),
     "the section's submit",
   ).toHaveCount(1);
 
-  /* And neither word appears in the other's place. */
-  await expect(
-    journal.getByText('Add entry', { exact: true }),
-    'the section does not repeat the trigger',
-  ).toHaveCount(0);
   await expect(
     page.locator('main').getByText('Add entry', { exact: true }),
-    'ADD ENTRY renders once on the screen',
+    'no trigger anywhere, so no label is shared',
+  ).toHaveCount(0);
+
+  await expect(
+    page.locator('main').getByText('Save entry', { exact: true }),
+    'and the submit is named once',
   ).toHaveCount(1);
 });
 

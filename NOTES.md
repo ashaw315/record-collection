@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 113 declared rules. Regenerate with
+Generated from 114 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -116,6 +116,7 @@ Generated from 113 declared rules. Regenerate with
 | an error path renders and you have not checked what it exposes | [A 403 on a JS chunk became a credential disclosure](#a-403-on-a-js-chunk-became-a-credential-disclosure) |
 | an output names a thing and you have not checked the thing exists | [A FABRICATED IDENTIFIER IS A DIFFERENT FAILURE CLASS FROM AN UNCERTAIN CLAIM](#a-fabricated-identifier-is-a-different-failure-class-from-an-uncertain-claim) |
 | a mutation failed nothing and you are reading that as dead code | [A mutation that fails nothing does not mean the code is dead. Three](#a-mutation-that-fails-nothing-does-not-mean-the-code-is-dead-three) |
+| a rule's stated ground describes what the code does, and nobody has checked that it does | [A predicate correctly applied to a false fact about the build](#a-predicate-correctly-applied-to-a-false-fact-about-the-build) |
 | you built a view to judge something and the view has its own layout rules | [A view that normalises away the signal it was made to show — third instance](#a-view-that-normalises-away-the-signal-it-was-made-to-show-third-instance) |
 | a rule passes and you have not checked that it had anything to govern | [An observer that can be satisfied without its subject ever existing](#an-observer-that-can-be-satisfied-without-its-subject-ever-existing) |
 | a comment calls a generalised thing a special case | [RULE: a class can be SOLVED and not RECOGNISED, and the giveaway is a](#rule-a-class-can-be-solved-and-not-recognised-and-the-giveaway-is-a) |
@@ -171,6 +172,8 @@ Generated from 113 declared rules. Regenerate with
 | a run reported no counts and you are reading that as nothing failed | [The wrapper caught a real crashed run, unstaged](#the-wrapper-caught-a-real-crashed-run-unstaged) |
 
 <!-- APPARATUS-INDEX:END -->
+
+114 rules indexed.
 
 113 rules indexed.
 
@@ -30142,3 +30145,46 @@ governed term and width follows the archetype: 1.46 for a beam, 1.57 for a
 plate, 0.51 for a panel. A constant extracted from one member of a set that was
 about to gain variety is the same shape one level down — it was correct while
 the set had one member, and correctness there says nothing about the rule.
+
+## A predicate correctly applied to a false fact about the build
+
+**Shape:** observer-without-subject
+**You are here if:** a rule's stated ground describes what the code does, and nobody has checked that it does
+
+§9.4 marks a section when it holds a kind of fact that appears nowhere above the
+fold. Snippet was **unmarked**, on this ground:
+
+> *Snippet, because its text is exactly what the frame's journal cell draws.*
+
+The frame's journal cell drew `record.notes` — the owner's own text — under an
+`About` rule. The snippet is `record.snippet`, §10b's GENERATED text, a
+different column. **The frame has never drawn it.** The duplication the
+exemption rested on does not exist and never did.
+
+**Nothing in the reasoning chain fails.** The rule is right. The application is
+right — given the stated ground, unmarked is the correct output. The INPUT is
+wrong, and an input is not a step anyone reviews: a predicate is checked against
+its cases, and the cases are checked against each other, and the sentence
+describing what the build does sits outside both.
+
+This is distinct from the shapes already recorded. A rule derived from a set
+fits that set and nothing else; a rule whose parameters make it vacuous excludes
+what it should permit; a test encoding a superseded ruling fails misleadingly.
+**Here every layer is sound and the whole is wrong, because one clause is a
+claim about the code that was never read against the code.**
+
+**The check is cheap and nobody does it: for each "because the frame shows X",
+find X in the frame.** It took one grep. The clause had survived four rounds of
+review of the rule it justifies.
+
+### What made it visible
+
+Not review — a change. Removing the frame's journal cell forced the question
+"what did that cell show?", and the answer was two facts the ground named
+neither of. **A ruling that moves is worth more than a ruling that is read**,
+because moving it requires stating what is actually there.
+
+The same clause was wrong about Journal in the other direction: its ground was
+"the frame's journal cell shows the snippet, not an entry", and the cell drew an
+ENTRY above the note. Journal stayed marked, correctly, for a reason the file
+did not give.
