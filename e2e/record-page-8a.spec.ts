@@ -375,10 +375,10 @@ test('the journal is named once in the frame and once on the rail, and nowhere e
    * the section below it carried an h2 saying the same word in the same
    * treatment, so the page named one thing twice. The h2 went.
    *
-   * §9.1 then made a rail label the region's structural element — "every label
-   * starts at the same x on every section" is the whole mechanism, and a
-   * section without one puts a hole in the one edge that never moves. So the
-   * word returns, and this test caught it: the count went back to 2.
+   * §9.1 then made a section label structural — first as a 216px rail, now as
+   * the first two columns of the twelve — and a section without one puts a hole
+   * in the one edge that never moves. So the word returns, and this test caught
+   * it: the count went back to 2.
    *
    * **The two are not the same repetition.** The h2 was a heading stacked under
    * the frame's cell in a column that had no structure of its own. The rail
@@ -396,12 +396,19 @@ test('the journal is named once in the frame and once on the rail, and nowhere e
   await expect(page.getByTestId('record-page-8a')).toBeVisible();
 
   const frame = page.getByTestId('record-page-8a');
-  const rail = page.locator('[data-section="journal"] [data-rail]');
+  /*
+    The label CELL, not a rail: §9.1's rail became a two-column span when the
+    region returned to twelve columns, so the handle moved with it.
+  */
+  const rail = page.locator('[data-section="journal"] [data-cell="label"]');
 
   await expect(frame.getByText('Journal', { exact: true }), "the frame's cell label").toHaveCount(
     1,
   );
-  await expect(rail.getByText('Journal', { exact: true }), "§9.1's rail label").toHaveCount(1);
+  await expect(
+    rail.getByText('Journal', { exact: true }),
+    "§9.1's label span",
+  ).toHaveCount(1);
 
   /* And nowhere else — no surviving heading, no third naming. */
   await expect(

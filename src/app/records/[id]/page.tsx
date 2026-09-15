@@ -14,6 +14,7 @@ import { pressingLine } from './page-record';
 import { recordLadder } from '@/lib/colour/record-ladder';
 import { MAX_GRID_WIDTH } from './band-geometry';
 import { LABEL } from './grid-type';
+import { Section } from './Section';
 import { marketFigures } from './market-median';
 import { listPricesForRecord } from '@/lib/db/queries/prices';
 import { hydrateRecord } from '@/lib/db/queries/records';
@@ -288,11 +289,28 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
               Auto-loaded because this is one record the user already owns, not
               a list.
             */}
-            <MarketPanel
-              discogsReleaseId={record.pressing?.discogsReleaseId ?? null}
-              label="What it goes for now"
-              autoLoad
-            />
+            {/*
+              **The market section, which never got the primitive.** It is
+              `pair` by §9.1's shapes — a figure and the action that refreshes
+              it — and unmarked by §9.3, because the frame shows the median in
+              full and this only refreshes it.
+
+              Wrapped here rather than inside `MarketPanel`: that component is
+              shared with `/want-list`, where a row is not a §9 section and has
+              no grid to sit on. `labelled={false}` hands the heading to the
+              section's label span instead of drawing a second one.
+            */}
+            {record.pressing?.discogsReleaseId != null && (
+              <Section name="market" title="What it goes for now" base={ladderBase} shape="pair">
+                <MarketPanel
+                  discogsReleaseId={record.pressing?.discogsReleaseId ?? null}
+                  label="What it goes for now"
+                  labelled={false}
+                  autoLoad
+                />
+                <div />
+              </Section>
+            )}
 
             <PriceHistory
               base={ladderBase}

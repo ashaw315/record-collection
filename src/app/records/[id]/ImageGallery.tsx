@@ -110,7 +110,7 @@ export function ImageGallery({
   }
 
   return (
-    <Section name="images" title="Images" base={base}>
+    <Section name="images" title="Images" base={base} shape="one">
       <div data-testid="image-gallery">
       <div className="mb-3 flex flex-wrap items-center gap-[10px]">
         <label htmlFor="image-type" className="sr-only">

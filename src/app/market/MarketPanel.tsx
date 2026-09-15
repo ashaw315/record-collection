@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { LABEL } from '@/app/records/[id]/grid-type';
+import { CONTROL_HEIGHT } from '@/app/records/[id]/extended-grid';
 import { marketSummary, type MarketView } from '@/app/lookup/market-summary';
 
 /**
@@ -22,6 +23,7 @@ export function MarketPanel({
   discogsReleaseId,
   label,
   autoLoad = false,
+  labelled = true,
 }: {
   discogsReleaseId: number | null;
   /** What the reader is asking here — §10a's table gives a different question per screen. */
@@ -32,6 +34,11 @@ export function MarketPanel({
    * list does not, because it is a list.
    */
   autoLoad?: boolean;
+  /**
+   * Whether this panel renders its own heading. False where a §9.1 section
+   * supplies it in the label span; true in a list row that has no section.
+   */
+  labelled?: boolean;
 }) {
   const [market, setMarket] = useState<MarketView | null>(null);
   const [loading, setLoading] = useState(false);
@@ -77,15 +84,17 @@ export function MarketPanel({
   if (discogsReleaseId === null) return null;
 
   return (
-    <div className="mt-2" data-testid="market-panel">
+    <div data-testid="market-panel">
       {/*
-        **The shared label, not a second one.** This was `text-xs uppercase` —
-        12px sans, off the scale entirely, and the only uppercase-sans label on
-        either screen that renders it. §4's label is mono, uppercase, tracked,
-        one grey; `grid-type.ts` is the single definition and this is a section
-        label like any other.
+        **The label renders only where this component owns its heading.**
+
+        On `/records/[id]` the §9.1 section supplies it in the label span, and a
+        second copy here would name the section twice. On `/want-list` there is
+        no section — this is a row in a list — so the panel still says what it
+        is. `labelled` is the caller telling it which context it is in, rather
+        than the component guessing from a route.
       */}
-      <p className={LABEL}>{label}</p>
+      {labelled && <p className={LABEL}>{label}</p>}
 
       {market === null && error === undefined && (
         <button
@@ -93,7 +102,18 @@ export function MarketPanel({
           onClick={() => void load()}
           disabled={loading}
           data-testid="market-check"
-          className="text-label underline underline-offset-2 disabled:text-muted-foreground"
+          /*
+            §9.2's control: 44px, 1px ink box, no fill, no radius, 11px mono
+            uppercase. The box is §3's hairline weight at ink rather than grey —
+            the smallest difference that says pressable on a page of hairlines.
+          */
+          className={`${LABEL} px-[14px] disabled:text-muted-foreground`}
+          style={{
+            height: CONTROL_HEIGHT,
+            border: '1px solid oklch(0.18 0.005 60)',
+            borderRadius: 0,
+            boxSizing: 'border-box',
+          }}
         >
           {loading ? 'Checking Discogs…' : 'Check the market'}
         </button>

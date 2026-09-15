@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 102 declared rules. Regenerate with
+Generated from 105 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -55,6 +55,7 @@ Generated from 102 declared rules. Regenerate with
 | the data changed, no code changed, and the suite is still green | [A DATA change opened an untested branch, and the suite could not see it](#a-data-change-opened-an-untested-branch-and-the-suite-could-not-see-it) |
 | the tests are well shaped and you staged the bug and they all passed | [A fixture that cannot express the defect](#a-fixture-that-cannot-express-the-defect) |
 | a test passes and you have not asked which of its inputs the fixture actually set | [A fixture that produced the right output for the wrong reason, third time](#a-fixture-that-produced-the-right-output-for-the-wrong-reason-third-time) |
+| you sampled one point to prove an element is reachable | [A hit test at the centre point cannot see a control leaving its cell](#a-hit-test-at-the-centre-point-cannot-see-a-control-leaving-its-cell) |
 | a mutation failed N tests and you have not read which N | [A mutation is code, and it can be wrong. "Fails N tests" is not evidence](#a-mutation-is-code-and-it-can-be-wrong-fails-n-tests-is-not-evidence) |
 | a rule holds, and you are not sure whether the code or a guard is holding it | [A rule kept by a backstop reads identically to a rule kept by the code](#a-rule-kept-by-a-backstop-reads-identically-to-a-rule-kept-by-the-code) |
 | a test passes and its fixture may not have created the condition | [A test fixture can fail to create the condition its test claims — and](#a-test-fixture-can-fail-to-create-the-condition-its-test-claims-and) |
@@ -98,6 +99,7 @@ Generated from 102 declared rules. Regenerate with
 | a check can fail in two directions and you are choosing the default | [RULE: when a check can fail in two directions, pick the default by asking](#rule-when-a-check-can-fail-in-two-directions-pick-the-default-by-asking) |
 | content renders smaller or clipped and the element it sits in was not measured | [The canvas is a container, and its height is a constraint on what renders inside it](#the-canvas-is-a-container-and-its-height-is-a-constraint-on-what-renders-inside-it) |
 | a coordinate or position is being compared and you have not said in which frame | [The frame family, tenth instance — a POSITION must name its frame too](#the-frame-family-tenth-instance-a-position-must-name-its-frame-too) |
+| you are dropping a structure because the reason for it no longer applies, and have not checked which of its properties that reason was about | [The rail was an argument against the wrong thing](#the-rail-was-an-argument-against-the-wrong-thing) |
 | something renders and cannot be seen, and you are looking at colour rather than size | [THE SHELF WAS NOT INVISIBLE — IT WAS TOO SHALLOW TO EXIST](#the-shelf-was-not-invisible-it-was-too-shallow-to-exist) |
 | a screen works on desktop and the mobile case was reasoned about rather than rendered | [The wall at 390px: 462px of non-shrinkable chrome, and no touch handlers at all](#the-wall-at-390px-462px-of-non-shrinkable-chrome-and-no-touch-handlers-at-all) |
 | instances differ measurably and look identical | [Variation applied to the wrong axis](#variation-applied-to-the-wrong-axis) |
@@ -136,6 +138,7 @@ Generated from 102 declared rules. Regenerate with
 | repeated failures are being treated as one bug | [THE HUNT, COMPLETE — six runs, SEVEN failures, and it is not one bug](#the-hunt-complete-six-runs-seven-failures-and-it-is-not-one-bug) |
 | two standing explanations exist for a failure and neither has been tested | [THE NEON HAZARD, DIAGNOSED — and BOTH standing explanations were wrong](#the-neon-hazard-diagnosed-and-both-standing-explanations-were-wrong) |
 | an intermittent failure is being called a timeout without a trace | [THE TRACE, CAUGHT — and it is a hydration race, not a timeout (2026-09-05)](#the-trace-caught-and-it-is-a-hydration-race-not-a-timeout-2026-09-05) |
+| a layout rule is stated over the cases someone has drawn, and you are about to meet one they did not | [Three splits, and the rule that stops a fourth](#three-splits-and-the-rule-that-stops-a-fourth) |
 
 ### Instruments that report nothing
 
@@ -160,6 +163,10 @@ Generated from 102 declared rules. Regenerate with
 | a run reported no counts and you are reading that as nothing failed | [The wrapper caught a real crashed run, unstaged](#the-wrapper-caught-a-real-crashed-run-unstaged) |
 
 <!-- APPARATUS-INDEX:END -->
+
+105 rules indexed.
+
+104 rules indexed.
 
 102 rules indexed.
 
@@ -29755,3 +29762,94 @@ claim underneath the stale number — *the pressing block anchors to the bottom 
 the space the content has*, *the journal is named where the structure says and
 nowhere else* — and the repair is to restate the claim against the current
 ruling, not to drop it.
+
+## The rail was an argument against the wrong thing
+
+**Shape:** wrong-axis-variation
+**You are here if:** you are dropping a structure because the reason for it no longer applies, and have not checked which of its properties that reason was about
+
+§9.1 replaced the twelve columns below the fold with a 216px label rail, and the
+stated argument was that the columns exist for a budget that does not apply
+there. Built, measured, tested, committed.
+
+**The argument was against the fixed BANDS, not against the columns.** Bands are
+height; columns are alignment. Dropping the no-scroll budget requires dropping
+the height and says nothing about the alignment — so the rail removed a property
+the argument never reached, and the region became a grid with a document stapled
+under it: a rail aligned to nothing above it.
+
+Two things the columns did that the rail structurally could not:
+
+- **A rail has one edge; a grid has as many as it has cells.** §2.1's vertical
+  rules could not return while the region had a single vertical line in it.
+- The label's x was an invented number (34) rather than a column edge, so it
+  aligned with nothing in the frame above. As a two-column SPAN it lines up with
+  the identity cell.
+
+**The tell was available before the build:** the rail's own justification named
+the fixed-height cells as the reason columns worked above, which is a statement
+about heights wearing a statement about columns. Nothing in it explained why
+*alignment* should stop at the fold.
+
+Recorded because the build was correct against the ruling and the ruling was
+wrong in a way the build could have surfaced — "what property of this structure
+is the argument actually about?" is a question a builder can ask.
+
+## Three splits, and the rule that stops a fourth
+
+**Shape:** sample-as-population
+**You are here if:** a layout rule is stated over the cases someone has drawn, and you are about to meet one they did not
+
+§9.1 gives the ten columns right of the label exactly three divisions — 10 for
+one continuous thing, 5+5 for two comparable things, 6+4 for a body with an
+action beside it — and states the guard explicitly: **a section needing a fourth
+split is a section whose content has not been identified yet.**
+
+That is the seventh-shape test applied by the ruling to itself, and it is what
+makes the rule hold rather than proliferate. Each of the eight sections mapped
+to one of the three without argument (pairs and list rows are the same object;
+a form takes the same split as the pairs it edits), and the instruction if one
+had not is to REPORT it rather than invent a span.
+
+Built as a union type, so a fourth does not compile, with the count asserted
+rather than the membership: the failure being guarded is one more arriving, not
+one of these three changing.
+
+## A hit test at the centre point cannot see a control leaving its cell
+
+**Shape:** check-cannot-fail
+**You are here if:** you sampled one point to prove an element is reachable
+
+The journal's entry row was `flex` with a fixed 96px date and a `shrink-0`
+Delete. At 390px its cell is 193px, so the button rendered at x=318 against a
+cell ending at 262 — past the edge, over the cell beside it. `record-detail`
+caught it as a 30s timeout on a button that was **enabled, visible, motionless
+and inside the viewport**: the failure was a hit test, not state or stability.
+
+I wrote a guard for it. The guard **passed against the staged defect**, and the
+reason is the useful part: it sampled each control's CENTRE and asked what
+`elementFromPoint` returned. The overflowing button is 30px wide and only its
+right-hand portion crosses the boundary — its centre still lands on itself. One
+point is enough to prove a control is reachable SOMEWHERE and cannot prove it is
+not covered anywhere.
+
+Asserting containment instead fires with the geometry that names the defect:
+
+```
+journal: BUTTON [318..348] escapes content-0 [69..262]
+```
+
+**Two general forms, and the second is the one worth carrying.** A point sample
+answers a weaker question than the one being asked — the same family as arity
+standing in for behaviour. And the tell was available: the failure message said
+"visible, enabled and stable" had all passed, so whatever was wrong was none of
+those three, and a guard that checks a fourth property by sampling one pixel of
+it has not moved far from the three that already passed.
+
+### The fixture, again
+
+The first version of that guard ran against a record with **no journal entry**,
+so the control the defect covered was not on the page at all. Fourth instance
+this cycle of a fixture that cannot contain the defect it is written for; the
+fix each time is to construct the state explicitly rather than hope a general
+fixture happens to include it.

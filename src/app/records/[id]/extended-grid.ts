@@ -17,28 +17,72 @@
  */
 
 /**
- * The five tracks, in order. **Three of the five are spacer tracks** — not
- * padding and not column-gap.
+ * **Twelve columns, the same `repeat(12, 1fr)` as §2.1** — gap 0, full bleed,
+ * 34px padding inside every cell, and row heights derived from content.
  *
- * Padding is excluded because the section rules must bleed PAST it: §3's
- * distinction is full-bleed separates modules, inset separates things inside
- * one, and each section is a module. A gap is excluded because a spacer track
- * and a gap both applying was a live defect here — the two compose silently and
- * the rail lands at the wrong x.
+ * This replaced a 216px label rail, which was the wrong repair. The argument
+ * for the rail was that the twelve columns exist for a budget that does not
+ * apply below the fold — but that is an argument against the fixed BANDS, not
+ * against the columns. **Bands are height and columns are alignment; dropping
+ * the budget only requires dropping the height.** A rail aligned to nothing
+ * above it made the page a grid with a document stapled under it.
  */
-export const GRID_TRACKS = ['34px', '216px', '34px', '1fr', '34px'] as const;
+export const GRID_TEMPLATE = 'repeat(12, 1fr)';
 
-/** `grid-template-columns`, as authored. `gap: 0` is implied and asserted. */
-export const GRID_TEMPLATE = GRID_TRACKS.join(' ');
+/** 34px inside every cell, holding content while the section rule bleeds past. */
+export const CELL_PADDING = 34;
 
-/** Where the rail starts, and where content starts — the frame's text edge. */
-export const RAIL_X = 34;
-export const CONTENT_X = 284;
+/**
+ * **The label is a span, not a structure: the first two columns of every
+ * section.**
+ *
+ * Same reading as the rail gave — a label on the left, content to its right —
+ * but its x is now a column edge rather than an invented one, so it lines up
+ * with the identity cell above it. §9.3's bar sits under the label inside this
+ * span, which is what keeps the colour ruling unchanged.
+ */
+export const LABEL_SPAN = 2;
 
-/** §3's hairline, the only rule in the region. It bleeds; the tracks indent. */
+/**
+ * **Three content splits and no more**, which is what stops each section
+ * inventing its own. The ten columns right of the label divide 10, 5+5, or 6+4,
+ * and the section picks by the SHAPE of what it holds:
+ *
+ * - `one` — one continuous thing: tags, thumbnails.
+ * - `pair` — two comparable things: pressing pairs, source/date, figure/action,
+ *   series/rows. Label-value pairs and list rows are the same object, and a
+ *   form takes the same split as the pairs it edits.
+ * - `body` — a body with an action beside it: snippet, journal.
+ *
+ * **A section needing a fourth split is a section whose content has not been
+ * identified yet.** If you meet one, report it rather than inventing a span —
+ * a fourth pattern is the rule proliferating, which is the thing three splits
+ * exist to prevent.
+ */
+export const CONTENT_SPLITS = {
+  one: [10],
+  pair: [5, 5],
+  body: [6, 4],
+} as const;
+
+export type ContentShape = keyof typeof CONTENT_SPLITS;
+
+/** Every split fills the ten columns right of the label. */
+export const CONTENT_COLUMNS = 12 - LABEL_SPAN;
+
+/**
+ * §3's hairline. Two uses below the fold, and the distinction is load-bearing:
+ *
+ * - **Section boundaries bleed** to the composition's edge while cell padding
+ *   holds content at 34px — §3 makes full-bleed separate modules and inset
+ *   separate things within one, and each section is a module.
+ * - **Cell verticals** sit on the right of every cell but the last, exactly as
+ *   §2.1 draws them. These are what a rail structurally could not do: a rail
+ *   has one edge, and a grid has as many as it has cells.
+ */
 export const SECTION_RULE = 'oklch(0.72 0.004 80)';
 
-/** §9.3's bar: one base-step mark in the rail, under the label. */
+/** §9.3's bar: one base-step mark in the label span, under the label. */
 export const MARK_WIDTH = 44;
 export const MARK_HEIGHT = 10;
 

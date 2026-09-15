@@ -3,8 +3,14 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { Section } from './Section';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { LABEL } from './grid-type';
+import {
+  CONTROL_HEIGHT,
+  FIELD_HEIGHT,
+  SECTION_RULE,
+  TYPED_LEADING,
+  TYPED_SIZE,
+} from './extended-grid';
 import { COLLECTION_DATE_MIN } from '@/lib/api/date';
 
 /**
@@ -153,7 +159,13 @@ export function RecordJournal({
       twice — and `record-page-8a.spec.ts` caught it. What is true is that the
       two namings are different things, and that test now asserts exactly two.
     */
-    <Section name="journal" title="Journal" base={base}>
+    <Section name="journal" title="Journal" base={base} shape="body">
+      {/*
+        **The entries in the 6, the form in the 4** — §9.1's `body` split is a
+        body with an action beside it. A section declaring it must fill both
+        cells: passing one child left the second empty, and at 390px that empty
+        box sat on top of the entry's Delete control and took its clicks.
+      */}
       <div data-testid="journal">
       {/*
         **No heading: 8a's journal cell already carries the label.** The frame
@@ -165,52 +177,6 @@ export function RecordJournal({
         where this shows all of them. The heading was the part the cell had
         already done.
       */}
-
-      <div
-        ref={formRef}
-        data-testid="journal-form"
-        className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start"
-      >
-        <div className="sm:w-40 sm:shrink-0">
-          <label htmlFor="entry-date" className="sr-only">
-            Entry date
-          </label>
-          <Input
-            id="entry-date"
-            type="date"
-            value={entryDate}
-            /**
-             * Bounded in the markup as well as at the API. 1877 is when sound
-             * recording began; the upper bound is today, because you cannot
-             * have played a record tomorrow. The browser's picker enforcing it
-             * saves a round trip — the server enforces it regardless, since a
-             * client-side bound is a suggestion.
-             */
-            min={COLLECTION_DATE_MIN}
-            max={today}
-            onChange={(event) => setEntryDate(event.target.value)}
-            className="h-9"
-          />
-        </div>
-
-        <div className="flex-1">
-          <label htmlFor="journal-note" className="sr-only">
-            Journal note
-          </label>
-          <textarea
-            id="journal-note"
-            rows={2}
-            value={note}
-            onChange={(event) => setNote(event.target.value)}
-            placeholder="Played it after the pub. Still loud."
-            className="w-full rounded-xs border border-input bg-transparent px-2 py-1.5 text-typed"
-          />
-        </div>
-
-        <Button type="button" disabled={busy} onClick={() => void add()} className="sm:mt-0">
-          {busy ? 'Saving…' : 'Add entry'}
-        </Button>
-      </div>
 
       {error !== undefined && (
         <p role="alert" className="mb-3 text-meta text-destructive">
@@ -228,11 +194,22 @@ export function RecordJournal({
             <li
               key={entry.id}
               data-testid="journal-entry"
-              className="flex items-start gap-3 border-b border-border py-2 last:border-0"
+              /*
+                **Wraps rather than overflowing.** At 390px the journal's body
+                cell is 193px, and this row's fixed 96px date plus its gaps and
+                a `shrink-0` Delete exceeded it — the button rendered past the
+                cell's right edge, over the cell beside it, where a click
+                landed on the wrong element and Playwright waited 30s for a
+                control that was enabled, visible and motionless.
+
+                `flex-wrap` with the date no longer fixed-width: the row keeps
+                its line where there is room and stacks where there is not.
+              */
+              className="flex flex-wrap items-start gap-x-3 gap-y-1 border-b border-border py-2 last:border-0"
             >
               <time
                 dateTime={entry.entryDate}
-                className="w-24 shrink-0 font-mono text-meta text-muted-foreground tabular-nums"
+                className="shrink-0 font-mono text-meta text-muted-foreground tabular-nums"
               >
                 {entry.entryDate}
               </time>
@@ -250,6 +227,107 @@ export function RecordJournal({
           ))}
         </ul>
       )}
+      </div>
+
+      <div data-testid="journal-actions">
+      <div
+        ref={formRef}
+        data-testid="journal-form"
+        className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start"
+      >
+        <div className="sm:w-40 sm:shrink-0">
+          <label htmlFor="entry-date" className="sr-only">
+            Entry date
+          </label>
+          {/*
+            **§9.2's ruled field, not a box.** A 1px ink underline under a 16px
+            line, 34px tall, MONO because the field takes data — §4.1's
+            data/prose split applying to entry exactly as it applies to
+            display. A box around a line of type is a second frame around
+            something the cell already framed.
+
+            16px is A67's amendment and its whole scope: text the user can put
+            a cursor in. At 16/1.9 the line is 30.4px inside the 34px field.
+          */}
+          <input
+            id="entry-date"
+            type="date"
+            value={entryDate}
+            className="w-full bg-transparent font-mono"
+            style={{
+              height: FIELD_HEIGHT,
+              boxSizing: 'border-box',
+              border: 0,
+              borderBottom: '1px solid oklch(0.18 0.005 60)',
+              borderRadius: 0,
+              padding: 0,
+              fontSize: TYPED_SIZE,
+              lineHeight: TYPED_LEADING,
+            }}
+            /**
+             * Bounded in the markup as well as at the API. 1877 is when sound
+             * recording began; the upper bound is today, because you cannot
+             * have played a record tomorrow. The browser's picker enforcing it
+             * saves a round trip — the server enforces it regardless, since a
+             * client-side bound is a suggestion.
+             */
+            min={COLLECTION_DATE_MIN}
+            max={today}
+            onChange={(event) => setEntryDate(event.target.value)}
+          />
+        </div>
+
+        <div className="flex-1">
+          <label htmlFor="journal-note" className="sr-only">
+            Journal note
+          </label>
+          <textarea
+            id="journal-note"
+            rows={2}
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+            placeholder="Played it after the pub. Still loud."
+            /*
+              **The one exception to the ruled-field rule**: a textarea takes a
+              full 1px grey box, because it is a REGION of text rather than a
+              line, and a region with only a baseline has no shape at all.
+            */
+            className="w-full bg-transparent px-[10px] py-[8px]"
+            style={{
+              border: `1px solid ${SECTION_RULE}`,
+              borderRadius: 0,
+              fontSize: TYPED_SIZE,
+              lineHeight: TYPED_LEADING,
+            }}
+          />
+        </div>
+
+        {/*
+          **`Save entry`, not `Add entry` — §9.2.** A form's submit is never the
+          trigger that opened it and the two never share a label: the frame's
+          journal cell carries `Add entry` as the trigger (§8.1), and this
+          section is its target. Drawn with the trigger's label it would be one
+          control announced in two places 900px apart, and a reader who has
+          already pressed `Add entry` is not adding anything by pressing it
+          again. The section loses its trigger and keeps its submit — a target
+          without a submit is a dead end.
+        */}
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => void add()}
+          className={`${LABEL} shrink-0 px-[14px] disabled:text-muted-foreground`}
+          style={{
+            height: CONTROL_HEIGHT,
+            border: '1px solid oklch(0.18 0.005 60)',
+            borderRadius: 0,
+            boxSizing: 'border-box',
+          }}
+        >
+          {busy ? 'Saving…' : 'Save entry'}
+        </button>
+      </div>
+
       </div>
     </Section>
   );

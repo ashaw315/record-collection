@@ -1,88 +1,114 @@
 import { LABEL } from './grid-type';
 import {
-  CONTENT_X,
+  CELL_PADDING,
+  CONTENT_SPLITS,
   GRID_TEMPLATE,
+  LABEL_SPAN,
   MARK_HEIGHT,
   MARK_WIDTH,
-  RAIL_X,
   SECTION_RULE,
   carriesMark,
+  type ContentShape,
   type SectionName,
 } from './extended-grid';
 
 /**
- * §9.1's section — the one structure every part of the extended grid uses.
+ * §9.1's section — twelve columns, content-derived rows.
  *
- * **The rail is the mechanism.** Above the fold twelve columns hold because
- * every cell has a fixed height; here nothing does, so what holds is a vertical
- * line: every label starts at the same x on every section, and a reader
- * scrolling past eight sections of wildly different heights sees one edge that
- * never moves. That is why a section can be 60px or 600px without the region
- * coming apart.
+ * **The same `repeat(12, 1fr)` as §2.1.** A 216px rail preceded this and was
+ * the wrong repair: the argument for it was that the twelve columns exist for a
+ * budget that does not apply below the fold, but that is an argument against
+ * the fixed BANDS rather than against the columns. Bands are height, columns
+ * are alignment; dropping the budget only requires dropping the height.
  *
- * **Height is content-derived at every level** — rail as tall as its label,
- * content as tall as its content, section as tall as the taller. A form that
- * grows pushes everything below it down. Nothing here is a band.
+ * **Height is derived at every level and nothing is reserved.** A row is as
+ * tall as its tallest cell, a section as tall as its row, the region as tall as
+ * its sections — a form that grows pushes everything below it down.
  */
 export function Section({
   name,
   title,
   base,
+  shape,
   children,
 }: {
   name: SectionName;
   title: string;
-  /**
-   * §5.5's base step for this record, or null when the record has no cover to
-   * derive from. Null draws no bar — the ladder has no invented hue (§5.3).
-   */
+  /** §5.5's base step, or null when the record has no cover to derive from. */
   base: string | null;
+  /**
+   * How the ten columns right of the label divide. The section picks by the
+   * SHAPE of what it holds, not by what it is called — see `CONTENT_SPLITS`.
+   */
+  shape: ContentShape;
+  /** One node per span in the chosen split. */
   children: React.ReactNode;
 }) {
+  const split = CONTENT_SPLITS[shape];
+
+  /**
+   * **One cell per child, not one per span.**
+   *
+   * A section declaring `pair` and passing a single child left the second cell
+   * empty — and an empty cell is not harmless: it renders as a real box beside
+   * the content, takes its columns, and at 390px sat on top of the control next
+   * to it and swallowed clicks. `record-detail.spec.ts` caught that as a 30s
+   * timeout on a Delete button that was enabled, visible and motionless.
+   *
+   * So the unused spans collapse into the last cell that has content. The
+   * split still governs where the internal edge falls when a section supplies
+   * both halves; it no longer invents a box when it does not.
+   */
+  const given = (Array.isArray(children) ? children : [children]).filter(
+    (child) => child !== null && child !== undefined && child !== false,
+  );
+  const cells =
+    given.length >= split.length
+      ? split.map((span, index) => ({ span, child: given[index] }))
+      : given.map((child, index) => ({
+          span:
+            index === given.length - 1
+              ? split.slice(index).reduce((sum, span) => sum + span, 0)
+              : split[index],
+          child,
+        }));
+
   return (
     <section
       data-section={name}
+      data-shape={shape}
       /*
-        **The boundary bleeds; the tracks indent.** §3 makes the distinction
-        load-bearing — a full-bleed rule separates modules, an inset one
-        separates things inside one module — and each section is a module. The
-        rule is therefore on the section element itself, which spans the
-        composition, rather than on the grid inside it.
-
-        It is also the ONLY rule in the region: no cell verticals, because there
-        are no cells, and no rule under the rail, which would make the rail a
-        column and re-import the grid this region is not using.
+        **The boundary bleeds; cell padding holds content at 34.** §3 makes the
+        distinction load-bearing — full-bleed separates modules, inset separates
+        things inside one — and each section is a module. So the rule is on the
+        section element, which spans the composition, rather than on the grid.
       */
       style={{ borderTop: `1px solid ${SECTION_RULE}` }}
     >
-      <div
-        /*
-          Five tracks, three of them spacers — not padding and not column-gap.
-          Padding is excluded because the rule above must bleed past it; a gap
-          is excluded because a spacer track and a gap both applying was a live
-          defect, and the two compose silently at the wrong x.
-        */
-        className="grid"
-        style={{ gridTemplateColumns: GRID_TEMPLATE, gap: 0 }}
-      >
-        {/* Track 1: spacer. The rail starts at 34. */}
-        <div aria-hidden="true" />
-
-        <div data-rail="" className="py-[18px]">
+      <div className="grid" style={{ gridTemplateColumns: GRID_TEMPLATE, gap: 0 }}>
+        {/*
+          **The label is a span, not a structure**: the first two columns. Its x
+          is a column edge rather than an invented one, so it lines up with the
+          identity cell above it.
+        */}
+        <div
+          data-cell="label"
+          style={{
+            gridColumn: `span ${LABEL_SPAN}`,
+            padding: CELL_PADDING,
+            borderRight: `1px solid ${SECTION_RULE}`,
+          }}
+        >
           <div className={LABEL}>{title}</div>
 
           {/*
-            §9.3's bar: one base-step mark in the rail, under the label.
+            §9.3's bar, under the label inside the span. A mark at the label
+            column's x sits on the one line the reader has already learned.
 
-            **It sits in the rail because the rail is the constant** — the same
-            colour arriving at the same x is what §5.5's distribution rule asks
-            for, and what no single large mark can do.
-
-            **Marked on the schema, not on the record.** A bar that appeared
-            when a record had images and vanished when it did not would make the
-            mark encode that fact, and nothing on this page encodes anything. So
-            a control-only section keeps its bar: that section is still where
-            this record's images go.
+            **Marked on the schema, not the record**: a bar that appeared when a
+            record had images and vanished when it did not would make the mark
+            encode that fact. A control-only section keeps its bar — it says the
+            record's colour reaches that place, not that something is in it.
           */}
           {carriesMark(name) && base !== null && (
             <div
@@ -93,15 +119,27 @@ export function Section({
           )}
         </div>
 
-        {/* Track 3: spacer. Content starts at 284, the frame's text edge. */}
-        <div aria-hidden="true" />
-
-        <div data-content="" className="min-w-0 py-[18px]">
-          {children}
-        </div>
-
-        {/* Track 5: spacer, so content does not run to the composition edge. */}
-        <div aria-hidden="true" />
+        {/*
+          The content cells. **A vertical rule on the right of every cell but
+          the last**, exactly as §2.1 draws them — the thing a rail structurally
+          could not do, because a rail has one edge and a grid has as many as it
+          has cells.
+        */}
+        {cells.map(({ span, child }, index) => (
+          <div
+            key={index}
+            data-cell={`content-${index}`}
+            className="min-w-0"
+            style={{
+              gridColumn: `span ${span}`,
+              padding: CELL_PADDING,
+              borderRight:
+                index === cells.length - 1 ? undefined : `1px solid ${SECTION_RULE}`,
+            }}
+          >
+            {child}
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -110,15 +148,10 @@ export function Section({
 /**
  * The region the sections stack in.
  *
- * **No max-width and no centring of its own.** The sections' rules bleed to the
+ * **No max-width and no centring of its own.** The section rules bleed to the
  * composition's edge — the viewport up to the 1728 cap, the capped container
- * beyond it — and the frame above already establishes that measure. A wrapper
- * with its own width here would inset the rules and make the region's only
- * structural element the wrong kind of edge by §3's vocabulary.
+ * beyond — and the frame above already establishes that measure.
  */
 export function ExtendedGrid({ children }: { children: React.ReactNode }) {
   return <div data-region="extended-grid">{children}</div>;
 }
-
-/** Where the rail and content land, for tests that measure rather than read. */
-export const SECTION_X = { rail: RAIL_X, content: CONTENT_X } as const;

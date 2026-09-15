@@ -420,7 +420,12 @@ test('the journal records what happened, newest first', async ({ page }) => {
   await expect(page.getByTestId('journal')).toContainText(/no entries|nothing yet/i);
 
   await page.getByLabel('Journal note').fill('Played it after the pub. Still loud.');
-  await page.getByRole('button', { name: 'Add entry' }).click();
+  /*
+    **`Save entry` is the submit; `Add entry` is the frame's trigger (§9.2).**
+    A form's submit is never the control that opened it and the two never share
+    a label, so a spec writing an entry presses the section's submit.
+  */
+  await page.getByRole('button', { name: 'Save entry' }).click();
 
   await expect(page.getByTestId('journal-entry')).toHaveCount(1, { timeout: 15_000 });
   await expect(page.getByTestId('journal')).toContainText('Still loud');
@@ -428,7 +433,12 @@ test('the journal records what happened, newest first', async ({ page }) => {
   // A second entry, backdated — "I played this last Tuesday" is the normal case.
   await page.getByLabel('Entry date').fill('2026-01-05');
   await page.getByLabel('Journal note').fill('First listen, cold morning.');
-  await page.getByRole('button', { name: 'Add entry' }).click();
+  /*
+    **`Save entry` is the submit; `Add entry` is the frame's trigger (§9.2).**
+    A form's submit is never the control that opened it and the two never share
+    a label, so a spec writing an entry presses the section's submit.
+  */
+  await page.getByRole('button', { name: 'Save entry' }).click();
 
   await expect(page.getByTestId('journal-entry')).toHaveCount(2, { timeout: 15_000 });
 
@@ -493,7 +503,12 @@ test('deleting an entry leaves the record alone', async ({ page }) => {
     timeout: 15_000,
   });
   await page.getByLabel('Journal note').fill('a note to remove');
-  await page.getByRole('button', { name: 'Add entry' }).click();
+  /*
+    **`Save entry` is the submit; `Add entry` is the frame's trigger (§9.2).**
+    A form's submit is never the control that opened it and the two never share
+    a label, so a spec writing an entry presses the section's submit.
+  */
+  await page.getByRole('button', { name: 'Save entry' }).click();
   await expect(page.getByTestId('journal-entry')).toHaveCount(1, { timeout: 15_000 });
 
   page.on('dialog', (dialog) => dialog.accept());
@@ -595,7 +610,13 @@ test('an asking price is listed but never charted as what the record is worth', 
 
   // All three remain in the list below — with the asking one saying nobody paid.
   await expect(page.getByTestId('price-observation')).toHaveCount(3);
-  await expect(page.getByTestId('price-history')).toContainText(/nobody paid/i);
+  /*
+    **The SECTION, not the first cell.** §9.1's `pair` split puts the series in
+    one cell and the observation rows in the other, so `price-history` is now
+    half of what it used to be. The fact asserted is unchanged — it moved cells,
+    so the locator moves with it.
+  */
+  await expect(page.locator('[data-section="price-history"]')).toContainText(/nobody paid/i);
 });
 
 test('the price section offers no way to edit an observation', async ({ page }) => {
@@ -617,7 +638,7 @@ test('the price section offers no way to edit an observation', async ({ page }) 
 
   await page.goto(`/records/${record.id}`);
 
-  const section = page.getByTestId('price-history');
+  const section = page.locator('[data-section="price-history"]');
   await expect(section).toContainText(/added, never edited/i);
   await expect(section.getByRole('button', { name: /edit/i })).toHaveCount(0);
 });
@@ -652,7 +673,7 @@ test('offers no way to type in a price — §10a replaced manual entry', async (
 
   await page.goto(`/records/${record.id}`);
 
-  const section = page.getByTestId('price-history');
+  const section = page.locator('[data-section="price-history"]');
 
   // The history is still shown — this removed an input, not the feature.
   await expect(section.getByTestId('price-observation')).toHaveCount(1);
@@ -679,7 +700,7 @@ test('offers no way to type in a price — §10a replaced manual entry', async (
 
   await page.goto(`/records/${blank.id}`);
 
-  const blankSection = page.getByTestId('price-history');
+  const blankSection = page.locator('[data-section="price-history"]');
   await expect(blankSection, 'the empty state IS on screen').toContainText(
     /no prices recorded/i,
   );

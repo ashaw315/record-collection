@@ -89,7 +89,14 @@ export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured, b
   }
 
   return (
-    <Section name="snippet" title="About this record" base={base}>
+    <Section name="snippet" title="About this record" base={base} shape="body">
+      {/*
+        **The body in the 6, the action in the 4** — §9.1's `body` split is "a
+        body with an action beside it", and a section that declares it must
+        fill both cells. Passing one child left the second empty, which renders
+        as a box beside the content and, at 390px, took the clicks meant for
+        what was under it.
+      */}
       <div data-testid="snippet-panel">
       {/*
         **Wraps rather than squeezing.** This was `flex items-baseline
@@ -103,37 +110,6 @@ export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured, b
         line, and the long message drops beneath it when there is no room. On a
         wide screen nothing changes — the two still sit on one baseline.
       */}
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        {/*
-          **Named when unconfigured, never silently absent** — the same choice
-          `GapAnalysis` makes for §9.2, and for its reason: "a button that
-          silently does nothing reads as broken; saying which credential is
-          missing turns a mystery into a deployment task."
-
-          Found by an E2E spec that could not click a button the test
-          environment had no key for. The button vanishing was consistent with
-          nothing, and A31a's whole argument is that hiding a capability with no
-          explanation is the shape to avoid.
-        */}
-        {configured ? (
-          <button
-            type="button"
-            data-testid="snippet-generate"
-            onClick={regenerate}
-            disabled={busy}
-            className="shrink-0 text-label underline underline-offset-2 disabled:opacity-60"
-          >
-            {busy ? 'Working…' : view.kind === 'absent' ? 'Write one' : 'Write a new one'}
-          </button>
-        ) : (
-          <span
-            data-testid="snippet-unconfigured"
-            className="text-meta text-muted-foreground"
-          >
-            Writing notes is not configured on this deployment.
-          </span>
-        )}
-      </div>
 
       {editing ? (
         <div className="mt-2">
@@ -230,6 +206,38 @@ export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured, b
           {error}
         </p>
       )}
+      </div>
+
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        {/*
+          **Named when unconfigured, never silently absent** — the same choice
+          `GapAnalysis` makes for §9.2, and for its reason: "a button that
+          silently does nothing reads as broken; saying which credential is
+          missing turns a mystery into a deployment task."
+
+          Found by an E2E spec that could not click a button the test
+          environment had no key for. The button vanishing was consistent with
+          nothing, and A31a's whole argument is that hiding a capability with no
+          explanation is the shape to avoid.
+        */}
+        {configured ? (
+          <button
+            type="button"
+            data-testid="snippet-generate"
+            onClick={regenerate}
+            disabled={busy}
+            className="shrink-0 text-label underline underline-offset-2 disabled:opacity-60"
+          >
+            {busy ? 'Working…' : view.kind === 'absent' ? 'Write one' : 'Write a new one'}
+          </button>
+        ) : (
+          <span
+            data-testid="snippet-unconfigured"
+            className="text-meta text-muted-foreground"
+          >
+            Writing notes is not configured on this deployment.
+          </span>
+        )}
       </div>
     </Section>
   );

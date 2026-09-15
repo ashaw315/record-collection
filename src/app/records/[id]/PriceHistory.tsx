@@ -61,7 +61,7 @@ export function PriceHistory({
   const range = priceRange(paid);
 
   return (
-    <Section name="price-history" title="Price history" base={base}>
+    <Section name="price-history" title="Price history" base={base} shape="pair">
       <div data-testid="price-history">
 
       {/*
@@ -153,6 +153,26 @@ export function PriceHistory({
               <span className="font-mono tabular-nums">{formatPrice(range.high)}</span>
             </p>
           )}
+        </div>
+      )}
+
+      {/*
+        §7.5 stated where it is felt. Without this, the absence of an edit
+        control reads as an oversight rather than a rule.
+      */}
+      <p className="mt-1 text-meta text-muted-foreground">
+        Prices are a record of observations — each one is added, never edited.
+      </p>
+      </div>
+
+      {/*
+        **The rows in the second 5.** §9.1 names this section's pair as "series
+        and rows", and they are the two comparable things: a sparkline says the
+        shape and cannot say which observation was when. A `pair` section that
+        passes one child leaves the other cell empty, which renders as a box
+        beside the content.
+      */}
+      <div data-testid="price-rows">
           {/*
             The observations themselves, which the sparkline could not show.
             "3 observations, $8.00 to $120.00" cannot say whether the $120 was
@@ -178,17 +198,6 @@ export function PriceHistory({
               </li>
             ))}
           </ul>
-        </div>
-      )}
-
-      {/*
-        §7.5 stated where it is felt. Without this, the absence of an edit
-        control reads as an oversight rather than a rule.
-      */}
-      <p className="mt-1 text-meta text-muted-foreground">
-        Prices are a record of observations — each one is added, never edited.
-      </p>
-
       </div>
     </Section>
   );

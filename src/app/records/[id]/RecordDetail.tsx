@@ -127,9 +127,24 @@ export function RecordDetail({
         appears here automatically unless the grid claims it.
       */}
       {remainingFacts.length > 0 && (
-        <Section name="pressing-detail" title="Pressing detail" base={base}>
+        <Section name="pressing-detail" title="Pressing detail" base={base} shape="pair">
+          {/*
+            **The pairs divide ACROSS the split, not inside one cell.** §9.1's
+            5+5 is "two comparable things — pressing pairs", and a single list
+            in the first cell leaves the second empty, which renders as a box
+            with nothing in it beside the content.
+          */}
           <dl>
-            {remainingFacts.map((fact) => (
+            {remainingFacts
+              .slice(0, Math.ceil(remainingFacts.length / 2))
+              .map((fact) => (
+                <Field key={fact.label} label={fact.label} mono={fact.mono}>
+                  {fact.value}
+                </Field>
+              ))}
+          </dl>
+          <dl>
+            {remainingFacts.slice(Math.ceil(remainingFacts.length / 2)).map((fact) => (
               <Field key={fact.label} label={fact.label} mono={fact.mono}>
                 {fact.value}
               </Field>
@@ -157,7 +172,7 @@ export function RecordDetail({
         it would edit live in the frame's provenance cell and in the edit form.
       */}
       {record.latestPrice !== null && (
-      <Section name="acquisition" title="Acquisition" base={base}>
+      <Section name="acquisition" title="Acquisition" base={base} shape="pair">
         {/*
           The LATEST price, whatever its type — NOT §7.6's used → new →
           purchase_price chain, which is defined for the collection-value
@@ -204,7 +219,7 @@ export function RecordDetail({
         a fact.
       */}
       {record.tags.length > 0 && (
-        <Section name="tags" title="Tags" base={base}>
+        <Section name="tags" title="Tags" base={base} shape="one">
           <div className="flex flex-wrap gap-[8px]">
             {record.tags.map((tag) => (
               <Link

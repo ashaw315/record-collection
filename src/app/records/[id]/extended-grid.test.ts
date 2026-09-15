@@ -1,56 +1,134 @@
 import { describe, expect, it } from 'vitest';
 import {
-  CONTENT_X,
+  CELL_PADDING,
+  CONTENT_COLUMNS,
+  CONTENT_SPLITS,
   CONTROL_HEIGHT,
   FIELD_HEIGHT,
   CHIP_HEIGHT,
   GRID_TEMPLATE,
-  GRID_TRACKS,
+  LABEL_SPAN,
   MARK_HEIGHT,
   MARK_WIDTH,
-  RAIL_X,
   SECTIONS,
   TYPED_LEADING,
   TYPED_SIZE,
   carriesMark,
+  type ContentShape,
   type SectionName,
 } from './extended-grid';
 
-describe('the five tracks (§9.1)', () => {
-  it('is five tracks, three of them spacers', () => {
-    expect(GRID_TRACKS).toEqual(['34px', '216px', '34px', '1fr', '34px']);
-    expect(GRID_TEMPLATE).toBe('34px 216px 34px 1fr 34px');
-  });
-
-  it('puts the rail at 34 and the content at 284', () => {
+describe('twelve columns (§9.1)', () => {
+  it('is the same grid as §2.1, not a structure of its own', () => {
     /*
-      Derived from the tracks rather than restated, so a track changing without
-      these moving is a contradiction the test can see. 34 + 216 + 34 = 284.
+      The rail was the wrong repair: the columns exist for ALIGNMENT and the
+      bands for height, so dropping the budget drops the height and leaves the
+      columns alone. A region on its own grid is a document stapled under a
+      page.
     */
-    const px = (track: string) => Number.parseInt(track, 10);
-
-    expect(px(GRID_TRACKS[0]), 'rail x').toBe(RAIL_X);
-    expect(px(GRID_TRACKS[0]) + px(GRID_TRACKS[1]) + px(GRID_TRACKS[2]), 'content x').toBe(
-      CONTENT_X,
-    );
+    expect(GRID_TEMPLATE).toBe('repeat(12, 1fr)');
   });
 
-  it('carries no gap in the template, because a gap would compose with the spacers', () => {
+  it('gives the label two columns, so its x is a column edge', () => {
+    expect(LABEL_SPAN).toBe(2);
+    expect(CONTENT_COLUMNS, 'the ten right of the label').toBe(10);
+    expect(LABEL_SPAN + CONTENT_COLUMNS, 'twelve').toBe(12);
+  });
+
+  it('holds content at 34px while the section rule bleeds past it', () => {
+    expect(CELL_PADDING).toBe(34);
+  });
+});
+
+describe('three content splits and no more (§9.1)', () => {
+  it('offers exactly three', () => {
     /**
-     * **A spacer track and a gap both applying was a live defect.** The two
-     * compose silently: the rail lands at 34 + gap and the content at 284 + 2×
-     * gap, and every label still lines up with every other, so the region looks
-     * correct and sits at the wrong x.
+     * **The count is the rule.** Three splits stop each section inventing its
+     * own; a fourth is a section whose content has not been identified yet.
+     * Asserted as a count rather than as a list, because the failure this
+     * guards is one more arriving — not one of these three changing.
      */
-    expect(GRID_TEMPLATE).not.toMatch(/gap/);
+    expect(Object.keys(CONTENT_SPLITS)).toHaveLength(3);
+  });
+
+  it('fills the ten columns right of the label, whichever is chosen', () => {
+    /*
+      The load-bearing property: a split that summed to anything else would put
+      one section's content edge somewhere no other section has one, which is
+      the alignment the twelve columns exist for.
+    */
+    for (const [shape, split] of Object.entries(CONTENT_SPLITS)) {
+      const total = split.reduce((sum, span) => sum + span, 0);
+      expect(total, `${shape} spans ${split.join('+')}`).toBe(CONTENT_COLUMNS);
+    }
+  });
+
+  it('names each split for the shape of content it takes', () => {
+    expect(CONTENT_SPLITS.one, 'one continuous thing').toEqual([10]);
+    expect(CONTENT_SPLITS.pair, 'two comparable things').toEqual([5, 5]);
+    expect(CONTENT_SPLITS.body, 'a body with an action beside it').toEqual([6, 4]);
+  });
+
+  it('has no split that is not one of the three', () => {
+    /**
+     * **The fourth-split guard, as a type-level claim made checkable.**
+     *
+     * `ContentShape` is the union of the three keys, so a section asking for a
+     * fourth does not compile. This asserts the union has not quietly grown —
+     * the enumeration defect this repo has recorded seven times, where a rule
+     * stated over a fixed set acquires a member nobody decided on.
+     */
+    const shapes: ContentShape[] = ['one', 'pair', 'body'];
+
+    expect(Object.keys(CONTENT_SPLITS).sort()).toEqual([...shapes].sort());
   });
 });
 
 describe("§9.3's mark predicate", () => {
-  it('marks exactly the four the ruling names', () => {
+  /**
+   * **Derived from the predicate, not transcribed from the list.**
+   *
+   * Design rebuilt the eight sections by hand and carried the mark flags from
+   * the pre-ruling order, which flipped Market with Price history. The bar
+   * belongs on Price history: the frame shows the median and does not show the
+   * series. Transcription is exactly how that error happened, so each section
+   * below states the FACT it holds and whether the frame shows it, and the
+   * expected set falls out of applying §9.3's one test.
+   */
+  const FRAME_SHOWS: Record<SectionName, { holds: string; shownAbove: boolean }> = {
+    'pressing-detail': { holds: 'plant, weight, colour variant', shownAbove: false },
+    acquisition: { holds: 'paid / from / condition', shownAbove: true },
+    tags: { holds: 'a control, not a fact', shownAbove: true },
+    images: { holds: 'the images themselves', shownAbove: false },
+    snippet: { holds: 'the snippet text', shownAbove: true },
+    market: { holds: 'the median', shownAbove: true },
+    'price-history': { holds: 'the series of observations', shownAbove: false },
+    journal: { holds: 'an entry', shownAbove: false },
+  };
+
+  it('marks a section when it holds a fact that appears nowhere above the fold', () => {
+    for (const section of SECTIONS) {
+      const { holds, shownAbove } = FRAME_SHOWS[section];
+
+      expect(
+        carriesMark(section),
+        `${section} holds ${holds}; the frame ${shownAbove ? 'shows' : 'does not show'} it`,
+      ).toBe(!shownAbove);
+    }
+  });
+
+  it('marks four of eight, and Price history rather than Market', () => {
+    /*
+      The flip, asserted by name because it is the specific error that shipped:
+      the frame shows the median in full and never the series, so Market only
+      refreshes a fact already above the fold and Price history holds one that
+      is not.
+    */
     const marked = SECTIONS.filter(carriesMark);
 
-    expect(marked).toEqual(['pressing-detail', 'images', 'price-history', 'journal']);
+    expect(marked).toHaveLength(4);
+    expect(marked, 'the series is not shown above').toContain('price-history');
+    expect(marked, 'the median IS shown above').not.toContain('market');
   });
 
   it('leaves the other four unmarked', () => {
@@ -201,10 +279,16 @@ describe("§9.3's bar", () => {
     expect(MARK_WIDTH, 'as wide as a control is tall').toBe(CONTROL_HEIGHT);
   });
 
-  it('fits inside the rail with room to spare', () => {
-    const rail = Number.parseInt(GRID_TRACKS[1], 10);
+  it('sits in the label span, which is where §9.3 puts it', () => {
+    /*
+      The bar is under the label inside the two-column span — a mark at the
+      label column's x sits on the one line the reader has already learned. At
+      1440 the span is 240px, so a 44px bar fits with room; the assertion is
+      that it fits the narrowest span the cap allows rather than a fixed number.
+    */
+    const spanAt1440 = (1440 / 12) * LABEL_SPAN;
 
-    expect(MARK_WIDTH).toBeLessThan(rail);
+    expect(MARK_WIDTH).toBeLessThan(spanAt1440 - CELL_PADDING * 2);
   });
 });
 

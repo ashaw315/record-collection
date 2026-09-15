@@ -3,7 +3,15 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { seedImage } from './seed';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
-import { CONTENT_X, MARK_HEIGHT, MARK_WIDTH, RAIL_X } from '../src/app/records/[id]/extended-grid';
+import {
+  CELL_PADDING,
+  CONTROL_HEIGHT,
+  FIELD_HEIGHT,
+  LABEL_SPAN,
+  MARK_HEIGHT,
+  MARK_WIDTH,
+  TYPED_SIZE,
+} from '../src/app/records/[id]/extended-grid';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 
 /**
@@ -102,11 +110,15 @@ test.beforeEach(async ({ page }) => {
   await login(page);
 });
 
-test('the rail lands at 34 and the content at 284, on every section', async ({ page }) => {
+test('every section is on the same twelve columns', async ({ page }) => {
   /**
-   * **The one edge that never moves.** The whole structure is the claim that a
-   * reader scrolling past sections of wildly different heights sees one x. So
-   * it is asserted across EVERY rendered section rather than on one.
+   * **The alignment the columns exist for.** A rail gave every section one
+   * shared x; twelve columns give every CELL EDGE a shared x, which is what
+   * lets sections of different shapes sit under one another without drifting.
+   *
+   * Asserted as: every cell edge in the region falls on a column boundary. A
+   * section on its own grid passes nothing here, and a section using a fourth
+   * split fails on the boundary its span does not reach.
    */
   const suffix = makeSuffix();
   const id = await richRecord(page, suffix);
@@ -114,26 +126,121 @@ test('the rail lands at 34 and the content at 284, on every section', async ({ p
   await page.goto(`/records/${id}`);
   await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
 
-  const measured = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('[data-section]')).map((section) => {
-      const rail = section.querySelector('[data-rail]');
-      const content = section.querySelector('[data-content]');
-      const box = section.getBoundingClientRect();
-      return {
-        name: section.getAttribute('data-section'),
-        railX: rail === null ? null : Math.round(rail.getBoundingClientRect().left),
-        contentX: content === null ? null : Math.round(content.getBoundingClientRect().left),
-        left: Math.round(box.left),
-        width: Math.round(box.width),
-      };
-    }),
-  );
+  const measured = await page.evaluate(() => {
+    const column = window.innerWidth / 12;
+    return Array.from(document.querySelectorAll('[data-section]')).map((section) => ({
+      name: section.getAttribute('data-section'),
+      shape: section.getAttribute('data-shape'),
+      edges: Array.from(section.querySelectorAll('[data-cell]')).map((cell) => {
+        const box = cell.getBoundingClientRect();
+        return { left: box.left / column, right: box.right / column };
+      }),
+    }));
+  });
 
   expect(measured.length, 'sections rendered').toBeGreaterThan(0);
 
   for (const section of measured) {
-    expect(section.railX, `${section.name}: rail x`).toBe(RAIL_X);
-    expect(section.contentX, `${section.name}: content x`).toBe(CONTENT_X);
+    for (const edge of section.edges) {
+      /* Within a tenth of a column: sub-pixel rounding, not a different grid. */
+      expect(
+        Math.abs(edge.left - Math.round(edge.left)),
+        `${section.name} (${section.shape}) left edge at column ${edge.left.toFixed(2)}`,
+      ).toBeLessThan(0.1);
+      expect(
+        Math.abs(edge.right - Math.round(edge.right)),
+        `${section.name} (${section.shape}) right edge at column ${edge.right.toFixed(2)}`,
+      ).toBeLessThan(0.1);
+    }
+  }
+});
+
+test('the label takes the first two columns on every section', async ({ page }) => {
+  /*
+    The label survives the rail as a SPAN. Its x is a column edge rather than an
+    invented one, which is what lines it up with the identity cell above.
+  */
+  const suffix = makeSuffix();
+  const id = await richRecord(page, suffix);
+  await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
+  await page.goto(`/records/${id}`);
+  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+
+  const labels = await page.evaluate(() => {
+    const column = window.innerWidth / 12;
+    return Array.from(document.querySelectorAll('[data-section]')).map((section) => {
+      const label = section.querySelector('[data-cell="label"]');
+      if (label === null) return null;
+      const box = label.getBoundingClientRect();
+      return {
+        name: section.getAttribute('data-section'),
+        startColumn: Math.round(box.left / column),
+        spanColumns: Math.round(box.width / column),
+      };
+    });
+  });
+
+  for (const label of labels) {
+    expect(label, 'every section has a label cell').not.toBeNull();
+    if (label === null) continue;
+    expect(label.startColumn, `${label.name} starts at column 0`).toBe(0);
+    expect(label.spanColumns, `${label.name} spans two`).toBe(LABEL_SPAN);
+  }
+});
+
+test('rules every cell but the last in each section', async ({ page }) => {
+  /**
+   * **The thing a rail structurally could not do.** A rail has one edge; a grid
+   * has as many as it has cells. §2.1 draws a 1px vertical on the right of
+   * every cell but the last, and the region now divides horizontally the way
+   * the frame does.
+   *
+   * The "but the last" half matters: a rule on the final cell would sit on the
+   * composition's edge, where §3 reserves the full-bleed weight for section
+   * boundaries.
+   */
+  const suffix = makeSuffix();
+  const id = await richRecord(page, suffix);
+  await page.goto(`/records/${id}`);
+  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+
+  const sections = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('[data-section]')).map((section) => ({
+      name: section.getAttribute('data-section'),
+      rules: Array.from(section.querySelectorAll('[data-cell]')).map(
+        (cell) => getComputedStyle(cell).borderRightWidth,
+      ),
+    })),
+  );
+
+  for (const section of sections) {
+    const last = section.rules.length - 1;
+    section.rules.forEach((width, index) => {
+      if (index === last) {
+        expect(width, `${section.name}: the last cell carries no rule`).toBe('0px');
+      } else {
+        expect(width, `${section.name}: cell ${index} is ruled`).toBe('1px');
+      }
+    });
+  }
+});
+
+test('holds content at 34px inside every cell', async ({ page }) => {
+  const suffix = makeSuffix();
+  const id = await richRecord(page, suffix);
+  await page.goto(`/records/${id}`);
+  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+
+  const paddings = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('[data-section] [data-cell]')).map((cell) => {
+      const style = getComputedStyle(cell);
+      return `${style.paddingTop}|${style.paddingLeft}`;
+    }),
+  );
+
+  expect(paddings.length).toBeGreaterThan(0);
+  for (const padding of paddings) {
+    expect(padding).toBe(`${CELL_PADDING}px|${CELL_PADDING}px`);
   }
 });
 
@@ -155,12 +262,12 @@ test('the section rule bleeds past the tracks it contains', async ({ page }) => 
 
   const measured = await page.evaluate(() => {
     const section = document.querySelector('[data-section]')!;
-    const rail = section.querySelector('[data-rail]')!;
+    const rail = section.querySelector('[data-cell="label"]')!;
     const style = getComputedStyle(section);
     return {
       left: Math.round(section.getBoundingClientRect().left),
       right: Math.round(section.getBoundingClientRect().right),
-      railLeft: Math.round(rail.getBoundingClientRect().left),
+      labelLeft: Math.round(rail.getBoundingClientRect().left),
       borderTop: style.borderTopWidth,
       viewport: window.innerWidth,
     };
@@ -168,7 +275,9 @@ test('the section rule bleeds past the tracks it contains', async ({ page }) => 
 
   expect(measured.left, 'the rule starts at the composition edge').toBe(0);
   expect(measured.right, 'and runs to it').toBe(measured.viewport);
-  expect(measured.railLeft, 'while the rail stays indented').toBeGreaterThan(measured.left);
+  expect(measured.labelLeft, 'while the label cell starts at the composition edge').toBe(
+    measured.left,
+  );
   expect(measured.borderTop, 'one hairline').toBe('1px');
 });
 
@@ -224,7 +333,8 @@ test('the bar is 44 × 10 and sits on the rail', async ({ page }) => {
     expect(bar.w).toBe(MARK_WIDTH);
     expect(bar.h).toBe(MARK_HEIGHT);
     /* On the rail — the same x as every label, which is the whole argument. */
-    expect(bar.x, 'the bar sits at the rail x').toBe(RAIL_X);
+    /* In the label span, indented by the cell's own 34px padding. */
+    expect(bar.x, 'the bar sits in the label span').toBe(CELL_PADDING);
   }
 });
 
@@ -248,8 +358,8 @@ test('renders no empty section, and no diagonal below the fold', async ({ page }
       (mark) => !frame.contains(mark),
     );
     const empty = Array.from(document.querySelectorAll('[data-section]')).filter((section) => {
-      const content = section.querySelector('[data-content]');
-      return content !== null && (content.textContent ?? '').trim() === '';
+      const cells = Array.from(section.querySelectorAll('[data-cell^="content"]'));
+      return cells.length > 0 && cells.every((cell) => (cell.textContent ?? '').trim() === '');
     });
     return {
       diagonals: diagonals.length,
@@ -260,4 +370,198 @@ test('renders no empty section, and no diagonal below the fold', async ({ page }
 
   expect(below.diagonals, 'no diagonal crosses the fold').toBe(0);
   expect(below.empty, `no section renders with empty content (all: ${below.all.join(', ')})`).toEqual([]);
+});
+
+test('the trigger and the submit never share a label', async ({ page }) => {
+  /**
+   * §9.2: a form's submit is not the trigger that opened it. The frame's
+   * journal cell carries `Add entry` (§8.1's trigger); this region's Journal
+   * section carries `Save entry` (the submit).
+   *
+   * **Both halves are asserted.** `ADD ENTRY` rendered twice before this —
+   * once in the frame and once on the section's button — which is one control
+   * announced in two places 900px apart, and a reader who has already pressed
+   * it is not adding anything by pressing it again. Asserting only that the
+   * section says `Save entry` would stay green if the frame's trigger vanished,
+   * and a target with no trigger is as broken as a trigger with no target.
+   */
+  const suffix = makeSuffix();
+  const id = await richRecord(page, suffix);
+  await page.goto(`/records/${id}`);
+  await page.locator('[data-section="journal"]').waitFor({ timeout: 20_000 });
+
+  const frame = page.getByTestId('record-page-8a');
+  const journal = page.locator('[data-section="journal"]');
+
+  await expect(frame.getByText('Add entry', { exact: true }), "the frame's trigger").toHaveCount(1);
+  await expect(
+    journal.getByRole('button', { name: 'Save entry' }),
+    "the section's submit",
+  ).toHaveCount(1);
+
+  /* And neither word appears in the other's place. */
+  await expect(
+    journal.getByText('Add entry', { exact: true }),
+    'the section does not repeat the trigger',
+  ).toHaveCount(0);
+  await expect(
+    page.locator('main').getByText('Add entry', { exact: true }),
+    'ADD ENTRY renders once on the screen',
+  ).toHaveCount(1);
+});
+
+test('the journal controls are §9.2 rather than browser defaults', async ({ page }) => {
+  /**
+   * The date field, the textarea and the submit were a shadcn `Input`, a
+   * bordered box and a filled `Button` — three vocabularies, none of them §9.2.
+   *
+   * Asserted on computed geometry rather than class names: a `border-radius`
+   * cancelled by an ancestor passes a class check, which is unit 20's breakout
+   * defect exactly.
+   */
+  const suffix = makeSuffix();
+  const id = await richRecord(page, suffix);
+  await page.goto(`/records/${id}`);
+  await page.locator('[data-section="journal"]').waitFor({ timeout: 20_000 });
+
+  const measured = await page.evaluate(() => {
+    const scope = document.querySelector('[data-section="journal"]')!;
+    const date = scope.querySelector('#entry-date') as HTMLElement | null;
+    const note = scope.querySelector('#journal-note') as HTMLElement | null;
+    const save = Array.from(scope.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === 'Save entry',
+    );
+    const read = (el: HTMLElement | null | undefined) => {
+      if (el == null) return null;
+      const style = getComputedStyle(el);
+      return {
+        height: Math.round(el.getBoundingClientRect().height),
+        radius: style.borderRadius,
+        fontSize: style.fontSize,
+        family: style.fontFamily.split(',')[0].replace(/['"]/g, ''),
+        bottomBorder: style.borderBottomWidth,
+        background: style.backgroundColor,
+      };
+    };
+    return { date: read(date), note: read(note), save: read(save) };
+  });
+
+  expect(measured.date, 'the date field renders').not.toBeNull();
+  expect(measured.save, 'the submit renders').not.toBeNull();
+  if (measured.date === null || measured.save === null || measured.note === null) return;
+
+  /* A ruled field: 34px, no radius, a 1px underline, mono because it takes data. */
+  expect(measured.date.height, 'field height').toBe(FIELD_HEIGHT);
+  expect(measured.date.radius, 'no radius').toBe('0px');
+  expect(measured.date.bottomBorder, 'the 1px rule under the line').toBe('1px');
+  expect(measured.date.fontSize, "A67's typed line").toBe(`${TYPED_SIZE}px`);
+
+  /* The textarea takes 16 too: it is a region of text the user types into. */
+  expect(measured.note.fontSize, 'the typed line in a region').toBe(`${TYPED_SIZE}px`);
+
+  /* A control: 44px, no radius, no fill. */
+  expect(measured.save.height, 'control height').toBe(CONTROL_HEIGHT);
+  expect(measured.save.radius, 'no radius').toBe('0px');
+  expect(
+    measured.save.background,
+    'no fill — a filled button would be the only solid non-derived mass',
+  ).toMatch(/rgba\(0, 0, 0, 0\)|transparent/);
+});
+
+test('no cell overlaps another, at mobile width', async ({ page }) => {
+  /**
+   * **A section that declares a split must fill it.**
+   *
+   * `Section` renders one cell per span, so a `pair` or `body` section passing
+   * a single child left the second cell empty — and an empty cell is not
+   * harmless: at 390px it sat on top of the content beside it and swallowed
+   * clicks. `record-detail.spec.ts` caught it as a 30s timeout on a Delete
+   * button that was enabled, visible, and motionless, because the failure was
+   * neither state nor stability but a hit test.
+   *
+   * Asserted by hit-testing every interactive element against what is actually
+   * on top of it — a geometric overlap check would pass on two cells that
+   * merely abut, and the defect is that the wrong one receives the click.
+   */
+  const suffix = makeSuffix();
+  const id = await richRecord(page, suffix);
+  /*
+    **With a journal entry**, because the first version of this test used a
+    record that had none — so the control the defect actually covered was not
+    on the page and the test passed against the bug. A fixture that cannot
+    contain the defect is the shape this repo has recorded three times.
+  */
+  await post(page, `/api/records/${id}/journal`, {
+    note: `an entry to delete ${suffix}`,
+    entryDate: '2024-03-14',
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`/records/${id}`);
+  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+
+  const blocked = await page.evaluate(() => {
+    const out: string[] = [];
+    for (const section of Array.from(document.querySelectorAll('[data-section]'))) {
+      for (const cell of Array.from(section.querySelectorAll('[data-cell]'))) {
+        const bounds = cell.getBoundingClientRect();
+        for (const control of Array.from(
+          cell.querySelectorAll('button, a, input, select, textarea'),
+        )) {
+          const box = control.getBoundingClientRect();
+          if (box.width === 0 || box.height === 0) continue;
+
+          /*
+            **Containment, not a centre-point hit test.** The first version
+            sampled each control's centre and passed against the real defect:
+            the journal's Delete button overflowed its 193px cell at 390px, but
+            its CENTRE still landed on itself — only the part past the cell edge
+            was over the neighbour. A control that leaves its cell is covered
+            wherever it overlaps, which a single point cannot see.
+          */
+          if (box.right > bounds.right + 1 || box.left < bounds.left - 1) {
+            out.push(
+              `${section.getAttribute('data-section')}: ${control.tagName} ` +
+                `[${Math.round(box.left)}..${Math.round(box.right)}] escapes ` +
+                `${cell.getAttribute('data-cell')} [${Math.round(bounds.left)}..${Math.round(bounds.right)}]`,
+            );
+          }
+        }
+      }
+    }
+    return out;
+  });
+
+  expect(blocked, `controls escaping their cell:\n${blocked.join('\n')}`).toEqual([]);
+});
+
+test('renders exactly one cell per span in its split', async ({ page }) => {
+  /*
+    The structural half of the same defect, checked directly: a `pair` section
+    has two content cells and a `one` section has one. A section passing fewer
+    children than its split declares gets an empty cell it did not intend.
+  */
+  const suffix = makeSuffix();
+  const id = await richRecord(page, suffix);
+  await page.goto(`/records/${id}`);
+  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+
+  const sections = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('[data-section]')).map((section) => ({
+      name: section.getAttribute('data-section'),
+      shape: section.getAttribute('data-shape'),
+      cells: section.querySelectorAll('[data-cell^="content"]').length,
+      empty: Array.from(section.querySelectorAll('[data-cell^="content"]')).filter(
+        (cell) => (cell.textContent ?? '').trim() === '' && cell.children.length === 0,
+      ).length,
+    })),
+  );
+
+  const expected: Record<string, number> = { one: 1, pair: 2, body: 2 };
+
+  for (const section of sections) {
+    expect(section.cells, `${section.name} (${section.shape}) cell count`).toBe(
+      expected[section.shape ?? ''],
+    );
+    expect(section.empty, `${section.name} renders no empty cell`).toBe(0);
+  }
 });
