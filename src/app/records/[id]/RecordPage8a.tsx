@@ -251,9 +251,13 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
                 evidence was a mark named `triangle` drawing three faces.
 
                 In the ornament TRACK rather than positioned against the cell,
-                so §4.2's corner reserve yields structurally: 140px at two
-                title lines, 115.4 at three, 47.7 at four, gone at five. The
-                HEIGHT is the drawing's; the track supplies it.
+                so §4.2's corner reserve yields structurally: the track holds
+                140px while the content does not need it and gives it up as
+                the title grows. The drawing's figures for that yield (115.4 at
+                three lines, 47.7 at four, gone at five) rested on a text stack
+                ~69px taller than the built one and are drift — on the build
+                the longest title in the collection leaves the track 27px. The
+                HEIGHT of the field is the drawing's; the track supplies it.
 
                 **268 × 140, ratio 1.91** — read off the drawing, where all
                 three instances have carried it since they were drawn.
@@ -544,7 +548,7 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
           edge. Labelled for the same reason as the year field above.
         */}
         <div
-          data-cell="about"
+          data-cell="note"
           /*
             **The mark keeps its name.** `journalEdge` is the 2px derived edge
             at the band's right end, and the name is load-bearing —
@@ -567,13 +571,21 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
             The snippet is a DIFFERENT fact — a separate column carrying §10b's
             generated text — and lives in its own section.
 
+            **Labelled `NOTE`, not `About this record`.** Both surfaces carried
+            those words for one round while holding different columns. The
+            frame's labels are field names — PRESSING, PROVENANCE, MATRIX — and
+            NOTE is that register; the §9 section keeps `About this record`,
+            and its own "Written by Claude" line carries the attribution, so a
+            possessive here would buy nothing and be the only one in a frame
+            that belongs to the record.
+
             §8.1's trigger goes with the entry. Its rule forbids a form's submit
             from sharing a label with the trigger that opened it; with no cell
             here there is no trigger, so the rule is vacuous rather than
             violated and the section keeps `Save entry`. The journal is reached
             by scrolling to it, not by a control.
           */}
-          <div className={LABEL}>About this record</div>
+          <div className={LABEL}>Note</div>
           {record.note === null ? (
             <EmptyMark diagonal="single" />
           ) : (

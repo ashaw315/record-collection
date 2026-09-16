@@ -16,13 +16,16 @@ registerCleanup();
  * underlined, opening the pressing editor. It costs no height because it
  * appends to a line already set.
  *
- * **What this asserts is the ORDER, not a line count.** On the build, the
- * longest title in the collection — the five-line "On The Radio: Greatest Hits
- * Vol. 1 & 2" — is absorbed by the ornament track with 27px to spare at every
- * viewport, because the title block is a fixed 412px measure. The drawing's
- * "20px short" is the build's 27px surplus, so the third give is never reached
- * on that record. The first test says so explicitly rather than pretending; the
- * second uses a record whose facts run one line longer, where it is.
+ * **What this asserts is the CONDITION, not a line count**: the run collapses
+ * when the ornament track has resolved to 0 and the remaining growth still
+ * exceeds the gap. "Five lines" was a proxy, and it fires wrongly the moment the
+ * type stack or the measure moves — which happened. The drawing's give
+ * arithmetic (20px short at five lines) was computed against a stack ~69px
+ * taller than the built one; a text stack's height is a measurement rather than
+ * a decision, and the build is authoritative on it. On the build the longest
+ * title in the collection leaves the track 27px at every viewport, so no record
+ * collapses today. The first test says so; the second reaches the condition
+ * with a record whose facts run one line longer.
  */
 
 const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
@@ -133,11 +136,11 @@ test('the longest title in the collection is absorbed by the track, and does not
   page,
 }) => {
   /**
-   * **Said plainly, because the drawing says otherwise.** §4.2 draws this record
-   * 20px short with the track at zero; the build measures it 27px clear with
-   * the track at 27.6. The collapse is the third give and this record never
-   * reaches it. A test claiming it fires at five lines would be asserting the
-   * drawing against the build, which is the shape the sweep found twice.
+   * **Said plainly.** The drawing drew this record 20px short with the track
+   * at zero; that arithmetic was drift in the drawing's text stack, and the
+   * build — 27px clear, track at 27.6 — is authoritative. The collapse is the
+   * third give and this record never reaches it. A test asserting a line-count
+   * threshold would have encoded the proxy, which is the defect.
    */
   const suffix = makeSuffix();
   const { id } = await longestTitle(page, suffix, ['Disco', 'Soul', 'Pop'], 'Casablanca');
@@ -148,7 +151,9 @@ test('the longest title in the collection is absorbed by the track, and does not
 
   const m = await measure(page);
 
-  expect(m.lines, 'the five-line title').toBe(5);
+  /* Fixture precondition — this is the collection's longest title, and it
+     wraps to five. Not the threshold: the threshold is the condition below. */
+  expect(m.lines, 'the fixture wraps to five lines').toBe(5);
   /* The line the count would append to, present on both fixtures: without a
      format line the collapse has nothing to append to and the "costs no
      height" claim is unmeasurable — which is how the first fixture found out. */
@@ -197,7 +202,7 @@ test('the run collapses only once the track is exhausted, and the count is what 
 
   const m = await measure(page);
 
-  expect(m.lines, 'still the five-line title').toBe(5);
+  expect(m.lines, 'the fixture still wraps to five lines').toBe(5);
   expect(m.formatHeight, 'a format line to append to — the precondition').not.toBeNull();
   /*
     **Measured after the collapse, so the track has already taken back what the

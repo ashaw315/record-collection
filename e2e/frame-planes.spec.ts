@@ -168,9 +168,10 @@ test('each plane is the shape its name says', async ({ page }) => {
 
 test('the triangle lives in the ornament track and yields with it', async ({ page }) => {
   /**
-   * §4.2's corner reserve: the triangle shrinks from 140px as the title grows —
-   * 115.4 at three lines, 47.7 at four, gone at five — which is the same track
-   * mechanism the identity cell already has.
+   * §4.2's corner reserve: the triangle shrinks from 140px as the title grows,
+   * through the same track mechanism the identity cell already has. (The
+   * drawing's yield figures — 115.4, 47.7, gone at five — rested on a stack
+   * ~69px taller than the build's and are drift; nothing here asserts them.)
    *
    * **In the track rather than positioned against the cell**, so the yielding
    * is structural: a mark placed absolutely would keep its size while the
@@ -200,7 +201,9 @@ test('the triangle lives in the ornament track and yields with it', async ({ pag
   expect(placed?.markHeight).toBeLessThanOrEqual((placed?.trackHeight ?? 0) + 1);
 });
 
-test('the frame\'s last cell is About this record, not Journal', async ({ page }) => {
+test('the frame\'s last cell is NOTE, not Journal — and the section keeps About this record', async ({
+  page,
+}) => {
   /**
    * **The journal leaves the frame entirely.** It has its own section at the
    * bottom of the page, so the frame does not need a cell for it — and the cell
@@ -218,7 +221,20 @@ test('the frame\'s last cell is About this record, not Journal', async ({ page }
 
   const frame = page.getByTestId('record-page-8a');
 
-  await expect(frame.getByText('About this record', { exact: true })).toHaveCount(1);
+  /*
+    **The pair, asserted together.** For one round both surfaces said
+    `About this record` while holding different columns. The frame's labels
+    are field names, so the cell is `NOTE`; the §9 section keeps the sentence
+    and its "Written by Claude" line does the attribution.
+  */
+  await expect(frame.getByText('Note', { exact: true }), 'the frame cell').toHaveCount(1);
+  await expect(frame.getByText('About this record', { exact: true }), 'not in the frame').toHaveCount(0);
+  await expect(
+    page.locator('[data-section="snippet"] [data-cell="label"]').getByText('About this record', {
+      exact: true,
+    }),
+    'the section keeps it',
+  ).toHaveCount(1);
   await expect(frame.getByText('Journal', { exact: true }), 'no journal cell').toHaveCount(0);
 
   /* And the note itself, which is the cell's content. */
@@ -287,7 +303,7 @@ test('the frame counts the images and links to their editor', async ({ page }) =
     await page.goto(`/records/${id}`);
     await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
 
-    const cell = page.locator('[data-cell="about"]');
+    const cell = page.locator('[data-cell="note"]');
     const count = cell.locator('[data-field="image-count"]');
 
     await expect(count, 'the count renders').toHaveCount(1);

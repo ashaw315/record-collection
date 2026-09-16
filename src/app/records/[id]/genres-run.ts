@@ -13,12 +13,16 @@
  * it appends to a line already set — a second line would cost back what the
  * collapse just recovered.
  *
- * **On the build's geometry the third give is never reached by any record in
- * the collection.** The longest title — five lines — is absorbed by the
- * ornament track with 27px to spare at every viewport, because the title block
- * is a fixed 412px measure. The drawing's "20px short" is the build's surplus.
- * The mechanism is built to the rule, not to the drawing's arithmetic, and it
- * fires on a record whose facts run one line longer.
+ * **The threshold is a CONDITION, not a line count**: the run collapses when
+ * the ornament track has resolved to 0 and the remaining growth still exceeds
+ * the gap. "Five lines" was a proxy for it — the granularity defect arriving in
+ * §4.2 — and a proxy fires wrongly the moment the type stack or the measure
+ * moves, which is what happened: the drawing's give arithmetic (183.1 against
+ * 203.1, 20px short) was computed against a stack ~69px taller than the built
+ * one. A text stack's height is a measurement, not a decision, and the build is
+ * authoritative on it. Under the condition, no record in the collection
+ * collapses today — the longest title leaves the track 27px — and the mechanism
+ * stays specified for when one does.
  */
 
 export type Genre = { id: string; name: string };
@@ -45,11 +49,12 @@ export function genresRun(
  * Whether the run collapses: only when the content still does not fit with the
  * track already at zero.
  *
- * **Decided by the shortfall, not by a line count.** A five-line title that fits
- * does not collapse and a four-line title that overflows would. `needed` is the
- * content track's full height with the run shown; `available` is the cell's
- * inner height, which is what the content has once the ornament has given
- * everything.
+ * **The condition, as a shortfall.** `needed` is the content track's full
+ * height with the run shown; `available` is the cell's inner height, which is
+ * what the content has once the track has resolved to 0. `needed > available`
+ * is exactly "the remaining growth still exceeds the gap" — a title of any line
+ * count that fits does not collapse, and one of any line count that overflows
+ * does.
  */
 export function shouldCollapse({ needed, available }: { needed: number; available: number }): boolean {
   return needed > available;

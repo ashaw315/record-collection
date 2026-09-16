@@ -69,12 +69,13 @@ describe('when the run collapses', () => {
     expect(shouldCollapse({ needed: 515.5, available: 510 })).toBe(true);
   });
 
-  it('is decided by the shortfall, not by a line count', () => {
+  it('is the condition, not a line count', () => {
     /*
-      A five-line title that fits does not collapse, and a four-line title that
-      overflows would. On the build the longest title in the collection is
-      absorbed with 27px to spare, so "fires at five lines" is not a property
-      of the rule — the rule sees a shortfall or none.
+      The run collapses when the track has resolved to 0 and the remaining
+      growth still exceeds the gap. "Five lines" was a proxy for that and fires
+      wrongly the moment the type stack or the measure moves — which happened:
+      the drawing's threshold rested on a stack ~69px taller than the build's.
+      The rule sees a shortfall or none, at any line count.
     */
     expect(shouldCollapse({ needed: 100, available: 90 })).toBe(true);
     expect(shouldCollapse({ needed: 900, available: 950 })).toBe(false);

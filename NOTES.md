@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 116 declared rules. Regenerate with
+Generated from 117 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -48,6 +48,7 @@ Generated from 116 declared rules. Regenerate with
 | a feature computes something correct and you cannot say what a user does with it | [THE WALK DOES NOTHING FOR A PERSON, and the four artists most likely to converge are People](#the-walk-does-nothing-for-a-person-and-the-four-artists-most-likely-to-converge-are-people) |
 | a rule enumerates cases and you cannot tell whether it constrains anything | [Three shapes that force a decision are structural; three that describe are not](#three-shapes-that-force-a-decision-are-structural-three-that-describe-are-not) |
 | a metric is easy to compute and you have not checked it tracks what you care about | [Wall colour: measured, and the naive metric says the wrong thing](#wall-colour-measured-and-the-naive-metric-says-the-wrong-thing) |
+| a figure in a ruling has just been found wrong and you are about to correct the sentence that named it | [When a number is retired, ask what else reads it — and whether anything asserts it](#when-a-number-is-retired-ask-what-else-reads-it-and-whether-anything-asserts-it) |
 
 ### Checks that cannot fail
 
@@ -174,6 +175,8 @@ Generated from 116 declared rules. Regenerate with
 | a run reported no counts and you are reading that as nothing failed | [The wrapper caught a real crashed run, unstaged](#the-wrapper-caught-a-real-crashed-run-unstaged) |
 
 <!-- APPARATUS-INDEX:END -->
+
+117 rules indexed.
 
 116 rules indexed.
 
@@ -30290,3 +30293,39 @@ on disk long enough for the dev server to 500 on every record. No full suite
 ran against that tree; the targeted spec failed correctly with the
 `ReferenceError`. The defect was treating a red typecheck as a line of output.
 Every subsequent command in this unit gates on it.
+
+## When a number is retired, ask what else reads it — and whether anything asserts it
+
+**Shape:** measurement-not-governing
+**You are here if:** a figure in a ruling has just been found wrong and you are about to correct the sentence that named it
+
+Design retired §4.2's five-line threshold — the give arithmetic rested on a text
+stack ~69px taller than the built one, and a text stack's height is a
+measurement rather than a decision. Correcting the two flagged sentences would
+have left it live in three others: §2.1's tail-reallocation claim, §5's
+corner-field cost and §6's undrawn-case note all asserted the collapse as a
+thing that happens. Seven sentences restated, not two.
+
+The same question applied to the code found the same shape at smaller scale.
+The drawing's yield figures — 115.4 at three lines, 47.7 at four, gone at five
+— were carried in two comments as though measured. **Nothing asserted them**:
+`identity-cell.spec` checks the track shrinks monotonically and yields more
+than 40px, which is the condition rather than the figures, so no test was wrong.
+The comments were restated as drift and the condition written in the ruling's
+words — the run collapses when the track has resolved to 0 and the remaining
+growth still exceeds the gap.
+
+**Two kinds of reader, and only one fails.** A test that asserts a retired
+figure fails on the day the figure changes, which is loud and late. A comment
+that carries one, or a rule that rests on one, produces no event — it stays
+correct-looking until someone reads it against the build. The grep is cheap;
+the discipline is running it for every retired number rather than the one in
+hand.
+
+### The other divergence resolved for the build
+
+Second time the drawing has been wrong: the acquisition date, and now the
+stack. Both are recorded rather than silently corrected, because the raster
+still carries the taller stack and §0 makes the drawing the specification for
+the composition — while never having been the authority on what 72px/0.94 Inter
+Tight occupies.

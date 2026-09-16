@@ -375,7 +375,8 @@ test('the journal is named once, on its own section', async ({ page }) => {
    * structural, so the word returned and the test asserted "twice — the frame's
    * cell and the rail". Now the frame has no journal cell at all: the journal
    * has its own section at the bottom of the page and the frame's last cell
-   * carries `About this record`.
+   * carries `Note` — the owner's note, in the field-name register of the
+   * frame; the §9 section keeps `About this record`.
    *
    * So it is once again — but the surviving instance is the SECTION's, where
    * before it was the frame's. Asserted as a count over the page plus which
