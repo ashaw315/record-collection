@@ -1,3 +1,4 @@
+import { LABEL_INK } from '@/app/records/[id]/grid-type';
 import { notFound } from 'next/navigation';
 import { ConstructionStill } from '@/app/records/[id]/ConstructionStill';
 import { listRecordsForSheet } from '@/lib/db/queries/records';
@@ -34,7 +35,7 @@ export default async function ConstructionSheetPage() {
             >
               <ConstructionStill recordId={record.id} spineColour={record.spineColour} />
             </div>
-            <figcaption className="mt-[4px] font-mono text-[10px] text-[oklch(0.55_0.008_60)]">
+            <figcaption className="mt-[4px] font-mono text-[10px]" style={{ color: LABEL_INK }}>
               {record.title.slice(0, 22)}
             </figcaption>
           </figure>

@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { BANDS, NO_SCROLL_HEIGHT, MAX_GRID_WIDTH } from '../src/app/records/[id]/band-geometry';
+import { contrastRatio } from '../src/lib/colour/record-colour';
 
 registerCleanup();
 
@@ -404,4 +405,53 @@ test('the journal is named once, on its own section', async ({ page }) => {
     page.locator('main').getByText('Journal', { exact: true }),
     'named once on the screen',
   ).toHaveCount(1);
+});
+
+test('the year figure and its label read against their field on a record with no cover', async ({
+  page,
+}) => {
+  /**
+   * §5.3: no cover, the field falls back to ink, and the label and figure
+   * reverse to paper. **Measured on the rendered page, not on the constants**
+   * — the record page's contrast findings all came from measuring values
+   * against grounds nothing painted, and a record created through the API has
+   * no image, so this is the branch every record in this spec has been on.
+   */
+  const suffix = makeSuffix();
+  const id = await createRecord(page, CASES[0], suffix);
+  await page.goto(`/records/${id}`);
+
+  const colours = await page.evaluate(() => {
+    /* Chrome reports oklch() as written; a 1px canvas resolves any colour to sRGB. */
+    const hex = (colour: string) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1;
+      canvas.height = 1;
+      const ctx = canvas.getContext('2d');
+      if (ctx === null) return colour;
+      ctx.fillStyle = colour;
+      ctx.fillRect(0, 0, 1, 1);
+      const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+      return `#${[r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('')}`;
+    };
+    const cell = document.querySelector('[data-cell="year"]');
+    const figure = cell?.querySelector('[data-field="year"]');
+    const label = cell?.firstElementChild;
+    if (!(cell instanceof HTMLElement) || !(figure instanceof HTMLElement) || !(label instanceof HTMLElement)) {
+      return null;
+    }
+    return {
+      field: hex(getComputedStyle(cell).backgroundColor),
+      figure: hex(getComputedStyle(figure).color),
+      label: hex(getComputedStyle(label).color),
+    };
+  });
+  expect(colours).not.toBeNull();
+  if (colours === null) return;
+
+  /* Precondition: this record took the no-cover branch — the field is ink. */
+  expect(colours.field, 'the field fell back to ink').toBe('#171310');
+
+  expect(contrastRatio(colours.figure, colours.field), '72 against its field').toBeGreaterThanOrEqual(3);
+  expect(contrastRatio(colours.label, colours.field), '11px label against its field').toBeGreaterThanOrEqual(4.5);
 });

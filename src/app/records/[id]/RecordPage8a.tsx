@@ -3,7 +3,7 @@ import { ConstructionStill } from './ConstructionStill';
 import { IdentityCell } from './IdentityCell';
 import { gridModules, type Diagonal } from './grid-modules';
 import { project } from './construction';
-import { LABEL } from './grid-type';
+import { LABEL, LABEL_INK } from './grid-type';
 import { recordLadder } from '@/lib/colour/record-ladder';
 
 /**
@@ -502,7 +502,16 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
             pushed the page's largest mark down. `whitespace-nowrap` makes a
             future overflow visible instead of silently reflowing the figure.
           */}
-          <div className={`${LABEL} whitespace-nowrap`} style={{ color: INK }}>
+          {/*
+            §5.3: on the record with no cover the field falls back to ink, and
+            the label and figure reverse to paper. **Both**, and by the page's
+            own ground token — a label left at INK here was measured at 1.00:1
+            on the one record the E2E seed produces by default.
+          */}
+          <div
+            className={`${LABEL} whitespace-nowrap ${ladder === null ? 'text-background' : ''}`}
+            style={ladder === null ? undefined : { color: INK }}
+          >
             {modules.pressing.pressedSameYear ? 'Released · same year' : 'Released'}
           </div>
           {/*
@@ -514,7 +523,7 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
           */}
           <div
             data-field="year"
-            className="text-[72px] leading-[0.86] font-extrabold"
+            className={`text-[72px] leading-[0.86] font-extrabold ${ladder === null ? 'text-background' : ''}`}
             style={{ minWidth: '203px', marginInline: '-18px', paddingInline: '18px' }}
           >
             {record.releaseYear}
@@ -534,7 +543,7 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
             <>
               <div className="text-[40px] leading-none font-extrabold">${record.marketMedian}</div>
               {record.marketLow !== null && (
-                <div className="mt-[6px] font-mono text-[10px] text-[oklch(0.55_0.008_60)]">
+                <div className="mt-[6px] font-mono text-[10px]" style={{ color: LABEL_INK }}>
                   ${record.marketLow}–${record.marketHigh}
                 </div>
               )}
