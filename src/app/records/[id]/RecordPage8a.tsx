@@ -214,6 +214,7 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
             pressingLine={record.pressingLine}
             formatLine={record.formatLine}
             genres={record.genres}
+            editHref={`/records/${record.id}/edit`}
             /*
               §5.1's triangle: tint, ground, in the cell's corner FIELD.
 

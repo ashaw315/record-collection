@@ -40,13 +40,17 @@ export default function IdentityProbePage() {
             title={c.title}
             artistName={c.artist}
             artistId="a-probe"
+            editHref="#"
             pressingLine="Harvest · SHVL 795 · United Kingdom, 1981"
             formatLine="Vinyl, LP, Album"
             /* Two, because the measure question this probe asks is about the
                block's height and a genres line is part of it. */
+            /* Three, matching the drawing's five-line record: §4.2's collapse
+               is measured against a three-genre run. */
             genres={[
               { id: 'g1', name: 'Psychedelic Rock' },
               { id: 'g2', name: 'Prog Rock' },
+              { id: 'g3', name: 'Folk Rock' },
             ]}
             /*
               **The real mark, not an empty track.** The probe rendered no

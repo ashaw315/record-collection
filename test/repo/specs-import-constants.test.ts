@@ -46,6 +46,10 @@ const GOVERNED = [
   'e2e/record-detail.spec.ts',
   'e2e/record-form.spec.ts',
   'e2e/frame-planes.spec.ts',
+  'e2e/genres-collapse.spec.ts',
+  'e2e/images.spec.ts',
+  'e2e/lookup-flows.spec.ts',
+  'e2e/snippet.spec.ts',
 ];
 
 /** The values a record-screen spec must not type. */
@@ -85,8 +89,13 @@ describe('record-screen specs check the declaration rather than restating it', (
     const offenders: string[] = [];
 
     for (const [value, name] of Object.entries(DECLARED)) {
-      /* Word-bounded, so 1728 does not match inside 17280 and 900 not in 1900. */
-      const pattern = new RegExp(`(?<![\\d.])${value}(?![\\d.])`, 'g');
+      /*
+        Word-bounded, so 1728 does not match inside 17280 and 900 not in 1900 —
+        and not inside `900_000` either: a numeric separator is part of the
+        literal, and `lookup-flows` uses one for a Discogs id. The first version
+        flagged it the moment that spec was governed.
+      */
+      const pattern = new RegExp(`(?<![\\d._])${value}(?![\\d._])`, 'g');
       const count = [...body.matchAll(pattern)].length;
       if (count > 0) offenders.push(`${value} (${name}) ×${count}`);
     }
@@ -113,7 +122,18 @@ describe('record-screen specs check the declaration rather than restating it', (
         if (entry.isDirectory()) walk(path);
         else if (entry.name.endsWith('.ts')) {
           const source = readFileSync(path, 'utf8');
-          if (source.includes('record-page-8a') || source.includes('data-band="identity"')) {
+          /*
+            Three ways a spec can drive the record screen. The third was added
+            when `genres-collapse.spec.ts` navigated to `/records/` and read the
+            identity cell without either handle — a spec the list missed and the
+            enumeration could not see, which is the gap the enumeration exists
+            to close.
+          */
+          if (
+            source.includes('record-page-8a') ||
+            source.includes('data-band="identity"') ||
+            /goto\(`\/records\/\$\{/.test(source)
+          ) {
             found.push(path);
           }
         }

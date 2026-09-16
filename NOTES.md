@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 115 declared rules. Regenerate with
+Generated from 116 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -44,6 +44,7 @@ Generated from 115 declared rules. Regenerate with
 | a comment or summary describes work more rigorously than the work | [RULE: prose is more rigorous than the work it describes, and it is always](#rule-prose-is-more-rigorous-than-the-work-it-describes-and-it-is-always) |
 | a number stands in for a capability and you counted the proxy | [RULE: when a measurement stands in for a capability, count the capability,](#rule-when-a-measurement-stands-in-for-a-capability-count-the-capability) |
 | a number surprised you and you have not checked what else was running | [THE APPARATUS GENERATING THE SIGNAL — now a mechanism, not a habit](#the-apparatus-generating-the-signal-now-a-mechanism-not-a-habit) |
+| a ruling describes a threshold being crossed and you are about to assert the crossing | [The third give is never reached on the build, and the test says so](#the-third-give-is-never-reached-on-the-build-and-the-test-says-so) |
 | a feature computes something correct and you cannot say what a user does with it | [THE WALK DOES NOTHING FOR A PERSON, and the four artists most likely to converge are People](#the-walk-does-nothing-for-a-person-and-the-four-artists-most-likely-to-converge-are-people) |
 | a rule enumerates cases and you cannot tell whether it constrains anything | [Three shapes that force a decision are structural; three that describe are not](#three-shapes-that-force-a-decision-are-structural-three-that-describe-are-not) |
 | a metric is easy to compute and you have not checked it tracks what you care about | [Wall colour: measured, and the naive metric says the wrong thing](#wall-colour-measured-and-the-naive-metric-says-the-wrong-thing) |
@@ -173,6 +174,8 @@ Generated from 115 declared rules. Regenerate with
 | a run reported no counts and you are reading that as nothing failed | [The wrapper caught a real crashed run, unstaged](#the-wrapper-caught-a-real-crashed-run-unstaged) |
 
 <!-- APPARATUS-INDEX:END -->
+
+116 rules indexed.
 
 115 rules indexed.
 
@@ -30243,3 +30246,47 @@ field of the type to be read by a component; it found exactly this one of 24.
 having reached the drawing. §0 makes the drawing the specification, and this is
 the first divergence in the file to resolve for the build — worth naming as the
 exception rather than letting it read as precedent.
+
+## The third give is never reached on the build, and the test says so
+
+**Shape:** measurement-not-governing
+**You are here if:** a ruling describes a threshold being crossed and you are about to assert the crossing
+
+§4.2 rules that on a five-line title the give runs 20px short and the genres run
+collapses to a count. Built to the rule — gap, then ornament track, then the
+run — and measured: **the longest title in the collection is absorbed by the
+ornament track with 27px to spare at every viewport**, because the title block
+is a fixed 412px measure and wraps to five lines at 1280 and at 1728 alike. The
+drawing's 20px shortfall is the build's 27px surplus; the two-line base in the
+drawing's arithmetic is ~69px taller than the build's stack.
+
+So "fires at five lines and not at four" is not a property the build has. What
+it has is the ORDER, and that is what the tests assert: the collapse fires when
+and only when the track is exhausted and content still overflows, on a record
+whose facts run one line longer than the longest title's — and the real
+five-line record is asserted NOT to collapse, in a test that says why.
+
+**A test claiming the drawing's threshold would have asserted the drawing
+against the build**, which is the shape the sweep found twice. The honest
+version names the threshold the build actually has.
+
+### Three fixture defects on the way, each a precondition unstated
+
+- The count fell to its own line and `formatHeight` was null: the fixture had
+  no format line, and the collapse only means anything when it appends to a
+  line already set. Now asserted as a precondition on both fixtures.
+- The "fits" record fit by 8px instead of 27: a longer suffix wrapped the
+  pressing line. The suffix is short and the catalog carries none.
+- The track was asserted at zero AFTER the collapse, when the collapse had just
+  handed height back to it. The claim is that the run could not have stayed:
+  the surplus after collapse is less than the run's own height.
+
+### And a process defect, which reached the dev server
+
+A prop was added to a type and used, and the edit to the destructuring did not
+apply. **Typecheck caught it** — `TS2304: Cannot find name 'editHref'` — and
+the command chained lint, unit and E2E after it without gating, so the file sat
+on disk long enough for the dev server to 500 on every record. No full suite
+ran against that tree; the targeted spec failed correctly with the
+`ReferenceError`. The defect was treating a red typecheck as a line of output.
+Every subsequent command in this unit gates on it.

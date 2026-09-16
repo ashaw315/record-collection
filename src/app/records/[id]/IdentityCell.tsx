@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { GenresRun } from './GenresRun';
 import { LABEL } from './grid-type';
 
 /**
@@ -49,6 +50,7 @@ export function IdentityCell({
   pressingLine,
   genres,
   formatLine,
+  editHref,
   ornament,
 }: {
   title: string;
@@ -59,6 +61,8 @@ export function IdentityCell({
   genres: ReadonlyArray<{ id: string; name: string }>;
   /** §4: sans 500, because it describes rather than identifies. */
   formatLine: string | null;
+  /** The pressing editor §4.2's genres count opens when the run collapses. */
+  editHref: string;
   /**
    * §5.1's corner field, rendered INSIDE the cell as a grid track.
    *
@@ -147,50 +151,24 @@ export function IdentityCell({
             {pressingLine}
           </div>
         )}
-        {formatLine !== null && (
-          <div data-field="format" className="text-prose font-medium">
-            {formatLine}
-          </div>
-        )}
         {/*
-          **Genres, as LINKS — the capability the swap dropped.**
+          **Format line and genres run together**, because §4.2's collapse
+          moves the run onto the format line as a count. `GenresRun` is a
+          client component: whether the content overflows is decided by layout,
+          and it measures once the cell has laid out — after the gap and the
+          ornament track have already given, which is the order §4.2 states.
 
-          `PageRecord` declared them, the route supplied them and `gridModules`
-          carried them into `modules.pressing.genres`, but nothing rendered
-          them: the richest record went straight from the pressing line to
-          Provenance. §1.1 puts the genres line in the pressing block, so this
-          is where they were meant to be.
-
-          Links rather than text, for the reason the deleted grid recorded and
-          `record-detail.spec.ts` asserts: §10 makes "what else is like this"
-          one click, and plain text would have hidden the loss while looking
-          right. Dropping them a second time is what made this a rule.
-
-          The block is anchored to the cell's floor, so this line grows UP into
-          the gap the title leaves rather than pushing anything.
+          The run is still LINKS: §10 makes "what else is like this" one click,
+          and this capability has been lost twice to rebuilds that kept the
+          text. The count, when it renders, is a link too — to the pressing
+          editor that holds every other pressing fact.
         */}
-        {genres.length > 0 && (
-          /*
-            `leading-none` because the inline links' leading otherwise pushes
-            the block's last line box 4px past its content box, and the cell's
-            floor is measured from the BLOCK — `e2e/identity-cell.spec.ts`
-            caught it as an 18px gap becoming 14. The line still sits on the
-            18px padding; only the half-leading below the glyphs is removed.
-          */
-          <div data-field="genres" className="text-prose leading-none">
-            {genres.map((genre, index) => (
-              <span key={genre.id}>
-                {index > 0 && ', '}
-                <Link
-                  href={`/?genreId=${genre.id}`}
-                  className="underline-offset-2 hover:underline"
-                >
-                  {genre.name}
-                </Link>
-              </span>
-            ))}
-          </div>
-        )}
+        <GenresRun
+          formatLine={formatLine}
+          genres={genres}
+          editHref={editHref}
+          runClassName="text-prose leading-none"
+        />
       </div>
       </div>
 
