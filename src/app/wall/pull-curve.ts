@@ -91,3 +91,21 @@ export function pullPose(progress: number, seatedScale: number, finalScale: numb
     shear: 1 - eased,
   };
 }
+
+/**
+ * The pose on the way back, `progress` 0 pulled → 1 seated.
+ *
+ * The same ease-out applied to the return travel: the record leaves fast and
+ * settles into the slot, rather than the pull reversed in time, which would
+ * ease in and hold still before moving. So `eased` runs 1 → 0 on `pullEase`,
+ * and scale and shear follow it exactly as they do on the way out.
+ */
+export function returnPose(progress: number, seatedScale: number, finalScale: number): PullPose {
+  const eased = 1 - pullEase(progress);
+
+  return {
+    eased,
+    scale: seatedScale + (finalScale - seatedScale) * eased,
+    shear: 1 - eased,
+  };
+}

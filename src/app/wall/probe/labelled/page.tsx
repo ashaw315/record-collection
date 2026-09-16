@@ -1,12 +1,13 @@
 import { notFound } from 'next/navigation';
-import { WallLabelled } from '../../WallLabelled';
+import { WallLive } from '../../WallLive';
 import { spineLabel } from '../../spine-text';
 import type { WallSeat } from '../../shelf-runs';
 import { COLLECTION_SPINES } from '../../../../../test/fixtures/collection-spines';
 
 /**
  * The wall at 1:1 on the real collection — seventeen records, their own
- * labels, their own stored colours post-A75, one unfilled.
+ * labels, outlines at rest (§11); click one to pull it and watch its colour
+ * arrive across the gesture.
  *
  * On a probe route, gated like the others: the 1:1 component is built and
  * measured here before the swap that puts it at `/`. The overview's probe
@@ -34,7 +35,7 @@ export default function WallLabelledProbePage() {
         Wall at 1:1 — labelled, on the collection
       </h1>
       <div style={{ maxWidth: 1000 }}>
-        <WallLabelled seats={seats} pulledId={null} />
+        <WallLive seats={seats} />
       </div>
     </main>
   );

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PULL_DURATION_MS, pullEase, pullPose } from './pull-curve';
+import { PULL_DURATION_MS, pullEase, pullPose, returnPose } from './pull-curve';
 
 /**
  * **The drawing's five frames are the fixture.** They share one viewBox, so the
@@ -150,5 +150,25 @@ describe('the duration is the length of the gesture you can see', () => {
     const visibleMs = PULL_DURATION_MS * perceivedEnd;
     expect(visibleMs).toBeCloseTo(680, 0);
     expect(PULL_DURATION_MS - visibleMs).toBeCloseTo(320, 0);
+  });
+});
+
+describe('the return is the same gesture back into the slot', () => {
+  /**
+   * §11.2 rules colour on the return; the geometry it rides on is stated here.
+   * The record leaves the pulled state fast and settles into its slot — the
+   * same ease-out on the return travel, not the pull reversed in time (which
+   * would ease IN and sit still before moving). Ends are exact: a residual
+   * shear at 1 is a record that never quite sat down.
+   */
+  it('starts where the pull ended and ends where it began', () => {
+    expect(returnPose(0, SEATED, FINAL)).toEqual(pullPose(1, SEATED, FINAL));
+    expect(returnPose(1, SEATED, FINAL)).toEqual(pullPose(0, SEATED, FINAL));
+  });
+
+  it('is front-loaded on the way back too — 88% seated at halfway', () => {
+    const half = returnPose(0.5, SEATED, FINAL);
+    expect(half.eased).toBeCloseTo(1 - 0.875, 3);
+    expect(half.shear).toBeCloseTo(0.875, 3);
   });
 });

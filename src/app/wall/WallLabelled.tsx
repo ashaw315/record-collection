@@ -1,4 +1,8 @@
 import { shelfRuns, type WallSeat } from './shelf-runs';
+import { pullPose, returnPose } from './pull-curve';
+import { pullFill, returnFill } from './pull-colour';
+import { PULLED_SIZE, pullFace } from './pull-geometry';
+import { recordLadder } from '@/lib/colour/record-ladder';
 import {
   SHELF_GAP,
   SPINE_HEIGHT,
@@ -36,6 +40,19 @@ import {
 /** The one ink, for outline and label alike. */
 const INK = '#161412';
 
+/**
+ * Where a record is on its way out or back.
+ *
+ * `progress` is 0 → 1 in the gesture's own direction, so `back` at 0 is the
+ * fully pulled record and at 1 the seated one. The component draws the pose;
+ * driving `progress` against the clock is `WallLive`'s job.
+ */
+export type PullState = {
+  id: string;
+  direction: 'out' | 'back';
+  progress: number;
+};
+
 const PER_SHELF = 40;
 const LABEL_FONT_PX = 10.39;
 const BASELINE_INSET = 8;
@@ -44,11 +61,16 @@ const points = (polygon: readonly Point[]) => polygon.map(([x, y]) => `${x},${y}
 
 export function WallLabelled({
   seats,
-  pulledId,
+  pull = null,
+  onSeatClick,
+  onPulledClick,
 }: {
   seats: readonly WallSeat[];
-  pulledId: string | null;
+  pull?: PullState | null;
+  onSeatClick?: (id: string) => void;
+  onPulledClick?: () => void;
 }) {
+  const pulledId = pull?.id ?? null;
   const shelves: WallSeat[][] = [];
   for (let index = 0; index < seats.length; index += PER_SHELF) {
     shelves.push(seats.slice(index, index + PER_SHELF));
@@ -83,12 +105,12 @@ export function WallLabelled({
             })}
             {(() => {
               let seatX = 0;
-              return shelf.map((seat) => {
+              const seated = shelf.map((seat) => {
                 const x = seatX;
                 seatX += SPINE_WIDTH_MAX;
-                if (seat.id === pulledId) return null;
-
                 const width = spineWidth(seat.id);
+
+                if (seat.id === pulledId) return null;
 
                 return (
                   <g key={seat.id} data-seat={seat.id}>
@@ -98,6 +120,14 @@ export function WallLabelled({
                       fill="none"
                       stroke={INK}
                       strokeWidth="1"
+                      /*
+                        An unfilled polygon is hit only on its stroke — the
+                        first pull spec timed out clicking the centre of a
+                        spine. The whole face takes the pointer.
+                      */
+                      pointerEvents="all"
+                      style={{ cursor: onSeatClick === undefined ? undefined : 'pointer' }}
+                      onClick={onSeatClick === undefined ? undefined : () => onSeatClick(seat.id)}
                     />
                     <text
                       data-label=""
@@ -122,6 +152,56 @@ export function WallLabelled({
                   </g>
                 );
               });
+
+              /*
+                **Drawn last, so it is in front.** A record pulled toward the
+                viewer sits over its neighbours — the frames show it — and a
+                polygon drawn in seat order sat UNDER the spines to its right,
+                which now take the pointer over their whole face: the first
+                return click landed on `collection-11` instead.
+
+                **The same polygon, transformed** (5b §3): the seated spine is
+                not drawn and this one starts on its exact four points. Fill
+                and pose read the ONE eased value — colour arrives across the
+                gesture, not at either end (§11.2).
+              */
+              const pulledIndex = pull === null ? -1 : shelf.findIndex((seat) => seat.id === pull.id);
+              const moving = pull !== null && pulledIndex >= 0 ? shelf[pulledIndex] : null;
+              let pulled = null;
+              if (moving !== null && pull !== null) {
+                const width = spineWidth(moving.id);
+                const finalScale = PULLED_SIZE / width;
+                const pose =
+                  pull.direction === 'out'
+                    ? pullPose(pull.progress, 1, finalScale)
+                    : returnPose(pull.progress, 1, finalScale);
+                const ladder = recordLadder(moving.spineColour);
+                const fill =
+                  pull.direction === 'out'
+                    ? pullFill(pull.progress, ladder)
+                    : returnFill(pull.progress, ladder);
+                const seat = { x: pulledIndex * SPINE_WIDTH_MAX, y: originY, width };
+
+                pulled = (
+                  <polygon
+                    data-pulled={moving.id}
+                    points={points(pullFace(seat, pose))}
+                    fill={fill}
+                    stroke={INK}
+                    strokeWidth="1"
+                    pointerEvents="all"
+                    style={{ cursor: onPulledClick === undefined ? undefined : 'pointer' }}
+                    onClick={onPulledClick}
+                  />
+                );
+              }
+
+              return (
+                <>
+                  {seated}
+                  {pulled}
+                </>
+              );
             })()}
           </g>
         );
