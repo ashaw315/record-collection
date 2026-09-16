@@ -45,6 +45,8 @@ export type ShelfSeat = {
 export type WallSeat = ShelfSeat & {
   label: string;
   spineColour: string | null;
+  /** §11.3: the pulled record shows its cover, at its own aspect, on the field. */
+  coverUrl: string | null;
 };
 
 export type ShelfRun = {

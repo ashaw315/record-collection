@@ -19,15 +19,29 @@ import { COLLECTION_SPINES } from '../../../../../test/fixtures/collection-spine
  */
 export const dynamic = 'force-dynamic';
 
-const seats: WallSeat[] = COLLECTION_SPINES.map((row, index) => ({
-  id: `collection-${index}`,
-  section: 'Collection',
-  label: spineLabel(row.artist, row.title),
-  spineColour: row.resampled,
-}));
+/**
+ * The fixture carries no cover URLs — it is the collection's colours, not its
+ * images — so `?cover=<url>` attaches one to Wired for the pull to show. A
+ * workbench parameter, like `?case=` on the page8a probe.
+ */
+function seatsWith(cover: string | null): WallSeat[] {
+  return COLLECTION_SPINES.map((row, index) => ({
+    id: `collection-${index}`,
+    section: 'Collection',
+    label: spineLabel(row.artist, row.title),
+    spineColour: row.resampled,
+    coverUrl: row.title === 'Wired' ? cover : null,
+  }));
+}
 
-export default function WallLabelledProbePage() {
+export default async function WallLabelledProbePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ cover?: string }>;
+}) {
   if (process.env.NODE_ENV === 'production') notFound();
+  const { cover } = await searchParams;
+  const seats = seatsWith(cover ?? null);
 
   return (
     <main style={{ padding: 24, background: '#f9f7f4' }}>

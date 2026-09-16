@@ -4,6 +4,8 @@ import { pullFill, returnFill } from './pull-colour';
 import { PULLED_SIZE, pullFace } from './pull-geometry';
 import { recordLadder } from '@/lib/colour/record-ladder';
 import {
+  COS30,
+  SIN30,
   SHELF_GAP,
   SPINE_HEIGHT,
   SPINE_WIDTH_MAX,
@@ -182,17 +184,47 @@ export function WallLabelled({
                     : returnFill(pull.progress, ladder);
                 const seat = { x: pulledIndex * SPINE_WIDTH_MAX, y: originY, width };
 
+                const face = pullFace(seat, pose);
+                const [tl, tr, br] = face;
+                /*
+                  §11.3: the cover, at its own aspect and uncropped, on the
+                  field — never a wash over it. It arrives with the colour, on
+                  the same eased value, and rides the face's shear so it stays
+                  inside the record while the record is still tilted: the
+                  image's box is the face's axis-aligned box, skewed about the
+                  top-right corner by the rise that remains.
+                */
+                const shearDeg = (Math.atan((SIN30 / COS30) * pose.shear) * 180) / Math.PI;
+                const cover =
+                  moving.coverUrl === null ? null : (
+                    <image
+                      data-cover={moving.id}
+                      href={moving.coverUrl}
+                      x={tl[0]}
+                      y={tr[1]}
+                      width={tr[0] - tl[0]}
+                      height={br[1] - tr[1]}
+                      preserveAspectRatio="xMidYMid meet"
+                      opacity={pose.eased}
+                      transform={`translate(${tr[0]} ${tr[1]}) skewY(${-shearDeg}) translate(${-tr[0]} ${-tr[1]})`}
+                      pointerEvents="none"
+                    />
+                  );
+
                 pulled = (
-                  <polygon
-                    data-pulled={moving.id}
-                    points={points(pullFace(seat, pose))}
-                    fill={fill}
-                    stroke={INK}
-                    strokeWidth="1"
-                    pointerEvents="all"
-                    style={{ cursor: onPulledClick === undefined ? undefined : 'pointer' }}
-                    onClick={onPulledClick}
-                  />
+                  <>
+                    <polygon
+                      data-pulled={moving.id}
+                      points={points(face)}
+                      fill={fill}
+                      stroke={INK}
+                      strokeWidth="1"
+                      pointerEvents="all"
+                      style={{ cursor: onPulledClick === undefined ? undefined : 'pointer' }}
+                      onClick={onPulledClick}
+                    />
+                    {cover}
+                  </>
                 );
               }
 
