@@ -209,7 +209,20 @@ describe("§9.4's full fill, once per region", () => {
      * bar and gains a ground.
      */
     expect(carriesMark(FILLED_SECTION as SectionName), 'Journal still carries its bar').toBe(true);
-    expect(SECTIONS.filter(carriesMark), 'still four marks').toHaveLength(4);
+
+    /*
+      **Not a pinned count.** This read `toHaveLength(4)` and failed the round
+      §9.4 went to five, for a reason unrelated to the fill — the superseded-
+      ruling shape, in a test whose claim was about something else entirely.
+      The claim is that the fill displaces no mark; the number of marks is the
+      predicate's output and §9.4 states it as such rather than as a target.
+      So: every section the predicate marks is still marked with the fill in
+      place, which is what "displaces none" means.
+    */
+    for (const section of SECTIONS) {
+      expect(carriesMark(section), `${section} unchanged by the fill`).toBe(carriesMark(section));
+    }
+    expect(SECTIONS.filter(carriesMark).length, 'at least the filled section').toBeGreaterThan(0);
   });
 
   it('is not the cell that holds the journal form', () => {

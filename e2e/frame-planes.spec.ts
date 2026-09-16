@@ -256,3 +256,49 @@ test('the journal entry and its trigger leave the frame', async ({ page }) => {
   /* And ADD ENTRY is nowhere on the page, since nothing opens the form now. */
   await expect(page.locator('main').getByText('Add entry', { exact: true })).toHaveCount(0);
 });
+
+test('the frame counts the images and links to their editor', async ({ page }) => {
+  /**
+   * **`Images N Manage →`, in the About cell.** §9.4 marks Images on the
+   * ground "the frame shows a count, never the images" — and for two days the
+   * frame showed neither: `imageCount` was declared in `PageRecord`, passed by
+   * the route, and never rendered. A field with no consumer.
+   *
+   * The count is kept where the date was struck, and the rule that decides it
+   * splits on WHY a constant is constant. purchase_date is constant because the
+   * app abandoned the field — nothing will ever write it. The image count is
+   * constant because the collection is unphotographed: the schema carries
+   * cover, gatefold left, gatefold right and back, so one image per record is a
+   * backlog rather than a ceiling. A rule reading texture from an unfilled
+   * field measures the backlog rather than the design.
+   *
+   * Asserted with TWO counts, so a hard-coded "1" cannot pass: a record with
+   * one image and a record with two.
+   */
+  const suffix = makeSuffix();
+  const one = await aRecord(page, suffix);
+  const two = await aRecord(page, `${suffix}b`);
+  await seedImage({ recordId: two, imageType: 'back' });
+
+  for (const [id, expected] of [
+    [one, 1],
+    [two, 2],
+  ] as const) {
+    await page.goto(`/records/${id}`);
+    await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
+
+    const cell = page.locator('[data-cell="about"]');
+    const count = cell.locator('[data-field="image-count"]');
+
+    await expect(count, 'the count renders').toHaveCount(1);
+    await expect(count, `${expected} image(s)`).toHaveText(String(expected));
+
+    /* Manage is the same vocabulary as the genres count: a link to the editor. */
+    const manage = cell.getByRole('link', { name: /Manage/ });
+    await expect(manage, 'Manage is a link, not text').toHaveCount(1);
+    await expect(manage).toHaveAttribute('href', '#images');
+
+    /* And the editor it names exists on the page, so the link lands. */
+    await expect(page.locator('#images[data-section="images"]')).toHaveCount(1);
+  }
+});

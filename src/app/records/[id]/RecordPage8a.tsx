@@ -578,6 +578,37 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
           ) : (
             <div className="text-prose">{record.note}</div>
           )}
+
+          {/*
+            **`Images N Manage →` — the count, and a link to its editor.**
+
+            `imageCount` was declared, passed by the route, carried by the
+            probe's fixtures, and never read: a field with no consumer. §9.4
+            marked Images on the ground "the frame shows a count, never the
+            images", and for two days it showed neither.
+
+            Kept where the acquisition date was struck, and the rule splits on
+            WHY a constant is constant. purchase_date is constant because the
+            app abandoned the field — nothing will ever write it, so a mark can
+            only be texture. The image count is constant because the collection
+            is unphotographed: the schema carries cover, gatefold left, gatefold
+            right and back, so one image per record is a backlog rather than a
+            ceiling. A rule that reads texture from an UNFILLED field measures
+            the backlog rather than the design.
+
+            Same vocabulary as the genres count — a fact that exists and is not
+            shown, with the control that shows it — and §6 requires absence to
+            be visible rather than silent, so a count of 0 is drawn too.
+          */}
+          <div className={`${LABEL} relative mt-[14px]`} style={{ color: INK }}>
+            Images{' '}
+            <span data-field="image-count" className="font-mono">
+              {record.imageCount}
+            </span>{' '}
+            <a href="#images" className="underline underline-offset-2">
+              Manage →
+            </a>
+          </div>
           {/*
             §5.1's second quarter-circle, bleeding off the band's right end.
             Flat for the same reason as the first — it touches a page edge —

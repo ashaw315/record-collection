@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 114 declared rules. Regenerate with
+Generated from 115 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -129,6 +129,7 @@ Generated from 114 declared rules. Regenerate with
 | --- | --- |
 | a defect has two plausible readings and you are about to fix the likelier one | [1093 DIAGNOSED after nine sightings: both candidate readings were wrong, and the predicate matches WHITE](#1093-diagnosed-after-nine-sightings-both-candidate-readings-were-wrong-and-the-predicate-matches-white) |
 | a failure has a number attached and you have not run it more than once | [427 MEASURED over three runs rather than assumed — and it is NOT a rate](#427-measured-over-three-runs-rather-than-assumed-and-it-is-not-a-rate) |
+| a mark, field or state is identical across every record and you are about to remove it as texture | [A constant is retired for why it is constant, not for being constant](#a-constant-is-retired-for-why-it-is-constant-not-for-being-constant) |
 | a written measurement is being carried forward and you have not re-read the source | [A note that implied a difference, and a payload that did not](#a-note-that-implied-a-difference-and-a-payload-that-did-not) |
 | you are about to derive a per-member value from a property of the members, and have not looked at the spread of that property | [A rule deriving variety from an axis the set does not vary along produces none](#a-rule-deriving-variety-from-an-axis-the-set-does-not-vary-along-produces-none) |
 | a search came back empty and you are about to conclude the thing does not exist | [A search whose scope cannot contain the answer](#a-search-whose-scope-cannot-contain-the-answer) |
@@ -172,6 +173,8 @@ Generated from 114 declared rules. Regenerate with
 | a run reported no counts and you are reading that as nothing failed | [The wrapper caught a real crashed run, unstaged](#the-wrapper-caught-a-real-crashed-run-unstaged) |
 
 <!-- APPARATUS-INDEX:END -->
+
+115 rules indexed.
 
 114 rules indexed.
 
@@ -30188,3 +30191,55 @@ The same clause was wrong about Journal in the other direction: its ground was
 "the frame's journal cell shows the snippet, not an entry", and the cell drew an
 ENTRY above the note. Journal stayed marked, correctly, for a reason the file
 did not give.
+
+## A constant is retired for why it is constant, not for being constant
+
+**Shape:** sample-as-population
+**You are here if:** a mark, field or state is identical across every record and you are about to remove it as texture
+
+7a §1.4 retires a mark that is constant across the collection. Two candidates
+were constant on the same measurement and the measurement was true for both:
+the acquisition date (null on every record) and the image count (1 on every
+record). The earlier refusal retired both. **The defect was not the
+measurement but the inference from it.**
+
+The rule now splits on WHY:
+
+- `purchase_date` is constant because **the app abandoned the field**. No
+  code path writes it, so the mark can only ever be texture. Retired.
+- The image count is constant because **the collection is unphotographed**.
+  The schema carries cover, gatefold left, gatefold right and back — one per
+  record is a backlog, not a ceiling. Kept, and the frame draws
+  `Images N Manage →`.
+
+**The test: a constant is retired when no field exists for the values that
+would vary it, and kept when the field exists and is unfilled.** The first is a
+fact about the app; the second is a fact about today's data. A rule reading
+texture from an unfilled field measures the backlog rather than the design.
+
+### The states this leaves correct-today-and-expiring
+
+Three things in the build describe one image per record, and all three are
+right now and must not harden: the gallery's cover-only empty state, its
+no-images empty state, and Images rendering control-only on most records. Each
+is now commented as today's data rather than the schema, and each is correct
+BY CONSTRUCTION when the data changes — a record with a back photograph gets a
+group and the empty branch stops rendering — so nothing silently becomes wrong
+when the first gatefold is photographed. Where a comment had to say "seventeen
+of seventeen", it now says "today".
+
+### A field with no consumer
+
+`imageCount` was declared in `PageRecord`, filled by the route, carried by the
+probe's fixtures, and read by no component. §9.4 marked Images on the ground
+"the frame shows a count", and for two days it showed none. **A type does not
+complain about a field nobody reads, and a route does not complain about
+passing one.** `test/repo/page-record-consumed.test.ts` now requires every
+field of the type to be read by a component; it found exactly this one of 24.
+
+### The drawing was wrong, once
+
+`April 2019` in the drawing's provenance cell was the date's retirement not
+having reached the drawing. §0 makes the drawing the specification, and this is
+the first divergence in the file to resolve for the build — worth naming as the
+exception rather than letting it read as precedent.

@@ -105,6 +105,7 @@ export function Section({
 
   return (
     <section
+      id={name}
       data-section={name}
       data-shape={shape}
       /*
@@ -140,6 +141,12 @@ export function Section({
             record had images and vanished when it did not would make the mark
             encode that fact. A control-only section keeps its bar — it says the
             record's colour reaches that place, not that something is in it.
+
+            That Images renders control-only on most records is TODAY'S DATA,
+            not a rule: the collection is unphotographed beyond its covers, and
+            the schema carries four image types. When a gatefold is photographed
+            the section stops being control-only for that record, and nothing
+            here should have assumed otherwise.
           */}
           {carriesMark(name) && base !== null && (
             <div

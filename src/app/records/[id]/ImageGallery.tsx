@@ -189,9 +189,16 @@ export function ImageGallery({
           want opposite sentences. "No images yet" is FALSE for the second, and
           the reader can see it is false: the cover is on the same screen.
 
-          Every record in the collection is in the second state (seventeen of
-          seventeen have one image and it is a cover), so the wrong sentence
-          here would be the one the whole collection renders.
+          Every record in the collection is in the second state TODAY (each has
+          one image and it is a cover), so the wrong sentence here would be the
+          one the whole collection renders.
+
+          **Correct today and expiring, not a rule.** Both sentences describe an
+          unphotographed collection against a schema with four image types.
+          When a gatefold is photographed the cover-only state stops being the
+          common case and this branch stops rendering for that record — by
+          construction, since `groups` is non-empty — so nothing here hardens
+          one image per record into an assumption.
         */
         images.some((image) => image.imageType === 'cover') ? (
           <p data-testid="gallery-cover-note" className="text-prose text-muted-foreground">

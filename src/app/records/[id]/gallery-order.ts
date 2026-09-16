@@ -85,10 +85,16 @@ export function groupImages(images: GalleryImage[]): ImageGroup[] {
     frame's summary — but a cover shown whole has no fuller version, which is
     what separates this from the price list or the journal.
 
-    Note what this does to the common case: every record in the collection has
-    exactly one image and it is always a cover, so `groupImages` returns [] for
-    all seventeen. That is correct here and WRONG in the component, which says
-    "No images yet" — see `ImageGallery`.
+    Note what this does to the common case TODAY: every record in the
+    collection has exactly one image and it is a cover, so `groupImages` returns
+    [] for all of them. That is correct here and WRONG in the component, which
+    says "No images yet" — see `ImageGallery`.
+
+    **"Every record has one image" is today's data, not the schema.** The schema
+    carries cover, gatefold left, gatefold right and back; one per record is a
+    backlog. Nothing here assumes one — a record with a back photograph gets a
+    group — and nothing should be written that silently becomes wrong when the
+    first gatefold is photographed.
   */
   const withoutCover = images.filter((image) => image.imageType !== 'cover');
 
