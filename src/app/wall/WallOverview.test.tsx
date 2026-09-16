@@ -126,3 +126,18 @@ describe('200 records', () => {
     expect(perRender, `${perRender.toFixed(1)}ms per 200-record render`).toBeLessThan(100);
   });
 });
+
+describe('the overview at rest is line, ink and paper (8a §11)', () => {
+  it('fills no spine — every polygon is an outline', () => {
+    /*
+      Fails against `WallOverview.tsx` while a spine carries `fill="#8a8079"`:
+      a flat grey is not a derived colour, but it is not line, ink or paper
+      either, and §11 leaves the resting wall nothing else.
+    */
+    const html = render({ seats: seats(6, 2), pulledId: null });
+    const fills = [...html.matchAll(/fill="([^"]*)"/g)].map((m) => m[1]);
+
+    expect(fills).toHaveLength(8);
+    expect(new Set(fills)).toEqual(new Set(['none']));
+  });
+});

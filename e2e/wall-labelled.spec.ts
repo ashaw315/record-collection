@@ -1,18 +1,22 @@
 import { expect, test, type Page } from '@playwright/test';
 import { SPINE_WIDTH_MIN, spinePolygon, spineWidth } from '../src/app/wall/geometry';
 import { SPINE_TEXT_BUDGET, spineLabel } from '../src/app/wall/spine-text';
-import { pickInk } from '../src/app/wall/spine-ink';
-import { contrastRatio } from '../src/lib/colour/record-colour';
 import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
 
 /**
- * The 1:1 component (The Wall 5b §1, §4, §5), on the real collection.
+ * The 1:1 component (The Wall 5b §1, §4, §5; 8a §11), on the real collection.
  *
  * What the overview could not assert: that labels render at 1:1 in the
- * drawing's own geometry, with ink picked per fill, truncated at the budget,
- * and inside the spine they name. And what only a rendering can: that the
- * labelled component draws the SAME polygons the overview does, by import
- * rather than by coincidence.
+ * drawing's own geometry, in ink, truncated at the budget, and inside the
+ * spine they name. And what only a rendering can: that the labelled component
+ * draws the SAME polygons the overview does, by import rather than by
+ * coincidence.
+ *
+ * **§11: the wall at rest is line, ink and paper — no derived colour anywhere
+ * in the drawing.** A spine at rest takes no colour; colour arrives with the
+ * pull. So the stored-colour and ink-pick claims this spec first made are
+ * withdrawn with the fills, and replaced by the one that supersedes them: that
+ * nothing in the resting drawing carries a fill but `none`.
  */
 
 const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
@@ -25,28 +29,32 @@ async function login(page: Page) {
   await expect(page).toHaveURL('/');
 }
 
-const withCover = COLLECTION_SPINES.filter((row) => row.resampled !== null);
-
 test.beforeEach(async ({ page }) => {
   await login(page);
   await page.goto('/wall/probe/labelled');
   await page.locator('[data-wall="labelled"]').waitFor({ timeout: 15_000 });
 });
 
-test('draws every record with its own stored colour, and the coverless one unfilled', async ({
+test('draws every spine as an unfilled outline at rest — the coverless one indistinguishable', async ({
   page,
 }) => {
-  const fills = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('[data-seat] [data-spine]')).map((spine) =>
-      spine.getAttribute('fill'),
-    ),
+  /*
+    Was: every record with its own stored colour, and one unfilled where no
+    cover exists. §11 withdraws the fills, and with them the one distinction
+    the coverless record had at rest: seventeen outlines, none filled.
+  */
+  const spines = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('[data-seat] [data-spine]')).map((spine) => ({
+      fill: spine.getAttribute('fill'),
+      stroke: spine.getAttribute('stroke'),
+    })),
   );
 
-  expect(fills).toHaveLength(COLLECTION_SPINES.length);
-  expect(fills.filter((fill) => fill === 'none'), 'one unfilled where no cover exists').toHaveLength(1);
-
-  const expected = COLLECTION_SPINES.map((row) => row.resampled ?? 'none');
-  expect(fills).toEqual(expected);
+  expect(spines).toHaveLength(COLLECTION_SPINES.length);
+  for (const spine of spines) {
+    expect(spine.fill).toBe('none');
+    expect(spine.stroke).toBe('#161412');
+  }
 });
 
 test('labels every spine at the drawn size, rotated up the spine, cut to the budget', async ({
@@ -81,33 +89,33 @@ test('labels every spine at the drawn size, rotated up the spine, cut to the bud
   expect(donna?.text).toBe('Donna Summer · On The Radio: Greates…');
 });
 
-test('picks each label ink from the four candidates, and every pick clears 4.5:1', async ({
+test('sets every label in ink, and no derived colour appears anywhere in the drawing', async ({
   page,
 }) => {
   /**
-   * **Re-run, not copied.** 5b's picks were against pre-A75 fills. The
-   * component picks against whatever the fill is now, and the test asserts the
-   * pick is the RULE's output — the best of four — rather than a table.
+   * Was: ink picked per fill from 5b's four candidates. With no fill there is
+   * nothing to pick against, and §11 withdraws the pick at rest. The second
+   * half is the ruling itself, asserted over the WHOLE svg rather than the
+   * spines: a fill that crept onto a shelf, a label or a mark would be the same
+   * exception leaking somewhere the spine assertion does not look.
    */
-  const pairs = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('[data-seat]')).map((seat) => ({
-      fill: seat.querySelector('[data-spine]')?.getAttribute('fill') ?? null,
-      ink: seat.querySelector('[data-label]')?.getAttribute('fill') ?? null,
-    })),
+  const fills = await page.evaluate(() => {
+    const svg = document.querySelector('[data-wall="labelled"]');
+    if (svg === null) return null;
+    return {
+      labels: Array.from(svg.querySelectorAll('[data-label]')).map((l) => l.getAttribute('fill')),
+      everything: Array.from(svg.querySelectorAll('[fill]')).map((el) => el.getAttribute('fill')),
+    };
+  });
+  expect(fills).not.toBeNull();
+  if (fills === null) return;
+
+  expect(fills.labels).toHaveLength(COLLECTION_SPINES.length);
+  for (const ink of fills.labels) expect(ink).toBe('#161412');
+
+  expect(new Set(fills.everything), 'line, ink and paper — nothing else').toEqual(
+    new Set(['none', '#161412']),
   );
-
-  for (const pair of pairs) {
-    if (pair.fill === null || pair.fill === 'none') continue;
-    const expected = pickInk(pair.fill);
-    expect(pair.ink, `ink on ${pair.fill}`).toBe(expected.ink);
-    expect(contrastRatio(pair.fill, pair.ink ?? ''), `${pair.fill} legible`).toBeGreaterThanOrEqual(
-      4.5,
-    );
-  }
-
-  /* And the pick is not degenerate on today's fills: both dark and light inks are used. */
-  const inks = new Set(pairs.map((pair) => pair.ink));
-  expect(inks.size, 'more than one ink on the raw fills').toBeGreaterThan(1);
 });
 
 test('draws the same polygons the overview does, by the shared geometry', async ({ page }) => {

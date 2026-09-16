@@ -18,9 +18,10 @@ import { shelfRuns, type ShelfSeat } from './shelf-runs';
  * render it at 3.7px and violate the floor silently. Which gives the wall two
  * states rather than one degrading one — this is the unlabelled state.
  *
- * Zoomed out the wall is colour, thickness, section gaps and the shape of the
+ * Zoomed out the wall is thickness, section gaps and the shape of the
  * collection: **encounter rather than retrieval**, which is what NOTES records
- * the wall is for.
+ * the wall is for. Not colour: §11 makes the wall at rest line, ink and paper,
+ * and the flat grey this once filled spines with was neither.
  *
  * **The threshold between this component and the labelled one is not here.**
  * The rule is settled; how the switch is expressed is its own decision.
@@ -92,7 +93,7 @@ export function WallOverview({
                   <polygon
                     key={seat.id}
                     points={points(spinePolygon(x, originY, spineWidth(seat.id)))}
-                    fill="#8a8079"
+                    fill="none"
                     stroke="#161412"
                     strokeWidth="1"
                   />

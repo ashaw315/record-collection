@@ -38,9 +38,9 @@ export type ShelfSeat = {
  * §5: labels render at 1:1 and are REMOVED below it — so `ShelfSeat` stays the
  * minimum both components share, and this is the labelled component's own.
  *
- * `spineColour` is the STORED value, as the wall has always taken it. Whether
- * the wall should take the ladder's base instead is D3, measured in
- * `wall-clamp.test.ts` and not yet ruled.
+ * `spineColour` is the STORED value, and at rest nothing reads it (§11: the
+ * wall at rest is line, ink and paper). It travels with the seat for the pull,
+ * where colour arrives across the gesture as the ladder's clamped base.
  */
 export type WallSeat = ShelfSeat & {
   label: string;

@@ -8,10 +8,9 @@ import {
   spineWidth,
   type Point,
 } from './geometry';
-import { pickInk } from './spine-ink';
 
 /**
- * The wall at 1:1 — polygons plus labels (The Wall 5b §1, §4).
+ * The wall at 1:1 — polygons plus labels (The Wall 5b §1, §4; 8a §11).
  *
  * **Same geometry as the overview, by import.** `geometry.ts` exists so this
  * component inherits the overview's decisions rather than re-making them: a
@@ -22,13 +21,20 @@ import { pickInk } from './spine-ink';
  *
  * **Labels at 10.39px reading 9px through the shear**, Geist Mono 500, rotated
  * to run up the spine from an 8px baseline inset — the drawing's own transform.
- * Truncated at the 37-character budget. Ink picked per fill from 5b's four
- * candidates, re-run on today's fills rather than copied from the drawing's.
+ * Truncated at the 37-character budget.
  *
- * **Fills are the stored value**, as the wall has always taken them. The record
- * screen draws the same record at the ladder's clamped base; the two disagree
- * today and D3 decides which moves. Measured in `wall-clamp.test.ts`.
+ * **At rest the wall is line, ink and paper (§11): no derived colour anywhere
+ * in the drawing.** A record on the shelf is one of seventeen outlines;
+ * pulled, it becomes itself and takes its own colour. So no spine is filled
+ * and every label is set in ink — 5b's four-candidate pick had nothing left
+ * to choose against and is withdrawn with the fills. What distinguishes a
+ * spine at rest is position, width and the label (§11.1), and the coverless
+ * record is no longer distinguishable from the rest — an outline among
+ * outlines, which is what §11 makes of every record.
  */
+
+/** The one ink, for outline and label alike. */
+const INK = '#161412';
 
 const PER_SHELF = 40;
 const LABEL_FONT_PX = 10.39;
@@ -83,17 +89,14 @@ export function WallLabelled({
                 if (seat.id === pulledId) return null;
 
                 const width = spineWidth(seat.id);
-                const ink = seat.spineColour === null ? '#161412' : pickInk(seat.spineColour).ink;
 
                 return (
                   <g key={seat.id} data-seat={seat.id}>
                     <polygon
                       data-spine=""
                       points={points(spinePolygon(x, originY, width))}
-                      /* One unfilled where no cover exists (5b §1): an honest
-                         absence, never a default colour. */
-                      fill={seat.spineColour ?? 'none'}
-                      stroke="#161412"
+                      fill="none"
+                      stroke={INK}
                       strokeWidth="1"
                     />
                     <text
@@ -111,7 +114,7 @@ export function WallLabelled({
                       fontFamily="Geist Mono, monospace"
                       fontSize={LABEL_FONT_PX}
                       fontWeight="500"
-                      fill={ink}
+                      fill={INK}
                       xmlSpace="preserve"
                     >
                       {seat.label}
