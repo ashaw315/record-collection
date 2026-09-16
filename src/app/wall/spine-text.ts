@@ -24,3 +24,19 @@ export const GLYPH_ADVANCE_PX = 6.235;
  * the slack. A 38th character would need 236.93px and overrun by 4.93px.
  */
 export const SPINE_TEXT_BUDGET = 37;
+
+/**
+ * The 1:1 label: `Artist · Title`, cut to the budget with an ellipsis.
+ *
+ * 5b's labels carry artist and title only — the catalogue number is the lit
+ * wall's addition, and the drawing does not show it. Truncation keeps the
+ * ellipsis inside the budget, so a 37-character result is 36 glyphs and the
+ * mark, never 38: "Donna Summer · On The Radio: Greates…" is the drawn case.
+ */
+export function spineLabel(artist: string, title: string): string {
+  const full = `${artist} · ${title}`;
+  if ([...full].length <= SPINE_TEXT_BUDGET) return full;
+
+  return `${[...full].slice(0, SPINE_TEXT_BUDGET - 1).join('')}…`;
+}
+

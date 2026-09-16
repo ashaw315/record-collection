@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { LABEL } from '@/app/records/[id]/grid-type';
 import { RECORD_SORT_FIELDS, type RecordSortField } from '@/lib/records/fields';
 import {
   VIEW_MODES,
@@ -297,7 +298,13 @@ export function CollectionFilters({
 
         return (
           <div key={group.key} className="flex items-baseline gap-2">
-            <span className="w-12 shrink-0 text-label tracking-wide text-muted-foreground uppercase">
+            {/*
+              §4's label, from the one definition. This was uppercase INTER —
+              the page around the wall takes the record screen's system, and a
+              second label treatment is A61's fifteen-places defect arriving on
+              the collection screen.
+            */}
+            <span className={`w-12 shrink-0 ${LABEL}`}>
               {group.label}
             </span>
             <div className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1">

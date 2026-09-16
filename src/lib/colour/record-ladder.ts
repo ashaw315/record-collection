@@ -43,7 +43,7 @@ const TINT_TOWARD_PAPER = 0.34;
 const SHADE_TOWARD_INK = 0.26;
 
 type Rgb = { r: number; g: number; b: number };
-type Oklch = { L: number; C: number; h: number };
+export type Oklch = { L: number; C: number; h: number };
 
 const HEX = /^#([0-9a-f]{6})$/i;
 
@@ -81,7 +81,13 @@ function rgbToOklch({ r, g, b }: Rgb): Oklch {
   return { L, C: Math.hypot(a, bb), h: ((Math.atan2(bb, a) * 180) / Math.PI + 360) % 360 };
 }
 
-function oklchToHex({ L, C, h }: Oklch): string {
+/**
+ * Exported for the wall's measurements. The ladder's steps are `oklch(...)`
+ * strings for CSS; anything comparing them to a stored hex — a contrast ratio,
+ * a distance — needs them back in sRGB, and this is the one inverse rather than
+ * a second copy of the OKLab matrices somewhere else.
+ */
+export function oklchToHex({ L, C, h }: Oklch): string {
   const rad = (h * Math.PI) / 180;
   const a = C * Math.cos(rad);
   const b = C * Math.sin(rad);
@@ -115,6 +121,7 @@ export type RecordLadder = {
   shadeHue: number;
   baseC: number;
   /** What the cover actually sampled to, before the clamp. */
+  sampledL: number;
   sampledC: number;
   sampledHue: number;
 };
@@ -163,6 +170,7 @@ export function recordLadder(stored: string | null): RecordLadder | null {
     baseHue: base.h,
     shadeHue: shade.h,
     baseC: base.C,
+    sampledL: sampled.L,
     sampledC: sampled.C,
     sampledHue: sampled.h,
   };

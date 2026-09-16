@@ -37,6 +37,17 @@ const SCREEN = [
   'src/app/records/[id]/RecordJournal.tsx',
   'src/app/records/[id]/DeleteRecord.tsx',
   'src/app/market/MarketPanel.tsx',
+  /*
+    `/` — the page around the wall takes the record screen's system: type
+    scale and roles, hairlines, mono-data and sans-prose, the control and field
+    specifications. The wall DRAWING keeps its own geometry and is not listed;
+    the chrome around it is application rather than design.
+  */
+  'src/app/page.tsx',
+  'src/app/CollectionFilters.tsx',
+  'src/app/ShelfControls.tsx',
+  'src/app/CollectionList.tsx',
+  'src/app/CollectionPagination.tsx',
 ];
 
 describe('the record screen speaks one type vocabulary', () => {

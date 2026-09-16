@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 117 declared rules. Regenerate with
+Generated from 119 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -40,10 +40,12 @@ Generated from 117 declared rules. Regenerate with
 | a long-settled constant has never been wrong, and you cannot say what would have told you | [A value that survived every review because nothing could test it](#a-value-that-survived-every-review-because-nothing-could-test-it) |
 | a verification was requested and the thing it needs was never recorded | [A37 VERIFIED in real use — and the measurement I asked for cannot be taken](#a37-verified-in-real-use-and-the-measurement-i-asked-for-cannot-be-taken) |
 | a rule has been loosened twice and still excludes cases it should permit | [Check the parameters before the predicate when a rule will not settle](#check-the-parameters-before-the-predicate-when-a-rule-will-not-settle) |
+| a ruling is pending on whether two systems can agree, and nobody has computed whether they are able to | [D3, measured: the clamp and the wall can share a value](#d3-measured-the-clamp-and-the-wall-can-share-a-value) |
 | an average across a dataset is being quoted and the set has kinds in it | [RULE: any measurement of Discogs metadata quality must be PER-GENRE. An](#rule-any-measurement-of-discogs-metadata-quality-must-be-per-genre-an) |
 | a comment or summary describes work more rigorously than the work | [RULE: prose is more rigorous than the work it describes, and it is always](#rule-prose-is-more-rigorous-than-the-work-it-describes-and-it-is-always) |
 | a number stands in for a capability and you counted the proxy | [RULE: when a measurement stands in for a capability, count the capability,](#rule-when-a-measurement-stands-in-for-a-capability-count-the-capability) |
 | a number surprised you and you have not checked what else was running | [THE APPARATUS GENERATING THE SIGNAL — now a mechanism, not a habit](#the-apparatus-generating-the-signal-now-a-mechanism-not-a-habit) |
+| two surfaces derive from one stored value through different functions and nobody has put them side by side | [The same record renders two colours on two screens](#the-same-record-renders-two-colours-on-two-screens) |
 | a ruling describes a threshold being crossed and you are about to assert the crossing | [The third give is never reached on the build, and the test says so](#the-third-give-is-never-reached-on-the-build-and-the-test-says-so) |
 | a feature computes something correct and you cannot say what a user does with it | [THE WALK DOES NOTHING FOR A PERSON, and the four artists most likely to converge are People](#the-walk-does-nothing-for-a-person-and-the-four-artists-most-likely-to-converge-are-people) |
 | a rule enumerates cases and you cannot tell whether it constrains anything | [Three shapes that force a decision are structural; three that describe are not](#three-shapes-that-force-a-decision-are-structural-three-that-describe-are-not) |
@@ -175,6 +177,8 @@ Generated from 117 declared rules. Regenerate with
 | a run reported no counts and you are reading that as nothing failed | [The wrapper caught a real crashed run, unstaged](#the-wrapper-caught-a-real-crashed-run-unstaged) |
 
 <!-- APPARATUS-INDEX:END -->
+
+119 rules indexed.
 
 117 rules indexed.
 
@@ -30329,3 +30333,77 @@ stack. Both are recorded rather than silently corrected, because the raster
 still carries the taller stack and §0 makes the drawing the specification for
 the composition — while never having been the authority on what 72px/0.94 Inter
 Tight occupies.
+
+## The same record renders two colours on two screens
+
+**Shape:** measurement-not-governing
+**You are here if:** two surfaces derive from one stored value through different functions and nobody has put them side by side
+
+The wall fills each spine with `spine_colour` as stored — 41 read sites, raw.
+The record screen draws the same record at `recordLadder(spine_colour).base`,
+clamped to lightness 0.62–0.74 and chroma ≤ 0.09. **The same record is two
+colours on two screens today**, and that is a defect regardless of how D3
+rules: the ruling decides which one moves, not whether they should agree.
+
+Measured on the seventeen, post-A75, raw against base:
+
+| | raw | base | ΔL | ΔC |
+|---|---|---|---|---|
+| Grave New World | `#363129` | `#8b857c` | **+0.30** | 0 |
+| Loss Of Life | `#473e35` | `#8e847a` | **+0.25** | 0 |
+| Super Rich | `#755f34` | `#9a8357` | +0.12 | 0 |
+| Psychic | `#6e636a` | `#8e828a` | +0.11 | 0 |
+| Dire Straits | `#d8cbb8` | `#b5a996` | −0.11 | 0 |
+| On The Radio | `#bc4889` | `#af6f8f` | +0.04 | **−0.074** |
+| Wired, Never Too Much, Bridge Over Troubled Water | | | +0.07–0.08 | |
+| The Money Store, Mind Games, Bitches Brew, The Soft Parade | | | **0** | **0** |
+
+Four records sit inside the clamp already and do not move; the two that move
+furthest are exactly A73's collisions, which the clamp lifts a quarter of the
+lightness range to get off the fallback — and which is also what takes them
+furthest from their covers.
+
+## D3, measured: the clamp and the wall can share a value
+
+**Shape:** measurement-not-governing
+**You are here if:** a ruling is pending on whether two systems can agree, and nobody has computed whether they are able to
+
+The question that decides whether D3 is open: at the ladder's clamped
+lightness, does 9px label text reach 4.5:1 against ink or against paper?
+
+**Ink, everywhere; paper, nowhere.** At every corner of the clamp band — L 0.62
+and 0.74, C 0 and 0.09 — ink reads 5.3–8.6:1 and paper 1.8–3.0:1 (white
+2.3–3.7). On the sixteen real records at base: ink ≥ 5.18, paper ≤ 3.06. So a
+spine at base is legible on every record, and arithmetic does not close the
+question — it stays a judgement, with three facts attached:
+
+1. **The four-candidate pick collapses to one.** 5b picks label ink per fill
+   because raw fills span light and dark; at the clamp every record's best ink
+   is the page's `#0a0a0a`. A ruling that shares the value retires the pick as a
+   consequence.
+2. **The raw wall still clears 4.5:1 on all sixteen, worst 4.74.** 5b reported
+   4.52 on Donna Summer pre-A75; A75 moved that fill (`#94698a` → `#bc4889`) and
+   it is still the worst pick, at 4.74. Re-run rather than copied.
+3. **A73's argument survives A75; two of its three numbers do too.** MGMT still
+   reads 1.09 against the fallback and 1.02 against the shelf plane; Discharge
+   1.13. Neither cover cleared A75's chroma floor, so neither moved. Jeff Beck
+   was fixed by A75 itself: 1.37 → 2.27. The argument — under line, an edge is
+   an edge at any value — never depended on the numbers.
+
+All of it is asserted in `src/lib/colour/wall-clamp.test.ts` from a committed
+fixture of the seventeen (`test/fixtures/collection-spines.ts`: 5b's fills
+paired to A75's before/after table). The dev database was not read — its
+`DATABASE_URL` reached a database with no `records` table.
+
+### Two smaller things from the same unit
+
+**One projection, defined once.** `COS30`/`SIN30` were declared in both
+`wall/geometry.ts` and `records/[id]/construction.ts` — the enumeration shape
+arriving in a constant. The record screen now imports the wall's. Forty tests
+unchanged.
+
+**A rotated element's `getBBox` is the box before the transform.** The 1:1
+component's "label inside its spine" test read a label's run length as its
+width and failed on every seat. `getBoundingClientRect` is the rendered
+rectangle, which is what the claim was about. Same family as the arity test:
+a real property of the element that is not the property the claim names.

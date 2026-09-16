@@ -32,6 +32,21 @@ export type ShelfSeat = {
 };
 
 /** One unbroken stretch of shelf, carrying the records still seated on it. */
+/**
+ * What the 1:1 component needs of a seat beyond its id and section: the label
+ * it carries and the colour it is filled with. The overview draws neither —
+ * §5: labels render at 1:1 and are REMOVED below it — so `ShelfSeat` stays the
+ * minimum both components share, and this is the labelled component's own.
+ *
+ * `spineColour` is the STORED value, as the wall has always taken it. Whether
+ * the wall should take the ladder's base instead is D3, measured in
+ * `wall-clamp.test.ts` and not yet ruled.
+ */
+export type WallSeat = ShelfSeat & {
+  label: string;
+  spineColour: string | null;
+};
+
 export type ShelfRun = {
   section: string;
   /** Seated records, in shelf order. Excludes the pulled one. */

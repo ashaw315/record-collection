@@ -14,8 +14,14 @@ import type { ShelfRun } from './shelf-runs';
  */
 
 /** 30°, the isometric basis. */
-const COS30 = Math.cos(Math.PI / 6);
-const SIN30 = 0.5;
+/**
+ * **The one projection, defined once.** `construction.ts` had its own copy of
+ * these two constants — one projection with two definitions, which is the
+ * enumeration shape arriving in a constant. The record screen's isometric
+ * solids and the wall's spines are the same 30° drawing, and share it by import.
+ */
+export const COS30 = Math.cos(Math.PI / 6);
+export const SIN30 = 0.5;
 
 /**
  * **The wall's constant, and everything else derives from it.**

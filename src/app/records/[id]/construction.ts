@@ -25,8 +25,8 @@
 import type { MarkStep } from './mark-boxes';
 
 /** The wall's constants (`src/app/wall/geometry.ts`), same angle. */
-const COS30 = Math.cos(Math.PI / 6);
-const SIN30 = 0.5;
+/* The wall's projection, by import — one definition, not a copy. */
+import { COS30, SIN30 } from '@/app/wall/geometry';
 
 /**
  * One point of the isometric basis.
