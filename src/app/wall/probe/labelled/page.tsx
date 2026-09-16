@@ -24,24 +24,32 @@ export const dynamic = 'force-dynamic';
  * images — so `?cover=<url>` attaches one to Wired for the pull to show. A
  * workbench parameter, like `?case=` on the page8a probe.
  */
-function seatsWith(cover: string | null): WallSeat[] {
-  return COLLECTION_SPINES.map((row, index) => ({
-    id: `collection-${index}`,
-    section: 'Collection',
-    label: spineLabel(row.artist, row.title),
-    spineColour: row.resampled,
-    coverUrl: row.title === 'Wired' ? cover : null,
-  }));
+function seatsWith(cover: string | null, count: number): WallSeat[] {
+  /*
+    `?count=200` cycles the collection's seventeen, exactly as Wall Density
+    drew its three shelves of forty — the 200 case §11.1 says width and label
+    do not cover. Evidence for the open difference rule, not a feature.
+  */
+  return Array.from({ length: count }, (_, index) => {
+    const row = COLLECTION_SPINES[index % COLLECTION_SPINES.length];
+    return {
+      id: `collection-${index}`,
+      section: 'Collection',
+      label: spineLabel(row.artist, row.title),
+      spineColour: row.resampled,
+      coverUrl: row.title === 'Wired' ? cover : null,
+    };
+  });
 }
 
 export default async function WallLabelledProbePage({
   searchParams,
 }: {
-  searchParams: Promise<{ cover?: string }>;
+  searchParams: Promise<{ cover?: string; count?: string }>;
 }) {
   if (process.env.NODE_ENV === 'production') notFound();
-  const { cover } = await searchParams;
-  const seats = seatsWith(cover ?? null);
+  const { cover, count } = await searchParams;
+  const seats = seatsWith(cover ?? null, Number(count) > 0 ? Number(count) : COLLECTION_SPINES.length);
 
   return (
     <main style={{ padding: 24, background: '#f9f7f4' }}>

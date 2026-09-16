@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SPINE_TEXT_BUDGET, spineLabel } from './spine-text';
+import { COLLECTION_SPINES } from '../../../test/fixtures/collection-spines';
 
 describe('the 1:1 label (5b §1)', () => {
   it('is artist and title with the middle dot', () => {
@@ -24,5 +25,28 @@ describe('the 1:1 label (5b §1)', () => {
     const exact = 'A · ' + 'x'.repeat(SPINE_TEXT_BUDGET - 4);
     expect([...exact].length).toBe(SPINE_TEXT_BUDGET);
     expect(spineLabel('A', 'x'.repeat(SPINE_TEXT_BUDGET - 4))).toBe(exact);
+  });
+});
+
+describe('Wall Density’s truncation count, re-gathered at the budget the code uses (8a §11)', () => {
+  /**
+   * Wall Density counted 21 of 120 labels truncating — three shelves of forty,
+   * the collection's seventeen labels cycled — at a 36-character budget. The
+   * budget is 37, and a truncation count is exactly the measurement a
+   * one-character error moves, so it is re-gathered here or not cited.
+   */
+  const labels = COLLECTION_SPINES.map((row) => spineLabel(row.artist, row.title));
+  const truncated = labels.filter((label) => label.endsWith('…'));
+
+  it('three of the seventeen truncate at 37 — the same three as at 36', () => {
+    expect(truncated).toHaveLength(3);
+    expect(truncated.map((l) => l.slice(0, 12))).toEqual(['Donna Summer', 'Simon & Garf', 'The Blues Pr']);
+    /* No label is exactly 37 long, which is why the character did not move the count. */
+    expect(labels.some((l) => [...l].length === SPINE_TEXT_BUDGET && !l.endsWith('…'))).toBe(false);
+  });
+
+  it('cycled to 120 labels as Wall Density drew them, 21 truncate at 37 too', () => {
+    const wall = Array.from({ length: 120 }, (_, i) => labels[i % labels.length]);
+    expect(wall.filter((l) => l.endsWith('…'))).toHaveLength(21);
   });
 });

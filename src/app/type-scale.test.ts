@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { MICRO_PX } from './type-scale';
 
 /**
  * **SPEC.md §7a's type scale, asserted against the CSS that is actually built.**
@@ -268,5 +269,26 @@ describe("A61's two-entry predicate", () => {
     const value = declared('text-prose');
 
     expect(pixels(value ?? ''), 'prose is the continuous-text size').toBe(13);
+  });
+});
+
+describe('micro, referenced by name where no class can carry it', () => {
+  it('MICRO_PX is the --text-micro globals.css declares', () => {
+    /* The theme block in SOURCE, since `@theme inline` emits no property. */
+    const css = readFileSync(join(process.cwd(), 'src', 'app', 'globals.css'), 'utf8');
+    const declared = /--text-micro:\s*([\d.]+)px/.exec(css)?.[1];
+    expect(declared, 'globals.css declares --text-micro').toBeDefined();
+    expect(MICRO_PX).toBe(Number(declared));
+  });
+
+  it('the wall derives its label size from MICRO_PX and carries no 10.39 of its own', () => {
+    /*
+      A source check, named as one: the rendered 10.39 is asserted by
+      wall-labelled.spec.ts. This proves the number is derived (9 / cos 30°)
+      rather than typed, which is the only way it moves when micro does.
+    */
+    const source = readFileSync(join(process.cwd(), 'src', 'app', 'wall', 'WallLabelled.tsx'), 'utf8');
+    expect(source).toContain('MICRO_PX');
+    expect(source).not.toMatch(/10\.39/);
   });
 });

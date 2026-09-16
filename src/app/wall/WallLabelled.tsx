@@ -3,6 +3,7 @@ import { pullPose, returnPose } from './pull-curve';
 import { pullFill, returnFill } from './pull-colour';
 import { PULLED_SIZE, pullFace } from './pull-geometry';
 import { recordLadder } from '@/lib/colour/record-ladder';
+import { MICRO_PX } from '../type-scale';
 import {
   COS30,
   SIN30,
@@ -25,9 +26,11 @@ import {
  * thickness when labels appear. So the polygons here are the overview's
  * polygons, and the only thing this adds is what §5 removes below 1:1.
  *
- * **Labels at 10.39px reading 9px through the shear**, Geist Mono 500, rotated
- * to run up the spine from an 8px baseline inset — the drawing's own transform.
- * Truncated at the 37-character budget.
+ * **Labels at `micro` / cos 30° — 9px read through the shear**, Geist Mono
+ * 500, rotated to run up the spine from an 8px baseline inset — the drawing's
+ * own transform. Truncated at the 37-character budget. The size is derived
+ * from the scale's `micro` by name (§11): the wall's sizes are the projection's
+ * units, and a floor matched by value is a coincidence waiting for a margin.
  *
  * **At rest the wall is line, ink and paper (§11): no derived colour anywhere
  * in the drawing.** A record on the shelf is one of seventeen outlines;
@@ -56,7 +59,7 @@ export type PullState = {
 };
 
 const PER_SHELF = 40;
-const LABEL_FONT_PX = 10.39;
+const LABEL_FONT_PX = Number((MICRO_PX / COS30).toFixed(2));
 const BASELINE_INSET = 8;
 
 const points = (polygon: readonly Point[]) => polygon.map(([x, y]) => `${x},${y}`).join(' ');
