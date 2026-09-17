@@ -163,7 +163,9 @@ test('the previous arrow is ABSENT at the first record, the next arrow at the la
   the pair paid that cost twice for one property.
 */
 
-test('navigation is a SLIDE — both records at the same depth, not a rise', async ({ page }) => {
+test('navigation moves along the collection — both records moving, the neighbour landing where the held one was', async ({
+  page,
+}) => {
   const artistId = await seed(20);
   try {
     await login(page);
@@ -173,46 +175,30 @@ test('navigation is a SLIDE — both records at the same depth, not a rise', asy
     await expect(page.getByTestId('wall')).toBeVisible({ timeout: 30_000 });
     await page.clock.pauseAt(Date.now() + 1000);
 
-    /* Read BEFORE pulling: a pulled record's anchor is absent from the wall — and each seat's own width, since widths are hashed per record. */
+    /* Read BEFORE pulling: a pulled record's anchor is absent from the wall. */
     const order = await wallOrder(page);
-    const seatedWidth: Record<string, number> = await page.evaluate(() =>
-      Object.fromEntries(
-        Array.from(document.querySelectorAll('a[data-seat]')).map((a) => {
-          const pts = (a.querySelector('[data-face="front"]')?.getAttribute('points') ?? '').split(' ').map((p) => p.split(',').map(Number));
-          return [a.getAttribute('data-seat') ?? '', pts[1][0] - pts[0][0]];
-        }),
-      ),
-    );
     await page.locator('[data-seat] [data-spine]').first().click();
     await page.clock.runFor(1040);
+    const landed = await page.locator('[data-pulled] [data-landing]').getAttribute('transform');
 
-    /*
-      Mid-slide: TWO records are moving — the held one back, its neighbour out —
-      and neither is scaled: a slide holds depth, a rise (the second pull) would
-      not. Asserted on the drawing, since the mechanism is the claim.
-    */
+    /* Mid-way: TWO records are moving — the held one back to its seat, its neighbour out to the square. */
     await page.getByTestId('nav-next').click();
     await page.clock.runFor(300);
     const moving = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('[data-pulled]')).map((g) => {
-        const pts = (g.querySelector('[data-face="front"]')?.getAttribute('points') ?? '').split(' ').map((p) => p.split(',').map(Number));
-        return { id: g.getAttribute('data-pulled'), width: pts[1][0] - pts[0][0] };
-      }),
+      Array.from(document.querySelectorAll('[data-pulled]')).map((g) => g.getAttribute('data-pulled')),
     );
-    expect(moving, 'both records move during the slide').toHaveLength(2);
-    /* As a set: which of the two paints first is the painter's decision, not the slide's. */
-    expect(moving.map((m) => m.id).sort()).toEqual([order[0], order[1]].sort());
-    /* Points are drawn to two decimals; a slide holds the width to the tenth, a rise would not hold it at all. */
-    for (const m of moving) expect(m.width, `${m.id} keeps ITS OWN size — same depth`).toBeCloseTo(seatedWidth[m.id ?? ''], 1);
+    expect(moving.slice().sort(), 'both records move').toEqual([order[0], order[1]].sort());
 
+    /* And the neighbour lands exactly where the held one was: the same square, flat. */
     await page.clock.runFor(800);
     expect(await pulled(page), 'settled on the successor').toBe(order[1]);
+    await expect(page.locator('[data-pulled] [data-landing]')).toHaveAttribute('transform', landed ?? '');
   } finally {
     await cleanup(artistId);
   }
 });
 
-test('put back lands in the HELD record\'s slot after sliding', async ({ page }) => {
+test('put back lands in the HELD record\'s slot after navigating', async ({ page }) => {
   const artistId = await seed(60);
   try {
     await login(page);

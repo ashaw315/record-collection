@@ -34,10 +34,10 @@ describe('the overview draws the collection as polygons', () => {
   it('draws three faces per record plus one plane per shelf run', () => {
     const html = render({ seats: seats(6, 2), pulledId: null });
 
-    // 6 records × (top, right, front), over four shelves (2·2·1·1): one plane
-    // per shelf (§11.7), the section boundaries drawn as rules, not planes.
-    expect(countTag(html, 'polygon')).toBe(6 * 3 + 4);
-    expect(html.split('data-break=""').length - 1, 'one break per row with both sections').toBe(2);
+    // 6 records × (top, right, front) on one shelf of forty (§11.9): one plane,
+    // the section boundaries drawn as rules within it, not as planes.
+    expect(countTag(html, 'polygon')).toBe(6 * 3 + 1);
+    expect(html.split('data-break=""').length - 1, 'a break at each section boundary').toBe(5);
   });
 
   /**
@@ -139,7 +139,7 @@ describe('the overview at rest is line, ink and paper (8a §11)', () => {
     const html = render({ seats: seats(6, 2), pulledId: null });
     const fills = [...html.matchAll(/fill="([^"]*)"/g)].map((m) => m[1]);
 
-    expect(fills).toHaveLength(6 * 3 + 4);
+    expect(fills).toHaveLength(6 * 3 + 1);
     expect(new Set(fills)).toEqual(new Set([PLANE_FILL, FACE_FILL, TOP_FILL]));
     for (const fill of fills) {
       const chroma = Number(/oklch\([\d.]+ ([\d.]+) /.exec(fill)?.[1]);

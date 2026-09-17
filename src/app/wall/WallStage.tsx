@@ -3,26 +3,21 @@ import { RecordPanel } from './RecordPanel';
 import type { RecordSummary } from './summary';
 import type { WallSeat } from './shelf-runs';
 import { PERCEIVED_END } from './pull-colour';
-import { pullPose, returnPose } from './pull-curve';
-import { wallLayout } from './wall-layout';
-import { FORK_PX, panelAnchor } from './panel-anchor';
 import { hasAdjacentSeat, type Direction } from './adjacent-seat';
+import { ARROW_LANE, LANDING_PAD, landingSquare, type View } from './landing';
+import { LABEL, LABEL_INK } from '../records/[id]/grid-type';
+import { DRAWN_PAPER } from './WallComposition';
 
 /**
- * The stage: the drawing, and what the gesture arrives at.
+ * The stage: two columns — facts left, drawing right (8a §11.9).
  *
- * **§11.7's panel sits in the plane of the page, not the projection** —
- * flat, on paper, at the record screen's type, right of the pulled record,
- * top-aligned to the cover's far-top corner and as wide as the cover's
- * projected width, so the composition reads as two columns rather than an
- * object with a caption. It APPEARS at the slide's perceived end
- * (`PERCEIVED_END`, where 97% of travel is behind the eye) rather than
- * tracking the face: something in the page's plane moving with something in
- * the projection is the two planes collapsing into one.
- *
- * **§11.8's fork at 820 is an overlay, not a narrower panel.** The wall does
- * not reflow — a narrow viewport shows fewer records, not smaller ones — and
- * the overlay is the panel arriving over a wall that has not changed.
+ * The facts column carries COLLECTION and the count at its head (the
+ * collection's identity, not the record's — the wall is still behind the
+ * pulled record) and, below them, **the panel's region: fixed, empty at
+ * rest, filled when a record is pulled.** Every earlier placement answered
+ * where the object is now and needed a new rule each time; a destination
+ * does not move. The record lands in the drawing's region as the largest
+ * square it holds, unsheared (landing.ts), and the arrows go with it.
  */
 export function WallStage({
   seats,
@@ -32,6 +27,9 @@ export function WallStage({
   side,
   width,
   viewport,
+  view = null,
+  countLine = null,
+  regionRef,
   labels = true,
   onSeatClick,
   onPulledClick,
@@ -45,10 +43,16 @@ export function WallStage({
   /** The arrows' slide: two records moving at once. The panel follows the ARRIVING one. */
   pulls?: readonly PullState[];
   side: 'front' | 'back';
-  /** The container's width in px — the pan extent's floor. */
+  /** The drawing region's width in px — the pan extent's floor. */
   width: number;
-  /** The VIEWPORT's width in px — A32's fork is a measure of the page, not of the wall's column. */
+  /** The viewport's width in px. Kept for the deferred narrow-viewport ruling; nothing forks on it. */
   viewport: number;
+  /** The visible drawing region in the svg's px, frozen when the pull began: where the record lands. */
+  view?: View | null;
+  /** The filter-aware line under the count — "34 of 312 records" — when a filter is on. */
+  countLine?: string | null;
+  /** The drawing region, for whoever measures it. */
+  regionRef?: React.Ref<HTMLDivElement>;
   labels?: boolean;
   onSeatClick?: (id: string) => void;
   onPulledClick?: () => void;
@@ -56,6 +60,7 @@ export function WallStage({
   onPutBack?: () => void;
   onNavigate?: (direction: Direction) => void;
 }) {
+  void viewport;
   const moving: readonly PullState[] = pulls ?? (pull === null ? [] : [pull]);
   /* The panel follows the record coming OUT, once 97% of its travel is behind the eye. */
   const arriving = moving.find((state) => state.direction === 'out');
@@ -63,77 +68,96 @@ export function WallStage({
   const summary = arrived ? summaries[arriving.id] : undefined;
   const order = seats.map((seat) => seat.id);
 
-  let chrome = null;
-  if (arrived && summary !== undefined) {
-    const layout = wallLayout(
-      seats,
-      moving.map((state) => ({
-        id: state.id,
-        pose: state.direction === 'out' ? pullPose(state.progress, 1, 1) : returnPose(state.progress, 1, 1),
-      })),
-      width,
-    );
-    const seat = layout.placed.find((placed) => placed.id === arriving.id);
-    const wide = viewport >= FORK_PX;
-    const arrow = (direction: Direction) =>
+  /*
+    §11.9: the panel's region is FIXED in the facts column below the count,
+    empty at rest, filled when a record is pulled. A destination does not
+    move — so no scrim, no lightness step, no overlap rule, no fork at 820.
+  */
+  const panel =
+    arrived && summary !== undefined ? (
+      <div data-testid="record-chrome">
+        <RecordPanel
+          summary={summary}
+          alwaysExpanded
+          onTurnOver={onTurnOver ?? (() => undefined)}
+          onPutBack={onPutBack ?? (() => undefined)}
+        />
+      </div>
+    ) : null;
+
+  /*
+    The arrows go with the record (§11.9): beside the landed square, in the
+    drawing's region, present only where there is somewhere to go.
+  */
+  let arrows = null;
+  if (arrived && arriving !== undefined) {
+    const region: View = view ?? { x: 0, y: 0, width, height: width };
+    const square = landingSquare(region);
+    const top = square.y + square.size / 2 - 22 + LANDING_PAD;
+    const arrow = (direction: Direction, left: number) =>
       hasAdjacentSeat(order, arriving.id, direction) ? (
         <button
           type="button"
           data-testid={direction === 'next' ? 'nav-next' : 'nav-previous'}
           aria-label={direction === 'next' ? 'Next record' : 'Previous record'}
           onClick={() => onNavigate?.(direction)}
-          className="min-h-11 min-w-11 border text-prose"
-          style={{ borderColor: 'oklch(0.19 0.008 60)' }}
+          className="absolute flex h-11 w-11 items-center justify-center border text-prose"
+          style={{ left: `${left}px`, top: `${top}px`, borderColor: 'oklch(0.19 0.008 60)', background: DRAWN_PAPER }}
         >
           {direction === 'next' ? '→' : '←'}
         </button>
       ) : null;
-    const panel = (
+    arrows = (
       <>
-        {/* §11.8: along the collection — present only where there is somewhere to go. */}
-        <div className="mb-[10px] flex justify-between">
-          {arrow('previous') ?? <span />}
-          {arrow('next') ?? <span />}
-        </div>
-        <RecordPanel
-          summary={summary}
-          alwaysExpanded={wide}
-          onTurnOver={onTurnOver ?? (() => undefined)}
-          onPutBack={onPutBack ?? (() => undefined)}
-        />
+        {arrow('previous', square.x - ARROW_LANE)}
+        {arrow('next', square.x + square.size + ARROW_LANE - 44)}
       </>
     );
-    if (wide && seat !== undefined) {
-      const anchor = panelAnchor(seat, layout.frame);
-      chrome = (
-        <div
-          data-testid="record-chrome"
-          className="absolute"
-          style={{ left: `${anchor.left}px`, top: `${anchor.top}px`, width: `${anchor.width}px` }}
-        >
-          <div data-testid="record-chrome-facts">{panel}</div>
-        </div>
-      );
-    } else {
-      chrome = (
-        <div data-testid="record-chrome" className="fixed inset-x-0 bottom-0 z-10" style={{ background: 'oklch(0.925 0.004 80)' }}>
-          <div data-testid="record-chrome-stacked">{panel}</div>
-        </div>
-      );
-    }
   }
+
   return (
-    <div className="relative">
-      <WallLabelled
-        seats={seats}
-        pulls={moving}
-        labels={labels}
-        minWidth={width}
-        side={side}
-        onSeatClick={onSeatClick}
-        onPulledClick={onPulledClick}
-      />
-      {chrome}
+    <div className="grid grid-cols-3 gap-0">
+      <div data-region="facts" className="flex flex-col p-[34px]">
+        <div data-region="count">
+          <div className={LABEL}>COLLECTION</div>
+          <div data-testid="wall-count" className="text-display leading-[0.86] font-extrabold" style={{ marginTop: 6 }}>
+            {seats.length}
+          </div>
+          {countLine === null ? null : (
+            <p className="mt-[10px] text-meta" style={{ color: LABEL_INK }}>
+              {countLine}
+            </p>
+          )}
+        </div>
+        <div data-testid="panel-region" className="mt-[34px]">{panel}</div>
+      </div>
+      {/*
+        D1: 1:1 and pans — the region scrolls the drawing rather than scaling it,
+        in BOTH axes: it is the viewport's height, not its content's. Left to
+        grow with the svg, and the svg's floor taken from it, the two grew each
+        other by the padding on every resize tick until the region was 6000px
+        tall and the record landed in the middle of that.
+      */}
+      <div
+        ref={regionRef}
+        data-region="wall"
+        className="col-span-2 h-[calc(100vh-var(--header-height,0px))] overflow-auto p-[34px] pl-0"
+      >
+        <div className="relative">
+          <WallLabelled
+            seats={seats}
+            pulls={moving}
+            labels={labels}
+            minWidth={width}
+            minHeight={view?.height ?? 0}
+            side={side}
+            view={view}
+            onSeatClick={onSeatClick}
+            onPulledClick={onPulledClick}
+          />
+          {arrows}
+        </div>
+      </div>
     </div>
   );
 }

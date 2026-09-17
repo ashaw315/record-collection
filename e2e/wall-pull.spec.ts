@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { SLIDE, project } from '../src/app/wall/geometry';
+import { LANDING_PAD, ARROW_LANE, parseMatrix } from '../src/app/wall/landing';
 import { PULL_DURATION_MS } from '../src/app/wall/pull-curve';
 import { RETURN_FADE_END, WALL_PAPER_HEX, pullFill } from '../src/app/wall/pull-colour';
 import { recordLadder } from '../src/lib/colour/record-ladder';
@@ -67,40 +67,33 @@ test.beforeEach(async ({ page }) => {
   await page.clock.pauseAt(Date.now() + 1000);
 });
 
-test('clicking a spine slides it forward: the same face moved, the slot emptied, the plane whole', async ({
+test('clicking a spine lifts its cover face into the region’s largest square — exactly flat — the seat emptied, the plane whole', async ({
   page,
 }) => {
   expect(wired).not.toBeNull();
-  const seatBefore = await page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`).getAttribute('points');
   const planesBefore = await page.locator('[data-wall="labelled"] [data-plane]').count();
 
   await page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`).click();
   await page.clock.runFor(1);
+  /* The region as the code froze it at the click — a scrollbar can change clientHeight between reads. */
+  const region = await page.locator('[data-region="wall"]').evaluate((el) => ({ w: el.clientWidth, h: el.clientHeight }));
 
-  /* Frame 0: the pulled polygon starts where the seated spine was. */
-  const start = await pulled(page);
-  expect(start?.id).toBe(WIRED_ID);
-  const seatedPoints = (seatBefore ?? '').split(' ').map((pair) => pair.split(',').map(Number));
-  expect(start?.points, 'the pulled polygon starts on the seated face').toEqual(seatedPoints);
+  /* Frame 0: the cover group is the face itself, and the seat's anchor is gone. */
+  const start = await page.locator('[data-pulled] [data-landing]').getAttribute('transform');
+  expect(parseMatrix(start ?? '')[1], 'sheared at the start — the face as drawn').toBeLessThan(0);
   await expect(page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`)).toHaveCount(0);
 
   await page.clock.runFor(SETTLED_MS);
-  const end = await pulled(page);
-  expect(end).not.toBeNull();
-  if (end === null) return;
-
-  /*
-    D2: the same object, slid SLIDE along the depth axis — every corner moved
-    by project(0, SLIDE, 0) from the seated face, no scaling, no shear resolved.
-  */
-  const seated = (seatBefore ?? '').split(' ').map((pair) => pair.split(',').map(Number));
-  const [dx, dy] = project(0, SLIDE, 0);
-  end.points.forEach((corner, index) => {
-    expect(corner[0], `corner ${index} x`).toBeCloseTo(seated[index][0] + dx, 1);
-    expect(corner[1], `corner ${index} y`).toBeCloseTo(seated[index][1] + dy, 1);
-  });
-
-  /* The planes still span the seat: as many as before the pull, none split. */
+  const [a, b, c, d] = parseMatrix((await page.locator('[data-pulled] [data-landing]').getAttribute('transform')) ?? '');
+  /* §11.9: exactly zero shear at rest, not near-zero. */
+  expect(b).toBe(0);
+  expect(c).toBe(0);
+  /* The largest square the region holds. */
+  const size = Math.min(region.w - 2 * (LANDING_PAD + ARROW_LANE), region.h - LANDING_PAD - 2 * LANDING_PAD);
+  expect(a * 240).toBeCloseTo(size, 6);
+  expect(d * 240).toBeCloseTo(size, 6);
+  /* The seat's spine has faded away; the plane still spans its seat. */
+  await expect(page.locator('[data-pulled] [data-face="front"]')).toHaveAttribute('opacity', '0');
   await expect(page.locator('[data-wall="labelled"] [data-plane]')).toHaveCount(planesBefore);
 });
 
@@ -166,5 +159,6 @@ test('on the return the fade completes before the spine lands — checked on the
   await page.clock.runFor(STEP_MS * 3);
   await expect(spine, 'landed: the seated face is back').toHaveCount(1);
   await expect(spine).toHaveAttribute('fill', /oklch\(0\.925/);
+  await expect(spine, 'and fully drawn').not.toHaveAttribute('opacity', '0');
   await expect(page.locator('[data-pulled]')).toHaveCount(0);
 });

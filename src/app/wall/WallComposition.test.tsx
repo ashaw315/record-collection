@@ -43,17 +43,20 @@ describe('the wall composition', () => {
     expect(html).toMatch(/data-region="wall"[^>]*col-span-2/);
     /* D1: 1:1 and pans — the region scrolls the drawing rather than scaling it. */
     expect(html).toMatch(/data-region="wall"[^>]*overflow-auto/);
+    /* §11.9: facts left, drawing right — the panel's region below the count. */
+    expect(html.indexOf('data-region="facts"')).toBeLessThan(html.indexOf('data-region="wall"'));
+    expect(html).toContain('data-testid="panel-region"');
     expect(html).toMatch(/data-composition[^>]*oklch\(0\.925 0\.004 80\)/);
     /* The svg owns no ground of its own: one paper, the page's. */
     const svg = /<svg[^>]*data-wall="labelled"[^>]*>/.exec(html)?.[0] ?? '';
     expect(svg).not.toContain('background');
   });
 
-  it('stacks four shelves for seventeen records, and draws nothing else — no carcass', () => {
+  it('puts seventeen records on one shelf of forty (§11.9), and draws nothing else — no carcass', () => {
     const html = render(17);
     const planes = html.split('data-plane=""').length - 1;
     const polygons = html.split('<polygon').length - 1;
-    expect(planes).toBe(4);
-    expect(polygons, 'planes plus three faces per record, nothing around them').toBe(4 + 17 * 3);
+    expect(planes).toBe(1);
+    expect(polygons, 'the plane plus three faces per record, nothing around them').toBe(1 + 17 * 3);
   });
 });

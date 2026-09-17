@@ -2,7 +2,6 @@ import {
   COS30,
   DEPTH,
   SPINE_HEIGHT,
-  coverTransform,
   frontFace,
   labelTransform,
   paintOrder,
@@ -15,6 +14,7 @@ import type { WallSeat } from './shelf-runs';
 import { pullPose, returnPose } from './pull-curve';
 import { WALL_PAPER_HEX, pullFill, returnFill } from './pull-colour';
 import { wallLayout } from './wall-layout';
+import { landingMatrixAt, landingSquare, type View } from './landing';
 import { recordLadder } from '@/lib/colour/record-ladder';
 import { MICRO_PX } from '../type-scale';
 import { LABEL } from '../records/[id]/grid-type';
@@ -90,7 +90,9 @@ export function WallLabelled({
   pulls,
   labels = true,
   minWidth = 0,
+  minHeight = 0,
   side = 'front',
+  view = null,
   onSeatClick,
   onPulledClick,
 }: {
@@ -104,6 +106,10 @@ export function WallLabelled({
   minWidth?: number;
   /** §11.7: Turn over shows the back on the same face. */
   side?: 'front' | 'back';
+  /** The visible drawing region in the svg's px (§11.9): where a pulled record lands. Defaults to the whole drawing. */
+  view?: View | null;
+  /** The region's height: the drawing is never smaller than the region that shows it. */
+  minHeight?: number;
   onSeatClick?: (id: string) => void;
   onPulledClick?: () => void;
 }) {
@@ -113,31 +119,19 @@ export function WallLabelled({
   const movingById = new Map(moving.map((state) => [state.id, state]));
 
   const byId = new Map(seats.map((seat) => [seat.id, seat]));
-  const { placed, planes, breaks, frame } = wallLayout(seats, moving.map((m) => ({ id: m.id, pose: poseOf(m) })), minWidth);
+  const { placed, planes, breaks, frame } = wallLayout(seats, moving.map((m) => ({ id: m.id, pose: poseOf(m) })), minWidth, minHeight);
+  /* The landing square, in svg coordinates: the view is given relative to the svg's top-left. */
+  const [frameX, frameY] = frame.viewBox.split(' ').map(Number);
+  const region: View = view ?? { x: 0, y: 0, width: frame.width, height: frame.height };
+  const square = landingSquare({ ...region, x: frameX + region.x, y: frameY + region.y });
 
-  return (
-    <svg
-      data-wall="labelled"
-      viewBox={frame.viewBox}
-      width={frame.width}
-      height={frame.height}
-      /* No ground of its own: the page's paper is the wall's, one surface. */
-      style={{ width: `${frame.width}px`, height: `${frame.height}px`, display: 'block' }}
-    >
-      {planes.map((plane, index) => (
-        <polygon key={`plane-${index}`} data-plane="" points={points(plane)} fill={PLANE_FILL} stroke={RULE} strokeWidth="1" />
-      ))}
-      {/* §2's breaks: a rule across the plane at the seat boundary; the plane runs on past it. */}
-      {breaks.map(([from, to], index) => (
-        <line key={`break-${index}`} data-break="" x1={from[0].toFixed(2)} y1={from[1].toFixed(2)} x2={to[0].toFixed(2)} y2={to[1].toFixed(2)} stroke={RULE} strokeWidth="1" />
-      ))}
-      {paintOrder(placed).map((seat) => {
-        const record = byId.get(seat.id);
-        if (record === undefined) return null;
-        const face = frontFace(seat);
-
-        const state = movingById.get(seat.id);
-        if (state !== undefined) {
+  /*
+    **Drawn after every seat, so nothing paints over it.** A record coming out
+    to be looked at covers whatever is behind it; rendered in seat order it
+    was under every later face, invisible at rest and unclickable on return.
+  */
+  const renderMoving = (seat: PlacedSeat, record: WallSeat, state: PullState) => {
+    const face = frontFace(seat);
           const pose = poseOf(state);
           const pull = state;
           /*
@@ -153,6 +147,14 @@ export function WallLabelled({
               ? pullFill(pull.progress, ladder)
               : returnFill(pull.progress, ladder);
           const inset = Math.round(DEPTH * 0.11);
+          /*
+            §11.9: the right face IS the cover, so the face already toward the
+            reader straightens and grows into the region's largest square on
+            §11.2's one curve; the spine and top faces go edge-on and fade.
+            The end state is constructed, not approached: exactly zero shear.
+          */
+          const eased = pose.eased;
+          const fading = { opacity: Math.max(0, 1 - eased) };
           return (
             <g
               key={seat.id}
@@ -160,8 +162,8 @@ export function WallLabelled({
               style={{ cursor: onPulledClick === undefined ? undefined : 'pointer' }}
               onClick={onPulledClick}
             >
-              <polygon data-face="top" points={points(topFace(seat))} fill={TOP_FILL} stroke={INK} strokeWidth="1" pointerEvents="all" />
-              <g transform={coverTransform(seat)}>
+              <polygon data-face="top" points={points(topFace(seat))} fill={TOP_FILL} stroke={INK} strokeWidth="1" pointerEvents="all" opacity={fading.opacity} />
+              <g transform={landingMatrixAt(seat, square, eased)} data-landing="">
                 <rect data-field="" width={DEPTH} height={SPINE_HEIGHT} fill={fill} stroke={INK} strokeWidth="1" pointerEvents="all" />
                 {side === 'back' ? (
                   /*
@@ -265,12 +267,35 @@ export function WallLabelled({
                   </g>
                 )}
               </g>
-              <polygon data-face="front" points={points(face)} fill={FACE_FILL} stroke={INK} strokeWidth="1" pointerEvents="all" />
-              {/* The same object: its spine still says what it is. */}
-              {labels ? label(seat, record.label) : null}
+              <polygon data-face="front" points={points(face)} fill={FACE_FILL} stroke={INK} strokeWidth="1" pointerEvents="all" opacity={fading.opacity} />
+              {/* The same object: its spine still says what it is, until the cover has taken over. */}
+              {labels ? <g opacity={fading.opacity}>{label(seat, record.label)}</g> : null}
             </g>
           );
-        }
+  };
+
+  return (
+    <svg
+      data-wall="labelled"
+      viewBox={frame.viewBox}
+      width={frame.width}
+      height={frame.height}
+      /* No ground of its own: the page's paper is the wall's, one surface. */
+      style={{ width: `${frame.width}px`, height: `${frame.height}px`, display: 'block' }}
+    >
+      {planes.map((plane, index) => (
+        <polygon key={`plane-${index}`} data-plane="" points={points(plane)} fill={PLANE_FILL} stroke={RULE} strokeWidth="1" />
+      ))}
+      {/* §2's breaks: a rule across the plane at the seat boundary; the plane runs on past it. */}
+      {breaks.map(([from, to], index) => (
+        <line key={`break-${index}`} data-break="" x1={from[0].toFixed(2)} y1={from[1].toFixed(2)} x2={to[0].toFixed(2)} y2={to[1].toFixed(2)} stroke={RULE} strokeWidth="1" />
+      ))}
+      {paintOrder(placed).map((seat) => {
+        const record = byId.get(seat.id);
+        if (record === undefined) return null;
+        const face = frontFace(seat);
+
+        if (movingById.has(seat.id)) return null;
 
         return (
           /*
@@ -309,6 +334,11 @@ export function WallLabelled({
             {labels ? label(seat, record.label) : null}
           </a>
         );
+      })}
+      {moving.map((state) => {
+        const seat = placed.find((p) => p.id === state.id);
+        const record = byId.get(state.id);
+        return seat === undefined || record === undefined ? null : renderMoving(seat, record, state);
       })}
     </svg>
   );

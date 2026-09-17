@@ -1,7 +1,6 @@
 import { WallLive } from './WallLive';
 import type { WallSeat } from './shelf-runs';
 import type { RecordSummary } from './summary';
-import { LABEL } from '../records/[id]/grid-type';
 
 /**
  * The wall as a screen (D2, from the reference): the collection on shelves
@@ -39,24 +38,10 @@ export function WallComposition({
     <section
       data-composition=""
       data-testid="wall"
-      className="grid min-h-[calc(100vh-var(--header-height,0px))] grid-cols-3 gap-0"
+      className="min-h-[calc(100vh-var(--header-height,0px))]"
       style={{ background: DRAWN_PAPER }}
     >
-      <div data-region="count" className="flex flex-col p-[34px]">
-        <div className={LABEL}>COLLECTION</div>
-        <div data-testid="wall-count" className="text-display leading-[0.86] font-extrabold" style={{ marginTop: 6 }}>
-          {seats.length}
-        </div>
-        {countLine === null ? null : (
-          <p className="mt-[10px] text-meta" style={{ color: 'oklch(0.44 0.008 70)' }}>
-            {countLine}
-          </p>
-        )}
-      </div>
-      {/* D1: 1:1 and pans — the region scrolls the drawing rather than scaling it. */}
-      <div data-region="wall" className="col-span-2 overflow-auto p-[34px] pl-0">
-        <WallLive seats={seats} summaries={summaries} />
-      </div>
+      <WallLive seats={seats} summaries={summaries} countLine={countLine} />
     </section>
   );
 }

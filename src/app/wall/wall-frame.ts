@@ -45,12 +45,15 @@ export function frameRange(frame: { viewBox: string; width: number }): { minX: n
   return { minX, maxX: minX + frame.width };
 }
 
-/** The same frame, at least `minWidth` wide — the pan extent is never narrower than the view. */
+/** The same frame, at least `minWidth` × `minHeight` — the drawing is never smaller than the region that shows it, so a record landing in the region lands inside the svg. */
 export function widened(
   frame: { viewBox: string; width: number; height: number },
   minWidth: number,
+  minHeight = 0,
 ): { viewBox: string; width: number; height: number } {
-  if (minWidth <= frame.width) return frame;
-  const [minX, minY, , height] = frame.viewBox.split(' ').map(Number);
-  return { viewBox: `${minX} ${minY} ${minWidth} ${height}`, width: minWidth, height: frame.height };
+  const width = Math.max(frame.width, minWidth);
+  const height = Math.max(frame.height, minHeight);
+  if (width === frame.width && height === frame.height) return frame;
+  const [minX, minY] = frame.viewBox.split(' ').map(Number);
+  return { viewBox: `${minX} ${minY} ${width} ${height}`, width, height };
 }

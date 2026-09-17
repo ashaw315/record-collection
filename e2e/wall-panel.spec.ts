@@ -36,7 +36,7 @@ test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
 });
 
-test('the panel arrives with the record — at the slide’s perceived end, not before, beside the cover', async ({
+test('the panel arrives with the record — at the gesture’s perceived end, not before, in the facts column', async ({
   page,
 }) => {
   const artistId = await seed(page, 12);
@@ -57,18 +57,34 @@ test('the panel arrives with the record — at the slide’s perceived end, not 
   await expect(chrome.getByTestId('action-put')).toBeVisible();
   await expect(chrome.getByTestId('panel-detail-link')).toHaveAttribute('href', /\/records\//);
 
-  /* Right of the pulled record, top-aligned to the cover's top edge, as wide as the cover: two columns. */
+  /*
+    §11.9: the panel's region is fixed in the facts column, left of the
+    drawing; the record lands in the drawing's region as its largest square,
+    flat; the arrows go with the record. Nothing in the panel is sheared.
+  */
   const geometry = await page.evaluate(() => {
-    const field = document.querySelector('[data-pulled] [data-field]')?.getBoundingClientRect();
-    const panel = document.querySelector('[data-testid="record-chrome"]')?.getBoundingClientRect();
-    return field && panel ? { fieldRight: field.right, fieldTop: field.top, fieldWidth: field.width, panelLeft: panel.left, panelTop: panel.top, panelWidth: panel.width } : null;
+    const box = (el: Element | null) => {
+      const r = el?.getBoundingClientRect();
+      return r ? { l: r.left, r: r.right, t: r.top, b: r.bottom, w: r.width, h: r.height } : null;
+    };
+    return {
+      panel: box(document.querySelector('[data-testid="record-chrome"]')),
+      facts: box(document.querySelector('[data-region="facts"]')),
+      wall: box(document.querySelector('[data-region="wall"]')),
+      field: box(document.querySelector('[data-pulled] [data-field]')),
+      next: box(document.querySelector('[data-testid="nav-next"]')),
+      count: box(document.querySelector('[data-testid="wall-count"]')),
+    };
   });
-  expect(geometry).not.toBeNull();
-  if (geometry === null) return;
-  expect(geometry.panelLeft).toBeGreaterThan(geometry.fieldRight);
-  expect(Math.abs(geometry.panelTop - geometry.fieldTop)).toBeLessThan(2);
-  expect(geometry.panelWidth).toBe(208);
-  /* Nothing in the panel is sheared: its box is axis-aligned text in the page's plane. */
+  expect(geometry.panel && geometry.facts && geometry.wall && geometry.field && geometry.next && geometry.count).toBeTruthy();
+  if (!geometry.panel || !geometry.facts || !geometry.wall || !geometry.field || !geometry.next || !geometry.count) return;
+  expect(geometry.panel.r, 'the panel is in the facts column').toBeLessThanOrEqual(geometry.facts.r + 1);
+  expect(geometry.panel.l).toBeLessThan(geometry.wall.l);
+  expect(geometry.panel.t, 'below the count').toBeGreaterThan(geometry.count.b);
+  expect(Math.abs(geometry.field.w - geometry.field.h), 'the record is a square').toBeLessThan(1.5);
+  expect(geometry.field.l, 'in the drawing’s region').toBeGreaterThanOrEqual(geometry.wall.l);
+  expect(geometry.next.l, 'the arrow goes with the record, beside it').toBeGreaterThan(geometry.field.r);
+  expect(geometry.next.l).toBeGreaterThanOrEqual(geometry.wall.l);
   const transform = await chrome.evaluate((el) => getComputedStyle(el).transform);
   expect(transform).toBe('none');
 });

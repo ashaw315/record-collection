@@ -8,7 +8,6 @@ import {
   SHELF_INSET_X,
   SHELF_INSET_Y,
   SIN30,
-  SLIDE,
   SPINE_HEIGHT,
   SPINE_WIDTH_MAX,
   SPINE_WIDTH_MIN,
@@ -78,7 +77,6 @@ describe('the wall proportions derive rather than being asserted', () => {
     expect(SHELF_INSET_X).toBe(Math.round(20 * ratio));
     expect(SHELF_INSET_Y).toBe(Math.round(10 * ratio));
     expect(LEDGE).toBe(Math.round(46 * ratio));
-    expect(SLIDE, 'the slide equals the ledge').toBe(LEDGE);
     expect(ROW_PITCH).toBe(Math.round(286 * ratio));
   });
 });
@@ -113,7 +111,7 @@ describe('the row is on the axis', () => {
       no gap the top faces tile into a ramp. So the gap is fixed and the seat
       pitch follows the width, rather than every seat sitting at the widest.
     */
-    const placed = layoutRow(seats, 0, null);
+    const placed = layoutRow(seats, 0);
     expect(placed[0].x).toBe(SHELF_INSET_X);
     for (let index = 1; index < placed.length; index += 1) {
       expect(placed[index].x).toBe(placed[index - 1].x + placed[index - 1].width + GAP);
@@ -129,7 +127,7 @@ describe('the row is on the axis', () => {
      * falls) at the projection's own rate as it goes, because it lies on the
      * axis. A row laid along screen x has Δsy = 0 here and fails.
      */
-    const [a, b] = layoutRow(seats, 0, null);
+    const [a, b] = layoutRow(seats, 0);
     const [fa, fb] = [frontFace(a), frontFace(b)];
     const [dx, dy] = project(b.x - a.x, 0, 0);
 
@@ -142,8 +140,8 @@ describe('the row is on the axis', () => {
   });
 
   it('stacks rows down the z axis at the pitch, row 0 highest', () => {
-    const top = layoutRow(seats, 0, null)[0];
-    const next = layoutRow(seats, 1, null)[0];
+    const top = layoutRow(seats, 0)[0];
+    const next = layoutRow(seats, 1)[0];
     expect(top.z - next.z).toBe(ROW_PITCH);
     expect(top.x).toBe(next.x);
   });
@@ -151,7 +149,7 @@ describe('the row is on the axis', () => {
 
 describe('the shelf is a single plane spanning the pan extent (§11.7, §11.8)', () => {
   const seats = Array.from({ length: 3 }, (_, index) => ({ id: `r${index}`, section: 'A' }));
-  const placed = layoutRow(seats, 0, null);
+  const placed = layoutRow(seats, 0);
   /* A frame in screen-x, as wallFrame would report it. */
   const view = { minX: -300, maxX: 900 };
 
@@ -190,7 +188,7 @@ describe('the shelf is a single plane spanning the pan extent (§11.7, §11.8)',
     const span = planeSpan(view);
     for (const count of [1, 5, 40]) {
       const row = Array.from({ length: count }, (_, index) => ({ id: `s${index}`, section: 'A' }));
-      expect(rowPlanes(row, layoutRow(row, 1, null), span)).toEqual([shelfPlane(-ROW_PITCH, span)]);
+      expect(rowPlanes(row, layoutRow(row, 1), span)).toEqual([shelfPlane(-ROW_PITCH, span)]);
     }
   });
 
@@ -203,11 +201,6 @@ describe('the shelf is a single plane spanning the pan extent (§11.7, §11.8)',
     }
   });
 
-  it('lands the pulled record’s front edge exactly on the shelf’s front', () => {
-    const pulled = layoutRow(seats, 0, 'r1').find((seat) => seat.id === 'r1');
-    expect(pulled?.y).toBe(SHELF_INSET_Y + SLIDE);
-    expect((pulled?.y ?? 0) + DEPTH).toBe(SHELF_INSET_Y + DEPTH + LEDGE);
-  });
 });
 
 describe('§2’s section breaks are marks within the plane, not its ends (§11.7)', () => {
@@ -218,7 +211,7 @@ describe('§2’s section breaks are marks within the plane, not its ends (§11.
     { id: 'b2', section: 'B' },
     { id: 'c1', section: 'C' },
   ];
-  const placed = layoutRow(shelf, 0, null);
+  const placed = layoutRow(shelf, 0);
 
   it('draws one rule across the plane at each boundary between sections, none within one', () => {
     const breaks = rowBreaks(shelf, placed);
@@ -234,11 +227,11 @@ describe('§2’s section breaks are marks within the plane, not its ends (§11.
   it('leaves the plane running past the break — one plane per row, whatever the sections', () => {
     expect(rowPlanes(shelf, placed, planeSpan({ minX: -300, maxX: 900 }))).toHaveLength(1);
     const one = [{ id: 'x', section: 'A' }];
-    expect(rowBreaks(one, layoutRow(one, 0, null))).toEqual([]);
+    expect(rowBreaks(one, layoutRow(one, 0))).toEqual([]);
   });
 
   it('keeps the break where the pulled record’s seat is, since the seat is still there', () => {
-    expect(rowBreaks(shelf, layoutRow(shelf, 0, 'b1'))).toHaveLength(2);
+    expect(rowBreaks(shelf, layoutRow(shelf, 0))).toHaveLength(2);
   });
 });
 
@@ -246,11 +239,10 @@ describe('faces paint back to front by x + y, globally', () => {
   it('orders rows top to bottom, then by depth from the camera within a row', () => {
     /*
       Row-major first: rows do not overlap at ROW_PITCH, and row order is what
-      a keyboard walks (§11.8). Within a row, back to front by x + y — a slid
-      record paints after the neighbours its faces cover.
+      a keyboard walks (§11.8). Within a row, back to front by x + y.
     */
     const upper: PlacedSeat = { id: 'u', x: 100, y: 16, z: 458, width: 20 };
-    const lowerSlid: PlacedSeat = { id: 's', x: 100, y: 16 + SLIDE, z: 0, width: 20 };
+    const lowerSlid: PlacedSeat = { id: 's', x: 100, y: 16 + 74, z: 0, width: 20 };
     const lowerRight: PlacedSeat = { id: 'r', x: 200, y: 16, z: 0, width: 20 };
     const order = paintOrder([lowerRight, lowerSlid, upper]).map((seat) => seat.id);
     expect(order).toEqual(['u', 's', 'r']);
@@ -277,8 +269,8 @@ describe('the row pitch keeps one row off the next', () => {
 
     /* At the same x — the plane is wall-wide, so its near edge's screen-y varies with x. */
     const seats = [{ id: 'r', section: 'A' }];
-    const upper = layoutRow(seats, 0, null);
-    const lower = layoutRow(seats, 1, null);
+    const upper = layoutRow(seats, 0);
+    const lower = layoutRow(seats, 1);
     const x = lower[0].x;
     const upperPlaneNear = project(x, SHELF_INSET_Y + DEPTH + LEDGE, upper[0].z)[1];
     const lowerTopFar = project(x, lower[0].y, lower[0].z + SPINE_HEIGHT)[1];
@@ -351,7 +343,7 @@ describe('5b’s two faces, on the same three coordinates (D2)', () => {
 describe('a run with no seated records still has a shelf (§11.6)', () => {
   it('draws the plane under a row whose only record is pulled — the plane is the shelf’s, not its occupants’', () => {
     const shelf = [{ id: 'only', section: 'A' }];
-    const placed = layoutRow(shelf, 0, 'only');
+    const placed = layoutRow(shelf, 0);
     expect(rowPlanes(shelf, placed, planeSpan({ minX: -300, maxX: 900 }))).toEqual([shelfPlane(placed[0].z, planeSpan({ minX: -300, maxX: 900 }))]);
   });
 });
@@ -385,7 +377,7 @@ describe('paint order is document order is seat order (§11.8)', () => {
     Array.from({ length: 6 }, (_, i) => ({ id: `a${i}`, section: 'A' })),
     Array.from({ length: 5 }, (_, i) => ({ id: `b${i}`, section: 'B' })),
   ];
-  const placed = rows.flatMap((row, index) => layoutRow(row, index, null));
+  const placed = rows.flatMap((row, index) => layoutRow(row, index));
 
   it('agrees on every seat, rows top to bottom', () => {
     expect(paintOrder(placed).map((seat) => seat.id)).toEqual(placed.map((seat) => seat.id));
@@ -402,7 +394,7 @@ describe('paint order is document order is seat order (§11.8)', () => {
       after them, so it is drawn as its own element; the anchors that remain
       seated keep the order the keyboard walks.
     */
-    const pulled = rows.flatMap((row, index) => layoutRow(row, index, 'a2')).filter((seat) => seat.id !== 'a2');
+    const pulled = rows.flatMap((row, index) => layoutRow(row, index)).filter((seat) => seat.id !== 'a2');
     expect(paintOrder(pulled).map((seat) => seat.id)).toEqual(pulled.map((seat) => seat.id));
   });
 });

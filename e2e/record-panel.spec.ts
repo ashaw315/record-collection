@@ -72,7 +72,13 @@ async function cleanup(ids: { artistId: string; recordId: string; pressingId?: s
   await db.execute(sql`DELETE FROM artists WHERE id = ${ids.artistId}::uuid`);
 }
 
-test('the chevron expands the panel in place and does not navigate', async ({ page }) => {
+test('the panel is expanded at rest in its own column, and nothing navigates', async ({ page }) => {
+  /*
+    A33's chevron expanded an overlay over the record; §11.9 gives the panel a
+    fixed region in the facts column at every width, so it is the expanded
+    shape at rest and the toggle has nothing to do. The destination stays
+    INSIDE the panel (A33b): the wall is still mounted, the URL unchanged.
+  */
   const ids = await seedRecord({});
   try {
     await login(page);
@@ -81,16 +87,12 @@ test('the chevron expands the panel in place and does not navigate', async ({ pa
     await pullTheRecord(page);
 
     const panel = page.getByTestId('record-chrome').getByTestId('record-panel');
-    await expect(panel).toHaveAttribute('data-expanded', 'false');
+    await expect(panel).toHaveAttribute('data-expanded', 'true');
+    await expect(page.getByTestId('record-chrome').getByTestId('panel-expand-toggle')).toBeDisabled();
 
-    await page.getByTestId('record-chrome').getByTestId('panel-expand-toggle').click();
-    await expect(panel, 'the chevron expanded the panel').toHaveAttribute('data-expanded', 'true');
-
-    /* It expanded IN PLACE — the wall is still mounted, no navigation. */
     await expect(page.getByTestId('wall')).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`/\\?artistId=`));
 
-    /* The detail link lives INSIDE the expanded panel (A33b). */
     const link = page.getByTestId('record-chrome').getByTestId('panel-detail-link');
     await expect(link).toBeVisible();
     await expect(link).toHaveAttribute('href', `/records/${ids.recordId}`);
@@ -107,7 +109,6 @@ test('a generated snippet and entered facts are separated by a boundary', async 
     await page.goto(`/?artistId=${ids.artistId}`);
     await pullTheRecord(page);
 
-    await page.getByTestId('record-chrome').getByTestId('panel-expand-toggle').click();
     await expect(page.getByTestId('record-chrome').getByTestId('record-panel')).toHaveAttribute('data-expanded', 'true');
 
     /* The snippet, labelled as generated (A33c). */
@@ -139,7 +140,6 @@ test('an edited snippet is labelled as the user\'s, not generated', async ({ pag
     await page.goto(`/?artistId=${ids.artistId}`);
     await pullTheRecord(page);
 
-    await page.getByTestId('record-chrome').getByTestId('panel-expand-toggle').click();
     await expect(page.getByTestId('record-chrome').getByTestId('panel-snippet-label'), 'edited = the user owns it (§4.2)').toContainText(
       /your/i,
     );

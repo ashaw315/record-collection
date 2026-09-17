@@ -5,7 +5,6 @@ import { WallStage } from './WallStage';
 import type { WallSeat } from './shelf-runs';
 import type { RecordSummary } from './summary';
 import { PERCEIVED_END } from './pull-colour';
-import { FORK_PX } from './panel-anchor';
 
 /**
  * The stage: the drawing plus what the gesture arrives at. §11.7's panel
@@ -46,48 +45,74 @@ const render = (props: Partial<Parameters<typeof WallStage>[0]> = {}) =>
       side="front"
       width={819}
       viewport={1280}
+      view={{ x: 0, y: 0, width: 960, height: 760 }}
       {...props}
     />,
   );
 
-describe('the panel arrives at the slide’s perceived end (§11.7)', () => {
-  it('is absent while the record is still visibly moving, present once 97% of travel is behind it', () => {
-    const before = render({ pull: { id: 'b', direction: 'out', progress: PERCEIVED_END - 0.05 } });
-    expect(before).not.toContain('data-testid="record-chrome"');
-    const after = render({ pull: { id: 'b', direction: 'out', progress: PERCEIVED_END } });
-    expect(after).toContain('data-testid="record-chrome"');
-    expect(after).toContain('data-testid="record-panel"');
-    expect(after).toContain('Title b');
-    expect(after).toContain('href="/records/b"');
+describe('two columns: facts left, drawing right (§11.9)', () => {
+  it('has the count at the facts column’s head and the panel’s region below it, EMPTY at rest', () => {
+    const html = render();
+    const facts = html.slice(html.indexOf('data-region="facts"'), html.indexOf('data-region="wall"'));
+    expect(facts).toContain('data-region="count"');
+    expect(facts).toContain('data-testid="panel-region"');
+    expect(facts.indexOf('data-region="count"')).toBeLessThan(facts.indexOf('data-testid="panel-region"'));
+    const region = /<div[^>]*data-testid="panel-region"[^>]*>([\s\S]*?)<\/div>/.exec(facts)?.[1] ?? 'x';
+    expect(region.trim(), 'empty at rest').toBe('');
+    expect(html).not.toContain('data-testid="record-chrome"');
   });
 
-  it('goes with the record on the way back', () => {
-    expect(render({ pull: { id: 'b', direction: 'back', progress: 0 } })).not.toContain('data-testid="record-chrome"');
-    expect(render({ pull: null })).not.toContain('data-testid="record-chrome"');
+  it('fills the panel’s region — a destination that does not move — once the record has arrived, at any width', () => {
+    for (const width of [500, 1280]) {
+      const html = render({ pull: { id: 'b', direction: 'out', progress: PERCEIVED_END }, viewport: width, width });
+      const facts = html.slice(html.indexOf('data-region="facts"'), html.indexOf('data-region="wall"'));
+      expect(facts).toContain('data-testid="record-chrome"');
+      expect(facts).toContain('href="/records/b"');
+      expect(facts).toMatch(/data-testid="record-panel"[^>]*data-expanded="true"/);
+      /* No fork: no overlay, no flanking variant, no width rule. */
+      expect(html).not.toContain('record-chrome-stacked');
+      expect(html).not.toContain('record-chrome-facts');
+    }
+    const early = render({ pull: { id: 'b', direction: 'out', progress: PERCEIVED_END - 0.05 } });
+    expect(early).not.toContain('data-testid="record-chrome"');
   });
 
-  it('flanks the record at the cover’s width on a wide VIEWPORT, expanded at rest — nothing sheared', () => {
-    /* The fork is the page's width, not the wall's column: at 1280 the column is 819, one under 820. */
-    const html = render({ pull: { id: 'b', direction: 'out', progress: 1 }, width: 819, viewport: 1280 });
-    expect(html).toContain('data-testid="record-chrome-facts"');
-    expect(html).not.toContain('data-testid="record-chrome-stacked"');
-    expect(html).toMatch(/data-testid="record-chrome"[^>]*style="[^"]*width:208px/);
-    expect(html).toMatch(/data-testid="record-panel"[^>]*data-expanded="true"/);
-    const chrome = /<div[^>]*data-testid="record-chrome"[^>]*>/.exec(html)?.[0] ?? '';
-    expect(chrome, 'in the page’s plane, not the projection').not.toContain('transform');
+  it('keeps the count while a record is out — the collection has not been left', () => {
+    const html = render({ pull: { id: 'b', direction: 'out', progress: 1 } });
+    expect(html).toContain('data-testid="wall-count"');
+    expect(html).toMatch(/data-testid="wall-count"[^>]*>2</);
+  });
+});
+
+describe('the record lands in the drawing’s region (§11.9)', () => {
+  it('is the largest square the region holds, unsheared — exactly — with the wall unchanged behind it', () => {
+    const rest = render();
+    const html = render({ pull: { id: 'b', direction: 'out', progress: 1 }, view: { x: 0, y: 0, width: 960, height: 760 } });
+    const group = /<g transform="matrix\(([^)]+)\)"[^>]*data-landing/.exec(html) ?? /data-pulled="b"[\s\S]*?<g transform="matrix\(([^)]+)\)"/.exec(html);
+    expect(group, 'the cover group carries the landing matrix').not.toBeNull();
+    const [a, b, c, d] = (group?.[1] ?? '').split(' ').map(Number);
+    expect(b).toBe(0);
+    expect(c).toBe(0);
+    expect(a * 240, 'the square’s size').toBeCloseTo(760 - 2 * 34, 9);
+    expect(d * 240).toBeCloseTo(760 - 2 * 34, 9);
+    /* No lightness step: every plane and face fill is what it was at rest. */
+    const fills = (h: string) => [...h.matchAll(/<polygon[^>]*fill="([^"]+)"/g)].map((m) => m[1]).filter((f) => f.startsWith('oklch'));
+    expect(new Set(fills(html))).toEqual(new Set(fills(rest)));
   });
 
-  it('overlays the projection below the fork, collapsed, and the wall itself is unchanged', () => {
-    const narrow = render({ pull: { id: 'b', direction: 'out', progress: 1 }, width: 500, viewport: FORK_PX - 1 });
-    expect(FORK_PX).toBe(820);
-    expect(narrow).toContain('data-testid="record-chrome-stacked"');
-    expect(narrow).not.toContain('data-testid="record-chrome-facts"');
-    expect(narrow).toMatch(/data-testid="record-panel"[^>]*data-expanded="false"/);
-    const wide = render({ pull: { id: 'b', direction: 'out', progress: 1 }, width: 819, viewport: 1280 });
-    /* The faces — not the frame, which rightly widens to the container: the pan extent is not the wall's shape. */
-    const faces = (h: string) => [...h.matchAll(/data-face="[a-z]+" points="([^"]+)"/g)].map((m) => m[1]);
-    expect(faces(narrow).length).toBeGreaterThan(0);
-    expect(faces(narrow), 'no reflow: fewer records, not smaller ones').toEqual(faces(wide));
+  it('carries the arrows with the record, in the drawing’s region, only where there is somewhere to go', () => {
+    const three = [seat('a'), seat('b'), seat('c')];
+    const sums = { a: summary('a'), b: summary('b'), c: summary('c') };
+    const mid = render({ seats: three, summaries: sums, pull: { id: 'b', direction: 'out', progress: 1 } });
+    const wall = mid.slice(mid.indexOf('data-region="wall"'));
+    const facts = mid.slice(mid.indexOf('data-region="facts"'), mid.indexOf('data-region="wall"'));
+    expect(wall).toContain('data-testid="nav-previous"');
+    expect(wall).toContain('data-testid="nav-next"');
+    expect(facts).not.toContain('data-testid="nav-next"');
+    const first = render({ seats: three, summaries: sums, pull: { id: 'a', direction: 'out', progress: 1 } });
+    expect(first).not.toContain('data-testid="nav-previous"');
+    const last = render({ seats: three, summaries: sums, pull: { id: 'c', direction: 'out', progress: 1 } });
+    expect(last).not.toContain('data-testid="nav-next"');
   });
 });
 
@@ -109,37 +134,5 @@ describe('Turn over shows the back on the same face (§11.7)', () => {
     expect(html).toContain('Epic');
     expect(html).toContain('PE 1');
     expect(html).not.toContain('href="https://c/x.jpg"');
-  });
-});
-
-describe('arrows between pulled records (§11.8): wall order, absent at the ends', () => {
-  const three = [seat('a'), seat('b'), seat('c')];
-  const sums = { a: summary('a'), b: summary('b'), c: summary('c') };
-
-  it('shows both arrows from the middle, neither where there is nowhere to go', () => {
-    const mid = render({ seats: three, summaries: sums, pull: { id: 'b', direction: 'out', progress: 1 } });
-    expect(mid).toContain('data-testid="nav-previous"');
-    expect(mid).toContain('data-testid="nav-next"');
-    const first = render({ seats: three, summaries: sums, pull: { id: 'a', direction: 'out', progress: 1 } });
-    expect(first).not.toContain('data-testid="nav-previous"');
-    expect(first).toContain('data-testid="nav-next"');
-    const last = render({ seats: three, summaries: sums, pull: { id: 'c', direction: 'out', progress: 1 } });
-    expect(last).toContain('data-testid="nav-previous"');
-    expect(last).not.toContain('data-testid="nav-next"');
-  });
-
-  it('follows the ARRIVING record: its panel, once it has arrived; nothing while both are moving', () => {
-    const moving = render({ seats: three, summaries: sums, pulls: [
-      { id: 'b', direction: 'back', progress: 0.3 },
-      { id: 'c', direction: 'out', progress: 0.3 },
-    ] });
-    expect(moving).not.toContain('data-testid="record-chrome"');
-    const arrived = render({ seats: three, summaries: sums, pulls: [
-      { id: 'b', direction: 'back', progress: 1 },
-      { id: 'c', direction: 'out', progress: PERCEIVED_END },
-    ] });
-    const chrome = arrived.slice(arrived.indexOf('data-testid="record-chrome"'));
-    expect(chrome).toContain('href="/records/c"');
-    expect(chrome, 'the returning record’s panel is not shown').not.toContain('href="/records/b"');
   });
 });

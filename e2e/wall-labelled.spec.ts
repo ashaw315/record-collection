@@ -146,7 +146,7 @@ test('draws the same polygons the overview does, by the shared geometry', async 
   /* Seventeen records over four shelves: each row placed on its own z. */
   const placed = intoShelves(
     COLLECTION_SPINES.map((_, index) => ({ id: `collection-${index}`, section: 'Collection' })),
-  ).flatMap((shelf, row) => layoutRow(shelf, row, null));
+  ).flatMap((shelf, row) => layoutRow(shelf, row));
   drawn.forEach((seat) => {
     const expected = placed.find((p) => p.id === seat.id);
     expect(expected, seat.id).toBeDefined();
@@ -326,7 +326,7 @@ test('the plane is the pan extent: it runs off both edges of the svg at every ro
   });
   expect(edges).not.toBeNull();
   if (edges === null) return;
-  expect(edges.length).toBeGreaterThanOrEqual(4);
+  expect(edges.length, 'one plane per shelf — seventeen is one shelf of forty').toBeGreaterThanOrEqual(1);
   for (const edge of edges) {
     expect(edge.left, 'off the left edge').toBeLessThan(0);
     expect(edge.right, 'off the right edge').toBeGreaterThan(0);

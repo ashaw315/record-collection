@@ -9,6 +9,7 @@ import { PULL_DURATION_MS } from './pull-curve';
 import { labelsFit } from './geometry';
 import { navigate, type Direction } from './adjacent-seat';
 import { PERCEIVED_END } from './pull-colour';
+import { LANDING_PAD, type View } from './landing';
 
 /**
  * The 1:1 wall with its pull driven against the clock.
@@ -26,9 +27,11 @@ import { PERCEIVED_END } from './pull-colour';
 export function WallLive({
   seats,
   summaries = {},
+  countLine = null,
 }: {
   seats: readonly WallSeat[];
   summaries?: Record<string, RecordSummary>;
+  countLine?: string | null;
 }) {
   const [pulls, setPulls] = useState<readonly PullState[]>([]);
   const [side, setSide] = useState<'front' | 'back'>('front');
@@ -41,16 +44,20 @@ export function WallLive({
     width — and re-measured on resize. A32's fork is measured on the PAGE:
     at 1280 the wall's column is 819px, one short of it.
   */
-  const container = useRef<HTMLDivElement>(null);
+  const region = useRef<HTMLDivElement>(null);
   const [labels, setLabels] = useState(true);
   const [width, setWidth] = useState(0);
+  const [height, setHeight] = useState(0);
   const [viewport, setViewport] = useState(0);
+  /* The visible region when the pull began: the record lands there and stays, whatever is panned after. */
+  const [view, setView] = useState<View | null>(null);
   useEffect(() => {
-    const el = container.current;
+    const el = region.current;
     if (el === null) return;
     const measure = () => {
       setLabels(labelsFit(el.clientWidth));
       setWidth(el.clientWidth);
+      setHeight(el.clientHeight - LANDING_PAD);
       setViewport(window.innerWidth);
     };
     measure();
@@ -59,11 +66,25 @@ export function WallLive({
     return () => observer.disconnect();
   }, []);
 
-  const begin = useCallback((id: string, direction: PullState['direction']) => {
-    started.current = null;
-    if (direction === 'out') setSide('front');
-    setPulls([{ id, direction, progress: 0 }]);
+  /** The region's visible box in the svg's px: the svg sits LANDING_PAD below the region's content top, at its left. */
+  const visible = useCallback((): View | null => {
+    const el = region.current;
+    if (el === null) return null;
+    /* The svg sits LANDING_PAD below the region's content top; the visible box in the svg's px is the client box less that offset. */
+    return { x: el.scrollLeft, y: el.scrollTop - LANDING_PAD, width: el.clientWidth, height: el.clientHeight - LANDING_PAD };
   }, []);
+
+  const begin = useCallback(
+    (id: string, direction: PullState['direction']) => {
+      started.current = null;
+      if (direction === 'out') {
+        setSide('front');
+        setView(visible());
+      }
+      setPulls([{ id, direction, progress: 0 }]);
+    },
+    [visible],
+  );
 
   /* The arrows: the held record goes back and its neighbour comes out, on one clock. */
   const go = useCallback(
@@ -72,9 +93,10 @@ export function WallLive({
       if (next === null) return;
       started.current = null;
       setSide('front');
+      setView((current) => current ?? visible());
       setPulls(next);
     },
-    [pulls, seats],
+    [pulls, seats, visible],
   );
 
   /* One clock drives every moving record; a returned record drops out when it lands. */
@@ -113,7 +135,7 @@ export function WallLive({
   }, [held, begin, go]);
 
   return (
-    <div ref={container} data-wall-container="">
+    <div data-wall-container="">
       <WallStage
         seats={seats}
         summaries={summaries}
@@ -121,6 +143,9 @@ export function WallLive({
         side={side}
         width={width}
         viewport={viewport}
+        view={view === null ? null : { ...view, height: Math.max(view.height, height) }}
+        countLine={countLine}
+        regionRef={region}
         labels={labels}
         onSeatClick={(id) => {
           if (pulls.length === 0) begin(id, 'out');

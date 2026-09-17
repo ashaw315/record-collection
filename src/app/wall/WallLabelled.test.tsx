@@ -100,9 +100,10 @@ describe('5b’s two faces at rest (D2): three faces per record, filled in paper
     const field = /<rect[^>]*data-field[^>]*>/.exec(pulled)?.[0] ?? '';
     expect(field).not.toBe('');
     expect(field).not.toContain(`fill="${WALL_PAPER_HEX}"`);
+    /* At the START of the pull the group is the face itself, entered from the near-top corner: un-mirrored. */
+    const start = render([seat('a', null), seat('b', 'https://covers.test/b.jpg')], { id: 'b', direction: 'out', progress: 0 });
+    expect(start.slice(start.indexOf('data-pulled="b"')), 'the cover’s group maps the face un-mirrored').toContain('<g transform="matrix(0.866');
     const g = pulled.slice(pulled.indexOf('<g transform="matrix('));
-    /* Entered from the near-top corner: un-mirrored (§11.7 puts type on this face). */
-    expect(g, 'the cover’s group maps the face un-mirrored').toContain('matrix(0.866');
     const image = /<image[^>]*>/.exec(g)?.[0] ?? '';
     expect(image).toContain('data-cover="b"');
     expect(image).toContain('href="https://covers.test/b.jpg"');
@@ -268,5 +269,17 @@ describe('two records can be moving at once — the arrows’ slide (§11.8)', (
     expect(html).not.toContain('data-seat="b"');
     expect(html).not.toContain('data-seat="c"');
     expect(html).toContain('data-seat="a"');
+  });
+});
+
+describe('the pulled record leaves its seat for the landing (§11.9)', () => {
+  it('fades its spine and top as the cover face grows — at 1 they are gone and the cover group is exactly axis-aligned', () => {
+    const out = render([seat('a', null)], [{ id: 'a', direction: 'out', progress: 1 }]);
+    const pulled = out.slice(out.indexOf('data-pulled="a"'));
+    const front = /<polygon[^>]*data-face="front"[^>]*>/.exec(pulled)?.[0] ?? '';
+    expect(front).toContain('opacity="0"');
+    const matrix = /<g transform="matrix\(([^)]+)\)"/.exec(pulled)?.[1]?.split(' ').map(Number) ?? [];
+    expect(matrix[1]).toBe(0);
+    expect(matrix[2]).toBe(0);
   });
 });

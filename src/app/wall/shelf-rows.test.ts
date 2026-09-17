@@ -1,28 +1,26 @@
 import { describe, expect, it } from 'vitest';
-import { MIN_SHELVES, PER_SHELF, shelfRows } from './shelf-rows';
+import { PER_SHELF, shelfRows } from './shelf-rows';
 
 /**
- * How the collection divides into shelves (the D2 composition).
+ * §11.9: rows are a fixed capacity, and no-reflow extends to wrapping — a
+ * record that changes shelf when the window narrows has a position that is
+ * a fact about the viewport rather than the collection, and §11.1 leaves
+ * position carrying the order. The four-shelf minimum went with the fork.
  *
- * The composition stacks four shelves; Wall Density's 200 case is five of
- * forty. Both hold: at least four shelves, never more than forty a shelf,
- * records spread evenly so no shelf is a remainder. An empty shelf is not
- * drawn — a plane with nothing on it would be the carcass coming back.
+ * Forty is Wall Density's figure — "200 records, five shelves of forty" at
+ * the 240 scale — the one number for what a shelf holds that was drawn and
+ * measured rather than derived from a view or a count of the collection.
  */
-describe('shelfRows', () => {
-  it('spreads seventeen over four shelves, front-loaded by one', () => {
-    expect(MIN_SHELVES).toBe(4);
-    expect(shelfRows(17)).toEqual([5, 4, 4, 4]);
-  });
-
-  it('keeps forty a shelf at two hundred — five shelves, Wall Density’s case', () => {
+describe('shelfRows — fixed seats per row', () => {
+  it('holds forty a shelf, from Wall Density', () => {
     expect(PER_SHELF).toBe(40);
     expect(shelfRows(200)).toEqual([40, 40, 40, 40, 40]);
-    expect(shelfRows(161)).toEqual([33, 32, 32, 32, 32]);
+    expect(shelfRows(41)).toEqual([40, 1]);
   });
 
-  it('drops empty shelves rather than drawing planes with nothing on them', () => {
-    expect(shelfRows(3)).toEqual([1, 1, 1]);
+  it('puts seventeen on one shelf — no minimum number of shelves', () => {
+    expect(shelfRows(17)).toEqual([17]);
+    expect(shelfRows(4)).toEqual([4]);
     expect(shelfRows(0)).toEqual([]);
   });
 });

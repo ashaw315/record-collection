@@ -59,7 +59,7 @@ export function WallOverview({
   const breaks: (readonly [Point, Point])[] = [];
   const rowZ: number[] = [];
   intoShelves(seats).forEach((shelf, row) => {
-    const rowSeats = layoutRow(shelf, row, pulledId);
+    const rowSeats = layoutRow(shelf, row);
     breaks.push(...rowBreaks(shelf, rowSeats));
     rowZ.push(rowSeats[0]?.z ?? 0);
     /* The pulled record's SEAT is still spanned by its plane; no spine is drawn on it. */

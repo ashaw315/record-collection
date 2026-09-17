@@ -56,9 +56,8 @@ export const GAP = Math.round(5 * D2);
 export const SHELF_INSET_X = Math.round(20 * D2);
 export const SHELF_INSET_Y = Math.round(10 * D2);
 
-/** The plane in front of the records, and how far a pulled record slides — equal, so it lands on the front edge. */
+/** The plane in front of the records (D2's ledge). */
 export const LEDGE = Math.round(46 * D2);
-export const SLIDE = LEDGE;
 
 /**
  * One row to the next, down z. A row's silhouette is H + D·sin30, and the
@@ -105,15 +104,10 @@ export type PlacedSeat = {
 
 /**
  * One row's seats, placed. Row 0 is the highest; each row is ROW_PITCH lower.
- * The pulled record sits SLIDE forward along y — the drawing's rest position
- * for a pulled record; the animated slide interpolates to it (pull-geometry).
+ * A pulled record keeps its seat: the pull lifts its cover face off it
+ * (landing.ts) and the seat stays where the collection's order put it.
  */
-export function layoutRow(
-  seats: readonly ShelfSeat[],
-  row: number,
-  pulledId: string | null,
-  slide: number = SLIDE,
-): PlacedSeat[] {
+export function layoutRow(seats: readonly ShelfSeat[], row: number): PlacedSeat[] {
   const z = -row * ROW_PITCH;
   let x = SHELF_INSET_X;
   return seats.map((seat) => {
@@ -121,7 +115,7 @@ export function layoutRow(
     const placed = {
       id: seat.id,
       x,
-      y: SHELF_INSET_Y + (seat.id === pulledId ? slide : 0),
+      y: SHELF_INSET_Y,
       z,
       width,
     };

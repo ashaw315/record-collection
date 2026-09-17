@@ -1,25 +1,22 @@
 /**
- * How the collection divides into shelves.
+ * How the collection divides into shelves (8a §11.9): **a fixed capacity,
+ * and no-reflow extends to wrapping.** A record that changes shelf when the
+ * window narrows has a position that is a fact about the viewport rather
+ * than about the collection, and §11.1 leaves position carrying the order.
  *
- * **At least four, never more than forty a shelf, spread evenly.** The
- * composition (D2, from the reference) stacks four shelves; Wall Density's
- * 200-record case is five of forty. A remainder shelf — thirty-nine full ones
- * and a stub — would read as the collection running out, so records spread
- * evenly with the extra ones on the first shelves. Empty shelves are not
- * drawn: a plane with nothing on it is the carcass coming back.
+ * Forty is Wall Density's figure — "200 records, five shelves of forty" at
+ * the 240 scale — the one number for what a shelf holds that was drawn and
+ * measured rather than derived from a view or a count of the collection.
+ * A row's length and a plane's length are different quantities: the plane
+ * still runs the pan extent (§11.8), whatever the row holds.
  */
-export const MIN_SHELVES = 4;
 export const PER_SHELF = 40;
 
-/** Seats per shelf, top shelf first. */
+/** Seats per shelf, top shelf first: full shelves, then the remainder. */
 export function shelfRows(count: number): number[] {
-  if (count <= 0) return [];
-  const shelves = Math.max(MIN_SHELVES, Math.ceil(count / PER_SHELF));
-  const base = Math.floor(count / shelves);
-  const extra = count % shelves;
-  return Array.from({ length: shelves }, (_, index) => base + (index < extra ? 1 : 0)).filter(
-    (size) => size > 0,
-  );
+  const rows: number[] = [];
+  for (let left = count; left > 0; left -= PER_SHELF) rows.push(Math.min(PER_SHELF, left));
+  return rows;
 }
 
 /** Split seats into shelves by `shelfRows`. */
