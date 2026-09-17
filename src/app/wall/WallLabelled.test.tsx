@@ -175,8 +175,12 @@ describe('the record with no cover arrives at type, not at a swatch (§11.3, §1
     expect(sleeve).toContain('data-diagonal');
     expect(sleeve).toContain('Title b');
     expect(sleeve).toContain('Artist b');
-    /* At the record screen's display sizes, flat text on the face's plane (a foreignObject inside the cover group). */
-    expect(sleeve).toMatch(/text-headline/);
+    /* The identity pairing, large-to-small: the title at the headline size, the artist at prose — set at 40 as
+       well the artist overflowed the sleeve area. Flat text on the face's plane (a foreignObject in the cover group). */
+    expect(sleeve).toMatch(/text-headline[^>]*>Title b</);
+    expect(sleeve).toMatch(/text-prose[^>]*>Artist b</);
+    expect(sleeve, 'a long title clips rather than escaping the sleeve').toContain('overflow-hidden');
+    expect(sleeve, 'anchored at the top: the clip takes the tail, never the title’s first line').toContain('justify-start');
     expect(html.indexOf('<g transform="matrix(')).toBeLessThan(html.indexOf('data-no-cover'));
   });
 

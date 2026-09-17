@@ -216,11 +216,19 @@ export function WallLabelled({
                     />
                     <foreignObject x={inset} y={inset} width={DEPTH - inset * 2} height={SPINE_HEIGHT - inset * 2}>
                       <div
-                        className="flex h-full flex-col justify-end p-[16px] font-sans leading-[0.95] tracking-[-0.02em]"
+                        /*
+                          Anchored at the TOP: a long title clips at its tail, never its
+                          head — at 40px extrabold a 29-character title is five lines in
+                          a 188px square, and anchored at the bottom the clip took the
+                          first line. Which size a no-cover sleeve sets is open (§11.3
+                          says "large"; the scale has nothing between 40 and 15).
+                        */
+                        className="flex h-full flex-col justify-start overflow-hidden p-[16px] font-sans tracking-[-0.02em]"
                         style={{ color: 'oklch(0.18 0.005 60)' }}
                       >
-                        <div className="text-headline font-extrabold">{record.title}</div>
-                        <div className="text-headline font-normal">{record.artist}</div>
+                        {/* The identity pairing, large-to-small (§4.1): title at 40, artist at 13. */}
+                        <div className="text-headline leading-[0.95] font-extrabold">{record.title}</div>
+                        <div className="text-prose mt-[8px] font-normal">{record.artist}</div>
                       </div>
                     </foreignObject>
                     <line
