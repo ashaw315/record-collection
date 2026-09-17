@@ -7,9 +7,9 @@ import type { Point } from './geometry';
  * a row on the axis descends as it goes, so the wall's extent is a property
  * of the projection and not of a count times a pitch.
  */
-export function wallViewBox(
+export function wallFrame(
   ...groups: ReadonlyArray<ReadonlyArray<readonly Point[]>>
-): string {
+): { viewBox: string; width: number; height: number } {
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;
@@ -24,7 +24,17 @@ export function wallViewBox(
       }
     }
   }
-  if (!Number.isFinite(minX)) return '0 0 1 1';
+  if (!Number.isFinite(minX)) return { viewBox: '0 0 1 1', width: 1, height: 1 };
   const pad = 30;
-  return `${(minX - pad).toFixed(0)} ${(minY - pad).toFixed(0)} ${(maxX - minX + pad * 2).toFixed(0)} ${(maxY - minY + pad * 2).toFixed(0)}`;
+  const width = Math.round(maxX - minX + pad * 2);
+  const height = Math.round(maxY - minY + pad * 2);
+  return {
+    viewBox: `${(minX - pad).toFixed(0)} ${(minY - pad).toFixed(0)} ${width} ${height}`,
+    width,
+    height,
+  };
+}
+
+export function wallViewBox(...groups: ReadonlyArray<ReadonlyArray<readonly Point[]>>): string {
+  return wallFrame(...groups).viewBox;
 }

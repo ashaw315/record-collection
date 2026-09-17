@@ -13,12 +13,13 @@ import {
   type PlacedSeat,
   type Point,
 } from './geometry';
-import { FACE_FILL, PER_SHELF, PLANE_FILL, TOP_FILL, points } from './WallOverview';
+import { FACE_FILL, PLANE_FILL, TOP_FILL, points } from './WallOverview';
+import { intoShelves } from './shelf-rows';
 import type { WallSeat } from './shelf-runs';
 import { pullPose, returnPose } from './pull-curve';
 import { pullFill, returnFill } from './pull-colour';
 import { slideY } from './pull-geometry';
-import { wallViewBox } from './wall-frame';
+import { wallFrame } from './wall-frame';
 import { recordLadder } from '@/lib/colour/record-ladder';
 import { MICRO_PX } from '../type-scale';
 
@@ -54,6 +55,29 @@ const BASELINE_INSET = 8;
  * fully pulled record and at 1 the seated one. The component draws the pose;
  * driving `progress` against the clock is `WallLive`'s job.
  */
+/**
+ * The label, on the face's plane: local x runs up the spine from the bottom
+ * inset, the baseline sits across the thickness at its centre plus half a
+ * cap height.
+ */
+function label(seat: PlacedSeat, text: string) {
+  return (
+    <text
+      data-label=""
+      transform={labelTransform(seat)}
+      x={BASELINE_INSET}
+      y={(seat.width / 2 + LABEL_FONT_PX * 0.35).toFixed(1)}
+      fontFamily="Geist Mono, monospace"
+      fontSize={LABEL_FONT_PX}
+      fontWeight="500"
+      fill={INK}
+      xmlSpace="preserve"
+    >
+      {text}
+    </text>
+  );
+}
+
 export type PullState = {
   id: string;
   direction: 'out' | 'back';
@@ -82,23 +106,32 @@ export function WallLabelled({
   const byId = new Map(seats.map((seat) => [seat.id, seat]));
   const planes: (readonly Point[])[] = [];
   const placed: PlacedSeat[] = [];
-  for (let index = 0, row = 0; index < seats.length; index += PER_SHELF, row += 1) {
-    const shelf = seats.slice(index, index + PER_SHELF);
+  intoShelves(seats).forEach((shelf, row) => {
     /* The plane spans the pulled SEAT (5b §2); the record itself is placed where the slide has it. */
     const rowSeats = layoutRow(shelf, row, pulledId);
-    planes.push(...rowPlanes(shelf, rowSeats, pulledId));
+    planes.push(...rowPlanes(shelf, rowSeats));
     placed.push(
       ...rowSeats.map((seat) =>
         seat.id === pulledId && pose !== null ? { ...seat, y: slideY(pose) } : seat,
       ),
     );
-  }
+  });
+
+  /*
+    **At 1:1, never above it.** The svg is as wide as its drawing, in px, and
+    only ever scales DOWN to its container — a small collection on four
+    shelves left at `width: 100%` filled the viewport with one record and
+    set its labels at forty pixels. Below 1:1 §5 removes labels; that switch
+    is its own decision and is not here.
+  */
+  const frame = wallFrame(planes, placed.map(frontFace));
 
   return (
     <svg
       data-wall="labelled"
-      viewBox={wallViewBox(planes, placed.map(frontFace))}
-      style={{ background: 'oklch(0.925 0.004 80)', width: '100%', height: 'auto' }}
+      viewBox={frame.viewBox}
+      /* No ground of its own: the page's paper is the wall's, one surface. */
+      style={{ width: `${frame.width}px`, maxWidth: '100%', height: 'auto', display: 'block' }}
     >
       {planes.map((plane, index) => (
         <polygon key={`plane-${index}`} data-plane="" points={points(plane)} fill={PLANE_FILL} stroke={RULE} strokeWidth="1" />
@@ -147,6 +180,8 @@ export function WallLabelled({
                 )}
               </g>
               <polygon data-face="front" points={points(face)} fill={FACE_FILL} stroke={INK} strokeWidth="1" pointerEvents="all" />
+              {/* The same object: its spine still says what it is. */}
+              {label(seat, record.label)}
             </g>
           );
         }
@@ -168,24 +203,7 @@ export function WallLabelled({
               stroke={INK}
               strokeWidth="1"
             />
-            {/*
-              On the face's plane: local x runs up the spine from the bottom
-              inset, the baseline sits across the thickness at its centre plus
-              half a cap height.
-            */}
-            <text
-              data-label=""
-              transform={labelTransform(seat)}
-              x={BASELINE_INSET}
-              y={(seat.width / 2 + LABEL_FONT_PX * 0.35).toFixed(1)}
-              fontFamily="Geist Mono, monospace"
-              fontSize={LABEL_FONT_PX}
-              fontWeight="500"
-              fill={INK}
-              xmlSpace="preserve"
-            >
-              {record.label}
-            </text>
+            {label(seat, record.label)}
           </g>
         );
       })}

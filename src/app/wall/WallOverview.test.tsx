@@ -34,8 +34,9 @@ describe('the overview draws the collection as polygons', () => {
   it('draws three faces per record plus one plane per shelf run', () => {
     const html = render({ seats: seats(6, 2), pulledId: null });
 
-    // 6 records × (top, right, front) + 2 planes.
-    expect(countTag(html, 'polygon')).toBe(6 * 3 + 2);
+    // 6 records × (top, right, front), over four shelves (2·2·1·1) whose
+    // alternating sections make 2 + 2 + 1 + 1 runs.
+    expect(countTag(html, 'polygon')).toBe(6 * 3 + 6);
   });
 
   /**
@@ -137,7 +138,7 @@ describe('the overview at rest is line, ink and paper (8a §11)', () => {
     const html = render({ seats: seats(6, 2), pulledId: null });
     const fills = [...html.matchAll(/fill="([^"]*)"/g)].map((m) => m[1]);
 
-    expect(fills).toHaveLength(6 * 3 + 2);
+    expect(fills).toHaveLength(6 * 3 + 6);
     expect(new Set(fills)).toEqual(new Set([PLANE_FILL, FACE_FILL, TOP_FILL]));
     for (const fill of fills) {
       const chroma = Number(/oklch\([\d.]+ ([\d.]+) /.exec(fill)?.[1]);

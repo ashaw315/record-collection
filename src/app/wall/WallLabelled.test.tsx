@@ -100,3 +100,31 @@ describe('5b’s two faces at rest (D2): three faces per record, filled in paper
     expect(html).toContain('data-field');
   });
 });
+
+describe('the pulled record is the same object (D2)', () => {
+  it('keeps its spine label on its front face while pulled', () => {
+    const html = render([seat('a', null), seat('b', null)], { id: 'b', direction: 'out', progress: 1 });
+    const pulled = html.slice(html.indexOf('data-pulled="b"'));
+    const group = pulled.slice(0, pulled.indexOf('</g>', pulled.indexOf('data-face="front"')));
+    expect(group).toContain('data-label=""');
+    expect(group).toContain('>b<');
+  });
+});
+
+describe('the labelled wall renders at 1:1 and never above it (5b §5)', () => {
+  it('sizes the svg to its viewBox width in px, capped by its container', () => {
+    /*
+      A seventeen-record wall over four shelves is a small drawing; left to
+      `width: 100%` it scaled UP to fill two-thirds of a 1440 viewport and a
+      record filled the screen, labels at forty pixels. §5's rule is that
+      labels render at 1:1 — which cuts both ways.
+    */
+    const html = render([seat('a', null), seat('b', null)], null);
+    const svg = /<svg[^>]*data-wall="labelled"[^>]*>/.exec(html)?.[0] ?? '';
+    const viewBox = /viewBox="([^"]+)"/.exec(svg)?.[1]?.split(' ').map(Number) ?? [];
+    expect(viewBox).toHaveLength(4);
+    expect(svg).toContain(`width:${viewBox[2]}px`);
+    expect(svg).toContain('max-width:100%');
+    expect(svg, 'not a fluid width').not.toMatch(/[;"]width:100%/);
+  });
+});

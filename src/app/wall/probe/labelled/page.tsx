@@ -1,13 +1,13 @@
 import { notFound } from 'next/navigation';
-import { WallLive } from '../../WallLive';
+import { WallComposition } from '../../WallComposition';
 import { spineLabel } from '../../spine-text';
 import type { WallSeat } from '../../shelf-runs';
 import { COLLECTION_SPINES } from '../../../../../test/fixtures/collection-spines';
 
 /**
- * The wall at 1:1 on the real collection — seventeen records, their own
- * labels, outlines at rest (§11); click one to pull it and watch its colour
- * arrive across the gesture.
+ * The wall composition on the real collection — seventeen records on four
+ * shelves, their own labels, paper at rest (§11); click one to slide it out
+ * and watch its colour arrive across the gesture.
  *
  * On a probe route, gated like the others: the 1:1 component is built and
  * measured here before the swap that puts it at `/`. The overview's probe
@@ -52,13 +52,8 @@ export default async function WallLabelledProbePage({
   const seats = seatsWith(cover ?? null, Number(count) > 0 ? Number(count) : COLLECTION_SPINES.length);
 
   return (
-    <main style={{ padding: 24, background: '#f9f7f4' }}>
-      <h1 style={{ font: "600 15px 'Geist', sans-serif", margin: '0 0 12px' }}>
-        Wall at 1:1 — labelled, on the collection
-      </h1>
-      <div style={{ maxWidth: 1000 }}>
-        <WallLive seats={seats} />
-      </div>
+    <main>
+      <WallComposition seats={seats} />
     </main>
   );
 }

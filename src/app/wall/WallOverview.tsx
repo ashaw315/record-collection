@@ -9,6 +9,7 @@ import {
   type Point,
 } from './geometry';
 import type { ShelfSeat } from './shelf-runs';
+import { intoShelves } from './shelf-rows';
 import { wallViewBox } from './wall-frame';
 
 /**
@@ -28,9 +29,6 @@ import { wallViewBox } from './wall-frame';
  * per run, three faces per record — 5b's top face is what makes a spine an
  * object rather than a bar — painted back to front across the whole wall.
  */
-
-/** How many records sit on one shelf before the wall wraps to the next. */
-export const PER_SHELF = 40;
 
 const INK = '#161412';
 const RULE = 'oklch(0.44 0.008 70)';
@@ -57,13 +55,12 @@ export function WallOverview({
 }) {
   const planes: (readonly Point[])[] = [];
   const placed: PlacedSeat[] = [];
-  for (let index = 0, row = 0; index < seats.length; index += PER_SHELF, row += 1) {
-    const shelf = seats.slice(index, index + PER_SHELF);
+  intoShelves(seats).forEach((shelf, row) => {
     const rowSeats = layoutRow(shelf, row, pulledId);
-    planes.push(...rowPlanes(shelf, rowSeats, pulledId));
+    planes.push(...rowPlanes(shelf, rowSeats));
     /* The pulled record's SEAT is still spanned by its plane; no spine is drawn on it. */
     placed.push(...rowSeats.filter((seat) => seat.id !== pulledId));
-  }
+  });
 
   return (
     <svg

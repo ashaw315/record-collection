@@ -18,6 +18,7 @@ import {
   paintOrder,
   project,
   rightFace,
+  rowPlanes,
   shelfPlane,
   spineWidth,
   topFace,
@@ -290,5 +291,32 @@ describe('5b’s two faces, on the same three coordinates (D2)', () => {
     near(apply(D, 0), project(119, 16 + D, 458 + H));
     near(apply(0, H), project(119, 16, 458));
     expect(a * d - b * c, 'mirrored: negative determinant').toBeLessThan(0);
+  });
+});
+
+describe('the plane spans seats, not occupants (5b §2)', () => {
+  it('still draws the plane under a run whose only record is pulled', () => {
+    /*
+      Found by the four-shelf split: a shelf of one record, pulled, lost its
+      plane — shelfRuns drops a run with no seated records, and the plane was
+      built from those runs. The record floated over nothing, which is the
+      gap §2 forbids: the shelf is still there and the record is not on it.
+    */
+    const shelf = [{ id: 'only', section: 'A' }];
+    const placed = layoutRow(shelf, 0, 'only');
+    expect(rowPlanes(shelf, placed)).toHaveLength(1);
+  });
+
+  it('keeps one plane per section run with a record pulled from the middle', () => {
+    const shelf = [
+      { id: 'a1', section: 'A' },
+      { id: 'a2', section: 'A' },
+      { id: 'b1', section: 'B' },
+    ];
+    const placed = layoutRow(shelf, 0, 'a2');
+    const planes = rowPlanes(shelf, placed);
+    expect(planes).toHaveLength(2);
+    /* A's plane spans both its seats, a2's included, at its slid-free extent. */
+    expect(planes[0]).toEqual(shelfPlane(placed.slice(0, 2), placed[0].z));
   });
 });

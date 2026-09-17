@@ -72,6 +72,7 @@ test('clicking a spine slides it forward: the same face moved, the slot emptied,
 }) => {
   expect(wired).not.toBeNull();
   const seatBefore = await page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`).getAttribute('points');
+  const planesBefore = await page.locator('[data-wall="labelled"] [data-plane]').count();
 
   await page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`).click();
   await page.clock.runFor(1);
@@ -99,8 +100,8 @@ test('clicking a spine slides it forward: the same face moved, the slot emptied,
     expect(corner[1], `corner ${index} y`).toBeCloseTo(seated[index][1] + dy, 1);
   });
 
-  /* The shelf run still spans the seat: as many runs as before, none split. */
-  await expect(page.locator('[data-wall="labelled"] [data-plane]')).toHaveCount(1);
+  /* The planes still span the seat: as many as before the pull, none split. */
+  await expect(page.locator('[data-wall="labelled"] [data-plane]')).toHaveCount(planesBefore);
 });
 
 test('colour arrives across the pull — paper at 0, the fill the curve gives at 500ms, base at the end', async ({

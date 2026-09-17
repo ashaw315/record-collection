@@ -188,16 +188,16 @@ export function labelTransform(seat: PlacedSeat): string {
  * would shrink when a record is pulled, the other absence drawn as a gap at
  * the end instead of the middle.
  */
-export function rowPlanes(
-  shelf: readonly ShelfSeat[],
-  placed: readonly PlacedSeat[],
-  pulledId: string | null,
-): (readonly Point[])[] {
-  const sectionOf = new Map(shelf.map((seat) => [seat.id, seat.section]));
-  return shelfRuns(shelf, pulledId).flatMap((run) => {
-    const extent = placed.filter(
-      (seat) => run.ids.includes(seat.id) || (seat.id === pulledId && sectionOf.get(seat.id) === run.section),
-    );
+export function rowPlanes(shelf: readonly ShelfSeat[], placed: readonly PlacedSeat[]): (readonly Point[])[] {
+  /*
+    **From the SEATED arrangement.** `shelfRuns(shelf, pulledId)` drops a run
+    with no seated records, which is right for what it counts and wrong for
+    what a plane spans: a shelf of one record, pulled, lost its plane and the
+    record floated over nothing — §2's gap. The shelf is still there and the
+    record is not on it, so the plane's extent is every seat of the section.
+  */
+  return shelfRuns(shelf, null).flatMap((run) => {
+    const extent = placed.filter((seat) => run.ids.includes(seat.id));
     return extent.length === 0 ? [] : [shelfPlane(extent, extent[0].z)];
   });
 }

@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { SPINE_WIDTH_MIN, frontFace, layoutRow } from '../src/app/wall/geometry';
+import { intoShelves } from '../src/app/wall/shelf-rows';
 import { SPINE_TEXT_BUDGET, spineLabel } from '../src/app/wall/spine-text';
 import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
 
@@ -63,20 +64,25 @@ test('draws every record as three paper faces at rest — filled for occlusion, 
 test('labels every spine at the drawn size, rotated up the spine, cut to the budget', async ({
   page,
 }) => {
+  /* By seat id, not DOM order: faces paint back to front, so the DOM is the painter's order. */
   const labels = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('[data-seat] [data-label]')).map((label) => ({
-      text: label.textContent ?? '',
-      size: label.getAttribute('font-size'),
-      weight: label.getAttribute('font-weight'),
-      family: label.getAttribute('font-family'),
-      transform: label.getAttribute('transform') ?? '',
-    })),
+    Array.from(document.querySelectorAll('[data-seat]')).map((seat) => {
+      const label = seat.querySelector('[data-label]');
+      return {
+        id: seat.getAttribute('data-seat') ?? '',
+        text: label?.textContent ?? '',
+        size: label?.getAttribute('font-size') ?? null,
+        weight: label?.getAttribute('font-weight') ?? null,
+        family: label?.getAttribute('font-family') ?? null,
+        transform: label?.getAttribute('transform') ?? '',
+      };
+    }),
   );
 
   expect(labels).toHaveLength(COLLECTION_SPINES.length);
 
-  for (const [index, label] of labels.entries()) {
-    const row = COLLECTION_SPINES[index];
+  for (const label of labels) {
+    const row = COLLECTION_SPINES[Number(label.id.replace('collection-', ''))];
     expect(label.text, `${row.title}`).toBe(spineLabel(row.artist, row.title));
     expect([...label.text].length, `${row.title} within the budget`).toBeLessThanOrEqual(
       SPINE_TEXT_BUDGET,
@@ -136,11 +142,10 @@ test('draws the same polygons the overview does, by the shared geometry', async 
     })),
   );
 
-  const placed = layoutRow(
+  /* Seventeen records over four shelves: each row placed on its own z. */
+  const placed = intoShelves(
     COLLECTION_SPINES.map((_, index) => ({ id: `collection-${index}`, section: 'Collection' })),
-    0,
-    null,
-  );
+  ).flatMap((shelf, row) => layoutRow(shelf, row, null));
   drawn.forEach((seat) => {
     const expected = placed.find((p) => p.id === seat.id);
     expect(expected, seat.id).toBeDefined();
