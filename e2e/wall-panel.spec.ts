@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { seedRecords } from './seed';
+import { contrastRatio } from '../src/lib/colour/record-colour';
 
 /**
  * What the gesture arrives at (8a §11.7): the panel, flat on paper, right of
@@ -95,4 +96,41 @@ test('Escape dismisses, and a record dismissed MID-TURN goes home with its chrom
   await expect(page.getByTestId('record-chrome'), 'and the chrome goes with it').toHaveCount(0);
   await expect(page.locator(`[data-seat="${firstId}"] [data-spine]`)).toHaveCount(1, { timeout: 5000 });
   await expect(page.locator('[data-pulled]')).toHaveCount(0);
+});
+
+test('the panel’s values are READABLE against the paper they sit on', async ({ page }) => {
+  /*
+    The lit wall's version measured the panel against its scrim and once
+    caught 1.02:1. The ground is paper now and the claim is the same: every
+    text colour in the panel, measured on the rendered page, clears 4.5:1
+    against the composition's ground.
+  */
+  const artistId = await seed(page, 3);
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
+  await page.locator('[data-seat] [data-spine]').first().click();
+  await expect(page.getByTestId('record-chrome')).toBeVisible({ timeout: 5000 });
+
+  const colours = await page.evaluate(() => {
+    const hex = (colour: string) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1;
+      canvas.height = 1;
+      const ctx = canvas.getContext('2d');
+      if (ctx === null) return colour;
+      ctx.fillStyle = colour;
+      ctx.fillRect(0, 0, 1, 1);
+      const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+      return `#${[r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('')}`;
+    };
+    const ground = hex(getComputedStyle(document.querySelector('[data-composition]') as HTMLElement).backgroundColor);
+    const texts = Array.from(document.querySelectorAll('[data-testid="record-chrome"] h3, [data-testid="record-chrome"] p, [data-testid="record-chrome"] a, [data-testid="record-chrome"] button, [data-testid="record-chrome"] dt, [data-testid="record-chrome"] dd'))
+      .filter((el) => (el.textContent ?? '').trim() !== '')
+      .map((el) => hex(getComputedStyle(el).color));
+    return { ground, texts: [...new Set(texts)] };
+  });
+  expect(colours.texts.length).toBeGreaterThan(0);
+  for (const colour of colours.texts) {
+    expect(contrastRatio(colour, colours.ground), `${colour} on ${colours.ground}`).toBeGreaterThanOrEqual(4.5);
+  }
 });

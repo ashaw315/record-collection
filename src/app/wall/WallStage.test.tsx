@@ -111,3 +111,35 @@ describe('Turn over shows the back on the same face (§11.7)', () => {
     expect(html).not.toContain('href="https://c/x.jpg"');
   });
 });
+
+describe('arrows between pulled records (§11.8): wall order, absent at the ends', () => {
+  const three = [seat('a'), seat('b'), seat('c')];
+  const sums = { a: summary('a'), b: summary('b'), c: summary('c') };
+
+  it('shows both arrows from the middle, neither where there is nowhere to go', () => {
+    const mid = render({ seats: three, summaries: sums, pull: { id: 'b', direction: 'out', progress: 1 } });
+    expect(mid).toContain('data-testid="nav-previous"');
+    expect(mid).toContain('data-testid="nav-next"');
+    const first = render({ seats: three, summaries: sums, pull: { id: 'a', direction: 'out', progress: 1 } });
+    expect(first).not.toContain('data-testid="nav-previous"');
+    expect(first).toContain('data-testid="nav-next"');
+    const last = render({ seats: three, summaries: sums, pull: { id: 'c', direction: 'out', progress: 1 } });
+    expect(last).toContain('data-testid="nav-previous"');
+    expect(last).not.toContain('data-testid="nav-next"');
+  });
+
+  it('follows the ARRIVING record: its panel, once it has arrived; nothing while both are moving', () => {
+    const moving = render({ seats: three, summaries: sums, pulls: [
+      { id: 'b', direction: 'back', progress: 0.3 },
+      { id: 'c', direction: 'out', progress: 0.3 },
+    ] });
+    expect(moving).not.toContain('data-testid="record-chrome"');
+    const arrived = render({ seats: three, summaries: sums, pulls: [
+      { id: 'b', direction: 'back', progress: 1 },
+      { id: 'c', direction: 'out', progress: PERCEIVED_END },
+    ] });
+    const chrome = arrived.slice(arrived.indexOf('data-testid="record-chrome"'));
+    expect(chrome).toContain('href="/records/c"');
+    expect(chrome, 'the returning record’s panel is not shown').not.toContain('href="/records/b"');
+  });
+});

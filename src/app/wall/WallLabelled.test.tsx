@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { WallLabelled } from './WallLabelled';
+import { WallLabelled, type PullState } from './WallLabelled';
 import { WALL_PAPER_HEX } from './pull-colour';
 import { FACE_FILL, PLANE_FILL, TOP_FILL } from './WallOverview';
 import type { WallSeat } from './shelf-runs';
@@ -25,10 +25,17 @@ const seat = (id: string, coverUrl: string | null, spineColour: string | null = 
 
 const render = (
   seats: WallSeat[],
-  pull: Parameters<typeof WallLabelled>[0]['pull'],
+  pull: Parameters<typeof WallLabelled>[0]['pull'] | Parameters<typeof WallLabelled>[0]['pulls'],
   labels?: boolean,
   minWidth?: number,
-) => renderToStaticMarkup(<WallLabelled seats={seats} pull={pull} labels={labels} minWidth={minWidth} />);
+) =>
+  renderToStaticMarkup(
+    Array.isArray(pull) ? (
+      <WallLabelled seats={seats} pulls={pull} labels={labels} minWidth={minWidth} />
+    ) : (
+      <WallLabelled seats={seats} pull={pull as PullState | null} labels={labels} minWidth={minWidth} />
+    ),
+  );
 
 describe('what distinguishes a spine at rest (§11.1)', () => {
   /**
@@ -247,5 +254,19 @@ describe('the plane is the pan extent (§11.8)', () => {
     const xs = plane.split(' ').map((pair) => Number(pair.split(',')[0]));
     expect(Math.min(...xs), 'off the left edge').toBeLessThan(box[0]);
     expect(Math.max(...xs), 'off the right edge').toBeGreaterThan(box[0] + box[2]);
+  });
+});
+
+describe('two records can be moving at once — the arrows’ slide (§11.8)', () => {
+  it('draws a returning record and an arriving one as their own elements, both seats emptied', () => {
+    const html = render([seat('a', null), seat('b', null), seat('c', null)], [
+      { id: 'b', direction: 'back', progress: 0.3 },
+      { id: 'c', direction: 'out', progress: 0.3 },
+    ]);
+    expect(html).toContain('data-pulled="b"');
+    expect(html).toContain('data-pulled="c"');
+    expect(html).not.toContain('data-seat="b"');
+    expect(html).not.toContain('data-seat="c"');
+    expect(html).toContain('data-seat="a"');
   });
 });

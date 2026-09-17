@@ -145,8 +145,6 @@ test('the route list has not fallen behind the app', async () => {
   */
   const EXEMPT = [
     join('app', 'login'),
-    join('app', 'plane'),
-    join('app', 'scene'),
     join('app', 'wall', 'probe'),
     join('app', 'wall', 'overview'),
     join('app', 'wall', 'probe', 'bands'),

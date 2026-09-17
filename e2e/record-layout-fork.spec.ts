@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
+import { PULL_DURATION_MS } from '../src/app/wall/pull-curve';
 
 /**
  * **§10b/A32/A33: the pulled record's facts flank it or overlay it, by width.**
@@ -75,10 +76,21 @@ test('a phone overlays the record with a collapsed panel', async ({ page }) => {
   await expect(panel).toBeVisible();
   await expect(panel).toHaveAttribute('data-expanded', 'false');
 
-  /* And the wall under it did not reflow: the same faces, at the same size, as on a desktop. */
-  const faces = await page.locator('[data-seat] [data-face="front"]').first().getAttribute('points');
+  /*
+    And the wall under it did not reflow: the pulled record's own face has the
+    same points, at the same size, as on a desktop. (This spec seeds one record
+    into an otherwise empty database, so the pulled one is the only face there is.)
+  */
+  /*
+    Read once the slide has SETTLED. The panel appears at 0.69 of the travel
+    with the face still moving, and in the tail it creeps by hundredths of a
+    pixel per frame — two equal consecutive reads are not stillness. The
+    slide's own duration is.
+  */
+  await page.waitForTimeout(PULL_DURATION_MS);
+  const face = await page.locator('[data-pulled] [data-face="front"]').getAttribute('points');
   await page.setViewportSize({ width: 1280, height: 900 });
-  await expect(page.locator('[data-seat] [data-face="front"]').first()).toHaveAttribute('points', faces ?? '');
+  await expect(page.locator('[data-pulled] [data-face="front"]')).toHaveAttribute('points', face ?? '');
 });
 
 test('a desktop flanks the record with an always-expanded panel', async ({ page }) => {

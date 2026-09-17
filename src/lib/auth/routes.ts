@@ -50,7 +50,8 @@ const PUBLIC_PATHS = new Set(['/login', '/api/auth/login']);
  *
  * Read at call time rather than captured at module load, so a test can vary it.
  */
-const DEV_ONLY_PUBLIC_PATHS = new Set(['/scene']);
+/* No dev-only public routes remain: /scene retired with the lit wall (8a §11). */
+const DEV_ONLY_PUBLIC_PATHS = new Set<string>();
 
 const CRON_PATHS = new Set(['/api/discogs/refresh-prices']);
 

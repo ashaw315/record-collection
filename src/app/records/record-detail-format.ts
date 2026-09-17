@@ -97,7 +97,7 @@ const GRADE_NAMES: Record<ConditionGrade, string> = {
 /**
  * Expands a condition grade to its full name (`VG+` → `Very Good Plus`).
  *
- * **This has a caller on a different surface: `src/app/shelf/back-face.ts`.**
+ * **This has a caller on a different surface: `src/app/wall/back-face.ts`.**
  * The wall's sleeve back-face renders Media and Sleeve conditions through this
  * same helper, so the function outliving its detail-screen caller is correct
  * rather than dead code.

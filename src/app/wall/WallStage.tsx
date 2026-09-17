@@ -6,6 +6,7 @@ import { PERCEIVED_END } from './pull-colour';
 import { pullPose, returnPose } from './pull-curve';
 import { wallLayout } from './wall-layout';
 import { FORK_PX, panelAnchor } from './panel-anchor';
+import { hasAdjacentSeat, type Direction } from './adjacent-seat';
 
 /**
  * The stage: the drawing, and what the gesture arrives at.
@@ -26,7 +27,8 @@ import { FORK_PX, panelAnchor } from './panel-anchor';
 export function WallStage({
   seats,
   summaries,
-  pull,
+  pull = null,
+  pulls,
   side,
   width,
   viewport,
@@ -35,10 +37,13 @@ export function WallStage({
   onPulledClick,
   onTurnOver,
   onPutBack,
+  onNavigate,
 }: {
   seats: readonly WallSeat[];
   summaries: Record<string, RecordSummary>;
-  pull: PullState | null;
+  pull?: PullState | null;
+  /** The arrows' slide: two records moving at once. The panel follows the ARRIVING one. */
+  pulls?: readonly PullState[];
   side: 'front' | 'back';
   /** The container's width in px — the pan extent's floor. */
   width: number;
@@ -49,23 +54,54 @@ export function WallStage({
   onPulledClick?: () => void;
   onTurnOver?: () => void;
   onPutBack?: () => void;
+  onNavigate?: (direction: Direction) => void;
 }) {
-  const arrived = pull !== null && pull.direction === 'out' && pull.progress >= PERCEIVED_END;
-  const summary = arrived ? summaries[pull.id] : undefined;
+  const moving: readonly PullState[] = pulls ?? (pull === null ? [] : [pull]);
+  /* The panel follows the record coming OUT, once 97% of its travel is behind the eye. */
+  const arriving = moving.find((state) => state.direction === 'out');
+  const arrived = arriving !== undefined && arriving.progress >= PERCEIVED_END;
+  const summary = arrived ? summaries[arriving.id] : undefined;
+  const order = seats.map((seat) => seat.id);
 
   let chrome = null;
   if (arrived && summary !== undefined) {
-    const pose = pullPose(pull.progress, 1, 1);
-    const layout = wallLayout(seats, pull.id, pose, width);
-    const seat = layout.placed.find((placed) => placed.id === pull.id);
+    const layout = wallLayout(
+      seats,
+      moving.map((state) => ({
+        id: state.id,
+        pose: state.direction === 'out' ? pullPose(state.progress, 1, 1) : returnPose(state.progress, 1, 1),
+      })),
+      width,
+    );
+    const seat = layout.placed.find((placed) => placed.id === arriving.id);
     const wide = viewport >= FORK_PX;
+    const arrow = (direction: Direction) =>
+      hasAdjacentSeat(order, arriving.id, direction) ? (
+        <button
+          type="button"
+          data-testid={direction === 'next' ? 'nav-next' : 'nav-previous'}
+          aria-label={direction === 'next' ? 'Next record' : 'Previous record'}
+          onClick={() => onNavigate?.(direction)}
+          className="min-h-11 min-w-11 border text-prose"
+          style={{ borderColor: 'oklch(0.19 0.008 60)' }}
+        >
+          {direction === 'next' ? '→' : '←'}
+        </button>
+      ) : null;
     const panel = (
-      <RecordPanel
-        summary={summary}
-        alwaysExpanded={wide}
-        onTurnOver={onTurnOver ?? (() => undefined)}
-        onPutBack={onPutBack ?? (() => undefined)}
-      />
+      <>
+        {/* §11.8: along the collection — present only where there is somewhere to go. */}
+        <div className="mb-[10px] flex justify-between">
+          {arrow('previous') ?? <span />}
+          {arrow('next') ?? <span />}
+        </div>
+        <RecordPanel
+          summary={summary}
+          alwaysExpanded={wide}
+          onTurnOver={onTurnOver ?? (() => undefined)}
+          onPutBack={onPutBack ?? (() => undefined)}
+        />
+      </>
     );
     if (wide && seat !== undefined) {
       const anchor = panelAnchor(seat, layout.frame);
@@ -86,14 +122,11 @@ export function WallStage({
       );
     }
   }
-  /* returnPose is the stage's other pose; referenced so the pair stays in one module's view. */
-  void returnPose;
-
   return (
     <div className="relative">
       <WallLabelled
         seats={seats}
-        pull={pull}
+        pulls={moving}
         labels={labels}
         minWidth={width}
         side={side}

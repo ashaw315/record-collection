@@ -44,7 +44,7 @@ import type { BackFaceGroup } from './back-face';
  * this project (`genreSubtree`, `hasGatefold`, and `panel.ts`'s own comment
  * about not reimplementing `backFaceGroups`).
  *
- * **The keyboard path already went there.** `WallScene`'s accessible list links
+ * **The keyboard path already went there.** The wall's spines are anchors that link
  * every record to `/records/[id]`, so this is the same destination reached a
  * second way rather than a new one — a consistency worth naming, because it
  * means the tap affordance and the screen-reader affordance cannot drift.

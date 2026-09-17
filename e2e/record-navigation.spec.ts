@@ -11,8 +11,11 @@ import { sql } from 'drizzle-orm';
  * 0 cannot tell adjacency from always-forward), assert the order matches the
  * wall's own producer rather than a literal, and test the ends.
  *
- * The swipe/tilt boundary lives in `touch-tilt.spec.ts`; this covers the
- * navigation and the arrows.
+ * On the isometric wall (8a §11.8) the arrows are kept as the lit wall had
+ * them — wall order, absent at the ends, a slide at the same depth: the held
+ * record goes back and its neighbour comes out on one clock. Adjacency
+ * derives from the seat order the anchors carry, which is the same order the
+ * keyboard walks and the links carry.
  */
 
 const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
@@ -44,69 +47,30 @@ async function cleanup(artistId: string) {
 }
 
 /**
- * The wall's order, read from the `wall-records` list — the SAME `records`
- * prop the wall is built from, rendered as `/records/:id` links. This is the
- * seam test: asserting navigation against the wall's own producer rather than a
- * literal or a re-derivation. `shelfRecords` cannot be imported here (it is
- * server-only), and this list is exactly what it produced.
+ * The wall's order, read from the spines themselves — the anchors carry
+ * `/records/:id`, in the producer's order. This is the seam test: navigation
+ * asserted against the wall's own producer rather than a literal.
  */
 async function wallOrder(page: Page): Promise<string[]> {
-  return page.$$eval('[data-testid="wall-records"] a', (links) =>
-    links.map((a) => (a as HTMLAnchorElement).getAttribute('href')!.replace('/records/', '')),
-  );
+  return page.$$eval('a[data-seat]', (links) => links.map((a) => a.getAttribute('data-seat') ?? ''));
 }
 
 const pulled = (page: Page) =>
-  page.evaluate(
-    () => (document.querySelector('[data-testid="wall-scene"]') as HTMLElement)?.dataset.pulled ?? '',
-  );
+  page.evaluate(() => {
+    const out = Array.from(document.querySelectorAll('[data-pulled]'));
+    /* While two are moving, the one coming OUT is the held record; settled, there is one. */
+    return out.length === 0 ? '' : (out[out.length - 1].getAttribute('data-pulled') ?? '');
+  });
 
 async function pullFirst(page: Page) {
-  const box = await page.getByTestId('wall-scene').locator('canvas').boundingBox();
-  if (!box) throw new Error('no canvas');
-  for (let offset = 20; offset < 600; offset += 12) {
-    await page.mouse.click(box.x + offset, box.y + 120);
-    if ((await pulled(page)) !== '') break;
-  }
-  await expect
-    .poll(
-      () =>
-        page.evaluate(
-          () =>
-            (document.querySelector('[data-testid="wall-scene"]') as HTMLElement)?.dataset
-              .pulledProgress ?? '0',
-        ),
-      { timeout: 10_000 },
-    )
-    .toBe('1');
+  await page.locator('[data-seat] [data-spine]').first().click();
+  await expect(page.getByTestId('record-chrome')).toBeVisible({ timeout: 5000 });
 }
 
+/** Settled: one record out, its panel up, nothing else moving. */
 async function settle(page: Page) {
-  await expect
-    .poll(
-      () =>
-        page.evaluate(
-          () =>
-            (document.querySelector('[data-testid="wall-scene"]') as HTMLElement)?.dataset
-              .pulledProgress ?? '0',
-        ),
-      { timeout: 10_000 },
-    )
-    .toBe('1');
-  /*
-    Wait for the PHASE too, not just progress — a slide's progress hits 1 a tick
-    before the state settles, and clicking the next arrow mid-settle races the
-    transition. `settled` or `flipping` both mean the record is out and still.
-  */
-  await expect
-    .poll(
-      () =>
-        page.evaluate(
-          () => (document.querySelector('[data-testid="wall-scene"]') as HTMLElement)?.dataset.phase ?? '',
-        ),
-      { timeout: 10_000 },
-    )
-    .toMatch(/settled|flipping/);
+  await expect(page.getByTestId('record-chrome')).toBeVisible({ timeout: 5000 });
+  await expect.poll(() => page.locator('[data-pulled]').count(), { timeout: 5000 }).toBe(1);
 }
 
 test('the arrows move to the adjacent record in the WALL\'S order', async ({ page }) => {
@@ -119,8 +83,8 @@ test('the arrows move to the adjacent record in the WALL\'S order', async ({ pag
     */
     await login(page);
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(`/plane?artistId=${artistId}`);
-    await expect(page.getByTestId('wall-scene').locator('canvas')).toBeVisible({ timeout: 30_000 });
+    await page.goto(`/?artistId=${artistId}`);
+    await expect(page.getByTestId('wall')).toBeVisible({ timeout: 30_000 });
 
     const order = await wallOrder(page);
     expect(order.length).toBe(8);
@@ -151,8 +115,8 @@ test('the previous arrow is ABSENT at the first record, the next arrow at the la
   try {
     await login(page);
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(`/plane?artistId=${artistId}`);
-    await expect(page.getByTestId('wall-scene').locator('canvas')).toBeVisible({ timeout: 30_000 });
+    await page.goto(`/?artistId=${artistId}`);
+    await expect(page.getByTestId('wall')).toBeVisible({ timeout: 30_000 });
 
     const order = await wallOrder(page);
 
@@ -204,106 +168,86 @@ test('navigation is a SLIDE — both records at the same depth, not a rise', asy
   try {
     await login(page);
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(`/plane?artistId=${artistId}`);
-    await expect(page.getByTestId('wall-scene').locator('canvas')).toBeVisible({ timeout: 30_000 });
-    await pullFirst(page);
+    await page.clock.install();
+    await page.goto(`/?artistId=${artistId}`);
+    await expect(page.getByTestId('wall')).toBeVisible({ timeout: 30_000 });
+    await page.clock.pauseAt(Date.now() + 1000);
+
+    /* Read BEFORE pulling: a pulled record's anchor is absent from the wall — and each seat's own width, since widths are hashed per record. */
+    const order = await wallOrder(page);
+    const seatedWidth: Record<string, number> = await page.evaluate(() =>
+      Object.fromEntries(
+        Array.from(document.querySelectorAll('a[data-seat]')).map((a) => {
+          const pts = (a.querySelector('[data-face="front"]')?.getAttribute('points') ?? '').split(' ').map((p) => p.split(',').map(Number));
+          return [a.getAttribute('data-seat') ?? '', pts[1][0] - pts[0][0]];
+        }),
+      ),
+    );
+    await page.locator('[data-seat] [data-spine]').first().click();
+    await page.clock.runFor(1040);
 
     /*
-      During a slide the record is in the 'sliding' phase — a LATERAL move, not a
-      rise. The scene exposes the phase via the data attribute set while sliding;
-      we sample it mid-transition. A rise would pass through 'rising' instead.
-      Asserted through the state, not pixels, because the mechanism is the claim.
-    */
-    /*
-      **The phase is 'sliding', never 'rising'** — that IS the distinction from
-      the pull-based version, which passed through 'rising'. Poll for it right
-      after the click; a slide is fast, so catch it before it settles.
+      Mid-slide: TWO records are moving — the held one back, its neighbour out —
+      and neither is scaled: a slide holds depth, a rise (the second pull) would
+      not. Asserted on the drawing, since the mechanism is the claim.
     */
     await page.getByTestId('nav-next').click();
-    const phasesSeen = new Set<string>();
-    for (let i = 0; i < 40; i += 1) {
-      phasesSeen.add(
-        await page.evaluate(
-          () => (document.querySelector('[data-testid="wall-scene"]') as HTMLElement)?.dataset.phase ?? '',
-        ),
-      );
-      if (phasesSeen.has('settled') && phasesSeen.has('sliding')) break;
-      await page.waitForTimeout(15);
-    }
-    expect(phasesSeen.has('sliding'), `saw phases ${[...phasesSeen].join(',')}`).toBe(true);
-    expect(phasesSeen.has('rising'), 'a slide never rises').toBe(false);
-    await settle(page);
+    await page.clock.runFor(300);
+    const moving = await page.evaluate(() =>
+      Array.from(document.querySelectorAll('[data-pulled]')).map((g) => {
+        const pts = (g.querySelector('[data-face="front"]')?.getAttribute('points') ?? '').split(' ').map((p) => p.split(',').map(Number));
+        return { id: g.getAttribute('data-pulled'), width: pts[1][0] - pts[0][0] };
+      }),
+    );
+    expect(moving, 'both records move during the slide').toHaveLength(2);
+    /* As a set: which of the two paints first is the painter's decision, not the slide's. */
+    expect(moving.map((m) => m.id).sort()).toEqual([order[0], order[1]].sort());
+    /* Points are drawn to two decimals; a slide holds the width to the tenth, a rise would not hold it at all. */
+    for (const m of moving) expect(m.width, `${m.id} keeps ITS OWN size — same depth`).toBeCloseTo(seatedWidth[m.id ?? ''], 1);
+
+    await page.clock.runFor(800);
+    expect(await pulled(page), 'settled on the successor').toBe(order[1]);
   } finally {
     await cleanup(artistId);
   }
 });
 
-test('put back lands in the HELD record\'s slot after sliding (slotGap ~0)', async ({ page }) => {
+test('put back lands in the HELD record\'s slot after sliding', async ({ page }) => {
   const artistId = await seed(60);
   try {
     await login(page);
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(`/plane?artistId=${artistId}`);
-    await expect(page.getByTestId('wall-scene').locator('canvas')).toBeVisible({ timeout: 30_000 });
+    await page.goto(`/?artistId=${artistId}`);
+    await expect(page.getByTestId('wall')).toBeVisible({ timeout: 30_000 });
+    /* Every seat's home, read before anything moves — the layout's own answer. */
+    const homes = await page.evaluate(() =>
+      Object.fromEntries(
+        Array.from(document.querySelectorAll('a[data-seat]')).map((a) => [
+          a.getAttribute('data-seat'),
+          a.querySelector('[data-face="front"]')?.getAttribute('points') ?? '',
+        ]),
+      ),
+    );
     await pullFirst(page);
 
     for (let i = 0; i < 10; i += 1) {
       await page.getByTestId('nav-next').click();
       await settle(page);
     }
-
-    const scene = () =>
-      page.evaluate(() => {
-        const el = document.querySelector('[data-testid="wall-scene"]') as HTMLElement;
-        return {
-          gap: Number(el?.dataset.slotGap ?? '-1'),
-          slotX: Number(el?.dataset.layoutSlotX ?? NaN),
-          slotY: Number(el?.dataset.layoutSlotY ?? NaN),
-          meshX: Number(el?.dataset.meshX ?? NaN),
-          meshY: Number(el?.dataset.meshY ?? NaN),
-        };
-      });
-
-    /*
-      **The slot is captured WHILE the record is out**, because `layoutSlotX/Y`
-      describe whichever record is currently held — after the put-back there is
-      none, and the values would be stale.
-
-      `slotGap` is kept for this half: it says the record has LEFT its slot,
-      which is a claim about distance travelled and does not depend on where
-      home is.
-    */
-    const out = await scene();
-    expect(out.gap, 'the held record slot is empty while out').toBeGreaterThan(100);
-    expect(Number.isNaN(out.slotX), 'the layout knows the held record slot').toBe(false);
+    const held = await pulled(page);
+    expect(held, 'ten slides moved the held record').not.toBe((await wallOrder(page))[0]);
+    /* The held record's seat is empty while it is out. */
+    await expect(page.locator(`a[data-seat="${held}"]`)).toHaveCount(0);
 
     await page.getByTestId('record-chrome').getByTestId('action-put').click();
-    await expect.poll(() => page.evaluate(() => (document.querySelector('[data-testid="wall-scene"]') as HTMLElement)?.dataset.pulled ?? ''), { timeout: 10_000 }).toBe('');
-    await page.waitForTimeout(300);
+    await expect(page.locator('[data-pulled]')).toHaveCount(0, { timeout: 5000 });
 
-    /**
-     * **Where the record ACTUALLY landed, against the LAYOUT's slot — not
-     * against `slotGap`.**
-     *
-     * `slotGap` is `|mesh.position - home|` and the return animates the mesh
-     * toward `home`, so it collapses to ~0 whatever `home` holds: the ruler
-     * moves with the thing it measures. It can catch a return that never runs,
-     * and cannot catch a return to the WRONG slot — which is precisely the bug
-     * a slide can introduce, because sliding changes which record is held and
-     * its home is elsewhere.
-     *
-     * That was tolerable while a sibling test also covered put-back. It is not
-     * now: this test carries the property alone since its pull-era predecessor
-     * was removed as subsumed, so a partial tautology would be the only guard.
-     *
-     * `meshX/meshY` come from the render and `layoutSlotX/layoutSlotY` from the
-     * packer — two independent producers, which is what makes this falsifiable.
-     * The same substitution was already made in `wall-scene.spec.ts` for the
-     * re-wrap return, for the same reason.
-     */
-    const landed = await scene();
-    expect(landed.meshX, 'the record is back in its OWN slot, horizontally').toBeCloseTo(out.slotX, 0);
-    expect(landed.meshY, 'and vertically').toBeCloseTo(out.slotY, 0);
+    /*
+      **Where it ACTUALLY landed, against the layout's slot:** the SAME record,
+      seated again, on exactly the points its seat had before anything moved —
+      a return to the wrong slot is the bug a slide can introduce.
+    */
+    await expect(page.locator(`a[data-seat="${held}"] [data-face="front"]`)).toHaveAttribute('points', homes[held]);
   } finally {
     await cleanup(artistId);
   }

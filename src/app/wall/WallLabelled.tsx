@@ -87,6 +87,7 @@ export type PullState = {
 export function WallLabelled({
   seats,
   pull = null,
+  pulls,
   labels = true,
   minWidth = 0,
   side = 'front',
@@ -95,6 +96,8 @@ export function WallLabelled({
 }: {
   seats: readonly WallSeat[];
   pull?: PullState | null;
+  /** The arrows' slide moves two records at once: one back, one out (§11.8). */
+  pulls?: readonly PullState[];
   /** §5's guard: false only when the container cannot hold one record (D1). */
   labels?: boolean;
   /** The container's width in px: the pan extent is never narrower than the view (§11.8). */
@@ -104,16 +107,13 @@ export function WallLabelled({
   onSeatClick?: (id: string) => void;
   onPulledClick?: () => void;
 }) {
-  const pulledId = pull?.id ?? null;
-  const pose =
-    pull === null
-      ? null
-      : pull.direction === 'out'
-        ? pullPose(pull.progress, 1, 1)
-        : returnPose(pull.progress, 1, 1);
+  const moving: readonly PullState[] = pulls ?? (pull === null ? [] : [pull]);
+  const poseOf = (state: PullState) =>
+    state.direction === 'out' ? pullPose(state.progress, 1, 1) : returnPose(state.progress, 1, 1);
+  const movingById = new Map(moving.map((state) => [state.id, state]));
 
   const byId = new Map(seats.map((seat) => [seat.id, seat]));
-  const { placed, planes, breaks, frame } = wallLayout(seats, pulledId, pose, minWidth);
+  const { placed, planes, breaks, frame } = wallLayout(seats, moving.map((m) => ({ id: m.id, pose: poseOf(m) })), minWidth);
 
   return (
     <svg
@@ -136,7 +136,10 @@ export function WallLabelled({
         if (record === undefined) return null;
         const face = frontFace(seat);
 
-        if (seat.id === pulledId && pull !== null) {
+        const state = movingById.get(seat.id);
+        if (state !== undefined) {
+          const pose = poseOf(state);
+          const pull = state;
           /*
             **The same object, moved** (D2): the pulled record is the seated
             one at a different y. Its right face is the field — the one place
