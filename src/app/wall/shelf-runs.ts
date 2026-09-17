@@ -50,6 +50,10 @@ export type WallSeat = ShelfSeat & {
   spineColour: string | null;
   /** §11.3: the pulled record shows its cover, at its own aspect, on the field. */
   coverUrl: string | null;
+  /** §11.7: Turn over shows the back on the same face — the photograph, or a plain back carrying label and catalogue number (§10b). */
+  backUrl: string | null;
+  labelName: string | null;
+  catalogNumber: string | null;
 };
 
 export type ShelfRun = {

@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react';
 import { canvasPx } from './frames';
 import { BoxCanvas } from './BoxCanvas';
 import { WIDTH_CANDIDATES, recordSizeFor } from './fill-candidates';
-import { recordSummary } from './summary';
+import { recordSummary } from '../wall/summary';
 import { SummaryCard } from './SummaryCard';
 import { viewportAspect } from './wall-camera';
 import { PANEL_GROUND } from '../shelf/panel-palette';
-import type { FactPanel } from './panel';
+import type { FactPanel } from '../wall/panel';
 import type { Skins } from './skins';
 
 /**

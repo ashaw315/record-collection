@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { PANEL_TEXT } from '../shelf/panel-palette';
 import type { RecordSummary } from './summary';
+import { HAIRLINE, INK, LABEL, LABEL_INK } from '../records/[id]/grid-type';
 
 /**
  * **The pulled record's facts, as a panel that expands in place (§10b, A33).**
@@ -27,6 +27,10 @@ import type { RecordSummary } from './summary';
  * above the fact list, labelled in the register §10b requires, with a boundary
  * between. `RecordSummary` keeps `snippet` and `factGroups` as separate fields
  * precisely so this component cannot merge them.
+ *
+ * **Set in the record screen's type and rules (§11.7):** flat, on paper, the
+ * title at `title`, prose at `prose`, labels at `LABEL`, hairlines for rules.
+ * The lit scene's palette went with the lit scene.
  */
 export function RecordPanel({
   summary,
@@ -63,27 +67,26 @@ export function RecordPanel({
         aria-expanded={expanded}
         onClick={() => setToggled((open) => !open)}
         disabled={alwaysExpanded}
-        className="group flex w-full items-center gap-3 rounded-xs px-4 py-3 text-left"
+        className="group flex w-full items-center gap-3 px-0 py-0 text-left"
       >
         <div className="min-w-0 flex-1">
           <h3
             data-testid="summary-title"
-            className="font-heading truncate text-lg leading-tight font-semibold"
-            style={{ color: PANEL_TEXT.title }}
+            className={`truncate text-title font-semibold ${INK}`}
           >
             {summary.title}
           </h3>
           <p
             data-testid="summary-attribution"
-            className="mt-0.5 truncate text-sm"
-            style={{ color: PANEL_TEXT.muted }}
+            className="mt-[4px] truncate text-prose"
+            style={{ color: LABEL_INK }}
           >
             {attribution}
           </p>
           <p
             data-testid="summary-further"
-            className="mt-1 truncate text-xs"
-            style={{ color: PANEL_TEXT.muted }}
+            className="mt-[6px] truncate text-meta"
+            style={{ color: LABEL_INK }}
           >
             {summary.furtherFacts === 0
               ? 'Nothing else recorded yet'
@@ -95,7 +98,7 @@ export function RecordPanel({
             aria-hidden="true"
             className="shrink-0 text-lg transition-transform"
             style={{
-              color: PANEL_TEXT.muted,
+              color: LABEL_INK,
               transform: expanded ? 'rotate(90deg)' : undefined,
             }}
           >
@@ -112,7 +115,7 @@ export function RecordPanel({
             synopsis unfolds inside, as the reference does. Capped so the panel
             never grows past the record it sits over.
           */
-          className="max-h-64 overflow-y-auto px-4 pb-3"
+          className="mt-[14px] max-h-64 overflow-y-auto"
         >
           {summary.snippet !== null && (
             <section data-testid="panel-snippet" className="mb-4">
@@ -126,12 +129,11 @@ export function RecordPanel({
               */}
               <p
                 data-testid="panel-snippet-label"
-                className="mb-1 text-[11px] tracking-wide uppercase"
-                style={{ color: PANEL_TEXT.muted }}
+                className={`mb-[6px] ${LABEL}`}
               >
                 {summary.snippet.generated ? 'A note, written by Claude' : 'Your note'}
               </p>
-              <p className="text-sm leading-relaxed" style={{ color: PANEL_TEXT.value }}>
+              <p className={`text-prose leading-[1.55] ${INK}`}>
                 {summary.snippet.text}
               </p>
             </section>
@@ -145,16 +147,16 @@ export function RecordPanel({
             noise.
           */}
           {summary.snippet !== null && summary.factGroups.length > 0 && (
-            <hr data-testid="panel-boundary" className="mb-4 border-t" style={{ borderColor: PANEL_TEXT.muted, opacity: 0.25 }} />
+            <hr data-testid="panel-boundary" className={`mb-4 border-t ${HAIRLINE}`} />
           )}
 
           {summary.factGroups.length > 0 && (
-            <dl data-testid="panel-facts" className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+            <dl data-testid="panel-facts" className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-[6px]">
               {summary.factGroups.flatMap((group) =>
                 group.rows.map((row) => (
                   <div key={`${group.kind}-${row.label}`} className="contents">
-                    <dt style={{ color: PANEL_TEXT.muted }}>{row.label}</dt>
-                    <dd style={{ color: PANEL_TEXT.value }}>{row.value}</dd>
+                    <dt className={LABEL}>{row.label}</dt>
+                    <dd className={`text-prose ${INK}`}>{row.value}</dd>
                   </div>
                 )),
               )}
@@ -169,8 +171,7 @@ export function RecordPanel({
           <Link
             href={summary.href}
             data-testid="panel-detail-link"
-            className="mt-4 inline-block text-sm underline"
-            style={{ color: PANEL_TEXT.title }}
+            className={`mt-4 inline-block text-prose underline ${INK}`}
           >
             Open the full record — journal, prices, images
           </Link>
@@ -178,13 +179,12 @@ export function RecordPanel({
       )}
 
       {/* The controls belong with the panel in both states. */}
-      <div className="mt-2 flex gap-2 px-4 pb-3">
+      <div className="mt-[14px] flex gap-2">
         <button
           type="button"
           onClick={onTurnOver}
           data-testid="action-turn"
-          className="min-h-11 flex-1 rounded-xs border border-border text-sm"
-          style={{ color: PANEL_TEXT.title }}
+          className={`min-h-11 flex-1 border text-prose ${HAIRLINE} ${INK}`}
         >
           Turn over
         </button>
@@ -192,8 +192,7 @@ export function RecordPanel({
           type="button"
           onClick={onPutBack}
           data-testid="action-put"
-          className="min-h-11 flex-1 rounded-xs border border-border text-sm"
-          style={{ color: PANEL_TEXT.title }}
+          className={`min-h-11 flex-1 border text-prose ${HAIRLINE} ${INK}`}
         >
           Put back
         </button>

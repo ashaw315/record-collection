@@ -6,7 +6,7 @@ import { BoxCanvas } from './BoxCanvas';
 import { FactsPanel, ActionsPanel } from './Panels';
 import { FillComparison } from './FillComparison';
 import { BoxGeometryProbe } from './BoxGeometryProbe';
-import { factPanel } from './panel';
+import { factPanel } from '../wall/panel';
 import { PlaneCanvas } from './PlaneCanvas';
 import { WallScene } from './WallScene';
 import { coverTextureUrl } from './plane';

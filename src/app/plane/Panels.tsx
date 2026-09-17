@@ -1,5 +1,5 @@
 import { PANEL_TEXT } from '../shelf/panel-palette';
-import type { FactPanel } from './panel';
+import type { FactPanel } from '../wall/panel';
 
 /**
  * The panels that flank §10b's record (A19e).

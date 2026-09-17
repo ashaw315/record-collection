@@ -20,6 +20,9 @@ const seats = (count: number): WallSeat[] =>
     artist: `Artist ${index}`,
     spineColour: null,
     coverUrl: null,
+    backUrl: null,
+    labelName: null,
+    catalogNumber: null,
   }));
 
 const render = (count: number) => renderToStaticMarkup(<WallComposition seats={seats(count)} />);

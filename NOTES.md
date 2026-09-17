@@ -30480,3 +30480,23 @@ Design corrected the budget withdrawal: 37 stands, D2's 30 is superseded, D2's l
 **The sleeve's title is a drawn element.** Its size derives from its box and its string — largest size whose longest word fits the measure, at most three lines, floored at 15 then cut at a derived cap — and `sleeve-type.test.ts` asserts the rule (a longer title yields a smaller size) rather than a number. The artist above it is read and takes LABEL: two elements in one cell governed on read-versus-drawn, commented at the site. The advance was estimated at 0.6em and the rendered check caught it: the app's sans is **Inter Tight** 800, not Geist, and titles measure 0.477em; a bounding box inside the sheared plane is taller than its text, so line counts come from Range rects.
 
 **Two proxies retired from my own specs this round:** the 1:1 test's "no fluid width" substring (matched `max-width`), and a line count from `getBoundingClientRect().height` under a skew.
+
+## Step 5a: the swap — `/` on the isometric wall, the panel in the page's plane
+
+`/`'s shelf view mounts `WallComposition` from `shelfRecords`; `WallScene` is unmounted and retires with `plane/`, `scene/` and `shelf/` in 5b, with the arrows. What was decided in the build:
+
+**One producer, one order.** `wall/producer.ts` maps `ShelfRecord` to `WallSeat` and to §10b's `RecordSummary` in the query's order — the order the keyboard walks, the arrows will follow and the links carry. The query exposes `sectionIndex`, a dense ordinal of the record's top-level genre in wall order, and still no name: the runs need boundaries, the screen must never render the headings.
+
+**The panel appears at the slide's perceived end**, `PERCEIVED_END = 1 − ∛0.03`, where 97% of travel is behind the eye — not tracking the face, since something in the page's plane moving with something in the projection is the two planes collapsing into one (Design's own reason for §11.7). Anchored to the cover's far-top corner — the right face's highest, rightmost point — in whole pixels, 34px right of it, 208px wide (the cover's projected width, rounded: laid out in the page's plane, not drawn).
+
+**A32's fork is measured on the viewport, not the wall's column.** Found by the desktop spec: at 1280 the wall's two-thirds column is 819px, one pixel under 820, and the panel rendered as the overlay. §11.8 keeps 820 as "room for a panel beside a record on the page", so `WallStage` takes the viewport's width for the fork and the container's for the pan extent, separately.
+
+**Turn over shows the back on the same face**, as a swap: the photograph, or §10b's plain back in the record's field carrying label and catalogue number. No motion — §11 does not rule the turn's motion, and the rotation belonged to the lit medium. Open for Design if a turn should be drawn.
+
+**The scroll lock retires as a mechanism; its claims survive.** The lit wall scrolled under a record fixed to the camera and froze the body; the isometric wall draws the pulled record in the same svg as its slot, so nothing scrolls the page on a pull and nothing is locked. `scroll-lock.spec.ts` now asserts exactly those two facts — reading the position after Playwright's own scroll-into-view, which the first port mistook for the app's.
+
+**The five access claims, checked for their reasons.** Spine-is-a-link: a navigation with JavaScript off. Named by role: `Artist · Title` on the anchor, the truncated form not a name. Heading count: the composition's 72 against the spines drawn as links. Full titles: one link per record, no `wall-records` list beside them. Keyboard: Tab reaches the first seat, visibly sized; Enter pulls it; the panel's link opens the full record — the old test navigated on Enter because its list was the destination; the spine is the pull, and the destination is inside what it arrives at (A33b).
+
+**Two small things.** `wall/layout.ts` is a reserved filename under `app/` — Next read it as a route segment's layout — so it is `wall-layout.ts`. And `RecordPanel` is set in the record screen's type (`title`, `prose`, `LABEL`, hairlines) with the lit scene's palette gone.
+
+**Open, from the composition landing on `/`:** the page's own `<header>` (the "Collection" h1 and the count line) sits above a composition that carries `COLLECTION` and the count at 72 — the same fact twice, in two vocabularies. Design's composition assumed no other header; the `/` header is §10's. One of them goes.

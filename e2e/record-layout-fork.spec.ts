@@ -10,9 +10,9 @@ import { registerCleanup, trackArtist } from './cleanup';
  * reaches `/records/:id` by a link inside the expansion. This asserts the fork
  * lands on the right side at each width and behaves per A33.
  *
- * Driven on `/`, the real wall, because the fork is a property of the rendered
- * scene and a className test would not know whether a panel actually overlapped
- * the record (this unit's recurring lesson).
+ * Driven on `/`, the real wall. §11.8: below the fork the panel OVERLAYS the
+ * projection rather than competing with it for width — the wall does not
+ * reflow, a narrow viewport shows fewer records, not smaller ones.
  */
 
 const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
@@ -39,20 +39,10 @@ async function seedOne(page: Page): Promise<string> {
   return artistId;
 }
 
-/** Walk the first row until a spine is hit — the raycast has no DOM target. */
+/** The spines are anchors now (§11.8): the first one is a real DOM target. */
 async function pullASpine(page: Page) {
-  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }));
-  await page.waitForTimeout(200);
-  const box = await page.getByTestId('wall-scene').locator('canvas').boundingBox();
-  if (!box) throw new Error('no canvas');
-  for (let offset = 20; offset < 600; offset += 12) {
-    await page.mouse.click(box.x + offset, box.y + 120);
-    const pulled = await page.evaluate(
-      () => (document.querySelector('[data-testid="wall-scene"]') as HTMLElement)?.dataset.pulled ?? '',
-    );
-    if (pulled !== '') return;
-  }
-  throw new Error('no spine hit');
+  await page.locator('[data-seat] [data-spine]').first().click();
+  await expect(page.getByTestId('record-chrome')).toBeVisible({ timeout: 5000 });
 }
 
 test.beforeEach(async ({ page }) => {
@@ -74,9 +64,8 @@ registerCleanup();
 test('a phone overlays the record with a collapsed panel', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
-  await expect(page.getByTestId('wall-scene').locator('canvas')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('wall')).toBeVisible({ timeout: 30_000 });
   await pullASpine(page);
-  await page.waitForTimeout(2000);
 
   await expect(page.getByTestId('record-chrome-stacked')).toBeVisible();
   await expect(page.getByTestId('record-chrome-facts')).toHaveCount(0);
@@ -85,14 +74,18 @@ test('a phone overlays the record with a collapsed panel', async ({ page }) => {
   const panel = page.getByTestId('record-chrome').getByTestId('record-panel');
   await expect(panel).toBeVisible();
   await expect(panel).toHaveAttribute('data-expanded', 'false');
+
+  /* And the wall under it did not reflow: the same faces, at the same size, as on a desktop. */
+  const faces = await page.locator('[data-seat] [data-face="front"]').first().getAttribute('points');
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await expect(page.locator('[data-seat] [data-face="front"]').first()).toHaveAttribute('points', faces ?? '');
 });
 
 test('a desktop flanks the record with an always-expanded panel', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/');
-  await expect(page.getByTestId('wall-scene').locator('canvas')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('wall')).toBeVisible({ timeout: 30_000 });
   await pullASpine(page);
-  await page.waitForTimeout(2000);
 
   await expect(page.getByTestId('record-chrome-facts')).toBeVisible();
   await expect(page.getByTestId('record-chrome-stacked')).toHaveCount(0);
@@ -115,9 +108,8 @@ test('both shapes reach the detail page by a link inside the expanded panel (A33
   */
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
-  await expect(page.getByTestId('wall-scene').locator('canvas')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('wall')).toBeVisible({ timeout: 30_000 });
   await pullASpine(page);
-  await page.waitForTimeout(2000);
 
   await page.getByTestId('record-chrome').getByTestId('panel-expand-toggle').click();
   const link = page.getByTestId('record-chrome').getByTestId('panel-detail-link');

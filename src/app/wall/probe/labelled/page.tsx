@@ -40,6 +40,9 @@ function seatsWith(cover: string | null, count: number): WallSeat[] {
       artist: row.artist,
       spineColour: row.resampled,
       coverUrl: row.title === 'Wired' ? cover : null,
+      backUrl: null,
+      labelName: null,
+      catalogNumber: null,
     };
   });
 }
@@ -55,7 +58,15 @@ export default async function WallLabelledProbePage({
 
   return (
     <main>
-      <WallComposition seats={seats} />
+      <WallComposition
+        seats={seats}
+        summaries={Object.fromEntries(
+          seats.map((seat) => [
+            seat.id,
+            { title: seat.title, artist: seat.artist, year: null, href: `/records/${seat.id}`, furtherFacts: 0, snippet: null, factGroups: [] },
+          ]),
+        )}
+      />
     </main>
   );
 }

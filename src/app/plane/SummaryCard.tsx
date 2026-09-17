@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { PANEL_TEXT } from '../shelf/panel-palette';
-import type { RecordSummary } from './summary';
+import type { RecordSummary } from '../wall/summary';
 
 /**
  * **The card beneath a pulled record: artist, title, year, and a tap for the

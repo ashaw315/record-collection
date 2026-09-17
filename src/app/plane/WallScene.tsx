@@ -66,12 +66,12 @@ import { riseTravel } from './motion-sample';
 import { PROUD_MS, proudOffset, shouldRedraw } from './hover-proud';
 import { NO_TILT, tiltFor } from '../shelf/tilt';
 import { beginDrag, endDrag, shouldStartTiltDrag, swipeDirection, type TiltDrag } from './touch-tilt';
-import { RecordPanel } from './RecordPanel';
-import { recordSummary } from './summary';
+import { RecordPanel } from '../wall/RecordPanel';
+import { recordSummary } from '../wall/summary';
 import { recordLayout } from './record-layout';
 import { adjacentRecordId, hasAdjacent, type Direction } from './adjacent-record';
 import { useScrollLock } from './use-scroll-lock';
-import { factPanel } from './panel';
+import { factPanel } from '../wall/panel';
 import { PANEL_GROUND, PANEL_TEXT } from '../shelf/panel-palette';
 import {
   canTilt,

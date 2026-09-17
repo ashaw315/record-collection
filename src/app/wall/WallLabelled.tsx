@@ -5,23 +5,16 @@ import {
   coverTransform,
   frontFace,
   labelTransform,
-  layoutRow,
   paintOrder,
-  planeSpan,
   rightFace,
-  rowBreaks,
-  shelfPlane,
   topFace,
   type PlacedSeat,
-  type Point,
 } from './geometry';
 import { FACE_FILL, PLANE_FILL, TOP_FILL, points } from './WallOverview';
-import { intoShelves } from './shelf-rows';
 import type { WallSeat } from './shelf-runs';
 import { pullPose, returnPose } from './pull-curve';
-import { pullFill, returnFill } from './pull-colour';
-import { slideY } from './pull-geometry';
-import { frameRange, wallFrame, widened } from './wall-frame';
+import { WALL_PAPER_HEX, pullFill, returnFill } from './pull-colour';
+import { wallLayout } from './wall-layout';
 import { recordLadder } from '@/lib/colour/record-ladder';
 import { MICRO_PX } from '../type-scale';
 import { LABEL } from '../records/[id]/grid-type';
@@ -96,6 +89,7 @@ export function WallLabelled({
   pull = null,
   labels = true,
   minWidth = 0,
+  side = 'front',
   onSeatClick,
   onPulledClick,
 }: {
@@ -105,6 +99,8 @@ export function WallLabelled({
   labels?: boolean;
   /** The container's width in px: the pan extent is never narrower than the view (§11.8). */
   minWidth?: number;
+  /** §11.7: Turn over shows the back on the same face. */
+  side?: 'front' | 'back';
   onSeatClick?: (id: string) => void;
   onPulledClick?: () => void;
 }) {
@@ -117,40 +113,7 @@ export function WallLabelled({
         : returnPose(pull.progress, 1, 1);
 
   const byId = new Map(seats.map((seat) => [seat.id, seat]));
-  const placed: PlacedSeat[] = [];
-  const breaks: (readonly [Point, Point])[] = [];
-  const rowZ: number[] = [];
-  intoShelves(seats).forEach((shelf, row) => {
-    /* The plane spans the pulled SEAT (5b §2); the record itself is placed where the slide has it. */
-    const rowSeats = layoutRow(shelf, row, pulledId);
-    breaks.push(...rowBreaks(shelf, rowSeats));
-    rowZ.push(rowSeats[0]?.z ?? 0);
-    placed.push(
-      ...rowSeats.map((seat) =>
-        seat.id === pulledId && pose !== null ? { ...seat, y: slideY(pose) } : seat,
-      ),
-    );
-  });
-
-  /*
-    **At 1:1 — never above it, never below it (D1).** The svg is exactly as
-    wide as its drawing, in px. At `width: 100%` a small collection scaled
-    UP until one record filled the screen; at `max-width: 100%` the 200 case
-    scaled DOWN below the 9px floor. The wall pans instead: its region
-    scrolls the drawing rather than scaling it.
-  */
-  /* Every face, not the front alone: the top faces stand D·sin30 above them. */
-  /*
-    Framed on the faces, at least as wide as the container; the planes span
-    that frame and run off both of its edges (§11.8): the plane is the wall,
-    and the wall is the pan extent.
-  */
-  const frame = widened(
-    wallFrame(placed.flatMap((seat) => [frontFace(seat), topFace(seat), rightFace(seat)])),
-    minWidth,
-  );
-  const span = planeSpan(frameRange(frame));
-  const planes = rowZ.map((z) => shelfPlane(z, span));
+  const { placed, planes, breaks, frame } = wallLayout(seats, pulledId, pose, minWidth);
 
   return (
     <svg
@@ -197,7 +160,34 @@ export function WallLabelled({
               <polygon data-face="top" points={points(topFace(seat))} fill={TOP_FILL} stroke={INK} strokeWidth="1" pointerEvents="all" />
               <g transform={coverTransform(seat)}>
                 <rect data-field="" width={DEPTH} height={SPINE_HEIGHT} fill={fill} stroke={INK} strokeWidth="1" pointerEvents="all" />
-                {record.coverUrl !== null ? (
+                {side === 'back' ? (
+                  /*
+                    §11.7: Turn over is about the record rather than which face
+                    is toward the reader — the back on the same face. The
+                    photograph when there is one; otherwise §10b's plain back,
+                    in the record's field, carrying label and catalogue number
+                    and no body text.
+                  */
+                  record.backUrl !== null ? (
+                    <image
+                      data-back={seat.id}
+                      href={record.backUrl}
+                      x={inset}
+                      y={inset}
+                      width={DEPTH - inset * 2}
+                      height={SPINE_HEIGHT - inset * 2}
+                      preserveAspectRatio="xMidYMid meet"
+                      pointerEvents="none"
+                    />
+                  ) : (
+                    <foreignObject data-back-plain="" x={inset} y={inset} width={DEPTH - inset * 2} height={SPINE_HEIGHT - inset * 2} pointerEvents="none">
+                      <div className={`flex h-full flex-col justify-end p-[16px] ${LABEL}`} style={{ color: WALL_PAPER_HEX }}>
+                        <div>{record.labelName ?? ''}</div>
+                        <div>{record.catalogNumber ?? ''}</div>
+                      </div>
+                    </foreignObject>
+                  )
+                ) : record.coverUrl !== null ? (
                   <image
                     data-cover={seat.id}
                     href={record.coverUrl}

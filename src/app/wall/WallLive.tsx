@@ -1,7 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { WallLabelled, type PullState } from './WallLabelled';
+import type { PullState } from './WallLabelled';
+import { WallStage } from './WallStage';
+import type { RecordSummary } from './summary';
 import type { WallSeat } from './shelf-runs';
 import { PULL_DURATION_MS } from './pull-curve';
 import { labelsFit } from './geometry';
@@ -18,8 +20,15 @@ import { labelsFit } from './geometry';
  * it back. A click on another spine while one is out sends the first back
  * first — one record moves at a time, which is what the shelf's runs assume.
  */
-export function WallLive({ seats }: { seats: readonly WallSeat[] }) {
+export function WallLive({
+  seats,
+  summaries = {},
+}: {
+  seats: readonly WallSeat[];
+  summaries?: Record<string, RecordSummary>;
+}) {
   const [pull, setPull] = useState<PullState | null>(null);
+  const [side, setSide] = useState<'front' | 'back'>('front');
   const started = useRef<number | null>(null);
 
   /*
@@ -30,12 +39,15 @@ export function WallLive({ seats }: { seats: readonly WallSeat[] }) {
   const container = useRef<HTMLDivElement>(null);
   const [labels, setLabels] = useState(true);
   const [width, setWidth] = useState(0);
+  const [viewport, setViewport] = useState(0);
   useEffect(() => {
     const el = container.current;
     if (el === null) return;
     const measure = () => {
       setLabels(labelsFit(el.clientWidth));
       setWidth(el.clientWidth);
+      /* A32's fork is measured on the page: at 1280 the wall's column is 819px, one short of it. */
+      setViewport(window.innerWidth);
     };
     measure();
     const observer = new ResizeObserver(measure);
@@ -45,6 +57,7 @@ export function WallLive({ seats }: { seats: readonly WallSeat[] }) {
 
   const begin = useCallback((id: string, direction: PullState['direction']) => {
     started.current = null;
+    if (direction === 'out') setSide('front');
     setPull({ id, direction, progress: 0 });
   }, []);
 
@@ -81,16 +94,23 @@ export function WallLive({ seats }: { seats: readonly WallSeat[] }) {
 
   return (
     <div ref={container} data-wall-container="">
-      <WallLabelled
+      <WallStage
         seats={seats}
+        summaries={summaries}
         pull={pull}
+        side={side}
+        width={width}
+        viewport={viewport}
         labels={labels}
-        minWidth={width}
         onSeatClick={(id) => {
           if (pull === null) begin(id, 'out');
         }}
         onPulledClick={() => {
           if (pull !== null && pull.direction === 'out' && pull.progress >= 1) begin(pull.id, 'back');
+        }}
+        onTurnOver={() => setSide((s) => (s === 'front' ? 'back' : 'front'))}
+        onPutBack={() => {
+          if (pull !== null && pull.direction === 'out') begin(pull.id, 'back');
         }}
       />
     </div>

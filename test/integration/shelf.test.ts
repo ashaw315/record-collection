@@ -591,3 +591,22 @@ describe('shelfRecords — what pulling a record needs (§10b)', () => {
     expect(await titles()).toEqual(['Hear Nothing']);
   });
 });
+
+describe('shelfRecords exposes a section ORDINAL for the runs, never a name', () => {
+  it('ranks records densely by top-level genre in wall order, the untagged last', async () => {
+    const punk = await genre('Punk');
+    const rock = await genre('Rock');
+    await record('Rock A', await artist('A Rock'), { genreIds: [rock] });
+    await record('Punk A', await artist('A Punk'), { genreIds: [punk] });
+    await record('Punk B', await artist('B Punk'), { genreIds: [punk] });
+    await record('Untagged', await artist('Z Nobody'));
+
+    const rows = await shelfRecords();
+    const byTitle = Object.fromEntries(rows.map((r) => [r.title, r.sectionIndex]));
+    expect(byTitle['Punk A']).toBe(byTitle['Punk B']);
+    expect(byTitle['Rock A']).not.toBe(byTitle['Punk A']);
+    expect(byTitle['Untagged']).toBeGreaterThan(Math.max(byTitle['Punk A'], byTitle['Rock A']));
+    /* An ordinal, not a name: nothing on the record can be rendered as a heading. */
+    expect('sectionName' in rows[0]).toBe(false);
+  });
+});

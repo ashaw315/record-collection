@@ -6,7 +6,7 @@ import { BoxCanvas } from '../plane/BoxCanvas';
 import { resolveSkins } from '../plane/skins';
 import type { ScreenRect } from '../plane/world-map';
 import { ActionsPanel, FactsPanel } from '../plane/Panels';
-import { factPanel } from '../plane/panel';
+import { factPanel } from '../wall/panel';
 import { PANEL_GROUND } from './panel-palette';
 
 /**

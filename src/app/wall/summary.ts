@@ -1,5 +1,5 @@
 import type { FactPanel } from './panel';
-import type { BackFaceGroup } from '../shelf/back-face';
+import type { BackFaceGroup } from './back-face';
 
 /**
  * **The card beside a pulled record, reduced to a summary.**

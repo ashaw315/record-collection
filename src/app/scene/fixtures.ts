@@ -114,6 +114,7 @@ export function sceneFixtures(count: number, withCovers = false): ShelfRecord[] 
       from the covers, so a synthetic palette would describe a different wall.
       The plain-spine case (§10b's honest absence) is preserved either way.
     */
+    sectionIndex: 0,
     spineColour:
       i % 8 === 7
         ? null

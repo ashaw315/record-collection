@@ -12,8 +12,9 @@ import { sql } from 'drizzle-orm';
  * (A33c), so the panel never asserts things about music without saying which
  * part it made up.
  *
- * Driven on the live wall (`/plane?artistId=` with ONE record, so the pull is
- * unambiguous — the workbench route mounts the real `WallScene`).
+ * Driven on `/?artistId=` with ONE record, so the pull is unambiguous — the
+ * real route, the isometric wall (8a §11.7): the panel is flat on paper, right
+ * of the pulled record, appearing at the slide's perceived end.
  */
 
 const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
@@ -27,28 +28,9 @@ async function login(page: Page) {
 }
 
 async function pullTheRecord(page: Page) {
-  const scene = page.getByTestId('wall-scene');
-  await expect(scene.locator('canvas')).toBeVisible({ timeout: 30_000 });
-  const box = await scene.locator('canvas').boundingBox();
-  if (!box) throw new Error('no canvas');
-  for (let offset = 20; offset < 600; offset += 12) {
-    await page.mouse.click(box.x + offset, box.y + 120);
-    const pulled = await page.evaluate(
-      () => (document.querySelector('[data-testid="wall-scene"]') as HTMLElement)?.dataset.pulled ?? '',
-    );
-    if (pulled !== '') break;
-  }
-  await expect
-    .poll(
-      () =>
-        page.evaluate(
-          () =>
-            (document.querySelector('[data-testid="wall-scene"]') as HTMLElement)?.dataset
-              .pulledProgress ?? '0',
-        ),
-      { timeout: 10_000 },
-    )
-    .toBe('1');
+  await page.locator('[data-seat] [data-spine]').first().click();
+  /* The panel arrives at the slide's perceived end (~690ms), not before. */
+  await expect(page.getByTestId('record-chrome')).toBeVisible({ timeout: 5000 });
 }
 
 /** One artist, one record, optionally with a snippet and pressing facts. */
@@ -95,7 +77,7 @@ test('the chevron expands the panel in place and does not navigate', async ({ pa
   try {
     await login(page);
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(`/plane?artistId=${ids.artistId}`);
+    await page.goto(`/?artistId=${ids.artistId}`);
     await pullTheRecord(page);
 
     const panel = page.getByTestId('record-chrome').getByTestId('record-panel');
@@ -104,9 +86,9 @@ test('the chevron expands the panel in place and does not navigate', async ({ pa
     await page.getByTestId('record-chrome').getByTestId('panel-expand-toggle').click();
     await expect(panel, 'the chevron expanded the panel').toHaveAttribute('data-expanded', 'true');
 
-    /* It expanded IN PLACE — the wall scene is still mounted, no navigation. */
-    await expect(page.getByTestId('wall-scene')).toBeVisible();
-    await expect(page).toHaveURL(new RegExp(`/plane`));
+    /* It expanded IN PLACE — the wall is still mounted, no navigation. */
+    await expect(page.getByTestId('wall')).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`/\\?artistId=`));
 
     /* The detail link lives INSIDE the expanded panel (A33b). */
     const link = page.getByTestId('record-chrome').getByTestId('panel-detail-link');
@@ -122,7 +104,7 @@ test('a generated snippet and entered facts are separated by a boundary', async 
   try {
     await login(page);
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(`/plane?artistId=${ids.artistId}`);
+    await page.goto(`/?artistId=${ids.artistId}`);
     await pullTheRecord(page);
 
     await page.getByTestId('record-chrome').getByTestId('panel-expand-toggle').click();
@@ -154,7 +136,7 @@ test('an edited snippet is labelled as the user\'s, not generated', async ({ pag
   try {
     await login(page);
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(`/plane?artistId=${ids.artistId}`);
+    await page.goto(`/?artistId=${ids.artistId}`);
     await pullTheRecord(page);
 
     await page.getByTestId('record-chrome').getByTestId('panel-expand-toggle').click();
@@ -171,7 +153,7 @@ test('the desktop flanking panel shows the expanded content at rest', async ({ p
   try {
     await login(page);
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(`/plane?artistId=${ids.artistId}`);
+    await page.goto(`/?artistId=${ids.artistId}`);
     await pullTheRecord(page);
 
     /*

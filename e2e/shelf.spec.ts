@@ -171,53 +171,42 @@ test('the shelf is the default view, and a spine names its record', async ({ pag
   await page.goto('/');
 
   /*
-    The wall is a WebGL scene now, so its marker is `wall-scene` rather than
-    `shelf`. The property — the shelf is the default view of `/` — is unchanged.
+    The wall is the isometric composition now (8a §11), so its marker is
+    `wall`. The property — the shelf is the default view of `/` — is unchanged.
   */
-  await expect(page.getByTestId('wall-scene')).toBeAttached({ timeout: 30_000 });
+  await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
   await expect(
     page.getByRole('link', { name: new RegExp(title) }),
     'the spine is named by the record, whatever its spine text says',
   ).toBeVisible();
 });
 
-test('a spine is a link, so it survives without JavaScript', async ({ page }) => {
+test('a spine is a link, so it survives without JavaScript', async ({ browser, page }) => {
   /**
-   * §10b pulls the record into view rather than navigating, which reads as a
-   * button — and making it one broke eight specs across five files. The element
-   * is a LINK whose click is intercepted: `preventDefault` upgrades it, so the
-   * href still goes somewhere correct if the handler never runs.
+   * §11.8: the spine is an <a> inside the SVG whose click is intercepted into
+   * the pull, so the href goes somewhere correct if the handler never runs.
    *
-   * Asserted through the href rather than by disabling JavaScript, because the
-   * property is that the fallback EXISTS.
+   * **Asserted by navigating with JavaScript OFF, not by reading the href.** An
+   * href is necessary and not sufficient — an element can carry one and still
+   * not be navigable without its handler — and the earlier version of this
+   * test asserted the attribute, which is the proxy shape.
    */
   const title = `Linked ${suffix()}`;
   const { id } = await seedRecord(page, title);
 
-  await page.goto('/');
-
-  await expect(page.getByRole('link', { name: new RegExp(title) })).toHaveAttribute(
-    'href',
-    `/records/${id}`,
-  );
+  const storage = await page.context().storageState();
+  const noJs = await browser.newContext({ storageState: storage, javaScriptEnabled: false });
+  try {
+    const plain = await noJs.newPage();
+    await plain.goto('/');
+    const link = plain.getByRole('link', { name: new RegExp(title) });
+    await expect(link).toHaveAttribute('href', `/records/${id}`);
+    await link.click();
+    await expect(plain).toHaveURL(`/records/${id}`);
+  } finally {
+    await noJs.close();
+  }
 });
-
-/**
- * **These specs assert the CSS wall's DOM, which `/` no longer mounts.**
- *
- * The WebGL wall replaced it at `/`; `Shelf.tsx` and its supporting modules are
- * still in the tree, deliberately, so the swap is one revert. These tests go
- * with them when the CSS path is deleted — skipping rather than deleting keeps
- * the swap revertible in a single commit, which is the whole point of doing it
- * separately.
- *
- * What they covered is not lost. The properties that must survive the swap were
- * retargeted rather than skipped: the shelf is the default view, the table view
- * is still reachable, and the seam test pinning the wall's record count to the
- * heading. The rest — the rise, the return, the panels, the overlay, the tilt —
- * are the CSS implementation's own behaviour, and their WebGL equivalents live
- * in `wall-scene.spec.ts` or are queued as their own units.
- */
 
 test.skip('the shelf is a plane that ends where the wall ends, at any collection size', async ({ page }) => {
   /**
@@ -325,29 +314,17 @@ test('the wall shows the records the heading says it does', async ({ page }) => 
   await seedRecord(page, `Outside ${suffixed}`);
 
   await page.goto(`/?genreId=${genreId}`);
-  await expect(page.getByTestId('wall-records')).toBeAttached({ timeout: 30_000 });
-
-  /**
-   * The heading is the FILTERED count from `listRecords`; the list is what
-   * `shelfRecords` returned. Both describe the same request, so they must
-   * agree.
-   *
-   * **Counted from the accessible list rather than from spines**, because the
-   * wall is a canvas now and a canvas has no elements to count. The list is the
-   * wall's record channel — it is generated from the same `records` the scene
-   * builds its meshes from, so it answers the same question the spines did.
-   * The property is unchanged; only the instrument moved.
-   */
-  const heading = await page.locator('main header p').first().textContent();
-  const headingCount = Number(/^(\d+)/.exec(heading?.trim() ?? '')?.[1] ?? NaN);
-  expect(headingCount, `the heading did not state a count: "${heading}"`).not.toBeNaN();
-
-  const onWall = await page.getByTestId('wall-records').getByRole('link').count();
-
-  expect(
-    onWall,
-    `the wall shows ${onWall} records under a heading reading "${heading?.trim()}"`,
-  ).toBe(headingCount);
+  await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
+  /*
+    Two counts asserted against EACH OTHER: the composition's 72 (§11.7's
+    COLLECTION count, from the wall's own seats) and the number of spines
+    drawn as links. The heading's "N of M" line is the same number again when a
+    filter is on.
+  */
+  const shown = Number((await page.getByTestId('wall-count').textContent())?.trim());
+  expect(shown, 'the composition states a count').not.toBeNaN();
+  const onWall = await page.getByTestId('wall').locator('a[data-seat]').count();
+  expect(onWall, `the wall draws ${onWall} spines under a count of ${shown}`).toBe(shown);
 });
 
 test.skip('the shelf view puts its controls in an overlay, and says when a filter is on', async ({

@@ -1,4 +1,5 @@
 import 'server-only';
+import { sectionIndices } from '@/app/wall/section-index';
 import { sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
 import { buildWhere, type RecordFilters } from './records';
@@ -44,6 +45,12 @@ export type ShelfRecord = {
   catalogNumber: string | null;
   /** §10b's spine colour; `null` is an honest absence, rendered as a plain spine. */
   spineColour: string | null;
+  /**
+   * The dense rank of this record's section in wall order — a BOUNDARY marker
+   * for the runs, never a name: the screen must not render the headings §10b
+   * removed, and an ordinal cannot be rendered as one.
+   */
+  sectionIndex: number;
 
   /**
    * §10b's snippet, for the pulled record's panel. Null is ordinary.
@@ -255,8 +262,10 @@ export async function shelfRecords(filters: RecordFilters = {}): Promise<ShelfRe
    * dropped here — it is not shown, and returning it would invite a caller to
    * render the headings §10b removed.
    */
-  return result.rows.map((row) => ({
+  const indices = sectionIndices(result.rows.map((row) => row.sectionName));
+  return result.rows.map((row, index) => ({
     id: row.id,
+    sectionIndex: indices[index],
     title: row.title,
     artistName: row.artistName,
     releaseYear: row.releaseYear,

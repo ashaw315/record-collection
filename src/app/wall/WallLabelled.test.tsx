@@ -18,6 +18,9 @@ const seat = (id: string, coverUrl: string | null, spineColour: string | null = 
   artist: `Artist ${id}`,
   spineColour,
   coverUrl,
+  backUrl: null,
+  labelName: null,
+  catalogNumber: null,
 });
 
 const render = (

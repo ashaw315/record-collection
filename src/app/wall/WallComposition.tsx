@@ -1,5 +1,6 @@
 import { WallLive } from './WallLive';
 import type { WallSeat } from './shelf-runs';
+import type { RecordSummary } from './summary';
 import { LABEL } from '../records/[id]/grid-type';
 
 /**
@@ -24,22 +25,37 @@ import { LABEL } from '../records/[id]/grid-type';
  */
 export const DRAWN_PAPER = 'oklch(0.925 0.004 80)';
 
-export function WallComposition({ seats }: { seats: readonly WallSeat[] }) {
+export function WallComposition({
+  seats,
+  summaries = {},
+  countLine = null,
+}: {
+  seats: readonly WallSeat[];
+  summaries?: Record<string, RecordSummary>;
+  /** The filter-aware line under the count — "34 of 312 records" — when a filter is on. */
+  countLine?: string | null;
+}) {
   return (
     <section
       data-composition=""
+      data-testid="wall"
       className="grid min-h-[calc(100vh-var(--header-height,0px))] grid-cols-3 gap-0"
       style={{ background: DRAWN_PAPER }}
     >
       <div data-region="count" className="flex flex-col p-[34px]">
         <div className={LABEL}>COLLECTION</div>
-        <div className="text-display leading-[0.86] font-extrabold" style={{ marginTop: 6 }}>
+        <div data-testid="wall-count" className="text-display leading-[0.86] font-extrabold" style={{ marginTop: 6 }}>
           {seats.length}
         </div>
+        {countLine === null ? null : (
+          <p className="mt-[10px] text-meta" style={{ color: 'oklch(0.44 0.008 70)' }}>
+            {countLine}
+          </p>
+        )}
       </div>
       {/* D1: 1:1 and pans — the region scrolls the drawing rather than scaling it. */}
       <div data-region="wall" className="col-span-2 overflow-auto p-[34px] pl-0">
-        <WallLive seats={seats} />
+        <WallLive seats={seats} summaries={summaries} />
       </div>
     </section>
   );

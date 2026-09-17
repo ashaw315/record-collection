@@ -5,7 +5,8 @@ import { ShelfControls } from './ShelfControls';
 import { activeFilterCount } from './active-filters';
 import { collectionCountLabel } from './collection-count';
 import { CollectionList, type CollectionRow } from './CollectionList';
-import { WallScene } from './plane/WallScene';
+import { WallComposition } from './wall/WallComposition';
+import { wallSeats, wallSummaries } from './wall/producer';
 import { CollectionPagination } from './CollectionPagination';
 import { parseCollectionParams } from './collection-params';
 import { listRecords, recordFacets, countAllRecords } from '@/lib/db/queries/records';
@@ -206,8 +207,16 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
             Table and grid are untouched — this is the closet view, not a change
             to how the collection is read as a list.
           */
-          <div className="relative left-1/2 -ml-[50vw] w-screen px-4">
-            <WallScene records={shelf} />
+          <div className="relative left-1/2 -ml-[50vw] w-screen">
+            <WallComposition
+              seats={wallSeats(shelf)}
+              summaries={wallSummaries(shelf)}
+              countLine={
+                activeFilterCount(params) > 0
+                  ? collectionCountLabel({ matched: shelf.length, total: collectionTotal, filtered: true })
+                  : null
+              }
+            />
           </div>
         )}
       </main>

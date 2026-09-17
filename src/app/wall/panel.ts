@@ -1,4 +1,4 @@
-import { backFaceGroups, type BackFaceGroup, type BackFaceInput } from '../shelf/back-face';
+import { backFaceGroups, type BackFaceGroup, type BackFaceInput } from './back-face';
 
 /**
  * The facts that sit beside the record (§10b, A19e).
