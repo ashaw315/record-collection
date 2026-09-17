@@ -95,6 +95,15 @@ export type PlacedSeat = {
 };
 
 /**
+ * A record as a box: a seat with its own depth and height. Seated, every
+ * record is DEPTH × SPINE_HEIGHT and the faces below read those defaults;
+ * pulled, it grows (§11.10) and stays a box under the same projection — the
+ * faces are the same three coordinates seen once, whatever its size.
+ */
+export type RecordBox = PlacedSeat & { depth: number; height: number };
+type BoxLike = PlacedSeat & Partial<Pick<RecordBox, 'depth' | 'height'>>;
+
+/**
  * One row's seats, placed in their unit. Row 0 is the unit's top shelf;
  * seats advance at the fixed pitch, the record's hashed width inside each.
  * A pulled record keeps its seat empty: the pull moves it (§11.10).
@@ -111,13 +120,13 @@ export function layoutRow(seats: readonly ShelfSeat[], row: number, unit = 0): P
 }
 
 /** The spine: the record's near face, at y + DEPTH. */
-export function frontFace({ x, y, z, width }: PlacedSeat): readonly Point[] {
-  const near = y + DEPTH;
+export function frontFace({ x, y, z, width, depth = DEPTH, height = SPINE_HEIGHT }: BoxLike): readonly Point[] {
+  const near = y + depth;
   return [
     project(x, near, z),
     project(x + width, near, z),
-    project(x + width, near, z + SPINE_HEIGHT),
-    project(x, near, z + SPINE_HEIGHT),
+    project(x + width, near, z + height),
+    project(x, near, z + height),
   ];
 }
 
@@ -146,8 +155,8 @@ export function paintOrder<T extends { x: number; y: number; z: number }>(items:
  * `matrix(0, −1, cos30, sin30, P)` — determinant +cos30, so the text is not
  * mirrored (the cover's plane is, which is why it carries no caption).
  */
-export function labelTransform(seat: PlacedSeat): string {
-  const [px, py] = project(seat.x, seat.y + DEPTH, seat.z);
+export function labelTransform(seat: BoxLike): string {
+  const [px, py] = project(seat.x, seat.y + (seat.depth ?? DEPTH), seat.z);
   return `matrix(0 -1 ${COS30} ${SIN30} ${px} ${py})`;
 }
 
@@ -181,37 +190,41 @@ export function rowBreaks(
  * the pulled record's cover shows (D2, §11.3). Both are the same three
  * coordinates the front face is, seen once.
  */
-export function topFace({ x, y, z, width }: PlacedSeat): readonly Point[] {
-  const top = z + SPINE_HEIGHT;
+export function topFace({ x, y, z, width, depth = DEPTH, height = SPINE_HEIGHT }: BoxLike): readonly Point[] {
+  const top = z + height;
   return [
     project(x, y, top),
     project(x + width, y, top),
-    project(x + width, y + DEPTH, top),
-    project(x, y + DEPTH, top),
+    project(x + width, y + depth, top),
+    project(x, y + depth, top),
   ];
 }
 
-export function rightFace({ x, y, z, width }: PlacedSeat): readonly Point[] {
+export function rightFace({ x, y, z, width, depth = DEPTH, height = SPINE_HEIGHT }: BoxLike): readonly Point[] {
   const right = x + width;
   return [
     project(right, y, z),
-    project(right, y + DEPTH, z),
-    project(right, y + DEPTH, z + SPINE_HEIGHT),
-    project(right, y, z + SPINE_HEIGHT),
+    project(right, y + depth, z),
+    project(right, y + depth, z + height),
+    project(right, y, z + height),
   ];
 }
 
 /**
- * The cover's plane: a DEPTH × SPINE_HEIGHT rect mapped onto the right face,
+ * The cover's plane: a depth × height rect mapped onto the right face,
  * **entered from its near-top corner so the plane is not mirrored.** D2's
  * `matrix(−cos30, sin30, 0, 1, far-top)` has determinant −cos30, which is why
  * D2 removed its caption rather than un-mirroring it. §11.7 puts type on
  * this face for the record with no cover, and a sleeve's own lettering reads
  * backwards on a mirrored plane — so local x runs from the near edge toward
  * the far edge: `matrix(cos30, −sin30, 0, 1, near-top)`, determinant +cos30.
+ *
+ * The plane's units are the wall's, at any size: a pulled record's cover
+ * grows because its box does (§11.10), not because the plane is scaled — so
+ * the shear stays the wall's angle by construction rather than by assertion.
  */
-export function coverTransform({ x, y, z, width }: PlacedSeat): string {
-  const [px, py] = project(x + width, y + DEPTH, z + SPINE_HEIGHT);
+export function coverTransform({ x, y, z, width, depth = DEPTH, height = SPINE_HEIGHT }: BoxLike): string {
+  const [px, py] = project(x + width, y + depth, z + height);
   return `matrix(${COS30} ${-SIN30} 0 1 ${px} ${py})`;
 }
 

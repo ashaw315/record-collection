@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
-import { LANDING_PAD, ARROW_LANE, parseMatrix } from '../src/app/wall/landing';
-import { DEPTH, SPINE_HEIGHT } from '../src/app/wall/geometry';
+import { LANDING_PAD, landingSize, parseMatrix } from '../src/app/wall/landing';
+import { COS30, SIN30, SPINE_HEIGHT, spineWidth } from '../src/app/wall/geometry';
 import { PULL_DURATION_MS } from '../src/app/wall/pull-curve';
 import { RETURN_FADE_END, WALL_PAPER_HEX, pullFill } from '../src/app/wall/pull-colour';
 import { recordLadder } from '../src/lib/colour/record-ladder';
@@ -68,7 +68,7 @@ test.beforeEach(async ({ page }) => {
   await page.clock.pauseAt(Date.now() + 1000);
 });
 
-test('clicking a spine lifts its cover face into the region’s largest square — exactly flat — the seat emptied, the plane whole', async ({
+test('clicking a spine slides the record forward and grows it — a box at the wall’s own angle, exactly — the seat emptied, the furniture whole', async ({
   page,
 }) => {
   expect(wired).not.toBeNull();
@@ -79,22 +79,27 @@ test('clicking a spine lifts its cover face into the region’s largest square �
   /* The region as the code froze it at the click — a scrollbar can change clientHeight between reads. */
   const region = await page.locator('[data-region="wall"]').evaluate((el) => ({ w: el.clientWidth, h: el.clientHeight }));
 
-  /* Frame 0: the cover group is the face itself, and the seat's anchor is gone. */
-  const start = await page.locator('[data-pulled] [data-landing]').getAttribute('transform');
-  expect(parseMatrix(start ?? '')[1], 'sheared at the start — the face as drawn').toBeLessThan(0);
+  /* Frame 0: the cover plane is the seated face's own, and the seat's anchor is gone. */
+  const start = parseMatrix((await page.locator('[data-pulled] [data-landing]').getAttribute('transform')) ?? '');
+  expect(start[0]).toBe(COS30);
+  expect(start[1]).toBe(-SIN30);
   await expect(page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`)).toHaveCount(0);
 
   await page.clock.runFor(SETTLED_MS);
   const [a, b, c, d] = parseMatrix((await page.locator('[data-pulled] [data-landing]').getAttribute('transform')) ?? '');
-  /* §11.9: exactly zero shear at rest, not near-zero. */
-  expect(b).toBe(0);
+  /* §11.10: it does not straighten. The shear at rest IS the wall's angle — a landing that drifts toward flat fails here. */
+  expect(a).toBe(COS30);
+  expect(b).toBe(-SIN30);
   expect(c).toBe(0);
-  /* The largest square the region holds. */
-  const size = Math.min(region.w - 2 * (LANDING_PAD + ARROW_LANE), region.h - LANDING_PAD - 2 * LANDING_PAD);
-  expect(a * DEPTH).toBeCloseTo(size, 6);
-  expect(d * SPINE_HEIGHT).toBeCloseTo(size, 6);
-  /* The seat's spine has faded away; the unit's furniture is unchanged by the pull. */
-  await expect(page.locator('[data-pulled] [data-face="front"]')).toHaveAttribute('opacity', '0');
+  expect(d).toBe(1);
+  /* The largest square face the region holds, in projection. */
+  const size = landingSize({ x: 0, y: 0, width: region.w, height: region.h - LANDING_PAD }, spineWidth(WIRED_ID));
+  const field = page.locator('[data-pulled] [data-field]');
+  expect(Number(await field.getAttribute('width'))).toBeCloseTo(size, 6);
+  expect(Number(await field.getAttribute('height'))).toBeCloseTo(size, 6);
+  expect(size).toBeGreaterThan(2 * SPINE_HEIGHT);
+  /* The seated faces MOVED rather than faded: the spine is drawn, in front, at full strength; the furniture is unchanged. */
+  await expect(page.locator('[data-pulled] [data-face="front"]')).not.toHaveAttribute('opacity', /.*/);
   await expect(page.locator('[data-wall="labelled"] [data-furniture]')).toHaveCount(furnitureBefore);
 });
 

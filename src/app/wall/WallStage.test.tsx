@@ -5,7 +5,8 @@ import { WallStage } from './WallStage';
 import type { WallSeat } from './shelf-runs';
 import type { RecordSummary } from './summary';
 import { PERCEIVED_END } from './pull-colour';
-import { DEPTH, SPINE_HEIGHT } from './geometry';
+import { COS30, SIN30, spineWidth } from './geometry';
+import { ARROW_LANE, landedBox, landingSize, projectedBox } from './landing';
 
 /**
  * The stage: the drawing plus what the gesture arrives at. §11.7's panel
@@ -85,17 +86,24 @@ describe('two columns: facts left, drawing right (§11.9)', () => {
   });
 });
 
-describe('the record lands in the drawing’s region (§11.9)', () => {
-  it('is the largest square the region holds, unsheared — exactly — with the wall unchanged behind it', () => {
+describe('the record lands in the drawing’s region, in the projection (§11.10)', () => {
+  const view = { x: 0, y: 0, width: 960, height: 760 };
+
+  it('is the largest square face the region holds, at the wall’s own angle — exactly — with the wall unchanged behind it', () => {
     const rest = render();
-    const html = render({ pull: { id: 'b', direction: 'out', progress: 1 }, view: { x: 0, y: 0, width: 960, height: 760 } });
-    const group = /<g transform="matrix\(([^)]+)\)"[^>]*data-landing/.exec(html) ?? /data-pulled="b"[\s\S]*?<g transform="matrix\(([^)]+)\)"/.exec(html);
+    const html = render({ pull: { id: 'b', direction: 'out', progress: 1 }, view });
+    const group = /<g transform="matrix\(([^)]+)\)"[^>]*data-landing/.exec(html);
     expect(group, 'the cover group carries the landing matrix').not.toBeNull();
     const [a, b, c, d] = (group?.[1] ?? '').split(' ').map(Number);
-    expect(b).toBe(0);
+    /* §11.10: the shear IS the wall's angle. A landing that drifts toward flat fails here. */
+    expect(a).toBe(COS30);
+    expect(b).toBe(-SIN30);
     expect(c).toBe(0);
-    expect(a * DEPTH, 'the square’s size').toBeCloseTo(760 - 2 * 34, 9);
-    expect(d * SPINE_HEIGHT).toBeCloseTo(760 - 2 * 34, 9);
+    expect(d).toBe(1);
+    const field = /<rect[^>]*data-field=""[^>]*>/.exec(html)?.[0] ?? '';
+    const size = landingSize(view, spineWidth('b'));
+    expect(Number(/width="([^"]+)"/.exec(field)?.[1]), 'the face’s size').toBe(size);
+    expect(Number(/height="([^"]+)"/.exec(field)?.[1]), 'square').toBe(size);
     /* No lightness step: every plane and face fill is what it was at rest. */
     const fills = (h: string) => [...h.matchAll(/<polygon[^>]*fill="([^"]+)"/g)].map((m) => m[1]).filter((f) => f.startsWith('oklch'));
     expect(new Set(fills(html))).toEqual(new Set(fills(rest)));
@@ -110,6 +118,11 @@ describe('the record lands in the drawing’s region (§11.9)', () => {
     expect(wall).toContain('data-testid="nav-previous"');
     expect(wall).toContain('data-testid="nav-next"');
     expect(facts).not.toContain('data-testid="nav-next"');
+    /* Beside the landed box's projected extent, in the region's px: the arrows go with the record. */
+    const bounds = projectedBox(landedBox('b', view));
+    const left = (id: string) => Number(/left:([\d.]+)px/.exec(/data-testid="nav-(?:previous|next)"[^>]*>/.exec(mid.slice(mid.indexOf(`data-testid="${id}"`)))?.[0] ?? '')?.[1]);
+    expect(left('nav-previous')).toBeCloseTo(bounds.minX - ARROW_LANE, 6);
+    expect(left('nav-next')).toBeCloseTo(bounds.maxX + ARROW_LANE - 44, 6);
     const first = render({ seats: three, summaries: sums, pull: { id: 'a', direction: 'out', progress: 1 } });
     expect(first).not.toContain('data-testid="nav-previous"');
     const last = render({ seats: three, summaries: sums, pull: { id: 'c', direction: 'out', progress: 1 } });

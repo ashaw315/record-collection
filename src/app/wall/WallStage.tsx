@@ -4,7 +4,7 @@ import type { RecordSummary } from './summary';
 import type { WallSeat } from './shelf-runs';
 import { PERCEIVED_END } from './pull-colour';
 import { hasAdjacentSeat, type Direction } from './adjacent-seat';
-import { ARROW_LANE, LANDING_PAD, landingSquare, type View } from './landing';
+import { ARROW_LANE, LANDING_PAD, landedBox, projectedBox, type View } from './landing';
 import { LABEL, LABEL_INK } from '../records/[id]/grid-type';
 import { DRAWN_PAPER } from './WallComposition';
 
@@ -86,14 +86,14 @@ export function WallStage({
     ) : null;
 
   /*
-    The arrows go with the record (§11.9): beside the landed square, in the
+    The arrows go with the record (§11.9): beside the landed box, in the
     drawing's region, present only where there is somewhere to go.
   */
   let arrows = null;
   if (arrived && arriving !== undefined) {
     const region: View = view ?? { x: 0, y: 0, width, height: width };
-    const square = landingSquare(region);
-    const top = square.y + square.size / 2 - 22 + LANDING_PAD;
+    const bounds = projectedBox(landedBox(arriving.id, region));
+    const top = (bounds.minY + bounds.maxY) / 2 - 22 + LANDING_PAD;
     const arrow = (direction: Direction, left: number) =>
       hasAdjacentSeat(order, arriving.id, direction) ? (
         <button
@@ -109,8 +109,8 @@ export function WallStage({
       ) : null;
     arrows = (
       <>
-        {arrow('previous', square.x - ARROW_LANE)}
-        {arrow('next', square.x + square.size + ARROW_LANE - 44)}
+        {arrow('previous', bounds.minX - ARROW_LANE)}
+        {arrow('next', bounds.maxX + ARROW_LANE - 44)}
       </>
     );
   }

@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { WallLabelled, type PullState } from './WallLabelled';
 import { WALL_PAPER_HEX } from './pull-colour';
-import { FACE_FILL, PLANE_FILL, TOP_FILL } from './WallOverview';
+import { FACE_FILL, PLANE_FILL, TOP_FILL, points } from './WallOverview';
 import type { WallSeat } from './shelf-runs';
+import { COS30, SIN30, SPINE_HEIGHT, frontFace, layoutRow, spineWidth } from './geometry';
+import { landingBoxAt, landingSize } from './landing';
+import { wallLayout } from './wall-layout';
 
 /**
  * The 1:1 component at the structure layer. The cover on the pulled record is
@@ -330,14 +333,46 @@ describe('two records can be moving at once — the arrows’ slide (§11.8)', (
   });
 });
 
-describe('the pulled record leaves its seat for the landing (§11.9)', () => {
-  it('fades its spine and top as the cover face grows — at 1 they are gone and the cover group is exactly axis-aligned', () => {
-    const out = render([seat('a', null)], [{ id: 'a', direction: 'out', progress: 1 }]);
-    const pulled = out.slice(out.indexOf('data-pulled="a"'));
-    const front = /<polygon[^>]*data-face="front"[^>]*>/.exec(pulled)?.[0] ?? '';
-    expect(front).toContain('opacity="0"');
-    const matrix = /<g transform="matrix\(([^)]+)\)"/.exec(pulled)?.[1]?.split(' ').map(Number) ?? [];
-    expect(matrix[1]).toBe(0);
+describe('the pulled record stays in the projection (§11.10)', () => {
+  const view = { x: 0, y: 0, width: 960, height: 760 };
+  const out = renderToStaticMarkup(
+    <WallLabelled seats={[seat('a', null), seat('b', null)]} pulls={[{ id: 'a', direction: 'out', progress: 1 }]} view={view} />,
+  );
+  const pulled = out.slice(out.indexOf('data-pulled="a"'));
+
+  it('lands as a box under the one projection: its cover plane sheared at the wall’s angle, exactly, its field square', () => {
+    const matrix = /<g transform="matrix\(([^)]+)\)"[^>]*data-landing/.exec(pulled)?.[1]?.split(' ').map(Number) ?? [];
+    expect(matrix[0]).toBe(COS30);
+    expect(matrix[1]).toBe(-SIN30);
     expect(matrix[2]).toBe(0);
+    expect(matrix[3]).toBe(1);
+    const field = /<rect[^>]*data-field=""[^>]*>/.exec(pulled)?.[0] ?? '';
+    const w = Number(/width="([^"]+)"/.exec(field)?.[1]);
+    const h = Number(/height="([^"]+)"/.exec(field)?.[1]);
+    expect(w).toBe(landingSize(view, spineWidth('a')));
+    expect(h).toBe(w);
+    expect(w).toBeGreaterThan(2 * SPINE_HEIGHT);
+  });
+
+  it('keeps its spine and top drawn — the seated faces MOVE; nothing fades — and its seat is empty', () => {
+    const front = /<polygon[^>]*data-face="front"[^>]*>/.exec(pulled)?.[0] ?? '';
+    expect(front).not.toContain('opacity');
+    expect(/<polygon[^>]*data-face="top"[^>]*>/.exec(pulled)?.[0] ?? '').not.toContain('opacity');
+    /* The view is given relative to the svg's top-left; the landing is computed in the frame's coordinates. */
+    const placed = layoutRow([{ id: 'a', section: 'S' }], 0)[0];
+    const [fx, fy] = wallLayout([{ id: 'a', section: 'S' }, { id: 'b', section: 'S' }], [], 0, 0).frame.viewBox.split(' ').map(Number);
+    expect(front).toContain(`points="${points(frontFace(landingBoxAt(placed, { ...view, x: view.x + fx, y: view.y + fy }, 1)))}"`);
+    expect(out).not.toContain('data-seat="a"');
+    expect(out).toContain('data-seat="b"');
+  });
+
+  it('is the seated faces at 0 — the same object, before it moves', () => {
+    const atRest = renderToStaticMarkup(<WallLabelled seats={[seat('a', null)]} view={view} />);
+    const seated = /<polygon[^>]*data-spine=""[^>]*points="([^"]+)"/.exec(atRest)?.[1];
+    const starting = renderToStaticMarkup(
+      <WallLabelled seats={[seat('a', null)]} pulls={[{ id: 'a', direction: 'out', progress: 0 }]} view={view} />,
+    );
+    const moving = /data-pulled="a"[\s\S]*?<polygon[^>]*data-face="front"[^>]*points="([^"]+)"/.exec(starting)?.[1];
+    expect(moving).toBe(seated);
   });
 });

@@ -1,7 +1,6 @@
 import {
   COS30,
-  DEPTH,
-  SPINE_HEIGHT,
+  coverTransform,
   frontFace,
   labelTransform,
   paintOrder,
@@ -14,7 +13,7 @@ import type { WallSeat } from './shelf-runs';
 import { pullPose, returnPose } from './pull-curve';
 import { WALL_PAPER_HEX, pullFill, returnFill } from './pull-colour';
 import { wallLayout } from './wall-layout';
-import { landingMatrixAt, landingSquare, type View } from './landing';
+import { landedBox, landingBoxAt, type View } from './landing';
 import { recordLadder } from '@/lib/colour/record-ladder';
 import { MICRO_PX } from '../type-scale';
 import { LABEL } from '../records/[id]/grid-type';
@@ -35,8 +34,9 @@ import { SLEEVE_LEADING, sleeveTitle } from './sleeve-type';
  * budget. The size is derived from the scale's `micro` by name (§11).
  *
  * **At rest the wall is line, ink and paper (§11): no derived colour anywhere
- * in the drawing.** Pulled, a record slides forward along the depth axis (D2)
- * and its colour arrives across the slide (§11.2).
+ * in the drawing.** Pulled, a record slides forward along the depth axis and
+ * grows, still in the projection (§11.10), and its colour arrives across the
+ * slide (§11.2).
  */
 
 /** The one ink, for outline and label alike. */
@@ -58,7 +58,7 @@ const BASELINE_INSET = 8;
  * inset, the baseline sits across the thickness at its centre plus half a
  * cap height.
  */
-function label(seat: PlacedSeat, text: string) {
+function label(seat: Parameters<typeof labelTransform>[0], text: string) {
   return (
     <text
       data-label=""
@@ -120,10 +120,10 @@ export function WallLabelled({
 
   const byId = new Map(seats.map((seat) => [seat.id, seat]));
   const { placed, furniture, breaks, frame } = wallLayout(seats, moving.map((m) => ({ id: m.id, pose: poseOf(m) })), minWidth, minHeight);
-  /* The landing square, in svg coordinates: the view is given relative to the svg's top-left. */
+  /* The landing's region, in the svg's own coordinates: the view is given relative to the svg's top-left. */
   const [frameX, frameY] = frame.viewBox.split(' ').map(Number);
-  const region: View = view ?? { x: 0, y: 0, width: frame.width, height: frame.height };
-  const square = landingSquare({ ...region, x: frameX + region.x, y: frameY + region.y });
+  const given: View = view ?? { x: 0, y: 0, width: frame.width, height: frame.height };
+  const region: View = { ...given, x: frameX + given.x, y: frameY + given.y };
 
   /*
     **Drawn after every seat, so nothing paints over it.** A record coming out
@@ -131,150 +131,144 @@ export function WallLabelled({
     was under every later face, invisible at rest and unclickable on return.
   */
   const renderMoving = (seat: PlacedSeat, record: WallSeat, state: PullState) => {
-    const face = frontFace(seat);
-          const pose = poseOf(state);
-          const pull = state;
-          /*
-            **The same object, moved** (D2): the pulled record is the seated
-            one at a different y. Its right face is the field — the one place
-            colour arrives, on the ONE eased value the slide reads (§11.2) —
-            and the cover sits on it at its own aspect (§11.3). The cover's
-            plane is mirrored by D2's matrix, so it carries no caption.
-          */
-          const ladder = recordLadder(record.spineColour);
-          const fill =
-            pull.direction === 'out'
-              ? pullFill(pull.progress, ladder)
-              : returnFill(pull.progress, ladder);
-          const inset = Math.round(DEPTH * 0.11);
-          /*
-            §11.9: the right face IS the cover, so the face already toward the
-            reader straightens and grows into the region's largest square on
-            §11.2's one curve; the spine and top faces go edge-on and fade.
-            The end state is constructed, not approached: exactly zero shear.
-          */
-          const eased = pose.eased;
-          const fading = { opacity: Math.max(0, 1 - eased) };
-          return (
-            <g
-              key={seat.id}
-              data-pulled={seat.id}
-              style={{ cursor: onPulledClick === undefined ? undefined : 'pointer' }}
-              onClick={onPulledClick}
-            >
-              <polygon data-face="top" points={points(topFace(seat))} fill={TOP_FILL} stroke={INK} strokeWidth="1" pointerEvents="all" opacity={fading.opacity} />
-              <g transform={landingMatrixAt(seat, square, eased)} data-landing="">
-                <rect data-field="" width={DEPTH} height={SPINE_HEIGHT} fill={fill} stroke={INK} strokeWidth="1" pointerEvents="all" />
-                {side === 'back' ? (
-                  /*
-                    §11.7: Turn over is about the record rather than which face
-                    is toward the reader — the back on the same face. The
-                    photograph when there is one; otherwise §10b's plain back,
-                    in the record's field, carrying label and catalogue number
-                    and no body text.
-                  */
-                  record.backUrl !== null ? (
-                    <image
-                      data-back={seat.id}
-                      href={record.backUrl}
-                      x={inset}
-                      y={inset}
-                      width={DEPTH - inset * 2}
-                      height={SPINE_HEIGHT - inset * 2}
-                      preserveAspectRatio="xMidYMid meet"
-                      pointerEvents="none"
-                    />
-                  ) : (
-                    <foreignObject data-back-plain="" x={inset} y={inset} width={DEPTH - inset * 2} height={SPINE_HEIGHT - inset * 2} pointerEvents="none">
-                      <div className={`flex h-full flex-col justify-end p-[16px] ${LABEL}`} style={{ color: WALL_PAPER_HEX }}>
-                        <div>{record.labelName ?? ''}</div>
-                        <div>{record.catalogNumber ?? ''}</div>
-                      </div>
-                    </foreignObject>
-                  )
-                ) : record.coverUrl !== null ? (
-                  <image
-                    data-cover={seat.id}
-                    href={record.coverUrl}
-                    x={inset}
-                    y={inset}
-                    width={DEPTH - inset * 2}
-                    height={SPINE_HEIGHT - inset * 2}
-                    preserveAspectRatio="xMidYMid meet"
-                    opacity={pose?.eased ?? 1}
-                    pointerEvents="none"
-                  />
-                ) : (
-                  /*
-                    §11.3, §11.7: **the record with no cover arrives at type,
-                    not at a swatch.** Its material is its text — title and
-                    artist set large on a paper sleeve area where the cover
-                    would be, over the same field every pull arrives at — and
-                    §6's diagonal crosses the area so the state says "no
-                    cover" rather than leaving a grey square to be inferred.
-                    The one place text enters the projection, because it
-                    stands in for artwork rather than being read as fact.
-                  */
-                  <g data-no-cover="" opacity={pose?.eased ?? 1} pointerEvents="none">
-                    <rect
-                      x={inset}
-                      y={inset}
-                      width={DEPTH - inset * 2}
-                      height={SPINE_HEIGHT - inset * 2}
-                      fill={PAPER}
-                      stroke={INK}
-                      strokeWidth="1"
-                    />
-                    <foreignObject x={inset} y={inset} width={DEPTH - inset * 2} height={SPINE_HEIGHT - inset * 2}>
-                      {(() => {
-                        /*
-                          **Laid out in LANDED pixels, divided by the group's scale.** The
-                          sleeve is read where it lands, and the group scales by `k` on
-                          arrival — so the padding, the artist's LABEL size and the fitted
-                          title are all set at their landed size over k. That is also the
-                          read-versus-drawn rule holding on landing: the artist is READ and
-                          lands at LABEL's 11px, not 11·k; the title stands in for artwork
-                          and is fitted to the landed sleeve (sleeve-type.ts). Anchored at
-                          the top: a long title clips at its tail, never its head.
-                        */
-                        const k = square.size / DEPTH;
-                        const fit = sleeveTitle(record.title, (DEPTH - inset * 2) * k - 32);
-                        return (
-                          <div
-                            className="flex h-full flex-col justify-start overflow-hidden font-sans tracking-[-0.02em]"
-                            style={{ color: 'oklch(0.18 0.005 60)', padding: `${16 / k}px` }}
-                          >
-                            <div className={LABEL} style={{ fontSize: `${11 / k}px` }}>
-                              {record.artist}
-                            </div>
-                            <div
-                              data-sleeve-title=""
-                              className="font-extrabold tracking-[-0.02em]"
-                              style={{ fontSize: `${fit.size / k}px`, lineHeight: SLEEVE_LEADING, marginTop: `${6 / k}px` }}
-                            >
-                              {fit.text}
-                            </div>
+    const pose = poseOf(state);
+    /*
+      **The same object, moved — and grown — under the one projection**
+      (§11.10). The pulled record is a box on §11.2's one curve: it slides
+      forward along the depth axis, its cover face grows to the region's
+      largest square, and it does not straighten. Its faces are drawn by the
+      functions that draw every seated face, so the cover arrives as a
+      parallelogram at the wall's own angle by construction. The seat is
+      empty behind it: the seated anchor is not rendered while it moves.
+      Its right face is the field — the one place colour arrives, on the ONE
+      eased value the slide reads (§11.2) — and the cover sits on it at its
+      own aspect (§11.3).
+    */
+    const box = landingBoxAt(seat, region, pose.eased);
+    const landed = landedBox(seat.id, region);
+    const ladder = recordLadder(record.spineColour);
+    const fill =
+      state.direction === 'out'
+        ? pullFill(state.progress, ladder)
+        : returnFill(state.progress, ladder);
+    /* The field's inset, in the wall's units: proportional to the face, so the landed cover keeps the seated proportion. */
+    const inset = Math.round(box.depth * 0.11);
+    /*
+      **Type is laid out once, at the landed size, and scaled uniformly on
+      the way there.** The face grows faster in depth than in height (a
+      100 × 150 seat becomes a square), and type scaled with it would
+      stretch; so the sleeve is set at its landed px — where it is read, on
+      a wall at 1:1 — and travels inside the field at the smaller of the two
+      ratios, exactly 1 on arrival. The artist lands at LABEL's 11px, not
+      11·k: read type is read at the scale's size wherever it lands.
+    */
+    const landedInset = Math.round(landed.depth * 0.11);
+    const inner = landed.depth - 2 * landedInset;
+    const sleeveScale = Math.min((box.depth - 2 * inset) / inner, (box.height - 2 * inset) / inner);
+    const sleeve = (children: React.ReactNode) => (
+      <g transform={`translate(${inset} ${inset}) scale(${sleeveScale})`}>{children}</g>
+    );
+    return (
+      <g
+        key={seat.id}
+        data-pulled={seat.id}
+        style={{ cursor: onPulledClick === undefined ? undefined : 'pointer' }}
+        onClick={onPulledClick}
+      >
+        <polygon data-face="top" points={points(topFace(box))} fill={TOP_FILL} stroke={INK} strokeWidth="1" pointerEvents="all" />
+        <g transform={coverTransform(box)} data-landing="">
+          <rect data-field="" width={box.depth} height={box.height} fill={fill} stroke={INK} strokeWidth="1" pointerEvents="all" />
+          {side === 'back' ? (
+            /*
+              §11.7: Turn over is about the record rather than which face
+              is toward the reader — the back on the same face. The
+              photograph when there is one; otherwise §10b's plain back,
+              in the record's field, carrying label and catalogue number
+              and no body text.
+            */
+            record.backUrl !== null ? (
+              <image
+                data-back={seat.id}
+                href={record.backUrl}
+                x={inset}
+                y={inset}
+                width={box.depth - inset * 2}
+                height={box.height - inset * 2}
+                preserveAspectRatio="xMidYMid meet"
+                pointerEvents="none"
+              />
+            ) : (
+              sleeve(
+                <foreignObject data-back-plain="" width={inner} height={inner} pointerEvents="none">
+                  <div className={`flex h-full flex-col justify-end p-[16px] ${LABEL}`} style={{ color: WALL_PAPER_HEX }}>
+                    <div>{record.labelName ?? ''}</div>
+                    <div>{record.catalogNumber ?? ''}</div>
+                  </div>
+                </foreignObject>,
+              )
+            )
+          ) : record.coverUrl !== null ? (
+            <image
+              data-cover={seat.id}
+              href={record.coverUrl}
+              x={inset}
+              y={inset}
+              width={box.depth - inset * 2}
+              height={box.height - inset * 2}
+              preserveAspectRatio="xMidYMid meet"
+              opacity={pose.eased}
+              pointerEvents="none"
+            />
+          ) : (
+            /*
+              §11.3, §11.7: **the record with no cover arrives at type,
+              not at a swatch.** Its material is its text — title and
+              artist set large on a paper sleeve area where the cover
+              would be, over the same field every pull arrives at — and
+              §6's diagonal crosses the area so the state says "no
+              cover" rather than leaving a grey square to be inferred.
+              The one place text enters the projection, because it
+              stands in for artwork rather than being read as fact.
+              Anchored at the top: a long title clips at its tail, never
+              its head (sleeve-type.ts fits it to the landed sleeve).
+            */
+            <g data-no-cover="" opacity={pose.eased} pointerEvents="none">
+              {sleeve(
+                <>
+                  <rect width={inner} height={inner} fill={PAPER} stroke={INK} strokeWidth="1" />
+                  <foreignObject width={inner} height={inner}>
+                    {(() => {
+                      const fit = sleeveTitle(record.title, inner - 32);
+                      return (
+                        <div
+                          className="flex h-full flex-col justify-start overflow-hidden p-[16px] font-sans tracking-[-0.02em]"
+                          style={{ color: 'oklch(0.18 0.005 60)' }}
+                        >
+                          <div className={LABEL} style={{ fontSize: '11px' }}>
+                            {record.artist}
                           </div>
-                        );
-                      })()}
-                    </foreignObject>
-                    <line
-                      data-diagonal=""
-                      x1={inset}
-                      y1={inset}
-                      x2={DEPTH - inset}
-                      y2={SPINE_HEIGHT - inset}
-                      stroke={INK}
-                      strokeWidth="1"
-                    />
-                  </g>
-                )}
-              </g>
-              <polygon data-face="front" points={points(face)} fill={FACE_FILL} stroke={INK} strokeWidth="1" pointerEvents="all" opacity={fading.opacity} />
-              {/* The same object: its spine still says what it is, until the cover has taken over. */}
-              {labels ? <g opacity={fading.opacity}>{label(seat, record.label)}</g> : null}
+                          <div
+                            data-sleeve-title=""
+                            className="mt-[6px] font-extrabold tracking-[-0.02em]"
+                            style={{ fontSize: `${fit.size}px`, lineHeight: SLEEVE_LEADING }}
+                          >
+                            {fit.text}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </foreignObject>
+                  <line data-diagonal="" x1={0} y1={0} x2={inner} y2={inner} stroke={INK} strokeWidth="1" />
+                </>,
+              )}
             </g>
-          );
+          )}
+        </g>
+        <polygon data-face="front" points={points(frontFace(box))} fill={FACE_FILL} stroke={INK} strokeWidth="1" pointerEvents="all" />
+        {/* The same object: its spine still says what it is. */}
+        {labels ? label(box, record.label) : null}
+      </g>
+    );
   };
 
   return (

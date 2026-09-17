@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { COS30 } from '../src/app/wall/geometry';
 import { registerCleanup, trackArtist } from './cleanup';
 import { seedRecords } from './seed';
 import { contrastRatio } from '../src/lib/colour/record-colour';
@@ -58,9 +59,10 @@ test('the panel arrives with the record — at the gesture’s perceived end, no
   await expect(chrome.getByTestId('panel-detail-link')).toHaveAttribute('href', /\/records\//);
 
   /*
-    §11.9: the panel's region is fixed in the facts column, left of the
-    drawing; the record lands in the drawing's region as its largest square,
-    flat; the arrows go with the record. Nothing in the panel is sheared.
+    §11.9, §11.10: the panel's region is fixed in the facts column, left of
+    the drawing; the record lands in the drawing's region as its largest
+    square face, still in the projection; the arrows go with the record.
+    Nothing in the panel is sheared.
   */
   const geometry = await page.evaluate(() => {
     const box = (el: Element | null) => {
@@ -81,7 +83,8 @@ test('the panel arrives with the record — at the gesture’s perceived end, no
   expect(geometry.panel.r, 'the panel is in the facts column').toBeLessThanOrEqual(geometry.facts.r + 1);
   expect(geometry.panel.l).toBeLessThan(geometry.wall.l);
   expect(geometry.panel.t, 'below the count').toBeGreaterThan(geometry.count.b);
-  expect(Math.abs(geometry.field.w - geometry.field.h), 'the record is a square').toBeLessThan(1.5);
+  /* A square face at 30°: its box is cos30 wide and 1.5 tall per unit — the parallelogram, not a square. */
+  expect(geometry.field.h / geometry.field.w, 'the record is a square face at the wall’s angle').toBeCloseTo(1.5 / COS30, 2);
   expect(geometry.field.l, 'in the drawing’s region').toBeGreaterThanOrEqual(geometry.wall.l);
   expect(geometry.next.l, 'the arrow goes with the record, beside it').toBeGreaterThan(geometry.field.r);
   expect(geometry.next.l).toBeGreaterThanOrEqual(geometry.wall.l);

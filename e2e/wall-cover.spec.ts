@@ -30,7 +30,7 @@ test('the pulled record shows its cover, fitted inside its face, at the end and 
   page,
 }) => {
   await login(page);
-  /* The landing is ruled for the two-column composition; narrow viewports are deferred (§11.9). */
+  /* The landing is ruled for the two-column composition (§11.9, §11.10); narrow viewports are deferred. */
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.clock.install();
   await page.goto(`/wall/probe/labelled?cover=${encodeURIComponent(WIDE_COVER)}`);

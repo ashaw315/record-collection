@@ -1,3 +1,4 @@
+import { COS30, SPINE_WIDTH_MAX, SPINE_WIDTH_MIN } from '../src/app/wall/geometry';
 import { expect, test, type Page } from '@playwright/test';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
@@ -179,7 +180,19 @@ test('navigation moves along the collection — both records moving, the neighbo
     const order = await wallOrder(page);
     await page.locator('[data-seat] [data-spine]').first().click();
     await page.clock.runFor(1040);
-    const landed = await page.locator('[data-pulled] [data-landing]').getAttribute('transform');
+    /* The pulled BOX's extent — the union of its three faces — which is what the landing centres in the region. */
+    const place = () =>
+      page.locator('[data-pulled]').evaluate((el) => {
+        const rects = ['[data-face="top"]', '[data-face="front"]', '[data-field]'].map((q) =>
+          (el.querySelector(q) as Element).getBoundingClientRect(),
+        );
+        const l = Math.min(...rects.map((r) => r.left));
+        const t = Math.min(...rects.map((r) => r.top));
+        const w = Math.max(...rects.map((r) => r.right)) - l;
+        const h = Math.max(...rects.map((r) => r.bottom)) - t;
+        return [l, t, w, h].map((v) => Math.round(v * 10) / 10);
+      });
+    const landed = await place();
 
     /* Mid-way: TWO records are moving — the held one back to its seat, its neighbour out to the square. */
     await page.getByTestId('nav-next').click();
@@ -189,10 +202,21 @@ test('navigation moves along the collection — both records moving, the neighbo
     );
     expect(moving.slice().sort(), 'both records move').toEqual([order[0], order[1]].sort());
 
-    /* And the neighbour lands exactly where the held one was: the same square, flat. */
+    /*
+      And the neighbour lands where the held one was: its box centred on the
+      same point. The box's SIZE is the record's own — a thicker spine gives a
+      face a few units smaller so the whole box fits the region — so the two
+      extents differ by at most twice the thickness range, projected.
+    */
     await page.clock.runFor(800);
     expect(await pulled(page), 'settled on the successor').toBe(order[1]);
-    await expect(page.locator('[data-pulled] [data-landing]')).toHaveAttribute('transform', landed ?? '');
+    const successor = await place();
+    const centre = (r: number[]) => [r[0] + r[2] / 2, r[1] + r[3] / 2];
+    expect(Math.abs(centre(successor)[0] - centre(landed)[0])).toBeLessThan(1);
+    expect(Math.abs(centre(successor)[1] - centre(landed)[1])).toBeLessThan(1);
+    const range = SPINE_WIDTH_MAX - SPINE_WIDTH_MIN;
+    expect(Math.abs(successor[2] - landed[2])).toBeLessThanOrEqual(2 * range * COS30);
+    expect(Math.abs(successor[3] - landed[3])).toBeLessThanOrEqual(2 * range);
   } finally {
     await cleanup(artistId);
   }
