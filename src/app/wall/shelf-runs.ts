@@ -44,6 +44,9 @@ export type ShelfSeat = {
  */
 export type WallSeat = ShelfSeat & {
   label: string;
+  /** §11.3: with no cover the record's material is its text — set large on the field. */
+  title: string;
+  artist: string;
   spineColour: string | null;
   /** §11.3: the pulled record shows its cover, at its own aspect, on the field. */
   coverUrl: string | null;

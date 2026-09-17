@@ -89,3 +89,32 @@ test('the pulled record shows its cover, fitted inside its face, at the end and 
   });
   expect(hit, 'the slid record is in front of everything at its depth').toBe(true);
 });
+
+test('the record with no cover arrives at type on its field, with the diagonal, not at a swatch', async ({
+  page,
+}) => {
+  await login(page);
+  await page.clock.install();
+  await page.goto('/wall/probe/labelled');
+  await page.locator('[data-wall="labelled"]').waitFor({ timeout: 15_000 });
+  await page.clock.pauseAt(Date.now() + 1000);
+
+  const blues = COLLECTION_SPINES.findIndex((row) => row.resampled === null);
+  expect(blues, 'the fixture has one record without a cover').toBeGreaterThan(-1);
+  await page.locator(`[data-seat="collection-${blues}"] [data-spine]`).click();
+  await page.clock.runFor(PULL_DURATION_MS + 40);
+
+  const sleeve = page.locator('[data-pulled] [data-no-cover]');
+  await expect(sleeve).toHaveCount(1);
+  await expect(sleeve).toContainText(COLLECTION_SPINES[blues].title);
+  await expect(sleeve).toContainText(COLLECTION_SPINES[blues].artist);
+  await expect(page.locator('[data-pulled] [data-diagonal]')).toHaveCount(1);
+  await expect(page.locator('[data-pulled] [data-cover]')).toHaveCount(0);
+  /* The type is readable: not mirrored. A mirrored plane flips the text's box; the box's left edge stays left of its right. */
+  const box = await sleeve.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    return { w: r.width, h: r.height };
+  });
+  expect(box.w).toBeGreaterThan(50);
+  expect(box.h).toBeGreaterThan(50);
+});

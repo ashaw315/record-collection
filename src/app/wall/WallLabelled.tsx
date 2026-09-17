@@ -46,6 +46,7 @@ import { MICRO_PX } from '../type-scale';
 /** The one ink, for outline and label alike. */
 const INK = '#161412';
 const RULE = 'oklch(0.44 0.008 70)';
+const PAPER = 'oklch(0.925 0.004 80)';
 const LABEL_FONT_PX = Number((MICRO_PX / COS30).toFixed(2));
 const BASELINE_INSET = 8;
 
@@ -73,6 +74,8 @@ function label(seat: PlacedSeat, text: string) {
       fontWeight="500"
       fill={INK}
       xmlSpace="preserve"
+      /* The face takes the pointer; a label drawn over it must not intercept the click on its own record. */
+      pointerEvents="none"
     >
       {text}
     </text>
@@ -178,7 +181,7 @@ export function WallLabelled({
               <polygon data-face="top" points={points(topFace(seat))} fill={TOP_FILL} stroke={INK} strokeWidth="1" pointerEvents="all" />
               <g transform={coverTransform(seat)}>
                 <rect data-field="" width={DEPTH} height={SPINE_HEIGHT} fill={fill} stroke={INK} strokeWidth="1" pointerEvents="all" />
-                {record.coverUrl === null ? null : (
+                {record.coverUrl !== null ? (
                   <image
                     data-cover={seat.id}
                     href={record.coverUrl}
@@ -190,6 +193,46 @@ export function WallLabelled({
                     opacity={pose?.eased ?? 1}
                     pointerEvents="none"
                   />
+                ) : (
+                  /*
+                    §11.3, §11.7: **the record with no cover arrives at type,
+                    not at a swatch.** Its material is its text — title and
+                    artist set large on a paper sleeve area where the cover
+                    would be, over the same field every pull arrives at — and
+                    §6's diagonal crosses the area so the state says "no
+                    cover" rather than leaving a grey square to be inferred.
+                    The one place text enters the projection, because it
+                    stands in for artwork rather than being read as fact.
+                  */
+                  <g data-no-cover="" opacity={pose?.eased ?? 1} pointerEvents="none">
+                    <rect
+                      x={inset}
+                      y={inset}
+                      width={DEPTH - inset * 2}
+                      height={SPINE_HEIGHT - inset * 2}
+                      fill={PAPER}
+                      stroke={INK}
+                      strokeWidth="1"
+                    />
+                    <foreignObject x={inset} y={inset} width={DEPTH - inset * 2} height={SPINE_HEIGHT - inset * 2}>
+                      <div
+                        className="flex h-full flex-col justify-end p-[16px] font-sans leading-[0.95] tracking-[-0.02em]"
+                        style={{ color: 'oklch(0.18 0.005 60)' }}
+                      >
+                        <div className="text-headline font-extrabold">{record.title}</div>
+                        <div className="text-headline font-normal">{record.artist}</div>
+                      </div>
+                    </foreignObject>
+                    <line
+                      data-diagonal=""
+                      x1={inset}
+                      y1={inset}
+                      x2={DEPTH - inset}
+                      y2={SPINE_HEIGHT - inset}
+                      stroke={INK}
+                      strokeWidth="1"
+                    />
+                  </g>
                 )}
               </g>
               <polygon data-face="front" points={points(face)} fill={FACE_FILL} stroke={INK} strokeWidth="1" pointerEvents="all" />

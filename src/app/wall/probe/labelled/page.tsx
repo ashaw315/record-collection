@@ -36,6 +36,8 @@ function seatsWith(cover: string | null, count: number): WallSeat[] {
       id: `collection-${index}`,
       section: 'Collection',
       label: spineLabel(row.artist, row.title),
+      title: row.title,
+      artist: row.artist,
       spineColour: row.resampled,
       coverUrl: row.title === 'Wired' ? cover : null,
     };

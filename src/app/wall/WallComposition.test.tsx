@@ -16,6 +16,8 @@ const seats = (count: number): WallSeat[] =>
     id: `r${index}`,
     section: 'S',
     label: `Artist ${index} · Title`,
+    title: 'Title',
+    artist: `Artist ${index}`,
     spineColour: null,
     coverUrl: null,
   }));

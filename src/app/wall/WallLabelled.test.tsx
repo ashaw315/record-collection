@@ -10,11 +10,13 @@ import type { WallSeat } from './shelf-runs';
  * asserted with the faces that carry it (D2: the right face).
  */
 
-const seat = (id: string, coverUrl: string | null): WallSeat => ({
+const seat = (id: string, coverUrl: string | null, spineColour: string | null = '#31788a'): WallSeat => ({
   id,
   section: 'S',
   label: id,
-  spineColour: '#31788a',
+  title: `Title ${id}`,
+  artist: `Artist ${id}`,
+  spineColour,
   coverUrl,
 });
 
@@ -87,8 +89,9 @@ describe('5b’s two faces at rest (D2): three faces per record, filled in paper
     const field = /<rect[^>]*data-field[^>]*>/.exec(pulled)?.[0] ?? '';
     expect(field).not.toBe('');
     expect(field).not.toContain(`fill="${WALL_PAPER_HEX}"`);
-    const g = pulled.slice(pulled.indexOf('<g transform="matrix(-'));
-    expect(g, 'the cover’s group uses D2’s mirrored matrix').toContain('matrix(-0.866');
+    const g = pulled.slice(pulled.indexOf('<g transform="matrix('));
+    /* Entered from the near-top corner: un-mirrored (§11.7 puts type on this face). */
+    expect(g, 'the cover’s group maps the face un-mirrored').toContain('matrix(0.866');
     const image = /<image[^>]*>/.exec(g)?.[0] ?? '';
     expect(image).toContain('data-cover="b"');
     expect(image).toContain('href="https://covers.test/b.jpg"');
@@ -158,5 +161,29 @@ describe('the frame holds the whole drawing', () => {
       expect(x).toBeLessThanOrEqual(minX + w);
       expect(y).toBeLessThanOrEqual(minY + h);
     }
+  });
+});
+
+describe('the record with no cover arrives at type, not at a swatch (§11.3, §11.7)', () => {
+  it('sets title and artist large on a paper sleeve area over the field, with §6’s diagonal across it', () => {
+    const html = render([seat('a', null), seat('b', null, null)], { id: 'b', direction: 'out', progress: 1 });
+    const pulled = html.slice(html.indexOf('data-pulled="b"'));
+    /* The field is still painted — the same fill every pull arrives at — and the sleeve area sits on it. */
+    expect(pulled).toContain('data-field');
+    const sleeve = pulled.slice(pulled.indexOf('data-no-cover'));
+    expect(sleeve, 'a sleeve area where the cover would be').not.toBe('');
+    expect(sleeve).toContain('data-diagonal');
+    expect(sleeve).toContain('Title b');
+    expect(sleeve).toContain('Artist b');
+    /* At the record screen's display sizes, flat text on the face's plane (a foreignObject inside the cover group). */
+    expect(sleeve).toMatch(/text-headline/);
+    expect(html.indexOf('<g transform="matrix(')).toBeLessThan(html.indexOf('data-no-cover'));
+  });
+
+  it('draws no sleeve area and no diagonal for a record that has a cover', () => {
+    const html = render([seat('a', 'https://covers.test/a.jpg')], { id: 'a', direction: 'out', progress: 1 });
+    expect(html).not.toContain('data-no-cover');
+    expect(html).not.toContain('data-diagonal');
+    expect(html).toContain('data-cover="a"');
   });
 });

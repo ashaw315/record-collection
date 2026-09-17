@@ -318,13 +318,16 @@ describe('5b’s two faces, on the same three coordinates (D2)', () => {
     expect(front[1], 'the front’s bottom-right is the right’s near-bottom').toEqual(right[1]);
   });
 
-  it('maps the cover’s rect onto the right face with D2’s matrix, which mirrors', () => {
+  it('maps the cover’s rect onto the right face entered from its NEAR-top corner, un-mirrored', () => {
     /*
-      matrix(−cos30, sin30, 0, 1, P) with P the right face's far-top corner:
-      local (0,0) → P, local (D,0) → the near-top corner, local (0,H) → the
-      far-bottom corner. Its determinant is −cos30: the plane is mirrored,
-      which is why the pulled record carries no caption — text on it would
-      fight the geometry. Removed rather than un-mirrored (D2).
+      D2's matrix(−cos30, sin30, 0, 1, far-top) has determinant −cos30: the
+      plane is mirrored, which is why D2 removed its caption rather than
+      un-mirroring it. §11.7 puts type on this face for the record with no
+      cover, and a sleeve's own lettering reads backwards on a mirrored
+      plane — so the face is entered from the near-top corner with local x
+      running toward the far edge: matrix(cos30, −sin30, 0, 1, near-top),
+      determinant +cos30. local (0,0) → near-top, (D,0) → far-top, (0,H) →
+      near-bottom.
     */
     const t = coverTransform(seat);
     const m = /^matrix\(([-\d.e]+) ([-\d.e]+) ([-\d.e]+) ([-\d.e]+) ([-\d.e]+) ([-\d.e]+)\)$/.exec(t);
@@ -336,10 +339,10 @@ describe('5b’s two faces, on the same three coordinates (D2)', () => {
       expect(p[0]).toBeCloseTo(q[0], 6);
       expect(p[1]).toBeCloseTo(q[1], 6);
     };
-    near(apply(0, 0), project(119, 16, 458 + H));
-    near(apply(D, 0), project(119, 16 + D, 458 + H));
-    near(apply(0, H), project(119, 16, 458));
-    expect(a * d - b * c, 'mirrored: negative determinant').toBeLessThan(0);
+    near(apply(0, 0), project(119, 16 + D, 458 + H));
+    near(apply(D, 0), project(119, 16, 458 + H));
+    near(apply(0, H), project(119, 16 + D, 458));
+    expect(a * d - b * c, 'not mirrored: positive determinant').toBeGreaterThan(0);
   });
 });
 

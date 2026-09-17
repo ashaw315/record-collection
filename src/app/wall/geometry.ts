@@ -246,15 +246,17 @@ export function rightFace({ x, y, z, width }: PlacedSeat): readonly Point[] {
 }
 
 /**
- * The cover's plane: a DEPTH × SPINE_HEIGHT rect mapped onto the right face
- * by D2's `matrix(−cos30, sin30, 0, 1, P)`, P the face's far-top corner.
- * The determinant is −cos30 — the plane is mirrored — so the pulled record
- * carries no caption: text on it would fight the geometry, and D2 removed
- * the caption rather than un-mirroring it.
+ * The cover's plane: a DEPTH × SPINE_HEIGHT rect mapped onto the right face,
+ * **entered from its near-top corner so the plane is not mirrored.** D2's
+ * `matrix(−cos30, sin30, 0, 1, far-top)` has determinant −cos30, which is why
+ * D2 removed its caption rather than un-mirroring it. §11.7 puts type on
+ * this face for the record with no cover, and a sleeve's own lettering reads
+ * backwards on a mirrored plane — so local x runs from the near edge toward
+ * the far edge: `matrix(cos30, −sin30, 0, 1, near-top)`, determinant +cos30.
  */
 export function coverTransform({ x, y, z, width }: PlacedSeat): string {
-  const [px, py] = project(x + width, y, z + SPINE_HEIGHT);
-  return `matrix(${-COS30} ${SIN30} 0 1 ${px} ${py})`;
+  const [px, py] = project(x + width, y + DEPTH, z + SPINE_HEIGHT);
+  return `matrix(${COS30} ${-SIN30} 0 1 ${px} ${py})`;
 }
 
 /**
