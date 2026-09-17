@@ -2,16 +2,17 @@ import {
   frontFace,
   layoutRow,
   paintOrder,
+  planeSpan,
   rightFace,
   rowBreaks,
-  rowPlanes,
+  shelfPlane,
   topFace,
   type PlacedSeat,
   type Point,
 } from './geometry';
 import type { ShelfSeat } from './shelf-runs';
 import { intoShelves } from './shelf-rows';
-import { wallViewBox } from './wall-frame';
+import { frameRange, wallFrame } from './wall-frame';
 
 /**
  * The wall, zoomed out (The Wall 5b §5, D2).
@@ -54,20 +55,24 @@ export function WallOverview({
   seats: readonly ShelfSeat[];
   pulledId: string | null;
 }) {
-  const planes: (readonly Point[])[] = [];
-  const breaks: (readonly [Point, Point])[] = [];
   const placed: PlacedSeat[] = [];
+  const breaks: (readonly [Point, Point])[] = [];
+  const rowZ: number[] = [];
   intoShelves(seats).forEach((shelf, row) => {
     const rowSeats = layoutRow(shelf, row, pulledId);
-    planes.push(...rowPlanes(shelf, rowSeats));
     breaks.push(...rowBreaks(shelf, rowSeats));
+    rowZ.push(rowSeats[0]?.z ?? 0);
     /* The pulled record's SEAT is still spanned by its plane; no spine is drawn on it. */
     placed.push(...rowSeats.filter((seat) => seat.id !== pulledId));
   });
+  /* Framed on the faces; the planes then span the frame and run off both of its edges (§11.8). */
+  const frame = wallFrame(placed.flatMap((seat) => [frontFace(seat), topFace(seat), rightFace(seat)]));
+  const span = planeSpan(frameRange(frame));
+  const planes = rowZ.map((z) => shelfPlane(z, span));
 
   return (
     <svg
-      viewBox={wallViewBox(planes, placed.flatMap((seat) => [frontFace(seat), topFace(seat), rightFace(seat)]))}
+      viewBox={frame.viewBox}
       style={{ background: 'oklch(0.925 0.004 80)', width: '100%', height: 'auto' }}
     >
       {planes.map((plane, index) => (

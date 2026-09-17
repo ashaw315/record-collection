@@ -21,9 +21,15 @@ import { pullEase } from './pull-curve';
 export const WALL_PAPER: Oklch = { L: 0.977, C: 0.004, h: 80 };
 export const WALL_PAPER_HEX = oklchToHex(WALL_PAPER);
 
-/** SPEC §4: a record with no cover pulls to the achromatic fallback, never a hue. */
-const FALLBACK: Oklch = { L: 0.32, C: 0, h: 0 };
-const FALLBACK_HEX = '#3a3a3a';
+/**
+ * The wall's ink, and the field a record with no cover pulls to (§5.3 via
+ * §11.8). Not #3a3a3a — a default colour SPEC §4 says never renders — and
+ * not "the same clamped base", which has no referent when the sample is
+ * null. Colour arrives with the pull because it comes from the cover, and a
+ * record with no cover has none to arrive with.
+ */
+export const WALL_INK = '#161412';
+const INK_OKLCH: Oklch = { L: 0.17, C: 0.004, h: 60 };
 
 /**
  * Where the visible gesture ends: a cubic ease-out reaches 97% of travel at
@@ -44,13 +50,13 @@ export const PERCEIVED_END = 1 - Math.cbrt(0.03);
 export const RETURN_FADE_END = PERCEIVED_END;
 
 function target(ladder: RecordLadder | null): Oklch {
-  return ladder === null ? FALLBACK : { L: ladder.baseL, C: ladder.baseC, h: ladder.baseHue };
+  return ladder === null ? INK_OKLCH : { L: ladder.baseL, C: ladder.baseC, h: ladder.baseHue };
 }
 
 function mix(eased: number, ladder: RecordLadder | null): string {
   if (eased <= 0) return WALL_PAPER_HEX;
   const to = target(ladder);
-  if (eased >= 1) return ladder === null ? FALLBACK_HEX : oklchToHex(to);
+  if (eased >= 1) return ladder === null ? WALL_INK : oklchToHex(to);
 
   return oklchToHex({
     L: WALL_PAPER.L + (to.L - WALL_PAPER.L) * eased,

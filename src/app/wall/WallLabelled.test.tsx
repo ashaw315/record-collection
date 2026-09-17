@@ -24,7 +24,8 @@ const render = (
   seats: WallSeat[],
   pull: Parameters<typeof WallLabelled>[0]['pull'],
   labels?: boolean,
-) => renderToStaticMarkup(<WallLabelled seats={seats} pull={pull} labels={labels} />);
+  minWidth?: number,
+) => renderToStaticMarkup(<WallLabelled seats={seats} pull={pull} labels={labels} minWidth={minWidth} />);
 
 describe('what distinguishes a spine at rest (§11.1)', () => {
   /**
@@ -152,9 +153,11 @@ describe('the frame holds the whole drawing', () => {
     const html = render([seat('a', null), seat('b', null)], null);
     const svg = /<svg[^>]*data-wall="labelled"[^>]*>/.exec(html)?.[0] ?? '';
     const [minX, minY, w, h] = /viewBox="([^"]+)"/.exec(svg)?.[1]?.split(' ').map(Number) ?? [];
-    const points = [...html.matchAll(/points="([^"]+)"/g)].flatMap((m) =>
+    /* Faces only: the planes run off both edges of the frame by design (§11.8). */
+    const points = [...html.matchAll(/data-face="[a-z]+" points="([^"]+)"/g)].flatMap((m) =>
       m[1].split(' ').map((pair) => pair.split(',').map(Number)),
     );
+    expect(points.length).toBeGreaterThan(0);
     for (const [x, y] of points) {
       expect(x).toBeGreaterThanOrEqual(minX);
       expect(y, 'no point above the frame').toBeGreaterThanOrEqual(minY);
@@ -175,10 +178,15 @@ describe('the record with no cover arrives at type, not at a swatch (§11.3, §1
     expect(sleeve).toContain('data-diagonal');
     expect(sleeve).toContain('Title b');
     expect(sleeve).toContain('Artist b');
-    /* The identity pairing, large-to-small: the title at the headline size, the artist at prose — set at 40 as
-       well the artist overflowed the sleeve area. Flat text on the face's plane (a foreignObject in the cover group). */
-    expect(sleeve).toMatch(/text-headline[^>]*>Title b</);
-    expect(sleeve).toMatch(/text-prose[^>]*>Artist b</);
+    /*
+      Two elements, governed differently on read-versus-drawn: the artist is
+      READ and takes a scale size (LABEL, above); the title stands in for
+      artwork, so it is a DRAWN element whose size derives from its box and
+      its string, the way the 72 does in the year field.
+    */
+    expect(sleeve).toMatch(/text-label[^>]*>Artist b</);
+    expect(sleeve.indexOf('Artist b')).toBeLessThan(sleeve.indexOf('Title b'));
+    expect(sleeve).toMatch(/data-sleeve-title[^>]*font-size:\d+px[^>]*>Title b</);
     expect(sleeve, 'a long title clips rather than escaping the sleeve').toContain('overflow-hidden');
     expect(sleeve, 'anchored at the top: the clip takes the tail, never the title’s first line').toContain('justify-start');
     expect(html.indexOf('<g transform="matrix(')).toBeLessThan(html.indexOf('data-no-cover'));
@@ -189,5 +197,52 @@ describe('the record with no cover arrives at type, not at a swatch (§11.3, §1
     expect(html).not.toContain('data-no-cover');
     expect(html).not.toContain('data-diagonal');
     expect(html).toContain('data-cover="a"');
+  });
+});
+
+describe('spines are anchors inside the SVG (§11.8)', () => {
+  it('wraps each seat’s faces in an <a> with the record’s route and the FULL title as its name', () => {
+    const html = render([seat('a', null), seat('b', null)], null);
+    const a = html.slice(html.indexOf('data-seat="a"'), html.indexOf('data-seat="b"'));
+    const open = /<a [^>]*data-seat="a"[^>]*>/.exec(html)?.[0] ?? '';
+    expect(open, 'the seat is an anchor').not.toBe('');
+    expect(open).toContain('href="/records/a"');
+    /* The face carries the truncated label; the accessible name carries the whole title. */
+    expect(open).toContain('aria-label="Artist a · Title a"');
+    for (const face of ['top', 'right', 'front']) expect(a).toContain(`data-face="${face}"`);
+  });
+
+});
+
+describe('document order is seat order (§11.8) — asserted, because it holds only while seats vary along x alone', () => {
+  it('lists the seats in the DOM in seat order, rows top to bottom, with no tabindex', () => {
+    /*
+      SVG has no z-index: paint order is document order, and document order
+      is what a keyboard walks. The two agree today because seats within a
+      row vary only along x. The day a row's seats vary in depth, THIS fails
+      rather than the reading order silently going wrong.
+    */
+    const many = Array.from({ length: 11 }, (_, i) => seat(`s${String(i).padStart(2, '0')}`, null));
+    const html = render(many, null);
+    const order = [...html.matchAll(/data-seat="([^"]+)"/g)].map((m) => m[1]);
+    expect(order).toEqual(many.map((s) => s.id));
+    expect(html, 'no tabindex — document order serves the reader').not.toContain('tabindex');
+  });
+});
+
+describe('the plane is the pan extent (§11.8)', () => {
+  it('widens the drawing to the container when the container is wider, and the planes run past both edges', () => {
+    const narrow = render([seat('a', null)], null, true);
+    const narrowBox = /viewBox="([^"]+)"/.exec(narrow)?.[1]?.split(' ').map(Number) ?? [];
+    const wide = render([seat('a', null)], null, true, narrowBox[2] + 1000);
+    const svg = /<svg[^>]*data-wall="labelled"[^>]*>/.exec(wide)?.[0] ?? '';
+    const box = /viewBox="([^"]+)"/.exec(svg)?.[1]?.split(' ').map(Number) ?? [];
+    expect(box[2]).toBe(narrowBox[2] + 1000);
+    expect(svg).toContain(`width:${box[2]}px`);
+
+    const plane = /data-plane="" points="([^"]+)"/.exec(wide)?.[1] ?? '';
+    const xs = plane.split(' ').map((pair) => Number(pair.split(',')[0]));
+    expect(Math.min(...xs), 'off the left edge').toBeLessThan(box[0]);
+    expect(Math.max(...xs), 'off the right edge').toBeGreaterThan(box[0] + box[2]);
   });
 });

@@ -1,7 +1,4 @@
 import type { ShelfSeat } from './shelf-runs';
-import { PER_SHELF } from './shelf-rows';
-
-export { PER_SHELF };
 
 /**
  * The geometry both wall components share (The Wall D2, on 5b's constants).
@@ -145,35 +142,60 @@ export function frontFace({ x, y, z, width }: PlacedSeat): readonly Point[] {
 }
 
 /**
- * **One plane, one width, every row — the wall's width, with the records
- * inset inside it** (§11.7). A shelf whose length is a function of what is
- * on it is not a shelf but a platform per arrangement, which is why rows
- * spanning their seated extent read as islands at a pitch measured correct.
- * The width is the wall's CAPACITY rather than the widest row's extent: a
- * shared width derived from the fullest row still moves every plane when one
- * record is added to that row, and the thing drawn is a fixture, not a
- * measurement of the collection. That is also what makes an empty run's
- * plane (§11.6) unremarkable: the plane is the shelf's, not its occupants'.
+ * **The plane is the wall, and the wall is the pan extent** (§11.7, §11.8).
+ * Spanning each run's seated extent gave a platform per arrangement; a
+ * capacity — forty, or D2's sixteen — is the same defect, a fixture sized by
+ * a count: forty reads as a fixture waiting to be stocked, sixteen is wrong
+ * at the eighteenth record. So the plane runs the full pan extent and off
+ * both edges of the viewport, because a fixture that ends inside the view is
+ * what reads as a platform. At seventeen the wall is a shelf the collection
+ * sits at the left of, which is a true statement about the collection.
  *
  * A single plane, not a board: 5b rules out three faces and the reason
  * survives the reference — a shelf with three faces is a box, and a box
  * drawn around the collection competes with the records standing in it.
  */
-export const WALL_WIDTH = 2 * SHELF_INSET_X + PER_SHELF * (SPINE_WIDTH_MAX + GAP);
+export type PlaneSpan = { x0: number; x1: number };
 
-export function shelfPlane(z: number): readonly Point[] {
+/** How far past the view's edges the plane runs, in screen px. */
+export const PLANE_OVERHANG = 200;
+
+/**
+ * The wall-space x range whose plane covers `[minX, maxX]` of screen-x at
+ * every depth, and PLANE_OVERHANG beyond. The near edge sits further left on
+ * screen than the far edge, so the right end is set by the near edge and the
+ * left end by the far edge.
+ */
+export function planeSpan({ minX, maxX }: { minX: number; maxX: number }): PlaneSpan {
   const near = SHELF_INSET_Y + DEPTH + LEDGE;
-  return [project(0, 0, z), project(WALL_WIDTH, 0, z), project(WALL_WIDTH, near, z), project(0, near, z)];
+  return {
+    x0: (minX - PLANE_OVERHANG) / COS30,
+    x1: (maxX + PLANE_OVERHANG) / COS30 + near,
+  };
+}
+
+export function shelfPlane(z: number, { x0, x1 }: PlaneSpan): readonly Point[] {
+  const near = SHELF_INSET_Y + DEPTH + LEDGE;
+  return [project(x0, 0, z), project(x1, 0, z), project(x1, near, z), project(x0, near, z)];
 }
 
 /**
- * Painter's order: back to front by x + y, **across the whole wall.** Depth
- * from the camera does not involve z, so a record slid forward on one shelf
- * is nearer than everything at its x on every other shelf. Sorting per shelf
- * painted the pulled record under rows it stands in front of.
+ * Painter's order — and document order, and seat order, which §11.8 says
+ * must agree rather than be assumed to. SVG has no z-index, so paint order
+ * is document order, and document order is what a keyboard walks.
+ *
+ * **Row-major, then back to front by x + y within the row.** A global x + y
+ * sort is blind to z: the second row's left seats sorted between the first
+ * row's, so the drawing was never rows-top-to-bottom and the keyboard would
+ * have walked it interleaved — the test Design asked for caught it. Rows do
+ * not overlap at ROW_PITCH (asserted), so row order costs the painter
+ * nothing; within a row seats vary along x alone, so x + y IS seat order.
+ * A pulled record slides forward and must paint after the neighbours its
+ * faces cover, which is why it is drawn as its own element and not as a
+ * seat: the seated anchors keep seat order whatever is pulled.
  */
-export function paintOrder<T extends { x: number; y: number }>(items: readonly T[]): T[] {
-  return [...items].sort((a, b) => a.x + a.y - (b.x + b.y));
+export function paintOrder<T extends { x: number; y: number; z: number }>(items: readonly T[]): T[] {
+  return [...items].sort((a, b) => (a.z !== b.z ? b.z - a.z : a.x + a.y - (b.x + b.y)));
 }
 
 /**
@@ -188,9 +210,13 @@ export function labelTransform(seat: PlacedSeat): string {
 }
 
 /** The plane a row draws: one, at the row's height, whatever the row holds. */
-export function rowPlanes(shelf: readonly ShelfSeat[], placed: readonly PlacedSeat[]): (readonly Point[])[] {
+export function rowPlanes(
+  shelf: readonly ShelfSeat[],
+  placed: readonly PlacedSeat[],
+  span: PlaneSpan,
+): (readonly Point[])[] {
   const z = placed[0]?.z ?? 0;
-  return shelf.length === 0 ? [] : [shelfPlane(z)];
+  return shelf.length === 0 ? [] : [shelfPlane(z, span)];
 }
 
 /**

@@ -110,11 +110,14 @@ test('the record with no cover arrives at type on its field, with the diagonal, 
   await expect(sleeve).toContainText(COLLECTION_SPINES[blues].artist);
   await expect(page.locator('[data-pulled] [data-diagonal]')).toHaveCount(1);
   await expect(page.locator('[data-pulled] [data-cover]')).toHaveCount(0);
-  /* The type is readable: not mirrored. A mirrored plane flips the text's box; the box's left edge stays left of its right. */
-  const box = await sleeve.evaluate((el) => {
-    const r = el.getBoundingClientRect();
-    return { w: r.width, h: r.height };
+  /* The fitted title does not overflow its box — the rendered check the advance estimate stands in for. */
+  /* Line boxes from a Range: a bounding box inside the sheared plane is taller than the text. */
+  const fit = await page.locator('[data-pulled] [data-sleeve-title]').evaluate((el) => {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const tops = new Set(Array.from(range.getClientRects()).map((r) => Math.round(r.top)));
+    return { over: el.scrollWidth > el.clientWidth + 1, size: getComputedStyle(el).fontSize, lines: tops.size };
   });
-  expect(box.w).toBeGreaterThan(50);
-  expect(box.h).toBeGreaterThan(50);
+  expect(fit.over, `title overflows its measure at ${fit.size}`).toBe(false);
+  expect(fit.lines).toBeLessThanOrEqual(3);
 });

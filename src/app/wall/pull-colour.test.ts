@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   PERCEIVED_END,
   RETURN_FADE_END,
+  WALL_INK,
   WALL_PAPER,
   WALL_PAPER_HEX,
   pullFill,
@@ -81,10 +82,16 @@ describe('colour arrives across the pull (§11.2)', () => {
     }
   });
 
-  it('arrives at the achromatic fallback for a record with no cover (SPEC §4)', () => {
-    /* No hue invented where none was sampled: the pull lands on #3a3a3a. */
-    expect(pullFill(1, null)).toBe('#3a3a3a');
+  it('arrives at INK for a record with no cover (§5.3 via §11.8)', () => {
+    /*
+      Not #3a3a3a — a default colour SPEC §4 says never renders — and not
+      "the same clamped base", which has no referent when the sample is null.
+      §5.3 owns the fallback and says ink: colour arrives with the pull
+      because it comes from the cover, and a record with no cover has none.
+    */
+    expect(pullFill(1, null)).toBe(WALL_INK);
     expect(pullFill(0, null)).toBe(WALL_PAPER_HEX);
+    expect(returnFill(0, null)).toBe(WALL_INK);
   });
 });
 

@@ -5,7 +5,6 @@ import {
   GAP,
   LEDGE,
   ROW_PITCH,
-  PER_SHELF,
   SHELF_INSET_X,
   SHELF_INSET_Y,
   SIN30,
@@ -13,13 +12,13 @@ import {
   SPINE_HEIGHT,
   SPINE_WIDTH_MAX,
   SPINE_WIDTH_MIN,
-  WALL_WIDTH,
   coverTransform,
   frontFace,
   labelsFit,
   layoutRow,
   oneRecordPx,
   paintOrder,
+  planeSpan,
   project,
   rightFace,
   rowBreaks,
@@ -150,9 +149,11 @@ describe('the row is on the axis', () => {
   });
 });
 
-describe('the shelf is a single plane at the wall’s width (§11.7)', () => {
+describe('the shelf is a single plane spanning the pan extent (§11.7, §11.8)', () => {
   const seats = Array.from({ length: 3 }, (_, index) => ({ id: `r${index}`, section: 'A' }));
   const placed = layoutRow(seats, 0, null);
+  /* A frame in screen-x, as wallFrame would report it. */
+  const view = { minX: -300, maxX: 900 };
 
   const inside = (point: readonly [number, number], polygon: ReadonlyArray<readonly [number, number]>) => {
     let hit = false;
@@ -166,39 +167,40 @@ describe('the shelf is a single plane at the wall’s width (§11.7)', () => {
     return hit;
   };
 
-  it('spans the wall’s CAPACITY, not the widest row — a fixture, not a measurement of the collection', () => {
+  it('runs off BOTH edges of the view at every depth — a fixture that ends inside the view is a platform', () => {
     /*
-      §11.7: a shared width derived from the fullest row still moves every
-      plane when one record is added to that row. So the width is what the
-      shelf holds — PER_SHELF seats at the widest pitch — inset either side.
+      §11.8 withdraws capacity as the measure: forty reads as a fixture
+      waiting to be stocked, sixteen is wrong at the eighteenth record, and
+      both are a fixture sized by a count. The plane is the wall and the wall
+      is the pan extent.
     */
-    expect(WALL_WIDTH).toBe(2 * SHELF_INSET_X + PER_SHELF * (SPINE_WIDTH_MAX + GAP));
-    expect(shelfPlane(0)).toEqual([
-      project(0, 0, 0),
-      project(WALL_WIDTH, 0, 0),
-      project(WALL_WIDTH, SHELF_INSET_Y + DEPTH + LEDGE, 0),
-      project(0, SHELF_INSET_Y + DEPTH + LEDGE, 0),
-    ]);
+    const plane = shelfPlane(0, planeSpan(view));
+    const xs = plane.map(([x]) => x);
+    expect(Math.min(...xs)).toBeLessThan(view.minX);
+    expect(Math.max(...xs)).toBeGreaterThan(view.maxX);
+    /* At the far edge AND the near edge, not only at the corners the shear favours. */
+    const [farL, farR, nearR, nearL] = plane;
+    expect(farL[0]).toBeLessThan(view.minX);
+    expect(nearL[0]).toBeLessThan(view.minX);
+    expect(farR[0]).toBeGreaterThan(view.maxX);
+    expect(nearR[0]).toBeGreaterThan(view.maxX);
   });
 
-  it('is the same plane whatever the row holds — one record, five, or forty', () => {
-    const z = -ROW_PITCH;
+  it('is not sized by anything on it — the same span for one record or forty', () => {
+    const span = planeSpan(view);
     for (const count of [1, 5, 40]) {
       const row = Array.from({ length: count }, (_, index) => ({ id: `s${index}`, section: 'A' }));
-      expect(rowPlanes(row, layoutRow(row, 1, null))).toEqual([shelfPlane(z)]);
+      expect(rowPlanes(row, layoutRow(row, 1, null), span)).toEqual([shelfPlane(-ROW_PITCH, span)]);
     }
   });
 
-  it('has every spine’s feet on it, and forty of the widest fit inside it', () => {
-    const plane = shelfPlane(placed[0].z);
+  it('has every spine’s feet on it', () => {
+    const plane = shelfPlane(placed[0].z, planeSpan(view));
     for (const seat of placed) {
       const [footL, footR] = frontFace(seat);
       expect(inside(footL, plane), `${seat.id} left foot on the plane`).toBe(true);
       expect(inside(footR, plane), `${seat.id} right foot on the plane`).toBe(true);
     }
-    const full = layoutRow(Array.from({ length: PER_SHELF }, (_, i) => ({ id: `w${i}`, section: 'A' })), 0, null);
-    const last = full[full.length - 1];
-    expect(last.x + last.width + SHELF_INSET_X).toBeLessThanOrEqual(WALL_WIDTH);
   });
 
   it('lands the pulled record’s front edge exactly on the shelf’s front', () => {
@@ -230,7 +232,7 @@ describe('§2’s section breaks are marks within the plane, not its ends (§11.
   });
 
   it('leaves the plane running past the break — one plane per row, whatever the sections', () => {
-    expect(rowPlanes(shelf, placed)).toHaveLength(1);
+    expect(rowPlanes(shelf, placed, planeSpan({ minX: -300, maxX: 900 }))).toHaveLength(1);
     const one = [{ id: 'x', section: 'A' }];
     expect(rowBreaks(one, layoutRow(one, 0, null))).toEqual([]);
   });
@@ -241,12 +243,12 @@ describe('§2’s section breaks are marks within the plane, not its ends (§11.
 });
 
 describe('faces paint back to front by x + y, globally', () => {
-  it('orders by depth from the camera and ignores z', () => {
-    /**
-     * D2: a record slid forward on one shelf is nearer than everything on
-     * every other shelf at the same x. Sorting per shelf painted the pulled
-     * record under rows it stands in front of.
-     */
+  it('orders rows top to bottom, then by depth from the camera within a row', () => {
+    /*
+      Row-major first: rows do not overlap at ROW_PITCH, and row order is what
+      a keyboard walks (§11.8). Within a row, back to front by x + y — a slid
+      record paints after the neighbours its faces cover.
+    */
     const upper: PlacedSeat = { id: 'u', x: 100, y: 16, z: 458, width: 20 };
     const lowerSlid: PlacedSeat = { id: 's', x: 100, y: 16 + SLIDE, z: 0, width: 20 };
     const lowerRight: PlacedSeat = { id: 'r', x: 200, y: 16, z: 0, width: 20 };
@@ -254,9 +256,9 @@ describe('faces paint back to front by x + y, globally', () => {
     expect(order).toEqual(['u', 's', 'r']);
   });
 
-  it('is stable on ties, so a row keeps its seat order', () => {
+  it('is stable on ties within a row, so the row keeps its seat order', () => {
     const a: PlacedSeat = { id: 'a', x: 50, y: 16, z: 0, width: 20 };
-    const b: PlacedSeat = { id: 'b', x: 30, y: 36, z: 458, width: 20 };
+    const b: PlacedSeat = { id: 'b', x: 30, y: 36, z: 0, width: 20 };
     expect(paintOrder([a, b]).map((s) => s.id)).toEqual(['a', 'b']);
     expect(paintOrder([b, a]).map((s) => s.id)).toEqual(['b', 'a']);
   });
@@ -350,7 +352,7 @@ describe('a run with no seated records still has a shelf (§11.6)', () => {
   it('draws the plane under a row whose only record is pulled — the plane is the shelf’s, not its occupants’', () => {
     const shelf = [{ id: 'only', section: 'A' }];
     const placed = layoutRow(shelf, 0, 'only');
-    expect(rowPlanes(shelf, placed)).toEqual([shelfPlane(placed[0].z)]);
+    expect(rowPlanes(shelf, placed, planeSpan({ minX: -300, maxX: 900 }))).toEqual([shelfPlane(placed[0].z, planeSpan({ minX: -300, maxX: 900 }))]);
   });
 });
 
@@ -368,5 +370,39 @@ describe('D1: the wall renders at 1:1 and pans; §5 removes labels only below on
     expect(labelsFit(Math.ceil(oneRecordPx()))).toBe(true);
     expect(labelsFit(Math.floor(oneRecordPx()) - 1)).toBe(false);
     expect(labelsFit(0)).toBe(false);
+  });
+});
+
+describe('paint order is document order is seat order (§11.8)', () => {
+  /**
+   * SVG has no z-index: paint order is document order, and document order is
+   * what a keyboard walks. The back-to-front sort by x + y agrees with seat
+   * order only because seats within a row vary along x alone — the day a
+   * row's seats vary in depth, the two orders separate and the drawing gets
+   * a wrong reading order with nothing failing. So it is asserted.
+   */
+  const rows = [
+    Array.from({ length: 6 }, (_, i) => ({ id: `a${i}`, section: 'A' })),
+    Array.from({ length: 5 }, (_, i) => ({ id: `b${i}`, section: 'B' })),
+  ];
+  const placed = rows.flatMap((row, index) => layoutRow(row, index, null));
+
+  it('agrees on every seat, rows top to bottom', () => {
+    expect(paintOrder(placed).map((seat) => seat.id)).toEqual(placed.map((seat) => seat.id));
+  });
+
+  it('would disagree if a seat varied in depth — the control that shows the check discriminates', () => {
+    const perturbed = placed.map((seat) => (seat.id === 'a1' ? { ...seat, y: seat.y + 200 } : seat));
+    expect(paintOrder(perturbed).map((seat) => seat.id)).not.toEqual(perturbed.map((seat) => seat.id));
+  });
+
+  it('keeps the seated anchors in seat order while a record is pulled — the pulled one paints on its own', () => {
+    /*
+      A slid record covers its right-hand neighbours' faces and must paint
+      after them, so it is drawn as its own element; the anchors that remain
+      seated keep the order the keyboard walks.
+    */
+    const pulled = rows.flatMap((row, index) => layoutRow(row, index, 'a2')).filter((seat) => seat.id !== 'a2');
+    expect(paintOrder(pulled).map((seat) => seat.id)).toEqual(pulled.map((seat) => seat.id));
   });
 });

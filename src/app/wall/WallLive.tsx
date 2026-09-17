@@ -29,10 +29,14 @@ export function WallLive({ seats }: { seats: readonly WallSeat[] }) {
   */
   const container = useRef<HTMLDivElement>(null);
   const [labels, setLabels] = useState(true);
+  const [width, setWidth] = useState(0);
   useEffect(() => {
     const el = container.current;
     if (el === null) return;
-    const measure = () => setLabels(labelsFit(el.clientWidth));
+    const measure = () => {
+      setLabels(labelsFit(el.clientWidth));
+      setWidth(el.clientWidth);
+    };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(el);
@@ -81,6 +85,7 @@ export function WallLive({ seats }: { seats: readonly WallSeat[] }) {
         seats={seats}
         pull={pull}
         labels={labels}
+        minWidth={width}
         onSeatClick={(id) => {
           if (pull === null) begin(id, 'out');
         }}

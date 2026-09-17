@@ -38,3 +38,19 @@ export function wallFrame(
 export function wallViewBox(...groups: ReadonlyArray<ReadonlyArray<readonly Point[]>>): string {
   return wallFrame(...groups).viewBox;
 }
+
+/** The frame's screen-x range, for a plane that must run past both of its edges. */
+export function frameRange(frame: { viewBox: string; width: number }): { minX: number; maxX: number } {
+  const minX = Number(frame.viewBox.split(' ')[0]);
+  return { minX, maxX: minX + frame.width };
+}
+
+/** The same frame, at least `minWidth` wide — the pan extent is never narrower than the view. */
+export function widened(
+  frame: { viewBox: string; width: number; height: number },
+  minWidth: number,
+): { viewBox: string; width: number; height: number } {
+  if (minWidth <= frame.width) return frame;
+  const [minX, minY, , height] = frame.viewBox.split(' ').map(Number);
+  return { viewBox: `${minX} ${minY} ${minWidth} ${height}`, width: minWidth, height: frame.height };
+}

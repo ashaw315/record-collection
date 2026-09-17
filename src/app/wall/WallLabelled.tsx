@@ -7,9 +7,10 @@ import {
   labelTransform,
   layoutRow,
   paintOrder,
+  planeSpan,
   rightFace,
   rowBreaks,
-  rowPlanes,
+  shelfPlane,
   topFace,
   type PlacedSeat,
   type Point,
@@ -20,9 +21,11 @@ import type { WallSeat } from './shelf-runs';
 import { pullPose, returnPose } from './pull-curve';
 import { pullFill, returnFill } from './pull-colour';
 import { slideY } from './pull-geometry';
-import { wallFrame } from './wall-frame';
+import { frameRange, wallFrame, widened } from './wall-frame';
 import { recordLadder } from '@/lib/colour/record-ladder';
 import { MICRO_PX } from '../type-scale';
+import { LABEL } from '../records/[id]/grid-type';
+import { SLEEVE_LEADING, sleeveTitle } from './sleeve-type';
 
 /**
  * The wall at 1:1 — faces plus labels (The Wall 5b §4, D2; 8a §11).
@@ -92,6 +95,7 @@ export function WallLabelled({
   seats,
   pull = null,
   labels = true,
+  minWidth = 0,
   onSeatClick,
   onPulledClick,
 }: {
@@ -99,6 +103,8 @@ export function WallLabelled({
   pull?: PullState | null;
   /** §5's guard: false only when the container cannot hold one record (D1). */
   labels?: boolean;
+  /** The container's width in px: the pan extent is never narrower than the view (§11.8). */
+  minWidth?: number;
   onSeatClick?: (id: string) => void;
   onPulledClick?: () => void;
 }) {
@@ -111,14 +117,14 @@ export function WallLabelled({
         : returnPose(pull.progress, 1, 1);
 
   const byId = new Map(seats.map((seat) => [seat.id, seat]));
-  const planes: (readonly Point[])[] = [];
-  const breaks: (readonly [Point, Point])[] = [];
   const placed: PlacedSeat[] = [];
+  const breaks: (readonly [Point, Point])[] = [];
+  const rowZ: number[] = [];
   intoShelves(seats).forEach((shelf, row) => {
     /* The plane spans the pulled SEAT (5b §2); the record itself is placed where the slide has it. */
     const rowSeats = layoutRow(shelf, row, pulledId);
-    planes.push(...rowPlanes(shelf, rowSeats));
     breaks.push(...rowBreaks(shelf, rowSeats));
+    rowZ.push(rowSeats[0]?.z ?? 0);
     placed.push(
       ...rowSeats.map((seat) =>
         seat.id === pulledId && pose !== null ? { ...seat, y: slideY(pose) } : seat,
@@ -134,7 +140,17 @@ export function WallLabelled({
     scrolls the drawing rather than scaling it.
   */
   /* Every face, not the front alone: the top faces stand D·sin30 above them. */
-  const frame = wallFrame(planes, placed.flatMap((seat) => [frontFace(seat), topFace(seat), rightFace(seat)]));
+  /*
+    Framed on the faces, at least as wide as the container; the planes span
+    that frame and run off both of its edges (§11.8): the plane is the wall,
+    and the wall is the pan extent.
+  */
+  const frame = widened(
+    wallFrame(placed.flatMap((seat) => [frontFace(seat), topFace(seat), rightFace(seat)])),
+    minWidth,
+  );
+  const span = planeSpan(frameRange(frame));
+  const planes = rowZ.map((z) => shelfPlane(z, span));
 
   return (
     <svg
@@ -215,20 +231,33 @@ export function WallLabelled({
                       strokeWidth="1"
                     />
                     <foreignObject x={inset} y={inset} width={DEPTH - inset * 2} height={SPINE_HEIGHT - inset * 2}>
+                      {/*
+                        Two elements governed differently, on read-versus-drawn
+                        rather than on size — it looks like an inconsistency and
+                        is the rule. The ARTIST is read, so it takes a scale size
+                        (LABEL). The TITLE stands in for artwork, so it is a drawn
+                        element and its size derives from its box and its string
+                        (sleeve-type.ts) — the way the 72 derives from the year
+                        field. Anchored at the top: a long title clips at its
+                        tail, never its first line.
+                      */}
                       <div
-                        /*
-                          Anchored at the TOP: a long title clips at its tail, never its
-                          head — at 40px extrabold a 29-character title is five lines in
-                          a 188px square, and anchored at the bottom the clip took the
-                          first line. Which size a no-cover sleeve sets is open (§11.3
-                          says "large"; the scale has nothing between 40 and 15).
-                        */
-                        className="flex h-full flex-col justify-start overflow-hidden p-[16px] font-sans tracking-[-0.02em]"
+                        className="flex h-full flex-col justify-start overflow-hidden p-[16px] font-sans"
                         style={{ color: 'oklch(0.18 0.005 60)' }}
                       >
-                        {/* The identity pairing, large-to-small (§4.1): title at 40, artist at 13. */}
-                        <div className="text-headline leading-[0.95] font-extrabold">{record.title}</div>
-                        <div className="text-prose mt-[8px] font-normal">{record.artist}</div>
+                        <div className={LABEL}>{record.artist}</div>
+                        {(() => {
+                          const fit = sleeveTitle(record.title, DEPTH - inset * 2 - 32);
+                          return (
+                            <div
+                              data-sleeve-title=""
+                              className="mt-[6px] font-extrabold tracking-[-0.02em]"
+                              style={{ fontSize: `${fit.size}px`, lineHeight: SLEEVE_LEADING }}
+                            >
+                              {fit.text}
+                            </div>
+                          );
+                        })()}
                       </div>
                     </foreignObject>
                     <line
@@ -251,11 +280,28 @@ export function WallLabelled({
         }
 
         return (
-          <g
+          /*
+            **An anchor, not a group** (§11.8): the href is the record's route,
+            so the spine works with JavaScript off, names its record by role,
+            and is on the keyboard's path — and the FULL title is its
+            accessible name where the face carries the truncated one, the one
+            place in this design where truncation is not a loss. With
+            JavaScript on, the click is intercepted into the pull.
+          */
+          <a
             key={seat.id}
             data-seat={seat.id}
+            href={`/records/${seat.id}`}
+            aria-label={`${record.artist} · ${record.title}`}
             style={{ cursor: onSeatClick === undefined ? undefined : 'pointer' }}
-            onClick={onSeatClick === undefined ? undefined : () => onSeatClick(seat.id)}
+            onClick={
+              onSeatClick === undefined
+                ? undefined
+                : (event) => {
+                    event.preventDefault();
+                    onSeatClick(seat.id);
+                  }
+            }
           >
             <polygon data-face="top" points={points(topFace(seat))} fill={TOP_FILL} stroke={INK} strokeWidth="1" />
             <polygon data-face="right" points={points(rightFace(seat))} fill={FACE_FILL} stroke={INK} strokeWidth="1" />
@@ -268,7 +314,7 @@ export function WallLabelled({
               strokeWidth="1"
             />
             {labels ? label(seat, record.label) : null}
-          </g>
+          </a>
         );
       })}
     </svg>

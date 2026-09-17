@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { WALL_INK } from '../src/app/wall/pull-colour';
 import { SPINE_WIDTH_MIN, frontFace, layoutRow } from '../src/app/wall/geometry';
 import { intoShelves } from '../src/app/wall/shelf-rows';
 import { SPINE_TEXT_BUDGET, spineLabel } from '../src/app/wall/spine-text';
@@ -243,4 +244,100 @@ test('removes labels only when the viewport cannot hold one record (§5 as a gua
 
   await page.setViewportSize({ width: 1440, height: 900 });
   await expect(page.locator('[data-label]')).toHaveCount(COLLECTION_SPINES.length);
+});
+
+test('each spine is a link by role, named by its FULL title, with the record’s route (§11.8)', async ({
+  page,
+}) => {
+  /* The face carries the truncated label; the accessible name carries the whole title. */
+  const donna = COLLECTION_SPINES.findIndex((row) => row.title.startsWith('On The Radio'));
+  const link = page.getByRole('link', {
+    name: `${COLLECTION_SPINES[donna].artist} · ${COLLECTION_SPINES[donna].title}`,
+    exact: true,
+  });
+  await expect(link).toHaveCount(1);
+  await expect(link).toHaveAttribute('href', `/records/collection-${donna}`);
+  await expect(page.getByRole('link', { name: /Greates…/ }), 'the truncated form is not the name').toHaveCount(0);
+  await expect(page.locator('[data-seat]').and(page.locator('a'))).toHaveCount(COLLECTION_SPINES.length);
+});
+
+test('a spine navigates with JavaScript disabled — the fallback is exercised, not inferred from an href', async ({
+  browser,
+  page,
+}) => {
+  /*
+    An href is necessary and not sufficient for "works without JavaScript":
+    an element can carry one and still not be navigable without its handler.
+    So a second context with JavaScript off, carrying this session's cookie,
+    clicks the spine and must ARRIVE.
+  */
+  const storage = await page.context().storageState();
+  const noJs = await browser.newContext({ storageState: storage, javaScriptEnabled: false });
+  try {
+    const plain = await noJs.newPage();
+    await plain.goto('/wall/probe/labelled');
+    await plain.locator('[data-wall="labelled"]').waitFor({ timeout: 15_000 });
+    await plain.locator('[data-seat="collection-7"] [data-spine]').click();
+    await expect(plain).toHaveURL(/\/records\/collection-7$/);
+  } finally {
+    await noJs.close();
+  }
+});
+
+test('a keyboard can walk the wall and open a record', async ({ page }) => {
+  /* Tab until focus lands on a spine, as a keyboard user would; see it; press Enter; the record comes out. */
+  let reached = false;
+  for (let press = 0; press < 40 && !reached; press += 1) {
+    await page.keyboard.press('Tab');
+    reached = await page.evaluate(() => document.activeElement?.closest('[data-seat]') !== null);
+  }
+  expect(reached, 'the wall must be reachable by keyboard at all').toBe(true);
+  const focused = await page.evaluate(() => {
+    const el = document.activeElement;
+    const r = el?.getBoundingClientRect();
+    return { id: el?.closest('[data-seat]')?.getAttribute('data-seat'), w: r?.width ?? 0, h: r?.height ?? 0 };
+  });
+  expect(focused.id, 'the first spine in document order is the first seat').toBe('collection-0');
+  expect(focused.w, 'the focused record is on screen, not clipped to 1px').toBeGreaterThan(20);
+  expect(focused.h).toBeGreaterThan(100);
+
+  await page.keyboard.press('Enter');
+  await expect(page.locator('[data-pulled="collection-0"]')).toHaveCount(1);
+});
+
+test('document order is seat order — asserted, since it holds only while seats vary along x alone', async ({
+  page,
+}) => {
+  const order = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('[data-seat]')).map((el) => el.getAttribute('data-seat')),
+  );
+  expect(order).toEqual(COLLECTION_SPINES.map((_, index) => `collection-${index}`));
+});
+
+test('the plane is the pan extent: it runs off both edges of the svg at every row', async ({ page }) => {
+  const edges = await page.evaluate(() => {
+    const svg = document.querySelector('[data-wall="labelled"]');
+    if (!(svg instanceof SVGSVGElement)) return null;
+    const s = svg.getBoundingClientRect();
+    return Array.from(svg.querySelectorAll('[data-plane]')).map((plane) => {
+      const r = (plane as SVGGraphicsElement).getBoundingClientRect();
+      return { left: r.left - s.left, right: r.right - s.right };
+    });
+  });
+  expect(edges).not.toBeNull();
+  if (edges === null) return;
+  expect(edges.length).toBeGreaterThanOrEqual(4);
+  for (const edge of edges) {
+    expect(edge.left, 'off the left edge').toBeLessThan(0);
+    expect(edge.right, 'off the right edge').toBeGreaterThan(0);
+  }
+});
+
+test('the record with no cover pulls to ink, not to a default colour', async ({ page }) => {
+  await page.clock.install();
+  await page.clock.pauseAt(Date.now() + 1000);
+  const blues = COLLECTION_SPINES.findIndex((row) => row.resampled === null);
+  await page.locator(`[data-seat="collection-${blues}"] [data-spine]`).click();
+  await page.clock.runFor(1040);
+  await expect(page.locator('[data-pulled] [data-field]')).toHaveAttribute('fill', WALL_INK);
 });
