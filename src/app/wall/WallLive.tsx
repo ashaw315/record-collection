@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { WallLabelled, type PullState } from './WallLabelled';
 import type { WallSeat } from './shelf-runs';
 import { PULL_DURATION_MS } from './pull-curve';
+import { labelsFit } from './geometry';
 
 /**
  * The 1:1 wall with its pull driven against the clock.
@@ -20,6 +21,23 @@ import { PULL_DURATION_MS } from './pull-curve';
 export function WallLive({ seats }: { seats: readonly WallSeat[] }) {
   const [pull, setPull] = useState<PullState | null>(null);
   const started = useRef<number | null>(null);
+
+  /*
+    §5's guard, measured (D1): labels are removed only when the container
+    cannot hold one record. Rendered with labels first — the server has no
+    width — and re-measured on resize.
+  */
+  const container = useRef<HTMLDivElement>(null);
+  const [labels, setLabels] = useState(true);
+  useEffect(() => {
+    const el = container.current;
+    if (el === null) return;
+    const measure = () => setLabels(labelsFit(el.clientWidth));
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const begin = useCallback((id: string, direction: PullState['direction']) => {
     started.current = null;
@@ -58,15 +76,18 @@ export function WallLive({ seats }: { seats: readonly WallSeat[] }) {
   }, [pull, begin]);
 
   return (
-    <WallLabelled
-      seats={seats}
-      pull={pull}
-      onSeatClick={(id) => {
-        if (pull === null) begin(id, 'out');
-      }}
-      onPulledClick={() => {
-        if (pull !== null && pull.direction === 'out' && pull.progress >= 1) begin(pull.id, 'back');
-      }}
-    />
+    <div ref={container} data-wall-container="">
+      <WallLabelled
+        seats={seats}
+        pull={pull}
+        labels={labels}
+        onSeatClick={(id) => {
+          if (pull === null) begin(id, 'out');
+        }}
+        onPulledClick={() => {
+          if (pull !== null && pull.direction === 'out' && pull.progress >= 1) begin(pull.id, 'back');
+        }}
+      />
+    </div>
   );
 }

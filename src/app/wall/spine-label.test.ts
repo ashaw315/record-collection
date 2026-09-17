@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { SPINE_TEXT_BUDGET, spineLabel } from './spine-text';
+import { GLYPH_ADVANCE_PX, SPINE_TEXT_BUDGET, spineLabel } from './spine-text';
+import { SPINE_HEIGHT } from './geometry';
 import { COLLECTION_SPINES } from '../../../test/fixtures/collection-spines';
 
 describe('the 1:1 label (5b §1)', () => {
@@ -48,5 +49,26 @@ describe('Wall Density’s truncation count, re-gathered at the budget the code 
   it('cycled to 120 labels as Wall Density drew them, 21 truncate at 37 too', () => {
     const wall = Array.from({ length: 120 }, (_, i) => labels[i % labels.length]);
     expect(wall.filter((l) => l.endsWith('…'))).toHaveLength(21);
+  });
+});
+
+describe('the budget is a rule, not a number: it derives to 37 at both scales', () => {
+  /**
+   * Design's check on the withdrawal: D2's 30 came from an advance of 7.03 —
+   * its 6.5px size plus 0.5 letter-spacing applied at 5b's scale. The
+   * measured advance is 0.6em and nothing else. Derived from named terms at
+   * each scale, the two agree, which is what makes the budget scale-invariant
+   * — a character count does not multiply with the unit.
+   */
+  it('floor(232 / 6.235) at 5b’s unit and floor(145 / 3.9) at D2’s are both the budget', () => {
+    const at5b = Math.floor((SPINE_HEIGHT - 8) / GLYPH_ADVANCE_PX);
+    const d2Height = 150;
+    const d2Inset = 5;
+    const d2Advance = 0.6 * 6.5;
+    const atD2 = Math.floor((d2Height - d2Inset) / d2Advance);
+    expect(at5b).toBe(SPINE_TEXT_BUDGET);
+    expect(atD2).toBe(SPINE_TEXT_BUDGET);
+    /* And the advance is the em ratio at the label's size, nothing added. */
+    expect(GLYPH_ADVANCE_PX / 10.39).toBeCloseTo(0.6, 2);
   });
 });

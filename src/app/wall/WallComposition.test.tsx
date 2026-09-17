@@ -36,6 +36,8 @@ describe('the wall composition', () => {
     const html = render(17);
     expect(html).toContain('data-region="wall"');
     expect(html).toMatch(/data-region="wall"[^>]*col-span-2/);
+    /* D1: 1:1 and pans — the region scrolls the drawing rather than scaling it. */
+    expect(html).toMatch(/data-region="wall"[^>]*overflow-auto/);
     expect(html).toMatch(/data-composition[^>]*oklch\(0\.925 0\.004 80\)/);
     /* The svg owns no ground of its own: one paper, the page's. */
     const svg = /<svg[^>]*data-wall="labelled"[^>]*>/.exec(html)?.[0] ?? '';

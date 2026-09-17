@@ -14,7 +14,9 @@ import {
   SPINE_WIDTH_MIN,
   coverTransform,
   frontFace,
+  labelsFit,
   layoutRow,
+  oneRecordPx,
   paintOrder,
   project,
   rightFace,
@@ -318,5 +320,22 @@ describe('the plane spans seats, not occupants (5b §2)', () => {
     expect(planes).toHaveLength(2);
     /* A's plane spans both its seats, a2's included, at its slid-free extent. */
     expect(planes[0]).toEqual(shelfPlane(placed.slice(0, 2), placed[0].z));
+  });
+});
+
+describe('D1: the wall renders at 1:1 and pans; §5 removes labels only below one record', () => {
+  it('measures one record as the projected width of its three faces', () => {
+    const seat: PlacedSeat = { id: 'r', x: 0, y: 0, z: 0, width: SPINE_WIDTH_MAX };
+    const xs = [...frontFace(seat), ...topFace(seat), ...rightFace(seat)].map(([x]) => x);
+    expect(oneRecordPx()).toBeCloseTo(Math.max(...xs) - Math.min(...xs), 6);
+    /* (width + depth) · cos30 — the footprint seen from the corner. */
+    expect(oneRecordPx()).toBeCloseTo((SPINE_WIDTH_MAX + DEPTH) * COS30, 6);
+  });
+
+  it('keeps labels at any container that holds one record, and removes them below it', () => {
+    expect(labelsFit(1440)).toBe(true);
+    expect(labelsFit(Math.ceil(oneRecordPx()))).toBe(true);
+    expect(labelsFit(Math.floor(oneRecordPx()) - 1)).toBe(false);
+    expect(labelsFit(0)).toBe(false);
   });
 });

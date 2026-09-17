@@ -87,11 +87,14 @@ export type PullState = {
 export function WallLabelled({
   seats,
   pull = null,
+  labels = true,
   onSeatClick,
   onPulledClick,
 }: {
   seats: readonly WallSeat[];
   pull?: PullState | null;
+  /** §5's guard: false only when the container cannot hold one record (D1). */
+  labels?: boolean;
   onSeatClick?: (id: string) => void;
   onPulledClick?: () => void;
 }) {
@@ -118,11 +121,11 @@ export function WallLabelled({
   });
 
   /*
-    **At 1:1, never above it.** The svg is as wide as its drawing, in px, and
-    only ever scales DOWN to its container — a small collection on four
-    shelves left at `width: 100%` filled the viewport with one record and
-    set its labels at forty pixels. Below 1:1 §5 removes labels; that switch
-    is its own decision and is not here.
+    **At 1:1 — never above it, never below it (D1).** The svg is exactly as
+    wide as its drawing, in px. At `width: 100%` a small collection scaled
+    UP until one record filled the screen; at `max-width: 100%` the 200 case
+    scaled DOWN below the 9px floor. The wall pans instead: its region
+    scrolls the drawing rather than scaling it.
   */
   const frame = wallFrame(planes, placed.map(frontFace));
 
@@ -130,8 +133,10 @@ export function WallLabelled({
     <svg
       data-wall="labelled"
       viewBox={frame.viewBox}
+      width={frame.width}
+      height={frame.height}
       /* No ground of its own: the page's paper is the wall's, one surface. */
-      style={{ width: `${frame.width}px`, maxWidth: '100%', height: 'auto', display: 'block' }}
+      style={{ width: `${frame.width}px`, height: `${frame.height}px`, display: 'block' }}
     >
       {planes.map((plane, index) => (
         <polygon key={`plane-${index}`} data-plane="" points={points(plane)} fill={PLANE_FILL} stroke={RULE} strokeWidth="1" />
@@ -181,7 +186,7 @@ export function WallLabelled({
               </g>
               <polygon data-face="front" points={points(face)} fill={FACE_FILL} stroke={INK} strokeWidth="1" pointerEvents="all" />
               {/* The same object: its spine still says what it is. */}
-              {label(seat, record.label)}
+              {labels ? label(seat, record.label) : null}
             </g>
           );
         }
@@ -203,7 +208,7 @@ export function WallLabelled({
               stroke={INK}
               strokeWidth="1"
             />
-            {label(seat, record.label)}
+            {labels ? label(seat, record.label) : null}
           </g>
         );
       })}

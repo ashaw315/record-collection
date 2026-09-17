@@ -8,6 +8,10 @@ import { LABEL } from '../records/[id]/grid-type';
  * third, in the record screen's vocabulary — the page around the wall takes
  * the record screen's system; the wall keeps its own geometry.
  *
+ * **At 1:1, panning (D1).** A sub-1:1 wall is a shelf of anonymous outlines
+ * once the label is the only identifying channel; the region scrolls the
+ * drawing. The 200-record overview is a different view with a different job.
+ *
  * **No carcass.** The reference draws a case around the whole thing — top,
  * sides and bottom — and it reads as furniture in a room rather than as a
  * wall. Shelves, records, and paper.
@@ -33,7 +37,8 @@ export function WallComposition({ seats }: { seats: readonly WallSeat[] }) {
           {seats.length}
         </div>
       </div>
-      <div data-region="wall" className="col-span-2 p-[34px] pl-0">
+      {/* D1: 1:1 and pans — the region scrolls the drawing rather than scaling it. */}
+      <div data-region="wall" className="col-span-2 overflow-auto p-[34px] pl-0">
         <WallLive seats={seats} />
       </div>
     </section>

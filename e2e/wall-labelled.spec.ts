@@ -195,3 +195,52 @@ test('keeps every label inside the spine it names', async ({ page }) => {
   }
   expect(SPINE_WIDTH_MIN, 'the thinnest spine still holds the band').toBeGreaterThanOrEqual(14);
 });
+
+test('renders at 1:1 — the svg is its viewBox width on screen — and pans rather than scaling (D1)', async ({
+  page,
+}) => {
+  const oneToOne = await page.evaluate(() => {
+    const svg = document.querySelector('[data-wall="labelled"]');
+    if (!(svg instanceof SVGSVGElement)) return null;
+    return { drawn: svg.viewBox.baseVal.width, shown: svg.getBoundingClientRect().width };
+  });
+  expect(oneToOne).not.toBeNull();
+  if (oneToOne === null) return;
+  expect(oneToOne.shown).toBeCloseTo(oneToOne.drawn, 0);
+
+  /* Two hundred records: wider than the region, so the region scrolls and the labels stay at the floor. */
+  await page.goto('/wall/probe/labelled?count=200');
+  await page.locator('[data-wall="labelled"]').waitFor({ timeout: 15_000 });
+  const wide = await page.evaluate(() => {
+    const region = document.querySelector('[data-region="wall"]');
+    const svg = document.querySelector('[data-wall="labelled"]');
+    const label = document.querySelector('[data-label]');
+    if (!(region instanceof HTMLElement) || !(svg instanceof SVGSVGElement) || label === null) return null;
+    return {
+      pans: region.scrollWidth > region.clientWidth,
+      shown: svg.getBoundingClientRect().width,
+      drawn: svg.viewBox.baseVal.width,
+      labels: document.querySelectorAll('[data-label]').length,
+      size: label.getAttribute('font-size'),
+    };
+  });
+  expect(wide).not.toBeNull();
+  if (wide === null) return;
+  expect(wide.pans, 'the region pans').toBe(true);
+  expect(wide.shown, 'still 1:1').toBeCloseTo(wide.drawn, 0);
+  expect(wide.labels).toBe(200);
+  expect(wide.size).toBe('10.39');
+});
+
+test('removes labels only when the viewport cannot hold one record (§5 as a guard)', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 200, height: 900 });
+  await page.goto('/wall/probe/labelled');
+  await page.locator('[data-wall="labelled"]').waitFor({ timeout: 15_000 });
+  await expect(page.locator('[data-label]')).toHaveCount(0);
+  await expect(page.locator('[data-face="front"]')).toHaveCount(COLLECTION_SPINES.length);
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(page.locator('[data-label]')).toHaveCount(COLLECTION_SPINES.length);
+});

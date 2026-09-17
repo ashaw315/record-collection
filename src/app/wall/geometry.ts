@@ -239,3 +239,18 @@ export function coverTransform({ x, y, z, width }: PlacedSeat): string {
   const [px, py] = project(x + width, y, z + SPINE_HEIGHT);
   return `matrix(${-COS30} ${SIN30} 0 1 ${px} ${py})`;
 }
+
+/**
+ * **D1: the wall renders at 1:1 and pans.** A sub-1:1 wall is a shelf of
+ * anonymous outlines once the label is the only identifying channel, so 5b
+ * §5's remove-don't-shrink is a GUARD for a viewport narrower than one record
+ * rather than the mechanism for showing the collection. One record is its
+ * three faces' projected width — the footprint seen from the corner.
+ */
+export function oneRecordPx(): number {
+  return (SPINE_WIDTH_MAX + DEPTH) * COS30;
+}
+
+export function labelsFit(containerPx: number): boolean {
+  return containerPx >= oneRecordPx();
+}
