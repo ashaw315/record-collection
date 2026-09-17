@@ -83,7 +83,7 @@ describe('5b’s two faces at rest (D2): three faces per record, filled in paper
     expect(seatA).toContain(`fill="${FACE_FILL}"`);
     /* Paper, not none: the painter's order only occludes with opaque faces. */
     expect(seatA).not.toContain('fill="none"');
-    expect(html).toContain(`data-plane="" points="`);
+    expect(html).toContain(`data-furniture="shelf-top" points="`);
     expect(html).toContain(`fill="${PLANE_FILL}"`);
   });
 
@@ -197,7 +197,7 @@ describe('the record with no cover arrives at type, not at a swatch (§11.3, §1
     */
     expect(sleeve).toMatch(/text-label[^>]*>Artist b</);
     expect(sleeve.indexOf('Artist b')).toBeLessThan(sleeve.indexOf('Title b'));
-    expect(sleeve).toMatch(/data-sleeve-title[^>]*font-size:\d+px[^>]*>Title b</);
+    expect(sleeve).toMatch(/data-sleeve-title[^>]*font-size:[\d.]+px[^>]*>Title b</);
     expect(sleeve, 'a long title clips rather than escaping the sleeve').toContain('overflow-hidden');
     expect(sleeve, 'anchored at the top: the clip takes the tail, never the title’s first line').toContain('justify-start');
     expect(html.indexOf('<g transform="matrix(')).toBeLessThan(html.indexOf('data-no-cover'));
@@ -241,20 +241,78 @@ describe('document order is seat order (§11.8) — asserted, because it holds o
   });
 });
 
-describe('the plane is the pan extent (§11.8)', () => {
-  it('widens the drawing to the container when the container is wider, and the planes run past both edges', () => {
+describe('the drawing is never smaller than the region that shows it', () => {
+  it('widens the frame to the container; the unit does not lengthen', () => {
     const narrow = render([seat('a', null)], null, true);
     const narrowBox = /viewBox="([^"]+)"/.exec(narrow)?.[1]?.split(' ').map(Number) ?? [];
     const wide = render([seat('a', null)], null, true, narrowBox[2] + 1000);
-    const svg = /<svg[^>]*data-wall="labelled"[^>]*>/.exec(wide)?.[0] ?? '';
-    const box = /viewBox="([^"]+)"/.exec(svg)?.[1]?.split(' ').map(Number) ?? [];
+    const box = /viewBox="([^"]+)"/.exec(wide)?.[1]?.split(' ').map(Number) ?? [];
     expect(box[2]).toBe(narrowBox[2] + 1000);
-    expect(svg).toContain(`width:${box[2]}px`);
+    const furniture = (h: string) => [...h.matchAll(/data-furniture="[a-z-]+" points="([^"]+)"/g)].map((m) => m[1]);
+    expect(furniture(wide), 'the fixture is the fixture at any width').toEqual(furniture(narrow));
+  });
+});
 
-    const plane = /data-plane="" points="([^"]+)"/.exec(wide)?.[1] ?? '';
-    const xs = plane.split(' ').map((pair) => Number(pair.split(',')[0]));
-    expect(Math.min(...xs), 'off the left edge').toBeLessThan(box[0]);
-    expect(Math.max(...xs), 'off the right edge').toBeGreaterThan(box[0] + box[2]);
+describe('the record with no cover arrives at type, not at a swatch (§11.3, §11.7)', () => {
+  it('sets title and artist large on a paper sleeve area over the field, with §6’s diagonal across it', () => {
+    const html = render([seat('a', null), seat('b', null, null)], { id: 'b', direction: 'out', progress: 1 });
+    const pulled = html.slice(html.indexOf('data-pulled="b"'));
+    /* The field is still painted — the same fill every pull arrives at — and the sleeve area sits on it. */
+    expect(pulled).toContain('data-field');
+    const sleeve = pulled.slice(pulled.indexOf('data-no-cover'));
+    expect(sleeve, 'a sleeve area where the cover would be').not.toBe('');
+    expect(sleeve).toContain('data-diagonal');
+    expect(sleeve).toContain('Title b');
+    expect(sleeve).toContain('Artist b');
+    /*
+      Two elements, governed differently on read-versus-drawn: the artist is
+      READ and takes a scale size (LABEL, above); the title stands in for
+      artwork, so it is a DRAWN element whose size derives from its box and
+      its string, the way the 72 does in the year field.
+    */
+    expect(sleeve).toMatch(/text-label[^>]*>Artist b</);
+    expect(sleeve.indexOf('Artist b')).toBeLessThan(sleeve.indexOf('Title b'));
+    expect(sleeve).toMatch(/data-sleeve-title[^>]*font-size:[\d.]+px[^>]*>Title b</);
+    expect(sleeve, 'a long title clips rather than escaping the sleeve').toContain('overflow-hidden');
+    expect(sleeve, 'anchored at the top: the clip takes the tail, never the title’s first line').toContain('justify-start');
+    expect(html.indexOf('<g transform="matrix(')).toBeLessThan(html.indexOf('data-no-cover'));
+  });
+
+  it('draws no sleeve area and no diagonal for a record that has a cover', () => {
+    const html = render([seat('a', 'https://covers.test/a.jpg')], { id: 'a', direction: 'out', progress: 1 });
+    expect(html).not.toContain('data-no-cover');
+    expect(html).not.toContain('data-diagonal');
+    expect(html).toContain('data-cover="a"');
+  });
+});
+
+describe('spines are anchors inside the SVG (§11.8)', () => {
+  it('wraps each seat’s faces in an <a> with the record’s route and the FULL title as its name', () => {
+    const html = render([seat('a', null), seat('b', null)], null);
+    const a = html.slice(html.indexOf('data-seat="a"'), html.indexOf('data-seat="b"'));
+    const open = /<a [^>]*data-seat="a"[^>]*>/.exec(html)?.[0] ?? '';
+    expect(open, 'the seat is an anchor').not.toBe('');
+    expect(open).toContain('href="/records/a"');
+    /* The face carries the truncated label; the accessible name carries the whole title. */
+    expect(open).toContain('aria-label="Artist a · Title a"');
+    for (const face of ['top', 'right', 'front']) expect(a).toContain(`data-face="${face}"`);
+  });
+
+});
+
+describe('document order is seat order (§11.8) — asserted, because it holds only while seats vary along x alone', () => {
+  it('lists the seats in the DOM in seat order, rows top to bottom, with no tabindex', () => {
+    /*
+      SVG has no z-index: paint order is document order, and document order
+      is what a keyboard walks. The two agree today because seats within a
+      row vary only along x. The day a row's seats vary in depth, THIS fails
+      rather than the reading order silently going wrong.
+    */
+    const many = Array.from({ length: 11 }, (_, i) => seat(`s${String(i).padStart(2, '0')}`, null));
+    const html = render(many, null);
+    const order = [...html.matchAll(/data-seat="([^"]+)"/g)].map((m) => m[1]);
+    expect(order).toEqual(many.map((s) => s.id));
+    expect(html, 'no tabindex — document order serves the reader').not.toContain('tabindex');
   });
 });
 

@@ -119,7 +119,7 @@ export function WallLabelled({
   const movingById = new Map(moving.map((state) => [state.id, state]));
 
   const byId = new Map(seats.map((seat) => [seat.id, seat]));
-  const { placed, planes, breaks, frame } = wallLayout(seats, moving.map((m) => ({ id: m.id, pose: poseOf(m) })), minWidth, minHeight);
+  const { placed, furniture, breaks, frame } = wallLayout(seats, moving.map((m) => ({ id: m.id, pose: poseOf(m) })), minWidth, minHeight);
   /* The landing square, in svg coordinates: the view is given relative to the svg's top-left. */
   const [frameX, frameY] = frame.viewBox.split(' ').map(Number);
   const region: View = view ?? { x: 0, y: 0, width: frame.width, height: frame.height };
@@ -226,34 +226,37 @@ export function WallLabelled({
                       strokeWidth="1"
                     />
                     <foreignObject x={inset} y={inset} width={DEPTH - inset * 2} height={SPINE_HEIGHT - inset * 2}>
-                      {/*
-                        Two elements governed differently, on read-versus-drawn
-                        rather than on size — it looks like an inconsistency and
-                        is the rule. The ARTIST is read, so it takes a scale size
-                        (LABEL). The TITLE stands in for artwork, so it is a drawn
-                        element and its size derives from its box and its string
-                        (sleeve-type.ts) — the way the 72 derives from the year
-                        field. Anchored at the top: a long title clips at its
-                        tail, never its first line.
-                      */}
-                      <div
-                        className="flex h-full flex-col justify-start overflow-hidden p-[16px] font-sans"
-                        style={{ color: 'oklch(0.18 0.005 60)' }}
-                      >
-                        <div className={LABEL}>{record.artist}</div>
-                        {(() => {
-                          const fit = sleeveTitle(record.title, DEPTH - inset * 2 - 32);
-                          return (
+                      {(() => {
+                        /*
+                          **Laid out in LANDED pixels, divided by the group's scale.** The
+                          sleeve is read where it lands, and the group scales by `k` on
+                          arrival — so the padding, the artist's LABEL size and the fitted
+                          title are all set at their landed size over k. That is also the
+                          read-versus-drawn rule holding on landing: the artist is READ and
+                          lands at LABEL's 11px, not 11·k; the title stands in for artwork
+                          and is fitted to the landed sleeve (sleeve-type.ts). Anchored at
+                          the top: a long title clips at its tail, never its head.
+                        */
+                        const k = square.size / DEPTH;
+                        const fit = sleeveTitle(record.title, (DEPTH - inset * 2) * k - 32);
+                        return (
+                          <div
+                            className="flex h-full flex-col justify-start overflow-hidden font-sans tracking-[-0.02em]"
+                            style={{ color: 'oklch(0.18 0.005 60)', padding: `${16 / k}px` }}
+                          >
+                            <div className={LABEL} style={{ fontSize: `${11 / k}px` }}>
+                              {record.artist}
+                            </div>
                             <div
                               data-sleeve-title=""
-                              className="mt-[6px] font-extrabold tracking-[-0.02em]"
-                              style={{ fontSize: `${fit.size}px`, lineHeight: SLEEVE_LEADING }}
+                              className="font-extrabold tracking-[-0.02em]"
+                              style={{ fontSize: `${fit.size / k}px`, lineHeight: SLEEVE_LEADING, marginTop: `${6 / k}px` }}
                             >
                               {fit.text}
                             </div>
-                          );
-                        })()}
-                      </div>
+                          </div>
+                        );
+                      })()}
                     </foreignObject>
                     <line
                       data-diagonal=""
@@ -283,8 +286,9 @@ export function WallLabelled({
       /* No ground of its own: the page's paper is the wall's, one surface. */
       style={{ width: `${frame.width}px`, height: `${frame.height}px`, display: 'block' }}
     >
-      {planes.map((plane, index) => (
-        <polygon key={`plane-${index}`} data-plane="" points={points(plane)} fill={PLANE_FILL} stroke={RULE} strokeWidth="1" />
+      {/* The unit's furniture first (§11.10, §11.11): four shelves joined by uprights, the records standing on them. */}
+      {furniture.map((face, index) => (
+        <polygon key={`f-${index}`} data-furniture={face.kind} points={points(face.points)} fill={PLANE_FILL} stroke={RULE} strokeWidth="1" />
       ))}
       {/* §2's breaks: a rule across the plane at the seat boundary; the plane runs on past it. */}
       {breaks.map(([from, to], index) => (

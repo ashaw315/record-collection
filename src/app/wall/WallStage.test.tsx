@@ -5,6 +5,7 @@ import { WallStage } from './WallStage';
 import type { WallSeat } from './shelf-runs';
 import type { RecordSummary } from './summary';
 import { PERCEIVED_END } from './pull-colour';
+import { DEPTH, SPINE_HEIGHT } from './geometry';
 
 /**
  * The stage: the drawing plus what the gesture arrives at. §11.7's panel
@@ -93,8 +94,8 @@ describe('the record lands in the drawing’s region (§11.9)', () => {
     const [a, b, c, d] = (group?.[1] ?? '').split(' ').map(Number);
     expect(b).toBe(0);
     expect(c).toBe(0);
-    expect(a * 240, 'the square’s size').toBeCloseTo(760 - 2 * 34, 9);
-    expect(d * 240).toBeCloseTo(760 - 2 * 34, 9);
+    expect(a * DEPTH, 'the square’s size').toBeCloseTo(760 - 2 * 34, 9);
+    expect(d * SPINE_HEIGHT).toBeCloseTo(760 - 2 * 34, 9);
     /* No lightness step: every plane and face fill is what it was at rest. */
     const fills = (h: string) => [...h.matchAll(/<polygon[^>]*fill="([^"]+)"/g)].map((m) => m[1]).filter((f) => f.startsWith('oklch'));
     expect(new Set(fills(html))).toEqual(new Set(fills(rest)));

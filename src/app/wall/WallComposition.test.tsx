@@ -52,11 +52,12 @@ describe('the wall composition', () => {
     expect(svg).not.toContain('background');
   });
 
-  it('puts seventeen records on one shelf of forty (§11.9), and draws nothing else — no carcass', () => {
+  it('puts seventeen records on the top shelf of one unit (§11.10), and draws the unit — nothing else', () => {
     const html = render(17);
-    const planes = html.split('data-plane=""').length - 1;
+    const furniture = html.split('data-furniture=').length - 1;
     const polygons = html.split('<polygon').length - 1;
-    expect(planes).toBe(1);
-    expect(polygons, 'the plane plus three faces per record, nothing around them').toBe(1 + 17 * 3);
+    /* Two uprights and four shelves, three faces each: the fixture, empty shelves drawn. */
+    expect(furniture).toBe(18);
+    expect(polygons, 'the unit plus three faces per record, no back, no front, no top').toBe(18 + 17 * 3);
   });
 });

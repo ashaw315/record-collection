@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { LANDING_PAD, ARROW_LANE, parseMatrix } from '../src/app/wall/landing';
+import { DEPTH, SPINE_HEIGHT } from '../src/app/wall/geometry';
 import { PULL_DURATION_MS } from '../src/app/wall/pull-curve';
 import { RETURN_FADE_END, WALL_PAPER_HEX, pullFill } from '../src/app/wall/pull-colour';
 import { recordLadder } from '../src/lib/colour/record-ladder';
@@ -71,7 +72,7 @@ test('clicking a spine lifts its cover face into the regionâ€™s largest square â
   page,
 }) => {
   expect(wired).not.toBeNull();
-  const planesBefore = await page.locator('[data-wall="labelled"] [data-plane]').count();
+  const furnitureBefore = await page.locator('[data-wall="labelled"] [data-furniture]').count();
 
   await page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`).click();
   await page.clock.runFor(1);
@@ -90,11 +91,11 @@ test('clicking a spine lifts its cover face into the regionâ€™s largest square â
   expect(c).toBe(0);
   /* The largest square the region holds. */
   const size = Math.min(region.w - 2 * (LANDING_PAD + ARROW_LANE), region.h - LANDING_PAD - 2 * LANDING_PAD);
-  expect(a * 240).toBeCloseTo(size, 6);
-  expect(d * 240).toBeCloseTo(size, 6);
-  /* The seat's spine has faded away; the plane still spans its seat. */
+  expect(a * DEPTH).toBeCloseTo(size, 6);
+  expect(d * SPINE_HEIGHT).toBeCloseTo(size, 6);
+  /* The seat's spine has faded away; the unit's furniture is unchanged by the pull. */
   await expect(page.locator('[data-pulled] [data-face="front"]')).toHaveAttribute('opacity', '0');
-  await expect(page.locator('[data-wall="labelled"] [data-plane]')).toHaveCount(planesBefore);
+  await expect(page.locator('[data-wall="labelled"] [data-furniture]')).toHaveCount(furnitureBefore);
 });
 
 test('colour arrives across the pull â€” paper at 0, the fill the curve gives at 500ms, base at the end', async ({

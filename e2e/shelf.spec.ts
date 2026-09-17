@@ -201,7 +201,8 @@ test('a spine is a link, so it survives without JavaScript', async ({ browser, p
     await plain.goto('/');
     const link = plain.getByRole('link', { name: new RegExp(title) });
     await expect(link).toHaveAttribute('href', `/records/${id}`);
-    await link.click();
+    /* The link's box spans its three faces and its centre falls on paper between them; the spine is the target. */
+    await link.locator('[data-spine]').click();
     await expect(plain).toHaveURL(`/records/${id}`);
   } finally {
     await noJs.close();

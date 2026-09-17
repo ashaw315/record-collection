@@ -1,18 +1,6 @@
-import {
-  frontFace,
-  layoutRow,
-  paintOrder,
-  planeSpan,
-  rightFace,
-  rowBreaks,
-  shelfPlane,
-  topFace,
-  type PlacedSeat,
-  type Point,
-} from './geometry';
+import { frontFace, paintOrder, rightFace, topFace, type Point } from './geometry';
 import type { ShelfSeat } from './shelf-runs';
-import { intoShelves } from './shelf-rows';
-import { frameRange, wallFrame } from './wall-frame';
+import { wallLayout } from './wall-layout';
 
 /**
  * The wall, zoomed out (The Wall 5b §5, D2).
@@ -55,34 +43,19 @@ export function WallOverview({
   seats: readonly ShelfSeat[];
   pulledId: string | null;
 }) {
-  const placed: PlacedSeat[] = [];
-  const breaks: (readonly [Point, Point])[] = [];
-  const rowZ: number[] = [];
-  intoShelves(seats).forEach((shelf, row) => {
-    const rowSeats = layoutRow(shelf, row);
-    breaks.push(...rowBreaks(shelf, rowSeats));
-    rowZ.push(rowSeats[0]?.z ?? 0);
-    /* The pulled record's SEAT is still spanned by its plane; no spine is drawn on it. */
-    placed.push(...rowSeats.filter((seat) => seat.id !== pulledId));
-  });
-  /* Framed on the faces; the planes then span the frame and run off both of its edges (§11.8). */
-  const frame = wallFrame(placed.flatMap((seat) => [frontFace(seat), topFace(seat), rightFace(seat)]));
-  const span = planeSpan(frameRange(frame));
-  const planes = rowZ.map((z) => shelfPlane(z, span));
+  const { placed, furniture, breaks, frame } = wallLayout(seats, [], 0);
+  const seated = placed.filter((seat) => seat.id !== pulledId);
 
   return (
-    <svg
-      viewBox={frame.viewBox}
-      style={{ background: 'oklch(0.925 0.004 80)', width: '100%', height: 'auto' }}
-    >
-      {planes.map((plane, index) => (
-        <polygon key={`plane-${index}`} data-plane="" points={points(plane)} fill={PLANE_FILL} stroke={RULE} strokeWidth="1" />
+    <svg viewBox={frame.viewBox} style={{ background: 'oklch(0.925 0.004 80)', width: '100%', height: 'auto' }}>
+      {/* The unit's furniture first, as §11.11 draws it; the records stand on it. */}
+      {furniture.map((face, index) => (
+        <polygon key={`f-${index}`} data-furniture={face.kind} points={points(face.points)} fill={PLANE_FILL} stroke={RULE} strokeWidth="1" />
       ))}
-      {/* §2's breaks: a rule across the plane at the seat boundary; the plane runs on past it. */}
       {breaks.map(([from, to], index) => (
         <line key={`break-${index}`} data-break="" x1={from[0].toFixed(2)} y1={from[1].toFixed(2)} x2={to[0].toFixed(2)} y2={to[1].toFixed(2)} stroke={RULE} strokeWidth="1" />
       ))}
-      {paintOrder(placed).map((seat) => (
+      {paintOrder(seated).map((seat) => (
         <g key={seat.id}>
           <polygon points={points(topFace(seat))} fill={TOP_FILL} stroke={INK} strokeWidth="1" />
           <polygon points={points(rightFace(seat))} fill={FACE_FILL} stroke={INK} strokeWidth="1" />

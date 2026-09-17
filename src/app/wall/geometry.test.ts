@@ -2,27 +2,25 @@ import { describe, expect, it } from 'vitest';
 import {
   COS30,
   DEPTH,
-  GAP,
-  LEDGE,
   ROW_PITCH,
+  SEAT_PITCH,
+  SHELF_DEPTH,
   SHELF_INSET_X,
   SHELF_INSET_Y,
   SIN30,
   SPINE_HEIGHT,
   SPINE_WIDTH_MAX,
   SPINE_WIDTH_MIN,
+  UNIT_PITCH_X,
   coverTransform,
   frontFace,
   labelsFit,
   layoutRow,
   oneRecordPx,
   paintOrder,
-  planeSpan,
   project,
   rightFace,
   rowBreaks,
-  rowPlanes,
-  shelfPlane,
   spineWidth,
   topFace,
   type PlacedSeat,
@@ -44,11 +42,11 @@ import {
 
 describe('the wall proportions derive rather than being asserted', () => {
   it('derives the width bounds from the spine height', () => {
-    expect(SPINE_HEIGHT).toBe(240);
+    expect(SPINE_HEIGHT).toBe(150);
     expect(SPINE_WIDTH_MIN).toBe(Math.round(SPINE_HEIGHT / 14));
     expect(SPINE_WIDTH_MAX).toBe(Math.round(SPINE_HEIGHT / 10));
-    expect(SPINE_WIDTH_MIN).toBe(17);
-    expect(SPINE_WIDTH_MAX).toBe(24);
+    expect(SPINE_WIDTH_MIN).toBe(11);
+    expect(SPINE_WIDTH_MAX).toBe(15);
   });
 
   it('keeps every spine inside the real bounds', () => {
@@ -64,21 +62,6 @@ describe('the wall proportions derive rather than being asserted', () => {
     expect(spineWidth('abc')).not.toBe(spineWidth('xyz'));
   });
 
-  /**
-   * **D2's figures are the reference's units (H = 150) applied as ratios to
-   * 5b's 240**, because the 9px floor's argument is made at 240 and a 12-unit
-   * spine would not hold it. Each ratio is named so the next change to H moves
-   * every figure with it rather than one of them.
-   */
-  it('applies D2’s ratios to the wall’s constant', () => {
-    const ratio = SPINE_HEIGHT / 150;
-    expect(DEPTH, 'square: a record is as deep as it is tall').toBe(SPINE_HEIGHT);
-    expect(GAP).toBe(Math.round(5 * ratio));
-    expect(SHELF_INSET_X).toBe(Math.round(20 * ratio));
-    expect(SHELF_INSET_Y).toBe(Math.round(10 * ratio));
-    expect(LEDGE).toBe(Math.round(46 * ratio));
-    expect(ROW_PITCH).toBe(Math.round(286 * ratio));
-  });
 });
 
 describe('one projection', () => {
@@ -105,16 +88,16 @@ describe('one projection', () => {
 describe('the row is on the axis', () => {
   const seats = Array.from({ length: 5 }, (_, index) => ({ id: `r${index}`, section: 'A' }));
 
-  it('advances each seat by its width plus the gap, along x', () => {
+  it('advances each seat by the unit’s fixed pitch, the hashed width textured inside it', () => {
     /*
-      D2: thickness plus gap is what keeps the objects countable — at 22 with
-      no gap the top faces tile into a ramp. So the gap is fixed and the seat
-      pitch follows the width, rather than every seat sitting at the widest.
+      §11.10: the row is the unit's, not the collection's — a fixed seat of 17
+      (a 12 spine and a 5 gap as drawn), the record's width varying inside it.
     */
     const placed = layoutRow(seats, 0);
     expect(placed[0].x).toBe(SHELF_INSET_X);
     for (let index = 1; index < placed.length; index += 1) {
-      expect(placed[index].x).toBe(placed[index - 1].x + placed[index - 1].width + GAP);
+      expect(placed[index].x).toBe(placed[index - 1].x + SEAT_PITCH);
+      expect(placed[index].width).toBeLessThanOrEqual(SEAT_PITCH - 2);
       expect(placed[index].y).toBe(SHELF_INSET_Y);
       expect(placed[index].z).toBe(placed[0].z);
     }
@@ -139,71 +122,16 @@ describe('the row is on the axis', () => {
     }
   });
 
-  it('stacks rows down the z axis at the pitch, row 0 highest', () => {
+  it('stacks rows down the z axis at the pitch, row 0 highest, and units along x', () => {
     const top = layoutRow(seats, 0)[0];
     const next = layoutRow(seats, 1)[0];
     expect(top.z - next.z).toBe(ROW_PITCH);
     expect(top.x).toBe(next.x);
+    expect(layoutRow(seats, 0, 1)[0].x - top.x).toBe(UNIT_PITCH_X);
   });
 });
 
-describe('the shelf is a single plane spanning the pan extent (§11.7, §11.8)', () => {
-  const seats = Array.from({ length: 3 }, (_, index) => ({ id: `r${index}`, section: 'A' }));
-  const placed = layoutRow(seats, 0);
-  /* A frame in screen-x, as wallFrame would report it. */
-  const view = { minX: -300, maxX: 900 };
-
-  const inside = (point: readonly [number, number], polygon: ReadonlyArray<readonly [number, number]>) => {
-    let hit = false;
-    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i, i += 1) {
-      const [xi, yi] = polygon[i];
-      const [xj, yj] = polygon[j];
-      if (yi > point[1] !== yj > point[1] && point[0] < ((xj - xi) * (point[1] - yi)) / (yj - yi) + xi + 1e-9) {
-        hit = !hit;
-      }
-    }
-    return hit;
-  };
-
-  it('runs off BOTH edges of the view at every depth — a fixture that ends inside the view is a platform', () => {
-    /*
-      §11.8 withdraws capacity as the measure: forty reads as a fixture
-      waiting to be stocked, sixteen is wrong at the eighteenth record, and
-      both are a fixture sized by a count. The plane is the wall and the wall
-      is the pan extent.
-    */
-    const plane = shelfPlane(0, planeSpan(view));
-    const xs = plane.map(([x]) => x);
-    expect(Math.min(...xs)).toBeLessThan(view.minX);
-    expect(Math.max(...xs)).toBeGreaterThan(view.maxX);
-    /* At the far edge AND the near edge, not only at the corners the shear favours. */
-    const [farL, farR, nearR, nearL] = plane;
-    expect(farL[0]).toBeLessThan(view.minX);
-    expect(nearL[0]).toBeLessThan(view.minX);
-    expect(farR[0]).toBeGreaterThan(view.maxX);
-    expect(nearR[0]).toBeGreaterThan(view.maxX);
-  });
-
-  it('is not sized by anything on it — the same span for one record or forty', () => {
-    const span = planeSpan(view);
-    for (const count of [1, 5, 40]) {
-      const row = Array.from({ length: count }, (_, index) => ({ id: `s${index}`, section: 'A' }));
-      expect(rowPlanes(row, layoutRow(row, 1), span)).toEqual([shelfPlane(-ROW_PITCH, span)]);
-    }
-  });
-
-  it('has every spine’s feet on it', () => {
-    const plane = shelfPlane(placed[0].z, planeSpan(view));
-    for (const seat of placed) {
-      const [footL, footR] = frontFace(seat);
-      expect(inside(footL, plane), `${seat.id} left foot on the plane`).toBe(true);
-      expect(inside(footR, plane), `${seat.id} right foot on the plane`).toBe(true);
-    }
-  });
-
-});
-
-describe('§2’s section breaks are marks within the plane, not its ends (§11.7)', () => {
+describe('§2’s section breaks are marks within the shelf, not its ends (§11.7)', () => {
   const shelf = [
     { id: 'a1', section: 'A' },
     { id: 'a2', section: 'A' },
@@ -217,15 +145,15 @@ describe('§2’s section breaks are marks within the plane, not its ends (§11.
     const breaks = rowBreaks(shelf, placed);
     expect(breaks).toHaveLength(2);
     const between = (a: PlacedSeat, b: PlacedSeat) => (a.x + a.width + b.x) / 2;
+    const z = placed[0].z;
     expect(breaks[0]).toEqual([
-      project(between(placed[1], placed[2]), 0, 0),
-      project(between(placed[1], placed[2]), SHELF_INSET_Y + DEPTH + LEDGE, 0),
+      project(between(placed[1], placed[2]), 0, z),
+      project(between(placed[1], placed[2]), SHELF_DEPTH, z),
     ]);
-    expect(breaks[1][0]).toEqual(project(between(placed[3], placed[4]), 0, 0));
+    expect(breaks[1][0]).toEqual(project(between(placed[3], placed[4]), 0, z));
   });
 
-  it('leaves the plane running past the break — one plane per row, whatever the sections', () => {
-    expect(rowPlanes(shelf, placed, planeSpan({ minX: -300, maxX: 900 }))).toHaveLength(1);
+  it('draws none within a section', () => {
     const one = [{ id: 'x', section: 'A' }];
     expect(rowBreaks(one, layoutRow(one, 0))).toEqual([]);
   });
@@ -253,28 +181,6 @@ describe('faces paint back to front by x + y, globally', () => {
     const b: PlacedSeat = { id: 'b', x: 30, y: 36, z: 0, width: 20 };
     expect(paintOrder([a, b]).map((s) => s.id)).toEqual(['a', 'b']);
     expect(paintOrder([b, a]).map((s) => s.id)).toEqual(['b', 'a']);
-  });
-});
-
-describe('the row pitch keeps one row off the next', () => {
-  it('exceeds the silhouette plus the ledge — the figure 238 failed on', () => {
-    /*
-      D2: "at 238 the lower row's top faces ate the upper row's ledge." The
-      lower row's highest point is its far top corner; the upper row's lowest
-      is its plane's near edge. In projection that is PITCH > H + (D + LEDGE)·sin30
-      — 248 in D2's units, which 238 fails and 286 clears by 38.
-    */
-    const minimum = SPINE_HEIGHT + (DEPTH + LEDGE) * SIN30;
-    expect(ROW_PITCH).toBeGreaterThan(minimum);
-
-    /* At the same x — the plane is wall-wide, so its near edge's screen-y varies with x. */
-    const seats = [{ id: 'r', section: 'A' }];
-    const upper = layoutRow(seats, 0);
-    const lower = layoutRow(seats, 1);
-    const x = lower[0].x;
-    const upperPlaneNear = project(x, SHELF_INSET_Y + DEPTH + LEDGE, upper[0].z)[1];
-    const lowerTopFar = project(x, lower[0].y, lower[0].z + SPINE_HEIGHT)[1];
-    expect(lowerTopFar, 'the lower row’s top stays below the upper plane').toBeGreaterThan(upperPlaneNear);
   });
 });
 
@@ -337,14 +243,6 @@ describe('5b’s two faces, on the same three coordinates (D2)', () => {
     near(apply(D, 0), project(119, 16, 458 + H));
     near(apply(0, H), project(119, 16 + D, 458));
     expect(a * d - b * c, 'not mirrored: positive determinant').toBeGreaterThan(0);
-  });
-});
-
-describe('a run with no seated records still has a shelf (§11.6)', () => {
-  it('draws the plane under a row whose only record is pulled — the plane is the shelf’s, not its occupants’', () => {
-    const shelf = [{ id: 'only', section: 'A' }];
-    const placed = layoutRow(shelf, 0);
-    expect(rowPlanes(shelf, placed, planeSpan({ minX: -300, maxX: 900 }))).toEqual([shelfPlane(placed[0].z, planeSpan({ minX: -300, maxX: 900 }))]);
   });
 });
 

@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { WALL_INK } from '../src/app/wall/pull-colour';
 import { SPINE_WIDTH_MIN, frontFace, layoutRow } from '../src/app/wall/geometry';
-import { intoShelves } from '../src/app/wall/shelf-rows';
+import { unitRows } from '../src/app/wall/unit';
 import { SPINE_TEXT_BUDGET, spineLabel } from '../src/app/wall/spine-text';
 import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
 
@@ -97,7 +97,7 @@ test('labels every spine at the drawn size, rotated up the spine, cut to the bud
 
   /* The drawn truncation, on the drawn record. */
   const donna = labels.find((label) => label.text.startsWith('Donna Summer'));
-  expect(donna?.text).toBe('Donna Summer · On The Radio: Greates…');
+  expect(donna?.text).toBe('Donna Summer · On Th…');
 });
 
 test('sets every label in ink, and nothing in the resting drawing carries a hue', async ({
@@ -143,10 +143,10 @@ test('draws the same polygons the overview does, by the shared geometry', async 
     })),
   );
 
-  /* Seventeen records over four shelves: each row placed on its own z. */
-  const placed = intoShelves(
+  /* Seventeen records on one unit's top shelf: placed by unit and row. */
+  const placed = unitRows(
     COLLECTION_SPINES.map((_, index) => ({ id: `collection-${index}`, section: 'Collection' })),
-  ).flatMap((shelf, row) => layoutRow(shelf, row));
+  ).flatMap(({ unit, row, seats }) => layoutRow(seats, row, unit));
   drawn.forEach((seat) => {
     const expected = placed.find((p) => p.id === seat.id);
     expect(expected, seat.id).toBeDefined();
@@ -190,11 +190,13 @@ test('keeps every label inside the spine it names', async ({ page }) => {
   );
 
   for (const box of boxes) {
-    expect(box.labelLeft, `${box.id} label left edge`).toBeGreaterThanOrEqual(box.spineLeft - 0.5);
-    expect(box.labelRight, `${box.id} label right edge`).toBeLessThanOrEqual(box.spineRight + 0.5);
+    /* Within a pixel: at the 150 face the thinnest spine is 11 units and the label's rendered box overhangs it by half a pixel, as §11.11's render also does. */
+    expect(box.labelLeft, `${box.id} label left edge`).toBeGreaterThanOrEqual(box.spineLeft - 1);
+    expect(box.labelRight, `${box.id} label right edge`).toBeLessThanOrEqual(box.spineRight + 1);
     expect(box.labelHeight, `${box.id} run fits the spine`).toBeLessThanOrEqual(box.spineHeight);
   }
-  expect(SPINE_WIDTH_MIN, 'the thinnest spine still holds the band').toBeGreaterThanOrEqual(14);
+  /* 5b's 13.5-unit band was the 240 face's; §11.11 renders the label on a 12-unit spine and the pixel check above is the claim. */
+  expect(SPINE_WIDTH_MIN).toBe(11);
 });
 
 test('renders at 1:1 — the svg is its viewBox width on screen — and pans rather than scaling (D1)', async ({
@@ -233,18 +235,13 @@ test('renders at 1:1 — the svg is its viewBox width on screen — and pans rat
   expect(wide.size).toBe('10.39');
 });
 
-test('removes labels only when the viewport cannot hold one record (§5 as a guard)', async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 200, height: 900 });
-  await page.goto('/wall/probe/labelled');
-  await page.locator('[data-wall="labelled"]').waitFor({ timeout: 15_000 });
-  await expect(page.locator('[data-label]')).toHaveCount(0);
-  await expect(page.locator('[data-face="front"]')).toHaveCount(COLLECTION_SPINES.length);
-
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await expect(page.locator('[data-label]')).toHaveCount(COLLECTION_SPINES.length);
-});
+/*
+  The label-removal guard (D1, §5) had an E2E here at a 200px viewport. On the
+  two-column composition the facts column gives the wall's column a floor
+  wider than one record at any viewport, so the guard's trigger cannot occur
+  on this page; `labelsFit` keeps the rule at the unit layer, and narrow
+  viewports are deferred (§11.9).
+*/
 
 test('each spine is a link by role, named by its FULL title, with the record’s route (§11.8)', async ({
   page,
@@ -314,23 +311,13 @@ test('document order is seat order — asserted, since it holds only while seats
   expect(order).toEqual(COLLECTION_SPINES.map((_, index) => `collection-${index}`));
 });
 
-test('the plane is the pan extent: it runs off both edges of the svg at every row', async ({ page }) => {
-  const edges = await page.evaluate(() => {
-    const svg = document.querySelector('[data-wall="labelled"]');
-    if (!(svg instanceof SVGSVGElement)) return null;
-    const s = svg.getBoundingClientRect();
-    return Array.from(svg.querySelectorAll('[data-plane]')).map((plane) => {
-      const r = (plane as SVGGraphicsElement).getBoundingClientRect();
-      return { left: r.left - s.left, right: r.right - s.right };
-    });
-  });
-  expect(edges).not.toBeNull();
-  if (edges === null) return;
-  expect(edges.length, 'one plane per shelf — seventeen is one shelf of forty').toBeGreaterThanOrEqual(1);
-  for (const edge of edges) {
-    expect(edge.left, 'off the left edge').toBeLessThan(0);
-    expect(edge.right, 'off the right edge').toBeGreaterThan(0);
-  }
+test('the unit is drawn whole: two uprights and four shelves, the empty ones too (§11.10)', async ({ page }) => {
+  const furniture = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('[data-wall="labelled"] [data-furniture]')).map((f) => f.getAttribute('data-furniture')),
+  );
+  expect(furniture).toHaveLength(18);
+  expect(furniture.filter((k) => k === 'shelf-top')).toHaveLength(4);
+  expect(furniture.filter((k) => k?.startsWith('upright'))).toHaveLength(6);
 });
 
 test('the record with no cover pulls to ink, not to a default colour', async ({ page }) => {

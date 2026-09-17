@@ -24,48 +24,40 @@ export const COS30 = Math.cos(Math.PI / 6);
 export const SIN30 = 0.5;
 
 /**
- * **The wall's constant, and everything else derives from it.** 5b's 240 is
- * where the 9px floor's argument is made — a label's band across the spine
- * fits the thinnest record at this height and not at 120 — so it stays, and
- * D2's figures (drawn at H = 150, the reference's units) apply as ratios.
+ * **The wall's constant — the drawing's own face (8a §11.11).** §11.6 built
+ * D2's proportions at 5b's 240; §11.11 draws the near view at true 1:1 with
+ * a 150-unit face and measures its labels there, so the wall's unit IS the
+ * drawing's: no ratio between them. Everything below is read off §11.11's
+ * polygons under the same projection.
  */
-export const SPINE_HEIGHT = 240;
-const D2 = SPINE_HEIGHT / 150;
+export const SPINE_HEIGHT = 150;
 
-/** §1: the real thickness bounds, derived so they follow SPINE_HEIGHT. */
+/** §1: the real thickness bounds, derived so they follow SPINE_HEIGHT — and textured within a fixed seat. */
 export const SPINE_WIDTH_MIN = Math.round(SPINE_HEIGHT / 14);
 export const SPINE_WIDTH_MAX = Math.round(SPINE_HEIGHT / 10);
 
-/**
- * **Depth is square: a record is as deep as it is tall.** D2 retires 5b's 52,
- * which drew a card on edge, and makes DEPTH the RECORD's dimension — the
- * shelf's follows from it. But depth was not what made the first D2 read as
- * one slab; thickness was, which is why GAP exists as its own ruling.
- */
-export const DEPTH = SPINE_HEIGHT;
+/** A record is as deep as the shelf it stands on: 100, as drawn. */
+export const DEPTH = 100;
+export const SHELF_DEPTH = 100;
+export const SHELF_THICKNESS = 8;
 
 /**
- * The gap between records. **Thickness plus gap is what keeps the objects
- * countable**: at 22 thick with no gap the top faces tile into a continuous
- * ramp; at 12 with a 5 gap each record separates. So seats advance by their
- * own width plus this, rather than all sitting at the widest.
+ * The seat: a fixed pitch of 17 (a 12 spine and a 5 gap, as drawn), the
+ * hashed width textured inside it. Twenty seats to a 350 shelf.
  */
-export const GAP = Math.round(5 * D2);
-
-/** The plane's margins around its records: along the row, and behind them. */
-export const SHELF_INSET_X = Math.round(20 * D2);
-export const SHELF_INSET_Y = Math.round(10 * D2);
-
-/** The plane in front of the records (D2's ledge). */
-export const LEDGE = Math.round(46 * D2);
-
-/**
- * One row to the next, down z. A row's silhouette is H + D·sin30, and the
- * ledge sits under it; at D2's 238 the lower row's top faces ate the upper
- * row's ledge, at 286 they clear it. Asserted as an inequality in the tests,
- * so the figure can move but not below the silhouette.
- */
-export const ROW_PITCH = Math.round(286 * D2);
+export const GAP = 5;
+export const SEAT_PITCH = 17;
+export const SHELF_LENGTH = 350;
+/** Seats start at the shelf's left end: twenty at 17 fill 0…340, the right upright takes 340…350. */
+export const SHELF_INSET_X = 0;
+export const SHELF_INSET_Y = 0;
+/** The unit's uprights: 10 thick, the shelf's depth, four pitches tall. */
+export const ROW_PITCH = 198;
+export const UPRIGHT = { thickness: 10, depth: SHELF_DEPTH, height: 4 * ROW_PITCH } as const;
+/** Units along x, at the drawing's spacing (520 on screen). */
+export const UNIT_PITCH_X = 600;
+/** No ledge: the shelf is the record's depth. Kept as a name so nothing derives from a literal zero. */
+export const LEDGE = 0;
 
 /** A point on the page. */
 export type Point = readonly [number, number];
@@ -103,25 +95,19 @@ export type PlacedSeat = {
 };
 
 /**
- * One row's seats, placed. Row 0 is the highest; each row is ROW_PITCH lower.
- * A pulled record keeps its seat: the pull lifts its cover face off it
- * (landing.ts) and the seat stays where the collection's order put it.
+ * One row's seats, placed in their unit. Row 0 is the unit's top shelf;
+ * seats advance at the fixed pitch, the record's hashed width inside each.
+ * A pulled record keeps its seat empty: the pull moves it (§11.10).
  */
-export function layoutRow(seats: readonly ShelfSeat[], row: number): PlacedSeat[] {
-  const z = -row * ROW_PITCH;
-  let x = SHELF_INSET_X;
-  return seats.map((seat) => {
-    const width = spineWidth(seat.id);
-    const placed = {
-      id: seat.id,
-      x,
-      y: SHELF_INSET_Y,
-      z,
-      width,
-    };
-    x += width + GAP;
-    return placed;
-  });
+export function layoutRow(seats: readonly ShelfSeat[], row: number, unit = 0): PlacedSeat[] {
+  const z = (3 - row) * ROW_PITCH;
+  return seats.map((seat, index) => ({
+    id: seat.id,
+    x: unit * UNIT_PITCH_X + SHELF_INSET_X + index * SEAT_PITCH,
+    y: SHELF_INSET_Y,
+    z,
+    width: spineWidth(seat.id),
+  }));
 }
 
 /** The spine: the record's near face, at y + DEPTH. */
@@ -133,44 +119,6 @@ export function frontFace({ x, y, z, width }: PlacedSeat): readonly Point[] {
     project(x + width, near, z + SPINE_HEIGHT),
     project(x, near, z + SPINE_HEIGHT),
   ];
-}
-
-/**
- * **The plane is the wall, and the wall is the pan extent** (§11.7, §11.8).
- * Spanning each run's seated extent gave a platform per arrangement; a
- * capacity — forty, or D2's sixteen — is the same defect, a fixture sized by
- * a count: forty reads as a fixture waiting to be stocked, sixteen is wrong
- * at the eighteenth record. So the plane runs the full pan extent and off
- * both edges of the viewport, because a fixture that ends inside the view is
- * what reads as a platform. At seventeen the wall is a shelf the collection
- * sits at the left of, which is a true statement about the collection.
- *
- * A single plane, not a board: 5b rules out three faces and the reason
- * survives the reference — a shelf with three faces is a box, and a box
- * drawn around the collection competes with the records standing in it.
- */
-export type PlaneSpan = { x0: number; x1: number };
-
-/** How far past the view's edges the plane runs, in screen px. */
-export const PLANE_OVERHANG = 200;
-
-/**
- * The wall-space x range whose plane covers `[minX, maxX]` of screen-x at
- * every depth, and PLANE_OVERHANG beyond. The near edge sits further left on
- * screen than the far edge, so the right end is set by the near edge and the
- * left end by the far edge.
- */
-export function planeSpan({ minX, maxX }: { minX: number; maxX: number }): PlaneSpan {
-  const near = SHELF_INSET_Y + DEPTH + LEDGE;
-  return {
-    x0: (minX - PLANE_OVERHANG) / COS30,
-    x1: (maxX + PLANE_OVERHANG) / COS30 + near,
-  };
-}
-
-export function shelfPlane(z: number, { x0, x1 }: PlaneSpan): readonly Point[] {
-  const near = SHELF_INSET_Y + DEPTH + LEDGE;
-  return [project(x0, 0, z), project(x1, 0, z), project(x1, near, z), project(x0, near, z)];
 }
 
 /**
@@ -203,29 +151,17 @@ export function labelTransform(seat: PlacedSeat): string {
   return `matrix(0 -1 ${COS30} ${SIN30} ${px} ${py})`;
 }
 
-/** The plane a row draws: one, at the row's height, whatever the row holds. */
-export function rowPlanes(
-  shelf: readonly ShelfSeat[],
-  placed: readonly PlacedSeat[],
-  span: PlaneSpan,
-): (readonly Point[])[] {
-  const z = placed[0]?.z ?? 0;
-  return shelf.length === 0 ? [] : [shelfPlane(z, span)];
-}
-
 /**
- * **§2's section breaks are marks within the plane, not its ends** (§11.7).
- * They coincided with the plane's ends only because each plane stopped where
- * a section did — a division of the collection expressed as a division of
- * the furniture. A break is a rule across the plane at the seat boundary,
- * from its far edge to its near edge, and the plane runs on past it. The
- * pulled record's seat is still a seat, so its boundary still carries one.
+ * **§2's section breaks are marks within the shelf, not its ends** (§11.7).
+ * A break is a rule across the shelf's top at the seat boundary, from its far
+ * edge to its near edge, and the shelf runs on past it. The pulled record's
+ * seat is still a seat, so its boundary still carries one.
  */
 export function rowBreaks(
   shelf: readonly ShelfSeat[],
   placed: readonly PlacedSeat[],
 ): (readonly [Point, Point])[] {
-  const near = SHELF_INSET_Y + DEPTH + LEDGE;
+  const near = SHELF_DEPTH;
   const byId = new Map(placed.map((seat) => [seat.id, seat]));
   const breaks: (readonly [Point, Point])[] = [];
   for (let index = 1; index < shelf.length; index += 1) {

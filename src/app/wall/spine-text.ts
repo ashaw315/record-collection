@@ -1,3 +1,5 @@
+import { SPINE_HEIGHT } from './geometry';
+
 /**
  * How many characters fit on a spine (SPEC.md §10b).
  *
@@ -10,20 +12,21 @@
  * inset produces a new derivation rather than a new fit.
  */
 
-/** The pulled record's glyph run: 232px wide, less the 8px baseline inset. */
-export const GLYPH_RUN_PX = 232 - 8;
+/** The label's run along the face: the face less the baseline inset and the end inset, as §11.11 derives it. */
+export const BASELINE_INSET_PX = 8;
+export const END_INSET_PX = 6;
+export const GLYPH_RUN_PX = SPINE_HEIGHT - BASELINE_INSET_PX - END_INSET_PX;
 
-/** Per-character advance of the mono face at the spine's set size, in px. */
+/** Per-character advance of the mono face at the spine's set size, in px — measured, 6.234 in §11.11's render. */
 export const GLYPH_ADVANCE_PX = 6.235;
 
 /**
- * Characters that fit: `floor(232 / 6.235)` = 37.
- *
- * **The divisor is applied to the full 232, not to the 224 run.** The longest
- * label at this budget sets 230.695px — a 1.3px margin, which is the whole of
- * the slack. A 38th character would need 236.93px and overrun by 4.93px.
+ * Characters that fit: `floor((150 − 14) / 6.235)` = 21 at the drawing's face
+ * (§11.11). One rule, and the number follows the face: at 5b's 240 the same
+ * rule gave 37 with an 8 inset — the end inset is the drawing's, and the
+ * derivation is the thing kept, not the number.
  */
-export const SPINE_TEXT_BUDGET = 37;
+export const SPINE_TEXT_BUDGET = Math.floor(GLYPH_RUN_PX / GLYPH_ADVANCE_PX);
 
 /**
  * The 1:1 label: `Artist · Title`, cut to the budget with an ellipsis.

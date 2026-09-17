@@ -30,6 +30,8 @@ test('the pulled record shows its cover, fitted inside its face, at the end and 
   page,
 }) => {
   await login(page);
+  /* The landing is ruled for the two-column composition; narrow viewports are deferred (§11.9). */
+  await page.setViewportSize({ width: 1280, height: 900 });
   await page.clock.install();
   await page.goto(`/wall/probe/labelled?cover=${encodeURIComponent(WIDE_COVER)}`);
   await page.locator('[data-wall="labelled"]').waitFor({ timeout: 15_000 });
@@ -94,6 +96,7 @@ test('the record with no cover arrives at type on its field, with the diagonal, 
   page,
 }) => {
   await login(page);
+  await page.setViewportSize({ width: 1280, height: 900 });
   await page.clock.install();
   await page.goto('/wall/probe/labelled');
   await page.locator('[data-wall="labelled"]').waitFor({ timeout: 15_000 });

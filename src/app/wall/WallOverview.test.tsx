@@ -31,12 +31,12 @@ const countTag = (html: string, tag: string) =>
   html.split(`<${tag}`).length - 1;
 
 describe('the overview draws the collection as polygons', () => {
-  it('draws three faces per record plus one plane per shelf run', () => {
+  it('draws three faces per record plus the unit’s furniture', () => {
     const html = render({ seats: seats(6, 2), pulledId: null });
 
-    // 6 records × (top, right, front) on one shelf of forty (§11.9): one plane,
-    // the section boundaries drawn as rules within it, not as planes.
-    expect(countTag(html, 'polygon')).toBe(6 * 3 + 1);
+    // 6 records × (top, right, front) on one unit's top shelf (§11.10): the
+    // unit's eighteen faces, the section boundaries drawn as rules on the shelf.
+    expect(countTag(html, 'polygon')).toBe(6 * 3 + 18);
     expect(html.split('data-break=""').length - 1, 'a break at each section boundary').toBe(5);
   });
 
@@ -60,10 +60,11 @@ describe('the overview draws the collection as polygons', () => {
     expect(html).not.toMatch(/tabindex|onclick|role="button"/i);
   });
 
-  it('renders an empty collection without drawing anything', () => {
+  it('renders an empty collection as the fixture alone — the unit, no records', () => {
     const html = render({ seats: [], pulledId: null });
 
-    expect(countTag(html, 'polygon')).toBe(0);
+    /* §11.10: the empty shelves are the fixture rather than a gap in it. */
+    expect(countTag(html, 'polygon')).toBe(18);
   });
 });
 
@@ -103,7 +104,8 @@ describe('200 records', () => {
       assuming one run per section across the whole wall; runs are per SHELF,
       which is what makes the wall wrap without a run spanning a row break.
     */
-    expect(polygons).toBe(200 * 3 + 5);
+    /* 200 records are three units (80 + 80 + 40): three fixtures of eighteen faces. */
+    expect(polygons).toBe(200 * 3 + 3 * 18);
     expect(html.length).toBeGreaterThan(0);
   });
 
@@ -139,7 +141,7 @@ describe('the overview at rest is line, ink and paper (8a §11)', () => {
     const html = render({ seats: seats(6, 2), pulledId: null });
     const fills = [...html.matchAll(/fill="([^"]*)"/g)].map((m) => m[1]);
 
-    expect(fills).toHaveLength(6 * 3 + 1);
+    expect(fills).toHaveLength(6 * 3 + 18);
     expect(new Set(fills)).toEqual(new Set([PLANE_FILL, FACE_FILL, TOP_FILL]));
     for (const fill of fills) {
       const chroma = Number(/oklch\([\d.]+ ([\d.]+) /.exec(fill)?.[1]);

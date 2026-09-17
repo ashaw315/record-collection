@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { GLYPH_ADVANCE_PX, GLYPH_RUN_PX, SPINE_TEXT_BUDGET } from './spine-text';
+import { BASELINE_INSET_PX, END_INSET_PX, GLYPH_ADVANCE_PX, GLYPH_RUN_PX, SPINE_TEXT_BUDGET } from './spine-text';
+import { SPINE_HEIGHT } from './geometry';
 
 /**
  * **This constant went through four values, and the only one that holds is the
@@ -9,32 +10,38 @@ import { GLYPH_ADVANCE_PX, GLYPH_RUN_PX, SPINE_TEXT_BUDGET } from './spine-text'
  * got in. Each term is pinned separately, and the budget is checked to be what
  * they produce.
  */
-describe('the spine text budget is derived, not fitted', () => {
-  it('names the glyph run as 232px less the 8px baseline inset', () => {
-    expect(GLYPH_RUN_PX).toBe(224);
+/**
+ * The character budget, derived rather than declared (SPEC.md §10b; 8a §11.6,
+ * §11.11). Every term is named so the next change to the face or the insets
+ * produces a new derivation rather than a new fit: the face, less the
+ * baseline inset and the end inset, over the measured advance.
+ *
+ * §11.11 draws the near view at true 1:1 with a 150-unit face and measures
+ * its labels there — floor((150 − 14) / 6.235) = 21 — so the budget is the
+ * drawing's. At 5b's 240 the same rule gives 36; the earlier 37 used the
+ * baseline inset alone, which is the difference between the two, not a
+ * second rule.
+ */
+describe('the budget derives from the face (§11.11)', () => {
+  it('names the glyph run as the face less the baseline and end insets', () => {
+    expect(BASELINE_INSET_PX).toBe(8);
+    expect(END_INSET_PX).toBe(6);
+    expect(GLYPH_RUN_PX).toBe(SPINE_HEIGHT - 14);
+    expect(GLYPH_RUN_PX).toBe(136);
   });
 
-  it('names the per-character advance', () => {
-    expect(GLYPH_ADVANCE_PX).toBeCloseTo(6.235, 3);
+  it('is floor(136 / 6.235) = 21', () => {
+    expect(SPINE_TEXT_BUDGET).toBe(Math.floor(GLYPH_RUN_PX / GLYPH_ADVANCE_PX));
+    expect(SPINE_TEXT_BUDGET).toBe(21);
   });
 
-  it('is floor(232 / 6.235) = 37', () => {
-    /*
-      The divisor is applied to the full 232, not to the 224 run — that is the
-      arithmetic Design confirmed, and writing it out is the point: a future
-      reader who divides by GLYPH_RUN_PX gets 35 and will think this is wrong.
-    */
-    expect(Math.floor(232 / GLYPH_ADVANCE_PX)).toBe(SPINE_TEXT_BUDGET);
-    expect(SPINE_TEXT_BUDGET).toBe(37);
-  });
-
-  it('leaves 1.3px of margin at the longest label and overruns at 38', () => {
-    // The whole of the slack, stated so that a change to the advance fails here
-    // rather than silently clipping the last character on the longest label.
+  it('leaves 5px of margin at the longest label and overruns at 22', () => {
     const longest = SPINE_TEXT_BUDGET * GLYPH_ADVANCE_PX;
-    expect(longest).toBeCloseTo(230.695, 3);
-    expect(232 - longest).toBeCloseTo(1.305, 3);
+    expect(GLYPH_RUN_PX - longest).toBeCloseTo(5.07, 1);
+    expect((SPINE_TEXT_BUDGET + 1) * GLYPH_ADVANCE_PX).toBeGreaterThan(GLYPH_RUN_PX);
+  });
 
-    expect((SPINE_TEXT_BUDGET + 1) * GLYPH_ADVANCE_PX).toBeGreaterThan(232);
+  it('would move with the face: the same rule at 240 gives 36, not a second number', () => {
+    expect(Math.floor((240 - BASELINE_INSET_PX - END_INSET_PX) / GLYPH_ADVANCE_PX)).toBe(36);
   });
 });
