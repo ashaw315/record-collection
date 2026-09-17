@@ -3,9 +3,10 @@ import { PULL_DURATION_MS } from '../src/app/wall/pull-curve';
 import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
 
 /**
- * §11.3 on the rendering: the pulled record shows its cover at its own aspect,
- * inside the record's face throughout the gesture — a cover that stayed
- * axis-aligned while the face was still sheared would hang outside it.
+ * §11.3 on the rendering: the pulled record shows its cover at its own aspect
+ * on its RIGHT face (D2), inside that face throughout the slide, over the
+ * field where its colour arrives — and nothing paints over the pulled record,
+ * which is what the global painter's order is for.
  */
 
 const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
@@ -25,8 +26,7 @@ const WIDE_COVER =
 const WIRED_INDEX = COLLECTION_SPINES.findIndex((row) => row.title === 'Wired');
 const WIRED_ID = `collection-${WIRED_INDEX}`;
 
-/* fixme: D2 puts the cover on the RIGHT face, which arrives with 5b's faces in the next unit. */
-test.fixme('the pulled record shows its cover, fitted inside its face, at the end and mid-gesture', async ({
+test('the pulled record shows its cover, fitted inside its face, at the end and mid-gesture', async ({
   page,
 }) => {
   await login(page);
@@ -42,24 +42,28 @@ test.fixme('the pulled record shows its cover, fitted inside its face, at the en
 
   const boxes = async () =>
     page.evaluate(() => {
-      const face = document.querySelector('[data-pulled]')?.getBoundingClientRect();
-      const cover = document.querySelector('[data-cover]')?.getBoundingClientRect();
-      return face && cover
-        ? { face: { l: face.left, r: face.right, t: face.top, b: face.bottom }, cover: { l: cover.left, r: cover.right, t: cover.top, b: cover.bottom } }
+      const pulled = document.querySelector('[data-pulled]');
+      const field = pulled?.querySelector('[data-field]')?.getBoundingClientRect();
+      const cover = pulled?.querySelector('[data-cover]')?.getBoundingClientRect();
+      return field && cover
+        ? {
+            field: { l: field.left, r: field.right, t: field.top, b: field.bottom },
+            cover: { l: cover.left, r: cover.right, t: cover.top, b: cover.bottom },
+          }
         : null;
     });
 
-  /* Mid-gesture: the cover is inside the sheared face's box, not hanging out of it. */
+  /* Mid-slide: the cover is inside the field's box, on the same plane. */
   const mid = await boxes();
   expect(mid).not.toBeNull();
   if (mid !== null) {
-    expect(mid.cover.l).toBeGreaterThanOrEqual(mid.face.l - 0.5);
-    expect(mid.cover.r).toBeLessThanOrEqual(mid.face.r + 0.5);
-    expect(mid.cover.t).toBeGreaterThanOrEqual(mid.face.t - 0.5);
-    expect(mid.cover.b).toBeLessThanOrEqual(mid.face.b + 0.5);
+    expect(mid.cover.l).toBeGreaterThanOrEqual(mid.field.l - 0.5);
+    expect(mid.cover.r).toBeLessThanOrEqual(mid.field.r + 0.5);
+    expect(mid.cover.t).toBeGreaterThanOrEqual(mid.field.t - 0.5);
+    expect(mid.cover.b).toBeLessThanOrEqual(mid.field.b + 0.5);
   }
 
-  await page.clock.runFor(PULL_DURATION_MS);
+  await page.clock.runFor(PULL_DURATION_MS + 40);
   const end = await boxes();
   expect(end).not.toBeNull();
   if (end === null) return;
@@ -67,10 +71,21 @@ test.fixme('the pulled record shows its cover, fitted inside its face, at the en
   const image = page.locator('[data-cover]');
   await expect(image).toHaveAttribute('href', WIDE_COVER);
   await expect(image).toHaveAttribute('preserveAspectRatio', 'xMidYMid meet');
+  await expect(image).toHaveAttribute('opacity', '1');
 
-  /* The image's box IS the pulled face; a 3:1 sleeve then letterboxes inside it — own aspect, uncropped. */
-  expect(end.cover.l).toBeCloseTo(end.face.l, 0);
-  expect(end.cover.r).toBeCloseTo(end.face.r, 0);
-  expect(end.cover.t).toBeCloseTo(end.face.t, 0);
-  expect(end.cover.b).toBeCloseTo(end.face.b, 0);
+  /* Inset on the field, and inside it: a 3:1 sleeve letterboxes there — own aspect, uncropped. */
+  expect(end.cover.l).toBeGreaterThan(end.field.l);
+  expect(end.cover.r).toBeLessThan(end.field.r);
+  expect(end.cover.t).toBeGreaterThan(end.field.t);
+  expect(end.cover.b).toBeLessThan(end.field.b);
+
+  /* Nothing paints over the pulled record: the point at its field's centre hits the field. */
+  const hit = await page.evaluate(() => {
+    const field = document.querySelector('[data-pulled] [data-field]');
+    if (field === null) return null;
+    const r = field.getBoundingClientRect();
+    const el = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return el?.closest('[data-pulled]') !== null;
+  });
+  expect(hit, 'the slid record is in front of everything at its depth').toBe(true);
 });

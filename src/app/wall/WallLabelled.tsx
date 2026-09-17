@@ -1,14 +1,19 @@
 import {
   COS30,
+  DEPTH,
+  SPINE_HEIGHT,
+  coverTransform,
   frontFace,
   labelTransform,
   layoutRow,
   paintOrder,
+  rightFace,
   rowPlanes,
+  topFace,
   type PlacedSeat,
   type Point,
 } from './geometry';
-import { PER_SHELF, points } from './WallOverview';
+import { FACE_FILL, PER_SHELF, PLANE_FILL, TOP_FILL, points } from './WallOverview';
 import type { WallSeat } from './shelf-runs';
 import { pullPose, returnPose } from './pull-curve';
 import { pullFill, returnFill } from './pull-colour';
@@ -96,7 +101,7 @@ export function WallLabelled({
       style={{ background: 'oklch(0.925 0.004 80)', width: '100%', height: 'auto' }}
     >
       {planes.map((plane, index) => (
-        <polygon key={`plane-${index}`} data-plane="" points={points(plane)} fill="none" stroke={RULE} strokeWidth="1" />
+        <polygon key={`plane-${index}`} data-plane="" points={points(plane)} fill={PLANE_FILL} stroke={RULE} strokeWidth="1" />
       ))}
       {paintOrder(placed).map((seat) => {
         const record = byId.get(seat.id);
@@ -106,42 +111,62 @@ export function WallLabelled({
         if (seat.id === pulledId && pull !== null) {
           /*
             **The same object, moved** (D2): the pulled record is the seated
-            one at a different y, and its fill reads the ONE eased value the
-            slide reads — colour arrives across the gesture, not at either end
-            (§11.2). The cover moves onto the right face with 5b's faces.
+            one at a different y. Its right face is the field — the one place
+            colour arrives, on the ONE eased value the slide reads (§11.2) —
+            and the cover sits on it at its own aspect (§11.3). The cover's
+            plane is mirrored by D2's matrix, so it carries no caption.
           */
           const ladder = recordLadder(record.spineColour);
           const fill =
             pull.direction === 'out'
               ? pullFill(pull.progress, ladder)
               : returnFill(pull.progress, ladder);
+          const inset = Math.round(DEPTH * 0.11);
           return (
-            <polygon
+            <g
               key={seat.id}
               data-pulled={seat.id}
-              points={points(face)}
-              fill={fill}
-              stroke={INK}
-              strokeWidth="1"
-              pointerEvents="all"
               style={{ cursor: onPulledClick === undefined ? undefined : 'pointer' }}
               onClick={onPulledClick}
-            />
+            >
+              <polygon data-face="top" points={points(topFace(seat))} fill={TOP_FILL} stroke={INK} strokeWidth="1" pointerEvents="all" />
+              <g transform={coverTransform(seat)}>
+                <rect data-field="" width={DEPTH} height={SPINE_HEIGHT} fill={fill} stroke={INK} strokeWidth="1" pointerEvents="all" />
+                {record.coverUrl === null ? null : (
+                  <image
+                    data-cover={seat.id}
+                    href={record.coverUrl}
+                    x={inset}
+                    y={inset}
+                    width={DEPTH - inset * 2}
+                    height={SPINE_HEIGHT - inset * 2}
+                    preserveAspectRatio="xMidYMid meet"
+                    opacity={pose?.eased ?? 1}
+                    pointerEvents="none"
+                  />
+                )}
+              </g>
+              <polygon data-face="front" points={points(face)} fill={FACE_FILL} stroke={INK} strokeWidth="1" pointerEvents="all" />
+            </g>
           );
         }
 
         return (
-          <g key={seat.id} data-seat={seat.id}>
+          <g
+            key={seat.id}
+            data-seat={seat.id}
+            style={{ cursor: onSeatClick === undefined ? undefined : 'pointer' }}
+            onClick={onSeatClick === undefined ? undefined : () => onSeatClick(seat.id)}
+          >
+            <polygon data-face="top" points={points(topFace(seat))} fill={TOP_FILL} stroke={INK} strokeWidth="1" />
+            <polygon data-face="right" points={points(rightFace(seat))} fill={FACE_FILL} stroke={INK} strokeWidth="1" />
             <polygon
               data-spine=""
+              data-face="front"
               points={points(face)}
-              fill="none"
+              fill={FACE_FILL}
               stroke={INK}
               strokeWidth="1"
-              /* An unfilled polygon is hit only on its stroke; the whole face takes the pointer. */
-              pointerEvents="all"
-              style={{ cursor: onSeatClick === undefined ? undefined : 'pointer' }}
-              onClick={onSeatClick === undefined ? undefined : () => onSeatClick(seat.id)}
             />
             {/*
               On the face's plane: local x runs up the spine from the bottom

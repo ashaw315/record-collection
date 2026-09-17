@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { WallLabelled } from './WallLabelled';
+import { WALL_PAPER_HEX } from './pull-colour';
+import { FACE_FILL, PLANE_FILL, TOP_FILL } from './WallOverview';
 import type { WallSeat } from './shelf-runs';
 
 /**
@@ -29,7 +31,7 @@ describe('what distinguishes a spine at rest (§11.1)', () => {
    */
   const widthOf = (html: string, id: string) => {
     const seat = html.slice(html.indexOf(`data-seat="${id}"`));
-    const points = /data-spine="" points="([^"]+)"/.exec(seat)?.[1] ?? '';
+    const points = /data-spine=""[^>]*points="([^"]+)"/.exec(seat)?.[1] ?? '';
     const [tl, tr] = points.split(' ').map((p) => p.split(',').map(Number));
     return tr[0] - tl[0];
   };
@@ -50,5 +52,51 @@ describe('what distinguishes a spine at rest (§11.1)', () => {
     );
     /* r1 hashes to 21 and r2 to 22 — a label-fed hash would make these equal. */
     expect(widthOf(html, 'r1')).not.toBe(widthOf(html, 'r2'));
+  });
+});
+
+describe('5b’s two faces at rest (D2): three faces per record, filled in paper for occlusion', () => {
+  it('draws top, right and front per seat, the top a step lighter, all paper', () => {
+    const html = render([seat('a', null), seat('b', null)], null);
+    const seatA = html.slice(html.indexOf('data-seat="a"'), html.indexOf('data-seat="b"'));
+    for (const face of ['top', 'right', 'front']) {
+      expect(seatA, `face ${face}`).toContain(`data-face="${face}"`);
+    }
+    expect(seatA).toContain(`data-face="top" points="`);
+    expect(seatA).toContain(`fill="${TOP_FILL}"`);
+    expect(seatA).toContain(`fill="${FACE_FILL}"`);
+    /* Paper, not none: the painter's order only occludes with opaque faces. */
+    expect(seatA).not.toContain('fill="none"');
+    expect(html).toContain(`data-plane="" points="`);
+    expect(html).toContain(`fill="${PLANE_FILL}"`);
+  });
+
+  it('carries the pulled record’s field and cover on its right face, and no caption', () => {
+    const html = render([seat('a', null), seat('b', 'https://covers.test/b.jpg')], {
+      id: 'b',
+      direction: 'out',
+      progress: 1,
+    });
+    const pulled = html.slice(html.indexOf('data-pulled="b"'));
+    expect(pulled).toContain('data-face="top"');
+    expect(pulled).toContain('data-face="front"');
+    /* The right face is the field: a rect on the cover's plane, at the record's colour. */
+    const field = /<rect[^>]*data-field[^>]*>/.exec(pulled)?.[0] ?? '';
+    expect(field).not.toBe('');
+    expect(field).not.toContain(`fill="${WALL_PAPER_HEX}"`);
+    const g = pulled.slice(pulled.indexOf('<g transform="matrix(-'));
+    expect(g, 'the cover’s group uses D2’s mirrored matrix').toContain('matrix(-0.866');
+    const image = /<image[^>]*>/.exec(g)?.[0] ?? '';
+    expect(image).toContain('data-cover="b"');
+    expect(image).toContain('href="https://covers.test/b.jpg"');
+    expect(image, 'own aspect, uncropped (§11.3)').toContain('preserveAspectRatio="xMidYMid meet"');
+    const group = g.slice(0, g.indexOf('</g>'));
+    expect(group, 'no text on a mirrored plane').not.toContain('<text');
+  });
+
+  it('draws no cover for a record with none, and the field still arrives', () => {
+    const html = render([seat('a', null)], { id: 'a', direction: 'out', progress: 1 });
+    expect(html).not.toContain('<image');
+    expect(html).toContain('data-field');
   });
 });

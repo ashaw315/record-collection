@@ -12,12 +12,15 @@ import {
   SPINE_HEIGHT,
   SPINE_WIDTH_MAX,
   SPINE_WIDTH_MIN,
+  coverTransform,
   frontFace,
   layoutRow,
   paintOrder,
   project,
+  rightFace,
   shelfPlane,
   spineWidth,
+  topFace,
   type PlacedSeat,
 } from './geometry';
 
@@ -228,5 +231,64 @@ describe('the row pitch keeps one row off the next', () => {
     const upperPlaneNear = shelfPlane(upper, upper[0].z)[2][1];
     const lowerTopFar = project(lower[0].x, lower[0].y, lower[0].z + SPINE_HEIGHT)[1];
     expect(lowerTopFar, 'the lower row’s top stays below the upper plane').toBeGreaterThan(upperPlaneNear);
+  });
+});
+
+describe('5b’s two faces, on the same three coordinates (D2)', () => {
+  const seat: PlacedSeat = { id: 'r', x: 100, y: 16, z: 458, width: 19 };
+  const H = SPINE_HEIGHT;
+  const D = DEPTH;
+
+  it('draws the top face at z + H over the record’s footprint', () => {
+    expect(topFace(seat)).toEqual([
+      project(100, 16, 458 + H),
+      project(119, 16, 458 + H),
+      project(119, 16 + D, 458 + H),
+      project(100, 16 + D, 458 + H),
+    ]);
+  });
+
+  it('draws the right face at x + width, back to front, floor to top', () => {
+    expect(rightFace(seat)).toEqual([
+      project(119, 16, 458),
+      project(119, 16 + D, 458),
+      project(119, 16 + D, 458 + H),
+      project(119, 16, 458 + H),
+    ]);
+  });
+
+  it('shares its corners: the front’s top-right IS the top’s near-right IS the right’s near-top', () => {
+    /* One object, not three drawings that happen to touch. */
+    const front = frontFace(seat);
+    const top = topFace(seat);
+    const right = rightFace(seat);
+    expect(front[2]).toEqual(top[2]);
+    expect(front[2]).toEqual(right[2]);
+    expect(top[1], 'the top’s far-right is the right’s far-top').toEqual(right[3]);
+    expect(front[1], 'the front’s bottom-right is the right’s near-bottom').toEqual(right[1]);
+  });
+
+  it('maps the cover’s rect onto the right face with D2’s matrix, which mirrors', () => {
+    /*
+      matrix(−cos30, sin30, 0, 1, P) with P the right face's far-top corner:
+      local (0,0) → P, local (D,0) → the near-top corner, local (0,H) → the
+      far-bottom corner. Its determinant is −cos30: the plane is mirrored,
+      which is why the pulled record carries no caption — text on it would
+      fight the geometry. Removed rather than un-mirrored (D2).
+    */
+    const t = coverTransform(seat);
+    const m = /^matrix\(([-\d.e]+) ([-\d.e]+) ([-\d.e]+) ([-\d.e]+) ([-\d.e]+) ([-\d.e]+)\)$/.exec(t);
+    expect(m, t).not.toBeNull();
+    if (m === null) return;
+    const [a, b, c, d, e, f] = m.slice(1).map(Number);
+    const apply = (lx: number, ly: number) => [a * lx + c * ly + e, b * lx + d * ly + f];
+    const near = (p: readonly number[], q: readonly number[]) => {
+      expect(p[0]).toBeCloseTo(q[0], 6);
+      expect(p[1]).toBeCloseTo(q[1], 6);
+    };
+    near(apply(0, 0), project(119, 16, 458 + H));
+    near(apply(D, 0), project(119, 16 + D, 458 + H));
+    near(apply(0, H), project(119, 16, 458));
+    expect(a * d - b * c, 'mirrored: negative determinant').toBeLessThan(0);
   });
 });

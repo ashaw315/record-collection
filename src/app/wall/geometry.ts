@@ -201,3 +201,41 @@ export function rowPlanes(
     return extent.length === 0 ? [] : [shelfPlane(extent, extent[0].z)];
   });
 }
+
+/**
+ * **5b's top face: what makes a spine an object rather than a bar** (5b §4),
+ * over the record's footprint at z + H. And the right face, which is where
+ * the pulled record's cover shows (D2, §11.3). Both are the same three
+ * coordinates the front face is, seen once.
+ */
+export function topFace({ x, y, z, width }: PlacedSeat): readonly Point[] {
+  const top = z + SPINE_HEIGHT;
+  return [
+    project(x, y, top),
+    project(x + width, y, top),
+    project(x + width, y + DEPTH, top),
+    project(x, y + DEPTH, top),
+  ];
+}
+
+export function rightFace({ x, y, z, width }: PlacedSeat): readonly Point[] {
+  const right = x + width;
+  return [
+    project(right, y, z),
+    project(right, y + DEPTH, z),
+    project(right, y + DEPTH, z + SPINE_HEIGHT),
+    project(right, y, z + SPINE_HEIGHT),
+  ];
+}
+
+/**
+ * The cover's plane: a DEPTH × SPINE_HEIGHT rect mapped onto the right face
+ * by D2's `matrix(−cos30, sin30, 0, 1, P)`, P the face's far-top corner.
+ * The determinant is −cos30 — the plane is mirrored — so the pulled record
+ * carries no caption: text on it would fight the geometry, and D2 removed
+ * the caption rather than un-mirroring it.
+ */
+export function coverTransform({ x, y, z, width }: PlacedSeat): string {
+  const [px, py] = project(x + width, y, z + SPINE_HEIGHT);
+  return `matrix(${-COS30} ${SIN30} 0 1 ${px} ${py})`;
+}

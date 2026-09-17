@@ -35,25 +35,28 @@ test.beforeEach(async ({ page }) => {
   await page.locator('[data-wall="labelled"]').waitFor({ timeout: 15_000 });
 });
 
-test('draws every spine as an unfilled outline at rest — the coverless one indistinguishable', async ({
+test('draws every record as three paper faces at rest — filled for occlusion, none with a hue', async ({
   page,
 }) => {
   /*
-    Was: every record with its own stored colour, and one unfilled where no
-    cover exists. §11 withdraws the fills, and with them the one distinction
-    the coverless record had at rest: seventeen outlines, none filled.
+    Was: unfilled outlines. D2 paints faces back to front, and a painter's
+    order only hides what is behind a face if the face is opaque — so faces
+    are paper in three steps, and the coverless record is indistinguishable
+    from the rest. "No derived colour" is asserted as chroma, over every fill.
   */
-  const spines = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('[data-seat] [data-spine]')).map((spine) => ({
-      fill: spine.getAttribute('fill'),
-      stroke: spine.getAttribute('stroke'),
+  const faces = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('[data-seat] [data-face]')).map((face) => ({
+      face: face.getAttribute('data-face'),
+      fill: face.getAttribute('fill') ?? '',
     })),
   );
 
-  expect(spines).toHaveLength(COLLECTION_SPINES.length);
-  for (const spine of spines) {
-    expect(spine.fill).toBe('none');
-    expect(spine.stroke).toBe('#161412');
+  expect(faces.filter((f) => f.face === 'front')).toHaveLength(COLLECTION_SPINES.length);
+  expect(faces.filter((f) => f.face === 'top')).toHaveLength(COLLECTION_SPINES.length);
+  expect(faces.filter((f) => f.face === 'right')).toHaveLength(COLLECTION_SPINES.length);
+  for (const { face, fill } of faces) {
+    const chroma = Number(/oklch\([\d.]+ ([\d.]+) /.exec(fill)?.[1]);
+    expect(chroma, `${face} ${fill} is paper`).toBeLessThanOrEqual(0.004);
   }
 });
 
@@ -90,22 +93,20 @@ test('labels every spine at the drawn size, rotated up the spine, cut to the bud
   expect(donna?.text).toBe('Donna Summer · On The Radio: Greates…');
 });
 
-test('sets every label in ink, and no derived colour appears anywhere in the drawing', async ({
+test('sets every label in ink, and nothing in the resting drawing carries a hue', async ({
   page,
 }) => {
   /**
-   * Was: ink picked per fill from 5b's four candidates. With no fill there is
-   * nothing to pick against, and §11 withdraws the pick at rest. The second
-   * half is the ruling itself, asserted over the WHOLE svg rather than the
-   * spines: a fill that crept onto a shelf, a label or a mark would be the same
-   * exception leaking somewhere the spine assertion does not look.
+   * §11 asserted over the WHOLE svg: every fill is a paper step (chroma ≤
+   * 0.004) or the ink — a colour that crept onto a plane, a label or a mark
+   * would be the exception leaking somewhere the face assertion does not look.
    */
   const fills = await page.evaluate(() => {
     const svg = document.querySelector('[data-wall="labelled"]');
     if (svg === null) return null;
     return {
       labels: Array.from(svg.querySelectorAll('[data-label]')).map((l) => l.getAttribute('fill')),
-      everything: Array.from(svg.querySelectorAll('[fill]')).map((el) => el.getAttribute('fill')),
+      everything: Array.from(svg.querySelectorAll('[fill]')).map((el) => el.getAttribute('fill') ?? ''),
     };
   });
   expect(fills).not.toBeNull();
@@ -114,9 +115,11 @@ test('sets every label in ink, and no derived colour appears anywhere in the dra
   expect(fills.labels).toHaveLength(COLLECTION_SPINES.length);
   for (const ink of fills.labels) expect(ink).toBe('#161412');
 
-  expect(new Set(fills.everything), 'line, ink and paper — nothing else').toEqual(
-    new Set(['none', '#161412']),
-  );
+  for (const fill of fills.everything) {
+    if (fill === '#161412' || fill === 'none') continue;
+    const chroma = Number(/oklch\([\d.]+ ([\d.]+) /.exec(fill)?.[1]);
+    expect(chroma, `${fill} — line, ink and paper, nothing else`).toBeLessThanOrEqual(0.004);
+  }
 });
 
 test('draws the same polygons the overview does, by the shared geometry', async ({ page }) => {

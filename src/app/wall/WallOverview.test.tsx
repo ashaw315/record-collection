@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { WallOverview } from './WallOverview';
+import { FACE_FILL, PLANE_FILL, TOP_FILL, WallOverview } from './WallOverview';
 import type { ShelfSeat } from './shelf-runs';
 
 /**
@@ -31,11 +31,11 @@ const countTag = (html: string, tag: string) =>
   html.split(`<${tag}`).length - 1;
 
 describe('the overview draws the collection as polygons', () => {
-  it('draws one polygon per record plus one per shelf run', () => {
+  it('draws three faces per record plus one plane per shelf run', () => {
     const html = render({ seats: seats(6, 2), pulledId: null });
 
-    // 6 spines + 2 runs.
-    expect(countTag(html, 'polygon')).toBe(8);
+    // 6 records × (top, right, front) + 2 planes.
+    expect(countTag(html, 'polygon')).toBe(6 * 3 + 2);
   });
 
   /**
@@ -76,7 +76,7 @@ describe('a pulled record leaves the shelf whole', () => {
     const pulled = render({ seats: shelf, pulledId: 'r2' });
 
     /* One fewer spine, the SAME number of outlines. */
-    expect(countTag(pulled, 'polygon')).toBe(countTag(seated, 'polygon') - 1);
+    expect(countTag(pulled, 'polygon')).toBe(countTag(seated, 'polygon') - 3);
   });
 });
 
@@ -101,7 +101,7 @@ describe('200 records', () => {
       assuming one run per section across the whole wall; runs are per SHELF,
       which is what makes the wall wrap without a run spanning a row break.
     */
-    expect(polygons).toBe(225);
+    expect(polygons).toBe(200 * 3 + 25);
     expect(html.length).toBeGreaterThan(0);
   });
 
@@ -128,16 +128,20 @@ describe('200 records', () => {
 });
 
 describe('the overview at rest is line, ink and paper (8a §11)', () => {
-  it('fills no spine — every polygon is an outline', () => {
+  it('fills every face in a paper value, never a derived colour — opaque so nearer faces occlude', () => {
     /*
-      Fails against `WallOverview.tsx` while a spine carries `fill="#8a8079"`:
-      a flat grey is not a derived colour, but it is not line, ink or paper
-      either, and §11 leaves the resting wall nothing else.
+      §11 says no derived colour at rest, not no fill: a painter's order can
+      only hide the lines behind a face if the face is opaque. Three paper
+      steps — plane, face, top — and nothing with a hue.
     */
     const html = render({ seats: seats(6, 2), pulledId: null });
     const fills = [...html.matchAll(/fill="([^"]*)"/g)].map((m) => m[1]);
 
-    expect(fills).toHaveLength(8);
-    expect(new Set(fills)).toEqual(new Set(['none']));
+    expect(fills).toHaveLength(6 * 3 + 2);
+    expect(new Set(fills)).toEqual(new Set([PLANE_FILL, FACE_FILL, TOP_FILL]));
+    for (const fill of fills) {
+      const chroma = Number(/oklch\([\d.]+ ([\d.]+) /.exec(fill)?.[1]);
+      expect(chroma, fill).toBeLessThanOrEqual(0.004);
+    }
   });
 });

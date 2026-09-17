@@ -1,4 +1,13 @@
-import { frontFace, layoutRow, paintOrder, rowPlanes, type PlacedSeat, type Point } from './geometry';
+import {
+  frontFace,
+  layoutRow,
+  paintOrder,
+  rightFace,
+  rowPlanes,
+  topFace,
+  type PlacedSeat,
+  type Point,
+} from './geometry';
 import type { ShelfSeat } from './shelf-runs';
 import { wallViewBox } from './wall-frame';
 
@@ -16,7 +25,8 @@ import { wallViewBox } from './wall-frame';
  * wall at rest line, ink and paper.
  *
  * Drawn on the shared geometry by import: rows laid on the axis, one plane
- * per run, faces painted back to front across the whole wall.
+ * per run, three faces per record — 5b's top face is what makes a spine an
+ * object rather than a bar — painted back to front across the whole wall.
  */
 
 /** How many records sit on one shelf before the wall wraps to the next. */
@@ -24,6 +34,16 @@ export const PER_SHELF = 40;
 
 const INK = '#161412';
 const RULE = 'oklch(0.44 0.008 70)';
+
+/**
+ * **Paper, in three steps — not none.** §11 rules out derived colour at rest,
+ * not fill: a painter's order can only hide the lines behind a face if the
+ * face is opaque, and an outline row shows every edge through. D2's values:
+ * the plane a step below paper, the faces at paper, the top a step above.
+ */
+export const PLANE_FILL = 'oklch(0.905 0.004 80)';
+export const FACE_FILL = 'oklch(0.925 0.004 80)';
+export const TOP_FILL = 'oklch(0.948 0.004 80)';
 
 export const points = (polygon: readonly Point[]) =>
   polygon.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(' ');
@@ -51,10 +71,14 @@ export function WallOverview({
       style={{ background: 'oklch(0.925 0.004 80)', width: '100%', height: 'auto' }}
     >
       {planes.map((plane, index) => (
-        <polygon key={`plane-${index}`} data-plane="" points={points(plane)} fill="none" stroke={RULE} strokeWidth="1" />
+        <polygon key={`plane-${index}`} data-plane="" points={points(plane)} fill={PLANE_FILL} stroke={RULE} strokeWidth="1" />
       ))}
       {paintOrder(placed).map((seat) => (
-        <polygon key={seat.id} points={points(frontFace(seat))} fill="none" stroke={INK} strokeWidth="1" />
+        <g key={seat.id}>
+          <polygon points={points(topFace(seat))} fill={TOP_FILL} stroke={INK} strokeWidth="1" />
+          <polygon points={points(rightFace(seat))} fill={FACE_FILL} stroke={INK} strokeWidth="1" />
+          <polygon points={points(frontFace(seat))} fill={FACE_FILL} stroke={INK} strokeWidth="1" />
+        </g>
       ))}
     </svg>
   );

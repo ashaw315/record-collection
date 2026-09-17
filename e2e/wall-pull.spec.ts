@@ -40,12 +40,15 @@ const FRAME_MS = 1000 / 60;
 const SETTLED_MS = PULL_DURATION_MS + Math.ceil(2 * FRAME_MS);
 const STEP_MS = Math.ceil(FRAME_MS);
 
+/** The pulled record: its front face's points, and the FIELD's fill — the right face, where colour arrives. */
 async function pulled(page: Page) {
   return page.evaluate(() => {
     const el = document.querySelector('[data-pulled]');
-    if (el === null) return null;
-    const points = (el.getAttribute('points') ?? '').split(' ').map((pair) => pair.split(',').map(Number));
-    return { fill: el.getAttribute('fill'), points, id: el.getAttribute('data-pulled') };
+    const front = el?.querySelector('[data-face="front"]');
+    const field = el?.querySelector('[data-field]');
+    if (el === null || el === undefined || !front || !field) return null;
+    const points = (front.getAttribute('points') ?? '').split(' ').map((pair) => pair.split(',').map(Number));
+    return { fill: field.getAttribute('fill'), points, id: el.getAttribute('data-pulled') };
   });
 }
 
@@ -135,7 +138,7 @@ test('on the return the fade completes before the spine lands — checked on the
   await page.clock.runFor(SETTLED_MS);
 
   /* Send it back. */
-  await page.locator('[data-pulled]').click();
+  await page.locator('[data-pulled] [data-field]').click();
   await page.clock.runFor(1);
   expect((await pulled(page))?.fill, 'leaves in colour').not.toBe(WALL_PAPER_HEX);
 
@@ -160,7 +163,7 @@ test('on the return the fade completes before the spine lands — checked on the
   expect(frames, 'frames the viewer sees in paper before landing').toBeGreaterThan(10);
 
   await page.clock.runFor(STEP_MS * 3);
-  await expect(spine, 'landed: the seated outline is back').toHaveCount(1);
-  await expect(spine).toHaveAttribute('fill', 'none');
+  await expect(spine, 'landed: the seated face is back').toHaveCount(1);
+  await expect(spine).toHaveAttribute('fill', /oklch\(0\.925/);
   await expect(page.locator('[data-pulled]')).toHaveCount(0);
 });
