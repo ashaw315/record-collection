@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { PULLED_SIZE, PULL_OFFSET_X } from '../src/app/wall/pull-geometry';
+import { SLIDE, project } from '../src/app/wall/geometry';
 import { PULL_DURATION_MS } from '../src/app/wall/pull-curve';
 import { RETURN_FADE_END, WALL_PAPER_HEX, pullFill } from '../src/app/wall/pull-colour';
 import { recordLadder } from '../src/lib/colour/record-ladder';
@@ -31,6 +31,14 @@ const WIRED_ID = `collection-${WIRED_INDEX}`;
 const wired = recordLadder(COLLECTION_SPINES[WIRED_INDEX]?.resampled ?? null);
 
 const FRAME_MS = 1000 / 60;
+/*
+  `runFor` takes whole milliseconds and floors a fraction, so a gesture run for
+  1000 + 16.67 ends a frame short — progress 0.992, a fill that rounds to the
+  base, and a return click the component rightly refuses. Settle time is two
+  whole frames past the duration.
+*/
+const SETTLED_MS = PULL_DURATION_MS + Math.ceil(2 * FRAME_MS);
+const STEP_MS = Math.ceil(FRAME_MS);
 
 async function pulled(page: Page) {
   return page.evaluate(() => {
@@ -56,7 +64,7 @@ test.beforeEach(async ({ page }) => {
   await page.clock.pauseAt(Date.now() + 1000);
 });
 
-test('clicking a spine pulls it: one polygon, the slot emptied, the shelf whole', async ({
+test('clicking a spine slides it forward: the same face moved, the slot emptied, the plane whole', async ({
   page,
 }) => {
   expect(wired).not.toBeNull();
@@ -68,26 +76,28 @@ test('clicking a spine pulls it: one polygon, the slot emptied, the shelf whole'
   /* Frame 0: the pulled polygon starts where the seated spine was. */
   const start = await pulled(page);
   expect(start?.id).toBe(WIRED_ID);
-  expect(start?.points.map((p) => p.join(',')).join(' ')).toBe(seatBefore);
+  const seatedPoints = (seatBefore ?? '').split(' ').map((pair) => pair.split(',').map(Number));
+  expect(start?.points, 'the pulled polygon starts on the seated face').toEqual(seatedPoints);
   await expect(page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`)).toHaveCount(0);
 
-  await page.clock.runFor(PULL_DURATION_MS + FRAME_MS);
+  await page.clock.runFor(SETTLED_MS);
   const end = await pulled(page);
   expect(end).not.toBeNull();
   if (end === null) return;
 
-  /* Axis-aligned, 116 square, 41 right of the slot, top on the seated top. */
-  const [tl, tr, br] = end.points;
-  expect(tr[0] - tl[0]).toBeCloseTo(PULLED_SIZE, 1);
-  expect(br[1] - tr[1]).toBeCloseTo(PULLED_SIZE, 1);
-  expect(tl[1], 'no shear left').toBeCloseTo(tr[1], 1);
-  const seatedTop = Number(seatBefore?.split(' ')[1].split(',')[1]);
-  const seatedLeft = Number(seatBefore?.split(' ')[0].split(',')[0]);
-  expect(tl[1]).toBeCloseTo(seatedTop, 1);
-  expect(tl[0]).toBeCloseTo(seatedLeft + PULL_OFFSET_X, 1);
+  /*
+    D2: the same object, slid SLIDE along the depth axis — every corner moved
+    by project(0, SLIDE, 0) from the seated face, no scaling, no shear resolved.
+  */
+  const seated = (seatBefore ?? '').split(' ').map((pair) => pair.split(',').map(Number));
+  const [dx, dy] = project(0, SLIDE, 0);
+  end.points.forEach((corner, index) => {
+    expect(corner[0], `corner ${index} x`).toBeCloseTo(seated[index][0] + dx, 1);
+    expect(corner[1], `corner ${index} y`).toBeCloseTo(seated[index][1] + dy, 1);
+  });
 
   /* The shelf run still spans the seat: as many runs as before, none split. */
-  await expect(page.locator('[data-wall="labelled"] polygon[stroke-width="1.6"]')).toHaveCount(1);
+  await expect(page.locator('[data-wall="labelled"] [data-plane]')).toHaveCount(1);
 });
 
 test('colour arrives across the pull — paper at 0, the fill the curve gives at 500ms, base at the end', async ({
@@ -122,7 +132,7 @@ test('on the return the fade completes before the spine lands — checked on the
   if (wired === null) throw new Error('fixture');
   const spine = page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`);
   await spine.click();
-  await page.clock.runFor(PULL_DURATION_MS + FRAME_MS);
+  await page.clock.runFor(SETTLED_MS);
 
   /* Send it back. */
   await page.locator('[data-pulled]').click();
@@ -139,17 +149,17 @@ test('on the return the fade completes before the spine lands — checked on the
   const fadeEndMs = Math.ceil(RETURN_FADE_END * PULL_DURATION_MS) + 2 * FRAME_MS;
   await page.clock.runFor(fadeEndMs);
   let frames = 0;
-  for (let ms = fadeEndMs; ms < PULL_DURATION_MS; ms += FRAME_MS) {
+  for (let ms = fadeEndMs; ms < PULL_DURATION_MS; ms += STEP_MS) {
     const now = await pulled(page);
     expect(now, `still returning at ${ms.toFixed(0)}ms`).not.toBeNull();
     expect(now?.fill, `paper at ${ms.toFixed(0)}ms`).toBe(WALL_PAPER_HEX);
     /* And not yet seated: the top edge still carries less than the full rise. */
     frames += 1;
-    await page.clock.runFor(FRAME_MS);
+    await page.clock.runFor(STEP_MS);
   }
   expect(frames, 'frames the viewer sees in paper before landing').toBeGreaterThan(10);
 
-  await page.clock.runFor(FRAME_MS * 2);
+  await page.clock.runFor(STEP_MS * 3);
   await expect(spine, 'landed: the seated outline is back').toHaveCount(1);
   await expect(spine).toHaveAttribute('fill', 'none');
   await expect(page.locator('[data-pulled]')).toHaveCount(0);

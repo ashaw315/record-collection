@@ -1,33 +1,41 @@
 import { describe, expect, it } from 'vitest';
 import {
+  COS30,
   DEPTH,
-  SHELF_GAP,
+  GAP,
+  LEDGE,
+  ROW_PITCH,
+  SHELF_INSET_X,
+  SHELF_INSET_Y,
+  SIN30,
+  SLIDE,
   SPINE_HEIGHT,
   SPINE_WIDTH_MAX,
   SPINE_WIDTH_MIN,
-  shelfPolygon,
-  spinePolygon,
+  frontFace,
+  layoutRow,
+  paintOrder,
+  project,
+  shelfPlane,
   spineWidth,
+  type PlacedSeat,
 } from './geometry';
-import { shelfRuns, type ShelfSeat } from './shelf-runs';
 
 /**
- * The geometry both wall components share (The Wall 5b §1).
+ * The geometry both wall components share (The Wall D2, on 5b's constants).
  *
- * **This layer exists so the labelled component inherits its decisions rather
- * than re-making them.** A projection settled inside the overview's renderer is
- * one the 1:1 component cannot reuse, and two renderers that each decide a
- * spine's width produce a record that changes thickness when labels appear.
+ * **One `project(x, y, z)` and nothing individually sheared.** 5b advanced
+ * seats along the projection's length axis; the build advanced them along
+ * screen x and sheared each spine on its own, so the row was flat, 5b's climb
+ * sat in the pitch as an empty band, and the shelf — laid along the axis
+ * correctly — peeled away from spines that were not. c5ce6ab flattened the
+ * shelf to match, and its test asserted the flattening as an invariant. That
+ * test is deleted with this file's rewrite, not updated: it encoded the defect.
+ *
+ * Every face below is three coordinates seen once through the same function.
  */
 
 describe('the wall proportions derive rather than being asserted', () => {
-  /**
-   * **240 is the wall's constant and the derivation is the point.** The design
-   * file drew at 120 for convenience, adopted it as a constant, reasoned from
-   * it, and produced its one wrong conclusion — that the wall carries no
-   * labels. Deriving the bounds from SPINE_HEIGHT keeps them honest if it ever
-   * changes; hardcoding 17 and 24 would not.
-   */
   it('derives the width bounds from the spine height', () => {
     expect(SPINE_HEIGHT).toBe(240);
     expect(SPINE_WIDTH_MIN).toBe(Math.round(SPINE_HEIGHT / 14));
@@ -44,201 +52,181 @@ describe('the wall proportions derive rather than being asserted', () => {
     }
   });
 
-  /**
-   * **Same record, same width, every call.** Both components ask independently,
-   * and a record that is 19px in the overview and 21px at 1:1 is a record that
-   * changes thickness when labels appear.
-   */
   it('gives one record one width, stably', () => {
     expect(spineWidth('abc')).toBe(spineWidth('abc'));
     expect(spineWidth('abc')).not.toBe(spineWidth('xyz'));
   });
+
+  /**
+   * **D2's figures are the reference's units (H = 150) applied as ratios to
+   * 5b's 240**, because the 9px floor's argument is made at 240 and a 12-unit
+   * spine would not hold it. Each ratio is named so the next change to H moves
+   * every figure with it rather than one of them.
+   */
+  it('applies D2’s ratios to the wall’s constant', () => {
+    const ratio = SPINE_HEIGHT / 150;
+    expect(DEPTH, 'square: a record is as deep as it is tall').toBe(SPINE_HEIGHT);
+    expect(GAP).toBe(Math.round(5 * ratio));
+    expect(SHELF_INSET_X).toBe(Math.round(20 * ratio));
+    expect(SHELF_INSET_Y).toBe(Math.round(10 * ratio));
+    expect(LEDGE).toBe(Math.round(46 * ratio));
+    expect(SLIDE, 'the slide equals the ledge').toBe(LEDGE);
+    expect(ROW_PITCH).toBe(Math.round(286 * ratio));
+  });
 });
 
-describe('the isometric projection', () => {
-  /**
-   * The shear IS the projection: the top edge rises to the right by
-   * `width * tan(30°)`. The 1:1 component's pull resolves this to zero, so it
-   * has to start from the same value this produces.
-   */
-  it('lifts the left edge by the isometric rise', () => {
-    const points = spinePolygon(100, 50, 20);
-    const [topLeft, topRight] = points;
-
-    expect(topRight[0] - topLeft[0], 'the spine is `width` across').toBeCloseTo(20, 5);
-    expect(topLeft[1] - topRight[1], 'the left edge sits lower by the rise').toBeCloseTo(
-      20 * Math.tan(Math.PI / 6),
-      5,
-    );
+describe('one projection', () => {
+  it('is the reference’s: x down-right, y down-left, z straight up', () => {
+    expect(project(1, 0, 0)).toEqual([COS30, SIN30]);
+    expect(project(0, 1, 0)).toEqual([-COS30, SIN30]);
+    expect(project(0, 0, 1)).toEqual([0, -1]);
+    expect(project(0, 0, 0)).toEqual([0, 0]);
   });
 
-  it('keeps the two vertical edges parallel and SPINE_HEIGHT long', () => {
-    const [topLeft, topRight, bottomRight, bottomLeft] = spinePolygon(0, 0, 22);
-
-    expect(bottomLeft[1] - topLeft[1]).toBeCloseTo(SPINE_HEIGHT, 5);
-    expect(bottomRight[1] - topRight[1]).toBeCloseTo(SPINE_HEIGHT, 5);
+  it('draws the front face as the same four 3D corners seen once', () => {
+    /* The spine's near face lies at y + D; its four corners projected, in order. */
+    const seat: PlacedSeat = { id: 'r', x: 100, y: 16, z: 458, width: 19 };
+    const D = DEPTH;
+    expect(frontFace(seat)).toEqual([
+      project(100, 16 + D, 458),
+      project(119, 16 + D, 458),
+      project(119, 16 + D, 458 + SPINE_HEIGHT),
+      project(100, 16 + D, 458 + SPINE_HEIGHT),
+    ]);
   });
+});
 
-  it('translates without reshaping', () => {
-    const at0 = spinePolygon(0, 0, 19);
-    const at100 = spinePolygon(100, 40, 19);
+describe('the row is on the axis', () => {
+  const seats = Array.from({ length: 5 }, (_, index) => ({ id: `r${index}`, section: 'A' }));
 
-    for (const [index, point] of at100.entries()) {
-      expect(point[0] - at0[index][0]).toBeCloseTo(100, 5);
-      expect(point[1] - at0[index][1]).toBeCloseTo(40, 5);
+  it('advances each seat by its width plus the gap, along x', () => {
+    /*
+      D2: thickness plus gap is what keeps the objects countable — at 22 with
+      no gap the top faces tile into a ramp. So the gap is fixed and the seat
+      pitch follows the width, rather than every seat sitting at the widest.
+    */
+    const placed = layoutRow(seats, 0, null);
+    expect(placed[0].x).toBe(SHELF_INSET_X);
+    for (let index = 1; index < placed.length; index += 1) {
+      expect(placed[index].x).toBe(placed[index - 1].x + placed[index - 1].width + GAP);
+      expect(placed[index].y).toBe(SHELF_INSET_Y);
+      expect(placed[index].z).toBe(placed[0].z);
     }
   });
+
+  it('moves consecutive seats by a translation ALONG THE AXIS, not along the screen', () => {
+    /**
+     * **The test that replaces the deleted one.** Corresponding corners of two
+     * neighbours differ by exactly project(Δx, 0, 0): the row climbs (or
+     * falls) at the projection's own rate as it goes, because it lies on the
+     * axis. A row laid along screen x has Δsy = 0 here and fails.
+     */
+    const [a, b] = layoutRow(seats, 0, null);
+    const [fa, fb] = [frontFace(a), frontFace(b)];
+    const [dx, dy] = project(b.x - a.x, 0, 0);
+
+    expect(dy, 'the row is not flat').not.toBe(0);
+    /* Left edges only: the right edges also carry the two widths' difference. */
+    for (const index of [0, 3]) {
+      expect(fb[index][0] - fa[index][0], `corner ${index} Δsx`).toBeCloseTo(dx, 9);
+      expect(fb[index][1] - fa[index][1], `corner ${index} Δsy`).toBeCloseTo(dy, 9);
+    }
+  });
+
+  it('stacks rows down the z axis at the pitch, row 0 highest', () => {
+    const top = layoutRow(seats, 0, null)[0];
+    const next = layoutRow(seats, 1, null)[0];
+    expect(top.z - next.z).toBe(ROW_PITCH);
+    expect(top.x).toBe(next.x);
+  });
 });
 
-/**
- * **§2's distinction, asserted at the layer that draws it.**
- *
- * > "Between groups, the outline stops and restarts — there is no shelf there.
- * > Within group 3, the outline runs unbroken under an empty slot — the shelf
- * > is still there and the record is not on it. Same mark, different owner."
- *
- * `shelfRuns` holds the invariant on run COUNTS. This is the same invariant one
- * layer out, on polygons — and this is the layer that actually draws the lie,
- * so a pull-into-break must fail here too rather than only upstream.
- */
-describe('the shelf outline tells the truth about groups', () => {
-  const SHELF: ShelfSeat[] = [
-    { id: 'a1', section: 'Jazz' },
-    { id: 'b1', section: 'Punk' },
-    { id: 'a2', section: 'Jazz' },
-    { id: 'b2', section: 'Punk' },
-    { id: 'a3', section: 'Jazz' },
-    { id: 'b3', section: 'Punk' },
-  ];
+describe('the shelf is a single plane the records stand on', () => {
+  const seats = Array.from({ length: 3 }, (_, index) => ({ id: `r${index}`, section: 'A' }));
+  const placed = layoutRow(seats, 0, null);
 
-  /** Runs laid end to end, as a shelf lays them. */
-  const layOut = (pulled: string | null) => {
-    let x = 0;
-    return shelfRuns(SHELF, pulled).map((run) => {
-      const polygon = shelfPolygon(run, x, 0);
-      x += run.seatCount * SPINE_WIDTH_MAX;
-      return polygon;
-    });
+  const inside = (point: readonly [number, number], polygon: ReadonlyArray<readonly [number, number]>) => {
+    /* Ray casting, with a tolerance for a point ON an edge. */
+    let hit = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i, i += 1) {
+      const [xi, yi] = polygon[i];
+      const [xj, yj] = polygon[j];
+      if (yi > point[1] !== yj > point[1] && point[0] < ((xj - xi) * (point[1] - yi)) / (yj - yi) + xi + 1e-9) {
+        hit = !hit;
+      }
+    }
+    return hit;
   };
 
-  it('draws one polygon per run', () => {
-    const polygons = layOut(null);
+  it('is one polygon per run, at the row’s height, spanning the run’s seats and the ledge', () => {
+    const plane = shelfPlane(placed, placed[0].z);
+    const last = placed[placed.length - 1];
+    const x0 = placed[0].x - SHELF_INSET_X;
+    const x1 = last.x + last.width + SHELF_INSET_X;
+    expect(plane).toEqual([
+      project(x0, 0, placed[0].z),
+      project(x1, 0, placed[0].z),
+      project(x1, SHELF_INSET_Y + DEPTH + LEDGE, placed[0].z),
+      project(x0, SHELF_INSET_Y + DEPTH + LEDGE, placed[0].z),
+    ]);
+  });
 
-    expect(polygons).toHaveLength(2);
-    for (const polygon of polygons) {
-      expect(polygon, 'a shelf outline is a quadrilateral').toHaveLength(4);
+  it('has every spine’s feet on it — the shelf meets the records standing on it', () => {
+    /* The invariant c5ce6ab was after, asserted on the surface itself. */
+    const plane = shelfPlane(placed, placed[0].z);
+    for (const seat of placed) {
+      const [footL, footR] = frontFace(seat);
+      expect(inside(footL, plane), `${seat.id} left foot on the plane`).toBe(true);
+      expect(inside(footR, plane), `${seat.id} right foot on the plane`).toBe(true);
     }
   });
 
-  /**
-   * **THE assertion this layer exists for.** A record pulled from the middle of
-   * a run leaves the shelf unbroken beneath it: ONE polygon, not two. Two would
-   * be the wall saying a group ended where none did.
-   */
-  it('draws ONE polygon for a run with a seat emptied', () => {
-    const seated = layOut(null);
-    const pulled = layOut('a2');
+  it('lands the pulled record’s front edge exactly on the shelf’s front', () => {
+    /* SLIDE equals LEDGE so the slid record stops at the plane's near edge, never past it. */
+    const pulled = layoutRow(seats, 0, 'r1').find((seat) => seat.id === 'r1');
+    expect(pulled?.y).toBe(SHELF_INSET_Y + SLIDE);
+    expect((pulled?.y ?? 0) + DEPTH).toBe(SHELF_INSET_Y + DEPTH + LEDGE);
+  });
+});
 
-    expect(pulled, 'a pull must not add an outline').toHaveLength(seated.length);
+describe('faces paint back to front by x + y, globally', () => {
+  it('orders by depth from the camera and ignores z', () => {
+    /**
+     * D2: a record slid forward on one shelf is nearer than everything on
+     * every other shelf at the same x. Sorting per shelf painted the pulled
+     * record under rows it stands in front of.
+     */
+    const upper: PlacedSeat = { id: 'u', x: 100, y: 16, z: 458, width: 20 };
+    const lowerSlid: PlacedSeat = { id: 's', x: 100, y: 16 + SLIDE, z: 0, width: 20 };
+    const lowerRight: PlacedSeat = { id: 'r', x: 200, y: 16, z: 0, width: 20 };
+    const order = paintOrder([lowerRight, lowerSlid, upper]).map((seat) => seat.id);
+    expect(order).toEqual(['u', 's', 'r']);
   });
 
-  it('draws TWO polygons when a section boundary genuinely separates them', () => {
-    // The other absence: different groups, so the outline stops and restarts.
-    const polygons = layOut(null);
-
-    expect(polygons).toHaveLength(2);
-    expect(polygons[0], 'runs at different positions are different polygons').not.toEqual(
-      polygons[1],
-    );
+  it('is stable on ties, so a row keeps its seat order', () => {
+    const a: PlacedSeat = { id: 'a', x: 50, y: 16, z: 0, width: 20 };
+    const b: PlacedSeat = { id: 'b', x: 30, y: 36, z: 458, width: 20 };
+    expect(paintOrder([a, b]).map((s) => s.id)).toEqual(['a', 'b']);
+    expect(paintOrder([b, a]).map((s) => s.id)).toEqual(['b', 'a']);
   });
+});
 
-  it('never draws a shorter outline for a pulled run than for the seated one', () => {
+describe('the row pitch keeps one row off the next', () => {
+  it('exceeds the silhouette plus the ledge — the figure 238 failed on', () => {
     /*
-      The shelf is still there and the record is not on it — so the outline
-      under a pulled record keeps its extent. A shorter polygon is the same lie
-      as a split one, drawn as a gap at the end instead of the middle.
+      D2: "at 238 the lower row's top faces ate the upper row's ledge." The
+      lower row's highest point is its far top corner; the upper row's lowest
+      is its plane's near edge. In projection that is PITCH > H + (D + LEDGE)·sin30
+      — 248 in D2's units, which 238 fails and 286 clears by 38.
     */
-    const [seatedJazz] = layOut(null);
-    const [pulledJazz] = layOut('a2');
+    const minimum = SPINE_HEIGHT + (DEPTH + LEDGE) * SIN30;
+    expect(ROW_PITCH).toBeGreaterThan(minimum);
 
-    const width = (polygon: ReadonlyArray<readonly [number, number]>) =>
-      Math.max(...polygon.map(([x]) => x)) - Math.min(...polygon.map(([x]) => x));
-
-    expect(width(pulledJazz)).toBeCloseTo(width(seatedJazz), 5);
-  });
-});
-
-describe('the shelf meets the spines standing on it', () => {
-  /**
-   * **Caught by looking, not by measuring.** The first rendering at true size
-   * showed the outlines floating below the spines and sagging away from them —
-   * and every existing test passed, because they all asked about run COUNTS and
-   * never about whether the shelf touches the records.
-   *
-   * That is the fixture-adequacy failure in a new place: the assertions were
-   * about the right invariant and no assertion described the surface itself.
-   */
-  const run = shelfRuns(
-    Array.from({ length: 3 }, (_, index) => ({ id: `r${index}`, section: 'A' })),
-    null,
-  )[0];
-
-  it('starts where the spines end, including the isometric lift', () => {
-    const spine = spinePolygon(0, 0, SPINE_WIDTH_MAX);
-    const shelf = shelfPolygon(run, 0, 0);
-
-    /* The spine's lower-RIGHT corner is the shelf's upper-right corner. */
-    const spineFootRight = spine[2];
-    const shelfTopRight = shelf[1];
-
-    expect(shelfTopRight[1], 'the shelf top meets the spine foot').toBeCloseTo(
-      spineFootRight[1],
-      5,
-    );
-  });
-
-  it('rises at the projection rate, not in proportion to its length', () => {
-    /*
-      The defect the drawing showed: rise was computed from the run's whole
-      span, so a forty-seat shelf sagged forty times as far as a one-seat one.
-      The shelf's rise is a property of its DEPTH under the projection.
-    */
-    const short = shelfPolygon(run, 0, 0);
-    const longRun = shelfRuns(
-      Array.from({ length: 30 }, (_, index) => ({ id: `x${index}`, section: 'A' })),
-      null,
-    )[0];
-    const long = shelfPolygon(longRun, 0, 0);
-
-    const rise = (polygon: ReadonlyArray<readonly [number, number]>) =>
-      polygon[0][1] - polygon[1][1];
-
-    expect(rise(long), 'a longer shelf does not sag further').toBeCloseTo(rise(short), 5);
-  });
-});
-
-describe('the shelf gap is provisional', () => {
-  /**
-   * **Authored, not measured — and pinned here so it cannot become settled by
-   * being used.** See the comment on SHELF_GAP: it was written rather than read
-   * off the scene, then doubled with everything else during the 120→240
-   * rescale, which transformed an assumption instead of re-deriving it.
-   */
-  it('is the value the density drawings were computed against', () => {
-    expect(SHELF_GAP).toBe(48);
-  });
-
-  it('composes the shelf pitch the density work reported', () => {
-    // 688 = 400 climb + 240 spine + 48 gap. Stated so a change to the gap moves
-    // a number someone has to look at rather than silently re-rendering.
-    expect(400 + SPINE_HEIGHT + SHELF_GAP).toBe(688);
-  });
-});
-
-describe('depth', () => {
-  it('is the drawing\'s 52, giving the 1:12 mean proportion', () => {
-    expect(DEPTH).toBe(52);
-    const meanWidth = (SPINE_WIDTH_MIN + SPINE_WIDTH_MAX) / 2;
-    expect(SPINE_HEIGHT / meanWidth).toBeCloseTo(11.7, 1);
+    const seats = [{ id: 'r', section: 'A' }];
+    const upper = layoutRow(seats, 0, null);
+    const lower = layoutRow(seats, 1, null);
+    const upperPlaneNear = shelfPlane(upper, upper[0].z)[2][1];
+    const lowerTopFar = project(lower[0].x, lower[0].y, lower[0].z + SPINE_HEIGHT)[1];
+    expect(lowerTopFar, 'the lower row’s top stays below the upper plane').toBeGreaterThan(upperPlaneNear);
   });
 });

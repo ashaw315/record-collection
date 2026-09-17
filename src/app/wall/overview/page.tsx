@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { WallOverview } from '../WallOverview';
-import { SHELF_GAP, SPINE_HEIGHT } from '../geometry';
+import { ROW_PITCH, SPINE_HEIGHT } from '../geometry';
 import type { ShelfSeat } from '../shelf-runs';
 
 /**
@@ -56,10 +56,8 @@ export default function WallOverviewPage() {
         Wall overview — true size, unlabelled
       </h1>
       <p style={{ font: '400 13px/1.6 Geist, sans-serif', maxWidth: 640, margin: '0 0 6px' }}>
-        Polygons only. Spine height {SPINE_HEIGHT}, thickness 17–24, shelf gap{' '}
-        <strong>{SHELF_GAP}</strong> — the gap is the open question: it was authored rather
-        than read from the scene, and doubled during the 120→240 rescale. This is the first
-        rendering at which it can be judged by looking.
+        Polygons only. Spine height {SPINE_HEIGHT}, thickness 17–24, rows on the axis at a pitch of{' '}
+        <strong>{ROW_PITCH}</strong> (D2). The first rendering at which the row can be judged as a row.
       </p>
 
       <section style={{ margin: '28px 0 0' }}>

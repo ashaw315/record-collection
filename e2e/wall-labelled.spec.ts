@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { SPINE_WIDTH_MIN, spinePolygon, spineWidth } from '../src/app/wall/geometry';
+import { SPINE_WIDTH_MIN, frontFace, layoutRow } from '../src/app/wall/geometry';
 import { SPINE_TEXT_BUDGET, spineLabel } from '../src/app/wall/spine-text';
 import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
 
@@ -81,7 +81,8 @@ test('labels every spine at the drawn size, rotated up the spine, cut to the bud
     expect(label.size).toBe('10.39');
     expect(label.weight).toBe('500');
     expect(label.family).toMatch(/Geist Mono/);
-    expect(label.transform).toMatch(/rotate\(-90\)/);
+    /* D2's matrix: local x up the spine, local y along the row — on the face's own plane. */
+    expect(label.transform).toMatch(/^matrix\(0 -1 /);
   }
 
   /* The drawn truncation, on the drawn record. */
@@ -132,12 +133,20 @@ test('draws the same polygons the overview does, by the shared geometry', async 
     })),
   );
 
-  drawn.forEach((seat, index) => {
-    const x = index * 24;
-    const expected = spinePolygon(x, 0, spineWidth(seat.id))
-      .map(([px, py]) => `${px},${py}`)
-      .join(' ');
-    expect(seat.points, `${seat.id} polygon`).toBe(expected);
+  const placed = layoutRow(
+    COLLECTION_SPINES.map((_, index) => ({ id: `collection-${index}`, section: 'Collection' })),
+    0,
+    null,
+  );
+  drawn.forEach((seat) => {
+    const expected = placed.find((p) => p.id === seat.id);
+    expect(expected, seat.id).toBeDefined();
+    if (expected === undefined) return;
+    expect(seat.points, `${seat.id} polygon`).toBe(
+      frontFace(expected)
+        .map(([px, py]) => `${px.toFixed(2)},${py.toFixed(2)}`)
+        .join(' '),
+    );
   });
 });
 
