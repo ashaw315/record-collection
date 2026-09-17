@@ -64,7 +64,7 @@ export function WallOverview({
 
   return (
     <svg
-      viewBox={wallViewBox(planes, placed.map(frontFace))}
+      viewBox={wallViewBox(planes, placed.flatMap((seat) => [frontFace(seat), topFace(seat), rightFace(seat)]))}
       style={{ background: 'oklch(0.925 0.004 80)', width: '100%', height: 'auto' }}
     >
       {planes.map((plane, index) => (

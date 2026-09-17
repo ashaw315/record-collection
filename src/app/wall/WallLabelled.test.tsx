@@ -138,3 +138,25 @@ describe('the labelled wall renders at 1:1 — never above it, and (D1) never be
     expect(render([seat('a', null)], null)).toContain('<text');
   });
 });
+
+describe('the frame holds the whole drawing', () => {
+  it('starts above the top row’s top faces, not at its front faces', () => {
+    /*
+      Framed on front faces only, the viewBox began 120px (D·sin30) below the
+      top row's top faces and the scene ran off the top of the view. Every
+      point of every face is inside the frame.
+    */
+    const html = render([seat('a', null), seat('b', null)], null);
+    const svg = /<svg[^>]*data-wall="labelled"[^>]*>/.exec(html)?.[0] ?? '';
+    const [minX, minY, w, h] = /viewBox="([^"]+)"/.exec(svg)?.[1]?.split(' ').map(Number) ?? [];
+    const points = [...html.matchAll(/points="([^"]+)"/g)].flatMap((m) =>
+      m[1].split(' ').map((pair) => pair.split(',').map(Number)),
+    );
+    for (const [x, y] of points) {
+      expect(x).toBeGreaterThanOrEqual(minX);
+      expect(y, 'no point above the frame').toBeGreaterThanOrEqual(minY);
+      expect(x).toBeLessThanOrEqual(minX + w);
+      expect(y).toBeLessThanOrEqual(minY + h);
+    }
+  });
+});

@@ -127,7 +127,8 @@ export function WallLabelled({
     scaled DOWN below the 9px floor. The wall pans instead: its region
     scrolls the drawing rather than scaling it.
   */
-  const frame = wallFrame(planes, placed.map(frontFace));
+  /* Every face, not the front alone: the top faces stand D·sin30 above them. */
+  const frame = wallFrame(planes, placed.flatMap((seat) => [frontFace(seat), topFace(seat), rightFace(seat)]));
 
   return (
     <svg
