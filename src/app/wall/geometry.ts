@@ -1,4 +1,7 @@
-import { shelfRuns, type ShelfSeat } from './shelf-runs';
+import type { ShelfSeat } from './shelf-runs';
+import { PER_SHELF } from './shelf-rows';
+
+export { PER_SHELF };
 
 /**
  * The geometry both wall components share (The Wall D2, on 5b's constants).
@@ -142,23 +145,25 @@ export function frontFace({ x, y, z, width }: PlacedSeat): readonly Point[] {
 }
 
 /**
- * The shelf under a run: **a single plane**, not a board. 5b rules out three
- * faces and the reason survives the reference — a shelf with three faces is a
- * box, and a box drawn around the collection competes with the records
- * standing in it. It spans the run's seats plus the inset either side, and
- * runs from behind the records to the ledge in front of them.
+ * **One plane, one width, every row — the wall's width, with the records
+ * inset inside it** (§11.7). A shelf whose length is a function of what is
+ * on it is not a shelf but a platform per arrangement, which is why rows
+ * spanning their seated extent read as islands at a pitch measured correct.
+ * The width is the wall's CAPACITY rather than the widest row's extent: a
+ * shared width derived from the fullest row still moves every plane when one
+ * record is added to that row, and the thing drawn is a fixture, not a
+ * measurement of the collection. That is also what makes an empty run's
+ * plane (§11.6) unremarkable: the plane is the shelf's, not its occupants'.
  *
- * Between runs the plane stops and restarts (5b §2): there is no shelf there.
- * Within a run it spans an emptied seat, because the shelf is still there and
- * the record is not on it.
+ * A single plane, not a board: 5b rules out three faces and the reason
+ * survives the reference — a shelf with three faces is a box, and a box
+ * drawn around the collection competes with the records standing in it.
  */
-export function shelfPlane(run: readonly PlacedSeat[], z: number): readonly Point[] {
-  const first = run[0];
-  const last = run[run.length - 1];
-  const x0 = first.x - SHELF_INSET_X;
-  const x1 = last.x + last.width + SHELF_INSET_X;
+export const WALL_WIDTH = 2 * SHELF_INSET_X + PER_SHELF * (SPINE_WIDTH_MAX + GAP);
+
+export function shelfPlane(z: number): readonly Point[] {
   const near = SHELF_INSET_Y + DEPTH + LEDGE;
-  return [project(x0, 0, z), project(x1, 0, z), project(x1, near, z), project(x0, near, z)];
+  return [project(0, 0, z), project(WALL_WIDTH, 0, z), project(WALL_WIDTH, near, z), project(0, near, z)];
 }
 
 /**
@@ -182,24 +187,36 @@ export function labelTransform(seat: PlacedSeat): string {
   return `matrix(0 -1 ${COS30} ${SIN30} ${px} ${py})`;
 }
 
-/**
- * The planes a row draws: one per run, over the run's seats — the pulled
- * record's seat included, since a plane drawn from the seated records alone
- * would shrink when a record is pulled, the other absence drawn as a gap at
- * the end instead of the middle.
- */
+/** The plane a row draws: one, at the row's height, whatever the row holds. */
 export function rowPlanes(shelf: readonly ShelfSeat[], placed: readonly PlacedSeat[]): (readonly Point[])[] {
-  /*
-    **From the SEATED arrangement.** `shelfRuns(shelf, pulledId)` drops a run
-    with no seated records, which is right for what it counts and wrong for
-    what a plane spans: a shelf of one record, pulled, lost its plane and the
-    record floated over nothing — §2's gap. The shelf is still there and the
-    record is not on it, so the plane's extent is every seat of the section.
-  */
-  return shelfRuns(shelf, null).flatMap((run) => {
-    const extent = placed.filter((seat) => run.ids.includes(seat.id));
-    return extent.length === 0 ? [] : [shelfPlane(extent, extent[0].z)];
-  });
+  const z = placed[0]?.z ?? 0;
+  return shelf.length === 0 ? [] : [shelfPlane(z)];
+}
+
+/**
+ * **§2's section breaks are marks within the plane, not its ends** (§11.7).
+ * They coincided with the plane's ends only because each plane stopped where
+ * a section did — a division of the collection expressed as a division of
+ * the furniture. A break is a rule across the plane at the seat boundary,
+ * from its far edge to its near edge, and the plane runs on past it. The
+ * pulled record's seat is still a seat, so its boundary still carries one.
+ */
+export function rowBreaks(
+  shelf: readonly ShelfSeat[],
+  placed: readonly PlacedSeat[],
+): (readonly [Point, Point])[] {
+  const near = SHELF_INSET_Y + DEPTH + LEDGE;
+  const byId = new Map(placed.map((seat) => [seat.id, seat]));
+  const breaks: (readonly [Point, Point])[] = [];
+  for (let index = 1; index < shelf.length; index += 1) {
+    if (shelf[index].section === shelf[index - 1].section) continue;
+    const a = byId.get(shelf[index - 1].id);
+    const b = byId.get(shelf[index].id);
+    if (a === undefined || b === undefined) continue;
+    const x = (a.x + a.width + b.x) / 2;
+    breaks.push([project(x, 0, a.z), project(x, near, a.z)]);
+  }
+  return breaks;
 }
 
 /**

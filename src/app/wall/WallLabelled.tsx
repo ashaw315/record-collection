@@ -8,6 +8,7 @@ import {
   layoutRow,
   paintOrder,
   rightFace,
+  rowBreaks,
   rowPlanes,
   topFace,
   type PlacedSeat,
@@ -108,11 +109,13 @@ export function WallLabelled({
 
   const byId = new Map(seats.map((seat) => [seat.id, seat]));
   const planes: (readonly Point[])[] = [];
+  const breaks: (readonly [Point, Point])[] = [];
   const placed: PlacedSeat[] = [];
   intoShelves(seats).forEach((shelf, row) => {
     /* The plane spans the pulled SEAT (5b §2); the record itself is placed where the slide has it. */
     const rowSeats = layoutRow(shelf, row, pulledId);
     planes.push(...rowPlanes(shelf, rowSeats));
+    breaks.push(...rowBreaks(shelf, rowSeats));
     placed.push(
       ...rowSeats.map((seat) =>
         seat.id === pulledId && pose !== null ? { ...seat, y: slideY(pose) } : seat,
@@ -141,6 +144,10 @@ export function WallLabelled({
     >
       {planes.map((plane, index) => (
         <polygon key={`plane-${index}`} data-plane="" points={points(plane)} fill={PLANE_FILL} stroke={RULE} strokeWidth="1" />
+      ))}
+      {/* §2's breaks: a rule across the plane at the seat boundary; the plane runs on past it. */}
+      {breaks.map(([from, to], index) => (
+        <line key={`break-${index}`} data-break="" x1={from[0].toFixed(2)} y1={from[1].toFixed(2)} x2={to[0].toFixed(2)} y2={to[1].toFixed(2)} stroke={RULE} strokeWidth="1" />
       ))}
       {paintOrder(placed).map((seat) => {
         const record = byId.get(seat.id);

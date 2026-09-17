@@ -5,6 +5,7 @@ import {
   GAP,
   LEDGE,
   ROW_PITCH,
+  PER_SHELF,
   SHELF_INSET_X,
   SHELF_INSET_Y,
   SIN30,
@@ -12,6 +13,7 @@ import {
   SPINE_HEIGHT,
   SPINE_WIDTH_MAX,
   SPINE_WIDTH_MIN,
+  WALL_WIDTH,
   coverTransform,
   frontFace,
   labelsFit,
@@ -20,6 +22,7 @@ import {
   paintOrder,
   project,
   rightFace,
+  rowBreaks,
   rowPlanes,
   shelfPlane,
   spineWidth,
@@ -147,12 +150,11 @@ describe('the row is on the axis', () => {
   });
 });
 
-describe('the shelf is a single plane the records stand on', () => {
+describe('the shelf is a single plane at the wall’s width (§11.7)', () => {
   const seats = Array.from({ length: 3 }, (_, index) => ({ id: `r${index}`, section: 'A' }));
   const placed = layoutRow(seats, 0, null);
 
   const inside = (point: readonly [number, number], polygon: ReadonlyArray<readonly [number, number]>) => {
-    /* Ray casting, with a tolerance for a point ON an edge. */
     let hit = false;
     for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i, i += 1) {
       const [xi, yi] = polygon[i];
@@ -164,34 +166,77 @@ describe('the shelf is a single plane the records stand on', () => {
     return hit;
   };
 
-  it('is one polygon per run, at the row’s height, spanning the run’s seats and the ledge', () => {
-    const plane = shelfPlane(placed, placed[0].z);
-    const last = placed[placed.length - 1];
-    const x0 = placed[0].x - SHELF_INSET_X;
-    const x1 = last.x + last.width + SHELF_INSET_X;
-    expect(plane).toEqual([
-      project(x0, 0, placed[0].z),
-      project(x1, 0, placed[0].z),
-      project(x1, SHELF_INSET_Y + DEPTH + LEDGE, placed[0].z),
-      project(x0, SHELF_INSET_Y + DEPTH + LEDGE, placed[0].z),
+  it('spans the wall’s CAPACITY, not the widest row — a fixture, not a measurement of the collection', () => {
+    /*
+      §11.7: a shared width derived from the fullest row still moves every
+      plane when one record is added to that row. So the width is what the
+      shelf holds — PER_SHELF seats at the widest pitch — inset either side.
+    */
+    expect(WALL_WIDTH).toBe(2 * SHELF_INSET_X + PER_SHELF * (SPINE_WIDTH_MAX + GAP));
+    expect(shelfPlane(0)).toEqual([
+      project(0, 0, 0),
+      project(WALL_WIDTH, 0, 0),
+      project(WALL_WIDTH, SHELF_INSET_Y + DEPTH + LEDGE, 0),
+      project(0, SHELF_INSET_Y + DEPTH + LEDGE, 0),
     ]);
   });
 
-  it('has every spine’s feet on it — the shelf meets the records standing on it', () => {
-    /* The invariant c5ce6ab was after, asserted on the surface itself. */
-    const plane = shelfPlane(placed, placed[0].z);
+  it('is the same plane whatever the row holds — one record, five, or forty', () => {
+    const z = -ROW_PITCH;
+    for (const count of [1, 5, 40]) {
+      const row = Array.from({ length: count }, (_, index) => ({ id: `s${index}`, section: 'A' }));
+      expect(rowPlanes(row, layoutRow(row, 1, null))).toEqual([shelfPlane(z)]);
+    }
+  });
+
+  it('has every spine’s feet on it, and forty of the widest fit inside it', () => {
+    const plane = shelfPlane(placed[0].z);
     for (const seat of placed) {
       const [footL, footR] = frontFace(seat);
       expect(inside(footL, plane), `${seat.id} left foot on the plane`).toBe(true);
       expect(inside(footR, plane), `${seat.id} right foot on the plane`).toBe(true);
     }
+    const full = layoutRow(Array.from({ length: PER_SHELF }, (_, i) => ({ id: `w${i}`, section: 'A' })), 0, null);
+    const last = full[full.length - 1];
+    expect(last.x + last.width + SHELF_INSET_X).toBeLessThanOrEqual(WALL_WIDTH);
   });
 
   it('lands the pulled record’s front edge exactly on the shelf’s front', () => {
-    /* SLIDE equals LEDGE so the slid record stops at the plane's near edge, never past it. */
     const pulled = layoutRow(seats, 0, 'r1').find((seat) => seat.id === 'r1');
     expect(pulled?.y).toBe(SHELF_INSET_Y + SLIDE);
     expect((pulled?.y ?? 0) + DEPTH).toBe(SHELF_INSET_Y + DEPTH + LEDGE);
+  });
+});
+
+describe('§2’s section breaks are marks within the plane, not its ends (§11.7)', () => {
+  const shelf = [
+    { id: 'a1', section: 'A' },
+    { id: 'a2', section: 'A' },
+    { id: 'b1', section: 'B' },
+    { id: 'b2', section: 'B' },
+    { id: 'c1', section: 'C' },
+  ];
+  const placed = layoutRow(shelf, 0, null);
+
+  it('draws one rule across the plane at each boundary between sections, none within one', () => {
+    const breaks = rowBreaks(shelf, placed);
+    expect(breaks).toHaveLength(2);
+    const between = (a: PlacedSeat, b: PlacedSeat) => (a.x + a.width + b.x) / 2;
+    expect(breaks[0]).toEqual([
+      project(between(placed[1], placed[2]), 0, 0),
+      project(between(placed[1], placed[2]), SHELF_INSET_Y + DEPTH + LEDGE, 0),
+    ]);
+    expect(breaks[1][0]).toEqual(project(between(placed[3], placed[4]), 0, 0));
+  });
+
+  it('leaves the plane running past the break — one plane per row, whatever the sections', () => {
+    expect(rowPlanes(shelf, placed)).toHaveLength(1);
+    const one = [{ id: 'x', section: 'A' }];
+    expect(rowBreaks(one, layoutRow(one, 0, null))).toEqual([]);
+  });
+
+  it('keeps the break where the pulled record’s seat is, since the seat is still there', () => {
+    expect(rowBreaks(shelf, layoutRow(shelf, 0, 'b1'))).toHaveLength(2);
   });
 });
 
@@ -228,11 +273,13 @@ describe('the row pitch keeps one row off the next', () => {
     const minimum = SPINE_HEIGHT + (DEPTH + LEDGE) * SIN30;
     expect(ROW_PITCH).toBeGreaterThan(minimum);
 
+    /* At the same x — the plane is wall-wide, so its near edge's screen-y varies with x. */
     const seats = [{ id: 'r', section: 'A' }];
     const upper = layoutRow(seats, 0, null);
     const lower = layoutRow(seats, 1, null);
-    const upperPlaneNear = shelfPlane(upper, upper[0].z)[2][1];
-    const lowerTopFar = project(lower[0].x, lower[0].y, lower[0].z + SPINE_HEIGHT)[1];
+    const x = lower[0].x;
+    const upperPlaneNear = project(x, SHELF_INSET_Y + DEPTH + LEDGE, upper[0].z)[1];
+    const lowerTopFar = project(x, lower[0].y, lower[0].z + SPINE_HEIGHT)[1];
     expect(lowerTopFar, 'the lower row’s top stays below the upper plane').toBeGreaterThan(upperPlaneNear);
   });
 });
@@ -296,30 +343,11 @@ describe('5b’s two faces, on the same three coordinates (D2)', () => {
   });
 });
 
-describe('the plane spans seats, not occupants (5b §2)', () => {
-  it('still draws the plane under a run whose only record is pulled', () => {
-    /*
-      Found by the four-shelf split: a shelf of one record, pulled, lost its
-      plane — shelfRuns drops a run with no seated records, and the plane was
-      built from those runs. The record floated over nothing, which is the
-      gap §2 forbids: the shelf is still there and the record is not on it.
-    */
+describe('a run with no seated records still has a shelf (§11.6)', () => {
+  it('draws the plane under a row whose only record is pulled — the plane is the shelf’s, not its occupants’', () => {
     const shelf = [{ id: 'only', section: 'A' }];
     const placed = layoutRow(shelf, 0, 'only');
-    expect(rowPlanes(shelf, placed)).toHaveLength(1);
-  });
-
-  it('keeps one plane per section run with a record pulled from the middle', () => {
-    const shelf = [
-      { id: 'a1', section: 'A' },
-      { id: 'a2', section: 'A' },
-      { id: 'b1', section: 'B' },
-    ];
-    const placed = layoutRow(shelf, 0, 'a2');
-    const planes = rowPlanes(shelf, placed);
-    expect(planes).toHaveLength(2);
-    /* A's plane spans both its seats, a2's included, at its slid-free extent. */
-    expect(planes[0]).toEqual(shelfPlane(placed.slice(0, 2), placed[0].z));
+    expect(rowPlanes(shelf, placed)).toEqual([shelfPlane(placed[0].z)]);
   });
 });
 

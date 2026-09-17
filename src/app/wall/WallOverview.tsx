@@ -3,6 +3,7 @@ import {
   layoutRow,
   paintOrder,
   rightFace,
+  rowBreaks,
   rowPlanes,
   topFace,
   type PlacedSeat,
@@ -54,10 +55,12 @@ export function WallOverview({
   pulledId: string | null;
 }) {
   const planes: (readonly Point[])[] = [];
+  const breaks: (readonly [Point, Point])[] = [];
   const placed: PlacedSeat[] = [];
   intoShelves(seats).forEach((shelf, row) => {
     const rowSeats = layoutRow(shelf, row, pulledId);
     planes.push(...rowPlanes(shelf, rowSeats));
+    breaks.push(...rowBreaks(shelf, rowSeats));
     /* The pulled record's SEAT is still spanned by its plane; no spine is drawn on it. */
     placed.push(...rowSeats.filter((seat) => seat.id !== pulledId));
   });
@@ -69,6 +72,10 @@ export function WallOverview({
     >
       {planes.map((plane, index) => (
         <polygon key={`plane-${index}`} data-plane="" points={points(plane)} fill={PLANE_FILL} stroke={RULE} strokeWidth="1" />
+      ))}
+      {/* §2's breaks: a rule across the plane at the seat boundary; the plane runs on past it. */}
+      {breaks.map(([from, to], index) => (
+        <line key={`break-${index}`} data-break="" x1={from[0].toFixed(2)} y1={from[1].toFixed(2)} x2={to[0].toFixed(2)} y2={to[1].toFixed(2)} stroke={RULE} strokeWidth="1" />
       ))}
       {paintOrder(placed).map((seat) => (
         <g key={seat.id}>

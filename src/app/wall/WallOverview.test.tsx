@@ -34,9 +34,10 @@ describe('the overview draws the collection as polygons', () => {
   it('draws three faces per record plus one plane per shelf run', () => {
     const html = render({ seats: seats(6, 2), pulledId: null });
 
-    // 6 records × (top, right, front), over four shelves (2·2·1·1) whose
-    // alternating sections make 2 + 2 + 1 + 1 runs.
-    expect(countTag(html, 'polygon')).toBe(6 * 3 + 6);
+    // 6 records × (top, right, front), over four shelves (2·2·1·1): one plane
+    // per shelf (§11.7), the section boundaries drawn as rules, not planes.
+    expect(countTag(html, 'polygon')).toBe(6 * 3 + 4);
+    expect(html.split('data-break=""').length - 1, 'one break per row with both sections').toBe(2);
   });
 
   /**
@@ -102,7 +103,7 @@ describe('200 records', () => {
       assuming one run per section across the whole wall; runs are per SHELF,
       which is what makes the wall wrap without a run spanning a row break.
     */
-    expect(polygons).toBe(200 * 3 + 25);
+    expect(polygons).toBe(200 * 3 + 5);
     expect(html.length).toBeGreaterThan(0);
   });
 
@@ -138,7 +139,7 @@ describe('the overview at rest is line, ink and paper (8a §11)', () => {
     const html = render({ seats: seats(6, 2), pulledId: null });
     const fills = [...html.matchAll(/fill="([^"]*)"/g)].map((m) => m[1]);
 
-    expect(fills).toHaveLength(6 * 3 + 6);
+    expect(fills).toHaveLength(6 * 3 + 4);
     expect(new Set(fills)).toEqual(new Set([PLANE_FILL, FACE_FILL, TOP_FILL]));
     for (const fill of fills) {
       const chroma = Number(/oklch\([\d.]+ ([\d.]+) /.exec(fill)?.[1]);
