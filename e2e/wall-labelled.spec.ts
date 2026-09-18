@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { WALL_INK } from '../src/app/wall/pull-colour';
-import { SPINE_WIDTH_MIN, frontFace, layoutRow } from '../src/app/wall/geometry';
+import { COS30, SPINE_WIDTH_MIN, frontFace, layoutRow } from '../src/app/wall/geometry';
 import { unitRows } from '../src/app/wall/unit';
 import { SPINE_TEXT_BUDGET, spineLabel } from '../src/app/wall/spine-text';
 import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
@@ -46,8 +46,9 @@ test('draws every record as three paper faces at rest — filled for occlusion, 
     are paper in three steps, and the coverless record is indistinguishable
     from the rest. "No derived colour" is asserted as chroma, over every fill.
   */
+  /* The spine is in the seat's anchor; its cover and top are in the pass painted before the anchors (§11.15). */
   const faces = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('[data-seat] [data-face]')).map((face) => ({
+    Array.from(document.querySelectorAll('[data-seat] [data-face], [data-of] [data-face]')).map((face) => ({
       face: face.getAttribute('data-face'),
       fill: face.getAttribute('fill') ?? '',
     })),
@@ -295,7 +296,8 @@ test('a keyboard can walk the wall and open a record', async ({ page }) => {
     return { id: el?.closest('[data-seat]')?.getAttribute('data-seat'), w: r?.width ?? 0, h: r?.height ?? 0 };
   });
   expect(focused.id, 'the first spine in document order is the first seat').toBe('collection-0');
-  expect(focused.w, 'the focused record is on screen, not clipped to 1px').toBeGreaterThan(20);
+  /* The anchor is the spine: at least the thinnest spine's projected width, and the face's height. */
+  expect(focused.w, 'the focused record is on screen, not clipped to 1px').toBeGreaterThan(SPINE_WIDTH_MIN * COS30 - 1);
   expect(focused.h).toBeGreaterThan(100);
 
   await page.keyboard.press('Enter');

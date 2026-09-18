@@ -14,6 +14,7 @@ import {
   UNIT_PITCH_X,
   coverTransform,
   frontFace,
+  labelTransform,
   labelsFit,
   layoutRow,
   oneRecordPx,
@@ -73,15 +74,45 @@ describe('one projection', () => {
   });
 
   it('draws the front face as the same four 3D corners seen once', () => {
-    /* The spine's near face lies at y + D; its four corners projected, in order. */
+    /* The spine is the −y face, at the seat's own y; its four corners projected, in order. */
     const seat: PlacedSeat = { id: 'r', x: 100, y: 16, z: 458, width: 19 };
-    const D = DEPTH;
     expect(frontFace(seat)).toEqual([
-      project(100, 16 + D, 458),
-      project(119, 16 + D, 458),
-      project(119, 16 + D, 458 + SPINE_HEIGHT),
-      project(100, 16 + D, 458 + SPINE_HEIGHT),
+      project(100, 16, 458),
+      project(119, 16, 458),
+      project(119, 16, 458 + SPINE_HEIGHT),
+      project(100, 16, 458 + SPINE_HEIGHT),
     ]);
+  });
+});
+
+describe('which side the reader is on (§11.15) — the sign convention, asserted once', () => {
+  /*
+    P(x, y, z) = [(x − y)·cos30, (x + y)·sin30 − z] makes the visible faces
+    the ones with normals +x, −y and +z: the camera is at (+∞, −∞, +∞), so a
+    SMALLER y is nearer. The spine is the −y face and the cover the +x face.
+    A build with its labelled face at y + D has its labels on the back of
+    every record — and an extent comparison cannot catch it, because a
+    mirror in y leaves the bounding box invariant. This block is the check
+    that does change under the flip.
+  */
+  const seat: PlacedSeat = { id: 'r', x: 100, y: 16, z: 458, width: 19 };
+
+  it('puts the spine on the −y face: the front face is at the seat’s y, not y + D', () => {
+    expect(frontFace(seat)[0]).toEqual(project(100, 16, 458));
+    expect(frontFace({ ...seat, depth: 300 })[0], 'whatever the depth').toEqual(project(100, 16, 458));
+  });
+
+  it('enters the label’s plane at the −y face’s bottom-left corner', () => {
+    const [px, py] = project(100, 16, 458);
+    expect(labelTransform(seat)).toBe(`matrix(0 -1 ${COS30} ${SIN30} ${px} ${py})`);
+  });
+
+  it('paints nearer later: larger x − y is nearer the camera', () => {
+    const back: PlacedSeat = { id: 'back', x: 100, y: 40, z: 0, width: 12 };
+    /* Slid 60 toward the reader, it is nearer than the record 50 to its right. */
+    const front: PlacedSeat = { id: 'front', x: 100, y: -20, z: 0, width: 12 };
+    const right: PlacedSeat = { id: 'right', x: 150, y: 40, z: 0, width: 12 };
+    expect(paintOrder([front, right, back]).map((s) => s.id)).toEqual(['back', 'right', 'front']);
   });
 });
 
@@ -163,22 +194,24 @@ describe('§2’s section breaks are marks within the shelf, not its ends (§11.
   });
 });
 
-describe('faces paint back to front by x + y, globally', () => {
+describe('faces paint back to front by x − y, row by row', () => {
   it('orders rows top to bottom, then by depth from the camera within a row', () => {
     /*
       Row-major first: rows do not overlap at ROW_PITCH, and row order is what
-      a keyboard walks (§11.8). Within a row, back to front by x + y.
+      a keyboard walks (§11.8). Within a row, back to front by x − y: the
+      camera is at −y (§11.15), so a record slid toward the reader has a
+      SMALLER y and paints after its row-mate at the same x.
     */
     const upper: PlacedSeat = { id: 'u', x: 100, y: 16, z: 458, width: 20 };
-    const lowerSlid: PlacedSeat = { id: 's', x: 100, y: 16 + 74, z: 0, width: 20 };
     const lowerRight: PlacedSeat = { id: 'r', x: 200, y: 16, z: 0, width: 20 };
-    const order = paintOrder([lowerRight, lowerSlid, upper]).map((seat) => seat.id);
-    expect(order).toEqual(['u', 's', 'r']);
+    const lowerSlid: PlacedSeat = { id: 's', x: 200, y: 16 - 74, z: 0, width: 20 };
+    const order = paintOrder([lowerSlid, lowerRight, upper]).map((seat) => seat.id);
+    expect(order).toEqual(['u', 'r', 's']);
   });
 
   it('is stable on ties within a row, so the row keeps its seat order', () => {
-    const a: PlacedSeat = { id: 'a', x: 50, y: 16, z: 0, width: 20 };
-    const b: PlacedSeat = { id: 'b', x: 30, y: 36, z: 0, width: 20 };
+    const a: PlacedSeat = { id: 'a', x: 50, y: 36, z: 0, width: 20 };
+    const b: PlacedSeat = { id: 'b', x: 30, y: 16, z: 0, width: 20 };
     expect(paintOrder([a, b]).map((s) => s.id)).toEqual(['a', 'b']);
     expect(paintOrder([b, a]).map((s) => s.id)).toEqual(['b', 'a']);
   });
@@ -212,22 +245,23 @@ describe('5b’s two faces, on the same three coordinates (D2)', () => {
     const front = frontFace(seat);
     const top = topFace(seat);
     const right = rightFace(seat);
-    expect(front[2]).toEqual(top[2]);
-    expect(front[2]).toEqual(right[2]);
-    expect(top[1], 'the top’s far-right is the right’s far-top').toEqual(right[3]);
-    expect(front[1], 'the front’s bottom-right is the right’s near-bottom').toEqual(right[1]);
+    expect(front[2]).toEqual(top[1]);
+    expect(front[2]).toEqual(right[3]);
+    expect(top[2], 'the top’s far-right is the right’s far-top').toEqual(right[2]);
+    expect(front[1], 'the front’s bottom-right is the right’s near-bottom').toEqual(right[0]);
   });
 
-  it('maps the cover’s rect onto the right face entered from its NEAR-top corner, un-mirrored', () => {
+  it('maps the cover’s rect onto the right face entered from its FAR-top corner (y + D), local x toward the reader, un-mirrored', () => {
     /*
       D2's matrix(−cos30, sin30, 0, 1, far-top) has determinant −cos30: the
       plane is mirrored, which is why D2 removed its caption rather than
       un-mirroring it. §11.7 puts type on this face for the record with no
       cover, and a sleeve's own lettering reads backwards on a mirrored
-      plane — so the face is entered from the near-top corner with local x
-      running toward the far edge: matrix(cos30, −sin30, 0, 1, near-top),
-      determinant +cos30. local (0,0) → near-top, (D,0) → far-top, (0,H) →
-      near-bottom.
+      plane — so the face is entered from the far-top corner (y + D) with
+      local x running toward the near edge, which is −y (§11.15: seen from
+      +x the in-plane right-hand direction is −y): matrix(cos30, −sin30, 0,
+      1, far-top), determinant +cos30 — the drawing's own image matrix.
+      local (0,0) → far-top, (D,0) → near-top, (0,H) → far-bottom.
     */
     const t = coverTransform(seat);
     const m = /^matrix\(([-\d.e]+) ([-\d.e]+) ([-\d.e]+) ([-\d.e]+) ([-\d.e]+) ([-\d.e]+)\)$/.exec(t);

@@ -127,9 +127,18 @@ export function layoutRow(seats: readonly ShelfSeat[], row: number, unit = 0): P
   }));
 }
 
-/** The spine: the record's near face, at y + DEPTH. */
-export function frontFace({ x, y, z, width, depth = DEPTH, height = SPINE_HEIGHT }: BoxLike): readonly Point[] {
-  const near = y + depth;
+/**
+ * **Which side the reader is on (§11.15).** P(x, y, z) makes the visible
+ * faces the ones with normals +x, −y and +z: the camera is at (+∞, −∞, +∞),
+ * so a SMALLER y is nearer. The spine is the −y face — at the seat's own y —
+ * and the cover is the +x face. D2 had the labelled face at y + D, which is
+ * the back of every record; an extent test could not see it, since a
+ * mirror in y leaves the bounding box alone (geometry.test.ts asserts the
+ * convention at one place). `depth` is accepted so a grown box shares the
+ * signature; the spine does not move with it.
+ */
+export function frontFace({ x, y, z, width, height = SPINE_HEIGHT }: BoxLike): readonly Point[] {
+  const near = y;
   return [
     project(x, near, z),
     project(x + width, near, z),
@@ -143,28 +152,31 @@ export function frontFace({ x, y, z, width, depth = DEPTH, height = SPINE_HEIGHT
  * must agree rather than be assumed to. SVG has no z-index, so paint order
  * is document order, and document order is what a keyboard walks.
  *
- * **Row-major, then back to front by x + y within the row.** A global x + y
- * sort is blind to z: the second row's left seats sorted between the first
- * row's, so the drawing was never rows-top-to-bottom and the keyboard would
- * have walked it interleaved — the test Design asked for caught it. Rows do
- * not overlap at ROW_PITCH (asserted), so row order costs the painter
- * nothing; within a row seats vary along x alone, so x + y IS seat order.
- * A pulled record slides forward and must paint after the neighbours its
- * faces cover, which is why it is drawn as its own element and not as a
- * seat: the seated anchors keep seat order whatever is pulled.
+ * **Row-major, then back to front by x − y within the row.** Nearer is
+ * larger x and smaller y (§11.15: the camera is at −y), so the painter's
+ * key is x − y ascending. A global depth sort is blind to z: the second
+ * row's left seats sorted between the first row's, so the drawing was never
+ * rows-top-to-bottom and the keyboard would have walked it interleaved —
+ * the test Design asked for caught it. Rows do not overlap at ROW_PITCH
+ * (asserted), so row order costs the painter nothing; within a row seats
+ * vary along x alone, so x − y IS seat order. A pulled record slides toward
+ * the reader and must paint after the neighbours its faces cover, which is
+ * why it is drawn as its own element and not as a seat: the seated anchors
+ * keep seat order whatever is pulled.
  */
 export function paintOrder<T extends { x: number; y: number; z: number }>(items: readonly T[]): T[] {
-  return [...items].sort((a, b) => (a.z !== b.z ? b.z - a.z : a.x + a.y - (b.x + b.y)));
+  return [...items].sort((a, b) => (a.z !== b.z ? b.z - a.z : a.x - a.y - (b.x - b.y)));
 }
 
 /**
- * The label's plane: the front face, entered at its bottom-left corner, with
- * local x running up the spine and local y along the row. D2's matrix,
+ * The label's plane: the front face (the −y face), entered at its
+ * bottom-left corner, with local x running up the spine and local y along
+ * the row. D2's matrix,
  * `matrix(0, −1, cos30, sin30, P)` — determinant +cos30, so the text is not
  * mirrored (the cover's plane is, which is why it carries no caption).
  */
 export function labelTransform(seat: BoxLike): string {
-  const [px, py] = project(seat.x, seat.y + (seat.depth ?? DEPTH), seat.z);
+  const [px, py] = project(seat.x, seat.y, seat.z);
   return `matrix(0 -1 ${COS30} ${SIN30} ${px} ${py})`;
 }
 
@@ -220,12 +232,14 @@ export function rightFace({ x, y, z, width, depth = DEPTH, height = SPINE_HEIGHT
 
 /**
  * The cover's plane: a depth × height rect mapped onto the right face,
- * **entered from its near-top corner so the plane is not mirrored.** D2's
- * `matrix(−cos30, sin30, 0, 1, far-top)` has determinant −cos30, which is why
- * D2 removed its caption rather than un-mirroring it. §11.7 puts type on
- * this face for the record with no cover, and a sleeve's own lettering reads
- * backwards on a mirrored plane — so local x runs from the near edge toward
- * the far edge: `matrix(cos30, −sin30, 0, 1, near-top)`, determinant +cos30.
+ * **entered from its far-top corner (y + depth) with local x running toward
+ * the reader, so the plane is not mirrored.** Seen from +x the in-plane
+ * right-hand direction is −y (§11.15); D2's `matrix(−cos30, sin30, 0, 1, …)`
+ * ran the other way and had determinant −cos30, which is why D2 removed its
+ * caption rather than un-mirroring it. §11.7 puts type on this face for the
+ * record with no cover, and a sleeve's own lettering reads backwards on a
+ * mirrored plane — so: `matrix(cos30, −sin30, 0, 1, far-top)`, determinant
+ * +cos30, which is §11.11's own image matrix.
  *
  * The plane's units are the wall's, at any size: a pulled record's cover
  * grows because its box does (§11.10), not because the plane is scaled — so

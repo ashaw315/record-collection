@@ -77,17 +77,47 @@ describe('what distinguishes a spine at rest (§11.1)', () => {
 describe('5b’s two faces at rest (D2): three faces per record, filled in paper for occlusion', () => {
   it('draws top, right and front per seat, the top a step lighter, all paper', () => {
     const html = render([seat('a', null), seat('b', null)], null);
+    const facesA = html.slice(html.indexOf('data-of="a"'), html.indexOf('data-of="b"'));
     const seatA = html.slice(html.indexOf('data-seat="a"'), html.indexOf('data-seat="b"'));
-    for (const face of ['top', 'right', 'front']) {
-      expect(seatA, `face ${face}`).toContain(`data-face="${face}"`);
+    for (const face of ['top', 'right']) {
+      expect(facesA, `face ${face}`).toContain(`data-face="${face}"`);
     }
-    expect(seatA).toContain(`data-face="top" points="`);
-    expect(seatA).toContain(`fill="${TOP_FILL}"`);
+    expect(seatA).toContain('data-face="front"');
+    expect(facesA).toContain(`data-face="top" points="`);
+    expect(facesA).toContain(`fill="${TOP_FILL}"`);
+    expect(facesA).toContain(`fill="${FACE_FILL}"`);
     expect(seatA).toContain(`fill="${FACE_FILL}"`);
     /* Paper, not none: the painter's order only occludes with opaque faces. */
-    expect(seatA).not.toContain('fill="none"');
+    expect(facesA).not.toContain('fill="none"');
     expect(html).toContain(`data-furniture="shelf-top" points="`);
     expect(html).toContain(`fill="${PLANE_FILL}"`);
+  });
+
+  it('paints every cover and top face before every spine, so no neighbour’s cover covers the spine the reader clicks (§11.15)', () => {
+    /*
+      The spine is the −y face and the cover the +x face, and a record's cover
+      face reaches down-left across the spines of every record to its left.
+      Painted record by record, the only readable spine in a row was the
+      last one; §11.11's drawing has the same occlusion and hides it by
+      painting all seventeen labels after every polygon. Per-face painting
+      is what a depth test would give: covers and tops far to near, then the
+      spines, which are nearer than everything they cross. The anchor is the
+      spine with its label — the click lands on the record it names.
+    */
+    const html = render([seat('a', null), seat('b', null), seat('c', null)], null);
+    const firstSeat = html.indexOf('data-seat=');
+    const lastFace = Math.max(html.lastIndexOf('data-face="right"'), html.lastIndexOf('data-face="top"'));
+    expect(lastFace).toBeLessThan(firstSeat);
+    for (const id of ['a', 'b', 'c']) {
+      const inner = new RegExp(`<a [^>]*data-seat="${id}"[^>]*>([\\s\\S]*?)</a>`).exec(html)?.[1] ?? '';
+      expect(inner, `anchor ${id} holds one spine`).toMatch(/<polygon[^>]*data-spine=""/);
+      expect(inner, `anchor ${id} holds its label`).toContain('<text');
+      expect(inner).not.toContain('data-face="right"');
+      expect(inner).not.toContain('data-face="top"');
+    }
+    /* Faces are painted far to near: the order of data-of is the seat order along the row. */
+    const ofOrder = [...html.matchAll(/data-of="([^"]+)"/g)].map((m) => m[1]).filter((v, i, arr) => arr.indexOf(v) === i);
+    expect(ofOrder).toEqual(['a', 'b', 'c']);
   });
 
   it('carries the pulled record’s field and cover on its right face, and no caption', () => {
@@ -103,7 +133,7 @@ describe('5b’s two faces at rest (D2): three faces per record, filled in paper
     const field = /<rect[^>]*data-field[^>]*>/.exec(pulled)?.[0] ?? '';
     expect(field).not.toBe('');
     expect(field).not.toContain(`fill="${WALL_PAPER_HEX}"`);
-    /* At the START of the pull the group is the face itself, entered from the near-top corner: un-mirrored. */
+    /* At the START of the pull the group is the face itself, entered from the far-top corner, local x toward the reader: un-mirrored. */
     const start = render([seat('a', null), seat('b', 'https://covers.test/b.jpg')], { id: 'b', direction: 'out', progress: 0 });
     expect(start.slice(start.indexOf('data-pulled="b"')), 'the cover’s group maps the face un-mirrored').toContain('<g transform="matrix(0.866');
     const g = pulled.slice(pulled.indexOf('<g transform="matrix('));
@@ -215,7 +245,7 @@ describe('the record with no cover arrives at type, not at a swatch (§11.3, §1
 });
 
 describe('spines are anchors inside the SVG (§11.8)', () => {
-  it('wraps each seat’s faces in an <a> with the record’s route and the FULL title as its name', () => {
+  it('wraps each seat’s spine and label in an <a> with the record’s route and the FULL title as its name', () => {
     const html = render([seat('a', null), seat('b', null)], null);
     const a = html.slice(html.indexOf('data-seat="a"'), html.indexOf('data-seat="b"'));
     const open = /<a [^>]*data-seat="a"[^>]*>/.exec(html)?.[0] ?? '';
@@ -223,7 +253,11 @@ describe('spines are anchors inside the SVG (§11.8)', () => {
     expect(open).toContain('href="/records/a"');
     /* The face carries the truncated label; the accessible name carries the whole title. */
     expect(open).toContain('aria-label="Artist a · Title a"');
-    for (const face of ['top', 'right', 'front']) expect(a).toContain(`data-face="${face}"`);
+    expect(a).toContain('data-face="front"');
+    expect(a).toContain('<text');
+    /* The record's cover and top are painted in the pass before the anchors (§11.15), tagged with the seat they belong to. */
+    const faces = html.slice(html.indexOf('data-of="a"'), html.indexOf('data-of="b"'));
+    for (const face of ['top', 'right']) expect(faces).toContain(`data-face="${face}"`);
   });
 
 });
@@ -290,7 +324,7 @@ describe('the record with no cover arrives at type, not at a swatch (§11.3, §1
 });
 
 describe('spines are anchors inside the SVG (§11.8)', () => {
-  it('wraps each seat’s faces in an <a> with the record’s route and the FULL title as its name', () => {
+  it('wraps each seat’s spine and label in an <a> with the record’s route and the FULL title as its name', () => {
     const html = render([seat('a', null), seat('b', null)], null);
     const a = html.slice(html.indexOf('data-seat="a"'), html.indexOf('data-seat="b"'));
     const open = /<a [^>]*data-seat="a"[^>]*>/.exec(html)?.[0] ?? '';
@@ -298,7 +332,11 @@ describe('spines are anchors inside the SVG (§11.8)', () => {
     expect(open).toContain('href="/records/a"');
     /* The face carries the truncated label; the accessible name carries the whole title. */
     expect(open).toContain('aria-label="Artist a · Title a"');
-    for (const face of ['top', 'right', 'front']) expect(a).toContain(`data-face="${face}"`);
+    expect(a).toContain('data-face="front"');
+    expect(a).toContain('<text');
+    /* The record's cover and top are painted in the pass before the anchors (§11.15), tagged with the seat they belong to. */
+    const faces = html.slice(html.indexOf('data-of="a"'), html.indexOf('data-of="b"'));
+    for (const face of ['top', 'right']) expect(faces).toContain(`data-face="${face}"`);
   });
 
 });

@@ -288,6 +288,24 @@ export function WallLabelled({
       {breaks.map(([from, to], index) => (
         <line key={`break-${index}`} data-break="" x1={from[0].toFixed(2)} y1={from[1].toFixed(2)} x2={to[0].toFixed(2)} y2={to[1].toFixed(2)} stroke={RULE} strokeWidth="1" />
       ))}
+      {/*
+        **Two passes, because the spine is the −y face (§11.15).** A record's
+        cover face reaches down-left across the spines of every record to its
+        left, so painted record by record the only readable spine in a row is
+        the last one — §11.11's drawing has the same occlusion and hides it by
+        painting all its labels after every polygon. Per-face painting is what
+        a depth test gives: covers and tops far to near, then every spine,
+        which is nearer than everything it crosses. Document order of the
+        seats is still seat order (§11.8): the anchors are the second pass.
+      */}
+      {paintOrder(placed).map((seat) =>
+        !byId.has(seat.id) || movingById.has(seat.id) ? null : (
+          <g key={`faces-${seat.id}`} data-of={seat.id}>
+            <polygon data-face="top" points={points(topFace(seat))} fill={TOP_FILL} stroke={INK} strokeWidth="1" />
+            <polygon data-face="right" points={points(rightFace(seat))} fill={FACE_FILL} stroke={INK} strokeWidth="1" />
+          </g>
+        ),
+      )}
       {paintOrder(placed).map((seat) => {
         const record = byId.get(seat.id);
         if (record === undefined) return null;
@@ -302,7 +320,9 @@ export function WallLabelled({
             and is on the keyboard's path — and the FULL title is its
             accessible name where the face carries the truncated one, the one
             place in this design where truncation is not a loss. With
-            JavaScript on, the click is intercepted into the pull.
+            JavaScript on, the click is intercepted into the pull. The anchor
+            is the spine and its label; the record's other faces are in the
+            pass above.
           */
           <a
             key={seat.id}
@@ -319,8 +339,6 @@ export function WallLabelled({
                   }
             }
           >
-            <polygon data-face="top" points={points(topFace(seat))} fill={TOP_FILL} stroke={INK} strokeWidth="1" />
-            <polygon data-face="right" points={points(rightFace(seat))} fill={FACE_FILL} stroke={INK} strokeWidth="1" />
             <polygon
               data-spine=""
               data-face="front"

@@ -49,11 +49,11 @@ describe('landingSize — the largest cover face the region holds', () => {
 describe('landedBox — where the record lands', () => {
   const box = landedBox(seat.id, view);
 
-  it('keeps the record’s own width, grows depth and height to one square face, and stands one shelf’s depth in front of the row', () => {
+  it('keeps the record’s own width, grows depth and height to one square face, and stands one shelf’s depth in front of the row — toward the reader, at −y', () => {
     expect(box.width).toBe(seat.width);
     expect(box.depth).toBe(box.height);
     expect(box.height).toBe(landingSize(view, seat.width));
-    expect(box.y).toBe(SHELF_INSET_Y + SHELF_DEPTH);
+    expect(box.y).toBe(SHELF_INSET_Y - SHELF_DEPTH);
   });
 
   it('is centred in the visible region, in projection', () => {
@@ -90,7 +90,7 @@ describe('landingBoxAt — one curve from the seat to the landing', () => {
     expect(cover[1]).toEqual(project(landed.x + landed.width, landed.y + landed.depth, landed.z));
     expect(cover[3]).toEqual(project(landed.x + landed.width, landed.y, landed.z + landed.height));
     expect(topFace(landed)[2]).toEqual(project(landed.x + landed.width, landed.y + landed.depth, landed.z + landed.height));
-    expect(frontFace(landed)[0]).toEqual(project(landed.x, landed.y + landed.depth, landed.z));
+    expect(frontFace(landed)[0], 'the spine stays the −y face').toEqual(project(landed.x, landed.y, landed.z));
     /* And the cover's plane is entered at the box's near-top corner, unmirrored, at the wall's angle. */
     const [px, py] = project(landed.x + landed.width, landed.y + landed.depth, landed.z + landed.height);
     expect(coverTransform(landed)).toBe(`matrix(${COS30} ${-SIN30} 0 1 ${px} ${py})`);
@@ -106,8 +106,9 @@ describe('landingBoxAt — one curve from the seat to the landing', () => {
     expect(at.depth).toBeCloseTo(DEPTH + (landed.depth - DEPTH) * eased, 9);
     expect(at.height).toBeCloseTo(SPINE_HEIGHT + (landed.height - SPINE_HEIGHT) * eased, 9);
     /* Still a box under the projection at every step: its faces share their corners. */
-    expect(frontFace(at)[2]).toEqual(rightFace(at)[2]);
+    expect(frontFace(at)[2]).toEqual(rightFace(at)[3]);
     expect(topFace(at)[1]).toEqual(rightFace(at)[3]);
+    expect(topFace(at)[2]).toEqual(rightFace(at)[2]);
   });
 
   it('grows uniformly — a 12″ sleeve is square, so the face is square at every step, and the plane is never mirrored', () => {

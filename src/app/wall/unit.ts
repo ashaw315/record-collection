@@ -69,8 +69,10 @@ const face = (kind: FurnitureFace['kind'], z: number, corners: ReadonlyArray<rea
 
 /**
  * One unit's furniture as drawn in §11.11: two uprights and four shelves,
- * three visible faces each — top, the +x end, the near (+y) front. Drawn
- * before the records, as the drawing does.
+ * three visible faces each — top, the +x end, the near front, which is the
+ * −y face (§11.15: the reader is at −y). Drawn before the records, as the
+ * drawing does; every face here is among the drawing's own polygons
+ * (unit.test.ts).
  */
 export function unitFurniture(unit: number): FurnitureFace[] {
   const x0 = unit * UNIT_PITCH_X;
@@ -86,7 +88,7 @@ export function unitFurniture(unit: number): FurnitureFace[] {
   ) => {
     faces.push(face(kinds[0], z + h, [[x, y, z + h], [x + w, y, z + h], [x + w, y + d, z + h], [x, y + d, z + h]]));
     faces.push(face(kinds[1], z + h, [[x + w, y, z], [x + w, y + d, z], [x + w, y + d, z + h], [x + w, y, z + h]]));
-    faces.push(face(kinds[2], z + h, [[x, y + d, z], [x + w, y + d, z], [x + w, y + d, z + h], [x, y + d, z + h]]));
+    faces.push(face(kinds[2], z + h, [[x, y, z], [x + w, y, z], [x + w, y, z + h], [x, y, z + h]]));
   };
   const bottom = -SHELF_THICKNESS;
   box(['upright-top', 'upright-end', 'upright-front'], x0 - UPRIGHT.thickness, UPRIGHT.thickness, 0, UPRIGHT.depth, bottom, UPRIGHT.height);

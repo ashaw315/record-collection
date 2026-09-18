@@ -81,18 +81,35 @@ describe('the unit’s figures are the drawing’s (§11.11)', () => {
     expect((e.maxY - e.minY) / (e.maxX - e.minX)).toBeCloseTo(2.37, 2);
   });
 
-  it('spans exactly what §11.11’s own polygons span, when the target is on this checkout', ({ skip }) => {
+  it('emits the faces §11.11’s own polygons emit — every furniture face is among the drawing’s, to 0.1', ({ skip }) => {
+    /*
+      A point-SET comparison, not an extent: mirroring in y leaves the
+      bounding box invariant, so an extent comparison passed with every
+      label on the back of every record (§11.15). A shelf's lip at y = 150
+      is not among the drawing's polygons; one at y = 0 is.
+    */
     if (!existsSync(TARGET)) skip('docs/design is not on this checkout — the drawing cannot be read here');
     const html = readFileSync(TARGET, 'utf8');
     const section = html.slice(html.indexOf('11.11 ·'), html.indexOf('11.12 ·'));
     const svg = /<svg[^>]*>[\s\S]*?<\/svg>/.exec(section)?.[0] ?? '';
-    const drawn = [...svg.matchAll(/<polygon[^>]*points="([^"]+)"/g)].flatMap((m) =>
-      m[1].trim().split(/\s+/).map((pair) => pair.split(',').map(Number) as [number, number]),
+    /* A face is its four corners, whichever corner a file starts from. */
+    const key = (points: readonly (readonly [number, number])[]) =>
+      points
+        .map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`)
+        .sort()
+        .join(' ');
+    const drawn = new Set(
+      [...svg.matchAll(/<polygon[^>]*points="([^"]+)"/g)].map((m) =>
+        key(m[1].trim().split(/\s+/).map((pair) => pair.split(',').map(Number) as [number, number])),
+      ),
     );
-    expect(drawn.length, 'the far view at 17: 18 furniture faces and 51 record faces, four corners each').toBe((18 + 17 * 3) * 4);
-    const theirs = extent(drawn);
-    const ours = extent(unitFurniture(0).flatMap((face) => face.points));
-    for (const k of ['minX', 'maxX', 'minY', 'maxY'] as const) expect(ours[k], k).toBeCloseTo(theirs[k], 1);
+    expect(drawn.size, 'the far view at 17: 18 furniture faces and 51 record faces').toBe(18 + 17 * 3);
+    for (const face of unitFurniture(0)) expect(drawn.has(key(face.points)), `${face.kind} ${key(face.points)}`).toBe(true);
+  });
+
+  it('draws the shelves’ and uprights’ strips on their −y faces — toward the reader (§11.15)', () => {
+    const lip = unitFurniture(0).find((face) => face.kind === 'shelf-front');
+    expect(lip?.points[0]).toEqual(project(-UPRIGHT.thickness, 0, 594 - SHELF_THICKNESS));
   });
 
   it('puts the top shelf’s surface at the unit’s highest shelf, filled top-down', () => {

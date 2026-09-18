@@ -1,3 +1,4 @@
+import { COS30, SPINE_WIDTH_MIN } from '../src/app/wall/geometry';
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { seedRecords } from './seed';
@@ -81,7 +82,8 @@ test('a keyboard can walk the wall and open a record', async ({ page }) => {
     /* An SVG <a>'s `.href` is an SVGAnimatedString; the attribute is the route. */
     return { width: box.width, height: box.height, href: document.activeElement?.getAttribute('href') ?? '' };
   });
-  expect(focused.width, 'the focused record is on screen, not clipped to 1px').toBeGreaterThan(20);
+  /* The anchor is the spine (§11.15): at least the thinnest spine's projected width, and the face's height. */
+  expect(focused.width, 'the focused record is on screen, not clipped to 1px').toBeGreaterThan(SPINE_WIDTH_MIN * COS30 - 1);
   expect(focused.height).toBeGreaterThan(100);
   expect(focused.href).toMatch(/\/records\/[0-9a-f-]{36}$/);
 

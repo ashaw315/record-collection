@@ -78,14 +78,16 @@ export function landingSize(view: View, width: number): number {
 
 /**
  * The landed box: the record's own width (the hash of its id, as every seat
- * is), one shelf's depth in front of the row, its projected extent centred
+ * is), one shelf's depth in front of the row — toward the reader, at −y —
+ * its projected extent centred
  * in the region. Constructed, not approached — the end of the pull is this
  * box exactly.
  */
 export function landedBox(id: string, view: View): RecordBox {
   const width = spineWidth(id);
   const size = landingSize(view, width);
-  const y = SHELF_INSET_Y + SHELF_DEPTH;
+  /* Forward is toward the reader, which is −y (§11.15). */
+  const y = SHELF_INSET_Y - SHELF_DEPTH;
   const at = projectedBox({ id, x: 0, y, z: 0, width, depth: size, height: size });
   /* Along x the page moves cos30 across and sin30 down per unit; along z, straight up. */
   const dx = (view.x + view.width / 2 - (at.minX + at.maxX) / 2) / COS30;
