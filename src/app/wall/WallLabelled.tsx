@@ -14,6 +14,7 @@ import { pullPose, returnPose } from './pull-curve';
 import { WALL_PAPER_HEX, pullFill, returnFill } from './pull-colour';
 import { wallLayout } from './wall-layout';
 import { landedBox, landingBoxAt, type View } from './landing';
+import { pageSquare, turnMatrixAt, type CornerPath } from './turn';
 import { recordLadder } from '@/lib/colour/record-ladder';
 import { MICRO_PX } from '../type-scale';
 import { LABEL } from '../records/[id]/grid-type';
@@ -82,6 +83,13 @@ export type PullState = {
   id: string;
   direction: 'out' | 'back';
   progress: number;
+  /**
+   * §11.14's phase two, as the eased amount of the turn: 0 in the projection,
+   * 1 on the page's plane. Present only while the record is turning or
+   * turned; absent through phase one, and always on the wall as shipped
+   * until the probe is ruled on.
+   */
+  turn?: number;
 };
 
 export function WallLabelled({
@@ -93,6 +101,7 @@ export function WallLabelled({
   minHeight = 0,
   side = 'front',
   view = null,
+  turnPath = 'linear',
   onSeatClick,
   onPulledClick,
 }: {
@@ -110,6 +119,8 @@ export function WallLabelled({
   view?: View | null;
   /** The region's height: the drawing is never smaller than the region that shows it. */
   minHeight?: number;
+  /** §11.14's open question as a parameter: how the cover's corners travel through the turn. */
+  turnPath?: CornerPath;
   onSeatClick?: (id: string) => void;
   onPulledClick?: () => void;
 }) {
@@ -144,8 +155,17 @@ export function WallLabelled({
       eased value the slide reads (§11.2) — and the cover sits on it at its
       own aspect (§11.3).
     */
-    const box = landingBoxAt(seat, region, pose.eased);
+    /*
+      §11.14, phase two: once the record carries a turn amount it is the
+      landed box turning onto the page's plane — the cover on the turn's
+      matrix, the spine and top departing the drawing with it, since a face
+      on the page has no sides.
+    */
+    const turning = state.turn !== undefined;
     const landed = landedBox(seat.id, region);
+    const box = turning ? landed : landingBoxAt(seat, region, pose.eased);
+    const departing = turning ? { opacity: 1 - (state.turn ?? 0) } : {};
+    const coverMatrix = turning ? turnMatrixAt(landed, pageSquare(region), state.turn ?? 0, turnPath) : coverTransform(box);
     const ladder = recordLadder(record.spineColour);
     const fill =
       state.direction === 'out'
@@ -175,8 +195,8 @@ export function WallLabelled({
         style={{ cursor: onPulledClick === undefined ? undefined : 'pointer' }}
         onClick={onPulledClick}
       >
-        <polygon data-face="top" points={points(topFace(box))} fill={TOP_FILL} stroke={INK} strokeWidth="1" pointerEvents="all" />
-        <g transform={coverTransform(box)} data-landing="">
+        <polygon data-face="top" points={points(topFace(box))} fill={TOP_FILL} stroke={INK} strokeWidth="1" pointerEvents="all" {...departing} />
+        <g transform={coverMatrix} data-landing="">
           <rect data-field="" width={box.depth} height={box.height} fill={fill} stroke={INK} strokeWidth="1" pointerEvents="all" />
           {side === 'back' ? (
             /*
@@ -264,9 +284,9 @@ export function WallLabelled({
             </g>
           )}
         </g>
-        <polygon data-face="front" points={points(frontFace(box))} fill={FACE_FILL} stroke={INK} strokeWidth="1" pointerEvents="all" />
+        <polygon data-face="front" points={points(frontFace(box))} fill={FACE_FILL} stroke={INK} strokeWidth="1" pointerEvents="all" {...departing} />
         {/* The same object: its spine still says what it is. */}
-        {labels ? label(box, record.label) : null}
+        {labels ? <g {...departing}>{label(box, record.label)}</g> : null}
       </g>
     );
   };

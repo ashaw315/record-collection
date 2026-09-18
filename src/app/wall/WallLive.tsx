@@ -10,6 +10,7 @@ import { labelsFit } from './geometry';
 import { navigate, type Direction } from './adjacent-seat';
 import { PERCEIVED_END } from './pull-colour';
 import { LANDING_PAD, type View } from './landing';
+import { turnEase, type TurnConfig } from './turn';
 
 /**
  * The 1:1 wall with its pull driven against the clock.
@@ -28,15 +29,35 @@ export function WallLive({
   seats,
   summaries = {},
   countLine = null,
+  turn = null,
 }: {
   seats: readonly WallSeat[];
   summaries?: Record<string, RecordSummary>;
   countLine?: string | null;
+  /**
+   * §11.14's second phase — out, then round — switched on by the probe and
+   * off on the wall as shipped until the probe is ruled on. With it, a
+   * record that has landed turns onto the page's plane over `ms`, and put
+   * back is both phases reversed in reverse order.
+   */
+  turn?: TurnConfig | null;
 }) {
   const [pulls, setPulls] = useState<readonly PullState[]>([]);
+  /*
+    The clock reads the moving set from here: a state updater runs at render
+    time, not when it is queued, so nothing can be decided inside one. Synced
+    after each commit; a frame that reads it a commit early recomputes from
+    elapsed time anyway, since nothing a gesture depends on changes mid-way.
+  */
+  const pullsRef = useRef<readonly PullState[]>([]);
+  useEffect(() => {
+    pullsRef.current = pulls;
+  }, [pulls]);
   const [side, setSide] = useState<'front' | 'back'>('front');
   const held = pulls.find((state) => state.direction === 'out') ?? null;
   const started = useRef<number | null>(null);
+  /* Where each returning record's turn stood when it was sent back: round from there, then in. */
+  const turnFrom = useRef(new Map<string, number>());
 
   /*
     §5's guard, measured (D1): labels are removed only when the container
@@ -80,10 +101,12 @@ export function WallLive({
       if (direction === 'out') {
         setSide('front');
         setView(visible());
+      } else {
+        turnFrom.current.set(id, held?.turn ?? 0);
       }
-      setPulls([{ id, direction, progress: 0 }]);
+      setPulls([{ id, direction, progress: 0, ...(direction === 'back' && held?.turn !== undefined ? { turn: held.turn } : {}) }]);
     },
-    [visible],
+    [visible, held],
   );
 
   /* The arrows: the held record goes back and its neighbour comes out, on one clock. */
@@ -94,28 +117,47 @@ export function WallLive({
       started.current = null;
       setSide('front');
       setView((current) => current ?? visible());
+      for (const state of next) {
+        if (state.direction === 'back') turnFrom.current.set(state.id, held?.id === state.id ? (held.turn ?? 0) : 0);
+      }
       setPulls(next);
     },
-    [pulls, seats, visible],
+    [pulls, seats, visible, held],
   );
 
-  /* One clock drives every moving record; a returned record drops out when it lands. */
+  /*
+    One clock drives every moving record; a returned record drops out when it
+    lands. With §11.14's phase two: out runs the pull's 1000ms and then the
+    turn's `ms`, abutting with no hold; back runs the turn in reverse from
+    wherever it stood (over a proportionate slice of `ms`) and then the pull
+    in reverse — round, then in.
+  */
+  const settled = (state: PullState) =>
+    state.progress >= 1 && (state.direction === 'back' || turn === null || (state.turn ?? 0) >= 1);
   const clockKey = pulls.map((state) => `${state.id}:${state.direction}`).join('|');
   useEffect(() => {
-    if (pulls.length === 0 || pulls.every((state) => state.progress >= 1)) return;
+    if (pulls.length === 0 || pulls.every(settled)) return;
+
+    const at = (state: PullState, elapsed: number): PullState => {
+      if (state.direction === 'out') {
+        const progress = Math.min(1, elapsed / PULL_DURATION_MS);
+        if (turn === null || elapsed <= PULL_DURATION_MS) return { id: state.id, direction: 'out', progress };
+        return { id: state.id, direction: 'out', progress, turn: turnEase((elapsed - PULL_DURATION_MS) / turn.ms) };
+      }
+      const from = turnFrom.current.get(state.id) ?? 0;
+      const roundMs = turn === null ? 0 : turn.ms * from;
+      if (elapsed < roundMs) return { id: state.id, direction: 'back', progress: 0, turn: from * turnEase(1 - elapsed / roundMs) };
+      return { id: state.id, direction: 'back', progress: Math.min(1, (elapsed - roundMs) / PULL_DURATION_MS) };
+    };
 
     let handle = 0;
     const frame = (now: number) => {
       if (started.current === null) started.current = now;
-      const progress = Math.min(1, (now - started.current) / PULL_DURATION_MS);
-
-      setPulls((current) =>
-        current
-          .map((state) => ({ ...state, progress }))
-          /* Landed: the seated anchor is drawn again by the ordinary path. */
-          .filter((state) => !(state.direction === 'back' && progress >= 1)),
-      );
-      if (progress < 1) handle = requestAnimationFrame(frame);
+      const elapsed = now - started.current;
+      const next = pullsRef.current.map((state) => at(state, elapsed));
+      /* Landed: the seated anchor is drawn again by the ordinary path. */
+      setPulls(next.filter((state) => !(state.direction === 'back' && state.progress >= 1)));
+      if (!next.every(settled)) handle = requestAnimationFrame(frame);
     };
 
     handle = requestAnimationFrame(frame);
@@ -134,8 +176,22 @@ export function WallLive({
     return () => window.removeEventListener('keydown', onKey);
   }, [held, begin, go]);
 
+  /* The gesture's phase, for whoever watches the probe: rest · pull · turn · landed · round · return. */
+  const phase =
+    held !== null
+      ? held.progress < 1
+        ? 'pull'
+        : turn !== null && (held.turn ?? 0) < 1
+          ? 'turn'
+          : 'landed'
+      : pulls.length === 0
+        ? 'rest'
+        : pulls[0].turn !== undefined
+          ? 'round'
+          : 'return';
+
   return (
-    <div data-wall-container="">
+    <div data-wall-container="" data-phase={phase}>
       <WallStage
         seats={seats}
         summaries={summaries}
@@ -147,6 +203,7 @@ export function WallLive({
         countLine={countLine}
         regionRef={region}
         labels={labels}
+        turn={turn}
         onSeatClick={(id) => {
           if (pulls.length === 0) begin(id, 'out');
         }}

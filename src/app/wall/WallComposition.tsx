@@ -1,6 +1,7 @@
 import { WallLive } from './WallLive';
 import type { WallSeat } from './shelf-runs';
 import type { RecordSummary } from './summary';
+import type { TurnConfig } from './turn';
 
 /**
  * The wall as a screen (D2, from the reference): the collection on shelves
@@ -28,11 +29,14 @@ export function WallComposition({
   seats,
   summaries = {},
   countLine = null,
+  turn = null,
 }: {
   seats: readonly WallSeat[];
   summaries?: Record<string, RecordSummary>;
   /** The filter-aware line under the count — "34 of 312 records" — when a filter is on. */
   countLine?: string | null;
+  /** §11.14's second phase, on the probe only until it is ruled. */
+  turn?: TurnConfig | null;
 }) {
   return (
     <section
@@ -41,7 +45,7 @@ export function WallComposition({
       className="min-h-[calc(100vh-var(--header-height,0px))]"
       style={{ background: DRAWN_PAPER }}
     >
-      <WallLive seats={seats} summaries={summaries} countLine={countLine} />
+      <WallLive seats={seats} summaries={summaries} countLine={countLine} turn={turn} />
     </section>
   );
 }

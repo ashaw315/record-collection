@@ -4,8 +4,9 @@ import { WallLabelled, type PullState } from './WallLabelled';
 import { WALL_PAPER_HEX } from './pull-colour';
 import { FACE_FILL, PLANE_FILL, TOP_FILL, points } from './WallOverview';
 import type { WallSeat } from './shelf-runs';
-import { COS30, SIN30, SPINE_HEIGHT, frontFace, layoutRow, spineWidth } from './geometry';
-import { landingBoxAt, landingSize } from './landing';
+import { COS30, SIN30, SPINE_HEIGHT, coverTransform, frontFace, layoutRow, spineWidth } from './geometry';
+import { landedBox, landingBoxAt, landingSize } from './landing';
+import { pageSquare, turnMatrixAt } from './turn';
 import { wallLayout } from './wall-layout';
 
 /**
@@ -412,5 +413,43 @@ describe('the pulled record stays in the projection (§11.10)', () => {
     );
     const moving = /data-pulled="a"[\s\S]*?<polygon[^>]*data-face="front"[^>]*points="([^"]+)"/.exec(starting)?.[1];
     expect(moving).toBe(seated);
+  });
+});
+
+describe('phase two: the turn onto the page’s plane (§11.14)', () => {
+  const view = { x: 0, y: 0, width: 960, height: 760 };
+  const [fx, fy] = wallLayout([{ id: 'a', section: 'S' }, { id: 'b', section: 'S' }], [], 0, 0).frame.viewBox.split(' ').map(Number);
+  const region = { ...view, x: view.x + fx, y: view.y + fy };
+  const at = (turn: number, path: 'linear' | 'rotation' = 'linear') =>
+    renderToStaticMarkup(
+      <WallLabelled
+        seats={[seat('a', null), seat('b', null)]}
+        pulls={[{ id: 'a', direction: 'out', progress: 1, turn }]}
+        view={view}
+        turnPath={path}
+      />,
+    ).replace(/^[\s\S]*?data-pulled="a"/, '');
+
+  it('draws the cover on the turn’s matrix once the state carries a turn amount — from the landed cover, exactly', () => {
+    const landed = landedBox('a', region);
+    const square = pageSquare(region);
+    for (const [turn, path] of [[0, 'linear'], [0.5, 'linear'], [0.5, 'rotation'], [1, 'rotation']] as const) {
+      const transform = /<g transform="([^"]+)"[^>]*data-landing/.exec(at(turn, path))?.[1];
+      expect(transform, `turn ${turn} ${path}`).toBe(turnMatrixAt(landed, square, turn, path));
+    }
+    expect(/<g transform="([^"]+)"[^>]*data-landing/.exec(at(0))?.[1]).toBe(coverTransform(landed));
+  });
+
+  it('departs the drawing: the spine and top fade with the turn, gone on the page’s plane; the seat stays empty', () => {
+    const mid = at(0.5);
+    expect(/<polygon[^>]*data-face="front"[^>]*>/.exec(mid)?.[0]).toContain('opacity="0.5"');
+    expect(/<polygon[^>]*data-face="top"[^>]*>/.exec(mid)?.[0]).toContain('opacity="0.5"');
+    const end = at(1);
+    expect(/<polygon[^>]*data-face="front"[^>]*>/.exec(end)?.[0]).toContain('opacity="0"');
+    const whole = renderToStaticMarkup(
+      <WallLabelled seats={[seat('a', null), seat('b', null)]} pulls={[{ id: 'a', direction: 'out', progress: 1, turn: 1 }]} view={view} />,
+    );
+    expect(whole).not.toContain('data-seat="a"');
+    expect(whole).toContain('data-seat="b"');
   });
 });

@@ -7,6 +7,7 @@ import type { RecordSummary } from './summary';
 import { PERCEIVED_END } from './pull-colour';
 import { COS30, SIN30, spineWidth } from './geometry';
 import { ARROW_LANE, landedBox, landingSize, projectedBox } from './landing';
+import { pageSquare } from './turn';
 
 /**
  * The stage: the drawing plus what the gesture arrives at. §11.7's panel
@@ -148,5 +149,31 @@ describe('Turn over shows the back on the same face (§11.7)', () => {
     expect(html).toContain('Epic');
     expect(html).toContain('PE 1');
     expect(html).not.toContain('href="https://c/x.jpg"');
+  });
+});
+
+describe('the panel arrives with phase two (§11.14)', () => {
+  it('in two-phase mode the panel is absent at the end of phase one and present once the turn begins', () => {
+    const turn = { ms: 600, path: 'linear' as const };
+    const landedOnly = render({ pull: { id: 'b', direction: 'out', progress: 1 }, turn });
+    expect(landedOnly).not.toContain('data-testid="record-chrome"');
+    expect(landedOnly).not.toContain('data-testid="nav-next"');
+    const turning = render({ pull: { id: 'b', direction: 'out', progress: 1, turn: 0.01 }, turn });
+    expect(turning).toContain('data-testid="record-chrome"');
+    expect(turning).toContain('href="/records/b"');
+  });
+
+  it('carries the arrows beside the page square once the record is on the page’s plane', () => {
+    const view = { x: 0, y: 0, width: 960, height: 760 };
+    const turned = render({ pull: { id: 'b', direction: 'out', progress: 1, turn: 1 }, turn: { ms: 600, path: 'linear' }, view });
+    const square = pageSquare(view);
+    const left = (id: string) => Number(/left:([\d.]+)px/.exec(/data-testid="nav-(?:previous|next)"[^>]*>/.exec(turned.slice(turned.indexOf(`data-testid="${id}"`)))?.[0] ?? '')?.[1]);
+    expect(left('nav-previous')).toBeCloseTo(square.x - ARROW_LANE, 6);
+    const half = render({ pull: { id: 'b', direction: 'out', progress: 1, turn: 0.5 }, turn: { ms: 600, path: 'linear' }, view });
+    expect(half, 'not before it has arrived').not.toContain('data-testid="nav-previous"');
+  });
+
+  it('without the mode, the panel arrives at the perceived end of the pull as before', () => {
+    expect(render({ pull: { id: 'b', direction: 'out', progress: PERCEIVED_END } })).toContain('data-testid="record-chrome"');
   });
 });
