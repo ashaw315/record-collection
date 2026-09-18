@@ -110,6 +110,23 @@ describe('landingBoxAt — one curve from the seat to the landing', () => {
     expect(topFace(at)[1]).toEqual(rightFace(at)[3]);
   });
 
+  it('grows uniformly — a 12″ sleeve is square, so the face is square at every step, and the plane is never mirrored', () => {
+    /*
+      §11.11: a seat of 12 × 100 × 150 made the landed record grow 3× in depth
+      and 2× in height to reach a square cover, and the growth read as a rule
+      about covers rather than as an error in the seat. The seat is square, so
+      the pull is one ratio.
+    */
+    expect(DEPTH).toBe(SPINE_HEIGHT);
+    for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+      const box = landingBoxAt(seat, view, t);
+      expect(box.depth, `t=${t}`).toBe(box.height);
+      /* The determinant's sign on any matrix that places artwork in the projection: positive, or the sleeve reads backwards. */
+      const [a, b, c, d] = coverTransform(box).replace(/^matrix\(|\)$/g, '').split(' ').map(Number);
+      expect(a * d - b * c, `t=${t}`).toBeGreaterThan(0);
+    }
+  });
+
   it('never straightens: the cover’s top edge keeps the wall’s slope at every step', () => {
     for (const t of [0, 0.25, 0.5, 0.75, 1]) {
       const cover = rightFace(landingBoxAt(seat, view, t));

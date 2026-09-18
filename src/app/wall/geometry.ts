@@ -28,7 +28,9 @@ export const SIN30 = 0.5;
  * D2's proportions at 5b's 240; §11.11 draws the near view at true 1:1 with
  * a 150-unit face and measures its labels there, so the wall's unit IS the
  * drawing's: no ratio between them. Everything below is read off §11.11's
- * polygons under the same projection.
+ * polygons under the same projection — the unit's extent, 441.7 × 1047 at
+ * 1 : 2.37, is measured over every face `unitFurniture` emits and never
+ * re-declared by hand (unit.test.ts).
  */
 export const SPINE_HEIGHT = 150;
 
@@ -36,9 +38,15 @@ export const SPINE_HEIGHT = 150;
 export const SPINE_WIDTH_MIN = Math.round(SPINE_HEIGHT / 14);
 export const SPINE_WIDTH_MAX = Math.round(SPINE_HEIGHT / 10);
 
-/** A record is as deep as the shelf it stands on: 100, as drawn. */
-export const DEPTH = 100;
-export const SHELF_DEPTH = 100;
+/**
+ * **A 12″ sleeve is square, so depth equals height** (§11.11). A seat of
+ * 12 × 100 × 150 — a sleeve deeper than it is tall by nothing in particular
+ * — made the pulled record grow 3× in depth and 2× in height to reach a
+ * square cover, and the growth read as a rule about covers rather than as
+ * an error in the seat. The record is as deep as the shelf it stands on.
+ */
+export const DEPTH = SPINE_HEIGHT;
+export const SHELF_DEPTH = DEPTH;
 export const SHELF_THICKNESS = 8;
 
 /**

@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   DEPTH,
@@ -16,19 +18,22 @@ import {
 } from './geometry';
 import { PER_SHELF, SHELVES_PER_UNIT, intoUnits, unitFurniture, unitOf } from './unit';
 
+const TARGET = resolve(process.cwd(), 'docs/design/Record Detail 8a - build target.dc.html');
+
 /**
  * §11.10: the wall is a fixed unit of four shelves joined at their ends, and
  * the collection fills it left to right, top to bottom. Row length comes from
- * the unit's proportion, not the collection. §11.11 fixes the figures: 398 ×
- * 1030 on screen (1 : 2.59), twenty seats, four shelves at 198 pitch, a 150
- * face — read off the drawing's own polygons: records 12 × 100 × 150 on
- * shelves 350 × 100 × 8, uprights 10 × 100 × 792 at both ends.
+ * the unit's proportion, not the collection. §11.11 fixes the figures: 442 ×
+ * 1047 on screen (1 : 2.37), twenty seats, four shelves at 198 pitch, a 150
+ * face — read off the drawing's own polygons: records 12 × 150 × 150 (a 12″
+ * sleeve is square) on shelves 360 × 150 × 8, uprights 10 × 150 × 792 at
+ * both ends.
  */
 describe('the unit’s figures are the drawing’s (§11.11)', () => {
-  it('draws at the 150 face, records as deep as the shelf', () => {
+  it('draws at the 150 face, the sleeve square, records as deep as the shelf', () => {
     expect(SPINE_HEIGHT).toBe(150);
-    expect(DEPTH).toBe(100);
-    expect(SHELF_DEPTH).toBe(100);
+    expect(DEPTH).toBe(SPINE_HEIGHT);
+    expect(SHELF_DEPTH).toBe(DEPTH);
     expect(SHELF_THICKNESS).toBe(8);
     expect(ROW_PITCH).toBe(198);
   });
@@ -48,27 +53,46 @@ describe('the unit’s figures are the drawing’s (§11.11)', () => {
 
   it('is four shelves joined by uprights at their ends — no back, no front, no top', () => {
     expect(SHELVES_PER_UNIT).toBe(4);
-    expect(UPRIGHT).toEqual({ thickness: 10, depth: 100, height: SHELVES_PER_UNIT * ROW_PITCH });
+    expect(UPRIGHT).toEqual({ thickness: 10, depth: SHELF_DEPTH, height: SHELVES_PER_UNIT * ROW_PITCH });
     const furniture = unitFurniture(0);
     /* Two uprights and four shelves, three faces each: eighteen polygons, as drawn. */
     expect(furniture).toHaveLength(18);
     for (const face of furniture) expect(face.points).toHaveLength(4);
   });
 
-  it('projects to 398 × 1022 on screen, taller than it is wide at 1 : 2.57', () => {
-    /*
-      §11.11's prose says 398 × 1030 and 1 : 2.59; its own polygons span
-      −789…233, which is 1022 — the 8 is a shelf thickness counted twice.
-      Built to the polygons, since the drawing is the figure's source.
-    */
-    const points = unitFurniture(0).flatMap((face) => face.points);
+  /**
+   * **The measurement comes from the same list the polygons come from.**
+   * §11.11's figure was wrong twice in opposite directions (1030, then 1055)
+   * because it was computed by re-declaring the bounds instead of reading
+   * the boxes the drawing emits; the frame-extent defect had the same shape
+   * one level up. So the extent here is the min–max over every point of
+   * every face `unitFurniture` emits — never two corners, never a hand sum.
+   */
+  const extent = (points: readonly (readonly [number, number])[]) => {
     const xs = points.map(([x]) => x);
     const ys = points.map(([, y]) => y);
-    const width = Math.max(...xs) - Math.min(...xs);
-    const height = Math.max(...ys) - Math.min(...ys);
-    expect(width).toBeCloseTo(398.4, 0);
-    expect(height).toBeCloseTo(1022, 0);
-    expect(height / width).toBeCloseTo(2.57, 1);
+    return { minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys) };
+  };
+
+  it('projects to 441.7 × 1047 on screen, taller than it is wide at 1 : 2.37 — the extent over every emitted point', () => {
+    const e = extent(unitFurniture(0).flatMap((face) => face.points));
+    expect(e.maxX - e.minX).toBeCloseTo(441.7, 1);
+    expect(e.maxY - e.minY).toBeCloseTo(1047, 1);
+    expect((e.maxY - e.minY) / (e.maxX - e.minX)).toBeCloseTo(2.37, 2);
+  });
+
+  it('spans exactly what §11.11’s own polygons span, when the target is on this checkout', ({ skip }) => {
+    if (!existsSync(TARGET)) skip('docs/design is not on this checkout — the drawing cannot be read here');
+    const html = readFileSync(TARGET, 'utf8');
+    const section = html.slice(html.indexOf('11.11 ·'), html.indexOf('11.12 ·'));
+    const svg = /<svg[^>]*>[\s\S]*?<\/svg>/.exec(section)?.[0] ?? '';
+    const drawn = [...svg.matchAll(/<polygon[^>]*points="([^"]+)"/g)].flatMap((m) =>
+      m[1].trim().split(/\s+/).map((pair) => pair.split(',').map(Number) as [number, number]),
+    );
+    expect(drawn.length, 'the far view at 17: 18 furniture faces and 51 record faces, four corners each').toBe((18 + 17 * 3) * 4);
+    const theirs = extent(drawn);
+    const ours = extent(unitFurniture(0).flatMap((face) => face.points));
+    for (const k of ['minX', 'maxX', 'minY', 'maxY'] as const) expect(ours[k], k).toBeCloseTo(theirs[k], 1);
   });
 
   it('puts the top shelf’s surface at the unit’s highest shelf, filled top-down', () => {
