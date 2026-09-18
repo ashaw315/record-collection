@@ -14,7 +14,11 @@ import {
   SPINE_WIDTH_MIN,
   UNIT_PITCH_X,
   UPRIGHT,
+  frontFace,
+  layoutRow,
   project,
+  rightFace,
+  topFace,
 } from './geometry';
 import { PER_SHELF, SHELVES_PER_UNIT, intoUnits, unitFurniture, unitOf } from './unit';
 
@@ -105,6 +109,34 @@ describe('the unit’s figures are the drawing’s (§11.11)', () => {
     );
     expect(drawn.size, 'the far view at 17: 18 furniture faces and 51 record faces').toBe(18 + 17 * 3);
     for (const face of unitFurniture(0)) expect(drawn.has(key(face.points)), `${face.kind} ${key(face.points)}`).toBe(true);
+  });
+
+  it('seats records exactly as §11.11’s polygons do — every face of a 12-wide record at seats 0…16 is among the drawing’s', ({ skip }) => {
+    /*
+      The check for a seat built from two conventions: if the spine moved to
+      the −y face and anything else still assumed the old one, some face of
+      some record would be a polygon the drawing does not contain. Widths are
+      forced to the drawing's 12 (ours hash 11…15); everything else is the
+      build's own placement.
+    */
+    if (!existsSync(TARGET)) skip('docs/design is not on this checkout — the drawing cannot be read here');
+    const html = readFileSync(TARGET, 'utf8');
+    const section = html.slice(html.indexOf('11.11 ·'), html.indexOf('11.12 ·'));
+    const svg = /<svg[^>]*>[\s\S]*?<\/svg>/.exec(section)?.[0] ?? '';
+    const key = (points: readonly (readonly [number, number])[]) =>
+      points.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).sort().join(' ');
+    const drawn = new Set(
+      [...svg.matchAll(/<polygon[^>]*points="([^"]+)"/g)].map((m) =>
+        key(m[1].trim().split(/\s+/).map((pair) => pair.split(',').map(Number) as [number, number])),
+      ),
+    );
+    const seats = Array.from({ length: 17 }, (_, i) => ({ id: `d${i}`, section: 'S' }));
+    for (const placed of layoutRow(seats, 0)) {
+      const record = { ...placed, width: 12 };
+      for (const [name, face] of [['top', topFace(record)], ['right', rightFace(record)], ['front', frontFace(record)]] as const) {
+        expect(drawn.has(key(face)), `seat ${placed.id} ${name} ${key(face)}`).toBe(true);
+      }
+    }
   });
 
   it('draws the shelves’ and uprights’ strips on their −y faces — toward the reader (§11.15)', () => {
