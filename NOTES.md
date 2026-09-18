@@ -30592,3 +30592,7 @@ Eleven-versus-twelve truncations was the drawing's approximated title list, not 
 **One defect on the way, worth the shape:** the clock's "still moving?" decision was made inside a `setPulls` updater, and React runs updaters at render time, not when they are queued — so the flag was never set, the loop stopped after one frame, and every pull spec on the shipped wall went red. The moving set is now read from a ref synced after commit, and the decision is made outside the updater.
 
 **Not ruled, not built:** which duration and path win (Design watches the probe); the pull with phase two on `/`; §11.13's rail; §11.12's views and the producer that marks matches instead of filtering.
+
+## Known flake: collection-filters:427 on mobile (pre-existing)
+
+"clicking through to a filtered view equals loading that URL directly" fails intermittently on the mobile project: the cold page's Sort select reads "" after `controlsReady`, or the table row lookup times out. Measured 2026-09-17: 1 of 4 at load 4 on 952c935; **4 of 4 on cbbb948, the commit before this round**, so it is not this round's — it is the hydration race the test's own 2026-09-05 comment describes, still open. It sits with manage:179 (mobile, select on touch) as the two mobile flakes a full E2E can show under load. Not fixed here: the wall units did not touch the filters, and a fix belongs to a unit of its own.
