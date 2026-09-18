@@ -14,7 +14,7 @@ import {
   topFace,
   type PlacedSeat,
 } from './geometry';
-import { ARROW_LANE, LANDING_PAD, landedBox, landingBox, landingBoxAt, landingSize, projectedBox } from './landing';
+import { ARROW_LANE, LANDED_GUTTER, LANDED_SIZE, LANDING_PAD, landedBox, landedSquare, landingBox, landingBoxAt, landingSize, projectedBox } from './landing';
 import { pullEase } from './pull-curve';
 
 /**
@@ -134,5 +134,18 @@ describe('landingBoxAt — one curve from the seat to the landing', () => {
       const slope = (cover[1][1] - cover[0][1]) / (cover[1][0] - cover[0][0]);
       expect(slope, `t=${t}`).toBeCloseTo(-SIN30 / COS30, 12);
     }
+  });
+});
+
+describe('landedSquare — §11.19’s landed composition', () => {
+  it('is 560 × 560, offset right of the region by the page’s gutter, centred vertically — not the largest square that fits', () => {
+    const view = { x: 0, y: -34, width: 872, height: 847 };
+    const square = landedSquare(view);
+    expect(square.size).toBe(LANDED_SIZE);
+    expect(LANDED_SIZE).toBe(560);
+    expect(square.x).toBe(view.x + view.width - LANDED_GUTTER - 560);
+    expect(square.y).toBe(view.y + (view.height - 560) / 2);
+    /* Bounded by what must stay visible, not by what fits: a wider region does not grow it. */
+    expect(landedSquare({ ...view, width: 1400, height: 1200 }).size).toBe(560);
   });
 });

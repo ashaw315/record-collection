@@ -1,7 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
-import { LANDING_PAD, parseMatrix } from '../src/app/wall/landing';
+import { LANDING_PAD, landedSquare, parseMatrix } from '../src/app/wall/landing';
 import { PULL_DURATION_MS } from '../src/app/wall/pull-curve';
-import { pageSquare } from '../src/app/wall/turn';
 import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
 
 /**
@@ -81,7 +80,7 @@ test('out, then round: the turn begins where the pull ends, with no hold, and th
   expect(c).toBe(0);
   /* The square in the region's px; the group's matrix is in the svg's frame, whose viewBox origin offsets it. */
   /* The view as the code froze it: the svg sits LANDING_PAD below the region's content top. */
-  const square = pageSquare({ x: 0, y: -LANDING_PAD, width: region.w, height: region.h - LANDING_PAD });
+  const square = landedSquare({ x: 0, y: -LANDING_PAD, width: region.w, height: region.h - LANDING_PAD });
   const [frameX, frameY] = ((await page.locator('[data-wall="labelled"]').getAttribute('viewBox')) ?? '0 0').split(' ').map(Number);
   const field = page.locator('[data-pulled] [data-field]');
   expect(a * Number(await field.getAttribute('width'))).toBeCloseTo(square.size, 6);

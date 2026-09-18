@@ -5,8 +5,8 @@ import { WALL_PAPER_HEX } from './pull-colour';
 import { FACE_FILL, PLANE_FILL, TOP_FILL, points } from './WallOverview';
 import type { WallSeat } from './shelf-runs';
 import { COS30, SIN30, SPINE_HEIGHT, coverTransform, frontFace, layoutRow, spineWidth } from './geometry';
-import { landedBox, landingBoxAt, landingSize } from './landing';
-import { pageSquare, turnMatrixAt } from './turn';
+import { landedBox, landedSquare, landingBoxAt, landingSize } from './landing';
+import { turnMatrixAt } from './turn';
 import { wallLayout } from './wall-layout';
 
 /**
@@ -432,7 +432,7 @@ describe('phase two: the turn onto the page’s plane (§11.14)', () => {
 
   it('draws the cover on the turn’s matrix once the state carries a turn amount — from the landed cover, exactly', () => {
     const landed = landedBox('a', region);
-    const square = pageSquare(region);
+    const square = landedSquare(region);
     for (const [turn, path] of [[0, 'linear'], [0.5, 'linear'], [0.5, 'rotation'], [1, 'rotation']] as const) {
       const transform = /<g transform="([^"]+)"[^>]*data-landing/.exec(at(turn, path))?.[1];
       expect(transform, `turn ${turn} ${path}`).toBe(turnMatrixAt(landed, square, turn, path));

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { COS30, SIN30, coverTransform, spineWidth } from './geometry';
-import { ARROW_LANE, LANDING_PAD, landedBox, parseMatrix } from './landing';
+import { landedBox, landedSquare, parseMatrix } from './landing';
 import { PULL_DURATION_MS, pullEase } from './pull-curve';
-import { TURN_DURATION_MS, pageSquare, turnEase, turnMatrix, turnMatrixAt } from './turn';
+import { TURN_DURATION_MS, turnEase, turnMatrix, turnMatrixAt } from './turn';
 
 /**
  * §11.14: the pull has two phases — out, then round — and the square is the
@@ -17,7 +17,7 @@ import { TURN_DURATION_MS, pageSquare, turnEase, turnMatrix, turnMatrixAt } from
  */
 const view = { x: 0, y: 0, width: 960, height: 760 };
 const box = landedBox('r', view);
-const square = pageSquare(view);
+const square = landedSquare(view);
 const slope = (f: (t: number) => number, t: number, h = 1e-4) => (f(Math.min(1, t + h)) - f(Math.max(0, t - h))) / (2 * h);
 
 describe('the boundary: velocity returns to zero between the phases', () => {
@@ -41,14 +41,6 @@ describe('the boundary: velocity returns to zero between the phases', () => {
   it('phase one keeps its 1000ms; phase two’s figure is the open one, and the hypothesis is faster', () => {
     expect(PULL_DURATION_MS).toBe(1000);
     expect(TURN_DURATION_MS).toBeLessThan(PULL_DURATION_MS);
-  });
-});
-
-describe('pageSquare — §11.9’s square, now the second phase’s end', () => {
-  it('is the largest square the region holds inside the padding and the arrow lanes, centred', () => {
-    expect(square.size).toBe(Math.min(view.width - 2 * (LANDING_PAD + ARROW_LANE), view.height - 2 * LANDING_PAD));
-    expect(square.x).toBe(view.x + (view.width - square.size) / 2);
-    expect(square.y).toBe(view.y + (view.height - square.size) / 2);
   });
 });
 

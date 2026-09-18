@@ -1,5 +1,5 @@
 import { coverTransform, type RecordBox } from './geometry';
-import { ARROW_LANE, LANDING_PAD, parseMatrix, type View } from './landing';
+import { parseMatrix } from './landing';
 
 /**
  * Phase two of the pull (8a §11.14): **out, then round.** The record leaves
@@ -35,18 +35,13 @@ export const TURN_DURATION_MS = 600;
 /** How the cover's corners travel: entries straight, or the top edge swinging through the angle. */
 export type CornerPath = 'linear' | 'rotation';
 export type TurnConfig = { ms: number; path: CornerPath };
+/** Where the turn ends: §11.19's landed square (landing.ts). */
 export type Square = { x: number; y: number; size: number };
 
 /** Ease-in-out cubic: leaves from rest, arrives at rest. Clamped, like the pull's. */
 export function turnEase(progress: number): number {
   const t = Math.min(1, Math.max(0, progress));
   return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
-}
-
-/** §11.9's square — the largest the region holds inside the padding and the arrow lanes — now phase two's end. */
-export function pageSquare(view: View): Square {
-  const size = Math.max(0, Math.min(view.width - 2 * (LANDING_PAD + ARROW_LANE), view.height - 2 * LANDING_PAD));
-  return { size, x: view.x + (view.width - size) / 2, y: view.y + (view.height - size) / 2 };
 }
 
 const format = (m: readonly number[]) => `matrix(${m.join(' ')})`;

@@ -88,7 +88,7 @@ test('the panel is expanded at rest in its own column, and nothing navigates', a
 
     const panel = page.getByTestId('record-chrome').getByTestId('record-panel');
     await expect(panel).toHaveAttribute('data-expanded', 'true');
-    await expect(page.getByTestId('record-chrome').getByTestId('panel-expand-toggle')).toBeDisabled();
+    await expect(page.getByTestId('record-chrome').getByTestId('panel-expand-toggle'), 'no toggle: the panel has one state (§11.9, §11.19)').toHaveCount(0);
 
     await expect(page.getByTestId('wall')).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`/\\?artistId=`));
@@ -163,7 +163,7 @@ test('the desktop flanking panel shows the expanded content at rest', async ({ p
     await expect(page.getByTestId('record-chrome').getByTestId('panel-snippet')).toBeVisible();
     await expect(page.getByTestId('record-chrome').getByTestId('panel-facts')).toBeVisible();
     await expect(page.getByTestId('record-chrome').getByTestId('panel-detail-link')).toBeVisible();
-    await expect(page.getByTestId('record-chrome').getByTestId('panel-expand-toggle')).toBeDisabled();
+    await expect(page.getByTestId('record-chrome').getByTestId('panel-expand-toggle'), 'no toggle: the panel has one state (§11.9, §11.19)').toHaveCount(0);
   } finally {
     await cleanup(ids);
   }

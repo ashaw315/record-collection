@@ -1,199 +1,112 @@
-'use client';
-
-import { useState } from 'react';
 import Link from 'next/link';
 import type { RecordSummary } from './summary';
 import { HAIRLINE, INK, LABEL, LABEL_INK } from '../records/[id]/grid-type';
 
 /**
- * **The pulled record's facts, as a panel that expands in place (§10b, A33).**
+ * **The pulled record's facts, in the record screen's order (§11.19).**
  *
- * The chevron does not navigate — it expands the panel over the record, the
- * synopsis scrolling inside it, the record staying behind, as the reference
- * does. A33 superseded A32's decision that the tap went to `/records/:id`;
- * that page is now reached by a link INSIDE the expanded panel, for what the
- * panel does not hold — the journal, prices, images and editing.
- *
- * One component for both layouts (A33d): the narrow overlay and the wide
- * flanking panel both use it. The wide panel's difference is only that it sits
- * beside the record with room, not over it — the expand/collapse behaviour is
- * the same, because a behavioural fork on top of A32's layout fork has no room
- * argument behind it.
+ * Artist, title, year, then the note, then the fact groups on their
+ * hairlines, then Open the full record and the two verbs. Turn over and Put
+ * back sit together at the foot because they are the two things you can do
+ * to the object; Open the full record sits above them because it leaves
+ * this surface — §3's rule, separating a departure from an interaction.
+ * The panel is the record screen's order, not a summary of it: no count of
+ * further facts, no truncation, no toggle — §11.9 fixed its region and it
+ * is expanded at rest.
  *
  * ## Generated and entered facts stay distinguishable (A33c)
  *
- * The snippet is the app's own claim about the music, carried as
- * `{ text, generated }` since 13c so it can never be rendered as a fact. It sits
- * above the fact list, labelled in the register §10b requires, with a boundary
- * between. `RecordSummary` keeps `snippet` and `factGroups` as separate fields
- * precisely so this component cannot merge them.
+ * The note is the app's own claim about the music, carried as
+ * `{ text, generated }` since 13c so it can never be rendered as a fact. It
+ * sits above the fact groups, labelled in the register §10b requires, with
+ * a hairline between. `RecordSummary` keeps `snippet` and `factGroups` as
+ * separate fields precisely so this component cannot merge them.
  *
- * **Set in the record screen's type and rules (§11.7):** flat, on paper, the
- * title at `title`, prose at `prose`, labels at `LABEL`, hairlines for rules.
- * The lit scene's palette went with the lit scene.
+ * **Set in the record screen's type and rules (§11.7):** flat, on paper,
+ * labels at `LABEL`, hairlines for rules.
+ *
+ * Left open by §11.19, reported rather than solved: a long title wraps in
+ * the 420px column and pushes the fact groups toward a foot the two verbs
+ * pin — §4.2's collision, in a column with no ornament track to yield.
  */
 export function RecordPanel({
   summary,
   onTurnOver,
   onPutBack,
-  alwaysExpanded = false,
+  alwaysExpanded = true,
 }: {
   summary: RecordSummary;
   onTurnOver: () => void;
   onPutBack: () => void;
-  /**
-   * **The flanking layout has room, so it shows the expanded content at rest
-   * (A33d)** — the snippet, the facts and the link, no chevron. The overlay
-   * (narrow) toggles. One behaviour, two layouts: the wide panel is "the
-   * expanded shape at rest", not a second, static fork.
-   */
+  /** Kept for the callers that pass it; the panel has one state now, expanded. */
   alwaysExpanded?: boolean;
 }) {
-  const [toggled, setToggled] = useState(false);
-  const expanded = alwaysExpanded || toggled;
-
-  const attribution = [summary.artist, summary.year].filter((part) => part !== null).join(' · ');
+  void alwaysExpanded;
+  const groupName = (kind: string) => kind.charAt(0).toUpperCase() + kind.slice(1);
 
   return (
-    <div data-testid="record-panel" data-expanded={expanded ? 'true' : 'false'}>
-      {/*
-        The collapsed header: title, attribution, and a chevron that expands
-        rather than navigates. A button, not a link — the destination is inside
-        the expansion now.
-      */}
-      <button
-        type="button"
-        data-testid="panel-expand-toggle"
-        aria-expanded={expanded}
-        onClick={() => setToggled((open) => !open)}
-        disabled={alwaysExpanded}
-        className="group flex w-full items-center gap-3 px-0 py-0 text-left"
-      >
-        <div className="min-w-0 flex-1">
-          <h3
-            data-testid="summary-title"
-            className={`truncate text-title font-semibold ${INK}`}
-          >
-            {summary.title}
-          </h3>
-          <p
-            data-testid="summary-attribution"
-            className="mt-[4px] truncate text-prose"
-            style={{ color: LABEL_INK }}
-          >
-            {attribution}
-          </p>
-          <p
-            data-testid="summary-further"
-            className="mt-[6px] truncate text-meta"
-            style={{ color: LABEL_INK }}
-          >
-            {summary.furtherFacts === 0
-              ? 'Nothing else recorded yet'
-              : `${summary.furtherFacts} more ${summary.furtherFacts === 1 ? 'fact' : 'facts'}`}
-          </p>
-        </div>
-        {!alwaysExpanded && (
-          <span
-            aria-hidden="true"
-            className="shrink-0 text-lg transition-transform"
-            style={{
-              color: LABEL_INK,
-              transform: expanded ? 'rotate(90deg)' : undefined,
-            }}
-          >
-            ›
-          </span>
-        )}
-      </button>
-
-      {expanded && (
-        <div
-          data-testid="panel-expanded"
-          /*
-            Scrolls WITHIN the panel — the record stays whole behind it, the
-            synopsis unfolds inside, as the reference does. Capped so the panel
-            never grows past the record it sits over.
-          */
-          className="mt-[14px] max-h-64 overflow-y-auto"
-        >
-          {summary.snippet !== null && (
-            <section data-testid="panel-snippet" className="mb-4">
-              {/*
-                **The generated label, kept (A33c).** The snippet is the app
-                asserting something about the music; §10b requires it in the
-                register of "Discogs estimates", never as established fact. The
-                label travels with the text because `RecordSummary.snippet`
-                carries the `generated` flag — an edited snippet is the user's
-                and is labelled so.
-              */}
-              <p
-                data-testid="panel-snippet-label"
-                className={`mb-[6px] ${LABEL}`}
-              >
-                {summary.snippet.generated ? 'A note, written by Claude' : 'Your note'}
-              </p>
-              <p className={`text-prose leading-[1.55] ${INK}`}>
-                {summary.snippet.text}
-              </p>
-            </section>
-          )}
-
-          {/*
-            **The boundary (A33c).** A rule between the generated synopsis and the
-            entered facts, so the panel never reads as one undifferentiated block
-            asserting things about music without saying which part it made up.
-            Present only when both sides exist — a boundary above nothing is
-            noise.
-          */}
-          {summary.snippet !== null && summary.factGroups.length > 0 && (
-            <hr data-testid="panel-boundary" className={`mb-4 border-t ${HAIRLINE}`} />
-          )}
-
-          {summary.factGroups.length > 0 && (
-            <dl data-testid="panel-facts" className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-[6px]">
-              {summary.factGroups.flatMap((group) =>
-                group.rows.map((row) => (
-                  <div key={`${group.kind}-${row.label}`} className="contents">
-                    <dt className={LABEL}>{row.label}</dt>
-                    <dd className={`text-prose ${INK}`}>{row.value}</dd>
-                  </div>
-                )),
-              )}
-            </dl>
-          )}
-
-          {/*
-            The link to the full record — INSIDE the expanded panel (A33b), for
-            what the panel does not hold. The one destination §10b's keyboard
-            list also uses.
-          */}
-          <Link
-            href={summary.href}
-            data-testid="panel-detail-link"
-            className={`mt-4 inline-block text-prose underline ${INK}`}
-          >
-            Open the full record — journal, prices, images
-          </Link>
-        </div>
+    <div data-testid="record-panel" data-expanded="true">
+      <p data-testid="panel-artist" className={LABEL}>
+        {summary.artist}
+      </p>
+      <h3 data-testid="summary-title" className={`mt-[6px] text-title font-semibold ${INK}`}>
+        {summary.title}
+      </h3>
+      {summary.year !== null && (
+        <p data-testid="panel-year" className="mt-[4px] text-prose" style={{ color: LABEL_INK }}>
+          {summary.year}
+        </p>
       )}
 
-      {/* The controls belong with the panel in both states. */}
+      {summary.snippet !== null && (
+        <section data-testid="panel-snippet" className="mt-[18px]">
+          {/*
+            **The generated label, kept (A33c).** The note is the app asserting
+            something about the music; §10b requires it in the register of
+            "Discogs estimates", never as established fact. The label travels
+            with the text because `RecordSummary.snippet` carries the
+            `generated` flag — an edited note is the user's and is labelled so.
+          */}
+          <p data-testid="panel-snippet-label" className={`mb-[6px] ${LABEL}`}>
+            {summary.snippet.generated ? 'A note, written by Claude' : 'Your note'}
+          </p>
+          <p className={`text-prose leading-[1.55] ${INK}`}>{summary.snippet.text}</p>
+        </section>
+      )}
+
+      {/*
+        Every group on its own hairline (§11.19). The first one's is also
+        **the boundary (A33c)** between the generated note and the entered
+        facts, so the panel never reads as one undifferentiated block
+        asserting things about music without saying which part it made up.
+      */}
+      {summary.factGroups.length > 0 && (
+        <dl data-testid="panel-facts" className="mt-[18px]">
+          {summary.factGroups.map((group, index) => (
+            <div
+              key={group.kind}
+              data-group={group.kind}
+              data-testid={index === 0 && summary.snippet !== null ? 'panel-boundary' : undefined}
+              className={`grid grid-cols-[112px_1fr] gap-x-4 border-t py-[10px] ${HAIRLINE}`}
+            >
+              <dt className={LABEL}>{groupName(group.kind)}</dt>
+              <dd className={`text-prose ${INK}`}>{group.rows.map((row) => row.value).join(' · ')}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+
+      {/* Leaves this surface, so it sits above the two verbs rather than among them (§3, §11.19). */}
+      <Link href={summary.href} data-testid="panel-detail-link" className={`mt-[18px] inline-block text-prose underline ${INK}`}>
+        Open the full record — journal, prices, images
+      </Link>
+
+      {/* The two things you can do to the object, together at the foot. */}
       <div className="mt-[14px] flex gap-2">
-        <button
-          type="button"
-          onClick={onTurnOver}
-          data-testid="action-turn"
-          className={`min-h-11 flex-1 border text-prose ${HAIRLINE} ${INK}`}
-        >
+        <button type="button" onClick={onTurnOver} data-testid="action-turn" className={`min-h-11 flex-1 border text-prose ${HAIRLINE} ${INK}`}>
           Turn over
         </button>
-        <button
-          type="button"
-          onClick={onPutBack}
-          data-testid="action-put"
-          className={`min-h-11 flex-1 border text-prose ${HAIRLINE} ${INK}`}
-        >
+        <button type="button" onClick={onPutBack} data-testid="action-put" className={`min-h-11 flex-1 border text-prose ${HAIRLINE} ${INK}`}>
           Put back
         </button>
       </div>

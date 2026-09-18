@@ -13,8 +13,8 @@ import type { WallSeat } from './shelf-runs';
 import { pullPose, returnPose } from './pull-curve';
 import { WALL_PAPER_HEX, pullFill, returnFill } from './pull-colour';
 import { wallLayout } from './wall-layout';
-import { landedBox, landingBoxAt, type View } from './landing';
-import { pageSquare, turnMatrixAt, type CornerPath } from './turn';
+import { landedBox, landedSquare, landingBoxAt, type View } from './landing';
+import { turnMatrixAt, type CornerPath } from './turn';
 import { recordLadder } from '@/lib/colour/record-ladder';
 import { MICRO_PX } from '../type-scale';
 import { LABEL } from '../records/[id]/grid-type';
@@ -165,7 +165,7 @@ export function WallLabelled({
     const landed = landedBox(seat.id, region);
     const box = turning ? landed : landingBoxAt(seat, region, pose.eased);
     const departing = turning ? { opacity: 1 - (state.turn ?? 0) } : {};
-    const coverMatrix = turning ? turnMatrixAt(landed, pageSquare(region), state.turn ?? 0, turnPath) : coverTransform(box);
+    const coverMatrix = turning ? turnMatrixAt(landed, landedSquare(region), state.turn ?? 0, turnPath) : coverTransform(box);
     const ladder = recordLadder(record.spineColour);
     const fill =
       state.direction === 'out'

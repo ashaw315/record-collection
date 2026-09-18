@@ -4,8 +4,8 @@ import type { RecordSummary } from './summary';
 import type { WallSeat } from './shelf-runs';
 import { PERCEIVED_END } from './pull-colour';
 import { hasAdjacentSeat, type Direction } from './adjacent-seat';
-import { ARROW_LANE, LANDING_PAD, landedBox, projectedBox, type View } from './landing';
-import { pageSquare, type TurnConfig } from './turn';
+import { ARROW_LANE, LANDING_PAD, landedBox, landedSquare, projectedBox, type View } from './landing';
+import type { TurnConfig } from './turn';
 import { LABEL, LABEL_INK } from '../records/[id]/grid-type';
 import { DRAWN_PAPER } from './WallComposition';
 
@@ -102,7 +102,7 @@ export function WallStage({
   const onPage = turn !== null && arriving !== undefined && (arriving.turn ?? 0) >= 1;
   if (arriving !== undefined && (turn === null ? arrived : onPage)) {
     const region: View = view ?? { x: 0, y: 0, width, height: width };
-    const square = pageSquare(region);
+    const square = landedSquare(region);
     const box = projectedBox(landedBox(arriving.id, region));
     const bounds = onPage ? { minX: square.x, maxX: square.x + square.size, minY: square.y, maxY: square.y + square.size } : box;
     const top = (bounds.minY + bounds.maxY) / 2 - 22 + LANDING_PAD;

@@ -6,8 +6,7 @@ import type { WallSeat } from './shelf-runs';
 import type { RecordSummary } from './summary';
 import { PERCEIVED_END } from './pull-colour';
 import { COS30, SIN30, spineWidth } from './geometry';
-import { ARROW_LANE, landedBox, landingSize, projectedBox } from './landing';
-import { pageSquare } from './turn';
+import { ARROW_LANE, landedBox, landedSquare, landingSize, projectedBox } from './landing';
 
 /**
  * The stage: the drawing plus what the gesture arrives at. §11.7's panel
@@ -166,7 +165,7 @@ describe('the panel arrives with phase two (§11.14)', () => {
   it('carries the arrows beside the page square once the record is on the page’s plane', () => {
     const view = { x: 0, y: 0, width: 960, height: 760 };
     const turned = render({ pull: { id: 'b', direction: 'out', progress: 1, turn: 1 }, turn: { ms: 600, path: 'linear' }, view });
-    const square = pageSquare(view);
+    const square = landedSquare(view);
     const left = (id: string) => Number(/left:([\d.]+)px/.exec(/data-testid="nav-(?:previous|next)"[^>]*>/.exec(turned.slice(turned.indexOf(`data-testid="${id}"`)))?.[0] ?? '')?.[1]);
     expect(left('nav-previous')).toBeCloseTo(square.x - ARROW_LANE, 6);
     const half = render({ pull: { id: 'b', direction: 'out', progress: 1, turn: 0.5 }, turn: { ms: 600, path: 'linear' }, view });

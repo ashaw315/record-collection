@@ -126,3 +126,23 @@ export function landingBoxAt(seat: PlacedSeat, view: View, eased: number): Recor
 export function landingBox(seat: PlacedSeat, view: View, progress: number): RecordBox {
   return landingBoxAt(seat, view, pullEase(progress));
 }
+
+/**
+ * §11.19's landed composition: **560 × 560, offset right, vertically
+ * centred in the region — and neither number is the largest square that
+ * fits.** A centred 779 covered the fixture entirely, which is total
+ * occlusion rather than the overlap §11.18 ruled. The horizontal offset is
+ * derived — travelling −y projects to +x on screen, so the gesture leaves
+ * the record right of the fixture; the vertical placement is not — a fixed
+ * 560 in an 847 region cannot track seats spread over four shelves, so it
+ * is centred, for a reason rather than by default. The size is bounded by
+ * what must stay visible: 264 of the unit's 324px clear, the empty seat
+ * 55px clear of the cover's left edge.
+ */
+export const LANDED_SIZE = 560;
+/** The page's gutter between the cover's right edge and the region's. */
+export const LANDED_GUTTER = 24;
+
+export function landedSquare(view: View): { x: number; y: number; size: number } {
+  return { size: LANDED_SIZE, x: view.x + view.width - LANDED_GUTTER - LANDED_SIZE, y: view.y + (view.height - LANDED_SIZE) / 2 };
+}
