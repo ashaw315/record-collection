@@ -104,8 +104,8 @@ describe('200 records', () => {
       assuming one run per section across the whole wall; runs are per SHELF,
       which is what makes the wall wrap without a run spanning a row break.
     */
-    /* 200 records are three units (80 + 80 + 40): three fixtures of eighteen faces. */
-    expect(polygons).toBe(200 * 3 + 3 * 18);
+    /* 200 records on ONE fixture of four shelves of fifty (§11.23): eighteen furniture faces, not three units' worth. */
+    expect(polygons).toBe(200 * 3 + 18);
     expect(html.length).toBeGreaterThan(0);
   });
 

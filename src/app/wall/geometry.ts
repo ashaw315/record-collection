@@ -51,7 +51,8 @@ export const SHELF_THICKNESS = 8;
 
 /**
  * The seat: a fixed pitch of 17 (a 12 spine and a 5 gap, as drawn), the
- * hashed width textured inside it. Twenty seats to a 350 shelf.
+ * hashed width textured inside it. Twenty seats to a 350 shelf at the
+ * fixture's smallest; the shelf lengthens with the collection (§11.23).
  */
 export const GAP = 5;
 export const SEAT_PITCH = 17;
@@ -62,8 +63,6 @@ export const SHELF_INSET_Y = 0;
 /** The unit's uprights: 10 thick, the shelf's depth, four pitches tall. */
 export const ROW_PITCH = 198;
 export const UPRIGHT = { thickness: 10, depth: SHELF_DEPTH, height: 4 * ROW_PITCH } as const;
-/** Units along x, at the drawing's spacing (520 on screen). */
-export const UNIT_PITCH_X = 600;
 /** No ledge: the shelf is the record's depth. Kept as a name so nothing derives from a literal zero. */
 export const LEDGE = 0;
 
@@ -112,15 +111,15 @@ export type RecordBox = PlacedSeat & { depth: number; height: number };
 type BoxLike = PlacedSeat & Partial<Pick<RecordBox, 'depth' | 'height'>>;
 
 /**
- * One row's seats, placed in their unit. Row 0 is the unit's top shelf;
- * seats advance at the fixed pitch, the record's hashed width inside each.
- * A pulled record keeps its seat empty: the pull moves it (§11.10).
+ * One row's seats, placed. Row 0 is the top shelf; seats advance at the
+ * fixed pitch, the record's hashed width inside each. A pulled record keeps
+ * its seat empty: the pull moves it (§11.10).
  */
-export function layoutRow(seats: readonly ShelfSeat[], row: number, unit = 0): PlacedSeat[] {
+export function layoutRow(seats: readonly ShelfSeat[], row: number): PlacedSeat[] {
   const z = (3 - row) * ROW_PITCH;
   return seats.map((seat, index) => ({
     id: seat.id,
-    x: unit * UNIT_PITCH_X + SHELF_INSET_X + index * SEAT_PITCH,
+    x: SHELF_INSET_X + index * SEAT_PITCH,
     y: SHELF_INSET_Y,
     z,
     width: spineWidth(seat.id),

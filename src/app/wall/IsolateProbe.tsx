@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { DEPTH, frontFace, labelTransform, rightFace, topFace, type PlacedSeat, type Point } from './geometry';
 import { OUT_MS, SWING_MS, gestureFaces, landingDrift, poseAt } from './gesture';
 import { paintOrder, seatBounds, type PaintBounds } from './paint-sort';
-import { rowZ, unitPieces } from './unit';
+import { PER_SHELF, rowZ, unitPieces } from './unit';
 
 /**
  * **The isolation harness: the probe's exact configuration, in this code.**
@@ -106,7 +106,7 @@ export function IsolateProbe({ config }: { config: IsolateConfig }) {
     void floor;
   }
   if (config.furniture) {
-    for (const piece of unitPieces(0)) {
+    for (const piece of unitPieces(PER_SHELF)) {
       objects.push({
         id: piece.id,
         ...piece.bounds,

@@ -144,10 +144,10 @@ test('draws the same polygons the overview does, by the shared geometry', async 
     })),
   );
 
-  /* Seventeen records on one unit's top shelf: placed by unit and row. */
+  /* Seventeen records on the fixture's top shelf: placed by row (§11.23: one fixture). */
   const placed = unitRows(
     COLLECTION_SPINES.map((_, index) => ({ id: `collection-${index}`, section: 'Collection' })),
-  ).flatMap(({ unit, row, seats }) => layoutRow(seats, row, unit));
+  ).flatMap(({ row, seats }) => layoutRow(seats, row));
   drawn.forEach((seat) => {
     const expected = placed.find((p) => p.id === seat.id);
     expect(expected, seat.id).toBeDefined();

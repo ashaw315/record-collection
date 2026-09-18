@@ -286,6 +286,32 @@ describe('document order is seat order (§11.8) — asserted, because it holds o
     expect(order).not.toEqual(many.map((s) => s.id));
   });
 
+  it('masks the tops of the records below a shelf: the shelf’s faces paint after every record of the row beneath, where they overlap (§11.23)', () => {
+    /*
+      A lower record's top face and the shelf above it overlap on screen by
+      27px (225 of extent against 198 of pitch). The shelf must paint over
+      the record's top, or the unit reads as rows floating in front of each
+      other. The overlap is asserted too, so the order cannot pass vacuously.
+    */
+    const many = Array.from({ length: 22 }, (_, i) => seat(`s${String(i).padStart(2, '0')}`, null));
+    const html = render(many, null);
+    const shelfAbove = /<g data-piece="shelf">(?:(?!<\/g>)[\s\S])*?data-furniture="shelf-top" points="([^"]+)"/g;
+    const shelves = [...html.matchAll(shelfAbove)].map((m) => ({ index: m.index ?? 0, points: m[1] }));
+    const lower = html.indexOf('data-seat="s20"');
+    const lowerTop = /data-seat="s20"[^>]*>[\s\S]*?data-face="top" points="([^"]+)"/.exec(html)?.[1] ?? '';
+    const box = (pts: string) => {
+      const xy = pts.split(' ').map((p) => p.split(',').map(Number));
+      return { minX: Math.min(...xy.map((p) => p[0])), maxX: Math.max(...xy.map((p) => p[0])), minY: Math.min(...xy.map((p) => p[1])), maxY: Math.max(...xy.map((p) => p[1])) };
+    };
+    const top = box(lowerTop);
+    const covering = shelves.filter((s) => {
+      const b = box(s.points);
+      return b.minX < top.maxX && b.maxX > top.minX && b.minY < top.maxY && b.maxY > top.minY;
+    });
+    expect(covering.length, 'a shelf top overlaps the lower record’s top on screen').toBeGreaterThan(0);
+    for (const s of covering) expect(s.index, 'the shelf paints after the record it covers').toBeGreaterThan(lower);
+  });
+
   it('interleaves the furniture with the records by the same order: the shelf above a row paints after that row’s records', () => {
     const many = Array.from({ length: 22 }, (_, i) => seat(`s${String(i).padStart(2, '0')}`, null));
     const html = render(many, null);

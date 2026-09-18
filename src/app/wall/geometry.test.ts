@@ -11,7 +11,6 @@ import {
   SPINE_HEIGHT,
   SPINE_WIDTH_MAX,
   SPINE_WIDTH_MIN,
-  UNIT_PITCH_X,
   coverTransform,
   frontFace,
   labelTransform,
@@ -151,12 +150,11 @@ describe('the row is on the axis', () => {
     }
   });
 
-  it('stacks rows down the z axis at the pitch, row 0 highest, and units along x', () => {
+  it('stacks rows down the z axis at the pitch, row 0 highest — one fixture, nothing along x (§11.23)', () => {
     const top = layoutRow(seats, 0)[0];
     const next = layoutRow(seats, 1)[0];
     expect(top.z - next.z).toBe(ROW_PITCH);
     expect(top.x).toBe(next.x);
-    expect(layoutRow(seats, 0, 1)[0].x - top.x).toBe(UNIT_PITCH_X);
   });
 });
 

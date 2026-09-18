@@ -12,7 +12,6 @@ import {
   SPINE_HEIGHT,
   SPINE_WIDTH_MAX,
   SPINE_WIDTH_MIN,
-  UNIT_PITCH_X,
   UPRIGHT,
   frontFace,
   layoutRow,
@@ -20,14 +19,14 @@ import {
   rightFace,
   topFace,
 } from './geometry';
-import { PER_SHELF, SHELVES_PER_UNIT, intoUnits, unitFurniture, unitOf, unitPieces } from './unit';
+import { PER_SHELF, SHELVES_PER_UNIT, intoRows, perShelf, shelfLength, unitFurniture, unitPieces } from './unit';
 
 const TARGET = resolve(process.cwd(), 'docs/design/Record Detail 8a - build target.dc.html');
 
 /**
- * §11.10: the wall is a fixed unit of four shelves joined at their ends, and
- * the collection fills it left to right, top to bottom. Row length comes from
- * the unit's proportion, not the collection. §11.11 fixes the figures: 442 ×
+ * §11.10 / §11.23: the wall is one fixture of four shelves joined at their
+ * ends, the collection fills it left to right, top to bottom, and the row
+ * length grows with the collection above twenty a shelf. §11.11 fixes the figures: 442 ×
  * 1047 on screen (1 : 2.37), twenty seats, four shelves at 198 pitch, a 150
  * face — read off the drawing's own polygons: records 12 × 150 × 150 (a 12″
  * sleeve is square) on shelves 360 × 150 × 8, uprights 10 × 150 × 792 at
@@ -58,7 +57,7 @@ describe('the unit’s figures are the drawing’s (§11.11)', () => {
   it('is four shelves joined by uprights at their ends — no back, no front, no top', () => {
     expect(SHELVES_PER_UNIT).toBe(4);
     expect(UPRIGHT).toEqual({ thickness: 10, depth: SHELF_DEPTH, height: SHELVES_PER_UNIT * ROW_PITCH });
-    const furniture = unitFurniture(0);
+    const furniture = unitFurniture(PER_SHELF);
     /* Two uprights and four shelves, three faces each: eighteen polygons, as drawn. */
     expect(furniture).toHaveLength(18);
     for (const face of furniture) expect(face.points).toHaveLength(4);
@@ -79,7 +78,7 @@ describe('the unit’s figures are the drawing’s (§11.11)', () => {
   };
 
   it('projects to 441.7 × 1047 on screen, taller than it is wide at 1 : 2.37 — the extent over every emitted point', () => {
-    const e = extent(unitFurniture(0).flatMap((face) => face.points));
+    const e = extent(unitFurniture(PER_SHELF).flatMap((face) => face.points));
     expect(e.maxX - e.minX).toBeCloseTo(441.7, 1);
     expect(e.maxY - e.minY).toBeCloseTo(1047, 1);
     expect((e.maxY - e.minY) / (e.maxX - e.minX)).toBeCloseTo(2.37, 2);
@@ -109,7 +108,7 @@ describe('the unit’s figures are the drawing’s (§11.11)', () => {
     );
     expect(drawn.size, 'the far view at 17: 18 furniture faces and 51 record faces').toBe(18 + 17 * 3);
     /* §11.20 withdrew the drawing's side: its strips are −y faces. Tops and +x ends do not depend on the sign and must match. */
-    for (const face of unitFurniture(0).filter((f) => !f.kind.endsWith('front'))) {
+    for (const face of unitFurniture(PER_SHELF).filter((f) => !f.kind.endsWith('front'))) {
       expect(drawn.has(key(face.points)), `${face.kind} ${key(face.points)}`).toBe(true);
     }
   });
@@ -145,50 +144,54 @@ describe('the unit’s figures are the drawing’s (§11.11)', () => {
   });
 
   it('draws the shelves’ and uprights’ strips on their +y faces — toward the camera (§11.20)', () => {
-    const lip = unitFurniture(0).find((face) => face.kind === 'shelf-front');
+    const lip = unitFurniture(PER_SHELF).find((face) => face.kind === 'shelf-front');
     expect(lip?.points[0]).toEqual(project(-UPRIGHT.thickness, SHELF_DEPTH, 594 - SHELF_THICKNESS));
   });
 
   it('puts the top shelf’s surface at the unit’s highest shelf, filled top-down', () => {
     /* Shelf tops at z = 594, 396, 198, 0 — the collection fills the top one first. */
-    const tops = unitFurniture(0).filter((face) => face.kind === 'shelf-top').map((face) => face.z);
+    const tops = unitFurniture(PER_SHELF).filter((face) => face.kind === 'shelf-top').map((face) => face.z);
     expect(tops).toEqual([594, 396, 198, 0]);
     expect(project(0, 0, 594)[1]).toBeLessThan(project(0, 0, 0)[1]);
   });
 });
 
-describe('the collection fills units left to right, top to bottom; the wall gains units', () => {
+describe('one fixture: the row length grows with the collection (§11.23)', () => {
   const seats = (n: number) => Array.from({ length: n }, (_, i) => ({ id: `r${i}`, section: 'A' }));
 
-  it('puts seventeen on the top shelf of one unit, three shelves empty and drawn', () => {
-    const units = intoUnits(seats(17));
-    expect(units).toHaveLength(1);
-    expect(units[0].map((row) => row.length)).toEqual([17, 0, 0, 0]);
+  it('seats twenty a shelf up to eighty, then a quarter of the collection a shelf — 200 is 50 × 4', () => {
+    expect(perShelf(17)).toBe(20);
+    expect(perShelf(80)).toBe(20);
+    expect(perShelf(81)).toBe(21);
+    expect(perShelf(200)).toBe(50);
+    expect(shelfLength(20)).toBe(SHELF_LENGTH);
+    expect(shelfLength(50)).toBe(50 * SEAT_PITCH + UPRIGHT.thickness);
   });
 
-  it('gains units above one unit’s worth — 200 is 80 + 80 + 40 — and no row lengthens', () => {
-    const units = intoUnits(seats(200));
-    expect(units.map((unit) => unit.flat().length)).toEqual([80, 80, 40]);
-    expect(units[2].map((row) => row.length)).toEqual([20, 20, 0, 0]);
-    for (const unit of units) for (const row of unit) expect(row.length).toBeLessThanOrEqual(PER_SHELF);
+  it('puts seventeen on the top shelf, three shelves empty and drawn; 200 on four shelves of fifty, top-down', () => {
+    expect(intoRows(seats(17)).map((row) => row.length)).toEqual([17, 0, 0, 0]);
+    expect(intoRows(seats(200)).map((row) => row.length)).toEqual([50, 50, 50, 50]);
+    expect(intoRows(seats(130)).map((row) => row.length)).toEqual([33, 33, 33, 31]);
   });
 
-  it('places units along x at the drawing’s pitch, and knows which unit a seat is in', () => {
-    expect(UNIT_PITCH_X).toBe(600);
-    expect(unitOf(0)).toBe(0);
-    expect(unitOf(79)).toBe(0);
-    expect(unitOf(80)).toBe(1);
+  it('projects to 883 × 1302 at 200 — §11.23’s one-fixture figure — over every face the fixture emits, and no unit ever tiles', () => {
+    const points = unitPieces(perShelf(200)).flatMap((piece) => piece.faces.flatMap((face) => face.points));
+    const xs = points.map(([x]) => x);
+    const ys = points.map(([, y]) => y);
+    expect(Math.max(...xs) - Math.min(...xs)).toBeCloseTo(883, 0);
+    expect(Math.max(...ys) - Math.min(...ys)).toBeCloseTo(1302, 0);
+    expect((Math.max(...ys) - Math.min(...ys)) / (Math.max(...xs) - Math.min(...xs))).toBeCloseTo(1.47, 1);
   });
 });
 
 describe('the unit as objects for the painter (§11.20)', () => {
   it('is six pieces — two uprights and four shelves — each with its bounds and its three faces', () => {
-    const pieces = unitPieces(0);
+    const pieces = unitPieces(PER_SHELF);
     expect(pieces).toHaveLength(6);
     expect(pieces.filter((p) => p.kind === 'shelf')).toHaveLength(4);
     expect(pieces.filter((p) => p.kind === 'upright')).toHaveLength(2);
     for (const piece of pieces) expect(piece.faces).toHaveLength(3);
-    expect(pieces.flatMap((p) => p.faces)).toEqual(unitFurniture(0));
+    expect(pieces.flatMap((p) => p.faces)).toEqual(unitFurniture(PER_SHELF));
     const top = pieces.find((p) => p.kind === 'shelf' && p.row === 0);
     /* Sorted as the span between the uprights (its drawn faces run upright to upright): interpenetrating boxes have no separating plane. */
     expect(top?.bounds).toEqual({ x0: 0, x1: SHELF_LENGTH - UPRIGHT.thickness, y0: 0, y1: SHELF_DEPTH, z0: 594 - SHELF_THICKNESS, z1: 594 });
@@ -197,8 +200,10 @@ describe('the unit as objects for the painter (§11.20)', () => {
     expect(right?.bounds).toEqual({ x0: SHELF_LENGTH - UPRIGHT.thickness, x1: SHELF_LENGTH, y0: 0, y1: UPRIGHT.depth, z0: -SHELF_THICKNESS, z1: UPRIGHT.height - SHELF_THICKNESS });
   });
 
-  it('offsets a unit’s pieces along x by the unit pitch', () => {
-    const first = unitPieces(1).find((p) => p.kind === 'shelf' && p.row === 0);
-    expect(first?.bounds.x0).toBe(UNIT_PITCH_X);
+  it('lengthens the shelves and moves the right upright with the row: fifty seats, one fixture', () => {
+    const shelf = unitPieces(50).find((p) => p.kind === 'shelf' && p.row === 0);
+    expect(shelf?.bounds.x1).toBe(50 * SEAT_PITCH);
+    const right = unitPieces(50).find((p) => p.kind === 'upright' && p.bounds.x0 > 0);
+    expect(right?.bounds).toMatchObject({ x0: 50 * SEAT_PITCH, x1: 50 * SEAT_PITCH + UPRIGHT.thickness });
   });
 });

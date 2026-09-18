@@ -3,9 +3,7 @@ import {
   SEAT_PITCH,
   SHELF_DEPTH,
   SHELF_INSET_X,
-  SHELF_LENGTH,
   SHELF_THICKNESS,
-  UNIT_PITCH_X,
   UPRIGHT,
   project,
   type Point,
@@ -27,27 +25,34 @@ import type { ShelfSeat } from './shelf-runs';
  * collection competes with the records standing in it (5b), and four planes
  * with nothing joining them is not a shelf either.
  */
+/** §11.11's unit: twenty a shelf, four shelves — the fixture at its smallest. */
 export const PER_SHELF = 20;
 export const SHELVES_PER_UNIT = 4;
-export const PER_UNIT = PER_SHELF * SHELVES_PER_UNIT;
 
-/** Seats into units of four rows of twenty, top row first; empty rows kept, since they draw. */
-export function intoUnits<T>(seats: readonly T[]): T[][][] {
-  const units: T[][][] = [];
-  const count = Math.max(1, Math.ceil(seats.length / PER_UNIT));
-  for (let u = 0; u < count; u += 1) {
-    const rows: T[][] = [];
-    for (let r = 0; r < SHELVES_PER_UNIT; r += 1) {
-      const start = u * PER_UNIT + r * PER_SHELF;
-      rows.push(seats.slice(start, start + PER_SHELF));
-    }
-    units.push(rows);
-  }
-  return units;
+/**
+ * **One fixture; the row length grows with the collection (§11.23).** Tiling
+ * is withdrawn: three units along +x read as three bookcases stepping away
+ * from the reader, and they did not even touch — 600 of +x projects 520
+ * right and 300 down, and each unit carried its own uprights. Row length
+ * is a parameter (§11.15 named it so); where shelves go is a fact. Twenty a
+ * shelf up to eighty records, then a quarter of the collection a shelf:
+ * 200 is 50 × 4, 883 × 1302 on screen, one wall of records.
+ */
+export function perShelf(count: number): number {
+  return Math.max(PER_SHELF, Math.ceil(count / SHELVES_PER_UNIT));
 }
 
-export function unitOf(seatIndex: number): number {
-  return Math.floor(seatIndex / PER_UNIT);
+/** A shelf runs from the left upright's face to the right upright's far face: the seats, then the upright inside its end. */
+export function shelfLength(seatsPerShelf: number): number {
+  return seatsPerShelf * SEAT_PITCH + UPRIGHT.thickness;
+}
+
+/** Seats into four rows, top row first; empty rows kept, since they draw. */
+export function intoRows<T>(seats: readonly T[]): T[][] {
+  const per = perShelf(seats.length);
+  const rows: T[][] = [];
+  for (let r = 0; r < SHELVES_PER_UNIT; r += 1) rows.push(seats.slice(r * per, (r + 1) * per));
+  return rows;
 }
 
 /** A row's shelf-top height: row 0 is the top shelf. */
@@ -68,11 +73,11 @@ const face = (kind: FurnitureFace['kind'], z: number, corners: ReadonlyArray<rea
 });
 
 /**
- * One unit's furniture as drawn in §11.11: two uprights and four shelves,
- * three visible faces each — top, the +x end, the near front, which is the
- * +y face (§11.20: the camera is at +(1, 1, 1)). Drawn before the records;
- * the tops and ends are among the drawing's own polygons (unit.test.ts) —
- * its strips were drawn on the −y side and are superseded.
+ * The fixture as objects for the painter (§11.20, §11.23): two uprights and
+ * four shelves of `seatsPerShelf`, each with its bounds and its three faces
+ * — top, the +x end, the near front (the +y face). At twenty a shelf the
+ * tops and ends are §11.11's own polygons (unit.test.ts); its strips were
+ * drawn on the −y side and are superseded.
  */
 export type UnitPiece = {
   id: string;
@@ -89,8 +94,9 @@ export type UnitPiece = {
  * the records standing on it and after the row below it; the right upright
  * after the row it ends.
  */
-export function unitPieces(unit: number): UnitPiece[] {
-  const x0 = unit * UNIT_PITCH_X;
+export function unitPieces(seatsPerShelf: number): UnitPiece[] {
+  const x0 = 0;
+  const length = shelfLength(seatsPerShelf);
   const piece = (
     id: string,
     kind: UnitPiece['kind'],
@@ -116,7 +122,7 @@ export function unitPieces(unit: number): UnitPiece[] {
   });
   const bottom = -SHELF_THICKNESS;
   const pieces: UnitPiece[] = [];
-  pieces.push(piece(`unit${unit}-upright-left`, 'upright', ['upright-top', 'upright-end', 'upright-front'], x0 - UPRIGHT.thickness, UPRIGHT.thickness, 0, UPRIGHT.depth, bottom, UPRIGHT.height));
+  pieces.push(piece(`upright-left`, 'upright', ['upright-top', 'upright-end', 'upright-front'], x0 - UPRIGHT.thickness, UPRIGHT.thickness, 0, UPRIGHT.depth, bottom, UPRIGHT.height));
   for (let row = 0; row < SHELVES_PER_UNIT; row += 1) {
     const z = rowZ(row);
     /*
@@ -130,9 +136,9 @@ export function unitPieces(unit: number): UnitPiece[] {
       the uprights every pair has a plane.
     */
     pieces.push(
-      piece(`unit${unit}-shelf-${row}`, 'shelf', ['shelf-top', 'shelf-end', 'shelf-front'], x0 - UPRIGHT.thickness, SHELF_LENGTH + UPRIGHT.thickness, 0, SHELF_DEPTH, z - SHELF_THICKNESS, SHELF_THICKNESS, row, {
+      piece(`shelf-${row}`, 'shelf', ['shelf-top', 'shelf-end', 'shelf-front'], x0 - UPRIGHT.thickness, length + UPRIGHT.thickness, 0, SHELF_DEPTH, z - SHELF_THICKNESS, SHELF_THICKNESS, row, {
         x0,
-        x1: x0 + SHELF_LENGTH - UPRIGHT.thickness,
+        x1: x0 + length - UPRIGHT.thickness,
         y0: 0,
         y1: SHELF_DEPTH,
         z0: z - SHELF_THICKNESS,
@@ -141,22 +147,22 @@ export function unitPieces(unit: number): UnitPiece[] {
     );
   }
   /* Inside the shelf's end, as drawn: the +x face at 350, the front at 340…350. */
-  pieces.push(piece(`unit${unit}-upright-right`, 'upright', ['upright-top', 'upright-end', 'upright-front'], x0 + SHELF_LENGTH - UPRIGHT.thickness, UPRIGHT.thickness, 0, UPRIGHT.depth, bottom, UPRIGHT.height));
+  pieces.push(piece(`upright-right`, 'upright', ['upright-top', 'upright-end', 'upright-front'], x0 + length - UPRIGHT.thickness, UPRIGHT.thickness, 0, UPRIGHT.depth, bottom, UPRIGHT.height));
   return pieces;
 }
 
-/** The unit's faces in piece order — the frame's and the tests' view of the furniture. */
-export function unitFurniture(unit: number): FurnitureFace[] {
-  return unitPieces(unit).flatMap((piece) => piece.faces);
+/** The fixture's faces in piece order — the frame's and the tests' view of the furniture. */
+export function unitFurniture(seatsPerShelf: number): FurnitureFace[] {
+  return unitPieces(seatsPerShelf).flatMap((piece) => piece.faces);
 }
 
-/** Where seat `i` of a row sits in x, within its unit. */
-export function seatX(unit: number, index: number): number {
-  return unit * UNIT_PITCH_X + SHELF_INSET_X + index * SEAT_PITCH;
+/** Where seat `i` of a row sits in x. */
+export function seatX(index: number): number {
+  return SHELF_INSET_X + index * SEAT_PITCH;
 }
 
-export type UnitRow = { unit: number; row: number; seats: ShelfSeat[] };
+export type UnitRow = { row: number; seats: ShelfSeat[] };
 
 export function unitRows(seats: readonly ShelfSeat[]): UnitRow[] {
-  return intoUnits(seats).flatMap((rows, unit) => rows.map((row, index) => ({ unit, row: index, seats: row })));
+  return intoRows(seats).map((row, index) => ({ row: index, seats: row }));
 }

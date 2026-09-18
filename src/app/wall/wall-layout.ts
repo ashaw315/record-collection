@@ -1,5 +1,5 @@
 import { frontFace, layoutRow, rightFace, rowBreaks, topFace, type PlacedSeat, type Point } from './geometry';
-import { unitPieces, unitRows, type FurnitureFace, type UnitPiece } from './unit';
+import { perShelf, unitPieces, unitRows, type FurnitureFace, type UnitPiece } from './unit';
 import type { ShelfSeat } from './shelf-runs';
 import { wallFrame, widened } from './wall-frame';
 
@@ -9,15 +9,15 @@ import { wallFrame, widened } from './wall-frame';
  * same placement separately is the two-producers shape this project keeps
  * finding.
  *
- * §11.10: the collection fills fixed units left to right, top to bottom;
- * the furniture is the unit's — four shelves joined by uprights — drawn
- * before the records, as §11.11 draws it. The pan extent holds the units.
+ * §11.10 / §11.23: the collection fills one fixture left to right, top to
+ * bottom; the furniture is four shelves joined by uprights, their length
+ * growing with the collection. The pan extent holds the fixture.
  */
 export type WallLayout = {
   placed: PlacedSeat[];
   furniture: FurnitureFace[];
   /** The unit's shelves and uprights as objects for the painter, with the breaks that sit on each shelf. */
-  pieces: (UnitPiece & { unit: number; breaks: (readonly [Point, Point])[] })[];
+  pieces: (UnitPiece & { breaks: (readonly [Point, Point])[] })[];
   breaks: (readonly [Point, Point])[];
   frame: { viewBox: string; width: number; height: number };
 };
@@ -35,13 +35,12 @@ export function wallLayout(
   const breaks: (readonly [Point, Point])[] = [];
   const pieces: WallLayout['pieces'] = [];
   const rows = unitRows(seats);
-  const unitCount = Math.max(1, ...rows.map((r) => r.unit + 1));
-  for (let unit = 0; unit < unitCount; unit += 1) pieces.push(...unitPieces(unit).map((piece) => ({ ...piece, unit, breaks: [] })));
-  for (const { unit, row, seats: rowSeats } of rows) {
-    const rowPlaced = layoutRow(rowSeats, row, unit);
+  pieces.push(...unitPieces(perShelf(seats.length)).map((piece) => ({ ...piece, breaks: [] })));
+  for (const { row, seats: rowSeats } of rows) {
+    const rowPlaced = layoutRow(rowSeats, row);
     const rowBreakMarks = rowBreaks(rowSeats, rowPlaced);
     breaks.push(...rowBreakMarks);
-    const shelf = pieces.find((piece) => piece.unit === unit && piece.kind === 'shelf' && piece.row === row);
+    const shelf = pieces.find((piece) => piece.kind === 'shelf' && piece.row === row);
     if (shelf !== undefined) shelf.breaks.push(...rowBreakMarks);
     placed.push(...rowPlaced);
   }
