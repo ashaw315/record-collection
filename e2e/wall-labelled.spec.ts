@@ -329,3 +329,14 @@ test('the record with no cover pulls to ink, not to a default colour', async ({ 
   await page.clock.runFor(OUT_MS + 40);
   await expect(page.locator('[data-pulled] [data-field]')).toHaveAttribute('fill', WALL_INK);
 });
+
+test('the keyboard walk crosses rows in seat order — an explicit tab sequence where paint order interleaves rows (§11.23)', async ({ page }) => {
+  await page.goto('/wall/probe/labelled?count=200');
+  await page.locator('[data-wall="labelled"]').waitFor({ timeout: 15_000 });
+  /* The last seat of the top shelf, then Tab: the first seat of the second shelf, which precedes it in the DOM. */
+  await page.locator('[data-seat="collection-49"]').focus();
+  await page.keyboard.press('Tab');
+  expect(await page.evaluate(() => document.activeElement?.getAttribute('data-seat'))).toBe('collection-50');
+  const domOrder = await page.evaluate(() => Array.from(document.querySelectorAll('a[data-seat]')).map((a) => a.getAttribute('data-seat')));
+  expect(domOrder.indexOf('collection-50'), 'the DOM has it earlier: the sequence is what orders the walk').toBeLessThan(domOrder.indexOf('collection-0'));
+});

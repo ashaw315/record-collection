@@ -254,17 +254,30 @@ describe('spines are anchors inside the SVG (§11.8)', () => {
 });
 
 describe('document order is seat order (§11.8) — asserted, because it holds only while seats vary along x alone', () => {
-  it('lists a row’s seats in the DOM in seat order, with no tabindex', () => {
-    /*
-      SVG has no z-index: paint order is document order, and document order
-      is what a keyboard walks. Within a row the two agree because seats are
-      separated on x alone.
-    */
+  it('lists a row’s seats in the DOM in seat order', () => {
+    /* Within a row paint order and seat order agree, because seats are separated on x alone. */
     const many = Array.from({ length: 11 }, (_, i) => seat(`s${String(i).padStart(2, '0')}`, null));
     const html = render(many, null);
     const order = [...html.matchAll(/data-seat="([^"]+)"/g)].map((m) => m[1]);
     expect(order).toEqual(many.map((s) => s.id));
-    expect(html, 'no tabindex — document order serves the reader').not.toContain('tabindex');
+  });
+
+  it('carries an explicit tabindex sequence in seat order across rows, where paint order and reading order separate (§11.23)', () => {
+    /*
+      Paint order interleaves rows by column (225 of extent against 198 of
+      pitch), so document order is no longer the reading order across rows.
+      The keyboard walk gets its own sequence: §11.8 preferred anchors to a
+      parallel list because a list draws the identifying channel twice; a tab
+      sequence draws nothing, so the argument is silent on it.
+    */
+    const many = Array.from({ length: 22 }, (_, i) => seat(`s${String(i).padStart(2, '0')}`, null));
+    const html = render(many, null);
+    const tab = (id: string) => Number(/tabindex="(\d+)"/.exec(new RegExp(`<a [^>]*data-seat="${id}"[^>]*>`).exec(html)?.[0] ?? '')?.[1]);
+    expect(tab('s00')).toBe(1);
+    expect(tab('s19')).toBe(20);
+    expect(tab('s20'), 'the second row follows the first in the walk, though it precedes it in the DOM').toBe(21);
+    expect(tab('s21')).toBe(22);
+    expect(html.indexOf('data-seat="s20"')).toBeLessThan(html.indexOf('data-seat="s00"'));
   });
 
   it('puts a lower record before the one above it in the DOM — the painter’s order, which is no longer the reading order (with Design)', () => {

@@ -107,6 +107,8 @@ export function WallLabelled({
   const movingById = new Map(moving.map((state) => [state.id, state]));
 
   const byId = new Map(seats.map((seat) => [seat.id, seat]));
+  /* §11.23: paint order interleaves rows by column, so the keyboard walk gets its own sequence — seat order, 1-based. */
+  const tabOf = new Map(seats.map((seat, index) => [seat.id, index + 1]));
   const { placed, pieces, frame } = wallLayout(seats, moving.map((m) => ({ id: m.id })), minWidth, minHeight);
   /* The frozen view, in the svg's own coordinates (the frame's origin added), for the interim landing drift. */
   const [frameX, frameY] = frame.viewBox.split(' ').map(Number);
@@ -277,7 +279,8 @@ export function WallLabelled({
         nearer than and last once past the row on y. The spine is the +y
         face, toward the camera, so a record's anchor holds all three faces.
         Document order follows this order — within a row it is seat order;
-        across rows the lower row comes first, which is with Design (§11.8).
+        across rows it interleaves by column, so the keyboard walk carries an
+        explicit tabindex sequence in seat order (§11.23).
       */}
       {paintOrder([
         ...pieces.map((piece) => ({ id: piece.id, ...piece.bounds })),
@@ -321,6 +324,7 @@ export function WallLabelled({
             key={seat.id}
             data-seat={seat.id}
             href={`/records/${seat.id}`}
+            tabIndex={tabOf.get(seat.id)}
             aria-label={`${record.artist} · ${record.title}`}
             style={{ cursor: onSeatClick === undefined ? undefined : 'pointer' }}
             onClick={
