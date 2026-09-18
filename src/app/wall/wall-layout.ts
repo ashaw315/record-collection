@@ -1,5 +1,5 @@
 import { frontFace, layoutRow, rightFace, rowBreaks, topFace, type PlacedSeat, type Point } from './geometry';
-import { unitFurniture, unitRows, type FurnitureFace } from './unit';
+import { unitPieces, unitRows, type FurnitureFace, type UnitPiece } from './unit';
 import type { ShelfSeat } from './shelf-runs';
 import { wallFrame, widened } from './wall-frame';
 
@@ -16,6 +16,8 @@ import { wallFrame, widened } from './wall-frame';
 export type WallLayout = {
   placed: PlacedSeat[];
   furniture: FurnitureFace[];
+  /** The unit's shelves and uprights as objects for the painter, with the breaks that sit on each shelf. */
+  pieces: (UnitPiece & { unit: number; breaks: (readonly [Point, Point])[] })[];
   breaks: (readonly [Point, Point])[];
   frame: { viewBox: string; width: number; height: number };
 };
@@ -31,15 +33,19 @@ export function wallLayout(
   void moving;
   const placed: PlacedSeat[] = [];
   const breaks: (readonly [Point, Point])[] = [];
-  const furniture: FurnitureFace[] = [];
+  const pieces: WallLayout['pieces'] = [];
   const rows = unitRows(seats);
   const unitCount = Math.max(1, ...rows.map((r) => r.unit + 1));
-  for (let unit = 0; unit < unitCount; unit += 1) furniture.push(...unitFurniture(unit));
+  for (let unit = 0; unit < unitCount; unit += 1) pieces.push(...unitPieces(unit).map((piece) => ({ ...piece, unit, breaks: [] })));
   for (const { unit, row, seats: rowSeats } of rows) {
     const rowPlaced = layoutRow(rowSeats, row, unit);
-    breaks.push(...rowBreaks(rowSeats, rowPlaced));
+    const rowBreakMarks = rowBreaks(rowSeats, rowPlaced);
+    breaks.push(...rowBreakMarks);
+    const shelf = pieces.find((piece) => piece.unit === unit && piece.kind === 'shelf' && piece.row === row);
+    if (shelf !== undefined) shelf.breaks.push(...rowBreakMarks);
     placed.push(...rowPlaced);
   }
+  const furniture = pieces.flatMap((piece) => piece.faces);
   /* Framed on the furniture and the faces, at least as large as the region that shows it. */
   const frame = widened(
     wallFrame(
@@ -49,5 +55,5 @@ export function wallLayout(
     minWidth,
     minHeight,
   );
-  return { placed, furniture, breaks, frame };
+  return { placed, furniture, pieces, breaks, frame };
 }

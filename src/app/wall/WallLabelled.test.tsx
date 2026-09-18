@@ -254,18 +254,48 @@ describe('spines are anchors inside the SVG (§11.8)', () => {
 });
 
 describe('document order is seat order (§11.8) — asserted, because it holds only while seats vary along x alone', () => {
-  it('lists the seats in the DOM in seat order, rows top to bottom, with no tabindex', () => {
+  it('lists a row’s seats in the DOM in seat order, with no tabindex', () => {
     /*
       SVG has no z-index: paint order is document order, and document order
-      is what a keyboard walks. The two agree today because seats within a
-      row vary only along x. The day a row's seats vary in depth, THIS fails
-      rather than the reading order silently going wrong.
+      is what a keyboard walks. Within a row the two agree because seats are
+      separated on x alone.
     */
     const many = Array.from({ length: 11 }, (_, i) => seat(`s${String(i).padStart(2, '0')}`, null));
     const html = render(many, null);
     const order = [...html.matchAll(/data-seat="([^"]+)"/g)].map((m) => m[1]);
     expect(order).toEqual(many.map((s) => s.id));
     expect(html, 'no tabindex — document order serves the reader').not.toContain('tabindex');
+  });
+
+  it('puts a lower record before the one above it in the DOM — the painter’s order, which is no longer the reading order (with Design)', () => {
+    /*
+      §11.8's assertion has failed as designed: at the square seat a record's
+      projected extent is 150 plus a 75px top face against a 198 pitch, so a
+      lower record's top overpaints the bottom 27px of the record above it
+      unless that one paints later. Either the pitch grows so rows do not
+      overlap, or paint and reading order separate and the keyboard walk
+      needs its own mechanism. Until then the DOM carries the paint order:
+      each row in seat order, the rows interleaved by column.
+    */
+    const many = Array.from({ length: 22 }, (_, i) => seat(`s${String(i).padStart(2, '0')}`, null));
+    const html = render(many, null);
+    const order = [...html.matchAll(/data-seat="([^"]+)"/g)].map((m) => m[1]);
+    expect(order.filter((id) => Number(id.slice(1)) < 20)).toEqual(many.slice(0, 20).map((s) => s.id));
+    expect(order.indexOf('s20'), 'the record below s00 paints first').toBeLessThan(order.indexOf('s00'));
+    expect(order.indexOf('s21')).toBeLessThan(order.indexOf('s01'));
+    expect(order).not.toEqual(many.map((s) => s.id));
+  });
+
+  it('interleaves the furniture with the records by the same order: the shelf above a row paints after that row’s records', () => {
+    const many = Array.from({ length: 22 }, (_, i) => seat(`s${String(i).padStart(2, '0')}`, null));
+    const html = render(many, null);
+    const topShelfStrip = [...html.matchAll(/data-furniture="shelf-front"/g)].map((m) => m.index ?? 0);
+    const lowerRowLast = html.indexOf('data-seat="s21"');
+    expect(topShelfStrip.some((i) => i > lowerRowLast), 'a shelf strip after the lower row').toBe(true);
+    /* The right upright paints after every seated record; the left before them. */
+    const uprights = [...html.matchAll(/data-furniture="upright-front"/g)].map((m) => m.index ?? 0);
+    expect(Math.max(...uprights)).toBeGreaterThan(html.lastIndexOf('data-seat='));
+    expect(Math.min(...uprights)).toBeLessThan(html.indexOf('data-seat='));
   });
 });
 

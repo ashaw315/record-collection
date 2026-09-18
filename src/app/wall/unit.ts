@@ -74,10 +74,26 @@ const face = (kind: FurnitureFace['kind'], z: number, corners: ReadonlyArray<rea
  * the tops and ends are among the drawing's own polygons (unit.test.ts) —
  * its strips were drawn on the −y side and are superseded.
  */
-export function unitFurniture(unit: number): FurnitureFace[] {
+export type UnitPiece = {
+  id: string;
+  kind: 'shelf' | 'upright';
+  /** For a shelf, its row (0 at the top). */
+  row?: number;
+  bounds: { x0: number; x1: number; y0: number; y1: number; z0: number; z1: number };
+  faces: FurnitureFace[];
+};
+
+/**
+ * The unit as objects for the painter (§11.20): two uprights and four
+ * shelves, each with its bounds and its three faces. A shelf paints before
+ * the records standing on it and after the row below it; the right upright
+ * after the row it ends.
+ */
+export function unitPieces(unit: number): UnitPiece[] {
   const x0 = unit * UNIT_PITCH_X;
-  const faces: FurnitureFace[] = [];
-  const box = (
+  const piece = (
+    id: string,
+    kind: UnitPiece['kind'],
     kinds: [FurnitureFace['kind'], FurnitureFace['kind'], FurnitureFace['kind']],
     x: number,
     w: number,
@@ -85,20 +101,53 @@ export function unitFurniture(unit: number): FurnitureFace[] {
     d: number,
     z: number,
     h: number,
-  ) => {
-    faces.push(face(kinds[0], z + h, [[x, y, z + h], [x + w, y, z + h], [x + w, y + d, z + h], [x, y + d, z + h]]));
-    faces.push(face(kinds[1], z + h, [[x + w, y, z], [x + w, y + d, z], [x + w, y + d, z + h], [x + w, y, z + h]]));
-    faces.push(face(kinds[2], z + h, [[x, y + d, z], [x + w, y + d, z], [x + w, y + d, z + h], [x, y + d, z + h]]));
-  };
+    row?: number,
+    sortBounds?: UnitPiece['bounds'],
+  ): UnitPiece => ({
+    id,
+    kind,
+    row,
+    bounds: sortBounds ?? { x0: x, x1: x + w, y0: y, y1: y + d, z0: z, z1: z + h },
+    faces: [
+      face(kinds[0], z + h, [[x, y, z + h], [x + w, y, z + h], [x + w, y + d, z + h], [x, y + d, z + h]]),
+      face(kinds[1], z + h, [[x + w, y, z], [x + w, y + d, z], [x + w, y + d, z + h], [x + w, y, z + h]]),
+      face(kinds[2], z + h, [[x, y + d, z], [x + w, y + d, z], [x + w, y + d, z + h], [x, y + d, z + h]]),
+    ],
+  });
   const bottom = -SHELF_THICKNESS;
-  box(['upright-top', 'upright-end', 'upright-front'], x0 - UPRIGHT.thickness, UPRIGHT.thickness, 0, UPRIGHT.depth, bottom, UPRIGHT.height);
+  const pieces: UnitPiece[] = [];
+  pieces.push(piece(`unit${unit}-upright-left`, 'upright', ['upright-top', 'upright-end', 'upright-front'], x0 - UPRIGHT.thickness, UPRIGHT.thickness, 0, UPRIGHT.depth, bottom, UPRIGHT.height));
   for (let row = 0; row < SHELVES_PER_UNIT; row += 1) {
     const z = rowZ(row);
-    box(['shelf-top', 'shelf-end', 'shelf-front'], x0 - UPRIGHT.thickness, SHELF_LENGTH + UPRIGHT.thickness, 0, SHELF_DEPTH, z - SHELF_THICKNESS, SHELF_THICKNESS);
+    /*
+      Drawn from upright to upright, as §11.11 draws it — but SORTED as the
+      span between them. A shelf's drawn box interpenetrates the uprights at
+      its ends, and interpenetrating boxes have no separating plane: the
+      centroid fallback then put the right upright nearer than the top shelf
+      while the records were nearer than the upright and the shelf nearer
+      than the records — a cycle the insertion resolved by painting the top
+      shelf over its own row's spines, and no spine could be clicked. Between
+      the uprights every pair has a plane.
+    */
+    pieces.push(
+      piece(`unit${unit}-shelf-${row}`, 'shelf', ['shelf-top', 'shelf-end', 'shelf-front'], x0 - UPRIGHT.thickness, SHELF_LENGTH + UPRIGHT.thickness, 0, SHELF_DEPTH, z - SHELF_THICKNESS, SHELF_THICKNESS, row, {
+        x0,
+        x1: x0 + SHELF_LENGTH - UPRIGHT.thickness,
+        y0: 0,
+        y1: SHELF_DEPTH,
+        z0: z - SHELF_THICKNESS,
+        z1: z,
+      }),
+    );
   }
   /* Inside the shelf's end, as drawn: the +x face at 350, the front at 340…350. */
-  box(['upright-top', 'upright-end', 'upright-front'], x0 + SHELF_LENGTH - UPRIGHT.thickness, UPRIGHT.thickness, 0, UPRIGHT.depth, bottom, UPRIGHT.height);
-  return faces;
+  pieces.push(piece(`unit${unit}-upright-right`, 'upright', ['upright-top', 'upright-end', 'upright-front'], x0 + SHELF_LENGTH - UPRIGHT.thickness, UPRIGHT.thickness, 0, UPRIGHT.depth, bottom, UPRIGHT.height));
+  return pieces;
+}
+
+/** The unit's faces in piece order — the frame's and the tests' view of the furniture. */
+export function unitFurniture(unit: number): FurnitureFace[] {
+  return unitPieces(unit).flatMap((piece) => piece.faces);
 }
 
 /** Where seat `i` of a row sits in x, within its unit. */

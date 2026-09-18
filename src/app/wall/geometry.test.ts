@@ -25,7 +25,7 @@ import {
   topFace,
   type PlacedSeat,
 } from './geometry';
-import { paintSort, seatBounds } from './paint-sort';
+import { paintOrder, seatBounds } from './paint-sort';
 
 /**
  * The geometry both wall components share (The Wall D2, on 5b's constants).
@@ -272,32 +272,23 @@ describe('D1: the wall renders at 1:1 and pans; §5 removes labels only below on
   });
 });
 
-describe('paint order is document order is seat order (§11.8)', () => {
+describe('paint order within a row is seat order (§11.8)', () => {
   /**
    * SVG has no z-index: paint order is document order, and document order is
-   * what a keyboard walks. The separating-plane sort agrees with seat order
-   * only because seats within a row are separated on x alone — the day a
-   * row's seats vary in depth, the two orders separate and the drawing gets
-   * a wrong reading order with nothing failing. So it is asserted.
+   * what a keyboard walks. Within a row the separating-plane order agrees
+   * with seat order because seats are separated on x alone. Across rows it
+   * does not — the upper row is nearer and paints later — and that question
+   * is with Design (paint-sort.test.ts, WallLabelled.test.tsx).
    */
-  const rows = [
-    Array.from({ length: 6 }, (_, i) => ({ id: `a${i}`, section: 'A' })),
-    Array.from({ length: 5 }, (_, i) => ({ id: `b${i}`, section: 'B' })),
-  ];
-  const placed = rows.flatMap((row, index) => layoutRow(row, index).map((seat) => seatBounds(seat, index)));
+  const row = Array.from({ length: 6 }, (_, i) => ({ id: `a${i}`, section: 'A' }));
+  const placed = layoutRow(row, 0).map((seat) => seatBounds(seat));
 
-  it('agrees on every seat, rows top to bottom', () => {
-    expect(paintSort(placed).map((seat) => seat.id)).toEqual(placed.map((seat) => seat.id));
+  it('agrees on every seat of a row', () => {
+    expect(paintOrder(placed).map((seat) => seat.id)).toEqual(placed.map((seat) => seat.id));
   });
 
   it('would disagree if a seat varied in depth — the control that shows the check discriminates', () => {
-    /* A seat 200 deeper is separated from its row-mates on y as well as x, and the plane on y puts it after them. */
-    const perturbed = placed.map((seat) => (seat.id === 'a1' ? { ...seat, y0: seat.y0 + 200, y1: seat.y1 + 200, moving: true } : seat));
-    expect(paintSort(perturbed).map((seat) => seat.id)).not.toEqual(perturbed.map((seat) => seat.id));
-  });
-
-  it('keeps the seated anchors in seat order while a record is pulled — the pulled one joins by its own bounds', () => {
-    const pulled = placed.filter((seat) => seat.id !== 'a2');
-    expect(paintSort(pulled).map((seat) => seat.id)).toEqual(pulled.map((seat) => seat.id));
+    const perturbed = placed.map((seat) => (seat.id === 'a1' ? { ...seat, y0: seat.y0 + 200, y1: seat.y1 + 200 } : seat));
+    expect(paintOrder(perturbed).map((seat) => seat.id)).not.toEqual(perturbed.map((seat) => seat.id));
   });
 });

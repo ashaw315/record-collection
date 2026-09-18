@@ -1,5 +1,5 @@
-import { COS30, DEPTH, ROW_PITCH, SPINE_HEIGHT, frontFace, labelTransform, rightFace, topFace, type PlacedSeat } from './geometry';
-import { paintSort, seatBounds } from './paint-sort';
+import { COS30, DEPTH, SPINE_HEIGHT, frontFace, labelTransform, rightFace, topFace, type PlacedSeat } from './geometry';
+import { paintOrder, seatBounds } from './paint-sort';
 import { FACE_FILL, PLANE_FILL, TOP_FILL, points } from './WallOverview';
 import type { WallSeat } from './shelf-runs';
 import { WALL_PAPER_HEX, pullFill, returnFill } from './pull-colour';
@@ -107,7 +107,7 @@ export function WallLabelled({
   const movingById = new Map(moving.map((state) => [state.id, state]));
 
   const byId = new Map(seats.map((seat) => [seat.id, seat]));
-  const { placed, furniture, breaks, frame } = wallLayout(seats, moving.map((m) => ({ id: m.id })), minWidth, minHeight);
+  const { placed, pieces, frame } = wallLayout(seats, moving.map((m) => ({ id: m.id })), minWidth, minHeight);
   /* The frozen view, in the svg's own coordinates (the frame's origin added), for the interim landing drift. */
   const [frameX, frameY] = frame.viewBox.split(' ').map(Number);
   const region: View | null = view === null ? null : { ...view, x: frameX + view.x, y: frameY + view.y };
@@ -117,8 +117,6 @@ export function WallLabelled({
     between its neighbours before — a record coming out covers what is
     behind it and is covered by the neighbour at larger x until it is clear.
   */
-  /** The row a placed seat is on, for the sort's document order. */
-  const rowOf = (seat: PlacedSeat) => Math.round((3 * ROW_PITCH - seat.z) / ROW_PITCH);
   /** The moving record's solid at this instant of its gesture (§11.19–§11.21): rigid, re-projected, one fixed point. */
   const facesOf = (seat: PlacedSeat, state: PullState) =>
     gestureFaces(seat, poseAt(outTime(state)), region === null ? [0, 0] : landingDrift(seat, region));
@@ -271,30 +269,38 @@ export function WallLabelled({
       /* No ground of its own: the page's paper is the wall's, one surface. */
       style={{ width: `${frame.width}px`, height: `${frame.height}px`, display: 'block' }}
     >
-      {/* The unit's furniture first (§11.10, §11.11): four shelves joined by uprights, the records standing on them. */}
-      {furniture.map((face, index) => (
-        <polygon key={`f-${index}`} data-furniture={face.kind} points={points(face.points)} fill={PLANE_FILL} stroke={RULE} strokeWidth="1" />
-      ))}
-      {/* §2's breaks: a rule across the plane at the seat boundary; the plane runs on past it. */}
-      {breaks.map(([from, to], index) => (
-        <line key={`break-${index}`} data-break="" x1={from[0].toFixed(2)} y1={from[1].toFixed(2)} x2={to[0].toFixed(2)} y2={to[1].toFixed(2)} stroke={RULE} strokeWidth="1" />
-      ))}
       {/*
-        **Objects in the painter's order, by separating plane (§11.20).** The
-        seated row is exactly its x order; a moving record joins by its own
-        bounds — after the seats it is nearer than, before the neighbour at
-        larger x that is genuinely nearer, and last once it is past the row
-        on y. The spine is the +y face, toward the camera, so a record's
-        anchor holds all three of its faces and nothing paints over a spine.
-        Document order of the seated anchors is still seat order (§11.8).
+        **Every object in the painter's order, by separating plane (§11.20):**
+        each shelf and upright, each seated record, the moving one. A shelf
+        paints before the records on it and after the row below; the right
+        upright after the row it ends; a moving record after the seats it is
+        nearer than and last once past the row on y. The spine is the +y
+        face, toward the camera, so a record's anchor holds all three faces.
+        Document order follows this order — within a row it is seat order;
+        across rows the lower row comes first, which is with Design (§11.8).
       */}
-      {paintSort([
-        ...placed.filter((seat) => byId.has(seat.id) && !movingById.has(seat.id)).map((seat) => seatBounds(seat, rowOf(seat))),
+      {paintOrder([
+        ...pieces.map((piece) => ({ id: piece.id, ...piece.bounds })),
+        ...placed.filter((seat) => byId.has(seat.id) && !movingById.has(seat.id)).map((seat) => seatBounds(seat)),
         ...moving.flatMap((state) => {
           const seat = placed.find((p) => p.id === state.id);
-          return seat === undefined ? [] : [{ id: seat.id, ...facesOf(seat, state).bounds, row: rowOf(seat), moving: true }];
+          return seat === undefined ? [] : [{ id: seat.id, ...facesOf(seat, state).bounds, moving: true }];
         }),
       ]).map((object) => {
+        const piece = pieces.find((p) => p.id === object.id);
+        if (piece !== undefined) {
+          return (
+            <g key={piece.id} data-piece={piece.kind}>
+              {piece.faces.map((face, index) => (
+                <polygon key={index} data-furniture={face.kind} points={points(face.points)} fill={PLANE_FILL} stroke={RULE} strokeWidth="1" />
+              ))}
+              {/* §2's breaks: a rule across the shelf's top at the seat boundary; the plane runs on past it. */}
+              {piece.breaks.map(([from, to], index) => (
+                <line key={`break-${index}`} data-break="" x1={from[0].toFixed(2)} y1={from[1].toFixed(2)} x2={to[0].toFixed(2)} y2={to[1].toFixed(2)} stroke={RULE} strokeWidth="1" />
+              ))}
+            </g>
+          );
+        }
         const seat = placed.find((p) => p.id === object.id);
         const record = byId.get(object.id);
         if (seat === undefined || record === undefined) return null;

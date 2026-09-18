@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { NEARER, nearer, paintSort, type PaintBounds } from './paint-sort';
+import { NEARER, nearer, paintOrder, type PaintBounds } from './paint-sort';
 
 /**
  * §11.20's camera and the probe's sort: **order the drawing's objects — not
@@ -56,32 +56,63 @@ describe('nearer(a, b) — a separating plane decides, and only then the centroi
   });
 });
 
-describe('paintSort — the seated row by x alone, the moving records joining by their own bounds', () => {
-  const row = Array.from({ length: 5 }, (_, i) => box(`s${i}`, i * 17, i * 17 + 12, 0, 150));
+describe('paintOrder — the reference’s insertion, over every object: each shelf, each upright, each record', () => {
+  const seat = (id: string, i: number, z: number) => box(id, i * 17, i * 17 + 12, 0, 150, z, z + 150);
+  /* A shelf is sorted as the span between the uprights (unit.ts says why). */
+  const shelf = (id: string, top: number) => box(id, 0, 340, 0, 150, top - 8, top);
+  const upright = (id: string, x0: number) => box(id, x0, x0 + 10, 0, 150, -8, 784);
+  const ids = (objects: PaintBounds[]) => paintOrder(objects).map((o) => o.id);
 
-  it('is the seat order for a seated row, rows top to bottom first', () => {
-    const upper = row.map((s) => ({ ...s, id: `u${s.id}`, z0: 198, z1: 348, row: 0 }));
-    const ids = paintSort([...row.map((s) => ({ ...s, row: 1 })), ...upper].reverse()).map((b) => b.id);
-    expect(ids).toEqual([...upper.map((b) => b.id), ...row.map((b) => b.id)]);
+  it('paints a shelf before the records standing on it and the shelf above them after — the plane on z', () => {
+    const order = ids([shelf('lower', 396), shelf('upper', 594), seat('a', 0, 396), seat('b', 1, 396)]);
+    expect(order.indexOf('lower')).toBeLessThan(order.indexOf('a'));
+    expect(order.indexOf('upper'), 'the shelf above a row is nearer than the row’s tops — it must cover them').toBeGreaterThan(order.indexOf('b'));
   });
 
-  it('inserts a pulled record after the seats behind it and before the seats nearer than it', () => {
-    /* Pulled from seat 2, only 60 out and 1.8× deep: seats 0–1 are behind (x-plane), seats 3–4 nearer (x-plane), its own seat by centroid. */
-    const pulled = { ...box('p', 34, 50, 60, 330), row: 0, moving: true };
-    const seats = row.map((s) => ({ ...s, row: 0 }));
-    const ids = paintSort([...seats, pulled]).map((b) => b.id);
-    /* s2 is the seat it left, kept here only to show the centroid fallback: no plane separates them and p's centroid is nearer. */
-    expect(ids).toEqual(['s0', 's1', 's2', 'p', 's3', 's4']);
+  it('paints the left upright before the row and the right upright after it — the plane on x', () => {
+    const order = ids([upright('left', -10), upright('right', 340), seat('a', 0, 594), seat('t', 19, 594)]);
+    expect(order.indexOf('left')).toBeLessThan(order.indexOf('a'));
+    expect(order.indexOf('right')).toBeGreaterThan(order.indexOf('t'));
   });
 
-  it('paints it last once it is past the row on y', () => {
-    const pulled = { ...box('p', 34, 80, 150, 710), row: 0, moving: true };
-    expect(paintSort([...row.map((s) => ({ ...s, row: 0 })), pulled]).map((b) => b.id).at(-1)).toBe('p');
+  it('keeps each row in seat order, and paints a lower record before the upper one in its column — larger z is nearer', () => {
+    /*
+      §11.8 asked for document order = seat order to be asserted because it
+      would fail exactly here: a record's projected extent is 150 plus a 75px
+      top face against a 198 pitch, so a lower record's top overpaints the
+      bottom 27px of the record above it unless that one paints later. The
+      pairs that do not overlap on screen (separated on x as well as z) are
+      free, so the rows interleave rather than group; the paint order is
+      right, and the reading order is with Design.
+    */
+    const upper = [0, 1, 2].map((i) => seat(`u${i}`, i, 594));
+    const lower = [0, 1, 2].map((i) => seat(`l${i}`, i, 396));
+    const order = ids([...upper, ...lower]);
+    expect(order.filter((id) => id.startsWith('u'))).toEqual(['u0', 'u1', 'u2']);
+    expect(order.filter((id) => id.startsWith('l'))).toEqual(['l0', 'l1', 'l2']);
+    for (const i of [0, 1, 2]) expect(order.indexOf(`l${i}`), `column ${i}`).toBeLessThan(order.indexOf(`u${i}`));
+  });
+
+  it('inserts a pulled record after the seats behind it and before the neighbour at larger x, and last once past the row on y', () => {
+    const row = [0, 1, 2, 3, 4].map((i) => seat(`s${i}`, i, 594));
+    const early = { ...box('p', 34, 46, 60, 210, 594, 744), moving: true };
+    const orderEarly = ids([...row.filter((s) => s.id !== 's2'), early]);
+    expect(orderEarly.indexOf('p')).toBeGreaterThan(orderEarly.indexOf('s1'));
+    expect(orderEarly.indexOf('p')).toBeLessThan(orderEarly.indexOf('s3'));
+    const past = { ...box('p', 34, 46, 150, 300, 594, 744), moving: true };
+    expect(ids([...row, upright('right', 340), past]).at(-1)).toBe('p');
+  });
+
+  it('orders the whole fixture without a cycle: the top shelf before its row, the row before the right upright', () => {
+    const objects = [upright('L', -10), shelf('S0', 594), shelf('S1', 396), shelf('S2', 198), shelf('S3', 0), upright('R', 340), ...[0, 7, 19].map((i) => seat(`s${i}`, i, 594))];
+    const order = ids(objects);
+    expect(order.indexOf('S0')).toBeLessThan(order.indexOf('s0'));
+    expect(order.indexOf('s19')).toBeLessThan(order.indexOf('R'));
+    expect(order.indexOf('L')).toBeLessThan(order.indexOf('S3'));
   });
 
   it('never drops or duplicates an object — the first frame renders', () => {
-    const pulled = { ...box('p', 34, 46, 0, 150), row: 0, moving: true };
-    const ids = paintSort([...row.map((s) => ({ ...s, row: 0 })), pulled]).map((b) => b.id);
-    expect([...ids].sort()).toEqual([...row.map((b) => b.id), 'p'].sort());
+    const objects = [shelf('s', 594), upright('l', -10), upright('r', 340), seat('a', 0, 594), { ...box('p', 17, 29, 0, 150, 594, 744), moving: true }];
+    expect([...ids(objects)].sort()).toEqual(objects.map((o) => o.id).sort());
   });
 });

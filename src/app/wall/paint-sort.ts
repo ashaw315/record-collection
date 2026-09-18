@@ -18,12 +18,9 @@ import { DEPTH, SPINE_HEIGHT, type PlacedSeat, type RecordBox } from './geometry
  * whole row and it draws in front of every seat regardless of x; before
  * that a neighbour at larger x is genuinely nearer and draws over it.
  *
- * Rows keep §11.8's document order — top to bottom, the order a keyboard
- * walks — because rows never overlap on screen at rest. A moving record is
- * placed within its own row by the plane rule, and after every row once it
- * is nearer than every seat. The one case the two rules disagree on is a
- * grown record still inside the row's y-band overlapping a lower row on
- * screen; there the document order wins, and it is recorded in NOTES.
+ * Every object goes through the same insertion (`paintOrder`) — the unit's
+ * shelves and uprights included, since a shelf above a row is nearer than
+ * that row's top faces and a right upright nearer than the row it ends.
  */
 export const NEARER = { x: 1, y: 1, z: 1 } as const;
 
@@ -35,19 +32,17 @@ export type PaintBounds = {
   y1: number;
   z0: number;
   z1: number;
-  /** The shelf row the object belongs to, 0 at the top. Seated objects carry theirs; a moving one the row it came from. */
-  row?: number;
   moving?: boolean;
 };
 
 /** A seated record's bounds: its box, DEPTH deep and SPINE_HEIGHT tall. */
-export function seatBounds(seat: PlacedSeat, row?: number): PaintBounds {
-  return { id: seat.id, x0: seat.x, x1: seat.x + seat.width, y0: seat.y, y1: seat.y + DEPTH, z0: seat.z, z1: seat.z + SPINE_HEIGHT, row };
+export function seatBounds(seat: PlacedSeat): PaintBounds {
+  return { id: seat.id, x0: seat.x, x1: seat.x + seat.width, y0: seat.y, y1: seat.y + DEPTH, z0: seat.z, z1: seat.z + SPINE_HEIGHT };
 }
 
 /** A box's bounds — a grown record still axis-aligned. */
-export function boxBounds(box: RecordBox, row?: number): PaintBounds {
-  return { id: box.id, x0: box.x, x1: box.x + box.width, y0: box.y, y1: box.y + box.depth, z0: box.z, z1: box.z + box.height, row, moving: true };
+export function boxBounds(box: RecordBox): PaintBounds {
+  return { id: box.id, x0: box.x, x1: box.x + box.width, y0: box.y, y1: box.y + box.depth, z0: box.z, z1: box.z + box.height, moving: true };
 }
 
 /**
@@ -71,22 +66,29 @@ export function nearer(a: PaintBounds, b: PaintBounds): number {
   return depth(a) - depth(b);
 }
 
-export function paintSort(objects: readonly PaintBounds[]): PaintBounds[] {
-  const seated = objects.filter((o) => !o.moving);
-  const moving = objects.filter((o) => o.moving);
-  /* Rows top to bottom (larger z first), then along the row: exactly the x order, since seats are x-separated. */
-  const rowOf = (o: PaintBounds) => o.row ?? -o.z1;
-  const order = [...seated].sort((a, b) => rowOf(a) - rowOf(b) || a.x0 - b.x0);
-  for (const m of moving) {
-    if (order.every((s) => nearer(m, s) > 0)) {
-      order.push(m);
-      continue;
+/**
+ * The reference's insertion: every object — each shelf, each upright, each
+ * record, the moving one — placed before the first object already placed
+ * that it is farther than. Input order only decides ties no plane or
+ * centroid separates. Across rows this puts the lower row FIRST, since the
+ * upper row is nearer (a plane on z): at the square seat a record's
+ * projected extent is 150 plus a 75px top face against a 198 pitch, so a
+ * lower row's tops would overpaint the bottom 27px of the row above unless
+ * the upper row paints later. Document order therefore follows the paint
+ * order and is no longer seat order across rows — §11.8's assertion has
+ * failed as it was designed to, and the reading order is with Design.
+ */
+export function paintOrder<T extends PaintBounds>(objects: readonly T[]): T[] {
+  const out: T[] = [];
+  for (const object of objects) {
+    let at = out.length;
+    for (let i = 0; i < out.length; i += 1) {
+      if (nearer(object, out[i]) < 0) {
+        at = i;
+        break;
+      }
     }
-    /* Within its own row: after the last seat it is nearer than, before the first that is nearer than it. */
-    const row = order.filter((s) => !s.moving && rowOf(s) === rowOf(m));
-    const nearerSeat = row.find((s) => nearer(s, m) > 0);
-    const at = nearerSeat === undefined ? (row.length > 0 ? order.indexOf(row[row.length - 1]) + 1 : order.length) : order.indexOf(nearerSeat);
-    order.splice(at, 0, m);
+    out.splice(at, 0, object);
   }
-  return order;
+  return out;
 }

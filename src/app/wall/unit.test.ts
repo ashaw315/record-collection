@@ -20,7 +20,7 @@ import {
   rightFace,
   topFace,
 } from './geometry';
-import { PER_SHELF, SHELVES_PER_UNIT, intoUnits, unitFurniture, unitOf } from './unit';
+import { PER_SHELF, SHELVES_PER_UNIT, intoUnits, unitFurniture, unitOf, unitPieces } from './unit';
 
 const TARGET = resolve(process.cwd(), 'docs/design/Record Detail 8a - build target.dc.html');
 
@@ -178,5 +178,27 @@ describe('the collection fills units left to right, top to bottom; the wall gain
     expect(unitOf(0)).toBe(0);
     expect(unitOf(79)).toBe(0);
     expect(unitOf(80)).toBe(1);
+  });
+});
+
+describe('the unit as objects for the painter (§11.20)', () => {
+  it('is six pieces — two uprights and four shelves — each with its bounds and its three faces', () => {
+    const pieces = unitPieces(0);
+    expect(pieces).toHaveLength(6);
+    expect(pieces.filter((p) => p.kind === 'shelf')).toHaveLength(4);
+    expect(pieces.filter((p) => p.kind === 'upright')).toHaveLength(2);
+    for (const piece of pieces) expect(piece.faces).toHaveLength(3);
+    expect(pieces.flatMap((p) => p.faces)).toEqual(unitFurniture(0));
+    const top = pieces.find((p) => p.kind === 'shelf' && p.row === 0);
+    /* Sorted as the span between the uprights (its drawn faces run upright to upright): interpenetrating boxes have no separating plane. */
+    expect(top?.bounds).toEqual({ x0: 0, x1: SHELF_LENGTH - UPRIGHT.thickness, y0: 0, y1: SHELF_DEPTH, z0: 594 - SHELF_THICKNESS, z1: 594 });
+    expect(top?.faces[0].points[0]).toEqual(project(-UPRIGHT.thickness, 0, 594));
+    const right = pieces.find((p) => p.kind === 'upright' && p.bounds.x0 > 0);
+    expect(right?.bounds).toEqual({ x0: SHELF_LENGTH - UPRIGHT.thickness, x1: SHELF_LENGTH, y0: 0, y1: UPRIGHT.depth, z0: -SHELF_THICKNESS, z1: UPRIGHT.height - SHELF_THICKNESS });
+  });
+
+  it('offsets a unit’s pieces along x by the unit pitch', () => {
+    const first = unitPieces(1).find((p) => p.kind === 'shelf' && p.row === 0);
+    expect(first?.bounds.x0).toBe(UNIT_PITCH_X);
   });
 });
