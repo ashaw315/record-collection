@@ -53,6 +53,10 @@ const render = (props: Partial<Parameters<typeof WallStage>[0]> = {}) =>
   );
 
 describe('two columns: facts left, drawing right (§11.9)', () => {
+  it('gives the facts 420px and the drawing the rest — page pixels, §11.13’s figure', () => {
+    expect(render()).toMatch(/grid-cols-\[420px_1fr\]/);
+  });
+
   it('has the count at the facts column’s head and the panel’s region below it, EMPTY at rest', () => {
     const html = render();
     const facts = html.slice(html.indexOf('data-region="facts"'), html.indexOf('data-region="wall"'));

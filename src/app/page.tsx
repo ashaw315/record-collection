@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { AppHeader } from '@/components/AppHeader';
 import { CollectionFilters } from './CollectionFilters';
-import { ShelfControls } from './ShelfControls';
+import { WallRail } from './WallRail';
 import { activeFilterCount } from './active-filters';
 import { collectionCountLabel } from './collection-count';
 import { CollectionList, type CollectionRow } from './CollectionList';
@@ -99,127 +99,68 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
     <>
       <AppHeader />
 
-      <main className="mx-auto w-full max-w-6xl px-4 py-6">
-        <header className="mb-5 flex items-start justify-between gap-4">
-          <div>
-            <h1 className="font-heading text-headline font-semibold tracking-tight">Collection</h1>
-            <p className="mt-0.5 text-lede text-muted-foreground">
-              {/*
-                Filter-aware: "34 of 312 records" when a filter is active. This
-                is the signal the wall's four-row minimum used to carry in empty
-                shelf (A24d, amended) — the count says how many the collection
-                holds, so the wall can be as tall as its contents.
-              */}
-              {collectionCountLabel({
-                matched: records.total,
-                total: collectionTotal,
-                filtered: activeFilterCount(params) > 0,
-              })}
-            </p>
-          </div>
-          {/* The primary action, in the accent — the only place oxblood appears
-              on this screen besides an active filter. */}
-          <Link
-            href="/records/new"
-            className="shrink-0 rounded-xs bg-primary px-3 py-1.5 text-label text-primary-foreground transition-opacity hover:opacity-90"
-          >
-            Add record
-          </Link>
-        </header>
-
-        {/*
-          §10b A24a and §10's screens table: the views differ structurally, not
-          just in layout. Grid and table carry their controls ON THE PAGE, above
-          the rows, because a list wants its controls visible. The shelf owns
-          the screen and reaches the same controls through an OVERLAY.
-
-          The branch is here rather than inside `CollectionFilters` deliberately:
-          wrapping the shared component would impose the overlay on the list
-          views too, and the asymmetry is the point.
-        */}
-        {shelf === null ? (
-          <CollectionFilters
-            params={params}
-            undatedCount={records.undatedCount}
-            options={facets}
+      {shelf !== null ? (
+        /*
+          §11.13: the header band is withdrawn on the shelf view. The wall
+          starts directly under the app nav and takes the full height; the
+          page's controls go down a 148px rail on the left, and COLLECTION with
+          the count stays at the facts column's head (§11.9) — the header's
+          Collection and count were the duplicate, and they are the instance
+          that goes.
+        */
+        <main>
+          <WallComposition
+            seats={wallSeats(shelf)}
+            summaries={wallSummaries(shelf)}
+            countLine={
+              activeFilterCount(params) > 0
+                ? collectionCountLabel({ matched: shelf.length, total: collectionTotal, filtered: true })
+                : null
+            }
+            rail={<WallRail params={params} />}
           />
-        ) : (
-          <ShelfControls
-            params={params}
-            undatedCount={records.undatedCount}
-            options={facets}
-            activeCount={activeFilterCount(params)}
-          />
-        )}
+        </main>
+      ) : (
+        <main className="mx-auto w-full max-w-6xl px-4 py-6">
+          <header className="mb-5 flex items-start justify-between gap-4">
+            <div>
+              <h1 className="font-heading text-headline font-semibold tracking-tight">Collection</h1>
+              <p className="mt-0.5 text-lede text-muted-foreground">
+                {/*
+                  Filter-aware: "34 of 312 records" when a filter is active. On
+                  the table and grid the heading carries it; on the shelf the
+                  facts column's count does (§11.9).
+                */}
+                {collectionCountLabel({
+                  matched: records.total,
+                  total: collectionTotal,
+                  filtered: activeFilterCount(params) > 0,
+                })}
+              </p>
+            </div>
+            {/* The primary action, in the accent — the only place oxblood appears
+                on this screen besides an active filter. */}
+            <Link
+              href="/records/new"
+              className="shrink-0 rounded-xs bg-primary px-3 py-1.5 text-label text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              Add record
+            </Link>
+          </header>
 
-        {/*
-          `view` is still honoured from the URL at any width — a grid link
-          shared from a desktop opens as a grid. Only the CONTROL is hidden on
-          small screens, so nothing becomes unreachable, and the CSS grid falls
-          back to one column there anyway.
-        */}
-        {shelf === null ? (
-          <>
-            {/*
-              Narrowed, not cast. `CollectionList` handles table and grid and
-              the shelf is its SIBLING rather than a third case inside it — so
-              the branch above is what proves `view` is not 'shelf' here, and
-              widening that component's prop would let a shelf request reach a
-              component with no way to render it.
-            */}
-            <CollectionList
-              rows={records.rows as CollectionRow[]}
-              view={params.view === 'grid' ? 'grid' : 'table'}
-            />
+          {/* Grid and table carry their controls ON THE PAGE, above the rows, because a list wants its controls visible (§10). */}
+          <CollectionFilters params={params} undatedCount={records.undatedCount} options={facets} />
 
-            <CollectionPagination
-              params={params}
-              total={records.total}
-              rows={records.rows.length}
-              pageSize={PAGE_SIZE}
-            />
-          </>
-        ) : (
-          /*
-            No pagination on the shelf, deliberately. §10b's wall is browsed by
-            eye and a shelf that stopped at fifty records would be a claim about
-            the collection's size rather than a view of it — the sections are
-            the structure, and scrolling is how you reach the end.
-          */
-          /*
-            **Full-bleed: the wall claims the screen** (unit 20). The header and
-            the filters stay inside `max-w-6xl`; the shelf breaks out of it,
-            because the reference's spines dominate the frame and that is what
-            makes a case emerging from them read as emerging from SOMETHING. At
-            160px in a centred column it was a 510x188 strip in the corner of a
-            1280x900 window with the page empty below it.
+          {/*
+            Narrowed, not cast. `CollectionList` handles table and grid and the
+            shelf is its SIBLING rather than a third case inside it — so the
+            branch above is what proves `view` is not 'shelf' here.
+          */}
+          <CollectionList rows={records.rows as CollectionRow[]} view={params.view === 'grid' ? 'grid' : 'table'} />
 
-            `w-screen` with a negative half-viewport margin is the breakout: the
-            element is as wide as the viewport regardless of the ancestor's
-            max-width, and `left-1/2 -ml-[50vw]` re-centres it.
-
-            A SMALL gutter rather than the column's own — an earlier attempt
-            used `px-[calc((100vw-72rem)/2)]`, which re-inserted exactly the
-            margin the breakout had just escaped and put the wall back where it
-            started. Measured: the wrapper was 1280px wide and the shelf inside
-            it still x=64 w=1152.
-
-            Table and grid are untouched — this is the closet view, not a change
-            to how the collection is read as a list.
-          */
-          <div className="relative left-1/2 -ml-[50vw] w-screen">
-            <WallComposition
-              seats={wallSeats(shelf)}
-              summaries={wallSummaries(shelf)}
-              countLine={
-                activeFilterCount(params) > 0
-                  ? collectionCountLabel({ matched: shelf.length, total: collectionTotal, filtered: true })
-                  : null
-              }
-            />
-          </div>
-        )}
-      </main>
+          <CollectionPagination params={params} total={records.total} rows={records.rows.length} pageSize={PAGE_SIZE} />
+        </main>
+      )}
     </>
   );
 }

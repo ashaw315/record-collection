@@ -11,7 +11,8 @@ import { LABEL, LABEL_INK } from '../records/[id]/grid-type';
 import { DRAWN_PAPER } from './WallComposition';
 
 /**
- * The stage: two columns — facts left, drawing right (8a §11.9).
+ * The stage: two columns — facts left at 420px, drawing right with the rest
+ * (8a §11.9, §11.13's figures in page pixels).
  *
  * The facts column carries COLLECTION and the count at its head (the
  * collection's identity, not the record's — the wall is still behind the
@@ -131,7 +132,7 @@ export function WallStage({
   }
 
   return (
-    <div className="grid grid-cols-3 gap-0">
+    <div className="grid grid-cols-[420px_1fr] gap-0">
       <div data-region="facts" className="flex flex-col p-[34px]">
         <div data-region="count">
           <div className={LABEL}>COLLECTION</div>
@@ -156,7 +157,7 @@ export function WallStage({
       <div
         ref={regionRef}
         data-region="wall"
-        className="col-span-2 h-[calc(100vh-var(--header-height,0px))] overflow-auto p-[34px] pl-0"
+        className="h-[calc(100vh-var(--app-nav-height,0px))] overflow-auto p-[34px] pl-0"
       >
         <div className="relative">
           <WallLabelled

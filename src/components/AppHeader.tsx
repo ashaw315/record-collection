@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { MAX_GRID_WIDTH } from '@/app/records/[id]/band-geometry';
 
@@ -44,8 +45,25 @@ export function AppHeader() {
   */
   const wide = /^\/records\/[^/]+$/.test(pathname) || pathname.startsWith('/wall/probe/page8a');
 
+  /*
+    §11.13: the wall starts directly under this nav and takes the full height,
+    so the nav's rendered height is published as a variable the wall's region
+    subtracts from the viewport — measured rather than declared, since the
+    bar's height is its type's.
+  */
+  const bar = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = bar.current;
+    if (el === null) return;
+    const publish = () => document.documentElement.style.setProperty('--app-nav-height', `${el.getBoundingClientRect().height}px`);
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <header className="border-b border-border">
+    <header ref={bar} data-app-nav="" className="border-b border-border">
       {/*
         **The nav shares its page's measure.**
 

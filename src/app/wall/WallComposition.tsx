@@ -28,19 +28,24 @@ export function WallComposition({
   seats,
   summaries = {},
   countLine = null,
+  rail = null,
 }: {
   seats: readonly WallSeat[];
   summaries?: Record<string, RecordSummary>;
   /** The filter-aware line under the count — "34 of 312 records" — when a filter is on. */
   countLine?: string | null;
+  /** §11.13's rail, in a 148px column left of the facts; the page supplies it, the probes do not. */
+  rail?: React.ReactNode;
 }) {
   return (
     <section
       data-composition=""
       data-testid="wall"
-      className="min-h-[calc(100vh-var(--header-height,0px))]"
-      style={{ background: DRAWN_PAPER }}
+      className={rail === null ? undefined : 'grid grid-cols-[148px_1fr]'}
+      /* §11.13: the wall starts directly under the app nav and takes the full height. */
+      style={{ background: DRAWN_PAPER, minHeight: 'calc(100vh - var(--app-nav-height, 0px))' }}
     >
+      {rail}
       <WallLive seats={seats} summaries={summaries} countLine={countLine} />
     </section>
   );

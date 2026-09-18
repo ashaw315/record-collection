@@ -30674,3 +30674,15 @@ The interim drift is gone. The record's transforms are exactly §11.21's, and th
 - **Put back retraces to the view before the first pull**, scaled from wherever the return began so an Escape mid-swing is continuous; after an arrow slide the return goes home, not to the previous record's framing.
 
 Measured in the specs on the wall's own screen position, since scroll numbers are frame-relative: the upright does not move when the frame grows; it moves by exactly the pan; it is back within 1.5px after put back; the landed record and its arrow are inside the region.
+
+## §11.13: the rail, and the region that sets every later frame
+
+The shelf view has no header band. The page under the nav is a 148px rail, the 420px facts column and the drawing region, which is `calc(100vh − nav)` tall and is the scroller: the page itself does not scroll on the shelf view. `AppHeader` publishes its measured height as `--app-nav-height` (a ResizeObserver, so a wrapped nav still sets it), and the composition's min-height and the region's height read it. The rail (`WallRail`) is SEARCH (a plain GET form to `/`, the other parameters carried as hidden inputs, the field 34px ruled), the three views as links with the current one marked `aria-current="page"` and a 44×4 bar, a full-bleed hairline and ADD RECORD. Table and grid keep the header band, the filters and the pagination; only the shelf branch changes.
+
+**Two consequences, recorded rather than resolved:**
+- The shelf's genre and sort filters have no control now. The header band's filter chips carried them and the band is gone; they still work from the URL (`?genreId=`, `?sort=`) and via a round trip through the table or grid, whose chips write the same parameters. `ShelfControls.tsx` is no longer imported anywhere. Whether the rail gets a filter — §11.13 draws none — is with Design.
+- The rail has no narrow-viewport form. At 390px the three columns overflow the width; §11.13 is drawn at desktop and the mobile shelf is not specified. The mobile Playwright project does not run the shelf specs.
+
+**One spec restated against the new scroller**, said plainly because the rule is never to change a test to make code pass: `scroll-lock.spec.ts` scrolled the *window* 600px before a pull and asserted it unchanged; the window no longer scrolls on the shelf view, and §11.22's pan moves the region on purpose. The test now scrolls the region, asserts the window stays at zero throughout and the body is never fixed, and asserts the region is back at its pre-pull position after put back — the claim §11.22 makes.
+
+**The search test's first version was wrong about trigrams**, not about the rail: three titles sharing a random stamp all scored above 0.3 against each other, so a search for one returned three. Titles are distinct and the artist filter, carried through the rail's hidden inputs, is what scopes the search.

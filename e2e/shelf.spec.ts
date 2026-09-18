@@ -328,98 +328,66 @@ test('the wall shows the records the heading says it does', async ({ page }) => 
   expect(onWall, `the wall draws ${onWall} spines under a count of ${shown}`).toBe(shown);
 });
 
-test.skip('the shelf view puts its controls in an overlay, and says when a filter is on', async ({
-  page,
-}) => {
-  /**
-   * §10b A24a: below the nav there is the wall and nothing else. Search, chips
-   * and sort are reachable from the shelf but do not take vertical space above
-   * it — a wall arriving under four rows of controls is a strip rather than a
-   * wall.
-   *
-   * **The closed state must announce an active filter.** The gaps in the wall
-   * are the primary feedback (A24d), but a wall with fewer records and no
-   * indication of why cannot be told from a collection that is simply small —
-   * the absent-versus-unknown problem this project keeps catching. This is the
-   * half most likely to be skipped, so it is asserted explicitly.
-   *
-   * Asserted as what a user can SEE and REACH — `toBeVisible`, not
-   * `toHaveClass`. Unit 20's breakout had every class present and correct and
-   * cancelled by a fourth declaration.
-   */
-  const title = `Overlaid ${suffix()}`;
-  const { artistId } = await seedRecord(page, title);
-
+test('the shelf view has no header band: the wall starts under the nav, and the rail carries the controls (§11.13)', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByTestId('shelf-timber')).toBeVisible();
-
-  // Closed by default: the controls are not occupying space above the wall.
-  const panel = page.getByTestId('shelf-controls-panel');
-  await expect(panel, 'the panel starts closed so the wall owns the screen').toBeHidden();
-
-  const toggle = page.getByTestId('shelf-controls-toggle');
-  await expect(toggle, 'and one control opens all of them').toBeVisible();
-
-  await toggle.click();
-  await expect(panel, 'opening the control reveals search, chips and sort').toBeVisible();
-  await expect(panel.getByRole('search')).toBeVisible();
-
-  await toggle.click();
-  await expect(panel, 'and it closes again').toBeHidden();
-
-  /**
-   * With a filter applied and the panel CLOSED, the control must still say so.
-   */
-  await page.goto(`/?artistId=${artistId}`);
-  await expect(page.getByTestId('shelf-timber')).toBeVisible();
-  await expect(page.getByTestId('shelf-controls-panel')).toBeHidden();
-
-  await expect(
-    page.getByTestId('shelf-controls-active'),
-    'a closed panel must never hide the fact that the wall is filtered',
-  ).toBeVisible();
+  await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
+  /* No heading, no band: the facts column's COLLECTION and count are the identity (§11.9). */
+  await expect(page.getByRole('heading', { level: 1, name: 'Collection' })).toHaveCount(0);
+  await expect(page.getByTestId('shelf-controls-toggle')).toHaveCount(0);
+  const rail = page.getByTestId('wall-rail');
+  await expect(rail).toBeVisible();
+  const geometry = await page.evaluate(() => {
+    const box = (q: string) => document.querySelector(q)?.getBoundingClientRect();
+    return { nav: box('[data-app-nav]'), wall: box('[data-testid="wall"]'), rail: box('[data-testid="wall-rail"]'), facts: box('[data-region="facts"]'), region: box('[data-region="wall"]') };
+  });
+  expect(geometry.nav && geometry.wall && geometry.rail && geometry.facts && geometry.region).toBeTruthy();
+  if (!geometry.nav || !geometry.wall || !geometry.rail || !geometry.facts || !geometry.region) return;
+  expect(Math.abs(geometry.wall.top - geometry.nav.bottom), 'directly under the nav').toBeLessThan(2);
+  expect(geometry.rail.width, '148px').toBeCloseTo(148, 0);
+  expect(geometry.rail.left).toBeLessThan(geometry.facts.left);
+  expect(geometry.facts.width, '420px').toBeCloseTo(420, 0);
+  expect(geometry.region.left, 'the drawing stays rightmost').toBeGreaterThan(geometry.facts.left);
+  /* The rail's order: search, the views, add record. */
+  const order = await rail.evaluate((el) => Array.from(el.querySelectorAll('form, a')).map((n) => n.textContent?.trim()));
+  expect(order).toEqual(['Search', 'Shelf', 'Table', 'Grid', 'Add record']);
+  await expect(rail.getByRole('link', { name: 'Shelf' })).toHaveAttribute('aria-current', 'page');
 });
 
-test.skip('the view toggle stays OUT of the overlay, and can reach all three views', async ({
-  page,
-}) => {
-  /**
-   * The prompt's explicit carve-out: "One control opens all of them... The view
-   * toggle stays separate, as the reference does with its List/Closet switch."
-   *
-   * Two failures this pins, both found by LOOKING at the built overlay rather
-   * than by reading its numbers — the wall measured 1248px full-bleed and the
-   * panel displaced it 0px, and neither number could see either of these:
-   *
-   *   1. The toggle was swept into the panel with everything else, so changing
-   *      view meant opening a filter overlay first.
-   *   2. The toggle offers `table` and `grid` only. With `shelf` as the default
-   *      view (§10b), leaving the shelf became a ONE-WAY trip — reachable only
-   *      by editing the URL.
-   *
-   * The second is the worse one and predates this unit: it was invisible while
-   * `table` was the default and became a trap when §10b moved the default.
-   */
-  await seedRecord(page, `Toggle ${suffix()}`);
+test('search from the rail narrows the wall, and the count says so', async ({ page }) => {
+  const artist = await page.request.post('/api/artists', { data: { name: `Shelf-${suffix()}` } });
+  const artistId = (await artist.json()).id as string;
+  trackArtist(artistId);
+  /*
+    Distinct titles with NO shared stamp: the search is trigram OR substring,
+    and a suffix common to all three would score every title above the 0.3
+    threshold against any one of them. The artist filter, carried through the
+    rail's hidden inputs, is what scopes the search to this test's records.
+  */
+  const titles = ['Wired', 'Gaucho', 'Believer'];
+  for (const title of titles) {
+    const record = await page.request.post('/api/records', { data: { title, artistId } });
+    expect(record.status()).toBe(201);
+  }
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
+  await expect(page.getByTestId('wall-count')).toHaveText('3');
+  const search = page.getByTestId('wall-rail').getByLabel('Search');
+  await search.fill(titles[0]);
+  await search.press('Enter');
+  await expect(page).toHaveURL(/q=Wired/);
+  await expect(page.getByTestId('wall-count')).toHaveText('1');
+  /* The filter-aware line under the count carries what the header's count used to. */
+  await expect(page.getByTestId('wall').locator('[data-region="count"]')).toContainText(/1 of \d+/);
+});
+
+test('the rail’s view list reaches the table and comes back to the shelf', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByTestId('shelf-timber')).toBeVisible();
-
-  const toggle = page.getByRole('group', { name: 'View' });
-  await expect(toggle, 'the view toggle is reachable without opening the panel').toBeVisible();
-  await expect(page.getByTestId('shelf-controls-panel')).toBeHidden();
-
-  // Out and back: the round trip is the property, not either leg alone.
-  // The wall's ABSENCE is what says we left the shelf — there is no single
-  // element that means "table view", and asserting the wall is gone is the
-  // question actually being asked.
-  await toggle.getByRole('button', { name: 'table', exact: true }).click();
-  await expect(page.getByTestId('shelf-timber')).toBeHidden();
-
-  await page
-    .getByRole('group', { name: 'View' })
-    .getByRole('button', { name: 'shelf', exact: true })
-    .click();
-  await expect(page.getByTestId('shelf-timber'), 'and the shelf is reachable again').toBeVisible();
+  await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
+  await page.getByTestId('wall-rail').getByRole('link', { name: 'Table' }).click();
+  await expect(page).toHaveURL(/view=table/);
+  await expect(page.getByTestId('wall')).toHaveCount(0);
+  await page.getByRole('group', { name: 'View' }).getByRole('button', { name: 'shelf', exact: true }).click();
+  await expect(page.getByTestId('wall'), 'and the shelf is reachable again').toBeAttached({ timeout: 30_000 });
 });
 
 test('the table and grid keep their controls on the page', async ({ page }) => {
