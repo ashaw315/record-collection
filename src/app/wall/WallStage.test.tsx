@@ -6,7 +6,7 @@ import type { WallSeat } from './shelf-runs';
 import type { RecordSummary } from './summary';
 import { layoutRow } from './geometry';
 import { ARROW_LANE } from './landing';
-import { OUT_MS, RETURN_MS, ROTATION_START, SWING_MS, gestureFaces, landingDrift, poseAt } from './gesture';
+import { GROWTH, OUT_MS, RETURN_MS, ROTATION_START, SWING_MS, gestureFaces, landingDrift, poseAt } from './gesture';
 
 /**
  * The stage: the drawing plus what the gesture arrives at. §11.7's panel
@@ -89,14 +89,14 @@ describe('two columns: facts left, drawing right (§11.9)', () => {
 describe('where the record lands and what goes with it (§11.19–§11.21)', () => {
   const view = { x: 0, y: 0, width: 960, height: 760 };
 
-  it('lands on the gesture’s own construction: the cover matrix at 1600ms is axis-aligned and 560 square, the wall unchanged behind it', () => {
+  it('lands on the gesture’s own construction: the cover matrix at 1600ms is axis-aligned and square at the record’s own size, the wall unchanged behind it', () => {
     const rest = render();
     const html = render({ pull: { id: 'b', direction: 'out', ms: OUT_MS }, view });
     const [a, b, c, d] = (/<g transform="matrix\(([^)]+)\)"[^>]*data-landing/.exec(html)?.[1] ?? '').split(' ').map(Number);
     expect(b).toBeCloseTo(0, 9);
     expect(c).toBeCloseTo(0, 9);
-    expect(a * 150).toBeCloseTo(560, 6);
-    expect(d * 150).toBeCloseTo(560, 6);
+    expect(a * 150).toBeCloseTo(150 * GROWTH, 6);
+    expect(d * 150).toBeCloseTo(150 * GROWTH, 6);
     const fills = (h: string) => [...h.matchAll(/<polygon[^>]*fill="([^"]+)"/g)].map((m) => m[1]).filter((f) => f.startsWith('oklch'));
     expect(new Set(fills(html))).toEqual(new Set(fills(rest)));
   });

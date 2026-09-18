@@ -203,7 +203,7 @@ test('navigation moves along the collection — both records moving, the neighbo
     expect(moving.slice().sort(), 'both records move').toEqual([order[0], order[1]].sort());
 
     /*
-      And the neighbour lands where the held one was: the same 560 square in
+      And the neighbour lands where the held one was: the same square in
       the same place. Under the gesture's own construction it would land one
       seat along the row; the interim landing drift (gesture.ts) centres the
       square vertically and keeps it inside the region's lanes, which for a

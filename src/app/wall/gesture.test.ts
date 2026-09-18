@@ -24,7 +24,9 @@ import {
  * probe's 1300 for travel, growth and rotation, with a 300ms finish added
  * after it rather than carved out — and the return is the whole gesture
  * reversed at 860ms (700 × 1600 / 1300). Travel is 290 · easeInOutCubic(k)
- * over the 1300; growth rides the same curve, 150 → 560; rotation is 45° on
+ * over the 1300; no growth — the probe never grew the record and 3.73× over
+ * 290 units is a zoom with a slide under it, so growth is back with Design
+ * as its own question; rotation is 45° on
  * its own ease over the last 58%, joining at k = 0.42 with the record 85.9
  * out. Growth and rotation share one fixed point — the foot of the cover's
  * near vertical edge (§11.21) — and the finish's two terms come after 45°.
@@ -51,7 +53,9 @@ describe('the clock', () => {
 
   it('poses: travel, growth and rotation on the swing, the finish after it', () => {
     expect(TRAVEL).toBe(290);
-    expect(GROWTH).toBeCloseTo(LANDED_SIZE / SPINE_HEIGHT, 12);
+    /* No growth: the record leaves the row at its own size, as the probe's does. §11.21's 150 → 560 is with Design. */
+    expect(GROWTH).toBe(1);
+    expect(LANDED_SIZE).toBe(560);
     expect(poseAt(0)).toEqual({ k: 0, travel: 0, scale: 1, angle: 0, finish: 0 });
     const join = poseAt(ROTATION_START * SWING_MS);
     expect(join.travel).toBeCloseTo(85.9, 1);
@@ -62,11 +66,8 @@ describe('the clock', () => {
     expect(end).toEqual({ k: 1, travel: TRAVEL, scale: GROWTH, angle: OPEN_ANGLE, finish: 0 });
     expect(poseAt(SWING_MS + FINISH_MS / 2).finish).toBe(0.5);
     expect(poseAt(OUT_MS)).toEqual({ ...end, finish: 1 });
-    /* Growth rides phase one's curve: scale and travel are the same fact. */
-    for (const t of [200, 546, 900, 1300]) {
-      const pose = poseAt(t);
-      expect(pose.scale - 1).toBeCloseTo((GROWTH - 1) * (pose.travel / TRAVEL), 12);
-    }
+    /* Scale is a parameter of the construction, not a curve: 1 throughout. */
+    for (const t of [200, 546, 900, 1300, OUT_MS]) expect(poseAt(t).scale).toBe(1);
   });
 });
 
@@ -122,20 +123,20 @@ describe('the drawn record: three faces, the cover’s plane and the label’s, 
     for (const i of [0, 1, 2, 3]) expect(depth(after.coverWall[i]) + 1e-9, `corner ${i}`).toBeGreaterThanOrEqual(depth(before.coverWall[i]));
   });
 
-  it('finishes with the projection undone: 0.8165 across and the sliver to zero, arriving at a 560 square, un-mirrored', () => {
+  it('finishes with the projection undone: 0.8165 across and the sliver to zero, arriving at a square of the record’s own size, un-mirrored', () => {
     const mid = gestureFaces(seat, poseAt(SWING_MS + FINISH_MS / 2));
     expect(width(mid.cover)).toBeCloseTo(DEPTH * GROWTH * (WIDEST + 1) / 2, 6);
     const done = gestureFaces(seat, poseAt(OUT_MS));
-    expect(width(done.cover)).toBeCloseTo(LANDED_SIZE, 6);
-    expect(height(done.cover)).toBeCloseTo(LANDED_SIZE, 6);
+    expect(width(done.cover)).toBeCloseTo(DEPTH * GROWTH, 6);
+    expect(height(done.cover)).toBeCloseTo(SPINE_HEIGHT * GROWTH, 6);
     expect(width(done.spine)).toBeCloseTo(0, 9);
     /* No thickness: the top face has collapsed onto the cover's top edge. */
     expect(height(done.top)).toBeCloseTo(0, 9);
     const [a, b, c, d] = parseMatrix(done.coverMatrix);
     expect(b).toBeCloseTo(0, 9);
     expect(c).toBeCloseTo(0, 9);
-    expect(a * DEPTH).toBeCloseTo(LANDED_SIZE, 6);
-    expect(d * SPINE_HEIGHT).toBeCloseTo(LANDED_SIZE, 6);
+    expect(a * DEPTH).toBeCloseTo(DEPTH * GROWTH, 6);
+    expect(d * SPINE_HEIGHT).toBeCloseTo(SPINE_HEIGHT * GROWTH, 6);
     for (const t of [0, 546, 900, 1300, 1450, 1600]) {
       const [ma, mb, mc, md] = parseMatrix(gestureFaces(seat, poseAt(t)).coverMatrix);
       expect(ma * md - mb * mc, `determinant at ${t}`).toBeGreaterThan(0);
@@ -175,7 +176,7 @@ describe('the landing drift — an interim composition rule, explicitly assumed,
   /*
     The gesture's own construction lands a top-shelf record above the region
     and a left-end record left of it: the foot stays at the seat's screen
-    height while the cover grows 560 up from it, and +y travel carries it 251px
+    height while the cover stands 150 up from it, and +y travel carries it 251px
     left of a fixture that sits at the region's left edge. §11.19 placed the
     landed square by composition (vertically centred; 264px of the fixture
     clear) and §11.20 reversed its side, and the two cannot both hold in this

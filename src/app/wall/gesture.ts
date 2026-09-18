@@ -17,11 +17,10 @@ import { OPEN_ANGLE } from './rotation';
  * every point because its eases are shaped to be (gesture.test.ts asserts
  * the joint state at every frame).
  *
- * **Growth rides phase one's curve**, 150 → 560 (§11.21): a record coming
- * toward the reader gets larger, so scale and travel are the same fact —
- * finishing the travel then growing would read as a zoom, growing first as
- * approaching without moving. **Growth and rotation share one fixed point:
- * the foot of the cover's near vertical edge**, at y + depth (§11.21). The
+ * **Growth is a parameter, held at 1** (see `GROWTH`). When it returns it
+ * rides phase one's curve (§11.21) about the same fixed point as the
+ * rotation. **Growth and rotation share one fixed point: the foot of the
+ * cover's near vertical edge**, at y + depth (§11.21). The
  * rotation already holds that edge, so its foot is a point fixed by both
  * transforms; any other origin moves a point the rotation is holding
  * still. The gesture is that corner staying put while everything else
@@ -47,7 +46,18 @@ export const OUT_MS = SWING_MS + FINISH_MS;
 export const RETURN_MS = (700 * OUT_MS) / SWING_MS;
 export const TRAVEL = 290;
 export const ROTATION_START = 0.42;
-export const GROWTH = LANDED_SIZE / SPINE_HEIGHT;
+/**
+ * **No growth, for now.** The probe that read correctly never grew the record:
+ * scale is a parameter of the construction, not a curve. §11.21 ruled growth
+ * rides the travel on the argument that a record coming toward the reader
+ * gets larger — but 3.73× over 290 units is not what approach looks like,
+ * it is a zoom with a slide under it, and it was the dominant difference
+ * from the probe. Growth is back with Design as its own question, with the
+ * comparison in hand; the record leaves the row at its own size. §11.19's
+ * 560 (`LANDED_SIZE`) waits with it.
+ */
+export const GROWTH = 1;
+void LANDED_SIZE;
 
 export type GestureState = { id: string; direction: 'out' | 'back'; ms: number };
 export type Pose = { k: number; travel: number; scale: number; angle: number; finish: number };

@@ -324,13 +324,14 @@ describe('the pulled record is the gesture’s solid, drawn where the sort puts 
     }
   });
 
-  it('lands as a 560 square with no shear: the cover matrix is axis-aligned at 1600ms, and the field rect is DEPTH × SPINE_HEIGHT in its own plane', () => {
+  it('lands as a square of its own size with no shear: the cover matrix is axis-aligned at 1600ms, and the field rect is DEPTH × SPINE_HEIGHT in its own plane', () => {
     const html = pulledOf(at(OUT_MS));
     const [a, b, c, d] = (/<g transform="matrix\(([^)]+)\)"[^>]*data-landing/.exec(html)?.[1] ?? '').split(' ').map(Number);
     expect(b).toBeCloseTo(0, 9);
     expect(c).toBeCloseTo(0, 9);
-    expect(a * DEPTH).toBeCloseTo(560, 6);
-    expect(d * SPINE_HEIGHT).toBeCloseTo(560, 6);
+    expect(a * DEPTH).toBeCloseTo(DEPTH * GROWTH, 6);
+    expect(d * SPINE_HEIGHT).toBeCloseTo(SPINE_HEIGHT * GROWTH, 6);
+    expect(GROWTH, 'no growth while it is with Design').toBe(1);
     const field = /<rect[^>]*data-field=""[^>]*>/.exec(html)?.[0] ?? '';
     expect(Number(/width="([^"]+)"/.exec(field)?.[1])).toBe(DEPTH);
     expect(Number(/height="([^"]+)"/.exec(field)?.[1])).toBe(SPINE_HEIGHT);

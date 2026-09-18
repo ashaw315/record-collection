@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
-import { LANDED_SIZE, parseMatrix } from '../src/app/wall/landing';
+import { parseMatrix } from '../src/app/wall/landing';
 import { COS30, DEPTH, SIN30, SPINE_HEIGHT } from '../src/app/wall/geometry';
-import { FINISH_MS, OUT_MS, RETURN_MS, SWING_MS, easeInOutCubic } from '../src/app/wall/gesture';
+import { FINISH_MS, GROWTH, OUT_MS, RETURN_MS, SWING_MS, easeInOutCubic } from '../src/app/wall/gesture';
 import { WIDEST } from '../src/app/wall/rotation';
 import { RETURN_FADE_END, WALL_PAPER_HEX, pullFill } from '../src/app/wall/pull-colour';
 import { recordLadder } from '../src/lib/colour/record-ladder';
@@ -80,7 +80,7 @@ test.beforeEach(async ({ page }) => {
   await page.clock.pauseAt(Date.now() + 1000);
 });
 
-test('clicking a spine pulls it out on the gesture: the seat emptied from the first frame, the furniture whole, a rigid record at 45° at the swing’s end and a 560 square after the finish', async ({
+test('clicking a spine pulls it out on the gesture: the seat emptied from the first frame, the furniture whole, a rigid record at 45° at the swing’s end and a square of its own size after the finish', async ({
   page,
 }) => {
   expect(wired).not.toBeNull();
@@ -99,8 +99,8 @@ test('clicking a spine pulls it out on the gesture: the seat emptied from the fi
   await page.clock.runFor(SWING_MS + TWO_FRAMES - 1);
   const [a45, b45, , d45] = parseMatrix((await landing(page)) ?? '');
   expect(Math.abs(b45)).toBeLessThan(0.02);
-  expect(a45 * DEPTH).toBeCloseTo(LANDED_SIZE * WIDEST, 0);
-  expect(d45 * SPINE_HEIGHT).toBeCloseTo(LANDED_SIZE, 0);
+  expect(a45 * DEPTH).toBeCloseTo(DEPTH * GROWTH * WIDEST, 0);
+  expect(d45 * SPINE_HEIGHT).toBeCloseTo(SPINE_HEIGHT * GROWTH, 0);
   expect(await spineWidth(page)).toBeLessThan(0.5);
   expect(await phase(page)).toBe('finish');
 
@@ -109,8 +109,8 @@ test('clicking a spine pulls it out on the gesture: the seat emptied from the fi
   const [a, b, c, d] = parseMatrix((await landing(page)) ?? '');
   expect(b).toBeCloseTo(0, 6);
   expect(c).toBeCloseTo(0, 6);
-  expect(a * DEPTH).toBeCloseTo(LANDED_SIZE, 3);
-  expect(d * SPINE_HEIGHT).toBeCloseTo(LANDED_SIZE, 3);
+  expect(a * DEPTH).toBeCloseTo(DEPTH * GROWTH, 3);
+  expect(d * SPINE_HEIGHT).toBeCloseTo(SPINE_HEIGHT * GROWTH, 3);
   expect(await phase(page)).toBe('landed');
   await expect(page.locator('[data-wall="labelled"] [data-furniture]')).toHaveCount(furnitureBefore);
   await expect(page.locator(`[data-seat="${WIRED_ID}"]`)).toHaveCount(0);

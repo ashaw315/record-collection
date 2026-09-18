@@ -1,6 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { LANDED_SIZE } from '../src/app/wall/landing';
-import { OUT_MS } from '../src/app/wall/gesture';
+import { GROWTH, OUT_MS } from '../src/app/wall/gesture';
 import { registerCleanup, trackArtist } from './cleanup';
 import { seedRecords } from './seed';
 import { contrastRatio } from '../src/lib/colour/record-colour';
@@ -88,7 +87,8 @@ test('the panel arrives with the record — with the rotation, not before, in th
   expect(geometry.panel.t, 'below the count').toBeGreaterThan(geometry.count.b);
   /* Landed on the page's plane (§11.17, §11.21): a 560 square, the projection undone. */
   expect(Math.abs(geometry.field.w - geometry.field.h), 'the landed record is a square').toBeLessThan(1.5);
-  expect(geometry.field.w).toBeCloseTo(LANDED_SIZE, 0);
+  /* At its own size while growth is with Design: 150 × 150 at 1:1. */
+  expect(geometry.field.w).toBeCloseTo(150 * GROWTH, 0);
   expect(geometry.field.l, 'in the drawing’s region').toBeGreaterThanOrEqual(geometry.wall.l);
   expect(geometry.next.l, 'the arrow goes with the record, beside it').toBeGreaterThan(geometry.field.r);
   expect(geometry.next.l).toBeGreaterThanOrEqual(geometry.wall.l);
