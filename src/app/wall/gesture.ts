@@ -1,6 +1,5 @@
 import { DEPTH, SPINE_HEIGHT, project, type PlacedSeat, type Point } from './geometry';
-import { ARROW_LANE, LANDED_SIZE, LANDING_PAD } from './landing';
-import type { View } from './view';
+import { LANDED_SIZE } from './landing';
 import { OPEN_ANGLE } from './rotation';
 
 /**
@@ -115,10 +114,8 @@ const fmt = (m: readonly number[]) => `matrix(${m.join(' ')})`;
  * scaled by `scale`. Through the finish the same points are laid out on a
  * basis that runs from the 45° projection to the page's plane.
  */
-export function gestureFaces(seat: PlacedSeat, pose: Pose, drift: Point = [0, 0]): GestureFaces {
+export function gestureFaces(seat: PlacedSeat, pose: Pose): GestureFaces {
   const { scale: s, angle, finish: u, travel } = pose;
-  /* The interim composition drift (see `landingDrift`), on the swing's own ease: nothing at 0, all of it from the swing's end. */
-  const carried: Point = [drift[0] * easeInOutCubic(pose.k), drift[1] * easeInOutCubic(pose.k)];
   const w = seat.width;
   const foot: readonly [number, number, number] = [seat.x + w, seat.y + DEPTH + travel, seat.z];
   const cos = Math.cos(angle);
@@ -135,10 +132,7 @@ export function gestureFaces(seat: PlacedSeat, pose: Pose, drift: Point = [0, 0]
 
   let screen: (a: number, b: number, c: number) => Point;
   if (u <= 0) {
-    screen = (a, b, c) => {
-      const [x, y] = project(...wall(a, b, c));
-      return [x + carried[0], y + carried[1]];
-    };
+    screen = (a, b, c) => project(...wall(a, b, c));
   } else {
     /* The finish: the projection removed on the rotated basis, both terms together. */
     const F = project(...foot);
@@ -146,7 +140,7 @@ export function gestureFaces(seat: PlacedSeat, pose: Pose, drift: Point = [0, 0]
     const R = project(run[0], run[1], 0);
     const Tu: Point = [T[0] * (1 - u), T[1] * (1 - u)];
     const Ru: Point = [R[0] + (1 - R[0]) * u, R[1] * (1 - u)];
-    screen = (a, b, c) => [F[0] + carried[0] + s * (a * Tu[0] + b * Ru[0]), F[1] + carried[1] + s * (a * Tu[1] + b * Ru[1] - c)];
+    screen = (a, b, c) => [F[0] + s * (a * Tu[0] + b * Ru[0]), F[1] + s * (a * Tu[1] + b * Ru[1] - c)];
   }
 
   const H = SPINE_HEIGHT;
@@ -184,34 +178,4 @@ export function gestureFaces(seat: PlacedSeat, pose: Pose, drift: Point = [0, 0]
   const coverWall = [wall(0, D, 0), wall(0, 0, 0), wall(0, 0, H), wall(0, D, H)].map(([x, y]) => [x, y] as const);
 
   return { top, cover, spine, coverMatrix, labelMatrix, coverWall, bounds, scale: s };
-}
-
-/**
- * **An interim composition rule, explicitly assumed, until Design places the
- * landed square.** The gesture's own construction lands a top-shelf record
- * above the region and a left-end record left of it: the foot stays at the
- * seat's screen height while the cover grows 560 up from it, and +y travel
- * carries it 251px left of a fixture that sits at the region's left edge.
- * §11.19 placed the landed square by composition — vertically centred, the
- * fixture clear beside it — and §11.20 reversed its side, and the two cannot
- * both hold in this region. Until that is ruled, the record is carried on
- * the swing's own ease by a screen-space drift that centres the landed
- * square vertically in the frozen view and keeps it inside the region's
- * arrow lanes. Zero when the construction already fits; the seated frame is
- * never touched. Recorded in NOTES as a finding, not a ruling.
- */
-export function landingDrift(seat: PlacedSeat, view: View): Point {
-  const cover = gestureFaces(seat, poseAt(OUT_MS)).cover;
-  const xs = cover.map(([x]) => x);
-  const ys = cover.map(([, y]) => y);
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const midY = (Math.min(...ys) + Math.max(...ys)) / 2;
-  const left = view.x + LANDING_PAD + ARROW_LANE;
-  const right = view.x + view.width - LANDING_PAD - ARROW_LANE;
-  let dx = 0;
-  if (minX < left) dx = left - minX;
-  else if (maxX > right) dx = right - maxX;
-  const dy = view.y + view.height / 2 - midY;
-  return [dx, dy];
 }

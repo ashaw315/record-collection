@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { PullState } from './WallLabelled';
 import { WallStage } from './WallStage';
 import type { RecordSummary } from './summary';
@@ -10,6 +10,18 @@ import { navigate, type Direction } from './adjacent-seat';
 import { LANDING_PAD } from './landing';
 import type { View } from './view';
 import { OUT_MS, RETURN_MS, SWING_MS, outTime, settled } from './gesture';
+import { frameView, landedExtent, panFraction, panView, type Pan } from './pan';
+import { wallLayout } from './wall-layout';
+
+/** The view's top-left in the svg's px, from the region's scroll against the frame's originRef; the svg sits LANDING_PAD below the region's content top. */
+function readView(el: HTMLDivElement, [frameX, frameY]: readonly [number, number]): [number, number] {
+  return [frameX + el.scrollLeft, frameY + el.scrollTop - LANDING_PAD];
+}
+
+function writeView(el: HTMLDivElement, [frameX, frameY]: readonly [number, number], v: readonly [number, number]): void {
+  el.scrollLeft = v[0] - frameX;
+  el.scrollTop = v[1] - frameY + LANDING_PAD;
+}
 
 /**
  * The 1:1 wall with its gesture driven against the clock.
@@ -35,6 +47,8 @@ export function WallLive({
   countLine?: string | null;
 }) {
   const [pulls, setPulls] = useState<readonly PullState[]>([]);
+  /* §11.22: every record that has moved since the wall was last at rest — its landing stays in the frame until then. */
+  const [framed, setFramed] = useState<readonly string[]>([]);
   /*
     The clock reads the moving set from here: a state updater runs at render
     time, not when it is queued, so nothing can be decided inside one. Synced
@@ -85,6 +99,65 @@ export function WallLive({
     return { x: el.scrollLeft, y: el.scrollTop - LANDING_PAD, width: el.clientWidth, height: el.clientHeight - LANDING_PAD };
   }, []);
 
+  /*
+    §11.22: the view pans; the gesture does not move. The view is tracked in
+    the svg's own px — its top-left, `viewNowRef` — and the scroll is derived
+    from it against the frame's originRef, so the frame growing to hold a
+    landing (which moves the svg's originRef) never moves the wall on screen.
+    Every landing stays in the frame until the wall is at rest again, so the
+    view is always representable as a scroll. A pull pans from the view where
+    it began to the landing's framing; put back retraces to the view before
+    the first pull; the arrows' neighbour pans on from the previous framing.
+  */
+  const viewNowRef = useRef<[number, number] | null>(null);
+  const restViewRef = useRef<[number, number] | null>(null);
+  const panRef = useRef<Pan | null>(null);
+  /* The frame's originRef as last committed, for the scroll listener that tracks the view at rest. */
+  const originRef = useRef<[number, number]>([0, 0]);
+  const gestureOnRef = useRef(false);
+  const pullKey = pulls.map((p) => `${p.id}:${p.direction}`).join('|');
+  useLayoutEffect(() => {
+    const el = region.current;
+    if (el === null) return;
+    /* The same layout the drawing committed, for its frame's origin. */
+    const layout = wallLayout(seats, framed.map((id) => ({ id })), width, view === null ? 0 : Math.max(view.height, height));
+    const [frameX, frameY] = layout.frame.viewBox.split(' ').map(Number);
+    /* The frame may have moved its origin in this commit: hold the view where it was — on the way into a gesture and out of it. */
+    if (viewNowRef.current !== null) writeView(el, [frameX, frameY], viewNowRef.current);
+    originRef.current = [frameX, frameY];
+    gestureOnRef.current = pulls.length > 0;
+    if (pulls.length === 0) {
+      viewNowRef.current = readView(el, [frameX, frameY]);
+      restViewRef.current = null;
+      panRef.current = null;
+      return;
+    }
+    const current = readView(el, [frameX, frameY]);
+    if (restViewRef.current === null) restViewRef.current = current;
+    const arriving = pulls.find((state) => state.direction === 'out');
+    if (arriving !== undefined) {
+      if (panRef.current?.forId !== arriving.id) {
+        const seat = layout.placed.find((p) => p.id === arriving.id);
+        if (seat !== undefined) {
+          panRef.current = { forId: arriving.id, from: current, to: frameView(landedExtent(seat), { width: el.clientWidth, height: el.clientHeight - LANDING_PAD }), at0: 1 };
+        }
+      }
+    } else if (pulls[0] !== undefined && panRef.current?.forId !== `back:${pulls[0].id}`) {
+      panRef.current = { forId: `back:${pulls[0].id}`, from: current, to: restViewRef.current, at0: panFraction(pulls[0]) };
+    }
+    viewNowRef.current = current;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seats, framed, width, height, view, pullKey]);
+  /* At rest the reader pans (§11.6): the view follows, so a gesture begins from where the reader left it. */
+  useEffect(() => {
+    const el = region.current;
+    if (el === null) return;
+    const onScroll = () => {
+      if (!gestureOnRef.current) viewNowRef.current = readView(el, originRef.current);
+    };
+    el.addEventListener('scroll', onScroll);
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
   const begin = useCallback(
     (id: string, direction: PullState['direction']) => {
       started.current = null;
@@ -92,6 +165,7 @@ export function WallLive({
         setSide('front');
         setView(visible());
         base.current.set(id, 0);
+        setFramed((current) => (current.includes(id) ? current : [...current, id]));
         setPulls([{ id, direction, ms: 0 }]);
       } else {
         /* The return begins at the time that mirrors where the out had got to: the whole gesture reversed (§11.21). */
@@ -112,6 +186,7 @@ export function WallLive({
       setSide('front');
       setView((current) => current ?? visible());
       for (const state of next) base.current.set(state.id, state.ms);
+      setFramed((current) => [...current, ...next.map((state) => state.id).filter((id) => !current.includes(id))]);
       setPulls(next);
     },
     [pulls, seats, visible],
@@ -127,8 +202,18 @@ export function WallLive({
       if (started.current === null) started.current = now;
       const elapsed = now - started.current;
       const next = pullsRef.current.map((state) => ({ ...state, ms: (base.current.get(state.id) ?? 0) + elapsed }));
-      /* Landed: the seated anchor is drawn again by the ordinary path. */
-      setPulls(next.filter((state) => !(state.direction === 'back' && settled(state))));
+      /* The pan, on the same clock: the view follows the record coming out, or the one going back. */
+      const el = region.current;
+      const driver = next.find((state) => state.direction === 'out') ?? next[0];
+      if (el !== null && panRef.current !== null && driver !== undefined) {
+        const v = panView(panRef.current, driver);
+        viewNowRef.current = v;
+        writeView(el, originRef.current, v);
+      }
+      /* Landed: the seated anchor is drawn again by the ordinary path; at rest, the frame lets the landings go. */
+      const remaining = next.filter((state) => !(state.direction === 'back' && settled(state)));
+      setPulls(remaining);
+      if (remaining.length === 0) setFramed([]);
       if (!next.every(settled)) handle = requestAnimationFrame(frame);
     };
 
@@ -173,6 +258,7 @@ export function WallLive({
         countLine={countLine}
         regionRef={region}
         labels={labels}
+        framed={framed}
         onSeatClick={(id) => {
           if (pulls.length === 0) begin(id, 'out');
         }}

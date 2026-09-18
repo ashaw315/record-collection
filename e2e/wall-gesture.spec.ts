@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { parseMatrix } from '../src/app/wall/landing';
-import { OUT_MS, RETURN_MS, ROTATION_START, SWING_MS, easeInOutCubic } from '../src/app/wall/gesture';
+import { OUT_MS, RETURN_MS, ROTATION_START, SWING_MS, TRAVEL, easeInOutCubic } from '../src/app/wall/gesture';
+import { COS30, SIN30 } from '../src/app/wall/geometry';
 import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
 
 /**
@@ -59,27 +60,69 @@ test('the rotation joins at 42% of the swing — with the panel — and the spin
   expect(await spineWidth(page), 'closed at 45°').toBeLessThan(0.5);
 });
 
-test('the foot of the cover’s near edge moves on one straight path at the swing’s ease — growth and rotation hold it (§11.21)', async ({ page }) => {
+test('the foot of the cover’s near edge moves only with the travel — growth and rotation hold it, and nothing drifts (§11.21, §11.22)', async ({ page }) => {
   await page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`).click();
   await page.clock.runFor(1);
   const f0 = await foot(page);
-  const moved: Record<number, [number, number]> = {};
   let elapsed = 1;
-  for (const ms of [546, 1300]) {
+  for (const ms of [546, 900, 1300]) {
     await page.clock.runFor(ms - elapsed);
     elapsed = ms;
     const f = await foot(page);
-    moved[ms] = [f[0] - f0[0], f[1] - f0[1]];
+    /* In the svg's own px: +y travel projects to (−cos30, +sin30) per unit, within two frames of the gesture's time. */
+    const travel = TRAVEL * easeInOutCubic(ms / SWING_MS);
+    const slack = TRAVEL * (easeInOutCubic((ms + 2 * FRAME_MS) / SWING_MS) - easeInOutCubic(ms / SWING_MS)) + 0.5;
+    expect(Math.abs(f[0] - f0[0] + travel * COS30), `x at ${ms}`).toBeLessThan(slack * COS30 + 0.5);
+    expect(Math.abs(f[1] - f0[1] - travel * SIN30), `y at ${ms}`).toBeLessThan(slack * SIN30 + 0.5);
   }
-  /* The travel (and the interim drift) both ride easeInOutCubic(k): the foot at 546 is e(0.42) of the way it is at 1300, on both axes, within two frames. */
-  const ratio = easeInOutCubic(ROTATION_START);
-  const slack = easeInOutCubic((546 + 2 * FRAME_MS) / SWING_MS) - ratio;
-  for (const axis of [0, 1]) {
-    const observed = moved[546][axis] / moved[1300][axis];
-    expect(Math.abs(observed - ratio), `axis ${axis}`).toBeLessThan(slack + 0.02);
-  }
-  /* And the +y travel reads on screen as left and down: the foot ends left of and below where it started. */
-  expect(moved[1300][0]).toBeLessThan(0);
+});
+
+test('the view pans to frame the landing on the swing’s ease — the wall still relative to itself, the record in frame at the end (§11.22)', async ({ page }) => {
+  const region = page.locator('[data-region="wall"]');
+  const scroll = () => region.evaluate((el) => [el.scrollLeft, el.scrollTop]);
+  const upright = () => page.locator('[data-furniture="upright-front"]').first().evaluate((el) => el.getBoundingClientRect().left);
+  const before = await upright();
+  /* The first seat: its landing lies left of the region, so the view must pan. */
+  await page.locator('[data-seat="collection-0"] [data-spine]').click();
+  await page.clock.runFor(1);
+  const s0 = await scroll();
+  expect(Math.abs((await upright()) - before), 'the frame grew and the scroll was compensated: the wall did not move').toBeLessThan(1);
+  await page.clock.runFor(546 - 1);
+  const sJoin = await scroll();
+  await page.clock.runFor(1300 - 546);
+  const sEnd = await scroll();
+  expect(sEnd[0], 'panned left toward the landing').toBeLessThan(s0[0]);
+  /* On the swing's ease: e(0.42) of the way at the join, within two frames. */
+  const ratio = (sJoin[0] - s0[0]) / (sEnd[0] - s0[0]);
+  const slack = easeInOutCubic((546 + 2 * FRAME_MS) / SWING_MS) - easeInOutCubic(ROTATION_START);
+  expect(Math.abs(ratio - easeInOutCubic(ROTATION_START))).toBeLessThan(slack + 0.02);
+  /* The wall stayed still relative to itself: the upright moved on screen by exactly the pan. */
+  expect(Math.abs((await upright()) - before - (s0[0] - sEnd[0]))).toBeLessThan(1.5);
+  /* And the landing is in frame, arrows and all. */
+  await page.clock.runFor(OUT_MS - 1300 + 2 * TWO_FRAMES);
+  const inside = await page.evaluate(() => {
+    const r = document.querySelector('[data-region="wall"]')?.getBoundingClientRect();
+    const f = document.querySelector('[data-pulled] [data-field]')?.getBoundingClientRect();
+    const n = document.querySelector('[data-testid="nav-next"]')?.getBoundingClientRect();
+    return r && f ? { field: f.left >= r.left && f.right <= r.right && f.top >= r.top && f.bottom <= r.bottom, next: n ? n.left >= r.left && n.right <= r.right : false } : null;
+  });
+  expect(inside?.field, 'the landed record is inside the region').toBe(true);
+  expect(inside?.next, 'and its arrow').toBe(true);
+});
+
+test('put back pans the view back to where it began, on the same clock', async ({ page }) => {
+  /* Measured on the wall's own screen position: scroll numbers are frame-relative and the frame changes with the landing. */
+  const upright = () => page.locator('[data-furniture="upright-front"]').first().evaluate((el) => { const r = el.getBoundingClientRect(); return [r.left, r.top]; });
+  const before = await upright();
+  await page.locator(`[data-seat="collection-0"] [data-spine]`).click();
+  await page.clock.runFor(OUT_MS + TWO_FRAMES);
+  const landed = await upright();
+  expect(Math.hypot(landed[0] - before[0], landed[1] - before[1]), 'the view panned').toBeGreaterThan(20);
+  await page.keyboard.press('Escape');
+  await page.clock.runFor(RETURN_MS + 2 * TWO_FRAMES);
+  const back = await upright();
+  expect(Math.abs(back[0] - before[0]), 'and panned back').toBeLessThan(1.5);
+  expect(Math.abs(back[1] - before[1])).toBeLessThan(1.5);
 });
 
 test('put back is the whole gesture reversed on one clock, from wherever it stood', async ({ page }) => {

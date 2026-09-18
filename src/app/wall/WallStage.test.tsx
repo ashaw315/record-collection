@@ -6,7 +6,7 @@ import type { WallSeat } from './shelf-runs';
 import type { RecordSummary } from './summary';
 import { layoutRow } from './geometry';
 import { ARROW_LANE } from './landing';
-import { GROWTH, OUT_MS, RETURN_MS, ROTATION_START, SWING_MS, gestureFaces, landingDrift, poseAt } from './gesture';
+import { GROWTH, OUT_MS, RETURN_MS, ROTATION_START, SWING_MS, gestureFaces, poseAt } from './gesture';
 
 /**
  * The stage: the drawing plus what the gesture arrives at. §11.7's panel
@@ -112,9 +112,8 @@ describe('where the record lands and what goes with it (§11.19–§11.21)', () 
     expect(facts).not.toContain('data-testid="nav-next"');
     /* Beside the landed cover, in the region's px (the svg's frame origin taken out). */
     const placed = layoutRow(three.map((s) => ({ id: s.id, section: '0' })), 0)[1];
-    const [frameX, frameY] = (/viewBox="([^"]+)"/.exec(mid)?.[1] ?? '0 0').split(' ').map(Number);
-    const view = { x: 0, y: 0, width: 960, height: 760 };
-    const cover = gestureFaces(placed, poseAt(OUT_MS), landingDrift(placed, { ...view, x: frameX, y: frameY })).cover;
+    const [frameX] = (/viewBox="([^"]+)"/.exec(mid)?.[1] ?? '0 0').split(' ').map(Number);
+    const cover = gestureFaces(placed, poseAt(OUT_MS)).cover;
     const xs = cover.map(([x]) => x);
     const left = (id: string) => Number(/left:([\d.-]+)px/.exec(/data-testid="nav-(?:previous|next)"[^>]*>/.exec(mid.slice(mid.indexOf(`data-testid="${id}"`)))?.[0] ?? '')?.[1]);
     expect(left('nav-previous')).toBeCloseTo(Math.min(...xs) - frameX - ARROW_LANE, 6);

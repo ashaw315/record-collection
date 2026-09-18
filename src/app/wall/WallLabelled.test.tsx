@@ -5,8 +5,9 @@ import { WALL_PAPER_HEX } from './pull-colour';
 import { FACE_FILL, PLANE_FILL, TOP_FILL, points } from './WallOverview';
 import type { WallSeat } from './shelf-runs';
 import { DEPTH, SPINE_HEIGHT, frontFace, layoutRow } from './geometry';
-import { GROWTH, OUT_MS, RETURN_MS, ROTATION_START, SWING_MS, gestureFaces, landingDrift, poseAt } from './gesture';
+import { GROWTH, OUT_MS, RETURN_MS, ROTATION_START, SWING_MS, gestureFaces, poseAt } from './gesture';
 import { wallLayout } from './wall-layout';
+import { landedExtent } from './pan';
 
 /**
  * The 1:1 component at the structure layer. The cover on the pulled record is
@@ -381,11 +382,9 @@ describe('the pulled record is the gesture’s solid, drawn where the sort puts 
     expect(at(0)).not.toContain('data-seat="a"');
   });
 
-  it('carries the cover matrix and the label’s plane through the swing and the finish — with the interim drift from the frozen view', () => {
-    const [fx, fy] = wallLayout(two.map((s) => ({ id: s.id, section: 'S' })), [], 0, 0).frame.viewBox.split(' ').map(Number);
-    const drift = landingDrift(placed, { ...view, x: view.x + fx, y: view.y + fy });
+  it('carries the cover matrix and the label’s plane through the swing and the finish — the transforms exactly as ruled, nothing drifting (§11.22)', () => {
     for (const ms of [546, 900, SWING_MS, SWING_MS + 150, OUT_MS]) {
-      const faces = gestureFaces(placed, poseAt(ms), drift);
+      const faces = gestureFaces(placed, poseAt(ms));
       const html = pulledOf(at(ms));
       expect(/<g transform="([^"]+)"[^>]*data-landing/.exec(html)?.[1], `cover at ${ms}`).toBe(faces.coverMatrix);
       expect(/<text[^>]*transform="([^"]+)"/.exec(html)?.[1], `label at ${ms}`).toBe(faces.labelMatrix);
@@ -421,5 +420,28 @@ describe('the pulled record is the gesture’s solid, drawn where the sort puts 
     expect(sleeve).toContain(`scale(${1 / GROWTH})`);
     expect(html).toMatch(/data-sleeve-title=""[^>]*style="[^"]*font-size:\s*\d+px/);
     expect(ROTATION_START).toBe(0.42);
+  });
+});
+
+describe('the frame holds the landing (§11.22): the pan needs somewhere to pan to', () => {
+  it('grows the viewBox to include the pulled record’s landed extent, and is the seated frame when nothing moves', () => {
+    const two = [seat('a', null), seat('b', null)];
+    const seated = wallLayout(two.map((s) => ({ id: s.id, section: 'S' })), [], 0, 0).frame;
+    const pulling = wallLayout(two.map((s) => ({ id: s.id, section: 'S' })), [{ id: 'a' }], 0, 0).frame;
+    const placed = layoutRow([{ id: 'a', section: 'S' }], 0)[0];
+    const extent = landedExtent(placed);
+    const [sx, sy, sw, sh] = seated.viewBox.split(' ').map(Number);
+    const [px, py, pw, ph] = pulling.viewBox.split(' ').map(Number);
+    expect(px).toBeLessThanOrEqual(extent.minX);
+    expect(py).toBeLessThanOrEqual(extent.minY);
+    expect(px + pw).toBeGreaterThanOrEqual(extent.maxX);
+    expect(py + ph).toBeGreaterThanOrEqual(extent.maxY);
+    expect(px, 'the landing lies left of the seated frame, so the frame grows there').toBeLessThan(sx);
+    expect(sy).toBe(sy);
+    expect(sw).toBeGreaterThan(0);
+    expect(sh).toBeGreaterThan(0);
+    /* The rendered svg carries the grown frame while the record is out. */
+    const html = renderToStaticMarkup(<WallLabelled seats={two} pulls={[{ id: 'a', direction: 'out', ms: 10 }]} />);
+    expect(/viewBox="([^"]+)"/.exec(html)?.[1]).toBe(pulling.viewBox);
   });
 });

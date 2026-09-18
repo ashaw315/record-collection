@@ -5,7 +5,7 @@ import type { WallSeat } from './shelf-runs';
 import { hasAdjacentSeat, type Direction } from './adjacent-seat';
 import { ARROW_LANE, LANDING_PAD } from './landing';
 import type { View } from './view';
-import { OUT_MS, ROTATION_START, SWING_MS, gestureFaces, landingDrift, outTime, poseAt, settled } from './gesture';
+import { OUT_MS, ROTATION_START, SWING_MS, gestureFaces, outTime, poseAt, settled } from './gesture';
 import { wallLayout } from './wall-layout';
 import { LABEL, LABEL_INK } from '../records/[id]/grid-type';
 import { DRAWN_PAPER } from './WallComposition';
@@ -33,6 +33,7 @@ export function WallStage({
   countLine = null,
   regionRef,
   labels = true,
+  framed,
   onSeatClick,
   onPulledClick,
   onTurnOver,
@@ -56,6 +57,8 @@ export function WallStage({
   /** The drawing region, for whoever measures it. */
   regionRef?: React.Ref<HTMLDivElement>;
   labels?: boolean;
+  /** §11.22: the records whose landings the frame holds, until the wall is at rest. */
+  framed?: readonly string[];
   onSeatClick?: (id: string) => void;
   onPulledClick?: () => void;
   onTurnOver?: () => void;
@@ -98,11 +101,10 @@ export function WallStage({
   let arrows = null;
   if (arriving !== undefined && settled(arriving)) {
     /* Beside the landed cover's own extent (§11.9 with §11.21's landing), in the region's px: the svg's frame origin taken out. */
-    const { placed, frame } = wallLayout(seats, [], width, view?.height ?? 0);
+    const { placed, frame } = wallLayout(seats, (framed ?? moving.map((m) => m.id)).map((id) => ({ id })), width, view?.height ?? 0);
     const seat = placed.find((p) => p.id === arriving.id);
     const [frameX, frameY] = frame.viewBox.split(' ').map(Number);
-    const region: View | null = view === null ? null : { ...view, x: frameX + view.x, y: frameY + view.y };
-    const cover = seat === undefined ? [] : gestureFaces(seat, poseAt(OUT_MS), region === null ? [0, 0] : landingDrift(seat, region)).cover;
+    const cover = seat === undefined ? [] : gestureFaces(seat, poseAt(OUT_MS)).cover;
     const xs = cover.map(([x]) => x - frameX);
     const ys = cover.map(([, y]) => y - frameY);
     const bounds = { minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys) };
@@ -165,6 +167,7 @@ export function WallStage({
             minHeight={view?.height ?? 0}
             side={side}
             view={view}
+            framed={framed}
             onSeatClick={onSeatClick}
             onPulledClick={onPulledClick}
           />

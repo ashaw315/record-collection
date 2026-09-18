@@ -1,7 +1,8 @@
 import { frontFace, layoutRow, rightFace, rowBreaks, topFace, type PlacedSeat, type Point } from './geometry';
 import { perShelf, unitPieces, unitRows, type FurnitureFace, type UnitPiece } from './unit';
 import type { ShelfSeat } from './shelf-runs';
-import { wallFrame, widened } from './wall-frame';
+import { unionFrame, wallFrame, widened } from './wall-frame';
+import { framedViewExtent, landedExtent } from './pan';
 
 /**
  * The wall's layout, computed once for whoever draws against it — the
@@ -30,7 +31,6 @@ export function wallLayout(
   minWidth: number,
   minHeight = 0,
 ): WallLayout {
-  void moving;
   const placed: PlacedSeat[] = [];
   const breaks: (readonly [Point, Point])[] = [];
   const pieces: WallLayout['pieces'] = [];
@@ -45,8 +45,13 @@ export function wallLayout(
     placed.push(...rowPlaced);
   }
   const furniture = pieces.flatMap((piece) => piece.faces);
-  /* Framed on the furniture and the faces, at least as large as the region that shows it. */
-  const frame = widened(
+  /*
+    Framed on the furniture and the faces, at least as large as the region
+    that shows it — and, while a record moves, on where it lands with its
+    arrows (§11.22): the pan needs somewhere to pan to, and the plane runs
+    the pan extent (§11.7).
+  */
+  const seatedFrame = widened(
     wallFrame(
       furniture.map((face) => face.points),
       placed.flatMap((seat) => [frontFace(seat), topFace(seat), rightFace(seat)]),
@@ -54,5 +59,13 @@ export function wallLayout(
     minWidth,
     minHeight,
   );
+  const landings = moving.flatMap((m) => {
+    const seat = placed.find((p) => p.id === m.id);
+    if (seat === undefined) return [];
+    /* The whole view at the landing's framing, so the pan can always reach it; the landing's own extent when no region is known. */
+    return [minWidth > 0 && minHeight > 0 ? framedViewExtent(seat, { width: minWidth, height: minHeight }) : landedExtent(seat)];
+  });
+  /* The union, not a refit: the seated frame keeps every pixel, and the landing is overflow the region scrolls to. */
+  const frame = unionFrame(seatedFrame, landings);
   return { placed, furniture, pieces, breaks, frame };
 }

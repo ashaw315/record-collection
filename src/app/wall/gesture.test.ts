@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { COS30, DEPTH, SPINE_HEIGHT, coverTransform, frontFace, labelTransform, project, rightFace, spineWidth, topFace, type PlacedSeat } from './geometry';
-import { ARROW_LANE, LANDED_SIZE, LANDING_PAD, parseMatrix } from './landing';
+import { LANDED_SIZE, parseMatrix } from './landing';
 import { OPEN_ANGLE, WIDEST, footprint, footprintsCollide } from './rotation';
 import {
   FINISH_MS,
@@ -12,7 +12,6 @@ import {
   TRAVEL,
   easeInOutCubic,
   gestureFaces,
-  landingDrift,
   outTime,
   poseAt,
   settled,
@@ -169,57 +168,5 @@ describe('the return', () => {
   it('is the out reversed on one clock: the same pose at the mirrored time', () => {
     const back: GestureState = { id: 'p', direction: 'back', ms: RETURN_MS * 0.25 };
     expect(poseAt(outTime(back))).toEqual(poseAt(OUT_MS * 0.75));
-  });
-});
-
-describe('the landing drift — an interim composition rule, explicitly assumed, until Design places the landed square', () => {
-  /*
-    The gesture's own construction lands a top-shelf record above the region
-    and a left-end record left of it: the foot stays at the seat's screen
-    height while the cover stands 150 up from it, and +y travel carries it 251px
-    left of a fixture that sits at the region's left edge. §11.19 placed the
-    landed square by composition (vertically centred; 264px of the fixture
-    clear) and §11.20 reversed its side, and the two cannot both hold in this
-    region. Until that is ruled, the record is carried on the swing's own
-    ease by a screen-space drift that centres the landed square vertically in
-    the frozen view and keeps it inside the region's arrow lanes. Zero when
-    the construction already fits; the seated frame is never touched.
-  */
-  const view = { x: -200, y: -900, width: 900, height: 800 };
-
-  it('is zero for a landing that already fits, centred, inside the lanes', () => {
-    const faces = gestureFaces(seat, poseAt(OUT_MS));
-    const xs = faces.cover.map(([x]) => x);
-    const ys = faces.cover.map(([, y]) => y);
-    const fitting = {
-      x: Math.min(...xs) - LANDING_PAD - ARROW_LANE - 10,
-      y: (Math.min(...ys) + Math.max(...ys)) / 2 - 400,
-      width: Math.max(...xs) - Math.min(...xs) + 2 * (LANDING_PAD + ARROW_LANE) + 20,
-      height: 800,
-    };
-    expect(landingDrift(seat, fitting)).toEqual([0, 0]);
-  });
-
-  it('centres the landed cover vertically in the view and brings it inside the arrow lanes', () => {
-    const drift = landingDrift(seat, view);
-    const landed = gestureFaces(seat, poseAt(OUT_MS), drift);
-    const xs = landed.cover.map(([x]) => x);
-    const ys = landed.cover.map(([, y]) => y);
-    expect((Math.min(...ys) + Math.max(...ys)) / 2).toBeCloseTo(view.y + view.height / 2, 6);
-    expect(Math.min(...xs)).toBeGreaterThanOrEqual(view.x + LANDING_PAD + ARROW_LANE - 1e-6);
-    expect(Math.max(...xs)).toBeLessThanOrEqual(view.x + view.width - LANDING_PAD - ARROW_LANE + 1e-6);
-  });
-
-  it('rides the swing’s own ease: nothing at 0, all of it at the swing’s end, in proportion between', () => {
-    const drift = landingDrift(seat, view);
-    expect(drift).not.toEqual([0, 0]);
-    const at = (t: number) => gestureFaces(seat, poseAt(t), drift).cover[1];
-    const plain = (t: number) => gestureFaces(seat, poseAt(t)).cover[1];
-    expect(at(0)).toEqual(plain(0));
-    for (const t of [300, 546, 900, 1300, OUT_MS]) {
-      const e = easeInOutCubic(Math.min(1, t / SWING_MS));
-      expect(at(t)[0] - plain(t)[0], `x at ${t}`).toBeCloseTo(drift[0] * e, 9);
-      expect(at(t)[1] - plain(t)[1], `y at ${t}`).toBeCloseTo(drift[1] * e, 9);
-    }
   });
 });

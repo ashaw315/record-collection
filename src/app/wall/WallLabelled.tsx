@@ -5,7 +5,7 @@ import type { WallSeat } from './shelf-runs';
 import { WALL_PAPER_HEX, pullFill, returnFill } from './pull-colour';
 import { wallLayout } from './wall-layout';
 import type { View } from './view';
-import { GROWTH, RETURN_MS, easeInOutCubic, gestureFaces, landingDrift, outTime, poseAt, type GestureState } from './gesture';
+import { GROWTH, RETURN_MS, easeInOutCubic, gestureFaces, outTime, poseAt, type GestureState } from './gesture';
 import { RETURN_FADE_END } from './pull-colour';
 import { recordLadder } from '@/lib/colour/record-ladder';
 import { MICRO_PX } from '../type-scale';
@@ -83,6 +83,7 @@ export function WallLabelled({
   minHeight = 0,
   side = 'front',
   view = null,
+  framed,
   onSeatClick,
   onPulledClick,
 }: {
@@ -100,6 +101,8 @@ export function WallLabelled({
   view?: View | null;
   /** The region's height: the drawing is never smaller than the region that shows it. */
   minHeight?: number;
+  /** Records whose landings the frame holds (§11.22) — every record that has moved since the wall was last at rest. Defaults to the moving set. */
+  framed?: readonly string[];
   onSeatClick?: (id: string) => void;
   onPulledClick?: () => void;
 }) {
@@ -109,10 +112,9 @@ export function WallLabelled({
   const byId = new Map(seats.map((seat) => [seat.id, seat]));
   /* §11.23: paint order interleaves rows by column, so the keyboard walk gets its own sequence — seat order, 1-based. */
   const tabOf = new Map(seats.map((seat, index) => [seat.id, index + 1]));
-  const { placed, pieces, frame } = wallLayout(seats, moving.map((m) => ({ id: m.id })), minWidth, minHeight);
-  /* The frozen view, in the svg's own coordinates (the frame's origin added), for the interim landing drift. */
-  const [frameX, frameY] = frame.viewBox.split(' ').map(Number);
-  const region: View | null = view === null ? null : { ...view, x: frameX + view.x, y: frameY + view.y };
+  const { placed, pieces, frame } = wallLayout(seats, (framed ?? moving.map((m) => m.id)).map((id) => ({ id })), minWidth, minHeight);
+  /* The view is the region's to pan (§11.22); the drawing needs none of it. */
+  void view;
 
   /*
     **Drawn where the sort puts it** (§11.20): last once it is past the row,
@@ -120,8 +122,7 @@ export function WallLabelled({
     behind it and is covered by the neighbour at larger x until it is clear.
   */
   /** The moving record's solid at this instant of its gesture (§11.19–§11.21): rigid, re-projected, one fixed point. */
-  const facesOf = (seat: PlacedSeat, state: PullState) =>
-    gestureFaces(seat, poseAt(outTime(state)), region === null ? [0, 0] : landingDrift(seat, region));
+  const facesOf = (seat: PlacedSeat, state: PullState) => gestureFaces(seat, poseAt(outTime(state)));
   /*
     How far colour (and the cover) has arrived: the swing's own eased travel
     on the way out (§11.2, one curve), and on the way back the fade that

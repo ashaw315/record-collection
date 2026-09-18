@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { DEPTH, frontFace, labelTransform, rightFace, topFace, type PlacedSeat, type Point } from './geometry';
-import { OUT_MS, SWING_MS, gestureFaces, landingDrift, poseAt } from './gesture';
+import { OUT_MS, SWING_MS, gestureFaces, poseAt } from './gesture';
 import { paintOrder, seatBounds, type PaintBounds } from './paint-sort';
 import { PER_SHELF, rowZ, unitPieces } from './unit';
 
@@ -21,8 +21,6 @@ export type IsolateConfig = {
   furniture: boolean;
   floor: boolean;
   labelSize: number;
-  /** The wall's interim landing drift, computed against the fixed frame as the region's view. */
-  drift: boolean;
 };
 
 const OX = 40;
@@ -73,12 +71,7 @@ export function IsolateProbe({ config }: { config: IsolateConfig }) {
   const seats: PlacedSeat[] = Array.from({ length: SEATS }, (_, i) => ({ id: `iso-${i}`, x: OX + i * 17, y: 0, z, width: 12 }));
   const pulled = seats[PULLED];
   const pose = poseAt(t);
-  /* The drift needs the frame the wall would freeze: the fixed window below, as a view in the svg's own coordinates. */
-  const restPts: Point[] = [];
-  for (const seat of seats) restPts.push(...frontFace(seat), ...topFace(seat), ...rightFace(seat));
-  const rest = { minX: Math.min(...restPts.map((p) => p[0])), maxX: Math.max(...restPts.map((p) => p[0])), minY: Math.min(...restPts.map((p) => p[1])), maxY: Math.max(...restPts.map((p) => p[1])) };
-  const fixedWindow = { x: rest.minX - 320 - PAD, y: rest.minY - 40 - PAD, width: rest.maxX - rest.minX + 360 + 2 * PAD, height: rest.maxY - rest.minY + 260 + 2 * PAD };
-  const moving = gestureFaces(pulled, pose, config.drift ? landingDrift(pulled, fixedWindow) : [0, 0]);
+  const moving = gestureFaces(pulled, pose);
 
   type Drawn = PaintBounds & { svg: React.ReactNode; floor?: boolean };
   const objects: Drawn[] = [];
@@ -177,7 +170,7 @@ export function IsolateProbe({ config }: { config: IsolateConfig }) {
         {ordered.map((o) => o.svg)}
       </svg>
       <p style={{ marginTop: 8, opacity: 0.7 }}>
-        finish {String(config.finish)} · frame {config.frame} · furniture {String(config.furniture)} · floor {String(config.floor)} · label {config.labelSize}px · drift {String(config.drift)}
+        finish {String(config.finish)} · frame {config.frame} · furniture {String(config.furniture)} · floor {String(config.floor)} · label {config.labelSize}px
       </p>
     </div>
   );

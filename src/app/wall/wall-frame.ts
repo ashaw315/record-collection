@@ -57,3 +57,30 @@ export function widened(
   const [minX, minY] = frame.viewBox.split(' ').map(Number);
   return { viewBox: `${minX} ${minY} ${width} ${height}`, width, height };
 }
+
+/**
+ * The frame grown to hold `extents` as well — its origin moving up or left
+ * as needed, its size the union. The seated frame (already widened to the
+ * region) keeps every pixel it had, so a region that shows all of it still
+ * does; the growth is overflow the region can scroll to (§11.22).
+ */
+export function unionFrame(
+  frame: { viewBox: string; width: number; height: number },
+  extents: ReadonlyArray<{ minX: number; maxX: number; minY: number; maxY: number }>,
+): { viewBox: string; width: number; height: number } {
+  if (extents.length === 0) return frame;
+  const [x, y] = frame.viewBox.split(' ').map(Number);
+  let minX = x;
+  let minY = y;
+  let maxX = x + frame.width;
+  let maxY = y + frame.height;
+  for (const e of extents) {
+    minX = Math.min(minX, e.minX);
+    minY = Math.min(minY, e.minY);
+    maxX = Math.max(maxX, e.maxX);
+    maxY = Math.max(maxY, e.maxY);
+  }
+  const width = Math.round(maxX - minX);
+  const height = Math.round(maxY - minY);
+  return { viewBox: `${minX.toFixed(0)} ${minY.toFixed(0)} ${width} ${height}`, width, height };
+}
