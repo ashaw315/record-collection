@@ -1,5 +1,5 @@
 import type { PullState } from './WallLabelled';
-import { PERCEIVED_END } from './pull-colour';
+import { settled } from './gesture';
 
 /**
  * Arrows between pulled records (8a §11.8): wall order, absent at the ends,
@@ -35,12 +35,12 @@ export function navigate(
   order: readonly string[],
   direction: Direction,
 ): PullState[] | null {
-  const held = pulls.find((pull) => pull.direction === 'out' && pull.progress >= PERCEIVED_END);
+  const held = pulls.find((pull) => pull.direction === 'out' && settled(pull));
   if (held === undefined) return null;
   const to = adjacentSeatId(order, held.id, direction);
   if (to === null) return null;
   return [
-    { id: held.id, direction: 'back', progress: 0 },
-    { id: to, direction: 'out', progress: 0 },
+    { id: held.id, direction: 'back', ms: 0 },
+    { id: to, direction: 'out', ms: 0 },
   ];
 }

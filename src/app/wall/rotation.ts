@@ -8,12 +8,15 @@ import { COS30, project, type Point, type RecordBox } from './geometry';
  * three faces whose widths change together, and the reader reads rigidity
  * from the agreement.
  *
- * **The axis is the cover's near vertical edge — at y = 0 — not its
- * centre.** The pivot plants that edge: it does not move, and no point of
- * the record ends nearer the shelf than it. The rotation carries the cover
- * normal from (1, 0, 0) toward (0.707, 0.707, 0), the direction that opens
- * the face: its horizontal edge runs 129.9 → 183.7 on screen; the other
- * way it shuts edge-on at 45°.
+ * **The axis is the cover's near vertical edge — at y + depth, toward the
+ * camera (§11.20) — not its centre.** The pivot plants that edge: it does
+ * not move, and no point of the record ends nearer the shelf than it. The
+ * rotation carries the cover normal from (1, 0, 0) toward (0.707, 0.707, 0):
+ * against the camera's (1, 1, 1) that is 1.414 against 1, so the cover
+ * turns toward the reader and every point of it advances — the pivot's
+ * original ground, reinstated. It is also the direction that opens the
+ * face: its horizontal edge runs 129.9 → 183.7 on screen; the other way it
+ * shuts edge-on at 45°.
  *
  * **Rigid to 45°, where the cover is its widest, and then the projection is
  * undone rather than shape invented.** No rotation about a vertical axis
@@ -43,10 +46,14 @@ export const FINISH_COMPRESSION = 1 / WIDEST;
 export type Corner3 = readonly [number, number, number];
 export type Bounds3 = { x0: number; x1: number; y0: number; y1: number; z0: number; z1: number };
 
-/** A point of the box, given as offsets from the axis in plan, rotated by `angle` about the cover's near vertical edge. */
+/**
+ * A point of the box, given as offsets from the axis in plan, rotated by
+ * `angle` about the cover's near vertical edge — at y + depth (§11.20). In
+ * plan the box is dx ∈ [−width, 0], dy ∈ [−depth, 0] from that edge.
+ */
 function rotate(box: RecordBox, dx: number, dy: number, z: number, angle: number): Corner3 {
   const ax = box.x + box.width;
-  const ay = box.y;
+  const ay = box.y + box.depth;
   const c = Math.cos(angle);
   const s = Math.sin(angle);
   return [ax + dx * c - dy * s, ay + dx * s + dy * c, z];
@@ -56,7 +63,7 @@ function rotate(box: RecordBox, dx: number, dy: number, z: number, angle: number
 export function rotatedCorners(box: RecordBox, angle: number): Corner3[] {
   const corners: Corner3[] = [];
   for (const dx of [-box.width, 0]) {
-    for (const dy of [0, box.depth]) {
+    for (const dy of [-box.depth, 0]) {
       for (const z of [box.z, box.z + box.height]) corners.push(rotate(box, dx, dy, z, angle));
     }
   }
@@ -70,8 +77,8 @@ export function rotatedFaces(box: RecordBox, angle: number): { top: readonly Poi
   const d = box.depth;
   const top = box.z + box.height;
   return {
-    top: [p(-w, 0, top), p(0, 0, top), p(0, d, top), p(-w, d, top)],
-    cover: [p(0, 0, box.z), p(0, d, box.z), p(0, d, top), p(0, 0, top)],
+    top: [p(-w, -d, top), p(0, -d, top), p(0, 0, top), p(-w, 0, top)],
+    cover: [p(0, -d, box.z), p(0, 0, box.z), p(0, 0, top), p(0, -d, top)],
     spine: [p(-w, 0, box.z), p(0, 0, box.z), p(0, 0, top), p(-w, 0, top)],
   };
 }
@@ -87,10 +94,10 @@ export function rotatedBounds(box: RecordBox, angle: number): Bounds3 {
 /** The rotated footprint in plan: four corners, for the clearance check. */
 export function footprint(box: RecordBox, angle: number): (readonly [number, number])[] {
   const plan: (readonly [number, number])[] = [
-    [-box.width, 0],
+    [-box.width, -box.depth],
+    [0, -box.depth],
     [0, 0],
-    [0, box.depth],
-    [-box.width, box.depth],
+    [-box.width, 0],
   ];
   return plan.map(([dx, dy]) => {
     const [x, y] = rotate(box, dx, dy, box.z, angle);
@@ -130,13 +137,14 @@ export function footprintsCollide(plan: readonly (readonly [number, number])[], 
 /**
  * The finish's basis, `u` of the way from the 45° projection to the page's
  * plane, for a unit box: where x̂ (thickness), ŷ (the cover's run) and ẑ
- * land on screen. At 0 it is the rotated projection — x̂ → [0, 0.7071],
- * ŷ → [−1.2247, 0], ẑ → [0, −1]; at 1 the thickness has collapsed and the
- * run is compressed to its own length: a square, face-on.
+ * land on screen, measured from the pivot. At 0 it is the rotated
+ * projection — x̂ → [0, 0.7071], ŷ (toward the far end, to the right) →
+ * [1.2247, 0], ẑ → [0, −1]; at 1 the thickness has collapsed and the run
+ * is compressed to its own length: a square, face-on.
  */
 export function finishBasis(u: number): { x: readonly [number, number]; y: readonly [number, number]; z: readonly [number, number] } {
   const t = Math.min(1, Math.max(0, u));
   const sliver = Math.SQRT1_2 * (1 - t);
   const run = WIDEST + (1 - WIDEST) * t;
-  return { x: [0, sliver], y: [-run, 0], z: [0, -1] };
+  return { x: [0, sliver], y: [run, 0], z: [0, -1] };
 }

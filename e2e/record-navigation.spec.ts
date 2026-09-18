@@ -1,4 +1,4 @@
-import { COS30, SPINE_WIDTH_MAX, SPINE_WIDTH_MIN } from '../src/app/wall/geometry';
+import { OUT_MS } from '../src/app/wall/gesture';
 import { expect, test, type Page } from '@playwright/test';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
@@ -179,7 +179,7 @@ test('navigation moves along the collection — both records moving, the neighbo
     /* Read BEFORE pulling: a pulled record's anchor is absent from the wall. */
     const order = await wallOrder(page);
     await page.locator('[data-seat] [data-spine]').first().click();
-    await page.clock.runFor(1040);
+    await page.clock.runFor(OUT_MS + 40);
     /* The pulled BOX's extent — the union of its three faces — which is what the landing centres in the region. */
     const place = () =>
       page.locator('[data-pulled]').evaluate((el) => {
@@ -203,20 +203,21 @@ test('navigation moves along the collection — both records moving, the neighbo
     expect(moving.slice().sort(), 'both records move').toEqual([order[0], order[1]].sort());
 
     /*
-      And the neighbour lands where the held one was: its box centred on the
-      same point. The box's SIZE is the record's own — a thicker spine gives a
-      face a few units smaller so the whole box fits the region — so the two
-      extents differ by at most twice the thickness range, projected.
+      And the neighbour lands where the held one was: the same 560 square in
+      the same place. Under the gesture's own construction it would land one
+      seat along the row; the interim landing drift (gesture.ts) centres the
+      square vertically and keeps it inside the region's lanes, which for a
+      row's records is one place. When Design places the landed square, this
+      is the assertion that moves.
     */
-    await page.clock.runFor(800);
+    await page.clock.runFor(OUT_MS + 40 - 300);
     expect(await pulled(page), 'settled on the successor').toBe(order[1]);
     const successor = await place();
     const centre = (r: number[]) => [r[0] + r[2] / 2, r[1] + r[3] / 2];
-    expect(Math.abs(centre(successor)[0] - centre(landed)[0])).toBeLessThan(1);
-    expect(Math.abs(centre(successor)[1] - centre(landed)[1])).toBeLessThan(1);
-    const range = SPINE_WIDTH_MAX - SPINE_WIDTH_MIN;
-    expect(Math.abs(successor[2] - landed[2])).toBeLessThanOrEqual(2 * range * COS30);
-    expect(Math.abs(successor[3] - landed[3])).toBeLessThanOrEqual(2 * range);
+    expect(Math.abs(centre(successor)[0] - centre(landed)[0])).toBeLessThan(1.5);
+    expect(Math.abs(centre(successor)[1] - centre(landed)[1])).toBeLessThan(1.5);
+    expect(Math.abs(successor[2] - landed[2]), 'the same size').toBeLessThan(1.5);
+    expect(Math.abs(successor[3] - landed[3])).toBeLessThan(1.5);
   } finally {
     await cleanup(artistId);
   }

@@ -1,5 +1,5 @@
 import { oklchToHex, type Oklch, type RecordLadder } from '@/lib/colour/record-ladder';
-import { pullEase } from './pull-curve';
+import { easeInOutCubic } from './gesture';
 
 /**
  * Colour across the pull (8a §11.2).
@@ -66,12 +66,14 @@ function mix(eased: number, ladder: RecordLadder | null): string {
 }
 
 /** The pulled record's fill at `progress` of the pull, 0 seated → 1 pulled. */
-export function pullFill(progress: number, ladder: RecordLadder | null): string {
-  return mix(pullEase(progress), ladder);
+/** The fill at `arrival` of the way from paper to the record's colour — the gesture's own eased value (§11.2, on §11.19's curve). */
+export function pullFill(arrival: number, ladder: RecordLadder | null): string {
+  return mix(arrival, ladder);
 }
 
 /** The returning record's fill at `progress` of the return, 0 pulled → 1 seated. */
-export function returnFill(progress: number, ladder: RecordLadder | null): string {
-  const fade = Math.min(1, Math.max(0, progress) / RETURN_FADE_END);
-  return mix(1 - pullEase(fade), ladder);
+/** The fill `fraction` of the way through the return: the fade completes at RETURN_FADE_END, before the spine lands. */
+export function returnFill(fraction: number, ladder: RecordLadder | null): string {
+  const fade = Math.min(1, Math.max(0, fraction) / RETURN_FADE_END);
+  return mix(1 - easeInOutCubic(fade), ladder);
 }

@@ -5,49 +5,41 @@ import type { PullState } from './WallLabelled';
 import { WallStage } from './WallStage';
 import type { RecordSummary } from './summary';
 import type { WallSeat } from './shelf-runs';
-import { PULL_DURATION_MS } from './pull-curve';
 import { labelsFit } from './geometry';
 import { navigate, type Direction } from './adjacent-seat';
-import { PERCEIVED_END } from './pull-colour';
-import { LANDING_PAD, type View } from './landing';
-import { turnEase, type TurnConfig } from './turn';
+import { LANDING_PAD } from './landing';
+import type { View } from './view';
+import { OUT_MS, RETURN_MS, SWING_MS, outTime, settled } from './gesture';
 
 /**
- * The 1:1 wall with its pull driven against the clock.
+ * The 1:1 wall with its gesture driven against the clock.
  *
- * `WallStage` draws poses; this owns WHICH records are moving and how far,
- * by `requestAnimationFrame` rather than `<animate>` — a declarative
- * animation is smoother to write and impossible to sample from outside, and
- * §11.2's claims are all about when.
+ * `WallStage` draws states; this owns WHICH records are moving and how far
+ * along their own clocks, by `requestAnimationFrame` rather than `<animate>`
+ * — a declarative animation is smoother to write and impossible to sample
+ * from outside, and §11.19's claims are all about when.
  *
- * Click a spine to pull it; click the field, press Escape or Put back to
- * send it back. The arrows (and ← →) slide along the collection: the held
- * record goes back and its neighbour comes out on one clock (§11.8). One
- * gesture at a time, which is what the shelf's planes assume.
+ * Click a spine to pull it (1600ms out: the 1300ms swing and the 300ms
+ * finish); click the field, press Escape or Put back to send it back (860ms,
+ * the whole gesture reversed on one clock — from wherever it stood). The
+ * arrows (and ← →) slide along the collection: the held record goes back
+ * and its neighbour comes out on one clock (§11.8).
  */
 export function WallLive({
   seats,
   summaries = {},
   countLine = null,
-  turn = null,
 }: {
   seats: readonly WallSeat[];
   summaries?: Record<string, RecordSummary>;
   countLine?: string | null;
-  /**
-   * §11.14's second phase — out, then round — switched on by the probe and
-   * off on the wall as shipped until the probe is ruled on. With it, a
-   * record that has landed turns onto the page's plane over `ms`, and put
-   * back is both phases reversed in reverse order.
-   */
-  turn?: TurnConfig | null;
 }) {
   const [pulls, setPulls] = useState<readonly PullState[]>([]);
   /*
     The clock reads the moving set from here: a state updater runs at render
     time, not when it is queued, so nothing can be decided inside one. Synced
     after each commit; a frame that reads it a commit early recomputes from
-    elapsed time anyway, since nothing a gesture depends on changes mid-way.
+    elapsed time anyway.
   */
   const pullsRef = useRef<readonly PullState[]>([]);
   useEffect(() => {
@@ -56,21 +48,20 @@ export function WallLive({
   const [side, setSide] = useState<'front' | 'back'>('front');
   const held = pulls.find((state) => state.direction === 'out') ?? null;
   const started = useRef<number | null>(null);
-  /* Where each returning record's turn stood when it was sent back: round from there, then in. */
-  const turnFrom = useRef(new Map<string, number>());
+  /* Where each moving record's own clock stood when the current run began: a return starts from wherever the out had got to. */
+  const base = useRef(new Map<string, number>());
 
   /*
     §5's guard, measured (D1): labels are removed only when the container
     cannot hold one record. Rendered with labels first — the server has no
-    width — and re-measured on resize. A32's fork is measured on the PAGE:
-    at 1280 the wall's column is 819px, one short of it.
+    width — and re-measured on resize.
   */
   const region = useRef<HTMLDivElement>(null);
   const [labels, setLabels] = useState(true);
   const [width, setWidth] = useState(0);
   const [height, setHeight] = useState(0);
   const [viewport, setViewport] = useState(0);
-  /* The visible region when the pull began: the record lands there and stays, whatever is panned after. */
+  /* The visible region when the pull began. */
   const [view, setView] = useState<View | null>(null);
   useEffect(() => {
     const el = region.current;
@@ -91,7 +82,6 @@ export function WallLive({
   const visible = useCallback((): View | null => {
     const el = region.current;
     if (el === null) return null;
-    /* The svg sits LANDING_PAD below the region's content top; the visible box in the svg's px is the client box less that offset. */
     return { x: el.scrollLeft, y: el.scrollTop - LANDING_PAD, width: el.clientWidth, height: el.clientHeight - LANDING_PAD };
   }, []);
 
@@ -101,10 +91,14 @@ export function WallLive({
       if (direction === 'out') {
         setSide('front');
         setView(visible());
+        base.current.set(id, 0);
+        setPulls([{ id, direction, ms: 0 }]);
       } else {
-        turnFrom.current.set(id, held?.turn ?? 0);
+        /* The return begins at the time that mirrors where the out had got to: the whole gesture reversed (§11.21). */
+        const from = held !== null && held.id === id ? RETURN_MS * (1 - outTime(held) / OUT_MS) : 0;
+        base.current.set(id, from);
+        setPulls([{ id, direction, ms: from }]);
       }
-      setPulls([{ id, direction, progress: 0, ...(direction === 'back' && held?.turn !== undefined ? { turn: held.turn } : {}) }]);
     },
     [visible, held],
   );
@@ -117,52 +111,30 @@ export function WallLive({
       started.current = null;
       setSide('front');
       setView((current) => current ?? visible());
-      for (const state of next) {
-        if (state.direction === 'back') turnFrom.current.set(state.id, held?.id === state.id ? (held.turn ?? 0) : 0);
-      }
+      for (const state of next) base.current.set(state.id, state.ms);
       setPulls(next);
     },
-    [pulls, seats, visible, held],
+    [pulls, seats, visible],
   );
 
-  /*
-    One clock drives every moving record; a returned record drops out when it
-    lands. With §11.14's phase two: out runs the pull's 1000ms and then the
-    turn's `ms`, abutting with no hold; back runs the turn in reverse from
-    wherever it stood (over a proportionate slice of `ms`) and then the pull
-    in reverse — round, then in.
-  */
-  const settled = (state: PullState) =>
-    state.progress >= 1 && (state.direction === 'back' || turn === null || (state.turn ?? 0) >= 1);
+  /* One clock drives every moving record; a returned record drops out when it lands. */
   const clockKey = pulls.map((state) => `${state.id}:${state.direction}`).join('|');
   useEffect(() => {
     if (pulls.length === 0 || pulls.every(settled)) return;
-
-    const at = (state: PullState, elapsed: number): PullState => {
-      if (state.direction === 'out') {
-        const progress = Math.min(1, elapsed / PULL_DURATION_MS);
-        if (turn === null || elapsed <= PULL_DURATION_MS) return { id: state.id, direction: 'out', progress };
-        return { id: state.id, direction: 'out', progress, turn: turnEase((elapsed - PULL_DURATION_MS) / turn.ms) };
-      }
-      const from = turnFrom.current.get(state.id) ?? 0;
-      const roundMs = turn === null ? 0 : turn.ms * from;
-      if (elapsed < roundMs) return { id: state.id, direction: 'back', progress: 0, turn: from * turnEase(1 - elapsed / roundMs) };
-      return { id: state.id, direction: 'back', progress: Math.min(1, (elapsed - roundMs) / PULL_DURATION_MS) };
-    };
 
     let handle = 0;
     const frame = (now: number) => {
       if (started.current === null) started.current = now;
       const elapsed = now - started.current;
-      const next = pullsRef.current.map((state) => at(state, elapsed));
+      const next = pullsRef.current.map((state) => ({ ...state, ms: (base.current.get(state.id) ?? 0) + elapsed }));
       /* Landed: the seated anchor is drawn again by the ordinary path. */
-      setPulls(next.filter((state) => !(state.direction === 'back' && state.progress >= 1)));
+      setPulls(next.filter((state) => !(state.direction === 'back' && settled(state))));
       if (!next.every(settled)) handle = requestAnimationFrame(frame);
     };
 
     handle = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(handle);
-    /* Re-armed when the SET of moving records changes, not on every progress tick. */
+    /* Re-armed when the SET of moving records changes, not on every tick. */
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clockKey]);
 
@@ -176,19 +148,17 @@ export function WallLive({
     return () => window.removeEventListener('keydown', onKey);
   }, [held, begin, go]);
 
-  /* The gesture's phase, for whoever watches the probe: rest · pull · turn · landed · round · return. */
+  /* The gesture's phase, for whoever watches: rest · swing · finish · landed · return. */
   const phase =
     held !== null
-      ? held.progress < 1
-        ? 'pull'
-        : turn !== null && (held.turn ?? 0) < 1
-          ? 'turn'
+      ? held.ms < SWING_MS
+        ? 'swing'
+        : held.ms < OUT_MS
+          ? 'finish'
           : 'landed'
       : pulls.length === 0
         ? 'rest'
-        : pulls[0].turn !== undefined
-          ? 'round'
-          : 'return';
+        : 'return';
 
   return (
     <div data-wall-container="" data-phase={phase}>
@@ -203,13 +173,12 @@ export function WallLive({
         countLine={countLine}
         regionRef={region}
         labels={labels}
-        turn={turn}
         onSeatClick={(id) => {
           if (pulls.length === 0) begin(id, 'out');
         }}
         onPulledClick={() => {
-          /* Settled to the eye: the field is clickable once the panel is up. */
-          if (held !== null && held.progress >= PERCEIVED_END) begin(held.id, 'back');
+          /* The field is clickable once the record has settled. */
+          if (held !== null && settled(held)) begin(held.id, 'back');
         }}
         onTurnOver={() => setSide((s) => (s === 'front' ? 'back' : 'front'))}
         onPutBack={() => {

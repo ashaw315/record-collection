@@ -1,4 +1,5 @@
-import { frontFace, paintOrder, rightFace, topFace, type Point } from './geometry';
+import { frontFace, rightFace, topFace, type Point } from './geometry';
+import { paintSort, seatBounds } from './paint-sort';
 import type { ShelfSeat } from './shelf-runs';
 import { wallLayout } from './wall-layout';
 
@@ -55,7 +56,7 @@ export function WallOverview({
       {breaks.map(([from, to], index) => (
         <line key={`break-${index}`} data-break="" x1={from[0].toFixed(2)} y1={from[1].toFixed(2)} x2={to[0].toFixed(2)} y2={to[1].toFixed(2)} stroke={RULE} strokeWidth="1" />
       ))}
-      {paintOrder(seated).map((seat) => (
+      {paintSort(seated.map((seat) => seatBounds(seat, -seat.z))).map((bounds) => seated.find((seat) => seat.id === bounds.id) as (typeof seated)[number]).map((seat) => (
         <g key={seat.id}>
           <polygon points={points(topFace(seat))} fill={TOP_FILL} stroke={INK} strokeWidth="1" />
           <polygon points={points(rightFace(seat))} fill={FACE_FILL} stroke={INK} strokeWidth="1" />

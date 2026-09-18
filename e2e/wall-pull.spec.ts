@@ -1,13 +1,16 @@
 import { expect, test, type Page } from '@playwright/test';
-import { LANDING_PAD, landingSize, parseMatrix } from '../src/app/wall/landing';
-import { COS30, SIN30, SPINE_HEIGHT, spineWidth } from '../src/app/wall/geometry';
-import { PULL_DURATION_MS } from '../src/app/wall/pull-curve';
+import { LANDED_SIZE, parseMatrix } from '../src/app/wall/landing';
+import { COS30, DEPTH, SIN30, SPINE_HEIGHT } from '../src/app/wall/geometry';
+import { FINISH_MS, OUT_MS, RETURN_MS, SWING_MS, easeInOutCubic } from '../src/app/wall/gesture';
+import { WIDEST } from '../src/app/wall/rotation';
 import { RETURN_FADE_END, WALL_PAPER_HEX, pullFill } from '../src/app/wall/pull-colour';
 import { recordLadder } from '../src/lib/colour/record-ladder';
 import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
 
 /**
- * The pull on the 1:1 wall, with colour arriving across it (8a §11.2, §11.3).
+ * The pull on the 1:1 wall, with colour arriving across it (8a §11.2, §11.3,
+ * §11.19–§11.21): one clock, travel, growth and rotation on it, the finish
+ * after, and the return the whole gesture reversed.
  *
  * **Under a fake clock, so the gesture can be stepped.** Everything §11.2
  * rules about colour is a claim about WHEN — across the curve, not at either
@@ -38,8 +41,17 @@ const FRAME_MS = 1000 / 60;
   base, and a return click the component rightly refuses. Settle time is two
   whole frames past the duration.
 */
-const SETTLED_MS = PULL_DURATION_MS + Math.ceil(2 * FRAME_MS);
+const TWO_FRAMES = Math.ceil(2 * FRAME_MS);
 const STEP_MS = Math.ceil(FRAME_MS);
+
+const landing = (page: Page) => page.locator('[data-pulled] [data-landing]').getAttribute('transform');
+const phase = (page: Page) => page.locator('[data-wall-container]').getAttribute('data-phase');
+/** The pulled record's spine, as its projected width — the rigid rotation's signature, closing to zero at 45°. */
+const spineWidth = (page: Page) =>
+  page.locator('[data-pulled] [data-face="front"]').evaluate((el) => {
+    const xs = (el.getAttribute('points') ?? '').split(' ').map((pair) => Number(pair.split(',')[0]));
+    return Math.max(...xs) - Math.min(...xs);
+  });
 
 /** The pulled record: its front face's points, and the FIELD's fill — the right face, where colour arrives. */
 async function pulled(page: Page) {
@@ -68,7 +80,7 @@ test.beforeEach(async ({ page }) => {
   await page.clock.pauseAt(Date.now() + 1000);
 });
 
-test('clicking a spine slides the record forward and grows it — a box at the wall’s own angle, exactly — the seat emptied, the furniture whole', async ({
+test('clicking a spine pulls it out on the gesture: the seat emptied from the first frame, the furniture whole, a rigid record at 45° at the swing’s end and a 560 square after the finish', async ({
   page,
 }) => {
   expect(wired).not.toBeNull();
@@ -76,34 +88,35 @@ test('clicking a spine slides the record forward and grows it — a box at the w
 
   await page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`).click();
   await page.clock.runFor(1);
-  /* The region as the code froze it at the click — a scrollbar can change clientHeight between reads. */
-  const region = await page.locator('[data-region="wall"]').evaluate((el) => ({ w: el.clientWidth, h: el.clientHeight }));
-
-  /* Frame 0: the cover plane is the seated face's own, and the seat's anchor is gone. */
-  const start = parseMatrix((await page.locator('[data-pulled] [data-landing]').getAttribute('transform')) ?? '');
-  expect(start[0]).toBe(COS30);
-  expect(start[1]).toBe(-SIN30);
+  /* Frame 0: the cover plane is the seated face's own; the seat's anchor is gone. */
+  const start = parseMatrix((await landing(page)) ?? '');
+  expect(start[0]).toBeCloseTo(COS30, 6);
+  expect(start[1]).toBeCloseTo(-SIN30, 6);
   await expect(page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`)).toHaveCount(0);
+  expect(await phase(page)).toBe('swing');
 
-  await page.clock.runFor(SETTLED_MS);
-  const [a, b, c, d] = parseMatrix((await page.locator('[data-pulled] [data-landing]').getAttribute('transform')) ?? '');
-  /* §11.10: it does not straighten. The shear at rest IS the wall's angle — a landing that drifts toward flat fails here. */
-  expect(a).toBe(COS30);
-  expect(b).toBe(-SIN30);
-  expect(c).toBe(0);
-  expect(d).toBe(1);
-  /* The largest square face the region holds, in projection. */
-  const size = landingSize({ x: 0, y: 0, width: region.w, height: region.h - LANDING_PAD }, spineWidth(WIRED_ID));
-  const field = page.locator('[data-pulled] [data-field]');
-  expect(Number(await field.getAttribute('width'))).toBeCloseTo(size, 6);
-  expect(Number(await field.getAttribute('height'))).toBeCloseTo(size, 6);
-  expect(size).toBeGreaterThan(2 * SPINE_HEIGHT);
-  /* The seated faces MOVED rather than faded: the spine is drawn, in front, at full strength; the furniture is unchanged. */
-  await expect(page.locator('[data-pulled] [data-face="front"]')).not.toHaveAttribute('opacity', /.*/);
+  /* The swing's end: the spine has closed to nothing, the cover is level and at its widest — √2·cos30 of its grown run. */
+  await page.clock.runFor(SWING_MS + TWO_FRAMES - 1);
+  const [a45, b45, , d45] = parseMatrix((await landing(page)) ?? '');
+  expect(Math.abs(b45)).toBeLessThan(0.02);
+  expect(a45 * DEPTH).toBeCloseTo(LANDED_SIZE * WIDEST, 0);
+  expect(d45 * SPINE_HEIGHT).toBeCloseTo(LANDED_SIZE, 0);
+  expect(await spineWidth(page)).toBeLessThan(0.5);
+  expect(await phase(page)).toBe('finish');
+
+  /* The finish: the square, exactly axis-aligned. */
+  await page.clock.runFor(FINISH_MS + TWO_FRAMES);
+  const [a, b, c, d] = parseMatrix((await landing(page)) ?? '');
+  expect(b).toBeCloseTo(0, 6);
+  expect(c).toBeCloseTo(0, 6);
+  expect(a * DEPTH).toBeCloseTo(LANDED_SIZE, 3);
+  expect(d * SPINE_HEIGHT).toBeCloseTo(LANDED_SIZE, 3);
+  expect(await phase(page)).toBe('landed');
   await expect(page.locator('[data-wall="labelled"] [data-furniture]')).toHaveCount(furnitureBefore);
+  await expect(page.locator(`[data-seat="${WIRED_ID}"]`)).toHaveCount(0);
 });
 
-test('colour arrives across the pull — paper at 0, the fill the curve gives at 500ms, base at the end', async ({
+test('colour arrives across the swing on its own eased travel — paper at 0, the fill the curve gives at halfway, base at the end', async ({
   page,
 }) => {
   if (wired === null) throw new Error('fixture');
@@ -111,21 +124,18 @@ test('colour arrives across the pull — paper at 0, the fill the curve gives at
   await page.clock.runFor(1);
   expect((await pulled(page))?.fill, 'starts as paper').toBe(pullFill(0, wired));
 
-  await page.clock.runFor(499);
+  await page.clock.runFor(SWING_MS / 2 - 1);
   const mid = (await pulled(page))?.fill ?? '';
   expect(mid, 'not paper, not base, at halfway').not.toBe(WALL_PAPER_HEX);
   expect(mid).not.toBe(pullFill(1, wired));
-  /*
-    rAF quantisation: the first frame after the click starts the gesture, so
-    the sampled progress sits within two frames of 0.5, at ms resolution.
-  */
+  /* rAF quantisation: the sampled k sits within two frames of 0.5. */
   const candidates = new Set<string>();
-  for (let ms = 500 - 2 * FRAME_MS; ms <= 500 + FRAME_MS; ms += 1) {
-    candidates.add(pullFill(ms / PULL_DURATION_MS, wired));
+  for (let ms = SWING_MS / 2 - 2 * FRAME_MS; ms <= SWING_MS / 2 + FRAME_MS; ms += 1) {
+    candidates.add(pullFill(easeInOutCubic(ms / SWING_MS), wired));
   }
-  expect([...candidates], 'on the curve at 500ms').toContain(mid);
+  expect([...candidates], 'on the curve at halfway').toContain(mid);
 
-  await page.clock.runFor(PULL_DURATION_MS);
+  await page.clock.runFor(OUT_MS);
   expect((await pulled(page))?.fill, 'the clamped base, exactly').toBe(pullFill(1, wired));
 });
 
@@ -135,36 +145,28 @@ test('on the return the fade completes before the spine lands — checked on the
   if (wired === null) throw new Error('fixture');
   const spine = page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`);
   await spine.click();
-  await page.clock.runFor(SETTLED_MS);
+  await page.clock.runFor(OUT_MS + TWO_FRAMES);
 
-  /* Send it back. */
+  /* Send it back: the whole gesture reversed on one clock. */
   await page.locator('[data-pulled] [data-field]').click();
   await page.clock.runFor(1);
+  expect(await phase(page)).toBe('return');
   expect((await pulled(page))?.fill, 'leaves in colour').not.toBe(WALL_PAPER_HEX);
 
-  /*
-    Step to the fade's end: paper from here on, while the record is still
-    travelling. The gesture's own t0 is the first rAF after the click, up to
-    one frame after the test's — so the window opens two frames past the
-    fade's end in wall-clock terms, and every frame from there to landing is
-    checked.
-  */
-  const fadeEndMs = Math.ceil(RETURN_FADE_END * PULL_DURATION_MS) + 2 * FRAME_MS;
+  const fadeEndMs = Math.ceil(RETURN_FADE_END * RETURN_MS) + 2 * FRAME_MS;
   await page.clock.runFor(fadeEndMs);
   let frames = 0;
-  for (let ms = fadeEndMs; ms < PULL_DURATION_MS; ms += STEP_MS) {
+  for (let ms = fadeEndMs; ms < RETURN_MS; ms += STEP_MS) {
     const now = await pulled(page);
     expect(now, `still returning at ${ms.toFixed(0)}ms`).not.toBeNull();
     expect(now?.fill, `paper at ${ms.toFixed(0)}ms`).toBe(WALL_PAPER_HEX);
-    /* And not yet seated: the top edge still carries less than the full rise. */
     frames += 1;
     await page.clock.runFor(STEP_MS);
   }
-  expect(frames, 'frames the viewer sees in paper before landing').toBeGreaterThan(10);
+  expect(frames, 'frames the viewer sees in paper before landing').toBeGreaterThan(8);
 
   await page.clock.runFor(STEP_MS * 3);
   await expect(spine, 'landed: the seated face is back').toHaveCount(1);
   await expect(spine).toHaveAttribute('fill', /oklch\(0\.925/);
-  await expect(spine, 'and fully drawn').not.toHaveAttribute('opacity', '0');
   await expect(page.locator('[data-pulled]')).toHaveCount(0);
 });

@@ -8,13 +8,14 @@ import {
   pullFill,
   returnFill,
 } from './pull-colour';
-import { PULL_DURATION_MS, pullEase, pullPose } from './pull-curve';
+import { RETURN_MS, SWING_MS, easeInOutCubic } from './gesture';
 import { oklchToHex, recordLadder } from '@/lib/colour/record-ladder';
 import { COLLECTION_SPINES } from '../../../test/fixtures/collection-spines';
 
 /**
  * 8a §11.2: colour arrives ACROSS the gesture, on the same curve — a fade from
- * paper to the record's clamped base over the same 1000ms, starting at 0.
+ * paper to the record's clamped base on the swing's own eased travel
+ * (§11.19), starting at 0.
  *
  * Colour at the end is an event on a curve whose whole argument is that it has
  * none; colour at the start is the shelf changing before the record moves. So
@@ -31,8 +32,8 @@ if (ladder === null) throw new Error('fixture: Wired has a cover');
 /** The fill a record has when fully pulled: its clamped base, exactly. */
 const BASE_HEX = oklchToHex({ L: ladder.baseL, C: ladder.baseC, h: ladder.baseHue });
 
-/** One frame at 60fps, as a fraction of the gesture. */
-const FRAME = 1000 / 60 / PULL_DURATION_MS;
+/** One frame at 60fps, as a fraction of the return. */
+const FRAME = 1000 / 60 / RETURN_MS;
 
 describe('colour arrives across the pull (§11.2)', () => {
   it('starts at the wall’s paper — no step from the resting outline', () => {
@@ -49,28 +50,28 @@ describe('colour arrives across the pull (§11.2)', () => {
       holds is at the perceived end: 97% of travel is still a step short.
     */
     expect(pullFill(1, ladder)).toBe(BASE_HEX);
-    expect(pullFill(PERCEIVED_END, ladder)).not.toBe(BASE_HEX);
+    expect(pullFill(easeInOutCubic(0.9), ladder)).not.toBe(BASE_HEX);
     expect(pullFill(0.5, ladder)).not.toBe(BASE_HEX);
   });
 
-  it('is on the pull’s eased value — 87.5% of the way at halfway, like the geometry', () => {
+  it('is the mix at the value it is given — the gesture’s eased travel, one curve for colour and position', () => {
     /*
-      The load-bearing claim: ONE curve. A linear fade would read 50% here; a
-      second curve would drift from the pose. Asserted in OKLCH lightness, where
-      the mix is defined.
+      The load-bearing claim: ONE curve. The drawing passes the swing's own
+      eased value (easeInOutCubic of k), so colour is where the record is —
+      50% at halfway, not a second curve drifting from the pose. Asserted in
+      OKLCH lightness, where the mix is defined.
     */
-    const at = (t: number) => {
-      const eased = pullEase(t);
-      return oklchToHex({
+    const at = (eased: number) =>
+      oklchToHex({
         L: WALL_PAPER.L + (ladder.baseL - WALL_PAPER.L) * eased,
         C: WALL_PAPER.C + (ladder.baseC - WALL_PAPER.C) * eased,
         h: ladder.baseHue,
       });
-    };
-    for (const t of [0.1, 0.25, 0.5, 0.75, 0.9]) {
-      expect(pullFill(t, ladder), `t=${t}`).toBe(at(t));
-      expect(pullPose(t, 1, 2).eased, 'the same eased value the geometry uses').toBe(pullEase(t));
+    for (const k of [0.1, 0.25, 0.5, 0.75, 0.9]) {
+      expect(pullFill(easeInOutCubic(k), ladder), `k=${k}`).toBe(at(easeInOutCubic(k)));
     }
+    expect(easeInOutCubic(0.5)).toBe(0.5);
+    expect(SWING_MS).toBe(1300);
   });
 
   it('holds the record’s hue throughout — paper has none to lend', () => {
@@ -104,7 +105,6 @@ describe('the return drains to paper before the spine lands', () => {
       is the record being one of seventeen again, not still becoming it.
     */
     expect(PERCEIVED_END).toBeCloseTo(1 - Math.cbrt(0.03), 10);
-    expect(pullEase(PERCEIVED_END)).toBeCloseTo(0.97, 10);
     expect(RETURN_FADE_END).toBe(PERCEIVED_END);
   });
 

@@ -108,7 +108,10 @@ describe('the unit’s figures are the drawing’s (§11.11)', () => {
       ),
     );
     expect(drawn.size, 'the far view at 17: 18 furniture faces and 51 record faces').toBe(18 + 17 * 3);
-    for (const face of unitFurniture(0)) expect(drawn.has(key(face.points)), `${face.kind} ${key(face.points)}`).toBe(true);
+    /* §11.20 withdrew the drawing's side: its strips are −y faces. Tops and +x ends do not depend on the sign and must match. */
+    for (const face of unitFurniture(0).filter((f) => !f.kind.endsWith('front'))) {
+      expect(drawn.has(key(face.points)), `${face.kind} ${key(face.points)}`).toBe(true);
+    }
   });
 
   it('seats records exactly as §11.11’s polygons do — every face of a 12-wide record at seats 0…16 is among the drawing’s', ({ skip }) => {
@@ -133,15 +136,17 @@ describe('the unit’s figures are the drawing’s (§11.11)', () => {
     const seats = Array.from({ length: 17 }, (_, i) => ({ id: `d${i}`, section: 'S' }));
     for (const placed of layoutRow(seats, 0)) {
       const record = { ...placed, width: 12 };
-      for (const [name, face] of [['top', topFace(record)], ['right', rightFace(record)], ['front', frontFace(record)]] as const) {
+      for (const [name, face] of [['top', topFace(record)], ['right', rightFace(record)]] as const) {
         expect(drawn.has(key(face)), `seat ${placed.id} ${name} ${key(face)}`).toBe(true);
       }
+      /* The spine is the +y face (§11.20); the drawing's is at y = 0 and is superseded. */
+      expect(drawn.has(key(frontFace(record))), `seat ${placed.id} front — not the drawing's back face`).toBe(false);
     }
   });
 
-  it('draws the shelves’ and uprights’ strips on their −y faces — toward the reader (§11.15)', () => {
+  it('draws the shelves’ and uprights’ strips on their +y faces — toward the camera (§11.20)', () => {
     const lip = unitFurniture(0).find((face) => face.kind === 'shelf-front');
-    expect(lip?.points[0]).toEqual(project(-UPRIGHT.thickness, 0, 594 - SHELF_THICKNESS));
+    expect(lip?.points[0]).toEqual(project(-UPRIGHT.thickness, SHELF_DEPTH, 594 - SHELF_THICKNESS));
   });
 
   it('puts the top shelf’s surface at the unit’s highest shelf, filled top-down', () => {

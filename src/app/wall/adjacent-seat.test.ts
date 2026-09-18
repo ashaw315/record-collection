@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { adjacentSeatId, hasAdjacentSeat, navigate } from './adjacent-seat';
 import type { PullState } from './WallLabelled';
-import { PERCEIVED_END } from './pull-colour';
+import { OUT_MS } from './gesture';
 
 /**
  * Arrows between pulled records (8a §11.8): wall order, absent at the ends,
@@ -41,21 +41,21 @@ describe('hasAdjacentSeat — the arrow is present only where there is somewhere
 });
 
 describe('navigate — a slide at the same depth, along the collection', () => {
-  const held: PullState = { id: 'b', direction: 'out', progress: 1 };
+  const held: PullState = { id: 'b', direction: 'out', ms: OUT_MS };
 
   it('sends the held record back and brings the neighbour out, both from 0 on the same clock', () => {
     /* Changing depth would be a second pull; the arrows move along the collection, not into it. */
     expect(navigate([held], order, 'next')).toEqual([
-      { id: 'b', direction: 'back', progress: 0 },
-      { id: 'c', direction: 'out', progress: 0 },
+      { id: 'b', direction: 'back', ms: 0 },
+      { id: 'c', direction: 'out', ms: 0 },
     ]);
   });
 
-  it('does nothing at an end, or before the held record has visibly arrived', () => {
-    expect(navigate([{ id: 'c', direction: 'out', progress: 1 }], order, 'next')).toBeNull();
-    expect(navigate([{ id: 'b', direction: 'out', progress: PERCEIVED_END - 0.05 }], order, 'next')).toBeNull();
-    /* From the perceived end — when the panel and its arrows are up — it goes. */
-    expect(navigate([{ id: 'b', direction: 'out', progress: PERCEIVED_END }], order, 'next')).not.toBeNull();
+  it('does nothing at an end, or before the held record has settled', () => {
+    expect(navigate([{ id: 'c', direction: 'out', ms: OUT_MS }], order, 'next')).toBeNull();
+    expect(navigate([{ id: 'b', direction: 'out', ms: OUT_MS - 1 }], order, 'next')).toBeNull();
+    /* Once settled — when the arrows are up — it goes. */
+    expect(navigate([{ id: 'b', direction: 'out', ms: OUT_MS }], order, 'next')).not.toBeNull();
     expect(navigate([], order, 'next')).toBeNull();
   });
 });

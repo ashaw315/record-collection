@@ -1,6 +1,5 @@
 import { frontFace, layoutRow, rightFace, rowBreaks, topFace, type PlacedSeat, type Point } from './geometry';
 import { unitFurniture, unitRows, type FurnitureFace } from './unit';
-import type { PullPose } from './pull-curve';
 import type { ShelfSeat } from './shelf-runs';
 import { wallFrame, widened } from './wall-frame';
 
@@ -21,7 +20,7 @@ export type WallLayout = {
   frame: { viewBox: string; width: number; height: number };
 };
 
-export type Moving = { id: string; pose: PullPose };
+export type Moving = { id: string };
 
 export function wallLayout(
   seats: readonly ShelfSeat[],

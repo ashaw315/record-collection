@@ -4,9 +4,8 @@ import { WallLabelled, type PullState } from './WallLabelled';
 import { WALL_PAPER_HEX } from './pull-colour';
 import { FACE_FILL, PLANE_FILL, TOP_FILL, points } from './WallOverview';
 import type { WallSeat } from './shelf-runs';
-import { COS30, SIN30, SPINE_HEIGHT, coverTransform, frontFace, layoutRow, spineWidth } from './geometry';
-import { landedBox, landedSquare, landingBoxAt, landingSize } from './landing';
-import { turnMatrixAt } from './turn';
+import { DEPTH, SPINE_HEIGHT, frontFace, layoutRow } from './geometry';
+import { GROWTH, OUT_MS, RETURN_MS, ROTATION_START, SWING_MS, gestureFaces, landingDrift, poseAt } from './gesture';
 import { wallLayout } from './wall-layout';
 
 /**
@@ -27,6 +26,7 @@ const seat = (id: string, coverUrl: string | null, spineColour: string | null = 
   catalogNumber: null,
 });
 
+const view = { x: 0, y: 0, width: 960, height: 760 };
 const render = (
   seats: WallSeat[],
   pull: Parameters<typeof WallLabelled>[0]['pull'] | Parameters<typeof WallLabelled>[0]['pulls'],
@@ -78,54 +78,47 @@ describe('what distinguishes a spine at rest (§11.1)', () => {
 describe('5b’s two faces at rest (D2): three faces per record, filled in paper for occlusion', () => {
   it('draws top, right and front per seat, the top a step lighter, all paper', () => {
     const html = render([seat('a', null), seat('b', null)], null);
-    const facesA = html.slice(html.indexOf('data-of="a"'), html.indexOf('data-of="b"'));
     const seatA = html.slice(html.indexOf('data-seat="a"'), html.indexOf('data-seat="b"'));
-    for (const face of ['top', 'right']) {
-      expect(facesA, `face ${face}`).toContain(`data-face="${face}"`);
+    for (const face of ['top', 'right', 'front']) {
+      expect(seatA, `face ${face}`).toContain(`data-face="${face}"`);
     }
-    expect(seatA).toContain('data-face="front"');
-    expect(facesA).toContain(`data-face="top" points="`);
-    expect(facesA).toContain(`fill="${TOP_FILL}"`);
-    expect(facesA).toContain(`fill="${FACE_FILL}"`);
+    expect(seatA).toContain(`data-face="top" points="`);
+    expect(seatA).toContain(`fill="${TOP_FILL}"`);
     expect(seatA).toContain(`fill="${FACE_FILL}"`);
     /* Paper, not none: the painter's order only occludes with opaque faces. */
-    expect(facesA).not.toContain('fill="none"');
+    expect(seatA).not.toContain('fill="none"');
     expect(html).toContain(`data-furniture="shelf-top" points="`);
     expect(html).toContain(`fill="${PLANE_FILL}"`);
   });
 
-  it('paints every cover and top face before every spine, so no neighbour’s cover covers the spine the reader clicks (§11.15)', () => {
-    /*
-      The spine is the −y face and the cover the +x face, and a record's cover
-      face reaches down-left across the spines of every record to its left.
-      Painted record by record, the only readable spine in a row was the
-      last one; §11.11's drawing has the same occlusion and hides it by
-      painting all seventeen labels after every polygon. Per-face painting
-      is what a depth test would give: covers and tops far to near, then the
-      spines, which are nearer than everything they cross. The anchor is the
-      spine with its label — the click lands on the record it names.
-    */
-    const html = render([seat('a', null), seat('b', null), seat('c', null)], null);
-    const firstSeat = html.indexOf('data-seat=');
-    const lastFace = Math.max(html.lastIndexOf('data-face="right"'), html.lastIndexOf('data-face="top"'));
-    expect(lastFace).toBeLessThan(firstSeat);
-    for (const id of ['a', 'b', 'c']) {
-      const inner = new RegExp(`<a [^>]*data-seat="${id}"[^>]*>([\\s\\S]*?)</a>`).exec(html)?.[1] ?? '';
-      expect(inner, `anchor ${id} holds one spine`).toMatch(/<polygon[^>]*data-spine=""/);
-      expect(inner, `anchor ${id} holds its label`).toContain('<text');
-      expect(inner).not.toContain('data-face="right"');
-      expect(inner).not.toContain('data-face="top"');
+  it('paints the moving record where the separating-plane sort puts it: between its neighbours while it overlaps the row, last once past it (§11.20)', () => {
+    const three = [seat('a', null), seat('b', null), seat('c', null)];
+    const view = { x: 0, y: 0, width: 960, height: 760 };
+    const early = renderToStaticMarkup(<WallLabelled seats={three} pulls={[{ id: 'b', direction: 'out', ms: 0 }]} view={view} />);
+    expect(early.indexOf('data-pulled="b"')).toBeGreaterThan(early.indexOf('data-seat="a"'));
+    expect(early.indexOf('data-pulled="b"'), 'the neighbour at larger x is nearer until the record is clear').toBeLessThan(early.indexOf('data-seat="c"'));
+    const clear = renderToStaticMarkup(<WallLabelled seats={three} pulls={[{ id: 'b', direction: 'out', ms: OUT_MS }]} view={view} />);
+    expect(clear.indexOf('data-pulled="b"')).toBeGreaterThan(clear.indexOf('data-seat="c"'));
+  });
+
+  it('renders the moving record on its first frame — three faces, four corners each — the test the probe’s comparator failed', () => {
+    const html = renderToStaticMarkup(
+      <WallLabelled seats={[seat('a', null), seat('b', null)]} pulls={[{ id: 'a', direction: 'out', ms: 0 }]} view={{ x: 0, y: 0, width: 960, height: 760 }} />,
+    );
+    const pulled = html.slice(html.indexOf('data-pulled="a"'));
+    for (const face of ['top', 'front']) {
+      const points = new RegExp(`data-face="${face}"[^>]*points="([^"]+)"`).exec(pulled)?.[1] ?? '';
+      expect(points.split(' '), `${face} has four corners`).toHaveLength(4);
     }
-    /* Faces are painted far to near: the order of data-of is the seat order along the row. */
-    const ofOrder = [...html.matchAll(/data-of="([^"]+)"/g)].map((m) => m[1]).filter((v, i, arr) => arr.indexOf(v) === i);
-    expect(ofOrder).toEqual(['a', 'b', 'c']);
+    expect(pulled).toContain('data-field=""');
+    expect(html).not.toContain('data-seat="a"');
   });
 
   it('carries the pulled record’s field and cover on its right face, and no caption', () => {
     const html = render([seat('a', null), seat('b', 'https://covers.test/b.jpg')], {
       id: 'b',
       direction: 'out',
-      progress: 1,
+      ms: OUT_MS,
     });
     const pulled = html.slice(html.indexOf('data-pulled="b"'));
     expect(pulled).toContain('data-face="top"');
@@ -135,7 +128,7 @@ describe('5b’s two faces at rest (D2): three faces per record, filled in paper
     expect(field).not.toBe('');
     expect(field).not.toContain(`fill="${WALL_PAPER_HEX}"`);
     /* At the START of the pull the group is the face itself, entered from the far-top corner, local x toward the reader: un-mirrored. */
-    const start = render([seat('a', null), seat('b', 'https://covers.test/b.jpg')], { id: 'b', direction: 'out', progress: 0 });
+    const start = render([seat('a', null), seat('b', 'https://covers.test/b.jpg')], { id: 'b', direction: 'out', ms: 0 });
     expect(start.slice(start.indexOf('data-pulled="b"')), 'the cover’s group maps the face un-mirrored').toContain('<g transform="matrix(0.866');
     const g = pulled.slice(pulled.indexOf('<g transform="matrix('));
     const image = /<image[^>]*>/.exec(g)?.[0] ?? '';
@@ -147,7 +140,7 @@ describe('5b’s two faces at rest (D2): three faces per record, filled in paper
   });
 
   it('draws no cover for a record with none, and the field still arrives', () => {
-    const html = render([seat('a', null)], { id: 'a', direction: 'out', progress: 1 });
+    const html = render([seat('a', null)], { id: 'a', direction: 'out', ms: OUT_MS });
     expect(html).not.toContain('<image');
     expect(html).toContain('data-field');
   });
@@ -155,7 +148,7 @@ describe('5b’s two faces at rest (D2): three faces per record, filled in paper
 
 describe('the pulled record is the same object (D2)', () => {
   it('keeps its spine label on its front face while pulled', () => {
-    const html = render([seat('a', null), seat('b', null)], { id: 'b', direction: 'out', progress: 1 });
+    const html = render([seat('a', null), seat('b', null)], { id: 'b', direction: 'out', ms: OUT_MS });
     const pulled = html.slice(html.indexOf('data-pulled="b"'));
     const group = pulled.slice(0, pulled.indexOf('</g>', pulled.indexOf('data-face="front"')));
     expect(group).toContain('data-label=""');
@@ -214,7 +207,7 @@ describe('the frame holds the whole drawing', () => {
 
 describe('the record with no cover arrives at type, not at a swatch (§11.3, §11.7)', () => {
   it('sets title and artist large on a paper sleeve area over the field, with §6’s diagonal across it', () => {
-    const html = render([seat('a', null), seat('b', null, null)], { id: 'b', direction: 'out', progress: 1 });
+    const html = render([seat('a', null), seat('b', null, null)], { id: 'b', direction: 'out', ms: OUT_MS });
     const pulled = html.slice(html.indexOf('data-pulled="b"'));
     /* The field is still painted — the same fill every pull arrives at — and the sleeve area sits on it. */
     expect(pulled).toContain('data-field');
@@ -238,7 +231,7 @@ describe('the record with no cover arrives at type, not at a swatch (§11.3, §1
   });
 
   it('draws no sleeve area and no diagonal for a record that has a cover', () => {
-    const html = render([seat('a', 'https://covers.test/a.jpg')], { id: 'a', direction: 'out', progress: 1 });
+    const html = render([seat('a', 'https://covers.test/a.jpg')], { id: 'a', direction: 'out', ms: OUT_MS });
     expect(html).not.toContain('data-no-cover');
     expect(html).not.toContain('data-diagonal');
     expect(html).toContain('data-cover="a"');
@@ -246,7 +239,7 @@ describe('the record with no cover arrives at type, not at a swatch (§11.3, §1
 });
 
 describe('spines are anchors inside the SVG (§11.8)', () => {
-  it('wraps each seat’s spine and label in an <a> with the record’s route and the FULL title as its name', () => {
+  it('wraps each seat’s faces and label in an <a> with the record’s route and the FULL title as its name', () => {
     const html = render([seat('a', null), seat('b', null)], null);
     const a = html.slice(html.indexOf('data-seat="a"'), html.indexOf('data-seat="b"'));
     const open = /<a [^>]*data-seat="a"[^>]*>/.exec(html)?.[0] ?? '';
@@ -254,11 +247,8 @@ describe('spines are anchors inside the SVG (§11.8)', () => {
     expect(open).toContain('href="/records/a"');
     /* The face carries the truncated label; the accessible name carries the whole title. */
     expect(open).toContain('aria-label="Artist a · Title a"');
-    expect(a).toContain('data-face="front"');
+    for (const face of ['top', 'right', 'front']) expect(a).toContain(`data-face="${face}"`);
     expect(a).toContain('<text');
-    /* The record's cover and top are painted in the pass before the anchors (§11.15), tagged with the seat they belong to. */
-    const faces = html.slice(html.indexOf('data-of="a"'), html.indexOf('data-of="b"'));
-    for (const face of ['top', 'right']) expect(faces).toContain(`data-face="${face}"`);
   });
 
 });
@@ -291,78 +281,11 @@ describe('the drawing is never smaller than the region that shows it', () => {
   });
 });
 
-describe('the record with no cover arrives at type, not at a swatch (§11.3, §11.7)', () => {
-  it('sets title and artist large on a paper sleeve area over the field, with §6’s diagonal across it', () => {
-    const html = render([seat('a', null), seat('b', null, null)], { id: 'b', direction: 'out', progress: 1 });
-    const pulled = html.slice(html.indexOf('data-pulled="b"'));
-    /* The field is still painted — the same fill every pull arrives at — and the sleeve area sits on it. */
-    expect(pulled).toContain('data-field');
-    const sleeve = pulled.slice(pulled.indexOf('data-no-cover'));
-    expect(sleeve, 'a sleeve area where the cover would be').not.toBe('');
-    expect(sleeve).toContain('data-diagonal');
-    expect(sleeve).toContain('Title b');
-    expect(sleeve).toContain('Artist b');
-    /*
-      Two elements, governed differently on read-versus-drawn: the artist is
-      READ and takes a scale size (LABEL, above); the title stands in for
-      artwork, so it is a DRAWN element whose size derives from its box and
-      its string, the way the 72 does in the year field.
-    */
-    expect(sleeve).toMatch(/text-label[^>]*>Artist b</);
-    expect(sleeve.indexOf('Artist b')).toBeLessThan(sleeve.indexOf('Title b'));
-    expect(sleeve).toMatch(/data-sleeve-title[^>]*font-size:[\d.]+px[^>]*>Title b</);
-    expect(sleeve, 'a long title clips rather than escaping the sleeve').toContain('overflow-hidden');
-    expect(sleeve, 'anchored at the top: the clip takes the tail, never the title’s first line').toContain('justify-start');
-    expect(html.indexOf('<g transform="matrix(')).toBeLessThan(html.indexOf('data-no-cover'));
-  });
-
-  it('draws no sleeve area and no diagonal for a record that has a cover', () => {
-    const html = render([seat('a', 'https://covers.test/a.jpg')], { id: 'a', direction: 'out', progress: 1 });
-    expect(html).not.toContain('data-no-cover');
-    expect(html).not.toContain('data-diagonal');
-    expect(html).toContain('data-cover="a"');
-  });
-});
-
-describe('spines are anchors inside the SVG (§11.8)', () => {
-  it('wraps each seat’s spine and label in an <a> with the record’s route and the FULL title as its name', () => {
-    const html = render([seat('a', null), seat('b', null)], null);
-    const a = html.slice(html.indexOf('data-seat="a"'), html.indexOf('data-seat="b"'));
-    const open = /<a [^>]*data-seat="a"[^>]*>/.exec(html)?.[0] ?? '';
-    expect(open, 'the seat is an anchor').not.toBe('');
-    expect(open).toContain('href="/records/a"');
-    /* The face carries the truncated label; the accessible name carries the whole title. */
-    expect(open).toContain('aria-label="Artist a · Title a"');
-    expect(a).toContain('data-face="front"');
-    expect(a).toContain('<text');
-    /* The record's cover and top are painted in the pass before the anchors (§11.15), tagged with the seat they belong to. */
-    const faces = html.slice(html.indexOf('data-of="a"'), html.indexOf('data-of="b"'));
-    for (const face of ['top', 'right']) expect(faces).toContain(`data-face="${face}"`);
-  });
-
-});
-
-describe('document order is seat order (§11.8) — asserted, because it holds only while seats vary along x alone', () => {
-  it('lists the seats in the DOM in seat order, rows top to bottom, with no tabindex', () => {
-    /*
-      SVG has no z-index: paint order is document order, and document order
-      is what a keyboard walks. The two agree today because seats within a
-      row vary only along x. The day a row's seats vary in depth, THIS fails
-      rather than the reading order silently going wrong.
-    */
-    const many = Array.from({ length: 11 }, (_, i) => seat(`s${String(i).padStart(2, '0')}`, null));
-    const html = render(many, null);
-    const order = [...html.matchAll(/data-seat="([^"]+)"/g)].map((m) => m[1]);
-    expect(order).toEqual(many.map((s) => s.id));
-    expect(html, 'no tabindex — document order serves the reader').not.toContain('tabindex');
-  });
-});
-
 describe('two records can be moving at once — the arrows’ slide (§11.8)', () => {
   it('draws a returning record and an arriving one as their own elements, both seats emptied', () => {
     const html = render([seat('a', null), seat('b', null), seat('c', null)], [
-      { id: 'b', direction: 'back', progress: 0.3 },
-      { id: 'c', direction: 'out', progress: 0.3 },
+      { id: 'b', direction: 'back', ms: 250 },
+      { id: 'c', direction: 'out', ms: 400 },
     ]);
     expect(html).toContain('data-pulled="b"');
     expect(html).toContain('data-pulled="c"');
@@ -372,84 +295,61 @@ describe('two records can be moving at once — the arrows’ slide (§11.8)', (
   });
 });
 
-describe('the pulled record stays in the projection (§11.10)', () => {
-  const view = { x: 0, y: 0, width: 960, height: 760 };
-  const out = renderToStaticMarkup(
-    <WallLabelled seats={[seat('a', null), seat('b', null)]} pulls={[{ id: 'a', direction: 'out', progress: 1 }]} view={view} />,
-  );
-  const pulled = out.slice(out.indexOf('data-pulled="a"'));
+describe('the pulled record is the gesture’s solid, drawn where the sort puts it (§11.19–§11.21)', () => {
+  const two = [seat('a', null), seat('b', null)];
+  const at = (ms: number, direction: 'out' | 'back' = 'out') =>
+    renderToStaticMarkup(<WallLabelled seats={two} pulls={[{ id: 'a', direction, ms }]} view={view} />);
+  const pulledOf = (html: string) => html.slice(html.indexOf('data-pulled="a"'));
+  const placed = layoutRow([{ id: 'a', section: 'S' }, { id: 'b', section: 'S' }], 0)[0];
 
-  it('lands as a box under the one projection: its cover plane sheared at the wall’s angle, exactly, its field square', () => {
-    const matrix = /<g transform="matrix\(([^)]+)\)"[^>]*data-landing/.exec(pulled)?.[1]?.split(' ').map(Number) ?? [];
-    expect(matrix[0]).toBe(COS30);
-    expect(matrix[1]).toBe(-SIN30);
-    expect(matrix[2]).toBe(0);
-    expect(matrix[3]).toBe(1);
-    const field = /<rect[^>]*data-field=""[^>]*>/.exec(pulled)?.[0] ?? '';
-    const w = Number(/width="([^"]+)"/.exec(field)?.[1]);
-    const h = Number(/height="([^"]+)"/.exec(field)?.[1]);
-    expect(w).toBe(landingSize(view, spineWidth('a')));
-    expect(h).toBe(w);
-    expect(w).toBeGreaterThan(2 * SPINE_HEIGHT);
+  it('draws the three faces gestureFaces gives at that time — seated at 0, exactly', () => {
+    const faces = gestureFaces(placed, poseAt(0));
+    const html = pulledOf(at(0));
+    expect(html).toContain(`data-face="front" points="${points(faces.spine)}"`);
+    expect(html).toContain(`data-face="top" points="${points(faces.top)}"`);
+    expect(/<g transform="([^"]+)"[^>]*data-landing/.exec(html)?.[1]).toBe(faces.coverMatrix);
+    expect(html).toContain(`points="${points(frontFace(placed))}"`);
+    expect(at(0)).not.toContain('data-seat="a"');
   });
 
-  it('keeps its spine and top drawn — the seated faces MOVE; nothing fades — and its seat is empty', () => {
-    const front = /<polygon[^>]*data-face="front"[^>]*>/.exec(pulled)?.[0] ?? '';
-    expect(front).not.toContain('opacity');
-    expect(/<polygon[^>]*data-face="top"[^>]*>/.exec(pulled)?.[0] ?? '').not.toContain('opacity');
-    /* The view is given relative to the svg's top-left; the landing is computed in the frame's coordinates. */
-    const placed = layoutRow([{ id: 'a', section: 'S' }], 0)[0];
-    const [fx, fy] = wallLayout([{ id: 'a', section: 'S' }, { id: 'b', section: 'S' }], [], 0, 0).frame.viewBox.split(' ').map(Number);
-    expect(front).toContain(`points="${points(frontFace(landingBoxAt(placed, { ...view, x: view.x + fx, y: view.y + fy }, 1)))}"`);
-    expect(out).not.toContain('data-seat="a"');
-    expect(out).toContain('data-seat="b"');
-  });
-
-  it('is the seated faces at 0 — the same object, before it moves', () => {
-    const atRest = renderToStaticMarkup(<WallLabelled seats={[seat('a', null)]} view={view} />);
-    const seated = /<polygon[^>]*data-spine=""[^>]*points="([^"]+)"/.exec(atRest)?.[1];
-    const starting = renderToStaticMarkup(
-      <WallLabelled seats={[seat('a', null)]} pulls={[{ id: 'a', direction: 'out', progress: 0 }]} view={view} />,
-    );
-    const moving = /data-pulled="a"[\s\S]*?<polygon[^>]*data-face="front"[^>]*points="([^"]+)"/.exec(starting)?.[1];
-    expect(moving).toBe(seated);
-  });
-});
-
-describe('phase two: the turn onto the page’s plane (§11.14)', () => {
-  const view = { x: 0, y: 0, width: 960, height: 760 };
-  const [fx, fy] = wallLayout([{ id: 'a', section: 'S' }, { id: 'b', section: 'S' }], [], 0, 0).frame.viewBox.split(' ').map(Number);
-  const region = { ...view, x: view.x + fx, y: view.y + fy };
-  const at = (turn: number, path: 'linear' | 'rotation' = 'linear') =>
-    renderToStaticMarkup(
-      <WallLabelled
-        seats={[seat('a', null), seat('b', null)]}
-        pulls={[{ id: 'a', direction: 'out', progress: 1, turn }]}
-        view={view}
-        turnPath={path}
-      />,
-    ).replace(/^[\s\S]*?data-pulled="a"/, '');
-
-  it('draws the cover on the turn’s matrix once the state carries a turn amount — from the landed cover, exactly', () => {
-    const landed = landedBox('a', region);
-    const square = landedSquare(region);
-    for (const [turn, path] of [[0, 'linear'], [0.5, 'linear'], [0.5, 'rotation'], [1, 'rotation']] as const) {
-      const transform = /<g transform="([^"]+)"[^>]*data-landing/.exec(at(turn, path))?.[1];
-      expect(transform, `turn ${turn} ${path}`).toBe(turnMatrixAt(landed, square, turn, path));
+  it('carries the cover matrix and the label’s plane through the swing and the finish — with the interim drift from the frozen view', () => {
+    const [fx, fy] = wallLayout(two.map((s) => ({ id: s.id, section: 'S' })), [], 0, 0).frame.viewBox.split(' ').map(Number);
+    const drift = landingDrift(placed, { ...view, x: view.x + fx, y: view.y + fy });
+    for (const ms of [546, 900, SWING_MS, SWING_MS + 150, OUT_MS]) {
+      const faces = gestureFaces(placed, poseAt(ms), drift);
+      const html = pulledOf(at(ms));
+      expect(/<g transform="([^"]+)"[^>]*data-landing/.exec(html)?.[1], `cover at ${ms}`).toBe(faces.coverMatrix);
+      expect(/<text[^>]*transform="([^"]+)"/.exec(html)?.[1], `label at ${ms}`).toBe(faces.labelMatrix);
+      expect(html, `spine at ${ms}`).toContain(`data-face="front" points="${points(faces.spine)}"`);
     }
-    expect(/<g transform="([^"]+)"[^>]*data-landing/.exec(at(0))?.[1]).toBe(coverTransform(landed));
   });
 
-  it('departs the drawing: the spine and top fade with the turn, gone on the page’s plane; the seat stays empty', () => {
-    const mid = at(0.5);
-    expect(/<polygon[^>]*data-face="front"[^>]*>/.exec(mid)?.[0]).toContain('opacity="0.5"');
-    expect(/<polygon[^>]*data-face="top"[^>]*>/.exec(mid)?.[0]).toContain('opacity="0.5"');
-    const end = at(1);
-    expect(/<polygon[^>]*data-face="front"[^>]*>/.exec(end)?.[0]).toContain('opacity="0"');
-    const whole = renderToStaticMarkup(
-      <WallLabelled seats={[seat('a', null), seat('b', null)]} pulls={[{ id: 'a', direction: 'out', progress: 1, turn: 1 }]} view={view} />,
-    );
-    expect(whole).not.toContain('data-seat="a"');
-    expect(whole).toContain('data-seat="b"');
+  it('lands as a 560 square with no shear: the cover matrix is axis-aligned at 1600ms, and the field rect is DEPTH × SPINE_HEIGHT in its own plane', () => {
+    const html = pulledOf(at(OUT_MS));
+    const [a, b, c, d] = (/<g transform="matrix\(([^)]+)\)"[^>]*data-landing/.exec(html)?.[1] ?? '').split(' ').map(Number);
+    expect(b).toBeCloseTo(0, 9);
+    expect(c).toBeCloseTo(0, 9);
+    expect(a * DEPTH).toBeCloseTo(560, 6);
+    expect(d * SPINE_HEIGHT).toBeCloseTo(560, 6);
+    const field = /<rect[^>]*data-field=""[^>]*>/.exec(html)?.[0] ?? '';
+    expect(Number(/width="([^"]+)"/.exec(field)?.[1])).toBe(DEPTH);
+    expect(Number(/height="([^"]+)"/.exec(field)?.[1])).toBe(SPINE_HEIGHT);
+    expect(html).not.toContain('opacity="0"');
+  });
+
+  it('the return is the out reversed: the same drawing at the mirrored time', () => {
+    const back = at(RETURN_MS * 0.25, 'back');
+    const out = at(OUT_MS * 0.75, 'out');
+    const matrix = (html: string) =>
+      (/<g transform="matrix\(([^)]+)\)"[^>]*data-landing/.exec(pulledOf(html))?.[1] ?? '').split(' ').map(Number);
+    matrix(back).forEach((v, i) => expect(v, `entry ${i}`).toBeCloseTo(matrix(out)[i], 6));
+  });
+
+  it('lays the no-cover sleeve out at its landed size and scales it into the growing face — exact at the end', () => {
+    const html = pulledOf(at(OUT_MS));
+    const sleeve = /<g data-no-cover=""[\s\S]*?<g transform="([^"]+)"/.exec(html)?.[1] ?? '';
+    expect(sleeve).toContain(`scale(${1 / GROWTH})`);
+    expect(html).toMatch(/data-sleeve-title=""[^>]*style="[^"]*font-size:\s*\d+px/);
+    expect(ROTATION_START).toBe(0.42);
   });
 });

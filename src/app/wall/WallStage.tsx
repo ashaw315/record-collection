@@ -2,10 +2,11 @@ import { WallLabelled, type PullState } from './WallLabelled';
 import { RecordPanel } from './RecordPanel';
 import type { RecordSummary } from './summary';
 import type { WallSeat } from './shelf-runs';
-import { PERCEIVED_END } from './pull-colour';
 import { hasAdjacentSeat, type Direction } from './adjacent-seat';
-import { ARROW_LANE, LANDING_PAD, landedBox, landedSquare, projectedBox, type View } from './landing';
-import type { TurnConfig } from './turn';
+import { ARROW_LANE, LANDING_PAD } from './landing';
+import type { View } from './view';
+import { OUT_MS, ROTATION_START, SWING_MS, gestureFaces, landingDrift, outTime, poseAt, settled } from './gesture';
+import { wallLayout } from './wall-layout';
 import { LABEL, LABEL_INK } from '../records/[id]/grid-type';
 import { DRAWN_PAPER } from './WallComposition';
 
@@ -32,7 +33,6 @@ export function WallStage({
   countLine = null,
   regionRef,
   labels = true,
-  turn = null,
   onSeatClick,
   onPulledClick,
   onTurnOver,
@@ -56,8 +56,6 @@ export function WallStage({
   /** The drawing region, for whoever measures it. */
   regionRef?: React.Ref<HTMLDivElement>;
   labels?: boolean;
-  /** §11.14's two-phase pull, on the probe: the panel arrives with phase two, and the arrows with the page square. */
-  turn?: TurnConfig | null;
   onSeatClick?: (id: string) => void;
   onPulledClick?: () => void;
   onTurnOver?: () => void;
@@ -67,13 +65,12 @@ export function WallStage({
   void viewport;
   const moving: readonly PullState[] = pulls ?? (pull === null ? [] : [pull]);
   /*
-    The panel follows the record coming OUT, once 97% of its travel is behind
-    the eye — or, with §11.14's second phase in play, with that phase: the
-    record becomes a subject when it turns to face the reader.
+    The panel arrives with the rotation (§11.14, §11.19): the record becomes
+    a subject when it turns to face the reader, which is 42% into the swing
+    — and leaves with it on the return, the whole gesture reversed.
   */
   const arriving = moving.find((state) => state.direction === 'out');
-  const arrived =
-    arriving !== undefined && (turn === null ? arriving.progress >= PERCEIVED_END : arriving.turn !== undefined);
+  const arrived = arriving !== undefined && outTime(arriving) >= ROTATION_START * SWING_MS;
   const summary = arrived ? summaries[arriving.id] : undefined;
   const order = seats.map((seat) => seat.id);
 
@@ -99,12 +96,16 @@ export function WallStage({
     drawing's region, present only where there is somewhere to go.
   */
   let arrows = null;
-  const onPage = turn !== null && arriving !== undefined && (arriving.turn ?? 0) >= 1;
-  if (arriving !== undefined && (turn === null ? arrived : onPage)) {
-    const region: View = view ?? { x: 0, y: 0, width, height: width };
-    const square = landedSquare(region);
-    const box = projectedBox(landedBox(arriving.id, region));
-    const bounds = onPage ? { minX: square.x, maxX: square.x + square.size, minY: square.y, maxY: square.y + square.size } : box;
+  if (arriving !== undefined && settled(arriving)) {
+    /* Beside the landed cover's own extent (§11.9 with §11.21's landing), in the region's px: the svg's frame origin taken out. */
+    const { placed, frame } = wallLayout(seats, [], width, view?.height ?? 0);
+    const seat = placed.find((p) => p.id === arriving.id);
+    const [frameX, frameY] = frame.viewBox.split(' ').map(Number);
+    const region: View | null = view === null ? null : { ...view, x: frameX + view.x, y: frameY + view.y };
+    const cover = seat === undefined ? [] : gestureFaces(seat, poseAt(OUT_MS), region === null ? [0, 0] : landingDrift(seat, region)).cover;
+    const xs = cover.map(([x]) => x - frameX);
+    const ys = cover.map(([, y]) => y - frameY);
+    const bounds = { minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys) };
     const top = (bounds.minY + bounds.maxY) / 2 - 22 + LANDING_PAD;
     const arrow = (direction: Direction, left: number) =>
       hasAdjacentSeat(order, arriving.id, direction) ? (
@@ -164,7 +165,6 @@ export function WallStage({
             minHeight={view?.height ?? 0}
             side={side}
             view={view}
-            turnPath={turn?.path}
             onSeatClick={onSeatClick}
             onPulledClick={onPulledClick}
           />

@@ -4,9 +4,9 @@ import '../../../test/component/next-navigation';
 import { WallStage } from './WallStage';
 import type { WallSeat } from './shelf-runs';
 import type { RecordSummary } from './summary';
-import { PERCEIVED_END } from './pull-colour';
-import { COS30, SIN30, spineWidth } from './geometry';
-import { ARROW_LANE, landedBox, landedSquare, landingSize, projectedBox } from './landing';
+import { layoutRow } from './geometry';
+import { ARROW_LANE } from './landing';
+import { OUT_MS, RETURN_MS, ROTATION_START, SWING_MS, gestureFaces, landingDrift, poseAt } from './gesture';
 
 /**
  * The stage: the drawing plus what the gesture arrives at. §11.7's panel
@@ -66,7 +66,7 @@ describe('two columns: facts left, drawing right (§11.9)', () => {
 
   it('fills the panel’s region — a destination that does not move — once the record has arrived, at any width', () => {
     for (const width of [500, 1280]) {
-      const html = render({ pull: { id: 'b', direction: 'out', progress: PERCEIVED_END }, viewport: width, width });
+      const html = render({ pull: { id: 'b', direction: 'out', ms: OUT_MS }, viewport: width, width });
       const facts = html.slice(html.indexOf('data-region="facts"'), html.indexOf('data-region="wall"'));
       expect(facts).toContain('data-testid="record-chrome"');
       expect(facts).toContain('href="/records/b"');
@@ -75,58 +75,69 @@ describe('two columns: facts left, drawing right (§11.9)', () => {
       expect(html).not.toContain('record-chrome-stacked');
       expect(html).not.toContain('record-chrome-facts');
     }
-    const early = render({ pull: { id: 'b', direction: 'out', progress: PERCEIVED_END - 0.05 } });
+    const early = render({ pull: { id: 'b', direction: 'out', ms: ROTATION_START * SWING_MS - 1 } });
     expect(early).not.toContain('data-testid="record-chrome"');
   });
 
   it('keeps the count while a record is out — the collection has not been left', () => {
-    const html = render({ pull: { id: 'b', direction: 'out', progress: 1 } });
+    const html = render({ pull: { id: 'b', direction: 'out', ms: OUT_MS } });
     expect(html).toContain('data-testid="wall-count"');
     expect(html).toMatch(/data-testid="wall-count"[^>]*>2</);
   });
 });
 
-describe('the record lands in the drawing’s region, in the projection (§11.10)', () => {
+describe('where the record lands and what goes with it (§11.19–§11.21)', () => {
   const view = { x: 0, y: 0, width: 960, height: 760 };
 
-  it('is the largest square face the region holds, at the wall’s own angle — exactly — with the wall unchanged behind it', () => {
+  it('lands on the gesture’s own construction: the cover matrix at 1600ms is axis-aligned and 560 square, the wall unchanged behind it', () => {
     const rest = render();
-    const html = render({ pull: { id: 'b', direction: 'out', progress: 1 }, view });
-    const group = /<g transform="matrix\(([^)]+)\)"[^>]*data-landing/.exec(html);
-    expect(group, 'the cover group carries the landing matrix').not.toBeNull();
-    const [a, b, c, d] = (group?.[1] ?? '').split(' ').map(Number);
-    /* §11.10: the shear IS the wall's angle. A landing that drifts toward flat fails here. */
-    expect(a).toBe(COS30);
-    expect(b).toBe(-SIN30);
-    expect(c).toBe(0);
-    expect(d).toBe(1);
-    const field = /<rect[^>]*data-field=""[^>]*>/.exec(html)?.[0] ?? '';
-    const size = landingSize(view, spineWidth('b'));
-    expect(Number(/width="([^"]+)"/.exec(field)?.[1]), 'the face’s size').toBe(size);
-    expect(Number(/height="([^"]+)"/.exec(field)?.[1]), 'square').toBe(size);
-    /* No lightness step: every plane and face fill is what it was at rest. */
+    const html = render({ pull: { id: 'b', direction: 'out', ms: OUT_MS }, view });
+    const [a, b, c, d] = (/<g transform="matrix\(([^)]+)\)"[^>]*data-landing/.exec(html)?.[1] ?? '').split(' ').map(Number);
+    expect(b).toBeCloseTo(0, 9);
+    expect(c).toBeCloseTo(0, 9);
+    expect(a * 150).toBeCloseTo(560, 6);
+    expect(d * 150).toBeCloseTo(560, 6);
     const fills = (h: string) => [...h.matchAll(/<polygon[^>]*fill="([^"]+)"/g)].map((m) => m[1]).filter((f) => f.startsWith('oklch'));
     expect(new Set(fills(html))).toEqual(new Set(fills(rest)));
   });
 
-  it('carries the arrows with the record, in the drawing’s region, only where there is somewhere to go', () => {
+  it('carries the arrows with the landed record — beside its cover’s extent — only where there is somewhere to go, and only once settled', () => {
     const three = [seat('a'), seat('b'), seat('c')];
     const sums = { a: summary('a'), b: summary('b'), c: summary('c') };
-    const mid = render({ seats: three, summaries: sums, pull: { id: 'b', direction: 'out', progress: 1 } });
+    const mid = render({ seats: three, summaries: sums, pull: { id: 'b', direction: 'out', ms: OUT_MS } });
     const wall = mid.slice(mid.indexOf('data-region="wall"'));
     const facts = mid.slice(mid.indexOf('data-region="facts"'), mid.indexOf('data-region="wall"'));
     expect(wall).toContain('data-testid="nav-previous"');
     expect(wall).toContain('data-testid="nav-next"');
     expect(facts).not.toContain('data-testid="nav-next"');
-    /* Beside the landed box's projected extent, in the region's px: the arrows go with the record. */
-    const bounds = projectedBox(landedBox('b', view));
-    const left = (id: string) => Number(/left:([\d.]+)px/.exec(/data-testid="nav-(?:previous|next)"[^>]*>/.exec(mid.slice(mid.indexOf(`data-testid="${id}"`)))?.[0] ?? '')?.[1]);
-    expect(left('nav-previous')).toBeCloseTo(bounds.minX - ARROW_LANE, 6);
-    expect(left('nav-next')).toBeCloseTo(bounds.maxX + ARROW_LANE - 44, 6);
-    const first = render({ seats: three, summaries: sums, pull: { id: 'a', direction: 'out', progress: 1 } });
+    /* Beside the landed cover, in the region's px (the svg's frame origin taken out). */
+    const placed = layoutRow(three.map((s) => ({ id: s.id, section: '0' })), 0)[1];
+    const [frameX, frameY] = (/viewBox="([^"]+)"/.exec(mid)?.[1] ?? '0 0').split(' ').map(Number);
+    const view = { x: 0, y: 0, width: 960, height: 760 };
+    const cover = gestureFaces(placed, poseAt(OUT_MS), landingDrift(placed, { ...view, x: frameX, y: frameY })).cover;
+    const xs = cover.map(([x]) => x);
+    const left = (id: string) => Number(/left:([\d.-]+)px/.exec(/data-testid="nav-(?:previous|next)"[^>]*>/.exec(mid.slice(mid.indexOf(`data-testid="${id}"`)))?.[0] ?? '')?.[1]);
+    expect(left('nav-previous')).toBeCloseTo(Math.min(...xs) - frameX - ARROW_LANE, 6);
+    expect(left('nav-next')).toBeCloseTo(Math.max(...xs) - frameX + ARROW_LANE - 44, 6);
+    const first = render({ seats: three, summaries: sums, pull: { id: 'a', direction: 'out', ms: OUT_MS } });
     expect(first).not.toContain('data-testid="nav-previous"');
-    const last = render({ seats: three, summaries: sums, pull: { id: 'c', direction: 'out', progress: 1 } });
+    const last = render({ seats: three, summaries: sums, pull: { id: 'c', direction: 'out', ms: OUT_MS } });
     expect(last).not.toContain('data-testid="nav-next"');
+    const moving = render({ seats: three, summaries: sums, pull: { id: 'b', direction: 'out', ms: SWING_MS } });
+    expect(moving, 'not before it has settled').not.toContain('data-testid="nav-next"');
+  });
+});
+
+describe('the panel arrives with the rotation (§11.14, §11.19)', () => {
+  it('is absent before the rotation joins at 42% of the swing and present from it — the record becomes a subject when it turns', () => {
+    const before = render({ pull: { id: 'b', direction: 'out', ms: ROTATION_START * SWING_MS - 1 } });
+    expect(before).not.toContain('data-testid="record-chrome"');
+    const from = render({ pull: { id: 'b', direction: 'out', ms: ROTATION_START * SWING_MS + 1 } });
+    expect(from).toContain('data-testid="record-chrome"');
+    expect(from).toContain('href="/records/b"');
+    /* And leaves with it on the return: past the mirrored time, the panel is gone. */
+    const returning = render({ pull: { id: 'b', direction: 'back', ms: RETURN_MS * (1 - (ROTATION_START * SWING_MS - 1) / OUT_MS) } });
+    expect(returning).not.toContain('data-testid="record-chrome"');
   });
 });
 
@@ -135,7 +146,7 @@ describe('Turn over shows the back on the same face (§11.7)', () => {
     const html = render({
       seats: [seat('a', { backUrl: 'https://c/back.jpg' })],
       summaries: { a: summary('a') },
-      pull: { id: 'a', direction: 'out', progress: 1 },
+      pull: { id: 'a', direction: 'out', ms: OUT_MS },
       side: 'back',
     });
     expect(html).toContain('href="https://c/back.jpg"');
@@ -143,36 +154,10 @@ describe('Turn over shows the back on the same face (§11.7)', () => {
   });
 
   it('shows a plain back carrying label and catalogue number when there is no photograph (§10b)', () => {
-    const html = render({ pull: { id: 'a', direction: 'out', progress: 1 }, side: 'back' });
+    const html = render({ pull: { id: 'a', direction: 'out', ms: OUT_MS }, side: 'back' });
     expect(html).toContain('data-back-plain');
     expect(html).toContain('Epic');
     expect(html).toContain('PE 1');
     expect(html).not.toContain('href="https://c/x.jpg"');
-  });
-});
-
-describe('the panel arrives with phase two (§11.14)', () => {
-  it('in two-phase mode the panel is absent at the end of phase one and present once the turn begins', () => {
-    const turn = { ms: 600, path: 'linear' as const };
-    const landedOnly = render({ pull: { id: 'b', direction: 'out', progress: 1 }, turn });
-    expect(landedOnly).not.toContain('data-testid="record-chrome"');
-    expect(landedOnly).not.toContain('data-testid="nav-next"');
-    const turning = render({ pull: { id: 'b', direction: 'out', progress: 1, turn: 0.01 }, turn });
-    expect(turning).toContain('data-testid="record-chrome"');
-    expect(turning).toContain('href="/records/b"');
-  });
-
-  it('carries the arrows beside the page square once the record is on the page’s plane', () => {
-    const view = { x: 0, y: 0, width: 960, height: 760 };
-    const turned = render({ pull: { id: 'b', direction: 'out', progress: 1, turn: 1 }, turn: { ms: 600, path: 'linear' }, view });
-    const square = landedSquare(view);
-    const left = (id: string) => Number(/left:([\d.]+)px/.exec(/data-testid="nav-(?:previous|next)"[^>]*>/.exec(turned.slice(turned.indexOf(`data-testid="${id}"`)))?.[0] ?? '')?.[1]);
-    expect(left('nav-previous')).toBeCloseTo(square.x - ARROW_LANE, 6);
-    const half = render({ pull: { id: 'b', direction: 'out', progress: 1, turn: 0.5 }, turn: { ms: 600, path: 'linear' }, view });
-    expect(half, 'not before it has arrived').not.toContain('data-testid="nav-previous"');
-  });
-
-  it('without the mode, the panel arrives at the perceived end of the pull as before', () => {
-    expect(render({ pull: { id: 'b', direction: 'out', progress: PERCEIVED_END } })).toContain('data-testid="record-chrome"');
   });
 });

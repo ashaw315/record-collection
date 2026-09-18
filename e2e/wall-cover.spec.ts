@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { PULL_DURATION_MS } from '../src/app/wall/pull-curve';
+import { OUT_MS } from '../src/app/wall/gesture';
 import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
 
 /**
@@ -65,7 +65,7 @@ test('the pulled record shows its cover, fitted inside its face, at the end and 
     expect(mid.cover.b).toBeLessThanOrEqual(mid.field.b + 0.5);
   }
 
-  await page.clock.runFor(PULL_DURATION_MS + 40);
+  await page.clock.runFor(OUT_MS + 40);
   const end = await boxes();
   expect(end).not.toBeNull();
   if (end === null) return;
@@ -105,7 +105,7 @@ test('the record with no cover arrives at type on its field, with the diagonal, 
   const blues = COLLECTION_SPINES.findIndex((row) => row.resampled === null);
   expect(blues, 'the fixture has one record without a cover').toBeGreaterThan(-1);
   await page.locator(`[data-seat="collection-${blues}"] [data-spine]`).click();
-  await page.clock.runFor(PULL_DURATION_MS + 40);
+  await page.clock.runFor(OUT_MS + 40);
 
   const sleeve = page.locator('[data-pulled] [data-no-cover]');
   await expect(sleeve).toHaveCount(1);

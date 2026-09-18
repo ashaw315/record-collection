@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
-import { COS30 } from '../src/app/wall/geometry';
+import { LANDED_SIZE } from '../src/app/wall/landing';
+import { OUT_MS } from '../src/app/wall/gesture';
 import { registerCleanup, trackArtist } from './cleanup';
 import { seedRecords } from './seed';
 import { contrastRatio } from '../src/lib/colour/record-colour';
@@ -37,7 +38,7 @@ test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
 });
 
-test('the panel arrives with the record — at the gesture’s perceived end, not before, in the facts column', async ({
+test('the panel arrives with the record — with the rotation, not before, in the facts column', async ({
   page,
 }) => {
   const artistId = await seed(page, 12);
@@ -53,6 +54,8 @@ test('the panel arrives with the record — at the gesture’s perceived end, no
   await page.clock.runFor(700);
   const chrome = page.getByTestId('record-chrome');
   await expect(chrome).toBeVisible();
+  /* The geometry below is read once the gesture has settled: the swing, then the 300ms finish. */
+  await page.clock.runFor(OUT_MS);
   await expect(chrome.getByTestId('record-panel')).toHaveAttribute('data-expanded', 'true');
   await expect(chrome.getByTestId('action-turn')).toBeVisible();
   await expect(chrome.getByTestId('action-put')).toBeVisible();
@@ -83,8 +86,9 @@ test('the panel arrives with the record — at the gesture’s perceived end, no
   expect(geometry.panel.r, 'the panel is in the facts column').toBeLessThanOrEqual(geometry.facts.r + 1);
   expect(geometry.panel.l).toBeLessThan(geometry.wall.l);
   expect(geometry.panel.t, 'below the count').toBeGreaterThan(geometry.count.b);
-  /* A square face at 30°: its box is cos30 wide and 1.5 tall per unit — the parallelogram, not a square. */
-  expect(geometry.field.h / geometry.field.w, 'the record is a square face at the wall’s angle').toBeCloseTo(1.5 / COS30, 2);
+  /* Landed on the page's plane (§11.17, §11.21): a 560 square, the projection undone. */
+  expect(Math.abs(geometry.field.w - geometry.field.h), 'the landed record is a square').toBeLessThan(1.5);
+  expect(geometry.field.w).toBeCloseTo(LANDED_SIZE, 0);
   expect(geometry.field.l, 'in the drawing’s region').toBeGreaterThanOrEqual(geometry.wall.l);
   expect(geometry.next.l, 'the arrow goes with the record, beside it').toBeGreaterThan(geometry.field.r);
   expect(geometry.next.l).toBeGreaterThanOrEqual(geometry.wall.l);
