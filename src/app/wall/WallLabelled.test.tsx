@@ -301,6 +301,31 @@ describe('the record with no cover arrives at type, not at a swatch (§11.3, §1
   });
 });
 
+describe('a filter empties seats rather than re-seating them (§11.12)', () => {
+  const xOf = (html: string, id: string) => Number(/<polygon[^>]*data-face="front"[^>]*points="([\d.-]+),/.exec(html.slice(html.indexOf(`data-seat="${id}"`)))?.[1]);
+
+  it('draws nothing for an empty seat — no faces, no anchor, no label — and holds every other seat in its place', () => {
+    const full = render([seat('a', null), seat('b', null), seat('c', null)], null);
+    const filtered = render([seat('a', null), { ...seat('b', null), empty: true }, seat('c', null)], null);
+    expect(filtered).not.toContain('data-seat="b"');
+    expect(filtered).not.toContain('href="/records/b"');
+    expect(filtered).not.toContain('Title b');
+    expect(filtered).toContain('data-seat="a"');
+    expect(filtered).toContain('data-seat="c"');
+    /* c's seat is where it was: the filter is a shape on the fixture, not a new fixture. */
+    expect(xOf(filtered, 'c')).toBe(xOf(full, 'c'));
+    /* The fixture is unchanged: the same pieces, the same faces. */
+    expect(filtered.split('data-furniture=').length).toBe(full.split('data-furniture=').length);
+  });
+
+  it('gives the keyboard walk the seated records only, in seat order', () => {
+    const html = render([seat('a', null), { ...seat('b', null), empty: true }, seat('c', null)], null);
+    const tab = (id: string) => Number(/tabindex="(\d+)"/.exec(new RegExp(`<a [^>]*data-seat="${id}"[^>]*>`).exec(html)?.[0] ?? '')?.[1]);
+    expect(tab('a')).toBe(1);
+    expect(tab('c')).toBe(2);
+  });
+});
+
 describe('spines are anchors inside the SVG (§11.8)', () => {
   it('wraps each seat’s faces and label in an <a> with the record’s route and the FULL title as its name', () => {
     const html = render([seat('a', null), seat('b', null)], null);

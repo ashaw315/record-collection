@@ -84,6 +84,19 @@ describe('the overview draws the collection as polygons', () => {
  * **§2's distinction, at the rendered layer.** The geometry module asserts it
  * on points; this asserts that the renderer actually emits what it produced.
  */
+describe('a filter empties seats in the far view (§11.12)', () => {
+  it('draws no faces for an empty seat, keeps the fixture, and links nothing there', () => {
+    const three = seats(3);
+    const full = render({ seats: three, pulledId: null });
+    const filtered = render({ seats: [three[0], { ...three[1], empty: true }, three[2]], pulledId: null, linked: true });
+    expect(countTag(filtered, 'polygon')).toBe(countTag(full, 'polygon') - 3);
+    expect(countTag(filtered, 'polygon[data-furniture')).toBe(countTag(full, 'polygon[data-furniture'));
+    expect(filtered).not.toContain('data-far-seat="r1"');
+    expect(filtered).toContain('data-far-seat="r0"');
+    expect(filtered).toContain('data-far-seat="r2"');
+  });
+});
+
 describe('a pulled record leaves the shelf whole', () => {
   it('draws the same number of shelf outlines with a record pulled', () => {
     const shelf = seats(6, 2);

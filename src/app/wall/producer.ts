@@ -13,6 +13,7 @@ import { recordSummary, type RecordSummary } from './summary';
 export function wallSeats(records: readonly ShelfRecord[]): WallSeat[] {
   return records.map((record) => ({
     id: record.id,
+    ...(record.matches ? {} : { empty: true }),
     section: String(record.sectionIndex),
     label: spineLabel(record.artistName, record.title),
     title: record.title,

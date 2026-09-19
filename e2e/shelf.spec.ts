@@ -420,6 +420,58 @@ test('genre and sort from the rail narrow and order the wall without leaving it 
   await expect(rail.getByLabel('Sort')).toHaveValue('title:desc');
 });
 
+test('a filter empties seats rather than re-seating them: the same record’s seat has the same screen position with and without it (§11.12)', async ({ page }) => {
+  /*
+    The property the ruling buys and nothing else pins. Positions are measured
+    against the left upright, since scroll and frame are relative; the fixture's
+    length is the right upright's distance from the left one.
+  */
+  const stamp = suffix();
+  const genre = await page.request.post('/api/genres', { data: { name: `Shape-${stamp}` } });
+  const genreId = (await genre.json()).id as string;
+  const artist = await page.request.post('/api/artists', { data: { name: `Shape-${stamp}` } });
+  const artistId = (await artist.json()).id as string;
+  trackArtist(artistId);
+  const ids: Record<string, string> = {};
+  for (const [title, inGenre] of [['Believer', true], ['Gaucho', false], ['Wired', true]] as const) {
+    const record = await page.request.post('/api/records', { data: { title, artistId, ...(inGenre ? { genreIds: [genreId] } : {}) } });
+    expect(record.status()).toBe(201);
+    ids[title] = (await record.json()).id as string;
+  }
+  const measure = () =>
+    page.evaluate((seatIds) => {
+      const left = (q: string) => document.querySelector(q)?.getBoundingClientRect().left ?? null;
+      const uprights = Array.from(document.querySelectorAll('[data-furniture="upright-front"]')).map((el) => el.getBoundingClientRect().left);
+      const origin = Math.min(...uprights);
+      return {
+        length: Math.max(...uprights) - origin,
+        pieces: document.querySelectorAll('[data-piece]').length,
+        seats: Object.fromEntries(Object.entries(seatIds).map(([title, id]) => [title, (() => { const l = left(`[data-seat="${id}"] [data-spine]`); return l === null ? null : l - origin; })()])),
+      };
+    }, ids);
+
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
+  await expect(page.getByTestId('wall-count')).toHaveText('3');
+  const rest = await measure();
+  expect(rest.seats.Gaucho).not.toBeNull();
+
+  await page.goto(`/?artistId=${artistId}&genreId=${genreId}`);
+  await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
+  await expect(page.getByTestId('wall-count'), 'the seated records').toHaveText('2');
+  await expect(page.getByTestId('wall').locator('[data-region="count"]')).toContainText(/2 of \d+/);
+  const filtered = await measure();
+  /* The non-matching seat is empty: no element. The fixture is the same fixture. */
+  expect(filtered.seats.Gaucho, 'the emptied seat draws nothing').toBeNull();
+  expect(filtered.pieces).toBe(rest.pieces);
+  expect(Math.abs(filtered.length - rest.length), 'the row did not shorten').toBeLessThan(1);
+  /* And the matching records are in the seats they were in. */
+  for (const title of ['Believer', 'Wired']) {
+    expect(Math.abs((filtered.seats[title] ?? NaN) - (rest.seats[title] ?? NaN)), `${title} keeps its seat`).toBeLessThan(1);
+  }
+  await page.request.delete(`/api/genres/${genreId}`);
+});
+
 test('the rail’s view list reaches the table and comes back to the shelf', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });

@@ -319,6 +319,50 @@ describe('shelfRecords — what a spine needs', () => {
   });
 });
 
+describe('shelfRecords — a filter marks rather than prunes (8a §11.12, §11.24)', () => {
+  /*
+    A filter that re-seats the collection changes every record's position, and
+    §11.1 leaves position carrying the collection's order — so a filtered wall
+    is the same fixture with the non-matching seats EMPTY. The query therefore
+    returns the whole collection in wall order with the table's own predicate
+    as a projection, `matches`, rather than as a WHERE. Same row count as at
+    rest; the predicate is evaluated per row instead of pruning.
+  */
+  it('returns every owned record in the unfiltered order, marking the ones the predicate matches', async () => {
+    const punk = await genre('Punk');
+    const jazz = await genre('Jazz');
+    const discharge = await artist('Discharge');
+    const davis = await artist('Miles Davis');
+    await record('Hear Nothing', discharge, { genreIds: [punk] });
+    await record('Why', discharge, { genreIds: [punk] });
+    await record('Bitches Brew', davis, { genreIds: [jazz] });
+
+    const all = await shelfRecords();
+    const filtered = await shelfRecords({ genreId: punk });
+    expect(filtered.map((r) => r.id)).toEqual(all.map((r) => r.id));
+    expect(all.map((r) => r.matches)).toEqual([true, true, true]);
+    expect(filtered.map((r) => [r.title, r.matches])).toEqual(all.map((r) => [r.title, r.title !== 'Bitches Brew']));
+  });
+
+  it('marks by the same predicate the table uses — a search term, an artist — and marks nothing when nothing matches', async () => {
+    const discharge = await artist('Discharge');
+    const davis = await artist('Miles Davis');
+    await record('Hear Nothing', discharge);
+    await record('Bitches Brew', davis);
+
+    const byArtist = await shelfRecords({ artistId: davis });
+    expect(byArtist).toHaveLength(2);
+    expect(byArtist.find((r) => r.title === 'Bitches Brew')?.matches).toBe(true);
+    expect(byArtist.find((r) => r.title === 'Hear Nothing')?.matches).toBe(false);
+    const bySearch = await shelfRecords({ q: 'Bitches' });
+    expect(bySearch.map((r) => r.matches).filter(Boolean)).toHaveLength(1);
+    /* A term sharing no trigram with either title — 'nothing' would match 'Hear Nothing' by similarity, correctly. */
+    const none = await shelfRecords({ q: 'qqqq-xxxx' });
+    expect(none).toHaveLength(2);
+    expect(none.every((r) => r.matches === false)).toBe(true);
+  });
+});
+
 describe('shelfRecords — scope', () => {
   it('returns an empty array for an empty collection', async () => {
     // §10b: "sparse is fine … the view does not pad, fake, or hide itself."
@@ -396,7 +440,7 @@ describe('shelfRecords — what pulling a record needs (§10b)', () => {
     expect((await shelfRecords())[0].backUrl).toBeNull();
   });
 
-  it('honours a filter, rather than returning the whole collection', async () => {
+  it('honours a filter — by marking, since §11.12: the whole collection returns and only the matching records are marked', async () => {
     /**
      * **The defect this pins, at the query level.**
      *
@@ -414,8 +458,11 @@ describe('shelfRecords — what pulling a record needs (§10b)', () => {
      * rather than against the page.
      *
      * Fails against `shelfRecords` if the filters parameter is dropped, if the
-     * WHERE clause is omitted, or if the shared `buildWhere` predicate stops
-     * being applied.
+     * `matches` projection is omitted, or if the shared `buildWhere` predicate
+     * stops being applied. Restated under 8a §11.12: the filter is honoured by
+     * MARKING — every record returns, in its seat, and `matches` says which
+     * the filter keeps — because a filter that re-seats the collection changes
+     * every record's position, and position carries the collection's order.
      */
     const punk = await genre('Punk');
     const rock = await genre('Rock');
@@ -428,10 +475,11 @@ describe('shelfRecords — what pulling a record needs (§10b)', () => {
     expect((await shelfRecords()).length, 'unfiltered returns everything').toBe(3);
 
     const punkOnly = await shelfRecords({ genreId: punk });
-    expect(punkOnly.map((row) => row.title).sort()).toEqual(['Hear Nothing', 'Why']);
+    expect(punkOnly.length, 'filtered returns everything too').toBe(3);
+    expect(punkOnly.filter((row) => row.matches).map((row) => row.title).sort()).toEqual(['Hear Nothing', 'Why']);
 
     const rockOnly = await shelfRecords({ genreId: rock });
-    expect(rockOnly.map((row) => row.title)).toEqual(['Brothers in Arms']);
+    expect(rockOnly.filter((row) => row.matches).map((row) => row.title)).toEqual(['Brothers in Arms']);
   });
 
   it('shares ONE filter predicate with the table, rather than restating it', async () => {
@@ -462,11 +510,12 @@ describe('shelfRecords — what pulling a record needs (§10b)', () => {
     const wall = await shelfRecords({ genreId: punk });
     const table = await listRecords({ filters: { genreId: punk }, limit: 50, offset: 0 });
 
+    const marked = wall.filter((row) => row.matches);
     expect(
-      wall.map((row) => row.title).sort(),
+      marked.map((row) => row.title).sort(),
       'the wall must match through the hierarchy, as the table does',
     ).toEqual(table.rows.map((row) => row.title).sort());
-    expect(wall.length, 'and the child-tagged record matches its ancestor').toBe(1);
+    expect(marked.length, 'and the child-tagged record matches its ancestor').toBe(1);
   });
 
   it('carries a gatefold ONLY when BOTH leaves have been photographed', async () => {

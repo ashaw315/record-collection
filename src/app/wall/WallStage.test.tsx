@@ -122,6 +122,25 @@ describe('two columns: facts left, drawing right (§11.9)', () => {
   });
 });
 
+describe('a filter empties seats: the count and the arrows are the seated records’ (§11.12)', () => {
+  const three = [seat('a'), { ...seat('b'), empty: true }, seat('c')];
+  const sums = { a: summary('a'), b: summary('b'), c: summary('c') };
+
+  it('counts the seated records, not the seats', () => {
+    expect(render({ seats: three, summaries: sums })).toMatch(/data-testid="wall-count"[^>]*>2</);
+  });
+
+  it('skips an empty seat with the arrows: a’s next is c, and c’s previous is a', () => {
+    const fromA = render({ seats: three, summaries: sums, pull: { id: 'a', direction: 'out', ms: OUT_MS } });
+    expect(fromA).toContain('data-testid="nav-next"');
+    const fromC = render({ seats: three, summaries: sums, pull: { id: 'c', direction: 'out', ms: OUT_MS } });
+    expect(fromC).toContain('data-testid="nav-previous"');
+    /* And an empty seat at the end is not somewhere to go. */
+    const end = render({ seats: [seat('a'), { ...seat('b'), empty: true }], summaries: sums, pull: { id: 'a', direction: 'out', ms: OUT_MS } });
+    expect(end).not.toContain('data-testid="nav-next"');
+  });
+});
+
 describe('where the record lands and what goes with it (§11.19–§11.21)', () => {
   const view = { x: 0, y: 0, width: 960, height: 760 };
 

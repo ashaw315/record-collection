@@ -56,7 +56,9 @@ export function WallOverview({
   linked?: boolean;
 }) {
   const { placed, furniture, breaks, frame } = wallLayout(seats, [], 0);
-  const seated = placed.filter((seat) => seat.id !== pulledId);
+  const emptied = new Set(seats.filter((seat) => seat.empty).map((seat) => seat.id));
+  /* §11.12: an emptied seat is laid out and draws nothing — the filter is a shape on the fixture. */
+  const seated = placed.filter((seat) => seat.id !== pulledId && !emptied.has(seat.id));
 
   return (
     <svg data-wall="overview" viewBox={frame.viewBox} style={{ background: PAPER_CSS, width: '100%', height: 'auto' }}>

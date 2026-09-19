@@ -35,6 +35,7 @@ const record = (over: Partial<ShelfRecord>): ShelfRecord => ({
   purchaseDate: null,
   storeName: null,
   sectionIndex: 0,
+  matches: true,
   ...over,
 });
 
@@ -58,6 +59,16 @@ describe('wallSeats', () => {
   it('keeps the producer’s order — the one order the keyboard, the arrows and the links share', () => {
     const seats = wallSeats([record({ id: 'b' }), record({ id: 'a' }), record({ id: 'c' })]);
     expect(seats.map((s) => s.id)).toEqual(['b', 'a', 'c']);
+  });
+});
+
+describe('wallSeats — a filter empties seats (§11.12)', () => {
+  it('seats a matching record and leaves a non-matching one EMPTY — the seat kept, the record absent', () => {
+    const [seated, empty] = wallSeats([record({ id: 'r1', matches: true }), record({ id: 'r2', matches: false })]);
+    expect(seated.empty).toBeUndefined();
+    expect(empty.empty).toBe(true);
+    /* Position carries the collection's order: the empty seat is still a seat, in its place. */
+    expect(wallSeats([record({ id: 'r1', matches: false }), record({ id: 'r2', matches: true })]).map((s) => s.id)).toEqual(['r1', 'r2']);
   });
 });
 

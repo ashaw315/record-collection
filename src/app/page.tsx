@@ -114,7 +114,7 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
             summaries={wallSummaries(shelf)}
             countLine={
               activeFilterCount(params) > 0
-                ? collectionCountLabel({ matched: shelf.length, total: collectionTotal, filtered: true })
+                ? collectionCountLabel({ matched: shelf.filter((record) => record.matches).length, total: collectionTotal, filtered: true })
                 : null
             }
             rail={<WallRail params={params} genres={facets.genres} />}

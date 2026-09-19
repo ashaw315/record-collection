@@ -181,7 +181,7 @@ export function WallLive({
   /* The arrows: the held record goes back and its neighbour comes out, on one clock. */
   const go = useCallback(
     (direction: Direction) => {
-      const next = navigate(pulls, seats.map((seat) => seat.id), direction);
+      const next = navigate(pulls, seats.filter((seat) => !seat.empty).map((seat) => seat.id), direction);
       if (next === null) return;
       started.current = null;
       setSide('front');

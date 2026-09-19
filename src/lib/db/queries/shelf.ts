@@ -46,6 +46,12 @@ export type ShelfRecord = {
   /** §10b's spine colour; `null` is an honest absence, rendered as a plain spine. */
   spineColour: string | null;
   /**
+   * §11.12 / §11.24: whether this record matches the active filter. The
+   * shelf returns the WHOLE collection in wall order and marks; a
+   * non-matching record's seat stays where it is, empty.
+   */
+  matches: boolean;
+  /**
    * The dense rank of this record's section in wall order — a BOUNDARY marker
    * for the runs, never a name: the screen must not render the headings §10b
    * removed, and an ordinal cannot be rendered as one.
@@ -122,10 +128,16 @@ type Row = ShelfRecord & { sectionName: string | null };
  * those conditions resolve: Drizzle renders `"records"."label_id"`, which would
  * reference a table not in scope under any other alias.
  *
- * **Filtering repacks rather than leaving gaps**, which is honest but is not
- * what §10b A24d asks for. That behaviour is unimplemented and has its own unit
- * ahead of it; holding positions for records that are not rendered is a
- * different mechanism from filtering the rows.
+ * **A filter marks rather than prunes (8a §11.12, §11.24).** The predicate is
+ * projected as \`matches\` rather than applied as a WHERE, so the whole
+ * collection comes back in wall order and a non-matching record's seat
+ * stays where it is, empty: the filter is a shape on the fixture, not a new
+ * fixture, and the answer to how much there is stays comparable before and
+ * after. The cost, stated: the row count under a filter is the row count at
+ * rest (the shelf is unpaginated), and the predicate is evaluated per row
+ * rather than pruning — at hundreds of records nothing; at thousands the
+ * trigram search becomes a sequential scan over every row where a WHERE
+ * could have used its index, and that is the point to revisit this.
  */
 export async function shelfRecords(filters: RecordFilters = {}): Promise<ShelfRecord[]> {
   const db = getDb();
@@ -222,7 +234,8 @@ export async function shelfRecords(filters: RecordFilters = {}): Promise<ShelfRe
       records.purchase_price::text AS "purchasePrice",
       records.purchase_date::text AS "purchaseDate",
       st.name AS "storeName",
-      s.root_name AS "sectionName"
+      s.root_name AS "sectionName",
+      ${where === undefined ? sql`true` : sql`(${where})`} AS "matches"
     FROM records
     JOIN artists a ON a.id = records.artist_id
     LEFT JOIN labels l ON l.id = records.label_id
@@ -233,7 +246,6 @@ export async function shelfRecords(filters: RecordFilters = {}): Promise<ShelfRe
     LEFT JOIN image gateL ON gateL.record_id = records.id AND gateL.image_type = 'gatefold_left'
     LEFT JOIN image gateR ON gateR.record_id = records.id AND gateR.image_type = 'gatefold_right'
     LEFT JOIN section s ON s.record_id = records.id
-    ${where === undefined ? sql`` : sql`WHERE ${where}`}
     /**
      * Genre groups alphabetically, with ungrouped records LAST — they are the
      * leftovers, and scattering them through the wall would break the adjacency
@@ -265,6 +277,7 @@ export async function shelfRecords(filters: RecordFilters = {}): Promise<ShelfRe
   const indices = sectionIndices(result.rows.map((row) => row.sectionName));
   return result.rows.map((row, index) => ({
     id: row.id,
+    matches: row.matches,
     sectionIndex: indices[index],
     title: row.title,
     artistName: row.artistName,

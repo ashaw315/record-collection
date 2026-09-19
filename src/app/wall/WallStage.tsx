@@ -87,7 +87,9 @@ export function WallStage({
   const arriving = moving.find((state) => state.direction === 'out');
   const arrived = arriving !== undefined && outTime(arriving) >= ROTATION_START * SWING_MS;
   const summary = arrived ? summaries[arriving.id] : undefined;
-  const order = seats.map((seat) => seat.id);
+  /* §11.12: the arrows walk the seated records; an empty seat is not somewhere to go. */
+  const seated = seats.filter((seat) => !seat.empty);
+  const order = seated.map((seat) => seat.id);
 
   /*
     §11.9: the panel's region is FIXED in the facts column below the count,
@@ -152,7 +154,7 @@ export function WallStage({
     <div data-region={far ? 'count-far' : 'count'}>
       <div className={LABEL}>COLLECTION</div>
       <div data-testid={far ? 'wall-count-far' : 'wall-count'} className="text-display leading-[0.86] font-extrabold" style={{ marginTop: 6 }}>
-        {seats.length}
+        {seated.length}
       </div>
       {countLine === null ? null : (
         <p className="mt-[10px] text-meta" style={{ color: LABEL_INK }}>

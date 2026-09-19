@@ -112,8 +112,8 @@ export function WallLabelled({
   const movingById = new Map(moving.map((state) => [state.id, state]));
 
   const byId = new Map(seats.map((seat) => [seat.id, seat]));
-  /* §11.23: paint order interleaves rows by column, so the keyboard walk gets its own sequence — seat order, 1-based. */
-  const tabOf = new Map(seats.map((seat, index) => [seat.id, index + 1]));
+  /* §11.23: paint order interleaves rows by column, so the keyboard walk gets its own sequence — seat order, 1-based, over the SEATED records (§11.12: an empty seat is not on the path). */
+  const tabOf = new Map(seats.filter((seat) => !seat.empty).map((seat, index) => [seat.id, index + 1]));
   const { placed, pieces, frame } = wallLayout(seats, (framed ?? moving.map((m) => m.id)).map((id) => ({ id })), minWidth, minHeight);
   /* The view is the region's to pan (§11.22); the drawing needs none of it. */
   void view;
@@ -314,6 +314,8 @@ export function WallLabelled({
         const seat = placed.find((p) => p.id === object.id);
         const record = byId.get(object.id);
         if (seat === undefined || record === undefined) return null;
+        /* §11.12: an emptied seat is laid out — it holds its neighbours in place — and draws nothing. */
+        if (record.empty) return null;
         const state = movingById.get(object.id);
         if (state !== undefined) return renderMoving(seat, record, state);
         const face = frontFace(seat);

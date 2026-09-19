@@ -21,6 +21,8 @@
 /** A record's seat on the shelf, in shelf order. */
 export type ShelfSeat = {
   id: string;
+  /** §11.12: the seat is kept and the record is absent — a filter empties seats rather than re-seating the collection. */
+  empty?: boolean;
   /**
    * The section this seat belongs to — §10b's top-level genre ancestor.
    *
