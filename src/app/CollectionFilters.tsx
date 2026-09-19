@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { LABEL } from '@/app/records/[id]/grid-type';
 import { RECORD_SORT_FIELDS, type RecordSortField } from '@/lib/records/fields';
 import {
+  SORT_LABELS,
   VIEW_MODES,
   parseCollectionParams,
   toQueryString,
@@ -34,14 +35,6 @@ export type FilterOptions = {
   labels: FilterOption[];
   stores: FilterOption[];
   tags: FilterOption[];
-};
-
-const SORT_LABELS: Record<RecordSortField, string> = {
-  title: 'Title',
-  artist: 'Artist',
-  purchaseDate: 'Date bought',
-  purchasePrice: 'Price paid',
-  releaseYear: 'Year',
 };
 
 const CHIP_GROUPS = [

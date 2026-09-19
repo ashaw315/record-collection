@@ -14,7 +14,11 @@ import { LABEL } from './records/[id]/grid-type';
  * edges of the rail. The rail carries no identity: COLLECTION and the count
  * stay at the facts column's head (§11.9).
  */
-const render = (search = '') => renderToStaticMarkup(<WallRail params={parseCollectionParams(new URLSearchParams(search))} />);
+const GENRES = [
+  { id: '00000000-0000-4000-8000-00000000000a', name: 'Punk', count: 12 },
+  { id: '00000000-0000-4000-8000-00000000000b', name: 'Jazz', count: 3 },
+];
+const render = (search = '') => renderToStaticMarkup(<WallRail params={parseCollectionParams(new URLSearchParams(search))} genres={GENRES} />);
 const at = (html: string, marker: string) => {
   const index = html.indexOf(marker);
   expect(index, marker).toBeGreaterThan(-1);
@@ -22,10 +26,10 @@ const at = (html: string, marker: string) => {
 };
 
 describe('the rail (§11.13)', () => {
-  it('is 148px wide, LABEL throughout, and runs SEARCH, then SHELF · TABLE · GRID, then a full-bleed rule, then ADD RECORD', () => {
+  it('is 148px wide, LABEL throughout, and runs SEARCH, GENRE, SORT, then SHELF · TABLE · GRID, then a full-bleed rule, then ADD RECORD', () => {
     const html = render();
     expect(html).toMatch(/data-testid="wall-rail"[^>]*width:\s*148px/);
-    const order = ['role="search"', '>Shelf<', '>Table<', '>Grid<', 'data-rail-rule=""', 'href="/records/new"'].map((m) => at(html, m));
+    const order = ['role="search"', 'for="rail-search"', 'for="rail-genre"', 'for="rail-sort"', '>Shelf<', '>Table<', '>Grid<', 'data-rail-rule=""', 'href="/records/new"'].map((m) => at(html, m));
     expect([...order].sort((a, b) => a - b)).toEqual(order);
     for (const cls of LABEL.split(' ')) expect(html, cls).toContain(cls);
     expect(html).not.toContain('COLLECTION');
@@ -71,5 +75,55 @@ describe('the rail (§11.13)', () => {
     expect(input).not.toMatch(/\bborder\b(?!-)/);
     expect(input).not.toMatch(/border-[tlrx]\b|border-y\b/);
     expect(html).toMatch(/<label[^>]*for="rail-search"[^>]*>Search<\/label>/);
+  });
+
+  /*
+    §11.24: the filter belongs in the rail. §11.12 forces it — a filter that
+    empties seats produces a shape on the fixture, and an empty seat you did
+    not watch empty is indistinguishable from a gap in the collection — so
+    GENRE and SORT sit under SEARCH in the same vocabulary, and the round
+    trip through the table's chips stops being the only route.
+  */
+  describe('GENRE and SORT under SEARCH (§11.24)', () => {
+    it('offers every genre facet with its rolled-up count, Any first, the current one selected — as a ruled field, not a box', () => {
+      const html = render(`genreId=${GENRES[1].id}`);
+      const select = /<select[^>]*id="rail-genre"[^>]*>[\s\S]*?<\/select>/.exec(html)?.[0] ?? '';
+      expect(select).toMatch(/name="genreId"/);
+      expect(select).toMatch(/<option[^>]*value=""[^>]*>Any<\/option>/);
+      expect(select).toMatch(/<option[^>]*value="00000000-0000-4000-8000-00000000000a"[^>]*>Punk 12<\/option>/);
+      expect(select).toMatch(/<option[^>]*value="00000000-0000-4000-8000-00000000000b"[^>]*selected[^>]*>Jazz 3<\/option>/);
+      expect(select).toContain('h-[34px]');
+      expect(select).toContain('border-b');
+      expect(select).toContain('font-mono');
+      expect(select).not.toMatch(/rounded/);
+      expect(select).not.toMatch(/\bborder\b(?!-)/);
+      expect(html).toMatch(/<label[^>]*for="rail-genre"[^>]*>Genre<\/label>/);
+    });
+
+    it('offers the sort fields in both directions with Default first, the current one selected', () => {
+      const html = render('sort=releaseYear:desc');
+      const select = /<select[^>]*id="rail-sort"[^>]*>[\s\S]*?<\/select>/.exec(html)?.[0] ?? '';
+      expect(select).toMatch(/name="sort"/);
+      expect(select).toMatch(/<option[^>]*value=""[^>]*>Default<\/option>/);
+      expect(select).toMatch(/<option[^>]*value="title:asc"[^>]*>Title ↑<\/option>/);
+      expect(select).toMatch(/<option[^>]*value="releaseYear:desc"[^>]*selected[^>]*>Year ↓<\/option>/);
+      expect(html).toMatch(/<label[^>]*for="rail-sort"[^>]*>Sort<\/label>/);
+    });
+
+    it('is one GET form: search, genre and sort are its fields, the other filters ride as hidden inputs, and a submit exists for JavaScript off', () => {
+      const html = render(`artistId=00000000-0000-4000-8000-000000000001&genreId=${GENRES[0].id}&sort=title:asc&q=wired`);
+      const form = /<form[^>]*role="search"[\s\S]*?<\/form>/.exec(html)?.[0] ?? '';
+      for (const own of ['q', 'genreId', 'sort']) expect(form, `${own} is a field, not a hidden input`).not.toMatch(new RegExp(`type="hidden"[^>]*name="${own}"`));
+      expect(form).toMatch(/<input[^>]*type="hidden"[^>]*name="artistId"/);
+      expect(form).toMatch(/<select[^>]*name="genreId"/);
+      expect(form).toMatch(/<select[^>]*name="sort"/);
+      expect(form).toMatch(/<button[^>]*type="submit"[^>]*>Apply<\/button>/);
+    });
+
+    it('draws no genre line when the collection has no genre facets, and keeps the sort', () => {
+      const html = renderToStaticMarkup(<WallRail params={parseCollectionParams(new URLSearchParams())} genres={[]} />);
+      expect(html).not.toContain('rail-genre');
+      expect(html).toContain('rail-sort');
+    });
   });
 });

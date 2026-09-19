@@ -29,6 +29,15 @@ import { RECORD_SORT_FIELDS, type RecordFilters, type RecordSortField } from '@/
 export const VIEW_MODES = ['shelf', 'table', 'grid'] as const;
 export type ViewMode = (typeof VIEW_MODES)[number];
 
+/** The sort fields as the page names them — one vocabulary for the chips row and the rail (§11.24). */
+export const SORT_LABELS: Record<RecordSortField, string> = {
+  title: 'Title',
+  artist: 'Artist',
+  purchaseDate: 'Date bought',
+  purchasePrice: 'Price paid',
+  releaseYear: 'Year',
+};
+
 export type CollectionParams = {
   filters: RecordFilters;
   sort?: { field: RecordSortField; direction: 'asc' | 'desc' };

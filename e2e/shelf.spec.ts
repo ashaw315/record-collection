@@ -348,8 +348,13 @@ test('the shelf view has no header band: the wall starts under the nav, and the 
   expect(geometry.facts.width, '420px').toBeCloseTo(420, 0);
   expect(geometry.region.left, 'the drawing stays rightmost').toBeGreaterThan(geometry.facts.left);
   /* The rail's order: search, the views, add record. */
-  const order = await rail.evaluate((el) => Array.from(el.querySelectorAll('form, a')).map((n) => n.textContent?.trim()));
-  expect(order).toEqual(['Search', 'Shelf', 'Table', 'Grid', 'Add record']);
+  /* The rail's order: the one form (search, genre, sort), the views, add record. */
+  const order = await rail.evaluate((el) => Array.from(el.querySelectorAll('form, a')).map((n) => (n.tagName === 'FORM' ? n.getAttribute('role') : n.textContent?.trim())));
+  expect(order).toEqual(['search', 'Shelf', 'Table', 'Grid', 'Add record']);
+  /* SEARCH first and SORT last; GENRE between them when the collection has genre facets (the §11.24 test seeds one and asserts all three). */
+  const fields = await rail.evaluate((el) => Array.from(el.querySelectorAll('form label')).map((n) => n.textContent?.trim()));
+  expect(fields[0]).toBe('Search');
+  expect(fields[fields.length - 1]).toBe('Sort');
   await expect(rail.getByRole('link', { name: 'Shelf' })).toHaveAttribute('aria-current', 'page');
 });
 
@@ -378,6 +383,38 @@ test('search from the rail narrows the wall, and the count says so', async ({ pa
   await expect(page.getByTestId('wall-count')).toHaveText('1');
   /* The filter-aware line under the count carries what the header's count used to. */
   await expect(page.getByTestId('wall').locator('[data-region="count"]')).toContainText(/1 of \d+/);
+});
+
+test('genre and sort from the rail narrow and order the wall without leaving it (§11.24)', async ({ page }) => {
+  const stamp = suffix();
+  const genre = await page.request.post('/api/genres', { data: { name: `Rail-${stamp}` } });
+  expect(genre.status()).toBe(201);
+  const genreId = (await genre.json()).id as string;
+  const artist = await page.request.post('/api/artists', { data: { name: `Rail-${stamp}` } });
+  const artistId = (await artist.json()).id as string;
+  trackArtist(artistId);
+  for (const [title, inGenre] of [['Believer', true], ['Gaucho', true], ['Wired', false]] as const) {
+    const record = await page.request.post('/api/records', { data: { title, artistId, ...(inGenre ? { genreIds: [genreId] } : {}) } });
+    expect(record.status()).toBe(201);
+  }
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
+  await expect(page.getByTestId('wall-count')).toHaveText('3');
+  const rail = page.getByTestId('wall-rail');
+  const fields = await rail.evaluate((el) => Array.from(el.querySelectorAll('form label')).map((n) => n.textContent?.trim()));
+  expect(fields, 'SEARCH, then GENRE and SORT beneath it').toEqual(['Search', 'Genre', 'Sort']);
+  /* Choosing a genre is the submit: the artist scope rides along as a hidden input. */
+  await rail.getByLabel('Genre').selectOption(genreId);
+  await expect(page).toHaveURL(new RegExp(`genreId=${genreId}`));
+  await expect(page).toHaveURL(new RegExp(`artistId=${artistId}`));
+  await expect(page.getByTestId('wall-count')).toHaveText('2');
+  await expect(rail.getByLabel('Genre')).toHaveValue(genreId);
+  /* And the sort keeps the genre. */
+  await rail.getByLabel('Sort').selectOption('title:desc');
+  await expect(page).toHaveURL(/sort=title(%3A|:)desc/);
+  await expect(page).toHaveURL(new RegExp(`genreId=${genreId}`));
+  await expect(page.getByTestId('wall-count')).toHaveText('2');
+  await expect(rail.getByLabel('Sort')).toHaveValue('title:desc');
 });
 
 test('the rail’s view list reaches the table and comes back to the shelf', async ({ page }) => {

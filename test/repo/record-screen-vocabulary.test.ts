@@ -45,7 +45,7 @@ const SCREEN = [
   */
   'src/app/page.tsx',
   'src/app/CollectionFilters.tsx',
-  'src/app/ShelfControls.tsx',
+  'src/app/WallRail.tsx',
   'src/app/CollectionList.tsx',
   'src/app/CollectionPagination.tsx',
 ];
