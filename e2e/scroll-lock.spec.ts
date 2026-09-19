@@ -81,7 +81,8 @@ test('the page never scrolls, and the drawing region is back where it was after 
 });
 
 test('the body is not left locked after the record returns', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+  /* Where the pulled state exists: below §11.24's fork a tap opens the record screen instead. */
+  await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/');
   await expect(page.getByTestId('wall')).toBeVisible({ timeout: 30_000 });
 

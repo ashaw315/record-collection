@@ -9,6 +9,7 @@ import { OUT_MS, ROTATION_START, SWING_MS, gestureFaces, outTime, poseAt, settle
 import { wallLayout } from './wall-layout';
 import { LABEL, LABEL_INK } from '../records/[id]/grid-type';
 import { DRAWN_PAPER } from './WallComposition';
+import { WallOverview } from './WallOverview';
 
 /**
  * The stage: two columns — facts left at 420px, drawing right with the rest
@@ -34,6 +35,7 @@ export function WallStage({
   countLine = null,
   regionRef,
   labels = true,
+  far = false,
   framed,
   onSeatClick,
   onPulledClick,
@@ -49,7 +51,7 @@ export function WallStage({
   side: 'front' | 'back';
   /** The drawing region's width in px — the pan extent's floor. */
   width: number;
-  /** The viewport's width in px. Kept for the deferred narrow-viewport ruling; nothing forks on it. */
+  /** The viewport's width in px. The fork on it is `far`, decided by whoever measures (view-fork.ts). */
   viewport: number;
   /** The visible drawing region in the svg's px, frozen when the pull began: where the record lands. */
   view?: View | null;
@@ -58,6 +60,8 @@ export function WallStage({
   /** The drawing region, for whoever measures it. */
   regionRef?: React.Ref<HTMLDivElement>;
   labels?: boolean;
+  /** §11.24: the narrow shelf is the far view — the count, then the collection as an object, each record a link to its screen. */
+  far?: boolean;
   /** §11.22: the records whose landings the frame holds, until the wall is at rest. */
   framed?: readonly string[];
   onSeatClick?: (id: string) => void;
@@ -131,20 +135,41 @@ export function WallStage({
     );
   }
 
+  const count = (
+    <div data-region="count">
+      <div className={LABEL}>COLLECTION</div>
+      <div data-testid="wall-count" className="text-display leading-[0.86] font-extrabold" style={{ marginTop: 6 }}>
+        {seats.length}
+      </div>
+      {countLine === null ? null : (
+        <p className="mt-[10px] text-meta" style={{ color: LABEL_INK }}>
+          {countLine}
+        </p>
+      )}
+    </div>
+  );
+
+  /*
+    §11.24: below the fork the near view holds about two seats, which is not a
+    fixture; the far view has no width floor. One column — the count, then the
+    collection as an object — and no panel region, because the pulled state
+    does not exist at this width: a tap goes to the record screen.
+  */
+  if (far) {
+    return (
+      <div data-region="far" className="flex flex-col p-[34px]">
+        {count}
+        <div className="mt-[34px]">
+          <WallOverview seats={seats} pulledId={null} linked />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-[420px_1fr] gap-0">
       <div data-region="facts" className="flex flex-col p-[34px]">
-        <div data-region="count">
-          <div className={LABEL}>COLLECTION</div>
-          <div data-testid="wall-count" className="text-display leading-[0.86] font-extrabold" style={{ marginTop: 6 }}>
-            {seats.length}
-          </div>
-          {countLine === null ? null : (
-            <p className="mt-[10px] text-meta" style={{ color: LABEL_INK }}>
-              {countLine}
-            </p>
-          )}
-        </div>
+        {count}
         <div data-testid="panel-region" className="mt-[34px]">{panel}</div>
       </div>
       {/*

@@ -4,6 +4,7 @@ import '../../../test/component/next-navigation';
 import { WallComposition } from './WallComposition';
 import type { WallSeat } from './shelf-runs';
 import { LABEL } from '../records/[id]/grid-type';
+import { nearViewMinWidth } from './view-fork';
 
 /**
  * The composition (D2, from the reference): four shelves stacked on the right
@@ -60,6 +61,20 @@ describe('the wall composition', () => {
     /* Two uprights and four shelves, three faces each: the fixture, empty shelves drawn. */
     expect(furniture).toBe(18);
     expect(polygons, 'the unit plus three faces per record, no back, no front, no top').toBe(18 + 17 * 3);
+  });
+});
+
+describe('the rail collapses to one band below the fork (§11.24)', () => {
+  it('emits the fork as a media query at the near view’s minimum width: one column, the rail a row of search, views and add record, the filter lines and the rule withdrawn', () => {
+    const html = renderToStaticMarkup(<WallComposition seats={seats(3)} rail={<nav data-testid="wall-rail">rail</nav>} />);
+    const style = /<style[^>]*data-narrow-shelf=""[^>]*>([\s\S]*?)<\/style>/.exec(html)?.[1] ?? '';
+    expect(style).toContain(`@media (max-width: ${nearViewMinWidth() - 1}px)`);
+    expect(style).toMatch(/\[data-composition\]\s*\{[^}]*grid-template-columns:\s*1fr/);
+    expect(style).toMatch(/\[data-testid="wall-rail"\]\s*\{[^}]*flex-direction:\s*row/);
+    expect(style).toMatch(/\[data-rail-filter\][^{]*\{[^}]*display:\s*none/);
+    expect(style).toMatch(/\[data-rail-rule\][^{]*\{[^}]*display:\s*none/);
+    /* The band is the shelf's, not the probes': no rail, no style. */
+    expect(render(3)).not.toContain('data-narrow-shelf');
   });
 });
 

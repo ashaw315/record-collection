@@ -52,6 +52,25 @@ const render = (props: Partial<Parameters<typeof WallStage>[0]> = {}) =>
     />,
   );
 
+describe('the narrow shelf is the far view (§11.24)', () => {
+  it('draws the count and then the overview in one column — no facts column, no labelled wall, no panel region — with the records as links to their screens', () => {
+    const html = render({ far: true, viewport: 390, width: 390 });
+    expect(html).not.toMatch(/grid-cols-\[420px_1fr\]/);
+    expect(html).not.toContain('data-wall="labelled"');
+    expect(html).not.toContain('data-testid="panel-region"');
+    expect(html).toContain('data-testid="wall-count"');
+    expect(html.indexOf('data-testid="wall-count"')).toBeLessThan(html.indexOf('data-wall="overview"'));
+    expect(html).toMatch(/<a [^>]*href="\/records\/a"[^>]*data-seat="a"/);
+    /* No width floor: the svg fits the column rather than holding 1:1. */
+    expect(/<svg[^>]*data-wall="overview"[^>]*>/.exec(html)?.[0]).toContain('width:100%');
+  });
+
+  it('keeps the near view unless told otherwise', () => {
+    expect(render()).toContain('data-wall="labelled"');
+    expect(render()).not.toContain('data-wall="overview"');
+  });
+});
+
 describe('two columns: facts left, drawing right (§11.9)', () => {
   it('gives the facts 420px and the drawing the rest — page pixels, §11.13’s figure', () => {
     expect(render()).toMatch(/grid-cols-\[420px_1fr\]/);

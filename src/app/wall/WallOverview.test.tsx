@@ -57,7 +57,16 @@ describe('the overview draws the collection as polygons', () => {
     const html = render({ seats: seats(20, 2), pulledId: null });
 
     expect(countTag(html, 'button')).toBe(0);
+    expect(countTag(html, 'a ')).toBe(0);
     expect(html).not.toMatch(/tabindex|onclick|role="button"/i);
+  });
+
+  it('linked (§11.24’s narrow shelf): each record is an anchor to its own screen — a tap goes there, not to a pulled state', () => {
+    const html = render({ seats: seats(3), pulledId: null, linked: true });
+    for (const id of ['r0', 'r1', 'r2']) expect(html).toMatch(new RegExp(`<a [^>]*href="/records/${id}"[^>]*data-seat="${id}"`));
+    expect(countTag(html, 'a ')).toBe(3);
+    /* Still no text: the far view identifies nothing; the record screen does. */
+    expect(html).not.toMatch(/<text/);
   });
 
   it('renders an empty collection as the fixture alone — the unit, no records', () => {

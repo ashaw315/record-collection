@@ -1,6 +1,7 @@
-import { WallLive } from './WallLive';
-import type { WallSeat } from './shelf-runs';
-import type { RecordSummary } from './summary';
+import { WallLive } from "./WallLive";
+import type { WallSeat } from "./shelf-runs";
+import type { RecordSummary } from "./summary";
+import { nearViewMinWidth } from "./view-fork";
 
 /**
  * The wall as a screen (D2, from the reference): the collection on shelves
@@ -22,7 +23,7 @@ import type { RecordSummary } from './summary';
  * drawing-versus-build paper divergence NOTES records, made visible here
  * against the app's chrome rather than resolved.
  */
-export const DRAWN_PAPER = 'oklch(0.925 0.004 80)';
+export const DRAWN_PAPER = "oklch(0.925 0.004 80)";
 
 export function WallComposition({
   seats,
@@ -41,10 +42,31 @@ export function WallComposition({
     <section
       data-composition=""
       data-testid="wall"
-      className={rail === null ? undefined : 'grid grid-cols-[148px_1fr]'}
+      className={rail === null ? undefined : "grid grid-cols-[148px_1fr]"}
       /* §11.13: the wall starts directly under the app nav and takes the full height. */
-      style={{ background: DRAWN_PAPER, minHeight: 'calc(100vh - var(--app-nav-height, 0px))' }}
+      style={{
+        background: DRAWN_PAPER,
+        minHeight: "calc(100vh - var(--app-nav-height, 0px))",
+      }}
     >
+      {rail !== null && (
+        /*
+          §11.24: below the fork the far view is bounded by width, not height,
+          so §11.13's argument for the column does not hold and the band is
+          correct there — one row of search, the three views and Add record;
+          the filter lines and the rule withdrawn. The number is the fork's
+          own (view-fork.ts), so the band and the far view cannot disagree.
+        */
+        <style data-narrow-shelf="">{`@media (max-width: ${nearViewMinWidth() - 1}px) {
+  [data-composition] { grid-template-columns: 1fr; }
+  [data-testid="wall-rail"] { flex-direction: row; align-items: flex-end; flex-wrap: wrap; gap: 18px; width: auto !important; padding: 12px 20px 16px !important; }
+  [data-testid="wall-rail"] form { margin-bottom: 0; flex: 1 1 160px; }
+  [data-testid="wall-rail"] ul { flex-direction: row; }
+  [data-testid="wall-rail"] a { margin-top: 0; }
+  [data-rail-filter] { display: none; }
+  [data-rail-rule] { display: none; }
+}`}</style>
+      )}
       {rail}
       <WallLive seats={seats} summaries={summaries} countLine={countLine} />
     </section>

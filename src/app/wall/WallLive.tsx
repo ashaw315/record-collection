@@ -12,6 +12,7 @@ import type { View } from './view';
 import { OUT_MS, RETURN_MS, SWING_MS, outTime, settled } from './gesture';
 import { frameView, landedExtent, panFraction, panView, type Pan } from './pan';
 import { wallLayout } from './wall-layout';
+import { isFarView } from './view-fork';
 
 /** The view's top-left in the svg's px, from the region's scroll against the frame's originRef; the svg sits LANDING_PAD below the region's content top. */
 function readView(el: HTMLDivElement, [frameX, frameY]: readonly [number, number]): [number, number] {
@@ -258,6 +259,8 @@ export function WallLive({
         countLine={countLine}
         regionRef={region}
         labels={labels}
+        /* Rendered near first — the server has no width — and forked once measured (§11.24). */
+        far={viewport > 0 && isFarView(viewport)}
         framed={framed}
         onSeatClick={(id) => {
           if (pulls.length === 0) begin(id, 'out');

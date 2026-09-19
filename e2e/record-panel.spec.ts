@@ -75,14 +75,20 @@ async function cleanup(ids: { artistId: string; recordId: string; pressingId?: s
 test('the panel is expanded at rest in its own column, and nothing navigates', async ({ page }) => {
   /*
     A33's chevron expanded an overlay over the record; §11.9 gives the panel a
-    fixed region in the facts column at every width, so it is the expanded
-    shape at rest and the toggle has nothing to do. The destination stays
-    INSIDE the panel (A33b): the wall is still mounted, the URL unchanged.
+    fixed region in the facts column at every width the pulled state exists,
+    so it is the expanded shape at rest and the toggle has nothing to do. The
+    destination stays INSIDE the panel (A33b): the wall is still mounted, the
+    URL unchanged.
+
+    These three ran at 390px while §11.8's fork was an overlay. §11.24 rules
+    that below the fork the pulled state does not exist — a tap opens the
+    record screen (shelf-narrow.spec.ts) — so the panel's claims are made
+    where the panel is.
   */
   const ids = await seedRecord({});
   try {
     await login(page);
-    await page.setViewportSize({ width: 390, height: 844 });
+    await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(`/?artistId=${ids.artistId}`);
     await pullTheRecord(page);
 
@@ -105,7 +111,7 @@ test('a generated snippet and entered facts are separated by a boundary', async 
   const ids = await seedRecord({ snippet: 'A landmark Deptford debut.', withFacts: true });
   try {
     await login(page);
-    await page.setViewportSize({ width: 390, height: 844 });
+    await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(`/?artistId=${ids.artistId}`);
     await pullTheRecord(page);
 
@@ -136,7 +142,7 @@ test('an edited snippet is labelled as the user\'s, not generated', async ({ pag
   const ids = await seedRecord({ snippet: 'My own note.', edited: true });
   try {
     await login(page);
-    await page.setViewportSize({ width: 390, height: 844 });
+    await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(`/?artistId=${ids.artistId}`);
     await pullTheRecord(page);
 
