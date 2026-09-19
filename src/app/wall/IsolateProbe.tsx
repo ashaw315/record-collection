@@ -131,7 +131,7 @@ export function IsolateProbe({ config }: { config: IsolateConfig }) {
   }
   objects.push({
     id: pulled.id,
-    ...moving.bounds,
+    ...moving.sortBounds,
     moving: true,
     svg: (
       <g key={pulled.id} data-pulled="">

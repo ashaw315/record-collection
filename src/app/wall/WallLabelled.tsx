@@ -288,7 +288,7 @@ export function WallLabelled({
         ...placed.filter((seat) => byId.has(seat.id) && !movingById.has(seat.id)).map((seat) => seatBounds(seat)),
         ...moving.flatMap((state) => {
           const seat = placed.find((p) => p.id === state.id);
-          return seat === undefined ? [] : [{ id: seat.id, ...facesOf(seat, state).bounds, moving: true }];
+          return seat === undefined ? [] : [{ id: seat.id, ...facesOf(seat, state).sortBounds, moving: true }];
         }),
       ]).map((object) => {
         const piece = pieces.find((p) => p.id === object.id);

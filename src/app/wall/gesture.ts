@@ -105,14 +105,19 @@ export type GestureFaces = {
   /** The cover's corners in wall plan, for the advance claim. */
   coverWall: readonly (readonly [number, number])[];
   /**
-   * Axis-aligned wall-space bounds of the PHYSICAL solid — travelled and
-   * rotated at the record's own size — for the painter's sort. Growth is
-   * the screen's cue (§11.21, the clearance is asserted on this box): the
-   * grown solid reaches back into the row on y at a partial angle, and a
-   * sort on it loses its y-plane and falls to the centroid, where a long
-   * row's far records come out nearer than the record in front of them.
+   * **The rule: a moving record has three sets of bounds for three purposes,
+   * and they differ for reasons that are each correct.** The faces above are
+   * DRAWN grown (§11.25). This box is what the record is SORTED on: the
+   * physical solid, travelled and rotated at the record's own size, axis-
+   * aligned in wall space. And the plan is CLEARED against the neighbours
+   * by SAT on that same physical box (rotation.ts, gesture.test.ts). The
+   * grown solid reaches back into the row on y at a partial angle and loses
+   * its separating plane, so a sort on it falls to the centroid — the
+   * invalid order, where a long row's far records come out nearer than the
+   * record in front of them. WallLabelled.test.tsx asserts the sort's input
+   * is this box, since nothing else stops the grown one being passed again.
    */
-  bounds: { x0: number; x1: number; y0: number; y1: number; z0: number; z1: number };
+  sortBounds: { x0: number; x1: number; y0: number; y1: number; z0: number; z1: number };
   scale: number;
 };
 
@@ -185,7 +190,7 @@ export function gestureFaces(seat: PlacedSeat, pose: Pose): GestureFaces {
   ];
   const corners: (readonly [number, number, number])[] = [];
   for (const a of [0, w]) for (const b of [0, D]) for (const c of [0, H]) corners.push(physical(a, b, c));
-  const bounds = {
+  const sortBounds = {
     x0: Math.min(...corners.map(([x]) => x)),
     x1: Math.max(...corners.map(([x]) => x)),
     y0: Math.min(...corners.map(([, y]) => y)),
@@ -195,5 +200,5 @@ export function gestureFaces(seat: PlacedSeat, pose: Pose): GestureFaces {
   };
   const coverWall = [wall(0, D, 0), wall(0, 0, 0), wall(0, 0, H), wall(0, D, H)].map(([x, y]) => [x, y] as const);
 
-  return { top, cover, spine, coverMatrix, labelMatrix, coverWall, bounds, scale: s };
+  return { top, cover, spine, coverMatrix, labelMatrix, coverWall, sortBounds, scale: s };
 }

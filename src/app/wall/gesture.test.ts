@@ -178,7 +178,7 @@ describe('the drawn record: three faces, the cover’s plane and the label’s, 
   });
 
   it('carries its bounds for the sort: the seat’s at 0, and the PHYSICAL box after — unscaled, growth being the screen’s cue (§11.21)', () => {
-    expect(gestureFaces(seat, poseAt(0)).bounds).toEqual({ x0: seat.x, x1: seat.x + seat.width, y0: 0, y1: DEPTH, z0: seat.z, z1: seat.z + SPINE_HEIGHT });
+    expect(gestureFaces(seat, poseAt(0)).sortBounds).toEqual({ x0: seat.x, x1: seat.x + seat.width, y0: 0, y1: DEPTH, z0: seat.z, z1: seat.z + SPINE_HEIGHT });
     /*
       The grown solid reaches back INTO the row on y (a 560 run at a partial
       angle), and a sort on the grown box loses its y-plane and falls to the
@@ -188,13 +188,13 @@ describe('the drawn record: three faces, the cover’s plane and the label’s, 
       rotated at the record's own size.
     */
     for (const t of [900, SWING_MS]) {
-      const { bounds } = gestureFaces(seat, poseAt(t));
-      const physical = gestureFaces(seat, { ...poseAt(t), scale: 1 }).bounds;
+      const { sortBounds: bounds } = gestureFaces(seat, poseAt(t));
+      const physical = gestureFaces(seat, { ...poseAt(t), scale: 1 }).sortBounds;
       expect(bounds, `t=${t}`).toEqual(physical);
       expect(bounds.z1, `t=${t}`).toBe(seat.z + SPINE_HEIGHT);
     }
-    expect(gestureFaces(seat, poseAt(SWING_MS)).bounds.y0, 'past the row entirely at 45°').toBeGreaterThan(DEPTH);
-    expect(gestureFaces(seat, poseAt(SWING_MS)).bounds.y1).toBeGreaterThanOrEqual(DEPTH + TRAVEL);
+    expect(gestureFaces(seat, poseAt(SWING_MS)).sortBounds.y0, 'past the row entirely at 45°').toBeGreaterThan(DEPTH);
+    expect(gestureFaces(seat, poseAt(SWING_MS)).sortBounds.y1).toBeGreaterThanOrEqual(DEPTH + TRAVEL);
   });
 });
 

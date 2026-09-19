@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import * as paintSort from './paint-sort';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { WallLabelled, type PullState } from './WallLabelled';
 import { WALL_PAPER_HEX } from './pull-colour';
@@ -100,6 +101,38 @@ describe('5b’s two faces at rest (D2): three faces per record, filled in paper
     expect(early.indexOf('data-pulled="b"'), 'the neighbour at larger x is nearer until the record is clear').toBeLessThan(early.indexOf('data-seat="c"'));
     const clear = renderToStaticMarkup(<WallLabelled seats={three} pulls={[{ id: 'b', direction: 'out', ms: OUT_MS }]} view={view} />);
     expect(clear.indexOf('data-pulled="b"')).toBeGreaterThan(clear.indexOf('data-seat="c"'));
+  });
+
+  it('hands the sort the PHYSICAL box for the moving record — the rule, asserted at the sort’s input, since nothing else stops the grown box being passed again', () => {
+    /*
+      Three sets of bounds for three purposes, each right for its own: the
+      faces are DRAWN grown; the box is SORTED at the record's own size,
+      travelled and rotated; the plan is CLEARED against the neighbours by
+      SAT on that same physical box. The grown box reaches back into the row
+      on y at a partial angle and loses its separating plane, so a sort on
+      it falls to the centroid — the invalid order.
+    */
+    const spy = vi.spyOn(paintSort, 'paintOrder');
+    try {
+      const row = Array.from({ length: 20 }, (_, i) => seat(`r${i}`, null));
+      const placed = layoutRow(row.map(({ id, section }) => ({ id, section })), 0).find((p) => p.id === 'r4');
+      expect(placed).toBeDefined();
+      if (placed === undefined) return;
+      for (const ms of [900, SWING_MS]) {
+        spy.mockClear();
+        renderToStaticMarkup(<WallLabelled seats={row} pulls={[{ id: 'r4', direction: 'out', ms }]} view={{ x: 0, y: 0, width: 1400, height: 900 }} />);
+        const inputs = spy.mock.calls.flatMap(([objects]) => objects).filter((o) => o.id === 'r4');
+        expect(inputs.length, `the moving record reaches the sort once at ${ms}`).toBe(1);
+        const physical = gestureFaces(placed, { ...poseAt(ms), scale: 1 }).sortBounds;
+        const { id: _id, moving: _moving, ...given } = inputs[0] as typeof inputs[0] & { moving?: boolean };
+        void _id;
+        void _moving;
+        expect(given, `at ${ms}`).toEqual(physical);
+        expect(given.z1, `the record's own height at ${ms}`).toBeCloseTo(placed.z + SPINE_HEIGHT, 9);
+      }
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it('paints the growing record over the whole of a long row: the sort sees the physical box, not the grown one (§11.25 with §11.21)', () => {
