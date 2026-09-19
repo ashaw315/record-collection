@@ -37,12 +37,15 @@ export const TOP_FILL = 'oklch(0.948 0.004 80)';
 export const points = (polygon: readonly Point[]) =>
   polygon.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(' ');
 
+/** A seat that can be named: the far view draws no text, so a linked record's name is its anchor's attribute. */
+type NamedSeat = ShelfSeat & { artist?: string; title?: string };
+
 export function WallOverview({
   seats,
   pulledId,
   linked = false,
 }: {
-  seats: readonly ShelfSeat[];
+  seats: readonly NamedSeat[];
   pulledId: string | null;
   /**
    * §11.24's narrow shelf: each record an anchor to its own screen. A tap
@@ -71,8 +74,10 @@ export function WallOverview({
             <polygon points={points(frontFace(seat))} fill={FACE_FILL} stroke={INK} strokeWidth="1" />
           </>
         );
+        const named = seats.find((s) => s.id === seat.id);
+        const name = named?.artist !== undefined && named.title !== undefined ? `${named.artist} · ${named.title}` : undefined;
         return linked ? (
-          <a key={seat.id} href={`/records/${seat.id}`} data-seat={seat.id}>
+          <a key={seat.id} href={`/records/${seat.id}`} aria-label={name} data-seat={seat.id}>
             {faces}
           </a>
         ) : (

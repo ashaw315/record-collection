@@ -60,7 +60,7 @@ describe('the narrow shelf is the far view (§11.24)', () => {
     expect(html).not.toContain('data-testid="panel-region"');
     expect(html).toContain('data-testid="wall-count"');
     expect(html.indexOf('data-testid="wall-count"')).toBeLessThan(html.indexOf('data-wall="overview"'));
-    expect(html).toMatch(/<a [^>]*href="\/records\/a"[^>]*data-seat="a"/);
+    expect(html).toMatch(/<a [^>]*href="\/records\/a"[^>]*aria-label="Artist a · Title a"[^>]*data-seat="a"/);
     /* No width floor: the svg fits the column rather than holding 1:1. */
     expect(/<svg[^>]*data-wall="overview"[^>]*>/.exec(html)?.[0]).toContain('width:100%');
   });
