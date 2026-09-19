@@ -116,7 +116,7 @@ test('clicking a spine pulls it out on the gesture: the seat emptied from the fi
   await expect(page.locator(`[data-seat="${WIRED_ID}"]`)).toHaveCount(0);
 });
 
-test('colour arrives across the swing on its own eased travel — paper at 0, the fill the curve gives at halfway, base at the end', async ({
+test('colour arrives across the full out-span on one ease (§11.2) — paper at 0, the curve’s fill at halfway, not yet base at the swing’s end, base when the record lands', async ({
   page,
 }) => {
   if (wired === null) throw new Error('fixture');
@@ -124,16 +124,20 @@ test('colour arrives across the swing on its own eased travel — paper at 0, th
   await page.clock.runFor(1);
   expect((await pulled(page))?.fill, 'starts as paper').toBe(pullFill(0, wired));
 
-  await page.clock.runFor(SWING_MS / 2 - 1);
+  await page.clock.runFor(OUT_MS / 2 - 1);
   const mid = (await pulled(page))?.fill ?? '';
   expect(mid, 'not paper, not base, at halfway').not.toBe(WALL_PAPER_HEX);
   expect(mid).not.toBe(pullFill(1, wired));
-  /* rAF quantisation: the sampled k sits within two frames of 0.5. */
+  /* rAF quantisation: the sampled time sits within two frames of the half. */
   const candidates = new Set<string>();
-  for (let ms = SWING_MS / 2 - 2 * FRAME_MS; ms <= SWING_MS / 2 + FRAME_MS; ms += 1) {
-    candidates.add(pullFill(easeInOutCubic(ms / SWING_MS), wired));
+  for (let ms = OUT_MS / 2 - 2 * FRAME_MS; ms <= OUT_MS / 2 + FRAME_MS; ms += 1) {
+    candidates.add(pullFill(easeInOutCubic(ms / OUT_MS), wired));
   }
   expect([...candidates], 'on the curve at halfway').toContain(mid);
+
+  /* The swing's end is not the record's: 300ms of finish remain, and the colour has the same 300ms left. */
+  await page.clock.runFor(SWING_MS - OUT_MS / 2);
+  expect((await pulled(page))?.fill, 'still arriving at 1300').not.toBe(pullFill(1, wired));
 
   await page.clock.runFor(OUT_MS);
   expect((await pulled(page))?.fill, 'the clamped base, exactly').toBe(pullFill(1, wired));

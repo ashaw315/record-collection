@@ -3,11 +3,12 @@ import * as paintSort from './paint-sort';
 import { recordOffset } from './pan';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { WallLabelled, type PullState } from './WallLabelled';
-import { WALL_PAPER_HEX } from './pull-colour';
+import { WALL_PAPER_HEX, pullFill } from './pull-colour';
+import { recordLadder } from '@/lib/colour/record-ladder';
 import { FACE_FILL, PLANE_FILL, TOP_FILL, points } from './WallOverview';
 import type { WallSeat } from './shelf-runs';
 import { DEPTH, SPINE_HEIGHT, frontFace, layoutRow } from './geometry';
-import { GROWTH, OUT_MS, RETURN_MS, ROTATION_START, SWING_MS, gestureFaces, poseAt } from './gesture';
+import { GROWTH, OUT_MS, RETURN_MS, ROTATION_START, SWING_MS, easeInOutCubic, gestureFaces, poseAt } from './gesture';
 import { wallLayout } from './wall-layout';
 import { landedExtent } from './pan';
 
@@ -186,6 +187,19 @@ describe('5b’s two faces at rest (D2): three faces per record, filled in paper
     expect(image, 'own aspect, uncropped (§11.3)').toContain('preserveAspectRatio="xMidYMid meet"');
     const group = g.slice(0, g.indexOf('</g>'));
     expect(group, 'no text on a mirrored plane').not.toContain('<text');
+  });
+
+  it('fades the field over the full out-span (§11.2): the swing’s end is not yet the base, the finish’s end is — one ease over 1600, so colour lands with the record', () => {
+    const record = seat('b', null);
+    const fieldAt = (ms: number) => {
+      const html = render([seat('a', null), record], { id: 'b', direction: 'out', ms });
+      return /fill="([^"]+)"/.exec(/<rect[^>]*data-field[^>]*>/.exec(html.slice(html.indexOf('data-pulled="b"')))?.[0] ?? '')?.[1];
+    };
+    const ladder = recordLadder(record.spineColour);
+    expect(fieldAt(0)).toBe(pullFill(0, ladder));
+    expect(fieldAt(SWING_MS), 'at 1300 the record has 300ms of finish left, and so does its colour').not.toBe(pullFill(1, ladder));
+    expect(fieldAt(OUT_MS)).toBe(pullFill(1, ladder));
+    for (const ms of [400, 800, SWING_MS, 1450]) expect(fieldAt(ms), `at ${ms}`).toBe(pullFill(easeInOutCubic(ms / OUT_MS), ladder));
   });
 
   it('draws no cover for a record with none, and the field still arrives', () => {

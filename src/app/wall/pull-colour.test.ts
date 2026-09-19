@@ -8,7 +8,7 @@ import {
   pullFill,
   returnFill,
 } from './pull-colour';
-import { RETURN_MS, SWING_MS, easeInOutCubic } from './gesture';
+import { OUT_MS, RETURN_MS, SWING_MS, easeInOutCubic } from './gesture';
 import { oklchToHex, recordLadder } from '@/lib/colour/record-ladder';
 import { COLLECTION_SPINES } from '../../../test/fixtures/collection-spines';
 
@@ -71,7 +71,9 @@ describe('colour arrives across the pull (§11.2)', () => {
       expect(pullFill(easeInOutCubic(k), ladder), `k=${k}`).toBe(at(easeInOutCubic(k)));
     }
     expect(easeInOutCubic(0.5)).toBe(0.5);
-    expect(SWING_MS).toBe(1300);
+    /* §11.2: the fade runs the FULL out-span — the drawing passes ease(t / OUT_MS), not the swing's k, or colour would land 300ms before the record. */
+    expect(OUT_MS).toBe(1600);
+    expect(OUT_MS).toBeGreaterThan(SWING_MS);
   });
 
   it('holds the record’s hue throughout — paper has none to lend', () => {

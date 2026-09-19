@@ -5,7 +5,7 @@ import type { WallSeat } from './shelf-runs';
 import { WALL_PAPER_HEX, pullFill, returnFill } from './pull-colour';
 import { wallLayout } from './wall-layout';
 import type { View } from './view';
-import { GROWTH, RETURN_MS, easeInOutCubic, gestureFaces, outTime, poseAt, type GestureState } from './gesture';
+import { GROWTH, OUT_MS, RETURN_MS, easeInOutCubic, gestureFaces, outTime, poseAt, type GestureState } from './gesture';
 import { recordOffset } from './pan';
 import { RETURN_FADE_END } from './pull-colour';
 import { recordLadder } from '@/lib/colour/record-ladder';
@@ -125,13 +125,14 @@ export function WallLabelled({
   /** The moving record's solid at this instant of its gesture (§11.19–§11.21): rigid, re-projected, one fixed point. */
   const facesOf = (seat: PlacedSeat, state: PullState) => gestureFaces(seat, poseAt(outTime(state)));
   /*
-    How far colour (and the cover) has arrived: the swing's own eased travel
-    on the way out (§11.2, one curve), and on the way back the fade that
-    completes at RETURN_FADE_END, before the spine lands.
+    How far colour (and the cover) has arrived: one ease over the FULL
+    out-span on the way out (§11.2 — the fade runs 1600ms, not the swing's
+    1300, or colour would land 300ms before the record does), and on the way
+    back the fade that completes at RETURN_FADE_END, before the spine lands.
   */
   const arrivalOf = (state: PullState) =>
     state.direction === 'out'
-      ? easeInOutCubic(poseAt(outTime(state)).k)
+      ? easeInOutCubic(outTime(state) / OUT_MS)
       : 1 - easeInOutCubic(Math.min(1, state.ms / RETURN_MS / RETURN_FADE_END));
 
   const renderMoving = (seat: PlacedSeat, record: WallSeat, state: PullState) => {
