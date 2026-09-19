@@ -114,8 +114,14 @@
  * than half-maintained.
  */
 :root {
-  /* Warm paper, not white — a hint of yellow keeps dense text from glaring. */
-  --background: oklch(0.985 0.004 85);
+  /*
+   * Paper (8a §11.5): the drawing's 0.925, which every ink, hairline and
+   * ladder step in the system was chosen against. One token — the value is
+   * `PAPER` in src/lib/colour/paper.ts, and test/repo/paper-token.test.ts
+   * holds this line to it. Was 0.985, a ground the page painted while every
+   * ratio was measured on 0.925.
+   */
+  --background: oklch(0.925 0.004 80);
   --foreground: oklch(0.19 0.008 60);
 
   --card: oklch(0.995 0.003 85);

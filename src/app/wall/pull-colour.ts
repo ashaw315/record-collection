@@ -1,4 +1,5 @@
 import { oklchToHex, type Oklch, type RecordLadder } from '@/lib/colour/record-ladder';
+import { PAPER } from '@/lib/colour/paper';
 import { easeInOutCubic } from './gesture';
 
 /**
@@ -17,8 +18,8 @@ import { easeInOutCubic } from './gesture';
  * has none to lend.
  */
 
-/** The wall's paper, as the drawing paints it. Stated once, in OKLCH. */
-export const WALL_PAPER: Oklch = { L: 0.977, C: 0.004, h: 80 };
+/** The wall's paper — the one token (§11.5): the fade starts from the face it leaves, not a lighter value. */
+export const WALL_PAPER: Oklch = PAPER;
 export const WALL_PAPER_HEX = oklchToHex(WALL_PAPER);
 
 /**

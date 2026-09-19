@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { PAPER_CSS } from '@/lib/colour/paper';
 import { DEPTH, frontFace, labelTransform, rightFace, topFace, type PlacedSeat, type Point } from './geometry';
 import { OUT_MS, SWING_MS, gestureFaces, poseAt } from './gesture';
 import { paintOrder, seatBounds, type PaintBounds } from './paint-sort';
@@ -38,7 +39,7 @@ const TITLES = [
   'MGMT · Loss Of Life',
   'Dire Straits · Dire Straits',
 ];
-const PAPER = 'oklch(0.925 0.004 80)';
+const PAPER = PAPER_CSS;
 const INK = 'oklch(0.18 0.005 60)';
 const HAIR = 'oklch(0.72 0.004 80)';
 const FACE = 'oklch(0.948 0.004 80)';

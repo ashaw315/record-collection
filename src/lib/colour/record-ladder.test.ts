@@ -1,3 +1,4 @@
+import { PAPER } from './paper';
 import { describe, expect, it } from 'vitest';
 import { contrastRatio } from './record-colour';
 import { CHROMA_CEILING, LIGHTNESS_MAX, LIGHTNESS_MIN, recordLadder } from './record-ladder';
@@ -107,7 +108,8 @@ describe('the ladder (§5.5)', () => {
 
     /* Lightness steps, not hue steps — which is what keeps a near-grey ladder
        reading as one object rather than as three greys. */
-    expect(tintL).toBeCloseTo(baseL + (1 - baseL) * 0.34, 4);
+    /* Toward PAPER — the ground the app paints (§11.5) — not toward white. */
+    expect(tintL).toBeCloseTo(baseL + (PAPER.L - baseL) * 0.34, 4);
     expect(shadeL).toBeCloseTo(baseL * (1 - 0.26), 4);
   });
 

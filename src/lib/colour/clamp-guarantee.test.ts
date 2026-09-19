@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { PAPER as PAPER_TOKEN } from './paper';
 import { LIGHTNESS_MAX, LIGHTNESS_MIN, CHROMA_CEILING, oklchToHex, recordLadder } from './record-ladder';
 import { contrastRatio } from './record-colour';
 import { COLLECTION_SPINES } from '../../../test/fixtures/collection-spines';
@@ -21,7 +22,7 @@ import { COLLECTION_SPINES } from '../../../test/fixtures/collection-spines';
 
 /** The record page's ink — `grid-type.ts` — not 5b's. */
 const INK = oklchToHex({ L: 0.19, C: 0.008, h: 60 });
-const PAPER = oklchToHex({ L: 0.925, C: 0.004, h: 80 });
+const PAPER = oklchToHex(PAPER_TOKEN);
 const FALLBACK = '#3a3a3a';
 const SHELF_PLANE = '#4d3b2b';
 

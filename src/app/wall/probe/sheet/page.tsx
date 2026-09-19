@@ -1,4 +1,5 @@
 import { LABEL_INK } from '@/app/records/[id]/grid-type';
+import { PAPER_CSS } from '@/lib/colour/paper';
 import { notFound } from 'next/navigation';
 import { ConstructionStill } from '@/app/records/[id]/ConstructionStill';
 import { listRecordsForSheet } from '@/lib/db/queries/records';
@@ -30,8 +31,8 @@ export default async function ConstructionSheetPage() {
         {records.map((record) => (
           <figure key={record.id} data-sheet-tile={record.id} className="m-0">
             <div
-              className="border border-[oklch(0.9_0.006_75)] bg-[oklch(0.925_0.004_80)]"
-              style={{ aspectRatio: '300 / 340' }}
+              className="border border-[oklch(0.9_0.006_75)]"
+              style={{ aspectRatio: '300 / 340', background: PAPER_CSS }}
             >
               <ConstructionStill recordId={record.id} spineColour={record.spineColour} />
             </div>

@@ -1,4 +1,5 @@
 import { COS30, DEPTH, SPINE_HEIGHT, frontFace, labelTransform, rightFace, topFace, type PlacedSeat } from './geometry';
+import { PAPER_CSS } from '@/lib/colour/paper';
 import { paintOrder, seatBounds } from './paint-sort';
 import { FACE_FILL, PLANE_FILL, TOP_FILL, points } from './WallOverview';
 import type { WallSeat } from './shelf-runs';
@@ -36,7 +37,7 @@ import { SLEEVE_LEADING, sleeveTitle } from './sleeve-type';
 /** The one ink, for outline and label alike. */
 const INK = '#161412';
 const RULE = 'oklch(0.44 0.008 70)';
-const PAPER = 'oklch(0.925 0.004 80)';
+const PAPER = PAPER_CSS;
 const LABEL_FONT_PX = Number((MICRO_PX / COS30).toFixed(2));
 const BASELINE_INSET = 8;
 

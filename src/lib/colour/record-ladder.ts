@@ -1,3 +1,4 @@
+import { PAPER } from './paper';
 /**
  * The record's one derived value, as 8a's three-step ladder (§5.2, §5.5).
  *
@@ -33,7 +34,7 @@
 
 /** §5.2: the floor is set by the 11px label clearing 4.5:1, not by the 72. */
 export const LIGHTNESS_MIN = 0.62;
-/** The ceiling stops the field dissolving into paper at oklch(0.925). */
+/** The ceiling stops the field dissolving into paper (PAPER, §11.5). */
 export const LIGHTNESS_MAX = 0.74;
 /** Above this, no record shouts. Ceiling only — see the module comment. */
 export const CHROMA_CEILING = 0.09;
@@ -156,7 +157,7 @@ export function recordLadder(stored: string | null): RecordLadder | null {
     That is what makes a near-grey ladder still read as one object: three tones
     of the same thing rather than three different greys.
   */
-  const tint: Oklch = { ...base, L: base.L + (1 - base.L) * TINT_TOWARD_PAPER };
+  const tint: Oklch = { ...base, L: base.L + (PAPER.L - base.L) * TINT_TOWARD_PAPER };
   const shade: Oklch = { ...base, L: base.L * (1 - SHADE_TOWARD_INK) };
 
   return {

@@ -1,4 +1,5 @@
 import { WallLive } from "./WallLive";
+import { PAPER_CSS } from '@/lib/colour/paper';
 import type { WallSeat } from "./shelf-runs";
 import type { RecordSummary } from "./summary";
 import { nearViewMinWidth } from "./view-fork";
@@ -17,13 +18,13 @@ import { nearViewMinWidth } from "./view-fork";
  * sides and bottom — and it reads as furniture in a room rather than as a
  * wall. Shelves, records, and paper.
  *
- * **The ground is the drawn paper, `oklch(0.925 0.004 80)`.** The faces are
- * paper in three steps and the top step has to sit above the ground; on the
- * app's lighter `--background` there is no room for it. That is the
- * drawing-versus-build paper divergence NOTES records, made visible here
- * against the app's chrome rather than resolved.
+ * **The ground is the drawn paper — `PAPER`, the one token (§11.5).** The faces
+ * are paper in three steps and the top step has to sit above the ground,
+ * which is why the app's `--background` is this same value now: while it was
+ * lighter there was no room for the step, and every ratio in the system was
+ * being measured on a ground the page did not paint.
  */
-export const DRAWN_PAPER = "oklch(0.925 0.004 80)";
+export const DRAWN_PAPER = PAPER_CSS;
 
 export function WallComposition({
   seats,

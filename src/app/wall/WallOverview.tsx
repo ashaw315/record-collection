@@ -1,4 +1,5 @@
 import { frontFace, rightFace, topFace, type Point } from './geometry';
+import { PAPER_CSS } from '@/lib/colour/paper';
 import { paintOrder, seatBounds } from './paint-sort';
 import type { ShelfSeat } from './shelf-runs';
 import { wallLayout } from './wall-layout';
@@ -31,7 +32,7 @@ const RULE = 'oklch(0.44 0.008 70)';
  * the plane a step below paper, the faces at paper, the top a step above.
  */
 export const PLANE_FILL = 'oklch(0.905 0.004 80)';
-export const FACE_FILL = 'oklch(0.925 0.004 80)';
+export const FACE_FILL = PAPER_CSS;
 export const TOP_FILL = 'oklch(0.948 0.004 80)';
 
 export const points = (polygon: readonly Point[]) =>
@@ -58,7 +59,7 @@ export function WallOverview({
   const seated = placed.filter((seat) => seat.id !== pulledId);
 
   return (
-    <svg data-wall="overview" viewBox={frame.viewBox} style={{ background: 'oklch(0.925 0.004 80)', width: '100%', height: 'auto' }}>
+    <svg data-wall="overview" viewBox={frame.viewBox} style={{ background: PAPER_CSS, width: '100%', height: 'auto' }}>
       {/* The unit's furniture first, as §11.11 draws it; the records stand on it. */}
       {furniture.map((face, index) => (
         <polygon key={`f-${index}`} data-furniture={face.kind} points={points(face.points)} fill={PLANE_FILL} stroke={RULE} strokeWidth="1" />

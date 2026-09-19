@@ -30740,3 +30740,9 @@ The rail's selects now mark `data-hydrated`: the genre-and-sort spec raced the s
 ## §11.2: the fade runs the full out-span
 
 Colour arrived on the swing's k, so it was at the clamped base at 1300ms with 300ms of finish still to run — the record landed 300ms after its colour did. §11.2's surviving ruling is that colour arrives across the gesture, and the gesture is 1600ms; the field now fades on one ease over the out-span, asserted at 1300 (not yet base) and 1600 (base) in the component and the E2E. The return's fade, which completes before the spine lands, is unchanged.
+
+## §11.5: paper is one token
+
+`PAPER` (`src/lib/colour/paper.ts`) is the drawing's 0.925, and the app paints it: `--background` moved from 0.985, the composition's ground reads the token, the wall's faces read it, and the fade now starts from it rather than from a third value at 0.977 — a pulled record's field used to begin a step lighter than the face it left. The ladder's tint is a fraction toward PAPER's lightness, not toward white. A repo test holds the stylesheet's `--background` to the token, holds the fade's start to it, and scans src for any restatement of the value.
+
+**Measured on the new ground, the text inks all clear:** foreground 14.8:1, muted 5.26, label 6.22, primary 9.10. **The generic hairlines do not survive it, as §11.5 predicted:** `--border` at 0.9 reads 1.08:1 on 0.925 (was 1.30 on 0.985) and `--input` at 0.88 reads 1.15 (was 1.37) — they were chosen against the old ground, and the design's rule at 0.72 reads 1.99 on this paper. `--secondary`, `--muted` and `--accent` (0.955, 0.945) are now lighter than the ground, so a hover or a chip rises rather than sinks. Recorded, not changed: the scope was the one token, and the derived values are a decision about the app's chrome.
