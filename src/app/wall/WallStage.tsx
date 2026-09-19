@@ -7,6 +7,7 @@ import { ARROW_LANE, LANDING_PAD } from './landing';
 import type { View } from './view';
 import { OUT_MS, ROTATION_START, SWING_MS, gestureFaces, outTime, poseAt, settled } from './gesture';
 import { wallLayout } from './wall-layout';
+import { clearanceShift } from './pan';
 import { LABEL, LABEL_INK } from '../records/[id]/grid-type';
 import { DRAWN_PAPER } from './WallComposition';
 import { WallOverview } from './WallOverview';
@@ -110,7 +111,9 @@ export function WallStage({
     const seat = placed.find((p) => p.id === arriving.id);
     const [frameX, frameY] = frame.viewBox.split(' ').map(Number);
     const cover = seat === undefined ? [] : gestureFaces(seat, poseAt(OUT_MS)).cover;
-    const xs = cover.map(([x]) => x - frameX);
+    /* Where the cover LANDS: the gesture's position plus the pan's clearance (§11.26). */
+    const shift = seat === undefined ? 0 : clearanceShift(seat);
+    const xs = cover.map(([x]) => x + shift - frameX);
     const ys = cover.map(([, y]) => y - frameY);
     const bounds = { minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys) };
     const top = (bounds.minY + bounds.maxY) / 2 - 22 + LANDING_PAD;

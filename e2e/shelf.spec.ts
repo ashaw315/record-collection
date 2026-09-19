@@ -403,13 +403,16 @@ test('genre and sort from the rail narrow and order the wall without leaving it 
   const rail = page.getByTestId('wall-rail');
   const fields = await rail.evaluate((el) => Array.from(el.querySelectorAll('form label')).map((n) => n.textContent?.trim()));
   expect(fields, 'SEARCH, then GENRE and SORT beneath it').toEqual(['Search', 'Genre', 'Sort']);
-  /* Choosing a genre is the submit: the artist scope rides along as a hidden input. */
+  /* Choosing a genre is the submit: the artist scope rides along as a hidden input. The selects submit only once hydrated. */
+  const hydrated = () => rail.locator('select[data-hydrated="true"]').first().waitFor({ timeout: 15_000 });
+  await hydrated();
   await rail.getByLabel('Genre').selectOption(genreId);
   await expect(page).toHaveURL(new RegExp(`genreId=${genreId}`));
   await expect(page).toHaveURL(new RegExp(`artistId=${artistId}`));
   await expect(page.getByTestId('wall-count')).toHaveText('2');
   await expect(rail.getByLabel('Genre')).toHaveValue(genreId);
-  /* And the sort keeps the genre. */
+  /* And the sort keeps the genre. A fresh document after the submit: wait for its selects to hydrate too. */
+  await hydrated();
   await rail.getByLabel('Sort').selectOption('title:desc');
   await expect(page).toHaveURL(/sort=title(%3A|:)desc/);
   await expect(page).toHaveURL(new RegExp(`genreId=${genreId}`));

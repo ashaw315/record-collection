@@ -6,6 +6,7 @@ import type { WallSeat } from './shelf-runs';
 import type { RecordSummary } from './summary';
 import { layoutRow } from './geometry';
 import { ARROW_LANE } from './landing';
+import { clearanceShift } from './pan';
 import { GROWTH, OUT_MS, RETURN_MS, ROTATION_START, SWING_MS, gestureFaces, poseAt } from './gesture';
 
 /**
@@ -136,8 +137,9 @@ describe('where the record lands and what goes with it (§11.19–§11.21)', () 
     /* Beside the landed cover, in the region's px (the svg's frame origin taken out). */
     const placed = layoutRow(three.map((s) => ({ id: s.id, section: '0' })), 0)[1];
     const [frameX] = (/viewBox="([^"]+)"/.exec(mid)?.[1] ?? '0 0').split(' ').map(Number);
+    /* Shifted by the pan's clearance (§11.26): the arrows go where the cover lands, not where the gesture alone puts it. */
     const cover = gestureFaces(placed, poseAt(OUT_MS)).cover;
-    const xs = cover.map(([x]) => x);
+    const xs = cover.map(([x]) => x + clearanceShift(placed));
     const left = (id: string) => Number(/left:([\d.-]+)px/.exec(/data-testid="nav-(?:previous|next)"[^>]*>/.exec(mid.slice(mid.indexOf(`data-testid="${id}"`)))?.[0] ?? '')?.[1]);
     expect(left('nav-previous')).toBeCloseTo(Math.min(...xs) - frameX - ARROW_LANE, 6);
     expect(left('nav-next')).toBeCloseTo(Math.max(...xs) - frameX + ARROW_LANE - 44, 6);

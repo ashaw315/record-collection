@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as paintSort from './paint-sort';
+import { recordOffset } from './pan';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { WallLabelled, type PullState } from './WallLabelled';
 import { WALL_PAPER_HEX } from './pull-colour';
@@ -451,6 +452,19 @@ describe('the pulled record is the gesture’s solid, drawn where the sort puts 
     expect(Number(/width="([^"]+)"/.exec(field)?.[1])).toBe(DEPTH);
     expect(Number(/height="([^"]+)"/.exec(field)?.[1])).toBe(SPINE_HEIGHT);
     expect(html).not.toContain('opacity="0"');
+  });
+
+  it('carries the pan’s clearance as a translate on the whole moving record — none at rest, the shift at the landing, the faces themselves untouched (§11.26)', () => {
+    const rest = /<g[^>]*data-pulled="a"[^>]*>/.exec(at(0))?.[0] ?? '';
+    expect(rest).not.toContain('transform=');
+    for (const ms of [900, SWING_MS, OUT_MS]) {
+      const group = /<g[^>]*data-pulled="a"[^>]*>/.exec(at(ms))?.[0] ?? '';
+      const [dx, dy] = recordOffset(placed, { id: 'a', direction: 'out', ms });
+      expect(group, `at ${ms}`).toContain(`transform="translate(${dx} ${dy})"`);
+      /* The polygons inside are the gesture's own points: the offset is the group's, not the geometry's. */
+      const faces = gestureFaces(placed, poseAt(ms));
+      expect(pulledOf(at(ms))).toContain(`points="${points(faces.top)}"`);
+    }
   });
 
   it('the return is the out reversed: the same drawing at the mirrored time', () => {

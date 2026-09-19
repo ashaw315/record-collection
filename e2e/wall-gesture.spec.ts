@@ -110,6 +110,33 @@ test('the view pans to frame the landing on the swing’s ease — the wall stil
   expect(inside?.next, 'and its arrow').toBe(true);
 });
 
+test('the pan settles where the empty seat clears the cover’s trailing edge — 55px, on screen, with the seat in the region (§11.26)', async ({ page }) => {
+  /*
+    A mid-row seat: with the wall rigid under the record, the 560 cover would
+    cover its own seat (251px right of the foot, 145 up). The emptied seat has
+    no element while its record is out, so its screen position is carried
+    from rest by its fixed distance from the upright — the wall is rigid
+    relative to itself.
+  */
+  const rect = (q: string) => page.evaluate((sel) => { const r = document.querySelector(sel)?.getBoundingClientRect(); return r ? { left: r.left, right: r.right } : null; }, q);
+  const upright = '[data-furniture="upright-front"]';
+  const seatAtRest = await rect(`[data-seat="${WIRED_ID}"] [data-spine]`);
+  const uprightAtRest = await rect(upright);
+  expect(seatAtRest && uprightAtRest).toBeTruthy();
+  if (!seatAtRest || !uprightAtRest) return;
+  await page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`).click();
+  await page.clock.runFor(OUT_MS + 2 * TWO_FRAMES);
+  const [region, field, uprightLanded] = await Promise.all([rect('[data-region="wall"]'), rect('[data-pulled] [data-field]'), rect(upright)]);
+  expect(region && field && uprightLanded).toBeTruthy();
+  if (!region || !field || !uprightLanded) return;
+  const seatLeft = uprightLanded.left + (seatAtRest.left - uprightAtRest.left);
+  const seatRight = uprightLanded.left + (seatAtRest.right - uprightAtRest.left);
+  expect(seatLeft - field.right, 'the seat clears the cover’s trailing edge by the clearance').toBeGreaterThanOrEqual(55 - 1.5);
+  expect(seatLeft - field.right, 'and not by a different composition').toBeLessThan(55 + 12);
+  expect(seatLeft >= region.left && seatRight <= region.right, 'the empty seat is in the region').toBe(true);
+  expect(field.left >= region.left && field.right <= region.right, 'and so is the landed record').toBe(true);
+});
+
 test('put back pans the view back to where it began, on the same clock', async ({ page }) => {
   /* Measured on the wall's own screen position: scroll numbers are frame-relative and the frame changes with the landing. */
   const upright = () => page.locator('[data-furniture="upright-front"]').first().evaluate((el) => { const r = el.getBoundingClientRect(); return [r.left, r.top]; });

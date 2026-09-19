@@ -1,4 +1,4 @@
-import type { PlacedSeat } from './geometry';
+import { SPINE_WIDTH_MAX, frontFace, type PlacedSeat } from './geometry';
 import { OUT_MS, SWING_MS, easeInOutCubic, gestureFaces, outTime, poseAt, type GestureState } from './gesture';
 import { ARROW_LANE, LANDING_PAD } from './landing';
 import type { View } from './view';
@@ -17,13 +17,57 @@ import type { View } from './view';
  * fixture moving on screen during the pull is the correct cost — the wall
  * stays still relative to itself and the record, and only the window over
  * it moves. A person at a shelf steps across to look at the record.
+ *
+ * **§11.26: the pan gains a target — it settles where the empty seat clears
+ * the cover's trailing edge.** 290 units of travel and 560px of cover are
+ * each right in their own space and collide in the frame: the landed cover
+ * covers its own empty seat, which §11.10 makes the mark of which record is
+ * out and §11.22 the separation that replaces a scrim. Neither the travel
+ * (watched on a probe) nor the cover (bounded below by the fixture and the
+ * seat staying visible) moves; the landing is the pan's business.
+ * Mechanically the record carries a horizontal offset from its gesture
+ * position (`recordOffset`), and the pan pays for it: the view's target is
+ * the canonical framing of the SHIFTED landing, so the record's screen path
+ * is exactly the gesture's under the framing pan, and the wall slides under
+ * it by the clearance. The offset rides the pan's own ease and unwinds with
+ * it, so the seat is covered only while the cover is arriving and uncovers
+ * as it leaves.
  */
 export type Extent = { minX: number; maxX: number; minY: number; maxY: number };
 
-/** The frame the landing needs, in the svg's px: the landed cover with its arrow lanes across and the page's padding down. */
+/** §11.19: the empty seat sits this far clear of the landed cover's trailing edge. */
+export const SEAT_CLEARANCE = 55;
+
+/**
+ * The horizontal shift (svg px, ≤ 0 — leftward) the landed record carries so
+ * the empty seat's near edge is SEAT_CLEARANCE past the cover's right edge.
+ * Zero when the seat already clears it.
+ *
+ * Measured on the seat at its WIDEST spine, so the shift is one number for
+ * every seat: the cover's right edge sits at the foot, x + width, and a
+ * shift that followed the width would make a neighbour's framing differ by
+ * the pitch plus the width difference — and §11.22's same-screen-position
+ * landing needs exactly the pitch. A narrower seat clears by more.
+ */
+export function clearanceShift(seat: PlacedSeat): number {
+  const widest = { ...seat, width: SPINE_WIDTH_MAX };
+  const cover = gestureFaces(widest, poseAt(OUT_MS)).cover;
+  const coverRight = Math.max(...cover.map(([x]) => x));
+  const seatLeft = Math.min(...frontFace(widest).map(([x]) => x));
+  return Math.min(0, seatLeft - SEAT_CLEARANCE - coverRight);
+}
+
+/** The moving record's offset from its gesture position at a state: the shift on the pan's own fraction, zero at rest. */
+export function recordOffset(seat: PlacedSeat, state: GestureState): [number, number] {
+  const dx = clearanceShift(seat) * panFraction(state);
+  return [dx === 0 ? 0 : dx, 0];
+}
+
+/** The frame the landing needs, in the svg's px: the landed cover, shifted by the clearance, with its arrow lanes across and the page's padding down. */
 export function landedExtent(seat: PlacedSeat): Extent {
   const cover = gestureFaces(seat, poseAt(OUT_MS)).cover;
-  const xs = cover.map(([x]) => x);
+  const shift = clearanceShift(seat);
+  const xs = cover.map(([x]) => x + shift);
   const ys = cover.map(([, y]) => y);
   return {
     minX: Math.min(...xs) - LANDING_PAD - ARROW_LANE,

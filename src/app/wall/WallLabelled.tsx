@@ -6,6 +6,7 @@ import { WALL_PAPER_HEX, pullFill, returnFill } from './pull-colour';
 import { wallLayout } from './wall-layout';
 import type { View } from './view';
 import { GROWTH, RETURN_MS, easeInOutCubic, gestureFaces, outTime, poseAt, type GestureState } from './gesture';
+import { recordOffset } from './pan';
 import { RETURN_FADE_END } from './pull-colour';
 import { recordLadder } from '@/lib/colour/record-ladder';
 import { MICRO_PX } from '../type-scale';
@@ -157,6 +158,7 @@ export function WallLabelled({
       scale's size wherever it lands.
     */
     const inner = (DEPTH - 2 * inset) * GROWTH;
+    const offset = recordOffset(seat, state);
     const sleeve = (children: React.ReactNode) => (
       <g transform={`translate(${inset} ${inset}) scale(${1 / GROWTH})`}>{children}</g>
     );
@@ -164,6 +166,8 @@ export function WallLabelled({
       <g
         key={seat.id}
         data-pulled={seat.id}
+        /* §11.26: the pan's clearance, carried by the whole record; the faces inside are the gesture's own. */
+        transform={offset[0] === 0 && offset[1] === 0 ? undefined : `translate(${offset[0]} ${offset[1]})`}
         style={{ cursor: onPulledClick === undefined ? undefined : 'pointer' }}
         onClick={onPulledClick}
       >
