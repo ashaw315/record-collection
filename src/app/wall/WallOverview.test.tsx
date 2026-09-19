@@ -64,9 +64,9 @@ describe('the overview draws the collection as polygons', () => {
   it('linked (§11.24’s narrow shelf): each record is an anchor to its own screen, NAMED as the labelled wall names it — a tap goes there, not to a pulled state', () => {
     const named = seats(3).map((seat, i) => ({ ...seat, artist: `Artist ${i}`, title: `Title ${i}` }));
     const html = render({ seats: named, pulledId: null, linked: true });
-    for (const id of ['r0', 'r1', 'r2']) expect(html).toMatch(new RegExp(`<a [^>]*href="/records/${id}"[^>]*data-seat="${id}"`));
+    for (const id of ['r0', 'r1', 'r2']) expect(html).toMatch(new RegExp(`<a [^>]*href="/records/${id}"[^>]*data-far-seat="${id}"`));
     /* An anchor with no name is "link" two hundred times over: the far view draws no text, so the name is the attribute. */
-    for (const i of [0, 1, 2]) expect(html).toMatch(new RegExp(`<a [^>]*aria-label="Artist ${i} · Title ${i}"[^>]*data-seat="r${i}"`));
+    for (const i of [0, 1, 2]) expect(html).toMatch(new RegExp(`<a [^>]*aria-label="Artist ${i} · Title ${i}"[^>]*data-far-seat="r${i}"`));
     expect(countTag(html, 'a ')).toBe(3);
     /* Still no text: the far view identifies nothing; the record screen does. */
     expect(html).not.toMatch(/<text/);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { FACTS_WIDTH, RAIL_WIDTH, isFarView, nearViewMinWidth } from './view-fork';
-import { LANDING_PAD } from './landing';
+import { FACTS_WIDTH, RAIL_WIDTH, fixtureWidth, isFarView, landingWidth, nearViewMinWidth } from './view-fork';
+import { ARROW_LANE, LANDED_SIZE, LANDING_PAD } from './landing';
 import { PER_SHELF, unitPieces } from './unit';
 
 /**
@@ -13,15 +13,26 @@ import { PER_SHELF, unitPieces } from './unit';
  * pulled state does not exist to be presented either way.
  */
 describe('the fork between the near view and the far view (§11.24)', () => {
-  it('is the width that holds the rail, the facts column and one twenty-seat shelf with the region’s pad — derived from the fixture, not chosen', () => {
+  it('is the width that holds the rail, the facts column and the LANDING — the larger of the fixture and the landing, with the region’s pad (§11.26)', () => {
+    /*
+      §11.24 derived the fork from the fixture: the right method, the wrong
+      subject. The fork separates where the pull works from where a tap goes
+      to the record screen, so it derives from the pull — deriving it from the
+      fixture left a band from 1044 to about 1280 where the wall was a fixture
+      and the pull had nowhere to land, the exact failure the fork exists to
+      prevent, surviving inside it. One constant either way: max(fixture, landing).
+    */
     const points = unitPieces(PER_SHELF).flatMap((piece) => piece.faces.flatMap((face) => face.points));
     const xs = points.map(([x]) => x);
-    const fixture = Math.max(...xs) - Math.min(...xs);
-    expect(fixture).toBeCloseTo(442, 0);
+    expect(fixtureWidth()).toBeCloseTo(Math.max(...xs) - Math.min(...xs), 9);
+    expect(fixtureWidth()).toBeCloseTo(442, 0);
+    /* The landing: its two arrow lanes and the 560 cover, in a region padded on the right only. */
+    expect(landingWidth()).toBe(ARROW_LANE + LANDED_SIZE + ARROW_LANE);
     expect(RAIL_WIDTH).toBe(148);
     expect(FACTS_WIDTH).toBe(420);
-    expect(nearViewMinWidth()).toBe(Math.ceil(RAIL_WIDTH + FACTS_WIDTH + fixture + LANDING_PAD));
-    expect(nearViewMinWidth()).toBe(1044);
+    expect(nearViewMinWidth()).toBe(Math.ceil(RAIL_WIDTH + FACTS_WIDTH + Math.max(fixtureWidth(), landingWidth()) + LANDING_PAD));
+    expect(nearViewMinWidth()).toBe(1274);
+    expect(nearViewMinWidth()).toBeGreaterThan(1044);
   });
 
   it('puts 390 on the far side, the desktop the specs run at on the near side, and the boundary itself on the near side', () => {

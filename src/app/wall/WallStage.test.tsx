@@ -59,9 +59,12 @@ describe('the narrow shelf is the far view (§11.24)', () => {
     expect(html).not.toMatch(/grid-cols-\[420px_1fr\]/);
     expect(html).not.toContain('data-wall="labelled"');
     expect(html).not.toContain('data-testid="panel-region"');
-    expect(html).toContain('data-testid="wall-count"');
-    expect(html.indexOf('data-testid="wall-count"')).toBeLessThan(html.indexOf('data-wall="overview"'));
-    expect(html).toMatch(/<a [^>]*href="\/records\/a"[^>]*aria-label="Artist a · Title a"[^>]*data-seat="a"/);
+    /* Its own markers: while unmeasured both views are in the document, and nothing may resolve to both. */
+    expect(html).toContain('data-testid="wall-count-far"');
+    expect(html).not.toContain('data-testid="wall-count"');
+    expect(html.indexOf('data-testid="wall-count-far"')).toBeLessThan(html.indexOf('data-wall="overview"'));
+    expect(html).toMatch(/<a [^>]*href="\/records\/a"[^>]*aria-label="Artist a · Title a"[^>]*data-far-seat="a"/);
+    expect(html).not.toContain('data-seat="a"');
     /* No width floor: the svg fits the column rather than holding 1:1. */
     expect(/<svg[^>]*data-wall="overview"[^>]*>/.exec(html)?.[0]).toContain('width:100%');
   });
@@ -69,6 +72,15 @@ describe('the narrow shelf is the far view (§11.24)', () => {
   it('keeps the near view unless told otherwise', () => {
     expect(render()).toContain('data-wall="labelled"');
     expect(render()).not.toContain('data-wall="overview"');
+    expect(render()).toContain('data-region="near"');
+  });
+
+  it('renders BOTH views while unmeasured — the server has no width — so CSS can show the right one on the first paint, and one once measured (§11.26)', () => {
+    const both = render({ far: null });
+    expect(both).toContain('data-region="near"');
+    expect(both).toContain('data-region="far"');
+    expect(render({ far: true })).not.toContain('data-region="near"');
+    expect(render({ far: false })).not.toContain('data-region="far"');
   });
 });
 

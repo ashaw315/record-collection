@@ -56,7 +56,7 @@ test('at 390px the shelf is the far view in one column, the rail one band, and a
   /* The rail is one band: full width, under the nav, above the count; the filter lines and the rule withdrawn. */
   const nav = await box(page, '[data-app-nav]');
   const rail = await box(page, '[data-testid="wall-rail"]');
-  const count = await box(page, '[data-testid="wall-count"]');
+  const count = await box(page, '[data-testid="wall-count-far"]');
   expect(nav && rail && count).toBeTruthy();
   if (!nav || !rail || !count) return;
   expect(rail.width, 'the band spans the viewport').toBeGreaterThan(300);
@@ -69,11 +69,21 @@ test('at 390px the shelf is the far view in one column, the rail one band, and a
   await expect(railEl.getByRole('link', { name: 'Add record' })).toBeVisible();
   await expect(railEl.getByLabel('Sort')).toBeHidden();
   await expect(railEl.locator('[data-rail-rule]')).toBeHidden();
+  /* §11.26: Add record is a row item in the band — on the same line as the views, not wrapped under them. */
+  const shelfLink = await railEl.getByRole('link', { name: 'Shelf' }).boundingBox();
+  const addLink = await railEl.getByRole('link', { name: 'Add record' }).boundingBox();
+  expect(shelfLink && addLink).toBeTruthy();
+  if (shelfLink && addLink) {
+    /* To the right of the views and overlapping them vertically: the same row, not the line under it. */
+    expect(addLink.x, 'to the right').toBeGreaterThan(shelfLink.x + shelfLink.width);
+    expect(addLink.y, 'one row').toBeLessThan(shelfLink.y + shelfLink.height);
+    expect(addLink.y + addLink.height, 'one row').toBeGreaterThan(shelfLink.y);
+  }
   /* Nothing overflows the width: the page does not scroll sideways. */
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 
   /* A tap goes to the record screen; nothing is pulled. */
-  await page.locator(`[data-wall="overview"] a[data-seat="${recordId}"]`).click();
+  await page.locator(`[data-wall="overview"] a[data-far-seat="${recordId}"]`).click();
   await expect(page).toHaveURL(new RegExp(`/records/${recordId}`));
   expect(await page.locator('[data-pulled]').count()).toBe(0);
 });
@@ -94,4 +104,23 @@ test('the fork is one number: widening past it brings the near view back, with t
   await page.setViewportSize({ width: nearViewMinWidth() - 1, height: 844 });
   await expect(page.locator('[data-wall="overview"]')).toBeVisible();
   await expect(page.locator('[data-wall="labelled"]')).toHaveCount(0);
+});
+
+test('the first paint is the far view: with no script at all, 390px shows the overview and hides the labelled wall (§11.26’s flash, handled)', async ({ browser, page: signedIn }) => {
+  /* The login form needs script to submit; the session cookie does not. Sign in with script, then look with none. */
+  await login(signedIn);
+  const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 844 }, storageState: await signedIn.context().storageState() });
+  const page = await context.newPage();
+  try {
+    await page.goto('/');
+    await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
+    /* Both are in the document — the server has no width — and the stylesheet decides. */
+    await expect(page.locator('[data-region="far"]')).toBeVisible();
+    await expect(page.locator('[data-region="near"]')).toBeHidden();
+    await page.setViewportSize({ width: nearViewMinWidth(), height: 844 });
+    await expect(page.locator('[data-region="near"]')).toBeVisible();
+    await expect(page.locator('[data-region="far"]')).toBeHidden();
+  } finally {
+    await context.close();
+  }
 });

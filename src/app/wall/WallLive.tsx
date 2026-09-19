@@ -259,8 +259,8 @@ export function WallLive({
         countLine={countLine}
         regionRef={region}
         labels={labels}
-        /* Rendered near first — the server has no width — and forked once measured (§11.24). */
-        far={viewport > 0 && isFarView(viewport)}
+        /* Unmeasured on the server, so both render and CSS shows the right one; forked once measured (§11.24, §11.26). */
+        far={viewport > 0 ? isFarView(viewport) : null}
         framed={framed}
         onSeatClick={(id) => {
           if (pulls.length === 0) begin(id, 'out');

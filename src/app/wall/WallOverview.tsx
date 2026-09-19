@@ -77,7 +77,7 @@ export function WallOverview({
         const named = seats.find((s) => s.id === seat.id);
         const name = named?.artist !== undefined && named.title !== undefined ? `${named.artist} · ${named.title}` : undefined;
         return linked ? (
-          <a key={seat.id} href={`/records/${seat.id}`} aria-label={name} data-seat={seat.id}>
+          <a key={seat.id} href={`/records/${seat.id}`} aria-label={name} data-far-seat={seat.id}>
             {faces}
           </a>
         ) : (

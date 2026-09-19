@@ -61,8 +61,14 @@ export function WallStage({
   /** The drawing region, for whoever measures it. */
   regionRef?: React.Ref<HTMLDivElement>;
   labels?: boolean;
-  /** §11.24: the narrow shelf is the far view — the count, then the collection as an object, each record a link to its screen. */
-  far?: boolean;
+  /**
+   * §11.24: the narrow shelf is the far view — the count, then the collection
+   * as an object, each record a link to its screen. `null` is unmeasured:
+   * the server has no width, so both views render and the composition's
+   * media query shows the right one on the first paint (§11.26 records the
+   * flash of the near view as a build concern; this is its handling).
+   */
+  far?: boolean | null;
   /** §11.22: the records whose landings the frame holds, until the wall is at rest. */
   framed?: readonly string[];
   onSeatClick?: (id: string) => void;
@@ -138,10 +144,14 @@ export function WallStage({
     );
   }
 
-  const count = (
-    <div data-region="count">
+  /*
+    Both views carry the count, and while unmeasured both are in the document
+    (§11.26): the far view's markers are its own so nothing resolves to both.
+  */
+  const count = (far: boolean) => (
+    <div data-region={far ? 'count-far' : 'count'}>
       <div className={LABEL}>COLLECTION</div>
-      <div data-testid="wall-count" className="text-display leading-[0.86] font-extrabold" style={{ marginTop: 6 }}>
+      <div data-testid={far ? 'wall-count-far' : 'wall-count'} className="text-display leading-[0.86] font-extrabold" style={{ marginTop: 6 }}>
         {seats.length}
       </div>
       {countLine === null ? null : (
@@ -158,21 +168,20 @@ export function WallStage({
     collection as an object — and no panel region, because the pulled state
     does not exist at this width: a tap goes to the record screen.
   */
-  if (far) {
-    return (
-      <div data-region="far" className="flex flex-col p-[34px]">
-        {count}
-        <div className="mt-[34px]">
-          <WallOverview seats={seats} pulledId={null} linked />
-        </div>
+  const farView = (
+    <div data-region="far" className="flex flex-col p-[34px]">
+      {count(true)}
+      <div className="mt-[34px]">
+        <WallOverview seats={seats} pulledId={null} linked />
       </div>
-    );
-  }
+    </div>
+  );
+  if (far === true) return farView;
 
-  return (
-    <div className="grid grid-cols-[420px_1fr] gap-0">
+  const nearView = (
+    <div data-region="near" className="grid grid-cols-[420px_1fr] gap-0">
       <div data-region="facts" className="flex flex-col p-[34px]">
-        {count}
+        {count(false)}
         <div data-testid="panel-region" className="mt-[34px]">{panel}</div>
       </div>
       {/*
@@ -204,5 +213,12 @@ export function WallStage({
         </div>
       </div>
     </div>
+  );
+  if (far === false) return nearView;
+  return (
+    <>
+      {nearView}
+      {farView}
+    </>
   );
 }

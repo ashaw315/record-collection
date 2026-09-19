@@ -54,10 +54,13 @@ describe('the wall composition', () => {
     expect(svg).not.toContain('background');
   });
 
-  it('puts seventeen records on the top shelf of one unit (§11.10), and draws the unit — nothing else', () => {
+  it('puts seventeen records on the top shelf of one unit (§11.10), and the near view draws the unit — nothing else', () => {
+    /* Unmeasured, the composition carries both views (§11.26); the near view is the drawing this claim is about. */
     const html = render(17);
-    const furniture = html.split('data-furniture=').length - 1;
-    const polygons = html.split('<polygon').length - 1;
+    const near = html.slice(html.indexOf('data-region="near"'), html.indexOf('data-region="far"'));
+    expect(near.length).toBeGreaterThan(0);
+    const furniture = near.split('data-furniture=').length - 1;
+    const polygons = near.split('<polygon').length - 1;
     /* Two uprights and four shelves, three faces each: the fixture, empty shelves drawn. */
     expect(furniture).toBe(18);
     expect(polygons, 'the unit plus three faces per record, no back, no front, no top').toBe(18 + 17 * 3);
@@ -75,6 +78,17 @@ describe('the rail collapses to one band below the fork (§11.24)', () => {
     expect(style).toMatch(/\[data-rail-rule\][^{]*\{[^}]*display:\s*none/);
     /* The band is the shelf's, not the probes': no rail, no style. */
     expect(render(3)).not.toContain('data-narrow-shelf');
+  });
+
+  it('keeps Add record a row item in the band — nowrap, the search yielding — and gates the unmeasured first paint by the same query (§11.26)', () => {
+    const html = renderToStaticMarkup(<WallComposition seats={seats(3)} rail={<nav data-testid="wall-rail">rail</nav>} />);
+    const style = /<style[^>]*data-narrow-shelf=""[^>]*>([\s\S]*?)<\/style>/.exec(html)?.[1] ?? '';
+    expect(style).toMatch(/\[data-testid="wall-rail"\]\s*\{[^}]*flex-wrap:\s*nowrap/);
+    expect(style).toMatch(/\[data-testid="wall-rail"\] a\s*\{[^}]*white-space:\s*nowrap/);
+    expect(style).toMatch(/\[data-testid="wall-rail"\] form\s*\{[^}]*min-width:\s*0/);
+    /* The flash: below the fork the server-rendered near view is hidden by CSS; above it the far one — so the first paint is the right view before any measurement. */
+    expect(style).toMatch(new RegExp(`@media \\(max-width: ${nearViewMinWidth() - 1}px\\)[\\s\\S]*\\[data-region="near"\\]\\s*\\{[^}]*display:\\s*none`));
+    expect(style).toMatch(new RegExp(`@media \\(min-width: ${nearViewMinWidth()}px\\)[\\s\\S]*\\[data-region="far"\\]\\s*\\{[^}]*display:\\s*none`));
   });
 });
 
