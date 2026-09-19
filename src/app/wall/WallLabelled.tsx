@@ -150,8 +150,8 @@ export function WallLabelled({
     const inset = Math.round(DEPTH * 0.11);
     /*
       **Type is laid out once, at the landed size, and rides the plane.** The
-      cover's plane scales uniformly by the record's growth (1 while growth
-      is with Design), exactly GROWTH on arrival, so the sleeve is set at its
+      cover's plane scales uniformly by the record's growth (§11.25: on the
+      rotation's window), exactly GROWTH on arrival, so the sleeve is set at its
       landed px — where it is read, on a wall at 1:1 — inside a group scaled
       by 1/GROWTH. The artist lands at LABEL's 11px: read type is read at the
       scale's size wherever it lands.

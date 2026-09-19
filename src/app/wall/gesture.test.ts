@@ -5,6 +5,8 @@ import { OPEN_ANGLE, WIDEST, footprint, footprintsCollide } from './rotation';
 import {
   FINISH_MS,
   GROWTH,
+  GROWTH_END,
+  GROWTH_START,
   OUT_MS,
   RETURN_MS,
   ROTATION_START,
@@ -23,12 +25,13 @@ import {
  * probe's 1300 for travel, growth and rotation, with a 300ms finish added
  * after it rather than carved out — and the return is the whole gesture
  * reversed at 860ms (700 × 1600 / 1300). Travel is 290 · easeInOutCubic(k)
- * over the 1300; no growth — the probe never grew the record and 3.73× over
- * 290 units is a zoom with a slide under it, so growth is back with Design
- * as its own question; rotation is 45° on
- * its own ease over the last 58%, joining at k = 0.42 with the record 85.9
- * out. Growth and rotation share one fixed point — the foot of the cover's
- * near vertical edge (§11.21) — and the finish's two terms come after 45°.
+ * over the 1300; rotation is 45° on its own ease over the last 58%, joining
+ * at k = 0.42 with the record 85.9 out; and growth (150 → 560, §11.19) rides
+ * the ROTATION's window, not the travel's (§11.25): an orthographic
+ * projection has no size change on approach, so growth is the record
+ * leaving the projection, which is what the rotation is. Growth and
+ * rotation share one fixed point — the foot of the cover's near vertical
+ * edge (§11.21) — and the finish's two terms come after 45°.
  */
 const seat: PlacedSeat = { id: 'p', x: 170, y: 0, z: 594, width: spineWidth('p') };
 const width = (poly: readonly (readonly [number, number])[]) => Math.max(...poly.map(([x]) => x)) - Math.min(...poly.map(([x]) => x));
@@ -50,23 +53,55 @@ describe('the clock', () => {
     expect(settled({ id: 'p', direction: 'back', ms: RETURN_MS })).toBe(true);
   });
 
-  it('poses: travel, growth and rotation on the swing, the finish after it', () => {
+  it('poses: travel on the swing, growth and rotation on the rotation’s window, the finish after it', () => {
     expect(TRAVEL).toBe(290);
-    /* No growth: the record leaves the row at its own size, as the probe's does. §11.21's 150 → 560 is with Design. */
-    expect(GROWTH).toBe(1);
+    /* §11.19's landed square is 560 on a 150 seat: 3.73×. */
     expect(LANDED_SIZE).toBe(560);
+    expect(GROWTH).toBeCloseTo(560 / 150, 12);
     expect(poseAt(0)).toEqual({ k: 0, travel: 0, scale: 1, angle: 0, finish: 0 });
     const join = poseAt(ROTATION_START * SWING_MS);
     expect(join.travel).toBeCloseTo(85.9, 1);
     expect(join.angle).toBe(0);
-    expect(join.scale).toBeCloseTo(1 + (GROWTH - 1) * easeInOutCubic(ROTATION_START), 12);
+    expect(join.scale).toBe(1);
     expect(poseAt(ROTATION_START * SWING_MS + 1).angle).toBeGreaterThan(0);
+    expect(poseAt(ROTATION_START * SWING_MS + 1).scale).toBeGreaterThan(1);
     const end = poseAt(SWING_MS);
     expect(end).toEqual({ k: 1, travel: TRAVEL, scale: GROWTH, angle: OPEN_ANGLE, finish: 0 });
     expect(poseAt(SWING_MS + FINISH_MS / 2).finish).toBe(0.5);
     expect(poseAt(OUT_MS)).toEqual({ ...end, finish: 1 });
-    /* Scale is a parameter of the construction, not a curve: 1 throughout. */
-    for (const t of [200, 546, 900, 1300, OUT_MS]) expect(poseAt(t).scale).toBe(1);
+  });
+
+  it('growth rides the rotation’s window, not the travel’s (§11.25): size does not change through the first third', () => {
+    /*
+      The window is a motion parameter, adjustable like the finish's 300ms
+      (§11.25: no still can judge it — the endpoints agree under every
+      distribution). Its default is the rotation's own window, so the two
+      transforms with one cause arrive together.
+    */
+    expect(GROWTH_START).toBe(ROTATION_START);
+    expect(GROWTH_END).toBe(1);
+    for (const k of [0.1, 0.25, 0.42]) {
+      const pose = poseAt(k * SWING_MS);
+      expect(pose.travel, `k=${k}`).toBeGreaterThan(0);
+      expect(pose.scale, `k=${k}`).toBe(1);
+    }
+    /* On the window, growth's progress IS the rotation's progress: one ease, one cause. */
+    for (const k of [0.5, 0.6, 0.7, 0.85, 1]) {
+      const pose = poseAt(k * SWING_MS);
+      const progress = easeInOutCubic((k - GROWTH_START) / (GROWTH_END - GROWTH_START));
+      expect(pose.scale, `k=${k}`).toBeCloseTo(1 + (GROWTH - 1) * progress, 12);
+      expect(pose.angle / OPEN_ANGLE, `k=${k}`).toBeCloseTo(progress, 12);
+    }
+    /*
+      The tell §11.25 records: growth on the travel's curve gave a size change
+      that was 1.41 of the position change at EVERY instant — a constant ratio
+      is two quantities sharing a curve when only one belongs on it. Here the
+      ratio is not constant: zero while the record only travels, then rising.
+    */
+    const ratio = (k: number) => (poseAt(k * SWING_MS).scale - 1) * DEPTH / poseAt(k * SWING_MS).travel;
+    expect(ratio(0.3)).toBe(0);
+    expect(ratio(0.7)).toBeGreaterThan(0);
+    expect(ratio(1)).toBeGreaterThan(ratio(0.7));
   });
 });
 
@@ -142,9 +177,23 @@ describe('the drawn record: three faces, the cover’s plane and the label’s, 
     }
   });
 
-  it('carries its bounds for the sort: the seat’s at 0, past the row on y at the end', () => {
+  it('carries its bounds for the sort: the seat’s at 0, and the PHYSICAL box after — unscaled, growth being the screen’s cue (§11.21)', () => {
     expect(gestureFaces(seat, poseAt(0)).bounds).toEqual({ x0: seat.x, x1: seat.x + seat.width, y0: 0, y1: DEPTH, z0: seat.z, z1: seat.z + SPINE_HEIGHT });
-    expect(gestureFaces(seat, poseAt(SWING_MS)).bounds.y0).toBeGreaterThanOrEqual(0);
+    /*
+      The grown solid reaches back INTO the row on y (a 560 run at a partial
+      angle), and a sort on the grown box loses its y-plane and falls to the
+      centroid, where a long row's far records come out nearer than the
+      record in front of them — the row painted over the cover. The box the
+      sort sees is the one the clearance is asserted on: travelled and
+      rotated at the record's own size.
+    */
+    for (const t of [900, SWING_MS]) {
+      const { bounds } = gestureFaces(seat, poseAt(t));
+      const physical = gestureFaces(seat, { ...poseAt(t), scale: 1 }).bounds;
+      expect(bounds, `t=${t}`).toEqual(physical);
+      expect(bounds.z1, `t=${t}`).toBe(seat.z + SPINE_HEIGHT);
+    }
+    expect(gestureFaces(seat, poseAt(SWING_MS)).bounds.y0, 'past the row entirely at 45°').toBeGreaterThan(DEPTH);
     expect(gestureFaces(seat, poseAt(SWING_MS)).bounds.y1).toBeGreaterThanOrEqual(DEPTH + TRAVEL);
   });
 });

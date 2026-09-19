@@ -16,14 +16,18 @@ import { OPEN_ANGLE } from './rotation';
  * every point because its eases are shaped to be (gesture.test.ts asserts
  * the joint state at every frame).
  *
- * **Growth is a parameter, held at 1** (see `GROWTH`). When it returns it
- * rides phase one's curve (§11.21) about the same fixed point as the
- * rotation. **Growth and rotation share one fixed point: the foot of the
- * cover's near vertical edge**, at y + depth (§11.21). The
- * rotation already holds that edge, so its foot is a point fixed by both
- * transforms; any other origin moves a point the rotation is holding
- * still. The gesture is that corner staying put while everything else
- * leaves — with the travel, which carries the corner itself.
+ * **Growth rides the rotation's window, not the travel's** (§11.25): an
+ * orthographic projection has no size change on approach, by definition,
+ * so growth is not what approach looks like — it is the record leaving the
+ * projection, which is what the rotation is. Two transforms, one cause,
+ * one window (`GROWTH_START`..`GROWTH_END`, the rotation's by default),
+ * one fixed point, the travel underneath. **Growth and rotation share one
+ * fixed point: the foot of the cover's near vertical edge**, at y + depth
+ * (§11.21). The rotation already holds that edge, so its foot is a point
+ * fixed by both transforms; any other origin moves a point the rotation
+ * is holding still. The gesture is that corner staying put while
+ * everything else leaves — with the travel, which carries the corner
+ * itself.
  *
  * **The finish is added after the rotation, not carved out of it**: 300ms,
  * a number Design labels chosen rather than derived — long enough that a
@@ -45,18 +49,20 @@ export const OUT_MS = SWING_MS + FINISH_MS;
 export const RETURN_MS = (700 * OUT_MS) / SWING_MS;
 export const TRAVEL = 290;
 export const ROTATION_START = 0.42;
+/** 150 → 560 (§11.19): the landed square on the seat's face. */
+export const GROWTH = LANDED_SIZE / DEPTH;
 /**
- * **No growth, for now.** The probe that read correctly never grew the record:
- * scale is a parameter of the construction, not a curve. §11.21 ruled growth
- * rides the travel on the argument that a record coming toward the reader
- * gets larger — but 3.73× over 290 units is not what approach looks like,
- * it is a zoom with a slide under it, and it was the dominant difference
- * from the probe. Growth is back with Design as its own question, with the
- * comparison in hand; the record leaves the row at its own size. §11.19's
- * 560 (`LANDED_SIZE`) waits with it.
+ * The growth's window on the swing, in k — adjustable like `FINISH_MS`, and
+ * for the same reason: it is the second parameter in the gesture no still
+ * can judge, since the endpoints agree under every distribution and only
+ * the frames between differ (§11.25). Its default is the rotation's own
+ * window. The tell that ruled out the travel's curve: 410px of growth
+ * against 290 of travel on one ease was 1.41 at every instant, and a
+ * constant ratio is two quantities sharing a curve when only one belongs
+ * on it — it could not be tuned because it was structural.
  */
-export const GROWTH = 1;
-void LANDED_SIZE;
+export const GROWTH_START = ROTATION_START;
+export const GROWTH_END = 1;
 
 export type GestureState = { id: string; direction: 'out' | 'back'; ms: number };
 export type Pose = { k: number; travel: number; scale: number; angle: number; finish: number };
@@ -82,7 +88,7 @@ export function poseAt(t: number): Pose {
   return {
     k,
     travel: TRAVEL * eased,
-    scale: 1 + (GROWTH - 1) * eased,
+    scale: 1 + (GROWTH - 1) * easeInOutCubic((k - GROWTH_START) / (GROWTH_END - GROWTH_START)),
     angle: OPEN_ANGLE * easeInOutCubic((k - ROTATION_START) / (1 - ROTATION_START)),
     finish: t <= SWING_MS ? 0 : easeInOutCubic((t - SWING_MS) / FINISH_MS),
   };
@@ -98,7 +104,14 @@ export type GestureFaces = {
   labelMatrix: string;
   /** The cover's corners in wall plan, for the advance claim. */
   coverWall: readonly (readonly [number, number])[];
-  /** Axis-aligned wall-space bounds of the grown, rotated solid, for the painter's sort. */
+  /**
+   * Axis-aligned wall-space bounds of the PHYSICAL solid — travelled and
+   * rotated at the record's own size — for the painter's sort. Growth is
+   * the screen's cue (§11.21, the clearance is asserted on this box): the
+   * grown solid reaches back into the row on y at a partial angle, and a
+   * sort on it loses its y-plane and falls to the centroid, where a long
+   * row's far records come out nearer than the record in front of them.
+   */
   bounds: { x0: number; x1: number; y0: number; y1: number; z0: number; z1: number };
   scale: number;
 };
@@ -165,15 +178,20 @@ export function gestureFaces(seat: PlacedSeat, pose: Pose): GestureFaces {
   const br = spine[1];
   const labelMatrix = fmt([(tl[0] - bl[0]) / H, (tl[1] - bl[1]) / H, (br[0] - bl[0]) / w, (br[1] - bl[1]) / w, bl[0], bl[1]]);
 
+  const physical = (a: number, b: number, c: number): readonly [number, number, number] => [
+    foot[0] + a * thick[0] + b * run[0],
+    foot[1] + a * thick[1] + b * run[1],
+    foot[2] + c,
+  ];
   const corners: (readonly [number, number, number])[] = [];
-  for (const a of [0, w]) for (const b of [0, D]) for (const c of [0, H]) corners.push(wall(a, b, c));
+  for (const a of [0, w]) for (const b of [0, D]) for (const c of [0, H]) corners.push(physical(a, b, c));
   const bounds = {
     x0: Math.min(...corners.map(([x]) => x)),
     x1: Math.max(...corners.map(([x]) => x)),
     y0: Math.min(...corners.map(([, y]) => y)),
     y1: Math.max(...corners.map(([, y]) => y)),
     z0: foot[2],
-    z1: foot[2] + s * H,
+    z1: foot[2] + H,
   };
   const coverWall = [wall(0, D, 0), wall(0, 0, 0), wall(0, 0, H), wall(0, D, H)].map(([x, y]) => [x, y] as const);
 

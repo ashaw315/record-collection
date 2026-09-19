@@ -102,6 +102,20 @@ describe('5b’s two faces at rest (D2): three faces per record, filled in paper
     expect(clear.indexOf('data-pulled="b"')).toBeGreaterThan(clear.indexOf('data-seat="c"'));
   });
 
+  it('paints the growing record over the whole of a long row: the sort sees the physical box, not the grown one (§11.25 with §11.21)', () => {
+    /* Twenty on a shelf, the fifth pulled: the far end of the row is 255 units to the right of it. */
+    const row = Array.from({ length: 20 }, (_, i) => seat(`r${i}`, null));
+    const view = { x: 0, y: 0, width: 1400, height: 900 };
+    for (const ms of [900, SWING_MS, OUT_MS]) {
+      const html = renderToStaticMarkup(<WallLabelled seats={row} pulls={[{ id: 'r4', direction: 'out', ms }]} view={view} />);
+      const pulled = html.indexOf('data-pulled="r4"');
+      const lastSeat = Math.max(...row.map((r) => html.lastIndexOf(`data-seat="${r.id}"`)));
+      const lastPiece = html.lastIndexOf('data-piece=');
+      expect(pulled, `over the row at ${ms}`).toBeGreaterThan(lastSeat);
+      expect(pulled, `over the furniture at ${ms}`).toBeGreaterThan(lastPiece);
+    }
+  });
+
   it('renders the moving record on its first frame — three faces, four corners each — the test the probe’s comparator failed', () => {
     const html = renderToStaticMarkup(
       <WallLabelled seats={[seat('a', null), seat('b', null)]} pulls={[{ id: 'a', direction: 'out', ms: 0 }]} view={{ x: 0, y: 0, width: 960, height: 760 }} />,
@@ -392,14 +406,14 @@ describe('the pulled record is the gesture’s solid, drawn where the sort puts 
     }
   });
 
-  it('lands as a square of its own size with no shear: the cover matrix is axis-aligned at 1600ms, and the field rect is DEPTH × SPINE_HEIGHT in its own plane', () => {
+  it('lands as a 560 square with no shear: the cover matrix is axis-aligned at 1600ms, and the field rect is DEPTH × SPINE_HEIGHT in its own plane', () => {
     const html = pulledOf(at(OUT_MS));
     const [a, b, c, d] = (/<g transform="matrix\(([^)]+)\)"[^>]*data-landing/.exec(html)?.[1] ?? '').split(' ').map(Number);
     expect(b).toBeCloseTo(0, 9);
     expect(c).toBeCloseTo(0, 9);
     expect(a * DEPTH).toBeCloseTo(DEPTH * GROWTH, 6);
     expect(d * SPINE_HEIGHT).toBeCloseTo(SPINE_HEIGHT * GROWTH, 6);
-    expect(GROWTH, 'no growth while it is with Design').toBe(1);
+    expect(a * DEPTH, '§11.19: 560 square').toBeCloseTo(560, 6);
     const field = /<rect[^>]*data-field=""[^>]*>/.exec(html)?.[0] ?? '';
     expect(Number(/width="([^"]+)"/.exec(field)?.[1])).toBe(DEPTH);
     expect(Number(/height="([^"]+)"/.exec(field)?.[1])).toBe(SPINE_HEIGHT);
