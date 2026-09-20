@@ -40,6 +40,7 @@ export function WallStage({
   far = false,
   onZoomIn,
   onZoomOut,
+  arrivalScript = true,
   framed,
   onSeatClick,
   onPulledClick,
@@ -82,6 +83,13 @@ export function WallStage({
    */
   onZoomIn?: (id: string) => void;
   onZoomOut?: () => void;
+  /**
+   * §11.29: whether to render the parse-time arrival script. True on the
+   * server and for the first client render, so hydration matches; false once
+   * mounted, since the tag can only do work at parse time and React logs a
+   * warning for every later commit that renders it.
+   */
+  arrivalScript?: boolean;
   /** §11.22: the records whose landings the frame holds, until the wall is at rest. */
   framed?: readonly string[];
   onSeatClick?: (id: string) => void;
@@ -285,9 +293,11 @@ export function WallStage({
           navigation from the table, and on Back and Forward. Rendering the
           tag only on the server silences the warning but changes the markup
           between server and client, which is a hydration mismatch: worse
-          than the warning.
+          than the warning. It is dropped once mounted instead
+          (`arrivalScript`), so the warning fires once at hydration rather
+          than on every return to rest.
         */}
-        {arrival === null ? null : (
+        {arrival === null || !arrivalScript ? null : (
           <script
             data-arrival-scroll=""
             dangerouslySetInnerHTML={{

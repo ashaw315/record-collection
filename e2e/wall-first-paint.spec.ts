@@ -178,19 +178,56 @@ test('a client navigation to the shelf arrives in position too (§11.29)', async
   /*
     **The console warning this does NOT assert away.** React logs "Scripts
     inside React components are never executed when rendering on the client"
-    for the arrival tag. That is true and harmless: the tag's only job is the
-    server's markup, and this test proves the client path lands anyway,
-    through WallLive's landing effect. It cannot be removed from a component
-    — React warns on any script element it renders, however its content is
-    set, and the tag already uses dangerouslySetInnerHTML.
+    for the arrival tag. It fires ONCE, at hydration, and cannot be removed
+    from a component: React warns on any script element it renders, however
+    its content is set, and the tag already uses dangerouslySetInnerHTML.
+    True and harmless — the tag's only job is the server's markup, and this
+    test proves the client path lands anyway, through WallLive's landing
+    effect.
 
-    Two alternatives were built and rejected. Rendering it only on the server
-    silences the warning and makes the server and client markup differ, which
-    is a hydration mismatch — a real defect where the warning is dev-only
-    noise. Emitting it from the document layout also works and puts
-    wall-specific code in the app shell. The warning is the cheapest of the
-    three.
+    It used to fire on every return to rest, because the tag was rendered on
+    every commit; it is now gone from the commit the viewport measurement
+    triggers, which the test above pins. Two alternatives to the warning
+    itself were built and rejected: rendering only on the server silences it
+    and makes the server and client markup differ, which is a hydration
+    mismatch — a real defect where the warning is dev-only noise — and
+    emitting it from the document layout works but puts wall-specific code in
+    the app shell.
   */
+});
+
+test('the arrival script warns at most once per load, and never on a put-back (§11.29)', async ({ page }) => {
+  /*
+    The tag can only ever do work at parse time, so rendering it on every
+    later commit is noise: React logs its script warning each time the wall
+    returns to rest. It stays for the first client render — hydration must
+    match the server's HTML — and is dropped once mounted.
+  */
+  const warnings: string[] = [];
+  page.on('console', (m) => { if (/Scripts inside React components/i.test(m.text())) warnings.push(m.text()); });
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const artistId = await seed(page, 240);
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
+  await page.waitForTimeout(900);
+  const afterLoad = warnings.length;
+  expect(afterLoad, 'at most one warning at hydration').toBeLessThanOrEqual(1);
+
+  const before = await page.evaluate(() => { const el = document.querySelector('[data-region="wall"]') as HTMLElement; return { l: Math.round(el.scrollLeft), t: Math.round(el.scrollTop) }; });
+
+  /* Pull and put back: the wall returns to rest, which is where the warning was repeating. */
+  await page.locator('a[data-seat] [data-spine]').first().click();
+  await expect(page.getByTestId('record-chrome')).toBeVisible({ timeout: 10_000 });
+  await page.getByRole('button', { name: 'Put back' }).click();
+  await expect(page.getByTestId('record-chrome')).toHaveCount(0, { timeout: 10_000 });
+  await page.waitForTimeout(1400);
+
+  expect(warnings.length, 'no further warnings once mounted').toBe(afterLoad);
+  /* And the scroll is where it was: put back retraces the pan (§11.22). */
+  const after = await page.evaluate(() => { const el = document.querySelector('[data-region="wall"]') as HTMLElement; return { l: Math.round(el.scrollLeft), t: Math.round(el.scrollTop) }; });
+  expect(Math.abs(after.l - before.l), 'scrollLeft unchanged').toBeLessThanOrEqual(2);
+  expect(Math.abs(after.t - before.t), 'scrollTop unchanged').toBeLessThanOrEqual(2);
 });
 
 test('the fork’s width is one constant, shared by the media query and the measurement', async () => {

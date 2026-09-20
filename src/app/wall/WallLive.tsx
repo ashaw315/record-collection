@@ -64,6 +64,19 @@ export function WallLive({
   */
   const [routeView, setRouteView] = useState<RouteView>(opens);
   /*
+    §11.29's arrival script can only do work at parse time, so it is rendered
+    for the first client render — hydration must match the server's HTML —
+    and dropped once mounted. Left in, React logs its script warning on every
+    later commit, which is every return to rest.
+  */
+  /*
+    The script is rendered while the viewport is unmeasured — the server's
+    state and the first client render, so hydration matches — and gone from
+    the commit the measurement triggers. That is one render later, by which
+    time the parser has long finished, and it needs no flag of its own:
+    `viewport` is already the thing that changes on mount.
+  */
+  /*
     **The pending landing** (§11.12): the seat a zoom-in must put at the
     region's left, with its shelf at the region's top.
     
@@ -398,6 +411,7 @@ export function WallLive({
           Once measured, the fork and the route's own state decide.
         */
         far={viewport === 0 ? null : isFarView(viewport) || routeView === 'far'}
+        arrivalScript={viewport === 0}
         onZoomIn={viewport > 0 && !isFarView(viewport) ? zoomIn : undefined}
         onZoomOut={viewport > 0 && !isFarView(viewport) ? zoomOut : undefined}
         framed={framed}
