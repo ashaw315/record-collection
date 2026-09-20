@@ -13,7 +13,7 @@ import { OUT_MS, RETURN_MS, SWING_MS, outTime, settled } from './gesture';
 import { frameView, landedExtent, panFraction, panView, type Pan } from './pan';
 import { wallLayout } from './wall-layout';
 import { isFarView } from './view-fork';
-import { DEFAULT_ROUTE_VIEW, nearView, type RouteView } from './route-view';
+import { DEFAULT_ROUTE_VIEW, arrivalSeat, nearView, type RouteView } from './route-view';
 
 /** The view's top-left in the svg's px, from the region's scroll against the frame's originRef; the svg sits LANDING_PAD below the region's content top. */
 function readView(el: HTMLDivElement, [frameX, frameY]: readonly [number, number]): [number, number] {
@@ -77,6 +77,8 @@ export function WallLive({
     instruction to that owner, not a new responsibility.
   */
   const landOn = useRef<string | null>(null);
+  /* §11.29: the desktop opens near and ARRIVES on the occupied shelf, through the same landing a zoom-in uses. */
+  const arrived = useRef(false);
   /** Set across the landing's own scroll write, so the rest-tracking listener does not overwrite it. */
   const landingWriteRef = useRef(false);
   const [pulls, setPulls] = useState<readonly PullState[]>([]);
@@ -159,6 +161,30 @@ export function WallLive({
       after it. The seat comes from this layout — the committed frame's own —
       so the target and the origin it is written against are the same frame.
     */
+    /*
+      §11.29's arrival: the first frame of a near-opening route lands on the
+      occupied shelf rather than the fixture's top corner, by setting the same
+      pending landing a zoom-in sets. Once only — a reader who has scrolled
+      away is not dragged back by a later commit.
+    */
+    /*
+      §11.29's arrival: the first frame of a near-opening route lands on the
+      occupied shelf rather than the fixture's top corner, by setting the same
+      pending landing a zoom-in sets. Once only — a reader who has scrolled
+      away is not dragged back by a later commit.
+
+      KNOWN, and asserted as failing by wall-first-paint.spec.ts: this is a
+      layout effect, so the browser has already painted the server's markup
+      at 0,0 and the wall visibly scrolls up into position. The position has
+      to be right in what the SERVER sends; that is the next unit.
+    */
+    if (!arrived.current && routeView === 'near' && width > 0) {
+      arrived.current = true;
+      if (landOn.current === null && pulls.length === 0) {
+        const first = arrivalSeat(layout.placed);
+        if (first !== null) landOn.current = first.id;
+      }
+    }
     const landing = landOn.current;
     /*
       Consumed only on a commit whose frame is the region's OWN: after a zoom
@@ -365,6 +391,11 @@ export function WallLive({
           Unmeasured on the server, so both render and CSS shows the right one
           (§11.26); once measured the fork decides below §11.24's width and
           the route's own view decides above it (§11.12).
+        */
+        /*
+          Unmeasured, BOTH regions render and the composition's media query
+          shows the right one — the first paint is already correct (§11.29).
+          Once measured, the fork and the route's own state decide.
         */
         far={viewport === 0 ? null : isFarView(viewport) || routeView === 'far'}
         onZoomIn={viewport > 0 && !isFarView(viewport) ? zoomIn : undefined}

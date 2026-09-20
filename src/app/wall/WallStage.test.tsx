@@ -54,6 +54,22 @@ const render = (props: Partial<Parameters<typeof WallStage>[0]> = {}) =>
   );
 
 describe('the route’s two views, and the way between them (§11.12)', () => {
+  it('makes the count the way out in BOTH views: §11.12 puts the zoom-out on the collection’s identity, which the near view also shows', () => {
+    /*
+      The zoom-out was rendered only inside the far view's count, so from the
+      near view there was no way back except Escape — and every test that
+      clicked it timed out. §11.12's argument is about the COUNT, which is
+      the collection's identity and what the zoom-out arrives at; the near
+      view carries the same count in its facts column.
+    */
+    const near = render({ onZoomOut: () => {}, onZoomIn: () => {} });
+    expect(near).toContain('data-region="near"');
+    expect(near).toMatch(/<button[^>]*data-testid="wall-zoom-out"[^>]*>/);
+    expect(near).toContain('data-testid="wall-count"');
+    /* And it is absent where there is no zoom to do — §11.24's narrow shelf. */
+    expect(render()).not.toContain('data-testid="wall-zoom-out"');
+  });
+
   it('makes the far view’s count the way out — a button, not a wheel — and the far seats the way in', () => {
     const far = render({ far: true, onZoomOut: () => {}, onZoomIn: () => {} });
     /* Out is the count: the collection's identity, which is what the zoom-out arrives at. */

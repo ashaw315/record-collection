@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { frontFace, layoutRow, project, topFace, ROW_PITCH, SPINE_HEIGHT, type PlacedSeat } from './geometry';
 import { wallLayout } from './wall-layout';
 import { LANDING_PAD } from './landing';
-import { nearView, type RouteView } from './route-view';
+import { DEFAULT_ROUTE_VIEW, arrivalSeat, nearView } from './route-view';
 
 /**
  * §11.12: the route opens FAR, and moving between the two views has two named
@@ -21,10 +21,26 @@ import { nearView, type RouteView } from './route-view';
 const seats = Array.from({ length: 30 }, (_, i) => ({ id: `r${i}`, section: 'S' }));
 const placedOf = (index: number, row: number): PlacedSeat => layoutRow(seats.slice(0, 10), row)[index];
 
-describe('the route’s two views (§11.12)', () => {
-  it('opens far: with no view chosen the route is the far one', () => {
-    const view: RouteView = 'far';
-    expect(view).toBe('far');
+describe('the route’s two views (§11.12, §11.29)', () => {
+  it('opens NEAR on the desktop: §11.12’s far default is withdrawn, and far is a deliberate zoom-out (§11.29)', () => {
+    expect(DEFAULT_ROUTE_VIEW).toBe('near');
+  });
+
+  it('names the shelf the arrival lands on: the first OCCUPIED one, not the fixture’s top corner (§11.29)', () => {
+    /*
+      The empty shelves are the room the collection grows into, and a view
+      that opens on them opens on nothing. The same target §11.28 gives a
+      click on a run.
+    */
+    const seats = Array.from({ length: 17 }, (_, i) => ({ id: `r${i}`, section: 'S' }));
+    const { placed } = wallLayout(seats, [], 872, 799);
+    const arrival = arrivalSeat(placed);
+    expect(arrival?.id, 'the first seat of the occupied shelf').toBe('r0');
+    /* With four shelves and 17 records only the top one is occupied, and it is the one addressed. */
+    const zs = [...new Set(placed.map((p) => p.z))];
+    expect(arrival?.z).toBe(Math.max(...zs));
+    /* An empty collection has nothing to arrive at, and says so rather than guessing. */
+    expect(arrivalSeat([])).toBeNull();
   });
 
   it('keeps the addressed seat inside the region at every collection size, the vertical target being reachable (§11.28)', () => {

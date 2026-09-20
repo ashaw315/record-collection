@@ -94,8 +94,9 @@ describe('the rail collapses to one band below the fork (§11.24)', () => {
       that reverts, which is the flash reported from the running app. The near
       view appears only once the client has measured and been asked for it.
     */
-    expect(style).toMatch(/\[data-unmeasured\] \[data-region="near"\]\s*\{[^}]*display:\s*none/);
-    expect(style, 'the far view is never hidden while unmeasured').not.toMatch(/\[data-unmeasured\] \[data-region="far"\]/);
+    /* The fork decides the unmeasured paint too, so the first paint is already the settled view (§11.29). */
+    expect(style).toMatch(new RegExp(`@media \\(max-width: ${nearViewMinWidth() - 1}px\\)[\\s\\S]*\\[data-unmeasured\\] \\[data-region="near"\\]\\s*\\{[^}]*display:\\s*none`));
+    expect(style).toMatch(new RegExp(`@media \\(min-width: ${nearViewMinWidth()}px\\)[\\s\\S]*\\[data-unmeasured\\] \\[data-region="far"\\]\\s*\\{[^}]*display:\\s*none`));
   });
 });
 

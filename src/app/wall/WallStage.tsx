@@ -165,8 +165,13 @@ export function WallStage({
   const count = (far: boolean) => (
     <div data-region={far ? 'count-far' : 'count'}>
       <div className={LABEL}>COLLECTION</div>
-      {far && onZoomOut !== undefined ? (
-        /* §11.12: the way out is the collection's identity, which is what the zoom-out arrives at. */
+      {onZoomOut !== undefined ? (
+        /*
+        §11.12: the way out is the collection's identity, which is what the
+        zoom-out arrives at — so it is the COUNT, in whichever view is
+        showing. Rendered only in the far view, the near view had no way back
+        but Escape.
+      */
         <button
           type="button"
           data-testid="wall-zoom-out"
@@ -175,7 +180,7 @@ export function WallStage({
           className="block cursor-pointer border-0 bg-transparent p-0 text-left text-display leading-[0.86] font-extrabold"
           style={{ marginTop: 6, color: 'inherit' }}
         >
-          <span data-testid="wall-count-far">{seated.length}</span>
+          <span data-testid={far ? 'wall-count-far' : 'wall-count'}>{seated.length}</span>
         </button>
       ) : (
         <div data-testid={far ? 'wall-count-far' : 'wall-count'} className="text-display leading-[0.86] font-extrabold" style={{ marginTop: 6 }}>

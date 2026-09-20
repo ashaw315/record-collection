@@ -3,20 +3,48 @@ import { LANDING_PAD } from './landing';
 import type { View } from './view';
 
 /**
- * §11.12: **the route opens far, and there are two named targets.**
+ * **§11.29: the desktop route opens NEAR**, and the far view becomes a
+ * deliberate zoom-out. §11.12's "the route opens far" is withdrawn above
+ * §11.26's fork: at 17 records the far view is a 337px object with no labels
+ * — §11.10 rules them absent there — and the drawing is identical at every
+ * size below 80, because `perShelf` holds at twenty a shelf until the
+ * collection outgrows it. So it can report neither quantity nor arrangement
+ * at the common case, and a reader must click before anything is readable.
+ * Opening far below a size and near above it was rejected on §11.28's own
+ * ground: behaviour changing partway up the range, with a threshold the
+ * reader cannot see.
  *
- * The far view answers the question a reader has before choosing anything —
- * how much is here and how is it arranged — so it is where the route opens;
- * opening near lands them mid-shelf with no account of where that shelf is.
- * Out is the way in reversed and needs no control of its own: in is a click
- * on a seat, out is a click on the count, which is the collection's identity
- * sitting in the facts column and is precisely what the zoom-out arrives at.
- * Neither is a wheel or a pinch — a continuous input snapping to a target is
- * an intermediate the reader can see, and §11.12 rules there is none.
+ * What opening near costs is stated rather than hidden: the fixture is
+ * 442 × 1047 at 1:1 in a 968 × 799 region, so about three shelves of four
+ * show and 526px of width is empty at 20 seats. The first is answered by
+ * where it lands — the occupied shelf, via §11.22's pan — and the second is
+ * the near view's standing condition, not a defect: a fixture narrower than
+ * its region is what a 20-seat shelf looks like.
+ *
+ * The two named targets are unchanged (§11.12): in is a click on a seat, out
+ * is a click on the count, which is the collection's identity in the facts
+ * column and precisely what the zoom-out arrives at. Neither is a wheel or a
+ * pinch — a continuous input snapping to a target is an intermediate the
+ * reader can see. Below §11.26's fork the route still opens far (§11.24),
+ * because there the near view is not a fixture.
  */
 export type RouteView = 'far' | 'near';
 
-export const DEFAULT_ROUTE_VIEW: RouteView = 'far';
+export const DEFAULT_ROUTE_VIEW: RouteView = 'near';
+
+/**
+ * The seat the arrival lands on (§11.29): the first of the OCCUPIED shelves,
+ * not the fixture's top corner. The empty shelves are the room the
+ * collection grows into, and a view that opens on them opens on nothing —
+ * the same target §11.28 gives a click on a run. `null` for an empty
+ * collection, which has nothing to arrive at.
+ *
+ * Seats are laid out in wall order, so the first placed seat is the first
+ * seat of the topmost occupied shelf.
+ */
+export function arrivalSeat(placed: readonly PlacedSeat[]): PlacedSeat | null {
+  return placed.length === 0 ? null : placed[0];
+}
 
 /**
  * Where the near view lands on a seat, as the view's top-left in the svg's

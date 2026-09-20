@@ -91,8 +91,7 @@ test('the near view can be reached and used at desktop width, with no unmeasured
   /* The gate clears without the near view ever having existed. */
   await expect(page.locator('[data-wall-container][data-unmeasured]'), 'the unmeasured gate clears on the viewport alone').toHaveCount(0, { timeout: 10_000 });
 
-  /* The near view is reachable... */
-  await clickFarSeat(page, ids[5]);
+  /* The near view is reachable — it is what the route opens on (§11.29)... */
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 10_000 });
   await expect(page.locator('[data-wall-container][data-unmeasured]')).toHaveCount(0);
 
@@ -102,27 +101,52 @@ test('the near view can be reached and used at desktop width, with no unmeasured
   await expect(page.locator('[data-pulled]')).toHaveCount(1);
 });
 
-test('opens far, zooms in on a seat and back out on the count — two targets, no intermediate', async ({ page }) => {
+test('a bare / opens NEAR with the occupied shelf framed, and the far view is a deliberate zoom-out (§11.29)', async ({ page }) => {
+  /*
+    §11.12's "the route opens far" is withdrawn on the desktop: at the common
+    collection size the far view is a small unlabelled object that can report
+    neither quantity nor arrangement, and a reader had to click before
+    anything was readable. The arrival lands on the OCCUPIED shelf — the
+    empty shelves are the room the collection grows into.
+  */
   const { artistId, ids } = await seed(page, 24);
   await page.goto(`/?artistId=${artistId}`);
   await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
 
-  /* Opens far: the collection as an object, at a width where the near view would fit. */
-  await expect(page.locator('[data-wall="overview"]')).toBeVisible();
-  await expect(page.locator('[data-wall="labelled"]')).toHaveCount(0);
-  await expect(page.getByTestId('wall-count-far')).toHaveText('24');
-
-  /* In: a click on a seat. The near view arrives, with labels. */
-  const target = ids[20];
-  await clickFarSeat(page, target);
-  await expect(page.locator('[data-wall="labelled"]')).toBeVisible();
+  /* Near, with labels, on the first load — no click. */
+  await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 15_000 });
   await expect(page.locator('[data-wall="overview"]')).toHaveCount(0);
-  await expect(page).toHaveURL(new RegExp(`artistId=${artistId}`), { timeout: 5000 });
+  await expect(page.locator('a[data-seat]').first()).toBeVisible();
 
-  /* Out: the count. The far view returns whole, not an intermediate. */
+  /* Framed on the occupied shelf: the first seat is in the region, and so are its top faces. */
+  await page.waitForTimeout(900);
+  const framed = await page.evaluate((id) => {
+    const rect = (q: string) => { const r = document.querySelector(q)?.getBoundingClientRect(); return r ? { left: r.left, top: r.top, right: r.right, bottom: r.bottom } : null; };
+    return { region: rect('[data-region="wall"]'), seat: rect(`a[data-seat="${id}"] [data-spine]`), top: rect(`a[data-seat="${id}"] [data-face="top"]`) };
+  }, ids[0]);
+  expect(framed.region && framed.seat && framed.top).toBeTruthy();
+  if (framed.region && framed.seat && framed.top) {
+    expect(framed.seat.top, 'the arrival seat is inside the region').toBeGreaterThanOrEqual(framed.region.top - 1);
+    expect(framed.seat.bottom).toBeLessThanOrEqual(framed.region.bottom + 1);
+    expect(framed.top.top, 'and its top face is not cut off (§11.28)').toBeGreaterThanOrEqual(framed.region.top - 1);
+  }
+
+  /* The far view is still reachable from the count... */
   await page.getByTestId('wall-zoom-out').click();
   await expect(page.locator('[data-wall="overview"]')).toBeVisible();
   await expect(page.locator('[data-wall="labelled"]')).toHaveCount(0);
+
+  /* ...and a far seat still zooms back in. */
+  await clickFarSeat(page, ids[5]);
+  await expect(page.locator('[data-wall="labelled"]')).toBeVisible();
+});
+
+test('Escape reaches the far view from a bare /, with nothing pulled (§11.12, §11.29)', async ({ page }) => {
+  const { artistId } = await seed(page, 20);
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
+  await page.keyboard.press('Escape');
+  await expect(page.locator('[data-wall="overview"]')).toBeVisible();
 });
 
 test('the near view lands by the rule: min(target, the scroller’s limit), the shelf at the region’s top, applied exactly once (§11.12)', async ({ page }) => {
@@ -135,8 +159,11 @@ test('the near view lands by the rule: min(target, the scroller’s limit), the 
   */
   const { artistId, ids } = await seed(page, 240);
   const land = async (index: number) => {
+    /* Out to the far view, then in on the seat under test: §11.29 opens near, so the zoom-out is the way to a far seat. */
     await page.goto(`/?artistId=${artistId}`);
-    await expect(page.locator('[data-wall="overview"]')).toBeVisible({ timeout: 30_000 });
+    await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
+    await page.getByTestId('wall-zoom-out').click();
+    await expect(page.locator('[data-wall="overview"]')).toBeVisible();
     await page.evaluate(() => { (window as unknown as { __landings?: number }).__landings = 0; });
     await clickFarSeat(page, ids[index]);
     await expect(page.locator('[data-wall="labelled"]')).toBeVisible();
@@ -149,7 +176,7 @@ test('the near view lands by the rule: min(target, the scroller’s limit), the 
     await page.waitForTimeout(900);
     return page.evaluate((id) => {
       const el = document.querySelector('[data-region="wall"]') as HTMLElement | null;
-      const rect = (q: string) => { const r = document.querySelector(q)?.getBoundingClientRect(); return r ? { left: r.left, top: r.top, right: r.right } : null; };
+      const rect = (q: string) => { const r = document.querySelector(q)?.getBoundingClientRect(); return r ? { left: r.left, top: r.top, right: r.right, bottom: r.bottom } : null; };
       return {
         scrollLeft: el === null ? null : Math.round(el.scrollLeft),
         limit: el === null ? null : el.scrollWidth - el.clientWidth,
@@ -168,8 +195,13 @@ test('the near view lands by the rule: min(target, the scroller’s limit), the 
   if (early.region && early.seat && early.shelf) {
     expect(early.seat.left - early.region.left, 'the seat is at the region’s left').toBeGreaterThanOrEqual(-1);
     expect(early.seat.left - early.region.left, 'not centred').toBeLessThan(LANDING_PAD + 20);
-    expect(early.shelf.top - early.region.top, 'the addressed shelf is at the region’s top').toBeGreaterThanOrEqual(-1);
-    expect(early.shelf.top - early.region.top).toBeLessThan(LANDING_PAD + 40);
+    /*
+      §11.28's window rule: the vertical target takes in the top faces the
+      arrival SHOWS, so the addressed seat's own top sits at or below the
+      region's top rather than at it — a seat further along the row is the
+      one flush with the edge. What must hold is that it is inside and uncut.
+    */
+    expect(early.shelf.top - early.region.top, 'the addressed shelf’s top face is not cut off').toBeGreaterThanOrEqual(-1);
     expect(early.region.right - early.seat.left, 'the useful half of the region is after the seat').toBeGreaterThan((early.region.right - early.region.left) / 2);
   }
 
@@ -178,14 +210,17 @@ test('the near view lands by the rule: min(target, the scroller’s limit), the 
   expect(late.landings).toBe(1);
   expect(late.scrollLeft, 'clamped to the scroller’s limit — as far left as the wall allows').toBe(late.limit);
   if (late.region && late.shelf) {
-    expect(late.shelf.top - late.region.top, 'and the addressed shelf is still at the region’s top').toBeLessThan(LANDING_PAD + 40);
+    expect(late.shelf.top - late.region.top, 'and the addressed shelf is still inside the region, uncut').toBeGreaterThanOrEqual(-1);
+    expect(late.shelf.top, 'and above its bottom edge').toBeLessThan(late.region.bottom);
   }
 });
 
 test('a wall that fits the region has no horizontal landing to make, and still puts the addressed shelf at the top (§11.12)', async ({ page }) => {
   const { artistId, ids } = await seed(page, 20);
   await page.goto(`/?artistId=${artistId}`);
-  await expect(page.locator('[data-wall="overview"]')).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
+  await page.getByTestId('wall-zoom-out').click();
+  await expect(page.locator('[data-wall="overview"]')).toBeVisible();
   await clickFarSeat(page, ids[10]);
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible();
   await page.waitForTimeout(250);
@@ -196,15 +231,13 @@ test('a wall that fits the region has no horizontal landing to make, and still p
   }, ids[10]);
   expect(got.fits, 'the whole wall is visible').toBe(true);
   expect(got.scrollLeft, 'nothing to pan: the landing resolves to zero').toBe(0);
-  if (got.region && got.shelf) expect(got.shelf.top - got.region.top).toBeLessThan(LANDING_PAD + 40);
+  if (got.region && got.shelf) expect(got.shelf.top - got.region.top, 'the addressed shelf’s top face is not cut off').toBeGreaterThanOrEqual(-1);
 });
 
 test('Escape returns to the collection when nothing is pulled, and dismisses the pull when something is', async ({ page }) => {
   const { artistId, ids } = await seed(page, 12);
   await page.goto(`/?artistId=${artistId}`);
-  await expect(page.locator('[data-wall="overview"]')).toBeVisible({ timeout: 30_000 });
-  await clickFarSeat(page, ids[3]);
-  await expect(page.locator('[data-wall="labelled"]')).toBeVisible();
+  await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
 
   /* With a record out, Escape is the put-back it already was — the near view stays. */
   await page.locator('[data-seat] [data-spine]').first().click();
