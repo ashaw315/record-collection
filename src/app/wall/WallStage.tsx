@@ -8,6 +8,7 @@ import type { View } from './view';
 import { OUT_MS, ROTATION_START, SWING_MS, gestureFaces, outTime, poseAt, settled } from './gesture';
 import { wallLayout } from './wall-layout';
 import { clearanceShift } from './pan';
+import { arrivalSeat, nearView as arrivalView } from './route-view';
 import { LABEL, LABEL_INK } from '../records/[id]/grid-type';
 import { DRAWN_PAPER } from './WallComposition';
 import { WallOverview } from './WallOverview';
@@ -101,6 +102,21 @@ export function WallStage({
   const summary = arrived ? summaries[arriving.id] : undefined;
   /* §11.12: the arrows walk the seated records; an empty seat is not somewhere to go. */
   const seated = seats.filter((seat) => !seat.empty);
+  /*
+    Where the near view arrives (§11.29): the occupied shelf, by the same
+    `nearView` the client lands with. Only at rest — a pull owns the view
+    while it is out (§11.22) — and only in the near view, which is the one
+    that scrolls.
+  */
+  const arrival: [number, number] | null = (() => {
+    if (far === true || moving.length > 0) return null;
+    const { placed, frame } = wallLayout(seats, [], width, view?.height ?? 0);
+    const seat = arrivalSeat(placed);
+    if (seat === null) return null;
+    const [fx, fy] = frame.viewBox.split(' ').map(Number);
+    const [x, y] = arrivalView(seat, { width, height: view?.height ?? 0 }, placed.filter((p) => p.z === seat.z));
+    return [Math.round(x - fx), Math.round(y - fy + LANDING_PAD)];
+  })();
   const order = seated.map((seat) => seat.id);
 
   /*
@@ -250,6 +266,25 @@ export function WallStage({
           />
           {arrows}
         </div>
+        {/*
+          §11.29's arrival, applied at PARSE time. The browser paints the
+          server's markup before any client script runs, so a scroll issued
+          from a layout effect is always a paint late — the wall appeared at
+          0,0 and visibly travelled into place. The server's svg carries real
+          dimensions inside this overflow-auto region, so the region is
+          already scrollable here, and a script immediately after it runs
+          before the first paint. Two lines, no framework state; the numbers
+          come from the same layout the client lands with, so the two cannot
+          drift.
+        */}
+        {arrival === null ? null : (
+          <script
+            data-arrival-scroll=""
+            dangerouslySetInnerHTML={{
+              __html: `(function(){var e=document.currentScript.previousElementSibling.parentElement;e.scrollLeft=${arrival[0]};e.scrollTop=${arrival[1]};})();`,
+            }}
+          />
+        )}
       </div>
     </div>
   );

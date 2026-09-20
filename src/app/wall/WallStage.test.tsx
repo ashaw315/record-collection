@@ -53,6 +53,33 @@ const render = (props: Partial<Parameters<typeof WallStage>[0]> = {}) =>
     />,
   );
 
+describe('the arrival is in position at parse time (§11.29)', () => {
+  it('emits an inline script straight after the region that sets its scroll before the first paint', () => {
+    /*
+      The browser paints the server's markup before any client script runs, so
+      a scroll issued from a layout effect is always a paint late: the wall
+      appeared at 0,0 and visibly travelled into place, scrollbar moving,
+      which reads as a page still loading. The server's svg already carries
+      real dimensions inside an overflow-auto region, so the region IS
+      scrollable at parse time — and a script placed immediately after it
+      runs then, before that first paint.
+    */
+    const html = render({ far: false });
+    const region = html.indexOf('data-region="wall"');
+    const script = html.indexOf('data-arrival-scroll');
+    expect(region, 'the region is rendered').toBeGreaterThan(-1);
+    expect(script, 'the arrival script follows it').toBeGreaterThan(region);
+    const body = /<script data-arrival-scroll[^>]*>([\s\S]*?)<\/script>/.exec(html)?.[1] ?? '';
+    expect(body).toContain('scrollLeft');
+    expect(body).toContain('scrollTop');
+    expect(body, 'no framework, no state').not.toMatch(/react|useState|dispatch/i);
+  });
+
+  it('emits nothing in the far view, which does not scroll', () => {
+    expect(render({ far: true })).not.toContain('data-arrival-scroll');
+  });
+});
+
 describe('the route’s two views, and the way between them (§11.12)', () => {
   it('makes the count the way out in BOTH views: §11.12 puts the zoom-out on the collection’s identity, which the near view also shows', () => {
     /*

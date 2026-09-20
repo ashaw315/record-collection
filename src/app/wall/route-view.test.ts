@@ -21,6 +21,35 @@ import { DEFAULT_ROUTE_VIEW, arrivalSeat, nearView } from './route-view';
 const seats = Array.from({ length: 30 }, (_, i) => ({ id: `r${i}`, section: 'S' }));
 const placedOf = (index: number, row: number): PlacedSeat => layoutRow(seats.slice(0, 10), row)[index];
 
+describe('the arrival needs no scroll (§11.29)', () => {
+  /*
+    The browser paints the server's markup before any client JavaScript runs,
+    so a layout effect that scrolls is always a paint late: the wall appears
+    at 0,0 and visibly travels into place. The arrival target does not depend
+    on the measured region — it is the first seat's, and the window rule
+    resolves to the same top faces at every size — so the drawing's own
+    origin can start there and the landing IS scroll 0,0.
+  */
+  it('is the same target at every region size and collection size, so the server can bake it in', () => {
+    const targets = new Set<string>();
+    for (const region of [{ width: 872, height: 799 }, { width: 1400, height: 600 }, { width: 600, height: 1000 }]) {
+      for (const n of [17, 200, 400]) {
+        const all = Array.from({ length: n }, (_, i) => ({ id: `r${i}`, section: 'S' }));
+        const layout = wallLayout(all, [], region.width, region.height);
+        const seat = arrivalSeat(layout.placed);
+        expect(seat).not.toBeNull();
+        if (seat === null) continue;
+        const row = layout.placed.filter((p) => p.z === seat.z);
+        const [tx, ty] = nearView(seat, region, row);
+        const [fx, fy] = layout.frame.viewBox.split(' ').map(Number);
+        targets.add(`${Math.round(tx - fx)}/${Math.round(ty - fy)}`);
+      }
+    }
+    expect(targets.size, `one target for every size: ${[...targets].join(' ')}`).toBe(1);
+  });
+
+});
+
 describe('the route’s two views (§11.12, §11.29)', () => {
   it('opens NEAR on the desktop: §11.12’s far default is withdrawn, and far is a deliberate zoom-out (§11.29)', () => {
     expect(DEFAULT_ROUTE_VIEW).toBe('near');
