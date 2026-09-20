@@ -84,6 +84,56 @@ describe('the overview draws the collection as polygons', () => {
  * **§2's distinction, at the rendered layer.** The geometry module asserts it
  * on points; this asserts that the renderer actually emits what it produced.
  */
+describe('the far view paints by the separating-plane sort, furniture and records together (§11.23)', () => {
+  /*
+    **The defect this pins.** The far view painted ALL furniture, then ALL
+    records — two passes — so a shelf's front face went down before the
+    records standing on it and the records drew over it: spines hanging below
+    the shelf plane and past the right upright, which is what a reader
+    reported as "the shelf drawing itself is messed up". The near view has
+    never had this, because §11.23's insertion runs over every object at
+    once; the far view is the same wall and needs the same order.
+  */
+  it('paints the shelf a row stands on BEFORE that row’s records, and the upright in front of them after — one order over every object', () => {
+    const html = render({ seats: seats(17), pulledId: null, linked: true });
+    const order = (marker: string) => html.indexOf(marker);
+    /* A record of the top row, and the shelf it stands on. */
+    const record = order('data-far-seat="r0"');
+    expect(record).toBeGreaterThan(-1);
+    const shelfTop = order('data-furniture="shelf-top"');
+    expect(shelfTop, 'the shelf its records stand on is painted first').toBeLessThan(record);
+    /* The nearer upright is in FRONT of the row, so it paints after. */
+    const uprights = [...html.matchAll(/data-furniture="upright-front"/g)].map((m) => m.index ?? -1);
+    expect(uprights.some((i) => i > record), 'the near upright paints after the records it stands in front of').toBe(true);
+  });
+
+  it('does not paint every piece of furniture before every record — the two-pass order is the defect', () => {
+    const html = render({ seats: seats(17), pulledId: null, linked: true });
+    const lastFurniture = html.lastIndexOf('data-furniture=');
+    const firstRecord = html.indexOf('data-far-seat=');
+    expect(lastFurniture, 'some furniture paints after some records').toBeGreaterThan(firstRecord);
+  });
+});
+
+describe('the far view fits its region (§11.10, §11.12)', () => {
+  it('centres the fitted drawing rather than pinning it to the left — a portrait fixture in a landscape region fits the height and must not sit in a column', () => {
+    const html = render({ seats: seats(17), pulledId: null });
+    const svg = /<svg[^>]*>/.exec(html)?.[0] ?? '';
+    /* `meet` fits the whole drawing; the alignment decides where the leftover space goes, and it goes on both sides. */
+    expect(svg).toContain('preserveAspectRatio="xMidYMid meet"');
+    expect(svg).not.toContain('xMinYMin');
+  });
+});
+
+describe('the far view’s seats are the way in (§11.12)', () => {
+  it('calls back with the seat rather than following its link, when a zoom is offered', () => {
+    const html = render({ seats: seats(3), pulledId: null, linked: true, onSeatClick: () => {} });
+    /* Still an anchor — it works with JavaScript off — and the click is intercepted. */
+    expect(html).toMatch(/<a [^>]*href="\/records\/r1"[^>]*data-far-seat="r1"/);
+    expect(html).toContain('cursor:pointer');
+  });
+});
+
 describe('a filter empties seats in the far view (§11.12)', () => {
   it('draws no faces for an empty seat, keeps the fixture, and links nothing there', () => {
     const three = seats(3);

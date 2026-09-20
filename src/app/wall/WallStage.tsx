@@ -37,6 +37,8 @@ export function WallStage({
   regionRef,
   labels = true,
   far = false,
+  onZoomIn,
+  onZoomOut,
   framed,
   onSeatClick,
   onPulledClick,
@@ -69,6 +71,16 @@ export function WallStage({
    * flash of the near view as a build concern; this is its handling).
    */
   far?: boolean | null;
+  /**
+   * §11.12: the way in and the way out — a click on a far seat zooms to the
+   * near view on that seat, and a click on the COUNT zooms back out. The same
+   * input in both directions, never a continuous one: a wheel or a pinch
+   * snapping to a target is an intermediate the reader can see. Absent below
+   * §11.24's fork, where the far view is the only view and a tap opens the
+   * record screen.
+   */
+  onZoomIn?: (id: string) => void;
+  onZoomOut?: () => void;
   /** §11.22: the records whose landings the frame holds, until the wall is at rest. */
   framed?: readonly string[];
   onSeatClick?: (id: string) => void;
@@ -153,9 +165,23 @@ export function WallStage({
   const count = (far: boolean) => (
     <div data-region={far ? 'count-far' : 'count'}>
       <div className={LABEL}>COLLECTION</div>
-      <div data-testid={far ? 'wall-count-far' : 'wall-count'} className="text-display leading-[0.86] font-extrabold" style={{ marginTop: 6 }}>
-        {seated.length}
-      </div>
+      {far && onZoomOut !== undefined ? (
+        /* §11.12: the way out is the collection's identity, which is what the zoom-out arrives at. */
+        <button
+          type="button"
+          data-testid="wall-zoom-out"
+          onClick={onZoomOut}
+          aria-label="Show the whole collection"
+          className="block cursor-pointer border-0 bg-transparent p-0 text-left text-display leading-[0.86] font-extrabold"
+          style={{ marginTop: 6, color: 'inherit' }}
+        >
+          <span data-testid="wall-count-far">{seated.length}</span>
+        </button>
+      ) : (
+        <div data-testid={far ? 'wall-count-far' : 'wall-count'} className="text-display leading-[0.86] font-extrabold" style={{ marginTop: 6 }}>
+          {seated.length}
+        </div>
+      )}
       {countLine === null ? null : (
         <p className="mt-[10px] text-meta" style={{ color: LABEL_INK }}>
           {countLine}
@@ -170,11 +196,17 @@ export function WallStage({
     collection as an object — and no panel region, because the pulled state
     does not exist at this width: a tap goes to the record screen.
   */
+  /*
+    §11.10: the far view is the collection AS AN OBJECT, so it fits the
+    region — labels are absent rather than shrunk, which is what lets it
+    scale at all (§11.24). The near view is the one that renders at 1:1 and
+    pans; a far view that scrolled would be the near view's job done badly.
+  */
   const farView = (
-    <div data-region="far" className="flex flex-col p-[34px]">
+    <div data-region="far" className="flex h-[calc(100vh-var(--app-nav-height,0px))] flex-col overflow-hidden p-[34px]">
       {count(true)}
-      <div className="mt-[34px]">
-        <WallOverview seats={seats} pulledId={null} linked />
+      <div className="mt-[34px] min-h-0 flex-1">
+        <WallOverview seats={seats} pulledId={null} linked onSeatClick={onZoomIn} />
       </div>
     </div>
   );

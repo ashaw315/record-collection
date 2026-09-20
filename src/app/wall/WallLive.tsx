@@ -13,6 +13,7 @@ import { OUT_MS, RETURN_MS, SWING_MS, outTime, settled } from './gesture';
 import { frameView, landedExtent, panFraction, panView, type Pan } from './pan';
 import { wallLayout } from './wall-layout';
 import { isFarView } from './view-fork';
+import { DEFAULT_ROUTE_VIEW, nearView, type RouteView } from './route-view';
 
 /** The view's top-left in the svg's px, from the region's scroll against the frame's originRef; the svg sits LANDING_PAD below the region's content top. */
 function readView(el: HTMLDivElement, [frameX, frameY]: readonly [number, number]): [number, number] {
@@ -42,11 +43,42 @@ export function WallLive({
   seats,
   summaries = {},
   countLine = null,
+  opens = DEFAULT_ROUTE_VIEW,
 }: {
   seats: readonly WallSeat[];
   summaries?: Record<string, RecordSummary>;
   countLine?: string | null;
+  /**
+   * Which view the route opens in (§11.12: `/` opens far). A probe or a
+   * harness that is about the near view asks for it directly — the opening
+   * view is the ROUTE's, so a component that is not the route must not
+   * inherit it.
+   */
+  opens?: RouteView;
 }) {
+  /*
+    §11.12: the route opens FAR and has two named targets. Above §11.24's fork
+    both views exist and this says which is showing; below it the fork decides
+    and this is not consulted. `landOn` carries the seat a zoom-in must land
+    the near view on, applied once the region has been measured.
+  */
+  const [routeView, setRouteView] = useState<RouteView>(opens);
+  /*
+    **The pending landing** (§11.12): the seat a zoom-in must put at the
+    region's left, with its shelf at the region's top.
+    
+    It is consumed by the pan effect rather than applied where it is set,
+    because that effect is the one place that runs with the frame the drawing
+    COMMITTED. The measuring effect sets `width`, and the drawing lays its
+    frame out from that state — so a write issued from inside the commit that
+    produces the new frame is a frame ahead of itself: it computes against the
+    frame about to exist and writes against the one still on screen. The pan
+    effect already owns where the view sits; a pending landing is a second
+    instruction to that owner, not a new responsibility.
+  */
+  const landOn = useRef<string | null>(null);
+  /** Set across the landing's own scroll write, so the rest-tracking listener does not overwrite it. */
+  const landingWriteRef = useRef(false);
   const [pulls, setPulls] = useState<readonly PullState[]>([]);
   /* §11.22: every record that has moved since the wall was last at rest — its landing stays in the frame until then. */
   const [framed, setFramed] = useState<readonly string[]>([]);
@@ -78,19 +110,17 @@ export function WallLive({
   const [viewport, setViewport] = useState(0);
   /* The visible region when the pull began. */
   const [view, setView] = useState<View | null>(null);
+  /*
+    Re-attached when the route's view changes (§11.12): the drawing region
+    belongs to the NEAR view, so on the far view there is nothing to observe
+    and the first measurement has to wait for the zoom in. The viewport is
+    measured either way — §11.24's fork needs it before a region exists.
+  */
   useEffect(() => {
-    const el = region.current;
-    if (el === null) return;
-    const measure = () => {
-      setLabels(labelsFit(el.clientWidth));
-      setWidth(el.clientWidth);
-      setHeight(el.clientHeight - LANDING_PAD);
-      setViewport(window.innerWidth);
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    return () => observer.disconnect();
+    const measureViewport = () => setViewport(window.innerWidth);
+    measureViewport();
+    window.addEventListener('resize', measureViewport);
+    return () => window.removeEventListener('resize', measureViewport);
   }, []);
 
   /** The region's visible box in the svg's px: the svg sits LANDING_PAD below the region's content top, at its left. */
@@ -123,6 +153,44 @@ export function WallLive({
     /* The same layout the drawing committed, for its frame's origin. */
     const layout = wallLayout(seats, framed.map((id) => ({ id })), width, view === null ? 0 : Math.max(view.height, height));
     const [frameX, frameY] = layout.frame.viewBox.split(' ').map(Number);
+    /*
+      §11.12's landing, consumed here and exactly once: it is where the reader
+      is GOING, so it replaces the tracked view rather than being restored
+      after it. The seat comes from this layout — the committed frame's own —
+      so the target and the origin it is written against are the same frame.
+    */
+    const landing = landOn.current;
+    /*
+      Consumed only on a commit whose frame is the region's OWN: after a zoom
+      the first commit still carries the previous view's measured width, and a
+      landing written against that frame is written against a layout the
+      drawing is about to replace. Waiting for the widths to agree is what
+      makes "exactly once" also mean "on the right frame".
+    */
+    if (landing !== null && width === el.clientWidth) {
+      const seat = layout.placed.find((p) => p.id === landing);
+      if (seat !== undefined) {
+        landOn.current = null;
+        /* Counted so the ordering can be asserted: consumed exactly once, on the commit whose frame is the region's own (§11.12). */
+        const counter = window as unknown as { __landings?: number };
+        counter.__landings = (counter.__landings ?? 0) + 1;
+        /* The addressed seat's whole ROW, so the target takes in every top face the arrival shows (§11.28). */
+        const row = layout.placed.filter((p) => p.z === seat.z);
+        const target = nearView(seat, { width: el.clientWidth, height: el.clientHeight - LANDING_PAD }, row);
+        landingWriteRef.current = true;
+        /*
+          The scroller clamps: a seat late in the row cannot reach the region's
+          left edge, so the landing is min(target, scrollWidth − clientWidth)
+          — as far left as the wall allows (§11.12).
+        */
+        writeView(el, [frameX, frameY], target);
+        originRef.current = [frameX, frameY];
+        /* Clamped by the scroller: near the wall's left or top edge the region cannot pan that far. */
+        viewNowRef.current = readView(el, [frameX, frameY]);
+        gestureOnRef.current = pulls.length > 0;
+        return;
+      }
+    }
     /* The frame may have moved its origin in this commit: hold the view where it was — on the way into a gesture and out of it. */
     if (viewNowRef.current !== null) writeView(el, [frameX, frameY], viewNowRef.current);
     originRef.current = [frameX, frameY];
@@ -148,17 +216,39 @@ export function WallLive({
     }
     viewNowRef.current = current;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seats, framed, width, height, view, pullKey]);
+  }, [seats, framed, width, height, view, pullKey, routeView]);
   /* At rest the reader pans (§11.6): the view follows, so a gesture begins from where the reader left it. */
   useEffect(() => {
     const el = region.current;
     if (el === null) return;
     const onScroll = () => {
+      /* The landing's own write fires this; it has already recorded where it put the view (§11.12). */
+      if (landingWriteRef.current) {
+        landingWriteRef.current = false;
+        return;
+      }
       if (!gestureOnRef.current) viewNowRef.current = readView(el, originRef.current);
     };
     el.addEventListener('scroll', onScroll);
     return () => el.removeEventListener('scroll', onScroll);
   }, []);
+
+  useLayoutEffect(() => {
+    const el = region.current;
+    if (el === null) return;
+    const measure = () => {
+      const regionWidth = el.clientWidth;
+      const regionHeight = el.clientHeight - LANDING_PAD;
+      setLabels(labelsFit(regionWidth));
+      setWidth(regionWidth);
+      setHeight(regionHeight);
+
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [routeView]);
   const begin = useCallback(
     (id: string, direction: PullState['direction']) => {
       started.current = null;
@@ -224,15 +314,27 @@ export function WallLive({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clockKey]);
 
+  /* §11.12's two targets. In: the near view lands on the seat. Out: back to the whole collection. */
+  const zoomIn = useCallback((id: string) => {
+    landOn.current = id;
+    setRouteView('near');
+  }, []);
+  const zoomOut = useCallback(() => {
+    landOn.current = null;
+    setRouteView('far');
+  }, []);
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      /* Escape dismisses the pulled state; with nothing out it is the way back to the collection (§11.12). */
+      if (event.key === 'Escape' && held === null && routeView === 'near') zoomOut();
       if (event.key === 'Escape' && held !== null) begin(held.id, 'back');
       if (event.key === 'ArrowRight') go('next');
       if (event.key === 'ArrowLeft') go('previous');
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [held, begin, go]);
+  }, [held, begin, go, routeView, zoomOut]);
 
   /* The gesture's phase, for whoever watches: rest · swing · finish · landed · return. */
   const phase =
@@ -247,7 +349,7 @@ export function WallLive({
         : 'return';
 
   return (
-    <div data-wall-container="" data-phase={phase}>
+    <div data-wall-container="" data-phase={phase} {...(viewport === 0 ? { 'data-unmeasured': '' } : {})}>
       <WallStage
         seats={seats}
         summaries={summaries}
@@ -259,8 +361,14 @@ export function WallLive({
         countLine={countLine}
         regionRef={region}
         labels={labels}
-        /* Unmeasured on the server, so both render and CSS shows the right one; forked once measured (§11.24, §11.26). */
-        far={viewport > 0 ? isFarView(viewport) : null}
+        /*
+          Unmeasured on the server, so both render and CSS shows the right one
+          (§11.26); once measured the fork decides below §11.24's width and
+          the route's own view decides above it (§11.12).
+        */
+        far={viewport === 0 ? null : isFarView(viewport) || routeView === 'far'}
+        onZoomIn={viewport > 0 && !isFarView(viewport) ? zoomIn : undefined}
+        onZoomOut={viewport > 0 && !isFarView(viewport) ? zoomOut : undefined}
         framed={framed}
         onSeatClick={(id) => {
           if (pulls.length === 0) begin(id, 'out');

@@ -30754,3 +30754,11 @@ Colour arrived on the swing's k, so it was at the clamped base at 1300ms with 30
 **The cost, stated in the query's comment:** the row count under a filter is the row count at rest (the shelf is unpaginated), and the predicate is evaluated per row rather than pruning. At hundreds of records nothing. At thousands the trigram search becomes a sequential scan over every row where a WHERE could have used its index; that is the point to revisit.
 
 Seen in the test run: a search term of `zzzz-nothing-here` matched `Hear Nothing` by trigram similarity, correctly. The term was the defect.
+
+## §11.28's landing: the vertical target is the window's, not the row's
+
+The near view's arrival took its vertical target from the addressed seat's own top face. The wall descends to the right (+x projects to (cos30, sin30)), so every seat back along the row sits higher on screen and their tops were cut off at the region's edge — a wall pushed off the top of the screen. Measured at row 1: the view's top was −554.5 while the row reached −546.0.
+
+**The whole row is the wrong correction, and the numbers say so.** A row spans ~99px of screen height per seat (198 pitch × sin30), so a 100-seat row spans ~9,900px against a 799-high region. A row-wide minimum is unreachable, and after the scroller clamps it the addressed seat can land below the region entirely: at 400 records a row-end seat sat at 296..527 against a view ending at 219 — off-screen. A mid-row seat happened to stay inside, which is why the first measurement passed; the defect only shows at the row's end.
+
+The target is therefore the minimum over the top faces of the seats inside the HORIZONTAL WINDOW, which is what the arrival actually shows: always reachable, so the addressed seat is always in the region. Asserted at 17, 200 and 400 records, at the start, middle and end of a row, with the scroller's clamp applied as the region applies it — and shown to discriminate: with the whole-row target the test fails.

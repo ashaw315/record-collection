@@ -29,7 +29,7 @@ export default async function WallLabelledProbePage({
 
   return (
     <main>
-      <WallComposition seats={seats} summaries={collectionSummaries(seats)} />
+      <WallComposition seats={seats} summaries={collectionSummaries(seats)} opens="near" />
     </main>
   );
 }

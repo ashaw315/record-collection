@@ -114,7 +114,8 @@ test('the first paint is the far view: with no script at all, 390px shows the ov
   try {
     await page.goto('/');
     await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
-    /* Both are in the document — the server has no width — and the stylesheet decides. */
+    /* Both are in the document — the server has no width, and with no script none is ever measured — and the stylesheet decides. */
+    await expect(page.locator('[data-wall-container][data-unmeasured]')).toBeAttached();
     await expect(page.locator('[data-region="far"]')).toBeVisible();
     await expect(page.locator('[data-region="near"]')).toBeHidden();
     await page.setViewportSize({ width: nearViewMinWidth(), height: 844 });

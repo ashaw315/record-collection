@@ -45,6 +45,7 @@ export function WallOverview({
   seats,
   pulledId,
   linked = false,
+  onSeatClick,
 }: {
   seats: readonly NamedSeat[];
   pulledId: string | null;
@@ -54,22 +55,59 @@ export function WallOverview({
    * and a 420 panel side by side, which a narrow screen cannot hold.
    */
   linked?: boolean;
+  /**
+   * §11.12: where the pulled state DOES exist, a click on a seat is the way
+   * in — the zoom to the near view, landing on that seat. The anchor stays,
+   * so the route still works with JavaScript off; the click is intercepted.
+   */
+  onSeatClick?: (id: string) => void;
 }) {
-  const { placed, furniture, breaks, frame } = wallLayout(seats, [], 0);
+  const { placed, pieces, breaks, frame } = wallLayout(seats, [], 0);
   const emptied = new Set(seats.filter((seat) => seat.empty).map((seat) => seat.id));
   /* §11.12: an emptied seat is laid out and draws nothing — the filter is a shape on the fixture. */
   const seated = placed.filter((seat) => seat.id !== pulledId && !emptied.has(seat.id));
 
   return (
-    <svg data-wall="overview" viewBox={frame.viewBox} style={{ background: PAPER_CSS, width: '100%', height: 'auto' }}>
-      {/* The unit's furniture first, as §11.11 draws it; the records stand on it. */}
-      {furniture.map((face, index) => (
-        <polygon key={`f-${index}`} data-furniture={face.kind} points={points(face.points)} fill={PLANE_FILL} stroke={RULE} strokeWidth="1" />
-      ))}
+    <svg
+      data-wall="overview"
+      viewBox={frame.viewBox}
+      /*
+        The collection as an object, fitted whole to its region (§11.10):
+        `meet` scales to whichever dimension binds, and the leftover space goes
+        on BOTH sides — a portrait fixture in a landscape region fits the
+        height, and pinned to xMin it sat in a narrow column with the region
+        empty beside it.
+      */
+      preserveAspectRatio="xMidYMid meet"
+      style={{ background: PAPER_CSS, width: '100%', height: '100%', maxHeight: '100%' }}
+    >
       {breaks.map(([from, to], index) => (
         <line key={`break-${index}`} data-break="" x1={from[0].toFixed(2)} y1={from[1].toFixed(2)} x2={to[0].toFixed(2)} y2={to[1].toFixed(2)} stroke={RULE} strokeWidth="1" />
       ))}
-      {paintOrder(seated.map((seat) => seatBounds(seat))).map((bounds) => seated.find((seat) => seat.id === bounds.id) as (typeof seated)[number]).map((seat) => {
+      {/*
+        **One order over every object — pieces and records together (§11.23).**
+        Painting all the furniture and then all the records is two passes, and
+        it puts a shelf's front face down before the records standing on it:
+        the spines then draw over the shelf and past the upright in front of
+        them, which reads as a broken fixture rather than a paint-order fault.
+        The near view has always interleaved; this is the same wall.
+      */}
+      {paintOrder([
+        ...pieces.map((piece) => ({ id: piece.id, ...piece.bounds })),
+        ...seated.map((seat) => seatBounds(seat)),
+      ]).map((object) => {
+        const piece = pieces.find((p) => p.id === object.id);
+        if (piece !== undefined) {
+          return (
+            <g key={piece.id} data-piece={piece.kind}>
+              {piece.faces.map((face, index) => (
+                <polygon key={index} data-furniture={face.kind} points={points(face.points)} fill={PLANE_FILL} stroke={RULE} strokeWidth="1" />
+              ))}
+            </g>
+          );
+        }
+        const seat = seated.find((s) => s.id === object.id);
+        if (seat === undefined) return null;
         const faces = (
           <>
             <polygon points={points(topFace(seat))} fill={TOP_FILL} stroke={INK} strokeWidth="1" />
@@ -80,7 +118,21 @@ export function WallOverview({
         const named = seats.find((s) => s.id === seat.id);
         const name = named?.artist !== undefined && named.title !== undefined ? `${named.artist} · ${named.title}` : undefined;
         return linked ? (
-          <a key={seat.id} href={`/records/${seat.id}`} aria-label={name} data-far-seat={seat.id}>
+          <a
+            key={seat.id}
+            href={`/records/${seat.id}`}
+            aria-label={name}
+            data-far-seat={seat.id}
+            style={onSeatClick === undefined ? undefined : { cursor: 'pointer' }}
+            onClick={
+              onSeatClick === undefined
+                ? undefined
+                : (event) => {
+                    event.preventDefault();
+                    onSeatClick(seat.id);
+                  }
+            }
+          >
             {faces}
           </a>
         ) : (

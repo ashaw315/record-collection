@@ -53,6 +53,24 @@ const render = (props: Partial<Parameters<typeof WallStage>[0]> = {}) =>
     />,
   );
 
+describe('the route’s two views, and the way between them (§11.12)', () => {
+  it('makes the far view’s count the way out — a button, not a wheel — and the far seats the way in', () => {
+    const far = render({ far: true, onZoomOut: () => {}, onZoomIn: () => {} });
+    /* Out is the count: the collection's identity, which is what the zoom-out arrives at. */
+    expect(far).toMatch(/<button[^>]*data-testid="wall-zoom-out"[^>]*>/);
+    expect(far.indexOf('data-testid="wall-zoom-out"')).toBeLessThan(far.indexOf('data-wall="overview"'));
+    expect(far).toContain('data-testid="wall-count-far"');
+    /* In is a seat. With a handler the far seats are the zoom, not links away. */
+    expect(far).toMatch(/<a [^>]*data-far-seat="a"/);
+  });
+
+  it('leaves the far view’s records as plain links when there is no zoom to do — the narrow shelf, where a tap opens the record (§11.24)', () => {
+    const narrow = render({ far: true });
+    expect(narrow).not.toContain('data-testid="wall-zoom-out"');
+    expect(narrow).toMatch(/<a [^>]*href="\/records\/a"/);
+  });
+});
+
 describe('the narrow shelf is the far view (§11.24)', () => {
   it('draws the count and then the overview in one column — no facts column, no labelled wall, no panel region — with the records as links to their screens', () => {
     const html = render({ far: true, viewport: 390, width: 390 });

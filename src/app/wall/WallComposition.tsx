@@ -31,9 +31,12 @@ export function WallComposition({
   summaries = {},
   countLine = null,
   rail = null,
+  opens,
 }: {
   seats: readonly WallSeat[];
   summaries?: Record<string, RecordSummary>;
+  /** §11.12: which view the route opens in. The collection page opens far; probes about the near view ask for it. */
+  opens?: 'far' | 'near';
   /** The filter-aware line under the count — "34 of 312 records" — when a filter is on. */
   countLine?: string | null;
   /** §11.13's rail, in a 148px column left of the facts; the page supplies it, the probes do not. */
@@ -59,9 +62,9 @@ export function WallComposition({
           (§11.26): the wrap was a column's width rule arriving in a layout
           with horizontal room and no vertical room, so the search yields
           instead. The number is the fork's own (view-fork.ts), so the band
-          and the far view cannot disagree — and the same query gates the
-          unmeasured first paint, which renders both views (WallStage), so a
-          phone never paints the near view first.
+          and the far view cannot disagree. The unmeasured first paint shows
+          the route's default (far) at every width, so the server's paint and
+          the client's first paint are the same view.
         */
         <style data-narrow-shelf="">{`@media (max-width: ${nearViewMinWidth() - 1}px) {
   [data-composition] { grid-template-columns: 1fr; }
@@ -71,14 +74,19 @@ export function WallComposition({
   [data-testid="wall-rail"] a { margin-top: 0; white-space: nowrap; }
   [data-rail-filter] { display: none; }
   [data-rail-rule] { display: none; }
-  [data-region="near"] { display: none; }
 }
-@media (min-width: ${nearViewMinWidth()}px) {
-  [data-region="far"] { display: none; }
-}`}</style>
+/*
+  The unmeasured first paint is the route's default — FAR at every width
+  (§11.12). The server cannot know the viewport, but it does know the route,
+  and painting by the fork instead made the server render the near view above
+  the fork and hydration replace it with the far one ~185ms later: a large,
+  correct-looking wall that reverts. The near view is revealed only once the
+  client has measured and been asked for it.
+*/
+[data-unmeasured] [data-region="near"] { display: none; }`}</style>
       )}
       {rail}
-      <WallLive seats={seats} summaries={summaries} countLine={countLine} />
+      <WallLive seats={seats} summaries={summaries} countLine={countLine} opens={opens} />
     </section>
   );
 }

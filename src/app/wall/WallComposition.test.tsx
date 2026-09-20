@@ -86,9 +86,16 @@ describe('the rail collapses to one band below the fork (§11.24)', () => {
     expect(style).toMatch(/\[data-testid="wall-rail"\]\s*\{[^}]*flex-wrap:\s*nowrap/);
     expect(style).toMatch(/\[data-testid="wall-rail"\] a\s*\{[^}]*white-space:\s*nowrap/);
     expect(style).toMatch(/\[data-testid="wall-rail"\] form\s*\{[^}]*min-width:\s*0/);
-    /* The flash: below the fork the server-rendered near view is hidden by CSS; above it the far one — so the first paint is the right view before any measurement. */
-    expect(style).toMatch(new RegExp(`@media \\(max-width: ${nearViewMinWidth() - 1}px\\)[\\s\\S]*\\[data-region="near"\\]\\s*\\{[^}]*display:\\s*none`));
-    expect(style).toMatch(new RegExp(`@media \\(min-width: ${nearViewMinWidth()}px\\)[\\s\\S]*\\[data-region="far"\\]\\s*\\{[^}]*display:\\s*none`));
+    /*
+      The unmeasured first paint is the ROUTE's default at every width — far
+      (§11.12) — because the server cannot know the viewport but does know the
+      route. Hiding the far view above the fork made the SERVER paint the near
+      view and hydration replace it 185ms later: a large, correct-looking wall
+      that reverts, which is the flash reported from the running app. The near
+      view appears only once the client has measured and been asked for it.
+    */
+    expect(style).toMatch(/\[data-unmeasured\] \[data-region="near"\]\s*\{[^}]*display:\s*none/);
+    expect(style, 'the far view is never hidden while unmeasured').not.toMatch(/\[data-unmeasured\] \[data-region="far"\]/);
   });
 });
 
