@@ -141,6 +141,58 @@ test('the arrival is already in position: the region’s scroll never moves afte
   expect(Number(positions[0].split('/')[1]), 'landed somewhere the fixture required').toBeGreaterThan(0);
 });
 
+test('a client navigation to the shelf arrives in position too (§11.29)', async ({ page }) => {
+  /*
+    Two paths, two mechanisms. A DOCUMENT load is painted from the server's
+    markup before any client script runs, so the arrival is written by an
+    inline script at parse time. A CLIENT navigation has no server paint to
+    be late for, and React never executes a component-rendered script on the
+    client anyway — it warns when it finds one — so the arrival there is the
+    landing effect's. Both must land, and neither may warn.
+  */
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const artistId = await seed(page, 240);
+
+  await page.goto(`/?artistId=${artistId}&view=table`);
+  await expect(page.getByText('shelf', { exact: true }).first()).toBeVisible({ timeout: 30_000 });
+  await page.evaluate(() => {
+    (window as unknown as { __nav: Array<{ l: number; s: number }> }).__nav = [];
+    const t0 = performance.now();
+    (function sample() {
+      const el = document.querySelector('[data-region="wall"]') as HTMLElement | null;
+      if (el) (window as unknown as { __nav: Array<{ l: number; s: number }> }).__nav.push({ l: Math.round(el.scrollLeft), s: Math.round(el.scrollTop) });
+      if (performance.now() - t0 < 2500) requestAnimationFrame(sample);
+    })();
+  });
+  await page.getByText('shelf', { exact: true }).first().click();
+  await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 20_000 });
+  await page.waitForTimeout(2000);
+
+  const frames = (await page.evaluate(() => (window as unknown as { __nav: Array<{ l: number; s: number }> }).__nav)) as Array<{ l: number; s: number }>;
+  expect(frames.length, 'the region was sampled after the navigation').toBeGreaterThan(3);
+  const positions = [...new Set(frames.map((f) => `${f.l}/${f.s}`))];
+  expect(positions.length, `no movement after the shelf renders: ${positions.join(' -> ')}`).toBe(1);
+  expect(Number(positions[0].split('/')[1]), 'and it is a real landing').toBeGreaterThan(0);
+
+  /*
+    **The console warning this does NOT assert away.** React logs "Scripts
+    inside React components are never executed when rendering on the client"
+    for the arrival tag. That is true and harmless: the tag's only job is the
+    server's markup, and this test proves the client path lands anyway,
+    through WallLive's landing effect. It cannot be removed from a component
+    — React warns on any script element it renders, however its content is
+    set, and the tag already uses dangerouslySetInnerHTML.
+
+    Two alternatives were built and rejected. Rendering it only on the server
+    silences the warning and makes the server and client markup differ, which
+    is a hydration mismatch — a real defect where the warning is dev-only
+    noise. Emitting it from the document layout also works and puts
+    wall-specific code in the app shell. The warning is the cheapest of the
+    three.
+  */
+});
+
 test('the fork’s width is one constant, shared by the media query and the measurement', async () => {
   expect(nearViewMinWidth()).toBeGreaterThan(1000);
 });

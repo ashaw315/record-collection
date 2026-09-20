@@ -64,6 +64,12 @@ describe('the arrival is in position at parse time (§11.29)', () => {
       scrollable at parse time — and a script placed immediately after it
       runs then, before that first paint.
     */
+    /*
+      `renderToStaticMarkup` is the server's path, which is the only one that
+      emits this: React never executes a component-rendered script on the
+      client and warns when it finds one, and a client navigation has no
+      server paint to be late for — WallLive's landing effect covers it.
+    */
     const html = render({ far: false });
     const region = html.indexOf('data-region="wall"');
     const script = html.indexOf('data-arrival-scroll');

@@ -276,6 +276,16 @@ export function WallStage({
           before the first paint. Two lines, no framework state; the numbers
           come from the same layout the client lands with, so the two cannot
           drift.
+
+          React warns that a component-rendered script never executes on the
+          client, which is true and harmless here: the tag's job is the
+          server's markup. A client navigation has no server paint to be late
+          for, and WallLive's landing effect already supplies the arrival
+          there — measured at the landing on the first sampled frame of a
+          navigation from the table, and on Back and Forward. Rendering the
+          tag only on the server silences the warning but changes the markup
+          between server and client, which is a hydration mismatch: worse
+          than the warning.
         */}
         {arrival === null ? null : (
           <script
