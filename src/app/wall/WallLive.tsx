@@ -90,8 +90,12 @@ export function WallLive({
     instruction to that owner, not a new responsibility.
   */
   const landOn = useRef<string | null>(null);
-  /** Set across the landing's own scroll write, and cleared on a timer — see `onScroll`. */
-  const landingWriteRef = useRef(false);
+/**
+   * The scroll position the app's own landing write intends, or `null` when
+   * the next scroll is the reader's. The listener ignores a scroll only when
+   * what it sees MATCHES that intent — see `onScroll`.
+   */
+  const landingWriteRef = useRef<{ left: number; top: number } | null>(null);
   /* §11.29: the desktop opens near and ARRIVES on the occupied shelf, through the same landing a zoom-in uses. */
   const arrived = useRef(false);
   const [pulls, setPulls] = useState<readonly PullState[]>([]);
@@ -221,12 +225,9 @@ export function WallLive({
           left edge, so the landing is min(target, scrollWidth − clientWidth)
           — as far left as the wall allows (§11.12).
         */
-        landingWriteRef.current = true;
         writeView(el, [frameX, frameY], target);
-        /* Cleared after this task's scroll events have fired, whether or not any did. */
-        setTimeout(() => {
-          landingWriteRef.current = false;
-        }, 0);
+        /* What this write actually landed on, clamped: the listener ignores exactly this and nothing else. */
+        landingWriteRef.current = { left: Math.round(el.scrollLeft), top: Math.round(el.scrollTop) };
         originRef.current = [frameX, frameY];
         /* Clamped by the scroller: near the wall's left or top edge the region cannot pan that far. */
         viewNowRef.current = readView(el, [frameX, frameY]);
@@ -267,15 +268,19 @@ export function WallLive({
     const onScroll = () => {
       /*
         The landing's own write fires this, and it has already recorded where
-        it put the view (§11.12). The flag is cleared on a TIMER rather than
-        by this handler: a write that lands on an already-correct position
-        fires no scroll event at all, so a handler-cleared flag stayed armed
-        and swallowed the reader's next genuine scroll — the tracked view
-        stayed at the arrival, the pull began from there, and put back
-        returned there instead of to where the reader was (593 scrolled, 75
-        returned).
+        it put the view (§11.12). What distinguishes it from the reader's
+        scroll is the POSITION, not the timing: the write records where it
+        intends to land, and this ignores a scroll only when it sees exactly
+        that. A write that moves nothing therefore needs no clearing — it
+        fires no event and the record is dropped on the next scroll of any
+        kind — where a flag cleared by this handler stayed armed and
+        swallowed the reader's next genuine scroll: the tracked view stayed
+        at the arrival, the pull began from there, and put back returned
+        there instead of to where the reader was (593 scrolled, 75 returned).
       */
-      if (landingWriteRef.current) return;
+      const intended = landingWriteRef.current;
+      landingWriteRef.current = null;
+      if (intended !== null && Math.round(el.scrollLeft) === intended.left && Math.round(el.scrollTop) === intended.top) return;
       if (!gestureOnRef.current) viewNowRef.current = readView(el, originRef.current);
     };
     el.addEventListener('scroll', onScroll);
