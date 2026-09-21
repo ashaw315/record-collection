@@ -178,6 +178,78 @@ describe('§11.28: the occupied run is the click target, and it signals on hover
   });
 });
 
+describe('§11.30: reaching the run by keyboard', () => {
+  const occupied = (count = 17) => seats(count).map((s, i) => ({ ...s, artist: `A${i}`, title: `T${i}` }));
+
+  it('is a BUTTON, not an anchor — a run has no route, and §11.29 makes the near view a camera position rather than an address', () => {
+    /*
+      A spine is an anchor because a record has a route. An anchor with no
+      href is a link to nowhere announced as a link, which is worse for the
+      reader it exists to serve than a control announced as what it is.
+    */
+    /*
+      SVG has no <button>, so the run is a <g> carrying the button ROLE, which
+      is what a screen reader announces. The point of the ruling holds either
+      way: it is announced as a control rather than as a link to nowhere, and
+      it carries no href.
+    */
+    const html = render({ seats: occupied(), pulledId: null, linked: true, onSeatClick: () => {} });
+    const run = /<(\w+)[^>]*data-run="0"[^>]*>/.exec(html);
+    expect(run?.[0], 'announced as a button').toContain('role="button"');
+    expect(run?.[0], 'and reachable by keyboard').toContain('tabindex="0"');
+    expect(run?.[0], 'no href: a run is not an address').not.toContain('href');
+  });
+
+  it('is labelled by what the hover says in ink: "17 records — zoom to this shelf"', () => {
+    const html = render({ seats: occupied(), pulledId: null, linked: true, onSeatClick: () => {} });
+    const run = /<g[^>]*data-run="0"[^>]*>/.exec(html)?.[0] ?? '';
+    expect(run).toContain('aria-label="17 records — zoom to this shelf"');
+  });
+
+  it('takes runs in document order, top shelf first — §11.23’s seat order one level up', () => {
+    /* Two shelves' worth: the order they filled is the order they are reached. */
+    const html = render({ seats: occupied(30), pulledId: null, linked: true, onSeatClick: () => {} });
+    const order = [...html.matchAll(/data-run="(\d+)"/g)].map((m) => Number(m[1]));
+    expect(order.length, 'thirty records fill two runs').toBe(2);
+    expect(order, 'document order, top shelf first').toEqual([0, 1]);
+  });
+
+  it('shows the hover’s sink and count on FOCUS too, plus a 2px ink rule the hover does not have', () => {
+    /*
+      Hover and focus must not be the same state: hover follows a pointer
+      already where the reader is looking, and focus has to be findable by
+      someone who cannot see where it went. The sink alone is a 1.74:1 change
+      in a drawing of 1.99:1 hairlines — legible as a response, not as a
+      location. 0.18 reads 7.89:1 on the 0.731 surface and 15.07:1 on paper.
+    */
+    const html = render({ seats: occupied(), pulledId: null, linked: true, onSeatClick: () => {} });
+    const style = /<style data-run-hover[^>]*>([\s\S]*?)<\/style>/.exec(html)?.[1] ?? '';
+    expect(style, 'focus sinks and counts as hover does').toMatch(/\[data-run\]:focus-visible/);
+    /* The edge is drawn only on focus, at §3's 2px, in ink. */
+    expect(style).toMatch(/\[data-run-edge\][\s\S]*?opacity:\s*0/);
+    expect(style).toMatch(/:focus-visible[^{]*\[data-run-edge\][^}]*opacity:\s*1/);
+    const edge = /<line[^>]*data-run-edge[^>]*>/.exec(html)?.[0] ?? '';
+    expect(edge, '§3’s 2px, the weight reserved for a mark that is not a rule about type').toContain('stroke-width="2"');
+    expect(edge, 'ink at 0.18').toContain('oklch(0.18');
+    /* Hover does not draw it: the two states differ. */
+    expect(style).not.toMatch(/:hover[^{]*\[data-run-edge\][^}]*opacity:\s*1/);
+  });
+
+  it('adds no second control: the run is the only stop, and nothing else in the far view is focusable', () => {
+    const html = render({ seats: occupied(), pulledId: null, linked: true, onSeatClick: () => {} });
+    expect((html.match(/role="button"/g) ?? []).length, 'one control per run and no more').toBe(1);
+    /*
+      The run is the only TAB STOP. Where a zoom is offered the seats stay
+      anchors — they work with JavaScript off, and a record has a route — but
+      they leave the tab sequence: §11.28 rules the run the only target, and
+      seventeen links in front of it would be the second control §11.30
+      forbids, reached before the one that does something.
+    */
+    expect((html.match(/tabindex="0"/g) ?? []).length, 'one tab stop').toBe(1);
+    expect((html.match(/tabindex="-1"/g) ?? []).length, 'and the seats step out of the sequence').toBe(17);
+  });
+});
+
 describe('the far view’s seats are the way in (§11.12)', () => {
   it('calls back with the seat rather than following its link, when a zoom is offered', () => {
     const html = render({ seats: seats(3), pulledId: null, linked: true, onSeatClick: () => {} });

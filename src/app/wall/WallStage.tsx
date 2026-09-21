@@ -245,7 +245,7 @@ export function WallStage({
     shelf at 390px, and a 420px column beside it leaves nothing to draw in.
   */
   const farView = (
-    <div data-region="far" className={`flex h-[calc(100vh-var(--app-nav-height,0px))] flex-col overflow-hidden p-[34px] [@media(min-width:${nearViewMinWidth()}px)]:flex-row`}>
+    <div data-region="far" inert={far === null} className={`flex h-[calc(100vh-var(--app-nav-height,0px))] flex-col overflow-hidden p-[34px] [@media(min-width:${nearViewMinWidth()}px)]:flex-row`}>
       <div className={`shrink-0 [@media(min-width:${nearViewMinWidth()}px)]:w-[420px]`}>{count(true)}</div>
       <div className="min-h-0 min-w-0 flex-1">
         <WallOverview seats={seats} pulledId={null} linked onSeatClick={onZoomIn} />
@@ -255,7 +255,7 @@ export function WallStage({
   if (far === true) return farView;
 
   const nearView = (
-    <div data-region="near" className="grid grid-cols-[420px_1fr] gap-0">
+    <div data-region="near" inert={far === null} className="grid grid-cols-[420px_1fr] gap-0">
       <div data-region="facts" className="flex flex-col p-[34px]">
         {count(false)}
         <div data-testid="panel-region" className="mt-[34px]">{panel}</div>
@@ -322,6 +322,14 @@ export function WallStage({
     </div>
   );
   if (far === false) return nearView;
+  /*
+    Unmeasured, both views are in the document and CSS shows one (§11.26).
+    The hidden one must be INERT: `display: none` removes it from the
+    accessibility tree, but nothing guarantees the CSS has applied before a
+    reader tabs, and a rendered-but-hidden view keeps its tab stops — the
+    near view's seat anchors then stand in front of §11.30's run, which is
+    the far view's only stop.
+  */
   return (
     <>
       {nearView}

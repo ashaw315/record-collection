@@ -175,6 +175,16 @@ describe('the narrow shelf is the far view (§11.24)', () => {
     const both = render({ far: null });
     expect(both).toContain('data-region="near"');
     expect(both).toContain('data-region="far"');
+    /*
+      Both are in the document, and the one CSS hides must be inert: a hidden
+      view keeps its tab stops otherwise, and the near view's seat anchors
+      then stand in front of the far view's run — §11.30's only stop,
+      unreachable behind seventeen links to records that are not shown.
+    */
+    expect(both, 'both are inert until the measurement decides').toMatch(/data-region="near"[^>]*\binert\b/);
+    expect(both).toMatch(/data-region="far"[^>]*\binert\b/);
+    expect(render({ far: false }), 'the shown view is not inert').not.toMatch(/data-region="near"[^>]*\binert\b/);
+    expect(render({ far: true })).not.toMatch(/data-region="far"[^>]*\binert\b/);
     expect(render({ far: true })).not.toContain('data-region="near"');
     expect(render({ far: false })).not.toContain('data-region="far"');
   });

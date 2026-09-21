@@ -35,6 +35,17 @@ const INK = '#161412';
  */
 const RUN_HOVER_SURFACE = 'oklch(0.731 0.004 80)';
 const RUN_HOVER_RULE = 'oklch(0.588 0.004 80)';
+/**
+ * §11.30's focus edge. Hover and focus must not be the same state: hover
+ * follows a pointer already where the reader is looking, and focus has to be
+ * findable by someone who cannot see where it went. The sink alone is a
+ * 1.74:1 change in a drawing of 1.99:1 hairlines — legible as a response,
+ * not as a location. 2px because §3 reserves that weight for a mark that is
+ * not a rule about type, and the value is recomputed against its ground
+ * rather than borrowed: 0.18 reads 7.89:1 on the 0.731 surface and 15.07:1
+ * on paper, so it clears on both.
+ */
+const RUN_FOCUS_EDGE = 'oklch(0.18 0.008 60)';
 const RULE = 'oklch(0.44 0.008 70)';
 
 /**
@@ -114,10 +125,14 @@ export function WallOverview({
       */}
       {onSeatClick === undefined ? null : (
         <style data-run-hover="">{`
-[data-run]:hover polygon { fill: ${RUN_HOVER_SURFACE}; stroke: ${RUN_HOVER_RULE}; }
-[data-run]:hover [data-run-label] { opacity: 1; }
+[data-run]:hover polygon, [data-run]:focus-visible polygon { fill: ${RUN_HOVER_SURFACE}; stroke: ${RUN_HOVER_RULE}; }
+[data-run]:hover [data-run-label], [data-run]:focus-visible [data-run-label] { opacity: 1; }
 [data-run] [data-run-label] { opacity: 0; }
+[data-run] [data-run-edge] { opacity: 0; }
+[data-run]:focus-visible [data-run-edge] { opacity: 1; }
 [data-run] { cursor: pointer; }
+[data-run]:focus { outline: none; }
+[data-run]:focus-visible { outline: none; }
 `}</style>
       )}
       {paintOrder([
@@ -151,6 +166,14 @@ export function WallOverview({
             href={`/records/${seat.id}`}
             aria-label={name}
             data-far-seat={seat.id}
+            /*
+              §11.30: out of the tab sequence where a zoom is offered. The
+              anchor stays — it works with JavaScript off, and a record has a
+              route — but §11.28 rules the RUN the only target, and a shelf's
+              worth of links in front of it is the second control §11.30
+              forbids, reached before the one that does something.
+            */
+            tabIndex={onSeatClick === undefined ? undefined : -1}
             style={onSeatClick === undefined ? undefined : { cursor: 'pointer' }}
             onClick={
               onSeatClick === undefined
@@ -184,9 +207,18 @@ export function WallOverview({
             return (
               <g
                 key={`run-${run.row}`}
+                role="button"
+                tabIndex={0}
                 data-run={run.row}
                 data-run-count={run.seats.length}
+                aria-label={`${run.seats.length} records — zoom to this shelf`}
                 onClick={() => onSeatClick(run.seats[0].id)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    onSeatClick(run.seats[0].id);
+                  }
+                }}
               >
                 {run.seats.map((s) => (
                   <g key={s.id}>
@@ -207,6 +239,27 @@ export function WallOverview({
                 >
                   {run.seats.length} RECORDS →
                 </text>
+                {/* §11.30: the front edge — the run's longest continuous line, and the only one no spine interrupts. */}
+                {(() => {
+                  const fronts = run.seats.flatMap((s) => frontFace(s));
+                  const bottom = Math.max(...fronts.map(([, y]) => y));
+                  const near = fronts.filter(([, y]) => y > bottom - 2);
+                  const x1 = Math.min(...near.map(([x]) => x));
+                  const x2 = Math.max(...near.map(([x]) => x));
+                  const y1 = near.find(([x]) => x === x1)?.[1] ?? bottom;
+                  const y2 = near.find(([x]) => x === x2)?.[1] ?? bottom;
+                  return (
+                    <line
+                      data-run-edge=""
+                      x1={x1.toFixed(2)}
+                      y1={y1.toFixed(2)}
+                      x2={x2.toFixed(2)}
+                      y2={y2.toFixed(2)}
+                      stroke={RUN_FOCUS_EDGE}
+                      strokeWidth="2"
+                    />
+                  );
+                })()}
                 <title>{`${run.seats.length} records`}</title>
               </g>
             );
