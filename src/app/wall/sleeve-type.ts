@@ -20,15 +20,22 @@ export const SLEEVE_MAX_LINES = 3;
 /** Line height, as the sleeve sets it. */
 export const SLEEVE_LEADING = 0.95;
 /**
- * Average advance of the app's sans — Inter Tight at 800 — per em, on
- * titles. **Measured, not estimated:** `measureText` in the rendered face
- * gave 0.477em on the collection's titles (0.544 on the lowercase alphabet;
- * the mono, for comparison, 0.600, which is the spine's measured advance).
- * A first estimate of 0.6 fitted the title a size too small.
- * `wall-cover.spec.ts` checks the rendered title's line boxes, which is the
- * measurement this number stands in for.
+ * Advance of the app's sans — Inter Tight at 800 — per em, bounding the
+ * WIDEST WORD rather than describing the average title.
+ *
+ * **The defect this fixes.** It was 0.48, an average measured across the
+ * collection's titles, which narrow letters pull down. The fit's job is that
+ * no word overflows its measure, so an average is the wrong statistic: "Mind
+ * Games" took size 140, computed as 336px inside a 401px measure, while the
+ * rendered face gives 0.664em per character for "Games" — 465px, clipped by
+ * 64. Measured in the browser at weight 800: "Games" 0.664, "Mind Games"
+ * 0.588, "Hear Nothing See Nothing" 0.504, lowercase alphabet 0.544.
+ *
+ * 0.68 bounds the widest of those with a little room, which is what a fit
+ * needs rather than a mean. `wall-cover.spec.ts` checks the rendered title's
+ * line boxes, which is the measurement this number stands in for.
  */
-export const TITLE_ADVANCE_EM = 0.48;
+export const TITLE_ADVANCE_EM = 0.68;
 
 export type SleeveTitle = {
   size: number;

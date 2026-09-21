@@ -30820,3 +30820,11 @@ The app carried TWO hairline values, `--border` at 0.9 and `--input` at 0.88, bo
 **The size of the change, on the record:** both tokens collapse to `oklch(0.72 0.004 80)`, plus `--sidebar-border`. That reaches 76 uses of `border-border` across 25 files and 8 of `border-input` across 7, which is every table row rule, every form field edge, every card and panel boundary in the app — the collection list, the filters, pagination, every lookup and manage screen, the record page and its journal and gallery, the want list, the forms, and shadcn's button and input primitives. One literal spelled the old value out (the sheet probe) and now names the token.
 
 `test/repo/hairline-value.test.ts` holds the stylesheet to 0.72, keeps the two replaced ratios as measured figures so the finding cannot recur silently, and scans for the literal.
+
+## The no-cover title's advance: a mean where a bound was needed
+
+"Mind Games" clipped 64px past its field. Neither the measure nor the step was wrong: the fit computed the widest word at 336px inside a 401px measure and was arithmetically consistent. `TITLE_ADVANCE_EM` was the fault — 0.48, an **average** measured across the collection's titles, where the fit's job is that no WORD overflows. Narrow letters pull an average down, and a word of wide glyphs exceeds it.
+
+Measured in the rendered face at weight 800: "Games" 0.664 em/char, "Mind Games" 0.588, "Hear Nothing See Nothing" 0.504, the lowercase alphabet 0.544. The constant is 0.68, which bounds the widest of those.
+
+**The general form, since this is the second time a statistic has been used for the wrong job:** a fit needs a bound, not a mean. An average describes the set and guarantees nothing about its worst member, which is precisely what a fit is about. Tested with the collection's longest title and a single very long word, both asserted against the measure rather than against a size.
