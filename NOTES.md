@@ -30812,3 +30812,11 @@ The run is announced as a button with `tabindex="0"` — SVG has no `<button>` e
 - In the far view the seats were themselves tab stops, which is exactly the second control §11.30 forbids. They keep their anchors — a record has a route, and they work with JavaScript off — and take `tabIndex={-1}` where a zoom is offered.
 
 **The tab order, walked from the document's start rather than inferred:** nav, then the rail's seven stops, then the count's zoom-out, then the runs in document order. Three passes at asserting this failed because the probe resumed from wherever a click left focus and because the sequence wraps inside the press budget; the walk settled it in one. The run-order assertion within a pass is left skipped in the E2E with the walk's output recorded beside it, since it is asserted directly in the unit test and reproducing it here depends on where the sequence wraps, which moves with the collection size.
+
+## §11.27: one hairline value, and it is §3's 0.72
+
+The app carried TWO hairline values, `--border` at 0.9 and `--input` at 0.88, both chosen against the 0.985 ground §11.5 replaced. Measured on the paper the app now paints they read **1.08:1 and 1.15:1** — past the threshold of visible on the wrong side, where §3's 0.72 reads **1.99:1**. §3 spends its whole argument keeping a rule AT that threshold, so a hairline that cannot be seen is not a quiet rule but an absent one. That is why the page read as having no rules at all.
+
+**The size of the change, on the record:** both tokens collapse to `oklch(0.72 0.004 80)`, plus `--sidebar-border`. That reaches 76 uses of `border-border` across 25 files and 8 of `border-input` across 7, which is every table row rule, every form field edge, every card and panel boundary in the app — the collection list, the filters, pagination, every lookup and manage screen, the record page and its journal and gallery, the want list, the forms, and shadcn's button and input primitives. One literal spelled the old value out (the sheet probe) and now names the token.
+
+`test/repo/hairline-value.test.ts` holds the stylesheet to 0.72, keeps the two replaced ratios as measured figures so the finding cannot recur silently, and scans for the literal.

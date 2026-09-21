@@ -147,9 +147,17 @@
      become the same colour. Brighter and more orange. */
   --destructive: oklch(0.52 0.2 27);
 
-  /* Hairlines. Ledger rules, not card outlines. */
-  --border: oklch(0.9 0.006 75);
-  --input: oklch(0.88 0.006 75);
+  /*
+   * Hairlines. Ledger rules, not card outlines — ONE value (8a §11.27),
+   * which is §3's 0.72 and reads 1.99:1 on the paper §11.5 makes the app
+   * paint. The two this replaces were chosen against the old 0.985 ground
+   * and read 1.08:1 and 1.15:1 on 0.925 — past the threshold of visible on
+   * the wrong side, which is why the page read as having no rules at all.
+   * §3 spends its argument keeping a rule AT that threshold; a hairline that
+   * cannot be seen is not a quiet rule, it is an absent one.
+   */
+  --border: oklch(0.72 0.004 80);
+  --input: oklch(0.72 0.004 80);
   --ring: oklch(0.36 0.098 18);
 
   --chart-1: oklch(0.36 0.098 18);
@@ -167,7 +175,7 @@
   --sidebar-primary-foreground: oklch(0.98 0.005 85);
   --sidebar-accent: oklch(0.93 0.009 80);
   --sidebar-accent-foreground: var(--foreground);
-  --sidebar-border: oklch(0.9 0.006 75);
+  --sidebar-border: oklch(0.72 0.004 80);
   --sidebar-ring: oklch(0.36 0.098 18);
 }
 

@@ -31,7 +31,7 @@ export default async function ConstructionSheetPage() {
         {records.map((record) => (
           <figure key={record.id} data-sheet-tile={record.id} className="m-0">
             <div
-              className="border border-[oklch(0.9_0.006_75)]"
+              className="border border-border"
               style={{ aspectRatio: '300 / 340', background: PAPER_CSS }}
             >
               <ConstructionStill recordId={record.id} spineColour={record.spineColour} />
