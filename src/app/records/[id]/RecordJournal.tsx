@@ -240,7 +240,7 @@ export function RecordJournal({
       <div
         ref={formRef}
         data-testid="journal-form"
-        className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start"
+        className="mb-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start"
       >
         <div className="sm:w-40 sm:shrink-0">
           <label htmlFor="entry-date" className="sr-only">
@@ -284,7 +284,14 @@ export function RecordJournal({
           />
         </div>
 
-        <div className="flex-1">
+        {/*
+          A floor, not just a share: `flex-1` alone gave the field 135px beside
+          the date input and the save button, and two rows of that cannot hold
+          the placeholder that tells a reader what to write — the example was
+          cut mid-sentence, which demonstrates only that the field is too small
+          for the example. `min-w` sets the floor and the row wraps below it.
+        */}
+        <div className="min-w-[280px] flex-1">
           <label htmlFor="journal-note" className="sr-only">
             Journal note
           </label>

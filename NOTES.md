@@ -30828,3 +30828,9 @@ The app carried TWO hairline values, `--border` at 0.9 and `--input` at 0.88, bo
 Measured in the rendered face at weight 800: "Games" 0.664 em/char, "Mind Games" 0.588, "Hear Nothing See Nothing" 0.504, the lowercase alphabet 0.544. The constant is 0.68, which bounds the widest of those.
 
 **The general form, since this is the second time a statistic has been used for the wrong job:** a fit needs a bound, not a mean. An average describes the set and guarantees nothing about its worst member, which is precisely what a fit is about. Tested with the collection's longest title and a single very long word, both asserted against the measure rather than against a size.
+
+## Two record-screen defects found in the hairline captures
+
+**The stray ink square.** §5.1's `sleeveBlock` anchors the construction inside the sleeve's base bar, and its own comment says "not straddling the frame edge, because a mark half off the page reads as a crop". With a cover the bar is a flex child and the block's 10px offset lands inside it; with NO cover the bar is absolutely positioned at the cell's right edge, so the same 10px put the block against the VIEWPORT's edge — a black square belonging to no panel, which is how it was reported. The offset now follows the bar: 20px clears the 10px bar when there is no cover.
+
+**The journal note field.** A `flex-1` child beside the date input and the save button, with no width floor: at 1456px it measured 135px, and two rows of that cannot hold its own placeholder — "Played it after the pub. Still loud." was cut mid-sentence, an example that demonstrates only that the field is too small for the example. It takes a 280px floor and the row wraps below it. Asserted by measuring the placeholder in the field's own type and comparing `scrollHeight` against `clientHeight`, so the test fails on clipping rather than on a width alone.

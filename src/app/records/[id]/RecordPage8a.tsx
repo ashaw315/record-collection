@@ -351,10 +351,16 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
           {/*
             Inside the bar, not straddling the frame edge. It anchors the
             construction (§5.1) and a mark half off the page reads as a crop.
+
+            The offset follows the bar. With a cover the bar is a flex child
+            and 10px lands inside it; with none the bar is absolutely
+            positioned at the cell's right edge, so the same 10px put the
+            block against the VIEWPORT's edge — a stray ink square belonging
+            to no panel. 20px clears the 10px bar either way.
           */}
           <div
             data-mark="sleeveBlock"
-            className="absolute right-[10px] bottom-[18px] h-[46px] w-[46px]"
+            className={`absolute bottom-[18px] h-[46px] w-[46px] ${record.coverUrl === null ? 'right-[20px]' : 'right-[10px]'}`}
             style={{ background: INK }}
           />
         </div>

@@ -70,3 +70,27 @@ describe('the release-year field on the record with no cover (§5.3)', () => {
     expect(cell, 'the label on the colour field is full ink (§4)').toContain('color:oklch(0.19');
   });
 });
+
+describe('the sleeve block sits inside the bar, not against the page edge', () => {
+  /*
+    §5.1 anchors the construction with a block INSIDE the sleeve's base bar —
+    its own comment says "not straddling the frame edge", because a mark half
+    off the page reads as a crop. With a cover the bar is a flex child and the
+    block's `right-[10px]` lands inside it. With NO cover the bar is absolutely
+    positioned at the cell's right edge and the block, offset by the same 10px,
+    landed against the viewport's edge: a stray ink square belonging to no
+    panel, which is how a reader reported it.
+  */
+  it('is offset past the bar’s width when there is no cover', () => {
+    const html = renderToStaticMarkup(<RecordPage8a record={{ ...record(null), coverUrl: null }} />);
+    const block = /<div[^>]*data-mark="sleeveBlock"[^>]*>/.exec(html)?.[0] ?? '';
+    expect(block, 'the block is drawn').not.toBe('');
+    expect(block, 'clear of the bar, not at the page edge').toMatch(/right-\[20px\]/);
+  });
+
+  it('keeps its position inside the bar when there is a cover', () => {
+    const html = renderToStaticMarkup(<RecordPage8a record={{ ...record(null), coverUrl: 'https://c/x.jpg' }} />);
+    const block = /<div[^>]*data-mark="sleeveBlock"[^>]*>/.exec(html)?.[0] ?? '';
+    expect(block).toMatch(/right-\[10px\]/);
+  });
+});

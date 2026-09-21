@@ -765,3 +765,39 @@ test('each price shows its date and what its type means', async ({ page }) => {
   expect(text).toMatch(/second-hand copy sold for/i);
   expect(text.toLowerCase()).not.toContain('best dig');
 });
+
+test('the journal note field holds its own example without clipping', async ({ page }) => {
+  /*
+    The field is a flex child beside the date input and the save button, and
+    it had no width floor: at a desktop width it measured 135px, so its two
+    rows could not hold the placeholder that tells a reader what to write —
+    "Played it after the pub. Still loud." was cut mid-sentence, which is an
+    example that demonstrates the field is too small for the example.
+  */
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Journal-${suffix}` });
+  trackArtist(artist.id as string);
+  const record = await post(page, '/api/records', { title: `Journal ${suffix}`, artistId: artist.id });
+
+  await page.setViewportSize({ width: 1456, height: 900 });
+  await page.goto(`/records/${record.id}`);
+  const field = page.locator('#journal-note');
+  await expect(field).toBeVisible({ timeout: 15_000 });
+
+  const fits = await field.evaluate((el) => {
+    const t = el as HTMLTextAreaElement;
+    const box = t.getBoundingClientRect();
+    /* What the placeholder needs, measured in the field's own type. */
+    const probe = document.createElement('div');
+    const cs = getComputedStyle(t);
+    probe.style.cssText = `position:absolute;visibility:hidden;white-space:pre-wrap;width:${t.clientWidth - 20}px;font:${cs.font};line-height:${cs.lineHeight}`;
+    probe.textContent = t.placeholder;
+    document.body.appendChild(probe);
+    const needed = probe.getBoundingClientRect().height;
+    probe.remove();
+    return { width: Math.round(box.width), height: Math.round(box.height), needed: Math.round(needed), scrollH: t.scrollHeight, clientH: t.clientHeight };
+  });
+
+  expect(fits.width, 'wide enough to be written in').toBeGreaterThanOrEqual(260);
+  expect(fits.scrollH, 'the example is not clipped').toBeLessThanOrEqual(fits.clientH + 1);
+});
