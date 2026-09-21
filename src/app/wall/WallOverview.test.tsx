@@ -125,6 +125,59 @@ describe('the far view fits its region (§11.10, §11.12)', () => {
   });
 });
 
+describe('§11.28: the occupied run is the click target, and it signals on hover', () => {
+  const occupied = (over: Partial<{ artist: string; title: string }> = {}) =>
+    seats(17).map((s, i) => ({ ...s, artist: `A${i}`, title: `T${i}`, ...over }));
+
+  it('draws ONE target per occupied run — not the fixture, not the region, and not the empty shelves', () => {
+    /*
+      A region-sized target that does one thing is a page that responds
+      anywhere; the fixture includes three empty shelves, so half of it would
+      promise a view of nothing. The run is the only part with something to
+      zoom to.
+    */
+    const html = render({ seats: occupied(), pulledId: null, linked: true, onSeatClick: () => {} });
+    const runs = [...html.matchAll(/data-run="(\d+)"/g)].map((m) => m[1]);
+    expect(runs, 'seventeen records fill one shelf').toEqual(['0']);
+    /* It covers the run's records, and nothing is drawn over the empty shelves. */
+    const target = /<(?:a|g)[^>]*data-run="0"[^>]*>/.exec(html)?.[0] ?? '';
+    expect(target).toContain('data-run-count="17"');
+  });
+
+  it('sinks the run to §11.27’s 0.731 on hover, with its hairlines recomputed to 0.588 against that ground', () => {
+    /*
+      §11.28: the hairline moves because the GROUND moved — §5.5's shade step
+      from 0.731 rather than from paper. Left at 0.72 it reads 1.04:1 on the
+      hover surface, worse than the 1.08:1 §11.27 refused 0.90 for, and it
+      erased the only channel separating one spine from another: the hover
+      said one object at the moment it meant seventeen records. 0.588 gives
+      1.74:1, close to the run's 1.99:1 at rest and deliberately not equal —
+      matching rest would need ~0.556, a number tuned to a target, where
+      0.588 is the derivation.
+    */
+    const html = render({ seats: occupied(), pulledId: null, linked: true, onSeatClick: () => {} });
+    const style = /<style data-run-hover[^>]*>([\s\S]*?)<\/style>/.exec(html)?.[1] ?? '';
+    expect(style, 'the sunk surface').toContain('0.731');
+    expect(style, 'the recomputed hairline').toContain('0.588');
+    expect(style, 'not the paper-ground hairline').not.toContain('0.72 0.004 80');
+    expect(style).toMatch(/\[data-run\][^{]*:hover|:hover[^{]*\[data-run\]/);
+  });
+
+  it('shows the run’s count beside it on hover, in 11px mono, with no caption', () => {
+    const html = render({ seats: occupied(), pulledId: null, linked: true, onSeatClick: () => {} });
+    const label = /<text[^>]*data-run-label[^>]*>([^<]*)<\/text>/.exec(html);
+    expect(label?.[1], 'the count, not a caption').toMatch(/^17 RECORDS/);
+    const tag = label?.[0] ?? '';
+    expect(tag, '§11.27’s 11px mono').toMatch(/font-size="11"|font-size:11px/);
+    expect(html, 'no caption explaining the drawing').not.toMatch(/click to|tap to|zoom in/i);
+  });
+
+  it('does not offer a run target where there is no zoom to do — §11.24’s narrow shelf', () => {
+    const html = render({ seats: occupied(), pulledId: null, linked: true });
+    expect(html).not.toContain('data-run=');
+  });
+});
+
 describe('the far view’s seats are the way in (§11.12)', () => {
   it('calls back with the seat rather than following its link, when a zoom is offered', () => {
     const html = render({ seats: seats(3), pulledId: null, linked: true, onSeatClick: () => {} });

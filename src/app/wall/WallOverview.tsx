@@ -1,4 +1,4 @@
-import { frontFace, rightFace, topFace, type Point } from './geometry';
+import { frontFace, rightFace, topFace, type PlacedSeat, type Point } from './geometry';
 import { PAPER_CSS } from '@/lib/colour/paper';
 import { paintOrder, seatBounds } from './paint-sort';
 import type { ShelfSeat } from './shelf-runs';
@@ -23,6 +23,18 @@ import { wallLayout } from './wall-layout';
  */
 
 const INK = '#161412';
+/**
+ * §11.27's hover surface, and §11.28's hairline ON that surface. The hairline
+ * is §5.5's shade step taken from 0.731 rather than from paper: left at
+ * §3's 0.72 it reads 1.04:1 against the sunk run — worse than the 1.08:1
+ * §11.27 refused 0.90 for — and erases the only channel separating one spine
+ * from another, so the hover says one object at the moment it means a
+ * shelf's worth of records. 0.588 gives 1.74:1, near the 1.99:1 the run has
+ * at rest and deliberately not equal: matching rest needs ~0.556, a number
+ * tuned to a target, where 0.588 is the step.
+ */
+const RUN_HOVER_SURFACE = 'oklch(0.731 0.004 80)';
+const RUN_HOVER_RULE = 'oklch(0.588 0.004 80)';
 const RULE = 'oklch(0.44 0.008 70)';
 
 /**
@@ -92,6 +104,22 @@ export function WallOverview({
         them, which reads as a broken fixture rather than a paint-order fault.
         The near view has always interleaved; this is the same wall.
       */}
+      {/*
+        §11.28's hover: the run sinks, its hairlines are recomputed against
+        that ground, and its count appears beside it. Two things at once —
+        the sink says pressable in the vocabulary the chips already use, and
+        the count says what is there, which is the one fact the far view
+        withholds by design. No cursor-only signal, and no caption: a caption
+        explaining a drawing is the admission that the drawing does not work.
+      */}
+      {onSeatClick === undefined ? null : (
+        <style data-run-hover="">{`
+[data-run]:hover polygon { fill: ${RUN_HOVER_SURFACE}; stroke: ${RUN_HOVER_RULE}; }
+[data-run]:hover [data-run-label] { opacity: 1; }
+[data-run] [data-run-label] { opacity: 0; }
+[data-run] { cursor: pointer; }
+`}</style>
+      )}
       {paintOrder([
         ...pieces.map((piece) => ({ id: piece.id, ...piece.bounds })),
         ...seated.map((seat) => seatBounds(seat)),
@@ -139,6 +167,63 @@ export function WallOverview({
           <g key={seat.id}>{faces}</g>
         );
       })}
+      {/*
+        §11.28's click target: the OCCUPIED RUN, drawn as its own layer over
+        the sorted drawing. It cannot wrap the records — they paint
+        interleaved with the furniture by the separating-plane sort (§11.23),
+        so grouping them would break that order — so the run is a transparent
+        hull over the seats of one shelf, carrying the hover and the count.
+      */}
+      {onSeatClick === undefined
+        ? null
+        : runsOf(seated).map((run) => {
+            const xs = run.seats.flatMap((s) => [...topFace(s), ...frontFace(s), ...rightFace(s)]);
+            const maxX = Math.max(...xs.map(([x]) => x));
+            const minY = Math.min(...xs.map(([, y]) => y));
+            const maxY = Math.max(...xs.map(([, y]) => y));
+            return (
+              <g
+                key={`run-${run.row}`}
+                data-run={run.row}
+                data-run-count={run.seats.length}
+                onClick={() => onSeatClick(run.seats[0].id)}
+              >
+                {run.seats.map((s) => (
+                  <g key={s.id}>
+                    <polygon points={points(topFace(s))} fill="transparent" stroke="none" />
+                    <polygon points={points(rightFace(s))} fill="transparent" stroke="none" />
+                    <polygon points={points(frontFace(s))} fill="transparent" stroke="none" />
+                  </g>
+                ))}
+                {/* The count beside the run, in §11.27's 11px mono. Not a caption: what is there, not what to do. */}
+                <text
+                  data-run-label=""
+                  x={maxX + 14}
+                  y={(minY + maxY) / 2}
+                  fontSize="11"
+                  fontFamily="var(--font-geist-mono), monospace"
+                  fill={INK}
+                  dominantBaseline="middle"
+                >
+                  {run.seats.length} RECORDS →
+                </text>
+                <title>{`${run.seats.length} records`}</title>
+              </g>
+            );
+          })}
     </svg>
   );
+}
+
+/** The occupied runs — one per shelf that holds records (§11.28). */
+function runsOf(seated: readonly PlacedSeat[]): Array<{ row: number; seats: PlacedSeat[] }> {
+  const byZ = new Map<number, PlacedSeat[]>();
+  for (const seat of seated) {
+    const row = byZ.get(seat.z);
+    if (row === undefined) byZ.set(seat.z, [seat]);
+    else row.push(seat);
+  }
+  return [...byZ.entries()]
+    .sort((a, b) => b[0] - a[0])
+    .map(([, seats], index) => ({ row: index, seats }));
 }

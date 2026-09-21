@@ -7,6 +7,7 @@ import type { RecordSummary } from './summary';
 import { layoutRow } from './geometry';
 import { ARROW_LANE } from './landing';
 import { clearanceShift } from './pan';
+import { nearViewMinWidth } from './view-fork';
 import { GROWTH, OUT_MS, RETURN_MS, ROTATION_START, SWING_MS, gestureFaces, poseAt } from './gesture';
 
 /**
@@ -52,6 +53,34 @@ const render = (props: Partial<Parameters<typeof WallStage>[0]> = {}) =>
       {...props}
     />,
   );
+
+describe('§11.28: the count beside the drawing, and the run is what the reader clicks', () => {
+  it('puts COLLECTION and the count in a COLUMN beside the drawing, not a band above it', () => {
+    /*
+      The band ate 281px of the 847 available, which is why the region was
+      1240 × 566 and the fixture 239px wide. Moving the count into a column
+      returns that height: 337px at 17 records, 542 at 200. The fixture does
+      not change — the region does.
+    */
+    const html = render({ far: true });
+    const region = /<div data-region="far"[^>]*class="([^"]*)"/.exec(html)?.[1] ?? '';
+    expect(region, 'a row above the fork: the count beside the drawing').toContain('flex-row');
+    /* And the fork's width is the one constant, not a literal restated here (§11.26). */
+    expect(region, 'the fork’s own width').toContain(`min-width:${nearViewMinWidth()}px`);
+    /* Below it the column stacks: §11.24 makes the far view the whole shelf, and a 420px column would leave nothing to draw in. */
+    expect(region).toContain('flex-col');
+    expect(region, 'and it still takes the full height under the nav').toContain('h-[calc(100vh-var(--app-nav-height,0px))]');
+    /* The count comes first in the row, and the drawing takes the rest. */
+    expect(html.indexOf('data-region="count-far"')).toBeLessThan(html.indexOf('data-wall="overview"'));
+  });
+
+  it('gives the drawing the region’s full height, so the fit has the band’s 281px back', () => {
+    const html = render({ far: true });
+    const drawing = /<div([^>]*)>\s*<svg data-wall="overview"/.exec(html)?.[1] ?? '';
+    expect(drawing, 'the drawing fills the row').toMatch(/flex-1|min-h-0/);
+    expect(drawing, 'and is not pushed down by a band').not.toContain('mt-[34px]');
+  });
+});
 
 describe('the arrival is in position at parse time (§11.29)', () => {
   it('emits an inline script straight after the region that sets its scroll before the first paint', () => {

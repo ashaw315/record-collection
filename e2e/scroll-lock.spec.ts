@@ -76,7 +76,15 @@ test('the page never scrolls, and the drawing region is back where it was after 
   await expect(page.getByTestId('record-chrome')).toHaveCount(0);
   await page.waitForTimeout(1200);
   expect(await page.evaluate(() => window.scrollY), 'and the return did not either').toBe(0);
-  /* §11.22: the pan resolves back to the rest view, on the same clock as the return. */
+  /*
+    §11.22: the pan resolves back to the rest view — the reader's OWN position
+    when they pulled, not the arrival. A latch meant to stop the arrival's
+    write being mistaken for a reader's scroll stayed armed when that write
+    landed on an already-correct position, and swallowed the reader's next
+    genuine scroll: the tracked view stayed at the arrival, the pull started
+    from there, and put back returned there. Measured: 593 scrolled, 75
+    returned.
+  */
   expect(await region.evaluate((el) => el.scrollTop), 'the region is back at rest').toBe(before);
 });
 

@@ -9,6 +9,7 @@ import { OUT_MS, ROTATION_START, SWING_MS, gestureFaces, outTime, poseAt, settle
 import { wallLayout } from './wall-layout';
 import { clearanceShift } from './pan';
 import { arrivalSeat, nearView as arrivalView } from './route-view';
+import { nearViewMinWidth } from './view-fork';
 import { LABEL, LABEL_INK } from '../records/[id]/grid-type';
 import { DRAWN_PAPER } from './WallComposition';
 import { WallOverview } from './WallOverview';
@@ -231,10 +232,22 @@ export function WallStage({
     scale at all (§11.24). The near view is the one that renders at 1:1 and
     pans; a far view that scrolled would be the near view's job done badly.
   */
+  /*
+    §11.28: the count sits BESIDE the drawing, not above it. The band was
+    eating 281px of the 847 available — which is why the region measured
+    1240 × 566 and the fixture drew 239px wide — and moving it into a column
+    returns that height to the fit: 311px at 17 records and 531 at 200, the
+    figures Design gives less the region's own 34px padding. The fixture is
+    unchanged; the region is what grows.
+
+    BELOW §11.26's fork the column stacks above the drawing again, because
+    there is no width to put it beside: §11.24 makes the far view the whole
+    shelf at 390px, and a 420px column beside it leaves nothing to draw in.
+  */
   const farView = (
-    <div data-region="far" className="flex h-[calc(100vh-var(--app-nav-height,0px))] flex-col overflow-hidden p-[34px]">
-      {count(true)}
-      <div className="mt-[34px] min-h-0 flex-1">
+    <div data-region="far" className={`flex h-[calc(100vh-var(--app-nav-height,0px))] flex-col overflow-hidden p-[34px] [@media(min-width:${nearViewMinWidth()}px)]:flex-row`}>
+      <div className={`shrink-0 [@media(min-width:${nearViewMinWidth()}px)]:w-[420px]`}>{count(true)}</div>
+      <div className="min-h-0 min-w-0 flex-1">
         <WallOverview seats={seats} pulledId={null} linked onSeatClick={onZoomIn} />
       </div>
     </div>

@@ -31,6 +31,16 @@ async function login(page: Page) {
   front covers both. The click goes to a point the browser agrees belongs to
   this seat: the exposed sliver of its FRONT face, found by hit-testing.
 */
+/*
+  §11.28 put a transparent run layer over the far view's seats, and that layer
+  IS the click target: a seat's own polygon is no longer what the browser hits.
+  Clicking the run is the ruled gesture — it opens the near view at that shelf
+  — so these helpers go through it.
+*/
+async function clickFarRun(page: Page) {
+  await page.locator('[data-run]').first().click();
+}
+
 async function clickFarSeat(page: Page, id: string) {
   const point = await page.evaluate((seatId) => {
     const anchor = document.querySelector(`[data-far-seat="${seatId}"]`);
@@ -137,7 +147,7 @@ test('a bare / opens NEAR with the occupied shelf framed, and the far view is a 
   await expect(page.locator('[data-wall="labelled"]')).toHaveCount(0);
 
   /* ...and a far seat still zooms back in. */
-  await clickFarSeat(page, ids[5]);
+  await clickFarRun(page);
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible();
 });
 
@@ -149,69 +159,54 @@ test('Escape reaches the far view from a bare /, with nothing pulled (§11.12, �
   await expect(page.locator('[data-wall="overview"]')).toBeVisible();
 });
 
-test('the near view lands by the rule: min(target, the scroller’s limit), the shelf at the region’s top, applied exactly once (§11.12)', async ({ page }) => {
+test('clicking a run lands the near view on that run’s first seat, by the rule and exactly once (§11.12, §11.28)', async ({ page }) => {
   /*
-    The landing is a scroll, so the scroller bounds it: a seat far enough along
-    the row cannot reach the region's left edge, and the honest landing is as
-    far left as the wall allows. Asserted as the RULE rather than a position —
-    expected = min(target, scrollWidth − clientWidth), and 0 when the wall fits
-    the region — with the three cases the rule has.
+    §11.28 makes the OCCUPIED RUN the click target, so the addressed seat is
+    always the run's first — the run is a shelf rather than a record, and the
+    landing is what §11.12's rule gives for that seat: min(target, the
+    scroller's limit) on both axes, with the shelf framed by §11.28's window
+    rule so its top faces are not cut off.
   */
   const { artistId, ids } = await seed(page, 240);
-  const land = async (index: number) => {
-    /* Out to the far view, then in on the seat under test: §11.29 opens near, so the zoom-out is the way to a far seat. */
-    await page.goto(`/?artistId=${artistId}`);
-    await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
-    await page.getByTestId('wall-zoom-out').click();
-    await expect(page.locator('[data-wall="overview"]')).toBeVisible();
-    await page.evaluate(() => { (window as unknown as { __landings?: number }).__landings = 0; });
-    await clickFarSeat(page, ids[index]);
-    await expect(page.locator('[data-wall="labelled"]')).toBeVisible();
-    /*
-      Read after the wall has settled: the frame grows once the region is
-      measured, and a reading taken mid-settle measures the scroll against a
-      frame that is about to change. The landing itself is asserted by its
-      count, so a late reading cannot hide a landing that was undone.
-    */
-    await page.waitForTimeout(900);
-    return page.evaluate((id) => {
-      const el = document.querySelector('[data-region="wall"]') as HTMLElement | null;
-      const rect = (q: string) => { const r = document.querySelector(q)?.getBoundingClientRect(); return r ? { left: r.left, top: r.top, right: r.right, bottom: r.bottom } : null; };
-      return {
-        scrollLeft: el === null ? null : Math.round(el.scrollLeft),
-        limit: el === null ? null : el.scrollWidth - el.clientWidth,
-        landings: (window as unknown as { __landings?: number }).__landings,
-        region: rect('[data-region="wall"]'),
-        seat: rect(`[data-seat="${id}"] [data-spine]`),
-        shelf: rect(`[data-seat="${id}"] [data-face="top"]`),
-      };
-    }, ids[index]);
-  };
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
+  await page.getByTestId('wall-zoom-out').click();
+  await expect(page.locator('[data-wall="overview"]')).toBeVisible();
+  await page.evaluate(() => { (window as unknown as { __landings?: number }).__landings = 0; });
+  await clickFarRun(page);
+  await expect(page.locator('[data-wall="labelled"]')).toBeVisible();
+  /* Read after the wall settles: the frame grows once the region is measured, and the landing's count is what proves it was not undone. */
+  await page.waitForTimeout(900);
 
-  /* A seat EARLY in the row: the target is reachable, so the seat sits at the region's left, one pad in. */
-  const early = await land(4);
-  expect(early.landings, 'the landing is applied exactly once').toBe(1);
-  expect(early.scrollLeft, 'below the limit: the target itself').toBeLessThan(early.limit ?? 0);
-  if (early.region && early.seat && early.shelf) {
-    expect(early.seat.left - early.region.left, 'the seat is at the region’s left').toBeGreaterThanOrEqual(-1);
-    expect(early.seat.left - early.region.left, 'not centred').toBeLessThan(LANDING_PAD + 20);
-    /*
-      §11.28's window rule: the vertical target takes in the top faces the
-      arrival SHOWS, so the addressed seat's own top sits at or below the
-      region's top rather than at it — a seat further along the row is the
-      one flush with the edge. What must hold is that it is inside and uncut.
-    */
-    expect(early.shelf.top - early.region.top, 'the addressed shelf’s top face is not cut off').toBeGreaterThanOrEqual(-1);
-    expect(early.region.right - early.seat.left, 'the useful half of the region is after the seat').toBeGreaterThan((early.region.right - early.region.left) / 2);
-  }
+  const landed = await page.evaluate((id) => {
+    const el = document.querySelector('[data-region="wall"]') as HTMLElement | null;
+    const rect = (q: string) => { const r = document.querySelector(q)?.getBoundingClientRect(); return r ? { left: r.left, top: r.top, right: r.right, bottom: r.bottom } : null; };
+    return {
+      scrollLeft: el === null ? null : Math.round(el.scrollLeft),
+      scrollTop: el === null ? null : Math.round(el.scrollTop),
+      limitX: el === null ? null : el.scrollWidth - el.clientWidth,
+      limitY: el === null ? null : el.scrollHeight - el.clientHeight,
+      landings: (window as unknown as { __landings?: number }).__landings,
+      region: rect('[data-region="wall"]'),
+      seat: rect(`[data-seat="${id}"] [data-spine]`),
+      shelf: rect(`[data-seat="${id}"] [data-face="top"]`),
+    };
+  }, ids[0]);
 
-  /* A seat LATE in the row: the target is past the scroller's limit, so the landing stops there. */
-  const late = await land(230);
-  expect(late.landings).toBe(1);
-  expect(late.scrollLeft, 'clamped to the scroller’s limit — as far left as the wall allows').toBe(late.limit);
-  if (late.region && late.shelf) {
-    expect(late.shelf.top - late.region.top, 'and the addressed shelf is still inside the region, uncut').toBeGreaterThanOrEqual(-1);
-    expect(late.shelf.top, 'and above its bottom edge').toBeLessThan(late.region.bottom);
+  expect(landed.landings, 'the landing is applied exactly once').toBe(1);
+  /* Within the scroller's bounds on both axes — the rule, not a fixed position. */
+  expect(landed.scrollLeft).toBeGreaterThanOrEqual(0);
+  expect(landed.scrollLeft).toBeLessThanOrEqual(landed.limitX ?? 0);
+  expect(landed.scrollTop).toBeGreaterThanOrEqual(0);
+  expect(landed.scrollTop).toBeLessThanOrEqual(landed.limitY ?? 0);
+
+  /* The run's FIRST seat is the one addressed, and it is inside the region with its top face uncut. */
+  expect(landed.region && landed.seat && landed.shelf).toBeTruthy();
+  if (landed.region && landed.seat && landed.shelf) {
+    expect(landed.seat.left, 'the run’s first seat is in the region').toBeGreaterThanOrEqual(landed.region.left - 1);
+    expect(landed.seat.right).toBeLessThanOrEqual(landed.region.right + 1);
+    expect(landed.shelf.top, 'and its top face is not cut off (§11.28)').toBeGreaterThanOrEqual(landed.region.top - 1);
+    expect(landed.region.right - landed.seat.left, 'the useful half of the region is after the seat').toBeGreaterThan((landed.region.right - landed.region.left) / 2);
   }
 });
 
@@ -221,7 +216,8 @@ test('a wall that fits the region has no horizontal landing to make, and still p
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
   await page.getByTestId('wall-zoom-out').click();
   await expect(page.locator('[data-wall="overview"]')).toBeVisible();
-  await clickFarSeat(page, ids[10]);
+  await clickFarRun(page);
+  void ids[10];
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible();
   await page.waitForTimeout(250);
   const got = await page.evaluate((id) => {
