@@ -54,6 +54,38 @@ const render = (props: Partial<Parameters<typeof WallStage>[0]> = {}) =>
     />,
   );
 
+describe('§11.35: the count carries the departure mark', () => {
+  it('reads THE WHOLE COLLECTION → beneath the figure, in the near view', () => {
+    /*
+      A pointer cursor and an accessible name are not marks: 72px of ink that
+      does nothing else on this page is a display figure until something says
+      otherwise, which is why the far view was reported as missing. The arrow
+      is already this page's departure mark — §11.19's OPEN THE FULL RECORD →
+      and §11.28's run hover — so the mark is the same in both views and only
+      its timing differs.
+    */
+    const html = render({ far: false, onZoomOut: () => {} });
+    const mark = /<span[^>]*data-zoom-mark[^>]*>([^<]*)<\/span>/.exec(html);
+    expect(mark?.[1]).toBe('THE WHOLE COLLECTION →');
+    expect(html.indexOf('data-testid="wall-count"'), 'beneath the figure').toBeLessThan(html.indexOf('data-zoom-mark'));
+  });
+
+  it('is NOT the rail’s set bar: a state mark on a control reads as an answer rather than an offer', () => {
+    const html = render({ far: false, onZoomOut: () => {} });
+    const button = /<button[^>]*data-testid="wall-zoom-out"[\s\S]*?<\/button>/.exec(html)?.[0] ?? '';
+    expect(button).not.toContain('data-current-bar');
+    expect(button).not.toContain('data-set-bar');
+  });
+
+  it('is absent from the FAR view’s count: there is nowhere to go from the whole collection', () => {
+    expect(render({ far: true, onZoomOut: () => {} })).not.toContain('data-zoom-mark');
+  });
+
+  it('is absent where there is no zoom to do — §11.24’s narrow shelf', () => {
+    expect(render({ far: false })).not.toContain('data-zoom-mark');
+  });
+});
+
 describe('§11.29: the view and its shelf live in the URL', () => {
   it('opens on the wall the URL names, and on the shelf it addresses', () => {
     /*

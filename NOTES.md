@@ -30874,3 +30874,13 @@ Adam: "sort doesn't work at all from the rail". The control was fine — it subm
 The section order is the DEFAULT rather than the only order: §11.1 leaves position carrying the collection's order, and which order that is is the reader's to choose. The expression comes from `records.ts`'s `sortExpression` rather than being restated, so the wall and the table cannot sort differently, and the allowlist there keeps a request's string out of the SQL. A chosen sort leads the ORDER BY and the section order remains the tie-break beneath it.
 
 **The filter is unaffected**, which is asserted: a sorted, filtered wall returns every record in the chosen order with `matches` marking the survivors — the filter still empties seats rather than reordering them.
+
+## §11.35: the count's departure mark
+
+The zoom-out rendered correctly on the real route — 70 × 62, pointer cursor, named "Show the whole collection" — and Adam could not find it, because it is the figure 17 at 72px with no border, no background and nothing distinguishing it from the display count it replaced. **A pointer cursor and an accessible name are not marks.**
+
+THE WHOLE COLLECTION → in 11px mono beneath the figure, near view only. Not the rail's set bar: that mark means "this is the current state", so on a control it reads as an answer rather than an offer. The far view's count carries nothing — there is nowhere to go from the whole collection. The arrow is already this page's departure mark in both views (§11.19's panel link, §11.28's run hover), so only its timing differs: at rest on the count, on hover on the run.
+
+**The rail's pitch, measured against Design's 44 specimen:** 50 between Shelf and Table, 42 between Table and Grid. Uneven because the active view carries a 2px set bar the others do not, so the first gap is larger; the source sets an 18px gap and type metrics do the rest. Neither matches 44 and the unevenness differs from any single specified pitch — reported rather than changed, since fixing it means either a fixed row height absorbing the bar or taking the bar out of flow, which is a drawing decision.
+
+**Also reported:** the handoff carried no §11.35 row while the target did, and `handoff-index-complete` caught it. The check that has historically missed is the build order, which still has no rows for §11.28 onward.

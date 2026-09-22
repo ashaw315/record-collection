@@ -206,6 +206,29 @@ export function WallStage({
           style={{ marginTop: 6, color: 'inherit' }}
         >
           <span data-testid={far ? 'wall-count-far' : 'wall-count'}>{seated.length}</span>
+          {/*
+            §11.35: the count's departure mark. A pointer cursor and an
+            accessible name are not marks — 72px of ink that does nothing else
+            on this page is a display figure until something says otherwise,
+            which is why the far view was reported as missing. The arrow is
+            already this page's departure mark (§11.19's OPEN THE FULL RECORD
+            →, §11.28's run hover), so the mark is the same in both views and
+            only its timing differs: at rest on the near view's count, on
+            hover on the far view's run.
+
+            NOT the rail's set bar: that mark means "this is the current
+            state", and on a control it would read as an answer rather than
+            an offer. And not the caption §11.28 refused — a label on a
+            control is the control's name, not a gloss on a picture.
+
+            The far view's own count carries nothing: there is nowhere to go
+            from the whole collection.
+          */}
+          {far ? null : (
+            <span data-zoom-mark="" className={`mt-[6px] block ${LABEL}`}>
+              THE WHOLE COLLECTION →
+            </span>
+          )}
         </button>
       ) : (
         <div data-testid={far ? 'wall-count-far' : 'wall-count'} className="text-display leading-[0.86] font-extrabold" style={{ marginTop: 6 }}>
