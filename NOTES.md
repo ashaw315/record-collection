@@ -30951,3 +30951,11 @@ So it is not a regression from §12 and not a broken assertion. It fails only un
 **Worth a real fix rather than a note eventually**, because a test that fails only when the machine is busy trains everyone to re-run rather than read. The suspect is the shared dev server under 500+ specs, not the database guard, which now refuses a second runner outright. Recorded here rather than chased inside §12.
 
 **And the exit code lied again**: `3 failed` with `exited with code 0`. Fifth instance. The counts were read, not the status.
+
+## Adam's dev server renders MY working tree
+
+A broken grid on `/records/[id]` was reported from a screenshot and bisected across six commits before the cause turned out to be an uncommitted experiment sitting in the working directory. The bisect was clean at every commit — grid identical, 1728×847 — because nothing was ever committed.
+
+**So an uncommitted experiment is not private.** When work stops mid-experiment with a change in the tree, say so in one line: "tree is dirty with X". That sentence would have replaced a six-commit bisect. It matters most in exactly the case where it is easiest to forget — stopping to measure something else, as here, where the §17 aspect change sat in the tree while rotation headings were being swept for §19.
+
+**And the trigger is not always the defect.** The experiment exposed something real and older: a grid ROW with a fixed height does not clamp its children, so `height: 547` on the identity band was a claim rather than a constraint. The still's svg is sized `h-full` against a grid item with no definite height, so it falls back to the viewBox's intrinsic ratio — **the construction frame's aspect drives its cell's height**. That is now a standing constraint on §17/§19: whatever aspect Design rules has to fit the 547 band, and `e2e/identity-band-holds.spec.ts` holds it there.
