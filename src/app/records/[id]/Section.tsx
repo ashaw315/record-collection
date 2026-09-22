@@ -116,7 +116,12 @@ export function Section({
       */
       style={{ borderTop: `1px solid ${SECTION_RULE}` }}
     >
-      <div className="grid" style={{ gridTemplateColumns: GRID_TEMPLATE, gap: 0 }}>
+      {/*
+        `data-band` so §18's single-column fork reaches this grid too: the
+        region is on the same twelve columns as the bands above it, so it
+        collapses with them rather than needing a second rule that could drift.
+      */}
+      <div data-band="section" className="grid" style={{ gridTemplateColumns: GRID_TEMPLATE, gap: 0 }}>
         {/*
           **The label is a span, not a structure**: the first two columns. Its x
           is a column edge rather than an invented one, so it lines up with the

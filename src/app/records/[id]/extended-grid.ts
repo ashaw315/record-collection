@@ -27,7 +27,15 @@
  * the budget only requires dropping the height.** A rail aligned to nothing
  * above it made the page a grid with a document stapled under it.
  */
-export const GRID_TEMPLATE = 'repeat(12, 1fr)';
+/**
+ * **§18: fixed columns, not fractions.** "The grid is fixed, so the fork is
+ * 1440 and needs no new figure: the bands are `repeat(12, 120px)`, not
+ * fractions." A fractional grid asked a fixed composition to be a fluid one,
+ * which is what the 93px identity cell was reporting. The single-column fork
+ * below 1440 is a stylesheet in `RecordPage8a`, so it applies to these
+ * sections and to the bands alike.
+ */
+export const GRID_TEMPLATE = 'repeat(12, 120px)';
 
 /** 34px inside every cell, holding content while the section rule bleeds past. */
 export const CELL_PADDING = 34;

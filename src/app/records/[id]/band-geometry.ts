@@ -44,6 +44,36 @@ export const NO_SCROLL_HEIGHT = 900;
 export const MAX_GRID_WIDTH = 1728;
 
 /**
+ * **§18's fork, and it needs no new figure: twelve columns of 120.**
+ *
+ * "The grid is fixed, so the fork is 1440 and needs no new figure: the bands
+ * are `repeat(12, 120px)`, not fractions." The page has never reflowed — §7
+ * specifies nothing below 1440 — so a fluid `1fr` grid was asking a fixed
+ * composition to be a fluid one, and what the 93px identity cell reported was
+ * that question rather than a layout to be repaired.
+ *
+ * Above the fork the columns stay 120 and the composition is centred; below
+ * it the twelve become one.
+ */
+export const GRID_COLUMN = 120;
+export const GRID_COLUMNS = 12;
+export const GRID_FORK = GRID_COLUMN * GRID_COLUMNS;
+
+/**
+ * **§18's floor for the content track, which is §4.2's measure.**
+ *
+ * "The track's floor and the type's measure are the same number because they
+ * are the same decision." A track narrower than its own measure is not a
+ * squeezed composition but a different one — the earlier collapse-to-min-content
+ * attempt wrapped titles at 196 and `identity-cell.spec.ts` caught it.
+ *
+ * Full measure holds down to `CONTENT_MEASURE + 2 × CELL_PADDING` = 480; below
+ * that the measure itself yields to the column's inner width, which is §4.2's
+ * give order's fourth term and reaches 322 at 390.
+ */
+export const CONTENT_MEASURE = 412;
+
+/**
  * The bands. **53 · 547 · 300, and no tail.**
  *
  * `nav` is 53 because the built `AppHeader` measures 53. 8a's drawing showed

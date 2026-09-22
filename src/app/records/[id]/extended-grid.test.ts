@@ -1,3 +1,4 @@
+import { GRID_COLUMN, GRID_COLUMNS } from './band-geometry';
 import { describe, expect, it } from 'vitest';
 import {
   CELL_PADDING,
@@ -25,8 +26,18 @@ describe('twelve columns (§9.1)', () => {
       bands for height, so dropping the budget drops the height and leaves the
       columns alone. A region on its own grid is a document stapled under a
       page.
+
+      **§18 made the columns FIXED rather than fractional**, and the claim this
+      test makes is unchanged: the region is on the same grid as §2.1. What
+      changed is which grid that is. "The grid is fixed, so the fork is 1440
+      and needs no new figure: the bands are `repeat(12, 120px)`, not
+      fractions." A fractional grid was asking a fixed composition to be a
+      fluid one, which is what the 93px identity cell reported.
+
+      Asserted against the derivation rather than the string, so the two can
+      never drift: twelve columns of `GRID_COLUMN`.
     */
-    expect(GRID_TEMPLATE).toBe('repeat(12, 1fr)');
+    expect(GRID_TEMPLATE).toBe(`repeat(${GRID_COLUMNS}, ${GRID_COLUMN}px)`);
   });
 
   it('gives the label two columns, so its x is a column edge', () => {

@@ -3,7 +3,7 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { seedImage } from './seed';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
-import { MAX_GRID_WIDTH } from '../src/app/records/[id]/band-geometry';
+import { GRID_FORK } from '../src/app/records/[id]/band-geometry';
 import { ARCHETYPE_ASPECT, SIZE_RATIO, archetypeFor } from '../src/app/records/[id]/ornament';
 import {
   CELL_PADDING,
@@ -720,7 +720,13 @@ test('draws a solid only where the gate passes, and only in type-only cells', as
 test('the region caps with the frame, so the page is one grid', async ({ page }) => {
   /**
    * **§9.1's boundaries bleed to the COMPOSITION's edge — the viewport up to
-   * the 1728 cap, the capped container beyond it.**
+   * the cap, the capped container beyond it.**
+   *
+   * The cap is §18's `GRID_FORK` now rather than the old 1728: the bands are
+   * `repeat(12, 120px)` and fixed, so the composition is 1440 at every width
+   * above the fork. The CLAIM here is unchanged and is the reason the swap is
+   * safe — the page is one grid, rendered at one width — and only the figure
+   * it caps at moved.
    *
    * They were bleeding to the viewport at every width, so at 3440 the frame
    * sat at 1728@856 while every section below started at 0: one grid rendered
@@ -732,7 +738,7 @@ test('the region caps with the frame, so the page is one grid', async ({ page })
   const suffix = makeSuffix();
   const id = await richRecord(page, suffix);
 
-  for (const width of [1440, MAX_GRID_WIDTH, 2560, 3440]) {
+  for (const width of [1440, GRID_FORK, 2560, 3440]) {
     await page.setViewportSize({ width, height: NO_SCROLL_HEIGHT });
     await page.goto(`/records/${id}`);
     await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
@@ -751,7 +757,7 @@ test('the region caps with the frame, so the page is one grid', async ({ page })
       };
     });
 
-    const expected = Math.min(width, MAX_GRID_WIDTH);
+    const expected = Math.min(width, GRID_FORK);
 
     expect(measured.frame.width, `frame at ${width}`).toBe(expected);
 
@@ -788,7 +794,7 @@ test('a solid is 0.62 of its section, and not a fixed size', async ({ page }) =>
   const suffix = makeSuffix();
   const id = await richRecord(page, suffix);
 
-  for (const width of [1440, MAX_GRID_WIDTH, 2560, 3440]) {
+  for (const width of [1440, GRID_FORK, 2560, 3440]) {
     await page.setViewportSize({ width, height: NO_SCROLL_HEIGHT });
     await page.goto(`/records/${id}`);
     await page.locator('[data-ornament="solid"]').first().waitFor({ timeout: 20_000 });

@@ -12,7 +12,7 @@ import { RecordDetail } from './RecordDetail';
 import { RecordPage8a } from './RecordPage8a';
 import { pressingLine } from './page-record';
 import { recordLadder } from '@/lib/colour/record-ladder';
-import { MAX_GRID_WIDTH } from './band-geometry';
+import { GRID_FORK } from './band-geometry';
 import { LABEL } from './grid-type';
 import { Section } from './Section';
 import { EdgeFields } from './OrnamentMarks';
@@ -129,7 +129,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
           */}
           <div
             className="relative mx-auto min-w-0"
-            style={{ maxWidth: MAX_GRID_WIDTH }}
+            style={{ maxWidth: GRID_FORK }}
           >
             {/*
               **8a, on the route rather than on a probe.**
@@ -200,7 +200,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
             <div
               data-testid="record-controls"
               className="mx-auto flex items-center justify-between gap-3 px-[14px] py-4"
-              style={{ maxWidth: MAX_GRID_WIDTH }}
+              style={{ maxWidth: GRID_FORK }}
             >
               {/*
                 **§8.1 deleted the ← Collection link, and it is gone (§12).**

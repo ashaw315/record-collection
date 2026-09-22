@@ -1,4 +1,5 @@
-import { BANDS, IDENTITY_SPANS, LOWER_SPANS, MAX_GRID_WIDTH } from './band-geometry';
+import { BANDS, CONTENT_MEASURE, GRID_COLUMN, GRID_COLUMNS, GRID_FORK, IDENTITY_SPANS, LOWER_SPANS } from './band-geometry';
+import { CELL_PADDING } from './extended-grid';
 import { ConstructionStill } from './ConstructionStill';
 import { IdentityCell } from './IdentityCell';
 import { gridModules, type Diagonal } from './grid-modules';
@@ -194,8 +195,39 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
     <div
       data-testid="record-page-8a"
       className="mx-auto"
-      style={{ color: INK, maxWidth: MAX_GRID_WIDTH }}
+      style={{ color: INK, maxWidth: GRID_FORK }}
     >
+      {/*
+        **§18: the type never moves, the grid does.**
+
+        The bands are `repeat(12, 120px)` — FIXED, not fractions — so the page
+        does not stretch and does not squeeze. §7 specifies nothing below 1440,
+        so a fluid grid was asking a fixed composition to be a fluid one, and
+        the 93px identity cell was reporting that question rather than a layout
+        to repair.
+
+        Below the fork the twelve columns become one and every cell spans it.
+        A stylesheet rather than measurement: the server has no viewport, so a
+        JavaScript fork would render the wrong composition first and correct it
+        after hydration — and this page must be right on the first paint.
+
+        The content track floors at §4.2's own measure (`CONTENT_MEASURE`), and
+        below 480 the measure yields to the column's inner width, which is
+        §4.2's give order's fourth term. `min()` states that as one rule rather
+        than a second breakpoint: 412 where there is room, the column's inner
+        width where there is not.
+      */}
+      <style>{`
+        [data-band] { grid-template-columns: repeat(${GRID_COLUMNS}, ${GRID_COLUMN}px) !important; }
+        [data-track="content"] { width: ${CONTENT_MEASURE}px; max-width: 100%; }
+        @media (max-width: ${GRID_FORK - 1}px) {
+          [data-band] { grid-template-columns: 1fr !important; height: auto !important; }
+          [data-band] > [data-cell] { grid-column: 1 / -1 !important; }
+          [data-band="section"] > * { grid-column: 1 / -1 !important; }
+          [data-cell="still"], [data-cell="sleeve"] { display: none; }
+          [data-track="content"] { width: min(${CONTENT_MEASURE}px, 100vw - ${CELL_PADDING * 2}px); }
+        }
+      `}</style>
       {/* IDENTITY BAND — 4 / 3 / 5. */}
       <div
         data-band="identity"

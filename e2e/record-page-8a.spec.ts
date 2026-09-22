@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
-import { BANDS, NO_SCROLL_HEIGHT, MAX_GRID_WIDTH } from '../src/app/records/[id]/band-geometry';
+import { BANDS, NO_SCROLL_HEIGHT, GRID_FORK } from '../src/app/records/[id]/band-geometry';
 import { contrastRatio } from '../src/lib/colour/record-colour';
 
 registerCleanup();
@@ -290,7 +290,7 @@ test('every real record fills 900px exactly, at 1440 and wider', async ({ page }
     ids.push([which.name, await createRecord(page, which, suffix)]);
   }
 
-  for (const width of [1440, MAX_GRID_WIDTH]) {
+  for (const width of [1440, GRID_FORK]) {
     await page.setViewportSize({ width, height: NO_SCROLL_HEIGHT });
 
     for (const [name, id] of ids) {
@@ -358,7 +358,7 @@ test('the page caps, and the header caps with it', async ({ page }) => {
       return { pw: Math.round(p.width), pl: Math.round(p.left), hw: Math.round(h.width), hl: Math.round(h.left) };
     });
 
-    const expected = Math.min(width, MAX_GRID_WIDTH);
+    const expected = Math.min(width, GRID_FORK);
     expect(measured.pw, `page width at ${width}`).toBe(expected);
     expect(measured.hw, `header width at ${width}`).toBe(expected);
     /* Same measure AND same edge — equal widths off by an offset still misalign. */
