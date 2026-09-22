@@ -628,6 +628,21 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
             shown, with the control that shows it — and §6 requires absence to
             be visible rather than silent, so a count of 0 is drawn too.
           */}
+          {/*
+            **§3's second inset hairline, 220px** — the one over `Images`,
+            declared alongside the identity block's 372 and never drawn.
+            §16 settles that it stays inset on §3's MODULE axis: the note and
+            the `Images N Manage →` line are both inside the About cell, so
+            the rule separates two things within one module rather than two
+            modules. §3 names the failure mode as extending it to the cell
+            edge, "which silently promotes a paragraph break into a division",
+            so the 220 is the ruling and not a starting point.
+          */}
+          <div
+            data-line="about-images"
+            className="mt-[14px] w-[220px] max-w-full"
+            style={{ borderTop: `1px solid ${RULE}` }}
+          />
           <div className={`${LABEL} relative mt-[14px]`} style={{ color: INK }}>
             Images{' '}
             <span data-field="image-count" className="font-mono">
