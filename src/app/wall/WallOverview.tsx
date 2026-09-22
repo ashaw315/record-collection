@@ -46,6 +46,8 @@ const RUN_HOVER_RULE = 'oklch(0.588 0.004 80)';
  * on paper, so it clears on both.
  */
 const RUN_FOCUS_EDGE = 'oklch(0.18 0.008 60)';
+/** §11.34: the footprint a displaced record leaves, at §11.27's hairline. */
+const FOOTPRINT = 'oklch(0.72 0.004 80)';
 const RULE = 'oklch(0.44 0.008 70)';
 
 /**
@@ -87,8 +89,9 @@ export function WallOverview({
 }) {
   const { placed, pieces, breaks, frame } = wallLayout(seats, [], 0);
   const emptied = new Set(seats.filter((seat) => seat.empty).map((seat) => seat.id));
-  /* §11.12: an emptied seat is laid out and draws nothing — the filter is a shape on the fixture. */
+  /* §11.12: an emptied seat is laid out and holds its neighbours; §11.34 draws its footprint. */
   const seated = placed.filter((seat) => seat.id !== pulledId && !emptied.has(seat.id));
+  const displaced = placed.filter((seat) => emptied.has(seat.id));
 
   return (
     <svg
@@ -135,6 +138,22 @@ export function WallOverview({
 [data-run]:focus-visible { outline: none; }
 `}</style>
       )}
+      {/*
+        §11.34: the seats a filter emptied, drawn as their own rectangles on
+        the shelf's top face — projected geometry at §11.27's hairline, not a
+        page rule. A never-filled seat draws nothing: a filtered seat is a
+        fact about the filter, a never-filled one a fact about the backlog.
+      */}
+      {displaced.map((seat) => (
+        <polygon
+          key={`fp-${seat.id}`}
+          data-footprint=""
+          points={points(topFace({ ...seat, height: 0 }))}
+          fill="none"
+          stroke={FOOTPRINT}
+          strokeWidth="1"
+        />
+      ))}
       {paintOrder([
         ...pieces.map((piece) => ({ id: piece.id, ...piece.bounds })),
         ...seated.map((seat) => seatBounds(seat)),

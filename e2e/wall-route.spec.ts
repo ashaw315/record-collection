@@ -315,3 +315,55 @@ test('Escape returns to the collection when nothing is pulled, and dismisses the
   await page.keyboard.press('Escape');
   await expect(page.locator('[data-wall="overview"]')).toBeVisible();
 });
+
+test('the wall’s view and its shelf survive a reload, Back, Forward and a cold link (§11.29)', async ({ page, browser }) => {
+  /*
+    A zoom is a place rather than a mode, so it is addressable — and pushed,
+    so Back returns to where the reader was. The wall owns the view's
+    immediate state and the URL owns its address; a reload reads the address
+    back and the wall opens on it, through the landing that already exists.
+  */
+  const { artistId } = await seed(page, 24);
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
+  await expect(page, 'a bare / carries no wall key').not.toHaveURL(/wall=/);
+
+  /* Out: the URL says far. */
+  await page.getByTestId('wall-zoom-out').click();
+  await expect(page.locator('[data-wall="overview"]')).toBeVisible();
+  await expect(page).toHaveURL(/wall=far/);
+
+  /* A RELOAD on that URL opens far, not the default. */
+  await page.reload();
+  await expect(page.locator('[data-wall="overview"]')).toBeVisible({ timeout: 30_000 });
+
+  /* In: the URL names the shelf, and the near view is showing. */
+  await clickFarRun(page);
+  await expect(page.locator('[data-wall="labelled"]')).toBeVisible();
+  await expect(page).toHaveURL(/shelf=\d+/);
+  await expect(page).not.toHaveURL(/wall=far/);
+  const nearUrl = page.url();
+
+  /* BACK returns to the far view — the zoom is in history. */
+  await page.goBack();
+  await expect(page.locator('[data-wall="overview"]')).toBeVisible({ timeout: 15_000 });
+  /* FORWARD returns to the near view. */
+  await page.goForward();
+  await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 15_000 });
+
+  /* And the near URL opened COLD, in a context that has never seen the page, lands on that shelf. */
+  const cold = await browser.newContext({ storageState: await page.context().storageState() });
+  try {
+    const fresh = await cold.newPage();
+    await fresh.goto(nearUrl);
+    await expect(fresh.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
+    await fresh.waitForTimeout(900);
+    const landed = await fresh.evaluate(() => {
+      const el = document.querySelector('[data-region="wall"]') as HTMLElement | null;
+      return el === null ? null : { left: Math.round(el.scrollLeft), top: Math.round(el.scrollTop) };
+    });
+    expect(landed, 'the cold link landed somewhere deliberate').not.toBeNull();
+  } finally {
+    await cold.close();
+  }
+});

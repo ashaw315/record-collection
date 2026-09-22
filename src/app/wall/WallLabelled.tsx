@@ -38,6 +38,8 @@ import { SLEEVE_LEADING, sleeveTitle } from './sleeve-type';
 const INK = '#161412';
 const RULE = 'oklch(0.44 0.008 70)';
 const PAPER = PAPER_CSS;
+/** §11.34: the footprint a displaced record leaves, at §11.27's hairline. */
+const FOOTPRINT = 'oklch(0.72 0.004 80)';
 const LABEL_FONT_PX = Number((MICRO_PX / COS30).toFixed(2));
 const BASELINE_INSET = 8;
 
@@ -314,8 +316,33 @@ export function WallLabelled({
         const seat = placed.find((p) => p.id === object.id);
         const record = byId.get(object.id);
         if (seat === undefined || record === undefined) return null;
-        /* §11.12: an emptied seat is laid out — it holds its neighbours in place — and draws nothing. */
-        if (record.empty) return null;
+        /*
+          §11.34: an emptied seat draws its FOOTPRINT — the seat's own
+          rectangle on the shelf's top face. §11.12's position invariance was
+          necessary and not sufficient: the seats held to the pixel and the
+          drawing had nothing in it to read, so a filtered row looked short
+          rather than gapped. A shape made of absences is only a shape if the
+          absences are drawn.
+
+          Projected geometry rather than a page rule, so §11.31's "no rules
+          in the drawing region" holds: it is drawn by the same projection as
+          the shelf under it and moves with the pan. 1px because it is not
+          one of §3's three named 2px non-type marks, and a hairline rather
+          than a tint, so the shelf at rest stays line, ink and paper
+          (§11.32).
+        */
+        if (record.empty) {
+          return (
+            <polygon
+              key={seat.id}
+              data-footprint=""
+              points={points(topFace({ ...seat, height: 0 }))}
+              fill="none"
+              stroke={FOOTPRINT}
+              strokeWidth="1"
+            />
+          );
+        }
         const state = movingById.get(object.id);
         if (state !== undefined) return renderMoving(seat, record, state);
         const face = frontFace(seat);

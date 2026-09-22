@@ -30850,3 +30850,19 @@ No oxblood anywhere in the rail — Add record stays ink on §11.13's LABEL. §1
 §11.30 needed the hidden view's tab stops gone while both views render unmeasured, and `inert` did it — served by the SERVER, so with JavaScript off nothing ever measures and both views stay inert permanently. The spine link then renders and cannot be clicked, which is exactly what §11.8's no-JavaScript test protects, and it failed within the hour.
 
 The fix was to delete it: the media query already hides the unwanted view with `display: none`, which takes its contents out of the tab order and the accessibility tree by itself. **The general form, now twice:** a state that exists only after a script runs cannot answer a question the server can answer with CSS — and reaching for one is what that test exists to catch.
+
+## The outstanding list goes stale, same as the handoff index
+
+§11.12's filter was built mid-session in `110789e`, stayed on the outstanding list afterwards, and was nearly rebuilt a day later — caught only by grepping the source before starting. **Work completed mid-session and not reconciled against the list gets rebuilt or re-reported**, which is the same class as the handoff index passing while the build order sat two sections behind: a record of what remains is only true at the moment it is written, and nothing makes it fail when it drifts. The cheap guard is to check the source, not the list, before starting anything the list claims is outstanding.
+
+## §11.34: an emptied seat draws its footprint, and the test that missed it
+
+Adam reported the genre filter "shrinking the row". The trace found the app correct at every layer: `shelfRecords` returned 17 rows with 6 matched, `wallSeats` marked 11 empty, and measured against the left upright the seats held to the pixel — index 0 at 9px and index 15 at 82px, filtered and unfiltered alike. **The seats never repacked.**
+
+Two of my own readings were wrong on the way, and both are worth keeping. The `artistId`-plus-`genreId` hypothesis was disproven by querying directly: both combinations return the same rows, only the matched count differs. And the "six bunched at the left" that looked like repacking was the **wall's own genre ordering** — the wall sorts by genre section, so records carrying a test genre sort to the front together, and a filter on that genre leaves survivors that were already contiguous.
+
+**The finding is sharper than the fix.** Position invariance was necessary and not sufficient: the seats held and the drawing had nothing in it to read, so the result looked like a short shelf. An undrawn seat is not an empty seat, it is no seat. Same class as the extent test that could not see a front/back flip — what was asserted was true and was not the thing that mattered.
+
+§11.34: an emptied seat draws its own rectangle on the shelf's top face, 1px at 0.72, in both views. Projected geometry rather than a page rule, so §11.31 holds; a hairline rather than a tint, so §11.32 does. **Only where a record was displaced** — a never-filled seat is a fact about the backlog (§8.1), and drawing those would put 63 vacancies on a 17-record fixture.
+
+**The E2E's fixture must have non-contiguous matches**, stated in the test: with matches adjacent, a build that repacks and a build that holds look identical. It now asserts seat count unchanged, matched count correct, footprint count equal to the number emptied, and every surviving position identical against the unfiltered layout.

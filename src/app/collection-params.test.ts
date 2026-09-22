@@ -289,3 +289,41 @@ describe('the shelf view (§10b)', () => {
     ).toContain('view=table');
   });
 });
+
+describe('§11.29: the shelf’s view and its shelf, in the URL', () => {
+  /*
+    A bare / opens near (§11.29's default), and the far view is a deliberate
+    zoom-out — so the URL carries the view only when it is NOT the default,
+    the way every other key here works. `shelf` addresses which run the near
+    view lands on, so a link opens where it says rather than on the first
+    occupied shelf.
+  */
+  it('reads the wall’s view, defaulting to near when absent or unrecognised', () => {
+    expect(parseCollectionParams(params('')).wall).toBe('near');
+    expect(parseCollectionParams(params('wall=far')).wall).toBe('far');
+    expect(parseCollectionParams(params('wall=sideways')).wall).toBe('near');
+  });
+
+  it('reads the addressed shelf as a row index, ignoring anything that is not one', () => {
+    expect(parseCollectionParams(params('shelf=2')).shelf).toBe(2);
+    expect(parseCollectionParams(params('')).shelf).toBeUndefined();
+    expect(parseCollectionParams(params('shelf=-1')).shelf).toBeUndefined();
+    expect(parseCollectionParams(params('shelf=1.5')).shelf).toBeUndefined();
+    expect(parseCollectionParams(params('shelf=four')).shelf).toBeUndefined();
+  });
+
+  it('writes neither key on the default, and both when they are set', () => {
+    const bare = parseCollectionParams(params(''));
+    expect(toQueryString(bare)).not.toContain('wall=');
+    expect(toQueryString(bare)).not.toContain('shelf=');
+    expect(toQueryString({ ...bare, wall: 'far' })).toContain('wall=far');
+    expect(toQueryString({ ...bare, shelf: 2 })).toContain('shelf=2');
+  });
+
+  it('round-trips: what it writes, it reads back', () => {
+    const set = parseCollectionParams(params('wall=far&shelf=3'));
+    const round = parseCollectionParams(new URLSearchParams(toQueryString(set)));
+    expect(round.wall).toBe('far');
+    expect(round.shelf).toBe(3);
+  });
+});

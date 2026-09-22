@@ -42,6 +42,19 @@ export type CollectionParams = {
   filters: RecordFilters;
   sort?: { field: RecordSortField; direction: 'asc' | 'desc' };
   view: ViewMode;
+  /**
+   * §11.29: which wall the shelf view opens on. `near` is the default — a
+   * bare `/` opens the labelled wall — and `far` is a deliberate zoom-out,
+   * so the key appears only when it is not the default, as every other key
+   * here does. Distinct from `view`, which chooses shelf, table or grid.
+   */
+  wall: WallView;
+  /**
+   * §11.29: which run the near view lands on, as a row index. Absent means
+   * the arrival's own choice, the first occupied shelf; present means a link
+   * or a remembered view opens where it says.
+   */
+  shelf?: number;
   page: number;
 };
 
@@ -100,6 +113,8 @@ export function parseCollectionParams(search: URLSearchParams): CollectionParams
     filters,
     sort: readSort(search.get('sort')),
     view: readView(search.get('view')),
+    wall: readWall(search.get('wall')),
+    shelf: readShelf(search.get('shelf')),
     page: readPage(search.get('page')),
   };
 }
@@ -126,6 +141,22 @@ function readSort(value: string | null): CollectionParams['sort'] {
  * error.
  */
 export const DEFAULT_VIEW: ViewMode = 'shelf';
+
+/** §11.29: the shelf view's two walls, and the one a bare `/` opens on. */
+export const WALL_VIEWS = ['near', 'far'] as const;
+export type WallView = (typeof WALL_VIEWS)[number];
+export const DEFAULT_WALL: WallView = 'near';
+
+function readWall(value: string | null): WallView {
+  return WALL_VIEWS.includes(value as WallView) ? (value as WallView) : DEFAULT_WALL;
+}
+
+/** A row index: plain digits, zero or above. Anything else is no address at all. */
+function readShelf(value: string | null): number | undefined {
+  if (value === null || !/^\d+$/.test(value)) return undefined;
+  const n = Number(value);
+  return Number.isSafeInteger(n) ? n : undefined;
+}
 
 function readView(value: string | null): ViewMode {
   return VIEW_MODES.includes(value as ViewMode) ? (value as ViewMode) : DEFAULT_VIEW;
@@ -157,6 +188,9 @@ export function toQueryString(params: CollectionParams): string {
   // Omits the DEFAULT, which §10b moved — otherwise `/` would emit
   // `?view=shelf` on every link while `?view=table` vanished.
   if (params.view !== DEFAULT_VIEW) search.set('view', params.view);
+  /* §11.29: only when they are not the default — a bare `/` opens near on the arrival's own shelf. */
+  if (params.wall !== DEFAULT_WALL) search.set('wall', params.wall);
+  if (params.shelf !== undefined) search.set('shelf', String(params.shelf));
   if (params.page > 1) search.set('page', String(params.page));
 
   return search.toString();
@@ -203,6 +237,9 @@ export function withFacet(
     filters,
     sort: 'sort' in change ? change.sort : params.sort,
     view: change.view ?? params.view,
+    /* §11.29's wall and shelf survive a filter change: changing what is shown is not changing where you are. */
+    wall: params.wall,
+    shelf: params.shelf,
     page: 1,
   };
 }

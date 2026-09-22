@@ -5,7 +5,7 @@ import { WallRail } from './WallRail';
 import { activeFilterCount } from './active-filters';
 import { collectionCountLabel } from './collection-count';
 import { CollectionList, type CollectionRow } from './CollectionList';
-import { WallComposition } from './wall/WallComposition';
+import { WallUrlState } from './WallUrlState';
 import { wallSeats, wallSummaries } from './wall/producer';
 import { CollectionPagination } from './CollectionPagination';
 import { parseCollectionParams } from './collection-params';
@@ -109,7 +109,8 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
           that goes.
         */
         <main>
-          <WallComposition
+          <WallUrlState
+            params={params}
             seats={wallSeats(shelf)}
             summaries={wallSummaries(shelf)}
             countLine={

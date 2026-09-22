@@ -54,6 +54,18 @@ const render = (props: Partial<Parameters<typeof WallStage>[0]> = {}) =>
     />,
   );
 
+describe('§11.29: the view and its shelf live in the URL', () => {
+  it('opens on the wall the URL names, and on the shelf it addresses', () => {
+    /*
+      A bare `/` opens near on the arrival's own shelf; `?wall=far` opens the
+      zoom-out; `?shelf=1` lands the near view on that run rather than the
+      first occupied one. A link opens where it says.
+    */
+    expect(render({ far: false })).toContain('data-region="near"');
+    expect(render({ far: true })).toContain('data-region="far"');
+  });
+});
+
 describe('§11.28: the count beside the drawing, and the run is what the reader clicks', () => {
   it('puts COLLECTION and the count in a COLUMN beside the drawing, not a band above it', () => {
     /*

@@ -44,10 +44,16 @@ export function WallLive({
   summaries = {},
   countLine = null,
   opens = DEFAULT_ROUTE_VIEW,
+  opensShelf,
+  onView,
 }: {
   seats: readonly WallSeat[];
   summaries?: Record<string, RecordSummary>;
   countLine?: string | null;
+  /** §11.29: the run the near view opens on, from the URL. Absent means the arrival's own choice. */
+  opensShelf?: number;
+  /** §11.29: told when the reader zooms, so the page can put it in the URL and Back can return. */
+  onView?: (wall: 'near' | 'far', shelf?: number) => void;
   /**
    * Which view the route opens in (§11.12: `/` opens far). A probe or a
    * harness that is about the near view asks for it directly — the opening
@@ -198,7 +204,15 @@ export function WallLive({
     if (!arrived.current && routeView === 'near' && width > 0) {
       arrived.current = true;
       if (landOn.current === null && pulls.length === 0) {
-        const first = arrivalSeat(layout.placed);
+        /* §11.29: the URL's shelf if it names one, else the arrival's own — the first occupied run. */
+        const addressed =
+          opensShelf === undefined
+            ? null
+            : ([...new Set(layout.placed.map((p) => p.z))].sort((a, b) => b - a)[opensShelf] ?? null);
+        const first =
+          addressed === null
+            ? arrivalSeat(layout.placed)
+            : (layout.placed.find((p) => p.z === addressed) ?? arrivalSeat(layout.placed));
         if (first !== null) landOn.current = first.id;
       }
     }
@@ -369,14 +383,25 @@ export function WallLive({
   }, [clockKey]);
 
   /* §11.12's two targets. In: the near view lands on the seat. Out: back to the whole collection. */
-  const zoomIn = useCallback((id: string) => {
-    landOn.current = id;
-    setRouteView('near');
-  }, []);
+  /*
+    §11.29: a zoom is a place, so it goes in the URL — pushed, so Back returns
+    to where the reader was. The view's own state changes immediately; the URL
+    follows, and a reload reads it back.
+  */
+  const zoomIn = useCallback(
+    (id: string) => {
+      landOn.current = id;
+      setRouteView('near');
+      const row = seats.findIndex((seat) => seat.id === id);
+      onView?.('near', row < 0 ? undefined : row);
+    },
+    [onView, seats],
+  );
   const zoomOut = useCallback(() => {
     landOn.current = null;
     setRouteView('far');
-  }, []);
+    onView?.('far');
+  }, [onView]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {

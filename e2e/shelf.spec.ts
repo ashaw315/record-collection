@@ -420,56 +420,91 @@ test('genre and sort from the rail narrow and order the wall without leaving it 
   await expect(rail.getByLabel('Sort')).toHaveValue('title:desc');
 });
 
-test('a filter empties seats rather than re-seating them: the same record’s seat has the same screen position with and without it (§11.12)', async ({ page }) => {
+test('a filter empties seats rather than re-seating them, and the emptied seats are drawn (§11.12, §11.34)', async ({ page }) => {
   /*
-    The property the ruling buys and nothing else pins. Positions are measured
-    against the left upright, since scroll and frame are relative; the fixture's
-    length is the right upright's distance from the left one.
+    **The fixture's matches must NOT be contiguous in wall order, and that is
+    the whole reason this test was rewritten.** The wall orders by genre
+    section, so records carrying a test genre sort to the front of the shelf
+    together: filter to that genre and the survivors were already adjacent,
+    so a build that repacked and a build that held looked identical. The
+    earlier version asserted position without count and would have passed on
+    a build that dropped every emptied seat.
+
+    So: three genres, assigned so the filtered genre's records are separated
+    by records of another — the gaps then fall INSIDE the run, where holding
+    and repacking differ. Asserted together: the seat count is unchanged, the
+    matched count is right, and every surviving position is identical against
+    the UNFILTERED layout.
   */
   const stamp = suffix();
-  const genre = await page.request.post('/api/genres', { data: { name: `Shape-${stamp}` } });
-  const genreId = (await genre.json()).id as string;
+  const target = await page.request.post('/api/genres', { data: { name: `AShape-${stamp}` } });
+  const targetId = (await target.json()).id as string;
+  const other = await page.request.post('/api/genres', { data: { name: `BShape-${stamp}` } });
+  const otherId = (await other.json()).id as string;
   const artist = await page.request.post('/api/artists', { data: { name: `Shape-${stamp}` } });
   const artistId = (await artist.json()).id as string;
   trackArtist(artistId);
-  const ids: Record<string, string> = {};
-  for (const [title, inGenre] of [['Believer', true], ['Gaucho', false], ['Wired', true]] as const) {
-    const record = await page.request.post('/api/records', { data: { title, artistId, ...(inGenre ? { genreIds: [genreId] } : {}) } });
+
+  /* Six records alternating between the two genres, so neither set is contiguous. */
+  const ids: string[] = [];
+  for (let i = 0; i < 6; i += 1) {
+    const record = await page.request.post('/api/records', {
+      data: { title: `Shape ${String(i).padStart(2, '0')}`, artistId, genreIds: [i % 2 === 0 ? targetId : otherId] },
+    });
     expect(record.status()).toBe(201);
-    ids[title] = (await record.json()).id as string;
+    ids.push((await record.json()).id as string);
   }
-  const measure = () =>
-    page.evaluate((seatIds) => {
-      const left = (q: string) => document.querySelector(q)?.getBoundingClientRect().left ?? null;
+
+  /** Every seat's x against the left upright, so scroll and frame origin drop out. */
+  const measure = (seatIds: string[]) =>
+    page.evaluate((all) => {
       const uprights = Array.from(document.querySelectorAll('[data-furniture="upright-front"]')).map((el) => el.getBoundingClientRect().left);
       const origin = Math.min(...uprights);
-      return {
-        length: Math.max(...uprights) - origin,
-        pieces: document.querySelectorAll('[data-piece]').length,
-        seats: Object.fromEntries(Object.entries(seatIds).map(([title, id]) => [title, (() => { const l = left(`[data-seat="${id}"] [data-spine]`); return l === null ? null : l - origin; })()])),
+      const at = (id: string) => {
+        const box = document.querySelector(`[data-seat="${id}"] [data-spine]`)?.getBoundingClientRect();
+        return box === undefined ? null : Math.round(box.left - origin);
       };
-    }, ids);
+      return {
+        length: Math.round(Math.max(...uprights) - origin),
+        pieces: document.querySelectorAll('[data-piece]').length,
+        drawn: document.querySelectorAll('a[data-seat]').length,
+        footprints: document.querySelectorAll('[data-footprint]').length,
+        seats: Object.fromEntries(all.map((id) => [id, at(id)])),
+      };
+    }, seatIds);
 
   await page.goto(`/?artistId=${artistId}`);
   await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
-  await expect(page.getByTestId('wall-count')).toHaveText('3');
-  const rest = await measure();
-  expect(rest.seats.Gaucho).not.toBeNull();
+  await expect(page.getByTestId('wall-count')).toHaveText('6');
+  const rest = await measure(ids);
+  expect(rest.drawn, 'all six are drawn unfiltered').toBe(6);
+  expect(rest.footprints, 'and nothing is a footprint when nothing is filtered').toBe(0);
 
-  await page.goto(`/?artistId=${artistId}&genreId=${genreId}`);
+  await page.goto(`/?artistId=${artistId}&genreId=${targetId}`);
   await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
-  await expect(page.getByTestId('wall-count'), 'the seated records').toHaveText('2');
-  await expect(page.getByTestId('wall').locator('[data-region="count"]')).toContainText(/2 of \d+/);
-  const filtered = await measure();
-  /* The non-matching seat is empty: no element. The fixture is the same fixture. */
-  expect(filtered.seats.Gaucho, 'the emptied seat draws nothing').toBeNull();
-  expect(filtered.pieces).toBe(rest.pieces);
+  await expect(page.getByTestId('wall-count'), 'the seated records').toHaveText('3');
+  const filtered = await measure(ids);
+
+  /* The COUNT: three drawn, three emptied, and the fixture itself unchanged. */
+  expect(filtered.drawn, 'only the matches are drawn').toBe(3);
+  expect(filtered.pieces, 'the fixture is the same fixture').toBe(rest.pieces);
   expect(Math.abs(filtered.length - rest.length), 'the row did not shorten').toBeLessThan(1);
-  /* And the matching records are in the seats they were in. */
-  for (const title of ['Believer', 'Wired']) {
-    expect(Math.abs((filtered.seats[title] ?? NaN) - (rest.seats[title] ?? NaN)), `${title} keeps its seat`).toBeLessThan(1);
+
+  /* §11.34: every seat a record was displaced from draws its footprint. */
+  expect(filtered.footprints, 'one footprint per emptied seat').toBe(3);
+
+  /* The POSITIONS, against the unfiltered layout: every survivor is where it was. */
+  for (const [index, id] of ids.entries()) {
+    if (index % 2 === 0) {
+      expect(filtered.seats[id], `match ${index} is drawn`).not.toBeNull();
+      expect(Math.abs((filtered.seats[id] ?? NaN) - (rest.seats[id] ?? NaN)), `match ${index} keeps its seat`).toBeLessThan(1);
+    } else {
+      expect(filtered.seats[id], `non-match ${index} draws no spine`).toBeNull();
+    }
   }
-  await page.request.delete(`/api/genres/${genreId}`);
+
+  await page.request.delete(`/api/genres/${targetId}`);
+  await page.request.delete(`/api/genres/${otherId}`);
 });
 
 test('the rail’s view list reaches the table and comes back to the shelf', async ({ page }) => {

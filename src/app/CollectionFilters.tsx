@@ -384,6 +384,8 @@ export function CollectionFilters({
                 filters: {},
                 sort: current.sort,
                 view: current.view,
+                wall: current.wall,
+                shelf: current.shelf,
                 page: 1,
               }))
             }

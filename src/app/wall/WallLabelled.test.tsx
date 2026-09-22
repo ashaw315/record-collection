@@ -301,6 +301,46 @@ describe('the record with no cover arrives at type, not at a swatch (§11.3, §1
   });
 });
 
+describe('§11.34: an emptied seat draws its footprint', () => {
+  it('draws the seat’s rectangle on the shelf’s top face where a record was displaced', () => {
+    /*
+      Position invariance was necessary and not sufficient: the seats held to
+      the pixel and the drawing had nothing in it to read, so six matches
+      looked like a shorter shelf rather than six records and eleven empty
+      berths. A shape made of absences is only a shape if the absences are
+      drawn.
+    */
+    const html = render([seat('a', null), { ...seat('b', null), empty: true }, seat('c', null)], null);
+    const prints = [...html.matchAll(/data-footprint=""/g)];
+    expect(prints, 'one per emptied seat').toHaveLength(1);
+    const tag = /<polygon[^>]*data-footprint=""[^>]*>/.exec(html)?.[0] ?? '';
+    /* Projected geometry, not a page rule: it is a polygon in the drawing, at 1px. */
+    expect(tag).toContain('stroke-width="1"');
+    expect(tag).toContain('fill="none"');
+    expect(tag, '§11.27’s hairline').toMatch(/oklch\(0\.72/);
+  });
+
+  it('draws nothing for a seat that never held a record — a filtered seat is a fact about the filter, a never-filled one about the backlog (§8.1)', () => {
+    /*
+      At seventeen records the fixture has eighty seats, sixty-three of them
+      never filled. Drawing those would turn the room-to-grow into a grid of
+      vacancies; the three empty shelves stay blank.
+    */
+    const html = render([seat('a', null), seat('b', null)], null);
+    expect(html).not.toContain('data-footprint');
+  });
+
+  it('counts one footprint per emptied seat, and none when nothing is filtered', () => {
+    const none = render([seat('a', null), seat('b', null), seat('c', null)], null);
+    expect([...none.matchAll(/data-footprint=""/g)]).toHaveLength(0);
+    const two = render(
+      [seat('a', null), { ...seat('b', null), empty: true }, { ...seat('c', null), empty: true }, seat('d', null)],
+      null,
+    );
+    expect([...two.matchAll(/data-footprint=""/g)]).toHaveLength(2);
+  });
+});
+
 describe('a filter empties seats rather than re-seating them (§11.12)', () => {
   const xOf = (html: string, id: string) => Number(/<polygon[^>]*data-face="front"[^>]*points="([\d.-]+),/.exec(html.slice(html.indexOf(`data-seat="${id}"`)))?.[1]);
 

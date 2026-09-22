@@ -32,11 +32,17 @@ export function WallComposition({
   countLine = null,
   rail = null,
   opens,
+  opensShelf,
+  onView,
 }: {
   seats: readonly WallSeat[];
   summaries?: Record<string, RecordSummary>;
   /** §11.12: which view the route opens in. The collection page opens far; probes about the near view ask for it. */
   opens?: 'far' | 'near';
+  /** §11.29: the run the near view opens on, from the URL. */
+  opensShelf?: number;
+  /** §11.29: told when the reader zooms, so the page can put it in the URL. */
+  onView?: (wall: 'near' | 'far', shelf?: number) => void;
   /** The filter-aware line under the count — "34 of 312 records" — when a filter is on. */
   countLine?: string | null;
   /** §11.13's rail, in a 148px column left of the facts; the page supplies it, the probes do not. */
@@ -111,7 +117,7 @@ export function WallComposition({
           />
         </div>
       )}
-      <WallLive seats={seats} summaries={summaries} countLine={countLine} opens={opens} />
+      <WallLive seats={seats} summaries={summaries} countLine={countLine} opens={opens} opensShelf={opensShelf} onView={onView} />
     </section>
   );
 }

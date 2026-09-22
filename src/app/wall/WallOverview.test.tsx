@@ -178,6 +178,15 @@ describe('§11.28: the occupied run is the click target, and it signals on hover
   });
 });
 
+describe('§11.34: the far view draws emptied seats too', () => {
+  it('draws a footprint where a record was displaced, and nothing where none has been shelved', () => {
+    const three = seats(3);
+    const html = render({ seats: [three[0], { ...three[1], empty: true }, three[2]], pulledId: null });
+    expect([...html.matchAll(/data-footprint=""/g)], 'one per emptied seat').toHaveLength(1);
+    expect(render({ seats: three, pulledId: null }), 'nothing filtered, no footprints').not.toContain('data-footprint');
+  });
+});
+
 describe('§11.30: reaching the run by keyboard', () => {
   const occupied = (count = 17) => seats(count).map((s, i) => ({ ...s, artist: `A${i}`, title: `T${i}` }));
 
@@ -260,11 +269,12 @@ describe('the far view’s seats are the way in (§11.12)', () => {
 });
 
 describe('a filter empties seats in the far view (§11.12)', () => {
-  it('draws no faces for an empty seat, keeps the fixture, and links nothing there', () => {
+  it('draws no faces for an empty seat — only §11.34’s footprint — keeps the fixture, and links nothing there', () => {
     const three = seats(3);
     const full = render({ seats: three, pulledId: null });
     const filtered = render({ seats: [three[0], { ...three[1], empty: true }, three[2]], pulledId: null, linked: true });
-    expect(countTag(filtered, 'polygon')).toBe(countTag(full, 'polygon') - 3);
+    /* Three faces go, one footprint arrives (§11.34): the seat is drawn as a berth rather than as a record. */
+    expect(countTag(filtered, 'polygon')).toBe(countTag(full, 'polygon') - 3 + 1);
     expect(countTag(filtered, 'polygon[data-furniture')).toBe(countTag(full, 'polygon[data-furniture'));
     expect(filtered).not.toContain('data-far-seat="r1"');
     expect(filtered).toContain('data-far-seat="r0"');
