@@ -30910,7 +30910,7 @@ Two older tests needed their claims narrowed rather than changed: one forbade `f
 
 ## Observed out of scope, 22 Sep
 
-**`test/repo/specs-import-constants.test.ts` is red on a clean tree**, independent of any wall work: `e2e/record-detail.spec.ts` types the literal `900` where it should import `NO_SCROLL_HEIGHT` from `src/app/records/[id]/band-geometry.ts`. Confirmed by stashing the working tree and re-running the file on `6241a45`. One import and one substitution, but it belongs to the record screen rather than the shelf, so it is recorded rather than fixed.
+~~**`test/repo/specs-import-constants.test.ts` is red on a clean tree**: `e2e/record-detail.spec.ts` types the literal `900` where it should import `NO_SCROLL_HEIGHT`.~~ **Fixed in `8a0be07`**, during §12's pass — the same guard and the same constant govern the three specs that pass added, so the file came inside the unit that could fix it. The general form worth keeping: an out-of-scope note is scoped to the unit that FOUND it, not to the defect, and a later unit can legitimately own what an earlier one had to record.
 
 **`test/integration/neon-transactions.test.ts` still fails on an unreachable branch** — `28P01`, a credential rejection on `ep-wispy-sunset-au5w293q-pooler`. This is the three-states gate working as designed: configured-but-unreachable is reported as broken rather than skipped. The branch is the developer's to refresh.
 
