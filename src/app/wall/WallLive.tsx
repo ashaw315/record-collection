@@ -70,6 +70,24 @@ export function WallLive({
   */
   const [routeView, setRouteView] = useState<RouteView>(opens);
   /*
+    §11.29: the ADDRESS is authoritative when it changes under a mounted wall.
+    `useState(opens)` reads the prop once, so a Back or a Forward — which
+    swap the URL without remounting this component — left the view showing
+    whatever the last click had set while the URL said otherwise. The wall
+    owns the view's immediate state, and the two zoom handlers still set it
+    before the push lands; this only reconciles the two when the route moves
+    on its own. Comparing against the last `opens` SEEN — React's documented
+    adjust-state-during-render pattern, not an effect — is what keeps a
+    zoom's own optimistic change from being reverted by the render that
+    precedes the push: syncing on every render would fight the handler, and
+    an effect would show the wrong view for a frame first.
+  */
+  const [lastOpens, setLastOpens] = useState<RouteView>(opens);
+  if (lastOpens !== opens) {
+    setLastOpens(opens);
+    if (routeView !== opens) setRouteView(opens);
+  }
+  /*
     §11.29's arrival script can only do work at parse time, so it is rendered
     for the first client render — hydration must match the server's HTML —
     and dropped once mounted. Left in, React logs its script warning on every

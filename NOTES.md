@@ -30907,3 +30907,19 @@ A spine hovers exactly as a run does — sinks to §11.27's 0.731 with hairlines
 **The app's oxblood focus ring is off the shelf** (§11.32), and this is the case that shows why that ruling had to reach past Add record: a focus ring is chrome applied without asking what it lands on, so on a monochrome fixture it is the only colour on the page, arriving wherever the reader tabs. Verified on the real route: hover moves the spine 0px and changes its fill 0.925 → 0.731, the focus mark reaches full opacity, and the outline style is `none`.
 
 Two older tests needed their claims narrowed rather than changed: one forbade `fill="none"` anywhere in a seat, where the claim is that the three FACES are opaque for the painter's order, and one counted polygons per seat.
+
+## Observed out of scope, 22 Sep
+
+**`test/repo/specs-import-constants.test.ts` is red on a clean tree**, independent of any wall work: `e2e/record-detail.spec.ts` types the literal `900` where it should import `NO_SCROLL_HEIGHT` from `src/app/records/[id]/band-geometry.ts`. Confirmed by stashing the working tree and re-running the file on `6241a45`. One import and one substitution, but it belongs to the record screen rather than the shelf, so it is recorded rather than fixed.
+
+**`test/integration/neon-transactions.test.ts` still fails on an unreachable branch** — `28P01`, a credential rejection on `ep-wispy-sunset-au5w293q-pooler`. This is the three-states gate working as designed: configured-but-unreachable is reported as broken rather than skipped. The branch is the developer's to refresh.
+
+## §11.29: Back moved the address but not the view
+
+The zoom's history was correct all along — `history.length` goes 3 → 4 on the zoom-out, 5 on the zoom-in, and Back restores `?wall=far` in the URL. What failed is that the WALL did not follow. `WallLive` read its opening view as `useState<RouteView>(opens)`, which samples the prop once at mount; Back and Forward swap the URL without remounting the component, so the address said far while the drawing still showed near.
+
+**The probe is what separated the two halves.** The failing assertion was "the overview is visible after Back", which is equally consistent with the push never happening, the URL never changing, and the view ignoring the URL. Logging `history.length` and `location.href` at each step — as instructed — showed history and URL both correct and isolated the defect to the one line that samples the prop.
+
+It also surfaced a second thing worth keeping: **`router.push` had not landed by the time the view had visibly changed.** Read immediately after the zoom-out the URL was still the old one, and only after a settle did it carry `wall=far`. The view's own state changes first and the address follows, which is the intended order — but it means any assertion about the URL taken at the moment the view changes is reading a frame too early.
+
+The fix compares against the last `opens` seen and adjusts state during render, React's documented pattern for deriving state from a changed prop. Not an effect: an effect would paint the wrong view for a frame after every Back. Not an unconditional sync: that would fight the zoom handlers, which set the view optimistically before the push lands.
