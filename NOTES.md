@@ -30937,3 +30937,17 @@ Three of the four were fixed; the first is with Design. The pattern worth record
 **The grey solids were three opacities.** §9.2 asks for "three lightnesses of the one tint value" and §5.1 forbids the shortcut by name — never at an opacity variant. The build drew `fill={tint}` at 1, 0.72 and 0.5. Opacity composites toward PAPER, so the three faces converge on the ground instead of stepping down, and all three reported the identical `rgb(217, 143, 138)` on the route. Computed now, holding one hue and one chroma. The matrix is excepted and asserted so: a fix stated as "the solids stop being grey" would have coloured exactly the one solid §5 rules record-independent.
 
 **On out-of-scope notes.** The `specs-import-constants` entry recorded on 22 Sep was cleared by this pass, because the same guard and constant govern the three specs it added. An out-of-scope note is scoped to the unit that FOUND it, not to the defect — a later unit can legitimately own what an earlier one had to record.
+
+## The shelf filter test is load-dependent, not broken
+
+`e2e/shelf.spec.ts:469` (§11.12, §11.34 — "a filter empties seats rather than re-seating them") **failed in the full 18.5-minute run and passes everywhere else.** Checked rather than assumed:
+
+- passes at `c95cf09`, before §12 began;
+- passes at each of §12's four commits individually (`c4c7dab`, `fe661e2`, `30deac0`, `e947a48`);
+- passes on current `main` in isolation, and the whole file passes 11/11 three times running.
+
+So it is not a regression from §12 and not a broken assertion. It fails only under the full suite's parallel load, which is the same behaviour recorded for it earlier this session. Two other specs in that run — `record-navigation.spec.ts:226` and `wall-route.spec.ts:233` — failed alongside it and both pass serially, so the shape is the suite's contention rather than three unrelated defects.
+
+**Worth a real fix rather than a note eventually**, because a test that fails only when the machine is busy trains everyone to re-run rather than read. The suspect is the shared dev server under 500+ specs, not the database guard, which now refuses a second runner outright. Recorded here rather than chased inside §12.
+
+**And the exit code lied again**: `3 failed` with `exited with code 0`. Fifth instance. The counts were read, not the status.
