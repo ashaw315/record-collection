@@ -2,7 +2,8 @@ import 'server-only';
 import { sectionIndices } from '@/app/wall/section-index';
 import { sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
-import { buildWhere, type RecordFilters } from './records';
+import { buildWhere, sortExpression, type RecordFilters } from './records';
+import type { RecordSortField } from '@/lib/records/fields';
 
 /**
  * SPEC.md §10b's shelf: the collection as ONE continuous wall of spines.
@@ -139,9 +140,25 @@ type Row = ShelfRecord & { sectionName: string | null };
  * trigram search becomes a sequential scan over every row where a WHERE
  * could have used its index, and that is the point to revisit this.
  */
-export async function shelfRecords(filters: RecordFilters = {}): Promise<ShelfRecord[]> {
+export async function shelfRecords(
+  filters: RecordFilters = {},
+  sort?: { field: RecordSortField; direction: 'asc' | 'desc' },
+): Promise<ShelfRecord[]> {
   const db = getDb();
   const where = buildWhere(filters);
+  /*
+    §11.24's rail carries SORT, and the control submitted an order this query
+    ignored: the wall kept its genre sections whatever the URL said. The
+    section order is the DEFAULT rather than the only one — §11.1 leaves
+    position carrying the collection's order, and which order that is is the
+    reader's to choose. The expression comes from `records.ts` rather than
+    being restated, so the wall and the table cannot sort differently; the
+    allowlist there is what keeps a request's string out of the SQL.
+  */
+  const chosen =
+    sort === undefined
+      ? undefined
+      : sql`${sortExpression(sort.field)} ${sort.direction === 'desc' ? sql`DESC NULLS LAST` : sql`ASC NULLS LAST`},`;
 
   const result = await db.execute<Row>(sql`
     /**
@@ -261,6 +278,7 @@ export async function shelfRecords(filters: RecordFilters = {}): Promise<ShelfRe
      * nobody entered.
      */
     ORDER BY
+      ${chosen === undefined ? sql`` : chosen}
       (s.root_name IS NULL),
       s.root_name,
       a.name,

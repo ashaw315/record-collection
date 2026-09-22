@@ -75,7 +75,7 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
    * Fetched only when it is the view in use, so the table and grid do not pay
    * for it.
    */
-  const shelf = params.view === 'shelf' ? await shelfRecords(params.filters) : null;
+  const shelf = params.view === 'shelf' ? await shelfRecords(params.filters, params.sort) : null;
 
   /*
     `collectionTotal` is the UNFILTERED grand total — the "M" in "N of M

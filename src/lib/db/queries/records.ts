@@ -367,7 +367,7 @@ export function buildWhere(filters: RecordFilters) {
  * correlated subquery rather than by interpolating a string — the allowlist is
  * EXTENDED, not bypassed, so nothing derived from the request reaches SQL.
  */
-function sortExpression(field: RecordSortField) {
+export function sortExpression(field: RecordSortField) {
   switch (field) {
     case 'artist':
       return sql`(SELECT ${artists.name} FROM ${artists} WHERE ${artists.id} = ${records.artistId})`;

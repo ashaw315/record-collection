@@ -30866,3 +30866,11 @@ Two of my own readings were wrong on the way, and both are worth keeping. The `a
 §11.34: an emptied seat draws its own rectangle on the shelf's top face, 1px at 0.72, in both views. Projected geometry rather than a page rule, so §11.31 holds; a hairline rather than a tint, so §11.32 does. **Only where a record was displaced** — a never-filled seat is a fact about the backlog (§8.1), and drawing those would put 63 vacancies on a 17-record fixture.
 
 **The E2E's fixture must have non-contiguous matches**, stated in the test: with matches adjacent, a build that repacks and a build that holds look identical. It now asserts seat count unchanged, matched count correct, footprint count equal to the number emptied, and every surviving position identical against the unfiltered layout.
+
+## The rail's sort reached the URL and stopped there
+
+Adam: "sort doesn't work at all from the rail". The control was fine — it submitted, and the URL carried `sort=title:desc` — and `shelfRecords` took no sort parameter at all, ordering by genre section, artist, year and title whatever the request said. So §11.24 put a control in the rail that the query ignored: a behaviour ShelfControls had, moved to a surface that could not deliver it.
+
+The section order is the DEFAULT rather than the only order: §11.1 leaves position carrying the collection's order, and which order that is is the reader's to choose. The expression comes from `records.ts`'s `sortExpression` rather than being restated, so the wall and the table cannot sort differently, and the allowlist there keeps a request's string out of the SQL. A chosen sort leads the ORDER BY and the section order remains the tie-break beneath it.
+
+**The filter is unaffected**, which is asserted: a sorted, filtered wall returns every record in the chosen order with `matches` marking the survivors — the filter still empties seats rather than reordering them.

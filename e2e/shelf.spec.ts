@@ -385,6 +385,52 @@ test('search from the rail narrows the wall, and the count says so', async ({ pa
   await expect(page.getByTestId('wall').locator('[data-region="count"]')).toContainText(/1 of \d+/);
 });
 
+test('the rail’s sort reorders the wall itself (§11.24)', async ({ page }) => {
+  /*
+    The control submitted a `sort` the shelf query ignored: the wall kept its
+    genre-section order whatever the URL said, so the rail had a control that
+    did nothing. The section order is the DEFAULT — §11.1 leaves position
+    carrying the collection's order, and which order that is is the reader's.
+  */
+  const stamp = suffix();
+  const artist = await page.request.post('/api/artists', { data: { name: `Sort-${stamp}` } });
+  const artistId = (await artist.json()).id as string;
+  trackArtist(artistId);
+  for (const [i, title] of ['Charlie', 'Alpha', 'Echo', 'Bravo', 'Delta'].entries()) {
+    const record = await page.request.post('/api/records', { data: { title, artistId, releaseYear: 1990 - i } });
+    expect(record.status()).toBe(201);
+  }
+
+  /** The wall's own left-to-right order, by each spine's accessible name. */
+  const order = () =>
+    page.evaluate(() =>
+      Array.from(document.querySelectorAll('a[data-seat]'))
+        .map((el) => ({ x: el.getBoundingClientRect().left, title: (el.getAttribute('aria-label') ?? '').split('·').pop()?.trim() }))
+        .sort((a, b) => a.x - b.x)
+        .map((seat) => seat.title),
+    );
+
+  await page.goto(`/?artistId=${artistId}&sort=title%3Aasc`);
+  await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
+  await page.waitForTimeout(500);
+  expect(await order()).toEqual(['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo']);
+
+  await page.goto(`/?artistId=${artistId}&sort=title%3Adesc`);
+  await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
+  await page.waitForTimeout(500);
+  expect(await order(), 'the direction reaches the wall too').toEqual(['Echo', 'Delta', 'Charlie', 'Bravo', 'Alpha']);
+
+  /* And through the control itself, which is how a reader reaches it. */
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
+  await page.locator('select[data-hydrated="true"]').first().waitFor({ timeout: 15_000 });
+  await page.getByTestId('wall-rail').getByLabel('Sort').selectOption('releaseYear:asc');
+  await expect(page).toHaveURL(/sort=releaseYear/, { timeout: 15_000 });
+  await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 20_000 });
+  await page.waitForTimeout(700);
+  expect(await order(), 'oldest first: Delta 1986 … Charlie 1990').toEqual(['Delta', 'Bravo', 'Echo', 'Alpha', 'Charlie']);
+});
+
 test('genre and sort from the rail narrow and order the wall without leaving it (§11.24)', async ({ page }) => {
   const stamp = suffix();
   const genre = await page.request.post('/api/genres', { data: { name: `Rail-${stamp}` } });

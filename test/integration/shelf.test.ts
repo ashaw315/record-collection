@@ -363,6 +363,48 @@ describe('shelfRecords — a filter marks rather than prunes (8a §11.12, §11.2
   });
 });
 
+describe('shelfRecords — the rail’s sort reaches the wall (§11.24)', () => {
+  /*
+    §11.24 puts SORT in the rail as ShelfControls' surviving behaviour, and
+    the control submitted a `sort` the shelf query ignored: the wall kept its
+    own genre-section order whatever the URL said. The section order is the
+    DEFAULT rather than the only order — §11.1 leaves position carrying the
+    collection's order, and which order that is is the reader's to choose.
+  */
+  it('orders by the chosen field and direction, overriding the section default', async () => {
+    const punk = await genre('Punk');
+    const discharge = await artist('Discharge');
+    await record('Charlie', discharge, { genreIds: [punk], releaseYear: 1980 });
+    await record('Alpha', discharge, { genreIds: [punk], releaseYear: 1990 });
+    await record('Bravo', discharge, { genreIds: [punk], releaseYear: 1970 });
+
+    expect((await shelfRecords({}, { field: 'title', direction: 'asc' })).map((r) => r.title)).toEqual(['Alpha', 'Bravo', 'Charlie']);
+    expect((await shelfRecords({}, { field: 'title', direction: 'desc' })).map((r) => r.title)).toEqual(['Charlie', 'Bravo', 'Alpha']);
+    expect((await shelfRecords({}, { field: 'releaseYear', direction: 'asc' })).map((r) => r.title)).toEqual(['Bravo', 'Charlie', 'Alpha']);
+  });
+
+  it('keeps the genre-section order when no sort is asked for', async () => {
+    const rock = await genre('Rock');
+    const punk = await genre('Punk');
+    const a = await artist('Zeta');
+    await record('Later', a, { genreIds: [punk] });
+    await record('Earlier', a, { genreIds: [rock] });
+    /* Punk before Rock: sections order alphabetically, which the default keeps. */
+    expect((await shelfRecords()).map((r) => r.title)).toEqual(['Later', 'Earlier']);
+  });
+
+  it('sorts the whole collection, marks included — a filter still empties seats rather than reordering them (§11.12)', async () => {
+    const punk = await genre('Punk');
+    const a = await artist('Yankee');
+    await record('Charlie', a, { genreIds: [punk] });
+    await record('Alpha', a);
+    await record('Bravo', a, { genreIds: [punk] });
+    const rows = await shelfRecords({ genreId: punk }, { field: 'title', direction: 'asc' });
+    expect(rows.map((r) => r.title), 'every record, in the chosen order').toEqual(['Alpha', 'Bravo', 'Charlie']);
+    expect(rows.map((r) => r.matches)).toEqual([false, true, true]);
+  });
+});
+
 describe('shelfRecords — scope', () => {
   it('returns an empty array for an empty collection', async () => {
     // §10b: "sparse is fine … the view does not pad, fake, or hide itself."
