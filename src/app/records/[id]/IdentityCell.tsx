@@ -117,7 +117,20 @@ export function IdentityCell({
         >
           {title}
         </h1>
-        <div data-field="artist" className={ARTIST}>
+        {/*
+          **§4.2's "the break is balanced" applies to the artist too (§12).**
+          The section rules the artist at 40 and says its break is balanced;
+          the build gave the 72 block `text-wrap: balance` and `hyphens: none`
+          and gave this line neither, so a real band name — "Godspeed You!
+          Black Emperor" — ran past the cell and was CUT by §9.2's
+          `overflow: hidden`, 50px at 1100 and more as the cell narrows.
+
+          Same treatment as the title, for the same reason and with the same
+          two declarations: balance evens the lines so a two-line artist has
+          no orphan, and `hyphens: none` keeps a name from being broken
+          mid-word to achieve it. A person's name is not a place to hyphenate.
+        */}
+        <div data-field="artist" className={ARTIST} style={{ textWrap: 'balance', hyphens: 'none' }}>
           {/*
             **A LINK, restored for the second time.** The deleted header linked
             the artist; `RecordGrid` had to put it back and recorded why; 8a

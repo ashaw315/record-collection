@@ -291,7 +291,22 @@ export function RecordJournal({
           cut mid-sentence, which demonstrates only that the field is too small
           for the example. `min-w` sets the floor and the row wraps below it.
         */}
-        <div className="min-w-[280px] flex-1">
+        {/*
+          **A floor the container can honour (§12).** `min-w-[280px]` was an
+          absolute in a cell that clips: §9.2's cells carry `overflow: hidden`
+          so §5.1's edge marks stay inside the cell that owns them, so a
+          control wider than its cell is not spilled but silently CUT. At 390
+          the cell is 128px and 186px of this field was cut away — its right
+          rule with it, leaving a box with no closing edge.
+
+          The floor's reason survives and is kept: `flex-1` alone gave the
+          field 135px beside the date and the button, too narrow to show the
+          placeholder that says what to write. `min()` states the same floor
+          as a PREFERENCE that yields to the cell — 280 where there is room,
+          the cell's own width where there is not. A floor that exceeds its
+          container is not a floor, it is a clip.
+        */}
+        <div className="flex-1" style={{ minWidth: 'min(280px, 100%)' }}>
           <label htmlFor="journal-note" className="sr-only">
             Journal note
           </label>
