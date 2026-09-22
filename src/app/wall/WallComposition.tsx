@@ -95,7 +95,22 @@ export function WallComposition({
   [data-unmeasured] [data-region="far"] { display: none; }
 }`}</style>
       )}
-      {rail}
+      {/*
+        §11.31: the vertical between the rail and the facts column, full-bleed
+        from the nav to the page foot. A rule that stops short of the foot
+        draws a box, and §11.13's argument is that a column is a region.
+      */}
+      {rail === null ? null : (
+        <div className="relative">
+          {rail}
+          <div
+            data-line="rail-facts"
+            aria-hidden="true"
+            className="absolute inset-y-0 right-0 h-full w-px"
+            style={{ background: "oklch(0.72 0.004 80)" }}
+          />
+        </div>
+      )}
       <WallLive seats={seats} summaries={summaries} countLine={countLine} opens={opens} />
     </section>
   );

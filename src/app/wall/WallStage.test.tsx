@@ -181,10 +181,16 @@ describe('the narrow shelf is the far view (§11.24)', () => {
       then stand in front of the far view's run — §11.30's only stop,
       unreachable behind seventeen links to records that are not shown.
     */
-    expect(both, 'both are inert until the measurement decides').toMatch(/data-region="near"[^>]*\binert\b/);
-    expect(both).toMatch(/data-region="far"[^>]*\binert\b/);
-    expect(render({ far: false }), 'the shown view is not inert').not.toMatch(/data-region="near"[^>]*\binert\b/);
-    expect(render({ far: true })).not.toMatch(/data-region="far"[^>]*\binert\b/);
+    /*
+      Nothing is inert, here or anywhere. The media query hides the view CSS
+      does not want with `display: none`, which takes its contents out of the
+      tab order and the accessibility tree by itself — so §11.30's tab-stop
+      collision is already answered. An `inert` attribute was tried and
+      removed: served by the SERVER it is permanent with JavaScript off, and
+      the spine link then renders unclickable, which is precisely what
+      §11.8's no-JavaScript test protects.
+    */
+    expect(both, 'nothing is inert').not.toMatch(/\binert\b/);
     expect(render({ far: true })).not.toContain('data-region="near"');
     expect(render({ far: false })).not.toContain('data-region="far"');
   });

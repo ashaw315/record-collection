@@ -30834,3 +30834,19 @@ Measured in the rendered face at weight 800: "Games" 0.664 em/char, "Mind Games"
 **The stray ink square.** §5.1's `sleeveBlock` anchors the construction inside the sleeve's base bar, and its own comment says "not straddling the frame edge, because a mark half off the page reads as a crop". With a cover the bar is a flex child and the block's 10px offset lands inside it; with NO cover the bar is absolutely positioned at the cell's right edge, so the same 10px put the block against the VIEWPORT's edge — a black square belonging to no panel, which is how it was reported. The offset now follows the bar: 20px clears the 10px bar when there is no cover.
 
 **The journal note field.** A `flex-1` child beside the date input and the save button, with no width floor: at 1456px it measured 135px, and two rows of that cannot hold its own placeholder — "Played it after the pub. Still loud." was cut mid-sentence, an example that demonstrates only that the field is too small for the example. It takes a 280px floor and the row wraps below it. Asserted by measuring the placeholder in the field's own type and comparing `scrollHeight` against `clientHeight`, so the test fails on clipping rather than on a width alone.
+
+## §11.31: six lines, and no others
+
+Two verticals full-bleed nav to foot (rail to facts, facts to drawing); two horizontals in the rail, above the view switcher and above Add record; two in the facts column, under the count and above the verbs. The facts column's pair exists only when the PANEL does, so the far view carries four and the landed state six — a rule under the count with nothing below it separates nothing. Measured on the real route at 17 records: 4 at rest, 6 landed. Counted per view in `page-lines.test.tsx`, so a seventh line fails rather than passing unnoticed.
+
+Every rule 1px at 0.72 on the 0.925 paper. 2px is reserved for §3's non-type marks — §11.30's focus edge, the journal edge, and the rail's set bar, **corrected from 4px**: at 4 it was a third tier inside a system that claims two, and its length (44) is what distinguishes a mark from a rule. §9.3's ruled-field underlines stay 2px because they are fields, not rules. The drawing region carries no rules: it holds one drawing.
+
+## §11.32: the accent does not survive on the shelf
+
+No oxblood anywhere in the rail — Add record stays ink on §11.13's LABEL. §11 rests on colour arriving with the pull, so an accent already present would make the pull colour joining colour rather than colour arriving. Table and grid are untouched: no rest state to protect, no pull to spend it on. A set filter takes the rail's own set mark, the 44-wide ink bar at 2px, rather than the field's underline (§9.3 puts that there whether or not a filter is set, so it encodes nothing). A filter carried from the table to the shelf changes appearance, which is correct: on the shelf its expression is the empty seats.
+
+## `inert` was the wrong tool, and the no-JavaScript test caught it
+
+§11.30 needed the hidden view's tab stops gone while both views render unmeasured, and `inert` did it — served by the SERVER, so with JavaScript off nothing ever measures and both views stay inert permanently. The spine link then renders and cannot be clicked, which is exactly what §11.8's no-JavaScript test protects, and it failed within the hour.
+
+The fix was to delete it: the media query already hides the unwanted view with `display: none`, which takes its contents out of the tab order and the accessibility tree by itself. **The general form, now twice:** a state that exists only after a script runs cannot answer a question the server can answer with CSS — and reaching for one is what that test exists to catch.

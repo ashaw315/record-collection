@@ -101,6 +101,14 @@ export function RecordPanel({
         Open the full record — journal, prices, images
       </Link>
 
+      {/*
+        §11.31: above the two verbs, bleeding across the facts column. The
+        count is the collection and everything below it is one record; the
+        verbs are what you do rather than what is true, so the rule closes
+        the panel's lower end.
+      */}
+      <hr data-line="facts-verbs" className={`border-t ${HAIRLINE}`} style={{ margin: "18px -34px 0" }} />
+
       {/* The two things you can do to the object, together at the foot. */}
       <div className="mt-[14px] flex gap-2">
         <button type="button" onClick={onTurnOver} data-testid="action-turn" className={`min-h-11 flex-1 border text-prose ${HAIRLINE} ${INK}`}>

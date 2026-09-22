@@ -102,6 +102,22 @@ export function WallRail({
               >
                 Genre
               </label>
+              {/*
+                §11.32: a SET filter takes the rail's own set mark — §11.13's
+                44-wide ink bar at §11.31's 2px — not oxblood, and not the
+                field's underline, which §9.3 puts there whether or not a
+                filter is set and so encodes nothing. On the shelf a filter's
+                real expression is the empty seats (§11.12); this only says
+                which filter made them.
+              */}
+              {params.filters.genreId !== undefined && (
+                <span
+                  data-set-bar=""
+                  aria-hidden="true"
+                  className="mt-[6px] block bg-[oklch(0.19_0.008_60)]"
+                  style={{ width: 44, height: 2 }}
+                />
+              )}
               {/* The count follows §7.1's rollup, as the chips' does: "Punk 12" is what choosing it returns. */}
               <RailSelect
                 id="rail-genre"
@@ -143,6 +159,9 @@ export function WallRail({
         </button>
       </form>
 
+      {/* §11.31: above the view switcher, bleeding to both edges of the rail. */}
+      <hr data-line="rail-views" className={`border-t ${HAIRLINE}`} style={{ margin: "0 -20px 18px" }} />
+
       <ul className="flex flex-col gap-[18px]" aria-label="View">
         {VIEW_MODES.map((mode) => {
           const current = params.view === mode;
@@ -166,7 +185,8 @@ export function WallRail({
                   data-current-bar=""
                   aria-hidden="true"
                   className="mt-[6px] block bg-[oklch(0.19_0.008_60)]"
-                  style={{ width: 44, height: 4 }}
+                  /* §11.31: §3's non-type weight is 2px; at 4 it was a third tier. The 44 is what makes it a mark rather than a rule. */
+                  style={{ width: 44, height: 2 }}
                 />
               )}
             </li>
@@ -177,6 +197,7 @@ export function WallRail({
       {/* The rule bleeds to both edges of the rail: it separates an action on the collection from the views of it. */}
       <hr
         data-rail-rule=""
+        data-line="rail-actions"
         className={`mt-[34px] border-t ${HAIRLINE}`}
         style={{ margin: "34px -20px 0" }}
       />

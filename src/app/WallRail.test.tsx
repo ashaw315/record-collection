@@ -35,10 +35,10 @@ describe('the rail (§11.13)', () => {
     expect(html).not.toContain('COLLECTION');
   });
 
-  it('marks the current view with aria-current and the 44 × 4 bar, and no box, pill or field around any view', () => {
+  it('marks the current view with aria-current and the 44 × 2 bar (§11.31), and no box, pill or field around any view', () => {
     const shelf = render();
     expect(shelf).toMatch(/aria-current="page"[^>]*>Shelf</);
-    expect(shelf).toMatch(/>Shelf<\/a>\s*<span[^>]*data-current-bar=""[^>]*width:\s*44px;\s*height:\s*4px/);
+    expect(shelf).toMatch(/>Shelf<\/a>\s*<span[^>]*data-current-bar=""[^>]*width:\s*44px;\s*height:\s*2px/);
     expect(shelf).not.toMatch(/aria-current="page"[^>]*>Table</);
     const table = render('view=table');
     expect(table).toMatch(/aria-current="page"[^>]*>Table</);

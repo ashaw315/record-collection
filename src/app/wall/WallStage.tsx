@@ -10,7 +10,7 @@ import { wallLayout } from './wall-layout';
 import { clearanceShift } from './pan';
 import { arrivalSeat, nearView as arrivalView } from './route-view';
 import { nearViewMinWidth } from './view-fork';
-import { LABEL, LABEL_INK } from '../records/[id]/grid-type';
+import { HAIRLINE, LABEL, LABEL_INK } from '../records/[id]/grid-type';
 import { DRAWN_PAPER } from './WallComposition';
 import { WallOverview } from './WallOverview';
 
@@ -245,8 +245,17 @@ export function WallStage({
     shelf at 390px, and a 420px column beside it leaves nothing to draw in.
   */
   const farView = (
-    <div data-region="far" inert={far === null} className={`flex h-[calc(100vh-var(--app-nav-height,0px))] flex-col overflow-hidden p-[34px] [@media(min-width:${nearViewMinWidth()}px)]:flex-row`}>
-      <div className={`shrink-0 [@media(min-width:${nearViewMinWidth()}px)]:w-[420px]`}>{count(true)}</div>
+    <div data-region="far" className={`flex h-[calc(100vh-var(--app-nav-height,0px))] flex-col overflow-hidden p-[34px] [@media(min-width:${nearViewMinWidth()}px)]:flex-row`}>
+      {/* §11.31: the count column, and the vertical between it and the drawing — the far view's second line. */}
+      <div className={`relative shrink-0 [@media(min-width:${nearViewMinWidth()}px)]:w-[420px]`}>
+        {count(true)}
+        <div
+          data-line="facts-drawing"
+          aria-hidden="true"
+          className={`absolute inset-y-0 right-0 hidden h-full w-px [@media(min-width:${nearViewMinWidth()}px)]:block`}
+          style={{ background: "oklch(0.72 0.004 80)" }}
+        />
+      </div>
       <div className="min-h-0 min-w-0 flex-1">
         <WallOverview seats={seats} pulledId={null} linked onSeatClick={onZoomIn} />
       </div>
@@ -255,10 +264,27 @@ export function WallStage({
   if (far === true) return farView;
 
   const nearView = (
-    <div data-region="near" inert={far === null} className="grid grid-cols-[420px_1fr] gap-0">
-      <div data-region="facts" className="flex flex-col p-[34px]">
+    <div data-region="near" className="grid grid-cols-[420px_1fr] gap-0">
+      {/*
+        §11.31's facts column. Its two horizontals exist only when the PANEL
+        does — a rule under the count with nothing below it separates nothing
+        — so the far view carries four lines and the landed state six. Both
+        bleed across the column rather than stopping at the type's measure:
+        the type has a measure and the rules have a region (§3).
+      */}
+      <div data-region="facts" className="relative flex flex-col p-[34px]">
         {count(false)}
+        {panel === null ? null : (
+          <hr data-line="facts-count" className={`border-t ${HAIRLINE}`} style={{ margin: "18px -34px 0" }} />
+        )}
         <div data-testid="panel-region" className="mt-[34px]">{panel}</div>
+        {/* §11.31: the vertical between the facts column and the drawing region, nav to foot. */}
+        <div
+          data-line="facts-drawing"
+          aria-hidden="true"
+          className="absolute inset-y-0 right-0 h-full w-px"
+          style={{ background: "oklch(0.72 0.004 80)" }}
+        />
       </div>
       {/*
         D1: 1:1 and pans — the region scrolls the drawing rather than scaling it,
@@ -324,11 +350,13 @@ export function WallStage({
   if (far === false) return nearView;
   /*
     Unmeasured, both views are in the document and CSS shows one (§11.26).
-    The hidden one must be INERT: `display: none` removes it from the
-    accessibility tree, but nothing guarantees the CSS has applied before a
-    reader tabs, and a rendered-but-hidden view keeps its tab stops — the
-    near view's seat anchors then stand in front of §11.30's run, which is
-    the far view's only stop.
+    The hidden one needs nothing further: the media query hides it with
+    `display: none`, which takes its contents out of the tab order and the
+    accessibility tree already. An `inert` attribute was added here and
+    removed — served by the SERVER it is permanent with JavaScript off, so
+    the spine link rendered unclickable, which is exactly what §11.8's
+    no-JavaScript test protects. A state that exists only after a script
+    runs is the wrong tool for a view the server can hide.
   */
   return (
     <>
