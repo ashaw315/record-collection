@@ -202,15 +202,20 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
               className="mx-auto flex items-center justify-between gap-3 px-[14px] py-4"
               style={{ maxWidth: MAX_GRID_WIDTH }}
             >
-              {/* Back to the collection, not browser-back: the reader may have
-                  arrived from a link or a fresh tab, where back goes nowhere. */}
-              <Link
-                href="/"
-                className="text-meta text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-              >
-                ← Collection
-              </Link>
+              {/*
+                **§8.1 deleted the ← Collection link, and it is gone (§12).**
+                "Navigation is constant across records (§3), so it lives in
+                AppHeader and nowhere else; the 10px ← Collection is deleted."
+                The capability is not lost with it: the header carries
+                Collection at `/`, which is the one route, and
+                `record-back-route.spec.ts` asserts both halves — the control
+                gone AND the collection still one click away — because
+                deleting a link is only correct if the way out survives.
 
+                The band itself stays for now and §13 removes it: that ruling
+                also moves Edit to the eyebrow and Delete to the region's foot,
+                at which point the container has nothing left to hold.
+              */}
               <div className="flex items-center gap-3">
                 <Link
                   href={`/records/${id}/edit`}
