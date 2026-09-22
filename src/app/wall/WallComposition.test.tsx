@@ -63,7 +63,8 @@ describe('the wall composition', () => {
     const polygons = near.split('<polygon').length - 1;
     /* Two uprights and four shelves, three faces each: the fixture, empty shelves drawn. */
     expect(furniture).toBe(18);
-    expect(polygons, 'the unit plus three faces per record, no back, no front, no top').toBe(18 + 17 * 3);
+    /* Plus §11.33's focus mark per seat: an unfilled outline on the top face, drawn only on focus. */
+    expect(polygons, 'the unit, three faces per record, and each record’s focus mark').toBe(18 + 17 * 3 + 17);
   });
 });
 

@@ -89,8 +89,15 @@ describe('5b’s two faces at rest (D2): three faces per record, filled in paper
     expect(seatA).toContain(`data-face="top" points="`);
     expect(seatA).toContain(`fill="${TOP_FILL}"`);
     expect(seatA).toContain(`fill="${FACE_FILL}"`);
-    /* Paper, not none: the painter's order only occludes with opaque faces. */
-    expect(seatA).not.toContain('fill="none"');
+    /*
+      Paper, not none: the painter's order only occludes with opaque faces.
+      Scoped to the FACES — §11.33's focus mark is an unfilled outline on the
+      top face, and it is not a face.
+    */
+    for (const face of ['top', 'right', 'front']) {
+      const polygon = new RegExp(`<polygon[^>]*data-face="${face}"[^>]*>`).exec(seatA)?.[0] ?? '';
+      expect(polygon, `face ${face} is opaque`).not.toContain('fill="none"');
+    }
     expect(html).toContain(`data-furniture="shelf-top" points="`);
     expect(html).toContain(`fill="${PLANE_FILL}"`);
   });
@@ -298,6 +305,64 @@ describe('the record with no cover arrives at type, not at a swatch (§11.3, §1
     expect(html).not.toContain('data-no-cover');
     expect(html).not.toContain('data-diagonal');
     expect(html).toContain('data-cover="a"');
+  });
+});
+
+describe('§11.33: hover and focus on a spine', () => {
+  const html = () => render([seat('a', null), seat('b', null)], null);
+
+  it('sinks the spine to §11.27’s 0.731 with hairlines at 0.588, and moves nothing', () => {
+    /*
+      A small version of the pull is still the pull: §11.19's gesture is the
+      transition from the collection to a record, and a hover performing 10%
+      of it says that transition is underway when nothing has been chosen.
+      Motion of a record is the channel this page reserves for the pull.
+    */
+    const style = /<style data-spine-states[^>]*>([\s\S]*?)<\/style>/.exec(html())?.[1] ?? '';
+    expect(style, 'the sunk surface').toContain('0.731');
+    expect(style, 'hairlines recomputed against that ground').toContain('0.588');
+    expect(style, 'no lift, offset or shadow').not.toMatch(/translate|scale|shadow/);
+  });
+
+  it('shows no count and no tooltip: the label is already on the face', () => {
+    /*
+      The far view's run shows a count because the far view withholds counts
+      by design. The near view withholds nothing, so there is nothing to
+      reveal and a tooltip would repeat the drawing.
+    */
+    const style = /<style data-spine-states[^>]*>([\s\S]*?)<\/style>/.exec(html())?.[1] ?? '';
+    expect(style).not.toContain('data-run-label');
+    expect(html()).not.toMatch(/<title>/);
+  });
+
+  it('puts the focus mark on the TOP face, not the front edge — 2px is 19% of a 10.4-unit face', () => {
+    /*
+      At that proportion the mark stops reading as an edge and starts reading
+      as a spine of a different colour, which is the channel §11.28 spent the
+      hover hairline correction protecting. The top face is 130 deep and no
+      label crosses it.
+    */
+    const markup = html();
+    const edge = /<polygon[^>]*data-spine-focus[^>]*>/.exec(markup)?.[0] ?? '';
+    expect(edge, 'the focus mark is drawn').not.toBe('');
+    expect(edge, '§11.30’s weight and value, unchanged').toContain('stroke-width="2"');
+    expect(edge).toMatch(/oklch\(0\.18/);
+    const style = /<style data-spine-states[^>]*>([\s\S]*?)<\/style>/.exec(markup)?.[1] ?? '';
+    /* Drawn only on focus — hover and focus must differ (§11.30). */
+    expect(style).toMatch(/\[data-spine-focus\][^{]*\{[^}]*opacity:\s*0/);
+    expect(style).toMatch(/:focus-visible[^{]*\[data-spine-focus\][^}]*opacity:\s*1/);
+    expect(style).not.toMatch(/:hover[^{]*\[data-spine-focus\][^}]*opacity:\s*1/);
+  });
+
+  it('takes the app’s oxblood focus ring off the shelf (§11.32)', () => {
+    /*
+      A focus ring is chrome the app applies everywhere without asking what it
+      lands on; on a monochrome fixture it is the only colour on the page,
+      arriving wherever the reader happens to tab.
+    */
+    const style = /<style data-spine-states[^>]*>([\s\S]*?)<\/style>/.exec(html())?.[1] ?? '';
+    expect(style).toMatch(/outline:\s*none/);
+    expect(html()).not.toMatch(/oklch\(0\.36/);
   });
 });
 

@@ -30897,3 +30897,13 @@ A mark is not content, so it cannot push. §11.31 settled that a mark that stops
 - every indexed section also appears in a **build-order step**. The table and the order are separate lists and only the table was ever checked, which is how the order sat eight rulings behind while this test reported the index current. On its first run it found **§11.27 indexed with no step** — steps 9–11 cover §11.28 through §11.36 and skip it.
 
 **Design's correction on the absent GENRE control, worth keeping:** an absent facet is legitimate, so omitting the control is a *claim* rather than a gap — it asserts a collection with no genres. A drawing cannot abstain.
+
+## §11.33: hover and focus on a spine
+
+A spine hovers exactly as a run does — sinks to §11.27's 0.731 with hairlines at 0.588, and nothing else. No lift, offset or shadow: a small version of the pull is still the pull, and motion of a record is the channel reserved for §11.19's gesture. No count and no tooltip either, because the far view's run shows a count only since that view withholds counts by design; the near view withholds nothing and the label is already on the face.
+
+**The focus mark goes on the TOP face, not the front edge.** A spine's front projects to 10.4 units, so §11.30's 2px rule would be 19% of it — at that proportion it stops reading as an edge and starts reading as a spine of a different colour, which is the channel §11.28's hover hairline correction was protecting. The top face is 130 deep and no label crosses it. Value unchanged at 0.18.
+
+**The app's oxblood focus ring is off the shelf** (§11.32), and this is the case that shows why that ruling had to reach past Add record: a focus ring is chrome applied without asking what it lands on, so on a monochrome fixture it is the only colour on the page, arriving wherever the reader tabs. Verified on the real route: hover moves the spine 0px and changes its fill 0.925 → 0.731, the focus mark reaches full opacity, and the outline style is `none`.
+
+Two older tests needed their claims narrowed rather than changed: one forbade `fill="none"` anywhere in a seat, where the claim is that the three FACES are opaque for the painter's order, and one counted polygons per seat.

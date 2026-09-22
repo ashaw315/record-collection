@@ -40,6 +40,11 @@ const RULE = 'oklch(0.44 0.008 70)';
 const PAPER = PAPER_CSS;
 /** §11.34: the footprint a displaced record leaves, at §11.27's hairline. */
 const FOOTPRINT = 'oklch(0.72 0.004 80)';
+/** §11.33: the focus mark's ink, §11.30's value recomputed against both grounds. */
+const SPINE_FOCUS = 'oklch(0.18 0.008 60)';
+/** §11.27's hover surface and the hairline recomputed against it (§11.28). */
+const SPINE_HOVER_SURFACE = 'oklch(0.731 0.004 80)';
+const SPINE_HOVER_RULE = 'oklch(0.588 0.004 80)';
 const LABEL_FONT_PX = Number((MICRO_PX / COS30).toFixed(2));
 const BASELINE_INSET = 8;
 
@@ -281,6 +286,27 @@ export function WallLabelled({
       style={{ width: `${frame.width}px`, height: `${frame.height}px`, display: 'block' }}
     >
       {/*
+        §11.33: a spine hovers exactly as a run does — it sinks to §11.27's
+        0.731 with hairlines at 0.588, and nothing else. No lift, no offset,
+        no shadow: a small version of the pull is still the pull, and motion
+        of a record is the channel this page reserves for §11.19's gesture.
+        No count and no tooltip either — the far view's run shows a count
+        because that view withholds counts, and the near view withholds
+        nothing, so a tooltip would repeat the label already on the face.
+
+        Focus adds the top-face mark the polygons carry, and the app's
+        oxblood ring goes: a focus ring is chrome applied without asking what
+        it lands on, and on a monochrome fixture it is the only colour on the
+        page, arriving wherever the reader happens to tab (§11.32).
+      */}
+      <style data-spine-states="">{`
+[data-seat]:hover polygon[data-face], [data-seat]:focus-visible polygon[data-face] { fill: ${SPINE_HOVER_SURFACE}; stroke: ${SPINE_HOVER_RULE}; }
+[data-seat] [data-spine-focus] { opacity: 0; }
+[data-seat]:focus-visible [data-spine-focus] { opacity: 1; }
+[data-seat]:focus { outline: none; }
+[data-seat]:focus-visible { outline: none; }
+`}</style>
+      {/*
         **Every object in the painter's order, by separating plane (§11.20):**
         each shelf and upright, each seated record, the moving one. A shelf
         paints before the records on it and after the row below; the right
@@ -381,6 +407,22 @@ export function WallLabelled({
               fill={FACE_FILL}
               stroke={INK}
               strokeWidth="1"
+            />
+            {/*
+              §11.33: the focus mark, on the TOP face. A spine's front face
+              projects to 10.4 units, so §11.30's 2px rule would be 19% of it
+              — at that proportion the mark stops reading as an edge and
+              starts reading as a spine of a different colour, which is the
+              channel §11.28's hover hairline correction was protecting. The
+              top face is 130 deep and no label crosses it. Value unchanged
+              at 0.18: 7.89:1 on the sunk surface, 15.07:1 on paper.
+            */}
+            <polygon
+              data-spine-focus=""
+              points={points(topFace(seat))}
+              fill="none"
+              stroke={SPINE_FOCUS}
+              strokeWidth="2"
             />
             {labels ? label(labelTransform(seat), seat.width, record.label) : null}
           </a>
