@@ -30884,3 +30884,16 @@ THE WHOLE COLLECTION → in 11px mono beneath the figure, near view only. Not th
 **The rail's pitch, measured against Design's 44 specimen:** 50 between Shelf and Table, 42 between Table and Grid. Uneven because the active view carries a 2px set bar the others do not, so the first gap is larger; the source sets an 18px gap and type metrics do the rest. Neither matches 44 and the unevenness differs from any single specified pitch — reported rather than changed, since fixing it means either a fixed row height absorbing the bar or taking the bar out of flow, which is a drawing decision.
 
 **Also reported:** the handoff carried no §11.35 row while the target did, and `handoff-index-complete` caught it. The check that has historically missed is the build order, which still has no rows for §11.28 onward.
+
+## §11.36: the set bar leaves the flow, and the index check grows two assertions
+
+The 44-wide bar was stacked under its label, so it pushed: measured on the real route the switcher's pitch was **50 then 42** — 8px larger below the active view than below the others, because only the active one carried a bar. It is now positioned against the label's baseline and occupies no height, and the pitch is **42 and 42** in every state.
+
+A mark is not content, so it cannot push. §11.31 settled that a mark that stops is not a rule that failed to reach; this is the other half. The generalising case is §11.32's reuse: the same bar marks a set filter, and GENRE sits ABOVE the switcher — in flow, choosing a genre would have moved the control you choose the view with.
+
+**The index check now makes three assertions rather than one**, and the second caught something on its first run:
+- every §11.N heading has a row, and no row points at a missing section (as before);
+- **exactly one** row per section — a presence grep passes on two conflicting rows, and §11.35 briefly had two;
+- every indexed section also appears in a **build-order step**. The table and the order are separate lists and only the table was ever checked, which is how the order sat eight rulings behind while this test reported the index current. On its first run it found **§11.27 indexed with no step** — steps 9–11 cover §11.28 through §11.36 and skip it.
+
+**Design's correction on the absent GENRE control, worth keeping:** an absent facet is legitimate, so omitting the control is a *claim* rather than a gap — it asserts a collection with no genres. A drawing cannot abstain.

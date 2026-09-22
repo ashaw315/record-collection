@@ -127,3 +127,52 @@ describe('the rail (§11.13)', () => {
     });
   });
 });
+
+describe('§11.36: the set bar leaves the flow', () => {
+  /*
+    A mark is not content, so it cannot push. In flow the 44-wide bar
+    displaced its neighbours — GRID sat 8px lower when SHELF was active than
+    when it was not, so the rail's spacing encoded state — and under §11.32
+    the same bar marks a set filter, which sits ABOVE the switcher: a set
+    genre would have moved the control you choose the view with. Position in
+    the rail is the reader's map of the page's controls, and a map that
+    shifts when you use it is not one.
+  */
+  const barOf = (html: string, marker: string) => new RegExp(`<span[^>]*${marker}[^>]*>`).exec(html)?.[0] ?? '';
+
+  it('draws the set bar out of flow, against the label’s baseline, occupying no height', () => {
+    const bar = barOf(render(), 'data-current-bar');
+    expect(bar, 'the bar is drawn').not.toBe('');
+    expect(bar, 'positioned rather than stacked').toMatch(/absolute/);
+    expect(bar, 'still 44 wide at §11.31’s 2px').toMatch(/width:\s*44px/);
+    expect(bar).toMatch(/height:\s*2px/);
+  });
+
+  it('gives a set filter’s bar the same treatment, so choosing a genre moves nothing', () => {
+    const bar = barOf(render(`genreId=${GENRES[0].id}`), 'data-set-bar');
+    expect(bar).not.toBe('');
+    expect(bar).toMatch(/absolute/);
+  });
+
+  it('leaves each view name’s own box unchanged whether it is set or not — the pitch is the type’s', () => {
+    /*
+      The bar contributes no height, so the element that carries it is the
+      same element it would be without one: nothing in the switcher's flow
+      differs between the set and unset states but the bar's presence.
+    */
+    /*
+      The bar contributes no height, so the list item carrying it is laid out
+      exactly as one without: same classes, and the mark positioned against
+      the label's baseline rather than stacked beneath it.
+    */
+    const liOf = (html: string, view: string) => new RegExp(`<li[^>]*>(?:(?!</li>)[\\s\\S])*?>${view}<[\\s\\S]*?</li>`).exec(html)?.[0] ?? '';
+    const setShelf = liOf(render(), 'Shelf');
+    const unsetShelf = liOf(render('view=table'), 'Shelf');
+    expect(setShelf, 'the active view carries the mark').toContain('data-current-bar');
+    expect(unsetShelf, 'and an inactive one does not').not.toContain('data-current-bar');
+    /* The <li> itself is identical either way: nothing in the flow changes with the mark. */
+    const openOf = (li: string) => /<li[^>]*>/.exec(li)?.[0] ?? '';
+    expect(openOf(setShelf)).toBe(openOf(unsetShelf));
+    expect(openOf(setShelf), 'positioned, so the bar anchors without displacing').toContain('relative');
+  });
+});

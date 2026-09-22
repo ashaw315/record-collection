@@ -93,7 +93,7 @@ export function WallRail({
           className={`${FIELD} font-sans text-[16px] leading-[1.9]`}
         />
 
-        <div data-rail-filter="">
+        <div data-rail-filter="" className="relative">
           {genres.length > 0 && (
             <>
               <label
@@ -102,6 +102,15 @@ export function WallRail({
               >
                 Genre
               </label>
+              {/* §11.36: out of flow — GENRE sits above the switcher, so a set filter in flow would move the control you choose the view with. */}
+              {params.filters.genreId !== undefined && (
+                <span
+                  data-set-bar=""
+                  aria-hidden="true"
+                  className="absolute mt-[-12px] block bg-[oklch(0.19_0.008_60)]"
+                  style={{ width: 44, height: 2 }}
+                />
+              )}
               {/*
                 §11.32: a SET filter takes the rail's own set mark — §11.13's
                 44-wide ink bar at §11.31's 2px — not oxblood, and not the
@@ -110,14 +119,7 @@ export function WallRail({
                 real expression is the empty seats (§11.12); this only says
                 which filter made them.
               */}
-              {params.filters.genreId !== undefined && (
-                <span
-                  data-set-bar=""
-                  aria-hidden="true"
-                  className="mt-[6px] block bg-[oklch(0.19_0.008_60)]"
-                  style={{ width: 44, height: 2 }}
-                />
-              )}
+              {/* §11.36: out of flow like the view's — GENRE and SORT sit above the switcher, so a set filter in flow would move the control you choose the view with. */}
               {/* The count follows §7.1's rollup, as the chips' does: "Punk 12" is what choosing it returns. */}
               <RailSelect
                 id="rail-genre"
@@ -167,7 +169,7 @@ export function WallRail({
           const current = params.view === mode;
           const href = `/${toQueryString({ ...params, view: mode, page: 1 }) === "" ? "" : `?${toQueryString({ ...params, view: mode, page: 1 })}`}`;
           return (
-            <li key={mode}>
+            <li key={mode} className="relative">
               <Link
                 href={href}
                 aria-current={current ? "page" : undefined}
@@ -180,12 +182,20 @@ export function WallRail({
               >
                 {VIEW_NAMES[mode]}
               </Link>
+              {/*
+                §11.36: OUT OF FLOW — drawn against the label's baseline and
+                occupying no height, so the switcher's pitch is the type's
+                whether a view is set or not. A mark is not content, so it
+                cannot push: in flow, GRID sat 8px lower when SHELF was
+                active, and the rail's spacing encoded state. §11.31 gives
+                the weight (§3's 2px non-type mark) and the 44 that makes it
+                a mark rather than a rule.
+              */}
               {current && (
                 <span
                   data-current-bar=""
                   aria-hidden="true"
-                  className="mt-[6px] block bg-[oklch(0.19_0.008_60)]"
-                  /* §11.31: §3's non-type weight is 2px; at 4 it was a third tier. The 44 is what makes it a mark rather than a rule. */
+                  className="absolute top-full left-0 mt-[6px] block bg-[oklch(0.19_0.008_60)]"
                   style={{ width: 44, height: 2 }}
                 />
               )}
