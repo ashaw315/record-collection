@@ -51,6 +51,7 @@ const GOVERNED = [
   'e2e/record-lines.spec.ts',
   'e2e/record-narrow.spec.ts',
   'e2e/record-back-route.spec.ts',
+  'e2e/identity-band-holds.spec.ts',
   'e2e/images.spec.ts',
   'e2e/lookup-flows.spec.ts',
   'e2e/snippet.spec.ts',

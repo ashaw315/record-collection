@@ -295,7 +295,7 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
         */}
         <div
           data-cell="still"
-          className="relative"
+          className="relative h-full min-h-0 overflow-hidden"
           style={{ gridColumn: `span ${IDENTITY_SPANS[1]}`, borderRight: `1px solid ${RULE}` }}
         >
           {/*
