@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
+import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 
 registerCleanup();
 
@@ -13,7 +14,7 @@ registerCleanup();
  * The test asserts BOTH halves, because deleting a link is only correct if the
  * capability survives: the record screen must still reach the collection in
  * one click, and it must do so through the chrome rather than through a second
- * control that says the same thing 900px lower. A test that only checked the
+ * control that says the same thing far below it. A test that only checked the
  * link was gone would pass on a page with no way back at all.
  *
  * `record-navigation.spec.ts` covers the arrows between records; this covers
@@ -40,7 +41,7 @@ test('the collection is reached through the chrome, and nowhere else (§8.1)', a
   });
   const { id } = await r.json();
 
-  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
   await page.goto(`/records/${id}`);
   await expect(page.getByTestId('record-controls')).toBeVisible();
 

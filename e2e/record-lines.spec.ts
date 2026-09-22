@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { PAPER } from '../src/lib/colour/paper';
+import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 
 registerCleanup();
 
@@ -104,9 +105,9 @@ async function seedRecord(page: Page): Promise<string> {
 test('the page states its own line set: two weights, one value, §3’s module axis (§16)', async ({ page }) => {
   await login(page);
   const id = await seedRecord(page);
-  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
   await page.goto(`/records/${id}`);
-  await page.waitForTimeout(900);
+  await page.waitForTimeout(800);
 
   const all = await edgesOf(page);
   /*

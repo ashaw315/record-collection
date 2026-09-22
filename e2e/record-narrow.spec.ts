@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
+import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 
 registerCleanup();
 
@@ -66,7 +67,7 @@ test('no control is clipped by the cell that holds it, at any width (§12)', asy
   const { id } = await r.json();
 
   for (const width of [1440, 1100, 768]) {
-    await page.setViewportSize({ width, height: 900 });
+    await page.setViewportSize({ width, height: NO_SCROLL_HEIGHT });
     await page.goto(`/records/${id}`);
     await page.waitForTimeout(700);
 

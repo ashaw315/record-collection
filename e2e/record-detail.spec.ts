@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { registerCleanup, trackArtist } from './cleanup';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
@@ -779,7 +780,7 @@ test('the journal note field holds its own example without clipping', async ({ p
   trackArtist(artist.id as string);
   const record = await post(page, '/api/records', { title: `Journal ${suffix}`, artistId: artist.id });
 
-  await page.setViewportSize({ width: 1456, height: 900 });
+  await page.setViewportSize({ width: 1456, height: NO_SCROLL_HEIGHT });
   await page.goto(`/records/${record.id}`);
   const field = page.locator('#journal-note');
   await expect(field).toBeVisible({ timeout: 15_000 });

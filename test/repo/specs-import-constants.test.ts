@@ -47,6 +47,10 @@ const GOVERNED = [
   'e2e/record-form.spec.ts',
   'e2e/frame-planes.spec.ts',
   'e2e/genres-collapse.spec.ts',
+  /* §12's pass: the line set, the clipping band, and §8.1's deleted link. */
+  'e2e/record-lines.spec.ts',
+  'e2e/record-narrow.spec.ts',
+  'e2e/record-back-route.spec.ts',
   'e2e/images.spec.ts',
   'e2e/lookup-flows.spec.ts',
   'e2e/snippet.spec.ts',
