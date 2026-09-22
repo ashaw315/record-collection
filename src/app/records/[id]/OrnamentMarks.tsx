@@ -1,4 +1,5 @@
 import { project } from './construction';
+import { ornamentFacesFromTint } from './ornament-tones';
 import { ARCHETYPE_ASPECT, CELL_SIZE_RATIO, type OrnamentArchetype } from './ornament';
 
 /**
@@ -57,6 +58,14 @@ export function Ornament({
 
   const [du, dv, dw] = EXTENTS[archetype];
 
+  /*
+    §5.3's fallback reaches here too: an unparseable tint draws nothing rather
+    than an invented value. `Section` already gates on `tint !== null`, so this
+    is the narrower case of a value present but not a colour.
+  */
+  const faces = ornamentFacesFromTint(tint);
+  if (faces === null) return null;
+
   return (
     <svg
       data-ornament="solid"
@@ -97,22 +106,31 @@ export function Ornament({
         zIndex: -1,
       }}
     >
-      {/* Top face: the lightest of the three lightnesses. */}
+      {/*
+        **Three computed lightnesses, not three opacities (§9.2, §5.1).**
+
+        These were `fill={tint}` at opacity 1, 0.72 and 0.5 — the variant §5.1
+        forbids by name, and it does not produce what §9.2 asks for: opacity
+        composites each face toward PAPER, so the three sides converge on the
+        ground rather than stepping down in lightness, and the solid reads as
+        a flat grey shape. `ornamentFaces` steps the tint's own lightness
+        instead, holding one hue and one chroma across all three, which is
+        §5.3's reason a form reads as an object at all.
+      */}
+      {/* The lit face: the tint itself. */}
       <polygon
         points={face([p(0, 0, dw), p(du, 0, dw), p(du, dv, dw), p(0, dv, dw)])}
-        fill={tint}
+        fill={faces.top.fill}
       />
       {/* Left face. */}
       <polygon
         points={face([p(0, dv, 0), p(du, dv, 0), p(du, dv, dw), p(0, dv, dw)])}
-        fill={tint}
-        opacity="0.72"
+        fill={faces.left.fill}
       />
       {/* Right face, darkest — one value, three lightnesses. */}
       <polygon
         points={face([p(du, 0, 0), p(du, dv, 0), p(du, dv, dw), p(du, 0, dw)])}
-        fill={tint}
-        opacity="0.5"
+        fill={faces.right.fill}
       />
     </svg>
   );

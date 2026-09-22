@@ -83,6 +83,21 @@ function rgbToOklch({ r, g, b }: Rgb): Oklch {
 }
 
 /**
+ * The forward direction, exported for §9.2's ornament.
+ *
+ * The region's solids are given their tint as a hex string rather than the
+ * whole ladder, and they need its lightness to step down from it (§9.2: three
+ * lightnesses of the one tint value). Exporting the conversion is the
+ * alternative to threading a `RecordLadder` through every `Section`, and to a
+ * second copy of the OKLab matrices — the thing the inverse below already
+ * exists to prevent.
+ */
+export function hexToOklch(hex: string): Oklch | null {
+  const rgb = parseHex(hex);
+  return rgb === null ? null : rgbToOklch(rgb);
+}
+
+/**
  * Exported for the wall's measurements. The ladder's steps are `oklch(...)`
  * strings for CSS; anything comparing them to a stored hex — a contrast ratio,
  * a distance — needs them back in sRGB, and this is the one inverse rather than
