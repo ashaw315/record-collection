@@ -147,3 +147,11 @@ export function columnWidth(viewport: number): number {
 export function spanWidth(span: number, viewport: number): number {
   return span * columnWidth(viewport);
 }
+
+/**
+ * §26: the construction is drawn at its fitted size INSIDE the cell's 24px
+ * margin — forms and disc together in the inner box, 432 × 499 at 1440. The
+ * fit is the smaller of the two ratios (inner width over the frame's width,
+ * inner height over its height), so nothing spills and nothing is cropped.
+ */
+export const STILL_MARGIN = 24;

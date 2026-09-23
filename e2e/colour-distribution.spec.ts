@@ -203,6 +203,56 @@ test.describe('colour distribution (§5.5)', () => {
   }
 
   /**
+   * §26: the construction is drawn at its fitted size inside the cell's 24px
+   * margin, and every record's drawing lies inside its cell — the shared
+   * frame was sized to the worst one, so nothing spills. Measured on all
+   * three probe cases: the SVG sits 24 inside the still cell on every side,
+   * and every drawn face and the disc sit inside the SVG's box.
+   */
+  for (const which of CASES) {
+    test(`draws the construction inside the cell's 24px margin on the ${which} record`, async ({ page }) => {
+      await login(page);
+      await page.goto(`/wall/probe/page8a?case=${which}`);
+      await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
+
+      const fit = await page.evaluate(() => {
+        const cell = document.querySelector('[data-cell="still"]');
+        const svg = document.querySelector<SVGSVGElement>('[data-testid="construction-still"]');
+        if (cell === null || svg === null) return null;
+        const c = cell.getBoundingClientRect();
+        const s = svg.getBoundingClientRect();
+        /* Each drawn element's box on screen, from its own geometry. */
+        const drawn = Array.from(svg.querySelectorAll<SVGGraphicsElement>('polygon[data-face], circle[data-mark="disc"]')).map((el) => {
+          const b = el.getBoundingClientRect();
+          return { left: b.left, right: b.right, top: b.top, bottom: b.bottom };
+        });
+        return {
+          margins: { left: s.left - c.left, top: s.top - c.top, right: c.right - s.right, bottom: c.bottom - s.bottom },
+          svg: { left: s.left, right: s.right, top: s.top, bottom: s.bottom, width: s.width, height: s.height },
+          drawn,
+        };
+      });
+      expect(fit, 'the still renders').not.toBeNull();
+      if (fit === null) return;
+
+      const inner = 24;
+      expect(fit.margins.left, 'left margin').toBeCloseTo(inner, 0);
+      expect(fit.margins.top, 'top margin').toBeCloseTo(inner, 0);
+      /* The right margin includes the cell's 1px rule. */
+      expect(fit.margins.right, 'right margin').toBeGreaterThanOrEqual(inner);
+      expect(fit.margins.bottom, 'bottom margin').toBeCloseTo(inner, 0);
+
+      expect(fit.drawn.length, 'faces and a disc were measured').toBeGreaterThan(6);
+      for (const box of fit.drawn) {
+        expect(box.left, 'inside on the left').toBeGreaterThanOrEqual(fit.svg.left - 0.5);
+        expect(box.right, 'inside on the right').toBeLessThanOrEqual(fit.svg.right + 0.5);
+        expect(box.top, 'inside at the top').toBeGreaterThanOrEqual(fit.svg.top - 0.5);
+        expect(box.bottom, 'inside at the bottom').toBeLessThanOrEqual(fit.svg.bottom + 0.5);
+      }
+    });
+  }
+
+  /**
    * §5.3: the no-cover record's fallback now covers all eight marks including
    * the construction, so the one coverless record has specified behaviour
    * rather than falling outside the rule its own principle demands.

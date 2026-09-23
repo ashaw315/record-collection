@@ -11,7 +11,7 @@ import { recordLadder } from '@/lib/colour/record-ladder';
  * is mostly a gain, and the render's materiality is what makes it look
  * imported.
  *
- * **The frame never moves.** `viewBox` is `CONSTRUCTION_FRAME` on every record;
+ * **The frame never moves.** `viewBox` is §26's one shared frame on every record;
  * the forms move inside it. Fitting it per arrangement is the defect that made
  * six records look like one drawing.
  *

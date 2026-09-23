@@ -93,3 +93,103 @@ describe.each(TABLES)('the handoff indexes every numbered section of the $name t
     expect(unbuilt, 'indexed but in no build-order step').toEqual([]);
   });
 });
+
+/**
+ * **Assertions 6 and 7: the reader's note's withdrawal list is a
+ * RESTATEMENT, and this file's whole history is restatements going stale.**
+ *
+ * The note says what currently governs; each section says what it withdraws.
+ * Those are two lists of one fact, which is the shape that has failed this
+ * index three times. So they are checked against each other in both
+ * directions: every listed withdrawal must be marked in the section it
+ * happened to, and every marked withdrawal must be listed.
+ *
+ * The list is machine-readable on purpose — a `reader-note-withdrawals`
+ * comment of `[section, replaced-by, what]` entries — because the prose form
+ * cannot be checked without parsing English. **On its first run, 6 found §26
+ * retracting its 0.78 scale without ever saying so.**
+ *
+ * A section marks a withdrawal in its own text as "Withdrawn by §N",
+ * "Superseded by §N" or "Withdrawn within §N" — the third because §26
+ * withdraws a figure of its own, so the replacement is itself.
+ */
+describe('the reader’s note and the sections agree about what is withdrawn', () => {
+  const RECORD_TARGET = join(DESIGN, 'Record Detail 8a - build target.dc.html');
+  const present = () => existsSync(RECORD_TARGET) && existsSync(HANDOFF);
+
+  /** The note's list: [section, replaced-by, what]. */
+  const listed = (): Array<[string, string, string]> => {
+    /* `[\s\S]` rather than the `s` flag, which needs an es2018 target this tsconfig does not set. */
+    const comment = /<!--\s*reader-note-withdrawals\s*(\[[\s\S]*?\])\s*-->/.exec(text(RECORD_TARGET));
+    expect(comment, 'the reader’s note carries a machine-readable withdrawal list').not.toBeNull();
+    return JSON.parse(comment![1]) as Array<[string, string, string]>;
+  };
+
+  /**
+   * Each section's own text, keyed by its number.
+   *
+   * **Headings only, never SVG text.** The drawings carry cell labels in the
+   * same `N · ` shape — "1 · Cover", "1981 · Harvest" — so a pattern that
+   * reads stripped text splits the file at a picture's caption. Sliced on the
+   * uppercase heading paragraphs the file's own eyebrow signature marks.
+   */
+  const sections = (): Map<string, { heading: string; body: string }> => {
+    const raw = text(RECORD_TARGET).replace(/<svg[\s\S]*?<\/svg>/g, '');
+    const heading = /text-transform:uppercase;color:oklch\(0\.48 0\.012 60\)">(?:§)?(\d+(?:\.\d+)?) · [^<]*/g;
+    const marks = [...raw.matchAll(heading)].map((m) => ({ n: m[1], at: m.index!, end: m.index! + m[0].length }));
+    const out = new Map<string, { heading: string; body: string }>();
+    marks.forEach((mark, i) => {
+      out.set(mark.n, {
+        heading: raw.slice(mark.at, mark.end),
+        /*
+          **The body EXCLUDES the heading, and that is the whole assertion.**
+          Three headings carry the withdrawal in their own title — §13, §17,
+          §20 — so a slice that starts at the heading is satisfied by the
+          title while the section's prose says nothing. Staged: removing
+          §20's "Withdrawn by §22" from its text left the check green,
+          because its heading still read "(squeeze withdrawn by §22)". That
+          is the assertion testing one layer below its own name.
+        */
+        body: raw.slice(mark.end, i + 1 < marks.length ? marks[i + 1].at : undefined),
+      });
+    });
+    return out;
+  };
+
+  /** "Withdrawn by §N", "Superseded by §N", "Withdrawn within §N" — the forms the target uses. */
+  const MARK = /(?:withdrawn|superseded)\s+(?:by|within)\s+§(\d+(?:\.\d+)?)/gi;
+
+  it('marks every listed withdrawal in the section it happened to, citing its replacement', ({ skip }) => {
+    if (!present()) skip('docs/design is not on this checkout');
+    const bodies = sections();
+    const unmarked: string[] = [];
+    for (const [section, replacedBy, what] of listed()) {
+      const found = bodies.get(section);
+      if (found === undefined) {
+        unmarked.push(`§${section} (${what}): the note lists a section the target has no heading for`);
+        continue;
+      }
+      /* The section's own prose, not its title — see `sections`. */
+      const cited = [...found.body.matchAll(MARK)].map((m) => m[1]);
+      if (!cited.includes(replacedBy)) {
+        unmarked.push(`§${section} (${what}): the note says §${replacedBy} replaces it; the section cites ${cited.length === 0 ? 'nothing' : cited.map((c) => `§${c}`).join(', ')}`);
+      }
+    }
+    expect(unmarked, 'withdrawals the note lists that their own section does not mark').toEqual([]);
+  });
+
+  it('lists every withdrawal a section marks — the other direction, because either list can go stale', ({ skip }) => {
+    if (!present()) skip('docs/design is not on this checkout');
+    const entries = listed();
+    const unlisted: string[] = [];
+    for (const [section, { heading, body }] of sections()) {
+      /* Either place counts here: a heading that claims a withdrawal the note omits is the same staleness. */
+      for (const cited of new Set([...`${heading}${body}`.matchAll(MARK)].map((m) => m[1]))) {
+        if (!entries.some(([s, by]) => s === section && by === cited)) {
+          unlisted.push(`§${section} says it is withdrawn/superseded by §${cited}, and the reader’s note does not list it`);
+        }
+      }
+    }
+    expect(unlisted, 'withdrawals marked in a section that the note omits').toEqual([]);
+  });
+});

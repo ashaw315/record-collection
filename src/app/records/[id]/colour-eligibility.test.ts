@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { construction } from './construction';
 import { REAL_RECORD_IDS } from './real-records';
-import { BANDS, GRID_COLUMNS, IDENTITY_SPANS, NO_SCROLL_HEIGHT } from './band-geometry';
+import { BANDS, GRID_COLUMNS, IDENTITY_SPANS, NO_SCROLL_HEIGHT, STILL_MARGIN } from './band-geometry';
 
 /**
  * **§22: the colour lands on a form that can carry it.**
@@ -32,8 +32,14 @@ import { BANDS, GRID_COLUMNS, IDENTITY_SPANS, NO_SCROLL_HEIGHT } from './band-ge
  * the cell §2.1's rounding produced and §23 corrected — and a typed figure
  * here would have gone on measuring a cell the drawing no longer has.
  */
-const CELL_W = (1440 / GRID_COLUMNS) * IDENTITY_SPANS[1];
-const CELL_H = BANDS.identity;
+/*
+  §26: the construction is drawn inside the cell's 24px margin, so the box the
+  frame fits is the INNER one — 432 × 499 at 1440 — and the fit is the smaller
+  of the two ratios. The floor is measured at that scale, which is the scale
+  the page draws.
+*/
+const CELL_W = (1440 / GRID_COLUMNS) * IDENTITY_SPANS[1] - 2 * STILL_MARGIN;
+const CELL_H = BANDS.identity - 2 * STILL_MARGIN;
 const PAGE = 1440 * NO_SCROLL_HEIGHT;
 const FLOOR = 0.005;
 

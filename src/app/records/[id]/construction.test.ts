@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   ARCHETYPES,
   CONSTRUCTION_FRAME,
+  FRAME_PAD,
   FORM_COUNT,
   SIZE_BAND,
   construction,
@@ -55,57 +56,48 @@ describe('the projection is the wall’s, generalised (§1)', () => {
   });
 });
 
-describe('the frame is constant, and that was the whole finding (§4)', () => {
+describe('the frame is one box for every record (§4, §26)', () => {
   /**
-   * **The load-bearing assertion.** The probe's first version fitted the viewBox
-   * to each arrangement's bounding box and six records were nearly
-   * indistinguishable: fitting normalises every composition to the same
-   * rectangle and throws away the property that varies most. The generator was
-   * never the problem — the framing was discarding its output.
+   * §26: "the frame is one box for every record, sized to the union of
+   * (forms ∪ disc ∪ offset) across the shared extremes fixture (§27). So the
+   * offset shows, because the frame is not refitted per record, and no record
+   * spills, because the frame was sized to the worst one."
    *
-   * A normalisation applied to make things comparable removes the variation it
-   * was applied to preserve. Same shape as the averaging that cancelled the
-   * chroma it was sampling for.
+   * This replaces one frame PER SYMMETRY, a build choice the target never
+   * made: eight boxes were still "shared", but §26 says one, and the cost of
+   * one is what step 18 predicts and measures. Fitting per record remains
+   * the defect §17 names — a normalisation that discards the variation it
+   * was applied to preserve.
    */
-  /**
-   * **One frame per SYMMETRY, not one frame overall — and that is the fix
-   * rather than a loosening.**
-   *
-   * A single frame unioned over every archetype-by-slot combination is the
-   * worst case over the SPACE of arrangements, so every arrangement that
-   * actually occurs under-fills it by construction. The frames are now fitted
-   * to the seventeen real arrangements drawn under each orientation.
-   *
-   * The property that mattered survives: records sharing a symmetry share a
-   * frame exactly, so the forms still move inside a fixed box rather than the
-   * box moving to them. What is gone is the pretence that eight different
-   * orientations need the same rectangle.
-   */
-  it('gives records sharing a symmetry the identical viewBox', () => {
-    const byFrame = new Map<string, string[]>();
-    for (const id of REAL_IDS) {
-      const frame = construction(id).viewBox;
-      byFrame.set(frame, [...(byFrame.get(frame) ?? []), id]);
-    }
-
-    /* Fewer frames than records: records really do share them. */
-    expect(byFrame.size, 'frames are shared, not per-record').toBeLessThan(REAL_IDS.length);
-    /* And no more than one per symmetry. */
-    expect(byFrame.size, 'at most one frame per symmetry').toBeLessThanOrEqual(8);
+  it('gives every record the identical viewBox', () => {
+    const frames = new Set(REAL_IDS.map((id) => construction(id).viewBox));
+    expect([...frames], 'one frame, not one per symmetry and not one per record').toHaveLength(1);
   });
 
-  it('never fits a frame to a single record', () => {
-    /*
-      The defect this replaced: a frame fitted per arrangement normalises away
-      the variation it was applied to preserve, and six records looked like one
-      drawing. A frame shared by several records cannot be doing that.
-    */
-    const frames = REAL_IDS.map((id) => construction(id).viewBox);
-    const shared = frames.filter((f) => frames.filter((g) => g === f).length > 1);
-
-    expect(shared.length, 'most records share their frame with another').toBeGreaterThan(
-      REAL_IDS.length / 2,
-    );
+  it('is the union of forms and disc across the fixture, plus the pad — every edge is reached', () => {
+    const [fx, fy, fw, fh] = construction(REAL_IDS[0]).viewBox.split(' ').map(Number);
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    for (const id of REAL_IDS) {
+      const { forms, disc } = construction(id);
+      for (const [x, y] of forms.flatMap((f) => f.faces.flatMap((face) => face.points))) {
+        minX = Math.min(minX, x);
+        maxX = Math.max(maxX, x);
+        minY = Math.min(minY, y);
+        maxY = Math.max(maxY, y);
+      }
+      minX = Math.min(minX, disc.cx - disc.r);
+      maxX = Math.max(maxX, disc.cx + disc.r);
+      minY = Math.min(minY, disc.cy - disc.r);
+      maxY = Math.max(maxY, disc.cy + disc.r);
+    }
+    /* The frame is the union and nothing looser: each side sits exactly one pad off the extreme. */
+    expect(fx, 'left').toBeCloseTo(minX - FRAME_PAD, 0);
+    expect(fy, 'top').toBeCloseTo(minY - FRAME_PAD, 0);
+    expect(fx + fw, 'right').toBeCloseTo(maxX + FRAME_PAD, 0);
+    expect(fy + fh, 'bottom').toBeCloseTo(maxY + FRAME_PAD, 0);
   });
 
   it('does not fit the frame to the forms', () => {
@@ -151,6 +143,23 @@ describe('the forms stay inside the constant frame', () => {
         expect(y, `${id}: y ${y.toFixed(1)}`).toBeGreaterThanOrEqual(fy);
         expect(y, `${id}: y ${y.toFixed(1)}`).toBeLessThanOrEqual(fy + fh);
       }
+    }
+  });
+
+  it('keeps every record’s drawing inside the ONE shared frame (§26)', () => {
+    for (const id of REAL_IDS) {
+      const { forms, disc, viewBox } = construction(id);
+      const [fx, fy, fw, fh] = viewBox.split(' ').map(Number);
+      for (const [x, y] of forms.flatMap((f) => f.faces.flatMap((face) => face.points))) {
+        expect(x, `${id}: x ${x.toFixed(1)}`).toBeGreaterThanOrEqual(fx);
+        expect(x, `${id}: x ${x.toFixed(1)}`).toBeLessThanOrEqual(fx + fw);
+        expect(y, `${id}: y ${y.toFixed(1)}`).toBeGreaterThanOrEqual(fy);
+        expect(y, `${id}: y ${y.toFixed(1)}`).toBeLessThanOrEqual(fy + fh);
+      }
+      expect(disc.cx - disc.r, `${id}: disc left`).toBeGreaterThanOrEqual(fx);
+      expect(disc.cx + disc.r, `${id}: disc right`).toBeLessThanOrEqual(fx + fw);
+      expect(disc.cy - disc.r, `${id}: disc top`).toBeGreaterThanOrEqual(fy);
+      expect(disc.cy + disc.r, `${id}: disc bottom`).toBeLessThanOrEqual(fy + fh);
     }
   });
 

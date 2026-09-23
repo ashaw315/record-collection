@@ -1,4 +1,4 @@
-import { BANDS, CONTENT_MEASURE, GRID_COLUMN, GRID_COLUMNS, GRID_FORK, IDENTITY_SPANS, LOWER_SPANS } from './band-geometry';
+import { BANDS, CONTENT_MEASURE, GRID_COLUMN, GRID_COLUMNS, GRID_FORK, IDENTITY_SPANS, LOWER_SPANS, STILL_MARGIN } from './band-geometry';
 import { CELL_PADDING } from './extended-grid';
 import { BAR_BOTTOM, BLOCK_BOTTOM, COVER, COVER_COLUMN, COVER_PAD } from './cover-geometry';
 import { ConstructionStill } from './ConstructionStill';
@@ -329,7 +329,17 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
         <div
           data-cell="still"
           className="relative h-full min-h-0 overflow-hidden"
-          style={{ gridColumn: `span ${IDENTITY_SPANS[1]}`, borderRight: `1px solid ${RULE}` }}
+          style={{
+            gridColumn: `span ${IDENTITY_SPANS[1]}`,
+            borderRight: `1px solid ${RULE}`,
+            /*
+              §26: forms and disc together at the build's fit, INSIDE the
+              cell's 24px margin — the inner box is 432 × 499, and the SVG
+              fills that box, so `meet` fits the shared frame to it by the
+              smaller of the two ratios.
+            */
+            padding: STILL_MARGIN,
+          }}
         >
           {/*
             The disc is drawn INSIDE the construction's own SVG (it is one of

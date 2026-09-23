@@ -23,6 +23,7 @@
  */
 
 import type { MarkStep } from './mark-boxes';
+import { REAL_RECORD_IDS } from './real-records';
 
 /** The wall's constants (`src/app/wall/geometry.ts`), same angle. */
 /* The wall's projection, by import — one definition, not a copy. */
@@ -58,94 +59,61 @@ export const SIZE_BAND = 6;
  */
 export const CONSTRUCTION_FRAME = '-150 -170 300 340';
 
-/**
- * **One frame per symmetry, computed from the arrangements that actually
- * occur.**
- *
- * A single frame unioned over every archetype-by-slot combination is the worst
- * case over the SPACE of possible arrangements, so every realised arrangement
- * under-fills it by construction — the forms sat in the middle of a box sized
- * for a composition no record renders.
- *
- * Third time this mechanism has appeared. The fitted viewBox normalised over a
- * whole arrangement when the signal was its size; the averaged mean over a
- * whole cover when the signal was its hue; and here a frame unioned over a
- * whole space when the signal is which arrangements exist. Each time the
- * operation was defined over a superset of the thing it was measuring.
- *
- * So the frame is still CONSTANT PER SYMMETRY — the property that made six
- * records look like six rather than one — but it is fitted to the seventeen
- * real arrangements that use that orientation rather than to every arrangement
- * that could.
- */
-const SYMMETRY_FRAMES = new Map<number, string>();
+/** The margin the shared frame keeps around its extreme, so the outermost form has air and the shadows have room. */
+export const FRAME_PAD = 16;
 
 /**
- * Every record id the collection holds, so the frames are fitted to
- * arrangements that exist rather than to arrangements that could.
+ * **§26: one frame for every record — the union of (forms ∪ disc) across the
+ * shared extremes fixture (§27), padded.**
  *
- * Listed rather than queried: the generator is pure and synchronous, and a
- * frame that depended on a database read would make a record's construction
- * depend on when it was drawn.
- */
-const COLLECTION_IDS: readonly string[] = [
-  'e73e1de1-3686-4a81-8544-ca2300e187bb',
-  'd7047c62-149e-42fa-8cda-fac3f90c47cc',
-  '158a3163-6a56-4673-8f88-27e7b2aec724',
-  'c61c5919-8f50-4782-8e04-419fb3d2b148',
-  'a31591e7-2e28-42e7-84d5-2a1f96ad31fd',
-  'b9a9a9db-4bf5-42e6-b751-0eba2dfe8002',
-  '30504952-8d43-4c2e-b687-b89558371df5',
-  '78da2ee9-f7c7-40ea-8149-269454437ef6',
-  '372aba39-59ad-46c8-b76b-f33ecae75c98',
-  '464979c3-aaa2-43c5-afd4-8dc4ee2e98c6',
-  '7d35194b-5a02-4e31-a568-d95a9b32b0cd',
-  'b4abf39a-df33-4a9e-b65c-64d3d0a39b78',
-  '4a1e2b7c-0000-4000-8000-000000000001',
-  '4a1e2b7c-0000-4000-8000-000000000002',
-  '4a1e2b7c-0000-4000-8000-000000000003',
-  '4a1e2b7c-0000-4000-8000-000000000004',
-  '4a1e2b7c-0000-4000-8000-000000000005',
-];
-
-/**
- * The frame for one symmetry: the union of every real arrangement drawn AS IF
- * it used that orientation, padded so nothing touches the edge.
+ * The frame is constant, and that was the whole finding (§4): fitting per
+ * arrangement normalises away the variation it was applied to preserve, and
+ * six records looked like one drawing. §17 keeps the per-record offset within
+ * the shared frame as the signal. §26 states the box: one, sized to the worst
+ * record, so the offset shows because nothing is refitted and no record
+ * spills because the frame was sized to the one that reaches furthest.
  *
- * Computed once per symmetry and cached. `formsFor` is the generator's body
- * without the frame, so this does not recurse.
+ * This replaces one frame PER SYMMETRY — a build choice ("fitted to the real
+ * arrangements that use that orientation") the target never made. Its cost
+ * is what step 18 predicts before building and measures after: the frame is
+ * strictly larger than any one record, so every record draws below its own
+ * best fit by the square of (frame width ÷ its own width).
+ *
+ * Over the fixture rather than queried: the generator is pure and
+ * synchronous, and a frame that depended on a database read would make a
+ * record's construction depend on when it was drawn. `formsFor` and
+ * `discFor` are the generator's body without the frame, so this does not
+ * recurse.
  */
-function frameFor(symmetryIndex: number): string {
-  const cached = SYMMETRY_FRAMES.get(symmetryIndex);
-  if (cached !== undefined) return cached;
+let SHARED_FRAME: string | null = null;
+function sharedFrame(): string {
+  if (SHARED_FRAME !== null) return SHARED_FRAME;
 
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;
   let maxY = -Infinity;
-
-  for (const id of COLLECTION_IDS) {
-    for (const point of formsFor(id, symmetryIndex).forms.flatMap((form) =>
-      form.faces.flatMap((face) => face.points),
-    )) {
+  for (const id of REAL_RECORD_IDS) {
+    for (const point of formsFor(id).forms.flatMap((form) => form.faces.flatMap((face) => face.points))) {
       minX = Math.min(minX, point[0]);
       maxX = Math.max(maxX, point[0]);
       minY = Math.min(minY, point[1]);
       maxY = Math.max(maxY, point[1]);
     }
+    const disc = discFor(id);
+    minX = Math.min(minX, disc.cx - disc.r);
+    maxX = Math.max(maxX, disc.cx + disc.r);
+    minY = Math.min(minY, disc.cy - disc.r);
+    maxY = Math.max(maxY, disc.cy + disc.r);
   }
 
-  /* A margin so the outermost form has air, and the shadows have room. */
-  const pad = 16;
-  const frame = [
-    (minX - pad).toFixed(1),
-    (minY - pad).toFixed(1),
-    (maxX - minX + pad * 2).toFixed(1),
-    (maxY - minY + pad * 2).toFixed(1),
+  SHARED_FRAME = [
+    (minX - FRAME_PAD).toFixed(1),
+    (minY - FRAME_PAD).toFixed(1),
+    (maxX - minX + FRAME_PAD * 2).toFixed(1),
+    (maxY - minY + FRAME_PAD * 2).toFixed(1),
   ].join(' ');
-
-  SYMMETRY_FRAMES.set(symmetryIndex, frame);
-  return frame;
+  return SHARED_FRAME;
 }
 
 /** Each archetype's proportions along u, v and w, before its extent is applied. */
@@ -691,15 +659,13 @@ function formsFor(recordId: string, forceSymmetry?: number): { forms: Form[]; sy
   return { forms, symmetryIndex };
 }
 
-export function construction(recordId: string): Construction {
-  const { forms, symmetryIndex } = formsFor(recordId);
-
-  /*
-    The disc's own draws continue the same stream the forms used, so it is
-    re-seeded and fast-forwarded rather than replayed — replaying meant
-    duplicating the draw order in two places, which is two things that must
-    agree.
-  */
+/**
+ * The disc's own draws continue the same stream the forms used, so it is
+ * re-seeded and fast-forwarded rather than replayed — replaying meant
+ * duplicating the draw order in two places, which is two things that must
+ * agree.
+ */
+function discFor(recordId: string): Construction['disc'] {
   const next = seedFrom(recordId);
   shuffled(ARCHETYPES, next);
   next();
@@ -707,21 +673,22 @@ export function construction(recordId: string): Construction {
   for (let i = 0; i < ARCHETYPES.length * 3; i += 1) next();
 
   return {
-    viewBox: frameFor(symmetryIndex),
-    forms,
-    disc: {
-      cx: (next() * 2 - 1) * 30,
-      cy: (next() * 2 - 1) * 30,
-      /*
-        **0.15–0.19 of the frame's smaller dimension, down from 0.22–0.28.** The
-        disc read as the subject because it was the largest area on the tile —
-        an area problem with an area fix. Measured on this generator's sheet, at
-        17% the existing spread already crosses it (3 to 5 of 6 forms beyond
-        51px on every record), so the edge-breaks come for nothing rather than
-        costing the frame's margins.
-      */
-      r: (0.15 + next() * 0.04) * 300,
-      step: 'tint',
-    },
+    cx: (next() * 2 - 1) * 30,
+    cy: (next() * 2 - 1) * 30,
+    /*
+      **0.15–0.19 of the frame's smaller dimension, down from 0.22–0.28.** The
+      disc read as the subject because it was the largest area on the tile —
+      an area problem with an area fix. Measured on this generator's sheet, at
+      17% the existing spread already crosses it (3 to 5 of 6 forms beyond
+      51px on every record), so the edge-breaks come for nothing rather than
+      costing the frame's margins.
+    */
+    r: (0.15 + next() * 0.04) * 300,
+    step: 'tint',
   };
+}
+
+export function construction(recordId: string): Construction {
+  const { forms } = formsFor(recordId);
+  return { viewBox: sharedFrame(), forms, disc: discFor(recordId) };
 }
