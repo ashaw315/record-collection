@@ -53,68 +53,36 @@ export const FORM_COUNT = ARCHETYPES.length;
 export const SIZE_BAND = 6;
 
 /**
- * The ground plane's projected envelope — identical on every record.
+ * **§31: the frame is a STATED constant, not a result.**
  *
- * This is the constant frame. The forms move inside it; it never moves to them.
+ * It is the union of (forms ∪ disc) measured across the collection in step
+ * 18 — `-139.5932 -186.0000 294.7735 313.6029` — with its origin floored and
+ * its extent rounded up to the next whole unit. §31: "the rounding is the
+ * tolerance, not slack. At full precision the widest current record would fit
+ * by exactly zero, which makes its fit an equality: a coincidence, not a
+ * margin (§W.18)."
+ *
+ * **Stated rather than computed, because a computed frame is a mutable input
+ * to every drawing.** A frame fitted to the collection's extremes changes
+ * when Adam buys a record, and through §22's guard that can change an
+ * existing record's colour placement or its arrangement. §5.1 forbids feeding
+ * the drawing anything that changes. With the constant, a record's drawing
+ * depends only on its id and on numbers in this file.
+ *
+ * The cost of the rounding, measured: 0.41% of width, against §31's estimate
+ * of at most 1 ÷ 432 = 0.23%. The extra is the origin flooring as well as the
+ * extent rounding up, which grows the box on both sides of each axis.
  */
-export const CONSTRUCTION_FRAME = '-150 -170 300 340';
+export const CONSTRUCTION_FRAME = '-140 -186 296 314';
+
+/** §31: the hash advances at most this many times before the fallbacks are used. */
+export const HASH_ADVANCE_CAP = 32;
+
+/** An id reserved for testing the exhausted-hash fallback, which no real id reaches. */
+export const EXHAUSTED_ID = 'exhausted-arrangement-fixture';
 
 /** The margin the shared frame keeps around its extreme, so the outermost form has air and the shadows have room. */
 export const FRAME_PAD = 16;
-
-/**
- * **§26: one frame for every record — the union of (forms ∪ disc) across the
- * shared extremes fixture (§27), padded.**
- *
- * The frame is constant, and that was the whole finding (§4): fitting per
- * arrangement normalises away the variation it was applied to preserve, and
- * six records looked like one drawing. §17 keeps the per-record offset within
- * the shared frame as the signal. §26 states the box: one, sized to the worst
- * record, so the offset shows because nothing is refitted and no record
- * spills because the frame was sized to the one that reaches furthest.
- *
- * This replaces one frame PER SYMMETRY — a build choice ("fitted to the real
- * arrangements that use that orientation") the target never made. Its cost
- * is what step 18 predicts before building and measures after: the frame is
- * strictly larger than any one record, so every record draws below its own
- * best fit by the square of (frame width ÷ its own width).
- *
- * Over the fixture rather than queried: the generator is pure and
- * synchronous, and a frame that depended on a database read would make a
- * record's construction depend on when it was drawn. `formsFor` and
- * `discFor` are the generator's body without the frame, so this does not
- * recurse.
- */
-let SHARED_FRAME: string | null = null;
-function sharedFrame(): string {
-  if (SHARED_FRAME !== null) return SHARED_FRAME;
-
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  for (const id of REAL_RECORD_IDS) {
-    for (const point of formsFor(id).forms.flatMap((form) => form.faces.flatMap((face) => face.points))) {
-      minX = Math.min(minX, point[0]);
-      maxX = Math.max(maxX, point[0]);
-      minY = Math.min(minY, point[1]);
-      maxY = Math.max(maxY, point[1]);
-    }
-    const disc = discFor(id);
-    minX = Math.min(minX, disc.cx - disc.r);
-    maxX = Math.max(maxX, disc.cx + disc.r);
-    minY = Math.min(minY, disc.cy - disc.r);
-    maxY = Math.max(maxY, disc.cy + disc.r);
-  }
-
-  SHARED_FRAME = [
-    (minX - FRAME_PAD).toFixed(1),
-    (minY - FRAME_PAD).toFixed(1),
-    (maxX - minX + FRAME_PAD * 2).toFixed(1),
-    (maxY - minY + FRAME_PAD * 2).toFixed(1),
-  ].join(' ');
-  return SHARED_FRAME;
-}
 
 /** Each archetype's proportions along u, v and w, before its extent is applied. */
 const SHAPE: Record<Archetype, readonly [number, number, number]> = {
@@ -434,7 +402,11 @@ function boxFaces(
  * Split out of `construction` so `frameFor` can ask "what would every record
  * look like under symmetry N" without recursing into the frame it is computing.
  */
-function formsFor(recordId: string, forceSymmetry?: number): { forms: Form[]; symmetryIndex: number } {
+function formsFor(
+  recordId: string,
+  forceSymmetry?: number,
+  forceQuiet?: boolean,
+): { forms: Form[]; symmetryIndex: number; quiet: boolean } {
   const next = seedFrom(recordId);
 
   /* Which archetype takes which slot — one of each, never a random bag. */
@@ -495,7 +467,19 @@ function formsFor(recordId: string, forceSymmetry?: number): { forms: Form[]; sy
     asserts it, so this falls back rather than handling it silently — taking
     the hash's own order, which keeps the result deterministic.
   */
-  const facesCarryColour = (eligible.length >= 2 ? eligible : ordered).slice(0, 2);
+  /*
+    §22 + §31: an arrangement with no eligible pair is illegal, and §31 rules
+    what happens when the hash cannot escape it — **the record renders QUIET,
+    in greys with no base face**, which is the state §5.2 already draws for a
+    record whose cover gives no usable colour. The reader sees something the
+    collection contains rather than a blank cell.
+
+    The build used to fall back to the hash's order and colour an INELIGIBLE
+    form, which is §5.5's floor violated rather than §22's guard working, and
+    nothing on the page said so.
+  */
+  const quiet = forceQuiet === true || eligible.length < 2;
+  const facesCarryColour = quiet ? [] : eligible.slice(0, 2);
 
   const forms: Form[] = order.map((archetype, index) => {
     const [su, sv, sw] = SHAPE[archetype];
@@ -656,7 +640,7 @@ function formsFor(recordId: string, forceSymmetry?: number): { forms: Form[]; sy
   /* Painter's sort: near forms last. */
   forms.sort((a, b) => a.depth - b.depth);
 
-  return { forms, symmetryIndex };
+  return { forms, symmetryIndex, quiet };
 }
 
 /**
@@ -688,7 +672,75 @@ function discFor(recordId: string): Construction['disc'] {
   };
 }
 
-export function construction(recordId: string): Construction {
-  const { forms } = formsFor(recordId);
-  return { viewBox: sharedFrame(), forms, disc: discFor(recordId) };
+const [FRAME_LEFT, FRAME_TOP, FRAME_WIDTH, FRAME_HEIGHT] = CONSTRUCTION_FRAME.split(' ').map(Number);
+
+/** Whether a drawing lies inside §31's stated frame. */
+function fitsFrame(forms: readonly Form[], disc: Construction['disc']): boolean {
+  for (const [x, y] of forms.flatMap((f) => f.faces.flatMap((face) => face.points))) {
+    if (x < FRAME_LEFT || x > FRAME_LEFT + FRAME_WIDTH) return false;
+    if (y < FRAME_TOP || y > FRAME_TOP + FRAME_HEIGHT) return false;
+  }
+  if (disc.cx - disc.r < FRAME_LEFT || disc.cx + disc.r > FRAME_LEFT + FRAME_WIDTH) return false;
+  if (disc.cy - disc.r < FRAME_TOP || disc.cy + disc.r > FRAME_TOP + FRAME_HEIGHT) return false;
+  return true;
+}
+
+/** Scale a drawing about the frame's centre until it fits — §31's fallback when no arrangement does. */
+function scaledToFitFrame(forms: readonly Form[], disc: Construction['disc']): { forms: Form[]; disc: Construction['disc'] } {
+  const cx = FRAME_LEFT + FRAME_WIDTH / 2;
+  const cy = FRAME_TOP + FRAME_HEIGHT / 2;
+  const points = [...forms.flatMap((f) => f.faces.flatMap((face) => face.points)), [disc.cx - disc.r, disc.cy - disc.r] as const, [disc.cx + disc.r, disc.cy + disc.r] as const];
+  let scale = 1;
+  for (const [x, y] of points) {
+    const dx = Math.abs(x - cx);
+    const dy = Math.abs(y - cy);
+    if (dx > 0) scale = Math.min(scale, FRAME_WIDTH / 2 / dx);
+    if (dy > 0) scale = Math.min(scale, FRAME_HEIGHT / 2 / dy);
+  }
+  const at = (x: number, y: number) => [cx + (x - cx) * scale, cy + (y - cy) * scale] as const;
+  return {
+    forms: forms.map((form) => ({
+      ...form,
+      faces: form.faces.map((face) => ({ ...face, points: face.points.map(([x, y]) => at(x, y)) })),
+    })),
+    disc: { ...disc, ...(([x, y]) => ({ cx: x, cy: y }))(at(disc.cx, disc.cy)), r: disc.r * scale },
+  };
+}
+
+/**
+ * §31: an arrangement that does not fit the stated frame is illegal, so the
+ * hash moves to that record's next one — the same mechanism §22 uses for
+ * colour eligibility.
+ *
+ * `forceExhausted` is for the test that constructs the fallback §31 rules but
+ * no real id reaches: §31 requires it built, and waiting for a record that
+ * exhausts 32 arrangements is waiting for a case the collection may never
+ * produce.
+ */
+export function constructionWithin(
+  recordId: string,
+  options: { forceExhausted?: boolean; forceQuiet?: boolean } = {},
+): Construction & { advances: number; scaledToFit: boolean; quiet: boolean } {
+  for (let advance = 0; advance < HASH_ADVANCE_CAP; advance += 1) {
+    if (options.forceExhausted === true) break;
+    const seed = advance === 0 ? recordId : `${recordId}#${advance}`;
+    const { forms, quiet } = formsFor(seed, undefined, options.forceQuiet);
+    const disc = discFor(seed);
+    if (fitsFrame(forms, disc)) {
+      return { viewBox: CONSTRUCTION_FRAME, forms, disc, advances: advance, scaledToFit: false, quiet };
+    }
+  }
+
+  /*
+    §31: "If no arrangement fits, the id's first arrangement is drawn scaled
+    down just enough to fit. Only that record's scale is lower, and it depends
+    only on its id."
+  */
+  const { forms, quiet } = formsFor(recordId, undefined, options.forceQuiet);
+  const fitted = scaledToFitFrame(forms, discFor(recordId));
+  return { viewBox: CONSTRUCTION_FRAME, forms: fitted.forms, disc: fitted.disc, advances: HASH_ADVANCE_CAP, scaledToFit: true, quiet };
+}
+
+export function construction(recordId: string): Construction & { advances: number; scaledToFit: boolean; quiet: boolean } {
+  return constructionWithin(recordId);
 }

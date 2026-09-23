@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { BANDS, GRID_FORK, IDENTITY_SPANS } from '../src/app/records/[id]/band-geometry';
 import { COVER, COVER_PAD, COVER_GAP, COVER_COLUMN, BAR_BOTTOM, BLOCK_BOTTOM } from '../src/app/records/[id]/cover-geometry';
+import { CONSTRUCTION_FRAME } from '../src/app/records/[id]/construction';
 import { WORST } from '../src/app/records/[id]/identity-extremes';
 import { seedExtreme } from './identity-extremes';
 
@@ -168,10 +169,17 @@ test('§32: the FRAME fills the cell, which is constant against constant', async
     };
   });
 
-  /* The two constants, read off the page rather than retyped. */
+  /*
+    The two constants, read off the page rather than retyped.
+
+    **§31: "fit is asserted at render as well as in the measuring pass,
+    because §27's fixture path and the render path could differ by a rounding,
+    and the point of §31 is a constant both agree on."** So the viewBox the
+    browser received is compared with the constant the generator states, and
+    the unit tests compare that constant with the measured union.
+  */
+  expect(drawn.viewBox, 'the page draws §31’s stated frame').toBe(CONSTRUCTION_FRAME);
   const [, , frameW, frameH] = (drawn.viewBox ?? '0 0 1 1').split(' ').map(Number);
-  expect(frameW, 'the frame is one box for every record (§31)').toBeCloseTo(294.8, 1);
-  expect(frameH).toBeCloseTo(313.6, 1);
   expect(Math.round(drawn.innerWidth), 'the cell’s inner box after §26’s 24px margin').toBe(432);
   /*
     **498 where §32 says 499: the band's bottom hairline sits inside the
@@ -190,7 +198,14 @@ test('§32: the FRAME fills the cell, which is constant against constant', async
   */
   const scale = Math.min(drawn.innerWidth / frameW, drawn.innerHeight / frameH);
   const drawnHeight = frameH * scale;
-  expect(drawnHeight, 'the frame draws 459.6 tall').toBeCloseTo(459.6, 0);
+  /*
+    §32 computes 459.6 from the union 294.8 × 313.6; §31 states the frame
+    rounded up to 296 × 314, which draws 458.0. The rounding is §31's
+    tolerance — it costs every record the same 0.41% of scale — so the figure
+    is asserted against the stated constant rather than against §32's
+    pre-rounding arithmetic.
+  */
+  expect(drawnHeight, 'the frame draws 458 tall at §31’s rounded constant').toBeCloseTo(458, 0);
 
   /*
     **§32's 92% is of the INNER box, not of the cell, and the section labels
