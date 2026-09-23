@@ -43,6 +43,7 @@ const GOVERNED = [
   */
   'e2e/record-page-28.spec.ts',
   'e2e/flat-sizing-29.spec.ts',
+  'e2e/capture/built-page.capture.ts',
   'e2e/capture/colour-budget.capture.ts',
   'e2e/capture/viewport-widths.capture.ts',
   'e2e/record-detail.spec.ts',
