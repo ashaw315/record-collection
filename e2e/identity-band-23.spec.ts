@@ -112,21 +112,13 @@ test('§23: the cover cell — 26 + 414 + 10 + 30, bar above the block in one co
   expect(m.bar!.t, 'the bar starts with the cover').toBe(COVER_PAD);
   expect(m.bar!.b, 'the bar ends at 398').toBe(BAR_BOTTOM);
   expect(m.block!.t, 'the block starts where the bar ends').toBe(BAR_BOTTOM);
-  expect(m.block!.b, 'the block ends at 544').toBe(BLOCK_BOTTOM);
+  expect(m.block!.b, 'the block ends at the band’s foot').toBe(BLOCK_BOTTOM);
 
   /* Paper below the cover: the cover ends well above the band, and nothing else is drawn in that width. */
   expect(m.cover!.b, 'the cover ends inside the band, leaving paper below').toBeLessThan(m.cellH - 60);
 
-  /*
-    **The open input, measured rather than resolved.** 26 → 544 sits inside
-    547, so the ruled column does not overflow; what does not close is the
-    bottom padding, 3 against the top's 26. Design has been asked whether the
-    band is 547 or 570. This records the asymmetry so it is visible in the
-    run, and asserts only that the block is INSIDE the band — a crop would be
-    the one outcome worse than either answer.
-  */
-  console.log(`§23 open input: block bottom ${m.block!.b} in a ${m.cellH} band — bottom padding ${m.cellH - m.block!.b} against top ${COVER_PAD}`);
-  expect(m.block!.b, 'the block is not cropped by the band').toBeLessThanOrEqual(m.cellH);
+  /* §23 as tracked: the 26 applies to the column's top only, and the block runs to the foot. */
+  expect(m.block!.b, 'the block reaches the band’s foot, not 3px short of it').toBe(m.cellH);
 });
 
 test('§23: the construction fills its cell’s height, which is what the correction was for', async ({ page }) => {
