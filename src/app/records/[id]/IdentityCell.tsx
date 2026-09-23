@@ -96,39 +96,36 @@ export function IdentityCell({
     <div
       data-cell="identity"
       className="grid h-full overflow-hidden p-[18px]"
-      /*
-        **Three rows now, and the first is `auto` (§13).** The eyebrow is the
-        frame's top line and it is not part of the type's measure, so it sits
-        OUTSIDE `data-track="content"` — otherwise Edit lands at the 412 measure
-        rather than at the cell's right edge, 32px short of it.
-
-        `auto` for the line, `1fr` for the content, and §4.2's reserve
-        unchanged at the foot: the added row takes the line's own height and
-        the ornament track still yields as the title grows.
-      */
-      style={{ gridTemplateRows: 'auto 1fr minmax(0, 140px)' }}
+      /* Two rows again (§27): the content, and §4.2's reserve that yields to it. */
+      style={{ gridTemplateRows: '1fr minmax(0, 140px)' }}
     >
-      {/*
-        **The eyebrow line: Collection, alone (§8.1, §24).**
-
-        §8.1 rules the COLLECTION eyebrow the identity band's LABEL — not a
-        link, which is why it is set in the label system rather than as a
-        control. §13 had put Edit at its right end; §24 moved both verbs to the
-        nav's `actions` slot and returned this line to Collection alone. It
-        keeps its own row because it is the frame's top line rather than part
-        of the type's measure, so it sits outside `data-track="content"`.
-      */}
-      <div data-row="eyebrow" className="flex items-baseline">
-        <div data-field="eyebrow" className={LABEL} style={{ color: LABEL_INK }}>
-          Collection
-        </div>
-      </div>
       <div data-track="content" className="flex flex-col justify-between">
       {/*
         The title block flows from the TOP. It grows downward into the gap and
         cannot displace the pressing block, which is anchored below.
       */}
       <div data-block="title" className="w-[412px] max-w-full">
+        {/*
+          **§27: COLLECTION is in the content flow, and the eyebrow grid row is
+          deleted.** §8.1 rules the eyebrow the band's label, not a link. §13
+          lifted it into a grid row of its own so Edit could share its line;
+          §24 moved Edit to the nav and the row stayed behind, 16.5px that
+          §4.2's give order never saw because it sat outside the track the
+          collapse measures. On the collection's real five-line title that was
+          2.5px of overflow and a cut pressing block. No give-order term — a
+          new term would be a second mechanism patching the first.
+
+          **Inside the title block, not beside it.** The track is
+          `justify-between` with two children, title block and pressing block,
+          and that pairing is the structural guard: the title flows from the
+          top and the pressing anchors to the floor. A third child shares the
+          slack, and the first build of this put the label there — on a
+          one-line title the slack opened 81px between COLLECTION and the
+          title. Here it is the top of the block that flows from the top.
+        */}
+        <div data-field="eyebrow" className={LABEL} style={{ color: LABEL_INK }}>
+          Collection
+        </div>
         <h1
           data-field="title"
           className={TITLE}

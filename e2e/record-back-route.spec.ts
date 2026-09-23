@@ -43,11 +43,8 @@ test('the collection is reached through the chrome, and nowhere else (§8.1)', a
 
   await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
   await page.goto(`/records/${id}`);
-  /*
-    §13 deleted the controls band, so the page is settled when the record's own
-    frame is drawn — the eyebrow line, which is the frame's first row.
-  */
-  await expect(page.locator('[data-row="eyebrow"]')).toBeVisible();
+  /* The page is settled when the record's own frame is drawn — the COLLECTION label at its head. */
+  await expect(page.locator('[data-field="eyebrow"]')).toBeVisible();
 
   /* The deleted control: no link anywhere on the page carries the back arrow. */
   const arrowed = await page.evaluate(() =>

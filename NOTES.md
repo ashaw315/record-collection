@@ -31006,12 +31006,27 @@ A broken grid on `/records/[id]` was reported from a screenshot and bisected acr
 | ornament track | 1 |
 | sum | 512.5 |
 
-2.5px over, and `overflow-hidden` cuts it. The row exists because §13 put Edit on it and claimed "costs no height" — true of Edit, not of the row — and §24 moved Edit away without removing the row. Expect the fix to be a deletion or a band-height change, not a fifth give-order term; none is being built meanwhile. **This and §23's 544-in-547 padding are one shortfall**: a 570 band clears both, and when Design names the delta it should land as one change, with the floor re-measured after it as step 14 requires. `overflow-hidden` then cuts the pressing block, which is a fact rendered shorter (§6). The second test's collapse "closes the shortfall" by 15px where the run needs 13, so it collapses and still overflows.
+2.5px over, and `overflow-hidden` cuts it. The row exists because §13 put Edit on it and claimed "costs no height" — true of Edit, not of the row — and §24 moved Edit away without removing the row. **§27 rules the deletion**: the row goes and COLLECTION returns to the content flow; no give-order term, since a new term would be a second mechanism patching the first.
+
+**RETRACTED: "a 570 band clears both."** That was an inference of Code's and Design has overruled it — the band stays at 547, delta 0. The 26 is the cover bar's offset from the top of its cell, not the band's top padding, and the 544 measured against §23 was a 3px defect already corrected to 398 → 547 in all three drawings; the copy of the target it was measured on was stale. No band change is built. `overflow-hidden` then cuts the pressing block, which is a fact rendered shorter (§6). The second test's collapse "closes the shortfall" by 15px where the run needs 13, so it collapses and still overflows.
 
 **Why no test caught it at §13.** `identity-cell.spec.ts` measures the probe's five-line case, which needs 461.9; `genres-collapse` seeds the real record with a three-genre run and a label, which needs 495. The probe under-represents the collection's worst case by 33px, and the eyebrow costs about 19. I ran the probe's spec after §13 and not this one.
 
 **Not fixed, reported.** §8.1 rules the eyebrow exists and §24 rules it stays; the drawing fits the five-line title with it. So either the eyebrow participates in the give order or the band's height budget does — and a dimensional change in this band is what cost the last four rulings. With Design.
 
+
+## §27 built: the row is gone, and the margin is a hair either way
+
+Re-measured on the collection's real worst title with fonts confirmed loaded (`document.fonts.status === 'loaded'`, three loads, identical figures), at 1440 × 900, both cases the genres spec carries, AFTER §4.2's third term has fired:
+
+| case | pressing line | content needs | ornament track | sum | against 510 |
+|---|---|---|---|---|---|
+| three genres, short label | 1 line, 19.5 | 505 | 4.6 | 509.6 | **+0.4** |
+| six genres, long label | 2 lines, 39 | 525 | 1 | 526 | **−16** |
+
+The ornament track's REQUIRED height is §4.2's 140 reserve, the corner triangle's own drawn height; it is squeezed to 4.6 and 1. The recovery from deleting the row was not the row's 16.5 — COLLECTION's line is still spent in the flow, as the ruling said — and on the short-label case the collapse now fires where it did not need to before and closes it by 0.4px.
+
+**What triggers the collapse today: height, not width.** `GenresRun`'s layout effect compares the content track's `scrollHeight` against the cell's inner height (`clientHeight` less padding) and collapses when `needed > available` (`shouldCollapse`, genres-run.ts). It fires on both cases. What it never saw was the eyebrow ROW, because the row sat outside the track it measures; with COLLECTION in the flow it sees everything. On the long-label case it fires and is **exhausted**: the run's 13px was the only height it could give, the gap and the reserve are already spent, §18's fourth term is width-only, and the pressing line's second line — 19.5px from a label long enough to wrap — is outside every term. The cell overflows with the fallback silent, exactly the case §27 named. **Not fixed. A height term is Design's to rule.** The step-3 test asserts no pressing fact is clipped on that record and is red for this reason, beside genres-collapse.
 
 ## TASK: the worst-case fixture is computed from the collection, not hand-written — OWNED BY CODE
 
@@ -31022,4 +31037,4 @@ Twice in one week a fixture that under-represented the real worst case produced 
 
 The shape is the same both times: a hand-written sample drops its tail and reports its median as its minimum. Design has been asked to record it as a rule.
 
-**The mechanism to build.** One fixture module — the analogue of `real-records.ts` for the identity cell — that defines the worst-case record (longest title by rendered lines, fullest pressing block, longest genres run) and is consumed by BOTH the probe route and every spec that claims to test the worst case, so they cannot disagree about what it is. Longer term, a script that derives that record from the live collection rather than from a literal, so the fixture follows the collection when a longer title arrives. Not built now: wiring the probe to the real worst case today would only show the eyebrow regression a second time, and one red test per known cause is enough while it is with Design.
+**The mechanism to build.** One fixture module — the analogue of `real-records.ts` for the identity cell — that defines the worst-case record (longest title by rendered lines, fullest pressing block, longest genres run) and is consumed by BOTH the probe route and every spec that claims to test the worst case, so they cannot disagree about what it is. Longer term, a script that derives that record from the live collection rather than from a literal, so the fixture follows the collection when a longer title arrives. **Built (§27, step 4):** `identity-extremes.ts` names the worst case with its measurements; `genres-collapse`, `identity-extremes.spec.ts` and the probe route's five-line case consume it, so none can disagree about what the worst case is. Design has recorded the rule. The derivation from the live collection remains the longer-term form.

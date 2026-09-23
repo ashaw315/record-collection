@@ -181,10 +181,14 @@ test('§24: the eyebrow returns to Collection alone and the foot row is gone', a
   await page.setViewportSize({ width: GRID_FORK, height: 1000 });
   await page.goto(`/records/${id}`);
 
-  const eyebrowRow = page.locator('[data-row="eyebrow"]');
-  await expect(eyebrowRow).toBeVisible();
-  await expect(eyebrowRow, 'the eyebrow reads Collection, and nothing else').toHaveText(/^\s*collection\s*$/i);
-  await expect(eyebrowRow.locator('a, button'), 'no control on the eyebrow').toHaveCount(0);
+  /* §27 deleted the eyebrow's grid row; the label sits in the content flow, first, and alone. */
+  const eyebrow = page.locator('[data-field="eyebrow"]');
+  await expect(eyebrow).toBeVisible();
+  await expect(eyebrow, 'the eyebrow reads Collection, and nothing else').toHaveText(/^\s*collection\s*$/i);
+  await expect(page.locator('[data-row="eyebrow"]'), 'the row §13 added is gone').toHaveCount(0);
+  /* The head of the block that flows from the top — not a third child of the track, which would share its slack. */
+  const first = page.locator('[data-block="title"] > :first-child');
+  await expect(first, 'and it is the title block’s first child').toHaveAttribute('data-field', 'eyebrow');
   await expect(page.locator('[data-row="delete"]'), 'the foot Delete row is deleted').toHaveCount(0);
   await expect(page.getByTestId('record-controls'), '§13’s band deletion stands').toHaveCount(0);
 });

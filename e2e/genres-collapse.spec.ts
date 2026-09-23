@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
+import { FITS_AFTER_COLLAPSE, WORST } from '../src/app/records/[id]/identity-extremes';
 import { seedImage } from './seed';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
@@ -29,7 +30,13 @@ registerCleanup();
  */
 
 const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-const FIVE_LINE_TITLE = 'On The Radio: Greatest Hits Vol. 1 & 2';
+/*
+  The title, the pressing and the two label variants come from the shared
+  extremes module (§27), so this spec and the probe cannot disagree about the
+  collection's worst case — the disagreement is how a 16.5px row passed one
+  and cut the other.
+*/
+const FIVE_LINE_TITLE = WORST.title;
 /** The genres run's own height: one 13px line at leading-none, no margin. */
 const RUN_HEIGHT = 13;
 
@@ -71,7 +78,7 @@ async function longestTitle(page: Page, suffix: string, genreNames: string[], la
     genreIds.push(genre.id as string);
   }
   const pressing = await post(page, '/api/pressings', {
-    catalogNumber: 'NBLP 7119',
+    catalogNumber: WORST.catalogNumber,
     matrixRunout: 'NBLP-7119-A',
     yearPressed: 1979,
     countryPressed: 'United States',
@@ -143,7 +150,7 @@ test('the longest title in the collection is absorbed by the track, and does not
    * threshold would have encoded the proxy, which is the defect.
    */
   const suffix = makeSuffix();
-  const { id } = await longestTitle(page, suffix, ['Disco', 'Soul', 'Pop'], 'Casablanca');
+  const { id } = await longestTitle(page, suffix, [...FITS_AFTER_COLLAPSE.genres], FITS_AFTER_COLLAPSE.label);
   await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
   await page.goto(`/records/${id}`);
   await page.locator('[data-cell="identity"]').first().waitFor({ timeout: 20_000 });
@@ -188,12 +195,12 @@ test('the run collapses only once the track is exhausted, and the count is what 
    * already set and costs no height.
    */
   const suffix = makeSuffix();
-  const genres = ['Disco', 'Soul', 'Pop', 'Funk', 'Electronic', 'Hi-NRG'];
+  const genres = [...WORST.genres];
   const { id } = await longestTitle(
     page,
     suffix,
     genres,
-    'Casablanca Record and FilmWorks International',
+    WORST.label,
   );
   await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
   await page.goto(`/records/${id}`);

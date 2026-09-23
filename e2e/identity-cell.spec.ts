@@ -70,8 +70,8 @@ const measure = (page: Page) =>
         .filter((r) => r.width > 0)
         .map((r) => Math.round(r.width));
 
-      /* §13's eyebrow row: the frame's top line, above the content track. */
-      const eyebrow = cell.querySelector('[data-row="eyebrow"]');
+      /* §27: the eyebrow is the content track's first child; the title begins at its bottom. */
+      const eyebrow = cell.querySelector('[data-field="eyebrow"]');
       const eyebrowBox = eyebrow?.getBoundingClientRect() ?? null;
 
       return {
