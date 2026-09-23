@@ -29,7 +29,7 @@ import { RECORD_SORT_FIELDS, type RecordFilters, type RecordSortField } from '@/
 export const VIEW_MODES = ['shelf', 'table', 'grid'] as const;
 export type ViewMode = (typeof VIEW_MODES)[number];
 
-/** The sort fields as the page names them — one vocabulary for the chips row and the rail (§11.24). */
+/** The sort fields as the page names them — one vocabulary for the chips row and the rail (§W.24). */
 export const SORT_LABELS: Record<RecordSortField, string> = {
   title: 'Title',
   artist: 'Artist',
@@ -43,14 +43,14 @@ export type CollectionParams = {
   sort?: { field: RecordSortField; direction: 'asc' | 'desc' };
   view: ViewMode;
   /**
-   * §11.29: which wall the shelf view opens on. `near` is the default — a
+   * §W.29: which wall the shelf view opens on. `near` is the default — a
    * bare `/` opens the labelled wall — and `far` is a deliberate zoom-out,
    * so the key appears only when it is not the default, as every other key
    * here does. Distinct from `view`, which chooses shelf, table or grid.
    */
   wall: WallView;
   /**
-   * §11.29: which run the near view lands on, as a row index. Absent means
+   * §W.29: which run the near view lands on, as a row index. Absent means
    * the arrival's own choice, the first occupied shelf; present means a link
    * or a remembered view opens where it says.
    */
@@ -142,7 +142,7 @@ function readSort(value: string | null): CollectionParams['sort'] {
  */
 export const DEFAULT_VIEW: ViewMode = 'shelf';
 
-/** §11.29: the shelf view's two walls, and the one a bare `/` opens on. */
+/** §W.29: the shelf view's two walls, and the one a bare `/` opens on. */
 export const WALL_VIEWS = ['near', 'far'] as const;
 export type WallView = (typeof WALL_VIEWS)[number];
 export const DEFAULT_WALL: WallView = 'near';
@@ -188,7 +188,7 @@ export function toQueryString(params: CollectionParams): string {
   // Omits the DEFAULT, which §10b moved — otherwise `/` would emit
   // `?view=shelf` on every link while `?view=table` vanished.
   if (params.view !== DEFAULT_VIEW) search.set('view', params.view);
-  /* §11.29: only when they are not the default — a bare `/` opens near on the arrival's own shelf. */
+  /* §W.29: only when they are not the default — a bare `/` opens near on the arrival's own shelf. */
   if (params.wall !== DEFAULT_WALL) search.set('wall', params.wall);
   if (params.shelf !== undefined) search.set('shelf', String(params.shelf));
   if (params.page > 1) search.set('page', String(params.page));
@@ -237,7 +237,7 @@ export function withFacet(
     filters,
     sort: 'sort' in change ? change.sort : params.sort,
     view: change.view ?? params.view,
-    /* §11.29's wall and shelf survive a filter change: changing what is shown is not changing where you are. */
+    /* §W.29's wall and shelf survive a filter change: changing what is shown is not changing where you are. */
     wall: params.wall,
     shelf: params.shelf,
     page: 1,

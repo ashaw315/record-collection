@@ -5,7 +5,7 @@ import { PAPER, PAPER_CSS } from '@/lib/colour/paper';
 import { WALL_PAPER } from '@/app/wall/pull-colour';
 
 /**
- * §11.5: paper is one token, named in both places, and every ratio is
+ * §W.5: paper is one token, named in both places, and every ratio is
  * measured against it. Three papers had grown: the app's ground at 0.985,
  * the drawing's 0.925 painted by the composition, and the fade's start at
  * 0.977 — so the hairline and the ladder's tint step were measured against
@@ -20,7 +20,7 @@ function* sources(dir: string): Generator<string> {
   }
 }
 
-describe('paper is one token (§11.5)', () => {
+describe('paper is one token (§W.5)', () => {
   it('is the drawing’s 0.925, and the stylesheet’s --background on :root is that value', () => {
     expect(PAPER).toEqual({ L: 0.925, C: 0.004, h: 80 });
     const css = readFileSync('src/app/globals.css', 'utf8');

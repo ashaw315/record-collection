@@ -290,9 +290,9 @@ describe('the shelf view (§10b)', () => {
   });
 });
 
-describe('§11.29: the shelf’s view and its shelf, in the URL', () => {
+describe('§W.29: the shelf’s view and its shelf, in the URL', () => {
   /*
-    A bare / opens near (§11.29's default), and the far view is a deliberate
+    A bare / opens near (§W.29's default), and the far view is a deliberate
     zoom-out — so the URL carries the view only when it is NOT the default,
     the way every other key here works. `shelf` addresses which run the near
     view lands on, so a link opens where it says rather than on the first

@@ -34,7 +34,7 @@ describe('the overview draws the collection as polygons', () => {
   it('draws three faces per record plus the unit’s furniture', () => {
     const html = render({ seats: seats(6, 2), pulledId: null });
 
-    // 6 records × (top, right, front) on one unit's top shelf (§11.10): the
+    // 6 records × (top, right, front) on one unit's top shelf (§W.10): the
     // unit's eighteen faces, the section boundaries drawn as rules on the shelf.
     expect(countTag(html, 'polygon')).toBe(6 * 3 + 18);
     expect(html.split('data-break=""').length - 1, 'a break at each section boundary').toBe(5);
@@ -61,7 +61,7 @@ describe('the overview draws the collection as polygons', () => {
     expect(html).not.toMatch(/tabindex|onclick|role="button"/i);
   });
 
-  it('linked (§11.24’s narrow shelf): each record is an anchor to its own screen, NAMED as the labelled wall names it — a tap goes there, not to a pulled state', () => {
+  it('linked (§W.24’s narrow shelf): each record is an anchor to its own screen, NAMED as the labelled wall names it — a tap goes there, not to a pulled state', () => {
     const named = seats(3).map((seat, i) => ({ ...seat, artist: `Artist ${i}`, title: `Title ${i}` }));
     const html = render({ seats: named, pulledId: null, linked: true });
     for (const id of ['r0', 'r1', 'r2']) expect(html).toMatch(new RegExp(`<a [^>]*href="/records/${id}"[^>]*data-far-seat="${id}"`));
@@ -75,7 +75,7 @@ describe('the overview draws the collection as polygons', () => {
   it('renders an empty collection as the fixture alone — the unit, no records', () => {
     const html = render({ seats: [], pulledId: null });
 
-    /* §11.10: the empty shelves are the fixture rather than a gap in it. */
+    /* §W.10: the empty shelves are the fixture rather than a gap in it. */
     expect(countTag(html, 'polygon')).toBe(18);
   });
 });
@@ -84,14 +84,14 @@ describe('the overview draws the collection as polygons', () => {
  * **§2's distinction, at the rendered layer.** The geometry module asserts it
  * on points; this asserts that the renderer actually emits what it produced.
  */
-describe('the far view paints by the separating-plane sort, furniture and records together (§11.23)', () => {
+describe('the far view paints by the separating-plane sort, furniture and records together (§W.23)', () => {
   /*
     **The defect this pins.** The far view painted ALL furniture, then ALL
     records — two passes — so a shelf's front face went down before the
     records standing on it and the records drew over it: spines hanging below
     the shelf plane and past the right upright, which is what a reader
     reported as "the shelf drawing itself is messed up". The near view has
-    never had this, because §11.23's insertion runs over every object at
+    never had this, because §W.23's insertion runs over every object at
     once; the far view is the same wall and needs the same order.
   */
   it('paints the shelf a row stands on BEFORE that row’s records, and the upright in front of them after — one order over every object', () => {
@@ -115,7 +115,7 @@ describe('the far view paints by the separating-plane sort, furniture and record
   });
 });
 
-describe('the far view fits its region (§11.10, §11.12)', () => {
+describe('the far view fits its region (§W.10, §W.12)', () => {
   it('centres the fitted drawing rather than pinning it to the left — a portrait fixture in a landscape region fits the height and must not sit in a column', () => {
     const html = render({ seats: seats(17), pulledId: null });
     const svg = /<svg[^>]*>/.exec(html)?.[0] ?? '';
@@ -125,7 +125,7 @@ describe('the far view fits its region (§11.10, §11.12)', () => {
   });
 });
 
-describe('§11.28: the occupied run is the click target, and it signals on hover', () => {
+describe('§W.28: the occupied run is the click target, and it signals on hover', () => {
   const occupied = (over: Partial<{ artist: string; title: string }> = {}) =>
     seats(17).map((s, i) => ({ ...s, artist: `A${i}`, title: `T${i}`, ...over }));
 
@@ -144,11 +144,11 @@ describe('§11.28: the occupied run is the click target, and it signals on hover
     expect(target).toContain('data-run-count="17"');
   });
 
-  it('sinks the run to §11.27’s 0.731 on hover, with its hairlines recomputed to 0.588 against that ground', () => {
+  it('sinks the run to §W.27’s 0.731 on hover, with its hairlines recomputed to 0.588 against that ground', () => {
     /*
-      §11.28: the hairline moves because the GROUND moved — §5.5's shade step
+      §W.28: the hairline moves because the GROUND moved — §5.5's shade step
       from 0.731 rather than from paper. Left at 0.72 it reads 1.04:1 on the
-      hover surface, worse than the 1.08:1 §11.27 refused 0.90 for, and it
+      hover surface, worse than the 1.08:1 §W.27 refused 0.90 for, and it
       erased the only channel separating one spine from another: the hover
       said one object at the moment it meant seventeen records. 0.588 gives
       1.74:1, close to the run's 1.99:1 at rest and deliberately not equal —
@@ -168,17 +168,17 @@ describe('§11.28: the occupied run is the click target, and it signals on hover
     const label = /<text[^>]*data-run-label[^>]*>([^<]*)<\/text>/.exec(html);
     expect(label?.[1], 'the count, not a caption').toMatch(/^17 RECORDS/);
     const tag = label?.[0] ?? '';
-    expect(tag, '§11.27’s 11px mono').toMatch(/font-size="11"|font-size:11px/);
+    expect(tag, '§W.27’s 11px mono').toMatch(/font-size="11"|font-size:11px/);
     expect(html, 'no caption explaining the drawing').not.toMatch(/click to|tap to|zoom in/i);
   });
 
-  it('does not offer a run target where there is no zoom to do — §11.24’s narrow shelf', () => {
+  it('does not offer a run target where there is no zoom to do — §W.24’s narrow shelf', () => {
     const html = render({ seats: occupied(), pulledId: null, linked: true });
     expect(html).not.toContain('data-run=');
   });
 });
 
-describe('§11.34: the far view draws emptied seats too', () => {
+describe('§W.34: the far view draws emptied seats too', () => {
   it('draws a footprint where a record was displaced, and nothing where none has been shelved', () => {
     const three = seats(3);
     const html = render({ seats: [three[0], { ...three[1], empty: true }, three[2]], pulledId: null });
@@ -187,10 +187,10 @@ describe('§11.34: the far view draws emptied seats too', () => {
   });
 });
 
-describe('§11.30: reaching the run by keyboard', () => {
+describe('§W.30: reaching the run by keyboard', () => {
   const occupied = (count = 17) => seats(count).map((s, i) => ({ ...s, artist: `A${i}`, title: `T${i}` }));
 
-  it('is a BUTTON, not an anchor — a run has no route, and §11.29 makes the near view a camera position rather than an address', () => {
+  it('is a BUTTON, not an anchor — a run has no route, and §W.29 makes the near view a camera position rather than an address', () => {
     /*
       A spine is an anchor because a record has a route. An anchor with no
       href is a link to nowhere announced as a link, which is worse for the
@@ -215,7 +215,7 @@ describe('§11.30: reaching the run by keyboard', () => {
     expect(run).toContain('aria-label="17 records — zoom to this shelf"');
   });
 
-  it('takes runs in document order, top shelf first — §11.23’s seat order one level up', () => {
+  it('takes runs in document order, top shelf first — §W.23’s seat order one level up', () => {
     /* Two shelves' worth: the order they filled is the order they are reached. */
     const html = render({ seats: occupied(30), pulledId: null, linked: true, onSeatClick: () => {} });
     const order = [...html.matchAll(/data-run="(\d+)"/g)].map((m) => Number(m[1]));
@@ -250,8 +250,8 @@ describe('§11.30: reaching the run by keyboard', () => {
     /*
       The run is the only TAB STOP. Where a zoom is offered the seats stay
       anchors — they work with JavaScript off, and a record has a route — but
-      they leave the tab sequence: §11.28 rules the run the only target, and
-      seventeen links in front of it would be the second control §11.30
+      they leave the tab sequence: §W.28 rules the run the only target, and
+      seventeen links in front of it would be the second control §W.30
       forbids, reached before the one that does something.
     */
     expect((html.match(/tabindex="0"/g) ?? []).length, 'one tab stop').toBe(1);
@@ -259,7 +259,7 @@ describe('§11.30: reaching the run by keyboard', () => {
   });
 });
 
-describe('the far view’s seats are the way in (§11.12)', () => {
+describe('the far view’s seats are the way in (§W.12)', () => {
   it('calls back with the seat rather than following its link, when a zoom is offered', () => {
     const html = render({ seats: seats(3), pulledId: null, linked: true, onSeatClick: () => {} });
     /* Still an anchor — it works with JavaScript off — and the click is intercepted. */
@@ -268,12 +268,12 @@ describe('the far view’s seats are the way in (§11.12)', () => {
   });
 });
 
-describe('a filter empties seats in the far view (§11.12)', () => {
-  it('draws no faces for an empty seat — only §11.34’s footprint — keeps the fixture, and links nothing there', () => {
+describe('a filter empties seats in the far view (§W.12)', () => {
+  it('draws no faces for an empty seat — only §W.34’s footprint — keeps the fixture, and links nothing there', () => {
     const three = seats(3);
     const full = render({ seats: three, pulledId: null });
     const filtered = render({ seats: [three[0], { ...three[1], empty: true }, three[2]], pulledId: null, linked: true });
-    /* Three faces go, one footprint arrives (§11.34): the seat is drawn as a berth rather than as a record. */
+    /* Three faces go, one footprint arrives (§W.34): the seat is drawn as a berth rather than as a record. */
     expect(countTag(filtered, 'polygon')).toBe(countTag(full, 'polygon') - 3 + 1);
     expect(countTag(filtered, 'polygon[data-furniture')).toBe(countTag(full, 'polygon[data-furniture'));
     expect(filtered).not.toContain('data-far-seat="r1"');
@@ -314,7 +314,7 @@ describe('200 records', () => {
       assuming one run per section across the whole wall; runs are per SHELF,
       which is what makes the wall wrap without a run spanning a row break.
     */
-    /* 200 records on ONE fixture of four shelves of fifty (§11.23): eighteen furniture faces, not three units' worth. */
+    /* 200 records on ONE fixture of four shelves of fifty (§W.23): eighteen furniture faces, not three units' worth. */
     expect(polygons).toBe(200 * 3 + 18);
     expect(html.length).toBeGreaterThan(0);
   });

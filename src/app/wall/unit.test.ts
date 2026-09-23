@@ -21,18 +21,19 @@ import {
 } from './geometry';
 import { PER_SHELF, SHELVES_PER_UNIT, intoRows, perShelf, shelfLength, unitFurniture, unitPieces } from './unit';
 
-const TARGET = resolve(process.cwd(), 'docs/design/Record Detail 8a - build target.dc.html');
+/* The wall's target since the split: §W.11's drawing lives here, not in the record screen's file. */
+const TARGET = resolve(process.cwd(), 'docs/design/Wall and Pull - build target.dc.html');
 
 /**
- * §11.10 / §11.23: the wall is one fixture of four shelves joined at their
+ * §W.10 / §W.23: the wall is one fixture of four shelves joined at their
  * ends, the collection fills it left to right, top to bottom, and the row
- * length grows with the collection above twenty a shelf. §11.11 fixes the figures: 442 ×
+ * length grows with the collection above twenty a shelf. §W.11 fixes the figures: 442 ×
  * 1047 on screen (1 : 2.37), twenty seats, four shelves at 198 pitch, a 150
  * face — read off the drawing's own polygons: records 12 × 150 × 150 (a 12″
  * sleeve is square) on shelves 360 × 150 × 8, uprights 10 × 150 × 792 at
  * both ends.
  */
-describe('the unit’s figures are the drawing’s (§11.11)', () => {
+describe('the unit’s figures are the drawing’s (§W.11)', () => {
   it('draws at the 150 face, the sleeve square, records as deep as the shelf', () => {
     expect(SPINE_HEIGHT).toBe(150);
     expect(DEPTH).toBe(SPINE_HEIGHT);
@@ -65,7 +66,7 @@ describe('the unit’s figures are the drawing’s (§11.11)', () => {
 
   /**
    * **The measurement comes from the same list the polygons come from.**
-   * §11.11's figure was wrong twice in opposite directions (1030, then 1055)
+   * §W.11's figure was wrong twice in opposite directions (1030, then 1055)
    * because it was computed by re-declaring the bounds instead of reading
    * the boxes the drawing emits; the frame-extent defect had the same shape
    * one level up. So the extent here is the min–max over every point of
@@ -84,16 +85,16 @@ describe('the unit’s figures are the drawing’s (§11.11)', () => {
     expect((e.maxY - e.minY) / (e.maxX - e.minX)).toBeCloseTo(2.37, 2);
   });
 
-  it('emits the faces §11.11’s own polygons emit — every furniture face is among the drawing’s, to 0.1', ({ skip }) => {
+  it('emits the faces §W.11’s own polygons emit — every furniture face is among the drawing’s, to 0.1', ({ skip }) => {
     /*
       A point-SET comparison, not an extent: mirroring in y leaves the
       bounding box invariant, so an extent comparison passed with every
-      label on the back of every record (§11.15). A shelf's lip at y = 150
+      label on the back of every record (§W.15). A shelf's lip at y = 150
       is not among the drawing's polygons; one at y = 0 is.
     */
     if (!existsSync(TARGET)) skip('docs/design is not on this checkout — the drawing cannot be read here');
     const html = readFileSync(TARGET, 'utf8');
-    const section = html.slice(html.indexOf('11.11 ·'), html.indexOf('11.12 ·'));
+    const section = html.slice(html.indexOf('W.11 ·'), html.indexOf('W.12 ·'));
     const svg = /<svg[^>]*>[\s\S]*?<\/svg>/.exec(section)?.[0] ?? '';
     /* A face is its four corners, whichever corner a file starts from. */
     const key = (points: readonly (readonly [number, number])[]) =>
@@ -107,13 +108,13 @@ describe('the unit’s figures are the drawing’s (§11.11)', () => {
       ),
     );
     expect(drawn.size, 'the far view at 17: 18 furniture faces and 51 record faces').toBe(18 + 17 * 3);
-    /* §11.20 withdrew the drawing's side: its strips are −y faces. Tops and +x ends do not depend on the sign and must match. */
+    /* §W.20 withdrew the drawing's side: its strips are −y faces. Tops and +x ends do not depend on the sign and must match. */
     for (const face of unitFurniture(PER_SHELF).filter((f) => !f.kind.endsWith('front'))) {
       expect(drawn.has(key(face.points)), `${face.kind} ${key(face.points)}`).toBe(true);
     }
   });
 
-  it('seats records exactly as §11.11’s polygons do — every face of a 12-wide record at seats 0…16 is among the drawing’s', ({ skip }) => {
+  it('seats records exactly as §W.11’s polygons do — every face of a 12-wide record at seats 0…16 is among the drawing’s', ({ skip }) => {
     /*
       The check for a seat built from two conventions: if the spine moved to
       the −y face and anything else still assumed the old one, some face of
@@ -123,7 +124,7 @@ describe('the unit’s figures are the drawing’s (§11.11)', () => {
     */
     if (!existsSync(TARGET)) skip('docs/design is not on this checkout — the drawing cannot be read here');
     const html = readFileSync(TARGET, 'utf8');
-    const section = html.slice(html.indexOf('11.11 ·'), html.indexOf('11.12 ·'));
+    const section = html.slice(html.indexOf('W.11 ·'), html.indexOf('W.12 ·'));
     const svg = /<svg[^>]*>[\s\S]*?<\/svg>/.exec(section)?.[0] ?? '';
     const key = (points: readonly (readonly [number, number])[]) =>
       points.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).sort().join(' ');
@@ -138,12 +139,12 @@ describe('the unit’s figures are the drawing’s (§11.11)', () => {
       for (const [name, face] of [['top', topFace(record)], ['right', rightFace(record)]] as const) {
         expect(drawn.has(key(face)), `seat ${placed.id} ${name} ${key(face)}`).toBe(true);
       }
-      /* The spine is the +y face (§11.20); the drawing's is at y = 0 and is superseded. */
+      /* The spine is the +y face (§W.20); the drawing's is at y = 0 and is superseded. */
       expect(drawn.has(key(frontFace(record))), `seat ${placed.id} front — not the drawing's back face`).toBe(false);
     }
   });
 
-  it('draws the shelves’ and uprights’ strips on their +y faces — toward the camera (§11.20)', () => {
+  it('draws the shelves’ and uprights’ strips on their +y faces — toward the camera (§W.20)', () => {
     const lip = unitFurniture(PER_SHELF).find((face) => face.kind === 'shelf-front');
     expect(lip?.points[0]).toEqual(project(-UPRIGHT.thickness, SHELF_DEPTH, 594 - SHELF_THICKNESS));
   });
@@ -156,7 +157,7 @@ describe('the unit’s figures are the drawing’s (§11.11)', () => {
   });
 });
 
-describe('one fixture: the row length grows with the collection (§11.23)', () => {
+describe('one fixture: the row length grows with the collection (§W.23)', () => {
   const seats = (n: number) => Array.from({ length: n }, (_, i) => ({ id: `r${i}`, section: 'A' }));
 
   it('seats twenty a shelf up to eighty, then a quarter of the collection a shelf — 200 is 50 × 4', () => {
@@ -174,7 +175,7 @@ describe('one fixture: the row length grows with the collection (§11.23)', () =
     expect(intoRows(seats(130)).map((row) => row.length)).toEqual([33, 33, 33, 31]);
   });
 
-  it('projects to 883 × 1302 at 200 — §11.23’s one-fixture figure — over every face the fixture emits, and no unit ever tiles', () => {
+  it('projects to 883 × 1302 at 200 — §W.23’s one-fixture figure — over every face the fixture emits, and no unit ever tiles', () => {
     const points = unitPieces(perShelf(200)).flatMap((piece) => piece.faces.flatMap((face) => face.points));
     const xs = points.map(([x]) => x);
     const ys = points.map(([, y]) => y);
@@ -184,7 +185,7 @@ describe('one fixture: the row length grows with the collection (§11.23)', () =
   });
 });
 
-describe('the unit as objects for the painter (§11.20)', () => {
+describe('the unit as objects for the painter (§W.20)', () => {
   it('is six pieces — two uprights and four shelves — each with its bounds and its three faces', () => {
     const pieces = unitPieces(PER_SHELF);
     expect(pieces).toHaveLength(6);

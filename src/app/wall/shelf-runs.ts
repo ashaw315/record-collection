@@ -21,7 +21,7 @@
 /** A record's seat on the shelf, in shelf order. */
 export type ShelfSeat = {
   id: string;
-  /** §11.12: the seat is kept and the record is absent — a filter empties seats rather than re-seating the collection. */
+  /** §W.12: the seat is kept and the record is absent — a filter empties seats rather than re-seating the collection. */
   empty?: boolean;
   /**
    * The section this seat belongs to — §10b's top-level genre ancestor.
@@ -46,13 +46,13 @@ export type ShelfSeat = {
  */
 export type WallSeat = ShelfSeat & {
   label: string;
-  /** §11.3: with no cover the record's material is its text — set large on the field. */
+  /** §W.3: with no cover the record's material is its text — set large on the field. */
   title: string;
   artist: string;
   spineColour: string | null;
-  /** §11.3: the pulled record shows its cover, at its own aspect, on the field. */
+  /** §W.3: the pulled record shows its cover, at its own aspect, on the field. */
   coverUrl: string | null;
-  /** §11.7: Turn over shows the back on the same face — the photograph, or a plain back carrying label and catalogue number (§10b). */
+  /** §W.7: Turn over shows the back on the same face — the photograph, or a plain back carrying label and catalogue number (§10b). */
   backUrl: string | null;
   labelName: string | null;
   catalogNumber: string | null;

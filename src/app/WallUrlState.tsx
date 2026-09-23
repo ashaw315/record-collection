@@ -8,7 +8,7 @@ import type { WallSeat } from './wall/shelf-runs';
 import type { RecordSummary } from './wall/summary';
 
 /**
- * §11.29: **the wall's view and its shelf live in the URL.**
+ * §W.29: **the wall's view and its shelf live in the URL.**
  *
  * A zoom is a place rather than a mode, so it is addressable: a bare `/`
  * opens near on the arrival's own shelf, `?wall=far` opens the zoom-out, and

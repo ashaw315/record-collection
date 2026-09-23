@@ -12,8 +12,8 @@ import { sql } from 'drizzle-orm';
  * plane beside it, so there is no rise-scroll to undo and no lock to leak.
  * The two claims the lock's tests carried survive as what they were claims
  * ABOUT: the page is never scrolled by a pull, and the body is never left
- * fixed. Since §11.13 the drawing region is the scroller (the page itself does
- * not scroll on the shelf view), and §11.22 pans THAT region to frame the
+ * fixed. Since §W.13 the drawing region is the scroller (the page itself does
+ * not scroll on the shelf view), and §W.22 pans THAT region to frame the
  * landing and back again on put back — so the region's position is asserted
  * to return, not to hold, and the window's to stay where it was.
  */
@@ -77,7 +77,7 @@ test('the page never scrolls, and the drawing region is back where it was after 
   await page.waitForTimeout(1200);
   expect(await page.evaluate(() => window.scrollY), 'and the return did not either').toBe(0);
   /*
-    §11.22: the pan resolves back to the rest view — the reader's OWN position
+    §W.22: the pan resolves back to the rest view — the reader's OWN position
     when they pulled, not the arrival. A latch meant to stop the arrival's
     write being mistaken for a reader's scroll stayed armed when that write
     landed on an already-correct position, and swallowed the reader's next
@@ -89,7 +89,7 @@ test('the page never scrolls, and the drawing region is back where it was after 
 });
 
 test('the body is not left locked after the record returns', async ({ page }) => {
-  /* Where the pulled state exists: below §11.24's fork a tap opens the record screen instead. */
+  /* Where the pulled state exists: below §W.24's fork a tap opens the record screen instead. */
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/');
   await expect(page.getByTestId('wall')).toBeVisible({ timeout: 30_000 });

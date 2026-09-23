@@ -5,7 +5,7 @@ import { COS30, SIN30 } from '../src/app/wall/geometry';
 import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
 
 /**
- * §11.19 / §11.21: the assembled gesture, watched under a paused clock. The
+ * §W.19 / §W.21: the assembled gesture, watched under a paused clock. The
  * rotation joins at 42% of the swing with the panel; the foot of the cover's
  * near edge is the one point growth and rotation hold; put back is the whole
  * gesture reversed on one clock, from wherever it stood.
@@ -60,7 +60,7 @@ test('the rotation joins at 42% of the swing — with the panel — and the spin
   expect(await spineWidth(page), 'closed at 45°').toBeLessThan(0.5);
 });
 
-test('the foot of the cover’s near edge moves only with the travel — growth and rotation hold it, and nothing drifts (§11.21, §11.22)', async ({ page }) => {
+test('the foot of the cover’s near edge moves only with the travel — growth and rotation hold it, and nothing drifts (§W.21, §W.22)', async ({ page }) => {
   await page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`).click();
   await page.clock.runFor(1);
   const f0 = await foot(page);
@@ -77,7 +77,7 @@ test('the foot of the cover’s near edge moves only with the travel — growth 
   }
 });
 
-test('the view pans to frame the landing on the swing’s ease — the wall still relative to itself, the record in frame at the end (§11.22)', async ({ page }) => {
+test('the view pans to frame the landing on the swing’s ease — the wall still relative to itself, the record in frame at the end (§W.22)', async ({ page }) => {
   const region = page.locator('[data-region="wall"]');
   const scroll = () => region.evaluate((el) => [el.scrollLeft, el.scrollTop]);
   const upright = () => page.locator('[data-furniture="upright-front"]').first().evaluate((el) => el.getBoundingClientRect().left);
@@ -110,7 +110,7 @@ test('the view pans to frame the landing on the swing’s ease — the wall stil
   expect(inside?.next, 'and its arrow').toBe(true);
 });
 
-test('the pan settles where the empty seat clears the cover’s trailing edge — 55px, on screen, with the seat in the region (§11.26)', async ({ page }) => {
+test('the pan settles where the empty seat clears the cover’s trailing edge — 55px, on screen, with the seat in the region (§W.26)', async ({ page }) => {
   /*
     A mid-row seat: with the wall rigid under the record, the 560 cover would
     cover its own seat (251px right of the foot, 145 up). The emptied seat has

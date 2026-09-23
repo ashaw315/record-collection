@@ -18,7 +18,7 @@ import { nearViewMinWidth } from "./view-fork";
  * sides and bottom — and it reads as furniture in a room rather than as a
  * wall. Shelves, records, and paper.
  *
- * **The ground is the drawn paper — `PAPER`, the one token (§11.5).** The faces
+ * **The ground is the drawn paper — `PAPER`, the one token (§W.5).** The faces
  * are paper in three steps and the top step has to sit above the ground,
  * which is why the app's `--background` is this same value now: while it was
  * lighter there was no room for the step, and every ratio in the system was
@@ -37,15 +37,15 @@ export function WallComposition({
 }: {
   seats: readonly WallSeat[];
   summaries?: Record<string, RecordSummary>;
-  /** §11.12: which view the route opens in. The collection page opens far; probes about the near view ask for it. */
+  /** §W.12: which view the route opens in. The collection page opens far; probes about the near view ask for it. */
   opens?: 'far' | 'near';
-  /** §11.29: the run the near view opens on, from the URL. */
+  /** §W.29: the run the near view opens on, from the URL. */
   opensShelf?: number;
-  /** §11.29: told when the reader zooms, so the page can put it in the URL. */
+  /** §W.29: told when the reader zooms, so the page can put it in the URL. */
   onView?: (wall: 'near' | 'far', shelf?: number) => void;
   /** The filter-aware line under the count — "34 of 312 records" — when a filter is on. */
   countLine?: string | null;
-  /** §11.13's rail, in a 148px column left of the facts; the page supplies it, the probes do not. */
+  /** §W.13's rail, in a 148px column left of the facts; the page supplies it, the probes do not. */
   rail?: React.ReactNode;
 }) {
   return (
@@ -53,7 +53,7 @@ export function WallComposition({
       data-composition=""
       data-testid="wall"
       className={rail === null ? undefined : "grid grid-cols-[148px_1fr]"}
-      /* §11.13: the wall starts directly under the app nav and takes the full height. */
+      /* §W.13: the wall starts directly under the app nav and takes the full height. */
       style={{
         background: DRAWN_PAPER,
         minHeight: "calc(100vh - var(--app-nav-height, 0px))",
@@ -61,11 +61,11 @@ export function WallComposition({
     >
       {rail !== null && (
         /*
-          §11.24: below the fork the far view is bounded by width, not height,
-          so §11.13's argument for the column does not hold and the band is
+          §W.24: below the fork the far view is bounded by width, not height,
+          so §W.13's argument for the column does not hold and the band is
           correct there — one row of search, the three views and Add record;
           the filter lines and the rule withdrawn. Add record is a row item
-          (§11.26): the wrap was a column's width rule arriving in a layout
+          (§W.26): the wrap was a column's width rule arriving in a layout
           with horizontal room and no vertical room, so the search yields
           instead. The number is the fork's own (view-fork.ts), so the band
           and the far view cannot disagree. The same query decides the
@@ -83,15 +83,15 @@ export function WallComposition({
 }
 /*
   **The fork is decided in CSS, so the first paint is already correct**
-  (§11.26, §11.29). The server cannot measure a viewport; a media query can
+  (§W.26, §W.29). The server cannot measure a viewport; a media query can
   answer the same question with no measurement at all, so both regions are
   rendered and the stylesheet shows one. Nothing swaps after hydration, and
   the JS measurement is left to drive only the route's own state — which is
   also what keeps it out of the circular dependency it fell into once, where
   the measurement lived inside the view it was selecting.
 
-  Above the fork the route's default is the near view (§11.29); below it the
-  shelf IS the far view (§11.24). Once the client has measured, one region
+  Above the fork the route's default is the near view (§W.29); below it the
+  shelf IS the far view (§W.24). Once the client has measured, one region
   renders and these rules have nothing to hide.
 */
 @media (max-width: ${nearViewMinWidth() - 1}px) {
@@ -102,9 +102,9 @@ export function WallComposition({
 }`}</style>
       )}
       {/*
-        §11.31: the vertical between the rail and the facts column, full-bleed
+        §W.31: the vertical between the rail and the facts column, full-bleed
         from the nav to the page foot. A rule that stops short of the foot
-        draws a box, and §11.13's argument is that a column is a region.
+        draws a box, and §W.13's argument is that a column is a region.
       */}
       {rail === null ? null : (
         <div className="relative">

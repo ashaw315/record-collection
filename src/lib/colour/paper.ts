@@ -1,5 +1,5 @@
 /**
- * **Paper is one token (8a §11.5).** The drawing's `oklch(0.925 0.004 80)` is
+ * **Paper is one token (8a §W.5).** The drawing's `oklch(0.925 0.004 80)` is
  * the page's paper and the app paints it: every other value in the system —
  * the 0.72 hairline, the 0.19 ink, the 0.44 label, the ladder's tint step,
  * which is literally a fraction toward paper — was chosen against 0.925, and

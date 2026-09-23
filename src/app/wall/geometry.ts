@@ -24,10 +24,10 @@ export const COS30 = Math.cos(Math.PI / 6);
 export const SIN30 = 0.5;
 
 /**
- * **The wall's constant — the drawing's own face (8a §11.11).** §11.6 built
- * D2's proportions at 5b's 240; §11.11 draws the near view at true 1:1 with
+ * **The wall's constant — the drawing's own face (8a §W.11).** §W.6 built
+ * D2's proportions at 5b's 240; §W.11 draws the near view at true 1:1 with
  * a 150-unit face and measures its labels there, so the wall's unit IS the
- * drawing's: no ratio between them. Everything below is read off §11.11's
+ * drawing's: no ratio between them. Everything below is read off §W.11's
  * polygons under the same projection — the unit's extent, 441.7 × 1047 at
  * 1 : 2.37, is measured over every face `unitFurniture` emits and never
  * re-declared by hand (unit.test.ts).
@@ -39,7 +39,7 @@ export const SPINE_WIDTH_MIN = Math.round(SPINE_HEIGHT / 14);
 export const SPINE_WIDTH_MAX = Math.round(SPINE_HEIGHT / 10);
 
 /**
- * **A 12″ sleeve is square, so depth equals height** (§11.11). A seat of
+ * **A 12″ sleeve is square, so depth equals height** (§W.11). A seat of
  * 12 × 100 × 150 — a sleeve deeper than it is tall by nothing in particular
  * — made the pulled record grow 3× in depth and 2× in height to reach a
  * square cover, and the growth read as a rule about covers rather than as
@@ -52,7 +52,7 @@ export const SHELF_THICKNESS = 8;
 /**
  * The seat: a fixed pitch of 17 (a 12 spine and a 5 gap, as drawn), the
  * hashed width textured inside it. Twenty seats to a 350 shelf at the
- * fixture's smallest; the shelf lengthens with the collection (§11.23).
+ * fixture's smallest; the shelf lengthens with the collection (§W.23).
  */
 export const GAP = 5;
 export const SEAT_PITCH = 17;
@@ -104,7 +104,7 @@ export type PlacedSeat = {
 /**
  * A record as a box: a seat with its own depth and height. Seated, every
  * record is DEPTH × SPINE_HEIGHT and the faces below read those defaults;
- * pulled, it grows (§11.10) and stays a box under the same projection — the
+ * pulled, it grows (§W.10) and stays a box under the same projection — the
  * faces are the same three coordinates seen once, whatever its size.
  */
 export type RecordBox = PlacedSeat & { depth: number; height: number };
@@ -113,7 +113,7 @@ type BoxLike = PlacedSeat & Partial<Pick<RecordBox, 'depth' | 'height'>>;
 /**
  * One row's seats, placed. Row 0 is the top shelf; seats advance at the
  * fixed pitch, the record's hashed width inside each. A pulled record keeps
- * its seat empty: the pull moves it (§11.10).
+ * its seat empty: the pull moves it (§W.10).
  */
 export function layoutRow(seats: readonly ShelfSeat[], row: number): PlacedSeat[] {
   const z = (3 - row) * ROW_PITCH;
@@ -127,11 +127,11 @@ export function layoutRow(seats: readonly ShelfSeat[], row: number): PlacedSeat[
 }
 
 /**
- * **Which side the reader is on (§11.20).** P(x, y, z) collapses (1, 1, 1)
+ * **Which side the reader is on (§W.20).** P(x, y, z) collapses (1, 1, 1)
  * — P(1, 1, 1) = 0 — so the camera lies on that line, and with the tops
  * visible it is at +(1, 1, 1): the visible faces are +x, +y and +z, and
  * LARGER is nearer on every axis. The spine is the +y face, at y + depth,
- * and the cover is the +x face. §11.15's (+, −, +) camera was not a
+ * and the cover is the +x face. §W.15's (+, −, +) camera was not a
  * viewpoint of this projection and is withdrawn; geometry.test.ts asserts
  * the convention at one place, since an extent test cannot see a flip in y.
  */
@@ -158,7 +158,7 @@ export function labelTransform(seat: BoxLike): string {
 }
 
 /**
- * **§2's section breaks are marks within the shelf, not its ends** (§11.7).
+ * **§2's section breaks are marks within the shelf, not its ends** (§W.7).
  * A break is a rule across the shelf's top at the seat boundary, from its far
  * edge to its near edge, and the shelf runs on past it. The pulled record's
  * seat is still a seat, so its boundary still carries one.
@@ -184,7 +184,7 @@ export function rowBreaks(
 /**
  * **5b's top face: what makes a spine an object rather than a bar** (5b §4),
  * over the record's footprint at z + H. And the right face, which is where
- * the pulled record's cover shows (D2, §11.3). Both are the same three
+ * the pulled record's cover shows (D2, §W.3). Both are the same three
  * coordinates the front face is, seen once.
  */
 export function topFace({ x, y, z, width, depth = DEPTH, height = SPINE_HEIGHT }: BoxLike): readonly Point[] {
@@ -213,13 +213,13 @@ export function rightFace({ x, y, z, width, depth = DEPTH, height = SPINE_HEIGHT
  * local x running toward the far end, so the plane is not mirrored and the
  * cover's left edge is at the spine, as a front cover's is.** D2's
  * `matrix(−cos30, sin30, 0, 1, …)` had determinant −cos30, which is why D2
- * removed its caption rather than un-mirroring it. §11.7 puts type on this
+ * removed its caption rather than un-mirroring it. §W.7 puts type on this
  * face for the record with no cover, and a sleeve's own lettering reads
  * backwards on a mirrored plane — so: `matrix(cos30, −sin30, 0, 1,
  * near-top)`, determinant +cos30.
  *
  * The plane's units are the wall's, at any size: a pulled record's cover
- * grows because its box does (§11.10), not because the plane is scaled — so
+ * grows because its box does (§W.10), not because the plane is scaled — so
  * the shear stays the wall's angle by construction rather than by assertion.
  */
 export function coverTransform({ x, y, z, width, depth = DEPTH, height = SPINE_HEIGHT }: BoxLike): string {

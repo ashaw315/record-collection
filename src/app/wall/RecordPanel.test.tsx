@@ -5,7 +5,7 @@ import { RecordPanel } from './RecordPanel';
 import type { RecordSummary } from './summary';
 
 /**
- * §11.19: the panel's order is the record screen's, not a summary of it —
+ * §W.19: the panel's order is the record screen's, not a summary of it —
  * artist, title, year, then the note, then the fact groups on their
  * hairlines, then Open the full record and the two verbs. Turn over and Put
  * back sit together at the foot because they are the two things you can do
@@ -32,7 +32,7 @@ const at = (html: string, marker: string) => {
   return index;
 };
 
-describe('the panel’s order is the record screen’s (§11.19)', () => {
+describe('the panel’s order is the record screen’s (§W.19)', () => {
   it('runs artist, title, year, note, fact groups, the link, then the two verbs together at the foot', () => {
     const html = render();
     const order = [

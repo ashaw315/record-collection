@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SLEEVE_TYPE_FLOOR, SLEEVE_MAX_LINES, TITLE_ADVANCE_EM, sleeveTitle } from './sleeve-type';
 
 /**
- * The no-cover sleeve's title is a DRAWN element (8a §11.3 as ruled): it
+ * The no-cover sleeve's title is a DRAWN element (8a §W.3 as ruled): it
  * stands in for artwork, so §4's scale does not apply and its size derives
  * from its box and its string, the way the 72 does in the year field. The
  * fit: the largest size whose longest word fits the square's measure, at most
@@ -54,7 +54,7 @@ describe('the sleeve title fits its box', () => {
   });
 });
 
-describe('the advance is the WIDEST word’s, not the average title’s (§11.3, §11.8)', () => {
+describe('the advance is the WIDEST word’s, not the average title’s (§W.3, §W.8)', () => {
   /*
     **The defect this pins.** `TITLE_ADVANCE_EM` was 0.48, measured across
     the collection's titles — an average, which narrow letters pull down. The

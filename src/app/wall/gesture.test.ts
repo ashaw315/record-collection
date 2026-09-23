@@ -21,17 +21,17 @@ import {
 } from './gesture';
 
 /**
- * §11.19 / §11.21: the assembled gesture on one clock. Out is 1600ms — the
+ * §W.19 / §W.21: the assembled gesture on one clock. Out is 1600ms — the
  * probe's 1300 for travel, growth and rotation, with a 300ms finish added
  * after it rather than carved out — and the return is the whole gesture
  * reversed at 860ms (700 × 1600 / 1300). Travel is 290 · easeInOutCubic(k)
  * over the 1300; rotation is 45° on its own ease over the last 58%, joining
- * at k = 0.42 with the record 85.9 out; and growth (150 → 560, §11.19) rides
- * the ROTATION's window, not the travel's (§11.25): an orthographic
+ * at k = 0.42 with the record 85.9 out; and growth (150 → 560, §W.19) rides
+ * the ROTATION's window, not the travel's (§W.25): an orthographic
  * projection has no size change on approach, so growth is the record
  * leaving the projection, which is what the rotation is. Growth and
  * rotation share one fixed point — the foot of the cover's near vertical
- * edge (§11.21) — and the finish's two terms come after 45°.
+ * edge (§W.21) — and the finish's two terms come after 45°.
  */
 const seat: PlacedSeat = { id: 'p', x: 170, y: 0, z: 594, width: spineWidth('p') };
 const width = (poly: readonly (readonly [number, number])[]) => Math.max(...poly.map(([x]) => x)) - Math.min(...poly.map(([x]) => x));
@@ -55,7 +55,7 @@ describe('the clock', () => {
 
   it('poses: travel on the swing, growth and rotation on the rotation’s window, the finish after it', () => {
     expect(TRAVEL).toBe(290);
-    /* §11.19's landed square is 560 on a 150 seat: 3.73×. */
+    /* §W.19's landed square is 560 on a 150 seat: 3.73×. */
     expect(LANDED_SIZE).toBe(560);
     expect(GROWTH).toBeCloseTo(560 / 150, 12);
     expect(poseAt(0)).toEqual({ k: 0, travel: 0, scale: 1, angle: 0, finish: 0 });
@@ -71,10 +71,10 @@ describe('the clock', () => {
     expect(poseAt(OUT_MS)).toEqual({ ...end, finish: 1 });
   });
 
-  it('growth rides the rotation’s window, not the travel’s (§11.25): size does not change through the first third', () => {
+  it('growth rides the rotation’s window, not the travel’s (§W.25): size does not change through the first third', () => {
     /*
       The window is a motion parameter, adjustable like the finish's 300ms
-      (§11.25: no still can judge it — the endpoints agree under every
+      (§W.25: no still can judge it — the endpoints agree under every
       distribution). Its default is the rotation's own window, so the two
       transforms with one cause arrive together.
     */
@@ -93,7 +93,7 @@ describe('the clock', () => {
       expect(pose.angle / OPEN_ANGLE, `k=${k}`).toBeCloseTo(progress, 12);
     }
     /*
-      The tell §11.25 records: growth on the travel's curve gave a size change
+      The tell §W.25 records: growth on the travel's curve gave a size change
       that was 1.41 of the position change at EVERY instant — a constant ratio
       is two quantities sharing a curve when only one belongs on it. Here the
       ratio is not constant: zero while the record only travels, then rising.
@@ -119,7 +119,7 @@ describe('the drawn record: three faces, the cover’s plane and the label’s, 
     l.forEach((v, i) => expect(v, `label entry ${i}`).toBeCloseTo(l0[i], 9));
   });
 
-  it('keeps the foot of the pivot edge fixed under growth and rotation — three transforms, one point (§11.21)', () => {
+  it('keeps the foot of the pivot edge fixed under growth and rotation — three transforms, one point (§W.21)', () => {
     /*
       The tell for an origin: both endpoints are given by the drawings and
       every candidate origin agrees at both; they differ only between. So
@@ -177,7 +177,7 @@ describe('the drawn record: three faces, the cover’s plane and the label’s, 
     }
   });
 
-  it('carries its bounds for the sort: the seat’s at 0, and the PHYSICAL box after — unscaled, growth being the screen’s cue (§11.21)', () => {
+  it('carries its bounds for the sort: the seat’s at 0, and the PHYSICAL box after — unscaled, growth being the screen’s cue (§W.21)', () => {
     expect(gestureFaces(seat, poseAt(0)).sortBounds).toEqual({ x0: seat.x, x1: seat.x + seat.width, y0: 0, y1: DEPTH, z0: seat.z, z1: seat.z + SPINE_HEIGHT });
     /*
       The grown solid reaches back INTO the row on y (a 560 run at a partial

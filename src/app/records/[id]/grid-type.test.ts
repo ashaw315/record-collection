@@ -5,7 +5,7 @@ import { oklchToHex } from '@/lib/colour/record-ladder';
 import { contrastRatio } from '@/lib/colour/record-colour';
 
 /**
- * §11.4: the 11px label read 3.88:1 against paper, and the reason it survived
+ * §W.4: the 11px label read 3.88:1 against paper, and the reason it survived
  * is that **contrast is checked against the ground a mark sits on, and these
  * sat on the default, which nobody checks.** So this file checks the default.
  *
@@ -33,7 +33,7 @@ function pageGround(): string {
 
 const DRAWN_PAPER = hexOf('oklch(0.925 0.004 80)');
 
-describe('the 11px label ink (§4, §11.4)', () => {
+describe('the 11px label ink (§4, §W.4)', () => {
   it('clears 4.5:1 on the ground the page paints AND on the drawing’s paper', () => {
     /* Fails against grid-type.ts:17 at oklch(0.55 0.008 60): 3.88 on the drawn paper. */
     const label = hexOf(LABEL);

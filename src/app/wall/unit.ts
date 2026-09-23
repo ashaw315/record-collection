@@ -11,7 +11,7 @@ import {
 import type { ShelfSeat } from './shelf-runs';
 
 /**
- * The unit (8a §11.10, figures from §11.11): **a fixed unit of four shelves
+ * The unit (8a §W.10, figures from §W.11): **a fixed unit of four shelves
  * joined at their ends, and the collection fills it left to right, top to
  * bottom.** Capacity per row could not make a shelf read as a shelf — that is
  * the shape of the stack, a different axis — so the row length comes from
@@ -25,16 +25,16 @@ import type { ShelfSeat } from './shelf-runs';
  * collection competes with the records standing in it (5b), and four planes
  * with nothing joining them is not a shelf either.
  */
-/** §11.11's unit: twenty a shelf, four shelves — the fixture at its smallest. */
+/** §W.11's unit: twenty a shelf, four shelves — the fixture at its smallest. */
 export const PER_SHELF = 20;
 export const SHELVES_PER_UNIT = 4;
 
 /**
- * **One fixture; the row length grows with the collection (§11.23).** Tiling
+ * **One fixture; the row length grows with the collection (§W.23).** Tiling
  * is withdrawn: three units along +x read as three bookcases stepping away
  * from the reader, and they did not even touch — 600 of +x projects 520
  * right and 300 down, and each unit carried its own uprights. Row length
- * is a parameter (§11.15 named it so); where shelves go is a fact. Twenty a
+ * is a parameter (§W.15 named it so); where shelves go is a fact. Twenty a
  * shelf up to eighty records, then a quarter of the collection a shelf:
  * 200 is 50 × 4, 883 × 1302 on screen, one wall of records.
  */
@@ -73,10 +73,10 @@ const face = (kind: FurnitureFace['kind'], z: number, corners: ReadonlyArray<rea
 });
 
 /**
- * The fixture as objects for the painter (§11.20, §11.23): two uprights and
+ * The fixture as objects for the painter (§W.20, §W.23): two uprights and
  * four shelves of `seatsPerShelf`, each with its bounds and its three faces
  * — top, the +x end, the near front (the +y face). At twenty a shelf the
- * tops and ends are §11.11's own polygons (unit.test.ts); its strips were
+ * tops and ends are §W.11's own polygons (unit.test.ts); its strips were
  * drawn on the −y side and are superseded.
  */
 export type UnitPiece = {
@@ -89,7 +89,7 @@ export type UnitPiece = {
 };
 
 /**
- * The unit as objects for the painter (§11.20): two uprights and four
+ * The unit as objects for the painter (§W.20): two uprights and four
  * shelves, each with its bounds and its three faces. A shelf paints before
  * the records standing on it and after the row below it; the right upright
  * after the row it ends.
@@ -126,7 +126,7 @@ export function unitPieces(seatsPerShelf: number): UnitPiece[] {
   for (let row = 0; row < SHELVES_PER_UNIT; row += 1) {
     const z = rowZ(row);
     /*
-      Drawn from upright to upright, as §11.11 draws it — but SORTED as the
+      Drawn from upright to upright, as §W.11 draws it — but SORTED as the
       span between them. A shelf's drawn box interpenetrates the uprights at
       its ends, and interpenetrating boxes have no separating plane: the
       centroid fallback then put the right upright nearer than the top shelf

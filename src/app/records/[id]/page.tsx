@@ -220,7 +220,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
               frame's eyebrow line and Delete is the region's last row, so the
               container had nothing left to hold — §8.1 having already deleted
               its only other occupant. Deleting it gives §9's region its height
-              back, which is §11.28's move on the shelf arriving here.
+              back, which is §W.28's move on the shelf arriving here.
             */}
 
             {/*

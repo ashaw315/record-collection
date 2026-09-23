@@ -3,7 +3,7 @@ import type { RecordSummary } from './summary';
 import { HAIRLINE, INK, LABEL, LABEL_INK } from '../records/[id]/grid-type';
 
 /**
- * **The pulled record's facts, in the record screen's order (§11.19).**
+ * **The pulled record's facts, in the record screen's order (§W.19).**
  *
  * Artist, title, year, then the note, then the fact groups on their
  * hairlines, then Open the full record and the two verbs. Turn over and Put
@@ -11,7 +11,7 @@ import { HAIRLINE, INK, LABEL, LABEL_INK } from '../records/[id]/grid-type';
  * to the object; Open the full record sits above them because it leaves
  * this surface — §3's rule, separating a departure from an interaction.
  * The panel is the record screen's order, not a summary of it: no count of
- * further facts, no truncation, no toggle — §11.9 fixed its region and it
+ * further facts, no truncation, no toggle — §W.9 fixed its region and it
  * is expanded at rest.
  *
  * ## Generated and entered facts stay distinguishable (A33c)
@@ -22,10 +22,10 @@ import { HAIRLINE, INK, LABEL, LABEL_INK } from '../records/[id]/grid-type';
  * a hairline between. `RecordSummary` keeps `snippet` and `factGroups` as
  * separate fields precisely so this component cannot merge them.
  *
- * **Set in the record screen's type and rules (§11.7):** flat, on paper,
+ * **Set in the record screen's type and rules (§W.7):** flat, on paper,
  * labels at `LABEL`, hairlines for rules.
  *
- * Left open by §11.19, reported rather than solved: a long title wraps in
+ * Left open by §W.19, reported rather than solved: a long title wraps in
  * the 420px column and pushes the fact groups toward a foot the two verbs
  * pin — §4.2's collision, in a column with no ornament track to yield.
  */
@@ -75,7 +75,7 @@ export function RecordPanel({
       )}
 
       {/*
-        Every group on its own hairline (§11.19). The first one's is also
+        Every group on its own hairline (§W.19). The first one's is also
         **the boundary (A33c)** between the generated note and the entered
         facts, so the panel never reads as one undifferentiated block
         asserting things about music without saying which part it made up.
@@ -96,13 +96,13 @@ export function RecordPanel({
         </dl>
       )}
 
-      {/* Leaves this surface, so it sits above the two verbs rather than among them (§3, §11.19). */}
+      {/* Leaves this surface, so it sits above the two verbs rather than among them (§3, §W.19). */}
       <Link href={summary.href} data-testid="panel-detail-link" className={`mt-[18px] inline-block text-prose underline ${INK}`}>
         Open the full record — journal, prices, images
       </Link>
 
       {/*
-        §11.31: above the two verbs, bleeding across the facts column. The
+        §W.31: above the two verbs, bleeding across the facts column. The
         count is the collection and everything below it is one record; the
         verbs are what you do rather than what is true, so the rule closes
         the panel's lower end.

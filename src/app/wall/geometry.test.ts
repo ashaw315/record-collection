@@ -85,14 +85,14 @@ describe('one projection', () => {
   });
 });
 
-describe('which side the reader is on (§11.20) — the sign convention, asserted once', () => {
+describe('which side the reader is on (§W.20) — the sign convention, asserted once', () => {
   /*
     P(x, y, z) = [(x − y)·cos30, (x + y)·sin30 − z] collapses (1, 1, 1):
     P(1, 1, 1) = 0, so the camera lies on that line, and with the tops
     visible it is at +(1, 1, 1). The visible faces are +x, +y and +z; the
-    spine is the +y face and LARGER is nearer on every axis. §11.15's
+    spine is the +y face and LARGER is nearer on every axis. §W.15's
     (+, −, +) camera is not a viewpoint of this projection — P(1, −1, 1) is
-    not zero — and is withdrawn by §11.20. An extent comparison cannot
+    not zero — and is withdrawn by §W.20. An extent comparison cannot
     catch a flip in y; this block can.
   */
   const seat: PlacedSeat = { id: 'r', x: 100, y: 16, z: 458, width: 19 };
@@ -118,7 +118,7 @@ describe('the row is on the axis', () => {
 
   it('advances each seat by the unit’s fixed pitch, the hashed width textured inside it', () => {
     /*
-      §11.10: the row is the unit's, not the collection's — a fixed seat of 17
+      §W.10: the row is the unit's, not the collection's — a fixed seat of 17
       (a 12 spine and a 5 gap as drawn), the record's width varying inside it.
     */
     const placed = layoutRow(seats, 0);
@@ -150,7 +150,7 @@ describe('the row is on the axis', () => {
     }
   });
 
-  it('stacks rows down the z axis at the pitch, row 0 highest — one fixture, nothing along x (§11.23)', () => {
+  it('stacks rows down the z axis at the pitch, row 0 highest — one fixture, nothing along x (§W.23)', () => {
     const top = layoutRow(seats, 0)[0];
     const next = layoutRow(seats, 1)[0];
     expect(top.z - next.z).toBe(ROW_PITCH);
@@ -158,7 +158,7 @@ describe('the row is on the axis', () => {
   });
 });
 
-describe('§2’s section breaks are marks within the shelf, not its ends (§11.7)', () => {
+describe('§2’s section breaks are marks within the shelf, not its ends (§W.7)', () => {
   const shelf = [
     { id: 'a1', section: 'A' },
     { id: 'a2', section: 'A' },
@@ -228,7 +228,7 @@ describe('5b’s two faces, on the same three coordinates (D2)', () => {
     /*
       D2's matrix(−cos30, sin30, 0, 1, far-top) has determinant −cos30: the
       plane is mirrored, which is why D2 removed its caption rather than
-      un-mirroring it. §11.7 puts type on this face for the record with no
+      un-mirroring it. §W.7 puts type on this face for the record with no
       cover, and a sleeve's own lettering reads backwards on a mirrored
       plane — so the face is entered from the near-top corner (y + D, where
       the spine is) with local x running toward the far end: the cover's
@@ -270,7 +270,7 @@ describe('D1: the wall renders at 1:1 and pans; §5 removes labels only below on
   });
 });
 
-describe('paint order within a row is seat order (§11.8)', () => {
+describe('paint order within a row is seat order (§W.8)', () => {
   /**
    * SVG has no z-index: paint order is document order, and document order is
    * what a keyboard walks. Within a row the separating-plane order agrees

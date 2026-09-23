@@ -34,7 +34,7 @@ import { PAPER } from './paper';
 
 /** §5.2: the floor is set by the 11px label clearing 4.5:1, not by the 72. */
 export const LIGHTNESS_MIN = 0.62;
-/** The ceiling stops the field dissolving into paper (PAPER, §11.5). */
+/** The ceiling stops the field dissolving into paper (PAPER, §W.5). */
 export const LIGHTNESS_MAX = 0.74;
 /** Above this, no record shouts. Ceiling only — see the module comment. */
 export const CHROMA_CEILING = 0.09;

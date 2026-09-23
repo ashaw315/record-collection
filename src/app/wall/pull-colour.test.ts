@@ -13,9 +13,9 @@ import { oklchToHex, recordLadder } from '@/lib/colour/record-ladder';
 import { COLLECTION_SPINES } from '../../../test/fixtures/collection-spines';
 
 /**
- * 8a §11.2: colour arrives ACROSS the gesture, on the same curve — a fade from
+ * 8a §W.2: colour arrives ACROSS the gesture, on the same curve — a fade from
  * paper to the record's clamped base on the swing's own eased travel
- * (§11.19), starting at 0.
+ * (§W.19), starting at 0.
  *
  * Colour at the end is an event on a curve whose whole argument is that it has
  * none; colour at the start is the shelf changing before the record moves. So
@@ -35,7 +35,7 @@ const BASE_HEX = oklchToHex({ L: ladder.baseL, C: ladder.baseC, h: ladder.baseHu
 /** One frame at 60fps, as a fraction of the return. */
 const FRAME = 1000 / 60 / RETURN_MS;
 
-describe('colour arrives across the pull (§11.2)', () => {
+describe('colour arrives across the pull (§W.2)', () => {
   it('starts at the wall’s paper — no step from the resting outline', () => {
     /* At 0 the record is an outline on paper; a fill of paper draws the same. */
     expect(pullFill(0, ladder)).toBe(WALL_PAPER_HEX);
@@ -71,7 +71,7 @@ describe('colour arrives across the pull (§11.2)', () => {
       expect(pullFill(easeInOutCubic(k), ladder), `k=${k}`).toBe(at(easeInOutCubic(k)));
     }
     expect(easeInOutCubic(0.5)).toBe(0.5);
-    /* §11.2: the fade runs the FULL out-span — the drawing passes ease(t / OUT_MS), not the swing's k, or colour would land 300ms before the record. */
+    /* §W.2: the fade runs the FULL out-span — the drawing passes ease(t / OUT_MS), not the swing's k, or colour would land 300ms before the record. */
     expect(OUT_MS).toBe(1600);
     expect(OUT_MS).toBeGreaterThan(SWING_MS);
   });
@@ -85,7 +85,7 @@ describe('colour arrives across the pull (§11.2)', () => {
     }
   });
 
-  it('arrives at INK for a record with no cover (§5.3 via §11.8)', () => {
+  it('arrives at INK for a record with no cover (§5.3 via §W.8)', () => {
     /*
       Not #3a3a3a — a default colour SPEC §4 says never renders — and not
       "the same clamped base", which has no referent when the sample is null.
@@ -134,7 +134,7 @@ describe('the return drains to paper before the spine lands', () => {
   it('completes strictly before the geometry does', () => {
     /*
       Colour reaches paper at RETURN_FADE_END; the geometry is not seated until
-      1. The gap is frames the viewer sees in paper — the condition §11.2
+      1. The gap is frames the viewer sees in paper — the condition §W.2
       states, measured as an ordering rather than assumed from the constant.
     */
     let firstPaper = -1;

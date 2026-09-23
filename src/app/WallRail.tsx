@@ -12,7 +12,7 @@ import {
 import { HAIRLINE, INK, LABEL, LABEL_INK } from "./records/[id]/grid-type";
 
 /**
- * **The rail (8a §11.13): the page's controls leave the horizontal band.**
+ * **The rail (8a §W.13): the page's controls leave the horizontal band.**
  *
  * The 260px header band cost height in the one dimension the unit is
  * measured in, so the wall starts directly under the app nav and the
@@ -30,12 +30,12 @@ import { HAIRLINE, INK, LABEL, LABEL_INK } from "./records/[id]/grid-type";
  * (§3's distinction, applied to chrome).
  *
  * The rail carries no identity. COLLECTION and the count are the facts
- * column's head (§11.9); the header's Collection and count were the
+ * column's head (§W.9); the header's Collection and count were the
  * duplicate, and they are the instance that goes. Every control is a plain
  * link or a GET form, so all of it works with JavaScript off.
  *
- * **GENRE and SORT sit under SEARCH (§11.24), three lines in the rail's
- * mono with the same ink underline.** §11.12 is what puts them here rather
+ * **GENRE and SORT sit under SEARCH (§W.24), three lines in the rail's
+ * mono with the same ink underline.** §W.12 is what puts them here rather
  * than convenience: a filter that empties seats produces a shape on the
  * fixture, and an empty seat you did not watch empty is indistinguishable
  * from a gap in the collection — arriving pre-filtered throws away what
@@ -102,7 +102,7 @@ export function WallRail({
               >
                 Genre
               </label>
-              {/* §11.36: out of flow — GENRE sits above the switcher, so a set filter in flow would move the control you choose the view with. */}
+              {/* §W.36: out of flow — GENRE sits above the switcher, so a set filter in flow would move the control you choose the view with. */}
               {params.filters.genreId !== undefined && (
                 <span
                   data-set-bar=""
@@ -112,14 +112,14 @@ export function WallRail({
                 />
               )}
               {/*
-                §11.32: a SET filter takes the rail's own set mark — §11.13's
-                44-wide ink bar at §11.31's 2px — not oxblood, and not the
+                §W.32: a SET filter takes the rail's own set mark — §W.13's
+                44-wide ink bar at §W.31's 2px — not oxblood, and not the
                 field's underline, which §9.3 puts there whether or not a
                 filter is set and so encodes nothing. On the shelf a filter's
-                real expression is the empty seats (§11.12); this only says
+                real expression is the empty seats (§W.12); this only says
                 which filter made them.
               */}
-              {/* §11.36: out of flow like the view's — GENRE and SORT sit above the switcher, so a set filter in flow would move the control you choose the view with. */}
+              {/* §W.36: out of flow like the view's — GENRE and SORT sit above the switcher, so a set filter in flow would move the control you choose the view with. */}
               {/* The count follows §7.1's rollup, as the chips' does: "Punk 12" is what choosing it returns. */}
               <RailSelect
                 id="rail-genre"
@@ -161,7 +161,7 @@ export function WallRail({
         </button>
       </form>
 
-      {/* §11.31: above the view switcher, bleeding to both edges of the rail. */}
+      {/* §W.31: above the view switcher, bleeding to both edges of the rail. */}
       <hr data-line="rail-views" className={`border-t ${HAIRLINE}`} style={{ margin: "0 -20px 18px" }} />
 
       <ul className="flex flex-col gap-[18px]" aria-label="View">
@@ -183,11 +183,11 @@ export function WallRail({
                 {VIEW_NAMES[mode]}
               </Link>
               {/*
-                §11.36: OUT OF FLOW — drawn against the label's baseline and
+                §W.36: OUT OF FLOW — drawn against the label's baseline and
                 occupying no height, so the switcher's pitch is the type's
                 whether a view is set or not. A mark is not content, so it
                 cannot push: in flow, GRID sat 8px lower when SHELF was
-                active, and the rail's spacing encoded state. §11.31 gives
+                active, and the rail's spacing encoded state. §W.31 gives
                 the weight (§3's 2px non-type mark) and the 44 that makes it
                 a mark rather than a rule.
               */}

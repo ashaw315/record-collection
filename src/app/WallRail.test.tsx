@@ -6,13 +6,13 @@ import { parseCollectionParams } from './collection-params';
 import { LABEL } from './records/[id]/grid-type';
 
 /**
- * §11.13: the header band is withdrawn and the page's controls go down a
+ * §W.13: the header band is withdrawn and the page's controls go down a
  * 148px rail on the left — SEARCH at the head (a ruled field, §9.3's 34px
  * control), the three views stacked as a list with the current one marked
  * the way this page marks a current thing (ink against muted, the 44 × 4
  * bar, no box), and Add record at the foot below a rule that bleeds to both
  * edges of the rail. The rail carries no identity: COLLECTION and the count
- * stay at the facts column's head (§11.9).
+ * stay at the facts column's head (§W.9).
  */
 const GENRES = [
   { id: '00000000-0000-4000-8000-00000000000a', name: 'Punk', count: 12 },
@@ -25,7 +25,7 @@ const at = (html: string, marker: string) => {
   return index;
 };
 
-describe('the rail (§11.13)', () => {
+describe('the rail (§W.13)', () => {
   it('is 148px wide, LABEL throughout, and runs SEARCH, GENRE, SORT, then SHELF · TABLE · GRID, then a full-bleed rule, then ADD RECORD', () => {
     const html = render();
     expect(html).toMatch(/data-testid="wall-rail"[^>]*width:\s*148px/);
@@ -35,7 +35,7 @@ describe('the rail (§11.13)', () => {
     expect(html).not.toContain('COLLECTION');
   });
 
-  it('marks the current view with aria-current and the 44 × 2 bar (§11.31), and no box, pill or field around any view', () => {
+  it('marks the current view with aria-current and the 44 × 2 bar (§W.31), and no box, pill or field around any view', () => {
     const shelf = render();
     expect(shelf).toMatch(/aria-current="page"[^>]*>Shelf</);
     expect(shelf).toMatch(/>Shelf<\/a>\s*<span[^>]*data-current-bar=""[^>]*width:\s*44px;\s*height:\s*2px/);
@@ -78,13 +78,13 @@ describe('the rail (§11.13)', () => {
   });
 
   /*
-    §11.24: the filter belongs in the rail. §11.12 forces it — a filter that
+    §W.24: the filter belongs in the rail. §W.12 forces it — a filter that
     empties seats produces a shape on the fixture, and an empty seat you did
     not watch empty is indistinguishable from a gap in the collection — so
     GENRE and SORT sit under SEARCH in the same vocabulary, and the round
     trip through the table's chips stops being the only route.
   */
-  describe('GENRE and SORT under SEARCH (§11.24)', () => {
+  describe('GENRE and SORT under SEARCH (§W.24)', () => {
     it('offers every genre facet with its rolled-up count, Any first, the current one selected — as a ruled field, not a box', () => {
       const html = render(`genreId=${GENRES[1].id}`);
       const select = /<select[^>]*id="rail-genre"[^>]*>[\s\S]*?<\/select>/.exec(html)?.[0] ?? '';
@@ -128,11 +128,11 @@ describe('the rail (§11.13)', () => {
   });
 });
 
-describe('§11.36: the set bar leaves the flow', () => {
+describe('§W.36: the set bar leaves the flow', () => {
   /*
     A mark is not content, so it cannot push. In flow the 44-wide bar
     displaced its neighbours — GRID sat 8px lower when SHELF was active than
-    when it was not, so the rail's spacing encoded state — and under §11.32
+    when it was not, so the rail's spacing encoded state — and under §W.32
     the same bar marks a set filter, which sits ABOVE the switcher: a set
     genre would have moved the control you choose the view with. Position in
     the rail is the reader's map of the page's controls, and a map that
@@ -144,7 +144,7 @@ describe('§11.36: the set bar leaves the flow', () => {
     const bar = barOf(render(), 'data-current-bar');
     expect(bar, 'the bar is drawn').not.toBe('');
     expect(bar, 'positioned rather than stacked').toMatch(/absolute/);
-    expect(bar, 'still 44 wide at §11.31’s 2px').toMatch(/width:\s*44px/);
+    expect(bar, 'still 44 wide at §W.31’s 2px').toMatch(/width:\s*44px/);
     expect(bar).toMatch(/height:\s*2px/);
   });
 

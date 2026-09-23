@@ -63,7 +63,7 @@ export function AppHeader({ actions }: { actions?: React.ReactNode } = {}) {
   const wide = /^\/records\/[^/]+$/.test(pathname) || pathname.startsWith('/wall/probe/page8a');
 
   /*
-    §11.13: the wall starts directly under this nav and takes the full height,
+    §W.13: the wall starts directly under this nav and takes the full height,
     so the nav's rendered height is published as a variable the wall's region
     subtracts from the viewport — measured rather than declared, since the
     bar's height is its type's.

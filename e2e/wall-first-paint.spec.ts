@@ -26,12 +26,12 @@ test.describe.configure({ timeout: 60_000 });
 
 
 /**
- * **The first paint is already the final view (§11.26, §11.29).**
+ * **The first paint is already the final view (§W.26, §W.29).**
  *
  * The server cannot measure a viewport, so which view exists was decided by
- * CSS at §11.26's fork width and the client's measurement only drove the
+ * CSS at §W.26's fork width and the client's measurement only drove the
  * route's own state. When that gate was written the route opened far, and
- * §11.29 made near the default — so the pre-measurement paint became wrong
+ * §W.29 made near the default — so the pre-measurement paint became wrong
  * in the other direction: a far view appearing for ~200ms on every load and
  * then being replaced, which reads as a glitch.
  *
@@ -88,7 +88,7 @@ async function viewTimeline(page: Page): Promise<string[]> {
   return changes;
 }
 
-test('above the fork the first paint is the NEAR view and never changes to settle (§11.29)', async ({ page }) => {
+test('above the fork the first paint is the NEAR view and never changes to settle (§W.29)', async ({ page }) => {
   await login(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   const artistId = await seed(page, 17);
@@ -100,7 +100,7 @@ test('above the fork the first paint is the NEAR view and never changes to settl
   expect(changes[0], 'and it is the near view from the start').toContain('near');
 });
 
-test('below the fork the first paint is the FAR view and never changes to settle (§11.24)', async ({ page }) => {
+test('below the fork the first paint is the FAR view and never changes to settle (§W.24)', async ({ page }) => {
   await login(page);
   await page.setViewportSize({ width: 390, height: 844 });
   const artistId = await seed(page, 17);
@@ -129,9 +129,9 @@ test('the fork is decided without measuring: no script at all still paints the r
   }
 });
 
-test('the arrival is already in position: the region’s scroll never moves after the first paint (§11.29)', async ({ page }) => {
+test('the arrival is already in position: the region’s scroll never moves after the first paint (§W.29)', async ({ page }) => {
   /*
-    §11.22's eased pan belongs to the PULL, where the reader is watching a
+    §W.22's eased pan belongs to the PULL, where the reader is watching a
     record move and the view follows it. On arrival there is nothing to
     follow: a wall that starts low and scrolls up into place — with the
     scrollbar travelling — reads as a page still loading, which is what
@@ -162,7 +162,7 @@ test('the arrival is already in position: the region’s scroll never moves afte
   expect(Number(positions[0].split('/')[1]), 'landed somewhere the fixture required').toBeGreaterThan(0);
 });
 
-test('a client navigation to the shelf arrives in position too (§11.29)', async ({ page }) => {
+test('a client navigation to the shelf arrives in position too (§W.29)', async ({ page }) => {
   /*
     Two paths, two mechanisms. A DOCUMENT load is painted from the server's
     markup before any client script runs, so the arrival is written by an
@@ -217,7 +217,7 @@ test('a client navigation to the shelf arrives in position too (§11.29)', async
   */
 });
 
-test('the arrival script warns at most once per load, and never on a put-back (§11.29)', async ({ page }) => {
+test('the arrival script warns at most once per load, and never on a put-back (§W.29)', async ({ page }) => {
   /*
     The tag can only ever do work at parse time, so rendering it on every
     later commit is noise: React logs its script warning each time the wall
@@ -245,7 +245,7 @@ test('the arrival script warns at most once per load, and never on a put-back (�
   await page.waitForTimeout(1400);
 
   expect(warnings.length, 'no further warnings once mounted').toBe(afterLoad);
-  /* And the scroll is where it was: put back retraces the pan (§11.22). */
+  /* And the scroll is where it was: put back retraces the pan (§W.22). */
   const after = await page.evaluate(() => { const el = document.querySelector('[data-region="wall"]') as HTMLElement; return { l: Math.round(el.scrollLeft), t: Math.round(el.scrollTop) }; });
   expect(Math.abs(after.l - before.l), 'scrollLeft unchanged').toBeLessThanOrEqual(2);
   expect(Math.abs(after.t - before.t), 'scrollTop unchanged').toBeLessThanOrEqual(2);

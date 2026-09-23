@@ -4,7 +4,7 @@ import type { ShelfRecord } from '@/lib/db/queries/shelf';
 import { spineLabel } from './spine-text';
 
 /**
- * The wall on the database (§11.7 step 5): `shelfRecords` is the producer of
+ * The wall on the database (§W.7 step 5): `shelfRecords` is the producer of
  * both the seats and the panel's summaries, so the two cannot drift — one
  * order for the keyboard, the arrows and the links.
  */
@@ -62,7 +62,7 @@ describe('wallSeats', () => {
   });
 });
 
-describe('wallSeats — a filter empties seats (§11.12)', () => {
+describe('wallSeats — a filter empties seats (§W.12)', () => {
   it('seats a matching record and leaves a non-matching one EMPTY — the seat kept, the record absent', () => {
     const [seated, empty] = wallSeats([record({ id: 'r1', matches: true }), record({ id: 'r2', matches: false })]);
     expect(seated.empty).toBeUndefined();

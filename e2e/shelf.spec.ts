@@ -204,7 +204,7 @@ test('the shelf is the default view, and a spine names its record', async ({ pag
 
 test('a spine is a link, so it survives without JavaScript', async ({ browser, page }) => {
   /**
-   * §11.8: the spine is an <a> inside the SVG whose click is intercepted into
+   * §W.8: the spine is an <a> inside the SVG whose click is intercepted into
    * the pull, so the href goes somewhere correct if the handler never runs.
    *
    * **Asserted by navigating with JavaScript OFF, not by reading the href.** An
@@ -338,7 +338,7 @@ test('the wall shows the records the heading says it does', async ({ page }) => 
   await page.goto(`/?genreId=${genreId}`);
   await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
   /*
-    Two counts asserted against EACH OTHER: the composition's 72 (§11.7's
+    Two counts asserted against EACH OTHER: the composition's 72 (§W.7's
     COLLECTION count, from the wall's own seats) and the number of spines
     drawn as links. The heading's "N of M" line is the same number again when a
     filter is on.
@@ -349,10 +349,10 @@ test('the wall shows the records the heading says it does', async ({ page }) => 
   expect(onWall, `the wall draws ${onWall} spines under a count of ${shown}`).toBe(shown);
 });
 
-test('the shelf view has no header band: the wall starts under the nav, and the rail carries the controls (§11.13)', async ({ page }) => {
+test('the shelf view has no header band: the wall starts under the nav, and the rail carries the controls (§W.13)', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
-  /* No heading, no band: the facts column's COLLECTION and count are the identity (§11.9). */
+  /* No heading, no band: the facts column's COLLECTION and count are the identity (§W.9). */
   await expect(page.getByRole('heading', { level: 1, name: 'Collection' })).toHaveCount(0);
   await expect(page.getByTestId('shelf-controls-toggle')).toHaveCount(0);
   const rail = page.getByTestId('wall-rail');
@@ -372,7 +372,7 @@ test('the shelf view has no header band: the wall starts under the nav, and the 
   /* The rail's order: the one form (search, genre, sort), the views, add record. */
   const order = await rail.evaluate((el) => Array.from(el.querySelectorAll('form, a')).map((n) => (n.tagName === 'FORM' ? n.getAttribute('role') : n.textContent?.trim())));
   expect(order).toEqual(['search', 'Shelf', 'Table', 'Grid', 'Add record']);
-  /* SEARCH first and SORT last; GENRE between them when the collection has genre facets (the §11.24 test seeds one and asserts all three). */
+  /* SEARCH first and SORT last; GENRE between them when the collection has genre facets (the §W.24 test seeds one and asserts all three). */
   const fields = await rail.evaluate((el) => Array.from(el.querySelectorAll('form label')).map((n) => n.textContent?.trim()));
   expect(fields[0]).toBe('Search');
   expect(fields[fields.length - 1]).toBe('Sort');
@@ -406,11 +406,11 @@ test('search from the rail narrows the wall, and the count says so', async ({ pa
   await expect(page.getByTestId('wall').locator('[data-region="count"]')).toContainText(/1 of \d+/);
 });
 
-test('the rail’s sort reorders the wall itself (§11.24)', async ({ page }) => {
+test('the rail’s sort reorders the wall itself (§W.24)', async ({ page }) => {
   /*
     The control submitted a `sort` the shelf query ignored: the wall kept its
     genre-section order whatever the URL said, so the rail had a control that
-    did nothing. The section order is the DEFAULT — §11.1 leaves position
+    did nothing. The section order is the DEFAULT — §W.1 leaves position
     carrying the collection's order, and which order that is is the reader's.
   */
   const stamp = suffix();
@@ -452,7 +452,7 @@ test('the rail’s sort reorders the wall itself (§11.24)', async ({ page }) =>
   expect(await order(), 'oldest first: Delta 1986 … Charlie 1990').toEqual(['Delta', 'Bravo', 'Echo', 'Alpha', 'Charlie']);
 });
 
-test('genre and sort from the rail narrow and order the wall without leaving it (§11.24)', async ({ page }) => {
+test('genre and sort from the rail narrow and order the wall without leaving it (§W.24)', async ({ page }) => {
   const stamp = suffix();
   const genre = await page.request.post('/api/genres', { data: { name: `Rail-${stamp}` } });
   expect(genre.status()).toBe(201);
@@ -487,7 +487,7 @@ test('genre and sort from the rail narrow and order the wall without leaving it 
   await expect(rail.getByLabel('Sort')).toHaveValue('title:desc');
 });
 
-test('a filter empties seats rather than re-seating them, and the emptied seats are drawn (§11.12, §11.34)', async ({ page }) => {
+test('a filter empties seats rather than re-seating them, and the emptied seats are drawn (§W.12, §W.34)', async ({ page }) => {
   /*
     **The fixture's matches must NOT be contiguous in wall order, and that is
     the whole reason this test was rewritten.** The wall orders by genre
@@ -550,8 +550,8 @@ test('a filter empties seats rather than re-seating them, and the emptied seats 
   /*
     **Counted among this fixture's records, not the whole wall's.** This line
     asserted zero footprints on the wall and failed under the full suite with
-    67: `?artistId=` is a filter (§11.12), so every record another spec has
-    seeded at that moment is displaced and §11.34 owes it a footprint. A
+    67: `?artistId=` is a filter (§W.12), so every record another spec has
+    seeded at that moment is displaced and §W.34 owes it a footprint. A
     baseline-and-delta was tried first and failed too — the navigation spec
     seeds sixty records and deletes them between this test's two page loads,
     so even the gap between loads is wide enough. So a footprint now carries
@@ -571,7 +571,7 @@ test('a filter empties seats rather than re-seating them, and the emptied seats 
   expect(filtered.pieces, 'the fixture is the same fixture').toBe(rest.pieces);
   expect(Math.abs(filtered.length - rest.length), 'the row did not shorten').toBeLessThan(1);
 
-  /* §11.34: every seat a record was displaced from draws its footprint. */
+  /* §W.34: every seat a record was displaced from draws its footprint. */
   expect(filtered.footprintsMine, 'one footprint per emptied seat, among the six').toBe(3);
 
   /* The POSITIONS, against the unfiltered layout: every survivor is where it was. */

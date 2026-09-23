@@ -5,14 +5,14 @@ import { isFarView, nearViewMinWidth } from '../src/app/wall/view-fork';
 registerCleanup();
 
 /**
- * 8a §11.24: the narrow shelf is the far view — measured rather than chosen.
+ * 8a §W.24: the narrow shelf is the far view — measured rather than chosen.
  *
  * At 390px the near view holds about two seats, and two of two hundred is
  * not a fixture; the far view has no width floor because its labels are
  * absent rather than shrunk. Two consequences, both asserted here: a tap goes
  * to the record screen rather than to a pulled state (the landing needs a
  * 560 cover and a 420 panel side by side), and the rail collapses to one
- * band. This spec runs on the MOBILE project — the finding §11.24 keeps is
+ * band. This spec runs on the MOBILE project — the finding §W.24 keeps is
  * that no mobile project ran the shelf specs, so the view had no narrow form
  * and nothing asserted that it did.
  */
@@ -69,7 +69,7 @@ test('at 390px the shelf is the far view in one column, the rail one band, and a
   await expect(railEl.getByRole('link', { name: 'Add record' })).toBeVisible();
   await expect(railEl.getByLabel('Sort')).toBeHidden();
   await expect(railEl.locator('[data-rail-rule]')).toBeHidden();
-  /* §11.26: Add record is a row item in the band — on the same line as the views, not wrapped under them. */
+  /* §W.26: Add record is a row item in the band — on the same line as the views, not wrapped under them. */
   const shelfLink = await railEl.getByRole('link', { name: 'Shelf' }).boundingBox();
   const addLink = await railEl.getByRole('link', { name: 'Add record' }).boundingBox();
   expect(shelfLink && addLink).toBeTruthy();
@@ -106,7 +106,7 @@ test('the fork is one number: widening past it brings the near view back, with t
   await expect(page.locator('[data-wall="labelled"]')).toHaveCount(0);
 });
 
-test('the first paint is the far view: with no script at all, 390px shows the overview and hides the labelled wall (§11.26’s flash, handled)', async ({ browser, page: signedIn }) => {
+test('the first paint is the far view: with no script at all, 390px shows the overview and hides the labelled wall (§W.26’s flash, handled)', async ({ browser, page: signedIn }) => {
   /* The login form needs script to submit; the session cookie does not. Sign in with script, then look with none. */
   await login(signedIn);
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 844 }, storageState: await signedIn.context().storageState() });

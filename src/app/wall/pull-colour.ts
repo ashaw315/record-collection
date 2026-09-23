@@ -3,7 +3,7 @@ import { PAPER } from '@/lib/colour/paper';
 import { easeInOutCubic } from './gesture';
 
 /**
- * Colour across the pull (8a §11.2).
+ * Colour across the pull (8a §W.2).
  *
  * **The wall at rest is line, ink and paper; colour arrives with the pull.**
  * Not at the end — that reads as confirmation, the record lands and then
@@ -18,13 +18,13 @@ import { easeInOutCubic } from './gesture';
  * has none to lend.
  */
 
-/** The wall's paper — the one token (§11.5): the fade starts from the face it leaves, not a lighter value. */
+/** The wall's paper — the one token (§W.5): the fade starts from the face it leaves, not a lighter value. */
 export const WALL_PAPER: Oklch = PAPER;
 export const WALL_PAPER_HEX = oklchToHex(WALL_PAPER);
 
 /**
  * The wall's ink, and the field a record with no cover pulls to (§5.3 via
- * §11.8). Not #3a3a3a — a default colour SPEC §4 says never renders — and
+ * §W.8). Not #3a3a3a — a default colour SPEC §4 says never renders — and
  * not "the same clamped base", which has no referent when the sample is
  * null. Colour arrives with the pull because it comes from the cover, and a
  * record with no cover has none to arrive with.
@@ -67,7 +67,7 @@ function mix(eased: number, ladder: RecordLadder | null): string {
 }
 
 /** The pulled record's fill at `progress` of the pull, 0 seated → 1 pulled. */
-/** The fill at `arrival` of the way from paper to the record's colour — the gesture's own eased value (§11.2, on §11.19's curve). */
+/** The fill at `arrival` of the way from paper to the record's colour — the gesture's own eased value (§W.2, on §W.19's curve). */
 export function pullFill(arrival: number, ladder: RecordLadder | null): string {
   return mix(arrival, ladder);
 }

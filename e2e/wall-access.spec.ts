@@ -4,7 +4,7 @@ import { seedRecords } from './seed';
 
 /**
  * **The access contract the lit wall met through a list, met by the spines
- * themselves (8a §11.8).** Two of the five claims inherit here — the other
+ * themselves (8a §W.8).** Two of the five claims inherit here — the other
  * three live in shelf.spec.ts. They were written against a list beside a
  * canvas; each is checked here for the reason it was written, not for
  * passing incidentally against anchors inside an SVG.
@@ -42,7 +42,7 @@ test('every record is a link named by its FULL title — the face carries the tr
   /**
    * The reason: the drawn label is cut at 37 characters, so what is drawn may
    * name no record to a screen reader. The accessible name carries the whole
-   * `Artist · Title` — §11.8's one place where truncation is not a loss.
+   * `Artist · Title` — §W.8's one place where truncation is not a loss.
    */
   const { artistId, titles } = await seed(page, 8);
   await page.goto(`/?artistId=${artistId}`);

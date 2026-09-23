@@ -5,7 +5,7 @@ import { seedRecords } from './seed';
 import { contrastRatio } from '../src/lib/colour/record-colour';
 
 /**
- * What the gesture arrives at (8a §11.7): the panel, flat on paper, right of
+ * What the gesture arrives at (8a §W.7): the panel, flat on paper, right of
  * the pulled record, appearing at the slide's perceived end. Two claims
  * inherit from the lit wall's composition tests: the chrome arrives with the
  * record rather than before it, and Escape sends the record home — from
@@ -61,7 +61,7 @@ test('the panel arrives with the record — with the rotation, not before, in th
   await expect(chrome.getByTestId('panel-detail-link')).toHaveAttribute('href', /\/records\//);
 
   /*
-    §11.9, §11.10: the panel's region is fixed in the facts column, left of
+    §W.9, §W.10: the panel's region is fixed in the facts column, left of
     the drawing; the record lands in the drawing's region as its largest
     square face, still in the projection; the arrows go with the record.
     Nothing in the panel is sheared.
@@ -85,7 +85,7 @@ test('the panel arrives with the record — with the rotation, not before, in th
   expect(geometry.panel.r, 'the panel is in the facts column').toBeLessThanOrEqual(geometry.facts.r + 1);
   expect(geometry.panel.l).toBeLessThan(geometry.wall.l);
   expect(geometry.panel.t, 'below the count').toBeGreaterThan(geometry.count.b);
-  /* Landed on the page's plane (§11.17, §11.21): a 560 square, the projection undone. */
+  /* Landed on the page's plane (§W.17, §W.21): a 560 square, the projection undone. */
   expect(Math.abs(geometry.field.w - geometry.field.h), 'the landed record is a square').toBeLessThan(1.5);
   /* At its own size while growth is with Design: 150 × 150 at 1:1. */
   expect(geometry.field.w).toBeCloseTo(150 * GROWTH, 0);

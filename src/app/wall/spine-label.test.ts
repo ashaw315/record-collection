@@ -9,7 +9,7 @@ describe('the 1:1 label (5b §1)', () => {
   });
 
   it('truncates the drawn case exactly as drawn', () => {
-    /* §11.11's near view: "Donna Summer · On Th…" — 20 glyphs and the mark, the 21 cap at the 150 face. */
+    /* §W.11's near view: "Donna Summer · On Th…" — 20 glyphs and the mark, the 21 cap at the 150 face. */
     const label = spineLabel('Donna Summer', 'On The Radio: Greatest Hits Vol. 1 & 2');
 
     expect(label).toBe('Donna Summer · On Th…');
@@ -42,7 +42,7 @@ describe('Wall Density’s truncation count, re-gathered at the budget the code 
 
   it('re-gathered at the 21 cap: twelve of the seventeen truncate', () => {
     /*
-      §11.11 counted eleven overrunning untruncated in its render; the rule
+      §W.11 counted eleven overrunning untruncated in its render; the rule
       cuts twelve. The twelfth is Buddy Rich · Super Rich at 23 characters —
       two over the cap, which the render's inset evidently absorbed. Two
       characters is the measured-versus-derived gap, recorded rather than
@@ -62,7 +62,7 @@ describe('Wall Density’s truncation count, re-gathered at the budget the code 
 
 describe('the budget is a rule, not a number: the face less its insets over the measured advance', () => {
   /**
-   * §11.11: floor((150 − 14) / 6.235) = 21 at the drawing's face, the advance
+   * §W.11: floor((150 − 14) / 6.235) = 21 at the drawing's face, the advance
    * measured at 6.234 in its render. The number follows the face; the
    * derivation is what is kept. (At 5b's 240 the same insets give 36 — the
    * earlier 37 used an 8 inset alone. One rule, and the inset is now the
@@ -88,7 +88,7 @@ describe('Wall Density’s truncation count, re-gathered at the budget the code 
 
   it('re-gathered at the 21 cap: twelve of the seventeen truncate', () => {
     /*
-      §11.11 counted eleven overrunning untruncated in its render; the rule
+      §W.11 counted eleven overrunning untruncated in its render; the rule
       cuts twelve. The twelfth is Buddy Rich · Super Rich at 23 characters —
       two over the cap, which the render's inset evidently absorbed. Two
       characters is the measured-versus-derived gap, recorded rather than

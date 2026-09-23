@@ -47,7 +47,7 @@ export type ShelfRecord = {
   /** §10b's spine colour; `null` is an honest absence, rendered as a plain spine. */
   spineColour: string | null;
   /**
-   * §11.12 / §11.24: whether this record matches the active filter. The
+   * §W.12 / §W.24: whether this record matches the active filter. The
    * shelf returns the WHOLE collection in wall order and marks; a
    * non-matching record's seat stays where it is, empty.
    */
@@ -129,7 +129,7 @@ type Row = ShelfRecord & { sectionName: string | null };
  * those conditions resolve: Drizzle renders `"records"."label_id"`, which would
  * reference a table not in scope under any other alias.
  *
- * **A filter marks rather than prunes (8a §11.12, §11.24).** The predicate is
+ * **A filter marks rather than prunes (8a §W.12, §W.24).** The predicate is
  * projected as \`matches\` rather than applied as a WHERE, so the whole
  * collection comes back in wall order and a non-matching record's seat
  * stays where it is, empty: the filter is a shape on the fixture, not a new
@@ -147,9 +147,9 @@ export async function shelfRecords(
   const db = getDb();
   const where = buildWhere(filters);
   /*
-    §11.24's rail carries SORT, and the control submitted an order this query
+    §W.24's rail carries SORT, and the control submitted an order this query
     ignored: the wall kept its genre sections whatever the URL said. The
-    section order is the DEFAULT rather than the only one — §11.1 leaves
+    section order is the DEFAULT rather than the only one — §W.1 leaves
     position carrying the collection's order, and which order that is is the
     reader's to choose. The expression comes from `records.ts` rather than
     being restated, so the wall and the table cannot sort differently; the

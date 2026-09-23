@@ -13,7 +13,7 @@ import { sql } from 'drizzle-orm';
  * part it made up.
  *
  * Driven on `/?artistId=` with ONE record, so the pull is unambiguous — the
- * real route, the isometric wall (8a §11.7): the panel is flat on paper, right
+ * real route, the isometric wall (8a §W.7): the panel is flat on paper, right
  * of the pulled record, appearing at the slide's perceived end.
  */
 
@@ -74,13 +74,13 @@ async function cleanup(ids: { artistId: string; recordId: string; pressingId?: s
 
 test('the panel is expanded at rest in its own column, and nothing navigates', async ({ page }) => {
   /*
-    A33's chevron expanded an overlay over the record; §11.9 gives the panel a
+    A33's chevron expanded an overlay over the record; §W.9 gives the panel a
     fixed region in the facts column at every width the pulled state exists,
     so it is the expanded shape at rest and the toggle has nothing to do. The
     destination stays INSIDE the panel (A33b): the wall is still mounted, the
     URL unchanged.
 
-    These three ran at 390px while §11.8's fork was an overlay. §11.24 rules
+    These three ran at 390px while §W.8's fork was an overlay. §W.24 rules
     that below the fork the pulled state does not exist — a tap opens the
     record screen (shelf-narrow.spec.ts) — so the panel's claims are made
     where the panel is.
@@ -94,7 +94,7 @@ test('the panel is expanded at rest in its own column, and nothing navigates', a
 
     const panel = page.getByTestId('record-chrome').getByTestId('record-panel');
     await expect(panel).toHaveAttribute('data-expanded', 'true');
-    await expect(page.getByTestId('record-chrome').getByTestId('panel-expand-toggle'), 'no toggle: the panel has one state (§11.9, §11.19)').toHaveCount(0);
+    await expect(page.getByTestId('record-chrome').getByTestId('panel-expand-toggle'), 'no toggle: the panel has one state (§W.9, §W.19)').toHaveCount(0);
 
     await expect(page.getByTestId('wall')).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`/\\?artistId=`));
@@ -169,7 +169,7 @@ test('the desktop flanking panel shows the expanded content at rest', async ({ p
     await expect(page.getByTestId('record-chrome').getByTestId('panel-snippet')).toBeVisible();
     await expect(page.getByTestId('record-chrome').getByTestId('panel-facts')).toBeVisible();
     await expect(page.getByTestId('record-chrome').getByTestId('panel-detail-link')).toBeVisible();
-    await expect(page.getByTestId('record-chrome').getByTestId('panel-expand-toggle'), 'no toggle: the panel has one state (§11.9, §11.19)').toHaveCount(0);
+    await expect(page.getByTestId('record-chrome').getByTestId('panel-expand-toggle'), 'no toggle: the panel has one state (§W.9, §W.19)').toHaveCount(0);
   } finally {
     await cleanup(ids);
   }

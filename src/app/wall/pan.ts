@@ -4,25 +4,25 @@ import { ARROW_LANE, LANDING_PAD } from './landing';
 import type { View } from './view';
 
 /**
- * §11.22: **the view pans; the gesture does not move.** The record's
- * transforms stay exactly as §11.21 rules them, and the drawing region pans
+ * §W.22: **the view pans; the gesture does not move.** The record's
+ * transforms stay exactly as §W.21 rules them, and the drawing region pans
  * so that the landing is in frame — on the swing's own ease and one clock,
  * resolving to zero when the landing is already in frame.
  *
  * The gesture is authored in the wall's coordinates and the landing is
  * specified in the page's, and nothing was converting between them. A drift
  * converts by moving the object, and a fixed point that is itself moving is
- * the negation of §11.21's argument, not a weaker version of it. A pan
- * converts by moving the viewport, which the wall already does (§11.6): the
+ * the negation of §W.21's argument, not a weaker version of it. A pan
+ * converts by moving the viewport, which the wall already does (§W.6): the
  * fixture moving on screen during the pull is the correct cost — the wall
  * stays still relative to itself and the record, and only the window over
  * it moves. A person at a shelf steps across to look at the record.
  *
- * **§11.26: the pan gains a target — it settles where the empty seat clears
+ * **§W.26: the pan gains a target — it settles where the empty seat clears
  * the cover's trailing edge.** 290 units of travel and 560px of cover are
  * each right in their own space and collide in the frame: the landed cover
- * covers its own empty seat, which §11.10 makes the mark of which record is
- * out and §11.22 the separation that replaces a scrim. Neither the travel
+ * covers its own empty seat, which §W.10 makes the mark of which record is
+ * out and §W.22 the separation that replaces a scrim. Neither the travel
  * (watched on a probe) nor the cover (bounded below by the fixture and the
  * seat staying visible) moves; the landing is the pan's business.
  * Mechanically the record carries a horizontal offset from its gesture
@@ -35,7 +35,7 @@ import type { View } from './view';
  */
 export type Extent = { minX: number; maxX: number; minY: number; maxY: number };
 
-/** §11.19: the empty seat sits this far clear of the landed cover's trailing edge. */
+/** §W.19: the empty seat sits this far clear of the landed cover's trailing edge. */
 export const SEAT_CLEARANCE = 55;
 
 /**
@@ -46,7 +46,7 @@ export const SEAT_CLEARANCE = 55;
  * Measured on the seat at its WIDEST spine, so the shift is one number for
  * every seat: the cover's right edge sits at the foot, x + width, and a
  * shift that followed the width would make a neighbour's framing differ by
- * the pitch plus the width difference — and §11.22's same-screen-position
+ * the pitch plus the width difference — and §W.22's same-screen-position
  * landing needs exactly the pitch. A narrower seat clears by more.
  */
 export function clearanceShift(seat: PlacedSeat): number {
@@ -81,9 +81,9 @@ export function landedExtent(seat: PlacedSeat): Extent {
  * The view that frames a landing the same way every time — the view's
  * top-left in the svg's px: the landing's extent (its lane included) at the
  * view's left, since the record lands left of the fixture, and centred
- * vertically (§11.19's composition, now a statement about the framed view).
+ * vertically (§W.19's composition, now a statement about the framed view).
  * For a neighbour reached by the arrows it differs by exactly the seat
- * pitch, which is what lands it in the same screen position (§11.22).
+ * pitch, which is what lands it in the same screen position (§W.22).
  */
 export function frameView(extent: Extent, view: Pick<View, 'width' | 'height'>): [number, number] {
   return [extent.minX, (extent.minY + extent.maxY) / 2 - view.height / 2];

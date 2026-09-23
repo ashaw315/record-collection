@@ -14,7 +14,7 @@
  */
 
 /**
- * The label's ink (§4, §11.4): `oklch(0.44 0.008 70)`, 6.2:1 on the drawing's
+ * The label's ink (§4, §W.4): `oklch(0.44 0.008 70)`, 6.2:1 on the drawing's
  * paper and 7.4:1 on the ground the page actually paints.
  *
  * **Was 0.55, which read 3.88:1 on the drawn paper, and survived because

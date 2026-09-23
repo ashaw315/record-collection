@@ -1,7 +1,7 @@
 import { COS30, project, type Point, type RecordBox } from './geometry';
 
 /**
- * The turn as a rigid rotation (8a §11.16, §11.17). **The record rotates in
+ * The turn as a rigid rotation (8a §W.16, §W.17). **The record rotates in
  * three dimensions and is re-projected every frame; its projected corners
  * are never interpolated.** A morph of four corners passes through
  * quadrilaterals that are no rotation of any record; a rigid body shows
@@ -9,7 +9,7 @@ import { COS30, project, type Point, type RecordBox } from './geometry';
  * from the agreement.
  *
  * **The axis is the cover's near vertical edge — at y + depth, toward the
- * camera (§11.20) — not its centre.** The pivot plants that edge: it does
+ * camera (§W.20) — not its centre.** The pivot plants that edge: it does
  * not move, and no point of the record ends nearer the shelf than it. The
  * rotation carries the cover normal from (1, 0, 0) toward (0.707, 0.707, 0):
  * against the camera's (1, 1, 1) that is 1.414 against 1, so the cover
@@ -29,8 +29,8 @@ import { COS30, project, type Point, type RecordBox } from './geometry';
  * spine, 10.39 wide in projection at rest, closing to exactly zero at the
  * same 45°: its normal turns edge-on to the camera when the rotation ends.
  *
- * The clearance is a fact about the swept volume (§11.16, §11.18) and, as
- * §11.19 rules, angle-dependent: what phase one must have travelled at any
+ * The clearance is a fact about the swept volume (§W.16, §W.18) and, as
+ * §W.19 rules, angle-dependent: what phase one must have travelled at any
  * instant is what the rotation at that instant sweeps. `footprint` and
  * `footprintsCollide` are the joint-state check — a test that asserts the
  * travel alone passes the sequential path and fails the ruled one.
@@ -48,7 +48,7 @@ export type Bounds3 = { x0: number; x1: number; y0: number; y1: number; z0: numb
 
 /**
  * A point of the box, given as offsets from the axis in plan, rotated by
- * `angle` about the cover's near vertical edge — at y + depth (§11.20). In
+ * `angle` about the cover's near vertical edge — at y + depth (§W.20). In
  * plan the box is dx ∈ [−width, 0], dy ∈ [−depth, 0] from that edge.
  */
 function rotate(box: RecordBox, dx: number, dy: number, z: number, angle: number): Corner3 {

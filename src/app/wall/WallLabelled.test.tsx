@@ -45,7 +45,7 @@ const render = (
     ),
   );
 
-describe('what distinguishes a spine at rest (§11.1)', () => {
+describe('what distinguishes a spine at rest (§W.1)', () => {
   /**
    * Width is the only distinguishing mark derived from the record, and it
    * hashes the id — **never anything mutable.** A title or a label in the hash
@@ -91,7 +91,7 @@ describe('5b’s two faces at rest (D2): three faces per record, filled in paper
     expect(seatA).toContain(`fill="${FACE_FILL}"`);
     /*
       Paper, not none: the painter's order only occludes with opaque faces.
-      Scoped to the FACES — §11.33's focus mark is an unfilled outline on the
+      Scoped to the FACES — §W.33's focus mark is an unfilled outline on the
       top face, and it is not a face.
     */
     for (const face of ['top', 'right', 'front']) {
@@ -102,7 +102,7 @@ describe('5b’s two faces at rest (D2): three faces per record, filled in paper
     expect(html).toContain(`fill="${PLANE_FILL}"`);
   });
 
-  it('paints the moving record where the separating-plane sort puts it: between its neighbours while it overlaps the row, last once past it (§11.20)', () => {
+  it('paints the moving record where the separating-plane sort puts it: between its neighbours while it overlaps the row, last once past it (§W.20)', () => {
     const three = [seat('a', null), seat('b', null), seat('c', null)];
     const view = { x: 0, y: 0, width: 960, height: 760 };
     const early = renderToStaticMarkup(<WallLabelled seats={three} pulls={[{ id: 'b', direction: 'out', ms: 0 }]} view={view} />);
@@ -144,7 +144,7 @@ describe('5b’s two faces at rest (D2): three faces per record, filled in paper
     }
   });
 
-  it('paints the growing record over the whole of a long row: the sort sees the physical box, not the grown one (§11.25 with §11.21)', () => {
+  it('paints the growing record over the whole of a long row: the sort sees the physical box, not the grown one (§W.25 with §W.21)', () => {
     /* Twenty on a shelf, the fifth pulled: the far end of the row is 255 units to the right of it. */
     const row = Array.from({ length: 20 }, (_, i) => seat(`r${i}`, null));
     const view = { x: 0, y: 0, width: 1400, height: 900 };
@@ -191,12 +191,12 @@ describe('5b’s two faces at rest (D2): three faces per record, filled in paper
     const image = /<image[^>]*>/.exec(g)?.[0] ?? '';
     expect(image).toContain('data-cover="b"');
     expect(image).toContain('href="https://covers.test/b.jpg"');
-    expect(image, 'own aspect, uncropped (§11.3)').toContain('preserveAspectRatio="xMidYMid meet"');
+    expect(image, 'own aspect, uncropped (§W.3)').toContain('preserveAspectRatio="xMidYMid meet"');
     const group = g.slice(0, g.indexOf('</g>'));
     expect(group, 'no text on a mirrored plane').not.toContain('<text');
   });
 
-  it('fades the field over the full out-span (§11.2): the swing’s end is not yet the base, the finish’s end is — one ease over 1600, so colour lands with the record', () => {
+  it('fades the field over the full out-span (§W.2): the swing’s end is not yet the base, the finish’s end is — one ease over 1600, so colour lands with the record', () => {
     const record = seat('b', null);
     const fieldAt = (ms: number) => {
       const html = render([seat('a', null), record], { id: 'b', direction: 'out', ms });
@@ -261,7 +261,7 @@ describe('the frame holds the whole drawing', () => {
     const html = render([seat('a', null), seat('b', null)], null);
     const svg = /<svg[^>]*data-wall="labelled"[^>]*>/.exec(html)?.[0] ?? '';
     const [minX, minY, w, h] = /viewBox="([^"]+)"/.exec(svg)?.[1]?.split(' ').map(Number) ?? [];
-    /* Faces only: the planes run off both edges of the frame by design (§11.8). */
+    /* Faces only: the planes run off both edges of the frame by design (§W.8). */
     const points = [...html.matchAll(/data-face="[a-z]+" points="([^"]+)"/g)].flatMap((m) =>
       m[1].split(' ').map((pair) => pair.split(',').map(Number)),
     );
@@ -275,7 +275,7 @@ describe('the frame holds the whole drawing', () => {
   });
 });
 
-describe('the record with no cover arrives at type, not at a swatch (§11.3, §11.7)', () => {
+describe('the record with no cover arrives at type, not at a swatch (§W.3, §W.7)', () => {
   it('sets title and artist large on a paper sleeve area over the field, with §6’s diagonal across it', () => {
     const html = render([seat('a', null), seat('b', null, null)], { id: 'b', direction: 'out', ms: OUT_MS });
     const pulled = html.slice(html.indexOf('data-pulled="b"'));
@@ -308,12 +308,12 @@ describe('the record with no cover arrives at type, not at a swatch (§11.3, §1
   });
 });
 
-describe('§11.33: hover and focus on a spine', () => {
+describe('§W.33: hover and focus on a spine', () => {
   const html = () => render([seat('a', null), seat('b', null)], null);
 
-  it('sinks the spine to §11.27’s 0.731 with hairlines at 0.588, and moves nothing', () => {
+  it('sinks the spine to §W.27’s 0.731 with hairlines at 0.588, and moves nothing', () => {
     /*
-      A small version of the pull is still the pull: §11.19's gesture is the
+      A small version of the pull is still the pull: §W.19's gesture is the
       transition from the collection to a record, and a hover performing 10%
       of it says that transition is underway when nothing has been chosen.
       Motion of a record is the channel this page reserves for the pull.
@@ -338,23 +338,23 @@ describe('§11.33: hover and focus on a spine', () => {
   it('puts the focus mark on the TOP face, not the front edge — 2px is 19% of a 10.4-unit face', () => {
     /*
       At that proportion the mark stops reading as an edge and starts reading
-      as a spine of a different colour, which is the channel §11.28 spent the
+      as a spine of a different colour, which is the channel §W.28 spent the
       hover hairline correction protecting. The top face is 130 deep and no
       label crosses it.
     */
     const markup = html();
     const edge = /<polygon[^>]*data-spine-focus[^>]*>/.exec(markup)?.[0] ?? '';
     expect(edge, 'the focus mark is drawn').not.toBe('');
-    expect(edge, '§11.30’s weight and value, unchanged').toContain('stroke-width="2"');
+    expect(edge, '§W.30’s weight and value, unchanged').toContain('stroke-width="2"');
     expect(edge).toMatch(/oklch\(0\.18/);
     const style = /<style data-spine-states[^>]*>([\s\S]*?)<\/style>/.exec(markup)?.[1] ?? '';
-    /* Drawn only on focus — hover and focus must differ (§11.30). */
+    /* Drawn only on focus — hover and focus must differ (§W.30). */
     expect(style).toMatch(/\[data-spine-focus\][^{]*\{[^}]*opacity:\s*0/);
     expect(style).toMatch(/:focus-visible[^{]*\[data-spine-focus\][^}]*opacity:\s*1/);
     expect(style).not.toMatch(/:hover[^{]*\[data-spine-focus\][^}]*opacity:\s*1/);
   });
 
-  it('takes the app’s oxblood focus ring off the shelf (§11.32)', () => {
+  it('takes the app’s oxblood focus ring off the shelf (§W.32)', () => {
     /*
       A focus ring is chrome the app applies everywhere without asking what it
       lands on; on a monochrome fixture it is the only colour on the page,
@@ -366,7 +366,7 @@ describe('§11.33: hover and focus on a spine', () => {
   });
 });
 
-describe('§11.34: an emptied seat draws its footprint', () => {
+describe('§W.34: an emptied seat draws its footprint', () => {
   it('draws the seat’s rectangle on the shelf’s top face where a record was displaced', () => {
     /*
       Position invariance was necessary and not sufficient: the seats held to
@@ -383,7 +383,7 @@ describe('§11.34: an emptied seat draws its footprint', () => {
     /* Projected geometry, not a page rule: it is a polygon in the drawing, at 1px. */
     expect(tag).toContain('stroke-width="1"');
     expect(tag).toContain('fill="none"');
-    expect(tag, '§11.27’s hairline').toMatch(/oklch\(0\.72/);
+    expect(tag, '§W.27’s hairline').toMatch(/oklch\(0\.72/);
   });
 
   it('draws nothing for a seat that never held a record — a filtered seat is a fact about the filter, a never-filled one about the backlog (§8.1)', () => {
@@ -407,7 +407,7 @@ describe('§11.34: an emptied seat draws its footprint', () => {
   });
 });
 
-describe('a filter empties seats rather than re-seating them (§11.12)', () => {
+describe('a filter empties seats rather than re-seating them (§W.12)', () => {
   const xOf = (html: string, id: string) => Number(/<polygon[^>]*data-face="front"[^>]*points="([\d.-]+),/.exec(html.slice(html.indexOf(`data-seat="${id}"`)))?.[1]);
 
   it('draws nothing for an empty seat — no faces, no anchor, no label — and holds every other seat in its place', () => {
@@ -432,7 +432,7 @@ describe('a filter empties seats rather than re-seating them (§11.12)', () => {
   });
 });
 
-describe('spines are anchors inside the SVG (§11.8)', () => {
+describe('spines are anchors inside the SVG (§W.8)', () => {
   it('wraps each seat’s faces and label in an <a> with the record’s route and the FULL title as its name', () => {
     const html = render([seat('a', null), seat('b', null)], null);
     const a = html.slice(html.indexOf('data-seat="a"'), html.indexOf('data-seat="b"'));
@@ -447,7 +447,7 @@ describe('spines are anchors inside the SVG (§11.8)', () => {
 
 });
 
-describe('document order is seat order (§11.8) — asserted, because it holds only while seats vary along x alone', () => {
+describe('document order is seat order (§W.8) — asserted, because it holds only while seats vary along x alone', () => {
   it('lists a row’s seats in the DOM in seat order', () => {
     /* Within a row paint order and seat order agree, because seats are separated on x alone. */
     const many = Array.from({ length: 11 }, (_, i) => seat(`s${String(i).padStart(2, '0')}`, null));
@@ -456,11 +456,11 @@ describe('document order is seat order (§11.8) — asserted, because it holds o
     expect(order).toEqual(many.map((s) => s.id));
   });
 
-  it('carries an explicit tabindex sequence in seat order across rows, where paint order and reading order separate (§11.23)', () => {
+  it('carries an explicit tabindex sequence in seat order across rows, where paint order and reading order separate (§W.23)', () => {
     /*
       Paint order interleaves rows by column (225 of extent against 198 of
       pitch), so document order is no longer the reading order across rows.
-      The keyboard walk gets its own sequence: §11.8 preferred anchors to a
+      The keyboard walk gets its own sequence: §W.8 preferred anchors to a
       parallel list because a list draws the identifying channel twice; a tab
       sequence draws nothing, so the argument is silent on it.
     */
@@ -476,7 +476,7 @@ describe('document order is seat order (§11.8) — asserted, because it holds o
 
   it('puts a lower record before the one above it in the DOM — the painter’s order, which is no longer the reading order (with Design)', () => {
     /*
-      §11.8's assertion has failed as designed: at the square seat a record's
+      §W.8's assertion has failed as designed: at the square seat a record's
       projected extent is 150 plus a 75px top face against a 198 pitch, so a
       lower record's top overpaints the bottom 27px of the record above it
       unless that one paints later. Either the pitch grows so rows do not
@@ -493,7 +493,7 @@ describe('document order is seat order (§11.8) — asserted, because it holds o
     expect(order).not.toEqual(many.map((s) => s.id));
   });
 
-  it('masks the tops of the records below a shelf: the shelf’s faces paint after every record of the row beneath, where they overlap (§11.23)', () => {
+  it('masks the tops of the records below a shelf: the shelf’s faces paint after every record of the row beneath, where they overlap (§W.23)', () => {
     /*
       A lower record's top face and the shelf above it overlap on screen by
       27px (225 of extent against 198 of pitch). The shelf must paint over
@@ -544,7 +544,7 @@ describe('the drawing is never smaller than the region that shows it', () => {
   });
 });
 
-describe('two records can be moving at once — the arrows’ slide (§11.8)', () => {
+describe('two records can be moving at once — the arrows’ slide (§W.8)', () => {
   it('draws a returning record and an arriving one as their own elements, both seats emptied', () => {
     const html = render([seat('a', null), seat('b', null), seat('c', null)], [
       { id: 'b', direction: 'back', ms: 250 },
@@ -558,7 +558,7 @@ describe('two records can be moving at once — the arrows’ slide (§11.8)', (
   });
 });
 
-describe('the pulled record is the gesture’s solid, drawn where the sort puts it (§11.19–§11.21)', () => {
+describe('the pulled record is the gesture’s solid, drawn where the sort puts it (§W.19–§W.21)', () => {
   const two = [seat('a', null), seat('b', null)];
   const at = (ms: number, direction: 'out' | 'back' = 'out') =>
     renderToStaticMarkup(<WallLabelled seats={two} pulls={[{ id: 'a', direction, ms }]} view={view} />);
@@ -575,7 +575,7 @@ describe('the pulled record is the gesture’s solid, drawn where the sort puts 
     expect(at(0)).not.toContain('data-seat="a"');
   });
 
-  it('carries the cover matrix and the label’s plane through the swing and the finish — the transforms exactly as ruled, nothing drifting (§11.22)', () => {
+  it('carries the cover matrix and the label’s plane through the swing and the finish — the transforms exactly as ruled, nothing drifting (§W.22)', () => {
     for (const ms of [546, 900, SWING_MS, SWING_MS + 150, OUT_MS]) {
       const faces = gestureFaces(placed, poseAt(ms));
       const html = pulledOf(at(ms));
@@ -592,14 +592,14 @@ describe('the pulled record is the gesture’s solid, drawn where the sort puts 
     expect(c).toBeCloseTo(0, 9);
     expect(a * DEPTH).toBeCloseTo(DEPTH * GROWTH, 6);
     expect(d * SPINE_HEIGHT).toBeCloseTo(SPINE_HEIGHT * GROWTH, 6);
-    expect(a * DEPTH, '§11.19: 560 square').toBeCloseTo(560, 6);
+    expect(a * DEPTH, '§W.19: 560 square').toBeCloseTo(560, 6);
     const field = /<rect[^>]*data-field=""[^>]*>/.exec(html)?.[0] ?? '';
     expect(Number(/width="([^"]+)"/.exec(field)?.[1])).toBe(DEPTH);
     expect(Number(/height="([^"]+)"/.exec(field)?.[1])).toBe(SPINE_HEIGHT);
     expect(html).not.toContain('opacity="0"');
   });
 
-  it('carries the pan’s clearance as a translate on the whole moving record — none at rest, the shift at the landing, the faces themselves untouched (§11.26)', () => {
+  it('carries the pan’s clearance as a translate on the whole moving record — none at rest, the shift at the landing, the faces themselves untouched (§W.26)', () => {
     const rest = /<g[^>]*data-pulled="a"[^>]*>/.exec(at(0))?.[0] ?? '';
     expect(rest).not.toContain('transform=');
     for (const ms of [900, SWING_MS, OUT_MS]) {
@@ -629,7 +629,7 @@ describe('the pulled record is the gesture’s solid, drawn where the sort puts 
   });
 });
 
-describe('the frame holds the landing (§11.22): the pan needs somewhere to pan to', () => {
+describe('the frame holds the landing (§W.22): the pan needs somewhere to pan to', () => {
   it('grows the viewBox to include the pulled record’s landed extent, and is the seated frame when nothing moves', () => {
     const two = [seat('a', null), seat('b', null)];
     const seated = wallLayout(two.map((s) => ({ id: s.id, section: 'S' })), [], 0, 0).frame;

@@ -115,7 +115,7 @@
  */
 :root {
   /*
-   * Paper (8a §11.5): the drawing's 0.925, which every ink, hairline and
+   * Paper (8a §W.5): the drawing's 0.925, which every ink, hairline and
    * ladder step in the system was chosen against. One token — the value is
    * `PAPER` in src/lib/colour/paper.ts, and test/repo/paper-token.test.ts
    * holds this line to it. Was 0.985, a ground the page painted while every
@@ -148,8 +148,8 @@
   --destructive: oklch(0.52 0.2 27);
 
   /*
-   * Hairlines. Ledger rules, not card outlines — ONE value (8a §11.27),
-   * which is §3's 0.72 and reads 1.99:1 on the paper §11.5 makes the app
+   * Hairlines. Ledger rules, not card outlines — ONE value (8a §W.27),
+   * which is §3's 0.72 and reads 1.99:1 on the paper §W.5 makes the app
    * paint. The two this replaces were chosen against the old 0.985 ground
    * and read 1.08:1 and 1.15:1 on 0.925 — past the threshold of visible on
    * the wrong side, which is why the page read as having no rules at all.

@@ -101,10 +101,10 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
 
       {shelf !== null ? (
         /*
-          §11.13: the header band is withdrawn on the shelf view. The wall
+          §W.13: the header band is withdrawn on the shelf view. The wall
           starts directly under the app nav and takes the full height; the
           page's controls go down a 148px rail on the left, and COLLECTION with
-          the count stays at the facts column's head (§11.9) — the header's
+          the count stays at the facts column's head (§W.9) — the header's
           Collection and count were the duplicate, and they are the instance
           that goes.
         */
@@ -130,7 +130,7 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
                 {/*
                   Filter-aware: "34 of 312 records" when a filter is active. On
                   the table and grid the heading carries it; on the shelf the
-                  facts column's count does (§11.9).
+                  facts column's count does (§W.9).
                 */}
                 {collectionCountLabel({
                   matched: records.total,

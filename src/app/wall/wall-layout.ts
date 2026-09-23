@@ -10,7 +10,7 @@ import { framedViewExtent, landedExtent } from './pan';
  * same placement separately is the two-producers shape this project keeps
  * finding.
  *
- * §11.10 / §11.23: the collection fills one fixture left to right, top to
+ * §W.10 / §W.23: the collection fills one fixture left to right, top to
  * bottom; the furniture is four shelves joined by uprights, their length
  * growing with the collection. The pan extent holds the fixture.
  */
@@ -48,8 +48,8 @@ export function wallLayout(
   /*
     Framed on the furniture and the faces, at least as large as the region
     that shows it — and, while a record moves, on where it lands with its
-    arrows (§11.22): the pan needs somewhere to pan to, and the plane runs
-    the pan extent (§11.7).
+    arrows (§W.22): the pan needs somewhere to pan to, and the plane runs
+    the pan extent (§W.7).
   */
   const seatedFrame = widened(
     wallFrame(

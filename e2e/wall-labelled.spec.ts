@@ -7,7 +7,7 @@ import { SPINE_TEXT_BUDGET, spineLabel } from '../src/app/wall/spine-text';
 import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
 
 /**
- * The 1:1 component (The Wall 5b §1, §4, §5; 8a §11), on the real collection.
+ * The 1:1 component (The Wall 5b §1, §4, §5; §W), on the real collection.
  *
  * What the overview could not assert: that labels render at 1:1 in the
  * drawing's own geometry, in ink, truncated at the budget, and inside the
@@ -15,7 +15,7 @@ import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
  * draws the SAME polygons the overview does, by import rather than by
  * coincidence.
  *
- * **§11: the wall at rest is line, ink and paper — no derived colour anywhere
+ * **§W: the wall at rest is line, ink and paper — no derived colour anywhere
  * in the drawing.** A spine at rest takes no colour; colour arrives with the
  * pull. So the stored-colour and ink-pick claims this spec first made are
  * withdrawn with the fills, and replaced by the one that supersedes them: that
@@ -105,7 +105,7 @@ test('sets every label in ink, and nothing in the resting drawing carries a hue'
   page,
 }) => {
   /**
-   * §11 asserted over the WHOLE svg: every fill is a paper step (chroma ≤
+   * §W asserted over the WHOLE svg: every fill is a paper step (chroma ≤
    * 0.004) or the ink — a colour that crept onto a plane, a label or a mark
    * would be the exception leaking somewhere the face assertion does not look.
    */
@@ -144,7 +144,7 @@ test('draws the same polygons the overview does, by the shared geometry', async 
     })),
   );
 
-  /* Seventeen records on the fixture's top shelf: placed by row (§11.23: one fixture). */
+  /* Seventeen records on the fixture's top shelf: placed by row (§W.23: one fixture). */
   const placed = unitRows(
     COLLECTION_SPINES.map((_, index) => ({ id: `collection-${index}`, section: 'Collection' })),
   ).flatMap(({ row, seats }) => layoutRow(seats, row));
@@ -191,12 +191,12 @@ test('keeps every label inside the spine it names', async ({ page }) => {
   );
 
   for (const box of boxes) {
-    /* Within a pixel: at the 150 face the thinnest spine is 11 units and the label's rendered box overhangs it by half a pixel, as §11.11's render also does. */
+    /* Within a pixel: at the 150 face the thinnest spine is 11 units and the label's rendered box overhangs it by half a pixel, as §W.11's render also does. */
     expect(box.labelLeft, `${box.id} label left edge`).toBeGreaterThanOrEqual(box.spineLeft - 1);
     expect(box.labelRight, `${box.id} label right edge`).toBeLessThanOrEqual(box.spineRight + 1);
     expect(box.labelHeight, `${box.id} run fits the spine`).toBeLessThanOrEqual(box.spineHeight);
   }
-  /* 5b's 13.5-unit band was the 240 face's; §11.11 renders the label on a 12-unit spine and the pixel check above is the claim. */
+  /* 5b's 13.5-unit band was the 240 face's; §W.11 renders the label on a 12-unit spine and the pixel check above is the claim. */
   expect(SPINE_WIDTH_MIN).toBe(11);
 });
 
@@ -241,10 +241,10 @@ test('renders at 1:1 — the svg is its viewBox width on screen — and pans rat
   two-column composition the facts column gives the wall's column a floor
   wider than one record at any viewport, so the guard's trigger cannot occur
   on this page; `labelsFit` keeps the rule at the unit layer, and narrow
-  viewports are deferred (§11.9).
+  viewports are deferred (§W.9).
 */
 
-test('each spine is a link by role, named by its FULL title, with the record’s route (§11.8)', async ({
+test('each spine is a link by role, named by its FULL title, with the record’s route (§W.8)', async ({
   page,
 }) => {
   /* The face carries the truncated label; the accessible name carries the whole title. */
@@ -312,7 +312,7 @@ test('document order is seat order — asserted, since it holds only while seats
   expect(order).toEqual(COLLECTION_SPINES.map((_, index) => `collection-${index}`));
 });
 
-test('the unit is drawn whole: two uprights and four shelves, the empty ones too (§11.10)', async ({ page }) => {
+test('the unit is drawn whole: two uprights and four shelves, the empty ones too (§W.10)', async ({ page }) => {
   const furniture = await page.evaluate(() =>
     Array.from(document.querySelectorAll('[data-wall="labelled"] [data-furniture]')).map((f) => f.getAttribute('data-furniture')),
   );
@@ -330,7 +330,7 @@ test('the record with no cover pulls to ink, not to a default colour', async ({ 
   await expect(page.locator('[data-pulled] [data-field]')).toHaveAttribute('fill', WALL_INK);
 });
 
-test('the keyboard walk crosses rows in seat order — an explicit tab sequence where paint order interleaves rows (§11.23)', async ({ page }) => {
+test('the keyboard walk crosses rows in seat order — an explicit tab sequence where paint order interleaves rows (§W.23)', async ({ page }) => {
   await page.goto('/wall/probe/labelled?count=200');
   await page.locator('[data-wall="labelled"]').waitFor({ timeout: 15_000 });
   /* The last seat of the top shelf, then Tab: the first seat of the second shelf, which precedes it in the DOM. */

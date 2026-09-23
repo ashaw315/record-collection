@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { NEARER, nearer, paintOrder, type PaintBounds } from './paint-sort';
 
 /**
- * §11.20's camera and the probe's sort: **order the drawing's objects — not
+ * §W.20's camera and the probe's sort: **order the drawing's objects — not
  * faces — by separating plane, and fall back to centroid depth only when no
  * plane separates them.** Two disjoint boxes always have a consistent
  * order; for axis-aligned boxes a plane on x, y or z gives it exactly, with
@@ -31,7 +31,7 @@ describe('nearer(a, b) — a separating plane decides, and only then the centroi
     expect(nearer(left, right)).toBeLessThan(0);
   });
 
-  it('puts a record travelled +y past the row in front of every seat, whatever its x — §11.18 with its side inverted', () => {
+  it('puts a record travelled +y past the row in front of every seat, whatever its x — §W.18 with its side inverted', () => {
     const pulled = box('p', 170, 215, 150, 710);
     for (const x of [0, 170, 323]) expect(nearer(pulled, box('s', x, x + 12, 0, 150))).toBeGreaterThan(0);
   });
@@ -77,7 +77,7 @@ describe('paintOrder — the reference’s insertion, over every object: each sh
 
   it('keeps each row in seat order, and paints a lower record before the upper one in its column — larger z is nearer', () => {
     /*
-      §11.8 asked for document order = seat order to be asserted because it
+      §W.8 asked for document order = seat order to be asserted because it
       would fail exactly here: a record's projected extent is 150 plus a 75px
       top face against a 198 pitch, so a lower record's top overpaints the
       bottom 27px of the record above it unless that one paints later. The

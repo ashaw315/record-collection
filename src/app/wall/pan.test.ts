@@ -6,28 +6,28 @@ import { SEAT_CLEARANCE, clearanceShift, frameView, landedExtent, panFraction, p
 import { SPINE_WIDTH_MAX, frontFace } from './geometry';
 
 /**
- * §11.22: the view pans; the gesture does not move. The record's transforms
- * stay exactly as §11.21 rules them, and the drawing region pans so that the
+ * §W.22: the view pans; the gesture does not move. The record's transforms
+ * stay exactly as §W.21 rules them, and the drawing region pans so that the
  * landing is in frame — on the swing's own ease and one clock, resolving to
  * zero when the landing is already in frame. A drift converted between the
  * wall's coordinates and the page's by moving the object, and negated
- * §11.21's shared fixed point; a pan converts by moving the viewport, which
- * the wall already does (§11.6).
+ * §W.21's shared fixed point; a pan converts by moving the viewport, which
+ * the wall already does (§W.6).
  */
 const seat = layoutRow([{ id: 'p', section: 'S' }], 0)[0];
 
 /*
- * §11.26: the pan gains a target. 290 units of travel and 560px of cover are
+ * §W.26: the pan gains a target. 290 units of travel and 560px of cover are
  * each right in their own space and collide in the frame — the landed cover
- * covers its own empty seat, which §11.10 makes the mark of which record is
- * out and §11.22 the separation that replaces a scrim. Neither the travel
+ * covers its own empty seat, which §W.10 makes the mark of which record is
+ * out and §W.22 the separation that replaces a scrim. Neither the travel
  * nor the cover moves; the pan settles where the empty seat clears the
- * cover's trailing edge, by §11.19's 55px. Mechanically the record carries a
+ * cover's trailing edge, by §W.19's 55px. Mechanically the record carries a
  * horizontal offset from its gesture position that the pan pays for: the
  * view moves by the same amount, so the record's screen path is exactly the
  * gesture's and the wall slides under it.
  */
-describe('clearanceShift — where the empty seat clears the cover’s trailing edge (§11.26)', () => {
+describe('clearanceShift — where the empty seat clears the cover’s trailing edge (§W.26)', () => {
   it('is the horizontal shift, to the left, that puts the seat’s near edge 55px past the landed cover’s right edge — and zero if it already is', () => {
     expect(SEAT_CLEARANCE).toBe(55);
     const cover = gestureFaces(seat, poseAt(OUT_MS)).cover;
@@ -60,7 +60,7 @@ describe('clearanceShift — where the empty seat clears the cover’s trailing 
 });
 
 describe('landedExtent — the frame the landing needs: the cover with its arrows and the page’s padding', () => {
-  it('is the landed cover’s extent — shifted by the clearance (§11.26) — padded by the arrow lanes across and the page’s padding down', () => {
+  it('is the landed cover’s extent — shifted by the clearance (§W.26) — padded by the arrow lanes across and the page’s padding down', () => {
     const cover = gestureFaces(seat, poseAt(OUT_MS)).cover;
     const xs = cover.map(([x]) => x + clearanceShift(seat));
     const ys = cover.map(([, y]) => y);

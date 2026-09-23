@@ -33,7 +33,7 @@ test.describe.configure({ timeout: 60_000 });
  * 0 cannot tell adjacency from always-forward), assert the order matches the
  * wall's own producer rather than a literal, and test the ends.
  *
- * On the isometric wall (8a §11.8) the arrows are kept as the lit wall had
+ * On the isometric wall (8a §W.8) the arrows are kept as the lit wall had
  * them — wall order, absent at the ends, a slide at the same depth: the held
  * record goes back and its neighbour comes out on one clock. Adjacency
  * derives from the seat order the anchors carry, which is the same order the

@@ -319,10 +319,10 @@ describe('shelfRecords — what a spine needs', () => {
   });
 });
 
-describe('shelfRecords — a filter marks rather than prunes (8a §11.12, §11.24)', () => {
+describe('shelfRecords — a filter marks rather than prunes (8a §W.12, §W.24)', () => {
   /*
     A filter that re-seats the collection changes every record's position, and
-    §11.1 leaves position carrying the collection's order — so a filtered wall
+    §W.1 leaves position carrying the collection's order — so a filtered wall
     is the same fixture with the non-matching seats EMPTY. The query therefore
     returns the whole collection in wall order with the table's own predicate
     as a projection, `matches`, rather than as a WHERE. Same row count as at
@@ -363,12 +363,12 @@ describe('shelfRecords — a filter marks rather than prunes (8a §11.12, §11.2
   });
 });
 
-describe('shelfRecords — the rail’s sort reaches the wall (§11.24)', () => {
+describe('shelfRecords — the rail’s sort reaches the wall (§W.24)', () => {
   /*
-    §11.24 puts SORT in the rail as ShelfControls' surviving behaviour, and
+    §W.24 puts SORT in the rail as ShelfControls' surviving behaviour, and
     the control submitted a `sort` the shelf query ignored: the wall kept its
     own genre-section order whatever the URL said. The section order is the
-    DEFAULT rather than the only order — §11.1 leaves position carrying the
+    DEFAULT rather than the only order — §W.1 leaves position carrying the
     collection's order, and which order that is is the reader's to choose.
   */
   it('orders by the chosen field and direction, overriding the section default', async () => {
@@ -393,7 +393,7 @@ describe('shelfRecords — the rail’s sort reaches the wall (§11.24)', () => 
     expect((await shelfRecords()).map((r) => r.title)).toEqual(['Later', 'Earlier']);
   });
 
-  it('sorts the whole collection, marks included — a filter still empties seats rather than reordering them (§11.12)', async () => {
+  it('sorts the whole collection, marks included — a filter still empties seats rather than reordering them (§W.12)', async () => {
     const punk = await genre('Punk');
     const a = await artist('Yankee');
     await record('Charlie', a, { genreIds: [punk] });
@@ -482,7 +482,7 @@ describe('shelfRecords — what pulling a record needs (§10b)', () => {
     expect((await shelfRecords())[0].backUrl).toBeNull();
   });
 
-  it('honours a filter — by marking, since §11.12: the whole collection returns and only the matching records are marked', async () => {
+  it('honours a filter — by marking, since §W.12: the whole collection returns and only the matching records are marked', async () => {
     /**
      * **The defect this pins, at the query level.**
      *
@@ -501,7 +501,7 @@ describe('shelfRecords — what pulling a record needs (§10b)', () => {
      *
      * Fails against `shelfRecords` if the filters parameter is dropped, if the
      * `matches` projection is omitted, or if the shared `buildWhere` predicate
-     * stops being applied. Restated under 8a §11.12: the filter is honoured by
+     * stops being applied. Restated under 8a §W.12: the filter is honoured by
      * MARKING — every record returns, in its seat, and `matches` says which
      * the filter keeps — because a filter that re-seats the collection changes
      * every record's position, and position carries the collection's order.

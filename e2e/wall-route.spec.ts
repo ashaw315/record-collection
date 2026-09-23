@@ -5,7 +5,7 @@ import { LANDING_PAD } from '../src/app/wall/landing';
 registerCleanup();
 
 /**
- * 8a §11.12: the route opens FAR, and moving between the two views has two
+ * 8a §W.12: the route opens FAR, and moving between the two views has two
  * named targets and never an intermediate.
  *
  * In is a click on a seat, landing the near view with the addressed shelf at
@@ -32,7 +32,7 @@ async function login(page: Page) {
   this seat: the exposed sliver of its FRONT face, found by hit-testing.
 */
 /*
-  §11.28 put a transparent run layer over the far view's seats, and that layer
+  §W.28 put a transparent run layer over the far view's seats, and that layer
   IS the click target: a seat's own polygon is no longer what the browser hits.
   Clicking the run is the ruled gesture — it opens the near view at that shelf
   — so these helpers go through it.
@@ -81,7 +81,7 @@ test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
 });
 
-test('the near view can be reached and used at desktop width, with no unmeasured state left (§11.12, §11.26)', async ({ page }) => {
+test('the near view can be reached and used at desktop width, with no unmeasured state left (§W.12, §W.26)', async ({ page }) => {
   /*
     **The circular-dependency guard, and it must be an E2E.** The unmeasured
     first paint is gated by CSS, and the gate clears on a measurement. When
@@ -101,7 +101,7 @@ test('the near view can be reached and used at desktop width, with no unmeasured
   /* The gate clears without the near view ever having existed. */
   await expect(page.locator('[data-wall-container][data-unmeasured]'), 'the unmeasured gate clears on the viewport alone').toHaveCount(0, { timeout: 10_000 });
 
-  /* The near view is reachable — it is what the route opens on (§11.29)... */
+  /* The near view is reachable — it is what the route opens on (§W.29)... */
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 10_000 });
   await expect(page.locator('[data-wall-container][data-unmeasured]')).toHaveCount(0);
 
@@ -111,9 +111,9 @@ test('the near view can be reached and used at desktop width, with no unmeasured
   await expect(page.locator('[data-pulled]')).toHaveCount(1);
 });
 
-test('a bare / opens NEAR with the occupied shelf framed, and the far view is a deliberate zoom-out (§11.29)', async ({ page }) => {
+test('a bare / opens NEAR with the occupied shelf framed, and the far view is a deliberate zoom-out (§W.29)', async ({ page }) => {
   /*
-    §11.12's "the route opens far" is withdrawn on the desktop: at the common
+    §W.12's "the route opens far" is withdrawn on the desktop: at the common
     collection size the far view is a small unlabelled object that can report
     neither quantity nor arrangement, and a reader had to click before
     anything was readable. The arrival lands on the OCCUPIED shelf — the
@@ -138,7 +138,7 @@ test('a bare / opens NEAR with the occupied shelf framed, and the far view is a 
   if (framed.region && framed.seat && framed.top) {
     expect(framed.seat.top, 'the arrival seat is inside the region').toBeGreaterThanOrEqual(framed.region.top - 1);
     expect(framed.seat.bottom).toBeLessThanOrEqual(framed.region.bottom + 1);
-    expect(framed.top.top, 'and its top face is not cut off (§11.28)').toBeGreaterThanOrEqual(framed.region.top - 1);
+    expect(framed.top.top, 'and its top face is not cut off (§W.28)').toBeGreaterThanOrEqual(framed.region.top - 1);
   }
 
   /* The far view is still reachable from the count... */
@@ -151,7 +151,7 @@ test('a bare / opens NEAR with the occupied shelf framed, and the far view is a 
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible();
 });
 
-test('Escape reaches the far view from a bare /, with nothing pulled (§11.12, §11.29)', async ({ page }) => {
+test('Escape reaches the far view from a bare /, with nothing pulled (§W.12, §W.29)', async ({ page }) => {
   const { artistId } = await seed(page, 20);
   await page.goto(`/?artistId=${artistId}`);
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
@@ -159,12 +159,12 @@ test('Escape reaches the far view from a bare /, with nothing pulled (§11.12, �
   await expect(page.locator('[data-wall="overview"]')).toBeVisible();
 });
 
-test('clicking a run lands the near view on that run’s first seat, by the rule and exactly once (§11.12, §11.28)', async ({ page }) => {
+test('clicking a run lands the near view on that run’s first seat, by the rule and exactly once (§W.12, §W.28)', async ({ page }) => {
   /*
-    §11.28 makes the OCCUPIED RUN the click target, so the addressed seat is
+    §W.28 makes the OCCUPIED RUN the click target, so the addressed seat is
     always the run's first — the run is a shelf rather than a record, and the
-    landing is what §11.12's rule gives for that seat: min(target, the
-    scroller's limit) on both axes, with the shelf framed by §11.28's window
+    landing is what §W.12's rule gives for that seat: min(target, the
+    scroller's limit) on both axes, with the shelf framed by §W.28's window
     rule so its top faces are not cut off.
   */
   const { artistId, ids } = await seed(page, 240);
@@ -205,12 +205,12 @@ test('clicking a run lands the near view on that run’s first seat, by the rule
   if (landed.region && landed.seat && landed.shelf) {
     expect(landed.seat.left, 'the run’s first seat is in the region').toBeGreaterThanOrEqual(landed.region.left - 1);
     expect(landed.seat.right).toBeLessThanOrEqual(landed.region.right + 1);
-    expect(landed.shelf.top, 'and its top face is not cut off (§11.28)').toBeGreaterThanOrEqual(landed.region.top - 1);
+    expect(landed.shelf.top, 'and its top face is not cut off (§W.28)').toBeGreaterThanOrEqual(landed.region.top - 1);
     expect(landed.region.right - landed.seat.left, 'the useful half of the region is after the seat').toBeGreaterThan((landed.region.right - landed.region.left) / 2);
   }
 });
 
-test('a wall that fits the region has no horizontal landing to make, and still puts the addressed shelf at the top (§11.12)', async ({ page }) => {
+test('a wall that fits the region has no horizontal landing to make, and still puts the addressed shelf at the top (§W.12)', async ({ page }) => {
   const { artistId, ids } = await seed(page, 20);
   await page.goto(`/?artistId=${artistId}`);
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
@@ -230,10 +230,10 @@ test('a wall that fits the region has no horizontal landing to make, and still p
   if (got.region && got.shelf) expect(got.shelf.top - got.region.top, 'the addressed shelf’s top face is not cut off').toBeGreaterThanOrEqual(-1);
 });
 
-test('the run is reachable by keyboard after the rail, and Enter zooms to that shelf (§11.30)', async ({ page }) => {
+test('the run is reachable by keyboard after the rail, and Enter zooms to that shelf (§W.30)', async ({ page }) => {
   /*
     The rail is the page's chrome and the run is its content, so the run
-    comes after it: §11.24 put the filter in the rail precisely so the shape
+    comes after it: §W.24 put the filter in the rail precisely so the shape
     on the fixture is read once it is set. Walked from the start of the
     document rather than from wherever a click left focus — the measured
     order at 24 records is:
@@ -316,7 +316,7 @@ test('Escape returns to the collection when nothing is pulled, and dismisses the
   await expect(page.locator('[data-wall="overview"]')).toBeVisible();
 });
 
-test('the wall’s view and its shelf survive a reload, Back, Forward and a cold link (§11.29)', async ({ page, browser }) => {
+test('the wall’s view and its shelf survive a reload, Back, Forward and a cold link (§W.29)', async ({ page, browser }) => {
   /*
     A zoom is a place rather than a mode, so it is addressable — and pushed,
     so Back returns to where the reader was. The wall owns the view's

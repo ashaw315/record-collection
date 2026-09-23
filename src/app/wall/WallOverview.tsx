@@ -24,10 +24,10 @@ import { wallLayout } from './wall-layout';
 
 const INK = '#161412';
 /**
- * §11.27's hover surface, and §11.28's hairline ON that surface. The hairline
+ * §W.27's hover surface, and §W.28's hairline ON that surface. The hairline
  * is §5.5's shade step taken from 0.731 rather than from paper: left at
  * §3's 0.72 it reads 1.04:1 against the sunk run — worse than the 1.08:1
- * §11.27 refused 0.90 for — and erases the only channel separating one spine
+ * §W.27 refused 0.90 for — and erases the only channel separating one spine
  * from another, so the hover says one object at the moment it means a
  * shelf's worth of records. 0.588 gives 1.74:1, near the 1.99:1 the run has
  * at rest and deliberately not equal: matching rest needs ~0.556, a number
@@ -36,7 +36,7 @@ const INK = '#161412';
 const RUN_HOVER_SURFACE = 'oklch(0.731 0.004 80)';
 const RUN_HOVER_RULE = 'oklch(0.588 0.004 80)';
 /**
- * §11.30's focus edge. Hover and focus must not be the same state: hover
+ * §W.30's focus edge. Hover and focus must not be the same state: hover
  * follows a pointer already where the reader is looking, and focus has to be
  * findable by someone who cannot see where it went. The sink alone is a
  * 1.74:1 change in a drawing of 1.99:1 hairlines — legible as a response,
@@ -46,7 +46,7 @@ const RUN_HOVER_RULE = 'oklch(0.588 0.004 80)';
  * on paper, so it clears on both.
  */
 const RUN_FOCUS_EDGE = 'oklch(0.18 0.008 60)';
-/** §11.34: the footprint a displaced record leaves, at §11.27's hairline. */
+/** §W.34: the footprint a displaced record leaves, at §W.27's hairline. */
 const FOOTPRINT = 'oklch(0.72 0.004 80)';
 const RULE = 'oklch(0.44 0.008 70)';
 
@@ -75,13 +75,13 @@ export function WallOverview({
   seats: readonly NamedSeat[];
   pulledId: string | null;
   /**
-   * §11.24's narrow shelf: each record an anchor to its own screen. A tap
+   * §W.24's narrow shelf: each record an anchor to its own screen. A tap
    * goes there rather than to a pulled state — the pull needs a 560 cover
    * and a 420 panel side by side, which a narrow screen cannot hold.
    */
   linked?: boolean;
   /**
-   * §11.12: where the pulled state DOES exist, a click on a seat is the way
+   * §W.12: where the pulled state DOES exist, a click on a seat is the way
    * in — the zoom to the near view, landing on that seat. The anchor stays,
    * so the route still works with JavaScript off; the click is intercepted.
    */
@@ -89,7 +89,7 @@ export function WallOverview({
 }) {
   const { placed, pieces, breaks, frame } = wallLayout(seats, [], 0);
   const emptied = new Set(seats.filter((seat) => seat.empty).map((seat) => seat.id));
-  /* §11.12: an emptied seat is laid out and holds its neighbours; §11.34 draws its footprint. */
+  /* §W.12: an emptied seat is laid out and holds its neighbours; §W.34 draws its footprint. */
   const seated = placed.filter((seat) => seat.id !== pulledId && !emptied.has(seat.id));
   const displaced = placed.filter((seat) => emptied.has(seat.id));
 
@@ -98,7 +98,7 @@ export function WallOverview({
       data-wall="overview"
       viewBox={frame.viewBox}
       /*
-        The collection as an object, fitted whole to its region (§11.10):
+        The collection as an object, fitted whole to its region (§W.10):
         `meet` scales to whichever dimension binds, and the leftover space goes
         on BOTH sides — a portrait fixture in a landscape region fits the
         height, and pinned to xMin it sat in a narrow column with the region
@@ -111,7 +111,7 @@ export function WallOverview({
         <line key={`break-${index}`} data-break="" x1={from[0].toFixed(2)} y1={from[1].toFixed(2)} x2={to[0].toFixed(2)} y2={to[1].toFixed(2)} stroke={RULE} strokeWidth="1" />
       ))}
       {/*
-        **One order over every object — pieces and records together (§11.23).**
+        **One order over every object — pieces and records together (§W.23).**
         Painting all the furniture and then all the records is two passes, and
         it puts a shelf's front face down before the records standing on it:
         the spines then draw over the shelf and past the upright in front of
@@ -119,7 +119,7 @@ export function WallOverview({
         The near view has always interleaved; this is the same wall.
       */}
       {/*
-        §11.28's hover: the run sinks, its hairlines are recomputed against
+        §W.28's hover: the run sinks, its hairlines are recomputed against
         that ground, and its count appears beside it. Two things at once —
         the sink says pressable in the vocabulary the chips already use, and
         the count says what is there, which is the one fact the far view
@@ -139,8 +139,8 @@ export function WallOverview({
 `}</style>
       )}
       {/*
-        §11.34: the seats a filter emptied, drawn as their own rectangles on
-        the shelf's top face — projected geometry at §11.27's hairline, not a
+        §W.34: the seats a filter emptied, drawn as their own rectangles on
+        the shelf's top face — projected geometry at §W.27's hairline, not a
         page rule. A never-filled seat draws nothing: a filtered seat is a
         fact about the filter, a never-filled one a fact about the backlog.
       */}
@@ -186,10 +186,10 @@ export function WallOverview({
             aria-label={name}
             data-far-seat={seat.id}
             /*
-              §11.30: out of the tab sequence where a zoom is offered. The
+              §W.30: out of the tab sequence where a zoom is offered. The
               anchor stays — it works with JavaScript off, and a record has a
-              route — but §11.28 rules the RUN the only target, and a shelf's
-              worth of links in front of it is the second control §11.30
+              route — but §W.28 rules the RUN the only target, and a shelf's
+              worth of links in front of it is the second control §W.30
               forbids, reached before the one that does something.
             */
             tabIndex={onSeatClick === undefined ? undefined : -1}
@@ -210,9 +210,9 @@ export function WallOverview({
         );
       })}
       {/*
-        §11.28's click target: the OCCUPIED RUN, drawn as its own layer over
+        §W.28's click target: the OCCUPIED RUN, drawn as its own layer over
         the sorted drawing. It cannot wrap the records — they paint
-        interleaved with the furniture by the separating-plane sort (§11.23),
+        interleaved with the furniture by the separating-plane sort (§W.23),
         so grouping them would break that order — so the run is a transparent
         hull over the seats of one shelf, carrying the hover and the count.
       */}
@@ -246,7 +246,7 @@ export function WallOverview({
                     <polygon points={points(frontFace(s))} fill="transparent" stroke="none" />
                   </g>
                 ))}
-                {/* The count beside the run, in §11.27's 11px mono. Not a caption: what is there, not what to do. */}
+                {/* The count beside the run, in §W.27's 11px mono. Not a caption: what is there, not what to do. */}
                 <text
                   data-run-label=""
                   x={maxX + 14}
@@ -258,7 +258,7 @@ export function WallOverview({
                 >
                   {run.seats.length} RECORDS →
                 </text>
-                {/* §11.30: the front edge — the run's longest continuous line, and the only one no spine interrupts. */}
+                {/* §W.30: the front edge — the run's longest continuous line, and the only one no spine interrupts. */}
                 {(() => {
                   const fronts = run.seats.flatMap((s) => frontFace(s));
                   const bottom = Math.max(...fronts.map(([, y]) => y));
@@ -287,7 +287,7 @@ export function WallOverview({
   );
 }
 
-/** The occupied runs — one per shelf that holds records (§11.28). */
+/** The occupied runs — one per shelf that holds records (§W.28). */
 function runsOf(seated: readonly PlacedSeat[]): Array<{ row: number; seats: PlacedSeat[] }> {
   const byZ = new Map<number, PlacedSeat[]>();
   for (const seat of seated) {

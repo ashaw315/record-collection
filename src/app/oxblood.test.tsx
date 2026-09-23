@@ -5,7 +5,7 @@ import { WallRail } from './WallRail';
 import { parseCollectionParams } from './collection-params';
 
 /**
- * §11.32: **the accent does not survive on the shelf, and survives unchanged
+ * §W.32: **the accent does not survive on the shelf, and survives unchanged
  * everywhere else.**
  *
  * §11 rests on one premise — the wall at rest is line, ink and paper, and
@@ -20,8 +20,8 @@ const GENRE = '00000000-0000-4000-8000-00000000000a';
 const rail = (search = '') =>
   renderToStaticMarkup(<WallRail params={parseCollectionParams(new URLSearchParams(search))} genres={[{ id: GENRE, name: 'Punk', count: 12 }]} />);
 
-describe('§11.32: no oxblood on the shelf view', () => {
-  it('keeps the rail’s Add record ink on §11.13’s LABEL, never the accent', () => {
+describe('§W.32: no oxblood on the shelf view', () => {
+  it('keeps the rail’s Add record ink on §W.13’s LABEL, never the accent', () => {
     const html = rail();
     const add = /<a [^>]*href="\/records\/new"[^>]*>/.exec(html)?.[0] ?? '';
     expect(add, 'the action is drawn').not.toBe('');
@@ -34,7 +34,7 @@ describe('§11.32: no oxblood on the shelf view', () => {
 
   it('marks a set filter with the rail’s own set mark — the 44-wide ink bar at 2px, not the field’s underline', () => {
     /*
-      §11.13's set mark is the BAR under the active view name. The field's
+      §W.13's set mark is the BAR under the active view name. The field's
       ink underline (§9.3) is present whether or not a filter is set, so it
       encodes no state — which is the one thing this must express.
     */

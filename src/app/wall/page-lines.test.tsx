@@ -10,7 +10,7 @@ import type { RecordSummary } from './summary';
 import { OUT_MS } from './gesture';
 
 /**
- * §11.31: **which lines the page carries — six, and no others.**
+ * §W.31: **which lines the page carries — six, and no others.**
  *
  * Two verticals, rail to facts column and facts column to drawing region,
  * each full-bleed from the nav to the page foot; two horizontals in the
@@ -21,8 +21,8 @@ import { OUT_MS } from './gesture';
  * state six.
  *
  * Counted per view, so a line added later fails this rather than passing
- * unnoticed. Value 0.72 on the 0.925 paper (§11.27), 1px for every rule;
- * 2px is reserved for §3's non-type marks, which on this page are §11.30's
+ * unnoticed. Value 0.72 on the 0.925 paper (§W.27), 1px for every rule;
+ * 2px is reserved for §3's non-type marks, which on this page are §W.30's
  * focus edge, the journal edge and the rail's 44-wide set bar.
  */
 const seat = (id: string): WallSeat => ({
@@ -79,10 +79,10 @@ const compositionRailLines = () => {
 };
 void rail;
 
-/** Every element the page marks as one of §11.31's structural lines. */
+/** Every element the page marks as one of §W.31's structural lines. */
 const lines = (html: string) => [...html.matchAll(/data-line="([a-z-]+)"/g)].map((m) => m[1]);
 
-describe('§11.31: the page carries six lines, and no others', () => {
+describe('§W.31: the page carries six lines, and no others', () => {
   it('draws four in the far view — the two verticals and the rail’s two — with the count unruled', () => {
     const html = stage({ far: true }) + compositionRailLines();
     expect(lines(html).sort()).toEqual(['rail-actions', 'rail-facts', 'rail-views', 'facts-drawing'].sort());
@@ -116,7 +116,7 @@ describe('§11.31: the page carries six lines, and no others', () => {
       const line = new RegExp(`<[^>]*data-line="${id}"[^>]*>`).exec(html)?.[0] ?? '';
       expect(line, `${id} is 1px`).not.toMatch(/border-2|h-\[2px\]|w-\[2px\]/);
     }
-    /* The rail's set bar is a MARK, not a rule: 44 wide at 2px (§11.31's correction from 4). */
+    /* The rail's set bar is a MARK, not a rule: 44 wide at 2px (§W.31's correction from 4). */
     const bar = /<[^>]*data-current-bar[^>]*>/.exec(html)?.[0] ?? '';
     expect(bar).toMatch(/width:\s*44px/);
     expect(bar, 'the set bar is 2px, not the 4 it was drawn at').toMatch(/height:\s*2px/);

@@ -31,13 +31,13 @@ function writeView(el: HTMLDivElement, [frameX, frameY]: readonly [number, numbe
  * `WallStage` draws states; this owns WHICH records are moving and how far
  * along their own clocks, by `requestAnimationFrame` rather than `<animate>`
  * — a declarative animation is smoother to write and impossible to sample
- * from outside, and §11.19's claims are all about when.
+ * from outside, and §W.19's claims are all about when.
  *
  * Click a spine to pull it (1600ms out: the 1300ms swing and the 300ms
  * finish); click the field, press Escape or Put back to send it back (860ms,
  * the whole gesture reversed on one clock — from wherever it stood). The
  * arrows (and ← →) slide along the collection: the held record goes back
- * and its neighbour comes out on one clock (§11.8).
+ * and its neighbour comes out on one clock (§W.8).
  */
 export function WallLive({
   seats,
@@ -50,12 +50,12 @@ export function WallLive({
   seats: readonly WallSeat[];
   summaries?: Record<string, RecordSummary>;
   countLine?: string | null;
-  /** §11.29: the run the near view opens on, from the URL. Absent means the arrival's own choice. */
+  /** §W.29: the run the near view opens on, from the URL. Absent means the arrival's own choice. */
   opensShelf?: number;
-  /** §11.29: told when the reader zooms, so the page can put it in the URL and Back can return. */
+  /** §W.29: told when the reader zooms, so the page can put it in the URL and Back can return. */
   onView?: (wall: 'near' | 'far', shelf?: number) => void;
   /**
-   * Which view the route opens in (§11.12: `/` opens far). A probe or a
+   * Which view the route opens in (§W.12: `/` opens far). A probe or a
    * harness that is about the near view asks for it directly — the opening
    * view is the ROUTE's, so a component that is not the route must not
    * inherit it.
@@ -63,14 +63,14 @@ export function WallLive({
   opens?: RouteView;
 }) {
   /*
-    §11.12: the route opens FAR and has two named targets. Above §11.24's fork
+    §W.12: the route opens FAR and has two named targets. Above §W.24's fork
     both views exist and this says which is showing; below it the fork decides
     and this is not consulted. `landOn` carries the seat a zoom-in must land
     the near view on, applied once the region has been measured.
   */
   const [routeView, setRouteView] = useState<RouteView>(opens);
   /*
-    §11.29: the ADDRESS is authoritative when it changes under a mounted wall.
+    §W.29: the ADDRESS is authoritative when it changes under a mounted wall.
     `useState(opens)` reads the prop once, so a Back or a Forward — which
     swap the URL without remounting this component — left the view showing
     whatever the last click had set while the URL said otherwise. The wall
@@ -88,7 +88,7 @@ export function WallLive({
     if (routeView !== opens) setRouteView(opens);
   }
   /*
-    §11.29's arrival script can only do work at parse time, so it is rendered
+    §W.29's arrival script can only do work at parse time, so it is rendered
     for the first client render — hydration must match the server's HTML —
     and dropped once mounted. Left in, React logs its script warning on every
     later commit, which is every return to rest.
@@ -101,7 +101,7 @@ export function WallLive({
     `viewport` is already the thing that changes on mount.
   */
   /*
-    **The pending landing** (§11.12): the seat a zoom-in must put at the
+    **The pending landing** (§W.12): the seat a zoom-in must put at the
     region's left, with its shelf at the region's top.
     
     It is consumed by the pan effect rather than applied where it is set,
@@ -120,10 +120,10 @@ export function WallLive({
    * what it sees MATCHES that intent — see `onScroll`.
    */
   const landingWriteRef = useRef<{ left: number; top: number } | null>(null);
-  /* §11.29: the desktop opens near and ARRIVES on the occupied shelf, through the same landing a zoom-in uses. */
+  /* §W.29: the desktop opens near and ARRIVES on the occupied shelf, through the same landing a zoom-in uses. */
   const arrived = useRef(false);
   const [pulls, setPulls] = useState<readonly PullState[]>([]);
-  /* §11.22: every record that has moved since the wall was last at rest — its landing stays in the frame until then. */
+  /* §W.22: every record that has moved since the wall was last at rest — its landing stays in the frame until then. */
   const [framed, setFramed] = useState<readonly string[]>([]);
   /*
     The clock reads the moving set from here: a state updater runs at render
@@ -154,10 +154,10 @@ export function WallLive({
   /* The visible region when the pull began. */
   const [view, setView] = useState<View | null>(null);
   /*
-    Re-attached when the route's view changes (§11.12): the drawing region
+    Re-attached when the route's view changes (§W.12): the drawing region
     belongs to the NEAR view, so on the far view there is nothing to observe
     and the first measurement has to wait for the zoom in. The viewport is
-    measured either way — §11.24's fork needs it before a region exists.
+    measured either way — §W.24's fork needs it before a region exists.
   */
   useEffect(() => {
     const measureViewport = () => setViewport(window.innerWidth);
@@ -174,7 +174,7 @@ export function WallLive({
   }, []);
 
   /*
-    §11.22: the view pans; the gesture does not move. The view is tracked in
+    §W.22: the view pans; the gesture does not move. The view is tracked in
     the svg's own px — its top-left, `viewNowRef` — and the scroll is derived
     from it against the frame's originRef, so the frame growing to hold a
     landing (which moves the svg's originRef) never moves the wall on screen.
@@ -197,19 +197,19 @@ export function WallLive({
     const layout = wallLayout(seats, framed.map((id) => ({ id })), width, view === null ? 0 : Math.max(view.height, height));
     const [frameX, frameY] = layout.frame.viewBox.split(' ').map(Number);
     /*
-      §11.12's landing, consumed here and exactly once: it is where the reader
+      §W.12's landing, consumed here and exactly once: it is where the reader
       is GOING, so it replaces the tracked view rather than being restored
       after it. The seat comes from this layout — the committed frame's own —
       so the target and the origin it is written against are the same frame.
     */
     /*
-      §11.29's arrival: the first frame of a near-opening route lands on the
+      §W.29's arrival: the first frame of a near-opening route lands on the
       occupied shelf rather than the fixture's top corner, by setting the same
       pending landing a zoom-in sets. Once only — a reader who has scrolled
       away is not dragged back by a later commit.
     */
     /*
-      §11.29's arrival: the first frame of a near-opening route lands on the
+      §W.29's arrival: the first frame of a near-opening route lands on the
       occupied shelf rather than the fixture's top corner, by setting the same
       pending landing a zoom-in sets. Once only — a reader who has scrolled
       away is not dragged back by a later commit.
@@ -222,7 +222,7 @@ export function WallLive({
     if (!arrived.current && routeView === 'near' && width > 0) {
       arrived.current = true;
       if (landOn.current === null && pulls.length === 0) {
-        /* §11.29: the URL's shelf if it names one, else the arrival's own — the first occupied run. */
+        /* §W.29: the URL's shelf if it names one, else the arrival's own — the first occupied run. */
         const addressed =
           opensShelf === undefined
             ? null
@@ -246,16 +246,16 @@ export function WallLive({
       const seat = layout.placed.find((p) => p.id === landing);
       if (seat !== undefined) {
         landOn.current = null;
-        /* Counted so the ordering can be asserted: consumed exactly once, on the commit whose frame is the region's own (§11.12). */
+        /* Counted so the ordering can be asserted: consumed exactly once, on the commit whose frame is the region's own (§W.12). */
         const counter = window as unknown as { __landings?: number };
         counter.__landings = (counter.__landings ?? 0) + 1;
-        /* The addressed seat's whole ROW, so the target takes in every top face the arrival shows (§11.28). */
+        /* The addressed seat's whole ROW, so the target takes in every top face the arrival shows (§W.28). */
         const row = layout.placed.filter((p) => p.z === seat.z);
         const target = nearView(seat, { width: el.clientWidth, height: el.clientHeight - LANDING_PAD }, row);
         /*
           The scroller clamps: a seat late in the row cannot reach the region's
           left edge, so the landing is min(target, scrollWidth − clientWidth)
-          — as far left as the wall allows (§11.12).
+          — as far left as the wall allows (§W.12).
         */
         writeView(el, [frameX, frameY], target);
         /* What this write actually landed on, clamped: the listener ignores exactly this and nothing else. */
@@ -293,14 +293,14 @@ export function WallLive({
     viewNowRef.current = current;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seats, framed, width, height, view, pullKey, routeView]);
-  /* At rest the reader pans (§11.6): the view follows, so a gesture begins from where the reader left it. */
+  /* At rest the reader pans (§W.6): the view follows, so a gesture begins from where the reader left it. */
   useEffect(() => {
     const el = region.current;
     if (el === null) return;
     const onScroll = () => {
       /*
         The landing's own write fires this, and it has already recorded where
-        it put the view (§11.12). What distinguishes it from the reader's
+        it put the view (§W.12). What distinguishes it from the reader's
         scroll is the POSITION, not the timing: the write records where it
         intends to land, and this ignores a scroll only when it sees exactly
         that. A write that moves nothing therefore needs no clearing — it
@@ -345,7 +345,7 @@ export function WallLive({
         setFramed((current) => (current.includes(id) ? current : [...current, id]));
         setPulls([{ id, direction, ms: 0 }]);
       } else {
-        /* The return begins at the time that mirrors where the out had got to: the whole gesture reversed (§11.21). */
+        /* The return begins at the time that mirrors where the out had got to: the whole gesture reversed (§W.21). */
         const from = held !== null && held.id === id ? RETURN_MS * (1 - outTime(held) / OUT_MS) : 0;
         base.current.set(id, from);
         setPulls([{ id, direction, ms: from }]);
@@ -400,9 +400,9 @@ export function WallLive({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clockKey]);
 
-  /* §11.12's two targets. In: the near view lands on the seat. Out: back to the whole collection. */
+  /* §W.12's two targets. In: the near view lands on the seat. Out: back to the whole collection. */
   /*
-    §11.29: a zoom is a place, so it goes in the URL — pushed, so Back returns
+    §W.29: a zoom is a place, so it goes in the URL — pushed, so Back returns
     to where the reader was. The view's own state changes immediately; the URL
     follows, and a reload reads it back.
   */
@@ -423,7 +423,7 @@ export function WallLive({
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      /* Escape dismisses the pulled state; with nothing out it is the way back to the collection (§11.12). */
+      /* Escape dismisses the pulled state; with nothing out it is the way back to the collection (§W.12). */
       if (event.key === 'Escape' && held === null && routeView === 'near') zoomOut();
       if (event.key === 'Escape' && held !== null) begin(held.id, 'back');
       if (event.key === 'ArrowRight') go('next');
@@ -460,12 +460,12 @@ export function WallLive({
         labels={labels}
         /*
           Unmeasured on the server, so both render and CSS shows the right one
-          (§11.26); once measured the fork decides below §11.24's width and
-          the route's own view decides above it (§11.12).
+          (§W.26); once measured the fork decides below §W.24's width and
+          the route's own view decides above it (§W.12).
         */
         /*
           Unmeasured, BOTH regions render and the composition's media query
-          shows the right one — the first paint is already correct (§11.29).
+          shows the right one — the first paint is already correct (§W.29).
           Once measured, the fork and the route's own state decide.
         */
         far={viewport === 0 ? null : isFarView(viewport) || routeView === 'far'}

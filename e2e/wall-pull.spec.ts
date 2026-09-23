@@ -8,11 +8,11 @@ import { recordLadder } from '../src/lib/colour/record-ladder';
 import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
 
 /**
- * The pull on the 1:1 wall, with colour arriving across it (8a §11.2, §11.3,
- * §11.19–§11.21): one clock, travel, growth and rotation on it, the finish
+ * The pull on the 1:1 wall, with colour arriving across it (8a §W.2, §W.3,
+ * §W.19–§W.21): one clock, travel, growth and rotation on it, the finish
  * after, and the return the whole gesture reversed.
  *
- * **Under a fake clock, so the gesture can be stepped.** Everything §11.2
+ * **Under a fake clock, so the gesture can be stepped.** Everything §W.2
  * rules about colour is a claim about WHEN — across the curve, not at either
  * end; gone before the spine lands — and at speed a fill one frame late looks
  * fine. `page.clock` drives `requestAnimationFrame` and `performance.now`, so
@@ -116,7 +116,7 @@ test('clicking a spine pulls it out on the gesture: the seat emptied from the fi
   await expect(page.locator(`[data-seat="${WIRED_ID}"]`)).toHaveCount(0);
 });
 
-test('colour arrives across the full out-span on one ease (§11.2) — paper at 0, the curve’s fill at halfway, not yet base at the swing’s end, base when the record lands', async ({
+test('colour arrives across the full out-span on one ease (§W.2) — paper at 0, the curve’s fill at halfway, not yet base at the swing’s end, base when the record lands', async ({
   page,
 }) => {
   if (wired === null) throw new Error('fixture');

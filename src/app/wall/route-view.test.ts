@@ -5,7 +5,7 @@ import { LANDING_PAD } from './landing';
 import { DEFAULT_ROUTE_VIEW, arrivalSeat, nearView } from './route-view';
 
 /**
- * §11.12: the route opens FAR, and moving between the two views has two named
+ * §W.12: the route opens FAR, and moving between the two views has two named
  * targets and never an intermediate.
  *
  * The far view is where the near view zooms out to, so the way back is the way
@@ -21,7 +21,7 @@ import { DEFAULT_ROUTE_VIEW, arrivalSeat, nearView } from './route-view';
 const seats = Array.from({ length: 30 }, (_, i) => ({ id: `r${i}`, section: 'S' }));
 const placedOf = (index: number, row: number): PlacedSeat => layoutRow(seats.slice(0, 10), row)[index];
 
-describe('the arrival needs no scroll (§11.29)', () => {
+describe('the arrival needs no scroll (§W.29)', () => {
   /*
     The browser paints the server's markup before any client JavaScript runs,
     so a layout effect that scrolls is always a paint late: the wall appears
@@ -50,15 +50,15 @@ describe('the arrival needs no scroll (§11.29)', () => {
 
 });
 
-describe('the route’s two views (§11.12, §11.29)', () => {
-  it('opens NEAR on the desktop: §11.12’s far default is withdrawn, and far is a deliberate zoom-out (§11.29)', () => {
+describe('the route’s two views (§W.12, §W.29)', () => {
+  it('opens NEAR on the desktop: §W.12’s far default is withdrawn, and far is a deliberate zoom-out (§W.29)', () => {
     expect(DEFAULT_ROUTE_VIEW).toBe('near');
   });
 
-  it('names the shelf the arrival lands on: the first OCCUPIED one, not the fixture’s top corner (§11.29)', () => {
+  it('names the shelf the arrival lands on: the first OCCUPIED one, not the fixture’s top corner (§W.29)', () => {
     /*
       The empty shelves are the room the collection grows into, and a view
-      that opens on them opens on nothing. The same target §11.28 gives a
+      that opens on them opens on nothing. The same target §W.28 gives a
       click on a run.
     */
     const seats = Array.from({ length: 17 }, (_, i) => ({ id: `r${i}`, section: 'S' }));
@@ -72,7 +72,7 @@ describe('the route’s two views (§11.12, §11.29)', () => {
     expect(arrivalSeat([])).toBeNull();
   });
 
-  it('keeps the addressed seat inside the region at every collection size, the vertical target being reachable (§11.28)', () => {
+  it('keeps the addressed seat inside the region at every collection size, the vertical target being reachable (§W.28)', () => {
     /*
       A row spans ~99px of screen height per seat (198 pitch × sin30), so a
       100-seat row spans ~9,900px against a 799-high region. A target taken
@@ -101,7 +101,7 @@ describe('the route’s two views (§11.12, §11.29)', () => {
     }
   });
 
-  it('takes in the top faces of the seats the arrival shows, not just the addressed one — the wall descends to the right (§11.28)', () => {
+  it('takes in the top faces of the seats the arrival shows, not just the addressed one — the wall descends to the right (§W.28)', () => {
     /*
       The addressed seat's own top face was the target, and every seat to its
       LEFT along the row sits higher on screen: +x projects to (cos30, sin30),

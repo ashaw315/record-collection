@@ -11,10 +11,10 @@ import { nearViewMinWidth } from './view-fork';
 import { GROWTH, OUT_MS, RETURN_MS, ROTATION_START, SWING_MS, gestureFaces, poseAt } from './gesture';
 
 /**
- * The stage: the drawing plus what the gesture arrives at. §11.7's panel
+ * The stage: the drawing plus what the gesture arrives at. §W.7's panel
  * appears at the slide's perceived end — not tracking the face, since a
  * panel that slides with a drawn object is a caption and the two planes
- * collapse into one. §11.8's fork at 820 is an overlay, not a narrower
+ * collapse into one. §W.8's fork at 820 is an overlay, not a narrower
  * panel: the wall does not reflow.
  */
 const seat = (id: string, over: Partial<WallSeat> = {}): WallSeat => ({
@@ -54,14 +54,14 @@ const render = (props: Partial<Parameters<typeof WallStage>[0]> = {}) =>
     />,
   );
 
-describe('§11.35: the count carries the departure mark', () => {
+describe('§W.35: the count carries the departure mark', () => {
   it('reads THE WHOLE COLLECTION → beneath the figure, in the near view', () => {
     /*
       A pointer cursor and an accessible name are not marks: 72px of ink that
       does nothing else on this page is a display figure until something says
       otherwise, which is why the far view was reported as missing. The arrow
-      is already this page's departure mark — §11.19's OPEN THE FULL RECORD →
-      and §11.28's run hover — so the mark is the same in both views and only
+      is already this page's departure mark — §W.19's OPEN THE FULL RECORD →
+      and §W.28's run hover — so the mark is the same in both views and only
       its timing differs.
     */
     const html = render({ far: false, onZoomOut: () => {} });
@@ -81,12 +81,12 @@ describe('§11.35: the count carries the departure mark', () => {
     expect(render({ far: true, onZoomOut: () => {} })).not.toContain('data-zoom-mark');
   });
 
-  it('is absent where there is no zoom to do — §11.24’s narrow shelf', () => {
+  it('is absent where there is no zoom to do — §W.24’s narrow shelf', () => {
     expect(render({ far: false })).not.toContain('data-zoom-mark');
   });
 });
 
-describe('§11.29: the view and its shelf live in the URL', () => {
+describe('§W.29: the view and its shelf live in the URL', () => {
   it('opens on the wall the URL names, and on the shelf it addresses', () => {
     /*
       A bare `/` opens near on the arrival's own shelf; `?wall=far` opens the
@@ -98,7 +98,7 @@ describe('§11.29: the view and its shelf live in the URL', () => {
   });
 });
 
-describe('§11.28: the count beside the drawing, and the run is what the reader clicks', () => {
+describe('§W.28: the count beside the drawing, and the run is what the reader clicks', () => {
   it('puts COLLECTION and the count in a COLUMN beside the drawing, not a band above it', () => {
     /*
       The band ate 281px of the 847 available, which is why the region was
@@ -109,9 +109,9 @@ describe('§11.28: the count beside the drawing, and the run is what the reader 
     const html = render({ far: true });
     const region = /<div data-region="far"[^>]*class="([^"]*)"/.exec(html)?.[1] ?? '';
     expect(region, 'a row above the fork: the count beside the drawing').toContain('flex-row');
-    /* And the fork's width is the one constant, not a literal restated here (§11.26). */
+    /* And the fork's width is the one constant, not a literal restated here (§W.26). */
     expect(region, 'the fork’s own width').toContain(`min-width:${nearViewMinWidth()}px`);
-    /* Below it the column stacks: §11.24 makes the far view the whole shelf, and a 420px column would leave nothing to draw in. */
+    /* Below it the column stacks: §W.24 makes the far view the whole shelf, and a 420px column would leave nothing to draw in. */
     expect(region).toContain('flex-col');
     expect(region, 'and it still takes the full height under the nav').toContain('h-[calc(100vh-var(--app-nav-height,0px))]');
     /* The count comes first in the row, and the drawing takes the rest. */
@@ -126,7 +126,7 @@ describe('§11.28: the count beside the drawing, and the run is what the reader 
   });
 });
 
-describe('the arrival is in position at parse time (§11.29)', () => {
+describe('the arrival is in position at parse time (§W.29)', () => {
   it('emits an inline script straight after the region that sets its scroll before the first paint', () => {
     /*
       The browser paints the server's markup before any client script runs, so
@@ -159,12 +159,12 @@ describe('the arrival is in position at parse time (§11.29)', () => {
   });
 });
 
-describe('the route’s two views, and the way between them (§11.12)', () => {
-  it('makes the count the way out in BOTH views: §11.12 puts the zoom-out on the collection’s identity, which the near view also shows', () => {
+describe('the route’s two views, and the way between them (§W.12)', () => {
+  it('makes the count the way out in BOTH views: §W.12 puts the zoom-out on the collection’s identity, which the near view also shows', () => {
     /*
       The zoom-out was rendered only inside the far view's count, so from the
       near view there was no way back except Escape — and every test that
-      clicked it timed out. §11.12's argument is about the COUNT, which is
+      clicked it timed out. §W.12's argument is about the COUNT, which is
       the collection's identity and what the zoom-out arrives at; the near
       view carries the same count in its facts column.
     */
@@ -172,7 +172,7 @@ describe('the route’s two views, and the way between them (§11.12)', () => {
     expect(near).toContain('data-region="near"');
     expect(near).toMatch(/<button[^>]*data-testid="wall-zoom-out"[^>]*>/);
     expect(near).toContain('data-testid="wall-count"');
-    /* And it is absent where there is no zoom to do — §11.24's narrow shelf. */
+    /* And it is absent where there is no zoom to do — §W.24's narrow shelf. */
     expect(render()).not.toContain('data-testid="wall-zoom-out"');
   });
 
@@ -186,14 +186,14 @@ describe('the route’s two views, and the way between them (§11.12)', () => {
     expect(far).toMatch(/<a [^>]*data-far-seat="a"/);
   });
 
-  it('leaves the far view’s records as plain links when there is no zoom to do — the narrow shelf, where a tap opens the record (§11.24)', () => {
+  it('leaves the far view’s records as plain links when there is no zoom to do — the narrow shelf, where a tap opens the record (§W.24)', () => {
     const narrow = render({ far: true });
     expect(narrow).not.toContain('data-testid="wall-zoom-out"');
     expect(narrow).toMatch(/<a [^>]*href="\/records\/a"/);
   });
 });
 
-describe('the narrow shelf is the far view (§11.24)', () => {
+describe('the narrow shelf is the far view (§W.24)', () => {
   it('draws the count and then the overview in one column — no facts column, no labelled wall, no panel region — with the records as links to their screens', () => {
     const html = render({ far: true, viewport: 390, width: 390 });
     expect(html).not.toMatch(/grid-cols-\[420px_1fr\]/);
@@ -215,24 +215,24 @@ describe('the narrow shelf is the far view (§11.24)', () => {
     expect(render()).toContain('data-region="near"');
   });
 
-  it('renders BOTH views while unmeasured — the server has no width — so CSS can show the right one on the first paint, and one once measured (§11.26)', () => {
+  it('renders BOTH views while unmeasured — the server has no width — so CSS can show the right one on the first paint, and one once measured (§W.26)', () => {
     const both = render({ far: null });
     expect(both).toContain('data-region="near"');
     expect(both).toContain('data-region="far"');
     /*
       Both are in the document, and the one CSS hides must be inert: a hidden
       view keeps its tab stops otherwise, and the near view's seat anchors
-      then stand in front of the far view's run — §11.30's only stop,
+      then stand in front of the far view's run — §W.30's only stop,
       unreachable behind seventeen links to records that are not shown.
     */
     /*
       Nothing is inert, here or anywhere. The media query hides the view CSS
       does not want with `display: none`, which takes its contents out of the
-      tab order and the accessibility tree by itself — so §11.30's tab-stop
+      tab order and the accessibility tree by itself — so §W.30's tab-stop
       collision is already answered. An `inert` attribute was tried and
       removed: served by the SERVER it is permanent with JavaScript off, and
       the spine link then renders unclickable, which is precisely what
-      §11.8's no-JavaScript test protects.
+      §W.8's no-JavaScript test protects.
     */
     expect(both, 'nothing is inert').not.toMatch(/\binert\b/);
     expect(render({ far: true })).not.toContain('data-region="near"');
@@ -240,8 +240,8 @@ describe('the narrow shelf is the far view (§11.24)', () => {
   });
 });
 
-describe('two columns: facts left, drawing right (§11.9)', () => {
-  it('gives the facts 420px and the drawing the rest — page pixels, §11.13’s figure', () => {
+describe('two columns: facts left, drawing right (§W.9)', () => {
+  it('gives the facts 420px and the drawing the rest — page pixels, §W.13’s figure', () => {
     expect(render()).toMatch(/grid-cols-\[420px_1fr\]/);
   });
 
@@ -278,7 +278,7 @@ describe('two columns: facts left, drawing right (§11.9)', () => {
   });
 });
 
-describe('a filter empties seats: the count and the arrows are the seated records’ (§11.12)', () => {
+describe('a filter empties seats: the count and the arrows are the seated records’ (§W.12)', () => {
   const three = [seat('a'), { ...seat('b'), empty: true }, seat('c')];
   const sums = { a: summary('a'), b: summary('b'), c: summary('c') };
 
@@ -297,7 +297,7 @@ describe('a filter empties seats: the count and the arrows are the seated record
   });
 });
 
-describe('where the record lands and what goes with it (§11.19–§11.21)', () => {
+describe('where the record lands and what goes with it (§W.19–§W.21)', () => {
   const view = { x: 0, y: 0, width: 960, height: 760 };
 
   it('lands on the gesture’s own construction: the cover matrix at 1600ms is axis-aligned and square at the record’s own size, the wall unchanged behind it', () => {
@@ -324,7 +324,7 @@ describe('where the record lands and what goes with it (§11.19–§11.21)', () 
     /* Beside the landed cover, in the region's px (the svg's frame origin taken out). */
     const placed = layoutRow(three.map((s) => ({ id: s.id, section: '0' })), 0)[1];
     const [frameX] = (/viewBox="([^"]+)"/.exec(mid)?.[1] ?? '0 0').split(' ').map(Number);
-    /* Shifted by the pan's clearance (§11.26): the arrows go where the cover lands, not where the gesture alone puts it. */
+    /* Shifted by the pan's clearance (§W.26): the arrows go where the cover lands, not where the gesture alone puts it. */
     const cover = gestureFaces(placed, poseAt(OUT_MS)).cover;
     const xs = cover.map(([x]) => x + clearanceShift(placed));
     const left = (id: string) => Number(/left:([\d.-]+)px/.exec(/data-testid="nav-(?:previous|next)"[^>]*>/.exec(mid.slice(mid.indexOf(`data-testid="${id}"`)))?.[0] ?? '')?.[1]);
@@ -339,7 +339,7 @@ describe('where the record lands and what goes with it (§11.19–§11.21)', () 
   });
 });
 
-describe('the panel arrives with the rotation (§11.14, §11.19)', () => {
+describe('the panel arrives with the rotation (§W.14, §W.19)', () => {
   it('is absent before the rotation joins at 42% of the swing and present from it — the record becomes a subject when it turns', () => {
     const before = render({ pull: { id: 'b', direction: 'out', ms: ROTATION_START * SWING_MS - 1 } });
     expect(before).not.toContain('data-testid="record-chrome"');
@@ -352,7 +352,7 @@ describe('the panel arrives with the rotation (§11.14, §11.19)', () => {
   });
 });
 
-describe('Turn over shows the back on the same face (§11.7)', () => {
+describe('Turn over shows the back on the same face (§W.7)', () => {
   it('swaps the cover for the back photograph when there is one', () => {
     const html = render({
       seats: [seat('a', { backUrl: 'https://c/back.jpg' })],

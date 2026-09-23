@@ -3,7 +3,7 @@ import { OUT_MS } from '../src/app/wall/gesture';
 import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
 
 /**
- * §11.3 on the rendering: the pulled record shows its cover at its own aspect
+ * §W.3 on the rendering: the pulled record shows its cover at its own aspect
  * on its RIGHT face (D2), inside that face throughout the slide, over the
  * field where its colour arrives — and nothing paints over the pulled record,
  * which is what the global painter's order is for.
@@ -30,7 +30,7 @@ test('the pulled record shows its cover, fitted inside its face, at the end and 
   page,
 }) => {
   await login(page);
-  /* The landing is ruled for the two-column composition (§11.9, §11.10); narrow viewports are deferred. */
+  /* The landing is ruled for the two-column composition (§W.9, §W.10); narrow viewports are deferred. */
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.clock.install();
   await page.goto(`/wall/probe/labelled?cover=${encodeURIComponent(WIDE_COVER)}`);

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ARROW_LANE, LANDED_SIZE, LANDING_PAD, parseMatrix } from './landing';
 
-describe('what survives of the landing (§11.9, §11.19)', () => {
+describe('what survives of the landing (§W.9, §W.19)', () => {
   it('keeps the page’s padding, the arrow lane and the landed size as the figures they are', () => {
     expect(LANDING_PAD).toBe(34);
     expect(ARROW_LANE).toBe(56);

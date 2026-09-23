@@ -11,18 +11,18 @@ import { SPINE_HEIGHT } from './geometry';
  * they produce.
  */
 /**
- * The character budget, derived rather than declared (SPEC.md §10b; 8a §11.6,
- * §11.11). Every term is named so the next change to the face or the insets
+ * The character budget, derived rather than declared (SPEC.md §10b; 8a §W.6,
+ * §W.11). Every term is named so the next change to the face or the insets
  * produces a new derivation rather than a new fit: the face, less the
  * baseline inset and the end inset, over the measured advance.
  *
- * §11.11 draws the near view at true 1:1 with a 150-unit face and measures
+ * §W.11 draws the near view at true 1:1 with a 150-unit face and measures
  * its labels there — floor((150 − 14) / 6.235) = 21 — so the budget is the
  * drawing's. At 5b's 240 the same rule gives 36; the earlier 37 used the
  * baseline inset alone, which is the difference between the two, not a
  * second rule.
  */
-describe('the budget derives from the face (§11.11)', () => {
+describe('the budget derives from the face (§W.11)', () => {
   it('names the glyph run as the face less the baseline and end insets', () => {
     expect(BASELINE_INSET_PX).toBe(8);
     expect(END_INSET_PX).toBe(6);

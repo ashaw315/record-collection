@@ -62,7 +62,7 @@ export function widened(
  * The frame grown to hold `extents` as well — its origin moving up or left
  * as needed, its size the union. The seated frame (already widened to the
  * region) keeps every pixel it had, so a region that shows all of it still
- * does; the growth is overflow the region can scroll to (§11.22).
+ * does; the growth is overflow the region can scroll to (§W.22).
  */
 export function unionFrame(
   frame: { viewBox: string; width: number; height: number },

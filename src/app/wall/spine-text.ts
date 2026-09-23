@@ -12,17 +12,17 @@ import { SPINE_HEIGHT } from './geometry';
  * inset produces a new derivation rather than a new fit.
  */
 
-/** The label's run along the face: the face less the baseline inset and the end inset, as §11.11 derives it. */
+/** The label's run along the face: the face less the baseline inset and the end inset, as §W.11 derives it. */
 export const BASELINE_INSET_PX = 8;
 export const END_INSET_PX = 6;
 export const GLYPH_RUN_PX = SPINE_HEIGHT - BASELINE_INSET_PX - END_INSET_PX;
 
-/** Per-character advance of the mono face at the spine's set size, in px — measured, 6.234 in §11.11's render. */
+/** Per-character advance of the mono face at the spine's set size, in px — measured, 6.234 in §W.11's render. */
 export const GLYPH_ADVANCE_PX = 6.235;
 
 /**
  * Characters that fit: `floor((150 − 14) / 6.235)` = 21 at the drawing's face
- * (§11.11). One rule, and the number follows the face: at 5b's 240 the same
+ * (§W.11). One rule, and the number follows the face: at 5b's 240 the same
  * rule gave 37 with an 8 inset — the end inset is the drawing's, and the
  * derivation is the thing kept, not the number.
  */

@@ -5,7 +5,7 @@ import { factPanel } from './panel';
 import { recordSummary, type RecordSummary } from './summary';
 
 /**
- * The wall on the database (§11.7, step 5). `shelfRecords` produces the
+ * The wall on the database (§W.7, step 5). `shelfRecords` produces the
  * seats and the panel's summaries alike, in one order — the order the
  * keyboard walks, the arrows follow and the links carry. A second producer
  * for any of those is how the three would drift.

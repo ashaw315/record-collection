@@ -1,7 +1,7 @@
 import { DEPTH, SPINE_HEIGHT, type PlacedSeat, type RecordBox } from './geometry';
 
 /**
- * The painter's order, by separating plane (8a §11.20, and the probe's
+ * The painter's order, by separating plane (8a §W.20, and the probe's
  * finding). **Order the drawing's objects — not faces — by separating
  * plane, and fall back to centroid depth only when no plane separates
  * them.** Two disjoint boxes always have a consistent order; for
@@ -14,7 +14,7 @@ import { DEPTH, SPINE_HEIGHT, type PlacedSeat, type RecordBox } from './geometry
  * **The comparator takes bounds.** Every seated record is separated from
  * its neighbours on x, so the seated row is exactly ordered by x alone; a
  * moving record joins that order by its own bounds, which expand as it
- * grows and rotates. §11.18: at y ≥ 150 a plane on y separates it from the
+ * grows and rotates. §W.18: at y ≥ 150 a plane on y separates it from the
  * whole row and it draws in front of every seat regardless of x; before
  * that a neighbour at larger x is genuinely nearer and draws over it.
  *
@@ -52,7 +52,7 @@ export function boxBounds(box: RecordBox): PaintBounds {
  * separate the same pair with opposite verdicts, neither object can occlude
  * the other (a ray toward the camera leaves one range before it enters the
  * other), so the order is a convention: y is checked first, which is
- * §11.18's — past the row on y, the record draws in front of every seat
+ * §W.18's — past the row on y, the record draws in front of every seat
  * regardless of x.
  */
 export function nearer(a: PaintBounds, b: PaintBounds): number {
@@ -75,7 +75,7 @@ export function nearer(a: PaintBounds, b: PaintBounds): number {
  * projected extent is 150 plus a 75px top face against a 198 pitch, so a
  * lower row's tops would overpaint the bottom 27px of the row above unless
  * the upper row paints later. Document order therefore follows the paint
- * order and is no longer seat order across rows — §11.8's assertion has
+ * order and is no longer seat order across rows — §W.8's assertion has
  * failed as it was designed to, and the reading order is with Design.
  */
 export function paintOrder<T extends PaintBounds>(objects: readonly T[]): T[] {

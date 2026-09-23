@@ -4,7 +4,7 @@ import type { PullState } from './WallLabelled';
 import { OUT_MS } from './gesture';
 
 /**
- * Arrows between pulled records (8a §11.8): wall order, absent at the ends,
+ * Arrows between pulled records (8a §W.8): wall order, absent at the ends,
  * a slide at the same depth. Adjacency derives from the seat order the
  * anchors already carry — one ordering for the keyboard, the arrows and the
  * links is one thing to keep correct; `adjacent-record.ts` was a second

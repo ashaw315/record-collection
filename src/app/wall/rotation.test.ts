@@ -13,7 +13,7 @@ import {
 } from './rotation';
 
 /**
- * §11.16 / §11.17 / §11.20: the turn is a rigid rotation in three dimensions,
+ * §W.16 / §W.17 / §W.20: the turn is a rigid rotation in three dimensions,
  * re-projected every frame — never interpolated corners — about the cover's
  * near vertical edge at y + depth, in the direction that opens the face. Rigid
  * to 45°, where the cover projects to its widest, 1.2247 : 1; then a
@@ -21,7 +21,7 @@ import {
  * thickness sliver collapsing to zero — both terms being the projection
  * removed. The signature is the spine closing 10.39 → 0 at the same 45°.
  *
- * Every figure below is §11.17's, reproduced from the rotation rather than
+ * Every figure below is §W.17's, reproduced from the rotation rather than
  * typed in as a constant the rotation is then asserted to equal.
  */
 const box: RecordBox = { id: 'r', x: 170, y: 0, z: 594, width: 12, depth: DEPTH, height: SPINE_HEIGHT };
@@ -39,7 +39,7 @@ describe('at rest the rotation is the seated record', () => {
   });
 });
 
-describe('the axis and the direction (§11.16, §11.17)', () => {
+describe('the axis and the direction (§W.16, §W.17)', () => {
   it('pivots about the cover’s near vertical edge at y + depth, which does not move, and turns the cover normal from +x toward +y', () => {
     const corners = rotatedCorners(box, OPEN_ANGLE);
     const axisY = box.y + box.depth;
@@ -48,7 +48,7 @@ describe('the axis and the direction (§11.16, §11.17)', () => {
     /* The cover's far corner (the y = 0 end) swings to +x: (sin45, −cos45) · 150 from the axis — toward the camera, every point advancing. */
     const far = corners.find(([x, y, z]) => z === box.z && Math.abs(x - (axisX + Math.SQRT1_2 * DEPTH)) < 1e-6 && Math.abs(y - (axisY - Math.SQRT1_2 * DEPTH)) < 1e-6);
     expect(far).toBeDefined();
-    /* §11.20 reinstates the pivot's ground: (0.707, 0.707, 0)·(1, 1, 1) = 1.414 > 1 — the cover turns toward the reader, every point advancing. */
+    /* §W.20 reinstates the pivot's ground: (0.707, 0.707, 0)·(1, 1, 1) = 1.414 > 1 — the cover turns toward the reader, every point advancing. */
     const depthOf = ([x, y, z]: readonly [number, number, number]) => x + y + z;
     const before = rotatedCorners(box, 0);
     /* The cover's corners are those on the axis plane dx = 0: indices 4…7 of the enumeration. */
@@ -87,7 +87,7 @@ describe('the axis and the direction (§11.16, §11.17)', () => {
   });
 });
 
-describe('the finish (§11.17): the projection undone on the 45° rectangle', () => {
+describe('the finish (§W.17): the projection undone on the 45° rectangle', () => {
   it('compresses horizontally by 0.8165 and collapses the sliver to zero, both reaching the square together', () => {
     expect(FINISH_COMPRESSION).toBeCloseTo(1 / (Math.SQRT2 * COS30), 12);
     const start = finishBasis(0);
@@ -108,7 +108,7 @@ describe('the finish (§11.17): the projection undone on the 45° rectangle', ()
   });
 });
 
-describe('the clearance is angle-dependent: assert the joint state, not the travel (§11.19)', () => {
+describe('the clearance is angle-dependent: assert the joint state, not the travel (§W.19)', () => {
   /* The row: seats at pitch 17, each 12 × 150 in plan, with the pulled seat left empty. */
   const seat = 10;
   const neighbours = Array.from({ length: 20 }, (_, i) => i)

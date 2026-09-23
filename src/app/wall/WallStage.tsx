@@ -16,7 +16,7 @@ import { WallOverview } from './WallOverview';
 
 /**
  * The stage: two columns — facts left at 420px, drawing right with the rest
- * (8a §11.9, §11.13's figures in page pixels).
+ * (8a §W.9, §W.13's figures in page pixels).
  *
  * The facts column carries COLLECTION and the count at its head (the
  * collection's identity, not the record's — the wall is still behind the
@@ -67,31 +67,31 @@ export function WallStage({
   regionRef?: React.Ref<HTMLDivElement>;
   labels?: boolean;
   /**
-   * §11.24: the narrow shelf is the far view — the count, then the collection
+   * §W.24: the narrow shelf is the far view — the count, then the collection
    * as an object, each record a link to its screen. `null` is unmeasured:
    * the server has no width, so both views render and the composition's
-   * media query shows the right one on the first paint (§11.26 records the
+   * media query shows the right one on the first paint (§W.26 records the
    * flash of the near view as a build concern; this is its handling).
    */
   far?: boolean | null;
   /**
-   * §11.12: the way in and the way out — a click on a far seat zooms to the
+   * §W.12: the way in and the way out — a click on a far seat zooms to the
    * near view on that seat, and a click on the COUNT zooms back out. The same
    * input in both directions, never a continuous one: a wheel or a pinch
    * snapping to a target is an intermediate the reader can see. Absent below
-   * §11.24's fork, where the far view is the only view and a tap opens the
+   * §W.24's fork, where the far view is the only view and a tap opens the
    * record screen.
    */
   onZoomIn?: (id: string) => void;
   onZoomOut?: () => void;
   /**
-   * §11.29: whether to render the parse-time arrival script. True on the
+   * §W.29: whether to render the parse-time arrival script. True on the
    * server and for the first client render, so hydration matches; false once
    * mounted, since the tag can only do work at parse time and React logs a
    * warning for every later commit that renders it.
    */
   arrivalScript?: boolean;
-  /** §11.22: the records whose landings the frame holds, until the wall is at rest. */
+  /** §W.22: the records whose landings the frame holds, until the wall is at rest. */
   framed?: readonly string[];
   onSeatClick?: (id: string) => void;
   onPulledClick?: () => void;
@@ -102,19 +102,19 @@ export function WallStage({
   void viewport;
   const moving: readonly PullState[] = pulls ?? (pull === null ? [] : [pull]);
   /*
-    The panel arrives with the rotation (§11.14, §11.19): the record becomes
+    The panel arrives with the rotation (§W.14, §W.19): the record becomes
     a subject when it turns to face the reader, which is 42% into the swing
     — and leaves with it on the return, the whole gesture reversed.
   */
   const arriving = moving.find((state) => state.direction === 'out');
   const arrived = arriving !== undefined && outTime(arriving) >= ROTATION_START * SWING_MS;
   const summary = arrived ? summaries[arriving.id] : undefined;
-  /* §11.12: the arrows walk the seated records; an empty seat is not somewhere to go. */
+  /* §W.12: the arrows walk the seated records; an empty seat is not somewhere to go. */
   const seated = seats.filter((seat) => !seat.empty);
   /*
-    Where the near view arrives (§11.29): the occupied shelf, by the same
+    Where the near view arrives (§W.29): the occupied shelf, by the same
     `nearView` the client lands with. Only at rest — a pull owns the view
-    while it is out (§11.22) — and only in the near view, which is the one
+    while it is out (§W.22) — and only in the near view, which is the one
     that scrolls.
   */
   const arrival: [number, number] | null = (() => {
@@ -129,7 +129,7 @@ export function WallStage({
   const order = seated.map((seat) => seat.id);
 
   /*
-    §11.9: the panel's region is FIXED in the facts column below the count,
+    §W.9: the panel's region is FIXED in the facts column below the count,
     empty at rest, filled when a record is pulled. A destination does not
     move — so no scrim, no lightness step, no overlap rule, no fork at 820.
   */
@@ -146,17 +146,17 @@ export function WallStage({
     ) : null;
 
   /*
-    The arrows go with the record (§11.9): beside the landed box, in the
+    The arrows go with the record (§W.9): beside the landed box, in the
     drawing's region, present only where there is somewhere to go.
   */
   let arrows = null;
   if (arriving !== undefined && settled(arriving)) {
-    /* Beside the landed cover's own extent (§11.9 with §11.21's landing), in the region's px: the svg's frame origin taken out. */
+    /* Beside the landed cover's own extent (§W.9 with §W.21's landing), in the region's px: the svg's frame origin taken out. */
     const { placed, frame } = wallLayout(seats, (framed ?? moving.map((m) => m.id)).map((id) => ({ id })), width, view?.height ?? 0);
     const seat = placed.find((p) => p.id === arriving.id);
     const [frameX, frameY] = frame.viewBox.split(' ').map(Number);
     const cover = seat === undefined ? [] : gestureFaces(seat, poseAt(OUT_MS)).cover;
-    /* Where the cover LANDS: the gesture's position plus the pan's clearance (§11.26). */
+    /* Where the cover LANDS: the gesture's position plus the pan's clearance (§W.26). */
     const shift = seat === undefined ? 0 : clearanceShift(seat);
     const xs = cover.map(([x]) => x + shift - frameX);
     const ys = cover.map(([, y]) => y - frameY);
@@ -185,14 +185,14 @@ export function WallStage({
 
   /*
     Both views carry the count, and while unmeasured both are in the document
-    (§11.26): the far view's markers are its own so nothing resolves to both.
+    (§W.26): the far view's markers are its own so nothing resolves to both.
   */
   const count = (far: boolean) => (
     <div data-region={far ? 'count-far' : 'count'}>
       <div className={LABEL}>COLLECTION</div>
       {onZoomOut !== undefined ? (
         /*
-        §11.12: the way out is the collection's identity, which is what the
+        §W.12: the way out is the collection's identity, which is what the
         zoom-out arrives at — so it is the COUNT, in whichever view is
         showing. Rendered only in the far view, the near view had no way back
         but Escape.
@@ -207,18 +207,18 @@ export function WallStage({
         >
           <span data-testid={far ? 'wall-count-far' : 'wall-count'}>{seated.length}</span>
           {/*
-            §11.35: the count's departure mark. A pointer cursor and an
+            §W.35: the count's departure mark. A pointer cursor and an
             accessible name are not marks — 72px of ink that does nothing else
             on this page is a display figure until something says otherwise,
             which is why the far view was reported as missing. The arrow is
-            already this page's departure mark (§11.19's OPEN THE FULL RECORD
-            →, §11.28's run hover), so the mark is the same in both views and
+            already this page's departure mark (§W.19's OPEN THE FULL RECORD
+            →, §W.28's run hover), so the mark is the same in both views and
             only its timing differs: at rest on the near view's count, on
             hover on the far view's run.
 
             NOT the rail's set bar: that mark means "this is the current
             state", and on a control it would read as an answer rather than
-            an offer. And not the caption §11.28 refused — a label on a
+            an offer. And not the caption §W.28 refused — a label on a
             control is the control's name, not a gloss on a picture.
 
             The far view's own count carries nothing: there is nowhere to go
@@ -244,32 +244,32 @@ export function WallStage({
   );
 
   /*
-    §11.24: below the fork the near view holds about two seats, which is not a
+    §W.24: below the fork the near view holds about two seats, which is not a
     fixture; the far view has no width floor. One column — the count, then the
     collection as an object — and no panel region, because the pulled state
     does not exist at this width: a tap goes to the record screen.
   */
   /*
-    §11.10: the far view is the collection AS AN OBJECT, so it fits the
+    §W.10: the far view is the collection AS AN OBJECT, so it fits the
     region — labels are absent rather than shrunk, which is what lets it
-    scale at all (§11.24). The near view is the one that renders at 1:1 and
+    scale at all (§W.24). The near view is the one that renders at 1:1 and
     pans; a far view that scrolled would be the near view's job done badly.
   */
   /*
-    §11.28: the count sits BESIDE the drawing, not above it. The band was
+    §W.28: the count sits BESIDE the drawing, not above it. The band was
     eating 281px of the 847 available — which is why the region measured
     1240 × 566 and the fixture drew 239px wide — and moving it into a column
     returns that height to the fit: 311px at 17 records and 531 at 200, the
     figures Design gives less the region's own 34px padding. The fixture is
     unchanged; the region is what grows.
 
-    BELOW §11.26's fork the column stacks above the drawing again, because
-    there is no width to put it beside: §11.24 makes the far view the whole
+    BELOW §W.26's fork the column stacks above the drawing again, because
+    there is no width to put it beside: §W.24 makes the far view the whole
     shelf at 390px, and a 420px column beside it leaves nothing to draw in.
   */
   const farView = (
     <div data-region="far" className={`flex h-[calc(100vh-var(--app-nav-height,0px))] flex-col overflow-hidden p-[34px] [@media(min-width:${nearViewMinWidth()}px)]:flex-row`}>
-      {/* §11.31: the count column, and the vertical between it and the drawing — the far view's second line. */}
+      {/* §W.31: the count column, and the vertical between it and the drawing — the far view's second line. */}
       <div className={`relative shrink-0 [@media(min-width:${nearViewMinWidth()}px)]:w-[420px]`}>
         {count(true)}
         <div
@@ -289,7 +289,7 @@ export function WallStage({
   const nearView = (
     <div data-region="near" className="grid grid-cols-[420px_1fr] gap-0">
       {/*
-        §11.31's facts column. Its two horizontals exist only when the PANEL
+        §W.31's facts column. Its two horizontals exist only when the PANEL
         does — a rule under the count with nothing below it separates nothing
         — so the far view carries four lines and the landed state six. Both
         bleed across the column rather than stopping at the type's measure:
@@ -301,7 +301,7 @@ export function WallStage({
           <hr data-line="facts-count" className={`border-t ${HAIRLINE}`} style={{ margin: "18px -34px 0" }} />
         )}
         <div data-testid="panel-region" className="mt-[34px]">{panel}</div>
-        {/* §11.31: the vertical between the facts column and the drawing region, nav to foot. */}
+        {/* §W.31: the vertical between the facts column and the drawing region, nav to foot. */}
         <div
           data-line="facts-drawing"
           aria-hidden="true"
@@ -337,7 +337,7 @@ export function WallStage({
           {arrows}
         </div>
         {/*
-          §11.29's arrival, applied at PARSE time. The browser paints the
+          §W.29's arrival, applied at PARSE time. The browser paints the
           server's markup before any client script runs, so a scroll issued
           from a layout effect is always a paint late — the wall appeared at
           0,0 and visibly travelled into place. The server's svg carries real
@@ -372,12 +372,12 @@ export function WallStage({
   );
   if (far === false) return nearView;
   /*
-    Unmeasured, both views are in the document and CSS shows one (§11.26).
+    Unmeasured, both views are in the document and CSS shows one (§W.26).
     The hidden one needs nothing further: the media query hides it with
     `display: none`, which takes its contents out of the tab order and the
     accessibility tree already. An `inert` attribute was added here and
     removed — served by the SERVER it is permanent with JavaScript off, so
-    the spine link rendered unclickable, which is exactly what §11.8's
+    the spine link rendered unclickable, which is exactly what §W.8's
     no-JavaScript test protects. A state that exists only after a script
     runs is the wrong tool for a view the server can hide.
   */

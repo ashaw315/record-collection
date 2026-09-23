@@ -1,6 +1,6 @@
 /**
  * The no-cover sleeve's title: a DRAWN element, sized from its box and its
- * string (8a §11.3 as ruled). It stands in for artwork, so §4's scale does
+ * string (8a §W.3 as ruled). It stands in for artwork, so §4's scale does
  * not apply — the way the 72 derives from the year field and ornament from
  * its cell. Choosing a size at all was the defect.
  *

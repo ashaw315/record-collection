@@ -8,17 +8,17 @@ registerCleanup();
 /**
  * **§16: the count does not transfer; §3's module test does.**
  *
- * §11.31 enumerates SIX lines for the shelf, and those six name the rail, the
+ * §W.31 enumerates SIX lines for the shelf, and those six name the rail, the
  * facts column and the drawing region — regions that exist only there. Reading
  * six as a budget here would mean deleting 14 of this page's 20 rules to reach
  * a number counted on another composition. So this page states its OWN set,
- * and what §11.31 exports is three properties, which is what this spec pins:
+ * and what §W.31 exports is three properties, which is what this spec pins:
  *
  * 1. **Two weights.** 1px for every rule; 2px reserved for §3's non-type
  *    marks. On this page there is exactly one 2px edge — the journal's right
  *    edge (§3: "the only rule on the page that is not grey and the only edge
  *    that is 2px"), which must not be applied to a second cell.
- * 2. **One hairline value**, §11.27's 0.72 on §11.5's 0.925 paper.
+ * 2. **One hairline value**, §W.27's 0.72 on §W.5's 0.925 paper.
  * 3. **The bleed distinction, on §3's MODULE axis** — two things inside one
  *    module take an inset line, two modules take a bleeding one. A
  *    "marks type versus separates type" axis was tried and withdrawn (§16):
@@ -32,7 +32,7 @@ registerCleanup();
  */
 const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 
-/** §11.27's hairline, as the page must paint it. */
+/** §W.27's hairline, as the page must paint it. */
 const HAIRLINE = 'oklch(0.72 0.004 80)';
 /** §3's journal edge: the one 2px mark, in the record's derived colour or ink (§5.3). */
 const JOURNAL_EDGE_W = 2;
@@ -111,7 +111,7 @@ test('the page states its own line set: two weights, one value, §3’s module a
 
   const all = await edgesOf(page);
   /*
-    §9.3's fields and buttons are controls, not the page's rules — §11.31's
+    §9.3's fields and buttons are controls, not the page's rules — §W.31's
     weights govern RULES. And a FRAME is not a rule either: §5.3 draws a
     four-sided border at paper luminance where a cover is missing, and a box
     has no bleed or inset to assert. Both are excluded by what they ARE, not
@@ -141,10 +141,10 @@ test('the page states its own line set: two weights, one value, §3’s module a
     expect(e.w, `every other rule is 1px — ${e.tag}.${e.name}/${e.side}`).toBe(1);
   }
 
-  /* 2. One hairline value, §11.27's 0.72 on §11.5's paper. */
+  /* 2. One hairline value, §W.27's 0.72 on §W.5's paper. */
   expect(PAPER.L, 'the paper the ratio was measured on').toBe(0.925);
   for (const e of light) {
-    expect(e.colour, `§11.27's one hairline value — ${e.tag}.${e.name}/${e.side}`).toBe(HAIRLINE);
+    expect(e.colour, `§W.27's one hairline value — ${e.tag}.${e.name}/${e.side}`).toBe(HAIRLINE);
   }
 
   /* 3a. The two insets STAY inset — §3's named failure mode is extending them. */

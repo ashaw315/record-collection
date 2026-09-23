@@ -108,7 +108,7 @@ describe('the ladder (§5.5)', () => {
 
     /* Lightness steps, not hue steps — which is what keeps a near-grey ladder
        reading as one object rather than as three greys. */
-    /* Toward PAPER — the ground the app paints (§11.5) — not toward white. */
+    /* Toward PAPER — the ground the app paints (§W.5) — not toward white. */
     expect(tintL).toBeCloseTo(baseL + (PAPER.L - baseL) * 0.34, 4);
     expect(shadeL).toBeCloseTo(baseL * (1 - 0.26), 4);
   });

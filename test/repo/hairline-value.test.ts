@@ -5,10 +5,10 @@ import { oklchToHex } from '@/lib/colour/record-ladder';
 import { contrastRatio } from '@/lib/colour/record-colour';
 
 /**
- * §11.27: **the app has one hairline value, and it is §3's 0.72.**
+ * §W.27: **the app has one hairline value, and it is §3's 0.72.**
  *
  * The chrome carried two — `--border` at 0.9 and `--input` at 0.88 — both
- * chosen against a ground of 0.985 that §11.5 replaced with the drawing's
+ * chosen against a ground of 0.985 that §W.5 replaced with the drawing's
  * 0.925. Measured on the ground the app now paints they read 1.08:1 and
  * 1.15:1, which is past the threshold of visible on the wrong side: §3
  * spends its whole argument keeping a rule AT that threshold, and a hairline
@@ -28,7 +28,7 @@ function tokenOf(name: string): { L: number; C: number; h: number } {
 
 const RULE = { L: 0.72, C: 0.004, h: 80 };
 
-describe('one hairline value (§11.27)', () => {
+describe('one hairline value (§W.27)', () => {
   it('is §3’s 0.72, for both of the app’s former hairline tokens', () => {
     expect(tokenOf('border')).toEqual(RULE);
     expect(tokenOf('input')).toEqual(RULE);

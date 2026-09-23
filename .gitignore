@@ -98,8 +98,14 @@ q-probe.mjs
 # problem with an extra copy. These are read where they are and left untracked;
 # the screenshots that supersede them live in docs/record-detail/.
 #
-# The two exceptions are the wall-and-pull handoff and the build target it
-# indexes. The target's own reachability note said it seven times: the repo's
+# The exceptions are the wall-and-pull handoff and the TWO build targets it
+# indexes — the target split into the wall's (§W, §W.1–§W.37) and the record
+# screen's (§1–§10, §12–§27) on 23 Sep. All three move together or not at
+# all: the reachability clause is "reachable wherever the index is read, AND
+# AT THE SAME REVISION as the index", and a commit carrying one of the three
+# is the defect it exists to prevent. Adam's own constraint here — design
+# files untracked — is deliberately relaxed for these three, by his call;
+# NOTES records why. The target's own reachability note said it seven times: the repo's
 # build target ends at §10, so §11 onward "exists only in this file and in an
 # excerpt deferring to a section its reader cannot consult", and an excerpt
 # naming a source of truth is only sound if the source is reachable. So the
@@ -110,6 +116,7 @@ q-probe.mjs
 docs/design/*
 !docs/design/HANDOFF-wall-and-pull.md
 !docs/design/Record Detail 8a - build target.dc.html
+!docs/design/Wall and Pull - build target.dc.html
 
 # The same artefacts' STALE root copies, from before they moved into
 # docs/design/. Each root file is smaller than its docs/design counterpart, so

@@ -3,7 +3,7 @@ import { LANDED_SIZE } from './landing';
 import { OPEN_ANGLE } from './rotation';
 
 /**
- * The assembled gesture (8a §11.19, §11.21): **travel, growth and rotation on
+ * The assembled gesture (8a §W.19, §W.21): **travel, growth and rotation on
  * one span, with the finish after it, and the return the whole thing
  * reversed on one clock.**
  *
@@ -16,14 +16,14 @@ import { OPEN_ANGLE } from './rotation';
  * every point because its eases are shaped to be (gesture.test.ts asserts
  * the joint state at every frame).
  *
- * **Growth rides the rotation's window, not the travel's** (§11.25): an
+ * **Growth rides the rotation's window, not the travel's** (§W.25): an
  * orthographic projection has no size change on approach, by definition,
  * so growth is not what approach looks like — it is the record leaving the
  * projection, which is what the rotation is. Two transforms, one cause,
  * one window (`GROWTH_START`..`GROWTH_END`, the rotation's by default),
  * one fixed point, the travel underneath. **Growth and rotation share one
  * fixed point: the foot of the cover's near vertical edge**, at y + depth
- * (§11.21). The rotation already holds that edge, so its foot is a point
+ * (§W.21). The rotation already holds that edge, so its foot is a point
  * fixed by both transforms; any other origin moves a point the rotation
  * is holding still. The gesture is that corner staying put while
  * everything else leaves — with the travel, which carries the corner
@@ -35,12 +35,12 @@ import { OPEN_ANGLE } from './rotation';
  * than a third phase. It is the one number in the gesture a probe should
  * overrule, and the probe that gave 1300 could not have measured it;
  * expect it to move once the assembled gesture can be watched. Its two
- * terms (§11.17) are the projection undone on the 45° rectangle: the run
+ * terms (§W.17) are the projection undone on the 45° rectangle: the run
  * compressed by 0.8165 and the thickness sliver collapsing to zero,
  * together. Out is therefore 1600ms and the return 860 — 700 × 1600 / 1300.
  *
  * Every frame is the box rotated rigidly in three dimensions and
- * re-projected; nothing here interpolates a corner (§11.16).
+ * re-projected; nothing here interpolates a corner (§W.16).
  */
 export const SWING_MS = 1300;
 /** Chosen, not derived: the number a probe should overrule. */
@@ -49,13 +49,13 @@ export const OUT_MS = SWING_MS + FINISH_MS;
 export const RETURN_MS = (700 * OUT_MS) / SWING_MS;
 export const TRAVEL = 290;
 export const ROTATION_START = 0.42;
-/** 150 → 560 (§11.19): the landed square on the seat's face. */
+/** 150 → 560 (§W.19): the landed square on the seat's face. */
 export const GROWTH = LANDED_SIZE / DEPTH;
 /**
  * The growth's window on the swing, in k — adjustable like `FINISH_MS`, and
  * for the same reason: it is the second parameter in the gesture no still
  * can judge, since the endpoints agree under every distribution and only
- * the frames between differ (§11.25). Its default is the rotation's own
+ * the frames between differ (§W.25). Its default is the rotation's own
  * window. The tell that ruled out the travel's curve: 410px of growth
  * against 290 of travel on one ease was 1.41 at every instant, and a
  * constant ratio is two quantities sharing a curve when only one belongs
@@ -107,7 +107,7 @@ export type GestureFaces = {
   /**
    * **The rule: a moving record has three sets of bounds for three purposes,
    * and they differ for reasons that are each correct.** The faces above are
-   * DRAWN grown (§11.25). This box is what the record is SORTED on: the
+   * DRAWN grown (§W.25). This box is what the record is SORTED on: the
    * physical solid, travelled and rotated at the record's own size, axis-
    * aligned in wall space. And the plan is CLEARED against the neighbours
    * by SAT on that same physical box (rotation.ts, gesture.test.ts). The

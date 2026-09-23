@@ -17,7 +17,7 @@ import { COLLECTION_SPINES } from '../../../test/fixtures/collection-spines';
  * two records and sat on the line on a third; at the band it clears everywhere.
  *
  * The collisions stay, under their own heading: they are the evidence for
- * §11.1's open work and nothing the ladder does repairs them.
+ * §W.1's open work and nothing the ladder does repairs them.
  */
 
 /** The record page's ink — `grid-type.ts` — not 5b's. */
@@ -67,7 +67,7 @@ describe('at the clamp, ink on the field clears 4.5:1 — the 72 never reaches f
   });
 });
 
-describe('the two collisions at raw values — §11.1’s open difference problem', () => {
+describe('the two collisions at raw values — §W.1’s open difference problem', () => {
   /**
    * A73 retired the lit medium on three records whose derived colours collided
    * with the fallback and the shelf plane: MGMT at 1.088, Discharge at 1.134,
