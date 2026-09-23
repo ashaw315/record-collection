@@ -121,15 +121,31 @@ export const CHIP_HEIGHT = 30;
 export const TYPED_SIZE = 16;
 export const TYPED_LEADING = 1.9;
 
-/** The eight sections §9 draws, in the order they render. */
+/**
+ * The eight sections §9 draws, in the order they render.
+ *
+ * **§26 reorders them, and it is a page change rather than a layout one.**
+ * Its five rows are Pressing detail · Acquisition / Tags / Market ·
+ * Price history · Images / About · Journal, so Market moves up beside
+ * Acquisition and Tags, and Images and About move below Price history.
+ * The build's earlier order put Images and About before Market and Price
+ * history, on §10b's reading that the images describe the object, the
+ * snippet the music and the journal living with it — outward-in.
+ *
+ * §26 supersedes that: the three tight columns of row 2 are the facts a
+ * record carries, the full-width strip is its history, and the two halves
+ * are what was made of it. §26's groupings list and its drawing agree, so
+ * this is not the drawing-governs question §28 settles — both say the same
+ * thing, and the build had neither.
+ */
 export const SECTIONS = [
   'pressing-detail',
   'acquisition',
   'tags',
-  'images',
-  'snippet',
   'market',
   'price-history',
+  'images',
+  'snippet',
   'journal',
 ] as const;
 

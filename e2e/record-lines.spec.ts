@@ -55,6 +55,7 @@ type Edge = {
   width: number;
   height: number;
   parentWidth: number;
+  rowItem: boolean;
   tag: string;
   control: boolean;
 };
@@ -75,6 +76,8 @@ async function edgesOf(page: Page): Promise<Edge[]> {
         if (w > 0 && style !== 'none' && style !== 'hidden') {
           out.push({
             name: el.getAttribute('data-line') ?? el.getAttribute('data-block') ?? el.getAttribute('data-testid') ?? '',
+            /* §26's row items: a section or an air column, each carrying its own top rule. */
+            rowItem: el.hasAttribute('data-section') || el.getAttribute('data-cell') === 'air',
             side,
             w,
             colour: cs.getPropertyValue(`border-${side.toLowerCase()}-color`),
@@ -147,8 +150,20 @@ test('the page states its own line set: two weights, one value, §3’s module a
     expect(e.colour, `§W.27's one hairline value — ${e.tag}.${e.name}/${e.side}`).toBe(HAIRLINE);
   }
 
-  /* 3a. The two insets STAY inset — §3's named failure mode is extending them. */
-  const insets = light.filter((e) => e.side === 'Top' && e.width > 0 && e.width < e.parentWidth - 1);
+  /*
+    3a. The two insets STAY inset — §3's named failure mode is extending them.
+
+    **An inset is a rule narrower than the box it is drawn ON**, not one
+    narrower than the page. §26 gives the lower region rows of varied spans,
+    so each section's own top rule is 1080 or 720 or 600 or 360 wide — each
+    bleeding fully across the section that draws it, which is §3's full-bleed
+    separator doing its job one row at a time. Measuring against the viewport
+    counted all four as insets and reported the region's rows as a violation
+    of a rule about the identity block.
+  */
+  const insets = light.filter(
+    (e) => e.side === 'Top' && e.width > 0 && e.width < e.parentWidth - 1 && !e.rowItem,
+  );
   const widths = insets.map((e) => Math.round(e.width)).sort((a, b) => b - a);
   expect(
     widths,
@@ -159,10 +174,18 @@ test('the page states its own line set: two weights, one value, §3’s module a
   const viewport = page.viewportSize()?.width ?? 0;
   const bleeding = light.filter((e) => !insets.includes(e) && (e.side === 'Top' || e.side === 'Bottom'));
   for (const e of bleeding) {
+    /*
+      **A section's rule bleeds across the SECTION**, which §26 makes one row
+      item rather than the whole page. The rules of a row line up into one
+      line because the items share a top edge, and that is asserted in
+      `extended-grid.spec.ts` where the rows are; here the claim is only that
+      no rule is sized to something it is not drawn on.
+    */
+    const container = e.rowItem ? e.width : e.parentWidth;
     expect(
       Math.round(e.width),
       `a bleeding rule spans its own container — ${e.tag}.${e.name}/${e.side}`,
-    ).toBe(Math.round(e.parentWidth));
+    ).toBe(Math.round(container));
     expect(e.width, 'and is never sized to the viewport by accident').toBeLessThanOrEqual(viewport);
   }
 });

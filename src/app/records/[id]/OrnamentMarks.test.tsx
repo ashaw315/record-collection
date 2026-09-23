@@ -44,12 +44,11 @@ describe('a figure’s faces are the ladder’s (§25, §26)', () => {
 });
 
 describe('a flat is one fill at tint or base, never shade (§25)', () => {
-  it('draws the quarter-disc at BASE, r 150, one rounded shape and no faces', () => {
+  it('draws the quarter-disc at BASE, one rounded shape and no faces', () => {
     const html = renderToStaticMarkup(<Flat ladder={ladder} flat={FLATS.right} />);
     expect(html).not.toContain('<polygon');
     expect(html).toContain(`background:${ladder.base}`);
     expect(html).toContain('border-radius:50%');
-    expect(html).toContain('width:300px');
     expect(html).toContain('data-flat="quarterDisc"');
   });
 
@@ -59,6 +58,42 @@ describe('a flat is one fill at tint or base, never shade (§25)', () => {
     expect(html).toContain(`background:${ladder.tint}`);
     expect(html).toMatch(/clip-path:polygon\(/);
     expect(html).toContain('data-flat="triangle"');
+  });
+
+  /**
+   * **§29: a flat's size follows its host, and no section fixes it at 150.**
+   *
+   * The build read §25's specimen caption — "r 150 · more than a third
+   * outside" — as the spec. It is one drawn instance on a sheet. §29 rules
+   * that a flat takes §9.2's gate measured on its host at render: visible
+   * part at most two-thirds of the host cell's HEIGHT and at most a quarter
+   * of the section's WIDTH, whichever is smaller. On the record with no
+   * About snippet the host is 104px, so the visible radius is 69, not 150.
+   *
+   * Sized in CSS rather than in JavaScript, so it holds on the first paint
+   * and at every width without a measurement pass — the same reason §9.2's
+   * solids are sized by percentage.
+   */
+  it('sizes the quarter-disc against its host, not at the specimen’s 150 (§29)', () => {
+    const html = renderToStaticMarkup(<Flat ladder={ladder} flat={FLATS.right} />);
+    expect(html, 'no drawn-instance size survives').not.toMatch(/width:300px|width:150px/);
+    /*
+      §29's two bounds sit on their own axes: the height bound sizes the disc
+      and the width bound clamps it, so the smaller wins. Asserted as the two
+      maxima rather than as a `min()`, because a percentage inside `min()`
+      resolves against one axis and drops the other — measured at 180 where
+      §29's bound was 161.
+    */
+    expect(html, 'the height bound, doubled for the full disc').toContain('max-height:calc(66.66666666666666% * 2)');
+    expect(html, 'the width bound clamps it').toContain('max-width:calc(25% * 2)');
+    expect(html, 'and it stays a circle whichever binds').toContain('aspect-ratio:1 / 1');
+  });
+
+  it('sizes the triangle against its host too, by the same rule', () => {
+    const html = renderToStaticMarkup(<Flat ladder={ladder} flat={FLATS.left} />);
+    expect(html, 'no drawn-instance size survives').not.toMatch(/width:250px|height:190px/);
+    expect(html).toContain('max-height:66.66666666666666%');
+    expect(html).toContain('max-width:25%');
   });
 
   it('never paints shade on a flat', () => {

@@ -1,12 +1,12 @@
 import type { RecordLadder } from '@/lib/colour/record-ladder';
 import { LABEL } from './grid-type';
 import { Figure, Flat } from './OrnamentMarks';
-import { FLATS, figureAt } from './ornament';
+import { FLATS, figureAt, type Figure as FigureSpec } from './ornament';
+import { REGION_ROWS, airPlacement, airRow, placementOf, rowOf } from './region-rows';
 import {
   CELL_PADDING,
   CONTENT_SPLITS,
   GRID_TEMPLATE,
-  LABEL_SPAN,
   MARK_HEIGHT,
   MARK_WIDTH,
   SECTION_RULE,
@@ -16,36 +16,27 @@ import {
 } from './extended-grid';
 
 /**
- * §9.1's section — twelve columns, content-derived rows.
+ * §26's section — an ITEM in one of the region's five rows.
  *
- * **The same `repeat(12, 1fr)` as §2.1.** A 216px rail preceded this and was
- * the wrong repair: the argument for it was that the twelve columns exist for a
- * budget that does not apply below the fold, but that is an argument against
- * the fixed BANDS rather than against the columns. Bands are height, columns
- * are alignment; dropping the budget only requires dropping the height.
+ * **§9.1 made every section its own twelve-column grid with the label in a
+ * two-column span.** §26 gives the region varied spans — 7 + 5, 4 / 4 / 4,
+ * 12, 6 / 6, 3 + 9 — so a section is four or six or twelve columns wide, and
+ * a two-column label inside a four-column section would be half of it. §26's
+ * drawing puts the label at each section's top-left with the content
+ * beneath, and that is what this builds.
  *
- * **Height is derived at every level and nothing is reserved.** A row is as
- * tall as its tallest cell, a section as tall as its row, the region as tall as
- * its sections — a form that grows pushes everything below it down.
- */
-/**
- * **The stacking layer, which is structural rather than per-element.**
+ * **What that keeps of §9.1's argument.** The rail existed so a reader
+ * scrolling past sections of wildly different heights sees one edge that
+ * never moves. Each section's label still starts at its own left edge, and
+ * the rows' spans are column multiples, so the edges a reader sees are still
+ * column edges — one per row rather than one per page, which is what having
+ * rows means.
  *
- * Every §9 cell gets these three together, and ornament sits at `z-index: -1`
- * inside it. Nothing else in the region carries a z-index at all: controls,
- * ruled fields, chips, uploaders, textareas and type runs are above ornament
- * because they are IN FLOW, not because each was named.
- *
- * The first implementation of this lifted eleven elements by matching control
- * heights and missed the textarea, the uploader and the three tag chips — a
- * list of things to raise is a list someone has to keep complete, and the frame
- * failed the same way first, as three patches. All eleven came out when it went
- * structural. **Do not add per-element z-index.**
- *
- * - `position: relative` gives the ornament something to position against.
- * - `isolation: isolate` makes the cell a stacking context, so `-1` cannot
- *   escape behind the section's own background or the page's.
- * - `overflow: hidden` keeps the bleed inside the cell that owns it.
+ * **The section is the positioned, clipping box, and that is load-bearing.**
+ * §25 sizes a figure at 0.855 of the SECTION's height; a percentage resolves
+ * against the positioned ancestor, so the section must be it. §26: "each
+ * figure's clip is its own cell, so it can never enter another", and "a
+ * figure may be cut by at most one of its cell's edges — its foot".
  */
 const CELL_LAYER = {
   position: 'relative',
@@ -59,153 +50,151 @@ export function Section({
   base,
   shape,
   children,
+  span,
+  start,
+  endsRow,
   ladder = null,
 }: {
   name: SectionName;
   title: string;
   /** §5.5's base step, or null when the record has no cover to derive from. */
   base: string | null;
-  /**
-   * How the ten columns right of the label divide. The section picks by the
-   * SHAPE of what it holds, not by what it is called — see `CONTENT_SPLITS`.
-   */
+  /** How the section divides internally — see `CONTENT_SPLITS`. */
   shape: ContentShape;
   /** One node per span in the chosen split. */
   children: React.ReactNode;
+  /**
+   * Columns this section takes in its row, and the column it starts at
+   * (§26, §28). **Both default to what the region's rows say for this
+   * section's NAME**, so no call site states a span: `region-rows.ts` is the
+   * only place §28's list lives. Passing them is for the component test,
+   * which renders a section outside any region.
+   */
+  span?: number;
+  start?: number;
+  /** False when another item follows in the row, which is what draws the rule. */
+  endsRow?: boolean;
   /** The record's ladder, for §25's figures and §26's flats. Null when there is no cover. */
   ladder?: RecordLadder | null;
 }) {
   const split = CONTENT_SPLITS[shape];
+  /* Step 18b builds the 12-column region; step 20 turns §28's other widths on. */
+  const placed = placementOf(1440, name);
+  const column = start ?? placed.start;
+  const width = span ?? placed.span;
+  const last = endsRow ?? placed.endsRow;
 
   /**
-   * **One cell per child, not one per span.**
-   *
-   * A section declaring `pair` and passing a single child left the second cell
-   * empty — and an empty cell is not harmless: it renders as a real box beside
-   * the content, takes its columns, and at 390px sat on top of the control next
-   * to it and swallowed clicks. `record-detail.spec.ts` caught that as a 30s
-   * timeout on a Delete button that was enabled, visible and motionless.
-   *
-   * So the unused spans collapse into the last cell that has content. The
-   * split still governs where the internal edge falls when a section supplies
-   * both halves; it no longer invents a box when it does not.
+   * **One cell per child, not one per span.** A section declaring `pair` and
+   * passing a single child left the second cell empty — and an empty cell is
+   * not harmless: it renders as a real box beside the content, takes its
+   * columns, and at 390px sat on top of the control next to it and swallowed
+   * clicks. So unused spans collapse into the last cell that has content.
    */
   const given = (Array.isArray(children) ? children : [children]).filter(
     (child) => child !== null && child !== undefined && child !== false,
   );
   const cells =
     given.length >= split.length
-      ? split.map((span, index) => ({ span, child: given[index] }))
+      ? split.map((weight, index) => ({ weight, child: given[index] }))
       : given.map((child, index) => ({
-          span:
+          weight:
             index === given.length - 1
-              ? split.slice(index).reduce((sum, span) => sum + span, 0)
+              ? split.slice(index).reduce((sum, weight) => sum + weight, 0)
               : split[index],
           child,
         }));
+
+  /* §26's strip figure, and the flat that sits beside this section. */
+  const figure = figureAt(name, 'strip');
+  const flat = FLATS.right.beside === name ? FLATS.right : null;
 
   return (
     <section
       id={name}
       data-section={name}
       data-shape={shape}
-      /*
-        **The boundary bleeds; cell padding holds content at 34.** §3 makes the
-        distinction load-bearing — full-bleed separates modules, inset separates
-        things inside one — and each section is a module. So the rule is on the
-        section element, which spans the composition, rather than on the grid.
-      */
-      style={{ borderTop: `1px solid ${SECTION_RULE}` }}
+      style={{
+        gridColumn: `${column} / span ${width}`,
+        /* Explicit: an item with only a column is auto-placed into the first row with space. */
+        gridRow: rowOf(1440, name),
+        /*
+          **The row's rule is the section's top.** §3 makes full-bleed the
+          separator between modules, and each row of sections reads as one
+          band of the document, so every item carries the rule and the row's
+          tops line up across its items.
+        */
+        borderTop: `1px solid ${SECTION_RULE}`,
+        borderRight: last ? undefined : `1px solid ${SECTION_RULE}`,
+        /*
+          **A grid item's automatic minimum size is its content**, so a
+          section whose content is wider than its span would grow past it
+          rather than letting its own content wrap — the same reason the
+          content cells one level down carry it.
+
+          It is NOT what caused About to paint over Images: that was the fork
+          stylesheet forcing `grid-column` without `grid-row`, so both row-4
+          sections landed on one track. This was added on a wrong diagnosis
+          and kept on its own merits, which the test below states.
+        */
+        minWidth: 0,
+        ...CELL_LAYER,
+      }}
     >
       {/*
-        `data-band` so §18's single-column fork reaches this grid too: the
-        region is on the same twelve columns as the bands above it, so it
-        collapses with them rather than needing a second rule that could drift.
+        §26's two placements that belong to a SECTION rather than to air: the
+        solo in Price history's strip, and the base quarter-disc beside About
+        this record. Both sit at `z-index: -1` inside the section's own
+        stacking context, so every piece of content is above them by being in
+        flow, and neither can leave this section.
       */}
-      <div data-band="section" className="grid" style={{ gridTemplateColumns: GRID_TEMPLATE, gap: 0 }}>
-        {/*
-          **The label is a span, not a structure**: the first two columns. Its x
-          is a column edge rather than an invented one, so it lines up with the
-          identity cell above it.
-        */}
-        <div
-          data-cell="label"
-          style={{
-            gridColumn: `span ${LABEL_SPAN}`,
-            padding: CELL_PADDING,
-            borderRight: `1px solid ${SECTION_RULE}`,
-            ...CELL_LAYER,
-          }}
-        >
-          <div className={LABEL}>{title}</div>
+      {ladder !== null && figure !== null && <Figure ladder={ladder} figure={figure} />}
+      {ladder !== null && flat !== null && <Flat ladder={ladder} flat={flat} />}
 
-          {/*
-            §9.3's bar, under the label inside the span. A mark at the label
-            column's x sits on the one line the reader has already learned.
-
-            **Marked on the schema, not the record**: a bar that appeared when a
-            record had images and vanished when it did not would make the mark
-            encode that fact. A control-only section keeps its bar — it says the
-            record's colour reaches that place, not that something is in it.
-
-            That Images renders control-only on most records is TODAY'S DATA,
-            not a rule: the collection is unphotographed beyond its covers, and
-            the schema carries four image types. When a gatefold is photographed
-            the section stops being control-only for that record, and nothing
-            here should have assumed otherwise.
-          */}
-          {carriesMark(name) && base !== null && (
-            <div
-              data-mark="section-bar"
-              className="mt-[10px]"
-              style={{ width: MARK_WIDTH, height: MARK_HEIGHT, background: base }}
-            />
-          )}
-        </div>
+      {/*
+        **The label above the content**, at the section's own left edge. §9.3's
+        bar sits under it, where a mark at the label's x sits on the line the
+        reader has already learned.
+      */}
+      <div data-cell="label" style={{ padding: `${CELL_PADDING}px ${CELL_PADDING}px 0` }}>
+        <div className={LABEL}>{title}</div>
 
         {/*
-          The content cells. **A vertical rule on the right of every cell but
-          the last**, exactly as §2.1 draws them — the thing a rail structurally
-          could not do, because a rail has one edge and a grid has as many as it
-          has cells.
+          **Marked on the schema, not the record**: a bar that appeared when a
+          record had images and vanished when it did not would make the mark
+          encode that fact. A control-only section keeps its bar — it says the
+          record's colour reaches that place, not that something is in it.
         */}
-        {cells.map(({ span, child }, index) => (
+        {carriesMark(name) && base !== null && (
+          <div
+            data-mark="section-bar"
+            className="mt-[10px]"
+            style={{ width: MARK_WIDTH, height: MARK_HEIGHT, background: base }}
+          />
+        )}
+      </div>
+
+      {/*
+        The content cells, dividing the section's own width by the split's
+        weights. Fractions rather than columns: the section's span is already
+        a column multiple, and a split of a four-column section into 5 + 5 of
+        the page's columns has no meaning.
+      */}
+      <div
+        className="grid"
+        style={{ gridTemplateColumns: cells.map((cell) => `${cell.weight}fr`).join(' '), gap: 0 }}
+      >
+        {cells.map(({ child }, index) => (
           <div
             key={index}
             data-cell={`content-${index}`}
             className="min-w-0"
             style={{
-              gridColumn: `span ${span}`,
               padding: CELL_PADDING,
               borderRight:
                 index === cells.length - 1 ? undefined : `1px solid ${SECTION_RULE}`,
-              ...CELL_LAYER,
             }}
           >
-            {/*
-              §26's placement, in the section's LAST content cell — the one
-              with air at its right. A figure keyed to `strip` is the solo in
-              Price history; `air` is the pair in Pressing detail's air column
-              and has no host until §26's rows exist (step 18). The flat
-              beside About this record is the base quarter-disc on the right
-              page edge; the tint triangle on the left lives in the last row's
-              air column, likewise §26's.
-
-              Each carries `z-index: -1` and nothing else carries anything:
-              the cell isolates and clips, so the figure sits at the bottom of
-              that stacking context, every piece of content is above it by
-              being in flow, and its clip is its own cell.
-
-              §9.4's full tint fill of the last section is gone: §26's flats
-              are the region's flat colour, and a third flat shape reads as a
-              layout with colour blocks rather than a page with marks (§13).
-            */}
-            {ladder !== null && index === cells.length - 1 && figureAt(name, 'strip') !== null && (
-              <Figure ladder={ladder} figure={figureAt(name, 'strip')!} />
-            )}
-            {ladder !== null && index === cells.length - 1 && FLATS.right.beside === name && (
-              <Flat ladder={ladder} flat={FLATS.right} />
-            )}
             {child}
           </div>
         ))}
@@ -215,12 +204,87 @@ export function Section({
 }
 
 /**
- * The region the sections stack in.
+ * The region the rows stack in.
  *
  * **No max-width and no centring of its own.** The section rules bleed to the
- * composition's edge — the viewport up to the 1728 cap, the capped container
- * beyond — and the frame above already establishes that measure.
+ * composition's edge, and the frame above already establishes that measure.
  */
-export function ExtendedGrid({ children }: { children: React.ReactNode }) {
-  return <div data-region="extended-grid">{children}</div>;
+export function ExtendedGrid({ children, ladder = null }: { children: React.ReactNode; ladder?: RecordLadder | null }) {
+  return (
+    <div
+      data-region="extended-grid"
+      className="grid"
+      style={{ gridTemplateColumns: GRID_TEMPLATE, gap: 0 }}
+    >
+      {children}
+      {/*
+        **§26's air columns, rendered by the region rather than by a
+        section.** Air belongs to a ROW — "the air columns are where the
+        figures and flats go, so the rhythm makes the air rather than finding
+        it" — and no section owns its row. Rendered after the sections and
+        placed explicitly, so source order does not decide where they land.
+
+        Row 1's air carries §25's pair; row 5's carries the tint triangle,
+        and its span is what makes the left page edge (§26: "the left page
+        edge is made, not found").
+      */}
+      {REGION_ROWS.map((row, index) => {
+        const air = airPlacement(1440, index);
+        if (air === null) return null;
+        return (
+          <ExtendedGrid.Air
+            key={`air-${index}`}
+            start={air.start}
+            span={air.span}
+            row={airRow(1440, index)}
+            ladder={ladder}
+            figure={figureAt(row.sections[0], 'air')}
+            flat={FLATS.left.beside === row.sections[0] ? FLATS.left : null}
+          />
+        );
+      })}
+    </div>
+  );
 }
+
+/**
+ * §26's air column — "the air columns are where the figures and flats go, so
+ * the rhythm makes the air rather than finding it".
+ *
+ * It carries no label, no rule and no content: air is not a cell with empty
+ * content, which §9.1 forbids as reserved space, but the shape of the row
+ * itself. It renders even with nothing in it, because the row's spans are
+ * what make the left page edge in the last row (§26).
+ */
+ExtendedGrid.Air = function Air({
+  span,
+  start,
+  row,
+  ladder,
+  figure = null,
+  flat = null,
+}: {
+  span: number;
+  start: number;
+  /** The grid row it shares with the sections it sits beside. */
+  row?: number;
+  ladder: RecordLadder | null;
+  figure?: FigureSpec | null;
+  flat?: (typeof FLATS)[keyof typeof FLATS] | null;
+}) {
+  return (
+    <div
+      data-cell="air"
+      aria-hidden="true"
+      style={{
+        gridColumn: `${start} / span ${span}`,
+        gridRow: row,
+        borderTop: `1px solid ${SECTION_RULE}`,
+        ...CELL_LAYER,
+      }}
+    >
+      {ladder !== null && figure !== null && <Figure ladder={ladder} figure={figure} />}
+      {ladder !== null && flat !== null && <Flat ladder={ladder} flat={flat} />}
+    </div>
+  );
+};

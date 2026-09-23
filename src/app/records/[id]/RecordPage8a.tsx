@@ -225,6 +225,28 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
           [data-band] { grid-template-columns: 1fr !important; height: auto !important; }
           [data-band] > [data-cell] { grid-column: 1 / -1 !important; }
           [data-band="section"] > * { grid-column: 1 / -1 !important; }
+          /*
+            §26's region places every section explicitly. Below the fork the
+            twelve columns become one, so each section must take that column
+            and the AIR columns must go: §28 rules that below 960 the lower
+            region is a document, and at 4 columns no air reaches the 240 a
+            figure needs. Step 20 builds §28's own groupings at 8 and 4; this
+            keeps the single-column fork honest until then.
+          */
+          [data-region="extended-grid"] { grid-template-columns: 1fr !important; }
+          /*
+            grid-row: auto as well as the column, and the row is the half that
+            bites. §26 places every section on an explicit row, so forcing
+            only the column left the two sections of row 4 — Images and About
+            — on the same track AND the same column: two boxes at exactly the
+            same rectangle, stacked. Paint order is DOM order, so About
+            covered Images entirely and took the clicks meant for its delete
+            button. The images spec caught it as a 30s timeout on a button
+            Playwright could see was visible, enabled and stable; the page
+            looked right because About drew over a section nobody saw.
+          */
+          [data-region="extended-grid"] > * { grid-column: 1 / -1 !important; grid-row: auto !important; }
+          [data-region="extended-grid"] > [data-cell="air"] { display: none; }
           [data-cell="still"], [data-cell="sleeve"] { display: none; }
           [data-track="content"] { width: min(${CONTENT_MEASURE}px, 100vw - ${CELL_PADDING * 2}px); }
         }

@@ -78,23 +78,79 @@ export function Figure({ ladder, figure }: { ladder: RecordLadder; figure: Figur
   );
 }
 
-/** The quarter-disc's radius: §25's "r 150 · more than a third outside, masked by the page edge". */
-export const QUARTER_DISC_RADIUS = 150;
-/** The triangle as §26 draws it in the last row's air: 250 across the foot, 190 up the page edge. */
-export const TRIANGLE = { width: 250, height: 190 } as const;
+/**
+ * §29: **a flat's size follows its host, and no section fixes it at 150.**
+ *
+ * The build had 150 from §25's specimen caption — "r 150 · more than a third
+ * outside, masked by the page edge" — which is one drawn instance on a sheet
+ * and never a rule. §29 rules that a flat takes §9.2's gate measured on its
+ * host at render: its visible part is at most two-thirds of the host cell's
+ * HEIGHT and at most a quarter of the section's WIDTH, whichever is smaller.
+ * On the record with no About snippet the host is 104px, so the visible
+ * radius is 69 rather than 150.
+ *
+ * §29 also names the general form, since the quarter-disc is the first
+ * instance and not the last: any ornament with a fixed size in a cell whose
+ * height depends on its content will outgrow that cell on some record. So
+ * every ornament here is sized against its host, and a size on a specimen
+ * sheet is a drawn instance.
+ *
+ * **In CSS, not JavaScript.** `min(66.7%, 25%)` resolves the two bounds
+ * against the host's height and width respectively, at first paint and at
+ * every width, with no measurement pass — the same reason §9.2's solids are
+ * sized by percentage. A layout effect would draw the wrong size once per
+ * render and correct it, which on this page is a visible flash.
+ */
+export const VISIBLE_OF_HOST_HEIGHT = 2 / 3;
+export const VISIBLE_OF_SECTION_WIDTH = 1 / 4;
+
+/**
+ * The visible extent of a flat, as an aspect-locked square bounded on both
+ * axes.
+ *
+ * **§29's two bounds are on different axes, and CSS resolves a percentage
+ * against one.** `min(66.7%, 25%)` in `width` compares two fractions of the
+ * WIDTH and silently drops the height bound: measured, a 242px host in a
+ * 720px section gave 180 (a quarter of the width) where §29's smaller bound
+ * is 161 (two-thirds of the height).
+ *
+ * **`container-type: size` is not the answer, and that was tried.** It
+ * removes a box's contents from its own height, so every section collapsed
+ * to 1px and the figures with them — the exact failure §9.2 recorded when it
+ * tried the same thing on a content-derived cell. A row item's height comes
+ * from its content like any other box.
+ *
+ * So the bounds are applied as what they are: `max-height` in the height
+ * term, `max-width` in the width term, on a square whose height drives its
+ * width through `aspect-ratio`. The height bound sets the size, the width
+ * bound clamps it, and the smaller wins without either being expressed as a
+ * fraction of the wrong axis.
+ */
+const VISIBLE_HEIGHT = `${VISIBLE_OF_HOST_HEIGHT * 100}%`;
+const VISIBLE_WIDTH = `${VISIBLE_OF_SECTION_WIDTH * 100}%`;
 
 /**
  * §26's two flats — one fill each, no faces, on opposite page edges.
  *
- * The quarter-disc is a full disc centred on its cell's bottom-right corner,
- * so the cell's clip shows one quadrant and the page edge masks three: that
- * is how "more than a third outside" is made rather than drawn. The triangle
- * stands on the foot with its vertical edge on the page's left edge.
+ * The quarter-disc is a full disc whose centre sits on its host's
+ * bottom-right corner, so the host's clip shows one quadrant and the page
+ * edge masks the rest: that is how "more than a third outside" is made
+ * rather than drawn. The triangle stands on the foot with its vertical edge
+ * on the page's left edge.
+ *
+ * **Neither bleeds at a cell edge, and §29 keeps that reasoning.** A cell
+ * edge has the next section behind it, so a flat crossing it lies over that
+ * section or over one of the structural rules, which is ornament overriding
+ * structure. A page edge has nothing behind it.
  */
 export function Flat({ ladder, flat }: { ladder: RecordLadder; flat: (typeof FLATS)[keyof typeof FLATS] }) {
   const fill = flat.step === 'base' ? ladder.base : ladder.tint;
+
   if (flat.shape === 'quarterDisc') {
-    const size = QUARTER_DISC_RADIUS * 2;
+    /*
+      The disc is twice the visible radius, centred on the corner: half of it
+      lies outside on each axis, so exactly one quadrant shows.
+    */
     return (
       <div
         data-ornament="flat"
@@ -102,10 +158,20 @@ export function Flat({ ladder, flat }: { ladder: RecordLadder; flat: (typeof FLA
         aria-hidden="true"
         className="pointer-events-none absolute"
         style={{
-          width: size,
-          height: size,
-          right: -QUARTER_DISC_RADIUS,
-          bottom: -QUARTER_DISC_RADIUS,
+          /*
+            Twice the visible radius, centred on the corner: half lies outside
+            on each axis, so exactly one quadrant shows. The bounds are
+            doubled with it — `maxHeight` is §29's height bound, `maxWidth`
+            its width bound, and `aspectRatio` keeps it a circle whichever
+            binds.
+          */
+          height: `calc(${VISIBLE_HEIGHT} * 2)`,
+          maxHeight: `calc(${VISIBLE_HEIGHT} * 2)`,
+          maxWidth: `calc(${VISIBLE_WIDTH} * 2)`,
+          aspectRatio: '1 / 1',
+          right: 0,
+          bottom: 0,
+          transform: 'translate(50%, 50%)',
           borderRadius: '50%',
           background: fill,
           zIndex: -1,
@@ -113,6 +179,7 @@ export function Flat({ ladder, flat }: { ladder: RecordLadder; flat: (typeof FLA
       />
     );
   }
+
   return (
     <div
       data-ornament="flat"
@@ -120,8 +187,10 @@ export function Flat({ ladder, flat }: { ladder: RecordLadder; flat: (typeof FLA
       aria-hidden="true"
       className="pointer-events-none absolute"
       style={{
-        width: TRIANGLE.width,
-        height: TRIANGLE.height,
+        height: VISIBLE_HEIGHT,
+        maxHeight: VISIBLE_HEIGHT,
+        maxWidth: VISIBLE_WIDTH,
+        aspectRatio: '1 / 1',
         left: 0,
         bottom: 0,
         clipPath: 'polygon(0 100%, 0 0, 100% 100%)',

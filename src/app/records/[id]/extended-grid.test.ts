@@ -318,16 +318,24 @@ describe("§9.3's bar", () => {
 });
 
 describe('the eight sections', () => {
-  it('names them in render order', () => {
+  it('names them in §26’s render order — the facts, the history, then what was made of it', () => {
+    /*
+      **Reordered by §26, whose rows put Market in the second and Images and
+      About in the fourth.** The previous order — Images and About before
+      Market and Price history — was §10b's outward-in reading: the images
+      describe the object, the snippet the music, the journal living with
+      it. §26's rows supersede it, and its groupings list and its drawing
+      agree, so there was no drawing-governs question to settle.
+    */
     expect(SECTIONS).toHaveLength(8);
     expect([...SECTIONS]).toEqual([
       'pressing-detail',
       'acquisition',
       'tags',
-      'images',
-      'snippet',
       'market',
       'price-history',
+      'images',
+      'snippet',
       'journal',
     ]);
   });

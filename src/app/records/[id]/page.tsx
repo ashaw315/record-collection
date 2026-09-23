@@ -5,6 +5,7 @@ import { DeleteRecord } from './DeleteRecord';
 import { ImageGallery } from './ImageGallery';
 import { MarketPanel } from '@/app/market/MarketPanel';
 import { PriceHistory } from './PriceHistory';
+import { ExtendedGrid } from './Section';
 import { SnippetPanel } from './SnippetPanel';
 import { isAnthropicConfigured } from '@/lib/llm/client';
 import { RecordJournal } from './RecordJournal';
@@ -229,22 +230,6 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
               still need a reading width. The split lives inside it while the
               conversion is partway done.
             */}
-            <RecordDetail record={record} base={ladderBase} ladder={ladder} />
-
-            {/*
-              **No measure wrapper: §9.1 replaced it.** The rail is what holds
-              the region together, and a max-width here would inset the section
-              rules — making the region's only structural element the wrong kind
-              of edge by §3's vocabulary. The old `max-w-3xl` went with the last
-              section that needed it.
-            */}
-
-            {/*
-              §10's "images gallery". Rendered here rather than inside
-              RecordDetail because it is interactive — uploads and deletes make
-              it a client component, and RecordDetail is a server component that
-              formats already-fetched facts.
-            */}
             {/*
               Said plainly, and only on a genuine failure.
               
@@ -283,98 +268,128 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
               </p>
             )}
 
-            <ImageGallery recordId={id} images={record.images} base={ladderBase} />
+            {/*
+              **§26’s five rows.** The region is one twelve-column grid and
+              every section is placed into it BY NAME (`region-rows.ts`), so
+              source order here is the reading order while the spans are
+              §28’s list, stated in one place. The air columns belong to rows
+              rather than to sections, so `ExtendedGrid` renders its own.
 
-            {/*
-              §10b's snippet. Between the gallery and the journal deliberately:
-              the images describe the object, the snippet describes the MUSIC,
-              and the journal describes living with it — outward-in.
+              §26 also reorders the sections: Market joins Acquisition and
+              Tags in row 2, and Images and About drop below Price history.
+              The previous order was §10b’s outward-in reading — the images
+              describe the object, the snippet the music, the journal living
+              with it — which §26’s rows supersede.
             */}
-            <SnippetPanel
-              recordId={id}
-              snippet={record.snippet}
-              snippetEditedAt={record.snippetEditedAt}
-              configured={isAnthropicConfigured()}
-              base={ladderBase}
-              ladder={ladder}
-            />
+            <ExtendedGrid ladder={ladder}>
+              <RecordDetail record={record} base={ladderBase} ladder={ladder} />
 
-            {/*
-              §10's journal. After the gallery because the images describe the
-              object and the journal describes living with it.
-            */}
-            {/*
-              Before the journal: the sparkline is about the object's value,
-              which sits with the other facts, while the journal is about
-              living with it.
-            */}
-            {/*
-              §10a's third placement: "Has this appreciated since I bought it?"
-              — the market beside what was PAID, which sits in Acquisition above.
-              Auto-loaded because this is one record the user already owns, not
-              a list.
-            */}
-            {/*
-              **The market section, which never got the primitive.** It is
-              `pair` by §9.1's shapes — a figure and the action that refreshes
-              it — and unmarked by §9.3, because the frame shows the median in
-              full and this only refreshes it.
+              {/*
+                **No measure wrapper: §9.1 replaced it.** The rail is what holds
+                the region together, and a max-width here would inset the section
+                rules — making the region's only structural element the wrong kind
+                of edge by §3's vocabulary. The old `max-w-3xl` went with the last
+                section that needed it.
+              */}
 
-              Wrapped here rather than inside `MarketPanel`: that component is
-              shared with `/want-list`, where a row is not a §9 section and has
-              no grid to sit on. `labelled={false}` hands the heading to the
-              section's label span instead of drawing a second one.
-            */}
-            {record.pressing?.discogsReleaseId != null && (
-              <Section
-                name="market"
-                title="What it goes for now"
+              {/*
+                §10's "images gallery". Rendered here rather than inside
+                RecordDetail because it is interactive — uploads and deletes make
+                it a client component, and RecordDetail is a server component that
+                formats already-fetched facts.
+              */}
+
+              {/*
+                §10's journal. After the gallery because the images describe the
+                object and the journal describes living with it.
+              */}
+              {/*
+                Before the journal: the sparkline is about the object's value,
+                which sits with the other facts, while the journal is about
+                living with it.
+              */}
+              {/*
+                §10a's third placement: "Has this appreciated since I bought it?"
+                — the market beside what was PAID, which sits in Acquisition above.
+                Auto-loaded because this is one record the user already owns, not
+                a list.
+              */}
+              {/*
+                **The market section, which never got the primitive.** It is
+                `pair` by §9.1's shapes — a figure and the action that refreshes
+                it — and unmarked by §9.3, because the frame shows the median in
+                full and this only refreshes it.
+
+                Wrapped here rather than inside `MarketPanel`: that component is
+                shared with `/want-list`, where a row is not a §9 section and has
+                no grid to sit on. `labelled={false}` hands the heading to the
+                section's label span instead of drawing a second one.
+              */}
+              {record.pressing?.discogsReleaseId != null && (
+                <Section
+                  name="market"
+                  title="What it goes for now"
+                  base={ladderBase}
+                  shape="pair"
+                  ladder={ladder}
+                >
+                  <MarketPanel
+                    discogsReleaseId={record.pressing?.discogsReleaseId ?? null}
+                    label="What it goes for now"
+                    labelled={false}
+                    autoLoad
+                  />
+                  <div />
+                </Section>
+              )}
+
+              <PriceHistory
                 base={ladderBase}
-                shape="pair"
                 ladder={ladder}
-              >
-                <MarketPanel
-                  discogsReleaseId={record.pressing?.discogsReleaseId ?? null}
-                  label="What it goes for now"
-                  labelled={false}
-                  autoLoad
-                />
-                <div />
-              </Section>
-            )}
+                // The same id the panel above is built from, so the empty state
+                // cannot point at a control that did not render.
+                hasMarketPanel={record.pressing?.discogsReleaseId != null}
+                observations={prices.map((row) => ({
+                  id: row.id,
+                  price: row.price,
+                  /**
+                   * No `?? 'used'` fallback. `price_type` is NOT NULL in the
+                   * database and `.notNull()` in Drizzle, so `row.priceType` is
+                   * non-nullable and the branch was unreachable — and it defaulted
+                   * to the ONE type §7.6 sums into estimated value, so a null
+                   * arriving here would have become evidence of what a record is
+                   * worth. Dead, and wrong in the direction that inflates.
+                   */
+                  priceType: row.priceType,
+                  recordedAt: row.recordedAt,
+                }))}
+              />
 
-            <PriceHistory
-              base={ladderBase}
-              ladder={ladder}
-              // The same id the panel above is built from, so the empty state
-              // cannot point at a control that did not render.
-              hasMarketPanel={record.pressing?.discogsReleaseId != null}
-              observations={prices.map((row) => ({
-                id: row.id,
-                price: row.price,
-                /**
-                 * No `?? 'used'` fallback. `price_type` is NOT NULL in the
-                 * database and `.notNull()` in Drizzle, so `row.priceType` is
-                 * non-nullable and the branch was unreachable — and it defaulted
-                 * to the ONE type §7.6 sums into estimated value, so a null
-                 * arriving here would have become evidence of what a record is
-                 * worth. Dead, and wrong in the direction that inflates.
-                 */
-                priceType: row.priceType,
-                recordedAt: row.recordedAt,
-              }))}
-            />
-
-            <RecordJournal
-              base={ladderBase}
-              ladder={ladder}
-              recordId={id}
-              entries={record.journalEntries.map((entry) => ({
-                id: entry.id,
-                entryDate: entry.entryDate,
-                note: entry.note,
-              }))}
-            />
+              <ImageGallery recordId={id} images={record.images} base={ladderBase} />
+              {/*
+                §10b's snippet. Between the gallery and the journal deliberately:
+                the images describe the object, the snippet describes the MUSIC,
+                and the journal describes living with it — outward-in.
+              */}
+              <SnippetPanel
+                recordId={id}
+                snippet={record.snippet}
+                snippetEditedAt={record.snippetEditedAt}
+                configured={isAnthropicConfigured()}
+                base={ladderBase}
+                ladder={ladder}
+              />
+              <RecordJournal
+                base={ladderBase}
+                ladder={ladder}
+                recordId={id}
+                entries={record.journalEntries.map((entry) => ({
+                  id: entry.id,
+                  entryDate: entry.entryDate,
+                  note: entry.note,
+                }))}
+              />
+            </ExtendedGrid>
 
           </div>
         </div>

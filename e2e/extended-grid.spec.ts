@@ -112,15 +112,16 @@ test.beforeEach(async ({ page }) => {
   await login(page);
 });
 
-test('every section is on the same twelve columns', async ({ page }) => {
+test('every section and air column sits on the twelve columns (§26)', async ({ page }) => {
   /**
-   * **The alignment the columns exist for.** A rail gave every section one
-   * shared x; twelve columns give every CELL EDGE a shared x, which is what
-   * lets sections of different shapes sit under one another without drifting.
+   * **The alignment the columns exist for, now measured on the row items.**
    *
-   * Asserted as: every cell edge in the region falls on a column boundary. A
-   * section on its own grid passes nothing here, and a section using a fourth
-   * split fails on the boundary its span does not reach.
+   * §9.1 gave every section its own twelve-column grid, so every CELL edge
+   * was a column edge. §26 gives the region varied spans — 7 + 5, 4 / 4 / 4,
+   * 12, 6 / 6, 3 + 9 — so a section is an item in a row and its content
+   * divides the section's own width by fractions. What must still land on a
+   * column boundary is each section's and each air column's outer edges,
+   * because that is what keeps the rows reading as one grid.
    */
   const suffix = makeSuffix();
   const id = await richRecord(page, suffix);
@@ -130,99 +131,128 @@ test('every section is on the same twelve columns', async ({ page }) => {
 
   const measured = await page.evaluate(() => {
     const column = window.innerWidth / 12;
-    return Array.from(document.querySelectorAll('[data-section]')).map((section) => ({
-      name: section.getAttribute('data-section'),
-      shape: section.getAttribute('data-shape'),
-      edges: Array.from(section.querySelectorAll('[data-cell]')).map((cell) => {
-        const box = cell.getBoundingClientRect();
-        return { left: box.left / column, right: box.right / column };
-      }),
-    }));
+    return Array.from(document.querySelectorAll('[data-section], [data-cell="air"]')).map((item) => {
+      const box = item.getBoundingClientRect();
+      return {
+        name: item.getAttribute('data-section') ?? 'air',
+        left: box.left / column,
+        right: box.right / column,
+      };
+    });
   });
 
-  expect(measured.length, 'sections rendered').toBeGreaterThan(0);
+  expect(measured.length, 'rows rendered').toBeGreaterThan(0);
 
-  for (const section of measured) {
-    for (const edge of section.edges) {
-      /* Within a tenth of a column: sub-pixel rounding, not a different grid. */
-      expect(
-        Math.abs(edge.left - Math.round(edge.left)),
-        `${section.name} (${section.shape}) left edge at column ${edge.left.toFixed(2)}`,
-      ).toBeLessThan(0.1);
-      expect(
-        Math.abs(edge.right - Math.round(edge.right)),
-        `${section.name} (${section.shape}) right edge at column ${edge.right.toFixed(2)}`,
-      ).toBeLessThan(0.1);
-    }
+  for (const item of measured) {
+    /* Within a tenth of a column: sub-pixel rounding, not a different grid. */
+    expect(
+      Math.abs(item.left - Math.round(item.left)),
+      `${item.name} left edge at column ${item.left.toFixed(2)}`,
+    ).toBeLessThan(0.1);
+    expect(
+      Math.abs(item.right - Math.round(item.right)),
+      `${item.name} right edge at column ${item.right.toFixed(2)}`,
+    ).toBeLessThan(0.1);
   }
 });
 
-test('the label takes the first two columns on every section', async ({ page }) => {
-  /*
-    The label survives the rail as a SPAN. Its x is a column edge rather than an
-    invented one, which is what lines it up with the identity cell above.
-  */
+test('the label sits above its content at the section’s own left edge (§26)', async ({ page }) => {
+  /**
+   * **§9.1's two-column label span does not survive §26's rows.** A section
+   * of four columns cannot give two of them to a label. §26's drawing puts
+   * the label at the top-left of each section with content beneath it.
+   *
+   * What that keeps of §9.1's argument — one edge that never moves as a
+   * reader scrolls — is asserted here: each label starts at its own
+   * section's left edge plus the cell padding, and the sections' edges are
+   * column edges (the test above).
+   */
   const suffix = makeSuffix();
   const id = await richRecord(page, suffix);
   await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
   await page.goto(`/records/${id}`);
   await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
 
-  const labels = await page.evaluate(() => {
-    const column = window.innerWidth / 12;
-    return Array.from(document.querySelectorAll('[data-section]')).map((section) => {
-      const label = section.querySelector('[data-cell="label"]');
-      if (label === null) return null;
-      const box = label.getBoundingClientRect();
+  const labels = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('[data-section]')).map((section) => {
+      const cell = section.querySelector('[data-cell="label"]');
+      const content = section.querySelector('[data-cell^="content"]');
+      if (cell === null || content === null) return null;
+      /*
+        The label's TEXT, not its cell: the cell starts at the section's edge
+        and holds the type 34 inside, which is the x a reader sees.
+      */
+      const text = cell.firstElementChild ?? cell;
+      const l = text.getBoundingClientRect();
+      const s = section.getBoundingClientRect();
+      const c = content.getBoundingClientRect();
       return {
         name: section.getAttribute('data-section'),
-        startColumn: Math.round(box.left / column),
-        spanColumns: Math.round(box.width / column),
+        offsetFromSection: Math.round(l.left - s.left),
+        aboveContent: l.bottom <= c.top + 1,
       };
-    });
-  });
+    }),
+  );
 
   for (const label of labels) {
-    expect(label, 'every section has a label cell').not.toBeNull();
+    expect(label, 'every section has a label and content').not.toBeNull();
     if (label === null) continue;
-    expect(label.startColumn, `${label.name} starts at column 0`).toBe(0);
-    expect(label.spanColumns, `${label.name} spans two`).toBe(LABEL_SPAN);
+    expect(label.offsetFromSection, `${label.name}: the label starts at the section's own edge, inside its padding`).toBe(CELL_PADDING);
+    expect(label.aboveContent, `${label.name}: the label is above the content, not beside it`).toBe(true);
   }
 });
 
-test('rules every cell but the last in each section', async ({ page }) => {
+test('rules every row item but the last, and every content cell but the last (§26)', async ({ page }) => {
   /**
-   * **The thing a rail structurally could not do.** A rail has one edge; a grid
-   * has as many as it has cells. §2.1 draws a 1px vertical on the right of
-   * every cell but the last, and the region now divides horizontally the way
-   * the frame does.
-   *
-   * The "but the last" half matters: a rule on the final cell would sit on the
-   * composition's edge, where §3 reserves the full-bleed weight for section
-   * boundaries.
+   * **Two levels of rule now, because §26 gives the region two levels of
+   * box.** A row's items are ruled between one another — that is the
+   * vertical line between Acquisition, Tags and Market — and inside a
+   * section its content cells are ruled between themselves. In both cases
+   * the last carries none, because the next edge is the page's.
    */
   const suffix = makeSuffix();
   const id = await richRecord(page, suffix);
+  await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
   await page.goto(`/records/${id}`);
   await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
 
-  const sections = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('[data-section]')).map((section) => ({
-      name: section.getAttribute('data-section'),
-      rules: Array.from(section.querySelectorAll('[data-cell]')).map(
-        (cell) => getComputedStyle(cell).borderRightWidth,
-      ),
-    })),
-  );
+  const rows = await page.evaluate(() => {
+    const items = Array.from(document.querySelectorAll('[data-section], [data-cell="air"]'));
+    /* Group by top edge: items sharing a top are one row. */
+    const byTop = new Map<number, Element[]>();
+    for (const item of items) {
+      const top = Math.round(item.getBoundingClientRect().top);
+      byTop.set(top, [...(byTop.get(top) ?? []), item]);
+    }
+    return [...byTop.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([, group]) => {
+        const ordered = group.sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left);
+        return ordered.map((item) => ({
+          name: item.getAttribute('data-section') ?? 'air',
+          rule: getComputedStyle(item).borderRightWidth,
+          cells: Array.from(item.querySelectorAll('[data-cell^="content"]')).map((cell) => getComputedStyle(cell).borderRightWidth),
+        }));
+      });
+  });
 
-  for (const section of sections) {
-    const last = section.rules.length - 1;
-    section.rules.forEach((width, index) => {
-      if (index === last) {
-        expect(width, `${section.name}: the last cell carries no rule`).toBe('0px');
-      } else {
-        expect(width, `${section.name}: cell ${index} is ruled`).toBe('1px');
-      }
+  expect(rows.length, 'rows rendered').toBeGreaterThan(0);
+
+  for (const row of rows) {
+    row.forEach((item, index) => {
+      /*
+        **Air carries no rule.** A rule divides two cells; air is where the
+        rhythm makes room, so a rule beside it would draw an edge around
+        nothing — §3's vocabulary, where an inset hairline separates things
+        inside one module. Only sections are ruled from their neighbours.
+      */
+      const expected = index === row.length - 1 || item.name === 'air' ? '0px' : '1px';
+      expect(item.rule, `${item.name}: ${index === row.length - 1 ? 'last in its row, unruled' : item.name === 'air' ? 'air is unruled' : 'ruled from its neighbour'}`).toBe(expected);
+
+      item.cells.forEach((cell, cellIndex) => {
+        const last = cellIndex === item.cells.length - 1;
+        expect(cell, `${item.name} content ${cellIndex}`).toBe(last ? '0px' : '1px');
+      });
     });
   }
 });
@@ -246,15 +276,13 @@ test('holds content at 34px inside every cell', async ({ page }) => {
   }
 });
 
-test('the section rule bleeds past the tracks it contains', async ({ page }) => {
+test('each row’s rule bleeds across the composition (§26)', async ({ page }) => {
   /**
-   * §3's distinction is load-bearing: a full-bleed rule separates modules, an
-   * inset one separates things inside one module, and each section is a module.
-   * Drawn inset, the region's only structural element would be the wrong kind
-   * of edge by this file's own vocabulary.
-   *
-   * Asserted as the section spanning wider than its own content, which is what
-   * "bleeds past" means geometrically.
+   * **§3's full bleed is the ROW's now, not the section's.** Each section
+   * carries the rule on its own top, and a row's items share a top edge, so
+   * the rules line up into one line across the page. A section is no longer
+   * 1440 wide — Pressing detail is 7 of 12 columns — so the claim moves from
+   * "the section spans the composition" to "the row does".
    */
   const suffix = makeSuffix();
   const id = await richRecord(page, suffix);
@@ -263,24 +291,32 @@ test('the section rule bleeds past the tracks it contains', async ({ page }) => 
   await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
 
   const measured = await page.evaluate(() => {
-    const section = document.querySelector('[data-section]')!;
-    const rail = section.querySelector('[data-cell="label"]')!;
-    const style = getComputedStyle(section);
+    const items = Array.from(document.querySelectorAll('[data-section], [data-cell="air"]'));
+    const byTop = new Map<number, Element[]>();
+    for (const item of items) {
+      const top = Math.round(item.getBoundingClientRect().top);
+      byTop.set(top, [...(byTop.get(top) ?? []), item]);
+    }
     return {
-      left: Math.round(section.getBoundingClientRect().left),
-      right: Math.round(section.getBoundingClientRect().right),
-      labelLeft: Math.round(rail.getBoundingClientRect().left),
-      borderTop: style.borderTopWidth,
       viewport: window.innerWidth,
+      rows: [...byTop.entries()].sort((a, b) => a[0] - b[0]).map(([top, group]) => ({
+        top,
+        left: Math.round(Math.min(...group.map((g) => g.getBoundingClientRect().left))),
+        right: Math.round(Math.max(...group.map((g) => g.getBoundingClientRect().right))),
+        borders: group.map((g) => getComputedStyle(g).borderTopWidth),
+      })),
     };
   });
 
-  expect(measured.left, 'the rule starts at the composition edge').toBe(0);
-  expect(measured.right, 'and runs to it').toBe(measured.viewport);
-  expect(measured.labelLeft, 'while the label cell starts at the composition edge').toBe(
-    measured.left,
-  );
-  expect(measured.borderTop, 'one hairline').toBe('1px');
+  expect(measured.rows.length, 'rows rendered').toBeGreaterThan(0);
+
+  for (const row of measured.rows) {
+    expect(row.left, `row at ${row.top} starts at the composition edge`).toBe(0);
+    expect(row.right, `row at ${row.top} runs to it`).toBe(measured.viewport);
+    for (const border of row.borders) {
+      expect(border, `row at ${row.top}: one hairline on every item, so they line up`).toBe('1px');
+    }
+  }
 });
 
 test('draws the bar beside a control-only section, because marking is by schema', async ({
@@ -315,7 +351,7 @@ test('draws the bar beside a control-only section, because marking is by schema'
   }
 });
 
-test('the bar is 44 × 10 and sits on the rail', async ({ page }) => {
+test('the bar is 44 × 10 and sits at its section’s own left edge (§26)', async ({ page }) => {
   const suffix = makeSuffix();
   const id = await richRecord(page, suffix);
   await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
@@ -325,18 +361,27 @@ test('the bar is 44 × 10 and sits on the rail', async ({ page }) => {
   const bars = await page.evaluate(() =>
     Array.from(document.querySelectorAll('[data-mark="section-bar"]')).map((bar) => {
       const box = bar.getBoundingClientRect();
-      return { x: Math.round(box.left), w: Math.round(box.width), h: Math.round(box.height) };
+      const section = bar.closest('[data-section]')!.getBoundingClientRect();
+      return {
+        name: bar.closest('[data-section]')!.getAttribute('data-section'),
+        offset: Math.round(box.left - section.left),
+        w: Math.round(box.width),
+        h: Math.round(box.height),
+      };
     }),
   );
 
   expect(bars.length, 'at least one bar').toBeGreaterThan(0);
-
   for (const bar of bars) {
     expect(bar.w).toBe(MARK_WIDTH);
     expect(bar.h).toBe(MARK_HEIGHT);
-    /* On the rail — the same x as every label, which is the whole argument. */
-    /* In the label span, indented by the cell's own 34px padding. */
-    expect(bar.x, 'the bar sits in the label span').toBe(CELL_PADDING);
+    /*
+      **Under the label, at the section's own edge.** §9.1 put every bar at
+      the page's x = 34 because every label was there; §26's sections start
+      at different columns, so the bar follows its own label — which is what
+      "a mark at the label column's x" meant.
+    */
+    expect(bar.offset, `${bar.name}: the bar sits under its label`).toBe(CELL_PADDING);
   }
 });
 
@@ -569,18 +614,17 @@ test('renders exactly one cell per span in its split', async ({ page }) => {
 
 test('ornament sits behind everything, structurally rather than per element', async ({ page }) => {
   /**
-   * §9.2's layer, which is the part most easily built wrong.
+   * **The stacking layer moved from the cell to the SECTION (§26).**
    *
-   * **Every §9 cell isolates and the ornament sits at `z-index: -1` inside
-   * it.** Nothing else carries a z-index: controls, ruled fields, chips,
-   * uploaders, textareas and type runs are above ornament because they are IN
-   * FLOW, not because each was named. Design's first implementation lifted
-   * eleven elements by matching control heights and missed the textarea, the
-   * uploader and the three tag chips — a list of things to raise is a list
-   * someone has to keep complete.
+   * §25 sizes a figure at 0.855 of the SECTION's height, and a percentage
+   * resolves against the positioned ancestor — so the section must be it.
+   * §26 puts the clip there too: "each figure's clip is its own cell, so it
+   * can never enter another". The cells inside a section hold content and
+   * carry no layer of their own.
    *
-   * So this asserts the mechanism AND its absence: the cells isolate, and no
-   * content element in the region carries a stacking value of its own.
+   * The second half is unchanged and is the defect this replaced: nothing
+   * inside lifts itself. A list of things to raise is a list someone has to
+   * keep complete, and it failed as three patches before it went structural.
    */
   const suffix = makeSuffix();
   const id = await richRecord(page, suffix);
@@ -588,12 +632,12 @@ test('ornament sits behind everything, structurally rather than per element', as
   await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
 
   const layer = await page.evaluate(() => {
-    const cells = Array.from(document.querySelectorAll('[data-section] [data-cell]'));
-    const wrong = cells
-      .map((cell) => {
-        const style = getComputedStyle(cell);
+    const hosts = Array.from(document.querySelectorAll('[data-section], [data-cell="air"]'));
+    const wrong = hosts
+      .map((host) => {
+        const style = getComputedStyle(host);
         return {
-          cell: cell.getAttribute('data-cell'),
+          name: host.getAttribute('data-section') ?? 'air',
           position: style.position,
           isolation: style.isolation,
           overflow: style.overflow,
@@ -604,22 +648,22 @@ test('ornament sits behind everything, structurally rather than per element', as
           row.position !== 'relative' || row.isolation !== 'isolate' || row.overflow !== 'hidden',
       );
 
-    /* Anything inside a cell that lifts itself — the defect this replaces. */
+    /* Anything inside that lifts itself — the defect this replaces. */
     const lifted: string[] = [];
-    for (const cell of cells) {
-      for (const node of Array.from(cell.querySelectorAll('*'))) {
+    for (const host of hosts) {
+      for (const node of Array.from(host.querySelectorAll('*'))) {
         if (node.getAttribute('data-ornament') !== null) continue;
         const z = getComputedStyle(node).zIndex;
         if (z !== 'auto' && z !== '0') lifted.push(`${node.tagName} z-index:${z}`);
       }
     }
-    return { cells: cells.length, wrong, lifted };
+    return { hosts: hosts.length, wrong, lifted };
   });
 
-  expect(layer.cells, 'cells rendered').toBeGreaterThan(0);
+  expect(layer.hosts, 'sections and air rendered').toBeGreaterThan(0);
   expect(
     layer.wrong,
-    `cells missing the structural layer:\n${JSON.stringify(layer.wrong, null, 2)}`,
+    `row items missing the structural layer:\n${JSON.stringify(layer.wrong, null, 2)}`,
   ).toEqual([]);
   expect(
     layer.lifted,
@@ -688,18 +732,14 @@ test('the region caps with the frame, so the page is one grid', async ({ page })
    * **§9.1's boundaries bleed to the COMPOSITION's edge — the viewport up to
    * the cap, the capped container beyond it.**
    *
-   * The cap is §18's `GRID_FORK` now rather than the old 1728: the bands are
-   * `repeat(12, 120px)` and fixed, so the composition is 1440 at every width
-   * above the fork. The CLAIM here is unchanged and is the reason the swap is
-   * safe — the page is one grid, rendered at one width — and only the figure
-   * it caps at moved.
+   * Measured on the REGION rather than on each section: §26 gives sections
+   * spans of their row, so Pressing detail is 7 of 12 columns and only the
+   * region itself is the composition's width. The claim is unchanged — the
+   * page is one grid rendered at one width — and what moved is which box
+   * carries it.
    *
-   * They were bleeding to the viewport at every width, so at 3440 the frame
-   * sat at 1728@856 while every section below started at 0: one grid rendered
-   * at two widths, and the frame appeared to start a long way in from the left.
-   *
-   * **Measured wide, because at 1440 the two are identical and the defect is
-   * invisible** — which is why it shipped.
+   * **Measured wide, because at 1440 the region and the viewport are
+   * identical and the defect is invisible** — which is why it shipped.
    */
   const suffix = makeSuffix();
   const id = await richRecord(page, suffix);
@@ -711,12 +751,14 @@ test('the region caps with the frame, so the page is one grid', async ({ page })
 
     const measured = await page.evaluate(() => {
       const frame = document.querySelector('[data-testid="record-page-8a"]')!.getBoundingClientRect();
+      const region = document.querySelector('[data-region="extended-grid"]')!.getBoundingClientRect();
       const sections = Array.from(document.querySelectorAll('[data-section]')).map((section) => {
         const box = section.getBoundingClientRect();
-        return { left: Math.round(box.left), width: Math.round(box.width) };
+        return { name: section.getAttribute('data-section'), left: Math.round(box.left), right: Math.round(box.right) };
       });
       return {
         frame: { left: Math.round(frame.left), width: Math.round(frame.width) },
+        region: { left: Math.round(region.left), width: Math.round(region.width) },
         sections,
       };
     });
@@ -724,33 +766,33 @@ test('the region caps with the frame, so the page is one grid', async ({ page })
     const expected = Math.min(width, GRID_FORK);
 
     expect(measured.frame.width, `frame at ${width}`).toBe(expected);
+    expect(measured.region.width, `region at ${width}`).toBe(expected);
+    expect(measured.region.left, `region left at ${width}`).toBe(measured.frame.left);
 
+    /* And every section lies inside that measure — no row item escapes the grid. */
     for (const section of measured.sections) {
-      /* Same measure AND same edge: equal widths at different x still misalign. */
-      expect(section.width, `section width at ${width}`).toBe(expected);
-      expect(section.left, `section left at ${width} (frame ${measured.frame.left})`).toBe(
-        measured.frame.left,
-      );
+      expect(section.left, `${section.name} at ${width} starts inside the region`).toBeGreaterThanOrEqual(measured.region.left);
+      expect(section.right, `${section.name} at ${width} ends inside it`).toBeLessThanOrEqual(measured.region.left + measured.region.width);
     }
   }
 });
 
 /**
- * §25 and §26: the figures and flats, measured on the route.
+ * Every row item — sections AND air columns — with the ornament it carries.
  *
- * Distribution is §26's placement and not a rule about sections: two figures
- * in eight sections, never consecutive — the pair in Pressing detail's air,
- * the solo in Price history's strip — and two flats on opposite page edges.
- * Until §26's rows exist the air column has no host, so the pair and the
- * triangle are asserted by their absence from every OTHER section here and by
- * their presence in step 18's spec.
+ * §26 puts the pair in Pressing detail's AIR rather than in the section, so a
+ * helper walking `[data-section]` alone cannot see it, and "no section
+ * carries two figures" would pass on a page whose pair never rendered.
  */
-const figureSections = (page: Page) =>
+const figureSections = (
+  page: Page,
+): Promise<Array<{ name: string; kind: string; figures: number; flats: Array<string | null> }>> =>
   page.evaluate(() =>
-    Array.from(document.querySelectorAll('[data-section]')).map((section) => ({
-      name: section.getAttribute('data-section') ?? '?',
-      figures: section.querySelectorAll('[data-ornament="figure"]').length,
-      flats: Array.from(section.querySelectorAll('[data-ornament="flat"]')).map((f) => f.getAttribute('data-flat')),
+    Array.from(document.querySelectorAll('[data-section], [data-cell="air"]')).map((item) => ({
+      name: item.getAttribute('data-section') ?? 'air',
+      kind: item.hasAttribute('data-section') ? 'section' : 'air',
+      figures: item.querySelectorAll('[data-ornament="figure"]').length,
+      flats: Array.from(item.querySelectorAll('[data-ornament="flat"]')).map((f) => f.getAttribute('data-flat')),
     })),
   );
 
@@ -765,7 +807,10 @@ test('places figures only where §26 does, never in consecutive sections', async
 
   /* The positive half first, or the exclusions below pass on a page with no ornament. */
   expect(carrying, 'the solo in Price history').toContain('price-history');
-  const ruled = new Set(Object.keys(FIGURES).map((key) => key.split(':')[0]));
+  expect(carrying, 'the pair in Pressing detail’s air column').toContain('air');
+  /* Two figures on the page and no more — §26 places two in eight sections. */
+  expect(placed.reduce((sum, row) => sum + row.figures, 0), 'two figures in all').toBe(2);
+  const ruled = new Set([...Object.keys(FIGURES).map((key) => key.split(':')[0]), 'air']);
   for (const name of carrying) expect(ruled.has(name), `${name} is one of §26's two hosts`).toBe(true);
   for (const row of placed) expect(row.figures, `${row.name}: one figure at most`).toBeLessThanOrEqual(1);
 
@@ -798,14 +843,18 @@ test('a figure is 0.855 of its section, shows two-thirds, and is cut by its foot
 
     const figures = await page.evaluate(() =>
       Array.from(document.querySelectorAll('[data-ornament="figure"]')).map((figure) => {
-        const section = figure.closest('[data-section]')!;
-        const cell = figure.closest('[data-cell]')!;
+        /*
+          §26 makes the host the SECTION or the AIR column, not a cell inside
+          one: a figure's clip is its own cell in §26's sense, which is the
+          row item it belongs to.
+        */
+        const host = figure.closest('[data-section], [data-cell="air"]')!;
         const f = figure.getBoundingClientRect();
-        const c = cell.getBoundingClientRect();
+        const c = host.getBoundingClientRect();
         return {
-          name: section.getAttribute('data-section'),
+          name: host.getAttribute('data-section') ?? 'air',
           kind: figure.getAttribute('data-figure'),
-          sectionHeight: section.getBoundingClientRect().height,
+          sectionHeight: c.height,
           height: f.height,
           width: f.width,
           visible: Math.max(0, Math.min(f.bottom, c.bottom) - Math.max(f.top, c.top)),
@@ -824,7 +873,10 @@ test('a figure is 0.855 of its section, shows two-thirds, and is cut by its foot
       expect(figure.cutEdges, `${label}: cut by one edge only`).toBe(1);
 
       /* Width follows the figure's projected box, never a constant. */
-      const spec = FIGURES[`${figure.name}:strip`] ?? FIGURES[`${figure.name}:air`];
+      const spec =
+        figure.name === 'air'
+          ? FIGURES['pressing-detail:air']
+          : FIGURES[`${figure.name}:strip`] ?? FIGURES[`${figure.name}:air`];
       expect(spec, `${figure.name} is a ruled figure`).toBeDefined();
       if (spec === undefined) continue;
       const box = figureBox(spec);
@@ -893,12 +945,19 @@ test('a figure’s faces are the ladder’s top, base and shade; a flat is tint 
   }
 });
 
-test('the quarter-disc bleeds off the right page edge: r 150, three quarters outside', async ({ page }) => {
+test('the quarter-disc is sized against its host and bleeds off the right page edge (§29)', async ({ page }) => {
   /**
-   * §25's flat sheet: "r 150 · more than a third outside, masked by the page
-   * edge". Made structurally — a full disc centred on its cell's bottom-right
-   * corner — so the cell's clip shows one quadrant. Measured as the disc's
-   * box against the cell's and the page's.
+   * **§29: a flat's size follows its host, and no section fixes it at 150.**
+   *
+   * The specimen's "r 150" is one drawn instance on a sheet. The visible
+   * part is at most two-thirds of the host's HEIGHT and at most a quarter of
+   * the section's WIDTH, whichever is smaller — so on the About section it
+   * is whichever bound binds, and on a record with no snippet (a 104px host)
+   * it is 69 rather than 150.
+   *
+   * Measured as a quadrant: a full disc centred on the host's bottom-right
+   * corner, so the host's clip shows one quarter and the page edge masks the
+   * rest. That is how "more than a third outside" is made rather than drawn.
    */
   const suffix = makeSuffix();
   const id = await richRecord(page, suffix);
@@ -910,33 +969,35 @@ test('the quarter-disc bleeds off the right page edge: r 150, three quarters out
     const el = document.querySelector('[data-flat="quarterDisc"]');
     if (el === null) return null;
     const d = el.getBoundingClientRect();
-    const cell = el.closest('[data-cell]')!.getBoundingClientRect();
+    const host = el.closest('[data-section], [data-cell="air"]')!.getBoundingClientRect();
     const frame = document.querySelector('[data-testid="record-page-8a"]')!.getBoundingClientRect();
     return {
       width: d.width,
-      height: d.height,
       radius: getComputedStyle(el).borderRadius,
-      visibleWidth: Math.max(0, Math.min(d.right, cell.right) - Math.max(d.left, cell.left)),
-      visibleHeight: Math.max(0, Math.min(d.bottom, cell.bottom) - Math.max(d.top, cell.top)),
-      cellHeight: cell.height,
-      sectionWidth: el.closest('[data-section]')!.getBoundingClientRect().width,
-      cellRightIsPageRight: Math.abs(cell.right - frame.right) < 1,
+      visibleWidth: Math.max(0, Math.min(d.right, host.right) - Math.max(d.left, host.left)),
+      visibleHeight: Math.max(0, Math.min(d.bottom, host.bottom) - Math.max(d.top, host.top)),
+      hostHeight: host.height,
+      hostWidth: host.width,
+      hostEndsAtPageEdge: Math.abs(host.right - frame.right) < 1,
     };
   });
   expect(disc, 'the disc renders').not.toBeNull();
   if (disc === null) return;
-  expect(disc.width, 'a disc of r 150').toBe(300);
-  expect(disc.height).toBe(300);
-  expect(disc.radius).toBe('50%');
-  expect(disc.cellRightIsPageRight, 'its cell ends at the page edge, so the mask is the page edge').toBe(true);
-  /* The radius shows across; three quarters of the disc are outside the page. */
-  expect(disc.visibleWidth, 'one quadrant across').toBeCloseTo(150, 0);
-  expect(disc.visibleWidth / disc.width, 'more than a third outside').toBeLessThan(2 / 3);
-  expect(disc.visibleWidth, 'and at most a quarter of the section across').toBeLessThanOrEqual(disc.sectionWidth / 4);
+
+  expect(disc.radius, 'a disc, not a box').toBe('50%');
+  expect(disc.hostEndsAtPageEdge, 'its host ends at the page edge, so the mask is the page edge').toBe(true);
+
   /*
-    Up the page, the quadrant shows to the cell's own height. §26 draws About
-    at 220 and the quadrant whole; a record with no snippet has a 104px cell
-    here and the quadrant is cut by its top — open with Design (NOTES).
+    §29's two bounds, whichever is smaller. Within 1.5px: the percentage
+    resolves against the host's padding box, which excludes its 1px top
+    rule, so two-thirds of it is a fraction of a pixel under two-thirds of
+    the border box the test measures.
   */
-  expect(disc.visibleHeight, `the quadrant up to the cell's ${Math.round(disc.cellHeight)}px`).toBeCloseTo(Math.min(150, disc.cellHeight), 0);
+  const bound = Math.min(disc.hostHeight * (2 / 3), disc.hostWidth * (1 / 4));
+  expect(disc.visibleWidth, `visible radius against §29's bound on a ${Math.round(disc.hostHeight)}px host`).toBeGreaterThan(bound - 1.5);
+  expect(disc.visibleWidth, 'and never over it').toBeLessThanOrEqual(bound + 0.5);
+  expect(disc.visibleHeight, 'and the same up the page').toBeGreaterThan(bound - 1.5);
+  /* Exactly one quadrant: the disc is twice the visible radius on each axis. */
+  expect(disc.width, 'the whole disc is twice what shows').toBeGreaterThan(bound * 2 - 3);
+  expect(disc.visibleWidth, 'more than a third lies outside').toBeLessThan(disc.width * (2 / 3));
 });
