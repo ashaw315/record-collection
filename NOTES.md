@@ -30987,8 +30987,30 @@ A broken grid on `/records/[id]` was reported from a screenshot and bisected acr
 
 `e2e/genres-collapse.spec.ts` fails deterministically at HEAD (serially, `--workers=1`) and the bisect is exact: passes at `f3a3955` (§22), fails at `76cd562` (§13). §24 kept the eyebrow row and the failure with it.
 
-**The mechanism.** The eyebrow is a third grid row (`auto`) above `data-track="content"`. §4.2's give order has four terms — gap, reserve, genres run, then §18's measure — and none of them is the eyebrow, so on the collection's real five-line title the row's height comes out of nowhere: inner 510, content needs 495, ornament track at 1, and the cell overflows. `overflow-hidden` then cuts the pressing block, which is a fact rendered shorter (§6). The second test's collapse "closes the shortfall" by 15px where the run needs 13, so it collapses and still overflows.
+**The mechanism, with the load-bearing number.** The eyebrow is a third grid row (`auto`) above `data-track="content"`, and it measures **16.5px** on the spec's own fixture. §4.2's give order has four terms — gap, reserve, genres run, then §18's measure — and none of them is the eyebrow, so on the collection's real five-line title:
+
+| | px |
+|---|---|
+| cell inner | 510 |
+| eyebrow row | **16.5** |
+| content needs | 495 |
+| ornament track | 1 |
+| sum | 512.5 |
+
+2.5px over, and `overflow-hidden` cuts it. The row exists because §13 put Edit on it and claimed "costs no height" — true of Edit, not of the row — and §24 moved Edit away without removing the row. Expect the fix to be a deletion or a band-height change, not a fifth give-order term; none is being built meanwhile. **This and §23's 544-in-547 padding are one shortfall**: a 570 band clears both, and when Design names the delta it should land as one change, with the floor re-measured after it as step 14 requires. `overflow-hidden` then cuts the pressing block, which is a fact rendered shorter (§6). The second test's collapse "closes the shortfall" by 15px where the run needs 13, so it collapses and still overflows.
 
 **Why no test caught it at §13.** `identity-cell.spec.ts` measures the probe's five-line case, which needs 461.9; `genres-collapse` seeds the real record with a three-genre run and a label, which needs 495. The probe under-represents the collection's worst case by 33px, and the eyebrow costs about 19. I ran the probe's spec after §13 and not this one.
 
 **Not fixed, reported.** §8.1 rules the eyebrow exists and §24 rules it stays; the drawing fits the five-line title with it. So either the eyebrow participates in the give order or the band's height budget does — and a dimensional change in this band is what cost the last four rulings. With Design.
+
+
+## TASK: the worst-case fixture is computed from the collection, not hand-written — OWNED BY CODE
+
+Twice in one week a fixture that under-represented the real worst case produced a false pass:
+
+- §20's first test carried twelve of the seventeen record ids, and the five it dropped were the five worst — it reported the floor's worst at 0.540% where the truth was 0.440% with two failures. Fixed by `real-records.ts`: one shared list, no test carries its own.
+- The identity probe's five-line case is the real longest title with **no pressing block** — it needs 462px where `genres-collapse`'s fixture, the same title with catalogue, country, year, format and a three-genre run, needs 495. The probe is 33px short of the collection's actual worst, the eyebrow costs 16.5, and the probe passed after §13 while the real case overflowed.
+
+The shape is the same both times: a hand-written sample drops its tail and reports its median as its minimum. Design has been asked to record it as a rule.
+
+**The mechanism to build.** One fixture module — the analogue of `real-records.ts` for the identity cell — that defines the worst-case record (longest title by rendered lines, fullest pressing block, longest genres run) and is consumed by BOTH the probe route and every spec that claims to test the worst case, so they cannot disagree about what it is. Longer term, a script that derives that record from the live collection rather than from a literal, so the fixture follows the collection when a longer title arrives. Not built now: wiring the probe to the real worst case today would only show the eyebrow regression a second time, and one red test per known cause is enough while it is with Design.
