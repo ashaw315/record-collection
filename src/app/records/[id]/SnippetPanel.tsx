@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import type { RecordLadder } from '@/lib/colour/record-ladder';
 
 import { Section } from './Section';
 import { useRouter } from 'next/navigation';
@@ -31,11 +32,11 @@ type Props = {
   /** §5.5's base step, for §9.3's rail bar. Unmarked section, passed anyway so
       the primitive decides rather than the caller. */
   base: string | null;
-  /** §5.5's tint step, for §9.2's ornament. */
-  tint: string | null;
+  /** The record's ladder, for §25's figures and §26's flats. */
+  ladder: RecordLadder | null;
 };
 
-export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured, base, tint }: Props) {
+export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured, base, ladder }: Props) {
   const router = useRouter();
   const view = snippetView({ snippet, snippetEditedAt });
 
@@ -91,7 +92,7 @@ export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured, b
   }
 
   return (
-    <Section name="snippet" title="About this record" base={base} shape="body" tint={tint}>
+    <Section name="snippet" title="About this record" base={base} shape="body" ladder={ladder}>
       {/*
         **The body in the 6, the action in the 4** — §9.1's `body` split is "a
         body with an action beside it", and a section that declares it must

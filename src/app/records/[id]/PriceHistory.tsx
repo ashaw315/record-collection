@@ -1,3 +1,4 @@
+import type { RecordLadder } from '@/lib/colour/record-ladder';
 import { formatPrice } from '@/app/collection-format';
 
 import { Section } from './Section';
@@ -41,12 +42,12 @@ export function PriceHistory({
    */
   hasMarketPanel = false,
   base,
-  tint,
+  ladder,
 }: {
   /** §5.5's base step, for §9.4's label-span bar. */
   base: string | null;
-  /** §5.5's tint step, for §9.2's ornament. */
-  tint: string | null;
+  /** The record's ladder, for §25's figures and §26's flats. */
+  ladder: RecordLadder | null;
   observations: PriceObservation[];
   hasMarketPanel?: boolean;
 }) {
@@ -64,7 +65,7 @@ export function PriceHistory({
   const range = priceRange(paid);
 
   return (
-    <Section name="price-history" title="Price history" base={base} shape="pair" tint={tint}>
+    <Section name="price-history" title="Price history" base={base} shape="pair" ladder={ladder}>
       <div data-testid="price-history">
 
       {/*

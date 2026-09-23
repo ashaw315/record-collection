@@ -4,7 +4,7 @@ import { seedImage } from './seed';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
 import { GRID_FORK } from '../src/app/records/[id]/band-geometry';
-import { ARCHETYPE_ASPECT, SIZE_RATIO, archetypeFor } from '../src/app/records/[id]/ornament';
+import { FIGURES, GATE_RATIO, SIZE_RATIO, figureBox } from '../src/app/records/[id]/ornament';
 import {
   CELL_PADDING,
   CONTROL_HEIGHT,
@@ -646,7 +646,7 @@ test('no ornament covers a control or a ruled field', async ({ page }) => {
   const collisions = await page.evaluate(() => {
     const CLEARANCE = 60;
     const out: string[] = [];
-    const solids = Array.from(document.querySelectorAll('[data-ornament="solid"]'));
+    const solids = Array.from(document.querySelectorAll('[data-ornament="figure"]'));
     const controls = Array.from(
       document.querySelectorAll('[data-section] button, [data-section] input, [data-section] select, [data-section] textarea, [data-section] a'),
     );
@@ -679,95 +679,8 @@ test('no ornament covers a control or a ruled field', async ({ page }) => {
     mistake away from — the first gate permitted zero positions while the
     drawing showed two.
   */
-  const solids = await page.locator('[data-ornament="solid"]').count();
-  expect(solids, 'solids actually rendered, so the clearance was tested').toBeGreaterThan(0);
-});
-
-test('draws a solid only where the gate passes, and only in type-only cells', async ({ page }) => {
-  const suffix = makeSuffix();
-  const id = await richRecord(page, suffix);
-  await page.goto(`/records/${id}`);
-  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
-
-  const placed = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('[data-section]')).map((section) => ({
-      name: section.getAttribute('data-section'),
-      solids: section.querySelectorAll('[data-ornament="solid"]').length,
-    })),
-  );
-
-  const carrying = placed.filter((row) => row.solids > 0).map((row) => row.name);
-
-  /*
-    The positive half first: the type-only cells DO carry one. Without this the
-    exclusions below are satisfied by a page with no ornament anywhere.
-  */
-  expect(carrying, 'the type-only cells carry solids').toContain('pressing-detail');
-  expect(carrying).toContain('snippet');
-  expect(carrying).toContain('price-history');
-
-  /* Acquisition, Images, Journal and Tags are excluded by their controls. */
-  for (const excluded of ['acquisition', 'images', 'journal', 'tags']) {
-    expect(carrying, `${excluded} holds a control and carries none`).not.toContain(excluded);
-  }
-
-  /* And one per section, never two. */
-  for (const row of placed) {
-    expect(row.solids, `${row.name} carries at most one solid`).toBeLessThanOrEqual(1);
-  }
-});
-
-test('the region’s solids carry the record’s ladder, and the matrix does not (§12)', async ({ page }) => {
-  /**
-   * **§9.2: the three faces are three LIGHTNESSES of one tint value**, and
-   * §5.1 forbids the shortcut by name — every colour mark sits "at one of the
-   * three steps of §5.5 and never at an opacity variant".
-   *
-   * The build drew all three faces as one fill at opacity 1, 0.72 and 0.5.
-   * Composited over paper those converge on the ground rather than stepping
-   * down, so the solids read flat and grey — §12's third fix. Asserted on the
-   * ROUTE rather than only in the unit test, because the defect was visible on
-   * screen and invisible to a component test that never composited anything.
-   *
-   * **The matrix is the exception and is asserted as one**: §5 rules it
-   * record-independent, so its three greys must NOT follow the record. A fix
-   * stated as "the solids stop being grey" would have coloured exactly the one
-   * solid that must stay so.
-   */
-  const suffix = makeSuffix();
-  const id = await richRecord(page, suffix);
-  await page.goto(`/records/${id}`);
-  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
-
-  const drawn = await page.evaluate(() => {
-    const solids = Array.from(document.querySelectorAll('[data-ornament="solid"]')).map((svg) => ({
-      section: svg.closest('[data-section]')?.getAttribute('data-section') ?? '?',
-      fills: Array.from(svg.querySelectorAll('polygon')).map((p) => getComputedStyle(p).fill),
-      opacities: Array.from(svg.querySelectorAll('polygon')).map((p) => getComputedStyle(p).opacity),
-    }));
-    const matrix = document.querySelector('[data-mark="matrixSolid"]');
-    return {
-      solids,
-      matrix: matrix === null ? null : Array.from(matrix.querySelectorAll('polygon')).map((p) => getComputedStyle(p).fill),
-    };
-  });
-
-  expect(drawn.solids.length, 'the region draws solids at all').toBeGreaterThan(0);
-
-  for (const solid of drawn.solids) {
-    expect(new Set(solid.fills).size, `${solid.section}: three DIFFERENT fills, not one`).toBe(3);
-    for (const opacity of solid.opacities) {
-      expect(Number(opacity), `${solid.section}: §5.1 forbids an opacity variant`).toBe(1);
-    }
-  }
-
-  /* The matrix keeps its own greys, which are record-independent by §5. */
-  if (drawn.matrix !== null) {
-    expect(new Set(drawn.matrix).size, 'the matrix has three tones of its own').toBe(3);
-    for (const fill of drawn.matrix) {
-      expect(fill, 'and they are grey, never the record’s colour').toMatch(/0\.004 80|rgb\((\d+), \1, /);
-    }
-  }
+  const solids = await page.locator('[data-ornament="figure"]').count();
+  expect(solids, 'figures actually rendered, so the clearance was tested').toBeGreaterThan(0);
 });
 
 test('the region caps with the frame, so the page is one grid', async ({ page }) => {
@@ -802,11 +715,9 @@ test('the region caps with the frame, so the page is one grid', async ({ page })
         const box = section.getBoundingClientRect();
         return { left: Math.round(box.left), width: Math.round(box.width) };
       });
-      const edge = document.querySelector('[data-ornament="edge-fields"]')?.getBoundingClientRect();
       return {
         frame: { left: Math.round(frame.left), width: Math.round(frame.width) },
         sections,
-        edge: edge === undefined ? null : { left: Math.round(edge.left), width: Math.round(edge.width) },
       };
     });
 
@@ -821,28 +732,61 @@ test('the region caps with the frame, so the page is one grid', async ({ page })
         measured.frame.left,
       );
     }
-
-    if (measured.edge !== null) {
-      expect(measured.edge.width, `edge fields at ${width}`).toBe(expected);
-      expect(measured.edge.left, 'the fields leave the COMPOSITION, not the viewport').toBe(
-        measured.frame.left,
-      );
-    }
   }
 });
 
-test('a solid is 0.62 of its section, and not a fixed size', async ({ page }) => {
+/**
+ * §25 and §26: the figures and flats, measured on the route.
+ *
+ * Distribution is §26's placement and not a rule about sections: two figures
+ * in eight sections, never consecutive — the pair in Pressing detail's air,
+ * the solo in Price history's strip — and two flats on opposite page edges.
+ * Until §26's rows exist the air column has no host, so the pair and the
+ * triangle are asserted by their absence from every OTHER section here and by
+ * their presence in step 18's spec.
+ */
+const figureSections = (page: Page) =>
+  page.evaluate(() =>
+    Array.from(document.querySelectorAll('[data-section]')).map((section) => ({
+      name: section.getAttribute('data-section') ?? '?',
+      figures: section.querySelectorAll('[data-ornament="figure"]').length,
+      flats: Array.from(section.querySelectorAll('[data-ornament="flat"]')).map((f) => f.getAttribute('data-flat')),
+    })),
+  );
+
+test('places figures only where §26 does, never in consecutive sections', async ({ page }) => {
+  const suffix = makeSuffix();
+  const id = await richRecord(page, suffix);
+  await page.goto(`/records/${id}`);
+  await page.locator('[data-ornament="figure"]').first().waitFor({ timeout: 20_000 });
+
+  const placed = await figureSections(page);
+  const carrying = placed.filter((row) => row.figures > 0).map((row) => row.name);
+
+  /* The positive half first, or the exclusions below pass on a page with no ornament. */
+  expect(carrying, 'the solo in Price history').toContain('price-history');
+  const ruled = new Set(Object.keys(FIGURES).map((key) => key.split(':')[0]));
+  for (const name of carrying) expect(ruled.has(name), `${name} is one of §26's two hosts`).toBe(true);
+  for (const row of placed) expect(row.figures, `${row.name}: one figure at most`).toBeLessThanOrEqual(1);
+
+  /* Never consecutive, in the page's own order. */
+  for (let i = 1; i < placed.length; i++) {
+    expect(placed[i].figures > 0 && placed[i - 1].figures > 0, `${placed[i - 1].name} then ${placed[i].name}: consecutive figures`).toBe(false);
+  }
+  /* And §9.4's fill is withdrawn by §26's flats. */
+  expect(await page.locator('[data-ornament="fill"]').count(), 'no full fill anywhere').toBe(0);
+});
+
+test('a figure is 0.855 of its section, shows two-thirds, and is cut by its foot alone', async ({ page }) => {
   /**
-   * **The size term is relative now, so the assertion is a ratio.**
+   * **The size rule is the gate itself.** Height is the governed term and it
+   * is the SECTION's; the visible part is exactly the two-thirds ceiling and
+   * the rest bleeds below the cell's foot. Measured at four viewports because
+   * the size must track the section and not the window.
    *
-   * The withdrawn rule was half a column — a WIDTH — and in cells eleven times
-   * wider than tall the dimension carrying presence is height. A fixed-size
-   * assertion would pass on the old rule and fail on this one, which is the
-   * point: the four solids differ because their sections do.
-   *
-   * Measured at four viewports because the size must track the SECTION, not the
-   * window: above the 1728 cap the composition stops growing, so a solid keyed
-   * to the viewport would keep growing and one keyed to its section would not.
+   * **Clipping is a boundary, not a treatment**: the clip is the figure's own
+   * cell, and a figure is cut by at most one edge — its foot. A second cut
+   * edge reads as a figure too big for its box.
    */
   const suffix = makeSuffix();
   const id = await richRecord(page, suffix);
@@ -850,165 +794,149 @@ test('a solid is 0.62 of its section, and not a fixed size', async ({ page }) =>
   for (const width of [1440, GRID_FORK, 2560, 3440]) {
     await page.setViewportSize({ width, height: NO_SCROLL_HEIGHT });
     await page.goto(`/records/${id}`);
-    await page.locator('[data-ornament="solid"]').first().waitFor({ timeout: 20_000 });
+    await page.locator('[data-ornament="figure"]').first().waitFor({ timeout: 20_000 });
 
-    const solids = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('[data-ornament="solid"]')).map((solid) => {
-        const section = solid.closest('[data-section]')!;
-        const box = solid.getBoundingClientRect();
+    const figures = await page.evaluate(() =>
+      Array.from(document.querySelectorAll('[data-ornament="figure"]')).map((figure) => {
+        const section = figure.closest('[data-section]')!;
+        const cell = figure.closest('[data-cell]')!;
+        const f = figure.getBoundingClientRect();
+        const c = cell.getBoundingClientRect();
         return {
           name: section.getAttribute('data-section'),
+          kind: figure.getAttribute('data-figure'),
           sectionHeight: section.getBoundingClientRect().height,
-          height: box.height,
-          width: box.width,
+          height: f.height,
+          width: f.width,
+          visible: Math.max(0, Math.min(f.bottom, c.bottom) - Math.max(f.top, c.top)),
+          cutEdges: [f.top < c.top, f.bottom > c.bottom, f.left < c.left, f.right > c.right].filter(Boolean).length,
+          cutFoot: f.bottom > c.bottom,
         };
       }),
     );
+    expect(figures.length, `figures at ${width}`).toBeGreaterThan(0);
 
-    expect(solids.length, `solids at ${width}`).toBeGreaterThan(0);
+    for (const figure of figures) {
+      const label = `${figure.name} (${figure.kind}) at ${width}: ${Math.round(figure.height)}px in a ${Math.round(figure.sectionHeight)}px section`;
+      expect(figure.height / figure.sectionHeight, label).toBeCloseTo(SIZE_RATIO, 2);
+      expect(figure.visible / figure.sectionHeight, `${label}: visible`).toBeCloseTo(GATE_RATIO, 2);
+      expect(figure.cutFoot, `${label}: bleeds below the foot`).toBe(true);
+      expect(figure.cutEdges, `${label}: cut by one edge only`).toBe(1);
 
-    for (const solid of solids) {
-      expect(
-        solid.height / solid.sectionHeight,
-        `${solid.name} at ${width}: ${Math.round(solid.height)}px in a ${Math.round(solid.sectionHeight)}px section`,
-      ).toBeCloseTo(SIZE_RATIO, 2);
-
-      /*
-        **Width follows the ARCHETYPE**, never a constant: `h / 1.06` was the
-        cube's instance of the rule, not the rule. Height is governed and each
-        section's silhouette differs.
-      */
-      const archetype = archetypeFor(solid.name ?? '');
-      expect(archetype, `${solid.name} has an archetype`).not.toBeNull();
-      if (archetype === null) continue;
-
-      expect(solid.width / solid.height, `${solid.name} aspect at ${width}`).toBeCloseTo(
-        ARCHETYPE_ASPECT[archetype],
-        1,
-      );
+      /* Width follows the figure's projected box, never a constant. */
+      const spec = FIGURES[`${figure.name}:strip`] ?? FIGURES[`${figure.name}:air`];
+      expect(spec, `${figure.name} is a ruled figure`).toBeDefined();
+      if (spec === undefined) continue;
+      const box = figureBox(spec);
+      expect(figure.width / figure.height, `${label}: aspect`).toBeCloseTo(box.width / box.height, 1);
     }
   }
 });
 
-test('solids differ from each other, because their sections do', async ({ page }) => {
-  /*
-    **The check a fixed size would fail.** Under the withdrawn rule every solid
-    was identical; under this one they are 79, 72, 76 and 94 on the four drawn
-    cells. Asserted as "not all the same" rather than as four numbers, because
-    the heights depend on the record and the RELATIONSHIP is the rule.
-  */
+test('a figure’s faces are the ladder’s top, base and shade; a flat is tint or base (§25, §26)', async ({ page }) => {
+  /**
+   * §26's four steps on the route: a solid's top at 0.745 (a face only), base
+   * on the left, shade on the right — three different fills at opacity 1,
+   * never the §5.1 opacity variant. The flat beside About this record is one
+   * fill at BASE and carries no face. The matrix keeps its own greys (§5).
+   */
+  const suffix = makeSuffix();
+  const id = await richRecord(page, suffix);
+  await page.goto(`/records/${id}`);
+  await page.locator('[data-ornament="figure"]').first().waitFor({ timeout: 20_000 });
+
+  const drawn = await page.evaluate(() => {
+    const read = (el: Element) => getComputedStyle(el);
+    const figures = Array.from(document.querySelectorAll('[data-ornament="figure"]')).map((svg) => ({
+      section: svg.closest('[data-section]')?.getAttribute('data-section') ?? '?',
+      faces: Array.from(svg.querySelectorAll('polygon')).map((p) => ({
+        face: p.getAttribute('data-face'),
+        fill: read(p).fill,
+        opacity: read(p).opacity,
+      })),
+    }));
+    const flats = Array.from(document.querySelectorAll('[data-ornament="flat"]')).map((el) => ({
+      shape: el.getAttribute('data-flat'),
+      section: el.closest('[data-section]')?.getAttribute('data-section') ?? '?',
+      fill: read(el).backgroundColor,
+      polygons: el.querySelectorAll('polygon').length,
+    }));
+    const bar = document.querySelector('[data-mark="section-bar"]');
+    const matrix = document.querySelector('[data-mark="matrixSolid"]');
+    return {
+      figures,
+      flats,
+      /* The section bar is the record's BASE on the route: the flat must match it. */
+      base: bar === null ? null : read(bar).backgroundColor,
+      matrix: matrix === null ? null : Array.from(matrix.querySelectorAll('polygon')).map((p) => read(p).fill),
+    };
+  });
+
+  expect(drawn.figures.length, 'the region draws figures at all').toBeGreaterThan(0);
+  for (const figure of drawn.figures) {
+    const byFace = new Map(figure.faces.map((f) => [f.face, f.fill]));
+    expect([...byFace.keys()].sort(), `${figure.section}: the three faces`).toEqual(['base', 'shade', 'top']);
+    expect(new Set(byFace.values()).size, `${figure.section}: three DIFFERENT fills`).toBe(3);
+    expect(byFace.get('base'), `${figure.section}: the left face is the record's base, as the bar is`).toBe(drawn.base);
+    for (const f of figure.faces) expect(Number(f.opacity), `${figure.section}: §5.1 forbids an opacity variant`).toBe(1);
+  }
+
+  const disc = drawn.flats.find((f) => f.shape === 'quarterDisc');
+  expect(disc, 'the base quarter-disc renders').toBeDefined();
+  expect(disc?.section, 'beside About this record').toBe('snippet');
+  expect(disc?.polygons, 'one fill, no faces').toBe(0);
+  expect(disc?.fill, 'at BASE').toBe(drawn.base);
+
+  if (drawn.matrix !== null) {
+    expect(new Set(drawn.matrix).size, 'the matrix has three tones of its own').toBe(3);
+    for (const fill of drawn.matrix) expect(fill, 'grey, never the record’s colour').toMatch(/0\.004 80|rgb\((\d+), \1, /);
+  }
+});
+
+test('the quarter-disc bleeds off the right page edge: r 150, three quarters outside', async ({ page }) => {
+  /**
+   * §25's flat sheet: "r 150 · more than a third outside, masked by the page
+   * edge". Made structurally — a full disc centred on its cell's bottom-right
+   * corner — so the cell's clip shows one quadrant. Measured as the disc's
+   * box against the cell's and the page's.
+   */
   const suffix = makeSuffix();
   const id = await richRecord(page, suffix);
   await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
   await page.goto(`/records/${id}`);
-  await page.locator('[data-ornament="solid"]').first().waitFor({ timeout: 20_000 });
+  await page.locator('[data-ornament="flat"]').first().waitFor({ timeout: 20_000 });
 
-  const heights = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('[data-ornament="solid"]')).map((solid) => ({
-      name: solid.closest('[data-section]')!.getAttribute('data-section'),
-      section: Math.round(solid.closest('[data-section]')!.getBoundingClientRect().height),
-      solid: Math.round(solid.getBoundingClientRect().height),
-    })),
-  );
-
-  expect(heights.length, 'more than one solid to compare').toBeGreaterThan(1);
-
-  const sectionsDiffer = new Set(heights.map((row) => row.section)).size > 1;
-  if (sectionsDiffer) {
-    expect(
-      new Set(heights.map((row) => row.solid)).size,
-      `sections differ so solids must: ${JSON.stringify(heights)}`,
-    ).toBeGreaterThan(1);
-  }
-});
-
-test('the region has one full fill, in the last section, at tint', async ({ page }) => {
-  /**
-   * §9.4's fill: **once per region, not once per section**, in the last
-   * section's widest cell, at the tint step.
-   *
-   * It is ground rather than a mark — a mark anchors by contrast, ground
-   * anchors by area — so the section's bar stays and §9.4's count of four is
-   * unaffected. Both halves are asserted: exactly one fill, and the bar still
-   * there beside it.
-   */
-  const suffix = makeSuffix();
-  const id = await richRecord(page, suffix);
-  await page.goto(`/records/${id}`);
-  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
-
-  const region = await page.evaluate(() => {
-    const fills = Array.from(document.querySelectorAll('[data-ornament="fill"]'));
-    const sections = Array.from(document.querySelectorAll('[data-section]'));
-    const last = sections[sections.length - 1];
-
+  const disc = await page.evaluate(() => {
+    const el = document.querySelector('[data-flat="quarterDisc"]');
+    if (el === null) return null;
+    const d = el.getBoundingClientRect();
+    const cell = el.closest('[data-cell]')!.getBoundingClientRect();
+    const frame = document.querySelector('[data-testid="record-page-8a"]')!.getBoundingClientRect();
     return {
-      count: fills.length,
-      section: fills[0]?.closest('[data-section]')?.getAttribute('data-section') ?? null,
-      cell: fills[0]?.closest('[data-cell]')?.getAttribute('data-cell') ?? null,
-      isLastSection: fills[0]?.closest('[data-section]') === last,
-      /* The bar in that section, which the fill must not displace. */
-      barsInFilledSection:
-        fills[0]?.closest('[data-section]')?.querySelectorAll('[data-mark="section-bar"]').length ??
-        0,
-      totalBars: document.querySelectorAll('[data-mark="section-bar"]').length,
-      /* Area, which is how ground anchors. */
-      fillArea: fills[0] === undefined ? 0 : Math.round(fills[0].getBoundingClientRect().width * fills[0].getBoundingClientRect().height),
-      barArea: (() => {
-        const bar = document.querySelector('[data-mark="section-bar"]');
-        if (bar === null) return 0;
-        const box = bar.getBoundingClientRect();
-        return Math.round(box.width * box.height);
-      })(),
+      width: d.width,
+      height: d.height,
+      radius: getComputedStyle(el).borderRadius,
+      visibleWidth: Math.max(0, Math.min(d.right, cell.right) - Math.max(d.left, cell.left)),
+      visibleHeight: Math.max(0, Math.min(d.bottom, cell.bottom) - Math.max(d.top, cell.top)),
+      cellHeight: cell.height,
+      sectionWidth: el.closest('[data-section]')!.getBoundingClientRect().width,
+      cellRightIsPageRight: Math.abs(cell.right - frame.right) < 1,
     };
   });
-
-  expect(region.count, 'one fill in the whole region').toBe(1);
-  expect(region.section, "the last section's").toBe('journal');
-  expect(region.cell, 'the widest cell, holding type').toBe('content-0');
-  expect(region.isLastSection, 'last, because the page thins downward').toBe(true);
-
-  /* A mark and its ground are different objects. */
-  expect(region.barsInFilledSection, 'the section keeps its bar').toBe(1);
-  expect(region.totalBars, 'still four marks').toBeGreaterThanOrEqual(2);
-
+  expect(disc, 'the disc renders').not.toBeNull();
+  if (disc === null) return;
+  expect(disc.width, 'a disc of r 150').toBe(300);
+  expect(disc.height).toBe(300);
+  expect(disc.radius).toBe('50%');
+  expect(disc.cellRightIsPageRight, 'its cell ends at the page edge, so the mask is the page edge').toBe(true);
+  /* The radius shows across; three quarters of the disc are outside the page. */
+  expect(disc.visibleWidth, 'one quadrant across').toBeCloseTo(150, 0);
+  expect(disc.visibleWidth / disc.width, 'more than a third outside').toBeLessThan(2 / 3);
+  expect(disc.visibleWidth, 'and at most a quarter of the section across').toBeLessThanOrEqual(disc.sectionWidth / 4);
   /*
-    Ground anchors by area. The ruling puts the fill at forty times a bar; the
-    assertion is the ORDER of magnitude rather than the figure, since both
-    depend on the record's content.
+    Up the page, the quadrant shows to the cell's own height. §26 draws About
+    at 220 and the quadrant whole; a record with no snippet has a 104px cell
+    here and the quadrant is cut by its top — open with Design (NOTES).
   */
-  expect(region.fillArea / region.barArea, 'the fill is ground-scale').toBeGreaterThan(10);
-});
-
-test('the four solids are four silhouettes, not one stamp', async ({ page }) => {
-  /**
-   * All four were the same cube, which read as a repeated stamp rather than as
-   * the frame's vocabulary appearing small. Height stays governed at 0.62 and
-   * the WIDTH varies by archetype.
-   *
-   * Asserted as distinct aspect ratios rather than four widths, because the
-   * widths depend on the sections' heights and the silhouette does not.
-   */
-  const suffix = makeSuffix();
-  const id = await richRecord(page, suffix);
-  await page.goto(`/records/${id}`);
-  await page.locator('[data-ornament="solid"]').first().waitFor({ timeout: 20_000 });
-
-  const solids = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('[data-ornament="solid"]')).map((solid) => {
-      const box = solid.getBoundingClientRect();
-      return {
-        name: solid.closest('[data-section]')!.getAttribute('data-section'),
-        aspect: Math.round((box.width / box.height) * 100) / 100,
-      };
-    }),
-  );
-
-  expect(solids.length, 'solids rendered').toBeGreaterThan(1);
-
-  const aspects = new Set(solids.map((solid) => solid.aspect));
-  expect(
-    aspects.size,
-    `each section its own silhouette: ${JSON.stringify(solids)}`,
-  ).toBe(solids.length);
+  expect(disc.visibleHeight, `the quadrant up to the cell's ${Math.round(disc.cellHeight)}px`).toBeCloseTo(Math.min(150, disc.cellHeight), 0);
 });

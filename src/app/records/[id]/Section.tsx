@@ -1,6 +1,7 @@
+import type { RecordLadder } from '@/lib/colour/record-ladder';
 import { LABEL } from './grid-type';
-import { Ornament } from './OrnamentMarks';
-import { archetypeFor, mayOrnament, takesFill } from './ornament';
+import { Figure, Flat } from './OrnamentMarks';
+import { FLATS, figureAt } from './ornament';
 import {
   CELL_PADDING,
   CONTENT_SPLITS,
@@ -58,7 +59,7 @@ export function Section({
   base,
   shape,
   children,
-  tint = null,
+  ladder = null,
 }: {
   name: SectionName;
   title: string;
@@ -71,8 +72,8 @@ export function Section({
   shape: ContentShape;
   /** One node per span in the chosen split. */
   children: React.ReactNode;
-  /** §5.5's tint step, for §9.2's ornament. Null when there is no cover. */
-  tint?: string | null;
+  /** The record's ladder, for §25's figures and §26's flats. Null when there is no cover. */
+  ladder?: RecordLadder | null;
 }) {
   const split = CONTENT_SPLITS[shape];
 
@@ -182,39 +183,29 @@ export function Section({
             }}
           >
             {/*
-              §9.2's solid, where the section's type-only cell is. It carries
-              `z-index: -1` and nothing else carries anything: the cell
-              isolates, so this sits at the bottom of that stacking context and
-              every piece of content is above it by being in flow.
-            */}
-            {/*
-              §9.4's full fill — once per region, in the last section's widest
-              cell, at the TINT step.
+              §26's placement, in the section's LAST content cell — the one
+              with air at its right. A figure keyed to `strip` is the solo in
+              Price history; `air` is the pair in Pressing detail's air column
+              and has no host until §26's rows exist (step 18). The flat
+              beside About this record is the base quarter-disc on the right
+              page edge; the tint triangle on the left lives in the last row's
+              air column, likewise §26's.
 
-              **Not a mark, so it displaces none**: the section's bar stays and
-              §9.4's count of four is unaffected. Base would be wrong twice — a
-              second mass at the record's colour, and §5.2's lightness
-              derivation depends on the year field being the only base mark
-              carrying type.
+              Each carries `z-index: -1` and nothing else carries anything:
+              the cell isolates and clips, so the figure sits at the bottom of
+              that stacking context, every piece of content is above it by
+              being in flow, and its clip is its own cell.
 
-              **Ground anchors by area where a mark anchors by contrast**, and
-              a tint plane at cell scale has forty times a bar's area, which is
-              why it can be the region's floor at a step the bars would be
-              invisible at.
+              §9.4's full tint fill of the last section is gone: §26's flats
+              are the region's flat colour, and a third flat shape reads as a
+              layout with colour blocks rather than a page with marks (§13).
             */}
-            {tint !== null && takesFill(name, index) && (
-              <div
-                data-ornament="fill"
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-0"
-                style={{ background: tint, zIndex: -1 }}
-              />
+            {ladder !== null && index === cells.length - 1 && figureAt(name, 'strip') !== null && (
+              <Figure ladder={ladder} figure={figureAt(name, 'strip')!} />
             )}
-            {tint !== null &&
-              mayOrnament(name, index) &&
-              archetypeFor(name) !== null && (
-                <Ornament tint={tint} archetype={archetypeFor(name)!} />
-              )}
+            {ladder !== null && index === cells.length - 1 && FLATS.right.beside === name && (
+              <Flat ladder={ladder} flat={FLATS.right} />
+            )}
             {child}
           </div>
         ))}

@@ -1,362 +1,132 @@
 import { describe, expect, it } from 'vitest';
 import {
-  CELL_SIZE_RATIO,
-  CONTROL_CLEARANCE,
-  SECTION_CELL_DELTA,
-  GATE_RATIO,
-  ORNAMENTED_SECTIONS,
-  SIZE_RATIO,
   ARCHETYPE_ASPECT,
-  DRAWN_SOLIDS,
-  archetypeFor,
-  FILLED_SECTION,
-  takesFill,
+  BLEED_RATIO,
+  CURVED_ASPECT,
+  EXTENTS,
+  FIGURES,
+  FLATS,
+  GATE_RATIO,
+  MIN_FACE_WIDTH,
+  PAIRS,
+  SIZE_RATIO,
+  SPECIMEN_HEIGHT,
+  figureAt,
+  figureBox,
+  footprintsDisjoint,
   gatePasses,
-  mayOrnament,
+  pairBoxRatio,
+  projectedAspect,
+  silhouettesOverlap,
   solidSize,
   visibleRatio,
+  type OrnamentArchetype,
 } from './ornament';
-import { SECTIONS, carriesMark, type SectionName } from './extended-grid';
 
-/** The four carrying cells, and the heights §9.2 draws them at. */
-const DRAWN = [
-  { section: 'Pressing detail', name: 'pressing-detail', height: 127, solid: 79 },
-  { section: 'Market', name: 'market', height: 116, solid: 72 },
-  { section: 'Snippet', name: 'snippet', height: 122, solid: 76 },
-  { section: 'Price history', name: 'price-history', height: 151, solid: 94 },
-] as const;
+/**
+ * 8a §25 (the specimen, the size rule raised, distribution) and §26 (the page
+ * as a whole), with §13's ornament clause and §21's library behind them.
+ *
+ * **The size rule is 0.855 of the section's height, which is the gate
+ * itself.** At 0.62 a figure showed 78 of an allowed 107 — conservative by a
+ * quarter for no stated reason, and Adam's "boring" was that quarter. At
+ * 0.855 the visible height equals the two-thirds ceiling exactly: the gate
+ * binds, and every figure in §25's specimen is drawn touching it.
+ *
+ * **Distribution is §26's, not a rule about sections.** Two figures in eight
+ * sections, never consecutive: the pair in Pressing detail's air, the solo in
+ * Price history's strip. Two flats on opposite page edges: the tint triangle
+ * bleeding off the left in the last row's air, the base quarter-disc off the
+ * right beside About this record. Weight lightens down the page.
+ */
 
-/** The archetype each carrying section is assigned. */
-const ASSIGNED = {
-  'pressing-detail': 'beam',
-  snippet: 'plate',
-  market: 'cube',
-  'price-history': 'panel',
-} as const;
-
-describe('the size term is relative, because height is what carries presence', () => {
-  it('is 0.62 of the section height', () => {
-    expect(SIZE_RATIO).toBe(0.62);
+describe('the size rule (§25)', () => {
+  it('is 0.855 of the section height — the gate itself, raised from 0.62', () => {
+    expect(SIZE_RATIO).toBe(0.855);
   });
 
-  it('draws the four carrying cells at their ruled heights', () => {
-    /*
-      The ruled values, from the drawing. These are what a fixed-size rule
-      cannot produce: the four differ because their sections do.
-    */
-    for (const cell of DRAWN) {
-      expect(solidSize(cell.height, 'cube').height, `${cell.section} at ${cell.height}px`).toBe(
-        cell.solid,
-      );
+  it('shows exactly the two-thirds ceiling: what bleeds below the foot is the difference', () => {
+    expect(GATE_RATIO).toBeCloseTo(2 / 3, 6);
+    expect(BLEED_RATIO, 'the part below the cell’s foot, as a fraction of the section').toBeCloseTo(SIZE_RATIO - GATE_RATIO, 6);
+    /* The gate passes at the ruled size on any section: visible = 2/3, never more. */
+    for (const section of [120, 127, 175, 200, 300]) {
+      expect(gatePasses(section, section - 1), `${section}`).toBe(true);
+      expect(visibleRatio(section, section - 1), `${section}: visible`).toBeLessThanOrEqual(GATE_RATIO + 0.01);
     }
   });
 
-  it('derives width FROM height, and never re-derives height from the width', () => {
-    /**
-     * **The round-trip defect, named in §9.2 because it shipped once.**
-     *
-     * Computing height, deriving width, then re-deriving height from that width
-     * inflates every solid by a pixel and draws 0.63 where the rule says 0.62.
-     * Height is the primary term; width follows and never feeds back.
-     *
-     * Asserted by doing the round trip here and requiring it to differ — if the
-     * implementation ever adopts it, the numbers move and this fails.
-     */
-    for (const cell of DRAWN) {
-      const { width, height } = solidSize(cell.height, 'cube');
-
-      expect(width, `${cell.section} width from height`).toBe(
-        Math.round(height * ARCHETYPE_ASPECT.cube),
-      );
-
-      /* What the wrong order would have produced. */
-      const roundTripped = Math.round(width / ARCHETYPE_ASPECT.cube);
-      expect(height, `${cell.section}: height survives the round trip`).toBeLessThanOrEqual(
-        roundTripped,
-      );
-    }
-  });
-
-  it('grows with the section rather than staying fixed', () => {
-    /*
-      The withdrawn rule was half a column — a WIDTH — and in cells eleven times
-      wider than tall the dimension carrying presence is height. So the same
-      rule at two section heights gives two solids.
-    */
-    expect(solidSize(100, 'cube').height).toBeLessThan(solidSize(200, 'cube').height);
-    expect(solidSize(200, 'cube').height / solidSize(100, 'cube').height).toBeCloseTo(2, 1);
-  });
-
-  it('gives each archetype its own width at the same height', () => {
-    /**
-     * **Height is governed; width varies.** `h / 1.06` was never the rule — it
-     * was the cube's instance of it. A beam draws wide and shallow, a plate
-     * wide and flat, a panel narrow, all at the same governed height.
-     */
-    const section = 127;
-    const widths = Object.keys(ARCHETYPE_ASPECT).map((archetype) => ({
-      archetype,
-      ...solidSize(section, archetype as keyof typeof ARCHETYPE_ASPECT),
-    }));
-
-    /* One height across all four. */
-    expect(new Set(widths.map((row) => row.height)).size, 'height is the governed term').toBe(1);
-
-    /* Four distinct widths — the variety the region was missing. */
-    expect(new Set(widths.map((row) => row.width)).size, 'four silhouettes').toBe(4);
-
-    const byName = Object.fromEntries(widths.map((row) => [row.archetype, row.width]));
-    expect(byName.beam, 'a beam is wider than a cube').toBeGreaterThan(byName.cube);
-    expect(byName.panel, 'a panel is narrower than a cube').toBeLessThan(byName.cube);
-  });
-
-  it('matches the four drawn solids', () => {
-    /*
-      The ratios are read off §9.2's drawing, so this checks the reading rather
-      than restating the constant: each aspect reproduces its drawn pair.
-    */
-    for (const [archetype, drawn] of Object.entries(DRAWN_SOLIDS)) {
-      expect(
-        Math.round(drawn.height * ARCHETYPE_ASPECT[archetype as keyof typeof ARCHETYPE_ASPECT]),
-        `${archetype} ${drawn.width} × ${drawn.height}`,
-      ).toBe(drawn.width);
-    }
+  it('derives height from the section and width from the archetype, never the reverse', () => {
+    const at = (a: OrnamentArchetype) => solidSize(200, a);
+    expect(at('cube').height, 'height is the governed term').toBe(Math.round(200 * SIZE_RATIO));
+    expect(at('panel').width, 'a panel is narrower than a cube').toBeLessThan(at('cube').width);
+    expect(at('plate').width, 'a plate is wider than a beam').toBeGreaterThan(at('beam').width);
   });
 });
 
-describe('the archetype is assigned, not derived (§9.2)', () => {
-  it('gives each carrying section the archetype the ruling names', () => {
-    for (const [section, archetype] of Object.entries(ASSIGNED)) {
-      expect(archetypeFor(section), section).toBe(archetype);
+describe('the library (§21, §25): six solids, three curves, three pairs', () => {
+  it('reproduces §25’s specimen at its drawn height', () => {
+    /* Every figure on the sheet is drawn at 171 = 0.855 × 200; the widths are read off it. */
+    expect(SPECIMEN_HEIGHT).toBe(171);
+    const drawn: Record<OrnamentArchetype, number> = { beam: 249, slab: 92, cube: 148, plate: 269, panel: 88, rod: 12 };
+    for (const [archetype, width] of Object.entries(drawn) as [OrnamentArchetype, number][]) {
+      expect(Math.round(SPECIMEN_HEIGHT * ARCHETYPE_ASPECT[archetype]), `${archetype} ${width} × 171`).toBe(width);
     }
+    expect(Math.round(SPECIMEN_HEIGHT * CURVED_ASPECT.cylinder), 'cylinder').toBe(184);
+    expect(Math.round(SPECIMEN_HEIGHT * CURVED_ASPECT.ring), 'ring').toBe(226);
+    expect(Math.round(SPECIMEN_HEIGHT * CURVED_ASPECT.quarterRing), 'quarter ring').toBe(322);
   });
 
-  it('gives the four carrying sections four different archetypes', () => {
+  it('raises each solid from extents that project to the sheet’s silhouette', () => {
     /*
-      The defect this replaces: all four solids were the same cube, so the marks
-      read as a repeated stamp rather than as one vocabulary.
+      The sheet's widths are the ruling; the extents are what the build raises.
+      Asserted here because the rendering draws the EXTENTS through the
+      projection, so an extent that projects to the wrong aspect draws a form
+      the sheet does not show — and the E2E measures the rendering.
     */
-    const assigned = Object.keys(ASSIGNED).map((section) => archetypeFor(section));
-
-    expect(new Set(assigned).size, 'four silhouettes, not one stamp').toBe(4);
-  });
-
-  it('assigns nothing to a section that carries no solid', () => {
-    for (const section of ['acquisition', 'images', 'journal', 'tags']) {
-      expect(archetypeFor(section), section).toBeNull();
+    for (const archetype of Object.keys(EXTENTS) as OrnamentArchetype[]) {
+      expect(projectedAspect(EXTENTS[archetype]), archetype).toBeCloseTo(ARCHETYPE_ASPECT[archetype], 1);
     }
   });
 
-  it('cannot be derived from the cells proportion, which is why it is written down', () => {
-    /**
-     * **The rule Design tried first, and why the drawing killed it.**
-     *
-     * Deriving the archetype from the cell's proportion — beam for a wide cell,
-     * cube for a square one — is a better rule and is vacuous here. The four
-     * carrying cells measure 4.75, 6.27, 4.92 and 4.00 : 1, so every one is
-     * "wide": the rule yields one archetype for all four, and at exactly 4.00
-     * it yields no verdict at all.
-     *
-     * **A rule that derives variety from an axis the real set does not vary
-     * along produces none.** Asserted rather than described, because the
-     * temptation to re-derive it will return.
-     */
-    const proportions = [4.75, 6.27, 4.92, 4.0];
-    const WIDE = 2;
-
-    const verdicts = new Set(proportions.map((ratio) => (ratio > WIDE ? 'beam' : 'cube')));
-
-    expect(verdicts.size, 'one archetype for all four cells').toBe(1);
-    expect(Math.min(...proportions), 'and no verdict at the boundary case').toBe(4.0);
+  it('holds no face narrower than 6px at the ruled size, and the rod is the case', () => {
+    expect(MIN_FACE_WIDTH).toBe(6);
+    /* The rod passes at 12px at the ruled size and is ineligible at any smaller one. */
+    expect(solidSize(200, 'rod').width).toBe(12);
+    expect(solidSize(100, 'rod').width, 'half the size, half the width').toBeLessThan(MIN_FACE_WIDTH + 1);
   });
 
-  it('decides on the section, never on the record', () => {
-    /*
-      Same ruling as §9.4's bars: a per-record archetype makes the region's
-      ornament encode which record you are on, and the frame's construction
-      already does that deliberately. Enforced by the signature — `archetypeFor`
-      takes a section and nothing else — and checked by calling it with what a
-      per-record implementation would want.
-    */
-    const ask = archetypeFor as unknown as (section: string, ...rest: unknown[]) => unknown;
-
-    for (const section of Object.keys(ASSIGNED)) {
-      const plain = ask(section);
-      for (const extra of [false, true, 0, 'a-record-id', null, undefined]) {
-        expect(ask(section, extra), `${section} ignores ${String(extra)}`).toBe(plain);
-      }
+  it('pairs earn their box: footprints disjoint, silhouettes overlapping, area ≥ 1.2× the larger solo', () => {
+    for (const pair of PAIRS) {
+      const name = pair.join('+');
+      const { forms } = figureBox({ kind: 'pair', forms: pair });
+      expect(forms, `${name} is two placed forms`).toHaveLength(2);
+      expect(footprintsDisjoint(forms[0], forms[1]), `${name}: footprints do not overlap in plan`).toBe(true);
+      expect(silhouettesOverlap(forms[0], forms[1]), `${name}: silhouettes overlap in projection`).toBe(true);
+      expect(pairBoxRatio(pair), `${name} box area against its larger solo`).toBeGreaterThanOrEqual(1.2);
     }
+    /* Three is not in the library. */
+    expect(PAIRS.every((p) => p.length === 2)).toBe(true);
   });
 });
 
-describe("§9.4's full fill, once per region", () => {
-  it('fills the last section-s widest cell', () => {
-    expect(takesFill('journal', 0), "Journal's span-6").toBe(true);
+describe('distribution (§26 over §25)', () => {
+  it('places exactly two figures: the pair in Pressing detail’s air, the solo in Price history’s strip', () => {
+    expect(figureAt('pressing-detail', 'air')).toEqual({ kind: 'pair', forms: ['slab', 'beam'] });
+    expect(figureAt('price-history', 'strip')?.kind).toBe('solo');
+    expect(Object.keys(FIGURES)).toHaveLength(2);
   });
 
-  it('is admitted once in the whole region, not once per section', () => {
-    const filled = SECTIONS.flatMap((section) =>
-      [0, 1].filter((index) => takesFill(section, index)).map((index) => `${section}:${index}`),
-    );
-
-    expect(filled, 'exactly one fill').toEqual(['journal:0']);
-  });
-
-  it('does not displace the section-s bar', () => {
-    /**
-     * **A mark and its ground are different objects.** The fill is tint and is
-     * not a mark, so §9.4's count is unaffected — Journal keeps its base-step
-     * bar and gains a ground.
-     */
-    expect(carriesMark(FILLED_SECTION as SectionName), 'Journal still carries its bar').toBe(true);
-
-    /*
-      **Not a pinned count.** This read `toHaveLength(4)` and failed the round
-      §9.4 went to five, for a reason unrelated to the fill — the superseded-
-      ruling shape, in a test whose claim was about something else entirely.
-      The claim is that the fill displaces no mark; the number of marks is the
-      predicate's output and §9.4 states it as such rather than as a target.
-      So: every section the predicate marks is still marked with the fill in
-      place, which is what "displaces none" means.
-    */
-    for (const section of SECTIONS) {
-      expect(carriesMark(section), `${section} unchanged by the fill`).toBe(carriesMark(section));
-    }
-    expect(SECTIONS.filter(carriesMark).length, 'at least the filled section').toBeGreaterThan(0);
-  });
-
-  it('is not the cell that holds the journal form', () => {
-    /*
-      Journal is a `body` split: the entries in the 6 and the form in the 4. The
-      fill takes the WIDEST cell, which is the one holding type — putting
-      ground behind a textarea and a submit is the competition §9.2's clearance
-      rule exists to prevent.
-    */
-    expect(takesFill('journal', 1), 'not the form cell').toBe(false);
-  });
-});
-
-describe('the section and the cell are different boxes (§9.2)', () => {
-  it('sizes against the section and gates against the cell', () => {
-    /**
-     * **Both numbers are in §9.2 and neither contradicts the other.**
-     *
-     * The size is 0.62 of the SECTION, because that is the height a build has
-     * before the cells lay out. The gate's ceiling is checked against the CELL,
-     * because that is the box clipping the solid. A cell is about 1.2px shorter
-     * — the section carries the 1px border-top and its cells resolve sub-pixel
-     * — so the same solid is 0.627 of its cell.
-     */
-    const section = 127;
-    const cell = section - 1.2;
-
-    const { height } = solidSize(section, 'cube');
-
-    expect(height / section, 'against the section').toBeCloseTo(0.62, 2);
-    expect(height / cell, 'against the cell it is clipped by').toBeCloseTo(0.627, 2);
-    expect(visibleRatio(section, cell)).toBeCloseTo(0.627, 2);
-  });
-
-  it('states one rule from two boxes, and they agree', () => {
-    /**
-     * `SIZE_RATIO` is against the section, `CELL_SIZE_RATIO` against the cell.
-     * They are not two decisions — §9.2 states both and says explicitly that
-     * neither contradicts the other. This asserts they describe the same solid,
-     * so a change to one that is not a change to the other fails here.
-     */
-    for (const section of [127, 116, 122, 151, 97]) {
-      const cell = section - SECTION_CELL_DELTA;
-      const bySection = section * SIZE_RATIO;
-      const byCell = cell * CELL_SIZE_RATIO;
-
-      expect(byCell, `${section}px section: the two agree within a pixel`).toBeCloseTo(
-        bySection,
-        0,
-      );
+  it('places nothing in the other six sections — never consecutive, at most one per three', () => {
+    for (const section of ['acquisition', 'tags', 'market', 'images', 'snippet', 'journal']) {
+      expect(figureAt(section, 'strip'), section).toBeNull();
+      expect(figureAt(section, 'air'), section).toBeNull();
     }
   });
 
-  it('reports the drawn cell ratios', () => {
-    /* 0.627 on three cells and 0.623 on the fourth, per §9.2. */
-    const ratios = DRAWN.map((cell) =>
-      Number(visibleRatio(cell.height, cell.height - 1.2).toFixed(3)),
-    );
-
-    for (const ratio of ratios) {
-      expect(ratio).toBeGreaterThanOrEqual(0.62);
-      expect(ratio).toBeLessThanOrEqual(0.63);
-    }
-  });
-});
-
-describe('the gate, which no longer discriminates', () => {
-  /**
-   * **Kept as a guard against a future size change, and it cannot fire now.**
-   *
-   * Under a height-relative size the gate binds at a single value BY
-   * CONSTRUCTION: the visible height is 0.62 of the section by definition, so
-   * every placement sits at the same ratio and the ceiling is never approached
-   * from both sides.
-   *
-   * At the withdrawn fixed size the four cells measured 0.40, 0.39, 0.43 and
-   * 0.32 — all far under two-thirds, so the gate could not have fired then
-   * either. **No test here claims it discriminates**, because it does not.
-   */
-  it('passes on every cell, which is what a non-discriminating guard does', () => {
-    for (const cell of DRAWN) {
-      expect(gatePasses(cell.height, cell.height - 1.2), cell.section).toBe(true);
-    }
-  });
-
-  it('would fire if the size ratio were raised past the ceiling', () => {
-    /*
-      The guard's value is entirely in this: it catches a FUTURE size change
-      that pushes the solid past two-thirds of its cell. Demonstrated by
-      computing the ratio a larger size would produce, rather than by claiming
-      the current one is near the edge.
-    */
-    const section = 127;
-    const cell = section - 1.2;
-    const oversized = Math.round(section * 0.7);
-
-    expect(oversized / cell, 'a 0.70 ratio would exceed the ceiling').toBeGreaterThan(GATE_RATIO);
-    expect(solidSize(section, 'cube').height / cell, 'and 0.62 does not').toBeLessThan(GATE_RATIO);
-  });
-
-  it('rejects a cell too short to hold the solid', () => {
-    /* Ornament carries no data, so suppression is safe here where §5.4 forbids
-       it above the fold: a short cell simply has none. */
-    expect(gatePasses(127, 40)).toBe(false);
-    expect(gatePasses(127, 0)).toBe(false);
-    expect(gatePasses(0, 127)).toBe(false);
-  });
-});
-
-describe('the clearance is a distance, not cell membership (§9.2)', () => {
-  it('excludes the four sections whose cells hold a control', () => {
-    for (const section of ['acquisition', 'images', 'journal', 'tags']) {
-      expect(mayOrnament(section, 0), `${section} cell 0`).toBe(false);
-      expect(mayOrnament(section, 1), `${section} cell 1`).toBe(false);
-    }
-  });
-
-  it('names the four cells that hold only type', () => {
-    expect([...ORNAMENTED_SECTIONS].sort()).toEqual(
-      ['market', 'pressing-detail', 'price-history', 'snippet'].sort(),
-    );
-  });
-
-  it('places one solid per section, in one cell', () => {
-    for (const section of ORNAMENTED_SECTIONS) {
-      const cells = [0, 1].filter((index) => mayOrnament(section, index));
-      expect(cells, `${section} ornaments exactly one cell`).toHaveLength(1);
-    }
-  });
-
-  it('keeps a clearance to state, whatever the solid is sized at', () => {
-    /* Half a column remains the clearance unit even though the SIZE is no
-       longer stated in columns — the constraint is about a hit target's
-       surroundings, not about the solid's proportions. */
-    expect(CONTROL_CLEARANCE).toBeGreaterThan(0);
+  it('puts the two flats on opposite page edges, tint lower than base', () => {
+    expect(FLATS.left, 'tint triangle, left edge, last row’s air').toMatchObject({ shape: 'triangle', step: 'tint', edge: 'left' });
+    expect(FLATS.right, 'base quarter-disc, right edge, beside About').toMatchObject({ shape: 'quarterDisc', step: 'base', edge: 'right', beside: 'snippet' });
+    /* Weight lightens down the page: the base flat sits above the tint flat. */
+    expect(FLATS.right.rowIndex).toBeLessThan(FLATS.left.rowIndex);
   });
 });

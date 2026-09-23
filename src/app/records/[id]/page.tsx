@@ -15,7 +15,6 @@ import { recordLadder } from '@/lib/colour/record-ladder';
 import { GRID_FORK } from './band-geometry';
 import { LABEL } from './grid-type';
 import { Section } from './Section';
-import { EdgeFields } from './OrnamentMarks';
 import { marketFigures } from './market-median';
 import { listPricesForRecord } from '@/lib/db/queries/prices';
 import { hydrateRecord } from '@/lib/db/queries/records';
@@ -84,10 +83,10 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
   const ladderBase = recordLadder(record.spineColour)?.base ?? null;
 
   /*
-    §9.2's ornament is the TINT step throughout — ground, not the record's
-    colour arriving. The four base-step bars are unaffected.
+    §25's figures take three of the ladder's steps as faces and §26's flats
+    take tint or base, so the sections that host them get the whole ladder.
   */
-  const ladderTint = recordLadder(record.spineColour)?.tint ?? null;
+  const ladder = recordLadder(record.spineColour);
 
   return (
     <>
@@ -230,7 +229,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
               still need a reading width. The split lives inside it while the
               conversion is partway done.
             */}
-            <RecordDetail record={record} base={ladderBase} tint={ladderTint} />
+            <RecordDetail record={record} base={ladderBase} ladder={ladder} />
 
             {/*
               **No measure wrapper: §9.1 replaced it.** The rail is what holds
@@ -297,7 +296,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
               snippetEditedAt={record.snippetEditedAt}
               configured={isAnthropicConfigured()}
               base={ladderBase}
-              tint={ladderTint}
+              ladder={ladder}
             />
 
             {/*
@@ -332,7 +331,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
                 title="What it goes for now"
                 base={ladderBase}
                 shape="pair"
-                tint={ladderTint}
+                ladder={ladder}
               >
                 <MarketPanel
                   discogsReleaseId={record.pressing?.discogsReleaseId ?? null}
@@ -346,7 +345,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
 
             <PriceHistory
               base={ladderBase}
-              tint={ladderTint}
+              ladder={ladder}
               // The same id the panel above is built from, so the empty state
               // cannot point at a control that did not render.
               hasMarketPanel={record.pressing?.discogsReleaseId != null}
@@ -368,7 +367,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
 
             <RecordJournal
               base={ladderBase}
-              tint={ladderTint}
+              ladder={ladder}
               recordId={id}
               entries={record.journalEntries.map((entry) => ({
                 id: entry.id,
@@ -377,16 +376,6 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
               }))}
             />
 
-            {/*
-              §9.2's flat edge fields. **They attach to the REGION rather than
-              to a cell**, and bleed off the composition's bottom edge — the one
-              place below the fold where a height is known, because it is the
-              region's own end.
-
-              §5.1's frame rule re-derived: a mark touching a page edge is a
-              flat plane, a mark not touching it is an isometric solid.
-            */}
-            {ladderTint !== null && <EdgeFields tint={ladderTint} />}
           </div>
         </div>
       </main>

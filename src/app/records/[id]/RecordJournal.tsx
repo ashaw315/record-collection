@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import type { RecordLadder } from '@/lib/colour/record-ladder';
 import { useEffect, useRef, useState } from 'react';
 import { Section } from './Section';
 import { LABEL } from './grid-type';
@@ -53,18 +54,19 @@ export function RecordJournal({
   recordId,
   entries,
   base,
-  tint,
+  ladder,
 }: {
   recordId: string;
   entries: JournalEntryView[];
   /** §5.5's base step, for §9.4's label-span bar. */
   base: string | null;
   /**
-   * §5.5's tint step. Journal carries no solid — its textarea fails §9.2's
-   * clearance — but it takes §9.4's one full fill, which is ground rather than
-   * a mark and does not displace the bar.
+   * The record's ladder. Journal carries no figure — §26 places two in eight
+   * sections and neither here — and §9.4's full fill is withdrawn by §26's
+   * flats; the tint triangle in the last row's air is the region's, not the
+   * section's.
    */
-  tint: string | null;
+  ladder: RecordLadder | null;
 }) {
   const router = useRouter();
   const today = todayIso();
@@ -166,7 +168,7 @@ export function RecordJournal({
       twice — and `record-page-8a.spec.ts` caught it. What is true is that the
       two namings are different things, and that test now asserts exactly two.
     */
-    <Section name="journal" title="Journal" base={base} shape="body" tint={tint}>
+    <Section name="journal" title="Journal" base={base} shape="body" ladder={ladder}>
       {/*
         **The entries in the 6, the form in the 4** — §9.1's `body` split is a
         body with an action beside it. A section declaring it must fill both

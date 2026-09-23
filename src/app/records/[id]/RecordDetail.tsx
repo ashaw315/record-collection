@@ -1,3 +1,4 @@
+import type { RecordLadder } from '@/lib/colour/record-ladder';
 import Link from 'next/link';
 import { HAIRLINE, LABEL } from './grid-type';
 import { Section } from './Section';
@@ -52,11 +53,11 @@ function Field({
 export function RecordDetail({
   record,
   base,
-  tint,
+  ladder,
 }: {
   record: HydratedRecord;
-  /** §5.5's tint step, for §9.2's ornament. */
-  tint: string | null;
+  /** The record's ladder, for §25's figures and §26's flats. */
+  ladder: RecordLadder | null;
   /** §5.5's base step, for §9.3's rail bar. Null when the record has no cover. */
   base: string | null;
 }) {
@@ -130,7 +131,7 @@ export function RecordDetail({
         appears here automatically unless the grid claims it.
       */}
       {remainingFacts.length > 0 && (
-        <Section name="pressing-detail" title="Pressing detail" base={base} shape="pair" tint={tint}>
+        <Section name="pressing-detail" title="Pressing detail" base={base} shape="pair" ladder={ladder}>
           {/*
             **The pairs divide ACROSS the split, not inside one cell.** §9.1's
             5+5 is "two comparable things — pressing pairs", and a single list
