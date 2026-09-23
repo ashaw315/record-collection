@@ -30960,7 +30960,7 @@ A broken grid on `/records/[id]` was reported from a screenshot and bisected acr
 
 **And the trigger is not always the defect.** The experiment exposed something real and older: a grid ROW with a fixed height does not clamp its children, so `height: 547` on the identity band was a claim rather than a constraint. The still's svg is sized `h-full` against a grid item with no definite height, so it falls back to the viewBox's intrinsic ratio — **the construction frame's aspect drives its cell's height**. That is now a standing constraint on §17/§19: whatever aspect Design rules has to fit the 547 band, and `e2e/identity-band-holds.spec.ts` holds it there.
 
-## TASK: the E2E suite's flakes are a timeout budget, not contention — OWNED BY CODE, first half built
+## TASK: the E2E suite's flakes — one is a timeout budget, two are parallel data — OWNED BY CODE, corrected
 
 **The previous conclusion was mitigation and said so.** `playwright.config.ts` reduced workers from ~6 to 3 to 2, measured carefully, and labelled itself "MITIGATION, not diagnosis". The suite has since grown from 278 tests to 570 and the symptoms returned: 21.5 minutes, nine flaky, four failed, all passing serially.
 
@@ -30974,4 +30974,21 @@ A broken grid on `/records/[id]` was reported from a screenshot and bisected acr
 
 **The fix has two parts and neither is more workers.** Raise the per-test timeout for the specs that legitimately need it — the wall's gesture tests drive real animation clocks — and cut what the slow ones spend. `shelf.spec.ts` and `wall-first-paint.spec.ts` carry 15 `waitForTimeout` calls between them, which are fixed sleeps rather than waits on a condition; `record-navigation` already uses `page.clock` correctly and is slow for a different reason worth measuring separately.
 
+**CORRECTION, after the next full run.** The heading above said "not contention" and that was wrong for two of the four. With the 60s budget applied the suite still failed `record-navigation:247` and `shelf:490`, and their messages are not timing: `waiting for getByTestId('nav-next')` for the full 60s, and `Expected: 0 Received: 67` footprints. Read rather than reasoned:
+
+- **`shelf:490` is parallel data, and the cause is in the test.** It scopes the wall with `?artistId=` and asserts "nothing is a footprint when nothing is filtered" — but `artistId` IS a filter (§11.12), so every record another spec has seeded at that moment is a non-match and is drawn as a footprint (§11.34). Serially the database holds only its six and the count is 0. Under load it was 67. The assertion assumes an empty collection, which parallel specs do not owe it.
+- **`record-navigation:247` fails under load waiting for the next-arrow, and passes alone in 32.9s.** Cause not isolated. It seeds 60 records and navigates the wall; whether another spec's records or cleanup change its neighbours is the first thing to check. The budget was right for this test and insufficient for it.
+- **The 32.9s measurement stands** and the budget stays. One diagnosis was generalised to four failures; the remaining two needed their own messages read.
+
 **First half built.** `record-navigation`, `shelf` and `wall-first-paint` declare `test.describe.configure({ timeout: 60_000 })` — twice the measured worst, not `test.slow()`'s triple, so a busy machine has headroom and a hang still fails inside a minute. Held by `test/repo/wall-specs-declare-budget.test.ts`, which is a proxy and says so; the behaviour is the suite's summary line. **Second half open:** the 19 fixed `waitForTimeout` sleeps across `shelf`, `wall-first-paint` and `wall-route` are what make those specs slow in the first place, and each needs its condition understood before it can become a wait on that condition. Not done inside a design unit.
+
+
+## REGRESSION on main: the longest title clips its pressing block — pinned to §13's eyebrow row
+
+`e2e/genres-collapse.spec.ts` fails deterministically at HEAD (serially, `--workers=1`) and the bisect is exact: passes at `f3a3955` (§22), fails at `76cd562` (§13). §24 kept the eyebrow row and the failure with it.
+
+**The mechanism.** The eyebrow is a third grid row (`auto`) above `data-track="content"`. §4.2's give order has four terms — gap, reserve, genres run, then §18's measure — and none of them is the eyebrow, so on the collection's real five-line title the row's height comes out of nowhere: inner 510, content needs 495, ornament track at 1, and the cell overflows. `overflow-hidden` then cuts the pressing block, which is a fact rendered shorter (§6). The second test's collapse "closes the shortfall" by 15px where the run needs 13, so it collapses and still overflows.
+
+**Why no test caught it at §13.** `identity-cell.spec.ts` measures the probe's five-line case, which needs 461.9; `genres-collapse` seeds the real record with a three-genre run and a label, which needs 495. The probe under-represents the collection's worst case by 33px, and the eyebrow costs about 19. I ran the probe's spec after §13 and not this one.
+
+**Not fixed, reported.** §8.1 rules the eyebrow exists and §24 rules it stays; the drawing fits the five-line title with it. So either the eyebrow participates in the give order or the band's height budget does — and a dimensional change in this band is what cost the last four rulings. With Design.
