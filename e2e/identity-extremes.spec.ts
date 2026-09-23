@@ -30,16 +30,37 @@ async function login(page: Page) {
   await expect(page).toHaveURL('/');
 }
 
-/** Seeds one of the extremes, suffixing every NAMED thing so parallel specs cannot collide. */
+/**
+ * Seeds one of the extremes, suffixing every NAMED thing so parallel specs
+ * cannot collide — with a suffix SHORT enough not to change the cell's shape.
+ *
+ * The first version used a twelve-character suffix, and "Donna Summer
+ * dmue4rj1d9999" wraps to a second 40px line where "Donna Summer" does not.
+ * That put the record at 525 against 510 and reported a 15px overflow Design
+ * was about to rule a height term against; measured unsuffixed the same
+ * record needs 485 and fits by 25. A suffix is isolation, not shape, so it
+ * is four characters here and the one-line artist is asserted below as the
+ * precondition it is — a wrapping suffix must fail loudly, not inflate.
+ */
 export async function seedExtreme(page: Page, extreme: IdentityExtreme): Promise<string> {
-  const suffix = `x${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`;
+  const suffix = `${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`;
+  /*
+    The artist's isolation cannot be a suffix: even four characters wrap
+    "Donna Summer" at 40px in the 412 measure (measured: two lines). The
+    record's shape is one 40px line, and that is what this preserves — a
+    unique name of the SAME LENGTH, so the cell sees exactly what it sees on
+    the real record while parallel specs cannot collide. The letters are not
+    the claim; the line count is, and it is asserted as a precondition.
+  */
+  const uniqueTail = Math.random().toString(36).slice(2, 2 + (extreme.artist.length - extreme.artist.indexOf(' ') - 1));
+  const artistName = `${extreme.artist.slice(0, extreme.artist.indexOf(' ') + 1)}${uniqueTail.padEnd(extreme.artist.length - extreme.artist.indexOf(' ') - 1, 'x')}`;
   const post = async (path: string, data: unknown) => {
     const r = await page.request.post(path, { data, failOnStatusCode: false });
     /* Pressings are shared and found-or-created (§4), so the same catalogue posted twice is a 200 the second time. */
     expect([200, 201], `${path} returned ${r.status()}`).toContain(r.status());
     return r.json();
   };
-  const artist = await post('/api/artists', { name: `${extreme.artist} ${suffix}` });
+  const artist = await post('/api/artists', { name: artistName });
   trackArtist(artist.id);
   const label = await post('/api/labels', { name: `${extreme.label} ${suffix}` });
   const genreIds: string[] = [];
@@ -81,17 +102,32 @@ test('§27: every pressing fact ends inside the cell on the collection’s worst
       field: el.getAttribute('data-field') ?? '?',
       cut: +(el.getBoundingClientRect().bottom - contentBottom).toFixed(1),
     }));
+    /* Distinct ROWS, not client rects: the artist is a link inside a div, and one line yields two rects. */
+    const lines = (sel: string) => {
+      const el = cell.querySelector(sel);
+      if (el === null) return 0;
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      return new Set([...range.getClientRects()].filter((r) => r.width > 0).map((r) => Math.round(r.top))).size;
+    };
     return {
+      artistLines: lines('[data-field="artist"]'),
+      pressingLines: lines('[data-field="pressing-line"]'),
       inner: Math.round(inner),
       needed: content.scrollHeight,
       ornament: +track.height.toFixed(1),
-      margin: +(inner - content.scrollHeight - track.height).toFixed(1),
+      /* The content's margin against the cell; the reserve's height is reported beside it, not subtracted — it yields, and what it holds is what the content did not need. */
+      margin: +(inner - content.scrollHeight).toFixed(1),
       collapsed: cell.querySelector('[data-field="genre-count"]') !== null,
       facts,
     };
   });
 
-  console.log(`§27 worst title: margin ${m.margin}px (needed ${m.needed} + ornament ${m.ornament} against ${m.inner}), run ${m.collapsed ? 'collapsed' : 'listed'}`);
+  console.log(`§27 worst title: content margin ${m.margin}px (needed ${m.needed} against ${m.inner}); the reserve holds ${m.ornament}px; run ${m.collapsed ? 'collapsed' : 'listed'}`);
+
+  /* Precondition: the fixture has the RECORD's shape, not the suffix's. */
+  expect(m.artistLines, 'the artist renders on one line, as the real record does').toBe(1);
+  expect(m.pressingLines, 'the long label wraps the pressing line to two, as the real record does').toBe(2);
 
   expect(m.facts.length, 'the pressing block carries facts').toBeGreaterThan(0);
   for (const fact of m.facts) {
