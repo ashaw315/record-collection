@@ -1,4 +1,5 @@
 import { PAPER } from './paper';
+import { INK } from './ink';
 /**
  * The record's one derived value, as 8a's three-step ladder (§5.2, §5.5).
  *
@@ -124,12 +125,15 @@ export function oklchToHex({ L, C, h }: Oklch): string {
 export type RecordLadder = {
   /** Ground: behind the construction, under the identity block, the arcs. */
   tint: string;
+  /** §26: a solid's top face, halfway from tint to base. A face only — never a flat mark. */
+  top: string;
   /** Carries or frames the record's material: year field, sleeve bar, journal edge. */
   base: string;
   /** A right-hand face, never a shape. */
   shade: string;
 
   tintL: number;
+  topL: number;
   baseL: number;
   shadeL: number;
   tintHue: number;
@@ -173,13 +177,18 @@ export function recordLadder(stored: string | null): RecordLadder | null {
     of the same thing rather than three different greys.
   */
   const tint: Oklch = { ...base, L: base.L + (PAPER.L - base.L) * TINT_TOWARD_PAPER };
-  const shade: Oklch = { ...base, L: base.L * (1 - SHADE_TOWARD_INK) };
+  /* Toward INK (0.19), as §5.5 says — not toward black, which the first build did and which sat every shade face ~0.05 under the drawings. */
+  const shade: Oklch = { ...base, L: base.L - (base.L - INK.L) * SHADE_TOWARD_INK };
+  /* §26: a solid's top face, halfway from tint to base. A face and never a flat mark. */
+  const top: Oklch = { ...base, L: (tint.L + base.L) / 2 };
 
   return {
     tint: oklchToHex(tint),
+    top: oklchToHex(top),
     base: oklchToHex(base),
     shade: oklchToHex(shade),
     tintL: tint.L,
+    topL: top.L,
     baseL: base.L,
     shadeL: shade.L,
     tintHue: tint.h,

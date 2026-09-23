@@ -1,4 +1,5 @@
 import { PAPER } from './paper';
+import { INK } from './ink';
 import { describe, expect, it } from 'vitest';
 import { contrastRatio } from './record-colour';
 import { CHROMA_CEILING, LIGHTNESS_MAX, LIGHTNESS_MIN, recordLadder } from './record-ladder';
@@ -84,7 +85,21 @@ describe('the clamp (§5.2)', () => {
 });
 
 describe('the ladder (§5.5)', () => {
-  it('is exactly three steps — tint, base, shade', () => {
+  it('has a TOP face step halfway from tint to base (§26)', () => {
+    /*
+      §25's "three values" is corrected by §26 to four face steps: tint (ground
+      and flat), top (face only), base (face and flat), shade (face only). The
+      top exists because a solid's tint top vanishes on the tint disc it
+      stands on; halfway is the step, a third of the way (0.773) having been
+      withdrawn after viewing because the plate's top did not read.
+    */
+    for (const stored of ['#44946b', '#8b2f2f', '#7a7a78']) {
+      const { tintL, baseL, topL } = step(stored);
+      expect(topL, `${stored}: halfway`).toBeCloseTo((tintL + baseL) / 2, 4);
+    }
+  });
+
+  it('is exactly three steps — tint, base, shade — plus §26’s top, which is a face and never a flat', () => {
     const ladder = step('#44946b');
 
     expect(Object.keys(ladder)).toContain('tint');
@@ -103,14 +118,22 @@ describe('the ladder (§5.5)', () => {
     }
   });
 
-  it('moves tint 34% toward paper and shade 26% toward ink', () => {
+  it('moves tint 34% toward paper and shade 26% toward INK — not toward black', () => {
+    /*
+      This test carried the right name and the wrong assertion: it was named
+      "toward ink" and asserted `baseL * (1 - 0.26)`, which is 26% of the way
+      to L = 0 — black. Ink is 0.19. For §25's example base of 0.66 the two
+      give 0.488 and 0.535, and the drawings carry 0.535. A green line naming
+      a claim its assertion cannot support is the shape CLAUDE.md §2 records
+      three times; this was a fourth.
+    */
     const { baseL, tintL, shadeL } = step('#44946b');
 
     /* Lightness steps, not hue steps — which is what keeps a near-grey ladder
        reading as one object rather than as three greys. */
     /* Toward PAPER — the ground the app paints (§W.5) — not toward white. */
     expect(tintL).toBeCloseTo(baseL + (PAPER.L - baseL) * 0.34, 4);
-    expect(shadeL).toBeCloseTo(baseL * (1 - 0.26), 4);
+    expect(shadeL).toBeCloseTo(baseL - (baseL - INK.L) * 0.26, 4);
   });
 
   /**
