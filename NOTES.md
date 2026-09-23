@@ -31150,3 +31150,42 @@ The fork rule now forces `grid-row: auto` alongside the column — which my own 
 **§16's line inventory needed §26's rows.** `record-lines.spec.ts` defines an inset hairline as a top rule narrower than its parent, which was sound when every section spanned the page. §26 gives sections spans of 6, 7, 9 or 12 columns, so each section's own top rule is 1080 or 720 or 600 or 360 wide — bleeding fully across the item that draws it, which is §3's full-bleed separator working one row at a time. The test read all four as insets and reported the region's rows as a violation of a rule about the identity block. It now carries a `rowItem` flag out of the DOM (a `[data-section]` or an air cell) and measures a row item's rule against its own box rather than its parent's. The two real insets — 372 under the identity block, 220 over Images — are unchanged.
 
 **Environmental, not ours:** `test/integration/neon-transactions.test.ts` fails because `NEON_TEST_DATABASE_URL` is set but the branch rejects the password (`password authentication failed for user 'neondb_owner'`). That is the configured-but-dead state CLAUDE.md §2 calls the dangerous one, and the guard reports it loudly rather than skipping — working as designed, with a stale credential behind it. Present before this session's work.
+
+
+## Genres spec, re-derived from the targets (Adam's call, 23 Sep)
+
+Derived fresh from §4.2 and §28 rather than by reconciling the two existing claims against each other.
+
+**The governing text.** §4.2: "the genres run collapses when the ornament track has resolved to 0 and the remaining growth still exceeds the gap", and — three times — "the collapse fires on no record in the collection today", "the condition is unmet on all seventeen". §28 then changes two of that condition's inputs: **the ornament track is withdrawn** ("the identity cell carries no ornament. Its corner field and ornament track are withdrawn, and the ornament step leaves §4.2's give order"), and **the pressing line pays its own growth first**, itself untriggered on the current collection.
+
+**What the spec comes out as.** With the track gone, §4.2's three-step give order is two: the gap, then the run. The condition is no longer "the track has resolved to 0 and growth still exceeds the gap" — there is no track. It is: **the content's height exceeds the cell, measured on the cell with §28's 4px tolerance, after the pressing line has paid its own growth.** §28 is explicit that the trigger "measures the cell, not the content track". On the current collection that is unmet on every record, and the 140px the track held returns to the content, which widens the margin further. So:
+
+1. **No record in the collection collapses** — on the shared extremes fixture, genres listed in full, no count.
+2. **The mechanism exists and fires on its stated trigger** — §4.2 calls it "a guard with a stated trigger rather than a case the page currently draws", so it must stay reachable.
+3. **When it fires the count replaces the run and costs no height** — `Vinyl, LP, Album · 3 genres`, underlined, linking to the editor, format line still one line.
+
+**Where this contradicts the old claims.**
+
+- **Claim 1 ("absorbed by the track, does not collapse") is contradicted in its MECHANISM, not its outcome.** The outcome — this record does not collapse — is right and survives. But it asserts `m.track > 0` and is named for the track, so it credits the record's fit to a mechanism §28 deleted. The outcome must be derived from the cell's height.
+- **Claim 2 ("collapses only once the track is exhausted") is contradicted outright.** Its title names a trigger that no longer exists, and its fixture reaches the condition only because the artist suffix adds a 40px line — §27's third recorded instance of a test altering a fixture along the axis it measures. §4.2 says no record in the collection meets the condition, so a test reaching it on a real record's geometry would assert the opposite of the ruling.
+
+**One thing I could not derive and am not picking.** §4.2 requires the guard to be reachable; §27 forbids reaching it by inflating the fixture; §28 says nothing in the collection triggers it. That leaves the mechanism testable only by constructing the overflow deliberately — a record declared as beyond anything the collection holds — or by unit-testing `shouldCollapse` against its inputs. I would take the first, declared in the test as a constructed case rather than a collection extreme, but that is a judgement about what a spec may fabricate, so it is flagged rather than decided. **The spec is left failing in the meantime; nothing was rewritten to the re-derivation without that answer.**
+
+
+## Steps 19 and 20 built (23 Sep)
+
+**§32 replaces §23's fill test (step 19).** §23 asserted the construction fills over half its cell's height; under §31's one fixed frame that became a claim about whichever record the test seeded, and the seed it used was one of the seven below 50% — a different seed would have passed and hidden the conflict, which is §27's fixture rule unapplied. §32 moves the claim to two constants and withdraws the per-record floor, because the 35.6%–72.4% spread IS the offset §17 requires to show.
+
+**Two measured discrepancies with §32's arithmetic, asserted rather than rounded away.** The cell's inner box is **498** tall, not 499: the band's bottom hairline sits inside the content box (547 − 48 = 499, less the rule). And **§32's 92% is 459.6 ÷ 499 — the drawn height over the INNER box — which the section labels "of the cell's height"**; against the cell itself (547) it is 84.0%, and the build measures 84.2%. Both figures are right and only the label slipped. The test asserts both so neither can drift.
+
+**The seeding helper moved out of a spec.** Playwright refuses spec-to-spec imports, so `seedExtreme` now lives in `e2e/identity-extremes.ts`. A shared fixture reachable only by importing somebody's spec is one copy away from the drift §27 exists to stop.
+
+**Step 20's floor, predicted then measured — they agree exactly.** §28's prediction is area × (342 ÷ 432)² × (1,296,000 ÷ 329,160) = **×2.468**. Predicted worst at 390 × 844 from the 1440 figure: **1.265%**; measured: **1.265%**. Median predicted 1.874%, measured 1.874%. Nothing under 0.5% at either named viewport. §28 says "only then build below 480", so the breakpoints followed the measurement.
+
+**§28's breakpoints are GENERATED from the same table the tests assert.** Four widths × eight sections × two air columns is fifty-odd placements; hand-written they would be a second copy of §28's list and the drift would show only as a layout nobody measured. `regionStylesheet()` emits them from `region-rows.ts`, and the unit tests assert both the table and the generated CSS.
+
+**The defect that hid the breakpoints: inline placement.** Sections and air cells carried `grid-column`/`grid-row` inline, which beats any stylesheet rule without `!important`. The generated media queries were correct and did nothing. Measured at 1200: the region reported 8 columns of 150 (correct per §28) while four air cells — hidden by `display: none` but still inline-placed at columns 8–12 — opened four implicit 0px tracks beside them. **A hidden element's inline placement still creates grid tracks.** Placement now lives only in the stylesheet; the markup carries the section's name and the air's row index.
+
+**§28's touch floor went structural, and the first attempt was wrong.** "The hit area is padded out to 44 while the drawn type stays the same size." First attempt grew the hit area with an `::after` overlay reaching 44px around each control — it covered the controls NEXT to it, so a tap near a row of chips landed on whichever overlay came last in the DOM. What works is `min-height: 44px` with `box-sizing: border-box`: the box grows, the drawn type centres in it and does not, and nothing overlaps a neighbour. Applied to every control in the region by selector rather than to a list of elements — the lesson §9.2's z-index history already taught this build three times.
+
+**Two fixture faults in my own new spec, both worth recording.** A record with no `spine_colour` draws no flats at all (they are ladder-derived, §5.3), so the flat assertions were vacuous until the fixture got a colour. And seeding a cover plus a matrix gives ONE thumbnail, because the cover is drawn in the frame above and the gallery excludes it by design — the strip needed two non-cover images. Both would have passed as "no flats" and "one image" without the fixture being questioned.

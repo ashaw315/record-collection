@@ -210,3 +210,21 @@ const MARKED: ReadonlySet<SectionName> = new Set<SectionName>([
 export function carriesMark(section: SectionName): boolean {
   return MARKED.has(section);
 }
+
+/**
+ * §28's touch floor, as the padding a control needs to reach it.
+ *
+ * "§9.3's 44px hit floor now covers every control on the page, the 11px
+ * labels included. **The hit area is padded out to 44 while the drawn type
+ * stays the same size.**" So a 34px field keeps its 34px box and gains 5px of
+ * hit area above and below; a 30px chip gains 7. A control already at the
+ * floor gains nothing — padding a 44px button to 54 would push the rows apart
+ * for no one.
+ *
+ * Vertical only, and split evenly, so the drawn box does not move: the
+ * ruled field's underline is a mark at a position §9.3 fixes, and growing
+ * the hit area must not shift it.
+ */
+export function touchPadding(drawnHeight: number): number {
+  return Math.max(0, (CONTROL_HEIGHT - drawnHeight) / 2);
+}

@@ -71,4 +71,31 @@ export const FITS_AFTER_COLLAPSE = {
   genres: ['Disco', 'Soul', 'Pop'],
 } as const;
 
-export type IdentityExtreme = typeof WORST | typeof FITS_AFTER_COLLAPSE;
+/**
+ * **The other end of the collection: the emptiest record §29 reports on.**
+ *
+ * §29's build step 21 measures each flat "on the shared extremes fixture's
+ * emptiest and fullest records", because a flat is sized against its host and
+ * the host's height is its content's. The fullest record gives the largest
+ * flat; this gives the smallest, and §29 rules a floor only if the smallest
+ * reads as a speck.
+ *
+ * Emptiest means what the schema permits, not what looks sparse: a record
+ * needs a title and an artist and nothing else. One short title word, a
+ * one-line artist, no label, no pressing facts, no genres — so every section
+ * below the fold renders at its minimum and About has no snippet, which is
+ * the 104px host §29 names.
+ */
+export const EMPTIEST = {
+  title: 'Sun',
+  artist: 'Kim Jung Mi',
+  label: null,
+  catalogNumber: null,
+  countryPressed: null,
+  yearPressed: null,
+  releaseYear: 1973,
+  format: null,
+  genres: [] as readonly string[],
+} as const;
+
+export type IdentityExtreme = typeof WORST | typeof FITS_AFTER_COLLAPSE | typeof EMPTIEST;

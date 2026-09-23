@@ -41,6 +41,8 @@ const GOVERNED = [
     specs driving the record screen that the list had missed, which is what a
     list of names is always one commit away from.
   */
+  'e2e/record-page-28.spec.ts',
+  'e2e/flat-sizing-29.spec.ts',
   'e2e/capture/colour-budget.capture.ts',
   'e2e/capture/viewport-widths.capture.ts',
   'e2e/record-detail.spec.ts',

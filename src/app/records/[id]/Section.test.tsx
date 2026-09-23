@@ -21,14 +21,27 @@ if (ladder === null) throw new Error('the fixture colour produces a ladder');
 const render = (node: React.ReactNode) => renderToStaticMarkup(<>{node}</>);
 
 describe('a section is an item in its row (§26)', () => {
-  it('spans the columns the row gives it, and starts where the row puts it', () => {
+  it('is placed by §28’s stylesheet, never inline, so the breakpoints can move it', () => {
+    /**
+     * **An inline `grid-column` beats every stylesheet rule that lacks
+     * `!important`.** Placing sections inline pinned the region at twelve
+     * columns and the breakpoints silently did nothing — measured at 1200,
+     * where the region reported 8 columns of 150 while four air cells,
+     * hidden but still inline-placed at columns 8–12, opened four implicit
+     * 0px tracks beside them.
+     *
+     * So the markup carries the section's NAME and the generated stylesheet
+     * carries its placement, per width, from the same table
+     * (`region-rows.ts`) the unit tests assert.
+     */
     const html = render(
-      <Section name="market" title="Market" base={null} shape="pair" span={4} start={5}>
+      <Section name="market" title="Market" base={null} shape="pair">
         <div>a</div>
         <div>b</div>
       </Section>,
     );
-    expect(html, 'placed explicitly, so a row cannot reflow into a different shape').toContain('grid-column:5 / span 4');
+    expect(html, 'the name is what the stylesheet addresses').toContain('data-section="market"');
+    expect(html, 'and nothing places it inline').not.toContain('grid-column');
   });
 
   it('puts the label above the content, not in a two-column span beside it', () => {
@@ -102,17 +115,19 @@ describe('a section is an item in its row (§26)', () => {
 });
 
 describe('an air column is a cell with nothing in it but ornament (§26)', () => {
-  it('renders as a placed item carrying no type', () => {
-    const html = render(<ExtendedGrid.Air span={5} start={8} ladder={ladder} figure={{ kind: 'pair', forms: ['slab', 'beam'] }} />);
+  it('renders as an addressable item carrying no type', () => {
+    const html = render(<ExtendedGrid.Air index={0} ladder={ladder} figure={{ kind: 'pair', forms: ['slab', 'beam'] }} />);
     expect(html).toContain('data-cell="air"');
-    expect(html).toContain('grid-column:8 / span 5');
+    /* The row index is what §28's stylesheet places and hides, per width. */
+    expect(html).toContain('data-air="0"');
+    expect(html, 'nothing places it inline').not.toContain('grid-column');
     expect(html, 'the pair sits in it').toContain('data-figure="pair"');
     /* Air carries no label and no rule: it is where the rhythm makes room, not a cell with empty content. */
     expect(html).not.toContain('data-cell="label"');
   });
 
   it('renders empty when the record gives it no ornament, rather than vanishing', () => {
-    const html = render(<ExtendedGrid.Air span={5} start={8} ladder={null} figure={null} />);
+    const html = render(<ExtendedGrid.Air index={0} ladder={null} figure={null} />);
     expect(html, 'the air still holds the row’s shape').toContain('data-cell="air"');
     expect(html).not.toContain('data-ornament');
   });

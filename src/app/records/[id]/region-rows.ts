@@ -249,3 +249,120 @@ export function airRow(width: RegionWidth, rowIndex: number): number {
   }
   return rowIndex + 1;
 }
+
+/**
+ * §28: **the column never drops below 120px**, and every breakpoint is
+ * derived from that rather than from a device width.
+ *
+ * The identity cell holds §4.2's 412 title measure plus 34 of padding each
+ * side, which is 480 — four columns of 120. So 8 × 120 is the narrowest grid
+ * that seats two upper cells side by side, and 4 × 120 is one.
+ */
+export const COLUMN_MIN = 120;
+
+/**
+ * The width of one column at a viewport.
+ *
+ * **Columns GROW between breakpoints.** §28 rules it below 1440 and §30
+ * repeats it above: at 1000 the page is 1000 wide on 8 columns of 125, not
+ * 960 centred. §30 names the build's centring as a divergence from §28 in
+ * both directions, which is what step 22's check at 1000 is for.
+ */
+export function columnWidthAt(viewport: number): number {
+  return viewport / columnsFor(viewport);
+}
+
+/** The three upper cells, in the order §23 places them. */
+const UPPER_CELLS = ['identity', 'still', 'sleeve'] as const;
+
+/**
+ * §28: **no upper cell reshapes; they wrap.** "The construction's frame is
+ * fitted to a 480 cell, and reshaping it moves §5.5's floor, so the cells
+ * wrap and extra width becomes air." Three abreast at 12 columns, two then
+ * one at 8, stacked at 4 and below.
+ */
+export function upperRowsAt(viewport: number): string[][] {
+  const perRow = Math.max(1, Math.floor(columnsFor(viewport) / 4));
+  const rows: string[][] = [];
+  for (let i = 0; i < UPPER_CELLS.length; i += perRow) rows.push([...UPPER_CELLS.slice(i, i + perRow)]);
+  return rows;
+}
+
+/**
+ * The air beside the third upper cell at 8 columns, which carries what the
+ * first lower row gives up.
+ *
+ * §28: "That air carries the lower region's first figure and the tint field,
+ * moved up from the first lower row, so it reads as composed rather than as a
+ * gap." It exists only at 8 — at 12 the three cells fill the band, and below
+ * 960 they stack with nothing beside them.
+ */
+export function upperAirAt(viewport: number): { start: number; span: number; figure: string; flat: string } | null {
+  if (columnsFor(viewport) !== 8) return null;
+  return { start: 5, span: 4, figure: 'pressing-detail:air', flat: 'triangle' };
+}
+
+/**
+ * §28's groupings as CSS, generated from the table above.
+ *
+ * **Generated rather than hand-written, because §28's list is the authority
+ * and a stylesheet is a second copy of it.** Four widths × eight sections ×
+ * two air columns is fifty-odd placements; typed by hand they would drift
+ * from the table the unit tests assert, and the drift would show only as a
+ * layout nobody measured. §26 records the same argument when it says its
+ * drawing "has been redrawn to this list".
+ *
+ * A stylesheet rather than a measurement: the server has no viewport, so a
+ * JavaScript fork renders the wrong composition first and corrects it after
+ * hydration, and this page must be right on the first paint.
+ *
+ * **The columns are fractional below 1440 and fixed at or above it.** §28
+ * grows columns between breakpoints — at 1000 the page is 1000 wide on 8
+ * columns of 125 — while §18's fixed `120px` module holds at the fork and
+ * above, where §30 takes over.
+ */
+export function regionStylesheet(): string {
+  const blocks: Array<{ width: RegionWidth; rules: string[] }> = [];
+
+  for (const width of WIDTHS) {
+    const columns = COLUMNS_AT[width];
+    const rules: string[] = [
+      `[data-region="extended-grid"] { grid-template-columns: repeat(${columns}, ${width === 1440 ? `${COLUMN_MIN}px` : '1fr'}); }`,
+    ];
+
+    for (const section of SECTIONS) {
+      const { start, span, endsRow } = placementOf(width, section);
+      rules.push(`[data-section="${section}"] { grid-column: ${start} / span ${span}; grid-row: ${rowOf(width, section)}; }`);
+      /* A rule divides two cells; the last in a row has the page edge beside it. */
+      rules.push(`[data-section="${section}"] { border-right-width: ${endsRow ? 0 : 1}px; }`);
+    }
+
+    REGION_ROWS.forEach((_, index) => {
+      const air = airPlacement(width, index);
+      rules.push(
+        air === null
+          ? `[data-air="${index}"] { display: none; }`
+          : `[data-air="${index}"] { grid-column: ${air.start} / span ${air.span}; grid-row: ${airRow(width, index)}; display: block; }`,
+      );
+    });
+
+    blocks.push({ width, rules });
+  }
+
+  /*
+    Descending, so a narrower block's rules win: `max-width` queries all match
+    at a small viewport, and the last one wins by source order.
+  */
+  const [widest, ...rest] = blocks;
+  const out = [widest.rules.join('\n')];
+  rest.forEach((block, index) => {
+    /*
+      A block's ceiling is one below the width ABOVE it, not below its own:
+      `WIDTHS` names the width each grouping STARTS at, so the 8-column block
+      governs 960–1439 and its query is `max-width: 1439`.
+    */
+    const ceiling = (index === 0 ? widest.width : rest[index - 1].width) - 1;
+    out.push(`@media (max-width: ${ceiling}px) {\n${block.rules.join('\n')}\n}`);
+  });
+  return out.join('\n');
+}

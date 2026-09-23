@@ -2,11 +2,10 @@ import type { RecordLadder } from '@/lib/colour/record-ladder';
 import { LABEL } from './grid-type';
 import { Figure, Flat } from './OrnamentMarks';
 import { FLATS, figureAt, type Figure as FigureSpec } from './ornament';
-import { REGION_ROWS, airPlacement, airRow, placementOf, rowOf } from './region-rows';
+import { REGION_ROWS, airPlacement, placementOf } from './region-rows';
 import {
   CELL_PADDING,
   CONTENT_SPLITS,
-  GRID_TEMPLATE,
   MARK_HEIGHT,
   MARK_WIDTH,
   SECTION_RULE,
@@ -115,9 +114,13 @@ export function Section({
       data-section={name}
       data-shape={shape}
       style={{
-        gridColumn: `${column} / span ${width}`,
-        /* Explicit: an item with only a column is auto-placed into the first row with space. */
-        gridRow: rowOf(1440, name),
+        /*
+          Placement comes from §28's generated stylesheet, which states it per
+          width; an inline value would beat every breakpoint. `placementOf`
+          still governs — the stylesheet is generated from it — and the
+          fallbacks below are for a section rendered outside a region, which
+          is what the component test does.
+        */
         /*
           **The row's rule is the section's top.** §3 makes full-bleed the
           separator between modules, and each row of sections reads as one
@@ -214,7 +217,14 @@ export function ExtendedGrid({ children, ladder = null }: { children: React.Reac
     <div
       data-region="extended-grid"
       className="grid"
-      style={{ gridTemplateColumns: GRID_TEMPLATE, gap: 0 }}
+      /*
+        **The columns come from §28's generated stylesheet, not from here.**
+        An inline `grid-template-columns` beats every rule in a stylesheet
+        that lacks `!important`, so setting it here pinned the region at
+        twelve columns and the breakpoints silently did nothing — measured at
+        1200, where the region reported 12 columns where §28 rules 8.
+      */
+      style={{ gap: 0 }}
     >
       {children}
       {/*
@@ -234,9 +244,7 @@ export function ExtendedGrid({ children, ladder = null }: { children: React.Reac
         return (
           <ExtendedGrid.Air
             key={`air-${index}`}
-            start={air.start}
-            span={air.span}
-            row={airRow(1440, index)}
+            index={index}
             ladder={ladder}
             figure={figureAt(row.sections[0], 'air')}
             flat={FLATS.left.beside === row.sections[0] ? FLATS.left : null}
@@ -257,17 +265,17 @@ export function ExtendedGrid({ children, ladder = null }: { children: React.Reac
  * what make the left page edge in the last row (§26).
  */
 ExtendedGrid.Air = function Air({
-  span,
-  start,
-  row,
+  index,
   ladder,
   figure = null,
   flat = null,
 }: {
-  span: number;
-  start: number;
-  /** The grid row it shares with the sections it sits beside. */
-  row?: number;
+  /**
+   * Which of §26's five rows it belongs to. **The only placement it
+   * carries**: §28's generated stylesheet states its column, row and
+   * visibility per width, addressed by this index.
+   */
+  index?: number;
   ladder: RecordLadder | null;
   figure?: FigureSpec | null;
   flat?: (typeof FLATS)[keyof typeof FLATS] | null;
@@ -275,10 +283,16 @@ ExtendedGrid.Air = function Air({
   return (
     <div
       data-cell="air"
+      data-air={index}
       aria-hidden="true"
       style={{
-        gridColumn: `${start} / span ${span}`,
-        gridRow: row,
+        /*
+          **No inline placement.** §28's generated stylesheet places every air
+          column per width, and an inline `grid-column` beats it: an air cell
+          hidden at 8 columns still reached column 12 through its inline
+          value and opened four implicit 0px tracks on the region's grid.
+          The `data-air` index is what the stylesheet addresses.
+        */
         borderTop: `1px solid ${SECTION_RULE}`,
         ...CELL_LAYER,
       }}

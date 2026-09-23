@@ -6,11 +6,16 @@ import {
   FIGURE_PLACES,
   REGION_ROWS,
   WIDTHS,
+  COLUMN_MIN,
   airOf,
   airPlacement,
+  columnWidthAt,
   columnsFor,
+  upperAirAt,
+  upperRowsAt,
   placeRow,
   placementOf,
+  regionStylesheet,
   rowOf,
   airRow,
   rowsAt,
@@ -205,5 +210,98 @@ describe('rows are explicit, because a column placement alone does not pick a ro
   it('puts an air column on the same row as the sections it sits beside', () => {
     expect(airRow(1440, 0), 'row 1’s air is on row 1, beside Pressing detail').toBe(1);
     expect(airRow(1440, 4), 'row 5’s air is on row 5, before Journal').toBe(5);
+  });
+});
+
+describe('§28’s breakpoints: the column count is derived, and the region follows it', () => {
+  it('never lets a column fall below 120, which is where every breakpoint comes from', () => {
+    /*
+      §28 derives all four from one measurement: the identity cell holds
+      §4.2's 412 measure plus 34 of padding each side, which is 480, or four
+      columns of 120. 8 × 120 seats two such cells; 4 × 120 seats one.
+    */
+    expect(COLUMN_MIN).toBe(120);
+    for (const [viewport, columns] of [[1440, 12], [1200, 8], [960, 8], [700, 4], [480, 4]] as const) {
+      expect(viewport / columns, `${viewport} over ${columns} columns`).toBeGreaterThanOrEqual(COLUMN_MIN);
+    }
+  });
+
+  it('grows columns between breakpoints rather than centring a narrower page (§28, §30)', () => {
+    /*
+      "Between breakpoints, columns grow above 120 and never shrink below
+      it." §30 states the same clause for above 1440 and names the build's
+      centring as a divergence: at 1000 the page is 1000 wide on 8 columns of
+      125, not 960 centred.
+    */
+    expect(columnWidthAt(960)).toBe(120);
+    expect(columnWidthAt(1000)).toBe(125);
+    expect(columnWidthAt(1439)).toBeCloseTo(1439 / 8, 5);
+    expect(columnWidthAt(1440)).toBe(120);
+    /* And never below the floor at any width the grid is defined for. */
+    for (let w = 480; w <= 1440; w += 7) {
+      expect(columnWidthAt(w), `${w}`).toBeGreaterThanOrEqual(COLUMN_MIN);
+    }
+  });
+
+  it('keeps the upper cells at 480 and wraps them, rather than reshaping any (§28)', () => {
+    /*
+      "No upper cell reshapes: the construction's frame is fitted to a 480
+      cell, and reshaping it moves §5.5's floor, so the cells wrap and extra
+      width becomes air." At 8 columns two sit side by side and the third
+      takes a second row.
+    */
+    expect(upperRowsAt(1440), 'three abreast').toEqual([['identity', 'still', 'sleeve']]);
+    expect(upperRowsAt(960), 'two, then one with 480 of air beside it').toEqual([['identity', 'still'], ['sleeve']]);
+    expect(upperRowsAt(480), 'stacked').toEqual([['identity'], ['still'], ['sleeve']]);
+    expect(upperRowsAt(390), 'stacked below 480 too').toEqual([['identity'], ['still'], ['sleeve']]);
+  });
+
+  it('gives the third upper cell’s air row 1’s figure and the tint flat, at 8 columns', () => {
+    /*
+      §28: "That air carries the lower region's first figure and the tint
+      field, moved up from the first lower row, so it reads as composed
+      rather than as a gap." Which is why row 1 has no air of its own at 8.
+    */
+    expect(upperAirAt(960)).toEqual({ start: 5, span: 4, figure: 'pressing-detail:air', flat: 'triangle' });
+    expect(upperAirAt(1440), 'no air above the fold at 12 columns').toBeNull();
+    expect(upperAirAt(480), 'nor below 960, where the cells stack').toBeNull();
+  });
+});
+
+describe('the breakpoint stylesheet is generated from the same table the tests assert', () => {
+  const css = regionStylesheet();
+
+  it('emits one block per §28 width, in descending order so later rules win', () => {
+    const widths = [...css.matchAll(/@media \(max-width: (\d+)px\)/g)].map((m) => Number(m[1]));
+    expect(widths, 'a block for 1439, 959 and 479').toEqual([1439, 959, 479]);
+  });
+
+  it('states each width’s column count, so the page grows rather than centring (§28, §30)', () => {
+    expect(css, '12 columns at 1440 and above, fixed at the module').toContain(`repeat(12, ${COLUMN_MIN}px)`);
+    expect(css, '8 columns below 1440, fractional so they grow').toContain('repeat(8, 1fr)');
+    expect(css, '4 below 960').toContain('repeat(4, 1fr)');
+    expect(css, 'one fluid column below 480').toContain('repeat(1, 1fr)');
+  });
+
+  it('places every section at each width from the rows, never by hand', () => {
+    /* A spot check per width: if the generator stopped reading the table this diverges. */
+    expect(css, 'market takes the last 4 of row 2 at 12').toContain('[data-section="market"] { grid-column: 9 / span 4; grid-row: 2; }');
+    expect(css, 'and the 2 of 3/3/2 at 8').toContain('[data-section="market"] { grid-column: 7 / span 2; grid-row: 2; }');
+    expect(css, 'a row of its own at 4').toContain('[data-section="market"] { grid-column: 1 / span 4; grid-row: 4; }');
+  });
+
+  it('drops the air columns where §28 drops them, rather than hiding them everywhere', () => {
+    /*
+      Row 5's air survives at 8 (3 of 8 columns is 360, over the 240 a figure
+      needs) and goes at 4. Sliced between the media queries that OPEN each
+      block, so a rule in the unqueried 12-column block cannot satisfy a
+      claim about the 8-column one.
+    */
+    const block = (query: string, next: string) =>
+      css.slice(css.indexOf(query) + query.length, next === '' ? undefined : css.indexOf(next));
+    const at960 = block('@media (max-width: 1439px) {', '@media (max-width: 959px) {');
+    const at480 = block('@media (max-width: 959px) {', '@media (max-width: 479px) {');
+    expect(at960, 'row 5 keeps its air at 8 columns').toContain('[data-air="4"] { grid-column: 1 / span 3; grid-row: 5; display: block; }');
+    expect(at480, 'and loses it at 4, being under 240').toContain('[data-air="4"] { display: none; }');
   });
 });

@@ -1,4 +1,6 @@
 import { BANDS, CONTENT_MEASURE, GRID_COLUMN, GRID_COLUMNS, GRID_FORK, IDENTITY_SPANS, LOWER_SPANS, STILL_MARGIN } from './band-geometry';
+import { regionStylesheet } from './region-rows';
+import { CONTROL_HEIGHT } from './extended-grid';
 import { CELL_PADDING } from './extended-grid';
 import { BAR_BOTTOM, BLOCK_BOTTOM, COVER, COVER_COLUMN, COVER_PAD } from './cover-geometry';
 import { ConstructionStill } from './ConstructionStill';
@@ -225,30 +227,55 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
           [data-band] { grid-template-columns: 1fr !important; height: auto !important; }
           [data-band] > [data-cell] { grid-column: 1 / -1 !important; }
           [data-band="section"] > * { grid-column: 1 / -1 !important; }
-          /*
-            §26's region places every section explicitly. Below the fork the
-            twelve columns become one, so each section must take that column
-            and the AIR columns must go: §28 rules that below 960 the lower
-            region is a document, and at 4 columns no air reaches the 240 a
-            figure needs. Step 20 builds §28's own groupings at 8 and 4; this
-            keeps the single-column fork honest until then.
-          */
-          [data-region="extended-grid"] { grid-template-columns: 1fr !important; }
-          /*
-            grid-row: auto as well as the column, and the row is the half that
-            bites. §26 places every section on an explicit row, so forcing
-            only the column left the two sections of row 4 — Images and About
-            — on the same track AND the same column: two boxes at exactly the
-            same rectangle, stacked. Paint order is DOM order, so About
-            covered Images entirely and took the clicks meant for its delete
-            button. The images spec caught it as a 30s timeout on a button
-            Playwright could see was visible, enabled and stable; the page
-            looked right because About drew over a section nobody saw.
-          */
-          [data-region="extended-grid"] > * { grid-column: 1 / -1 !important; grid-row: auto !important; }
-          [data-region="extended-grid"] > [data-cell="air"] { display: none; }
           [data-cell="still"], [data-cell="sleeve"] { display: none; }
           [data-track="content"] { width: min(${CONTENT_MEASURE}px, 100vw - ${CELL_PADDING * 2}px); }
+        }
+
+        /*
+          §28's breakpoints for the lower region, GENERATED from the same
+          table region-rows.ts states and the unit tests assert. Four widths
+          × eight sections × two air columns is fifty-odd placements; hand
+          written they would be a second copy of §28's list, and the drift
+          would show only as a layout nobody measured.
+        */
+        ${regionStylesheet()}
+
+        /*
+          §28's 44px touch floor: "the hit area is padded out to 44 while the
+          drawn type stays the same size."
+
+          **The drawn box must not grow, and two attempts grew it.** An
+          ::after overlay reaching 44px around each control covered the
+          controls beside it, so a tap near a row of chips landed on whichever
+          overlay came last in the DOM. Then min-height grew the box itself —
+          and §9.2 rules the journal's date field 34px with its underline at
+          the bottom, so a 44px box moves a mark whose position is ruled
+          (caught by extended-grid's field-height claim).
+
+          So the hit area is an overlay that extends only VERTICALLY, never
+          past the control's own width, and sits behind the control rather
+          than over it. A neighbour in the same row is beside it horizontally,
+          so a vertical-only extension cannot reach one; a neighbour above or
+          below is separated by more than 5px of the cell's own 34px padding.
+          The drawn box, its height and its underline are untouched.
+        */
+        [data-section] :is(a, button, select, input, label),
+        [data-cell="air"] :is(a, button, select, input, label) { position: relative; }
+        [data-section] :is(a, button, select, input, label)::before,
+        [data-cell="air"] :is(a, button, select, input, label)::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          right: 0;
+          top: 50%;
+          height: ${CONTROL_HEIGHT}px;
+          transform: translateY(-50%);
+          /*
+            No z-index: the overlay is in the control's own stacking context
+            and paints under its text by source order, so it takes the tap
+            without hiding the type. z-index: -1 put it behind the cell's
+            background, where elementFromPoint never reached it.
+          */
         }
       `}</style>
       {/* IDENTITY BAND — 4 / 3 / 5. */}

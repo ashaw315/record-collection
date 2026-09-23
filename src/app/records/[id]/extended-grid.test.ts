@@ -17,6 +17,7 @@ import {
   carriesMark,
   type ContentShape,
   type SectionName,
+  touchPadding,
 } from './extended-grid';
 
 describe('twelve columns (§9.1)', () => {
@@ -344,5 +345,32 @@ describe('the eight sections', () => {
     /* A typo in a section name is a compile error rather than a silent miss. */
     const name: SectionName = 'journal';
     expect(SECTIONS).toContain(name);
+  });
+});
+
+describe('§28’s touch floor: the hit area grows, the drawn type does not', () => {
+  it('states the floor and the drawn heights it must not change', () => {
+    /*
+      §28: "§9.3's 44px hit floor now covers every control on the page, the
+      11px labels included. The hit area is padded out to 44 while the drawn
+      type stays the same size." So the field is still 34 tall as drawn and
+      the chip 30; what changes is the box that takes the tap.
+    */
+    expect(CONTROL_HEIGHT, 'the hit floor').toBe(44);
+    expect(FIELD_HEIGHT, 'a ruled field is still drawn at 34').toBe(34);
+    expect(CHIP_HEIGHT, 'and a chip at 30').toBe(30);
+  });
+
+  it('gives a control shorter than the floor exactly the padding that reaches it', () => {
+    /*
+      Vertical padding only, split evenly, so the drawn box stays where it is
+      and the hit area grows symmetrically around it. A control already at or
+      over the floor gets none — padding a 44px button to 54 would push the
+      rows apart for nothing.
+    */
+    expect(touchPadding(FIELD_HEIGHT), '34 + 5 + 5 = 44').toBe(5);
+    expect(touchPadding(CHIP_HEIGHT), '30 + 7 + 7 = 44').toBe(7);
+    expect(touchPadding(CONTROL_HEIGHT), 'already at the floor').toBe(0);
+    expect(touchPadding(60), 'and over it').toBe(0);
   });
 });

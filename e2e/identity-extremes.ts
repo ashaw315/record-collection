@@ -45,22 +45,32 @@ export async function seedExtreme(page: Page, extreme: IdentityExtreme): Promise
   };
   const artist = await post('/api/artists', { name: artistName });
   trackArtist(artist.id);
-  const label = await post('/api/labels', { name: `${extreme.label} ${suffix}` });
+  /*
+    **Every attached fact is optional, because EMPTIEST has none of them.**
+    §29's report needs both ends of the collection, and the emptiest record
+    is one the schema permits: a title and an artist and nothing else. A
+    helper that always posts a label and a pressing cannot produce it, and
+    seeding one by hand beside this would be the second copy §27 forbids.
+  */
+  const label = extreme.label === null ? null : await post('/api/labels', { name: `${extreme.label} ${suffix}` });
   const genreIds: string[] = [];
   for (const name of extreme.genres) genreIds.push((await post('/api/genres', { name: `${name} ${suffix}` })).id);
-  const pressing = await post('/api/pressings', {
-    catalogNumber: extreme.catalogNumber,
-    yearPressed: extreme.yearPressed,
-    countryPressed: extreme.countryPressed,
-  });
-  const format = await post('/api/formats', { name: `${extreme.format} ${suffix}` });
+  const pressing =
+    extreme.catalogNumber === null
+      ? null
+      : await post('/api/pressings', {
+          catalogNumber: extreme.catalogNumber,
+          yearPressed: extreme.yearPressed,
+          countryPressed: extreme.countryPressed,
+        });
+  const format = extreme.format === null ? null : await post('/api/formats', { name: `${extreme.format} ${suffix}` });
   const record = await post('/api/records', {
     title: extreme.title,
     artistId: artist.id,
-    labelId: label.id,
+    ...(label === null ? {} : { labelId: label.id }),
     genreIds,
-    pressingId: pressing.id,
-    formatId: format.id,
+    ...(pressing === null ? {} : { pressingId: pressing.id }),
+    ...(format === null ? {} : { formatId: format.id }),
     releaseYear: extreme.releaseYear,
   });
   return record.id as string;
