@@ -51,9 +51,17 @@ export function DeleteRecord({
       if (!response.ok) {
         const body = await response.json().catch(() => null);
         setError(deleteFailureMessage(response.status, body?.error?.code));
-        // Closed so the message is READABLE — an alert behind a modal is not.
-        // The record is still here, which a dialog still open would contradict.
-        setConfirming(false);
+        /*
+          The dialog STAYS open and carries the refusal (§24). It used to close
+          and render the alert beside the trigger, so the message was readable
+          and not behind a modal — sound while the trigger sat in the page.
+          §24 moved the trigger into the nav's actions slot, where a sentence
+          in a nowrap chrome row is neither readable nor room it has. The
+          dialog is where the question was asked, so the answer goes there:
+          "Delete X?" — "No, because…", with Cancel as the way out. The record
+          is still here, and the open dialog now says so rather than
+          contradicting it.
+        */
         return;
       }
 
@@ -67,7 +75,6 @@ export function DeleteRecord({
       router.refresh();
     } catch {
       setError('Could not reach the server. Nothing was deleted.');
-      setConfirming(false);
     } finally {
       setDeleting(false);
     }
@@ -75,15 +82,6 @@ export function DeleteRecord({
 
   return (
     <>
-      {error !== undefined && (
-        <p
-          role="alert"
-          className="mt-3 rounded-xs border border-destructive px-3 py-2 text-prose text-destructive"
-        >
-          {error}
-        </p>
-      )}
-
       {/*
         **Matched to the `Edit` it stands beside.** The two are one pair of
         controls in the chrome row and were set in two vocabularies — Edit mono
@@ -92,11 +90,13 @@ export function DeleteRecord({
         hover is kept, because that is a claim about the action rather than
         about the type.
       */}
+      {/* §24: in the nav's own type — 11px mono uppercase, ink — beside Edit in the actions slot. */}
       <button
         type="button"
         data-control="delete"
         onClick={() => setConfirming(true)}
-        className={`${LABEL} text-muted-foreground underline-offset-2 hover:text-destructive hover:underline`}
+        className={`${LABEL} underline-offset-2 hover:underline`}
+        style={{ color: 'var(--foreground)' }}
       >
         Delete record
       </button>
@@ -108,6 +108,15 @@ export function DeleteRecord({
           <DialogDescription>
             {deleteConsequence({ imageCount, journalCount })}
           </DialogDescription>
+          {/* The refusal, inside the conversation that asked (§24). */}
+          {error !== undefined && (
+            <p
+              role="alert"
+              className="rounded-xs border border-destructive px-3 py-2 text-prose text-destructive"
+            >
+              {error}
+            </p>
+          )}
           <DialogFooter>
             <DialogClose render={<Button variant="outline">Cancel</Button>} />
             <Button

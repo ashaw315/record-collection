@@ -35,7 +35,23 @@ const LINKS = [
   { href: '/manage', label: 'Manage' },
 ] as const;
 
-export function AppHeader() {
+/**
+ * **§24: one `actions` slot at the bar's right end, empty on every screen but
+ * records/[id].**
+ *
+ * §13 refused this bar for the record's controls because chrome identical on
+ * six screens cannot hold a per-record control. That objection is to the
+ * bar's CONTENTS being per-record, and a named slot answers it: the component
+ * stays identical everywhere, and only the record page puts something in it.
+ * The page fills the slot; AppHeader never decides what goes there.
+ *
+ * The 1 × 16 hairline at 0.72 is the slot's boundary — left of it is the
+ * app's, right of it is this record's — and it is drawn only when the slot is
+ * filled, because a boundary around nothing is a mark. Inline `var(--border)`
+ * rather than `bg-border`, so it resolves to the token itself rather than
+ * through the colour-mix Tailwind's utilities emit.
+ */
+export function AppHeader({ actions }: { actions?: React.ReactNode } = {}) {
   const pathname = usePathname();
 
   /*
@@ -82,8 +98,21 @@ export function AppHeader() {
         1152 where the page is 1152 — which is why this is a variable and not a
         class.
       */}
+      {/*
+        `flex-wrap` and the nav's `basis-0 grow` are applied ONLY when the slot
+        is filled, because §24 says no other screen changes. Wrapping the
+        container unconditionally moved the nav under the wordmark at 390 on
+        every screen — a wrap container breaks lines on max-content, so the
+        nav's 337px left the wordmark's row rather than shrinking into it.
+        `basis-0 grow` gives the nav a zero hypothetical size so it stays on
+        the wordmark's row and wraps internally as it always has, and only
+        the slot, at `basis-full`, takes the next row.
+      */}
       <div
-        className="mx-auto flex w-full items-baseline gap-6 px-4 py-3"
+        className={cn(
+          'mx-auto flex w-full items-baseline gap-6 px-4 py-3',
+          actions !== undefined && 'flex-wrap',
+        )}
         style={{ maxWidth: wide ? GRID_FORK : 1152 }}
       >
         {/*
@@ -132,7 +161,10 @@ export function AppHeader() {
           other. A class-name check would pass on a `flex-wrap` cancelled by an
           ancestor, which is unit 20's breakout-class defect exactly.
         */}
-        <nav aria-label="Main" className="-mx-1 flex min-w-0 flex-wrap gap-1">
+        <nav
+          aria-label="Main"
+          className={cn('-mx-1 flex min-w-0 flex-wrap gap-1', actions !== undefined && 'basis-0 grow')}
+        >
           {LINKS.map((link) => {
             // `/manage` must not light up on `/manage/anything`, and `/` would
             // prefix-match everything, so home is compared exactly.
@@ -156,6 +188,31 @@ export function AppHeader() {
             );
           })}
         </nav>
+
+        {/*
+          Below the fork the slot takes its own row. The nav's own wrap
+          (`min-w-0 flex-wrap`, above) lets it give up width, so a nowrap slot
+          on the same row squeezed the five links to one per line at 390 — a
+          five-row bar on the one screen that has the slot. `basis-full` under
+          1440 puts the slot beneath the nav, right-aligned, and the nav keeps
+          its two-row wrap. Keyed to the fork because the slot exists only on
+          the record screen, which is the fixed grid above it and one column
+          below.
+        */}
+        {actions !== undefined && (
+          <div
+            data-slot="actions"
+            className="ml-auto flex shrink-0 items-baseline gap-3 whitespace-nowrap max-[1439px]:basis-full max-[1439px]:justify-end"
+          >
+            <span
+              data-hairline=""
+              aria-hidden="true"
+              className="h-4 w-px self-center"
+              style={{ background: 'var(--border)' }}
+            />
+            {actions}
+          </div>
+        )}
       </div>
     </header>
   );

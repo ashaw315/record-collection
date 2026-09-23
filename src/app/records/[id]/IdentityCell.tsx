@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { GenresRun } from './GenresRun';
-import { INK, LABEL, LABEL_INK } from './grid-type';
+import { LABEL, LABEL_INK } from './grid-type';
 
 /**
  * 8a's identity cell — the title block from the top, the pressing block anchored
@@ -109,28 +109,19 @@ export function IdentityCell({
       style={{ gridTemplateRows: 'auto 1fr minmax(0, 140px)' }}
     >
       {/*
-        **§13: the eyebrow line, with Edit at its right end.**
+        **The eyebrow line: Collection, alone (§8.1, §24).**
 
         §8.1 rules the COLLECTION eyebrow the identity band's LABEL — not a
         link, which is why it is set in the label system rather than as a
-        control. §13 puts Edit on that line: the eyebrow is the frame's top
-        line at 11px mono and Edit is 11px mono, so the control joins a line it
-        already matches and costs no height. Not AppHeader, which is chrome
-        shared with six screens; a control acting on THIS record cannot live in
-        a bar identical on all of them.
-
-        The row is the structure that makes "costs no height" true rather than
-        hoped for: `justify-between` on a baseline-aligned row, eyebrow first
-        and Edit second, so the row's height is the line's and Edit sits at the
-        cell's right edge rather than being absolutely positioned against it.
+        control. §13 had put Edit at its right end; §24 moved both verbs to the
+        nav's `actions` slot and returned this line to Collection alone. It
+        keeps its own row because it is the frame's top line rather than part
+        of the type's measure, so it sits outside `data-track="content"`.
       */}
-      <div data-row="eyebrow" className="flex items-baseline justify-between">
+      <div data-row="eyebrow" className="flex items-baseline">
         <div data-field="eyebrow" className={LABEL} style={{ color: LABEL_INK }}>
           Collection
         </div>
-        <Link data-control="edit" href={editHref} className={`${LABEL} no-underline hover:underline`} style={{ color: INK }}>
-          Edit
-        </Link>
       </div>
       <div data-track="content" className="flex flex-col justify-between">
       {/*

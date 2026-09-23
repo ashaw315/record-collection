@@ -387,9 +387,11 @@ test('a record fulfilling a want-list entry says WHY it cannot be deleted', asyn
   await page.getByRole('button', { name: 'Delete record' }).click();
   await page.getByTestId('confirm-delete').click();
 
-  // Scoped to main: Next renders a route announcer with role="alert" too, so
-  // an unscoped query is a strict-mode violation that reads as absence.
-  await expect(page.locator('main').getByRole('alert')).toContainText(/want[- ]list/i);
+  // Scoped to the dialog, which stays open and carries the refusal (§24 moved
+  // the trigger into the nav, so an alert beside it would sit in chrome). The
+  // scope still excludes Next's route announcer, whose role="alert" made an
+  // unscoped query a strict-mode violation that read as absence.
+  await expect(page.getByRole('dialog').getByRole('alert')).toContainText(/want[- ]list/i);
   // And it is still here — a refused delete must not look like a successful one.
   await expect(page).toHaveURL(new RegExp(`/records/${record.id}`));
 });

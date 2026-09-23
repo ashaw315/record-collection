@@ -91,7 +91,33 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
 
   return (
     <>
-      <AppHeader />
+      {/*
+        §24: the record's two verbs ride the nav's `actions` slot, in this
+        order, and this page is the only one that fills it. 11px mono
+        uppercase in ink — the nav's own type — so they cost no height. Delete
+        record asks before it acts, naming the record, which is how §13's
+        worry (the app's only irreversible act in chrome) is kept.
+      */}
+      <AppHeader
+        actions={
+          <>
+            <Link
+              data-control="edit"
+              href={`/records/${id}/edit`}
+              className={`${LABEL} no-underline hover:underline`}
+              style={{ color: 'var(--foreground)' }}
+            >
+              Edit
+            </Link>
+            <DeleteRecord
+              recordId={id}
+              title={record.title}
+              imageCount={record.images.length}
+              journalCount={record.journalEntries.length}
+            />
+          </>
+        }
+      />
 
       {/*
         **No padding above 8a, and nothing between it and the nav.**
@@ -350,29 +376,6 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
                 note: entry.note,
               }))}
             />
-
-            {/*
-              **§13: Delete, alone, at the foot of §9's region.**
-
-              Not beside Edit, and the reason is not caution about mis-clicks:
-              deletion is the record's END and the page is the record. §11.19
-              put "Open the full record" above "Turn over" and "Put back" on
-              exactly this ground — a departure separates from the verbs that
-              act on the object — and Delete is neither, being the departure
-              that takes the record with it. So it sits after everything the
-              record is, which is the last row of the region.
-
-              Keeping it with Edit would have put the app's only irreversible
-              act in a chrome line, where every other screen's chrome is safe.
-            */}
-            <div data-row="delete" className="px-[34px] py-[18px]">
-              <DeleteRecord
-                recordId={id}
-                title={record.title}
-                imageCount={record.images.length}
-                journalCount={record.journalEntries.length}
-              />
-            </div>
 
             {/*
               §9.2's flat edge fields. **They attach to the REGION rather than
