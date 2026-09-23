@@ -536,6 +536,8 @@ test('a filter empties seats rather than re-seating them, and the emptied seats 
         pieces: document.querySelectorAll('[data-piece]').length,
         drawn: document.querySelectorAll('a[data-seat]').length,
         footprints: document.querySelectorAll('[data-footprint]').length,
+        /* Footprints among THIS fixture's records — a footprint carries the displaced record's id. */
+        footprintsMine: all.filter((id) => document.querySelector(`[data-footprint="${id}"]`) !== null).length,
         seats: Object.fromEntries(all.map((id) => [id, at(id)])),
       };
     }, seatIds);
@@ -546,17 +548,18 @@ test('a filter empties seats rather than re-seating them, and the emptied seats 
   const rest = await measure(ids);
   expect(rest.drawn, 'all six are drawn unfiltered').toBe(6);
   /*
-    **The unfiltered footprint count is a BASELINE, not zero.** This line
-    asserted `toBe(0)` and failed under the full suite with 67: `?artistId=`
-    is a filter (§11.12), so every record another spec has seeded at that
-    moment is displaced and §11.34 owes it a footprint. Serially the database
-    holds only these six and the count is 0; in parallel it is whatever the
-    other specs have in flight. The claim this test can make is that its six
-    are all drawn (above) and that the genre filter displaces exactly three
-    MORE (below) — the footprints belong to records outside the fixture, and
-    counting them was asserting an empty collection nobody owes this test.
-    The remaining race is the gap between two page loads, and it is named.
+    **Counted among this fixture's records, not the whole wall's.** This line
+    asserted zero footprints on the wall and failed under the full suite with
+    67: `?artistId=` is a filter (§11.12), so every record another spec has
+    seeded at that moment is displaced and §11.34 owes it a footprint. A
+    baseline-and-delta was tried first and failed too — the navigation spec
+    seeds sixty records and deletes them between this test's two page loads,
+    so even the gap between loads is wide enough. So a footprint now carries
+    the displaced record's id, and the claim is exact and owes nothing to the
+    rest of the database: none of these six is a footprint unfiltered, and
+    exactly three are once the genre filter is on.
   */
+  expect(rest.footprintsMine, 'none of the six is a footprint when nothing is filtered').toBe(0);
 
   await page.goto(`/?artistId=${artistId}&genreId=${targetId}`);
   await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
@@ -569,7 +572,7 @@ test('a filter empties seats rather than re-seating them, and the emptied seats 
   expect(Math.abs(filtered.length - rest.length), 'the row did not shorten').toBeLessThan(1);
 
   /* §11.34: every seat a record was displaced from draws its footprint. */
-  expect(filtered.footprints - rest.footprints, 'one footprint per emptied seat, over the baseline').toBe(3);
+  expect(filtered.footprintsMine, 'one footprint per emptied seat, among the six').toBe(3);
 
   /* The POSITIONS, against the unfiltered layout: every survivor is where it was. */
   for (const [index, id] of ids.entries()) {

@@ -1,4 +1,4 @@
-import { OUT_MS } from '../src/app/wall/gesture';
+import { OUT_MS, RETURN_MS } from '../src/app/wall/gesture';
 import { expect, test, type Page } from '@playwright/test';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
@@ -86,13 +86,37 @@ const pulled = (page: Page) =>
 
 async function pullFirst(page: Page) {
   await page.locator('[data-seat] [data-spine]').first().click();
-  await expect(page.getByTestId('record-chrome')).toBeVisible({ timeout: 5000 });
+  /* Settled, not merely pulled — see `settle`. */
+  await settle(page);
 }
 
 /** Settled: one record out, its panel up, nothing else moving. */
+/**
+ * **Waits for the gesture to SETTLE, which neither the chrome nor the pulled
+ * element signals.** Both exist from the first frame of a slide, so the old
+ * body returned mid-flight. Measured under load — three workers, four
+ * repeats, a probe before every click: the arrows were absent at the moment
+ * of the click on eight of ten slides, with a record pulled and 59 seats
+ * standing. The gesture's clock is frame-driven, and under load frames
+ * arrive slower than wall-clock, so a slide that takes 1.6s alone was still
+ * running when the next click came. The click then waited for an arrow that
+ * arrived late, and ten late arrivals exceeded the test's budget. Alone,
+ * four of four passed.
+ *
+ * The stage draws the arrows only once the arriving record has settled
+ * (`WallStage`, the `settled` gate), so an arrow IS the settled signal the
+ * product already exposes. At any position with two or more records at
+ * least one arrow exists once settled — `next` everywhere but the last seat,
+ * `previous` everywhere but the first — so this waits for either. The
+ * budget is generous because it is the load case that needs it; a hang
+ * still fails inside it.
+ */
 async function settle(page: Page) {
   await expect(page.getByTestId('record-chrome')).toBeVisible({ timeout: 5000 });
-  await expect.poll(() => page.locator('[data-pulled]').count(), { timeout: 5000 }).toBe(1);
+  await expect(
+    page.locator('[data-testid="nav-next"], [data-testid="nav-previous"]').first(),
+    'the gesture has settled: an arrow is drawn',
+  ).toBeVisible({ timeout: 20_000 });
 }
 
 test('the arrows move to the adjacent record in the WALL\'S order', async ({ page }) => {
@@ -249,8 +273,20 @@ test('put back lands in the HELD record\'s slot after navigating', async ({ page
   try {
     await login(page);
     await page.setViewportSize({ width: 1280, height: 900 });
+    /*
+      **On Playwright's clock, so the ten slides cost no wall time.** Measured
+      under the suite's load: ten real slides took 32.9s alone and exceeded
+      the 60s budget at two workers, because the gesture's clock is
+      frame-driven and frames arrive slower on a busy machine. Driving the
+      clock — as the adjacency test above does — makes each slide complete
+      the moment it is advanced, so the test is load-PROOF rather than
+      load-tolerant: `settle` still waits on the arrow, and the arrow appears
+      on the next frame. The claim is unchanged.
+    */
+    await page.clock.install();
     await page.goto(`/?artistId=${artistId}`);
     await expect(page.getByTestId('wall')).toBeVisible({ timeout: 30_000 });
+    await page.clock.pauseAt(Date.now() + 1000);
     /* Every seat's home, read before anything moves — the layout's own answer. */
     const homes = await page.evaluate(() =>
       Object.fromEntries(
@@ -260,10 +296,14 @@ test('put back lands in the HELD record\'s slot after navigating', async ({ page
         ]),
       ),
     );
-    await pullFirst(page);
+    await page.locator('[data-seat] [data-spine]').first().click();
+    await page.clock.runFor(OUT_MS + 40);
+    await settle(page);
 
     for (let i = 0; i < 10; i += 1) {
       await page.getByTestId('nav-next').click();
+      /* A slide is one out gesture on one clock (navigate): advance it, then wait for the arrow it settles into. */
+      await page.clock.runFor(OUT_MS + 40);
       await settle(page);
     }
     const held = await pulled(page);
@@ -272,6 +312,8 @@ test('put back lands in the HELD record\'s slot after navigating', async ({ page
     await expect(page.locator(`a[data-seat="${held}"]`)).toHaveCount(0);
 
     await page.getByTestId('record-chrome').getByTestId('action-put').click();
+    /* The return animates too; advance its length so the seat can be re-read. */
+    await page.clock.runFor(RETURN_MS + 40);
     await expect(page.locator('[data-pulled]')).toHaveCount(0, { timeout: 5000 });
 
     /*

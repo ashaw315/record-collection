@@ -361,7 +361,8 @@ export function WallLabelled({
           return (
             <polygon
               key={seat.id}
-              data-footprint=""
+              /* Carries the displaced record's id, so a test can count footprints among ITS records rather than the whole wall's. */
+              data-footprint={seat.id}
               points={points(topFace({ ...seat, height: 0 }))}
               fill="none"
               stroke={FOOTPRINT}

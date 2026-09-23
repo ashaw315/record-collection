@@ -376,9 +376,10 @@ describe('§11.34: an emptied seat draws its footprint', () => {
       drawn.
     */
     const html = render([seat('a', null), { ...seat('b', null), empty: true }, seat('c', null)], null);
-    const prints = [...html.matchAll(/data-footprint=""/g)];
+    /* A footprint carries the displaced record's id, so an E2E can count footprints among ITS records. The claim here — one per emptied seat — is unchanged. */
+    const prints = [...html.matchAll(/data-footprint="[^"]+"/g)];
     expect(prints, 'one per emptied seat').toHaveLength(1);
-    const tag = /<polygon[^>]*data-footprint=""[^>]*>/.exec(html)?.[0] ?? '';
+    const tag = /<polygon[^>]*data-footprint="[^"]+"[^>]*>/.exec(html)?.[0] ?? '';
     /* Projected geometry, not a page rule: it is a polygon in the drawing, at 1px. */
     expect(tag).toContain('stroke-width="1"');
     expect(tag).toContain('fill="none"');
@@ -397,12 +398,12 @@ describe('§11.34: an emptied seat draws its footprint', () => {
 
   it('counts one footprint per emptied seat, and none when nothing is filtered', () => {
     const none = render([seat('a', null), seat('b', null), seat('c', null)], null);
-    expect([...none.matchAll(/data-footprint=""/g)]).toHaveLength(0);
+    expect([...none.matchAll(/data-footprint="[^"]+"/g)]).toHaveLength(0);
     const two = render(
       [seat('a', null), { ...seat('b', null), empty: true }, { ...seat('c', null), empty: true }, seat('d', null)],
       null,
     );
-    expect([...two.matchAll(/data-footprint=""/g)]).toHaveLength(2);
+    expect([...two.matchAll(/data-footprint="[^"]+"/g)]).toHaveLength(2);
   });
 });
 
