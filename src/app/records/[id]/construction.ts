@@ -272,6 +272,76 @@ function shuffled<T>(items: readonly T[], next: () => number): T[] {
 
 const SCALE = 15;
 
+/**
+ * The extent bands, named so eligibility and drawing cannot drift apart.
+ *
+ * §5.5's floor governs the coloured faces, so a carrying form draws from a
+ * higher band — a 1.25x nudge rather than a redesign. `carrierFaceArea` judges
+ * eligibility at the carrier floor because that is the size the form will
+ * actually be if it is chosen.
+ */
+/**
+ * **§22's bar: the largest face a carrier must be able to draw.**
+ *
+ * Derived from §5.5's floor rather than chosen. The floor is 0.5% of the page
+ * on the PAIR, so each of the two faces has to average 0.25%; at the drawn
+ * scale the four large archetypes measure 0.17–0.23% at the carrier extent's
+ * FLOOR and reach the floor together once the extent jitter and the record's
+ * own scale are in. The cube and needle measure 0.06% and 0.05% — a third of
+ * the next form up — and no jitter closes that gap.
+ *
+ * So the bar sits at the discontinuity the archetype set already has, in the
+ * frame's own units: 900 admits beam, panel, plate and slab and excludes cube
+ * and needle. §5.5 calls the cube small by design and the needle is ink
+ * (`INK_ARCHETYPES`), so the bar formalises a size relationship the set
+ * already encodes rather than introducing a new one.
+ */
+const MIN_CARRIER_FACE = 900;
+const CARRIER_EXTENT_FLOOR = 1.05;
+const PLAIN_EXTENT_FLOOR = 0.8;
+const EXTENT_JITTER = 0.45;
+
+/**
+ * **§22's eligibility: the largest visible face a form would draw AS A
+ * CARRIER, in the frame's own units.**
+ *
+ * Judged at the carrier extent's floor (1.05) rather than at whatever extent
+ * the form happens to have, because §22's bar is "at the drawn scale" and a
+ * form not currently carrying is drawn from 0.80 — about 1.7x smaller in area
+ * than it would be if chosen. Measuring the form where it stands would rule
+ * out forms that are in fact large enough once they carry.
+ *
+ * The projection is what the eye sees, so the comparison is the shoelace over
+ * the projected corners rather than the form's own proportions: the isometric
+ * foreshortens the two ground axes by cos30 and the vertical not at all, and
+ * comparing shape units gets the upright panel wrong by an order of magnitude.
+ */
+function carrierFaceArea(archetype: Archetype): number {
+  const [su, sv, sw] = SHAPE[archetype];
+  const du = su * CARRIER_EXTENT_FLOOR;
+  const dv = sv * CARRIER_EXTENT_FLOOR;
+  const dw = sw * CARRIER_EXTENT_FLOOR;
+
+  const faces: Array<Array<readonly [number, number, number]>> = [
+    [[0, 0, dw], [du, 0, dw], [du, dv, dw], [0, dv, dw]],
+    [[0, dv, 0], [du, dv, 0], [du, dv, dw], [0, dv, dw]],
+    [[du, 0, 0], [du, dv, 0], [du, dv, dw], [du, 0, dw]],
+  ];
+
+  let largest = 0;
+  for (const corners of faces) {
+    const pts = corners.map(([cu, cv, cw]) => project(cu, cv, cw));
+    let sum = 0;
+    for (let i = 0; i < pts.length; i += 1) {
+      const [x1, y1] = pts[i];
+      const [x2, y2] = pts[(i + 1) % pts.length];
+      sum += x1 * y2 - x2 * y1;
+    }
+    largest = Math.max(largest, (Math.abs(sum) / 2) * SCALE * SCALE);
+  }
+  return largest;
+}
+
 /** The frame, parsed once, as the envelope every form is clamped into. */
 const [FRAME_X, FRAME_Y, FRAME_W, FRAME_H] = CONSTRUCTION_FRAME.split(' ').map(Number);
 
@@ -425,13 +495,39 @@ function formsFor(recordId: string, forceSymmetry?: number): { forms: Form[]; sy
   const colourable = order.filter((a) => !INK_ARCHETYPES.includes(a));
 
   /*
-    Four grey archetypes; the hash picks which two of them are "the colour
-    form" pair by picking the two it EXCLUDES. Exactly two remain, so the
-    selection is fully determined once the exclusion is drawn — there is no
-    ranking and therefore no sort to filter wrongly.
+    **§22: the hash orders the forms and the colour takes the first ELIGIBLE
+    two in that order.**
+
+    It previously picked the two it excluded, which let the colour land on the
+    cube — and §5.5 calls the cube small by design, so those records failed the
+    0.5% floor by construction: six of seventeen, worst 0.320%.
+
+    §17 and §20 both tried to fix that by moving the thing being measured (the
+    frame's aspect, then the plan's width) and both were withdrawn. This moves
+    neither: resizing the cube would tune the vocabulary to the measurement,
+    re-measuring the floor would tune the measurement to the vocabulary, and
+    choosing where the colour lands tunes neither — the assignment is the
+    generator's, and §21 already makes it the one place a hash carries meaning,
+    because the construction IS the record.
+
+    Determinism is kept by construction rather than by luck: the order comes
+    from the same hash as the arrangement and depends only on the id, so a
+    record's colour placement is exactly as stable as its arrangement.
+
+    Eligibility is judged at the extent the form WOULD be drawn at if it
+    carried — the carrier band's floor — because that is "at the drawn scale"
+    in §22's sense. Judging a form at its non-carrier extent understates it by
+    about 1.7x in area and would rule out forms that are in fact large enough.
   */
-  const excluded = shuffled(colourable, next).slice(0, colourable.length - 2);
-  const facesCarryColour = colourable.filter((a) => !excluded.includes(a));
+  const ordered = shuffled(colourable, next);
+  const eligible = ordered.filter((a) => carrierFaceArea(a) >= MIN_CARRIER_FACE);
+  /*
+    §22: an arrangement with no eligible pair is ILLEGAL. That case has not
+    been observed across the seventeen and `colour-eligibility.test.ts`
+    asserts it, so this falls back rather than handling it silently — taking
+    the hash's own order, which keeps the result deterministic.
+  */
+  const facesCarryColour = (eligible.length >= 2 ? eligible : ordered).slice(0, 2);
 
   const forms: Form[] = order.map((archetype, index) => {
     const [su, sv, sw] = SHAPE[archetype];
@@ -453,7 +549,7 @@ function formsFor(recordId: string, forceSymmetry?: number): { forms: Form[]; sy
       forms and the two carriers were not the extremes.
     */
     const carriesColour = facesCarryColour.includes(archetype);
-    const extent = (carriesColour ? 1.05 : 0.8) + next() * 0.45;
+    const extent = (carriesColour ? CARRIER_EXTENT_FLOOR : PLAIN_EXTENT_FLOOR) + next() * EXTENT_JITTER;
 
     const du = su * extent;
     const dv = sv * extent;

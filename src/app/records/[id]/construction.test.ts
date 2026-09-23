@@ -7,6 +7,7 @@ import {
   construction,
   project,
 } from './construction';
+import { REAL_RECORD_IDS } from './real-records';
 
 /**
  * The isometric construction (Isometric Probe §1, §4, §5).
@@ -18,26 +19,15 @@ import {
  * size band, and the rule that the disc never takes base.
  */
 
-/** Every real record id in the collection, so the sheet is the real sheet. */
-const REAL_IDS = [
-  'e73e1de1-3686-4a81-8544-ca2300e187bb',
-  'd7047c62-149e-42fa-8cda-fac3f90c47cc',
-  '158a3163-6a56-4673-8f88-27e7b2aec724',
-  'c61c5919-8f50-4782-8e04-419fb3d2b148',
-  'a31591e7-2e28-42e7-84d5-2a1f96ad31fd',
-  'b9a9a9db-4bf5-42e6-b751-0eba2dfe8002',
-  '30504952-8d43-4c2e-b687-b89558371df5',
-  '78da2ee9-f7c7-40ea-8149-269454437ef6',
-  '372aba39-59ad-46c8-b76b-f33ecae75c98',
-  '464979c3-aaa2-43c5-afd4-8dc4ee2e98c6',
-  '7d35194b-5a02-4e31-a568-d95a9b32b0cd',
-  'b4abf39a-df33-4a9e-b65c-64d3d0a39b78',
-  '4a1e2b7c-0000-4000-8000-000000000001',
-  '4a1e2b7c-0000-4000-8000-000000000002',
-  '4a1e2b7c-0000-4000-8000-000000000003',
-  '4a1e2b7c-0000-4000-8000-000000000004',
-  '4a1e2b7c-0000-4000-8000-000000000005',
-] as const;
+/**
+ * Every real record id, from the one list every test shares.
+ *
+ * It was duplicated here and in §20's first test, which carried twelve of the
+ * seventeen — and the five it omitted were the five worst, so it reported the
+ * worst record at 0.540% when the truth was 0.440% with two under the floor.
+ * A sample that drops its tail reports its median as its minimum.
+ */
+const REAL_IDS = REAL_RECORD_IDS;
 
 describe('the projection is the wall’s, generalised (§1)', () => {
   /**
