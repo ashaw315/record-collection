@@ -30960,7 +30960,7 @@ A broken grid on `/records/[id]` was reported from a screenshot and bisected acr
 
 **And the trigger is not always the defect.** The experiment exposed something real and older: a grid ROW with a fixed height does not clamp its children, so `height: 547` on the identity band was a claim rather than a constraint. The still's svg is sized `h-full` against a grid item with no definite height, so it falls back to the viewBox's intrinsic ratio — **the construction frame's aspect drives its cell's height**. That is now a standing constraint on §17/§19: whatever aspect Design rules has to fit the 547 band, and `e2e/identity-band-holds.spec.ts` holds it there.
 
-## TASK: the E2E suite's flakes are a timeout budget, not contention — OWNED BY CODE, diagnosis complete
+## TASK: the E2E suite's flakes are a timeout budget, not contention — OWNED BY CODE, first half built
 
 **The previous conclusion was mitigation and said so.** `playwright.config.ts` reduced workers from ~6 to 3 to 2, measured carefully, and labelled itself "MITIGATION, not diagnosis". The suite has since grown from 278 tests to 570 and the symptoms returned: 21.5 minutes, nine flaky, four failed, all passing serially.
 
@@ -30974,4 +30974,4 @@ A broken grid on `/records/[id]` was reported from a screenshot and bisected acr
 
 **The fix has two parts and neither is more workers.** Raise the per-test timeout for the specs that legitimately need it — the wall's gesture tests drive real animation clocks — and cut what the slow ones spend. `shelf.spec.ts` and `wall-first-paint.spec.ts` carry 15 `waitForTimeout` calls between them, which are fixed sleeps rather than waits on a condition; `record-navigation` already uses `page.clock` correctly and is slow for a different reason worth measuring separately.
 
-**Not yet done.** This is the diagnosis and the measurement; the change is not made. Doing it inside a design-ruling unit would bury it.
+**First half built.** `record-navigation`, `shelf` and `wall-first-paint` declare `test.describe.configure({ timeout: 60_000 })` — twice the measured worst, not `test.slow()`'s triple, so a busy machine has headroom and a hang still fails inside a minute. Held by `test/repo/wall-specs-declare-budget.test.ts`, which is a proxy and says so; the behaviour is the suite's summary line. **Second half open:** the 19 fixed `waitForTimeout` sleeps across `shelf`, `wall-first-paint` and `wall-route` are what make those specs slow in the first place, and each needs its condition understood before it can become a wait on that condition. Not done inside a design unit.

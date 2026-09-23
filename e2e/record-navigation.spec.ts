@@ -3,6 +3,27 @@ import { expect, test, type Page } from '@playwright/test';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
 
+
+/*
+  **A 60-second budget, because the 30-second default did not fit this file
+  on an IDLE machine.** Diagnosed in NOTES ("the E2E suite's flakes are a
+  timeout budget, not contention"): the suite's four load failures all passed
+  serially, which looked like contention, and was not. `record-navigation`'s
+  put-back test measured 32.9s running entirely alone; `wall-first-paint`'s
+  arrival-script test 23.5s. These specs drive the wall's real animation
+  clocks — SWING 1300, OUT 1600, RETURN 861 — through several pulls per test,
+  so their floor is high and any load pushed them over the default. Under
+  load, which spec crossed first varied, so the failing set moved between
+  runs and no single spec ever looked broken.
+
+  Twice the measured worst, not `test.slow()`'s triple: enough headroom for
+  a busy machine, not enough to hide a hang for minutes. Held by
+  test/repo/wall-specs-declare-budget.test.ts. The fixed `waitForTimeout`
+  sleeps in these files are the second half of the same task and are not
+  touched here.
+*/
+test.describe.configure({ timeout: 60_000 });
+
 /**
  * **Moving between records without putting one back (§10b, 13b).**
  *
