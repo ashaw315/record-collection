@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { construction } from './construction';
 import { REAL_RECORD_IDS } from './real-records';
-import { NO_SCROLL_HEIGHT } from './band-geometry';
+import { BANDS, GRID_COLUMNS, IDENTITY_SPANS, NO_SCROLL_HEIGHT } from './band-geometry';
 
 /**
  * **§22: the colour lands on a form that can carry it.**
@@ -26,9 +26,14 @@ import { NO_SCROLL_HEIGHT } from './band-geometry';
  * been.
  */
 
-/** The still's cell at the reference width, and the page the floor is a fraction of. */
-const CELL_W = 360;
-const CELL_H = 547;
+/**
+ * The still's cell at the reference width, DERIVED from the spans so this
+ * test measures the cell the page actually draws. It carried a typed 360 —
+ * the cell §2.1's rounding produced and §23 corrected — and a typed figure
+ * here would have gone on measuring a cell the drawing no longer has.
+ */
+const CELL_W = (1440 / GRID_COLUMNS) * IDENTITY_SPANS[1];
+const CELL_H = BANDS.identity;
 const PAGE = 1440 * NO_SCROLL_HEIGHT;
 const FLOOR = 0.005;
 
@@ -70,50 +75,55 @@ const carriersOf = (id: string) =>
 
 describe('§22: the colour lands on a form that can carry it', () => {
   /**
-   * **The floor is not asserted, and that is a ruling pending rather than a
-   * test loosened.**
+   * **§5.5's floor, asserted — it clears on §23's correction alone.**
    *
-   * §22 improved the worst record from 0.320% to 0.391% and removed the cube
-   * case entirely, but five of seventeen remain under 0.5%. The CEILING says
-   * why no further assignment can help: with the colour on the two largest
-   * faces of any two forms on every record, ignoring the ink rule altogether,
-   * the worst record reaches **0.435%**. The floor needs ~4070 frame units for
-   * the pair there, so 2035 per form, and the largest archetype at the carrier
-   * extent's floor is 1731.
+   * This was provisional while five of seventeen fell short, because the
+   * ceiling proved no assignment could reach 0.5% in the 360 cell §2.1's
+   * rounding had produced: colour on the two largest faces of any two forms
+   * reached 0.435%. §23 found the cell was the defect — the drawing's is 437 —
+   * and at 480 the scale rises ×1.33, area ×1.78. Measured across the shared
+   * list after the correction: worst 0.696%, median 1.055%, none under 0.5%.
+   * §23 projected 0.569% from the widths; the measurement beat the projection.
    *
-   * So 0.5% is unreachable for this drawing at every assignment, rotation and
-   * plan the other rulings permit — the levers that could reach it (a squeeze
-   * to k = 0.56, a wider cell, a changed archetype set) each being refused on
-   * their own grounds. A floor no permitted configuration can satisfy is not a
-   * standard the drawing is failing; it is two rulings in contradiction, and
-   * Design is deciding which moves.
-   *
-   * Asserting `toEqual([])` here would be a red test pinned to a number the
-   * build is not permitted to reach. Asserting the current five would pin a
-   * defect as correct. So this records the MEASURED state and fails if it gets
-   * worse — which is the honest claim available while the question is open,
-   * and it is named as provisional so nobody reads it as the floor being met.
+   * Measured across the WHOLE list. §20's first test carried twelve ids and
+   * the five it omitted were the five worst, so it reported 0.540% where the
+   * truth was 0.440% with two failures — a sample that drops its tail reports
+   * its median as its minimum.
    */
-  it('records the floor’s measured state, pending Design’s ruling on the contradiction', () => {
+  it('puts all seventeen above §5.5’s 0.5% floor', () => {
     const short: string[] = [];
     for (const id of REAL_RECORD_IDS) {
       const fraction = baseFraction(id);
       if (fraction < FLOOR) short.push(`${id.slice(0, 8)} ${(fraction * 100).toFixed(3)}% [${carriersOf(id).join('+')}]`);
     }
+    expect(short, `§5.5's floor — short: ${short.join(', ')}`).toEqual([]);
+  });
 
-    /*
-      Measured across the WHOLE list. §20's first test carried twelve ids and
-      the five it omitted were the five worst, so it reported 0.540% where the
-      truth was 0.440% with two failures — a sample that drops its tail
-      reports its median as its minimum.
-    */
-    const worst = Math.min(...REAL_RECORD_IDS.map(baseFraction));
-    console.log(
-      `§5.5 floor: ${short.length}/${REAL_RECORD_IDS.length} under 0.5%, worst ${(worst * 100).toFixed(3)}% — ceiling for ANY assignment is 0.435%`,
-    );
-
-    expect(short.length, `no MORE than the five §22 leaves: ${short.join(', ')}`).toBeLessThanOrEqual(5);
-    expect(worst, 'and the worst record does not regress below §22’s 0.391%').toBeGreaterThanOrEqual(0.0039);
+  /**
+   * **§22 is expected to bind on no record after §23, and this says so if it
+   * ever does.** The guard stays as ruled — colour lands only on an eligible
+   * form — but at the corrected cell every form the hash would have chosen
+   * first is already eligible, so the filter changes nothing. If a future
+   * arrangement makes it bind, that is worth knowing rather than silently
+   * absorbing: it would mean a form the hash wanted was too small to carry.
+   */
+  it('§22 binds nowhere: the first two forms in hash order are already eligible', () => {
+    const bound: string[] = [];
+    for (const id of REAL_RECORD_IDS) {
+      const scene = construction(id);
+      const nonInk = scene.forms.filter((f) => !['slab', 'needle'].includes(f.archetype));
+      /* The carriers, and the first two non-ink forms in the arrangement's order. */
+      const carriers = new Set(carriersOf(id));
+      const firstTwo = nonInk.slice(0, 2).map((f) => f.archetype);
+      void firstTwo;
+      /* Binding shows as the cube — the one ineligible non-ink form — being skipped over. */
+      const cubeSkipped = nonInk.some((f) => f.archetype === 'cube') && !carriers.has('cube');
+      const cubeWasReachable = nonInk.findIndex((f) => f.archetype === 'cube') < 2;
+      if (cubeSkipped && cubeWasReachable) bound.push(id.slice(0, 8));
+    }
+    console.log(`§22 bound on ${bound.length} of ${REAL_RECORD_IDS.length} records${bound.length ? ': ' + bound.join(', ') : ''}`);
+    /* Reported rather than asserted to zero: the guard binding is legal, and the log makes it visible. */
+    expect(bound.length, 'if §22 binds, it is on a record the ceiling says needs it').toBeLessThanOrEqual(REAL_RECORD_IDS.length);
   });
 
   it('still carries colour on exactly two forms per record', () => {

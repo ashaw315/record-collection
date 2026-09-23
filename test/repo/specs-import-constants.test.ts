@@ -54,6 +54,7 @@ const GOVERNED = [
   'e2e/identity-band-holds.spec.ts',
   'e2e/identity-measure.spec.ts',
   'e2e/record-controls.spec.ts',
+  'e2e/identity-band-23.spec.ts',
   'e2e/images.spec.ts',
   'e2e/lookup-flows.spec.ts',
   'e2e/snippet.spec.ts',

@@ -111,7 +111,22 @@ export const BAND_TOTAL = BANDS.nav + BANDS.identity + BANDS.record + BANDS.tail
  * rather than hiding it, because it is visible — and the proportions the
  * composition is doing survive it.
  */
-export const IDENTITY_SPANS = [4, 3, 5] as const;
+/**
+ * **§23: 4 / 4 / 4.** The construction takes the fourth column from the cover.
+ *
+ * §2.1 snapped the upper dividers from 451 and 888 to 480 and 840, and named
+ * the identity cell's gain of 29 and the figures cell's loss of 51 — but the
+ * construction cell went from a drawn 437 to 360, 18% narrower, and nothing
+ * named it. Then the band grew to 547 when the tail moved in. 0.97 in the
+ * drawing became 0.658 in the build, and §17 through §22 tried to make the
+ * drawing fit a cell the file had introduced one section earlier.
+ *
+ * Every cell now moves toward the drawing: identity 480 against a drawn 451,
+ * construction 480 against 437. The identity cell cannot give the column —
+ * its 412 measure needs the 480 (§4, §18) — so the cover does, and its
+ * geometry is ruled in `cover-geometry.ts` rather than left to the span.
+ */
+export const IDENTITY_SPANS = [4, 4, 4] as const;
 
 /**
  * Lower band: 3 / 2 / 2 / 2 / 3 — provenance, matrix, release year, market,

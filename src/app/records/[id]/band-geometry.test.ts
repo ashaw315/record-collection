@@ -112,7 +112,16 @@ describe('twelve columns at 1440 (§2.1)', () => {
 
     expect(identity + still + sleeve, 'twelve columns').toBe(12);
     expect(spanWidth(identity, 1440), 'the raster had 451').toBe(480);
-    expect(spanWidth(identity + still, 1440), 'the raster had 888').toBe(840);
+    /*
+      §23 moved the second divider: the construction takes the fourth column
+      from the cover, so identity + still is 960 rather than 840. The CLAIM —
+      on the grid rather than on the raster — is unchanged; 960 is as much a
+      column edge as 840 was, and it is 72px closer to the raster's 888 than
+      840 was to it. §2.1 had rounded the construction cell from a drawn 437 to
+      360 without naming the loss.
+    */
+    expect(spanWidth(identity + still, 1440), 'the raster had 888').toBe(960);
+    expect(spanWidth(still, 1440), 'the construction cell, drawn at 437').toBe(480);
   });
 
   it('divides the lower band 3 / 2 / 2 / 2 / 3', () => {

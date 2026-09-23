@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import '../../../../test/component/next-navigation';
 import { RecordPage8a, type PageRecord } from './RecordPage8a';
+import { BAR_BOTTOM, COVER_COLUMN } from './cover-geometry';
 
 /**
  * §5.3, the record with no cover: "the fallback is ink for all eight marks
@@ -71,26 +72,30 @@ describe('the release-year field on the record with no cover (§5.3)', () => {
   });
 });
 
-describe('the sleeve block sits inside the bar, not against the page edge', () => {
+describe('the sleeve block shares the bar’s column (§23)', () => {
   /*
-    §5.1 anchors the construction with a block INSIDE the sleeve's base bar —
-    its own comment says "not straddling the frame edge", because a mark half
-    off the page reads as a crop. With a cover the bar is a flex child and the
-    block's `right-[10px]` lands inside it. With NO cover the bar is absolutely
-    positioned at the cell's right edge and the block, offset by the same 10px,
-    landed against the viewport's edge: a stray ink square belonging to no
-    panel, which is how a reader reported it.
+    **§23 put the block in a ruled column, and the two cases collapse into
+    one.** These tests pinned `right-[20px]` without a cover and `right-[10px]`
+    with one — offsets that kept a 46px block clear of a 10px bar, because a
+    block at the viewport's edge read as "a stray ink square belonging to no
+    panel". §23 answers the same complaint by structure: the bar and the block
+    SHARE one 30px column at the cell's right edge, bar above and block below,
+    so the block belongs to the column whether or not there is a cover. The
+    claim survives; the mechanism is the column, not an offset.
   */
-  it('is offset past the bar’s width when there is no cover', () => {
-    const html = renderToStaticMarkup(<RecordPage8a record={{ ...record(null), coverUrl: null }} />);
-    const block = /<div[^>]*data-mark="sleeveBlock"[^>]*>/.exec(html)?.[0] ?? '';
-    expect(block, 'the block is drawn').not.toBe('');
-    expect(block, 'clear of the bar, not at the page edge').toMatch(/right-\[20px\]/);
-  });
-
-  it('keeps its position inside the bar when there is a cover', () => {
-    const html = renderToStaticMarkup(<RecordPage8a record={{ ...record(null), coverUrl: 'https://c/x.jpg' }} />);
-    const block = /<div[^>]*data-mark="sleeveBlock"[^>]*>/.exec(html)?.[0] ?? '';
-    expect(block).toMatch(/right-\[10px\]/);
+  it('sits in the shared column below the bar, with or without a cover (§23)', () => {
+    for (const coverUrl of [null, 'https://c/x.jpg']) {
+      const html = renderToStaticMarkup(<RecordPage8a record={{ ...record(null), coverUrl }} />);
+      const block = /<div[^>]*data-mark="sleeveBlock"[^>]*>/.exec(html)?.[0] ?? '';
+      const bar = /<div[^>]*data-mark="sleeveBar"[^>]*>/.exec(html)?.[0] ?? '';
+      expect(block, `cover=${coverUrl}: the block is drawn`).not.toBe('');
+      /* Both at the cell's right edge, both the column's width. */
+      expect(block, 'block at the right edge').toMatch(/right-0/);
+      expect(bar, 'bar at the right edge').toMatch(/right-0/);
+      expect(block, `block is ${COVER_COLUMN} wide`).toMatch(new RegExp(`width:${COVER_COLUMN}px`));
+      expect(bar, `bar is ${COVER_COLUMN} wide`).toMatch(new RegExp(`width:${COVER_COLUMN}px`));
+      /* Block below bar: its top is the bar's bottom. */
+      expect(block, `block starts at ${BAR_BOTTOM}`).toMatch(new RegExp(`top:${BAR_BOTTOM}px`));
+    }
   });
 });

@@ -1,5 +1,6 @@
 import { BANDS, CONTENT_MEASURE, GRID_COLUMN, GRID_COLUMNS, GRID_FORK, IDENTITY_SPANS, LOWER_SPANS } from './band-geometry';
 import { CELL_PADDING } from './extended-grid';
+import { BAR_BOTTOM, BLOCK_BOTTOM, COVER, COVER_COLUMN, COVER_PAD } from './cover-geometry';
 import { ConstructionStill } from './ConstructionStill';
 import { IdentityCell } from './IdentityCell';
 import { gridModules, type Diagonal } from './grid-modules';
@@ -338,62 +339,61 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
           <ConstructionStill recordId={record.id} spineColour={record.spineColour} />
         </div>
 
-        {/* The sleeve, with §5.1's base bar on its right edge. */}
+        {/*
+          **§23's cover cell: 26 + 414 + 10 + 30, ruled rather than left to the
+          span.** The cover is 414 square at (26, 26). The sleeve bar and the
+          black block share ONE 30px column at the cell's right edge — bar
+          above, block below — which is how the supplied render draws them.
+          They had been drawn side by side, needing 58px beside the cover that
+          a 480 cell does not have.
+
+          Absolutely placed against the ruled figures rather than laid out by
+          flex, because §23 gives coordinates and a flex row would derive them
+          from the cover's size — a square source lands in the same place
+          either way, but a rule stated as positions is checked as positions.
+
+          **Fitted, not cropped** survives: `object-contain` on a 414 square.
+          The paper below the cover is the band's, as in the render, and
+          carries nothing.
+
+          The bar runs 26 → 398 and the block 398 → 544, §23's figures as
+          written. 544 sits inside the 547 band; the 3px of bottom padding
+          against 26 at the top is the open input Design has been asked to
+          settle, and it is recorded in `cover-geometry.ts` rather than closed
+          here.
+        */}
         <div
           data-cell="sleeve"
           className="relative overflow-hidden"
           style={{ gridColumn: `span ${IDENTITY_SPANS[2]}` }}
         >
-          {/*
-            **Fitted, not cropped.** `object-cover` on a square source in a cell
-            that widens without heightening shows a horizontal slice — measured
-            at 83% of the artwork visible at 1440 and 47% at 2560. The sleeve is
-            §5's entry point and the source of the page's colour, so showing
-            less than half of it was the worst cost of the unspecified widths.
-
-            `object-contain` with the artwork centred, and the bar anchored to
-            the ARTWORK'S edge rather than the cell's, so the mark stays on the
-            thing it marks.
-          */}
           {record.coverUrl === null ? (
-            /* §5.3: a frame at paper luminance, never a filled rectangle. */
-            <div className="absolute inset-[18px]" style={{ border: `1px solid ${RULE}` }} />
-          ) : (
-            <div className="relative flex h-full w-full items-center justify-end">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={record.coverUrl}
-                alt=""
-                className="block h-full w-auto max-w-full object-contain"
-              />
-              <div
-                data-mark="sleeveBar"
-                className="h-full w-[10px] shrink-0"
-                style={{ background: base }}
-              />
-            </div>
-          )}
-          {record.coverUrl === null && (
+            /* §5.3: a frame at paper luminance at the square's exact size, never a filled rectangle. */
             <div
-              data-mark="sleeveBar"
-              className="absolute top-0 right-0 h-full w-[10px]"
-              style={{ background: base }}
+              data-mark="coverFrame"
+              className="absolute"
+              style={{ left: COVER_PAD, top: COVER_PAD, width: COVER, height: COVER, border: `1px solid ${RULE}` }}
+            />
+          ) : (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              data-cover=""
+              src={record.coverUrl}
+              alt=""
+              className="absolute block object-contain"
+              style={{ left: COVER_PAD, top: COVER_PAD, width: COVER, height: COVER }}
             />
           )}
-          {/*
-            Inside the bar, not straddling the frame edge. It anchors the
-            construction (§5.1) and a mark half off the page reads as a crop.
-
-            The offset follows the bar. With a cover the bar is a flex child
-            and 10px lands inside it; with none the bar is absolutely
-            positioned at the cell's right edge, so the same 10px put the
-            block against the VIEWPORT's edge — a stray ink square belonging
-            to no panel. 20px clears the 10px bar either way.
-          */}
+          <div
+            data-mark="sleeveBar"
+            className="absolute right-0"
+            style={{ top: COVER_PAD, width: COVER_COLUMN, height: BAR_BOTTOM - COVER_PAD, background: base }}
+          />
+          {/* Inside the column, below the bar. It anchors the construction (§5.1). */}
           <div
             data-mark="sleeveBlock"
-            className={`absolute bottom-[18px] h-[46px] w-[46px] ${record.coverUrl === null ? 'right-[20px]' : 'right-[10px]'}`}
-            style={{ background: INK }}
+            className="absolute right-0"
+            style={{ top: BAR_BOTTOM, width: COVER_COLUMN, height: BLOCK_BOTTOM - BAR_BOTTOM, background: INK }}
           />
         </div>
       </div>
