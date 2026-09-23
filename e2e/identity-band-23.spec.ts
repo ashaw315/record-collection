@@ -2,6 +2,8 @@ import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { BANDS, GRID_FORK, IDENTITY_SPANS } from '../src/app/records/[id]/band-geometry';
 import { COVER, COVER_PAD, COVER_GAP, COVER_COLUMN, BAR_BOTTOM, BLOCK_BOTTOM } from '../src/app/records/[id]/cover-geometry';
+import { WORST } from '../src/app/records/[id]/identity-extremes';
+import { seedExtreme } from './identity-extremes';
 
 registerCleanup();
 
@@ -121,26 +123,94 @@ test('§23: the cover cell — 26 + 414 + 10 + 30, bar above the block in one co
   expect(m.block!.b, 'the block reaches the band’s foot, not 3px short of it').toBe(m.cellH);
 });
 
-test('§23: the construction fills its cell’s height, which is what the correction was for', async ({ page }) => {
+test('§32: the FRAME fills the cell, which is constant against constant', async ({ page }) => {
+  /**
+   * **§32 moves the fill assertion from each record to the frame, and
+   * withdraws the per-record height floor.**
+   *
+   * §23 asserted that the construction fills over half its cell's height,
+   * against the 41.9% the old 360-wide cell gave. Under §31's one fixed
+   * frame that became a claim about whichever record the test happened to
+   * seed: the seventeen span 35.6% to 72.4%, so a different seed would have
+   * passed and hidden the conflict. §32: "any threshold inside that range
+   * would pick a winner between §23 and §17 without saying so", because the
+   * spread IS the per-record offset that §17 requires to show.
+   *
+   * So the claim is about two constants. The frame is 294.8 × 313.6 (§31)
+   * and the cell's inner box is 432 × 499 (§26's 24px margin), so the fit is
+   * height-bound at 432 × 459.6 — **92% of the cell's height**. It varies
+   * with no record, and it still catches the defect §23 was written for: a
+   * drawing whose aspect does not match its cell's filled 66% of the height
+   * and would fail this.
+   *
+   * On the shared extremes fixture (§27, build step 19), because a seed
+   * record is exactly what let the old test hide a conflict.
+   */
   await login(page);
-  const id = await seed(page);
+  const id = await seedExtreme(page, WORST);
   await page.setViewportSize({ width: GRID_FORK, height: 1000 });
   await page.goto(`/records/${id}`);
-  await page.waitForTimeout(800);
+  await page.locator('[data-testid="construction-still"]').waitFor({ timeout: 20_000 });
 
-  const fill = await page.evaluate(() => {
-    const cell = document.querySelector('[data-cell="still"]')!.getBoundingClientRect();
-    const svg = document.querySelector('[data-cell="still"] svg')!;
-    let l = Infinity, t = Infinity, r = -Infinity, b = -Infinity;
-    for (const p of Array.from(svg.querySelectorAll('polygon'))) {
-      if (Number(getComputedStyle(p).opacity) < 0.5) continue;
-      const box = (p as SVGGraphicsElement).getBoundingClientRect();
-      l = Math.min(l, box.left); t = Math.min(t, box.top); r = Math.max(r, box.right); b = Math.max(b, box.bottom);
-    }
-    return { fillW: (r - l) / cell.width * 100, fillH: (b - t) / cell.height * 100 };
+  const drawn = await page.evaluate(() => {
+    const cell = document.querySelector('[data-cell="still"]')!;
+    const svg = document.querySelector('[data-testid="construction-still"]')!;
+    const style = getComputedStyle(cell);
+    const box = cell.getBoundingClientRect();
+    return {
+      cellHeight: box.height,
+      cellWidth: box.width,
+      innerHeight: box.height - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom),
+      innerWidth: box.width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
+      viewBox: svg.getAttribute('viewBox'),
+      svgHeight: svg.getBoundingClientRect().height,
+      svgWidth: svg.getBoundingClientRect().width,
+    };
   });
-  console.log(`§23 construction fill: ${fill.fillW.toFixed(1)}% wide, ${fill.fillH.toFixed(1)}% tall (opaque polygons; disc and shadows excluded)`);
 
-  /* Before §23 the height fill was 41.9%: half the cell dead. The correction is the height. */
-  expect(fill.fillH, 'height fill rose from the 41.9% the 360 cell gave').toBeGreaterThan(50);
+  /* The two constants, read off the page rather than retyped. */
+  const [, , frameW, frameH] = (drawn.viewBox ?? '0 0 1 1').split(' ').map(Number);
+  expect(frameW, 'the frame is one box for every record (§31)').toBeCloseTo(294.8, 1);
+  expect(frameH).toBeCloseTo(313.6, 1);
+  expect(Math.round(drawn.innerWidth), 'the cell’s inner box after §26’s 24px margin').toBe(432);
+  /*
+    **498 where §32 says 499: the band's bottom hairline sits inside the
+    cell's content box.** The band is 547 and the margin takes 48, which is
+    §32's 499; the rule takes the last pixel. The frame is width-bound here,
+    so the height has slack and the pixel changes nothing about the fit — it
+    is asserted rather than rounded away so a change to the rule cannot move
+    the box silently.
+  */
+  expect(Math.round(drawn.innerHeight), 'less the band’s bottom rule').toBe(498);
+
+  /*
+    The fit is the smaller of the two ratios (§26). With a frame taller than
+    wide in a box taller than wide, it binds on WIDTH: 432 / 294.8 = 1.465,
+    which draws 313.6 × 1.465 = 459.6 of the 499 available.
+  */
+  const scale = Math.min(drawn.innerWidth / frameW, drawn.innerHeight / frameH);
+  const drawnHeight = frameH * scale;
+  expect(drawnHeight, 'the frame draws 459.6 tall').toBeCloseTo(459.6, 0);
+
+  /*
+    **§32's 92% is of the INNER box, not of the cell, and the section labels
+    it "of the cell's height".** 459.6 ÷ 499 = 92.1%; 459.6 ÷ 547 = 84.0%.
+    Both figures are right and only the label slipped, so both are asserted
+    here: the ratio §32 computed, against the box it computed it from, and
+    the same height against the cell that contains it. Reported to Design
+    rather than picking one, since the number that matters — the drawn
+    height — is the same either way.
+  */
+  const fillOfInner = (drawnHeight / drawn.innerHeight) * 100;
+  const fillOfCell = (drawnHeight / drawn.cellHeight) * 100;
+  expect(fillOfInner, `§32's ratio: ${fillOfInner.toFixed(1)}% of the inner box`).toBeCloseTo(92, 0);
+  expect(fillOfCell, `and ${fillOfCell.toFixed(1)}% of the cell itself`).toBeCloseTo(84, 0);
+
+  /*
+    And the SVG really is that box: the element fills the inner box, so the
+    fit above is the fit the page draws rather than one this test computed
+    beside it. `preserveAspectRatio="meet"` does the fitting inside it.
+  */
+  expect(drawn.svgWidth, 'the svg fills the inner box').toBeCloseTo(drawn.innerWidth, -0.5);
+  expect(drawn.svgHeight).toBeCloseTo(drawn.innerHeight, -0.5);
 });
