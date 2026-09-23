@@ -94,8 +94,9 @@ export function DeleteRecord({
       */}
       <button
         type="button"
+        data-control="delete"
         onClick={() => setConfirming(true)}
-        className={`mt-1 ${LABEL} text-muted-foreground underline-offset-2 hover:text-destructive hover:underline`}
+        className={`${LABEL} text-muted-foreground underline-offset-2 hover:text-destructive hover:underline`}
       >
         Delete record
       </button>

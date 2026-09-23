@@ -190,47 +190,12 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
             />
 
             {/*
-              **The chrome sits below 8a, because the screen above it is spoken
-              for.** Edit, Delete and the way back are real controls and none of
-              them is in 8a's drawing — its bands are identity / record / tail
-              and it draws no controls cell. Putting them here keeps the 900px
-              screen whole without inventing a cell to hold them, which would be
-              a design decision made to fit an existing control.
+              **§13 removed the chrome band that sat here.** Edit is on the
+              frame's eyebrow line and Delete is the region's last row, so the
+              container had nothing left to hold — §8.1 having already deleted
+              its only other occupant. Deleting it gives §9's region its height
+              back, which is §11.28's move on the shelf arriving here.
             */}
-            <div
-              data-testid="record-controls"
-              className="mx-auto flex items-center justify-between gap-3 px-[14px] py-4"
-              style={{ maxWidth: GRID_FORK }}
-            >
-              {/*
-                **§8.1 deleted the ← Collection link, and it is gone (§12).**
-                "Navigation is constant across records (§3), so it lives in
-                AppHeader and nowhere else; the 10px ← Collection is deleted."
-                The capability is not lost with it: the header carries
-                Collection at `/`, which is the one route, and
-                `record-back-route.spec.ts` asserts both halves — the control
-                gone AND the collection still one click away — because
-                deleting a link is only correct if the way out survives.
-
-                The band itself stays for now and §13 removes it: that ruling
-                also moves Edit to the eyebrow and Delete to the region's foot,
-                at which point the container has nothing left to hold.
-              */}
-              <div className="flex items-center gap-3">
-                <Link
-                  href={`/records/${id}/edit`}
-                  className={`${LABEL} no-underline hover:underline`}
-                >
-                  Edit
-                </Link>
-                <DeleteRecord
-                  recordId={id}
-                  title={record.title}
-                  imageCount={record.images.length}
-                  journalCount={record.journalEntries.length}
-                />
-              </div>
-            </div>
 
             {/*
               **`RecordDetail` carries its own measure now**, because it holds
@@ -385,6 +350,29 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
                 note: entry.note,
               }))}
             />
+
+            {/*
+              **§13: Delete, alone, at the foot of §9's region.**
+
+              Not beside Edit, and the reason is not caution about mis-clicks:
+              deletion is the record's END and the page is the record. §11.19
+              put "Open the full record" above "Turn over" and "Put back" on
+              exactly this ground — a departure separates from the verbs that
+              act on the object — and Delete is neither, being the departure
+              that takes the record with it. So it sits after everything the
+              record is, which is the last row of the region.
+
+              Keeping it with Edit would have put the app's only irreversible
+              act in a chrome line, where every other screen's chrome is safe.
+            */}
+            <div data-row="delete" className="px-[34px] py-[18px]">
+              <DeleteRecord
+                recordId={id}
+                title={record.title}
+                imageCount={record.images.length}
+                journalCount={record.journalEntries.length}
+              />
+            </div>
 
             {/*
               §9.2's flat edge fields. **They attach to the REGION rather than

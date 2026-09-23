@@ -70,10 +70,15 @@ const measure = (page: Page) =>
         .filter((r) => r.width > 0)
         .map((r) => Math.round(r.width));
 
+      /* §13's eyebrow row: the frame's top line, above the content track. */
+      const eyebrow = cell.querySelector('[data-row="eyebrow"]');
+      const eyebrowBox = eyebrow?.getBoundingClientRect() ?? null;
+
       return {
         cellBottom: Math.round(cellBox.bottom),
         trackBottom: Math.round(trackBox.bottom),
         cellTop: Math.round(cellBox.top),
+        eyebrowBottom: eyebrowBox === null ? null : Math.round(eyebrowBox.bottom),
         titleTop: Math.round(titleBox.top),
         titleHeight: Math.round(titleBox.height),
         pressingBottom: Math.round(pressingBox.bottom),
@@ -134,7 +139,19 @@ test.describe('the identity cell (§4.2)', () => {
       const c = m[id];
       if (c === null) continue;
 
-      expect(c.titleTop - c.cellTop, `${id}: title starts at the top`).toBe(18);
+      /*
+        **§13 put the eyebrow line above the title, so the figure moved and the
+        CLAIM did not.** The title still flows from the top of the content
+        track — it is the track's first child — and what sits above it is the
+        frame's own top line, which §8.1 rules is the identity band's label.
+        18 was the cell's padding when the title was the first thing in the
+        cell; now the offset is that padding plus the line.
+
+        Asserted as the relationship rather than as a new constant: the title
+        begins immediately below the eyebrow row, so a change to the line's
+        size moves both together and this cannot drift.
+      */
+      expect(c.titleTop, `${id}: title starts at the top of the content track`).toBe(c.eyebrowBottom);
       /* The guard: a growing title spends the gap, never the pressing block. */
       expect(c.overflows, `${id}: nothing overflows the cell`).toBe(false);
     }
