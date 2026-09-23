@@ -717,6 +717,59 @@ test('draws a solid only where the gate passes, and only in type-only cells', as
   }
 });
 
+test('the region’s solids carry the record’s ladder, and the matrix does not (§12)', async ({ page }) => {
+  /**
+   * **§9.2: the three faces are three LIGHTNESSES of one tint value**, and
+   * §5.1 forbids the shortcut by name — every colour mark sits "at one of the
+   * three steps of §5.5 and never at an opacity variant".
+   *
+   * The build drew all three faces as one fill at opacity 1, 0.72 and 0.5.
+   * Composited over paper those converge on the ground rather than stepping
+   * down, so the solids read flat and grey — §12's third fix. Asserted on the
+   * ROUTE rather than only in the unit test, because the defect was visible on
+   * screen and invisible to a component test that never composited anything.
+   *
+   * **The matrix is the exception and is asserted as one**: §5 rules it
+   * record-independent, so its three greys must NOT follow the record. A fix
+   * stated as "the solids stop being grey" would have coloured exactly the one
+   * solid that must stay so.
+   */
+  const suffix = makeSuffix();
+  const id = await richRecord(page, suffix);
+  await page.goto(`/records/${id}`);
+  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+
+  const drawn = await page.evaluate(() => {
+    const solids = Array.from(document.querySelectorAll('[data-ornament="solid"]')).map((svg) => ({
+      section: svg.closest('[data-section]')?.getAttribute('data-section') ?? '?',
+      fills: Array.from(svg.querySelectorAll('polygon')).map((p) => getComputedStyle(p).fill),
+      opacities: Array.from(svg.querySelectorAll('polygon')).map((p) => getComputedStyle(p).opacity),
+    }));
+    const matrix = document.querySelector('[data-mark="matrixSolid"]');
+    return {
+      solids,
+      matrix: matrix === null ? null : Array.from(matrix.querySelectorAll('polygon')).map((p) => getComputedStyle(p).fill),
+    };
+  });
+
+  expect(drawn.solids.length, 'the region draws solids at all').toBeGreaterThan(0);
+
+  for (const solid of drawn.solids) {
+    expect(new Set(solid.fills).size, `${solid.section}: three DIFFERENT fills, not one`).toBe(3);
+    for (const opacity of solid.opacities) {
+      expect(Number(opacity), `${solid.section}: §5.1 forbids an opacity variant`).toBe(1);
+    }
+  }
+
+  /* The matrix keeps its own greys, which are record-independent by §5. */
+  if (drawn.matrix !== null) {
+    expect(new Set(drawn.matrix).size, 'the matrix has three tones of its own').toBe(3);
+    for (const fill of drawn.matrix) {
+      expect(fill, 'and they are grey, never the record’s colour').toMatch(/0\.004 80|rgb\((\d+), \1, /);
+    }
+  }
+});
+
 test('the region caps with the frame, so the page is one grid', async ({ page }) => {
   /**
    * **§9.1's boundaries bleed to the COMPOSITION's edge — the viewport up to
