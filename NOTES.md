@@ -30959,3 +30959,19 @@ A broken grid on `/records/[id]` was reported from a screenshot and bisected acr
 **So an uncommitted experiment is not private.** When work stops mid-experiment with a change in the tree, say so in one line: "tree is dirty with X". That sentence would have replaced a six-commit bisect. It matters most in exactly the case where it is easiest to forget — stopping to measure something else, as here, where the §17 aspect change sat in the tree while rotation headings were being swept for §19.
 
 **And the trigger is not always the defect.** The experiment exposed something real and older: a grid ROW with a fixed height does not clamp its children, so `height: 547` on the identity band was a claim rather than a constraint. The still's svg is sized `h-full` against a grid item with no definite height, so it falls back to the viewBox's intrinsic ratio — **the construction frame's aspect drives its cell's height**. That is now a standing constraint on §17/§19: whatever aspect Design rules has to fit the 547 band, and `e2e/identity-band-holds.spec.ts` holds it there.
+
+## TASK: the E2E suite's flakes are a timeout budget, not contention — OWNED BY CODE, diagnosis complete
+
+**The previous conclusion was mitigation and said so.** `playwright.config.ts` reduced workers from ~6 to 3 to 2, measured carefully, and labelled itself "MITIGATION, not diagnosis". The suite has since grown from 278 tests to 570 and the symptoms returned: 21.5 minutes, nine flaky, four failed, all passing serially.
+
+**The diagnosis.** It is not contention over the database and not accumulation. Measured:
+
+- The database holds **zero records at rest**, so `registerCleanup` is working and the 724-record accumulation that caused the old login flake is gone.
+- `record-navigation.spec.ts:226` ("put back lands in the HELD record's slot") takes **32.9 seconds running entirely alone**, against Playwright's **30-second default per-test timeout**. It does not fit its own budget on an idle machine.
+- Under any load it exceeds it, which is why it reads as a contention flake. It is not one: it is a test 10% over budget that passes only when nothing else competes.
+
+**Why it looked like contention.** Every symptom matches — fails in full runs, passes serially, different specs each time — because several wall specs sit near the same ceiling. `wall-first-paint`'s arrival test runs 14–18s, the arrival-script test 23.5s. Load decides which ones cross first, so the failing set moves between runs and no single spec looks broken.
+
+**The fix has two parts and neither is more workers.** Raise the per-test timeout for the specs that legitimately need it — the wall's gesture tests drive real animation clocks — and cut what the slow ones spend. `shelf.spec.ts` and `wall-first-paint.spec.ts` carry 15 `waitForTimeout` calls between them, which are fixed sleeps rather than waits on a condition; `record-navigation` already uses `page.clock` correctly and is slow for a different reason worth measuring separately.
+
+**Not yet done.** This is the diagnosis and the measurement; the change is not made. Doing it inside a design-ruling unit would bury it.
