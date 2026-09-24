@@ -77,7 +77,40 @@ That reading makes the build correct under §29's *reason* while violating
 
 Only the edge count is in conflict.
 
-## What a ruling would need to say
+## The question that may dissolve this entirely
+
+**§26's clause says "figure". The quarter-disc is a flat.** If that clause
+governs solids only, there is no conflict at all.
+
+§21 gives the two kinds *different* edge rules, in one sentence:
+
+> "**An isometric figure never crosses a page edge. A flat field always may.**
+> That is not a new rule — it is the Edge Marks ruling... a cropped object
+> reads as a mistake and a cropped field reads as a plane extending past the
+> edge."
+
+So the vocabulary is already split at the point §26's clause uses it:
+
+| | figure (isometric solid) | flat field |
+|---|---|---|
+| §21 on the page edge | never crosses | always may |
+| §26 "at most one edge may cut it" | clearly applies | **unstated** |
+| §29 on cell edges | — | never bleeds at one |
+
+§26's own sentence reads: "each **figure's** clip is its own cell... A
+**figure** may be cut by at most one of its cell's edges — its foot, per
+§9.2's bleed." §9.2 is about in-cell solids, and "its foot" is the solid's
+bottom bleed. Every term in the clause points at solids.
+
+**If "figure" there means what §21 means by it, the disc is out of scope and
+the build is already correct.** The audit's other three ornaments — solo,
+pair, triangle — are cut by a foot or by nothing, so §26's clause is satisfied
+by everything it plainly governs.
+
+**Design is ruling the subject of that clause.** That is a smaller question
+than the three below, and it may remove the need for them.
+
+## What a ruling would need to say, if the clause does govern flats
 
 One of:
 
