@@ -198,89 +198,63 @@ const report = (n, ok) => console.log(`${ok ? 'PASS' : 'FAIL'} ${n}`);
 }
 
 /* The declared withdrawal marks, and the reader's note's list. */
-/**
- * Every mark in a section, as `{ by, id }`.
- *
- * **The id is what makes 6 and 7 count rather than merely ask.** Both read
- * only the `data-withdrawn-by` value until now, so they were set-membership
- * checks: "does §26 contain a mark saying 26" is satisfied by one mark
- * however many entries the list carries. §26 has two self-withdrawals, and
- * deleting either left both assertions green and the run at exit 0 —
- * confirmed by mutation twice, the second time with the deletion verified
- * against a pristine copy.
- *
- * `data-withdrawal` names WHICH withdrawal a mark is, so the two directions
- * pair entries with marks one-to-one instead of comparing two sets.
- */
+/** Every mark in a section, as `{ by, id }` -- the id is the list entry it pairs with. */
 const WITHDRAWN_IN = (html) =>
   [...html.matchAll(/<span data-withdrawn-by="([^"]+)"(?:\s+data-withdrawal="([^"]*)")?/g)].map((m) => ({
     by: m[1],
     id: m[2],
   }));
-
-/** The list's `what` as an id. The script derives it; it is never typed twice. */
-const WITHDRAWAL_ID = (what) => what.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const listMatch = /<!--\s*reader-note-withdrawals\s*(\[[\s\S]*?\])\s*-->/.exec(src.L);
 const withdrawals = listMatch === null ? [] : JSON.parse(listMatch[1]);
 
-/* 6. Every listed withdrawal is marked where it happened — matched by id. */
+/*
+  6 and 7 pair each list entry with exactly one mark, by the entry's id.
+
+  **The id is Design's, carried in the list, and never derived here.** Both
+  assertions read only `data-withdrawn-by` until now, which made them set
+  membership: "does §26 contain a mark saying 26" is satisfied by one mark
+  however many entries the list holds. §26 has two self-withdrawals, and
+  deleting either left both green at exit 0 -- confirmed by mutation, the
+  second time with the deletion verified against a pristine copy because the
+  first attempt silently never landed and printed the same green.
+*/
+
+/* 6. Every listed withdrawal is marked where it happened. */
 {
   const before = failures.length;
-  for (const [s, by, what] of withdrawals) {
-    const id = WITHDRAWAL_ID(what);
-    const h = byId.get(s);
+
+  /* The list's own uniqueness rule, which is where Design put it. */
+  const seen = new Map();
+  for (const e of withdrawals) seen.set(e.id, (seen.get(e.id) ?? 0) + 1);
+  for (const [id, n] of seen) if (n > 1) fail(`6 duplicate-id ${id}`);
+
+  for (const e of withdrawals) {
+    const h = byId.get(e.s);
     const marks = h === undefined ? [] : WITHDRAWN_IN(h.html);
-    const hit = marks.filter((mk) => mk.by === by && mk.id === id);
-    if (hit.length === 0) fail(`6 §${s}/§${by}#${id}`);
+    const hit = marks.filter((mk) => mk.id === e.id);
+    if (hit.length === 0) fail(`6 ${e.id} missing`);
+    else if (!hit.some((mk) => mk.by === e.by)) fail(`6 ${e.id} by-mismatch`);
   }
   report(6, failures.length === before);
 }
 
-/* 7. Every marked withdrawal is listed — and carries an id to be listed by. */
+/* 7. Every marked withdrawal is listed, and each id is used by one element. */
 {
   const before = failures.length;
+  const byIdEntry = new Map(withdrawals.map((e) => [e.id, e]));
+  const uses = new Map();
+
   for (const h of ALL) {
     if (h.id.startsWith('W')) continue;
     for (const mk of WITHDRAWN_IN(h.html)) {
-      /* An unidentified mark cannot be paired with an entry, so it fails on its own. */
-      if (mk.id === undefined) { fail(`7 §${h.id} no-id`); continue; }
-      if (!withdrawals.some(([s, b, what]) => s === h.id && b === mk.by && WITHDRAWAL_ID(what) === mk.id)) {
-        fail(`7 §${h.id}#${mk.id}`);
-      }
+      const e = mk.id === undefined ? undefined : byIdEntry.get(mk.id);
+      if (e === undefined) { fail(`7 §${h.id} unlisted`); continue; }
+      if (e.s !== h.id || e.by !== mk.by) fail(`7 ${mk.id} wrong-section`);
+      uses.set(mk.id, (uses.get(mk.id) ?? 0) + 1);
     }
   }
+  for (const [id, n] of uses) if (n > 1) fail(`7 ${id} used-twice`);
   report(7, failures.length === before);
-}
-
-/*
-  7b. No two list entries share a (section, id), and no two marks do either.
-
-  **Without this, the pairing is one-to-many again.** 6 asks whether at least
-  one mark matches an entry and 7 whether at least one entry matches a mark,
-  so two identical entries are both satisfied by a single mark — the same
-  hole one level up, since the ids would be equal rather than the attributes
-  absent. The spec's list has no uniqueness rule; this supplies it.
-*/
-{
-  const before = failures.length;
-  const seenEntries = new Map();
-  for (const [s, , what] of withdrawals) {
-    const key = `${s}#${WITHDRAWAL_ID(what)}`;
-    seenEntries.set(key, (seenEntries.get(key) ?? 0) + 1);
-  }
-  for (const [key, n] of seenEntries) if (n > 1) fail(`7b entry ${key} x${n}`);
-
-  for (const h of ALL) {
-    if (h.id.startsWith('W')) continue;
-    const seen = new Map();
-    for (const mk of WITHDRAWN_IN(h.html)) {
-      if (mk.id === undefined) continue;
-      const key = `${h.id}#${mk.id}`;
-      seen.set(key, (seen.get(key) ?? 0) + 1);
-    }
-    for (const [key, n] of seen) if (n > 1) fail(`7b mark ${key} x${n}`);
-  }
-  report('7b', failures.length === before);
 }
 
 /* 8. Figures in rows. */
