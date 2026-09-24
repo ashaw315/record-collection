@@ -3,6 +3,18 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 /**
+ * **SUPERSEDED by `scripts/check-index.mjs`, and kept until it passes.**
+ *
+ * `docs/design/ASSERTIONS-spec.md` specifies eight assertions and says "the
+ * script's exit code is the result". That script is built and runs; it is
+ * currently red on assertion 6 (the `data-withdrawn-by` marking pass has not
+ * landed — zero marks exist in any target) and on 8b (two handoff rows carry
+ * figures in their pointer column). **This file stays until the script is
+ * green, then it is deleted**, because two checks over one fact is the
+ * duplication the index itself keeps failing on.
+ *
+ * What it asserts is a subset of the script's 1, 2, 3, 6 and 7.
+ *
  * **The handoff index and the build targets are three sources for one fact,
  * and this holds them to agreeing.**
  *

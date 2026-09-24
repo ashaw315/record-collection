@@ -120,6 +120,11 @@ docs/design/*
 # reachability rule is that a source of truth is reachable wherever the index is
 # read, AND at the same revision as the index.
 !docs/design/Record Detail 8a - settled 1-10.dc.html
+# The specification `scripts/check-index.mjs` is built FROM. Same reachability
+# rule as the targets: a source of truth is reachable wherever the thing built
+# from it is read, and at the same revision. A script whose spec is not in the
+# repo cannot be reviewed against it.
+!docs/design/ASSERTIONS-spec.md
 !docs/design/Wall and Pull - build target.dc.html
 
 # The same artefacts' STALE root copies, from before they moved into
