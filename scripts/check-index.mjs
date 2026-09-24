@@ -12,6 +12,15 @@
  * at the assertions they belong to.
  */
 import { readFileSync, existsSync } from 'node:fs';
+import {
+  collapse,
+  decodeEntities,
+  liveText,
+  sectionText,
+  sections,
+  stripTags,
+  withoutSvg,
+} from './design-target-parser.mjs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -24,7 +33,7 @@ const FILES = {
 };
 
 /** Spec: decode these two entities before any text comparison. */
-const decode = (s) => s.replace(/&rsquo;/g, '’').replace(/&amp;/g, '&');
+const decode = decodeEntities;
 
 const read = (key) => {
   const path = join(DESIGN, FILES[key]);
@@ -37,41 +46,22 @@ const read = (key) => {
 
 const src = { H: read('H'), L: read('L'), S: read('S'), W: read('W') };
 
-const stripTags = (s) => s.replace(/<[^>]+>/g, ' ');
-const collapse = (s) => s.replace(/\s+/g, ' ').trim();
-/** Spec: never match headings inside <svg> — SVG text holds cell labels like "1 · Cover". */
-const withoutSvg = (s) => s.replace(/<svg[\s\S]*?<\/svg>/g, ' ');
-
-const ID = String.raw`(?:W|W\.\d+(?:\.\d+)?|\d{1,2}(?:\.\d+)?)`;
-const HEADING = new RegExp(
-  String.raw`<p[^>]*style="[^"]*text-transform:uppercase[^"]*"[^>]*>\s*(?:§)?(${ID}) · ([^<]*)`,
-  'g',
-);
-
-/** Headings of one target file, in order, with their text spans. */
-function headings(key) {
-  const raw = withoutSvg(src[key]);
-  const found = [];
-  for (const m of raw.matchAll(HEADING)) {
-    const id = key === 'W' && /^\d/.test(m[1]) ? `W.${m[1]}` : m[1];
-    found.push({ id, title: collapse(m[2]), at: m.index, end: m.index + m[0].length, raw });
-  }
-  return found.map((h, i) => ({
-    ...h,
-    /** Spec: from a heading to the next heading in the same file. */
-    html: raw.slice(h.at, i + 1 < found.length ? found[i + 1].at : undefined),
-  }));
-}
+/**
+ * Headings of one target file — delegated to `design-target-parser.mjs`, the
+ * ONE implementation of this pattern. A lookalike that matched the eyebrow
+ * styling without requiring an id and " · " truncated §26 at a figure
+ * caption; see that module's header.
+ */
+const headings = (key) => sections(src[key], { prefixW: key === 'W' });
 
 const ALL = [...headings('L'), ...headings('S'), ...headings('W')];
 const byId = new Map(ALL.map((h) => [h.id, h]));
 
-/**
- * Spec: live text is the section text with every `[data-withdrawn-by]`
- * element removed. There is no keyword list — withdrawn text is DECLARED.
- */
-const liveText = (html) => collapse(stripTags(html.replace(/<span[^>]*data-withdrawn-by=[^>]*>[\s\S]*?<\/span>/g, ' ')));
-const sectionText = (html) => collapse(stripTags(html));
+/*
+  Spec: live text is the section text with every `[data-withdrawn-by]`
+  element removed. There is no keyword list — withdrawn text is DECLARED.
+  Both helpers come from the shared parser.
+*/
 
 /* ---- tables in H ---------------------------------------------------- */
 const between = (text, from, to) => {
