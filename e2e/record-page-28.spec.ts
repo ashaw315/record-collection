@@ -4,7 +4,7 @@ import { seedImage } from './seed';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
 import { CONTROL_HEIGHT } from '../src/app/records/[id]/extended-grid';
-import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
+import { BANDS, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { COLUMN_MIN, columnsFor, columnWidthAt, pageWidthAt, upperSpansAt } from '../src/app/records/[id]/region-rows';
 
 registerCleanup();
@@ -322,4 +322,48 @@ test('§28’s growth below 1440: at 1000 the page is 1000 wide, not 960 centred
   expect(measured.width, 'the page takes the whole 1000').toBe(1000);
   expect(measured.columns.length, 'on eight columns').toBe(8);
   expect(measured.columns[0], 'of 125 each, grown from the 120 module').toBeCloseTo(125, 0);
+});
+
+test('§28: the identity band keeps its fixed height from 480 up, and loses it below', async ({ page }) => {
+  /**
+   * **§28: "The band stays at 547 above 480... Below 480 the band has no
+   * fixed height at all, so there the height give order does not apply."**
+   *
+   * The build applied `height: auto` from 1440 down, which is 960px of range
+   * where §28 says the height is fixed. That made the identity cell
+   * shrink-wrap its content, so demand equalled supply exactly — measured at
+   * 1280, available 351 against a children's sum of 351 — and the genres
+   * collapse could not distinguish a record with 45px of slack from one 2px
+   * over.
+   *
+   * **Asserted on the rendered box, never on `style.height`.** The declared
+   * value reads 547 at every width because the fork overrode it in a
+   * stylesheet without touching the attribute
+   * (`docs/findings/declared-values-are-not-measurements.md`).
+   */
+  const id = await seed(page);
+
+  for (const width of [1440, 1200, 960, 720, 480]) {
+    await page.setViewportSize({ width, height: NO_SCROLL_HEIGHT });
+    await page.goto(`/records/${id}`);
+    await page.locator('[data-track="content"]').waitFor({ timeout: 20_000 });
+
+    const band = await page.evaluate(() => {
+      const el = document.querySelector('[data-cell="identity-content"]')!.closest('[data-band]') as HTMLElement;
+      return { rendered: Math.round(el.getBoundingClientRect().height), declared: el.style.height };
+    });
+
+    expect(band.rendered, `at ${width}, the band renders its fixed height`).toBe(BANDS.identity);
+  }
+
+  /* Below 480 it has no fixed height, so the box is its content's. */
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`/records/${id}`);
+  await page.locator('[data-track="content"]').waitFor({ timeout: 20_000 });
+
+  const narrow = await page.evaluate(() => {
+    const el = document.querySelector('[data-cell="identity-content"]')!.closest('[data-band]') as HTMLElement;
+    return Math.round(el.getBoundingClientRect().height);
+  });
+  expect(narrow, 'below 480 the band grows to its content').not.toBe(BANDS.identity);
 });

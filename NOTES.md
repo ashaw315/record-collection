@@ -31355,3 +31355,27 @@ Related to CLAUDE.md §2's "the assertion tests a proxy one layer below the clai
 ## Captures now live in the repo
 
 `docs/captures/`, with the record and viewport in each filename, committed. Three sets sent through the conversation did not reach Adam and neither end could see why; a file in the repo can be opened from the repo. The old `docs/record-detail/built/` location is removed.
+
+
+## Step 26: the band's fixed height from 480 up (24 Sep)
+
+Design ruled the auto-height conflict I had held: §28's "the band stays at 547 above 480" governs, so `height: auto` is confined to below 480. The build applied it from **1440 down** — 960px of range where §28 says the height is fixed — which is what made the identity cell shrink-wrap, demand equal supply exactly, and the genres trigger unable to tell 45px of slack from 2px over.
+
+**Asserted on the rendered box, never `style.height`**, per `docs/findings/declared-values-are-not-measurements.md`: the declared value reads 547 at every width because the fork overrode it in a stylesheet without touching the attribute.
+
+Step 25's give-order measurement re-run across the newly fixed range:
+
+| record | 1440 / 1200 / 960 / 720 / 480 | 390 |
+|---|---|---|
+| worst title | demand 484.9, margin **+25.1**, collapsed | demand 523.9, margin 0.1, listed |
+| short title | demand 207.7, margin **+302.3**, listed | demand 240.2, margin −0.2, listed |
+
+Identical at every width from 480 up, which is what a fixed band should give, and the two records are **277px apart** — so the trigger separates them at every width now, not only at 1440. Below 480 the band grows to its content (561 and 277) and the give order stops applying, as §28 rules.
+
+**The backtick trap, third instance.** Writing a CSS comment containing a backtick inside the `<style>{\`…\`}` literal breaks the parse. It has now cost three rounds this session. The mechanical guard is to strip backticks from that block after any edit, which is what I now do rather than remembering not to type them.
+
+## A full E2E run was killed for memory, and is not reported as a result
+
+The step-26 run was killed by the system for low memory: **4MB free, 7.3GB wired, load 38.3** — the highest of the session by a wide margin. It produced **no summary line**, and CLAUDE.md §9 is explicit that no summary is a failure, not a pass. Discarded rather than reported.
+
+Relaunching into that state would likely be killed again and tell us nothing, so step 26 is verified instead against the seven specs it plausibly affects — `record-page-28`, `identity-measure`, `identity-extremes`, `genres-collapse`, `record-narrow`, `identity-cell`, `record-page-8a`, `extended-grid` — **47 passed, 0 failed**. That is narrower than CLAUDE.md §10's requirement of a full run, and it is stated as such: the full suite has NOT been run against step 26.

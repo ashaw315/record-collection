@@ -231,11 +231,29 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
         [data-band] { grid-template-columns: repeat(${GRID_COLUMNS}, ${GRID_COLUMN}px) !important; }
         [data-track="content"] { width: ${CONTENT_MEASURE}px; max-width: 100%; }
         @media (max-width: ${GRID_FORK - 1}px) {
-          [data-band] { grid-template-columns: 1fr !important; height: auto !important; }
+          /*
+            **The band keeps its fixed height to 480 (§28).** "The band stays
+            at 547 above 480... Below 480 the band has no fixed height at
+            all, so there the height give order does not apply." This rule
+            carried height: auto from 1440 down, which is 960px of range
+            where §28 says the height is fixed — and it made the identity
+            cell shrink-wrap, so demand equalled supply exactly and the
+            genres collapse could not tell 45px of slack from 2px over.
+          */
+          [data-band] { grid-template-columns: 1fr !important; }
           [data-band] > [data-cell] { grid-column: 1 / -1 !important; }
           [data-band="section"] > * { grid-column: 1 / -1 !important; }
           [data-cell="still"], [data-cell="sleeve"] { display: none; }
           [data-track="content"] { width: min(${CONTENT_MEASURE}px, 100vw - ${CELL_PADDING * 2}px); }
+        }
+
+        /*
+          §28: below 480 the band has no fixed height, so the cell grows to
+          its content and the height give order stops applying. That is the
+          one range where auto is correct.
+        */
+        @media (max-width: 479px) {
+          [data-band] { height: auto !important; }
         }
 
         /*
