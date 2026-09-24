@@ -88,22 +88,28 @@ const allRows = [...governs, ...pointers];
 const orderBlock = between(src.H, '## Build order', '## Maintaining');
 
 /* ---- assertions ------------------------------------------------------ */
-const CANDIDATES = process.argv.includes('--candidates');
 const failures = [];
 const fail = (line) => failures.push(line);
-/** Offenders from 6, 7 and 8a while the marking pass is outstanding: printed, not fatal. */
-const provisional = [];
-const failProvisional = (line) => (CANDIDATES ? provisional : failures).push(line);
-/**
- * Spec: "Until then, 6, 7 and 8a print `PROVISIONAL` instead of `PASS`."
- *
- * Provisional means the marking pass has not landed, so these three cannot
- * be judged either way — they print PROVISIONAL whether or not they found
- * offenders, and their offenders do not fail the run. Everything else fails
- * normally, which is why 8b's two real violations still exit non-zero.
- */
-const report = (n, ok, provisional = false) =>
-  console.log(`${provisional ? 'PROVISIONAL' : ok ? 'PASS' : 'FAIL'} ${n}`);
+/*
+  **The `--candidates` bootstrap is gone, and with it the last thing here
+  that guessed.**
+
+  The spec's own instruction retired it: "After the pass, delete
+  `--candidates` and the pattern with it, so nothing in the script guesses."
+  The marking pass has landed, so the trigger is met.
+
+  What it carried was an eleven-keyword regex over every sentence in three
+  files — the exact machinery the declared-mark design replaced, because a
+  list derived from the phrasings seen so far fits those and misses the next
+  one. It missed "reversed", which this corpus uses constantly. Leaving it
+  reachable behind a flag left the guessing in the script; a flag is not a
+  deletion.
+
+  The PROVISIONAL state went with it. It existed to say "the marking pass has
+  not landed, so 6, 7 and 8a cannot be judged either way". They can be judged
+  now, so every assertion is PASS or FAIL and every offender is fatal.
+*/
+const report = (n, ok) => console.log(`${ok ? 'PASS' : 'FAIL'} ${n}`);
 
 /* 1. Every heading has exactly one row. */
 {
@@ -201,9 +207,9 @@ const withdrawals = listMatch === null ? [] : JSON.parse(listMatch[1]);
   const before = failures.length;
   for (const [s, by] of withdrawals) {
     const h = byId.get(s);
-    if (h === undefined || !WITHDRAWN_IN(h.html).includes(by)) failProvisional(`6 §${s}/§${by}`);
+    if (h === undefined || !WITHDRAWN_IN(h.html).includes(by)) fail(`6 §${s}/§${by}`);
   }
-  report(6, failures.length === before && provisional.length === 0, CANDIDATES);
+  report(6, failures.length === before);
 }
 
 /* 7. Every marked withdrawal is listed. */
@@ -212,10 +218,10 @@ const withdrawals = listMatch === null ? [] : JSON.parse(listMatch[1]);
   for (const h of ALL) {
     if (h.id.startsWith('W')) continue;
     for (const by of new Set(WITHDRAWN_IN(h.html))) {
-      if (!withdrawals.some(([s, b]) => s === h.id && b === by)) failProvisional(`7 §${h.id}`);
+      if (!withdrawals.some(([s, b]) => s === h.id && b === by)) fail(`7 §${h.id}`);
     }
   }
-  report(7, failures.length === before, CANDIDATES);
+  report(7, failures.length === before);
 }
 
 /* 8. Figures in rows. */
@@ -239,9 +245,9 @@ const withdrawals = listMatch === null ? [] : JSON.parse(listMatch[1]);
     const missing = [...strip(`${r.title}|${r.pointer}`).matchAll(FIGURE)]
       .map((m) => m[0].replace(/\s+/g, ''))
       .filter((n) => !hay.includes(n));
-    if (missing.length > 0) failProvisional(`8a §${r.id} missing=${[...new Set(missing)].join(',')}`);
+    if (missing.length > 0) fail(`8a §${r.id} missing=${[...new Set(missing)].join(',')}`);
   }
-  report('8a', failures.length === beforeA, CANDIDATES);
+  report('8a', failures.length === beforeA);
 
   const beforeB = failures.length;
   /* Spec: the governs table ONLY — the pointer table has no pointer column. */
@@ -259,26 +265,5 @@ const withdrawals = listMatch === null ? [] : JSON.parse(listMatch[1]);
   report('8b', failures.length === beforeB);
 }
 
-/* Bootstrap: print unmarked candidate sentences for the author to mark. */
-if (CANDIDATES) {
-  const PATTERN =
-    /withdrawn|withdraw|replaces|replaced|reversed|reverses|superseded|supersedes|earlier version|first (gave|said|version)|was wrong|original sentence|until now|instead of|no longer/i;
-  console.log('\n--candidates: unmarked sentences matching the broad pattern\n');
-  let n = 0;
-  for (const [key, list] of [['L', headings('L')], ['S', headings('S')], ['W', headings('W')]]) {
-    for (const h of list) {
-      const live = liveText(h.html);
-      for (const sentence of live.split(/(?<=[.!?])\s+/)) {
-        if (PATTERN.test(sentence)) {
-          n += 1;
-          console.log(`${key} §${h.id}: ${sentence.trim().slice(0, 200)}`);
-        }
-      }
-    }
-  }
-  console.log(`\n${n} candidate sentences.`);
-}
-
-for (const line of provisional) console.log(line);
 for (const line of failures) console.log(line);
 process.exit(failures.length > 0 ? 1 : 0);
