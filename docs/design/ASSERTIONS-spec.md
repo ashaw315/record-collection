@@ -64,7 +64,7 @@ Each prints `PASS n` or `FAIL n` followed by one line per offender, then the scr
 
 6. **Every listed withdrawal is marked where it happened.** For each `[s, by]` in the withdrawal list, section `s` must contain a `[data-withdrawn-by]` element whose value is `by`.
    Fail: `6 §s/§by`.
-   6 and 7 are the two directions of one check, so both read the attribute. (An earlier version of 6 matched `/withdrawn|superseded/i` while 7 read the attribute, so a passage marked `data-withdrawn-by="20"` whose prose said "reversed by §20" passed 7 and failed 6.)
+   6 and 7 are the two directions of one check, so both read the attribute. **A section may withdraw its own wording:** an entry `[s, s]` with the mark inside §s is valid, and neither 6 nor 7 may reject it for `s` equalling `by`. §26 is the first instance. (An earlier version of 6 matched `/withdrawn|superseded/i` while 7 read the attribute, so a passage marked `data-withdrawn-by="20"` whose prose said "reversed by §20" passed 7 and failed 6.)
 
 7. **Every marked withdrawal is listed.** Every non-`W` section containing a `[data-withdrawn-by]` element must appear as `s` in the withdrawal list, with `by` equal to the attribute's value. (An earlier version matched three exact phrasings and none of them was "Reversed by §".)
    Fail: `7 §ID`.
