@@ -83,11 +83,26 @@ test('§18: the grid moves and the type does not, at every width', async ({ page
   await login(page);
   const s = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
   /* A real band name that does not fit: the case the ruling was written for. */
-  const a = await page.request.post('/api/artists', { data: { name: 'Godspeed You! Black Emperor' } });
+  const a = await page.request.post('/api/artists', { data: { name: `Godspeed You! Black Emperor ${s}` } });
   const { id: artistId } = await a.json();
   trackArtist(artistId);
+  /*
+    **The suffix goes on the ARTIST, not the title — §27, fifth instance.**
+    "No test may alter a fixture along the axis it measures; an isolation
+    suffix goes on a field the assertion does not read." This spec measures
+    the title's wrap in §4.2's 412 measure, and it was appending
+    `${Date.now()}-${random}` to the title: a 20-character unbreakable digit
+    string that sets 843px at 72px, against a longest real word ("Antennas")
+    of 321px. The h1 ran to 569 of a 412 measure at EVERY width, and at 480
+    that escaped and scrolled the document.
+
+    Measured unsuffixed, the same title is 412/412 with nothing over, at
+    1440 and 480 alike — as is the collection's real worst title. The
+    artist carries the isolation instead; `artistSpill` asserts the artist
+    is not cut, which a longer name cannot break.
+  */
   const r = await page.request.post('/api/records', {
-    data: { artistId, title: `Lift Your Skinny Fists Like Antennas to Heaven ${s}`, releaseYear: 2000 },
+    data: { artistId, title: 'Lift Your Skinny Fists Like Antennas to Heaven', releaseYear: 2000 },
   });
   const { id } = await r.json();
   const href = `/records/${id}`;
@@ -105,27 +120,15 @@ test('§18: the grid moves and the type does not, at every width', async ({ page
     expect(m.track, `at ${width}, the track holds its measure`).toBeGreaterThanOrEqual(CONTENT_MEASURE);
     expect(m.artistSpill, `at ${width}, nothing of the artist is cut`).toBe(0);
     expect(m.titleSpill, `at ${width}, nothing of the title is cut`).toBe(0);
-    /**
-     * **KNOWN-FAILING at 480, and it is a defect FOUND rather than caused.**
-     *
-     * The page overflows 125px horizontally at 480 × 1100: `scrollWidth` 605
-     * against `clientWidth` 480. It has been doing so all along —
-     * `overflow-hidden` on the identity cell was swallowing it, and §27's
-     * removal of that class ("never overflow-hidden") is what made it
-     * visible. **Do not restore the class to get this green**; the class is
-     * the thing §27 forbids and the swallowing is why this went unseen.
-     *
-     * What is ruled out, by measurement: no element's right edge exceeds the
-     * viewport, none has a left edge below −1, both 900 and 1100 heights are
-     * clean on a fresh load, and walking 2000 → 480 in one page is clean at
-     * every step. `scrollWidth` growing with no element accounting for it is
-     * the signature of content clipped by an ancestor, which a
-     * `getBoundingClientRect` scan cannot see.
-     *
-     * Open with Design. The next step is an `offsetLeft + offsetWidth`
-     * traversal, which reports a box a rect cannot.
-     */
-    expect(m.pageOverflow, `at ${width}, the page does not scroll sideways — see the note above; pre-existing, exposed by §27`).toBe(false);
+    /*
+      **This caught a fixture defect, not a page one, and the distinction
+      took four measurements.** It failed at 480 with the document scrolling
+      125px, and the first reading was that §27's removal of
+      `overflow-hidden` had exposed a pre-existing page overflow. It had
+      not: the test's own isolation suffix was on the title, and that is
+      what overflowed. Kept as a plain assertion because it does its job.
+    */
+    expect(m.pageOverflow, `at ${width}, the page does not scroll sideways`).toBe(false);
   }
 
   /* Below the fork: one column, and the measure still holds down to 480. */
@@ -157,7 +160,7 @@ test('§18: the grid moves and the type does not, at every width', async ({ page
      * Open with Design. The next step is an `offsetLeft + offsetWidth`
      * traversal, which reports a box a rect cannot.
      */
-    expect(m.pageOverflow, `at ${width}, the page does not scroll sideways — see the note above; pre-existing, exposed by §27`).toBe(false);
+    expect(m.pageOverflow, `at ${width}, the page does not scroll sideways`).toBe(false);
   }
 
   /* Below 480 the measure yields — §4.2's give order's fourth term. */
@@ -188,7 +191,7 @@ test('§18: the grid moves and the type does not, at every width', async ({ page
      * Open with Design. The next step is an `offsetLeft + offsetWidth`
      * traversal, which reports a box a rect cannot.
      */
-    expect(m.pageOverflow, `at ${width}, the page does not scroll sideways — see the note above; pre-existing, exposed by §27`).toBe(false);
+    expect(m.pageOverflow, `at ${width}, the page does not scroll sideways`).toBe(false);
   }
 
   /* §18 names 322 at 390, which is the derivation and not a second figure. */

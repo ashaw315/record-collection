@@ -31322,3 +31322,36 @@ Cleared with `pg_terminate_backend` on the connection holding the advisory lock.
 Same class as the inline-value finding and as CLAUDE.md §2's "the assertion tests a proxy one layer below the claim": there the proxy was a variable for a connection, a token for a rendering, a source string for a behaviour; here it is a declaration for a layout.
 
 **HELD, not built: the auto-height conflict.** §28 says the give order stops below 480; the build's fork sets `height: auto` from 1440. That is a spec conflict over 960px of range and it is Design's to rule. The build currently exempts any auto-height band from the give order, which is §28's principle applied where the build actually puts the auto height — but the range disagreement is untouched and reported.
+
+
+## The 480 overflow was the TEST's suffix, not the page (24 Sep)
+
+I reported it twice, wrongly both times — first as a regression from removing `overflow-hidden`, then (after Adam corrected that) as a pre-existing page defect the removal had exposed. **Adam's two measurements showed it was neither.**
+
+**Measurement 1 — does it overflow at 1440 too?** Yes: `h1 scrollWidth 569 / clientWidth 412` at 1440, 960 AND 480, identically. So it was never a 480 bug; 480 is simply the only viewport narrow enough for 569 to escape and scroll the document. His point: if the content and the measure are the same at every width, the wrap is the same at every width.
+
+**Measurement 2 — is it actually one word?** His arithmetic said no: 563px at 72px is ~7.8em, and the longest word in that title ("Antennas") is ~4.2em. Measured: **"Antennas" is 321px**. The widest "word" in the rendered h1 was `1790258315970-593500` at **843px** — the spec's own isolation suffix, `${Date.now()}-${random}`, appended to the title.
+
+**So it is §27's named defect for the FIFTH time**: "no test may alter a fixture along the axis it measures; an isolation suffix goes on a field the assertion does not read." This spec measures the title's wrap in §4.2's 412 measure and was appending an unbreakable 20-character digit string to the title. Measured unsuffixed, the same title is **412/412, nothing over**, at 1440 and 480 alike — as is the collection's real worst title. The suffix now goes on the artist.
+
+**What this nearly cost.** I was one step from sending Design a question framed as "which of §4.2's terms gives — the 412 measure, the 72px size, or a break on the title?" Both are load-bearing and neither should have been traded to fix something that was never a measure problem. Adam stopped it with arithmetic alone, against a finding I had just reported as located and confirmed.
+
+**The method that did work, kept:** only `scrollWidth` on the element ITSELF sees content its own box clips. `getBoundingClientRect` returns the box (412, unchanging); `offsetLeft + offsetWidth` likewise; a document-wide scan for boxes past the edge found nothing. Walking every element's `scrollWidth` against its own `clientWidth` found the chain in one pass and terminated exactly at the h1.
+
+## Finding 3 for Design: choose the quantity that can be wrong
+
+`docs/findings/choose-the-quantity-that-can-be-wrong.md` — the general form of the other two, written at Adam's request after the third instance in two days. **A test can be green, specific, well-named and pointed at the right element, and still assert nothing, because the quantity it reads cannot move when the thing breaks.**
+
+| instance | quantity read | why it cannot fail |
+|---|---|---|
+| genres trigger | `scrollHeight` on a `space-between` track | reports the budget; gave 512 and 511 for records 274px apart, and a margin of exactly 0 |
+| give-order guard | `style.height` | the declaration, not the used value: 547 declared, 387.5 rendered |
+| title overflow | `getBoundingClientRect()` | the box, not its content: 412 box, 569 content |
+
+The rule: **before asserting, ask whether this number would move if the thing broke.** Three tests for it — can it vary at all; is it the demand or the budget; is it declared or realised. It recurs on this page specifically because almost every box here is *given* rather than taken (fixed bands, a fitted frame, a 412 measure, `space-between` tracks, `h-full` cells), so the obvious quantity is nearly always the budget.
+
+Related to CLAUDE.md §2's "the assertion tests a proxy one layer below the claim", but distinct: those were proxies for a CHANNEL, these for a QUANTITY.
+
+## Captures now live in the repo
+
+`docs/captures/`, with the record and viewport in each filename, committed. Three sets sent through the conversation did not reach Adam and neither end could see why; a file in the repo can be opened from the repo. The old `docs/record-detail/built/` location is removed.

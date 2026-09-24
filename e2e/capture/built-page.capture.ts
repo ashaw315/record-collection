@@ -15,6 +15,11 @@ import { NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/band-geometry';
  *
  * Full page rather than the fold, because §26's region is the half that
  * changed and most of it is below 900.
+ *
+ * **Written into `docs/captures/` and committed**, with the record and the
+ * viewport in each filename. Three sets sent through the conversation did
+ * not arrive and neither end could see why; a file in the repo can be
+ * opened from the repo.
  */
 const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 
@@ -138,7 +143,7 @@ test('capture the built record page at 1440 and 390', async ({ page }) => {
     await page.waitForTimeout(400);
     /* Next's dev-mode compile badge is chrome, not the page. */
     await page.addStyleTag({ content: 'nextjs-portal{display:none!important}' });
-    await page.screenshot({ path: `docs/record-detail/built/ordinary-${width}.png`, fullPage: true });
+    await page.screenshot({ path: `docs/captures/record-detail-ordinary-two-line-title-${width}.png`, fullPage: true });
   }
 
   for (const [width, height] of [[1440, NO_SCROLL_HEIGHT], [390, 844], [1680, 1050], [1920, 1080]] as const) {
@@ -162,6 +167,6 @@ test('capture the built record page at 1440 and 390', async ({ page }) => {
     await page.waitForTimeout(400);
 
     await page.addStyleTag({ content: 'nextjs-portal{display:none!important}' });
-    await page.screenshot({ path: `docs/record-detail/built/page-${width}.png`, fullPage: true });
+    await page.screenshot({ path: `docs/captures/record-detail-worst-title-${width}.png`, fullPage: true });
   }
 });
