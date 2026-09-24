@@ -198,30 +198,89 @@ const report = (n, ok) => console.log(`${ok ? 'PASS' : 'FAIL'} ${n}`);
 }
 
 /* The declared withdrawal marks, and the reader's note's list. */
-const WITHDRAWN_IN = (html) => [...html.matchAll(/data-withdrawn-by="([^"]+)"/g)].map((m) => m[1]);
+/**
+ * Every mark in a section, as `{ by, id }`.
+ *
+ * **The id is what makes 6 and 7 count rather than merely ask.** Both read
+ * only the `data-withdrawn-by` value until now, so they were set-membership
+ * checks: "does §26 contain a mark saying 26" is satisfied by one mark
+ * however many entries the list carries. §26 has two self-withdrawals, and
+ * deleting either left both assertions green and the run at exit 0 —
+ * confirmed by mutation twice, the second time with the deletion verified
+ * against a pristine copy.
+ *
+ * `data-withdrawal` names WHICH withdrawal a mark is, so the two directions
+ * pair entries with marks one-to-one instead of comparing two sets.
+ */
+const WITHDRAWN_IN = (html) =>
+  [...html.matchAll(/<span data-withdrawn-by="([^"]+)"(?:\s+data-withdrawal="([^"]*)")?/g)].map((m) => ({
+    by: m[1],
+    id: m[2],
+  }));
+
+/** The list's `what` as an id. The script derives it; it is never typed twice. */
+const WITHDRAWAL_ID = (what) => what.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const listMatch = /<!--\s*reader-note-withdrawals\s*(\[[\s\S]*?\])\s*-->/.exec(src.L);
 const withdrawals = listMatch === null ? [] : JSON.parse(listMatch[1]);
 
-/* 6. Every listed withdrawal is marked where it happened. */
+/* 6. Every listed withdrawal is marked where it happened — matched by id. */
 {
   const before = failures.length;
-  for (const [s, by] of withdrawals) {
+  for (const [s, by, what] of withdrawals) {
+    const id = WITHDRAWAL_ID(what);
     const h = byId.get(s);
-    if (h === undefined || !WITHDRAWN_IN(h.html).includes(by)) fail(`6 §${s}/§${by}`);
+    const marks = h === undefined ? [] : WITHDRAWN_IN(h.html);
+    const hit = marks.filter((mk) => mk.by === by && mk.id === id);
+    if (hit.length === 0) fail(`6 §${s}/§${by}#${id}`);
   }
   report(6, failures.length === before);
 }
 
-/* 7. Every marked withdrawal is listed. */
+/* 7. Every marked withdrawal is listed — and carries an id to be listed by. */
 {
   const before = failures.length;
   for (const h of ALL) {
     if (h.id.startsWith('W')) continue;
-    for (const by of new Set(WITHDRAWN_IN(h.html))) {
-      if (!withdrawals.some(([s, b]) => s === h.id && b === by)) fail(`7 §${h.id}`);
+    for (const mk of WITHDRAWN_IN(h.html)) {
+      /* An unidentified mark cannot be paired with an entry, so it fails on its own. */
+      if (mk.id === undefined) { fail(`7 §${h.id} no-id`); continue; }
+      if (!withdrawals.some(([s, b, what]) => s === h.id && b === mk.by && WITHDRAWAL_ID(what) === mk.id)) {
+        fail(`7 §${h.id}#${mk.id}`);
+      }
     }
   }
   report(7, failures.length === before);
+}
+
+/*
+  7b. No two list entries share a (section, id), and no two marks do either.
+
+  **Without this, the pairing is one-to-many again.** 6 asks whether at least
+  one mark matches an entry and 7 whether at least one entry matches a mark,
+  so two identical entries are both satisfied by a single mark — the same
+  hole one level up, since the ids would be equal rather than the attributes
+  absent. The spec's list has no uniqueness rule; this supplies it.
+*/
+{
+  const before = failures.length;
+  const seenEntries = new Map();
+  for (const [s, , what] of withdrawals) {
+    const key = `${s}#${WITHDRAWAL_ID(what)}`;
+    seenEntries.set(key, (seenEntries.get(key) ?? 0) + 1);
+  }
+  for (const [key, n] of seenEntries) if (n > 1) fail(`7b entry ${key} x${n}`);
+
+  for (const h of ALL) {
+    if (h.id.startsWith('W')) continue;
+    const seen = new Map();
+    for (const mk of WITHDRAWN_IN(h.html)) {
+      if (mk.id === undefined) continue;
+      const key = `${h.id}#${mk.id}`;
+      seen.set(key, (seen.get(key) ?? 0) + 1);
+    }
+    for (const [key, n] of seen) if (n > 1) fail(`7b mark ${key} x${n}`);
+  }
+  report('7b', failures.length === before);
 }
 
 /* 8. Figures in rows. */
