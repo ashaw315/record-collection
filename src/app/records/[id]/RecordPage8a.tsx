@@ -1,5 +1,5 @@
 import { BANDS, CONTENT_MEASURE, GRID_COLUMN, GRID_COLUMNS, GRID_FORK, IDENTITY_SPANS, LOWER_SPANS, STILL_MARGIN } from './band-geometry';
-import { regionStylesheet } from './region-rows';
+import { regionStylesheet, widePageStylesheet } from './region-rows';
 import { CONTROL_HEIGHT } from './extended-grid';
 import { CELL_PADDING } from './extended-grid';
 import { BAR_BOTTOM, BLOCK_BOTTOM, COVER, COVER_COLUMN, COVER_PAD } from './cover-geometry';
@@ -198,7 +198,14 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
     <div
       data-testid="record-page-8a"
       className="mx-auto"
-      style={{ color: INK, maxWidth: GRID_FORK }}
+      /*
+        **The cap is in the stylesheet, not inline.** §30 lifts it to 1920
+        above 1440, and an inline `max-width` beats every rule that lacks
+        `!important` — the same defect that made §28's breakpoints silently
+        do nothing when sections were placed inline. `GRID_FORK` remains the
+        cap up to 1679, stated in `widePageStylesheet`.
+      */
+      style={{ color: INK }}
     >
       {/*
         **§18: the type never moves, the grid does.**
@@ -239,6 +246,14 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
           would show only as a layout nobody measured.
         */
         ${regionStylesheet()}
+
+        /*
+          §30's page above 1440: 14 columns from 1680, 16 from 1920, the page
+          taking the window up to that ceiling, and the upper band keeping its
+          share of the viewport's height with the extra going to the
+          construction. Generated for the same reason as the region's blocks.
+        */
+        ${widePageStylesheet()}
 
         /*
           §28's 44px touch floor: "the hit area is padded out to 44 while the

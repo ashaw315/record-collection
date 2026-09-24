@@ -5,7 +5,7 @@ import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
 import { CONTROL_HEIGHT } from '../src/app/records/[id]/extended-grid';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
-import { COLUMN_MIN, columnsFor, columnWidthAt } from '../src/app/records/[id]/region-rows';
+import { COLUMN_MIN, columnsFor, columnWidthAt, pageWidthAt, upperSpansAt } from '../src/app/records/[id]/region-rows';
 
 registerCleanup();
 
@@ -230,4 +230,96 @@ test('§28: the images strip wraps its thumbnails, two per row at 390', async ({
     expect(thumb.left, 'no thumbnail starts off-screen').toBeGreaterThanOrEqual(0);
     expect(thumb.right, 'nor runs past the viewport').toBeLessThanOrEqual(390);
   }
+});
+
+test('§30: the page uses the width above 1440, to a ceiling at 1920', async ({ page }) => {
+  /**
+   * §30: "There are 14 columns from 1680 (14 × 120) and 16 from 1920, and the
+   * ceiling is 16... Above 1920 the page stays 1920 wide and centres. The
+   * current behaviour, 1440 centred at every wider width, was never ruled,
+   * and it is withdrawn here."
+   *
+   * The construction takes the extra columns — five at 14, six at 16 — while
+   * identity and cover keep four, because their content has a fixed measure
+   * and the construction's is fitted.
+   */
+  const id = await seed(page);
+
+  for (const width of [1440, 1680, 1920, 2560]) {
+    await page.setViewportSize({ width, height: 1050 });
+    await page.goto(`/records/${id}`);
+    await page.locator('[data-cell="still"]').waitFor({ timeout: 20_000 });
+
+    const measured = await page.evaluate(() => {
+      const frame = document.querySelector('[data-testid="record-page-8a"]')!.getBoundingClientRect();
+      const cells = ['identity', 'still', 'sleeve'].map((name) => {
+        const box = document.querySelector(`[data-cell="${name}"]`)!.getBoundingClientRect();
+        return { name, width: Math.round(box.width) };
+      });
+      return { page: Math.round(frame.width), cells };
+    });
+
+    expect(measured.page, `the page at ${width}`).toBe(pageWidthAt(width));
+
+    const spans = upperSpansAt(width);
+    const column = pageWidthAt(width) / columnsFor(width);
+    for (const cell of measured.cells) {
+      const expected = Math.round(column * spans[cell.name as 'identity' | 'still' | 'sleeve']);
+      expect(cell.width, `${cell.name} at ${width}`).toBeCloseTo(expected, -0.7);
+    }
+  }
+});
+
+test('§30: the construction’s drawn scale never falls as the window widens', async ({ page }) => {
+  /**
+   * §30's invariant, on the route at its breakpoints. The 1px sweep is a unit
+   * test (`region-rows.test.ts`); this checks the rendered drawing agrees
+   * with the geometry that sweep asserts, at the widths where it changes.
+   */
+  const id = await seed(page);
+  let previous = 0;
+
+  for (const width of [1440, 1679, 1680, 1919, 1920, 2560]) {
+    await page.setViewportSize({ width, height: 1050 });
+    await page.goto(`/records/${id}`);
+    await page.locator('[data-testid="construction-still"]').waitFor({ timeout: 20_000 });
+
+    const drawn = await page.evaluate(() => {
+      const svg = document.querySelector('[data-testid="construction-still"]')!.getBoundingClientRect();
+      return Math.round(svg.width * 100) / 100;
+    });
+
+    expect(drawn, `the drawing at ${width} is not narrower than at the width below`).toBeGreaterThanOrEqual(previous - 0.5);
+    previous = drawn;
+  }
+});
+
+test('§28’s growth below 1440: at 1000 the page is 1000 wide, not 960 centred', async ({ page }) => {
+  /**
+   * **Expected to fail on first run, and it is §28 unbuilt rather than §30
+   * breaking something.** §30: "§28 already says columns grow between
+   * breakpoints below 1440 too, so a 1000px window should show 8 columns of
+   * 125 across the full width, not 960 centred. If the build centres there,
+   * the build diverges from §28."
+   *
+   * The gap growth closes is larger than it looks: 960 to 1439 is one
+   * breakpoint, so at the top of that range it would reach 479px.
+   */
+  const id = await seed(page);
+  await page.setViewportSize({ width: 1000, height: NO_SCROLL_HEIGHT });
+  await page.goto(`/records/${id}`);
+  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+
+  const measured = await page.evaluate(() => {
+    const region = document.querySelector('[data-region="extended-grid"]')!.getBoundingClientRect();
+    const columns = getComputedStyle(document.querySelector('[data-region="extended-grid"]')!)
+      .gridTemplateColumns.split(/\s+/)
+      .filter((v) => v !== '')
+      .map((v) => parseFloat(v));
+    return { width: Math.round(region.width), columns };
+  });
+
+  expect(measured.width, 'the page takes the whole 1000').toBe(1000);
+  expect(measured.columns.length, 'on eight columns').toBe(8);
+  expect(measured.columns[0], 'of 125 each, grown from the 120 module').toBeCloseTo(125, 0);
 });

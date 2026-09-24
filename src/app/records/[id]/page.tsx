@@ -13,7 +13,6 @@ import { RecordDetail } from './RecordDetail';
 import { RecordPage8a } from './RecordPage8a';
 import { pressingLine } from './page-record';
 import { recordLadder } from '@/lib/colour/record-ladder';
-import { GRID_FORK } from './band-geometry';
 import { LABEL } from './grid-type';
 import { Section } from './Section';
 import { marketFigures } from './market-median';
@@ -153,10 +152,14 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
             `relative` also gives §9.2's edge fields the region to attach to,
             so they leave the composition rather than the viewport.
           */}
-          <div
-            className="relative mx-auto min-w-0"
-            style={{ maxWidth: GRID_FORK }}
-          >
+          {/*
+            **The cap is §30's and lives in the stylesheet.** An inline
+            `max-width` beats every rule that lacks `!important`, so a cap
+            here pins the page at 1440 and §30's wider grids silently do
+            nothing — measured at 1680, where the page stayed 1440.
+            `data-page-measure` is what `widePageStylesheet` addresses.
+          */}
+          <div data-page-measure="" className="relative mx-auto min-w-0">
             {/*
               **8a, on the route rather than on a probe.**
 

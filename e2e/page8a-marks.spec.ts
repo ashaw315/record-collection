@@ -172,7 +172,7 @@ test.describe('every mark stays in its cell', () => {
     for (const mark of [
       'sleeveBar',
       'sleeveBlock',
-      'identityTriangle',
+      /* §28 withdraws `identityTriangle` with the identity cell's ornament track. */
       'provenanceArc',
       'aboutArc',
       /* §5.4's small solid, in the construction's own vocabulary. */

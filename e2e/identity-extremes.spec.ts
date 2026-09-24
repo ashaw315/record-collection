@@ -83,7 +83,27 @@ test('§27: every pressing fact ends inside the cell on the collection’s worst
   expect(m.pressingLines, 'the long label wraps the pressing line to two, as the real record does').toBe(2);
 
   expect(m.facts.length, 'the pressing block carries facts').toBeGreaterThan(0);
+  /**
+   * **KNOWN-FAILING at 0.9px, and the question is Design's.** §27 and §18 both
+   * forbid clipping a fact, and the genres run is cut by 0.9px on the
+   * collection's worst title — the cell needs 512 against 510.
+   *
+   * The 27px against §28's "fits by 25" is settled as arithmetic: §28's
+   * figure was measured on a built page with the run COLLAPSED (NOTES, 23
+   * Sep), and the run is 26px when listed, so 512 − 26 = 486 against the
+   * recorded 485. Neither figure is wrong; they are two states of one record.
+   *
+   * What is open is that §28 quotes a fits-by-25 figure obtained with the
+   * collapse fired while calling the clause "untriggered on the current
+   * collection", and §4.2 says the condition is unmet on all seventeen. If
+   * the run must be listed the record does not fit; if it may collapse, the
+   * collapse is triggered. §28's own 4px tolerance is why the build lists at
+   * −2 rather than collapsing.
+   *
+   * Asserted as §27 rules rather than relaxed, so the resolution moves this
+   * line instead of arriving unnoticed.
+   */
   for (const fact of m.facts) {
-    expect(fact.cut, `${fact.field} ends inside the cell (positive = clipped by that many px)`).toBeLessThanOrEqual(0);
+    expect(fact.cut, `${fact.field} ends inside the cell (positive = clipped by that many px) — see the note above; open with Design`).toBeLessThanOrEqual(0);
   }
 });

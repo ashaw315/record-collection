@@ -62,7 +62,6 @@ const MARK_KIND: Partial<Record<string, MarkKind>> = {
   journalEdge: 'linear',
   /* Tint: ground, and the sleeve bar frames the source rather than being one. */
   sleeveBar: 'tint',
-  identityTriangle: 'tint',
   provenanceArc: 'tint',
   aboutArc: 'tint',
   disc: 'tint',
@@ -96,7 +95,6 @@ const colouredAreas = (page: Page) =>
       let area: number;
       if (name === 'journalEdge') area = 2 * box.height;
       else if (name.endsWith('Arc') || name === 'disc') area = box.width * box.height * (Math.PI / 4);
-      else if (name === 'identityTriangle') area = box.width * box.height * 0.5;
       else area = box.width * box.height;
 
       areas.push({ name, area });
@@ -264,7 +262,8 @@ test.describe('colour distribution (§5.5)', () => {
 
     /* Filled, not outlined, not omitted — omitting them would let a missing
        image change the composition's structure. */
-    for (const mark of ['releaseYearField', 'sleeveBar', 'journalEdge', 'identityTriangle']) {
+    /* §28 withdraws the identity triangle; the rest of §5.3's fallback stands. */
+    for (const mark of ['releaseYearField', 'sleeveBar', 'journalEdge']) {
       await expect(page.locator(`[data-mark="${mark}"]`), mark).toHaveCount(1);
     }
 

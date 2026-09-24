@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { BANDS, NO_SCROLL_HEIGHT, GRID_FORK } from '../src/app/records/[id]/band-geometry';
+import { pageWidthAt } from '../src/app/records/[id]/region-rows';
 import { contrastRatio } from '../src/lib/colour/record-colour';
 
 registerCleanup();
@@ -344,7 +345,7 @@ test('the page caps, and the header caps with it', async ({ page }) => {
   const suffix = makeSuffix();
   const id = await createRecord(page, CASES[0], suffix);
 
-  for (const width of [1440, 2560]) {
+  for (const width of [1440, 1680, 2560]) {
     await page.setViewportSize({ width, height: NO_SCROLL_HEIGHT });
     await page.goto(`/records/${id}`);
     await expect(page.getByTestId('record-page-8a')).toBeVisible();
@@ -358,7 +359,13 @@ test('the page caps, and the header caps with it', async ({ page }) => {
       return { pw: Math.round(p.width), pl: Math.round(p.left), hw: Math.round(h.width), hl: Math.round(h.left) };
     });
 
-    const expected = Math.min(width, GRID_FORK);
+    /*
+      §30 lifts the cap: the page takes the window to a 1920 ceiling, so the
+      figure is `pageWidthAt` rather than a flat 1440. The CLAIM is unchanged
+      and is the reason the test exists — the header shares the page's measure
+      and its edge, whatever that measure is.
+    */
+    const expected = pageWidthAt(width);
     expect(measured.pw, `page width at ${width}`).toBe(expected);
     expect(measured.hw, `header width at ${width}`).toBe(expected);
     /* Same measure AND same edge — equal widths off by an offset still misalign. */

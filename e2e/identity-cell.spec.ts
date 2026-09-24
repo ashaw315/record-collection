@@ -228,74 +228,24 @@ test.describe('the corner field is a track, not a reserve (§4.2)', () => {
    * `1fr` and `minmax(0, 140px)` has that property by construction; padding
    * plus an absolute height does not have it at all.
    */
-  test('shrinks the ornament track as the title grows, at every title length', async ({ page }) => {
-    await login(page);
-    await page.goto('/wall/probe/identity');
-    await page.locator('[data-case="five"]').waitFor({ timeout: 15_000 });
-
-    const tracks = await page.evaluate(() =>
-      ['one', 'two', 'three', 'four', 'five'].map((id) => {
-        const cell = document.querySelector(`[data-case="${id}"] [data-cell="identity"]`);
-        const ornament = cell?.querySelector('[data-track="ornament"]');
-        const content = cell?.querySelector('[data-track="content"]');
-        if (cell == null || ornament == null || content == null) return null;
-        return {
-          id,
-          ornament: Math.round(ornament.getBoundingClientRect().height * 10) / 10,
-          content: Math.round(content.getBoundingClientRect().height * 10) / 10,
-          cell: Math.round(cell.getBoundingClientRect().height * 10) / 10,
-          hasMark: ornament.querySelector('[data-mark]') !== null,
-        };
-      }),
-    );
-
-    for (const track of tracks) expect(track, 'every case renders both tracks').not.toBeNull();
-    const rows = tracks.filter((t): t is NonNullable<typeof t> => t !== null);
-
-    /*
-      **The track must contain the mark.** The first version of this test
-      measured an empty track — the probe passed no ornament — so "the track
-      shrinks" was true of a div with nothing in it, which an empty box
-      satisfies trivially. The mark is what the field is FOR.
-    */
-    for (const row of rows) {
-      expect(row.hasMark, `${row.id}: the ornament track draws the mark`).toBe(true);
-    }
-
-    /*
-      **Monotonic, not equal to a figure.** Longer title, no more ornament —
-      this is what "the track shrinks by exactly what the content takes" means
-      observationally, and it fails on any layout where the two are independent.
-    */
-    for (let i = 1; i < rows.length; i += 1) {
-      expect(
-        rows[i].ornament,
-        `${rows[i].id} (${rows[i].ornament}) must not exceed ${rows[i - 1].id} (${rows[i - 1].ornament})`,
-      ).toBeLessThanOrEqual(rows[i - 1].ornament);
-    }
-
-    /* And it genuinely moves: a track that never changed would pass the above. */
-    expect(
-      rows[0].ornament - rows[rows.length - 1].ornament,
-      'the track actually yields between the shortest and longest title',
-    ).toBeGreaterThan(40);
-
-    /*
-      The two tracks together are the cell: the ornament is displaced by the
-      content rather than overlapping it or overflowing the cell.
-    */
-    for (const row of rows) {
-      expect(row.content + row.ornament, `${row.id}: tracks fill the cell`).toBeLessThanOrEqual(
-        row.cell + 1,
-      );
-    }
-  });
-
-  test('never closes the corner field entirely, and never drops a fact', async ({ page }) => {
+  /**
+   * **§28 withdrew this test's subject.** It asserted the ornament track
+   * shrinking by exactly what the content takes — §4.2's two-track mechanism.
+   * §28: "The identity cell carries no ornament. Its corner field and
+   * ornament track are withdrawn, and the ornament step leaves §4.2's give
+   * order... The space the track held returns to the content on every
+   * record."
+   *
+   * The cell is one track now, so there is no yielding to assert. What the
+   * mechanism was FOR — the content always fits and no fact is dropped —
+   * survives in the test below, which is the claim that mattered.
+   */
+  test('never drops a fact, at any title length', async ({ page }) => {
     /**
-     * The field shrinks on two records and disappears on none. A track that
-     * collapsed to zero would be a reserve that failed rather than yielded, and
-     * the fact the cell must never trade away is a line of the record.
+     * **The claim §4.2's two-track mechanism existed to deliver**, kept after
+     * §28 withdrew the track itself: whatever the title does, the cell holds
+     * its pressing line, its genres and its format, and nothing overflows.
+     * The mechanism is now simply that the content has the whole cell.
      */
     await login(page);
     await page.goto('/wall/probe/identity');
@@ -304,10 +254,8 @@ test.describe('the corner field is a track, not a reserve (§4.2)', () => {
     const rows = await page.evaluate(() =>
       ['one', 'two', 'three', 'four', 'five'].map((id) => {
         const cell = document.querySelector(`[data-case="${id}"] [data-cell="identity"]`)!;
-        const ornament = cell.querySelector('[data-track="ornament"]')!;
         return {
           id,
-          ornament: Math.round(ornament.getBoundingClientRect().height * 10) / 10,
           overflows: cell.scrollHeight > Math.ceil(cell.getBoundingClientRect().height),
           hasPressing: cell.querySelector('[data-field="pressing-line"]') !== null,
           hasGenres: cell.querySelector('[data-field="genres"]') !== null,
@@ -317,7 +265,6 @@ test.describe('the corner field is a track, not a reserve (§4.2)', () => {
     );
 
     for (const row of rows) {
-      expect(row.ornament, `${row.id}: the field is still there`).toBeGreaterThan(0);
       expect(row.overflows, `${row.id}: nothing overflows the cell`).toBe(false);
       expect(row.hasPressing, `${row.id}: keeps the pressing line`).toBe(true);
       expect(row.hasGenres, `${row.id}: keeps the genres`).toBe(true);

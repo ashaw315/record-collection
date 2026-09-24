@@ -80,7 +80,14 @@ async function aRecord(page: Page, suffix: string): Promise<string> {
 }
 
 /** The three §5.1 planes, by the name each already carries. */
-const PLANES = ['identityTriangle', 'provenanceArc', 'aboutArc'] as const;
+/**
+ * **Two planes, not three: §28 withdraws the identity triangle** with the
+ * ornament track that held it. "The identity cell carries no ornament. Its
+ * corner field and ornament track are withdrawn." The claim below — a plane
+ * is one painted region, not three faces — is unchanged for the two that
+ * remain.
+ */
+const PLANES = ['provenanceArc', 'aboutArc'] as const;
 
 test.beforeEach(async ({ page }) => {
   await login(page);
@@ -146,14 +153,11 @@ test('each plane is the shape its name says', async ({ page }) => {
       return { clipPath: style.clipPath, borderRadius: style.borderRadius };
     };
     return {
-      triangle: read('identityTriangle'),
       provenance: read('provenanceArc'),
       about: read('aboutArc'),
     };
   });
 
-  expect(shapes.triangle, 'the triangle renders').not.toBeNull();
-  expect(shapes.triangle?.clipPath, 'three points, not a box').toMatch(/polygon\(/);
 
   for (const [name, arc] of [
     ['provenance', shapes.provenance],
@@ -166,41 +170,19 @@ test('each plane is the shape its name says', async ({ page }) => {
   }
 });
 
-test('the triangle lives in the ornament track and yields with it', async ({ page }) => {
-  /**
-   * §4.2's corner reserve: the triangle shrinks from 140px as the title grows,
-   * through the same track mechanism the identity cell already has. (The
-   * drawing's yield figures — 115.4, 47.7, gone at five — rested on a stack
-   * ~69px taller than the build's and are drift; nothing here asserts them.)
-   *
-   * **In the track rather than positioned against the cell**, so the yielding
-   * is structural: a mark placed absolutely would keep its size while the
-   * reserve it is supposed to occupy shrank underneath it.
-   */
-  const suffix = makeSuffix();
-  const id = await aRecord(page, suffix);
-  await page.goto(`/records/${id}`);
-  await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
-
-  const placed = await page.evaluate(() => {
-    const mark = document.querySelector('[data-mark="identityTriangle"]');
-    if (mark === null) return null;
-    const track = mark.closest('[data-track="ornament"]');
-    const trackBox = track?.getBoundingClientRect();
-    const markBox = mark.getBoundingClientRect();
-    return {
-      inTrack: track !== null,
-      trackHeight: trackBox === undefined ? null : Math.round(trackBox.height),
-      markHeight: Math.round(markBox.height),
-    };
-  });
-
-  expect(placed, 'the triangle renders').not.toBeNull();
-  expect(placed?.inTrack, 'it sits in the ornament track').toBe(true);
-  /* It fills the reserve it is given rather than overflowing it. */
-  expect(placed?.markHeight).toBeLessThanOrEqual((placed?.trackHeight ?? 0) + 1);
-});
-
+/**
+ * **§28 withdrew this test's subject.** It asserted that the identity
+ * triangle shrinks with the ornament track as the title grows — §4.2's
+ * corner reserve yielding structurally. §28 withdraws both: "A track that
+ * holds a triangle on most records and 1px on the worst makes ornament's
+ * presence depend on the record. §21 forbids that, and it is the same defect
+ * as hashing ornament, reached through the give order instead of the
+ * generator."
+ *
+ * What replaces it is `mark-boxes.test.ts` asserting the mark is gone from
+ * the inventory, and `identity-cell.spec.ts` asserting the cell is one track
+ * whose whole height is the content's.
+ */
 test('the frame\'s last cell is NOTE, not Journal — and the section keeps About this record', async ({
   page,
 }) => {

@@ -88,7 +88,13 @@ test('capture the built record page at 1440 and 390', async ({ page }) => {
     expect(posted.status(), `the price seeded: ${await posted.text()}`).toBe(201);
   }
 
-  for (const [width, height] of [[1440, NO_SCROLL_HEIGHT], [390, 844]] as const) {
+  /*
+    §28's two named viewports, plus §30's wide references — the section
+    requires the page viewed at 1680 × 1050 and 1920 × 1080 before merging,
+    and 1920 × 950 is the real maximised window where the floor is a stated
+    known miss.
+  */
+  for (const [width, height] of [[1440, NO_SCROLL_HEIGHT], [390, 844], [1680, 1050], [1920, 1080]] as const) {
     await page.setViewportSize({ width, height });
     await page.goto(`/records/${id}`);
     await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });

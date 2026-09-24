@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { CELL_PADDING } from '../src/app/records/[id]/extended-grid';
 import { CONTENT_MEASURE, GRID_FORK } from '../src/app/records/[id]/band-geometry';
+import { pageWidthAt } from '../src/app/records/[id]/region-rows';
 
 registerCleanup();
 
@@ -91,13 +92,16 @@ test('§18: the grid moves and the type does not, at every width', async ({ page
   const { id } = await r.json();
   const href = `/records/${id}`;
 
-  /* Above the fork: twelve fixed columns, so the grid does not stretch. */
-  /* Widths above the fork. 1730 rather than 1728 deliberately: the old cap is
-     not a landmark any more, and a literal equal to a constant reads as that
-     constant to the next person (and to `specs-import-constants`). */
+  /*
+    **§30 withdraws the flat 1440 cap, so the claim is the page's WIDTH rule
+    rather than one number.** §18's point survives — the type never moves, the
+    grid does — but above 1440 the grid grows: 14 columns from 1680, 16 from
+    1920, and the page stays 1920 above that. So the expected width is
+    `pageWidthAt`, which is 1440 at the fork and 1920 at 2000.
+  */
   for (const width of [2000, 1730, 1600, GRID_FORK]) {
     const m = await measure(page, width, href);
-    expect(m.grid, `at ${width}, the grid is fixed at ${GRID_FORK}`).toBe(GRID_FORK);
+    expect(m.grid, `at ${width}, the grid takes ${pageWidthAt(width)}`).toBe(pageWidthAt(width));
     expect(m.track, `at ${width}, the track holds its measure`).toBeGreaterThanOrEqual(CONTENT_MEASURE);
     expect(m.artistSpill, `at ${width}, nothing of the artist is cut`).toBe(0);
     expect(m.titleSpill, `at ${width}, nothing of the title is cut`).toBe(0);

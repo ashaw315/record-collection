@@ -31204,3 +31204,40 @@ The two mechanisms answer the same question differently — **§31 rejects an ar
 **A double-counted pad in my own test.** The first version asserted `frameTop <= minY - FRAME_PAD` against a constant that already includes the pad, and reported the frame 16 units short at the top. The constant was right; the assertion subtracted the pad twice.
 
 **§26's union test moved rather than being deleted.** It asserted the frame equals the union recomputed at render, which §31 withdraws ("a frame fitted to the collection's extremes is a mutable input to every record's drawing"). What survives is the property §26 wanted — one box containing every record — now asserted against the stated constant, plus a test that adding a record leaves every existing drawing untouched, which is the whole reason §31 exists.
+
+
+## Step 18 reopened, step 22 built, and three corrections (23 Sep)
+
+**CORRECTION — the diagonals are not a defect, and I cited the wrong section.** Provenance and Matrix / runout draw a module-level diagonal, which §6 rules by name: "Provenance 13 of 17 (no source) — Label persists, one diagonal fills the body box, the field is suppressed". The governing rule is "One diagonal per empty module, never per empty field — carried unchanged from 7a §1.4, where the FIELD-level version failed the area floor." I cited §W.31's retirement of field-level diagonals against a module-level one. §10.1 anticipates the misreading exactly: "The diagonals read as intended, and the reason they look wrong is §2.1 working."
+
+**Checked, per Adam, because §9.1 makes it decidable in the build:** §6's one-diagonal rule does not cross the fold — above it absence must be drawn because the geometry is fixed, below it drawing absence would be inventing content. **All four `EmptyMark` uses render inside `data-band="record"`, the frame's lower band, above the fold**, and `extended-grid.spec.ts` already asserts no diagonal appears in §9's region. No §9.1 violation; nothing changes.
+
+**CORRECTION — the screenshot's tint triangle was §28's, not §26's.** It is the identity cell's 140px corner field, and removing the ornament track removes it. So the screenshot defect and the unbuilt withdrawal were one item. **Why I misattributed it: §1, §6.1 and §10 still draw the triangle**, so a superseded drawing pointed me at §26. Design has since put a notice above each of those three. **Checked after the removal:** the lower region's own tint triangle still renders, 90 × 252 off the left edge of the last row's air — the identity one was not standing in for it.
+
+**THE 27PX, ANSWERED.** §28's "+25" was **measured on a built page**, and NOTES records the conditions: "the same record — five-line title, one-line artist, the long label wrapping the pressing line to two, six genres **collapsed** — needs 485 against 510, margin +25". **The measurement was taken with the genres run COLLAPSED.** Measured now, the run is **26px** tall when listed (six genres wrap to two lines), and 512 − 26 = 486 against the recorded 485. The arithmetic closes to a pixel. Neither figure is wrong; they are two states of one record, and nothing has been added since.
+
+**What is still open and is Design's:** §28 quotes a fits-by-25 figure obtained with the collapse already fired, while also calling the clause "untriggered on the current collection" and §4.2 saying the condition is unmet on all seventeen. If the run must be listed, the record needs 512 and does not fit; if it may collapse, it fits by 25 but the collapse IS triggered. §28's own 4px tolerance is why the build currently lists at −2 rather than collapsing — without it the run would collapse and §28's +25 would reproduce, which is itself evidence the two figures are one measurement.
+
+**STEP 18 REOPENED: the clamp is removed.** `containedOrigin` shifted every form back inside the frame before drawing, which made §31's fit check unreachable. Measured with it gone, over 5,000 random uuids: **14.1% of ids have an arrangement rejected** (Adam predicted ~13.8%), the most any id needs is **5 advances** against a cap of 32, none reaches the cap, and none renders quiet. **The stop condition Adam set — 0 of 17 changed — holds**, so step 18's union was measured on unclamped output and the frame constant stands.
+
+**Before removal, for the record:** the clamp displaced 690 of 5,000 records (13.8%) and 703 of 30,000 forms (2.3%), largest 40.92px. 97.7% of forms untouched, but 456 of the 703 displacements exceeded 5px — rare, and not sub-pixel when it fired. **It displaced none of the seventeen** (0 of 17, largest 0.00px), which is what made the constant safe.
+
+**STEP 22 BUILT — §30's wide page.** Floor figures at every viewport §30 names, all matching Design's post-constant expectations:
+
+| viewport | worst | median | cell / band | bound | expected |
+|---|---|---|---|---|---|
+| 1440 × 900 | 0.508% | 0.753% | 480 / 547 | width | 0.508% |
+| 1679 × 1050 | 0.524% | 0.777% | 560 / 638 | width | 0.526% |
+| 1680 × 1050 | **0.610%** | 0.904% | 600 / 638 | width | 0.610% |
+| 1920 × 1080 | **0.559%** | 0.829% | 720 / 656 | height | 0.557% |
+| 1920 × 950 | **0.481%** | 0.713% | 720 / 577 | height | 0.480% — **a stated known miss, 1 of 17 under** |
+
+The band keeps its ratio above 1440 — `max(547, 547/900 × viewport height)` — with the extra height going to the construction, which is the only upper cell fitted rather than fixed. §30's invariant (the drawn scale never falls as the window widens) is asserted in **1px steps across 1440–1920** as a unit test, and at its breakpoints on the route.
+
+**§30's expected failure at 1000px did NOT fail — and that is correct.** §30 predicted "if the build centres at 1000, the build diverges"; the region grew when §28's breakpoints were built in step 20, so the prediction described the tree before that work. At 1000 the page is 1000 wide on 8 columns of 125.
+
+**The inline-beats-stylesheet defect, third and fourth instances.** §30's breakpoints did nothing at first because THREE inline `max-width: GRID_FORK` caps pinned the page at 1440 (`RecordPage8a`, `page.tsx`, `AppHeader`), and then because `IDENTITY_SPANS` is set inline on the upper cells. The caps moved into the stylesheet; the spans keep their inline 4/4/4 (which is right at 1440, being §23's ruling rather than a width's) and the wide blocks override with `!important`. **Recorded as a pattern: a value that varies by width cannot be inline, and one that does not should not be overridden.**
+
+**§30's lower region above 1440 was missed on the first pass.** The region kept its 12 fixed columns while the frame ran to 1920, leaving a dead strip — visible in the 1920 screenshot before the fix. §30: "the extra columns become air, not wider sections... a row with no air gains one on the side its neighbour above leaves filled, so the air alternates down the page." Built as `wideRowsAt`, with the full-width strip exempt ("spanning is what it is for") and therefore excluded from the alternation — counting it as a side broke the chain at row 4.
+
+**The four "load-dependent probes" are mislabelled and a bug report is queued.** One wall test measured **32.9s against Playwright's 30s default timeout**. A too-tight budget and a busy box produce an identical symptom — a 30s timeout that passes on re-run — and want different fixes. The four have passed in isolation every time, including at load 24.9.

@@ -34,6 +34,9 @@ export const COLUMNS_AT: Record<RegionWidth, number> = { 1440: 12, 960: 8, 480: 
  * rather than guessing past it.
  */
 export function columnsFor(viewport: number): number {
+  /* §30: 14 from 1680, 16 from 1920, and 16 is the ceiling. */
+  if (viewport >= 1920) return 16;
+  if (viewport >= 1680) return 14;
   if (viewport >= 1440) return 12;
   if (viewport >= 960) return 8;
   if (viewport >= 480) return 4;
@@ -365,4 +368,202 @@ export function regionStylesheet(): string {
     out.push(`@media (max-width: ${ceiling}px) {\n${block.rules.join('\n')}\n}`);
   });
   return out.join('\n');
+}
+
+/**
+ * §30: **above 1920 the page stays 1920 wide and centres.**
+ *
+ * "The current behaviour, 1440 centred at every wider width, was never ruled,
+ * and it is withdrawn here." Below the ceiling the page takes the window, so
+ * columns grow between breakpoints as §28 rules below 1440.
+ */
+export const PAGE_CEILING = 1920;
+export function pageWidthAt(viewport: number): number {
+  return Math.min(viewport, PAGE_CEILING);
+}
+
+/**
+ * §30: which upper cells take the extra columns.
+ *
+ * "The construction takes five columns at 14 (600 wide) and six at 16 (720
+ * wide), while the identity and cover cells keep four. The rule is which
+ * cells grow. A cell whose content has a fixed measure keeps its width: the
+ * identity cell holds the 412 title measure, and the cover holds a square
+ * sleeve. The construction is fitted to its cell and scales with it, so it is
+ * the one cell that uses more width."
+ *
+ * What is left is air that carries nothing — one column at 14, two at 16 —
+ * and §30 keeps it narrower than one upper cell, which is where the ceiling
+ * comes from.
+ */
+export function upperSpansAt(viewport: number): { identity: number; still: number; sleeve: number; air: number } {
+  const columns = columnsFor(viewport);
+  const still = columns >= 16 ? 6 : columns >= 14 ? 5 : 4;
+  return { identity: 4, still, sleeve: 4, air: columns - 8 - still };
+}
+
+/**
+ * The upper band's height: `max(547, 547/900 × viewport height)`.
+ *
+ * §5.5's floor is measured against the VIEWPORT (§28), and a wider screen is
+ * also a taller one, so a band fixed at 547 makes the construction a smaller
+ * share of a bigger screen. Holding the band's ratio to the reference
+ * viewport keeps "one screen" meaning the same thing at every width, and the
+ * whole extra height goes to the construction cell — the only upper cell
+ * whose content is fitted rather than fixed.
+ */
+export function bandHeightAt(viewportHeight: number): number {
+  return Math.max(BAND_AT_REFERENCE, Math.round((BAND_AT_REFERENCE / REFERENCE_HEIGHT) * viewportHeight));
+}
+/** §28's ruled band at the reference viewport, and the height it is a share of. */
+export const BAND_AT_REFERENCE = 547;
+export const REFERENCE_HEIGHT = 900;
+
+/**
+ * The construction's drawn scale at a viewport — §30's invariant is that this
+ * never falls as the window widens.
+ *
+ * The drawing is §31's frame fitted into the still cell's inner box (§26's
+ * 24px margin), by the smaller of the two ratios. Six columns at 1920 exist
+ * to hold the invariant: at 1919 the 14 columns are 137 wide and a
+ * five-column cell is 686, where keeping five at 1920 would drop it to 600.
+ */
+export function constructionScaleAt(viewport: number, viewportHeight = REFERENCE_HEIGHT): number {
+  const page = pageWidthAt(viewport);
+  const cellWidth = (page / columnsFor(viewport)) * upperSpansAt(viewport).still;
+  const innerWidth = cellWidth - 2 * 24;
+  const innerHeight = bandHeightAt(viewportHeight) - 2 * 24;
+  /* §31's stated frame, as the ratio it is fitted by. */
+  const FRAME_W = 296;
+  const FRAME_H = 314;
+  return Math.min(innerWidth / FRAME_W, innerHeight / FRAME_H);
+}
+
+/**
+ * §30's wide page, as CSS.
+ *
+ * A stylesheet rather than a measurement, for §18's reason: the server has no
+ * viewport, so a JavaScript fork renders the wrong composition first and
+ * corrects it after hydration, and this page must be right on the first
+ * paint.
+ *
+ * **`!important` on the upper spans, deliberately.** §23's 4/4/4 is set
+ * inline on the cells, which is right at 1440 — the spans are the band's
+ * ruling, not a width's — and an inline value beats a plain stylesheet rule.
+ * Rather than move §23's spans out to CSS and make every width restate them,
+ * the three widths that differ override the one that does not.
+ *
+ * Three things change above 1440 and nothing else does. The page takes the
+ * window up to the 1920 ceiling; the grid gains columns at the same 120
+ * module; and the upper band keeps its share of the viewport's height, with
+ * the extra going to the construction cell — the one upper cell whose content
+ * is fitted rather than fixed.
+ */
+export function widePageStylesheet(): string {
+  const bandShare = ((BAND_AT_REFERENCE / REFERENCE_HEIGHT) * 100).toFixed(4);
+  const band = `max(${BAND_AT_REFERENCE}px, ${bandShare}vh)`;
+
+  const block = (min: number) => {
+    const columns = columnsFor(min);
+    const spans = upperSpansAt(min);
+    /* §30's lower region: the extra columns become air, alternating sides. */
+    const region: string[] = [`[data-region="extended-grid"] { grid-template-columns: repeat(${columns}, 1fr) !important; }`];
+    wideRowsAt(min).forEach((row, rowIndex) => {
+      let column = 1;
+      let airIndex = 0;
+      for (const item of row.items) {
+        if (item.kind === 'section') {
+          region.push(`[data-section="${item.section}"] { grid-column: ${column} / span ${item.span} !important; grid-row: ${rowIndex + 1} !important; }`);
+        } else {
+          /*
+            A row's air keeps the index §26 gave it where it has one; a row
+            that GAINS air above 1440 has no `data-air` of its own, so the
+            surplus is carried by the section's own margin instead — §26's
+            five air slots are the only ones the markup renders.
+          */
+          const owner = REGION_ROWS[rowIndex].air === null ? null : rowIndex;
+          if (owner !== null && airIndex === 0) {
+            region.push(`[data-air="${owner}"] { grid-column: ${column} / span ${item.span} !important; grid-row: ${rowIndex + 1} !important; display: block; }`);
+          }
+          airIndex += 1;
+        }
+        column += item.span;
+      }
+    });
+    return `@media (min-width: ${min}px) {
+${region.join('\n')}
+[data-testid="record-page-8a"] { max-width: ${PAGE_CEILING}px; }
+[data-band] { grid-template-columns: repeat(${columns}, 1fr) !important; }
+[data-band="identity"] { height: ${band}; }
+[data-cell="identity"] { grid-column: span ${spans.identity} !important; }
+[data-cell="still"] { grid-column: span ${spans.still} !important; }
+[data-cell="sleeve"] { grid-column: span ${spans.sleeve} !important; }
+}`;
+  };
+
+  return [
+    /*
+      **The page takes the window from 1440 up to the 1920 ceiling.** §30
+      computes the floor at 1679 × 1050 from "twelve columns, so the
+      construction is four columns of 139.9" — 1679 ÷ 12 — so columns grow
+      through 1440–1679 exactly as §28 grows them below 1440. A flat 1440 cap
+      in that range made a four-column cell 480 where §30 measures 559.7, and
+      §18's fixed 120px module is the grid BELOW the fork, not a cap above it.
+    */
+    `[data-testid="record-page-8a"], [data-page-measure], [data-app-nav] > div { max-width: ${PAGE_CEILING}px; }`,
+    /* And the twelve columns stretch with it rather than staying at the module. */
+    `@media (min-width: 1440px) { [data-band], [data-region="extended-grid"] { grid-template-columns: repeat(12, 1fr) !important; } }`,
+    block(1680),
+    block(1920),
+  ].join('\n');
+}
+
+/**
+ * §30's lower region above 1440: **the extra columns become air, not wider
+ * sections**, and the new air alternates sides down the page.
+ *
+ * "Section content has fixed measures, such as the 412 title measure, field
+ * widths and list rows. A wider section is empty space hidden inside a box,
+ * whereas an air column is where §26 puts its figures and flats. Each row's
+ * existing air column absorbs the extra columns. A row with no air gains one
+ * on the side its neighbour above leaves filled, so the air alternates down
+ * the page rather than stacking into a margin at the right."
+ *
+ * The full-width strip stays full width, "because spanning is what it is
+ * for". §25's cap is per section, so more air adds no figures.
+ */
+export function wideRowsAt(viewport: number): RegionRow[] {
+  const columns = columnsFor(viewport);
+  const base = rowsAt(1440);
+  const surplus = columns - COLUMNS_AT[1440];
+  if (surplus <= 0) return base;
+
+  /* Row 1 has air on the right and row 5 on the left, so the alternation starts filled-right. */
+  let lastSide: 'left' | 'right' = 'right';
+
+  return base.map((row) => {
+    const existing = row.items.find((item) => item.kind === 'air');
+    if (existing !== undefined) {
+      /* The row's own air absorbs the surplus; its side is unchanged. */
+      lastSide = row.items[0].kind === 'air' ? 'left' : 'right';
+      return { items: row.items.map((item) => (item === existing ? { ...item, span: item.span + surplus } : item)) };
+    }
+
+    /*
+      A row with no air gains one on the side its neighbour above leaves
+      filled — except the full-width strip, which stays full width and takes
+      the surplus into its own span.
+    */
+    if (row.items.length === 1 && row.items[0].kind === 'section') {
+      const only = row.items[0];
+      if (only.span === COLUMNS_AT[1440]) {
+        return { items: [{ ...only, span: columns }] };
+      }
+    }
+
+    const side: 'left' | 'right' = lastSide === 'right' ? 'left' : 'right';
+    lastSide = side;
+    const air: RowItem = { kind: 'air', span: surplus };
+    return { items: side === 'left' ? [air, ...row.items] : [...row.items, air] };
+  });
 }

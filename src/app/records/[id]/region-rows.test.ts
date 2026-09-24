@@ -6,8 +6,16 @@ import {
   FIGURE_PLACES,
   REGION_ROWS,
   WIDTHS,
+  BAND_AT_REFERENCE,
   COLUMN_MIN,
+  PAGE_CEILING,
   airOf,
+  widePageStylesheet,
+  wideRowsAt,
+  bandHeightAt,
+  constructionScaleAt,
+  pageWidthAt,
+  upperSpansAt,
   airPlacement,
   columnWidthAt,
   columnsFor,
@@ -237,6 +245,14 @@ describe('§28’s breakpoints: the column count is derived, and the region foll
     expect(columnWidthAt(1000)).toBe(125);
     expect(columnWidthAt(1439)).toBeCloseTo(1439 / 8, 5);
     expect(columnWidthAt(1440)).toBe(120);
+    /*
+      **Columns grow between 1440 and 1679 too.** §30 computes the floor at
+      1679 × 1050 from "twelve columns, so the construction is four columns
+      of 139.9" — 1679 ÷ 12. The build held the page at a flat 1440 through
+      that range, which made a four-column cell 480 where §30 measures 559.7.
+    */
+    expect(columnWidthAt(1679)).toBeCloseTo(1679 / 12, 4);
+    expect(columnWidthAt(1600)).toBeCloseTo(1600 / 12, 4);
     /* And never below the floor at any width the grid is defined for. */
     for (let w = 480; w <= 1440; w += 7) {
       expect(columnWidthAt(w), `${w}`).toBeGreaterThanOrEqual(COLUMN_MIN);
@@ -303,5 +319,153 @@ describe('the breakpoint stylesheet is generated from the same table the tests a
     const at480 = block('@media (max-width: 959px) {', '@media (max-width: 479px) {');
     expect(at960, 'row 5 keeps its air at 8 columns').toContain('[data-air="4"] { grid-column: 1 / span 3; grid-row: 5; display: block; }');
     expect(at480, 'and loses it at 4, being under 240').toContain('[data-air="4"] { display: none; }');
+  });
+});
+
+describe('§30: the page above 1440 — 14 and 16 columns, a wider construction, a ceiling', () => {
+  it('adds columns at the same 120 module and caps at 16', () => {
+    /*
+      §30: "There are 14 columns from 1680 (14 × 120) and 16 from 1920
+      (16 × 120), and the ceiling is 16... Above 1920 the page stays 1920
+      wide and centres."
+    */
+    expect(columnsFor(1440)).toBe(12);
+    expect(columnsFor(1679), 'twelve holds to 1679').toBe(12);
+    expect(columnsFor(1680)).toBe(14);
+    expect(columnsFor(1919)).toBe(14);
+    expect(columnsFor(1920)).toBe(16);
+    expect(columnsFor(2560), 'the ceiling: the page stays 1920 and centres').toBe(16);
+    expect(pageWidthAt(2560), 'and its width stops growing').toBe(1920);
+    expect(pageWidthAt(1800), 'below the ceiling it takes the window').toBe(1800);
+    expect(pageWidthAt(1600), 'and it takes it between 1440 and 1680 as well').toBe(1600);
+  });
+
+  it('gives the construction the extra columns and leaves identity and cover at four', () => {
+    /*
+      §30: "the construction takes five columns at 14 (600 wide) and six at 16
+      (720 wide), while the identity and cover cells keep four. The rule is
+      which cells grow. A cell whose content has a fixed measure keeps its
+      width: the identity cell holds the 412 title measure, and the cover
+      holds a square sleeve."
+    */
+    expect(upperSpansAt(1440)).toEqual({ identity: 4, still: 4, sleeve: 4, air: 0 });
+    expect(upperSpansAt(1680)).toEqual({ identity: 4, still: 5, sleeve: 4, air: 1 });
+    expect(upperSpansAt(1920)).toEqual({ identity: 4, still: 6, sleeve: 4, air: 2 });
+  });
+
+  it('keeps the band’s ratio above 1440, and gives the height to the construction', () => {
+    /*
+      The handoff's step 22: "Above 1440 the upper band is max(547, 547/900 ×
+      viewport height), and the whole extra height goes to the construction
+      cell." §32's frame fills that cell, so a taller band is what stops the
+      floor falling as the viewport grows.
+    */
+    expect(bandHeightAt(900), 'at the reference viewport, the ruled 547').toBe(547);
+    expect(bandHeightAt(800), 'never below it').toBe(547);
+    expect(bandHeightAt(1050)).toBe(Math.round((547 / 900) * 1050));
+    expect(bandHeightAt(1080)).toBe(Math.round((547 / 900) * 1080));
+    expect(bandHeightAt(950), 'the real maximised window').toBe(Math.round((547 / 900) * 950));
+  });
+
+  it('never lets the construction’s drawn scale fall as the window widens (§30’s invariant)', () => {
+    /*
+      **§30's invariant, checked in 1px steps across the whole range.** "The
+      drawing's scale never falls as the window widens." It is what the
+      6-column step at 1920 is FOR: at 1919 the 14 columns are 137 wide and a
+      five-column construction is 686; keeping five at 1920 would drop it to
+      600.
+    */
+    let previous = 0;
+    const drops: string[] = [];
+    for (let width = 1440; width <= 1920; width += 1) {
+      const scale = constructionScaleAt(width);
+      if (scale < previous - 1e-9) drops.push(`${width}: ${scale.toFixed(4)} after ${previous.toFixed(4)}`);
+      previous = scale;
+    }
+    expect(drops, `the scale falls at: ${drops.join(', ')}`).toEqual([]);
+  });
+});
+
+describe('§30’s stylesheet: the wide page is CSS, because the server has no viewport', () => {
+  const css = widePageStylesheet();
+
+  it('lifts the page cap to 1920 and states each width’s columns', () => {
+    expect(css, '14 columns from 1680').toContain('@media (min-width: 1680px)');
+    expect(css, '16 from 1920').toContain('@media (min-width: 1920px)');
+    expect(css, 'the page takes the window up to the ceiling').toContain(`max-width: ${PAGE_CEILING}px`);
+  });
+
+  it('gives the construction the extra columns and holds the other two at four', () => {
+    const at14 = css.slice(css.indexOf('@media (min-width: 1680px)'), css.indexOf('@media (min-width: 1920px)'));
+    expect(at14, 'the still cell takes five of fourteen').toContain('grid-column: span 5 !important');
+    /* `!important` because §23's 4/4/4 is inline on the cells — see `widePageStylesheet`. */
+    expect(at14, 'and identity keeps four').toContain('[data-cell="identity"] { grid-column: span 4 !important; }');
+  });
+
+  it('grows the band by the viewport’s height, never below the ruled 547', () => {
+    /*
+      `max(547px, 60.7778vh)` is `547/900` as a viewport unit: the band keeps
+      its share of the screen above 1440 and never shrinks below the figure
+      §28 ruled. The whole extra height goes to the construction cell, which
+      is the only upper cell fitted rather than fixed.
+    */
+    expect(css).toContain(`max(${BAND_AT_REFERENCE}px,`);
+    expect(css).toContain('vh)');
+  });
+});
+
+describe('§30: the lower region above 1440 — extra columns become air, alternating sides', () => {
+  it('spans every row across the whole grid, so no row stops short of the page', () => {
+    /*
+      §30: "In the lower region, the extra columns become air, not wider
+      sections." A row that keeps its 12-column spans on a 14- or 16-column
+      grid leaves a dead strip at the right — measured at 1920, where the
+      region stopped at 1440 while the frame ran to 1920.
+    */
+    for (const width of [1680, 1920]) {
+      const columns = columnsFor(width);
+      for (const row of wideRowsAt(width)) {
+        const total = row.items.reduce((sum, item) => sum + item.span, 0);
+        expect(total, `${width}: row [${row.items.map((i) => i.kind).join(', ')}] fills ${columns}`).toBe(columns);
+      }
+    }
+  });
+
+  it('keeps each section’s own span and gives the surplus to air', () => {
+    /*
+      "Section content has fixed measures... A wider section is empty space
+      hidden inside a box, whereas an air column is where §26 puts its figures
+      and flats."
+    */
+    const at1920 = wideRowsAt(1920);
+    const pressing = at1920[0].items.find((i) => i.kind === 'section' && i.section === 'pressing-detail');
+    expect(pressing?.span, 'Pressing detail keeps its 7 of §26’s 7 + 5').toBe(7);
+    expect(at1920[0].items.filter((i) => i.kind === 'air').reduce((s, i) => s + i.span, 0), 'the rest is air: 5 + 4 more').toBe(9);
+  });
+
+  it('alternates the new air column’s side row to row, so it does not stack into a margin', () => {
+    /*
+      §30: "A row with no air gains one on the side its neighbour above leaves
+      filled, so the air alternates down the page rather than stacking into a
+      margin at the right."
+    */
+    /*
+      The full-width strip has no air at all — "spanning is what it is for" —
+      so it is not part of the alternation and is skipped rather than counted
+      as a side. Counting it broke the chain at row 4.
+    */
+    const sides = wideRowsAt(1920)
+      .filter((row) => row.items.some((item) => item.kind === 'air'))
+      .map((row) => (row.items[0].kind === 'air' ? 'left' : 'right'));
+    expect(sides.length, 'four rows carry air at 16 columns').toBe(4);
+    for (let i = 1; i < sides.length; i += 1) {
+      expect(sides[i], `the ${i + 1}th air-carrying row alternates from the one above`).not.toBe(sides[i - 1]);
+    }
+  });
+
+  it('leaves the full-width strip full width, because spanning is what it is for', () => {
+    const strip = wideRowsAt(1920)[2];
+    expect(strip.items.filter((i) => i.kind === 'section')).toHaveLength(1);
+    expect(strip.items[0].span, 'Price history takes all sixteen').toBe(16);
   });
 });

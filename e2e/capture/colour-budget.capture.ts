@@ -93,8 +93,6 @@ test('measure the colour budget', async ({ page }) => {
           area = 2 * box.height;
         } else if (name.endsWith('Arc') || name === 'disc') {
           area = box.width * box.height * (Math.PI / 4);
-        } else if (name === 'identityTriangle') {
-          area = box.width * box.height * 0.5;
         } else {
           area = box.width * box.height;
         }

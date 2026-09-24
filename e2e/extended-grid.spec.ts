@@ -5,6 +5,7 @@ import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
 import { GRID_FORK } from '../src/app/records/[id]/band-geometry';
 import { FIGURES, GATE_RATIO, SIZE_RATIO, figureBox } from '../src/app/records/[id]/ornament';
+import { pageWidthAt } from '../src/app/records/[id]/region-rows';
 import {
   CELL_PADDING,
   CONTROL_HEIGHT,
@@ -763,7 +764,8 @@ test('the region caps with the frame, so the page is one grid', async ({ page })
       };
     });
 
-    const expected = Math.min(width, GRID_FORK);
+    /* §30: the page takes the window to a 1920 ceiling, not a flat 1440 cap. */
+    const expected = pageWidthAt(width);
 
     expect(measured.frame.width, `frame at ${width}`).toBe(expected);
     expect(measured.region.width, `region at ${width}`).toBe(expected);

@@ -113,7 +113,13 @@ export function AppHeader({ actions }: { actions?: React.ReactNode } = {}) {
           'mx-auto flex w-full items-baseline gap-6 px-4 py-3',
           actions !== undefined && 'flex-wrap',
         )}
-        style={{ maxWidth: wide ? GRID_FORK : 1152 }}
+        /*
+          On the record screen the measure is §30's and comes from that
+          page's stylesheet, which addresses `[data-app-nav] > div`: the bar
+          takes the measure of the page it sits above, and above 1440 that
+          page grows. Everywhere else it is the app's own 1152.
+        */
+        style={wide ? undefined : { maxWidth: 1152 }}
       >
         {/*
           **`text-sm` is NOT converted to a role, and the gap is deliberate
