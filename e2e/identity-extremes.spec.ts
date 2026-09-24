@@ -46,7 +46,7 @@ test('§27: every pressing fact ends inside the cell on the collection’s worst
     const inner = cell.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
     const contentBottom = cell.getBoundingClientRect().bottom - parseFloat(cs.paddingBottom);
     const content = cell.querySelector('[data-track="content"]')!;
-    const track = cell.querySelector('[data-track="ornament"]')!.getBoundingClientRect();
+
     const facts = Array.from(cell.querySelectorAll('[data-block="pressing"] [data-field]')).map((el) => ({
       field: el.getAttribute('data-field') ?? '?',
       cut: +(el.getBoundingClientRect().bottom - contentBottom).toFixed(1),
@@ -64,15 +64,19 @@ test('§27: every pressing fact ends inside the cell on the collection’s worst
       pressingLines: lines('[data-field="pressing-line"]'),
       inner: Math.round(inner),
       needed: content.scrollHeight,
-      ornament: +track.height.toFixed(1),
-      /* The content's margin against the cell; the reserve's height is reported beside it, not subtracted — it yields, and what it holds is what the content did not need. */
+      /*
+        The content's margin against the CELL, which §28 makes the thing the
+        trigger measures: "the trigger measures the cell, not the content
+        track". The ornament track it used to report beside this is withdrawn
+        (§28) and its 140px is part of `inner` now.
+      */
       margin: +(inner - content.scrollHeight).toFixed(1),
       collapsed: cell.querySelector('[data-field="genre-count"]') !== null,
       facts,
     };
   });
 
-  console.log(`§27 worst title: content margin ${m.margin}px (needed ${m.needed} against ${m.inner}); the reserve holds ${m.ornament}px; run ${m.collapsed ? 'collapsed' : 'listed'}`);
+  console.log(`§27 worst title: content margin ${m.margin}px (needed ${m.needed} against ${m.inner}); run ${m.collapsed ? 'collapsed' : 'listed'}`);
 
   /* Precondition: the fixture has the RECORD's shape, not the suffix's. */
   expect(m.artistLines, 'the artist renders on one line, as the real record does').toBe(1);

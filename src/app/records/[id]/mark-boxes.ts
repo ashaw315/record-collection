@@ -87,14 +87,17 @@ export const MARKS = {
     step: 'base',
     suppressWhenEmpty: false,
   },
-  identityTriangle: {
-    cell: 'identity',
-    band: 'identity',
-    inset: 18,
-    anchor: 'bottom-left',
-    step: 'tint',
-    suppressWhenEmpty: true,
-  },
+  /*
+    **§28 withdraws the identity triangle with the ornament track that held
+    it.** "The identity cell carries no ornament. Its corner field and
+    ornament track are withdrawn, and the ornament step leaves §4.2's give
+    order." A track holding a triangle on most records and 1px on the worst
+    makes ornament's presence depend on the record, which §21 forbids — the
+    same defect as hashing ornament, reached through the give order.
+
+    The §1, §6.1 and §10 drawings still show it and are superseded on that
+    point.
+  */
   /** Ground behind the rendered still; only the disc takes colour, not the still. */
   stillDisc: {
     cell: 'still',

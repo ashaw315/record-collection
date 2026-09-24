@@ -315,55 +315,6 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
               overlapped — and `e2e/page8a-marks.spec.ts` still asserts no
               mark's box contains type on any of the three records.
             */
-            ornament={
-              /*
-                **§5.1's corner triangle: a FLAT plane, not a solid.**
-
-                A mark that touches a page edge is a flat plane of the derived
-                colour; a mark that does not is an isometric solid. This one
-                sits in the identity block's lower-left corner and runs to the
-                cell's edge, so it is a plane.
-
-                It was built flat, replaced with an `IsoMark` on 13 Sep under a
-                ruling that withdrew §5.1's arcs and triangle for isometric
-                solids, and that ruling was itself withdrawn — "that was true
-                for one turn, under the withdrawn isometric ruling, and is not
-                true now". Nothing failed when the ruling reversed, because
-                code implementing a superseded rule keeps working; the only
-                evidence was a mark named `triangle` drawing three faces.
-
-                In the ornament TRACK rather than positioned against the cell,
-                so §4.2's corner reserve yields structurally: the track holds
-                140px while the content does not need it and gives it up as
-                the title grows. The drawing's figures for that yield (115.4 at
-                three lines, 47.7 at four, gone at five) rested on a text stack
-                ~69px taller than the built one and are drift — on the build
-                the longest title in the collection leaves the track 27px. The
-                HEIGHT of the field is the drawing's; the track supplies it.
-
-                **268 × 140, ratio 1.91** — read off the drawing, where all
-                three instances have carried it since they were drawn.
-
-                It was 180 for one round, which was a build decision taken
-                because §5.1 gives the edge fields "a count, a value, a step and
-                a suppression rule, and stops" and fixes only the height. Full
-                cell width made a corner mark into a band across the block, so
-                the constraint was real and the value was not ruled. Design's
-                own first answer derived 1.30 from the projection and landed
-                86px from the mark it described — a number reached by reasoning
-                rather than read off the drawing.
-              */
-              <div
-                data-mark="identityTriangle"
-                aria-hidden="true"
-                className="pointer-events-none absolute bottom-0 left-0 h-full w-[268px] max-w-full"
-                style={{
-                  background: tint,
-                  /* Lower-left corner: the hypotenuse runs up to the right. */
-                  clipPath: 'polygon(0 0, 0 100%, 100% 100%)',
-                }}
-              />
-            }
           />
         </div>
 

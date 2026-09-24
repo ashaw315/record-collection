@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { genresRun, shouldCollapse } from './genres-run';
+import { genresRun, shouldCollapse, COLLAPSE_TOLERANCE } from './genres-run';
 
 const GENRES = [
   { id: 'g1', name: 'Disco' },
@@ -67,6 +67,20 @@ describe('when the run collapses', () => {
 
   it('fires when the content overflows the space the track has already given up', () => {
     expect(shouldCollapse({ needed: 515.5, available: 510 })).toBe(true);
+  });
+
+  it('holds §28’s 4px tolerance, so a coincidental fit does not pass for a real one', () => {
+    /*
+      §28: "The trigger measures the cell, not the content track, with a 4px
+      tolerance. The tolerance stays as a guard against a coincidental pass,
+      but no record is near it." A shortfall inside the tolerance is not a
+      shortfall — the 0.4px margin that prompted this was measured on a
+      suffixed fixture and the real good case has about 45px of slack.
+    */
+    expect(COLLAPSE_TOLERANCE).toBe(4);
+    expect(shouldCollapse({ needed: 512, available: 510 }), '2px over is within the tolerance').toBe(false);
+    expect(shouldCollapse({ needed: 514, available: 510 }), 'and 4px still is').toBe(false);
+    expect(shouldCollapse({ needed: 514.5, available: 510 }), 'past it, the run collapses').toBe(true);
   });
 
   it('is the condition, not a line count', () => {

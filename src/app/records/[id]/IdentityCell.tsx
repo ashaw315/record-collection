@@ -51,7 +51,6 @@ export function IdentityCell({
   genres,
   formatLine,
   editHref,
-  ornament,
 }: {
   title: string;
   artistName: string;
@@ -63,15 +62,6 @@ export function IdentityCell({
   formatLine: string | null;
   /** The pressing editor §4.2's genres count opens when the run collapses. */
   editHref: string;
-  /**
-   * §5.1's corner field, rendered INSIDE the cell as a grid track.
-   *
-   * It was an absolutely-positioned mark with a fixed height, which is why the
-   * reserve could not yield: an absolute box is out of flow and shares no space
-   * with anything. As a track it is what remains after the content takes what
-   * it needs.
-   */
-  ornament?: React.ReactNode;
 }) {
   return (
     /*
@@ -88,7 +78,8 @@ export function IdentityCell({
       **The content track keeps its automatic min-content minimum.** Do not add
       `min-height: 0` here: it reads as flex-overflow hygiene and is the one
       declaration that defeats the mechanism it sits inside — it pins the 1fr
-      track, so content overflows the ornament rather than displacing it, and
+      track, so content overflows the CELL rather than being measured against
+      it, and
       the numbers still look reasonable. Asserted on the computed style,
       because the defect is invisible until a title is long enough to need the
       give.
@@ -96,8 +87,21 @@ export function IdentityCell({
     <div
       data-cell="identity"
       className="grid h-full overflow-hidden p-[18px]"
-      /* Two rows again (§27): the content, and §4.2's reserve that yields to it. */
-      style={{ gridTemplateRows: '1fr minmax(0, 140px)' }}
+      /*
+        **One row (§28): the ornament track is withdrawn and its space
+        returns to the content.** "The identity cell carries no ornament. Its
+        corner field and ornament track are withdrawn, and the ornament step
+        leaves §4.2's give order... The space the track held returns to the
+        content on every record."
+
+        A track holding a triangle on most records and 1px on the worst makes
+        ornament's presence depend on the record, which §21 forbids — the
+        same defect as hashing ornament, reached through the give order
+        rather than through the generator. A floor on the track would not
+        help: at the triangle's 140px it would take height from the title on
+        every long record for a mark that carries nothing.
+      */
+      style={{ gridTemplateRows: '1fr' }}
     >
       <div data-track="content" className="flex flex-col justify-between">
       {/*
@@ -207,15 +211,6 @@ export function IdentityCell({
       </div>
       </div>
 
-      {/*
-        The ornament track. It takes what is left of 140px after the content
-        above has taken what it needs — 76.2px at four title lines, 8.6px at
-        five, and the full reserve at one. The field shrinks on two records and
-        disappears on none.
-      */}
-      <div data-track="ornament" className="relative min-h-px">
-        {ornament}
-      </div>
     </div>
   );
 }

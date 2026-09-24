@@ -56,6 +56,18 @@ export function genresRun(
  * count that fits does not collapse, and one of any line count that overflows
  * does.
  */
+/**
+ * §28's tolerance on the trigger: "The trigger measures the cell, not the
+ * content track, with a 4px tolerance. The tolerance stays as a guard against
+ * a coincidental pass, but no record is near it."
+ *
+ * A shortfall inside it is not a shortfall. The 0.4px margin that prompted
+ * the rule was measured on a suffixed fixture; the real good case has about
+ * 45px of slack, so the tolerance costs nothing and catches the case where a
+ * record appears to fit by a rounding.
+ */
+export const COLLAPSE_TOLERANCE = 4;
+
 export function shouldCollapse({ needed, available }: { needed: number; available: number }): boolean {
-  return needed > available;
+  return needed > available + COLLAPSE_TOLERANCE;
 }

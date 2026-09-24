@@ -61,7 +61,6 @@ describe('the ladder step says what kind of mark it is (§5.5)', () => {
 
   it('puts the ground marks at tint', () => {
     expect(markBox('stillDisc').step).toBe('tint');
-    expect(markBox('identityTriangle').step).toBe('tint');
     expect(markBox('provenanceArc').step).toBe('tint');
     expect(markBox('aboutArc').step).toBe('tint');
   });
@@ -125,6 +124,26 @@ describe('at least one base mark per band, at most two (§5.5)', () => {
   });
 });
 
+describe('§28: the identity cell carries no ornament', () => {
+  /**
+   * §28: "The identity cell carries no ornament. Its corner field and
+   * ornament track are withdrawn, and the ornament step leaves §4.2's give
+   * order. A track that holds a triangle on most records and 1px on the
+   * worst makes ornament's presence depend on the record. §21 forbids that,
+   * and it is the same defect as hashing ornament, reached through the give
+   * order instead of the generator."
+   *
+   * So the page divides cleanly: above the fold the only ornament is the
+   * construction, which IS the record; below it, ornament is §25 and §26's,
+   * fixed per screen. The §1, §6.1 and §10 drawings still show the triangle
+   * and are superseded on that point.
+   */
+  it('has no identity triangle among the marks', () => {
+    expect(MARKS, 'the mark is gone, not merely unrendered').not.toHaveProperty('identityTriangle');
+    expect(marksForBand('identity'), 'and no band claims it').not.toContain('identityTriangle');
+  });
+});
+
 describe('decoration does not decorate an absence (§5.4)', () => {
   /**
    * "When the cell they sit in is empty, they are suppressed — because a
@@ -134,7 +153,6 @@ describe('decoration does not decorate an absence (§5.4)', () => {
   it('marks the ornament as suppressible and the structural marks as not', () => {
     expect(markBox('provenanceArc').suppressWhenEmpty).toBe(true);
     expect(markBox('aboutArc').suppressWhenEmpty).toBe(true);
-    expect(markBox('identityTriangle').suppressWhenEmpty).toBe(true);
     expect(markBox('aboutSquare').suppressWhenEmpty).toBe(true);
   });
 
@@ -152,12 +170,19 @@ describe('decoration does not decorate an absence (§5.4)', () => {
 });
 
 describe('the seven and the two', () => {
-  it('has exactly seven derived marks and two fixed-ink ones', () => {
+  it('has six derived marks and two fixed-ink ones, the triangle withdrawn (§28)', () => {
+    /*
+      §5.1 specified seven derived regions; §28 withdraws one of them — the
+      identity triangle, with the ornament track that held it. Six remain,
+      and the count is asserted rather than left implicit because it is what
+      §9.4's base-mark arithmetic and §5.5's colour budget are measured
+      against.
+    */
     const all = Object.keys(MARKS) as MarkName[];
     const derived = all.filter((m) => markBox(m).step !== 'ink');
     const ink = all.filter((m) => markBox(m).step === 'ink');
 
-    expect(derived.length, '§5.1: seven drawn regions, one value').toBe(7);
+    expect(derived.length, '§5.1’s seven, less §28’s triangle').toBe(6);
     expect(ink.length, 'the block and the square').toBe(2);
   });
 });

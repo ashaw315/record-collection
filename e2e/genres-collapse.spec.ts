@@ -1,6 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
-import { FITS_AFTER_COLLAPSE, WORST } from '../src/app/records/[id]/identity-extremes';
+import { WORST } from '../src/app/records/[id]/identity-extremes';
+import { seedExtreme } from './identity-extremes';
+import { COLLAPSE_TOLERANCE } from '../src/app/records/[id]/genres-run';
 import { seedImage } from './seed';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
@@ -68,47 +70,12 @@ async function post(page: Page, path: string, data: unknown) {
  * The five-line title with a normal pressing block: three genres, a short
  * label. This is the collection's longest title, as it actually renders.
  */
-async function longestTitle(page: Page, suffix: string, genreNames: string[], label: string) {
-  const artist = await post(page, '/api/artists', { name: `Donna Summer ${suffix}` });
-  trackArtist(artist.id as string);
-  const labelRow = await post(page, '/api/labels', { name: `${label} ${suffix}` });
-  const genreIds: string[] = [];
-  for (const name of genreNames) {
-    const genre = await post(page, '/api/genres', { name: `${name} ${suffix}` });
-    genreIds.push(genre.id as string);
-  }
-  const pressing = await post(page, '/api/pressings', {
-    catalogNumber: WORST.catalogNumber,
-    matrixRunout: 'NBLP-7119-A',
-    yearPressed: 1979,
-    countryPressed: 'United States',
-  });
-  /* The format line the count appends to — the ruling's `Vinyl, LP, Album`.
-     Without it the count falls to its own line and the "costs no height"
-     claim has nothing to be measured against. */
-  const format = await post(page, '/api/formats', { name: `Vinyl, LP, Album ${suffix}` });
-  const record = await post(page, '/api/records', {
-    title: FIVE_LINE_TITLE,
-    artistId: artist.id,
-    labelId: labelRow.id,
-    pressingId: pressing.id,
-    formatId: format.id,
-    releaseYear: 1979,
-    genreIds,
-  });
-  await seedImage({ recordId: record.id as string, imageType: 'cover' });
-  await getTestDb().execute(
-    sql`UPDATE records SET spine_colour = ${'#a25829'} WHERE id = ${record.id}::uuid`,
-  );
-  return { id: record.id as string, genreIds };
-}
-
 async function measure(page: Page) {
   return page.evaluate(() => {
     const cell =
       document.querySelector('[data-cell="identity"] [data-cell="identity"]') ??
       document.querySelector('[data-cell="identity"]')!;
-    const track = cell.querySelector('[data-track="ornament"]')!;
+
     const content = cell.querySelector('[data-track="content"]')!;
     const title = cell.querySelector('[data-field="title"]')!;
     const style = getComputedStyle(cell);
@@ -121,7 +88,6 @@ async function measure(page: Page) {
     const format = cell.querySelector('[data-field="format"]');
     return {
       lines,
-      track: Math.round(track.getBoundingClientRect().height * 10) / 10,
       inner: Math.round(inner),
       needed: Math.round(content.scrollHeight),
       overflows: cell.scrollHeight > cell.clientHeight,
@@ -139,69 +105,39 @@ test.beforeEach(async ({ page }) => {
   await login(page);
 });
 
-test('the longest title in the collection is absorbed by the track, and does not collapse', async ({
+test('§28: the collapse fires on NO record in the collection, including its worst title', async ({
   page,
 }) => {
   /**
-   * **Said plainly.** The drawing drew this record 20px short with the track
-   * at zero; that arithmetic was drift in the drawing's text stack, and the
-   * build — 27px clear, track at 27.6 — is authoritative. The collapse is the
-   * third give and this record never reaches it. A test asserting a line-count
-   * threshold would have encoded the proxy, which is the defect.
-   */
-  const suffix = makeSuffix();
-  const { id } = await longestTitle(page, suffix, [...FITS_AFTER_COLLAPSE.genres], FITS_AFTER_COLLAPSE.label);
-  await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
-  await page.goto(`/records/${id}`);
-  await page.locator('[data-cell="identity"]').first().waitFor({ timeout: 20_000 });
-  await page.waitForTimeout(300);
-
-  const m = await measure(page);
-
-  /* Fixture precondition — this is the collection's longest title, and it
-     wraps to five. Not the threshold: the threshold is the condition below. */
-  expect(m.lines, 'the fixture wraps to five lines').toBe(5);
-  /* The line the count would append to, present on both fixtures: without a
-     format line the collapse has nothing to append to and the "costs no
-     height" claim is unmeasurable — which is how the first fixture found out. */
-  expect(m.formatHeight, 'a format line to append to').not.toBeNull();
-  /* The run is already inside `needed`; "fits" is any surplus at all. The
-     track is what is left over, and it is >0 exactly when nothing overflows. */
-  expect(m.inner - m.needed, `fits with ${m.inner - m.needed}px to spare`).toBeGreaterThanOrEqual(0);
-  expect(m.track, 'the track still holds what the content did not need').toBeGreaterThan(0);
-  expect(m.overflows, 'and nothing overflows').toBe(false);
-
-  /* So the run is shown in full and there is no count. */
-  expect(m.genresListed, 'the genres are listed').toBe(true);
-  expect(m.count, 'no count while every genre is shown').toBeNull();
-  for (const name of ['Disco', 'Soul', 'Pop']) {
-    expect(m.cellText).toContain(`${name} ${suffix}`);
-  }
-});
-
-test('the run collapses only once the track is exhausted, and the count is what is withheld', async ({
-  page,
-}) => {
-  /**
-   * A record whose facts run one line longer than the longest title's: a label
-   * long enough to wrap the pressing line, and six genres that wrap the run.
-   * That is the state the third give exists for, and the only way to reach it
-   * on the build's geometry.
+   * **The fixture-level half of the guard, and its subject is the
+   * COLLECTION.** §4.2 says it three times — "the collapse fires on no record
+   * in the collection today", "the condition is unmet on all seventeen" — and
+   * §28 confirms the real worst record "fits with 25px to spare".
    *
-   * Three claims. The track is at zero — the second give was used up before
-   * the third fired. The count equals the genres NOT shown, and none of their
-   * names is on the cell, so it cannot say three while three are visible. And
-   * the format line is one line tall, because the count appends to a line
-   * already set and costs no height.
+   * The guard's own behaviour is asserted at the unit level on constructed
+   * input (`genres-run.test.ts`), where the subject is the FUNCTION and no
+   * claim is made about the collection. Two tests, two subjects: §27's rule
+   * forbids altering a fixture along the axis it measures, because a fixture
+   * stands in for the collection; a constructed case makes no claim about the
+   * collection at all.
+   *
+   * **The previous version asserted the opposite of §4.2** — it reached the
+   * collapse on a fixture whose twelve-character artist suffix added a 40px
+   * line, which is §27's third recorded instance of exactly that defect.
+   *
+   * And the mechanism it credited is gone: §28 withdrew the identity cell's
+   * ornament track, so nothing is "absorbed by the track". What remains is
+   * the cell's own height, which the content fits inside.
    */
-  const suffix = makeSuffix();
-  const genres = [...WORST.genres];
-  const { id } = await longestTitle(
-    page,
-    suffix,
-    genres,
-    WORST.label,
-  );
+  /*
+    **The SHARED fixture, not a local seeder.** The helper this replaced
+    appended the isolation suffix to the artist — `Donna Summer ${suffix}` —
+    which wraps it to a second 40px line and inflates the cell by exactly the
+    axis under test. That is §27's named defect and this is its fourth
+    instance; `seedExtreme` suffixes a field the assertion does not read and
+    keeps the artist one line, which the precondition below asserts.
+  */
+  const id = await seedExtreme(page, WORST);
   await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
   await page.goto(`/records/${id}`);
   await page.locator('[data-cell="identity"]').first().waitFor({ timeout: 20_000 });
@@ -209,33 +145,43 @@ test('the run collapses only once the track is exhausted, and the count is what 
 
   const m = await measure(page);
 
-  expect(m.lines, 'the fixture still wraps to five lines').toBe(5);
-  expect(m.formatHeight, 'a format line to append to — the precondition').not.toBeNull();
-  /*
-    **Measured after the collapse, so the track has already taken back what the
-    run freed** — asserting it at zero here was checking the wrong moment. The
-    claim is that the run could not have stayed: whatever room the track holds
-    now is less than the run needs, so putting it back would overflow again.
-    `RUN_HEIGHT` is the run's own line — 13px at `text-prose leading-none`,
-    no margin — and the first test asserts the converse on the record that
-    fits.
-  */
-  expect(
-    m.inner - m.needed,
-    `less room left (${m.inner - m.needed}px) than the run needs (${RUN_HEIGHT}px): inner ${m.inner}, needed ${m.needed}, track ${m.track}`,
-  ).toBeLessThan(RUN_HEIGHT);
+  /* The precondition: this IS the collection's worst case, not a mild one. */
+  expect(m.lines, 'the fixture wraps to five lines').toBe(5);
+  expect(m.formatHeight, 'a format line the count could have appended to').not.toBeNull();
 
-  expect(m.count, `the count is the ${genres.length} withheld`).toBe(genres.length);
-  expect(m.genresListed, 'no genre is listed beside a count').toBe(false);
-  for (const name of genres) {
-    expect(m.cellText, `${name} is withheld, not shown`).not.toContain(`${name} ${suffix}`);
+  /**
+   * **KNOWN-FAILING, and the open question is named.** §28 says the worst
+   * record "fits with 25px to spare"; the build measures 512 against 510 with
+   * the run LISTED, a 2px overage, and one fact clipped by 0.9px.
+   *
+   * The 27px between them is settled as arithmetic: §28's figure was measured
+   * on a built page with the genres run COLLAPSED (NOTES, 23 Sep — "six
+   * genres collapsed — needs 485 against 510"), and the run is 26px tall when
+   * listed. 512 − 26 = 486 against the recorded 485. Neither number is wrong;
+   * they are two states of one record.
+   *
+   * What is NOT settled, and is Design's: §28 quotes a fits-by-25 figure
+   * obtained with the collapse already fired, while also calling the clause
+   * "untriggered on the current collection" and §4.2 saying the condition is
+   * unmet on all seventeen. If the run must be listed the record does not
+   * fit; if it may collapse, the collapse is triggered. §28's own 4px
+   * tolerance is why the build lists rather than collapses at −2.
+   *
+   * Asserted as it stands rather than relaxed, so the resolution moves this
+   * line instead of arriving unnoticed.
+   */
+  expect(m.overflows, 'nothing overflows the cell — see the note above; open with Design').toBe(false);
+  expect(m.genresListed, 'every genre is listed').toBe(true);
+  expect(m.count, 'and no count, because nothing is withheld').toBeNull();
+  for (const name of WORST.genres) {
+    expect(m.cellText, `${name} is shown`).toContain(name);
   }
 
-  expect(m.countIsLink, 'the count opens the pressing editor').toBe(true);
-  expect(m.countHref).toBe(`/records/${id}/edit`);
-
-  /* Costs no height: after the collapse the content fits, and the format line
-     is one line — the count did not wrap it. */
-  expect(m.overflows, 'the collapse closed the shortfall').toBe(false);
-  expect(m.formatHeight, 'one line').toBeLessThan(30);
+  /*
+    Not by a hair: §28 puts the real worst record 25px clear, and the 0.4px
+    that once looked like a margin was the suffixed fixture. Asserted so a
+    change that leaves it fitting by a rounding fails here rather than
+    passing quietly.
+  */
+  expect(m.inner - m.needed, `fits with ${(m.inner - m.needed).toFixed(1)}px to spare`).toBeGreaterThan(COLLAPSE_TOLERANCE);
 });

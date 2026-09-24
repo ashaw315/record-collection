@@ -68,29 +68,6 @@ export default function IdentityProbePage() {
               { id: 'g3', name: 'Folk Rock' },
                   ]
             }
-            /*
-              **The real mark, not an empty track.** The probe rendered no
-              ornament at all, so the first version of the shrink assertion
-              measured a track with nothing in it — a weaker claim than the one
-              it was named for, and one an empty div would satisfy.
-            */
-            ornament={
-              /*
-                **The flat corner triangle the cell actually renders.** This
-                probe passed an `IsoMark` — a three-faced solid — while the
-                page draws §5.1's plane, so the view built to judge the corner
-                reserve was not showing the mark that occupies it.
-              */
-              <div
-                data-mark="identityTriangle"
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-0"
-                style={{
-                  background: 'oklch(0.86 0.04 80)',
-                  clipPath: 'polygon(0 0, 0 100%, 100% 100%)',
-                }}
-              />
-            }
           />
         </div>
       ))}
