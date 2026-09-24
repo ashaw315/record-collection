@@ -31379,3 +31379,23 @@ Identical at every width from 480 up, which is what a fixed band should give, an
 The step-26 run was killed by the system for low memory: **4MB free, 7.3GB wired, load 38.3** — the highest of the session by a wide margin. It produced **no summary line**, and CLAUDE.md §9 is explicit that no summary is a failure, not a pass. Discarded rather than reported.
 
 Relaunching into that state would likely be killed again and tell us nothing, so step 26 is verified instead against the seven specs it plausibly affects — `record-page-28`, `identity-measure`, `identity-extremes`, `genres-collapse`, `record-narrow`, `identity-cell`, `record-page-8a`, `extended-grid` — **47 passed, 0 failed**. That is narrower than CLAUDE.md §10's requirement of a full run, and it is stated as such: the full suite has NOT been run against step 26.
+
+
+## STANDING RULE: how Design's files arrive (24 Sep, Adam's arrangement)
+
+Design authors the build targets and ships whole files. This repo adds a mechanical layer to the same files — the `data-withdrawn-by` marks and the small wordings the index assertions require. **Design has never had that layer**: every target it has shipped carries zero marks. So every round strips it, silently, with no merge and nothing to review.
+
+**Follow this every time Design's files arrive:**
+
+1. **Commit Design's files EXACTLY AS SHIPPED, first**, labelled as Design's text, before touching anything. History then holds the original and no later checkout can destroy it.
+2. **Re-apply the mechanical layer as a SECOND, separate commit** — the 14 withdrawal marks and any wording the script requires. Two commits, two diffs, nothing silent.
+3. **Where Design's new prose has changed a passage a mark was attached to, do NOT guess where the mark goes.** Report that passage and leave it unmarked; assertions 6 and 7 will name it.
+4. **Never run `git checkout` on a path that holds someone else's uncommitted work.** Step 1 makes that impossible anyway.
+
+**Step 1 exists because of a real loss.** I reached for `git checkout -- docs/design/` to undo my own edits and destroyed Design's uncommitted reissue in the same files — step 28's text and the revised §26 row, with no copy anywhere. Design had to re-send. The command was chosen to be *clean*, and it was destructive precisely because two writers had uncommitted work in one path.
+
+**And a correction Adam made that I should have seen myself:** re-applying my own withdrawal marks is NOT editing Design's files. The marks are this repo's artifact — mechanical, re-derivable from a pass already run. I had conflated "don't rewrite Design's sentences" with "don't touch these files at all", and that conflation is what sent me to the checkout. What must not be touched is Design's prose; what must be restored is the layer the script needs.
+
+**One mechanical trap, recorded because it cost three marks:** a FIGURE CAPTION in §26 carries the same eyebrow styling as a section heading, so slicing sections on that styling alone ends §26 early and puts its last two passages outside the slice. `check-index.mjs`'s own `HEADING` pattern requires an id followed by " · ", which is why the script reads those sections correctly and my ad-hoc helper did not. **Use the script's pattern, not a lookalike.**
+
+Written up for Design as `docs/findings/two-writers-one-file.md`, with the two ways to remove the problem at source: Design adopts the marks, or the layer moves to a sidecar keyed by section id.
