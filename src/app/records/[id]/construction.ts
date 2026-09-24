@@ -296,51 +296,6 @@ const SYMMETRIES: ReadonlyArray<(slot: readonly [number, number]) => readonly [n
   ([u, v]) => [u, -v],
 ];
 
-/**
- * Shifts a form's origin so its whole box lands inside the frame.
- *
- * **Containment is structural rather than a bounded jitter hoping to stay in.**
- * The slots are pulled in, but a long beam at maximum extent can still reach
- * past the envelope, and the frame must not be fitted to it — so the form moves
- * instead. The shift is applied along u and v together, which keeps the
- * isometric relationship intact: sliding a form along a ground axis is a move
- * the projection already expresses, where scaling it would change the size band.
- */
-function containedOrigin(
-  u: number,
-  v: number,
-  du: number,
-  dv: number,
-  dw: number,
-): readonly [number, number, number] {
-  let shiftedU = u;
-  let shiftedV = v;
-
-  /* Two passes: a shift along one axis moves the other's projected extent. */
-  for (let pass = 0; pass < 2; pass += 1) {
-    const corners = boxCorners(shiftedU, shiftedV, 0, du, dv, dw);
-    const xs = corners.map(([x]) => x);
-    const ys = corners.map(([, y]) => y);
-
-    const overRight = Math.max(0, Math.max(...xs) - (FRAME_X + FRAME_W));
-    const overLeft = Math.max(0, FRAME_X - Math.min(...xs));
-    const overBottom = Math.max(0, Math.max(...ys) - (FRAME_Y + FRAME_H));
-    const overTop = Math.max(0, FRAME_Y - Math.min(...ys));
-
-    /*
-      x = (u - v) * COS30 * SCALE, so moving both axes equally shifts y alone and
-      moving them oppositely shifts x alone. That is the inverse of the
-      projection, used directly rather than searched for.
-    */
-    const dx = (overLeft - overRight) / (COS30 * SCALE);
-    const dy = (overTop - overBottom) / (SIN30 * SCALE);
-
-    shiftedU += dy / 2 + dx / 2;
-    shiftedV += dy / 2 - dx / 2;
-  }
-
-  return [shiftedU, shiftedV, 0];
-}
 
 /** The eight projected corners of a box, for the containment clamp. */
 function boxCorners(
@@ -629,7 +584,15 @@ function formsFor(
       slot,
       extent: Math.max(du, dv, dw),
       depth: u + v + dw,
-      faces: boxFaces(...containedOrigin(u, v, du, dv, dw), du, dv, dw, {
+      /*
+        **§31: no clamp.** `containedOrigin` used to shift a form back inside
+        the frame before drawing it, which made §31's fit check unreachable —
+        measured, 0 rejections in 5,000 ids with the tightest arrangement
+        touching the edge at exactly 0.00 units. The two mechanisms answer
+        one question differently, and §31's is the ruled one: an arrangement
+        that does not fit is illegal and the hash advances.
+      */
+      faces: boxFaces(u, v, 0, du, dv, dw, {
         top: stepFor('top'),
         left: stepFor('left'),
         right: stepFor('right'),

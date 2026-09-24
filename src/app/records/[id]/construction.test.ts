@@ -172,27 +172,29 @@ describe('§31: the frame is a STATED constant, and arrangements must fit it', (
     expect(Math.max(...advances), 'no sampled id reaches the 32 cap').toBeLessThan(HASH_ADVANCE_CAP);
 
     /**
-     * **The rejection rate is zero, and that is a finding rather than a
-     * pass.** Measured over 5,000 random uuids: no id advances, none scales
-     * to fit, none goes quiet, and the tightest any arrangement comes to the
-     * frame's edge is 0.00 units — an arrangement touching it exactly.
+     * **The guard fires, now that the clamp is gone.** `containedOrigin`
+     * shifted every form back inside the frame before drawing it, so no
+     * arrangement could fail `fitsFrame` and §31's mechanism was
+     * unreachable — measured at 0 rejections in 5,000 ids, with the
+     * tightest arrangement touching the edge at exactly 0.00 units. The two
+     * answered one question differently, and §31's is the ruled one.
      *
-     * The cause is `containedOrigin`, which predates §31: the generator
-     * SHIFTS every form back inside `CONSTRUCTION_FRAME` before drawing it,
-     * so a drawing cannot fail `fitsFrame` and the guard is unreachable. The
-     * two mechanisms answer the same question differently — §31 rejects an
-     * arrangement that does not fit, the clamp moves it until it does — and
-     * §31 does not mention the clamp.
+     * Measured with it removed: **14.1% of ids have an arrangement
+     * rejected**, the most any id needed is **5 advances** against a cap of
+     * 32, and none reaches the cap. None of the current seventeen changes,
+     * which is what says step 18's union was measured on unclamped output
+     * and the frame constant stands.
      *
-     * Reported to Design rather than resolved here: removing the clamp is a
-     * change to how every record is drawn, and §31's "the cost, stated —
-     * arrangements wider than the current widest become unavailable to new
-     * records" is a cost the clamp currently avoids by moving them instead.
-     * The guard is built and asserted on constructed cases below; what is
-     * not asserted is that it ever fires on a real id, because it cannot.
+     * The rejection rate is asserted as a BAND rather than a figure: it is a
+     * property of the hash against a fixed frame, so pinning 14.1% would
+     * fail on a change to either that leaves the mechanism working.
      */
+    const rate = advances.filter((a) => a > 0).length / sampled.length;
+    expect(rate, `the guard fires (${(rate * 100).toFixed(1)}% of ids) — a zero here means it is unreachable again`).toBeGreaterThan(0.05);
+    expect(rate, 'and it is a guard, not the common path').toBeLessThan(0.3);
+
     const rejected = advances.filter((a) => a > 0).length;
-    console.log(`§31: the frame rejects an arrangement for ${rejected} of ${sampled.length} sampled ids; most advances needed ${Math.max(...advances)} — see the note above on containedOrigin`);
+    console.log(`§31: the frame rejects an arrangement for ${rejected} of ${sampled.length} sampled ids; most advances needed ${Math.max(...advances)}`);
   });
 
   it('renders QUIET when no form can carry the colour, rather than erroring or faking one', () => {
