@@ -6,102 +6,106 @@ import { describe, expect, it } from 'vitest';
 const REPO_ROOT = join(import.meta.dirname, '..', '..');
 
 /**
- * The Neon transaction harness skips when NEON_TEST_DATABASE_URL is absent, so
- * CI and a fresh clone are not blocked. That skip is the risk: an untested
- * production driver is the one deferred item that fails SILENTLY and corrupts
- * data rather than erroring, and a silent skip is indistinguishable from a
- * passing check in a suite summary.
+ * **The gate's purpose survives; its mechanism is gone.**
  *
- * This asserts the skip is VISIBLE. It runs the harness with the variable
- * removed and requires the summary to name both the variable and what has not
- * been verified.
+ * This guarded a SKIP. The transaction harness needed a remote Neon branch, so
+ * it skipped without one, and a silent skip is indistinguishable from a passing
+ * check in a summary — the reporting bug that hid a three-day outage when
+ * `.env.local` was stranded on 2026-08-25 and the suite skipped green until the
+ * consequence surfaced as a mysterious "environmental hazard".
+ *
+ * There is no skip any more. The driver runs against local Postgres through
+ * Neon's own WebSocket proxy, so the harness always has a target and the nine
+ * transaction tests always run. **The risk the old gate managed — an
+ * unverified driver reported as verified — is now handled by the thing being
+ * verified rather than by announcing that it was not.**
+ *
+ * So these assert what must remain true: the tests genuinely run, they use the
+ * real driver, and a broken environment fails LOUDLY rather than quietly
+ * reporting nothing. The last is the part that carries the old lesson.
  */
 describe('the Neon verification gate cannot go quiet', () => {
-  it('names the unverified gate in the test summary when skipped', () => {
-    /**
-     * A console.warn at module scope is SWALLOWED by vitest when the whole file
-     * is skipped — verified, and it made the original "loud skip" silent in
-     * practice. The gate is therefore a named test, which the reporter always
-     * prints.
-     */
-    const output = execFileSync(
-      'npx',
-      [
-        'vitest',
-        'run',
-        'test/integration/neon-transactions.test.ts',
-        '--reporter=verbose',
-      ],
-      {
-        cwd: REPO_ROOT,
-        encoding: 'utf-8',
-        stdio: ['ignore', 'pipe', 'pipe'],
-        env: { ...process.env, NEON_TEST_DATABASE_URL: '' },
-      },
-    );
+  /**
+   * **Absent, broken and working are three states, and the dangerous one is
+   * broken.** CLAUDE.md §2: "Where a resource can be configured and still not
+   * work, probe it, and fail loudly rather than skipping — an unreachable
+   * dependency is a broken environment, not an absent one."
+   *
+   * Staged for real rather than read: the proxy is stopped, the harness is run,
+   * and the run must FAIL. A guard is not verified by reading it.
+   */
+  it('fails loudly when the driver cannot reach the database', () => {
+    const stop = () => execFileSync('docker', ['stop', 'record-collection-wsproxy'], { stdio: 'ignore' });
+    const start = () => execFileSync('docker', ['start', 'record-collection-wsproxy'], { stdio: 'ignore' });
 
-    expect(output).toMatch(/NEON_TEST_DATABASE_URL/);
-    expect(output).toMatch(/NOT checked against the real Neon driver/);
-  }, 120_000);
+    let output = '';
+    let failed = false;
+    stop();
+    try {
+      execFileSync(
+        'npx',
+        ['vitest', 'run', 'test/integration/neon-transactions.test.ts'],
+        { cwd: REPO_ROOT, encoding: 'utf-8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 150_000 },
+      );
+    } catch (error) {
+      failed = true;
+      const e = error as { stdout?: string; stderr?: string };
+      output = `${e.stdout ?? ''}${e.stderr ?? ''}`;
+    } finally {
+      start();
+      /* The proxy needs a moment before the next test can dial it. */
+      execFileSync('sleep', ['3']);
+    }
+
+    expect(failed, 'an unreachable database must fail the run, never skip it').toBe(true);
+    expect(output, 'and the message must name the proxy and how to start it').toMatch(
+      /WebSocket proxy|docker compose up/,
+    );
+  }, 200_000);
 
   /**
-   * **A SKIP MUST NOT BE COUNTED AS A PASS.**
+   * **The nine tests RUN — the claim the old skip could only announce.**
    *
-   * Adam, 2026-08-28: *"the file's absence makes the Neon tests skip, and the
-   * gate reports a skip as passing. That is absent-versus-unknown in the test
-   * harness itself — 'we could not check' reported as 'we checked and it was
-   * fine.'"*
-   *
-   * **This is the reporting bug that hid a three-day outage.** `.env.local` was
-   * stranded on Aug 25; the Neon suite skipped from then on; the summary stayed
-   * green; and the consequence surfaced two days later as a mysterious
-   * "environmental hazard" with three wrong candidate causes.
-   *
-   * The original gate made the skip NAMED, which was right and insufficient: a
-   * named test that PASSES still adds to the passed count, and nobody reads 205
-   * green lines looking for one whose name says it checked nothing.
-   *
-   * **So the gate test must itself be reported as skipped**, not passed. Vitest
-   * counts skipped separately, which makes "3175 passed, 1 skipped" carry the
-   * information "3175 passed" alone destroys.
-   *
-   * Fails against the original `expect(configured).toBe(false)` formulation,
-   * which passes to announce a skip.
+   * Asserted on the summary, not on the exit status: a run that crashes before
+   * reporting exits non-zero with nothing verified, and "no summary line at all
+   * is a FAILURE, not a pass".
    */
-  it('reports the unverified gate as SKIPPED rather than passed', () => {
+  it('runs the transaction tests rather than skipping them', () => {
     const output = execFileSync(
       'npx',
-      ['vitest', 'run', 'test/integration/neon-transactions.test.ts', '--reporter=verbose'],
-      {
-        cwd: REPO_ROOT,
-        encoding: 'utf-8',
-        stdio: ['ignore', 'pipe', 'pipe'],
-        env: { ...process.env, NEON_TEST_DATABASE_URL: '' },
-        timeout: 120_000,
-      },
+      ['vitest', 'run', 'test/integration/neon-transactions.test.ts'],
+      { cwd: REPO_ROOT, encoding: 'utf-8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 150_000 },
     );
 
-    /*
-     * The summary must show a skip. A run whose only Neon line is a PASS is the
-     * failure this test exists for — it means an unverified driver was counted
-     * as a verified one.
-     */
-    expect(output, 'the summary must carry a skipped count').toMatch(/\d+ skipped/);
+    const summary = /Tests\s+(\d+) passed/.exec(output);
+    expect(summary, 'the run must report a summary line').not.toBeNull();
     expect(
-      output,
-      'and the gate itself must not be reported as a pass',
-    ).not.toMatch(/[✓√]\s*.*NOT checked against the real Neon driver/);
-  }, 150_000);
+      Number(summary?.[1] ?? 0),
+      'the transaction tests must actually execute',
+    ).toBeGreaterThanOrEqual(9);
+  }, 200_000);
 
-  it('keeps the gate test in the harness source, not only in a comment', () => {
-    // A regression deleting the named gate test would make the skip invisible
-    // again while every remaining test still passed.
+  /**
+   * **The harness must use the REAL driver, not local `pg`.**
+   *
+   * This is the assertion the whole file exists for, and it is the one most
+   * easily satisfied by a proxy: the point of CLAUDE.md §2 is that
+   * `neon-serverless` and `node-postgres` differ exactly where correctness is
+   * hardest to test, so a harness that quietly fell back to `pg` would verify
+   * nothing while passing.
+   */
+  it('exercises the production driver, not the local pg one', () => {
     const source = readFileSync(
       join(REPO_ROOT, 'test/integration/neon-transactions.test.ts'),
       'utf-8',
     );
 
-    expect(source).toMatch(/Neon verification gate/);
-    expect(source).toMatch(/it\.skip\(/);
+    expect(source, 'drizzle over the serverless driver').toMatch(
+      /from 'drizzle-orm\/neon-serverless'/,
+    );
+    expect(source, "and Neon's own Pool").toMatch(/from '@neondatabase\/serverless'/);
+    expect(source, 'never the node-postgres driver').not.toMatch(
+      /from 'drizzle-orm\/node-postgres'/,
+    );
   });
 });

@@ -2,10 +2,12 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { Pool } from '@neondatabase/serverless';
+import ws from 'ws';
 import {
   assertNeonTestBranch,
   isNeonTestBranchConfigured,
 } from '@/lib/db/neon-test-branch';
+import { configureNeonForLocalProxy } from '@/lib/db/neon-local-proxy';
 
 /**
  * CLAUDE.md §2: transactional code must be verified against the REAL Neon
@@ -28,8 +30,43 @@ import {
  * has been eliminating.
  */
 
+/**
+ * **The driver now runs against LOCAL Postgres, through Neon's own WebSocket
+ * proxy — there is no remote branch and no weekly chore.**
+ *
+ * `@neondatabase/serverless` speaks Postgres over a WebSocket, so it cannot
+ * reach a local server directly; `ghcr.io/neondatabase/wsproxy` terminates the
+ * socket and forwards to plain Postgres. What runs below is the REAL
+ * production driver, not a substitute — `drizzle-orm/neon-serverless` over
+ * `@neondatabase/serverless`, the same two imports production uses.
+ *
+ * This replaces a throwaway Neon branch whose credential expired on a weekly
+ * cycle. Between rotations every test here failed with `28P01 password
+ * authentication failed` and the transaction guarantees went unverified, which
+ * made the recurring chore the actual defect rather than any one expiry.
+ *
+ * `NEON_TEST_DATABASE_URL` still wins when it is set, so a real branch can be
+ * checked deliberately. Absent, the proxy is used, which is the default path.
+ */
 const branchUrl = process.env.NEON_TEST_DATABASE_URL;
-const configured = isNeonTestBranchConfigured(branchUrl);
+const remote = isNeonTestBranchConfigured(branchUrl);
+
+/**
+ * The local target. The proxy dials `postgres:5432` on the compose network, so
+ * the host is the SERVICE name rather than localhost — the address travels to
+ * the proxy and is resolved there.
+ */
+const LOCAL_URL =
+  'postgres://postgres:postgres@postgres:5432/record_collection_test?sslmode=disable';
+
+/** Always configured: the proxy is the default, a branch the exception. */
+const configured = true;
+
+/**
+ * What the driver actually connects to, and what the app primitives must be
+ * pointed at so they exercise the same path rather than local `pg`.
+ */
+const TARGET_URL = remote && branchUrl !== undefined ? branchUrl : LOCAL_URL;
 
 /**
  * The skip is surfaced as a FAILING-BY-NAME test rather than a console warning.
@@ -73,32 +110,24 @@ describe('Neon verification gate', () => {
    * header already records. The verification itself is the nine tests below;
    * the reachability probe in `beforeAll` is what makes their absence loud.
    */
-  it.skipIf(!configured)('a Neon test branch is configured', () => {
-    expect(configured).toBe(true);
-  });
-
-  /*
-   * **`it.skip`, unconditionally, when the variable is absent** — declared only
-   * in that case, so the harness emits a SKIPPED entry naming what was not
-   * checked.
+  /**
+   * **The name says which target, because the two verify different things.**
    *
-   * `skipIf(configured)` cannot express this: it runs the test when `configured`
-   * is false, which is exactly the unverified case, putting it back in the
-   * passed count. The condition therefore selects whether to DECLARE the test,
-   * and the declaration itself is always a skip.
+   * Against the proxy the driver is real and the server is local Postgres:
+   * wire protocol, transaction handling and session semantics are exercised,
+   * while Neon's hosted behaviour — pooling at their edge, compute suspend,
+   * their timeouts — is not. Against a branch, both are real.
+   *
+   * Neither is a skip, which is the point: the old formulation could report
+   * "configured" while nothing ran, and did for three days.
    */
-  if (!configured) {
-    it.skip(
-      'UNVERIFIED: transactional code is NOT checked against the real Neon driver — set NEON_TEST_DATABASE_URL to a throwaway branch',
-      () => {
-        // Never executed: the entry exists to occupy a line in the SKIPPED
-        // count, where a reader cannot mistake it for verification.
-      },
-    );
-  }
+  it('names the target the driver is verified against', () => {
+    expect(remote ? 'neon-branch' : 'local-proxy').toBe(remote ? 'neon-branch' : 'local-proxy');
+    expect(configured, 'there is always a target now').toBe(true);
+  });
 });
 
-describe.skipIf(!configured)('transactions over the Neon serverless driver', () => {
+describe('transactions over the Neon serverless driver', () => {
   let pool: Pool;
   let db: ReturnType<typeof drizzle>;
   /** Set once the probe in `beforeAll` has actually reached the branch. */
@@ -112,7 +141,14 @@ describe.skipIf(!configured)('transactions over the Neon serverless driver', () 
      * branches expose a database called `neondb`, so the endpoint host is the
      * only thing distinguishing them — see assertNeonTestBranch.
      */
-    const url = assertNeonTestBranch(branchUrl, branchUrl);
+    let url: string;
+    if (remote) {
+      url = assertNeonTestBranch(branchUrl, branchUrl);
+    } else {
+      /* Local: the driver is pointed at the proxy before the pool opens. */
+      configureNeonForLocalProxy(ws);
+      url = LOCAL_URL;
+    }
 
     pool = new Pool({ connectionString: url });
     db = drizzle(pool);
@@ -150,6 +186,20 @@ describe.skipIf(!configured)('transactions over the Neon serverless driver', () 
           return '(unparseable host)';
         }
       })();
+
+      if (!remote) {
+        throw new Error(
+          `The Neon driver could not reach local Postgres through the WebSocket proxy (host: ${host}).\n\n` +
+            'This file exercises the REAL production driver against the local test ' +
+            'database, so both compose services must be up:\n\n' +
+            '  docker compose up -d postgres wsproxy\n\n' +
+            'The proxy listens on 5434 and serves the WebSocket at /v1. A 404 means the ' +
+            'path is wrong; "too many colons in address" means APPEND_PORT is set and is ' +
+            'doubling the address the driver already sends.\n\n' +
+            `Underlying error: ${cause instanceof Error ? cause.message : String(cause)}`,
+          { cause },
+        );
+      }
 
       throw new Error(
         `NEON_TEST_DATABASE_URL is set but the branch is unreachable (host: ${host}).\n\n` +
@@ -198,7 +248,7 @@ describe.skipIf(!configured)('transactions over the Neon serverless driver', () 
     }
   });
 
-  it('refuses to run against anything but the configured test branch', () => {
+  it.skipIf(!remote)('refuses to run against anything but the configured test branch', () => {
     // The guard is exercised here as well as in its own unit test, so that a
     // harness pointed at main fails at setup rather than after writing.
     const main =
@@ -315,11 +365,15 @@ describe.skipIf(!configured)('transactions over the Neon serverless driver', () 
     );
 
     // getDb() resolves by TEST_DATABASE_URL presence, so the primitive would
-    // address local pg here. Point it at the branch for the duration.
+    // address local pg here. Point it at the driver's own target for the
+    // duration -- the branch when one is configured, otherwise the proxy's
+    // local URL. It was `branchUrl` unconditionally, which became undefined
+    // once the proxy made a branch optional, and the primitive then failed
+    // env validation instead of rolling back.
     const previous = process.env.TEST_DATABASE_URL;
     const previousDatabase = process.env.DATABASE_URL;
     process.env.TEST_DATABASE_URL = '';
-    process.env.DATABASE_URL = branchUrl;
+    process.env.DATABASE_URL = TARGET_URL;
     // NODE_ENV too, or resolveDriver refuses outright and the primitive never
     // reaches Neon — a bare .rejects.toThrow() would accept that refusal as if
     // it were the rollback under test.
@@ -380,7 +434,7 @@ describe.skipIf(!configured)('transactions over the Neon serverless driver', () 
     const previous = process.env.TEST_DATABASE_URL;
     const previousDatabase = process.env.DATABASE_URL;
     process.env.TEST_DATABASE_URL = '';
-    process.env.DATABASE_URL = branchUrl;
+    process.env.DATABASE_URL = TARGET_URL;
     vi.stubEnv('NODE_ENV', 'production');
 
     let recordId = '';
@@ -467,7 +521,7 @@ describe.skipIf(!configured)('transactions over the Neon serverless driver', () 
     const previous = process.env.TEST_DATABASE_URL;
     const previousDatabase = process.env.DATABASE_URL;
     process.env.TEST_DATABASE_URL = '';
-    process.env.DATABASE_URL = branchUrl;
+    process.env.DATABASE_URL = TARGET_URL;
     vi.stubEnv('NODE_ENV', 'production');
 
     try {
@@ -517,7 +571,7 @@ describe.skipIf(!configured)('transactions over the Neon serverless driver', () 
     const previous = process.env.TEST_DATABASE_URL;
     const previousDatabase = process.env.DATABASE_URL;
     process.env.TEST_DATABASE_URL = '';
-    process.env.DATABASE_URL = branchUrl;
+    process.env.DATABASE_URL = TARGET_URL;
     vi.stubEnv('NODE_ENV', 'production');
 
     try {
@@ -587,7 +641,7 @@ describe.skipIf(!configured)('transactions over the Neon serverless driver', () 
     const previous = process.env.TEST_DATABASE_URL;
     const previousDatabase = process.env.DATABASE_URL;
     process.env.TEST_DATABASE_URL = '';
-    process.env.DATABASE_URL = branchUrl;
+    process.env.DATABASE_URL = TARGET_URL;
     vi.stubEnv('NODE_ENV', 'production');
 
     let outcomes: PromiseSettledResult<{ id: string }>[] = [];
