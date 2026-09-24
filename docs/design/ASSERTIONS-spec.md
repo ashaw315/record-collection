@@ -2,6 +2,8 @@
 
 Implement these as one script (suggested: `scripts/check-index.mjs`) and run it in CI and before any handoff is exported. **The script's exit code is the result.** A report written by whoever edited the index is not.
 
+**Read the status directly.** The script is the last command of its invocation, or its status is captured on the next line (`node scripts/check-index.mjs; s=$?`), and CI asserts on that status, not on a pipeline's. An exit code is evidence only if nothing ran after it: a full test run exited 0 with two failures because a shell `echo` followed the test command, and the failures were found only by reading the summary.
+
 ## Inputs
 
 | Key | File |
@@ -29,11 +31,11 @@ In `W`, a bare numeric id is prefixed `W.`.
 
 **Build order.** The text between `## Build order` and `## Maintaining`. A **step** is a line matching `^\d+\. `. The **closing paragraph** is the one containing `Every row in the table above`.
 
-**Withdrawal list.** In `L`, the JSON array in `<!-- reader-note-withdrawals […] -->`, entries `[section, replaced_by, what]`.
+**Withdrawal list.** In `L`, the JSON array in `<!-- reader-note-withdrawals […] -->`. Each entry is `{"id", "s", "by", "what"}`, where `id` is `s/slug` and is **unique across the list**; a duplicate `id` is a failure (`6 duplicate-id ID`). Uniqueness is the same discipline as assertion 1's one row per heading, one layer down: a section may carry any number of withdrawals, and each has exactly one entry.
 
-**Withdrawn text is declared, not guessed.** Every withdrawn or superseded passage is wrapped in `<span data-withdrawn-by="N">…</span>`, where `N` is the replacing section's id (`28`, `W.19`). **Live text** is the section text with every `[data-withdrawn-by]` element removed. There is no keyword list. An earlier version guessed from eleven keywords and missed "reversed", which this corpus uses for withdrawal constantly: a list derived from the phrasings seen so far fits those and misses the next one.
+**Withdrawn text is declared, not guessed.** Every withdrawn or superseded passage is wrapped in `<span data-withdrawn-by="N" data-withdrawal="ID">…</span>`, where `N` is the replacing section's id (`28`, `W.19`) and `ID` is the entry's `id` in the withdrawal list. **Live text** is the section text with every `[data-withdrawn-by]` element removed. There is no keyword list. An earlier version guessed from eleven keywords and missed "reversed", which this corpus uses for withdrawal constantly: a list derived from the phrasings seen so far fits those and misses the next one.
 
-**Bootstrap, once.** Until the marking pass lands, run the script with `--candidates`: it prints every sentence matching the broad pattern `withdrawn|withdraw|replaces|replaced|reversed|reverses|superseded|supersedes|earlier version|first (gave|said|version)|was wrong|original sentence|until now|instead of|no longer` that is not inside a `[data-withdrawn-by]` element, with file, section and sentence. **The author marks the source:** Code hands the list to Claude, who wrote those passages, and Claude wraps each true withdrawal in `data-withdrawn-by` and leaves the rest. That is a judgement about the author's own text, not a guess. Only the few Claude cannot settle go to Adam. Code then deletes the pattern and re-runs. **After the pass, delete `--candidates` and the pattern with it**, so nothing in the script guesses. Until then, 6, 7 and 8a print `PROVISIONAL` instead of `PASS`.
+**The marking pass has landed.** The candidate pattern and `--candidates` are deleted from the script, so nothing in it guesses, and assertions 6, 7 and 8a print `PASS` or `FAIL` like the rest.
 
 **Stripping for assertion 8.** Remove, in order:
 1. Section references: `§W\.\d+(\.\d+)?`, `§W\b`, `§\d+(\.\d+)?`
@@ -62,12 +64,13 @@ Each prints `PASS n` or `FAIL n` followed by one line per offender, then the scr
 5. **Each row's subject matches its section.** Take the row title, cut it at the first of `( : ; , —`, lowercase, normalise `’`→`'`, collapse whitespace, keep the first 24 characters. It must occur in the same-normalised heading text plus the first 600 characters of the section text.
    Fail: `5 §ID title="…" heading="…"`.
 
-6. **Every listed withdrawal is marked where it happened.** For each `[s, by]` in the withdrawal list, section `s` must contain a `[data-withdrawn-by]` element whose value is `by`.
-   Fail: `6 §s/§by`.
-   6 and 7 are the two directions of one check, so both read the attribute. **A section may withdraw its own wording:** an entry `[s, s]` with the mark inside §s is valid, and neither 6 nor 7 may reject it for `s` equalling `by`. §26 is the first instance. (An earlier version of 6 matched `/withdrawn|superseded/i` while 7 read the attribute, so a passage marked `data-withdrawn-by="20"` whose prose said "reversed by §20" passed 7 and failed 6.)
+6. **Every listed withdrawal is marked where it happened.** For each entry, section `s` must contain an element with `data-withdrawal` equal to the entry's `id` and `data-withdrawn-by` equal to its `by`.
+   Fail: `6 duplicate-id ID`, `6 ID missing`, or `6 ID by-mismatch`.
+   (An earlier version matched on the pair `(s, by)`, which cannot tell apart two withdrawals from one section by one replacer: §26 carries two self-withdrawals, and one surviving mark satisfied both entries.)
+   6 and 7 are the two directions of one check, so both read the attribute. **A section may withdraw its own wording:** an entry whose `s` equals its `by`, with the mark inside §s, is valid, and neither 6 nor 7 may reject it for that. §26 is the first instance. (An earlier version of 6 matched `/withdrawn|superseded/i` while 7 read the attribute, so a passage marked `data-withdrawn-by="20"` whose prose said "reversed by §20" passed 7 and failed 6.)
 
-7. **Every marked withdrawal is listed.** Every non-`W` section containing a `[data-withdrawn-by]` element must appear as `s` in the withdrawal list, with `by` equal to the attribute's value. (An earlier version matched three exact phrasings and none of them was "Reversed by §".)
-   Fail: `7 §ID`.
+7. **Every marked withdrawal is listed.** Every `[data-withdrawn-by]` element in `L` or `S` must carry a `data-withdrawal` whose value is an entry's `id`, and that entry's `s` must be the section the element is in and its `by` the element's `data-withdrawn-by`. Each id is used by exactly one element.
+   Fail: `7 §SEC unlisted`, `7 ID wrong-section`, or `7 ID used-twice`. (An earlier version matched three exact phrasings and none of them was "Reversed by §".)
 
 8. **Figures in rows.**
    - **(a) Live.** (Reads live text as defined above: every `[data-withdrawn-by]` element removed.) For each governs row, strip its columns 2 onward as above, then extract numbers with `\d+(\.\d+)?%?(\s?[×x]\s?\d+(\.\d+)?)?`. Every extracted number (whitespace removed) must occur in the section's live text (whitespace removed).
