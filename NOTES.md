@@ -31432,3 +31432,53 @@ Both restore to exit 0. The script handles it.
 **Why "be more careful" is the wrong fix:** the helper was an approximation of a rule that already existed in exact form. The two agreed on every section but one, which is how a copy drifts — not everywhere, once. Verified after the refactor that both failure kinds still bite.
 
 Written up as `docs/findings/one-parser-not-a-lookalike.md`. The signal to watch for is **writing a regex that resembles one already in the repo**: at that moment, forking is a decision to be written down, not a shortcut.
+
+## A rule that blocks the thing it was written to enable
+
+**Twice in one round.** Both times a rule was read as governing something
+adjacent to what it actually governs, and both times the effect was to stop
+work the rule exists to make possible.
+
+1. **The index bootstrap.** `ASSERTIONS-spec.md` says "Change an allow-list
+   only in this file, never in the script alone" and "Add an assertion only
+   with the defect that motivated it". Those govern CHANGES to the spec.
+   Deleting `--candidates` is not a change to the spec — it is the spec's own
+   instruction, whose trigger condition had been met: "After the pass, delete
+   `--candidates` and the pattern with it." Reading the change-control clause
+   as covering it left the eleven-keyword guessing machinery in the script,
+   reachable by a flag, which is the exact thing the declared-mark design
+   existed to remove.
+
+2. **The withdrawal ids.** The standing arrangement for Design's files
+   forbids rewriting Design's PROSE and requires shipping their text
+   unaltered and first. It says nothing about attributes on marks that are my
+   own mechanical layer — Design's copy has never carried a mark. Treating
+   "don't author Design's text" as "don't touch these files" blocked applying
+   an attribute Design specified, to a mark I placed, using an id from
+   Design's own list.
+
+**The check before invoking a rule to stop:** does it govern the thing I am
+about to do, or something adjacent to it? Name the actual object of the rule
+— Design's prose, changes to the spec — and check my action is that object,
+not merely near it. A rule cited against the work it was written to enable is
+being misread, and the tell is that following it makes the situation worse by
+the rule's own stated purpose.
+
+## The shared parser is the ONLY way these files get sliced
+
+Including in throwaway code. `one-parser-not-a-lookalike.md` records a
+lookalike parser truncating §26 at a figure caption; the finding was written,
+and then **the same trap was walked into again in one-off mutation code**, an
+ad-hoc heading regex reporting zero marks in §26 where the real parser finds
+three.
+
+That recurrence is the point: a written finding does not prevent recurrence
+in code that feels disposable, because the reason for reaching for a regex is
+precisely that the code is throwaway. So the rule is structural rather than
+remembered — `scripts/design-target-parser.mjs` is the only thing that
+identifies a heading, a section or a mark in a design target, in committed
+scripts and one-off probes alike. `scripts/apply-withdrawal-ids.mjs` is a
+one-off and imports it.
+
+If a probe needs to slice those files and importing the parser feels like too
+much ceremony, that is the signal, not the exemption.
