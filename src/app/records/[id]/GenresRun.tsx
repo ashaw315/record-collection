@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useLayoutEffect, useRef, useState } from 'react';
-import { genresRun, shouldCollapse, type Genre } from './genres-run';
+import { contentHeight, genresRun, shouldCollapse, type Genre } from './genres-run';
 
 /**
  * The format line and the genres run, as one component because §4.2's collapse
@@ -42,7 +42,13 @@ export function GenresRun({
     if (el === null || genres.length === 0) return;
 
     const content = el.closest('[data-track="content"]');
-    const cell = content?.parentElement;
+    /*
+      **By name, not by position.** This was `content.parentElement`, which
+      is the right box for the wrong reason: two elements carried
+      `data-cell="identity"` and the relationship held only because the inner
+      grid happened to be the track's parent.
+    */
+    const cell = content?.closest('[data-cell="identity-content"]');
     if (!(content instanceof HTMLElement) || !(cell instanceof HTMLElement)) return;
 
     const measure = () => {
@@ -59,10 +65,50 @@ export function GenresRun({
         }
       }
 
-      /* The content's full height with the run shown, whichever state it is in. */
-      const needed = content.scrollHeight + (collapsedRef.current ? runHeight.current : 0);
+      /*
+        **The demand is the children's sum (Adam's ruling, 24 Sep).** The
+        track is a flex column with `justify-content: space-between`, so it
+        always fills its row and turns the remainder into a gap — its height
+        and its `scrollHeight` both report the budget rather than the demand,
+        and measured on the route the collection's worst title and an
+        ordinary record came out 512 and 511, one pixel apart for records
+        274px apart in content.
 
-      const next = shouldCollapse({ needed, available });
+        §4.2's mechanism gives the measure: the pressing block anchors to the
+        floor, the title flows from the top, and "the two can never push each
+        other" holds because the gap absorbs the title's growth. A gap that
+        absorbs growth has a minimum of zero, so the demand is the two blocks
+        on their own heights.
+      */
+      const needed =
+        contentHeight({
+          childHeights: Array.from(content.children).map((child) => {
+            const box = child.getBoundingClientRect();
+            const childStyle = getComputedStyle(child);
+            return box.height + parseFloat(childStyle.marginTop) + parseFloat(childStyle.marginBottom);
+          }),
+        }) + (collapsedRef.current ? runHeight.current : 0);
+
+      /*
+        §28: the give order applies only where the band has a fixed height.
+        Read from the BAND rather than assumed from a width, so the fork's
+        own stylesheet decides and this cannot drift from it.
+      */
+      const band = cell.closest('[data-band]');
+      /*
+        **Whether the band's DECLARED height is the one it got.** §18's fork
+        overrides `height` with `auto !important` in the stylesheet, which
+        leaves the inline attribute saying 547 while the box renders at 387 —
+        so neither `style.height` nor a width threshold answers this. The
+        band is on its fixed height only when the two agree.
+      */
+      const declared = band instanceof HTMLElement ? parseFloat(band.style.height) : Number.NaN;
+      const fixedHeight =
+        band instanceof HTMLElement &&
+        !Number.isNaN(declared) &&
+        Math.abs(band.getBoundingClientRect().height - declared) < 1;
+
+      const next = shouldCollapse({ needed, available, fixedHeight });
       if (next !== collapsedRef.current) {
         collapsedRef.current = next;
         setCollapsed(next);

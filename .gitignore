@@ -116,6 +116,10 @@ q-probe.mjs
 docs/design/*
 !docs/design/HANDOFF-wall-and-pull.md
 !docs/design/Record Detail 8a - build target.dc.html
+# §1-§10, split out of the live target and closed. Tracked with it: the handoff's
+# reachability rule is that a source of truth is reachable wherever the index is
+# read, AND at the same revision as the index.
+!docs/design/Record Detail 8a - settled 1-10.dc.html
 !docs/design/Wall and Pull - build target.dc.html
 
 # The same artefacts' STALE root copies, from before they moved into

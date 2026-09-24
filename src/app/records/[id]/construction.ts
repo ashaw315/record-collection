@@ -75,7 +75,16 @@ export const SIZE_BAND = 6;
  */
 export const CONSTRUCTION_FRAME = '-140 -186 296 314';
 
-/** §31: the hash advances at most this many times before the fallbacks are used. */
+/**
+ * §31: the hash advances at most this many times before the fallbacks are
+ * used.
+ *
+ * **A guard, not a test.** At the measured 14.1% rejection rate, reaching it
+ * needs 32 consecutive rejections — 0.141³² ≈ 6 × 10⁻²⁸ — so no id will ever
+ * reach it in practice. The fallbacks below it are built because §31 rules
+ * them and because an unreachable branch that throws is worse than one that
+ * renders, not because the cap is expected to bind.
+ */
 export const HASH_ADVANCE_CAP = 32;
 
 /** An id reserved for testing the exhausted-hash fallback, which no real id reaches. */

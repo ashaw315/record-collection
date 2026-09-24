@@ -31241,3 +31241,84 @@ The band keeps its ratio above 1440 — `max(547, 547/900 × viewport height)` �
 **§30's lower region above 1440 was missed on the first pass.** The region kept its 12 fixed columns while the frame ran to 1920, leaving a dead strip — visible in the 1920 screenshot before the fix. §30: "the extra columns become air, not wider sections... a row with no air gains one on the side its neighbour above leaves filled, so the air alternates down the page." Built as `wideRowsAt`, with the full-width strip exempt ("spanning is what it is for") and therefore excluded from the alternation — counting it as a side broke the chain at row 4.
 
 **The four "load-dependent probes" are mislabelled and a bug report is queued.** One wall test measured **32.9s against Playwright's 30s default timeout**. A too-tight budget and a busy box produce an identical symptom — a 30s timeout that passes on re-run — and want different fixes. The four have passed in isolation every time, including at load 24.9.
+
+
+## §28's tolerance was the defect, and the direction was the whole of it (23 Sep)
+
+**Adam ruled: §28's "untriggered on the current collection" is the error, not the build.** The two claims cannot both hold — the fits-by-25 figure was obtained with the genres-collapse fired, and with it not fired the same record needs 512 against 510. So the collapse fires on the collection's worst title, and §28's measurement depended on that without saying so. **The collapse firing is CORRECT**: §27 rules it directly ("if the worst title still overflows, §4.2's genres-collapse fires — never overflow-hidden; test asserts no pressing fact is clipped"), and the genres run is the third term of §4.2's give order, so its yielding IS the mechanism working.
+
+**And Adam's hypothesis about the 0.9px clip was right.** §28 says "the tolerance stays as a guard against a coincidental **pass**" — it exists to stop a record that *barely fits* counting as fitting, so it must make the collapse fire MORE readily. I implemented `needed > available + TOLERANCE`, which is slack BEFORE the collapse: at 2px over it suppressed the collapse entirely and the run clipped by 0.9px instead of yielding. **A tolerance applied in the wrong direction turned a guard into the defect it was guarding against.** Corrected to `needed > available - TOLERANCE`; measured after: `needed 510 against 510, run collapsed`, margin 0, **no fact clipped**. Both known-failing marks dropped.
+
+Worth keeping as a shape: **a tolerance has a direction, and the direction is not implied by the number.** "4px tolerance" reads as symmetric and is not — §28's sentence names which side it guards, and I read the figure without the sentence.
+
+## The 32-advance cap is a guard, not a test (Adam's note, recorded)
+
+At the measured 14.1% rejection rate, reaching §31's cap needs 32 consecutive rejections: 0.141³² ≈ **6 × 10⁻²⁸**. So the assertion can never fail by chance — it fails only if the rejection rate has risen by orders of magnitude, which would mean the frame and the generator have come apart. That is what it watches for, and it now says so both at the constant and at the assertion. The fallbacks below it are built because §31 rules them and because an unreachable branch that throws is worse than one that renders, not because the cap is expected to bind.
+
+## The inline-value finding is written up for Design
+
+`docs/findings/inline-values-and-width.md` — the four-instance pattern, at Adam's request, in a form he can pass on. Short version: a value set inline beats every stylesheet rule without `!important`, so the moment a ruling makes a quantity depend on the viewport, any inline copy silently wins and the breakpoints do nothing. It renders the narrow composition at every width, errors nothing, and is invisible to reading the code — all four were found by measuring the built page. The suggestion to Design is the equivalent of §29's sentence about drawn instances: when a section makes an existing quantity depend on width, say so explicitly, because the build's copy of it is usually somewhere the new section never mentions.
+
+
+## The genres trigger, settled (24 Sep)
+
+**Adam ruled the measurement: the demand is the children's sum, and the gap has no minimum.** §4.2's mechanism gives it — the pressing block anchors to the floor, the title flows from the top, and "the two can never push each other" holds precisely because the gap absorbs the title's growth. A gap that absorbs growth has a minimum of zero. The model was trusted because **it reproduces a figure it was not fitted to**: children's sum 510.9 against 510 available is +0.9, the 0.9px clip measured separately before any of it was modelled.
+
+**The rendered tree, measured on main at 1440 × 900** (the report that earned the ruling):
+
+```
+[data-cell="identity"] ×2 — a wrapper AND the inner grid   ← duplicate attribute
+  inner: grid, one row, available = 546 − 36 = 510
+  [data-track="content"]  flex column, justify-content: space-between
+      WORST  h=510.9  scrollH=512   children 394.9 + 116.0 = 510.9   gap 0.0
+      SHORT  h=510.0  scrollH=511   children 191.8 +  44.5 = 236.3   gap 273.7
+```
+
+`scrollHeight` reports **512 and 511** — one pixel apart for records 274px apart in content. `space-between` converts every pixel of slack into a gap that `scrollHeight` counts as occupied, so no threshold could ever part them.
+
+**What actually took four passes, and why the first three failed.** Two attempts inferred the DOM and were wrong about it; the third measured it and was right. The fixes that followed then hit two more layers, each invisible until measured:
+
+1. **The tolerance's DIRECTION.** §28: "the tolerance stays as a guard against a coincidental **pass**" — so it must make the collapse fire MORE readily, not less. Built as `available + TOLERANCE` it suppressed the collapse at 2px over and the run clipped instead of yielding. **A tolerance has a direction and the number does not imply it**; §28's sentence names the side, and I read the figure without the sentence.
+2. **The demand.** Above.
+3. **The give order does not apply to an auto-height cell.** §28: "Below 480 the band has no fixed height at all, so there the height give order does not apply." The build's fork sets `height: auto` from **1440** down, not from 480 — so at 1280 the cell shrink-wraps and demand equals supply exactly (available 351, children 351). Any tolerance then collapses every record, which is what took the genres off `record-detail.spec.ts`. A cell that grows to its content cannot overflow, so there is nothing to protect against.
+4. **How to tell a fixed band from an auto one.** `band.style.height` still says `547px` at 1280 while the box renders at 387.5 — the fork's `height: auto !important` wins in the cascade but does not touch the inline attribute. Neither the inline value nor a width threshold answers it. **The honest test is whether the band's DECLARED height is the one it got**: `|rendered − declared| < 1`.
+
+**Two structural fixes Adam called for, both landed.**
+
+- **`overflow-hidden` is off the identity cell**, on both the wrapper and the grid. §27: "never overflow-hidden". That class is what turned a 0.9px overflow into a silent clip and is the reason this stayed invisible. Nothing overflows now, and the next thing that does will announce itself.
+- **The duplicate `data-cell="identity"` is gone.** The inner grid is `data-cell="identity-content"`. Five specs were surviving the ambiguity by scoping, and two used a nested `[data-cell="identity"] [data-cell="identity"]` selector as an explicit workaround; the trigger reached the right box as `content.parentElement` — right by position rather than by name, which is the implicit-relationship class `docs/findings/inline-values-and-width.md` records.
+
+**THE MARGIN-0 REPORT WAS AN ARTEFACT, caught by Adam.** I reported "510 against 510, margin 0" with the collapse fired. His arithmetic said it should be ~485 and ~+25, because the run is 26px listed. He was right: that line came from `identity-extremes.spec.ts`'s own `measure()`, which still computed `needed: content.scrollHeight` — **the exact quantity the ruling exists to avoid**. Measured properly, four figures:
+
+| record | collapsed | children's sum | kids | scrollH | inner |
+|---|---|---|---|---|---|
+| WORST | **true** | **484.9** | 394.9 + 90 | 510 | 510 |
+| ORDINARY | false | 478.4 | 394.9 + 83.5 | 511 | 510 |
+
+So the worst record's margin is **+25.1**, not 0. And **the 25 is not a coincidence with §28's withdrawn "fits by 25" — it is the same measurement**: §28's figure was taken with the collapse fired, and 484.9 against 510 reproduces it on the current tree. The two claims were always one measurement in two states.
+
+The lesson is the one the whole round keeps teaching: **a `margin 0` from a space-between track is what that track reports by construction**, and it would have read 0 forever whatever the content did. A figure that cannot vary is not a measurement. Adam caught it from arithmetic alone, against a number I had just reported as a success.
+
+**A second fixture fault in my own new test.** The floor test compared WORST against `FITS_AFTER_COLLAPSE` — which is the SAME five-line title with a shorter label, so both gaps came out 25–31px and the void never appeared. The gap is what the TITLE's growth spends, so the comparison needs a title that has not spent it. `SHORT_TITLE` (Meddle / Pink Floyd) is now in the shared fixture: **25.1px gap on the worst, 302.3px on the short one, both blocks on the floor.**
+
+**NOT RULED, and deliberately left: the visual question.** Whether the pressing block stays pinned to the cell's floor with ~270px of void above it, or follows the title, changes 16 of 17 records. Captured for Design rather than decided — `docs/record-detail/built/ordinary-1440.png` and `ordinary-390.png`, an ordinary two-line title, which is the case neither extreme shows.
+
+**§4.2's 43.1px does not reproduce, and is not built to.** The current layout gives 273.7 on an ordinary record; allowing for the removed 140px ornament track, 133.7. Design is being asked what geometry the 43.1 came from. Nothing in the build targets that number.
+
+## Design's split has landed
+
+`Record Detail 8a - settled 1-10.dc.html` holds §1–§10 and is closed; the live target keeps §12–§32. The handoff already documents three sources of truth. **Index assertion 6 caught the seam immediately** — Design's new withdrawal entries for §2.1, §4.2 and §8.1 pointed at sections the check could not see, because it read only the live target. It now reads both, and the new file is tracked (`.gitignore` negation) under the same reachability rule as the other two: a source of truth is reachable wherever the index is read, and at the same revision as the index.
+
+## The stale database lock, and the guard catching it (24 Sep)
+
+Three probe runs produced no output at all. The cause was not the page: a killed background E2E left a **session-scoped advisory lock** on `record_collection_test`, and `test/helpers/db.ts` refused every subsequent run — "another test run already holds this database". That is the mechanism CLAUDE.md §9 describes working exactly as designed, and it cost nothing but the time to read the error properly instead of re-running.
+
+Cleared with `pg_terminate_backend` on the connection holding the advisory lock. **Worth knowing for next time: a killed Playwright run can leave the lock behind, and the symptom is silent — the run exits with no summary rather than an obvious failure.** Reading the raw output rather than a grep of it is what surfaced it.
+
+## Finding 2 for Design: a declared value is not a measurement
+
+`docs/findings/declared-values-are-not-measurements.md`, at Adam's request. `band.style.height` reads `547px` at 1280 while the box renders at `387.5px` — §18's fork overrides with `height: auto !important`, which wins the cascade without touching the inline attribute. So a guard reading the declared value is wrong by 160px, and `getComputedStyle` is no better: it returns the USED value (`387.516px`), never `auto`, so a comparison against `'auto'` fails in the opposite direction. What works is comparing declared against rendered — the band is on its fixed height only when the height it declared is the height it got.
+
+Same class as the inline-value finding and as CLAUDE.md §2's "the assertion tests a proxy one layer below the claim": there the proxy was a variable for a connection, a token for a rendering, a source string for a behaviour; here it is a declaration for a layout.
+
+**HELD, not built: the auto-height conflict.** §28 says the give order stops below 480; the build's fork sets `height: auto` from 1440. That is a spec conflict over 960px of range and it is Design's to rule. The build currently exempts any auto-height band from the give order, which is §28's principle applied where the build actually puts the auto height — but the range disagreement is untouched and reported.

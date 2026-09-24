@@ -98,4 +98,24 @@ export const EMPTIEST = {
   genres: [] as readonly string[],
 } as const;
 
-export type IdentityExtreme = typeof WORST | typeof FITS_AFTER_COLLAPSE | typeof EMPTIEST;
+/**
+ * **A short title, for the comparison the floor ruling needs.**
+ *
+ * §1's ruling is that the pressing block stays on the cell's floor and the
+ * gap varies by record. Showing that takes two records whose TITLES differ —
+ * `FITS_AFTER_COLLAPSE` is the same five-line title with a shorter label, so
+ * both its gap and the worst record's come out ~25–31px and the void never
+ * appears. `Meddle` is the collection's own shortest, and it carries a 302px
+ * gap where the worst title carries 25.
+ */
+export const SHORT_TITLE = {
+  ...FITS_AFTER_COLLAPSE,
+  title: 'Meddle',
+  artist: 'Pink Floyd',
+} as const;
+
+export type IdentityExtreme =
+  | typeof WORST
+  | typeof FITS_AFTER_COLLAPSE
+  | typeof SHORT_TITLE
+  | typeof EMPTIEST;

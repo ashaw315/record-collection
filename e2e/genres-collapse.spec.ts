@@ -73,8 +73,7 @@ async function post(page: Page, path: string, data: unknown) {
 async function measure(page: Page) {
   return page.evaluate(() => {
     const cell =
-      document.querySelector('[data-cell="identity"] [data-cell="identity"]') ??
-      document.querySelector('[data-cell="identity"]')!;
+      document.querySelector('[data-cell="identity-content"]')!;
 
     const content = cell.querySelector('[data-track="content"]')!;
     const title = cell.querySelector('[data-field="title"]')!;
@@ -105,38 +104,26 @@ test.beforeEach(async ({ page }) => {
   await login(page);
 });
 
-test('§28: the collapse fires on NO record in the collection, including its worst title', async ({
+test('§27: the collapse FIRES on the collection’s worst title, and no fact is clipped', async ({
   page,
 }) => {
   /**
-   * **The fixture-level half of the guard, and its subject is the
-   * COLLECTION.** §4.2 says it three times — "the collapse fires on no record
-   * in the collection today", "the condition is unmet on all seventeen" — and
-   * §28 confirms the real worst record "fits with 25px to spare".
+   * **§27 rules this directly**: "If the worst title still overflows, §4.2's
+   * genres-collapse fires — never overflow-hidden; test asserts no pressing
+   * fact is clipped." The genres run is the third term of §4.2's give order,
+   * so its yielding IS the mechanism working, not a failure of it.
    *
-   * The guard's own behaviour is asserted at the unit level on constructed
-   * input (`genres-run.test.ts`), where the subject is the FUNCTION and no
-   * claim is made about the collection. Two tests, two subjects: §27's rule
-   * forbids altering a fixture along the axis it measures, because a fixture
-   * stands in for the collection; a constructed case makes no claim about the
-   * collection at all.
+   * §28's "untriggered on the current collection" is the error, and the
+   * arithmetic says why: its fits-by-25 figure was measured on a built page
+   * with the collapse ALREADY fired (NOTES, 23 Sep — "six genres collapsed —
+   * needs 485 against 510"). With the run listed the same record needs 512
+   * against 510, and 512 − 26 (the run's own height) = 486 against the
+   * recorded 485. The two claims could not both hold.
    *
-   * **The previous version asserted the opposite of §4.2** — it reached the
-   * collapse on a fixture whose twelve-character artist suffix added a 40px
-   * line, which is §27's third recorded instance of exactly that defect.
-   *
-   * And the mechanism it credited is gone: §28 withdrew the identity cell's
-   * ornament track, so nothing is "absorbed by the track". What remains is
-   * the cell's own height, which the content fits inside.
+   * The unit layer asserts the guard on constructed input, where the subject
+   * is the function; this asserts what the COLLECTION does, which is §27's
+   * subject. Two tests, two subjects.
    */
-  /*
-    **The SHARED fixture, not a local seeder.** The helper this replaced
-    appended the isolation suffix to the artist — `Donna Summer ${suffix}` —
-    which wraps it to a second 40px line and inflates the cell by exactly the
-    axis under test. That is §27's named defect and this is its fourth
-    instance; `seedExtreme` suffixes a field the assertion does not read and
-    keeps the artist one line, which the precondition below asserts.
-  */
   const id = await seedExtreme(page, WORST);
   await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
   await page.goto(`/records/${id}`);
@@ -147,41 +134,20 @@ test('§28: the collapse fires on NO record in the collection, including its wor
 
   /* The precondition: this IS the collection's worst case, not a mild one. */
   expect(m.lines, 'the fixture wraps to five lines').toBe(5);
-  expect(m.formatHeight, 'a format line the count could have appended to').not.toBeNull();
+  expect(m.formatHeight, 'a format line for the count to append to').not.toBeNull();
 
-  /**
-   * **KNOWN-FAILING, and the open question is named.** §28 says the worst
-   * record "fits with 25px to spare"; the build measures 512 against 510 with
-   * the run LISTED, a 2px overage, and one fact clipped by 0.9px.
-   *
-   * The 27px between them is settled as arithmetic: §28's figure was measured
-   * on a built page with the genres run COLLAPSED (NOTES, 23 Sep — "six
-   * genres collapsed — needs 485 against 510"), and the run is 26px tall when
-   * listed. 512 − 26 = 486 against the recorded 485. Neither number is wrong;
-   * they are two states of one record.
-   *
-   * What is NOT settled, and is Design's: §28 quotes a fits-by-25 figure
-   * obtained with the collapse already fired, while also calling the clause
-   * "untriggered on the current collection" and §4.2 saying the condition is
-   * unmet on all seventeen. If the run must be listed the record does not
-   * fit; if it may collapse, the collapse is triggered. §28's own 4px
-   * tolerance is why the build lists rather than collapses at −2.
-   *
-   * Asserted as it stands rather than relaxed, so the resolution moves this
-   * line instead of arriving unnoticed.
-   */
-  expect(m.overflows, 'nothing overflows the cell — see the note above; open with Design').toBe(false);
-  expect(m.genresListed, 'every genre is listed').toBe(true);
-  expect(m.count, 'and no count, because nothing is withheld').toBeNull();
+  /* The collapse fired: the run is gone and the count stands in its place. */
+  expect(m.genresListed, 'the run has yielded').toBe(false);
+  expect(m.count, `the count is the ${WORST.genres.length} withheld`).toBe(WORST.genres.length);
   for (const name of WORST.genres) {
-    expect(m.cellText, `${name} is shown`).toContain(name);
+    expect(m.cellText, `${name} is withheld, not shown`).not.toContain(name);
   }
 
-  /*
-    Not by a hair: §28 puts the real worst record 25px clear, and the 0.4px
-    that once looked like a margin was the suffixed fixture. Asserted so a
-    change that leaves it fitting by a rounding fails here rather than
-    passing quietly.
-  */
-  expect(m.inner - m.needed, `fits with ${(m.inner - m.needed).toFixed(1)}px to spare`).toBeGreaterThan(COLLAPSE_TOLERANCE);
+  /* §18 and §27 both: yielding a run is the answer, clipping a fact is not. */
+  expect(m.overflows, 'and with it yielded, nothing overflows').toBe(false);
+  expect(m.inner - m.needed, `fits with ${(m.inner - m.needed).toFixed(1)}px to spare once the run has yielded`).toBeGreaterThanOrEqual(0);
+
+  /* Costs no height: the count appends to a line already set. */
+  expect(m.countIsLink, 'the count opens the pressing editor').toBe(true);
+  expect(m.formatHeight, 'the format line is still one line').toBeLessThan(30);
 });

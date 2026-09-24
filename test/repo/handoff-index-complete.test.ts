@@ -115,6 +115,8 @@ describe.each(TABLES)('the handoff indexes every numbered section of the $name t
  */
 describe('the reader’s note and the sections agree about what is withdrawn', () => {
   const RECORD_TARGET = join(DESIGN, 'Record Detail 8a - build target.dc.html');
+  /** §1–§10, split out and closed: nothing is written into it. */
+  const SETTLED_TARGET = join(DESIGN, 'Record Detail 8a - settled 1-10.dc.html');
   const present = () => existsSync(RECORD_TARGET) && existsSync(HANDOFF);
 
   /** The note's list: [section, replaced-by, what]. */
@@ -134,7 +136,16 @@ describe('the reader’s note and the sections agree about what is withdrawn', (
    * uppercase heading paragraphs the file's own eyebrow signature marks.
    */
   const sections = (): Map<string, { heading: string; body: string }> => {
-    const raw = text(RECORD_TARGET).replace(/<svg[\s\S]*?<\/svg>/g, '');
+    /*
+      **Both record-detail targets.** Design split §1–§10 into
+      `Record Detail 8a - settled 1-10.dc.html` so each file can be rendered
+      after every edit, and the reader's note lists withdrawals in BOTH — §2.1,
+      §4.2 and §8.1 among them. Reading only the live target reported three of
+      Design's own entries as pointing at sections that do not exist.
+    */
+    const raw = [text(RECORD_TARGET), existsSync(SETTLED_TARGET) ? text(SETTLED_TARGET) : '']
+      .join('\n')
+      .replace(/<svg[\s\S]*?<\/svg>/g, '');
     const heading = /text-transform:uppercase;color:oklch\(0\.48 0\.012 60\)">(?:§)?(\d+(?:\.\d+)?) · [^<]*/g;
     const marks = [...raw.matchAll(heading)].map((m) => ({ n: m[1], at: m.index!, end: m.index! + m[0].length }));
     const out = new Map<string, { heading: string; body: string }>();

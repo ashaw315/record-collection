@@ -105,7 +105,27 @@ test('§18: the grid moves and the type does not, at every width', async ({ page
     expect(m.track, `at ${width}, the track holds its measure`).toBeGreaterThanOrEqual(CONTENT_MEASURE);
     expect(m.artistSpill, `at ${width}, nothing of the artist is cut`).toBe(0);
     expect(m.titleSpill, `at ${width}, nothing of the title is cut`).toBe(0);
-    expect(m.pageOverflow, `at ${width}, the page does not scroll sideways`).toBe(false);
+    /**
+     * **KNOWN-FAILING at 480, and it is a defect FOUND rather than caused.**
+     *
+     * The page overflows 125px horizontally at 480 × 1100: `scrollWidth` 605
+     * against `clientWidth` 480. It has been doing so all along —
+     * `overflow-hidden` on the identity cell was swallowing it, and §27's
+     * removal of that class ("never overflow-hidden") is what made it
+     * visible. **Do not restore the class to get this green**; the class is
+     * the thing §27 forbids and the swallowing is why this went unseen.
+     *
+     * What is ruled out, by measurement: no element's right edge exceeds the
+     * viewport, none has a left edge below −1, both 900 and 1100 heights are
+     * clean on a fresh load, and walking 2000 → 480 in one page is clean at
+     * every step. `scrollWidth` growing with no element accounting for it is
+     * the signature of content clipped by an ancestor, which a
+     * `getBoundingClientRect` scan cannot see.
+     *
+     * Open with Design. The next step is an `offsetLeft + offsetWidth`
+     * traversal, which reports a box a rect cannot.
+     */
+    expect(m.pageOverflow, `at ${width}, the page does not scroll sideways — see the note above; pre-existing, exposed by §27`).toBe(false);
   }
 
   /* Below the fork: one column, and the measure still holds down to 480. */
@@ -117,7 +137,27 @@ test('§18: the grid moves and the type does not, at every width', async ({ page
     expect(m.track, `at ${width}, the track keeps §4.2's 412 measure`).toBeGreaterThanOrEqual(CONTENT_MEASURE);
     expect(m.artistSpill, `at ${width}, nothing of the artist is cut`).toBe(0);
     expect(m.titleSpill, `at ${width}, nothing of the title is cut`).toBe(0);
-    expect(m.pageOverflow, `at ${width}, the page does not scroll sideways`).toBe(false);
+    /**
+     * **KNOWN-FAILING at 480, and it is a defect FOUND rather than caused.**
+     *
+     * The page overflows 125px horizontally at 480 × 1100: `scrollWidth` 605
+     * against `clientWidth` 480. It has been doing so all along —
+     * `overflow-hidden` on the identity cell was swallowing it, and §27's
+     * removal of that class ("never overflow-hidden") is what made it
+     * visible. **Do not restore the class to get this green**; the class is
+     * the thing §27 forbids and the swallowing is why this went unseen.
+     *
+     * What is ruled out, by measurement: no element's right edge exceeds the
+     * viewport, none has a left edge below −1, both 900 and 1100 heights are
+     * clean on a fresh load, and walking 2000 → 480 in one page is clean at
+     * every step. `scrollWidth` growing with no element accounting for it is
+     * the signature of content clipped by an ancestor, which a
+     * `getBoundingClientRect` scan cannot see.
+     *
+     * Open with Design. The next step is an `offsetLeft + offsetWidth`
+     * traversal, which reports a box a rect cannot.
+     */
+    expect(m.pageOverflow, `at ${width}, the page does not scroll sideways — see the note above; pre-existing, exposed by §27`).toBe(false);
   }
 
   /* Below 480 the measure yields — §4.2's give order's fourth term. */
@@ -128,7 +168,27 @@ test('§18: the grid moves and the type does not, at every width', async ({ page
     );
     expect(m.artistSpill, `at ${width}, nothing of the artist is cut`).toBe(0);
     expect(m.titleSpill, `at ${width}, nothing of the title is cut`).toBe(0);
-    expect(m.pageOverflow, `at ${width}, the page does not scroll sideways`).toBe(false);
+    /**
+     * **KNOWN-FAILING at 480, and it is a defect FOUND rather than caused.**
+     *
+     * The page overflows 125px horizontally at 480 × 1100: `scrollWidth` 605
+     * against `clientWidth` 480. It has been doing so all along —
+     * `overflow-hidden` on the identity cell was swallowing it, and §27's
+     * removal of that class ("never overflow-hidden") is what made it
+     * visible. **Do not restore the class to get this green**; the class is
+     * the thing §27 forbids and the swallowing is why this went unseen.
+     *
+     * What is ruled out, by measurement: no element's right edge exceeds the
+     * viewport, none has a left edge below −1, both 900 and 1100 heights are
+     * clean on a fresh load, and walking 2000 → 480 in one page is clean at
+     * every step. `scrollWidth` growing with no element accounting for it is
+     * the signature of content clipped by an ancestor, which a
+     * `getBoundingClientRect` scan cannot see.
+     *
+     * Open with Design. The next step is an `offsetLeft + offsetWidth`
+     * traversal, which reports a box a rect cannot.
+     */
+    expect(m.pageOverflow, `at ${width}, the page does not scroll sideways — see the note above; pre-existing, exposed by §27`).toBe(false);
   }
 
   /* §18 names 322 at 390, which is the derivation and not a second figure. */

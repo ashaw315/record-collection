@@ -94,6 +94,53 @@ test('capture the built record page at 1440 and 390', async ({ page }) => {
     and 1920 × 950 is the real maximised window where the floor is a stated
     known miss.
   */
+  /*
+    **A second record with an ORDINARY two-line title.** The extremes show
+    the collapse and the wide grids; what neither shows is the case 16 of 17
+    records are in — where §4.2's gap between the title block and the pressing
+    block is large, because `justify-content: space-between` distributes all
+    the slack into it. Whether the pressing block should stay pinned to the
+    cell's floor with that void above it, or follow the title, changes every
+    record but the worst, and it is Design's to rule from a capture.
+  */
+  const ordinaryArtist = await post('/api/artists', { name: 'Cocteau Twins' });
+  trackArtist(ordinaryArtist.id as string);
+  /* Its own label and pressing: reusing the other record's showed Casablanca 1979 under a 1990 title. */
+  const ordinaryLabel = await post('/api/labels', { name: '4AD' });
+  const ordinaryPressing = await post('/api/pressings', {
+    catalogNumber: 'CAD 0007',
+    yearPressed: 1990,
+    countryPressed: 'United Kingdom',
+    pressingPlant: 'Damont',
+    vinylWeightGrams: 140,
+    colorVariant: 'Black',
+  });
+  const ordinaryGenres: string[] = [];
+  for (const name of ['Dream Pop', 'Shoegaze']) ordinaryGenres.push((await post('/api/genres', { name })).id);
+  const ordinary = await post('/api/records', {
+    title: 'Heaven or Las Vegas',
+    artistId: ordinaryArtist.id,
+    labelId: ordinaryLabel.id,
+    pressingId: ordinaryPressing.id,
+    formatId: format.id,
+    genreIds: ordinaryGenres,
+    releaseYear: 1990,
+  });
+  const ordinaryId = ordinary.id as string;
+  await seedImage({ recordId: ordinaryId, imageType: 'cover' });
+  await getTestDb().execute(sql`UPDATE records SET spine_colour = ${'#6a7f8c'} WHERE id = ${ordinaryId}::uuid`);
+
+  for (const [width, height] of [[1440, NO_SCROLL_HEIGHT], [390, 844]] as const) {
+    await page.setViewportSize({ width, height });
+    await page.goto(`/records/${ordinaryId}`);
+    await page.locator('[data-track="content"]').waitFor({ timeout: 20_000 });
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForTimeout(400);
+    /* Next's dev-mode compile badge is chrome, not the page. */
+    await page.addStyleTag({ content: 'nextjs-portal{display:none!important}' });
+    await page.screenshot({ path: `docs/record-detail/built/ordinary-${width}.png`, fullPage: true });
+  }
+
   for (const [width, height] of [[1440, NO_SCROLL_HEIGHT], [390, 844], [1680, 1050], [1920, 1080]] as const) {
     await page.setViewportSize({ width, height });
     await page.goto(`/records/${id}`);
@@ -114,6 +161,7 @@ test('capture the built record page at 1440 and 390', async ({ page }) => {
     await page.evaluate(() => document.fonts.ready);
     await page.waitForTimeout(400);
 
+    await page.addStyleTag({ content: 'nextjs-portal{display:none!important}' });
     await page.screenshot({ path: `docs/record-detail/built/page-${width}.png`, fullPage: true });
   }
 });

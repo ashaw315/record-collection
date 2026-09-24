@@ -85,8 +85,25 @@ export function IdentityCell({
       give.
     */
     <div
-      data-cell="identity"
-      className="grid h-full overflow-hidden p-[18px]"
+      /*
+        **Its own name, because two elements carried `data-cell="identity"`.**
+        The band's grid item wraps this one, so every locator on that
+        attribute was a strict-mode violation surviving only by being scoped,
+        and the collapse trigger reached this box as `content.parentElement`
+        — right by position rather than by name, which is the relationship
+        held implicitly that `docs/findings/inline-values-and-width.md`
+        records as a class.
+      */
+      data-cell="identity-content"
+      /*
+        **No `overflow-hidden` (§27).** "If the worst title still overflows,
+        §4.2's genres-collapse fires — never overflow-hidden." The class
+        turned a 0.9px overflow into a silent clip, which is why the trigger
+        measuring the wrong thing stayed invisible for as long as it did.
+        With the collapse firing on the demand §4.2 actually defines, nothing
+        overflows — and the next thing that does will announce itself.
+      */
+      className="grid h-full p-[18px]"
       /*
         **One row (§28): the ornament track is withdrawn and its space
         returns to the content.** "The identity cell carries no ornament. Its

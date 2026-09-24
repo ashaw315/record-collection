@@ -253,7 +253,7 @@ test.describe('the corner field is a track, not a reserve (§4.2)', () => {
 
     const rows = await page.evaluate(() =>
       ['one', 'two', 'three', 'four', 'five'].map((id) => {
-        const cell = document.querySelector(`[data-case="${id}"] [data-cell="identity"]`)!;
+        const cell = document.querySelector(`[data-case="${id}"] [data-cell="identity-content"]`)!;
         return {
           id,
           overflows: cell.scrollHeight > Math.ceil(cell.getBoundingClientRect().height),
@@ -290,7 +290,7 @@ test.describe('the corner field is a track, not a reserve (§4.2)', () => {
     const mins = await page.evaluate(() =>
       ['one', 'five'].map((id) => {
         const content = document.querySelector(
-          `[data-case="${id}"] [data-cell="identity"] [data-track="content"]`,
+          `[data-case="${id}"] [data-cell="identity-content"] [data-track="content"]`,
         )!;
         return { id, minHeight: getComputedStyle(content).minHeight };
       }),

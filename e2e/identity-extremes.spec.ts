@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup } from './cleanup';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
-import { WORST } from '../src/app/records/[id]/identity-extremes';
+import { SHORT_TITLE, WORST } from '../src/app/records/[id]/identity-extremes';
 import { seedExtreme } from './identity-extremes';
 
 registerCleanup();
@@ -41,7 +41,7 @@ test('§27: every pressing fact ends inside the cell on the collection’s worst
   await page.waitForTimeout(400);
 
   const m = await page.evaluate(() => {
-    const cell = document.querySelector('[data-cell="identity"] [data-cell="identity"]') ?? document.querySelector('[data-cell="identity"]')!;
+    const cell = document.querySelector('[data-cell="identity-content"]') ?? document.querySelector('[data-cell="identity"]')!;
     const cs = getComputedStyle(cell);
     const inner = cell.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
     const contentBottom = cell.getBoundingClientRect().bottom - parseFloat(cs.paddingBottom);
@@ -63,14 +63,37 @@ test('§27: every pressing fact ends inside the cell on the collection’s worst
       artistLines: lines('[data-field="artist"]'),
       pressingLines: lines('[data-field="pressing-line"]'),
       inner: Math.round(inner),
-      needed: content.scrollHeight,
+      /*
+        **The children's sum, not `scrollHeight`.** The track is a flex column
+        with `justify-content: space-between`, so it always fills its row and
+        `scrollHeight` reports the BUDGET: it read 510 against an inner 510
+        with the collapse fired, a margin of exactly zero that would have read
+        that way whatever the content did. The demand is the two blocks on
+        their own heights (Adam's ruling, 24 Sep) — 484.9 here, margin +25.1,
+        which is §28's "fits by 25" reproduced on the current tree.
+      */
+      needed:
+        Math.round(
+          Array.from(content.children).reduce((sum, child) => {
+            const box = child.getBoundingClientRect();
+            const childStyle = getComputedStyle(child);
+            return sum + box.height + parseFloat(childStyle.marginTop) + parseFloat(childStyle.marginBottom);
+          }, 0) * 10,
+        ) / 10,
       /*
         The content's margin against the CELL, which §28 makes the thing the
         trigger measures: "the trigger measures the cell, not the content
         track". The ornament track it used to report beside this is withdrawn
         (§28) and its 140px is part of `inner` now.
       */
-      margin: +(inner - content.scrollHeight).toFixed(1),
+      margin: +(
+        inner -
+        Array.from(content.children).reduce((sum, child) => {
+          const box = child.getBoundingClientRect();
+          const childStyle = getComputedStyle(child);
+          return sum + box.height + parseFloat(childStyle.marginTop) + parseFloat(childStyle.marginBottom);
+        }, 0)
+      ).toFixed(1),
       collapsed: cell.querySelector('[data-field="genre-count"]') !== null,
       facts,
     };
@@ -84,26 +107,93 @@ test('§27: every pressing fact ends inside the cell on the collection’s worst
 
   expect(m.facts.length, 'the pressing block carries facts').toBeGreaterThan(0);
   /**
-   * **KNOWN-FAILING at 0.9px, and the question is Design's.** §27 and §18 both
-   * forbid clipping a fact, and the genres run is cut by 0.9px on the
-   * collection's worst title — the cell needs 512 against 510.
+   * **No fact is clipped, because the run yields first.** §27: "If the worst
+   * title still overflows, §4.2's genres-collapse fires — never
+   * overflow-hidden; test asserts no pressing fact is clipped." The collapse
+   * IS the mechanism, so the worst title lands at exactly 510 of 510 with
+   * its genres withheld to a count.
    *
-   * The 27px against §28's "fits by 25" is settled as arithmetic: §28's
-   * figure was measured on a built page with the run COLLAPSED (NOTES, 23
-   * Sep), and the run is 26px when listed, so 512 − 26 = 486 against the
-   * recorded 485. Neither figure is wrong; they are two states of one record.
-   *
-   * What is open is that §28 quotes a fits-by-25 figure obtained with the
-   * collapse fired while calling the clause "untriggered on the current
-   * collection", and §4.2 says the condition is unmet on all seventeen. If
-   * the run must be listed the record does not fit; if it may collapse, the
-   * collapse is triggered. §28's own 4px tolerance is why the build lists at
-   * −2 rather than collapsing.
-   *
-   * Asserted as §27 rules rather than relaxed, so the resolution moves this
-   * line instead of arriving unnoticed.
+   * It clipped by 0.9px for one round, when §28's 4px tolerance was applied
+   * as slack BEFORE the collapse rather than as a guard against a
+   * coincidental pass: at 2px over the collapse was suppressed and the run
+   * clipped instead of yielding. The tolerance was the defect, not the fit.
    */
   for (const fact of m.facts) {
-    expect(fact.cut, `${fact.field} ends inside the cell (positive = clipped by that many px) — see the note above; open with Design`).toBeLessThanOrEqual(0);
+    expect(fact.cut, `${fact.field} ends inside the cell (positive = clipped by that many px)`).toBeLessThanOrEqual(0);
   }
+});
+
+test('§1 as ruled: the pressing block stays on the cell’s floor, and the gap varies by record', async ({
+  page,
+}) => {
+  /**
+   * **Design's ruling, 24 Sep: the pressing block stays on the cell's floor,
+   * and the gap varies by record.**
+   *
+   * That is §4.2's own mechanism made visible — "the pressing block anchors
+   * to a reserved floor and the title block flows from the top, so the two
+   * can never push each other". The gap between them is what absorbs the
+   * title's growth, so it is large on a short title and zero on the worst
+   * one. Asserted on two records at once, because a floor that holds on ONE
+   * record is a coincidence and the claim is that it holds on both.
+   *
+   * §4.2 states 43.1px for that gap at two title lines and it does not
+   * reproduce — the build gives 273.7 on an ordinary record, or 133.7
+   * allowing for §28's removed 140px ornament track. Nothing here asserts
+   * 43.1; Design is being asked what geometry it came from.
+   */
+  await login(page);
+
+  const measured: Array<{ which: string; floorGap: number; titleGap: number }> = [];
+
+  /*
+    **The second record must have a SHORT title, not the same five-line one.**
+    `FITS_AFTER_COLLAPSE` is the worst title with a shorter label, so both
+    records' gaps came out ~25–31px and the void the ruling is about never
+    appeared. The gap is what the TITLE's growth spends, so the comparison
+    needs a title that has not spent it.
+  */
+  for (const [which, extreme] of [
+    ['worst', WORST],
+    ['ordinary', SHORT_TITLE],
+  ] as const) {
+    const id = await seedExtreme(page, extreme);
+    await page.setViewportSize({ width: GRID_FORK, height: NO_SCROLL_HEIGHT });
+    await page.goto(`/records/${id}`);
+    await page.locator('[data-track="content"]').waitFor({ timeout: 20_000 });
+    await page.waitForTimeout(300);
+
+    measured.push(
+      await page.evaluate((label) => {
+        const cell = document.querySelector('[data-cell="identity-content"]')!;
+        const track = document.querySelector('[data-track="content"]')!;
+        const style = getComputedStyle(cell);
+        const title = track.children[0].getBoundingClientRect();
+        const pressing = track.children[1].getBoundingClientRect();
+        const floor = cell.getBoundingClientRect().bottom - parseFloat(style.paddingBottom);
+        return {
+          which: label,
+          /* How far the pressing block's foot sits above the cell's floor. */
+          floorGap: Math.round((floor - pressing.bottom) * 10) / 10,
+          /* The gap §4.2 says absorbs the title's growth. */
+          titleGap: Math.round((pressing.top - title.bottom) * 10) / 10,
+        };
+      }, which),
+    );
+  }
+
+  const worst = measured.find((m) => m.which === 'worst')!;
+  const ordinary = measured.find((m) => m.which === 'ordinary')!;
+  console.log(
+    `§1 floor: worst sits ${worst.floorGap}px off the floor with a ${worst.titleGap}px gap; ordinary ${ordinary.floorGap}px off with ${ordinary.titleGap}px`,
+  );
+
+  /* The ruling's first half: the block is ON the floor, on every record. */
+  for (const m of measured) {
+    expect(m.floorGap, `${m.which}: the pressing block sits on the cell’s floor`).toBeCloseTo(0, 0);
+  }
+
+  /* And its second: the gap is what varies, not the block's position. */
+  expect(ordinary.titleGap, 'the ordinary record carries the void').toBeGreaterThan(100);
+  expect(worst.titleGap, 'and the worst title has spent it').toBeLessThan(ordinary.titleGap);
 });

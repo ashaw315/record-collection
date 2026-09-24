@@ -301,7 +301,8 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
       >
         <div
           data-cell="identity"
-          className="relative overflow-hidden"
+          /* §27: the response to overflow is the collapse, never overflow-hidden. */
+          className="relative"
           style={{ gridColumn: `span ${IDENTITY_SPANS[0]}`, borderRight: `1px solid ${RULE}` }}
         >
           <IdentityCell

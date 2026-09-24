@@ -169,7 +169,15 @@ describe('§31: the frame is a STATED constant, and arrangements must fit it', (
     const sampled = Array.from({ length: 400 }, (_, i) => `sample-${i}`);
     const advances = sampled.map((id) => construction(id).advances);
 
-    expect(Math.max(...advances), 'no sampled id reaches the 32 cap').toBeLessThan(HASH_ADVANCE_CAP);
+    /**
+     * **The cap is a guard, not a test, and cannot be reached.** At the
+     * measured 14.1% rejection rate, 32 consecutive rejections has a
+     * probability of 0.141³² ≈ 6 × 10⁻²⁸. So this assertion can never fail
+     * by chance: it fails only if the rejection rate has risen by orders of
+     * magnitude, which would mean the frame and the generator have come
+     * apart. That is what it is watching for.
+     */
+    expect(Math.max(...advances), 'no sampled id reaches the 32 cap — see the note: at 14.1% this is ~10^-27, so a failure means the rate has moved').toBeLessThan(HASH_ADVANCE_CAP);
 
     /**
      * **The guard fires, now that the clamp is gone.** `containedOrigin`
