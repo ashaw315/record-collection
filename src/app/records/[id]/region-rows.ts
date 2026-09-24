@@ -567,3 +567,52 @@ export function wideRowsAt(viewport: number): RegionRow[] {
     return { items: side === 'left' ? [air, ...row.items] : [...row.items, air] };
   });
 }
+
+/**
+ * §26's placement, as **two rules keyed to the HOST** (step 28).
+ *
+ * "A figure in a full-width strip takes a two-column right inset; a figure in
+ * an air column is centred in it. **Neither rule depends on solo or pair.**"
+ *
+ * Design's derivation is entirely about the host, which is why the figure's
+ * own kind does no work here: a full-width strip has no air of its own, so
+ * the figure is set against the page edge by a module; **an air column IS the
+ * host**, so centring is what being in the air means.
+ *
+ * This replaces a single right-inset constant fitted across both.
+ * Measured on §26's drawing: the air figure's host is 840..1440 (midpoint
+ * 1140.0) and the figure spans 1043.4..1237.2 (midpoint 1140.3) — centred to
+ * 0.3px, where the "203px inset" was centring seen from one side. The strip
+ * figure is genuinely inset at 242.9 = 2.02 columns. One constant is right
+ * for one and wrong for the other, and it put both figures on x = 1200 at
+ * 1440 where the drawing has them 40px apart.
+ *
+ * **Keyed to the host rather than the figure because §21 applies this
+ * vocabulary to six more screens**, where an air column may hold a solo and a
+ * strip a pair. This drawing has one of each, so a rule written to the figure
+ * type would encode that correlation.
+ */
+export const FIGURE_INSET_COLUMNS = 2;
+
+export type FigureHost = 'strip' | 'air';
+
+export function figurePlacement({
+  host,
+  hostWidth,
+  columnWidth,
+  figureWidth,
+}: {
+  host: FigureHost;
+  hostWidth: number;
+  columnWidth: number;
+  figureWidth: number;
+  /** Accepted and deliberately unused: the rule is the host's (step 28). */
+  kind?: 'solo' | 'pair';
+}): { left: number; right: number } {
+  if (host === 'strip') {
+    const right = FIGURE_INSET_COLUMNS * columnWidth;
+    return { right, left: hostWidth - right - figureWidth };
+  }
+  const gap = (hostWidth - figureWidth) / 2;
+  return { left: gap, right: gap };
+}

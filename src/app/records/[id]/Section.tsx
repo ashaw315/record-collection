@@ -151,7 +151,7 @@ export function Section({
         stacking context, so every piece of content is above them by being in
         flow, and neither can leave this section.
       */}
-      {ladder !== null && figure !== null && <Figure ladder={ladder} figure={figure} />}
+      {ladder !== null && figure !== null && <Figure ladder={ladder} figure={figure} host={'strip'} />}
       {ladder !== null && flat !== null && <Flat ladder={ladder} flat={flat} />}
 
       {/*
@@ -297,7 +297,7 @@ ExtendedGrid.Air = function Air({
         ...CELL_LAYER,
       }}
     >
-      {ladder !== null && figure !== null && <Figure ladder={ladder} figure={figure} />}
+      {ladder !== null && figure !== null && <Figure ladder={ladder} figure={figure} host={'air'} />}
       {ladder !== null && flat !== null && <Flat ladder={ladder} flat={flat} />}
     </div>
   );

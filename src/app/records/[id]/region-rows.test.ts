@@ -10,6 +10,7 @@ import {
   COLUMN_MIN,
   PAGE_CEILING,
   airOf,
+  figurePlacement,
   widePageStylesheet,
   wideRowsAt,
   bandHeightAt,
@@ -467,5 +468,61 @@ describe('§30: the lower region above 1440 — extra columns become air, altern
     const strip = wideRowsAt(1920)[2];
     expect(strip.items.filter((i) => i.kind === 'section')).toHaveLength(1);
     expect(strip.items[0].span, 'Price history takes all sixteen').toBe(16);
+  });
+});
+
+describe('§26 placement: the rule is the HOST’s, not the figure’s (step 28)', () => {
+  /**
+   * §28's step: "two rules by host. A figure in a full-width strip takes a
+   * two-column right inset; a figure in an air column is centred in it.
+   * **Neither rule depends on solo or pair.**"
+   *
+   * The build had one right-inset constant of 240, fitted across
+   * both. It is right for the strip and wrong for the air column: measured
+   * on §26's own drawing, the air figure's host is 840..1440 (midpoint
+   * 1140.0) and the figure spans 1043.4..1237.2 (midpoint 1140.3) — centred
+   * to 0.3px, where its "203px inset" was centring seen from one side. The
+   * strip figure is genuinely inset, at 242.9 = 2.02 columns.
+   *
+   * **Asserted by host, never by solo-versus-pair.** This drawing happens to
+   * have one of each, so a test written to the figure type would encode that
+   * correlation — and §21 applies this vocabulary to six more screens, where
+   * an air column may hold a solo and a strip a pair.
+   */
+  it('insets a figure in a full-width strip by two columns, whatever the figure is', () => {
+    for (const figure of ['solo', 'pair'] as const) {
+      const placed = figurePlacement({ host: 'strip', hostWidth: 1440, columnWidth: 120, figureWidth: 95, kind: figure });
+      expect(placed.right, `${figure} in a strip: two columns in from the host's right`).toBe(240);
+    }
+  });
+
+  it('centres a figure in an air column, whatever the figure is', () => {
+    for (const figure of ['solo', 'pair'] as const) {
+      /* §26's drawing: air host 600 wide, figure 193.8 across. */
+      const placed = figurePlacement({ host: 'air', hostWidth: 600, columnWidth: 120, figureWidth: 193.8, kind: figure });
+      expect(placed.right, `${figure} in air: centred, so the right gap is half the slack`).toBeCloseTo((600 - 193.8) / 2, 1);
+    }
+  });
+
+  it('reproduces §26’s drawing on both its figures', () => {
+    /* The strip figure: host 0..1440, drawn right edge 1197.1 -> inset 242.9 ≈ 2 columns. */
+    const strip = figurePlacement({ host: 'strip', hostWidth: 1440, columnWidth: 120, figureWidth: 95, kind: 'solo' });
+    expect(1440 - strip.right, 'the strip figure’s right edge').toBeCloseTo(1200, 0);
+
+    /* The air figure: host 840..1440, drawn 1043.4..1237.2, midpoint on the host's. */
+    const air = figurePlacement({ host: 'air', hostWidth: 600, columnWidth: 120, figureWidth: 193.8, kind: 'pair' });
+    expect(840 + air.left + 193.8 / 2, 'the air figure’s midpoint sits on its host’s').toBeCloseTo(1140, 0);
+  });
+
+  it('keeps the two figures apart, where one constant aligned them', () => {
+    /*
+      The observable defect: with a single 240 inset both figures landed on
+      x = 1200 at 1440, forming a vertical the design does not have — the
+      drawing has them 40px apart. A regularity reads as intent, which is why
+      it survived review.
+    */
+    const stripRight = 1440 - figurePlacement({ host: 'strip', hostWidth: 1440, columnWidth: 120, figureWidth: 95, kind: 'solo' }).right;
+    const airRight = 840 + figurePlacement({ host: 'air', hostWidth: 600, columnWidth: 120, figureWidth: 193.8, kind: 'pair' }).left + 193.8;
+    expect(Math.abs(stripRight - airRight), 'the two right edges do not coincide').toBeGreaterThan(20);
   });
 });

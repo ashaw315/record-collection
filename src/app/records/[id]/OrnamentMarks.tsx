@@ -1,9 +1,10 @@
 import type { RecordLadder } from '@/lib/colour/record-ladder';
 import { project } from './construction';
+import { GRID_COLUMN } from './band-geometry';
+import { FIGURE_INSET_COLUMNS, type FigureHost } from './region-rows';
 import {
   BLEED_RATIO,
   EXTENTS,
-  FIGURE_RIGHT_INSET,
   FLATS,
   SECTION_CELL_DELTA,
   SIZE_RATIO,
@@ -32,7 +33,20 @@ import {
  * context and can never enter another cell: its clip is its own cell, and it
  * is cut by at most one edge, the foot.
  */
-export function Figure({ ladder, figure }: { ladder: RecordLadder; figure: FigureSpec }) {
+export function Figure({
+  ladder,
+  figure,
+  host,
+}: {
+  ladder: RecordLadder;
+  figure: FigureSpec;
+  /**
+   * §26's placement is the HOST's rule, not the figure's (step 28): "a figure
+   * in a full-width strip takes a two-column right inset; a figure in an air
+   * column is centred in it. Neither rule depends on solo or pair."
+   */
+  host: FigureHost;
+}) {
   const box = figureBox(figure);
   const face = (points: ReadonlyArray<readonly [number, number]>) =>
     points.map(([x, y]) => `${x.toFixed(3)},${y.toFixed(3)}`).join(' ');
@@ -54,7 +68,16 @@ export function Figure({ ladder, figure }: { ladder: RecordLadder; figure: Figur
         */
         height: `calc(${SIZE_RATIO * 100}% + ${SIZE_RATIO * SECTION_CELL_DELTA}px)`,
         aspectRatio: `${box.width / box.height} / 1`,
-        right: FIGURE_RIGHT_INSET,
+        /*
+          Two rules, keyed to the host. A strip has no air of its own, so the
+          figure is set against the page edge by a module; an air column IS
+          the host, so centring is what being in the air means. A single
+          constant was right for the strip and wrong for the air column, and
+          it aligned both figures on one vertical the drawing does not have.
+        */
+        ...(host === 'strip'
+          ? { right: FIGURE_INSET_COLUMNS * GRID_COLUMN }
+          : { left: '50%', transform: 'translateX(-50%)' }),
         /* The part below the foot: the ruled size less the gate. */
         bottom: `calc(${-BLEED_RATIO * 100}% - ${BLEED_RATIO * SECTION_CELL_DELTA}px)`,
         zIndex: -1,
@@ -103,6 +126,17 @@ export function Figure({ ladder, figure }: { ladder: RecordLadder; figure: Figur
  */
 export const VISIBLE_OF_HOST_HEIGHT = 2 / 3;
 export const VISIBLE_OF_SECTION_WIDTH = 1 / 4;
+
+/**
+ * §21's bleed threshold: "a field bleeds at a page edge, never at a cell
+ * edge, and **at least a third of it lies outside the frame**... A third is a
+ * threshold, not a measurement, and it is stated as one; what it has to be is
+ * large enough that no reader wonders whether the shape was cut."
+ *
+ * Slightly over a third, so rounding cannot put a rendered shape under the
+ * threshold the assertion checks.
+ */
+export const FLAT_OUTSIDE = 0.34;
 
 /**
  * The visible extent of a flat, as an aspect-locked square bounded on both
@@ -187,11 +221,30 @@ export function Flat({ ladder, flat }: { ladder: RecordLadder; flat: (typeof FLA
       aria-hidden="true"
       className="pointer-events-none absolute"
       style={{
+        /*
+          **It bleeds off the page's left edge, with a third outside.**
+          §26's placement: "The tint triangle bleeds off the left edge in
+          that column; the base quarter-disc bleeds off the right edge beside
+          About this record." §21 gives the threshold: "a field bleeds at a
+          page edge, never at a cell edge, and at least a third of it lies
+          outside the frame... large enough that no reader wonders whether
+          the shape was cut."
+
+          It was built at `left: 0` — flush inside its host, bleeding
+          nowhere — from §26's VALUE paragraph, which names the triangle's
+          position without the bleed clause the placement paragraph carries.
+          The section states it twice and only once completely.
+
+          So the drawn shape is `1 / (1 - OUTSIDE)` of the visible width, and
+          the same fraction of it sits left of the page edge. The hypotenuse
+          still runs corner to corner, so what shows is the same triangle
+          with its point cut off by the page rather than a smaller whole one.
+        */
         height: VISIBLE_HEIGHT,
         maxHeight: VISIBLE_HEIGHT,
-        maxWidth: VISIBLE_WIDTH,
+        maxWidth: `calc(${VISIBLE_WIDTH} / ${1 - FLAT_OUTSIDE})`,
         aspectRatio: '1 / 1',
-        left: 0,
+        left: `calc(${VISIBLE_WIDTH} / ${1 - FLAT_OUTSIDE} * ${-FLAT_OUTSIDE})`,
         bottom: 0,
         clipPath: 'polygon(0 100%, 0 0, 100% 100%)',
         background: fill,

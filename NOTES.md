@@ -31399,3 +31399,36 @@ Design authors the build targets and ships whole files. This repo adds a mechani
 **One mechanical trap, recorded because it cost three marks:** a FIGURE CAPTION in §26 carries the same eyebrow styling as a section heading, so slicing sections on that styling alone ends §26 early and puts its last two passages outside the slice. `check-index.mjs`'s own `HEADING` pattern requires an id followed by " · ", which is why the script reads those sections correctly and my ad-hoc helper did not. **Use the script's pattern, not a lookalike.**
 
 Written up for Design as `docs/findings/two-writers-one-file.md`, with the two ways to remove the problem at source: Design adopts the marks, or the layer moves to a sidecar keyed by section id.
+
+
+## The triangle: a build defect, and I quoted the wrong sentence (24 Sep)
+
+I reported the triangle's non-bleed as an open question. **It is not open — §26 settles it, and I quoted the wrong sentence.**
+
+- **Placement (what governs):** "The tint triangle **bleeds off the left edge** in that column; the base quarter-disc bleeds off the right edge beside About this record."
+- **Value assignment (what I quoted):** "Base goes to the quarter-disc on the right beside About this record, and tint to the triangle on the left edge in the last row." — no bleed clause.
+
+So a triangle at `left: 0`, flush inside its host, fails twice: §26 says it bleeds off the page's left edge, and §21 requires "at least a third of it lies outside the frame" when a flat bleeds. The E2E now asserts both clauses for **both** flats, and the "question named" assertion is replaced by the ruling.
+
+**Why I landed on the wrong sentence, which is the finding.** §26 states the triangle twice — once as placement WITH the bleed, once as value WITHOUT it — and a reader landing on the second gets a rule missing a clause. That is the handoff's own hazard, "a row can omit a clause without contradicting its section", **occurring inside a section where no preamble warns anyone**. Design is fixing §26; the general form is written up.
+
+## Self-withdrawal is verified, not assumed
+
+Design's `data-withdrawn-by="26"` inside §26 is §26 withdrawing its own first wording, and every example in `ASSERTIONS-spec.md` is cross-section, so `s == by` could have been untested. **Staged both directions rather than trusting the green:**
+
+- Remove the self-withdrawal's MARK → `FAIL 6`, naming `6 §26/§26`.
+- Remove its LIST entry, keep the mark → `FAIL 7`, naming `7 §26`.
+
+Both restore to exit 0. The script handles it.
+
+**One methodological note from staging it:** my first attempt removed the *first* `data-withdrawn-by="26"` in the file, which belongs to §25's withdrawal by §26 — so the script reported `6 §25/§26` and I nearly read that as "assertion 6 doesn't see self-withdrawals". The mutation has to be aimed as precisely as the assertion.
+
+## One parser, not a lookalike
+
+`scripts/design-target-parser.mjs` is now the single implementation of the targets' section structure — id pattern, heading regex, SVG removal, slicing, live/section text. `check-index.mjs` imports it, and anything that slices those files must.
+
+**The instance:** a throwaway helper sliced on the eyebrow STYLING alone. §26 contains a figure caption with that same styling, so the slice ended at the caption and §26's last two passages fell outside their own section — reported as "passage changed or absent" for text `grep` found immediately. The script's pattern requires an id followed by " · ", so it never matched the caption and was right the whole time.
+
+**Why "be more careful" is the wrong fix:** the helper was an approximation of a rule that already existed in exact form. The two agreed on every section but one, which is how a copy drifts — not everywhere, once. Verified after the refactor that both failure kinds still bite.
+
+Written up as `docs/findings/one-parser-not-a-lookalike.md`. The signal to watch for is **writing a regex that resembles one already in the repo**: at that moment, forking is a decision to be written down, not a shortcut.

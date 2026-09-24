@@ -214,13 +214,14 @@ export function gatePasses(sectionHeight: number, cellHeight: number): boolean {
 /** §9.2's clearance: no figure within half a column of a control's box. */
 export const CONTROL_CLEARANCE = 60;
 
-/**
- * Where a figure stands in its cell: its box's right edge two columns in from
- * the cell's right edge. Not ruled in text — read off §26's drawing, where the
- * pair's box ends 203px and the solo's 243px short of their cells' right
- * edges. Cut by the foot only (§26): never by a side.
- */
-export const FIGURE_RIGHT_INSET = 240;
+/*
+  A single right-inset constant of 240 was here, fitted across §26's two
+  figures, replaced by step 28's two rules keyed to the HOST
+  (`figurePlacement` in region-rows.ts). It was right for the full-width
+  strip and wrong for the air column, where the figure is centred rather
+  than inset — and it put both figures on one vertical the drawing does not
+  have.
+*/
 
 export type FigurePlace = 'air' | 'strip';
 export const FIGURES: Readonly<Record<string, Figure>> = {

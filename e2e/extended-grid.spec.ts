@@ -872,6 +872,13 @@ test('a figure is 0.855 of its section, shows two-thirds, and is cut by its foot
       expect(figure.height / figure.sectionHeight, label).toBeCloseTo(SIZE_RATIO, 2);
       expect(figure.visible / figure.sectionHeight, `${label}: visible`).toBeCloseTo(GATE_RATIO, 2);
       expect(figure.cutFoot, `${label}: bleeds below the foot`).toBe(true);
+      /*
+        **Figures only** (step 28): "Apply the one-edge clip to figures only.
+        Flats follow §21: the quarter-disc bleeds off the page edge and is
+        never cut by its host cell." This loop reads
+        `[data-ornament="figure"]`, so flats are out of scope by
+        construction — and the converse is asserted below.
+      */
       expect(figure.cutEdges, `${label}: cut by one edge only`).toBe(1);
 
       /* Width follows the figure's projected box, never a constant. */
@@ -1002,4 +1009,59 @@ test('the quarter-disc is sized against its host and bleeds off the right page e
   /* Exactly one quadrant: the disc is twice the visible radius on each axis. */
   expect(disc.width, 'the whole disc is twice what shows').toBeGreaterThan(bound * 2 - 3);
   expect(disc.visibleWidth, 'more than a third lies outside').toBeLessThan(disc.width * (2 / 3));
+});
+
+test('§26 and §21: BOTH flats bleed off a page edge, a third or more outside', async ({ page }) => {
+  /**
+   * **§26 states the placement with the bleed in it:** "The tint triangle
+   * bleeds off the left edge in that column; the base quarter-disc bleeds
+   * off the right edge beside About this record."
+   *
+   * §21 gives the threshold: "a field bleeds at a page edge, never at a cell
+   * edge, and **at least a third of it lies outside the frame**... A third
+   * is a threshold, not a measurement... large enough that no reader wonders
+   * whether the shape was cut."
+   *
+   * Both clauses apply to both flats. An earlier version of this test
+   * asserted the triangle does NOT bleed, on the strength of §26's VALUE
+   * paragraph — "tint to the triangle on the left edge in the last row" —
+   * which omits the bleed the placement paragraph states. The section says
+   * the triangle twice and only once completely.
+   */
+  const suffix = makeSuffix();
+  const id = await richRecord(page, suffix);
+  await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
+  await page.goto(`/records/${id}`);
+  await page.locator('[data-ornament="flat"]').first().waitFor({ timeout: 20_000 });
+
+  const flats = await page.evaluate(() => {
+    const frame = document.querySelector('[data-testid="record-page-8a"]')!.getBoundingClientRect();
+    return Array.from(document.querySelectorAll('[data-ornament="flat"]'))
+      .filter((el) => el.getClientRects().length > 0)
+      .map((el) => {
+        const b = el.getBoundingClientRect();
+        const host = el.closest('[data-section], [data-cell="air"]')!.getBoundingClientRect();
+        const outside = Math.max(0, frame.left - b.left) + Math.max(0, b.right - frame.right);
+        return {
+          shape: el.getAttribute('data-flat'),
+          bleedsLeft: b.left < frame.left - 0.5,
+          bleedsRight: b.right > frame.right + 0.5,
+          outsideFraction: b.width > 0 ? outside / b.width : 0,
+          /* Its host must reach the page edge it bleeds at, or the cut is a CELL edge (§21). */
+          hostOnPageEdge: Math.abs(host.left - frame.left) < 1 || Math.abs(host.right - frame.right) < 1,
+        };
+      });
+  });
+
+  expect(flats.map((f) => f.shape).sort(), 'both flats render').toEqual(['quarterDisc', 'triangle']);
+
+  for (const flat of flats) {
+    expect(flat.bleedsLeft || flat.bleedsRight, `${flat.shape} bleeds off a page edge (§26)`).toBe(true);
+    expect(flat.hostOnPageEdge, `${flat.shape} bleeds at a PAGE edge, never a cell edge (§21)`).toBe(true);
+    expect(flat.outsideFraction, `${flat.shape}: at least a third outside the frame (§21)`).toBeGreaterThanOrEqual(1 / 3);
+  }
+
+  /* And they leave by opposite edges, which is what §26's cleared column is for. */
+  expect(flats.find((f) => f.shape === 'triangle')!.bleedsLeft, 'the tint triangle leaves by the LEFT').toBe(true);
+  expect(flats.find((f) => f.shape === 'quarterDisc')!.bleedsRight, 'the base quarter-disc by the RIGHT').toBe(true);
 });
