@@ -122,12 +122,19 @@ export function Section({
           is what the component test does.
         */
         /*
-          **The row's rule is the section's top.** §3 makes full-bleed the
-          separator between modules, and each row of sections reads as one
-          band of the document, so every item carries the rule and the row's
-          tops line up across its items.
+          **§33 moved the row's rule off the section.** "A row's horizontal
+          rule runs full-bleed across every cell, occupied or empty; the build
+          drew each cell's rule, so the empty cell of the four-by-three row
+          left a gap."
+
+          Measured on the built page: the 4/4/4 row rendered only Acquisition,
+          because Tags and Market are both conditional, so its rule stopped at
+          x=480 with 960px of the region's 1440 missing. A rule drawn per item
+          can only ever span the items that exist, and §26's rows are allowed
+          to hold fewer.
+
+          `RowRule` below draws one full-width line per row instead.
         */
-        borderTop: `1px solid ${SECTION_RULE}`,
         borderRight: last ? undefined : `1px solid ${SECTION_RULE}`,
         /*
           **A grid item's automatic minimum size is its content**, so a
@@ -192,11 +199,20 @@ export function Section({
             key={index}
             data-cell={`content-${index}`}
             className="min-w-0"
-            style={{
-              padding: CELL_PADDING,
-              borderRight:
-                index === cells.length - 1 ? undefined : `1px solid ${SECTION_RULE}`,
-            }}
+            /*
+              **§33 withdrew this divider.** "A vertical rule runs its row's
+              full height or is not drawn: the label-to-value dividers inside
+              Pressing detail and Market start below their section labels, and
+              a vertical that starts partway reads as a break. They are
+              withdrawn; the label and value columns are separated by space."
+
+              It sat on the content grid, which begins below the section's
+              label, so it could never run the row's height -- measured at
+              104px inside a 175px row. The columns are separated by
+              `CELL_PADDING` on both sides of the boundary, which is the space
+              §33 names.
+            */
+            style={{ padding: CELL_PADDING }}
           >
             {child}
           </div>
@@ -238,6 +254,32 @@ export function ExtendedGrid({ children, ladder = null }: { children: React.Reac
         and its span is what makes the left page edge (§26: "the left page
         edge is made, not found").
       */}
+      {/*
+        **§33's row rules: one line per row, spanning every column.**
+
+        Placed on the grid at `grid-column: 1 / -1` and the row's own track, so
+        it reaches the region's full width whether or not every section in that
+        row renders. `aria-hidden` and zero height: it is a rule, not a cell.
+
+        The stylesheet cannot do this with a pseudo-element on the row, because
+        a CSS grid has no element for a row -- which is why the build drew the
+        line on the items in the first place.
+      */}
+      {REGION_ROWS.map((_, index) => (
+        <div
+          key={`rule-${index}`}
+          data-row-rule={index}
+          aria-hidden="true"
+          style={{
+            gridColumn: '1 / -1',
+            gridRow: index + 1,
+            alignSelf: 'start',
+            height: 0,
+            borderTop: `1px solid ${SECTION_RULE}`,
+          }}
+        />
+      ))}
+
       {REGION_ROWS.map((row, index) => {
         const air = airPlacement(1440, index);
         if (air === null) return null;
@@ -293,7 +335,7 @@ ExtendedGrid.Air = function Air({
           value and opened four implicit 0px tracks on the region's grid.
           The `data-air` index is what the stylesheet addresses.
         */
-        borderTop: `1px solid ${SECTION_RULE}`,
+        /* §33: the row's rule belongs to the row -- see `RowRule`. */
         ...CELL_LAYER,
       }}
     >

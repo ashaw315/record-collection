@@ -1,6 +1,7 @@
 import { BANDS, CONTENT_MEASURE, GRID_COLUMN, GRID_COLUMNS, GRID_FORK, IDENTITY_SPANS, LOWER_SPANS, STILL_MARGIN } from './band-geometry';
 import { regionStylesheet, widePageStylesheet } from './region-rows';
 import { CONTROL_HEIGHT } from './extended-grid';
+import { MatrixSolid } from './MatrixSolid';
 import { CELL_PADDING } from './extended-grid';
 import { BAR_BOTTOM, BLOCK_BOTTOM, COVER, COVER_COLUMN, COVER_PAD } from './cover-geometry';
 import { ConstructionStill } from './ConstructionStill';
@@ -65,40 +66,6 @@ export type PageRecord = {
   draws the one in-cell solid the frame keeps; nothing else needs a generic
   isometric helper, and leaving one invites the same substitution again.
 */
-
-function MatrixSolid() {
-  const p = (u: number, v: number, w: number) => {
-    const [x, y] = project(u, v, w);
-    return [x * 13 + 60, y * 13 + 52] as const;
-  };
-  const face = (pts: ReadonlyArray<readonly [number, number]>) =>
-    pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
-
-  /* A low slab: wide on the ground, shallow in height. */
-  const [du, dv, dw] = [2.6, 1.5, 0.55];
-
-  return (
-    <svg
-      data-mark="matrixSolid"
-      aria-hidden="true"
-      viewBox="0 0 120 104"
-      className="pointer-events-none absolute right-[18px] bottom-[18px] h-[104px] w-[120px]"
-    >
-      <polygon
-        points={face([p(0, 0, dw), p(du, 0, dw), p(du, dv, dw), p(0, dv, dw)])}
-        fill="oklch(0.80 0.004 80)"
-      />
-      <polygon
-        points={face([p(0, dv, 0), p(du, dv, 0), p(du, dv, dw), p(0, dv, dw)])}
-        fill="oklch(0.66 0.004 80)"
-      />
-      <polygon
-        points={face([p(du, 0, 0), p(du, dv, 0), p(du, dv, dw), p(du, 0, dw)])}
-        fill="oklch(0.52 0.004 80)"
-      />
-    </svg>
-  );
-}
 
 /** §1.3's mark: one line means not recorded, crossed means not applicable. */
 function EmptyMark({ diagonal }: { diagonal: Exclude<Diagonal, 'none'> }) {
@@ -528,7 +495,7 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
           {record.matrixRunout === null ? (
             <EmptyMark diagonal="single" />
           ) : (
-            <div className="font-mono text-[12px] leading-[1.5]">
+            <div data-matrix-text="" className="font-mono text-[12px] leading-[1.5]">
               {/*
                 Broken on a TOKEN boundary, never mid-word: a 44-character slice
                 cut `<stamped>` into `<s tamped>`, which reads as corruption
