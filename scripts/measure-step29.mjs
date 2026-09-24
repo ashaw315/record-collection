@@ -70,6 +70,19 @@ const sharedScale = (id) => {
  * inner box's width and height over its OWN forms and disc, capped at 1.5
  * times the scale the shared frame gave."
  */
+/** §33's fit BEFORE the cap, so the cap's effect can be seen. */
+const uncappedScale = (id) => {
+  const scene = construction(id);
+  const xs = [], ys = [];
+  for (const form of scene.forms)
+    for (const face of form.faces)
+      for (const [x, y] of face.points) { xs.push(x); ys.push(y); }
+  if (xs.length === 0) return sharedScale(id);
+  const w = Math.max(...xs) - Math.min(...xs);
+  const h = Math.max(...ys) - Math.min(...ys);
+  return Math.min(CELL_W / w, CELL_H / h);
+};
+
 const ownScale = (id) => {
   const scene = construction(id);
   const xs = [], ys = [];
@@ -95,28 +108,69 @@ const rows = REAL_RECORD_IDS.map((id) => {
   const shared = sharedScale(id);
   const own = ownScale(id);
   return {
-    id: id.slice(0, 8),
+    /*
+      **Head AND tail.** Five fixture ids are synthetic extremes of the form
+      `4a1e2b7c-0000-4000-8000-00000000000N`, differing only in the last
+      digit, so any leading slice prints the same label five times and reads
+      as a duplicated row. All seventeen are distinct.
+    */
+    id: `${id.slice(0, 8)}…${id.slice(-4)}`,
+    sharedScale: shared,
+    ownScale: own,
     shared: fractionAt(id, shared),
     own: fractionAt(id, own),
     capped: own >= shared * CAP - 1e-9,
     gain: own / shared,
+    /* What the record would take if 1.5 did not stop it -- the cap's real cost. */
+    uncappedGain: uncappedScale(id) / shared,
   };
 });
 
-const pct = (f) => `${(f * 100).toFixed(3)}%`;
-const sorted = [...rows].sort((a, b) => a.own - b.own);
-const median = sorted[Math.floor(sorted.length / 2)];
+const pct = (f) => `${(f * 100).toFixed(4)}%`;
+
+/*
+  **Each statistic is taken over its OWN ordering.** The first version sorted
+  by the §33 value and then read the shared column off the reordered list, so
+  the "was" figures were the shared values of whichever records happened to
+  land first and middle -- 0.641% and 0.660% against the recorded 0.5084% and
+  0.7535%. Real numbers, attached to the wrong rows. A baseline has to be
+  computed, never read off a row that a different sort put there.
+*/
+const stat = (key) => {
+  const s = [...rows].sort((a, b) => a[key] - b[key]);
+  return { worst: s[0][key], median: s[Math.floor(s.length / 2)][key], sorted: s };
+};
+const sharedStat = stat('shared');
+const ownStat = stat('own');
 
 console.log(`\n===== §5.5's FLOOR on the extremes fixture (${rows.length} records) =====`);
+console.log(`  1440 x ${NO_SCROLL_HEIGHT}, inner box ${CELL_W} x ${CELL_H}, base-step face area over the page.`);
 console.log(`  §33 scales each record to its OWN forms, capped at ${CAP}x the shared frame's scale.\n`);
-console.log('  id        shared     §33        gain   capped');
-for (const r of sorted) {
+console.log('  id              shared       §33       gain   scale(shared -> own)');
+for (const r of ownStat.sorted) {
   console.log(
-    `  ${r.id}  ${pct(r.shared).padStart(8)}  ${pct(r.own).padStart(8)}  ${r.gain.toFixed(2)}x  ${r.capped ? 'CAPPED' : ''}`,
+    `  ${r.id}  ${pct(r.shared).padStart(9)}  ${pct(r.own).padStart(9)}  ${r.gain.toFixed(3)}x  ` +
+      `${r.sharedScale.toFixed(4)} -> ${r.ownScale.toFixed(4)}  ${r.capped ? 'CAPPED' : ''}`,
   );
 }
-console.log(`\n  WORST  : ${pct(sorted[0].own)}  (was ${pct(sorted[0].shared)})   floor is ${pct(FLOOR)}`);
-console.log(`  MEDIAN : ${pct(median.own)}  (was ${pct(median.shared)})`);
-console.log(`  CAPPED : ${rows.filter((r) => r.capped).length} of ${rows.length} records hit the 1.5x cap`);
-const below = sorted.filter((r) => r.own < FLOOR);
+
+console.log(`\n  SHARED FRAME (the recorded baseline, step 23)`);
+console.log(`    worst  : ${pct(sharedStat.worst)}   <- recorded as 0.5084%`);
+console.log(`    median : ${pct(sharedStat.median)}   <- recorded as 0.7535%`);
+console.log(`\n  §33 PER-RECORD FIT`);
+console.log(`    worst  : ${pct(ownStat.worst)}`);
+console.log(`    median : ${pct(ownStat.median)}`);
+console.log(`    floor  : ${pct(FLOOR)}`);
+console.log(`\n  CAPPED : ${rows.filter((r) => r.capped).length} of ${rows.length} records hit the ${CAP}x cap`);
+const below = ownStat.sorted.filter((r) => r.own < FLOOR);
 console.log(`  BELOW THE FLOOR: ${below.length}${below.length ? ' — ' + below.map((r) => `${r.id} ${pct(r.own)}`).join(', ') : ''}`);
+
+console.log(`\n===== THE 1.5x CAP: per-record scale factors =====`);
+console.log('  Design chose 1.5 without measuring. The distribution, ascending:\n');
+const byGain = [...rows].sort((a, b) => a.gain - b.gain);
+for (const r of byGain) {
+  const bar = '#'.repeat(Math.round((r.gain - 1) * 40));
+  console.log(`  ${r.id}  ${r.gain.toFixed(3)}x  ${r.uncappedGain.toFixed(3)}x uncapped  ${bar}${r.capped ? '  <- CAPPED' : ''}`);
+}
+const gains = byGain.map((r) => r.gain);
+console.log(`\n  min ${gains[0].toFixed(3)}x   median ${gains[Math.floor(gains.length / 2)].toFixed(3)}x   max ${gains[gains.length - 1].toFixed(3)}x`);

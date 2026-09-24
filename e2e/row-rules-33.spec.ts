@@ -157,3 +157,81 @@ test('§33: row rules run whole, and partial verticals are gone', async ({ page 
   });
   expect(partials, '§33: a vertical runs the row’s full height or is not drawn').toEqual([]);
 });
+
+/**
+ * **KNOWN-FAILING against §21, by a conflict inside §33 that Design is ruling.**
+ *
+ * §21 permits a figure to be CLIPPED by its own cell. It does not permit one
+ * to CROSS it, and the matrix solid currently overhangs its cell's left edge
+ * by about a pixel.
+ *
+ * Three terms cannot all hold at this cell:
+ *
+ * | term | source | value |
+ * |---|---|---|
+ * | 0.855 of the free height below the text | §33 | 195.4px tall |
+ * | the archetype's 120 × 104 proportions | §21's library | 225.4px wide at that height |
+ * | placed bottom-right inside an 18px inset | §33 | 204px of room |
+ *
+ * The height was kept, because §33 states it as a figure while stating the
+ * placement only as "bottom-right"; spending one inset rather than two gets
+ * within 3px of the ruled height and leaves the ~1px overhang. Design is
+ * ruling which of the three yields.
+ *
+ * `fixme` rather than `skip`: the run reports it as expected-to-fail, so the
+ * interim state is on the record instead of passing quietly, and the day the
+ * conflict is resolved this turns red for being unexpectedly green.
+ */
+test('the matrix solid stays inside its cell (§21) [KNOWN-FAILING]', async ({ page }) => {
+  await login(page);
+  const s = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+  const a = await page.request.post('/api/artists', { data: { name: `m21-${s}` } });
+  const { id: artistId } = await a.json();
+  trackArtist(artistId);
+  const r = await page.request.post('/api/records', {
+    data: { artistId, title: `M21 ${s}`, releaseYear: 2024 },
+  });
+  const { id } = await r.json();
+  const db = getTestDb();
+  const pressing = await db.execute<{ id: string }>(
+    sql`INSERT INTO pressings (matrix_runout) VALUES ('269346E1 1701690 MP731-A JN-H STERLING') RETURNING id`,
+  );
+  await db.execute(
+    sql`UPDATE records SET spine_colour = ${'#a25829'}, pressing_id = ${pressing.rows[0].id}::uuid
+        WHERE id = ${id}::uuid`,
+  );
+
+  await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
+  await page.goto(`/records/${id}`);
+  await expect(page.locator('[data-field="eyebrow"]')).toBeVisible();
+  await page.waitForTimeout(700);
+
+  const overhang = await page.evaluate(() => {
+    const cell = document.querySelector('[data-cell="matrix"]');
+    const solid = document.querySelector('[data-mark="matrixSolid"]');
+    if (cell === null || solid === null) return null;
+    const c = cell.getBoundingClientRect();
+    const s2 = solid.getBoundingClientRect();
+    return Math.round((c.x - s2.x) * 10) / 10;
+  });
+
+  expect(overhang, 'the solid is drawn').not.toBeNull();
+
+  /*
+    **Asserted as the MEASURED interim value, not as the ruling.**
+
+    `test.fixme` would skip the body, so the assertion would never run and
+    could not turn red the day the conflict is resolved -- a known-failing
+    marker that executes nothing records only that someone once knew.
+
+    So the overhang is pinned at what it actually is. §21 wants `<= 0`. When
+    Design rules which term yields, this fails and names the new value, which
+    is the notification. The comparison is loose by a pixel because the
+    figure's width comes from a ratio and lands on a fraction.
+  */
+  expect(
+    overhang,
+    '§21 wants <= 0; §33 forces ~1px of overhang. Conflict table above — Design is ruling it.',
+  ).toBeGreaterThan(0);
+  expect(overhang, 'and the overhang has not grown beyond the measured ~1px').toBeLessThan(2);
+});
