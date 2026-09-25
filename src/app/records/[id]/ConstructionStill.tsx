@@ -1,4 +1,5 @@
 import { ownFitViewBox } from './own-fit';
+import { SHADOW_STEPS, footprintPoints } from './footprints';
 import { slackAlignment } from './own-fit';
 import { construction } from './construction';
 import { recordLadder } from '@/lib/colour/record-ladder';
@@ -34,11 +35,6 @@ import { recordLadder } from '@/lib/colour/record-ladder';
  * At 360px the banding is not visible; it is the one place the flat medium
  * imitates a rendered one and loses.
  */
-const SHADOW_STEPS = [
-  { offset: 3, opacity: 0.2 },
-  { offset: 9, opacity: 0.09 },
-  { offset: 18, opacity: 0.05 },
-] as const;
 const INK = 'oklch(0.19 0.008 60)';
 
 export function ConstructionStill({
@@ -126,11 +122,7 @@ export function ConstructionStill({
         return [...SHADOW_STEPS].reverse().map((step, s) => (
           <polygon
             key={`shadow-${index}-${s}`}
-            points={points(
-              base.points.map(
-                ([x, y]) => [x + step.offset * 0.8, y + step.offset] as const,
-              ),
-            )}
+            points={points(footprintPoints(base.points, step.offset))}
             fill={`oklch(0.19 0.008 60 / ${step.opacity})`}
           />
         ));

@@ -1,5 +1,19 @@
-import { BAR_BOTTOM, COVER_PAD } from './cover-geometry';
+import { BAR_BOTTOM, BLOCK_BOTTOM, COVER_CELL, COVER_PAD } from './cover-geometry';
 import { BANDS } from './band-geometry';
+
+/**
+ * **The cell the cover actually has: 480 wide and 546 tall, not 547.**
+ *
+ * §33 says "At 1440 the cell is 480 × 547, so the cover is 480 × 480 and a
+ * 67px strip remains beneath it." The band is 547, but its last pixel is the
+ * rule between the bands (§3), so the CELL is 546 -- which is why §23 ended
+ * the block at `BLOCK_BOTTOM`, 546, "the band's foot". Built to the band, the
+ * block landed at 547 and spilled a pixel past its cell; the E2E caught it.
+ * The strip is therefore 66 on the page. Reported to Design as the one-pixel
+ * difference between the band and the cell, which §33's arithmetic did not
+ * carry.
+ */
+export const SLEEVE_CELL = { width: COVER_CELL, height: BLOCK_BOTTOM } as const;
 
 /**
  * §33's cover: "the largest square its cell holds, flush to the cell's top,

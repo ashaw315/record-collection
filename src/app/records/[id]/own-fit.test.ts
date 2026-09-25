@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { construction } from './construction';
 import { REAL_RECORD_IDS } from './real-records';
 import { ownFitViewBox, boundsOf } from './own-fit';
+import { FOOTPRINT_REACH, footprintPoints } from './footprints';
 
 /**
  * §33: "Each record's drawing is scaled to the smaller of its inner box's
@@ -64,6 +65,38 @@ describe('§33: the construction fits its own arrangement', () => {
       /* A smaller viewBox over the same cell is a LARGER drawing. */
       expect(ow, `${id.slice(0, 8)}: no wider than the union`).toBeLessThanOrEqual(sw + 0.01);
       expect(oh, `${id.slice(0, 8)}: no taller than the union`).toBeLessThanOrEqual(sh + 0.01);
+    }
+  });
+});
+
+/**
+ * **The box must contain what is DRAWN, not only the faces.**
+ *
+ * `ConstructionStill` draws three footprints under each form, offset from its
+ * top face by up to (0.8 × 18, 18) units, down and to the right. A box fitted
+ * to the faces alone leaves the broadest footprint outside it, and the outer
+ * svg clips to its viewBox -- so the shadow is cut, which §5.1 forbids: "a
+ * cropped object reports that something went wrong."
+ *
+ * §31's 16-unit pad hid this by accident. With the pad gone (step 29g) it
+ * surfaced as the construction's bottom edge 1.65px outside its cell at 2000,
+ * where the fit is height-bound and the hash aligned the drawing to the foot.
+ */
+describe('§33 with step 29(g): the box contains the footprints', () => {
+  it('reaches past the faces by the broadest footprint’s offset', () => {
+    for (const id of REAL_RECORD_IDS) {
+      const scene = construction(id);
+      const [x, y, w, h] = ownFitViewBox(scene).split(' ').map(Number);
+      const right = x + w;
+      const bottom = y + h;
+      for (const form of scene.forms) {
+        const top = form.faces.find((f) => f.kind === 'top');
+        if (top === undefined) continue;
+        for (const [fx, fy] of footprintPoints(top.points, FOOTPRINT_REACH)) {
+          expect(fx, `${id.slice(0, 8)}: a footprint’s x is inside the box`).toBeLessThanOrEqual(right + 0.01);
+          expect(fy, `${id.slice(0, 8)}: a footprint’s y is inside the box`).toBeLessThanOrEqual(bottom + 0.01);
+        }
+      }
     }
   });
 });

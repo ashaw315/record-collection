@@ -203,7 +203,18 @@ test('the label sits above its content at the section’s own left edge (§26)',
   }
 });
 
-test('rules every row item but the last, and every content cell but the last (§26)', async ({ page }) => {
+/**
+ * **§33 withdrew the content-cell dividers, and this test followed the ruling
+ * rather than being deleted.** It asserted a 1px right rule on every content
+ * cell but the last -- the label-to-value dividers -- which §33 names
+ * directly: "A vertical rule runs its row's full height or is not drawn: the
+ * label-to-value dividers inside Pressing detail and Market start below their
+ * section labels, and a vertical that starts partway reads as a break. They
+ * are withdrawn; the label and value columns are separated by space."
+ *
+ * The section-to-section rule runs the row's full height, so it stays.
+ */
+test('rules every row item but the last; content cells carry no divider (§26, §33)', async ({ page }) => {
   /**
    * **Two levels of rule now, because §26 gives the region two levels of
    * box.** A row's items are ruled between one another — that is the
@@ -251,8 +262,7 @@ test('rules every row item but the last, and every content cell but the last (§
       expect(item.rule, `${item.name}: ${index === row.length - 1 ? 'last in its row, unruled' : item.name === 'air' ? 'air is unruled' : 'ruled from its neighbour'}`).toBe(expected);
 
       item.cells.forEach((cell, cellIndex) => {
-        const last = cellIndex === item.cells.length - 1;
-        expect(cell, `${item.name} content ${cellIndex}`).toBe(last ? '0px' : '1px');
+        expect(cell, `${item.name} content ${cellIndex}: §33 withdrew the divider`).toBe('0px');
       });
     });
   }
@@ -277,14 +287,19 @@ test('holds content at 34px inside every cell', async ({ page }) => {
   }
 });
 
-test('each row’s rule bleeds across the composition (§26)', async ({ page }) => {
-  /**
-   * **§3's full bleed is the ROW's now, not the section's.** Each section
-   * carries the rule on its own top, and a row's items share a top edge, so
-   * the rules line up into one line across the page. A section is no longer
-   * 1440 wide — Pressing detail is 7 of 12 columns — so the claim moves from
-   * "the section spans the composition" to "the row does".
-   */
+/**
+ * **§33: the row's rule is ONE element per row, not a border on each item.**
+ *
+ * This asserted a 1px top border on every item so "they line up". §33 found
+ * the defect in that: "A row's horizontal rule runs full-bleed across every
+ * cell, occupied or empty; the build drew each cell's rule, so the empty cell
+ * of the four-by-three row left a gap." A rule drawn per item spans only the
+ * items that render, and §26's rows may hold fewer. So each row now carries
+ * exactly one `[data-row-rule]` spanning the composition, and the items
+ * carry none -- both halves asserted, since a leftover item border would
+ * double the line.
+ */
+test('each row’s rule is one full-bleed element, and no item carries its own (§26, §33)', async ({ page }) => {
   const suffix = makeSuffix();
   const id = await richRecord(page, suffix);
   await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
@@ -298,13 +313,16 @@ test('each row’s rule bleeds across the composition (§26)', async ({ page }) 
       const top = Math.round(item.getBoundingClientRect().top);
       byTop.set(top, [...(byTop.get(top) ?? []), item]);
     }
+    const rules = Array.from(document.querySelectorAll('[data-row-rule]')).map((r) => {
+      const b = r.getBoundingClientRect();
+      return { index: r.getAttribute('data-row-rule'), top: Math.round(b.top), left: Math.round(b.left), right: Math.round(b.right), border: getComputedStyle(r).borderTopWidth };
+    });
     return {
       viewport: window.innerWidth,
       rows: [...byTop.entries()].sort((a, b) => a[0] - b[0]).map(([top, group]) => ({
         top,
-        left: Math.round(Math.min(...group.map((g) => g.getBoundingClientRect().left))),
-        right: Math.round(Math.max(...group.map((g) => g.getBoundingClientRect().right))),
-        borders: group.map((g) => getComputedStyle(g).borderTopWidth),
+        itemBorders: group.map((g) => getComputedStyle(g).borderTopWidth),
+        rules: rules.filter((r) => Math.abs(r.top - top) <= 1),
       })),
     };
   });
@@ -312,10 +330,34 @@ test('each row’s rule bleeds across the composition (§26)', async ({ page }) 
   expect(measured.rows.length, 'rows rendered').toBeGreaterThan(0);
 
   for (const row of measured.rows) {
-    expect(row.left, `row at ${row.top} starts at the composition edge`).toBe(0);
-    expect(row.right, `row at ${row.top} runs to it`).toBe(measured.viewport);
-    for (const border of row.borders) {
-      expect(border, `row at ${row.top}: one hairline on every item, so they line up`).toBe('1px');
+    /*
+      At least one rule at the row's top, not exactly one: a region row that
+      renders no section collapses to nothing and its rule coincides with the
+      next row's. Two rules in the same place draw one line; the doubling to
+      forbid is two rules a pixel apart, asserted below on every pair.
+    */
+    expect(row.rules.length, `row at ${row.top}: a rule at its top, found ${JSON.stringify(row.rules)}`).toBeGreaterThanOrEqual(1);
+    for (const rule of row.rules) {
+      expect(rule.border, `row at ${row.top}: the rule is a hairline`).toBe('1px');
+      expect(rule.left, `row at ${row.top}: the rule starts at the composition edge`).toBe(0);
+      expect(rule.right, `row at ${row.top}: and runs to it, whatever the row holds`).toBe(measured.viewport);
+    }
+    for (const border of row.itemBorders) {
+      expect(border, `row at ${row.top}: no item carries its own rule -- that would double the line`).toBe('0px');
+    }
+  }
+
+  /*
+    **No doubled hairline anywhere.** Measured before the fix: an empty row's
+    rule at 1111 and the next row's at 1112, a 2px line where the page has
+    one. Two rules may share a y (an empty row collapsed onto the next) or be
+    a full row apart; a pixel apart is the defect.
+  */
+  const tops = measured.rows.flatMap((r) => r.rules.map((rule) => rule.top));
+  for (let i = 0; i < tops.length; i += 1) {
+    for (let j = i + 1; j < tops.length; j += 1) {
+      const d = Math.abs(tops[i] - tops[j]);
+      expect(d === 0 || d > 1, `rules at ${tops[i]} and ${tops[j]} are ${d}px apart: a doubled hairline`).toBe(true);
     }
   }
 });

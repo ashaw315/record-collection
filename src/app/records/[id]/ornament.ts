@@ -32,7 +32,20 @@ export const GATE_RATIO = 2 / 3;
 /** What sits below the cell's foot at the ruled size, as a fraction of the section — the deliberate bleed. */
 export const BLEED_RATIO = SIZE_RATIO - GATE_RATIO;
 /** §9.2: the cell is about 1.2px shorter than its section (the section carries the 1px border-top). */
-export const SECTION_CELL_DELTA = 1.2;
+/**
+ * **Zero since step 29(f): the section no longer carries its row's rule.**
+ *
+ * This was 1.2 -- the 1px top border plus a rounding -- because a figure's
+ * percentage height resolves against the section's padding box, which the
+ * border made shorter than the row track, and the pixel term put the border
+ * back so 0.855 was of the section and not of something 1px smaller.
+ *
+ * §33 moved the row rule off the section onto one element per row, so the
+ * padding box IS the track and there is nothing to restore. Left at 1.2 the
+ * term over-corrected: measured, the price-history figure drew 159.2px in a
+ * 185px section, 0.8605 against 0.855, and the ratio test caught it.
+ */
+export const SECTION_CELL_DELTA = 0;
 
 /**
  * §25's specimen sheet, every figure drawn at one height: 171 = 0.855 × 200.

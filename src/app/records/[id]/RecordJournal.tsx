@@ -55,9 +55,17 @@ export function RecordJournal({
   entries,
   base,
   ladder,
+  leadNote = null,
 }: {
   recordId: string;
   entries: JournalEntryView[];
+  /**
+   * §33 (d): "When an entry is shown, the note leads §9's Journal section,
+   * labelled NOTE." The frame's last cell shows the latest entry, so the note
+   * it displaced comes here, above the entries. Null when the record has
+   * none; unused when there is no entry, since the frame then shows it.
+   */
+  leadNote?: string | null;
   /** §5.5's base step, for §9.4's label-span bar. */
   base: string | null;
   /**
@@ -176,6 +184,18 @@ export function RecordJournal({
         box sat on top of the entry's Delete control and took its clicks.
       */}
       <div data-testid="journal">
+        {/*
+          **The note leads, labelled NOTE, only while an entry holds the
+          frame.** With no entry the frame's cell shows the note itself
+          (§33), and repeating it here would name one thing twice -- the
+          repetition §8.3 removed this section's heading for.
+        */}
+        {entries.length > 0 && leadNote !== null && (
+          <div data-note-lead="" className="mb-4">
+            <div className={LABEL}>Note</div>
+            <p className="text-prose mt-1">{leadNote}</p>
+          </div>
+        )}
       {/*
         **No heading: 8a's journal cell already carries the label.** The frame
         says `Journal` in §4's treatment, and repeating the same word in the

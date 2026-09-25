@@ -183,75 +183,70 @@ test('each plane is the shape its name says', async ({ page }) => {
  * the inventory, and `identity-cell.spec.ts` asserting the cell is one track
  * whose whole height is the content's.
  */
-test('the frame\'s last cell is NOTE, not Journal — and the section keeps About this record', async ({
+/**
+ * **§33 (d) reverses both tests below, and they followed the ruling.**
+ *
+ * They asserted the frame's last cell is NOTE, that no Journal cell exists,
+ * and that the entry and its trigger had left the frame. §33: "The lower
+ * frame's last cell carries the journal. It shows the latest entry's date and
+ * its text, clamped to four lines... With no entry the cell shows the owner's
+ * note, and with neither, §6's diagonal... When an entry is shown, the note
+ * leads §9's Journal section, labelled NOTE."
+ *
+ * The fixture seeds both a note and an entry, which is the case where every
+ * clause is exercised at once: the frame shows the entry under JOURNAL, and
+ * the note moves down to lead the section under NOTE. `About this record`
+ * stays the section's own label. No trigger returns to the frame -- §33 puts
+ * the entry there, not the form.
+ */
+test('the frame’s last cell is JOURNAL when an entry exists, and the note leads the section (§33)', async ({
   page,
 }) => {
-  /**
-   * **The journal leaves the frame entirely.** It has its own section at the
-   * bottom of the page, so the frame does not need a cell for it — and the cell
-   * it had was drawing two different facts at once: a journal entry above an
-   * `About` rule with the owner's note under it.
-   *
-   * What stays is the note, which is what the markup already pointed at. The
-   * snippet is a different fact (a separate column, §10b's generated text) and
-   * lives in its own section.
-   */
   const suffix = makeSuffix();
   const id = await aRecord(page, suffix);
   await page.goto(`/records/${id}`);
   await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
 
   const frame = page.getByTestId('record-page-8a');
+  const journalSection = page.locator('[data-section="journal"]');
 
-  /*
-    **The pair, asserted together.** For one round both surfaces said
-    `About this record` while holding different columns. The frame's labels
-    are field names, so the cell is `NOTE`; the §9 section keeps the sentence
-    and its "Written by Claude" line does the attribution.
-  */
-  await expect(frame.getByText('Note', { exact: true }), 'the frame cell').toHaveCount(1);
+  /* The frame: the entry, under its own label, and not the note. */
+  await expect(frame.getByText('Journal', { exact: true }), 'the frame cell is labelled JOURNAL').toHaveCount(1);
+  await expect(frame.getByText(`Bought it ${suffix}`), 'the latest entry is in the frame').toHaveCount(1);
+  await expect(frame.getByText('Note', { exact: true }), 'NOTE is not the frame’s label while an entry shows').toHaveCount(0);
+  await expect(frame.getByText(`A note ${suffix}`), 'the note is not in the frame').toHaveCount(0);
   await expect(frame.getByText('About this record', { exact: true }), 'not in the frame').toHaveCount(0);
-  await expect(
-    page.locator('[data-section="snippet"] [data-cell="label"]').getByText('About this record', {
-      exact: true,
-    }),
-    'the section keeps it',
-  ).toHaveCount(1);
-  await expect(frame.getByText('Journal', { exact: true }), 'no journal cell').toHaveCount(0);
 
-  /* And the note itself, which is the cell's content. */
-  await expect(frame).toContainText(`A note ${suffix}`);
+  /* The section: the note leads it, labelled NOTE, above the entries. */
+  const lead = journalSection.locator('[data-note-lead]');
+  await expect(lead, 'the note leads the Journal section').toHaveCount(1);
+  await expect(lead.getByText('Note', { exact: true }), 'labelled NOTE').toHaveCount(1);
+  await expect(lead, 'and carries the note').toContainText(`A note ${suffix}`);
+  const leadBox = await lead.boundingBox();
+  const entryBox = await journalSection.getByText(`Bought it ${suffix}`).first().boundingBox();
+  expect(leadBox, 'the lead is laid out').not.toBeNull();
+  expect(entryBox, 'the entry is laid out').not.toBeNull();
+  expect(leadBox!.y, 'the note LEADS: it sits above the entries').toBeLessThan(entryBox!.y);
+
+  await expect(
+    page.locator('[data-section="snippet"] [data-cell="label"]').getByText('About this record', { exact: true }),
+    'the snippet section keeps its label',
+  ).toHaveCount(1);
 });
 
-test('the journal entry and its trigger leave the frame', async ({ page }) => {
-  /**
-   * **§8.1's rule becomes vacuous rather than violated.** It forbids a form's
-   * submit from sharing a label with the trigger that opened it; with no
-   * journal cell there is no trigger, so there is only one label.
-   *
-   * The journal is reached by scrolling to its section, not by a control, and
-   * the section keeps `Save entry` — a form permanently visible in its own
-   * section needs no opening.
-   */
+test('no journal form returns to the frame with the entry (§33)', async ({ page }) => {
   const suffix = makeSuffix();
   const id = await aRecord(page, suffix);
   await page.goto(`/records/${id}`);
   await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
 
   const frame = page.getByTestId('record-page-8a');
-
-  await expect(frame.getByText('Add entry', { exact: true }), 'no trigger').toHaveCount(0);
-  await expect(
-    frame.getByText(`Bought it ${suffix}`),
-    'the entry belongs to the section below',
-  ).toHaveCount(0);
-
-  /* The section still has its submit — a target without one is a dead end. */
+  await expect(frame.getByText('Add entry', { exact: true }), 'no trigger in the frame').toHaveCount(0);
+  await expect(frame.getByRole('button', { name: 'Save entry' }), 'no form in the frame').toHaveCount(0);
   await expect(
     page.locator('[data-section="journal"]').getByRole('button', { name: 'Save entry' }),
+    'the form stays in the section',
   ).toHaveCount(1);
-
-  /* And ADD ENTRY is nowhere on the page, since nothing opens the form now. */
   await expect(page.locator('main').getByText('Add entry', { exact: true })).toHaveCount(0);
 });
 

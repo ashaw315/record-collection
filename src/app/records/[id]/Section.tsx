@@ -276,6 +276,19 @@ export function ExtendedGrid({ children, ladder = null }: { children: React.Reac
             alignSelf: 'start',
             height: 0,
             borderTop: `1px solid ${SECTION_RULE}`,
+            /*
+              **The rule must not size its track.** A zero-height box with a
+              1px border is 1px tall, so a row with no sections rendered --
+              the 4/4/4 row on a record with no latest price, no tags and no
+              Discogs release -- kept a 1px track for its rule, and the next
+              row's rule sat directly beneath it: a doubled hairline, measured
+              at 1111 and 1112. §9.1 forbids reserved space for an empty
+              section, and a pixel-tall track for an empty row is that. With
+              the margin, the box contributes nothing to the track: an empty
+              row collapses to 0 and its rule coincides with the next row's,
+              one line drawn twice in the same place rather than two lines.
+            */
+            marginBottom: -1,
           }}
         />
       ))}

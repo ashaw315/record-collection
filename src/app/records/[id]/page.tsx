@@ -386,6 +386,8 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
                 base={ladderBase}
                 ladder={ladder}
                 recordId={id}
+                /* §33 (d): the note the frame's entry displaced leads this section. */
+                leadNote={record.notes ?? null}
                 entries={record.journalEntries.map((entry) => ({
                   id: entry.id,
                   entryDate: entry.entryDate,

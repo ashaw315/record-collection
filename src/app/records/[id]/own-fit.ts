@@ -1,4 +1,5 @@
 import { type Construction } from './construction';
+import { FOOTPRINT_REACH, footprintPoints } from './footprints';
 
 /**
  * §33's per-record fit, which replaces §31's shared frame constant as the
@@ -32,8 +33,8 @@ export interface Bounds {
 }
 
 /**
- * The arrangement's own extent — every form's face points, plus the disc's
- * square.
+ * The arrangement's own extent — every form's face points, its footprints,
+ * plus the disc's square.
  *
  * The disc is included because §33 says "over its own forms AND DISC", and a
  * box drawn to the forms alone would clip a disc that reaches past them.
@@ -44,6 +45,19 @@ export function boundsOf(scene: Pick<Construction, 'forms' | 'disc'>): Bounds {
   for (const form of scene.forms) {
     for (const face of form.faces) {
       for (const [x, y] of face.points) {
+        xs.push(x);
+        ys.push(y);
+      }
+    }
+    /*
+      **The footprints reach past the faces, and the box must hold them.**
+      Three per form, offset from the top face by up to FOOTPRINT_REACH down
+      and to the right; a box fitted to the faces alone clips the broadest
+      one, which §5.1 forbids. Only the broadest matters for the extent.
+    */
+    const top = form.faces.find((f) => f.kind === 'top');
+    if (top !== undefined) {
+      for (const [x, y] of footprintPoints(top.points, FOOTPRINT_REACH)) {
         xs.push(x);
         ys.push(y);
       }

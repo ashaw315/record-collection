@@ -2,7 +2,7 @@ import { BANDS, CONTENT_MEASURE, GRID_COLUMN, GRID_COLUMNS, GRID_FORK, IDENTITY_
 import { regionStylesheet, widePageStylesheet } from './region-rows';
 import { CONTROL_HEIGHT } from './extended-grid';
 import { COVER_CELL } from './cover-geometry';
-import { STRIP_SPLIT, coverSquare, leftoverStrip } from './cover-33';
+import { SLEEVE_CELL, STRIP_SPLIT, coverSquare, leftoverStrip } from './cover-33';
 import { MatrixSolid } from './MatrixSolid';
 import { CELL_PADDING } from './extended-grid';
 import { BAR_BOTTOM, BLOCK_BOTTOM, COVER, COVER_COLUMN, COVER_PAD } from './cover-geometry';
@@ -394,7 +394,8 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
           style={{ gridColumn: `span ${IDENTITY_SPANS[2]}` }}
         >
           {(() => {
-            const cell = { width: COVER_CELL, height: BANDS.identity };
+            /* The CELL, 546 tall: the band's last pixel is the rule (see SLEEVE_CELL). */
+            const cell = SLEEVE_CELL;
             const square = coverSquare(cell);
             const strip = leftoverStrip(cell);
             const along = strip.orientation === 'horizontal' ? strip.width : strip.height;

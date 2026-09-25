@@ -1,8 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { BANDS, GRID_FORK, IDENTITY_SPANS } from '../src/app/records/[id]/band-geometry';
-import { COVER, COVER_PAD, COVER_GAP, COVER_COLUMN, BAR_BOTTOM, BLOCK_BOTTOM } from '../src/app/records/[id]/cover-geometry';
-import { CONSTRUCTION_FRAME } from '../src/app/records/[id]/construction';
+import { COVER_CELL } from '../src/app/records/[id]/cover-geometry';
+import { SLEEVE_CELL, STRIP_SPLIT, coverSquare, leftoverStrip } from '../src/app/records/[id]/cover-33';
+import { construction } from '../src/app/records/[id]/construction';
+import { ownFitViewBox } from '../src/app/records/[id]/own-fit';
 import { WORST } from '../src/app/records/[id]/identity-extremes';
 import { seedExtreme } from './identity-extremes';
 
@@ -71,82 +73,89 @@ test('§23: the upper band is 4 / 4 / 4 at the fork', async ({ page }) => {
   }
 });
 
-test('§23: the cover cell — 26 + 414 + 10 + 30, bar above the block in one column', async ({ page }) => {
+/**
+ * **§23's column is withdrawn by §33, and this test followed the ruling.**
+ *
+ * It asserted the 26 + 414 + 10 + 30 closure: a 414 cover inset 26 from the
+ * top and left, with the bar and the black block stacked in a 30px column at
+ * the cell's right edge. §33 reads Adam's capture as the cover "inset from
+ * its cell" and rules: "The cover is the largest square its cell holds, flush
+ * to the cell's top, left and right, and never cropped. At 1440 the cell is
+ * 480 × 547, so the cover is 480 × 480 and a 67px strip remains beneath it.
+ * The column that sat beside the cover rotates into that strip: the base bar
+ * and the black block keep their order and proportions, now horizontal."
+ *
+ * The claims survive -- the two marks stay together, bar first, and the block
+ * still reaches the band's foot -- and the geometry is read from `cover-33`
+ * rather than retyped, so the test cannot drift from the page.
+ */
+test('§33: the cover is the cell’s largest square, and the column lies down beneath it', async ({ page }) => {
   await login(page);
   const id = await seed(page);
   await page.setViewportSize({ width: GRID_FORK, height: 1000 });
   await page.goto(`/records/${id}`);
   await page.waitForTimeout(600);
 
-  /* The ruled widths close, and this pins them closing. */
-  expect(COVER_PAD + COVER + COVER_GAP + COVER_COLUMN, '26 + 414 + 10 + 30 = 480').toBe(GRID_FORK / 3);
+  expect(COVER_CELL, 'the cell is four columns').toBe(GRID_FORK / 3);
+  /* The CELL is 546: the band's last pixel is the rule between the bands, so §33's 67 is 66 on the page. */
+  const cell = SLEEVE_CELL;
+  const square = coverSquare(cell);
+  const strip = leftoverStrip(cell);
+  expect(square.size, '480 × 480 in a 480 × 546 cell').toBe(480);
+  expect(strip.orientation, 'the leftover falls beneath').toBe('horizontal');
+  expect(strip.height, 'a 66px strip on the page (§33 says 67, off the 547 band)').toBe(BANDS.identity - 1 - 480);
 
   const m = await page.evaluate(() => {
-    const cell = document.querySelector('[data-band="identity"] > [data-cell="sleeve"]')!.getBoundingClientRect();
+    const cellBox = document.querySelector('[data-band="identity"] > [data-cell="sleeve"]')!.getBoundingClientRect();
     const rel = (el: Element | null) => {
       if (el === null) return null;
       const r = el.getBoundingClientRect();
-      return { l: Math.round(r.left - cell.left), t: Math.round(r.top - cell.top), r: Math.round(cell.right - r.right), b: Math.round(r.bottom - cell.top), w: Math.round(r.width), h: Math.round(r.height) };
+      return { l: Math.round(r.left - cellBox.left), t: Math.round(r.top - cellBox.top), r: Math.round(cellBox.right - r.right), b: Math.round(r.bottom - cellBox.top), w: Math.round(r.width), h: Math.round(r.height) };
     };
-    /* §5.3: with no cover the frame stands at the cover's exact size. */
     return {
-      cellH: Math.round(cell.height),
+      cellH: Math.round(cellBox.height),
       cover: rel(document.querySelector('[data-mark="coverFrame"], [data-cover]')),
       bar: rel(document.querySelector('[data-mark="sleeveBar"]')),
       block: rel(document.querySelector('[data-mark="sleeveBlock"]')),
     };
   });
 
-  /* The cover: 414 square, 26 in from the left and the top. */
   expect(m.cover, 'the cover (or its §5.3 frame) is drawn').not.toBeNull();
-  expect(m.cover!.w, 'cover width').toBe(COVER);
-  expect(m.cover!.h, 'cover height — a square').toBe(COVER);
-  expect(m.cover!.l, 'cover sits 26 from the left').toBe(COVER_PAD);
-  expect(m.cover!.t, 'cover sits 26 from the top').toBe(COVER_PAD);
+  expect(m.cover!.w, 'cover width').toBe(square.size);
+  expect(m.cover!.h, 'cover height — a square').toBe(square.size);
+  expect(m.cover!.l, 'flush to the cell’s left').toBe(0);
+  expect(m.cover!.t, 'flush to the cell’s top').toBe(0);
+  expect(m.cover!.r, 'flush to the cell’s right').toBe(0);
 
-  /* The column: 30 wide, at the cell's right edge, shared. */
-  expect(m.bar!.w, 'the bar is the column’s width').toBe(COVER_COLUMN);
-  expect(m.block!.w, 'the block is the column’s width').toBe(COVER_COLUMN);
-  expect(m.bar!.r, 'the bar is at the cell’s right edge').toBe(0);
-  expect(m.block!.r, 'the block is at the cell’s right edge').toBe(0);
-  expect(m.bar!.l - (m.cover!.l + m.cover!.w), 'a 10px gap between cover and column').toBe(COVER_GAP);
+  /* The strip: bar first, then block, side by side beneath the square. */
+  const barW = Math.round(strip.width * STRIP_SPLIT.bar);
+  expect(m.bar!.t, 'the bar starts at the square’s foot').toBe(square.size);
+  expect(m.block!.t, 'the block starts there too').toBe(square.size);
+  expect(m.bar!.l, 'the bar leads, from the cell’s left').toBe(0);
+  expect(m.bar!.w, 'the bar takes §23’s share of the strip, now as width').toBe(barW);
+  expect(m.block!.l, 'the block follows the bar').toBe(barW);
+  expect(m.block!.r, 'the block reaches the cell’s right edge').toBe(0);
+  expect(m.bar!.w + m.block!.w, 'together they fill the strip’s width').toBe(strip.width);
+  expect(m.bar!.h, 'the bar is the strip’s height').toBe(strip.height);
+  expect(m.block!.h, 'so is the block').toBe(strip.height);
 
-  /* Bar above, block below — the ruled extents, 26 → 398 → 544. */
-  expect(m.bar!.t, 'the bar starts with the cover').toBe(COVER_PAD);
-  expect(m.bar!.b, 'the bar ends at 398').toBe(BAR_BOTTOM);
-  expect(m.block!.t, 'the block starts where the bar ends').toBe(BAR_BOTTOM);
-  expect(m.block!.b, 'the block ends at the band’s foot').toBe(BLOCK_BOTTOM);
-
-  /* Paper below the cover: the cover ends well above the band, and nothing else is drawn in that width. */
-  expect(m.cover!.b, 'the cover ends inside the band, leaving paper below').toBeLessThan(m.cellH - 60);
-
-  /* §23 as tracked: the 26 applies to the column's top only, and the block runs to the foot. */
-  expect(m.block!.b, 'the block reaches the band’s foot, not 3px short of it').toBe(m.cellH);
+  expect(m.block!.b, 'the block reaches the band’s foot, as the column did').toBe(m.cellH);
 });
 
-test('§32: the FRAME fills the cell, which is constant against constant', async ({ page }) => {
-  /**
-   * **§32 moves the fill assertion from each record to the frame, and
-   * withdraws the per-record height floor.**
-   *
-   * §23 asserted that the construction fills over half its cell's height,
-   * against the 41.9% the old 360-wide cell gave. Under §31's one fixed
-   * frame that became a claim about whichever record the test happened to
-   * seed: the seventeen span 35.6% to 72.4%, so a different seed would have
-   * passed and hidden the conflict. §32: "any threshold inside that range
-   * would pick a winner between §23 and §17 without saying so", because the
-   * spread IS the per-record offset that §17 requires to show.
-   *
-   * So the claim is about two constants. The frame is 294.8 × 313.6 (§31)
-   * and the cell's inner box is 432 × 499 (§26's 24px margin), so the fit is
-   * height-bound at 432 × 459.6 — **92% of the cell's height**. It varies
-   * with no record, and it still catches the defect §23 was written for: a
-   * drawing whose aspect does not match its cell's filled 66% of the height
-   * and would fail this.
-   *
-   * On the shared extremes fixture (§27, build step 19), because a seed
-   * record is exactly what let the old test hide a conflict.
-   */
+/**
+ * **§31 and §32 are withdrawn by §33, and this test followed the ruling.**
+ *
+ * It asserted that the page draws §31's stated constant `-140 -186 296 314`
+ * and that the frame fills 92% of the inner box, 84% of the cell -- §32's
+ * arithmetic against the constant. §33 retires both: "Each record's drawing
+ * is scaled to the smaller of its inner box's width and height over its own
+ * forms and disc." So the viewBox the page draws is compared with the
+ * generator's own-fit box for THIS record, computed beside it, and the fit is
+ * asserted as binding on one axis -- which is what fitting means.
+ *
+ * The inner box's 432 × 498 stands: §33 changes the drawing, not the cell.
+ */
+test('§33: the drawing fits its OWN box, binding on one axis', async ({ page }) => {
   await login(page);
   const id = await seedExtreme(page, WORST);
   await page.setViewportSize({ width: GRID_FORK, height: 1000 });
@@ -159,8 +168,6 @@ test('§32: the FRAME fills the cell, which is constant against constant', async
     const style = getComputedStyle(cell);
     const box = cell.getBoundingClientRect();
     return {
-      cellHeight: box.height,
-      cellWidth: box.width,
       innerHeight: box.height - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom),
       innerWidth: box.width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
       viewBox: svg.getAttribute('viewBox'),
@@ -169,63 +176,21 @@ test('§32: the FRAME fills the cell, which is constant against constant', async
     };
   });
 
-  /*
-    The two constants, read off the page rather than retyped.
+  /* The box the page drew is the generator's own-fit box for this id, computed here rather than retyped. */
+  expect(drawn.viewBox, 'the page draws this record’s own box').toBe(ownFitViewBox(construction(id)));
+  const [, , boxW, boxH] = (drawn.viewBox ?? '0 0 1 1').split(' ').map(Number);
 
-    **§31: "fit is asserted at render as well as in the measuring pass,
-    because §27's fixture path and the render path could differ by a rounding,
-    and the point of §31 is a constant both agree on."** So the viewBox the
-    browser received is compared with the constant the generator states, and
-    the unit tests compare that constant with the measured union.
-  */
-  expect(drawn.viewBox, 'the page draws §31’s stated frame').toBe(CONSTRUCTION_FRAME);
-  const [, , frameW, frameH] = (drawn.viewBox ?? '0 0 1 1').split(' ').map(Number);
   expect(Math.round(drawn.innerWidth), 'the cell’s inner box after §26’s 24px margin').toBe(432);
-  /*
-    **498 where §32 says 499: the band's bottom hairline sits inside the
-    cell's content box.** The band is 547 and the margin takes 48, which is
-    §32's 499; the rule takes the last pixel. The frame is width-bound here,
-    so the height has slack and the pixel changes nothing about the fit — it
-    is asserted rather than rounded away so a change to the rule cannot move
-    the box silently.
-  */
   expect(Math.round(drawn.innerHeight), 'less the band’s bottom rule').toBe(498);
 
-  /*
-    The fit is the smaller of the two ratios (§26). With a frame taller than
-    wide in a box taller than wide, it binds on WIDTH: 432 / 294.8 = 1.465,
-    which draws 313.6 × 1.465 = 459.6 of the 499 available.
-  */
-  const scale = Math.min(drawn.innerWidth / frameW, drawn.innerHeight / frameH);
-  const drawnHeight = frameH * scale;
-  /*
-    §32 computes 459.6 from the union 294.8 × 313.6; §31 states the frame
-    rounded up to 296 × 314, which draws 458.0. The rounding is §31's
-    tolerance — it costs every record the same 0.41% of scale — so the figure
-    is asserted against the stated constant rather than against §32's
-    pre-rounding arithmetic.
-  */
-  expect(drawnHeight, 'the frame draws 458 tall at §31’s rounded constant').toBeCloseTo(458, 0);
+  /* §33's fit: the smaller of the two ratios, so the drawing fills exactly one axis. */
+  const scale = Math.min(drawn.innerWidth / boxW, drawn.innerHeight / boxH);
+  const fillW = (boxW * scale) / drawn.innerWidth;
+  const fillH = (boxH * scale) / drawn.innerHeight;
+  expect(Math.max(fillW, fillH), 'the binding axis is filled').toBeCloseTo(1, 3);
+  expect(Math.min(fillW, fillH), 'and the other is not exceeded').toBeLessThanOrEqual(1 + 1e-6);
 
-  /*
-    **§32's 92% is of the INNER box, not of the cell, and the section labels
-    it "of the cell's height".** 459.6 ÷ 499 = 92.1%; 459.6 ÷ 547 = 84.0%.
-    Both figures are right and only the label slipped, so both are asserted
-    here: the ratio §32 computed, against the box it computed it from, and
-    the same height against the cell that contains it. Reported to Design
-    rather than picking one, since the number that matters — the drawn
-    height — is the same either way.
-  */
-  const fillOfInner = (drawnHeight / drawn.innerHeight) * 100;
-  const fillOfCell = (drawnHeight / drawn.cellHeight) * 100;
-  expect(fillOfInner, `§32's ratio: ${fillOfInner.toFixed(1)}% of the inner box`).toBeCloseTo(92, 0);
-  expect(fillOfCell, `and ${fillOfCell.toFixed(1)}% of the cell itself`).toBeCloseTo(84, 0);
-
-  /*
-    And the SVG really is that box: the element fills the inner box, so the
-    fit above is the fit the page draws rather than one this test computed
-    beside it. `preserveAspectRatio="meet"` does the fitting inside it.
-  */
+  /* And the svg really is the inner box, so the fit above is the one the page draws. */
   expect(drawn.svgWidth, 'the svg fills the inner box').toBeCloseTo(drawn.innerWidth, -0.5);
   expect(drawn.svgHeight).toBeCloseTo(drawn.innerHeight, -0.5);
 });
