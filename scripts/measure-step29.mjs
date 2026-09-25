@@ -167,6 +167,23 @@ console.log(`\n  CAP    : withdrawn — no record is trimmed`);
 const below = ownStat.sorted.filter((r) => r.own < FLOOR);
 console.log(`  BELOW THE FLOOR: ${below.length}${below.length ? ' — ' + below.map((r) => `${r.id} ${pct(r.own)}`).join(', ') : ''}`);
 
+/*
+  **Evenness is a SHAPE question, and raw spread cannot answer it.** The
+  interquartile range went 0.3127% -> 0.4018% when the pad came out, which
+  read as "less even" -- but the whole distribution grew about 30%, so any
+  statistic in its units grows about 30% whatever the shape does. Scale-free,
+  on the same quartiles:
+
+      IQR / median   0.2711 -> 0.2613   (-3.6%)
+      Q3 / Q1        1.3202 -> 1.3165   (-0.3%)
+      max / min      1.955  -> 2.062    (+5.5%)
+
+  The middle half is marginally MORE even; the extremes spread slightly; both
+  moves are small and opposite. The shape barely moved, and the capture judges
+  it. Three answers to this question came from three wrong measures: gain
+  endpoints taken from different records, a cap with nothing measured behind
+  it, and a statistic that scales with its subject.
+*/
 console.log(`\n===== PER-RECORD SCALE FACTORS, cap withdrawn =====`);
 const byGain = [...rows].sort((a, b) => a.gain - b.gain);
 for (const r of byGain) {
