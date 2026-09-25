@@ -59,222 +59,48 @@ describe('the projection is the wall’s, generalised (§1)', () => {
   });
 });
 
-describe('§31: the frame is a STATED constant, and arrangements must fit it', () => {
-  /**
-   * **The frame stops tracking the collection.** §31: "A frame fitted to the
-   * collection's extremes is a mutable input to every record's drawing.
-   * Buying one record with a wider arrangement rescales all the others, and
-   * through §22's guard it can change an existing record's colour placement
-   * or even its arrangement. §5.1 forbids feeding the drawing anything that
-   * changes, and the collection changes every time Adam buys a record."
-   *
-   * So the extent measured in step 18 is written in as a number, and an
-   * arrangement that does not fit advances the hash — the same mechanism
-   * §22 uses for colour.
-   */
-  it('is the measured union rounded UP, stated rather than computed', () => {
-    /*
-      §31: "The constant is the measured union rounded up to the next whole
-      unit, and the rounding is the tolerance, not slack. At full precision
-      the widest current record would fit by exactly zero, which makes its
-      fit an equality: a coincidence, not a margin."
-    */
-    expect(CONSTRUCTION_FRAME, 'the stated constant').toBe('-140 -186 296 314');
+describe('§31 is withdrawn in whole, and its mechanism is gone (§33, step 29g)', () => {
+  /*
+    **What these tests covered, and why they are not simply deleted.**
 
-    /* And it really does contain the union it was measured from. */
-    const [fx, fy, fw, fh] = CONSTRUCTION_FRAME.split(' ').map(Number);
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = -Infinity;
-    let maxY = -Infinity;
-    for (const id of REAL_IDS) {
-      const { forms, disc } = construction(id);
-      for (const [x, y] of forms.flatMap((f) => f.faces.flatMap((face) => face.points))) {
-        minX = Math.min(minX, x);
-        maxX = Math.max(maxX, x);
-        minY = Math.min(minY, y);
-        maxY = Math.max(maxY, y);
-      }
-      minX = Math.min(minX, disc.cx - disc.r);
-      maxX = Math.max(maxX, disc.cx + disc.r);
-      minY = Math.min(minY, disc.cy - disc.r);
-      maxY = Math.max(maxY, disc.cy + disc.r);
-    }
-    /*
-      The frame contains every record's drawing with the pad still inside it:
-      the constant ALREADY includes `FRAME_PAD`, so the comparison is against
-      the raw union, not against the union less the pad — subtracting it here
-      double-counted and reported the frame 16 units short at the top.
-    */
-    expect(fx, 'left of every record').toBeLessThanOrEqual(minX);
-    expect(fy, 'above every record').toBeLessThanOrEqual(minY);
-    expect(fx + fw, 'right of every record').toBeGreaterThanOrEqual(maxX);
-    expect(fy + fh, 'below every record').toBeGreaterThanOrEqual(maxY);
+    This block asserted §31's fit check, its hash advance and its
+    scale-to-fit fallback: that the guard fired on ~14% of ids, that no id
+    reached the 32-advance cap, and that the two fallbacks composed. All three
+    now fail, because §33 withdrew §31 in whole and step 29(g) removed the
+    code.
 
-    /*
-      No slack beyond the pad and the rounding: §31 rules the frame "exactly
-      the measured union, with no slack", because slack lowers every record's
-      scale. So each side sits one pad plus under a unit outside the union.
-    */
-    expect(minX - fx, 'left: one pad, plus the origin flooring').toBeLessThan(FRAME_PAD + 1);
-    expect(fx + fw - maxX, 'right: one pad, plus the rounding up').toBeLessThan(FRAME_PAD + 2);
-    expect(minY - fy, 'top').toBeLessThan(FRAME_PAD + 1);
-    expect(fy + fh - maxY, 'bottom').toBeLessThan(FRAME_PAD + 2);
-  });
+    The mechanism is gone rather than broken, so the tests go with it -- but
+    the MEASUREMENTS they produced are what justified removing it, and those
+    are recorded here rather than lost with the assertions:
 
-  it('does not move when a record is added — the point of §5.1', () => {
-    /*
-      The reason §31 exists, asserted directly: a new record cannot change a
-      drawing already on the page. Under the old collection-fitted frame,
-      adding a wider arrangement rescaled all seventeen.
-    */
-    const before = REAL_IDS.map((id) => construction(id).viewBox);
-    /* An id outside the fixture — a record bought tomorrow. */
-    const newcomer = construction('9f3c77aa-0000-4000-8000-0000000000ff');
-    const after = REAL_IDS.map((id) => construction(id).viewBox);
+    | measured over 5,000 ids | with the frame | without it |
+    |---|---|---|
+    | arrangements rejected | 13.8% (recorded 14.1%) | none -- no check |
+    | deepest advance | 5 of a 32 cap | 0 |
+    | scale-to-fit fired | **0** | 0 -- no trigger |
 
-    expect(after, 'every existing drawing is untouched').toEqual(before);
-    expect(newcomer.viewBox, 'and the newcomer takes the same frame').toBe(CONSTRUCTION_FRAME);
-  });
+    `scaledToFit` never fired even while the check was live, which is what
+    made the fallback unreachable rather than merely unused, and is why §33
+    could drop the check without replacing it: an oversized arrangement now
+    draws smaller by construction.
 
-  it('draws every record inside the stated frame, at render as well as in the measuring pass', () => {
-    /*
-      §31: "Fit is asserted at render as well as in the measuring pass,
-      because §27's fixture path and the render path could differ by a
-      rounding, and the point of §31 is a constant both agree on."
-    */
-    const [fx, fy, fw, fh] = CONSTRUCTION_FRAME.split(' ').map(Number);
-    for (const id of REAL_IDS) {
-      const { forms, disc, viewBox } = construction(id);
-      expect(viewBox, `${id}: renders in the stated frame`).toBe(CONSTRUCTION_FRAME);
-      for (const [x, y] of forms.flatMap((f) => f.faces.flatMap((face) => face.points))) {
-        expect(x, `${id}: x ${x.toFixed(1)}`).toBeGreaterThanOrEqual(fx);
-        expect(x).toBeLessThanOrEqual(fx + fw);
-        expect(y, `${id}: y ${y.toFixed(1)}`).toBeGreaterThanOrEqual(fy);
-        expect(y).toBeLessThanOrEqual(fy + fh);
-      }
-      expect(disc.cx - disc.r, `${id}: disc`).toBeGreaterThanOrEqual(fx);
-      expect(disc.cx + disc.r).toBeLessThanOrEqual(fx + fw);
+    What survives §31 is tested elsewhere: `own-fit.test.ts` covers the
+    per-record fit that replaced the constant, and `colour-eligibility.test.ts`
+    covers §22's filter, which is the gate that remains.
+  */
+  it('no longer advances the hash, because there is no frame to miss', () => {
+    const sampled = Array.from({ length: 200 }, (_, i) => `sample-${i}`);
+    for (const id of sampled) {
+      const scene = construction(id);
+      expect(scene.advances, `${id}: nothing to advance past`).toBe(0);
+      expect(scene.scaledToFit, `${id}: nothing to scale to fit`).toBe(false);
     }
   });
 
-  it('advances the hash for an arrangement that does not fit, and no id reaches the cap', () => {
-    /*
-      §31's mechanism and its bound: "The hash advances at most 32 times, for
-      either reason — an arrangement that does not fit the frame (§31), or one
-      whose colour has no eligible form (§22)." Sampled across the id space,
-      because the current seventeen are the frame's own union and by
-      definition fit.
-    */
-    const sampled = Array.from({ length: 400 }, (_, i) => `sample-${i}`);
-    const advances = sampled.map((id) => construction(id).advances);
-
-    /**
-     * **The cap is a guard, not a test, and cannot be reached.** At the
-     * measured 14.1% rejection rate, 32 consecutive rejections has a
-     * probability of 0.141³² ≈ 6 × 10⁻²⁸. So this assertion can never fail
-     * by chance: it fails only if the rejection rate has risen by orders of
-     * magnitude, which would mean the frame and the generator have come
-     * apart. That is what it is watching for.
-     */
-    expect(Math.max(...advances), 'no sampled id reaches the 32 cap — see the note: at 14.1% this is ~10^-27, so a failure means the rate has moved').toBeLessThan(HASH_ADVANCE_CAP);
-
-    /**
-     * **The guard fires, now that the clamp is gone.** `containedOrigin`
-     * shifted every form back inside the frame before drawing it, so no
-     * arrangement could fail `fitsFrame` and §31's mechanism was
-     * unreachable — measured at 0 rejections in 5,000 ids, with the
-     * tightest arrangement touching the edge at exactly 0.00 units. The two
-     * answered one question differently, and §31's is the ruled one.
-     *
-     * Measured with it removed: **14.1% of ids have an arrangement
-     * rejected**, the most any id needed is **5 advances** against a cap of
-     * 32, and none reaches the cap. None of the current seventeen changes,
-     * which is what says step 18's union was measured on unclamped output
-     * and the frame constant stands.
-     *
-     * The rejection rate is asserted as a BAND rather than a figure: it is a
-     * property of the hash against a fixed frame, so pinning 14.1% would
-     * fail on a change to either that leaves the mechanism working.
-     */
-    const rate = advances.filter((a) => a > 0).length / sampled.length;
-    expect(rate, `the guard fires (${(rate * 100).toFixed(1)}% of ids) — a zero here means it is unreachable again`).toBeGreaterThan(0.05);
-    expect(rate, 'and it is a guard, not the common path').toBeLessThan(0.3);
-
-    const rejected = advances.filter((a) => a > 0).length;
-    console.log(`§31: the frame rejects an arrangement for ${rejected} of ${sampled.length} sampled ids; most advances needed ${Math.max(...advances)}`);
-  });
-
-  it('renders QUIET when no form can carry the colour, rather than erroring or faking one', () => {
-    /**
-     * §31: "An arrangement fits but no form can carry the colour: the record
-     * renders quiet, with its construction in greys and no base face. The
-     * page already has this state: records whose cover gives no usable colour
-     * render quiet (§5.2), so the reader sees a state the collection already
-     * contains, never a blank cell."
-     *
-     * The build fell back silently to the hash's order and coloured an
-     * INELIGIBLE form — which is §22's floor violated rather than its
-     * fallback, and the reader could not tell.
-     */
-    const quiet = constructionWithin(EXHAUSTED_ID, { forceQuiet: true });
-    expect(quiet.quiet, 'it says it is quiet').toBe(true);
-    const steps = quiet.forms.flatMap((f) => f.faces.map((face) => face.step));
-    expect(steps, 'no base face anywhere').not.toContain('base');
-    expect(steps, 'greys and ink, the state §5.2 already draws').toEqual(
-      expect.arrayContaining(['grey']),
-    );
-    /* And it is still a drawing: §5.3's no-drawing fallback is the wrong precedent. */
-    expect(quiet.forms.length, 'the forms are all there').toBe(FORM_COUNT);
-  });
-
-  it('composes the two fallbacks: a shrunk arrangement that then fails the floor goes quiet', () => {
-    /**
-     * **Constructed rather than waited for.** §31's scale-to-fit lowers a
-     * record's scale, which lowers its coloured area, which can put it under
-     * §5.5's floor — and §22's answer to that is the quiet fallback. That
-     * chain follows from both rulings and needs no new one, but nothing
-     * asserted it, and a record reaching it would be the first time anyone
-     * found out whether it renders or throws.
-     */
-    const both = constructionWithin(EXHAUSTED_ID, { forceExhausted: true, forceQuiet: true });
-
-    expect(both.scaledToFit, 'the first fallback fired').toBe(true);
-    expect(both.quiet, 'and the second').toBe(true);
-    expect(both.viewBox, 'still the stated frame').toBe(CONSTRUCTION_FRAME);
-    expect(both.forms.length, 'and still a drawing, not a blank cell').toBe(FORM_COUNT);
-    expect(both.forms.flatMap((f) => f.faces.map((face) => face.step)), 'quiet').not.toContain('base');
-
-    /* The shrunk drawing still lies inside the frame — the point of scaling it. */
-    const [fx, fy, fw, fh] = CONSTRUCTION_FRAME.split(' ').map(Number);
-    for (const [x, y] of both.forms.flatMap((f) => f.faces.flatMap((face) => face.points))) {
-      expect(x).toBeGreaterThanOrEqual(fx - 0.01);
-      expect(x).toBeLessThanOrEqual(fx + fw + 0.01);
-      expect(y).toBeGreaterThanOrEqual(fy - 0.01);
-      expect(y).toBeLessThanOrEqual(fy + fh + 0.01);
+  it('still depends only on the id (§5.1)', () => {
+    for (const id of REAL_RECORD_IDS.slice(0, 5)) {
+      expect(JSON.stringify(construction(id))).toBe(JSON.stringify(construction(id)));
     }
-  });
-
-  it('falls back to scale-to-fit when no arrangement fits, and stays deterministic', () => {
-    /*
-      §31: "If no arrangement fits, the id's first arrangement is drawn scaled
-      down just enough to fit. Only that record's scale is lower, and it
-      depends only on its id." Constructed rather than waited for, because no
-      real id reaches the cap.
-    */
-    const scaled = constructionWithin(EXHAUSTED_ID, { forceExhausted: true });
-    expect(scaled.viewBox, 'still the stated frame').toBe(CONSTRUCTION_FRAME);
-    expect(scaled.scaledToFit, 'and it says so, rather than spilling').toBe(true);
-
-    const [fx, fy, fw, fh] = CONSTRUCTION_FRAME.split(' ').map(Number);
-    for (const [x, y] of scaled.forms.flatMap((f) => f.faces.flatMap((face) => face.points))) {
-      expect(x, 'inside the frame after scaling').toBeGreaterThanOrEqual(fx - 0.01);
-      expect(x).toBeLessThanOrEqual(fx + fw + 0.01);
-      expect(y).toBeGreaterThanOrEqual(fy - 0.01);
-      expect(y).toBeLessThanOrEqual(fy + fh + 0.01);
-    }
-    /* Deterministic: the same id gives the same fallback. */
-    expect(constructionWithin(EXHAUSTED_ID, { forceExhausted: true }).forms).toEqual(scaled.forms);
   });
 });
 

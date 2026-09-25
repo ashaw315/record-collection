@@ -693,25 +693,39 @@ export function constructionWithin(
   recordId: string,
   options: { forceExhausted?: boolean; forceQuiet?: boolean } = {},
 ): Construction & { advances: number; scaledToFit: boolean; quiet: boolean } {
-  for (let advance = 0; advance < HASH_ADVANCE_CAP; advance += 1) {
-    if (options.forceExhausted === true) break;
-    const seed = advance === 0 ? recordId : `${recordId}#${advance}`;
-    const { forms, quiet } = formsFor(seed, undefined, options.forceQuiet);
-    const disc = discFor(seed);
-    if (fitsFrame(forms, disc)) {
-      return { viewBox: CONSTRUCTION_FRAME, forms, disc, advances: advance, scaledToFit: false, quiet };
-    }
-  }
-
   /*
-    §31: "If no arrangement fits, the id's first arrangement is drawn scaled
-    down just enough to fit. Only that record's scale is lower, and it depends
-    only on its id."
+    **§31 is withdrawn in whole, and step 29(g) removes what it left here.**
+
+    The fit check and its hash advance are gone: they existed to reject an
+    arrangement that did not fit the shared frame, and there is no shared
+    frame -- §33 scales each record to its own forms, so an oversized
+    arrangement now simply draws smaller. The check would have rejected one
+    arrangement in seven (13.8% over 5,000 ids) against a bound that no longer
+    constrains anything.
+
+    `scaledToFitFrame` goes with it. Measured over 5,000 ids it fired ZERO
+    times even while the check was live, so it was already unreachable; with
+    the check removed it has no trigger at all.
+
+    `advances` and `scaledToFit` stay on the return as constants, because §22's
+    quiet fallback and three specs read the shape. They are now what they
+    always measured: nothing advanced, nothing was scaled.
   */
-  const { forms, quiet } = formsFor(recordId, undefined, options.forceQuiet);
-  const fitted = scaledToFitFrame(forms, discFor(recordId));
-  return { viewBox: CONSTRUCTION_FRAME, forms: fitted.forms, disc: fitted.disc, advances: HASH_ADVANCE_CAP, scaledToFit: true, quiet };
+  const { forms, quiet } = formsFor(
+    recordId,
+    undefined,
+    options.forceQuiet,
+  );
+  return {
+    viewBox: CONSTRUCTION_FRAME,
+    forms,
+    disc: discFor(recordId),
+    advances: 0,
+    scaledToFit: false,
+    quiet: options.forceExhausted === true ? true : quiet,
+  };
 }
+
 
 export function construction(recordId: string): Construction & { advances: number; scaledToFit: boolean; quiet: boolean } {
   return constructionWithin(recordId);

@@ -46,7 +46,15 @@ import { NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/band-geometry';
  * |---|---|
  * | Loss Of Life | §33's worked example -- "144 fails by about 15px, so it takes 120 over two lines, with about 68px of gap" |
  * | the worst title | the case that stays at 72, where the give order runs and nothing steps up |
- * | the biggest gain, 1.396x | the drawing that grows most, captured on the construction sheet because a construction is a function of its id alone |
+ * | the biggest gain | NOT CAPTURED -- see below |
+ *
+ * **The third record is not in these captures, and the comment that said it
+ * was on the construction sheet was wrong.** The sheet draws the records the
+ * database holds, which here are the two this capture seeds -- not the
+ * seventeen extremes. `158a3163...c724` gains most (1.644x with the pad
+ * removed), and its drawing is a function of its id, so capturing it needs a
+ * row with that id; four foreign keys refuse a late id rewrite. Seeding it at
+ * INSERT time is the fix and is not built.
  */
 const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 
@@ -216,10 +224,9 @@ test('capture §33: three records at 1440', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
 
   /*
-    **The construction sheet, where the biggest gainer lives.** Every still is
-    drawn from its record's id at §33's per-record fit, so this is the one
-    view that shows the new scale across the collection rather than on one
-    record -- and `${BIGGEST_GAIN_ID.slice(0, 8)}` is the 1.396x tile.
+    The construction sheet: every still drawn from its record's id at §33's
+    per-record fit. It shows the records the DATABASE holds, which is the two
+    seeded above -- `${BIGGEST_GAIN_ID.slice(0, 8)}` is not among them.
   */
   await page.goto('/wall/probe/sheet');
   await page.locator('[data-sheet-tile]').first().waitFor({ timeout: 15_000 });

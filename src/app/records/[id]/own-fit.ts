@@ -1,4 +1,4 @@
-import { FRAME_PAD, type Construction } from './construction';
+import { type Construction } from './construction';
 
 /**
  * §33's per-record fit, which replaces §31's shared frame constant as the
@@ -64,18 +64,12 @@ export function boundsOf(scene: Pick<Construction, 'forms' | 'disc'>): Bounds {
  * The record's own viewBox, padded by the same `FRAME_PAD` the shared frame
  * used.
  *
- * **`FRAME_PAD` is kept, and it is the one term §33 does not state.**
- *
- * §33 gives the fit as "over its own forms and disc" and says nothing about
- * padding. Keeping §31's 16 units caps the largest gain at 1.396x; dropping
- * them gives 1.644x, which is within a whisker of the 1.662x Design's
- * withdrawn 1.5x cap was aimed at -- so Design's own estimate appears to have
- * assumed no padding, and this is REPORTED rather than settled here.
- *
- * Kept, because a drawing flush to its viewBox edge touches the cell edge,
- * and §26 draws the construction "inside the cell's 24px margin". The pad is
- * what holds it off. If Design rules the fit is to the bare bounds, this
- * constant is the only line that changes.
+ * **No padding, per step 29(g).** §33: "remove FRAME_PAD -- the
+ * construction's only margin is the cell's padding." The pad was §31's, and
+ * §31 is withdrawn in whole, so it was an orphaned term rather than merely an
+ * unstated one. Keeping it capped the largest gain at 1.396x; without it the
+ * fit is to the arrangement's own bounds, which is what §33 means by "over its
+ * own forms and disc".
  *
  * **Floored and ceiled to whole units, as §31 did.** Its note: "flooring the
  * origin grows the box on both sides of each axis, not only the extent", and
@@ -84,10 +78,10 @@ export function boundsOf(scene: Pick<Construction, 'forms' | 'disc'>): Bounds {
  */
 export function ownFitViewBox(scene: Pick<Construction, 'forms' | 'disc'>): string {
   const b = boundsOf(scene);
-  const x = Math.floor(b.minX - FRAME_PAD);
-  const y = Math.floor(b.minY - FRAME_PAD);
-  const w = Math.ceil(b.maxX + FRAME_PAD) - x;
-  const h = Math.ceil(b.maxY + FRAME_PAD) - y;
+  const x = Math.floor(b.minX);
+  const y = Math.floor(b.minY);
+  const w = Math.ceil(b.maxX) - x;
+  const h = Math.ceil(b.maxY) - y;
   return `${x} ${y} ${w} ${h}`;
 }
 
