@@ -20,8 +20,18 @@ export const ARTIST_OF_TITLE = 5 / 9;
 /** §33: the demand is measured "with 24px of gap", and the gap is a floor. */
 export const STEP_GAP = 24;
 
-/** §33: "at most two lines on the measure". */
-export const MAX_LINES = 2;
+/**
+ * §33, amended: "set in at most three lines. Height is the constraint the
+ * band exists for; the line count is a legibility ceiling, not a preference."
+ *
+ * **Three, not two.** The two-line rule is withdrawn within §33
+ * (33/two-line-ladder): it "maximised type subject to a line count and
+ * minimised nothing", so a three-line title fell to 72 at every step and kept
+ * 167px of slack -- the most of any record. Under this rule Loss Of Life is
+ * expected at 144 in three lines, which Code had measured as fitting on
+ * height and refused on line count alone.
+ */
+export const MAX_LINES = 3;
 
 /**
  * The artist line for a title step — derived, then rounded to the nearest 2px.

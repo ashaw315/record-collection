@@ -37,7 +37,7 @@ const record = (spineColour: string | null): PageRecord => ({
   marketHigh: null,
   hasDiscogsRelease: false,
   journalEntry: null,
-  note: null,
+  about: null,
   imageCount: 0,
   coverUrl: null,
   spineColour,
@@ -131,5 +131,80 @@ describe('§33: the cover fills its cell and the column lies down', () => {
     expect(cover, 'the cover is that square').toMatch(new RegExp(`width:${square.size}px`));
     expect(cover, 'flush to the cell’s left').toMatch(/left:0/);
     expect(cover, 'flush to the cell’s top').toMatch(/top:0/);
+  });
+});
+
+
+/**
+ * §33 (d), amended: "The lower frame's last cell shows the record's About,
+ * labelled ABOUT... A record with no About shows its latest journal entry
+ * instead, date and text; a record with neither shows §6's diagonal. Absence
+ * is one state: an About or entry that is null, empty or only whitespace,
+ * once trimmed, counts as none."
+ */
+function lastCell(html: string): string {
+  const start = html.indexOf('data-cell="note"');
+  expect(start, 'the last cell renders').toBeGreaterThan(-1);
+  return html.slice(start, html.indexOf('data-cell=', start + 1) === -1 ? undefined : html.indexOf('data-cell=', start + 1));
+}
+
+describe('the frame’s last cell is the About, else the entry, else the diagonal (§33)', () => {
+  const entry = { entry: 'Played it right through.', entryDate: '2026-09-20' };
+
+  it('shows the About under an ABOUT label, ahead of any entry', () => {
+    const cell = lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), about: 'Her last album for the label.', journalEntry: entry }} />));
+    expect(cell).toContain('>About<');
+    expect(cell).toContain('Her last album for the label.');
+    expect(cell, 'the entry yields to the About').not.toContain('Played it right through.');
+    expect(cell, 'no diagonal').not.toContain('data-diagonal');
+  });
+
+  it('falls to the latest entry, date and text, under a JOURNAL label', () => {
+    const cell = lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), about: null, journalEntry: entry }} />));
+    expect(cell).toContain('>Journal<');
+    expect(cell).toContain('2026-09-20');
+    expect(cell).toContain('Played it right through.');
+    expect(cell).not.toContain('data-diagonal');
+  });
+
+  it('shows the diagonal when there is neither', () => {
+    const cell = lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), about: null, journalEntry: null }} />));
+    expect(cell).toContain('data-diagonal');
+  });
+
+  /**
+   * **The hole the note version had, closed on the About.** It tested null,
+   * so an empty string printed a heading over nothing with no diagonal.
+   * Reachable now, because Adam can clear an About.
+   */
+  it('treats an empty or whitespace About as absent', () => {
+    for (const about of ['', '   ', '\n\t']) {
+      const cell = lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), about, journalEntry: null }} />));
+      expect(cell, `about=${JSON.stringify(about)}: the diagonal fires`).toContain('data-diagonal');
+    }
+    const withEntry = lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), about: '  ', journalEntry: entry }} />));
+    expect(withEntry, 'an empty About yields to the entry').toContain('Played it right through.');
+  });
+
+  /**
+   * §33: "An About longer than ten lines — a hand edit, or one written before
+   * this ruling — shows nine lines and more ↓, which opens the lower row's
+   * editor with the full text." Lines are measured after paint; on the
+   * server the measured character budget is the guess, so a long About never
+   * paints unclamped for a frame.
+   */
+  it('clamps a long About to nine lines on first paint and links more ↓ to the editor', () => {
+    const long = 'A sentence about the record that goes on. '.repeat(20);
+    const cell = lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), about: long, journalEntry: null }} />));
+    expect(cell).toContain('data-clamped');
+    expect(cell).toMatch(/-webkit-line-clamp:9/);
+    expect(cell).toContain('href="#snippet"');
+    expect(cell).toContain('more ↓');
+  });
+
+  it('does not clamp an About within the budget', () => {
+    const cell = lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), about: 'Short.', journalEntry: null }} />));
+    expect(cell).not.toContain('data-clamped');
+    expect(cell).not.toContain('more ↓');
   });
 });

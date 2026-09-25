@@ -211,7 +211,8 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
                         entry: record.journalEntries[0].note,
                         entryDate: String(record.journalEntries[0].entryDate),
                       },
-                note: record.notes,
+                /* §33: the About is §10b's snippet, `records.snippet`. */
+                about: record.snippet,
                 imageCount: record.images.length,
                 coverUrl: record.images.find((image) => image.imageType === 'cover')?.url ?? null,
                 spineColour: record.spineColour,

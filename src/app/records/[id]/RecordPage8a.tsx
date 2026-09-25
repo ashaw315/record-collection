@@ -4,6 +4,8 @@ import { CONTROL_HEIGHT } from './extended-grid';
 import { COVER_CELL } from './cover-geometry';
 import { SLEEVE_CELL, STRIP_SPLIT, coverSquare, leftoverStrip } from './cover-33';
 import { MatrixSolid } from './MatrixSolid';
+import { AboutCell } from './AboutCell';
+import { ENTRY_LINES, aboutCellState } from './about-cell';
 import { CELL_PADDING } from './extended-grid';
 import { BAR_BOTTOM, BLOCK_BOTTOM, COVER, COVER_COLUMN, COVER_PAD } from './cover-geometry';
 import { ConstructionStill } from './ConstructionStill';
@@ -47,7 +49,8 @@ export type PageRecord = {
   marketHigh: string | null;
   hasDiscogsRelease: boolean;
   journalEntry: { entry: string; entryDate: string } | null;
-  note: string | null;
+  /** §10b's snippet, stored in `records.snippet`; §33 calls it the About. */
+  about: string | null;
   imageCount: number;
   coverUrl: string | null;
   spineColour: string | null;
@@ -698,34 +701,44 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
             the collection. That is §8.1's constant-because-unfilled, a state
             the app expects to leave, not a defect of the cell."
           */}
-          <div className={LABEL}>{record.journalEntry !== null ? 'Journal' : 'Note'}</div>
-          {record.journalEntry !== null ? (
-            <>
-              <div className={`${LABEL} mt-[6px]`} style={{ color: LABEL_INK }}>
-                {record.journalEntry.entryDate}
-              </div>
-              {/*
-                Clamped to four lines, per §33. `line-clamp` rather than a
-                character cut: the limit is lines on this measure, which only
-                the browser knows, and a cut string would break mid-word.
-              */}
-              <div
-                data-field="journal-entry"
-                className="text-prose mt-[6px] overflow-hidden"
-                style={{
-                  display: '-webkit-box',
-                  WebkitBoxOrient: 'vertical',
-                  WebkitLineClamp: 4,
-                }}
-              >
-                {record.journalEntry.entry}
-              </div>
-            </>
-          ) : record.note === null ? (
-            <EmptyMark diagonal="single" />
-          ) : (
-            <div className="text-prose">{record.note}</div>
-          )}
+          {/*
+            **§33 (d), amended — the About leads, then the entry, then the
+            diagonal.** "The lower frame's last cell shows the record's About,
+            labelled ABOUT... A record with no About shows its latest journal
+            entry instead, date and text; a record with neither shows §6's
+            diagonal." Journal-first is withdrawn within §33. The note has
+            left the frame: it leads §9's Journal section, labelled NOTE.
+
+            Absence is decided by `aboutCellState`, on emptiness rather than
+            nullness -- the note version tested null and would have printed a
+            heading over an empty string with no diagonal.
+          */}
+          {(() => {
+            const state = aboutCellState({ about: record.about, entry: record.journalEntry });
+            return (
+              <>
+                <div className={LABEL}>{state.kind === 'entry' ? 'Journal' : 'About'}</div>
+                {state.kind === 'about' ? (
+                  <AboutCell text={state.text} />
+                ) : state.kind === 'entry' ? (
+                  <>
+                    <div className={`${LABEL} mt-[6px]`} style={{ color: LABEL_INK }}>
+                      {state.entryDate}
+                    </div>
+                    <div
+                      data-field="journal-entry"
+                      className="text-prose mt-[6px] overflow-hidden"
+                      style={{ display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: ENTRY_LINES }}
+                    >
+                      {state.text}
+                    </div>
+                  </>
+                ) : (
+                  <EmptyMark diagonal="single" />
+                )}
+              </>
+            );
+          })()}
 
           {/*
             **`Images N Manage →` — the count, and a link to its editor.**
@@ -778,10 +791,11 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
             and rounded on the corner that faces into the page. Suppressed when
             the cell is empty (§5.4): a decorated empty cell reads as a designed
             state rather than as a gap the reader can fill — and the cell's
-            content is the NOTE now, so its emptiness is the note's absence
-            rather than the journal's.
+            content is the ABOUT now (§33), else the latest entry, so its
+            emptiness is `aboutCellState`'s `none`, decided on emptiness
+            rather than nullness.
           */}
-          {record.note !== null && (
+          {aboutCellState({ about: record.about, entry: record.journalEntry }).kind !== 'none' && (
             <div
               data-mark="aboutArc"
               aria-hidden="true"

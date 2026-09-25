@@ -6,6 +6,8 @@ import type { RecordLadder } from '@/lib/colour/record-ladder';
 import { Section } from './Section';
 import { useRouter } from 'next/navigation';
 import { snippetView } from './snippet-view';
+import { ABOUT_LINES, aboutBudget } from './about-cell';
+import { useEffect, useRef } from 'react';
 
 /**
  * SPEC.md §10b's snippet on the record detail page.
@@ -127,6 +129,7 @@ export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured, b
             rows={4}
             className="w-full rounded-xs border border-input bg-transparent p-2 text-typed"
           />
+          <AboutBudget text={draft} />
           <div className="mt-2 flex gap-3">
             <button
               type="button"
@@ -161,10 +164,16 @@ export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured, b
             </p>
           ) : (
             <>
-              <p data-testid="snippet-text" className="mt-2 text-prose">
-                {snippet}
-              </p>
-
+              {/*
+                **§33: "The lower About row keeps its controls and drops its
+                text: it is the About's editor... an editor does not need to
+                repeat what the frame shows."** The text was here as
+                `snippet-text`; the frame's last cell is now where it is read,
+                and a second full copy on one page was "too high a price for
+                two clipped lines". What stays is the attribution and the
+                controls -- the row is the About's editor, as §8.1 makes §9's
+                Acquisition the editor of the frame's provenance.
+              */}
               {/*
                 §10b's labelling rule. Once the user has edited it the text is
                 THEIRS, and calling it generated would misattribute their writing
@@ -243,5 +252,51 @@ export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured, b
         )}
       </div>
     </Section>
+  );
+}
+
+
+/**
+ * §33: "Claude writes it to fit ten lines of the cell... Code converts the
+ * ten lines to a character budget measured on the collection's own text, and
+ * the editor states it."
+ *
+ * **Lines are the rule and characters are the guide, so both are stated.**
+ * The line count is MEASURED: the draft is laid out in a hidden copy at the
+ * frame cell's measure -- 322px wide, 13px at the built leading -- and the
+ * lines it sets to are read back, because a 555-character About renders to
+ * ten lines and a 552-character stand-in to eleven. The character budget is
+ * the floor of the measured range, 535, so a draft under it fits on every
+ * text in the collection and a draft over it may or may not.
+ */
+function AboutBudget({ text }: { text: string }) {
+  const probe = useRef<HTMLParagraphElement>(null);
+  const [lines, setLines] = useState<number | null>(null);
+  useEffect(() => {
+    const el = probe.current;
+    if (el === null) return;
+    const lineHeight = parseFloat(getComputedStyle(el).lineHeight);
+    setLines(text.trim() === '' ? 0 : Math.round(el.getBoundingClientRect().height / lineHeight));
+  }, [text]);
+  const { chars, budget, over } = aboutBudget(text);
+  const past = lines !== null && lines > ABOUT_LINES;
+  return (
+    <>
+      <p data-testid="about-budget" className="mt-1 text-meta text-muted-foreground" aria-live="polite">
+        {lines === null ? '' : `${lines} of ${ABOUT_LINES} lines · `}
+        {chars} of about {budget} characters
+        {over > 0 ? ` · ${over} over` : ''}
+        {past ? ' · past ten lines: the frame will show nine and more ↓' : ''}
+      </p>
+      {/* The frame cell's measure, so the line count is the one the cell will draw. */}
+      <p
+        ref={probe}
+        aria-hidden="true"
+        className="text-prose"
+        style={{ position: 'absolute', visibility: 'hidden', pointerEvents: 'none', width: 322, whiteSpace: 'pre-line' }}
+      >
+        {text}
+      </p>
+    </>
   );
 }

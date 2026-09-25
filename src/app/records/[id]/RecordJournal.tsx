@@ -5,6 +5,7 @@ import type { RecordLadder } from '@/lib/colour/record-ladder';
 import { useEffect, useRef, useState } from 'react';
 import { Section } from './Section';
 import { LABEL } from './grid-type';
+import { present } from './about-cell';
 import {
   CONTROL_HEIGHT,
   FIELD_HEIGHT,
@@ -60,10 +61,10 @@ export function RecordJournal({
   recordId: string;
   entries: JournalEntryView[];
   /**
-   * §33 (d): "When an entry is shown, the note leads §9's Journal section,
-   * labelled NOTE." The frame's last cell shows the latest entry, so the note
-   * it displaced comes here, above the entries. Null when the record has
-   * none; unused when there is no entry, since the frame then shows it.
+   * §33 (d), amended: "The note leaves the frame and leads §9's Journal
+   * section, labelled NOTE, above the entries, on every record that has
+   * one." Not only when an entry exists -- the frame no longer shows the note
+   * in any state, so this is its one place.
    */
   leadNote?: string | null;
   /** §5.5's base step, for §9.4's label-span bar. */
@@ -185,12 +186,11 @@ export function RecordJournal({
       */}
       <div data-testid="journal">
         {/*
-          **The note leads, labelled NOTE, only while an entry holds the
-          frame.** With no entry the frame's cell shows the note itself
-          (§33), and repeating it here would name one thing twice -- the
-          repetition §8.3 removed this section's heading for.
+          **The note leads, labelled NOTE, on every record that has one.**
+          §33 moved it out of the frame entirely; this is its only place.
+          Emptiness rather than nullness, per §33's one state of absence.
         */}
-        {entries.length > 0 && leadNote !== null && (
+        {present(leadNote) && (
           <div data-note-lead="" className="mb-4">
             <div className={LABEL}>Note</div>
             <p className="text-prose mt-1">{leadNote}</p>

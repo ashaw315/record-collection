@@ -3,6 +3,7 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { seedImage } from './seed';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
+import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 
 registerCleanup();
 
@@ -74,7 +75,9 @@ async function aRecord(page: Page, suffix: string): Promise<string> {
     entryDate: '2024-03-14',
   });
   await getTestDb().execute(
-    sql`UPDATE records SET spine_colour = ${'#a25829'} WHERE id = ${record.id}::uuid`,
+    sql`UPDATE records SET spine_colour = ${'#a25829'},
+          snippet = ${`Her last album for the label ${suffix}.`}, snippet_edited_at = NOW()
+        WHERE id = ${record.id}::uuid`,
   );
   return record.id as string;
 }
@@ -184,22 +187,21 @@ test('each plane is the shape its name says', async ({ page }) => {
  * whose whole height is the content's.
  */
 /**
- * **§33 (d) reverses both tests below, and they followed the ruling.**
+ * **§33 (d), amended, and both tests below followed the amendment.**
  *
- * They asserted the frame's last cell is NOTE, that no Journal cell exists,
- * and that the entry and its trigger had left the frame. §33: "The lower
- * frame's last cell carries the journal. It shows the latest entry's date and
- * its text, clamped to four lines... With no entry the cell shows the owner's
- * note, and with neither, §6's diagonal... When an entry is shown, the note
- * leads §9's Journal section, labelled NOTE."
+ * The first version of these asserted journal-first: JOURNAL in the frame
+ * when an entry exists, the note leading the section only then. §33 withdrew
+ * that within itself (33/journal-first): "The lower frame's last cell shows
+ * the record's About, labelled ABOUT... A record with no About shows its
+ * latest journal entry instead, date and text; a record with neither shows
+ * §6's diagonal." And the note "leaves the frame and leads §9's Journal
+ * section, labelled NOTE, above the entries, on every record that has one."
  *
- * The fixture seeds both a note and an entry, which is the case where every
- * clause is exercised at once: the frame shows the entry under JOURNAL, and
- * the note moves down to lead the section under NOTE. `About this record`
- * stays the section's own label. No trigger returns to the frame -- §33 puts
- * the entry there, not the form.
+ * The fixture seeds an About, a note and an entry, so every clause is
+ * exercised at once: the About wins the frame, the entry yields, the note
+ * leads the section.
  */
-test('the frame’s last cell is JOURNAL when an entry exists, and the note leads the section (§33)', async ({
+test('the frame’s last cell is the ABOUT, the entry yields, and the note leads the section (§33)', async ({
   page,
 }) => {
   const suffix = makeSuffix();
@@ -210,12 +212,18 @@ test('the frame’s last cell is JOURNAL when an entry exists, and the note lead
   const frame = page.getByTestId('record-page-8a');
   const journalSection = page.locator('[data-section="journal"]');
 
-  /* The frame: the entry, under its own label, and not the note. */
-  await expect(frame.getByText('Journal', { exact: true }), 'the frame cell is labelled JOURNAL').toHaveCount(1);
-  await expect(frame.getByText(`Bought it ${suffix}`), 'the latest entry is in the frame').toHaveCount(1);
-  await expect(frame.getByText('Note', { exact: true }), 'NOTE is not the frame’s label while an entry shows').toHaveCount(0);
+  /* The frame: the About under ABOUT, and neither the entry nor the note. */
+  await expect(frame.getByText('About', { exact: true }), 'the frame cell is labelled ABOUT').toHaveCount(1);
+  /*
+    The VISIBLE field, not a text search: the cell keeps a hidden, unclamped
+    copy of the About to measure its lines, and a text locator counts both.
+  */
+  await expect(frame.locator('[data-field="about"]'), 'the About is in the frame').toHaveText(`Her last album for the label ${suffix}.`);
+  await expect(frame.locator('[data-field="about"]'), 'once, visibly').toHaveCount(1);
+  await expect(frame.getByText(`Bought it ${suffix}`), 'the entry yields to the About').toHaveCount(0);
   await expect(frame.getByText(`A note ${suffix}`), 'the note is not in the frame').toHaveCount(0);
-  await expect(frame.getByText('About this record', { exact: true }), 'not in the frame').toHaveCount(0);
+  await expect(frame.getByText('Note', { exact: true }), 'NOTE is not a frame label').toHaveCount(0);
+  await expect(frame.getByText('About this record', { exact: true }), 'the section’s label stays out of the frame').toHaveCount(0);
 
   /* The section: the note leads it, labelled NOTE, above the entries. */
   const lead = journalSection.locator('[data-note-lead]');
@@ -230,24 +238,62 @@ test('the frame’s last cell is JOURNAL when an entry exists, and the note lead
 
   await expect(
     page.locator('[data-section="snippet"] [data-cell="label"]').getByText('About this record', { exact: true }),
-    'the snippet section keeps its label',
+    'the lower row keeps its label',
   ).toHaveCount(1);
+  /* §33: "The lower About row keeps its controls and drops its text." */
+  await expect(page.locator('[data-section="snippet"]').getByText(`Her last album for the label ${suffix}.`), 'the lower row does not repeat the About').toHaveCount(0);
+  await expect(page.locator('[data-section="snippet"]').getByTestId('snippet-edit'), 'and keeps its editor controls').toHaveCount(1);
 });
 
-test('no journal form returns to the frame with the entry (§33)', async ({ page }) => {
+test('the note leads the Journal section even with no entry (§33)', async ({ page }) => {
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Vandross-${suffix}` });
+  trackArtist(artist.id as string);
+  const record = await post(page, '/api/records', { title: `Never Too Much ${suffix}`, artistId: artist.id, releaseYear: 1981, notes: `A note ${suffix}` });
+  await page.goto(`/records/${record.id}`);
+  await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
+  const lead = page.locator('[data-section="journal"] [data-note-lead]');
+  await expect(lead, '“on every record that has one”').toHaveCount(1);
+  await expect(lead).toContainText(`A note ${suffix}`);
+  await expect(page.getByTestId('record-page-8a').getByText(`A note ${suffix}`), 'and not in the frame').toHaveCount(0);
+});
+
+/**
+ * §33: "An About longer than ten lines — a hand edit, or one written before
+ * this ruling — shows nine lines and more ↓, which opens the lower row's
+ * editor with the full text." Measured on the built cell: The Hurdy Gurdy
+ * Man's 745 characters set to fourteen lines, so a text of that length is
+ * the case.
+ */
+test('an About past ten lines shows nine and more ↓, which reaches the editor (§33)', async ({ page }) => {
   const suffix = makeSuffix();
   const id = await aRecord(page, suffix);
+  const long = `${suffix} ` + 'A sentence about the record that goes on for a while and then some more. '.repeat(10);
+  await getTestDb().execute(sql`UPDATE records SET snippet = ${long} WHERE id = ${id}::uuid`);
+  /*
+    **At the frame's reference width.** The clamp is measured against the
+    cell the page draws: below the 1440 fork the lower frame is one column
+    and this same text sets to four lines in a 1242px cell, so nothing
+    clamps -- correctly. Playwright's default viewport is 1280.
+  */
+  await page.setViewportSize({ width: GRID_FORK, height: NO_SCROLL_HEIGHT });
   await page.goto(`/records/${id}`);
   await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
+  await page.waitForTimeout(600);
 
-  const frame = page.getByTestId('record-page-8a');
-  await expect(frame.getByText('Add entry', { exact: true }), 'no trigger in the frame').toHaveCount(0);
-  await expect(frame.getByRole('button', { name: 'Save entry' }), 'no form in the frame').toHaveCount(0);
-  await expect(
-    page.locator('[data-section="journal"]').getByRole('button', { name: 'Save entry' }),
-    'the form stays in the section',
-  ).toHaveCount(1);
-  await expect(page.locator('main').getByText('Add entry', { exact: true })).toHaveCount(0);
+  const about = page.getByTestId('record-page-8a').locator('[data-field="about"]');
+  /* Presence, not value: the attribute is a boolean marker written as an empty string. */
+  await expect(about).toHaveAttribute('data-clamped');
+  const m = await about.evaluate((el) => ({ lines: Math.round(el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight)), clamp: getComputedStyle(el).webkitLineClamp }));
+  expect(m.lines, 'nine visible lines').toBe(9);
+  expect(m.clamp).toBe('9');
+
+  const more = page.getByTestId('record-page-8a').locator('[data-field="about-more"]');
+  await expect(more).toHaveText('more ↓');
+  await expect(more).toHaveAttribute('href', '#snippet');
+  await more.click();
+  await expect(page).toHaveURL(/#snippet$/);
+  await expect(page.locator('#snippet')).toBeInViewport();
 });
 
 test('the frame counts the images and links to their editor', async ({ page }) => {

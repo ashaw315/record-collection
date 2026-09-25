@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ARTIST_OF_TITLE, TITLE_STEPS, STEP_GAP, artistStep, titleStep } from './title-steps';
+import { ARTIST_OF_TITLE, MAX_LINES, TITLE_STEPS, STEP_GAP, artistStep, titleStep } from './title-steps';
 
 /**
  * §33: "The title takes the largest display step that fits. The steps are 72,
@@ -28,18 +28,36 @@ describe('§33: the title takes the largest step that fits', () => {
   });
 
   /**
-   * §33's own worked example: "Loss Of Life, estimated from the capture: 144
-   * fails by about 15px, so it takes 120 over two lines, with about 68px of
-   * gap."
+   * **§33 amended the ladder: three lines, not two.** "The title takes the
+   * largest step whose demand, with 24px of gap, is within the cell's supply,
+   * set in at most three lines. Height is the constraint the band exists for;
+   * the line count is a legibility ceiling, not a preference."
+   *
+   * The two-line rule is withdrawn within §33 (33/two-line-ladder): it
+   * "maximised type subject to a line count and minimised nothing", so a
+   * three-line title fell to 72 and kept 167px of slack. §33 now expects Loss
+   * Of Life at 144 in three lines, since Code measured 144 as fitting on
+   * height and refused it on line count alone.
    */
-  it('takes 120 for Loss Of Life, because 144 does not fit', () => {
+  it('takes 144 for Loss Of Life, which fits on height in three lines (§33 amended)', () => {
     const chosen = titleStep({
-      /* Two lines at 144 would exceed the supply by ~15px; at 120 it fits. */
-      linesAt: (step) => (step >= 144 ? 2 : step >= 96 ? 2 : 1),
-      demandAt: (step) => (step >= 144 ? 480 : step >= 120 ? 380 : 300),
-      supply: 465,
+      /* Measured: 144 sets to three lines at the 412 measure; 120 to two. */
+      linesAt: (step) => (step >= 144 ? 3 : step >= 96 ? 2 : 1),
+      /* Measured: at 144 the cell has 59px to spare, so 24px of gap is within supply. */
+      demandAt: (step) => (step >= 144 ? 546 - 59 - 24 : step >= 120 ? 546 - 118.4 - 24 : 300),
+      supply: 546,
     });
-    expect(chosen).toBe(120);
+    expect(chosen).toBe(144);
+  });
+
+  it('refuses a step that sets in four lines, however much height there is', () => {
+    const chosen = titleStep({
+      linesAt: (step) => (step >= 144 ? 4 : 3),
+      demandAt: () => 200,
+      supply: 546,
+    });
+    expect(chosen, 'four lines exceeds the legibility ceiling; 120 is the largest at three').toBe(120);
+    expect(MAX_LINES).toBe(3);
   });
 
   /** §33: "The five-line worst title stays at 72." */

@@ -163,12 +163,20 @@ describe('the heading uses the shared label treatment', () => {
     expect(html, 'the sans heading face is gone').not.toMatch(/font-heading/);
   });
 
-  it('renders the same content and controls as before the swap', () => {
-    // The change was a className; anything else moving is a defect.
+  /*
+    **§33 dropped the text from this row, and this test followed.** It
+    asserted the About's text rendered here beside the controls; §33: "The
+    lower About row keeps its controls and drops its text: it is the About's
+    editor... an editor does not need to repeat what the frame shows." The
+    label and the controls are what survive.
+  */
+  it('keeps its label and controls, and no longer repeats the About (§33)', () => {
     const html = render();
 
     expect(html).toContain('About this record');
-    expect(html).toContain('A note.');
+    expect(html, 'the About is read in the frame, not here').not.toContain('A note.');
+    expect(html, 'the text testid is gone with the text').not.toContain('snippet-text');
     expect(html).toMatch(/<button/);
+    expect(html, 'the editor control stays').toContain('snippet-edit');
   });
 });
