@@ -212,8 +212,66 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
             cell shrink-wrap, so demand equalled supply exactly and the
             genres collapse could not tell 45px of slack from 2px over.
           */
-          [data-band] { grid-template-columns: 1fr !important; }
-          [data-band] > [data-cell] { grid-column: 1 / -1 !important; }
+          /*
+            **Columns are set per band, by name -- the same rule §28 states
+            for height.** The first fork collapsed EVERY band to one column
+            through the shared [data-band] selector, so the record band's
+            provenance cell came out 1000 × 72 under a 112px mark, and the
+            still and sleeve were hidden rather than wrapped. Measured on
+            Adam's own server at 1000: provenanceArc in front of the
+            PROVENANCE label and the condition line on every record.
+
+            **The identity band wraps (§28, step 20).** "The upper cells keep
+            their size and wrap in order... At 8 columns, the first two cells
+            sit side by side and the third takes a second row, with 480 of
+            air beside it. At 4 columns the three cells stack. Below 480
+            there is one fluid column." Each row keeps the band's 547; the
+            band is as tall as its rows. The air beside the third cell
+            carries "the lower region's first figure and the tint field" --
+            that move is not built here; the slot is empty.
+
+            **The record band stays one column below the fork, and that is
+            not a ruling.** §28 rules this band's HEIGHT below 1440 and not
+            its cells' grouping. Two arrangements were measured: its
+            twelve-column spans on fluid columns cut the 72px year from 480
+            to 1439 (the year cell is 2/12 of the page, 130px inside its
+            padding at 1000, against a 172px figure); one column leaves the
+            provenance cell 72-92px tall under §5.1's 112px arc, which then
+            sits in front of the PROVENANCE label on every record. One
+            column keeps §18 ("clipping a fact is never the answer"); the
+            arc is reported by the sweep's known-failing test until Design
+            rules a grouping.
+          */
+          [data-band="identity"] { grid-template-columns: repeat(2, ${GRID_FORK / 3}px) !important; grid-auto-rows: ${BANDS.identity}px; height: auto !important; }
+          [data-band="identity"] > [data-cell] { grid-column: span 1 !important; }
+          [data-band="record"] { grid-template-columns: 1fr !important; }
+          [data-band="record"] > [data-cell] { grid-column: 1 / -1 !important; }
+          @media (max-width: 959px) {
+            [data-band="identity"] { grid-template-columns: ${GRID_FORK / 3}px !important; }
+          }
+          @media (max-width: 479px) {
+            [data-band="identity"] { grid-template-columns: 1fr !important; grid-auto-rows: auto; }
+            /*
+              **One fluid column: the two fitted cells scale with it.** §28:
+              the construction "draws at (W - 48) / 432 of fitted scale";
+              §33: the cover is "the largest square its cell holds". Both
+              cells are laid out in 480-wide pixels, so each keeps its 480
+              proportions and is drawn at the column's share of 480 -- the
+              still through its SVG's own fit inside the cell's aspect, the
+              sleeve through a scaled wrapper, since its marks are placed in
+              pixels. Before this the sleeve cell had no height in a fluid
+              column and its bar and block landed in the record band.
+            */
+            [data-cell="still"] { aspect-ratio: ${GRID_FORK / 3} / ${BANDS.identity}; }
+            [data-cell="sleeve"] { aspect-ratio: ${GRID_FORK / 3} / ${BANDS.identity}; }
+            /*
+              A ratio of two lengths as a NUMBER: scale() takes a number, and
+              calc(100vw / 480) is a length, so the first draft of this rule
+              was invalid and silently dropped (measured: transform none at
+              390). tan(atan2(a, b)) is a / b typed as a number.
+            */
+            [data-cell="sleeve"] > [data-scale] { transform: scale(tan(atan2(100vw, ${GRID_FORK / 3}px))); }
+          }
           /*
             **§28, step 31: below 1440 the record band has no fixed height.**
             "§2.1's 300 is the twelve-column figure, stated for 1440 × 900,
@@ -233,7 +291,6 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
           [data-band="record"] { height: auto !important; }
           [data-band="record"] > [data-cell] { min-height: 0; }
           [data-band="section"] > * { grid-column: 1 / -1 !important; }
-          [data-cell="still"], [data-cell="sleeve"] { display: none; }
           [data-track="content"] { width: min(${CONTENT_MEASURE}px, 100vw - ${CELL_PADDING * 2}px); }
         }
 
@@ -423,7 +480,7 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
             const barAlong = along * STRIP_SPLIT.bar;
 
             return (
-              <>
+              <div data-scale="" className="absolute left-0 top-0 origin-top-left" style={{ width: cell.width, height: cell.height }}>
                 {record.coverUrl === null ? (
                   /* §5.3: a frame at paper luminance at the square's exact size, never a filled rectangle. */
                   <div
@@ -464,7 +521,7 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
                       : { left: strip.x, top: strip.y + barAlong, width: strip.width, height: along - barAlong, background: INK }
                   }
                 />
-              </>
+              </div>
             );
           })()}
         </div>
