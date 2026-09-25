@@ -214,6 +214,24 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
           */
           [data-band] { grid-template-columns: 1fr !important; }
           [data-band] > [data-cell] { grid-column: 1 / -1 !important; }
+          /*
+            **§28, step 31: below 1440 the record band has no fixed height.**
+            "§2.1's 300 is the twelve-column figure, stated for 1440 × 900,
+            and it holds only there. At every width from 480 to 1439 the band
+            is as tall as its rows, and each row is as tall as its tallest
+            cell's content plus that cell's own padding." Measured before
+            this rule: five cells stacked into 300px at 59.8 each, the 72px
+            year overflowing by 9.3, the About by 39.2, the Images foot by
+            83.2 into the region.
+
+            **Set per band, by name.** §28: "Height is set per band, never
+            through a selector shared by bands — the defect reached the 300
+            through a shared [data-band] rule that did not know which band it
+            was sizing." The identity band keeps its 547 here, as §28 rules
+            for 480 to 1439; only the record band is released.
+          */
+          [data-band="record"] { height: auto !important; }
+          [data-band="record"] > [data-cell] { min-height: 0; }
           [data-band="section"] > * { grid-column: 1 / -1 !important; }
           [data-cell="still"], [data-cell="sleeve"] { display: none; }
           [data-track="content"] { width: min(${CONTENT_MEASURE}px, 100vw - ${CELL_PADDING * 2}px); }

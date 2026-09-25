@@ -51,6 +51,7 @@ const GOVERNED = [
   'e2e/page-fills-viewport.spec.ts',
   'e2e/title-ladder-33.spec.ts',
   'e2e/layout-sweep.spec.ts',
+  'e2e/capture/breakpoints.capture.ts',
   'e2e/capture/about-lines.capture.ts',
   'e2e/capture/step29.capture.ts',
   'e2e/record-detail.spec.ts',

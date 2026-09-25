@@ -121,48 +121,40 @@ test('above the fork, no two boxes intersect and nothing leaves its cell at any 
 });
 
 /**
- * **KNOWN-FAILING against §2.1 below the fork, pinned at what is measured.**
+ * **Below the fork, clean at every width — step 31, §28.**
  *
- * The record band's 300 is 1440's budget, and no section rules the band's
- * height below 1440: §18 turns the columns into one, §28 rules the identity
- * band's height and the region's rows, §2.1 states the 300 for 1440 × 900.
- * The build applied the identity band's fixed height to the record band by
- * the `[data-band]` selector. That is a ruling for Design -- what the record
- * band does in one column -- so this pins the measured interim rather than
- * asserting it clean: the same three fields escape and nothing else, at
- * every width from 480 to 1439. A new overlap fails now; the fix, when
- * ruled, turns this red for being unexpectedly clean.
+ * §28: "Below 1440 the record band has no fixed height. §2.1's 300 is the
+ * twelve-column figure, stated for 1440 × 900, and it holds only there. At
+ * every width from 480 to 1439 the band is as tall as its rows, and each row
+ * is as tall as its tallest cell's content plus that cell's own padding...
+ * Height is set per band, never through a selector shared by bands... And
+ * the widths between the references are tested: a sweep from 390 to 1920
+ * asserts no cell's content escapes its box."
+ *
+ * This replaced BELOW-FORK-KNOWN-BROKEN, which pinned the record band at
+ * 1440's 300px in one column with three fields escaping. It was watched red
+ * against that state before the build changed.
  */
-test('BELOW-FORK-KNOWN-BROKEN: the record band keeps 1440’s 300px in one column and three fields escape — green here means STILL BROKEN in exactly these ways, not clean', async ({ page }) => {
+test('below the fork, no two boxes intersect and nothing leaves its cell at any width (§28, step 31)', async ({ page }) => {
   test.setTimeout(600_000);
   await login(page);
   const id = await seedRich(page);
   await page.setViewportSize({ width: GRID_FORK, height: NO_SCROLL_HEIGHT });
   await page.goto(`/records/${id}`);
   await expect(page.locator('[data-field="eyebrow"]')).toBeVisible();
-  /* 750, not 900: the repo guard reads a bare 900 in a record-screen spec as NO_SCROLL_HEIGHT typed inline. */
   await page.waitForTimeout(750);
-  const KNOWN_ESCAPES = ['field=year', 'field=about', 'field=image-count'];
-  const KNOWN_PAIRS = ['field=image-count ∩ mark=section-bar', 'field=about ∩ mark=section-bar'];
-  const unexpected: string[] = [];
+  const bad: string[] = [];
   let checked = 0;
-  for (const w of sweepWidths(480, GRID_FORK - 1)) {
+  let sawAutoBand = false;
+  for (const w of sweepWidths(390, GRID_FORK - 1)) {
     await page.setViewportSize({ width: w, height: NO_SCROLL_HEIGHT });
     await page.waitForTimeout(w % 6 === 0 ? 120 : 400);
     const m = await page.evaluate(MEASURE);
     checked += 1;
-    expect(m.cols.lower, `${w}: the record band is one column`).toBe(1);
-    expect(m.lowerH, `${w}: and keeps 1440’s ${BANDS.record}`).toBe(BANDS.record);
-    const escaped = m.escapes.map((e) => e.split(' leaves ')[0]);
-    for (const e of escaped) if (!KNOWN_ESCAPES.includes(e)) unexpected.push(`${w}: NEW escape ${e}`);
-    for (const p of m.pairs) if (!KNOWN_PAIRS.includes(p)) unexpected.push(`${w}: NEW pair ${p}`);
-    if (escaped.length === 0) unexpected.push(`${w}: CLEAN — the interim state has changed; if the record band was ruled and built, promote this to the clean assertion`);
-    /* Printed on EVERY run, so a pass is never read as a clean layout. */
-    if (w === 1439 || w === 960 || w === 480) {
-      console.log(`  BELOW-FORK-KNOWN-BROKEN at ${w}: record band ${m.cols.lower} column, ${m.lowerH}px; ` + (m.escapes.length ? m.escapes.join('; ') : 'no escapes') + (m.pairs.length ? '; pairs: ' + m.pairs.join(', ') : ''));
-    }
+    if (m.lowerH !== null && m.lowerH !== BANDS.record) sawAutoBand = true;
+    if (m.pairs.length > 0 || m.escapes.length > 0) bad.push(`${w}: record band ${m.cols.lower} col ${m.lowerH}px — ${[...m.pairs, ...m.escapes].join(' | ')}`);
   }
-  console.log('  BELOW-FORK-KNOWN-BROKEN: this test is GREEN because the layout is still broken in exactly the pinned ways. It is not a clean layout.');
-  expect(checked).toBeGreaterThan(100);
-  expect(unexpected, `changes to the pinned state:\n  ${unexpected.slice(0, 10).join('\n  ')}`).toEqual([]);
+  expect(checked, 'widths measured').toBeGreaterThan(100);
+  expect(sawAutoBand, 'the record band is sized by its rows below the fork, not held at 1440’s 300').toBe(true);
+  expect(bad, `widths with an intersection or an escape:\n  ${bad.slice(0, 10).join('\n  ')}${bad.length > 10 ? `\n  … ${bad.length} in all` : ''}`).toEqual([]);
 });
