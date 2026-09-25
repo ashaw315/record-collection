@@ -30,6 +30,7 @@ const FILES = {
   L: 'Record Detail 8a - build target.dc.html',
   S: 'Record Detail 8a - settled 1-10.dc.html',
   W: 'Wall and Pull - build target.dc.html',
+  D: 'WITHDRAWALS.md',
 };
 
 /** Spec: decode these two entities before any text comparison. */
@@ -44,7 +45,7 @@ const read = (key) => {
   return decode(readFileSync(path, 'utf8'));
 };
 
-const src = { H: read('H'), L: read('L'), S: read('S'), W: read('W') };
+const src = { H: read('H'), L: read('L'), S: read('S'), W: read('W'), D: read('D') };
 
 /**
  * Headings of one target file — delegated to `design-target-parser.mjs`, the
@@ -198,64 +199,103 @@ const report = (n, ok) => console.log(`${ok ? 'PASS' : 'FAIL'} ${n}`);
 }
 
 /* The declared withdrawal marks, and the reader's note's list. */
-/** Every mark in a section, as `{ by, id }` -- the id is the list entry it pairs with. */
-const WITHDRAWN_IN = (html) =>
-  [...html.matchAll(/<span data-withdrawn-by="([^"]+)"(?:\s+data-withdrawal="([^"]*)")?/g)].map((m) => ({
-    by: m[1],
-    id: m[2],
-  }));
-const listMatch = /<!--\s*reader-note-withdrawals\s*(\[[\s\S]*?\])\s*-->/.exec(src.L);
+/**
+ * The withdrawal list, from `WITHDRAWALS.md`'s machine-readable block.
+ *
+ * **Nothing in the targets marks a withdrawal.** A mark written into a target
+ * did not survive its export: across eleven exports the targets carried no
+ * withdrawal attribute and no `<span>` at all, so every "re-applied" mark set
+ * was a rebuild that the next Design drop destroyed. Each entry now quotes its
+ * withdrawal sentence verbatim and the quote is what is checked.
+ */
+const listMatch = /<!--\s*machine-readable:\s*(\[[\s\S]*?\])\s*-->/.exec(src.D);
 const withdrawals = listMatch === null ? [] : JSON.parse(listMatch[1]);
 
-/*
-  6 and 7 pair each list entry with exactly one mark, by the entry's id.
+/** A section's text, normalised the one way the spec defines. */
+const textOf = (id) => {
+  const h = byId.get(id);
+  return h === undefined ? null : collapse(stripTags(h.html));
+};
 
-  **The id is Design's, carried in the list, and never derived here.** Both
-  assertions read only `data-withdrawn-by` until now, which made them set
-  membership: "does §26 contain a mark saying 26" is satisfied by one mark
-  however many entries the list holds. §26 has two self-withdrawals, and
-  deleting either left both green at exit 0 -- confirmed by mutation, the
-  second time with the deletion verified against a pristine copy because the
-  first attempt silently never landed and printed the same green.
-*/
+/**
+ * Spec: "A withdrawal sentence in `L` or `S` begins with one of these
+ * prefixes, as the first text of a `<strong>` run outside a heading."
+ */
+const WITHDRAWAL_PREFIX =
+  /^(Withdrawn by §|Withdrawn in part by §|Withdrawn in whole by §|Withdrawn within §|Superseded by §|Superseded in part by §)/;
 
-/* 6. Every listed withdrawal is marked where it happened. */
+/* 6. Every entry's quote is in its section, exactly once, with no overlaps. */
 {
   const before = failures.length;
 
-  /* The list's own uniqueness rule, which is where Design put it. */
-  const seen = new Map();
-  for (const e of withdrawals) seen.set(e.id, (seen.get(e.id) ?? 0) + 1);
-  for (const [id, n] of seen) if (n > 1) fail(`6 duplicate-id ${id}`);
+  if (withdrawals.length === 0) fail('6 empty');
 
+  const seenIds = new Map();
+  for (const e of withdrawals) seenIds.set(e.id, (seenIds.get(e.id) ?? 0) + 1);
+  for (const [id, n] of seenIds) if (n > 1) fail(`6 duplicate-id ${id}`);
+
+  /* Where each quote sits, per section, so overlaps can be found. */
+  const spans = new Map();
   for (const e of withdrawals) {
-    const h = byId.get(e.s);
-    const marks = h === undefined ? [] : WITHDRAWN_IN(h.html);
-    const hit = marks.filter((mk) => mk.id === e.id);
-    if (hit.length === 0) fail(`6 ${e.id} missing`);
-    else if (!hit.some((mk) => mk.by === e.by)) fail(`6 ${e.id} by-mismatch`);
+    const text = textOf(e.s);
+    if (text === null) { fail(`6 ${e.id} quote-missing`); continue; }
+    const quote = collapse(e.quote);
+    const first = text.indexOf(quote);
+    if (first === -1) { fail(`6 ${e.id} quote-missing`); continue; }
+    if (text.indexOf(quote, first + 1) !== -1) { fail(`6 ${e.id} quote-repeated`); continue; }
+    if (!spans.has(e.s)) spans.set(e.s, []);
+    spans.get(e.s).push({ id: e.id, start: first, end: first + quote.length });
   }
+
+  /*
+    **Overlapping quotes, which 6 would otherwise pass.** Two entries whose
+    spans share a character each occur exactly once, so every check above is
+    satisfied -- and the defect then surfaces in 8a as a removed count falling
+    short of the entry count, reported against a section as though an entry
+    were missing. Named where it happens instead.
+  */
+  for (const [s, list] of spans) {
+    const sorted = [...list].sort((a, b) => a.start - b.start);
+    for (let i = 1; i < sorted.length; i += 1) {
+      if (sorted[i].start < sorted[i - 1].end) {
+        fail(`6 §${s} quote-overlap ${sorted[i - 1].id},${sorted[i].id}`);
+      }
+    }
+  }
+
+  console.log(`     6: ${withdrawals.length} entries checked`);
   report(6, failures.length === before);
 }
 
-/* 7. Every marked withdrawal is listed, and each id is used by one element. */
+/* 7. Every declared withdrawal sentence is quoted. */
 {
   const before = failures.length;
-  const byIdEntry = new Map(withdrawals.map((e) => [e.id, e]));
-  const uses = new Map();
+  let declared = 0;
 
   for (const h of ALL) {
     if (h.id.startsWith('W')) continue;
-    for (const mk of WITHDRAWN_IN(h.html)) {
-      const e = mk.id === undefined ? undefined : byIdEntry.get(mk.id);
-      if (e === undefined) { fail(`7 §${h.id} unlisted`); continue; }
-      if (e.s !== h.id || e.by !== mk.by) fail(`7 ${mk.id} wrong-section`);
-      uses.set(mk.id, (uses.get(mk.id) ?? 0) + 1);
+    /*
+      Withdrawal sentences are the first text of a `<strong>` run, so the runs
+      are read rather than the section's whole text -- a sentence beginning
+      mid-paragraph cannot be found by splitting on full stops, because the
+      prose uses `§28.` and `0.78` freely.
+    */
+    for (const run of h.html.matchAll(/<strong[^>]*>([\s\S]*?)<\/strong>/g)) {
+      const text = collapse(stripTags(run[1]));
+      if (!WITHDRAWAL_PREFIX.test(text)) continue;
+      declared += 1;
+      const quoted = withdrawals.some(
+        (e) => e.s === h.id && collapse(e.quote).startsWith(text.slice(0, Math.min(text.length, 40))),
+      );
+      if (!quoted) fail(`7 §${h.id} unquoted "${text.slice(0, 60)}"`);
     }
   }
-  for (const [id, n] of uses) if (n > 1) fail(`7 ${id} used-twice`);
+
+  if (declared === 0) fail('7 empty');
+  console.log(`     7: ${declared} declared withdrawal sentences`);
   report(7, failures.length === before);
 }
+
 
 /* 8. Figures in rows. */
 {
@@ -271,15 +311,46 @@ const withdrawals = listMatch === null ? [] : JSON.parse(listMatch[1]);
       .replace(/\b\d{1,2}[a-z]\b/g, ' ');
   const FIGURE = /\d+(?:\.\d+)?%?(?:\s?[×x]\s?\d+(?:\.\d+)?)?/g;
 
+  /*
+    **Live text is the section's text with every entry's quote removed**, and
+    the removal is COUNTED. Spec: "Assert, per section, that the number of
+    quotes removed equals the number of entries for it, so a section with
+    nothing removed is known to have nothing listed rather than assumed."
+
+    That count is the fix for a vacuous pass. Before the quote scheme, 8a read
+    a section with zero marks as wholly live and passed on every row; nothing
+    in its output distinguished "this section has no withdrawals" from "the
+    marking was destroyed".
+  */
+  let removedTotal = 0;
+  const live = (id, html) => {
+    let text = collapse(stripTags(html));
+    const entries = withdrawals.filter((e) => e.s === id);
+    let removed = 0;
+    for (const e of entries) {
+      const quote = collapse(e.quote);
+      if (text.includes(quote)) {
+        text = text.replace(quote, ' ');
+        removed += 1;
+      }
+    }
+    if (removed !== entries.length) {
+      fail(`8a §${id} removed=${removed} entries=${entries.length}`);
+    }
+    removedTotal += removed;
+    return collapse(text);
+  };
+
   for (const r of governs) {
     const h = byId.get(r.id);
     if (h === undefined) continue;
-    const hay = liveText(h.html).replace(/\s+/g, '');
+    const hay = live(r.id, h.html).replace(/\s+/g, '');
     const missing = [...strip(`${r.title}|${r.pointer}`).matchAll(FIGURE)]
       .map((m) => m[0].replace(/\s+/g, ''))
       .filter((n) => !hay.includes(n));
     if (missing.length > 0) fail(`8a §${r.id} missing=${[...new Set(missing)].join(',')}`);
   }
+  console.log(`     8a: ${governs.length} rows, ${removedTotal} quotes removed from live text`);
   report('8a', failures.length === beforeA);
 
   const beforeB = failures.length;

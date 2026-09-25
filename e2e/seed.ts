@@ -213,3 +213,57 @@ export async function seedMatchCandidate(options: {
 
   return { importedId, localId };
 }
+
+/**
+ * Creates a record with a CHOSEN id, so a capture can be asked for a named one.
+ *
+ * **Why this exists.** A construction depends only on its record's id (§5.1),
+ * so the record that gains most under §33 cannot be photographed without a row
+ * carrying that id -- and every capture this session used hand-typed specimen
+ * data instead, which is how an invented five-line title reached a report as a
+ * build defect. §27 rules that fixtures derive from the collection's measured
+ * extremes; naming a real record is what makes that possible for a capture.
+ *
+ * **Set at INSERT, never rewritten.** An existing record's id cannot be
+ * UPDATEd: `images`, `price_history`, `journal_entries`, `record_genres`,
+ * `record_tags` and `want_list` all carry a foreign key to `records.id` and
+ * Postgres refuses -- "violates foreign key constraint
+ * images_record_id_records_id_fk", measured. Copying the row under the new key
+ * first fails too, on the primary key. So the id is chosen up front, which
+ * needs no key rewriting at all.
+ *
+ * The API cannot do this and should not: a client naming its own primary key
+ * is a hazard everywhere except a fixture. This is the test-only path.
+ */
+export async function seedRecordWithId(input: {
+  id: string;
+  artistId: string;
+  title: string;
+  labelId?: string;
+  pressingId?: string;
+  formatId?: string;
+  releaseYear?: number;
+  genreIds?: readonly string[];
+}): Promise<string> {
+  const db = getTestDb();
+
+  await db.execute(sql`
+    INSERT INTO records (id, artist_id, title, label_id, pressing_id, format_id, release_year)
+    VALUES (
+      ${input.id}::uuid,
+      ${input.artistId}::uuid,
+      ${input.title},
+      ${input.labelId ?? null}::uuid,
+      ${input.pressingId ?? null}::uuid,
+      ${input.formatId ?? null}::uuid,
+      ${input.releaseYear ?? null}
+    )`);
+
+  for (const genreId of input.genreIds ?? []) {
+    await db.execute(
+      sql`INSERT INTO record_genres (record_id, genre_id) VALUES (${input.id}::uuid, ${genreId}::uuid)`,
+    );
+  }
+
+  return input.id;
+}

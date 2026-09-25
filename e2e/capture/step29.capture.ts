@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { getTestDb } from '../../test/helpers/db';
 import { sql } from 'drizzle-orm';
-import { seedImage } from '../seed';
+import { seedImage, seedRecordWithId } from '../seed';
 import { trackArtist } from '../cleanup';
 import { NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/band-geometry';
 
@@ -128,7 +128,16 @@ test('capture §33: three records at 1440', async ({ page }) => {
     worse in a capture: a suffixed artist renders on the screenshot and Adam
     judges type he will never ship.
   */
-  const seed = async ({ title, artistName }: { title: string; artistName: string }) => {
+  const seed = async ({
+    title,
+    artistName,
+    id: wantedId,
+  }: {
+    title: string;
+    artistName: string;
+    /** A real record's id, so its construction is the one that record draws. */
+    id?: string;
+  }) => {
     const artist = await findOrCreate('/api/artists', { name: artistName });
     trackArtist(artist.id as string);
     const label = await findOrCreate('/api/labels', { name: 'Mom + Pop' });
@@ -145,16 +154,36 @@ test('capture §33: three records at 1440', async ({ page }) => {
     for (const name of ['Electronic', 'Indie Pop', 'Indie Rock', 'Pop', 'Psychedelic Rock', 'Rock']) {
       genreIds.push((await findOrCreate('/api/genres', { name })).id);
     }
-    const record = await post('/api/records', {
-      title,
-      artistId: artist.id,
-      labelId: label.id,
-      pressingId: pressing.id,
-      formatId: format.id,
-      genreIds,
-      releaseYear: 2024,
-    });
-    const id = record.id as string;
+    let id: string;
+    if (wantedId === undefined) {
+      const record = await post('/api/records', {
+        title,
+        artistId: artist.id,
+        labelId: label.id,
+        pressingId: pressing.id,
+        formatId: format.id,
+        genreIds,
+        releaseYear: 2024,
+      });
+      id = record.id as string;
+    } else {
+      /*
+        **Named, so the construction is that record's own.** A drawing is a
+        function of its id alone, so photographing the record that gains most
+        under §33 means a row carrying its id -- which the API cannot give and
+        an UPDATE cannot reach, four foreign keys refusing it.
+      */
+      id = await seedRecordWithId({
+        id: wantedId,
+        artistId: artist.id as string,
+        title,
+        labelId: label.id as string,
+        pressingId: pressing.id as string,
+        formatId: format.id as string,
+        releaseYear: 2024,
+        genreIds,
+      });
+    }
 
 
     /*
@@ -213,8 +242,18 @@ test('capture §33: three records at 1440', async ({ page }) => {
     name: 'worst-title-five-lines',
   });
 
+  /* 3. The drawing that grows most under §33 -- now seeded by its real id. */
+  shots.push({
+    id: await seed({
+      title: 'Music Has The Right To Children',
+      artistName: 'Boards Of Canada',
+      id: BIGGEST_GAIN_ID,
+    }),
+    name: 'biggest-gain-1.644x',
+  });
+
   /*
-    3. The drawing that grows most under §33 is `158a3163…c724` at 1.396x,
+    (superseded note) The drawing that grows most under §33 is `158a3163…c724`,
     and a construction depends only on its id -- so it cannot be seeded into
     a fresh record without rewriting `records.id`, which four foreign keys
     refuse. The construction SHEET draws every record's still from its own

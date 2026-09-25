@@ -40,7 +40,24 @@ export const HEADING = () =>
  */
 export const withoutSvg = (s) => s.replace(/<svg[\s\S]*?<\/svg>/g, ' ');
 
-export const stripTags = (s) => s.replace(/<[^>]+>/g, ' ');
+/**
+ * Spec, "Tag stripping, which is not one rule":
+ *
+ * > Inline tags — `strong`, `em`, `code`, `a`, `span`, `b`, `i`, `sup`, `sub`
+ * > — are removed to the EMPTY STRING. Every other tag becomes a single
+ * > space.
+ *
+ * **The choice decides a pass.** Mapping inline tags to a space makes
+ * `26/first-wording-of-placement` read `a pair in air , because` — the prose
+ * closes an `<em>` mid-sentence — and its quote scores zero occurrences. To
+ * empty, all 27 quotes match. The same file yields both results.
+ */
+const INLINE = new Set(['strong', 'em', 'code', 'a', 'span', 'b', 'i', 'sup', 'sub']);
+
+export const stripTags = (s) =>
+  s.replace(/<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/g, (_tag, name) =>
+    INLINE.has(name.toLowerCase()) ? '' : ' ',
+  );
 export const collapse = (s) => s.replace(/\s+/g, ' ').trim();
 
 /** Decode the two entities the spec names, before any text comparison. */
