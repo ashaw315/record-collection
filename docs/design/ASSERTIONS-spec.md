@@ -11,7 +11,7 @@ Implement these as one script (suggested: `scripts/check-index.mjs`) and run it 
 | Key | File |
 |---|---|
 | `H` | `HANDOFF-wall-and-pull.md` |
-| `L` | `Record Detail 8a - build target.dc.html` (live, §12–§32) |
+| `L` | `Record Detail 8a - build target.dc.html` (live, §12–§33) |
 | `S` | `Record Detail 8a - settled 1-10.dc.html` (closed, §1–§10) |
 | `W` | `Wall and Pull - build target.dc.html` (§W, §W.1–§W.N) |
 | `D` | `WITHDRAWALS.md` (the withdrawal list) |
