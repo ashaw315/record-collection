@@ -34,11 +34,32 @@ In `W`, a bare numeric id is prefixed `W.`.
 
 **Build order.** The text between `## Build order` and `## Maintaining`. A **step** is a line matching `^\d+\. `. The **closing paragraph** is the one containing `Every row in the table above`.
 
-**Withdrawal list.** In `D`, the JSON array in the `<!-- machine-readable: […] -->` comment. Each entry is `{"id", "s", "by", "what", "quote"}`. `id` is `s/slug` and is unique across the list; `quote` is verbatim text from section `s`. **Nothing in `L`, `S` or `W` marks a withdrawal.** The list lives only in `D`, because a mark written into a target did not survive its export: across eleven exports, the targets carried no withdrawal attribute and no `<span>` at all.
+**Withdrawal list.** In `D`, the bulleted entries, and only them. Design ships `D` with no comment; the file ends at its last entry. **Nothing in `L`, `S` or `W` marks a withdrawal.** The list lives only in `D`, because a mark written into a target did not survive its export: across eleven exports, the targets carried no withdrawal attribute and no `<span>` at all.
 
-**Declared withdrawal sentence.** A withdrawal sentence in `L` or `S` begins with one of these prefixes, as the first text of a `<strong>` run outside a heading: `Withdrawn by §`, `Withdrawn in part by §`, `Withdrawn in whole by §`, `Withdrawn within §`, `Superseded by §`, `Superseded in part by §`. The prefixes are the author's contract, not a guess: Claude begins every withdrawal sentence with one, and a withdrawal phrased any other way is a defect in the prose.
+**The bullet grammar.** The source of truth, so it is stated rather than assumed — a parser written from memory matched 0 of 33 bullets and derived an empty comment without a word.
+
+```
+- **`ID`**: §S, withdrawn by §BY. WHAT
+  > QUOTE
+```
+
+- `ID` is `S/slug`, in backticks inside the bold, unique across the list.
+- `S` and `BY` are section ids: `\d{1,2}(\.\d+)?` or `W(\.\d+)*`.
+- `WHAT` runs from the character after the by-clause's own `. ` to the end of the line and is carried **verbatim** into the entry: its capital, its trailing period, any colon or inner period, and apostrophes straight or curly as written. No assertion reads `WHAT`; it is for people.
+- `QUOTE` is the whole of the next line after `> `, verbatim; it is what 6 and 7 compare, so it is never normalised.
+- A line beginning `- ` that does not match, or a bullet with no `> ` line after it, **fails the parse loudly** with its line number. An entry is never dropped silently.
+
+Test cases, all of which the grammar must yield unchanged: `31/whole` (a colon and a comma inside `WHAT`), `33/journal-first` (a colon and a curly apostrophe inside `WHAT`), `26/0-78-scale` (a period inside `WHAT`, `0.78`), and `33/three-line-cap` (a straight apostrophe where four other entries use a curly one).
+
+**The machine-readable comment is derived, never authored.** Claude authors only the bulleted entries; `scripts/derive-withdrawals.mjs` rewrites the `<!-- machine-readable: […] -->` comment from them and is idempotent, so it is run first after every drop. The script reads the bullets as the list and **ignores a shipped comment**; assertion 6 fails `6 comment-stale` when the comment in the file disagrees with the bullets, so a hand edit to the comment, or a stale one shipped with a drop, is named rather than trusted. **Why:** the comment is one line of about 8KB of JSON that nobody can read to confirm their own edit, so any claim about it is a report from memory — and one round's report said two entries were fixed while the old comment had been written back unchanged.
+
+**Tag stripping, which is not one rule.** "Tags stripped" decides a pass on its own, so it is stated exactly. **Inline tags — `strong`, `em`, `code`, `a`, `span`, `b`, `i`, `sup`, `sub` — are removed to the EMPTY STRING. Every other tag becomes a single space.** Then whitespace collapses. Measured on this corpus: with inline tags mapped to a space, `26/first-wording-of-placement` reads `a pair in air , because` and its quote scores zero; mapped to empty, every quote matches.
+
+**Declared withdrawal sentence.** A withdrawal sentence in `L` or `S` **starts at a declared prefix that begins a sentence inside a `<strong>` run outside a heading — the run's first text, or the text after a sentence end within the run — and runs to its own sentence end** — the first `. `, `? ` or `! ` after the prefix, or the end of its paragraph. **A run of bold text is not a sentence boundary in either direction:** the sentence may continue past `</strong>`, and one run may hold more than one sentence. (Design flattened nested bold by merging runs, which moved `33/three-line-cap`'s prefix off its run's start; the quote still equals the sentence.) The prefixes: `Withdrawn by §`, `Withdrawn in part by §`, `Withdrawn in whole by §`, `Withdrawn within §`, `Superseded by §`, `Superseded in part by §`. They are the author's contract, not a guess: Claude begins every withdrawal sentence with one, and a withdrawal phrased any other way is a defect in the prose. (An earlier reading, "the strong run is the sentence", fails nine of thirty-two on this corpus; this one is what the corpus already satisfies, once two two-sentence quotes were re-cut to one.)
 
 **Live text** is a section's text with every entry's `quote` for that section removed.
+
+**Known limit: a whole-section withdrawal removes one sentence, not the section.** An entry quotes a sentence, so withdrawing a section "in whole" leaves the rest of its body in live text. §31 is withdrawn in whole and most of it is live — correct for a section kept as a record, but it means 8a checks such a section's row figures against retired reasoning. §31's row carries no figures, so nothing is wrong today.
 
 **Stripping for assertion 8.** Remove, in order:
 1. Section references: `§W\.\d+(\.\d+)?`, `§W\b`, `§\d+(\.\d+)?`
@@ -68,11 +89,13 @@ Each prints `PASS n` or `FAIL n` followed by one line per offender, then the scr
    Fail: `5 §ID title="…" heading="…"`.
 
 6. **Every entry's quote is in its section.** For each entry, `quote` occurs exactly once in section `s`'s text (tags stripped, entities decoded, whitespace collapsed). Ids are unique. **The list is non-empty and every entry is checked:** print the count, and fail if it is zero.
-   Fail: `6 empty`, `6 duplicate-id ID`, `6 ID quote-missing`, or `6 ID quote-repeated`.
+   **No two quotes for the same section may overlap in its text.** Two entries whose spans share a character each occur exactly once, so the rest of 6 passes and the defect surfaces later as 8a's removed-count falling short. Catch it where it happens.
+   **The comment matches the bullets.** The derived JSON must equal the comment in the file, byte for byte after whitespace is collapsed.
+   Fail: `6 empty`, `6 duplicate-id ID`, `6 ID quote-missing`, `6 ID quote-repeated`, `6 §SEC quote-overlap ID,ID`, or `6 comment-stale`.
    A rewritten withdrawal sentence fails here and names its entry. That is intended: re-quote it in the same edit.
 
-7. **Every declared withdrawal sentence is quoted.** Every declared withdrawal sentence in `L` or `S` must begin some entry's `quote`, with that entry's `s` the sentence's section. **Assert the count of declared sentences is non-zero** and print it.
-   Fail: `7 empty`, or `7 §SEC unquoted "first 60 chars"`.
+7. **Every declared withdrawal sentence is an entry, one to one.** Each declared sentence in `L` or `S` — from its prefix to its own sentence end, as defined above — must **equal in full** the `quote` of exactly one entry whose `s` is the sentence's section, and each entry with a prefixed quote must equal exactly one declared sentence. Not a prefix and not a slice: a 40-character slice let 7 pass with an entry deleted, because `4.2/track-minimum` and `4.2/two-track` share their first 40 characters. An entry whose quote carries no prefix (`26/first-wording-of-placement`) is outside 7 by design and is checked by 6 alone. **Assert the count of declared sentences is non-zero** and print it beside the entry count.
+   Fail: `7 empty`, `7 §SEC unquoted "sentence"`, `7 ID matches-none`, `7 ID matches-many N`, or `7 §SEC quoted-twice "sentence"`.
    A section may withdraw its own wording: `s` equal to `by` is valid.
    **What 7 cannot check:** that the text after the prefix names what is withdrawn. That is the author's contract, and a sentence that passes 7 while naming nothing is a defect in the prose.
 

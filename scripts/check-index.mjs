@@ -12,6 +12,7 @@
  * at the assertions they belong to.
  */
 import { readFileSync, existsSync } from 'node:fs';
+import { parseBullets, serialize, shippedComment } from './withdrawals.mjs';
 import {
   collapse,
   decodeEntities,
@@ -208,8 +209,13 @@ const report = (n, ok) => console.log(`${ok ? 'PASS' : 'FAIL'} ${n}`);
  * was a rebuild that the next Design drop destroyed. Each entry now quotes its
  * withdrawal sentence verbatim and the quote is what is checked.
  */
-const listMatch = /<!--\s*machine-readable:\s*(\[[\s\S]*?\])\s*-->/.exec(src.D);
-const withdrawals = listMatch === null ? [] : JSON.parse(listMatch[1]);
+const withdrawals = parseBullets(src.D);
+/*
+  The shipped comment is IGNORED as a source and compared as a claim: the
+  bullets are what Claude authors and can read back; the comment is derived.
+*/
+const shipped = shippedComment(src.D);
+const commentStale = shipped === null || collapse(shipped) !== collapse(serialize(withdrawals));
 
 /** A section's text, normalised the one way the spec defines. */
 const textOf = (id) => {
@@ -263,39 +269,85 @@ const WITHDRAWAL_PREFIX =
     }
   }
 
+  if (commentStale) fail('6 comment-stale (run scripts/derive-withdrawals.mjs)');
+
   console.log(`     6: ${withdrawals.length} entries checked`);
   report(6, failures.length === before);
 }
 
-/* 7. Every declared withdrawal sentence is quoted. */
+/* 7. Every declared withdrawal sentence is an entry, one to one. */
 {
   const before = failures.length;
-  let declared = 0;
 
+  /*
+    Spec: a declared sentence "starts at a declared prefix, as the first text
+    of a <strong> run outside a heading, and runs to its own sentence end --
+    the first `. `, `? ` or `! ` after the prefix, or the end of its
+    paragraph. A run of bold text is not a sentence boundary."
+
+    So the paragraph's plain text is what is sliced, and the strong run only
+    says where a sentence STARTS. Matching is on the whole sentence, one to
+    one -- a 40-character slice once let 7 pass with an entry deleted.
+  */
+  const sentences = [];
   for (const h of ALL) {
     if (h.id.startsWith('W')) continue;
-    /*
-      Withdrawal sentences are the first text of a `<strong>` run, so the runs
-      are read rather than the section's whole text -- a sentence beginning
-      mid-paragraph cannot be found by splitting on full stops, because the
-      prose uses `§28.` and `0.78` freely.
-    */
-    for (const run of h.html.matchAll(/<strong[^>]*>([\s\S]*?)<\/strong>/g)) {
-      const text = collapse(stripTags(run[1]));
-      if (!WITHDRAWAL_PREFIX.test(text)) continue;
-      declared += 1;
-      const quoted = withdrawals.some(
-        (e) => e.s === h.id && collapse(e.quote).startsWith(text.slice(0, Math.min(text.length, 40))),
-      );
-      if (!quoted) fail(`7 §${h.id} unquoted "${text.slice(0, 60)}"`);
+    for (const para of h.html.matchAll(/<p\b[^>]*>([\s\S]*?)<\/p>/g)) {
+      const inner = para[1];
+      const plain = collapse(stripTags(inner));
+      for (const run of inner.matchAll(/<strong[^>]*>([\s\S]*?)<\/strong>/g)) {
+        const runText = collapse(stripTags(run[1]));
+        /*
+          **A prefix that BEGINS A SENTENCE inside the run, not only the
+          run's first text.** Design flattened its nested bold by merging
+          runs, so `33/three-line-cap`'s sentence now sits mid-run after
+          "…is within the supply." -- with an unchanged quote that equals
+          its sentence exactly. Bold is not a sentence boundary in either
+          direction: the sentence may run past </strong>, and a run may hold
+          more than one sentence.
+        */
+        const starts = [];
+        if (WITHDRAWAL_PREFIX.test(runText)) starts.push(0);
+        for (const b of runText.matchAll(/[.!?] (?=\S)/g)) {
+          if (WITHDRAWAL_PREFIX.test(runText.slice(b.index + 2))) starts.push(b.index + 2);
+        }
+        for (const at of starts) {
+          const head = runText.slice(at, at + Math.min(60, runText.length - at));
+          const start = plain.indexOf(head);
+          if (start === -1) continue;
+          const rest = plain.slice(start);
+          const end = /[.!?](?=\s|$)/.exec(rest);
+          const sentence = end === null ? rest : rest.slice(0, end.index + 1);
+          sentences.push({ section: h.id, sentence });
+        }
+      }
     }
   }
+  if (sentences.length === 0) fail('7 empty');
 
-  if (declared === 0) fail('7 empty');
-  console.log(`     7: ${declared} declared withdrawal sentences`);
+  /* One to one, both directions. */
+  const byKey = new Map();
+  for (const s of sentences) {
+    const key = `${s.section}\u0000${s.sentence}`;
+    byKey.set(key, (byKey.get(key) ?? 0) + 1);
+  }
+  for (const [key, n] of byKey) {
+    if (n > 1) { const [sec, sent] = key.split('\u0000'); fail(`7 §${sec} quoted-twice "${sent.slice(0, 60)}"`); }
+  }
+  for (const s of sentences) {
+    const matches = withdrawals.filter((e) => e.s === s.section && collapse(e.quote) === s.sentence);
+    if (matches.length === 0) fail(`7 §${s.section} unquoted "${s.sentence.slice(0, 60)}"`);
+  }
+  for (const e of withdrawals) {
+    if (!WITHDRAWAL_PREFIX.test(collapse(e.quote))) continue; /* outside 7 by design; 6 checks it */
+    const n = sentences.filter((s) => s.section === e.s && s.sentence === collapse(e.quote)).length;
+    if (n === 0) fail(`7 ${e.id} matches-none`);
+    else if (n > 1) fail(`7 ${e.id} matches-many ${n}`);
+  }
+
+  console.log(`     7: ${sentences.length} declared withdrawal sentences against ${withdrawals.length} entries`);
   report(7, failures.length === before);
 }
-
 
 /* 8. Figures in rows. */
 {
