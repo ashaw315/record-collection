@@ -282,6 +282,18 @@ test('an About past ten lines shows nine and more ↓, which reaches the editor 
   await page.waitForTimeout(600);
 
   const about = page.getByTestId('record-page-8a').locator('[data-field="about"]');
+  /*
+    **The measuring copy is the paragraph's width.** It spanned the cell's
+    padding once, 358 against 322, and counted ten lines where the page drew
+    eleven; a probe that is not the element measures something else.
+  */
+  const widths = await page.evaluate(() => {
+    const cell = document.querySelector('[data-cell="note"]') as HTMLElement;
+    const p = cell.querySelector('[data-field="about"]') as HTMLElement;
+    const probe = cell.querySelector('p[aria-hidden="true"]') as HTMLElement;
+    return { paragraph: p.getBoundingClientRect().width, probe: probe.getBoundingClientRect().width };
+  });
+  expect(widths.probe, `the probe (${widths.probe}) measures on the paragraph's own width (${widths.paragraph})`).toBeCloseTo(widths.paragraph, 0);
   /* Presence, not value: the attribute is a boolean marker written as an empty string. */
   await expect(about).toHaveAttribute('data-clamped');
   const m = await about.evaluate((el) => ({ lines: Math.round(el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight)), clamp: getComputedStyle(el).webkitLineClamp }));

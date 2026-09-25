@@ -28,12 +28,24 @@ import { LABEL } from './grid-type';
  */
 export function AboutCell({ text }: { text: string }) {
   const probe = useRef<HTMLParagraphElement>(null);
+  const real = useRef<HTMLParagraphElement>(null);
   const [clamped, setClamped] = useState(text.length > ABOUT_CHAR_BUDGET);
 
   useEffect(() => {
     const el = probe.current;
     if (el === null) return;
     const measure = () => {
+      /*
+        **The probe must be the paragraph's width, not the cell's.** At
+        `left: 0; right: 0` it spanned the cell's padding too -- 358px where
+        the paragraph sets on 322 -- so Bitches Brew measured ten lines in
+        the probe and drew eleven on the page, unclamped, with the Images
+        foot flush to the cell's edge. Same defect as the title probe: a
+        probe that is not the element measures something else. Width is
+        read off the rendered paragraph so the two cannot disagree.
+      */
+      const width = real.current?.getBoundingClientRect().width;
+      if (width !== undefined && width > 0) el.style.width = `${width}px`;
       const lineHeight = parseFloat(getComputedStyle(el).lineHeight);
       const lines = Math.round(el.getBoundingClientRect().height / lineHeight);
       setClamped(lines > ABOUT_LINES);
@@ -47,6 +59,7 @@ export function AboutCell({ text }: { text: string }) {
   return (
     <>
       <p
+        ref={real}
         data-field="about"
         data-clamped={clamped ? '' : undefined}
         className="text-prose mt-[6px]"
@@ -69,7 +82,7 @@ export function AboutCell({ text }: { text: string }) {
         ref={probe}
         aria-hidden="true"
         className="text-prose"
-        style={{ position: 'absolute', visibility: 'hidden', pointerEvents: 'none', left: 0, right: 0, top: 0 }}
+        style={{ position: 'absolute', visibility: 'hidden', pointerEvents: 'none', left: 0, top: 0 }}
       >
         {text}
       </p>
