@@ -133,7 +133,7 @@ test('above the fork, no two boxes intersect and nothing leaves its cell at any 
  * every width from 480 to 1439. A new overlap fails now; the fix, when
  * ruled, turns this red for being unexpectedly clean.
  */
-test('below the fork the record band keeps 1440’s 300px in one column, and exactly three fields escape [KNOWN-FAILING against §2.1]', async ({ page }) => {
+test('BELOW-FORK-KNOWN-BROKEN: the record band keeps 1440’s 300px in one column and three fields escape — green here means STILL BROKEN in exactly these ways, not clean', async ({ page }) => {
   test.setTimeout(600_000);
   await login(page);
   const id = await seedRich(page);
@@ -157,7 +157,12 @@ test('below the fork the record band keeps 1440’s 300px in one column, and exa
     for (const e of escaped) if (!KNOWN_ESCAPES.includes(e)) unexpected.push(`${w}: NEW escape ${e}`);
     for (const p of m.pairs) if (!KNOWN_PAIRS.includes(p)) unexpected.push(`${w}: NEW pair ${p}`);
     if (escaped.length === 0) unexpected.push(`${w}: CLEAN — the interim state has changed; if the record band was ruled and built, promote this to the clean assertion`);
+    /* Printed on EVERY run, so a pass is never read as a clean layout. */
+    if (w === 1439 || w === 960 || w === 480) {
+      console.log(`  BELOW-FORK-KNOWN-BROKEN at ${w}: record band ${m.cols.lower} column, ${m.lowerH}px; ` + (m.escapes.length ? m.escapes.join('; ') : 'no escapes') + (m.pairs.length ? '; pairs: ' + m.pairs.join(', ') : ''));
+    }
   }
+  console.log('  BELOW-FORK-KNOWN-BROKEN: this test is GREEN because the layout is still broken in exactly the pinned ways. It is not a clean layout.');
   expect(checked).toBeGreaterThan(100);
   expect(unexpected, `changes to the pinned state:\n  ${unexpected.slice(0, 10).join('\n  ')}`).toEqual([]);
 });
