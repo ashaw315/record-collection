@@ -4,6 +4,8 @@ Implement these as one script (suggested: `scripts/check-index.mjs`) and run it 
 
 **Read the status directly.** The script is the last command of its invocation, or its status is captured on the next line (`node scripts/check-index.mjs; s=$?`), and CI asserts on that status, not on a pipeline's. An exit code is evidence only if nothing ran after it: a full test run exited 0 with two failures because a shell `echo` followed the test command, and the failures were found only by reading the summary.
 
+**A check that reports nothing has not run.** Every assertion prints what it examined — files, sections, rows, entries — with counts, and fails if a set it quantifies over is empty: an empty set satisfies every universal claim, which is how 7 and 8a once passed on a file with no withdrawal marks at all. The suite that runs this script fails if any named assertion produced no count, and fails if the script was not invoked: a full test run once reported zero failures while this script, never called by it, exited 1. Skipped tests are listed by name; an unnamed skip is a failure.
+
 ## Inputs
 
 | Key | File |
@@ -25,10 +27,6 @@ In `W`, a bare numeric id is prefixed `W.`.
 
 **Section text.** From a heading to the next heading in the same file, tags stripped, whitespace collapsed.
 
-**Tag stripping, which is not one rule.** "Tags stripped" decides a pass on its own, so it is stated exactly. **Inline tags — `strong`, `em`, `code`, `a`, `span`, `b`, `i`, `sup`, `sub` — are removed to the EMPTY STRING. Every other tag becomes a single space.** Then whitespace collapses.
-
-The distinction is load-bearing and was measured on this corpus: with inline tags mapped to a space, `26/first-wording-of-placement` reads `a pair in air , because` — a space before the comma, where the prose closes a `<em>` mid-sentence — and its quote scores zero occurrences. With inline tags mapped to empty, all 27 quotes match. The same file yields both results depending only on this choice, so it belongs here rather than in the script.
-
 **Tables in `H`.**
 - *Governs table*: lines starting `| §` between `## What each subsection governs` and `## Structural sections`.
 - *Pointer table*: lines starting `| §` between `## Structural sections` and `## Build order`.
@@ -41,8 +39,6 @@ The distinction is load-bearing and was measured on this corpus: with inline tag
 **Declared withdrawal sentence.** A withdrawal sentence in `L` or `S` begins with one of these prefixes, as the first text of a `<strong>` run outside a heading: `Withdrawn by §`, `Withdrawn in part by §`, `Withdrawn in whole by §`, `Withdrawn within §`, `Superseded by §`, `Superseded in part by §`. The prefixes are the author's contract, not a guess: Claude begins every withdrawal sentence with one, and a withdrawal phrased any other way is a defect in the prose.
 
 **Live text** is a section's text with every entry's `quote` for that section removed.
-
-**Known limit: a whole-section withdrawal removes one sentence, not the section.** An entry quotes a sentence, so withdrawing a section "in whole" leaves the rest of its body in live text. §31 is withdrawn in whole and most of it is live. That is correct for a section kept as a record — the reasoning stays readable — but it means assertion 8a checks such a section's row figures against retired reasoning. §31's row carries no figures, so nothing is wrong today. If a whole-withdrawn section's row ever gains one, 8a will check it against text the file has retired, and the answer is a whole-section form of entry rather than a change to 8a.
 
 **Stripping for assertion 8.** Remove, in order:
 1. Section references: `§W\.\d+(\.\d+)?`, `§W\b`, `§\d+(\.\d+)?`
@@ -72,13 +68,13 @@ Each prints `PASS n` or `FAIL n` followed by one line per offender, then the scr
    Fail: `5 §ID title="…" heading="…"`.
 
 6. **Every entry's quote is in its section.** For each entry, `quote` occurs exactly once in section `s`'s text (tags stripped, entities decoded, whitespace collapsed). Ids are unique. **The list is non-empty and every entry is checked:** print the count, and fail if it is zero.
-   **No two quotes for the same section may overlap in its text.** Two entries whose spans share a character each occur exactly once, so this assertion passes and the defect surfaces later as 8a's removed-count falling short of the entry count — reported against a section as though an entry were missing. Catch it where it happens.
-   Fail: `6 empty`, `6 duplicate-id ID`, `6 ID quote-missing`, `6 ID quote-repeated`, or `6 §SEC quote-overlap ID,ID`.
+   Fail: `6 empty`, `6 duplicate-id ID`, `6 ID quote-missing`, or `6 ID quote-repeated`.
    A rewritten withdrawal sentence fails here and names its entry. That is intended: re-quote it in the same edit.
 
 7. **Every declared withdrawal sentence is quoted.** Every declared withdrawal sentence in `L` or `S` must begin some entry's `quote`, with that entry's `s` the sentence's section. **Assert the count of declared sentences is non-zero** and print it.
    Fail: `7 empty`, or `7 §SEC unquoted "first 60 chars"`.
    A section may withdraw its own wording: `s` equal to `by` is valid.
+   **What 7 cannot check:** that the text after the prefix names what is withdrawn. That is the author's contract, and a sentence that passes 7 while naming nothing is a defect in the prose.
 
 8. **Figures in rows.**
    - **(a) Live.** (Reads live text as defined above: every entry's quote removed. Assert, per section, that the number of quotes removed equals the number of entries for it, so a section with nothing removed is known to have nothing listed rather than assumed.) For each governs row, strip its columns 2 onward as above, then extract numbers with `\d+(\.\d+)?%?(\s?[×x]\s?\d+(\.\d+)?)?`. Every extracted number (whitespace removed) must occur in the section's live text (whitespace removed).
@@ -88,6 +84,12 @@ Each prints `PASS n` or `FAIL n` followed by one line per offender, then the scr
      **Guard against a vacuous pass:** fail with `8b empty-column §ID` if any governs row's pointer column is empty after stripping. An earlier version of this clause read both tables, so it checked an empty string for every pointer-table row and passed on all of them, and it carried §4.1 on the allow-list for rows it could not see.
      Fail: `8b §ID tokens=…`.
    The allow-list is the only exemption. Do not add a digit-width or magnitude exemption; that was tried and let through `1 : 1` and `2px`.
+
+## Planned: assertion 9
+
+**Not a named assertion yet, so the no-count rule does not reach it and the suite does not run it.** It becomes assertion 9, and moves into the numbered list above, in the round the quoting pass over the build steps lands; until then the spec has eight assertions.
+
+**Every build step quotes its section.** Input: each numbered step in the handoff's build order. Each step carries `> ` a verbatim clause and names one § or §W section; the clause must occur in that section's live text (outside any withdrawn passage, per 8a). Prints the count of steps checked; fails if zero. Fail: `9 STEP no-quote`, `9 STEP not-in-§SEC`. Motivated by three stale steps in one round — 29(a)'s two-line cap and 24px, 29(d)'s "else note", §33's row — that no assertion read.
 
 ## Changing this spec
 
