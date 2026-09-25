@@ -297,7 +297,15 @@ describe('transactions over the Neon serverless driver', () => {
     },
   );
 
-  it.skipIf(!remote || skipRemote !== null)('refuses to run against anything but the configured test branch', () => {
+  /*
+    **Not skipped, because it does not need a branch.** This was
+    `skipIf(!remote)`, which meant it examined nothing on the default local
+    path -- a skip is a green that checked nothing, and this one was hiding a
+    check that runs fine either way: `assertNeonTestBranch` refuses a
+    main-branch URL whether or not a test branch is configured, since an
+    absent `expected` is itself a refusal. Measured by unskipping it.
+  */
+  it('refuses to run against anything but the configured test branch', () => {
     // The guard is exercised here as well as in its own unit test, so that a
     // harness pointed at main fails at setup rather than after writing.
     const main =

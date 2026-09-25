@@ -322,6 +322,17 @@ const WITHDRAWAL_PREFIX =
     in its output distinguished "this section has no withdrawals" from "the
     marking was destroyed".
   */
+  /*
+    **The denominator is what 8a can REACH, not the list's length.**
+
+    8a iterates governs rows, and §1-§10 have pointer rows instead -- so the
+    settled file's eight entries are permanently out of its scope. Printing
+    them in the denominator showed a clean run as 18 against 26, a standing
+    gap of eight that says nothing and trains a reader to ignore the number.
+    The comparison that carries information is removed against in-scope.
+  */
+  const inScopeIds = new Set(governs.map((r) => r.id));
+  const inScope = withdrawals.filter((e) => inScopeIds.has(e.s)).length;
   let removedTotal = 0;
   const live = (id, html) => {
     let text = collapse(stripTags(html));
@@ -350,7 +361,11 @@ const WITHDRAWAL_PREFIX =
       .filter((n) => !hay.includes(n));
     if (missing.length > 0) fail(`8a §${r.id} missing=${[...new Set(missing)].join(',')}`);
   }
-  console.log(`     8a: ${governs.length} rows, ${removedTotal} quotes removed from live text`);
+  console.log(
+    `     8a: ${governs.length} rows, ${removedTotal} of ${inScope} in-scope quotes removed` +
+      ` (${withdrawals.length - inScope} more are in the settled file, which has no governs rows)`,
+  );
+  if (removedTotal !== inScope) fail(`8a removed=${removedTotal} in-scope=${inScope}`);
   report('8a', failures.length === beforeA);
 
   const beforeB = failures.length;

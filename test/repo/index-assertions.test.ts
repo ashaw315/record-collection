@@ -62,6 +62,15 @@ describe('the design index passes its own assertions', () => {
     const count = (label: RegExp) => Number(label.exec(output)?.[1] ?? 0);
     expect(count(/6: (\d+) entries checked/), 'assertion 6 checked entries').toBeGreaterThan(0);
     expect(count(/7: (\d+) declared/), 'assertion 7 found declared sentences').toBeGreaterThan(0);
-    expect(count(/8a: \d+ rows, (\d+) quotes removed/), '8a removed quotes').toBeGreaterThan(0);
+    /*
+      **In-scope, not the list total.** 8a iterates governs rows and §1-§10
+      have pointer rows, so the settled file's eight entries are permanently
+      beyond it; comparing against the list length showed a clean run as a
+      standing shortfall of eight.
+    */
+    const removed = count(/8a: \d+ rows, (\d+) of \d+ in-scope/);
+    const scope = count(/8a: \d+ rows, \d+ of (\d+) in-scope/);
+    expect(removed, '8a removed quotes').toBeGreaterThan(0);
+    expect(removed, 'and removed every quote it could reach').toBe(scope);
   });
 });
