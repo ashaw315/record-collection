@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { TitleStep } from './TitleStep';
 import { GenresRun } from './GenresRun';
 import { LABEL, LABEL_INK } from './grid-type';
 
@@ -147,48 +148,40 @@ export function IdentityCell({
         <div data-field="eyebrow" className={LABEL} style={{ color: LABEL_INK }}>
           Collection
         </div>
-        <h1
-          data-field="title"
-          className={TITLE}
-          /*
-            `balance` evens the lines so a five-line title has no orphan;
-            `hyphens: none` keeps it from breaking words to achieve that.
-            Inline because Tailwind has no utility for `text-wrap: balance`
-            in this version, and the property is the decision.
-          */
-          style={{ textWrap: 'balance', hyphens: 'none' }}
-        >
-          {title}
-        </h1>
         {/*
-          **§4.2's "the break is balanced" applies to the artist too (§12).**
-          The section rules the artist at 40 and says its break is balanced;
-          the build gave the 72 block `text-wrap: balance` and `hyphens: none`
-          and gave this line neither, so a real band name — "Godspeed You!
-          Black Emperor" — ran past the cell and was CUT by §9.2's
-          `overflow: hidden`, 50px at 1100 and more as the cell narrows.
+          **§33's display ladder.** "The title takes the largest display step
+          that fits. The steps are 72, 96, 120 and 144, and the artist line is
+          five-ninths of the title... If 72 does not fit, §4.2's give order
+          runs as now."
 
-          Same treatment as the title, for the same reason and with the same
-          two declarations: balance evens the lines so a two-line artist has
-          no orphan, and `hyphens: none` keeps a name from being broken
-          mid-word to achieve it. A person's name is not a place to hyphenate.
+          The cell was dimensioned for the collection's extreme -- the
+          five-line title -- so an ordinary record set at 72 in a cell built
+          for five lines of it, and §33 reads that as the band being thin:
+          "the returned space becomes type, not gap".
+
+          `TitleStep` chooses by MEASURING, because both of §33's conditions
+          are browser facts: how many lines a string sets to at a size, and
+          how tall the cell's content then is.
         */}
-        <div data-field="artist" className={ARTIST} style={{ textWrap: 'balance', hyphens: 'none' }}>
-          {/*
-            **A LINK, restored for the second time.** The deleted header linked
-            the artist; `RecordGrid` had to put it back and recorded why; 8a
-            dropped it again, and `record-form.spec.ts` caught it — §10 makes
-            "what else do I have by this artist" one click rather than a search.
+        {/*
+          **A LINK, restored for the second time.** The deleted header linked
+          the artist; `RecordGrid` had to put it back and recorded why; 8a
+          dropped it again, and `record-form.spec.ts` caught it — §10 makes
+          "what else do I have by this artist" one click rather than a search.
 
-            Three losses of the same shape in one component's history (this, the
-            genres line, and the grid's own note about the header) is why the
-            capability is asserted by ROLE in the E2E rather than by text: plain
-            text satisfies a text assertion and loses the click.
-          */}
-          <Link href={`/?artistId=${artistId}`} className="underline-offset-2 hover:underline">
-            {artistName}
-          </Link>
-        </div>
+          Three losses of the same shape in one component's history (this, the
+          genres line, and the grid's own note about the header) is why the
+          capability is asserted by ROLE in the E2E rather than by text: plain
+          text satisfies a text assertion and loses the click.
+        */}
+        <TitleStep
+          title={title}
+          artist={
+            <Link href={`/?artistId=${artistId}`} className="underline-offset-2 hover:underline">
+              {artistName}
+            </Link>
+          }
+        />
       </div>
 
       {/*

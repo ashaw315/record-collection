@@ -1,6 +1,8 @@
 import { BANDS, CONTENT_MEASURE, GRID_COLUMN, GRID_COLUMNS, GRID_FORK, IDENTITY_SPANS, LOWER_SPANS, STILL_MARGIN } from './band-geometry';
 import { regionStylesheet, widePageStylesheet } from './region-rows';
 import { CONTROL_HEIGHT } from './extended-grid';
+import { COVER_CELL } from './cover-geometry';
+import { STRIP_SPLIT, coverSquare, leftoverStrip } from './cover-33';
 import { MatrixSolid } from './MatrixSolid';
 import { CELL_PADDING } from './extended-grid';
 import { BAR_BOTTOM, BLOCK_BOTTOM, COVER, COVER_COLUMN, COVER_PAD } from './cover-geometry';
@@ -373,39 +375,76 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
           settle, and it is recorded in `cover-geometry.ts` rather than closed
           here.
         */}
+        {/*
+          **§33: the cover is the largest square its cell holds.**
+
+          "Flush to the cell's top, left and right, and never cropped. At 1440
+          the cell is 480 × 547, so the cover is 480 × 480 and a 67px strip
+          remains beneath it. The column that sat beside the cover rotates
+          into that strip: the base bar and the black block keep their order
+          and proportions, now horizontal."
+
+          This replaces §23's 26 + 414 + 10 + 30 closure of the cell, which
+          sized the cover for a column standing beside it. The square goes
+          414 → 480 and the column lies down.
+        */}
         <div
           data-cell="sleeve"
           className="relative overflow-hidden"
           style={{ gridColumn: `span ${IDENTITY_SPANS[2]}` }}
         >
-          {record.coverUrl === null ? (
-            /* §5.3: a frame at paper luminance at the square's exact size, never a filled rectangle. */
-            <div
-              data-mark="coverFrame"
-              className="absolute"
-              style={{ left: COVER_PAD, top: COVER_PAD, width: COVER, height: COVER, border: `1px solid ${RULE}` }}
-            />
-          ) : (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              data-cover=""
-              src={record.coverUrl}
-              alt=""
-              className="absolute block object-contain"
-              style={{ left: COVER_PAD, top: COVER_PAD, width: COVER, height: COVER }}
-            />
-          )}
-          <div
-            data-mark="sleeveBar"
-            className="absolute right-0"
-            style={{ top: COVER_PAD, width: COVER_COLUMN, height: BAR_BOTTOM - COVER_PAD, background: base }}
-          />
-          {/* Inside the column, below the bar. It anchors the construction (§5.1). */}
-          <div
-            data-mark="sleeveBlock"
-            className="absolute right-0"
-            style={{ top: BAR_BOTTOM, width: COVER_COLUMN, height: BLOCK_BOTTOM - BAR_BOTTOM, background: INK }}
-          />
+          {(() => {
+            const cell = { width: COVER_CELL, height: BANDS.identity };
+            const square = coverSquare(cell);
+            const strip = leftoverStrip(cell);
+            const along = strip.orientation === 'horizontal' ? strip.width : strip.height;
+            const barAlong = along * STRIP_SPLIT.bar;
+
+            return (
+              <>
+                {record.coverUrl === null ? (
+                  /* §5.3: a frame at paper luminance at the square's exact size, never a filled rectangle. */
+                  <div
+                    data-mark="coverFrame"
+                    className="absolute"
+                    style={{ left: square.x, top: square.y, width: square.size, height: square.size, border: `1px solid ${RULE}` }}
+                  />
+                ) : (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    data-cover=""
+                    src={record.coverUrl}
+                    alt=""
+                    className="absolute block object-cover"
+                    style={{ left: square.x, top: square.y, width: square.size, height: square.size }}
+                  />
+                )}
+
+                {/*
+                  The bar and the block, lying in the strip. Order preserved:
+                  the bar leads, as it sat above the block in the column.
+                */}
+                <div
+                  data-mark="sleeveBar"
+                  className="absolute"
+                  style={
+                    strip.orientation === 'horizontal'
+                      ? { left: strip.x, top: strip.y, width: barAlong, height: strip.height, background: base }
+                      : { left: strip.x, top: strip.y, width: strip.width, height: barAlong, background: base }
+                  }
+                />
+                <div
+                  data-mark="sleeveBlock"
+                  className="absolute"
+                  style={
+                    strip.orientation === 'horizontal'
+                      ? { left: strip.x + barAlong, top: strip.y, width: along - barAlong, height: strip.height, background: INK }
+                      : { left: strip.x, top: strip.y + barAlong, width: strip.width, height: along - barAlong, background: INK }
+                  }
+                />
+              </>
+            );
+          })()}
         </div>
       </div>
 
@@ -643,8 +682,45 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
             violated and the section keeps `Save entry`. The journal is reached
             by scrolling to it, not by a control.
           */}
-          <div className={LABEL}>Note</div>
-          {record.note === null ? (
+          {/*
+            **§33 returns the journal to this cell**, reversing the clause
+            above. "The lower frame's last cell carries the journal. It shows
+            the latest entry's date and its text, clamped to four lines, and
+            the Images N Manage → line stays at the cell's foot, where it
+            fits. With no entry the cell shows the owner's note, and with
+            neither, §6's diagonal."
+
+            Three states in a fixed order, so the cell always says the most
+            specific thing it has. §33 names the consequence rather than
+            hiding it: "journal and note are both empty on sixteen of
+            seventeen records today, so the diagonal still fires on most of
+            the collection. That is §8.1's constant-because-unfilled, a state
+            the app expects to leave, not a defect of the cell."
+          */}
+          <div className={LABEL}>{record.journalEntry !== null ? 'Journal' : 'Note'}</div>
+          {record.journalEntry !== null ? (
+            <>
+              <div className={`${LABEL} mt-[6px]`} style={{ color: LABEL_INK }}>
+                {record.journalEntry.entryDate}
+              </div>
+              {/*
+                Clamped to four lines, per §33. `line-clamp` rather than a
+                character cut: the limit is lines on this measure, which only
+                the browser knows, and a cut string would break mid-word.
+              */}
+              <div
+                data-field="journal-entry"
+                className="text-prose mt-[6px] overflow-hidden"
+                style={{
+                  display: '-webkit-box',
+                  WebkitBoxOrient: 'vertical',
+                  WebkitLineClamp: 4,
+                }}
+              >
+                {record.journalEntry.entry}
+              </div>
+            </>
+          ) : record.note === null ? (
             <EmptyMark diagonal="single" />
           ) : (
             <div className="text-prose">{record.note}</div>

@@ -166,8 +166,14 @@ test('capture §33: three records at 1440', async ({ page }) => {
   */
   shots.push({
     id: await seed({
-      title: 'The Return Of The Durutti Column And The Sporadic Recordings Of A Long Winter',
-      artistName: 'The Durutti Column',
+      /*
+        **The collection's actual worst title**, the one §33 says "stays at
+        72" -- not a longer invented one. A title twice its length sets to
+        more lines than any record has and would test a case the collection
+        does not contain.
+      */
+      title: 'On The Radio: Greatest Hits Vol. 1 & 2',
+      artistName: 'Donna Summer',
     }),
     name: 'worst-title-five-lines',
   });

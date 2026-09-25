@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import '../../../../test/component/next-navigation';
 import { RecordPage8a, type PageRecord } from './RecordPage8a';
-import { BAR_BOTTOM, COVER_COLUMN } from './cover-geometry';
+import { COVER_CELL } from './cover-geometry';
+import { BANDS } from './band-geometry';
+import { STRIP_SPLIT, coverSquare, leftoverStrip } from './cover-33';
 
 /**
  * §5.3, the record with no cover: "the fallback is ink for all eight marks
@@ -72,30 +74,62 @@ describe('the release-year field on the record with no cover (§5.3)', () => {
   });
 });
 
-describe('the sleeve block shares the bar’s column (§23)', () => {
+describe('§33: the cover fills its cell and the column lies down', () => {
   /*
-    **§23 put the block in a ruled column, and the two cases collapse into
-    one.** These tests pinned `right-[20px]` without a cover and `right-[10px]`
-    with one — offsets that kept a 46px block clear of a 10px bar, because a
-    block at the viewport's edge read as "a stray ink square belonging to no
-    panel". §23 answers the same complaint by structure: the bar and the block
-    SHARE one 30px column at the cell's right edge, bar above and block below,
-    so the block belongs to the column whether or not there is a cover. The
-    claim survives; the mechanism is the column, not an offset.
+    **§23's column is withdrawn by §33.** These tests pinned the bar and block
+    to a 30px column at the cell's RIGHT edge, both `right-0`, which is what
+    §23 ruled and what let the cover be 414 in a 480 cell.
+
+    §33 rules the cover "the largest square its cell holds, flush to the
+    cell's top, left and right" -- 480 × 480 -- and rotates the column into
+    the 67px strip beneath: "the base bar and the black block keep their order
+    and proportions, now horizontal."
+
+    The claim survives and its mechanism changes, so the test follows the
+    ruling rather than being deleted: the two marks still sit together, still
+    in the bar-then-block order, and still carry the record's colour and ink.
   */
-  it('sits in the shared column below the bar, with or without a cover (§23)', () => {
+  it('lies the bar and block along the strip beneath the cover (§33)', () => {
     for (const coverUrl of [null, 'https://c/x.jpg']) {
       const html = renderToStaticMarkup(<RecordPage8a record={{ ...record(null), coverUrl }} />);
       const block = /<div[^>]*data-mark="sleeveBlock"[^>]*>/.exec(html)?.[0] ?? '';
       const bar = /<div[^>]*data-mark="sleeveBar"[^>]*>/.exec(html)?.[0] ?? '';
       expect(block, `cover=${coverUrl}: the block is drawn`).not.toBe('');
-      /* Both at the cell's right edge, both the column's width. */
-      expect(block, 'block at the right edge').toMatch(/right-0/);
-      expect(bar, 'bar at the right edge').toMatch(/right-0/);
-      expect(block, `block is ${COVER_COLUMN} wide`).toMatch(new RegExp(`width:${COVER_COLUMN}px`));
-      expect(bar, `bar is ${COVER_COLUMN} wide`).toMatch(new RegExp(`width:${COVER_COLUMN}px`));
-      /* Block below bar: its top is the bar's bottom. */
-      expect(block, `block starts at ${BAR_BOTTOM}`).toMatch(new RegExp(`top:${BAR_BOTTOM}px`));
+      expect(bar, `cover=${coverUrl}: the bar is drawn`).not.toBe('');
+
+      /* Both sit at the strip's top, which is the square's foot. */
+      const cell = { width: COVER_CELL, height: BANDS.identity };
+      const strip = leftoverStrip(cell);
+      expect(strip.orientation, 'the leftover falls beneath').toBe('horizontal');
+      expect(bar, `the bar starts at the strip (${strip.y})`).toMatch(new RegExp(`top:${strip.y}px`));
+      expect(block, `the block starts at the strip (${strip.y})`).toMatch(new RegExp(`top:${strip.y}px`));
+
+      /*
+        The bar leads, as it sat above the block in the column.
+
+        **Read back as a number, not matched as a string.** The split is a
+        ratio, so the emitted width is a float — pinning its rendered text
+        would assert React's number formatting rather than §33's proportion.
+      */
+      const barWidth = strip.width * STRIP_SPLIT.bar;
+      const widthOf = (markup: string) => Number(/width:([\d.]+)px/.exec(markup)?.[1] ?? NaN);
+      const leftOf = (markup: string) => Number(/left:([\d.]+)px/.exec(markup)?.[1] ?? NaN);
+
+      expect(widthOf(bar), 'the bar takes its share of the strip').toBeCloseTo(barWidth, 1);
+      expect(leftOf(block), 'and the block follows it').toBeCloseTo(barWidth, 1);
+      expect(widthOf(bar) + widthOf(block), 'together they fill it').toBeCloseTo(strip.width, 1);
     }
+  });
+
+  it('draws the cover at the cell’s full width (§33)', () => {
+    const html = renderToStaticMarkup(
+      <RecordPage8a record={{ ...record(null), coverUrl: 'https://c/x.jpg' }} />,
+    );
+    const cover = /<img[^>]*data-cover[^>]*>/.exec(html)?.[0] ?? '';
+    const square = coverSquare({ width: COVER_CELL, height: BANDS.identity });
+    expect(square.size, 'the largest square the 480 x 547 cell holds').toBe(480);
+    expect(cover, 'the cover is that square').toMatch(new RegExp(`width:${square.size}px`));
+    expect(cover, 'flush to the cell’s left').toMatch(/left:0/);
+    expect(cover, 'flush to the cell’s top').toMatch(/top:0/);
   });
 });
