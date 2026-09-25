@@ -1,3 +1,5 @@
+import { ownFitViewBox } from './own-fit';
+import { slackAlignment } from './own-fit';
 import { construction } from './construction';
 import { recordLadder } from '@/lib/colour/record-ladder';
 
@@ -80,7 +82,30 @@ export function ConstructionStill({
     <svg
       data-testid="construction-still"
       data-record={recordId}
-      viewBox={scene.viewBox}
+      /*
+        **§33: the record's own box, not §31's shared constant.**
+
+        "Each record's drawing is scaled to the smaller of its inner box's
+        width and height over its own forms and disc." A smaller viewBox over
+        the same cell is a larger drawing, so every record's scale rises --
+        measured across the seventeen, from 1.263x to 1.662x.
+
+        §31's constant remains on `scene.viewBox` and is still what the fit
+        check compares against; what it no longer does is set the drawn scale.
+      */
+      viewBox={ownFitViewBox(scene)}
+      /*
+        **§17's offset survives as position.** §33: "It is then placed by the
+        hash within whatever slack the binding dimension leaves... §17's
+        offset is kept where it can be seen, as the drawing's position in its
+        slack."
+
+        `preserveAspectRatio` decides where a drawing sits when its box and
+        its cell disagree in aspect, which is exactly that slack. Centring it
+        (the default, `xMidYMid`) would throw the offset away, so the hash
+        picks the alignment instead.
+      */
+      preserveAspectRatio={slackAlignment(recordId)}
       className="block h-full w-full"
       aria-hidden="true"
     >

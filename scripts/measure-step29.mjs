@@ -11,7 +11,17 @@ const { construction, HASH_ADVANCE_CAP } = await import('../src/app/records/[id]
 const N = 5000;
 const ids = Array.from({ length: N }, (_, i) => `sample-${i}`);
 
-console.log(`\n===== §22's ADVANCE RATE, over ${N} ids =====`);
+/*
+  **These are TWO different gates, and only one of them advances the hash.**
+
+  `constructionWithin`'s loop advances on `fitsFrame` alone -- §31's fit
+  check. §22 never advances anything: it FILTERS the hash's order to the forms
+  large enough to carry colour and takes the first two, and where fewer than
+  two are eligible the record renders quiet. So a "rate" reported for §22 was
+  the fit check's rejection rate wearing the wrong label, and 14.1%/deepest-5
+  describe the gate that retires with the frame.
+*/
+console.log(`\n===== §31's FIT CHECK (retiring), over ${N} ids =====`);
 const advances = [];
 let scaledToFit = 0;
 for (const id of ids) {
@@ -20,24 +30,30 @@ for (const id of ids) {
   if (c.scaledToFit === true) scaledToFit += 1;
 }
 const rejected = advances.filter((a) => a > 0).length;
-const rate = rejected / N;
-const deepest = Math.max(...advances);
+console.log(`  rejection rate : ${((rejected / N) * 100).toFixed(1)}%   (recorded: 14.1%)`);
+console.log(`  deepest advance: ${Math.max(...advances)}            (recorded: 5, cap ${HASH_ADVANCE_CAP})`);
+console.log(`  scaled to fit  : ${scaledToFit} of ${N}   <- the fallback has never fired`);
 
-console.log(`  advance rate : ${(rate * 100).toFixed(1)}%   (was 14.1%)`);
-console.log(`  deepest      : ${deepest}            (was 5, cap ${HASH_ADVANCE_CAP})`);
-console.log(`  ids rejected : ${rejected} of ${N}`);
-console.log(`  scaledToFit  : ${scaledToFit} of ${N}`);
-
-const histogram = new Map();
-for (const a of advances) histogram.set(a, (histogram.get(a) ?? 0) + 1);
-console.log('  distribution :');
-for (const [a, n] of [...histogram.entries()].sort((p, q) => p[0] - q[0])) {
-  console.log(`      ${String(a).padStart(2)} advance(s): ${String(n).padStart(5)}  ${((n / N) * 100).toFixed(2)}%`);
+console.log(`\n===== §22's COLOUR ELIGIBILITY (the gate that survives), over ${N} ids =====`);
+console.log('  §22 is a FILTER, not an advance: it has no rate of its own.');
+let quiet = 0;
+const eligibleCounts = new Map();
+for (const id of ids) {
+  const c = construction(id);
+  if (c.quiet === true) quiet += 1;
+  const carriers = c.forms.filter((f) => f.faces.some((x) => x.step === 'base')).length;
+  eligibleCounts.set(carriers, (eligibleCounts.get(carriers) ?? 0) + 1);
+}
+console.log(`  quiet records  : ${quiet} of ${N}  (${((quiet / N) * 100).toFixed(2)}%)  -- fewer than two eligible forms`);
+console.log('  colour-carrying forms per record:');
+for (const [n, count] of [...eligibleCounts.entries()].sort((a, b) => a[0] - b[0])) {
+  console.log(`      ${n} form(s): ${String(count).padStart(5)}  ${((count / N) * 100).toFixed(2)}%`);
 }
 
 /* ---- §5.5's floor on the extremes fixture, at §33's per-record scale ---- */
 
 const { REAL_RECORD_IDS } = await import('../src/app/records/[id]/real-records.ts');
+const { ownFitViewBox } = await import('../src/app/records/[id]/own-fit.ts');
 const { BANDS, GRID_COLUMNS, IDENTITY_SPANS, NO_SCROLL_HEIGHT, STILL_MARGIN } = await import(
   '../src/app/records/[id]/band-geometry.ts'
 );
@@ -70,31 +86,18 @@ const sharedScale = (id) => {
  * inner box's width and height over its OWN forms and disc, capped at 1.5
  * times the scale the shared frame gave."
  */
-/** §33's fit BEFORE the cap, so the cap's effect can be seen. */
-const uncappedScale = (id) => {
-  const scene = construction(id);
-  const xs = [], ys = [];
-  for (const form of scene.forms)
-    for (const face of form.faces)
-      for (const [x, y] of face.points) { xs.push(x); ys.push(y); }
-  if (xs.length === 0) return sharedScale(id);
-  const w = Math.max(...xs) - Math.min(...xs);
-  const h = Math.max(...ys) - Math.min(...ys);
+/**
+ * §33's fit, from THE SHIPPING IMPLEMENTATION rather than re-derived here.
+ * A measurement script that recomputes the rule measures its own copy of it,
+ * which is how a build and its check drift apart while both look right.
+ */
+const ownFitScale = (id) => {
+  const [, , w, h] = ownFitViewBox(construction(id)).split(' ').map(Number);
   return Math.min(CELL_W / w, CELL_H / h);
 };
 
-const ownScale = (id) => {
-  const scene = construction(id);
-  const xs = [], ys = [];
-  for (const form of scene.forms)
-    for (const face of form.faces)
-      for (const [x, y] of face.points) { xs.push(x); ys.push(y); }
-  if (xs.length === 0) return sharedScale(id);
-  const w = Math.max(...xs) - Math.min(...xs);
-  const h = Math.max(...ys) - Math.min(...ys);
-  const fit = Math.min(CELL_W / w, CELL_H / h);
-  return Math.min(fit, sharedScale(id) * CAP);
-};
+/* **The cap is gone**, so the record's own fit IS its scale. */
+const ownScale = ownFitScale;
 
 const fractionAt = (id, scale) => {
   const scene = construction(id);
@@ -119,10 +122,9 @@ const rows = REAL_RECORD_IDS.map((id) => {
     ownScale: own,
     shared: fractionAt(id, shared),
     own: fractionAt(id, own),
-    capped: own >= shared * CAP - 1e-9,
+    capped: false,
     gain: own / shared,
-    /* What the record would take if 1.5 did not stop it -- the cap's real cost. */
-    uncappedGain: uncappedScale(id) / shared,
+    uncappedGain: own / shared,
   };
 });
 
@@ -145,7 +147,7 @@ const ownStat = stat('own');
 
 console.log(`\n===== §5.5's FLOOR on the extremes fixture (${rows.length} records) =====`);
 console.log(`  1440 x ${NO_SCROLL_HEIGHT}, inner box ${CELL_W} x ${CELL_H}, base-step face area over the page.`);
-console.log(`  §33 scales each record to its OWN forms, capped at ${CAP}x the shared frame's scale.\n`);
+console.log(`  §33 scales each record to its OWN forms. The 1.5x cap is WITHDRAWN.\n`);
 console.log('  id              shared       §33       gain   scale(shared -> own)');
 for (const r of ownStat.sorted) {
   console.log(
@@ -161,16 +163,15 @@ console.log(`\n  §33 PER-RECORD FIT`);
 console.log(`    worst  : ${pct(ownStat.worst)}`);
 console.log(`    median : ${pct(ownStat.median)}`);
 console.log(`    floor  : ${pct(FLOOR)}`);
-console.log(`\n  CAPPED : ${rows.filter((r) => r.capped).length} of ${rows.length} records hit the ${CAP}x cap`);
+console.log(`\n  CAP    : withdrawn — no record is trimmed`);
 const below = ownStat.sorted.filter((r) => r.own < FLOOR);
 console.log(`  BELOW THE FLOOR: ${below.length}${below.length ? ' — ' + below.map((r) => `${r.id} ${pct(r.own)}`).join(', ') : ''}`);
 
-console.log(`\n===== THE 1.5x CAP: per-record scale factors =====`);
-console.log('  Design chose 1.5 without measuring. The distribution, ascending:\n');
+console.log(`\n===== PER-RECORD SCALE FACTORS, cap withdrawn =====`);
 const byGain = [...rows].sort((a, b) => a.gain - b.gain);
 for (const r of byGain) {
   const bar = '#'.repeat(Math.round((r.gain - 1) * 40));
-  console.log(`  ${r.id}  ${r.gain.toFixed(3)}x  ${r.uncappedGain.toFixed(3)}x uncapped  ${bar}${r.capped ? '  <- CAPPED' : ''}`);
+  console.log(`  ${r.id}  ${r.gain.toFixed(3)}x  ${bar}`);
 }
 const gains = byGain.map((r) => r.gain);
 console.log(`\n  min ${gains[0].toFixed(3)}x   median ${gains[Math.floor(gains.length / 2)].toFixed(3)}x   max ${gains[gains.length - 1].toFixed(3)}x`);

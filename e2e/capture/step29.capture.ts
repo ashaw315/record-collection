@@ -1,0 +1,212 @@
+import { test, expect } from '@playwright/test';
+import { getTestDb } from '../../test/helpers/db';
+import { sql } from 'drizzle-orm';
+import { seedImage } from '../seed';
+import { trackArtist } from '../cleanup';
+import { NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/band-geometry';
+
+/**
+ * **§33 rendered, which it has not been.**
+ *
+ * §33 reverses clauses in five sections and withdrew its own 1.5x cap on the
+ * strength of one screenshot, and none of it has been drawn: the title steps,
+ * the per-record construction fit, the cover flush to its cell, the journal in
+ * the last cell, the resized matrix solid and the whole-row rules.
+ *
+ * Three records, because each shows something the others cannot:
+ *
+ * | record | why |
+ * |---|---|
+ * | Loss Of Life | §33's own worked example — "144 fails by about 15px, so it takes 120 over two lines, with about 68px of gap" |
+ * | the five-line worst title | the case that stays at 72, where the give order runs and nothing steps up |
+ * | the biggest gain, 1.396x | the drawing that grows most, which nobody has considered and is the likeliest to look wrong |
+ */
+const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
+
+/**
+ * The extremes fixture's largest gain under §33's per-record fit, captured on
+ * the construction sheet — it is an id, and a construction is a function of
+ * its id alone.
+ */
+const BIGGEST_GAIN_ID = '158a3163-6a56-4673-8f88-27e7b2aec724';
+
+/**
+ * How long to let the client-measured marks settle before a shot -- the
+ * construction and the matrix solid both size themselves after paint.
+ *
+ * **750, not 900.** The repo guard reads a bare `900` in a record-screen spec
+ * as `NO_SCROLL_HEIGHT` typed inline, and it is right to: the two meanings
+ * share a number and only one is a viewport. Writing `800 + 100` would slip
+ * past the guard while keeping the collision, which is worse than the thing
+ * the guard is for. A different number is the honest fix, and the wait is a
+ * settle rather than a measured threshold.
+ */
+const SETTLE_MS = 750;
+
+test('capture §33: three records at 1440', async ({ page }) => {
+  test.skip(process.env.CAPTURE !== '1', 'A capture tool: run with CAPTURE=1');
+  test.setTimeout(240_000);
+
+  await page.goto('/login');
+  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
+  await page.getByLabel('Password').pressSequentially(PASSWORD);
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await expect(page).toHaveURL('/');
+
+  /*
+    **The status is checked.** Without it a 400 returns a body with no `id`,
+    every later query interpolates `undefined`, and the failure surfaces as
+    `WHERE id = ::uuid` -- a syntax error naming a statement that is correct,
+    three calls downstream of the one that actually broke.
+  */
+  const post = async (path: string, data: unknown) => {
+    const response = await page.request.post(path, { data });
+    expect(response.status(), `POST ${path}: ${await response.text()}`).toBeLessThan(300);
+    return response.json();
+  };
+
+  /*
+    **Reference rows are shared, so creating one twice is a DUPLICATE, not an
+    error.** The three records share a label, a format and six genres; the
+    second record's POST returns 409 with the existing id, which is the
+    endpoint working as §7 rules. Reusing it is what a real second record on
+    the same label does.
+
+    Without this the first collision returned a body with no `id`, and the
+    failure surfaced three calls later as `WHERE id = ::uuid` -- a syntax
+    error naming a statement that was correct.
+  */
+  const findOrCreate = async (path: string, data: unknown) => {
+    const response = await page.request.post(path, { data });
+    if (response.status() === 409 || response.status() === 200 || response.status() === 201) {
+      const body = await response.json();
+      const id = (body.id ?? body.error?.existingId) as string | undefined;
+      expect(id, `POST ${path} gave no id: ${JSON.stringify(body)}`).toBeTruthy();
+      return { id: id as string };
+    }
+    expect(response.status(), `POST ${path}: ${await response.text()}`).toBeLessThan(300);
+    return response.json();
+  };
+
+  /*
+    **No isolation suffix on anything the page displays** — §27's rule, and
+    worse in a capture: a suffixed artist renders on the screenshot and Adam
+    judges type he will never ship.
+  */
+  const seed = async ({ title, artistName }: { title: string; artistName: string }) => {
+    const artist = await findOrCreate('/api/artists', { name: artistName });
+    trackArtist(artist.id as string);
+    const label = await findOrCreate('/api/labels', { name: 'Mom + Pop' });
+    const pressing = await post('/api/pressings', {
+      catalogNumber: 'MP731',
+      yearPressed: 2024,
+      countryPressed: 'UK, Europe & US',
+      pressingPlant: 'GZ Media',
+      colorVariant: 'Orange [Tangerine]',
+      matrixRunout: '269346E1 1701690 MP731-A JN-H STERLING',
+    });
+    const format = await findOrCreate('/api/formats', { name: 'Vinyl, LP, Album' });
+    const genreIds: string[] = [];
+    for (const name of ['Electronic', 'Indie Pop', 'Indie Rock', 'Pop', 'Psychedelic Rock', 'Rock']) {
+      genreIds.push((await findOrCreate('/api/genres', { name })).id);
+    }
+    const record = await post('/api/records', {
+      title,
+      artistId: artist.id,
+      labelId: label.id,
+      pressingId: pressing.id,
+      formatId: format.id,
+      genreIds,
+      releaseYear: 2024,
+    });
+    const id = record.id as string;
+
+
+    /*
+      **The construction depends only on the id**, so the record that gains
+      most can only be captured by giving the row that id.
+
+      Set BEFORE any child row exists, not by rewriting it afterwards.
+      `images`, `price_history` and the journal all carry a foreign key to
+      `records.id`, so a late UPDATE of the key is refused outright --
+      "violates foreign key constraint images_record_id_records_id_fk" -- and
+      reordering it after the children would orphan them instead.
+    */
+    await seedImage({ recordId: id, imageType: 'cover' });
+    await getTestDb().execute(sql`
+      UPDATE records SET
+        spine_colour = ${'#a25829'},
+        notes = ${'Bought on the Saturday. Sleeve is clean.'},
+        snippet = ${'The record where the machinery starts to sound like a band.'},
+        snippet_edited_at = NOW()
+      WHERE id = ${id}::uuid`);
+    await page.request.post(`/api/records/${id}/journal`, {
+      data: { entryDate: '2026-09-20', note: 'Played it right through. The second side is the one.' },
+    });
+    for (const [price, source] of [['12.99', 'Rough Trade'], ['13.42', 'Discogs']] as const) {
+      const posted = await page.request.post(`/api/records/${id}/prices`, {
+        data: { price, priceType: 'used', source },
+      });
+      expect(posted.status(), `the price seeded: ${await posted.text()}`).toBe(201);
+    }
+    return id;
+  };
+
+  const shots: Array<{ id: string; name: string }> = [];
+
+  /* 1. §33's own worked example. */
+  shots.push({
+    id: await seed({ title: 'Loss Of Life', artistName: 'MGMT' }),
+    name: 'loss-of-life',
+  });
+
+  /*
+    2. The five-line worst title, which §33 says "stays at 72" — the case
+    where no step fits and §4.2's give order runs instead.
+  */
+  shots.push({
+    id: await seed({
+      title: 'The Return Of The Durutti Column And The Sporadic Recordings Of A Long Winter',
+      artistName: 'The Durutti Column',
+    }),
+    name: 'worst-title-five-lines',
+  });
+
+  /*
+    3. The drawing that grows most under §33 is `158a3163…c724` at 1.396x,
+    and a construction depends only on its id -- so it cannot be seeded into
+    a fresh record without rewriting `records.id`, which four foreign keys
+    refuse. The construction SHEET draws every record's still from its own
+    id, so the biggest gainer is captured there, beside the rest for scale.
+  */
+
+  await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
+
+  /*
+    **The construction sheet, where the biggest gainer lives.** Every still is
+    drawn from its record's id at §33's per-record fit, so this is the one
+    view that shows the new scale across the collection rather than on one
+    record -- and `${BIGGEST_GAIN_ID.slice(0, 8)}` is the 1.396x tile.
+  */
+  await page.goto('/wall/probe/sheet');
+  await page.locator('[data-sheet-tile]').first().waitFor({ timeout: 15_000 });
+  await page.waitForTimeout(SETTLE_MS);
+  await page.screenshot({ path: 'docs/captures/step29-construction-sheet-1440.png', fullPage: true });
+
+  for (const shot of shots) {
+    await page.goto(`/records/${shot.id}`);
+    await expect(page.locator('[data-field="eyebrow"]')).toBeVisible();
+    /* The construction and the matrix solid both measure at render. */
+    await page.waitForTimeout(SETTLE_MS);
+
+    await page.screenshot({
+      path: `docs/captures/step29-${shot.name}-1440x${NO_SCROLL_HEIGHT}.png`,
+      fullPage: true,
+    });
+    /* The upper band alone, where the title steps and the cover change. */
+    await page.screenshot({
+      path: `docs/captures/step29-${shot.name}-1440-band.png`,
+      clip: { x: 0, y: 0, width: 1440, height: 640 },
+    });
+  }
+});
