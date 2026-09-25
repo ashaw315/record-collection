@@ -65,7 +65,13 @@ test('an edited snippet is labelled as the user own, not as generated', async ({
 
   await page.goto(`/records/${id}`);
 
-  await expect(page.getByTestId('snippet-text')).toContainText(`My own words ${suffix}`);
+  /*
+    **§33: the lower row "keeps its controls and drops its text".** The edited
+    About is read in the frame's last cell, labelled ABOUT; the row keeps the
+    attribution, which is what this test is about.
+  */
+  await expect(page.getByTestId('record-page-8a').locator('[data-field="about"]')).toContainText(`My own words ${suffix}`);
+  await expect(page.getByTestId('snippet-text'), 'the row no longer repeats the About').toHaveCount(0);
   /*
    * §10b's label, and the direction that matters here: the user wrote this, so
    * attributing it to the model would be the same misattribution as presenting

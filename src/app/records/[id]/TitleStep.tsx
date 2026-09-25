@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { BANDS } from './band-geometry';
 import { MAX_LINES, STEP_GAP, TITLE_STEPS, artistStep, titleStep } from './title-steps';
 
 /**
@@ -30,6 +29,7 @@ export function TitleStep({
 }) {
   const host = useRef<HTMLDivElement>(null);
   const probe = useRef<HTMLHeadingElement>(null);
+  const artistProbe = useRef<HTMLDivElement>(null);
   const real = useRef<HTMLHeadingElement>(null);
   const [probeWidth, setProbeWidth] = useState<number | undefined>(undefined);
   /*
@@ -47,13 +47,6 @@ export function TitleStep({
     if (el === null || measure === null) return;
 
     const choose = () => {
-      /* The measure the title actually sets on. */
-      const titleBox = real.current?.getBoundingClientRect();
-      if (titleBox !== undefined && titleBox.width > 0) {
-        measure.style.width = `${titleBox.width}px`;
-        setProbeWidth(titleBox.width);
-      }
-
       /*
         **The BAND's height, which is a constant, not a measured box.**
 
@@ -69,39 +62,85 @@ export function TitleStep({
         §23 fixes at `BANDS.identity`. A constant cannot be inflated by what
         is measured against it.
       */
-      const cell = el.closest('[data-cell="identity"]');
-      if (cell === null) return;
-
       /*
-        The supply is the cell's own inner height; the demand at a step is
-        everything the cell holds with the title at that size. Measured on a
-        probe that carries the real title text at the real measure, so the
-        line count is the one the browser will actually produce.
-      */
-      const supply = BANDS.identity;
-      const below = el.nextElementSibling?.getBoundingClientRect().height ?? 0;
+        **Supply and demand, measured the way the genres run measures them.**
 
-      /*
-        **The line height is DERIVED from the size, not read back.**
+        Supply was `BANDS.identity`, the band, and demand was the title, the
+        artist and `el.nextElementSibling` -- which is not the pressing block,
+        so `below` read 0 and every step was judged on the type alone. The
+        ladder published its view: at 120 it saw 470 in 547 and chose it, and
+        the cell rendered at 593 with the genres run collapsed.
 
-        `line-height: 0.94` is unitless, so the computed value depends on the
-        font size that is being varied -- reading it back mid-probe gave the
-        ratio against the wrong size and the count came out low. At 144 the
-        title measured 406px and was reported as two lines when it is three,
-        which is exactly the step §33 says fails.
+        Both are now the content track's, as `GenresRun` reads them: supply is
+        the identity-content cell's box less its padding, and demand is the
+        sum of the track's children with this holder's own height replaced by
+        the probes at each step. The run is inside the pressing block, so a
+        step is chosen only where the run still fits expanded -- the ladder
+        can never force the give order; only 72 not fitting can.
       */
+      const cell = el.closest('[data-cell="identity-content"]');
+      const track = el.parentElement;
+      if (!(cell instanceof HTMLElement) || track === null) return;
+      const cellStyle = getComputedStyle(cell);
+      const supply = cell.clientHeight - parseFloat(cellStyle.paddingTop) - parseFloat(cellStyle.paddingBottom);
+      const outer = (child: Element) => {
+        const b = child.getBoundingClientRect();
+        const s = getComputedStyle(child);
+        return b.height + parseFloat(s.marginTop) + parseFloat(s.marginBottom);
+      };
+      const below = Array.from(track.children).filter((child) => child !== el).reduce((sum, child) => sum + outer(child), 0);
+
+      /* The title's measure. */
+      const titleBox = real.current?.getBoundingClientRect();
+      if (titleBox !== undefined && titleBox.width > 0) {
+        measure.style.width = `${titleBox.width}px`;
+        if (artistProbe.current !== null) artistProbe.current.style.width = `${titleBox.width}px`;
+        setProbeWidth(titleBox.width);
+      }
+
+      /* The title's unitless leading; derived from the size, never read back mid-probe. */
       const LINE = 0.94;
       const linesAt = (size: number) => {
         measure.style.fontSize = `${size}px`;
         return Math.round(measure.getBoundingClientRect().height / (size * LINE));
       };
+      /*
+        **The artist is measured too, not assumed to be one line.** The
+        demand counted the artist as `artistStep(size)` -- a single line --
+        so an artist that wraps was under-counted by every line past the
+        first. Measured: an artist that broke at its hyphens into three
+        lines of 80px let the ladder choose 144 for a demand it read as 569
+        and that rendered at 750, in a 547 cell; the genres collapsed and two
+        specs lost the field. A real two-line artist under-counts the same
+        way. §33's demand is what the cell holds, so the artist's rendered
+        height at each step is read off a second probe, sized at its own
+        step, on the same measure.
+      */
+      const artistMeasure = artistProbe.current;
       const demandAt = (size: number) => {
         measure.style.fontSize = `${size}px`;
-        return measure.getBoundingClientRect().height + artistStep(size) + below;
+        let artistHeight = artistStep(size);
+        if (artistMeasure !== null) {
+          artistMeasure.style.fontSize = `${artistStep(size)}px`;
+          artistHeight = artistMeasure.getBoundingClientRect().height;
+        }
+        return measure.getBoundingClientRect().height + artistHeight + below;
       };
 
+      /*
+        **What the ladder measured is published, per step.** A choice made
+        from measurements that cannot be seen afterwards is a choice nobody
+        can check; the E2E reads this back and asserts the chosen step's
+        demand is within supply.
+      */
+      const seen = TITLE_STEPS.map((size) => ({ size, lines: linesAt(size), demand: Math.round(demandAt(size)) }));
       const chosen = titleStep({ linesAt, demandAt, supply });
       measure.style.fontSize = '';
+      if (artistMeasure !== null) artistMeasure.style.fontSize = '';
+      el.setAttribute(
+        'data-ladder',
+        JSON.stringify({ supply, below: Math.round(below), steps: seen, chosen, fonts: document.fonts.status }),
+      );
       setStep(chosen);
     };
 
@@ -135,6 +174,25 @@ export function TitleStep({
           {artist}
         </div>
 
+        {/* The artist's probe: its own step, same measure, never painted. */}
+        <div
+          ref={artistProbe}
+          aria-hidden="true"
+          className="font-extrabold"
+          style={{
+            position: 'absolute',
+            visibility: 'hidden',
+            pointerEvents: 'none',
+            left: 0,
+            top: 0,
+            width: probeWidth,
+            lineHeight: 1,
+            textWrap: 'balance',
+            hyphens: 'none',
+          }}
+        >
+          {artist}
+        </div>
         {/*
           The probe: the same string at the same measure and face, sized in
           turn and never painted. `aria-hidden` and out of flow, so it adds
