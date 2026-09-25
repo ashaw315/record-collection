@@ -278,6 +278,42 @@ test('capture §33: three records at 1440', async ({ page }) => {
     /* The construction and the matrix solid both measure at render. */
     await page.waitForTimeout(SETTLE_MS);
 
+    /*
+      **Measured beside the picture, so the caption is a number and not a
+      reading of the image.** §33's worked example for Loss Of Life: "144
+      fails by about 15px, so it takes 120 over two lines, with about 68px of
+      gap." The step, the line count and the gap are read off the render.
+    */
+    const measured = await page.evaluate(() => {
+      const px = (n: number) => Math.round(n * 10) / 10;
+      const title = document.querySelector('[data-field="title"]') as HTMLElement | null;
+      const artist = document.querySelector('[data-field="artist"]') as HTMLElement | null;
+      const block = document.querySelector('[data-block="pressing"]') as HTMLElement | null;
+      const cell = document.querySelector('[data-cell="identity"]') as HTMLElement | null;
+      if (title === null || artist === null || block === null || cell === null) return null;
+      const size = parseFloat(getComputedStyle(title).fontSize);
+      const t = title.getBoundingClientRect();
+      const a = artist.getBoundingClientRect();
+      const b = block.getBoundingClientRect();
+      const c = cell.getBoundingClientRect();
+      /*
+        The whole y-stack, so "gap" is a named pair of edges and not a chosen
+        one: the artist's foot to the pressing block's head (the 372 hairline
+        is the block's top border), and the block's foot to the cell's.
+      */
+      return {
+        step: size,
+        lines: Math.round(t.height / (size * 0.94)),
+        artist: parseFloat(getComputedStyle(artist).fontSize),
+        artistH: px(a.height),
+        artistFootToHairline: px(b.top - a.bottom),
+        blockH: px(b.height),
+        blockFootToCellFoot: px(c.bottom - b.bottom),
+        cellH: px(c.height),
+      };
+    });
+    console.log(`MEASURED ${shot.name}: ${JSON.stringify(measured)}`);
+
     await page.screenshot({
       path: `docs/captures/step29-${shot.name}-1440x${NO_SCROLL_HEIGHT}.png`,
       fullPage: true,

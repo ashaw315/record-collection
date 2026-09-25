@@ -47,6 +47,7 @@ const GOVERNED = [
   'e2e/capture/colour-budget.capture.ts',
   'e2e/capture/viewport-widths.capture.ts',
   'e2e/row-rules-33.spec.ts',
+  'e2e/row-clip-29h.spec.ts',
   'e2e/capture/step29.capture.ts',
   'e2e/record-detail.spec.ts',
   'e2e/record-form.spec.ts',
