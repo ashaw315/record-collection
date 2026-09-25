@@ -9,17 +9,44 @@ import { NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/band-geometry';
  * **§33 rendered, which it has not been.**
  *
  * §33 reverses clauses in five sections and withdrew its own 1.5x cap on the
- * strength of one screenshot, and none of it has been drawn: the title steps,
+ * strength of one screenshot, and none of it had been drawn: the title steps,
  * the per-record construction fit, the cover flush to its cell, the journal in
  * the last cell, the resized matrix solid and the whole-row rules.
  *
- * Three records, because each shows something the others cannot:
+ * ## Fixture provenance, stated because §27 requires it and nothing enforces it
+ *
+ * §27: fixtures derive from the collection's measured extremes, from one
+ * shared file. `real-records.ts` holds the seventeen IDS and nothing else, so
+ * every displayed FIELD below is hand-entered and traces to a source named
+ * here rather than to that file.
+ *
+ * | what | source | in the shared file? |
+ * |---|---|---|
+ * | `Loss Of Life` / `MGMT` | §33's own worked example | no -- Design-stated |
+ * | `On The Radio: Greatest Hits Vol. 1 & 2` / `Donna Summer` | the collection's worst title, from Adam's capture of the built page | no -- by eye |
+ * | pressing line, matrix string, prices | transcribed from Adam's 1440 x 900 capture | no |
+ * | note, snippet, journal entry | written for this capture | no |
+ * | the 1.396x construction | `REAL_RECORD_IDS` | **yes** |
+ *
+ * **This is the fifth fixture artifact of the session**, after the isolation
+ * suffix rendering on the page, reused pressing data, the dev badge, and the
+ * one-pixel cover reading as an empty cell. The fourth was mine this round: a
+ * five-line title INVENTED at twice the length of any real one, which
+ * overflowed its cell and was reported as a build defect until it was checked
+ * against the pre-change capture. The title above is the collection's actual
+ * worst, and it fits.
+ *
+ * Until §27 is made assertable, the discipline is this table: no displayed
+ * field enters a capture without a named source, and "I typed something
+ * plausible" is not one.
+ *
+ * ## The three records
  *
  * | record | why |
  * |---|---|
- * | Loss Of Life | §33's own worked example — "144 fails by about 15px, so it takes 120 over two lines, with about 68px of gap" |
- * | the five-line worst title | the case that stays at 72, where the give order runs and nothing steps up |
- * | the biggest gain, 1.396x | the drawing that grows most, which nobody has considered and is the likeliest to look wrong |
+ * | Loss Of Life | §33's worked example -- "144 fails by about 15px, so it takes 120 over two lines, with about 68px of gap" |
+ * | the worst title | the case that stays at 72, where the give order runs and nothing steps up |
+ * | the biggest gain, 1.396x | the drawing that grows most, captured on the construction sheet because a construction is a function of its id alone |
  */
 const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 
