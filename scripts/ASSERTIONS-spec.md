@@ -11,7 +11,7 @@ Implement these as one script (suggested: `scripts/check-index.mjs`) and run it 
 | Key | File |
 |---|---|
 | `H` | `HANDOFF-wall-and-pull.md` |
-| `L` | `Record Detail 8a - build target.dc.html` (live, §12–§33) |
+| `L` | `Record Detail 8a - build target.dc.html` (live) |
 | `S` | `Record Detail 8a - settled 1-10.dc.html` (closed, §1–§10) |
 | `W` | `Wall and Pull - build target.dc.html` (§W, §W.1–§W.N) |
 | `D` | `WITHDRAWALS.md` (the withdrawal list) |
@@ -82,7 +82,7 @@ Each prints `PASS n` or `FAIL n` followed by one line per offender, then the scr
 4. **Cross-file references resolve.** In each file, with tags stripped and the renumbering note at the head of `W` excluded:
    - every `§W.N` in `L` or `S` names a heading in `W`;
    - every `§N` with 1 ≤ N ≤ 10 in `L` or `W` names a heading in `S`;
-   - every `§N` with 12 ≤ N ≤ 32 in `S` or `W` names a heading in `L`.
+   - every `§N` with N ≥ 12 in `S` or `W` names a heading in `L`. No upper bound: the live set is `L`'s own headings, and a bound restates them and goes stale each time a section is added (it sat at 32 while §33 and §34 were referenced unchecked).
    Fail: `4 FILE→§REF`.
 
 5. **Each row's subject matches its section.** Take the row title, cut it at the first of `( : ; , —`, lowercase, normalise `’`→`'`, collapse whitespace, keep the first 24 characters. It must occur in the same-normalised heading text plus the first 600 characters of the section text.

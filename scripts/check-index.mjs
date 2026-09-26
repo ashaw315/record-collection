@@ -178,7 +178,7 @@ const report = (n, ok) => console.log(`${ok ? 'PASS' : 'FAIL'} ${n}`);
   for (const key of ['S', 'W']) {
     for (const m of bodyOf(key).matchAll(/§(\d{1,2}(?:\.\d+)?)/g)) {
       const n = Number(m[1].split('.')[0]);
-      if (n >= 12 && n <= 32 && !has(m[1])) fail(`4 ${key}→§${m[1]}`);
+      if (n >= 12 && !has(m[1])) fail(`4 ${key}→§${m[1]}`);
     }
   }
   report(4, failures.length === before);
