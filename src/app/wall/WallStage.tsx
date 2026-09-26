@@ -133,9 +133,15 @@ export function WallStage({
     empty at rest, filled when a record is pulled. A destination does not
     move — so no scrim, no lightness step, no overlap rule, no fork at 820.
   */
+  /*
+    `data-nav` on the chrome: the index the arrows compute from and the
+    length of the order they walk -- an observation hook, because the full
+    chromium run shows a held record with no next at index 6 of a 60-anchor
+    wall and nothing read off the DOM could say what the arrows saw.
+  */
   const panel =
     arrived && summary !== undefined ? (
-      <div data-testid="record-chrome">
+      <div data-testid="record-chrome" data-nav={`${order.indexOf(arriving.id)}/${order.length}`}>
         <RecordPanel
           summary={summary}
           alwaysExpanded
