@@ -70,6 +70,8 @@ Test cases, all of which the grammar must yield unchanged: `31/whole` (a colon a
 
 Each prints `PASS n` or `FAIL n` followed by one line per offender, then the script exits non-zero if any failed.
 
+0. **The spec is the committed spec.** `scripts/ASSERTIONS-spec.md` is tracked and does not differ from `HEAD`. It was overwritten by three of Design's exports while it lived in `docs/design/`; a stray copy now fails by exit code. Fail: `0 spec-untracked PATH` or `0 spec-modified PATH differs from HEAD`.
+
 1. **Every heading has exactly one row.** Collect heading ids from `L`, `S`, `W`. Count rows by id across both tables in `H`.
    Fail on: a heading with 0 or ≥2 rows (`1 §ID rows=K`), and a row with no heading (`1 §ID no-heading`).
 
@@ -91,7 +93,8 @@ Each prints `PASS n` or `FAIL n` followed by one line per offender, then the scr
 6. **Every entry's quote is in its section.** For each entry, `quote` occurs exactly once in section `s`'s text (tags stripped, entities decoded, whitespace collapsed). Ids are unique. **The list is non-empty and every entry is checked:** print the count, and fail if it is zero.
    **No two quotes for the same section may overlap in its text.** Two entries whose spans share a character each occur exactly once, so the rest of 6 passes and the defect surfaces later as 8a's removed-count falling short. Catch it where it happens.
    **The comment matches the bullets.** The derived JSON must equal the comment in the file, byte for byte after whitespace is collapsed.
-   Fail: `6 empty`, `6 duplicate-id ID`, `6 ID quote-missing`, `6 ID quote-repeated`, `6 §SEC quote-overlap ID,ID`, or `6 comment-stale`.
+   **An entry whose section is in none of the inputs fails as absent, not as a missing quote.** Three states -- absent, broken, working -- because a list with a whole file's entries scoped out would satisfy the count guard (`6 empty` catches an empty set; nothing caught a subset). The settled file's nine entries are the motivating case: if `S` were not in the repo they would be the quarter of the list nobody examined.
+   Fail: `6 empty`, `6 duplicate-id ID`, `6 ID section-absent`, `6 ID quote-missing`, `6 ID quote-repeated`, `6 §SEC quote-overlap ID,ID`, or `6 comment-stale`.
    A rewritten withdrawal sentence fails here and names its entry. That is intended: re-quote it in the same edit.
 
 7. **Every declared withdrawal sentence is an entry, one to one.** Each declared sentence in `L` or `S` — from its prefix to its own sentence end, as defined above — must **equal in full** the `quote` of exactly one entry whose `s` is the sentence's section, and each entry with a prefixed quote must equal exactly one declared sentence. Not a prefix and not a slice: a 40-character slice let 7 pass with an entry deleted, because `4.2/track-minimum` and `4.2/two-track` share their first 40 characters. An entry whose quote carries no prefix (`26/first-wording-of-placement`) is outside 7 by design and is checked by 6 alone. **Assert the count of declared sentences is non-zero** and print it beside the entry count.

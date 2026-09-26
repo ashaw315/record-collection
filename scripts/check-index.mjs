@@ -12,6 +12,7 @@
  * at the assertions they belong to.
  */
 import { readFileSync, existsSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { parseBullets, serialize, shippedComment } from './withdrawals.mjs';
 import {
   collapse,
@@ -112,6 +113,21 @@ const fail = (line) => failures.push(line);
   now, so every assertion is PASS or FAIL and every offender is fatal.
 */
 const report = (n, ok) => console.log(`${ok ? 'PASS' : 'FAIL'} ${n}`);
+
+/*
+  0. The spec this script implements is the committed one. It lived in
+  docs/design/ and was overwritten by three exports before it moved beside
+  this script; a stray drop is now an exit code, not something a reader
+  notices. Untracked or differing from HEAD both fail.
+*/
+{
+  const before = failures.length;
+  const spec = 'scripts/ASSERTIONS-spec.md';
+  const tracked = spawnSync('git', ['ls-files', '--error-unmatch', spec], { encoding: 'utf8' });
+  if (tracked.status !== 0) fail(`0 spec-untracked ${spec}`);
+  else if (spawnSync('git', ['diff', '--quiet', 'HEAD', '--', spec], { encoding: 'utf8' }).status !== 0) fail(`0 spec-modified ${spec} differs from HEAD`);
+  report(0, failures.length === before);
+}
 
 /* 1. Every heading has exactly one row. */
 {
@@ -224,8 +240,12 @@ const textOf = (id) => {
 };
 
 /**
- * Spec: "A withdrawal sentence in `L` or `S` begins with one of these
- * prefixes, as the first text of a `<strong>` run outside a heading."
+ * Spec: a withdrawal sentence "starts at a declared prefix that begins a
+ * sentence inside a `<strong>` run outside a heading -- the run's first
+ * text, or the text after a sentence end within the run -- and runs to its
+ * own sentence end." (This comment quoted an older, stricter wording --
+ * "as the first text of a `<strong>` run" -- for a round while the code
+ * below implemented the spec's; the two are one reading now.)
  */
 const WITHDRAWAL_PREFIX =
   /^(Withdrawn by §|Withdrawn in part by §|Withdrawn in whole by §|Withdrawn within §|Superseded by §|Superseded in part by §)/;
@@ -244,7 +264,8 @@ const WITHDRAWAL_PREFIX =
   const spans = new Map();
   for (const e of withdrawals) {
     const text = textOf(e.s);
-    if (text === null) { fail(`6 ${e.id} quote-missing`); continue; }
+    /* Three states: the section is in no input (absent), the quote is not in it (broken), or it is (working). */
+    if (text === null) { fail(`6 ${e.id} section-absent`); continue; }
     const quote = collapse(e.quote);
     const first = text.indexOf(quote);
     if (first === -1) { fail(`6 ${e.id} quote-missing`); continue; }
