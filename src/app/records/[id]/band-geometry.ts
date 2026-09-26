@@ -156,30 +156,13 @@ export function spanWidth(span: number, viewport: number): number {
  */
 export const STILL_MARGIN = 24;
 
-/**
- * §36: from 960 to 1439 the page scales by W/1440 -- unless a content cell's
- * measure breaks its longest label first: "a cell narrows only while its
- * measure holds its longest label on one line. If a label breaks before
- * 960, the scaling band ends at that width and the wrap begins there
- * instead; Code measures where."
- *
- * **Measured 26 Sep on the collection's real rows at 1440, type held at
- * §4.1's sizes.** The LABELS: the year cell's "Released · same year" (152px
- * in a 203px measure) breaks first, at 1440 × 152 / 203 = 1077; next
- * "Matrix / runout" at 808. But the year cell also holds §4.1's 72px
- * FIGURE, "2024", 183.5px wide in the same 203px measure, and §36 holds type
- * while §18 forbids clipping a fact: with the figure held, the cell cuts it
- * below 1440 × 183.5 / 203 ≈ 1302 -- measured at 2px steps on the built
- * page: over by 0.58 at 1298, 0.3 at 1300, fitting from 1302. So the band
- * is 1302 to 1439 until Design rules on the year figure -- step it,
- * re-span the cell, or accept the narrower band -- and §28's wrap begins
- * at 1301. The sweep asserts that nothing in the band is cut and no band
- * label wraps, at this floor and one pixel either side of it, which is the
- * check that fails if this figure is stale.
- */
-export const SCALE_BAND_FLOOR = 1302;
-
-/** §36's scale in the scaling band: the viewport's width over 1440; 1 elsewhere. */
-export function bandScaleAt(viewport: number): number {
-  return viewport >= SCALE_BAND_FLOOR && viewport < GRID_FORK ? viewport / GRID_FORK : 1;
-}
+/*
+  §36's scaling band (960 to 1439, every band length by W/1440) was built
+  and then withdrawn by Design on the measurement that killed it: the year
+  cell's 72px figure "2024" needs 183.5px in a 203px measure and is cut
+  below 1302 with type held, so the band would have been 1302 to 1439 --
+  a second layout for 137px. Stepping the figure is a size below §33's
+  ladder, re-spanning its cell reshapes it. Step 38 reads "no scaling
+  band": §28's wrap and fixed cells stand from 1439 down, and §2.1's 120px
+  column at every width. The floor constant and its scale went with it.
+*/

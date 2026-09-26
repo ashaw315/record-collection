@@ -7,7 +7,6 @@ import { CONTROL_HEIGHT } from '../src/app/records/[id]/extended-grid';
 import { BANDS, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { SLEEVE_CELL } from '../src/app/records/[id]/cover-33';
 import { COLUMN_MIN, columnsFor, columnWidthAt, pageWidthAt, upperRowsAt, upperSpansAt } from '../src/app/records/[id]/region-rows';
-import { SCALE_BAND_FLOOR, bandScaleAt } from '../src/app/records/[id]/band-geometry';
 
 registerCleanup();
 
@@ -362,14 +361,12 @@ test('§28: every row of the identity band is 547 from 480 up, with every cell v
       return { rendered: Math.round(el.getBoundingClientRect().height), cells };
     });
 
-    /* §36: inside the scaling band (1077 to 1439) the band is one row scaled by W/1440; below it §28's rows of 547. */
-    const s = bandScaleAt(width);
-    const rows = width >= SCALE_BAND_FLOOR ? 1 : upperRowsAt(width).length;
-    expect(Math.abs(band.rendered - rows * BANDS.identity * s), `at ${width}, ${rows} row(s) of ${BANDS.identity} × ${s.toFixed(3)}`).toBeLessThanOrEqual(1.5);
+    const rows = upperRowsAt(width).length;
+    expect(band.rendered, `at ${width}, ${rows} row(s) of ${BANDS.identity}`).toBe(rows * BANDS.identity);
     for (const cell of band.cells) {
       expect(cell.display, `${cell.name} at ${width} is visible`).not.toBe('none');
-      /* A cell is the row less the band's last pixel, which is the rule (SLEEVE_CELL: 546) -- scaled inside the band. */
-      expect(Math.abs(cell.height - SLEEVE_CELL.height * s), `${cell.name} at ${width} is one row tall`).toBeLessThanOrEqual(1.5);
+      /* A cell is the row less the band's last pixel, which is the rule (SLEEVE_CELL: 546). */
+      expect(cell.height, `${cell.name} at ${width} is one row tall`).toBe(SLEEVE_CELL.height);
     }
   }
 

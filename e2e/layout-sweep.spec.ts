@@ -3,7 +3,7 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { getTestDb } from '../test/helpers/db';
 import { seedImage } from './seed';
 import { sql } from 'drizzle-orm';
-import { BANDS, GRID_FORK, NO_SCROLL_HEIGHT, SCALE_BAND_FLOOR, bandScaleAt } from '../src/app/records/[id]/band-geometry';
+import { BANDS, GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { bandHeightAt } from '../src/app/records/[id]/region-rows';
 
 registerCleanup();
@@ -135,11 +135,9 @@ const MEASURE = () => {
 
   /* A clamped About renders exactly its clamp lines: a flex column squeezed it to 6.4 lines against a clamp of 9, a cut the clip test cannot see because the paragraph is its own clipper. */
   const squeezed = Array.from(document.querySelectorAll<HTMLElement>('[data-field="about"][data-clamped]')).flatMap((p) => { const lh = parseFloat(getComputedStyle(p).lineHeight); const clamp = Number(getComputedStyle(p).webkitLineClamp); const drawn = p.getBoundingClientRect().height / lh; return Math.abs(drawn - clamp) > 0.15 ? [`About clamped to ${clamp} draws ${drawn.toFixed(2)} lines`] : []; });
-  const bodyFont = (() => { const p = document.querySelector('[data-band] .text-prose') as HTMLElement | null; return p === null ? 'none' : getComputedStyle(p).fontSize; })();
-  const wrappedLabels = Array.from(document.querySelectorAll<HTMLElement>('[data-band] .text-label')).filter((el) => { const rg = document.createRange(); rg.selectNodeContents(el); const lines = new Set(Array.from(rg.getClientRects()).map((r) => Math.round(r.top))); return lines.size > 1; }).map((el) => `"${(el.textContent ?? '').trim().slice(0, 24)}" in ${name(el.closest('[data-cell]') ?? el)}`);
   const upper = ['identity', 'still', 'sleeve'].map((n) => { const el = document.querySelector<HTMLElement>(`[data-cell="${n}"]`); return { n, display: el === null ? 'absent' : getComputedStyle(el).display, w: el === null ? 0 : px(R(el).width), h: el === null ? 0 : px(R(el).height) }; });
   const cover = document.querySelector<HTMLElement>('[data-cover]');
-  return { vw: window.innerWidth, vh: window.innerHeight, bodyFont, wrappedLabels, squeezed, cols: { identity: cols(identity), lower: cols(lower), region: cols(region) }, bandH: identity === null ? null : px(R(identity).height), lowerH: lower === null ? null : px(R(lower).height), cells, pairs, escapes, inFront, behindCount: behind.length, cut, upper, coverW: cover === null ? 0 : px(R(cover).width), paintKinds: [...new Set(paints.map(name))] };
+  return { vw: window.innerWidth, vh: window.innerHeight, squeezed, cols: { identity: cols(identity), lower: cols(lower), region: cols(region) }, bandH: identity === null ? null : px(R(identity).height), lowerH: lower === null ? null : px(R(lower).height), cells, pairs, escapes, inFront, behindCount: behind.length, cut, upper, coverW: cover === null ? 0 : px(R(cover).width), paintKinds: [...new Set(paints.map(name))] };
 };
 
 /** What every viewport must satisfy; returns what failed. Paint in front of type is judged by its own test. */
@@ -195,7 +193,7 @@ const seedRich = async (page: Page) => {
 };
 
 const sweepWidths = (from: number, to: number) => {
-  const forks = [390, 480, 960, SCALE_BAND_FLOOR, 1440, 1680, 1920];
+  const forks = [390, 480, 960, 1440, 1680, 1920];
   const widths = new Set<number>();
   for (let w = from; w <= to; w += 6) widths.add(w);
   for (const f of forks) for (const d of [-1, 0, 1]) if (f + d >= from && f + d <= to) widths.add(f + d);
@@ -278,26 +276,11 @@ test('below the fork, at every width: the upper cells wrap at their size, the co
     await page.waitForTimeout(w % 6 === 0 ? 120 : 400);
     const m = await page.evaluate(MEASURE);
     checked += 1;
-    if (w < SCALE_BAND_FLOOR && m.lowerH !== null && m.lowerH !== BANDS.record) sawAutoBand = true;
+    if (m.lowerH !== null && m.lowerH !== BANDS.record) sawAutoBand = true;
     const j = judge(m);
-    /*
-      §36: from SCALE_BAND_FLOOR to 1439 "the page scales by the viewport's
-      width over 1440", holding each cell's aspect, body type held; below it
-      §28's wrap stands. The band's floor is where the year cell's label
-      would first break (1077, measured), and no band label may wrap inside
-      the band -- the assertion that fails if that figure goes stale.
-    */
-    const s = bandScaleAt(w);
     for (const u of m.upper) {
       if (u.display === 'none' || u.display === 'absent') j.push(`upper cell ${u.n} is ${u.display} (§28: the upper cells wrap, they do not hide)`);
-      else if (w >= SCALE_BAND_FLOOR && (Math.abs(u.w - 480 * s) > 1.5 || Math.abs(u.h - (BANDS.identity - 1) * s) > 1.5)) j.push(`upper cell ${u.n} is ${u.w}x${u.h}, not 480x546 scaled by ${s.toFixed(3)} (§36)`);
-      else if (w >= 480 && w < SCALE_BAND_FLOOR && Math.abs(u.w - 480) > 1) j.push(`upper cell ${u.n} is ${u.w} wide, not its own 480`);
-    }
-    if (w >= SCALE_BAND_FLOOR) {
-      if (m.bandH === null || Math.abs(m.bandH - BANDS.identity * s) > 1.5) j.push(`identity band ${m.bandH}, §36 rules ${(BANDS.identity * s).toFixed(1)}`);
-      if (m.lowerH === null || Math.abs(m.lowerH - BANDS.record * s) > 1.5) j.push(`record band ${m.lowerH}, §36 rules ${(BANDS.record * s).toFixed(1)}`);
-      if (m.bodyFont !== '13px') j.push(`body type ${m.bodyFont}, §36: body type holds at 13px`);
-      if (m.wrappedLabels.length) j.push(`labels wrapped inside the scaling band: ${m.wrappedLabels.join(' | ')}`);
+      else if (w >= 480 && Math.abs(u.w - 480) > 1) j.push(`upper cell ${u.n} is ${u.w} wide, not its own 480`);
     }
     if (m.coverW < 1) j.push('no cover drawn');
     if (j.length) bad.push(`${w}: ${j.join(' ; ')}`);
@@ -305,7 +288,7 @@ test('below the fork, at every width: the upper cells wrap at their size, the co
   }
   console.log(`  PAINT IN FRONT OF TYPE below the fork: ${front.length} (judged by its own test)`);
   expect(checked, 'widths measured').toBeGreaterThan(100);
-  expect(sawAutoBand, 'the record band is sized by its rows below the scaling band, not held at 1440’s 300').toBe(true);
+  expect(sawAutoBand, 'the record band is sized by its rows below the fork, not held at 1440’s 300').toBe(true);
   expect(bad, `widths failing:\n  ${failLines(bad)}`).toEqual([]);
 });
 
