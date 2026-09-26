@@ -100,7 +100,9 @@ const pulled = (page: Page) =>
   });
 
 async function pullFirst(page: Page) {
-  await page.locator('[data-seat] [data-spine]').first().click();
+  /* Seat order's FIRST record -- the DOM's first spine is paint order's, a different seat once the wall wraps (§W.23). */
+  const first = (await wallOrder(page))[0];
+  await page.locator(`a[data-seat="${first}"] [data-spine]`).click();
   /* Settled, not merely pulled — see `settle`. */
   await settle(page);
 }
@@ -188,7 +190,8 @@ test('the previous arrow is ABSENT at the first record, the next arrow at the la
     const order = await wallOrder(page);
 
     /* Click, advance the clock, then settle -- pullFirst settles before the clock has moved. */
-    await page.locator('[data-seat] [data-spine]').first().click();
+    /* Seat order's first (§W.23): from the DOM's first spine the walk started at seat 38, 40, 47 or 53 of 60 depending on the layout. */
+    await page.locator(`a[data-seat="${order[0]}"] [data-spine]`).click();
     await page.clock.runFor(OUT_MS + 40);
     await settle(page);
     /*
@@ -249,7 +252,8 @@ test('navigation moves along the collection — both records moving, the neighbo
 
     /* Read BEFORE pulling: a pulled record's anchor is absent from the wall. */
     const order = await wallOrder(page);
-    await page.locator('[data-seat] [data-spine]').first().click();
+    /* Seat order's first (§W.23): from the DOM's first spine the walk started at seat 38, 40, 47 or 53 of 60 depending on the layout. */
+    await page.locator(`a[data-seat="${order[0]}"] [data-spine]`).click();
     await page.clock.runFor(OUT_MS + 40);
     /* The pulled BOX's extent — the union of its three faces — which is what the landing centres in the region. */
     const place = () =>
@@ -324,7 +328,8 @@ test('put back lands in the HELD record\'s slot after navigating', async ({ page
     );
     /* The wall's anchor order before anything moves: a pulled record leaves the DOM's seats, so the held record's index is taken against this. */
     const initial = await wallOrder(page);
-    await page.locator('[data-seat] [data-spine]').first().click();
+    /* Seat order's first (§W.23): from the DOM's first spine the walk started at seat 38, 40, 47 or 53 of 60 depending on the layout. */
+    await page.locator(`a[data-seat="${initial[0]}"] [data-spine]`).click();
     await page.clock.runFor(OUT_MS + 40);
     await settle(page);
 
