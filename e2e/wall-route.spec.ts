@@ -295,6 +295,16 @@ test('the run is reachable by keyboard after the rail, and Enter zooms to that s
   expect(runOrder.length, 'at least one run is walked').toBeGreaterThan(0);
 
   /* Enter zooms to that shelf — the same target a click reaches. */
+  /*
+    **Enter on the run, by name.** The walk wraps inside 24 presses, so the
+    24th Tab lands on whatever the focus order's length dictates -- and Next's
+    dev-tools button contributes one to three stops depending on its state.
+    Enter there fired on Stats in one run and on Manage in another, and
+    passed in isolation only because the count happened to land on a run. An
+    assertion on an unnamed stop asserts nothing; the walk above proves the
+    order, and Enter is pressed on the first run it found.
+  */
+  await page.locator(`[data-run="${runOrder[0]}"]`).focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 10_000 });
 });
