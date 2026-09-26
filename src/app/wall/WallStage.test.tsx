@@ -126,66 +126,34 @@ describe('§W.28: the count beside the drawing, and the run is what the reader c
   });
 });
 
-describe('the arrival is in position at parse time (§W.29)', () => {
-  it('emits an inline script straight after the region that sets its scroll before the first paint', () => {
-    /*
-      The browser paints the server's markup before any client script runs, so
-      a scroll issued from a layout effect is always a paint late: the wall
-      appeared at 0,0 and visibly travelled into place, scrollbar moving,
-      which reads as a page still loading. The server's svg already carries
-      real dimensions inside an overflow-auto region, so the region IS
-      scrollable at parse time — and a script placed immediately after it
-      runs then, before that first paint.
-    */
-    /*
-      `renderToStaticMarkup` is the server's path, which is the only one that
-      emits this: React never executes a component-rendered script on the
-      client and warns when it finds one, and a client navigation has no
-      server paint to be late for — WallLive's landing effect covers it.
-    */
-    const html = render({ far: false });
-    const region = html.indexOf('data-region="wall"');
-    const script = html.indexOf('data-arrival-scroll');
-    expect(region, 'the region is rendered').toBeGreaterThan(-1);
-    expect(script, 'the arrival script follows it').toBeGreaterThan(region);
-    const body = /<script data-arrival-scroll[^>]*>([\s\S]*?)<\/script>/.exec(html)?.[1] ?? '';
-    expect(body).toContain('scrollLeft');
-    expect(body).toContain('scrollTop');
-    expect(body, 'no framework, no state').not.toMatch(/react|useState|dispatch/i);
-  });
+describe('the arrival is in the markup (§W.29)', () => {
+  /*
+    §W.29: "the server computes the arrival and emits the wall already
+    offset to it, with the region's scroll at zero, so there is nothing to
+    move and nothing to wait for... The general form: a position the page
+    promises at first paint cannot depend on a script arriving."
 
-  it('emits nothing in the far view, which does not scroll', () => {
-    expect(render({ far: true })).not.toContain('data-arrival-scroll');
-  });
-
-  /**
-   * **A script "immediately after" the region runs before the first paint
-   * only while both arrive in one parse chunk.** Under a loaded server the
-   * stream is slow, a frame paints between the region and its script, and
-   * the wall appears at 0,0 and travels into place -- measured in three full
-   * runs as `0/0 -> 5/75`, identical on retry, and passing in isolation. So
-   * the region ships hidden and the script reveals it after the scroll is
-   * set: there is no frame at 0,0 to paint.
-   */
-  it('ships the region hidden and reveals it from the arrival script, so no frame can paint at 0,0', () => {
+    The script after the region ran before the first paint only while both
+    arrived in one parse chunk; hiding the region until it ran replaced the
+    travel with a blank measured at 1.8s at 200 kbps and over six at 50.
+    Both are gone: the composition carries the offset in its own style.
+  */
+  it('emits the composition already offset to the arrival, and no script, no hiding', () => {
     const html = render({ far: false });
+    const wrapper = /<div[^>]*data-arrival-offset[^>]*>/.exec(html)?.[0] ?? '';
+    expect(wrapper, 'the composition wrapper carries the arrival').not.toBe('');
+    const m = /transform:translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)/.exec(wrapper);
+    expect(m, `an offset in px: ${wrapper}`).not.toBeNull();
+    expect(Number(m?.[2]), 'the offset is upward and real: the arrival is below the fixture’s top corner').toBeLessThan(0);
     const region = /<div[^>]*data-region="wall"[^>]*>/.exec(html)?.[0] ?? '';
-    expect(region, 'the region is hidden in the server markup').toMatch(/visibility:hidden/);
-    const body = /<script data-arrival-scroll[^>]*>([\s\S]*?)<\/script>/.exec(html)?.[1] ?? '';
-    expect(body, 'the script sets the scroll').toContain('scrollTop');
-    expect(body, 'and then reveals the region').toMatch(/visibility\s*=\s*['"]{2}/);
-    expect(body.indexOf('scrollTop'), 'scroll first, reveal after').toBeLessThan(body.search(/visibility\s*=/));
-    /* The script finds the region as its previous element sibling; the noscript fallback comes after it, never between. */
-    const script = html.indexOf('data-arrival-scroll');
-    expect(html.indexOf('<noscript'), 'noscript after the script').toBeGreaterThan(script);
-    expect(html.slice(html.indexOf('<noscript')), 'without JavaScript the region is revealed by a style').toMatch(/visibility:visible/);
+    expect(region, 'the region is not hidden').not.toMatch(/visibility:hidden/);
+    expect(html, 'no parse-time script').not.toContain('data-arrival-scroll');
+    expect(html, 'no noscript fallback: nothing needs revealing').not.toContain('<noscript');
   });
 
-  it('does not hide the region when no arrival script is emitted', () => {
-    const far = /<div[^>]*data-region="wall"[^>]*>/.exec(render({ far: true }))?.[0] ?? '';
-    expect(far, 'the far view has nothing to reveal it').not.toMatch(/visibility:hidden/);
-    const mounted = /<div[^>]*data-region="wall"[^>]*>/.exec(render({ far: false, arrivalScript: false }))?.[0] ?? '';
-    expect(mounted, 'after mount the script is dropped and so is the hiding').not.toMatch(/visibility:hidden/);
+  it('carries no offset in the far view, which does not scroll, nor once mounted', () => {
+    expect(/<div[^>]*data-arrival-offset[^>]*>/.exec(render({ far: true }))?.[0] ?? '', 'far').not.toMatch(/transform:/);
+    expect(/<div[^>]*data-arrival-offset[^>]*>/.exec(render({ far: false, arrivalInMarkup: false }))?.[0] ?? '', 'mounted').not.toMatch(/transform:/);
   });
 });
 

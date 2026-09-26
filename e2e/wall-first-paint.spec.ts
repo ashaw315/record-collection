@@ -129,12 +129,23 @@ test('the fork is decided without measuring: no script at all still paints the r
   }
 });
 
-/** Samples the wall region every frame from before hydration: visibility and scroll. */
+/**
+ * Samples the wall every frame from before hydration: the region's
+ * visibility and the composition's PAINTED offset -- where the labelled
+ * wall's box sits relative to the region's box. Not the scroll value: with
+ * the arrival in the markup (§W.29) the region's scroll is 0 at first paint
+ * and becomes the landing at hydration while nothing on screen moves, and a
+ * scroll sampler would report a move that no reader sees.
+ */
 const SAMPLER = `
   window.__scrolls = []; const s0 = performance.now();
   (function sample() {
     const el = document.querySelector('[data-region="wall"]');
-    if (el) window.__scrolls.push({ t: Math.round(performance.now() - s0), v: getComputedStyle(el).visibility, l: Math.round(el.scrollLeft), t2: Math.round(el.scrollTop) });
+    const wall = document.querySelector('[data-wall="labelled"]');
+    if (el && wall) {
+      const r = el.getBoundingClientRect(); const w = wall.getBoundingClientRect();
+      window.__scrolls.push({ t: Math.round(performance.now() - s0), v: getComputedStyle(el).visibility, l: Math.round(r.left - w.left), t2: Math.round(r.top - w.top) });
+    }
     if (performance.now() - s0 < 6000) requestAnimationFrame(sample);
   })();
 `;
@@ -191,33 +202,40 @@ test('the arrival is already in position: the region’s scroll never moves afte
  * run-to-run variance, not a round number. A test that only forbade a
  * visible 0/0 would pass six seconds of nothing.
  */
-const THROTTLE_KBPS = 200;
+const THROTTLES_KBPS = [0, 200, 50] as const;
 const MEASURED_BLANK_MS = 1775;
 const BLANK_BOUND_MS = Math.round(MEASURED_BLANK_MS * 1.15);
 
-test('on a 200 kbps stream the wall is never visible at 0/0, does not move once painted, and is blank no longer than measured (§W.29)', async ({ page, browserName }) => {
+test('at 50 kbps, 200 kbps and unthrottled the wall is visible and at the arrival in its first painted frame, and never moves (§W.29)', async ({ page, browserName }) => {
   test.skip(browserName !== 'chromium', 'network throttling is a CDP capability');
-  test.setTimeout(120_000);
+  test.setTimeout(240_000);
   await login(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   const artistId = await seed(page, 240);
-  const cdp = await page.context().newCDPSession(page);
-  await cdp.send('Network.enable');
-  await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 20, downloadThroughput: (THROTTLE_KBPS * 1024) / 8, uploadThroughput: -1 });
-  await page.addInitScript(SAMPLER);
-  await page.goto(`/?artistId=${artistId}`);
-  await page.waitForTimeout(6000);
-  await cdp.detach();
-  const scrolls = await readSamples(page);
-  const firstHidden = scrolls.find((s) => s.v === 'hidden');
-  const firstVisible = scrolls.find((s) => s.v === 'visible');
-  expect(firstVisible, `the region became visible within the sample window: ${scrolls.filter((s, i, arr) => i === 0 || s.v !== arr[i - 1].v).map((s) => `${s.t}ms ${s.v}:${s.l}/${s.t2}`).join(' -> ')}`).toBeDefined();
-  expect(scrolls.some((s) => s.v === 'visible' && s.l === 0 && s.t2 === 0), 'never visible at 0/0').toBe(false);
-  const positions = visiblePositions(scrolls);
-  expect(positions.length, `once painted it does not move: ${positions.join(' -> ')}`).toBe(1);
-  const blank = firstHidden === undefined || firstVisible === undefined ? 0 : firstVisible.t - firstHidden.t;
-  console.log(`  §W.29 at ${THROTTLE_KBPS} kbps: blank ${blank}ms (bound ${BLANK_BOUND_MS}ms, measured ${MEASURED_BLANK_MS}ms)`);
-  expect(blank, `the blank is bounded: ${blank}ms hidden before the arrival script revealed the region`).toBeLessThanOrEqual(BLANK_BOUND_MS);
+  for (const kbps of THROTTLES_KBPS) {
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Network.enable');
+    await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 20, downloadThroughput: kbps === 0 ? -1 : (kbps * 1024) / 8, uploadThroughput: -1 });
+    await page.addInitScript(SAMPLER);
+    await page.goto(`/?artistId=${artistId}`);
+    await page.waitForTimeout(kbps === 50 ? 12_000 : 6000);
+    await cdp.detach();
+    const scrolls = await readSamples(page);
+    const label = kbps === 0 ? 'unthrottled' : `${kbps} kbps`;
+    const timeline = scrolls.filter((s, i, arr) => i === 0 || s.v !== arr[i - 1].v || s.l !== arr[i - 1].l || s.t2 !== arr[i - 1].t2).map((s) => `${s.t}ms ${s.v}:${s.l}/${s.t2}`).join(' -> ');
+    expect(scrolls.length, `${label}: the wall was sampled`).toBeGreaterThan(0);
+    const first = scrolls[0];
+    /* "Visible and at the arrival in the first painted frame": the first sample is visible, and its painted offset is the one the wall keeps. */
+    expect(first.v, `${label}: visible in the first painted frame: ${timeline}`).toBe('visible');
+    const positions = visiblePositions(scrolls);
+    expect(positions.length, `${label}: once painted it does not move: ${timeline}`).toBe(1);
+    expect(first.t2, `${label}: the first frame is at the arrival, below the fixture’s top corner`).toBeGreaterThan(0);
+    const firstHidden = scrolls.find((s) => s.v === 'hidden');
+    const firstVisible = scrolls.find((s) => s.v === 'visible');
+    const blank = firstHidden === undefined || firstVisible === undefined ? 0 : firstVisible.t - firstHidden.t;
+    console.log(`  §W.29 ${label}: first frame at ${first.t}ms ${first.v}:${first.l}/${first.t2}; blank ${blank}ms (bound ${BLANK_BOUND_MS}ms; a markup arrival measures zero)`);
+    expect(blank, `${label}: the blank is bounded`).toBeLessThanOrEqual(BLANK_BOUND_MS);
+  }
 });
 
 test('a client navigation to the shelf arrives in position too (§W.29)', async ({ page }) => {
@@ -275,7 +293,7 @@ test('a client navigation to the shelf arrives in position too (§W.29)', async 
   */
 });
 
-test('the arrival script warns at most once per load, and never on a put-back (§W.29)', async ({ page }) => {
+test('a client navigation lands without moving, and a put-back does not re-land (§W.29)', async ({ page }) => {
   /*
     The tag can only ever do work at parse time, so rendering it on every
     later commit is noise: React logs its script warning each time the wall

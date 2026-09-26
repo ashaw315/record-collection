@@ -41,7 +41,7 @@ export function WallStage({
   far = false,
   onZoomIn,
   onZoomOut,
-  arrivalScript = true,
+  arrivalInMarkup = true,
   framed,
   onSeatClick,
   onPulledClick,
@@ -85,12 +85,12 @@ export function WallStage({
   onZoomIn?: (id: string) => void;
   onZoomOut?: () => void;
   /**
-   * §W.29: whether to render the parse-time arrival script. True on the
-   * server and for the first client render, so hydration matches; false once
-   * mounted, since the tag can only do work at parse time and React logs a
-   * warning for every later commit that renders it.
+   * §W.29: whether the composition carries its arrival offset in the markup.
+   * True on the server and for the first client render, so hydration
+   * matches; false once mounted, when the landing effect has written the
+   * same position as scroll and cleared the offset in one layout pass.
    */
-  arrivalScript?: boolean;
+  arrivalInMarkup?: boolean;
   /** §W.22: the records whose landings the frame holds, until the wall is at rest. */
   framed?: readonly string[];
   onSeatClick?: (id: string) => void;
@@ -117,17 +117,6 @@ export function WallStage({
     while it is out (§W.22) — and only in the near view, which is the one
     that scrolls.
   */
-  /*
-    **True for the server's render only.** The inline script clears the
-    hiding before React hydrates, so the DOM React meets already has no
-    visibility -- and hydration compares the client's render with the DOM,
-    not with the server's markup. A client render that hides (a snapshot
-    that is true during hydration, or one made after the zoom out resets
-    the viewport to unmeasured) either mismatches the DOM -- React's dev
-    overlay opened and took three Tab stops (wall-route §W.30) -- or hides
-    a region nothing will reveal, since React never runs the script.
-  */
-  const serverRender = typeof window === 'undefined';
   const arrival: [number, number] | null = (() => {
     if (far === true || moving.length > 0) return null;
     const { placed, frame } = wallLayout(seats, [], width, view?.height ?? 0);
@@ -331,21 +320,24 @@ export function WallStage({
         ref={regionRef}
         data-region="wall"
         className="h-[calc(100vh-var(--app-nav-height,0px))] overflow-auto p-[34px] pl-0"
-        /*
-          **Hidden until the arrival script has set the scroll.** "A script
-          immediately after the region runs before the first paint" holds
-          only while the region and its script arrive in one parse chunk;
-          under a loaded server the stream is slow, a frame paints between
-          them, and the wall appears at 0,0 and travels into place --
-          measured `0/0 -> 5/75` in three full runs, identical on retry, and
-          never in isolation. Hidden, there is no frame at 0,0 to paint; the
-          script reveals it once the scroll is written. Layout still happens
-          under visibility:hidden, so the region is scrollable when the
-          script runs. Dropped with the script once mounted.
-        */
-        style={arrival !== null && arrivalScript && serverRender ? { visibility: 'hidden' } : undefined}
       >
-        <div className="relative">
+        {/*
+          **§W.29's arrival, in the markup.** "The server computes the arrival
+          and emits the wall already offset to it, with the region's scroll at
+          zero, so there is nothing to move and nothing to wait for." A script
+          after the region ran before the first paint only while both arrived
+          in one parse chunk; hiding the region until it ran traded the travel
+          for a blank of 1.8s at 200 kbps and over six at 50. The offset is the
+          composition's own style, so the first painted frame is the arrival
+          whatever the stream does. WallLive's landing effect writes the same
+          position as scroll and clears this in one layout pass, before any
+          paint, and the scroll model runs unchanged from there.
+        */}
+        <div
+          className="relative"
+          data-arrival-offset=""
+          style={arrival !== null && arrivalInMarkup ? { transform: `translate(${-arrival[0]}px, ${-arrival[1]}px)` } : undefined}
+        >
           <WallLabelled
             seats={seats}
             pulls={moving}
@@ -360,49 +352,6 @@ export function WallStage({
           />
           {arrows}
         </div>
-        {/*
-          §W.29's arrival, applied at PARSE time. The browser paints the
-          server's markup before any client script runs, so a scroll issued
-          from a layout effect is always a paint late — the wall appeared at
-          0,0 and visibly travelled into place. The server's svg carries real
-          dimensions inside this overflow-auto region, so the region is
-          already scrollable here, and a script immediately after it runs
-          before the first paint. Two lines, no framework state; the numbers
-          come from the same layout the client lands with, so the two cannot
-          drift.
-
-          React warns that a component-rendered script never executes on the
-          client, which is true and harmless here: the tag's job is the
-          server's markup. A client navigation has no server paint to be late
-          for, and WallLive's landing effect already supplies the arrival
-          there — measured at the landing on the first sampled frame of a
-          navigation from the table, and on Back and Forward. Rendering the
-          tag only on the server silences the warning but changes the markup
-          between server and client, which is a hydration mismatch: worse
-          than the warning. It is dropped once mounted instead
-          (`arrivalScript`), so the warning fires once at hydration rather
-          than on every return to rest.
-        */}
-        {arrival === null || !arrivalScript ? null : (
-          <script
-            data-arrival-scroll=""
-            dangerouslySetInnerHTML={{
-              __html: `(function(){var e=document.currentScript.previousElementSibling.parentElement;e.scrollLeft=${arrival[0]};e.scrollTop=${arrival[1]};e.style.visibility='';})();`,
-            }}
-          />
-        )}
-        {/*
-          **Without JavaScript the arrival script never runs, so the region
-          must not stay hidden.** After the script, which finds the region as
-          its previous element sibling -- a spine is a link and survives without
-          it (shelf.spec). `<noscript>` is the one hook that applies exactly
-          when the script cannot.
-        */}
-        {arrival === null || !arrivalScript ? null : (
-          <noscript>
-            <style>{`[data-region="wall"]{visibility:visible!important}`}</style>
-          </noscript>
-        )}
       </div>
     </div>
   );

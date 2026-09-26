@@ -257,6 +257,14 @@ export function WallLive({
           left edge, so the landing is min(target, scrollWidth − clientWidth)
           — as far left as the wall allows (§W.12).
         */
+/*
+  §W.29: the server's markup carried this landing as an offset on the
+  composition. Clear it and write the scroll in this same layout pass --
+  no paint can fall between -- so the wall stays where the first frame
+  painted it and the scroll model owns the position from here.
+*/
+const offset = el.querySelector<HTMLElement>('[data-arrival-offset]');
+if (offset !== null) offset.style.transform = '';
         writeView(el, [frameX, frameY], target);
         /* What this write actually landed on, clamped: the listener ignores exactly this and nothing else. */
         landingWriteRef.current = { left: Math.round(el.scrollLeft), top: Math.round(el.scrollTop) };
@@ -469,7 +477,7 @@ export function WallLive({
           Once measured, the fork and the route's own state decide.
         */
         far={viewport === 0 ? null : isFarView(viewport) || routeView === 'far'}
-        arrivalScript={viewport === 0}
+        arrivalInMarkup={viewport === 0}
         onZoomIn={viewport > 0 && !isFarView(viewport) ? zoomIn : undefined}
         onZoomOut={viewport > 0 && !isFarView(viewport) ? zoomOut : undefined}
         framed={framed}
