@@ -6,6 +6,8 @@
 
 **The rule that survives.** A test may be named expected-to-fail only after its failure has been read and its cause ruled — never to explain why it keeps failing. An intermittent failure is a measurement taken under conditions the fixture does not control, and "intermittent" describes the conditions, not the defect. The order is: read the context, reproduce or isolate, name the cause; then fix, or name the test after the cause.
 
+**A check whose output you do not see has not reported.** Two instances the same day, both checks pointed one layer off their claim. A `grep -c "error TS"` printed `0` and was read as a clean typecheck while the command it filtered had failed for another reason; a Playwright run then measured a page that would not compile, and the run's own `Parsing ecmascript source code failed` lines were the only thing saying so. And §W.29's sampler recorded the region's *scroll* to assert that the *paint* never moves — right until the arrival moved into the markup, where the scroll changes at hydration and nothing on screen does. The rule that survives both: show the tool's own output, and make the sampler read the thing the claim names.
+
 **Where it lives now.** The region ships `visibility:hidden` and the arrival script reveals it after setting the scroll, so no frame can paint at 0,0 (`WallStage.tsx`, component test on the markup); the §W.29 test stays as the measurement, unchanged.
 
 Related: [shared-infrastructure-invalidated-the-control](shared-infrastructure-invalidated-the-control.md), [a-check-whose-subject-is-a-list](a-check-whose-subject-is-a-list.md).

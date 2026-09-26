@@ -31493,3 +31493,12 @@ test was reached. Passed on retry both times; not seen in the chromium-alone
 or mobile-alone runs. Logged, not chased: it is the server, not the spec, and
 it appeared only when a project was starting cold against a server the other
 project had just finished with.
+
+## Flake log — wall-first-paint › a client navigation lands without moving (26 Sep)
+
+Flaked once in a chromium-project run (`scrollTop unchanged: expected ≤ 2,
+received 15`) on the put-back leg. Distinct from the ECONNRESET entry above:
+this is inside §W.29, rewritten the same day (the arrival moved into the
+markup and the landing effect now clears the offset in its layout pass), so
+the first place to look on a recurrence is that effect's put-back path, not
+the server. One occurrence; logged, not chased.
