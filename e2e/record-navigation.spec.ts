@@ -308,8 +308,9 @@ test('put back lands in the HELD record\'s slot after navigating', async ({ page
         spine is #0 of 60 on every load) -- were disproven by measurement.
         The state is logged where the next failure's output will show it.
       */
-      const before = await page.evaluate(() => ({ pulled: document.querySelector('[data-pulled]')?.getAttribute('data-pulled')?.slice(0, 8) ?? '-', next: document.querySelectorAll('[data-testid="nav-next"]').length, prev: document.querySelectorAll('[data-testid="nav-previous"]').length, chrome: document.querySelectorAll('[data-testid="record-chrome"]').length }));
-      console.log(`  slide ${i + 1}: pulled=${before.pulled} next=${before.next} prev=${before.prev} chrome=${before.chrome}`);
+      /* The seats the DOM shows and where the held record sits in them: a wall of fewer seats than seeded, or arrows disagreeing with the seats, are different defects. */
+      const before = await page.evaluate(() => { const held = document.querySelector('[data-pulled]')?.getAttribute('data-pulled') ?? ''; const seats = Array.from(document.querySelectorAll('[data-seat]')).map((e) => e.getAttribute('data-seat')); return { pulled: held.slice(0, 8) || '-', next: document.querySelectorAll('[data-testid="nav-next"]').length, prev: document.querySelectorAll('[data-testid="nav-previous"]').length, chrome: document.querySelectorAll('[data-testid="record-chrome"]').length, seats: seats.length, at: seats.indexOf(held), links: document.querySelectorAll('a[data-seat]').length }; });
+      console.log(`  slide ${i + 1}: pulled=${before.pulled} next=${before.next} prev=${before.prev} chrome=${before.chrome} seats=${before.seats} links=${before.links} held-at=${before.at}`);
       await page.getByTestId('nav-next').click({ timeout: 15_000 });
       /* A slide is one out gesture on one clock (navigate): advance it, then wait for the arrow it settles into. */
       await page.clock.runFor(OUT_MS + 40);
