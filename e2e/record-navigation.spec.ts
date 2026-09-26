@@ -74,7 +74,22 @@ async function cleanup(artistId: string) {
  * asserted against the wall's own producer rather than a literal.
  */
 async function wallOrder(page: Page): Promise<string[]> {
-  return page.$$eval('a[data-seat]', (links) => links.map((a) => a.getAttribute('data-seat') ?? ''));
+  /*
+    **Seat order, by tabindex -- not DOM order.** §W.23: "Paint order and
+    reading order separate... a correct paint order must interleave rows by
+    column. So the keyboard walk gets an explicit tabindex sequence in seat
+    order." The anchors' DOM order is paint order; the arrows walk seat
+    order. Measured in the full run: at the DOM's first anchor the arrows
+    saw 47/60, and ten slides from seat 53 ran off the end -- the put-back
+    timeout -- while a previous arrow stood at what DOM order called first.
+    Reading DOM order here was right before §W.23 and wrong since.
+  */
+  return page.$$eval('a[data-seat]', (links) =>
+    links
+      .map((a) => ({ id: a.getAttribute('data-seat') ?? '', tab: Number(a.getAttribute('tabindex')) }))
+      .sort((x, y) => x.tab - y.tab)
+      .map((s) => s.id),
+  );
 }
 
 const pulled = (page: Page) =>
@@ -120,7 +135,8 @@ async function settle(page: Page) {
 }
 
 test('the arrows move to the adjacent record in the WALL\'S order', async ({ page }) => {
-  const artistId = await seed(8);
+  /* Sixty, not eight: eight sit in one row, where paint order and seat order coincide, and the test named for the distinction never exercised it (§W.23). */
+  const artistId = await seed(60);
   try {
     /*
       **The order asserted against the wall's own producer**, not a literal —
@@ -133,7 +149,7 @@ test('the arrows move to the adjacent record in the WALL\'S order', async ({ pag
     await expect(page.getByTestId('wall')).toBeVisible({ timeout: 30_000 });
 
     const order = await wallOrder(page);
-    expect(order.length).toBe(8);
+    expect(order.length).toBe(60);
 
     await pullFirst(page);
     const firstId = await pulled(page);
@@ -157,16 +173,24 @@ test('the arrows move to the adjacent record in the WALL\'S order', async ({ pag
 test('the previous arrow is ABSENT at the first record, the next arrow at the last', async ({
   page,
 }) => {
-  const artistId = await seed(6);
+  /* Twenty-four: two rows at 1280 (twenty and four), enough that paint order and seat order differ (§W.23), so 'first' and 'last' are the seat order's, not the DOM's -- and a walk end to end fits the budget. */
+  test.setTimeout(120_000);
+  const artistId = await seed(24);
   try {
     await login(page);
     await page.setViewportSize({ width: 1280, height: 900 });
+    /* On Playwright's clock, as put-back is: sixty seats walked end to end cost no wall time, so the walk is load-proof rather than load-tolerant. */
+    await page.clock.install();
     await page.goto(`/?artistId=${artistId}`);
     await expect(page.getByTestId('wall')).toBeVisible({ timeout: 30_000 });
+    await page.clock.pauseAt(Date.now() + 1000);
 
     const order = await wallOrder(page);
 
-    await pullFirst(page);
+    /* Click, advance the clock, then settle -- pullFirst settles before the clock has moved. */
+    await page.locator('[data-seat] [data-spine]').first().click();
+    await page.clock.runFor(OUT_MS + 40);
+    await settle(page);
     /*
       pullFirst may land on any spine, so walk to the true first record — the
       previous arrow must then be absent, the end behaviour §10b requires (an
@@ -176,6 +200,7 @@ test('the previous arrow is ABSENT at the first record, the next arrow at the la
       const prev = page.getByTestId('nav-previous');
       if ((await prev.count()) === 0) break;
       await prev.click();
+      await page.clock.runFor(OUT_MS + 40);
       await settle(page);
     }
     expect(await pulled(page), 'walked to the first record').toBe(order[0]);
@@ -185,6 +210,7 @@ test('the previous arrow is ABSENT at the first record, the next arrow at the la
     /* Walk to the last record: the next arrow must be absent there. */
     while ((await pulled(page)) !== order[order.length - 1]) {
       await page.getByTestId('nav-next').click();
+      await page.clock.runFor(OUT_MS + 40);
       await settle(page);
     }
     expect(await pulled(page), 'walked to the last record').toBe(order[order.length - 1]);
