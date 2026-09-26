@@ -4,6 +4,7 @@ import { getTestDb } from '../test/helpers/db';
 import { seedImage } from './seed';
 import { sql } from 'drizzle-orm';
 import { BANDS, GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
+import { bandHeightAt } from '../src/app/records/[id]/region-rows';
 
 registerCleanup();
 const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
@@ -210,6 +211,8 @@ test('above the fork, at every width and at six heights: no two boxes intersect,
     const m = await page.evaluate(MEASURE);
     checked += 1;
     bands.push(`${w}x${h}: band ${m.bandH}`);
+    /* §30: "max(547, 547/900 × viewport height)" -- at 1680 × 2000 the band is 1216. */
+    if (m.bandH === null || Math.abs(m.bandH - bandHeightAt(h)) > 1) bad.push(`${w}x${h}: identity band ${m.bandH}, §30 rules ${bandHeightAt(h)}`);
     const j = judge(m);
     if (j.length) bad.push(`${w}x${h}: ${j.join(' ; ')}`);
     for (const f of m.inFront) front.push(`${w}x${h}: ${f}`);

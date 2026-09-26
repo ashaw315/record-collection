@@ -1,5 +1,5 @@
 import { BANDS, CONTENT_MEASURE, GRID_COLUMN, GRID_COLUMNS, GRID_FORK, IDENTITY_SPANS, LOWER_SPANS, STILL_MARGIN } from './band-geometry';
-import { regionStylesheet, widePageStylesheet } from './region-rows';
+import { BAND_AT_REFERENCE, REFERENCE_HEIGHT, regionStylesheet, widePageStylesheet } from './region-rows';
 import { Plane } from './Plane';
 import { CONTROL_HEIGHT } from './extended-grid';
 import { COVER_CELL } from './cover-geometry';
@@ -309,6 +309,21 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
         */
         @media (max-width: 479px) {
           [data-band] { height: auto !important; }
+        }
+
+        /*
+          **§30's height axis, from the fork up.** "Above 1440 the upper band
+          is max(547, 547/900 × viewport height)... The band's extra height
+          passes to the construction cell in full, so its inner box is the
+          band less 48." widePageStylesheet stated this from 1680 without
+          !important, and the band's inline 547 won at every height -- the
+          height sweep measured 547 at 1680 × 2000 where §30 rules 1216. The
+          identity and sleeve cells keep their 546 at the band's top; only
+          the still stretches.
+        */
+        @media (min-width: ${GRID_FORK}px) {
+          [data-band="identity"] { height: max(${BAND_AT_REFERENCE}px, ${((BAND_AT_REFERENCE / REFERENCE_HEIGHT) * 100).toFixed(4)}vh) !important; }
+          [data-band="identity"] > [data-cell="identity"], [data-band="identity"] > [data-cell="sleeve"] { height: ${SLEEVE_CELL.height}px; align-self: start; }
         }
 
         /*
