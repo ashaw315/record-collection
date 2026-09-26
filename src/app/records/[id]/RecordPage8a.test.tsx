@@ -321,3 +321,26 @@ describe('§36: the absence state offers the row, only where writing is configur
     expect(lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), about: null, journalEntry: { entry: 'Played.', entryDate: '2026-09-20' } }} writingConfigured />))).not.toContain('about-write');
   });
 });
+
+/**
+ * §28, at 8 columns: "the first two cells sit side by side and the third
+ * takes a second row, with 480 of air beside it. That air carries the lower
+ * region's first figure and the tint field, moved up from the first lower
+ * row, so it reads as composed rather than as a gap." The markup carries the
+ * air cell at every width -- the fork stylesheet shows it from 960 to 1439
+ * only -- with row 1's pair and the tint triangle `upperAirAt` declares.
+ */
+describe('§28: the upper band’s air at 8 columns carries row 1’s figure and the tint field', () => {
+  it('renders the air cell after the sleeve, with the pair and the tint triangle', () => {
+    const html = renderToStaticMarkup(<RecordPage8a record={{ ...record('#a25829') }} />);
+    const sleeve = html.indexOf('data-cell="sleeve"');
+    /* The element, not the stylesheet's selector for it, which precedes everything. */
+    const air = html.indexOf('data-upper-air=""');
+    expect(air, 'the upper air cell renders').toBeGreaterThan(-1);
+    expect(air, 'after the sleeve').toBeGreaterThan(sleeve);
+    expect(air, 'inside the identity band, before the record band').toBeLessThan(html.indexOf('data-band="record"'));
+    const cell = html.slice(air, html.indexOf('data-band="record"'));
+    expect(cell, 'row 1’s figure, §25’s pair').toMatch(/data-ornament="figure"[^>]*data-figure="pair"/);
+    expect(cell, 'the tint triangle').toMatch(/data-ornament="flat"[^>]*data-flat="triangle"/);
+  });
+});

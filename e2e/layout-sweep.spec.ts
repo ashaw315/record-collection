@@ -135,9 +135,10 @@ const MEASURE = () => {
 
   /* A clamped About renders exactly its clamp lines: a flex column squeezed it to 6.4 lines against a clamp of 9, a cut the clip test cannot see because the paragraph is its own clipper. */
   const squeezed = Array.from(document.querySelectorAll<HTMLElement>('[data-field="about"][data-clamped]')).flatMap((p) => { const lh = parseFloat(getComputedStyle(p).lineHeight); const clamp = Number(getComputedStyle(p).webkitLineClamp); const drawn = p.getBoundingClientRect().height / lh; return Math.abs(drawn - clamp) > 0.15 ? [`About clamped to ${clamp} draws ${drawn.toFixed(2)} lines`] : []; });
-  const upper = ['identity', 'still', 'sleeve'].map((n) => { const el = document.querySelector<HTMLElement>(`[data-cell="${n}"]`); return { n, display: el === null ? 'absent' : getComputedStyle(el).display, w: el === null ? 0 : px(R(el).width), h: el === null ? 0 : px(R(el).height) }; });
+  const upper = ['identity', 'still', 'sleeve'].map((n) => { const el = document.querySelector<HTMLElement>(`[data-cell="${n}"]`); return { n, display: el === null ? 'absent' : getComputedStyle(el).display, w: el === null ? 0 : px(R(el).width), h: el === null ? 0 : px(R(el).height), x: el === null ? 0 : px(R(el).left + window.scrollX), y: el === null ? 0 : px(R(el).top + window.scrollY) }; });
+  const upperAir = (() => { const el = document.querySelector<HTMLElement>('[data-upper-air]'); if (el === null) return null; const b = box(el); return { display: getComputedStyle(el).display, ...b, figure: el.querySelector('[data-ornament="figure"]') !== null, flat: el.querySelector('[data-ornament="flat"]') !== null }; })();
   const cover = document.querySelector<HTMLElement>('[data-cover]');
-  return { vw: window.innerWidth, vh: window.innerHeight, squeezed, cols: { identity: cols(identity), lower: cols(lower), region: cols(region) }, bandH: identity === null ? null : px(R(identity).height), lowerH: lower === null ? null : px(R(lower).height), cells, pairs, escapes, inFront, behindCount: behind.length, cut, upper, coverW: cover === null ? 0 : px(R(cover).width), paintKinds: [...new Set(paints.map(name))] };
+  return { vw: window.innerWidth, vh: window.innerHeight, squeezed, upperAir, cols: { identity: cols(identity), lower: cols(lower), region: cols(region) }, bandH: identity === null ? null : px(R(identity).height), lowerH: lower === null ? null : px(R(lower).height), cells, pairs, escapes, inFront, behindCount: behind.length, cut, upper, coverW: cover === null ? 0 : px(R(cover).width), paintKinds: [...new Set(paints.map(name))] };
 };
 
 /** What every viewport must satisfy; returns what failed. Paint in front of type is judged by its own test. */
@@ -283,6 +284,24 @@ test('below the fork, at every width: the upper cells wrap at their size, the co
       else if (w >= 480 && Math.abs(u.w - 480) > 1) j.push(`upper cell ${u.n} is ${u.w} wide, not its own 480`);
     }
     if (m.coverW < 1) j.push('no cover drawn');
+    /*
+      §28 at 8 columns: "the third takes a second row, with 480 of air beside
+      it. That air carries the lower region's first figure and the tint
+      field." Shown from 960 to 1439 only: beside the sleeve on the second
+      row, its own 480, with a figure and a flat inside; hidden where the
+      cells sit three abreast or stack.
+    */
+    const eight = w >= 960;
+    if (eight) {
+      if (m.upperAir === null || m.upperAir.display === 'none') j.push('the upper air is missing at 8 columns (§28)');
+      else {
+        const sleeve = m.upper.find((u) => u.n === 'sleeve');
+        if (Math.abs(m.upperAir.w - 480) > 1) j.push(`the upper air is ${m.upperAir.w} wide, not 480`);
+        if (sleeve !== undefined && (Math.abs(m.upperAir.y - sleeve.y) > 1 || m.upperAir.x < sleeve.x + 479)) j.push(`the upper air is not beside the sleeve on the second row (air ${m.upperAir.x},${m.upperAir.y}; sleeve ${sleeve.x},${sleeve.y})`);
+        if (!m.upperAir.figure) j.push('the upper air carries no figure');
+        if (!m.upperAir.flat) j.push('the upper air carries no tint field');
+      }
+    } else if (m.upperAir !== null && m.upperAir.display !== 'none') j.push(`the upper air shows at ${w}, where the cells stack`);
     if (j.length) bad.push(`${w}: ${j.join(' ; ')}`);
     for (const f of m.inFront) front.push(`${w}: ${f}`);
   }
