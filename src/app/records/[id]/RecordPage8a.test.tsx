@@ -229,3 +229,21 @@ describe('§5.1’s quarter-circles are sized against their host (§29, §34)', 
     }
   });
 });
+
+/**
+ * §6: "Label persists, one diagonal fills the body box." Measured on the
+ * collection's real rows: 12 of 17 have neither About nor entry, and the
+ * diagonal was `inset-0` of the cell, drawn across the ABOUT label.
+ */
+describe('the diagonal fills the body box, not the cell (§6)', () => {
+  it('draws the empty last cell’s diagonal after its label and not over it', () => {
+    const cell = lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), about: null, journalEntry: null }} />));
+    const label = cell.indexOf('>About<');
+    const diagonal = cell.indexOf('data-diagonal');
+    expect(label, 'the label persists').toBeGreaterThan(-1);
+    expect(diagonal, 'the diagonal follows the label').toBeGreaterThan(label);
+    const el = /<div[^>]*data-diagonal[^>]*>/.exec(cell)?.[0] ?? '';
+    expect(el, 'not the whole cell').not.toMatch(/inset-0/);
+    expect(el, 'in the body box, filling it').toMatch(/flex-1/);
+  });
+});

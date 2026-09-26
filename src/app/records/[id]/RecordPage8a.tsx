@@ -75,11 +75,18 @@ export type PageRecord = {
 
 /** §1.3's mark: one line means not recorded, crossed means not applicable. */
 function EmptyMark({ diagonal }: { diagonal: Exclude<Diagonal, 'none'> }) {
+  /*
+    §6: "Label persists, one diagonal fills the body box." It was `absolute
+    inset-0` of the cell, so the line crossed the label -- measured on the
+    collection's real rows, where 12 of 17 have neither About nor entry.
+    In flow after the label, it takes the body: the cell's remainder where
+    the band fixes the height, one prose line where content sizes the cell.
+  */
   return (
     <div
       aria-hidden="true"
       data-diagonal={diagonal}
-      className="pointer-events-none absolute inset-0"
+      className="pointer-events-none relative min-h-[1lh] flex-1 text-prose"
       style={{
         backgroundImage: [
           'linear-gradient(135deg,transparent calc(50% - 0.5px),oklch(0.15 0.005 60) calc(50% - 0.5px),oklch(0.15 0.005 60) calc(50% + 0.5px),transparent calc(50% + 0.5px))',
@@ -153,7 +160,8 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
    * `e2e/page8a-marks.spec.ts` — no mark renders outside its cell on any of the
    * three records.
    */
-  const cell = 'relative min-w-0 overflow-hidden p-[18px]';
+  /* A column, so an empty cell's diagonal can fill the body box below the label (§6) without a measured top. */
+  const cell = 'relative flex min-w-0 flex-col overflow-hidden p-[18px]';
 
   return (
     /*
