@@ -178,7 +178,7 @@ These are the sections the rulings above build on, all in `Record Detail 8a - se
 37. **§36 — the About's lower row.** Keep the row. When the frame clamps the About, the row shows the full text above the by-line, Edit and Delete; otherwise it shows only those. In the frame's absence state add "Write one ↓", linking to the row, only when writing is configured; with no key, the absence state has no link.
    > The About’s lower row survives as its editor and its full reading; the frame cell gains one link, never a control.
 
-38. **§36 — scaling from 960 to 1439.** Scale every length in the upper and record bands by W/1440, holding each cell's aspect, with type stepping on §33's ladder. Keep §28's wrap and fixed cells below 960. Measure where a content cell's measure first breaks its longest label, and report it: if that is above 960, the band ends there.
+38. **§36 — scaling from 960 to 1439.** Scale every length in the upper and record bands by W/1440, holding each cell's aspect; title and artist step on §33's ladder; body type (13, 11, 10) holds and does not scale. Keep §28's wrap and fixed cells below 960. Measure two things and report both: the width where a content cell's measure first breaks its longest label (if above 960, the band ends there), and the About's ten-line character budget at 960 alongside its 535 at 1440.
    > From 960 to 1439 the page scales by the viewport’s width over 1440, with type stepping on §33’s ladder; below 960 §28’s wrap stands.
 
 **Every row in the table above must appear in a step here.** The completeness check greps the table only, so an index that is current and an order that is eight rulings behind both pass — which is what happened at §W.28–§W.35. Check both.
