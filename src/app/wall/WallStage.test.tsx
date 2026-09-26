@@ -148,7 +148,22 @@ describe('the arrival is in the markup (§W.29)', () => {
     const region = /<div[^>]*data-region="wall"[^>]*>/.exec(html)?.[0] ?? '';
     expect(region, 'the region is not hidden').not.toMatch(/visibility:hidden/);
     expect(html, 'no parse-time script').not.toContain('data-arrival-scroll');
-    expect(html, 'no noscript fallback: nothing needs revealing').not.toContain('<noscript');
+    /* A noscript is emitted -- step 36's style that clears the offset without script; the test below reads it. Nothing here reveals a hidden region. */
+    expect(html, 'the noscript is not a reveal of a hidden region').not.toMatch(/<noscript>[\s\S]*visibility/);
+  });
+
+  /**
+   * Step 36 (§W.29): "Without JavaScript the wall starts at its origin,
+   * whole and reachable: the offset is cleared by a noscript style, not by
+   * the landing effect." With script off nothing clears the transform, and
+   * the strip above the arrival could not be scrolled to -- §W.8's contract
+   * is that the collection is reachable without script.
+   */
+  it('emits a noscript style that clears the offset, exactly when the offset is emitted', () => {
+    const html = render({ far: false });
+    const noscript = /<noscript>([\s\S]*?)<\/noscript>/.exec(html)?.[1] ?? '';
+    expect(noscript, 'a noscript style is emitted with the offset').toMatch(/data-arrival-offset[^{]*\{[^}]*transform:\s*none/);
+    expect(render({ far: true }), 'and not without it').not.toContain('<noscript');
   });
 
   it('carries no offset in the far view, which does not scroll, nor once mounted', () => {

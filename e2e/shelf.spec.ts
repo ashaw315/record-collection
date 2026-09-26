@@ -1,6 +1,8 @@
 import zlib from 'node:zlib';
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
+import { getTestDb } from '../test/helpers/db';
+import { sql } from 'drizzle-orm';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -225,6 +227,59 @@ test('a spine is a link, so it survives without JavaScript', async ({ browser, p
     /* The link's box spans its three faces and its centre falls on paper between them; the spine is the target. */
     await link.locator('[data-spine]').click();
     await expect(plain).toHaveURL(`/records/${id}`);
+  } finally {
+    await noJs.close();
+  }
+});
+
+/**
+ * Step 36 (§W.29): "Without JavaScript the wall starts at its origin, whole
+ * and reachable." The markup arrival is a transform the landing effect
+ * clears; with script off it stayed, and the rows above the arrival could
+ * not be scrolled to. Two rows at 1280 (twenty and four), so the first
+ * spine sits above the arrival and the last below it; both must scroll into
+ * the region and take focus.
+ */
+test('without JavaScript the first and last spines can both be scrolled to and focused (§W.29, step 36)', async ({ browser, page }) => {
+  await login(page);
+  const db = getTestDb();
+  const run = suffix();
+  const a = await db.execute(sql`INSERT INTO artists (name) VALUES (${'NoJs-' + run}) RETURNING id`);
+  const artistId = (a.rows[0] as { id: string }).id;
+  trackArtist(artistId);
+  await db.execute(sql`INSERT INTO records (artist_id, title, release_year) SELECT ${artistId}::uuid, ${'NoJs ' + run + ' '} || i, 1980 FROM generate_series(1, 24) i`);
+  const storage = await page.context().storageState();
+  const noJs = await browser.newContext({ storageState: storage, javaScriptEnabled: false, viewport: { width: 1280, height: 900 } });
+  try {
+    const plain = await noJs.newPage();
+    /*
+      Measured before this was built: the server renders the offset
+      translate(-5px, -75px) for the first shelf regardless of ?shelf= --
+      the addressed shelf is applied by the landing effect, client-side --
+      so without JavaScript the offset hides 75px of landing pad and never a
+      row, and 'first and last reachable' alone could not fail. The
+      assertion that can: with script off the wall is at its ORIGIN, the
+      offset's computed transform none (§W.29: "Without JavaScript the wall
+      starts at its origin, whole and reachable").
+    */
+    await plain.goto(`/?artistId=${artistId}`);
+    const spines = plain.locator('a[data-seat]');
+    await expect(spines).toHaveCount(24);
+    const offset = await plain.locator('[data-arrival-offset]').evaluate((el) => getComputedStyle(el).transform);
+    expect(offset, 'the arrival offset is cleared without script, by the noscript style').toBe('none');
+    for (const which of ['first', 'last'] as const) {
+      const spine = which === 'first' ? spines.first() : spines.last();
+      await spine.scrollIntoViewIfNeeded();
+      await spine.focus();
+      const state = await spine.evaluate((el) => {
+        const region = el.closest('[data-region="wall"]') as HTMLElement;
+        const r = region.getBoundingClientRect();
+        const b = el.getBoundingClientRect();
+        return { inside: b.top >= r.top - 1 && b.bottom <= r.bottom + 1 && b.left >= r.left - 1 && b.right <= r.right + 1, focused: document.activeElement === el, top: Math.round(b.top - r.top) };
+      });
+      expect(state.inside, `the ${which} spine scrolls into the region (top ${state.top}px from the region's top)`).toBe(true);
+      expect(state.focused, `the ${which} spine takes focus`).toBe(true);
+    }
   } finally {
     await noJs.close();
   }

@@ -339,6 +339,20 @@ export function WallStage({
           position as scroll and clears this in one layout pass, before any
           paint, and the scroll model runs unchanged from there.
         */}
+        {/*
+          Step 36 (§W.29): "Without JavaScript the wall starts at its origin,
+          whole and reachable: the offset is cleared by a noscript style, not
+          by the landing effect." Measured: the server's offset is the first
+          shelf's (75px of landing pad; ?shelf= is applied client-side), so
+          without script it hides no row today -- the style makes the
+          no-JS wall the origin the ruling names, whatever the server offsets
+          to later.
+        */}
+        {arrival !== null && arrivalInMarkup ? (
+          <noscript>
+            <style>{`[data-arrival-offset]{transform:none!important}`}</style>
+          </noscript>
+        ) : null}
         <div
           className="relative"
           data-arrival-offset=""
