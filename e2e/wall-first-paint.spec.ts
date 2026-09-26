@@ -129,6 +129,19 @@ test('the fork is decided without measuring: no script at all still paints the r
   }
 });
 
+/** Samples the wall region every frame from before hydration: visibility and scroll. */
+const SAMPLER = `
+  window.__scrolls = []; const s0 = performance.now();
+  (function sample() {
+    const el = document.querySelector('[data-region="wall"]');
+    if (el) window.__scrolls.push({ t: Math.round(performance.now() - s0), v: getComputedStyle(el).visibility, l: Math.round(el.scrollLeft), t2: Math.round(el.scrollTop) });
+    if (performance.now() - s0 < 6000) requestAnimationFrame(sample);
+  })();
+`;
+type Sample = { t: number; v: string; l: number; t2: number };
+const readSamples = (page: Page) => page.evaluate(() => (window as unknown as { __scrolls: Sample[] }).__scrolls) as Promise<Sample[]>;
+const visiblePositions = (scrolls: Sample[]) => [...new Set(scrolls.filter((s) => s.v === 'visible').map((s) => `${s.l}/${s.t2}`))];
+
 test('the arrival is already in position: the region’s scroll never moves after the first paint (§W.29)', async ({ page }) => {
   /*
     §W.22's eased pan belongs to the PULL, where the reader is watching a
@@ -144,22 +157,67 @@ test('the arrival is already in position: the region’s scroll never moves afte
   await login(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   const artistId = await seed(page, 240);
-  await page.addInitScript(`
-    window.__scrolls = []; const s0 = performance.now();
-    (function sample() {
-      const el = document.querySelector('[data-region="wall"]');
-      if (el) window.__scrolls.push({ t: Math.round(performance.now() - s0), l: Math.round(el.scrollLeft), t2: Math.round(el.scrollTop) });
-      if (performance.now() - s0 < 2500) requestAnimationFrame(sample);
-    })();
-  `);
+  await page.addInitScript(SAMPLER);
   await page.goto(`/?artistId=${artistId}`);
   await page.waitForTimeout(2600);
-  const scrolls = (await page.evaluate(() => (window as unknown as { __scrolls: Array<{ t: number; l: number; t2: number }> }).__scrolls)) as Array<{ t: number; l: number; t2: number }>;
+  const scrolls = await readSamples(page);
   expect(scrolls.length, 'the region was sampled').toBeGreaterThan(5);
-  const positions = [...new Set(scrolls.map((s) => `${s.l}/${s.t2}`))];
-  expect(positions.length, `the arrival must not move: ${positions.join(' -> ')}`).toBe(1);
-  /* And it is a real landing, not zero by accident: this collection needs a pan. */
+  /*
+    **Positions while VISIBLE.** "After the first paint": a region that is
+    hidden has not painted. The region ships hidden and the arrival script
+    reveals it once the scroll is written, so on a slow stream the sampler
+    sees hidden:0/0 for the script's latency and then visible:5/75 --
+    measured at 200 kbps: 524ms hidden:0/0 -> 2299ms visible:5/75. Counting
+    every scroll position, as this test first did, failed on exactly the
+    frames the fix made invisible.
+  */
+  const positions = visiblePositions(scrolls);
+  expect(positions.length, `the arrival must not move once painted: ${positions.join(' -> ')}`).toBe(1);
   expect(Number(positions[0].split('/')[1]), 'landed somewhere the fixture required').toBeGreaterThan(0);
+});
+
+/**
+ * **§W.29 under a slow stream, made deterministic.** The full run reached
+ * this condition only by accident -- a loaded dev server streaming slowly --
+ * and reported `0/0 -> 5/75` for three runs before anyone read it. Here the
+ * stream is throttled through CDP, so the frames between the region's
+ * markup and its arrival script are guaranteed.
+ *
+ * Three things are asserted. The region is never visible at 0/0. Once
+ * visible it does not move. And the blank -- the interval the region stays
+ * hidden, which is what the fix converted the travelling wall into -- is
+ * bounded: measured 1775ms (524 -> 2299) at 200 kbps on this fixture on 26
+ * Sep, and the bound is that measurement plus fifteen percent for
+ * run-to-run variance, not a round number. A test that only forbade a
+ * visible 0/0 would pass six seconds of nothing.
+ */
+const THROTTLE_KBPS = 200;
+const MEASURED_BLANK_MS = 1775;
+const BLANK_BOUND_MS = Math.round(MEASURED_BLANK_MS * 1.15);
+
+test('on a 200 kbps stream the wall is never visible at 0/0, does not move once painted, and is blank no longer than measured (§W.29)', async ({ page, browserName }) => {
+  test.skip(browserName !== 'chromium', 'network throttling is a CDP capability');
+  test.setTimeout(120_000);
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const artistId = await seed(page, 240);
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Network.enable');
+  await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 20, downloadThroughput: (THROTTLE_KBPS * 1024) / 8, uploadThroughput: -1 });
+  await page.addInitScript(SAMPLER);
+  await page.goto(`/?artistId=${artistId}`);
+  await page.waitForTimeout(6000);
+  await cdp.detach();
+  const scrolls = await readSamples(page);
+  const firstHidden = scrolls.find((s) => s.v === 'hidden');
+  const firstVisible = scrolls.find((s) => s.v === 'visible');
+  expect(firstVisible, `the region became visible within the sample window: ${scrolls.filter((s, i, arr) => i === 0 || s.v !== arr[i - 1].v).map((s) => `${s.t}ms ${s.v}:${s.l}/${s.t2}`).join(' -> ')}`).toBeDefined();
+  expect(scrolls.some((s) => s.v === 'visible' && s.l === 0 && s.t2 === 0), 'never visible at 0/0').toBe(false);
+  const positions = visiblePositions(scrolls);
+  expect(positions.length, `once painted it does not move: ${positions.join(' -> ')}`).toBe(1);
+  const blank = firstHidden === undefined || firstVisible === undefined ? 0 : firstVisible.t - firstHidden.t;
+  console.log(`  §W.29 at ${THROTTLE_KBPS} kbps: blank ${blank}ms (bound ${BLANK_BOUND_MS}ms, measured ${MEASURED_BLANK_MS}ms)`);
+  expect(blank, `the blank is bounded: ${blank}ms hidden before the arrival script revealed the region`).toBeLessThanOrEqual(BLANK_BOUND_MS);
 });
 
 test('a client navigation to the shelf arrives in position too (§W.29)', async ({ page }) => {
