@@ -294,3 +294,30 @@ describe('§35: absence in flow after the label in every cell that can be empty'
     }
   });
 });
+
+/**
+ * §36: "on the twelve records with neither About nor entry, the label and
+ * §6's diagonal stay, and below the label sits 'Write one ↓', a link to the
+ * row in the same vocabulary as 'more ↓'. It is a link, not a button...
+ * Where writing is not configured, the absence state carries no link."
+ */
+describe('§36: the absence state offers the row, only where writing is configured', () => {
+  const none = { about: null, journalEntry: null };
+  it('links "Write one ↓" to the row below the label, ahead of the diagonal, when configured', () => {
+    const cell = lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), ...none }} writingConfigured />));
+    const link = /<a[^>]*data-field="about-write"[^>]*>/.exec(cell)?.[0] ?? '';
+    expect(link, 'a link, not a button').not.toBe('');
+    expect(link).toMatch(/href="#snippet"/);
+    expect(cell).toContain('Write one ↓');
+    expect(cell.indexOf('data-field="about-write"'), 'below the label').toBeGreaterThan(cell.indexOf('>About<'));
+    expect(cell.indexOf('data-field="about-write"'), 'ahead of the diagonal').toBeLessThan(cell.indexOf('data-diagonal'));
+    expect(cell, 'the diagonal stays').toContain('data-diagonal');
+    expect(cell, 'no button in the frame cell').not.toMatch(/<button/);
+  });
+  it('carries no link when writing is not configured, and none in the About or entry states', () => {
+    expect(lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), ...none }} writingConfigured={false} />))).not.toContain('about-write');
+    expect(lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), ...none }} />)), 'unconfigured by default').not.toContain('about-write');
+    expect(lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), about: 'Short.', journalEntry: null }} writingConfigured />))).not.toContain('about-write');
+    expect(lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), about: null, journalEntry: { entry: 'Played.', entryDate: '2026-09-20' } }} writingConfigured />))).not.toContain('about-write');
+  });
+});

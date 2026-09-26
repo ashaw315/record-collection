@@ -170,10 +170,11 @@ describe('the heading uses the shared label treatment', () => {
     editor... an editor does not need to repeat what the frame shows." The
     label and the controls are what survive.
   */
-  it('keeps its label and controls, and no longer repeats the About (§33)', () => {
+  it('keeps its label and controls, and repeats an About the frame holds whole nowhere (§33, §36)', () => {
     const html = render();
 
     expect(html).toContain('About this record');
+    /* §36: the row carries the full text only when the frame clamps it; 'A note.' fits, so it is read in the frame and not here. */
     expect(html, 'the About is read in the frame, not here').not.toContain('A note.');
     expect(html, 'the text testid is gone with the text').not.toContain('snippet-text');
     expect(html).toMatch(/<button/);
@@ -192,5 +193,29 @@ describe('the editor’s budget line (§34)', () => {
     const html = renderToStaticMarkup(<AboutBudget text={'a'.repeat(555)} />);
     expect(html).toContain('555 of about 535 characters');
     expect(html, 'no “over” -- the guide is not a limit').not.toMatch(/\bover\b/);
+  });
+});
+
+/**
+ * §36: "when the frame clamps the About, the row carries the full text above
+ * the by-line, Edit and Delete; when the About fits, the row carries only
+ * those. The full text appears twice only on a record whose frame cuts it."
+ * On the server the frame's clamp is the budget guess, as AboutCell's is;
+ * the client measures.
+ */
+describe('§36: the row carries the full text only when the frame clamps it', () => {
+  const props = { recordId: 'r1', snippetEditedAt: null, configured: true, base: null, ladder: null };
+  it('shows the full text above the by-line for an About past the budget', () => {
+    const text = 'A sentence about the record that goes on. '.repeat(20).trim();
+    const html = renderToStaticMarkup(<SnippetPanel {...props} snippet={text} />);
+    const full = html.indexOf('data-testid="snippet-full"');
+    expect(full, 'the full reading').toBeGreaterThan(-1);
+    expect(html.slice(full)).toContain('A sentence about the record that goes on.');
+    expect(full, 'above the by-line').toBeLessThan(html.indexOf('data-testid="snippet-generated-label"'));
+  });
+  it('shows only the by-line and controls for an About that fits', () => {
+    const html = renderToStaticMarkup(<SnippetPanel {...props} snippet="Short and it fits." />);
+    expect(html).not.toContain('snippet-full');
+    expect(html).toContain('snippet-edit');
   });
 });

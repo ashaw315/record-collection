@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { BANDS, CONTENT_MEASURE, GRID_COLUMN, GRID_COLUMNS, GRID_FORK, IDENTITY_SPANS, LOWER_SPANS, STILL_MARGIN } from './band-geometry';
 import { BAND_AT_REFERENCE, REFERENCE_HEIGHT, regionStylesheet, widePageStylesheet } from './region-rows';
 import { Plane } from './Plane';
@@ -101,7 +102,14 @@ function EmptyMark({ diagonal }: { diagonal: Exclude<Diagonal, 'none'> }) {
   );
 }
 
-export function RecordPage8a({ record }: { record: PageRecord }) {
+/**
+ * `writingConfigured`: whether the deployment can write an About (a real
+ * Anthropic key). §36: the absence state offers the row with "Write one ↓"
+ * only then -- "an offer that cannot be taken up is not an offer" -- and
+ * which form renders "follows the same key that decides whether the row's
+ * button renders".
+ */
+export function RecordPage8a({ record, writingConfigured = false }: { record: PageRecord; writingConfigured?: boolean }) {
   const modules = gridModules({
     catalogNumber: record.pressingLine === '' ? null : record.pressingLine,
     labelName: null,
@@ -825,7 +833,19 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
                     </div>
                   </>
                 ) : (
-                  <EmptyMark diagonal="single" />
+                  <>
+                    {/*
+                      §36: "below the label sits 'Write one ↓', a link to the
+                      row in the same vocabulary as 'more ↓'. It is a link, not
+                      a button, so the app still has one generate control."
+                    */}
+                    {writingConfigured && (
+                      <Link href="#snippet" data-field="about-write" className={`${LABEL} mt-[6px] block`}>
+                        Write one ↓
+                      </Link>
+                    )}
+                    <EmptyMark diagonal="single" />
+                  </>
                 )}
               </>
             );

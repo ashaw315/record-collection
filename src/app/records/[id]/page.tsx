@@ -217,6 +217,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
                 coverUrl: record.images.find((image) => image.imageType === 'cover')?.url ?? null,
                 spineColour: record.spineColour,
               }}
+              writingConfigured={isAnthropicConfigured()}
             />
 
             {/*

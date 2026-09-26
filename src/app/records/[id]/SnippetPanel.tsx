@@ -1,13 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { RecordLadder } from '@/lib/colour/record-ladder';
 
 import { Section } from './Section';
 import { useRouter } from 'next/navigation';
 import { snippetView } from './snippet-view';
-import { ABOUT_LINES, aboutBudget } from './about-cell';
-import { useEffect, useRef } from 'react';
+import { ABOUT_CHAR_BUDGET, ABOUT_LINES, aboutBudget } from './about-cell';
 
 /**
  * SPEC.md §10b's snippet on the record detail page.
@@ -38,9 +37,38 @@ type Props = {
   ladder: RecordLadder | null;
 };
 
+/** Notifies on the frame paragraph's `data-clamped` attribute; a page with no frame About never notifies. */
+function subscribeToFrameClamp(onChange: () => void): () => void {
+  const frame = document.querySelector('[data-field="about"]');
+  if (frame === null) return () => {};
+  const observer = new MutationObserver(onChange);
+  observer.observe(frame, { attributes: true, attributeFilter: ['data-clamped'] });
+  return () => observer.disconnect();
+}
+
 export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured, base, ladder }: Props) {
   const router = useRouter();
   const view = snippetView({ snippet, snippetEditedAt });
+  /*
+    §36: "when the frame clamps the About, the row carries the full text
+    above the by-line, Edit and Delete; when the About fits, the row carries
+    only those." Whether the frame clamps is measured the way the frame
+    measures it -- lines at the frame paragraph's 322px measure -- with the
+    character budget as the server's guess, exactly as AboutCell guesses.
+  */
+  /*
+    The frame's own verdict, not a second measurement: AboutCell marks its
+    paragraph `data-clamped` once it has measured its lines, so the row
+    subscribes to that attribute and follows it. A hidden copy of the text in
+    this section was the first build, and a locator counting the About's
+    text in the row found it. On the server the budget is the guess, as it
+    is for the frame.
+  */
+  const clamps = useSyncExternalStore(
+    subscribeToFrameClamp,
+    () => document.querySelector('[data-field="about"]')?.hasAttribute('data-clamped') ?? false,
+    () => snippet !== null && snippet.length > ABOUT_CHAR_BUDGET,
+  );
 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(snippet ?? '');
@@ -180,6 +208,11 @@ export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured, b
                 to the model — the same error as presenting the model's writing
                 as fact, in the other direction.
               */}
+              {clamps && snippet !== null && (
+                <p data-testid="snippet-full" className="text-prose whitespace-pre-line">
+                  {snippet}
+                </p>
+              )}
               <p
                 data-testid={view.labelAsGenerated ? 'snippet-generated-label' : 'snippet-yours'}
                 className="mt-1 text-meta text-muted-foreground"

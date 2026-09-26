@@ -158,11 +158,11 @@ CASES.nocover = {
 export default async function Page8aProbe({
   searchParams,
 }: {
-  searchParams: Promise<{ case?: string }>;
+  searchParams: Promise<{ case?: string; configured?: string }>;
 }) {
   if (process.env.NODE_ENV === 'production') notFound();
 
-  const { case: which } = await searchParams;
+  const { case: which, configured } = await searchParams;
   const name = which ?? 'richest';
   const record = CASES[name];
 
@@ -189,7 +189,7 @@ export default async function Page8aProbe({
   return (
     <>
       <AppHeader />
-      <RecordPage8a record={record} />
+      <RecordPage8a record={record} writingConfigured={configured === '1'} />
     </>
   );
 }
