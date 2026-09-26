@@ -102,8 +102,10 @@ const READ = () => {
   const sleeve = document.querySelector('[data-cell="sleeve"]') as HTMLElement | null;
   const cover = document.querySelector('[data-cover]') as HTMLElement | null;
   const planes = Array.from(document.querySelectorAll<HTMLElement>('[data-plane]')).map((p) => `${p.getAttribute('data-mark')}:${p.getAttribute('data-plane')}`);
+  const lastCell = document.querySelector('[data-cell="note"]');
+  const aboutCell = lastCell?.querySelector('[data-field="about"]') ? 'about' : lastCell?.querySelector('[data-field="journal-entry"]') ? 'entry' : lastCell?.querySelector('[data-diagonal]') ? 'absence' : '?';
   return {
-    allKinds, planes, over, aboutLines, more,
+    allKinds, planes, aboutCell, over, aboutLines, more,
     footCut,
     market: marketSec === null ? null : { sectionW: px(R(marketSec).width), col: getComputedStyle(marketSec).gridColumn, labelW: marketLabel === null ? null : px(R(marketLabel).width), labelLines: marketLabel === null ? null : Math.round(R(marketLabel).height / parseFloat(getComputedStyle(marketLabel).lineHeight)) },
     still: still === null ? 'absent' : getComputedStyle(still).display, sleeve: sleeve === null ? 'absent' : getComputedStyle(sleeve).display, cover: cover === null ? 'absent' : `${px(R(cover).width)}x${px(R(cover).height)} ${getComputedStyle(cover).display}`,
@@ -170,7 +172,7 @@ test('every real record at seven widths: §26 ornaments behind type everywhere; 
       pairs += 1;
       for (const k of m.allKinds) kindsSeen.add(`${w}: ${k}`);
       for (const pl of m.planes) drawn[`${w} ${pl}`] = (drawn[`${w} ${pl}`] ?? 0) + 1;
-      if (w === 1440) { const r = records.find((x) => x.id === id); byRecord.push(`${(titleOf.get(id) ?? id).slice(0, 30).padEnd(30)} about=${r && hasAbout(r) ? 'yes' : 'no '} entries=${r ? r.entries.length : 0}  aboutArc=${m.planes.find((p) => p.startsWith('aboutArc:'))?.slice(9) ?? 'not rendered (cell empty)'}`); }
+      if (w === 1440) { const r = records.find((x) => x.id === id); byRecord.push(`${(titleOf.get(id) ?? id).slice(0, 30).padEnd(30)} about=${r && hasAbout(r) ? 'yes' : 'no '} entries=${r ? r.entries.length : 0}  cell=${m.aboutCell}`); }
       for (const o of m.over) { const k = `${w}: ${o.replace(/"[^"]*"/, '"…"')}`; overCount[k] = (overCount[k] ?? 0) + 1; if (overSamples.length < 60 && !overSamples.some((s) => s.endsWith(`: ${o}`) && s.startsWith(`${w} `))) overSamples.push(`${w} ${id.slice(0, 8)}: ${o}`); }
       for (const o of m.over) if (o.includes(' IN FRONT of ')) (o.startsWith('mark/') ? arcsInFront : o.startsWith('diagonal/') ? diagonalInFront : ornamentInFront).push(`${w} ${id.slice(0, 8)}: ${o}`);
       if (aboutFor[id] && (w === 1000 || w === 1440 || w === 1680)) specifics.push(`ABOUT ${aboutFor[id]} @${w}: ${m.aboutLines} lines, more↓=${m.more}, foot past cell by ${m.footCut}`);
@@ -183,7 +185,7 @@ test('every real record at seven widths: §26 ornaments behind type everywhere; 
   for (const [k, n] of Object.entries(overCount).sort()) console.log(`  ${n.toString().padStart(3)}  ${k}`);
   console.log(`\nORNAMENT OVER TEXT — one sample per (width, ornament, cell):`); overSamples.forEach((s) => console.log('  ' + s));
   console.log(`\nSPECIFICS:`); specifics.forEach((s) => console.log('  ' + s));
-  console.log(`\nSTEP 32 -- aboutArc on the real records at 1440 (${rows === null ? 'STAND-INS: not the real rows' : 'real id, title, About and journal entries; other fields one stand-in shape'}):`); byRecord.forEach((s) => console.log('  ' + s));
+  console.log(`\nSTEP 32 (done; §35 withdrew aboutArc on its result) -- the About cell's state on the real records at 1440 (${rows === null ? 'STAND-INS: not the real rows' : 'real id, title, About and journal entries; other fields one stand-in shape'}):`); byRecord.forEach((s) => console.log('  ' + s));
   console.log(`\nPLANES DRAWN vs NOT DRAWN (§34), per width over the ${ids.length} records (${rows === null ? 'stand-in rows' : 'real About and entries'}; real About on ${Object.keys(aboutFor).length}, journal entries on ${records.filter((r) => r.entries.length > 0).length}; a record with neither shows the diagonal and renders no arc):`); for (const [k, n] of Object.entries(drawn).sort()) console.log(`  ${String(n).padStart(3)}  ${k}`);
   console.log(`\nIN FRONT OF TYPE: §26 ornaments ${ornamentInFront.length}, §5.1 arcs ${arcsInFront.length}, §6 diagonals ${diagonalInFront.length} (box over the label; §6: 'Label persists, one diagonal fills the body box'), over ${pairs} record-width pairs`);
   expect(pairs, 'every record at every width').toBe(ids.length * widths.length);

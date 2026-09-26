@@ -63,7 +63,6 @@ const MARK_KIND: Partial<Record<string, MarkKind>> = {
   /* Tint: ground, and the sleeve bar frames the source rather than being one. */
   sleeveBar: 'tint',
   provenanceArc: 'tint',
-  aboutArc: 'tint',
   disc: 'tint',
   /* Fixed ink, never derived — they anchor the construction. */
   sleeveBlock: 'ink',

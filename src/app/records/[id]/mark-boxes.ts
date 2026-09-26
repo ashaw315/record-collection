@@ -115,14 +115,7 @@ export const MARKS = {
     step: 'tint',
     suppressWhenEmpty: true,
   },
-  aboutArc: {
-    cell: 'journal',
-    band: 'record',
-    inset: 18,
-    anchor: 'bottom-right',
-    step: 'tint',
-    suppressWhenEmpty: true,
-  },
+  /* aboutArc: withdrawn by §35 -- drawn on one real record in seventeen, trending to none. */
   /**
    * §3: the only 2px edge and the only rule on the page that is not grey. It
    * marks the cell whose content the owner WRITES rather than records, and

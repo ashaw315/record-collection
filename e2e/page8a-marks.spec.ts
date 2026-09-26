@@ -174,7 +174,7 @@ test.describe('every mark stays in its cell', () => {
       'sleeveBlock',
       /* §28 withdraws `identityTriangle` with the identity cell's ornament track. */
       'provenanceArc',
-      'aboutArc',
+      /* `aboutArc` is withdrawn by §35: one real record in seventeen drew it. */
       /* §5.4's small solid, in the construction's own vocabulary. */
       'matrixSolid',
     ]) {
@@ -196,7 +196,7 @@ test.describe('every mark stays in its cell', () => {
     await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
 
     await expect(page.locator('[data-mark="provenanceArc"]'), 'provenance is empty').toHaveCount(0);
-    await expect(page.locator('[data-mark="aboutArc"]'), 'the journal is empty').toHaveCount(0);
+    await expect(page.locator('[data-mark="aboutArc"]'), 'withdrawn by §35, in every state').toHaveCount(0);
     /* But the structural marks persist: they mark the cell, not its content. */
     await expect(page.locator('[data-mark="sleeveBar"]')).toHaveCount(1);
   });

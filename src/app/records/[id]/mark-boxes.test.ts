@@ -62,7 +62,6 @@ describe('the ladder step says what kind of mark it is (§5.5)', () => {
   it('puts the ground marks at tint', () => {
     expect(markBox('stillDisc').step).toBe('tint');
     expect(markBox('provenanceArc').step).toBe('tint');
-    expect(markBox('aboutArc').step).toBe('tint');
   });
 
   it('never assigns shade to a shape, because shade is a face', () => {
@@ -152,7 +151,6 @@ describe('decoration does not decorate an absence (§5.4)', () => {
    */
   it('marks the ornament as suppressible and the structural marks as not', () => {
     expect(markBox('provenanceArc').suppressWhenEmpty).toBe(true);
-    expect(markBox('aboutArc').suppressWhenEmpty).toBe(true);
     expect(markBox('aboutSquare').suppressWhenEmpty).toBe(true);
   });
 
@@ -170,10 +168,12 @@ describe('decoration does not decorate an absence (§5.4)', () => {
 });
 
 describe('the seven and the two', () => {
-  it('has six derived marks and two fixed-ink ones, the triangle withdrawn (§28)', () => {
+  it('has five derived marks and two fixed-ink ones: the triangle withdrawn by §28, the About arc by §35', () => {
     /*
       §5.1 specified seven derived regions; §28 withdraws one of them — the
-      identity triangle, with the ornament track that held it. Six remain,
+      identity triangle, with the ornament track that held it; §35 withdraws
+      a second, the About's quarter-circle, drawn on one real record in
+      seventeen ("of §5.1's eight, six are drawn"). Five derived remain,
       and the count is asserted rather than left implicit because it is what
       §9.4's base-mark arithmetic and §5.5's colour budget are measured
       against.
@@ -182,7 +182,7 @@ describe('the seven and the two', () => {
     const derived = all.filter((m) => markBox(m).step !== 'ink');
     const ink = all.filter((m) => markBox(m).step === 'ink');
 
-    expect(derived.length, '§5.1’s seven, less §28’s triangle').toBe(6);
+    expect(derived.length, '§5.1’s seven, less §28’s triangle, less §35’s About arc').toBe(5);
     expect(ink.length, 'the block and the square').toBe(2);
   });
 });

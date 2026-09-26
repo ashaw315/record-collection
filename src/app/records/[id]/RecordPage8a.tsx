@@ -877,18 +877,11 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
             </a>
           </div>
           {/*
-            §5.1's second quarter-circle, bleeding off the band's right end.
-            Flat for the same reason as the first — it touches a page edge —
-            and rounded on the corner that faces into the page. Suppressed when
-            the cell is empty (§5.4): a decorated empty cell reads as a designed
-            state rather than as a gap the reader can fill — and the cell's
-            content is the ABOUT now (§33), else the latest entry, so its
-            emptiness is `aboutCellState`'s `none`, decided on emptiness
-            rather than nullness.
+            §35: the About's quarter-circle is withdrawn. Measured on the
+            real seventeen it drew on one record, and every About Adam writes
+            removes it from another; "a mark drawn on one record in seventeen
+            is not part of the page's composition." Nothing replaces it.
           */}
-          {aboutCellState({ about: record.about, entry: record.journalEntry }).kind !== 'none' && (
-            <Plane name="aboutArc" corner="bottom-right" fill={tint} />
-          )}
         </div>
       </div>
 

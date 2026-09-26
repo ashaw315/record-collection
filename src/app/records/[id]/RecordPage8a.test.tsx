@@ -219,7 +219,8 @@ describe('the frame’s last cell is the About, else the entry, else the diagona
 describe('§5.1’s quarter-circles are sized against their host (§29, §34)', () => {
   it('draws each arc at two-thirds of the host height, capped at a quarter of its width, never at a fixed 112', () => {
     const html = renderToStaticMarkup(<RecordPage8a record={{ ...record(null), purchasePrice: '12.99', about: 'Short.', journalEntry: null }} />);
-    for (const name of ['provenanceArc', 'aboutArc']) {
+    /* provenanceArc only: aboutArc is withdrawn by §35. */
+    for (const name of ['provenanceArc']) {
       const arc = new RegExp(`<div[^>]*data-mark="${name}"[^>]*>`).exec(html)?.[0] ?? '';
       expect(arc, `${name} renders`).not.toBe('');
       expect(arc, `${name} is not a fixed 112`).not.toMatch(/h-\[112px\]|w-\[112px\]|height:112px/);
@@ -245,5 +246,51 @@ describe('the diagonal fills the body box, not the cell (§6)', () => {
     const el = /<div[^>]*data-diagonal[^>]*>/.exec(cell)?.[0] ?? '';
     expect(el, 'not the whole cell').not.toMatch(/inset-0/);
     expect(el, 'in the body box, filling it').toMatch(/flex-1/);
+  });
+});
+
+/**
+ * §35: "The About's quarter-circle is withdrawn: a mark drawn on one record
+ * in seventeen is not part of the page's composition." The cell holds the
+ * About; where there is none, the latest journal entry; where there is
+ * neither, absence -- and no arc in any of the three.
+ */
+describe('§35: the About cell carries no quarter-circle in any state', () => {
+  const entry = { entry: 'Played it right through.', entryDate: '2026-09-20' };
+  it.each([
+    ['an About', { about: 'Her last album for the label.', journalEntry: null }],
+    ['a journal entry', { about: null, journalEntry: entry }],
+    ['neither', { about: null, journalEntry: null }],
+  ])('with %s', (_state, fields) => {
+    /* Provenance populated, so its plane is the control for 'withdrawn' meaning this mark and not all planes. */
+    const html = renderToStaticMarkup(<RecordPage8a record={{ ...record(null), purchasePrice: '12.99', ...fields }} />);
+    expect(html, 'aboutArc is withdrawn (§35)').not.toContain('data-mark="aboutArc"');
+    expect(html, 'the provenance plane is untouched by the withdrawal').toContain('data-mark="provenanceArc"');
+  });
+});
+
+/**
+ * §35: "The same rule governs every cell that can be empty -- provenance,
+ * matrix, market." Absence is drawn in flow after the label, filling what
+ * the cell has left; never positioned over the cell. This guards the rule
+ * on the three cells whose real emptiness is not yet in the data file: it
+ * passes today because EmptyMark is shared, and it is here so that a
+ * per-cell regression cannot pass unseen.
+ */
+describe('§35: absence in flow after the label in every cell that can be empty', () => {
+  it('provenance, matrix and market draw the diagonal after their label, filling the body', () => {
+    const html = renderToStaticMarkup(<RecordPage8a record={{ ...record(null), purchasePrice: null, storeName: null, conditionMedia: null, conditionSleeve: null, matrixRunout: null, marketMedian: null, marketLow: null, marketHigh: null, hasDiscogsRelease: false }} />);
+    for (const [cell, label] of [['provenance', 'Provenance'], ['matrix', 'Matrix / runout'], ['market', 'Market median']] as const) {
+      const start = html.indexOf(`data-cell="${cell}"`);
+      expect(start, `${cell} renders`).toBeGreaterThan(-1);
+      const body = html.slice(start, html.indexOf('data-cell=', start + 1));
+      const at = body.indexOf(`>${label}<`);
+      const diagonal = /<div[^>]*data-diagonal[^>]*>/.exec(body);
+      expect(at, `${cell}: the label persists`).toBeGreaterThan(-1);
+      expect(diagonal, `${cell}: the diagonal is drawn`).not.toBeNull();
+      expect(diagonal?.index ?? -1, `${cell}: after the label`).toBeGreaterThan(at);
+      expect(diagonal?.[0] ?? '', `${cell}: in flow, filling the body, never over the cell`).toMatch(/flex-1/);
+      expect(diagonal?.[0] ?? '', `${cell}: not inset-0`).not.toMatch(/inset-0/);
+    }
   });
 });

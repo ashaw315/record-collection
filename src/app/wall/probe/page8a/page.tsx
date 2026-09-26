@@ -128,6 +128,21 @@ const CASES: Record<string, PageRecord> = {
   every mark falls back to INK — filled, not outlined, not omitted. Omitting them
   would let a missing image change the composition's structure.
 */
+/*
+  §35: the About cell's middle state -- a journal entry and no About -- which
+  the real collection holds on one record (Never Too Much). The extremes
+  fixture carries a record for every state a cell can be in.
+*/
+CASES.entryOnly = {
+  ...CASES.emptiest,
+  id: 'd7047c62-149e-42fa-8cda-fac3f90c47cc',
+  title: 'Never Too Much',
+  artistName: 'Luther Vandross',
+  artistId: 'a-vandross',
+  releaseYear: 1981,
+  journalEntry: { entry: 'This record slaps like crazy.', entryDate: '2026-08-12' },
+};
+
 CASES.nocover = {
   ...CASES.emptiest,
   id: '4a1e2b7c-0000-4000-8000-000000000005',

@@ -90,7 +90,8 @@ async function aRecord(page: Page, suffix: string): Promise<string> {
  * is one painted region, not three faces — is unchanged for the two that
  * remain.
  */
-const PLANES = ['provenanceArc', 'aboutArc'] as const;
+/* `aboutArc` withdrawn by §35; the provenance plane is the one §5.1 quarter-circle left. */
+const PLANES = ['provenanceArc'] as const;
 
 test.beforeEach(async ({ page }) => {
   await login(page);
@@ -157,14 +158,12 @@ test('each plane is the shape its name says', async ({ page }) => {
     };
     return {
       provenance: read('provenanceArc'),
-      about: read('aboutArc'),
     };
   });
 
 
   for (const [name, arc] of [
     ['provenance', shapes.provenance],
-    ['about', shapes.about],
   ] as const) {
     expect(arc, `the ${name} arc renders`).not.toBeNull();
     /* A quarter-circle is one rounded corner, not four. */
