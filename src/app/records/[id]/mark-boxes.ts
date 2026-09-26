@@ -130,7 +130,7 @@ export const MARKS = {
     suppressWhenEmpty: false,
   },
 
-  /* The two fixed-ink marks. Never derived — they anchor the construction. */
+  /* The fixed-ink mark. Never derived — it anchors the construction. */
   sleeveBlock: {
     cell: 'sleeve',
     band: 'identity',
@@ -139,14 +139,7 @@ export const MARKS = {
     step: 'ink',
     suppressWhenEmpty: false,
   },
-  aboutSquare: {
-    cell: 'journal',
-    band: 'record',
-    inset: 18,
-    anchor: 'bottom-left',
-    step: 'ink',
-    suppressWhenEmpty: true,
-  },
+  /* aboutSquare: removed -- a box for a mark nothing ever drew (no component, spec or script referenced it). */
 } as const satisfies Record<string, MarkBox>;
 
 export type MarkName = keyof typeof MARKS;

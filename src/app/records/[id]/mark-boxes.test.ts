@@ -73,11 +73,10 @@ describe('the ladder step says what kind of mark it is (§5.5)', () => {
     }
   });
 
-  it('keeps the two black marks off the ladder entirely', () => {
+  it('keeps the black mark off the ladder entirely (aboutSquare removed: a box nothing drew)', () => {
     // §5.1: fixed at ink, never derived, "because they anchor the construction
     // rather than being its subject".
     expect(markBox('sleeveBlock').step).toBe('ink');
-    expect(markBox('aboutSquare').step).toBe('ink');
   });
 });
 
@@ -151,7 +150,6 @@ describe('decoration does not decorate an absence (§5.4)', () => {
    */
   it('marks the ornament as suppressible and the structural marks as not', () => {
     expect(markBox('provenanceArc').suppressWhenEmpty).toBe(true);
-    expect(markBox('aboutSquare').suppressWhenEmpty).toBe(true);
   });
 
   it('keeps the release-year field and the journal edge whatever the cell holds', () => {
@@ -168,21 +166,30 @@ describe('decoration does not decorate an absence (§5.4)', () => {
 });
 
 describe('the seven and the two', () => {
-  it('has five derived marks and two fixed-ink ones: the triangle withdrawn by §28, the About arc by §35', () => {
+  it('holds five of §5.1’s eight as derived marks, and one fixed-ink one: the construction is accounted in construction.ts, the triangle withdrawn by §28, the About arc by §35', () => {
     /*
-      §5.1 specified seven derived regions; §28 withdraws one of them — the
-      identity triangle, with the ornament track that held it; §35 withdraws
-      a second, the About's quarter-circle, drawn on one real record in
-      seventeen ("of §5.1's eight, six are drawn"). Five derived remain,
-      and the count is asserted rather than left implicit because it is what
-      §9.4's base-mark arithmetic and §5.5's colour budget are measured
-      against.
+      §5.1 names EIGHT derived regions: the release-year field, the sleeve
+      bar, the identity triangle, the disc, the provenance quarter-circle,
+      the About quarter-circle, the journal's 2px edge, and the
+      construction's coloured faces. This module holds seven of them -- the
+      construction's faces are the construction's own (construction.ts), and
+      colour-distribution.spec counts them as one base mark -- so an earlier
+      version of this comment said "seven" where the file says eight. §28
+      withdraws the triangle with the ornament track; §35 the About arc,
+      drawn on one real record in seventeen. Five derived remain here, six
+      drawn on the page ("of §5.1's eight, six are drawn"), and the count is
+      asserted because §9.4's base-mark arithmetic and §5.5's colour budget
+      are measured against it.
+
+      One fixed-ink mark, not two: `aboutSquare` was a box for a mark nothing
+      ever drew -- no component, spec or script referenced it -- and a box
+      with no mark is a count that lies.
     */
     const all = Object.keys(MARKS) as MarkName[];
     const derived = all.filter((m) => markBox(m).step !== 'ink');
     const ink = all.filter((m) => markBox(m).step === 'ink');
 
-    expect(derived.length, '§5.1’s seven, less §28’s triangle, less §35’s About arc').toBe(5);
-    expect(ink.length, 'the block and the square').toBe(2);
+    expect(derived.length, 'seven of §5.1’s eight here, less §28’s triangle, less §35’s About arc').toBe(5);
+    expect(ink.length, 'the sleeve block alone').toBe(1);
   });
 });
