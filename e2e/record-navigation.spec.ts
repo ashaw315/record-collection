@@ -301,7 +301,16 @@ test('put back lands in the HELD record\'s slot after navigating', async ({ page
     await settle(page);
 
     for (let i = 0; i < 10; i += 1) {
-      await page.getByTestId('nav-next').click();
+      /*
+        Observed before each slide, not assumed: under one worker this walk
+        hung twice on `waiting for nav-next`, and two hypotheses for why --
+        leftover records from other specs; walking off the end (the first
+        spine is #0 of 60 on every load) -- were disproven by measurement.
+        The state is logged where the next failure's output will show it.
+      */
+      const before = await page.evaluate(() => ({ pulled: document.querySelector('[data-pulled]')?.getAttribute('data-pulled')?.slice(0, 8) ?? '-', next: document.querySelectorAll('[data-testid="nav-next"]').length, prev: document.querySelectorAll('[data-testid="nav-previous"]').length, chrome: document.querySelectorAll('[data-testid="record-chrome"]').length }));
+      console.log(`  slide ${i + 1}: pulled=${before.pulled} next=${before.next} prev=${before.prev} chrome=${before.chrome}`);
+      await page.getByTestId('nav-next').click({ timeout: 15_000 });
       /* A slide is one out gesture on one clock (navigate): advance it, then wait for the arrow it settles into. */
       await page.clock.runFor(OUT_MS + 40);
       await settle(page);
