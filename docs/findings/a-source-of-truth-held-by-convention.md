@@ -32,5 +32,5 @@ The parser that drops silently and the assertion that passes on an empty set
 are the same defect: both turn "I could not read this" into "there was
 nothing here".
 
-Related: [a check that reports nothing has not run](../design/ASSERTIONS-spec.md)
+Related: [a check that reports nothing has not run](../../scripts/ASSERTIONS-spec.md)
 — the spec's own rule, which this is the parser-side twin of.

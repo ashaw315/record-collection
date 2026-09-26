@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Index assertions — implemented from `docs/design/ASSERTIONS-spec.md`.
+ * Index assertions — implemented from `scripts/ASSERTIONS-spec.md`, beside this script.
  *
  * **The script's exit code is the result.** A report written by whoever
  * edited the index is not. Run it in CI and before any handoff is exported.

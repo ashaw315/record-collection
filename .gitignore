@@ -125,7 +125,6 @@ docs/design/*
 # rule as the targets: a source of truth is reachable wherever the thing built
 # from it is read, and at the same revision. A script whose spec is not in the
 # repo cannot be reviewed against it.
-!docs/design/ASSERTIONS-spec.md
 !docs/design/Wall and Pull - build target.dc.html
 
 # The same artefacts' STALE root copies, from before they moved into
