@@ -4,6 +4,7 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { getTestDb } from '../test/helpers/db';
 import { seedImage, seedRecordWithId } from './seed';
 import { sql } from 'drizzle-orm';
+import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 
 registerCleanup();
 const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
@@ -41,7 +42,7 @@ test('the row carries the full text only for a record whose frame clamps its Abo
       await seedImage({ recordId: r.id, imageType: 'cover' });
       await db.execute(sql`UPDATE records SET spine_colour = ${'#a25829'}, snippet = ${r.about}, snippet_edited_at = NOW() WHERE id = ${r.id}::uuid`);
     }
-    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
     await page.goto(`/records/${r.id}`);
     await page.locator('[data-field="eyebrow"]').waitFor({ timeout: 20_000 });
     await page.waitForTimeout(750);
