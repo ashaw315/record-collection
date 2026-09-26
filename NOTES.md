@@ -31482,3 +31482,14 @@ one-off and imports it.
 
 If a probe needs to slice those files and importing the parser feels like too
 much ceremony, that is the signal, not the exemption.
+
+## Flake log — ECONNRESET on POST /api/artists (26 Sep)
+
+`stats.spec.ts › an empty collection renders its zero rather than hiding it`
+flaked once in each project of the first sequential run (`npm run test:e2e`):
+`apiRequestContext.post: read ECONNRESET` on `POST /api/artists` — the dev
+server dropping a connection during fixture seeding, before the page under
+test was reached. Passed on retry both times; not seen in the chromium-alone
+or mobile-alone runs. Logged, not chased: it is the server, not the spec, and
+it appeared only when a project was starting cold against a server the other
+project had just finished with.
