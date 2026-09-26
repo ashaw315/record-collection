@@ -269,7 +269,7 @@ export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured, b
  * the floor of the measured range, 535, so a draft under it fits on every
  * text in the collection and a draft over it may or may not.
  */
-function AboutBudget({ text }: { text: string }) {
+export function AboutBudget({ text }: { text: string }) {
   const probe = useRef<HTMLParagraphElement>(null);
   const [lines, setLines] = useState<number | null>(null);
   useEffect(() => {
@@ -278,14 +278,19 @@ function AboutBudget({ text }: { text: string }) {
     const lineHeight = parseFloat(getComputedStyle(el).lineHeight);
     setLines(text.trim() === '' ? 0 : Math.round(el.getBoundingClientRect().height / lineHeight));
   }, [text]);
-  const { chars, budget, over } = aboutBudget(text);
+  const { chars, budget } = aboutBudget(text);
   const past = lines !== null && lines > ABOUT_LINES;
+  /*
+    §34: "the editor reports whether the text clamps in the rendered cell,
+    not whether it exceeds 535; it never says 'over' on a text that fits."
+    The clamp is the measured line count against ten; the budget is stated
+    as the guide it is.
+  */
   return (
     <>
       <p data-testid="about-budget" className="mt-1 text-meta text-muted-foreground" aria-live="polite">
         {lines === null ? '' : `${lines} of ${ABOUT_LINES} lines · `}
         {chars} of about {budget} characters
-        {over > 0 ? ` · ${over} over` : ''}
         {past ? ' · past ten lines: the frame will show nine and more ↓' : ''}
       </p>
       {/* The frame cell's measure, so the line count is the one the cell will draw. */}

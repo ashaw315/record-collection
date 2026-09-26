@@ -68,8 +68,13 @@ export function aboutCellState({
   return { kind: 'none' };
 }
 
-/** The editor's statement of the budget: characters written, the budget, and how far past it. */
-export function aboutBudget(text: string): { chars: number; budget: number; over: number } {
-  const chars = text.trim().length;
-  return { chars, budget: ABOUT_CHAR_BUDGET, over: Math.max(0, chars - ABOUT_CHAR_BUDGET) };
+/**
+ * The editor's statement of the budget: characters written against the guide.
+ *
+ * §34: "535 is a writing guide, not a limit: a text over it can still fit,
+ * and Gaucho's 555 does." There is no `over` -- whether a text clamps is
+ * measured in the rendered cell, and the editor reports that instead.
+ */
+export function aboutBudget(text: string): { chars: number; budget: number } {
+  return { chars: text.trim().length, budget: ABOUT_CHAR_BUDGET };
 }

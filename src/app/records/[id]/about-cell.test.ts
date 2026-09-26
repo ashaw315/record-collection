@@ -91,9 +91,10 @@ describe('§33 (d): the last cell is the About, else the entry, else nothing', (
  */
 describe('the editor states the About budget', () => {
   it('counts characters against the measured budget', () => {
-    expect(aboutBudget('')).toEqual({ chars: 0, budget: 535, over: 0 });
-    expect(aboutBudget('a'.repeat(535))).toEqual({ chars: 535, budget: 535, over: 0 });
-    expect(aboutBudget('a'.repeat(540))).toEqual({ chars: 540, budget: 535, over: 5 });
+    /* `over` withdrawn by §34: the budget is a guide, and clamping is measured in the cell. */
+    expect(aboutBudget('')).toEqual({ chars: 0, budget: 535 });
+    expect(aboutBudget('a'.repeat(535))).toEqual({ chars: 535, budget: 535 });
+    expect(aboutBudget('a'.repeat(540))).toEqual({ chars: 540, budget: 535 });
   });
 
   it('counts the text as the user sees it, not with trailing whitespace', () => {

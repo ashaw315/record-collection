@@ -7,7 +7,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
  * cannot reach. It supplies a framework context, never a value under test.
  */
 import '../../../../test/component/next-navigation';
-import { SnippetPanel } from './SnippetPanel';
+import { AboutBudget, SnippetPanel } from './SnippetPanel';
 
 /**
  * SPEC.md §11 (component layer, A46) — §10b's snippet panel, CONFIGURED.
@@ -178,5 +178,19 @@ describe('the heading uses the shared label treatment', () => {
     expect(html, 'the text testid is gone with the text').not.toContain('snippet-text');
     expect(html).toMatch(/<button/);
     expect(html, 'the editor control stays').toContain('snippet-edit');
+  });
+});
+
+/**
+ * §34: "535 is a writing guide, not a limit: a text over it can still fit,
+ * and Gaucho's 555 does. So the editor reports whether the text clamps in
+ * the rendered cell, not whether it exceeds 535; it never says 'over' on a
+ * text that fits."
+ */
+describe('the editor’s budget line (§34)', () => {
+  it('states the guide and never says “over”', () => {
+    const html = renderToStaticMarkup(<AboutBudget text={'a'.repeat(555)} />);
+    expect(html).toContain('555 of about 535 characters');
+    expect(html, 'no “over” -- the guide is not a limit').not.toMatch(/\bover\b/);
   });
 });
