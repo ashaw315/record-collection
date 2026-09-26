@@ -157,6 +157,36 @@ describe('the arrival is in position at parse time (§W.29)', () => {
   it('emits nothing in the far view, which does not scroll', () => {
     expect(render({ far: true })).not.toContain('data-arrival-scroll');
   });
+
+  /**
+   * **A script "immediately after" the region runs before the first paint
+   * only while both arrive in one parse chunk.** Under a loaded server the
+   * stream is slow, a frame paints between the region and its script, and
+   * the wall appears at 0,0 and travels into place -- measured in three full
+   * runs as `0/0 -> 5/75`, identical on retry, and passing in isolation. So
+   * the region ships hidden and the script reveals it after the scroll is
+   * set: there is no frame at 0,0 to paint.
+   */
+  it('ships the region hidden and reveals it from the arrival script, so no frame can paint at 0,0', () => {
+    const html = render({ far: false });
+    const region = /<div[^>]*data-region="wall"[^>]*>/.exec(html)?.[0] ?? '';
+    expect(region, 'the region is hidden in the server markup').toMatch(/visibility:hidden/);
+    const body = /<script data-arrival-scroll[^>]*>([\s\S]*?)<\/script>/.exec(html)?.[1] ?? '';
+    expect(body, 'the script sets the scroll').toContain('scrollTop');
+    expect(body, 'and then reveals the region').toMatch(/visibility\s*=\s*['"]{2}/);
+    expect(body.indexOf('scrollTop'), 'scroll first, reveal after').toBeLessThan(body.search(/visibility\s*=/));
+    /* The script finds the region as its previous element sibling; the noscript fallback comes after it, never between. */
+    const script = html.indexOf('data-arrival-scroll');
+    expect(html.indexOf('<noscript'), 'noscript after the script').toBeGreaterThan(script);
+    expect(html.slice(html.indexOf('<noscript')), 'without JavaScript the region is revealed by a style').toMatch(/visibility:visible/);
+  });
+
+  it('does not hide the region when no arrival script is emitted', () => {
+    const far = /<div[^>]*data-region="wall"[^>]*>/.exec(render({ far: true }))?.[0] ?? '';
+    expect(far, 'the far view has nothing to reveal it').not.toMatch(/visibility:hidden/);
+    const mounted = /<div[^>]*data-region="wall"[^>]*>/.exec(render({ far: false, arrivalScript: false }))?.[0] ?? '';
+    expect(mounted, 'after mount the script is dropped and so is the hiding').not.toMatch(/visibility:hidden/);
+  });
 });
 
 describe('the route’s two views, and the way between them (§W.12)', () => {

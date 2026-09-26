@@ -117,6 +117,17 @@ export function WallStage({
     while it is out (§W.22) — and only in the near view, which is the one
     that scrolls.
   */
+  /*
+    **True for the server's render only.** The inline script clears the
+    hiding before React hydrates, so the DOM React meets already has no
+    visibility -- and hydration compares the client's render with the DOM,
+    not with the server's markup. A client render that hides (a snapshot
+    that is true during hydration, or one made after the zoom out resets
+    the viewport to unmeasured) either mismatches the DOM -- React's dev
+    overlay opened and took three Tab stops (wall-route §W.30) -- or hides
+    a region nothing will reveal, since React never runs the script.
+  */
+  const serverRender = typeof window === 'undefined';
   const arrival: [number, number] | null = (() => {
     if (far === true || moving.length > 0) return null;
     const { placed, frame } = wallLayout(seats, [], width, view?.height ?? 0);
@@ -320,6 +331,19 @@ export function WallStage({
         ref={regionRef}
         data-region="wall"
         className="h-[calc(100vh-var(--app-nav-height,0px))] overflow-auto p-[34px] pl-0"
+        /*
+          **Hidden until the arrival script has set the scroll.** "A script
+          immediately after the region runs before the first paint" holds
+          only while the region and its script arrive in one parse chunk;
+          under a loaded server the stream is slow, a frame paints between
+          them, and the wall appears at 0,0 and travels into place --
+          measured `0/0 -> 5/75` in three full runs, identical on retry, and
+          never in isolation. Hidden, there is no frame at 0,0 to paint; the
+          script reveals it once the scroll is written. Layout still happens
+          under visibility:hidden, so the region is scrollable when the
+          script runs. Dropped with the script once mounted.
+        */
+        style={arrival !== null && arrivalScript && serverRender ? { visibility: 'hidden' } : undefined}
       >
         <div className="relative">
           <WallLabelled
@@ -363,9 +387,21 @@ export function WallStage({
           <script
             data-arrival-scroll=""
             dangerouslySetInnerHTML={{
-              __html: `(function(){var e=document.currentScript.previousElementSibling.parentElement;e.scrollLeft=${arrival[0]};e.scrollTop=${arrival[1]};})();`,
+              __html: `(function(){var e=document.currentScript.previousElementSibling.parentElement;e.scrollLeft=${arrival[0]};e.scrollTop=${arrival[1]};e.style.visibility='';})();`,
             }}
           />
+        )}
+        {/*
+          **Without JavaScript the arrival script never runs, so the region
+          must not stay hidden.** After the script, which finds the region as
+          its previous element sibling -- a spine is a link and survives without
+          it (shelf.spec). `<noscript>` is the one hook that applies exactly
+          when the script cannot.
+        */}
+        {arrival === null || !arrivalScript ? null : (
+          <noscript>
+            <style>{`[data-region="wall"]{visibility:visible!important}`}</style>
+          </noscript>
         )}
       </div>
     </div>
