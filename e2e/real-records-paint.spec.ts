@@ -163,7 +163,7 @@ test('every real record at seven widths: §26 ornaments behind type everywhere; 
   for (const [k, n] of Object.entries(overCount).sort()) console.log(`  ${n.toString().padStart(3)}  ${k}`);
   console.log(`\nORNAMENT OVER TEXT — one sample per (width, ornament, cell):`); overSamples.forEach((s) => console.log('  ' + s));
   console.log(`\nSPECIFICS:`); specifics.forEach((s) => console.log('  ' + s));
-  console.log(`\nPLANES DRAWN vs NOT DRAWN (§34), per width over the ${ids.length} records (one stand-in content shape; real About text on ${Object.keys(aboutFor).length}):`); for (const [k, n] of Object.entries(drawn).sort()) console.log(`  ${String(n).padStart(3)}  ${k}`);
+  console.log(`\nPLANES DRAWN vs NOT DRAWN (§34), per width over the ${ids.length} records (one stand-in content shape; real About text on ${Object.keys(aboutFor).length}; EVERY stand-in carries a journal entry, so aboutArc renders on the 13 without an About -- whether Adam's real no-About records carry entries is unmeasured; with neither, the cell shows the diagonal and no arc renders: RecordPage8a.test 'shows the diagonal when there is neither', page8a-marks 'suppresses the ornament in cells that are empty'):`); for (const [k, n] of Object.entries(drawn).sort()) console.log(`  ${String(n).padStart(3)}  ${k}`);
   console.log(`\nIN FRONT OF TYPE: §26 ornaments ${ornamentInFront.length}, §5.1 arcs ${arcsInFront.length}, over ${pairs} record-width pairs`);
   expect(pairs, 'every record at every width').toBe(ids.length * widths.length);
   expect(ornamentInFront, '§26: figures and flats sit behind content').toEqual([]);

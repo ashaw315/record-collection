@@ -5,7 +5,8 @@ import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
 import { CONTROL_HEIGHT } from '../src/app/records/[id]/extended-grid';
 import { BANDS, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
-import { COLUMN_MIN, columnsFor, columnWidthAt, pageWidthAt, upperSpansAt } from '../src/app/records/[id]/region-rows';
+import { SLEEVE_CELL } from '../src/app/records/[id]/cover-33';
+import { COLUMN_MIN, columnsFor, columnWidthAt, pageWidthAt, upperRowsAt, upperSpansAt } from '../src/app/records/[id]/region-rows';
 
 registerCleanup();
 
@@ -324,17 +325,20 @@ test('§28’s growth below 1440: at 1000 the page is 1000 wide, not 960 centred
   expect(measured.columns[0], 'of 125 each, grown from the 120 module').toBeCloseTo(125, 0);
 });
 
-test('§28: the identity band keeps its fixed height from 480 up, and loses it below', async ({ page }) => {
+test('§28: every row of the identity band is 547 from 480 up, with every cell visible; below 480 it has no fixed height', async ({ page }) => {
   /**
-   * **§28: "The band stays at 547 above 480... Below 480 the band has no
-   * fixed height at all, so there the height give order does not apply."**
+   * **§28: "'The band' means each row of it: every row of the upper band is
+   * 547, and where §28's wrap moves the third cell to a second row at 8
+   * columns, or stacks all three at 4, the band is two or three such rows,
+   * 1094 from 960 to 1439 and 1641 from 480 to 959."**
    *
-   * The build applied `height: auto` from 1440 down, which is 960px of range
-   * where §28 says the height is fixed. That made the identity cell
-   * shrink-wrap its content, so demand equalled supply exactly — measured at
-   * 1280, available 351 against a children's sum of 351 — and the genres
-   * collapse could not distinguish a record with 45px of slack from one 2px
-   * over.
+   * The earlier version of this test read "the band stays at 547 above 480"
+   * as the band's whole height, and passed only while the still and sleeve
+   * were hidden below the fork -- 547 was trivially true of one row. Once
+   * the cells wrapped it failed at 1094 and 1641, which is the conflict
+   * Design settled with the sentence above (step 33). So: rows × 547, and
+   * every cell visible -- "test each row with every cell visible, not with
+   * cells hidden."
    *
    * **Asserted on the rendered box, never on `style.height`.** The declared
    * value reads 547 at every width because the fork overrode it in a
@@ -350,10 +354,20 @@ test('§28: the identity band keeps its fixed height from 480 up, and loses it b
 
     const band = await page.evaluate(() => {
       const el = document.querySelector('[data-cell="identity-content"]')!.closest('[data-band]') as HTMLElement;
-      return { rendered: Math.round(el.getBoundingClientRect().height), declared: el.style.height };
+      const cells = ['identity', 'still', 'sleeve'].map((name) => {
+        const cell = document.querySelector(`[data-cell="${name}"]`) as HTMLElement | null;
+        return { name, display: cell === null ? 'absent' : getComputedStyle(cell).display, height: cell === null ? 0 : Math.round(cell.getBoundingClientRect().height) };
+      });
+      return { rendered: Math.round(el.getBoundingClientRect().height), cells };
     });
 
-    expect(band.rendered, `at ${width}, the band renders its fixed height`).toBe(BANDS.identity);
+    const rows = upperRowsAt(width).length;
+    expect(band.rendered, `at ${width}, ${rows} row(s) of ${BANDS.identity}`).toBe(rows * BANDS.identity);
+    for (const cell of band.cells) {
+      expect(cell.display, `${cell.name} at ${width} is visible`).not.toBe('none');
+      /* A cell is the row less the band's last pixel, which is the rule (SLEEVE_CELL: 546). */
+      expect(cell.height, `${cell.name} at ${width} is one row tall`).toBe(SLEEVE_CELL.height);
+    }
   }
 
   /* Below 480 it has no fixed height, so the box is its content's. */
@@ -365,5 +379,5 @@ test('§28: the identity band keeps its fixed height from 480 up, and loses it b
     const el = document.querySelector('[data-cell="identity-content"]')!.closest('[data-band]') as HTMLElement;
     return Math.round(el.getBoundingClientRect().height);
   });
-  expect(narrow, 'below 480 the band grows to its content').not.toBe(BANDS.identity);
+  expect(narrow % BANDS.identity, 'below 480 the band grows to its content, not to rows of 547').not.toBe(0);
 });

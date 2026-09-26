@@ -243,15 +243,22 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
             arc is reported by the sweep's known-failing test until Design
             rules a grouping.
           */
-          [data-band="identity"] { grid-template-columns: repeat(2, ${GRID_FORK / 3}px) !important; grid-auto-rows: ${BANDS.identity}px; height: auto !important; }
+          /*
+            §28: "the band is two or three such rows, 1094 from 960 to 1439
+            and 1641 from 480 to 959." The band's last pixel is its rule, as
+            at twelve columns, so each row's cells are 546 (SLEEVE_CELL) and
+            the band is stated as rows × 547 rather than summed: summed, the
+            rule made it 1095 (measured at 1200).
+          */
+          [data-band="identity"] { grid-template-columns: repeat(2, ${GRID_FORK / 3}px) !important; grid-auto-rows: ${BANDS.identity - 1}px; height: ${2 * BANDS.identity}px !important; }
           [data-band="identity"] > [data-cell] { grid-column: span 1 !important; }
           [data-band="record"] { grid-template-columns: 1fr !important; }
           [data-band="record"] > [data-cell] { grid-column: 1 / -1 !important; }
           @media (max-width: 959px) {
-            [data-band="identity"] { grid-template-columns: ${GRID_FORK / 3}px !important; }
+            [data-band="identity"] { grid-template-columns: ${GRID_FORK / 3}px !important; height: ${3 * BANDS.identity}px !important; }
           }
           @media (max-width: 479px) {
-            [data-band="identity"] { grid-template-columns: 1fr !important; grid-auto-rows: auto; }
+            [data-band="identity"] { grid-template-columns: 1fr !important; grid-auto-rows: auto; height: auto !important; }
             /*
               **One fluid column: the two fitted cells scale with it.** §28:
               the construction "draws at (W - 48) / 432 of fitted scale";
