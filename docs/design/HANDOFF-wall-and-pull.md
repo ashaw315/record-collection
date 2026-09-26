@@ -1,8 +1,8 @@
-# Handoff — the wall and the pull (§W), and the record detail (§1–§10 settled, §12–§32 live)
+# Handoff — the wall and the pull (§W), and the record detail (§1–§10 settled, §12 onward live)
 
 **This file is a pointer index, not an excerpt.** It says which subsection of the build target governs what. It does **not** restate the rules — the previous version of this file was a full excerpt and went stale twice: it carried §W.1's withdrawn "width is what the eye can use before reading" claim after that claim was reversed, and it predated §W.5, §W.6 and §W.7 entirely. **Same conclusion as the §9 handoff: the pointers never went stale, every restatement did.**
 
-**Three sources of truth.** `§W` and `§W.N` rows point into **`Wall and Pull - build target.dc.html`**. §12–§32 rows point into **`Record Detail 8a - build target.dc.html`**, the live record-detail target. §1–§10 rows point into **`Record Detail 8a - settled 1-10.dc.html`**, which is closed: **nothing is written into it except withdrawal sentences**. A withdrawal must sit in the section it withdraws, so a later section withdrawing a settled one writes one sentence there and its entry in `WITHDRAWALS.md`; nothing else in the file changes. The §4.1 heading repair moved a withdrawal sentence out of a heading, so it was this kind of edit. It was split from the live target so each file can be rendered after every edit. If this file and a target disagree, the target is right and this file is the defect. **A row can omit a clause without contradicting its section, so a claim that a section does NOT say something must be checked against the section itself.**
+**Three sources of truth.** `§W` and `§W.N` rows point into **`Wall and Pull - build target.dc.html`**. §12-and-above rows point into **`Record Detail 8a - build target.dc.html`**, the live record-detail target. §1–§10 rows point into **`Record Detail 8a - settled 1-10.dc.html`**, which is closed: **nothing is written into it except withdrawal sentences**. A withdrawal must sit in the section it withdraws, so a later section withdrawing a settled one writes one sentence there and its entry in `WITHDRAWALS.md`; nothing else in the file changes. The §4.1 heading repair moved a withdrawal sentence out of a heading, so it was this kind of edit. It was split from the live target so each file can be rendered after every edit. If this file and a target disagree, the target is right and this file is the defect. **A row can omit a clause without contradicting its section, so a claim that a section does NOT say something must be checked against the section itself.**
 
 **Renumbering.** The wall was §11 of the record-detail target, and its subsections were §11.1–§11.37. They are moved unchanged and renumbered **§11.N → §W.N**. No other number changed. **§27 is the eyebrow ruling (§27 · The eyebrow returns to the flow).** The hairline value is **§W.27** (was §11.27). A build that took §27 to mean the hairline was reading §11.27 with the 11 dropped, and that is the collision the renumbering removes.
 
@@ -80,6 +80,7 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §31 | The frame is a stated constant | **Withdrawn in whole by §33.** What the frame constant cost, kept as a record; what survives now belongs to §22. |
 | §32 | The frame fills the cell | The fill assertion on the frame, why the per-record height floor is withdrawn, and the withdrawal of §30's first floor figures. |
 | §33 | The band fits the record in front of it | Why the three upper cells read thin together; the title's display steps; the construction's own fit and where the offset survives; the cover as the largest square with the column rotated into the strip; the frame's last cell (About, then journal, then diagonal); the matrix solid's base; rules that run whole by row. Withdraws the size-by-collection clauses of §17, §23, §28, §31 and §32. |
+| §34 | No mark paints over type, the About’s length, and the market at eight columns | §5.1’s marks as well as §26’s figures and flats, governed by paint order not class name; §29 sizes a plane first, and only a plane that still covers type is not drawn; the post-fix counts and the cause below the fork; the About’s budget as a writing guide, and why the editor reports clamping, not excess; why a grouping list does not guarantee a measure. |
 
 ## Structural sections — pointers
 
@@ -116,7 +117,6 @@ These are the sections the rulings above build on, all in `Record Detail 8a - se
 | §10.1 | Two rhythms, and what the whole view shows |
 | §10.2 | Ornament at 11 : 1 — three sizes of answer, drawn |
 | §10.3 | Which, and the rule that replaces half a column |
-
 
 ## Build order
 
@@ -158,6 +158,12 @@ These are the sections the rulings above build on, all in `Record Detail 8a - se
 31. **§28 — the record band below 1440.** Release its inline 300 below the 1440 fork; size the band per band, not through the shared `[data-band]` selector; add a width sweep from 390 to 1920 asserting no cell's content escapes its box.
    > Below 1440 the record band has no fixed height.
 
+32. **§34 — marks, the About, and the market at eight columns.** Size §5.1's planes per §29 (at most ⅔ host height, ¼ section width), then do not draw any plane that still covers type; report survivors at each reference viewport. The About's budget is 535; the editor reports whether a text clamps, not whether it exceeds 535. At eight columns the market takes the full row and every content cell's measure holds its longest label on one line. Record that below the 1440 fork no quarter-circle survives, which is ruled and accepted. Above it, measure `aboutArc` on the real no-About records, not on stand-ins carrying journal entries, and report whether those records have entries.
+   > §29 governs a plane’s size: §5.1’s quarter-circles are flats, and a flat is sized against its host.
+
+33. **§28 — the upper band's rows, and the record band below the 1440 fork.** The upper band is 547 per row: 1094 from 960 to 1439 and 1641 from 480 to 959 where §28's wrap makes two or three rows. Test each row with every cell visible, not with cells hidden. Below the 1440 fork the record band is one column of full-width cells.
+   > “The band” means each row of it:
+
 **Every row in the table above must appear in a step here.** The completeness check greps the table only, so an index that is current and an order that is eight rulings behind both pass — which is what happened at §W.28–§W.35. Check both.
 
 ## Maintaining this file
@@ -168,7 +174,9 @@ So the check is mechanical: **eight assertions, run against all three targets, b
 
 **The assertions themselves are in `ASSERTIONS-spec.md`, and only there.** This section used to enumerate them, and in the round the spec was written three of the eight here had already diverged from it: 7 and 8a still used the keyword matcher the spec replaced, and 8b still carried §4.1. What stays here is this file's own record: when each assertion was reported passing while failing, and why each exists.
 
-**Assertion 5's blind spot.** It checks a row against its heading, so a heading and a row that go stale together pass: §31's heading and row both still named the frame constant after §33 retired it. Only a reading of the section's body catches that.
+**Assertion 5's blind spots, both directions.** It accepts a row whose title matches the heading or the first 600 characters of the body. So a heading and a row that go stale together pass: §31's heading and row both still named the frame constant after §33 retired it. And a heading that goes stale alone passes, covered by a correct body: §34's heading read "Ornament yields to type" a round after its body overturned that framing. Only a reading of the section catches either.
+
+**A pointer column is prose no assertion reads, so it goes stale silently.** 5 reads only a row's title and 8b only looks for digits, so a pointer's claims are never checked against its section. §34's pointer went stale three rounds running, the same shape as the withdrawal list before assertion 6 read its quotes.
 
 **Why each assertion exists, since each was added after the ones before it passed on a broken index.** Assertion 1 asks for *exactly one* row because a presence grep is satisfied by two conflicting rows for one section: §W.35 carried two, each with material the other lacked. Assertion 2 exists because the table and the build order are separate lists. The order stopped at step 8 while the table ran to §W.36, so a build reading the order was eight rulings behind, and the check still reported the index current. **An index is only sound if every list in it is checked, not the one that is easiest to grep.** Assertion 3 exists because 1 and 2 passed on an order that skipped step 14 and put three steps below its own closing text. Assertions 4 and 5 came with the split. 4 is needed because references now cross two files. 5 is needed because a number appearing in the table does not mean its subject agrees. **On its first run, 5 caught two rows, §W.8 and §W.15, whose titles had drifted from their headings, in an index every earlier check had passed.** That is the best evidence this file has for why a fifth check was needed. Assertions 6 and 7 came with the reader's note, whose withdrawal list is a restatement like the index. On its first run, 6 found §26 retracting its 0.78 scale without ever saying so.
 
@@ -178,6 +186,8 @@ So the check is mechanical: **eight assertions, run against all three targets, b
 
 ## Proposed changes to ASSERTIONS-spec.md
 
+- **Assertion 4's third clause: `§N` with `N ≥ 12`, no upper bound.** It reads `12 ≤ N ≤ 32`, so references to §33 and §34 are unchecked, and the settled file already carries one ("Superseded by §33 on the frame's cell"). The live set is `L`'s own headings, so the bound restates what the headings already state and goes stale each time a section is added.
+
 **The spec is Code's and leaves this bundle.** Code's additions to it have been lost to these exports twice, because a shipped copy overwrites the repo's. From this round nothing here ships `ASSERTIONS-spec.md` and nothing here edits it; changes are proposed below, and Code applies them or answers. The version in this bundle is stale and should not be read.
 
 **Assertion 7, reading and pairing.**
@@ -185,5 +195,5 @@ So the check is mechanical: **eight assertions, run against all three targets, b
 - **Each entry's quote equals one declared sentence in full, and pairing is one-to-one:** each declared sentence is matched by exactly one entry and each entry matches exactly one sentence. Not a prefix and not a slice. Code showed by mutation that a 40-character slice lets 7 pass with an entry deleted, because `4.2/track-minimum` and `4.2/two-track` share their first 40 characters.
 - Fail lines: `7 §SEC unquoted "sentence"`, `7 ID matches-none`, `7 ID matches-many N`, `7 §SEC quoted-twice "sentence"`.
 - **Bold is flattened in the targets:** no `<strong>` opens inside another. There were 17 nested openings at depth 3, which is why 7 could not see `33/three-line-cap`; there are none now. Worth an assertion only if it recurs.
-- **Claude authors only the listed entries in WITHDRAWALS.md; Code's script derives the machine-readable comment from them and fails if they disagree.** Claude never edits the comment. One edit, one author still holds: one authoring action, in prose that can be read. This supersedes the `listed-differs` clause proposed last round, which checked for a defect this removes. **Why:** the comment is one line of about 8KB of JSON, which nobody can read to confirm their own edit, so any claim about it is a report from memory. Last round's did exactly that: the script generated the list from updated quotes and then wrote the old comment back unchanged, and the report said both entries were fixed. It was the fourth report this session of a state the file did not have, and the first about an edit just made.
+- **Claude authors only the listed entries in WITHDRAWALS.md; Code's script derives the machine-readable comment from them and fails if they disagree.** Claude never edits the comment, and **Claude's exports carry no comment at all**: the file ships as the list alone and the script inserts the comment in the repo. Otherwise every export would carry a comment of its own and overwrite the derived one, which is the marks problem again in the file that fixed it, and it would depend on someone re-running the script after every drop. This is the same reasoning that took the spec out of Claude's bundle. One edit, one author still holds: one authoring action, in prose that can be read. This supersedes the `listed-differs` clause proposed last round, which checked for a defect this removes. **Why:** the comment is one line of about 8KB of JSON, which nobody can read to confirm their own edit, so any claim about it is a report from memory. Last round's did exactly that: the script generated the list from updated quotes and then wrote the old comment back unchanged, and the report said both entries were fixed. It was the fourth report this session of a state the file did not have, and the first about an edit just made.
 - **Placement:** this section sits after the build order, so it is outside the range the spec defines the pointer table by.
