@@ -333,13 +333,14 @@ describe('§36: the absence state offers the row, only where writing is configur
 describe('§28: the upper band’s air at 8 columns carries row 1’s figure and the tint field', () => {
   it('renders the air cell after the sleeve, with the pair and the tint triangle', () => {
     const html = renderToStaticMarkup(<RecordPage8a record={{ ...record('#a25829') }} />);
-    const sleeve = html.indexOf('data-cell="sleeve"');
-    /* The element, not the stylesheet's selector for it, which precedes everything. */
+    /* The ELEMENTS, not the stylesheet's selectors for them, which precede everything: `[data-cell="sleeve"]` and `[data-band="record"]` both appear in the <style> first. */
+    const sleeve = html.indexOf('data-cell="sleeve" class');
     const air = html.indexOf('data-upper-air=""');
+    const recordBand = html.indexOf('data-band="record" class');
     expect(air, 'the upper air cell renders').toBeGreaterThan(-1);
     expect(air, 'after the sleeve').toBeGreaterThan(sleeve);
-    expect(air, 'inside the identity band, before the record band').toBeLessThan(html.indexOf('data-band="record"'));
-    const cell = html.slice(air, html.indexOf('data-band="record"'));
+    expect(recordBand, 'the record band element').toBeGreaterThan(air);
+    const cell = html.slice(air, recordBand);
     expect(cell, 'row 1’s figure, §25’s pair').toMatch(/data-ornament="figure"[^>]*data-figure="pair"/);
     expect(cell, 'the tint triangle').toMatch(/data-ornament="flat"[^>]*data-flat="triangle"/);
   });
