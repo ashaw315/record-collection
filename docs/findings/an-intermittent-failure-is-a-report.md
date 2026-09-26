@@ -1,0 +1,11 @@
+# An intermittent failure is a report, not noise
+
+**The shape.** A test fails in some full runs and passes in others. The two available moves are to fix it or to name it `KNOWN-FAILING` so green cannot be misread. The second move is right for a failure whose cause is understood and ruled; taken before the failure has been read, it buries a defect under a label that says the opposite.
+
+**The instance.** `wall-first-paint › the arrival is already in position (§W.29)` was flaky in one full run and failed outright in the next three, with nothing under `src/app/wall` changed. Three untracked failures had by then carried across three runs, and the offer was: fix them, or name them. Reading the failure context first: `the arrival must not move: 0/0 -> 5/75`, identical on the retry. The arrival is an inline script placed after the wall region so it runs "before the first paint" — which holds only while the region and its script arrive in one parse chunk. Under a loaded server the stream is slow, a frame paints between them, and the wall appears at 0,0 and travels into place: the exact thing §W.29 forbids, and what a reader on a slow connection sees. The suite had been reporting it for three runs. It passed 11/11 in isolation, which is what made "flaky" the tempting word.
+
+**The rule that survives.** A test may be named expected-to-fail only after its failure has been read and its cause ruled — never to explain why it keeps failing. An intermittent failure is a measurement taken under conditions the fixture does not control, and "intermittent" describes the conditions, not the defect. The order is: read the context, reproduce or isolate, name the cause; then fix, or name the test after the cause.
+
+**Where it lives now.** The region ships `visibility:hidden` and the arrival script reveals it after setting the scroll, so no frame can paint at 0,0 (`WallStage.tsx`, component test on the markup); the §W.29 test stays as the measurement, unchanged.
+
+Related: [shared-infrastructure-invalidated-the-control](shared-infrastructure-invalidated-the-control.md), [a-check-whose-subject-is-a-list](a-check-whose-subject-is-a-list.md).
