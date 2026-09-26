@@ -301,18 +301,19 @@ const WITHDRAWAL_PREFIX =
   const before = failures.length;
 
   /*
-    Spec: a declared sentence "starts at a declared prefix, as the first text
-    of a <strong> run outside a heading, and runs to its own sentence end --
-    the first `. `, `? ` or `! ` after the prefix, or the end of its
-    paragraph. A run of bold text is not a sentence boundary."
+    Spec: a declared sentence "starts at a declared prefix that begins a
+    sentence inside a <strong> run outside a heading -- the run's first
+    text, or the text after a sentence end within the run -- and runs to
+    its own sentence end": the first `. `, `? ` or `! ` after the prefix,
+    or the end of its paragraph. Bold is not a sentence boundary.
 
     So the paragraph's plain text is what is sliced, and the strong run only
     says where a sentence STARTS. Matching is on the whole sentence, one to
     one -- a 40-character slice once let 7 pass with an entry deleted.
   */
   const sentences = [];
+  /* L, S and W alike: the wall had four declared withdrawals and, for as long as this loop skipped W, nothing checked them. */
   for (const h of ALL) {
-    if (h.id.startsWith('W')) continue;
     for (const para of h.html.matchAll(/<p\b[^>]*>([\s\S]*?)<\/p>/g)) {
       const inner = para[1];
       const plain = collapse(stripTags(inner));
@@ -360,7 +361,16 @@ const WITHDRAWAL_PREFIX =
     if (matches.length === 0) fail(`7 §${s.section} unquoted "${s.sentence.slice(0, 60)}"`);
   }
   for (const e of withdrawals) {
-    if (!WITHDRAWAL_PREFIX.test(collapse(e.quote))) continue; /* outside 7 by design; 6 checks it */
+    if (!WITHDRAWAL_PREFIX.test(collapse(e.quote))) {
+      /*
+        Spec: an undeclared entry is legal for one case only -- a superseded
+        first wording of the SAME section (`s` equals `by`); 6 checks its
+        quote and 7 skips it. Any other undeclared withdrawal is a defect in
+        the prose: a ruling withdrawn without a declared sentence.
+      */
+      if (e.s !== e.by) fail(`7 ${e.id} undeclared`);
+      continue;
+    }
     const n = sentences.filter((s) => s.section === e.s && s.sentence === collapse(e.quote)).length;
     if (n === 0) fail(`7 ${e.id} matches-none`);
     else if (n > 1) fail(`7 ${e.id} matches-many ${n}`);
