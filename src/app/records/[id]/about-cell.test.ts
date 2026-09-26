@@ -1,13 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  aboutBudget,
-  ABOUT_CHAR_BUDGET,
-  ABOUT_CLAMP_LINES,
-  ABOUT_LINES,
-  ENTRY_LINES,
-  aboutCellState,
-  present,
-} from './about-cell';
+import { aboutBudget, ABOUT_CHAR_BUDGET, ABOUT_CLAMP_LINES, ABOUT_LINES, ENTRY_LINES, aboutCellState, present, clampFor } from './about-cell';
 
 /**
  * §33 (d), amended: "The lower frame's last cell shows the record's About,
@@ -99,5 +91,25 @@ describe('the editor states the About budget', () => {
 
   it('counts the text as the user sees it, not with trailing whitespace', () => {
     expect(aboutBudget('  abc  ').chars).toBe(3);
+  });
+});
+
+/**
+ * §36: the lines the rendered cell holds, not a count. Measured at 1440 on
+ * the real rows: Gaucho's ten lines (195px at 19.5) fit a room of 213 and
+ * go unclamped; The Hurdy Gurdy Man's fourteen do not, and with "more ↓"
+ * taking a line the clamp is the budget less one, nine -- §33's 10 / 9
+ * recovered from the cell rather than assumed. At 1320 the same cell holds
+ * 162px of room: eight lines whole, and a clamp of seven.
+ */
+describe('clampFor: the About clamps to the lines its cell holds (§36)', () => {
+  it('recovers ten whole and nine clamped at 1440’s room', () => {
+    expect(clampFor({ lines: 10, room: 213, lineHeight: 19.5, more: 19 })).toBeNull();
+    expect(clampFor({ lines: 14, room: 213, lineHeight: 19.5, more: 19 })).toBe(9);
+  });
+  it('clamps to fewer lines in a smaller cell, and never below one', () => {
+    expect(clampFor({ lines: 9, room: 162, lineHeight: 19.5, more: 19 })).toBe(7);
+    expect(clampFor({ lines: 8, room: 162, lineHeight: 19.5, more: 19 })).toBeNull();
+    expect(clampFor({ lines: 3, room: 10, lineHeight: 19.5, more: 19 })).toBe(1);
   });
 });

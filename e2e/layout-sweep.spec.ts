@@ -3,7 +3,7 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { getTestDb } from '../test/helpers/db';
 import { seedImage } from './seed';
 import { sql } from 'drizzle-orm';
-import { BANDS, GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
+import { BANDS, GRID_FORK, NO_SCROLL_HEIGHT, SCALE_BAND_FLOOR, bandScaleAt } from '../src/app/records/[id]/band-geometry';
 import { bandHeightAt } from '../src/app/records/[id]/region-rows';
 
 registerCleanup();
@@ -40,7 +40,24 @@ const MEASURE = () => {
 
   /* Leaves: text fields and marks, not ornaments, not the diagonal -- the box test. */
   const leaves = Array.from(document.querySelectorAll<HTMLElement>('[data-field], [data-mark]')).filter((el) => el.getAttribute('data-diagonal') === null && el.closest('[data-ornament]') === null && el.getAttribute('aria-hidden') !== 'true' && R(el).width > 0);
-  const ib = leaves.map((el) => ({ el, name: name(el), b: box(el), cell: el.closest('[data-cell], [data-section]') }));
+  /*
+    **A text leaf's extent is its glyphs, not its box.** The year figure's
+    box bleeds into the cell's padding by design (margin-inline -18,
+    padding-inline 18) and in §36's band fractional columns put that box a
+    sub-pixel past the clip while the glyphs sit inside with room to spare
+    -- a check one layer off its claim, reported as "cut by 0.7px". Marks
+    and fields without text keep their boxes.
+  */
+  const extent = (el: HTMLElement) => {
+    const own = Array.from(el.childNodes).filter((n) => n.nodeType === Node.TEXT_NODE && (n.textContent ?? '').trim() !== '');
+    if (own.length === 0) return box(el);
+    let l = Infinity, tp = Infinity, r = -Infinity, bt = -Infinity;
+    for (const n of own) { const rg = document.createRange(); rg.selectNodeContents(n); for (const rc of Array.from(rg.getClientRects())) { if (rc.width === 0) continue; l = Math.min(l, rc.left); tp = Math.min(tp, rc.top); r = Math.max(r, rc.right); bt = Math.max(bt, rc.bottom); } }
+    if (!Number.isFinite(l)) return box(el);
+    return { x: px(l + window.scrollX), y: px(tp + window.scrollY), w: px(r - l), h: px(bt - tp) };
+  };
+  /* Pairs test BOXES: lines of display type at 0.94 leading overlap as glyphs by design. Escapes and cuts test glyphs: leaving a cell is the type leaving it. */
+  const ib = leaves.map((el) => ({ el, name: name(el), b: box(el), g: extent(el), cell: el.closest('[data-cell], [data-section]') }));
   const pairs: string[] = [];
   for (let i = 0; i < ib.length; i += 1) for (let j = i + 1; j < ib.length; j += 1) {
     if (ib[i].el.contains(ib[j].el) || ib[j].el.contains(ib[i].el)) continue;
@@ -50,7 +67,7 @@ const MEASURE = () => {
   for (const l of ib) {
     if (l.cell === null) continue;
     const c = box(l.cell);
-    if (l.b.x < c.x - 1 || l.b.y < c.y - 1 || l.b.x + l.b.w > c.x + c.w + 1 || l.b.y + l.b.h > c.y + c.h + 1) escapes.push(`${l.name} leaves ${name(l.cell)}`);
+    if (l.g.x < c.x - 1 || l.g.y < c.y - 1 || l.g.x + l.g.w > c.x + c.w + 1 || l.g.y + l.g.h > c.y + c.h + 1) escapes.push(`${l.name} leaves ${name(l.cell)}`);
   }
 
   /*
@@ -66,7 +83,10 @@ const MEASURE = () => {
     if (el.closest('[aria-hidden="true"]') !== null) return false;
     if (['SCRIPT', 'STYLE', 'SVG', 'POLYGON', 'CIRCLE', 'BUTTON', 'TEXTAREA', 'SELECT', 'INPUT', 'OPTION'].includes(el.tagName)) return false;
     const own = Array.from(el.childNodes).some((n) => n.nodeType === Node.TEXT_NODE && (n.textContent ?? '').trim() !== '');
-    return own && R(el).width > 0 && R(el).height > 0;
+    if (!own || R(el).width <= 0 || R(el).height <= 0) return false;
+    /* Screen-reader-only text is clipped to a pixel by design (sr-only: 1x1, overflow hidden -- and `position: relative` here, since the sections' hit-area rule overrides sr-only's absolute on labels); its glyphs are not type a reader sees cut. Enumerated by the properties, not the class. */
+    if (el.offsetWidth <= 1 && el.offsetHeight <= 1 && getComputedStyle(el).overflow === 'hidden') return false;
+    return true;
   });
   const paints = Array.from(document.querySelectorAll<HTMLElement>('main *')).filter((el) => {
     if (R(el).width <= 0 || R(el).height <= 0 || (el.textContent ?? '').trim() !== '') return false;
@@ -108,14 +128,18 @@ const MEASURE = () => {
     let clip: HTMLElement | null = tx.parentElement;
     while (clip !== null && getComputedStyle(clip).overflowY === 'visible' && getComputedStyle(clip).overflowX === 'visible') clip = clip.parentElement;
     if (clip === null || clip.getAttribute('data-clamped') !== null || tx.getAttribute('data-clamped') !== null) continue;
-    const c = R(clip); const b = R(tx);
+    const c = R(clip); const e = extent(tx); const b = { top: e.y - window.scrollY, bottom: e.y + e.h - window.scrollY, left: e.x - window.scrollX, right: e.x + e.w - window.scrollX };
     const by = Math.max(0, b.bottom - (c.top + clip.clientHeight + 1), b.right - (c.left + clip.clientWidth + 1), c.top - 1 - b.top, c.left - 1 - b.left);
     if (by > 0.5) cut.push(`"${(tx.textContent ?? '').trim().slice(0, 24)}" cut by ${px(by)}px in ${name(clip)}`);
   }
 
+  /* A clamped About renders exactly its clamp lines: a flex column squeezed it to 6.4 lines against a clamp of 9, a cut the clip test cannot see because the paragraph is its own clipper. */
+  const squeezed = Array.from(document.querySelectorAll<HTMLElement>('[data-field="about"][data-clamped]')).flatMap((p) => { const lh = parseFloat(getComputedStyle(p).lineHeight); const clamp = Number(getComputedStyle(p).webkitLineClamp); const drawn = p.getBoundingClientRect().height / lh; return Math.abs(drawn - clamp) > 0.15 ? [`About clamped to ${clamp} draws ${drawn.toFixed(2)} lines`] : []; });
+  const bodyFont = (() => { const p = document.querySelector('[data-band] .text-prose') as HTMLElement | null; return p === null ? 'none' : getComputedStyle(p).fontSize; })();
+  const wrappedLabels = Array.from(document.querySelectorAll<HTMLElement>('[data-band] .text-label')).filter((el) => { const rg = document.createRange(); rg.selectNodeContents(el); const lines = new Set(Array.from(rg.getClientRects()).map((r) => Math.round(r.top))); return lines.size > 1; }).map((el) => `"${(el.textContent ?? '').trim().slice(0, 24)}" in ${name(el.closest('[data-cell]') ?? el)}`);
   const upper = ['identity', 'still', 'sleeve'].map((n) => { const el = document.querySelector<HTMLElement>(`[data-cell="${n}"]`); return { n, display: el === null ? 'absent' : getComputedStyle(el).display, w: el === null ? 0 : px(R(el).width), h: el === null ? 0 : px(R(el).height) }; });
   const cover = document.querySelector<HTMLElement>('[data-cover]');
-  return { vw: window.innerWidth, vh: window.innerHeight, cols: { identity: cols(identity), lower: cols(lower), region: cols(region) }, bandH: identity === null ? null : px(R(identity).height), lowerH: lower === null ? null : px(R(lower).height), cells, pairs, escapes, inFront, behindCount: behind.length, cut, upper, coverW: cover === null ? 0 : px(R(cover).width), paintKinds: [...new Set(paints.map(name))] };
+  return { vw: window.innerWidth, vh: window.innerHeight, bodyFont, wrappedLabels, squeezed, cols: { identity: cols(identity), lower: cols(lower), region: cols(region) }, bandH: identity === null ? null : px(R(identity).height), lowerH: lower === null ? null : px(R(lower).height), cells, pairs, escapes, inFront, behindCount: behind.length, cut, upper, coverW: cover === null ? 0 : px(R(cover).width), paintKinds: [...new Set(paints.map(name))] };
 };
 
 /** What every viewport must satisfy; returns what failed. Paint in front of type is judged by its own test. */
@@ -124,6 +148,7 @@ const judge = (m: ReturnType<typeof MEASURE>) => {
   if (m.pairs.length) bad.push(`pairs: ${m.pairs.join(' | ')}`);
   if (m.escapes.length) bad.push(`escapes: ${m.escapes.join(' | ')}`);
   if (m.cut.length) bad.push(`CUT (§18): ${m.cut.slice(0, 3).join(' | ')}${m.cut.length > 3 ? ` …${m.cut.length}` : ''}`);
+  if (m.squeezed.length) bad.push(`SQUEEZED: ${m.squeezed.join(' | ')}`);
   return bad;
 };
 
@@ -170,7 +195,7 @@ const seedRich = async (page: Page) => {
 };
 
 const sweepWidths = (from: number, to: number) => {
-  const forks = [390, 480, 960, 1440, 1680, 1920];
+  const forks = [390, 480, 960, SCALE_BAND_FLOOR, 1440, 1680, 1920];
   const widths = new Set<number>();
   for (let w = from; w <= to; w += 6) widths.add(w);
   for (const f of forks) for (const d of [-1, 0, 1]) if (f + d >= from && f + d <= to) widths.add(f + d);
@@ -253,11 +278,26 @@ test('below the fork, at every width: the upper cells wrap at their size, the co
     await page.waitForTimeout(w % 6 === 0 ? 120 : 400);
     const m = await page.evaluate(MEASURE);
     checked += 1;
-    if (m.lowerH !== null && m.lowerH !== BANDS.record) sawAutoBand = true;
+    if (w < SCALE_BAND_FLOOR && m.lowerH !== null && m.lowerH !== BANDS.record) sawAutoBand = true;
     const j = judge(m);
+    /*
+      §36: from SCALE_BAND_FLOOR to 1439 "the page scales by the viewport's
+      width over 1440", holding each cell's aspect, body type held; below it
+      §28's wrap stands. The band's floor is where the year cell's label
+      would first break (1077, measured), and no band label may wrap inside
+      the band -- the assertion that fails if that figure goes stale.
+    */
+    const s = bandScaleAt(w);
     for (const u of m.upper) {
       if (u.display === 'none' || u.display === 'absent') j.push(`upper cell ${u.n} is ${u.display} (§28: the upper cells wrap, they do not hide)`);
-      else if (w >= 480 && Math.abs(u.w - 480) > 1) j.push(`upper cell ${u.n} is ${u.w} wide, not its own 480`);
+      else if (w >= SCALE_BAND_FLOOR && (Math.abs(u.w - 480 * s) > 1.5 || Math.abs(u.h - (BANDS.identity - 1) * s) > 1.5)) j.push(`upper cell ${u.n} is ${u.w}x${u.h}, not 480x546 scaled by ${s.toFixed(3)} (§36)`);
+      else if (w >= 480 && w < SCALE_BAND_FLOOR && Math.abs(u.w - 480) > 1) j.push(`upper cell ${u.n} is ${u.w} wide, not its own 480`);
+    }
+    if (w >= SCALE_BAND_FLOOR) {
+      if (m.bandH === null || Math.abs(m.bandH - BANDS.identity * s) > 1.5) j.push(`identity band ${m.bandH}, §36 rules ${(BANDS.identity * s).toFixed(1)}`);
+      if (m.lowerH === null || Math.abs(m.lowerH - BANDS.record * s) > 1.5) j.push(`record band ${m.lowerH}, §36 rules ${(BANDS.record * s).toFixed(1)}`);
+      if (m.bodyFont !== '13px') j.push(`body type ${m.bodyFont}, §36: body type holds at 13px`);
+      if (m.wrappedLabels.length) j.push(`labels wrapped inside the scaling band: ${m.wrappedLabels.join(' | ')}`);
     }
     if (m.coverW < 1) j.push('no cover drawn');
     if (j.length) bad.push(`${w}: ${j.join(' ; ')}`);
@@ -265,7 +305,7 @@ test('below the fork, at every width: the upper cells wrap at their size, the co
   }
   console.log(`  PAINT IN FRONT OF TYPE below the fork: ${front.length} (judged by its own test)`);
   expect(checked, 'widths measured').toBeGreaterThan(100);
-  expect(sawAutoBand, 'the record band is sized by its rows below the fork, not held at 1440’s 300').toBe(true);
+  expect(sawAutoBand, 'the record band is sized by its rows below the scaling band, not held at 1440’s 300').toBe(true);
   expect(bad, `widths failing:\n  ${failLines(bad)}`).toEqual([]);
 });
 

@@ -191,6 +191,7 @@ export function IdentityCell({
       */}
       <div data-block="pressing" className="w-[412px] max-w-full">
         <div
+          data-line="pressing-inset"
           className="mb-[14px] w-[372px] max-w-full"
           style={{ borderTop: `1px solid ${INSET_RULE}` }}
         />

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BANDS, CONTENT_MEASURE, GRID_COLUMN, GRID_COLUMNS, GRID_FORK, IDENTITY_SPANS, LOWER_SPANS, STILL_MARGIN } from './band-geometry';
+import { BANDS, CONTENT_MEASURE, GRID_COLUMN, GRID_COLUMNS, GRID_FORK, IDENTITY_SPANS, LOWER_SPANS, SCALE_BAND_FLOOR, STILL_MARGIN } from './band-geometry';
 import { BAND_AT_REFERENCE, REFERENCE_HEIGHT, regionStylesheet, widePageStylesheet } from './region-rows';
 import { Plane } from './Plane';
 import { CONTROL_HEIGHT } from './extended-grid';
@@ -169,6 +169,8 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
    * three records.
    */
   /* A column, so an empty cell's diagonal can fill the body box below the label (§6) without a measured top. */
+  /** The bands' cell padding, the 18 in the `p-[18px]` below and in IdentityCell; scaled by --s in §36's band. */
+  const BAND_CELL_PADDING = 18;
   const cell = 'relative flex min-w-0 flex-col overflow-hidden p-[18px]';
 
   return (
@@ -219,7 +221,41 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
       <style>{`
         [data-band] { grid-template-columns: repeat(${GRID_COLUMNS}, ${GRID_COLUMN}px) !important; }
         [data-track="content"] { width: ${CONTENT_MEASURE}px; max-width: 100%; }
-        @media (max-width: ${GRID_FORK - 1}px) {
+        /*
+          **§36's scaling band, from SCALE_BAND_FLOOR to 1439.** "From 960 to
+          1439 the page scales by the viewport's width over 1440, with type
+          stepping on §33's ladder; below 960 §28's wrap stands... A cell
+          narrows only while its measure holds its longest label on one line.
+          If a label breaks before 960, the scaling band ends at that width
+          and the wrap begins there instead; Code measures where." Measured:
+          the year cell's "Released · same year" breaks at 1077 with body
+          type held, so the band is 1077 to 1439 (band-geometry).
+
+          Every LENGTH in the two bands scales by --s; body type holds at
+          §4.1's 13, 11 and 10; the title and artist step on §33's ladder,
+          which measures the scaled cell. --s is a NUMBER -- tan(atan2(a, b))
+          is a / b typed as one -- because calc(100vw / 1440) is a length and
+          cannot multiply a length. Not CSS zoom: measured, zoom leaves
+          clientHeight in the element's own px while getBoundingClientRect
+          reports visual px, and the ladder read supply 510 against a demand
+          of 408 and stepped UP to 144.
+        */
+        @media (min-width: ${SCALE_BAND_FLOOR}px) and (max-width: ${GRID_FORK - 1}px) {
+          [data-testid="record-page-8a"] { --s: tan(atan2(100vw, ${GRID_FORK}px)); }
+          [data-band] { grid-template-columns: repeat(${GRID_COLUMNS}, calc(${GRID_COLUMN}px * var(--s))) !important; }
+          [data-band="identity"] { height: calc(${BANDS.identity}px * var(--s)) !important; }
+          [data-band="record"] { height: calc(${BANDS.record}px * var(--s)) !important; }
+          /* The bands' cells pad 18 (the cell class and identity-content's p-[18px]); CELL_PADDING is the region's 34 -- used here once, it made the About paragraph 282 wide at 1400 where 313 was due. */
+          [data-band="record"] > [data-cell], [data-cell="identity-content"] { padding: calc(${BAND_CELL_PADDING}px * var(--s)); }
+          [data-cell="still"] { padding: calc(${STILL_MARGIN}px * var(--s)) !important; }
+          [data-track="content"], [data-block] { width: calc(${CONTENT_MEASURE}px * var(--s)); }
+          [data-line="pressing-inset"] { width: calc(372px * var(--s)); }
+          [data-line="about-images"] { width: calc(220px * var(--s)); }
+          /* The year figure's own lengths -- its 1440 measure as a floor and its bleed into the cell's padding -- are the same lengths, scaled; fixed, the element overshot its clip by a pixel across the whole band while the glyphs fit. */
+          [data-field="year"] { min-width: calc(203px * var(--s)); margin-inline: calc(-18px * var(--s)); padding-inline: calc(18px * var(--s)); }
+          [data-cell="sleeve"] > [data-scale] { transform: scale(var(--s)); }
+        }
+        @media (max-width: ${SCALE_BAND_FLOOR - 1}px) {
           /*
             **The band keeps its fixed height to 480 (§28).** "The band stays
             at 547 above 480... Below 480 the band has no fixed height at
@@ -396,7 +432,19 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
         <div
           data-cell="identity"
           /* §27: the response to overflow is the collapse, never overflow-hidden. */
-          className="relative"
+          /*
+            **Its height is the track's, never its content's.** A grid item
+            with min-height:auto grows to its content, and the title ladder
+            reads its supply from this cell's box: on a resize DOWN into
+            §36's scaling band the title still at 120 kept the cell 503 tall
+            in a 410 band, the supply read 452 rather than 358, and the ladder
+            stayed at 120 -- measuring the thing the title inflates, the loop
+            TitleStep's note describes, reached from the other side. With the
+            height pinned to the track the content overflows the cell (§27:
+            never overflow-hidden) instead of growing it, and the ladder reads
+            the ruled height.
+          */
+          className="relative h-full min-h-0"
           style={{ gridColumn: `span ${IDENTITY_SPANS[0]}`, borderRight: `1px solid ${RULE}` }}
         >
           <IdentityCell
