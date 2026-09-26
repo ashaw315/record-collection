@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
-import { BANDS, MAX_GRID_WIDTH } from '../src/app/records/[id]/band-geometry';
+import { MAX_GRID_WIDTH } from '../src/app/records/[id]/band-geometry';
+import { bandHeightAt } from '../src/app/records/[id]/region-rows';
 
 registerCleanup();
 
@@ -82,13 +83,15 @@ test('every identity cell fits the band’s height, and the still is not clipped
       };
     });
 
-    expect(m.band, `the band keeps its budgeted height at ${width}`).toBeCloseTo(BANDS.identity, 0);
+    /* §30: from the fork up the band is max(547, 547/900 × viewport height) -- 669 at this 1100 -- not the 547 that held before the height axis was built. */
+    const band = bandHeightAt(1100);
+    expect(m.band, `the band is §30's height at ${width} × 1100`).toBeCloseTo(band, 0);
 
     for (const cell of m.cells) {
       expect(
         cell.height,
-        `at ${width}, the ${cell.name} cell fits the band — ${Math.round(cell.height)} in ${BANDS.identity}`,
-      ).toBeLessThanOrEqual(BANDS.identity);
+        `at ${width}, the ${cell.name} cell fits the band — ${Math.round(cell.height)} in ${band}`,
+      ).toBeLessThanOrEqual(band);
       expect(cell.bottom, `at ${width}, the ${cell.name} cell does not spill below the band`).toBeLessThanOrEqual(m.bandBottom + 1);
     }
 

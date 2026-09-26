@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { BANDS, GRID_FORK, IDENTITY_SPANS } from '../src/app/records/[id]/band-geometry';
+import { bandHeightAt } from '../src/app/records/[id]/region-rows';
 import { COVER_CELL } from '../src/app/records/[id]/cover-geometry';
 import { SLEEVE_CELL, STRIP_SPLIT, coverSquare, leftoverStrip } from '../src/app/records/[id]/cover-33';
 import { construction } from '../src/app/records/[id]/construction';
@@ -181,7 +182,8 @@ test('§33: the drawing fits its OWN box, binding on one axis', async ({ page })
   const [, , boxW, boxH] = (drawn.viewBox ?? '0 0 1 1').split(' ').map(Number);
 
   expect(Math.round(drawn.innerWidth), 'the cell’s inner box after §26’s 24px margin').toBe(432);
-  expect(Math.round(drawn.innerHeight), 'less the band’s bottom rule').toBe(498);
+  /* §30: the band is max(547, 547/900 × viewport height) from the fork up -- 608 at 1000 -- and "the band's extra height passes to the construction cell in full, so its inner box is the band less 48". Less the band's bottom rule. */
+  expect(Math.round(drawn.innerHeight), 'the band less the 48 margin, less the bottom rule (§30)').toBe(bandHeightAt(1000) - 48 - 1);
 
   /* §33's fit: the smaller of the two ratios, so the drawing fills exactly one axis. */
   const scale = Math.min(drawn.innerWidth / boxW, drawn.innerHeight / boxH);

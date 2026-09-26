@@ -231,24 +231,14 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
             carries "the lower region's first figure and the tint field" --
             that move is not built here; the slot is empty.
 
-            **The record band stays one column below the fork, and that is
-            not a ruling.** §28 rules this band's HEIGHT below 1440 and not
-            its cells' grouping. Two arrangements were measured: its
-            twelve-column spans on fluid columns cut the 72px year from 480
-            to 1439 (the year cell is 2/12 of the page, 130px inside its
-            padding at 1000, against a 172px figure); one column leaves the
-            provenance cell 72-92px tall under §5.1's 112px arc, which then
-            sits in front of the PROVENANCE label on every record. One
-            column keeps §18 ("clipping a fact is never the answer"); the
-            arc is reported by the sweep's known-failing test until Design
-            rules a grouping.
-          */
-          /*
-            §28: "the band is two or three such rows, 1094 from 960 to 1439
-            and 1641 from 480 to 959." The band's last pixel is its rule, as
-            at twelve columns, so each row's cells are 546 (SLEEVE_CELL) and
-            the band is stated as rows × 547 rather than summed: summed, the
-            rule made it 1095 (measured at 1200).
+            **The record band is one column of full-width cells below the
+            fork (§28).** "Twelve-column spans on fluid columns cut the 72px
+            year from 480 to 1439, so the grouping does not reshape either."
+            Its cells are 72-92px tall there, and §34 rules and accepts what
+            that does to §5.1's arcs: sized to two-thirds of such a host they
+            still cover the cell's text, so no quarter-circle is drawn below
+            1440 -- "which is ruled and accepted" (step 32). Plane.tsx makes
+            that decision per record at render; nothing here suppresses.
           */
           [data-band="identity"] { grid-template-columns: repeat(2, ${GRID_FORK / 3}px) !important; grid-auto-rows: ${BANDS.identity - 1}px; height: ${2 * BANDS.identity}px !important; }
           [data-band="identity"] > [data-cell] { grid-column: span 1 !important; }
