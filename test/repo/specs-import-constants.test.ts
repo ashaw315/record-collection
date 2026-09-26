@@ -55,6 +55,7 @@ const GOVERNED = [
   'e2e/capture/about-lines.capture.ts',
   'e2e/capture/step29.capture.ts',
   'e2e/capture/about-budget.capture.ts',
+  'e2e/capture/real-captures.capture.ts',
   'e2e/real-records-paint.spec.ts',
   'e2e/about-row-36.spec.ts',
   'e2e/record-detail.spec.ts',
