@@ -208,3 +208,24 @@ describe('the frame’s last cell is the About, else the entry, else the diagona
     expect(cell).not.toContain('more ↓');
   });
 });
+
+/**
+ * §34: "§29 governs a plane's size: §5.1's quarter-circles are flats, and a
+ * flat is sized against its host... a plane is sized first, to at most
+ * two-thirds of its host's height and a quarter of its section's width, and
+ * only then tested against type." §29: "a size on a specimen sheet is a drawn
+ * instance, never a rule" -- so the drawing's 112 is not carried.
+ */
+describe('§5.1’s quarter-circles are sized against their host (§29, §34)', () => {
+  it('draws each arc at two-thirds of the host height, capped at a quarter of its width, never at a fixed 112', () => {
+    const html = renderToStaticMarkup(<RecordPage8a record={{ ...record(null), purchasePrice: '12.99', about: 'Short.', journalEntry: null }} />);
+    for (const name of ['provenanceArc', 'aboutArc']) {
+      const arc = new RegExp(`<div[^>]*data-mark="${name}"[^>]*>`).exec(html)?.[0] ?? '';
+      expect(arc, `${name} renders`).not.toBe('');
+      expect(arc, `${name} is not a fixed 112`).not.toMatch(/h-\[112px\]|w-\[112px\]|height:112px/);
+      expect(arc, `${name}: two-thirds of the host height`).toMatch(/height:66\.6+\d*%/);
+      expect(arc, `${name}: at most a quarter of the section width`).toMatch(/max-width:25%/);
+      expect(arc, `${name}: a square, so the smaller bound wins`).toMatch(/aspect-ratio:1 \/ 1/);
+    }
+  });
+});

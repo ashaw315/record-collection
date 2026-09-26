@@ -268,13 +268,12 @@ test('below the fork, at every width: the upper cells wrap at their size, the co
 
 /**
  * **No paint in front of type, at any viewport.** §28 for §26's flats:
- * "never overlap type"; §26 puts figures behind content. §5.1's marks --
- * the two arcs -- are planes with no stacking ruling yet, and Design has
- * been asked whether §34 reaches them. Until it rules, this test is
- * EXPECTED RED on `aboutArc` over a long About's foot at 12 columns; it
- * prints every occurrence so the count is read, not the colour.
+ * "never overlap type"; §26 puts figures behind content; §34 for §5.1's
+ * planes: sized against the host, "and only then tested against type: if
+ * the sized plane still covers type, it is not drawn." Every occurrence is
+ * printed so the count is read, not the colour.
  */
-test('KNOWN-FAILING pending Design on §5.1 marks: no paint sits in front of type at any width or height', async ({ page }) => {
+test('no paint sits in front of type at any width or height (§26, §28, §34)', async ({ page }) => {
   test.setTimeout(600_000);
   await login(page);
   const id = await seedRich(page);

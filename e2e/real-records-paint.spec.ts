@@ -24,10 +24,11 @@ registerCleanup();
  * each point into view, because elementFromPoint answers for the viewport
  * only.
  *
- * Asserted: §26's figures and flats are BEHIND type in every overlap. Named
- * known-failing: §5.1's two arcs, which sit in front of type -- Design has
- * been asked whether §34 reaches them and how the record band groups below
- * the fork. The counts are printed so the number is read, not the colour.
+ * Asserted: §26's figures and flats are BEHIND type in every overlap, and
+ * §5.1's planes -- sized against their host, then tested against type
+ * (§34) -- are never in front. §34: "the planes survive below the fork
+ * wherever a two-thirds-of-host plane clears the cell's text, and Code
+ * reports how many do" -- the drawn count per width is printed.
  */
 const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 async function login(page: Page) {
@@ -100,15 +101,16 @@ const READ = () => {
   const still = document.querySelector('[data-cell="still"]') as HTMLElement | null;
   const sleeve = document.querySelector('[data-cell="sleeve"]') as HTMLElement | null;
   const cover = document.querySelector('[data-cover]') as HTMLElement | null;
+  const planes = Array.from(document.querySelectorAll<HTMLElement>('[data-plane]')).map((p) => `${p.getAttribute('data-mark')}:${p.getAttribute('data-plane')}`);
   return {
-    allKinds, over, aboutLines, more,
+    allKinds, planes, over, aboutLines, more,
     footCut,
     market: marketSec === null ? null : { sectionW: px(R(marketSec).width), col: getComputedStyle(marketSec).gridColumn, labelW: marketLabel === null ? null : px(R(marketLabel).width), labelLines: marketLabel === null ? null : Math.round(R(marketLabel).height / parseFloat(getComputedStyle(marketLabel).lineHeight)) },
     still: still === null ? 'absent' : getComputedStyle(still).display, sleeve: sleeve === null ? 'absent' : getComputedStyle(sleeve).display, cover: cover === null ? 'absent' : `${px(R(cover).width)}x${px(R(cover).height)} ${getComputedStyle(cover).display}`,
   };
 };
 
-test('every real record at seven widths: §26 ornaments behind type everywhere; §5.1 arcs in front is KNOWN-FAILING pending Design', async ({ page }) => {
+test('every real record at seven widths: §26 ornaments behind type everywhere; §5.1 planes never in front, and how many are drawn (§34)', async ({ page }) => {
   test.setTimeout(900_000);
   const abouts: Array<{ title: string; text: string }> = JSON.parse(readFileSync('docs/captures/abouts.json', 'utf8'));
   const aboutFor: Record<string, string> = { '158a3163-6a56-4673-8f88-27e7b2aec724': 'Loss Of Life', 'e73e1de1-3686-4a81-8544-ca2300e187bb': 'The Hurdy Gurdy Man', 'd7047c62-149e-42fa-8cda-fac3f90c47cc': 'Bitches Brew', 'c61c5919-8f50-4782-8e04-419fb3d2b148': 'Gaucho' };
@@ -137,6 +139,7 @@ test('every real record at seven widths: §26 ornaments behind type everywhere; 
   const kindsSeen = new Set<string>();
   let pairs = 0; const overCount: Record<string, number> = {}; const overSamples: string[] = [];
   const ornamentInFront: string[] = []; const arcsInFront: string[] = [];
+  const drawn: Record<string, number> = {};
   const specifics: string[] = [];
   for (const id of ids) {
     for (const w of widths) {
@@ -147,7 +150,8 @@ test('every real record at seven widths: §26 ornaments behind type everywhere; 
       const m = await page.evaluate(READ);
       pairs += 1;
       for (const k of m.allKinds) kindsSeen.add(`${w}: ${k}`);
-      for (const o of m.over) { const k = `${w}: ${o.replace(/"[^"]*"/, '"…"')}`; overCount[k] = (overCount[k] ?? 0) + 1; if (overSamples.length < 40 && !overSamples.some((s) => s.startsWith(`${w}: ${o.split('"')[0]}`))) overSamples.push(`${w} ${id.slice(0, 8)}: ${o}`); }
+      for (const pl of m.planes) drawn[`${w} ${pl}`] = (drawn[`${w} ${pl}`] ?? 0) + 1;
+      for (const o of m.over) { const k = `${w}: ${o.replace(/"[^"]*"/, '"…"')}`; overCount[k] = (overCount[k] ?? 0) + 1; if (overSamples.length < 60 && !overSamples.some((s) => s.endsWith(`: ${o}`) && s.startsWith(`${w} `))) overSamples.push(`${w} ${id.slice(0, 8)}: ${o}`); }
       for (const o of m.over) if (o.includes(' IN FRONT of ')) (o.startsWith('mark/') ? arcsInFront : ornamentInFront).push(`${w} ${id.slice(0, 8)}: ${o}`);
       if (aboutFor[id] && (w === 1000 || w === 1440 || w === 1680)) specifics.push(`ABOUT ${aboutFor[id]} @${w}: ${m.aboutLines} lines, more↓=${m.more}, foot past cell by ${m.footCut}`);
       if (id === ids[0] && (w === 1000 || w === 960 || w === 480 || w === 390 || w === 1440)) specifics.push(`BANDS @${w}: still=${m.still} sleeve=${m.sleeve} cover=${m.cover}; market=${JSON.stringify(m.market)}`);
@@ -159,8 +163,9 @@ test('every real record at seven widths: §26 ornaments behind type everywhere; 
   for (const [k, n] of Object.entries(overCount).sort()) console.log(`  ${n.toString().padStart(3)}  ${k}`);
   console.log(`\nORNAMENT OVER TEXT — one sample per (width, ornament, cell):`); overSamples.forEach((s) => console.log('  ' + s));
   console.log(`\nSPECIFICS:`); specifics.forEach((s) => console.log('  ' + s));
+  console.log(`\nPLANES DRAWN vs NOT DRAWN (§34), per width over the ${ids.length} records (one stand-in content shape; real About text on ${Object.keys(aboutFor).length}):`); for (const [k, n] of Object.entries(drawn).sort()) console.log(`  ${String(n).padStart(3)}  ${k}`);
   console.log(`\nIN FRONT OF TYPE: §26 ornaments ${ornamentInFront.length}, §5.1 arcs ${arcsInFront.length}, over ${pairs} record-width pairs`);
   expect(pairs, 'every record at every width').toBe(ids.length * widths.length);
   expect(ornamentInFront, '§26: figures and flats sit behind content').toEqual([]);
-  expect(arcsInFront, 'KNOWN-FAILING pending Design: §5.1 arcs in front of type').toEqual([]);
+  expect(arcsInFront, '§34: a sized plane that still covers type is not drawn').toEqual([]);
 });

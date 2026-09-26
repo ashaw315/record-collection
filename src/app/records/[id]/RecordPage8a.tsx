@@ -1,5 +1,6 @@
 import { BANDS, CONTENT_MEASURE, GRID_COLUMN, GRID_COLUMNS, GRID_FORK, IDENTITY_SPANS, LOWER_SPANS, STILL_MARGIN } from './band-geometry';
 import { regionStylesheet, widePageStylesheet } from './region-rows';
+import { Plane } from './Plane';
 import { CONTROL_HEIGHT } from './extended-grid';
 import { COVER_CELL } from './cover-geometry';
 import { SLEEVE_CELL, STRIP_SPLIT, coverSquare, leftoverStrip } from './cover-33';
@@ -567,12 +568,7 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
                 touching. A quarter-circle held 14px clear of the corner is a
                 disc with two sides hidden.
               */}
-              <div
-                data-mark="provenanceArc"
-                aria-hidden="true"
-                className="pointer-events-none absolute bottom-0 left-0 h-[112px] w-[112px]"
-                style={{ background: tint, borderTopRightRadius: '100%' }}
-              />
+              <Plane name="provenanceArc" corner="bottom-left" fill={tint} />
               {record.purchasePrice !== null && (
                 <div className="text-prose">Paid ${record.purchasePrice}</div>
               )}
@@ -871,12 +867,7 @@ export function RecordPage8a({ record }: { record: PageRecord }) {
             rather than nullness.
           */}
           {aboutCellState({ about: record.about, entry: record.journalEntry }).kind !== 'none' && (
-            <div
-              data-mark="aboutArc"
-              aria-hidden="true"
-              className="pointer-events-none absolute right-0 bottom-0 h-[112px] w-[112px]"
-              style={{ background: tint, borderTopLeftRadius: '100%' }}
-            />
+            <Plane name="aboutArc" corner="bottom-right" fill={tint} />
           )}
         </div>
       </div>
