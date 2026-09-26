@@ -296,6 +296,8 @@ test('put back lands in the HELD record\'s slot after navigating', async ({ page
         ]),
       ),
     );
+    /* The wall's anchor order before anything moves: a pulled record leaves the DOM's seats, so the held record's index is taken against this. */
+    const initial = await wallOrder(page);
     await page.locator('[data-seat] [data-spine]').first().click();
     await page.clock.runFor(OUT_MS + 40);
     await settle(page);
@@ -310,7 +312,8 @@ test('put back lands in the HELD record\'s slot after navigating', async ({ page
       */
       /* The seats the DOM shows and where the held record sits in them: a wall of fewer seats than seeded, or arrows disagreeing with the seats, are different defects. */
       const before = await page.evaluate(() => { const held = document.querySelector('[data-pulled]')?.getAttribute('data-pulled') ?? ''; const seats = Array.from(document.querySelectorAll('[data-seat]')).map((e) => e.getAttribute('data-seat')); return { pulled: held.slice(0, 8) || '-', next: document.querySelectorAll('[data-testid="nav-next"]').length, prev: document.querySelectorAll('[data-testid="nav-previous"]').length, chrome: document.querySelectorAll('[data-testid="record-chrome"]').length, seats: seats.length, at: seats.indexOf(held), links: document.querySelectorAll('a[data-seat]').length }; });
-      console.log(`  slide ${i + 1}: pulled=${before.pulled} next=${before.next} prev=${before.prev} chrome=${before.chrome} seats=${before.seats} links=${before.links} held-at=${before.at}`);
+      const heldFull = await page.evaluate(() => document.querySelector('[data-pulled]')?.getAttribute('data-pulled') ?? '');
+      console.log(`  slide ${i + 1}: pulled=${before.pulled} next=${before.next} prev=${before.prev} chrome=${before.chrome} seats=${before.seats} links=${before.links} held-at=${before.at} initial=${initial.length} held-in-initial=${initial.indexOf(heldFull)}`);
       await page.getByTestId('nav-next').click({ timeout: 15_000 });
       /* A slide is one out gesture on one clock (navigate): advance it, then wait for the arrow it settles into. */
       await page.clock.runFor(OUT_MS + 40);
