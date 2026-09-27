@@ -305,14 +305,38 @@ export function SnippetPanel({ recordId, snippet, snippetEditedAt, configured, b
 export function AboutBudget({ text }: { text: string }) {
   const probe = useRef<HTMLParagraphElement>(null);
   const [lines, setLines] = useState<number | null>(null);
+  /*
+    §34: "the editor reports whether the text clamps in the rendered cell".
+    The draft is laid out at the FRAME paragraph's width and counted against
+    the line budget that paragraph publishes -- what this cell holds at this
+    width -- not at a fixed 322px against ten, which was 1440's answer at
+    every width. Without a frame paragraph (no About yet) the 1440 figures
+    stand in, and the line says so by reporting them.
+  */
+  const [cell, setCell] = useState<{ width: number; lines: number }>({ width: 322, lines: ABOUT_LINES });
+  useEffect(() => {
+    const frame = document.querySelector<HTMLElement>('[data-field="about"]');
+    if (frame === null) return;
+    const read = () => {
+      const width = frame.getBoundingClientRect().width;
+      const budget = Number(frame.getAttribute('data-line-budget'));
+      setCell({ width: width > 0 ? width : 322, lines: Number.isFinite(budget) && budget > 0 ? budget : ABOUT_LINES });
+    };
+    read();
+    const resize = new ResizeObserver(read);
+    resize.observe(frame);
+    const mutation = new MutationObserver(read);
+    mutation.observe(frame, { attributes: true, attributeFilter: ['data-line-budget'] });
+    return () => { resize.disconnect(); mutation.disconnect(); };
+  }, []);
   useEffect(() => {
     const el = probe.current;
     if (el === null) return;
     const lineHeight = parseFloat(getComputedStyle(el).lineHeight);
     setLines(text.trim() === '' ? 0 : Math.round(el.getBoundingClientRect().height / lineHeight));
-  }, [text]);
+  }, [text, cell.width]);
   const { chars, budget } = aboutBudget(text);
-  const past = lines !== null && lines > ABOUT_LINES;
+  const past = lines !== null && lines > cell.lines;
   /*
     §34: "the editor reports whether the text clamps in the rendered cell,
     not whether it exceeds 535; it never says 'over' on a text that fits."
@@ -322,16 +346,16 @@ export function AboutBudget({ text }: { text: string }) {
   return (
     <>
       <p data-testid="about-budget" className="mt-1 text-meta text-muted-foreground" aria-live="polite">
-        {lines === null ? '' : `${lines} of ${ABOUT_LINES} lines · `}
+        {lines === null ? '' : `${lines} of ${cell.lines} lines · `}
         {chars} of about {budget} characters
-        {past ? ' · past ten lines: the frame will show nine and more ↓' : ''}
+        {past ? ` · past ${cell.lines} lines: the frame will show ${cell.lines - 1} and more ↓` : ''}
       </p>
       {/* The frame cell's measure, so the line count is the one the cell will draw. */}
       <p
         ref={probe}
         aria-hidden="true"
         className="text-prose"
-        style={{ position: 'absolute', visibility: 'hidden', pointerEvents: 'none', width: 322, whiteSpace: 'pre-line' }}
+        style={{ position: 'absolute', visibility: 'hidden', pointerEvents: 'none', width: cell.width, whiteSpace: 'pre-line' }}
       >
         {text}
       </p>

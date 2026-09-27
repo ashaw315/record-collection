@@ -88,3 +88,48 @@ test('the absence state links "Write one ↓" to the row only where writing is c
   expect(order.link, 'below the label').toBeGreaterThan(order.label);
   expect(order.link, 'ahead of the diagonal').toBeLessThan(order.diagonal);
 });
+
+/**
+ * §34: "the editor reports whether the text clamps in the rendered cell, not
+ * whether it exceeds 535." The budget line measured its own probe at a fixed
+ * 322px against ten lines -- 1440's cell -- at every width, so at 960, where
+ * the cell is wider and holds a different count, it reported 1440's answer.
+ * The frame paragraph publishes the line budget the cell holds; the editor
+ * lays the draft out at that paragraph's width and reports against it.
+ */
+test('the editor’s budget line reports the rendered cell’s own line budget, at 1440 and at 960 (§34)', async ({ page }) => {
+  await login(page);
+  const rows: Array<{ id: string; title: string; about: string | null }> = JSON.parse(readFileSync('docs/captures/real-records.json', 'utf8'));
+  const r = rows.find((x) => x.title === 'The Hurdy Gurdy Man');
+  expect(r?.about, 'a real About').toBeTruthy();
+  if (r === undefined) return;
+  const artist = await post(page, '/api/artists', { name: 'MGMT' });
+  trackArtist(artist.id);
+  const db = getTestDb();
+  const existing = await db.execute<{ id: string }>(sql`SELECT id FROM records WHERE id = ${r.id}::uuid`);
+  if (existing.rows.length === 0) {
+    await seedRecordWithId({ id: r.id, artistId: artist.id, title: r.title, releaseYear: 2024, genreIds: [] });
+    await seedImage({ recordId: r.id, imageType: 'cover' });
+    await db.execute(sql`UPDATE records SET spine_colour = ${'#a25829'}, snippet = ${r.about}, snippet_edited_at = NOW() WHERE id = ${r.id}::uuid`);
+  }
+  const seen: Array<{ width: number; budget: string | null; line: string; paragraphWidth: number }> = [];
+  for (const width of [1440, 960]) {
+    await page.setViewportSize({ width, height: NO_SCROLL_HEIGHT });
+    await page.goto(`/records/${r.id}`);
+    await page.locator('[data-field="eyebrow"]').waitFor({ timeout: 20_000 });
+    await page.waitForTimeout(750);
+    const paragraph = page.locator('[data-field="about"]');
+    const budget = await paragraph.getAttribute('data-line-budget');
+    expect(budget, `the frame publishes the line budget it holds at ${width}`).not.toBeNull();
+    await page.getByTestId('snippet-edit').click();
+    await page.getByTestId('snippet-draft').waitFor({ timeout: 10_000 });
+    await page.waitForTimeout(400);
+    const line = (await page.getByTestId('about-budget').textContent()) ?? '';
+    const paragraphWidth = await paragraph.evaluate((el) => el.getBoundingClientRect().width);
+    seen.push({ width, budget, line, paragraphWidth });
+    expect(line, `at ${width} the line reports against the cell's own budget (${budget})`).toContain(`of ${budget} lines`);
+  }
+  console.log(`  §34 BUDGET LINE: ${seen.map((s) => `${s.width}: "${s.line}" (paragraph ${Math.round(s.paragraphWidth)}px, budget ${s.budget})`).join(' | ')}`);
+  expect(seen[0].budget, 'at 1440 the cell holds §33’s ten').toBe('10');
+  expect(seen[1].budget, 'at 960 the cell is wider and holds a different count').not.toBe('10');
+});

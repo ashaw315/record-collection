@@ -159,9 +159,11 @@ describe('the frame’s last cell is the About, else the entry, else the diagona
     expect(cell, 'no diagonal').not.toContain('data-diagonal');
   });
 
-  it('falls to the latest entry, date and text, under a JOURNAL label', () => {
+  it('falls to the latest entry, date and text, still under the ABOUT label (§33: labelled ABOUT in every state)', () => {
+    /* §33 and §35 label the cell ABOUT and name no second label; the build relabelled it JOURNAL in the entry state. */
     const cell = lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), about: null, journalEntry: entry }} />));
-    expect(cell).toContain('>Journal<');
+    expect(cell).toContain('>About<');
+    expect(cell, 'no second label').not.toContain('>Journal<');
     expect(cell).toContain('2026-09-20');
     expect(cell).toContain('Played it right through.');
     expect(cell).not.toContain('data-diagonal');

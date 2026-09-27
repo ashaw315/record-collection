@@ -31,6 +31,7 @@ export function AboutCell({ text }: { text: string }) {
   const real = useRef<HTMLParagraphElement>(null);
   /* Lines to clamp to, or null when the text fits; the character budget is the server's guess at §33's nine. */
   const [clampLines, setClampLines] = useState<number | null>(text.length > ABOUT_CHAR_BUDGET ? ABOUT_CLAMP_LINES : null);
+  const [lineBudget, setLineBudget] = useState<number | null>(null);
   const clamped = clampLines !== null;
 
   useEffect(() => {
@@ -77,6 +78,8 @@ export function AboutCell({ text }: { text: string }) {
         if (moreHeight === 0) moreHeight = lineHeight;
         const room = clipBottom - paragraph.getBoundingClientRect().top - after + (paragraph.hasAttribute('data-clamped') ? moreHeight : 0);
         next = clampFor({ lines, room, lineHeight, more: moreHeight });
+        /* §34: the editor reports against the lines THIS cell holds, so the cell publishes them. */
+        setLineBudget(Math.floor(room / lineHeight + 1e-6));
       } else {
         next = lines > ABOUT_LINES ? ABOUT_CLAMP_LINES : null;
       }
@@ -94,6 +97,7 @@ export function AboutCell({ text }: { text: string }) {
         ref={real}
         data-field="about"
         data-clamped={clamped ? '' : undefined}
+        data-line-budget={lineBudget ?? undefined}
         /* shrink-0: the cell is a flex column, and a clamped paragraph with overflow hidden would otherwise be squeezed below its clamp -- measured 6.4 lines against a clamp of 9 at 1320. */
         className="text-prose mt-[6px] shrink-0"
         style={

@@ -883,7 +883,8 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
             const state = aboutCellState({ about: record.about, entry: record.journalEntry });
             return (
               <>
-                <div className={LABEL}>{state.kind === 'entry' ? 'Journal' : 'About'}</div>
+                {/* §33: "labelled ABOUT" in every state; §35 restates the cell without a second label. The entry state once relabelled it JOURNAL. */}
+                <div className={LABEL}>About</div>
                 {state.kind === 'about' ? (
                   <AboutCell text={state.text} />
                 ) : state.kind === 'entry' ? (

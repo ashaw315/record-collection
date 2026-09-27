@@ -98,7 +98,7 @@ export type SnippetResult =
 /**
  * The prompt.
  *
- * Asks for §10b's two-or-three sentences, forbids the three fact classes §10b
+ * Asks for §33's ten lines (§34's 535 as the guide), forbids the three fact classes §10b
  * names, and asks for less rather than a guess (A29c's trade, one feature over:
  * it reduces hallucination and does not prevent it, and its presence here must
  * not be read anywhere as a verification).
@@ -110,8 +110,10 @@ export function buildSnippetPrompt(subject: SnippetSubject): string {
     `ARTIST: ${subject.artist}`,
     `TITLE: ${subject.title}`,
     '',
-    'Two or three sentences: what the record is, roughly when it landed, and why',
-    'it matters. Write it for someone who owns it and wants context, not a review.',
+    /* §33: written to fit ten lines of the record's frame; §34: 535 characters is the writing guide, not a limit. */
+    'At most ten lines of a narrow column -- about 535 characters, and never much',
+    'past it: what the record is, roughly when it landed, and why it matters. Write',
+    'it for someone who owns it and wants context, not a review.',
     '',
     /*
      * §10b's rule. INSTRUCTED, not enforced — the real protection is that none

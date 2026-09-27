@@ -81,10 +81,17 @@ describe('the count decision (R5 finding 4)', () => {
    * at the ceiling is a half-sentence; a response that OBEYS the instruction is
    * two or three whole ones. The prompt has to ask.
    */
-  it('asks for the length §10b specifies', () => {
+  it('asks for the length §33 rules: ten lines of the cell, 535 as the guide (§34)', () => {
     const prompt = buildSnippetPrompt(SUBJECT);
 
-    expect(prompt).toMatch(/two or three sentences/i);
+    /*
+      §33: "Claude writes it to fit ten lines of the cell"; §34 makes 535 the
+      writing guide. The prompt asked for §10b's two or three sentences for a
+      round after that, so the length rule existed only as a clamp afterwards.
+    */
+    expect(prompt).toMatch(/ten lines/i);
+    expect(prompt).toMatch(/535/);
+    expect(prompt).not.toMatch(/two or three sentences/i);
   });
 });
 
