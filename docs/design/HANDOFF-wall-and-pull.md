@@ -84,6 +84,7 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §35 | The real collection: the About arc, the last cell, and absence in flow | Why the About’s quarter-circle leaves §5.1’s marks; the last cell stated directly, with absence as its usual state; absence drawn in flow after the label for every cell that can be empty; why the extremes fixture must carry empty fields. |
 | §36 | The About’s lower row, and the scaling band that did not survive | Why the lower row survives as the About’s editor and full reading; the absence state’s link and its unconfigured form; why proportional scaling below §18’s fork was withdrawn when the year figure bound it, and why each of the three exits is declined. |
 | §37 | The upper air at eight columns, and a figure in a tall host | Why the air moves left of the sleeve by grid order only; why the upper air is a section and carries no figure, and where its flat comes from; why a ceiling at one viewport’s size was drafted and withdrawn; which units §21 counts in; what this section withdraws from §28 and §30. |
+| §38 | A row whose section is absent | How a row regroups when §9.1 drops one of its sections, and where the dropped columns go; why a section-to-section rule is drawn only between rendered sections; why this adds a case rather than withdrawing a grouping, and why it does not depend on how many records are tagged. |
 
 ## Structural sections — pointers
 
@@ -193,6 +194,9 @@ These are the sections the rulings above build on, all in `Record Detail 8a - se
 
 42. **§30 — the ceiling per record.** Report the air plus each record's own empty width, per record, at 1680 × 900, 1920 × 900, 1920 × 950 and 1920 × 1080, against the 480 bound. Report; do not assert. The figures regenerate §30's instance sheet.
    > The ceiling’s bound stays one upper cell, 480, and is not re-derived: it is a fact about the band, not about the construction.
+
+43. **HELD — do not build.** Waits on step 32’s §34 row-2 change being built and re-measured; §38 may not survive it. **§38 — regrouping a row with an absent section.** When §9.1 drops a section, give its columns to the rendered section before it in reading order, or after it if it is first. Draw a section-to-section rule only between two rendered sections. Test on a record with no Tags at 1000 and 1440 that row 2 has no empty grid and no rule against it, and on a tagged record that row 2 groups as §28 lists.
+   > A row’s grouping is stated for every section present, and when §9.1 drops a section the row regroups over the sections that render: the dropped section’s columns go to the section before it in reading order, or to the one after if it is first.
 
 **Every row in the table above must appear in a step here.** The completeness check greps the table only, so an index that is current and an order that is eight rulings behind both pass — which is what happened at §W.28–§W.35. Check both.
 
