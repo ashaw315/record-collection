@@ -263,12 +263,23 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
           */
           [data-band="identity"] { grid-template-columns: repeat(2, ${GRID_FORK / 3}px) !important; grid-auto-rows: ${BANDS.identity - 1}px; height: ${2 * BANDS.identity}px !important; }
           [data-band="identity"] > [data-cell] { grid-column: span 1 !important; }
-          [data-upper-air] { display: block; }
+          /*
+            Step 39 (§37): the air LEFT of the sleeve in the second row, by
+            grid placement only -- the markup and the reading order keep the
+            sleeve before the air -- so the tint triangle bleeds off the
+            page's left edge as §26 places it, not at a cell edge against the
+            sleeve. Explicit rows, never order: a reader tabbing through
+            the band meets the sleeve's cover before the air's ornament.
+          */
+          /* Specificity above the band's own span-1 rule ([data-band] > [data-cell]), which otherwise auto-places both. */
+          [data-band="identity"] > [data-upper-air] { display: block; grid-row: 2 !important; grid-column: 1 !important; }
+          [data-band="identity"] > [data-cell="sleeve"] { grid-row: 2 !important; grid-column: 2 !important; }
           [data-band="record"] { grid-template-columns: 1fr !important; }
           [data-band="record"] > [data-cell] { grid-column: 1 / -1 !important; }
           @media (max-width: 959px) {
             [data-band="identity"] { grid-template-columns: ${GRID_FORK / 3}px !important; height: ${3 * BANDS.identity}px !important; }
-            [data-upper-air] { display: none; }
+            [data-band="identity"] > [data-upper-air] { display: none; }
+            [data-band="identity"] > [data-cell="sleeve"] { grid-row: auto !important; grid-column: 1 !important; }
           }
           @media (max-width: 479px) {
             [data-band="identity"] { grid-template-columns: 1fr !important; grid-auto-rows: auto; height: auto !important; }
