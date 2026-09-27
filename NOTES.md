@@ -31502,3 +31502,27 @@ this is inside §W.29, rewritten the same day (the arrival moved into the
 markup and the landing effect now clears the offset in its layout pass), so
 the first place to look on a recurrence is that effect's put-back path, not
 the server. One occurrence; logged, not chased.
+
+## Flake log — lookup-flows › says plainly when ownership could not be checked (27 Sep)
+
+Flaked once, mobile project, in the full sequential run after step 40 and the
+edge-rule fix (chromium 376 passed / 0 failed; mobile 193 passed / 1 flaky).
+First attempt: `expect(getByTestId('ownership-unchecked')).toBeVisible()`
+timed out at 15s with `element(s) not found`. The failure snapshot shows the
+result card rendered with its two Add links and NO versions region at all —
+no version rows, no warning — after `expand-versions` was clicked, though
+both routes were fulfilled by the test. Passed on retry in 3.6s.
+
+**Second lookup-flows intermittent this month, same shape.** `an owned
+version is never hidden inside a collapsed group` (`lookup-flows.spec.ts:893`)
+was listed flaky, also on mobile, in the full run that reported 4 failed / 4
+flaky / 553 passed. Both are the mobile project, both in this spec, both after
+the expand-versions click. Two is a shape, not a coincidence; the first place
+to look on a third is whether the click lands before the card's handler is
+attached at the 390 viewport (`formReady` guards the FORM's hydration, not
+the result list's) — stated as where to look, not as the cause. The
+first-attempt trace is kept at
+`scratchpad/lookup-flows-749-mobile-flaky-2026-09-27.trace.zip` for this
+session only; `test-results/` is cleared by the next run, so a recurrence
+should copy its trace somewhere durable before anything else runs. Logged,
+not chased.
