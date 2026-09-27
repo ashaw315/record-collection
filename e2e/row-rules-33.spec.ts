@@ -162,30 +162,20 @@ test('§33: row rules run whole, and partial verticals are gone', async ({ page 
 });
 
 /**
- * **KNOWN-FAILING against §21, by a conflict inside §33 that Design is ruling.**
+ * **§33 rules which term yields, and it is the height.** "It takes 0.855 of
+ * the cell's free height below the matrix text, or the height at which it
+ * fits the cell's width inside its insets, whichever is smaller... The height
+ * yields, not the insets: a figure never crosses its cell's side edges (§21),
+ * and 0.855 is a target, not a floor. At 240 wide with 18px insets that is
+ * 176.8, not 195.4."
  *
- * §21 permits a figure to be CLIPPED by its own cell. It does not permit one
- * to CROSS it, and the matrix solid currently overhangs its cell's left edge
- * by about a pixel.
- *
- * Three terms cannot all hold at this cell:
- *
- * | term | source | value |
- * |---|---|---|
- * | 0.855 of the free height below the text | §33 | 195.4px tall |
- * | the archetype's 120 × 104 proportions | §21's library | 225.4px wide at that height |
- * | placed bottom-right inside an 18px inset | §33 | 204px of room |
- *
- * The height was kept, because §33 states it as a figure while stating the
- * placement only as "bottom-right"; spending one inset rather than two gets
- * within 3px of the ruled height and leaves the ~1px overhang. Design is
- * ruling which of the three yields.
- *
- * `fixme` rather than `skip`: the run reports it as expected-to-fail, so the
- * interim state is on the record instead of passing quietly, and the day the
- * conflict is resolved this turns red for being unexpectedly green.
+ * The build kept 195.4 and spent one inset, overhanging the cell's left edge
+ * by about a pixel, and this test was named known-failing and pinned the
+ * overhang at 0 to 2px -- so it went red when the clause was built as ruled,
+ * which is why it never was. It now asserts the ruling: both insets held,
+ * and the width-bound height at this cell.
  */
-test('the matrix solid stays inside its cell (§21) [KNOWN-FAILING]', async ({ page }) => {
+test('the matrix solid sits inside both of its cell’s insets, and the height yields to the width (§21, §33)', async ({ page }) => {
   await login(page);
   const s = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
   const a = await page.request.post('/api/artists', { data: { name: `m21-${s}` } });
@@ -209,32 +199,30 @@ test('the matrix solid stays inside its cell (§21) [KNOWN-FAILING]', async ({ p
   await expect(page.locator('[data-field="eyebrow"]')).toBeVisible();
   await page.waitForTimeout(700);
 
-  const overhang = await page.evaluate(() => {
+  const m = await page.evaluate(() => {
     const cell = document.querySelector('[data-cell="matrix"]');
     const solid = document.querySelector('[data-mark="matrixSolid"]');
-    if (cell === null || solid === null) return null;
+    const text = document.querySelector('[data-matrix-text]');
+    if (cell === null || solid === null || text === null) return null;
     const c = cell.getBoundingClientRect();
     const s2 = solid.getBoundingClientRect();
-    return Math.round((c.x - s2.x) * 10) / 10;
+    const t = text.getBoundingClientRect();
+    const cs = getComputedStyle(cell);
+    const inset = parseFloat(cs.paddingRight);
+    /* Edges against the PADDING box: the cell's right rule is its border, and the inset sits inside it. */
+    const padLeft = c.x + parseFloat(cs.borderLeftWidth);
+    const padRight = c.right - parseFloat(cs.borderRightWidth);
+    return { left: s2.x - padLeft, right: padRight - s2.right, width: s2.width, height: s2.height, cellWidth: padRight - padLeft, inset, free: c.bottom - t.bottom };
   });
-
-  expect(overhang, 'the solid is drawn').not.toBeNull();
-
-  /*
-    **Asserted as the MEASURED interim value, not as the ruling.**
-
-    `test.fixme` would skip the body, so the assertion would never run and
-    could not turn red the day the conflict is resolved -- a known-failing
-    marker that executes nothing records only that someone once knew.
-
-    So the overhang is pinned at what it actually is. §21 wants `<= 0`. When
-    Design rules which term yields, this fails and names the new value, which
-    is the notification. The comparison is loose by a pixel because the
-    figure's width comes from a ratio and lands on a fraction.
-  */
-  expect(
-    overhang,
-    '§21 wants <= 0; §33 forces ~1px of overhang. Conflict table above — Design is ruling it.',
-  ).toBeGreaterThan(0);
-  expect(overhang, 'and the overhang has not grown beyond the measured ~1px').toBeLessThan(2);
+  expect(m, 'the solid is drawn').not.toBeNull();
+  if (m === null) return;
+  /* Both insets: the solid never crosses a side edge, and sits against the right inset. */
+  expect(m.left, `left edge ${m.left.toFixed(1)} inside the ${m.inset}px inset`).toBeGreaterThanOrEqual(m.inset - 0.5);
+  expect(m.right, `right edge against the ${m.inset}px inset`).toBeCloseTo(m.inset, 0);
+  /* The smaller of the two terms; at this cell the width binds: 204 × 104 / 120 = 176.8. */
+  const byHeight = m.free * 0.855;
+  const byWidth = (m.cellWidth - 2 * m.inset) * (104 / 120);
+  expect(m.height, `height ${m.height.toFixed(1)} is the smaller of ${byHeight.toFixed(1)} (0.855 of free) and ${byWidth.toFixed(1)} (width inside insets)`).toBeCloseTo(Math.min(byHeight, byWidth), 0);
+  /* §33's figure is stated for a 240 cell; the padding box is 239 here, the cell's rule being its border, so 175.9. */
+  expect(byWidth, 'at 240 wide with 18px insets §33 gives 176.8; a pixel of rule inside the box gives 175.9').toBeCloseTo(m.cellWidth === 240 ? 176.8 : 175.9, 1);
 });

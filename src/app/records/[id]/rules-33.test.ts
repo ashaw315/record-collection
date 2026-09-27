@@ -30,6 +30,19 @@ describe('§33: the matrix solid takes its free height', () => {
     expect(solid.width / solid.height).toBeCloseTo(120 / 104, 3);
   });
 
+  it('yields the height to the width inside both insets: 176.8 at 240 wide with 18px insets (§33)', () => {
+    /*
+      §33's own figure. The function already took the smaller term; the
+      caller passed the width less ONE inset and drew 195.4, which
+      `e2e/row-rules-33.spec.ts` measures on the page. Stated here so the
+      figure has a home beside the rule.
+    */
+    const solid = freeHeightSolid({ cellHeight: 299, textBottom: 60, cellWidth: 240 - 2 * 18 });
+    expect(solid.width).toBeCloseTo(204, 1);
+    expect(solid.height, 'the height yields, not the insets').toBeCloseTo(176.8, 1);
+    expect(solid.height, 'and not 0.855 of the free height, which would be wider than the room').toBeLessThan((299 - 60) * SOLID_OF_FREE_HEIGHT);
+  });
+
   it('never exceeds the cell’s width', () => {
     /* A tall free space would otherwise compute a width past the cell. */
     const solid = freeHeightSolid({ cellHeight: 900, textBottom: 40, cellWidth: 240 });

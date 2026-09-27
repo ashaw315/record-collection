@@ -44,44 +44,32 @@ export function MatrixSolid({ inset = 18 }: { inset?: number }) {
       const textBox = text?.getBoundingClientRect();
       const textBottom =
         textBox === undefined ? 0 : textBox.y + textBox.height - cellBox.y;
-
       /*
-        **The cell's own height and width, not an inset one.** §33 gives the
-        base as "0.855 of the cell's free height below the matrix text" and
-        says nothing about deducting the placement inset; subtracting it first
-        drew 176.8 where the ruling gives 195.4. The inset is where the solid
-        SITS, not what it is measured against.
-      */
-      /*
-        **Height from the cell, width from the space the inset leaves.**
+        **§33 rules which term yields: the height.** "It takes 0.855 of the
+        cell's free height below the matrix text, or the height at which it
+        fits the cell's width inside its insets, whichever is smaller... The
+        height yields, not the insets: a figure never crosses its cell's side
+        edges (§21), and 0.855 is a target, not a floor. At 240 wide with
+        18px insets that is 176.8, not 195.4."
 
-        §33 gives the base as "0.855 of the cell's free height below the
-        matrix text" and says nothing about deducting the placement inset, so
-        the HEIGHT is measured against the cell itself -- subtracting it first
-        drew 176.8 where the ruling gives 195.4.
-
-        The width is a different quantity. §33 places the solid "bottom-right"
-        inside the cell, so it cannot be wider than the room the inset leaves:
-        measured at full cell width it came out 225.4 in a 240px cell and
-        started 4.4px LEFT of the cell's own edge. A figure that leaves its
-        cell is not placed in it.
+        This spent one inset -- `cellBox.width - inset` -- to keep 195.4, and
+        the solid crossed the cell's left edge by about a pixel; the spec
+        that measured it was named known-failing and pinned the overhang, so
+        building the ruling turned it red. Both insets are room the solid
+        does not have.
       */
       setFit(
         freeHeightSolid({
           cellHeight: cellBox.height,
           textBottom,
           /*
-            The room to the LEFT of the inset the solid sits against. It is
-            flush to the cell's right inset, so only one inset is spent --
-            deducting both left 204px and pulled the height to 176.8, under
-            §33's ruled 195.4. **This is reported to Design as a conflict:**
-            at 0.855 of this cell's free height the figure wants 225.4px of
-            width and the cell has 240, so the ruled height and an inset on
-            both sides cannot both hold. The height is kept, because §33
-            states it as a figure and states the placement only as
-            "bottom-right".
+            The width inside BOTH insets: 204 in the 240 cell, so the height
+            yields to 176.8. The PADDING box, not the border box: the cell
+            carries its 1px right rule, and `right: inset` positions from the
+            padding edge, so a room taken from the border box sat the solid
+            17px inside the left inset, not 18.
           */
-          cellWidth: cellBox.width - inset,
+          cellWidth: cell.clientWidth - 2 * inset,
         }),
       );
     };
