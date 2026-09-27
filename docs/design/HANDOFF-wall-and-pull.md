@@ -83,6 +83,7 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §34 | No mark paints over type, the About’s length, and the market at eight columns | §5.1’s marks as well as §26’s figures and flats, governed by paint order not class name; §29 sizes a plane first, and only a plane that still covers type is not drawn; the post-fix counts and the cause below the fork; the About’s budget as a writing guide, and why the editor reports clamping, not excess; why a grouping list does not guarantee a measure. |
 | §35 | The real collection: the About arc, the last cell, and absence in flow | Why the About’s quarter-circle leaves §5.1’s marks; the last cell stated directly, with absence as its usual state; absence drawn in flow after the label for every cell that can be empty; why the extremes fixture must carry empty fields. |
 | §36 | The About’s lower row, and the scaling band that did not survive | Why the lower row survives as the About’s editor and full reading; the absence state’s link and its unconfigured form; why proportional scaling below §18’s fork was withdrawn when the year figure bound it, and why each of the three exits is declined. |
+| §37 | The upper air at eight columns, and a figure in a tall host | Why the air moves left of the sleeve by grid order only, keeping both marks at the page’s edges; why a figure’s size in a tall host waits on Code’s report of §29’s terms; why a ceiling at one viewport’s size was drafted and withdrawn. Which unit §21 counts figures in, and why the page total depends on width; what this section withdraws from §30. |
 
 ## Structural sections — pointers
 
@@ -181,6 +182,15 @@ These are the sections the rulings above build on, all in `Record Detail 8a - se
 38. **§36 — no scaling band.** Do not scale the upper or record bands below 1440; revert any scaling built for this step. §28's wrap and fixed cells stand from 1439 down and §2.1's 120px column at every width.
    > Withdrawn within §36: the scaling band from 960 to 1439, which measurement left at 137px.
 
+39. **§37 — the upper air at eight columns.** Put the air left of the sleeve in the second row by grid order only; markup and reading order stay. The tint triangle bleeds off the page's left edge.
+   > At eight columns the upper air sits left of the sleeve in the second row, so the triangle keeps the page’s left edge and the sleeve keeps its right.
+
+40. **§37 — measure §29's terms for the pair in the tall air.** Do not build a ceiling. At 1000 report the three candidate sizes for the slab-and-beam pair: two-thirds of the host's height, a quarter of the section's width, and the size drawn, and say which produced 360. If the width term is not being applied to figures, apply it and recapture.
+   > A figure’s size in a tall host is not ruled here until Code reports which of §29’s terms produced the 360px pair.
+
+41. **§37 — the figure count.** Replace the page-wide "two figures" assertion and its lower-region scoping. Assert at most one figure per section, and the page total per width: three at eight columns, two at twelve and wider. Report the totals below 480.
+   > §21 counts figures per section, not per screen, so the page carries three figures at eight columns and two at twelve and wider.
+
 **Every row in the table above must appear in a step here.** The completeness check greps the table only, so an index that is current and an order that is eight rulings behind both pass — which is what happened at §W.28–§W.35. Check both.
 
 ## Maintaining this file
@@ -202,6 +212,10 @@ So the check is mechanical: **eight assertions, run against all three targets, b
 **A prediction about the script is a question, not a fact.** Claude cannot see `check-index.mjs`, so any claim about what it will do is a guess. Written as a fact, a wrong guess reads as a finding: the wall entries were said to fail 6, and 6 already read the wall. The form that survives is "I think this may fail 6 — Code, confirm."
 
 **A claim from a commit message is not a measurement either.** Step 35's note said the no-JS offset made the strip above the arrival unreachable; it was relayed as a finding, and §W.29 ruled on it. Measured, the offset hid 75px of landing pad and never a row. Ask whether a relayed claim was measured before a section rests on it.
+
+**The index tests consistency between files, never their currency.** Assertions 6 and 7 pass when an entry and its sentence agree, whether or not either is current, so a stale pair and a live pair look the same to the check. Three files from the scaling-band withdrawal did not reach the repo and the index passed. Only a reader comparing a drop to what it replaced catches a drop that did not land.
+
+**A number collision is a duplicate until read.** §37 went in twice in one round, as two sections with conflicting rules, and the second set of build steps collided with the first. The collision was fixed by renumbering, which hid the duplicate instead of surfacing it. A step number, a heading or a paragraph that appears twice is read before it is renumbered.
 
 **Why each assertion exists, since each was added after the ones before it passed on a broken index.** Assertion 1 asks for *exactly one* row because a presence grep is satisfied by two conflicting rows for one section: §W.35 carried two, each with material the other lacked. Assertion 2 exists because the table and the build order are separate lists. The order stopped at step 8 while the table ran to §W.36, so a build reading the order was eight rulings behind, and the check still reported the index current. **An index is only sound if every list in it is checked, not the one that is easiest to grep.** Assertion 3 exists because 1 and 2 passed on an order that skipped step 14 and put three steps below its own closing text. Assertions 4 and 5 came with the split. 4 is needed because references now cross two files. 5 is needed because a number appearing in the table does not mean its subject agrees. **On its first run, 5 caught two rows, §W.8 and §W.15, whose titles had drifted from their headings, in an index every earlier check had passed.** That is the best evidence this file has for why a fifth check was needed. Assertions 6 and 7 came with the reader's note, whose withdrawal list is a restatement like the index. On its first run, 6 found §26 retracting its 0.78 scale without ever saying so.
 
