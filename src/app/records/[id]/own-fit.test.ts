@@ -14,6 +14,9 @@ import { FOOTPRINT_REACH, footprintPoints } from './footprints';
  * measuring, and the measured distribution runs 1.263x to 1.662x with no
  * clustering at the bound.
  */
+/** §31's shared frame, kept as the record of what every drawing was once fitted to; the module no longer exports it (step 29g). */
+const RETIRED_FRAME = '-140 -186 296 314';
+
 describe('§33: the construction fits its own arrangement', () => {
   it('gives every record a viewBox that bounds its own forms', () => {
     for (const id of REAL_RECORD_IDS) {
@@ -60,7 +63,7 @@ describe('§33: the construction fits its own arrangement', () => {
   it('never draws a record smaller than the shared frame did', () => {
     for (const id of REAL_RECORD_IDS) {
       const scene = construction(id);
-      const [, , sw, sh] = scene.viewBox.split(' ').map(Number);
+      const [, , sw, sh] = RETIRED_FRAME.split(' ').map(Number);
       const [, , ow, oh] = ownFitViewBox(scene).split(' ').map(Number);
       /* A smaller viewBox over the same cell is a LARGER drawing. */
       expect(ow, `${id.slice(0, 8)}: no wider than the union`).toBeLessThanOrEqual(sw + 0.01);

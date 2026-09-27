@@ -75,9 +75,10 @@ const faceArea = (points) => {
   return Math.abs(sum) / 2;
 };
 
-/** The shared frame's scale — what the build draws today. */
-const sharedScale = (id) => {
-  const [, , w, h] = construction(id).viewBox.split(' ').map(Number);
+/** §31's retired frame's scale, kept as history for the comparison; the module no longer exports it (step 29g). */
+const RETIRED_FRAME = '-140 -186 296 314';
+const sharedScale = () => {
+  const [, , w, h] = RETIRED_FRAME.split(' ').map(Number);
   return Math.min(CELL_W / w, CELL_H / h);
 };
 

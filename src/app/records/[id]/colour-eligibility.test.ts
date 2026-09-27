@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { construction } from './construction';
+import { ownFitViewBox } from './own-fit';
 import { REAL_RECORD_IDS } from './real-records';
 import { BANDS, GRID_COLUMNS, IDENTITY_SPANS, NO_SCROLL_HEIGHT, STILL_MARGIN } from './band-geometry';
 
@@ -53,8 +54,15 @@ const faceArea = (points: ReadonlyArray<readonly [number, number]>) => {
   return Math.abs(sum) / 2;
 };
 
+/*
+  The scale the PAGE draws: §33's own fit, not §31's retired frame. This read
+  `construction(id).viewBox`, the shared constant, for a round after the still
+  moved to `ownFitViewBox`, so the floor was asserted at a scale nothing drew.
+  Measured on the fixture at 1440 × 900: worst 0.5084% and median 0.7535% at
+  the retired frame, 0.9557% and 1.3489% at the own fit.
+*/
 const scaleOf = (id: string) => {
-  const [, , w, h] = construction(id).viewBox.split(' ').map(Number);
+  const [, , w, h] = ownFitViewBox(construction(id)).split(' ').map(Number);
   return Math.min(CELL_W / w, CELL_H / h);
 };
 
@@ -96,6 +104,13 @@ describe('§22: the colour lands on a form that can carry it', () => {
    * truth was 0.440% with two failures — a sample that drops its tail reports
    * its median as its minimum.
    */
+  it('measures at the scale the page draws: worst 0.956% and median 1.349% on the fixture at 1440 × 900 (§33)', () => {
+    /* These are the own-fit figures; at the retired frame they were 0.508% and 0.754%, which is how a wrong scale reads here. */
+    const fractions = REAL_RECORD_IDS.map((id) => baseFraction(id) * 100).sort((a, b) => a - b);
+    expect(fractions[0], 'worst').toBeCloseTo(0.9557, 3);
+    expect(fractions[Math.floor(fractions.length / 2)], 'median').toBeCloseTo(1.3489, 3);
+  });
+
   it('puts all seventeen above §5.5’s 0.5% floor', () => {
     const short: string[] = [];
     for (const id of REAL_RECORD_IDS) {

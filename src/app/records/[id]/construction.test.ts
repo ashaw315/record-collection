@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import * as constructionModule from './construction';
+import { ownFitViewBox } from './own-fit';
 import {
   ARCHETYPES,
-  CONSTRUCTION_FRAME,
   EXHAUSTED_ID,
-  FRAME_PAD,
   HASH_ADVANCE_CAP,
   constructionWithin,
   FORM_COUNT,
@@ -104,114 +104,51 @@ describe('§31 is withdrawn in whole, and its mechanism is gone (§33, step 29g)
   });
 });
 
-describe('the frame is one box for every record (§4, §26)', () => {
-  /**
-   * §26: "the frame is one box for every record, sized to the union of
-   * (forms ∪ disc ∪ offset) across the shared extremes fixture (§27). So the
-   * offset shows, because the frame is not refitted per record, and no record
-   * spills, because the frame was sized to the worst one."
-   *
-   * This replaces one frame PER SYMMETRY, a build choice the target never
-   * made: eight boxes were still "shared", but §26 says one, and the cost of
-   * one is what step 18 predicts and measures. Fitting per record remains
-   * the defect §17 names — a normalisation that discards the variation it
-   * was applied to preserve.
-   */
-  it('gives every record the identical viewBox', () => {
-    const frames = new Set(REAL_IDS.map((id) => construction(id).viewBox));
-    expect([...frames], 'one frame, not one per symmetry and not one per record').toHaveLength(1);
+describe('the shared frame is retired: each record draws at its own box (§33, step 29g)', () => {
+  /*
+    §31's frame was one box for every record, and this file asserted it as
+    "the union it was measured from". §33 retired it in whole: "the frame
+    constant is retired entirely... Fitting each record to its own box only
+    makes drawings larger." The constant, its padding and the fit-check that
+    read it are gone from the module, and a scene carries no viewBox: the box
+    is `ownFitViewBox(scene)`, computed from the forms and disc it holds.
+  */
+  it('exports no frame constant, no padding and no fit check', () => {
+    expect(Object.keys(constructionModule).filter((k) => /FRAME|fitsFrame|scaledToFit/.test(k)), 'retired exports').toEqual([]);
   });
 
-  it('is the union it was measured from, now stated rather than recomputed (§31)', () => {
-    /**
-     * **§26 sized the frame to the union at render; §31 states it.** The
-     * claim that survives is that the number in the file IS that union —
-     * asserted in §31's block above, which compares the constant against a
-     * fresh measurement over the fixture. What is withdrawn is recomputing
-     * it: "a frame fitted to the collection's extremes is a mutable input to
-     * every record's drawing", and §5.1 forbids feeding the drawing anything
-     * that changes.
-     *
-     * So this asserts the property §26 wanted — one box, containing every
-     * record — without requiring it to be derived at render.
-     */
-    const frames = new Set(REAL_IDS.map((id) => construction(id).viewBox));
-    expect([...frames], 'one box for every record').toEqual([CONSTRUCTION_FRAME]);
+  it('gives a scene no viewBox of its own: the box is derived from the scene', () => {
+    for (const id of REAL_IDS) {
+      expect(Object.keys(construction(id)), `${id.slice(0, 8)}: no stated box`).not.toContain('viewBox');
+    }
   });
-  it('does not fit the frame to the forms', () => {
-    /*
-      The forms move INSIDE the frame: their own bounding boxes differ while the
-      frame does not. If a future change starts fitting, the frames diverge and
-      the test above fails — this one says the variation it would destroy is
-      really there.
-    */
+
+  it('draws every record inside its OWN box, forms and disc alike', () => {
+    for (const id of REAL_IDS) {
+      const scene = construction(id);
+      const [fx, fy, fw, fh] = ownFitViewBox(scene).split(' ').map(Number);
+      for (const [x, y] of scene.forms.flatMap((f) => f.faces.flatMap((face) => face.points))) {
+        expect(x, `${id.slice(0, 8)}: x ${x.toFixed(1)}`).toBeGreaterThanOrEqual(fx);
+        expect(x, `${id.slice(0, 8)}: x ${x.toFixed(1)}`).toBeLessThanOrEqual(fx + fw);
+        expect(y, `${id.slice(0, 8)}: y ${y.toFixed(1)}`).toBeGreaterThanOrEqual(fy);
+        expect(y, `${id.slice(0, 8)}: y ${y.toFixed(1)}`).toBeLessThanOrEqual(fy + fh);
+      }
+      const { disc } = scene;
+      expect(disc.cx - disc.r, `${id.slice(0, 8)}: disc left`).toBeGreaterThanOrEqual(fx);
+      expect(disc.cx + disc.r, `${id.slice(0, 8)}: disc right`).toBeLessThanOrEqual(fx + fw);
+      expect(disc.cy - disc.r, `${id.slice(0, 8)}: disc top`).toBeGreaterThanOrEqual(fy);
+      expect(disc.cy + disc.r, `${id.slice(0, 8)}: disc bottom`).toBeLessThanOrEqual(fy + fh);
+    }
+  });
+
+  it('the compositions really do differ in extent, so their boxes differ', () => {
     const extents = REAL_IDS.map((id) => {
       const { forms } = construction(id);
       const xs = forms.flatMap((f) => f.faces.flatMap((face) => face.points.map((p) => p[0])));
       return Math.round(Math.max(...xs) - Math.min(...xs));
     });
-
-    expect(new Set(extents).size, 'the compositions really do differ in extent').toBeGreaterThan(
-      1,
-    );
-  });
-});
-
-describe('the forms stay inside the constant frame', () => {
-  /**
-   * **A property the generator must be unable to violate, not something the
-   * sheet catches.** The first version escaped on every record — worst case 17
-   * points outside, with x reaching 220 against a frame edge at 150, visible as
-   * clipped beams once seventeen tiles sat side by side.
-   *
-   * Fixed in the SLOTS rather than the frame. The frame is the thing that must
-   * not be fitted per record: fitting normalises away the variation it was
-   * applied to preserve, which is the whole viewBox lesson.
-   */
-  it('keeps every drawn point inside the frame, on all seventeen', () => {
-    const [fx, fy, fw, fh] = CONSTRUCTION_FRAME.split(' ').map(Number);
-
-    for (const id of REAL_IDS) {
-      const { forms } = construction(id);
-      const points = forms.flatMap((f) => f.faces.flatMap((face) => face.points));
-
-      for (const [x, y] of points) {
-        expect(x, `${id}: x ${x.toFixed(1)}`).toBeGreaterThanOrEqual(fx);
-        expect(x, `${id}: x ${x.toFixed(1)}`).toBeLessThanOrEqual(fx + fw);
-        expect(y, `${id}: y ${y.toFixed(1)}`).toBeGreaterThanOrEqual(fy);
-        expect(y, `${id}: y ${y.toFixed(1)}`).toBeLessThanOrEqual(fy + fh);
-      }
-    }
-  });
-
-  it('keeps every record’s drawing inside the ONE shared frame (§26)', () => {
-    for (const id of REAL_IDS) {
-      const { forms, disc, viewBox } = construction(id);
-      const [fx, fy, fw, fh] = viewBox.split(' ').map(Number);
-      for (const [x, y] of forms.flatMap((f) => f.faces.flatMap((face) => face.points))) {
-        expect(x, `${id}: x ${x.toFixed(1)}`).toBeGreaterThanOrEqual(fx);
-        expect(x, `${id}: x ${x.toFixed(1)}`).toBeLessThanOrEqual(fx + fw);
-        expect(y, `${id}: y ${y.toFixed(1)}`).toBeGreaterThanOrEqual(fy);
-        expect(y, `${id}: y ${y.toFixed(1)}`).toBeLessThanOrEqual(fy + fh);
-      }
-      expect(disc.cx - disc.r, `${id}: disc left`).toBeGreaterThanOrEqual(fx);
-      expect(disc.cx + disc.r, `${id}: disc right`).toBeLessThanOrEqual(fx + fw);
-      expect(disc.cy - disc.r, `${id}: disc top`).toBeGreaterThanOrEqual(fy);
-      expect(disc.cy + disc.r, `${id}: disc bottom`).toBeLessThanOrEqual(fy + fh);
-    }
-  });
-
-  it('keeps the disc inside the frame too', () => {
-    const [fx, fy, fw, fh] = CONSTRUCTION_FRAME.split(' ').map(Number);
-
-    for (const id of REAL_IDS) {
-      const { disc } = construction(id);
-
-      expect(disc.cx - disc.r, `${id}`).toBeGreaterThanOrEqual(fx);
-      expect(disc.cx + disc.r, `${id}`).toBeLessThanOrEqual(fx + fw);
-      expect(disc.cy - disc.r, `${id}`).toBeGreaterThanOrEqual(fy);
-      expect(disc.cy + disc.r, `${id}`).toBeLessThanOrEqual(fy + fh);
-    }
+    expect(new Set(extents).size, 'the compositions really do differ in extent').toBeGreaterThan(1);
+    expect(new Set(REAL_IDS.map((id) => ownFitViewBox(construction(id)))).size, 'and so do their boxes').toBeGreaterThan(1);
   });
 });
 

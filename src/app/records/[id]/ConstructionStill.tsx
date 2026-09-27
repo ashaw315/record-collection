@@ -86,8 +86,8 @@ export function ConstructionStill({
         the same cell is a larger drawing, so every record's scale rises --
         measured across the seventeen, from 1.263x to 1.662x.
 
-        §31's constant remains on `scene.viewBox` and is still what the fit
-        check compares against; what it no longer does is set the drawn scale.
+        §31's constant is retired (step 29g): a scene carries no viewBox, so
+        this is the only box the still can draw in.
       */
       viewBox={ownFitViewBox(scene)}
       /*

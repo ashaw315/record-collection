@@ -52,28 +52,15 @@ export const FORM_COUNT = ARCHETYPES.length;
 /** §4: longest to smallest, which stops a record reading as busier than another. */
 export const SIZE_BAND = 6;
 
-/**
- * **§31: the frame is a STATED constant, not a result.**
- *
- * It is the union of (forms ∪ disc) measured across the collection in step
- * 18 — `-139.5932 -186.0000 294.7735 313.6029` — with its origin floored and
- * its extent rounded up to the next whole unit. §31: "the rounding is the
- * tolerance, not slack. At full precision the widest current record would fit
- * by exactly zero, which makes its fit an equality: a coincidence, not a
- * margin (§W.18)."
- *
- * **Stated rather than computed, because a computed frame is a mutable input
- * to every drawing.** A frame fitted to the collection's extremes changes
- * when Adam buys a record, and through §22's guard that can change an
- * existing record's colour placement or its arrangement. §5.1 forbids feeding
- * the drawing anything that changes. With the constant, a record's drawing
- * depends only on its id and on numbers in this file.
- *
- * The cost of the rounding, measured: 0.41% of width, against §31's estimate
- * of at most 1 ÷ 432 = 0.23%. The extra is the origin flooring as well as the
- * extent rounding up, which grows the box on both sides of each axis.
- */
-export const CONSTRUCTION_FRAME = '-140 -186 296 314';
+/*
+  §31's frame constant lived here: one stated box for every record, the union
+  measured in step 18. §33 retired it in whole (step 29g): "the frame
+  constant is retired entirely... Fitting each record to its own box only
+  makes drawings larger." The box a record draws in is `ownFitViewBox(scene)`
+  in `own-fit.ts`, computed from the forms and disc it holds; nothing states
+  one. The retired value is kept in `own-fit.test.ts` as the record of what
+  every drawing was once fitted to.
+*/
 
 /**
  * §31: the hash advances at most this many times before the fallbacks are
@@ -89,9 +76,6 @@ export const HASH_ADVANCE_CAP = 32;
 
 /** An id reserved for testing the exhausted-hash fallback, which no real id reaches. */
 export const EXHAUSTED_ID = 'exhausted-arrangement-fixture';
-
-/** The margin the shared frame keeps around its extreme, so the outermost form has air and the shadows have room. */
-export const FRAME_PAD = 16;
 
 /** Each archetype's proportions along u, v and w, before its extent is applied. */
 const SHAPE: Record<Archetype, readonly [number, number, number]> = {
@@ -174,8 +158,6 @@ export type Form = {
 };
 
 export type Construction = {
-  /** Constant across records. Asserted, because fitting it was the old defect. */
-  viewBox: string;
   forms: readonly Form[];
   disc: {
     cx: number;
@@ -286,9 +268,6 @@ function carrierFaceArea(archetype: Archetype): number {
   }
   return largest;
 }
-
-/** The frame, parsed once, as the envelope every form is clamped into. */
-const [FRAME_X, FRAME_Y, FRAME_W, FRAME_H] = CONSTRUCTION_FRAME.split(' ').map(Number);
 
 /**
  * The eight rigid symmetries of the ground plane: four quarter turns, each with
@@ -644,45 +623,11 @@ function discFor(recordId: string): Construction['disc'] {
   };
 }
 
-const [FRAME_LEFT, FRAME_TOP, FRAME_WIDTH, FRAME_HEIGHT] = CONSTRUCTION_FRAME.split(' ').map(Number);
-
-/** Whether a drawing lies inside §31's stated frame. */
-function fitsFrame(forms: readonly Form[], disc: Construction['disc']): boolean {
-  for (const [x, y] of forms.flatMap((f) => f.faces.flatMap((face) => face.points))) {
-    if (x < FRAME_LEFT || x > FRAME_LEFT + FRAME_WIDTH) return false;
-    if (y < FRAME_TOP || y > FRAME_TOP + FRAME_HEIGHT) return false;
-  }
-  if (disc.cx - disc.r < FRAME_LEFT || disc.cx + disc.r > FRAME_LEFT + FRAME_WIDTH) return false;
-  if (disc.cy - disc.r < FRAME_TOP || disc.cy + disc.r > FRAME_TOP + FRAME_HEIGHT) return false;
-  return true;
-}
-
-/** Scale a drawing about the frame's centre until it fits — §31's fallback when no arrangement does. */
-function scaledToFitFrame(forms: readonly Form[], disc: Construction['disc']): { forms: Form[]; disc: Construction['disc'] } {
-  const cx = FRAME_LEFT + FRAME_WIDTH / 2;
-  const cy = FRAME_TOP + FRAME_HEIGHT / 2;
-  const points = [...forms.flatMap((f) => f.faces.flatMap((face) => face.points)), [disc.cx - disc.r, disc.cy - disc.r] as const, [disc.cx + disc.r, disc.cy + disc.r] as const];
-  let scale = 1;
-  for (const [x, y] of points) {
-    const dx = Math.abs(x - cx);
-    const dy = Math.abs(y - cy);
-    if (dx > 0) scale = Math.min(scale, FRAME_WIDTH / 2 / dx);
-    if (dy > 0) scale = Math.min(scale, FRAME_HEIGHT / 2 / dy);
-  }
-  const at = (x: number, y: number) => [cx + (x - cx) * scale, cy + (y - cy) * scale] as const;
-  return {
-    forms: forms.map((form) => ({
-      ...form,
-      faces: form.faces.map((face) => ({ ...face, points: face.points.map(([x, y]) => at(x, y)) })),
-    })),
-    disc: { ...disc, ...(([x, y]) => ({ cx: x, cy: y }))(at(disc.cx, disc.cy)), r: disc.r * scale },
-  };
-}
-
 /**
- * §31: an arrangement that does not fit the stated frame is illegal, so the
- * hash moves to that record's next one — the same mechanism §22 uses for
- * colour eligibility.
+ * §31's fit check lived here: an arrangement that did not fit the stated
+ * frame was illegal and the hash moved on. §33 retired the frame (step 29g),
+ * so there is nothing to miss; the check and its scale-to-fit fallback are
+ * removed rather than kept dead, and a scene states no box of its own.
  *
  * `forceExhausted` is for the test that constructs the fallback §31 rules but
  * no real id reaches: §31 requires it built, and waiting for a record that
@@ -717,7 +662,6 @@ export function constructionWithin(
     options.forceQuiet,
   );
   return {
-    viewBox: CONSTRUCTION_FRAME,
     forms,
     disc: discFor(recordId),
     advances: 0,
