@@ -51,7 +51,6 @@ export function Section({
   children,
   span,
   start,
-  endsRow,
   ladder = null,
 }: {
   name: SectionName;
@@ -72,7 +71,6 @@ export function Section({
   span?: number;
   start?: number;
   /** False when another item follows in the row, which is what draws the rule. */
-  endsRow?: boolean;
   /** The record's ladder, for §25's figures and §26's flats. Null when there is no cover. */
   ladder?: RecordLadder | null;
 }) {
@@ -81,7 +79,6 @@ export function Section({
   const placed = placementOf(1440, name);
   const column = start ?? placed.start;
   const width = span ?? placed.span;
-  const last = endsRow ?? placed.endsRow;
 
   /**
    * **One cell per child, not one per span.** A section declaring `pair` and
@@ -134,8 +131,17 @@ export function Section({
           to hold fewer.
 
           `RowRule` below draws one full-width line per row instead.
+
+          **And the VERTICAL is not inline either.** The section once set
+          `border-right: 1px solid` here for its 1440 placement, and an
+          inline width beats the generated stylesheet's per-width `0`: at
+          eight columns pressing-detail, row-final there, drew a 1px rule
+          down the page's right edge across its 174px (measured at 1000);
+          acquisition and tags did the same at four columns and images at
+          one. A rule on the page's edge is a line the page does not carry.
+          The region stylesheet gives every section a 0-width solid rule and
+          widens it per breakpoint from the same table as the placement.
         */
-        borderRight: last ? undefined : `1px solid ${SECTION_RULE}`,
         /*
           **A grid item's automatic minimum size is its content**, so a
           section whose content is wider than its span would grow past it

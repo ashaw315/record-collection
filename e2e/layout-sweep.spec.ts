@@ -320,6 +320,55 @@ test('below the fork, at every width: the upper cells wrap at their size, the co
 });
 
 /**
+ * **No structural vertical stands on the page's edge, at any fork.** §3 puts
+ * a rule on "every structural edge" and §33 on the boundary between two
+ * cells; a rule whose neighbour is the page's edge divides nothing. Measured
+ * before this test: at 1000 pressing-detail's inline 1px rule for its 1440
+ * placement beat the stylesheet's 0 and ran down the page's right edge, and
+ * the record band's stacked cells kept the rules they carry side by side.
+ *
+ * Enumerated by what a thing IS -- any element painting a left or right
+ * border whose painted edge is the composition's edge -- not by a list of
+ * cells. Form controls carry their own borders and are not rules.
+ * `journalEdge` is excluded and named: §3's 2px derived edge sits "at the
+ * band's right end", which is the page's edge at 1440 by its own ruling.
+ */
+test('no structural vertical rule stands on the page’s left or right edge, at any fork (§3, §33)', async ({ page }) => {
+  test.setTimeout(300_000);
+  await login(page);
+  const id = await seedRich(page);
+  const bad: string[] = [];
+  for (const w of [390, 480, 960, 1000, 1439, 1440, 1680, 1920]) {
+    await page.setViewportSize({ width: w, height: w <= 480 ? 844 : NO_SCROLL_HEIGHT });
+    await page.goto(`/records/${id}`);
+    await expect(page.locator('[data-field="eyebrow"]')).toBeVisible();
+    await page.waitForTimeout(500);
+    const edge = await page.evaluate(() => {
+      const root = document.querySelector<HTMLElement>('[data-testid="record-page-8a"]');
+      if (root === null) return ['no composition root'];
+      const rr = root.getBoundingClientRect();
+      const name = (el: Element) => ['data-cell', 'data-section', 'data-mark', 'data-band', 'data-field'].map((k) => (el.getAttribute(k) === null ? '' : `${k.slice(5)}=${el.getAttribute(k)}`)).filter(Boolean).join(' ') || el.tagName.toLowerCase();
+      const out: string[] = [];
+      for (const el of Array.from(root.querySelectorAll<HTMLElement>('*'))) {
+        if (el.closest('a, button, input, select, textarea') !== null) continue;
+        if (el.getAttribute('data-mark') === 'journalEdge') continue;
+        const s = getComputedStyle(el);
+        if (s.display === 'none') continue;
+        const b = el.getBoundingClientRect();
+        if (b.width === 0 || b.height === 0) continue;
+        const right = parseFloat(s.borderRightWidth); const left = parseFloat(s.borderLeftWidth);
+        if (right > 0 && s.borderRightStyle !== 'none' && Math.abs(b.right - rr.right) <= 1) out.push(`${name(el)} right rule ${right}px on the page's right edge (${Math.round(b.height)}px tall)`);
+        if (left > 0 && s.borderLeftStyle !== 'none' && Math.abs(b.left - rr.left) <= 1) out.push(`${name(el)} left rule ${left}px on the page's left edge (${Math.round(b.height)}px tall)`);
+      }
+      return out;
+    });
+    for (const e of edge) bad.push(`${w}: ${e}`);
+    console.log(`  EDGE @${w}: ${edge.length === 0 ? 'none' : edge.join(' ; ')}`);
+  }
+  expect(bad, `rules on the page's edge:\n  ${bad.join('\n  ')}`).toEqual([]);
+});
+
+/**
  * **No paint in front of type, at any viewport.** §28 for §26's flats:
  * "never overlap type"; §26 puts figures behind content; §34 for §5.1's
  * planes: sized against the host, "and only then tested against type: if

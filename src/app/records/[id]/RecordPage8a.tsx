@@ -223,7 +223,21 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
         [data-band] { grid-template-columns: repeat(${GRID_COLUMNS}, ${GRID_COLUMN}px) !important; }
         [data-track="content"] { width: ${CONTENT_MEASURE}px; max-width: 100%; }
         [data-upper-air] { display: none; }
+        /*
+          **Structural verticals live here, per fork, never inline.** §3's
+          rule sits on "every structural edge" and §33's on the boundary
+          between two cells; a rule whose neighbour is the page's edge divides
+          nothing. Inline, the 1440 rule stayed on every stacked cell below
+          the fork: measured at 1000, the record band's provenance, matrix,
+          year and market each ran a 1px rule down the page's right edge.
+          The journal edge keeps its inline 2px: §3 rules that mark "at the
+          band's right end", which is the page's edge at 1440 by its own
+          ruling, so it is not this defect.
+        */
+        [data-band="identity"] > [data-cell="identity"], [data-band="identity"] > [data-cell="still"], [data-band="record"] > [data-cell] { border-right: 1px solid ${RULE}; }
         @media (max-width: ${GRID_FORK - 1}px) {
+          /* One column of full-width cells (§28): no cell has a neighbour on its right. The still ends the identity row at 8 columns. */
+          [data-band="record"] > [data-cell], [data-band="identity"] > [data-cell="still"] { border-right-width: 0; }
           /*
             **The band keeps its fixed height to 480 (§28).** "The band stays
             at 547 above 480... Below 480 the band has no fixed height at
@@ -277,6 +291,8 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
           [data-band="record"] > [data-cell] { grid-column: 1 / -1 !important; }
           @media (max-width: 959px) {
             [data-band="identity"] { grid-template-columns: ${GRID_FORK / 3}px !important; height: ${3 * BANDS.identity}px !important; }
+            /* Stacked (§28): the identity cell is alone in its row too. */
+            [data-band="identity"] > [data-cell="identity"] { border-right-width: 0; }
             [data-band="identity"] > [data-upper-air] { display: none; }
             [data-band="identity"] > [data-cell="sleeve"] { grid-row: auto !important; grid-column: 1 !important; }
           }
@@ -426,7 +442,7 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
             the ruled height.
           */
           className="relative h-full min-h-0"
-          style={{ gridColumn: `span ${IDENTITY_SPANS[0]}`, borderRight: `1px solid ${RULE}` }}
+          style={{ gridColumn: `span ${IDENTITY_SPANS[0]}` }}
         >
           <IdentityCell
             title={record.title}
@@ -470,7 +486,6 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
           className="relative h-full min-h-0 overflow-hidden"
           style={{
             gridColumn: `span ${IDENTITY_SPANS[1]}`,
-            borderRight: `1px solid ${RULE}`,
             /*
               §26: forms and disc together at the build's fit, INSIDE the
               cell's 24px margin — the inner box is 432 × 499, and the SVG
@@ -627,7 +642,7 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
         <div
           data-cell="provenance"
           className={cell}
-          style={{ gridColumn: `span ${LOWER_SPANS[0]}`, borderRight: `1px solid ${RULE}` }}
+          style={{ gridColumn: `span ${LOWER_SPANS[0]}` }}
         >
           <div className={LABEL}>Provenance</div>
           {modules.provenance.empty ? (
@@ -670,7 +685,7 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
         <div
           data-cell="matrix"
           className={cell}
-          style={{ gridColumn: `span ${LOWER_SPANS[1]}`, borderRight: `1px solid ${RULE}` }}
+          style={{ gridColumn: `span ${LOWER_SPANS[1]}` }}
         >
           <div className={LABEL}>Matrix / runout</div>
           {/*
@@ -735,7 +750,6 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
           className="relative flex min-w-0 flex-col justify-center overflow-hidden p-[18px]"
           style={{
             gridColumn: `span ${LOWER_SPANS[2]}`,
-            borderRight: `1px solid ${RULE}`,
             background: base,
           }}
         >
@@ -778,7 +792,7 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
         <div
           data-cell="market"
           className="relative flex min-w-0 flex-col justify-center overflow-hidden p-[18px]"
-          style={{ gridColumn: `span ${LOWER_SPANS[3]}`, borderRight: `1px solid ${RULE}` }}
+          style={{ gridColumn: `span ${LOWER_SPANS[3]}` }}
         >
           <div className={LABEL}>Market median</div>
           {modules.market.empty ? (

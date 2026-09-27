@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { recordLadder } from '@/lib/colour/record-ladder';
 import { ExtendedGrid, Section } from './Section';
-import { CELL_PADDING } from './extended-grid';
+import { CELL_PADDING, SECTION_RULE } from './extended-grid';
+import { regionStylesheet } from './region-rows';
 
 /**
  * §26: the lower region is five rows of varied spans, and a section is an
@@ -58,19 +59,30 @@ describe('a section is an item in its row (§26)', () => {
     expect(html, 'the label no longer takes a column span of its own').not.toContain(`data-cell="label" style="grid-column:span 2`);
   });
 
-  it('holds its content at 34px and rules its right edge unless it ends the row', () => {
+  it('carries no right rule of its own: the region stylesheet rules it, per width, and never at the page edge', () => {
+    /*
+      **A rule at the page's edge is a line the page does not carry.** The
+      section once set `border-right: 1px solid` inline for its 1440
+      placement, and an inline width beats the generated stylesheet's per-
+      width `0` -- so pressing-detail, row-final at eight columns, drew a
+      1px vertical down the page's right edge across its 174px (measured at
+      1000), and acquisition and tags did the same at four columns, images
+      at one. The width now lives only in the stylesheet, which states it per
+      breakpoint from the same table as the placement.
+    */
     const middle = render(
-      <Section name="tags" title="Tags" base={null} shape="one" span={4} start={1} endsRow={false}>
+      <Section name="tags" title="Tags" base={null} shape="one" span={4} start={1}>
         <div />
       </Section>,
     );
-    const last = render(
-      <Section name="tags" title="Tags" base={null} shape="one" span={4} start={9} endsRow>
-        <div />
-      </Section>,
-    );
-    expect(middle, 'a section mid-row is ruled on its right').toContain('border-right:1px solid');
-    expect(last, 'the row’s last section is not — the page edge is there').not.toContain('border-right:1px solid');
+    expect(middle, 'no inline border-right at all').not.toMatch(/border-right/);
+    const css = regionStylesheet();
+    const blocks = css.split('@media');
+    /* Emission only: whether the cascade then widens it is `extended-grid.spec.ts`'s "rules every row item but the last". */
+    expect(blocks[0], 'the region gives every section a 0-width solid rule to widen, at the width rules’ own specificity').toContain(`:where([data-region="extended-grid"]) > [data-section] { border-right: 0 solid ${SECTION_RULE}; }`);
+    expect(blocks[0], 'tags is mid-row at 12 columns').toContain('[data-section="tags"] { border-right-width: 1px; }');
+    expect(blocks.find((b) => b.startsWith(' (max-width: 1439px)')), 'pressing-detail ends its row at 8 columns').toContain('[data-section="pressing-detail"] { border-right-width: 0px; }');
+    expect(blocks.find((b) => b.startsWith(' (max-width: 959px)')), 'tags ends its row at 4 columns').toContain('[data-section="tags"] { border-right-width: 0px; }');
     expect(middle, `content sits ${CELL_PADDING} inside`).toContain(`padding:${CELL_PADDING}px`);
   });
 

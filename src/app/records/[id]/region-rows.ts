@@ -1,4 +1,4 @@
-import { SECTIONS, type SectionName } from './extended-grid';
+import { SECTIONS, SECTION_RULE, type SectionName } from './extended-grid';
 
 /**
  * §26's five rows and §28's groupings at every width.
@@ -341,6 +341,19 @@ export function regionStylesheet(): string {
     const rules: string[] = [
       `[data-region="extended-grid"] { grid-template-columns: repeat(${columns}, ${width === 1440 ? `${COLUMN_MIN}px` : '1fr'}); }`,
     ];
+    /*
+      The vertical between two sections is the stylesheet's alone: a 0-width
+      solid rule on every section, widened below per breakpoint. Inline, the
+      1440 width beat every narrower block's 0 and stood on the page's edge
+      wherever a section ends its row only below the fork.
+
+      `:where()` so the shorthand has one attribute's specificity, the same
+      as `[data-section="name"]` below it, and source order widens it. As
+      `[data-region] > [data-section]` it out-specified every width rule
+      and no section was ruled at all -- caught by the rendering test, not
+      by the one that read this string.
+    */
+    if (width === 1440) rules.push(`:where([data-region="extended-grid"]) > [data-section] { border-right: 0 solid ${SECTION_RULE}; }`);
 
     for (const section of SECTIONS) {
       const { start, span, endsRow } = placementOf(width, section);
