@@ -32,7 +32,7 @@ test('captures at 390 / 1000 / 1440 / 1920 on real records', async ({ page }) =>
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     for (const w of [390, 1000, 1440, 1920]) {
       await page.setViewportSize({ width: w, height: w <= 480 ? 844 : NO_SCROLL_HEIGHT });
-      await page.goto(`/records/${r.id}`); await page.locator('[data-field="eyebrow"]').waitFor({ timeout: 20_000 }); await page.waitForTimeout(900);
+      await page.goto(`/records/${r.id}`); await page.locator('[data-field="eyebrow"]').waitFor({ timeout: 20_000 }); await page.waitForTimeout(NO_SCROLL_HEIGHT);
       await page.screenshot({ path: `docs/captures/real-${slug}-${w}.png`, fullPage: true });
     }
   }
