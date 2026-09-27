@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ARTIST_OF_TITLE, MAX_LINES, TITLE_STEPS, STEP_GAP, artistStep, titleStep } from './title-steps';
+import * as titleStepsModule from './title-steps';
+import { ARTIST_OF_TITLE, TITLE_STEPS, STEP_GAP, artistStep, titleStep } from './title-steps';
 
 /**
  * §33: "The title takes the largest display step that fits. The steps are 72,
@@ -39,32 +40,40 @@ describe('§33: the title takes the largest step that fits', () => {
    * Of Life at 144 in three lines, since Code measured 144 as fitting on
    * height and refused it on line count alone.
    */
-  it('takes 144 for Loss Of Life, which fits on height in three lines (§33 amended)', () => {
+  it('takes 120 for Loss Of Life: 144 sets in three lines but its demand with the gap exceeds supply (§33)', () => {
+    /*
+      §33 withdrew its own 144 expectation: "Loss Of Life is expected at 144
+      in three lines... It takes 120." The ladder spec measures it on the
+      page; this fixture states what it measures -- at 144 the block below
+      the title pushes demand past the 546 supply once the 24px gap is
+      counted, at 120 it fits. The earlier fixture fabricated 59px to spare.
+    */
     const chosen = titleStep({
-      /* Measured: 144 sets to three lines at the 412 measure; 120 to two. */
-      linesAt: (step) => (step >= 144 ? 3 : step >= 96 ? 2 : 1),
-      /* Measured: at 144 the cell has 59px to spare, so 24px of gap is within supply. */
-      demandAt: (step) => (step >= 144 ? 546 - 59 - 24 : step >= 120 ? 546 - 118.4 - 24 : 300),
+      demandAt: (step) => (step >= 144 ? 546 - 23 : step >= 120 ? 546 - 118.4 - 24 : 300),
       supply: 546,
     });
-    expect(chosen).toBe(144);
+    expect(chosen).toBe(120);
   });
 
-  it('refuses a step that sets in four lines, however much height there is', () => {
+  it('takes a step that sets in four lines when the height is there: the line count is no longer capped (§33)', () => {
+    /*
+      "Withdrawn within §33: the title sets in at most three lines... Height
+      is the only constraint, and the line count is no longer capped." This
+      test defended the cap -- four lines refused "however much height there
+      is" -- for a round after §33 withdrew it.
+    */
     const chosen = titleStep({
-      linesAt: (step) => (step >= 144 ? 4 : 3),
       demandAt: () => 200,
       supply: 546,
     });
-    expect(chosen, 'four lines exceeds the legibility ceiling; 120 is the largest at three').toBe(120);
-    expect(MAX_LINES).toBe(3);
+    expect(chosen, 'the largest step whose demand fits, whatever its line count').toBe(144);
+    expect(Object.keys(titleStepsModule), 'no line cap is exported').not.toContain('MAX_LINES');
   });
 
-  /** §33: "The five-line worst title stays at 72." */
-  it('falls to 72 when no larger step sets in two lines', () => {
+  /** §33: "The five-line worst title stays at 72" -- because on height, not on a count: at every larger step its demand exceeds supply. */
+  it('falls to 72 when no larger step fits on height', () => {
     const chosen = titleStep({
-      linesAt: (step) => (step >= 96 ? 5 : 5),
-      demandAt: () => 300,
+      demandAt: (step) => (step > 72 ? 500 : 430),
       supply: 465,
     });
     expect(chosen).toBe(72);
@@ -78,7 +87,6 @@ describe('§33: the title takes the largest step that fits', () => {
    */
   it('refuses a step whose demand plus the gap exceeds supply', () => {
     const chosen = titleStep({
-      linesAt: () => 2,
       demandAt: (step) => (step >= 120 ? 460 : 300),
       supply: 465,
     });
@@ -89,7 +97,7 @@ describe('§33: the title takes the largest step that fits', () => {
 
   it('never returns a step outside the ruled set', () => {
     for (const supply of [100, 300, 465, 900]) {
-      const chosen = titleStep({ linesAt: () => 2, demandAt: () => 200, supply });
+      const chosen = titleStep({ demandAt: () => 200, supply });
       expect(TITLE_STEPS).toContain(chosen);
     }
   });

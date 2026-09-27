@@ -20,18 +20,14 @@ export const ARTIST_OF_TITLE = 5 / 9;
 /** §33: the demand is measured "with 24px of gap", and the gap is a floor. */
 export const STEP_GAP = 24;
 
-/**
- * §33, amended: "set in at most three lines. Height is the constraint the
- * band exists for; the line count is a legibility ceiling, not a preference."
- *
- * **Three, not two.** The two-line rule is withdrawn within §33
- * (33/two-line-ladder): it "maximised type subject to a line count and
- * minimised nothing", so a three-line title fell to 72 at every step and kept
- * 167px of slack -- the most of any record. Under this rule Loss Of Life is
- * expected at 144 in three lines, which Code had measured as fitting on
- * height and refused on line count alone.
- */
-export const MAX_LINES = 3;
+/*
+  No line cap. §33 withdrew its own: "Withdrawn within §33: the title sets in
+  at most three lines... Height is the only constraint, and the line count is
+  no longer capped. Demand rises with the step, so the largest step that fits
+  on height is the one that leaves the least slack." A gate here refused 144
+  on Loss Of Life by count when the height was there, and the two-line rule
+  before it (33/two-line-ladder) did the same at three.
+*/
 
 /**
  * The artist line for a title step — derived, then rounded to the nearest 2px.
@@ -46,31 +42,23 @@ export function artistStep(title: number): number {
 }
 
 /**
- * The largest step at which the title sets in at most two lines AND the cell's
- * demand, plus the gap, is within its supply.
+ * The largest step at which the cell's demand, plus the gap, is within its
+ * supply. Height is the only condition (§33); the line count is measured and
+ * published on the ladder for the reader, and decides nothing.
  *
- * **Both conditions, not either.** §33 states them together, and they fail
- * differently: a long title breaks the line count at a large step, while a
- * tall stack of pressing facts breaks the supply even when the title is short.
- * Checking only lines would step a record up into a cell that cannot hold what
- * is below it.
- *
- * `linesAt` and `demandAt` are passed in because both are MEASUREMENTS — how
+ * `demandAt` is passed in because it is a MEASUREMENT — how
  * many lines a string sets to at a size, and how tall the cell's content then
  * is. Computing them from a character count here would be the declared-value
  * defect: the answer depends on the font, which only the browser knows.
  */
 export function titleStep({
-  linesAt,
   demandAt,
   supply,
 }: {
-  linesAt: (step: number) => number;
   demandAt: (step: number) => number;
   supply: number;
 }): number {
   for (const step of TITLE_STEPS) {
-    if (linesAt(step) > MAX_LINES) continue;
     if (demandAt(step) + STEP_GAP > supply) continue;
     return step;
   }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { MAX_LINES, STEP_GAP, TITLE_STEPS, artistStep, titleStep } from './title-steps';
+import { STEP_GAP, TITLE_STEPS, artistStep, titleStep } from './title-steps';
 
 /**
  * §33's display ladder, applied by measuring rather than by counting
@@ -79,8 +79,9 @@ export function TitleStep({
         can never force the give order; only 72 not fitting can.
       */
       const cell = el.closest('[data-cell="identity-content"]');
-      const track = el.parentElement;
-      if (!(cell instanceof HTMLElement) || track === null) return;
+      const block = el.parentElement;
+      const track = el.closest('[data-track="content"]');
+      if (!(cell instanceof HTMLElement) || block === null || track === null) return;
       const cellStyle = getComputedStyle(cell);
       const supply = cell.clientHeight - parseFloat(cellStyle.paddingTop) - parseFloat(cellStyle.paddingBottom);
       const outer = (child: Element) => {
@@ -88,7 +89,20 @@ export function TitleStep({
         const s = getComputedStyle(child);
         return b.height + parseFloat(s.marginTop) + parseFloat(s.marginBottom);
       };
-      const below = Array.from(track.children).filter((child) => child !== el).reduce((sum, child) => sum + outer(child), 0);
+      /*
+        Everything the track holds besides this holder: the title block's
+        other children (the eyebrow) AND the track's other blocks (the
+        pressing block). This read `el.parentElement`'s children only -- the
+        title block's -- so `below` was the 17px eyebrow and never the
+        pressing block, and a three-line title stepped to 96 at a demand of
+        485 in 511 that rendered at 588. The line cap masked it: every step
+        that overflowed also set in four lines, and §33 withdrew the cap.
+        `e2e/title-ladder-33.spec.ts` now reads `below` off the page.
+      */
+      const below = [
+        ...Array.from(block.children).filter((child) => child !== el),
+        ...Array.from(track.children).filter((child) => child !== block),
+      ].reduce((sum, child) => sum + outer(child), 0);
 
       /* The title's measure. */
       const titleBox = real.current?.getBoundingClientRect();
@@ -134,7 +148,7 @@ export function TitleStep({
         demand is within supply.
       */
       const seen = TITLE_STEPS.map((size) => ({ size, lines: linesAt(size), demand: Math.round(demandAt(size)) }));
-      const chosen = titleStep({ linesAt, demandAt, supply });
+      const chosen = titleStep({ demandAt, supply });
       measure.style.fontSize = '';
       if (artistMeasure !== null) artistMeasure.style.fontSize = '';
       el.setAttribute(
@@ -230,4 +244,4 @@ export function TitleStep({
   );
 }
 
-export { MAX_LINES, STEP_GAP, TITLE_STEPS };
+export { STEP_GAP, TITLE_STEPS };

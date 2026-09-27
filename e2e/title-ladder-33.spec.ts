@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { GRID_FORK, NO_SCROLL_HEIGHT, BANDS } from '../src/app/records/[id]/band-geometry';
-import { STEP_GAP, MAX_LINES } from '../src/app/records/[id]/title-steps';
+import { STEP_GAP } from '../src/app/records/[id]/title-steps';
 
 registerCleanup();
 const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
@@ -51,11 +51,30 @@ test('the chosen step’s demand plus the gap is within supply, and the run surv
   const chosen = ladder.steps.find((s) => s.size === ladder.chosen);
   expect(chosen, 'the chosen step was one it measured').toBeDefined();
   expect(ladder.below, 'the block below the title is in the demand').toBeGreaterThan(0);
-  expect(chosen!.lines, 'within the legibility ceiling').toBeLessThanOrEqual(MAX_LINES);
+  /*
+    **`below` is what the cell holds besides the title, measured off the
+    page, not the ladder's own claim.** The ladder once summed the TITLE
+    BLOCK's other children -- the 17px eyebrow -- and never the pressing
+    block, so it read 485 of 511 at 96 on a three-line title that rendered at
+    588. The line cap hid it: every step that overflowed also set in four
+    lines. With the cap withdrawn (§33) the measurement has to be right.
+  */
+  const rendered = await page.evaluate(() => {
+    const outer = (el: Element) => { const b = el.getBoundingClientRect(); const s = getComputedStyle(el); return b.height + parseFloat(s.marginTop) + parseFloat(s.marginBottom); };
+    const holder = document.querySelector('[data-title-step]')!;
+    const track = holder.closest('[data-track="content"]')!;
+    const cell = holder.closest<HTMLElement>('[data-cell="identity-content"]')!;
+    const others = Array.from(track.querySelectorAll('*')).filter((el) => el.parentElement === track || el.parentElement === holder.parentElement).filter((el) => el !== holder && el !== holder.parentElement);
+    return { below: others.reduce((sum, el) => sum + outer(el), 0), holder: outer(holder), overflows: cell.scrollHeight > cell.clientHeight };
+  });
+  expect(ladder.below, `the ladder's below (${ladder.below}) is the rendered eyebrow plus pressing block (${rendered.below.toFixed(1)})`).toBeCloseTo(rendered.below, 0);
+  expect(chosen!.demand, `the chosen step's demand (${chosen!.demand}) is what the cell renders (${(rendered.holder + rendered.below).toFixed(1)})`).toBeCloseTo(rendered.holder + rendered.below, -1);
+  expect(rendered.overflows, 'nothing overflows the cell').toBe(false);
   expect(chosen!.demand + STEP_GAP, `step ${ladder.chosen}: demand ${chosen!.demand} + ${STEP_GAP} within supply ${ladder.supply}`).toBeLessThanOrEqual(ladder.supply);
   /* And it is the LARGEST that fits: every larger step fails one of the two conditions. */
   for (const s of ladder.steps.filter((s) => s.size > ladder.chosen)) {
-    expect(s.lines > MAX_LINES || s.demand + STEP_GAP > ladder.supply, `step ${s.size} was rightly refused (lines ${s.lines}, demand ${s.demand})`).toBe(true);
+    /* §33: height is the only constraint; the line count is no longer capped. */
+    expect(s.demand + STEP_GAP > ladder.supply, `step ${s.size} was rightly refused on height (lines ${s.lines}, demand ${s.demand})`).toBe(true);
   }
 
   /* The consequences on the page: the cell holds, and the genres run is not collapsed. */
@@ -97,7 +116,7 @@ test('Loss Of Life takes 120: 144 sets in three lines but fails on height once t
   const ladder = await ladderOf(page);
   const at144 = ladder.steps.find((s) => s.size === 144);
   const at120 = ladder.steps.find((s) => s.size === 120);
-  expect(at144?.lines, '144 sets in three lines, within the ceiling').toBe(3);
+  expect(at144?.lines, '144 sets in three lines').toBe(3);
   expect(at144!.demand + STEP_GAP, '…but its demand with the gap exceeds supply').toBeGreaterThan(ladder.supply);
   expect(at120?.lines).toBe(2);
   expect(at120!.demand + STEP_GAP).toBeLessThanOrEqual(ladder.supply);
