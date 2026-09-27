@@ -68,6 +68,7 @@ const READ = () => {
   });
   const kindOf = (o: HTMLElement) => o.getAttribute('data-diagonal') !== null ? `diagonal/${o.getAttribute('data-diagonal')}` : o.getAttribute('data-mark') !== null ? `mark/${o.getAttribute('data-mark')}` : o.getAttribute('data-ornament') !== null ? `${o.getAttribute('data-ornament')}${o.getAttribute('data-flat') ? '/' + o.getAttribute('data-flat') : ''}${o.getAttribute('data-figure') ? '/' + o.getAttribute('data-figure') : ''}` : o.getAttribute('data-cover') !== null ? 'cover' : o.getAttribute('data-line') !== null ? `line/${o.getAttribute('data-line')}` : o.tagName.toLowerCase();
   const allKinds = [...new Set(paints.map(kindOf))];
+  const enumerated = { paints: paints.length, texts: textLeaves.length };
   /* Paint in FRONT of text: hit-test at the overlap's centre with EVERY paint's pointer events on. */
   const savedPE = paints.map((o) => o.style.pointerEvents);
   for (const o of paints) o.style.pointerEvents = 'auto';
@@ -105,7 +106,7 @@ const READ = () => {
   const lastCell = document.querySelector('[data-cell="note"]');
   const aboutCell = lastCell?.querySelector('[data-field="about"]') ? 'about' : lastCell?.querySelector('[data-field="journal-entry"]') ? 'entry' : lastCell?.querySelector('[data-diagonal]') ? 'absence' : '?';
   return {
-    allKinds, planes, aboutCell, over, aboutLines, more,
+    allKinds, enumerated, planes, aboutCell, over, aboutLines, more,
     footCut,
     market: marketSec === null ? null : { sectionW: px(R(marketSec).width), col: getComputedStyle(marketSec).gridColumn, labelW: marketLabel === null ? null : px(R(marketLabel).width), labelLines: marketLabel === null ? null : Math.round(R(marketLabel).height / parseFloat(getComputedStyle(marketLabel).lineHeight)) },
     still: still === null ? 'absent' : getComputedStyle(still).display, sleeve: sleeve === null ? 'absent' : getComputedStyle(sleeve).display, cover: cover === null ? 'absent' : `${px(R(cover).width)}x${px(R(cover).height)} ${getComputedStyle(cover).display}`,
@@ -158,6 +159,7 @@ test('every real record at seven widths: §26 ornaments behind type everywhere; 
   const byRecord: string[] = [];
   const widths = (process.env.QA_WIDTHS ?? '390,480,960,1000,1440,1680,1920').split(',').map(Number);
   const kindsSeen = new Set<string>();
+  const enumeratedAt: Record<number, { paints: number; texts: number }> = {};
   let pairs = 0; const overCount: Record<string, number> = {}; const overSamples: string[] = [];
   const ornamentInFront: string[] = []; const arcsInFront: string[] = []; const diagonalInFront: string[] = [];
   const drawn: Record<string, number> = {};
@@ -171,6 +173,7 @@ test('every real record at seven widths: §26 ornaments behind type everywhere; 
       const m = await page.evaluate(READ);
       pairs += 1;
       for (const k of m.allKinds) kindsSeen.add(`${w}: ${k}`);
+      enumeratedAt[w] = { paints: (enumeratedAt[w]?.paints ?? 0) + m.enumerated.paints, texts: (enumeratedAt[w]?.texts ?? 0) + m.enumerated.texts };
       for (const pl of m.planes) drawn[`${w} ${pl}`] = (drawn[`${w} ${pl}`] ?? 0) + 1;
       if (w === 1440) { const r = records.find((x) => x.id === id); byRecord.push(`${(titleOf.get(id) ?? id).slice(0, 30).padEnd(30)} about=${r && hasAbout(r) ? 'yes' : 'no '} entries=${r ? r.entries.length : 0}  cell=${m.aboutCell}`); }
       for (const o of m.over) { const k = `${w}: ${o.replace(/"[^"]*"/, '"…"')}`; overCount[k] = (overCount[k] ?? 0) + 1; if (overSamples.length < 60 && !overSamples.some((s) => s.endsWith(`: ${o}`) && s.startsWith(`${w} `))) overSamples.push(`${w} ${id.slice(0, 8)}: ${o}`); }
@@ -187,6 +190,7 @@ test('every real record at seven widths: §26 ornaments behind type everywhere; 
   console.log(`\nSPECIFICS:`); specifics.forEach((s) => console.log('  ' + s));
   console.log(`\nSTEP 32 (done; §35 withdrew aboutArc on its result) -- the About cell's state on the real records at 1440 (${rows === null ? 'STAND-INS: not the real rows' : 'real id, title, About and journal entries; other fields one stand-in shape'}):`); byRecord.forEach((s) => console.log('  ' + s));
   console.log(`\nPLANES DRAWN vs NOT DRAWN (§34), per width over the ${ids.length} records (${rows === null ? 'stand-in rows' : 'real About and entries'}; real About on ${Object.keys(aboutFor).length}, journal entries on ${records.filter((r) => r.entries.length > 0).length}; a record with neither shows the diagonal and renders no arc):`); for (const [k, n] of Object.entries(drawn).sort()) console.log(`  ${String(n).padStart(3)}  ${k}`);
+  console.log(`\nENUMERATED (summed over the records): ` + widths.map((w) => `${w}: ${enumeratedAt[w]?.paints ?? 0} paints x ${enumeratedAt[w]?.texts ?? 0} text leaves`).join(' | '));
   console.log(`\nIN FRONT OF TYPE: §26 ornaments ${ornamentInFront.length}, §5.1 arcs ${arcsInFront.length}, §6 diagonals ${diagonalInFront.length} (box over the label; §6: 'Label persists, one diagonal fills the body box'), over ${pairs} record-width pairs`);
   expect(pairs, 'every record at every width').toBe(ids.length * widths.length);
   expect(ornamentInFront, '§26: figures and flats sit behind content').toEqual([]);

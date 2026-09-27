@@ -1,3 +1,6 @@
+/*
+  Ornament locators are scoped to the REGION: §28's upper air (the identity band's fourth cell at 8 columns) carries a figure and a flat in the markup at every width, hidden by the fork stylesheet above 1439, and a page-wide `.first()` resolves to that hidden element. These tests state §26's rows, which are the region's.
+*/
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { seedImage } from './seed';
@@ -733,7 +736,7 @@ test('no ornament covers a control or a ruled field', async ({ page }) => {
   const collisions = await page.evaluate(() => {
     const CLEARANCE = 60;
     const out: string[] = [];
-    const solids = Array.from(document.querySelectorAll('[data-ornament="figure"]'));
+    const solids = Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-ornament="figure"]'));
     const controls = Array.from(
       document.querySelectorAll('[data-section] button, [data-section] input, [data-section] select, [data-section] textarea, [data-section] a'),
     );
@@ -844,7 +847,7 @@ test('places figures only where §26 does, never in consecutive sections', async
   const suffix = makeSuffix();
   const id = await richRecord(page, suffix);
   await page.goto(`/records/${id}`);
-  await page.locator('[data-ornament="figure"]').first().waitFor({ timeout: 20_000 });
+  await page.locator('[data-region="extended-grid"] [data-ornament="figure"]').first().waitFor({ timeout: 20_000 });
 
   const placed = await figureSections(page);
   const carrying = placed.filter((row) => row.figures > 0).map((row) => row.name);
@@ -883,10 +886,10 @@ test('a figure is 0.855 of its section, shows two-thirds, and is cut by its foot
   for (const width of [1440, GRID_FORK, 2560, 3440]) {
     await page.setViewportSize({ width, height: NO_SCROLL_HEIGHT });
     await page.goto(`/records/${id}`);
-    await page.locator('[data-ornament="figure"]').first().waitFor({ timeout: 20_000 });
+    await page.locator('[data-region="extended-grid"] [data-ornament="figure"]').first().waitFor({ timeout: 20_000 });
 
     const figures = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('[data-ornament="figure"]')).map((figure) => {
+      Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-ornament="figure"]')).map((figure) => {
         /*
           §26 makes the host the SECTION or the AIR column, not a cell inside
           one: a figure's clip is its own cell in §26's sense, which is the
@@ -946,11 +949,11 @@ test('a figure’s faces are the ladder’s top, base and shade; a flat is tint 
   const suffix = makeSuffix();
   const id = await richRecord(page, suffix);
   await page.goto(`/records/${id}`);
-  await page.locator('[data-ornament="figure"]').first().waitFor({ timeout: 20_000 });
+  await page.locator('[data-region="extended-grid"] [data-ornament="figure"]').first().waitFor({ timeout: 20_000 });
 
   const drawn = await page.evaluate(() => {
     const read = (el: Element) => getComputedStyle(el);
-    const figures = Array.from(document.querySelectorAll('[data-ornament="figure"]')).map((svg) => ({
+    const figures = Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-ornament="figure"]')).map((svg) => ({
       section: svg.closest('[data-section]')?.getAttribute('data-section') ?? '?',
       faces: Array.from(svg.querySelectorAll('polygon')).map((p) => ({
         face: p.getAttribute('data-face'),
@@ -958,7 +961,7 @@ test('a figure’s faces are the ladder’s top, base and shade; a flat is tint 
         opacity: read(p).opacity,
       })),
     }));
-    const flats = Array.from(document.querySelectorAll('[data-ornament="flat"]')).map((el) => ({
+    const flats = Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-ornament="flat"]')).map((el) => ({
       shape: el.getAttribute('data-flat'),
       section: el.closest('[data-section]')?.getAttribute('data-section') ?? '?',
       fill: read(el).backgroundColor,
@@ -1014,7 +1017,7 @@ test('the quarter-disc is sized against its host and bleeds off the right page e
   const id = await richRecord(page, suffix);
   await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
   await page.goto(`/records/${id}`);
-  await page.locator('[data-ornament="flat"]').first().waitFor({ timeout: 20_000 });
+  await page.locator('[data-region="extended-grid"] [data-ornament="flat"]').first().waitFor({ timeout: 20_000 });
 
   const disc = await page.evaluate(() => {
     const el = document.querySelector('[data-flat="quarterDisc"]');
@@ -1074,11 +1077,11 @@ test('§26 and §21: BOTH flats bleed off a page edge, a third or more outside',
   const id = await richRecord(page, suffix);
   await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
   await page.goto(`/records/${id}`);
-  await page.locator('[data-ornament="flat"]').first().waitFor({ timeout: 20_000 });
+  await page.locator('[data-region="extended-grid"] [data-ornament="flat"]').first().waitFor({ timeout: 20_000 });
 
   const flats = await page.evaluate(() => {
     const frame = document.querySelector('[data-testid="record-page-8a"]')!.getBoundingClientRect();
-    return Array.from(document.querySelectorAll('[data-ornament="flat"]'))
+    return Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-ornament="flat"]'))
       .filter((el) => el.getClientRects().length > 0)
       .map((el) => {
         const b = el.getBoundingClientRect();

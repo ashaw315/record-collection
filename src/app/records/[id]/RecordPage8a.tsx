@@ -585,7 +585,7 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
           the fork stylesheet shows it from 960 to 1439 and nowhere else.
         */}
         <div
-          data-cell="air"
+          data-cell="upper-air"
           data-upper-air=""
           aria-hidden="true"
           className="relative isolate overflow-hidden"
