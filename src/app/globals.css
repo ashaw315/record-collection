@@ -37,6 +37,14 @@
   --text-title: 15px;
   --text-lede: 15px;
   --text-prose: 13px;
+  /*
+    §33: the leading is ruled, and the token carries it -- "13px prose is set
+    at 1.5, and --text-prose declares its line-height beside its size, so the
+    leading no longer comes from whatever wins the cascade." Without this the
+    19.5px was preflight's html { line-height: 1.5 } falling through: a value
+    nobody chose, which changes silently with the base size.
+  */
+  --text-prose--line-height: 1.5;
   --text-detail: 13px;
   --text-caption: 12px;
   --text-label: 11px;

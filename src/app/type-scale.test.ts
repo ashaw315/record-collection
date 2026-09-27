@@ -270,6 +270,27 @@ describe("A61's two-entry predicate", () => {
 
     expect(pixels(value ?? ''), 'prose is the continuous-text size').toBe(13);
   });
+
+  it('carries the prose leading on the token: 13px set at 1.5, declared beside its size (§33, step 29d)', () => {
+    /*
+      §33: "The leading is ruled here, and the token carries it: 13px prose
+      is set at 1.5, and --text-prose declares its line-height beside its
+      size, so the leading no longer comes from whatever wins the cascade.
+      The built 19.5px was preflight's html { line-height: 1.5 } falling
+      through a token that set a size alone: a value nobody chose."
+
+      The token set a size alone for a round after that, and rendered right
+      only because preflight's 1.5 × 13 happens to be 19.5; the size test
+      above could not see it. Read off the compiled utility, which is what
+      the page loads.
+    */
+    const rule = new RegExp('\\.text-prose\\{([^}]*)\\}').exec(compiled ?? '')?.[1] ?? '';
+    const leading = /line-height:\s*([^;}]+)/.exec(rule)?.[1] ?? null;
+    expect(leading, `.text-prose declares a line-height (rule: ${rule})`).not.toBeNull();
+    /* Tailwind wraps it as var(--tw-leading, X) so leading-* utilities can override; X is the token's. */
+    const value = (leading ?? '').replace(/^var\(--tw-leading,\s*/, '').replace(/\)$/, '').trim();
+    expect(['1.5', '19.5px'], `the token's leading is 1.5 (got ${value})`).toContain(value);
+  });
 });
 
 describe('micro, referenced by name where no class can carry it', () => {
