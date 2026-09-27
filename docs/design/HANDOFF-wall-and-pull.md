@@ -83,7 +83,7 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §34 | No mark paints over type, the About’s length, and the market at eight columns | §5.1’s marks as well as §26’s figures and flats, governed by paint order not class name; §29 sizes a plane first, and only a plane that still covers type is not drawn; the post-fix counts and the cause below the fork; the About’s budget as a writing guide, and why the editor reports clamping, not excess; why a grouping list does not guarantee a measure. |
 | §35 | The real collection: the About arc, the last cell, and absence in flow | Why the About’s quarter-circle leaves §5.1’s marks; the last cell stated directly, with absence as its usual state; absence drawn in flow after the label for every cell that can be empty; why the extremes fixture must carry empty fields. |
 | §36 | The About’s lower row, and the scaling band that did not survive | Why the lower row survives as the About’s editor and full reading; the absence state’s link and its unconfigured form; why proportional scaling below §18’s fork was withdrawn when the year figure bound it, and why each of the three exits is declined. |
-| §37 | The upper air at eight columns, and a figure in a tall host | Why the air moves left of the construction by grid order only; why the upper air is a section and carries no figure, and where its flat comes from; why a ceiling at one viewport’s size was drafted and withdrawn; which units §21 counts in; what this section withdraws from §28 and §30. |
+| §37 | The upper air at eight columns, and a figure in a tall host | Why the air moves left of the sleeve by grid order only; why the upper air is a section and carries no figure, and where its flat comes from; why a ceiling at one viewport’s size was drafted and withdrawn; which units §21 counts in; what this section withdraws from §28 and §30. |
 
 ## Structural sections — pointers
 
@@ -190,6 +190,9 @@ These are the sections the rulings above build on, all in `Record Detail 8a - se
 
 41. **§37 — the counts.** Assert across the whole width sweep: at most one visible figure per section, and at most §21's flat allowance per region, counting the upper air in the upper band's region. Report the page's visible figure and flat totals at each width; do not assert them.
    > §21 counts figures per section and flats per region, and states no page total.
+
+42. **§30 — the ceiling per record.** Report the air plus each record's own empty width, per record, at 1680 × 900, 1920 × 900, 1920 × 950 and 1920 × 1080, against the 480 bound. Report; do not assert. The figures regenerate §30's instance sheet.
+   > The ceiling’s bound stays one upper cell, 480, and is not re-derived: it is a fact about the band, not about the construction.
 
 **Every row in the table above must appear in a step here.** The completeness check greps the table only, so an index that is current and an order that is eight rulings behind both pass — which is what happened at §W.28–§W.35. Check both.
 
