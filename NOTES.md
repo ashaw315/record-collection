@@ -31526,3 +31526,28 @@ first-attempt trace is kept at
 session only; `test-results/` is cleared by the next run, so a recurrence
 should copy its trace somewhere durable before anything else runs. Logged,
 not chased.
+
+## Flake log — about-row-36, three first attempts at the head of a cold run (27 Sep)
+
+In the full sequential run after the step-29 fixes, tests 1, 2 and 5 of the
+chromium project (all `about-row-36.spec.ts`, the first spec alphabetically)
+failed once each and passed on retry: two on `expect(page).toHaveURL('/')`
+after login still at `/login` at 5s, one on the eyebrow not visible at 20s.
+The dev server was compiling the login and record pages for the first time;
+the retries ran in 15 to 22s against a warm server. Same class as the
+ECONNRESET entry above: the first spec to run bears the cold start. Nothing
+in the spec or the page under it; logged, not chased. If it recurs, warm the
+server in `global-setup` by requesting `/login` and one record page before
+the first test.
+
+## Flake log — lookup-flows › shows no such warning on the ordinary path, mobile (27 Sep) — the THIRD
+
+`lookup-flows.spec.ts:799`, mobile: `getByTestId('version-row')` count 0
+where 2 were expected, after the expand-versions click, both routes
+fulfilled by the test. Passed on retry. This is the third intermittent in
+this spec this month, all on mobile, all after the same click (`:749` on 27
+Sep, `:893` earlier): the shape named in the entry above now has three
+instances, which is past "logged, not chased". The first-attempt trace is in
+this session's scratchpad as `lookup-flows-799-mobile-flaky-2026-09-27.trace.zip`;
+the place to look is whether the expand click lands before the result
+card's handler attaches at the 390 viewport.

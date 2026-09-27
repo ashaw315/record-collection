@@ -75,7 +75,7 @@ export function boundsOf(scene: Pick<Construction, 'forms' | 'disc'>): Bounds {
 }
 
 /**
- * The record's own viewBox, padded by the same `FRAME_PAD` the shared frame
+ * The record's own viewBox. `FRAME_PAD` is removed (step 29g); it once padded this box as it padded the shared frame
  * used.
  *
  * **No padding, per step 29(g).** §33: "remove FRAME_PAD -- the
