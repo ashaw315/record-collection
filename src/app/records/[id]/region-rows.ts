@@ -85,8 +85,16 @@ export const REGION_ROWS: ReadonlyArray<{ sections: readonly SectionName[]; air:
 const SPANS: Record<RegionWidth, ReadonlyArray<ReadonlyArray<number>>> = {
   /* 7+5 · 4/4/4 · 12 · 6/6 · 3+9 */
   1440: [[7, 5], [4, 4, 4], [12], [6, 6], [3, 9]],
-  /* 8 · 3/3/2 (the last section takes the 2) · 8 · 4/4 · 3+5 air first */
-  960: [[8], [3, 3, 2], [8], [4, 4], [3, 5]],
+  /*
+    8 · 4/4 · 8 · 8 · 4/4 · 3+5 air first. §28 wrote 3/3/2 here; §34
+    supersedes it: "a grouping list says where sections sit; it does not
+    guarantee each one a measure... At eight columns row 2 is therefore
+    4 / 4, then the market at 8." Two columns of 125 gave the market's pair
+    cells a 57px measure. The rule that outranks every grouping -- every
+    content cell's measure holds its longest label on one line -- is
+    asserted across the sweep in `e2e/layout-sweep.spec.ts`.
+  */
+  960: [[8], [4, 4], [8], [8], [4, 4], [3, 5]],
   /* 4 · three rows of 4 · 4 · 2/2 · 4 with the air dropped */
   480: [[4], [4], [4], [4], [4], [2, 2], [4]],
   390: [[1], [1], [1], [1], [1], [1], [1], [1]],
@@ -95,13 +103,22 @@ const SPANS: Record<RegionWidth, ReadonlyArray<ReadonlyArray<number>>> = {
 /** Which row of `SPANS` each of §26's five rows becomes, at a width that splits it. */
 const SPLIT_ROWS: Record<RegionWidth, ReadonlyArray<number>> = {
   1440: [1, 1, 1, 1, 1],
-  960: [1, 1, 1, 1, 1],
+  /* §34: row 2 is two rows at 8 -- acquisition and tags, then the market. */
+  960: [1, 2, 1, 1, 1],
   /* Row 2's three sections take a row each; row 4 keeps its pair. */
   480: [1, 3, 1, 1, 1],
   390: [1, 3, 1, 2, 1],
 };
 
 /** Whether a row keeps its air column at a given width. */
+/*
+  How a split row's sections share its sub-rows, where it is not one per
+  sub-row. §34's row 2 at 8: 4 / 4, then the market at 8.
+*/
+const SUB_ROWS: Partial<Record<RegionWidth, Partial<Record<number, ReadonlyArray<ReadonlyArray<SectionName>>>>>> = {
+  960: { 1: [['acquisition', 'tags'], ['market']] },
+};
+
 function airAt(rowIndex: number, width: RegionWidth): 'before' | 'after' | null {
   const air = REGION_ROWS[rowIndex].air;
   if (air === null) return null;
@@ -125,8 +142,9 @@ export function rowsAt(width: RegionWidth): RegionRow[] {
     for (let i = 0; i < taken; i += 1) {
       const rowSpans = spans[cursor];
       cursor += 1;
-      /* One section per sub-row when a row splits; all of them when it does not. */
-      const sections = taken === 1 ? row.sections : [row.sections[i]];
+      /* All of a row's sections when it does not split; SUB_ROWS' grouping when it does, else one per sub-row. */
+      const groups = SUB_ROWS[width]?.[rowIndex];
+      const sections = taken === 1 ? row.sections : groups !== undefined ? groups[i] : [row.sections[i]];
       const items: RowItem[] = [];
 
       if (air === 'before') items.push({ kind: 'air', span: rowSpans[0] });
@@ -143,6 +161,9 @@ export function rowsAt(width: RegionWidth): RegionRow[] {
 }
 
 /** The air column beside a section at a width, if that row has one. */
+/** The most grid rows any width lays (eight, at one column); the grid renders a rule element for each. */
+export const MAX_ROWS = Math.max(...WIDTHS.map((w) => rowsAt(w).length));
+
 export function airOf(width: RegionWidth, section: SectionName): { side: 'before' | 'after'; span: number } | undefined {
   const rowIndex = REGION_ROWS.findIndex((row) => row.sections.includes(section));
   if (rowIndex === -1) return undefined;
@@ -370,6 +391,14 @@ export function regionStylesheet(): string {
           : `[data-air="${index}"] { grid-column: ${air.start} / span ${air.span}; grid-row: ${airRow(width, index)}; display: block; }`,
       );
     });
+    /*
+      §33: every row is ruled. The grid renders MAX_ROWS rule elements at
+      grid rows 1 to MAX_ROWS; this width shows as many as it lays. Before
+      this the five elements sat at rows 1 to 5 whatever the width, so the
+      sixth row at 8 (§34) and rows 6 to 8 at 4 and 1 column had no rule.
+    */
+    const laid = rowsAt(width).length;
+    for (let i = 0; i < MAX_ROWS; i += 1) rules.push(`[data-row-rule="${i}"] { display: ${i < laid ? 'block' : 'none'}; }`);
     /*
       §37: the tint triangle is "moved, not added". Where the upper band's
       air carries it, the last row's air -- §26's "the left edge in the last

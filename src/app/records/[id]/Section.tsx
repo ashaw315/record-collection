@@ -2,7 +2,7 @@ import type { RecordLadder } from '@/lib/colour/record-ladder';
 import { LABEL } from './grid-type';
 import { Figure, Flat } from './OrnamentMarks';
 import { FLATS, figureAt, type Figure as FigureSpec } from './ornament';
-import { REGION_ROWS, airPlacement, placementOf } from './region-rows';
+import { MAX_ROWS, REGION_ROWS, airPlacement, placementOf } from './region-rows';
 import {
   CELL_PADDING,
   CONTENT_SPLITS,
@@ -271,7 +271,7 @@ export function ExtendedGrid({ children, ladder = null }: { children: React.Reac
         a CSS grid has no element for a row -- which is why the build drew the
         line on the items in the first place.
       */}
-      {REGION_ROWS.map((_, index) => (
+      {Array.from({ length: MAX_ROWS }, (_, index) => (
         <div
           key={`rule-${index}`}
           data-row-rule={index}

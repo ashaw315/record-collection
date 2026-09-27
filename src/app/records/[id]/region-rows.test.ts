@@ -27,6 +27,7 @@ import {
   regionStylesheet,
   rowOf,
   airRow,
+  MAX_ROWS,
   rowsAt,
   type RegionWidth,
 } from './region-rows';
@@ -70,15 +71,21 @@ describe('§28’s groupings, transcribed from the section’s list', () => {
     const spansAt = (width: RegionWidth) => rowsAt(width).map((row) => row.items.map((item) => item.span));
 
     expect(spansAt(1440), '7+5 · 4/4/4 · 12 · 6/6 · 3+9').toEqual([[7, 5], [4, 4, 4], [12], [6, 6], [3, 9]]);
-    expect(spansAt(960), '8 · 3/3/2 · 8 · 4/4 · 3+5').toEqual([[8], [3, 3, 2], [8], [4, 4], [3, 5]]);
+    /*
+      §34 supersedes §28's 3/3/2: "a grouping list says where sections sit;
+      it does not guarantee each one a measure... At eight columns row 2 is
+      therefore 4 / 4, then the market at 8." Two columns of 125 gave the
+      market's pair cells a 57px measure and set its label one word to a line.
+    */
+    expect(spansAt(960), '8 · 4/4 · 8 (the market, §34) · 8 · 4/4 · 3+5').toEqual([[8], [4, 4], [8], [8], [4, 4], [3, 5]]);
     /* At 4 the rows that cannot sit side by side stack, apart from row 4's pair. */
     expect(spansAt(480), 'row 2 stacks three, row 4 keeps its pair, row 5 drops its air').toEqual([[4], [4], [4], [4], [4], [2, 2], [4]]);
     expect(spansAt(390), 'one fluid column throughout').toEqual([[1], [1], [1], [1], [1], [1], [1], [1]]);
   });
 
-  it('counts the rows §28 states: five at 12 and 8, seven at 4, eight at one column', () => {
+  it('counts the rows: five at 12, six at 8 (§34 gives the market its own row), seven at 4, eight at one column', () => {
     expect(rowsAt(1440)).toHaveLength(5);
-    expect(rowsAt(960)).toHaveLength(5);
+    expect(rowsAt(960)).toHaveLength(6);
     expect(rowsAt(480)).toHaveLength(7);
     expect(rowsAt(390)).toHaveLength(8);
   });
@@ -209,6 +216,12 @@ describe('rows are explicit, because a column placement alone does not pick a ro
 
   it('splits a row into several at the widths §28 stacks it, and numbers them in order', () => {
     /* At 4 columns row 2's three sections take a row each, so what follows moves down. */
+    /* §34 at 8: acquisition and tags share row 2, the market takes row 3, and everything after moves down one. */
+    expect(rowOf(960, 'tags')).toBe(2);
+    expect(rowOf(960, 'market')).toBe(3);
+    expect(rowOf(960, 'price-history')).toBe(4);
+    expect(rowOf(960, 'journal')).toBe(6);
+    expect(airRow(960, 4), 'row 5’s air follows Journal to the sixth row').toBe(6);
     expect(rowOf(480, 'acquisition')).toBe(2);
     expect(rowOf(480, 'tags')).toBe(3);
     expect(rowOf(480, 'market')).toBe(4);
@@ -322,8 +335,28 @@ describe('the breakpoint stylesheet is generated from the same table the tests a
   it('places every section at each width from the rows, never by hand', () => {
     /* A spot check per width: if the generator stopped reading the table this diverges. */
     expect(css, 'market takes the last 4 of row 2 at 12').toContain('[data-section="market"] { grid-column: 9 / span 4; grid-row: 2; }');
-    expect(css, 'and the 2 of 3/3/2 at 8').toContain('[data-section="market"] { grid-column: 7 / span 2; grid-row: 2; }');
+    expect(css, 'and a full row of its own at 8 (§34)').toContain('[data-section="market"] { grid-column: 1 / span 8; grid-row: 3; }');
+    expect(css, 'so price history moves to row 4 at 8').toContain('[data-section="price-history"] { grid-column: 1 / span 8; grid-row: 4; }');
     expect(css, 'a row of its own at 4').toContain('[data-section="market"] { grid-column: 1 / span 4; grid-row: 4; }');
+  });
+
+  it('shows one row rule per grid row at each width, from the same table (§33: every row is ruled)', () => {
+    /*
+      The rules were five elements at grid rows 1 to 5 whatever the width,
+      so the sixth row at 8 columns (§34) and rows 6 to 8 at 4 and 1 column
+      had no rule at all. The grid renders MAX_ROWS rule elements and the
+      stylesheet shows as many as the width has rows.
+    */
+    const blocks = css.split('@media');
+    const at = (start: string) => blocks.find((b) => b.startsWith(start)) ?? '';
+    expect(MAX_ROWS, 'the most rows any width lays').toBe(8);
+    expect(blocks[0], 'five rows at 12').toContain('[data-row-rule="4"] { display: block; }');
+    expect(blocks[0]).toContain('[data-row-rule="5"] { display: none; }');
+    expect(at(' (max-width: 1439px)'), 'six at 8').toContain('[data-row-rule="5"] { display: block; }');
+    expect(at(' (max-width: 1439px)')).toContain('[data-row-rule="6"] { display: none; }');
+    expect(at(' (max-width: 959px)'), 'seven at 4').toContain('[data-row-rule="6"] { display: block; }');
+    expect(at(' (max-width: 959px)')).toContain('[data-row-rule="7"] { display: none; }');
+    expect(at(' (max-width: 479px)'), 'eight at one column').toContain('[data-row-rule="7"] { display: block; }');
   });
 
   it('drops the air columns where §28 drops them, rather than hiding them everywhere', () => {
@@ -337,7 +370,7 @@ describe('the breakpoint stylesheet is generated from the same table the tests a
       css.slice(css.indexOf(query) + query.length, next === '' ? undefined : css.indexOf(next));
     const at960 = block('@media (max-width: 1439px) {', '@media (max-width: 959px) {');
     const at480 = block('@media (max-width: 959px) {', '@media (max-width: 479px) {');
-    expect(at960, 'row 5 keeps its air at 8 columns').toContain('[data-air="4"] { grid-column: 1 / span 3; grid-row: 5; display: block; }');
+    expect(at960, 'row 5 keeps its air at 8 columns, on the sixth grid row (§34)').toContain('[data-air="4"] { grid-column: 1 / span 3; grid-row: 6; display: block; }');
     expect(at480, 'and loses it at 4, being under 240').toContain('[data-air="4"] { display: none; }');
   });
 });

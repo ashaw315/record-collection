@@ -187,6 +187,13 @@ const seedRich = async (page: Page) => {
   const id = record.id;
   await seedImage({ recordId: id, imageType: 'cover' });
   const db = getTestDb();
+  /*
+    A Discogs release, so the market section (§34's subject) renders; its
+    endpoint is mocked per test, never live. Unique per seed: the id is a
+    unique key on pressings, which are shared and outlive the record's
+    cleanup, so a fixed id collided with the previous run's pressing.
+  */
+  await db.execute(sql`UPDATE pressings SET discogs_release_id = ${900_000_000 + Math.floor(Math.random() * 90_000_000)} WHERE id = ${pressing.id}::uuid AND discogs_release_id IS NULL`);
   await db.execute(sql`UPDATE records SET spine_colour = ${'#a25829'}, purchase_price = 12.99,
     snippet = ${'Her last album for the label, and the one where the machinery starts to sound like a band. The long version of the title track runs past seventeen minutes without repeating itself, and the second side is where the songwriting finally catches up with the production. A pressing worth hunting for, not because it is rare but because the mastering is unusually generous with the low end, and the sleeve has survived better than most.'},
     snippet_edited_at = NOW() WHERE id = ${id}::uuid`);
@@ -317,6 +324,59 @@ test('below the fork, at every width: the upper cells wrap at their size, the co
   expect(checked, 'widths measured').toBeGreaterThan(100);
   expect(sawAutoBand, 'the record band is sized by its rows below the fork, not held at 1440’s 300').toBe(true);
   expect(bad, `widths failing:\n  ${failLines(bad)}`).toEqual([]);
+});
+
+/**
+ * **§34's measure rule, the one that outranks every grouping.** "The general
+ * rule, which governs span wherever it conflicts with a grouping: every
+ * content cell's measure holds its longest label on one line. For the market
+ * that is about 152px... Code measures it." Asserted for every label in every
+ * section at every width from 480 to 1920, enumerated by what a label IS --
+ * the label register, monospace and uppercase -- not by a list of cells.
+ */
+test('§34: every label in every section sets on one line, at every width from 480 to 1920', async ({ page }) => {
+  test.setTimeout(600_000);
+  await login(page);
+  await page.route('**/api/discogs/market/**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ numForSale: 11, lowestPrice: { value: 47.28, currency: 'USD' }, conditions: [{ grade: 'Near Mint (NM or M-)', value: 130.45 }, { grade: 'Very Good Plus (VG+)', value: 99.76 }], range: { low: 69.06, high: 130.45 }, currency: 'USD' }) }));
+  const id = await seedRich(page);
+  await page.setViewportSize({ width: 1920, height: NO_SCROLL_HEIGHT });
+  await page.goto(`/records/${id}`);
+  await expect(page.locator('[data-field="eyebrow"]')).toBeVisible();
+  await expect(page.locator('[data-section="market"]'), 'the market section renders, or the rule has no subject').toBeVisible();
+  await page.waitForTimeout(750);
+  const bad: string[] = [];
+  let labelsSeen = 0; let marketAt1000 = '';
+  for (const w of sweepWidths(480, 1920)) {
+    await page.setViewportSize({ width: w, height: w <= 480 ? 844 : NO_SCROLL_HEIGHT });
+    await page.waitForTimeout(w % 6 === 0 ? 120 : 400);
+    const m = await page.evaluate(() => {
+      const out: Array<{ section: string; text: string; lines: number; width: number; measure: number }> = [];
+      for (const section of Array.from(document.querySelectorAll<HTMLElement>('[data-section]'))) {
+        if (getComputedStyle(section).display === 'none') continue;
+        for (const el of Array.from(section.querySelectorAll<HTMLElement>('*'))) {
+          const s = getComputedStyle(el);
+          if (s.textTransform !== 'uppercase' || !/mono/i.test(s.fontFamily) || s.display === 'none') continue;
+          if (el.offsetWidth <= 1 && el.offsetHeight <= 1) continue;
+          const text = (el.textContent ?? '').trim(); if (text === '') continue;
+          if (Array.from(el.children).some((c) => getComputedStyle(c as HTMLElement).textTransform === 'uppercase')) continue;
+          const range = document.createRange(); range.selectNodeContents(el);
+          const tops = new Set(Array.from(range.getClientRects()).filter((r) => r.width > 0).map((r) => Math.round(r.top)));
+          const cell = el.closest<HTMLElement>('[data-cell], [data-section]');
+          const cs = cell === null ? null : getComputedStyle(cell);
+          const measure = cell === null || cs === null ? 0 : cell.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+          out.push({ section: section.dataset.section ?? '?', text: text.slice(0, 32), lines: tops.size, width: Math.round(range.getBoundingClientRect().width), measure: Math.round(measure) });
+        }
+      }
+      return out;
+    });
+    labelsSeen += m.length;
+    const market = m.find((l) => l.section === 'market' && /goes for now/i.test(l.text));
+    if (w === 1002 && market !== undefined) marketAt1000 = `${market.width}px wide in a ${market.measure}px measure`;
+    for (const l of m.filter((l) => l.lines > 1)) bad.push(`${w}: ${l.section} "${l.text}" sets on ${l.lines} lines (${l.width}px in a ${l.measure}px measure)`);
+  }
+  console.log(`  §34 LABELS: ${labelsSeen} label instances measured; the market’s label at 1002 (the sweep step nearest 1000) is ${marketAt1000 || 'not found'}`);
+  expect(labelsSeen, 'the rule has subjects').toBeGreaterThan(100);
+  expect(bad, `labels breaking their line:\n  ${bad.slice(0, 40).join('\n  ')}${bad.length > 40 ? `\n  … ${bad.length - 40} more` : ''}`).toEqual([]);
 });
 
 /**

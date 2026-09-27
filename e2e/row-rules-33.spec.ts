@@ -84,7 +84,10 @@ test('§33: row rules run whole, and partial verticals are gone', async ({ page 
     */
     const boxes = Array.from(
       document.querySelectorAll<HTMLElement>('[data-region="extended-grid"] [data-section], [data-cell="air"], [data-row-rule]'),
-    ).map((el) => {
+    )
+      /* A hidden rule paints nothing: the grid renders one rule element per row any width lays, and the stylesheet shows this width's count. */
+      .filter((el) => getComputedStyle(el).display !== 'none')
+      .map((el) => {
       const b = el.getBoundingClientRect();
       return {
         x: px(b.x + window.scrollX),

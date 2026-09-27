@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { recordLadder } from '@/lib/colour/record-ladder';
 import { ExtendedGrid, Section } from './Section';
 import { CELL_PADDING, SECTION_RULE } from './extended-grid';
-import { regionStylesheet } from './region-rows';
+import { MAX_ROWS, regionStylesheet } from './region-rows';
 
 /**
  * §26: the lower region is five rows of varied spans, and a section is an
@@ -127,6 +127,12 @@ describe('a section is an item in its row (§26)', () => {
 });
 
 describe('an air column is a cell with nothing in it but ornament (§26)', () => {
+  it('renders a rule element for every row any width lays, so the stylesheet can show the width’s count', () => {
+    const html = render(<ExtendedGrid ladder={ladder}><div /></ExtendedGrid>);
+    const count = (html.match(/data-row-rule="\d+"/g) ?? []).length;
+    expect(count, `MAX_ROWS (${MAX_ROWS}) rule elements`).toBe(MAX_ROWS);
+  });
+
   it('renders as an addressable item carrying no type', () => {
     const html = render(<ExtendedGrid.Air index={0} ladder={ladder} figure={{ kind: 'pair', forms: ['slab', 'beam'] }} />);
     expect(html).toContain('data-cell="air"');
