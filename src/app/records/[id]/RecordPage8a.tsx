@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { BANDS, CONTENT_MEASURE, GRID_COLUMN, GRID_COLUMNS, GRID_FORK, IDENTITY_SPANS, LOWER_SPANS, STILL_MARGIN } from './band-geometry';
 import { BAND_AT_REFERENCE, REFERENCE_HEIGHT, regionStylesheet, widePageStylesheet } from './region-rows';
 import { Plane } from './Plane';
-import { Figure, Flat } from './OrnamentMarks';
-import { FLATS, figureAt } from './ornament';
+import { Flat } from './OrnamentMarks';
+import { FLATS } from './ornament';
 import { CONTROL_HEIGHT } from './extended-grid';
 import { COVER_CELL } from './cover-geometry';
 import { SLEEVE_CELL, STRIP_SPLIT, coverSquare, leftoverStrip } from './cover-33';
@@ -133,7 +133,6 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
   });
   const ladder = recordLadder(record.spineColour);
   /* §28: row 1's figure, moved up into the upper band's air at 8 columns. */
-  const upperAirFigure = figureAt('pressing-detail', 'air');
 
   /* §5.3: no cover means every mark falls back to ink, filled. */
   /**
@@ -587,22 +586,25 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
         {/*
           **§28's air beside the third upper cell, at 8 columns only.** "The
           first two cells sit side by side and the third takes a second row,
-          with 480 of air beside it. That air carries the lower region's first
-          figure and the tint field, moved up from the first lower row, so it
-          reads as composed rather than as a gap." The region's row-1 air is
-          dropped at 8 columns (airPlacement returns null), and this cell
-          carries what it carried: §25's pair for pressing-detail, and the tint
-          triangle upperAirAt declares. The markup carries it at every width;
-          the fork stylesheet shows it from 960 to 1439 and nowhere else.
+          with 480 of air beside it." §37, step 40: "the upper air is a
+          section, and carries no figure" -- a `data-section`, so §21's cap,
+          §25's size and §29's terms resolve against it rather than falling
+          back to the host; the tint field moved up from the last lower row
+          (that row's own triangle is not drawn at 8, "moved, not added"),
+          and NO figure: "the construction is the only figure above the fold
+          at every width". §28's figure move is withdrawn
+          (`28/upper-air-figure`). The markup carries the cell at every
+          width; the fork stylesheet shows it from 960 to 1439 and nowhere
+          else.
         */}
         <div
           data-cell="upper-air"
+          data-section="upper-air"
           data-upper-air=""
           aria-hidden="true"
           className="relative isolate overflow-hidden"
           style={{ gridColumn: `span ${IDENTITY_SPANS[2]}` }}
         >
-          {ladder !== null && upperAirFigure !== null && <Figure ladder={ladder} figure={upperAirFigure} host="air" />}
           {ladder !== null && <Flat ladder={ladder} flat={FLATS.left} />}
         </div>
       </div>

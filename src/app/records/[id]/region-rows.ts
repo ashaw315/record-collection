@@ -300,9 +300,18 @@ export function upperRowsAt(viewport: number): string[][] {
  * gap." It exists only at 8 — at 12 the three cells fill the band, and below
  * 960 they stack with nothing beside them.
  */
-export function upperAirAt(viewport: number): { start: number; span: number; figure: string; flat: string } | null {
+export function upperAirAt(viewport: number): { start: number; span: number; figure: null; flat: string } | null {
   if (columnsFor(viewport) !== 8) return null;
-  return { start: 5, span: 4, figure: 'pressing-detail:air', flat: 'triangle' };
+  /*
+    §37, step 40: a section carrying the tint field and NO figure. §28's
+    "that air carries the lower region's first figure" is withdrawn
+    (`28/upper-air-figure`): at §25's size the pair was 439 of the air's 480,
+    "beside a sleeve the same width, so it competes with the record at the
+    width where the page has least room". The first figure stays in the
+    lower region, where §28's 240px air rule decides -- and row 1 has no air
+    at 8, so it does not draw there.
+  */
+  return { start: 5, span: 4, figure: null, flat: 'triangle' };
 }
 
 /**
@@ -348,6 +357,14 @@ export function regionStylesheet(): string {
           : `[data-air="${index}"] { grid-column: ${air.start} / span ${air.span}; grid-row: ${airRow(width, index)}; display: block; }`,
       );
     });
+    /*
+      §37: the tint triangle is "moved, not added". Where the upper band's
+      air carries it, the last row's air -- §26's "the left edge in the last
+      row" -- keeps its 3 columns (§28's 3 + 5) and draws no flat. Measured
+      before this: flats at three at eight columns, "that third flat is the
+      defect".
+    */
+    if (upperAirAt(width) !== null) rules.push(`[data-air="${REGION_ROWS.length - 1}"] > [data-ornament="flat"] { display: none; }`);
 
     blocks.push({ width, rules });
   }

@@ -46,14 +46,14 @@ type Measured = { shape: string; visible: number; hostHeight: number; hostWidth:
 async function flatsAt(page: Page, id: string, width: number, height: number): Promise<Measured[]> {
   await page.setViewportSize({ width, height });
   await page.goto(`/records/${id}`);
-  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+  await page.locator('[data-region="extended-grid"] [data-section]').first().waitFor({ timeout: 20_000 });
 
   return page.evaluate(
     ({ ofHeight, ofWidth }) =>
       Array.from(document.querySelectorAll('[data-ornament="flat"]'))
         .filter((el) => el.getClientRects().length > 0)
         .map((el) => {
-          const host = el.closest('[data-section], [data-cell="air"]')!.getBoundingClientRect();
+          const host = el.closest('[data-region="extended-grid"] [data-section], [data-cell="air"]')!.getBoundingClientRect();
           const box = el.getBoundingClientRect();
           /* The part inside its host is what shows; the rest is off the page edge. */
           const visible = Math.max(0, Math.min(box.right, host.right) - Math.max(box.left, host.left));

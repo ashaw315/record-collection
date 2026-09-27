@@ -77,7 +77,7 @@ test('§28: the page takes the whole width at every breakpoint, never centring a
   for (const width of [1440, 1200, 1000, 960, 700, 480, 390]) {
     await page.setViewportSize({ width, height: NO_SCROLL_HEIGHT });
     await page.goto(`/records/${id}`);
-    await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+    await page.locator('[data-region="extended-grid"] [data-section]').first().waitFor({ timeout: 20_000 });
 
     const measured = await page.evaluate(() => {
       const region = document.querySelector('[data-region="extended-grid"]')!.getBoundingClientRect();
@@ -113,7 +113,7 @@ test('§28: below 960 the lower region is a document — no air, no figures', as
   for (const width of [480, 390]) {
     await page.setViewportSize({ width, height: 844 });
     await page.goto(`/records/${id}`);
-    await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+    await page.locator('[data-region="extended-grid"] [data-section]').first().waitFor({ timeout: 20_000 });
 
     const shown = await page.evaluate(() => ({
       air: Array.from(document.querySelectorAll('[data-cell="air"]')).filter(
@@ -153,11 +153,11 @@ test('§28: every control clears the 44px touch floor, at 390', async ({ page })
   const id = await seed(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`/records/${id}`);
-  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+  await page.locator('[data-region="extended-grid"] [data-section]').first().waitFor({ timeout: 20_000 });
 
   const small = await page.evaluate((floor: number) => {
     const out: string[] = [];
-    for (const el of Array.from(document.querySelectorAll('[data-section] a, [data-section] button, [data-section] select, [data-section] input'))) {
+    for (const el of Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-section] a, [data-region="extended-grid"] [data-section] button, [data-region="extended-grid"] [data-section] select, [data-region="extended-grid"] [data-section] input'))) {
       const box = el.getBoundingClientRect();
       /* A hidden or zero-size control is not on the page for a finger either. */
       if (box.width === 0 || box.height === 0) continue;
@@ -309,7 +309,7 @@ test('§28’s growth below 1440: at 1000 the page is 1000 wide, not 960 centred
   const id = await seed(page);
   await page.setViewportSize({ width: 1000, height: NO_SCROLL_HEIGHT });
   await page.goto(`/records/${id}`);
-  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+  await page.locator('[data-region="extended-grid"] [data-section]').first().waitFor({ timeout: 20_000 });
 
   const measured = await page.evaluate(() => {
     const region = document.querySelector('[data-region="extended-grid"]')!.getBoundingClientRect();

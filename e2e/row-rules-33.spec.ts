@@ -83,7 +83,7 @@ test('§33: row rules run whole, and partial verticals are gone', async ({ page 
       whether the line reaches.
     */
     const boxes = Array.from(
-      document.querySelectorAll<HTMLElement>('[data-section], [data-cell="air"], [data-row-rule]'),
+      document.querySelectorAll<HTMLElement>('[data-region="extended-grid"] [data-section], [data-cell="air"], [data-row-rule]'),
     ).map((el) => {
       const b = el.getBoundingClientRect();
       return {
@@ -130,7 +130,7 @@ test('§33: row rules run whole, and partial verticals are gone', async ({ page 
   /* No vertical that starts partway down its row. */
   const partials = await page.evaluate(() => {
     const out: string[] = [];
-    for (const section of Array.from(document.querySelectorAll<HTMLElement>('[data-section]'))) {
+    for (const section of Array.from(document.querySelectorAll<HTMLElement>('[data-region="extended-grid"] [data-section]'))) {
       const sb = section.getBoundingClientRect();
       for (const el of Array.from(section.querySelectorAll<HTMLElement>('*'))) {
         /*

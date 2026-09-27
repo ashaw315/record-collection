@@ -136,9 +136,11 @@ const MEASURE = () => {
   /* A clamped About renders exactly its clamp lines: a flex column squeezed it to 6.4 lines against a clamp of 9, a cut the clip test cannot see because the paragraph is its own clipper. */
   const squeezed = Array.from(document.querySelectorAll<HTMLElement>('[data-field="about"][data-clamped]')).flatMap((p) => { const lh = parseFloat(getComputedStyle(p).lineHeight); const clamp = Number(getComputedStyle(p).webkitLineClamp); const drawn = p.getBoundingClientRect().height / lh; return Math.abs(drawn - clamp) > 0.15 ? [`About clamped to ${clamp} draws ${drawn.toFixed(2)} lines`] : []; });
   const upper = ['identity', 'still', 'sleeve'].map((n) => { const el = document.querySelector<HTMLElement>(`[data-cell="${n}"]`); return { n, display: el === null ? 'absent' : getComputedStyle(el).display, w: el === null ? 0 : px(R(el).width), h: el === null ? 0 : px(R(el).height), x: el === null ? 0 : px(R(el).left + window.scrollX), y: el === null ? 0 : px(R(el).top + window.scrollY) }; });
-  const upperAir = (() => { const el = document.querySelector<HTMLElement>('[data-upper-air]'); if (el === null) return null; const b = box(el); const flat = el.querySelector<HTMLElement>('[data-ornament="flat"]'); const fb = flat === null ? null : flat.getBoundingClientRect(); return { display: getComputedStyle(el).display, ...b, figure: el.querySelector('[data-ornament="figure"]') !== null, flat: flat !== null, flatBleed: fb === null || fb.width === 0 ? null : Math.max(0, -fb.left) / fb.width }; })();
+  const upperAir = (() => { const el = document.querySelector<HTMLElement>('[data-upper-air]'); if (el === null) return null; const b = box(el); const flat = el.querySelector<HTMLElement>('[data-ornament="flat"]'); const fb = flat === null ? null : flat.getBoundingClientRect(); return { display: getComputedStyle(el).display, ...b, section: el.dataset.section ?? null, figure: el.querySelector('[data-ornament="figure"]') !== null, flat: flat !== null, flatBleed: fb === null || fb.width === 0 ? null : Math.max(0, -fb.left) / fb.width }; })();
+  /* §37: the region's own triangle, "moved, not added" -- visible means displayed with a box. */
+  const regionTriangle = Array.from(document.querySelectorAll<HTMLElement>('[data-region="extended-grid"] [data-cell="air"] [data-ornament="flat"][data-flat="triangle"]')).some((f) => getComputedStyle(f).display !== 'none' && f.getBoundingClientRect().width > 0);
   const cover = document.querySelector<HTMLElement>('[data-cover]');
-  return { vw: window.innerWidth, vh: window.innerHeight, squeezed, upperAir, cols: { identity: cols(identity), lower: cols(lower), region: cols(region) }, bandH: identity === null ? null : px(R(identity).height), lowerH: lower === null ? null : px(R(lower).height), cells, pairs, escapes, inFront, behindCount: behind.length, cut, upper, coverW: cover === null ? 0 : px(R(cover).width), paintKinds: [...new Set(paints.map(name))] };
+  return { vw: window.innerWidth, vh: window.innerHeight, squeezed, upperAir, regionTriangle, cols: { identity: cols(identity), lower: cols(lower), region: cols(region) }, bandH: identity === null ? null : px(R(identity).height), lowerH: lower === null ? null : px(R(lower).height), cells, pairs, escapes, inFront, behindCount: behind.length, cut, upper, coverW: cover === null ? 0 : px(R(cover).width), paintKinds: [...new Set(paints.map(name))] };
 };
 
 /** What every viewport must satisfy; returns what failed. Paint in front of type is judged by its own test. */
@@ -286,10 +288,10 @@ test('below the fork, at every width: the upper cells wrap at their size, the co
     if (m.coverW < 1) j.push('no cover drawn');
     /*
       §28 at 8 columns: "the third takes a second row, with 480 of air beside
-      it. That air carries the lower region's first figure and the tint
-      field." Shown from 960 to 1439 only: beside the sleeve on the second
-      row, its own 480, with a figure and a flat inside; hidden where the
-      cells sit three abreast or stack.
+      it." §37 makes that air a section carrying the tint field and no
+      figure (`28/upper-air-figure`). Shown from 960 to 1439 only: beside
+      the sleeve on the second row, its own 480, with a flat inside; hidden
+      where the cells sit three abreast or stack.
     */
     const eight = w >= 960;
     if (eight) {
@@ -301,8 +303,11 @@ test('below the fork, at every width: the upper cells wrap at their size, the co
         if (sleeve !== undefined && (Math.abs(m.upperAir.y - sleeve.y) > 1 || m.upperAir.x > 1 || sleeve.x < m.upperAir.x + 479)) j.push(`the upper air is not left of the sleeve on the second row (air ${m.upperAir.x},${m.upperAir.y}; sleeve ${sleeve.x},${sleeve.y})`);
         if (m.upperAir.flatBleed === null) j.push('the upper air carries no tint triangle');
         else if (m.upperAir.flatBleed < 1 / 3) j.push(`the tint triangle bleeds ${(m.upperAir.flatBleed * 100).toFixed(0)}% off the page's left edge, less than §21's third`);
-        if (!m.upperAir.figure) j.push('the upper air carries no figure');
+        /* §37, step 40: a section carrying the tint field and NO figure; the region's triangle is moved, not added. */
+        if (m.upperAir.section === null) j.push('the upper air is not a section (§37)');
+        if (m.upperAir.figure) j.push('the upper air carries a figure (§37: the construction is the only figure above the fold)');
         if (!m.upperAir.flat) j.push('the upper air carries no tint field');
+        if (m.regionTriangle) j.push('the region draws its own triangle as well as the upper air’s (§37: moved, not added)');
       }
     } else if (m.upperAir !== null && m.upperAir.display !== 'none') j.push(`the upper air shows at ${w}, where the cells stack`);
     if (j.length) bad.push(`${w}: ${j.join(' ; ')}`);

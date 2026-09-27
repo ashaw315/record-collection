@@ -273,15 +273,34 @@ describe('§28’s breakpoints: the column count is derived, and the region foll
     expect(upperRowsAt(390), 'stacked below 480 too').toEqual([['identity'], ['still'], ['sleeve']]);
   });
 
-  it('gives the third upper cell’s air row 1’s figure and the tint flat, at 8 columns', () => {
+  it('gives the third upper cell’s air the tint flat and NO figure, at 8 columns (§37)', () => {
     /*
-      §28: "That air carries the lower region's first figure and the tint
-      field, moved up from the first lower row, so it reads as composed
-      rather than as a gap." Which is why row 1 has no air of its own at 8.
+      §37, step 40: "the upper air is a section, and carries no figure...
+      The first figure stays in the lower region, drawn only if its air
+      clears §28's 240px." §28's "that air carries the lower region's first
+      figure" is withdrawn by §37 (`28/upper-air-figure`); the tint field
+      still moves up, "moved, not added".
     */
-    expect(upperAirAt(960)).toEqual({ start: 5, span: 4, figure: 'pressing-detail:air', flat: 'triangle' });
+    expect(upperAirAt(960)).toEqual({ start: 5, span: 4, figure: null, flat: 'triangle' });
     expect(upperAirAt(1440), 'no air above the fold at 12 columns').toBeNull();
     expect(upperAirAt(480), 'nor below 960, where the cells stack').toBeNull();
+  });
+
+  it('does not draw the region’s own triangle where the upper air carries it (§37: moved, not added)', () => {
+    /*
+      "At eight columns the region's own triangle is not drawn, so the page
+      carries the same flats at eight columns as at twelve, one relocated...
+      flats at three at eight columns, because the region kept its triangle
+      when the upper air declared one; that third flat is the defect."
+    */
+    const css = regionStylesheet();
+    const blocks = css.split('@media');
+    const eight = blocks.find((b) => b.startsWith(' (max-width: 1439px)'));
+    const hide = '[data-air="4"] > [data-ornament="flat"] { display: none; }';
+    expect(eight, 'the 8-column block exists').toBeDefined();
+    expect(eight, 'row 5’s triangle is hidden at 8 columns').toContain(hide);
+    expect(blocks[0], 'and drawn at 12').not.toContain(hide);
+    expect(blocks.find((b) => b.startsWith(' (max-width: 959px)')), 'below 960 the air itself is dropped, so nothing to hide').not.toContain(hide);
   });
 });
 

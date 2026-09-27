@@ -323,15 +323,14 @@ describe('§36: the absence state offers the row, only where writing is configur
 });
 
 /**
- * §28, at 8 columns: "the first two cells sit side by side and the third
- * takes a second row, with 480 of air beside it. That air carries the lower
- * region's first figure and the tint field, moved up from the first lower
- * row, so it reads as composed rather than as a gap." The markup carries the
- * air cell at every width -- the fork stylesheet shows it from 960 to 1439
- * only -- with row 1's pair and the tint triangle `upperAirAt` declares.
+ * §37, step 40: "Give the upper air at eight columns a `[data-section]` so
+ * §21, §25 and §29 resolve against it. Draw no figure there; the first
+ * figure stays in the lower region... Move the region's tint triangle up at
+ * eight columns rather than drawing both." The markup carries the air cell
+ * at every width -- the fork stylesheet shows it from 960 to 1439 only.
  */
-describe('§28: the upper band’s air at 8 columns carries row 1’s figure and the tint field', () => {
-  it('renders the air cell after the sleeve, with the pair and the tint triangle', () => {
+describe('§37: the upper band’s air at 8 columns is a section carrying the tint field and no figure', () => {
+  it('renders the air cell after the sleeve, as a section, with the tint triangle and no figure', () => {
     const html = renderToStaticMarkup(<RecordPage8a record={{ ...record('#a25829') }} />);
     /* The ELEMENTS, not the stylesheet's selectors for them, which precede everything: `[data-cell="sleeve"]` and `[data-band="record"]` both appear in the <style> first. */
     const sleeve = html.indexOf('data-cell="sleeve" class');
@@ -341,7 +340,9 @@ describe('§28: the upper band’s air at 8 columns carries row 1’s figure and
     expect(air, 'after the sleeve').toBeGreaterThan(sleeve);
     expect(recordBand, 'the record band element').toBeGreaterThan(air);
     const cell = html.slice(air, recordBand);
-    expect(cell, 'row 1’s figure, §25’s pair').toMatch(/data-ornament="figure"[^>]*data-figure="pair"/);
-    expect(cell, 'the tint triangle').toMatch(/data-ornament="flat"[^>]*data-flat="triangle"/);
+    const tag = html.slice(html.lastIndexOf('<div', air), html.indexOf('>', air));
+    expect(tag, 'a section, so §21, §25 and §29 resolve against it').toContain('data-section="upper-air"');
+    expect(cell, 'no figure: the construction is the only figure above the fold').not.toMatch(/data-ornament="figure"/);
+    expect(cell, 'the tint triangle, moved up').toMatch(/data-ornament="flat"[^>]*data-flat="triangle"/);
   });
 });

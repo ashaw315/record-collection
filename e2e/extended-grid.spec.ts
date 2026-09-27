@@ -131,11 +131,11 @@ test('every section and air column sits on the twelve columns (§26)', async ({ 
   const id = await richRecord(page, suffix);
   await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
   await page.goto(`/records/${id}`);
-  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+  await page.locator('[data-region="extended-grid"] [data-section]').first().waitFor({ timeout: 20_000 });
 
   const measured = await page.evaluate(() => {
     const column = window.innerWidth / 12;
-    return Array.from(document.querySelectorAll('[data-section], [data-cell="air"]')).map((item) => {
+    return Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-section], [data-cell="air"]')).map((item) => {
       const box = item.getBoundingClientRect();
       return {
         name: item.getAttribute('data-section') ?? 'air',
@@ -175,10 +175,10 @@ test('the label sits above its content at the section’s own left edge (§26)',
   const id = await richRecord(page, suffix);
   await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
   await page.goto(`/records/${id}`);
-  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+  await page.locator('[data-region="extended-grid"] [data-section]').first().waitFor({ timeout: 20_000 });
 
   const labels = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('[data-section]')).map((section) => {
+    Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-section]')).map((section) => {
       const cell = section.querySelector('[data-cell="label"]');
       const content = section.querySelector('[data-cell^="content"]');
       if (cell === null || content === null) return null;
@@ -229,10 +229,10 @@ test('rules every row item but the last; content cells carry no divider (§26, �
   const id = await richRecord(page, suffix);
   await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
   await page.goto(`/records/${id}`);
-  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+  await page.locator('[data-region="extended-grid"] [data-section]').first().waitFor({ timeout: 20_000 });
 
   const rows = await page.evaluate(() => {
-    const items = Array.from(document.querySelectorAll('[data-section], [data-cell="air"]'));
+    const items = Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-section], [data-cell="air"]'));
     /* Group by top edge: items sharing a top are one row. */
     const byTop = new Map<number, Element[]>();
     for (const item of items) {
@@ -275,10 +275,10 @@ test('holds content at 34px inside every cell', async ({ page }) => {
   const suffix = makeSuffix();
   const id = await richRecord(page, suffix);
   await page.goto(`/records/${id}`);
-  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+  await page.locator('[data-region="extended-grid"] [data-section]').first().waitFor({ timeout: 20_000 });
 
   const paddings = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('[data-section] [data-cell]')).map((cell) => {
+    Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-section] [data-cell]')).map((cell) => {
       const style = getComputedStyle(cell);
       return `${style.paddingTop}|${style.paddingLeft}`;
     }),
@@ -307,10 +307,10 @@ test('each row’s rule is one full-bleed element, and no item carries its own (
   const id = await richRecord(page, suffix);
   await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
   await page.goto(`/records/${id}`);
-  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+  await page.locator('[data-region="extended-grid"] [data-section]').first().waitFor({ timeout: 20_000 });
 
   const measured = await page.evaluate(() => {
-    const items = Array.from(document.querySelectorAll('[data-section], [data-cell="air"]'));
+    const items = Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-section], [data-cell="air"]'));
     const byTop = new Map<number, Element[]>();
     for (const item of items) {
       const top = Math.round(item.getBoundingClientRect().top);
@@ -380,10 +380,10 @@ test('draws the bar beside a control-only section, because marking is by schema'
   const suffix = makeSuffix();
   const id = await modalRecord(page, suffix);
   await page.goto(`/records/${id}`);
-  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+  await page.locator('[data-region="extended-grid"] [data-section]').first().waitFor({ timeout: 20_000 });
 
   const marked = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('[data-section]')).map((section) => ({
+    Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-section]')).map((section) => ({
       name: section.getAttribute('data-section'),
       hasBar: section.querySelector('[data-mark="section-bar"]') !== null,
     })),
@@ -407,9 +407,9 @@ test('the bar is 44 × 10 and sits at its section’s own left edge (§26)', asy
   const bars = await page.evaluate(() =>
     Array.from(document.querySelectorAll('[data-mark="section-bar"]')).map((bar) => {
       const box = bar.getBoundingClientRect();
-      const section = bar.closest('[data-section]')!.getBoundingClientRect();
+      const section = bar.closest('[data-region="extended-grid"] [data-section]')!.getBoundingClientRect();
       return {
-        name: bar.closest('[data-section]')!.getAttribute('data-section'),
+        name: bar.closest('[data-region="extended-grid"] [data-section]')!.getAttribute('data-section'),
         offset: Math.round(box.left - section.left),
         w: Math.round(box.width),
         h: Math.round(box.height),
@@ -443,21 +443,21 @@ test('renders no empty section, and no diagonal below the fold', async ({ page }
   const suffix = makeSuffix();
   const id = await modalRecord(page, suffix);
   await page.goto(`/records/${id}`);
-  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+  await page.locator('[data-region="extended-grid"] [data-section]').first().waitFor({ timeout: 20_000 });
 
   const below = await page.evaluate(() => {
     const frame = document.querySelector('[data-testid="record-page-8a"]')!;
     const diagonals = Array.from(document.querySelectorAll('[data-diagonal]')).filter(
       (mark) => !frame.contains(mark),
     );
-    const empty = Array.from(document.querySelectorAll('[data-section]')).filter((section) => {
+    const empty = Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-section]')).filter((section) => {
       const cells = Array.from(section.querySelectorAll('[data-cell^="content"]'));
       return cells.length > 0 && cells.every((cell) => (cell.textContent ?? '').trim() === '');
     });
     return {
       diagonals: diagonals.length,
       empty: empty.map((section) => section.getAttribute('data-section')),
-      all: Array.from(document.querySelectorAll('[data-section]')).map((x) => x.getAttribute('data-section')),
+      all: Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-section]')).map((x) => x.getAttribute('data-section')),
     };
   });
 
@@ -589,11 +589,11 @@ test('no cell overlaps another, at mobile width', async ({ page }) => {
   });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`/records/${id}`);
-  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+  await page.locator('[data-region="extended-grid"] [data-section]').first().waitFor({ timeout: 20_000 });
 
   const blocked = await page.evaluate(() => {
     const out: string[] = [];
-    for (const section of Array.from(document.querySelectorAll('[data-section]'))) {
+    for (const section of Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-section]'))) {
       for (const cell of Array.from(section.querySelectorAll('[data-cell]'))) {
         const bounds = cell.getBoundingClientRect();
         for (const control of Array.from(
@@ -635,10 +635,10 @@ test('renders exactly one cell per span in its split', async ({ page }) => {
   const suffix = makeSuffix();
   const id = await richRecord(page, suffix);
   await page.goto(`/records/${id}`);
-  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+  await page.locator('[data-region="extended-grid"] [data-section]').first().waitFor({ timeout: 20_000 });
 
   const sections = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('[data-section]')).map((section) => ({
+    Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-section]')).map((section) => ({
       name: section.getAttribute('data-section'),
       shape: section.getAttribute('data-shape'),
       cells: section.querySelectorAll('[data-cell^="content"]').length,
@@ -675,10 +675,10 @@ test('ornament sits behind everything, structurally rather than per element', as
   const suffix = makeSuffix();
   const id = await richRecord(page, suffix);
   await page.goto(`/records/${id}`);
-  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+  await page.locator('[data-region="extended-grid"] [data-section]').first().waitFor({ timeout: 20_000 });
 
   const layer = await page.evaluate(() => {
-    const hosts = Array.from(document.querySelectorAll('[data-section], [data-cell="air"]'));
+    const hosts = Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-section], [data-cell="air"]'));
     const wrong = hosts
       .map((host) => {
         const style = getComputedStyle(host);
@@ -731,14 +731,14 @@ test('no ornament covers a control or a ruled field', async ({ page }) => {
   const suffix = makeSuffix();
   const id = await richRecord(page, suffix);
   await page.goto(`/records/${id}`);
-  await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+  await page.locator('[data-region="extended-grid"] [data-section]').first().waitFor({ timeout: 20_000 });
 
   const collisions = await page.evaluate(() => {
     const CLEARANCE = 60;
     const out: string[] = [];
     const solids = Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-ornament="figure"]'));
     const controls = Array.from(
-      document.querySelectorAll('[data-section] button, [data-section] input, [data-section] select, [data-section] textarea, [data-section] a'),
+      document.querySelectorAll('[data-region="extended-grid"] [data-section] button, [data-region="extended-grid"] [data-section] input, [data-region="extended-grid"] [data-section] select, [data-region="extended-grid"] [data-section] textarea, [data-region="extended-grid"] [data-section] a'),
     );
 
     for (const solid of solids) {
@@ -793,12 +793,12 @@ test('the region caps with the frame, so the page is one grid', async ({ page })
   for (const width of [1440, GRID_FORK, 2560, 3440]) {
     await page.setViewportSize({ width, height: NO_SCROLL_HEIGHT });
     await page.goto(`/records/${id}`);
-    await page.locator('[data-section]').first().waitFor({ timeout: 20_000 });
+    await page.locator('[data-region="extended-grid"] [data-section]').first().waitFor({ timeout: 20_000 });
 
     const measured = await page.evaluate(() => {
       const frame = document.querySelector('[data-testid="record-page-8a"]')!.getBoundingClientRect();
       const region = document.querySelector('[data-region="extended-grid"]')!.getBoundingClientRect();
-      const sections = Array.from(document.querySelectorAll('[data-section]')).map((section) => {
+      const sections = Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-section]')).map((section) => {
         const box = section.getBoundingClientRect();
         return { name: section.getAttribute('data-section'), left: Math.round(box.left), right: Math.round(box.right) };
       });
@@ -835,7 +835,7 @@ const figureSections = (
   page: Page,
 ): Promise<Array<{ name: string; kind: string; figures: number; flats: Array<string | null> }>> =>
   page.evaluate(() =>
-    Array.from(document.querySelectorAll('[data-section], [data-cell="air"]')).map((item) => ({
+    Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-section], [data-cell="air"]')).map((item) => ({
       name: item.getAttribute('data-section') ?? 'air',
       kind: item.hasAttribute('data-section') ? 'section' : 'air',
       figures: item.querySelectorAll('[data-ornament="figure"]').length,
@@ -895,7 +895,7 @@ test('a figure is 0.855 of its section, shows two-thirds, and is cut by its foot
           one: a figure's clip is its own cell in §26's sense, which is the
           row item it belongs to.
         */
-        const host = figure.closest('[data-section], [data-cell="air"]')!;
+        const host = figure.closest('[data-region="extended-grid"] [data-section], [data-cell="air"]')!;
         const f = figure.getBoundingClientRect();
         const c = host.getBoundingClientRect();
         return {
@@ -954,7 +954,7 @@ test('a figure’s faces are the ladder’s top, base and shade; a flat is tint 
   const drawn = await page.evaluate(() => {
     const read = (el: Element) => getComputedStyle(el);
     const figures = Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-ornament="figure"]')).map((svg) => ({
-      section: svg.closest('[data-section]')?.getAttribute('data-section') ?? '?',
+      section: svg.closest('[data-region="extended-grid"] [data-section]')?.getAttribute('data-section') ?? '?',
       faces: Array.from(svg.querySelectorAll('polygon')).map((p) => ({
         face: p.getAttribute('data-face'),
         fill: read(p).fill,
@@ -963,7 +963,7 @@ test('a figure’s faces are the ladder’s top, base and shade; a flat is tint 
     }));
     const flats = Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-ornament="flat"]')).map((el) => ({
       shape: el.getAttribute('data-flat'),
-      section: el.closest('[data-section]')?.getAttribute('data-section') ?? '?',
+      section: el.closest('[data-region="extended-grid"] [data-section]')?.getAttribute('data-section') ?? '?',
       fill: read(el).backgroundColor,
       polygons: el.querySelectorAll('polygon').length,
     }));
@@ -1023,7 +1023,7 @@ test('the quarter-disc is sized against its host and bleeds off the right page e
     const el = document.querySelector('[data-flat="quarterDisc"]');
     if (el === null) return null;
     const d = el.getBoundingClientRect();
-    const host = el.closest('[data-section], [data-cell="air"]')!.getBoundingClientRect();
+    const host = el.closest('[data-region="extended-grid"] [data-section], [data-cell="air"]')!.getBoundingClientRect();
     const frame = document.querySelector('[data-testid="record-page-8a"]')!.getBoundingClientRect();
     return {
       width: d.width,
@@ -1085,7 +1085,7 @@ test('§26 and §21: BOTH flats bleed off a page edge, a third or more outside',
       .filter((el) => el.getClientRects().length > 0)
       .map((el) => {
         const b = el.getBoundingClientRect();
-        const host = el.closest('[data-section], [data-cell="air"]')!.getBoundingClientRect();
+        const host = el.closest('[data-region="extended-grid"] [data-section], [data-cell="air"]')!.getBoundingClientRect();
         const outside = Math.max(0, frame.left - b.left) + Math.max(0, b.right - frame.right);
         return {
           shape: el.getAttribute('data-flat'),
