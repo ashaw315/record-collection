@@ -87,6 +87,14 @@ The withdrawal list for all three targets: the two record-detail targets and the
 - **`5.1/about-arc`**: §5.1, withdrawn by §35. The quarter-circle in About, drawn on one record of seventeen.
   > Withdrawn by §35: the quarter-circle in About, which the real collection draws on one record of seventeen.
 
+- **`36/scaling-band`**: §36, withdrawn by §36. Proportional scaling from 960 to 1439.
+  > Withdrawn within §36: the scaling band from 960 to 1439, which measurement left at 137px.
+- **`30/only-ornament-above-fold`**: §30, withdrawn by §37. The construction as the only ornament above the fold, which now holds at eight columns for figures only.
+  > Superseded in part by §37: at eight columns the upper air carries the tint triangle, so the construction is the only figure above the fold at every width and the only ornament there at twelve columns and wider.
+
+- **`28/upper-air-figure`**: §28, withdrawn by §37. The first figure moved up into the upper air at eight columns.
+  > Superseded in part by §37: the upper air takes the tint field only, and the first figure stays in the lower region.
+
 ## The wall
 
 **Brought into this list when the four entries below were found with none:** the scope was set when the wall was §11 of the record-detail target, and the split left its withdrawals unlisted, so nothing checked them. **Assertion 6 already read the wall through the shared heading set; the gap was assertion 7 skipping `W`.** An earlier version of this paragraph said these entries would fail 6 until the script was widened. That was a guess about a script this file's author cannot see, stated as a fact about it.
@@ -102,10 +110,4 @@ The withdrawal list for all three targets: the two record-detail targets and the
 
 - **`W.20/growth-on-travel`**: §W.20, withdrawn by §W.25. Growth riding the travel; it rides the rotation’s window.
   > Withdrawn by §W.25: growth rides the rotation’s window, because an orthographic projection has no size change on approach — the paragraph below reasons from a perspective intuition this drawing does not have.
-
-- **`36/scaling-band`**: §36, withdrawn by §36. Proportional scaling from 960 to 1439.
-  > Withdrawn within §36: the scaling band from 960 to 1439, which measurement left at 137px.
-
-- **`30/only-ornament-above-fold`**: §30, superseded in part by §37. The construction as the only ornament above the fold, which no longer holds at eight columns.
-  > Superseded in part by §37: at eight columns the upper air carries a figure and the tint triangle, so the construction is the only ornament above the fold at twelve columns and wider, not below.
 

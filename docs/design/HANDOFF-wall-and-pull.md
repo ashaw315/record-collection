@@ -83,7 +83,7 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §34 | No mark paints over type, the About’s length, and the market at eight columns | §5.1’s marks as well as §26’s figures and flats, governed by paint order not class name; §29 sizes a plane first, and only a plane that still covers type is not drawn; the post-fix counts and the cause below the fork; the About’s budget as a writing guide, and why the editor reports clamping, not excess; why a grouping list does not guarantee a measure. |
 | §35 | The real collection: the About arc, the last cell, and absence in flow | Why the About’s quarter-circle leaves §5.1’s marks; the last cell stated directly, with absence as its usual state; absence drawn in flow after the label for every cell that can be empty; why the extremes fixture must carry empty fields. |
 | §36 | The About’s lower row, and the scaling band that did not survive | Why the lower row survives as the About’s editor and full reading; the absence state’s link and its unconfigured form; why proportional scaling below §18’s fork was withdrawn when the year figure bound it, and why each of the three exits is declined. |
-| §37 | The upper air at eight columns, and a figure in a tall host | Why the air moves left of the sleeve by grid order only, keeping both marks at the page’s edges; why a figure’s size in a tall host waits on Code’s report of §29’s terms; why a ceiling at one viewport’s size was drafted and withdrawn. Which unit §21 counts figures in, and why the page total depends on width; what this section withdraws from §30. |
+| §37 | The upper air at eight columns, and a figure in a tall host | Why the air moves left of the construction by grid order only; why the upper air is a section and carries no figure, and where its flat comes from; why a ceiling at one viewport’s size was drafted and withdrawn; which units §21 counts in; what this section withdraws from §28 and §30. |
 
 ## Structural sections — pointers
 
@@ -185,11 +185,11 @@ These are the sections the rulings above build on, all in `Record Detail 8a - se
 39. **§37 — the upper air at eight columns.** Put the air left of the sleeve in the second row by grid order only; markup and reading order stay. The tint triangle bleeds off the page's left edge.
    > At eight columns the upper air sits left of the sleeve in the second row, so the triangle keeps the page’s left edge and the sleeve keeps its right.
 
-40. **§37 — measure §29's terms for the pair in the tall air.** Do not build a ceiling. At 1000 report the three candidate sizes for the slab-and-beam pair: two-thirds of the host's height, a quarter of the section's width, and the size drawn, and say which produced 360. If the width term is not being applied to figures, apply it and recapture.
-   > A figure’s size in a tall host is not ruled here until Code reports which of §29’s terms produced the 360px pair.
+40. **§37 — the upper air is a section, and carries no figure.** Give the upper air at eight columns a `[data-section]` so §21, §25 and §29 resolve against it. Draw no figure there; the first figure stays in the lower region, drawn only if its air clears §28's 240px. Move the region's tint triangle up at eight columns rather than drawing both. Do not build a ceiling.
+   > The upper band’s air at eight columns is a section carrying no construction, so §21’s cap, §25’s size and §29’s terms resolve against it.
 
-41. **§37 — the figure count.** Replace the page-wide "two figures" assertion and its lower-region scoping. Assert at most one figure per section, and the page total per width: three at eight columns, two at twelve and wider. Report the totals below 480.
-   > §21 counts figures per section, not per screen, so the page carries three figures at eight columns and two at twelve and wider.
+41. **§37 — the counts.** Assert across the whole width sweep: at most one visible figure per section, and at most §21's flat allowance per region, counting the upper air in the upper band's region. Report the page's visible figure and flat totals at each width; do not assert them.
+   > §21 counts figures per section and flats per region, and states no page total.
 
 **Every row in the table above must appear in a step here.** The completeness check greps the table only, so an index that is current and an order that is eight rulings behind both pass — which is what happened at §W.28–§W.35. Check both.
 
