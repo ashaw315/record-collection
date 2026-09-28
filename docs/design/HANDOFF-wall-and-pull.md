@@ -87,6 +87,7 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §38 | A row whose section is absent | How a row regroups when §9.1 drops one of its sections, and where the dropped columns go; why a section-to-section rule is drawn only between rendered sections; why this adds a case rather than withdrawing a grouping, and why it does not depend on how many records are tagged. |
 | §39 | The cover takes the spare columns above the fork | Why the cover alone widens when no other cell’s content grows; why its marks keep a mark’s width and the extra width is paper; why §30’s acceptance at the bound is withdrawn; the term that keeps the cap at sixteen columns. |
 | §40 | Every upper cell takes the band’s height, and the marks fill the leftover | Why the strip beneath the identity and cover cells was §30’s gap; why the title ladder’s supply stays fixed while the cell grows; why §39’s fixed marks column is withdrawn and its reason kept; what any leftover paper takes. |
+| §41 | The band below §18’s fork, and cells sized by their content | Why the upper tracks take half the page from the eight-column breakpoint to the fork while the band holds its height, and why scaling the band by width was withdrawn; why widening a cell alone does not work; §30’s ceiling on both sides of the fork; the record band packed by content; the nav noted, not ruled. |
 
 ## Structural sections — pointers
 
@@ -205,6 +206,12 @@ These are the sections the rulings above build on, all in `Record Detail 8a - se
 
 45. **§40 — every upper cell takes the band's height above §18's fork.** A supersession of built §30 geometry and of step 44's marks column, in its own step. Give the identity and cover cells the band's full height; the cover square is the largest that cell holds. The bar and block fill the leftover width beside the square. The title ladder's supply stays 510. Any paper left in the cover cell takes the tint step. First re-measure the ceiling and §5.5's floor per record, on each record's own fit, at 1680 × 900, 1920 × 950, 1920 × 1080 and 1920 × 1200, and report them before this is treated as fixed. Replace the tests that assert the cells at 546 and the 30px marks column. Report the identity cell's content-track height at 1440 × 900, which is the 510 §40 names.
    > Above §18’s fork every upper cell takes the band’s full height, so no strip of band paper shows beneath the identity or cover cell.
+
+46. **§41 — the upper tracks from 960 to 1439.** A supersession of built §28 geometry, in its own step. Give each upper track half the page from 960 to 1439 and keep the band at 547; let the cover cell take W ÷ 2 and the band's height. The ladder's supply stays 510. Assert across the width sweep, not at reference windows only, that no upper-band width is unassigned and empty width is under one upper cell. Report the cover square and §5.5's floor per record at 960, 1000, 1200 and 1439, and separately what they would be if the band grew above 547 with the page, for the ruling §41 leaves open. Replace the tests that assert 480 tracks in that range.
+   > From 960 to 1439 each upper track is half the page and the band stays 547, so the page’s whole width goes to its cells and the band never falls below the height §28 and §33 were measured at.
+
+47. **§41 — the record band packed by content.** From 960 to 1439 pack the record band's cells into rows by content width, rounded up to a quarter of the band, in reading order, never narrower than a cell's longest label. Replace the tests that assert one full-width column in that range. Report each cell's ink-to-width ratio at 1000 and 1439.
+   > Below §18’s fork the record band’s cells are sized by their content, not by the row.
 
 **Every row in the table above must appear in a step here.** The completeness check greps the table only, so an index that is current and an order that is eight rulings behind both pass — which is what happened at §W.28–§W.35. Check both.
 
