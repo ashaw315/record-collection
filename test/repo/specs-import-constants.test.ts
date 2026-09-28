@@ -47,6 +47,7 @@ const GOVERNED = [
   'e2e/capture/colour-budget.capture.ts',
   'e2e/capture/viewport-widths.capture.ts',
   'e2e/row-rules-33.spec.ts',
+  'e2e/row-regroup-38.spec.ts',
   'e2e/row-clip-29h.spec.ts',
   'e2e/page-fills-viewport.spec.ts',
   'e2e/title-ladder-33.spec.ts',
