@@ -354,6 +354,63 @@ export function upperAirAt(viewport: number): { start: number; span: number; fig
  * columns of 125 — while §18's fixed `120px` module holds at the fork and
  * above, where §30 takes over.
  */
+/**
+ * **§38: a row whose section is absent regroups over the sections that
+ * render.** "The dropped section's columns go to the section before it in
+ * reading order, or to the one after if it is first." Air keeps its span: it
+ * is a cell, not empty grid. A row with no section rendered keeps only its
+ * air; §9.1 collapses the rest.
+ */
+export function regroup(items: readonly RowItem[], present: ReadonlySet<SectionName>): RowItem[] {
+  const out: RowItem[] = [];
+  let carry = 0;
+  for (const item of items) {
+    if (item.kind === 'air') { out.push({ ...item }); continue; }
+    if (!present.has(item.section)) {
+      const before = [...out].reverse().find((o): o is RowItem & { kind: 'section' } => o.kind === 'section');
+      if (before !== undefined) before.span += item.span; else carry += item.span;
+      continue;
+    }
+    out.push({ ...item, span: item.span + carry });
+    carry = 0;
+  }
+  return out;
+}
+
+/**
+ * The regrouped placements for every way a row can be missing sections,
+ * guarded by what the region holds: `:has(> [data-section])` for each section
+ * present and `:not(:has(...))` for each absent, on the region itself. The
+ * guard is more specific than the base `[data-section="x"]` rule and follows
+ * it in source, so it wins where it applies and is inert where the row is
+ * whole. "Draw a section-to-section rule only between two rendered
+ * sections": the right rule is the regrouped row's, so no rule stands
+ * against empty grid.
+ */
+function regroupRules(rows: readonly RegionRow[], important: boolean): string[] {
+  const bang = important ? ' !important' : '';
+  const out: string[] = [];
+  for (const row of rows) {
+    const sections = row.items.filter((i): i is RowItem & { kind: 'section' } => i.kind === 'section').map((i) => i.section);
+    if (sections.length < 2) continue;
+    for (let mask = 1; mask < (1 << sections.length) - 1; mask += 1) {
+      const present = new Set(sections.filter((_, k) => (mask >> k) & 1));
+      const absent = sections.filter((name) => !present.has(name));
+      const guard = `[data-region="extended-grid"]${[...present].map((n) => `:has(> [data-section="${n}"])`).join('')}${absent.map((n) => `:not(:has(> [data-section="${n}"]))`).join('')}`;
+      const regrouped = regroup(row.items, present);
+      let column = 1;
+      regrouped.forEach((item, k) => {
+        if (item.kind === 'section') {
+          const endsRow = k === regrouped.length - 1;
+          out.push(`${guard} > [data-section="${item.section}"] { grid-column: ${column} / span ${item.span}${bang}; border-right-width: ${endsRow ? 0 : 1}px${bang}; }`);
+        }
+        column += item.span;
+      });
+    }
+  }
+  return out;
+}
+
 export function regionStylesheet(): string {
   const blocks: Array<{ width: RegionWidth; rules: string[] }> = [];
 
@@ -407,6 +464,17 @@ export function regionStylesheet(): string {
       defect".
     */
     if (upperAirAt(width) !== null) rules.push(`[data-air="${REGION_ROWS.length - 1}"] > [data-ornament="flat"] { display: none; }`);
+    /* §38's guards go LAST in the block: nested in their own min-width query, and a reader (or a test) slicing on @media must find the block's own rules before it. */
+    /*
+      §38: the same rows, missing any of their sections. Under a min-width
+      of this width's own: a guard out-specifies every base placement, so
+      without the lower bound the 12-column guard reached below the fork
+      and put the market at column 9 of an 8-column grid, opening four
+      implicit tracks (measured at 1000). The block's max-width still caps
+      it above.
+    */
+    const guarded = regroupRules(rowsAt(width), false);
+    if (guarded.length > 0) rules.push(`@media (min-width: ${width}px) {\n${guarded.join('\n')}\n}`);
 
     blocks.push({ width, rules });
   }
@@ -555,6 +623,8 @@ export function widePageStylesheet(): string {
         column += item.span;
       }
     });
+    /* §38 above the fork too, with the !important this sheet's placements carry. */
+    region.push(...regroupRules(wideRowsAt(min), true));
     return `@media (min-width: ${min}px) {
 ${region.join('\n')}
 [data-testid="record-page-8a"] { max-width: ${PAGE_CEILING}px; }

@@ -25,6 +25,7 @@ import {
   placeRow,
   placementOf,
   regionStylesheet,
+  regroup,
   rowOf,
   airRow,
   MAX_ROWS,
@@ -577,5 +578,76 @@ describe('§26 placement: the rule is the HOST’s, not the figure’s (step 28)
     const stripRight = 1440 - figurePlacement({ host: 'strip', hostWidth: 1440, columnWidth: 120, figureWidth: 95, kind: 'solo' }).right;
     const airRight = 840 + figurePlacement({ host: 'air', hostWidth: 600, columnWidth: 120, figureWidth: 193.8, kind: 'pair' }).left + 193.8;
     expect(Math.abs(stripRight - airRight), 'the two right edges do not coincide').toBeGreaterThan(20);
+  });
+});
+
+/**
+ * **§38: a row whose section is absent regroups over the sections that
+ * render.** "The dropped section's columns go to the section before it in
+ * reading order, or to the one after if it is first... A section-to-section
+ * rule marks a boundary between two rendered sections, never between a
+ * section and empty grid." Measured before this: on sixteen of seventeen
+ * records Tags is absent, so row 2 rendered as acquisition, three empty
+ * columns, then market, and acquisition's right rule stood against nothing.
+ */
+describe('§38: a row regroups over the sections that render (step 43)', () => {
+  const row2 = rowsAt(1440)[1].items;
+  const present = (...names: string[]) => new Set(names as Array<(typeof SECTIONS)[number]>);
+
+  it('gives an absent middle section’s columns to the section before it', () => {
+    expect(regroup(row2, present('acquisition', 'market'))).toEqual([
+      { kind: 'section', section: 'acquisition', span: 8 },
+      { kind: 'section', section: 'market', span: 4 },
+    ]);
+  });
+
+  it('gives an absent FIRST section’s columns to the one after it', () => {
+    expect(regroup(row2, present('tags', 'market'))).toEqual([
+      { kind: 'section', section: 'tags', span: 8 },
+      { kind: 'section', section: 'market', span: 4 },
+    ]);
+  });
+
+  it('gives an absent last section’s columns to the one before it, and two absences to the one that renders', () => {
+    expect(regroup(row2, present('acquisition', 'tags'))).toEqual([
+      { kind: 'section', section: 'acquisition', span: 4 },
+      { kind: 'section', section: 'tags', span: 8 },
+    ]);
+    expect(regroup(row2, present('market'))).toEqual([{ kind: 'section', section: 'market', span: 12 }]);
+  });
+
+  it('leaves a full row as §28 lists it, and leaves air its span', () => {
+    expect(regroup(row2, present('acquisition', 'tags', 'market'))).toEqual(row2);
+    const row1 = rowsAt(1440)[0].items;
+    expect(regroup(row1, present('pressing-detail'))).toEqual(row1);
+    expect(regroup(row1, present()), 'no section rendered: only the air remains, at its span').toEqual([{ kind: 'air', span: 5 }]);
+  });
+
+  it('states the regrouped placements in the stylesheet, guarded by what the region holds', () => {
+    const css = regionStylesheet();
+    const blocks = css.split('@media');
+    const noTags = '[data-region="extended-grid"]:has(> [data-section="acquisition"]):has(> [data-section="market"]):not(:has(> [data-section="tags"]))';
+    expect(blocks[1], 'at 12: acquisition takes 1 to 8, the market keeps its 4').toContain(`${noTags} > [data-section="acquisition"] { grid-column: 1 / span 8; border-right-width: 1px; }`);
+    expect(blocks[1]).toContain(`${noTags} > [data-section="market"] { grid-column: 9 / span 4; border-right-width: 0px; }`);
+    /* At 8 the market is on its own row, so the sub-row is acquisition and tags: without tags, acquisition takes all 8 and ends its row. */
+    const noTags8 = '[data-region="extended-grid"]:has(> [data-section="acquisition"]):not(:has(> [data-section="tags"]))';
+    /* The guards sit in a nested min-width query, which slicing on @media puts in its own chunk right after the block's. */
+    const guards960 = blocks[blocks.findIndex((b) => b.startsWith(' (max-width: 1439px)')) + 1];
+    expect(guards960, 'the 8-column guards follow their block, under min-width: 960').toMatch(/^ \(min-width: 960px\)/);
+    expect(guards960, 'at 8: acquisition takes all 8, unruled').toContain(`${noTags8} > [data-section="acquisition"] { grid-column: 1 / span 8; border-right-width: 0px; }`);
+    /*
+      Bounded below as well as above. A guarded rule out-specifies every
+      base placement, so a 12-column guard that reached below the fork put
+      the market at column 9 of an 8-column grid and opened four implicit
+      tracks (measured at 1000). Each width's guards sit inside a min-width
+      query of their own.
+    */
+    expect(blocks[0], 'the 12-column guards do not reach below the fork').not.toContain(noTags);
+    const guards1440 = blocks[1];
+    expect(guards1440, 'the 12-column guards follow the base block, under min-width: 1440').toMatch(/^ \(min-width: 1440px\)/);
+    /* And above the fork, where the sheet uses !important. */
+    const wide = widePageStylesheet();
+    /* At 14 row 2 gains its two surplus columns as air on the LEFT (§30's alternation), so acquisition starts at 3. */
+    expect(wide, 'at 14: the regroup carries the !important the wide sheet needs').toMatch(/:not\(:has\(> \[data-section="tags"\]\)\) > \[data-section="acquisition"\] \{ grid-column: 3 \/ span 8 !important;/);
   });
 });
