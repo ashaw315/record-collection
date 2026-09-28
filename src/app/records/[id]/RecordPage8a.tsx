@@ -308,7 +308,17 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
             The band's height is not the page's: 547 × W / 1440 was drafted and
             withdrawn within §41 (41/band-scaled-by-width).
           */
-          [data-band="identity"] { grid-template-columns: repeat(2, 50%) !important; grid-auto-rows: ${BANDS.identity - 1}px; height: ${2 * BANDS.identity}px !important; }
+          /*
+            §42 (step 48): from 960 to 1439 the band takes the viewport's
+            height as §40 rules above the fork -- 547 / 900 of it, never less
+            than 547 -- and every upper cell takes it (41/band-stays-547). Two
+            rows here, so the band is twice the row. It is a height rule, so
+            it grows the cover rather than shrinking it, which is why it is
+            not the width scaling §41 withdrew. The identity track stays the
+            ladder's 510 and the cell's extra height is slack below it.
+          */
+          [data-band="identity"] { grid-template-columns: repeat(2, 50%) !important; grid-auto-rows: max(${BANDS.identity - 1}px, calc(${((BAND_AT_REFERENCE / REFERENCE_HEIGHT) * 100).toFixed(4)}vh - 1px)); height: max(${2 * BANDS.identity}px, calc(2 * ${((BAND_AT_REFERENCE / REFERENCE_HEIGHT) * 100).toFixed(4)}vh)) !important; }
+          [data-cell="identity-content"] { --identity-track: ${LADDER_SUPPLY}px; }
           [data-band="identity"] > [data-cell] { grid-column: span 1 !important; }
           /*
             Step 39 (§37): the air LEFT of the sleeve in the second row, by

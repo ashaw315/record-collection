@@ -325,7 +325,8 @@ test('§28’s growth below 1440: at 1000 the page is 1000 wide, not 960 centred
   expect(measured.columns[0], 'of 125 each, grown from the 120 module').toBeCloseTo(125, 0);
 });
 
-test('§28: every row of the identity band is 547 from 480 up, with every cell visible; below 480 it has no fixed height', async ({ page }) => {
+/* At 900 high. From 960 the row takes the viewport's height (§42), which the sweep measures on the height axis; from 480 to 959 the row is §28's 547 at any height. */
+test('§28: every row of the identity band is 547 from 480 up at 900 high, with every cell visible; below 480 it has no fixed height', async ({ page }) => {
   /**
    * **§28: "'The band' means each row of it: every row of the upper band is
    * 547, and where §28's wrap moves the third cell to a second row at 8

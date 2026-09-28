@@ -137,7 +137,10 @@ describe('§41: the upper tracks from 960 to 1439 are half the page (step 46)', 
     const eight = style.slice(style.indexOf('@media (max-width: 1439px)'), style.indexOf('@media (max-width: 959px)'));
     expect(eight, 'each upper track is half the page').toMatch(/\[data-band="identity"\]\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*50%\)/);
     expect(eight, 'no 480 track in that range (28/band-pinned-547)').not.toMatch(/repeat\(2,\s*480px\)/);
-    expect(eight, 'and the band stays 547 per row').toMatch(/grid-auto-rows:\s*546px/);
+    /* §42 (step 48): the row takes the viewport's height as §40 rules above the fork, never less than 547 (41/band-stays-547). */
+    expect(eight, 'each row is max(546, 60.7778vh - 1)').toMatch(/grid-auto-rows:\s*max\(546px,\s*calc\(60\.7778vh - 1px\)\)/);
+    expect(eight, 'and the band two such rows').toMatch(/height:\s*max\(1094px,\s*calc\(2 \* 60\.7778vh\)\)/);
+    expect(eight, 'the identity track stays the ladder’s 510 (§42)').toMatch(/\[data-cell="identity-content"\]\s*\{[^}]*--identity-track:\s*510px/);
     const four = style.slice(style.indexOf('@media (max-width: 959px)'), style.indexOf('@media (max-width: 479px)'));
     expect(four, 'below 960 the one 480 track stands').toMatch(/grid-template-columns:\s*480px/);
   });

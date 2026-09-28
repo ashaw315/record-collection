@@ -339,6 +339,28 @@ test('below the fork, at every width: the upper cells wrap at their size, the co
     if (j.length) bad.push(`${w}: ${j.join(' ; ')}`);
     for (const f of m.inFront) front.push(`${w}: ${f}`);
   }
+  /*
+    §42 (step 48): from 960 to 1439 the band takes the viewport's height as
+    §40 rules above the fork -- 547 / 900 of it, never less than 547 -- and
+    every upper cell takes it. Two rows here, so the band is twice the row.
+    §41 held it at 547 and painted the rest of the window as paper; swept on
+    the height axis, where every earlier below-fork sweep ran at 900.
+  */
+  const rows: string[] = [];
+  for (const w of [960, 1000, 1200, GRID_FORK - 1]) for (const h of HEIGHTS) {
+    await page.setViewportSize({ width: w, height: h });
+    await page.waitForTimeout(400);
+    const m = await page.evaluate(MEASURE);
+    checked += 1;
+    const row = bandHeightAt(h);
+    rows.push(`${w}x${h}: band ${m.bandH}, cells ${m.upper.map((u) => u.h).join('/')}`);
+    if (m.bandH === null || Math.abs(m.bandH - 2 * row) > 2) bad.push(`${w}x${h}: identity band ${m.bandH}, §42 rules two rows of ${row}`);
+    for (const u of m.upper) if (Math.abs(u.h - (row - 1)) > 1) bad.push(`${w}x${h}: ${u.n} is ${u.h} tall, not the row's ${row - 1} (§42: every upper cell takes it)`);
+    const j = judge(m);
+    if (j.length) bad.push(`${w}x${h}: ${j.join(' ; ')}`);
+    for (const f of m.inFront) front.push(`${w}x${h}: ${f}`);
+  }
+  console.log(`  HEIGHT AXIS below the fork -- ${rows.join(', ')}`);
   console.log(`  PAINT IN FRONT OF TYPE below the fork: ${front.length} (judged by its own test)`);
   expect(checked, 'widths measured').toBeGreaterThan(100);
   expect(sawAutoBand, 'the record band is sized by its rows below the fork, not held at 1440’s 300').toBe(true);
