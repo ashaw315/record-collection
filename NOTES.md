@@ -31551,3 +31551,16 @@ instances, which is past "logged, not chased". The first-attempt trace is in
 this session's scratchpad as `lookup-flows-799-mobile-flaky-2026-09-27.trace.zip`;
 the place to look is whether the expand click lands before the result
 card's handler attaches at the 390 viewport.
+
+## Flake log — a burst at tests 107 to 110 of a chromium run (28 Sep)
+
+In the full run after steps 46 and 47: test 1 (about-row-36) failed the
+login redirect at 5s, the cold-run head already logged; then tests 107
+(identity-measure, 30s test timeout inside a `waitForTimeout`), 110
+(images, login still at `/login` at 5s) and, later, 204 (record-detail,
+ECONNRESET on `POST /api/artists`) failed once each and passed on retry.
+Three of the four sit within four tests of each other, which reads as one
+stall of the dev server rather than three spec faults; none of the four
+specs was touched by the steps. Logged, not chased; the classes are the
+entries above. If a burst recurs, the place to look is the server's log at
+that minute, not the specs.
