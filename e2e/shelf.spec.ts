@@ -1,4 +1,3 @@
-import zlib from 'node:zlib';
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { getTestDb } from '../test/helpers/db';
