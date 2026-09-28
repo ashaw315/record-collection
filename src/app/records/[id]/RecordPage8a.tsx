@@ -3,16 +3,15 @@ import { BANDS, CONTENT_MEASURE, GRID_COLUMN, GRID_COLUMNS, GRID_FORK, IDENTITY_
 import { BAND_AT_REFERENCE, REFERENCE_HEIGHT, regionStylesheet, widePageStylesheet } from './region-rows';
 import { Plane } from './Plane';
 import { Flat } from './OrnamentMarks';
-import { RecordBandPacker } from './RecordBandPacker';
 import { FLATS } from './ornament';
 import { CONTROL_HEIGHT } from './extended-grid';
 import { STRIP_SPLIT } from './cover-33';
+import { recordBandStylesheet, type CellRuns } from './record-band-43';
 import { LADDER_SUPPLY } from './title-steps';
 import { MatrixSolid } from './MatrixSolid';
 import { AboutCell } from './AboutCell';
 import { ENTRY_LINES, aboutCellState } from './about-cell';
 import { CELL_PADDING } from './extended-grid';
-import { COVER, COVER_COLUMN, COVER_PAD } from './cover-geometry';
 import { ConstructionStill } from './ConstructionStill';
 import { IdentityCell } from './IdentityCell';
 import { gridModules, type Diagonal } from './grid-modules';
@@ -159,6 +158,35 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
 
   const base = ladder?.base ?? INK;
   const tint = ladder?.tint ?? 'oklch(0.19 0.008 60 / 0.14)';
+  const aboutState = aboutCellState({ about: record.about, entry: record.journalEntry });
+  /*
+    §43 (step 51): the server states the record band's packing from each
+    cell's content, per width range, so first paint is the packed layout.
+    These runs are built from the same values the cells below render -- a
+    string that changes there must change here, which is why they sit
+    together in this component. Step 47's after-paint packer is gone.
+  */
+  const bandCells: CellRuns[] = [
+    { name: 'provenance', runs: [{ text: 'Provenance', register: 'label' }, ...(modules.provenance.empty ? [] : [
+      ...(record.purchasePrice !== null ? [{ text: `Paid $${record.purchasePrice}`, register: 'prose' as const }] : []),
+      ...(record.storeName !== null ? [{ text: `at ${record.storeName}`, register: 'prose' as const }] : []),
+      ...(record.conditionMedia !== null ? [{ text: `${record.conditionMedia} media${record.conditionSleeve !== null ? `, ${record.conditionSleeve} sleeve` : ''}`, register: 'prose' as const }] : []),
+    ])] },
+    { name: 'matrix', runs: [{ text: 'Matrix / runout', register: 'label' }, ...(record.matrixRunout === null ? [] : [
+      { text: matrix.shown, register: 'mono12' as const, wraps: true },
+      ...(matrix.hidden > 0 ? [{ text: `${matrix.hidden + 1} variants`, register: 'label' as const }] : []),
+    ])] },
+    { name: 'year', runs: [{ text: modules.pressing.pressedSameYear ? 'Released · same year' : 'Released', register: 'label' }, { text: String(record.releaseYear ?? ''), register: 'figure72' }] },
+    { name: 'market', runs: [{ text: 'Market median', register: 'label' }, ...(modules.market.empty ? [] : [
+      { text: `$${record.marketMedian}`, register: 'figure40' as const },
+      ...(record.marketLow !== null ? [{ text: `$${record.marketLow}–$${record.marketHigh}`, register: 'mono10' as const }] : []),
+    ])] },
+    { name: 'note', runs: [{ text: 'About', register: 'label' },
+      ...(aboutState.kind === 'about' ? [{ text: aboutState.text, register: 'prose' as const, wraps: true }]
+        : aboutState.kind === 'entry' ? [{ text: aboutState.entryDate, register: 'label' as const }, { text: aboutState.text, register: 'prose' as const, wraps: true }]
+        : writingConfigured ? [{ text: 'Write one ↓', register: 'label' as const }] : []),
+      { text: `Images ${record.imageCount} Manage →`, register: 'label' }] },
+  ];
 
   /**
    * **Every cell that hosts a mark clips it, and that is one rule rather than
@@ -350,9 +378,9 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
           /*
             §41 (step 47): from 960 to 1439 the record band packs its cells
             by content, a quarter of the band at a time, in reading order.
-            RecordBandPacker measures each cell after paint and writes its
-            quarters as --packed (no backticks in this template: they end it);
-            until it has, and on the server, a cell
+            §43 (step 51): the server states each cell's quarters as --packed
+            per width range, from its content (no backticks in this template:
+            they end it); a cell the sheet does not reach
             spans the whole row, which is §28's one column. Below 960 the
             one column stands (the 959 block).
           */
@@ -470,6 +498,8 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
           construction. Generated for the same reason as the region's blocks.
         */
         ${widePageStylesheet()}
+        /* §43: the record band's packing per width range, from this record's content (step 51). */
+        ${recordBandStylesheet(bandCells)}
 
         /*
           §28's 44px touch floor: "the hit area is padded out to 44 while the
@@ -689,7 +719,6 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
         className="grid grid-cols-12 gap-0"
         style={{ height: BANDS.record, borderBottom: `1px solid ${RULE}` }}
       >
-        <RecordBandPacker />
         {/* Provenance. */}
         <div
           data-cell="provenance"
@@ -932,7 +961,7 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
             heading over an empty string with no diagonal.
           */}
           {(() => {
-            const state = aboutCellState({ about: record.about, entry: record.journalEntry });
+            const state = aboutState;
             return (
               <>
                 {/* §33: "labelled ABOUT" in every state; §35 restates the cell without a second label. The entry state once relabelled it JOURNAL. */}

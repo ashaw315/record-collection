@@ -44,7 +44,7 @@ const record = (spineColour: string | null): PageRecord => ({
 
 /** The year cell's markup, cut at the next cell. */
 function yearCell(html: string): string {
-  const start = html.indexOf('data-cell="year"');
+  const start = elementIndex(html, 'year');
   expect(start, 'the year cell renders').toBeGreaterThan(-1);
   const rest = html.slice(start);
   const end = rest.indexOf('data-cell=', 1);
@@ -124,8 +124,14 @@ describe('§33, §39, §40: the cover is the largest square its cell holds, at e
  * is one state: an About or entry that is null, empty or only whitespace,
  * once trimmed, counts as none."
  */
+/** Where the ELEMENT carrying data-cell="name" starts -- never the stylesheet's selector for it, which precedes every element and is written [data-cell="name"]. */
+function elementIndex(html: string, name: string): number {
+  const m = new RegExp(`(?<!\\[)data-cell="${name}"`).exec(html);
+  return m === null ? -1 : m.index;
+}
+
 function lastCell(html: string): string {
-  const start = html.indexOf('data-cell="note"');
+  const start = elementIndex(html, 'note');
   expect(start, 'the last cell renders').toBeGreaterThan(-1);
   return html.slice(start, html.indexOf('data-cell=', start + 1) === -1 ? undefined : html.indexOf('data-cell=', start + 1));
 }
@@ -155,7 +161,10 @@ describe('§41: the record band packed by content from 960 to 1439 (step 47)', (
     expect(eight, 'each cell spans the quarters the client measured; a whole row until it has').toMatch(/\[data-band="record"\]\s*>\s*\[data-cell\]\s*\{[^}]*grid-column:\s*span var\(--packed,\s*4\)/);
     const four = style.slice(style.indexOf('@media (max-width: 959px)'), style.indexOf('@media (max-width: 479px)'));
     expect(four, 'below 960 the one column stands (§41)').toMatch(/\[data-band="record"\]\s*>\s*\[data-cell\]\s*\{[^}]*grid-column:\s*1 \/ -1/);
-    expect(html, 'the packer is in the band').toContain('data-record-band-packer');
+    /* §43 (step 51): the server states the packing per width; no packer measures after paint. */
+    expect(html, 'no after-paint packer').not.toContain('data-record-band-packer');
+    expect(style, 'the server states each cell’s quarters per width range').toMatch(/@media \(min-width: 960px\) and \(max-width: \d+px\) \{[\s\S]*?\[data-band="record"\] > \[data-cell="provenance"\] \{ --packed: [1-4];/);
+    expect(style, 'and covers the range to 1439').toMatch(/\(max-width: 1439px\)/);
   });
 });
 
@@ -292,7 +301,7 @@ describe('§35: absence in flow after the label in every cell that can be empty'
   it('provenance, matrix and market draw the diagonal after their label, filling the body', () => {
     const html = renderToStaticMarkup(<RecordPage8a record={{ ...record(null), purchasePrice: null, storeName: null, conditionMedia: null, conditionSleeve: null, matrixRunout: null, marketMedian: null, marketLow: null, marketHigh: null, hasDiscogsRelease: false }} />);
     for (const [cell, label] of [['provenance', 'Provenance'], ['matrix', 'Matrix / runout'], ['market', 'Market median']] as const) {
-      const start = html.indexOf(`data-cell="${cell}"`);
+      const start = elementIndex(html, cell);
       expect(start, `${cell} renders`).toBeGreaterThan(-1);
       const body = html.slice(start, html.indexOf('data-cell=', start + 1));
       const at = body.indexOf(`>${label}<`);
@@ -344,7 +353,7 @@ describe('§37: the upper band’s air at 8 columns is a section carrying the ti
   it('renders the air cell after the sleeve, as a section, with the tint triangle and no figure', () => {
     const html = renderToStaticMarkup(<RecordPage8a record={{ ...record('#a25829') }} />);
     /* The ELEMENTS, not the stylesheet's selectors for them, which precede everything: `[data-cell="sleeve"]` and `[data-band="record"]` both appear in the <style> first. */
-    const sleeve = html.indexOf('data-cell="sleeve" class');
+    const sleeve = elementIndex(html, 'sleeve');
     const air = html.indexOf('data-upper-air=""');
     const recordBand = html.indexOf('data-band="record" class');
     expect(air, 'the upper air cell renders').toBeGreaterThan(-1);
