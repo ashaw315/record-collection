@@ -398,14 +398,33 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
           @media (max-width: 959px) {
             [data-band="record"] { grid-template-columns: 1fr !important; }
             [data-band="record"] > [data-cell] { grid-column: 1 / -1 !important; }
-            [data-band="identity"] { grid-template-columns: ${GRID_FORK / 3}px !important; height: ${3 * BANDS.identity}px !important; }
-            /* Stacked (§28): the identity cell is alone in its row too. */
-            [data-band="identity"] > [data-cell="identity"] { border-right-width: 0; }
-            [data-band="identity"] > [data-upper-air] { display: none; }
-            [data-band="identity"] > [data-cell="sleeve"] { grid-row: auto !important; grid-column: 1 !important; }
+            /*
+              §44 (step 52): from 480 to 959 each upper cell fills its row.
+              The identity keeps its 480 -- §4.2's measure plus padding --
+              and the air beside it, a section carrying no ornament (§37),
+              takes the rest; the construction takes its row, and the cover
+              is the largest square the row holds with the marks in the
+              leftover (its container units). Rows stay §28's 547; the
+              band's height rule is §42's from 960. §28 stacked the three
+              cells at 480 with paper to their right
+              (28/cells-never-reshape, 28/never-reshape-above-480).
+            */
+            [data-band="identity"] { grid-template-columns: ${GRID_FORK / 3}px 1fr !important; grid-auto-rows: ${BANDS.identity - 1}px; height: ${3 * BANDS.identity}px !important; }
+            [data-band="identity"] > [data-cell="identity"] { grid-row: 1 !important; grid-column: 1 !important; }
+            [data-band="identity"] > [data-upper-air] { display: block; grid-row: 1 !important; grid-column: 2 !important; }
+            [data-band="identity"] > [data-cell="still"] { grid-row: 2 !important; grid-column: 1 / -1 !important; }
+            [data-band="identity"] > [data-cell="sleeve"] { grid-row: 3 !important; grid-column: 1 / -1 !important; }
+            /* §44: a 1px hairline between the identity and its air when the air renders; at 480 there is no air, so no vertical. */
+            [data-band="identity"] > [data-cell="identity"] { border-right-width: 1px; }
+            @media (max-width: 480px) {
+              [data-band="identity"] > [data-upper-air] { display: none; }
+              [data-band="identity"] > [data-cell="identity"] { border-right-width: 0; }
+            }
           }
           @media (max-width: 479px) {
             [data-band="identity"] { grid-template-columns: 1fr !important; grid-auto-rows: auto; height: auto !important; }
+            [data-band="identity"] > [data-cell="identity"], [data-band="identity"] > [data-cell="still"], [data-band="identity"] > [data-cell="sleeve"] { grid-column: 1 !important; grid-row: auto !important; }
+            [data-band="identity"] > [data-upper-air] { display: none; }
             /*
               **One fluid column: the two fitted cells scale with it.** §28:
               the construction "draws at (W - 48) / 432 of fitted scale";

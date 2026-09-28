@@ -54,4 +54,32 @@ export default async function globalSetup(): Promise<void> {
   await holdTestDatabase('playwright e2e');
 
   await closeTestDb();
+  await warmServer();
 }
+
+/**
+ * **Warm the dev server before the first test.** The first spec to run bore
+ * the cold start: /login, the login route and the wall each compile on their
+ * first request, and a 5s login redirect failed at the head of run after run
+ * (NOTES.md, the flake log entries of 27 and 28 Sep). Playwright starts the
+ * web server before this runs, so the first requests happen here, once, off
+ * the clock. Best effort: a failure here is logged, not fatal -- the tests
+ * will still say what is wrong.
+ */
+async function warmServer(): Promise<void> {
+  const base = process.env.E2E_BASE_URL ?? `http://localhost:${process.env.E2E_PORT ?? '3100'}`;
+  const password = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
+  const started = Date.now();
+  try {
+    await fetch(`${base}/login`);
+    const login = await fetch(`${base}/api/auth/login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password }), redirect: 'manual' });
+    const cookie = login.headers.get('set-cookie')?.split(';')[0] ?? '';
+    const headers: Record<string, string> = cookie === '' ? {} : { cookie };
+    await fetch(`${base}/`, { headers, redirect: 'manual' });
+    await fetch(`${base}/records/00000000-0000-4000-8000-000000000000`, { headers, redirect: 'manual' });
+    process.stdout.write(`[global-setup] warmed ${base} in ${Date.now() - started}ms\n`);
+  } catch (error) {
+    process.stdout.write(`[global-setup] warm-up failed (${error instanceof Error ? error.message : String(error)}); tests run cold\n`);
+  }
+}
+

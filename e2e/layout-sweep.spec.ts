@@ -143,8 +143,11 @@ const MEASURE = () => {
   const cover = document.querySelector<HTMLElement>('[data-cover]');
   /* §30's terms below the fork (§41): the construction's own empty width once height binds, and the cover cell's width beside its square. */
   const constructionEmpty = (() => { const svg = document.querySelector<SVGSVGElement>('[data-testid="construction-still"]'); const still = document.querySelector<HTMLElement>('[data-cell="still"]'); if (svg === null || still === null) return 0; const vb = (svg.getAttribute('viewBox') ?? '0 0 1 1').split(' ').map(Number); const sb = R(svg); const cs = getComputedStyle(still); const innerW = still.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight); const widthBound = sb.width / vb[2] < sb.height / vb[3]; return widthBound ? 0 : px(innerW - Math.min(sb.width / vb[2], sb.height / vb[3]) * vb[2]); })();
+  /* §44: the identity's right rule (a hairline against its air when the air renders) and each upper row's ground, which must be paper. */
+  const identityRule = (() => { const el = document.querySelector<HTMLElement>('[data-band="identity"] > [data-cell="identity"]'); return el === null ? 0 : parseFloat(getComputedStyle(el).borderRightWidth); })();
+  const groundGrey = ['identity', 'still', 'sleeve'].flatMap((n) => { const el = document.querySelector<HTMLElement>(`[data-band="identity"] > [data-cell="${n}"]`); if (el === null) return []; const bg = getComputedStyle(el).backgroundColor; return bg === 'rgba(0, 0, 0, 0)' || bg === 'transparent' ? [] : [`${n} ${bg}`]; });
   const coverBeside = (() => { const sleeve = document.querySelector<HTMLElement>('[data-cell="sleeve"]'); return sleeve === null || cover === null ? 0 : px(R(sleeve).width - R(cover).width); })();
-  return { vw: window.innerWidth, vh: window.innerHeight, squeezed, upperAir, regionTriangle, constructionEmpty, coverBeside, cols: { identity: cols(identity), lower: cols(lower), region: cols(region) }, bandH: identity === null ? null : px(R(identity).height), lowerH: lower === null ? null : px(R(lower).height), cells, pairs, escapes, inFront, behindCount: behind.length, cut, upper, coverW: cover === null ? 0 : px(R(cover).width), paintKinds: [...new Set(paints.map(name))] };
+  return { vw: window.innerWidth, vh: window.innerHeight, squeezed, upperAir, regionTriangle, constructionEmpty, coverBeside, identityRule, groundGrey, cols: { identity: cols(identity), lower: cols(lower), region: cols(region) }, bandH: identity === null ? null : px(R(identity).height), lowerH: lower === null ? null : px(R(lower).height), cells, pairs, escapes, inFront, behindCount: behind.length, cut, upper, coverW: cover === null ? 0 : px(R(cover).width), paintKinds: [...new Set(paints.map(name))] };
 };
 
 /** What every viewport must satisfy; returns what failed. Paint in front of type is judged by its own test. */
@@ -299,11 +302,28 @@ test('below the fork, at every width: the upper cells wrap at their size, the co
       construction: 40 at 1000, 240 at 1200, 479 at 1439. Below 960 the one
       480 track stands.
     */
-    const track = w >= 960 ? w / 2 : 480;
+    /*
+      §44 (step 52): from 480 to 959 each upper cell fills its row -- the
+      identity keeps its 480 and the air takes the rest, the cover and the
+      construction take the row. §28's stacking left every cell at 480 with
+      paper to its right (28/cells-never-reshape, 28/never-reshape-above-480).
+    */
+    const widthOf = (n: string) => (w >= 960 ? w / 2 : w >= 480 ? (n === 'identity' ? 480 : w) : w);
     for (const u of m.upper) {
       if (u.display === 'none' || u.display === 'absent') j.push(`upper cell ${u.n} is ${u.display} (§28: the upper cells wrap, they do not hide)`);
-      else if (w >= 480 && Math.abs(u.w - track) > 1) j.push(`upper cell ${u.n} is ${u.w} wide, not ${track} (§41: half the page from 960; 480 below)`);
+      else if (w >= 480 && Math.abs(u.w - widthOf(u.n)) > 1) j.push(`upper cell ${u.n} is ${u.w} wide, not ${widthOf(u.n)} (§41 from 960; §44 from 480)`);
     }
+    if (w > 480 && w < 960) {
+      const identity = m.upper.find((u) => u.n === 'identity');
+      if (m.upperAir === null || m.upperAir.display === 'none') j.push('the air beside the identity is missing (§44)');
+      else {
+        if (Math.abs(m.upperAir.w - (w - 480)) > 1) j.push(`the air is ${m.upperAir.w} wide, not the row's rest ${w - 480} (§44)`);
+        if (identity !== undefined && (Math.abs(m.upperAir.y - identity.y) > 1 || Math.abs(m.upperAir.x - 480) > 1)) j.push(`the air is not beside the identity on its row (air ${m.upperAir.x},${m.upperAir.y})`);
+        if (m.identityRule !== 1) j.push(`no hairline between the identity and its air (identity right rule ${m.identityRule}px; §44: 1px at 0.72 when the air renders)`);
+      }
+    }
+    if (w === 480 && m.upperAir !== null && m.upperAir.display !== 'none') j.push('at 480 there is no air (§44), yet the air cell shows');
+    if (w < 960 && w >= 480 && m.groundGrey.length) j.push(`a row's ground is not paper (§44): ${m.groundGrey.join(', ')}`);
     if (w >= 960) {
       const identity = m.upper.find((u) => u.n === 'identity'); const still = m.upper.find((u) => u.n === 'still');
       if (identity !== undefined && still !== undefined && Math.abs(w - identity.w - still.w) > 1) j.push(`${w - identity.w - still.w}px of the first row is unassigned (§41: none)`);
@@ -336,7 +356,7 @@ test('below the fork, at every width: the upper cells wrap at their size, the co
         if (!m.upperAir.flat) j.push('the upper air carries no tint field');
         if (m.regionTriangle) j.push('the region draws its own triangle as well as the upper air’s (§37: moved, not added)');
       }
-    } else if (m.upperAir !== null && m.upperAir.display !== 'none') j.push(`the upper air shows at ${w}, where the cells stack`);
+    }
     if (j.length) bad.push(`${w}: ${j.join(' ; ')}`);
     for (const f of m.inFront) front.push(`${w}: ${f}`);
   }

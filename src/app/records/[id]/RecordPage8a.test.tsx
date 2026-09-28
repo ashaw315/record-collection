@@ -148,7 +148,11 @@ describe('§41: the upper tracks from 960 to 1439 are half the page (step 46)', 
     expect(eight, 'and the band two such rows').toMatch(/height:\s*max\(1094px,\s*calc\(2 \* 60\.7778vh\)\)/);
     expect(eight, 'the identity track stays the ladder’s 510 (§42)').toMatch(/\[data-cell="identity-content"\]\s*\{[^}]*--identity-track:\s*510px/);
     const four = style.slice(style.indexOf('@media (max-width: 959px)'), style.indexOf('@media (max-width: 479px)'));
-    expect(four, 'below 960 the one 480 track stands').toMatch(/grid-template-columns:\s*480px/);
+    /* §44 (step 52): from 480 to 959 the identity keeps 480 and the air takes the rest of its row; the construction and the cover take their rows. */
+    expect(four, 'a 480 track and the rest of the row').toMatch(/\[data-band="identity"\]\s*\{[^}]*grid-template-columns:\s*480px 1fr/);
+    expect(four, 'the air shows beside the identity').toMatch(/\[data-upper-air\]\s*\{[^}]*display:\s*block/);
+    expect(four, 'the construction takes its row').toMatch(/\[data-cell="still"\]\s*\{[^}]*grid-column:\s*1 \/ -1/);
+    expect(four, 'and so does the cover').toMatch(/\[data-cell="sleeve"\]\s*\{[^}]*grid-column:\s*1 \/ -1/);
   });
 });
 
