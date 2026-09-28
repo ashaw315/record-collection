@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { GRID_FORK } from './band-geometry';
-import { RECORD_BAND_QUARTERS, packRecordBand } from './record-band-41';
+import { RECORD_BAND_QUARTERS, fillRows, packRecordBand, packedRules } from './record-band-41';
 
 /**
  * §41 (step 47): from 960 to 1439 each frame cell takes the quarters its
@@ -84,14 +84,20 @@ export function RecordBandPacker() {
       const cells = Array.from(band.querySelectorAll<HTMLElement>(':scope > [data-cell]'));
       const width = window.innerWidth;
       if (width < FLOOR || width >= GRID_FORK) {
-        for (const cell of cells) cell.style.removeProperty('--packed');
+        for (const cell of cells) for (const prop of ['--packed', '--rule-right', '--rule-top']) cell.style.removeProperty(prop);
         return;
       }
       for (const cell of cells) cell.style.setProperty('--packed', String(RECORD_BAND_QUARTERS));
       const quarter = band.getBoundingClientRect().width / RECORD_BAND_QUARTERS;
       const padding = cells.length === 0 ? 0 : parseFloat(getComputedStyle(cells[0]).paddingLeft);
-      const spans = packRecordBand({ quarter, padding, cells: cells.map((cell) => ({ ink: widestLine(cell), label: longestLabel(cell) })) });
-      cells.forEach((cell, index) => cell.style.setProperty('--packed', String(spans[index])));
+      /* §42 (step 49): the last cell in a row takes the row's remaining width, and rules stand only between rendered cells. */
+      const spans = fillRows(packRecordBand({ quarter, padding, cells: cells.map((cell) => ({ ink: widestLine(cell), label: longestLabel(cell) })) }));
+      const rules = packedRules(spans);
+      cells.forEach((cell, index) => {
+        cell.style.setProperty('--packed', String(spans[index]));
+        cell.style.setProperty('--rule-right', `${rules[index].right}px`);
+        cell.style.setProperty('--rule-top', `${rules[index].top}px`);
+      });
     };
     pack();
     window.addEventListener('resize', pack);

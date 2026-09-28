@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { packRecordBand, packedRows, RECORD_BAND_QUARTERS } from './record-band-41';
+import { fillRows, packRecordBand, packedRows, packedRules, RECORD_BAND_QUARTERS } from './record-band-41';
 
 /**
  * §41 (step 47): "from 960 to 1439 the record band packs its cells into
@@ -31,5 +31,28 @@ describe('§41: the record band packed by content (step 47)', () => {
     expect(packedRows([1, 1, 1, 1, 4])).toEqual([[0, 1, 2, 3], [4]]);
     expect(packedRows([2, 3, 1, 4])).toEqual([[0], [1, 2], [3]]);
     expect(packedRows([1, 1, 2, 2, 1])).toEqual([[0, 1, 2], [3, 4]]);
+  });
+});
+
+/**
+ * §42 (step 49): "Below §18's fork a 1px hairline divides packed cells where
+ * they meet in a row, and a 1px hairline across the band divides packed
+ * rows... The last cell in a row takes whatever width the row has left, so a
+ * row never ends in empty grid for a rule to stand against. A cell that
+ * spans the row has no vertical."
+ */
+describe('§42: the last cell in a row takes the row’s remaining width, and rules stand only between rendered cells (step 49)', () => {
+  it('fills each row’s remainder into its last cell', () => {
+    expect(fillRows([1, 1, 1, 1, 4])).toEqual([1, 1, 1, 1, 4]);
+    expect(fillRows([2, 3, 1, 4]), '2 alone in row 1 takes 4; 3 + 1 fill row 2').toEqual([4, 3, 1, 4]);
+    expect(fillRows([1, 1, 2, 2, 1]), 'row 2 is 2 + 1, so the 1 takes 2').toEqual([1, 1, 2, 2, 2]);
+    expect(fillRows([1]), 'one cell takes the row').toEqual([4]);
+  });
+
+  it('states each cell’s rules: a right rule where a cell follows it in the row, a top rule on every row but the first', () => {
+    expect(packedRules([1, 1, 1, 1, 4])).toEqual([
+      { right: 1, top: 0 }, { right: 1, top: 0 }, { right: 1, top: 0 }, { right: 0, top: 0 }, { right: 0, top: 1 },
+    ]);
+    expect(packedRules([4, 3, 1, 4])).toEqual([{ right: 0, top: 0 }, { right: 1, top: 1 }, { right: 0, top: 1 }, { right: 0, top: 1 }]);
   });
 });

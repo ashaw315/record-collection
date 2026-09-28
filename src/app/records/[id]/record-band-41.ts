@@ -43,3 +43,33 @@ export function packedRows(spans: ReadonlyArray<number>): number[][] {
   if (row.length > 0) rows.push(row);
   return rows;
 }
+
+/**
+ * §42 (step 49): "The last cell in a row takes whatever width the row has
+ * left, so a row never ends in empty grid for a rule to stand against."
+ */
+export function fillRows(spans: ReadonlyArray<number>): number[] {
+  const filled = [...spans];
+  for (const row of packedRows(spans)) {
+    const used = row.reduce((sum, index) => sum + spans[index], 0);
+    filled[row[row.length - 1]] += RECORD_BAND_QUARTERS - used;
+  }
+  return filled;
+}
+
+/**
+ * §42 (step 49): "a 1px hairline divides packed cells where they meet in a
+ * row, and a 1px hairline across the band divides packed rows", drawn only
+ * between rendered cells -- so a right rule where another cell follows in
+ * the row, and a top rule on every row but the first. A cell that spans the
+ * row has no vertical.
+ */
+export function packedRules(spans: ReadonlyArray<number>): Array<{ right: 0 | 1; top: 0 | 1 }> {
+  const rules = spans.map(() => ({ right: 0 as 0 | 1, top: 0 as 0 | 1 }));
+  packedRows(spans).forEach((row, rowIndex) => {
+    row.forEach((index, k) => {
+      rules[index] = { right: k < row.length - 1 ? 1 : 0, top: rowIndex > 0 ? 1 : 0 };
+    });
+  });
+  return rules;
+}

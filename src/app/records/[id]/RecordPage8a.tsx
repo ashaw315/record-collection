@@ -341,7 +341,16 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
             one column stands (the 959 block).
           */
           [data-band="record"] { grid-template-columns: repeat(4, 1fr) !important; }
-          [data-band="record"] > [data-cell] { grid-column: span var(--packed, 4) !important; }
+          /*
+            §42 (step 49): a 1px hairline at 0.72 between packed cells where
+            they meet in a row, and across the band between packed rows, only
+            between rendered cells -- the packer states each cell's rules as
+            --rule-right and --rule-top from the same rows it packed. The
+            rules were zeroed here when every cell spanned the row, and
+            packing made that wrong: adjacent cells with nothing between them
+            read as one cell.
+          */
+          [data-band="record"] > [data-cell] { grid-column: span var(--packed, 4) !important; border-right-width: var(--rule-right, 0px); border-top: var(--rule-top, 0px) solid ${RULE}; }
           @media (max-width: 959px) {
             [data-band="record"] { grid-template-columns: 1fr !important; }
             [data-band="record"] > [data-cell] { grid-column: 1 / -1 !important; }

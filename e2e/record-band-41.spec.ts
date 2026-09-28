@@ -4,7 +4,7 @@ import { getTestDb } from '../test/helpers/db';
 import { seedImage } from './seed';
 import { sql } from 'drizzle-orm';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
-import { packRecordBand, packedRows, RECORD_BAND_QUARTERS } from '../src/app/records/[id]/record-band-41';
+import { fillRows, packRecordBand, packedRows, packedRules, RECORD_BAND_QUARTERS } from '../src/app/records/[id]/record-band-41';
 
 registerCleanup();
 
@@ -58,7 +58,7 @@ const cellsOf = (page: Page) =>
         const b = cell.getBoundingClientRect(); const cs = getComputedStyle(cell);
         const ink = lines(cell, (el) => el === cell || !el.matches('[data-mark], [data-ornament], [data-plane]'));
         const label = Math.max(0, ...Array.from(cell.querySelectorAll<HTMLElement>('*')).filter((el) => { const s = getComputedStyle(el); return s.textTransform === 'uppercase' && /mono/i.test(s.fontFamily) && el.children.length === 0 && (el.textContent ?? '').trim() !== ''; }).map((el) => { const r = document.createRange(); r.selectNodeContents(el); return r.getBoundingClientRect().width; }));
-        return { name: cell.dataset.cell ?? '?', x: b.left - bb.left, y: b.top - bb.top, w: b.width, h: b.height, padding: parseFloat(cs.paddingLeft), ink, label, packed: cs.getPropertyValue('--packed').trim() };
+        return { name: cell.dataset.cell ?? '?', mark: cell.dataset.mark ?? null, x: b.left - bb.left, y: b.top - bb.top, w: b.width, h: b.height, padding: parseFloat(cs.paddingLeft), ink, label, packed: cs.getPropertyValue('--packed').trim(), ruleRight: parseFloat(cs.borderRightWidth), ruleTop: parseFloat(cs.borderTopWidth), ruleColour: cs.borderRightColor, topColour: cs.borderTopColor };
       }),
     };
   });
@@ -76,7 +76,8 @@ test('§41: from 960 to 1439 the record band packs its cells by content, a quart
     expect(m.tracks, `${width}: four quarters of the band`).toBe(RECORD_BAND_QUARTERS);
     const quarter = m.width / RECORD_BAND_QUARTERS;
     expect(m.trackWidth, 'each a quarter').toBeCloseTo(quarter, 0);
-    const expected = packRecordBand({ quarter, padding: m.cells[0].padding, cells: m.cells.map((c) => ({ ink: c.ink, label: c.label })) });
+    /* §42 (step 49): the last cell in a row takes the row's remaining width. */
+    const expected = fillRows(packRecordBand({ quarter, padding: m.cells[0].padding, cells: m.cells.map((c) => ({ ink: c.ink, label: c.label })) }));
     const actual = m.cells.map((c) => Math.round(c.w / quarter));
     expect(actual, `${width}: spans from the measured content (${m.cells.map((c) => `${c.name} ink ${Math.round(c.ink)} label ${Math.round(c.label)}`).join(', ')})`).toEqual(expected);
     /* Reading order fills left to right: each row's cells sit in DOM order at rising x, and a new row starts at x 0. */
@@ -88,6 +89,17 @@ test('§41: from 960 to 1439 the record band packs its cells by content, a quart
       expect(tops.size, `${width}: one row`).toBe(1);
     });
     for (const c of m.cells) expect(c.w - 2 * c.padding, `${width}: ${c.name} is never narrower than its longest label (${Math.round(c.label)})`).toBeGreaterThanOrEqual(c.label - 0.5);
+    /* §42 (step 49): a 1px hairline at 0.72 between packed cells in a row and across the band between rows, only between rendered cells. */
+    const rules = packedRules(actual);
+    m.cells.forEach((c, k) => {
+      /* The note cell's right border is §5.1's journal edge, a 2px derived mark in the record's colour, not a structural rule; it is ruled to stay. */
+      if (c.mark === 'journalEdge') expect(c.ruleRight, `${width}: the journal edge keeps its 2px`).toBe(2);
+      else expect(c.ruleRight, `${width}: ${c.name} right rule ${rules[k].right ? 'between it and the next cell' : 'absent at the row’s end'}`).toBe(rules[k].right);
+      expect(c.ruleTop, `${width}: ${c.name} top rule ${rules[k].top ? 'across the band above its row' : 'absent on the first row'}`).toBe(rules[k].top);
+      if (rules[k].right) expect(c.ruleColour, 'the hairline is §W.31’s 0.72').toBe('oklch(0.72 0.004 80)');
+      if (rules[k].top) expect(c.topColour, 'so is the row rule').toBe('oklch(0.72 0.004 80)');
+    });
+    expect(m.cells.reduce((s, c) => s + c.w, 0) / quarter, `${width}: the rows are filled, no empty grid`).toBeCloseTo(rows.length * RECORD_BAND_QUARTERS, 0);
     report.push(`${width}: ` + m.cells.map((c) => `${c.name} ${Math.round(c.w)}w ink ${Math.round(c.ink)} (${(c.ink / c.w * 100).toFixed(0)}%)`).join(' · '));
   }
   console.log(`  §41 RECORD BAND ink-to-width: ${report.join(' | ')}`);
