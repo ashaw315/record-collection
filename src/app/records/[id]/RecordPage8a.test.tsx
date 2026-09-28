@@ -130,6 +130,19 @@ function lastCell(html: string): string {
   return html.slice(start, html.indexOf('data-cell=', start + 1) === -1 ? undefined : html.indexOf('data-cell=', start + 1));
 }
 
+describe('§41: the upper tracks from 960 to 1439 are half the page (step 46)', () => {
+  it('states half-the-page tracks in the 8-column block, and keeps one 480 track below 960', () => {
+    const html = renderToStaticMarkup(<RecordPage8a record={{ ...record(null) }} />);
+    const style = /<style>([\s\S]*?)<\/style>/.exec(html)?.[1] ?? '';
+    const eight = style.slice(style.indexOf('@media (max-width: 1439px)'), style.indexOf('@media (max-width: 959px)'));
+    expect(eight, 'each upper track is half the page').toMatch(/\[data-band="identity"\]\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*50%\)/);
+    expect(eight, 'no 480 track in that range (28/band-pinned-547)').not.toMatch(/repeat\(2,\s*480px\)/);
+    expect(eight, 'and the band stays 547 per row').toMatch(/grid-auto-rows:\s*546px/);
+    const four = style.slice(style.indexOf('@media (max-width: 959px)'), style.indexOf('@media (max-width: 479px)'));
+    expect(four, 'below 960 the one 480 track stands').toMatch(/grid-template-columns:\s*480px/);
+  });
+});
+
 describe('the frame’s last cell is the About, else the entry, else the diagonal (§33)', () => {
   const entry = { entry: 'Played it right through.', entryDate: '2026-09-20' };
 

@@ -523,6 +523,19 @@ export function pageWidthAt(viewport: number): number {
  * and §30 keeps it narrower than one upper cell, which is where the ceiling
  * comes from.
  */
+/**
+ * The width of one upper track. Above §18's fork the tracks are the page's
+ * columns (see `upperSpansAt`); from 960 to 1439 each is half the page (§41,
+ * step 46); from 480 to 959 the cells stack in one 480 track (§28); below
+ * 480 the one column is the page.
+ */
+export function upperTrackAt(viewport: number): number {
+  if (viewport >= 1440) return (pageWidthAt(viewport) / columnsFor(viewport)) * 4;
+  if (viewport >= 960) return viewport / 2;
+  if (viewport >= 480) return 480;
+  return viewport;
+}
+
 export function upperSpansAt(viewport: number): { identity: number; still: number; sleeve: number; air: number } {
   const columns = columnsFor(viewport);
   const still = columns >= 16 ? 6 : columns >= 14 ? 5 : 4;

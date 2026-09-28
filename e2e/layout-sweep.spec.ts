@@ -140,7 +140,10 @@ const MEASURE = () => {
   /* §37: the region's own triangle, "moved, not added" -- visible means displayed with a box. */
   const regionTriangle = Array.from(document.querySelectorAll<HTMLElement>('[data-region="extended-grid"] [data-cell="air"] [data-ornament="flat"][data-flat="triangle"]')).some((f) => getComputedStyle(f).display !== 'none' && f.getBoundingClientRect().width > 0);
   const cover = document.querySelector<HTMLElement>('[data-cover]');
-  return { vw: window.innerWidth, vh: window.innerHeight, squeezed, upperAir, regionTriangle, cols: { identity: cols(identity), lower: cols(lower), region: cols(region) }, bandH: identity === null ? null : px(R(identity).height), lowerH: lower === null ? null : px(R(lower).height), cells, pairs, escapes, inFront, behindCount: behind.length, cut, upper, coverW: cover === null ? 0 : px(R(cover).width), paintKinds: [...new Set(paints.map(name))] };
+  /* §30's terms below the fork (§41): the construction's own empty width once height binds, and the cover cell's width beside its square. */
+  const constructionEmpty = (() => { const svg = document.querySelector<SVGSVGElement>('[data-testid="construction-still"]'); const still = document.querySelector<HTMLElement>('[data-cell="still"]'); if (svg === null || still === null) return 0; const vb = (svg.getAttribute('viewBox') ?? '0 0 1 1').split(' ').map(Number); const sb = R(svg); const cs = getComputedStyle(still); const innerW = still.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight); const widthBound = sb.width / vb[2] < sb.height / vb[3]; return widthBound ? 0 : px(innerW - Math.min(sb.width / vb[2], sb.height / vb[3]) * vb[2]); })();
+  const coverBeside = (() => { const sleeve = document.querySelector<HTMLElement>('[data-cell="sleeve"]'); return sleeve === null || cover === null ? 0 : px(R(sleeve).width - R(cover).width); })();
+  return { vw: window.innerWidth, vh: window.innerHeight, squeezed, upperAir, regionTriangle, constructionEmpty, coverBeside, cols: { identity: cols(identity), lower: cols(lower), region: cols(region) }, bandH: identity === null ? null : px(R(identity).height), lowerH: lower === null ? null : px(R(lower).height), cells, pairs, escapes, inFront, behindCount: behind.length, cut, upper, coverW: cover === null ? 0 : px(R(cover).width), paintKinds: [...new Set(paints.map(name))] };
 };
 
 /** What every viewport must satisfy; returns what failed. Paint in front of type is judged by its own test. */
@@ -288,26 +291,42 @@ test('below the fork, at every width: the upper cells wrap at their size, the co
     checked += 1;
     if (m.lowerH !== null && m.lowerH !== BANDS.record) sawAutoBand = true;
     const j = judge(m);
+    /*
+      §41 (step 46): from 960 to 1439 each upper track is half the page and
+      the band stays 547, so no width is unassigned. §28's 480 tracks held
+      there before, and the page's gain sat unassigned right of the
+      construction: 40 at 1000, 240 at 1200, 479 at 1439. Below 960 the one
+      480 track stands.
+    */
+    const track = w >= 960 ? w / 2 : 480;
     for (const u of m.upper) {
       if (u.display === 'none' || u.display === 'absent') j.push(`upper cell ${u.n} is ${u.display} (§28: the upper cells wrap, they do not hide)`);
-      else if (w >= 480 && Math.abs(u.w - 480) > 1) j.push(`upper cell ${u.n} is ${u.w} wide, not its own 480`);
+      else if (w >= 480 && Math.abs(u.w - track) > 1) j.push(`upper cell ${u.n} is ${u.w} wide, not ${track} (§41: half the page from 960; 480 below)`);
+    }
+    if (w >= 960) {
+      const identity = m.upper.find((u) => u.n === 'identity'); const still = m.upper.find((u) => u.n === 'still');
+      if (identity !== undefined && still !== undefined && Math.abs(w - identity.w - still.w) > 1) j.push(`${w - identity.w - still.w}px of the first row is unassigned (§41: none)`);
+      /* §30's ceiling holds on both sides of the fork: empty width in the upper band is always narrower than one upper cell. */
+      const empty = (identity !== undefined && still !== undefined ? w - identity.w - still.w : 0) + m.constructionEmpty + m.coverBeside;
+      if (empty >= 480) j.push(`empty width ${empty} (unassigned + construction ${m.constructionEmpty} + beside the square ${m.coverBeside}) is not under one upper cell`);
     }
     if (m.coverW < 1) j.push('no cover drawn');
     /*
       §28 at 8 columns: "the third takes a second row, with 480 of air beside
       it." §37 makes that air a section carrying the tint field and no
       figure (`28/upper-air-figure`). Shown from 960 to 1439 only: beside
-      the sleeve on the second row, its own 480, with a flat inside; hidden
-      where the cells sit three abreast or stack.
+      the sleeve on the second row, half the page (§41), with a flat inside;
+      hidden where the cells sit three abreast or stack.
     */
     const eight = w >= 960;
     if (eight) {
       if (m.upperAir === null || m.upperAir.display === 'none') j.push('the upper air is missing at 8 columns (§28)');
       else {
         const sleeve = m.upper.find((u) => u.n === 'sleeve');
-        if (Math.abs(m.upperAir.w - 480) > 1) j.push(`the upper air is ${m.upperAir.w} wide, not 480`);
+        if (Math.abs(m.upperAir.w - w / 2) > 1) j.push(`the upper air is ${m.upperAir.w} wide, not half the page (§41)`);
+        if (sleeve !== undefined && Math.abs(w - m.upperAir.w - sleeve.w) > 1) j.push(`${w - m.upperAir.w - sleeve.w}px of the second row is unassigned (§41: none)`);
         /* Step 39 (§37): the air LEFT of the sleeve in the second row, by grid order only -- markup and reading order stay -- so the tint triangle bleeds off the page's left edge, a third or more outside (§21). */
-        if (sleeve !== undefined && (Math.abs(m.upperAir.y - sleeve.y) > 1 || m.upperAir.x > 1 || sleeve.x < m.upperAir.x + 479)) j.push(`the upper air is not left of the sleeve on the second row (air ${m.upperAir.x},${m.upperAir.y}; sleeve ${sleeve.x},${sleeve.y})`);
+        if (sleeve !== undefined && (Math.abs(m.upperAir.y - sleeve.y) > 1 || m.upperAir.x > 1 || sleeve.x < m.upperAir.x + m.upperAir.w - 1)) j.push(`the upper air is not left of the sleeve on the second row (air ${m.upperAir.x},${m.upperAir.y}; sleeve ${sleeve.x},${sleeve.y})`);
         if (m.upperAir.flatBleed === null) j.push('the upper air carries no tint triangle');
         else if (m.upperAir.flatBleed < 1 / 3) j.push(`the tint triangle bleeds ${(m.upperAir.flatBleed * 100).toFixed(0)}% off the page's left edge, less than §21's third`);
         /* §37, step 40: a section carrying the tint field and NO figure; the region's triangle is moved, not added. */

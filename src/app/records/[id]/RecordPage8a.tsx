@@ -297,7 +297,17 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
             1440 -- "which is ruled and accepted" (step 32). Plane.tsx makes
             that decision per record at render; nothing here suppresses.
           */
-          [data-band="identity"] { grid-template-columns: repeat(2, ${GRID_FORK / 3}px) !important; grid-auto-rows: ${BANDS.identity - 1}px; height: ${2 * BANDS.identity}px !important; }
+          /*
+            §41 (step 46): from 960 to 1439 each upper track is half the page
+            and the band stays 547. §28's two 480 tracks held here, and the
+            page's gain sat unassigned right of the construction: 40 at 1000,
+            240 at 1200, 479 at 1439 -- that unassigned width was the defect
+            (28/band-pinned-547). The cover cell is then W / 2 by 546, so its
+            square is width-bound to about 1092 and height-bound at 546 above.
+            The band's height is not the page's: 547 × W / 1440 was drafted and
+            withdrawn within §41 (41/band-scaled-by-width).
+          */
+          [data-band="identity"] { grid-template-columns: repeat(2, 50%) !important; grid-auto-rows: ${BANDS.identity - 1}px; height: ${2 * BANDS.identity}px !important; }
           [data-band="identity"] > [data-cell] { grid-column: span 1 !important; }
           /*
             Step 39 (§37): the air LEFT of the sleeve in the second row, by
