@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
-import { BANDS, GRID_FORK, IDENTITY_SPANS } from '../src/app/records/[id]/band-geometry';
+import { BANDS, GRID_FORK, IDENTITY_SPANS, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { bandHeightAt, upperSpansAt } from '../src/app/records/[id]/region-rows';
 import { COVER_CELL } from '../src/app/records/[id]/cover-geometry';
 import { STRIP_SPLIT, coverSquare, leftoverStrip } from '../src/app/records/[id]/cover-33';
@@ -222,7 +222,7 @@ test('§39, §40: above the fork the cover takes the spare columns, every cell t
   await login(page);
   const id = await seed(page);
   const seen: string[] = [];
-  for (const [width, height] of [[1680, 900], [1920, 950], [1920, 1080], [1920, 1200]] as const) {
+  for (const [width, height] of [[1680, NO_SCROLL_HEIGHT], [1920, 950], [1920, 1080], [1920, 1200]] as const) {
     await page.setViewportSize({ width, height });
     await page.goto(`/records/${id}`);
     await page.locator('[data-title-step][data-ladder]').waitFor({ timeout: 20_000 });
