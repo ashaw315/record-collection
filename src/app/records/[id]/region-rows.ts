@@ -458,7 +458,13 @@ export function pageWidthAt(viewport: number): number {
 export function upperSpansAt(viewport: number): { identity: number; still: number; sleeve: number; air: number } {
   const columns = columnsFor(viewport);
   const still = columns >= 16 ? 6 : columns >= 14 ? 5 : 4;
-  return { identity: 4, still, sleeve: 4, air: columns - 8 - still };
+  /*
+    §39 (step 44): the cover takes the spare columns and the upper band
+    carries no air -- 4 / 5 / 5 at fourteen, 4 / 6 / 6 at sixteen. §30 refused
+    to widen cells because their content does not grow; that is false of the
+    cover, which §33 makes the largest square its cell holds.
+  */
+  return { identity: 4, still, sleeve: still, air: 0 };
 }
 
 /**

@@ -393,7 +393,7 @@ describe('§30: the page above 1440 — 14 and 16 columns, a wider construction,
     expect(pageWidthAt(1600), 'and it takes it between 1440 and 1680 as well').toBe(1600);
   });
 
-  it('gives the construction the extra columns and leaves identity and cover at four', () => {
+  it('gives the construction and the cover the extra columns and leaves identity at four, with no air (§30, §39)', () => {
     /*
       §30: "the construction takes five columns at 14 (600 wide) and six at 16
       (720 wide), while the identity and cover cells keep four. The rule is
@@ -402,8 +402,9 @@ describe('§30: the page above 1440 — 14 and 16 columns, a wider construction,
       holds a square sleeve."
     */
     expect(upperSpansAt(1440)).toEqual({ identity: 4, still: 4, sleeve: 4, air: 0 });
-    expect(upperSpansAt(1680)).toEqual({ identity: 4, still: 5, sleeve: 4, air: 1 });
-    expect(upperSpansAt(1920)).toEqual({ identity: 4, still: 6, sleeve: 4, air: 2 });
+    /* §39 (step 44): the cover takes the spare columns and the upper band carries no air. */
+    expect(upperSpansAt(1680)).toEqual({ identity: 4, still: 5, sleeve: 5, air: 0 });
+    expect(upperSpansAt(1920)).toEqual({ identity: 4, still: 6, sleeve: 6, air: 0 });
   });
 
   it('keeps the band’s ratio above 1440, and gives the height to the construction', () => {

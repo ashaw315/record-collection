@@ -119,7 +119,8 @@ export function IdentityCell({
         help: at the triangle's 140px it would take height from the title on
         every long record for a mark that carries nothing.
       */
-      style={{ gridTemplateRows: '1fr' }}
+      /* §40: above the fork the page pins the track at the ladder's 510 and the cell's extra height is slack below it. */
+      style={{ gridTemplateRows: 'var(--identity-track, 1fr)' }}
     >
       <div data-track="content" className="flex flex-col justify-between">
       {/*

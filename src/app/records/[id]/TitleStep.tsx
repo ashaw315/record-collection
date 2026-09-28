@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { STEP_GAP, TITLE_STEPS, artistStep, titleStep } from './title-steps';
+import { LADDER_SUPPLY, STEP_GAP, TITLE_STEPS, artistStep, titleStep } from './title-steps';
 
 /**
  * §33's display ladder, applied by measuring rather than by counting
@@ -83,7 +83,8 @@ export function TitleStep({
       const track = el.closest('[data-track="content"]');
       if (!(cell instanceof HTMLElement) || block === null || track === null) return;
       const cellStyle = getComputedStyle(cell);
-      const supply = cell.clientHeight - parseFloat(cellStyle.paddingTop) - parseFloat(cellStyle.paddingBottom);
+      /* §40: the cell may be taller than the band's 1440 constant above the fork; the supply never is. */
+      const supply = Math.min(LADDER_SUPPLY, cell.clientHeight - parseFloat(cellStyle.paddingTop) - parseFloat(cellStyle.paddingBottom));
       const outer = (child: Element) => {
         const b = child.getBoundingClientRect();
         const s = getComputedStyle(child);

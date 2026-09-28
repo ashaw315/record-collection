@@ -5,13 +5,13 @@ import { Plane } from './Plane';
 import { Flat } from './OrnamentMarks';
 import { FLATS } from './ornament';
 import { CONTROL_HEIGHT } from './extended-grid';
-import { COVER_CELL } from './cover-geometry';
-import { SLEEVE_CELL, STRIP_SPLIT, coverSquare, leftoverStrip } from './cover-33';
+import { STRIP_SPLIT } from './cover-33';
+import { LADDER_SUPPLY } from './title-steps';
 import { MatrixSolid } from './MatrixSolid';
 import { AboutCell } from './AboutCell';
 import { ENTRY_LINES, aboutCellState } from './about-cell';
 import { CELL_PADDING } from './extended-grid';
-import { BAR_BOTTOM, BLOCK_BOTTOM, COVER, COVER_COLUMN, COVER_PAD } from './cover-geometry';
+import { COVER, COVER_COLUMN, COVER_PAD } from './cover-geometry';
 import { ConstructionStill } from './ConstructionStill';
 import { IdentityCell } from './IdentityCell';
 import { gridModules, type Diagonal } from './grid-modules';
@@ -235,6 +235,29 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
           ruling, so it is not this defect.
         */
         [data-band="identity"] > [data-cell="identity"], [data-band="identity"] > [data-cell="still"], [data-band="record"] > [data-cell] { border-right: 1px solid ${RULE}; }
+        /*
+          **§33's cover, per breakpoint (steps 44 and 45).** "The cover is the
+          largest square its cell holds", and the bar and block fill what it
+          leaves. The marks were absolute pixels inside a 480 × 546 wrapper,
+          so the square was 480 wherever the cell was. The cell is now a size
+          container: the square is min(100cqw, 100cqh); where the cell is
+          wider than tall the strip stands beside the square with the bar
+          above the block, and where it is taller the strip lies beneath with
+          the bar leading -- §33's rotation, decided by the cell's own aspect.
+          The bar takes §23's share along the strip (cover-33's STRIP_SPLIT).
+        */
+        [data-cell="sleeve"] { container-type: size; }
+        [data-cell="sleeve"] > [data-scale] { position: absolute; inset: 0; }
+        [data-cell="sleeve"] [data-cover], [data-cell="sleeve"] [data-mark="coverFrame"] { position: absolute; left: 0; top: 0; width: min(100cqw, 100cqh); height: min(100cqw, 100cqh); }
+        [data-cell="sleeve"] [data-mark="sleeveBar"], [data-cell="sleeve"] [data-mark="sleeveBlock"] { position: absolute; }
+        @container (min-aspect-ratio: 1 / 1) {
+          [data-mark="sleeveBar"] { left: 100cqh; top: 0; width: calc(100cqw - 100cqh); height: calc(100cqh * ${STRIP_SPLIT.bar}); }
+          [data-mark="sleeveBlock"] { left: 100cqh; top: calc(100cqh * ${STRIP_SPLIT.bar}); width: calc(100cqw - 100cqh); height: calc(100cqh * ${STRIP_SPLIT.block}); }
+        }
+        @container (max-aspect-ratio: 1 / 1) {
+          [data-mark="sleeveBar"] { left: 0; top: 100cqw; width: calc(100cqw * ${STRIP_SPLIT.bar}); height: calc(100cqh - 100cqw); }
+          [data-mark="sleeveBlock"] { left: calc(100cqw * ${STRIP_SPLIT.bar}); top: 100cqw; width: calc(100cqw * ${STRIP_SPLIT.block}); height: calc(100cqh - 100cqw); }
+        }
         @media (max-width: ${GRID_FORK - 1}px) {
           /* One column of full-width cells (§28): no cell has a neighbour on its right. The still ends the identity row at 8 columns. */
           [data-band="record"] > [data-cell], [data-band="identity"] > [data-cell="still"] { border-right-width: 0; }
@@ -317,7 +340,6 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
               was invalid and silently dropped (measured: transform none at
               390). tan(atan2(a, b)) is a / b typed as a number.
             */
-            [data-cell="sleeve"] > [data-scale] { transform: scale(tan(atan2(100vw, ${GRID_FORK / 3}px))); }
           }
           /*
             **§28, step 31: below 1440 the record band has no fixed height.**
@@ -362,7 +384,17 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
         */
         @media (min-width: ${GRID_FORK}px) {
           [data-band="identity"] { height: max(${BAND_AT_REFERENCE}px, ${((BAND_AT_REFERENCE / REFERENCE_HEIGHT) * 100).toFixed(4)}vh) !important; }
-          [data-band="identity"] > [data-cell="identity"], [data-band="identity"] > [data-cell="sleeve"] { height: ${SLEEVE_CELL.height}px; align-self: start; }
+          /*
+            §40 (step 45): every upper cell takes the band's full height.
+            This pinned the identity and sleeve cells at 546 with align-self
+            start, so the band's extra height painted as paper beneath both:
+            31.4px at 1920 × 950, 110 at 1080, 183 at 1200. The cells stretch
+            with the grid now; the identity cell's content track stays the
+            ladder's 510 and the extra is slack below it.
+          */
+          [data-cell="identity-content"] { --identity-track: ${LADDER_SUPPLY}px; }
+          /* §40: any paper the marks leave in the cover cell takes the ladder's tint step, not bare paper. */
+          [data-cell="sleeve"] { background: var(--sleeve-tint); }
         }
 
         /*
@@ -542,61 +574,23 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
         <div
           data-cell="sleeve"
           className="relative overflow-hidden"
-          style={{ gridColumn: `span ${IDENTITY_SPANS[2]}` }}
+          style={{ gridColumn: `span ${IDENTITY_SPANS[2]}`, ['--sleeve-tint' as string]: tint }}
         >
-          {(() => {
-            /* The CELL, 546 tall: the band's last pixel is the rule (see SLEEVE_CELL). */
-            const cell = SLEEVE_CELL;
-            const square = coverSquare(cell);
-            const strip = leftoverStrip(cell);
-            const along = strip.orientation === 'horizontal' ? strip.width : strip.height;
-            const barAlong = along * STRIP_SPLIT.bar;
-
-            return (
-              <div data-scale="" className="absolute left-0 top-0 origin-top-left" style={{ width: cell.width, height: cell.height }}>
-                {record.coverUrl === null ? (
-                  /* §5.3: a frame at paper luminance at the square's exact size, never a filled rectangle. */
-                  <div
-                    data-mark="coverFrame"
-                    className="absolute"
-                    style={{ left: square.x, top: square.y, width: square.size, height: square.size, border: `1px solid ${RULE}` }}
-                  />
-                ) : (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
-                    data-cover=""
-                    src={record.coverUrl}
-                    alt=""
-                    className="absolute block object-cover"
-                    style={{ left: square.x, top: square.y, width: square.size, height: square.size }}
-                  />
-                )}
-
-                {/*
-                  The bar and the block, lying in the strip. Order preserved:
-                  the bar leads, as it sat above the block in the column.
-                */}
-                <div
-                  data-mark="sleeveBar"
-                  className="absolute"
-                  style={
-                    strip.orientation === 'horizontal'
-                      ? { left: strip.x, top: strip.y, width: barAlong, height: strip.height, background: base }
-                      : { left: strip.x, top: strip.y, width: strip.width, height: barAlong, background: base }
-                  }
-                />
-                <div
-                  data-mark="sleeveBlock"
-                  className="absolute"
-                  style={
-                    strip.orientation === 'horizontal'
-                      ? { left: strip.x + barAlong, top: strip.y, width: along - barAlong, height: strip.height, background: INK }
-                      : { left: strip.x, top: strip.y + barAlong, width: strip.width, height: along - barAlong, background: INK }
-                  }
-                />
-              </div>
-            );
-          })()}
+          {/*
+            No geometry here: the square, the bar and the block are placed by
+            the stylesheet in the cell's own container units, so every
+            breakpoint sizes them from the cell it is in. Only the colours are
+            the record's and travel inline.
+          */}
+          <div data-scale="">
+            {record.coverUrl === null ? (
+              <div data-mark="coverFrame" style={{ border: `1px solid ${RULE}` }} />
+            ) : (
+              <img data-cover="" src={record.coverUrl} alt="" className="block object-cover" />
+            )}
+            <div data-mark="sleeveBar" style={{ background: base }} />
+            <div data-mark="sleeveBlock" style={{ background: INK }} />
+          </div>
         </div>
         {/*
           **§28's air beside the third upper cell, at 8 columns only.** "The

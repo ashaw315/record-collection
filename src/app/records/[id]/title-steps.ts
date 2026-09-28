@@ -1,3 +1,4 @@
+import { BANDS } from './band-geometry';
 /**
  * §33's display ladder for the identity cell.
  *
@@ -19,6 +20,18 @@ export const ARTIST_OF_TITLE = 5 / 9;
 
 /** §33: the demand is measured "with 24px of gap", and the gap is a floor. */
 export const STEP_GAP = 24;
+
+/** The identity cell's padding on each side (§4.2's cell). */
+export const IDENTITY_PADDING = 18;
+
+/**
+ * §40: "The ladder's supply stays the band's 1440 constant, 510: the identity
+ * cell's inner height in §27's 547 band, which Code measured as the content
+ * track after its padding (§33). So a title's size never depends on the
+ * window's height." Above §18's fork the cell takes the band's full height
+ * and the extra is slack below the content; the ladder does not see it.
+ */
+export const LADDER_SUPPLY = BANDS.identity - 1 - 2 * IDENTITY_PADDING;
 
 /*
   No line cap. §33 withdrew its own: "Withdrawn within §33: the title sets in
