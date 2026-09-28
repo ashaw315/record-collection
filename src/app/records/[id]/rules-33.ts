@@ -48,13 +48,22 @@ export function freeHeightSolid({
   cellHeight,
   textBottom,
   cellWidth,
+  inset = 0,
 }: {
   cellHeight: number;
   /** Where the matrix text ends, measured from the cell's top. */
   textBottom: number;
   cellWidth: number;
+  /** The bottom inset the solid sits on; the room below the text ends there. */
+  inset?: number;
 }): SolidFit {
-  const free = Math.max(0, cellHeight - textBottom);
+  /*
+    The free height is the room the solid can occupy: from the text's bottom
+    to the inset it sits on, not to the cell's edge. Measured to the edge, a
+    114-tall cell (§41's packed band at 1000) gave a 53px solid on an 18px
+    inset whose top sat 9px above the text, in front of type (§34).
+  */
+  const free = Math.max(0, cellHeight - inset - textBottom);
   let height = free * SOLID_OF_FREE_HEIGHT;
   let width = height * (ARCHETYPE_WIDTH / ARCHETYPE_HEIGHT);
 

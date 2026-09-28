@@ -70,6 +70,7 @@ export function MatrixSolid({ inset = 18 }: { inset?: number }) {
             17px inside the left inset, not 18.
           */
           cellWidth: cell.clientWidth - 2 * inset,
+          inset,
         }),
       );
     };

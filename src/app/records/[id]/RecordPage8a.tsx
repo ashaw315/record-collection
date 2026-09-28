@@ -3,6 +3,7 @@ import { BANDS, CONTENT_MEASURE, GRID_COLUMN, GRID_COLUMNS, GRID_FORK, IDENTITY_
 import { BAND_AT_REFERENCE, REFERENCE_HEIGHT, regionStylesheet, widePageStylesheet } from './region-rows';
 import { Plane } from './Plane';
 import { Flat } from './OrnamentMarks';
+import { RecordBandPacker } from './RecordBandPacker';
 import { FLATS } from './ornament';
 import { CONTROL_HEIGHT } from './extended-grid';
 import { STRIP_SPLIT } from './cover-33';
@@ -320,9 +321,20 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
           /* Specificity above the band's own span-1 rule ([data-band] > [data-cell]), which otherwise auto-places both. */
           [data-band="identity"] > [data-upper-air] { display: block; grid-row: 2 !important; grid-column: 1 !important; }
           [data-band="identity"] > [data-cell="sleeve"] { grid-row: 2 !important; grid-column: 2 !important; }
-          [data-band="record"] { grid-template-columns: 1fr !important; }
-          [data-band="record"] > [data-cell] { grid-column: 1 / -1 !important; }
+          /*
+            §41 (step 47): from 960 to 1439 the record band packs its cells
+            by content, a quarter of the band at a time, in reading order.
+            RecordBandPacker measures each cell after paint and writes its
+            quarters as --packed (no backticks in this template: they end it);
+            until it has, and on the server, a cell
+            spans the whole row, which is §28's one column. Below 960 the
+            one column stands (the 959 block).
+          */
+          [data-band="record"] { grid-template-columns: repeat(4, 1fr) !important; }
+          [data-band="record"] > [data-cell] { grid-column: span var(--packed, 4) !important; }
           @media (max-width: 959px) {
+            [data-band="record"] { grid-template-columns: 1fr !important; }
+            [data-band="record"] > [data-cell] { grid-column: 1 / -1 !important; }
             [data-band="identity"] { grid-template-columns: ${GRID_FORK / 3}px !important; height: ${3 * BANDS.identity}px !important; }
             /* Stacked (§28): the identity cell is alone in its row too. */
             [data-band="identity"] > [data-cell="identity"] { border-right-width: 0; }
@@ -642,6 +654,7 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
         className="grid grid-cols-12 gap-0"
         style={{ height: BANDS.record, borderBottom: `1px solid ${RULE}` }}
       >
+        <RecordBandPacker />
         {/* Provenance. */}
         <div
           data-cell="provenance"

@@ -143,6 +143,19 @@ describe('§41: the upper tracks from 960 to 1439 are half the page (step 46)', 
   });
 });
 
+describe('§41: the record band packed by content from 960 to 1439 (step 47)', () => {
+  it('lays four quarter tracks in the 8-column block, each cell spanning what the client measured, and one column below 960', () => {
+    const html = renderToStaticMarkup(<RecordPage8a record={{ ...record(null) }} />);
+    const style = /<style>([\s\S]*?)<\/style>/.exec(html)?.[1] ?? '';
+    const eight = style.slice(style.indexOf('@media (max-width: 1439px)'), style.indexOf('@media (max-width: 959px)'));
+    expect(eight, 'four quarters of the band').toMatch(/\[data-band="record"\]\s*\{[^}]*grid-template-columns:\s*repeat\(4,\s*1fr\)/);
+    expect(eight, 'each cell spans the quarters the client measured; a whole row until it has').toMatch(/\[data-band="record"\]\s*>\s*\[data-cell\]\s*\{[^}]*grid-column:\s*span var\(--packed,\s*4\)/);
+    const four = style.slice(style.indexOf('@media (max-width: 959px)'), style.indexOf('@media (max-width: 479px)'));
+    expect(four, 'below 960 the one column stands (§41)').toMatch(/\[data-band="record"\]\s*>\s*\[data-cell\]\s*\{[^}]*grid-column:\s*1 \/ -1/);
+    expect(html, 'the packer is in the band').toContain('data-record-band-packer');
+  });
+});
+
 describe('the frame’s last cell is the About, else the entry, else the diagonal (§33)', () => {
   const entry = { entry: 'Played it right through.', entryDate: '2026-09-20' };
 

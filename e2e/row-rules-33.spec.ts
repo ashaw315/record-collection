@@ -212,7 +212,7 @@ test('the matrix solid sits inside both of its cell’s insets, and the height y
     /* Edges against the PADDING box: the cell's right rule is its border, and the inset sits inside it. */
     const padLeft = c.x + parseFloat(cs.borderLeftWidth);
     const padRight = c.right - parseFloat(cs.borderRightWidth);
-    return { left: s2.x - padLeft, right: padRight - s2.right, width: s2.width, height: s2.height, cellWidth: padRight - padLeft, inset, free: c.bottom - t.bottom };
+    return { left: s2.x - padLeft, right: padRight - s2.right, width: s2.width, height: s2.height, cellWidth: padRight - padLeft, inset, free: c.bottom - inset - t.bottom };
   });
   expect(m, 'the solid is drawn').not.toBeNull();
   if (m === null) return;

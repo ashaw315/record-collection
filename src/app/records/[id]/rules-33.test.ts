@@ -16,12 +16,28 @@ import { freeHeightSolid, MIN_FACE, SOLID_OF_FREE_HEIGHT } from './rules-33';
 describe('§33: the matrix solid takes its free height', () => {
   it('is 0.855 of the space below the text, not of the cell', () => {
     /* The measured cell: 240 × 299, with the matrix text occupying the top. */
-    const solid = freeHeightSolid({ cellHeight: 299, textBottom: 150, cellWidth: 240 });
+    const solid = freeHeightSolid({ cellHeight: 299, textBottom: 150, cellWidth: 240, inset: 0 });
 
     expect(solid.drawn, 'a solid is drawn at this size').toBe(true);
     /* Free height is 299 - 150 = 149; 0.855 of that is 127.4. */
     expect(solid.height).toBeCloseTo(149 * SOLID_OF_FREE_HEIGHT, 1);
     expect(solid.height, 'and NOT 0.855 of the section height').not.toBeCloseTo(299 * 0.855, 0);
+  });
+
+  it('measures the free height to the bottom inset, so a shallow cell’s solid never crosses its text', () => {
+    /*
+      §33 gives "0.855 of the cell's free height below the matrix text",
+      placed bottom-right inside the insets. The room the solid can occupy
+      ends at the inset it sits on, not at the cell's edge. Measured at 1000
+      once §41 packed the band: a 114-tall matrix cell with its text ending
+      at 52 had 62 below the text; 0.855 of that, 53, sat on the 18px inset
+      with its top 9px above the text, in front of type (§34). To the inset
+      the room is 44, the solid 37.6, and its smallest face 13 clears §29's 6.
+    */
+    const shallow = freeHeightSolid({ cellHeight: 114, textBottom: 52, cellWidth: 214, inset: 18 });
+    expect(shallow.drawn).toBe(true);
+    expect(shallow.height).toBeCloseTo((114 - 18 - 52) * SOLID_OF_FREE_HEIGHT, 1);
+    expect(shallow.height + 18, 'the solid sits on the inset and under the text').toBeLessThanOrEqual(114 - 52);
   });
 
   it('keeps the drawing’s aspect, so the width follows the height', () => {
