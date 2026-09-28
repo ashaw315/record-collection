@@ -200,25 +200,23 @@ describe('the frame’s last cell is the About, else the entry, else the diagona
   });
 
   /**
-   * §33: "An About longer than ten lines — a hand edit, or one written before
-   * this ruling — shows nine lines and more ↓, which opens the lower row's
-   * editor with the full text." Lines are measured after paint; on the
-   * server the measured character budget is the guess, so a long About never
-   * paints unclamped for a frame.
+   * §42 (step 50): "An About longer than its cell scrolls inside the cell;
+   * there is no clamp and no more link... The text region is focusable and
+   * labelled 'About this record', so a keyboard can scroll it." §33's nine
+   * lines and more ↓ are withdrawn (33/more-link).
    */
-  it('clamps a long About to nine lines on first paint and links more ↓ to the editor', () => {
-    const long = 'A sentence about the record that goes on. '.repeat(20);
-    const cell = lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), about: long, journalEntry: null }} />));
-    expect(cell).toContain('data-clamped');
-    expect(cell).toMatch(/-webkit-line-clamp:9/);
-    expect(cell).toContain('href="#snippet"');
-    expect(cell).toContain('more ↓');
-  });
-
-  it('does not clamp an About within the budget', () => {
-    const cell = lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), about: 'Short.', journalEntry: null }} />));
-    expect(cell).not.toContain('data-clamped');
-    expect(cell).not.toContain('more ↓');
+  it('renders the About whole in a focusable, labelled region that scrolls, with no clamp and no more link', () => {
+    for (const about of ['Short.', 'A sentence about the record that goes on. '.repeat(20)]) {
+      const cell = lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), about, journalEntry: null }} />));
+      const region = /<div[^>]*data-field="about"[^>]*>/.exec(cell)?.[0] ?? '';
+      expect(region, 'the text region').not.toBe('');
+      expect(region, 'focusable').toMatch(/tabindex="0"/);
+      expect(region, 'labelled').toMatch(/aria-label="About this record"/);
+      expect(region, 'a region').toMatch(/role="region"/);
+      expect(cell, 'no clamp').not.toMatch(/data-clamped|-webkit-line-clamp/);
+      expect(cell, 'no more link').not.toContain('more ↓');
+      expect(cell, 'no anchor to the row from the cell').not.toContain('href="#snippet"');
+    }
   });
 });
 

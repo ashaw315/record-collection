@@ -197,25 +197,19 @@ describe('the editor’s budget line (§34)', () => {
 });
 
 /**
- * §36: "when the frame clamps the About, the row carries the full text above
- * the by-line, Edit and Delete; when the About fits, the row carries only
- * those. The full text appears twice only on a record whose frame cuts it."
- * On the server the frame's clamp is the budget guess, as AboutCell's is;
- * the client measures.
+ * §42 (step 50): "the lower row keeps no copy of the text... Nothing
+ * replaces the reading copy: it was only ever the target of the more link,
+ * and the frame now holds the whole text." (36/lower-row-reading-copy)
  */
-describe('§36: the row carries the full text only when the frame clamps it', () => {
+describe('§42: the row carries no reading copy, whatever the About’s length', () => {
   const props = { recordId: 'r1', snippetEditedAt: null, configured: true, base: null, ladder: null };
-  it('shows the full text above the by-line for an About past the budget', () => {
-    const text = 'A sentence about the record that goes on. '.repeat(20).trim();
-    const html = renderToStaticMarkup(<SnippetPanel {...props} snippet={text} />);
-    const full = html.indexOf('data-testid="snippet-full"');
-    expect(full, 'the full reading').toBeGreaterThan(-1);
-    expect(html.slice(full)).toContain('A sentence about the record that goes on.');
-    expect(full, 'above the by-line').toBeLessThan(html.indexOf('data-testid="snippet-generated-label"'));
-  });
-  it('shows only the by-line and controls for an About that fits', () => {
-    const html = renderToStaticMarkup(<SnippetPanel {...props} snippet="Short and it fits." />);
-    expect(html).not.toContain('snippet-full');
-    expect(html).toContain('snippet-edit');
+  it('shows the by-line and controls only, for a long About and a short one', () => {
+    for (const text of ['A sentence about the record that goes on. '.repeat(20).trim(), 'Short and it fits.']) {
+      const html = renderToStaticMarkup(<SnippetPanel {...props} snippet={text} />);
+      expect(html, 'no reading copy').not.toContain('snippet-full');
+      expect(html).toContain('snippet-edit');
+      expect(html).toContain('snippet-delete');
+      expect(html, 'the by-line').toMatch(/snippet-generated-label|snippet-yours/);
+    }
   });
 });

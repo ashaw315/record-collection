@@ -225,6 +225,22 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
         [data-track="content"] { width: ${CONTENT_MEASURE}px; max-width: 100%; }
         [data-upper-air] { display: none; }
         /*
+          §42 (step 50): the About's scrollbar is "always visible while the
+          text overflows, never an overlay that hides at rest". Measured in
+          Chromium with scrollbars shown: the WebKit pseudo-element rules
+          alone give a classic scrollbar that takes 8px of layout width while
+          the text overflows and none when it fits; scrollbar-width and
+          scrollbar-color, alone or alongside, give an overlay that takes
+          none, and in Chrome their presence cancels the pseudo-elements. So
+          only the WebKit rules are stated; the thumb is §W.31's 0.72
+          hairline colour, the track the cell's own paper. (Headless Chromium
+          hides all scrollbars unless launched without --hide-scrollbars,
+          which the spec does for this measurement.)
+        */
+        [data-field="about"]::-webkit-scrollbar { width: 8px; }
+        [data-field="about"]::-webkit-scrollbar-thumb { background: ${RULE}; }
+        [data-field="about"]::-webkit-scrollbar-track { background: transparent; }
+        /*
           **Structural verticals live here, per fork, never inline.** §3's
           rule sits on "every structural edge" and §33's on the boundary
           between two cells; a rule whose neighbour is the page's edge divides

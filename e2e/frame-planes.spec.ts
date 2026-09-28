@@ -264,47 +264,58 @@ test('the note leads the Journal section even with no entry (§33)', async ({ pa
  * Man's 745 characters set to fourteen lines, so a text of that length is
  * the case.
  */
-test('an About past ten lines shows nine and more ↓, which reaches the editor (§33)', async ({ page }) => {
+test('an About longer than its cell scrolls inside it: focusable, labelled, the scrollbar taking width, no clamp and no more link (§42)', async ({ page, playwright }) => {
   const suffix = makeSuffix();
   const id = await aRecord(page, suffix);
   const long = `${suffix} ` + 'A sentence about the record that goes on for a while and then some more. '.repeat(10);
   await getTestDb().execute(sql`UPDATE records SET snippet = ${long} WHERE id = ${id}::uuid`);
-  /*
-    **At the frame's reference width.** The clamp is measured against the
-    cell the page draws: below the 1440 fork the lower frame is one column
-    and this same text sets to four lines in a 1242px cell, so nothing
-    clamps -- correctly. Playwright's default viewport is 1280.
-  */
+  /* At the fork the cell's height is fixed, so the region scrolls; below it the cell is sized by its content and the whole text sets (§41). */
   await page.setViewportSize({ width: GRID_FORK, height: NO_SCROLL_HEIGHT });
   await page.goto(`/records/${id}`);
   await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
   await page.waitForTimeout(600);
-
   const about = page.getByTestId('record-page-8a').locator('[data-field="about"]');
+  await expect(about, 'the whole text is in the frame').toContainText('and then some more.');
+  await expect(about).toHaveAttribute('role', 'region');
+  await expect(about).toHaveAttribute('aria-label', 'About this record');
+  await expect(about).toHaveAttribute('tabindex', '0');
+  await expect(about, 'the frame says it scrolls').toHaveAttribute('data-scrolls');
+  const m = await about.evaluate((node) => { const el = node as HTMLElement; return ({ overflowY: getComputedStyle(el).overflowY, scrollHeight: el.scrollHeight, clientHeight: el.clientHeight, gutter: el.offsetWidth - el.clientWidth, lineHeight: parseFloat(getComputedStyle(el).lineHeight), top: el.scrollTop }); });
+  expect(['auto', 'scroll'], 'a scroll container').toContain(m.overflowY);
+  expect(m.scrollHeight, 'the text overflows the region').toBeGreaterThan(m.clientHeight);
   /*
-    **The measuring copy is the paragraph's width.** It spanned the cell's
-    padding once, 358 against 322, and counted ten lines where the page drew
-    eleven; a probe that is not the element measures something else.
+    Headless Chromium hides every scrollbar (--hide-scrollbars), so the
+    gutter cannot be seen in this harness's browser; it is measured in a
+    second Chromium launched without that flag, which is the browser a
+    person has. Measured there: the WebKit rules give 8px while the text
+    overflows and 0 when it fits.
   */
-  const widths = await page.evaluate(() => {
-    const cell = document.querySelector('[data-cell="note"]') as HTMLElement;
-    const p = cell.querySelector('[data-field="about"]') as HTMLElement;
-    const probe = cell.querySelector('p[aria-hidden="true"]') as HTMLElement;
-    return { paragraph: p.getBoundingClientRect().width, probe: probe.getBoundingClientRect().width };
-  });
-  expect(widths.probe, `the probe (${widths.probe}) measures on the paragraph's own width (${widths.paragraph})`).toBeCloseTo(widths.paragraph, 0);
-  /* Presence, not value: the attribute is a boolean marker written as an empty string. */
-  await expect(about).toHaveAttribute('data-clamped');
-  const m = await about.evaluate((el) => ({ lines: Math.round(el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight)), clamp: getComputedStyle(el).webkitLineClamp }));
-  expect(m.lines, 'nine visible lines').toBe(9);
-  expect(m.clamp).toBe('9');
-
-  const more = page.getByTestId('record-page-8a').locator('[data-field="about-more"]');
-  await expect(more).toHaveText('more ↓');
-  await expect(more).toHaveAttribute('href', '#snippet');
-  await more.click();
-  await expect(page).toHaveURL(/#snippet$/);
-  await expect(page.locator('#snippet')).toBeInViewport();
+  const shown = await playwright.chromium.launch({ ignoreDefaultArgs: ['--hide-scrollbars'] });
+  try {
+    const ctx = await shown.newContext({ viewport: { width: GRID_FORK, height: NO_SCROLL_HEIGHT } });
+    const p2 = await ctx.newPage();
+    await login(p2);
+    await p2.goto(`/records/${id}`);
+    await p2.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
+    await p2.waitForTimeout(600);
+    const gutter = await p2.locator('[data-testid="record-page-8a"] [data-field="about"]').evaluate((node) => { const el = node as HTMLElement; return el.offsetWidth - el.clientWidth; });
+    expect(gutter, 'the scrollbar takes width: visible while the text overflows, not an overlay that hides at rest').toBeGreaterThan(0);
+  } finally {
+    await shown.close();
+  }
+  expect(page.getByTestId('record-page-8a').locator('[data-field="about-more"]'), 'no more link').toHaveCount(0);
+  await expect(about).not.toHaveAttribute('data-clamped');
+  /* A keyboard can scroll it: focus, then arrow down. */
+  await about.focus();
+  await page.keyboard.press('ArrowDown');
+  await page.waitForTimeout(200);
+  expect(await about.evaluate((el) => el.scrollTop), 'scrolled by the keyboard').toBeGreaterThan(0);
+  /* A short About: the same region, nothing to scroll, no gutter claimed. */
+  await getTestDb().execute(sql`UPDATE records SET snippet = ${`${suffix} short.`} WHERE id = ${id}::uuid`);
+  await page.reload();
+  await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
+  await page.waitForTimeout(600);
+  await expect(about).not.toHaveAttribute('data-scrolls');
 });
 
 test('the frame counts the images and links to their editor', async ({ page }) => {

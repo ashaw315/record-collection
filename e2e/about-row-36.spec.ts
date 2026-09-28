@@ -26,7 +26,8 @@ const post = async (page: Page, path: string, data: unknown) => { const j = awai
  * Loss Of Life (482, nine lines) fits, so the row carries the by-line and
  * controls only. Real About text, stand-in fields otherwise.
  */
-test('the row carries the full text only for a record whose frame clamps its About (§36)', async ({ page }) => {
+/* §42 (step 50): the row keeps no copy of the text; the frame scrolls a long About and holds a short one whole. */
+test('the row carries no reading copy; the frame scrolls The Hurdy Gurdy Man’s About and holds Loss Of Life’s whole (§42)', async ({ page }) => {
   await login(page);
   const rows: Array<{ id: string; title: string; about: string | null }> = JSON.parse(readFileSync('docs/captures/real-records.json', 'utf8'));
   const artist = await post(page, '/api/artists', { name: 'MGMT' });
@@ -46,18 +47,12 @@ test('the row carries the full text only for a record whose frame clamps its Abo
     await page.goto(`/records/${r.id}`);
     await page.locator('[data-field="eyebrow"]').waitFor({ timeout: 20_000 });
     await page.waitForTimeout(750);
-    const clamped = await page.locator('[data-field="about"]').getAttribute('data-clamped');
-    const full = page.getByTestId('snippet-full');
-    if (title === 'The Hurdy Gurdy Man') {
-      expect(clamped, 'the frame clamps it').not.toBeNull();
-      await expect(page.locator('[data-field="about-more"]')).toHaveAttribute('href', '#snippet');
-      await expect(full, 'the row carries the full reading').toHaveText(r.about ?? '');
-      const order = await page.evaluate(() => { const s = document.querySelector('section#snippet') as HTMLElement; return { full: s.innerHTML.indexOf('snippet-full'), byline: s.innerHTML.search(/snippet-(generated-label|yours)/) }; });
-      expect(order.full, 'above the by-line').toBeLessThan(order.byline);
-    } else {
-      expect(clamped, 'the frame holds it whole').toBeNull();
-      await expect(full, 'no second copy of a text the frame shows whole').toHaveCount(0);
-    }
+    const scrolls = await page.locator('[data-field="about"]').getAttribute('data-scrolls');
+    await expect(page.getByTestId('snippet-full'), `${title}: the row carries no reading copy`).toHaveCount(0);
+    await expect(page.locator('[data-field="about-more"]'), 'and there is no more link').toHaveCount(0);
+    await expect(page.locator('[data-field="about"]'), 'the frame holds the whole text').toContainText((r.about ?? '').slice(-40).trim());
+    if (title === 'The Hurdy Gurdy Man') expect(scrolls, 'the frame scrolls it').not.toBeNull();
+    else expect(scrolls, 'the frame holds it whole').toBeNull();
     await expect(page.getByTestId('snippet-edit')).toBeVisible();
     await expect(page.getByTestId('snippet-delete')).toBeVisible();
   }

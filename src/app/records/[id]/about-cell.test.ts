@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { aboutBudget, ABOUT_CHAR_BUDGET, ABOUT_CLAMP_LINES, ABOUT_LINES, ENTRY_LINES, aboutCellState, present, clampFor } from './about-cell';
+import * as aboutCellModule from './about-cell';
+import { aboutBudget, ABOUT_CHAR_BUDGET, ABOUT_LINES, ENTRY_LINES, aboutCellState, present } from './about-cell';
 
 /**
  * §33 (d), amended: "The lower frame's last cell shows the record's About,
@@ -55,7 +56,6 @@ describe('§33 (d): the last cell is the About, else the entry, else nothing', (
    */
   it('states the line rules', () => {
     expect(ABOUT_LINES).toBe(10);
-    expect(ABOUT_CLAMP_LINES).toBe(9);
     expect(ENTRY_LINES).toBe(4);
   });
 
@@ -102,14 +102,14 @@ describe('the editor states the About budget', () => {
  * recovered from the cell rather than assumed. At 1320 the same cell holds
  * 162px of room: eight lines whole, and a clamp of seven.
  */
-describe('clampFor: the About clamps to the lines its cell holds (§36)', () => {
-  it('recovers ten whole and nine clamped at 1440’s room', () => {
-    expect(clampFor({ lines: 10, room: 213, lineHeight: 19.5, more: 19 })).toBeNull();
-    expect(clampFor({ lines: 14, room: 213, lineHeight: 19.5, more: 19 })).toBe(9);
-  });
-  it('clamps to fewer lines in a smaller cell, and never below one', () => {
-    expect(clampFor({ lines: 9, room: 162, lineHeight: 19.5, more: 19 })).toBe(7);
-    expect(clampFor({ lines: 8, room: 162, lineHeight: 19.5, more: 19 })).toBeNull();
-    expect(clampFor({ lines: 3, room: 10, lineHeight: 19.5, more: 19 })).toBe(1);
+
+/**
+ * §42 (step 50): "An About longer than its cell scrolls inside the cell;
+ * there is no clamp and no more link." The nine-and-more clamp and its
+ * room-derived budget are withdrawn (33/more-link).
+ */
+describe('§42: no clamp', () => {
+  it('exports no clamp count and no clamp function', () => {
+    expect(Object.keys(aboutCellModule).filter((k) => /CLAMP|clampFor/i.test(k))).toEqual([]);
   });
 });

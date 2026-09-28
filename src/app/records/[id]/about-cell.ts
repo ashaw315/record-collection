@@ -19,9 +19,6 @@
 /** §33: "Claude writes it to fit ten lines of the cell." */
 export const ABOUT_LINES = 10;
 
-/** §33: an About longer than ten lines "shows nine lines and more ↓". */
-export const ABOUT_CLAMP_LINES = 9;
-
 /** The entry fallback keeps the four-line clamp from the paragraph journal-first withdrew only the first sentence of. */
 export const ENTRY_LINES = 4;
 
@@ -77,26 +74,4 @@ export function aboutCellState({
  */
 export function aboutBudget(text: string): { chars: number; budget: number } {
   return { chars: text.trim().length, budget: ABOUT_CHAR_BUDGET };
-}
-
-/**
- * §36: the About's budget "is re-measured per width, as ten lines of the
- * rendered cell" -- and the rendered cell scales while its type holds, so
- * the lines it holds are what is measured, ten at 1440 and fewer in the
- * scaling band. `room` is the height left for the paragraph in its cell
- * (the clip's bottom less the paragraph's top and everything below it);
- * `more` is the height "more ↓" takes when the text is clamped.
- *
- * Returns null when every line fits the whole-line budget, else the lines
- * to clamp to: the budget less one, the line "more ↓" takes -- §33's "shows
- * nine lines and more ↓" for a budget of ten, recovered from the cell at
- * 1440 and scaled with it in the band. Never fewer than one. `more` is kept
- * as the link's measured height for the room's accounting by the caller.
- */
-export function clampFor({ lines, room, lineHeight, more }: { lines: number; room: number; lineHeight: number; more: number }): number | null {
-  void more;
-  if (lineHeight <= 0) return null;
-  const budget = Math.floor(room / lineHeight + 1e-6);
-  if (lines <= budget) return null;
-  return Math.max(1, budget - 1);
 }

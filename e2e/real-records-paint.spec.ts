@@ -93,7 +93,7 @@ const READ = () => {
   /* The specific items. */
   const about = document.querySelector('[data-field="about"]') as HTMLElement | null;
   const aboutLines = about === null ? null : Math.round(R(about).height / parseFloat(getComputedStyle(about).lineHeight));
-  const more = document.querySelector('[data-field="about-more"]') !== null;
+  const more = document.querySelector('[data-field="about"][data-scrolls]') !== null;
   const noteCell = document.querySelector('[data-cell="note"]') as HTMLElement | null;
   const foot = noteCell?.querySelector('[data-field="image-count"]') as HTMLElement | null;
   const footCut = noteCell !== null && foot !== null ? px(R(foot).bottom - (R(noteCell).top + noteCell.clientHeight)) : null;

@@ -127,14 +127,15 @@ const MEASURE = () => {
   for (const tx of texts) {
     let clip: HTMLElement | null = tx.parentElement;
     while (clip !== null && getComputedStyle(clip).overflowY === 'visible' && getComputedStyle(clip).overflowX === 'visible') clip = clip.parentElement;
-    if (clip === null || clip.getAttribute('data-clamped') !== null || tx.getAttribute('data-clamped') !== null) continue;
+    /* §42: the About scrolls inside its region, so its last visible line is cut at the region's foot by rule. */
+    if (clip === null || ((getComputedStyle(clip).overflowY === 'auto' || getComputedStyle(clip).overflowY === 'scroll') && clip.scrollHeight > clip.clientHeight)) continue;
     const c = R(clip); const e = extent(tx); const b = { top: e.y - window.scrollY, bottom: e.y + e.h - window.scrollY, left: e.x - window.scrollX, right: e.x + e.w - window.scrollX };
     const by = Math.max(0, b.bottom - (c.top + clip.clientHeight + 1), b.right - (c.left + clip.clientWidth + 1), c.top - 1 - b.top, c.left - 1 - b.left);
     if (by > 0.5) cut.push(`"${(tx.textContent ?? '').trim().slice(0, 24)}" cut by ${px(by)}px in ${name(clip)}`);
   }
 
-  /* A clamped About renders exactly its clamp lines: a flex column squeezed it to 6.4 lines against a clamp of 9, a cut the clip test cannot see because the paragraph is its own clipper. */
-  const squeezed = Array.from(document.querySelectorAll<HTMLElement>('[data-field="about"][data-clamped]')).flatMap((p) => { const lh = parseFloat(getComputedStyle(p).lineHeight); const clamp = Number(getComputedStyle(p).webkitLineClamp); const drawn = p.getBoundingClientRect().height / lh; return Math.abs(drawn - clamp) > 0.15 ? [`About clamped to ${clamp} draws ${drawn.toFixed(2)} lines`] : []; });
+  /* §42 withdrew the clamp; nothing squeezes an About now, and the measure stays so the judge's shape does not change. */
+  const squeezed: string[] = [];
   const upper = ['identity', 'still', 'sleeve'].map((n) => { const el = document.querySelector<HTMLElement>(`[data-cell="${n}"]`); return { n, display: el === null ? 'absent' : getComputedStyle(el).display, w: el === null ? 0 : px(R(el).width), h: el === null ? 0 : px(R(el).height), x: el === null ? 0 : px(R(el).left + window.scrollX), y: el === null ? 0 : px(R(el).top + window.scrollY) }; });
   const upperAir = (() => { const el = document.querySelector<HTMLElement>('[data-upper-air]'); if (el === null) return null; const b = box(el); const flat = el.querySelector<HTMLElement>('[data-ornament="flat"]'); const fb = flat === null ? null : flat.getBoundingClientRect(); return { display: getComputedStyle(el).display, ...b, section: el.dataset.section ?? null, figure: el.querySelector('[data-ornament="figure"]') !== null, flat: flat !== null, flatBleed: fb === null || fb.width === 0 ? null : Math.max(0, -fb.left) / fb.width }; })();
   /* §37: the region's own triangle, "moved, not added" -- visible means displayed with a box. */
