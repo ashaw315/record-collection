@@ -31564,3 +31564,40 @@ stall of the dev server rather than three spec faults; none of the four
 specs was touched by the steps. Logged, not chased; the classes are the
 entries above. If a burst recurs, the place to look is the server's log at
 that minute, not the specs.
+
+## Flake log — a throttled machine: 35 first-attempt failures across a full run (28 Sep, evening)
+
+The full run after step 52 (commit ff5369c): the unit suite took 1,554s
+against 361s the previous run, with every phase slowed by the same factor
+(transform 2.4x, import 3.7x, tests 4.8x); chromium 55.3m against 17.9m with
+29 first-attempt failures against 4; mobile 16.2m with 6 against 1. The
+cause was measured, not inferred. `pmset -g therm` read
+`CPU_Speed_Limit = 28` at 19:33 and 31 to 46 for the following hour, with
+no thermal warning level recorded and no sleep or wake event; load average
+51 to 77 on 12 cores, a VS Code plugin helper alive 16 days at 78% CPU.
+The two candidates the build could have introduced were both measured and
+ruled out: step 51's estimator costs 0.23ms per render steady-state (3.3ms
+cold, 24 renders in the unit suite), and fifty `SELECT 1` round trips to the
+test database ran 1.2 to 7.6ms with zero ECONNRESET in any log.
+
+Every one of the 35 E2E first attempts failed on a time budget or a class
+already logged: 23 login redirects at the 5s budget, 7 test timeouts at
+30s, 2 of the §43 cold-load test's two-second paint window, 2 of the wall
+scroll landing 14 to 15px off (the 26 Sep entry), one shelf fixture count
+(12 expected, 6 received, passed on retry, the same test flaky in an earlier
+full run). None was an assertion about a measured layout value. Seven
+chromium and one mobile test failed both attempts, all on budgets:
+identity-cell 131 and 165, identity-measure §18, wall-route 162,
+frame-planes 267, record-band-43 §43, wall-first-paint 296, and mobile's
+record-detail genre link.
+
+In the unit suite, three timing tests failed under the throttle: the
+200-record render budget (146ms against 100), the migration probe (5s), and
+the CLI streaming sample. Alone on the same machine the first two passed;
+the CLI test still failed, because `npx tsx scripts/run-tests.ts` takes 2.0
+to 2.9s to print its first line here against the test's 1.5s sample point.
+That test measures the machine's process startup as much as the CLI.
+
+The run is not evidence about the build either way. The remedy is a re-run
+at full clock, and the place to look first if the throttle recurs is
+`pmset -g therm` before believing any duration.
