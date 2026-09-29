@@ -2,6 +2,7 @@ import { test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { sql } from 'drizzle-orm';
 import { getTestDb } from '../test/helpers/db';
+import { readSeventeen } from './seventeen';
 
 /**
  * Removes the records a spec created, so the database does not grow all run.
@@ -97,6 +98,17 @@ export function trackArtist(artistId: string): void {
 
 const trackedArtists: string[] = [];
 
+/**
+ * **The seventeen are nobody's to clean up.** They are seeded once per run by
+ * global setup (`seventeen.ts`) and read by several specs at once; the artist
+ * MGMT that owns them is found-or-created, so a spec that tracks MGMT would
+ * otherwise delete them under whichever spec is mid-read (the §43 diagnosis
+ * of 28 Sep: 63 and 93 "never painted" findings that were all 404s). The guard
+ * is the same file the seed reads, as a Postgres array literal: Drizzle
+ * expands a JS array into a row constructor, which `= ANY` rejects.
+ */
+const PROTECTED_RECORDS = `{${readSeventeen().map((r) => r.id).join(',')}}`;
+
 export function registerCleanup(): void {
   test.afterEach(async () => {
     const db = getTestDb();
@@ -122,10 +134,18 @@ export function registerCleanup(): void {
                WHERE artist_id = ${artistId}::uuid
                   OR acquired_record_id IN (
                        SELECT id FROM records WHERE artist_id = ${artistId}::uuid
+                         AND NOT (id = ANY(${PROTECTED_RECORDS}::uuid[]))
                      )`,
         );
-        await db.execute(sql`DELETE FROM records WHERE artist_id = ${artistId}::uuid`);
-        await db.execute(sql`DELETE FROM artists WHERE id = ${artistId}::uuid`);
+        await db.execute(
+          sql`DELETE FROM records WHERE artist_id = ${artistId}::uuid
+                AND NOT (id = ANY(${PROTECTED_RECORDS}::uuid[]))`,
+        );
+        /* Only when nothing is left under it: an artist the seventeen reference stays. */
+        await db.execute(
+          sql`DELETE FROM artists WHERE id = ${artistId}::uuid
+                AND NOT EXISTS (SELECT 1 FROM records WHERE artist_id = ${artistId}::uuid)`,
+        );
       } catch {
         // Swallowed deliberately — see above.
       }

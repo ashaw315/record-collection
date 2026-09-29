@@ -1,5 +1,6 @@
 import { config } from 'dotenv';
 import { closeTestDb, holdTestDatabase, truncateAll } from '../test/helpers/db';
+import { seedSeventeen } from './seventeen';
 
 /**
  * Resets the E2E database once per Playwright run.
@@ -55,7 +56,21 @@ export default async function globalSetup(): Promise<void> {
 
   await closeTestDb();
   await warmServer();
+
+  /*
+   * **The seventeen are seeded here, once, and no spec owns them.** Seeding
+   * happens after the warm-up so the API routes it calls are compiled, and the
+   * pool it opens is closed again below. Not best effort: a run without the
+   * seventeen would fail every spec that reads them, and it should say why.
+   */
+  const started = Date.now();
+  await seedSeventeen({ base: BASE, password: PASSWORD });
+  process.stdout.write(`[global-setup] seeded the seventeen in ${Date.now() - started}ms\n`);
+  await closeTestDb();
 }
+
+const BASE = process.env.E2E_BASE_URL ?? `http://localhost:${process.env.E2E_PORT ?? '3100'}`;
+const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 
 /**
  * **Warm the dev server before the first test.** The first spec to run bore
@@ -67,8 +82,8 @@ export default async function globalSetup(): Promise<void> {
  * will still say what is wrong.
  */
 async function warmServer(): Promise<void> {
-  const base = process.env.E2E_BASE_URL ?? `http://localhost:${process.env.E2E_PORT ?? '3100'}`;
-  const password = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
+  const base = BASE;
+  const password = PASSWORD;
   const started = Date.now();
   try {
     await fetch(`${base}/login`);

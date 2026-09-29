@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 119 declared rules. Regenerate with
+Generated from 120 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -134,6 +134,7 @@ Generated from 119 declared rules. Regenerate with
 | a defect has two plausible readings and you are about to fix the likelier one | [1093 DIAGNOSED after nine sightings: both candidate readings were wrong, and the predicate matches WHITE](#1093-diagnosed-after-nine-sightings-both-candidate-readings-were-wrong-and-the-predicate-matches-white) |
 | a failure has a number attached and you have not run it more than once | [427 MEASURED over three runs rather than assumed — and it is NOT a rate](#427-measured-over-three-runs-rather-than-assumed-and-it-is-not-a-rate) |
 | a mark, field or state is identical across every record and you are about to remove it as texture | [A constant is retired for why it is constant, not for being constant](#a-constant-is-retired-for-why-it-is-constant-not-for-being-constant) |
+| a long test reads fixtures other specs can touch, and its last clean run is being cited as evidence | [A MEASUREMENT THAT PASSED BY SCHEDULING LUCK IS NOT A MEASUREMENT](#a-measurement-that-passed-by-scheduling-luck-is-not-a-measurement) |
 | a written measurement is being carried forward and you have not re-read the source | [A note that implied a difference, and a payload that did not](#a-note-that-implied-a-difference-and-a-payload-that-did-not) |
 | you are about to derive a per-member value from a property of the members, and have not looked at the spread of that property | [A rule deriving variety from an axis the set does not vary along produces none](#a-rule-deriving-variety-from-an-axis-the-set-does-not-vary-along-produces-none) |
 | a search came back empty and you are about to conclude the thing does not exist | [A search whose scope cannot contain the answer](#a-search-whose-scope-cannot-contain-the-answer) |
@@ -30597,6 +30598,14 @@ Eleven-versus-twelve truncations was the drawing's approximated title list, not 
 
 "clicking through to a filtered view equals loading that URL directly" fails intermittently on the mobile project: the cold page's Sort select reads "" after `controlsReady`, or the table row lookup times out. Measured 2026-09-17: 1 of 4 at load 4 on 952c935; **4 of 4 on cbbb948, the commit before this round**, so it is not this round's — it is the hydration race the test's own 2026-09-05 comment describes, still open. It sits with manage:179 (mobile, select on touch) as the two mobile flakes a full E2E can show under load. Not fixed here: the wall units did not touch the filters, and a fix belongs to a unit of its own.
 
+**29 Sep, 11:02:** failed both attempts (11.6s, 11.9s) at position 14 of a
+mobile run that otherwise passed 193, `CPU_Speed_Limit = 100`; the same
+`toHaveValue("")` after `controlsReady(cold)`. Passed in the two mobile runs
+before it that morning (5.9s, 6.8s) and 10 of 10 alone straight after. Its
+fixtures are its own suffixed rows; the run-level seventeen were present in
+all three runs, so they are not the variable.
+
+
 ## Three questions on the wall at rest and the turn (2026-09-18), answered without changing anything
 
 **The painter's sort runs every render, and the moving record is not in it.** `paintOrder(placed)` sorts the SEATED records only (row-major, then x − y); the pulled record is skipped in both passes and rendered last, after every seated face (`renderMoving`). So during the slide it is nearest by construction, whatever its y. If the slide reads as moving through the row, draw order is not the cause; the slide's direction is — toward −y is up-right on screen, the same direction the tops recede, which the eye reads as away.
@@ -31601,3 +31610,61 @@ That test measures the machine's process startup as much as the CLI.
 The run is not evidence about the build either way. The remedy is a re-run
 at full clock, and the place to look first if the throttle recurs is
 `pmset -g therm` before believing any duration.
+
+---
+
+## A MEASUREMENT THAT PASSED BY SCHEDULING LUCK IS NOT A MEASUREMENT
+
+**Shape:** sample-as-population
+**You are here if:** a long test reads fixtures other specs can touch, and its last clean run is being cited as evidence
+
+**Step 51's 119 clean cold loads and the next full run's 63 and 93 failures
+were the same test, the same recorder and the same race**, with different
+overlap. `registerCleanup` deleted every record of every tracked artist; the
+artist MGMT was found-or-created and six specs tracked it; the seventeen real
+records were seeded by fixed id "if absent" by three of them. Any test in those
+six files finishing during §43's six-minute loop turned the seventeen into 404s,
+and the recorder reported the 404 honestly as "the band never painted".
+
+**Nothing in the passing result distinguished it from a protected one.** The
+measurement was real: 119 loads, worst box change 0px, 0 of 340 placements
+differing. It was also a sample of one scheduling — the run in which no
+MGMT-tracking test happened to finish inside the window — cited as if it were
+the population. The same test then failed both attempts at full clock
+(`CPU_Speed_Limit = 100` on sixteen samples), which is what ruled the clock
+out and pointed at the data: a budget fails more when slow, and this failed
+more when fast, but not because of speed — because of where the other worker's
+tests fell relative to the window.
+
+**The evidence that settled it**, in order: the recorder captured its first
+frame at 240 to 560ms on 120 clean loads and `requestAnimationFrame` still
+fired at the moment of failure (so not the observer); the response flipped
+from 200 to 404 mid-loop with the title "404: This page could not be found"
+and no `data-band` in the HTML (so not the paint); a database read at that
+instant showed zero MGMT records and zero MGMT artist rows (so the cleanup).
+
+**Now a mechanism, not a rule to remember.** The seventeen are seeded once per
+run by global setup (`e2e/seventeen.ts`) and `e2e/cleanup.ts` refuses to
+delete any id in `docs/captures/real-records.json` or an artist that still has
+records; `e2e/fixtures-protected.spec.ts` stages the careless spec — tracks
+MGMT, creates a record of its own — and reads what cleanup left. Re-measured
+on the protected fixtures: 119 loads, worst box change 0px, 0 findings, 340 of
+340 agree. Nothing changes for §43, and now the number can be believed.
+
+**Ownership by creator was evaluated and does not reach this case.** Every
+creation site knows its id, so a spec could delete only what it created — but
+three specs seed the seventeen by fixed id "if absent", so the first to arrive
+would own them and still delete them under the other two. A shared fixture has
+no owner; it needs a guard, not a ledger.
+
+**Also found, not fixed:** `docs/captures/real-records.json` is untracked in
+git, and global setup now reads it — a fresh checkout has no E2E run until it
+is committed or supplied. The two seeders in `about-row-36.spec.ts` and
+`real-records-paint.spec.ts` are now dead paths ("if absent" is never true).
+The four specs that create a record of their OWN under MGMT (`layout-sweep`,
+`page-fills-viewport`, `row-clip-29h`, `title-ladder-33`) remain exposed to
+each other's cleanup for the length of their tests, up to 60s in
+`layout-sweep`; the guard protects the seventeen, not those. And
+`scripts/notes-index.ts` prints "Regenerate with `--write`" in the index it
+generates, but implements no such flag: it prints to stdout, and the block
+has to be spliced by hand.
