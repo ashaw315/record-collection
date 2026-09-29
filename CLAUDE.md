@@ -192,28 +192,60 @@ This app is about vinyl records. Several distinctions matter and are easy to fla
 
 ---
 
-## 10. Definition of done for a unit
+## 10. Definition of done — two levels, and the report says which
 
-Do not report a unit complete unless all of these are true and you have verified each by running it:
+Verification runs at two levels. Every report says which one it was.
+
+**Per step** — run the specs covering what the step built, the relevant width
+sweep, `npm run typecheck` and `npm run lint`. Not the full suites.
+
+**At a gate** — run the full suites: `npm test`, and `npx playwright test` on
+both projects with no file argument. A gate is:
+
+- a screen closing;
+- a change to fixtures, cleanup or seeding (`e2e/cleanup.ts`,
+  `e2e/global-setup.ts`, `e2e/seventeen.ts`, `e2e/seed.ts`, anything a spec
+  reads that it did not create);
+- a change to shared infrastructure (`test/helpers/`, the Playwright or
+  Vitest config, the driver module, migrations);
+- before a merge;
+- on request.
+
+Why gates exist at all: a change that alters a contract breaks the tests
+that encoded the OLD contract, and those live in files the step never
+opened. Twice a spec-scoped run looked green while a cross-file break was
+waiting — the matrix change passed `discogs-prefill.spec.ts` while
+`lookup-flows.spec.ts` failed deterministically on both projects. **Passing
+in isolation is not evidence a change is clean**; it is evidence about the
+step, and the gate is where the rest gets examined.
+
+**A step is done** when:
 
 - [ ] Tests were written before the implementation.
 - [ ] The tests were observed failing, then passing.
-- [ ] The full suite passes, not just the new tests.
-- [ ] **The full E2E suite has run — `npx playwright test` with no file
-      argument — not only the spec files this unit touched.** A change that
-      alters a contract breaks the tests that encoded the OLD contract, and
-      those live in files the unit never opened. Twice now a spec-scoped run
-      looked green while a cross-file break was waiting: the matrix change
-      passed `discogs-prefill.spec.ts` while `lookup-flows.spec.ts` failed
-      deterministically on both projects. Same shape as the flake finding —
-      **passing in isolation is not evidence a change is clean.**
-- [ ] `npm run typecheck` clean.
-- [ ] `npm run lint` clean.
-- [ ] `npm run build` succeeds.
+- [ ] Its own covering verification is green: the covering specs, the
+      relevant width sweep, `npm run typecheck` and `npm run lint`.
+- [ ] The report names what was run, and says it was the step level.
 - [ ] Migrations (if any) run clean from an empty database.
 - [ ] No new dependencies were added without approval.
 - [ ] Nothing on the §13 non-goals list was built.
 - [ ] Out-of-scope observations were recorded in `NOTES.md` rather than acted on.
+
+**A screen or milestone is done** when, at a gate:
+
+- [ ] `npm test` passes in full.
+- [ ] `npx playwright test` passes on both projects with no file argument.
+- [ ] `npm run build` succeeds.
+- [ ] The report names the gate and says the full suites ran.
+
+**The guard, because this split creates a way to be wrong that did not exist
+before.** Every verification report states which of the two it was — "step
+level: colour-distribution and identity-band-23 on chromium, typecheck,
+lint" or "gate: full suites, both projects". A partial green mistaken for a
+full one is the same defect family as a green that examined nothing (§9);
+the difference is that here the green is honest and the reader's inference
+is not. Make the wrong inference impossible by always saying. A report that
+does not say is a report that ran nothing.
 
 ---
 
