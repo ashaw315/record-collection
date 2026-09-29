@@ -59,7 +59,8 @@ const faceArea = (points: ReadonlyArray<readonly [number, number]>) => {
   `construction(id).viewBox`, the shared constant, for a round after the still
   moved to `ownFitViewBox`, so the floor was asserted at a scale nothing drew.
   Measured on the fixture at 1440 × 900: worst 0.5084% and median 0.7535% at
-  the retired frame, 0.9557% and 1.3489% at the own fit.
+  the retired frame, 0.9557% and 1.3489% at the own fit on the hand-typed list;
+  0.9816% and 1.2523% on the collection's ids (29 Sep).
 */
 const scaleOf = (id: string) => {
   const [, , w, h] = ownFitViewBox(construction(id)).split(' ').map(Number);
@@ -104,11 +105,17 @@ describe('§22: the colour lands on a form that can carry it', () => {
    * truth was 0.440% with two failures — a sample that drops its tail reports
    * its median as its minimum.
    */
-  it('measures at the scale the page draws: worst 0.956% and median 1.349% on the fixture at 1440 × 900 (§33)', () => {
-    /* These are the own-fit figures; at the retired frame they were 0.508% and 0.754%, which is how a wrong scale reads here. */
+  it('measures at the scale the page draws: worst 0.982% and median 1.252% on the collection at 1440 × 900 (§33)', () => {
+    /*
+      On the collection's own ids, generated from the capture (29 Sep). The
+      hand-typed list this replaces shared 4 ids of 17 and read 0.9557% and
+      1.3489%; at the retired frame the same measure read 0.508% and 0.754%,
+      which is how a wrong scale reads here. Accepted by Adam as the
+      correction landing, not a regression.
+    */
     const fractions = REAL_RECORD_IDS.map((id) => baseFraction(id) * 100).sort((a, b) => a - b);
-    expect(fractions[0], 'worst').toBeCloseTo(0.9557, 3);
-    expect(fractions[Math.floor(fractions.length / 2)], 'median').toBeCloseTo(1.3489, 3);
+    expect(fractions[0], 'worst').toBeCloseTo(0.9816, 3);
+    expect(fractions[Math.floor(fractions.length / 2)], 'median').toBeCloseTo(1.2523, 3);
   });
 
   it('puts all seventeen above §5.5’s 0.5% floor', () => {
