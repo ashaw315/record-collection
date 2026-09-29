@@ -3,6 +3,7 @@ import { BANDS, GRID_COLUMNS, IDENTITY_SPANS, NO_SCROLL_HEIGHT, STILL_MARGIN } f
 import { construction } from '../src/app/records/[id]/construction';
 import { ownFitViewBox } from '../src/app/records/[id]/own-fit';
 import { readSeventeen } from './seventeen';
+import { renderedArea } from './svg-area';
 
 /**
  * **§5.5's floor and §30's ceiling, measured per record on the rendered page,
@@ -40,6 +41,7 @@ async function login(page: Page) {
 const FLOOR_PCT = 0.5;
 const CEILING_PX = 480;
 const RENDERED_VS_COMPUTED_PTS = 0.02;
+const RENDERED_AREA = renderedArea.toString();
 
 type Ref = { w: number; h: number; floor: boolean; ceiling: boolean };
 const REFERENCES: Ref[] = [
@@ -56,21 +58,21 @@ const REFERENCES: Ref[] = [
 type Reading = { floorPct: number; empty: number | null; unassigned: number | null; constructionEmpty: number | null; coverBeside: number | null; bound: 'width' | 'height' };
 
 /** In-page: the base faces' rendered area over the viewport, and §30's empty-width terms. */
-const MEASURE = () => {
+const MEASURE = (RENDERED_AREA: string) => {
   const svg = document.querySelector<SVGSVGElement>('[data-testid="construction-still"]');
   if (svg === null) return null;
   const sb = svg.getBoundingClientRect();
   const vb = (svg.getAttribute('viewBox') ?? '0 0 1 1').split(' ').map(Number);
   const sx = sb.width / vb[2];
   const sy = sb.height / vb[3];
-  /* `xMidYMid meet`: the drawing scales uniformly by the SMALLER ratio, so the rendered area is that scale squared -- not sx × sy, which overstates whichever axis the box is slack on. */
-  const s = Math.min(sx, sy);
+  /* One definition (`svg-area.ts`): under `meet` the area is the smaller ratio squared. */
+  const rendered = new Function('return ' + RENDERED_AREA)() as typeof renderedArea;
   let faces = 0;
   for (const poly of svg.querySelectorAll('polygon[data-step="base"]')) {
     const pts = (poly.getAttribute('points') ?? '').trim().split(/\s+/).map((p) => p.split(',').map(Number));
     let sum = 0;
     for (let i = 0; i < pts.length; i += 1) { const [x1, y1] = pts[i]; const [x2, y2] = pts[(i + 1) % pts.length]; sum += x1 * y2 - x2 * y1; }
-    faces += (Math.abs(sum) / 2) * s * s;
+    faces += rendered(Math.abs(sum) / 2, { width: sb.width, height: sb.height }, { width: vb[2], height: vb[3] });
   }
   const floorPct = (faces / (window.innerWidth * window.innerHeight)) * 100;
   const bound: 'width' | 'height' = sx < sy ? 'width' : 'height';
@@ -121,7 +123,7 @@ test('§5.5’s floor and §30’s ceiling hold per record at the reference view
       await page.locator('[data-testid="construction-still"] polygon').first().waitFor({ timeout: 20_000 });
       await page.evaluate(() => document.fonts.ready);
       await page.waitForTimeout(250);
-      const m = (await page.evaluate(MEASURE)) as Reading | null;
+      const m = (await page.evaluate(MEASURE, RENDERED_AREA)) as Reading | null;
       if (m === null) { bad.push(`${r.title} @${ref.w}x${ref.h}: no construction rendered`); continue; }
       readings.push({ title: r.title, m });
       if (ref.floor && m.floorPct < FLOOR_PCT) bad.push(`${r.title} @${ref.w}x${ref.h}: base faces ${m.floorPct.toFixed(3)}% of the viewport, under §5.5’s ${FLOOR_PCT}%`);

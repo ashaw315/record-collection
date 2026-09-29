@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { renderedArea } from './svg-area';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 
 /**
@@ -75,8 +76,12 @@ const MARK_KIND: Partial<Record<string, MarkKind>> = {
 };
 
 /** The coloured area of each mark, in px², with the two cell-property marks handled. */
+/** The page's own `renderedArea` (`svg-area.ts`), shipped as source: the evaluate cannot import. */
+const RENDERED_AREA = renderedArea.toString();
+
 const colouredAreas = (page: Page) =>
-  page.evaluate(() => {
+  page.evaluate(([renderedAreaSource]) => {
+    const rendered = new Function('return ' + renderedAreaSource)() as typeof renderedArea;
     const areas: Array<{ name: string; area: number }> = [];
 
     for (const mark of document.querySelectorAll('[data-mark]')) {
@@ -104,7 +109,14 @@ const colouredAreas = (page: Page) =>
     if (svg !== null) {
       const svgBox = svg.getBoundingClientRect();
       const vb = (svg.getAttribute('viewBox') ?? '0 0 1 1').split(' ').map(Number);
-      const scale = (svgBox.width / vb[2]) * (svgBox.height / vb[3]);
+      /*
+        The area a face draws at: uniform under `meet`, the smaller ratio
+        squared. This multiplied the two ratios until 29 Sep, which is right
+        only while the box has the viewBox's aspect -- and §33 fits each record
+        on ONE axis, so it does not. The dependency is asserted below.
+      */
+      const box = { width: svgBox.width, height: svgBox.height };
+      const viewBox = { width: vb[2], height: vb[3] };
       let faces = 0;
       for (const poly of svg.querySelectorAll('polygon[data-step="base"]')) {
         const pts = (poly.getAttribute('points') ?? '')
@@ -117,7 +129,7 @@ const colouredAreas = (page: Page) =>
           const [x2, y2] = pts[(i + 1) % pts.length];
           sum += x1 * y2 - x2 * y1;
         }
-        faces += (Math.abs(sum) / 2) * scale;
+        faces += rendered(Math.abs(sum) / 2, box, viewBox);
       }
       /*
         **The construction is ONE base mark**, so its disc and its coloured
@@ -136,7 +148,21 @@ const colouredAreas = (page: Page) =>
     }
 
     return areas;
-  });
+  }, [RENDERED_AREA] as const);
+
+/**
+ * **What the construction's area arithmetic depends on, asserted.** `renderedArea`
+ * is the smaller ratio squared, which is how `preserveAspectRatio="… meet"`
+ * scales; with `slice` or `none` the same polygons would draw at a different
+ * size and the floor and the 40% share would be judged on a number nothing
+ * rendered. Read from the element, so a change in `ConstructionStill.tsx` fails
+ * here rather than silently re-weighting every figure below.
+ */
+const constructionScalesUniformly = async (page: Page) => {
+  const alignment = await page.evaluate(() => document.querySelector('[data-testid="construction-still"]')?.getAttribute('preserveAspectRatio') ?? null);
+  expect(alignment, 'the construction svg is on the page').not.toBeNull();
+  expect(alignment, 'the construction scales uniformly (meet), which the area arithmetic assumes').toMatch(/\bmeet$/);
+};
 
 const CASES = ['richest', 'modal', 'emptiest'] as const;
 
@@ -152,6 +178,7 @@ test.describe('colour distribution (§5.5)', () => {
       await page.goto(`/wall/probe/page8a?case=${which}`);
       await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
 
+      await constructionScalesUniformly(page);
       const areas = await colouredAreas(page);
       const pageArea = await page.evaluate(() => {
         const el = document.querySelector('[data-testid="record-page-8a"]');
