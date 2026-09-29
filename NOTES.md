@@ -31734,3 +31734,18 @@ the unit-level floor (worst 0.956%, median 1.349%) and the rendered floor
 (worst 0.977%, median 1.247%) describe different sets of arrangements that
 happen to share titles. Both clear 0.5% on every record. Which list is the
 collection is not decidable from the repo.
+
+**Settled from the database (29 Sep).** Production (the Neon `DATABASE_URL`
+in `.env.local`) holds 17 records, created 11 to 26 Aug 2026.
+`docs/captures/real-records.json`: 17 present, 0 absent, 0 missing -- an
+exact capture, though no script in the repo writes it.
+`src/app/records/[id]/real-records.ts`: 4 present, 13 absent, 13 missing.
+Of its 13 absent ids, 8 are uuid-shaped and were never in production, and 5
+are synthetic (`4a1e2b7c-0000-4000-8000-00000000000N`). It dates from the
+§22 build (22 Sep), after every production record existed, so it never
+matched: a hand-maintained stand-in list under a header that says "every
+real record id in the collection". `construction.ts` imports it and does
+not use it. The per-record figures the unit tests quote (worst 0.956%,
+median 1.349%, §22's advance rate) are therefore figures about thirteen
+drawings the collection does not contain. Neither file changed; the
+proposal is in the session report.
