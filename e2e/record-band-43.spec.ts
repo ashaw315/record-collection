@@ -4,7 +4,7 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { getTestDb } from '../test/helpers/db';
 import { seedImage, seedRecordWithId } from './seed';
 import { sql } from 'drizzle-orm';
-import { GRID_FORK } from '../src/app/records/[id]/band-geometry';
+import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { fillRows, packRecordBand } from '../src/app/records/[id]/record-band-41';
 
 registerCleanup();
@@ -60,7 +60,7 @@ test('§43: the record band paints packed: its first-painted height is its settl
   const widths = [960, 1000, 1092, 1200, 1240, 1300, 1439];
   const bad: string[] = []; let worst = { change: 0, where: 'none' }; let loads = 0;
   for (const r of rows) for (const width of widths) {
-    const ctx = await browser.newContext({ viewport: { width, height: 900 } });
+    const ctx = await browser.newContext({ viewport: { width, height: NO_SCROLL_HEIGHT } });
     await ctx.addCookies(cookies);
     await ctx.addInitScript(RECORDER);
     const p = await ctx.newPage();
@@ -93,7 +93,7 @@ test('§43: reports where the server’s quarters differ from the page’s measu
   const rows = await seedSeventeen(page);
   const misses: string[] = []; let placements = 0;
   for (const r of rows) for (const w of [960, 1000, 1200, GRID_FORK - 1]) {
-    await page.setViewportSize({ width: w, height: 900 });
+    await page.setViewportSize({ width: w, height: NO_SCROLL_HEIGHT });
     await page.goto(`/records/${r.id}`);
     await page.locator('[data-band="record"] [data-cell="note"]').waitFor({ timeout: 20_000 });
     await page.waitForTimeout(300);
