@@ -87,3 +87,61 @@ describe('the apparatus index is generated, not maintained', () => {
     }
   });
 });
+
+/**
+ * **A documented flag that no code implements is the same shape as a test that
+ * cannot fail.** The index the generator prints ends with "Regenerate with
+ * `npx tsx scripts/notes-index.ts --write`", and for as long as that line has
+ * existed the CLI has printed to stdout and ignored its arguments; the block
+ * was spliced by hand (29 Sep). These run the CLI as a process, on a copy,
+ * because the claim is about the command and not about a function.
+ */
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+const STALE = [
+  '# Notes',
+  '',
+  '<!-- APPARATUS-INDEX:START -->',
+  'stale',
+  '<!-- APPARATUS-INDEX:END -->',
+  '',
+  '## A RULE WITH A HOME',
+  '',
+  '**Shape:** check-cannot-fail',
+  '**You are here if:** a test passes and you cannot say which input it would reject',
+  '',
+  'Body.',
+  '',
+].join('\n');
+
+const run = (...args: string[]) => spawnSync('npx', ['tsx', 'scripts/notes-index.ts', ...args], { encoding: 'utf8' });
+
+describe('the CLI’s --write flag', () => {
+  it('without --write prints the index and leaves the file alone', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'notes-index-'));
+    const path = join(dir, 'NOTES.md');
+    writeFileSync(path, STALE);
+    const result = run(path);
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout, 'the index of the file NAMED, not of NOTES.md').toContain('A RULE WITH A HOME');
+    expect(readFileSync(path, 'utf8'), 'unchanged').toBe(STALE);
+  });
+
+  it('with --write splices the generated block between the markers of the file it names', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'notes-index-'));
+    const path = join(dir, 'NOTES.md');
+    writeFileSync(path, STALE);
+    const result = run('--write', path);
+    expect(result.status, result.stderr).toBe(0);
+    const after = readFileSync(path, 'utf8');
+    const start = after.indexOf('<!-- APPARATUS-INDEX:START');
+    const end = after.indexOf('<!-- APPARATUS-INDEX:END -->') + '<!-- APPARATUS-INDEX:END -->'.length;
+    expect(after.slice(start, end), 'the block is the generator’s').toBe(renderIndex(readRules(after)));
+    expect(after, 'nothing outside the block changed').toContain('## A RULE WITH A HOME');
+    expect(after).not.toContain('\nstale\n');
+    expect(result.stdout).toMatch(/1 rules? indexed/);
+  });
+});

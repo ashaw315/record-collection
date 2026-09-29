@@ -1,13 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
-import { existsSync, readFileSync } from 'node:fs';
-import { registerCleanup, trackArtist } from './cleanup';
-import { getTestDb } from '../test/helpers/db';
-import { seedImage, seedRecordWithId } from './seed';
-import { sql } from 'drizzle-orm';
-import { REAL_RECORD_IDS } from '../src/app/records/[id]/real-records';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
-
-registerCleanup();
+import { readSeventeen } from './seventeen';
 
 /**
  * **Every real record, at the seven reference widths: what paints in front
@@ -38,7 +31,6 @@ async function login(page: Page) {
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page).toHaveURL('/');
 }
-async function post(page: Page, path: string, data: unknown) { const j = await (await page.request.post(path, { data })).json(); return { id: (j.id ?? j.error?.existingId) as string }; }
 
 const READ = () => {
   const px = (n: number) => Math.round(n * 10) / 10;
@@ -127,35 +119,14 @@ test('every real record at seven widths: §26 ornaments behind type everywhere; 
     ornament is a function of the id, so those counts were of the right
     texts on the wrong records.)
   */
-  const REAL = 'docs/captures/real-records.json';
   type RealRow = { id: string; title: string; about: string | null; entries: Array<{ entryDate: string; note: string }> };
-  const rows: RealRow[] | null = existsSync(REAL) ? JSON.parse(readFileSync(REAL, 'utf8')) : null;
-  if (rows === null) console.log(`\nSTEP 32 UNEXECUTABLE: ${REAL} is absent -- seeding REAL_RECORD_IDS with one stand-in shape and a journal entry on every row; the real no-About measurement did NOT run.`);
-  const records: RealRow[] = rows ?? REAL_RECORD_IDS.map((id) => ({ id, title: 'Loss Of Life', about: null, entries: [{ entryDate: '2026-09-20', note: 'Played it right through.' }] }));
+  /* The run-level seventeen (`seventeen.ts`): real ids, real About texts and journal entries. This spec seeded them itself until 29 Sep, a path global setup had made dead. */
+  const records: RealRow[] = readSeventeen();
   const hasAbout = (r: RealRow) => r.about !== null && r.about.trim() !== '';
   const titleOf = new Map(records.map((r) => [r.id, r.title]));
   const aboutFor: Record<string, string> = Object.fromEntries(records.filter(hasAbout).map((r) => [r.id, r.title]));
   await login(page);
-  const artist = await post(page, '/api/artists', { name: 'MGMT' });
-  trackArtist(artist.id);
-  const label = await post(page, '/api/labels', { name: 'Mom + Pop' });
-  const pressing = await post(page, '/api/pressings', { catalogNumber: 'MP731', matrixRunout: '269346E1 1701690 MP731-A JN-H STERLING', yearPressed: 2024, countryPressed: 'UK, Europe & US', pressingPlant: 'GZ Media', colorVariant: 'Orange [Tangerine]' });
-  const genres: string[] = [];
-  for (const g of ['Electronic', 'Indie Pop', 'Indie Rock', 'Pop', 'Psychedelic Rock', 'Rock']) genres.push((await post(page, '/api/genres', { name: g })).id);
-  const db = getTestDb();
-  const ids: string[] = [];
-  for (const r of records) {
-    const existing = await db.execute<{ id: string }>(sql`SELECT id FROM records WHERE id = ${r.id}::uuid`);
-    if (existing.rows.length === 0) {
-      await seedRecordWithId({ id: r.id, artistId: artist.id, title: r.title, labelId: label.id, pressingId: pressing.id, releaseYear: 2024, genreIds: genres });
-      await seedImage({ recordId: r.id, imageType: 'cover' });
-      const aboutText = hasAbout(r) ? (r.about as string).trim() : null;
-      await db.execute(sql`UPDATE records SET spine_colour = ${'#a25829'}, purchase_price = 12.99, notes = 'Bought on the Saturday.', snippet = ${aboutText}, snippet_edited_at = ${aboutText === null ? null : new Date()} WHERE id = ${r.id}::uuid`);
-      await db.execute(sql`INSERT INTO price_history (record_id, price, price_type, source) VALUES (${r.id}::uuid, 12.99, 'used', 'discogs'), (${r.id}::uuid, 13.42, 'used', 'discogs')`);
-      for (const e of r.entries) await page.request.post(`/api/records/${r.id}/journal`, { data: { entryDate: e.entryDate, note: e.note } });
-    }
-    ids.push(r.id);
-  }
+  const ids: string[] = records.map((r) => r.id);
   const byRecord: string[] = [];
   const widths = (process.env.QA_WIDTHS ?? '390,480,960,1000,1440,1680,1920').split(',').map(Number);
   const kindsSeen = new Set<string>();
@@ -188,8 +159,8 @@ test('every real record at seven widths: §26 ornaments behind type everywhere; 
   for (const [k, n] of Object.entries(overCount).sort()) console.log(`  ${n.toString().padStart(3)}  ${k}`);
   console.log(`\nORNAMENT OVER TEXT — one sample per (width, ornament, cell):`); overSamples.forEach((s) => console.log('  ' + s));
   console.log(`\nSPECIFICS:`); specifics.forEach((s) => console.log('  ' + s));
-  console.log(`\nSTEP 32 (done; §35 withdrew aboutArc on its result) -- the About cell's state on the real records at 1440 (${rows === null ? 'STAND-INS: not the real rows' : 'real id, title, About and journal entries; other fields one stand-in shape'}):`); byRecord.forEach((s) => console.log('  ' + s));
-  console.log(`\nPLANES DRAWN vs NOT DRAWN (§34), per width over the ${ids.length} records (${rows === null ? 'stand-in rows' : 'real About and entries'}; real About on ${Object.keys(aboutFor).length}, journal entries on ${records.filter((r) => r.entries.length > 0).length}; a record with neither shows the diagonal and renders no arc):`); for (const [k, n] of Object.entries(drawn).sort()) console.log(`  ${String(n).padStart(3)}  ${k}`);
+  console.log(`\nSTEP 32 (done; §35 withdrew aboutArc on its result) -- the About cell's state on the real records at 1440 (real id, title, About and journal entries; other fields one stand-in shape):`); byRecord.forEach((s) => console.log('  ' + s));
+  console.log(`\nPLANES DRAWN vs NOT DRAWN (§34), per width over the ${ids.length} records (real About and entries; real About on ${Object.keys(aboutFor).length}, journal entries on ${records.filter((r) => r.entries.length > 0).length}; a record with neither shows the diagonal and renders no arc):`); for (const [k, n] of Object.entries(drawn).sort()) console.log(`  ${String(n).padStart(3)}  ${k}`);
   console.log(`\nENUMERATED (summed over the records): ` + widths.map((w) => `${w}: ${enumeratedAt[w]?.paints ?? 0} paints x ${enumeratedAt[w]?.texts ?? 0} text leaves`).join(' | '));
   console.log(`\nIN FRONT OF TYPE: §26 ornaments ${ornamentInFront.length}, §5.1 arcs ${arcsInFront.length}, §6 diagonals ${diagonalInFront.length} (box over the label; §6: 'Label persists, one diagonal fills the body box'), over ${pairs} record-width pairs`);
   expect(pairs, 'every record at every width').toBe(ids.length * widths.length);

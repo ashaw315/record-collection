@@ -1,12 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
-import { readFileSync } from 'node:fs';
-import { registerCleanup, trackArtist } from './cleanup';
-import { getTestDb } from '../test/helpers/db';
-import { seedImage, seedRecordWithId } from './seed';
-import { sql } from 'drizzle-orm';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
+import { readSeventeen } from './seventeen';
 
-registerCleanup();
+/* Reads the run-level seventeen (`seventeen.ts`); it seeded them itself until 29 Sep, a path global setup had made dead. */
 const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 async function login(page: Page) {
   await page.goto('/login');
@@ -15,7 +11,6 @@ async function login(page: Page) {
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page).toHaveURL('/');
 }
-const post = async (page: Page, path: string, data: unknown) => { const j = await (await page.request.post(path, { data })).json(); return { id: (j.id ?? j.error?.existingId) as string }; };
 
 /**
  * §36 -- the About's lower row survives as its editor and its full reading;
@@ -29,20 +24,11 @@ const post = async (page: Page, path: string, data: unknown) => { const j = awai
 /* §42 (step 50): the row keeps no copy of the text; the frame scrolls a long About and holds a short one whole. */
 test('the row carries no reading copy; the frame scrolls The Hurdy Gurdy Man’s About and holds Loss Of Life’s whole (§42)', async ({ page }) => {
   await login(page);
-  const rows: Array<{ id: string; title: string; about: string | null }> = JSON.parse(readFileSync('docs/captures/real-records.json', 'utf8'));
-  const artist = await post(page, '/api/artists', { name: 'MGMT' });
-  trackArtist(artist.id);
-  const db = getTestDb();
+  const rows = readSeventeen();
   for (const title of ['The Hurdy Gurdy Man', 'Loss Of Life']) {
     const r = rows.find((x) => x.title === title);
     expect(r?.about, `${title} has its real About`).toBeTruthy();
     if (r === undefined) continue;
-    const existing = await db.execute<{ id: string }>(sql`SELECT id FROM records WHERE id = ${r.id}::uuid`);
-    if (existing.rows.length === 0) {
-      await seedRecordWithId({ id: r.id, artistId: artist.id, title: r.title, releaseYear: 2024, genreIds: [] });
-      await seedImage({ recordId: r.id, imageType: 'cover' });
-      await db.execute(sql`UPDATE records SET spine_colour = ${'#a25829'}, snippet = ${r.about}, snippet_edited_at = NOW() WHERE id = ${r.id}::uuid`);
-    }
     await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
     await page.goto(`/records/${r.id}`);
     await page.locator('[data-field="eyebrow"]').waitFor({ timeout: 20_000 });
@@ -94,19 +80,10 @@ test('the absence state links "Write one ↓" to the row only where writing is c
  */
 test('the editor’s budget line reports the rendered cell’s own line budget, at 1440 and at 960 (§34)', async ({ page }) => {
   await login(page);
-  const rows: Array<{ id: string; title: string; about: string | null }> = JSON.parse(readFileSync('docs/captures/real-records.json', 'utf8'));
+  const rows = readSeventeen();
   const r = rows.find((x) => x.title === 'The Hurdy Gurdy Man');
   expect(r?.about, 'a real About').toBeTruthy();
   if (r === undefined) return;
-  const artist = await post(page, '/api/artists', { name: 'MGMT' });
-  trackArtist(artist.id);
-  const db = getTestDb();
-  const existing = await db.execute<{ id: string }>(sql`SELECT id FROM records WHERE id = ${r.id}::uuid`);
-  if (existing.rows.length === 0) {
-    await seedRecordWithId({ id: r.id, artistId: artist.id, title: r.title, releaseYear: 2024, genreIds: [] });
-    await seedImage({ recordId: r.id, imageType: 'cover' });
-    await db.execute(sql`UPDATE records SET spine_colour = ${'#a25829'}, snippet = ${r.about}, snippet_edited_at = NOW() WHERE id = ${r.id}::uuid`);
-  }
   const seen: Array<{ width: number; budget: string | null; line: string; paragraphWidth: number }> = [];
   for (const width of [1440, 960]) {
     await page.setViewportSize({ width, height: NO_SCROLL_HEIGHT });

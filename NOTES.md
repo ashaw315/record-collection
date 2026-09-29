@@ -31657,17 +31657,26 @@ three specs seed the seventeen by fixed id "if absent", so the first to arrive
 would own them and still delete them under the other two. A shared fixture has
 no owner; it needs a guard, not a ledger.
 
-**Also found, not fixed:** `docs/captures/real-records.json` is untracked in
-git, and global setup now reads it — a fresh checkout has no E2E run until it
-is committed or supplied. The two seeders in `about-row-36.spec.ts` and
-`real-records-paint.spec.ts` are now dead paths ("if absent" is never true).
-The four specs that create a record of their OWN under MGMT (`layout-sweep`,
-`page-fills-viewport`, `row-clip-29h`, `title-ladder-33`) remain exposed to
-each other's cleanup for the length of their tests, up to 60s in
-`layout-sweep`; the guard protects the seventeen, not those. And
-`scripts/notes-index.ts` prints "Regenerate with `--write`" in the index it
-generates, but implements no such flag: it prints to stdout, and the block
-has to be spliced by hand.
+**Also found, and since closed (29 Sep):** `docs/captures/real-records.json`
+was untracked in git while global setup read it — committed with this fix,
+since a fresh checkout had no E2E run at all. The two seeders in
+`about-row-36.spec.ts` and `real-records-paint.spec.ts` became dead paths
+("if absent" never true) and are removed. The four specs that create a record
+of their own under MGMT stayed exposed to each other's cleanup for up to 60s
+in `layout-sweep`; the ownership ledger (`trackRecord`) closed that.
+`scripts/notes-index.ts` printed "Regenerate with `--write`" while
+implementing no such flag; it now splices in place, held by two CLI tests
+that failed first.
+
+**The second exposure class, counted: one writer, no content reader.**
+`want-list.spec.ts` wipes `gap_analysis_results` three times, because A39
+keeps one analysis and the screen shows the last answer. `suggestions.spec.ts`
+loads `/suggestions`, which renders that analysis, but asserts only on its
+own suffixed rows, so the wipe changes nothing it reads; no other spec
+touches the table. The hazard is real and currently unmet: the first spec to
+assert on the analysis's content will race the wipe, and the fix then is the
+same shape as the seventeen -- a row nobody owns, or a scope on the delete.
+Not changed now, because nothing collides today.
 
 ---
 
