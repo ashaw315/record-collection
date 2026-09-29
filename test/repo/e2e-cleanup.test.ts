@@ -60,11 +60,20 @@ const SEEDS = /post\(\s*page\s*,\s*[`'"]\/api\/records|request\.post\(\s*[`'"]\/
 
 /** Creates an artist fixture, by any of the idioms the specs use. */
 const CREATES_ARTIST = /post\(\s*page\s*,\s*[`'"]\/api\/artists|post\(\s*[`'"]\/api\/artists|request\.post\(\s*[`'"]\/api\/artists|INSERT INTO artists/g;
+/*
+  **The run-level artist is found, not created.** MGMT is seeded once per run
+  by global setup (`e2e/seventeen.ts`) and owns the seventeen; a spec posting
+  it gets `existingId` back and must not remove it, since another spec may be
+  mid-read. `cleanup.ts` deletes nothing by that artist; a spec's own record
+  under it is cleaned by `trackRecord`. So a post naming it is a find and does
+  not count here.
+*/
+const FINDS_RUN_LEVEL_ARTIST = /\/api\/artists['"`][^\n]*name:\s*'MGMT'/g;
 /** Accounts for one: the shared tracker, or an explicit artist delete. */
 const REMOVES_ARTIST = /trackArtist\(|DELETE FROM artists|deleteRecordsByArtist\(/g;
 
 /** Removes them: the shared tracker, the bulk helper, the API sweep, or raw SQL. */
-const CLEANS = /trackArtist\(|registerCleanup\(|removeRecordsFor\(|deleteRecordsByArtist\(|DELETE FROM records/;
+const CLEANS = /trackArtist\(|trackRecord\(|registerCleanup\(|removeRecordsFor\(|deleteRecordsByArtist\(|DELETE FROM records/;
 
 const specs = readdirSync('e2e')
   .filter((f) => f.endsWith('.spec.ts'))
@@ -107,7 +116,7 @@ describe('E2E specs clean up the records they seed', () => {
      */
     const offenders = specs
       .map((s) => {
-        const created = (s.body.match(CREATES_ARTIST) ?? []).length;
+        const created = (s.body.match(CREATES_ARTIST) ?? []).length - (s.body.match(FINDS_RUN_LEVEL_ARTIST) ?? []).length;
         const removed = (s.body.match(REMOVES_ARTIST) ?? []).length;
         return { name: s.name, created, removed };
       })

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { registerCleanup, trackArtist } from './cleanup';
+import { registerCleanup, trackRecord } from './cleanup';
 import { getTestDb } from '../test/helpers/db';
 import { seedImage } from './seed';
 import { sql } from 'drizzle-orm';
@@ -185,13 +185,13 @@ const failLines = (bad: string[]) => `${bad.slice(0, 12).join('\n  ')}${bad.leng
 const seedRich = async (page: Page) => {
   const suffix = `${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`;
   const artist = await post(page, '/api/artists', { name: 'MGMT' });
-  trackArtist(artist.id);
   const label = await post(page, '/api/labels', { name: 'Mom + Pop' });
   const pressing = await post(page, '/api/pressings', { catalogNumber: `MP731-${suffix}`, matrixRunout: '269346E1 1701690 MP731-A JN-H STERLING', yearPressed: 2024, countryPressed: 'UK, Europe & US', pressingPlant: 'GZ Media', colorVariant: 'Orange [Tangerine]' });
   const genres: string[] = [];
   for (const g of ['Electronic', 'Indie Pop', 'Indie Rock', 'Pop', 'Psychedelic Rock', 'Rock']) genres.push((await post(page, '/api/genres', { name: g })).id);
   const record = await post(page, '/api/records', { title: 'Loss Of Life', artistId: artist.id, labelId: label.id, pressingId: pressing.id, genreIds: genres, releaseYear: 2024, notes: 'Bought on the Saturday.' });
   const id = record.id;
+  trackRecord(id);
   await seedImage({ recordId: id, imageType: 'cover' });
   const db = getTestDb();
   /*

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { registerCleanup, trackArtist } from './cleanup';
+import { registerCleanup, trackArtist, trackRecord } from './cleanup';
 import { GRID_FORK, NO_SCROLL_HEIGHT, BANDS } from '../src/app/records/[id]/band-geometry';
 import { STEP_GAP } from '../src/app/records/[id]/title-steps';
 
@@ -107,8 +107,8 @@ test('Loss Of Life takes 120: 144 sets in three lines but fails on height once t
   await login(page);
   const a = await post(page, '/api/artists', { name: 'MGMT' });
   const artistId = (a.id ?? a.error?.existingId) as string;
-  trackArtist(artistId);
   const record = await post(page, '/api/records', { title: 'Loss Of Life', artistId, releaseYear: 2024 });
+  trackRecord(record.id);
   await page.setViewportSize({ width: GRID_FORK, height: NO_SCROLL_HEIGHT });
   await page.goto(`/records/${record.id}`);
   await page.locator('[data-title-step][data-ladder]').waitFor({ timeout: 20_000 });

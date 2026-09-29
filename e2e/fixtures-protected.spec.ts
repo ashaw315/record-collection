@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { sql } from 'drizzle-orm';
-import { registerCleanup, trackArtist } from './cleanup';
+import { registerCleanup, trackArtist, trackRecord } from './cleanup';
 import { readSeventeen } from './seventeen';
 import { getTestDb } from '../test/helpers/db';
 
@@ -71,12 +71,51 @@ test.describe.serial('a spec that tracks the seventeen’s artist', () => {
     trackArtist(artistId);
   });
 
-  test('…and its cleanup removed its own record but not the seventeen nor their artist', async () => {
+  test('…and its cleanup removed nothing: not the seventeen, not their artist, and not even its own record', async () => {
     const db = getTestDb();
+    /*
+      Tracking the run-level artist deletes NOTHING, by design: the four specs
+      that create a record of their own under MGMT held it for 3 to 60 seconds
+      while any other tracker's afterEach could remove it (layout-sweep's
+      sweeps are where §5.5's floor and §30's ceiling were measured). A
+      careless spec now leaks its own row for the run rather than deleting
+      another spec's; `trackRecord` is the path that cleans.
+    */
     const own = await db.execute<{ n: string }>(sql`SELECT count(*)::text AS n FROM records WHERE id = ${ownRecordId}::uuid`);
-    expect(Number(own.rows[0].n), 'the spec’s own record is cleaned up').toBe(0);
+    expect(Number(own.rows[0].n), 'tracking the run-level artist does not delete by artist').toBe(1);
     expect(await countSeventeen()).toEqual({ records: 17, withPressing: 17, withCover: 17 });
     const artist = await db.execute<{ n: string }>(sql`SELECT count(*)::text AS n FROM artists WHERE id = ${artistId}::uuid`);
     expect(Number(artist.rows[0].n), 'the seventeen’s artist survives').toBe(1);
+    trackRecord(ownRecordId);
+  });
+});
+
+/**
+ * **The ledger: a spec cleans what it created, by id.** Two records under the
+ * run-level artist, one tracked; the other stands in for a record another spec
+ * is still reading. Fails against a `trackRecord` that deletes nothing, and
+ * against one that deletes by the record's artist.
+ */
+test.describe.serial('a spec that tracks its own record by id', () => {
+  let tracked = '';
+  let untracked = '';
+
+  test('creates two records under the run-level artist and tracks one', async ({ page }) => {
+    await login(page);
+    const artist = await (await page.request.post('/api/artists', { data: { name: 'MGMT' } })).json();
+    const artistId = (artist.id ?? artist.error?.existingId) as string;
+    const mk = async (title: string) => ((await (await page.request.post('/api/records', { data: { artistId, title, releaseYear: 2024 } })).json()).id as string);
+    tracked = await mk('Ledger Tracked');
+    untracked = await mk('Ledger Untracked');
+    expect(tracked && untracked, 'both records exist').toBeTruthy();
+    trackRecord(tracked);
+  });
+
+  test('…and its cleanup removed the tracked record and left the other', async () => {
+    const db = getTestDb();
+    const count = async (id: string) => Number((await db.execute<{ n: string }>(sql`SELECT count(*)::text AS n FROM records WHERE id = ${id}::uuid`)).rows[0].n);
+    expect(await count(tracked), 'the tracked record is gone').toBe(0);
+    expect(await count(untracked), 'the untracked record survives').toBe(1);
+    trackRecord(untracked);
   });
 });

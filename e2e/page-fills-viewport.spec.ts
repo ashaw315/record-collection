@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { registerCleanup, trackArtist } from './cleanup';
+import { registerCleanup, trackRecord } from './cleanup';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
@@ -38,9 +38,9 @@ test('§2.1: the page fills the viewport at every width from 1440 to 1920', asyn
   const a = await page.request.post('/api/artists', { data: { name: 'MGMT' } });
   const artist = await a.json();
   const artistId = (artist.id ?? artist.error?.existingId) as string;
-  trackArtist(artistId);
   const r = await page.request.post('/api/records', { data: { artistId, title: 'Loss Of Life', releaseYear: 2024 } });
   const { id } = await r.json();
+  trackRecord(id);
   const db = getTestDb();
   const pressing = await db.execute<{ id: string }>(sql`INSERT INTO pressings (pressing_plant, color_variant, matrix_runout) VALUES ('GZ Media', 'Orange', 'X') RETURNING id`);
   await db.execute(sql`UPDATE records SET spine_colour = ${'#a25829'}, pressing_id = ${pressing.rows[0].id}::uuid, purchase_price = 12.99, snippet = 'A snippet.', snippet_edited_at = NOW() WHERE id = ${id}::uuid`);

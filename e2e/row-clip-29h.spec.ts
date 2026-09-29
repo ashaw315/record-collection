@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { registerCleanup, trackArtist } from './cleanup';
+import { registerCleanup, trackRecord } from './cleanup';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
@@ -47,11 +47,11 @@ test('§33 (h): no ornament paints below its row’s bottom rule', async ({ page
   const a = await page.request.post('/api/artists', { data: { name: 'MGMT' } });
   const artist = await a.json();
   const artistId = (artist.id ?? artist.error?.existingId) as string;
-  trackArtist(artistId);
   const r = await page.request.post('/api/records', {
     data: { artistId, title: `Loss Of Life ${s.slice(-4)}`, releaseYear: 2024 },
   });
   const { id } = await r.json();
+  trackRecord(id);
   const db = getTestDb();
   const pressing = await db.execute<{ id: string }>(
     sql`INSERT INTO pressings (pressing_plant, color_variant, matrix_runout) VALUES ('GZ Media', 'Orange', 'X') RETURNING id`,

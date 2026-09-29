@@ -92,6 +92,18 @@ export async function deleteRecordsByArtist(page: Page, artistId: string): Promi
  *
  * Records before the artist: §7.4 refuses to cascade a reference row in use.
  */
+/**
+ * **A spec cleans what it created, by id.** For records under the run-level
+ * artist MGMT this is the ONLY path that deletes: `trackArtist` on that artist
+ * removes nothing, so a spec can leak its own row for the run but never remove
+ * a row another spec is mid-read on (`fixtures-protected.spec.ts`).
+ */
+export function trackRecord(recordId: string): void {
+  trackedRecords.push(recordId);
+}
+
+const trackedRecords: string[] = [];
+
 export function trackArtist(artistId: string): void {
   trackedArtists.push(artistId);
 }
@@ -112,6 +124,15 @@ const PROTECTED_RECORDS = `{${readSeventeen().map((r) => r.id).join(',')}}`;
 export function registerCleanup(): void {
   test.afterEach(async () => {
     const db = getTestDb();
+
+    for (const recordId of trackedRecords.splice(0)) {
+      try {
+        await db.execute(sql`DELETE FROM want_list WHERE acquired_record_id = ${recordId}::uuid`);
+        await db.execute(sql`DELETE FROM records WHERE id = ${recordId}::uuid`);
+      } catch {
+        // Swallowed deliberately — see above.
+      }
+    }
 
     for (const artistId of trackedArtists.splice(0)) {
       /*
@@ -137,9 +158,19 @@ export function registerCleanup(): void {
                          AND NOT (id = ANY(${PROTECTED_RECORDS}::uuid[]))
                      )`,
         );
+        /*
+          Nothing by artist under the run-level artist: its records belong to
+          the run (the seventeen) or to whichever spec created them, and that
+          spec tracks them by id.
+        */
         await db.execute(
           sql`DELETE FROM records WHERE artist_id = ${artistId}::uuid
-                AND NOT (id = ANY(${PROTECTED_RECORDS}::uuid[]))`,
+                AND NOT (id = ANY(${PROTECTED_RECORDS}::uuid[]))
+                AND NOT EXISTS (
+                  SELECT 1 FROM records p
+                   WHERE p.artist_id = ${artistId}::uuid
+                     AND p.id = ANY(${PROTECTED_RECORDS}::uuid[])
+                )`,
         );
         /* Only when nothing is left under it: an artist the seventeen reference stays. */
         await db.execute(
