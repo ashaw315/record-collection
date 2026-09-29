@@ -592,6 +592,7 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
             formatLine={record.formatLine}
             genres={record.genres}
             editHref={`/records/${record.id}/edit`}
+            tint={ladder === null ? null : ladder.tint}
             /*
               §5.1's triangle: tint, ground, in the cell's corner FIELD.
 

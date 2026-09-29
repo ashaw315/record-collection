@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
-import { TITLE_STEPS, artistStep } from '../src/app/records/[id]/title-steps';
+import { STEP_GAP, TITLE_STEPS, artistStep } from '../src/app/records/[id]/title-steps';
 import { readSeventeen } from './seventeen';
 
 /**
@@ -112,4 +112,53 @@ test('§45: the title fits the identity cell on both axes on every record at eve
   console.log(`  §45 LADDER on the seventeen (${readings} readings): artist lowered the title on ${lowered}; word breaks on ${breaks}\n  ${report.join('\n  ')}\n  §18 FORK:\n  ${fork.join('\n  ')}`);
   expect(readings, 'the report has subjects').toBe(rows.length * WINDOWS.length);
   expect(bad, `§45 not met:\n  ${bad.join('\n  ')}`).toEqual([]);
+});
+
+/**
+ * **§45's field, rendered: it fills the height the ladder leaves, between the
+ * title and the pressing block, at 1440 × 900 and 1440 × 1200.** The ladder
+ * is quantised, so a leftover always remains; at 1440 × 1200 it is large.
+ * Provisional until Adam's capture rules on it; this holds the geometry.
+ */
+test('§45: the tint field fills the leftover between the title and the pressing block, at 1440 × 900 and 1440 × 1200', async ({ page }) => {
+  test.setTimeout(600_000);
+  await login(page);
+  const rows = readSeventeen();
+  const bad: string[] = [];
+  const seen: string[] = [];
+  let readings = 0;
+  for (const h of [NO_SCROLL_HEIGHT, 1200]) {
+    await page.setViewportSize({ width: GRID_FORK, height: h });
+    for (const r of rows) {
+      await page.goto(`/records/${r.id}`);
+      await page.locator('[data-title-step][data-ladder]').waitFor({ timeout: 20_000 });
+      await page.waitForTimeout(300);
+      const m = await page.evaluate(() => {
+        const R = (el: Element) => el.getBoundingClientRect();
+        const track = document.querySelector<HTMLElement>('[data-track="content"]');
+        const title = document.querySelector<HTMLElement>('[data-block="title"]');
+        const pressing = document.querySelector<HTMLElement>('[data-block="pressing"]');
+        const field = document.querySelector<HTMLElement>('[data-mark="identityField"]');
+        if (!track || !title || !pressing) return null;
+        const f = field === null ? null : R(field);
+        return { titleBottom: R(title).bottom, pressingTop: R(pressing).top, trackW: track.clientWidth, runPresent: document.querySelector('[data-field="genres"]') !== null, field: f === null ? null : { top: f.top, bottom: f.bottom, width: f.width, height: f.height, bg: getComputedStyle(field as HTMLElement).backgroundColor } };
+      });
+      const where = `${r.title.split(':')[0]} @1440x${h}`;
+      if (m === null) { bad.push(`${where}: no identity cell`); continue; }
+      readings += 1;
+      const leftover = m.pressingTop - m.titleBottom;
+      if (m.field === null) { bad.push(`${where}: no tint field (leftover ${leftover.toFixed(1)})`); continue; }
+      /* The field starts after the ladder's own gap, which its arithmetic reserves between the blocks; flush, it sat under the artist's inline box. */
+      if (Math.abs(m.field.top - (m.titleBottom + STEP_GAP)) > 1) bad.push(`${where}: the field starts ${m.field.top.toFixed(1)}, the title block ends ${m.titleBottom.toFixed(1)} and the ladder's gap is ${STEP_GAP}`);
+      if (Math.abs(m.field.bottom - m.pressingTop) > 1) bad.push(`${where}: the field ends ${m.field.bottom.toFixed(1)}, the pressing block starts ${m.pressingTop.toFixed(1)}`);
+      if (Math.abs(m.field.width - m.trackW) > 1) bad.push(`${where}: the field is ${m.field.width} wide, the track ${m.trackW}`);
+      if (m.field.bg === 'rgba(0, 0, 0, 0)') bad.push(`${where}: the field has no fill`);
+      /* The field is the gap made visible, not demand: the genres run must not yield to it (found 29 Sep: the run's measure summed the grown field and collapsed on every record with room). */
+      if (!m.runPresent) bad.push(`${where}: the genres run collapsed under the field`);
+      seen.push(`${r.title.split(':')[0]} ${Math.round(m.field.height)}`);
+    }
+  }
+  console.log(`  §45 TINT FIELD heights (1440 × 900 then × 1200): ${seen.join(' · ')}`);
+  expect(readings, 'the report has subjects').toBe(rows.length * 2);
+  expect(bad, `§45's field not met:\n  ${bad.join('\n  ')}`).toEqual([]);
 });

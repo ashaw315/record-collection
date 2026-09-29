@@ -82,7 +82,8 @@ export function GenresRun({
       */
       const needed =
         contentHeight({
-          childHeights: Array.from(content.children).map((child) => {
+          /* §45's tint field is the gap made visible -- ground, not demand. Summed, it filled the track and read as "exactly fitting", which collapsed the run on every record with room (29 Sep). Marks are never demand. */
+          childHeights: Array.from(content.children).filter((child) => !child.matches('[data-mark], [data-ground]')).map((child) => {
             const box = child.getBoundingClientRect();
             const childStyle = getComputedStyle(child);
             return box.height + parseFloat(childStyle.marginTop) + parseFloat(childStyle.marginBottom);

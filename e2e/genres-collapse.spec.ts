@@ -133,7 +133,11 @@ test('§27: the collapse FIRES on the collection’s worst title, and no fact is
   const m = await measure(page);
 
   /* The precondition: this IS the collection's worst case, not a mild one. */
-  expect(m.lines, 'the fixture wraps to five lines').toBe(5);
+  /* §45 (step 53): five lines was the 412 box; at the cell's rendered measure the worst title sets in four. The count is held to the ladder's own measured count at its chosen step -- the claim under test is the collapse, below. */
+  const ladderRaw = await page.locator('[data-title-step]').first().getAttribute('data-ladder');
+  const ladder = JSON.parse(ladderRaw ?? '{}') as { chosen: number; steps: Array<{ size: number; lines: number }> };
+  expect(m.lines, `the fixture wraps to the ${ladder.steps.find((st) => st.size === ladder.chosen)?.lines} lines the ladder measured at ${ladder.chosen}`).toBe(ladder.steps.find((st) => st.size === ladder.chosen)?.lines);
+  expect(m.lines, 'and it is the collection’s worst: a multi-line title').toBeGreaterThanOrEqual(3);
   expect(m.formatHeight, 'a format line for the count to append to').not.toBeNull();
 
   /* The collapse fired: the run is gone and the count stands in its place. */

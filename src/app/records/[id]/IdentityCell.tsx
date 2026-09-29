@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { TitleStep } from './TitleStep';
+import { STEP_GAP } from './title-steps';
 import { GenresRun } from './GenresRun';
 import { LABEL, LABEL_INK } from './grid-type';
 
@@ -52,6 +53,7 @@ export function IdentityCell({
   genres,
   formatLine,
   editHref,
+  tint = null,
 }: {
   title: string;
   artistName: string;
@@ -63,6 +65,8 @@ export function IdentityCell({
   formatLine: string | null;
   /** The pressing editor §4.2's genres count opens when the run collapses. */
   editHref: string;
+  /** The record's tint step (§5.5's ladder), or null when it has no ladder: then no field is drawn. */
+  tint?: string | null;
 }) {
   return (
     /*
@@ -104,7 +108,8 @@ export function IdentityCell({
         With the collapse firing on the demand §4.2 actually defines, nothing
         overflows — and the next thing that does will announce itself.
       */
-      className="grid h-full min-w-0 p-[18px]"
+      /* overflow-hidden: a cell that hosts a mark clips it (page8a-marks: "host overflow is visible, not hidden"), as every other mark's host does. */
+      className="grid h-full min-w-0 overflow-hidden p-[18px]"
       /*
         **One row (§28): the ornament track is withdrawn and its space
         returns to the content.** "The identity cell carries no ornament. Its
@@ -192,6 +197,30 @@ export function IdentityCell({
         last child at the bottom whatever the title above it does — which is the
         structural guard: the two blocks cannot push each other.
       */}
+      {/*
+        §45 (step 53b): "the title is the largest that fits, and the height it
+        leaves takes the tint step as a field across the cell, between the
+        title and the pressing block." Composed as §40 composes the cover's
+        leftover: the field grows into whatever the quantised ladder leaves,
+        so a taller window (a taller cell, §42/§40) reads as more field, not
+        more paper. Provisional until the 1440 × 900 and 1440 × 1200 captures
+        are judged. Ground, not content: hidden from assistive tech, and
+        drawn only when the record has a ladder.
+      */}
+      {tint !== null && (
+        /*
+          The paint starts STEP_GAP below the title block, not flush: the
+          ladder's own arithmetic keeps that gap between the blocks (demand +
+          STEP_GAP within supply), and the artist's inline box hangs 4px below
+          its block at 80, so a flush field sat under the artist's ink
+          (measured 29 Sep). The gap is an inset of the paint, not a margin on
+          the box: a margin survived when the leftover was gone and pushed the
+          pressing block 24px out of the worst title's cell.
+        */
+        <div data-ground="" className="relative w-full min-h-0 grow" aria-hidden="true">
+          <div data-mark="identityField" className="absolute inset-x-0 bottom-0" style={{ top: STEP_GAP, background: tint }} />
+        </div>
+      )}
       <div data-block="pressing" className="w-full">
         <div
           className="mb-[14px] w-[372px] max-w-full"

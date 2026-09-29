@@ -4,6 +4,7 @@ import '../../../../test/component/next-navigation';
 import { RecordPage8a, type PageRecord } from './RecordPage8a';
 import { BANDS } from './band-geometry';
 import { STRIP_SPLIT } from './cover-33';
+import { recordLadder } from '@/lib/colour/record-ladder';
 
 /**
  * §5.3, the record with no cover: "the fallback is ink for all eight marks
@@ -369,5 +370,44 @@ describe('§37: the upper band’s air at 8 columns is a section carrying the ti
     expect(tag, 'a section, so §21, §25 and §29 resolve against it').toContain('data-section="upper-air"');
     expect(cell, 'no figure: the construction is the only figure above the fold').not.toMatch(/data-ornament="figure"/);
     expect(cell, 'the tint triangle, moved up').toMatch(/data-ornament="flat"[^>]*data-flat="triangle"/);
+  });
+});
+
+/**
+ * **§45 (step 53b): the leftover between the title and the pressing block
+ * takes the tint step as a field.** "The title is the largest that fits, and
+ * the height it leaves takes the tint step as a field across the cell, between
+ * the title and the pressing block." Provisional until a capture; the markup
+ * is what this holds. A record with no ladder (no spine colour) draws none,
+ * as it draws no other tint mark.
+ */
+describe('§45: the identity cell’s leftover is a tint field', () => {
+  const trackOf = (html: string) => {
+    const start = html.indexOf('data-track="content"');
+    const end = html.indexOf('data-block="pressing"', start);
+    return { start, end, between: html.slice(start, end) };
+  };
+
+  it('draws the field between the title block and the pressing block, in the ladder’s tint', () => {
+    const html = renderToStaticMarkup(<RecordPage8a record={record('#a25829')} />);
+    const { start, end, between } = trackOf(html);
+    expect(start, 'the content track').toBeGreaterThan(-1);
+    expect(end, 'the pressing block follows it').toBeGreaterThan(start);
+    const field = /<div[^>]*data-mark="identityField"[^>]*>/.exec(between)?.[0];
+    expect(field, 'a tint field sits between the two blocks').toBeDefined();
+    expect(between.indexOf('data-block="title"'), 'after the title block').toBeLessThan(between.indexOf('data-mark="identityField"'));
+    const tint = recordLadder('#a25829')?.tint;
+    expect(tint).toBeDefined();
+    expect(field, 'filled with the record’s tint step').toContain(`background:${tint}`);
+    /* The paint sits inside a ground wrapper that the genres run's demand skips and assistive tech never sees; the paint itself is inset by the ladder's gap. */
+    const ground = /<div[^>]*data-ground=""[^>]*>/.exec(between)?.[0];
+    expect(ground, 'inside a ground wrapper').toBeDefined();
+    expect(ground, 'ground, not content: hidden from assistive tech').toContain('aria-hidden="true"');
+    expect(field, 'the paint starts after the ladder’s gap').toContain('top:24px');
+  });
+
+  it('draws no field when the record has no ladder', () => {
+    const html = renderToStaticMarkup(<RecordPage8a record={record(null)} />);
+    expect(trackOf(html).between).not.toContain('identityField');
   });
 });

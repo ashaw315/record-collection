@@ -58,6 +58,8 @@ type MarkKind = 'baseField' | 'linear' | 'tint' | 'ink';
    says so — which is the vacuity check proving itself impossible. */
 const MARK_KIND: Partial<Record<string, MarkKind>> = {
   releaseYearField: 'baseField',
+  /* §45 (step 53): the leftover between the title and the pressing block takes the tint step as a field. Tint, so the area floor does not govern it. */
+  identityField: 'tint',
   construction: 'baseField',
   /* Linear: an area floor cannot govern a 2px rule. */
   journalEdge: 'linear',

@@ -31872,3 +31872,49 @@ loop now accepts height, width or the artist; its Loss Of Life case is the
 ladder's own measured count rather than to five; §39/§40's "supply stays 510"
 is the rendered track; the component test's "track stays 510" is "no block
 pins the track".
+
+---
+
+## Step 53b built: §45's tint field in the identity cell's leftover (29 Sep)
+
+**Built, provisional until Adam judges the captures**
+(`docs/captures/step53-tint-field-{gaucho,bridge-over-troubled-water}-1440x{900,1200}.png`).
+Between the title block and the pressing block the identity cell draws the
+record's tint step as a field that grows into whatever the quantised ladder
+leaves; a record with no ladder draws none. The paint starts STEP_GAP (24)
+below the title block, as an inset of the paint rather than a margin on the
+box: flush, it sat under the artist's inline box, which hangs 4px below its
+block at 80; as a margin, it survived when the leftover was gone and pushed
+the worst title's pressing block 24px out of the cell. Held by a component
+test (failed first on the missing field) and by
+`title-ladder-45.spec.ts`'s field test on the seventeen at 1440 × 900 and
+1440 × 1200 (failed first with "no tint field" on all 34 readings). Field
+heights: 88 to 298 at 900, 277 to 480 at 1200.
+
+**The field is the gap made visible, not demand.** `GenresRun` summed every
+child of the track to decide whether the run yields; the grown field made
+the sum equal the supply, which is the "exactly fitting is a coincidental
+pass" case, and the run collapsed on all seventeen at 1440 × 900 with room to
+spare (staged: 34 of 34 readings against the unfiltered run). Marks and the
+ground wrapper are excluded from the demand.
+
+**Two rules the field met on the way, both kept.** page8a-marks requires a
+mark's host cell to clip, so the identity content cell is `overflow-hidden`
+now, as every other mark's host is. And §5.5's no-mark-over-40% share
+(`colour-distribution.spec.ts`) holds with the field counted as tint.
+
+**A finding for Design, left red rather than changed:**
+`genres-collapse.spec.ts` "§27: the collapse FIRES on the collection's worst
+title" now fails on "the run has yielded". At the rendered measure (443, not
+the 412 box) the worst title sets in four lines rather than five, its demand
+falls, and the give order is not reached -- the run stays listed and nothing
+overflows. §27's premise that the collection's worst title triggers the
+collapse was a fact about the 412 box. Whether the collapse should still
+fire (a narrower measure, or a padding of 34 -- the same question as the
+seventeen's padding above) or §27 is superseded here is Design's ruling.
+The test's five-line count was ported to the ladder's measured count; its
+collapse claim is untouched, and red.
+
+**Seen in the 1200 capture, cosmetic, recorded:** the pressing block's
+372px hairline sits on the field's bottom edge and leaves a 1px step to its
+right, where the field runs the full track and the rule does not.
