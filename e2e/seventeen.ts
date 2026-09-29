@@ -63,4 +63,22 @@ export async function seedSeventeen(opts: { base: string; password: string }): P
       if (!res.ok) throw new Error(`seedSeventeen: journal entry for ${r.title} gave ${res.status}`);
     }
   }
+  await assertSeventeenSeeded(db, readSeventeen());
+}
+
+/**
+ * **What global setup seeded is exactly the capture, or the run stops.** A
+ * database read of the capture's ids after seeding: absent is reported by
+ * title, so a capture that moved on from the seed, or a seed that failed half
+ * way, fails here rather than in whichever spec measures the wrong records.
+ */
+export async function assertSeventeenSeeded(db: ReturnType<typeof getTestDb>, rows: SeventeenRow[]): Promise<number> {
+  const idArray = `{${rows.map((r) => r.id).join(',')}}`;
+  const present = await db.execute<{ id: string }>(sql`SELECT id FROM records WHERE id = ANY(${idArray}::uuid[])`);
+  const seeded = new Set(present.rows.map((r) => r.id));
+  const missing = rows.filter((r) => !seeded.has(r.id));
+  if (missing.length > 0) {
+    throw new Error(`seventeen: ${seeded.size} of ${rows.length} captured records are seeded; missing: ${missing.map((r) => r.title).join(', ')}`);
+  }
+  return seeded.size;
 }

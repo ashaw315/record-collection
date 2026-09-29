@@ -31749,3 +31749,50 @@ not use it. The per-record figures the unit tests quote (worst 0.956%,
 median 1.349%, §22's advance rate) are therefore figures about thirteen
 drawings the collection does not contain. Neither file changed; the
 proposal is in the session report.
+
+---
+
+## The seventeen derive from the database now, and the first capture moved the collection (29 Sep)
+
+**Three mechanisms, each held by a test that failed first.**
+`scripts/real-records-capture.mjs` reads every record's id, title, About and
+journal entries from `DATABASE_URL` (two SELECTs, read-only), prints what a
+re-capture adds, removes and changes by title, and rewrites
+`docs/captures/real-records.json` only with `--write`; held against the
+local test database with rows the test inserted.
+`scripts/generate-real-records.mjs --write` renders
+`src/app/records/[id]/real-records.ts` from the capture;
+`test/repo/real-records-generated.test.ts` fails when the file is not what
+the generator renders, and names the command. `assertSeventeenSeeded` runs
+at the end of global setup's seed and fails naming the missing titles when
+the database does not hold every captured id.
+
+**The first regeneration, as a report and not a fix.** The hand-typed list
+shared 4 ids of 17 with the collection; the generated one shares 17. On the
+real ids, `colour-eligibility.test.ts`'s recorded figures move: worst
+**0.9557% → 0.9816%** (Wired), median **1.3489% → 1.2523%**. That one test
+is red at this commit by intent -- the old figures described thirteen
+records that were never in the collection, and the change is the correction
+landing; the expectation is Design's to accept. Every other test on the list
+holds: §22 binds on no record, every record carries two forms, the path has
+two ends, own fit binds on one axis.
+
+**The capture also found the collection had moved.** Against production:
+17 records, 0 added, 0 removed, **1 changed** -- Bridge Over Troubled Water
+now carries an About it did not have when the file was written, so five
+records have one, not four. That is the drift the mechanism exists to catch,
+on its first run. The capture is written in creation order and pretty
+printed, so the file's row order changed; nothing reads the order.
+
+**Two index questions, decided.** Assertion 9 should require a distinct
+quote per step: a step's quote is the clause its instruction restates, and
+two steps quoting one clause means at least one is quoting the section
+rather than its task -- a shared quote cannot say which step drifted, which
+is what per-step quoting is for. Steps 20, 25 and 26 and steps 22 to 24 need
+sharper clauses before 9 lands; the exemption for a step naming no § stands.
+And assertion 3 would not have caught step 8's quote sitting below the
+do-not-build paragraph: 3 reads step numbers and the closing paragraph's
+position and never looks at a `>` line. Assertion 9 catches it only if its
+parse attaches a quote to a step by being inside the step's own block --
+before the next blank-line paragraph -- rather than by nearest preceding
+step number. Written into 9's rule, not left to the parser.

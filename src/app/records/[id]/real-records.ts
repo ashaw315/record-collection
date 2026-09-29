@@ -1,33 +1,33 @@
 /**
- * **Every real record id in the collection, as one list.**
+ * **Every real record id in the collection, as one list -- GENERATED.**
  *
- * The generator's properties — §5.5's area floor, §20's clearance, the 6:1
- * size band — are claims about the REAL sheet rather than about a sample, so
- * every test that checks one has to see the same seventeen.
+ * Rendered from docs/captures/real-records.json by scripts/generate-real-records.mjs;
+ * do not edit. The capture comes from the database (scripts/real-records-capture.mjs).
+ * test/repo/real-records-generated.test.ts fails when this file and the capture disagree.
  *
- * It lives here because it was copied instead. §20's first test carried
- * twelve of the seventeen and reported the worst record at 0.540% when it was
- * actually 0.440% with two still under the floor: the five it omitted were
- * the five worst, so the incomplete list did not merely test less, it
- * reported a pass that was not true. A shared constant cannot drift from
- * itself.
+ *     node scripts/generate-real-records.mjs --write
+ *
+ * The generator's properties -- §5.5's area floor, §20's clearance, the 6:1
+ * size band -- are claims about the REAL sheet rather than about a sample, so
+ * every test that checks one has to see the same seventeen. The hand-typed
+ * list this replaces (29 Sep) shared 4 ids of 17 with the collection.
  */
 export const REAL_RECORD_IDS = [
-  'e73e1de1-3686-4a81-8544-ca2300e187bb',
+  'd5c483aa-047c-475f-8439-2adc2a4e9b0a',
   'd7047c62-149e-42fa-8cda-fac3f90c47cc',
+  'fadd5c0e-5146-4421-aebc-cd53eed2f8b1',
   '158a3163-6a56-4673-8f88-27e7b2aec724',
+  'bac64213-9673-4ae7-862f-fc5b17dc16d3',
+  '48461309-e0e0-42a8-b903-f60642c923ca',
+  '2be8579e-2ee7-44fa-81e8-9713a6aaa714',
   'c61c5919-8f50-4782-8e04-419fb3d2b148',
-  'a31591e7-2e28-42e7-84d5-2a1f96ad31fd',
-  'b9a9a9db-4bf5-42e6-b751-0eba2dfe8002',
-  '30504952-8d43-4c2e-b687-b89558371df5',
-  '78da2ee9-f7c7-40ea-8149-269454437ef6',
-  '372aba39-59ad-46c8-b76b-f33ecae75c98',
-  '464979c3-aaa2-43c5-afd4-8dc4ee2e98c6',
-  '7d35194b-5a02-4e31-a568-d95a9b32b0cd',
-  'b4abf39a-df33-4a9e-b65c-64d3d0a39b78',
-  '4a1e2b7c-0000-4000-8000-000000000001',
-  '4a1e2b7c-0000-4000-8000-000000000002',
-  '4a1e2b7c-0000-4000-8000-000000000003',
-  '4a1e2b7c-0000-4000-8000-000000000004',
-  '4a1e2b7c-0000-4000-8000-000000000005'
+  'e73e1de1-3686-4a81-8544-ca2300e187bb',
+  '1d4a4107-3153-4e98-b48a-d00a28266f94',
+  'b19cd530-f2d9-4936-b55d-3893b9f74420',
+  'cdcf94cb-7c7f-45f5-ad04-584a1fb0b30a',
+  '9a514311-ad88-4205-a37a-a5a4cdd231d2',
+  'ce57a185-6182-4a9d-9af1-37bae019db10',
+  '7a333685-81d3-4a8a-8515-cf29f4d587a7',
+  'c8bc3a1d-e5ba-4794-a4b9-bcfe89d6fbed',
+  'de2ad140-86af-44e1-84a4-977324346cca',
 ] as const;
