@@ -22,7 +22,7 @@ For every unit of work, follow this sequence without exception:
 4. **Run the tests. Watch them fail.** Paste the failure output. A test that has never failed has not been shown to test anything.
 5. **Write the minimum code to pass.** No speculative abstraction, no "while I'm here" refactors, no unrequested features.
 6. **Run the tests. Watch them pass.** Paste the output.
-7. **Run the full suite**, not just the new tests, to prove nothing regressed.
+7. **Run the step's covering verification, per §10.** The full suites run at a gate, and §10 says what a gate is.
 8. **Report and stop.** Summarize what changed, what is now green, and what the next step would be. **Then wait.** Do not proceed to the next unit unprompted.
 
 Step 8 is the one you will be most tempted to skip. Don't. The developer is reviewing and verifying as we go, and a large unreviewed diff is worse than a small one, even if it is correct.
