@@ -197,7 +197,10 @@ This app is about vinyl records. Several distinctions matter and are easy to fla
 Verification runs at two levels. Every report says which one it was.
 
 **Per step** — run the specs covering what the step built, the relevant width
-sweep, `npm run typecheck` and `npm run lint`. Not the full suites.
+sweep, `npm run typecheck`, `npm run lint` and `npm run build`. Not the full
+suites. The build is per step because it is cheap (14 to 17s wall clock,
+measured 29 Sep) and a broken build found at a gate means every step since
+was stacked on it — the expensive kind of late discovery.
 
 **At a gate** — run the full suites: `npm test`, and `npx playwright test` on
 both projects with no file argument. A gate is:
@@ -224,7 +227,8 @@ step, and the gate is where the rest gets examined.
 - [ ] Tests were written before the implementation.
 - [ ] The tests were observed failing, then passing.
 - [ ] Its own covering verification is green: the covering specs, the
-      relevant width sweep, `npm run typecheck` and `npm run lint`.
+      relevant width sweep, `npm run typecheck`, `npm run lint` and
+      `npm run build`.
 - [ ] The report names what was run, and says it was the step level.
 - [ ] Migrations (if any) run clean from an empty database.
 - [ ] No new dependencies were added without approval.
@@ -235,13 +239,12 @@ step, and the gate is where the rest gets examined.
 
 - [ ] `npm test` passes in full.
 - [ ] `npx playwright test` passes on both projects with no file argument.
-- [ ] `npm run build` succeeds.
 - [ ] The report names the gate and says the full suites ran.
 
 **The guard, because this split creates a way to be wrong that did not exist
 before.** Every verification report states which of the two it was — "step
 level: colour-distribution and identity-band-23 on chromium, typecheck,
-lint" or "gate: full suites, both projects". A partial green mistaken for a
+lint, build" or "gate: full suites, both projects". A partial green mistaken for a
 full one is the same defect family as a green that examined nothing (§9);
 the difference is that here the green is honest and the reader's inference
 is not. Make the wrong inference impossible by always saying. A report that
