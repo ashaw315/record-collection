@@ -412,6 +412,14 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
             [data-band="identity"] { grid-template-columns: ${GRID_FORK / 3}px 1fr !important; grid-auto-rows: ${BANDS.identity - 1}px; height: ${3 * BANDS.identity}px !important; }
             [data-band="identity"] > [data-cell="identity"] { grid-row: 1 !important; grid-column: 1 !important; }
             [data-band="identity"] > [data-upper-air] { display: block; grid-row: 1 !important; grid-column: 2 !important; }
+            /*
+              §44: "the air carries no ornament below 960". §37 moves the tint
+              triangle up AT eight columns; the cell carries it at every width,
+              so it rendered here from 481 to 959 until 29 Sep -- the rule
+              firing below its breakpoint. Hidden, not unmounted: the markup
+              is the same on both sides of 960 and the stylesheet decides.
+            */
+            [data-band="identity"] > [data-upper-air] [data-ornament="flat"] { display: none; }
             [data-band="identity"] > [data-cell="still"] { grid-row: 2 !important; grid-column: 1 / -1 !important; }
             [data-band="identity"] > [data-cell="sleeve"] { grid-row: 3 !important; grid-column: 1 / -1 !important; }
             /* §44: a 1px hairline between the identity and its air when the air renders; at 480 there is no air, so no vertical. */

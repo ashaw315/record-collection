@@ -137,7 +137,7 @@ const MEASURE = () => {
   /* §42 withdrew the clamp; nothing squeezes an About now, and the measure stays so the judge's shape does not change. */
   const squeezed: string[] = [];
   const upper = ['identity', 'still', 'sleeve'].map((n) => { const el = document.querySelector<HTMLElement>(`[data-cell="${n}"]`); return { n, display: el === null ? 'absent' : getComputedStyle(el).display, w: el === null ? 0 : px(R(el).width), h: el === null ? 0 : px(R(el).height), x: el === null ? 0 : px(R(el).left + window.scrollX), y: el === null ? 0 : px(R(el).top + window.scrollY) }; });
-  const upperAir = (() => { const el = document.querySelector<HTMLElement>('[data-upper-air]'); if (el === null) return null; const b = box(el); const flat = el.querySelector<HTMLElement>('[data-ornament="flat"]'); const fb = flat === null ? null : flat.getBoundingClientRect(); return { display: getComputedStyle(el).display, ...b, section: el.dataset.section ?? null, figure: el.querySelector('[data-ornament="figure"]') !== null, flat: flat !== null, flatBleed: fb === null || fb.width === 0 ? null : Math.max(0, -fb.left) / fb.width }; })();
+  const upperAir = (() => { const el = document.querySelector<HTMLElement>('[data-upper-air]'); if (el === null) return null; const b = box(el); const flat = el.querySelector<HTMLElement>('[data-ornament="flat"]'); const fb = flat === null ? null : flat.getBoundingClientRect(); return { display: getComputedStyle(el).display, ...b, section: el.dataset.section ?? null, figure: el.querySelector('[data-ornament="figure"]') !== null, flat: flat !== null, flatShown: flat !== null && getComputedStyle(flat).display !== 'none' && fb !== null && fb.width > 0 && fb.height > 0, flatBleed: fb === null || fb.width === 0 ? null : Math.max(0, -fb.left) / fb.width }; })();
   /* §37: the region's own triangle, "moved, not added" -- visible means displayed with a box. */
   const regionTriangle = Array.from(document.querySelectorAll<HTMLElement>('[data-region="extended-grid"] [data-cell="air"] [data-ornament="flat"][data-flat="triangle"]')).some((f) => getComputedStyle(f).display !== 'none' && f.getBoundingClientRect().width > 0);
   const cover = document.querySelector<HTMLElement>('[data-cover]');
@@ -320,6 +320,8 @@ test('below the fork, at every width: the upper cells wrap at their size, the co
         if (Math.abs(m.upperAir.w - (w - 480)) > 1) j.push(`the air is ${m.upperAir.w} wide, not the row's rest ${w - 480} (§44)`);
         if (identity !== undefined && (Math.abs(m.upperAir.y - identity.y) > 1 || Math.abs(m.upperAir.x - 480) > 1)) j.push(`the air is not beside the identity on its row (air ${m.upperAir.x},${m.upperAir.y})`);
         if (m.identityRule !== 1) j.push(`no hairline between the identity and its air (identity right rule ${m.identityRule}px; §44: 1px at 0.72 when the air renders)`);
+        /* §44: "the air carries no ornament below 960"; §37 moves the tint triangle up AT eight columns, not before. Asserted on the rendered flat, not the markup: the cell carries the flat at every width and the stylesheet decides. */
+        if (m.upperAir.flatShown) j.push('the air carries a tint triangle below 960 (§44: no ornament in the air below the eight-column breakpoint; §37 moves it up at 960)');
       }
     }
     if (w === 480 && m.upperAir !== null && m.upperAir.display !== 'none') j.push('at 480 there is no air (§44), yet the air cell shows');
@@ -353,7 +355,7 @@ test('below the fork, at every width: the upper cells wrap at their size, the co
         /* §37, step 40: a section carrying the tint field and NO figure; the region's triangle is moved, not added. */
         if (m.upperAir.section === null) j.push('the upper air is not a section (§37)');
         if (m.upperAir.figure) j.push('the upper air carries a figure (§37: the construction is the only figure above the fold)');
-        if (!m.upperAir.flat) j.push('the upper air carries no tint field');
+        if (!m.upperAir.flatShown) j.push('the upper air carries no tint field (rendered)');
         if (m.regionTriangle) j.push('the region draws its own triangle as well as the upper air’s (§37: moved, not added)');
       }
     }

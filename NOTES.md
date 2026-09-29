@@ -31796,3 +31796,19 @@ position and never looks at a `>` line. Assertion 9 catches it only if its
 parse attaches a quote to a step by being inside the step's own block --
 before the next blank-line paragraph -- rather than by nearest preceding
 step number. Written into 9's rule, not left to the parser.
+
+---
+
+## Flake log — layout-sweep's §30 ceiling on a random record (29 Sep)
+
+`layout-sweep.spec.ts` "below the fork" failed once at 1416 to 1439 with
+"empty width 483.4 … 506.9 is not under one upper cell", then passed twice
+unchanged. The record is `seedRich`'s, created fresh each run, and the
+construction is hashed from the id: the drawing's aspect varies per id, and
+at the top of the 960 to 1439 range a narrow arrangement's own empty width
+plus the 173.5 beside the square crosses 480. Computed over the seventeen's
+own-fit boxes, none crosses: the widest is The Soft Parade at 449.6 at 1439,
+which is what `floor-ceiling-measure.spec.ts` renders. So the assertion is
+true of the collection and intermittently false of a uuid the collection
+does not contain -- §30's ceiling asserted on a sample of one random
+record. Found while fixing the tint triangle below 960; not changed.
