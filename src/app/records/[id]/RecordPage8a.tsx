@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BANDS, CONTENT_MEASURE, GRID_COLUMN, GRID_COLUMNS, GRID_FORK, IDENTITY_SPANS, LOWER_SPANS, STILL_MARGIN } from './band-geometry';
+import { BANDS, GRID_COLUMN, GRID_COLUMNS, GRID_FORK, IDENTITY_SPANS, LOWER_SPANS, STILL_MARGIN } from './band-geometry';
 import { BAND_AT_REFERENCE, REFERENCE_HEIGHT, regionStylesheet, widePageStylesheet } from './region-rows';
 import { Plane } from './Plane';
 import { Flat } from './OrnamentMarks';
@@ -7,7 +7,6 @@ import { FLATS } from './ornament';
 import { CONTROL_HEIGHT } from './extended-grid';
 import { STRIP_SPLIT } from './cover-33';
 import { recordBandStylesheet, type CellRuns } from './record-band-43';
-import { LADDER_SUPPLY } from './title-steps';
 import { MatrixSolid } from './MatrixSolid';
 import { AboutCell } from './AboutCell';
 import { ENTRY_LINES, aboutCellState } from './about-cell';
@@ -242,15 +241,13 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
         JavaScript fork would render the wrong composition first and correct it
         after hydration — and this page must be right on the first paint.
 
-        The content track floors at §4.2's own measure (`CONTENT_MEASURE`), and
-        below 480 the measure yields to the column's inner width, which is
-        §4.2's give order's fourth term. `min()` states that as one rule rather
-        than a second breakpoint: 412 where there is room, the column's inner
-        width where there is not.
+        §45 (step 53): the content track is the cell's inner width at every
+        window -- the ladder's measure -- stated on the component itself
+        (`IdentityCell.tsx`), not here. Below §28's fork the measure follows
+        the column and §18's give order rules it.
       */}
       <style>{`
         [data-band] { grid-template-columns: repeat(${GRID_COLUMNS}, ${GRID_COLUMN}px) !important; }
-        [data-track="content"] { width: ${CONTENT_MEASURE}px; max-width: 100%; }
         [data-upper-air] { display: none; }
         /*
           §42 (step 50): the About's scrollbar is "always visible while the
@@ -362,7 +359,6 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
             ladder's 510 and the cell's extra height is slack below it.
           */
           [data-band="identity"] { grid-template-columns: repeat(2, 50%) !important; grid-auto-rows: max(${BANDS.identity - 1}px, calc(${((BAND_AT_REFERENCE / REFERENCE_HEIGHT) * 100).toFixed(4)}vh - 1px)); height: max(${2 * BANDS.identity}px, calc(2 * ${((BAND_AT_REFERENCE / REFERENCE_HEIGHT) * 100).toFixed(4)}vh)) !important; }
-          [data-cell="identity-content"] { --identity-track: ${LADDER_SUPPLY}px; }
           [data-band="identity"] > [data-cell] { grid-column: span 1 !important; }
           /*
             Step 39 (§37): the air LEFT of the sleeve in the second row, by
@@ -472,7 +468,6 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
           [data-band="record"] { height: auto !important; }
           [data-band="record"] > [data-cell] { min-height: 0; }
           [data-band="section"] > * { grid-column: 1 / -1 !important; }
-          [data-track="content"] { width: min(${CONTENT_MEASURE}px, 100vw - ${CELL_PADDING * 2}px); }
         }
 
         /*
@@ -504,7 +499,6 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
             with the grid now; the identity cell's content track stays the
             ladder's 510 and the extra is slack below it.
           */
-          [data-cell="identity-content"] { --identity-track: ${LADDER_SUPPLY}px; }
           /* §40: any paper the marks leave in the cover cell takes the ladder's tint step, not bare paper. */
           [data-cell="sleeve"] { background: var(--sleeve-tint); }
         }

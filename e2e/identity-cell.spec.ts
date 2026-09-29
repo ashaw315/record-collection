@@ -172,7 +172,17 @@ test.describe('the identity cell (§4.2)', () => {
     expect(five).not.toBeNull();
     if (five === null) return;
 
-    expect(five.lineWidths.length, 'five lines, unclamped').toBe(5);
+    /*
+      §45 (step 53): the count follows the measure. Five lines was the 412 box;
+      at the cell's rendered width (480 less 18 a side) the same title sets in
+      four. Unclamped is the claim, so the rendered count is held to the
+      ladder's own measured count at the chosen step rather than to a number.
+    */
+    const ladder = await page.locator('[data-case="five"] [data-title-step]').getAttribute('data-ladder');
+    const measured = (JSON.parse(ladder ?? '{}') as { chosen: number; steps: Array<{ size: number; lines: number }> });
+    const atChosen = measured.steps.find((st) => st.size === measured.chosen);
+    expect(five.lineWidths.length, `unclamped: renders the ${atChosen?.lines} lines the ladder measured at ${measured.chosen}`).toBe(atChosen?.lines);
+    expect(five.lineWidths.length, 'and it is a multi-line title').toBeGreaterThanOrEqual(3);
 
     /*
       Evenness, stated as a ratio rather than a pixel count so it survives a

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { LADDER_SUPPLY, STEP_GAP, TITLE_STEPS, artistStep, titleStep } from './title-steps';
+import { STEP_GAP, TITLE_PAIRS, TITLE_STEPS, artistStep, titlePair } from './title-steps';
 
 /**
  * §33's display ladder, applied by measuring rather than by counting
@@ -84,7 +84,16 @@ export function TitleStep({
       if (!(cell instanceof HTMLElement) || block === null || track === null) return;
       const cellStyle = getComputedStyle(cell);
       /* §40: the cell may be taller than the band's 1440 constant above the fork; the supply never is. */
-      const supply = Math.min(LADDER_SUPPLY, cell.clientHeight - parseFloat(cellStyle.paddingTop) - parseFloat(cellStyle.paddingBottom));
+      /*
+        §45 (step 53): both axes are the RENDERED track, at every window. The
+        supply is the content track's inner height (the cell's, less its
+        padding; the track fills the cell's row) and the measure is the track's
+        width. Two constants stood here, 510 and 412 -- "a figure written at
+        one size and never re-derived" -- and the ladder chose on height alone,
+        so Gaucho set 512 wide in a 412 box at 144.
+      */
+      const supply = cell.clientHeight - parseFloat(cellStyle.paddingTop) - parseFloat(cellStyle.paddingBottom);
+      const measureWidth = track instanceof HTMLElement ? track.clientWidth : 0;
       const outer = (child: Element) => {
         const b = child.getBoundingClientRect();
         const s = getComputedStyle(child);
@@ -106,11 +115,10 @@ export function TitleStep({
       ].reduce((sum, child) => sum + outer(child), 0);
 
       /* The title's measure. */
-      const titleBox = real.current?.getBoundingClientRect();
-      if (titleBox !== undefined && titleBox.width > 0) {
-        measure.style.width = `${titleBox.width}px`;
-        if (artistProbe.current !== null) artistProbe.current.style.width = `${titleBox.width}px`;
-        setProbeWidth(titleBox.width);
+      if (measureWidth > 0) {
+        measure.style.width = `${measureWidth}px`;
+        if (artistProbe.current !== null) artistProbe.current.style.width = `${measureWidth}px`;
+        setProbeWidth(measureWidth);
       }
 
       /* The title's unitless leading; derived from the size, never read back mid-probe. */
@@ -148,20 +156,42 @@ export function TitleStep({
         can check; the E2E reads this back and asserts the chosen step's
         demand is within supply.
       */
-      const seen = TITLE_STEPS.map((size) => ({ size, lines: linesAt(size), demand: Math.round(demandAt(size)) }));
-      const chosen = titleStep({ demandAt, supply });
+      /* The widest line the title sets at a size: a word wider than the measure is the width term's refusal. */
+      const widestAt = (size: number) => {
+        measure.style.fontSize = `${size}px`;
+        let widest = 0;
+        const walk = (node: Node) => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            const range = document.createRange();
+            range.selectNodeContents(node);
+            for (const rect of range.getClientRects()) widest = Math.max(widest, rect.width);
+          } else node.childNodes.forEach(walk);
+        };
+        walk(measure);
+        return widest;
+      };
+      const overflowsAt = (size: number) => widestAt(size) > measureWidth + 0.5;
+      const artistLinesAt = (artistSize: number) => {
+        if (artistMeasure === null) return 1;
+        artistMeasure.style.fontSize = `${artistSize}px`;
+        return Math.max(1, Math.round(artistMeasure.getBoundingClientRect().height / artistSize));
+      };
+      const seen = TITLE_PAIRS.map((pair) => ({ size: pair.title, artist: pair.artist, lines: linesAt(pair.title), demand: Math.round(demandAt(pair.title)), widest: Math.round(widestAt(pair.title) * 10) / 10, artistLines: artistLinesAt(pair.artist) }));
+      const pair = titlePair({ demandAt, supply, overflowsAt, artistLinesAt });
       measure.style.fontSize = '';
       if (artistMeasure !== null) artistMeasure.style.fontSize = '';
       el.setAttribute(
         'data-ladder',
-        JSON.stringify({ supply, below: Math.round(below), steps: seen, chosen, fonts: document.fonts.status }),
+        JSON.stringify({ supply, measure: measureWidth, below: Math.round(below), steps: seen, chosen: pair.title, pair: { title: pair.title, artist: pair.artist }, artistLowered: pair.artistLowered, fonts: document.fonts.status }),
       );
-      setStep(chosen);
+      setStep(pair.title);
     };
 
     choose();
     const observer = new ResizeObserver(choose);
     observer.observe(el.parentElement ?? el);
+    const track = el.closest('[data-track="content"]');
+    if (track !== null) observer.observe(track);
     return () => observer.disconnect();
   }, [title]);
 

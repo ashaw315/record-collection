@@ -1,4 +1,3 @@
-import { BANDS } from './band-geometry';
 /**
  * §33's display ladder for the identity cell.
  *
@@ -24,14 +23,13 @@ export const STEP_GAP = 24;
 /** The identity cell's padding on each side (§4.2's cell). */
 export const IDENTITY_PADDING = 18;
 
-/**
- * §40: "The ladder's supply stays the band's 1440 constant, 510: the identity
- * cell's inner height in §27's 547 band, which Code measured as the content
- * track after its padding (§33). So a title's size never depends on the
- * window's height." Above §18's fork the cell takes the band's full height
- * and the extra is slack below the content; the ladder does not see it.
- */
-export const LADDER_SUPPLY = BANDS.identity - 1 - 2 * IDENTITY_PADDING;
+/*
+  §45 (step 53): no supply constant. "Two constants stood in for the cell: a
+  supply of 510 on height, and a box of 412 on width... the same defect on two
+  axes, a figure written at one size and never re-derived." The supply is the
+  rendered content track's inner height and the measure its width, read by
+  `TitleStep.tsx` at every window. The step set still quantises them.
+*/
 
 /*
   No line cap. §33 withdrew its own: "Withdrawn within §33: the title sets in
@@ -54,31 +52,53 @@ export function artistStep(title: number): number {
   return Math.round((title * ARTIST_OF_TITLE) / 2) * 2;
 }
 
+/** The four pairs as one scale (§33 gives the artist lines; §45 keeps the pair together). */
+export const TITLE_PAIRS = TITLE_STEPS.map((title) => ({ title, artist: artistStep(title) }));
+
+export type TitlePair = { title: number; artist: number; artistLowered: boolean };
+
 /**
- * The largest step at which the cell's demand, plus the gap, is within its
- * supply. Height is the only condition (§33); the line count is measured and
- * published on the ladder for the reader, and decides nothing.
+ * **§45: the largest pair at which the title fits the cell on both axes and
+ * the artist sets on one line.** Every input is a MEASUREMENT the browser
+ * alone has: how many lines a string sets to at a size, how tall the cell's
+ * content then is, whether any line is wider than the measure, and how many
+ * lines the artist takes at the pair's artist size.
  *
- * `demandAt` is passed in because it is a MEASUREMENT — how
- * many lines a string sets to at a size, and how tall the cell's content then
- * is. Computing them from a character count here would be the declared-value
- * defect: the answer depends on the font, which only the browser knows.
+ *   - height: demand plus the gap within supply (§33 stands);
+ *   - width: no line of the title may exceed the measure, "so a step whose
+ *     longest word is wider than the measure is refused, whatever its height";
+ *   - the pair: "the ladder takes the largest pair at which the artist sets
+ *     on one line, down to the smallest pair, and only below that does the
+ *     artist wrap" -- so 72/40 is taken whether or not the artist fits.
+ *
+ * `artistLowered` reports the cost §45 states rather than hides: true when a
+ * larger pair fitted on height and width and the artist's line count alone
+ * brought the title down.
  */
-export function titleStep({
+export function titlePair({
   demandAt,
   supply,
+  overflowsAt,
+  artistLinesAt,
 }: {
-  demandAt: (step: number) => number;
+  demandAt: (title: number) => number;
   supply: number;
-}): number {
-  for (const step of TITLE_STEPS) {
-    if (demandAt(step) + STEP_GAP > supply) continue;
-    return step;
+  overflowsAt: (title: number) => boolean;
+  artistLinesAt: (artist: number) => number;
+}): TitlePair {
+  let artistLowered = false;
+  for (const [i, pair] of TITLE_PAIRS.entries()) {
+    const smallest = i === TITLE_PAIRS.length - 1;
+    if (overflowsAt(pair.title)) continue;
+    if (demandAt(pair.title) + STEP_GAP > supply) continue;
+    if (!smallest && artistLinesAt(pair.artist) > 1) { artistLowered = true; continue; }
+    return { ...pair, artistLowered };
   }
   /*
-    §33: "If 72 does not fit, §4.2's give order runs as now." The smallest step
-    is the floor rather than a failure — the give order handles what happens
+    §33: "If 72 does not fit, §4.2's give order runs as now." The smallest pair
+    is the floor rather than a failure -- the give order handles what happens
     below it, and it already does.
   */
-  return TITLE_STEPS[TITLE_STEPS.length - 1];
+  const last = TITLE_PAIRS[TITLE_PAIRS.length - 1];
+  return { ...last, artistLowered };
 }

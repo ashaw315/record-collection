@@ -42,7 +42,8 @@ export default function IdentityProbePage() {
         <div
           key={c.id}
           data-case={c.id}
-          style={{ width: 480, height: BANDS.identity, outline: '1px solid oklch(0.85 0 0)' }}
+          /* flexShrink 0: the five hosts are flex items, and until §45 (step 53) the blocks' fixed 412 held each at 448 by min-content. With the track free to shrink they collapsed to 232 and the ladder measured a cell the page never draws. The harness holds its own width. */
+          style={{ width: 480, flexShrink: 0, height: BANDS.identity, outline: '1px solid oklch(0.85 0 0)' }}
         >
           <IdentityCell
             title={c.title}

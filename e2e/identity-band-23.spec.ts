@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { IDENTITY_PADDING } from '../src/app/records/[id]/title-steps';
 import { registerCleanup, trackArtist } from './cleanup';
 import { BANDS, GRID_FORK, IDENTITY_SPANS, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { bandHeightAt, upperSpansAt } from '../src/app/records/[id]/region-rows';
@@ -267,7 +268,8 @@ test('§39, §40: above the fork the cover takes the spare columns, every cell t
       expect(m.bar.h, 'the bar fills the leftover height').toBeCloseTo(m.cells.sleeve.h - largest, 0);
     }
     expect(m.paper, `${width}x${height}: no paper left in the cover cell`).toBeLessThanOrEqual(2);
-    expect(m.supply, `${width}x${height}: the ladder's supply stays 510 (§40)`).toBe(510);
+    /* §45 (step 53) withdrew 40/supply-held-510: the supply is the rendered track's inner height, the band's inner height less the cell's padding. */
+    expect(Math.abs(m.supply - (m.bandInner - 2 * IDENTITY_PADDING)), `${width}x${height}: the ladder's supply is the rendered track (${m.supply} against band inner ${m.bandInner} less padding)`).toBeLessThanOrEqual(1);
   }
   console.log(`  §39/§40 UPPER BAND:\n    ${seen.join('\n    ')}`);
 });

@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist, trackRecord } from './cleanup';
 import { GRID_FORK, NO_SCROLL_HEIGHT, BANDS } from '../src/app/records/[id]/band-geometry';
-import { STEP_GAP } from '../src/app/records/[id]/title-steps';
+import { IDENTITY_PADDING, STEP_GAP } from '../src/app/records/[id]/title-steps';
 
 registerCleanup();
 const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
@@ -14,7 +14,7 @@ async function login(page: Page) {
 }
 async function post(page: Page, path: string, data: unknown) { return (await page.request.post(path, { data })).json(); }
 
-type Ladder = { supply: number; below: number; steps: Array<{ size: number; lines: number; demand: number }>; chosen: number };
+type Ladder = { supply: number; measure: number; below: number; steps: Array<{ size: number; artist: number; lines: number; demand: number; widest: number; artistLines: number }>; chosen: number; pair: { title: number; artist: number }; artistLowered: boolean };
 
 async function ladderOf(page: Page): Promise<Ladder> {
   const raw = await page.locator('[data-title-step]').getAttribute('data-ladder');
@@ -72,9 +72,12 @@ test('the chosen step’s demand plus the gap is within supply, and the run surv
   expect(rendered.overflows, 'nothing overflows the cell').toBe(false);
   expect(chosen!.demand + STEP_GAP, `step ${ladder.chosen}: demand ${chosen!.demand} + ${STEP_GAP} within supply ${ladder.supply}`).toBeLessThanOrEqual(ladder.supply);
   /* And it is the LARGEST that fits: every larger step fails one of the two conditions. */
+  /* §45 (step 53): a larger step is refused on height, on width (a line wider than the measure) or because the artist would not set on one line. §33's "height is the only constraint" is withdrawn (33/supply-510). */
   for (const s of ladder.steps.filter((s) => s.size > ladder.chosen)) {
-    /* §33: height is the only constraint; the line count is no longer capped. */
-    expect(s.demand + STEP_GAP > ladder.supply, `step ${s.size} was rightly refused on height (lines ${s.lines}, demand ${s.demand})`).toBe(true);
+    const onHeight = s.demand + STEP_GAP > ladder.supply;
+    const onWidth = s.widest > ladder.measure + 0.5;
+    const onArtist = s.artistLines > 1;
+    expect(onHeight || onWidth || onArtist, `step ${s.size} was refused for a reason (lines ${s.lines}, demand ${s.demand} against supply ${ladder.supply}; widest ${s.widest} against measure ${ladder.measure}; artist lines ${s.artistLines})`).toBe(true);
   }
 
   /* The consequences on the page: the cell holds, and the genres run is not collapsed. */
@@ -103,7 +106,7 @@ test('the chosen step’s demand plus the gap is within supply, and the run surv
  * asserted. The expectation in §33 is reported to Design as derived from a
  * wrong number, not as a defect in the rule.
  */
-test('Loss Of Life takes 120: 144 sets in three lines but fails on height once the block is counted (§33)', async ({ page }) => {
+test('Loss Of Life takes 144 at the rendered measure: two lines that fit on both axes with the artist on one line (§45; §33 read 120 in a 412 box)', async ({ page }) => {
   await login(page);
   const a = await post(page, '/api/artists', { name: 'MGMT' });
   const artistId = (a.id ?? a.error?.existingId) as string;
@@ -114,11 +117,17 @@ test('Loss Of Life takes 120: 144 sets in three lines but fails on height once t
   await page.locator('[data-title-step][data-ladder]').waitFor({ timeout: 20_000 });
   await page.waitForTimeout(500);
   const ladder = await ladderOf(page);
+  /*
+    The measure is the rendered track: a 480 cell less its own 18px padding a
+    side (and the cell's 1px rule), not the 412 box §33's figures were taken
+    in. At 412 "Loss Of Life" set three lines at 144 and took 120; at the
+    cell's width it sets two and fits.
+  */
+  expect(Math.abs(ladder.measure - (GRID_FORK / 3 - 2 * IDENTITY_PADDING)), `the measure is the cell's inner width (${ladder.measure})`).toBeLessThanOrEqual(1);
   const at144 = ladder.steps.find((s) => s.size === 144);
-  const at120 = ladder.steps.find((s) => s.size === 120);
-  expect(at144?.lines, '144 sets in three lines').toBe(3);
-  expect(at144!.demand + STEP_GAP, '…but its demand with the gap exceeds supply').toBeGreaterThan(ladder.supply);
-  expect(at120?.lines).toBe(2);
-  expect(at120!.demand + STEP_GAP).toBeLessThanOrEqual(ladder.supply);
-  expect(ladder.chosen, 'so the largest step that fits is 120').toBe(120);
+  expect(at144?.lines, '144 sets in two lines at the rendered measure').toBe(2);
+  expect(at144!.widest, 'and no line exceeds it').toBeLessThanOrEqual(ladder.measure + 0.5);
+  expect(at144!.demand + STEP_GAP, 'and its demand with the gap is within supply').toBeLessThanOrEqual(ladder.supply);
+  expect(at144!.artistLines, 'and MGMT sets on one line at 80').toBe(1);
+  expect(ladder.pair, 'so the largest pair that fits on every term is 144/80').toEqual({ title: 144, artist: 80 });
 });

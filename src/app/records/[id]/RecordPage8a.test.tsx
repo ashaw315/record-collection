@@ -146,7 +146,8 @@ describe('§41: the upper tracks from 960 to 1439 are half the page (step 46)', 
     /* §42 (step 48): the row takes the viewport's height as §40 rules above the fork, never less than 547 (41/band-stays-547). */
     expect(eight, 'each row is max(546, 60.7778vh - 1)').toMatch(/grid-auto-rows:\s*max\(546px,\s*calc\(60\.7778vh - 1px\)\)/);
     expect(eight, 'and the band two such rows').toMatch(/height:\s*max\(1094px,\s*calc\(2 \* 60\.7778vh\)\)/);
-    expect(eight, 'the identity track stays the ladder’s 510 (§42)').toMatch(/\[data-cell="identity-content"\]\s*\{[^}]*--identity-track:\s*510px/);
+    /* §45 (step 53): the track is never pinned; the ladder's supply is the rendered track. A negative assertion, because the pin sat here through every green run. */
+    expect(style, 'no stylesheet block pins the identity track (42/supply-stays-510, 40/supply-held-510)').not.toMatch(/--identity-track:\s*\d/);
     const four = style.slice(style.indexOf('@media (max-width: 959px)'), style.indexOf('@media (max-width: 479px)'));
     /* §44 (step 52): from 480 to 959 the identity keeps 480 and the air takes the rest of its row; the construction and the cover take their rows. */
     expect(four, 'a 480 track and the rest of the row').toMatch(/\[data-band="identity"\]\s*\{[^}]*grid-template-columns:\s*480px 1fr/);

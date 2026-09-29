@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import * as titleStepsModule from './title-steps';
-import { ARTIST_OF_TITLE, TITLE_STEPS, STEP_GAP, artistStep, titleStep } from './title-steps';
+import { ARTIST_OF_TITLE, TITLE_PAIRS, TITLE_STEPS, STEP_GAP, artistStep, titlePair } from './title-steps';
+
+/* The height term alone, as §33's tests were written: width fits and the artist sets on one line. */
+const titleStep = ({ demandAt, supply }: { demandAt: (step: number) => number; supply: number }) =>
+  titlePair({ demandAt, supply, overflowsAt: () => false, artistLinesAt: () => 1 }).title;
 
 /**
  * §33: "The title takes the largest display step that fits. The steps are 72,
@@ -100,5 +104,64 @@ describe('§33: the title takes the largest step that fits', () => {
       const chosen = titleStep({ demandAt: () => 200, supply });
       expect(TITLE_STEPS).toContain(chosen);
     }
+  });
+});
+
+/**
+ * **§45: the ladder on both axes, and title and artist as a pair.**
+ *
+ * Two constants stood in for the cell, 510 on height and 412 on width, and the
+ * ladder chose on height alone: Gaucho set 512 wide at 144 in a 412 box and
+ * one-word titles took 144 whatever the cell was (measured 29 Sep). Each test
+ * names the term it fails against: the width term, the pair term, the
+ * smallest pair's exemption, and the removed constant.
+ */
+describe('§45: the title fits the identity cell on both axes', () => {
+  const fits = () => false;
+  const oneLine = () => 1;
+  const tall = () => 100;
+
+  it('states the pairs as one scale: 144/80, 120/66, 96/54, 72/40', () => {
+    expect(TITLE_PAIRS).toEqual([
+      { title: 144, artist: 80 },
+      { title: 120, artist: 66 },
+      { title: 96, artist: 54 },
+      { title: 72, artist: 40 },
+    ]);
+  });
+
+  it('refuses a step whose longest line exceeds the measure, whatever its height (the width term)', () => {
+    /* Gaucho: 512 wide at 144 and 427 at 120 in a 412 measure; 341 at 96 fits. Height would allow 144. */
+    const overflowsAt = (step: number) => step >= 120;
+    const chosen = titlePair({ demandAt: tall, supply: 1000, overflowsAt, artistLinesAt: oneLine });
+    expect(chosen.title, 'the largest step at which no line exceeds the measure').toBe(96);
+    expect(chosen.artist).toBe(54);
+  });
+
+  it('refuses a pair whose artist does not set on one line, down to the smallest pair (the pair term)', () => {
+    /* The artist sets on one line only at 54 and below; height and width allow 144. */
+    const artistLinesAt = (artist: number) => (artist > 54 ? 2 : 1);
+    const chosen = titlePair({ demandAt: tall, supply: 1000, overflowsAt: fits, artistLinesAt });
+    expect(chosen).toEqual({ title: 96, artist: 54, artistLowered: true });
+  });
+
+  it('lets the artist wrap only at the smallest pair (§45: "only below that does the artist wrap")', () => {
+    const chosen = titlePair({ demandAt: tall, supply: 1000, overflowsAt: fits, artistLinesAt: () => 2 });
+    expect(chosen).toEqual({ title: 72, artist: 40, artistLowered: true });
+  });
+
+  it('reports artistLowered false when the artist did not decide the pair', () => {
+    const chosen = titlePair({ demandAt: tall, supply: 1000, overflowsAt: fits, artistLinesAt: oneLine });
+    expect(chosen).toEqual({ title: 144, artist: 80, artistLowered: false });
+  });
+
+  it('still refuses on height: demand plus the gap over supply steps down (§33 stands)', () => {
+    const demandAt = (step: number) => (step >= 120 ? 600 : 300);
+    const chosen = titlePair({ demandAt, supply: 510, overflowsAt: fits, artistLinesAt: oneLine });
+    expect(chosen.title).toBe(96);
+  });
+
+  it('exports no supply constant: the supply is measured from the rendered cell', () => {
+    expect(Object.keys(titleStepsModule)).not.toContain('LADDER_SUPPLY');
   });
 });

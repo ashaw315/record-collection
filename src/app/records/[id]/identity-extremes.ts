@@ -48,7 +48,7 @@
  * bound tests assert.
  */
 
-/** 38 characters, five lines at 72px in the 412 measure (§4.2). The collection's own. */
+/** 38 characters: five lines at 72px in §4.2's 412 box, four at the cell's rendered 444 (§45). The collection's own. */
 export const FIVE_LINE_TITLE = 'On The Radio: Greatest Hits Vol. 1 & 2';
 
 export const WORST = {

@@ -104,7 +104,7 @@ export function IdentityCell({
         With the collapse firing on the demand §4.2 actually defines, nothing
         overflows — and the next thing that does will announce itself.
       */
-      className="grid h-full p-[18px]"
+      className="grid h-full min-w-0 p-[18px]"
       /*
         **One row (§28): the ornament track is withdrawn and its space
         returns to the content.** "The identity cell carries no ornament. Its
@@ -120,14 +120,16 @@ export function IdentityCell({
         every long record for a mark that carries nothing.
       */
       /* §40: above the fork the page pins the track at the ladder's 510 and the cell's extra height is slack below it. */
-      style={{ gridTemplateRows: 'var(--identity-track, 1fr)' }}
+      /* A definite column: without one the grid sizes its column to the track's content, and the track's 100% resolves to nothing (measured 196 on the identity probe, 29 Sep). */
+      style={{ gridTemplateColumns: 'minmax(0, 1fr)', gridTemplateRows: '1fr' }}
     >
-      <div data-track="content" className="flex flex-col justify-between">
+      {/* §45 (step 53): the track is the cell's inner width at every window -- the ladder's measure. Stated here, on the component, so a page that renders the cell without RecordPage8a's stylesheet (the identity probe) measures the same track. */}
+      <div data-track="content" className="flex w-full min-w-0 flex-col justify-between">
       {/*
         The title block flows from the TOP. It grows downward into the gap and
         cannot displace the pressing block, which is anchored below.
       */}
-      <div data-block="title" className="w-[412px] max-w-full">
+      <div data-block="title" className="w-full">
         {/*
           **§27: COLLECTION is in the content flow, and the eyebrow grid row is
           deleted.** §8.1 rules the eyebrow the band's label, not a link. §13
@@ -190,7 +192,7 @@ export function IdentityCell({
         last child at the bottom whatever the title above it does — which is the
         structural guard: the two blocks cannot push each other.
       */}
-      <div data-block="pressing" className="w-[412px] max-w-full">
+      <div data-block="pressing" className="w-full">
         <div
           className="mb-[14px] w-[372px] max-w-full"
           style={{ borderTop: `1px solid ${INSET_RULE}` }}

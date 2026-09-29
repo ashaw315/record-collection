@@ -59,19 +59,6 @@ export const GRID_COLUMN = 120;
 export const GRID_COLUMNS = 12;
 export const GRID_FORK = GRID_COLUMN * GRID_COLUMNS;
 
-/**
- * **§18's floor for the content track, which is §4.2's measure.**
- *
- * "The track's floor and the type's measure are the same number because they
- * are the same decision." A track narrower than its own measure is not a
- * squeezed composition but a different one — the earlier collapse-to-min-content
- * attempt wrapped titles at 196 and `identity-cell.spec.ts` caught it.
- *
- * Full measure holds down to `CONTENT_MEASURE + 2 × CELL_PADDING` = 480; below
- * that the measure itself yields to the column's inner width, which is §4.2's
- * give order's fourth term and reaches 322 at 390.
- */
-export const CONTENT_MEASURE = 412;
 
 /**
  * The bands. **53 · 547 · 300, and no tail.**

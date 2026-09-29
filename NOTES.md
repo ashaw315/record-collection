@@ -31812,3 +31812,63 @@ which is what `floor-ceiling-measure.spec.ts` renders. So the assertion is
 true of the collection and intermittently false of a uuid the collection
 does not contain -- §30's ceiling asserted on a sample of one random
 record. Found while fixing the tint triangle below 960; not changed.
+
+---
+
+## Step 53a built: §45's ladder on both axes (29 Sep)
+
+**Built.** `titlePair` in `title-steps.ts` takes the largest of the four
+pairs at which no line of the title exceeds the measure, the demand plus the
+gap is within the supply, and the artist sets on one line -- the smallest
+pair exempt, so 72/40 is taken whether or not the artist fits. `TitleStep`
+reads both axes from the rendered track at every window and publishes
+`measure`, `pair`, per-step `widest` and `artistLines`, and `artistLowered`.
+`LADDER_SUPPLY` and `CONTENT_MEASURE` are gone; no stylesheet block pins the
+identity track (a negative assertion in `RecordPage8a.test.tsx`, proved to
+fail against the pinned stylesheet before the pin was removed). The track's
+width and a definite grid column are stated on `IdentityCell` itself.
+
+**The report §45 asks for**, on the seventeen at 393 × 844, 768, 1000,
+1435, 1440 × 900, 1440 × 1200 and 1480 (119 readings,
+`e2e/title-ladder-45.spec.ts`): the artist lowered the title on 0; a word
+broke on 0. Every one-word title that set 512 to 523 wide in a 412 box now
+fits its measure. Loss Of Life takes 144/80 at 1440 × 900 (§33's test read
+120 in the 412 box: at the rendered 443 it sets two lines at 144). At 1440 ×
+1200 six records step up (Blues Project 72 → 96, Grave New World 120 → 144,
+Never Too Much 120 → 144, Hurdy Gurdy Man 72 → 120, On The Radio 72 → 96,
+Bridge 72 → 96): the supply follows the cell as §45 rules, and the leftover
+§45 gives to the tint field is now measurable.
+
+**§18's fork now shows in the type, as §45 predicted.** At 1439 the cell is
+718.5 and the measure 683; at 1440 the cell is 479 and the measure 443. Nine
+of seventeen change pair across the pixel: Blues Project 120 → 72, Believer
+144 → 120, Bridge 120 → 72, On The Radio 96 → 72, Hurdy Gurdy Man 120 → 72,
+Gaucho 144 → 120, Psychic 144 → 120, Bitches Brew 144 → 120, Mind Games
+144 → 120. For Design; §45 says the fork is not ruled there.
+
+**A finding, for Design: the identity cell is padded 18 a side, not §18's
+34.** §18 derives 480 as 412 + 2 × 34 and §45 says "at a 480 cell the content
+width is 412 exactly". The cell renders 18 of padding (`IdentityCell`'s
+`p-[18px]`; `CELL_PADDING` 34 is the extended grid's). The 412 box was
+therefore 16 narrower than the cell on each side, and the rendered measure
+at a 480 cell is 443 (a 1px rule takes the other). Below the fork the same:
+357 at 393, not the 325 §45 cites, which was the old `min(412, 100vw − 68)`
+rule's arithmetic. Two tests encoded the 68 (`identity-measure.spec.ts` at
+390 and 420) and now assert the rendered inner width, with the question
+marked. Whether the padding should be 34 (then 412 holds and every figure in
+§45 stands as written) or the measure is 443 (as built) is a Design ruling;
+nothing here chose.
+
+**Two harness defects found on the way.** The identity probe page's five
+hosts are flex items that state 480 and shrank to 232 once the content could
+(the blocks' fixed 412 had held them at 448 by min-content); the ladder then
+measured a cell the page never draws. `flexShrink: 0` on the host. And the
+identity-content grid had no column template, so a percentage width on the
+track resolved to nothing; a definite `minmax(0, 1fr)` column.
+
+**Tests replaced, as step 53 asks:** the §33 spec's "refused on height"
+loop now accepts height, width or the artist; its Loss Of Life case is the
+144 the rendered measure gives; the five-line worst case is held to the
+ladder's own measured count rather than to five; §39/§40's "supply stays 510"
+is the rendered track; the component test's "track stays 510" is "no block
+pins the track".
