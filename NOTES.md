@@ -31668,3 +31668,60 @@ each other's cleanup for the length of their tests, up to 60s in
 `scripts/notes-index.ts` prints "Regenerate with `--write`" in the index it
 generates, but implements no such flag: it prints to stdout, and the block
 has to be spliced by hand.
+
+---
+
+## §5.5's floor and §30's ceiling re-measured per record on protected fixtures (29 Sep)
+
+**Why:** steps 18, 20 and 22 measured both on fixtures another spec's cleanup
+could delete mid-run, and §39 to §44 were ruled from those figures. With the
+seventeen a run-level fixture and every own-record spec on the ledger, the
+measurement was taken again, rendered, per record, at every viewport §30
+names -- `e2e/floor-ceiling-measure.spec.ts`, which asserts the rulings and
+reports the rest. It was first run with the floor staged at 2% and failed on
+seven records at 1440 × 900, so the assertion reaches the page.
+
+**The rulings hold on every record at every named reference.** Nothing under
+0.5% anywhere, including 1920 × 950; every empty width under 480.
+
+| viewport | recorded worst / median | re-measured worst / median | widest empty width |
+|---|---|---|---|
+| 1440 × 900 | 0.508% / 0.753% (step 22); 0.956% / 1.349% (unit, own fit) | **0.977% / 1.247%** (Wired) | 35.6 (The Soft Parade) |
+| 390 × 844 | 1.265% / 1.874% (step 20) | **2.423% / 3.091%** (Wired) | -- (below the fork) |
+| 1680 × 1050 | 0.610% / 0.904% (step 22) | **1.031% / 1.432%** (Believer) | 83.2 |
+| 1920 × 1080 | 0.559% / 0.829% (step 22) | **0.932% / 1.653%** (Believer) | 253.3 |
+| 1920 × 950 | 0.481% / 0.713%, one of 17 under (step 22) | **0.802% / 1.480%**, none under | 395.1 |
+| 1920 × 1200 | 0.634% stated (§30) | 1.052% / 1.602% | 130.8 |
+| 1680 × 900 | Believer's empty width 243 (§30, pre-§39) | 0.859% / 1.524% | 209.6 (Believer 176.8) |
+| 1920 × 900 | Believer's empty width 483 (§30, pre-§39) | 0.752% / 1.388% | 449.6 (Believer 416.8) |
+
+**The figures do not agree with the recorded ones, and are not meant to.**
+Every step-22 figure was taken at §31's shared frame, which §33 retired: each
+record now fits its own box, and the own fit roughly doubles the share (the
+unit test records the same jump at 1440, 0.508% to 0.956%). §39 took the air
+out of the upper band, so Believer's 483 is now the construction's own empty
+width plus the cover cell beside its square, 416.8. The rulings were made on
+the pre-§33 figures and hold with more margin on the post-§33 ones. Nothing
+changes for §39 to §44, and they now stand on a measurement rather than a
+window. The stated known miss at 1920 × 950 no longer occurs.
+
+**The page draws what the geometry states.** At 1440 × 900 the rendered share
+matches `colour-eligibility.test.ts`'s arithmetic on the same ids to within
+0.0075 points on the worst record (Never Too Much). The first version of the
+instrument multiplied the two axis scales and read 0.77 points high on Wired;
+`xMidYMid meet` scales by the smaller ratio, so the area is that scale
+squared. `colour-distribution.spec.ts` computes the construction's faces the
+same product way; it is not wrong today only if the svg's box has the
+viewBox's aspect, which `identity-band-23` asserts on one axis. Recorded, not
+fixed.
+
+**A finding, for Design and Code together: there are two "seventeen".**
+`src/app/records/[id]/real-records.ts` says "every real record id in the
+collection", and it is what the unit floor tests, `construction.ts` and the
+step-29 capture use. `docs/captures/real-records.json` is what every E2E
+spec seeds. They share **4 ids of 17** (On The Radio, Never Too Much, The
+Hurdy Gurdy Man, Grave New World). The arrangement is hashed from the id, so
+the unit-level floor (worst 0.956%, median 1.349%) and the rendered floor
+(worst 0.977%, median 1.247%) describe different sets of arrangements that
+happen to share titles. Both clear 0.5% on every record. Which list is the
+collection is not decidable from the repo.

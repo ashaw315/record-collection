@@ -50,6 +50,7 @@ const GOVERNED = [
   'e2e/row-regroup-38.spec.ts',
   'e2e/record-band-41.spec.ts',
   'e2e/record-band-43.spec.ts',
+  'e2e/floor-ceiling-measure.spec.ts',
   'e2e/row-clip-29h.spec.ts',
   'e2e/page-fills-viewport.spec.ts',
   'e2e/title-ladder-33.spec.ts',
