@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 123 declared rules. Regenerate with
+Generated from 124 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -120,6 +120,7 @@ Generated from 123 declared rules. Regenerate with
 | You are here if | The rule |
 | --- | --- |
 | an error path renders and you have not checked what it exposes | [A 403 on a JS chunk became a credential disclosure](#a-403-on-a-js-chunk-became-a-credential-disclosure) |
+| several captures of one record and window differ only in a prefix, and the wrong one can reach a reader without anyone noticing | [A capture's name carries the figure that differs, not only a step prefix (30 Sep)](#a-captures-name-carries-the-figure-that-differs-not-only-a-step-prefix-30-sep) |
 | an output names a thing and you have not checked the thing exists | [A FABRICATED IDENTIFIER IS A DIFFERENT FAILURE CLASS FROM AN UNCERTAIN CLAIM](#a-fabricated-identifier-is-a-different-failure-class-from-an-uncertain-claim) |
 | you are about to start anything that checks out, stashes or rewrites files while a run that reads those files is live | [A lint baseline stashed under a running Playwright job is scheduling luck (30 Sep)](#a-lint-baseline-stashed-under-a-running-playwright-job-is-scheduling-luck-30-sep) |
 | a mutation failed nothing and you are reading that as dead code | [A mutation that fails nothing does not mean the code is dead. Three](#a-mutation-that-fails-nothing-does-not-mean-the-code-is-dead-three) |
@@ -32429,3 +32430,24 @@ Straits, Grave New World and The Hurdy Gurdy Man at 1440 × 900 and
 1440 × 1200. Bitches Brew at 1440 × 900 is the ordinary two-line record
 §28 and §33 wait on: "Bitches / Brew" at 120/66, the genres run present,
 so Design can clear those two markers from the same set.
+
+## A capture's name carries the figure that differs, not only a step prefix (30 Sep)
+
+**Shape:** observer-without-subject
+**You are here if:** several captures of one record and window differ only in a prefix, and the wrong one can reach a reader without anyone noticing
+
+Gaucho at 1440 × 1200 was captured three times -- step56 unbounded at 409,
+step57 bounded at 179, step59 hung from the artist at 129 -- as three files
+of 135,147, 135,150 and 135,153 bytes whose names differ only in `step5N-`.
+The step56 shot reached Adam in place of the current one TWICE, and each
+time it took a SHA-256 to say which file he had. A channel that matches on
+size or on the record-and-window part of the name cannot tell them apart,
+and neither can a reader at a glance.
+
+**From the next capture set, the name carries the number that differs**:
+`tint-field-gaucho-1440x1200-h129.png` against `-h179` and `-h409`. The
+step number may stay wherever it is; the discriminator is the figure, so a
+wrong file is visible in its name instead of needing a hash. The manifest
+already holds the figure, so this is a rename rule, not new measurement.
+Existing files keep their names; the manifest and the hashes above settle
+them.
