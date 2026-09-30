@@ -53,6 +53,7 @@ export function IdentityCell({
   formatLine,
   editHref,
   tint = null,
+  ink = null,
 }: {
   title: string;
   artistName: string;
@@ -66,6 +67,8 @@ export function IdentityCell({
   editHref: string;
   /** The record's tint step (§5.5's ladder), or null when it has no ladder: then no field is drawn. */
   tint?: string | null;
+  /** §50/§52: the field's cap from the construction's minimum ink, with the figures behind it; null when there is no construction to weigh against. */
+  ink?: { cap: number; coverage: number; minArea: number } | null;
 }) {
   return (
     /*
@@ -218,8 +221,8 @@ export function IdentityCell({
           TitleStep, which knows the pair.
         */
         <div data-ground="" className="relative w-full min-h-0 grow" aria-hidden="true">
-          {/* Sized by TitleStep after the pair is chosen (§49): anchored to the pressing block's top, no taller than the title stack, no shorter than one line of the artist -- below that it is not drawn. Until then it draws nothing. */}
-          <div data-mark="identityField" data-field-state="pending" className="absolute inset-x-0 bottom-0" style={{ height: 0, background: tint }} />
+          {/* Sized by TitleStep after the pair is chosen (§49, §50, §52): anchored to the pressing block's top, the smallest of the gap, the title stack and the served ink cap, and not drawn past 4 : 1. Until then it draws nothing. */}
+          <div data-mark="identityField" data-field-state="pending" data-field-cap={ink === null ? undefined : ink.cap.toFixed(3)} data-field-ink={ink === null ? undefined : ink.coverage.toFixed(4)} data-field-min-ink={ink === null ? undefined : Math.round(ink.minArea)} className="absolute inset-x-0 bottom-0" style={{ height: 0, background: tint }} />
         </div>
       )}
       <div data-block="pressing" className="w-full">

@@ -111,3 +111,26 @@ export function titlePair({
   const last = TITLE_PAIRS[TITLE_PAIRS.length - 1];
   return { ...last, artistLowered };
 }
+
+/**
+ * **§50 (step 58): the field's proportion is its floor.** "A band past 4 : 1
+ * reads as a rule, which §13 gives to marks, not fields." The floor is
+ * judged on the rendered height, whichever term set it.
+ */
+export const FIELD_ASPECT_FLOOR = 4;
+
+export type FieldTerm = 'gap' | 'stack' | 'cap';
+
+/**
+ * §50: the field's height is the smallest of the gap the ladder leaves, the
+ * title stack, and the construction's minimum ink over the field's width
+ * (§52); it is drawn only where that height keeps the field within 4 : 1.
+ */
+export function fieldHeight({ gap, stack, cap, width = TITLE_MEASURE }: { gap: number; stack: number; cap: number; width?: number }): { height: number; term: FieldTerm; drawn: boolean; aspect: number } {
+  const terms: ReadonlyArray<readonly [FieldTerm, number]> = [['gap', gap], ['stack', stack], ['cap', cap]];
+  let [term, height] = terms[0];
+  for (const [t, v] of terms) if (v < height) [term, height] = [t, v];
+  if (height <= 0) return { height: 0, term, drawn: false, aspect: Number.POSITIVE_INFINITY };
+  const aspect = width / height;
+  return { height, term, drawn: aspect <= FIELD_ASPECT_FLOOR, aspect };
+}

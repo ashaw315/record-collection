@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { STEP_GAP, TITLE_PAIRS, TITLE_STEPS, artistStep, titlePair } from './title-steps';
+import { STEP_GAP, TITLE_PAIRS, TITLE_STEPS, artistStep, fieldHeight, titlePair } from './title-steps';
 
 /**
  * §33's display ladder, applied by measuring rather than by counting
@@ -192,7 +192,7 @@ export function TitleStep({
       const chosenDemand = demandAt(pair.title);
       const titleH = measure.getBoundingClientRect().height;
       const artistH = artistMeasure === null ? artistStep(pair.title) : artistMeasure.getBoundingClientRect().height;
-      const fieldTerms = { available: supply - chosenDemand - STEP_GAP, stack: titleH + artistH, floor: pair.artist };
+      const fieldTerms = { gap: supply - chosenDemand - STEP_GAP, stack: titleH + artistH };
       measure.style.fontSize = '';
       if (artistMeasure !== null) artistMeasure.style.fontSize = '';
       el.setAttribute(
@@ -201,26 +201,29 @@ export function TitleStep({
       );
       setStep(pair.title);
       /*
-        §49 (step 57): the tint field, sized from the type. Its ground wrapper is
-        the flex leftover between the blocks; the paint is anchored to the
-        pressing block's top, no taller than the title stack (this host: title
-        and artist) and no shorter than one line of the artist at the chosen
-        pair, with the ladder's STEP_GAP kept between the artist and the paint.
-        Below the floor nothing is drawn: a 1px ground over the hairline read
-        as a double rule, not a plane.
+        §49 (step 57), re-bounded by §50 and §52 (step 58): the tint field,
+        sized from the type and the mark. Its ground wrapper is the flex
+        leftover between the blocks; the paint is anchored to the pressing
+        block's top and is the smallest of the gap the ladder leaves, the title
+        stack (this host: title and artist) and the construction's minimum ink
+        over the field's width, which the server computed from the record's
+        own scene and stamped on the paint. Past 4 : 1 nothing is drawn: a
+        band that thin reads as a rule, and a 1px ground over the hairline
+        read as a double rule, not a plane.
       */
       const ground = track.querySelector<HTMLElement>('[data-ground]');
       const field = ground?.querySelector<HTMLElement>('[data-mark="identityField"]') ?? null;
       if (ground !== null && field !== null) {
-        const { available, stack, floor } = fieldTerms;
-        const height = Math.min(available, stack);
-        const drawn = height >= floor;
+        const cap = Number(field.getAttribute('data-field-cap'));
+        const sized = fieldHeight({ gap: fieldTerms.gap, stack: fieldTerms.stack, cap: Number.isFinite(cap) ? cap : 0 });
         /* Suppressed is zero height IN the box, not display none: a mark taken out of layout reads as a zero rect at the page's origin, which page8a-marks reports as escaping its cell. */
-        field.style.height = drawn ? `${Math.round(height * 10) / 10}px` : '0px';
-        field.setAttribute('data-field-state', drawn ? 'drawn' : 'suppressed');
-        field.setAttribute('data-field-floor', String(floor));
-        field.setAttribute('data-field-available', String(Math.round(available * 10) / 10));
-        field.setAttribute('data-field-stack', String(Math.round(stack * 10) / 10));
+        /* Floored to the tenth, never rounded: §50 says at most the ink, and rounding up by 0.05 put Gaucho 17px² over it. */
+        field.style.height = sized.drawn ? `${Math.floor(sized.height * 10) / 10}px` : '0px';
+        field.setAttribute('data-field-state', sized.drawn ? 'drawn' : 'suppressed');
+        field.setAttribute('data-field-term', sized.term);
+        field.setAttribute('data-field-gap', String(Math.round(fieldTerms.gap * 10) / 10));
+        field.setAttribute('data-field-stack', String(Math.round(fieldTerms.stack * 10) / 10));
+        field.setAttribute('data-field-aspect', Number.isFinite(sized.aspect) ? sized.aspect.toFixed(2) : 'none');
       }
     };
 

@@ -14,7 +14,8 @@ import { CELL_PADDING } from './extended-grid';
 import { ConstructionStill } from './ConstructionStill';
 import { IdentityCell } from './IdentityCell';
 import { gridModules, type Diagonal } from './grid-modules';
-import { project } from './construction';
+import { construction, project } from './construction';
+import { minimumInk } from './ink';
 import { LABEL, LABEL_INK } from './grid-type';
 import { recordLadder } from '@/lib/colour/record-ladder';
 import { TITLE_MEASURE } from './title-steps';
@@ -132,6 +133,8 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
     journalEntry: record.journalEntry,
   });
   const ladder = recordLadder(record.spineColour);
+  /* §50/§52 (step 58): the field's cap is the construction's minimum ink over the field's width, from the same scene the still draws. */
+  const ink = ladder === null ? null : (() => { const m = minimumInk(construction(record.id)); return { cap: m.area / TITLE_MEASURE, coverage: m.coverage, minArea: m.area }; })();
   /* §28: row 1's figure, moved up into the upper band's air at 8 columns. */
 
   /* §5.3: no cover means every mark falls back to ink, filled. */
@@ -615,6 +618,7 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
             genres={record.genres}
             editHref={`/records/${record.id}/edit`}
             tint={ladder === null ? null : ladder.tint}
+            ink={ink}
             /*
               §5.1's triangle: tint, ground, in the cell's corner FIELD.
 

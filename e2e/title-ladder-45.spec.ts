@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
-import { STEP_GAP, TITLE_STEPS, artistStep } from '../src/app/records/[id]/title-steps';
+import { TITLE_MEASURE, TITLE_STEPS, artistStep } from '../src/app/records/[id]/title-steps';
 import { readSeventeen } from './seventeen';
 
 /**
@@ -141,12 +141,64 @@ test('§45: the title fits the identity cell on both axes on every record at eve
  * is quantised, so a leftover always remains; at 1440 × 1200 it is large.
  * Provisional until Adam's capture rules on it; this holds the geometry.
  */
-test('§49: the tint field is anchored to the pressing block, no taller than the title stack, no shorter than one artist line, and never larger than the construction -- at 1440 × 900, 1440 × 1200 and 1200 × 1200', async ({ page }) => {
+/**
+ * §50 and §52 (step 58): the tint field's height is the smallest of the gap,
+ * the title stack and the construction's MINIMUM ink over the field's width,
+ * and a field past 4 : 1 is not drawn. "The tint field is drawn only where it
+ * can be both a plane and lighter than the construction: its area is at most
+ * the construction's ink, and its aspect at most 4 : 1; where either fails,
+ * the gap is paper." The floor is judged on the RENDERED height (step 58's
+ * wording), which this holds on the three records where the cap's own aspect
+ * would say the same thing for a different reason, and on the three where it
+ * would say the opposite.
+ *
+ * Ink is counted at alpha 0.5: the page's figure is a point sample at the
+ * viewBox's pixel centres (`ink.ts`), and this test rasterises the same SVG
+ * on a canvas and holds the two to half a point. The cap is served on the
+ * field by the server, from the record's own scene.
+ */
+const FIELD_WIDTH = TITLE_MEASURE;
+type FieldReading = { pair: { title: number; artist: number }; state: string | null; term: string | null; gap: number; stack: number; cap: number; ink: number; aspect: number; height: number; width: number; bottom: number; pressingTop: number; trackW: number; runPresent: boolean; canvasInk: number; minInkArea: number };
+const readField = (page: Page) => page.evaluate(async (): Promise<FieldReading | null> => {
+  const R = (el: Element) => el.getBoundingClientRect();
+  const track = document.querySelector<HTMLElement>('[data-track="content"]');
+  const host = document.querySelector<HTMLElement>('[data-title-step]');
+  const pressing = document.querySelector<HTMLElement>('[data-block="pressing"]');
+  const field = document.querySelector<HTMLElement>('[data-mark="identityField"]');
+  const svg = document.querySelector<SVGSVGElement>('[data-testid="construction-still"]');
+  if (!track || !host || !pressing || !field || !svg) return null;
+  const ladder = JSON.parse(host.getAttribute('data-ladder') ?? '{}') as { pair: { title: number; artist: number } };
+  const num = (name: string) => Number(field.getAttribute(name));
+  /* The same SVG, at its viewBox's own size, on a transparent canvas: a pixel with alpha >= 128 carries a form. */
+  const vb = (svg.getAttribute('viewBox') ?? '0 0 1 1').split(' ').map(Number);
+  const clone = svg.cloneNode(true) as SVGSVGElement;
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg'); clone.setAttribute('width', String(vb[2])); clone.setAttribute('height', String(vb[3])); clone.removeAttribute('class');
+  const img = new Image(); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(clone));
+  await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
+  const cv = document.createElement('canvas'); cv.width = vb[2]; cv.height = vb[3];
+  const ctx = cv.getContext('2d'); if (!ctx) return null;
+  ctx.drawImage(img, 0, 0);
+  const d = ctx.getImageData(0, 0, cv.width, cv.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] >= 128) n += 1;
+  return { pair: ladder.pair, state: field.getAttribute('data-field-state'), term: field.getAttribute('data-field-term'), gap: num('data-field-gap'), stack: num('data-field-stack'), cap: num('data-field-cap'), ink: num('data-field-ink'), aspect: num('data-field-aspect'), height: Math.round(R(field).height * 10) / 10, width: R(field).width, bottom: R(field).bottom, pressingTop: R(pressing).top, trackW: track.clientWidth, runPresent: document.querySelector('[data-field="genres"]') !== null, canvasInk: n / (cv.width * cv.height), minInkArea: num('data-field-min-ink') };
+});
+/** What §50 says the field should be, from the terms the page published. */
+const ruled = (m: FieldReading) => {
+  const terms = [['gap', m.gap], ['stack', m.stack], ['cap', m.cap]] as const;
+  let term: string = terms[0][0]; let height = terms[0][1];
+  for (const [t, v] of terms) if (v < height) { term = t; height = v; }
+  const drawn = height > 0 && FIELD_WIDTH / height <= 4;
+  return { term, height, drawn };
+};
+
+test('§50/§52: the tint field is the smallest of gap, title stack and minimum ink over its width, suppressed past 4 : 1, judged on the rendered height -- at 1440 × 900, 1440 × 1200 and 1200 × 1200', async ({ page }) => {
   test.setTimeout(900_000);
   await login(page);
   const rows = readSeventeen();
   const bad: string[] = [];
   const report: string[] = [];
+  /* Step 58: the three where the gap binds below a cap that passes, and the three where the gap fails a cap that passes. */
+  const GAP_UNDER_CAP: Record<string, ReadonlyArray<string>> = { 'The Best Of The Blues Project': ['1440x900', '1440x1200', '1200x1200'], 'Bitches Brew': ['1440x900'], 'Mind Games': ['1440x900'] };
+  const GAP_FAILS_CAP: Record<string, ReadonlyArray<string>> = { 'The Hurdy Gurdy Man': ['1440x1200', '1200x1200'], 'Grave New World': ['1440x1200', '1200x1200'], 'On The Radio': ['1440x900', '1440x1200', '1200x1200'] };
   let readings = 0;
   for (const [w, h] of [[GRID_FORK, NO_SCROLL_HEIGHT], [GRID_FORK, 1200], [1200, 1200]] as const) {
     await page.setViewportSize({ width: w, height: h });
@@ -156,41 +208,77 @@ test('§49: the tint field is anchored to the pressing block, no taller than the
       await page.locator('[data-title-step][data-ladder]').waitFor({ timeout: 20_000 });
       await page.evaluate(() => document.fonts.ready);
       await page.waitForTimeout(400);
-      const m = await page.evaluate(() => {
-        const R = (el: Element) => el.getBoundingClientRect();
-        const track = document.querySelector<HTMLElement>('[data-track="content"]');
-        const host = document.querySelector<HTMLElement>('[data-title-step]');
-        const pressing = document.querySelector<HTMLElement>('[data-block="pressing"]');
-        const ground = document.querySelector<HTMLElement>('[data-ground]');
-        const field = document.querySelector<HTMLElement>('[data-mark="identityField"]');
-        const svg = document.querySelector<SVGSVGElement>('[data-testid="construction-still"]');
-        if (!track || !host || !pressing || !ground || !field || !svg) return null;
-        const ladder = JSON.parse(host.getAttribute('data-ladder') ?? '{}') as { pair: { title: number; artist: number } };
-        const sb = R(svg); const vb = (svg.getAttribute('viewBox') ?? '0 0 1 1').split(' ').map(Number); const k = Math.min(sb.width / vb[2], sb.height / vb[3]);
-        const shown = getComputedStyle(field).display !== 'none' && R(field).height > 0;
-        return { pair: ladder.pair, state: field.getAttribute('data-field-state'), floor: Number(field.getAttribute('data-field-floor')), available: Number(field.getAttribute('data-field-available')), stack: Math.round(R(host).height * 10) / 10, shown, height: Math.round(R(field).height * 10) / 10, width: R(field).width, top: R(field).top, bottom: R(field).bottom, pressingTop: R(pressing).top, trackW: track.clientWidth, runPresent: document.querySelector('[data-field="genres"]') !== null, drawnW: vb[2] * k, drawnH: vb[3] * k };
-      });
-      const where = `${r.title.split(':')[0]} @${w}x${h}`;
+      const m = await readField(page);
+      const title = r.title.split(':')[0];
+      const where = `${title} @${w}x${h}`;
       if (m === null) { bad.push(`${where}: no identity cell`); continue; }
       readings += 1;
-      const expectDrawn = Math.min(m.available, m.stack) >= m.floor;
-      if (m.shown !== expectDrawn) bad.push(`${where}: field ${m.shown ? 'drawn' : 'suppressed'} where the rule says ${expectDrawn ? 'drawn' : 'suppressed'} (available ${m.available}, stack ${m.stack}, floor ${m.floor})`);
-      if (m.shown) {
-        if (Math.abs(m.bottom - m.pressingTop) > 1) bad.push(`${where}: the field ends ${m.bottom.toFixed(1)}, the pressing block starts ${m.pressingTop.toFixed(1)} (anchored to it)`);
-        if (m.height > m.stack + 1) bad.push(`${where}: the field is ${m.height} tall, taller than the title stack ${m.stack}`);
-        if (m.height > m.available + 1) bad.push(`${where}: the field is ${m.height} tall, more than the ${m.available} the gap leaves after the ladder's gap`);
-        if (m.height + 0.5 < m.floor) bad.push(`${where}: the field is ${m.height} tall, shorter than one artist line ${m.floor}`);
+      const want = ruled(m);
+      const shown = m.state === 'drawn';
+      if (shown !== want.drawn) bad.push(`${where}: field ${m.state} where the rule says ${want.drawn ? 'drawn' : 'suppressed'} (gap ${m.gap}, stack ${m.stack}, cap ${m.cap})`);
+      if (m.term !== want.term) bad.push(`${where}: the page names ${m.term} as the binding term, the rule says ${want.term}`);
+      if (Math.abs(m.ink - m.canvasInk) > 0.005) bad.push(`${where}: the page's ink ${m.ink} is not the rasterised ${m.canvasInk.toFixed(4)}`);
+      if (shown) {
+        if (Math.abs(m.height - want.height) > 0.6) bad.push(`${where}: the field is ${m.height} tall, the rule gives ${want.height.toFixed(1)}`);
+        if (FIELD_WIDTH / m.height > 4) bad.push(`${where}: drawn at ${(FIELD_WIDTH / m.height).toFixed(2)} : 1, past the floor`);
+        if (m.height * m.width > m.minInkArea + 1) bad.push(`${where}: the field (${Math.round(m.height * m.width)}) is larger than the construction's minimum ink (${Math.round(m.minInkArea)})`);
+        if (Math.abs(m.bottom - m.pressingTop) > 1) bad.push(`${where}: the field ends ${m.bottom.toFixed(1)}, the pressing block starts ${m.pressingTop.toFixed(1)} (anchored to it until step 59)`);
         if (Math.abs(m.width - m.trackW) > 1) bad.push(`${where}: the field is ${m.width} wide, the track ${m.trackW}`);
-        /* §49: a ground may not outweigh the mark it sits beside. Stop if any field is larger than its record's construction. */
-        const fieldArea = m.height * m.width; const drawnArea = m.drawnW * m.drawnH;
-        if (fieldArea > drawnArea) bad.push(`${where}: STOP -- the field (${Math.round(fieldArea)}) is larger than the construction's drawn area (${Math.round(drawnArea)})`);
+      } else if (m.height !== 0) bad.push(`${where}: suppressed but ${m.height} tall`);
+      const key = `${w}x${h}`;
+      if (GAP_UNDER_CAP[title]?.includes(key)) {
+        if (!(m.state === 'drawn' && m.term === 'gap' && m.height < m.cap)) bad.push(`${where}: expected drawn at its gap under a cap that does not bind (state ${m.state}, term ${m.term}, height ${m.height}, cap ${m.cap})`);
+      }
+      if (GAP_FAILS_CAP[title]?.includes(key)) {
+        if (!(m.state === 'suppressed' && m.term === 'gap' && FIELD_WIDTH / m.cap <= 4)) bad.push(`${where}: expected suppressed by its gap under a cap that would pass (state ${m.state}, term ${m.term}, gap ${m.gap}, cap ${m.cap})`);
       }
       if (!m.runPresent) bad.push(`${where}: the genres run collapsed under the field`);
-      line.push(`${r.title.split(':')[0]} ${m.pair.title}/${m.pair.artist}: ${m.shown ? `field ${m.height}` : 'SUPPRESSED'} (floor ${m.floor}, gap ${m.available}, stack ${m.stack}${m.shown ? `, area ${Math.round(m.height * m.width / 1000)}k vs construction ${Math.round(m.drawnW * m.drawnH / 1000)}k` : ''})`);
+      line.push(`${title} ${m.pair.title}/${m.pair.artist}: ${shown ? `field ${m.height} (${(FIELD_WIDTH / m.height).toFixed(1)}:1, ${m.term})` : `SUPPRESSED by ${m.term} (${(FIELD_WIDTH / Math.max(want.height, 0.1)).toFixed(1)}:1)`} -- gap ${m.gap}, stack ${m.stack}, cap ${m.cap}, ink ${(m.ink * 100).toFixed(1)}%, field/min-ink ${shown ? (m.height * m.width / m.minInkArea).toFixed(2) : '--'}`);
     }
     report.push(`${w} × ${h}:\n    ${line.join('\n    ')}`);
   }
-  console.log(`  §49 TINT FIELD:\n  ${report.join('\n  ')}`);
+  console.log(`  §50 TINT FIELD (ink at alpha 0.5, cap at the construction's minimum):\n  ${report.join('\n  ')}`);
   expect(readings, 'the report has subjects').toBe(rows.length * 3);
-  expect(bad, `§49's field not met:\n  ${bad.join('\n  ')}`).toEqual([]);
+  expect(bad, `§50's field not met:\n  ${bad.join('\n  ')}`).toEqual([]);
+});
+
+/**
+ * §52: "the field is the same at every width and never outweighs the mark at
+ * any of them." Step 58: assert every record draws or is suppressed
+ * identically at 959, 960, 1439, 1440, 1679, 1680, 1919 and 1920; if any
+ * differs, stop and report. Asserted at the reference height like §45's fork
+ * test; the 1200 readings are reported.
+ */
+test('§52: every record draws or is suppressed identically at the eight fork widths', async ({ page }) => {
+  test.setTimeout(900_000);
+  await login(page);
+  const rows = readSeventeen();
+  const WIDTHS = [959, 960, GRID_FORK - 1, GRID_FORK, 1679, 1680, 1919, 1920];
+  const bad: string[] = [];
+  const report: string[] = [];
+  for (const h of [NO_SCROLL_HEIGHT, 1200]) {
+    for (const r of rows) {
+      const title = r.title.split(':')[0];
+      const seen: Array<{ w: number; state: string | null; term: string | null; height: number; cap: number }> = [];
+      await page.setViewportSize({ width: WIDTHS[0], height: h });
+      await page.goto(`/records/${r.id}`);
+      await page.locator('[data-title-step][data-ladder]').waitFor({ timeout: 20_000 });
+      await page.evaluate(() => document.fonts.ready);
+      for (const w of WIDTHS) {
+        await page.setViewportSize({ width: w, height: h });
+        await page.waitForTimeout(250);
+        const m = await page.evaluate(() => { const f = document.querySelector<HTMLElement>('[data-mark="identityField"]'); if (!f) return null; return { state: f.getAttribute('data-field-state'), term: f.getAttribute('data-field-term'), height: Math.round(f.getBoundingClientRect().height * 10) / 10, cap: Number(f.getAttribute('data-field-cap')) }; });
+        if (m === null) { bad.push(`${title} @${w}x${h}: no field`); continue; }
+        seen.push({ w, ...m });
+      }
+      const states = new Set(seen.map((s) => s.state));
+      const caps = new Set(seen.map((s) => s.cap));
+      if (caps.size !== 1) bad.push(`${title} @${h}: the cap changed with width: ${seen.map((s) => `${s.w}:${s.cap}`).join(' ')}`);
+      if (h === NO_SCROLL_HEIGHT && states.size !== 1) bad.push(`${title} @${h}: STOP -- ${seen.map((s) => `${s.w}:${s.state}`).join(' ')}`);
+      report.push(`${title} @${h}: ${seen.map((s) => `${s.w}:${s.state === 'drawn' ? s.height : 'supp.'}/${s.term}`).join(' ')}`);
+    }
+  }
+  console.log(`  §52 FORK WIDTHS:\n    ${report.join('\n    ')}`);
+  expect(report.length).toBe(rows.length * 2);
+  expect(bad, `§52 forks:\n  ${bad.join('\n  ')}`).toEqual([]);
 });

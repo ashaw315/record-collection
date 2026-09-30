@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 120 declared rules. Regenerate with
+Generated from 122 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -44,6 +44,8 @@ Generated from 120 declared rules. Regenerate with
 | an average across a dataset is being quoted and the set has kinds in it | [RULE: any measurement of Discogs metadata quality must be PER-GENRE. An](#rule-any-measurement-of-discogs-metadata-quality-must-be-per-genre-an) |
 | a comment or summary describes work more rigorously than the work | [RULE: prose is more rigorous than the work it describes, and it is always](#rule-prose-is-more-rigorous-than-the-work-it-describes-and-it-is-always) |
 | a number stands in for a capability and you counted the proxy | [RULE: when a measurement stands in for a capability, count the capability,](#rule-when-a-measurement-stands-in-for-a-capability-count-the-capability) |
+| a figure that is a ceiling or a floor is serialised with fewer decimals than the comparison against it is made at | [Step 58 built: §50 and §52 -- the field capped by the construction's minimum ink, floored by its proportion (30 Sep)](#step-58-built-50-and-52----the-field-capped-by-the-constructions-minimum-ink-floored-by-its-proportion-30-sep) |
+| a ruling moves where a thing sits and says nothing else changes, but the term that sized it was measured from where it used to sit | [Step 59 halted before code: §51's anchor and §50's gap term disagree on three records (30 Sep)](#step-59-halted-before-code-51s-anchor-and-50s-gap-term-disagree-on-three-records-30-sep) |
 | a number surprised you and you have not checked what else was running | [THE APPARATUS GENERATING THE SIGNAL — now a mechanism, not a habit](#the-apparatus-generating-the-signal-now-a-mechanism-not-a-habit) |
 | two surfaces derive from one stored value through different functions and nobody has put them side by side | [The same record renders two colours on two screens](#the-same-record-renders-two-colours-on-two-screens) |
 | a ruling describes a threshold being crossed and you are about to assert the crossing | [The third give is never reached on the build, and the test says so](#the-third-give-is-never-reached-on-the-build-and-the-test-says-so) |
@@ -32250,3 +32252,115 @@ which is the boundary Adam named. At 1440 × 1200: none. At 1200 × 1200: none.
 largest share is Wired at 1440 × 900, 70%; Mind Games at 1440 × 1200, 81%; Mind Games at 1200 × 1200, 38%), so
 the stop did not fire. The captures for Adam: Gaucho, Dire Straits and Grave
 New World at the three windows, `docs/captures/step57-tint-field-*`.
+
+## Step 58 built: §50 and §52 -- the field capped by the construction's minimum ink, floored by its proportion (30 Sep)
+
+The tint field's height is the smallest of three terms: the gap the ladder
+leaves after its STEP_GAP, the title stack, and the construction's MINIMUM
+ink across every column count from 480 up, over the field's width of 443
+(`fieldHeight` in `title-steps.ts`; `ink.ts` for the cap). It is drawn only
+where that height keeps the field within 4 : 1, judged on the RENDERED
+height, whichever term set it. The artist-line floor and the box comparison
+are gone with their tests.
+
+**Ink is counted at alpha 0.5**: a point sample at each pixel centre of the
+still's own viewBox, inside the disc or any face, shadows as paper
+(`inkCoverage`). The §50 spec rasterises the same SVG on a canvas at
+alpha ≥ 128 and holds the two to half a point; on 51 readings the largest
+difference was under 0.2 points. The minimum is at 960 on every record of
+the real collection, where the still's inner box is 392 wide and every
+record is width-bound, so the window's height does not move it and the cap
+is one number per record, served on the paint by the server from the same
+scene the still draws (`data-field-cap`, three decimals).
+
+**The report, per record** (cap in px of field height; height with its
+aspect and the term that set it, or the term that suppressed it):
+
+| record | cap | ink | 1440 × 900 | 1440 × 1200 | 1200 × 1200 |
+|---|---|---|---|---|---|
+| Believer | 125.0 | 31.0% | 125 (3.5:1, cap) | 125 (3.5:1, cap) | 125 (3.5:1, cap) |
+| Bitches Brew | 116.9 | 30.7% | 113.9 (3.9:1, gap) | 116.9 (3.8:1, cap) | 116.9 (3.8:1, cap) |
+| Bridge Over Troubled Water | 109.1 | 35.9% | suppressed by cap (4.1:1) | suppressed by cap (4.1:1) | suppressed by cap (4.1:1) |
+| Dire Straits | 128.5 | 31.1% | suppressed by gap (8.1:1) | 128.4 (3.5:1, cap) | 128.4 (3.5:1, cap) |
+| Gaucho | 128.4 | 44.5% | 128.3 (3.5:1, cap) | 128.3 (3.5:1, cap) | 128.3 (3.5:1, cap) |
+| Grave New World | 145.2 | 49.8% | suppressed by gap (gap 1.1) | suppressed by gap (4.4:1) | suppressed by gap (4.4:1) |
+| Loss Of Life | 119.0 | 44.8% | suppressed by gap (8.1:1) | 119 (3.7:1, cap) | 119 (3.7:1, cap) |
+| Mind Games | 139.1 | 46.8% | 113.9 (3.9:1, gap) | 139.1 (3.2:1, cap) | 139.1 (3.2:1, cap) |
+| Never Too Much | 130.6 | 40.0% | 130.6 (3.4:1, cap) | 130.6 (3.4:1, cap) | 130.6 (3.4:1, cap) |
+| On The Radio | 145.4 | 35.5% | suppressed by gap (4.7:1) | suppressed by gap (5.4:1) | suppressed by gap (5.4:1) |
+| Psychic | 160.5 | 44.7% | 160.5 (2.8:1, cap) | 160.5 (2.8:1, cap) | 160.5 (2.8:1, cap) |
+| Super Rich | 129.9 | 38.0% | suppressed by gap (8.1:1) | 129.9 (3.4:1, cap) | 129.9 (3.4:1, cap) |
+| The Best Of The Blues Project | 175.3 | 41.5% | 162.4 (2.7:1, gap) | 172.5 (2.6:1, gap) | 172.5 (2.6:1, gap) |
+| The Hurdy Gurdy Man | 127.2 | 39.1% | 127.1 (3.5:1, cap) | suppressed by gap (6.3:1) | suppressed by gap (6.3:1) |
+| The Money Store | 134.9 | 39.6% | suppressed by gap (gap 1.1) | 134.8 (3.3:1, cap) | 134.8 (3.3:1, cap) |
+| The Soft Parade | 146.8 | 33.6% | suppressed by gap (gap 1.1) | 146.8 (3.0:1, cap) | 146.8 (3.0:1, cap) |
+| Wired | 86.2 | 38.5% | suppressed by cap (5.1:1) | suppressed by cap (5.1:1) | suppressed by cap (5.1:1) |
+
+Eight drawn at 1440 × 900, twelve at the two 1200-tall windows. Wired and
+Bridge are suppressed by the cap alone at every window; Bridge's cap is
+109.127 against the floor's 110.75, so it is suppressed by 1.6px -- Design
+is ruling whether that is a suppression or an acceptance at the bound. No
+suppression is by the title stack. **The forks**: at 900 tall every record
+draws or is suppressed identically at 959, 960, 1439, 1440, 1679, 1680, 1919
+and 1920, and the cap is the same number at all eight; asserted. At 1200
+tall the same holds from 960 up, but 959 differs from 960 on eight records
+(Dire Straits, Super Rich, The Soft Parade, The Money Store and Loss Of Life
+suppressed at 959 and drawn at 960; Bitches Brew and Mind Games at their
+gap at 959 and their cap at 960; The Hurdy Gurdy Man drawn at 959 and
+suppressed at 960). That is the GAP term, not the cap: below 960 the
+identity row is §44's fixed 546, from 960 the band takes the window's
+height (§42), so the supply steps across the fork at any height but 900.
+Reported, not asserted -- the step's assertion is at the reference height
+like §45's.
+
+**A served bound rounded to nearest is not a bound.** Served to one decimal,
+the cap rounded UP by up to 0.05 on the records it bound, and the field --
+rounded to the tenth on the client as well -- exceeded the minimum ink by
+12 to 17px² on Gaucho, Dire Straits and The Hurdy Gurdy Man; the spec's
+area check caught it. The client now floors the height to the tenth and
+the server serves the cap to three decimals. The component test's expected
+format changed with it, because its `toFixed(1)` was the defect.
+
+**Shape:** measurement-not-governing
+**You are here if:** a figure that is a ceiling or a floor is serialised with fewer decimals than the comparison against it is made at
+
+**A check that rewrites the working tree cannot run beside a measurement
+that reads it.** To get a lint baseline I ran `git stash … stash pop` in
+parallel with a Playwright run; the dev server rebuilt from HEAD for the
+stash's duration and the run's page was not the page under test. The
+numbers happened to agree with the serial re-run, which is luck, not
+evidence; the baseline now comes from a throwaway `git worktree`, which
+cannot touch the tree a run is reading.
+
+**Shape:** observer-without-subject
+**You are here if:** you are about to start anything that checks out, stashes or rewrites files while a run that reads those files is live
+
+## Step 59 halted before code: §51's anchor and §50's gap term disagree on three records (30 Sep)
+
+§51 starts the field one line of the artist's leading below the artist's
+last line, keeps the pressing block on the cell's floor, and sends the
+height left over when a cap binds between the field and the pressing block:
+"only the side of the field the paper falls on changes." But the paper
+above the field under §49 was never zero: it was the ladder's STEP_GAP of
+24, kept between the artist and the paint, and the gap term is what the
+supply leaves after the demand AND that 24. The artist's leading is its
+size (`lineHeight: 1`): 40, 54, 66 or 80. Where the gap binds, the field
+fills the ground less 24; moving its top down by the leading needs
+leading − 24 more pixels than the ground has.
+
+**Measured against step 58's figures**, three records are gap-bound and
+drawn: Bitches Brew and Mind Games at 1440 × 900 (113.9 at 120/66) and The
+Best Of The Blues Project at all three windows (162.4 at 72/40; 172.5 at
+96/54). As worded, §51 puts their fields 42, 42, 16 and 30px into the
+pressing block. Under the reading that keeps the field out of the block --
+the gap term becomes the room below the leading, gap + 24 − leading --
+Bitches Brew and Mind Games fall to 71.9 (6.2 : 1) and are suppressed, which
+contradicts §52's "Bitches Brew at 1440 × 900, 443 × 113.9 or 3.89 : 1,
+reads as a low plane, so the floor lands on the right side of its nearest
+case"; The Best Of The Blues Project draws at 146.4 and 142.5. Every
+cap-bound record is unchanged under either reading, because its slack
+exceeds leading − 24. Step 59 is not built until Design says which reading
+§51 means, or restates the gap term for the new anchor.
+
+**Shape:** measurement-not-governing
+**You are here if:** a ruling moves where a thing sits and says nothing else changes, but the term that sized it was measured from where it used to sit

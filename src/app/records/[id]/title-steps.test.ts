@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import * as titleStepsModule from './title-steps';
-import { ARTIST_OF_TITLE, TITLE_PAIRS, TITLE_STEPS, STEP_GAP, artistStep, titlePair } from './title-steps';
+import { ARTIST_OF_TITLE, FIELD_ASPECT_FLOOR, TITLE_MEASURE, TITLE_PAIRS, TITLE_STEPS, STEP_GAP, artistStep, fieldHeight, titlePair } from './title-steps';
 
 /* The height term alone, as §33's tests were written: width fits and the artist sets on one line. */
 const titleStep = ({ demandAt, supply }: { demandAt: (step: number) => number; supply: number }) =>
@@ -163,5 +163,50 @@ describe('§45: the title fits the identity cell on both axes', () => {
 
   it('exports no supply constant: the supply is measured from the rendered cell', () => {
     expect(Object.keys(titleStepsModule)).not.toContain('LADDER_SUPPLY');
+  });
+});
+
+/**
+ * **§50 (step 58): the field’s height is the smallest of three terms, and a
+ * field past 4 : 1 is not drawn.** "Its area is at most the construction’s
+ * ink, and its aspect at most 4 : 1; where either fails, the gap is paper."
+ * The floor is tested on the RENDERED height, not on the cap: a record whose
+ * cap would pass can still be suppressed because its gap is short, and one
+ * whose gap binds below its cap is judged on that gap.
+ */
+describe('§50: fieldHeight is the smallest of gap, stack and cap, suppressed past 4 : 1', () => {
+  it('names the term that set the height', () => {
+    expect(fieldHeight({ gap: 300, stack: 250, cap: 200 })).toMatchObject({ height: 200, term: 'cap', drawn: true });
+    expect(fieldHeight({ gap: 300, stack: 150, cap: 200 })).toMatchObject({ height: 150, term: 'stack', drawn: true });
+    expect(fieldHeight({ gap: 120, stack: 250, cap: 200 })).toMatchObject({ height: 120, term: 'gap', drawn: true });
+  });
+
+  it('suppresses at the aspect floor, on the rendered width of 443: 110 is a rule, 111 is a plane', () => {
+    expect(fieldHeight({ gap: 110, stack: 250, cap: 200 })).toMatchObject({ height: 110, term: 'gap', drawn: false });
+    expect(fieldHeight({ gap: 111, stack: 250, cap: 200 })).toMatchObject({ height: 111, term: 'gap', drawn: true });
+    expect(fieldHeight({ gap: 111, stack: 250, cap: 200 }).aspect).toBeCloseTo(TITLE_MEASURE / 111, 6);
+  });
+
+  it('judges the rendered height, not the cap: Bitches Brew at 1440 × 900 draws at its gap of 113.9 under a cap of 116.8', () => {
+    expect(fieldHeight({ gap: 113.9, stack: 291.6, cap: 116.8 })).toMatchObject({ height: 113.9, term: 'gap', drawn: true });
+  });
+
+  it('judges the rendered height, not the cap: The Hurdy Gurdy Man at 1200 high is suppressed by its gap of 70.3 under a cap of 127.1 that would pass', () => {
+    expect(fieldHeight({ gap: 70.3, stack: 517.2, cap: 127.1 })).toMatchObject({ height: 70.3, term: 'gap', drawn: false });
+  });
+
+  it('suppresses by the cap alone where the cap is past 4 : 1: Bridge Over Troubled Water at 109.3 against 110.75', () => {
+    const bridge = fieldHeight({ gap: 243, stack: 243, cap: 109.3 });
+    expect(bridge).toMatchObject({ height: 109.3, term: 'cap', drawn: false });
+    expect(bridge.aspect).toBeGreaterThan(FIELD_ASPECT_FLOOR);
+  });
+
+  it('treats a gap of nothing or less as suppressed, not as a negative field', () => {
+    expect(fieldHeight({ gap: 0, stack: 250, cap: 200 })).toMatchObject({ height: 0, drawn: false });
+    expect(fieldHeight({ gap: -12, stack: 250, cap: 200 })).toMatchObject({ height: 0, drawn: false });
+  });
+
+  it('exports the floor as 4', () => {
+    expect(FIELD_ASPECT_FLOOR).toBe(4);
   });
 });

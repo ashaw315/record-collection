@@ -5,6 +5,8 @@ import { RecordPage8a, type PageRecord } from './RecordPage8a';
 import { BANDS } from './band-geometry';
 import { STRIP_SPLIT } from './cover-33';
 import { recordLadder } from '@/lib/colour/record-ladder';
+import { construction } from './construction';
+import { fieldCapFor } from './ink';
 
 /**
  * §5.3, the record with no cover: "the fallback is ink for all eight marks
@@ -410,6 +412,22 @@ describe('§45: the identity cell’s leftover is a tint field', () => {
     /* §49: sized by TitleStep after the pair is chosen -- anchored to the pressing block, bounded by the title stack and the artist's line -- so the server sends it at no height, pending. */
     expect(field, 'served pending, at no height, until the ladder sizes it').toContain('data-field-state="pending"');
     expect(field).toContain('height:0');
+  });
+
+  /**
+   * §50/§52 (step 58): the cap is a property of the record's construction,
+   * computed on the server from the same scene the still draws, and served on
+   * the field so the client sizes against it without rasterising anything.
+   */
+  it('serves the field’s ink cap, computed from the record’s own construction (§52)', () => {
+    const r = record('#a25829');
+    const html = renderToStaticMarkup(<RecordPage8a record={r} />);
+    const field = /<div[^>]*data-mark="identityField"[^>]*>/.exec(trackOf(html).between)?.[0];
+    expect(field).toBeDefined();
+    const cap = fieldCapFor(construction(r.id));
+    expect(cap).toBeGreaterThan(0);
+    /* Three decimals: served to one, the cap rounded UP by 0.05 on the records it bound and the floored field still exceeded the ink (found in the §50 spec, 30 Sep). */
+    expect(field, 'the cap the server computed').toContain(`data-field-cap="${cap.toFixed(3)}"`);
   });
 
   it('draws no field when the record has no ladder', () => {
