@@ -3,6 +3,7 @@
 */
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
+import { readSeventeen } from './seventeen';
 import { seedImage } from './seed';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
@@ -989,7 +990,8 @@ test('a figure’s faces are the ladder’s top, base and shade; a flat is tint 
 
   const disc = drawn.flats.find((f) => f.shape === 'quarterDisc');
   expect(disc, 'the base quarter-disc renders').toBeDefined();
-  expect(disc?.section, 'beside About this record').toBe('snippet');
+  /* §53 (steps 60b, 61): the lower About row is gone; the disc's host is Images. */
+  expect(disc?.section, 'beside Images').toBe('images');
   expect(disc?.polygons, 'one fill, no faces').toBe(0);
   expect(disc?.fill, 'at BASE').toBe(drawn.base);
 
@@ -1109,4 +1111,58 @@ test('§26 and §21: BOTH flats bleed off a page edge, a third or more outside',
   /* And they leave by opposite edges, which is what §26's cleared column is for. */
   expect(flats.find((f) => f.shape === 'triangle')!.bleedsLeft, 'the tint triangle leaves by the LEFT').toBe(true);
   expect(flats.find((f) => f.shape === 'quarterDisc')!.bleedsRight, 'the base quarter-disc by the RIGHT').toBe(true);
+});
+
+/**
+ * **§53 (step 61): the disc's host on every record at every width.** "Assert
+ * on every record at 390, 768, 1000, 1439, 1440, 1680 and 1920 that the
+ * disc's host is Images, at the page's right edge, in a row above the
+ * triangle's, and within §29's bound; any width where it is not is a
+ * failure, not a suppression." Before 60b the model still held the images
+ * row as a pair and gave its surplus to air on the right above the fork, so
+ * the host left the page edge at 1680 and 1920 (NOTES, step 61 measured).
+ */
+test('§53: the quarter-disc is hosted by Images, at the page’s right edge, above the triangle’s row and within §29’s bound, on every record at seven widths', async ({ page }) => {
+  test.setTimeout(900_000);
+  await login(page);
+  const WIDTHS = [390, 768, 1000, 1439, 1440, 1680, 1920];
+  const bad: string[] = [];
+  const report: string[] = [];
+  for (const r of readSeventeen()) {
+    await page.setViewportSize({ width: WIDTHS[0], height: 844 });
+    await page.goto(`/records/${r.id}`);
+    await page.locator('[data-region="extended-grid"]').waitFor({ timeout: 20_000 });
+    const line: string[] = [];
+    for (const w of WIDTHS) {
+      await page.setViewportSize({ width: w, height: w < 480 ? 844 : NO_SCROLL_HEIGHT });
+      await page.waitForTimeout(250);
+      const m = await page.evaluate(() => {
+        const R = (el: Element) => el.getBoundingClientRect();
+        const disc = document.querySelector('[data-region="extended-grid"] [data-flat="quarterDisc"]');
+        const tri = document.querySelector('[data-region="extended-grid"] [data-flat="triangle"]');
+        const frame = document.querySelector('[data-testid="record-page-8a"]');
+        if (!disc || !frame) return null;
+        const host = disc.closest('[data-region="extended-grid"] [data-section], [data-cell="air"]');
+        if (!host) return null;
+        const h = R(host); const d = R(disc); const f = R(frame);
+        /* §44: the region has no air below 960 and the triangle rides the upper air from 960, so the region's triangle is laid out only above the fork; an undrawn one has no row to be above. */
+        const triDrawn = tri !== null && tri.getClientRects().length > 0 && R(tri).width > 0;
+        const triHost = triDrawn ? tri.closest('[data-region="extended-grid"] [data-section], [data-cell="air"]') : null;
+        return { host: host.getAttribute('data-section') ?? host.getAttribute('data-cell'), hostRight: h.right, frameRight: f.right, hostTop: h.top, triangleTop: triHost ? R(triHost).top : null, hostW: h.width, hostH: h.height, visible: Math.max(0, Math.min(d.right, h.right) - Math.max(d.left, h.left)), drawn: d.width > 0 };
+      });
+      const where = `${r.title.split(':')[0]} @${w}`;
+      if (m === null) { bad.push(`${where}: no disc, or no host`); line.push(`${w}: none`); continue; }
+      const bound = Math.min(m.hostH * (2 / 3), m.hostW / 4);
+      if (m.host !== 'images') bad.push(`${where}: hosted by ${m.host}, not Images`);
+      if (Math.abs(m.hostRight - m.frameRight) >= 1) bad.push(`${where}: the host ends at ${m.hostRight.toFixed(1)}, the page at ${m.frameRight.toFixed(1)}`);
+      if (m.triangleTop !== null && !(m.hostTop < m.triangleTop)) bad.push(`${where}: the host's row is not above the triangle's`);
+      if (m.visible > bound + 0.5) bad.push(`${where}: visible radius ${m.visible.toFixed(1)} is over §29's bound ${bound.toFixed(1)}`);
+      if (m.visible < Math.min(bound, 150) - 1.5) bad.push(`${where}: visible radius ${m.visible.toFixed(1)} is under the bound ${Math.min(bound, 150).toFixed(1)} it should fill`);
+      line.push(`${w}: ${m.host} ${Math.round(m.hostW)}×${Math.round(m.hostH)} r${m.visible.toFixed(0)}/${Math.min(bound, 150).toFixed(0)}${m.triangleTop === null ? ' (only flat)' : ''}`);
+    }
+    report.push(`${r.title.split(':')[0]}: ${line.join(' · ')}`);
+  }
+  console.log(`  §53 QUARTER-DISC HOST:\n    ${report.join('\n    ')}`);
+  expect(report).toHaveLength(readSeventeen().length);
+  expect(bad, `the disc's host:\n  ${bad.join('\n  ')}`).toEqual([]);
 });

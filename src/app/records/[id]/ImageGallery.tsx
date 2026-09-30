@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { LABEL } from './grid-type';
+import type { RecordLadder } from '@/lib/colour/record-ladder';
 import { Section } from './Section';
 import { CONTROL_HEIGHT, FIELD_HEIGHT } from './extended-grid';
 import { useRef, useState } from 'react';
@@ -29,11 +30,14 @@ export function ImageGallery({
   recordId,
   images,
   base,
+  ladder = null,
 }: {
   recordId: string;
   images: GalleryImage[];
   /** §5.5's base step, for §9.3's rail bar. */
   base: string | null;
+  /** §53 (step 61): the record's ladder, for the base quarter-disc this section now hosts (§26, bounded by §29). Null when there is no cover. */
+  ladder?: RecordLadder | null;
 }) {
   const router = useRouter();
   const fileInput = useRef<HTMLInputElement>(null);
@@ -110,7 +114,7 @@ export function ImageGallery({
   }
 
   return (
-    <Section name="images" title="Images" base={base} shape="one">
+    <Section name="images" title="Images" base={base} shape="one" ladder={ladder}>
       <div data-testid="image-gallery">
       <div className="mb-3 flex flex-wrap items-center gap-[10px]">
         <label htmlFor="image-type" className="sr-only">

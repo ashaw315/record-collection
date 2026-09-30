@@ -370,7 +370,8 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
                 }))}
               />
 
-              <ImageGallery recordId={id} images={record.images} base={ladderBase} />
+              {/* §53 (step 61): Images hosts the base quarter-disc, so it takes the ladder like the sections that carry figures. */}
+              <ImageGallery recordId={id} images={record.images} base={ladderBase} ladder={ladder} />
               {/* §53 (step 60a): the About is read and written in the frame's About cell; the lower row is gone. */}
               <RecordJournal
                 base={ladderBase}

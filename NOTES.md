@@ -32630,3 +32630,31 @@ E2E on chromium serially: extended-grid, layout-sweep, frame-planes,
 colour-distribution, record-page-8a, row-clip-29h, page-fills-viewport,
 page8a-marks -- 57 passed, 3 failed, the three quarter-disc tests, which now
 fail because the disc does not draw on Images (step 61).
+
+## Step 61 built: §53 -- the quarter-disc is hosted by Images at every width (30 Sep)
+
+The Images section never received the record's ladder, because the disc sat
+beside the row below it; the section primitive draws the flat whose
+`beside` names it only when it has one. The gallery now takes the ladder
+from the route, as the sections carrying figures do, and the disc draws.
+Asserted on every record of the seventeen at 390, 768, 1000, 1439, 1440,
+1680 and 1920: the host is Images; it ends at the page's right edge at all
+seven, including 1680 and 1920 where 60b's one-section row spans the
+fourteen and sixteen columns; §29's visible radius is 161 from 768 up
+(two-thirds of the 241 host) and 98 at 390 (a quarter of the width); and
+where the region's triangle is drawn, from 1440 up, the disc's row is above
+it. Below 1440 the region draws no triangle -- §44 gives it no air below
+960 and §37 moves the triangle to the upper air from 960 -- so the disc is
+the region's only flat there, which §13 allows. The three extended-grid
+tests that expected the disc beside the snippet are re-pointed to Images
+and pass; the four disc tests were red before the ladder was passed, and
+the seven-width test first failed on an undrawn triangle's row, which was
+the test's reading and is now excluded.
+
+**Verification, step level:** unit `src/app/records`, `test/repo` and
+`test/component` (742); typecheck clean; lint 29, none new (the spec's
+`LABEL_SPAN` warning predates this step); build compiles; E2E on chromium
+serially, one whole run of extended-grid, layout-sweep, frame-planes,
+colour-distribution, record-page-8a, row-clip-29h, page-fills-viewport,
+page8a-marks, snippet and about-row-36: 68 passed, 1 failed on the
+triangle reading; extended-grid alone after that fix: 21 passed.

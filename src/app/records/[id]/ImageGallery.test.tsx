@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import '../../../../test/component/next-navigation';
 import { ImageGallery } from './ImageGallery';
 import type { GalleryImage } from './gallery-order';
+import { recordLadder } from '@/lib/colour/record-ladder';
 
 /**
  * **"No images yet" is false when the record has a cover.**
@@ -86,5 +87,25 @@ describe('the gallery says which kind of empty it is', () => {
 
     expect(html).not.toContain('/c.jpg');
     expect(html).toContain('/b.jpg');
+  });
+});
+
+/**
+ * **§53 (step 61): the base quarter-disc moves to Images.** "The base
+ * quarter-disc moves to the rendered section that now ends the snippet's row
+ * at the page's right edge, bounded by §29 against that host." The section
+ * primitive draws the flat whose `beside` names it, when it has the ladder;
+ * the gallery never received one, because the disc sat beside the row below.
+ */
+describe('§53: the Images section hosts the base quarter-disc', () => {
+  const ladder = recordLadder('#a25829');
+  it('draws the quarter-disc in its section when given the record’s ladder', () => {
+    const html = renderToStaticMarkup(<ImageGallery recordId="r1" images={[]} base={ladder?.base ?? null} ladder={ladder} />);
+    expect(html).toContain('data-section="images"');
+    expect(html, 'the flat, in the section').toMatch(/data-ornament="flat"[^>]*data-flat="quarterDisc"|data-flat="quarterDisc"[^>]*data-ornament="flat"/);
+  });
+  it('draws none without a ladder, as no other section does', () => {
+    const html = renderToStaticMarkup(<ImageGallery recordId="r1" images={[]} base={null} />);
+    expect(html).not.toContain('quarterDisc');
   });
 });
