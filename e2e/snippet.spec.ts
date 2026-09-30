@@ -1,20 +1,16 @@
 import { expect, test, type Page } from '@playwright/test';
+import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { registerCleanup, trackArtist } from './cleanup';
 
-/* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
 
 /**
- * SPEC.md §10b's snippet on the record detail page, and A31a's confirmation.
- *
- * **No live model call.** §9.2's generation is exercised by integration tests
- * with an injected client; what needs a browser is the CONFIRMATION — whether
- * the dialog fires only when there is something to lose, and what it says. That
- * is a judgement only a real `window.confirm` can settle, and it is the one
- * place a mistake destroys the user's writing.
- *
- * So these specs drive edit and delete, which need no model, and assert the
- * confirmation's presence and absence around them.
+ * **§10b's About, read and written in one place (§53, step 60a).** "The
+ * About cell is the About's only place: it reads, writes, edits and deletes
+ * it, and the lower About row is removed." The E2E deployment has no writing
+ * key (`.env.test`), so what runs here is the unconfigured path: reading,
+ * editing, deleting and the absence state without a control. The configured
+ * controls are held at the component layer.
  */
 
 const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
@@ -27,132 +23,119 @@ async function login(page: Page) {
   await expect(page).toHaveURL('/');
 }
 
-/**
- * Asserts 201 rather than returning whatever came back.
- *
- * The first version of this helper did not, and a failing seed surfaced as
- * `Cannot read properties of undefined` four tests later — an error about the
- * assertion rather than about the setup that actually broke.
- */
 async function post(page: Page, path: string, data: unknown) {
   const response = await page.request.post(path, { data, failOnStatusCode: false });
   expect(response.status(), `${path} ${JSON.stringify(data)}`).toBe(201);
   return response.json();
 }
 
-/** A record with a snippet the USER owns, created without touching the model. */
 async function seedEditedRecord(page: Page, suffix: string) {
   const artist = await post(page, '/api/artists', { name: `Discharge ${suffix}` });
   trackArtist(artist.id as string);
-  const record = await post(page, '/api/records', {
-    title: `Why ${suffix}`,
-    artistId: artist.id,
-  });
-
+  const record = await post(page, '/api/records', { title: `Why ${suffix}`, artistId: artist.id });
   const id = record.id;
-  await page.request.patch(`/api/records/${id}/snippet`, {
-    data: { snippet: `My own words ${suffix}` },
-    failOnStatusCode: false,
-  });
-
+  await page.request.patch(`/api/records/${id}/snippet`, { data: { snippet: `My own words ${suffix}` }, failOnStatusCode: false });
   return id;
 }
 
-test('an edited snippet is labelled as the user own, not as generated', async ({ page }) => {
+const cell = (page: Page) => page.getByTestId('record-page-8a').locator('[data-cell="note"]');
+
+test('an edited About is read in the frame cell and labelled the user’s own there; the page has no lower About row', async ({ page }) => {
   await login(page);
   const suffix = `snip-${Date.now()}`;
   const id = await seedEditedRecord(page, suffix);
-
   await page.goto(`/records/${id}`);
 
-  /*
-    **§33: the lower row "keeps its controls and drops its text".** The edited
-    About is read in the frame's last cell, labelled ABOUT; the row keeps the
-    attribution, which is what this test is about.
-  */
-  await expect(page.getByTestId('record-page-8a').locator('[data-field="about"]')).toContainText(`My own words ${suffix}`);
-  await expect(page.getByTestId('snippet-text'), 'the row no longer repeats the About').toHaveCount(0);
-  /*
-   * §10b's label, and the direction that matters here: the user wrote this, so
-   * attributing it to the model would be the same misattribution as presenting
-   * the model's writing as fact.
-   */
-  await expect(page.getByTestId('snippet-yours')).toBeVisible();
-  await expect(page.getByTestId('snippet-generated-label')).toHaveCount(0);
+  await expect(cell(page).locator('[data-field="about"]')).toContainText(`My own words ${suffix}`);
+  await expect(cell(page).getByTestId('snippet-yours'), 'the by-line, in the cell').toHaveText('Your own note');
+  await expect(cell(page).getByTestId('snippet-generated-label')).toHaveCount(0);
+  await expect(cell(page).getByTestId('snippet-edit')).toBeVisible();
+  await expect(cell(page).getByTestId('snippet-delete')).toBeVisible();
+  /* §53: the lower row is removed. Its section, its heading and its unconfigured notice are gone with it. */
+  await expect(page.locator('[data-section="snippet"]'), 'no lower About row').toHaveCount(0);
+  await expect(page.getByText('About this record', { exact: true }), 'no second heading for the About').toHaveCount(0);
+  await expect(page.getByTestId('snippet-unconfigured'), 'no control and no notice where writing is not configured').toHaveCount(0);
+  await expect(page.getByTestId('snippet-generate')).toHaveCount(0);
 });
 
-test('a record with no snippet says so without inviting one', async ({ page }) => {
+test('a record with no About shows the diagonal and, unconfigured, no Write one', async ({ page }) => {
   await login(page);
   const suffix = `snipa-${Date.now()}`;
   const artist = await post(page, '/api/artists', { name: `Anti-Cimex ${suffix}` });
   trackArtist(artist.id as string);
-  const record = await post(page, '/api/records', {
-    title: `Raped Ass ${suffix}`,
-    artistId: artist.id,
-  });
-
+  const record = await post(page, '/api/records', { title: `Raped Ass ${suffix}`, artistId: artist.id });
   await page.goto(`/records/${record.id}`);
 
-  /*
-   * §10b: "Absence is fine. A record with no snippet shows none, and no
-   * placeholder invites one." The absent state states a fact; it does not nag.
-   */
-  await expect(page.getByTestId('snippet-absent')).toBeVisible();
-  await expect(page.getByTestId('snippet-text')).toHaveCount(0);
+  await expect(cell(page).locator('[data-diagonal]')).toHaveCount(1);
+  await expect(page.locator('[data-field="about-write"]')).toHaveCount(0);
+  await expect(page.getByTestId('snippet-absent'), 'no absence message: the diagonal is the absence state').toHaveCount(0);
 });
 
-/**
- * **Why the CONFIRMATION is not asserted here, recorded so nobody adds it back
- * and watches it hang.**
- *
- * The regenerate control requires `ANTHROPIC_API_KEY`, which the E2E
- * environment deliberately does not have (§11 forbids live external calls, and
- * `.env.test` carries no key). So the button that raises A31a's dialog does not
- * render here, and a spec clicking it waits 30s for a locator that will never
- * appear — which is what the first version of this file did.
- *
- * The confirmation is covered where it is reachable:
- *   - `snippet-view.test.ts` pins WHEN it fires and WHAT it says, including
- *     that it never mentions a column name;
- *   - `record-snippet-post.test.ts` pins that the server refuses without
- *     `confirmReplace` and that an edit landing mid-generation is not
- *     overwritten.
- *
- * What is left for a browser is the unconfigured state below, which this
- * environment genuinely has.
- */
-test('the control names itself unconfigured rather than vanishing', async ({ page }) => {
+test('editing replaces the prose in place: the textarea takes the region’s height, the budget line and Save/Cancel take the control line, and Save writes back', async ({ page }) => {
   await login(page);
-  const suffix = `snipu-${Date.now()}`;
+  await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
+  const suffix = `snipe-${Date.now()}`;
   const id = await seedEditedRecord(page, suffix);
-
   await page.goto(`/records/${id}`);
+  const region = cell(page).locator('[data-field="about"]');
+  await expect(region).toBeVisible();
+  const before = await region.evaluate((el) => el.getBoundingClientRect());
+  const footBefore = await cell(page).locator('[data-field="images-foot"]').evaluate((el) => el.getBoundingClientRect().top);
+  const controlsBefore = await cell(page).locator('[data-field="about-controls"]').evaluate((el) => el.getBoundingClientRect().height);
 
+  await cell(page).getByTestId('snippet-edit').click();
+  const draft = cell(page).getByTestId('snippet-draft');
+  await expect(draft, 'the textarea, in the cell').toBeVisible();
+  await expect(region, 'in place of the prose region').toHaveCount(0);
+  const after = await draft.evaluate((el) => el.getBoundingClientRect());
+  expect(Math.abs(after.top - before.top), 'the textarea starts where the region did').toBeLessThan(1);
   /*
-   * `GapAnalysis` makes the same choice for §9.2: "a button that silently does
-   * nothing reads as broken; saying which credential is missing turns a mystery
-   * into a deployment task." A31a's argument against HIDING a capability
-   * applies to the deployment case too.
-   */
-  await expect(page.getByTestId('snippet-unconfigured')).toBeVisible();
-  await expect(page.getByTestId('snippet-generate')).toHaveCount(0);
+    §53: "the textarea takes the prose region's height" and "nothing else in
+    the cell moves". On this record the rest line is one row (YOUR OWN NOTE ·
+    EDIT · DELETE, unconfigured) and editing needs two (the budget row, then
+    Save and Cancel), so the textarea gives up exactly that row and the foot
+    keeps the cell's floor. Where the control block does not grow, the two
+    heights are equal.
+  */
+  const controls = cell(page).locator('[data-field="about-controls"]');
+  const grew = (await controls.evaluate((el) => el.getBoundingClientRect().height)) - controlsBefore;
+  expect(grew, 'the control block grew by whole rows or not at all').toBeGreaterThanOrEqual(0);
+  expect(Math.abs(after.height - (before.height - grew)), 'the textarea takes the region’s height less what the control block grew by').toBeLessThan(1);
+  await expect(cell(page).getByTestId('about-budget'), 'the budget line, where the control line was').toBeVisible();
+  await expect(cell(page).getByTestId('snippet-save')).toBeVisible();
+  await expect(cell(page).getByTestId('snippet-cancel')).toBeVisible();
+  await expect(cell(page).getByTestId('snippet-edit'), 'Edit and Delete give way').toHaveCount(0);
+  await expect(cell(page).getByTestId('snippet-delete')).toHaveCount(0);
+  const footAfter = await cell(page).locator('[data-field="images-foot"]').evaluate((el) => el.getBoundingClientRect().top);
+  expect(Math.abs(footAfter - footBefore), `nothing else in the cell moves (the foot went from ${footBefore.toFixed(1)} to ${footAfter.toFixed(1)}; region was ${before.height.toFixed(1)} tall, textarea ${after.height.toFixed(1)})`).toBeLessThan(1);
+
+  await draft.fill(`Rewritten words ${suffix}`);
+  await cell(page).getByTestId('snippet-save').click();
+  await expect(cell(page).locator('[data-field="about"]')).toContainText(`Rewritten words ${suffix}`);
+  await expect(cell(page).getByTestId('snippet-yours')).toHaveText('Your own note');
+  await expect(cell(page).getByTestId('snippet-draft')).toHaveCount(0);
 });
 
-test('deleting a snippet removes the text and keeps ownership', async ({ page }) => {
+test('Cancel restores the prose unchanged', async ({ page }) => {
+  await login(page);
+  const suffix = `snipc-${Date.now()}`;
+  const id = await seedEditedRecord(page, suffix);
+  await page.goto(`/records/${id}`);
+  await cell(page).getByTestId('snippet-edit').click();
+  await cell(page).getByTestId('snippet-draft').fill('Discarded');
+  await cell(page).getByTestId('snippet-cancel').click();
+  await expect(cell(page).locator('[data-field="about"]')).toContainText(`My own words ${suffix}`);
+  await expect(cell(page).getByTestId('snippet-draft')).toHaveCount(0);
+});
+
+test('deleting an About from the cell removes the text and leaves the diagonal', async ({ page }) => {
   await login(page);
   const suffix = `snipd-${Date.now()}`;
   const id = await seedEditedRecord(page, suffix);
-
   await page.goto(`/records/${id}`);
-  await page.getByTestId('snippet-delete').click();
+  await cell(page).getByTestId('snippet-delete').click();
 
-  await expect(page.getByTestId('snippet-absent')).toBeVisible();
-
-  /*
-   * §4.2: "a deliberate deletion is an edit", so ownership SURVIVES the delete
-   * and a later generation must still ask. That is asserted in
-   * `snippet-view.test.ts` (the deleted-but-owned case) rather than here,
-   * because the control that would raise the dialog needs a key this
-   * environment does not have.
-   */
+  await expect(cell(page).locator('[data-diagonal]')).toHaveCount(1);
+  await expect(cell(page).locator('[data-field="about"]')).toHaveCount(0);
+  await expect(page.getByText(`My own words ${suffix}`)).toHaveCount(0);
 });

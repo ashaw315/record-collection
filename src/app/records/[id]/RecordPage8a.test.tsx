@@ -40,6 +40,7 @@ const record = (spineColour: string | null): PageRecord => ({
   marketHigh: null,
   hasDiscogsRelease: false,
   journalEntry: null,
+  aboutEditedAt: null,
   about: null,
   imageCount: 0,
   coverUrl: null,
@@ -329,29 +330,82 @@ describe('§35: absence in flow after the label in every cell that can be empty'
 });
 
 /**
- * §36: "on the twelve records with neither About nor entry, the label and
- * §6's diagonal stay, and below the label sits 'Write one ↓', a link to the
- * row in the same vocabulary as 'more ↓'. It is a link, not a button...
- * Where writing is not configured, the absence state carries no link."
+ * **§53 (step 60a): the About cell is the About's only place.** "At rest the
+ * cell carries four things, in this order: the ABOUT label, the scrolling
+ * prose, one line of controls, and the IMAGES row at its foot. The control
+ * line is the by-line's short form, 'Written by Claude', then Edit, Delete
+ * and Write a new one, in the 11px mono the label uses. The by-line's
+ * qualifier moves to a hover title on it... Where no About exists the
+ * absence state carries Write one as the button itself. Where writing is
+ * not configured it carries no control." The lower row is the route's
+ * (60b); what this holds is the cell's markup.
  */
-describe('§36: the absence state offers the row, only where writing is configured', () => {
-  const none = { about: null, journalEntry: null };
-  it('links "Write one ↓" to the row below the label, ahead of the diagonal, when configured', () => {
+describe('§53: the About cell carries its control line, and the absence state its Write one button', () => {
+  const none = { about: null, aboutEditedAt: null, journalEntry: null };
+  const generated = { about: 'A long About, written by the model.', aboutEditedAt: null, journalEntry: null };
+  const edited = { about: 'My own words.', aboutEditedAt: '2026-09-30T10:00:00.000Z', journalEntry: null };
+  const controlsOf = (cell: string) => /<div[^>]*data-field="about-controls"[^>]*>[\s\S]*?<\/div>/.exec(cell)?.[0] ?? '';
+
+  it('puts the control line after the prose region and before the IMAGES foot, in the label’s style', () => {
+    const cell = lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), ...generated }} writingConfigured />));
+    const controls = controlsOf(cell);
+    expect(controls, 'a control line').not.toBe('');
+    expect(cell.indexOf('data-field="about-controls"'), 'after the prose region').toBeGreaterThan(cell.indexOf('data-field="about"'));
+    expect(cell.indexOf('data-field="about-controls"'), 'before the IMAGES foot').toBeLessThan(cell.indexOf('data-field="images-foot"'));
+    expect(cell.indexOf('data-field="images-foot"'), 'the foot is there to be before').toBeGreaterThan(-1);
+    expect(controls, 'the 11px mono the label uses').toMatch(/font-mono/);
+    expect(controls).toMatch(/uppercase/);
+  });
+
+  it('names a generated About “Written by Claude” with the qualifier as its hover title, then Edit, Delete and Write a new one', () => {
+    const controls = controlsOf(lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), ...generated }} writingConfigured />)));
+    expect(controls).toMatch(/<span[^>]*data-testid="snippet-generated-label"[^>]*title="about the music, not a fact this app checked"[^>]*>Written by Claude<\/span>/);
+    expect(controls).toMatch(/<button[^>]*data-testid="snippet-edit"[^>]*>Edit<\/button>/);
+    expect(controls).toMatch(/<button[^>]*data-testid="snippet-delete"[^>]*>Delete<\/button>/);
+    expect(controls).toMatch(/<button[^>]*data-testid="snippet-generate"[^>]*>Write a new one<\/button>/);
+    expect(controls, 'the qualifier is a title, not text').not.toContain('not a fact this app checked<');
+  });
+
+  it('names an edited About “Your own note”, with no qualifier', () => {
+    const controls = controlsOf(lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), ...edited }} writingConfigured />)));
+    expect(controls).toMatch(/<span[^>]*data-testid="snippet-yours"[^>]*>Your own note<\/span>/);
+    expect(controls).not.toContain('title=');
+    expect(controls).not.toContain('snippet-generated-label');
+  });
+
+  it('carries no Write a new one where writing is not configured, and no message about it', () => {
+    const cell = lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), ...generated }} />));
+    expect(controlsOf(cell)).toContain('snippet-edit');
+    expect(controlsOf(cell)).toContain('snippet-delete');
+    expect(cell).not.toContain('data-testid="snippet-generate"');
+    expect(cell).not.toContain('not configured');
+  });
+
+  it('serves no textarea at rest: editing is a state the reader enters', () => {
+    expect(lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), ...generated }} writingConfigured />))).not.toContain('<textarea');
+  });
+
+  it('carries Write one as a button below the label, ahead of the diagonal, where no About exists and writing is configured', () => {
     const cell = lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), ...none }} writingConfigured />));
-    const link = /<a[^>]*data-field="about-write"[^>]*>/.exec(cell)?.[0] ?? '';
-    expect(link, 'a link, not a button').not.toBe('');
-    expect(link).toMatch(/href="#snippet"/);
-    expect(cell).toContain('Write one ↓');
+    const button = /<button[^>]*data-field="about-write"[^>]*>Write one<\/button>/.exec(cell)?.[0] ?? '';
+    expect(button, 'the button itself, not a link').not.toBe('');
+    expect(cell).not.toMatch(/<a[^>]*about-write/);
+    expect(cell).not.toContain('Write one ↓');
     expect(cell.indexOf('data-field="about-write"'), 'below the label').toBeGreaterThan(cell.indexOf('>About<'));
     expect(cell.indexOf('data-field="about-write"'), 'ahead of the diagonal').toBeLessThan(cell.indexOf('data-diagonal'));
     expect(cell, 'the diagonal stays').toContain('data-diagonal');
-    expect(cell, 'no button in the frame cell').not.toMatch(/<button/);
   });
-  it('carries no link when writing is not configured, and none in the About or entry states', () => {
+
+  it('carries Write one in the entry state too: an entry is not an About, and the row that offered one is gone', () => {
+    const cell = lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), about: null, aboutEditedAt: null, journalEntry: { entry: 'Played.', entryDate: '2026-09-20' } }} writingConfigured />));
+    expect(cell).toContain('data-field="about-write"');
+    expect(cell, 'the entry still shows').toContain('Played.');
+  });
+
+  it('carries no Write one where writing is not configured, and none where an About exists', () => {
     expect(lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), ...none }} writingConfigured={false} />))).not.toContain('about-write');
     expect(lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), ...none }} />)), 'unconfigured by default').not.toContain('about-write');
-    expect(lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), about: 'Short.', journalEntry: null }} writingConfigured />))).not.toContain('about-write');
-    expect(lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), about: null, journalEntry: { entry: 'Played.', entryDate: '2026-09-20' } }} writingConfigured />))).not.toContain('about-write');
+    expect(lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), ...generated }} writingConfigured />))).not.toContain('about-write');
   });
 });
 

@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { BANDS, GRID_COLUMN, GRID_COLUMNS, GRID_FORK, IDENTITY_SPANS, LOWER_SPANS, STILL_MARGIN } from './band-geometry';
 import { BAND_AT_REFERENCE, REFERENCE_HEIGHT, regionStylesheet, widePageStylesheet } from './region-rows';
 import { Plane } from './Plane';
@@ -8,7 +7,7 @@ import { CONTROL_HEIGHT } from './extended-grid';
 import { STRIP_SPLIT } from './cover-33';
 import { recordBandStylesheet, type CellRuns } from './record-band-43';
 import { MatrixSolid } from './MatrixSolid';
-import { AboutCell } from './AboutCell';
+import { AboutCell, WriteOne } from './AboutCell';
 import { ENTRY_LINES, aboutCellState } from './about-cell';
 import { CELL_PADDING } from './extended-grid';
 import { ConstructionStill } from './ConstructionStill';
@@ -56,6 +55,8 @@ export type PageRecord = {
   journalEntry: { entry: string; entryDate: string } | null;
   /** §10b's snippet, stored in `records.snippet`; §33 calls it the About. */
   about: string | null;
+  /** When the user last edited the About (ISO), or null when it is the model's or absent: §10b's attribution. */
+  aboutEditedAt: string | null;
   imageCount: number;
   coverUrl: string | null;
   spineColour: string | null;
@@ -187,7 +188,7 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
     { name: 'note', runs: [{ text: 'About', register: 'label' },
       ...(aboutState.kind === 'about' ? [{ text: aboutState.text, register: 'prose' as const, wraps: true }]
         : aboutState.kind === 'entry' ? [{ text: aboutState.entryDate, register: 'label' as const }, { text: aboutState.text, register: 'prose' as const, wraps: true }]
-        : writingConfigured ? [{ text: 'Write one ↓', register: 'label' as const }] : []),
+        : writingConfigured ? [{ text: 'Write one', register: 'label' as const }] : []),
       { text: `Images ${record.imageCount} Manage →`, register: 'label' }] },
   ];
 
@@ -1015,7 +1016,7 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
                 {/* §33: "labelled ABOUT" in every state; §35 restates the cell without a second label. The entry state once relabelled it JOURNAL. */}
                 <div className={LABEL}>About</div>
                 {state.kind === 'about' ? (
-                  <AboutCell text={state.text} />
+                  <AboutCell recordId={record.id} text={state.text} editedAt={record.aboutEditedAt} configured={writingConfigured} />
                 ) : state.kind === 'entry' ? (
                   <>
                     <div className={`${LABEL} mt-[6px]`} style={{ color: LABEL_INK }}>
@@ -1028,19 +1029,18 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
                     >
                       {state.text}
                     </div>
+                    {/* §53: an entry is not an About, and the row that offered to write one is gone, so the cell offers it here too. */}
+                    {writingConfigured && <WriteOne recordId={record.id} editedAt={record.aboutEditedAt} />}
                   </>
                 ) : (
                   <>
                     {/*
-                      §36: "below the label sits 'Write one ↓', a link to the
-                      row in the same vocabulary as 'more ↓'. It is a link, not
-                      a button, so the app still has one generate control."
+                      §53: "Where no About exists the absence state carries
+                      Write one as the button itself." §36's link to the lower
+                      row (36/write-one-link) went with the row. Where writing
+                      is not configured there is no control, as §36 rules.
                     */}
-                    {writingConfigured && (
-                      <Link href="#snippet" data-field="about-write" className={`${LABEL} mt-[6px] block`}>
-                        Write one ↓
-                      </Link>
-                    )}
+                    {writingConfigured && <WriteOne recordId={record.id} editedAt={record.aboutEditedAt} />}
                     <EmptyMark diagonal="single" />
                   </>
                 )}
@@ -1081,6 +1081,7 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
           */}
           <div
             data-line="about-images"
+            data-field="images-foot"
             className="mt-[14px] w-[220px] max-w-full"
             style={{ borderTop: `1px solid ${RULE}` }}
           />

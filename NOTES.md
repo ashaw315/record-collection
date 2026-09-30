@@ -32451,3 +32451,65 @@ wrong file is visible in its name instead of needing a hash. The manifest
 already holds the figure, so this is a rename rule, not new measurement.
 Existing files keep their names; the manifest and the hashes above settle
 them.
+
+## Step 60a built: §53 -- the About cell is the About's editor; the lower row is no longer rendered (30 Sep)
+
+**Measured first, as step 60 says.** The control line, "Written by Claude ·
+Edit · Delete · Write a new one", is 51 characters in the label's Geist Mono
+11px with 0.09em tracking: 7.594px a character (0.6em of glyph plus 0.09em
+of tracking), 387.3px in all. The About cell is 322 wide at 1440, so it
+wraps there to two rows of 16.5; below §18's fork the cell is a full-width
+row (1401 at 1439, 1162 at 1200, 922 at 960) and the line fits in one. The
+wrap is a 1440-only event, the reverse of §53's first draft, which assumed
+the cell narrows below the fork as the identity does. The prose region at
+1440 × 900 is 195 tall at 19.5 a line; with a two-row control line and the
+cell's 6px stacking gap it holds eight lines (156), or seven at the foot's
+14px; §53's floor is seven, so the stop did not fire. Design corrected §53
+to the measured figures.
+
+**Built (60a).** `AboutCell` is now the editor: at rest the label, the
+scrolling prose region, a control line in `data-field="about-controls"` in
+the label's style -- the by-line's short form ("Written by Claude" with §10b's
+qualifier as its `title`, or "Your own note"), then Edit, Delete and, where
+writing is configured, Write a new one -- and the IMAGES foot. The absence
+state (none, and the entry state too, since an entry is not an About and the
+row that offered one is gone) carries Write one as a button, where
+configured; unconfigured it carries no control and no notice. Editing
+replaces the region in place with a textarea; the budget row and Save/Cancel
+take the control block. The route no longer renders `SnippetPanel`, which is
+deleted with its tests; `aboutControlLine` in `about-cell.ts` is the pure
+form. The route passes `aboutEditedAt` so the cell can attribute.
+
+**§53's two sentences on editing cannot both hold where the rest line is
+one row.** "The textarea takes the prose region's height" and "nothing else
+in the cell moves" agree only where the control block keeps its row count
+between rest and editing -- at 1440 the generated, configured case, two rows
+either way. An edited About, or no writing key, rests on one row (YOUR OWN
+NOTE · EDIT · DELETE is 220px) and editing needs two (budget, then Save and
+Cancel), so one sentence gives. The IMAGES foot is on the cell's floor (§3)
+and the cell clips, so the foot stays and the textarea gives up the row: it
+flexes into the region's space as the region did. The snippet spec asserts
+exactly that: the textarea is the region's height less what the control
+block grew by, and the foot does not move. Design may rule otherwise.
+
+**Tests re-pointed on §53's authority, said plainly.** Two assertions
+encoded §42's region of ten lines at 1440: that Loss Of Life's 482
+characters fit whole, and that the budget line reports "of 10 lines". Under
+§53 the region holds eight there (the seventeen rest on one control row,
+unconfigured, so 172.5 of the 195), and both now assert the ruled contract:
+seven lines or more, scrolling exactly when the text exceeds what is held,
+and the budget line reporting the lines the region held when Edit was
+pressed, which the cell now passes to it because the textarea has replaced
+the element that published it.
+
+**Left red for 60b, on purpose.** Three extended-grid tests fail because
+the quarter-disc is placed beside the snippet section in the ornament table
+and the section is no longer rendered, so the flat does not draw. Whether it
+moves or goes is Design's ruling; 60b removes the section from the region
+model and settles the figure.
+
+**Verification, step level:** unit `src/app/records`, `test/repo` and
+`test/component` (737 tests); E2E on chromium serially: snippet, about-row-36,
+frame-planes, extended-grid, layout-sweep, colour-distribution and
+record-page-8a (53 passed, the three quarter-disc tests failing as above);
+typecheck clean; lint 29 warnings, none in touched files; build compiles.

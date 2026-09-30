@@ -22,7 +22,7 @@ async function login(page: Page) {
  * controls only. Real About text, stand-in fields otherwise.
  */
 /* §42 (step 50): the row keeps no copy of the text; the frame scrolls a long About and holds a short one whole. */
-test('the row carries no reading copy; the frame scrolls The Hurdy Gurdy Man’s About and holds Loss Of Life’s whole (§42)', async ({ page }) => {
+test('the page carries no reading copy; the frame holds the whole text, at least seven lines of it, and scrolls the rest (§42, §53)', async ({ page }) => {
   await login(page);
   const rows = readSeventeen();
   for (const title of ['The Hurdy Gurdy Man', 'Loss Of Life']) {
@@ -37,8 +37,19 @@ test('the row carries no reading copy; the frame scrolls The Hurdy Gurdy Man’s
     await expect(page.getByTestId('snippet-full'), `${title}: the row carries no reading copy`).toHaveCount(0);
     await expect(page.locator('[data-field="about-more"]'), 'and there is no more link').toHaveCount(0);
     await expect(page.locator('[data-field="about"]'), 'the frame holds the whole text').toContainText((r.about ?? '').slice(-40).trim());
+    /*
+      §53 (step 60a): the control line sits under the prose, so the region at
+      1440 × 900 holds eight lines where §42 measured ten, and Loss Of Life's
+      482 characters no longer fit whole -- the seven-line floor is what §53
+      rules, not any record's fit. The claim that survives: the text is whole
+      in the region, the region holds at least seven lines, and it scrolls
+      exactly when the text exceeds them.
+    */
+    const budget = Number(await page.locator('[data-field="about"]').getAttribute('data-line-budget'));
+    expect(budget, `${title}: the region holds §53's seven lines or more`).toBeGreaterThanOrEqual(7);
+    const overflows = await page.locator('[data-field="about"]').evaluate((el) => el.scrollHeight > el.clientHeight + 1);
+    expect(scrolls !== null, `${title}: scrolls exactly when the text exceeds the ${budget} lines held`).toBe(overflows);
     if (title === 'The Hurdy Gurdy Man') expect(scrolls, 'the frame scrolls it').not.toBeNull();
-    else expect(scrolls, 'the frame holds it whole').toBeNull();
     await expect(page.getByTestId('snippet-edit')).toBeVisible();
     await expect(page.getByTestId('snippet-delete')).toBeVisible();
   }
@@ -51,33 +62,24 @@ test('the row carries no reading copy; the frame scrolls The Hurdy Gurdy Man’s
  * deployment has no key, so the probe page takes `?configured=1` to render
  * the configured form.
  */
-test('the absence state links "Write one ↓" to the row only where writing is configured (§36)', async ({ page }) => {
+test('the absence state carries Write one as the button itself, only where writing is configured (§53)', async ({ page }) => {
   await login(page);
   await page.goto('/wall/probe/page8a?case=emptiest');
   await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
   await expect(page.locator('[data-cell="note"] [data-diagonal]'), 'the diagonal stays').toHaveCount(1);
-  await expect(page.locator('[data-field="about-write"]'), 'no key, no link').toHaveCount(0);
+  await expect(page.locator('[data-field="about-write"]'), 'no key, no control').toHaveCount(0);
 
   await page.goto('/wall/probe/page8a?case=emptiest&configured=1');
   await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
-  const link = page.locator('[data-field="about-write"]');
-  await expect(link).toHaveText('Write one ↓');
-  await expect(link).toHaveAttribute('href', '#snippet');
-  await expect(page.locator('[data-cell="note"] button'), 'a link, never a control, in the frame cell').toHaveCount(0);
+  const button = page.locator('button[data-field="about-write"]');
+  await expect(button, 'the button itself, in the frame cell').toHaveText('Write one');
+  await expect(page.locator('a[data-field="about-write"]'), 'no longer a link to a row').toHaveCount(0);
   await expect(page.locator('[data-cell="note"] [data-diagonal]'), 'the diagonal stays beneath it').toHaveCount(1);
-  const order = await page.evaluate(() => { const c = document.querySelector('[data-cell="note"]') as HTMLElement; return { label: c.innerHTML.indexOf('>About<'), link: c.innerHTML.indexOf('about-write'), diagonal: c.innerHTML.indexOf('data-diagonal') }; });
-  expect(order.link, 'below the label').toBeGreaterThan(order.label);
-  expect(order.link, 'ahead of the diagonal').toBeLessThan(order.diagonal);
+  const order = await page.evaluate(() => { const c = document.querySelector('[data-cell="note"]') as HTMLElement; return { label: c.innerHTML.indexOf('>About<'), button: c.innerHTML.indexOf('about-write'), diagonal: c.innerHTML.indexOf('data-diagonal') }; });
+  expect(order.button, 'below the label').toBeGreaterThan(order.label);
+  expect(order.button, 'ahead of the diagonal').toBeLessThan(order.diagonal);
 });
 
-/**
- * §34: "the editor reports whether the text clamps in the rendered cell, not
- * whether it exceeds 535." The budget line measured its own probe at a fixed
- * 322px against ten lines -- 1440's cell -- at every width, so at 960, where
- * the cell is wider and holds a different count, it reported 1440's answer.
- * The frame paragraph publishes the line budget the cell holds; the editor
- * lays the draft out at that paragraph's width and reports against it.
- */
 test('the editor’s budget line reports the rendered cell’s own line budget, at 1440 and at 960 (§34)', async ({ page }) => {
   await login(page);
   const rows = readSeventeen();
@@ -97,11 +99,14 @@ test('the editor’s budget line reports the rendered cell’s own line budget, 
     await page.getByTestId('snippet-draft').waitFor({ timeout: 10_000 });
     await page.waitForTimeout(400);
     const line = (await page.getByTestId('about-budget').textContent()) ?? '';
-    const paragraphWidth = await paragraph.evaluate((el) => el.getBoundingClientRect().width);
+    /* §53: the textarea replaces the region in place, so its width is the region's. */
+    const paragraphWidth = await page.getByTestId('snippet-draft').evaluate((el) => el.getBoundingClientRect().width);
     seen.push({ width, budget, line, paragraphWidth });
     expect(line, `at ${width} the line reports against the cell's own budget (${budget})`).toContain(`of ${budget} lines`);
   }
   console.log(`  §34 BUDGET LINE: ${seen.map((s) => `${s.width}: "${s.line}" (paragraph ${Math.round(s.paragraphWidth)}px, budget ${s.budget})`).join(' | ')}`);
-  expect(seen[0].budget, 'at 1440 the cell holds §33’s ten').toBe('10');
-  expect(seen[1].budget, 'at 960 the cell is wider and holds a different count').not.toBe('10');
+  /* §53 (step 60a): the control line under the prose costs the region its ninth and tenth lines at 1440; seven is the floor §53 rules. */
+  expect(Number(seen[0].budget), 'at 1440 the cell holds §53’s seven lines or more').toBeGreaterThanOrEqual(7);
+  expect(Number(seen[0].budget), 'and fewer than §33’s ten, the control line having taken two').toBeLessThan(10);
+  expect(seen[1].budget, 'at 960 the cell is wider and holds a different count').not.toBe(seen[0].budget);
 });

@@ -6,7 +6,6 @@ import { ImageGallery } from './ImageGallery';
 import { MarketPanel } from '@/app/market/MarketPanel';
 import { PriceHistory } from './PriceHistory';
 import { ExtendedGrid } from './Section';
-import { SnippetPanel } from './SnippetPanel';
 import { isAnthropicConfigured } from '@/lib/llm/client';
 import { RecordJournal } from './RecordJournal';
 import { RecordDetail } from './RecordDetail';
@@ -213,6 +212,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
                       },
                 /* §33: the About is §10b's snippet, `records.snippet`. */
                 about: record.snippet,
+                aboutEditedAt: record.snippetEditedAt === null ? null : new Date(record.snippetEditedAt).toISOString(),
                 imageCount: record.images.length,
                 coverUrl: record.images.find((image) => image.imageType === 'cover')?.url ?? null,
                 spineColour: record.spineColour,
@@ -371,19 +371,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
               />
 
               <ImageGallery recordId={id} images={record.images} base={ladderBase} />
-              {/*
-                §10b's snippet. Between the gallery and the journal deliberately:
-                the images describe the object, the snippet describes the MUSIC,
-                and the journal describes living with it — outward-in.
-              */}
-              <SnippetPanel
-                recordId={id}
-                snippet={record.snippet}
-                snippetEditedAt={record.snippetEditedAt}
-                configured={isAnthropicConfigured()}
-                base={ladderBase}
-                ladder={ladder}
-              />
+              {/* §53 (step 60a): the About is read and written in the frame's About cell; the lower row is gone. */}
               <RecordJournal
                 base={ladderBase}
                 ladder={ladder}

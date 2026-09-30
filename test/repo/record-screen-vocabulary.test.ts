@@ -32,7 +32,7 @@ const SCREEN = [
   'src/app/records/[id]/IdentityCell.tsx',
   'src/app/records/[id]/RecordDetail.tsx',
   'src/app/records/[id]/ImageGallery.tsx',
-  'src/app/records/[id]/SnippetPanel.tsx',
+  'src/app/records/[id]/AboutCell.tsx',
   'src/app/records/[id]/PriceHistory.tsx',
   'src/app/records/[id]/RecordJournal.tsx',
   'src/app/records/[id]/DeleteRecord.tsx',
@@ -95,6 +95,8 @@ describe('the record screen speaks one type vocabulary', () => {
      */
     const LABELLING = [
       'src/app/records/[id]/Section.tsx',
+      /* §53 (step 60a): the About cell labels its own control line, in the label's 11px mono. */
+      'src/app/records/[id]/AboutCell.tsx',
       'src/app/records/[id]/RecordDetail.tsx',
       'src/app/records/[id]/ImageGallery.tsx',
       'src/app/market/MarketPanel.tsx',

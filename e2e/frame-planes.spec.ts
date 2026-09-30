@@ -235,13 +235,10 @@ test('the frame’s last cell is the ABOUT, the entry yields, and the note leads
   expect(entryBox, 'the entry is laid out').not.toBeNull();
   expect(leadBox!.y, 'the note LEADS: it sits above the entries').toBeLessThan(entryBox!.y);
 
-  await expect(
-    page.locator('[data-section="snippet"] [data-cell="label"]').getByText('About this record', { exact: true }),
-    'the lower row keeps its label',
-  ).toHaveCount(1);
-  /* §33: "The lower About row keeps its controls and drops its text." */
-  await expect(page.locator('[data-section="snippet"]').getByText(`Her last album for the label ${suffix}.`), 'the lower row does not repeat the About').toHaveCount(0);
-  await expect(page.locator('[data-section="snippet"]').getByTestId('snippet-edit'), 'and keeps its editor controls').toHaveCount(1);
+  /* §53 (step 60a): the About has one cell. The lower row, its label and its controls are gone; the controls sit in the frame cell under the prose. */
+  await expect(page.locator('[data-section="snippet"]'), 'no lower About row').toHaveCount(0);
+  await expect(page.getByText('About this record', { exact: true }), 'no second heading for the About').toHaveCount(0);
+  await expect(frame.getByTestId('snippet-edit'), 'the editor’s controls are in the frame cell').toHaveCount(1);
 });
 
 test('the note leads the Journal section even with no entry (§33)', async ({ page }) => {

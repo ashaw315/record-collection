@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import * as aboutCellModule from './about-cell';
-import { aboutBudget, ABOUT_CHAR_BUDGET, ABOUT_LINES, ENTRY_LINES, aboutCellState, present } from './about-cell';
+import { ABOUT_QUALIFIER, aboutBudget, aboutControlLine, ABOUT_CHAR_BUDGET, ABOUT_LINES, ENTRY_LINES, aboutCellState, present } from './about-cell';
 
 /**
  * §33 (d), amended: "The lower frame's last cell shows the record's About,
@@ -111,5 +111,40 @@ describe('the editor states the About budget', () => {
 describe('§42: no clamp', () => {
   it('exports no clamp count and no clamp function', () => {
     expect(Object.keys(aboutCellModule).filter((k) => /CLAMP|clampFor/i.test(k))).toEqual([]);
+  });
+});
+
+/**
+ * **§53 (step 60a): the About cell carries its own control line.** "The
+ * control line is the by-line's short form, 'Written by Claude', then Edit,
+ * Delete and Write a new one... The by-line's qualifier moves to a hover
+ * title on it, 'about the music, not a fact this app checked'... Where no
+ * About exists the absence state carries Write one as the button itself.
+ * Where writing is not configured it carries no control, as §36 rules."
+ */
+describe('§53: the control line, from the About’s provenance and the deployment', () => {
+  it('names a generated About “Written by Claude”, with the qualifier as its title, and offers Edit, Delete and Write a new one', () => {
+    expect(aboutControlLine({ about: 'Text.', editedAt: null, configured: true })).toEqual({ byline: 'Written by Claude', title: ABOUT_QUALIFIER, controls: ['edit', 'delete', 'generate'] });
+  });
+
+  it('names an edited About “Your own note”, with no qualifier', () => {
+    expect(aboutControlLine({ about: 'Text.', editedAt: '2026-09-30T10:00:00.000Z', configured: true })).toEqual({ byline: 'Your own note', title: null, controls: ['edit', 'delete', 'generate'] });
+  });
+
+  it('drops Write a new one where writing is not configured, keeping Edit and Delete', () => {
+    expect(aboutControlLine({ about: 'Text.', editedAt: null, configured: false }).controls).toEqual(['edit', 'delete']);
+  });
+
+  it('offers Write one alone where no About exists and writing is configured, and nothing where it is not', () => {
+    expect(aboutControlLine({ about: null, editedAt: null, configured: true })).toEqual({ byline: null, title: null, controls: ['write'] });
+    expect(aboutControlLine({ about: null, editedAt: null, configured: false })).toEqual({ byline: null, title: null, controls: [] });
+  });
+
+  it('treats a blank About as absent, as the cell does', () => {
+    expect(aboutControlLine({ about: '   ', editedAt: null, configured: true }).controls).toEqual(['write']);
+  });
+
+  it('states the qualifier once, as the sentence §10b gives every About', () => {
+    expect(ABOUT_QUALIFIER).toBe('about the music, not a fact this app checked');
   });
 });
