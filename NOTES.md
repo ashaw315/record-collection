@@ -32708,9 +32708,14 @@ reach the page in those words is Design's, once this is fixed.
 The route's thirty integration tests replace the whole blob adapter with a
 spy, so the real SDK, the real credential resolution and the real store are
 exercised by nothing, and a store-side refusal passed green here for as
-long as it has existed. Third instance of the shape in a month: the
+long as it has existed. Fourth instance of the shape in a month: the
 artist strings (one stand-in for seventeen), the fixture's single terracotta
-(one for sixteen spine colours), and now the adapter. The rule, as
+(one for sixteen spine colours), the adapter replaced by a spy, and the
+only §5.3 record -- no cover, no spine colour -- never rendered by any
+fixture, so three of §5.1's eight marks went undrawn on it for eighteen
+days. A fixture that carries one value where the world carries many, or
+none where the world carries one, is an adapter replaced by a spy in a
+different coat. The rule, as
 proposed and kept:
 
 **Every external boundary -- blob store, mail, payment, any third-party SDK
@@ -32759,24 +32764,53 @@ Sixteen covers rendered at all seven windows; The Best Of The Blues Project
 is the one flat cover cell and the one ink fallback.
 
 **What the served colour changes in what draws: nothing among the sixteen,
-and five marks on the seventeenth.** Every record with a ladder draws the
-same ladder-dependent marks at every viewport (the tint field where its
-terms allow, the section bars, the figures, both flats), the same face-step
-histogram (six ink, ten grey, two base), and the field's state and pair
-follow the type, not the colour. The colour changes only what things look
-like. The no-cover record draws the disc at ink and the still at ink, and
-draws NO tint field, NO section bars, NO figures and NEITHER flat. §5.3
-says "the fallback is ink for all eight marks... The marks must not be
-dropped: omitting them would let a missing image change the composition's
-structure." The lower region's section primitive draws figures and flats
-only when it has a ladder and bars only when it has a base, so on this
-record it omits them. Reported for Design; not fixed.
+and on the seventeenth two different things.** Every record with a ladder
+draws the same ladder-dependent marks at every viewport (the tint field
+where its terms allow, the section bars, the figures, both flats), the same
+face-step histogram (six ink, ten grey, two base), and the field's state
+and pair follow the type, not the colour. The colour changes only what
+things look like. On The Best Of The Blues Project, §5.1's eight marks by
+name, identical at all seven windows (release-year field 240 × 299 at
+1440 and up; the still's disc 227 to 310 across):
 
-**Two assertions in the spec are labelled for what they are.** The disc's
-fallback fill `oklch(0.19 0.008 60 / 0.55)` is a change-detector for a
-source constant: §5.3 fixes the value as ink and §5.1 says colour marks are
-"never at an opacity variant", and the 0.55 alpha exists only in
-`ConstructionStill.tsx` since 12 Sep. And "no base served" cannot tell
+| §5.1 mark | on the no-cover record | value | alpha |
+|---|---|---|---|
+| the release-year field | drawn | ink, `oklch(0.19 0.008 60)`, label and figure reversed to paper | 1 |
+| the bar right of the sleeve | drawn | ink | 1 |
+| the corner triangle in the identity block's lower-left | **not drawn: absent from the DOM** at every window, in the identity block, the upper air and the region alike | — | — |
+| the disc behind the rendered still | drawn | ink at 0.55, `oklch(0.19 0.008 60 / 0.55)` | 0.55 |
+| the quarter-circle in provenance | **not drawn: absent from the DOM** | — | — |
+| the quarter-circle in About, withdrawn by §35 and rehoused by §53 as the quarter-disc in Images | **not drawn: absent from the DOM** in Images, where §53 puts it; its absence from About is correct | — | — |
+| the journal's 2px edge | drawn | ink, 2px right border | 1 |
+| the construction's coloured faces, one mark | drawn | the base-step faces at ink 0.55; the ink-step faces at ink; the grey faces at the neutral silver, which carry no colour on any record | 0.55 and 1 |
+
+**Two different problems, filed apart.** The tint field is not among §5.1's
+eight -- it arrived at §49, long after §5.3 was settled -- so its absence
+on a no-cover record is unruled, and with Design. The three of the eight
+that do not draw -- the corner triangle, the provenance quarter-circle and
+the rehoused quarter-disc -- contradict a settled section: §5.3, "filled,
+not outlined, not omitted... The marks must not be dropped: omitting them
+would let a missing image change the composition's structure." In the
+build every flat and plane is gated on the record having a ladder
+(`{ladder !== null && <Flat …>}` in RecordPage8a and Section), so a null
+ladder drops them. That is a defect with a step: 62 in HANDOFF, held until
+Design's §5.3 ruling says what they are filled with.
+
+**The 0.55 is a spec conflict, not an uncited constant.** §5.5's three
+steps are tint at 34% toward paper, base, and shade at 26% toward ink --
+mix steps, not alphas -- and "every coloured pixel on the screen is one of
+those three values." Ink at 0.55 alpha is a fourth value. It is with
+Design, with the build's reason stated in its favour: a flat ink for the
+disc and the base faces collapses the disc into the faces and the faces
+into each other, and the still stops reading as solids on a ground. Not
+changed until Design rules; the sheet's assertion holds the constant where
+it is as a change-detector and says so. And "no base served" cannot tell
 §5.3's no-cover case from a null spine colour, because the spec's model
 (SPEC §7.8: the colour derives from the cover alone) makes them one fact
-and the only real record has both.
+and the only real record has both; the test says that too.
+
+**Why this went eighteen days unseen: the fixture's single spine colour.**
+The seeded seventeen all carry `#a25829` and none carries null, so the only
+§5.3 record in the collection was never rendered by any test, spec or
+capture from the day the construction shipped until the sheet ran against
+the real database. Fourth instance of the shape in the boundary rule below.

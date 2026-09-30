@@ -169,11 +169,14 @@ test('the contact sheet: seventeen records at seven windows, full page, with a m
       ladder names and resolve to ink, so the step attribute is the wrong
       channel and the fill is the right one.
 
-      CHANGE-DETECTOR, not a spec check: §5.3 fixes the value as ink and §5.1
-      says colour marks are drawn "never at an opacity variant"; the 0.55 alpha
-      on the non-ink steps exists only in ConstructionStill.tsx (fe75669, 12
-      Sep). This line holds that constant where it is and will fail when it
-      moves; whether it SHOULD be an alpha at all is Design's question.
+      CHANGE-DETECTOR, not a spec check: §5.3 fixes the value as ink, §5.1
+      says colour marks are drawn "never at an opacity variant", and §5.5
+      makes every coloured pixel one of three MIX steps, so ink at 0.55 alpha
+      is a fourth value the spec does not have. It exists only in
+      ConstructionStill.tsx (fe75669, 12 Sep), where a flat ink would collapse
+      the disc into the faces. This line holds that constant where it is and
+      fails when it moves; whether it should exist is with Design (NOTES, the
+      contact sheet entry).
     */
     expect(x.tint, `${x.viewport}: the disc at the source's ink fallback (change-detector)`).toBe('oklch(0.19 0.008 60 / 0.55)');
     /*
