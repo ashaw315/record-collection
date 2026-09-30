@@ -22,14 +22,14 @@ import pg from 'pg';
 
 export const CAPTURE_PATH = 'docs/captures/real-records.json';
 
-/** Rows in creation order; an About that is null or blank is null; entries by date, then creation. */
+/** Rows in creation order with each record's own artist; an About that is null or blank is null; entries by date, then creation. */
 export async function captureRealRecords(connectionString) {
   if (!connectionString) throw new Error('captureRealRecords: no connection string');
   const client = new pg.Client({ connectionString });
   await client.connect();
   try {
     const records = await client.query(
-      'SELECT id, title, snippet FROM records ORDER BY created_at, id',
+      'SELECT r.id, r.title, a.name AS artist, r.snippet FROM records r JOIN artists a ON a.id = r.artist_id ORDER BY r.created_at, r.id',
     );
     const entries = await client.query(
       'SELECT record_id, entry_date::text AS entry_date, note FROM journal_entries ORDER BY entry_date, created_at, id',
@@ -42,6 +42,7 @@ export async function captureRealRecords(connectionString) {
     return records.rows.map((r) => ({
       id: r.id,
       title: r.title,
+      artist: r.artist,
       about: r.snippet !== null && r.snippet.trim() !== '' ? r.snippet : null,
       entries: byRecord.get(r.id) ?? [],
     }));

@@ -3,7 +3,7 @@ import { sql } from 'drizzle-orm';
 import { getTestDb } from '../test/helpers/db';
 
 /** One captured record: the fixed id every spec addresses it by, its title, its real About and its journal entries. */
-export type SeventeenRow = { id: string; title: string; about: string | null; entries: Array<{ entryDate: string; note: string }> };
+export type SeventeenRow = { id: string; title: string; artist: string; about: string | null; entries: Array<{ entryDate: string; note: string }> };
 
 /** The seventeen real records, from the capture every spec reads. */
 export function readSeventeen(): SeventeenRow[] {
@@ -11,7 +11,7 @@ export function readSeventeen(): SeventeenRow[] {
 }
 
 /**
- * **Seed the seventeen ONCE per run, from global setup, under the artist MGMT.**
+ * **Seed the seventeen ONCE per run, from global setup, each under its own artist.**
  *
  * Before this, three specs seeded them by fixed id "if absent" and six specs
  * tracked MGMT for cleanup, whose afterEach deleted every MGMT record -- so
@@ -20,9 +20,10 @@ export function readSeventeen(): SeventeenRow[] {
  * findings that were all missing pages). A run-level fixture has no owner to
  * clean it up; `cleanup.ts` refuses to delete these ids and their artist.
  *
- * The shape is the superset the seeders used (real-records-paint's): label,
- * pressing, six genres, a cover, spine colour, purchase price, notes, the real
- * About as the snippet, two price rows and the journal entries. The API is used
+ * The real parts are the id, the title, the artist, the About and the journal
+ * entries, captured from the collection. The label, pressing, six genres,
+ * cover, spine colour, purchase price, notes and two price rows are one
+ * stand-in shape, the superset the seeders used. The API is used
  * where a spec would use it, over `fetch` with the login cookie, because global
  * setup has no page. Records and images are raw SQL rather than `seed.ts`:
  * that module imports the schema through the `@/` alias, which Playwright's
@@ -42,7 +43,16 @@ export async function seedSeventeen(opts: { base: string; password: string }): P
     return id;
   };
 
-  const artistId = await post('/api/artists', { name: 'MGMT' });
+  /*
+    Each record's own artist, found or created by name (29 Sep). All seventeen
+    sat under one stand-in, MGMT, which left §45's pair term inert: a
+    four-character artist never wraps. Two specs posting a name together get
+    one row -- the API returns existingId on the unique violation -- and
+    cleanup keeps an artist that still has records, so these are run-level
+    like the records they own.
+  */
+  const artistIds = new Map<string, string>();
+  for (const name of new Set(readSeventeen().map((r) => r.artist))) artistIds.set(name, await post('/api/artists', { name }));
   const labelId = await post('/api/labels', { name: 'Mom + Pop' });
   const pressingId = await post('/api/pressings', { catalogNumber: 'MP731', matrixRunout: '269346E1 1701690 MP731-A JN-H STERLING', yearPressed: 2024, countryPressed: 'UK, Europe & US', pressingPlant: 'GZ Media', colorVariant: 'Orange [Tangerine]' });
   const genreIds: string[] = [];
@@ -52,7 +62,7 @@ export async function seedSeventeen(opts: { base: string; password: string }): P
   for (const r of readSeventeen()) {
     const existing = await db.execute<{ id: string }>(sql`SELECT id FROM records WHERE id = ${r.id}::uuid`);
     if (existing.rows.length > 0) continue;
-    await db.execute(sql`INSERT INTO records (id, artist_id, title, label_id, pressing_id, release_year) VALUES (${r.id}::uuid, ${artistId}::uuid, ${r.title}, ${labelId}::uuid, ${pressingId}::uuid, 2024)`);
+    await db.execute(sql`INSERT INTO records (id, artist_id, title, label_id, pressing_id, release_year) VALUES (${r.id}::uuid, ${artistIds.get(r.artist)}::uuid, ${r.title}, ${labelId}::uuid, ${pressingId}::uuid, 2024)`);
     for (const genreId of genreIds) await db.execute(sql`INSERT INTO record_genres (record_id, genre_id) VALUES (${r.id}::uuid, ${genreId}::uuid)`);
     await db.execute(sql`INSERT INTO images (record_id, url, image_type) VALUES (${r.id}::uuid, ${ONE_PIXEL_PNG}, 'cover')`);
     const about = r.about !== null && r.about.trim() !== '' ? r.about.trim() : null;

@@ -2,12 +2,14 @@
   {
     "id": "d5c483aa-047c-475f-8439-2adc2a4e9b0a",
     "title": "The Best Of The Blues Project",
+    "artist": "The Blues Project",
     "about": null,
     "entries": []
   },
   {
     "id": "d7047c62-149e-42fa-8cda-fac3f90c47cc",
     "title": "Never Too Much",
+    "artist": "Luther Vandross",
     "about": null,
     "entries": [
       {
@@ -19,30 +21,35 @@
   {
     "id": "fadd5c0e-5146-4421-aebc-cd53eed2f8b1",
     "title": "Dire Straits",
+    "artist": "Dire Straits",
     "about": null,
     "entries": []
   },
   {
     "id": "158a3163-6a56-4673-8f88-27e7b2aec724",
     "title": "Grave New World",
+    "artist": "Discharge",
     "about": null,
     "entries": []
   },
   {
     "id": "bac64213-9673-4ae7-862f-fc5b17dc16d3",
     "title": "Psychic",
+    "artist": "Darkside (22)",
     "about": null,
     "entries": []
   },
   {
     "id": "48461309-e0e0-42a8-b903-f60642c923ca",
     "title": "Wired",
+    "artist": "Jeff Beck",
     "about": null,
     "entries": []
   },
   {
     "id": "2be8579e-2ee7-44fa-81e8-9713a6aaa714",
     "title": "Bitches Brew",
+    "artist": "Miles Davis",
     "about": "A double album from the turn of the Seventies, recorded across a handful of dense sessions with an unusually large cast — multiple keyboards, two bassists, layered percussion — and then cut and reassembled in the edit, which was as much a compositional act as the playing itself. The music is built on vamps and atmosphere rather than heads and solos, with electric texture pushed to the front. It's the record where Davis's turn toward rock and funk stopped being a suggestion, and much of the personnel scattered afterward into the bands that defined fusion for the next decade.",
     "entries": [
       {
@@ -54,60 +61,70 @@
   {
     "id": "c61c5919-8f50-4782-8e04-419fb3d2b148",
     "title": "On The Radio: Greatest Hits Vol. 1 & 2",
+    "artist": "Donna Summer",
     "about": null,
     "entries": []
   },
   {
     "id": "e73e1de1-3686-4a81-8544-ca2300e187bb",
     "title": "The Hurdy Gurdy Man",
+    "artist": "Donovan",
     "about": "Donovan's turn toward something darker and heavier — the title track pairs his gentle folk voice with a droning, fuzz-drenched arrangement that sits closer to the psychedelic edge of the late sixties than to the sunshine pop he'd been known for. The song grew out of the period Donovan spent in India studying meditation alongside the Beatles, and he has said he originally imagined it for another singer entirely; the swirling production came from his long working relationship with Mickie Most. It matters because it's the moment his songwriting and the era's studio experimentation met head-on, and the track has outlived its context — it keeps resurfacing in films and covers whenever someone needs a sound that's both serene and unsettling.",
     "entries": []
   },
   {
     "id": "1d4a4107-3153-4e98-b48a-d00a28266f94",
     "title": "Super Rich",
+    "artist": "Buddy Rich",
     "about": null,
     "entries": []
   },
   {
     "id": "b19cd530-f2d9-4936-b55d-3893b9f74420",
     "title": "Gaucho",
+    "artist": "Steely Dan",
     "about": "The last Steely Dan album before Becker and Fagen went their separate ways for the better part of two decades, arriving as the seventies turned into the eighties. It's the furthest they pushed their studio method — rotating casts of session players, endless takes, a surface so lacquered and cool that the seediness in the lyrics can slip right past you. Its making was famously troubled, and the fatigue and disillusion audible under \"Babylon Sisters\" and \"Third World Man\" are part of why it works as a closing statement rather than just another record.",
     "entries": []
   },
   {
     "id": "cdcf94cb-7c7f-45f5-ad04-584a1fb0b30a",
     "title": "Bridge Over Troubled Water",
+    "artist": "Simon & Garfunkel",
     "about": "The duo's fifth and final studio album, arriving as the sixties gave way to the seventies and as the partnership itself was coming apart — a split that colors the record whether or not you listen for it. The title song, carried by Art Garfunkel's vocal over Larry Knechtel's gospel-leaning piano, became the kind of secular hymn that outgrew its authors, while \"The Boxer,\" \"Cecilia\" and \"El Cóndor Pasa\" pull in folk, Latin and percussion-driven directions that hint at where Paul Simon's solo work would go. It swept the major Grammys and sold in numbers that made it a fixture in households that owned few other records, which is part of why copies turn up everywhere and clean ones rather less often.",
     "entries": []
   },
   {
     "id": "9a514311-ad88-4205-a37a-a5a4cdd231d2",
     "title": "The Soft Parade",
+    "artist": "The Doors",
     "about": null,
     "entries": []
   },
   {
     "id": "ce57a185-6182-4a9d-9af1-37bae019db10",
     "title": "Mind Games",
+    "artist": "John Lennon",
     "about": null,
     "entries": []
   },
   {
     "id": "7a333685-81d3-4a8a-8515-cf29f4d587a7",
     "title": "The Money Store",
+    "artist": "Death Grips",
     "about": null,
     "entries": []
   },
   {
     "id": "c8bc3a1d-e5ba-4794-a4b9-bcfe89d6fbed",
     "title": "Loss Of Life",
+    "artist": "MGMT",
     "about": "MGMT's fifth album, arriving in the mid-2020s after a long gap following Little Dark Age and marking their move away from a major label. It's their warmest, most acoustic-leaning record — folk textures and layered harmony threaded through the usual psychedelia — and it plays as a deliberately sequenced whole, bookended by the two parts of the title track. Worth hearing as the point where the band stopped chasing anything and just made a sad, pretty pop album on their own terms.",
     "entries": []
   },
   {
     "id": "de2ad140-86af-44e1-84a4-977324346cca",
     "title": "Believer",
+    "artist": "Smerz (2)",
     "about": null,
     "entries": []
   }

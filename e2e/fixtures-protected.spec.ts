@@ -119,3 +119,45 @@ test.describe.serial('a spec that tracks its own record by id', () => {
     trackRecord(untracked);
   });
 });
+
+/**
+ * **Each of the seventeen is seeded under its own artist, and a name is one
+ * row.** Until 29 Sep all seventeen sat under one stand-in, MGMT, which left
+ * §45's pair term inert (a four-character artist never wraps). The artists are
+ * found or created by name from the capture; two specs posting the same name
+ * together get one row, because the API returns `existingId` on the unique
+ * violation, and cleanup keeps an artist that still has records. This holds
+ * both, on a seventeen artist no spec posts for itself.
+ */
+test('the seventeen are seeded under their own artists, one row per name', async () => {
+  const db = getTestDb();
+  for (const r of seventeen) {
+    const got = await db.execute<{ name: string; rows: string }>(sql`SELECT a.name, (SELECT count(*)::text FROM artists x WHERE x.name = a.name) AS rows FROM records r JOIN artists a ON a.id = r.artist_id WHERE r.id = ${r.id}::uuid`);
+    expect(got.rows[0]?.name, `${r.title}: seeded under its own artist`).toBe(r.artist);
+    expect(Number(got.rows[0]?.rows), `${r.title}: one artist row named ${r.artist}`).toBe(1);
+  }
+});
+
+test.describe.serial('a spec that posts and tracks one of the seventeen’s artists', () => {
+  const steely = () => seventeen.find((r) => r.title === 'Gaucho');
+  let artistId = '';
+  test('gets the seeded row back, not a second one, and tracks it', async ({ page }) => {
+    const r = steely();
+    if (!r) throw new Error('no Gaucho');
+    await login(page);
+    const posted = await (await page.request.post('/api/artists', { data: { name: r.artist } })).json();
+    artistId = (posted.id ?? posted.error?.existingId) as string;
+    const count = await getTestDb().execute<{ n: string }>(sql`SELECT count(*)::text AS n FROM artists WHERE name = ${r.artist}`);
+    expect(Number(count.rows[0].n), 'still one row').toBe(1);
+    trackArtist(artistId);
+  });
+  test('…and its cleanup left the artist and the record', async () => {
+    const r = steely();
+    if (!r) throw new Error('no Gaucho');
+    const db = getTestDb();
+    const artist = await db.execute<{ n: string }>(sql`SELECT count(*)::text AS n FROM artists WHERE id = ${artistId}::uuid`);
+    expect(Number(artist.rows[0].n), `${r.artist} survives a spec that tracked it`).toBe(1);
+    const record = await db.execute<{ n: string }>(sql`SELECT count(*)::text AS n FROM records WHERE id = ${r.id}::uuid`);
+    expect(Number(record.rows[0].n), 'and so does Gaucho').toBe(1);
+  });
+});

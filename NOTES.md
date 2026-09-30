@@ -32030,3 +32030,53 @@ refused because the mechanism is live and this is the only test that
 exercises it firing; a mechanism with no firing test is the shape §44's
 "carries no ornament" had. That no current record fires it is already
 asserted by the §45 field test's run-present check on the seventeen.
+
+---
+
+## The seventeen's artists were one stand-in, and §45's pair term was inert (29 Sep)
+
+**Found by Adam on the tint-field captures**: Bridge Over Troubled Water and
+Gaucho both credited to MGMT. Neither `real-records.json` nor
+`real-records.ts` carried an artist; `seventeen.ts` seeded all seventeen
+under one artist posted as "MGMT", a shape inherited from real-records-paint's
+"one stand-in shape, the ids and the About texts are the real part". Sixteen
+of seventeen were wrong and Loss Of Life right by coincidence. `abouts.json`
+was correct throughout: the artist had never been captured, so the two
+sources did not diverge.
+
+**Load-bearing for §45.** The pair term refuses any pair at which the artist
+does not set on one line, down to 72/40. A four-character artist never binds
+it, so every ladder figure reported on this fixture was measured with half
+the rule inert: every pair at the seven windows, "the artist lowered the
+title on 0", the nine records changing pair across 1439 to 1440, the eight and
+four across the upper forks, the tint-field heights and the captures. Still
+valid, because the artist never enters them: supply and measure, the cell
+widths in the fork table, the title's per-step line counts and widest lines,
+"a word broke on 0", the padding finding, the floor and ceiling, step 54,
+step 55's halt, and the cause and fix of the 72/40 regression. The real
+artists run from 4 to 17 characters (Simon & Garfunkel, The Blues Project);
+at 80px about ten fit one line in 443, so the term will bind on roughly
+eleven of seventeen at the top pair.
+
+**Fixed.** The capture carries each record's artist (`artist` on every row,
+joined from `artists`); the seed finds or creates each name and seeds the
+record under it; the API returns `existingId` on the unique violation, so
+two specs posting one name together get one row, and cleanup keeps an
+artist that still has records, so the seventeen's artists are run-level like
+their records. `fixtures-protected.spec.ts` holds both: every record under
+its own artist with one row per name, and a spec that posts and tracks Steely
+Dan gets the seeded row back and leaves it and Gaucho standing (failed first
+with every record under MGMT). The fixture's sentence now names the real
+parts: id, title, artist, About and entries; label, pressing, genres, cover,
+colour, price and notes are the stand-in shape.
+
+**Not re-measured, by ruling (Adam, 29 Sep):** Design is ruling the identity
+cell's width this round and the measure follows the identity, so the pairs
+are measured once, at the ruled width. The thing to falsify then: on a 0.55em
+advance "Simon & Garfunkel" is about 505 at the 54 step, fitting 523 at 1679
+and failing 443 at 1680, so the artist term is measure-dependent and a
+record may drop two rungs across a fork, not one.
+
+**Accepted, not fixed:** the inset rule in the pressing block is 372 wide
+and the field 443, both landing at the same y (517 at 1440 × 900 on Gaucho);
+the pair of widths is ruled together with the field's bound.

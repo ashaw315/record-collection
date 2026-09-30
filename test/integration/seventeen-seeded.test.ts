@@ -15,8 +15,8 @@ beforeEach(async () => { await truncateAll(); });
 afterAll(async () => { await closeTestDb(); });
 
 const rows = [
-  { id: '11111111-1111-4111-8111-111111111111', title: 'First', about: null, entries: [] },
-  { id: '22222222-2222-4222-8222-222222222222', title: 'Second', about: null, entries: [] },
+  { id: '11111111-1111-4111-8111-111111111111', title: 'First', artist: 'Seeded', about: null, entries: [] },
+  { id: '22222222-2222-4222-8222-222222222222', title: 'Second', artist: 'Seeded', about: null, entries: [] },
 ];
 
 async function seedAll() {

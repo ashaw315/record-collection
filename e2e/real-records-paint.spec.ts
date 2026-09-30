@@ -9,7 +9,9 @@ import { readSeventeen } from './seventeen';
  * seventeen ids in `real-records.ts` are rendered with one rich content
  * shape and, where the collection has one, the record's real About
  * (`docs/captures/abouts.json`; four records). Everything else on these rows
- * is a stand-in -- the ids and the About texts are the real part.
+ * is a stand-in -- the ids, titles, artists, About texts and journal entries
+ * are the real part (the artist since 29 Sep; before that all seventeen sat
+ * under one stand-in, MGMT).
  *
  * Paint is enumerated by what it IS (a fill, no text), not by a list: the
  * first version enumerated `[data-ornament]` and could not see §5.1's arcs
