@@ -653,12 +653,12 @@ describe('§38: a row regroups over the sections that render (step 43)', () => {
   });
 });
 
-describe('§41: the upper track below the fork (step 46)', () => {
-  it('is half the page from 960 to 1439, one 480 track below, and the page itself below 480', () => {
-    expect(upperTrackAt(1439)).toBe(719.5);
-    expect(upperTrackAt(1200)).toBe(600);
-    expect(upperTrackAt(1000)).toBe(500);
-    expect(upperTrackAt(960)).toBe(480);
+describe('§48: the identity track from 960 to 1439 (step 56; §41\'s half-page withdrawn)', () => {
+  it('is 520 from 960 to 1439, one 480 track below, and the page itself below 480', () => {
+    expect(upperTrackAt(1439)).toBe(520);
+    expect(upperTrackAt(1200)).toBe(520);
+    expect(upperTrackAt(1000)).toBe(520);
+    expect(upperTrackAt(960)).toBe(520);
     expect(upperTrackAt(959), 'below 960 the cells stack in one 480 track (§28)').toBe(480);
     expect(upperTrackAt(480)).toBe(480);
     expect(upperTrackAt(390), 'one fluid column below 480').toBe(390);

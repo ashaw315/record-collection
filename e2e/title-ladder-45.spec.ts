@@ -91,25 +91,45 @@ test('§45: the title fits the identity cell on both axes on every record at eve
       if (wordBreaks) { breaks += 1; if (!atSmallest) bad.push(`${where}: a line sets ${m.titleWidest} wide in a ${m.trackW} measure at ${pair.title} (§45: refused whatever its height)`); }
       if (m.artistLines > 1 && !atSmallest) bad.push(`${where}: the artist sets on ${m.artistLines} lines at ${pair.artist} (§45: one line at every pair above 72/40)`);
       if (m.ladder.artistLowered) lowered += 1;
-      line.push(`${r.title.split(':')[0]} ${pair.title}/${pair.artist}${wordBreaks ? ' BREAKS' : ''}${m.artistLines > 1 ? ` artist×${m.artistLines}` : ''}${m.ladder.artistLowered ? ' lowered' : ''}`);
+      line.push(`${r.title.split(':')[0]} ${pair.title}/${pair.artist}${pair.title === SMALLEST.title ? ' FLOOR' : ''}${wordBreaks ? ' BREAKS' : ''}${m.artistLines > 1 ? ` artist×${m.artistLines}` : ''}${m.ladder.artistLowered ? ' lowered' : ''}`);
     }
     report.push(`${w} × ${h}: ${line.join(' · ')}`);
   }
-  const fork: string[] = [];
-  for (const w of [GRID_FORK - 1, GRID_FORK]) {
+  /*
+    §48 (step 56): the identity is 520 from 960 to 1439 with padding taking the
+    extra 40, so the measure is 443 at every width from 480 to 1440 and the pair
+    does not change across 959 → 960 or 1439 → 1440. "A record whose pair
+    changes across either is a build defect, not a decision." Asserted. The
+    upper forks, 1679 → 1680 and 1919 → 1920, are measured and reported only:
+    §47's pending paragraph is open on them and nothing above 1440 changes here.
+  */
+  const FORKS: Array<[number, number]> = [[959, 960], [GRID_FORK - 1, GRID_FORK], [1679, 1680], [1919, 1920]];
+  const ASSERTED = new Set([959, 960, GRID_FORK - 1, GRID_FORK]);
+  const pairAt = new Map<number, Map<string, { pair: string; cell: number; measure: number }>>();
+  for (const w of [...new Set(FORKS.flat())]) {
     await page.setViewportSize({ width: w, height: NO_SCROLL_HEIGHT });
-    const line: string[] = [];
+    const at = new Map<string, { pair: string; cell: number; measure: number }>();
     for (const r of rows) {
       await page.goto(`/records/${r.id}`);
       await page.locator('[data-title-step][data-ladder]').waitFor({ timeout: 20_000 });
       await page.evaluate(() => document.fonts.ready);
       await page.waitForTimeout(400);
       const m = (await page.evaluate(READ)) as Reading | null;
-      if (m !== null) line.push(`${r.title.split(':')[0]} cell ${m.cellW} measure ${m.trackW} ${m.ladder.pair.title}/${m.ladder.pair.artist}`);
+      if (m !== null) at.set(r.title, { pair: `${m.ladder.pair.title}/${m.ladder.pair.artist}`, cell: m.cellW, measure: m.trackW });
     }
-    fork.push(`${w}: ${line.join(' · ')}`);
+    pairAt.set(w, at);
   }
-  console.log(`  §45 LADDER on the seventeen (${readings} readings): artist lowered the title on ${lowered}; word breaks on ${breaks}\n  ${report.join('\n  ')}\n  §18 FORK:\n  ${fork.join('\n  ')}`);
+  const fork: string[] = [];
+  for (const [a, b] of FORKS) {
+    const A = pairAt.get(a); const B = pairAt.get(b);
+    if (!A || !B) continue;
+    const any = [...A.values()][0]; const anyB = [...B.values()][0];
+    const changed = rows.filter((r) => A.get(r.title)?.pair !== B.get(r.title)?.pair).map((r) => `${r.title.split(':')[0]} ${A.get(r.title)?.pair} → ${B.get(r.title)?.pair}`);
+    const atFloor = rows.filter((r) => A.get(r.title)?.pair === '72/40' && B.get(r.title)?.pair === '72/40').length;
+    fork.push(`${a} → ${b} (cell ${any?.cell} → ${anyB?.cell}, measure ${any?.measure} → ${anyB?.measure}): ${changed.length ? changed.join(', ') : 'no record changes pair'}; ${atFloor} at the 72/40 floor on both sides`);
+    if (ASSERTED.has(a) && ASSERTED.has(b)) for (const c of changed) bad.push(`§48: a pair changes across ${a} → ${b}: ${c}`);
+  }
+  console.log(`  §45 LADDER on the seventeen (${readings} readings): artist lowered the title on ${lowered}; word breaks on ${breaks}\n  ${report.join('\n  ')}\n  FORKS:\n  ${fork.join('\n  ')}`);
   expect(readings, 'the report has subjects').toBe(rows.length * WINDOWS.length);
   expect(bad, `§45 not met:\n  ${bad.join('\n  ')}`).toEqual([]);
 });

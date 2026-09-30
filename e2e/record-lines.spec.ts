@@ -55,6 +55,8 @@ type Edge = {
   width: number;
   height: number;
   parentWidth: number;
+  /** The width of the cell the element sits in: §3's insets are inset from the CELL's edges, its padding, not from their block. */
+  cellWidth: number;
   rowItem: boolean;
   tag: string;
   control: boolean;
@@ -83,6 +85,7 @@ async function edgesOf(page: Page): Promise<Edge[]> {
             colour: cs.getPropertyValue(`border-${side.toLowerCase()}-color`),
             x: r.x, y: r.y, width: r.width, height: r.height,
             parentWidth: pr.width,
+            cellWidth: (el.closest('[data-cell]') ?? parent ?? el).getBoundingClientRect().width,
             tag: el.tagName.toLowerCase(),
             control: ['input', 'select', 'textarea', 'button', 'a'].includes(el.tagName.toLowerCase()),
           });
@@ -162,13 +165,15 @@ test('the page states its own line set: two weights, one value, §3’s module a
     of a rule about the identity block.
   */
   const insets = light.filter(
-    (e) => e.side === 'Top' && e.width > 0 && e.width < e.parentWidth - 1 && !e.rowItem,
+    /* §48 (3/inset-372): the hairline under the identity block runs the measure, the full width of its block, and is inset from the CELL by the padding. Inset is judged against the cell. */
+    (e) => e.side === 'Top' && e.width > 0 && e.width < e.cellWidth - 1 && !e.rowItem,
   );
   const widths = insets.map((e) => Math.round(e.width)).sort((a, b) => b - a);
+  /* §48 (3/inset-372, 27/inset-stays-372): the hairline under the identity block runs the title's measure, 443 at a 480 cell, and shares its edges with the tint field. */
   expect(
     widths,
-    `§3's two inset hairlines: 372 under the identity block, 220 over Images — found ${widths.join(', ')}`,
-  ).toEqual([372, 220]);
+    `§3's two inset hairlines: the measure (443) under the identity block, 220 over Images — found ${widths.join(', ')}`,
+  ).toEqual([443, 220]);
 
   /* 3b. Everything else bleeds to ITS OWN container, never the viewport (§16). */
   const viewport = page.viewportSize()?.width ?? 0;

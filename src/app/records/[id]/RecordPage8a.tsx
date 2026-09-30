@@ -358,8 +358,20 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
             not the width scaling §41 withdrew. The identity track stays the
             ladder's 510 and the cell's extra height is slack below it.
           */
-          [data-band="identity"] { grid-template-columns: repeat(2, 50%) !important; grid-auto-rows: max(${BANDS.identity - 1}px, calc(${((BAND_AT_REFERENCE / REFERENCE_HEIGHT) * 100).toFixed(4)}vh - 1px)); height: max(${2 * BANDS.identity}px, calc(2 * ${((BAND_AT_REFERENCE / REFERENCE_HEIGHT) * 100).toFixed(4)}vh)) !important; }
+          [data-band="identity"] { grid-template-columns: 520px 1fr !important; grid-auto-rows: max(${BANDS.identity - 1}px, calc(${((BAND_AT_REFERENCE / REFERENCE_HEIGHT) * 100).toFixed(4)}vh - 1px)); height: max(${2 * BANDS.identity}px, calc(2 * ${((BAND_AT_REFERENCE / REFERENCE_HEIGHT) * 100).toFixed(4)}vh)) !important; }
           [data-band="identity"] > [data-cell] { grid-column: span 1 !important; }
+          /*
+            §48 (step 56): the identity is 520 -- the smallest round width at which
+            every record's construction leaves less than 480 of empty width in
+            the first row (The Soft Parade 475.6 at 1439) -- and the extra 40
+            goes to padding, 38 a side, so the measure stays 443 and the pair
+            does not change across 959 → 960 or 1439 → 1440. Vertical padding
+            stays 18, so the supply is unchanged. The cover row splits at 520
+            too, so the vertical lands in one place in both rows.
+          */
+          @media (min-width: 960px) {
+            [data-cell="identity-content"] { padding-left: 38px !important; padding-right: 38px !important; }
+          }
           /*
             Step 39 (§37): the air LEFT of the sleeve in the second row, by
             grid placement only -- the markup and the reading order keep the

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { CEILING, aspectOfScene, ceilingEnvelope, emptyWidthAt, sweepWidths } from './ceiling';
+import { CEILING, CEILING_ENVELOPE, GUARD_GEOMETRY, aspectOfScene, ceilingEnvelope, emptyWidthAt, sweepWidths } from './ceiling';
 import { HASH_ADVANCE_CAP, arrangementAt, construction } from './construction';
 import { NO_SCROLL_HEIGHT } from './band-geometry';
 
@@ -48,7 +48,8 @@ const rows = JSON.parse(readFileSync('docs/captures/real-records.json', 'utf8'))
 
 describe('§46: the ceiling across five thousand ids (step 54, measured before anything is built)', () => {
   const widths = sweepWidths(960, 1920);
-  const envelope = ceilingEnvelope({ widths, height: NO_SCROLL_HEIGHT, geometry: 'built' });
+  /* §48 (step 56): the sum is the construction alone and the guard is derived against the identity at 520. */
+  const envelope = ceilingEnvelope({ widths, height: NO_SCROLL_HEIGHT, geometry: GUARD_GEOMETRY });
   const next = prng(SEED);
   const ids = Array.from({ length: IDS }, () => uuidFrom(next));
 
@@ -64,7 +65,7 @@ describe('§46: the ceiling across five thousand ids (step 54, measured before a
       const aspect = aspectOfScene(arrangementAt(id, 0));
       let worst = 0; let at = 0;
       for (const w of widths) {
-        const e = emptyWidthAt({ aspect, width: w, height: NO_SCROLL_HEIGHT, geometry: 'built' });
+        const e = emptyWidthAt({ aspect, width: w, height: NO_SCROLL_HEIGHT, geometry: GUARD_GEOMETRY });
         if (e > worst) { worst = e; at = w; }
         if (e > CEILING) breaksAt.set(w, (breaksAt.get(w) ?? 0) + 1);
       }
@@ -84,7 +85,7 @@ describe('§46: the ceiling across five thousand ids (step 54, measured before a
     const byRange = (lo: number, hi: number) => [...breaksAt.entries()].filter(([w]) => w >= lo && w <= hi).reduce((a, [, n]) => a + n, 0);
     const worstBreak = rejected.reduce((a, b) => (b.worst > a.worst ? b : a), { worst: 0, at: 0, aspect: 0, id: '' });
     console.log(
-      `  §46 CEILING over ${IDS} ids at ${widths.length} widths, 900 tall:\n` +
+      `  §46 CEILING over ${IDS} ids at ${widths.length} widths, 900 tall, against ${GUARD_GEOMETRY} (the strip excluded, §48):\n` +
         `    rejected ${rejected.length} (${(rate * 100).toFixed(2)}%) -- arrangements leaving more than ${CEILING} of empty width at some width\n` +
         `    envelope: aspect ≥ ${envelope.minAspect.toFixed(4)}, binding at ${envelope.bindingWidths.join(', ')}\n` +
         `    where it breaks (id × width counts): 960–1439: ${byRange(960, 1439)}; 1440–1679: ${byRange(1440, 1679)}; 1680–1919: ${byRange(1680, 1919)}; 1920: ${byRange(1920, 1920)}\n` +
@@ -95,10 +96,12 @@ describe('§46: the ceiling across five thousand ids (step 54, measured before a
     expect(rejected.length + (IDS - rejected.length), 'every id was measured').toBe(IDS);
     expect(capReached, 'the cap is a guard, not a path: no id reaches it').toBe(0);
     /* With the guard, what is DRAWN is inside the envelope for every id, so the ceiling holds across the id space. */
+    expect(envelope.minAspect, 'the sweep and the guard derive the same envelope').toBeCloseTo(CEILING_ENVELOPE, 6);
+    expect(rate, '§46: under the 13.8% line, so the identity does not widen (§48)').toBeLessThan(0.138);
     for (const id of ids.slice(0, 500)) expect(aspectOfScene(construction(id)), `${id.slice(0, 8)} draws inside the envelope`).toBeGreaterThanOrEqual(envelope.minAspect);
     /* The collection stays inside: the widest of the seventeen was rendered at 449.6, under the ceiling. */
     for (const r of rows) {
-      const worst = Math.max(...widths.map((w) => emptyWidthAt({ aspect: aspectOfScene(construction(r.id)), width: w, height: NO_SCROLL_HEIGHT, geometry: 'built' })));
+      const worst = Math.max(...widths.map((w) => emptyWidthAt({ aspect: aspectOfScene(construction(r.id)), width: w, height: NO_SCROLL_HEIGHT, geometry: GUARD_GEOMETRY })));
       expect(worst, `${r.title} stays under the ceiling at every width`).toBeLessThanOrEqual(CEILING);
     }
   });

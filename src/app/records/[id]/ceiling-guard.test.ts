@@ -17,17 +17,21 @@ const rows = JSON.parse(readFileSync('docs/captures/real-records.json', 'utf8'))
 const REJECTED = ['03e53036-b4df-4bf4-9aed-2e57a9b6a5f6', '9742c43b-8bca-4241-9cbe-8af59189680b', '2eea64c0-cdbc-440f-bd53-df145b38cc58'];
 
 describe('§46: the ceiling guard in the hash loop', () => {
-  it('states the envelope as a constant of the page: 0.7329 at 29 Sep\'s geometry', () => {
-    expect(CEILING_ENVELOPE).toBeCloseTo(0.7329, 3);
+  it('states the envelope as a constant of the page: 0.7851 against the identity at 520 (§48, step 56)', () => {
+    /* 0.7329 with the strip counted (step 54); 0.7851 with the strip out and the construction cell 919 at 1439. */
+    expect(CEILING_ENVELOPE).toBeCloseTo(0.7851, 3);
   });
 
   it('advances past a first arrangement below the envelope and draws the next (the ceiling guard)', () => {
+    /* Against 520 the second fixture's first two re-hashes (0.7581, 0.7810) are still under 0.7851, so it advances four times; the others once. */
+    const EXPECTED_ADVANCES: Record<string, number> = { '03e53036-b4df-4bf4-9aed-2e57a9b6a5f6': 1, '9742c43b-8bca-4241-9cbe-8af59189680b': 4, '2eea64c0-cdbc-440f-bd53-df145b38cc58': 1 };
     for (const id of REJECTED) {
       expect(aspectOfScene(arrangementAt(id, 0)), `${id.slice(0, 8)}: the fixture is rejected at 0`).toBeLessThan(CEILING_ENVELOPE);
       const scene = construction(id);
-      expect(scene.advances, `${id.slice(0, 8)}: advanced once`).toBe(1);
+      expect(scene.advances, `${id.slice(0, 8)}: advanced past every arrangement below the envelope`).toBe(EXPECTED_ADVANCES[id]);
+      for (let n = 0; n < scene.advances; n += 1) expect(aspectOfScene(arrangementAt(id, n)), `${id.slice(0, 8)}: arrangement ${n} was rightly refused`).toBeLessThan(CEILING_ENVELOPE);
       expect(aspectOfScene(scene), `${id.slice(0, 8)}: draws inside the envelope`).toBeGreaterThanOrEqual(CEILING_ENVELOPE);
-      expect(JSON.stringify(scene.forms), `${id.slice(0, 8)}: draws the advanced arrangement`).toBe(JSON.stringify(arrangementAt(id, 1).forms));
+      expect(JSON.stringify(scene.forms), `${id.slice(0, 8)}: draws the advanced arrangement`).toBe(JSON.stringify(arrangementAt(id, scene.advances).forms));
     }
   });
 
@@ -47,8 +51,7 @@ describe('§46: the ceiling guard in the hash loop', () => {
     expect(JSON.stringify(scene.forms), 'the widest aspect among those tried, which is the least empty width').toBe(JSON.stringify(best.forms));
   });
 
-  it('re-derives the cap from the measured deepest advance with a stated margin', () => {
-    /* Measured over 5,000 seeded ids: deepest 2, mean 1.06 among the 5.52% rejected. Four times the deepest; at 5.52% per attempt the cap is reached with probability 0.0552^8 ≈ 9e-11. */
+  it('keeps the cap at 8: §48 withdrew its re-derivation, and the measured deepest advance against 520 is 6 with none reaching it', () => {
     expect(HASH_ADVANCE_CAP).toBe(8);
   });
 });

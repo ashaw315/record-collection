@@ -308,7 +308,8 @@ test('below the fork, at every width: the upper cells wrap at their size, the co
       construction take the row. §28's stacking left every cell at 480 with
       paper to its right (28/cells-never-reshape, 28/never-reshape-above-480).
     */
-    const widthOf = (n: string) => (w >= 960 ? w / 2 : w >= 480 ? (n === 'identity' ? 480 : w) : w);
+    /* §48 (step 56): from 960 to 1439 the identity is 520 and the construction takes the rest; §44 below. */
+    const widthOf = (n: string) => (w >= 960 ? (n === 'identity' ? 520 : w - 520) : w >= 480 ? (n === 'identity' ? 480 : w) : w);
     for (const u of m.upper) {
       if (u.display === 'none' || u.display === 'absent') j.push(`upper cell ${u.n} is ${u.display} (§28: the upper cells wrap, they do not hide)`);
       else if (w >= 480 && Math.abs(u.w - widthOf(u.n)) > 1) j.push(`upper cell ${u.n} is ${u.w} wide, not ${widthOf(u.n)} (§41 from 960; §44 from 480)`);
@@ -330,8 +331,9 @@ test('below the fork, at every width: the upper cells wrap at their size, the co
       const identity = m.upper.find((u) => u.n === 'identity'); const still = m.upper.find((u) => u.n === 'still');
       if (identity !== undefined && still !== undefined && Math.abs(w - identity.w - still.w) > 1) j.push(`${w - identity.w - still.w}px of the first row is unassigned (§41: none)`);
       /* §30's ceiling holds on both sides of the fork: empty width in the upper band is always narrower than one upper cell. */
-      const empty = (identity !== undefined && still !== undefined ? w - identity.w - still.w : 0) + m.constructionEmpty + m.coverBeside;
-      if (empty >= 480) j.push(`empty width ${empty} (unassigned + construction ${m.constructionEmpty} + beside the square ${m.coverBeside}) is not under one upper cell`);
+      /* §48: the strip beside the cover's square carries the bar and the block, so it is not in §30's sum; only width that carries nothing counts. */
+      const empty = (identity !== undefined && still !== undefined ? w - identity.w - still.w : 0) + m.constructionEmpty;
+      if (empty >= 480) j.push(`empty width ${empty} (unassigned + construction ${m.constructionEmpty}) is not under one upper cell`);
     }
     if (m.coverW < 1) j.push('no cover drawn');
     /*
@@ -346,7 +348,7 @@ test('below the fork, at every width: the upper cells wrap at their size, the co
       if (m.upperAir === null || m.upperAir.display === 'none') j.push('the upper air is missing at 8 columns (§28)');
       else {
         const sleeve = m.upper.find((u) => u.n === 'sleeve');
-        if (Math.abs(m.upperAir.w - w / 2) > 1) j.push(`the upper air is ${m.upperAir.w} wide, not half the page (§41)`);
+        if (Math.abs(m.upperAir.w - 520) > 1) j.push(`the upper air is ${m.upperAir.w} wide, not 520 (§48: the cover row splits at 520 too)`);
         if (sleeve !== undefined && Math.abs(w - m.upperAir.w - sleeve.w) > 1) j.push(`${w - m.upperAir.w - sleeve.w}px of the second row is unassigned (§41: none)`);
         /* Step 39 (§37): the air LEFT of the sleeve in the second row, by grid order only -- markup and reading order stay -- so the tint triangle bleeds off the page's left edge, a third or more outside (§21). */
         if (sleeve !== undefined && (Math.abs(m.upperAir.y - sleeve.y) > 1 || m.upperAir.x > 1 || sleeve.x < m.upperAir.x + m.upperAir.w - 1)) j.push(`the upper air is not left of the sleeve on the second row (air ${m.upperAir.x},${m.upperAir.y}; sleeve ${sleeve.x},${sleeve.y})`);

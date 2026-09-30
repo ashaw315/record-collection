@@ -223,7 +223,8 @@ export function IdentityCell({
       )}
       <div data-block="pressing" className="w-full">
         <div
-          className="mb-[14px] w-[372px] max-w-full"
+          /* §48 (3/inset-372): the hairline runs the title's measure and shares its edges with the tint field; 372 was a figure written at one size. */
+          className="mb-[14px] w-full"
           style={{ borderTop: `1px solid ${INSET_RULE}` }}
         />
         <div className={LABEL}>Pressing</div>

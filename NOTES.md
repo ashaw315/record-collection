@@ -32080,3 +32080,105 @@ record may drop two rungs across a fork, not one.
 **Accepted, not fixed:** the inset rule in the pressing block is 372 wide
 and the field 443, both landing at the same y (517 at 1440 × 900 on Gaucho);
 the pair of widths is ruled together with the field's bound.
+
+---
+
+## Step 56 built: §48 -- the ceiling counts what carries nothing, and the identity at 520 (30 Sep)
+
+**The drop carries one defect, recorded rather than fixed:**
+`27/inset-stays-372` names §27, but the sentence it quotes ("the inset stays,
+and its width is the measure, not 372") sits in §16 of the build target,
+spliced into "the 372px horizontal stays inset at 372". `check-index` fails
+assertions 6, 7 and 8a on that one entry, and `index-assertions.test.ts`
+with it, until Design moves the sentence or renames the entry `16/…`. The
+id is Design's, so Code did not change it. §4.2 carries no 372; the only
+other 372 in the build target is §23's cost note, so no eighth entry.
+
+**The strip leaves the sum.** `ceiling.ts` counts the construction's own
+empty width alone; the strip beside the cover's square carries the bar and
+the block edge to edge (nine samples, none paper). Against the half-page
+geometry the envelope falls from 0.7329 to 0.3845 and §46's guard rejects
+none of 5,000 seeded ids. Against the identity at 520, which §48 rules, it is
+**0.7851, rejecting 11.64%** of first arrangements -- under §46's 13.8%, so
+the identity does not widen (it would take 540 to reach 6.68%, 560 to 3.44%).
+The guard is derived against 520 (`GUARD_GEOMETRY`); deepest advance 6, the
+cap of 8 reached by none; §48 withdrew the cap's re-derivation.
+
+**Built.** From 960 to 1439 the identity track is 520 and the construction
+takes the rest; the cover row splits at 520 too. The identity content's
+horizontal padding is 38 a side in that range, scoped to `min-width: 960px`
+-- the first version leaked 38 into §44's 480 cell and read 403 of measure
+at 880, caught by `identity-measure`. Vertical padding stays 18. The inset
+hairline under the identity block runs the measure, and `record-lines` now
+judges an inset against the cell rather than the block. `upperTrackAt`
+states 520. Tests replaced: §41's half page (component, region-rows, the
+sweep), the 372 inset, and the sweep's and the measurement spec's strip term.
+
+**§48's equal-pairs claim holds.** Across 959 → 960 and 1439 → 1440 no record
+changes pair (cell 479 → 519 → 479, measure 443 throughout); asserted in
+`title-ladder-45`, which failed on eight records at 1439 → 1440 before the
+build. Four sit at the 72/40 floor on both sides of each: Blues Project, On
+The Radio, The Hurdy Gurdy Man, Bridge.
+
+**The pairs, record × window, with the real artists** (FLOOR = 72/40):
+
+| record | 393×844 | 768 | 1000 | 1435 | 1440×900 | 1440×1200 | 1480 |
+|---|---|---|---|---|---|---|---|
+| Blues Project | FLOOR | FLOOR | FLOOR | FLOOR | FLOOR | 96/54 | FLOOR |
+| Never Too Much | FLOOR | 96/54 | 96/54 | 96/54 | 96/54 | 96/54 lowered | 96/54 |
+| Dire Straits | FLOOR | 144/80 | 144/80 | 144/80 | 144/80 | 144/80 | 144/80 |
+| Grave New World | FLOOR | 120/66 | 120/66 | 120/66 | 120/66 | 144/80 | 120/66 |
+| Psychic | FLOOR | 120/66 | 120/66 | 120/66 | 120/66 | 120/66 | 120/66 |
+| Wired | FLOOR | 144/80 | 144/80 | 144/80 | 144/80 | 144/80 | 144/80 |
+| Bitches Brew | FLOOR | 120/66 | 120/66 | 120/66 | 120/66 | 120/66 | 120/66 |
+| On The Radio | FLOOR | FLOOR | FLOOR | FLOOR | FLOOR | 96/54 | FLOOR |
+| Hurdy Gurdy Man | FLOOR | FLOOR | FLOOR | FLOOR | FLOOR | 120/66 | 96/54 |
+| Super Rich | FLOOR | 144/80 | 144/80 | 144/80 | 144/80 | 144/80 | 144/80 |
+| Gaucho | FLOOR | 120/66 | 120/66 | 120/66 | 120/66 | 120/66 | 120/66 |
+| Bridge | FLOOR | FLOOR | FLOOR | FLOOR | FLOOR | FLOOR lowered | FLOOR |
+| Soft Parade | FLOOR | 120/66 | 120/66 | 120/66 | 120/66 | 120/66 | 120/66 |
+| Mind Games | FLOOR | 120/66 | 120/66 | 120/66 | 120/66 | 120/66 | 120/66 |
+| Money Store | FLOOR | 120/66 | 120/66 | 120/66 | 120/66 | 120/66 | 120/66 |
+| Loss Of Life | FLOOR | 144/80 | 144/80 | 144/80 | 144/80 | 144/80 | 144/80 |
+| Believer | FLOOR | 120/66 | 120/66 | 120/66 | 120/66 | 120/66 | 120/66 |
+
+The artist lowered the title on 2 of 119 readings, both at 1440 × 1200
+(Never Too Much, Luther Vandross; Bridge, Simon & Garfunkel). A word broke
+on none. With MGMT the same run read 0 lowered and every record one rung
+higher where the artist now binds.
+
+**The upper forks, measured, nothing changed (§47's pending paragraph).**
+1679 → 1680: cell 558.7 → 479, measure 523 → 443; nine records change pair,
+every one by a single rung: Blues Project 96 → 72, Never Too Much 120 → 96,
+Psychic 144 → 120, Bitches Brew 144 → 120, Hurdy Gurdy Man 96 → 72, Gaucho
+144 → 120, Bridge 96 → 72, Mind Games 144 → 120, Believer 144 → 120.
+1919 → 1920: cell 547.3 → 479, measure 511 → 443; four: Blues Project,
+Bitches Brew, Hurdy Gurdy Man, Mind Games, each one rung.
+
+**The two-rung prediction is falsified, and the estimate's premise holds.**
+"Simon & Garfunkel" does fit at 54 in 523 and fail in 443, so the artist
+term is measure-dependent as predicted: Bridge is 96/54 at 1679 and 72/40 at
+1680. But that is one rung, because the title term had already capped Bridge
+at 96 in 523 (three lines at 120 exceed the supply), so the artist's failure
+at 443 had only one rung to take. A two-rung drop needs a record whose title
+allows 144 or 120 at 523 while its artist alone binds it two steps down at
+443; none of the seventeen has that shape. Every drop at both upper forks is
+one rung.
+
+**The floor at the four windows, rendered, with the identity at 520**: 960 ×
+900 worst 1.213% (Wired), 960 × 1080 worst 1.010% (Wired), 1439 × 900 worst
+1.003% (Believer), 1439 × 1080 worst 1.244% (Believer); none under 0.5%, so
+the step does not stop. The construction's cell is narrower at 960 (440
+against 480), and Wired is width-bound there.
+
+**The column cap, measured and not moved (nothing above 1440 changes).**
+Without the strip, at 900 tall: sixteen columns worst 275.6; **eighteen
+(2160, cell 840) worst 395.6, every record under 480**; **twenty (2400,
+cell 960) 515.6, five records over** (Soft Parade, Blues Project, Dire
+Straits, On The Radio, Believer). Adam's arithmetic held to the pixel once
+the still's 1px hairline was counted: 396.6 predicted, 395.6 measured. The
+cap lands at eighteen columns, 2160 wide; §48 says it moves there. Not
+built here.
+
+**Tint-field heights with the real artists**: 1 to 230 at 1440 × 900, 71 to
+409 at 1440 × 1200.

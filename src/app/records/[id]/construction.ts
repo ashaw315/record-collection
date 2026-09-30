@@ -64,15 +64,14 @@ export const SIZE_BAND = 6;
 
 /**
  * **§46's cap: the hash advances at most this many times before the
- * fallback draws.** Re-derived at step 54 from the measurement, with a
- * stated margin: over 5,000 seeded ids the ceiling guard rejected 5.52% of
- * first arrangements, the deepest advance was 2 and the mean 1.06; §22's
- * guard rejected none. Four times the measured deepest. At 5.52% per
- * attempt the cap is reached with probability 0.0552⁸ ≈ 9 × 10⁻¹¹, so it is
- * a guard, not a path: the fallback below it is built because §46 rules it,
- * and because an unreachable branch that throws is worse than one that
- * renders. (§31's 32 was derived the same way from a 14.1% rate and a
- * deepest of 5.)
+ * fallback draws.** Set at step 54 from the measurement (deepest 2, times
+ * four); §48 withdrew the re-derivation (46/cap-rederived): a guard against a
+ * case that has not occurred needs no derivation. The measured facts against
+ * the envelope §48 rules (0.7851, the identity at 520): 11.64% of 5,000 seeded
+ * first arrangements rejected, deepest advance 6, cap reached by none;
+ * 0.1164⁸ ≈ 3 × 10⁻⁸ per id. The fallback below it is built because §46
+ * rules it, and because an unreachable branch that throws is worse than one
+ * that renders.
  */
 export const HASH_ADVANCE_CAP = 8;
 

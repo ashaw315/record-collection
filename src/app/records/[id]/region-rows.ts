@@ -531,7 +531,8 @@ export function pageWidthAt(viewport: number): number {
  */
 export function upperTrackAt(viewport: number): number {
   if (viewport >= 1440) return (pageWidthAt(viewport) / columnsFor(viewport)) * 4;
-  if (viewport >= 960) return viewport / 2;
+  /* §48 (step 56): 520 from 960 to 1439, the construction taking the rest of the row; §41's half page is withdrawn (41/identity-half-page). */
+  if (viewport >= 960) return 520;
   if (viewport >= 480) return 480;
   return viewport;
 }

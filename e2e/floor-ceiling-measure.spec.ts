@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { BANDS, GRID_COLUMNS, IDENTITY_SPANS, NO_SCROLL_HEIGHT, STILL_MARGIN } from '../src/app/records/[id]/band-geometry';
+import { BANDS, GRID_COLUMNS, GRID_FORK, IDENTITY_SPANS, NO_SCROLL_HEIGHT, STILL_MARGIN } from '../src/app/records/[id]/band-geometry';
 import { construction } from '../src/app/records/[id]/construction';
 import { ownFitViewBox } from '../src/app/records/[id]/own-fit';
 import { readSeventeen } from './seventeen';
@@ -53,6 +53,11 @@ const REFERENCES: Ref[] = [
   { w: 1920, h: 1200, floor: false, ceiling: false },
   { w: 1680, h: NO_SCROLL_HEIGHT, floor: false, ceiling: false },
   { w: 1920, h: NO_SCROLL_HEIGHT, floor: false, ceiling: false },
+  /* §48 (step 56): the floor per record at 960 and 1439, at 900 and 1080, with the identity at 520 -- the construction's cell is narrower there, and the step stops if any record falls under 0.5%. */
+  { w: 960, h: NO_SCROLL_HEIGHT, floor: true, ceiling: true },
+  { w: 960, h: 1080, floor: true, ceiling: true },
+  { w: GRID_FORK - 1, h: NO_SCROLL_HEIGHT, floor: true, ceiling: true },
+  { w: GRID_FORK - 1, h: 1080, floor: true, ceiling: true },
 ];
 
 type Reading = { floorPct: number; empty: number | null; unassigned: number | null; constructionEmpty: number | null; coverBeside: number | null; bound: 'width' | 'height' };
@@ -93,7 +98,8 @@ const MEASURE = (RENDERED_AREA: string) => {
   const cover = document.querySelector<HTMLElement>('[data-mark="coverFrame"], [data-cover]');
   const coverBeside = cover === null ? 0 : sleeve.getBoundingClientRect().width - cover.getBoundingClientRect().width;
   const r = (n: number) => Math.round(n * 10) / 10;
-  return { floorPct, empty: r(unassigned + constructionEmpty + coverBeside), unassigned: r(unassigned), constructionEmpty: r(constructionEmpty), coverBeside: r(coverBeside), bound };
+  /* §48: the strip beside the square carries the bar and the block; it is reported but not in the sum. */
+  return { floorPct, empty: r(unassigned + constructionEmpty), unassigned: r(unassigned), constructionEmpty: r(constructionEmpty), coverBeside: r(coverBeside), bound };
 };
 
 /** The geometry's own figure at 1440 × 900: `colour-eligibility.test.ts`'s baseFraction, per record. */

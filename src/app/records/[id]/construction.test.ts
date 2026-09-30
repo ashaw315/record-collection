@@ -13,8 +13,6 @@ import {
 } from './construction';
 import { REAL_RECORD_IDS } from './real-records';
 import { CEILING_ENVELOPE, aspectOfScene } from './ceiling';
-/* The first arrangement the hash gives an id, before any advance: what the guard judges. */
-const formsOnly = (id: string) => constructionModule.arrangementAt(id, 0).forms;
 
 /**
  * The isometric construction (Isometric Probe §1, §4, §5).
@@ -96,7 +94,9 @@ describe('§31 is withdrawn in whole, and its mechanism is gone (§33, step 29g)
     const sampled = Array.from({ length: 200 }, (_, i) => `sample-${i}`);
     for (const id of sampled) {
       const scene = construction(id);
-      const firstLegal = aspectOfScene({ forms: formsOnly(id), disc: scene.disc }) >= CEILING_ENVELOPE;
+      /* Both guards: the ceiling's envelope and §22's carrier. */
+      const first = constructionModule.arrangementAt(id, 0);
+      const firstLegal = aspectOfScene(first) >= CEILING_ENVELOPE && !first.quiet;
       if (firstLegal) expect(scene.advances, `${id}: inside the envelope, nothing to advance past`).toBe(0);
       expect(aspectOfScene(scene), `${id}: what is drawn is inside the envelope`).toBeGreaterThanOrEqual(CEILING_ENVELOPE);
       expect(scene.scaledToFit, `${id}: nothing to scale to fit`).toBe(false);

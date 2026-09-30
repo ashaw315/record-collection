@@ -24,6 +24,14 @@ describe('upperRowAt: the first row\'s cells as the page draws them', () => {
   it('gives the construction the rest beside a 480 identity under §47', () => {
     expect(upperRowAt({ width: 1000, height: 900, geometry: 'identity-480' })).toMatchObject({ stillW: 520, sleeveW: 520 });
   });
+  it('gives the construction the rest beside a 520 identity under §48, the cover row split at 520 too', () => {
+    expect(upperRowAt({ width: 1000, height: 900, geometry: 'identity-520' })).toMatchObject({ stillW: 480, sleeveW: 480 });
+    expect(upperRowAt({ width: 1439, height: 900, geometry: 'identity-520' })).toMatchObject({ stillW: 919, sleeveW: 919 });
+  });
+  it('continues §30\'s derivation past sixteen columns when asked: 4/7/7 at eighteen, 4/8/8 at twenty', () => {
+    expect(upperRowAt({ width: 2160, height: 900, geometry: 'built', columns: 18 })).toMatchObject({ stillW: 840, sleeveW: 840 });
+    expect(upperRowAt({ width: 2400, height: 900, geometry: 'built', columns: 20 })).toMatchObject({ stillW: 960, sleeveW: 960 });
+  });
   it('takes the columns above 1440: 4/4/4 at 1440, 4/5/5 at 1680, 4/6/6 at 1920 (§30, §39)', () => {
     expect(upperRowAt({ width: 1440, height: 900, geometry: 'built' })).toMatchObject({ stillW: 480, sleeveW: 480 });
     expect(upperRowAt({ width: 1680, height: 900, geometry: 'built' })).toMatchObject({ stillW: 600, sleeveW: 600 });
@@ -35,17 +43,18 @@ describe('upperRowAt: the first row\'s cells as the page draws them', () => {
   });
 });
 
-describe('emptyWidthAt: the construction\'s own empty width plus the width beside the square', () => {
+describe('emptyWidthAt: the construction\'s own empty width -- the strip beside the square is marked, not empty (§48)', () => {
   const soft = aspectOf(idOf('The Soft Parade'));
-  it('reads 449.6 for The Soft Parade at 1439 × 900, as rendered', () => {
-    expect(emptyWidthAt({ aspect: soft, width: 1439, height: 900, geometry: 'built' })).toBeCloseTo(449.6, 0);
+  /* Rendered 29 Sep: 449.6 at 1439 × 900 WITH the 173.5 strip; the strip carries the bar and the block edge to edge, so §30's sum is the construction alone: 276.1. */
+  it('reads 276.1 for The Soft Parade at 1439 × 900: the rendered 449.6 less the 173.5 strip §48 excludes', () => {
+    expect(emptyWidthAt({ aspect: soft, width: 1439, height: 900, geometry: 'built' })).toBeCloseTo(276.1, 0);
   });
   it('reads 35.6 at 1440 × 900, where the cover cell is its own square and only the construction is slack', () => {
     expect(emptyWidthAt({ aspect: soft, width: 1440, height: 900, geometry: 'built' })).toBeCloseTo(35.6, 0);
   });
-  it('reads 449.6 at 1920 × 900 and 253.3 at 1920 × 1080: a taller band shrinks both terms', () => {
-    expect(emptyWidthAt({ aspect: soft, width: 1920, height: 900, geometry: 'built' })).toBeCloseTo(449.6, 0);
-    expect(emptyWidthAt({ aspect: soft, width: 1920, height: 1080, geometry: 'built' })).toBeCloseTo(253.3, 0);
+  it('reads 275.6 at 1920 × 900 and 188.7 at 1920 × 1080: the rendered figures less their strips (174 and 64.6)', () => {
+    expect(emptyWidthAt({ aspect: soft, width: 1920, height: 900, geometry: 'built' })).toBeCloseTo(275.6, 0);
+    expect(emptyWidthAt({ aspect: soft, width: 1920, height: 1080, geometry: 'built' })).toBeCloseTo(188.7, 0);
   });
   it('is zero for the construction when width binds (a wide drawing in a narrow cell)', () => {
     expect(emptyWidthAt({ aspect: 3, width: 960, height: 900, geometry: 'built' })).toBe(0);
@@ -54,11 +63,15 @@ describe('emptyWidthAt: the construction\'s own empty width plus the width besid
 
 describe('ceilingEnvelope: the least aspect that keeps every width under one upper cell', () => {
   const widths = [960, 1000, 1200, 1439, 1440, 1680, 1919, 1920];
-  it('binds where the row leaves the most width: 1439 and 1920 at 900 tall', () => {
+  it('binds where the construction cell is widest, 1439 at 900 tall, at aspect 0.3845 without the strip', () => {
     const e = ceilingEnvelope({ widths, height: 900, geometry: 'built' });
-    expect(e.minAspect).toBeGreaterThan(0.7);
-    expect(e.minAspect).toBeLessThan(0.76);
-    expect(e.bindingWidths).toEqual(expect.arrayContaining([1439, 1920]));
+    expect(e.minAspect).toBeCloseTo(0.3845, 3);
+    expect(e.bindingWidths).toEqual([1439]);
+  });
+  it('against the 520 identity the construction cell is 919 at 1439, so the envelope is 0.7851 (§48, step 56)', () => {
+    const e = ceilingEnvelope({ widths, height: 900, geometry: 'identity-520' });
+    expect(e.minAspect).toBeCloseTo(0.7851, 3);
+    expect(e.bindingWidths).toEqual([1439]);
   });
   it('admits every one of the collection\'s seventeen as built', () => {
     const e = ceilingEnvelope({ widths, height: 900, geometry: 'built' });
@@ -81,12 +94,17 @@ describe('ceilingEnvelope: the least aspect that keeps every width under one upp
  * figure the halt rests on, and fails the day the geometry or the
  * arrangements make it untrue.
  */
-describe('§47\'s geometry against §30\'s ceiling (step 55.1, the halt)', () => {
-  it('leaves more than one upper cell of empty width on every one of the seventeen at 1439 × 900', () => {
-    const over = rows.map((r) => ({ title: r.title, empty: emptyWidthAt({ aspect: aspectOf(r.id), width: 1439, height: 900, geometry: 'identity-480' }) }));
-    for (const o of over) expect(o.empty, `${o.title}: over 480 under §47`).toBeGreaterThan(480);
-    expect(Math.min(...over.map((o) => o.empty)), 'the least of them (Wired)').toBeGreaterThan(550);
-    expect(Math.max(...over.map((o) => o.empty)), 'the most (The Soft Parade)').toBeGreaterThan(925);
+describe('§47\'s 480 against §30\'s ceiling without the strip (step 55.1 re-read under §48), and §48\'s 520', () => {
+  /* The halt counted the strip: 17 of 17 over, 553 to 929. Without it, five records exceed at 480, by at most 35.6 on The Soft Parade (§48), and none at 520. */
+  it('leaves more than one upper cell of empty width on five of the seventeen at 1439 × 900 with the identity at 480', () => {
+    const over = rows.map((r) => ({ title: r.title, empty: emptyWidthAt({ aspect: aspectOf(r.id), width: 1439, height: 900, geometry: 'identity-480' }) })).filter((o) => o.empty > 480);
+    expect(over.map((o) => o.title).sort()).toEqual(['Believer', 'Dire Straits', 'On The Radio: Greatest Hits Vol. 1 & 2', 'The Best Of The Blues Project', 'The Soft Parade']);
+    expect(Math.max(...over.map((o) => o.empty)) - 480, 'by at most 35.6').toBeCloseTo(35.6, 0);
+  });
+  it('leaves every record under the ceiling at 520: The Soft Parade at 475.6 (§48)', () => {
+    const at520 = rows.map((r) => emptyWidthAt({ aspect: aspectOf(r.id), width: 1439, height: 900, geometry: 'identity-520' }));
+    expect(Math.max(...at520)).toBeCloseTo(475.6, 0);
+    for (const e of at520) expect(e).toBeLessThanOrEqual(480);
   });
   it('where the built geometry keeps the same records under 480 at the same width', () => {
     for (const r of rows) expect(emptyWidthAt({ aspect: aspectOf(r.id), width: 1439, height: 900, geometry: 'built' }), r.title).toBeLessThanOrEqual(480);

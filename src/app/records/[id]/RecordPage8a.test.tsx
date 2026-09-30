@@ -137,13 +137,15 @@ function lastCell(html: string): string {
   return html.slice(start, html.indexOf('data-cell=', start + 1) === -1 ? undefined : html.indexOf('data-cell=', start + 1));
 }
 
-describe('§41: the upper tracks from 960 to 1439 are half the page (step 46)', () => {
+describe('§48: the identity is 520 from 960 to 1439 and the construction takes the rest; the cover row splits at 520 (step 56; §41\'s half-page withdrawn)', () => {
   it('states half-the-page tracks in the 8-column block, and keeps one 480 track below 960', () => {
     const html = renderToStaticMarkup(<RecordPage8a record={{ ...record(null) }} />);
     const style = /<style>([\s\S]*?)<\/style>/.exec(html)?.[1] ?? '';
     const eight = style.slice(style.indexOf('@media (max-width: 1439px)'), style.indexOf('@media (max-width: 959px)'));
-    expect(eight, 'each upper track is half the page').toMatch(/\[data-band="identity"\]\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*50%\)/);
-    expect(eight, 'no 480 track in that range (28/band-pinned-547)').not.toMatch(/repeat\(2,\s*480px\)/);
+    expect(eight, 'the identity track is 520 and the construction takes the rest (§48)').toMatch(/\[data-band="identity"\]\s*\{[^}]*grid-template-columns:\s*520px 1fr/);
+    expect(eight, 'no half-page track in that range (41/identity-half-page)').not.toMatch(/repeat\(2,\s*50%\)/);
+    /* §48: the extra 40 of cell goes to padding, 38 a side, so the measure stays 443; vertical padding stays 18. */
+    expect(eight, 'the identity content is padded 38 a side').toMatch(/\[data-cell="identity-content"\]\s*\{[^}]*padding-left:\s*38px[^}]*padding-right:\s*38px/);
     /* §42 (step 48): the row takes the viewport's height as §40 rules above the fork, never less than 547 (41/band-stays-547). */
     expect(eight, 'each row is max(546, 60.7778vh - 1)').toMatch(/grid-auto-rows:\s*max\(546px,\s*calc\(60\.7778vh - 1px\)\)/);
     expect(eight, 'and the band two such rows').toMatch(/height:\s*max\(1094px,\s*calc\(2 \* 60\.7778vh\)\)/);
