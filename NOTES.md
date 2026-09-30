@@ -31918,3 +31918,96 @@ collapse claim is untouched, and red.
 **Seen in the 1200 capture, cosmetic, recorded:** the pressing block's
 372px hairline sits on the field's bottom edge and leaves a 1px step to its
 right, where the field runs the full track and the rule does not.
+
+---
+
+## Step 53b regression: the tint field was counted as the ladder's demand (29 Sep)
+
+**Found by step 55's fork table, not by a test.** With the field present,
+every one of the seventeen read 72/40 at 1440 × 900, where before the field
+they took 144 and 120. `TitleStep`'s `below` summed every child of the track
+other than the title block, so the grown ground wrapper read as content and
+the ladder fell to the smallest pair on every record with a ladder -- the
+same defect `GenresRun` had and was fixed for in 53b, one component over.
+The §33 Loss Of Life test kept passing because its record is created
+without a spine colour, so it draws no field: the regression sat on exactly
+the records the fixture lacked. The §45 field test now asserts the ladder's
+`below` is the eyebrow plus the pressing block on every reading (failed on
+34 of 34 before the fix). The 53b captures were re-taken; the field heights
+recorded in 53b's entry were inflated by the regression (the true range at
+900 is 1 to 230, at 1200 155 to 412).
+
+---
+
+## Step 54 built: §46's ceiling guard, measured first (29 Sep)
+
+**Measured before anything was built**, over 5,000 ids from a fixed seed at
+the layout sweep's 167 widths from 960 to 1920, 900 tall
+(`ceiling-sweep.test.ts`; the arithmetic in `ceiling.ts`, anchored to eight
+rendered readings to 0.1px once the still's hairline above the fork was
+counted):
+
+| figure | value |
+|---|---|
+| first arrangements leaving more than 480 at some width | 276 of 5,000, **5.52%** |
+| where it breaks (id × width) | 960–1439: 1,279 (all 1416 to 1439); 1680–1919: 10 (1919); 1920: 276; 1440–1679: 0 |
+| worst | 558.3 at 1439, aspect 0.5758 |
+| the envelope | aspect ≥ **0.7329**, binding at 1439 and 1920 |
+| §22's guard, no carrier at the first arrangement | 0 of 5,000 |
+| combined deepest advance | **2**; mean 1.06 over the rejected |
+| cap reached | 0 of 5,000 |
+
+Under 13.8%, so the guard was built: one loop over one hash in
+`constructionWithin`, each arrangement tested against the envelope and
+§22's carrier, one cap counting every advance. An advance is a deterministic
+re-hash of the id with a salt (`arrangementAt(id, n)`), from the id alone.
+At the cap the tried arrangement with the widest aspect -- the least empty
+width -- is drawn, quiet if it has no carrier. **The cap is re-derived at 8:
+four times the measured deepest of 2**, and at 5.52% per attempt it is
+reached with probability 0.0552⁸ ≈ 9 × 10⁻¹¹; §31's 32 came the same way
+from 14.1% and 5. None of the seventeen advances. The guard's tests use
+three rejected ids from the seeded sweep as fixtures and failed before the
+loop existed. The random-record intermittent in `layout-sweep` (the flake
+log, 29 Sep) is closed by construction: no drawn arrangement is below the
+envelope.
+
+---
+
+## Step 55 halted at its first measurement: §47's geometry fails §30's ceiling on every record (29 Sep)
+
+**Not built.** §47 pins the identity at 480 from 960 to 1439 with the
+construction taking the rest of the first row, and rules that the ceiling
+be measured first and the section stop if any record fails. Computed on the
+seventeen at 1439 × 900 under that geometry (`ceiling.test.ts`, "step
+55.1"): the construction's cell is 959 with a drawing bound by the 498
+inner height, and the cover's row leaves 413 beside its square, so **every
+record exceeds 480** -- Wired 553, Loss Of Life 675, Gaucho 725, Grave New
+World 731, Mind Games 743, Bridge 757, Hurdy Gurdy Man 793, Never Too Much
+796, Money Store 817, Super Rich 819, Psychic 843, Bitches Brew 871,
+Believer 896, On The Radio 902, Dire Straits 906, Blues Project 915, The
+Soft Parade 929. The built geometry keeps the same records at 35 to 450 at
+the same width. The cell was not pinned, the second row not split, the
+vertical not measured (steps 2 and 3).
+
+**Step 4's table was taken on the unchanged build, since it changes
+nothing.** At 900 tall:
+
+| width | identity cell | measure |
+|---|---|---|
+| 1679 | 559.7 | 523 |
+| 1680 | 480 | 443 |
+| 1919 | 548.3 | 511 |
+| 1920 | 480 | 443 |
+
+Across 1679 → 1680 eight records change pair: Blues Project 96/54 → 72/40,
+Psychic 144 → 120, Bitches Brew 144 → 120, Hurdy Gurdy Man 96 → 72, Gaucho
+144 → 120, Bridge 96 → 72, Mind Games 144 → 120, Believer 144 → 120. Across
+1919 → 1920 four: Blues Project 96 → 72, Bitches Brew 144 → 120, Hurdy Gurdy
+Man 96 → 72, Mind Games 144 → 120. So §47's pending paragraph is answered:
+the title does change pair at both upper forks, and the stretch (480 to 560
+before 1680, to 548 before 1920) is enough to cross a step on eight and four
+records. §47's pre-stated ruling for that case -- the identity at 480 at
+every width from 480 up -- would remove all three forks from the type, at
+the cost of leftover width beside the cover in the stretch, which counts
+against the ceiling; and the first row's split it depends on is the one
+that failed above. Design's ruling.

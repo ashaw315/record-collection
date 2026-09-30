@@ -12,6 +12,9 @@ import {
   project,
 } from './construction';
 import { REAL_RECORD_IDS } from './real-records';
+import { CEILING_ENVELOPE, aspectOfScene } from './ceiling';
+/* The first arrangement the hash gives an id, before any advance: what the guard judges. */
+const formsOnly = (id: string) => constructionModule.arrangementAt(id, 0).forms;
 
 /**
  * The isometric construction (Isometric Probe §1, §4, §5).
@@ -88,11 +91,14 @@ describe('§31 is withdrawn in whole, and its mechanism is gone (§33, step 29g)
     per-record fit that replaced the constant, and `colour-eligibility.test.ts`
     covers §22's filter, which is the gate that remains.
   */
-  it('no longer advances the hash, because there is no frame to miss', () => {
+  it('advances the hash only past an arrangement §46\'s ceiling refuses -- never past a frame, and never scales to fit', () => {
+    /* §31's frame is gone; §46 (step 54) reintroduced an advance on a different ground: the aspect envelope. An id whose first arrangement is inside it never advances. */
     const sampled = Array.from({ length: 200 }, (_, i) => `sample-${i}`);
     for (const id of sampled) {
       const scene = construction(id);
-      expect(scene.advances, `${id}: nothing to advance past`).toBe(0);
+      const firstLegal = aspectOfScene({ forms: formsOnly(id), disc: scene.disc }) >= CEILING_ENVELOPE;
+      if (firstLegal) expect(scene.advances, `${id}: inside the envelope, nothing to advance past`).toBe(0);
+      expect(aspectOfScene(scene), `${id}: what is drawn is inside the envelope`).toBeGreaterThanOrEqual(CEILING_ENVELOPE);
       expect(scene.scaledToFit, `${id}: nothing to scale to fit`).toBe(false);
     }
   });

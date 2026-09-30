@@ -23,7 +23,7 @@
  */
 
 import type { MarkStep } from './mark-boxes';
-import { REAL_RECORD_IDS } from './real-records';
+import { CEILING_ENVELOPE, aspectOfScene } from './ceiling';
 
 /** The wall's constants (`src/app/wall/geometry.ts`), same angle. */
 /* The wall's projection, by import — one definition, not a copy. */
@@ -63,16 +63,18 @@ export const SIZE_BAND = 6;
 */
 
 /**
- * §31: the hash advances at most this many times before the fallbacks are
- * used.
- *
- * **A guard, not a test.** At the measured 14.1% rejection rate, reaching it
- * needs 32 consecutive rejections — 0.141³² ≈ 6 × 10⁻²⁸ — so no id will ever
- * reach it in practice. The fallbacks below it are built because §31 rules
- * them and because an unreachable branch that throws is worse than one that
- * renders, not because the cap is expected to bind.
+ * **§46's cap: the hash advances at most this many times before the
+ * fallback draws.** Re-derived at step 54 from the measurement, with a
+ * stated margin: over 5,000 seeded ids the ceiling guard rejected 5.52% of
+ * first arrangements, the deepest advance was 2 and the mean 1.06; §22's
+ * guard rejected none. Four times the measured deepest. At 5.52% per
+ * attempt the cap is reached with probability 0.0552⁸ ≈ 9 × 10⁻¹¹, so it is
+ * a guard, not a path: the fallback below it is built because §46 rules it,
+ * and because an unreachable branch that throws is worse than one that
+ * renders. (§31's 32 was derived the same way from a 14.1% rate and a
+ * deepest of 5.)
  */
-export const HASH_ADVANCE_CAP = 32;
+export const HASH_ADVANCE_CAP = 8;
 
 /** An id reserved for testing the exhausted-hash fallback, which no real id reaches. */
 export const EXHAUSTED_ID = 'exhausted-arrangement-fixture';
@@ -634,42 +636,52 @@ function discFor(recordId: string): Construction['disc'] {
  * exhausts 32 arrangements is waiting for a case the collection may never
  * produce.
  */
+/**
+ * **One arrangement from one hash, at one position in §46's loop.** Position
+ * 0 is the record's own hash; position n re-hashes the id with a salt, which
+ * is deterministic and from the id alone (§5.1). Exposed so the guard's
+ * tests can name what was refused and what was drawn instead.
+ */
+export function arrangementAt(recordId: string, advance: number, forceQuiet?: boolean): { forms: Form[]; disc: Construction['disc']; quiet: boolean } {
+  const id = advance === 0 ? recordId : `${recordId}#${advance}`;
+  const { forms, quiet } = formsFor(id, undefined, forceQuiet);
+  return { forms, disc: discFor(id), quiet };
+}
+
 export function constructionWithin(
   recordId: string,
   options: { forceExhausted?: boolean; forceQuiet?: boolean } = {},
 ): Construction & { advances: number; scaledToFit: boolean; quiet: boolean } {
   /*
-    **§31 is withdrawn in whole, and step 29(g) removes what it left here.**
+    **§46 (step 54): one loop over one hash, each arrangement tested against
+    both guards, one cap counting every advance.** An arrangement is illegal
+    when its aspect would leave more than one upper cell of empty width at
+    any width (`CEILING_ENVELOPE`, a constant of the page's geometry), or
+    when no form carries the colour (§22); either advances the hash. At the
+    cap the arrangement with the least empty width among those tried is
+    drawn -- the widest aspect -- quiet if it has no carrier.
 
-    The fit check and its hash advance are gone: they existed to reject an
-    arrangement that did not fit the shared frame, and there is no shared
-    frame -- §33 scales each record to its own forms, so an oversized
-    arrangement now simply draws smaller. The check would have rejected one
-    arrangement in seven (13.8% over 5,000 ids) against a bound that no longer
-    constrains anything.
-
-    `scaledToFitFrame` goes with it. Measured over 5,000 ids it fired ZERO
-    times even while the check was live, so it was already unreachable; with
-    the check removed it has no trigger at all.
-
-    `advances` and `scaledToFit` stay on the return as constants, because §22's
-    quiet fallback and three specs read the shape. They are now what they
-    always measured: nothing advanced, nothing was scaled.
+    §31's fit check, which this replaces, was withdrawn with its frame:
+    there is no shared frame to miss, and an oversized arrangement draws
+    smaller by construction. The ceiling is a different ground: the drawing
+    is bound by the band's height, so a narrow aspect leaves the cell empty
+    beside it, and that emptiness is what §30 bounds. `scaledToFit` stays on
+    the return as the constant it always measured.
   */
-  const { forms, quiet } = formsFor(
-    recordId,
-    undefined,
-    options.forceQuiet,
-  );
-  return {
-    forms,
-    disc: discFor(recordId),
-    advances: 0,
-    scaledToFit: false,
-    quiet: options.forceExhausted === true ? true : quiet,
-  };
+  const tried: Array<{ forms: Form[]; disc: Construction['disc']; quiet: boolean; aspect: number }> = [];
+  for (let advance = 0; advance <= HASH_ADVANCE_CAP; advance += 1) {
+    const candidate = arrangementAt(recordId, advance, options.forceQuiet);
+    const aspect = aspectOfScene(candidate);
+    tried.push({ ...candidate, aspect });
+    const legal = aspect >= CEILING_ENVELOPE && !candidate.quiet;
+    if (legal && options.forceExhausted !== true) {
+      return { forms: candidate.forms, disc: candidate.disc, advances: advance, scaledToFit: false, quiet: false };
+    }
+    if (advance === HASH_ADVANCE_CAP) break;
+  }
+  const best = tried.reduce((a, b) => (b.aspect > a.aspect ? b : a));
+  return { forms: best.forms, disc: best.disc, advances: HASH_ADVANCE_CAP, scaledToFit: false, quiet: best.quiet };
 }
-
 
 export function construction(recordId: string): Construction & { advances: number; scaledToFit: boolean; quiet: boolean } {
   return constructionWithin(recordId);
