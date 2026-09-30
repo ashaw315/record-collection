@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LABEL } from './grid-type';
-import { ABOUT_LINES, aboutBudget, aboutControlLine } from './about-cell';
+import { ABOUT_LINES, ABOUT_QUALIFIER, aboutBudget, aboutControlLine } from './about-cell';
 import { snippetView } from './snippet-view';
 
 /**
@@ -17,8 +17,10 @@ import { snippetView } from './snippet-view';
  * record', so a keyboard can scroll it." The region takes the cell's
  * remaining height and publishes the lines it holds (34/editor-reports-clamp).
  *
- * The controls: the by-line's short form with §10b's qualifier as its hover
- * title, then Edit, Delete and Write a new one, in the label's 11px mono.
+ * The controls: the by-line's short form, then Edit, Delete and Write a new
+ * one, in the label's 11px mono, with §10b's qualifier as the generate
+ * control's own visible sentence -- never a title, which no touch or keyboard
+ * reader would see -- beside Write a new one, Write one, and Save and Cancel.
  * Editing replaces the prose in place: the textarea takes the region's
  * measured height and scrolls, the budget line takes the control line's
  * first row and Save and Cancel its second, so at 1440, where the control
@@ -149,13 +151,17 @@ export function AboutCell({ recordId, text, editedAt, configured }: { recordId: 
               <button type="button" data-testid="snippet-cancel" disabled={busy} onClick={() => { setEditing(false); setDraft(text); }} className={CONTROL}>
                 Cancel
               </button>
+              {line.qualifier !== null && (
+                <>
+                  {' '}
+                  <span data-field="about-qualifier">{line.qualifier}</span>
+                </>
+              )}
             </div>
           </>
         ) : (
           <>
-            <span data-testid={line.title === null ? 'snippet-yours' : 'snippet-generated-label'} title={line.title ?? undefined}>
-              {line.byline}
-            </span>
+            <span data-testid={line.byline === 'Your own note' ? 'snippet-yours' : 'snippet-generated-label'}>{line.byline}</span>
             {SEP}
             <button type="button" data-testid="snippet-edit" onClick={startEditing} className={CONTROL}>
               Edit
@@ -169,7 +175,8 @@ export function AboutCell({ recordId, text, editedAt, configured }: { recordId: 
                 {SEP}
                 <button type="button" data-testid="snippet-generate" disabled={busy} onClick={regenerate} className={CONTROL}>
                   {busy ? 'Working…' : 'Write a new one'}
-                </button>
+                </button>{' '}
+                <span data-field="about-qualifier">{line.qualifier}</span>
               </>
             )}
           </>
@@ -202,9 +209,12 @@ export function WriteOne({ recordId, editedAt }: { recordId: string; editedAt: s
   };
   return (
     <>
-      <button type="button" data-field="about-write" data-testid="snippet-write" disabled={busy} onClick={write} className={`${LABEL} mt-[6px] block ${CONTROL}`}>
-        {busy ? 'Working…' : 'Write one'}
-      </button>
+      <div className={`${LABEL} mt-[6px]`}>
+        <button type="button" data-field="about-write" data-testid="snippet-write" disabled={busy} onClick={write} className={CONTROL}>
+          {busy ? 'Working…' : 'Write one'}
+        </button>{' '}
+        <span data-field="about-qualifier">{ABOUT_QUALIFIER}</span>
+      </div>
       {error !== null && (
         <p role="alert" data-testid="snippet-error" className="mt-[6px] text-meta text-destructive">
           {error}

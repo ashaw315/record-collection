@@ -78,6 +78,31 @@ test('the absence state carries Write one as the button itself, only where writi
   const order = await page.evaluate(() => { const c = document.querySelector('[data-cell="note"]') as HTMLElement; return { label: c.innerHTML.indexOf('>About<'), button: c.innerHTML.indexOf('about-write'), diagonal: c.innerHTML.indexOf('data-diagonal') }; });
   expect(order.button, 'below the label').toBeGreaterThan(order.label);
   expect(order.button, 'ahead of the diagonal').toBeLessThan(order.diagonal);
+  /* §53: the qualifier is the generate control's own visible sentence, beside Write one; never a hover title. */
+  await expect(page.locator('[data-cell="note"] [data-field="about-qualifier"]')).toHaveText('about the music, not a fact this app checked');
+  expect(await page.locator('[data-cell="note"] [title]').count(), 'no title attribute carries it').toBe(0);
+});
+
+test('the qualifier is visible beside Write a new one and in the editing state, never a title; the configured control line still leaves seven lines at 1440 (§53)', async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
+  await page.goto('/wall/probe/page8a?case=richest&configured=1');
+  await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
+  await page.waitForTimeout(500);
+  const cell = page.locator('[data-cell="note"]');
+  /* §53's stop: the sentence makes the configured control line 98 characters, three rows at 322; the prose region must still hold seven lines at 263. */
+  const rows = await cell.locator('[data-field="about-controls"]').evaluate((el) => Math.round(el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight)));
+  const held = Number(await cell.locator('[data-field="about"]').getAttribute('data-line-budget'));
+  console.log(`  §53 CONFIGURED CONTROL LINE at 1440 × 900: ${rows} rows; the prose region holds ${held} lines`);
+  expect(held, 'seven lines or more with the control line in').toBeGreaterThanOrEqual(7);
+  await expect(cell.getByTestId('snippet-generate')).toHaveText('Write a new one');
+  await expect(cell.locator('[data-field="about-qualifier"]'), 'beside Write a new one').toHaveText('about the music, not a fact this app checked');
+  await expect(cell.getByTestId('snippet-generated-label'), 'the short by-line stays').toHaveText('Written by Claude');
+  expect(await cell.locator('[title]').count(), 'never a title attribute').toBe(0);
+  await cell.getByTestId('snippet-edit').click();
+  await expect(cell.getByTestId('snippet-draft')).toBeVisible();
+  await expect(cell.locator('[data-field="about-qualifier"]'), 'and in the editing state').toHaveText('about the music, not a fact this app checked');
+  await expect(cell.getByTestId('snippet-save')).toBeVisible();
 });
 
 test('the editor’s budget line reports the rendered cell’s own line budget, at 1440 and at 960 (§34)', async ({ page }) => {

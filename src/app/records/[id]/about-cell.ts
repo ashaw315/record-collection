@@ -78,9 +78,11 @@ export function aboutBudget(text: string): { chars: number; budget: number } {
 
 /**
  * **§53 (step 60a): the About cell carries its own control line.** §10b's
- * qualifier, "about the music, not a fact this app checked", explains the
- * provenance of every About and belongs to all of them, so it is a hover
- * title on the by-line rather than a sentence repeated at the foot of each.
+ * qualifier, "about the music, not a fact this app checked", is "the
+ * generate control's own sentence, beside Write one and Write a new one and
+ * in the editing state... Not a hover title: a title never appears on touch,
+ * and this page has a 390 layout, so the one sentence whose absence changes
+ * what a reader believes would vanish on every phone and keyboard pass."
  */
 export const ABOUT_QUALIFIER = 'about the music, not a fact this app checked';
 
@@ -88,18 +90,20 @@ export type AboutControl = 'edit' | 'delete' | 'generate' | 'write';
 
 /**
  * The control line at rest: the by-line's short form, then Edit, Delete and
- * Write a new one; the absence state carries Write one alone. Where writing
- * is not configured there is no generate control and, as §36 rules, no
- * control at all in the absence state. Attribution follows §10b: an About
- * the user has edited is theirs, and calling it generated would misattribute
- * their writing to the model.
+ * Write a new one; the absence state carries Write one alone. The qualifier
+ * goes with the generate control, so it is stated wherever writing is
+ * configured and nowhere else -- "every reader who can make a Claude About
+ * has read what it is." Attribution follows §10b: an About the user has
+ * edited is theirs, and calling it generated would misattribute their
+ * writing to the model.
  */
-export function aboutControlLine({ about, editedAt, configured }: { about: string | null; editedAt: string | null; configured: boolean }): { byline: string | null; title: string | null; controls: AboutControl[] } {
-  if (!present(about)) return { byline: null, title: null, controls: configured ? ['write'] : [] };
+export function aboutControlLine({ about, editedAt, configured }: { about: string | null; editedAt: string | null; configured: boolean }): { byline: string | null; qualifier: string | null; controls: AboutControl[] } {
+  const qualifier = configured ? ABOUT_QUALIFIER : null;
+  if (!present(about)) return { byline: null, qualifier, controls: configured ? ['write'] : [] };
   const owned = editedAt !== null;
   return {
     byline: owned ? 'Your own note' : 'Written by Claude',
-    title: owned ? null : ABOUT_QUALIFIER,
+    qualifier,
     controls: configured ? ['edit', 'delete', 'generate'] : ['edit', 'delete'],
   };
 }

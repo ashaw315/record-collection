@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 124 declared rules. Regenerate with
+Generated from 125 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -152,6 +152,7 @@ Generated from 124 declared rules. Regenerate with
 | a search returned a count and you have not checked it covered the space | [RULE: a search that does not cover the space returns a confident](#rule-a-search-that-does-not-cover-the-space-returns-a-confident) |
 | four fixes have failed and the diagnosis has not changed | [RULE: environmental causes look like logic bugs, and a diagnosis that](#rule-environmental-causes-look-like-logic-bugs-and-a-diagnosis-that) |
 | you are debugging where the symptom appeared | [RULE: the symptom names a location, and the location is where everyone](#rule-the-symptom-names-a-location-and-the-location-is-where-everyone) |
+| you are taking a drop by reading the diff lines the prompt described and calling the rest unchanged | [Step 60a corrected: the qualifier is the generate control's visible sentence, never a hover title (30 Sep)](#step-60a-corrected-the-qualifier-is-the-generate-controls-visible-sentence-never-a-hover-title-30-sep) |
 | a diagnosis explained the last occurrence and you are applying it to this one | [THE ACCUMULATION DIAGNOSIS IS REFUTED FOR THE CURRENT FLAKE — measured 2026-09-05](#the-accumulation-diagnosis-is-refuted-for-the-current-flake-measured-2026-09-05) |
 | a flake has a prescription attached that nobody measured | [The E2E flake is ACCUMULATION, not worker contention — the prescription was wrong](#the-e2e-flake-is-accumulation-not-worker-contention-the-prescription-was-wrong) |
 | repeated failures are being treated as one bug | [THE HUNT, COMPLETE — six runs, SEVEN failures, and it is not one bug](#the-hunt-complete-six-runs-seven-failures-and-it-is-not-one-bug) |
@@ -32513,3 +32514,35 @@ model and settles the figure.
 frame-planes, extended-grid, layout-sweep, colour-distribution and
 record-page-8a (53 passed, the three quarter-disc tests failing as above);
 typecheck clean; lint 29 warnings, none in touched files; build compiles.
+
+## Step 60a corrected: the qualifier is the generate control's visible sentence, never a hover title (30 Sep)
+
+**Cause, recorded before the fix.** The first §53 drop said "the by-line's
+qualifier moves to a hover title on it", and 60a built that. The correction
+drop at 15:27, taken at 74cd015, replaced the paragraph: "the generate
+control's own sentence, beside Write one and Write a new one and in the
+editing state... Not a hover title: a title never appears on touch, and this
+page has a 390 layout." I took that drop reading only the truncated diff
+lines for the two figures, so a changed paragraph in the same file was
+never read, and the build contradicted the file on disk. The fix was local.
+The lesson is the drop's: a drop is read whole, not as the lines the prompt
+named.
+
+**Shape:** sample-as-population
+**You are here if:** you are taking a drop by reading the diff lines the prompt described and calling the rest unchanged
+
+**Built.** `aboutControlLine` states `qualifier` wherever writing is
+configured and nowhere else; the cell renders it as a span beside Write a
+new one, beside Write one in the absence state, and beside Save and Cancel
+in the editing state. No element in the cell carries a `title`. "Written by
+Claude" stays as the short by-line. Measured on the probe page, configured,
+at 1440 × 900: the control line is 98 characters, three rows of 16.5, and
+the prose region holds seven lines -- §53's floor exactly, not below it.
+Unconfigured, as the seventeen are on the E2E deployment, the line is one
+row and the region holds eight.
+
+**One whole run of the covering set** -- snippet, about-row-36,
+frame-planes, extended-grid, layout-sweep, colour-distribution and
+record-page-8a, chromium, serial: 55 passed, 3 failed, and the three are
+extended-grid's quarter-disc tests ("the base quarter-disc renders", "the
+disc renders", "both flats render"), held for 60b.

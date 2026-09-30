@@ -56,6 +56,8 @@ test('an edited About is read in the frame cell and labelled the user’s own th
   await expect(page.getByText('About this record', { exact: true }), 'no second heading for the About').toHaveCount(0);
   await expect(page.getByTestId('snippet-unconfigured'), 'no control and no notice where writing is not configured').toHaveCount(0);
   await expect(page.getByTestId('snippet-generate')).toHaveCount(0);
+  await expect(cell(page).locator('[data-field="about-qualifier"]'), 'the sentence goes with the generate control').toHaveCount(0);
+  expect(await cell(page).locator('[title]').count(), 'never a title attribute').toBe(0);
 });
 
 test('a record with no About shows the diagonal and, unconfigured, no Write one', async ({ page }) => {
