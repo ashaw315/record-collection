@@ -51,7 +51,8 @@ describe('§46: the ceiling guard in the hash loop', () => {
     expect(JSON.stringify(scene.forms), 'the widest aspect among those tried, which is the least empty width').toBe(JSON.stringify(best.forms));
   });
 
-  it('keeps the cap at 8: §48 withdrew its re-derivation, and the measured deepest advance against 520 is 6 with none reaching it', () => {
-    expect(HASH_ADVANCE_CAP).toBe(8);
+  it('sets the cap at 24: four times the measured deepest advance of 6 against 520 (§49), as 8 was four times 2', () => {
+    /* At 11.64% per attempt the chance of reaching 24 is 0.1164^24 ≈ 3e-23 per id. */
+    expect(HASH_ADVANCE_CAP).toBe(24);
   });
 });

@@ -12,6 +12,8 @@
  */
 
 /** §33: "The steps are 72, 96, 120 and 144". Largest first — the rule is "the largest step that fits". */
+import { GRID_FORK } from './band-geometry';
+
 export const TITLE_STEPS = [144, 120, 96, 72] as const;
 
 /** §33: "the artist line is five-ninths of the title". */
@@ -22,6 +24,13 @@ export const STEP_GAP = 24;
 
 /** The identity cell's padding on each side (§4.2's cell). */
 export const IDENTITY_PADDING = 18;
+/**
+ * **The title's measure, one width from 480 up (§48, §49): the 480 cell less
+ * its 1px rule and 18 of padding a side, 443.** Every wider cell pads down to
+ * it -- 38 a side at §48's 520, about 58 at 1679 -- so no fork changes the
+ * type. Derived, not typed: §45's argument against the 412 box stands.
+ */
+export const TITLE_MEASURE = GRID_FORK / 3 - 1 - 2 * IDENTITY_PADDING;
 
 /*
   §45 (step 53): no supply constant. "Two constants stood in for the cell: a

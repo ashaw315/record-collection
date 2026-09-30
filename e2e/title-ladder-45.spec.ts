@@ -101,10 +101,11 @@ test('§45: the title fits the identity cell on both axes on every record at eve
     does not change across 959 → 960 or 1439 → 1440. "A record whose pair
     changes across either is a build defect, not a decision." Asserted. The
     upper forks, 1679 → 1680 and 1919 → 1920, are measured and reported only:
-    §47's pending paragraph is open on them and nothing above 1440 changes here.
+    §49 ruled them from the nine and four measured at step 56.
   */
   const FORKS: Array<[number, number]> = [[959, 960], [GRID_FORK - 1, GRID_FORK], [1679, 1680], [1919, 1920]];
-  const ASSERTED = new Set([959, 960, GRID_FORK - 1, GRID_FORK]);
+  /* §49 (step 57): the padding absorbs the stretch above the fork too, so the upper forks are asserted as well; before the build nine records changed pair across 1679 → 1680 and four across 1919 → 1920. */
+  const ASSERTED = new Set([959, 960, GRID_FORK - 1, GRID_FORK, 1679, 1680, 1919, 1920]);
   const pairAt = new Map<number, Map<string, { pair: string; cell: number; measure: number }>>();
   for (const w of [...new Set(FORKS.flat())]) {
     await page.setViewportSize({ width: w, height: NO_SCROLL_HEIGHT });
@@ -140,51 +141,56 @@ test('§45: the title fits the identity cell on both axes on every record at eve
  * is quantised, so a leftover always remains; at 1440 × 1200 it is large.
  * Provisional until Adam's capture rules on it; this holds the geometry.
  */
-test('§45: the tint field fills the leftover between the title and the pressing block, at 1440 × 900 and 1440 × 1200', async ({ page }) => {
-  test.setTimeout(600_000);
+test('§49: the tint field is anchored to the pressing block, no taller than the title stack, no shorter than one artist line, and never larger than the construction -- at 1440 × 900, 1440 × 1200 and 1200 × 1200', async ({ page }) => {
+  test.setTimeout(900_000);
   await login(page);
   const rows = readSeventeen();
   const bad: string[] = [];
-  const seen: string[] = [];
+  const report: string[] = [];
   let readings = 0;
-  for (const h of [NO_SCROLL_HEIGHT, 1200]) {
-    await page.setViewportSize({ width: GRID_FORK, height: h });
+  for (const [w, h] of [[GRID_FORK, NO_SCROLL_HEIGHT], [GRID_FORK, 1200], [1200, 1200]] as const) {
+    await page.setViewportSize({ width: w, height: h });
+    const line: string[] = [];
     for (const r of rows) {
       await page.goto(`/records/${r.id}`);
       await page.locator('[data-title-step][data-ladder]').waitFor({ timeout: 20_000 });
-      await page.waitForTimeout(300);
+      await page.evaluate(() => document.fonts.ready);
+      await page.waitForTimeout(400);
       const m = await page.evaluate(() => {
         const R = (el: Element) => el.getBoundingClientRect();
         const track = document.querySelector<HTMLElement>('[data-track="content"]');
-        const title = document.querySelector<HTMLElement>('[data-block="title"]');
+        const host = document.querySelector<HTMLElement>('[data-title-step]');
         const pressing = document.querySelector<HTMLElement>('[data-block="pressing"]');
+        const ground = document.querySelector<HTMLElement>('[data-ground]');
         const field = document.querySelector<HTMLElement>('[data-mark="identityField"]');
-        if (!track || !title || !pressing) return null;
-        const f = field === null ? null : R(field);
-        const outer = (el: Element) => { const b = R(el); const s = getComputedStyle(el); return b.height + parseFloat(s.marginTop) + parseFloat(s.marginBottom); };
-        const eyebrow = document.querySelector<HTMLElement>('[data-field="eyebrow"]');
-        const ladder = JSON.parse(document.querySelector('[data-title-step]')?.getAttribute('data-ladder') ?? '{}') as { below: number; pair: { title: number; artist: number } };
-        const belowRendered = (eyebrow === null ? 0 : outer(eyebrow)) + outer(pressing);
-        return { ladderBelow: ladder.below, belowRendered, titleBottom: R(title).bottom, pressingTop: R(pressing).top, trackW: track.clientWidth, runPresent: document.querySelector('[data-field="genres"]') !== null, field: f === null ? null : { top: f.top, bottom: f.bottom, width: f.width, height: f.height, bg: getComputedStyle(field as HTMLElement).backgroundColor } };
+        const svg = document.querySelector<SVGSVGElement>('[data-testid="construction-still"]');
+        if (!track || !host || !pressing || !ground || !field || !svg) return null;
+        const ladder = JSON.parse(host.getAttribute('data-ladder') ?? '{}') as { pair: { title: number; artist: number } };
+        const sb = R(svg); const vb = (svg.getAttribute('viewBox') ?? '0 0 1 1').split(' ').map(Number); const k = Math.min(sb.width / vb[2], sb.height / vb[3]);
+        const shown = getComputedStyle(field).display !== 'none' && R(field).height > 0;
+        return { pair: ladder.pair, state: field.getAttribute('data-field-state'), floor: Number(field.getAttribute('data-field-floor')), available: Number(field.getAttribute('data-field-available')), stack: Math.round(R(host).height * 10) / 10, shown, height: Math.round(R(field).height * 10) / 10, width: R(field).width, top: R(field).top, bottom: R(field).bottom, pressingTop: R(pressing).top, trackW: track.clientWidth, runPresent: document.querySelector('[data-field="genres"]') !== null, drawnW: vb[2] * k, drawnH: vb[3] * k };
       });
-      const where = `${r.title.split(':')[0]} @1440x${h}`;
+      const where = `${r.title.split(':')[0]} @${w}x${h}`;
       if (m === null) { bad.push(`${where}: no identity cell`); continue; }
       readings += 1;
-      const leftover = m.pressingTop - m.titleBottom;
-      if (m.field === null) { bad.push(`${where}: no tint field (leftover ${leftover.toFixed(1)})`); continue; }
-      /* The field starts after the ladder's own gap, which its arithmetic reserves between the blocks; flush, it sat under the artist's inline box. */
-      if (Math.abs(m.field.top - (m.titleBottom + STEP_GAP)) > 1) bad.push(`${where}: the field starts ${m.field.top.toFixed(1)}, the title block ends ${m.titleBottom.toFixed(1)} and the ladder's gap is ${STEP_GAP}`);
-      if (Math.abs(m.field.bottom - m.pressingTop) > 1) bad.push(`${where}: the field ends ${m.field.bottom.toFixed(1)}, the pressing block starts ${m.pressingTop.toFixed(1)}`);
-      if (Math.abs(m.field.width - m.trackW) > 1) bad.push(`${where}: the field is ${m.field.width} wide, the track ${m.trackW}`);
-      if (m.field.bg === 'rgba(0, 0, 0, 0)') bad.push(`${where}: the field has no fill`);
-      /* The field is the gap made visible, not demand: the genres run must not yield to it (found 29 Sep: the run's measure summed the grown field and collapsed on every record with room). */
+      const expectDrawn = Math.min(m.available, m.stack) >= m.floor;
+      if (m.shown !== expectDrawn) bad.push(`${where}: field ${m.shown ? 'drawn' : 'suppressed'} where the rule says ${expectDrawn ? 'drawn' : 'suppressed'} (available ${m.available}, stack ${m.stack}, floor ${m.floor})`);
+      if (m.shown) {
+        if (Math.abs(m.bottom - m.pressingTop) > 1) bad.push(`${where}: the field ends ${m.bottom.toFixed(1)}, the pressing block starts ${m.pressingTop.toFixed(1)} (anchored to it)`);
+        if (m.height > m.stack + 1) bad.push(`${where}: the field is ${m.height} tall, taller than the title stack ${m.stack}`);
+        if (m.height > m.available + 1) bad.push(`${where}: the field is ${m.height} tall, more than the ${m.available} the gap leaves after the ladder's gap`);
+        if (m.height + 0.5 < m.floor) bad.push(`${where}: the field is ${m.height} tall, shorter than one artist line ${m.floor}`);
+        if (Math.abs(m.width - m.trackW) > 1) bad.push(`${where}: the field is ${m.width} wide, the track ${m.trackW}`);
+        /* §49: a ground may not outweigh the mark it sits beside. Stop if any field is larger than its record's construction. */
+        const fieldArea = m.height * m.width; const drawnArea = m.drawnW * m.drawnH;
+        if (fieldArea > drawnArea) bad.push(`${where}: STOP -- the field (${Math.round(fieldArea)}) is larger than the construction's drawn area (${Math.round(drawnArea)})`);
+      }
       if (!m.runPresent) bad.push(`${where}: the genres run collapsed under the field`);
-      /* And the ladder's demand does not count it either: `below` is the eyebrow plus the pressing block, not the field (found 29 Sep by the fork table: every record read 72/40 with the field summed in). */
-      if (Math.abs(m.ladderBelow - m.belowRendered) > 1.5) bad.push(`${where}: the ladder's below is ${m.ladderBelow} where the eyebrow plus pressing block render ${m.belowRendered.toFixed(1)} -- the field is being counted as demand`);
-      seen.push(`${r.title.split(':')[0]} ${Math.round(m.field.height)}`);
+      line.push(`${r.title.split(':')[0]} ${m.pair.title}/${m.pair.artist}: ${m.shown ? `field ${m.height}` : 'SUPPRESSED'} (floor ${m.floor}, gap ${m.available}, stack ${m.stack}${m.shown ? `, area ${Math.round(m.height * m.width / 1000)}k vs construction ${Math.round(m.drawnW * m.drawnH / 1000)}k` : ''})`);
     }
+    report.push(`${w} × ${h}:\n    ${line.join('\n    ')}`);
   }
-  console.log(`  §45 TINT FIELD heights (1440 × 900 then × 1200): ${seen.join(' · ')}`);
-  expect(readings, 'the report has subjects').toBe(rows.length * 2);
-  expect(bad, `§45's field not met:\n  ${bad.join('\n  ')}`).toEqual([]);
+  console.log(`  §49 TINT FIELD:\n  ${report.join('\n  ')}`);
+  expect(readings, 'the report has subjects').toBe(rows.length * 3);
+  expect(bad, `§49's field not met:\n  ${bad.join('\n  ')}`).toEqual([]);
 });

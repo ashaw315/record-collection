@@ -145,7 +145,9 @@ describe('§48: the identity is 520 from 960 to 1439 and the construction takes 
     expect(eight, 'the identity track is 520 and the construction takes the rest (§48)').toMatch(/\[data-band="identity"\]\s*\{[^}]*grid-template-columns:\s*520px 1fr/);
     expect(eight, 'no half-page track in that range (41/identity-half-page)').not.toMatch(/repeat\(2,\s*50%\)/);
     /* §48: the extra 40 of cell goes to padding, 38 a side, so the measure stays 443; vertical padding stays 18. */
-    expect(eight, 'the identity content is padded 38 a side').toMatch(/\[data-cell="identity-content"\]\s*\{[^}]*padding-left:\s*38px[^}]*padding-right:\s*38px/);
+    /* §49 (step 57): the padding absorbs whatever the cell has beyond the measure, from 960 up -- 38 at a 520 cell, 18 at 480, about 58 at 1679 -- as one rule, not a figure per range. */
+    expect(eight, 'the identity content\'s padding is the cell beyond the measure, halved').toMatch(/\[data-cell="identity-content"\]\s*\{[^}]*padding-left:\s*calc\(\(100% - 443px\) \/ 2\)[^}]*padding-right:\s*calc\(\(100% - 443px\) \/ 2\)/);
+    expect(style, 'and no block types 38px').not.toMatch(/padding-left:\s*38px/);
     /* §42 (step 48): the row takes the viewport's height as §40 rules above the fork, never less than 547 (41/band-stays-547). */
     expect(eight, 'each row is max(546, 60.7778vh - 1)').toMatch(/grid-auto-rows:\s*max\(546px,\s*calc\(60\.7778vh - 1px\)\)/);
     expect(eight, 'and the band two such rows').toMatch(/height:\s*max\(1094px,\s*calc\(2 \* 60\.7778vh\)\)/);
@@ -405,11 +407,22 @@ describe('§45: the identity cell’s leftover is a tint field', () => {
     const ground = /<div[^>]*data-ground=""[^>]*>/.exec(between)?.[0];
     expect(ground, 'inside a ground wrapper').toBeDefined();
     expect(ground, 'ground, not content: hidden from assistive tech').toContain('aria-hidden="true"');
-    expect(field, 'the paint starts after the ladder’s gap').toContain('top:24px');
+    /* §49: sized by TitleStep after the pair is chosen -- anchored to the pressing block, bounded by the title stack and the artist's line -- so the server sends it at no height, pending. */
+    expect(field, 'served pending, at no height, until the ladder sizes it').toContain('data-field-state="pending"');
+    expect(field).toContain('height:0');
   });
 
   it('draws no field when the record has no ladder', () => {
     const html = renderToStaticMarkup(<RecordPage8a record={record(null)} />);
     expect(trackOf(html).between).not.toContain('identityField');
+  });
+});
+
+describe('§49: the measure is 443 at every width from 480 up (step 57)', () => {
+  it('states the padding rule above the fork too, so the stretch between column counts goes to padding', () => {
+    const html = renderToStaticMarkup(<RecordPage8a record={record(null)} />);
+    const style = /<style>([\s\S]*?)<\/style>/.exec(html)?.[1] ?? '';
+    const above = style.slice(style.indexOf('@media (min-width: 1440px)'));
+    expect(above, 'from 1440 up the identity content is padded to the measure').toMatch(/\[data-cell="identity-content"\]\s*\{[^}]*padding-left:\s*calc\(\(100% - 443px\) \/ 2\)/);
   });
 });

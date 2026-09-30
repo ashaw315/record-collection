@@ -64,16 +64,16 @@ export const SIZE_BAND = 6;
 
 /**
  * **§46's cap: the hash advances at most this many times before the
- * fallback draws.** Set at step 54 from the measurement (deepest 2, times
- * four); §48 withdrew the re-derivation (46/cap-rederived): a guard against a
- * case that has not occurred needs no derivation. The measured facts against
- * the envelope §48 rules (0.7851, the identity at 520): 11.64% of 5,000 seeded
- * first arrangements rejected, deepest advance 6, cap reached by none;
- * 0.1164⁸ ≈ 3 × 10⁻⁸ per id. The fallback below it is built because §46
+ * fallback draws.** §49: 24, four times the measured deepest advance of 6
+ * against the envelope §48 rules (0.7851, the identity at 520), as the cap of 8
+ * was four times 2 against the half-page geometry. At 11.64% per attempt the
+ * chance of reaching 24 is 0.1164²⁴ ≈ 3 × 10⁻²³ per id; the distribution over
+ * 5,000 seeded ids is geometric to depth 4 (12.5% and 12.3% per attempt at
+ * depths 1 and 2), with one id at depth 6. The fallback below it is built because §46
  * rules it, and because an unreachable branch that throws is worse than one
  * that renders.
  */
-export const HASH_ADVANCE_CAP = 8;
+export const HASH_ADVANCE_CAP = 24;
 
 /** An id reserved for testing the exhausted-hash fallback, which no real id reaches. */
 export const EXHAUSTED_ID = 'exhausted-arrangement-fixture';

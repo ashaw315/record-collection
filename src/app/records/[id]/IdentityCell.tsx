@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { TitleStep } from './TitleStep';
-import { STEP_GAP } from './title-steps';
 import { GenresRun } from './GenresRun';
 import { LABEL, LABEL_INK } from './grid-type';
 
@@ -209,16 +208,18 @@ export function IdentityCell({
       */}
       {tint !== null && (
         /*
-          The paint starts STEP_GAP below the title block, not flush: the
-          ladder's own arithmetic keeps that gap between the blocks (demand +
-          STEP_GAP within supply), and the artist's inline box hangs 4px below
-          its block at 80, so a flush field sat under the artist's ink
-          (measured 29 Sep). The gap is an inset of the paint, not a margin on
-          the box: a margin survived when the leftover was gone and pushed the
-          pressing block 24px out of the worst title's cell.
+          §49 bounds the paint from the type: anchored to the pressing block's
+          top, at most as tall as the title stack above it, and drawn only when
+          that leaves at least one line of the artist at its chosen pair; paper
+          above it, and paper in place of it below the floor. Unbounded it was
+          443 × 410 on Gaucho at 1200 high, larger than the record's construction.
+          The ladder's own STEP_GAP stays between the artist and the paint (the
+          artist's inline box hangs 4px below its block at 80). Sized by
+          TitleStep, which knows the pair.
         */
         <div data-ground="" className="relative w-full min-h-0 grow" aria-hidden="true">
-          <div data-mark="identityField" className="absolute inset-x-0 bottom-0" style={{ top: STEP_GAP, background: tint }} />
+          {/* Sized by TitleStep after the pair is chosen (§49): anchored to the pressing block's top, no taller than the title stack, no shorter than one line of the artist -- below that it is not drawn. Until then it draws nothing. */}
+          <div data-mark="identityField" data-field-state="pending" className="absolute inset-x-0 bottom-0" style={{ height: 0, background: tint }} />
         </div>
       )}
       <div data-block="pressing" className="w-full">

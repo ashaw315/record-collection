@@ -17,6 +17,7 @@ import { gridModules, type Diagonal } from './grid-modules';
 import { project } from './construction';
 import { LABEL, LABEL_INK } from './grid-type';
 import { recordLadder } from '@/lib/colour/record-ladder';
+import { TITLE_MEASURE } from './title-steps';
 
 /**
  * 8a assembled — three fixed bands at 1440 × 900, no scroll.
@@ -370,7 +371,7 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
             too, so the vertical lands in one place in both rows.
           */
           @media (min-width: 960px) {
-            [data-cell="identity-content"] { padding-left: 38px !important; padding-right: 38px !important; }
+            [data-cell="identity-content"] { padding-left: calc((100% - ${TITLE_MEASURE}px) / 2) !important; padding-right: calc((100% - ${TITLE_MEASURE}px) / 2) !important; }
           }
           /*
             Step 39 (§37): the air LEFT of the sleeve in the second row, by
@@ -513,6 +514,15 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
           */
           /* §40: any paper the marks leave in the cover cell takes the ladder's tint step, not bare paper. */
           [data-cell="sleeve"] { background: var(--sleeve-tint); }
+          /*
+            §49 (step 57): above the fork the identity stays four columns and its
+            horizontal padding absorbs the stretch between column counts -- 18 at
+            480, about 58 at 1679 -- so the measure is 443 at every width and no
+            fork changes the type. Nine records changed pair across 1679 → 1680
+            and four across 1919 → 1920 before this. §30's ceiling does not count
+            padding: it is the inside of a cell that carries type.
+          */
+          [data-cell="identity-content"] { padding-left: calc((100% - ${TITLE_MEASURE}px) / 2) !important; padding-right: calc((100% - ${TITLE_MEASURE}px) / 2) !important; }
         }
 
         /*

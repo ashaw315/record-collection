@@ -179,6 +179,20 @@ export function TitleStep({
       };
       const seen = TITLE_PAIRS.map((pair) => ({ size: pair.title, artist: pair.artist, lines: linesAt(pair.title), demand: Math.round(demandAt(pair.title)), widest: Math.round(widestAt(pair.title) * 10) / 10, artistLines: artistLinesAt(pair.artist) }));
       const pair = titlePair({ demandAt, supply, overflowsAt, artistLinesAt });
+      /*
+        The field's terms, from the SAME probe measurements the pair was chosen
+        on, before the probes are reset: the title stack is the title and the
+        artist at the chosen pair, and the gap is what the supply leaves after
+        the chosen demand and the ladder's own STEP_GAP. Reading the rendered
+        ground instead sized the field on the first pass against the initial
+        step, and until the observer fired the field sat under the title that
+        had since grown -- page8a-marks caught it covering "Grave New World"
+        by 86px on the probe page.
+      */
+      const chosenDemand = demandAt(pair.title);
+      const titleH = measure.getBoundingClientRect().height;
+      const artistH = artistMeasure === null ? artistStep(pair.title) : artistMeasure.getBoundingClientRect().height;
+      const fieldTerms = { available: supply - chosenDemand - STEP_GAP, stack: titleH + artistH, floor: pair.artist };
       measure.style.fontSize = '';
       if (artistMeasure !== null) artistMeasure.style.fontSize = '';
       el.setAttribute(
@@ -186,6 +200,28 @@ export function TitleStep({
         JSON.stringify({ supply, measure: measureWidth, below: Math.round(below), steps: seen, chosen: pair.title, pair: { title: pair.title, artist: pair.artist }, artistLowered: pair.artistLowered, fonts: document.fonts.status }),
       );
       setStep(pair.title);
+      /*
+        §49 (step 57): the tint field, sized from the type. Its ground wrapper is
+        the flex leftover between the blocks; the paint is anchored to the
+        pressing block's top, no taller than the title stack (this host: title
+        and artist) and no shorter than one line of the artist at the chosen
+        pair, with the ladder's STEP_GAP kept between the artist and the paint.
+        Below the floor nothing is drawn: a 1px ground over the hairline read
+        as a double rule, not a plane.
+      */
+      const ground = track.querySelector<HTMLElement>('[data-ground]');
+      const field = ground?.querySelector<HTMLElement>('[data-mark="identityField"]') ?? null;
+      if (ground !== null && field !== null) {
+        const { available, stack, floor } = fieldTerms;
+        const height = Math.min(available, stack);
+        const drawn = height >= floor;
+        /* Suppressed is zero height IN the box, not display none: a mark taken out of layout reads as a zero rect at the page's origin, which page8a-marks reports as escaping its cell. */
+        field.style.height = drawn ? `${Math.round(height * 10) / 10}px` : '0px';
+        field.setAttribute('data-field-state', drawn ? 'drawn' : 'suppressed');
+        field.setAttribute('data-field-floor', String(floor));
+        field.setAttribute('data-field-available', String(Math.round(available * 10) / 10));
+        field.setAttribute('data-field-stack', String(Math.round(stack * 10) / 10));
+      }
     };
 
     choose();

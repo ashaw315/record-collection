@@ -32182,3 +32182,71 @@ built here.
 
 **Tint-field heights with the real artists**: 1 to 230 at 1440 × 900, 71 to
 409 at 1440 × 1200.
+
+
+---
+
+## Step 57 built: §49 -- the measure at 443 everywhere, and the tint field bounded by the type (30 Sep)
+
+**The drop's index failures, Design's:** two entries match no declared
+sentence. `16/inset-stays-372`'s sentence sits inside "the 372px horizontal
+stays inset at 372 [sentence], as §3 already rules" and `47/stretch-to-cover`'s
+inside "going to the cover cell [sentence], which §39 already gives the spare
+columns to": both were spliced into the middle of a host sentence, so the
+parser's declared sentence runs on past the quote's full stop and assertion
+7 reports both as matching none, and §47 as carrying an unquoted sentence.
+Placing each after its host sentence's full stop closes it.
+`index-assertions.test.ts` is red on that alone.
+
+**The measure is one width from 480 up.** The identity content's horizontal
+padding is `calc((100% − 443px) / 2)` from 960 up, one rule in place of
+§48's 38 -- 18 at a 480 cell, 38 at 520, about 58 at 1679 -- and the same
+rule above the fork, where the cell stays four columns. `TITLE_MEASURE` is
+derived (480 − 1 − 2 × 18). **Before the build nine records changed pair
+across 1679 → 1680 and four across 1919 → 1920, and the assertion failed on
+those thirteen; after it no record changes pair across any of the four
+forks**, with four at the 72/40 floor on both sides of each (Blues Project,
+On The Radio, The Hurdy Gurdy Man, Bridge). The cap is 24, four times the
+measured deepest advance of 6.
+
+**The tint field, bounded from the type.** Anchored to the pressing block's
+top; at most the title stack (title and artist at the chosen pair); drawn
+only when the gap after the ladder's own STEP_GAP leaves at least one line
+of the artist; otherwise zero height in its box (not `display: none`, which
+page8a-marks reads as a zero rect at the page's origin, 53px above the
+cell). Sized in the same pass as the pair, from the probes the pair was
+chosen on: sized from the rendered ground it sat under a title that had
+since grown, until the observer fired, and page8a-marks caught it covering
+"Grave New World" by 86px on the probe page.
+
+**The suppression report, per record** (height or suppressed; the floor is
+one artist line at the chosen pair; the gap is what the supply leaves after
+the demand and STEP_GAP; area against the construction's drawn area):
+
+| record | 1440 × 900 | 1440 × 1200 | 1200 × 1200 |
+|---|---|---|---|
+| The Best Of The Blues Project | 162.5 (floor 40, gap 162.5; area 72k of 204k) at 72/40 | 172.6 (floor 54, gap 172.6; area 76k of 226k) at 96/54 | 172.6 (floor 54, gap 172.6; area 76k of 380k) at 96/54 |
+| Never Too Much | 171 (floor 54, gap 171; area 76k of 175k) at 96/54 | 234.5 (floor 54, gap 353; area 104k of 175k) at 96/54 | 234.5 (floor 54, gap 353; area 104k of 376k) at 96/54 |
+| Dire Straits | suppressed (floor 80, gap 54.8) at 144/80 | 236.8 (floor 80, gap 236.8; area 105k of 222k) at 144/80 | 236.8 (floor 80, gap 236.8; area 105k of 388k) at 144/80 |
+| Grave New World | suppressed (floor 66, gap 1.1) at 120/66 | 101.4 (floor 80, gap 101.4; area 45k of 156k) at 144/80 | 101.4 (floor 80, gap 101.4; area 45k of 336k) at 144/80 |
+| Psychic | 178.8 (floor 66, gap 226.7; area 79k of 192k) at 120/66 | 178.8 (floor 66, gap 408.7; area 79k of 192k) at 120/66 | 178.8 (floor 66, gap 408.7; area 79k of 413k) at 120/66 |
+| Wired | 190.1 (floor 80, gap 190.1; area 84k of 120k) at 144/80 | 215.4 (floor 80, gap 372.1; area 95k of 120k) at 144/80 | 215.4 (floor 80, gap 372.1; area 95k of 258k) at 144/80 |
+| Bitches Brew | 113.9 (floor 66, gap 113.9; area 50k of 204k) at 120/66 | 291.6 (floor 66, gap 295.9; area 129k of 204k) at 120/66 | 291.6 (floor 66, gap 295.9; area 129k of 421k) at 120/66 |
+| On The Radio | 94.8 (floor 40, gap 94.8; area 42k of 210k) at 72/40 | 82.3 (floor 54, gap 82.3; area 36k of 219k) at 96/54 | 82.3 (floor 54, gap 82.3; area 36k of 393k) at 96/54 |
+| The Hurdy Gurdy Man | 175.3 (floor 40, gap 230.2; area 78k of 174k) at 72/40 | 70.3 (floor 66, gap 70.3; area 31k of 174k) at 120/66 | 70.3 (floor 66, gap 70.3; area 31k of 374k) at 120/66 |
+| Super Rich | suppressed (floor 80, gap 54.8) at 144/80 | 236.8 (floor 80, gap 236.8; area 105k of 183k) at 144/80 | 236.8 (floor 80, gap 236.8; area 105k of 394k) at 144/80 |
+| Gaucho | 178.8 (floor 66, gap 226.7; area 79k of 154k) at 120/66 | 178.8 (floor 66, gap 408.7; area 79k of 154k) at 120/66 | 178.8 (floor 66, gap 408.7; area 79k of 332k) at 120/66 |
+| Bridge Over Troubled Water | 162.5 (floor 40, gap 162.5; area 72k of 163k) at 72/40 | 243 (floor 40, gap 344.5; area 108k of 163k) at 72/40 | 243 (floor 40, gap 344.5; area 108k of 351k) at 72/40 |
+| The Soft Parade | suppressed (floor 66, gap 1.1) at 120/66 | 183.1 (floor 66, gap 183.1; area 81k of 234k) at 120/66 | 183.1 (floor 66, gap 183.1; area 81k of 368k) at 120/66 |
+| Mind Games | 113.9 (floor 66, gap 113.9; area 50k of 159k) at 120/66 | 291.6 (floor 66, gap 295.9; area 129k of 159k) at 120/66 | 291.6 (floor 66, gap 295.9; area 129k of 342k) at 120/66 |
+| The Money Store | suppressed (floor 66, gap 1.1) at 120/66 | 183.1 (floor 66, gap 183.1; area 81k of 182k) at 120/66 | 183.1 (floor 66, gap 183.1; area 81k of 392k) at 120/66 |
+| Loss Of Life | suppressed (floor 80, gap 54.8) at 144/80 | 236.8 (floor 80, gap 236.8; area 105k of 142k) at 144/80 | 236.8 (floor 80, gap 236.8; area 105k of 306k) at 144/80 |
+| Believer | 178.8 (floor 66, gap 226.7; area 79k of 213k) at 120/66 | 178.8 (floor 66, gap 408.7; area 79k of 216k) at 120/66 | 178.8 (floor 66, gap 408.7; area 79k of 398k) at 120/66 |
+
+Suppressed at 1440 × 900: Dire Straits, Grave New World, Super Rich, The Soft Parade, The Money Store, Loss Of Life -- the three
+1px records, and the 144/80 cluster whose 54.8 gap is under the 80 floor,
+which is the boundary Adam named. At 1440 × 1200: none. At 1200 × 1200: none.
+**No field exceeds its construction at any of the three windows** (the
+largest share is Wired at 1440 × 900, 70%; Mind Games at 1440 × 1200, 81%; Mind Games at 1200 × 1200, 38%), so
+the stop did not fire. The captures for Adam: Gaucho, Dire Straits and Grave
+New World at the three windows, `docs/captures/step57-tint-field-*`.
