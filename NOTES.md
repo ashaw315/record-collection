@@ -32379,3 +32379,53 @@ anchor for the set Adam has judged under the old one -- Wired, Bitches
 Brew, Gaucho, Dire Straits, Grave New World and The Hurdy Gurdy Man -- at
 1440 × 900 and 1440 × 1200, so each is a pair against its step57 capture
 rather than a fresh look.
+
+## Step 59 built: §51 -- the field hangs 24 below the artist, and the leftover falls below it (30 Sep)
+
+Design ruled the third reading: the field starts the ladder's own 24 below
+the artist's last line, not one line of the artist's leading. The gap term
+already subtracts that 24, so the offset costs nothing the ground does not
+have, and every gap-bound record stays where it was: the overflow that
+halted the step (leading − 24, which was 16 to 56px on the three gap-bound
+records) is zero by construction. The paint moved from the ground wrapper's
+bottom edge to `top: STEP_GAP` (`IdentityCell.tsx`); its height terms are
+step 58's, unchanged. The pressing block keeps the cell's floor as §28
+rules, and what a cap leaves now falls between the field and PRESSING,
+where Dire Straits already showed it reading as room. Measured from the
+title block's end, which is the artist element's box; the artist's inline
+box hangs 4px below it at 80.
+
+**The two distances, per record** (artist-to-field is 24.0 on every drawn
+field at both windows; field-to-pressing is the leftover):
+
+| record | 1440 × 900 | 1440 × 1200 |
+|---|---|---|
+| Believer | 125, cap; leftover 101.7 | 125, cap; leftover 284.0 |
+| Bitches Brew | 113.9, gap; leftover 0.0 | 116.9, cap; leftover 179.3 |
+| Bridge Over Troubled Water | suppressed, cap | suppressed, cap |
+| Dire Straits | suppressed, gap | 128.4, cap; leftover 108.7 |
+| Gaucho | 128.3, cap; leftover 98.4 | 128.3, cap; leftover 280.7 |
+| Grave New World | suppressed, gap | suppressed, gap |
+| Loss Of Life | suppressed, gap | 119, cap; leftover 118.1 |
+| Mind Games | 113.9, gap; leftover 0.0 | 139.1, cap; leftover 157.1 |
+| Never Too Much | 130.6, cap; leftover 40.4 | 130.6, cap; leftover 222.8 |
+| On The Radio | suppressed, gap | suppressed, gap |
+| Psychic | 160.5, cap; leftover 66.2 | 160.5, cap; leftover 248.5 |
+| Super Rich | suppressed, gap | 129.9, cap; leftover 107.2 |
+| The Best Of The Blues Project | 162.4, gap; leftover 0.1 | 172.5, gap; leftover 0.4 |
+| The Hurdy Gurdy Man | 127.1, cap; leftover 103.1 | suppressed, gap |
+| The Money Store | suppressed, gap | 134.8, cap; leftover 48.6 |
+| The Soft Parade | suppressed, gap | 146.8, cap; leftover 36.6 |
+| Wired | suppressed, cap | suppressed, cap |
+
+The gap-bound records' leftover of 0.0 to 0.4 is the floor to the tenth in
+step 58: the field is at most the gap, never past it. The spec asserts the
+24 on every drawn field, that no field ends past the pressing block's top,
+and that the pressing block ends at the cell's floor.
+
+**The capture pairing**, `docs/captures/step59-tint-field-*` against the
+step57 shots under the old anchor: Wired, Bitches Brew, Gaucho, Dire
+Straits, Grave New World and The Hurdy Gurdy Man at 1440 × 900 and
+1440 × 1200. Bitches Brew at 1440 × 900 is the ordinary two-line record
+§28 and §33 wait on: "Bitches / Brew" at 120/66, the genres run present,
+so Design can clear those two markers from the same set.

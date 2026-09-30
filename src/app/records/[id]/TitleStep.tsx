@@ -203,8 +203,8 @@ export function TitleStep({
       /*
         §49 (step 57), re-bounded by §50 and §52 (step 58): the tint field,
         sized from the type and the mark. Its ground wrapper is the flex
-        leftover between the blocks; the paint is anchored to the pressing
-        block's top and is the smallest of the gap the ladder leaves, the title
+        leftover between the blocks; the paint hangs STEP_GAP below the title
+        block (§51, step 59) and is the smallest of the gap the ladder leaves, the title
         stack (this host: title and artist) and the construction's minimum ink
         over the field's width, which the server computed from the record's
         own scene and stamped on the paint. Past 4 : 1 nothing is drawn: a

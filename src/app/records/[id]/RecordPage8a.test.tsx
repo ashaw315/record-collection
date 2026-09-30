@@ -7,6 +7,7 @@ import { STRIP_SPLIT } from './cover-33';
 import { recordLadder } from '@/lib/colour/record-ladder';
 import { construction } from './construction';
 import { fieldCapFor } from './ink';
+import { STEP_GAP } from './title-steps';
 
 /**
  * §5.3, the record with no cover: "the fallback is ink for all eight marks
@@ -412,6 +413,22 @@ describe('§45: the identity cell’s leftover is a tint field', () => {
     /* §49: sized by TitleStep after the pair is chosen -- anchored to the pressing block, bounded by the title stack and the artist's line -- so the server sends it at no height, pending. */
     expect(field, 'served pending, at no height, until the ladder sizes it').toContain('data-field-state="pending"');
     expect(field).toContain('height:0');
+  });
+
+  /**
+   * §51 (step 59): "the tint field starts 24 below the artist's last line,
+   * the ladder's own gap, so the height left over when a cap binds falls
+   * between the field and the pressing block, not between the type and the
+   * field." The ground wrapper begins at the title block's end, so the paint
+   * is placed from the wrapper's top by STEP_GAP, and no longer from its
+   * bottom.
+   */
+  it('places the field 24 from the ground’s top, the ladder’s gap, not against the pressing block (§51)', () => {
+    const html = renderToStaticMarkup(<RecordPage8a record={record('#a25829')} />);
+    const field = /<div[^>]*data-mark="identityField"[^>]*>/.exec(trackOf(html).between)?.[0];
+    expect(field).toBeDefined();
+    expect(field, 'from the top, by the ladder’s gap').toContain(`top:${STEP_GAP}px`);
+    expect(field, 'not from the bottom').not.toMatch(/bottom-0|bottom:0/);
   });
 
   /**

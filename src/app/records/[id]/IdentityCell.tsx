@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { TitleStep } from './TitleStep';
+import { STEP_GAP } from './title-steps';
 import { GenresRun } from './GenresRun';
 import { LABEL, LABEL_INK } from './grid-type';
 
@@ -211,18 +212,19 @@ export function IdentityCell({
       */}
       {tint !== null && (
         /*
-          §49 bounds the paint from the type: anchored to the pressing block's
-          top, at most as tall as the title stack above it, and drawn only when
-          that leaves at least one line of the artist at its chosen pair; paper
-          above it, and paper in place of it below the floor. Unbounded it was
-          443 × 410 on Gaucho at 1200 high, larger than the record's construction.
-          The ladder's own STEP_GAP stays between the artist and the paint (the
-          artist's inline box hangs 4px below its block at 80). Sized by
-          TitleStep, which knows the pair.
+          §49 bounded the paint from the type and anchored it to the pressing
+          block; §50 and §52 re-bounded it by the construction's minimum ink and
+          its own proportion; §51 hangs it from the type instead. Unbounded it
+          was 443 × 410 on Gaucho at 1200 high, larger than the record's
+          construction; anchored below, a bound cap left 252px of hole between
+          the artist and the ground on Gaucho at 1440 × 1200. The ladder's own
+          STEP_GAP stays between the artist and the paint (the artist's inline
+          box hangs 4px below its block at 80), and the leftover now falls below
+          the paint. Sized by TitleStep, which knows the pair.
         */
         <div data-ground="" className="relative w-full min-h-0 grow" aria-hidden="true">
-          {/* Sized by TitleStep after the pair is chosen (§49, §50, §52): anchored to the pressing block's top, the smallest of the gap, the title stack and the served ink cap, and not drawn past 4 : 1. Until then it draws nothing. */}
-          <div data-mark="identityField" data-field-state="pending" data-field-cap={ink === null ? undefined : ink.cap.toFixed(3)} data-field-ink={ink === null ? undefined : ink.coverage.toFixed(4)} data-field-min-ink={ink === null ? undefined : Math.round(ink.minArea)} className="absolute inset-x-0 bottom-0" style={{ height: 0, background: tint }} />
+          {/* §51: placed the ladder's STEP_GAP below the title block's end, so what a cap leaves falls below the field, between it and the pressing block. Sized by TitleStep after the pair is chosen (§50, §52): the smallest of the gap, the title stack and the served ink cap, and not drawn past 4 : 1. Until then it draws nothing. */}
+          <div data-mark="identityField" data-field-state="pending" data-field-cap={ink === null ? undefined : ink.cap.toFixed(3)} data-field-ink={ink === null ? undefined : ink.coverage.toFixed(4)} data-field-min-ink={ink === null ? undefined : Math.round(ink.minArea)} className="absolute inset-x-0" style={{ top: STEP_GAP, height: 0, background: tint }} />
         </div>
       )}
       <div data-block="pressing" className="w-full">

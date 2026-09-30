@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
-import { TITLE_MEASURE, TITLE_STEPS, artistStep } from '../src/app/records/[id]/title-steps';
+import { STEP_GAP, TITLE_MEASURE, TITLE_STEPS, artistStep } from '../src/app/records/[id]/title-steps';
 import { readSeventeen } from './seventeen';
 
 /**
@@ -158,7 +158,7 @@ test('§45: the title fits the identity cell on both axes on every record at eve
  * field by the server, from the record's own scene.
  */
 const FIELD_WIDTH = TITLE_MEASURE;
-type FieldReading = { pair: { title: number; artist: number }; state: string | null; term: string | null; gap: number; stack: number; cap: number; ink: number; aspect: number; height: number; width: number; bottom: number; pressingTop: number; trackW: number; runPresent: boolean; canvasInk: number; minInkArea: number };
+type FieldReading = { pair: { title: number; artist: number }; state: string | null; term: string | null; gap: number; stack: number; cap: number; ink: number; aspect: number; height: number; width: number; top: number; bottom: number; artistBottom: number; pressingTop: number; pressingBottom: number; trackBottom: number; trackW: number; runPresent: boolean; canvasInk: number; minInkArea: number };
 const readField = (page: Page) => page.evaluate(async (): Promise<FieldReading | null> => {
   const R = (el: Element) => el.getBoundingClientRect();
   const track = document.querySelector<HTMLElement>('[data-track="content"]');
@@ -179,7 +179,7 @@ const readField = (page: Page) => page.evaluate(async (): Promise<FieldReading |
   const ctx = cv.getContext('2d'); if (!ctx) return null;
   ctx.drawImage(img, 0, 0);
   const d = ctx.getImageData(0, 0, cv.width, cv.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] >= 128) n += 1;
-  return { pair: ladder.pair, state: field.getAttribute('data-field-state'), term: field.getAttribute('data-field-term'), gap: num('data-field-gap'), stack: num('data-field-stack'), cap: num('data-field-cap'), ink: num('data-field-ink'), aspect: num('data-field-aspect'), height: Math.round(R(field).height * 10) / 10, width: R(field).width, bottom: R(field).bottom, pressingTop: R(pressing).top, trackW: track.clientWidth, runPresent: document.querySelector('[data-field="genres"]') !== null, canvasInk: n / (cv.width * cv.height), minInkArea: num('data-field-min-ink') };
+  return { pair: ladder.pair, state: field.getAttribute('data-field-state'), term: field.getAttribute('data-field-term'), gap: num('data-field-gap'), stack: num('data-field-stack'), cap: num('data-field-cap'), ink: num('data-field-ink'), aspect: num('data-field-aspect'), height: Math.round(R(field).height * 10) / 10, width: R(field).width, top: R(field).top, bottom: R(field).bottom, artistBottom: R(host).bottom, pressingTop: R(pressing).top, pressingBottom: R(pressing).bottom, trackBottom: R(track).bottom, trackW: track.clientWidth, runPresent: document.querySelector('[data-field="genres"]') !== null, canvasInk: n / (cv.width * cv.height), minInkArea: num('data-field-min-ink') };
 });
 /** What §50 says the field should be, from the terms the page published. */
 const ruled = (m: FieldReading) => {
@@ -190,7 +190,7 @@ const ruled = (m: FieldReading) => {
   return { term, height, drawn };
 };
 
-test('§50/§52: the tint field is the smallest of gap, title stack and minimum ink over its width, suppressed past 4 : 1, judged on the rendered height -- at 1440 × 900, 1440 × 1200 and 1200 × 1200', async ({ page }) => {
+test('§50/§51/§52: the tint field is the smallest of gap, title stack and minimum ink over its width, suppressed past 4 : 1, judged on the rendered height, and starts the ladder’s 24 below the artist -- at 1440 × 900, 1440 × 1200 and 1200 × 1200', async ({ page }) => {
   test.setTimeout(900_000);
   await login(page);
   const rows = readSeventeen();
@@ -222,7 +222,10 @@ test('§50/§52: the tint field is the smallest of gap, title stack and minimum 
         if (Math.abs(m.height - want.height) > 0.6) bad.push(`${where}: the field is ${m.height} tall, the rule gives ${want.height.toFixed(1)}`);
         if (FIELD_WIDTH / m.height > 4) bad.push(`${where}: drawn at ${(FIELD_WIDTH / m.height).toFixed(2)} : 1, past the floor`);
         if (m.height * m.width > m.minInkArea + 1) bad.push(`${where}: the field (${Math.round(m.height * m.width)}) is larger than the construction's minimum ink (${Math.round(m.minInkArea)})`);
-        if (Math.abs(m.bottom - m.pressingTop) > 1) bad.push(`${where}: the field ends ${m.bottom.toFixed(1)}, the pressing block starts ${m.pressingTop.toFixed(1)} (anchored to it until step 59)`);
+        /* §51 (step 59): the field starts STEP_GAP below the artist's last line (the title block's end); the leftover falls below it; the pressing block keeps the cell's floor. */
+        if (Math.abs(m.top - (m.artistBottom + STEP_GAP)) > 1) bad.push(`${where}: the field starts ${m.top.toFixed(1)}, the artist ends ${m.artistBottom.toFixed(1)}: ${(m.top - m.artistBottom).toFixed(1)} between them, not the ladder's ${STEP_GAP}`);
+        if (m.bottom > m.pressingTop + 0.5) bad.push(`${where}: the field ends ${m.bottom.toFixed(1)}, past the pressing block's top ${m.pressingTop.toFixed(1)}`);
+        if (Math.abs(m.pressingBottom - m.trackBottom) > 1) bad.push(`${where}: the pressing block ends ${m.pressingBottom.toFixed(1)}, the cell's floor is ${m.trackBottom.toFixed(1)}`);
         if (Math.abs(m.width - m.trackW) > 1) bad.push(`${where}: the field is ${m.width} wide, the track ${m.trackW}`);
       } else if (m.height !== 0) bad.push(`${where}: suppressed but ${m.height} tall`);
       const key = `${w}x${h}`;
@@ -233,7 +236,7 @@ test('§50/§52: the tint field is the smallest of gap, title stack and minimum 
         if (!(m.state === 'suppressed' && m.term === 'gap' && FIELD_WIDTH / m.cap <= 4)) bad.push(`${where}: expected suppressed by its gap under a cap that would pass (state ${m.state}, term ${m.term}, gap ${m.gap}, cap ${m.cap})`);
       }
       if (!m.runPresent) bad.push(`${where}: the genres run collapsed under the field`);
-      line.push(`${title} ${m.pair.title}/${m.pair.artist}: ${shown ? `field ${m.height} (${(FIELD_WIDTH / m.height).toFixed(1)}:1, ${m.term})` : `SUPPRESSED by ${m.term} (${(FIELD_WIDTH / Math.max(want.height, 0.1)).toFixed(1)}:1)`} -- gap ${m.gap}, stack ${m.stack}, cap ${m.cap}, ink ${(m.ink * 100).toFixed(1)}%, field/min-ink ${shown ? (m.height * m.width / m.minInkArea).toFixed(2) : '--'}`);
+      line.push(`${title} ${m.pair.title}/${m.pair.artist}: ${shown ? `field ${m.height} (${(FIELD_WIDTH / m.height).toFixed(1)}:1, ${m.term})` : `SUPPRESSED by ${m.term} (${(FIELD_WIDTH / Math.max(want.height, 0.1)).toFixed(1)}:1)`} -- gap ${m.gap}, stack ${m.stack}, cap ${m.cap}, ink ${(m.ink * 100).toFixed(1)}%, field/min-ink ${shown ? (m.height * m.width / m.minInkArea).toFixed(2) : '--'}${shown ? `; artist-to-field ${(m.top - m.artistBottom).toFixed(1)}, field-to-pressing ${(m.pressingTop - m.bottom).toFixed(1)}` : ''}`);
     }
     report.push(`${w} × ${h}:\n    ${line.join('\n    ')}`);
   }
