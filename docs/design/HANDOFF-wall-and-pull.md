@@ -99,6 +99,7 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §50 | The field is weighed against ink, and bounded by its proportion | Why the ground is capped by the construction’s ink rather than its box; why the floor is an aspect; why the two are ruled together, and why a record whose mark cannot carry a ground has none. |
 | §51 | The field grounds the type it sits under | Why the field hangs from the artist rather than sitting on the pressing block, and where the leftover paper goes. |
 | §52 | The ink cap is taken at the construction’s minimum | Why a cap against the construction’s current size forks at every breakpoint, and why its minimum across widths does not; what that costs, and which records it suppresses. |
+| §53 | The About has one cell | Why the lower About row goes; what the cell carries at rest and while editing; where the by-line’s qualifier goes; the two figures needed before build. |
 
 ## Structural sections — pointers
 
@@ -288,11 +289,14 @@ These are the sections the rulings above build on, all in `Record Detail 8a - se
 59. **§51 — the field hangs from the artist.** A supersession of step 57's anchor, in its own step. Start the field 24 below the artist's last line, the ladder's own gap; the pressing block stays on the cell's floor; leftover height falls between the field and the pressing block. Report, per record at 1440 × 900 and 1440 × 1200, the artist-to-field and field-to-pressing distances. Replace the tests that assert the field ends at the pressing block's top.
    > The tint field starts 24 below the artist’s last line, the ladder’s own gap, so the height left over when a cap binds falls between the field and the pressing block, not between the type and the field.
 
+60. **§53 — the About has one cell.** A supersession of built §36 and §42 behaviour, in its own step. First measure the control line's height and whether “Written by Claude · Edit · Delete · Write a new one” fits one line at the About cell's width at 1440 and below §18's fork; report both, and the prose region's line count at 263 with the control line in. If it falls below seven lines, stop and report. Otherwise remove section#snippet; put the control line between the prose and the IMAGES row, with the by-line's qualifier as its hover title; make Write one the absence state's button; edit in place, with Save and Cancel replacing the control line. Replace the tests written from the lower row.
+   > The About cell is the About’s only place: it reads, writes, edits and deletes it, and the lower About row is removed.
+
 **Every row in the table above must appear in a step here.** The completeness check greps the table only, so an index that is current and an order that is eight rulings behind both pass — which is what happened at §W.28–§W.35. Check both.
 
 ## Maintaining this file
 
-**A supersession of a built ruling gets its own build step.** §34 superseded §28's grouping for row 2, and the change went unbuilt because it was sentence four of step 32, which did four other things. §33's fixed rule rows were the same, inside step 29's nine lettered clauses. Nothing in the index catches a supersession: the old tests keep passing because the old behaviour is still there. Steps 22, 23, 24 and 43 to 53 are the convention; step 54 adds a guard and supersedes nothing; steps 55 to 59 are the convention.
+**A supersession of a built ruling gets its own build step.** §34 superseded §28's grouping for row 2, and the change went unbuilt because it was sentence four of step 32, which did four other things. §33's fixed rule rows were the same, inside step 29's nine lettered clauses. Nothing in the index catches a supersession: the old tests keep passing because the old behaviour is still there. Steps 22, 23, 24 and 43 to 53 are the convention; step 54 adds a guard and supersedes nothing; steps 55 to 60 are the convention.
 
 **A test written from a superseded ruling defends the defect.** Building the new ruling turns the suite red, which reads as a regression, so the old behaviour survives every green run. Step 29 alone had three instances: two tests guarding the line cap §33 withdrew, a known-failing test that goes red if the matrix term is built as ruled, and four suites asserting the frame constant §33 retired. So when a section supersedes a built ruling, the tests written from the old one are part of what must change, and the step names them.
 
