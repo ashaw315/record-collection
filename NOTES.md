@@ -32546,3 +32546,38 @@ frame-planes, extended-grid, layout-sweep, colour-distribution and
 record-page-8a, chromium, serial: 55 passed, 3 failed, and the three are
 extended-grid's quarter-disc tests ("the base quarter-disc renders", "the
 disc renders", "both flats render"), held for 60b.
+
+## Step 61 measured, not built: the quarter-disc's host is Images at every width, and it leaves the page edge above the fork (30 Sep)
+
+Step 61 asks which rendered section ends the removed row at the page's
+right edge, and whether it clears §29's bound; the relay added 390, 768,
+960, 1680 and 1920 to the three windows named. Measured on all seventeen at
+eight windows (136 readings, one throwaway run):
+
+| window | host | at the page's right edge | above the triangle's row | host w × h | §29 radius |
+|---|---|---|---|---|---|
+| 390 × 844 | images | yes | yes | 390 × 305 | 98 (a quarter of the width binds) |
+| 768 × 900 | images | yes | yes | 768 × 241 | 150 |
+| 960 × 900 | images | yes | yes | 960 × 241 | 150 |
+| 1000 × 900 | images | yes | yes | 1000 × 241 | 150 |
+| 1440 × 900 | images | yes | yes | 1440 × 241 | 150 |
+| 1440 × 1200 | images | yes | yes | 1440 × 241 | 150 |
+| 1680 × 900 | images | **no**: ends at 1440, 240 of air to its right | yes | 1440 × 241 | 150 |
+| 1920 × 900 | images | **no**: ends at 1440, 480 of air to its right | yes | 1440 × 241 | 150 |
+
+The same on every record: §38's regroup gives Images the whole of the row
+the snippet left, so the row is one section at every width and Images is
+the host everywhere. The rows are pressing-detail, acquisition,
+price-history, images, journal at every window, and the triangle's row
+(journal) is below the host's on all of them. §29's radius is the full 150
+from 768 up (the host is 241 tall, two-thirds of which is 161); at 390 the
+quarter-of-width term binds at 98, a smaller disc, not a suppressed one.
+
+**The fork.** Above §18's fork `wideRowsAt` gives a two-section row its
+surplus columns as air on one side, and the images row is still two
+sections in the model (images and snippet) though one on the page, so
+Images keeps twelve columns at the left and the air falls to its right:
+240 at 1680, 480 at 1920. §26's first condition, a right page edge, then
+fails there and holds at 1440. As step 61 is worded the disc draws at 390
+to 1440 and not at 1680 or 1920, which is the width fork §47 to §52 spent
+two days removing. Reported for Design; not ruled here.
