@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 122 declared rules. Regenerate with
+Generated from 123 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -36,6 +36,7 @@ Generated from 122 declared rules. Regenerate with
 | the number is in band and you cannot say what it would forbid | [A measurement correlated with the signal instead of being it — fifth instance](#a-measurement-correlated-with-the-signal-instead-of-being-it-fifth-instance) |
 | a rule collides with rules that were never in tension, or a figure moves while nothing changes size | [A rule scoped past its subject, and a ratio that moved when nothing did](#a-rule-scoped-past-its-subject-and-a-ratio-that-moved-when-nothing-did) |
 | a page states a fact twice after a rebuild, and getByText starts failing with "resolved to 2 elements" | [A seam that has to move when the screen above it moves](#a-seam-that-has-to-move-when-the-screen-above-it-moves) |
+| a figure that is a ceiling or a floor is serialised with fewer decimals than the comparison against it is made at | [A served bound rounded to nearest is not a bound (30 Sep)](#a-served-bound-rounded-to-nearest-is-not-a-bound-30-sep) |
 | a test you did not touch fails after a design change, and you are about to fix the code | [A test can fail because its ruling was superseded, and the message looks identical](#a-test-can-fail-because-its-ruling-was-superseded-and-the-message-looks-identical) |
 | a long-settled constant has never been wrong, and you cannot say what would have told you | [A value that survived every review because nothing could test it](#a-value-that-survived-every-review-because-nothing-could-test-it) |
 | a verification was requested and the thing it needs was never recorded | [A37 VERIFIED in real use — and the measurement I asked for cannot be taken](#a37-verified-in-real-use-and-the-measurement-i-asked-for-cannot-be-taken) |
@@ -44,7 +45,6 @@ Generated from 122 declared rules. Regenerate with
 | an average across a dataset is being quoted and the set has kinds in it | [RULE: any measurement of Discogs metadata quality must be PER-GENRE. An](#rule-any-measurement-of-discogs-metadata-quality-must-be-per-genre-an) |
 | a comment or summary describes work more rigorously than the work | [RULE: prose is more rigorous than the work it describes, and it is always](#rule-prose-is-more-rigorous-than-the-work-it-describes-and-it-is-always) |
 | a number stands in for a capability and you counted the proxy | [RULE: when a measurement stands in for a capability, count the capability,](#rule-when-a-measurement-stands-in-for-a-capability-count-the-capability) |
-| a figure that is a ceiling or a floor is serialised with fewer decimals than the comparison against it is made at | [Step 58 built: §50 and §52 -- the field capped by the construction's minimum ink, floored by its proportion (30 Sep)](#step-58-built-50-and-52----the-field-capped-by-the-constructions-minimum-ink-floored-by-its-proportion-30-sep) |
 | a ruling moves where a thing sits and says nothing else changes, but the term that sized it was measured from where it used to sit | [Step 59 halted before code: §51's anchor and §50's gap term disagree on three records (30 Sep)](#step-59-halted-before-code-51s-anchor-and-50s-gap-term-disagree-on-three-records-30-sep) |
 | a number surprised you and you have not checked what else was running | [THE APPARATUS GENERATING THE SIGNAL — now a mechanism, not a habit](#the-apparatus-generating-the-signal-now-a-mechanism-not-a-habit) |
 | two surfaces derive from one stored value through different functions and nobody has put them side by side | [The same record renders two colours on two screens](#the-same-record-renders-two-colours-on-two-screens) |
@@ -121,6 +121,7 @@ Generated from 122 declared rules. Regenerate with
 | --- | --- |
 | an error path renders and you have not checked what it exposes | [A 403 on a JS chunk became a credential disclosure](#a-403-on-a-js-chunk-became-a-credential-disclosure) |
 | an output names a thing and you have not checked the thing exists | [A FABRICATED IDENTIFIER IS A DIFFERENT FAILURE CLASS FROM AN UNCERTAIN CLAIM](#a-fabricated-identifier-is-a-different-failure-class-from-an-uncertain-claim) |
+| you are about to start anything that checks out, stashes or rewrites files while a run that reads those files is live | [A lint baseline stashed under a running Playwright job is scheduling luck (30 Sep)](#a-lint-baseline-stashed-under-a-running-playwright-job-is-scheduling-luck-30-sep) |
 | a mutation failed nothing and you are reading that as dead code | [A mutation that fails nothing does not mean the code is dead. Three](#a-mutation-that-fails-nothing-does-not-mean-the-code-is-dead-three) |
 | a rule's stated ground describes what the code does, and nobody has checked that it does | [A predicate correctly applied to a false fact about the build](#a-predicate-correctly-applied-to-a-false-fact-about-the-build) |
 | you built a view to judge something and the view has its own layout rules | [A view that normalises away the signal it was made to show — third instance](#a-view-that-normalises-away-the-signal-it-was-made-to-show-third-instance) |
@@ -32313,7 +32314,10 @@ height (§42), so the supply steps across the fork at any height but 900.
 Reported, not asserted -- the step's assertion is at the reference height
 like §45's.
 
-**A served bound rounded to nearest is not a bound.** Served to one decimal,
+## A served bound rounded to nearest is not a bound (30 Sep)
+
+Found by the §50 spec's area check in step 58: a test catching a precision
+defect rather than a behaviour one. **A served bound rounded to nearest is not a bound.** Served to one decimal,
 the cap rounded UP by up to 0.05 on the records it bound, and the field --
 rounded to the tenth on the client as well -- exceeded the minimum ink by
 12 to 17px² on Gaucho, Dire Straits and The Hurdy Gurdy Man; the spec's
@@ -32323,6 +32327,8 @@ format changed with it, because its `toFixed(1)` was the defect.
 
 **Shape:** measurement-not-governing
 **You are here if:** a figure that is a ceiling or a floor is serialised with fewer decimals than the comparison against it is made at
+
+## A lint baseline stashed under a running Playwright job is scheduling luck (30 Sep)
 
 **A check that rewrites the working tree cannot run beside a measurement
 that reads it.** To get a lint baseline I ran `git stash … stash pop` in
@@ -32364,3 +32370,12 @@ exceeds leading − 24. Step 59 is not built until Design says which reading
 
 **Shape:** measurement-not-governing
 **You are here if:** a ruling moves where a thing sits and says nothing else changes, but the term that sized it was measured from where it used to sit
+
+**Pending when §51 is ruled** (Design is choosing between the two readings
+above and a third: the offset becomes the ladder's 24 rather than the
+artist's leading, which makes the overflow zero by construction and leaves
+every gap-bound record where it is). Re-take the captures at the ruled
+anchor for the set Adam has judged under the old one -- Wired, Bitches
+Brew, Gaucho, Dire Straits, Grave New World and The Hurdy Gurdy Man -- at
+1440 × 900 and 1440 × 1200, so each is a pair against its step57 capture
+rather than a fresh look.
