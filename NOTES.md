@@ -32594,3 +32594,39 @@ the probe page, configured, at 1440 × 900: two rows, eight lines held; the
 probe test asserts both, the margin and not just the floor. The unit form
 returns no qualifier for a record with an About; the cell renders it in the
 editing state from the configured flag.
+
+## Step 60b built: §53 -- the images row is one section, and the snippet leaves the region model (30 Sep)
+
+The section registry drops `snippet` (and with it the mark set: four of
+seven sections carry a mark, not five of eight); the region rows make the
+images row one section, twelve columns at 1440, eight at 960, four at 480,
+one at 390, and one row at every width where it used to split into two at
+one column, so the region lays seven rows at most, not eight; the ornament
+table's disc is beside Images. The regroup guard follows the registry.
+**The compiler found nothing further**: every reference to the section was
+in those tables or came through the type. Above §18's fork the images row
+now takes the wide-row rule as a one-section row and spans fourteen and
+sixteen columns, so no surplus falls beside it as air -- the page-edge
+condition §26 needs and the model was denying (step 61's measurement).
+
+**Six assertions encoded the pair and were re-pointed on §53's authority**,
+each with the reason in the test: the 1440, 960, 480 and 390 span tables,
+the row counts (seven at one column, `MAX_ROWS` 7, no eighth rule), the
+mark count, the disc's host, and the alternation test. **The alternation
+one is a reading Design should see.** With the images row full width, the
+air-carrying rows at sixteen columns are right, left, then the journal's
+fixed left, with two full-width rows between the two lefts. §30's sentence
+is "a row with no air gains one on the side its neighbour above leaves
+filled, so the air alternates down the page rather than stacking into a
+margin"; two lefts separated by full rows cannot stack, so the test now
+asserts the sentence -- no two ADJACENT air-carrying rows share a side --
+rather than alternation over every air-carrying row. If §30 means the
+stronger thing, the journal row's air would need to move right above the
+fork, which is Design's call.
+
+**Verification, step level:** unit `src/app/records`, `test/repo` and
+`test/component` (740); typecheck clean; lint 29, none new; build compiles;
+E2E on chromium serially: extended-grid, layout-sweep, frame-planes,
+colour-distribution, record-page-8a, row-clip-29h, page-fills-viewport,
+page8a-marks -- 57 passed, 3 failed, the three quarter-disc tests, which now
+fail because the disc does not draw on Images (step 61).

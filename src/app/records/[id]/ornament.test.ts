@@ -117,7 +117,7 @@ describe('distribution (§26 over §25)', () => {
   });
 
   it('places nothing in the other six sections — never consecutive, at most one per three', () => {
-    for (const section of ['acquisition', 'tags', 'market', 'images', 'snippet', 'journal']) {
+    for (const section of ['acquisition', 'tags', 'market', 'images', 'journal']) {
       expect(figureAt(section, 'strip'), section).toBeNull();
       expect(figureAt(section, 'air'), section).toBeNull();
     }
@@ -125,7 +125,8 @@ describe('distribution (§26 over §25)', () => {
 
   it('puts the two flats on opposite page edges, tint lower than base', () => {
     expect(FLATS.left, 'tint triangle, left edge, last row’s air').toMatchObject({ shape: 'triangle', step: 'tint', edge: 'left' });
-    expect(FLATS.right, 'base quarter-disc, right edge, beside About').toMatchObject({ shape: 'quarterDisc', step: 'base', edge: 'right', beside: 'snippet' });
+    /* §53 (steps 60b, 61): the lower About row is gone; the disc's host is Images, which ends the row at the page's right edge at every width. */
+    expect(FLATS.right, 'base quarter-disc, right edge, beside Images').toMatchObject({ shape: 'quarterDisc', step: 'base', edge: 'right', beside: 'images' });
     /* Weight lightens down the page: the base flat sits above the tint flat. */
     expect(FLATS.right.rowIndex).toBeLessThan(FLATS.left.rowIndex);
   });

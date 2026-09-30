@@ -66,7 +66,8 @@ export const REGION_ROWS: ReadonlyArray<{ sections: readonly SectionName[]; air:
   { sections: ['pressing-detail'], air: 'after' },
   { sections: ['acquisition', 'tags', 'market'], air: null },
   { sections: ['price-history'], air: null },
-  { sections: ['images', 'snippet'], air: null },
+  /* §53 (step 60b): with the lower About row gone the images row is one section, not a pair, so it spans the row at every width and takes the wide-row rule as a one-section row. */
+  { sections: ['images'], air: null },
   { sections: ['journal'], air: 'before' },
 ];
 
@@ -84,7 +85,7 @@ export const REGION_ROWS: ReadonlyArray<{ sections: readonly SectionName[]; air:
  */
 const SPANS: Record<RegionWidth, ReadonlyArray<ReadonlyArray<number>>> = {
   /* 7+5 · 4/4/4 · 12 · 6/6 · 3+9 */
-  1440: [[7, 5], [4, 4, 4], [12], [6, 6], [3, 9]],
+  1440: [[7, 5], [4, 4, 4], [12], [12], [3, 9]],
   /*
     8 · 4/4 · 8 · 8 · 4/4 · 3+5 air first. §28 wrote 3/3/2 here; §34
     supersedes it: "a grouping list says where sections sit; it does not
@@ -94,10 +95,10 @@ const SPANS: Record<RegionWidth, ReadonlyArray<ReadonlyArray<number>>> = {
     content cell's measure holds its longest label on one line -- is
     asserted across the sweep in `e2e/layout-sweep.spec.ts`.
   */
-  960: [[8], [4, 4], [8], [8], [4, 4], [3, 5]],
+  960: [[8], [4, 4], [8], [8], [8], [3, 5]],
   /* 4 · three rows of 4 · 4 · 2/2 · 4 with the air dropped */
-  480: [[4], [4], [4], [4], [4], [2, 2], [4]],
-  390: [[1], [1], [1], [1], [1], [1], [1], [1]],
+  480: [[4], [4], [4], [4], [4], [4], [4]],
+  390: [[1], [1], [1], [1], [1], [1], [1]],
 };
 
 /** Which row of `SPANS` each of §26's five rows becomes, at a width that splits it. */
@@ -107,7 +108,7 @@ const SPLIT_ROWS: Record<RegionWidth, ReadonlyArray<number>> = {
   960: [1, 2, 1, 1, 1],
   /* Row 2's three sections take a row each; row 4 keeps its pair. */
   480: [1, 3, 1, 1, 1],
-  390: [1, 3, 1, 2, 1],
+  390: [1, 3, 1, 1, 1],
 };
 
 /** Whether a row keeps its air column at a given width. */

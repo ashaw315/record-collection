@@ -145,7 +145,7 @@ export const SECTIONS = [
   'market',
   'price-history',
   'images',
-  'snippet',
+  /* §53 (step 60b): the About has one cell; the snippet is no section of the region. */
   'journal',
 ] as const;
 
@@ -196,10 +196,9 @@ const MARKED: ReadonlySet<SectionName> = new Set<SectionName>([
    * So the predicate was applied correctly to a false fact about the build.
    * Nothing in the reasoning failed: the rule was right, the application was
    * right, the input was wrong. Freshly applied, the snippet is a kind of fact
-   * that appears nowhere above the fold, so it is marked — and would have been
-   * before the frame's journal cell was removed.
+   * that appears nowhere above the fold, so it was marked -- until §53 (step
+   * 60b) took the About into its own cell and the section left the region.
    */
-  'snippet',
 ]);
 
 /**

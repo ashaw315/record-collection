@@ -72,24 +72,25 @@ describe('§28’s groupings, transcribed from the section’s list', () => {
   it('lays every row to §28’s spans, at each of the four widths', () => {
     const spansAt = (width: RegionWidth) => rowsAt(width).map((row) => row.items.map((item) => item.span));
 
-    expect(spansAt(1440), '7+5 · 4/4/4 · 12 · 6/6 · 3+9').toEqual([[7, 5], [4, 4, 4], [12], [6, 6], [3, 9]]);
+    /* §53 (step 60b): the images row is one section of twelve; 6/6 was images and the lower About row. */
+    expect(spansAt(1440), '7+5 · 4/4/4 · 12 · 12 · 3+9').toEqual([[7, 5], [4, 4, 4], [12], [12], [3, 9]]);
     /*
       §34 supersedes §28's 3/3/2: "a grouping list says where sections sit;
       it does not guarantee each one a measure... At eight columns row 2 is
       therefore 4 / 4, then the market at 8." Two columns of 125 gave the
       market's pair cells a 57px measure and set its label one word to a line.
     */
-    expect(spansAt(960), '8 · 4/4 · 8 (the market, §34) · 8 · 4/4 · 3+5').toEqual([[8], [4, 4], [8], [8], [4, 4], [3, 5]]);
+    expect(spansAt(960), '8 · 4/4 · 8 (the market, §34) · 8 · 8 (§53: images alone) · 3+5').toEqual([[8], [4, 4], [8], [8], [8], [3, 5]]);
     /* At 4 the rows that cannot sit side by side stack, apart from row 4's pair. */
-    expect(spansAt(480), 'row 2 stacks three, row 4 keeps its pair, row 5 drops its air').toEqual([[4], [4], [4], [4], [4], [2, 2], [4]]);
-    expect(spansAt(390), 'one fluid column throughout').toEqual([[1], [1], [1], [1], [1], [1], [1], [1]]);
+    expect(spansAt(480), 'row 2 stacks three, row 4 keeps its pair, row 5 drops its air').toEqual([[4], [4], [4], [4], [4], [4], [4]]);
+    expect(spansAt(390), 'one fluid column throughout').toEqual([[1], [1], [1], [1], [1], [1], [1]]);
   });
 
-  it('counts the rows: five at 12, six at 8 (§34 gives the market its own row), seven at 4, eight at one column', () => {
+  it('counts the rows: five at 12, six at 8 (§34 gives the market its own row), seven at 4, seven at one column (§53: the images row no longer splits)', () => {
     expect(rowsAt(1440)).toHaveLength(5);
     expect(rowsAt(960)).toHaveLength(6);
     expect(rowsAt(480)).toHaveLength(7);
-    expect(rowsAt(390)).toHaveLength(8);
+    expect(rowsAt(390)).toHaveLength(7);
   });
 
   it('every row fills its width exactly — no row short, none overflowing', () => {
@@ -179,8 +180,8 @@ describe('placement is derived from the section’s name, not passed in', () => 
     expect(placementOf(1440, 'tags')).toEqual({ start: 5, span: 4, endsRow: false });
     expect(placementOf(1440, 'market')).toEqual({ start: 9, span: 4, endsRow: true });
     expect(placementOf(1440, 'price-history')).toEqual({ start: 1, span: 12, endsRow: true });
-    expect(placementOf(1440, 'images')).toEqual({ start: 1, span: 6, endsRow: false });
-    expect(placementOf(1440, 'snippet')).toEqual({ start: 7, span: 6, endsRow: true });
+    /* §53 (step 60b): with the lower About row gone the images row is one section spanning the row. */
+    expect(placementOf(1440, 'images')).toEqual({ start: 1, span: 12, endsRow: true });
     /* Row 5 is air-first: the journal starts at column 4, after 3 of air. */
     expect(placementOf(1440, 'journal')).toEqual({ start: 4, span: 9, endsRow: true });
   });
@@ -212,7 +213,6 @@ describe('rows are explicit, because a column placement alone does not pick a ro
     expect(rowOf(1440, 'market')).toBe(2);
     expect(rowOf(1440, 'price-history')).toBe(3);
     expect(rowOf(1440, 'images')).toBe(4);
-    expect(rowOf(1440, 'snippet')).toBe(4);
     expect(rowOf(1440, 'journal')).toBe(5);
   });
 
@@ -351,14 +351,15 @@ describe('the breakpoint stylesheet is generated from the same table the tests a
     */
     const blocks = css.split('@media');
     const at = (start: string) => blocks.find((b) => b.startsWith(start)) ?? '';
-    expect(MAX_ROWS, 'the most rows any width lays').toBe(8);
+    expect(MAX_ROWS, 'the most rows any width lays (§53: seven, once the images row stopped splitting at one column)').toBe(7);
     expect(blocks[0], 'five rows at 12').toContain('[data-row-rule="4"] { display: block; }');
     expect(blocks[0]).toContain('[data-row-rule="5"] { display: none; }');
     expect(at(' (max-width: 1439px)'), 'six at 8').toContain('[data-row-rule="5"] { display: block; }');
     expect(at(' (max-width: 1439px)')).toContain('[data-row-rule="6"] { display: none; }');
     expect(at(' (max-width: 959px)'), 'seven at 4').toContain('[data-row-rule="6"] { display: block; }');
-    expect(at(' (max-width: 959px)')).toContain('[data-row-rule="7"] { display: none; }');
-    expect(at(' (max-width: 479px)'), 'eight at one column').toContain('[data-row-rule="7"] { display: block; }');
+    /* §53 (step 60b): seven rows at most, so the rules run 0 to 6 and there is no seventh to hide. */
+    expect(css, 'no eighth rule').not.toContain('data-row-rule="7"');
+    expect(at(' (max-width: 479px)'), 'seven at one column').toContain('[data-row-rule="6"] { display: block; }');
   });
 
   it('drops the air columns where §28 drops them, rather than hiding them everywhere', () => {
@@ -510,12 +511,22 @@ describe('§30: the lower region above 1440 — extra columns become air, altern
       so it is not part of the alternation and is skipped rather than counted
       as a side. Counting it broke the chain at row 4.
     */
-    const sides = wideRowsAt(1920)
-      .filter((row) => row.items.some((item) => item.kind === 'air'))
-      .map((row) => (row.items[0].kind === 'air' ? 'left' : 'right'));
-    expect(sides.length, 'four rows carry air at 16 columns').toBe(4);
+    /*
+      §53 (step 60b): the images row is one section of the full width, like
+      the strip, so three rows carry air at 16 columns, not four -- and the
+      chain is right, left, then the journal's fixed left, with two full rows
+      between the two lefts. §30's sentence is "a row with no air gains one on
+      the side its neighbour above leaves filled, so the air alternates down
+      the page rather than stacking into a margin"; two lefts separated by
+      full-width rows cannot stack, so the assertion is the sentence: no two
+      ADJACENT air-carrying rows share a side. Reported to Design with 60b.
+    */
+    const rows = wideRowsAt(1920);
+    const sideOf = (row: (typeof rows)[number]) => (row.items.some((item) => item.kind === 'air') ? (row.items[0].kind === 'air' ? 'left' : 'right') : null);
+    const sides = rows.map(sideOf);
+    expect(sides.filter((s) => s !== null).length, 'three rows carry air at 16 columns').toBe(3);
     for (let i = 1; i < sides.length; i += 1) {
-      expect(sides[i], `the ${i + 1}th air-carrying row alternates from the one above`).not.toBe(sides[i - 1]);
+      if (sides[i] !== null && sides[i - 1] !== null) expect(sides[i], `row ${i + 1} alternates from the air-carrying row directly above`).not.toBe(sides[i - 1]);
     }
   });
 
@@ -662,5 +673,35 @@ describe('§48: the identity track from 960 to 1439 (step 56; §41\'s half-page 
     expect(upperTrackAt(959), 'below 960 the cells stack in one 480 track (§28)').toBe(480);
     expect(upperTrackAt(480)).toBe(480);
     expect(upperTrackAt(390), 'one fluid column below 480').toBe(390);
+  });
+});
+
+/**
+ * **§53 (step 60b): the images row is one section, not a pair.** "Images
+ * spans the row at every width, so above §18's fork the row takes the
+ * wide-row rule as a one-section row and reaches the page's right edge, with
+ * no surplus left as air beside it." Before this the model still held
+ * images and snippet as a pair though the page showed one, and the wide-row
+ * rule gave the pair's surplus to air on the right: 240 at 1680, 480 at 1920.
+ */
+describe('§53: the images row spans the region at every width', () => {
+  it('is one section of twelve at 1440, ending its row', () => {
+    const row = rowsAt(1440)[3];
+    expect(row.items).toEqual([{ kind: 'section', section: 'images', span: 12 }]);
+  });
+
+  it('takes the surplus columns into its own span above the fork, leaving no air beside it', () => {
+    for (const [viewport, columns] of [[1680, 14], [1920, 16]] as const) {
+      const row = wideRowsAt(viewport).find((r) => r.items.some((i) => i.kind === 'section' && i.section === 'images'));
+      expect(row?.items, `${viewport}`).toEqual([{ kind: 'section', section: 'images', span: columns }]);
+    }
+  });
+
+  it('is one row of the full width at 960, 480 and 390 too', () => {
+    for (const width of [960, 480, 390] as const) {
+      const rows = rowsAt(width).filter((r) => r.items.some((i) => i.kind === 'section' && i.section === 'images'));
+      expect(rows, `${width}: one row`).toHaveLength(1);
+      expect(rows[0].items, `${width}: images alone, full width`).toEqual([{ kind: 'section', section: 'images', span: COLUMNS_AT[width] }]);
+    }
   });
 });

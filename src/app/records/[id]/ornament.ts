@@ -252,6 +252,7 @@ export function figureAt(section: string, place: FigurePlace): Figure | null {
  * five, so "weight lightens down the page" is a comparison and not a claim.
  */
 export const FLATS = {
-  right: { shape: 'quarterDisc', step: 'base', edge: 'right', beside: 'snippet', rowIndex: 3, radius: 150 },
+  /* §53 (steps 60b, 61): the lower About row is gone and Images ends its row at the page's right edge at every width, so the disc's host is Images. */
+  right: { shape: 'quarterDisc', step: 'base', edge: 'right', beside: 'images', rowIndex: 3, radius: 150 },
   left: { shape: 'triangle', step: 'tint', edge: 'left', beside: 'journal', rowIndex: 4 },
 } as const;
