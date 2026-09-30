@@ -32581,3 +32581,16 @@ Images keeps twelve columns at the left and the air falls to its right:
 fails there and holds at 1440. As step 61 is worded the disc draws at 390
 to 1440 and not at 1680 or 1920, which is the width fork §47 to §52 spent
 two days removing. Reported for Design; not ruled here.
+
+## Step 60a corrected again: the sentence leaves the resting control line (30 Sep)
+
+§53's second correction: the qualifier is beside Write one in the absence
+state and beside Save and Cancel while editing, "not in the resting control
+line beside Write a new one" -- there it cost a row, took the line to 98
+characters and three rows at 1440, and left the prose exactly on its
+seven-line floor while doing the least work, since "Written by Claude" is
+the disclosure a record with an About needs. Measured after the change on
+the probe page, configured, at 1440 × 900: two rows, eight lines held; the
+probe test asserts both, the margin and not just the floor. The unit form
+returns no qualifier for a record with an About; the cell renders it in the
+editing state from the configured flag.

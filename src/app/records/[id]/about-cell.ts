@@ -98,12 +98,12 @@ export type AboutControl = 'edit' | 'delete' | 'generate' | 'write';
  * writing to the model.
  */
 export function aboutControlLine({ about, editedAt, configured }: { about: string | null; editedAt: string | null; configured: boolean }): { byline: string | null; qualifier: string | null; controls: AboutControl[] } {
-  const qualifier = configured ? ABOUT_QUALIFIER : null;
-  if (!present(about)) return { byline: null, qualifier, controls: configured ? ['write'] : [] };
+  /* §53, corrected: the sentence sits beside Write one in the absence state and beside Save and Cancel while editing, "not in the resting control line beside Write a new one" -- there it cost a row and did the least work. */
+  if (!present(about)) return { byline: null, qualifier: configured ? ABOUT_QUALIFIER : null, controls: configured ? ['write'] : [] };
   const owned = editedAt !== null;
   return {
     byline: owned ? 'Your own note' : 'Written by Claude',
-    qualifier,
+    qualifier: null,
     controls: configured ? ['edit', 'delete', 'generate'] : ['edit', 'delete'],
   };
 }

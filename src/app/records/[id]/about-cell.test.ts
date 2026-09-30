@@ -123,19 +123,20 @@ describe('§42: no clamp', () => {
  * Where writing is not configured it carries no control, as §36 rules."
  */
 describe('§53: the control line, from the About’s provenance and the deployment', () => {
-  it('names a generated About “Written by Claude” and offers Edit, Delete and Write a new one, with the qualifier as the generate control’s sentence', () => {
-    expect(aboutControlLine({ about: 'Text.', editedAt: null, configured: true })).toEqual({ byline: 'Written by Claude', qualifier: ABOUT_QUALIFIER, controls: ['edit', 'delete', 'generate'] });
+  it('names a generated About “Written by Claude” and offers Edit, Delete and Write a new one, with no sentence in the resting line', () => {
+    /* §53, corrected: on a record that already has an About, "Written by Claude" is the disclosure a reader needs; the sentence cost a row. */
+    expect(aboutControlLine({ about: 'Text.', editedAt: null, configured: true })).toEqual({ byline: 'Written by Claude', qualifier: null, controls: ['edit', 'delete', 'generate'] });
   });
 
-  it('names an edited About “Your own note”; the qualifier stays, because it belongs to the generate control, not the by-line', () => {
-    expect(aboutControlLine({ about: 'Text.', editedAt: '2026-09-30T10:00:00.000Z', configured: true })).toEqual({ byline: 'Your own note', qualifier: ABOUT_QUALIFIER, controls: ['edit', 'delete', 'generate'] });
+  it('names an edited About “Your own note”, with no sentence in the resting line', () => {
+    expect(aboutControlLine({ about: 'Text.', editedAt: '2026-09-30T10:00:00.000Z', configured: true })).toEqual({ byline: 'Your own note', qualifier: null, controls: ['edit', 'delete', 'generate'] });
   });
 
   it('drops Write a new one and its sentence where writing is not configured, keeping Edit and Delete', () => {
     expect(aboutControlLine({ about: 'Text.', editedAt: null, configured: false })).toEqual({ byline: 'Written by Claude', qualifier: null, controls: ['edit', 'delete'] });
   });
 
-  it('offers Write one with the sentence beside it where no About exists and writing is configured, and nothing where it is not', () => {
+  it('offers Write one with the sentence beside it where no About exists and writing is configured, and nothing where it is not: the absence state is where the sentence lives', () => {
     expect(aboutControlLine({ about: null, editedAt: null, configured: true })).toEqual({ byline: null, qualifier: ABOUT_QUALIFIER, controls: ['write'] });
     expect(aboutControlLine({ about: null, editedAt: null, configured: false })).toEqual({ byline: null, qualifier: null, controls: [] });
   });

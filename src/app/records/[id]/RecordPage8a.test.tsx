@@ -357,23 +357,23 @@ describe('§53: the About cell carries its control line, and the absence state i
     expect(controls).toMatch(/uppercase/);
   });
 
-  it('names a generated About “Written by Claude”, then Edit, Delete and Write a new one with the qualifier as its visible sentence, never a title', () => {
+  it('names a generated About “Written by Claude”, then Edit, Delete and Write a new one, with no sentence and no title in the resting line', () => {
     const controls = controlsOf(lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), ...generated }} writingConfigured />)));
     expect(controls).toMatch(/<span[^>]*data-testid="snippet-generated-label"[^>]*>Written by Claude<\/span>/);
     expect(controls).toMatch(/<button[^>]*data-testid="snippet-edit"[^>]*>Edit<\/button>/);
     expect(controls).toMatch(/<button[^>]*data-testid="snippet-delete"[^>]*>Delete<\/button>/);
     expect(controls).toMatch(/<button[^>]*data-testid="snippet-generate"[^>]*>Write a new one<\/button>/);
-    /* §53: "the generate control's own sentence, beside Write a new one... Not a hover title: a title never appears on touch." */
-    expect(controls).toMatch(/snippet-generate"[^>]*>Write a new one<\/button>[^<]*<span[^>]*data-field="about-qualifier"[^>]*>about the music, not a fact this app checked<\/span>/);
+    /* §53, corrected: "the sentence is not in the resting control line beside Write a new one" -- it cost a row and did the least work there. */
+    expect(controls, 'no sentence in the resting line').not.toContain('about-qualifier');
     expect(controls, 'never a title attribute').not.toContain('title=');
   });
 
-  it('names an edited About “Your own note”, and keeps the sentence beside Write a new one, since it is the generate control’s', () => {
+  it('names an edited About “Your own note”, with no sentence and no title', () => {
     const controls = controlsOf(lastCell(renderToStaticMarkup(<RecordPage8a record={{ ...record(null), ...edited }} writingConfigured />)));
     expect(controls).toMatch(/<span[^>]*data-testid="snippet-yours"[^>]*>Your own note<\/span>/);
     expect(controls).not.toContain('title=');
     expect(controls).not.toContain('snippet-generated-label');
-    expect(controls).toContain('data-field="about-qualifier"');
+    expect(controls).not.toContain('about-qualifier');
   });
 
   it('carries no Write a new one where writing is not configured, and no message about it', () => {

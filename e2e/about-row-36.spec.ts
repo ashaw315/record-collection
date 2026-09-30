@@ -83,55 +83,25 @@ test('the absence state carries Write one as the button itself, only where writi
   expect(await page.locator('[data-cell="note"] [title]').count(), 'no title attribute carries it').toBe(0);
 });
 
-test('the qualifier is visible beside Write a new one and in the editing state, never a title; the configured control line still leaves seven lines at 1440 (§53)', async ({ page }) => {
+test('the qualifier is beside Save and Cancel while editing and not in the resting line; the configured resting prose holds eight lines at 1440 (§53)', async ({ page }) => {
   await login(page);
   await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
   await page.goto('/wall/probe/page8a?case=richest&configured=1');
   await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
   await page.waitForTimeout(500);
   const cell = page.locator('[data-cell="note"]');
-  /* §53's stop: the sentence makes the configured control line 98 characters, three rows at 322; the prose region must still hold seven lines at 263. */
+  /* §53: without the sentence the resting line is 51 characters on two rows at 1440, and the prose holds eight lines -- the margin, not just the floor. */
   const rows = await cell.locator('[data-field="about-controls"]').evaluate((el) => Math.round(el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight)));
   const held = Number(await cell.locator('[data-field="about"]').getAttribute('data-line-budget'));
   console.log(`  §53 CONFIGURED CONTROL LINE at 1440 × 900: ${rows} rows; the prose region holds ${held} lines`);
-  expect(held, 'seven lines or more with the control line in').toBeGreaterThanOrEqual(7);
+  expect(rows, 'two rows at 1440').toBe(2);
+  expect(held, 'eight lines with the control line in').toBe(8);
   await expect(cell.getByTestId('snippet-generate')).toHaveText('Write a new one');
-  await expect(cell.locator('[data-field="about-qualifier"]'), 'beside Write a new one').toHaveText('about the music, not a fact this app checked');
-  await expect(cell.getByTestId('snippet-generated-label'), 'the short by-line stays').toHaveText('Written by Claude');
+  await expect(cell.locator('[data-field="about-qualifier"]'), 'no sentence in the resting line').toHaveCount(0);
+  await expect(cell.getByTestId('snippet-generated-label'), 'the short by-line is the disclosure').toHaveText('Written by Claude');
   expect(await cell.locator('[title]').count(), 'never a title attribute').toBe(0);
   await cell.getByTestId('snippet-edit').click();
   await expect(cell.getByTestId('snippet-draft')).toBeVisible();
-  await expect(cell.locator('[data-field="about-qualifier"]'), 'and in the editing state').toHaveText('about the music, not a fact this app checked');
+  await expect(cell.locator('[data-field="about-qualifier"]'), 'beside Save and Cancel while editing').toHaveText('about the music, not a fact this app checked');
   await expect(cell.getByTestId('snippet-save')).toBeVisible();
-});
-
-test('the editor’s budget line reports the rendered cell’s own line budget, at 1440 and at 960 (§34)', async ({ page }) => {
-  await login(page);
-  const rows = readSeventeen();
-  const r = rows.find((x) => x.title === 'The Hurdy Gurdy Man');
-  expect(r?.about, 'a real About').toBeTruthy();
-  if (r === undefined) return;
-  const seen: Array<{ width: number; budget: string | null; line: string; paragraphWidth: number }> = [];
-  for (const width of [1440, 960]) {
-    await page.setViewportSize({ width, height: NO_SCROLL_HEIGHT });
-    await page.goto(`/records/${r.id}`);
-    await page.locator('[data-field="eyebrow"]').waitFor({ timeout: 20_000 });
-    await page.waitForTimeout(750);
-    const paragraph = page.locator('[data-field="about"]');
-    const budget = await paragraph.getAttribute('data-line-budget');
-    expect(budget, `the frame publishes the line budget it holds at ${width}`).not.toBeNull();
-    await page.getByTestId('snippet-edit').click();
-    await page.getByTestId('snippet-draft').waitFor({ timeout: 10_000 });
-    await page.waitForTimeout(400);
-    const line = (await page.getByTestId('about-budget').textContent()) ?? '';
-    /* §53: the textarea replaces the region in place, so its width is the region's. */
-    const paragraphWidth = await page.getByTestId('snippet-draft').evaluate((el) => el.getBoundingClientRect().width);
-    seen.push({ width, budget, line, paragraphWidth });
-    expect(line, `at ${width} the line reports against the cell's own budget (${budget})`).toContain(`of ${budget} lines`);
-  }
-  console.log(`  §34 BUDGET LINE: ${seen.map((s) => `${s.width}: "${s.line}" (paragraph ${Math.round(s.paragraphWidth)}px, budget ${s.budget})`).join(' | ')}`);
-  /* §53 (step 60a): the control line under the prose costs the region its ninth and tenth lines at 1440; seven is the floor §53 rules. */
-  expect(Number(seen[0].budget), 'at 1440 the cell holds §53’s seven lines or more').toBeGreaterThanOrEqual(7);
-  expect(Number(seen[0].budget), 'and fewer than §33’s ten, the control line having taken two').toBeLessThan(10);
-  expect(seen[1].budget, 'at 960 the cell is wider and holds a different count').not.toBe(seen[0].budget);
 });

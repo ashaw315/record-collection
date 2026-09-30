@@ -18,9 +18,10 @@ import { snippetView } from './snippet-view';
  * remaining height and publishes the lines it holds (34/editor-reports-clamp).
  *
  * The controls: the by-line's short form, then Edit, Delete and Write a new
- * one, in the label's 11px mono, with §10b's qualifier as the generate
- * control's own visible sentence -- never a title, which no touch or keyboard
- * reader would see -- beside Write a new one, Write one, and Save and Cancel.
+ * one, in the label's 11px mono. §10b's qualifier is the generate control's
+ * own visible sentence -- never a title, which no touch or keyboard reader
+ * would see -- beside Write one in the absence state and beside Save and
+ * Cancel while editing, and not in the resting line, where it cost a row.
  * Editing replaces the prose in place: the textarea takes the region's
  * measured height and scrolls, the budget line takes the control line's
  * first row and Save and Cancel its second, so at 1440, where the control
@@ -151,10 +152,10 @@ export function AboutCell({ recordId, text, editedAt, configured }: { recordId: 
               <button type="button" data-testid="snippet-cancel" disabled={busy} onClick={() => { setEditing(false); setDraft(text); }} className={CONTROL}>
                 Cancel
               </button>
-              {line.qualifier !== null && (
+              {configured && (
                 <>
                   {' '}
-                  <span data-field="about-qualifier">{line.qualifier}</span>
+                  <span data-field="about-qualifier">{ABOUT_QUALIFIER}</span>
                 </>
               )}
             </div>
@@ -175,8 +176,7 @@ export function AboutCell({ recordId, text, editedAt, configured }: { recordId: 
                 {SEP}
                 <button type="button" data-testid="snippet-generate" disabled={busy} onClick={regenerate} className={CONTROL}>
                   {busy ? 'Working…' : 'Write a new one'}
-                </button>{' '}
-                <span data-field="about-qualifier">{line.qualifier}</span>
+                </button>
               </>
             )}
           </>
