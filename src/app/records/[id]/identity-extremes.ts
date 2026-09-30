@@ -64,6 +64,27 @@ export const WORST = {
   genres: ['Disco', 'Soul', 'Pop', 'Funk', 'Electronic', 'Hi-NRG'],
 } as const;
 
+/**
+ * **A record the app can hold whose title overflows the rendered measure
+ * (§46, 28/collapse-fires).** The collection's worst sets four lines at the
+ * cell's 443 and fits, so the collapse fires on no current record; §46 rules
+ * the collapse a claim about the page, not the collection, so it is tested on
+ * a record that does overflow: five lines at 72 in 443, over a pressing line
+ * that wraps and a run that sets on more than one line, so the run's yield
+ * alone brings the cell back inside. Synthetic and named as such.
+ */
+export const OVERFLOWS_THE_MEASURE = {
+  title: 'Greatest Hits Volume One And Volume Two Remastered',
+  artist: 'Donna Summer',
+  label: 'Casablanca Record and FilmWorks International',
+  catalogNumber: 'NBLP 7119',
+  countryPressed: 'United States',
+  yearPressed: 1979,
+  releaseYear: 1979,
+  format: 'Vinyl, LP, Album',
+  genres: ['Disco', 'Soul', 'Pop', 'Funk', 'Electronic', 'Hi-NRG', 'Boogie', 'Italo Disco', 'Synth-pop', 'Dance-pop'],
+} as const;
+
 /** The same record with a short label and three genres: needs 505 collapsed (465 with the one-line artist), the run need not collapse at all. */
 export const FITS_AFTER_COLLAPSE = {
   ...WORST,
@@ -116,6 +137,7 @@ export const SHORT_TITLE = {
 
 export type IdentityExtreme =
   | typeof WORST
+  | typeof OVERFLOWS_THE_MEASURE
   | typeof FITS_AFTER_COLLAPSE
   | typeof SHORT_TITLE
   | typeof EMPTIEST;

@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
-import { WORST } from '../src/app/records/[id]/identity-extremes';
+import { OVERFLOWS_THE_MEASURE, WORST } from '../src/app/records/[id]/identity-extremes';
 import { seedExtreme } from './identity-extremes';
 import { COLLAPSE_TOLERANCE } from '../src/app/records/[id]/genres-run';
 import { seedImage } from './seed';
@@ -104,7 +104,15 @@ test.beforeEach(async ({ page }) => {
   await login(page);
 });
 
-test('§27: the collapse FIRES on the collection’s worst title, and no fact is clipped', async ({
+/*
+  28/collapse-fires (§47) withdrew "the collapse fires on the collection's worst
+  title": at the rendered 443 measure that title sets four lines and fits. §46
+  rules the collapse a claim about the page -- any record the app can hold --
+  so the claim is kept and re-pointed at a synthetic record whose title does
+  overflow the measure. Not deleted: the mechanism is live and this is the
+  only test that exercises it firing.
+*/
+test('§27, §46: the collapse FIRES on a record the app can hold whose title overflows the measure, and no fact is clipped', async ({
   page,
 }) => {
   /**
@@ -124,7 +132,7 @@ test('§27: the collapse FIRES on the collection’s worst title, and no fact is
    * is the function; this asserts what the COLLECTION does, which is §27's
    * subject. Two tests, two subjects.
    */
-  const id = await seedExtreme(page, WORST);
+  const id = await seedExtreme(page, OVERFLOWS_THE_MEASURE);
   await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
   await page.goto(`/records/${id}`);
   await page.locator('[data-cell="identity"]').first().waitFor({ timeout: 20_000 });
@@ -137,13 +145,13 @@ test('§27: the collapse FIRES on the collection’s worst title, and no fact is
   const ladderRaw = await page.locator('[data-title-step]').first().getAttribute('data-ladder');
   const ladder = JSON.parse(ladderRaw ?? '{}') as { chosen: number; steps: Array<{ size: number; lines: number }> };
   expect(m.lines, `the fixture wraps to the ${ladder.steps.find((st) => st.size === ladder.chosen)?.lines} lines the ladder measured at ${ladder.chosen}`).toBe(ladder.steps.find((st) => st.size === ladder.chosen)?.lines);
-  expect(m.lines, 'and it is the collection’s worst: a multi-line title').toBeGreaterThanOrEqual(3);
+  expect(m.lines, 'a title that overflows the measure: five or more lines at 72').toBeGreaterThanOrEqual(5);
   expect(m.formatHeight, 'a format line for the count to append to').not.toBeNull();
 
   /* The collapse fired: the run is gone and the count stands in its place. */
   expect(m.genresListed, 'the run has yielded').toBe(false);
-  expect(m.count, `the count is the ${WORST.genres.length} withheld`).toBe(WORST.genres.length);
-  for (const name of WORST.genres) {
+  expect(m.count, `the count is the ${OVERFLOWS_THE_MEASURE.genres.length} withheld`).toBe(OVERFLOWS_THE_MEASURE.genres.length);
+  for (const name of OVERFLOWS_THE_MEASURE.genres) {
     expect(m.cellText, `${name} is withheld, not shown`).not.toContain(name);
   }
 

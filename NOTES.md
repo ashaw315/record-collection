@@ -32011,3 +32011,22 @@ every width from 480 up -- would remove all three forks from the type, at
 the cost of leftover width beside the cover in the stretch, which counts
 against the ceiling; and the first row's split it depends on is the one
 that failed above. Design's ruling.
+
+---
+
+## The collapse test re-pointed under §46: a synthetic record that overflows the measure (29 Sep)
+
+`genres-collapse.spec.ts` asserted "§27: the collapse FIRES on the
+collection's worst title", which `28/collapse-fires` (§47) withdrew: at the
+rendered 443 the worst title sets four lines and fits, so the collapse
+fires on no current record. Left red for a round as the finding. §46 rules
+the collapse a claim about the page -- any record the app can hold -- so
+the claim is kept and re-pointed, not deleted: `OVERFLOWS_THE_MEASURE` in
+`identity-extremes.ts` is a synthetic record, named as such, whose title
+sets five lines at 72 in 443 over a wrapping pressing line and a ten-genre
+run, so the run's yield alone brings the cell back inside. The test fires
+the collapse on it and asserts no fact is clipped after. Deletion was
+refused because the mechanism is live and this is the only test that
+exercises it firing; a mechanism with no firing test is the shape §44's
+"carries no ornament" had. That no current record fires it is already
+asserted by the §45 field test's run-present check on the seventeen.
