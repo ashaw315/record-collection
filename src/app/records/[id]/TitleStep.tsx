@@ -109,9 +109,10 @@ export function TitleStep({
         that overflowed also set in four lines, and §33 withdrew the cap.
         `e2e/title-ladder-33.spec.ts` now reads `below` off the page.
       */
+      /* §45's tint field is the gap made visible -- ground, not demand. Summed, it read as content and the ladder fell to 72/40 on every record with a ladder (found 29 Sep). Marks and ground are never demand. */
       const below = [
         ...Array.from(block.children).filter((child) => child !== el),
-        ...Array.from(track.children).filter((child) => child !== block),
+        ...Array.from(track.children).filter((child) => child !== block && !child.matches('[data-mark], [data-ground]')),
       ].reduce((sum, child) => sum + outer(child), 0);
 
       /* The title's measure. */

@@ -141,7 +141,11 @@ test('§45: the tint field fills the leftover between the title and the pressing
         const field = document.querySelector<HTMLElement>('[data-mark="identityField"]');
         if (!track || !title || !pressing) return null;
         const f = field === null ? null : R(field);
-        return { titleBottom: R(title).bottom, pressingTop: R(pressing).top, trackW: track.clientWidth, runPresent: document.querySelector('[data-field="genres"]') !== null, field: f === null ? null : { top: f.top, bottom: f.bottom, width: f.width, height: f.height, bg: getComputedStyle(field as HTMLElement).backgroundColor } };
+        const outer = (el: Element) => { const b = R(el); const s = getComputedStyle(el); return b.height + parseFloat(s.marginTop) + parseFloat(s.marginBottom); };
+        const eyebrow = document.querySelector<HTMLElement>('[data-field="eyebrow"]');
+        const ladder = JSON.parse(document.querySelector('[data-title-step]')?.getAttribute('data-ladder') ?? '{}') as { below: number; pair: { title: number; artist: number } };
+        const belowRendered = (eyebrow === null ? 0 : outer(eyebrow)) + outer(pressing);
+        return { ladderBelow: ladder.below, belowRendered, titleBottom: R(title).bottom, pressingTop: R(pressing).top, trackW: track.clientWidth, runPresent: document.querySelector('[data-field="genres"]') !== null, field: f === null ? null : { top: f.top, bottom: f.bottom, width: f.width, height: f.height, bg: getComputedStyle(field as HTMLElement).backgroundColor } };
       });
       const where = `${r.title.split(':')[0]} @1440x${h}`;
       if (m === null) { bad.push(`${where}: no identity cell`); continue; }
@@ -155,6 +159,8 @@ test('§45: the tint field fills the leftover between the title and the pressing
       if (m.field.bg === 'rgba(0, 0, 0, 0)') bad.push(`${where}: the field has no fill`);
       /* The field is the gap made visible, not demand: the genres run must not yield to it (found 29 Sep: the run's measure summed the grown field and collapsed on every record with room). */
       if (!m.runPresent) bad.push(`${where}: the genres run collapsed under the field`);
+      /* And the ladder's demand does not count it either: `below` is the eyebrow plus the pressing block, not the field (found 29 Sep by the fork table: every record read 72/40 with the field summed in). */
+      if (Math.abs(m.ladderBelow - m.belowRendered) > 1.5) bad.push(`${where}: the ladder's below is ${m.ladderBelow} where the eyebrow plus pressing block render ${m.belowRendered.toFixed(1)} -- the field is being counted as demand`);
       seen.push(`${r.title.split(':')[0]} ${Math.round(m.field.height)}`);
     }
   }
