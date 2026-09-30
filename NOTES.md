@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 125 declared rules. Regenerate with
+Generated from 126 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -69,6 +69,7 @@ Generated from 125 declared rules. Regenerate with
 | a rule holds, and you are not sure whether the code or a guard is holding it | [A rule kept by a backstop reads identically to a rule kept by the code](#a-rule-kept-by-a-backstop-reads-identically-to-a-rule-kept-by-the-code) |
 | a test passes and its fixture may not have created the condition | [A test fixture can fail to create the condition its test claims — and](#a-test-fixture-can-fail-to-create-the-condition-its-test-claims-and) |
 | a test computes a real number from real data and you cannot say which value it would reject | [A TEST THAT MEASURES A SET CONSTRAINS NO MEMBER OF IT](#a-test-that-measures-a-set-constrains-no-member-of-it) |
+| a test replaces a third-party SDK, a network client or a store with a spy or a fixture, and nothing anywhere crosses that boundary for real | [A test that replaces an external adapter proves the caller and never the boundary (30 Sep)](#a-test-that-replaces-an-external-adapter-proves-the-caller-and-never-the-boundary-30-sep) |
 | a test measures something real, but not the thing its name promises | [An assertion aimed at a proxy for the thing it names — third instance](#an-assertion-aimed-at-a-proxy-for-the-thing-it-names-third-instance) |
 | a control is enabled, visible, motionless, inside the viewport — and does not respond | [An empty cell is a click target, and it is invisible in a screenshot](#an-empty-cell-is-a-click-target-and-it-is-invisible-in-a-screenshot) |
 | a property regressed three times and every pure function covering it still passes | [AN INLINE COMPUTATION IS INVISIBLE TO EVERY LAYER OF THE SUITE BY CONSTRUCTION](#an-inline-computation-is-invisible-to-every-layer-of-the-suite-by-construction) |
@@ -32658,3 +32659,124 @@ serially, one whole run of extended-grid, layout-sweep, frame-planes,
 colour-distribution, record-page-8a, row-clip-29h, page-fills-viewport,
 page8a-marks, snippet and about-row-36: 68 passed, 1 failed on the
 triangle reading; extended-grid alone after that fix: 21 passed.
+
+## The image upload 500: the blob SDK chose OIDC over the read-write token, and the store refused the environment (30 Sep)
+
+Uploading a second image to Bitches Brew returned 500 on the deployed
+site. Production runs `3aa7ae8` of 12 September, so none of the §53 work
+was in front of Adam; the upload route is unchanged since 18 August and the
+server-side diff from before the §53 drop to HEAD is empty, so the bisect
+across the four commits had nothing to bisect. Vercel exposes no runtime
+logs to the CLI on this project, for any request. Reproduced locally
+against the real store: the ordinary development server (reads
+`.env.local`, production Neon, the real blob token), a minted session, a
+179-byte PNG posted as `back` to the route. It threw before the insert, so
+nothing was written anywhere:
+
+    [POST /api/records/:id/images] The image could not be stored.
+    ← caused by: Vercel Blob: OIDC is enabled for this project, but not for
+    the "development" environment.
+
+**The cause is the credential the SDK picks, not the token.** `@vercel/blob`
+2.8 resolves credentials OIDC-first (`chunk-YYMLUMXS.js`, the token
+resolver): it asks `@vercel/oidc` for a token before it reads
+`BLOB_READ_WRITE_TOKEN`, and uses the read-write token only when no OIDC
+token can be had. In development the OIDC helper obtains one through the
+CLI's project link; in production `VERCEL_OIDC_TOKEN` is in the
+environment (a production pull lists it). Either way the SDK presents an
+OIDC token to the store, and the store answers that OIDC is enabled for the
+project but not for that environment: error code
+`oidc_environment_not_allowed`. The read-write token is present, unchanged
+since 25 August (created the day the cover upload last worked), scoped to
+Production and Preview, and its store segment matches `BLOB_STORE_ID`; it
+is simply never used. So the thing that changed between 25 August and now
+is the project's OIDC federation setting on Vercel, which no commit carries
+and no test could have seen. Two fixes are possible and neither is taken
+here: pass the read-write token explicitly to `put` and `del` in
+`src/lib/storage/blob.ts`, which the SDK honours over OIDC, or allow the
+store for the project's environments in the dashboard.
+
+**The form shows the wrapper's sentence verbatim** ("Internal server error")
+because the client falls back to the body's message; whether a 500 should
+reach the page in those words is Design's, once this is fixed.
+
+## A test that replaces an external adapter proves the caller and never the boundary (30 Sep)
+
+**Shape:** check-cannot-fail
+**You are here if:** a test replaces a third-party SDK, a network client or a store with a spy or a fixture, and nothing anywhere crosses that boundary for real
+
+The route's thirty integration tests replace the whole blob adapter with a
+spy, so the real SDK, the real credential resolution and the real store are
+exercised by nothing, and a store-side refusal passed green here for as
+long as it has existed. Third instance of the shape in a month: the
+artist strings (one stand-in for seventeen), the fixture's single terracotta
+(one for sixteen spine colours), and now the adapter. The rule, as
+proposed and kept:
+
+**Every external boundary -- blob store, mail, payment, any third-party SDK
+or remote API -- carries either one test that crosses it for real, gated
+on the credential and failing loudly when the credential is present but
+the crossing fails, or a stated note in NOTES naming the boundary and
+saying nothing does.** A spy on the adapter tests the caller's contract
+with the adapter, which is worth having; it never tests the adapter's
+contract with the world. The Neon transaction test is the pattern to copy:
+skips when its branch is absent, refuses a wrong host, fails when the
+crossing fails.
+
+**The boundaries in this repository, and what crosses them (30 Sep):**
+
+| boundary | reached from | crossed for real by | note |
+|---|---|---|---|
+| Vercel Blob (`@vercel/blob`) | `src/lib/storage/blob.ts` | nothing | adapter replaced by a spy in four integration tests; this entry is the stated note until a gated real test exists |
+| Anthropic (`@anthropic-ai/sdk`) | `src/lib/llm/*` | nothing, by rule (CLAUDE.md: never a live call) | mocked in five integration tests; the rule forbids the crossing, so the note stands in |
+| Discogs (`api.discogs.com`, `i.discogs.com`) | `src/lib/discogs/client.ts` | nothing, by rule; `no-live-calls.ts` and `test/repo/no-live-discogs.test.ts` enforce the absence | fixture payloads under `test/fixtures/` |
+| MusicBrainz (`src/lib/musicbrainz/*`) | artist resolution, lineup walk | nothing | mocked in the artist and lineup integration tests |
+| Neon serverless driver (`@neondatabase/serverless`) | `src/db/client.ts` | `test/integration/neon-transactions.test.ts`, gated on `NEON_TEST_DATABASE_URL`, three states | the model for the others |
+
+No tests are written for these in this entry; the list is the deliverable.
+
+## The contact sheet, against the real collection: what the fixture stood in for (30 Sep)
+
+Run from `playwright.sheet.config.ts` and `e2e/sheet/contact-sheet.sheet.ts`:
+a separate configuration with no global setup or teardown, the server in
+the ordinary development environment reading `.env.local` (production Neon
+over HTTP), a spec that loads pages and registers no cleanup, and a login
+from `E2E_PASSWORD` at run time or a session token minted locally from the
+signing secret and read from a file -- never the test hash, and neither
+value printed anywhere. Nothing in the run writes: the session is a signed
+cookie and every request is a GET. All seventeen records at 390, 768, 1000,
+1440 and 1920 at 900 tall and 1440 and 1920 at 1200 tall: 119 full-page
+captures in about 200 seconds, named by the tint field's height or its
+suppression, with `manifest.json` and `MANIFEST.md` beside them under
+`docs/captures/sheet/`.
+
+**Sixteen distinct colours, sixteen covers.** Every record with a spine
+colour has its own: the tint served runs from a warm grey on Believer
+(rgb 162 166 169) through olives on Gaucho and Bitches Brew (194 194 125,
+193 193 153), the fixture's terracotta on Never Too Much alone, to blues on
+Wired, The Soft Parade and Mind Games and a green on The Hurdy Gurdy Man.
+Sixteen covers rendered at all seven windows; The Best Of The Blues Project
+is the one flat cover cell and the one ink fallback.
+
+**What the served colour changes in what draws: nothing among the sixteen,
+and five marks on the seventeenth.** Every record with a ladder draws the
+same ladder-dependent marks at every viewport (the tint field where its
+terms allow, the section bars, the figures, both flats), the same face-step
+histogram (six ink, ten grey, two base), and the field's state and pair
+follow the type, not the colour. The colour changes only what things look
+like. The no-cover record draws the disc at ink and the still at ink, and
+draws NO tint field, NO section bars, NO figures and NEITHER flat. §5.3
+says "the fallback is ink for all eight marks... The marks must not be
+dropped: omitting them would let a missing image change the composition's
+structure." The lower region's section primitive draws figures and flats
+only when it has a ladder and bars only when it has a base, so on this
+record it omits them. Reported for Design; not fixed.
+
+**Two assertions in the spec are labelled for what they are.** The disc's
+fallback fill `oklch(0.19 0.008 60 / 0.55)` is a change-detector for a
+source constant: §5.3 fixes the value as ink and §5.1 says colour marks are
+"never at an opacity variant", and the 0.55 alpha exists only in
+`ConstructionStill.tsx` since 12 Sep. And "no base served" cannot tell
+§5.3's no-cover case from a null spine colour, because the spec's model
+(SPEC §7.8: the colour derives from the cover alone) makes them one fact
+and the only real record has both.

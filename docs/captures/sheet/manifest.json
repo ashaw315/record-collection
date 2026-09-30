@@ -1,0 +1,4842 @@
+{
+ "takenAt": "2026-09-30T23:52:15.170Z",
+ "seconds": 191,
+ "readings": [
+  {
+   "record": "The Best Of The Blues Project",
+   "id": "d5c483aa-047c-475f-8439-2adc2a4e9b0a",
+   "viewport": "390×900",
+   "width": 390,
+   "height": 900,
+   "ladder": "ink",
+   "tint": "oklch(0.19 0.008 60 / 0.55)",
+   "base": null,
+   "coverRendered": false,
+   "coverCellFlat": true,
+   "field": null,
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "ink": 6,
+    "grey": 10,
+    "base": 2
+   },
+   "marks": [
+    "coverFrame",
+    "disc",
+    "journalEdge",
+    "releaseYearField",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-the-best-of-the-blues-project-390x900-ink.png"
+  },
+  {
+   "record": "The Best Of The Blues Project",
+   "id": "d5c483aa-047c-475f-8439-2adc2a4e9b0a",
+   "viewport": "768×900",
+   "width": 768,
+   "height": 900,
+   "ladder": "ink",
+   "tint": "oklch(0.19 0.008 60 / 0.55)",
+   "base": null,
+   "coverRendered": false,
+   "coverCellFlat": true,
+   "field": null,
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "ink": 6,
+    "grey": 10,
+    "base": 2
+   },
+   "marks": [
+    "coverFrame",
+    "disc",
+    "journalEdge",
+    "releaseYearField",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-the-best-of-the-blues-project-768x900-ink.png"
+  },
+  {
+   "record": "The Best Of The Blues Project",
+   "id": "d5c483aa-047c-475f-8439-2adc2a4e9b0a",
+   "viewport": "1000×900",
+   "width": 1000,
+   "height": 900,
+   "ladder": "ink",
+   "tint": "oklch(0.19 0.008 60 / 0.55)",
+   "base": null,
+   "coverRendered": false,
+   "coverCellFlat": true,
+   "field": null,
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "ink": 6,
+    "grey": 10,
+    "base": 2
+   },
+   "marks": [
+    "coverFrame",
+    "disc",
+    "journalEdge",
+    "releaseYearField",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-the-best-of-the-blues-project-1000x900-ink.png"
+  },
+  {
+   "record": "The Best Of The Blues Project",
+   "id": "d5c483aa-047c-475f-8439-2adc2a4e9b0a",
+   "viewport": "1440×900",
+   "width": 1440,
+   "height": 900,
+   "ladder": "ink",
+   "tint": "oklch(0.19 0.008 60 / 0.55)",
+   "base": null,
+   "coverRendered": false,
+   "coverCellFlat": true,
+   "field": null,
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "ink": 6,
+    "grey": 10,
+    "base": 2
+   },
+   "marks": [
+    "coverFrame",
+    "disc",
+    "drawn",
+    "journalEdge",
+    "releaseYearField",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-the-best-of-the-blues-project-1440x900-ink.png"
+  },
+  {
+   "record": "The Best Of The Blues Project",
+   "id": "d5c483aa-047c-475f-8439-2adc2a4e9b0a",
+   "viewport": "1920×900",
+   "width": 1920,
+   "height": 900,
+   "ladder": "ink",
+   "tint": "oklch(0.19 0.008 60 / 0.55)",
+   "base": null,
+   "coverRendered": false,
+   "coverCellFlat": true,
+   "field": null,
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "ink": 6,
+    "grey": 10,
+    "base": 2
+   },
+   "marks": [
+    "coverFrame",
+    "disc",
+    "drawn",
+    "journalEdge",
+    "releaseYearField",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-the-best-of-the-blues-project-1920x900-ink.png"
+  },
+  {
+   "record": "The Best Of The Blues Project",
+   "id": "d5c483aa-047c-475f-8439-2adc2a4e9b0a",
+   "viewport": "1440×1200",
+   "width": 1440,
+   "height": 1200,
+   "ladder": "ink",
+   "tint": "oklch(0.19 0.008 60 / 0.55)",
+   "base": null,
+   "coverRendered": false,
+   "coverCellFlat": true,
+   "field": null,
+   "pair": {
+    "title": 96,
+    "artist": 54
+   },
+   "faces": {
+    "ink": 6,
+    "grey": 10,
+    "base": 2
+   },
+   "marks": [
+    "coverFrame",
+    "disc",
+    "drawn",
+    "journalEdge",
+    "releaseYearField",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-the-best-of-the-blues-project-1440x1200-ink.png"
+  },
+  {
+   "record": "The Best Of The Blues Project",
+   "id": "d5c483aa-047c-475f-8439-2adc2a4e9b0a",
+   "viewport": "1920×1200",
+   "width": 1920,
+   "height": 1200,
+   "ladder": "ink",
+   "tint": "oklch(0.19 0.008 60 / 0.55)",
+   "base": null,
+   "coverRendered": false,
+   "coverCellFlat": true,
+   "field": null,
+   "pair": {
+    "title": 96,
+    "artist": 54
+   },
+   "faces": {
+    "ink": 6,
+    "grey": 10,
+    "base": 2
+   },
+   "marks": [
+    "coverFrame",
+    "disc",
+    "drawn",
+    "journalEdge",
+    "releaseYearField",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-the-best-of-the-blues-project-1920x1200-ink.png"
+  },
+  {
+   "record": "Never Too Much",
+   "id": "d7047c62-149e-42fa-8cda-fac3f90c47cc",
+   "viewport": "390×900",
+   "width": 390,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(212, 149, 114)",
+   "base": "rgb(178, 118, 83)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 130.644,
+    "aspect": "none"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "base": 2,
+    "grey": 10,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-never-too-much-390x900-suppressed.png"
+  },
+  {
+   "record": "Never Too Much",
+   "id": "d7047c62-149e-42fa-8cda-fac3f90c47cc",
+   "viewport": "768×900",
+   "width": 768,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(212, 149, 114)",
+   "base": "rgb(178, 118, 83)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 130.6,
+    "cap": 130.644,
+    "aspect": "3.39"
+   },
+   "pair": {
+    "title": 96,
+    "artist": 54
+   },
+   "faces": {
+    "base": 2,
+    "grey": 10,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-never-too-much-768x900-h131.png"
+  },
+  {
+   "record": "Never Too Much",
+   "id": "d7047c62-149e-42fa-8cda-fac3f90c47cc",
+   "viewport": "1000×900",
+   "width": 1000,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(212, 149, 114)",
+   "base": "rgb(178, 118, 83)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 130.6,
+    "cap": 130.644,
+    "aspect": "3.39"
+   },
+   "pair": {
+    "title": 96,
+    "artist": 54
+   },
+   "faces": {
+    "base": 2,
+    "grey": 10,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-never-too-much-1000x900-h131.png"
+  },
+  {
+   "record": "Never Too Much",
+   "id": "d7047c62-149e-42fa-8cda-fac3f90c47cc",
+   "viewport": "1440×900",
+   "width": 1440,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(212, 149, 114)",
+   "base": "rgb(178, 118, 83)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 130.6,
+    "cap": 130.644,
+    "aspect": "3.39"
+   },
+   "pair": {
+    "title": 96,
+    "artist": 54
+   },
+   "faces": {
+    "base": 2,
+    "grey": 10,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-never-too-much-1440x900-h131.png"
+  },
+  {
+   "record": "Never Too Much",
+   "id": "d7047c62-149e-42fa-8cda-fac3f90c47cc",
+   "viewport": "1920×900",
+   "width": 1920,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(212, 149, 114)",
+   "base": "rgb(178, 118, 83)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 130.6,
+    "cap": 130.644,
+    "aspect": "3.39"
+   },
+   "pair": {
+    "title": 96,
+    "artist": 54
+   },
+   "faces": {
+    "base": 2,
+    "grey": 10,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-never-too-much-1920x900-h131.png"
+  },
+  {
+   "record": "Never Too Much",
+   "id": "d7047c62-149e-42fa-8cda-fac3f90c47cc",
+   "viewport": "1440×1200",
+   "width": 1440,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(212, 149, 114)",
+   "base": "rgb(178, 118, 83)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 130.6,
+    "cap": 130.644,
+    "aspect": "3.39"
+   },
+   "pair": {
+    "title": 96,
+    "artist": 54
+   },
+   "faces": {
+    "base": 2,
+    "grey": 10,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-never-too-much-1440x1200-h131.png"
+  },
+  {
+   "record": "Never Too Much",
+   "id": "d7047c62-149e-42fa-8cda-fac3f90c47cc",
+   "viewport": "1920×1200",
+   "width": 1920,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(212, 149, 114)",
+   "base": "rgb(178, 118, 83)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 130.6,
+    "cap": 130.644,
+    "aspect": "3.39"
+   },
+   "pair": {
+    "title": 96,
+    "artist": 54
+   },
+   "faces": {
+    "base": 2,
+    "grey": 10,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-never-too-much-1920x1200-h131.png"
+  },
+  {
+   "record": "Dire Straits",
+   "id": "fadd5c0e-5146-4421-aebc-cd53eed2f8b1",
+   "viewport": "390×900",
+   "width": 390,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(202, 189, 170)",
+   "base": "rgb(181, 169, 150)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 128.475,
+    "aspect": "none"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "base": 2,
+    "grey": 10,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-dire-straits-390x900-suppressed.png"
+  },
+  {
+   "record": "Dire Straits",
+   "id": "fadd5c0e-5146-4421-aebc-cd53eed2f8b1",
+   "viewport": "768×900",
+   "width": 768,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(202, 189, 170)",
+   "base": "rgb(181, 169, 150)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 128.475,
+    "aspect": "12.56"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "base": 2,
+    "grey": 10,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-dire-straits-768x900-suppressed.png"
+  },
+  {
+   "record": "Dire Straits",
+   "id": "fadd5c0e-5146-4421-aebc-cd53eed2f8b1",
+   "viewport": "1000×900",
+   "width": 1000,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(202, 189, 170)",
+   "base": "rgb(181, 169, 150)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 128.475,
+    "aspect": "12.56"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "base": 2,
+    "grey": 10,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-dire-straits-1000x900-suppressed.png"
+  },
+  {
+   "record": "Dire Straits",
+   "id": "fadd5c0e-5146-4421-aebc-cd53eed2f8b1",
+   "viewport": "1440×900",
+   "width": 1440,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(202, 189, 170)",
+   "base": "rgb(181, 169, 150)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 128.475,
+    "aspect": "12.56"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "base": 2,
+    "grey": 10,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-dire-straits-1440x900-suppressed.png"
+  },
+  {
+   "record": "Dire Straits",
+   "id": "fadd5c0e-5146-4421-aebc-cd53eed2f8b1",
+   "viewport": "1920×900",
+   "width": 1920,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(202, 189, 170)",
+   "base": "rgb(181, 169, 150)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 128.475,
+    "aspect": "12.56"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "base": 2,
+    "grey": 10,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-dire-straits-1920x900-suppressed.png"
+  },
+  {
+   "record": "Dire Straits",
+   "id": "fadd5c0e-5146-4421-aebc-cd53eed2f8b1",
+   "viewport": "1440×1200",
+   "width": 1440,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(202, 189, 170)",
+   "base": "rgb(181, 169, 150)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 128.4,
+    "cap": 128.475,
+    "aspect": "3.45"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "base": 2,
+    "grey": 10,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-dire-straits-1440x1200-h128.png"
+  },
+  {
+   "record": "Dire Straits",
+   "id": "fadd5c0e-5146-4421-aebc-cd53eed2f8b1",
+   "viewport": "1920×1200",
+   "width": 1920,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(202, 189, 170)",
+   "base": "rgb(181, 169, 150)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 128.4,
+    "cap": 128.475,
+    "aspect": "3.45"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "base": 2,
+    "grey": 10,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-dire-straits-1920x1200-h128.png"
+  },
+  {
+   "record": "Grave New World",
+   "id": "158a3163-6a56-4673-8f88-27e7b2aec724",
+   "viewport": "390×900",
+   "width": 390,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(171, 165, 155)",
+   "base": "rgb(139, 133, 124)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 145.187,
+    "aspect": "none"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-grave-new-world-390x900-suppressed.png"
+  },
+  {
+   "record": "Grave New World",
+   "id": "158a3163-6a56-4673-8f88-27e7b2aec724",
+   "viewport": "768×900",
+   "width": 768,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(171, 165, 155)",
+   "base": "rgb(139, 133, 124)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 145.187,
+    "aspect": "7.23"
+   },
+   "pair": {
+    "title": 96,
+    "artist": 54
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-grave-new-world-768x900-suppressed.png"
+  },
+  {
+   "record": "Grave New World",
+   "id": "158a3163-6a56-4673-8f88-27e7b2aec724",
+   "viewport": "1000×900",
+   "width": 1000,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(171, 165, 155)",
+   "base": "rgb(139, 133, 124)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 145.187,
+    "aspect": "7.23"
+   },
+   "pair": {
+    "title": 96,
+    "artist": 54
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-grave-new-world-1000x900-suppressed.png"
+  },
+  {
+   "record": "Grave New World",
+   "id": "158a3163-6a56-4673-8f88-27e7b2aec724",
+   "viewport": "1440×900",
+   "width": 1440,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(171, 165, 155)",
+   "base": "rgb(139, 133, 124)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 145.187,
+    "aspect": "7.23"
+   },
+   "pair": {
+    "title": 96,
+    "artist": 54
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-grave-new-world-1440x900-suppressed.png"
+  },
+  {
+   "record": "Grave New World",
+   "id": "158a3163-6a56-4673-8f88-27e7b2aec724",
+   "viewport": "1920×900",
+   "width": 1920,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(171, 165, 155)",
+   "base": "rgb(139, 133, 124)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 145.187,
+    "aspect": "7.23"
+   },
+   "pair": {
+    "title": 96,
+    "artist": 54
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-grave-new-world-1920x900-suppressed.png"
+  },
+  {
+   "record": "Grave New World",
+   "id": "158a3163-6a56-4673-8f88-27e7b2aec724",
+   "viewport": "1440×1200",
+   "width": 1440,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(171, 165, 155)",
+   "base": "rgb(139, 133, 124)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 145.187,
+    "aspect": "5.41"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-grave-new-world-1440x1200-suppressed.png"
+  },
+  {
+   "record": "Grave New World",
+   "id": "158a3163-6a56-4673-8f88-27e7b2aec724",
+   "viewport": "1920×1200",
+   "width": 1920,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(171, 165, 155)",
+   "base": "rgb(139, 133, 124)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 145.187,
+    "aspect": "5.41"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-grave-new-world-1920x1200-suppressed.png"
+  },
+  {
+   "record": "Psychic",
+   "id": "bac64213-9673-4ae7-862f-fc5b17dc16d3",
+   "viewport": "390×900",
+   "width": 390,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(174, 162, 169)",
+   "base": "rgb(142, 130, 138)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 160.52,
+    "aspect": "none"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-psychic-390x900-suppressed.png"
+  },
+  {
+   "record": "Psychic",
+   "id": "bac64213-9673-4ae7-862f-fc5b17dc16d3",
+   "viewport": "768×900",
+   "width": 768,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(174, 162, 169)",
+   "base": "rgb(142, 130, 138)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 160.5,
+    "cap": 160.52,
+    "aspect": "2.76"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-psychic-768x900-h161.png"
+  },
+  {
+   "record": "Psychic",
+   "id": "bac64213-9673-4ae7-862f-fc5b17dc16d3",
+   "viewport": "1000×900",
+   "width": 1000,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(174, 162, 169)",
+   "base": "rgb(142, 130, 138)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 160.5,
+    "cap": 160.52,
+    "aspect": "2.76"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-psychic-1000x900-h161.png"
+  },
+  {
+   "record": "Psychic",
+   "id": "bac64213-9673-4ae7-862f-fc5b17dc16d3",
+   "viewport": "1440×900",
+   "width": 1440,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(174, 162, 169)",
+   "base": "rgb(142, 130, 138)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 160.5,
+    "cap": 160.52,
+    "aspect": "2.76"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-psychic-1440x900-h161.png"
+  },
+  {
+   "record": "Psychic",
+   "id": "bac64213-9673-4ae7-862f-fc5b17dc16d3",
+   "viewport": "1920×900",
+   "width": 1920,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(174, 162, 169)",
+   "base": "rgb(142, 130, 138)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 160.5,
+    "cap": 160.52,
+    "aspect": "2.76"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-psychic-1920x900-h161.png"
+  },
+  {
+   "record": "Psychic",
+   "id": "bac64213-9673-4ae7-862f-fc5b17dc16d3",
+   "viewport": "1440×1200",
+   "width": 1440,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(174, 162, 169)",
+   "base": "rgb(142, 130, 138)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 160.5,
+    "cap": 160.52,
+    "aspect": "2.76"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-psychic-1440x1200-h161.png"
+  },
+  {
+   "record": "Psychic",
+   "id": "bac64213-9673-4ae7-862f-fc5b17dc16d3",
+   "viewport": "1920×1200",
+   "width": 1920,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(174, 162, 169)",
+   "base": "rgb(142, 130, 138)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 160.5,
+    "cap": 160.52,
+    "aspect": "2.76"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-psychic-1920x1200-h161.png"
+  },
+  {
+   "record": "Wired",
+   "id": "48461309-e0e0-42a8-b903-f60642c923ca",
+   "viewport": "390×900",
+   "width": 390,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(108, 178, 197)",
+   "base": "rgb(76, 145, 164)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 86.223,
+    "aspect": "none"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-wired-390x900-suppressed.png"
+  },
+  {
+   "record": "Wired",
+   "id": "48461309-e0e0-42a8-b903-f60642c923ca",
+   "viewport": "768×900",
+   "width": 768,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(108, 178, 197)",
+   "base": "rgb(76, 145, 164)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "cap",
+    "height": 0,
+    "cap": 86.223,
+    "aspect": "5.14"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-wired-768x900-suppressed.png"
+  },
+  {
+   "record": "Wired",
+   "id": "48461309-e0e0-42a8-b903-f60642c923ca",
+   "viewport": "1000×900",
+   "width": 1000,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(108, 178, 197)",
+   "base": "rgb(76, 145, 164)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "cap",
+    "height": 0,
+    "cap": 86.223,
+    "aspect": "5.14"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-wired-1000x900-suppressed.png"
+  },
+  {
+   "record": "Wired",
+   "id": "48461309-e0e0-42a8-b903-f60642c923ca",
+   "viewport": "1440×900",
+   "width": 1440,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(108, 178, 197)",
+   "base": "rgb(76, 145, 164)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "cap",
+    "height": 0,
+    "cap": 86.223,
+    "aspect": "5.14"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-wired-1440x900-suppressed.png"
+  },
+  {
+   "record": "Wired",
+   "id": "48461309-e0e0-42a8-b903-f60642c923ca",
+   "viewport": "1920×900",
+   "width": 1920,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(108, 178, 197)",
+   "base": "rgb(76, 145, 164)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "cap",
+    "height": 0,
+    "cap": 86.223,
+    "aspect": "5.14"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-wired-1920x900-suppressed.png"
+  },
+  {
+   "record": "Wired",
+   "id": "48461309-e0e0-42a8-b903-f60642c923ca",
+   "viewport": "1440×1200",
+   "width": 1440,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(108, 178, 197)",
+   "base": "rgb(76, 145, 164)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "cap",
+    "height": 0,
+    "cap": 86.223,
+    "aspect": "5.14"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-wired-1440x1200-suppressed.png"
+  },
+  {
+   "record": "Wired",
+   "id": "48461309-e0e0-42a8-b903-f60642c923ca",
+   "viewport": "1920×1200",
+   "width": 1920,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(108, 178, 197)",
+   "base": "rgb(76, 145, 164)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "cap",
+    "height": 0,
+    "cap": 86.223,
+    "aspect": "5.14"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-wired-1920x1200-suppressed.png"
+  },
+  {
+   "record": "Bitches Brew",
+   "id": "2be8579e-2ee7-44fa-81e8-9713a6aaa714",
+   "viewport": "390×900",
+   "width": 390,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(193, 193, 153)",
+   "base": "rgb(173, 173, 133)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 116.921,
+    "aspect": "none"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "ink": 6,
+    "grey": 10,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-bitches-brew-390x900-suppressed.png"
+  },
+  {
+   "record": "Bitches Brew",
+   "id": "2be8579e-2ee7-44fa-81e8-9713a6aaa714",
+   "viewport": "768×900",
+   "width": 768,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(193, 193, 153)",
+   "base": "rgb(173, 173, 133)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 116.921,
+    "aspect": "4.69"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "ink": 6,
+    "grey": 10,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-bitches-brew-768x900-suppressed.png"
+  },
+  {
+   "record": "Bitches Brew",
+   "id": "2be8579e-2ee7-44fa-81e8-9713a6aaa714",
+   "viewport": "1000×900",
+   "width": 1000,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(193, 193, 153)",
+   "base": "rgb(173, 173, 133)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 116.921,
+    "aspect": "4.69"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "ink": 6,
+    "grey": 10,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-bitches-brew-1000x900-suppressed.png"
+  },
+  {
+   "record": "Bitches Brew",
+   "id": "2be8579e-2ee7-44fa-81e8-9713a6aaa714",
+   "viewport": "1440×900",
+   "width": 1440,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(193, 193, 153)",
+   "base": "rgb(173, 173, 133)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 116.921,
+    "aspect": "4.69"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "ink": 6,
+    "grey": 10,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-bitches-brew-1440x900-suppressed.png"
+  },
+  {
+   "record": "Bitches Brew",
+   "id": "2be8579e-2ee7-44fa-81e8-9713a6aaa714",
+   "viewport": "1920×900",
+   "width": 1920,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(193, 193, 153)",
+   "base": "rgb(173, 173, 133)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 116.921,
+    "aspect": "4.69"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "ink": 6,
+    "grey": 10,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-bitches-brew-1920x900-suppressed.png"
+  },
+  {
+   "record": "Bitches Brew",
+   "id": "2be8579e-2ee7-44fa-81e8-9713a6aaa714",
+   "viewport": "1440×1200",
+   "width": 1440,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(193, 193, 153)",
+   "base": "rgb(173, 173, 133)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 116.9,
+    "cap": 116.921,
+    "aspect": "3.79"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "ink": 6,
+    "grey": 10,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-bitches-brew-1440x1200-h117.png"
+  },
+  {
+   "record": "Bitches Brew",
+   "id": "2be8579e-2ee7-44fa-81e8-9713a6aaa714",
+   "viewport": "1920×1200",
+   "width": 1920,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(193, 193, 153)",
+   "base": "rgb(173, 173, 133)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 116.9,
+    "cap": 116.921,
+    "aspect": "3.79"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "ink": 6,
+    "grey": 10,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-bitches-brew-1920x1200-h117.png"
+  },
+  {
+   "record": "On The Radio: Greatest Hits Vol. 1 & 2",
+   "id": "c61c5919-8f50-4782-8e04-419fb3d2b148",
+   "viewport": "390×900",
+   "width": 390,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(209, 143, 175)",
+   "base": "rgb(175, 111, 143)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 145.357,
+    "aspect": "none"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-on-the-radio-390x900-suppressed.png"
+  },
+  {
+   "record": "On The Radio: Greatest Hits Vol. 1 & 2",
+   "id": "c61c5919-8f50-4782-8e04-419fb3d2b148",
+   "viewport": "768×900",
+   "width": 768,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(209, 143, 175)",
+   "base": "rgb(175, 111, 143)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 145.357,
+    "aspect": "5.88"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-on-the-radio-768x900-suppressed.png"
+  },
+  {
+   "record": "On The Radio: Greatest Hits Vol. 1 & 2",
+   "id": "c61c5919-8f50-4782-8e04-419fb3d2b148",
+   "viewport": "1000×900",
+   "width": 1000,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(209, 143, 175)",
+   "base": "rgb(175, 111, 143)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 145.357,
+    "aspect": "5.88"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-on-the-radio-1000x900-suppressed.png"
+  },
+  {
+   "record": "On The Radio: Greatest Hits Vol. 1 & 2",
+   "id": "c61c5919-8f50-4782-8e04-419fb3d2b148",
+   "viewport": "1440×900",
+   "width": 1440,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(209, 143, 175)",
+   "base": "rgb(175, 111, 143)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 145.357,
+    "aspect": "5.88"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-on-the-radio-1440x900-suppressed.png"
+  },
+  {
+   "record": "On The Radio: Greatest Hits Vol. 1 & 2",
+   "id": "c61c5919-8f50-4782-8e04-419fb3d2b148",
+   "viewport": "1920×900",
+   "width": 1920,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(209, 143, 175)",
+   "base": "rgb(175, 111, 143)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 145.357,
+    "aspect": "5.88"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-on-the-radio-1920x900-suppressed.png"
+  },
+  {
+   "record": "On The Radio: Greatest Hits Vol. 1 & 2",
+   "id": "c61c5919-8f50-4782-8e04-419fb3d2b148",
+   "viewport": "1440×1200",
+   "width": 1440,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(209, 143, 175)",
+   "base": "rgb(175, 111, 143)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 145.357,
+    "aspect": "7.05"
+   },
+   "pair": {
+    "title": 96,
+    "artist": 54
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-on-the-radio-1440x1200-suppressed.png"
+  },
+  {
+   "record": "On The Radio: Greatest Hits Vol. 1 & 2",
+   "id": "c61c5919-8f50-4782-8e04-419fb3d2b148",
+   "viewport": "1920×1200",
+   "width": 1920,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(209, 143, 175)",
+   "base": "rgb(175, 111, 143)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 145.357,
+    "aspect": "7.05"
+   },
+   "pair": {
+    "title": 96,
+    "artist": 54
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-on-the-radio-1920x1200-suppressed.png"
+  },
+  {
+   "record": "The Hurdy Gurdy Man",
+   "id": "e73e1de1-3686-4a81-8544-ca2300e187bb",
+   "viewport": "390×900",
+   "width": 390,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(114, 183, 145)",
+   "base": "rgb(82, 151, 114)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 127.173,
+    "aspect": "none"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-the-hurdy-gurdy-man-390x900-suppressed.png"
+  },
+  {
+   "record": "The Hurdy Gurdy Man",
+   "id": "e73e1de1-3686-4a81-8544-ca2300e187bb",
+   "viewport": "768×900",
+   "width": 768,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(114, 183, 145)",
+   "base": "rgb(82, 151, 114)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 127.1,
+    "cap": 127.173,
+    "aspect": "3.48"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-the-hurdy-gurdy-man-768x900-h127.png"
+  },
+  {
+   "record": "The Hurdy Gurdy Man",
+   "id": "e73e1de1-3686-4a81-8544-ca2300e187bb",
+   "viewport": "1000×900",
+   "width": 1000,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(114, 183, 145)",
+   "base": "rgb(82, 151, 114)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 127.1,
+    "cap": 127.173,
+    "aspect": "3.48"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-the-hurdy-gurdy-man-1000x900-h127.png"
+  },
+  {
+   "record": "The Hurdy Gurdy Man",
+   "id": "e73e1de1-3686-4a81-8544-ca2300e187bb",
+   "viewport": "1440×900",
+   "width": 1440,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(114, 183, 145)",
+   "base": "rgb(82, 151, 114)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 127.1,
+    "cap": 127.173,
+    "aspect": "3.48"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-the-hurdy-gurdy-man-1440x900-h127.png"
+  },
+  {
+   "record": "The Hurdy Gurdy Man",
+   "id": "e73e1de1-3686-4a81-8544-ca2300e187bb",
+   "viewport": "1920×900",
+   "width": 1920,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(114, 183, 145)",
+   "base": "rgb(82, 151, 114)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 127.1,
+    "cap": 127.173,
+    "aspect": "3.48"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-the-hurdy-gurdy-man-1920x900-h127.png"
+  },
+  {
+   "record": "The Hurdy Gurdy Man",
+   "id": "e73e1de1-3686-4a81-8544-ca2300e187bb",
+   "viewport": "1440×1200",
+   "width": 1440,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(114, 183, 145)",
+   "base": "rgb(82, 151, 114)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 127.173,
+    "aspect": "8.72"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-the-hurdy-gurdy-man-1440x1200-suppressed.png"
+  },
+  {
+   "record": "The Hurdy Gurdy Man",
+   "id": "e73e1de1-3686-4a81-8544-ca2300e187bb",
+   "viewport": "1920×1200",
+   "width": 1920,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(114, 183, 145)",
+   "base": "rgb(82, 151, 114)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 127.173,
+    "aspect": "8.72"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-the-hurdy-gurdy-man-1920x1200-suppressed.png"
+  },
+  {
+   "record": "Super Rich",
+   "id": "1d4a4107-3153-4e98-b48a-d00a28266f94",
+   "viewport": "390×900",
+   "width": 390,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(186, 162, 118)",
+   "base": "rgb(154, 131, 87)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 129.931,
+    "aspect": "none"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "ink": 6,
+    "base": 2,
+    "grey": 10
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-super-rich-390x900-suppressed.png"
+  },
+  {
+   "record": "Super Rich",
+   "id": "1d4a4107-3153-4e98-b48a-d00a28266f94",
+   "viewport": "768×900",
+   "width": 768,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(186, 162, 118)",
+   "base": "rgb(154, 131, 87)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 129.931,
+    "aspect": "12.56"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "ink": 6,
+    "base": 2,
+    "grey": 10
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-super-rich-768x900-suppressed.png"
+  },
+  {
+   "record": "Super Rich",
+   "id": "1d4a4107-3153-4e98-b48a-d00a28266f94",
+   "viewport": "1000×900",
+   "width": 1000,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(186, 162, 118)",
+   "base": "rgb(154, 131, 87)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 129.931,
+    "aspect": "12.56"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "ink": 6,
+    "base": 2,
+    "grey": 10
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-super-rich-1000x900-suppressed.png"
+  },
+  {
+   "record": "Super Rich",
+   "id": "1d4a4107-3153-4e98-b48a-d00a28266f94",
+   "viewport": "1440×900",
+   "width": 1440,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(186, 162, 118)",
+   "base": "rgb(154, 131, 87)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 129.931,
+    "aspect": "12.56"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "ink": 6,
+    "base": 2,
+    "grey": 10
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-super-rich-1440x900-suppressed.png"
+  },
+  {
+   "record": "Super Rich",
+   "id": "1d4a4107-3153-4e98-b48a-d00a28266f94",
+   "viewport": "1920×900",
+   "width": 1920,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(186, 162, 118)",
+   "base": "rgb(154, 131, 87)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 129.931,
+    "aspect": "12.56"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "ink": 6,
+    "base": 2,
+    "grey": 10
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-super-rich-1920x900-suppressed.png"
+  },
+  {
+   "record": "Super Rich",
+   "id": "1d4a4107-3153-4e98-b48a-d00a28266f94",
+   "viewport": "1440×1200",
+   "width": 1440,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(186, 162, 118)",
+   "base": "rgb(154, 131, 87)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 129.9,
+    "cap": 129.931,
+    "aspect": "3.41"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "ink": 6,
+    "base": 2,
+    "grey": 10
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-super-rich-1440x1200-h130.png"
+  },
+  {
+   "record": "Super Rich",
+   "id": "1d4a4107-3153-4e98-b48a-d00a28266f94",
+   "viewport": "1920×1200",
+   "width": 1920,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(186, 162, 118)",
+   "base": "rgb(154, 131, 87)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 129.9,
+    "cap": 129.931,
+    "aspect": "3.41"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "ink": 6,
+    "base": 2,
+    "grey": 10
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-super-rich-1920x1200-h130.png"
+  },
+  {
+   "record": "Gaucho",
+   "id": "b19cd530-f2d9-4936-b55d-3893b9f74420",
+   "viewport": "390×900",
+   "width": 390,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(194, 194, 125)",
+   "base": "rgb(173, 173, 105)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 128.361,
+    "aspect": "none"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-gaucho-390x900-suppressed.png"
+  },
+  {
+   "record": "Gaucho",
+   "id": "b19cd530-f2d9-4936-b55d-3893b9f74420",
+   "viewport": "768×900",
+   "width": 768,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(194, 194, 125)",
+   "base": "rgb(173, 173, 105)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 128.3,
+    "cap": 128.361,
+    "aspect": "3.45"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-gaucho-768x900-h128.png"
+  },
+  {
+   "record": "Gaucho",
+   "id": "b19cd530-f2d9-4936-b55d-3893b9f74420",
+   "viewport": "1000×900",
+   "width": 1000,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(194, 194, 125)",
+   "base": "rgb(173, 173, 105)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 128.3,
+    "cap": 128.361,
+    "aspect": "3.45"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-gaucho-1000x900-h128.png"
+  },
+  {
+   "record": "Gaucho",
+   "id": "b19cd530-f2d9-4936-b55d-3893b9f74420",
+   "viewport": "1440×900",
+   "width": 1440,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(194, 194, 125)",
+   "base": "rgb(173, 173, 105)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 128.3,
+    "cap": 128.361,
+    "aspect": "3.45"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-gaucho-1440x900-h128.png"
+  },
+  {
+   "record": "Gaucho",
+   "id": "b19cd530-f2d9-4936-b55d-3893b9f74420",
+   "viewport": "1920×900",
+   "width": 1920,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(194, 194, 125)",
+   "base": "rgb(173, 173, 105)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 128.3,
+    "cap": 128.361,
+    "aspect": "3.45"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-gaucho-1920x900-h128.png"
+  },
+  {
+   "record": "Gaucho",
+   "id": "b19cd530-f2d9-4936-b55d-3893b9f74420",
+   "viewport": "1440×1200",
+   "width": 1440,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(194, 194, 125)",
+   "base": "rgb(173, 173, 105)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 128.3,
+    "cap": 128.361,
+    "aspect": "3.45"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-gaucho-1440x1200-h128.png"
+  },
+  {
+   "record": "Gaucho",
+   "id": "b19cd530-f2d9-4936-b55d-3893b9f74420",
+   "viewport": "1920×1200",
+   "width": 1920,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(194, 194, 125)",
+   "base": "rgb(173, 173, 105)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 128.3,
+    "cap": 128.361,
+    "aspect": "3.45"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-gaucho-1920x1200-h128.png"
+  },
+  {
+   "record": "Bridge Over Troubled Water",
+   "id": "cdcf94cb-7c7f-45f5-ad04-584a1fb0b30a",
+   "viewport": "390×900",
+   "width": 390,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(182, 163, 127)",
+   "base": "rgb(150, 132, 96)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 109.127,
+    "aspect": "none"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-bridge-over-troubled-water-390x900-suppressed.png"
+  },
+  {
+   "record": "Bridge Over Troubled Water",
+   "id": "cdcf94cb-7c7f-45f5-ad04-584a1fb0b30a",
+   "viewport": "768×900",
+   "width": 768,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(182, 163, 127)",
+   "base": "rgb(150, 132, 96)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "cap",
+    "height": 0,
+    "cap": 109.127,
+    "aspect": "4.06"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-bridge-over-troubled-water-768x900-suppressed.png"
+  },
+  {
+   "record": "Bridge Over Troubled Water",
+   "id": "cdcf94cb-7c7f-45f5-ad04-584a1fb0b30a",
+   "viewport": "1000×900",
+   "width": 1000,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(182, 163, 127)",
+   "base": "rgb(150, 132, 96)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "cap",
+    "height": 0,
+    "cap": 109.127,
+    "aspect": "4.06"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-bridge-over-troubled-water-1000x900-suppressed.png"
+  },
+  {
+   "record": "Bridge Over Troubled Water",
+   "id": "cdcf94cb-7c7f-45f5-ad04-584a1fb0b30a",
+   "viewport": "1440×900",
+   "width": 1440,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(182, 163, 127)",
+   "base": "rgb(150, 132, 96)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "cap",
+    "height": 0,
+    "cap": 109.127,
+    "aspect": "4.06"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-bridge-over-troubled-water-1440x900-suppressed.png"
+  },
+  {
+   "record": "Bridge Over Troubled Water",
+   "id": "cdcf94cb-7c7f-45f5-ad04-584a1fb0b30a",
+   "viewport": "1920×900",
+   "width": 1920,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(182, 163, 127)",
+   "base": "rgb(150, 132, 96)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "cap",
+    "height": 0,
+    "cap": 109.127,
+    "aspect": "4.06"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-bridge-over-troubled-water-1920x900-suppressed.png"
+  },
+  {
+   "record": "Bridge Over Troubled Water",
+   "id": "cdcf94cb-7c7f-45f5-ad04-584a1fb0b30a",
+   "viewport": "1440×1200",
+   "width": 1440,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(182, 163, 127)",
+   "base": "rgb(150, 132, 96)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "cap",
+    "height": 0,
+    "cap": 109.127,
+    "aspect": "4.06"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-bridge-over-troubled-water-1440x1200-suppressed.png"
+  },
+  {
+   "record": "Bridge Over Troubled Water",
+   "id": "cdcf94cb-7c7f-45f5-ad04-584a1fb0b30a",
+   "viewport": "1920×1200",
+   "width": 1920,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(182, 163, 127)",
+   "base": "rgb(150, 132, 96)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "cap",
+    "height": 0,
+    "cap": 109.127,
+    "aspect": "4.06"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "grey": 10,
+    "ink": 6,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-bridge-over-troubled-water-1920x1200-suppressed.png"
+  },
+  {
+   "record": "The Soft Parade",
+   "id": "9a514311-ad88-4205-a37a-a5a4cdd231d2",
+   "viewport": "390×900",
+   "width": 390,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(144, 198, 219)",
+   "base": "rgb(123, 177, 197)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 146.84,
+    "aspect": "none"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "base": 2,
+    "grey": 10,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-the-soft-parade-390x900-suppressed.png"
+  },
+  {
+   "record": "The Soft Parade",
+   "id": "9a514311-ad88-4205-a37a-a5a4cdd231d2",
+   "viewport": "768×900",
+   "width": 768,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(144, 198, 219)",
+   "base": "rgb(123, 177, 197)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 146.8,
+    "cap": 146.84,
+    "aspect": "3.02"
+   },
+   "pair": {
+    "title": 96,
+    "artist": 54
+   },
+   "faces": {
+    "base": 2,
+    "grey": 10,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-the-soft-parade-768x900-h147.png"
+  },
+  {
+   "record": "The Soft Parade",
+   "id": "9a514311-ad88-4205-a37a-a5a4cdd231d2",
+   "viewport": "1000×900",
+   "width": 1000,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(144, 198, 219)",
+   "base": "rgb(123, 177, 197)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 146.8,
+    "cap": 146.84,
+    "aspect": "3.02"
+   },
+   "pair": {
+    "title": 96,
+    "artist": 54
+   },
+   "faces": {
+    "base": 2,
+    "grey": 10,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-the-soft-parade-1000x900-h147.png"
+  },
+  {
+   "record": "The Soft Parade",
+   "id": "9a514311-ad88-4205-a37a-a5a4cdd231d2",
+   "viewport": "1440×900",
+   "width": 1440,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(144, 198, 219)",
+   "base": "rgb(123, 177, 197)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 146.8,
+    "cap": 146.84,
+    "aspect": "3.02"
+   },
+   "pair": {
+    "title": 96,
+    "artist": 54
+   },
+   "faces": {
+    "base": 2,
+    "grey": 10,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-the-soft-parade-1440x900-h147.png"
+  },
+  {
+   "record": "The Soft Parade",
+   "id": "9a514311-ad88-4205-a37a-a5a4cdd231d2",
+   "viewport": "1920×900",
+   "width": 1920,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(144, 198, 219)",
+   "base": "rgb(123, 177, 197)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 146.8,
+    "cap": 146.84,
+    "aspect": "3.02"
+   },
+   "pair": {
+    "title": 96,
+    "artist": 54
+   },
+   "faces": {
+    "base": 2,
+    "grey": 10,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-the-soft-parade-1920x900-h147.png"
+  },
+  {
+   "record": "The Soft Parade",
+   "id": "9a514311-ad88-4205-a37a-a5a4cdd231d2",
+   "viewport": "1440×1200",
+   "width": 1440,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(144, 198, 219)",
+   "base": "rgb(123, 177, 197)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 146.8,
+    "cap": 146.84,
+    "aspect": "3.02"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "base": 2,
+    "grey": 10,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-the-soft-parade-1440x1200-h147.png"
+  },
+  {
+   "record": "The Soft Parade",
+   "id": "9a514311-ad88-4205-a37a-a5a4cdd231d2",
+   "viewport": "1920×1200",
+   "width": 1920,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(144, 198, 219)",
+   "base": "rgb(123, 177, 197)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 146.8,
+    "cap": 146.84,
+    "aspect": "3.02"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "base": 2,
+    "grey": 10,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-the-soft-parade-1920x1200-h147.png"
+  },
+  {
+   "record": "Mind Games",
+   "id": "ce57a185-6182-4a9d-9af1-37bae019db10",
+   "viewport": "390×900",
+   "width": 390,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(158, 194, 214)",
+   "base": "rgb(137, 173, 192)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 139.142,
+    "aspect": "none"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-mind-games-390x900-suppressed.png"
+  },
+  {
+   "record": "Mind Games",
+   "id": "ce57a185-6182-4a9d-9af1-37bae019db10",
+   "viewport": "768×900",
+   "width": 768,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(158, 194, 214)",
+   "base": "rgb(137, 173, 192)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 139.142,
+    "aspect": "4.69"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-mind-games-768x900-suppressed.png"
+  },
+  {
+   "record": "Mind Games",
+   "id": "ce57a185-6182-4a9d-9af1-37bae019db10",
+   "viewport": "1000×900",
+   "width": 1000,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(158, 194, 214)",
+   "base": "rgb(137, 173, 192)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 139.142,
+    "aspect": "4.69"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-mind-games-1000x900-suppressed.png"
+  },
+  {
+   "record": "Mind Games",
+   "id": "ce57a185-6182-4a9d-9af1-37bae019db10",
+   "viewport": "1440×900",
+   "width": 1440,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(158, 194, 214)",
+   "base": "rgb(137, 173, 192)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 139.142,
+    "aspect": "4.69"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-mind-games-1440x900-suppressed.png"
+  },
+  {
+   "record": "Mind Games",
+   "id": "ce57a185-6182-4a9d-9af1-37bae019db10",
+   "viewport": "1920×900",
+   "width": 1920,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(158, 194, 214)",
+   "base": "rgb(137, 173, 192)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 139.142,
+    "aspect": "4.69"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-mind-games-1920x900-suppressed.png"
+  },
+  {
+   "record": "Mind Games",
+   "id": "ce57a185-6182-4a9d-9af1-37bae019db10",
+   "viewport": "1440×1200",
+   "width": 1440,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(158, 194, 214)",
+   "base": "rgb(137, 173, 192)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 139.1,
+    "cap": 139.142,
+    "aspect": "3.18"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-mind-games-1440x1200-h139.png"
+  },
+  {
+   "record": "Mind Games",
+   "id": "ce57a185-6182-4a9d-9af1-37bae019db10",
+   "viewport": "1920×1200",
+   "width": 1920,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(158, 194, 214)",
+   "base": "rgb(137, 173, 192)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 139.1,
+    "cap": 139.142,
+    "aspect": "3.18"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-mind-games-1920x1200-h139.png"
+  },
+  {
+   "record": "The Money Store",
+   "id": "7a333685-81d3-4a8a-8515-cf29f4d587a7",
+   "viewport": "390×900",
+   "width": 390,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(180, 180, 179)",
+   "base": "rgb(155, 155, 154)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 134.898,
+    "aspect": "none"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "ink": 6,
+    "grey": 10,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-the-money-store-390x900-suppressed.png"
+  },
+  {
+   "record": "The Money Store",
+   "id": "7a333685-81d3-4a8a-8515-cf29f4d587a7",
+   "viewport": "768×900",
+   "width": 768,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(180, 180, 179)",
+   "base": "rgb(155, 155, 154)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 134.898,
+    "aspect": "7.23"
+   },
+   "pair": {
+    "title": 96,
+    "artist": 54
+   },
+   "faces": {
+    "ink": 6,
+    "grey": 10,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-the-money-store-768x900-suppressed.png"
+  },
+  {
+   "record": "The Money Store",
+   "id": "7a333685-81d3-4a8a-8515-cf29f4d587a7",
+   "viewport": "1000×900",
+   "width": 1000,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(180, 180, 179)",
+   "base": "rgb(155, 155, 154)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 134.898,
+    "aspect": "7.23"
+   },
+   "pair": {
+    "title": 96,
+    "artist": 54
+   },
+   "faces": {
+    "ink": 6,
+    "grey": 10,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-the-money-store-1000x900-suppressed.png"
+  },
+  {
+   "record": "The Money Store",
+   "id": "7a333685-81d3-4a8a-8515-cf29f4d587a7",
+   "viewport": "1440×900",
+   "width": 1440,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(180, 180, 179)",
+   "base": "rgb(155, 155, 154)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 134.898,
+    "aspect": "7.23"
+   },
+   "pair": {
+    "title": 96,
+    "artist": 54
+   },
+   "faces": {
+    "ink": 6,
+    "grey": 10,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-the-money-store-1440x900-suppressed.png"
+  },
+  {
+   "record": "The Money Store",
+   "id": "7a333685-81d3-4a8a-8515-cf29f4d587a7",
+   "viewport": "1920×900",
+   "width": 1920,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(180, 180, 179)",
+   "base": "rgb(155, 155, 154)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 134.898,
+    "aspect": "7.23"
+   },
+   "pair": {
+    "title": 96,
+    "artist": 54
+   },
+   "faces": {
+    "ink": 6,
+    "grey": 10,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-the-money-store-1920x900-suppressed.png"
+  },
+  {
+   "record": "The Money Store",
+   "id": "7a333685-81d3-4a8a-8515-cf29f4d587a7",
+   "viewport": "1440×1200",
+   "width": 1440,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(180, 180, 179)",
+   "base": "rgb(155, 155, 154)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 134.8,
+    "cap": 134.898,
+    "aspect": "3.28"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "ink": 6,
+    "grey": 10,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-the-money-store-1440x1200-h135.png"
+  },
+  {
+   "record": "The Money Store",
+   "id": "7a333685-81d3-4a8a-8515-cf29f4d587a7",
+   "viewport": "1920×1200",
+   "width": 1920,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(180, 180, 179)",
+   "base": "rgb(155, 155, 154)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 134.8,
+    "cap": 134.898,
+    "aspect": "3.28"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "ink": 6,
+    "grey": 10,
+    "base": 2
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-the-money-store-1920x1200-h135.png"
+  },
+  {
+   "record": "Loss Of Life",
+   "id": "c8bc3a1d-e5ba-4794-a4b9-bcfe89d6fbed",
+   "viewport": "390×900",
+   "width": 390,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(174, 164, 153)",
+   "base": "rgb(142, 132, 122)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 119.039,
+    "aspect": "none"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-loss-of-life-390x900-suppressed.png"
+  },
+  {
+   "record": "Loss Of Life",
+   "id": "c8bc3a1d-e5ba-4794-a4b9-bcfe89d6fbed",
+   "viewport": "768×900",
+   "width": 768,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(174, 164, 153)",
+   "base": "rgb(142, 132, 122)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 119.039,
+    "aspect": "12.56"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-loss-of-life-768x900-suppressed.png"
+  },
+  {
+   "record": "Loss Of Life",
+   "id": "c8bc3a1d-e5ba-4794-a4b9-bcfe89d6fbed",
+   "viewport": "1000×900",
+   "width": 1000,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(174, 164, 153)",
+   "base": "rgb(142, 132, 122)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 119.039,
+    "aspect": "12.56"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-loss-of-life-1000x900-suppressed.png"
+  },
+  {
+   "record": "Loss Of Life",
+   "id": "c8bc3a1d-e5ba-4794-a4b9-bcfe89d6fbed",
+   "viewport": "1440×900",
+   "width": 1440,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(174, 164, 153)",
+   "base": "rgb(142, 132, 122)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 119.039,
+    "aspect": "12.56"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-loss-of-life-1440x900-suppressed.png"
+  },
+  {
+   "record": "Loss Of Life",
+   "id": "c8bc3a1d-e5ba-4794-a4b9-bcfe89d6fbed",
+   "viewport": "1920×900",
+   "width": 1920,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(174, 164, 153)",
+   "base": "rgb(142, 132, 122)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 119.039,
+    "aspect": "12.56"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-loss-of-life-1920x900-suppressed.png"
+  },
+  {
+   "record": "Loss Of Life",
+   "id": "c8bc3a1d-e5ba-4794-a4b9-bcfe89d6fbed",
+   "viewport": "1440×1200",
+   "width": 1440,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(174, 164, 153)",
+   "base": "rgb(142, 132, 122)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 119,
+    "cap": 119.039,
+    "aspect": "3.72"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-loss-of-life-1440x1200-h119.png"
+  },
+  {
+   "record": "Loss Of Life",
+   "id": "c8bc3a1d-e5ba-4794-a4b9-bcfe89d6fbed",
+   "viewport": "1920×1200",
+   "width": 1920,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(174, 164, 153)",
+   "base": "rgb(142, 132, 122)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 119,
+    "cap": 119.039,
+    "aspect": "3.72"
+   },
+   "pair": {
+    "title": 144,
+    "artist": 80
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-loss-of-life-1920x1200-h119.png"
+  },
+  {
+   "record": "Believer",
+   "id": "de2ad140-86af-44e1-84a4-977324346cca",
+   "viewport": "390×900",
+   "width": 390,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(162, 166, 169)",
+   "base": "rgb(131, 135, 138)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "suppressed",
+    "term": "gap",
+    "height": 0,
+    "cap": 125.039,
+    "aspect": "none"
+   },
+   "pair": {
+    "title": 72,
+    "artist": 40
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-believer-390x900-suppressed.png"
+  },
+  {
+   "record": "Believer",
+   "id": "de2ad140-86af-44e1-84a4-977324346cca",
+   "viewport": "768×900",
+   "width": 768,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(162, 166, 169)",
+   "base": "rgb(131, 135, 138)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 125,
+    "cap": 125.039,
+    "aspect": "3.54"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock"
+   ],
+   "file": "sheet-believer-768x900-h125.png"
+  },
+  {
+   "record": "Believer",
+   "id": "de2ad140-86af-44e1-84a4-977324346cca",
+   "viewport": "1000×900",
+   "width": 1000,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(162, 166, 169)",
+   "base": "rgb(131, 135, 138)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 125,
+    "cap": 125.039,
+    "aspect": "3.54"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-believer-1000x900-h125.png"
+  },
+  {
+   "record": "Believer",
+   "id": "de2ad140-86af-44e1-84a4-977324346cca",
+   "viewport": "1440×900",
+   "width": 1440,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(162, 166, 169)",
+   "base": "rgb(131, 135, 138)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 125,
+    "cap": 125.039,
+    "aspect": "3.54"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-believer-1440x900-h125.png"
+  },
+  {
+   "record": "Believer",
+   "id": "de2ad140-86af-44e1-84a4-977324346cca",
+   "viewport": "1920×900",
+   "width": 1920,
+   "height": 900,
+   "ladder": "ladder",
+   "tint": "rgb(162, 166, 169)",
+   "base": "rgb(131, 135, 138)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 125,
+    "cap": 125.039,
+    "aspect": "3.54"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-believer-1920x900-h125.png"
+  },
+  {
+   "record": "Believer",
+   "id": "de2ad140-86af-44e1-84a4-977324346cca",
+   "viewport": "1440×1200",
+   "width": 1440,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(162, 166, 169)",
+   "base": "rgb(131, 135, 138)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 125,
+    "cap": 125.039,
+    "aspect": "3.54"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-believer-1440x1200-h125.png"
+  },
+  {
+   "record": "Believer",
+   "id": "de2ad140-86af-44e1-84a4-977324346cca",
+   "viewport": "1920×1200",
+   "width": 1920,
+   "height": 1200,
+   "ladder": "ladder",
+   "tint": "rgb(162, 166, 169)",
+   "base": "rgb(131, 135, 138)",
+   "coverRendered": true,
+   "coverCellFlat": false,
+   "field": {
+    "state": "drawn",
+    "term": "cap",
+    "height": 125,
+    "cap": 125.039,
+    "aspect": "3.54"
+   },
+   "pair": {
+    "title": 120,
+    "artist": 66
+   },
+   "faces": {
+    "grey": 10,
+    "base": 2,
+    "ink": 6
+   },
+   "marks": [
+    "disc",
+    "drawn",
+    "figure",
+    "identityField",
+    "journalEdge",
+    "matrixSolid",
+    "quarterDisc",
+    "releaseYearField",
+    "section-bar",
+    "sleeveBar",
+    "sleeveBlock",
+    "triangle"
+   ],
+   "file": "sheet-believer-1920x1200-h125.png"
+  }
+ ]
+}
