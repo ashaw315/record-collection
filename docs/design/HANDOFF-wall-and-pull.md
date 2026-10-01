@@ -107,6 +107,7 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §58 | The Price history solo sits beside its entries | Why the solo’s host is the summary column at every width, from a drawing. |
 | §59 | Contrast is the rule, not a size | Why the contrast rule reaches type of any size; why the Images quarter-disc yields to its caption. |
 | §60 | The disc’s reference is a height, not a rendering | Why the Images disc is sized against named fixed parts, and why the cover note’s blank row goes. |
+| §61 | The cover the record shows, and the colour that follows it | Why the newest cover displays and the colour follows it; why the page’s geometry does not read the colour, so no acceptance is about one colour; what a re-coloured record re-opens and what it does not. |
 
 ## Structural sections — pointers
 
@@ -329,7 +330,12 @@ These are the sections the rulings above build on, all in `Record Detail 8a - se
 70. **§60 — the disc's stated reference.** A supersession of built step 66 behaviour. Size the Images quarter-disc against the section's heading, padding and one tile row, excluding the cover note at every count; remove the blank note row beside the tiles. Report the disc's radius at 390, 1000, 1440 and 1920 at one, two, three and six images. Replace the tests that assert the blank row.
    > The Images quarter-disc is sized against a stated reference height: the section’s heading, its padding and one tile row, with the cover note excluded at every count.
 
-**The record-detail screen is closed at 7983d4d, on 1 October 2026,** by Adam’s pass over the 119 captures, which found nothing that changes what a reader understands about a record. Steps run 0 to 71. This is the baseline the record modal builds against: its marks, its type ladder and its colour system.
+71. **Done: built and deployed at 8b98e11.** **The tile's Delete control — report, then fix.** Code found it in the step 65 and 66 captures: on every record with a non-cover image the control renders below the tile at its left, while its classes say top-right over the image (`ImageGallery.tsx`, `absolute top-1 right-1` on a `relative` tile). Live on sixteen of seventeen records. First report where the control actually lands at 390, 1000, 1440 and 1920 and which rule in the button's own styles beats the tile's, with the same capture names as step 66; then fix it so the control sits where §9.2's control vocabulary puts it, over the tile's top-right corner, and keep §34's rule that no type sits over a photograph in view when deciding whether the control may. Numbered rather than noted: the §28 and §33 entries and the spy-boundary list each went missing for a round as notes. Built: the cause was the cascade layer, not a selector -- the page's unlayered hit-area rule beat the utility in Tailwind's utilities layer; the rule now sits in the components layer.
+
+72. **§61 — the newest cover, and the colour that follows it.** A supersession of built cover and colour behaviour. Display the newest cover row; re-derive the spine colour from the displayed cover whenever it changes, including on deletion. Report, for every record, the colour re-derived from its newest cover, and §59's worst glyph contrast under it; stop and report if any fails. Replace the tests that assert the oldest cover or a colour set once.
+   > The record shows its newest cover, and its spine colour is derived from the cover it shows, so a new cover re-colours the record.
+
+**The record-detail screen is closed at 7983d4d, on 1 October 2026,** by Adam’s pass over the 119 captures, which found nothing that changes what a reader understands about a record. Steps run 0 to 71; step 72 follows the close and changes values, not structure. This is the baseline the record modal builds against: its marks, its type ladder and its colour system.
 
 **Left open at close, deliberately:** §60’s corner mark still steps at a record’s second image, from the host’s side, invisible until a record has two; §55’s eight unconfirmed figures, which no real record exercises yet; §9’s specimen, which still draws the lower About row §53 removed; and the author-stated rule count in the NOTES index footer.
 
