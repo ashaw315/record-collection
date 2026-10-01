@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createBlobStorage, storageKeyFor } from './blob';
 
 /**
@@ -120,6 +120,42 @@ describe('createBlobStorage', () => {
 
     await storage.delete('https://blob.example/records/abc/x.jpg');
 
-    expect(del).toHaveBeenCalledWith('https://blob.example/records/abc/x.jpg');
+    /* The URL is the first argument still; the second is the explicit token the fix adds (see the token tests below), asserted there. */
+    expect(del.mock.calls[0][0]).toBe('https://blob.example/records/abc/x.jpg');
+  });
+});
+
+/**
+ * **The credential choice lives in the repo, not in a project setting.**
+ * `@vercel/blob` 2.8 resolves credentials OIDC-first: with no `token` option
+ * it asks Vercel's OIDC helper before it reads `BLOB_READ_WRITE_TOKEN`, and
+ * once the project had OIDC federation switched on (a setting no commit
+ * carries) every put was refused with "OIDC is enabled for this project, but
+ * not for the … environment" while the read-write token sat unused. Passing
+ * the token explicitly puts the choice where a diff shows it and a setting
+ * change cannot move it again (NOTES, "The image upload 500").
+ */
+describe('createBlobStorage passes the read-write token explicitly', () => {
+  const ORIGINAL = process.env.BLOB_READ_WRITE_TOKEN;
+  afterEach(() => {
+    if (ORIGINAL === undefined) delete process.env.BLOB_READ_WRITE_TOKEN;
+    else process.env.BLOB_READ_WRITE_TOKEN = ORIGINAL;
+  });
+
+  it('hands the token from BLOB_READ_WRITE_TOKEN to put, so the SDK never reaches for OIDC', async () => {
+    process.env.BLOB_READ_WRITE_TOKEN = 'vercel_blob_rw_store_test_0000';
+    const put = vi.fn().mockResolvedValue({ url: 'https://blob.example/records/a/b.png' });
+    const storage = createBlobStorage({ put, del: vi.fn() });
+    await storage.put('records/a/b.png', new ArrayBuffer(4), 'image/png');
+    expect(put).toHaveBeenCalledTimes(1);
+    expect(put.mock.calls[0][2]).toMatchObject({ token: 'vercel_blob_rw_store_test_0000' });
+  });
+
+  it('hands the same token to del', async () => {
+    process.env.BLOB_READ_WRITE_TOKEN = 'vercel_blob_rw_store_test_0000';
+    const del = vi.fn().mockResolvedValue(undefined);
+    const storage = createBlobStorage({ put: vi.fn(), del });
+    await storage.delete('https://blob.example/records/a/b.png');
+    expect(del).toHaveBeenCalledWith('https://blob.example/records/a/b.png', { token: 'vercel_blob_rw_store_test_0000' });
   });
 });

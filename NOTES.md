@@ -32718,7 +32718,11 @@ days. A fixture that carries one value where the world carries many, or
 none where the world carries one, is an adapter replaced by a spy in a
 different coat. Fifth, one level up: every per-record count Code measured
 into the design files came from that fixture, not only the ones tripped
-over (the table "Every per-record count in the design files"). The rule, as
+over (the table "Every per-record count in the design files"). Sixth: the
+environment is a boundary like any other -- the upload's cause was
+measured in development and inferred for production, and the OIDC token a
+production pull supplies is itself a development token, so the inference
+could not be closed from here. The rule, as
 proposed and kept:
 
 **Every external boundary -- blob store, mail, payment, any third-party SDK
@@ -32968,3 +32972,47 @@ collection it has no spine colour, so no ladder and no field, ever. The
 fixture gave it a field it can never have. Eight-to-six at 900 is Bitches
 Brew and Mind Games, drawn at their 113.9 gap on the fixture and suppressed
 by the gap on the real pages, whose pressing blocks run a line longer.
+
+## The upload 500: is it Adam's bug? Production cannot be measured from here, and the inference is recorded as an inference (30 Sep)
+
+The error names its environment: "OIDC is enabled for this project, but not
+for the 'development' environment." That was measured in development.
+Whether production is admitted was checked three ways, read-only: the
+project's OIDC issuance is on (`oidcTokenConfig.enabled: true`, team
+issuer); the store's API surface (`/v1/storage/stores/{id}` and its
+connections) shows no per-environment admission; and the OIDC token a
+production pull hands out is minted for the DEVELOPMENT environment -- its
+own `environment` claim says so -- so a put with it refused development
+again and proved nothing about production. The production runtime token is
+issued only inside the deployed function. So: if the store does not admit
+production, it is one bug with one cause; if it does, the production put
+succeeds over OIDC and Adam's 500 has a cause not seen here, which only
+the Vercel dashboard's runtime log can show, and that is Adam's to pull.
+The fix below removes the dependence either way. Sixth example of the
+boundary rule: the environment is a boundary like any other, and one
+environment measured with the neighbour inferred is the night's shape.
+
+**The fix: the read-write token passed explicitly.** `src/lib/storage/blob.ts`
+now hands `BLOB_READ_WRITE_TOKEN` to `put` and `del` as the SDK's `token`
+option, which it honours over its OIDC-first resolution. Taken over
+allowing the store for the environments, because what changed between 25
+August and now was a project setting no commit carries: the code depended
+on configuration nobody could see or review, and the explicit token puts
+the credential choice in the repo where a diff shows it and a setting
+change cannot move it again. Tests first: two unit cases in `blob.test.ts`
+seen failing (no token passed) then passing; the existing "deletes by URL"
+case asserted the exact argument list and now asserts the URL argument,
+since the second argument is the fix. The route's thirty integration
+tests, which spy on the adapter, are unchanged and green.
+
+**The one test that crosses Vercel Blob for real**:
+`test/integration/blob-store.test.ts`, gated on `BLOB_TEST_READ_WRITE_TOKEN`
+on the Neon transaction test's pattern, three states. Absent: a named skip
+in the count, "NOT crossed … unverified in this run", never a pass. Present:
+puts a 1 × 1 PNG under `diagnostics/`, reads it back byte for byte at the
+URL the SDK reported, deletes it; any failure is loud. Run once with the
+token exported in the shell (not from any file the repository loads, never
+printed): 1 passed against the real store, on the OIDC-enabled project,
+which is the explicit token working where the SDK's own resolution was
+refused minutes earlier. Adam's own upload is the end-to-end check; no
+image was added to any record here.

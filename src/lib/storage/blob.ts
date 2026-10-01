@@ -19,10 +19,25 @@ import type { AcceptedImageType } from './image-type';
 type PutFn = (
   key: string,
   body: ArrayBuffer,
-  options: { access: 'public'; contentType: string; addRandomSuffix: boolean },
+  options: { access: 'public'; contentType: string; addRandomSuffix: boolean; token: string | undefined },
 ) => Promise<{ url: string }>;
 
-type DelFn = (url: string) => Promise<void>;
+type DelFn = (url: string, options: { token: string | undefined }) => Promise<void>;
+
+/**
+ * **The credential choice lives here, not in a project setting.** `@vercel/blob`
+ * 2.8 resolves credentials OIDC-first: given no `token` it asks Vercel's OIDC
+ * helper before it reads `BLOB_READ_WRITE_TOKEN`. When the project had OIDC
+ * federation switched on -- a setting no commit carries -- every put was
+ * refused with "OIDC is enabled for this project, but not for the …
+ * environment" while the read-write token sat unused, and the upload 500ed
+ * from 25 August (NOTES, "The image upload 500"). Read at call time, so the
+ * route's configured check stays first and a test can set the variable.
+ */
+const readWriteToken = (): string | undefined => {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  return token === undefined || token === '' ? undefined : token;
+};
 
 export type BlobStorage = {
   /**
@@ -68,6 +83,7 @@ export function createBlobStorage(sdk: { put: PutFn; del: DelFn }): BlobStorage 
           access: 'public',
           contentType,
           addRandomSuffix: false,
+          token: readWriteToken(),
         });
 
         return { url };
@@ -79,7 +95,7 @@ export function createBlobStorage(sdk: { put: PutFn; del: DelFn }): BlobStorage 
     },
 
     async delete(url) {
-      await sdk.del(url);
+      await sdk.del(url, { token: readWriteToken() });
     },
   };
 }
@@ -105,6 +121,6 @@ export function isBlobConfigured(): boolean {
 export function getBlobStorage(): BlobStorage {
   return createBlobStorage({
     put: (key, body, options) => vercelPut(key, body, options),
-    del: (url) => vercelDel(url),
+    del: (url, options) => vercelDel(url, options),
   });
 }
