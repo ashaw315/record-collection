@@ -33468,3 +33468,54 @@ pass), the gallery-order, ImageGallery, OrnamentMarks, Section and
 RecordPage8a unit files with the spec guard (132 pass), typecheck, lint
 (0 errors, the 29 pre-existing warnings), build. Captures
 `docs/captures/step66-images-<n>-<w>x<h>-h<section height>.png`, sixteen.
+
+## Step 68 built: §58 -- the solo in the summary column, sized by both terms, and §29's face keeps it off the collection above 1000 (1 Oct)
+
+The Price history solo is hosted by the strip's summary column (the first
+content cell) at every width, sized by §57's rule to that column's free
+height below its text, with §33's width yield where the figure would cross
+the column's insets (§21). The figure reports its own terms
+(`data-free-height`, `data-height-term`, `data-width-term`, `data-binds`)
+so the report reads them off the figure. The strip placement is withdrawn
+(`price-history:column` in `ornament.ts`; `Section` hosts it in
+`content-0`, which becomes the positioned box).
+
+**Both terms on the real collection, read-only, server localhost:3200**
+(`docs/captures/figures-57-report.md`): the column's inner width, the
+free height below its text, the height term (0.855 of free) and the width
+term (the height at which the panel fills the column), and which binds.
+
+| width | drawn | not drawn | width binds | typical (fifteen records) |
+|---|---|---|---|---|
+| 390 | 15 | 1 | 15 | col 127, free 314 to 609: height term 269 to 520, width term 243; 127 × 243 |
+| 480 | 15 | 1 | 1 | col 172, free 247 to 448: height term 211 to 383, width term 329; 110 × 211 to 172 × 329 |
+| 1000 | 1 | 15 | 0 | col 432, free 82 to 105: height term 70 to 90; below §29's bound |
+| 1440 | 1 | 15 | 0 | col 652, the same free heights |
+| 1920 | 1 | 15 | 0 | col 892, the same |
+
+§21 is met by the sizing, not by a clip: where width binds (390 on every
+drawn record, 480 on Never Too Much) the height yields to the column's
+inner width and the figure sits inside both insets, cut by no edge. On The
+Radio, with no prices, has two free pixels in its column and draws nothing
+at any width; it drew under §57 at 1000 and up.
+
+**Above 1000 the ruling draws the solo on one record of sixteen, which is
+not what §58 expected, and the cause is §29's face.** The summary column
+is "almost empty" at 1440 in area, but its free height below its two
+sentences is 82px on fourteen records and 105 on two: the row is as tall
+as the entries column (five to nine lines), and the summary's text ends
+80px into the cell. The height term is then 70 to 90px, and the panel's
+narrowest face at that height is 4.6 to 5.9px, under §29's six, so the
+figure is not drawn. The panel keeps a six-pixel face only from about
+91px tall, which needs 106px free; only Never Too Much (nine prices, 132
+free) reaches it. So the live page above 1000 still has no solo on fifteen
+of sixteen. Not halted on, since no new rule is needed to build what §58
+says; it is Design's whether the bound, the form or the host changes.
+Gaucho captured at 1440 × 900 (no solo) and 390 × 900 (127 × 243, beside
+the entries below the two sentences) as `docs/captures/step68-gaucho-*`.
+
+Verification, step level: `figures-type-57.spec.ts` (§58 sweeps on nine
+prices and none, the staged covers-type), `extended-grid.spec.ts`'s figure
+test and `layout-sweep`'s §34 paint sweep on chromium (5 pass), the
+ornament, region-rows, OrnamentMarks, Section and RecordPage8a unit files
+with the spec guard (177 pass), typecheck, lint, build.

@@ -12,7 +12,10 @@ import { FIGURE_INSET_COLUMNS } from '../src/app/records/[id]/region-rows';
 export const WIDTHS: ReadonlyArray<[number, number]> = [[390, 844], [480, 844], [1000, NO_SCROLL_HEIGHT], [GRID_FORK, NO_SCROLL_HEIGHT], [1920, NO_SCROLL_HEIGHT]];
 
 export type FigureReading = {
-  host: string; kind: string | null; state: string | null; shown: boolean;
+  /** The section the figure is in, and the cell it is hosted by ('section' when the section itself is the host). */
+  host: string; cell: string; kind: string | null; state: string | null; shown: boolean;
+  /** §58: the host column's inner width (inside both insets) and the component's own terms as it reported them. */
+  columnWidth: number; terms: { free: number | null; heightTerm: number | null; widthTerm: number | null; binds: string | null };
   hostHeight: number; hostTop: number; hostBottom: number; hostLeft: number; hostRight: number;
   top: number; bottom: number; left: number; right: number; height: number; width: number;
   /** The bottom of the lowest text in the figure's own column, from the host's top; 0 when the column holds none. */
@@ -32,13 +35,18 @@ export const MEASURE = `(() => {
     const host = f.parentElement; const h = R(host); const b = R(f);
     const shown = getComputedStyle(f).display !== 'none';
     const text = typeIn(host, f);
-    const xRight = h.right - ${FIGURE_INSET_COLUMNS * GRID_COLUMN};
-    const column = Array.from(host.querySelectorAll('[data-cell^="content-"]')).find((c) => { const cb = R(c); return cb.left <= xRight - 1 && xRight - 1 <= cb.right && cb.top <= h.bottom - ${CELL_PADDING} - 1 && h.bottom - ${CELL_PADDING} - 1 <= cb.bottom; }) || null;
+    /* §58: a figure hosted by a content cell is bounded by that cell; a strip-hosted one by the content cell under its right edge (§57). */
+    const hostedByCell = (host.getAttribute('data-cell') || '').startsWith('content-');
+    const xRight = hostedByCell ? h.right - ${CELL_PADDING} : h.right - ${FIGURE_INSET_COLUMNS * GRID_COLUMN};
+    const column = hostedByCell ? host : (Array.from(host.querySelectorAll('[data-cell^="content-"]')).find((c) => { const cb = R(c); return cb.left <= xRight - 1 && xRight - 1 <= cb.right && cb.top <= h.bottom - ${CELL_PADDING} - 1 && h.bottom - ${CELL_PADDING} - 1 <= cb.bottom; }) || null);
     const columnText = column === null ? text : typeIn(column, f);
+    const num = (k) => (f.getAttribute(k) === null ? null : Number(f.getAttribute(k)));
+    const terms = { free: num('data-free-height'), heightTerm: num('data-height-term'), widthTerm: num('data-width-term'), binds: f.getAttribute('data-binds') };
     const textBottom = Math.max(0, ...columnText.map((t) => t.b.bottom - h.top));
     const clip = { left: Math.max(b.left, h.left), right: Math.min(b.right, h.right), top: Math.max(b.top, h.top), bottom: Math.min(b.bottom, h.bottom) };
     const covered = shown ? text.filter((t) => t.b.left < clip.right && clip.left < t.b.right && t.b.top < clip.bottom && clip.top < t.b.bottom).map((t) => t.text) : [];
-    return { host: host.getAttribute('data-section') || host.getAttribute('data-cell'), kind: f.getAttribute('data-figure'), state: f.getAttribute('data-figure-state'), shown, hostHeight: h.height, hostTop: h.top, hostBottom: h.bottom, hostLeft: h.left, hostRight: h.right, top: b.top, bottom: b.bottom, left: b.left, right: b.right, height: b.height, width: b.width, textBottom, columnLeft: column === null ? h.left : R(column).left, covered, cutEdges: [b.top < h.top - 0.5, b.bottom > h.bottom + 0.5, b.left < h.left - 0.5, b.right > h.right + 0.5].filter(Boolean).length };
+    const section = f.closest('[data-section]');
+    return { host: section === null ? (host.getAttribute('data-cell') || 'air') : section.getAttribute('data-section'), cell: hostedByCell ? host.getAttribute('data-cell') : 'section', columnWidth: column === null ? h.width - 2 * ${CELL_PADDING} : column.clientWidth - 2 * ${CELL_PADDING}, terms, kind: f.getAttribute('data-figure'), state: f.getAttribute('data-figure-state'), shown, hostHeight: h.height, hostTop: h.top, hostBottom: h.bottom, hostLeft: h.left, hostRight: h.right, top: b.top, bottom: b.bottom, left: b.left, right: b.right, height: b.height, width: b.width, textBottom, columnLeft: column === null ? h.left : R(column).left, covered, cutEdges: [b.top < h.top - 0.5, b.bottom > h.bottom + 0.5, b.left < h.left - 0.5, b.right > h.right + 0.5].filter(Boolean).length };
   });
 })()`;
 

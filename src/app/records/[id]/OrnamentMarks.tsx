@@ -74,7 +74,7 @@ export function Figure({
     MEASURING and not displayed, because no size the server could send is
     the host's.
   */
-  const [fit, setFit] = useState<{ state: FigureState; height: number | null }>({ state: freeHeight ? 'measuring' : 'drawn', height: null });
+  const [fit, setFit] = useState<{ state: FigureState; height: number | null; terms: FigureTerms | null }>({ state: freeHeight ? 'measuring' : 'drawn', height: null, terms: null });
 
   useEffect(() => {
     const el = ref.current;
@@ -83,34 +83,45 @@ export function Figure({
     const test = () => {
       const h = hostEl.getBoundingClientRect();
       const type = typeIn(hostEl, el);
-      const inset = FIGURE_INSET_COLUMNS * GRID_COLUMN;
+      /* The right inset: two page columns in a strip (§26), the cell's own padding in a content column (§58). */
+      const inset = host === 'column' ? CELL_PADDING : FIGURE_INSET_COLUMNS * GRID_COLUMN;
       let size: { width: number; height: number };
       let bottom: number;
+      let terms: FigureTerms | null = null;
       if (freeHeight) {
         /*
-          "The strip's free height below its entries", as the matrix solid
-          takes its cell's: the text that bounds the solo is the text in its
-          own column -- the content cell under the solo's right edge -- not
-          the strip's other column, which the §34 test below still guards.
+          §57: "as the matrix solid takes its cell's" -- the text that bounds
+          the solo is the text in its own column. §58 makes that column the
+          host itself (the summary column); in a strip it is the content cell
+          under the solo's right edge. The §34 test below guards the whole
+          host either way.
         */
         const xRight = h.right - inset;
-        const column = Array.from(hostEl.querySelectorAll<HTMLElement>('[data-cell^="content-"]')).find((c) => {
-          const cb = c.getBoundingClientRect();
-          return cb.left <= xRight - 1 && xRight - 1 <= cb.right && cb.top <= h.bottom - CELL_PADDING - 1 && h.bottom - CELL_PADDING - 1 <= cb.bottom;
-        });
-        const columnType = column === undefined ? type : typeIn(column, el);
+        const column =
+          host === 'column'
+            ? hostEl
+            : Array.from(hostEl.querySelectorAll<HTMLElement>('[data-cell^="content-"]')).find((c) => {
+                const cb = c.getBoundingClientRect();
+                return cb.left <= xRight - 1 && xRight - 1 <= cb.right && cb.top <= h.bottom - CELL_PADDING - 1 && h.bottom - CELL_PADDING - 1 <= cb.bottom;
+              });
+        const columnType = column === undefined || column === hostEl ? type : typeIn(column, el);
         const textBottom = Math.max(0, ...columnType.flatMap(glyphs).map((g) => g.bottom - h.top));
         const columnLeft = column === undefined ? h.left : column.getBoundingClientRect().left;
-        const sized = freeHeightSolid({
-          cellHeight: h.height,
-          textBottom,
-          cellWidth: xRight - (columnLeft + CELL_PADDING),
-          inset: CELL_PADDING,
-          aspect,
-          smallestFaceRatio: faceRatio,
-        });
+        const cellWidth = xRight - (columnLeft + CELL_PADDING);
+        const free = Math.max(0, h.height - CELL_PADDING - textBottom);
+        /*
+          §58 asked for both terms, not only the result: the height term is
+          §57's 0.855 of the free height; the width term is the height at
+          which the figure fills the column inside its insets (§33's yield,
+          §21's side edges). Whichever is smaller binds, and the figure says
+          which so the report reads it off the figure and not off a guess.
+        */
+        const heightTerm = free * SIZE_RATIO;
+        const widthTerm = cellWidth / aspect;
+        terms = { free, heightTerm, widthTerm, binds: heightTerm * aspect > cellWidth ? 'width' : 'height' };
+        const sized = freeHeightSolid({ cellHeight: h.height, textBottom, cellWidth, inset: CELL_PADDING, aspect, smallestFaceRatio: faceRatio });
         if (!sized.drawn) {
-          setFit({ state: 'below-bound', height: 0 });
+          setFit({ state: 'below-bound', height: 0, terms });
           return;
         }
         size = sized;
@@ -125,10 +136,10 @@ export function Figure({
         figure can be re-tested; and it is clipped to the host first, since
         what bleeds below the foot is cut and cannot cover anything.
       */
-      const right = host === 'strip' ? h.right - inset : h.left + h.width / 2 + size.width / 2;
+      const right = host === 'air' ? h.left + h.width / 2 + size.width / 2 : h.right - inset;
       const clipped = { left: Math.max(right - size.width, h.left), right: Math.min(right, h.right), top: Math.max(bottom - size.height, h.top), bottom: Math.min(bottom, h.bottom) };
       const covers = type.flatMap(glyphs).some((b) => b.left < clipped.right && clipped.left < b.right && b.top < clipped.bottom && clipped.top < b.bottom);
-      setFit({ state: covers ? 'covers-type' : 'drawn', height: freeHeight ? size.height : null });
+      setFit({ state: covers ? 'covers-type' : 'drawn', height: freeHeight ? size.height : null, terms });
     };
     test();
     const observer = new ResizeObserver(test);
@@ -145,6 +156,10 @@ export function Figure({
       data-ornament="figure"
       data-figure={figure.kind}
       data-figure-state={fit.state}
+      data-free-height={fit.terms === null ? undefined : Math.round(fit.terms.free * 10) / 10}
+      data-height-term={fit.terms === null ? undefined : Math.round(fit.terms.heightTerm * 10) / 10}
+      data-width-term={fit.terms === null ? undefined : Math.round(fit.terms.widthTerm * 10) / 10}
+      data-binds={fit.terms === null ? undefined : fit.terms.binds}
       aria-hidden="true"
       viewBox={`${box.minX} ${box.minY} ${box.width} ${box.height}`}
       preserveAspectRatio="xMidYMid meet"
@@ -177,7 +192,9 @@ export function Figure({
         */
         ...(host === 'strip'
           ? { right: FIGURE_INSET_COLUMNS * GRID_COLUMN }
-          : { left: '50%', transform: 'translateX(-50%)' }),
+          : host === 'column'
+            ? { right: CELL_PADDING }
+            : { left: '50%', transform: 'translateX(-50%)' }),
         /* §34, §57: a figure over type, or one without a size yet, is not drawn. `hidden` is an HTML attribute and an SVG element in an HTML document does not take its style. */
         ...(fit.state === 'drawn' ? {} : { display: 'none' }),
         zIndex: -1,
@@ -203,6 +220,9 @@ export function Figure({
 
 /** §57's states: served measuring (free-height) or drawn; the browser then finds it drawn, over type, or under §29's bound. */
 type FigureState = 'measuring' | 'drawn' | 'covers-type' | 'below-bound';
+
+/** §58's two terms for a free-height figure, as the figure measured them, and which one bound. */
+type FigureTerms = { free: number; heightTerm: number; widthTerm: number; binds: 'height' | 'width' };
 
 /**
  * A text element's extent is its GLYPHS, not its box: the section label is a

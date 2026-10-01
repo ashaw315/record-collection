@@ -1,4 +1,4 @@
-import { SECTIONS, SECTION_RULE, type SectionName } from './extended-grid';
+import { CELL_PADDING, SECTIONS, SECTION_RULE, type SectionName } from './extended-grid';
 
 /**
  * §26's five rows and §28's groupings at every width.
@@ -744,7 +744,7 @@ export function wideRowsAt(viewport: number): RegionRow[] {
  */
 export const FIGURE_INSET_COLUMNS = 2;
 
-export type FigureHost = 'strip' | 'air';
+export type FigureHost = 'strip' | 'air' | 'column';
 
 export function figurePlacement({
   host,
@@ -762,6 +762,10 @@ export function figurePlacement({
   if (host === 'strip') {
     const right = FIGURE_INSET_COLUMNS * columnWidth;
     return { right, left: hostWidth - right - figureWidth };
+  }
+  /* §58: hosted by a content column, the figure sits inside that column's own padding (§21: never across its cell's side edges). */
+  if (host === 'column') {
+    return { right: CELL_PADDING, left: hostWidth - CELL_PADDING - figureWidth };
   }
   const gap = (hostWidth - figureWidth) / 2;
   return { left: gap, right: gap };

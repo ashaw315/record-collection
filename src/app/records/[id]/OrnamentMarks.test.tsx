@@ -196,6 +196,14 @@ describe('§57: a figure is tested against type, and the free-height solo is siz
     expect(html, 'it sits on the strip’s inset, not below its foot').toContain('bottom:34px');
   });
 
+  it('§58: a figure hosted in a content column sits inside the column’s padding on both axes, measuring', () => {
+    const html = renderToStaticMarkup(<Figure ladder={ladder} figure={{ kind: 'solo', form: 'panel', sizing: 'free-height' }} host="column" />);
+    expect(html).toContain('data-figure-state="measuring"');
+    expect(html, 'inset by the column’s padding, not by two page columns').toContain('right:34px');
+    expect(html).not.toContain('right:240px');
+    expect(html).toContain('bottom:34px');
+  });
+
   it('renders a section-sized figure drawn at 0.855 of its host with the bleed, until the browser finds it covering type', () => {
     const html = renderToStaticMarkup(<Figure ladder={ladder} figure={{ kind: 'pair', forms: ['slab', 'beam'] }} host="air" />);
     expect(html).toContain('data-figure-state="drawn"');

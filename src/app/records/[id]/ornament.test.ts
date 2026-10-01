@@ -53,8 +53,8 @@ describe('the size rule (§25), which §57 keeps for the pair and takes from the
    * figure and not from the section's name.
    */
   it('§57: the Price history solo is the one figure sized by its free height; the pair keeps the section rule', () => {
-    const solo = figureAt('price-history', 'strip');
-    expect(solo?.kind === 'solo' && solo.sizing, 'the solo is sized by the free height below its entries').toBe('free-height');
+    const solo = figureAt('price-history', 'column');
+    expect(solo?.kind === 'solo' && solo.sizing, 'the solo is sized by the free height below its column’s text').toBe('free-height');
     const pair = figureAt('pressing-detail', 'air');
     expect(pair?.kind, 'the pair is a pair').toBe('pair');
     expect(pair !== null && 'sizing' in pair, 'and carries no free-height ruling: it keeps 0.855 of its air column').toBe(false);
@@ -111,6 +111,17 @@ describe('the library (§21, §25): six solids, three curves, three pairs', () =
   });
 
   /**
+   * §58: "The Price history solo's host is the strip's summary column at
+   * every width, sized to that column's free height below its text by §57's
+   * rule." The table keys the solo to the column, so the strip no longer
+   * places it and the section cannot draw it in two places.
+   */
+  it('§58: the Price history solo is placed in the summary column and no longer in the strip', () => {
+    expect(figureAt('price-history', 'column')?.kind).toBe('solo');
+    expect(figureAt('price-history', 'strip'), 'the strip placement is withdrawn by §58').toBeNull();
+  });
+
+  /**
    * §57 draws the solo "only where that free height clears §29's bound", and
    * §29's bound is a FACE width — "no face narrower than 6px as drawn" — not
    * a figure height. The ratio turns a drawn height into the narrowest face's
@@ -146,9 +157,9 @@ describe('the library (§21, §25): six solids, three curves, three pairs', () =
 });
 
 describe('distribution (§26 over §25)', () => {
-  it('places exactly two figures: the pair in Pressing detail’s air, the solo in Price history’s strip', () => {
+  it('places exactly two figures: the pair in Pressing detail’s air, the solo in Price history’s summary column (§58)', () => {
     expect(figureAt('pressing-detail', 'air')).toEqual({ kind: 'pair', forms: ['slab', 'beam'] });
-    expect(figureAt('price-history', 'strip')?.kind).toBe('solo');
+    expect(figureAt('price-history', 'column')?.kind).toBe('solo');
     expect(Object.keys(FIGURES)).toHaveLength(2);
   });
 
@@ -156,6 +167,7 @@ describe('distribution (§26 over §25)', () => {
     for (const section of ['acquisition', 'tags', 'market', 'images', 'journal']) {
       expect(figureAt(section, 'strip'), section).toBeNull();
       expect(figureAt(section, 'air'), section).toBeNull();
+      expect(figureAt(section, 'column'), section).toBeNull();
     }
   });
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SECTIONS } from './extended-grid';
+import { CELL_PADDING, SECTIONS } from './extended-grid';
 import {
   AIR_MIN,
   COLUMNS_AT,
@@ -560,6 +560,13 @@ describe('§26 placement: the rule is the HOST’s, not the figure’s (step 28)
       const placed = figurePlacement({ host: 'strip', hostWidth: 1440, columnWidth: 120, figureWidth: 95, kind: figure });
       expect(placed.right, `${figure} in a strip: two columns in from the host's right`).toBe(240);
     }
+  });
+
+  it('§58: insets a figure hosted in a content column by the column’s own padding, on both axes’ rule', () => {
+    /* The summary column is the host: the figure sits inside its padding, not two page columns in from a strip it is no longer in. */
+    const placed = figurePlacement({ host: 'column', hostWidth: 720, columnWidth: 120, figureWidth: 95, kind: 'solo' });
+    expect(placed.right).toBe(CELL_PADDING);
+    expect(placed.left).toBe(720 - CELL_PADDING - 95);
   });
 
   it('centres a figure in an air column, whatever the figure is', () => {

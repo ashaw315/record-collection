@@ -2,10 +2,9 @@ import { expect, test, type Page } from '@playwright/test';
 import { sql } from 'drizzle-orm';
 import { getTestDb } from '../test/helpers/db';
 import { registerCleanup, trackArtist } from './cleanup';
-import { GRID_COLUMN, GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
+import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { CELL_PADDING } from '../src/app/records/[id]/extended-grid';
 import { FIGURES, SIZE_RATIO, figureBox, smallestFaceRatio } from '../src/app/records/[id]/ornament';
-import { FIGURE_INSET_COLUMNS } from '../src/app/records/[id]/region-rows';
 import { freeHeightSolid } from '../src/app/records/[id]/rules-33';
 import { WIDTHS, readFigures, type FigureReading } from './figure-reading';
 
@@ -33,6 +32,12 @@ async function post(page: Page, path: string, data: unknown) {
  * free height below its entries, as the matrix solid is sized to its cell's,
  * and is drawn only where that free height clears §29's bound."
  *
+ * §58 (step 68) moves the solo's host: "the strip's summary column at every
+ * width, sized to that column's free height below its text by §57's rule."
+ * The rule carries §33's width yield -- the height gives way where the
+ * figure's width would cross the column's insets (§21) -- and both terms
+ * are reported with which one binds.
+ *
  * The sweep that produced the ruling: the solo at 0.855 of a section whose
  * height follows its content covered text on 8 real records at 390 and 15
  * from 480 to 1440, by up to 158px. Two seeded records bracket the
@@ -58,24 +63,27 @@ async function seedPriced(page: Page, prices: number[]): Promise<string> {
   return id;
 }
 
-const SOLO = FIGURES['price-history:strip'];
-if (SOLO === undefined || SOLO.kind !== 'solo') throw new Error('§26 places a solo in the Price history strip');
+const SOLO = FIGURES['price-history:column'];
+if (SOLO === undefined || SOLO.kind !== 'solo') throw new Error('§58 places a solo in the Price history summary column');
 const SOLO_BOX = figureBox(SOLO);
+const ASPECT = SOLO_BOX.width / SOLO_BOX.height;
 
-/** What §57 says the solo should be, from the measured strip. */
+/**
+ * What §58 says the solo should be, from the measured column: §57's rule
+ * (0.855 of the free height below the column's text) with §33's width
+ * yield, since a figure never crosses its cell's side edges (§21). Both
+ * terms are returned so the report can say which binds.
+ */
 function expectedSolo(m: FigureReading) {
-  return freeHeightSolid({
-    cellHeight: m.hostHeight,
-    textBottom: m.textBottom,
-    cellWidth: m.hostRight - FIGURE_INSET_COLUMNS * GRID_COLUMN - (m.columnLeft + CELL_PADDING),
-    inset: CELL_PADDING,
-    aspect: SOLO_BOX.width / SOLO_BOX.height,
-    smallestFaceRatio: smallestFaceRatio(SOLO),
-  });
+  const free = Math.max(0, m.hostHeight - CELL_PADDING - m.textBottom);
+  const heightTerm = free * SIZE_RATIO;
+  const widthTerm = m.columnWidth / ASPECT;
+  const fit = freeHeightSolid({ cellHeight: m.hostHeight, textBottom: m.textBottom, cellWidth: m.columnWidth, inset: CELL_PADDING, aspect: ASPECT, smallestFaceRatio: smallestFaceRatio(SOLO) });
+  return { ...fit, free, heightTerm, widthTerm, binds: heightTerm * ASPECT > m.columnWidth ? 'width' : 'height' };
 }
 
 for (const [label, prices] of [['nine prices', [8, 9.5, 11, 12.99, 13.42, 13.63, 15, 18, 22]], ['no prices', []]] as const) {
-  test(`§57: with ${label} the Price history solo takes the strip’s free height below its entries or is not drawn, and no figure covers type, at five widths`, async ({ page }) => {
+  test(`§58: with ${label} the Price history solo sits in the summary column, sized to its free height below the column’s text with §21’s width yield, or is not drawn, and no figure covers type, at five widths`, async ({ page }) => {
     test.setTimeout(240_000);
     await login(page);
     const id = await seedPriced(page, [...prices]);
@@ -86,22 +94,27 @@ for (const [label, prices] of [['nine prices', [8, 9.5, 11, 12.99, 13.42, 13.63,
       await page.goto(`/records/${id}`);
       const figures = await readFigures(page);
       const solo = figures.find((f) => f.host === 'price-history');
-      if (solo === undefined) { bad.push(`${w}: no solo rendered in the Price history strip`); continue; }
+      if (solo === undefined) { bad.push(`${w}: no solo rendered in Price history`); continue; }
+      if (solo.cell !== 'content-0') bad.push(`${w}: the solo is hosted by ${solo.cell}, not the summary column (§58)`);
       const want = expectedSolo(solo);
-      const free = solo.hostHeight - CELL_PADDING - solo.textBottom;
+      const terms = `column ${Math.round(solo.columnWidth)} inside its insets, ${Math.round(want.free)} free below its text; height term ${Math.round(want.heightTerm)} tall (${Math.round(want.heightTerm * ASPECT)} wide), width term ${Math.round(want.widthTerm)} tall (${Math.round(solo.columnWidth)} wide); ${want.binds} binds`;
+      /* The component reports its own terms; they must be the ones this spec computes from the same DOM, or the report is of a different thing. */
+      if (solo.terms.binds !== null && solo.terms.binds !== want.binds) bad.push(`${w}: the figure says ${solo.terms.binds} binds, the measure says ${want.binds}`);
+      if (solo.terms.free !== null && Math.abs(solo.terms.free - want.free) > 1) bad.push(`${w}: the figure reports ${solo.terms.free} free, the measure ${want.free.toFixed(1)}`);
       if (want.drawn) {
-        lines.push(`  §57 SOLO ${label} @${w}: drawn ${Math.round(solo.width)}×${Math.round(solo.height)} in ${Math.round(free)} free below the entries (strip ${Math.round(solo.hostHeight)})`);
+        lines.push(`  §58 SOLO ${label} @${w}: drawn ${Math.round(solo.width)}×${Math.round(solo.height)} -- ${terms}`);
         if (solo.state !== 'drawn' || !solo.shown) bad.push(`${w}: the solo should draw (${Math.round(want.height)} tall) and is ${solo.state}`);
         else {
-          if (Math.abs(solo.height - want.height) > 1) bad.push(`${w}: the solo is ${solo.height.toFixed(1)} tall, §57 gives ${want.height.toFixed(1)} (0.855 of ${free.toFixed(1)} free)`);
-          if (Math.abs(solo.bottom - (solo.hostBottom - CELL_PADDING)) > 1) bad.push(`${w}: the solo's bottom is ${(solo.hostBottom - solo.bottom).toFixed(1)} above the strip's foot, not on the ${CELL_PADDING}px inset`);
-          if (solo.top < solo.hostTop + solo.textBottom - 0.5) bad.push(`${w}: the solo's top (${(solo.top - solo.hostTop).toFixed(1)}) is above its entries' bottom (${solo.textBottom.toFixed(1)})`);
-          if (solo.cutEdges !== 0) bad.push(`${w}: the solo is cut by ${solo.cutEdges} edge(s); sized to its free height it is inside the strip`);
-          if (Math.abs(solo.height / solo.hostHeight - SIZE_RATIO) < 0.01 && Math.abs(want.height / solo.hostHeight - SIZE_RATIO) >= 0.01) bad.push(`${w}: the solo is still 0.855 of the section`);
+          if (Math.abs(solo.height - want.height) > 1) bad.push(`${w}: the solo is ${solo.height.toFixed(1)} tall, §58 gives ${want.height.toFixed(1)} (${want.binds} binds)`);
+          if (Math.abs(solo.bottom - (solo.hostBottom - CELL_PADDING)) > 1) bad.push(`${w}: the solo's bottom is ${(solo.hostBottom - solo.bottom).toFixed(1)} above the column's foot, not on the ${CELL_PADDING}px inset`);
+          if (Math.abs(solo.right - (solo.hostRight - CELL_PADDING)) > 1) bad.push(`${w}: the solo's right edge is ${(solo.hostRight - solo.right).toFixed(1)} in from the column's edge, not the ${CELL_PADDING}px inset`);
+          if (solo.top < solo.hostTop + solo.textBottom - 0.5) bad.push(`${w}: the solo's top (${(solo.top - solo.hostTop).toFixed(1)}) is above the column's text (${solo.textBottom.toFixed(1)})`);
+          if (solo.cutEdges !== 0) bad.push(`${w}: the solo is cut by ${solo.cutEdges} edge(s) of its column; §21 says a figure never crosses its cell's side edges`);
+          if (solo.left < solo.hostLeft + CELL_PADDING - 1) bad.push(`${w}: the solo crosses the column's left inset (${(solo.left - solo.hostLeft).toFixed(1)} in)`);
         }
       } else {
-        lines.push(`  §57 SOLO ${label} @${w}: not drawn — ${Math.round(free)} free below the entries gives a face under §29's 6px`);
-        if (solo.state !== 'below-bound' || solo.shown) bad.push(`${w}: ${Math.round(free)} free fails §29's bound, so the solo should be below-bound and not shown; it is ${solo.state}${solo.shown ? ', shown' : ''}`);
+        lines.push(`  §58 SOLO ${label} @${w}: not drawn -- ${terms}; a face under §29's 6px`);
+        if (solo.state !== 'below-bound' || solo.shown) bad.push(`${w}: ${Math.round(want.free)} free fails §29's bound, so the solo should be below-bound and not shown; it is ${solo.state}${solo.shown ? ', shown' : ''}`);
       }
       for (const f of figures) {
         if (f.covered.length > 0) bad.push(`${w}: the ${f.kind} in ${f.host} covers type: ${f.covered.map((t) => `"${t}"`).join(', ')}`);

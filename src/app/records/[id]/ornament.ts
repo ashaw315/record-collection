@@ -249,12 +249,14 @@ export const CONTROL_CLEARANCE = 60;
   have.
 */
 
-export type FigurePlace = 'air' | 'strip';
+/** Where a figure is placed: an air column, a full-width strip, or (§58) a section's first content column. */
+export type FigurePlace = 'air' | 'strip' | 'column';
 export const FIGURES: Readonly<Record<string, Figure>> = {
   /* Pressing detail's air column, row one. §26 does not name the pair; §25 lists three and this is its first. */
   'pressing-detail:air': { kind: 'pair', forms: ['slab', 'beam'] },
   /* Price history's full-width strip, row three. The archetype is §9.2's for this section. */
-  'price-history:strip': { kind: 'solo', form: 'panel', sizing: 'free-height' },
+  /* §58: the solo's host is the strip's SUMMARY COLUMN at every width, sized by §57's rule to that column's free height below its text; the strip placement is withdrawn. */
+  'price-history:column': { kind: 'solo', form: 'panel', sizing: 'free-height' },
 };
 
 /**

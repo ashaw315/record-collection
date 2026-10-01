@@ -120,13 +120,21 @@ describe('a section is an item in its row (§26)', () => {
     const html = render(
       <Section name="price-history" title="Price history" base={null} shape="pair" span={12} start={1} ladder={ladder}>
         <div />
+        <div />
       </Section>,
     );
     const section = html.slice(html.indexOf('<section'), html.indexOf('>', html.indexOf('<section')));
     expect(section, 'the section is the positioned box').toContain('position:relative');
     expect(section, 'and clips its own ornament — §26: a figure’s clip is its own cell').toContain('overflow:hidden');
     expect(html, 'the solo renders inside it').toContain('data-ornament="figure"');
-    expect(html, '§57: served measuring, sized by the browser against the entries').toContain('data-figure-state="measuring"');
+    expect(html, '§57: served measuring, sized by the browser against its column’s text').toContain('data-figure-state="measuring"');
+    /* §58: hosted in the summary column -- the first content cell -- and nowhere else in the section. */
+    const figureAt = html.indexOf('data-ornament="figure"');
+    expect(figureAt, 'the solo is inside the first content cell').toBeGreaterThan(html.indexOf('data-cell="content-0"'));
+    expect(figureAt).toBeLessThan(html.indexOf('data-cell="content-1"'));
+    expect(html.match(/data-ornament="figure"/g), 'one solo, not one per cell and none at the strip').toHaveLength(1);
+    const cell = html.slice(html.indexOf('<div', html.indexOf('data-cell="content-0"') - 60), html.indexOf('>', html.indexOf('data-cell="content-0"')));
+    expect(cell, 'the column is the figure’s positioned box').toContain('position:relative');
   });
 });
 

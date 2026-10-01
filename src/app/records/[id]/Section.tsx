@@ -101,8 +101,9 @@ export function Section({
           child,
         }));
 
-  /* §26's strip figure, and the flat that sits beside this section. */
+  /* §26's strip figure, §58's column figure (the Price history solo, hosted by the first content cell), and the flat that sits beside this section. */
   const figure = figureAt(name, 'strip');
+  const columnFigure = figureAt(name, 'column');
   const flat = FLATS.right.beside === name ? FLATS.right : null;
 
   return (
@@ -219,8 +220,10 @@ export function Section({
               `CELL_PADDING` on both sides of the boundary, which is the space
               §33 names.
             */
-            style={{ padding: CELL_PADDING }}
+            style={{ padding: CELL_PADDING, ...(index === 0 && columnFigure !== null ? { position: 'relative' } : {}) }}
           >
+            {/* §58: the summary column hosts the solo and is its positioned box; the figure measures this cell's text and sits inside its padding. */}
+            {index === 0 && ladder !== null && columnFigure !== null && <Figure ladder={ladder} figure={columnFigure} host={'column'} />}
             {child}
           </div>
         ))}
