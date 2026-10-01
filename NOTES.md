@@ -33245,7 +33245,13 @@ withdrawal form anywhere else -- unbolded, or after other words in a run --
 passed with no entry filed, which is how §28 and §33 each carried one
 narrowing the Price history solo. Same shape as §34 living in Plane and
 not Figure: a guard that ran one direction and was assumed to run both.
-Assertion 9 (`scripts/check-index.mjs`, on `withdrawalSentencesIn` and
+**The convention was also the detection mechanism.** Assertion 7 scans
+inside bold runs only, because the convention is that a withdrawal
+sentence begins its own bold run; so breaking the convention hid the
+sentence from the very check that enforces it. A guard that looks only
+where the rule says things should be cannot see a thing put elsewhere,
+and scanning plain text wherever it sits is the fix. That is the general
+lesson, not a detail of this script. Assertion 9 (`scripts/check-index.mjs`, on `withdrawalSentencesIn` and
 `unenteredWithdrawals` in `withdrawals.mjs`, unit-tested) scans every
 section's plain text for the six phrasings the file uses wherever they
 sit, sets aside a phrasing inside quotation marks as an example of the

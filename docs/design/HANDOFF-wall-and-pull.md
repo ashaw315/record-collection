@@ -102,6 +102,8 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §53 | The About has one cell | Why the lower About row goes; what the cell carries at rest and while editing; where the by-line’s qualifier goes; the two figures needed before build. |
 | §54 | The record with no cover is ink, flat | Why §5.3 stands as written; why the opacity goes and the disc merging into the faces is accepted; which three marks the build omits and why that is the defect; why the tint field is not drawn. |
 | §55 | What the real collection confirms | Which fixture figures the real collection supersedes, confirms or has not reached, and why the images row is unruled for more than one image. |
+| §56 | The images row with more than one image | Why the quarter-disc is sized against the one-image section; why the images flow in one grid without group labels. |
+| §57 | Figures yield to type by size | Why §34’s test moves into the figure; why the Price history solo is sized below its entries rather than hidden or moved; why a ruling measured on data the collection lacks is unverified. |
 
 ## Structural sections — pointers
 
@@ -303,17 +305,23 @@ These are the sections the rulings above build on, all in `Record Detail 8a - se
 63. **Done: answered by Code’s table before this step was written; §55 withdrew from it.** **Per-record counts on the real collection.** Produce one table of every "of seventeen" count and every per-record figure in the build target, each with its real-collection value from the manifest beside it, §50's twelve of seventeen first. Report; do not edit. Claude withdraws the class in one pass from the table and re-reads §50 against its figure.
    > Re-measured on the real collection in step 63:
 
-64. **§55 — re-measure the fork's pair changes on the real collection.** Measure every record's pair at 1439 and 1440 on the manifest and report how many change and by how many steps, against §47's nine of seventeen. Report; do not edit.
+64. **Done: zero of seventeen change pair; §47’s count withdrawn.** **§55 — re-measure the fork's pair changes on the real collection.** Measure every record's pair at 1439 and 1440 on the manifest and report how many change and by how many steps, against §47's nine of seventeen. Report; do not edit.
    > The real collection confirms or supersedes every per-record figure measured on the fixture, and a figure it has not reached is marked unconfirmed rather than left reading as measured.
 
-65. **§55 — the images row with more than one image.** Before the upload fix reaches Adam: seed records with two, three and six images and render each at 390, 1000, 1440 and 1920. Report the Images section's height, the quarter-disc's size and whether it still clears §26's three conditions, and what the rows beside Images do. Report; do not tune. Claude rules the row from the render.
+65. **Done: reported; §56 rules from it.** **§55 — the images row with more than one image.** Before the upload fix reaches Adam: seed records with two, three and six images and render each at 390, 1000, 1440 and 1920. Report the Images section's height, the quarter-disc's size and whether it still clears §26's three conditions, and what the rows beside Images do. Report; do not tune. Claude rules the row from the render.
    > The images row is ruled from its render, not from the code, and the render comes before any real record carries a second image.
+
+66. **§56 — the images row.** Size the Images quarter-disc against the section's one-image height at every image count. Flow every non-cover image in one grid in the fixed type order with its badge; drop the group labels. Re-render the step-65 records at 390, 1000, 1440 and 1920 and report the section's height, the disc's size at each of the four widths, and any type split across a row wrap. Replace the tests that assert grouped rows.
+   > The quarter-disc in Images is sized against the section as it stands with one image, whatever the count, so it never grows because a record gains a second.
+
+67. **§57 — figures and type.** Add §34's covers-type test to the figure component, against its host's text. Size the Price history solo to the strip's free height below its entries; draw it only where that clears §29's bound. Report per record at 390, 480, 1000, 1440 and 1920 the solo's size or that it is not drawn, and confirm no figure covers text. Replace the tests that assert the solo at 0.855 of the section.
+   > The Price history solo is sized to the strip’s free height below its entries, as the matrix solid is sized to its cell’s, and is drawn only where that free height clears §29’s bound.
 
 **Every row in the table above must appear in a step here.** The completeness check greps the table only, so an index that is current and an order that is eight rulings behind both pass — which is what happened at §W.28–§W.35. Check both.
 
 ## Maintaining this file
 
-**A supersession of a built ruling gets its own build step.** §34 superseded §28's grouping for row 2, and the change went unbuilt because it was sentence four of step 32, which did four other things. §33's fixed rule rows were the same, inside step 29's nine lettered clauses. Nothing in the index catches a supersession: the old tests keep passing because the old behaviour is still there. Steps 22, 23, 24 and 43 to 53 are the convention; step 54 adds a guard and supersedes nothing; steps 55 to 65 are the convention.
+**A supersession of a built ruling gets its own build step.** §34 superseded §28's grouping for row 2, and the change went unbuilt because it was sentence four of step 32, which did four other things. §33's fixed rule rows were the same, inside step 29's nine lettered clauses. Nothing in the index catches a supersession: the old tests keep passing because the old behaviour is still there. Steps 22, 23, 24 and 43 to 53 are the convention; step 54 adds a guard and supersedes nothing; steps 55 to 67 are the convention.
 
 **A test written from a superseded ruling defends the defect.** Building the new ruling turns the suite red, which reads as a regression, so the old behaviour survives every green run. Step 29 alone had three instances: two tests guarding the line cap §33 withdrew, a known-failing test that goes red if the matrix term is built as ruled, and four suites asserting the frame constant §33 retired. So when a section supersedes a built ruling, the tests written from the old one are part of what must change, and the step names them.
 
@@ -338,6 +346,8 @@ So the check is mechanical: **eight assertions, run against all three targets, b
 **A provisional is prose with no mechanism to notice its condition is met.** Five sections carried one; three had been met without anyone changing the word. Each provisional names the step or capture that settles it, and that step's report edits the section.
 
 **A declared withdrawal sentence is its own sentence.** It stands after the host sentence's full stop, never spliced into it, and it is the first text of its own strong run. The parser reads a declared sentence from its prefix to the next full stop, so a spliced one runs on into the host and matches no entry, while its verbatim text still passes every check that only looks for the text. Two placement defects in two rounds: `16/inset-stays-372` and `47/stretch-to-cover`.
+
+**A half-landed edit is detectable in one direction only.** An edit that lands an entry without its sentence fails assertion 6; one that lands a sentence without its entry fails nothing until the reverse check exists. So an edit that writes both is made in one save and verified from disk, and a no-match on either half stops the save: two scoped sentences in §28 and §33 were written without entries this way.
 
 **Two quotes sharing a long prefix are safe, because 7 pairs on the full sentence.** Code confirmed it: the script tests equality against the whole declared sentence (`check-index.mjs`, lines 360 and 374), so `28/cells-never-reshape` and `28/never-reshape-above-480`, which share their first 43 characters, cannot pass on a slice.
 
