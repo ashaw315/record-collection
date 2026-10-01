@@ -16,6 +16,8 @@ import { gridModules, type Diagonal } from './grid-modules';
 import { construction, project } from './construction';
 import { minimumInk } from './ink';
 import { LABEL, LABEL_INK } from './grid-type';
+import { INK_CSS } from '@/lib/colour/ink';
+import { PAPER_CSS } from '@/lib/colour/paper';
 import { recordLadder } from '@/lib/colour/record-ladder';
 import { TITLE_MEASURE } from './title-steps';
 
@@ -161,7 +163,17 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
   })();
 
   const base = ladder?.base ?? INK;
-  const tint = ladder?.tint ?? 'oklch(0.19 0.008 60 / 0.14)';
+  /*
+    §54 (step 62): with no cover there is no tint step. The provenance arc,
+    one of §5.1's eight, takes ink at full strength (its 0.14 was an opacity
+    variant §5.5 does not have). The cover cell's ground takes paper: §40
+    gives it "the ladder's tint step, not bare paper", and with no ladder
+    there is no step to take -- a reading for Design, since §54 names the
+    Plane and not the ground, and ink at full strength there would swallow
+    the sleeve bar and block, which are marks at ink.
+  */
+  const arcFill = ladder?.tint ?? INK_CSS;
+  const tint = ladder?.tint ?? PAPER_CSS;
   const aboutState = aboutCellState({ about: record.about, entry: record.journalEntry });
   /*
     §43 (step 51): the server states the record band's packing from each
@@ -750,7 +762,8 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
           className="relative isolate overflow-hidden"
           style={{ gridColumn: `span ${IDENTITY_SPANS[2]}` }}
         >
-          {ladder !== null && <Flat ladder={ladder} flat={FLATS.left} />}
+          {/* §54: drawn on a null ladder too, at ink -- the corner triangle is one of §5.1's eight. */}
+          <Flat ladder={ladder} flat={FLATS.left} />
         </div>
       </div>
 
@@ -794,7 +807,7 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
                 touching. A quarter-circle held 14px clear of the corner is a
                 disc with two sides hidden.
               */}
-              <Plane name="provenanceArc" corner="bottom-left" fill={tint} />
+              <Plane name="provenanceArc" corner="bottom-left" fill={arcFill} />
               {record.purchasePrice !== null && (
                 <div className="text-prose">Paid ${record.purchasePrice}</div>
               )}

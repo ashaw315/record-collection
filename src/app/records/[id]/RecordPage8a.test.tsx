@@ -514,6 +514,46 @@ describe('§45: the identity cell’s leftover is a tint field', () => {
   });
 });
 
+/**
+ * **§54 (step 62): the record with no cover is ink, flat.** "Every one of
+ * §5.1's marks is ink, flat and at full strength... The 0.55 alpha goes, and
+ * so does every opacity on this record: the Plane's fallback of ink at 0.14
+ * too." The still's disc and base-step faces were at ink 0.55 and the
+ * provenance arc at ink 0.14, two opacity variants §5.5 does not have; the
+ * upper air's triangle was not drawn at all.
+ */
+describe('§54: the record with no cover is ink, flat, at full strength', () => {
+  /* A provenance, as the real record has, so §5.1's arc is served and can be asserted on. */
+  const html = renderToStaticMarkup(<RecordPage8a record={{ ...record(null), conditionMedia: 'VG', conditionSleeve: 'G+' }} />);
+  it('serves no opacity variant of ink anywhere on the page, the still’s shadow footprints aside', () => {
+    expect(html).not.toContain('0.19 0.008 60 / 0.55');
+    expect(html).not.toContain('0.19 0.008 60 / 0.14');
+    /* The footprints under the forms are ink at 0.05, 0.09 and 0.2 on EVERY record -- a drawing device, not one of §5.1's marks -- so they are set aside here and reported to Design with step 62. */
+    const withoutFootprints = html.replace(/<polygon(?![^>]*data-face)[^>]*>/g, '');
+    expect(withoutFootprints, 'no ink at any alpha').not.toMatch(/oklch\(0\.19 0\.008 60 \/ /);
+  });
+  it('draws the still’s disc and base-step faces at ink', () => {
+    const still = /<svg[^>]*data-testid="construction-still"[\s\S]*?<\/svg>/.exec(html)?.[0] ?? '';
+    expect(still).not.toBe('');
+    expect(still).toMatch(/data-mark="disc"[^>]*fill="oklch\(0\.19 0\.008 60\)"/);
+    for (const face of still.matchAll(/<polygon[^>]*data-step="base"[^>]*fill="([^"]+)"/g)) expect(face[1], 'a base-step face').toBe('oklch(0.19 0.008 60)');
+    for (const face of still.matchAll(/<polygon[^>]*data-step="grey"[^>]*fill="([^"]+)"/g)) expect(face[1], 'a grey face keeps its neutral').toBe('oklch(0.74 0.004 80)');
+  });
+  it('draws the corner triangle in the upper air without a ladder, at ink', () => {
+    const air = /<div[^>]*data-upper-air[\s\S]*?<\/div>\s*<\/div>/.exec(html)?.[0] ?? '';
+    expect(air).toContain('data-flat="triangle"');
+    expect(air).toContain('background:oklch(0.19 0.008 60)');
+  });
+  it('gives the provenance arc ink, not ink at 0.14', () => {
+    const arc = /<div[^>]*data-mark="provenanceArc"[^>]*>/.exec(html)?.[0] ?? '';
+    expect(arc, 'the arc is served (its covers-type rule decides at render whether it shows)').not.toBe('');
+    expect(arc).toContain('background:oklch(0.19 0.008 60)');
+  });
+  it('gives the cover cell paper for its ground, since there is no tint step to take -- a reading of §40 for Design, not a sentence of §54', () => {
+    expect(html).toMatch(/--sleeve-tint:oklch\(0\.925 0\.004 80\)/);
+  });
+});
+
 describe('§49: the measure is 443 at every width from 480 up (step 57)', () => {
   it('states the padding rule above the fork too, so the stretch between column counts goes to padding', () => {
     const html = renderToStaticMarkup(<RecordPage8a record={record(null)} />);

@@ -154,6 +154,9 @@ CASES.nocover = {
   artistId: 'a-blues-project',
   pressingLine: 'Verve Forecast · United States, 1969',
   releaseYear: 1969,
+  /* As the real record: a provenance, so §5.1's arc has a host to be placed in (§54, step 62). */
+  conditionMedia: 'VG',
+  conditionSleeve: 'G+',
   coverUrl: null,
   spineColour: null,
 };

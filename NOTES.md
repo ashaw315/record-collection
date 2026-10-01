@@ -33016,3 +33016,49 @@ printed): 1 passed against the real store, on the OIDC-enabled project,
 which is the explicit token working where the SDK's own resolution was
 refused minutes earlier. Adam's own upload is the end-to-end check; no
 image was added to any record here.
+
+## Step 62 built: §54 -- the record with no cover is ink, flat (30 Sep)
+
+Every §5.1 mark on a no-cover record is ink at full strength. The still's
+disc and base-step faces were ink at 0.55 and the provenance arc ink at
+0.14, two opacity variants §5.5 has no step for; both go, the disc merges
+into the base faces as §54 accepts, and the grey faces keep their fixed
+neutral so the still still reads as solids. The corner triangle and the
+quarter-disc in Images, the two of the eight the gates dropped, draw at
+ink by their usual placement: `Flat` takes a null ladder and fills ink;
+`RecordPage8a` draws the upper air's triangle without a ladder; `Section`
+and `ExtendedGrid`'s air column draw their flat on a null ladder while
+§25's figures keep their gate, since they are not among the eight. The
+provenance arc keeps §34's covers-type rule and is at ink where it shows.
+No tint field is drawn. **One reading for Design**: the cover cell's ground
+takes paper with no ladder. §40 gives it "the ladder's tint step, not bare
+paper", there is no step to take, §54 names the Plane and not the ground,
+and ink at full strength there would swallow the sleeve bar and block,
+which are marks at ink. **One thing set aside for Design**: the still's
+shadow footprints are ink at 0.05, 0.09 and 0.2 on every record; they are a
+drawing device under the forms and not one of the eight, so "every opacity
+on this record" was read as the marks and the footprints were left as
+every record has them.
+
+The extremes fixture already carried the no-cover record (`?case=nocover`
+on the probe page); it gains the real record's provenance so the arc has a
+host. Captured at `docs/captures/step62-no-cover-1440x900-ink.png` and
+`-390x844-ink.png`. Tests first at both layers and watched failing: ten
+component cases (the flats throwing on null, the page serving both alphas,
+the gallery and section gates) and the E2E spec with 27 findings at 1440.
+Two of my assertions over-reached before GREEN and were narrowed, said
+plainly: the page-wide "no alpha" sweep caught the footprints, and the arc
+assertion used a record with an empty provenance. The probe page renders
+the frame only, so the quarter-disc and the region's triangle are asserted
+on a no-cover record made through the API on the real route, at 1440,
+1000 (the upper air's triangle, §37) and 390.
+
+**Gate, full suites.** Unit: 3,939 passed, 1 failed, 2 skipped -- the
+failure was the repo guard that names every spec driving the record
+screen, which did not know the §54 spec or the contact sheet; both are
+governed now and import their constants, and the guard with the step's
+unit sets re-ran at 495 passed. E2E, both projects, no file argument: 594
+passed, 1 flaky, 12 skipped, judged OK by the summary; the flake was
+`manage.spec.ts:639` ("a suggested hierarchy is grouped, evidenced, and
+applied only where accepted"), passing on retry, unrelated to this step.
+Typecheck clean; lint 29, none new; build compiles.

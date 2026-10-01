@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
+import { GRID_FORK, NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/band-geometry';
 import { readSeventeen } from '../seventeen';
 
 /**
@@ -20,7 +21,7 @@ import { readSeventeen } from '../seventeen';
  * difference in the inventory rather than in the eye.
  */
 
-const WINDOWS: ReadonlyArray<readonly [number, number]> = [[390, 900], [768, 900], [1000, 900], [1440, 900], [1920, 900], [1440, 1200], [1920, 1200]];
+const WINDOWS: ReadonlyArray<readonly [number, number]> = [[390, NO_SCROLL_HEIGHT], [768, NO_SCROLL_HEIGHT], [1000, NO_SCROLL_HEIGHT], [GRID_FORK, NO_SCROLL_HEIGHT], [1920, NO_SCROLL_HEIGHT], [GRID_FORK, 1200], [1920, 1200]];
 const OUT = process.env.SHEET_OUT ?? join('docs', 'captures', 'sheet');
 const NO_LADDER_RECORD = 'The Best Of The Blues Project';
 

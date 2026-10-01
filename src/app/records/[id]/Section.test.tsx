@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { recordLadder } from '@/lib/colour/record-ladder';
 import { ExtendedGrid, Section } from './Section';
 import { CELL_PADDING, SECTION_RULE } from './extended-grid';
+import { FLATS } from './ornament';
 import { MAX_ROWS, regionStylesheet } from './region-rows';
 
 /**
@@ -148,5 +149,26 @@ describe('an air column is a cell with nothing in it but ornament (§26)', () =>
     const html = render(<ExtendedGrid.Air index={0} ladder={null} figure={null} />);
     expect(html, 'the air still holds the row’s shape').toContain('data-cell="air"');
     expect(html).not.toContain('data-ornament');
+  });
+});
+
+/**
+ * §54 (step 62): the flats beside a section and in the air column draw with
+ * no ladder, at ink; the figures (§25's solids, not among §5.1's eight) stay
+ * gated on a ladder. Before this, `{ladder !== null && <Flat …>}` dropped
+ * the quarter-disc in Images and the region's triangle on the one no-cover
+ * record, which §5.3 forbids.
+ */
+describe('§54: the flats draw on a null ladder, at ink', () => {
+  it('draws the quarter-disc beside Images with no ladder', () => {
+    const html = render(<Section name="images" title="Images" base={null} shape="one" span={12} start={1} ladder={null}><div /></Section>);
+    expect(html).toContain('data-flat="quarterDisc"');
+    expect(html).toContain('background:oklch(0.19 0.008 60)');
+  });
+  it('draws the triangle in the air column with no ladder, and still no figure', () => {
+    const html = render(<ExtendedGrid.Air index={0} ladder={null} figure={{ kind: 'pair', forms: ['slab', 'beam'] }} flat={FLATS.left} />);
+    expect(html).toContain('data-flat="triangle"');
+    expect(html).toContain('background:oklch(0.19 0.008 60)');
+    expect(html, 'figures are not among the eight and keep their gate').not.toContain('data-figure');
   });
 });

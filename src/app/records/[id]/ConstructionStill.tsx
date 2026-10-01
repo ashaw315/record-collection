@@ -55,7 +55,8 @@ export function ConstructionStill({
   */
   const fill = (step: string): string => {
     if (step === 'grey') return 'oklch(0.74 0.004 80)';
-    if (ladder === null) return step === 'ink' ? INK : 'oklch(0.19 0.008 60 / 0.55)';
+    /* §54 (step 62): with no cover every mark is ink, flat, at full strength; the disc merges into the base faces and that is accepted, the grey faces keeping their neutral. The 0.55 alpha was a value no section states. */
+    if (ladder === null) return INK;
     switch (step) {
       case 'base':
         return ladder.base;

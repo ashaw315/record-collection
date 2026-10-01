@@ -156,3 +156,26 @@ describe('a flat is one fill at tint or base, never shade (§25)', () => {
     }
   });
 });
+
+/**
+ * **§54 (step 62): with no ladder a flat is ink, flat, at full strength.**
+ * "With no cover, every one of §5.1's marks is ink, flat and at full
+ * strength, and tint and shade have no role, because there is nothing to
+ * derive them from." The corner triangle and the quarter-disc are two of
+ * the eight, and the build omitted both on a null ladder; they draw now,
+ * at ink, by their usual placement rules.
+ */
+describe('§54: a flat with no ladder draws at ink, full strength', () => {
+  it('draws the quarter-disc at ink with no alpha', () => {
+    const html = renderToStaticMarkup(<Flat ladder={null} flat={FLATS.right} />);
+    expect(html).toContain('data-flat="quarterDisc"');
+    expect(html).toContain('background:oklch(0.19 0.008 60)');
+    expect(html, 'no opacity variant').not.toMatch(/0\.19 0\.008 60 \//);
+  });
+  it('draws the triangle at ink with no alpha', () => {
+    const html = renderToStaticMarkup(<Flat ladder={null} flat={FLATS.left} />);
+    expect(html).toContain('data-flat="triangle"');
+    expect(html).toContain('background:oklch(0.19 0.008 60)');
+    expect(html).not.toMatch(/0\.19 0\.008 60 \//);
+  });
+});

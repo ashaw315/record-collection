@@ -1,4 +1,5 @@
 import type { RecordLadder } from '@/lib/colour/record-ladder';
+import { INK_CSS } from '@/lib/colour/ink';
 import { project } from './construction';
 import { GRID_COLUMN } from './band-geometry';
 import { FIGURE_INSET_COLUMNS, type FigureHost } from './region-rows';
@@ -177,8 +178,9 @@ const VISIBLE_WIDTH = `${VISIBLE_OF_SECTION_WIDTH * 100}%`;
  * section or over one of the structural rules, which is ornament overriding
  * structure. A page edge has nothing behind it.
  */
-export function Flat({ ladder, flat }: { ladder: RecordLadder; flat: (typeof FLATS)[keyof typeof FLATS] }) {
-  const fill = flat.step === 'base' ? ladder.base : ladder.tint;
+export function Flat({ ladder, flat }: { ladder: RecordLadder | null; flat: (typeof FLATS)[keyof typeof FLATS] }) {
+  /* §54 (step 62): on a record with no cover the flats draw at ink, flat, by their usual placement; the gate that dropped them omitted two of §5.1's eight. */
+  const fill = ladder === null ? INK_CSS : flat.step === 'base' ? ladder.base : ladder.tint;
 
   if (flat.shape === 'quarterDisc') {
     /*

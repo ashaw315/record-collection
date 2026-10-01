@@ -78,6 +78,10 @@ const GOVERNED = [
   'e2e/images.spec.ts',
   'e2e/lookup-flows.spec.ts',
   'e2e/snippet.spec.ts',
+  /* §54 (step 62): the no-cover record on the probe page and on the route. */
+  'e2e/no-cover-54.spec.ts',
+  /* The contact sheet against the real collection: a separate config, the same screen. */
+  'e2e/sheet/contact-sheet.sheet.ts',
 ];
 
 /** The values a record-screen spec must not type. */

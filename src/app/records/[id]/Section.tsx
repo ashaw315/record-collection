@@ -165,7 +165,8 @@ export function Section({
         flow, and neither can leave this section.
       */}
       {ladder !== null && figure !== null && <Figure ladder={ladder} figure={figure} host={'strip'} />}
-      {ladder !== null && flat !== null && <Flat ladder={ladder} flat={flat} />}
+      {/* §54: the flat draws on a null ladder too, at ink; the figure is §25's and keeps its gate. */}
+      {flat !== null && <Flat ladder={ladder} flat={flat} />}
 
       {/*
         **The label above the content**, at the section's own left edge. §9.3's
@@ -359,7 +360,8 @@ ExtendedGrid.Air = function Air({
       }}
     >
       {ladder !== null && figure !== null && <Figure ladder={ladder} figure={figure} host={'air'} />}
-      {ladder !== null && flat !== null && <Flat ladder={ladder} flat={flat} />}
+      {/* §54: the flat draws on a null ladder too, at ink; the figure is §25's and keeps its gate. */}
+      {flat !== null && <Flat ladder={ladder} flat={flat} />}
     </div>
   );
 };

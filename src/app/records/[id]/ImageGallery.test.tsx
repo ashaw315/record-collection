@@ -104,8 +104,10 @@ describe('§53: the Images section hosts the base quarter-disc', () => {
     expect(html).toContain('data-section="images"');
     expect(html, 'the flat, in the section').toMatch(/data-ornament="flat"[^>]*data-flat="quarterDisc"|data-flat="quarterDisc"[^>]*data-ornament="flat"/);
   });
-  it('draws none without a ladder, as no other section does', () => {
+  /* §54 (step 62): re-pointed. The gate this asserted dropped a §5.1 mark on the no-cover record; the disc now draws at ink without a ladder. */
+  it('draws the quarter-disc at ink without a ladder (§54)', () => {
     const html = renderToStaticMarkup(<ImageGallery recordId="r1" images={[]} base={null} />);
-    expect(html).not.toContain('quarterDisc');
+    expect(html).toContain('data-flat="quarterDisc"');
+    expect(html).toContain('background:oklch(0.19 0.008 60)');
   });
 });
