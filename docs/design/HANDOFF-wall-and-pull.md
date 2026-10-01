@@ -100,6 +100,7 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §51 | The field grounds the type it sits under | Why the field hangs from the artist rather than sitting on the pressing block, and where the leftover paper goes. |
 | §52 | The ink cap is taken at the construction’s minimum | Why a cap against the construction’s current size forks at every breakpoint, and why its minimum across widths does not; what that costs, and which records it suppresses. |
 | §53 | The About has one cell | Why the lower About row goes; what the cell carries at rest and while editing; where the by-line’s qualifier goes; the two figures needed before build. |
+| §54 | The record with no cover is ink, flat | Why §5.3 stands as written; why the opacity goes and the disc merging into the faces is accepted; which three marks the build omits and why that is the defect; why the tint field is not drawn. |
 
 ## Structural sections — pointers
 
@@ -295,14 +296,17 @@ These are the sections the rulings above build on, all in `Record Detail 8a - se
 61. **§53 — the quarter-disc after the lower About row.** After 60b makes the images row one section, spanning the row at every width including above §18's fork. Assert on every record at 390, 768, 1000, 1439, 1440, 1680 and 1920 that the disc's host is Images, at the page's right edge, in a row above the triangle's, and within §29's bound; any width where it is not is a failure, not a suppression. Replace the three extended-grid tests that expect it beside the snippet.
    > The base quarter-disc moves to the rendered section that now ends the snippet’s row at the page’s right edge, bounded by §29 against that host.
 
-62. **§5.3 — the three marks omitted on the record with no cover.** HELD until Design's §5.3 ruling on the fill lands; the ruling sets what they are filled with. On the collection's one no-cover record (The Best Of The Blues Project), three of §5.1's eight marks are not drawn at any width: the corner triangle, the provenance quarter-circle, and the quarter-disc §53 rehoused in Images. §5.3 says "filled, not outlined, not omitted... The marks must not be dropped." The build gates every flat and plane on the record having a ladder, so a null ladder drops them. Draw all three on a null ladder at the fill the ruling names; the tint field is not among the eight and is ruled separately. Assert the eight by name on the no-cover record at 390, 768, 1000, 1440 and 1920 at 900 tall and 1440 and 1920 at 1200 tall, from the contact sheet's harness against the real collection, since no seeded fixture carries a null spine colour. Not executed until the ruling.
-   > No cover means no derivation, and the fallback is ink for all eight marks, the construction included — filled, not outlined, not omitted.
+62. **§54 — the record with no cover.** Remove every opacity on a no-cover record, the ink at 0.55 and the Plane's ink-at-0.14 fallback alike: every §5.1 mark is ink at full strength, and the construction's grey faces keep their neutral. Draw the corner triangle and the quarter-disc in Images at ink on that record, by their usual placement rules; the provenance arc keeps §34's rule. Draw no tint field. Add a no-cover record to the extremes fixture and capture it at 1440 × 900 and 390.
+   > §5.3 stands as written: with no cover, every one of §5.1’s marks is ink, flat and at full strength, and tint and shade have no role, because there is nothing to derive them from.
+
+63. **Per-record counts on the real collection.** Produce one table of every "of seventeen" count and every per-record figure in the build target, each with its real-collection value from the manifest beside it, §50's twelve of seventeen first. Report; do not edit. Claude withdraws the class in one pass from the table and re-reads §50 against its figure.
+   > Held for re-measurement on the real collection:
 
 **Every row in the table above must appear in a step here.** The completeness check greps the table only, so an index that is current and an order that is eight rulings behind both pass — which is what happened at §W.28–§W.35. Check both.
 
 ## Maintaining this file
 
-**A supersession of a built ruling gets its own build step.** §34 superseded §28's grouping for row 2, and the change went unbuilt because it was sentence four of step 32, which did four other things. §33's fixed rule rows were the same, inside step 29's nine lettered clauses. Nothing in the index catches a supersession: the old tests keep passing because the old behaviour is still there. Steps 22, 23, 24 and 43 to 53 are the convention; step 54 adds a guard and supersedes nothing; steps 55 to 61 are the convention.
+**A supersession of a built ruling gets its own build step.** §34 superseded §28's grouping for row 2, and the change went unbuilt because it was sentence four of step 32, which did four other things. §33's fixed rule rows were the same, inside step 29's nine lettered clauses. Nothing in the index catches a supersession: the old tests keep passing because the old behaviour is still there. Steps 22, 23, 24 and 43 to 53 are the convention; step 54 adds a guard and supersedes nothing; steps 55 to 63 are the convention.
 
 **A test written from a superseded ruling defends the defect.** Building the new ruling turns the suite red, which reads as a regression, so the old behaviour survives every green run. Step 29 alone had three instances: two tests guarding the line cap §33 withdrew, a known-failing test that goes red if the matrix term is built as ruled, and four suites asserting the frame constant §33 retired. So when a section supersedes a built ruling, the tests written from the old one are part of what must change, and the step names them.
 
