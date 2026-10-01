@@ -33696,3 +33696,41 @@ environments -- an env var set here and not there, a file present here and
 ignored there, a database this disk reaches -- and the honest statement of
 a local build is "builds with everything on this disk". Where production
 removes something, the gate needs a check run without it.
+
+## The upload form's default type is Back; what the uploader says today, and the smallest honest addition (1 Oct)
+
+**The fix.** The gallery's upload form selected Cover by default, the one
+type whose upload this screen cannot show: the sleeve takes the oldest
+cover row, the gallery leaves every cover out, and the spine colour is set
+only once. The owner's first uploads after the blob fix were a Back,
+which appeared, and then the same cover three times in fifty seconds,
+each stored and none shown -- a successful request with no visible result.
+The default is now Back, the next type in examination order and the first
+the gallery draws; Cover stays in the list. No feedback UI was added.
+
+**What the uploader shows today.** In between: "Working…" beside the
+controls while the request runs, the file input disabled. On failure: one
+line in the destructive ink under the limits line, from the server's
+message or "That image could not be uploaded." / "Could not reach the
+server. Nothing was uploaded." On success: nothing. The page refreshes and
+a non-cover tile appears in the grid; a cover upload changes nothing on
+screen except the frame's "Images N Manage" count in the About cell,
+which counts every row. Bitches Brew reads "Images 5" above a gallery of
+one, and that count is the only place a reader can see the record holds
+four covers; nothing names them or shows them.
+
+**The smallest honest addition, for Design (§53 makes the controls
+theirs).** One line in the control row's register after a 201, in the
+place "Working…" occupies, saying what was stored and whether it shows:
+"Stored as Back" when the tile appears, "Stored as Cover -- not shown; the
+sleeve keeps the oldest cover" when it does not. It costs no height the
+busy state does not already take, and it is true whichever cover ruling
+lands. Anything that lists the covers is a gallery change and waits for
+that ruling.
+
+**The three duplicate cover rows on Bitches Brew stay.** Invisible and
+harmless, and which survives depends on the cover ruling. Deleting them
+takes one call each to DELETE /api/images/:id (the gallery's own delete
+path), which removes the row and then the blob; no gallery control reaches
+a cover, so it is an API call with the three ids from this morning's
+report, after the ruling says which, if any, is the cover.

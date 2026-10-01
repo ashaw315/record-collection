@@ -44,7 +44,16 @@ export function ImageGallery({
   const fileInput = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
-  const [imageType, setImageType] = useState<string>('cover');
+  /*
+    Back, not cover. A cover upload is the one kind this screen cannot show:
+    the sleeve takes the oldest cover row, the gallery leaves every cover
+    out, and the spine colour is set only once -- so with cover as the
+    default, the owner's first uploads after the blob fix stored three
+    identical covers in fifty seconds and showed none of them. Back is the
+    next type in examination order and the first the gallery draws. Cover
+    stays in the list; only the default moves.
+  */
+  const [imageType, setImageType] = useState<string>('back');
 
   const tiles = orderImages(images);
 

@@ -119,3 +119,24 @@ describe('§53: the Images section hosts the base quarter-disc', () => {
     expect(html).toContain('background:oklch(0.19 0.008 60)');
   });
 });
+
+/**
+ * **The form's default type is the one whose upload shows.** Cover was the
+ * default, and a cover upload is invisible on this screen: the sleeve shows
+ * the oldest cover, the gallery leaves every cover out, and the spine colour
+ * is set only once. On 1 Oct the collection's owner uploaded the same cover
+ * three times in fifty seconds, each stored, none shown. Back is the next
+ * type in examination order and the first the gallery draws.
+ */
+describe('the upload form’s default type is one the gallery will show', () => {
+  it('selects Back, not Cover, before the reader touches the control', () => {
+    const html = renderToStaticMarkup(
+      <ImageGallery recordId="r1" images={[image('c', 'cover')]} base="oklch(0.7 0.06 60)" />,
+    );
+    const select = html.slice(html.indexOf('<select'), html.indexOf('</select>'));
+    expect(select, 'Back is the selected option').toMatch(/<option[^>]*\bselected=""[^>]*value="back"|<option[^>]*value="back"[^>]*\bselected=""/);
+    expect(select, 'and Cover is not').not.toMatch(/<option[^>]*\bselected=""[^>]*value="cover"|<option[^>]*value="cover"[^>]*\bselected=""/);
+    /* Cover stays available: the type is legal, only the default moves. */
+    expect(select).toContain('value="cover"');
+  });
+});
