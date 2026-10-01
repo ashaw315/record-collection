@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { IMAGE_TYPE_ORDER, imageTypeLabel, orderImages } from './gallery-order';
+import { IMAGE_TYPE_ORDER, displayedCover, imageTypeLabel, orderImages } from './gallery-order';
 
 /**
  * How the gallery arranges §4.2's image types (six since §10b's gatefold).
@@ -230,5 +230,31 @@ describe('the frame owns the cover, so the gallery does not repeat it', () => {
     ]);
 
     expect(onlyCover).toEqual(orderImages([]));
+  });
+});
+
+/**
+ * §61 (step 72): "The record shows its newest cover." The frame's sleeve
+ * and the shelf both read this; the build showed the oldest, so an upload
+ * sat beside the Discogs image unseen.
+ */
+describe('displayedCover (§61: the newest cover)', () => {
+  it('returns the newest cover row, whatever order the rows arrive in', () => {
+    const shown = displayedCover([
+      image('old', 'cover', '2026-01-01T00:00:00Z'),
+      image('new', 'cover', '2026-10-01T20:53:18Z'),
+      image('mid', 'cover', '2026-06-01T00:00:00Z'),
+    ]);
+    expect(shown?.id).toBe('new');
+  });
+
+  it('ignores every other type: a newer back photograph is not the cover', () => {
+    const shown = displayedCover([image('c', 'cover', '2026-01-01T00:00:00Z'), image('b', 'back', '2026-10-01T00:00:00Z')]);
+    expect(shown?.id).toBe('c');
+  });
+
+  it('is null with no cover at all, which is §54’s record', () => {
+    expect(displayedCover([image('b', 'back')])).toBeNull();
+    expect(displayedCover([])).toBeNull();
   });
 });

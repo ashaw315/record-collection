@@ -33744,3 +33744,45 @@ takes one call each to DELETE /api/images/:id (the gallery's own delete
 path), which removes the row and then the blob; no gallery control reaches
 a cover, so it is an API call with the three ids from this morning's
 report, after the ruling says which, if any, is the cover.
+
+## Step 72 built: §61 -- the record shows its newest cover, and the colour follows it (1 Oct)
+
+The displayed cover is the newest cover row (`displayedCover` in
+`gallery-order.ts` for the frame; the shelf's `image` CTE orders cover by
+newest and keeps every other face oldest-first). The spine colour is
+derived from the cover the record shows, through one function for every
+event that can change it (`rederiveSpineColour` in
+`src/lib/images/follow-cover.ts`): an upload typed cover re-derives from
+its bytes; deleting the displayed cover falls back to the next newest,
+read back from its stored URL, and clears the colour when none remains;
+the Discogs import attaches only where no cover exists and derives from
+the cover it attached. `setSpineColourIfUnset` is gone with §7.8's
+gap-fill; `setSpineColour` sets. The tests that asserted the oldest cover
+and a colour set once are replaced: a second cover re-derives, a non-cover
+upload does not, deletion falls back and clears, the shelf shows the
+newest cover and the oldest back.
+
+**For every record, the colour re-derived from its newest cover**
+(`scripts/rederive-spine-colours.mts`, read-only dry run against
+production): fifteen records unchanged, since their one cover is the one
+their colour came from; the Blues Project has none and stays null; **Bitches
+Brew changes, #adad85 to #95484a**, from Adam's own photograph (the webp
+of 20:53:18) in place of the Discogs image's olive. **§59 under #95484a:**
+rendered on the test harness with that colour, a cover, a back, five
+asking prices and a journal entry, across 54 widths from 390 to 1920: no
+glyph run sits on paint at any width, so nothing is under the bound and
+nothing fails. The disc yields to its caption and the solo is below its
+bound, as on every record; the colour cannot reach type. (The check was a
+throwaway spec, not kept: the standing §59 test reads any colour the
+harness renders, and this was one colour's run.)
+
+**Not applied.** The script's `--apply` would set Bitches Brew's colour
+through the same function the routes use, once, so the live record
+matches §61 before the next cover event does it for it. Production data,
+so it waits for the word; until then the deployed page will show the
+newest cover over the old colour.
+
+Verification, step level: the gallery-order unit file, the record-images,
+images-delete, shelf and discogs-cover integration files and the
+page-record guard (125 pass); `images.spec`, `no-cover-54` and the grid's
+ladder-faces test on chromium (14 pass); typecheck, lint, build.

@@ -398,19 +398,25 @@ describe('spine colour on a manually uploaded cover (§10b)', () => {
     expect(await spineColourOf(recordId)).toBeNull();
   });
 
-  it('leaves an existing colour alone when a second cover is uploaded', async () => {
-    // §7.8: gap-fill, never overwrite. The first cover decided the spine.
+  it('§61: a second cover re-derives the colour from it, because the record now shows that cover', async () => {
+    // §7.8's gap-fill is withdrawn by §61: the colour follows the displayed cover, and the displayed cover is the newest.
     const recordId = await seedRecord();
-
     await upload(
       recordId,
       fileForm(await solidPng(0xa7, 0x19, 0x1d), 'first.png', 'image/png', { imageType: 'cover' }),
     );
+    expect(await spineColourOf(recordId)).toBe('#a7191d');
     await upload(
       recordId,
       fileForm(await solidPng(0x33, 0x66, 0x99), 'second.png', 'image/png', { imageType: 'cover' }),
     );
+    expect(await spineColourOf(recordId), 'the newest cover decides').toBe('#336699');
+  });
 
+  it('§61: a non-cover upload after a cover leaves the colour where the cover put it', async () => {
+    const recordId = await seedRecord();
+    await upload(recordId, fileForm(await solidPng(0xa7, 0x19, 0x1d), 'first.png', 'image/png', { imageType: 'cover' }));
+    await upload(recordId, fileForm(await solidPng(0x33, 0x66, 0x99), 'back.png', 'image/png', { imageType: 'back' }));
     expect(await spineColourOf(recordId)).toBe('#a7191d');
   });
 

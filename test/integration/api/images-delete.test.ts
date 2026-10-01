@@ -187,6 +187,72 @@ describe('DELETE /api/images/:id', () => {
   });
 });
 
+/**
+ * §61 (step 72): "Deleting that cover falls back to the next newest and
+ * re-derives again; a record with no cover left is §54's." The remaining
+ * cover's bytes are not in the request, so the route fetches them from the
+ * stored URL; here the fetch is stubbed to hand back the first cover's
+ * pixels, since the test store's URLs do not resolve.
+ */
+describe('§61: deleting the displayed cover re-derives the colour', () => {
+  const solidPng = async (r: number, g: number, b: number) =>
+    (await import('sharp')).default({ create: { width: 24, height: 24, channels: 3, background: { r, g, b } } }).png().toBuffer();
+  const spineColourOf = async (recordId: string) => {
+    const { records } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+    const [row] = await db.select({ c: records.spineColour }).from(records).where(eq(records.id, recordId));
+    return row?.c ?? null;
+  };
+  async function coverUpload(recordId: string, png: Buffer, name: string): Promise<string> {
+    const form = new FormData();
+    form.set('file', new File([new Uint8Array(png) as BlobPart], name, { type: 'image/png' }));
+    form.set('imageType', 'cover');
+    const uploaded = await uploadImage(new Request(`http://test/api/records/${recordId}/images`, { method: 'POST', body: form }), { params: Promise.resolve({ id: recordId }) });
+    expect(uploaded.status).toBe(201);
+    return (await uploaded.json()).id as string;
+  }
+  async function seedRecordOnly(): Promise<string> {
+    const artist = await (await import('@/lib/db/queries/artists')).createArtist({ name: 'Discharge' });
+    const created = await createRecord(new Request('http://test/api/records', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: 'Hear Nothing', artistId: artist.id }) }));
+    return (await created.json()).id as string;
+  }
+
+  it('falls back to the next newest cover and re-derives from its pixels', async () => {
+    const recordId = await seedRecordOnly();
+    const first = await solidPng(0xa7, 0x19, 0x1d);
+    await coverUpload(recordId, first, 'first.png');
+    const second = await coverUpload(recordId, await solidPng(0x33, 0x66, 0x99), 'second.png');
+    expect(await spineColourOf(recordId), 'the newest cover decides while it is there').toBe('#336699');
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(new Uint8Array(first), { status: 200, headers: { 'content-type': 'image/png' } }));
+    const response = await remove(second);
+    expect(response.status).toBe(204);
+    expect(fetchSpy, 'the remaining cover is read from its stored URL').toHaveBeenCalledWith(STORED_URL);
+    expect(await spineColourOf(recordId), 'the first cover’s colour returns').toBe('#a7191d');
+  });
+
+  it('clears the colour when the only cover is deleted: the record is §54’s again', async () => {
+    const recordId = await seedRecordOnly();
+    const only = await coverUpload(recordId, await solidPng(0x33, 0x66, 0x99), 'only.png');
+    expect(await spineColourOf(recordId)).toBe('#336699');
+    const response = await remove(only);
+    expect(response.status).toBe(204);
+    expect(await spineColourOf(recordId)).toBeNull();
+  });
+
+  it('leaves the colour alone when a non-cover image is deleted', async () => {
+    const recordId = await seedRecordOnly();
+    await coverUpload(recordId, await solidPng(0x33, 0x66, 0x99), 'cover.png');
+    const form = new FormData();
+    form.set('file', new File([new Uint8Array(await solidPng(0xa7, 0x19, 0x1d)) as BlobPart], 'back.png', { type: 'image/png' }));
+    form.set('imageType', 'back');
+    const back = await uploadImage(new Request(`http://test/api/records/${recordId}/images`, { method: 'POST', body: form }), { params: Promise.resolve({ id: recordId }) });
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    await remove((await back.json()).id as string);
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(await spineColourOf(recordId)).toBe('#336699');
+  });
+});
+
 describe('DELETE /api/records/:id — the blobs go too', () => {
   /**
    * **The one path where the documented asymmetry did not hold.**

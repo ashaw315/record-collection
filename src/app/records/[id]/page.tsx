@@ -1,3 +1,4 @@
+import { displayedCover } from './gallery-order';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { AppHeader } from '@/components/AppHeader';
@@ -214,7 +215,8 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
                 about: record.snippet,
                 aboutEditedAt: record.snippetEditedAt === null ? null : new Date(record.snippetEditedAt).toISOString(),
                 imageCount: record.images.length,
-                coverUrl: record.images.find((image) => image.imageType === 'cover')?.url ?? null,
+                /* §61: the newest cover, not the first; the shelf (`shelf.ts`) reads the same. */
+                coverUrl: displayedCover(record.images)?.url ?? null,
                 spineColour: record.spineColour,
               }}
               writingConfigured={isAnthropicConfigured()}

@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, asc, desc, eq, exists, gte, ilike, inArray, isNull, lte, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, exists, gte, ilike, inArray, lte, or, sql } from 'drizzle-orm';
 import { isForeignKeyViolation } from '@/lib/api/errors';
 import { escapeLikePattern } from '@/lib/api/like';
 import type { RecordFilters, RecordSortField } from '@/lib/records/fields';
@@ -67,13 +67,16 @@ export type HydratedRecord = RecordRow & {
  * whose first cover failed to decode should get a colour when a readable one
  * arrives.
  */
-export async function setSpineColourIfUnset(recordId: string, colour: string): Promise<void> {
+/**
+ * §61 (step 72): the spine colour follows the cover the record shows, so it
+ * is SET, not gap-filled. §7.8's "derived once, never overwritten" is
+ * withdrawn by §61: a new cover re-colours the record, and deleting the
+ * displayed cover re-derives from the next newest, or clears it to §54's
+ * null when none remains. Callers go through `rederiveSpineColour`.
+ */
+export async function setSpineColour(recordId: string, colour: string | null): Promise<void> {
   const db = getDb();
-
-  await db
-    .update(records)
-    .set({ spineColour: colour })
-    .where(and(eq(records.id, recordId), isNull(records.spineColour)));
+  await db.update(records).set({ spineColour: colour }).where(eq(records.id, recordId));
 }
 
 export async function findRecordById(id: string): Promise<RecordRow | undefined> {

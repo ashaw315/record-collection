@@ -3,8 +3,8 @@ import { z } from 'zod';
 import { badRequest, isUuid, notConfigured, notFound, validationError } from '@/lib/api/errors';
 import { withErrorHandling } from '@/lib/api/handler';
 import { createImage } from '@/lib/db/queries/images';
-import { findRecordById, setSpineColourIfUnset } from '@/lib/db/queries/records';
-import { averageColour } from '@/lib/images/spine-colour';
+import { findRecordById } from '@/lib/db/queries/records';
+import { rederiveSpineColour } from '@/lib/images/follow-cover';
 import { getBlobStorage, isBlobConfigured, storageKeyFor } from '@/lib/storage/blob';
 import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_BYTES, sniffImageType } from '@/lib/storage/image-type';
 
@@ -123,25 +123,15 @@ export const POST = withErrorHandling(
       caption: parsed.data.caption ?? null,
     });
 
-    /**
-     * §10b's spine colour — for a COVER only, and that restriction is the point.
-     *
-     * The spine is the average of the front sleeve. A photograph of the dead
-     * wax is mostly black vinyl and a centre label is mostly one colour that is
-     * not the sleeve; either would give a spine matching no part of the record
-     * as it sits on a shelf. An untyped upload is not a claim to be the front
-     * either (§4.2 makes the column nullable).
-     *
-     * `setSpineColourIfUnset` is gap-fill (§7.8), so a second cover does not
-     * replace the first one's colour, and `averageColour` returns null rather
-     * than throwing — an unreadable image still uploads, it simply yields no
-     * spine.
-     */
+    /*
+      §61 (step 72): the record shows its newest cover and its colour follows
+      it. An upload typed cover IS the newest the moment its row exists, so
+      the colour is re-derived from these bytes. §7.8's gap-fill -- "a
+      second cover does not replace the first one's colour" -- is withdrawn.
+    */
     if (parsed.data.imageType === 'cover') {
-      const colour = await averageColour(buffer);
-      if (colour !== null) await setSpineColourIfUnset(id, colour);
+      await rederiveSpineColour(id, { bytes: buffer });
     }
-
     return NextResponse.json(row, { status: 201 });
   },
 );

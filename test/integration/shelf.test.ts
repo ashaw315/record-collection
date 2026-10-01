@@ -638,7 +638,7 @@ describe('shelfRecords — what pulling a record needs (§10b)', () => {
     });
   });
 
-  it('takes the OLDEST image of each type, matching the gallery', async () => {
+  it('takes the NEWEST cover (§61) and the oldest of each other type, matching the gallery', async () => {
     /**
      * A record can have two covers. The gallery orders within a type oldest
      * first — "the first upload stays first" — and the shelf must agree, or the
@@ -660,7 +660,20 @@ describe('shelfRecords — what pulling a record needs (§10b)', () => {
       createdAt: new Date('2026-06-01T00:00:00Z'),
     });
 
-    expect((await shelfRecords())[0].coverUrl).toBe('https://blob.example/first.jpg');
+    /* §61 (step 72): the shelf shows the record's NEWEST cover, as the frame does; the other faces keep the gallery's oldest-first. */
+    expect((await shelfRecords())[0].coverUrl).toBe('https://blob.example/second.jpg');
+  });
+
+  it('§61: the cover is the newest while the back stays the oldest, so the front matches the frame and the back matches the gallery', async () => {
+    const punk = await genre('Punk');
+    const id = await record('Hear Nothing', await artist('Discharge'), { genreIds: [punk] });
+    await db.insert(images).values({ recordId: id, url: 'https://blob.example/back-first.jpg', imageType: 'back', createdAt: new Date('2026-01-01T00:00:00Z') });
+    await db.insert(images).values({ recordId: id, url: 'https://blob.example/back-second.jpg', imageType: 'back', createdAt: new Date('2026-06-01T00:00:00Z') });
+    await db.insert(images).values({ recordId: id, url: 'https://blob.example/cover-first.jpg', imageType: 'cover', createdAt: new Date('2026-01-01T00:00:00Z') });
+    await db.insert(images).values({ recordId: id, url: 'https://blob.example/cover-second.jpg', imageType: 'cover', createdAt: new Date('2026-06-01T00:00:00Z') });
+    const [row] = await shelfRecords();
+    expect(row.coverUrl).toBe('https://blob.example/cover-second.jpg');
+    expect(row.backUrl).toBe('https://blob.example/back-first.jpg');
   });
 
   it('does not multiply a record by its images', async () => {

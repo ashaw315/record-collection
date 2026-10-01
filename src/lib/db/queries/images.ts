@@ -1,5 +1,5 @@
 import 'server-only';
-import { eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { getDb } from '@/db/client';
 import { images } from '@/db/schema';
 
@@ -46,4 +46,16 @@ export async function deleteImage(id: string): Promise<void> {
   const db = getDb();
 
   await db.delete(images).where(eq(images.id, id));
+}
+
+/** §61: the cover the record shows -- its newest cover row, or none. */
+export async function newestCoverFor(recordId: string): Promise<ImageRow | undefined> {
+  const db = getDb();
+  const [row] = await db
+    .select()
+    .from(images)
+    .where(and(eq(images.recordId, recordId), eq(images.imageType, 'cover')))
+    .orderBy(desc(images.createdAt), desc(images.id))
+    .limit(1);
+  return row;
 }

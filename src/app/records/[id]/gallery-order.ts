@@ -100,3 +100,18 @@ export function orderImages(images: GalleryImage[]): ImageTile[] {
       .map((image) => ({ type, image })),
   );
 }
+
+/**
+ * §61 (step 72): the cover a record shows is its NEWEST cover row -- the
+ * owner's own photograph of their own copy is a better source than the
+ * catalogue image that arrived first, and §5.2 reads the record, not the
+ * catalogue. Null is §54's record: no cover at all.
+ */
+export function displayedCover(images: GalleryImage[]): GalleryImage | null {
+  let newest: GalleryImage | null = null;
+  for (const image of images) {
+    if (image.imageType !== 'cover') continue;
+    if (newest === null || time(image.createdAt) > time(newest.createdAt)) newest = image;
+  }
+  return newest;
+}

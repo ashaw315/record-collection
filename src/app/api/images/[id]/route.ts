@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { badRequest, isUuid, notFound } from '@/lib/api/errors';
 import { withErrorHandling } from '@/lib/api/handler';
 import { deleteImage, findImageById } from '@/lib/db/queries/images';
+import { rederiveSpineColour } from '@/lib/images/follow-cover';
 import { logger } from '@/lib/logger';
 import { getBlobStorage, isBlobConfigured } from '@/lib/storage/blob';
 
@@ -40,6 +41,14 @@ export const DELETE = withErrorHandling(
     }
 
     await deleteImage(id);
+    /*
+      §61 (step 72): deleting the displayed cover falls back to the next
+      newest and re-derives the colour; with no cover left the record is
+      §54's and the colour clears. A non-cover image leaves it alone.
+    */
+    if (image.imageType === 'cover' && image.recordId !== null) {
+      await rederiveSpineColour(image.recordId);
+    }
 
     /**
      * **Skipped when this deployment has no storage token.** Without the guard

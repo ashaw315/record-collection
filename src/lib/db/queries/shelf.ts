@@ -223,7 +223,8 @@ export async function shelfRecords(
       SELECT DISTINCT ON (record_id, image_type) record_id, image_type, url
       FROM images
       WHERE image_type IN ('cover', 'back', 'gatefold_left', 'gatefold_right')
-      ORDER BY record_id, image_type, created_at ASC, id
+      -- §61 (step 72): the cover is the NEWEST, as the frame shows it; every other face keeps the gallery's oldest-first.
+      ORDER BY record_id, image_type, (CASE WHEN image_type = 'cover' THEN created_at END) DESC NULLS LAST, created_at ASC, id
     )
     SELECT
       records.id,

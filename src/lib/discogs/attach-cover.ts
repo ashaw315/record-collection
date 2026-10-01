@@ -3,8 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { getDb } from '@/db/client';
 import { images } from '@/db/schema';
 import { createImage } from '@/lib/db/queries/images';
-import { setSpineColourIfUnset } from '@/lib/db/queries/records';
-import { averageColour } from '@/lib/images/spine-colour';
+import { rederiveSpineColour } from '@/lib/images/follow-cover';
 import { describeError } from '@/lib/errors/describe';
 import { logger } from '@/lib/logger';
 import { getBlobStorage, isBlobConfigured, storageKeyFor } from '@/lib/storage/blob';
@@ -126,8 +125,8 @@ export async function attachDiscogsCover(input: {
      * §10b renders as a plain spine. So this cannot fail the import, and the
      * absence is a real state rather than an error.
      */
-    const colour = await averageColour(bytes);
-    if (colour !== null) await setSpineColourIfUnset(input.recordId, colour);
+    /* §61: the attached cover is the record's only cover (see the check above), so it is the one shown and the colour follows it. */
+    await rederiveSpineColour(input.recordId, { bytes });
 
     return { attached: true };
   } catch (cause) {
