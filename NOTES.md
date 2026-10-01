@@ -32712,7 +32712,7 @@ long as it has existed. Fourth instance of the shape in a month: the
 artist strings (one stand-in for seventeen), the fixture's single terracotta
 (one for sixteen spine colours), the adapter replaced by a spy, and the
 only §5.3 record -- no cover, no spine colour -- never rendered by any
-fixture, so three of §5.1's eight marks went undrawn on it for eighteen
+fixture, so two of §5.1's eight marks went undrawn on it for eighteen
 days. A fixture that carries one value where the world carries many, or
 none where the world carries one, is an adapter replaced by a spy in a
 different coat. The rule, as
@@ -32779,22 +32779,41 @@ name, identical at all seven windows (release-year field 240 × 299 at
 | the bar right of the sleeve | drawn | ink | 1 |
 | the corner triangle in the identity block's lower-left | **not drawn: absent from the DOM** at every window, in the identity block, the upper air and the region alike | — | — |
 | the disc behind the rendered still | drawn | ink at 0.55, `oklch(0.19 0.008 60 / 0.55)` | 0.55 |
-| the quarter-circle in provenance | **not drawn: absent from the DOM** | — | — |
+| the quarter-circle in provenance | drawn from 1440 up (90 × 199); below 1440 it hides itself by the Plane's own covers-type rule, which reads the host's type and not the ladder | ink at 0.14, `oklch(0.19 0.008 60 / 0.14)`: the page's own fallback for a null ladder (`RecordPage8a.tsx:164`), a FIFTH value beside the disc's 0.55 | 0.14 |
 | the quarter-circle in About, withdrawn by §35 and rehoused by §53 as the quarter-disc in Images | **not drawn: absent from the DOM** in Images, where §53 puts it; its absence from About is correct | — | — |
 | the journal's 2px edge | drawn | ink, 2px right border | 1 |
 | the construction's coloured faces, one mark | drawn | the base-step faces at ink 0.55; the ink-step faces at ink; the grey faces at the neutral silver, which carry no colour on any record | 0.55 and 1 |
 
 **Two different problems, filed apart.** The tint field is not among §5.1's
 eight -- it arrived at §49, long after §5.3 was settled -- so its absence
-on a no-cover record is unruled, and with Design. The three of the eight
-that do not draw -- the corner triangle, the provenance quarter-circle and
-the rehoused quarter-disc -- contradict a settled section: §5.3, "filled,
-not outlined, not omitted... The marks must not be dropped: omitting them
-would let a missing image change the composition's structure." In the
-build every flat and plane is gated on the record having a ladder
-(`{ladder !== null && <Flat …>}` in RecordPage8a and Section), so a null
-ladder drops them. That is a defect with a step: 62 in HANDOFF, held until
+on a no-cover record is unruled, and with Design. The two of the eight that
+do not draw -- the corner triangle and the rehoused quarter-disc --
+contradict a settled section: §5.3, "filled, not outlined, not omitted...
+The marks must not be dropped: omitting them would let a missing image
+change the composition's structure." (A first reading of the inventory
+said three: the provenance arc was probed by the wrong attribute. It draws.)
+**The gate is not a category; it is three sites, by file and symbol**, all
+of the shape `{ladder !== null && <Flat ladder={ladder} flat={…} />}`:
+`RecordPage8a.tsx:753` in `RecordPage8a`, the upper air's triangle
+(`FLATS.left`, §37); `Section.tsx:167-168` in `Section`, the strip's figure
+and the flat beside the section, which is the quarter-disc in Images
+(`FLATS.right`); and `Section.tsx:361-362` in `ExtendedGrid`'s air column,
+the region's triangle beside Journal. `Flat` itself (`OrnamentMarks.tsx:180`)
+types its ladder non-null, so the null case needs a fill before it can be
+called. The marks that draw do so because they never read the ladder's
+nullness: the sleeve bar, the journal edge and the release-year field take
+`base = ladder?.base ?? INK` (`RecordPage8a.tsx:163`), and the Plane takes
+`tint = ladder?.tint ?? ink at 0.14` (line 164). Not among the eight but
+gated the same way: the section bars, `Section.tsx:184`, on `base !== null`
+from `page.tsx:82`. That is a defect with a step: 62 in HANDOFF, held until
 Design's §5.3 ruling says what they are filled with.
+
+**Measured, for the step and for §54:** the disc and the construction's
+base-step faces already render at the same value, ink 0.55, so the reason
+given for keeping the alpha -- that a flat ink would collapse the disc into
+the faces -- describes a collapse that has already happened; and the
+provenance arc renders at ink 0.14, a fifth value from a second fallback
+constant.
 
 **The 0.55 is a spec conflict, not an uncited constant.** §5.5's three
 steps are tint at 34% toward paper, base, and shade at 26% toward ink --
