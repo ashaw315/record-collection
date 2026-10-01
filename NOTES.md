@@ -33629,3 +33629,24 @@ touch-floor test, `images-row-56.spec.ts`, `images.spec.ts`'s gallery
 tests and `extended-grid`'s two disc tests on chromium (16 pass), the
 RecordPage8a unit file with the spec guard (51 pass), typecheck, lint,
 build.
+
+## Gate after steps 68 to 71 and the sheet retake (1 Oct): full suites green, three specs carried to §58, §59 and §60 first
+
+The one gate for the run (Adam's instruction: one at the end rather than
+per step). Unit: 264 files passed, 1 skipped; 3966 tests passed, 2 skipped.
+Playwright with no file argument: the first full run had chromium at 402
+passed, 3 failed, 1 flaky and mobile at 195 passed. The three were tests
+still bounding the Price history solo and the Images disc by rules
+superseded today: two in `extended-grid.spec.ts` waited for a VISIBLE solo
+on a three-price record, where §58 hosts it in a column that leaves it
+below §29's bound and hidden (now attached and settled); `flat-sizing-29`
+bounded the disc by its host's height, where §60's reference and §59's
+caption now decide (241 against the host's 161 at 1440). Fixed in f53d330
+and the suites re-run whole: chromium 405 passed, 1 flaky, 1 skipped;
+mobile 194 passed, 1 flaky, 1 skipped. The two flaky, each green on its
+retry, are a wall-route landing test and a collection-filters navigation
+test, neither touched today. Typecheck clean, lint 0 errors with the 29
+standing warnings, build compiled, the index green in both modes.
+
+Verification, gate level: full suites on both projects, typecheck, lint,
+build, check-index plain and --strict-reverse.
