@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 130 declared rules. Regenerate with
+Generated from 131 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -160,6 +160,7 @@ Generated from 130 declared rules. Regenerate with
 | you are taking a drop by reading the diff lines the prompt described and calling the rest unchanged | [Step 60a corrected: the qualifier is the generate control's visible sentence, never a hover title (30 Sep)](#step-60a-corrected-the-qualifier-is-the-generate-controls-visible-sentence-never-a-hover-title-30-sep) |
 | a diagnosis explained the last occurrence and you are applying it to this one | [THE ACCUMULATION DIAGNOSIS IS REFUTED FOR THE CURRENT FLAKE — measured 2026-09-05](#the-accumulation-diagnosis-is-refuted-for-the-current-flake-measured-2026-09-05) |
 | a flake has a prescription attached that nobody measured | [The E2E flake is ACCUMULATION, not worker contention — the prescription was wrong](#the-e2e-flake-is-accumulation-not-worker-contention-the-prescription-was-wrong) |
+| a sweep reports a count of overlaps as satisfied, and the count is on element boxes while the rule is about what the letters sit on | [The ground under type, by size: §34's 945 "behind" overlaps resolve to one sentence at phone widths, and it is 13px on base at 1.75:1 (1 Oct)](#the-ground-under-type-by-size-34s-945-behind-overlaps-resolve-to-one-sentence-at-phone-widths-and-it-is-13px-on-base-at-1751-1-oct) |
 | repeated failures are being treated as one bug | [THE HUNT, COMPLETE — six runs, SEVEN failures, and it is not one bug](#the-hunt-complete-six-runs-seven-failures-and-it-is-not-one-bug) |
 | two standing explanations exist for a failure and neither has been tested | [THE NEON HAZARD, DIAGNOSED — and BOTH standing explanations were wrong](#the-neon-hazard-diagnosed-and-both-standing-explanations-were-wrong) |
 | an intermittent failure is being called a timeout without a trace | [THE TRACE, CAUGHT — and it is a hydration race, not a timeout (2026-09-05)](#the-trace-caught-and-it-is-a-hydration-race-not-a-timeout-2026-09-05) |
@@ -33335,3 +33336,74 @@ paint sweep (945 overlaps behind type, 0 in front) and `row-clip-29h` on
 chromium, the ornament, rules-33, OrnamentMarks and Section unit files (45
 pass), `test/repo` (246 pass after governing the two new specs), typecheck,
 lint, build.
+
+## The ground under type, by size: §34's 945 "behind" overlaps resolve to one sentence at phone widths, and it is 13px on base at 1.75:1 (1 Oct)
+
+**Shape:** sample-as-population
+**You are here if:** a sweep reports a count of overlaps as satisfied, and the count is on element boxes while the rule is about what the letters sit on
+
+Adam asked what the §34 sweep's "945 overlaps behind type, 0 in front"
+puts under small type, since §5.2 rules that no 11px type sits on a
+base-step ground, tint admitted under a contrast test. The sweep counts
+paint behind type on ELEMENT boxes, so it cannot say. A report test now
+in `layout-sweep.spec.ts` ("reports the ground under every glyph run that
+sits over paint, by type size") measures the same views on glyph rects and
+hit-tests each meeting at its centre, reading the ground off the element
+under the glyph: a face's step, a fill, an image.
+
+| of the 945 | count | what they are |
+|---|---|---|
+| glyph rects meeting a paint's box | 136 | the rest are block boxes that span past their letters (the label block, §57's lesson) |
+| of which the paint is clipped away under the glyph | 8 | figures' bleed below the foot, under the next row's labels |
+| of which the text is not under the hit point | 90 | the Journal form's screen-reader-only labels ("Entry date", "Journal note"), whose line boxes are full width while their glyphs are clipped to a pixel: not type a reader sees |
+| of which paint is in front | 0 | the §34 sweep's own count |
+| **glyph runs that sit on paint** | **38** | one sentence, see below |
+
+The 38 are one text at 38 views: "The cover is shown above. Photograph
+the back, the label, or the dead wax." in Images, 13px, over the
+quarter-disc at the BASE step (rgb 178 118 83 on the seeded record), at
+every sweep width from 390 to 594 and at none above. At 390 the sentence's
+last line runs 34px into the disc. The type is the muted ink
+(lab L 39.7), which reads **1.75:1** on that ground. No 11px or 10px type
+sits on any paint at any view on the rich seeded record: §5.2's clause as
+written is met, and the labels, meta and the 72 are where §5.2 put them.
+What it does not name is 13px prose on the base step at phone widths at
+under 2:1, which is a legibility finding for Design, not a §5.2 breach;
+visible in the sheet at 390 on any laddered record with a cover.
+
+Measured on the seeded rich record, the sweep's subject, not on the real
+collection; the real collection draws the same disc on every laddered
+record and the same sentence on every record with a cover.
+
+## The first price-history measurement was on line boxes, and its counts stand; its widths were the solid's box, and the painted figures are these (1 Oct)
+
+Adam asked whether the report "fifteen of seventeen, up to 158px" was
+inflated by the cause §57's spec found (a label's element box spanning
+its strip). It was not: that measurement walked every text node in the
+section and read its LINE BOXES (`Range.getClientRects`), which are the
+letters, and compared them with the solo's box. The one approximation was
+on the solid's side: the SVG's rectangle, of which the panel's faces fill
+76.5% (two empty corners, top-right and bottom-left, from the slab's lean).
+
+Re-measured on the superseded build (28e1fe2 in a worktree, server
+localhost:3300, the real collection, read-only) by hit-testing every 4px
+along each line box for a painted face:
+
+| width | records with text over a painted face | worst painted run | as first reported (box) |
+|---|---|---|---|
+| 390 | 9 | 116px | 8, 116px |
+| 480 | 15 | 100px | 15, 158px |
+| 768 | 15 | 108px | 15, 110px |
+| 960 | 15 | 72px | 15, 73px |
+| 1000 | 15 | 92px | 15, 93px |
+| 1440 | 15 | 100px | 15, 43 to 100px |
+| 1920 | 0 | — | 0 |
+
+The record counts hold at every width (one more at 390, not one fewer).
+The widths hold within 2px except at 480, where the box's empty corner
+made 158 of a painted 100. The defect was real at the size reported, and
+the one figure that over-stated was the 480 width, by 58px. The probe is
+not kept as a test because its subject, the section-sized solo, no longer
+exists; the method -- hit-test the painted faces, not the box -- is what
+`figures-type-57.spec.ts` would need if a figure's silhouette ever mattered
+to a bound.
