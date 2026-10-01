@@ -33062,3 +33062,61 @@ passed, 1 flaky, 12 skipped, judged OK by the summary; the flake was
 `manage.spec.ts:639` ("a suggested hierarchy is grouped, evidenced, and
 applied only where accepted"), passing on retry, unrelated to this step.
 Typecheck clean; lint 29, none new; build compiles.
+
+## Step 64 reported: no record changes pair across 1439 to 1440 on the real collection; §47's nine is superseded by zero (1 Oct)
+
+Rendered, not read off the manifest, which has no 1439 column: all
+seventeen real records at 1439 × 900 and 1440 × 900 through the ordinary
+development server, read-only. Every record chooses the same pair on both
+sides, with the supply 510 and the measure 443 identical at both widths on
+all seventeen. §47's nine of seventeen was measured before §48 put the
+identity at 520 and §49 made the measure 443 everywhere; the fixture's
+equal-pairs assertion at step 57 already held zero, and the real
+collection confirms it. The pressing block, which differs on real records,
+does not reach the pair at the fork because nothing about the cell changes
+across it any more.
+
+## Step 65 reported: the images row with one, two, three and six images, from the render (1 Oct)
+
+Seeded on the test harness (a spine colour, a cover, then back, label,
+matrix and two others by type), rendered at 390, 1000, 1440 and 1920, and
+captured full page as `docs/captures/step65-images-<n>-<w>x<h>-h<section
+height>.png`. The gallery drops the cover and groups the rest by type;
+columns are two at 390, three at 1000, four at 1440 and 1920. Every group
+takes its own grid row of square tiles, a tile being a column's width, so
+a group of one tile is one tile beside empty cells and costs a full tile
+row.
+
+| images | 390 | 1000 | 1440 | 1920 |
+|---|---|---|---|---|
+| one (control-only row) | 305 | 241 | 241 | 241 |
+| two | 487 (+182) | 592 (+351) | 623 (+382) | 743 (+502) |
+| three | 709 (+404) | 962 (+721) | 1025 (+784) | 1265 (+1024) |
+| six | 1153 (+848) | 1702 (+1461) | 1829 (+1588) | 2309 (+2068) |
+
+Section heights in px, with the growth over the one-image row. Six images
+at 1920 make the Images section 2309 tall, two and a half screens; at 390
+it is 1153, one and a third phone screens, with four groups stacked.
+
+**The quarter-disc grows with its host and has no ceiling.** §29 sizes the
+visible radius to the smaller of two-thirds of the host's height and a
+quarter of the section's width, and "no section fixes a flat at 150px";
+with the row full width, the width term is 360 at 1440 and 480 at 1920,
+and once the section is taller than 540 the height term stops binding. So
+the disc is 97.5 at 390 at any count, 250 at 1000, 360 at 1440 and 480 at
+1920 from two images up -- a 960px disc at 1920, a quadrant of it showing.
+It clears §26's three conditions at every count and width: the host ends
+at the page's right edge, its row is above the triangle's where the
+triangle is drawn (1440 and 1920), and the visible radius sits exactly on
+§29's bound. Whether a quadrant that large is still the mark §26 drew at
+150 is Design's to rule from the captures.
+
+**What the rows beside Images do: nothing beside it, since the row is one
+section of the full width.** The rows above do not move. The journal row
+below moves down by exactly the section's growth (+382 at 1440 with two
+images, +1588 with six), and the page's height with it. On the seeded
+records the pressing-detail and acquisition sections are absent (no data),
+so the region regroups per §38; the measurement is of the images row and
+the journal row, which do not depend on them.
+
+Report only; nothing tuned.
