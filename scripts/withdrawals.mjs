@@ -70,3 +70,44 @@ export function deriveInto(path) {
   writeFileSync(path, next);
   return { changed: true, entries: entries.length };
 }
+
+/* ---- the reverse direction ------------------------------------------ */
+
+/**
+ * **The index ran one direction and was assumed to run both.** Assertion 6
+ * checks every entry's quote is in its section; assertion 7 finds declared
+ * sentences only where they start a `<strong>` run or follow a sentence end
+ * inside one. A sentence in withdrawal form anywhere else -- unbolded, or
+ * after other words in a run -- passed with no entry filed: §28 and §33 each
+ * carried one narrowing the Price history solo. This is the other direction:
+ * every phrasing the file uses, wherever it sits, must have an entry whose
+ * quote matches its sentence. The §34 shape, a guard in Plane and not Figure.
+ */
+const PHRASING = /(?:Withdrawn (?:in part |in whole )?by §|Withdrawn within §|Superseded (?:in part )?by §)/g;
+
+export const collapseText = (text) => text.replace(/\s+/g, ' ').trim();
+
+/**
+ * Every sentence that carries a withdrawal phrasing, from the phrasing to
+ * its own sentence end. A phrasing inside quotation marks is an example of
+ * the form, not a declaration, and is not counted; the matching is
+ * case-sensitive, so prose that says "withdrawn by" mid-sentence is prose.
+ */
+export function withdrawalSentencesIn(plain) {
+  const text = collapseText(plain);
+  const blank = (m) => ' '.repeat(m.length);
+  const scrubbed = text.replace(/“[^”]*”/g, blank).replace(/"[^"]*"/g, blank);
+  const out = [];
+  for (const m of scrubbed.matchAll(PHRASING)) {
+    const rest = text.slice(m.index);
+    const end = rest.search(/[.!?](?=\s|$)/);
+    out.push(end === -1 ? rest : rest.slice(0, end + 1));
+  }
+  return out;
+}
+
+/** The sentences no entry's quote matches, on collapsed whitespace. */
+export function unenteredWithdrawals(sentences, entries) {
+  const quotes = new Set(entries.map((e) => collapseText(e.quote)));
+  return sentences.map(collapseText).filter((s) => !quotes.has(s));
+}

@@ -13,7 +13,7 @@
  */
 import { readFileSync, existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { parseBullets, serialize, shippedComment } from './withdrawals.mjs';
+import { parseBullets, serialize, shippedComment, unenteredWithdrawals, withdrawalSentencesIn } from './withdrawals.mjs';
 import {
   collapse,
   decodeEntities,
@@ -465,6 +465,32 @@ const WITHDRAWAL_PREFIX =
     if (tokens !== null) fail(`8b §${r.id} tokens=${collapse(stripped).slice(0, 60)}`);
   }
   report('8b', failures.length === beforeB);
+}
+
+/*
+  9 -- the reverse direction (1 Oct). 6 checks every entry's quote is in its
+  section; 7 finds declared sentences only where they start a <strong> run or
+  follow a sentence end inside one. A sentence in withdrawal form anywhere
+  else passed with no entry filed, which is how §28 and §33 each carried one
+  narrowing the Price history solo. This scans every section's plain text
+  for the phrasings the file uses, wherever they sit (a phrasing inside
+  quotation marks is an example, not a declaration), and names each sentence
+  no entry's quote matches. REPORT-ONLY until Design has filed what it finds:
+  it fails the run only with --strict-reverse, and the proposal for
+  ASSERTIONS-spec.md goes to Design with its first report.
+*/
+{
+  const strict = process.argv.includes('--strict-reverse');
+  const before = failures.length;
+  const unentered = [];
+  for (const h of ALL) {
+    const found = withdrawalSentencesIn(collapse(stripTags(h.html)));
+    for (const s of unenteredWithdrawals(found, withdrawals)) unentered.push(`9 §${h.id} unentered "${s.slice(0, 160)}"`);
+  }
+  console.log(`     9: ${unentered.length} withdrawal sentence${unentered.length === 1 ? '' : 's'} with no entry, across ${ALL.length} sections${strict ? '' : ' (report only; --strict-reverse to fail on them)'}`);
+  for (const line of unentered) console.log(line);
+  if (strict) for (const line of unentered) fail(line);
+  report(9, strict ? failures.length === before : true);
 }
 
 for (const line of failures) console.log(line);

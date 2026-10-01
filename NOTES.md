@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 129 declared rules. Regenerate with
+Generated from 130 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -89,6 +89,7 @@ Generated from 129 declared rules. Regenerate with
 | a comparison shows fixed columns and the discriminating field may not be among them | [RULE: the comparison columns are FIXED, and for any given master the](#rule-the-comparison-columns-are-fixed-and-for-any-given-master-the) |
 | a Zod schema sits at a trust boundary and uses coercion | [RULE: Zod's coercion layer is SYSTEMATICALLY PERMISSIVE at trust](#rule-zods-coercion-layer-is-systematically-permissive-at-trust) |
 | a test looks reasonable and you have not asked what would make it fail | [The decorative-test check has now caught one in ADVANCE rather than by](#the-decorative-test-check-has-now-caught-one-in-advance-rather-than-by) |
+| a guard checks that every declared thing exists where it should, and nobody has asked whether everything that exists is declared | [The index now runs the reverse direction too: withdrawal sentences with no entry (1 Oct)](#the-index-now-runs-the-reverse-direction-too-withdrawal-sentences-with-no-entry-1-oct) |
 | a feature has comprehensive passing tests and nobody has used it in a browser | [THE LARGEST FINDING IN THIS PROJECT: a feature that passed every test and had never once worked](#the-largest-finding-in-this-project-a-feature-that-passed-every-test-and-had-never-once-worked) |
 | you fixed the callers of a shared thing rather than the shared thing | [The layer argument turned on me: I fixed two callers and left the trap open](#the-layer-argument-turned-on-me-i-fixed-two-callers-and-left-the-trap-open) |
 | a test asserts a total or an average over a set that is allowed to vary | [The light became an angle, and a test that measured an aggregate missed a drift](#the-light-became-an-angle-and-a-test-that-measured-an-aggregate-missed-a-drift) |
@@ -33231,3 +33232,35 @@ records were measured against it and the rest against my own on 3200,
 and nothing in the output said which. Every measurement run now prints
 the base URL it hit as its first line (`SERVER …`), and the NOTES entry
 names it. A server one did not start is a subject one did not choose.
+
+## The index now runs the reverse direction too: withdrawal sentences with no entry (1 Oct)
+
+**Shape:** check-cannot-fail
+**You are here if:** a guard checks that every declared thing exists where it should, and nobody has asked whether everything that exists is declared
+
+Assertion 6 checks every entry's quote is in the section its id names;
+assertion 7 finds declared sentences, but only where they start a
+`<strong>` run or follow a sentence end inside one. A sentence in
+withdrawal form anywhere else -- unbolded, or after other words in a run --
+passed with no entry filed, which is how §28 and §33 each carried one
+narrowing the Price history solo. Same shape as §34 living in Plane and
+not Figure: a guard that ran one direction and was assumed to run both.
+Assertion 9 (`scripts/check-index.mjs`, on `withdrawalSentencesIn` and
+`unenteredWithdrawals` in `withdrawals.mjs`, unit-tested) scans every
+section's plain text for the six phrasings the file uses wherever they
+sit, sets aside a phrasing inside quotation marks as an example of the
+form, and names each sentence no entry's quote matches. Report-only until
+Design has filed: it fails the run only with `--strict-reverse`, and the
+proposal for ASSERTIONS-spec.md goes with its first report.
+
+**Its first report, on the files on disk (the §55 drop with Design's two
+new §28 and §33 entries already filed):** two unentered sentences, both in
+the build target, both outside any bold run, so assertion 7 never saw
+them. §28: "Superseded in part by §37 on the air's side only: at 960 the
+air sits left of the sleeve in the second row." §30: "Superseded by §33 on
+its frame sizes: this sheet is generated from the shared frame, so every
+frame size it prints is withdrawn." Design's to file; nothing deleted. Two
+candidates were set aside: a sentence in the build target that quotes
+"Withdrawn within §33: …" as an example of the prefix contract, and one in
+the wall file that matched once tags were stripped without inserting
+spaces, which the script's own helper does.
