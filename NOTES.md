@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 131 declared rules. Regenerate with
+Generated from 132 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -89,6 +89,7 @@ Generated from 131 declared rules. Regenerate with
 | a comparison shows fixed columns and the discriminating field may not be among them | [RULE: the comparison columns are FIXED, and for any given master the](#rule-the-comparison-columns-are-fixed-and-for-any-given-master-the) |
 | a Zod schema sits at a trust boundary and uses coercion | [RULE: Zod's coercion layer is SYSTEMATICALLY PERMISSIVE at trust](#rule-zods-coercion-layer-is-systematically-permissive-at-trust) |
 | a test looks reasonable and you have not asked what would make it fail | [The decorative-test check has now caught one in ADVANCE rather than by](#the-decorative-test-check-has-now-caught-one-in-advance-rather-than-by) |
+| a check passes because it runs where the thing the real environment lacks is present, and nothing stands in for the absence | [The gate's build is not the production build, and today that difference shipped (1 Oct)](#the-gates-build-is-not-the-production-build-and-today-that-difference-shipped-1-oct) |
 | a guard checks that every declared thing exists where it should, and nobody has asked whether everything that exists is declared | [The index now runs the reverse direction too: withdrawal sentences with no entry (1 Oct)](#the-index-now-runs-the-reverse-direction-too-withdrawal-sentences-with-no-entry-1-oct) |
 | a feature has comprehensive passing tests and nobody has used it in a browser | [THE LARGEST FINDING IN THIS PROJECT: a feature that passed every test and had never once worked](#the-largest-finding-in-this-project-a-feature-that-passed-every-test-and-had-never-once-worked) |
 | you fixed the callers of a shared thing rather than the shared thing | [The layer argument turned on me: I fixed two callers and left the trap open](#the-layer-argument-turned-on-me-i-fixed-two-callers-and-left-the-trap-open) |
@@ -32707,6 +32708,8 @@ reach the page in those words is Design's, once this is fixed.
 
 ## A test that replaces an external adapter proves the caller and never the boundary (30 Sep)
 
+(See also, 1 Oct: "The gate's build is not the production build" -- the same shape with a fixture on disk standing in for an upload that leaves it out.)
+
 **Shape:** check-cannot-fail
 **You are here if:** a test replaces a third-party SDK, a network client or a store with a spy or a fixture, and nothing anywhere crosses that boundary for real
 
@@ -33650,3 +33653,46 @@ standing warnings, build compiled, the index green in both modes.
 
 Verification, gate level: full suites on both projects, typecheck, lint,
 build, check-index plain and --strict-reverse.
+
+## The gate's build is not the production build, and today that difference shipped (1 Oct)
+
+**Shape:** check-cannot-fail
+**You are here if:** a check passes because it runs where the thing the real environment lacks is present, and nothing stands in for the absence
+
+The first production build since the wall failed:
+
+    Module not found: Can't resolve '../../../../../test/fixtures/collection-spines'
+
+Two files under `src/app/wall/probe` import a fixture from `test/`, which
+`.vercelignore` keeps out of the upload. The gate's `npm run build` passed
+on the same tree because the fixture is on this disk. The gate's build is
+not the production build: it has everything the ignore file removes. This
+is the seventh instance this week of a guard passing in an environment the
+real one does not match, and the fourth where the stand-in was a fixture
+(the spy-replaced blob boundary, the one-colour spine, the near-empty
+price history, now the fixture on disk); it sits beside the boundary rule
+of 30 Sep for that reason.
+
+**The sweep, not the count.** A build reports what it reached, so the
+whole of `src` was searched for imports that leave it: exactly the two,
+both under the probe directory. **The mechanism**: the probe directory is
+left out of the upload too (`.vercelignore`), so it is not built in
+production -- a workbench rendering real spine data at an unlinked URL was
+never a deployable surface, and its pages already 404 there by their own
+code. Moving the fixture under `src` would have compiled the collection's
+spine data into the bundle to serve a page nobody visits. **The guard**:
+`test/repo/src-imports-stay-in-src.test.ts` reads the ignore file and
+fails on any deployed source file importing from outside `src`, on any
+deployed file importing from a left-out directory, and on a left-out
+directory whose pages do not 404 in production. Over the whole tree it
+finds nothing else. **The check that matches production**: the tree was
+copied with the ignore file's exclusions applied and built; it compiled
+with no probe route and no missing module, which is the check the gate's
+build could not be.
+
+**Why the rule and not only the guard.** A guard that reads the ignore
+file covers imports. The general case is any difference between the two
+environments -- an env var set here and not there, a file present here and
+ignored there, a database this disk reaches -- and the honest statement of
+a local build is "builds with everything on this disk". Where production
+removes something, the gate needs a check run without it.

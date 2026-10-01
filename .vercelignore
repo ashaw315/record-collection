@@ -11,10 +11,22 @@ test-results
 playwright-report
 coverage
 
-# Test and review material: not needed to build or run the app.
+# Test and review material: not needed to build or run the app. The unit
+# tests that live beside their modules under src go too: `next build`
+# type-checks the whole project, and eleven of them import fixtures and
+# helpers from test/, which this file keeps out.
 e2e
 test
+*.test.ts
+*.test.tsx
 *.log
+
+# Workbench routes: probes that render test fixtures at unlinked URLs and
+# 404 in production by their own code. Left out of the upload so they are
+# not built there either -- the first production build since the wall
+# failed on their imports from test/, which this file keeps out.
+# test/repo/src-imports-stay-in-src.test.ts holds the two together.
+src/app/wall/probe
 
 # Working documents: build history and review notes, not build input.
 docs
